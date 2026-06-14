@@ -1,10 +1,11 @@
 import { Plus } from 'lucide-react';
 
 import { CalendarFilterBar, CalendarHeader } from '@/features/shared/ui/calendar';
+import { LoadingState } from '@/features/shared/ui/feedback';
 import { Button } from '@/features/shared/ui/ui/button';
 import { CalendarExportButton } from '@/features/events/ui/calendar/CalendarExportButton';
 import { CalendarViewContainer } from '@/features/events/ui/calendar/CalendarViewContainer';
-import type { CalendarEvent, CalendarViewMode } from '@/features/events/hooks/useCalendarView';
+import type { CalendarEvent, CalendarViewMode } from '../types/calendar.types';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { CalendarGroupFilter } from './CalendarGroupFilter';
 
@@ -62,11 +63,7 @@ export function CalendarPageView({
   onCreateEventRange,
 }: CalendarPageViewProps) {
   if (isLoading) {
-    return (
-      <div className="flex h-[400px] items-center justify-center">
-        <p className="text-muted-foreground">{loadingLabel}</p>
-      </div>
-    );
+    return <LoadingState label={loadingLabel} className="h-[400px]" />;
   }
 
   return (

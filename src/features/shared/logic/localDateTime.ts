@@ -2,17 +2,21 @@ const DATE_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_INPUT_PATTERN = /^\d{2}:\d{2}$/;
 const DATE_TIME_LOCAL_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 
-function isEmptyFormattedDateValue(value?: Date | number | string | null): boolean {
-  return (
-    value === null ||
-    value === undefined ||
-    value === '' ||
-    (typeof value === 'number' && value <= 0)
-  );
-}
-
 function padTwo(value: number): string {
   return String(value).padStart(2, '0');
+}
+
+function toDateValue(value?: Date | number | string | null): Date | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  if (typeof value === 'number' && value <= 0) {
+    return null;
+  }
+
+  const date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function parseDateInputParts(value?: string | null) {
@@ -45,12 +49,8 @@ export function parseLocalDateInput(value?: string | null): Date | undefined {
 }
 
 export function formatLocalDateInput(value?: Date | number | string | null): string {
-  if (isEmptyFormattedDateValue(value)) {
-    return '';
-  }
-
-  const date = value instanceof Date ? new Date(value) : new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const date = toDateValue(value);
+  if (!date) {
     return '';
   }
 
@@ -58,12 +58,8 @@ export function formatLocalDateInput(value?: Date | number | string | null): str
 }
 
 export function formatLocalTimeInput(value?: Date | number | string | null): string {
-  if (isEmptyFormattedDateValue(value)) {
-    return '';
-  }
-
-  const date = value instanceof Date ? new Date(value) : new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const date = toDateValue(value);
+  if (!date) {
     return '';
   }
 
@@ -71,12 +67,8 @@ export function formatLocalTimeInput(value?: Date | number | string | null): str
 }
 
 export function formatLocalDateTimeInput(value?: Date | number | string | null): string {
-  if (isEmptyFormattedDateValue(value)) {
-    return '';
-  }
-
-  const date = value instanceof Date ? new Date(value) : new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  const date = toDateValue(value);
+  if (!date) {
     return '';
   }
 
@@ -126,7 +118,7 @@ export function toLocalEndOfDayTimestamp(dateInput?: string | null): number | nu
 }
 
 export function getIsoWeekdayIndex(value: Date | number | string): number {
-  const date = value instanceof Date ? new Date(value) : new Date(value);
+  const date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
   const weekday = date.getDay();
   return weekday === 0 ? 6 : weekday - 1;
 }

@@ -10,13 +10,12 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
-import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { PriorityInput } from '../ui/inputs/PriorityInput';
 import { StatusInput } from '../ui/inputs/StatusInput';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { CreateInputField, CreateTextareaField, CreateTypeaheadField } from '../ui/CreateFields';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import type { CreateFormConfig } from '../types/create-form.types';
 
@@ -154,143 +153,176 @@ export function useCreateTodoForm(): CreateFormConfig {
         {
           label: t('pages.create.todo.titleLabel'),
           isValid: () => !!title.trim(),
-          content: (
-            <div className="space-y-4">
-              <CreateTypeaheadField
-                label={t('pages.create.common.group')}
-                hint={t('pages.create.todo.groupHint')}
-                entityTypes={['group']}
-                value={groupId || undefined}
-                onChange={item => {
+          fields: [
+            {
+              key: 'group',
+              kind: 'typeahead',
+              label: t('pages.create.common.group'),
+              hint: t('pages.create.todo.groupHint'),
+              props: {
+                entityTypes: ['group'],
+                value: groupId || undefined,
+                onChange: item => {
                   handleGroupChange(item?.id ?? '', item?.label ?? '');
-                }}
-                placeholder={t('pages.create.common.searchGroup')}
-                filterFn={item => memberGroupIds.has(item.id)}
-              />
-              <CreateInputField
-                label={t('pages.create.todo.titleLabel')}
-                required
-                hint={t('pages.create.todo.tips.title')}
-                value={title}
-                onValueChange={setTitle}
-                placeholder={t('pages.create.todo.titlePlaceholder')}
-              />
-              <CreateTextareaField
-                label={t('pages.create.todo.descriptionLabel')}
-                hint={t('pages.create.todo.tips.description')}
-                value={description}
-                onValueChange={setDescription}
-                placeholder={t('pages.create.todo.descriptionPlaceholder')}
-                rows={4}
-              />
-            </div>
-          ),
+                },
+                placeholder: t('pages.create.common.searchGroup'),
+                filterFn: item => memberGroupIds.has(item.id),
+              },
+            },
+            {
+              key: 'title',
+              kind: 'text',
+              label: t('pages.create.todo.titleLabel'),
+              required: true,
+              hint: t('pages.create.todo.tips.title'),
+              value: title,
+              onValueChange: setTitle,
+              placeholder: t('pages.create.todo.titlePlaceholder'),
+            },
+            {
+              key: 'description',
+              kind: 'text',
+              multiline: true,
+              label: t('pages.create.todo.descriptionLabel'),
+              hint: t('pages.create.todo.tips.description'),
+              value: description,
+              onValueChange: setDescription,
+              placeholder: t('pages.create.todo.descriptionPlaceholder'),
+              rows: 4,
+            },
+          ],
         },
         {
           label: t('pages.create.todo.priorityLabel'),
           isValid: () => true,
-          content: (
-            <div className="space-y-4">
-              <PriorityInput value={priority} onChange={setPriority} />
-              <StatusInput value={status} onChange={setStatus} />
-            </div>
-          ),
+          fields: [
+            {
+              key: 'priority',
+              kind: 'custom',
+              node: <PriorityInput value={priority} onChange={setPriority} />,
+            },
+            {
+              key: 'status',
+              kind: 'custom',
+              node: <StatusInput value={status} onChange={setStatus} />,
+            },
+          ],
         },
         {
           label: t('pages.create.todo.assignTo'),
           isValid: () => true,
           optional: true,
-          content: (
-            <div className="space-y-4">
-              <UserSearchInput
-                value={assigneeIds}
-                onChange={setAssigneeIds}
-                label={t('pages.create.todo.assignToLabel')}
-                placeholder={t('pages.create.todo.assignToPlaceholder')}
-              />
-            </div>
-          ),
+          fields: [
+            {
+              key: 'assignees',
+              kind: 'custom',
+              node: (
+                <UserSearchInput
+                  value={assigneeIds}
+                  onChange={setAssigneeIds}
+                  label={t('pages.create.todo.assignToLabel')}
+                  placeholder={t('pages.create.todo.assignToPlaceholder')}
+                />
+              ),
+            },
+          ],
         },
         {
           label: t('pages.create.event.settings'),
           isValid: () => true,
           optional: true,
-          content: (
-            <div className="space-y-4">
-              <CreateInputField
-                label={t('pages.create.todo.dueDateOptional')}
-                value={dueDate}
-                onValueChange={setDueDate}
-                type="date"
-              />
-              {groupId ? (
+          fields: [
+            {
+              key: 'due-date',
+              kind: 'text',
+              label: t('pages.create.todo.dueDateOptional'),
+              value: dueDate,
+              onValueChange: setDueDate,
+              type: 'date',
+            },
+            {
+              key: 'visibility',
+              kind: 'custom',
+              node: groupId ? (
                 <div className="bg-muted/40 text-muted-foreground rounded-md border px-3 py-2 text-sm">
                   {t('pages.create.todo.groupVisibilityHint')}
                 </div>
               ) : (
                 <VisibilityInput value={visibility} onChange={setVisibility} />
-              )}
-              <HashtagEditor
-                value={tags}
-                onChange={setTags}
-                label={t('pages.create.todo.tagsOptional')}
-                placeholder={t('pages.create.todo.tagPlaceholder')}
-              />
-            </div>
-          ),
+              ),
+            },
+            {
+              key: 'tags',
+              kind: 'custom',
+              node: (
+                <HashtagEditor
+                  value={tags}
+                  onChange={setTags}
+                  label={t('pages.create.todo.tagsOptional')}
+                  placeholder={t('pages.create.todo.tagPlaceholder')}
+                />
+              ),
+            },
+          ],
         },
         {
           label: t('pages.create.common.review'),
           isValid: () => !!title.trim(),
-          content: (
-            <CreateSummaryStep
-              entityType="todo"
-              badge={t('pages.create.todo.reviewBadge')}
-              title={title || t('pages.create.todo.titlePlaceholder')}
-              subtitle={description || undefined}
-              sections={[
-                {
-                  title: t('pages.create.todo.priorityLabel'),
-                  fields: [
-                    ...(groupId
-                      ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
-                      : []),
+          fields: [
+            {
+              key: 'review',
+              kind: 'custom',
+              node: (
+                <CreateSummaryStep
+                  entityType="todo"
+                  badge={t('pages.create.todo.reviewBadge')}
+                  title={title || t('pages.create.todo.titlePlaceholder')}
+                  subtitle={description || undefined}
+                  sections={[
                     {
-                      label: t('pages.create.todo.priorityLabel'),
-                      value: t(`pages.create.todo.priority.${priority}`),
+                      title: t('pages.create.todo.priorityLabel'),
+                      fields: [
+                        ...(groupId
+                          ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
+                          : []),
+                        {
+                          label: t('pages.create.todo.priorityLabel'),
+                          value: t(`pages.create.todo.priority.${priority}`),
+                        },
+                        {
+                          label: t('pages.create.todo.statusLabel'),
+                          value: t(`features.todos.status.${status}`),
+                        },
+                        ...(dueDate
+                          ? [{ label: t('pages.create.todo.dueDateLabel'), value: dueDate }]
+                          : []),
+                      ],
                     },
                     {
-                      label: t('pages.create.todo.statusLabel'),
-                      value: t(`features.todos.status.${status}`),
+                      title: t('pages.create.todo.assignTo'),
+                      fields: [
+                        ...(assigneeNames.length > 0
+                          ? [
+                              {
+                                label: t('pages.create.todo.assignedTo'),
+                                value: assigneeNames.join(', '),
+                              },
+                            ]
+                          : []),
+                        {
+                          label: t('pages.create.common.visibility'),
+                          value: visibilityLabel,
+                        },
+                        ...(tags.length > 0
+                          ? [{ label: t('pages.create.todo.tagsLabel'), value: tags.join(', ') }]
+                          : []),
+                      ],
                     },
-                    ...(dueDate
-                      ? [{ label: t('pages.create.todo.dueDateLabel'), value: dueDate }]
-                      : []),
-                  ],
-                },
-                {
-                  title: t('pages.create.todo.assignTo'),
-                  fields: [
-                    ...(assigneeNames.length > 0
-                      ? [
-                          {
-                            label: t('pages.create.todo.assignedTo'),
-                            value: assigneeNames.join(', '),
-                          },
-                        ]
-                      : []),
-                    {
-                      label: t('pages.create.common.visibility'),
-                      value: visibilityLabel,
-                    },
-                    ...(tags.length > 0
-                      ? [{ label: t('pages.create.todo.tagsLabel'), value: tags.join(', ') }]
-                      : []),
-                  ],
-                },
-              ]}
-            />
-          ),
+                  ]}
+                />
+              ),
+            },
+          ],
         },
       ],
     }),

@@ -5,7 +5,7 @@ import { EMPTY_RICH_TEXT_VALUE, toRichTextValue } from '@/features/shared/logic/
 import { EditorKit } from '@/features/shared/ui/kit-platejs/editor-kit';
 import { Editor, EditorContainer } from '@/features/shared/ui/ui-platejs/editor';
 import { FixedToolbarButtons } from '@/features/shared/ui/ui-platejs/fixed-toolbar-buttons';
-import { Toolbar } from '@/features/shared/ui/ui/toolbar';
+import { Toolbar } from '@/features/shared/ui/layout/Toolbar';
 import { cn } from '@/features/shared/utils/utils';
 
 interface SimpleRichTextEditorProps {

@@ -10,14 +10,14 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Users, Copy } from 'lucide-react';
-import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
-import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
-import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
+import { StatsBar } from '@/features/shared/ui/layout';
+import { ActionBar } from '@/features/shared/ui/layout';
 import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
 import { InfoTabs, WikiIncumbentPanel } from '@/features/shared/ui/wiki';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
+import { EditingModeBadge } from '@/features/shared/ui/status';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { VoteButtons, type VoteValue } from '@/features/shared/ui/voting';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';

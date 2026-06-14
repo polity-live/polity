@@ -1,7 +1,5 @@
-import { BadgeControl } from '@/features/shared/ui/status';
-import { FormControlTextarea } from '@/features/shared/ui/form';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { cn } from '@/features/shared/utils/utils';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+
 import type { PqlFieldDefinition } from '../logic/applyPqlFilter';
 import {
   applyPqlSuggestion,
@@ -9,7 +7,7 @@ import {
   type PqlQueryIssue,
   type PqlSuggestion,
 } from '../logic/pqlQueryLanguage';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { PqlQueryEditorView } from './PqlQueryEditorView';
 
 interface PqlQueryEditorProps<TItem, TFieldKey extends string> {
   fields: readonly PqlFieldDefinition<TItem, TFieldKey>[];
@@ -57,8 +55,6 @@ export function PqlQueryEditor<TItem, TFieldKey extends string>({
     [cursorPosition, fields, suggestionsOpen, value]
   );
 
-  const visibleFields = fields.slice(0, 10);
-
   useEffect(() => {
     if (selectedSuggestionIndex < suggestions.length) {
       return;
@@ -104,140 +100,80 @@ export function PqlQueryEditor<TItem, TFieldKey extends string>({
     });
   };
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (suggestions.length === 0) {
+      if (event.key === 'ArrowDown') {
+        const nextSuggestions = getPqlSuggestions(value, cursorPosition, fields);
+        if (nextSuggestions.length > 0) {
+          setSuggestionsOpen(true);
+          setSelectedSuggestionIndex(0);
+          event.preventDefault();
+        }
+      }
+
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      setSelectedSuggestionIndex(currentIndex =>
+        currentIndex >= suggestions.length - 1 ? 0 : currentIndex + 1
+      );
+      event.preventDefault();
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      setSelectedSuggestionIndex(currentIndex =>
+        currentIndex <= 0 ? suggestions.length - 1 : currentIndex - 1
+      );
+      event.preventDefault();
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === 'Tab') {
+      const selectedSuggestion = suggestions[selectedSuggestionIndex];
+      if (selectedSuggestion) {
+        handleSuggestionSelect(selectedSuggestion);
+        event.preventDefault();
+      }
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      setSuggestionsOpen(false);
+    }
+  };
+
   return (
-    <div className={cn('space-y-3', className)}>
-      <div className="relative">
-        <FormControlTextarea
-          ref={textareaRef}
-          value={value}
-          placeholder={placeholder}
-          onChange={event => {
-            onChange(event.target.value);
-            setCursorPosition(event.target.selectionStart ?? event.target.value.length);
-            setSuggestionsOpen(true);
-            setSelectedSuggestionIndex(0);
-          }}
-          onFocus={() => {
-            clearBlurTimeout();
-            syncCursorPosition();
-            setSuggestionsOpen(true);
-          }}
-          onBlur={closeSuggestionsSoon}
-          onClick={syncCursorPosition}
-          onKeyUp={syncCursorPosition}
-          onSelect={syncCursorPosition}
-          onKeyDown={event => {
-            if (suggestions.length === 0) {
-              if (event.key === 'ArrowDown') {
-                const nextSuggestions = getPqlSuggestions(value, cursorPosition, fields);
-                if (nextSuggestions.length > 0) {
-                  setSuggestionsOpen(true);
-                  setSelectedSuggestionIndex(0);
-                  event.preventDefault();
-                }
-              }
-
-              return;
-            }
-
-            if (event.key === 'ArrowDown') {
-              setSelectedSuggestionIndex(currentIndex =>
-                currentIndex >= suggestions.length - 1 ? 0 : currentIndex + 1
-              );
-              event.preventDefault();
-              return;
-            }
-
-            if (event.key === 'ArrowUp') {
-              setSelectedSuggestionIndex(currentIndex =>
-                currentIndex <= 0 ? suggestions.length - 1 : currentIndex - 1
-              );
-              event.preventDefault();
-              return;
-            }
-
-            if (event.key === 'Enter' || event.key === 'Tab') {
-              const selectedSuggestion = suggestions[selectedSuggestionIndex];
-              if (selectedSuggestion) {
-                handleSuggestionSelect(selectedSuggestion);
-                event.preventDefault();
-              }
-              return;
-            }
-
-            if (event.key === 'Escape') {
-              setSuggestionsOpen(false);
-            }
-          }}
-          className={cn('min-h-32 font-mono text-sm', textareaClassName)}
-          spellCheck={false}
-        />
-
-        {suggestionsOpen && suggestions.length > 0 ? (
-          <div className="bg-popover absolute z-50 mt-2 w-full rounded-md border p-1 shadow-md">
-            {suggestions.map((suggestion, index) => (
-              <button
-                key={`${suggestion.kind}-${suggestion.label}-${suggestion.insertText}`}
-                type="button"
-                className={cn(
-                  'flex w-full items-center gap-3 rounded-sm px-3 py-2 text-left text-sm',
-                  index === selectedSuggestionIndex
-                    ? 'bg-accent text-accent-foreground'
-                    : 'hover:bg-accent/50'
-                )}
-                onMouseDown={event => {
-                  event.preventDefault();
-                  handleSuggestionSelect(suggestion);
-                }}
-                onMouseEnter={() => setSelectedSuggestionIndex(index)}
-              >
-                <BadgeControl
-                  variant="outline"
-                  className="min-w-16 justify-center text-[10px] uppercase"
-                >
-                  {suggestion.kind}
-                </BadgeControl>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">{suggestion.label}</div>
-                  {suggestion.detail ? (
-                    <div className="text-muted-foreground truncate text-xs">
-                      {suggestion.detail}
-                    </div>
-                  ) : null}
-                </div>
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {visibleFields.map(field => (
-          <BadgeControl key={field.key} variant="secondary" className="font-mono text-xs">
-            {field.key}
-          </BadgeControl>
-        ))}
-        {fields.length > visibleFields.length ? (
-          <BadgeControl variant="outline" className="font-mono text-xs">
-            +{fields.length - visibleFields.length}
-            {translateText('generated.inline.0142_more_e7c95b4c')}
-          </BadgeControl>
-        ) : null}
-      </div>
-
-      <p className="text-muted-foreground text-xs">
-        {translateText(
-          'generated.inline.1094_suggestions_support_fields_in_contains_and_or_72aca790'
-        )}
-      </p>
-
-      {issues.length > 0 ? (
-        <div className="border-destructive/40 bg-destructive/5 text-destructive rounded-md border px-3 py-2 text-sm">
-          {issues.slice(0, 3).map(issue => (
-            <p key={`${issue.start}-${issue.end}-${issue.message}`}>{issue.message}</p>
-          ))}
-        </div>
-      ) : null}
-    </div>
+    <PqlQueryEditorView
+      className={className}
+      fields={fields}
+      issues={issues}
+      onBlur={closeSuggestionsSoon}
+      onChange={event => {
+        onChange(event.target.value);
+        setCursorPosition(event.target.selectionStart ?? event.target.value.length);
+        setSuggestionsOpen(true);
+        setSelectedSuggestionIndex(0);
+      }}
+      onClick={syncCursorPosition}
+      onFocus={() => {
+        clearBlurTimeout();
+        syncCursorPosition();
+        setSuggestionsOpen(true);
+      }}
+      onKeyDown={handleKeyDown}
+      onKeyUp={syncCursorPosition}
+      onSelect={syncCursorPosition}
+      onSuggestionHover={setSelectedSuggestionIndex}
+      onSuggestionSelect={handleSuggestionSelect}
+      placeholder={placeholder}
+      selectedSuggestionIndex={selectedSuggestionIndex}
+      suggestions={suggestions}
+      suggestionsOpen={suggestionsOpen}
+      textareaClassName={textareaClassName}
+      textareaRef={textareaRef}
+      value={value}
+    />
   );
 }

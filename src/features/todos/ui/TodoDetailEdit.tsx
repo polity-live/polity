@@ -1,5 +1,6 @@
 import {
   FormControlInput,
+  FormControlLabel,
   FormControlTextarea,
   FormControlSelect,
   FormControlSelectContent,
@@ -22,9 +23,9 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
       {/* Status and Priority */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="mb-2 block text-sm font-medium">
+          <FormControlLabel className="mb-2 block text-sm font-medium">
             {translateText('generated.inline.0688_status_bae7d5be')}
-          </label>
+          </FormControlLabel>
           <FormControlSelect
             value={formData.status}
             onValueChange={(v: TodoStatus) => onUpdate({ status: v })}
@@ -62,9 +63,9 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium">
+          <FormControlLabel className="mb-2 block text-sm font-medium">
             {translateText('generated.inline.0637_priority_886cbff9')}
-          </label>
+          </FormControlLabel>
           <FormControlSelect
             value={formData.priority}
             onValueChange={(v: TodoPriority) => onUpdate({ priority: v })}
@@ -104,9 +105,9 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
 
       {/* Description */}
       <div>
-        <label className="mb-2 block text-sm font-medium">
+        <FormControlLabel className="mb-2 block text-sm font-medium">
           {translateText('generated.inline.0030_description_55f8ebc8')}
-        </label>
+        </FormControlLabel>
         <FormControlTextarea
           value={formData.description}
           onChange={e => onUpdate({ description: e.target.value })}
@@ -117,9 +118,9 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
 
       {/* Due Date */}
       <div>
-        <label className="mb-2 block text-sm font-medium">
+        <FormControlLabel className="mb-2 block text-sm font-medium">
           {translateText('generated.inline.1171_due_date_a1b308ec')}
-        </label>
+        </FormControlLabel>
         <FormControlInput
           type="date"
           value={formData.dueDate}

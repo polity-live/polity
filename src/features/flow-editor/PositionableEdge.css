@@ -33,3 +33,13 @@
 .positionHandler:hover {
   box-shadow: 0 0 6px 2px rgba(0, 0, 0, 0.08);
 }
+
+.positionHandler:focus-visible {
+  outline: 2px solid rgb(99 102 241);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgb(99 102 241 / 0.18);
+}
+
+.positionHandlerEventContainer.active .positionHandler {
+  cursor: grabbing;
+}

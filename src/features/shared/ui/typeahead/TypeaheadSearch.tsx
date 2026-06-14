@@ -52,6 +52,9 @@ export interface TypeaheadMultiProps extends TypeaheadSearchBaseProps {
 }
 
 export type TypeaheadSearchProps = TypeaheadSingleProps | TypeaheadMultiProps;
+export type TypeaheadComboboxProps = TypeaheadSearchProps & {
+  items: readonly TypeaheadItem[];
+};
 
 type TypeaheadSearchBaseComponentProps = TypeaheadSearchProps & {
   query: string;
@@ -62,15 +65,15 @@ type TypeaheadSearchBaseComponentProps = TypeaheadSearchProps & {
 
 export function TypeaheadSearch(props: TypeaheadSearchProps) {
   if (props.items) {
-    return <TypeaheadSearchWithItems {...props} />;
+    return <TypeaheadCombobox {...props} items={props.items} />;
   }
 
   return <TypeaheadSearchWithData {...props} />;
 }
 
-function TypeaheadSearchWithItems(props: TypeaheadSearchProps) {
+export function TypeaheadCombobox(props: TypeaheadComboboxProps) {
   const [query, setQuery] = useState('');
-  const sourceItems = props.items ?? [];
+  const sourceItems = props.items;
   const searchResults = useMemo(() => {
     const filteredItems = filterItems(sourceItems, query, DEFAULT_TYPEAHEAD_SEARCH_KEYS);
     return sortByRelevance(filteredItems, query);

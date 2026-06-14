@@ -1,13 +1,7 @@
 import type { FormEventHandler } from 'react';
 import { Mail } from 'lucide-react';
 
-import {
-  FormButton,
-  FormControlInput,
-  FormFieldShell,
-  SettingsPanel,
-  TextField,
-} from '@/features/shared/ui/form';
+import { FormButton, SettingsPanel, TextField } from '@/features/shared/ui/form';
 import { InlineNotice, Spinner } from '@/features/shared/ui/feedback';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -71,9 +65,14 @@ export function AccountEmailSectionView({
           <p className="text-muted-foreground text-sm">{copy.initialPasswordRequired}</p>
         ) : (
           <form onSubmit={onSubmit} className="space-y-4">
-            <FormFieldShell
+            <TextField
               id="new-email"
+              type="email"
               label={copy.newEmail}
+              placeholder={copy.newEmailPlaceholder}
+              value={newEmail}
+              onValueChange={onNewEmailChange}
+              onBlur={onNewEmailBlur}
               description={copy.emailHint}
               descriptionClassName={cn(
                 'text-xs',
@@ -81,24 +80,11 @@ export function AccountEmailSectionView({
                 showEmailSuccess && 'text-emerald-600 dark:text-emerald-400'
               )}
               invalid={showEmailError}
-            >
-              {({ id, describedBy, invalid }) => (
-                <FormControlInput
-                  id={id}
-                  type="email"
-                  placeholder={copy.newEmailPlaceholder}
-                  value={newEmail}
-                  onChange={event => onNewEmailChange(event.target.value)}
-                  onBlur={onNewEmailBlur}
-                  required
-                  disabled={isBusy}
-                  autoComplete="email"
-                  aria-describedby={describedBy}
-                  aria-invalid={invalid}
-                  data-valid={showEmailSuccess ? 'true' : undefined}
-                />
-              )}
-            </FormFieldShell>
+              required
+              disabled={isBusy}
+              autoComplete="email"
+              data-valid={showEmailSuccess ? 'true' : undefined}
+            />
 
             {error ? <InlineNotice variant="destructive">{error}</InlineNotice> : null}
 

@@ -10,7 +10,7 @@ import {
 } from '@/features/shared/logic/typeaheadHelpers';
 import { ENTITY_COLORS } from '@/features/shared/utils/entity-colors';
 import { cn } from '@/features/shared/utils/utils';
-import { getHashtagGradient } from '@/features/timeline/logic/gradient-assignment';
+import { getHashtagGradient } from '@/features/shared/logic/hashtagHelpers';
 import { Hash } from 'lucide-react';
 
 interface TypeaheadResultCardProps {

@@ -1,7 +1,7 @@
 import type { MouseEvent, RefObject } from 'react';
 import { Bell, Check, Users } from 'lucide-react';
 
-import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
+import { EntitySearchBar } from '@/features/shared/ui/typeahead';
 import { FeedToolbar } from '@/features/shared/ui/feed';
 import { Tabs, TabsContent } from '@/features/shared/ui/ui/tabs';
 import type { Notification } from '../types/notification.types';

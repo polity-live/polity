@@ -3,7 +3,7 @@ import { useNavigationStore } from '@/features/navigation/state/navigation.store
 import { useScreenStore } from '@/features/shared/global-state/screen.store.tsx';
 import { useNavigation } from '@/features/navigation/state/useNavigation.tsx';
 
-import { Toolbar } from '@/features/shared/ui/ui/toolbar.tsx';
+import { Toolbar } from '@/features/shared/ui/layout';
 
 export function FixedToolbar(props: React.ComponentProps<typeof Toolbar>) {
   const { navigationView, navigationType } = useNavigationStore();
@@ -71,7 +71,7 @@ export function FixedToolbar(props: React.ComponentProps<typeof Toolbar>) {
     <Toolbar
       {...props}
       className={cn(
-        'scrollbar-hide supports-backdrop-blur:bg-background/60 fixed z-50 justify-between overflow-x-auto border-b border-b-border bg-background/95 p-1 backdrop-blur-sm transition-all duration-300',
+        'scrollbar-hide supports-backdrop-blur:bg-background/60 border-b-border bg-background/95 fixed z-50 justify-between overflow-x-auto border-b p-1 backdrop-blur-sm transition-all duration-300',
         getTopOffset(),
         getLeftOffset(),
         getRightOffset(),

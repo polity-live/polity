@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { ElectionSearchInput } from '../ui/inputs/ElectionSearchInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { CreateTextareaField } from '../ui/CreateFields';
 import type { CreateFormConfig } from '../types/create-form.types';
 
 export function useCreateElectionCandidateForm(): CreateFormConfig {
@@ -62,76 +61,102 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
         {
           label: t('pages.create.electionCandidate.electionLabel'),
           isValid: () => !!electionId,
-          content: (
-            <ElectionSearchInput
-              value={electionId}
-              onChange={setElectionId}
-              label={t('pages.create.electionCandidate.electionLabel')}
-              required
-              placeholder={t('pages.create.electionCandidate.electionPlaceholder')}
-            />
-          ),
+          fields: [
+            {
+              key: 'election',
+              kind: 'custom',
+              node: (
+                <ElectionSearchInput
+                  value={electionId}
+                  onChange={setElectionId}
+                  label={t('pages.create.electionCandidate.electionLabel')}
+                  required
+                  placeholder={t('pages.create.electionCandidate.electionPlaceholder')}
+                />
+              ),
+            },
+          ],
         },
         {
           label: t('pages.create.electionCandidate.descriptionLabel'),
           isValid: () => true,
           optional: true,
-          content: (
-            <div className="space-y-4">
-              <CreateTextareaField
-                label={t('pages.create.electionCandidate.descriptionLabel')}
-                hint={t('pages.create.electionCandidate.tips.description')}
-                value={statement}
-                onValueChange={setStatement}
-                placeholder={t('pages.create.electionCandidate.descriptionPlaceholder')}
-                rows={5}
-              />
-              <ImageUpload
-                currentImage={imageURL}
-                onImageChange={setImageURL}
-                entityType="election-candidates"
-                entityId={candidateId}
-                label={t('pages.create.electionCandidate.imageUrlLabel')}
-                description={t('pages.create.electionCandidate.imageUrlOptional')}
-              />
-            </div>
-          ),
+          fields: [
+            {
+              key: 'statement',
+              kind: 'text',
+              multiline: true,
+              label: t('pages.create.electionCandidate.descriptionLabel'),
+              hint: t('pages.create.electionCandidate.tips.description'),
+              value: statement,
+              onValueChange: setStatement,
+              placeholder: t('pages.create.electionCandidate.descriptionPlaceholder'),
+              rows: 5,
+            },
+            {
+              key: 'image',
+              kind: 'custom',
+              node: (
+                <ImageUpload
+                  currentImage={imageURL}
+                  onImageChange={setImageURL}
+                  entityType="election-candidates"
+                  entityId={candidateId}
+                  label={t('pages.create.electionCandidate.imageUrlLabel')}
+                  description={t('pages.create.electionCandidate.imageUrlOptional')}
+                />
+              ),
+            },
+          ],
         },
         {
           label: t('pages.create.common.review'),
           isValid: () => !!electionId,
-          content: (
-            <CreateSummaryStep
-              entityType="election"
-              badge={t('pages.create.electionCandidate.reviewBadge')}
-              title={selectedElection?.title || 'Election Candidate'}
-              subtitle={statement || undefined}
-              media={imageURL ? { imageUrl: imageURL, imageAlt: selectedElectionTitle } : undefined}
-              sections={[
-                {
-                  title: t('pages.create.electionCandidate.electionLabel'),
-                  fields: [
+          fields: [
+            {
+              key: 'review',
+              kind: 'custom',
+              node: (
+                <CreateSummaryStep
+                  entityType="election"
+                  badge={t('pages.create.electionCandidate.reviewBadge')}
+                  title={selectedElection?.title || 'Election Candidate'}
+                  subtitle={statement || undefined}
+                  media={
+                    imageURL ? { imageUrl: imageURL, imageAlt: selectedElectionTitle } : undefined
+                  }
+                  sections={[
                     {
-                      label: t('pages.create.electionCandidate.electionLabel'),
-                      value: selectedElectionTitle,
+                      title: t('pages.create.electionCandidate.electionLabel'),
+                      fields: [
+                        {
+                          label: t('pages.create.electionCandidate.electionLabel'),
+                          value: selectedElectionTitle,
+                        },
+                      ],
                     },
-                  ],
-                },
-                {
-                  title: t('pages.create.electionCandidate.descriptionLabel'),
-                  fields: [
                     {
-                      label: t('pages.create.electionCandidate.descriptionLabel'),
-                      value: statement || t('pages.create.common.notSelected'),
+                      title: t('pages.create.electionCandidate.descriptionLabel'),
+                      fields: [
+                        {
+                          label: t('pages.create.electionCandidate.descriptionLabel'),
+                          value: statement || t('pages.create.common.notSelected'),
+                        },
+                        ...(imageURL
+                          ? [
+                              {
+                                label: t('pages.create.electionCandidate.image'),
+                                value: 'Attached',
+                              },
+                            ]
+                          : []),
+                      ],
                     },
-                    ...(imageURL
-                      ? [{ label: t('pages.create.electionCandidate.image'), value: 'Attached' }]
-                      : []),
-                  ],
-                },
-              ]}
-            />
-          ),
+                  ]}
+                />
+              ),
+            },
+          ],
         },
       ],
     }),

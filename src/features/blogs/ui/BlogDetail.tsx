@@ -1,59 +1,74 @@
 'use client';
 
-import { ScrollableAlertDialogContent } from '@/features/shared/ui/dialog';
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useZero } from '@rocicorp/zero/react';
-import { PageWrapper } from '@/layout/page-wrapper';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import { Button } from '@/features/shared/ui/ui/button';
-import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
-import { extractHashtags } from '@/zero/common/hashtagHelpers';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import type { Value } from 'platejs';
+import { toast } from 'sonner';
+
+import { useAuth } from '@/providers/auth-provider';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
-import { BookOpen, Calendar, Trash2, Edit } from 'lucide-react';
-import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
+import { mutators } from '@/zero/mutators';
+import { extractHashtags } from '@/zero/common/hashtagHelpers';
+import { usePermissions } from '@/zero/rbac/usePermissions';
+import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
-import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
-import { useAuth } from '@/providers/auth-provider';
-import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
-import { SubscribeButton } from '@/features/shared/ui/action-buttons';
-import { VoteButtons, type VoteValue } from '@/features/shared/ui/voting';
-import { CommentThread } from '@/features/shared/ui/comments';
+import { useBlogPermissions } from '../hooks/useBlogPermissions';
 import type { CommentData } from '@/features/shared/ui/comments';
-import { toast } from 'sonner';
+import type { VoteValue } from '@/features/shared/ui/voting';
 import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { useBlogPermissions } from '../hooks/useBlogPermissions';
-import { usePermissions } from '@/zero/rbac/usePermissions';
-import type { Value } from 'platejs';
-import { RichTextPreview } from '@/features/shared/ui/rich-text';
-import { Link } from '@tanstack/react-router';
-import { mutators } from '@/zero/mutators';
-import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
-import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/features/shared/ui/ui/alert-dialog';
+
+import { BlogDetailView } from './BlogDetailView';
 
 interface BlogDetailProps {
   blogId: string;
+}
+
+function mapBlogComments(commentsRows: NonNullable<ReturnType<typeof useBlogState>['comments']>) {
+  return (commentsRows || []).map<CommentData>(comment => ({
+    id: comment.id,
+    text: comment.content ?? '',
+    createdAt: comment.created_at ?? 0,
+    creator: comment.user
+      ? {
+          id: comment.user.id,
+          name:
+            [comment.user.first_name, comment.user.last_name].filter(Boolean).join(' ') ||
+            undefined,
+          handle: comment.user.handle ?? undefined,
+          avatar: comment.user.avatar ?? undefined,
+        }
+      : undefined,
+    votes: (comment.votes ?? []).map(vote => ({
+      id: vote.id,
+      vote: vote.vote ?? 0,
+      user: vote.user ? { id: vote.user.id } : undefined,
+    })),
+    replies: (comment.replies ?? []).map(reply => ({
+      id: reply.id,
+      text: reply.content ?? '',
+      createdAt: reply.created_at ?? 0,
+      creator: reply.user
+        ? {
+            id: reply.user.id,
+            name:
+              [reply.user.first_name, reply.user.last_name].filter(Boolean).join(' ') || undefined,
+            handle: reply.user.handle ?? undefined,
+            avatar: reply.user.avatar ?? undefined,
+          }
+        : undefined,
+      votes: (reply.votes ?? []).map(vote => ({
+        id: vote.id,
+        vote: vote.vote ?? 0,
+        user: vote.user ? { id: vote.user.id } : undefined,
+      })),
+    })),
+  }));
 }
 
 export function BlogDetail({ blogId }: BlogDetailProps) {
@@ -63,12 +78,9 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   const { t } = useTranslation();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  // Permissions — blog-level + group-level
   const { canEdit: blogCanEdit, canDelete: blogCanDelete, isBlogger } = useBlogPermissions(blogId);
   const blogActions = useBlogActions();
   const { addComment: addCommentAction, voteComment } = useDocumentActions();
-
-  // Subscribe hook
   const {
     isSubscribed,
     subscriberCount,
@@ -76,7 +88,6 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     isLoading: subscribeLoading,
   } = useSubscribeBlog(blogId);
 
-  // Fetch blog data with relations
   const {
     blogWithDetails,
     comments: commentsRows,
@@ -88,58 +99,15 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   });
 
   const blog = blogWithDetails;
+  const comments = useMemo(() => mapBlogComments(commentsRows || []), [commentsRows]);
 
-  // Map Zero comment rows → CommentData shape expected by CommentThread
-  const allComments: CommentData[] = useMemo(() => {
-    return (commentsRows || []).map(c => ({
-      id: c.id,
-      text: c.content ?? '',
-      createdAt: c.created_at ?? 0,
-      creator: c.user
-        ? {
-            id: c.user.id,
-            name: [c.user.first_name, c.user.last_name].filter(Boolean).join(' ') || undefined,
-            handle: c.user.handle ?? undefined,
-            avatar: c.user.avatar ?? undefined,
-          }
-        : undefined,
-      votes: (c.votes ?? []).map(v => ({
-        id: v.id,
-        vote: v.vote ?? 0,
-        user: v.user ? { id: v.user.id } : undefined,
-      })),
-      replies: (c.replies ?? []).map(r => ({
-        id: r.id,
-        text: r.content ?? '',
-        createdAt: r.created_at ?? 0,
-        creator: r.user
-          ? {
-              id: r.user.id,
-              name: [r.user.first_name, r.user.last_name].filter(Boolean).join(' ') || undefined,
-              handle: r.user.handle ?? undefined,
-              avatar: r.user.avatar ?? undefined,
-            }
-          : undefined,
-        votes: (r.votes ?? []).map(v => ({
-          id: v.id,
-          vote: v.vote ?? 0,
-          user: v.user ? { id: v.user.id } : undefined,
-        })),
-      })),
-    }));
-  }, [commentsRows]);
-
-  // Group-level permission check for "Manage Group" rights
   const { can: canGroup } = usePermissions({ groupId: blog?.group_id ?? undefined });
   const groupCanManage = blog?.group_id ? canGroup('manage', 'groups') : false;
-
-  // Combined permissions: blog RBAC OR group "Manage Group"
   const canEdit = blogCanEdit || groupCanManage;
   const canDelete = blogCanDelete || groupCanManage;
 
-  // Vote handling
   const score = (blog?.upvotes || 0) - (blog?.downvotes || 0);
-  const userVote = blog?.support_votes?.find(v => v.user?.id === user?.id);
+  const userVote = blog?.support_votes?.find(vote => vote.user?.id === user?.id);
   const currentVoteValue: VoteValue = userVote ? (userVote.vote === 1 ? 1 : -1) : 0;
 
   const handleVote = async (voteValue: VoteValue) => {
@@ -169,8 +137,11 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           });
         }
       } else {
-        const voteId = crypto.randomUUID();
-        await blogActions.createSupportVote({ id: voteId, vote: voteValue, blog_id: blogId });
+        await blogActions.createSupportVote({
+          id: crypto.randomUUID(),
+          vote: voteValue,
+          blog_id: blogId,
+        });
         await blogActions.updateBlog({
           id: blogId,
           upvotes: voteValue === 1 ? (blog.upvotes || 0) + 1 : blog.upvotes,
@@ -186,7 +157,6 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   const handleAddComment = async (text: string, parentId?: string) => {
     if (!text.trim() || !user?.id) return;
     try {
-      // Create a thread for this blog if one doesn't exist yet
       if (!blogThread) {
         await zero.mutate(
           mutators.documents.createThread({
@@ -206,9 +176,8 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         );
       }
 
-      const commentId = crypto.randomUUID();
       await addCommentAction({
-        id: commentId,
+        id: crypto.randomUUID(),
         thread_id: blogId,
         parent_id: parentId || null,
         content: text,
@@ -253,217 +222,71 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     }
   };
 
-  if (!blogWithDetails) {
-    return (
-      <PageWrapper>
-        <div className="py-12 text-center">{t('features.blogs.detail.loading')}</div>
-      </PageWrapper>
-    );
-  }
-
-  if (!blog) {
-    return (
-      <PageWrapper>
-        <div className="py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">{t('features.blogs.detail.notFound')}</h1>
-          <p className="text-muted-foreground">{t('features.blogs.detail.notFoundDescription')}</p>
-        </div>
-      </PageWrapper>
-    );
-  }
-
-  if (!checkEntityAccess(blog.visibility, !!user, isBlogger)) {
-    return (
-      <PageWrapper>
-        <AccessDenied />
-      </PageWrapper>
-    );
-  }
-
-  // Get the blog author - find the owner or first blogger
   const author =
-    blog.bloggers?.find(blogger => blogger.status === 'owner')?.user || blog.bloggers?.[0]?.user;
-
-  // Compute context-aware editor URL
-  const editorUrl = blog.group_id
+    blog?.bloggers?.find(blogger => blogger.status === 'owner')?.user || blog?.bloggers?.[0]?.user;
+  const authorName =
+    [author?.first_name, author?.last_name].filter(Boolean).join(' ') ||
+    translateText('generated.inline.0031_unknown_bc7819b3');
+  const editorUrl = blog?.group_id
     ? `/group/${blog.group_id}/blog/${blogId}/editor`
     : `/user/${author?.id || user?.id}/blog/${blogId}/editor`;
-
-  // Compute context-aware blog view URL (for share, back links)
-  const blogViewUrl = blog.group_id
+  const blogViewUrl = blog?.group_id
     ? `/group/${blog.group_id}/blog/${blogId}`
     : `/user/${author?.id || user?.id}/blog/${blogId}`;
+  const commentCount = blog?.comment_count ?? comments.length;
 
   return (
-    <PageWrapper>
-      {/* Header with centered title */}
-      <div className="mb-8 text-center">
-        <div className="mb-2 flex items-center justify-center gap-3">
-          <BookOpen className="h-8 w-8" />
-          <h1 className="text-4xl font-bold">{blog.title}</h1>
-        </div>
-
-        {/* Created By Section */}
-        {author && (
-          <div className="mt-4 flex items-center justify-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={author.avatar ?? undefined} />
-              <AvatarFallback>{author.first_name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-            </Avatar>
-            <div className="text-left">
-              <p className="text-sm font-medium">
-                {t
-                  ? t('components.labels.createdBy')
-                  : translateText('generated.inline.0037_created_by_5d73cc30')}{' '}
-                {[author.first_name, author.last_name].filter(Boolean).join(' ') ||
-                  translateText('generated.inline.0031_unknown_bc7819b3')}
-              </p>
-              {author.handle && <p className="text-muted-foreground text-xs">@{author.handle}</p>}
-            </div>
-          </div>
-        )}
-
-        {blog.date && (
-          <div className="text-muted-foreground mt-2 flex items-center justify-center gap-2 text-sm">
-            <Calendar className="h-4 w-4" />
-            <span>{blog.date}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Stats Bar */}
-      <StatsBar
-        stats={[
-          { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-          { value: blog.supporter_count ?? score, labelKey: 'components.labels.supporters' },
-          {
-            value: blog.comment_count ?? allComments.length,
-            labelKey: 'components.labels.comments',
-          },
-        ]}
-      />
-
-      {/* Action Bar */}
-      <ActionBar>
-        <SubscribeButton
-          entityType="blog"
-          entityId={blogId}
-          isSubscribed={isSubscribed}
-          onToggleSubscribe={toggleSubscribe}
-          isLoading={subscribeLoading}
-        />
-        <VoteButtons
-          upvotes={blog.upvotes ?? 0}
-          downvotes={blog.downvotes ?? 0}
-          userVote={currentVoteValue}
-          onVote={handleVote}
-          orientation="horizontal"
-        />
-        <ShareButton
-          url={blogViewUrl}
-          title={blog.title ?? ''}
-          description=""
-          shareContextItem={{
-            id: blogId,
-            type: 'blog',
-            title: blog.title ?? '',
-            createdAt: new Date(),
-            authorId: author?.id,
-            authorName:
-              [author?.first_name, author?.last_name].filter(Boolean).join(' ') || undefined,
-            authorAvatar: author?.avatar ?? undefined,
-            groupId: blog.group_id ?? undefined,
-            commentCount: blog.comment_count ?? allComments.length,
-          }}
-        />
-      </ActionBar>
-
-      {/* Hashtags */}
-      {blog.blog_hashtags && blog.blog_hashtags.length > 0 && (
-        <div className="mb-6">
-          <HashtagDisplay hashtags={extractHashtags([...blog.blog_hashtags])} centered />
-        </div>
-      )}
-
-      {/* Blog Content */}
-      <Card className="mb-6">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>{t('features.blogs.detail.blogContent')}</CardTitle>
-            <CardDescription>
-              {blog.content
-                ? t('features.blogs.detail.latestVersion')
-                : t('features.blogs.detail.noContentYet')}
-            </CardDescription>
-          </div>
-          <div className="flex gap-2">
-            {canEdit && (
-              <Link to={editorUrl}>
-                <Button variant="outline" size="sm">
-                  <Edit className="mr-2 h-4 w-4" />
-                  {t('features.blogs.detail.editContent')}
-                </Button>
-              </Link>
-            )}
-            {canDelete && (
-              <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t('features.blogs.delete')}
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="prose prose-slate dark:prose-invert max-w-none">
-          {blog.content && Array.isArray(blog.content) && blog.content.length > 0 ? (
-            <RichTextPreview content={blog.content as Value} />
-          ) : (
-            <div className="text-muted-foreground py-8 text-center">
-              <p>{t('features.blogs.detail.noContentAvailable')}</p>
-              {canEdit && (
-                <Link to={editorUrl}>
-                  <Button variant="outline" className="mt-4">
-                    <Edit className="mr-2 h-4 w-4" />
-                    {t('features.blogs.detail.startWriting')}
-                  </Button>
-                </Link>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Comments Section */}
-      <CommentThread
-        comments={allComments}
-        currentUserId={user?.id}
-        onAddComment={handleAddComment}
-        onVote={handleCommentVote}
-        className="mt-6"
-      />
-
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <ScrollableAlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('features.blogs.detail.confirmDeleteTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('features.blogs.detail.confirmDelete')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90 text-white"
-              onClick={async () => {
-                setDeleteOpen(false);
-                await handleDeleteBlog();
-              }}
-            >
-              {t('common.actions.delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </ScrollableAlertDialogContent>
-      </AlertDialog>
-    </PageWrapper>
+    <BlogDetailView
+      author={
+        author
+          ? {
+              id: author.id,
+              avatar: author.avatar,
+              firstName: author.first_name,
+              handle: author.handle,
+              name: authorName,
+            }
+          : undefined
+      }
+      blogId={blogId}
+      canAccess={blog ? checkEntityAccess(blog.visibility, !!user, isBlogger) : true}
+      canDelete={canDelete}
+      canEdit={canEdit}
+      commentCount={commentCount}
+      comments={comments}
+      content={blog?.content as Value | null | undefined}
+      currentUserId={user?.id}
+      currentVoteValue={currentVoteValue}
+      date={blog?.date}
+      deleteOpen={deleteOpen}
+      downvotes={blog?.downvotes ?? 0}
+      editorUrl={editorUrl}
+      hashtags={blog?.blog_hashtags ? extractHashtags([...blog.blog_hashtags]) : []}
+      isLoaded={Boolean(blogWithDetails)}
+      isSubscribed={isSubscribed}
+      onAddComment={handleAddComment}
+      onCommentVote={handleCommentVote}
+      onConfirmDelete={handleDeleteBlog}
+      onDeleteOpenChange={setDeleteOpen}
+      onSubscribeToggle={toggleSubscribe}
+      onVote={handleVote}
+      shareContextItem={{
+        id: blogId,
+        type: 'blog',
+        title: blog?.title ?? '',
+        createdAt: new Date(),
+        authorId: author?.id,
+        authorName,
+        authorAvatar: author?.avatar ?? undefined,
+        groupId: blog?.group_id ?? undefined,
+        commentCount,
+      }}
+      subscriberCount={subscriberCount}
+      subscribeLoading={subscribeLoading}
+      supporterCount={blog?.supporter_count ?? score}
+      title={blog?.title}
+      upvotes={blog?.upvotes ?? 0}
+      viewUrl={blogViewUrl}
+    />
   );
 }

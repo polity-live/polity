@@ -1,4 +1,5 @@
 import { cn } from '@/features/shared/utils/utils';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import {
   Carousel,
@@ -56,12 +57,13 @@ export function CreateProgressIndicator({
 
             return (
               <CarouselItem key={index} className="basis-auto pl-2">
-                <button
+                <Button
                   type="button"
                   onClick={() => isClickable && onStepClick(index)}
                   disabled={!isClickable}
+                  variant="ghost"
                   className={cn(
-                    'flex h-8 items-center gap-1.5 rounded-full px-3.5 text-xs font-medium transition-all',
+                    'h-8 rounded-full px-3.5 text-xs transition-all',
                     isCurrent && 'bg-primary text-primary-foreground shadow-sm',
                     isCompleted && 'bg-primary/20 text-primary hover:bg-primary/30 cursor-pointer',
                     !isCurrent &&
@@ -74,7 +76,7 @@ export function CreateProgressIndicator({
                     {index + 1}
                   </span>
                   <span className="hidden sm:inline">{label}</span>
-                </button>
+                </Button>
               </CarouselItem>
             );
           })}

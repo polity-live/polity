@@ -9,16 +9,10 @@ import {
   FormControlSelectItem,
   FormControlSelectTrigger,
   FormControlSelectValue,
+  FileUploadTrigger,
 } from '@/features/shared/ui/form';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
-import {
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type ComponentType,
-} from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import {
   AtSign,
   Bot,
@@ -43,7 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
-import { HashtagInput } from '@/features/shared/ui/ui/hashtag-input';
+import { HashtagInput } from '@/features/shared/ui/hashtags';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -135,7 +129,6 @@ function buildModelKey(model: { provider: string; id: string }): string {
 export function AssistantMessageInput({ assistantChat }: AssistantMessageInputProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [messageText, setMessageText] = useState('');
   const [caretPosition, setCaretPosition] = useState(0);
   const [suggestionAnchorPosition, setSuggestionAnchorPosition] =
@@ -565,17 +558,6 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
     });
   };
 
-  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? []);
-    event.target.value = '';
-
-    if (files.length === 0) {
-      return;
-    }
-
-    await assistantChat.addUploadedFiles(files);
-  };
-
   return (
     <CardContent className="flex-shrink-0 border-t p-4">
       <div className="space-y-3">
@@ -728,11 +710,12 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                         {t('features.messages.ai.tools')}
                       </p>
                       {toolSuggestions.map(tool => (
-                        <button
+                        <Button
                           key={tool.name}
                           type="button"
+                          variant="ghost"
                           onClick={() => handleToolSelect(tool.name)}
-                          className="hover:bg-muted flex w-full items-start gap-3 rounded-md px-2 py-2 text-left"
+                          className="h-auto w-full items-start justify-start gap-3 px-2 py-2 text-left whitespace-normal"
                         >
                           <Wrench className="text-muted-foreground mt-0.5 h-4 w-4" />
                           <span className="min-w-0 flex-1">
@@ -747,7 +730,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                           <BadgeControl variant="outline" className="text-[10px] uppercase">
                             {tool.kind}
                           </BadgeControl>
-                        </button>
+                        </Button>
                       ))}
                     </>
                   )}
@@ -758,11 +741,12 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                         {t('features.messages.ai.skills')}
                       </p>
                       {skillSuggestions.map(skill => (
-                        <button
+                        <Button
                           key={skill.slug}
                           type="button"
+                          variant="ghost"
                           onClick={() => handleSkillSelect(skill.slug)}
-                          className="hover:bg-muted flex w-full items-start gap-3 rounded-md px-2 py-2 text-left"
+                          className="h-auto w-full items-start justify-start gap-3 px-2 py-2 text-left whitespace-normal"
                         >
                           <Slash className="text-muted-foreground mt-0.5 h-4 w-4" />
                           <span className="min-w-0 flex-1">
@@ -776,7 +760,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                               {translateText('generated.inline.0751_built_in_20f409cc')}
                             </BadgeControl>
                           )}
-                        </button>
+                        </Button>
                       ))}
                     </>
                   )}
@@ -787,11 +771,12 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                         {t('features.messages.ai.attachTypes')}
                       </p>
                       {attachmentTypeSuggestions.map(option => (
-                        <button
+                        <Button
                           key={option.entityType}
                           type="button"
+                          variant="ghost"
                           onClick={() => handleAttachmentTypeSelect(option.entityType)}
-                          className="hover:bg-muted flex w-full items-center gap-3 rounded-md px-2 py-2 text-left"
+                          className="h-auto w-full justify-start gap-3 px-2 py-2 text-left whitespace-normal"
                         >
                           <AtSign className="text-muted-foreground h-4 w-4" />
                           <span className="min-w-0 flex-1">
@@ -800,7 +785,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                               {option.token}
                             </span>
                           </span>
-                        </button>
+                        </Button>
                       ))}
                     </>
                   )}
@@ -811,11 +796,12 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                         {t('features.messages.ai.attachments')}
                       </p>
                       {attachmentSuggestions.map(option => (
-                        <button
+                        <Button
                           key={option.key}
                           type="button"
+                          variant="ghost"
                           onClick={() => handleAttachmentSelect(option)}
-                          className="hover:bg-muted flex w-full items-start gap-3 rounded-md px-2 py-2 text-left"
+                          className="h-auto w-full items-start justify-start gap-3 px-2 py-2 text-left whitespace-normal"
                         >
                           <Bot className="text-muted-foreground mt-0.5 h-4 w-4" />
                           <span className="min-w-0 flex-1">
@@ -831,7 +817,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                           <BadgeControl variant="outline" className="text-[10px] uppercase">
                             {option.entityType}
                           </BadgeControl>
-                        </button>
+                        </Button>
                       ))}
                     </>
                   )}
@@ -842,17 +828,6 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept={MESSAGE_ATTACHMENT_ACCEPT}
-            className="hidden"
-            onChange={event => {
-              void handleFileChange(event);
-            }}
-          />
-
           <div className="min-w-[240px] flex-1">
             <div className="flex items-center gap-1">
               <FormControlSelect
@@ -1058,21 +1033,26 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button
-            type="button"
+          <FileUploadTrigger
             variant="outline"
             size="icon"
-            onClick={() => fileInputRef.current?.click()}
             disabled={assistantChat.isUploadingAttachments}
             title={t('features.messages.compose.uploadFiles')}
             aria-label={t('features.messages.compose.uploadFiles')}
+            inputProps={{
+              multiple: true,
+              accept: MESSAGE_ATTACHMENT_ACCEPT,
+            }}
+            onFilesSelected={files => {
+              void assistantChat.addUploadedFiles(Array.from(files));
+            }}
           >
             {assistantChat.isUploadingAttachments ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
             ) : (
               <Paperclip className="h-4 w-4" />
             )}
-          </Button>
+          </FileUploadTrigger>
 
           <Button
             type="button"

@@ -1,7 +1,7 @@
 import type { FormEventHandler } from 'react';
 import { ArrowRight, Mail, MailCheck, UserPlus } from 'lucide-react';
 
-import { FormButton, FormCard, FormControlInput, FormFieldShell } from '@/features/shared/ui/form';
+import { FormButton, FormCard, PasswordField, TextField } from '@/features/shared/ui/form';
 import { InlineNotice, Spinner } from '@/features/shared/ui/feedback';
 import { cn } from '@/features/shared/utils/utils';
 import { GoogleIcon } from './GoogleIcon';
@@ -137,62 +137,47 @@ export function SignUpFormView({
       icon={<UserPlus className="h-12 w-12 text-blue-500" />}
     >
       <form onSubmit={onSubmit} className="space-y-4">
-        <FormFieldShell
+        <TextField
           id="email"
+          type="email"
           label={copy.emailLabel}
+          placeholder={copy.emailPlaceholder}
+          value={email}
+          onValueChange={onEmailChange}
+          onBlur={onEmailBlur}
           description={copy.emailHint}
           descriptionClassName={fieldHintClassName(showEmailError, showEmailSuccess)}
           invalid={showEmailError}
           required
-        >
-          {({ id, describedBy, invalid }) => (
-            <FormControlInput
-              id={id}
-              type="email"
-              placeholder={copy.emailPlaceholder}
-              value={email}
-              onChange={event => onEmailChange(event.target.value)}
-              onBlur={onEmailBlur}
-              required
-              disabled={isLoading}
-              autoComplete="email"
-              aria-describedby={describedBy}
-              aria-invalid={invalid}
-              data-valid={showEmailSuccess ? 'true' : undefined}
-            />
-          )}
-        </FormFieldShell>
+          disabled={isLoading}
+          autoComplete="email"
+          data-valid={showEmailSuccess ? 'true' : undefined}
+        />
 
-        <FormFieldShell
+        <PasswordField
           id="password"
           label={copy.passwordLabel}
+          placeholder={copy.passwordPlaceholder}
+          value={password}
+          onValueChange={onPasswordChange}
+          onBlur={onPasswordBlur}
           description={copy.passwordHint}
           descriptionClassName={fieldHintClassName(showPasswordError, showPasswordSuccess)}
           invalid={showPasswordError}
           required
-        >
-          {({ id, describedBy, invalid }) => (
-            <FormControlInput
-              id={id}
-              type="password"
-              placeholder={copy.passwordPlaceholder}
-              value={password}
-              onChange={event => onPasswordChange(event.target.value)}
-              onBlur={onPasswordBlur}
-              required
-              minLength={6}
-              disabled={isLoading}
-              autoComplete="new-password"
-              aria-describedby={describedBy}
-              aria-invalid={invalid}
-              data-valid={showPasswordSuccess ? 'true' : undefined}
-            />
-          )}
-        </FormFieldShell>
+          minLength={6}
+          disabled={isLoading}
+          autoComplete="new-password"
+          data-valid={showPasswordSuccess ? 'true' : undefined}
+        />
 
-        <FormFieldShell
+        <PasswordField
           id="confirm-password"
           label={copy.confirmPasswordLabel}
+          placeholder={copy.confirmPasswordPlaceholder}
+          value={confirmPassword}
+          onValueChange={onConfirmPasswordChange}
+          onBlur={onConfirmPasswordBlur}
           description={copy.confirmPasswordHint}
           descriptionClassName={fieldHintClassName(
             showConfirmPasswordError,
@@ -200,25 +185,11 @@ export function SignUpFormView({
           )}
           invalid={showConfirmPasswordError}
           required
-        >
-          {({ id, describedBy, invalid }) => (
-            <FormControlInput
-              id={id}
-              type="password"
-              placeholder={copy.confirmPasswordPlaceholder}
-              value={confirmPassword}
-              onChange={event => onConfirmPasswordChange(event.target.value)}
-              onBlur={onConfirmPasswordBlur}
-              required
-              minLength={6}
-              disabled={isLoading}
-              autoComplete="new-password"
-              aria-describedby={describedBy}
-              aria-invalid={invalid}
-              data-valid={showConfirmPasswordSuccess ? 'true' : undefined}
-            />
-          )}
-        </FormFieldShell>
+          minLength={6}
+          disabled={isLoading}
+          autoComplete="new-password"
+          data-valid={showConfirmPasswordSuccess ? 'true' : undefined}
+        />
 
         {displayError ? <InlineNotice variant="destructive">{displayError}</InlineNotice> : null}
 
@@ -270,13 +241,14 @@ export function SignUpFormView({
       <div className="text-muted-foreground mt-6 text-center text-sm">
         <p>
           {copy.hasAccount}{' '}
-          <button
+          <FormButton
             type="button"
-            className="text-primary font-medium underline-offset-4 hover:underline"
+            variant="link"
+            className="h-auto p-0 font-medium"
             onClick={onGoToSignIn}
           >
             {copy.signInLink}
-          </button>
+          </FormButton>
         </p>
       </div>
     </FormCard>

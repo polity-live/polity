@@ -1,4 +1,9 @@
-import { FormControlInput, FormControlTextarea, FormControlLabel } from '@/features/shared/ui/form';
+import {
+  FileInputField,
+  FormControlInput,
+  FormControlTextarea,
+  FormControlLabel,
+} from '@/features/shared/ui/form';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -9,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
-import { File, Upload, X } from 'lucide-react';
+import { File, X } from 'lucide-react';
 import { useUploadFile } from '@/features/file-upload/hooks/use-upload-file.ts';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -132,20 +137,15 @@ export function CreateThreadDialog({
                   </Button>
                 </div>
               ) : (
-                <label className="hover:bg-muted flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4">
-                  <Upload className="h-5 w-5" />
-                  <span>
-                    {translateText('generated.inline.0385_choose_file_to_attach_b555434d')}
-                  </span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={e => {
-                      const file = e.target.files?.[0];
-                      if (file) setSelectedFile(file);
-                    }}
-                  />
-                </label>
+                <FileInputField
+                  id="file"
+                  aria-label={translateText('generated.inline.0385_choose_file_to_attach_b555434d')}
+                  className="hover:bg-muted h-auto cursor-pointer rounded-lg border-2 border-dashed p-4 file:mr-3 file:rounded-md file:border file:px-3 file:py-1.5 file:shadow-xs"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) setSelectedFile(file);
+                  }}
+                />
               )}
             </div>
           </div>

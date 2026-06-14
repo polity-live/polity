@@ -37,7 +37,7 @@ import {
   TooltipTrigger,
 } from '@/features/shared/ui/ui/tooltip.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
-import { ToolbarButton } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarButton } from '@/features/shared/ui/layout';
 
 export function EmojiToolbarButton({
   options,

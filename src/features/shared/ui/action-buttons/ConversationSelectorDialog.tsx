@@ -1,154 +1,100 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/features/shared/ui/ui/dialog.tsx';
-import { Input } from '@/features/shared/ui/ui/input.tsx';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
-import { Badge } from '@/features/shared/ui/ui/badge.tsx';
-import { Search, MessageSquare } from 'lucide-react';
-import { useAuth } from '@/providers/auth-provider.tsx';
-import { useMessageState } from '@/zero/messages/useMessageState.ts';
-import { useMessageActions } from '@/zero/messages/useMessageActions.ts';
-import { cn } from '@/features/shared/utils/utils.ts';
-import { toast } from 'sonner';
-import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
-import { buildShareContextAttachment } from '@/features/messages/logic/shareContextAttachment.ts';
-import type { SearchContentItem } from '@/features/search/types/search.types';
+import { useMemo, useState, type ReactNode } from 'react';
+import { MessageSquare, Search } from 'lucide-react';
 
-interface ConversationSelectorDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/features/shared/ui/ui/dialog';
+import { Input } from '@/features/shared/ui/ui/input';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+
+export interface ConversationSelectorItem {
+  id: string;
+  name: string;
+  avatar?: string | null;
+  handle?: string | null;
+  isGroup?: boolean;
+  participantCount?: number;
+  status?: 'active' | 'pending' | string | null;
+  lastMessageAt?: number | null;
+}
+
+export interface ConversationSharePayload {
   shareUrl: string;
   shareTitle: string;
   shareDescription?: string;
-  shareContextItem?: SearchContentItem;
+  shareContextItem?: unknown;
+}
+
+interface ConversationSelectorDialogProps extends ConversationSharePayload {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  conversations?: readonly ConversationSelectorItem[];
+  isLoading?: boolean;
+  onShareToConversation?: (
+    conversationId: string,
+    payload: ConversationSharePayload
+  ) => Promise<void> | void;
+  title?: ReactNode;
+  searchPlaceholder?: string;
+  emptyLabel?: ReactNode;
+  loadingLabel?: ReactNode;
 }
 
 export function ConversationSelectorDialog({
   open,
   onOpenChange,
+  conversations = [],
+  isLoading = false,
+  onShareToConversation,
   shareUrl,
   shareTitle,
   shareDescription,
   shareContextItem,
+  title,
+  searchPlaceholder,
+  emptyLabel,
+  loadingLabel,
 }: ConversationSelectorDialogProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const { sendMessage } = useMessageActions();
   const [searchQuery, setSearchQuery] = useState('');
   const [sending, setSending] = useState<string | null>(null);
 
-  // Query all conversations where the user is a participant, with related conversation data
-  const { conversationsByUser: conversationsRaw, isLoading } = useMessageState({
-    includeConversationsByUser: !!user?.id,
-    userId: user?.id,
-  });
-
-  // Extract the nested conversation from each participant row
-  const conversations = useMemo(
-    () =>
-      (conversationsRaw || [])
-        .map(cp => cp.conversation)
-        .filter((c): c is NonNullable<typeof c> => c != null),
-    [conversationsRaw]
-  );
-
-  // Filter conversations based on search query
   const filteredConversations = useMemo(() => {
-    if (!searchQuery.trim()) {
-      // Sort conversations by last_message_at (newest first)
-      return [...conversations].sort((a, b) => {
-        const timeA = a.last_message_at || 0;
-        const timeB = b.last_message_at || 0;
-        return timeB - timeA;
-      });
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const sortedConversations = [...conversations].sort(
+      (left, right) => (right.lastMessageAt ?? 0) - (left.lastMessageAt ?? 0)
+    );
+
+    if (!normalizedQuery) {
+      return sortedConversations;
     }
 
-    return conversations
-      .filter(conv => {
-        // Search in participant names
-        const participantMatch = conv.participants.some(p => {
-          const name = [p.user?.first_name, p.user?.last_name]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase();
-          const handle = p.user?.handle?.toLowerCase() || '';
-          return (
-            name.includes(searchQuery.toLowerCase()) || handle.includes(searchQuery.toLowerCase())
-          );
-        });
-
-        // Search in group name
-        const groupMatch = conv.group?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-
-        return participantMatch || groupMatch;
-      })
-      .sort((a, b) => {
-        const timeA = a.last_message_at || 0;
-        const timeB = b.last_message_at || 0;
-        return timeB - timeA;
-      });
+    return sortedConversations.filter(conversation =>
+      [conversation.name, conversation.handle]
+        .filter(Boolean)
+        .some(value => String(value).toLowerCase().includes(normalizedQuery))
+    );
   }, [conversations, searchQuery]);
 
-  // Get the other participant in the conversation (for 1-on-1 chats) or group info
-  const getConversationDisplay = (conversation: (typeof conversations)[number]) => {
-    if (conversation.type === 'group') {
-      return {
-        name: conversation.name || conversation.group?.name || t('common.labels.groupChat'),
-        avatar: conversation.group?.image_url || null,
-        handle: null,
-        isGroup: true,
-        participantCount: conversation.participants.length,
-      };
-    } else {
-      const otherUser = conversation.participants.find(p => p.user?.id !== user?.id)?.user;
-      return {
-        name:
-          [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') ||
-          t('common.labels.unspecifiedUser'),
-        avatar: otherUser?.avatar,
-        handle: otherUser?.handle,
-        isGroup: false,
-      };
-    }
-  };
-
-  // Send link to conversation
   const handleShareToConversation = async (conversationId: string) => {
-    if (!user?.id) return;
+    if (!onShareToConversation) {
+      return;
+    }
 
     setSending(conversationId);
 
-    const messageId = crypto.randomUUID();
-    const fullUrl = typeof window !== 'undefined' ? window.location.origin + shareUrl : shareUrl;
-    const messageContent = `${shareTitle}\n${fullUrl}`;
-    const shareAttachment = buildShareContextAttachment({
-      shareUrl,
-      shareTitle,
-      shareDescription,
-      shareContextItem,
-    });
-
     try {
-      await sendMessage({
-        id: messageId,
-        conversation_id: conversationId,
-        content: shareAttachment ? null : messageContent,
-        context_json: shareAttachment ? JSON.stringify([shareAttachment]) : '[]',
-        deleted_at: 0,
+      await onShareToConversation(conversationId, {
+        shareUrl,
+        shareTitle,
+        shareDescription,
+        shareContextItem,
       });
-
-      toast.success(t('common.share.linkShared'));
       onOpenChange(false);
       setSearchQuery('');
-    } catch (error) {
-      console.error('Failed to share link:', error);
-      toast.error(t('common.share.linkShareFailed'));
     } finally {
       setSending(null);
     }
@@ -158,74 +104,80 @@ export function ConversationSelectorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{t('common.share.title')}</DialogTitle>
+          <DialogTitle>{title ?? t('common.share.title')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="relative">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
-              placeholder={t('common.share.searchConversations')}
+              placeholder={searchPlaceholder ?? t('common.share.searchConversations')}
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={event => setSearchQuery(event.target.value)}
               className="pl-9"
             />
           </div>
           <div className="max-h-[400px] space-y-2 overflow-y-auto">
             {isLoading ? (
-              <div className="py-8 text-center">
-                <p className="text-muted-foreground">{t('common.loading.conversations')}</p>
+              <div className="text-muted-foreground py-8 text-center">
+                {loadingLabel ?? t('common.loading.conversations')}
               </div>
             ) : filteredConversations.length === 0 ? (
               <div className="py-8 text-center">
                 <MessageSquare className="text-muted-foreground mx-auto mb-2 h-12 w-12" />
                 <p className="text-muted-foreground">
-                  {searchQuery
-                    ? t('common.share.noConversationsFound')
-                    : t('common.share.noConversationsYet')}
+                  {emptyLabel ??
+                    (searchQuery
+                      ? t('common.share.noConversationsFound')
+                      : t('common.share.noConversationsYet'))}
                 </p>
               </div>
             ) : (
               filteredConversations.map(conversation => {
-                const display = getConversationDisplay(conversation);
                 const isSending = sending === conversation.id;
+                const isPending = conversation.status === 'pending';
 
                 return (
                   <button
                     key={conversation.id}
+                    type="button"
                     onClick={() => handleShareToConversation(conversation.id)}
-                    disabled={isSending || conversation.status === 'pending'}
+                    disabled={isSending || isPending || !onShareToConversation}
                     className={cn(
                       'hover:bg-accent flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors',
                       isSending && 'opacity-50'
                     )}
                   >
-                    <Avatar className="h-12 w-12 flex-shrink-0">
-                      <AvatarImage src={display.avatar || undefined} />
-                      <AvatarFallback>{display.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                    <Avatar className="h-12 w-12 shrink-0">
+                      <AvatarImage src={conversation.avatar ?? undefined} />
+                      <AvatarFallback>
+                        {conversation.name?.[0]?.toUpperCase() || 'U'}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="truncate font-semibold">{display.name}</p>
-                        {display.isGroup && (
+                        <p className="truncate font-semibold">{conversation.name}</p>
+                        {conversation.isGroup && conversation.participantCount !== undefined ? (
                           <Badge variant="secondary" className="text-xs">
-                            {display.participantCount}
+                            {conversation.participantCount}
                           </Badge>
-                        )}
-                        {conversation.status === 'pending' && (
+                        ) : null}
+                        {isPending ? (
                           <Badge variant="outline" className="text-xs">
                             {t('common.labels.pending')}
                           </Badge>
-                        )}
+                        ) : null}
                       </div>
-                      {display.handle && (
-                        <p className="text-muted-foreground truncate text-sm">@{display.handle}</p>
-                      )}
+                      {conversation.handle ? (
+                        <p className="text-muted-foreground truncate text-sm">
+                          @{conversation.handle}
+                        </p>
+                      ) : null}
                     </div>
-                    {isSending && (
+                    {isSending ? (
                       <div className="text-muted-foreground text-xs">
                         {t('common.labels.sending')}
                       </div>
-                    )}
+                    ) : null}
                   </button>
                 );
               })

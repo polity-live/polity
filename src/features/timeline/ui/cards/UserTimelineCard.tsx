@@ -6,7 +6,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
-import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { Button } from '@/features/shared/ui/ui/button';
 import { useSubscribeUser } from '@/features/payments/hooks/useSubscribeUser';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';

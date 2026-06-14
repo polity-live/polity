@@ -20,12 +20,12 @@ import {
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { Button } from '@/features/shared/ui/ui/button';
-import { getEditingModeOption } from '@/features/shared/ui/ui/editing-mode.tsx';
+import { getEditingModeOption } from '@/features/shared/ui/status';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
-import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { useAmendmentCollaboration } from '@/features/amendments/hooks/useAmendmentCollaboration';
 import { useSubscribeAmendment } from '@/features/amendments/hooks/useSubscribeAmendment';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';

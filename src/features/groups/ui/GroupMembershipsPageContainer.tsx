@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@rocicorp/zero/react';
 import { useTranslation } from 'react-i18next';
@@ -41,8 +41,8 @@ import { useGroupRoles } from '@/features/roles/hooks/useGroupRoles';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
-import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
+import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
+import { EntitySearchBar } from '@/features/shared/ui/typeahead';
 import { emptyRoleEditorForm, roleToEditorForm } from '@/features/groups/logic/roleFormHelpers';
 import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
 import { resolveChildBaseGroups } from '@/features/groups/logic/hierarchy';
@@ -136,27 +136,43 @@ export function GroupMembershipsPageContainer({
   groupId,
   defaultTab,
 }: GroupMembershipsPageContainerProps) {
-  const { can, isMember, isLoading } = usePermissions({ groupId });
-  const canManageMembers = can('manage', 'groupMemberships');
-  const canManageAssignments =
-    can('manage', 'events') || can('manage', 'elections') || can('manage', 'agendaItems');
+  const controller = useGroupMembershipsPageController({ groupId, defaultTab });
 
-  if (isLoading) {
+  if (controller.isLoading) {
     return <GlobalLoadingAnimation connectionStatus="connecting" />;
   }
 
-  if (!isMember() || (!canManageMembers && !canManageAssignments)) {
+  if (!controller.canAccess) {
     return <AccessDenied />;
   }
 
   return (
     <GroupMembershipsContent
-      groupId={groupId}
-      canManageMembers={canManageMembers}
-      canManageAssignments={canManageAssignments}
-      defaultTab={defaultTab}
+      groupId={controller.groupId}
+      canManageMembers={controller.canManageMembers}
+      canManageAssignments={controller.canManageAssignments}
+      defaultTab={controller.defaultTab}
     />
   );
+}
+
+export function useGroupMembershipsPageController({
+  groupId,
+  defaultTab,
+}: GroupMembershipsPageContainerProps) {
+  const { can, isMember, isLoading } = usePermissions({ groupId });
+  const canManageMembers = can('manage', 'groupMemberships');
+  const canManageAssignments =
+    can('manage', 'events') || can('manage', 'elections') || can('manage', 'agendaItems');
+
+  return {
+    groupId,
+    defaultTab,
+    isLoading,
+    canAccess: isMember() && (canManageMembers || canManageAssignments),
+    canManageMembers,
+    canManageAssignments,
+  };
 }
 
 function GroupMembershipsContent({
@@ -847,22 +863,19 @@ function GroupMembershipsContent({
   );
 
   return (
-    <div>
-      <h1 className="mb-6 text-3xl font-bold">{t('features.groups.memberships.manage')}</h1>
-
-      {canManageMembers &&
-      activeTab !== 'roles' &&
-      activeTab !== 'composition' &&
-      activeTab !== 'rightsAlignment' &&
-      activeTab !== 'openAssignments' ? (
-        <EntitySearchBar
-          searchQuery={memberSearchQuery}
-          onSearchQueryChange={setMemberSearchQuery}
-          placeholder={t('features.groups.memberships.searchPlaceholder')}
-          className="mb-4"
-        />
-      ) : null}
-
+    <GroupMembershipsPageView
+      title={t('features.groups.memberships.manage')}
+      showSearch={
+        canManageMembers &&
+        activeTab !== 'roles' &&
+        activeTab !== 'composition' &&
+        activeTab !== 'rightsAlignment' &&
+        activeTab !== 'openAssignments'
+      }
+      searchQuery={memberSearchQuery}
+      onSearchQueryChange={setMemberSearchQuery}
+      searchPlaceholder={t('features.groups.memberships.searchPlaceholder')}
+    >
       <MembershipTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -1309,6 +1322,41 @@ function GroupMembershipsContent({
           role={groupRoleHook.selectedRole}
         />
       ) : null}
+    </GroupMembershipsPageView>
+  );
+}
+
+interface GroupMembershipsPageViewProps {
+  title: string;
+  showSearch: boolean;
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
+  searchPlaceholder: string;
+  children: ReactNode;
+}
+
+export function GroupMembershipsPageView({
+  title,
+  showSearch,
+  searchQuery,
+  onSearchQueryChange,
+  searchPlaceholder,
+  children,
+}: GroupMembershipsPageViewProps) {
+  return (
+    <div>
+      <h1 className="mb-6 text-3xl font-bold">{title}</h1>
+
+      {showSearch ? (
+        <EntitySearchBar
+          searchQuery={searchQuery}
+          onSearchQueryChange={onSearchQueryChange}
+          placeholder={searchPlaceholder}
+          className="mb-4"
+        />
+      ) : null}
+
+      {children}
     </div>
   );
 }

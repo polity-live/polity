@@ -1,12 +1,6 @@
-import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
+import { ScrollableTabsList } from '@/features/shared/ui/navigation';
 import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
-import {
-  CheckSquare,
-  Circle,
-  CheckCircle2,
-  XCircle,
-  Clock,
-} from 'lucide-react';
+import { CheckSquare, Circle, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { TodoStatus } from '../types/todo.types';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
@@ -23,16 +17,11 @@ interface TodosTabsProps {
   children: React.ReactNode;
 }
 
-export function TodosTabs({
-  selectedTab,
-  setSelectedTab,
-  statusCounts,
-  children,
-}: TodosTabsProps) {
+export function TodosTabs({ selectedTab, setSelectedTab, statusCounts, children }: TodosTabsProps) {
   const { t } = useTranslation();
-  
+
   return (
-    <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as typeof selectedTab)}>
+    <Tabs value={selectedTab} onValueChange={v => setSelectedTab(v as typeof selectedTab)}>
       <ScrollableTabsList className="mb-6">
         <TabsTrigger value="all" className="flex items-center gap-2">
           <CheckSquare className="h-4 w-4" />
@@ -56,9 +45,7 @@ export function TodosTabs({
         </TabsTrigger>
       </ScrollableTabsList>
 
-      <TabsContent value={selectedTab}>
-        {children}
-      </TabsContent>
+      <TabsContent value={selectedTab}>{children}</TabsContent>
     </Tabs>
   );
 }

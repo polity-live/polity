@@ -1,12 +1,7 @@
 import type { FormEventHandler } from 'react';
 import { KeyRound } from 'lucide-react';
 
-import {
-  FormButton,
-  FormControlInput,
-  FormFieldShell,
-  SettingsPanel,
-} from '@/features/shared/ui/form';
+import { FormButton, PasswordField, SettingsPanel } from '@/features/shared/ui/form';
 import { InlineNotice, Spinner } from '@/features/shared/ui/feedback';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -70,9 +65,13 @@ export function AccountPasswordSectionView({
       icon={<KeyRound className="h-5 w-5" />}
     >
       <form onSubmit={onSubmit} className="space-y-4">
-        <FormFieldShell
+        <PasswordField
           id="account-password"
           label={copy.newPassword}
+          placeholder={copy.newPasswordPlaceholder}
+          value={password}
+          onValueChange={onPasswordChange}
+          onBlur={onPasswordBlur}
           description={copy.passwordHint}
           descriptionClassName={cn(
             'text-xs',
@@ -80,29 +79,20 @@ export function AccountPasswordSectionView({
             showPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
           )}
           invalid={showPasswordError}
-        >
-          {({ id, describedBy, invalid }) => (
-            <FormControlInput
-              id={id}
-              type="password"
-              placeholder={copy.newPasswordPlaceholder}
-              value={password}
-              onChange={event => onPasswordChange(event.target.value)}
-              onBlur={onPasswordBlur}
-              minLength={6}
-              required
-              disabled={isBusy}
-              autoComplete="new-password"
-              aria-describedby={describedBy}
-              aria-invalid={invalid}
-              data-valid={showPasswordSuccess ? 'true' : undefined}
-            />
-          )}
-        </FormFieldShell>
+          minLength={6}
+          required
+          disabled={isBusy}
+          autoComplete="new-password"
+          data-valid={showPasswordSuccess ? 'true' : undefined}
+        />
 
-        <FormFieldShell
+        <PasswordField
           id="account-password-confirm"
           label={copy.confirmPassword}
+          placeholder={copy.confirmPasswordPlaceholder}
+          value={confirmPassword}
+          onValueChange={onConfirmPasswordChange}
+          onBlur={onConfirmPasswordBlur}
           description={copy.confirmPasswordHint}
           descriptionClassName={cn(
             'text-xs',
@@ -110,25 +100,12 @@ export function AccountPasswordSectionView({
             showConfirmPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
           )}
           invalid={showConfirmPasswordError}
-        >
-          {({ id, describedBy, invalid }) => (
-            <FormControlInput
-              id={id}
-              type="password"
-              placeholder={copy.confirmPasswordPlaceholder}
-              value={confirmPassword}
-              onChange={event => onConfirmPasswordChange(event.target.value)}
-              onBlur={onConfirmPasswordBlur}
-              minLength={6}
-              required
-              disabled={isBusy}
-              autoComplete="new-password"
-              aria-describedby={describedBy}
-              aria-invalid={invalid}
-              data-valid={showConfirmPasswordSuccess ? 'true' : undefined}
-            />
-          )}
-        </FormFieldShell>
+          minLength={6}
+          required
+          disabled={isBusy}
+          autoComplete="new-password"
+          data-valid={showConfirmPasswordSuccess ? 'true' : undefined}
+        />
 
         {requiresInitialPassword ? (
           <p className="text-muted-foreground text-sm">{copy.initialHelp}</p>

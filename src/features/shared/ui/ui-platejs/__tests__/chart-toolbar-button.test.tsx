@@ -1,11 +1,11 @@
 /* @vitest-environment jsdom */
 
-import { fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { openChartDialog } from '@/features/charts/ui/ChartDialog';
-import { Toolbar } from '@/features/shared/ui/ui/toolbar.tsx';
+import { Toolbar } from '@/features/shared/ui/layout';
 import { ChartToolbarButton } from '../chart-toolbar-button';
 
 vi.mock('@/features/charts/ui/ChartDialog', () => ({
@@ -21,6 +21,10 @@ vi.mock('react-i18next', () => ({
 describe('ChartToolbarButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   const renderButton = (button?: ReactNode) =>

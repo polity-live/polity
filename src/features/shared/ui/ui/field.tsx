@@ -6,6 +6,26 @@ function Field({ className, ...props }: React.ComponentProps<'div'>) {
   return <div data-slot="field" className={cn('grid gap-2', className)} {...props} />;
 }
 
+function FieldSet({ className, ...props }: React.ComponentProps<'fieldset'>) {
+  return (
+    <fieldset
+      data-slot="field-set"
+      className={cn('grid gap-6 rounded-lg border p-4', className)}
+      {...props}
+    />
+  );
+}
+
+function FieldLegend({ className, ...props }: React.ComponentProps<'legend'>) {
+  return (
+    <legend
+      data-slot="field-legend"
+      className={cn('mb-3 px-1 text-sm leading-none font-medium', className)}
+      {...props}
+    />
+  );
+}
+
 function FieldLabel({ className, ...props }: React.ComponentProps<'label'>) {
   return (
     <label
@@ -95,6 +115,8 @@ export {
   FieldError,
   FieldGroup,
   FieldLabel,
+  FieldLegend,
   FieldSeparator,
+  FieldSet,
   FieldTitle,
 };

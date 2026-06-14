@@ -1,5 +1,5 @@
 import { BadgeControl } from '@/features/shared/ui/status';
-import { FormControlTextarea } from '@/features/shared/ui/form';
+import { FileUploadTrigger, FormControlTextarea } from '@/features/shared/ui/form';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AtSign, LoaderCircle, Paperclip, Send, X } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -26,7 +26,6 @@ interface MessageInputProps {
 export function MessageInput({ conversation, currentUserId, onSendMessage }: MessageInputProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const attachments = useMessageAttachments(conversation.id);
   const [messageText, setMessageText] = useState('');
   const [caretPosition, setCaretPosition] = useState(0);
@@ -200,17 +199,6 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
     attachments.clearAttachments();
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? []);
-    event.target.value = '';
-
-    if (files.length === 0) {
-      return;
-    }
-
-    await attachments.addUploadedFiles(files);
-  };
-
   const otherUser = getOtherParticipant(conversation, currentUserId);
   const otherParticipantName =
     [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') ||
@@ -336,11 +324,12 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
                           {t('features.messages.ai.attachTypes')}
                         </p>
                         {attachmentTypeSuggestions.map(option => (
-                          <button
+                          <Button
                             key={option.entityType}
                             type="button"
+                            variant="ghost"
                             onClick={() => handleAttachmentTypeSelect(option.entityType)}
-                            className="hover:bg-muted flex w-full items-center gap-3 rounded-md px-2 py-2 text-left"
+                            className="h-auto w-full justify-start gap-3 px-2 py-2 text-left whitespace-normal"
                           >
                             <AtSign className="text-muted-foreground h-4 w-4" />
                             <span className="min-w-0 flex-1">
@@ -349,7 +338,7 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
                                 {option.token}
                               </span>
                             </span>
-                          </button>
+                          </Button>
                         ))}
                       </>
                     )}
@@ -360,11 +349,12 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
                           {t('features.messages.ai.attachments')}
                         </p>
                         {attachmentSuggestions.map(option => (
-                          <button
+                          <Button
                             key={option.key}
                             type="button"
+                            variant="ghost"
                             onClick={() => handleAttachmentSelect(option)}
-                            className="hover:bg-muted flex w-full items-start gap-3 rounded-md px-2 py-2 text-left"
+                            className="h-auto w-full items-start justify-start gap-3 px-2 py-2 text-left whitespace-normal"
                           >
                             <AtSign className="text-muted-foreground mt-0.5 h-4 w-4" />
                             <span className="min-w-0 flex-1">
@@ -380,7 +370,7 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
                             <BadgeControl variant="outline" className="text-[10px] uppercase">
                               {option.entityType}
                             </BadgeControl>
-                          </button>
+                          </Button>
                         ))}
                       </>
                     )}
@@ -397,30 +387,26 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
             </p>
 
             <div className="flex items-center gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept={MESSAGE_ATTACHMENT_ACCEPT}
-                className="hidden"
-                onChange={event => {
-                  void handleFileChange(event);
-                }}
-              />
-              <Button
-                type="button"
+              <FileUploadTrigger
                 variant="outline"
                 size="icon"
-                onClick={() => fileInputRef.current?.click()}
                 disabled={attachments.isUploadingAttachments}
                 title={t('features.messages.compose.uploadFiles')}
+                aria-label={t('features.messages.compose.uploadFiles')}
+                inputProps={{
+                  multiple: true,
+                  accept: MESSAGE_ATTACHMENT_ACCEPT,
+                }}
+                onFilesSelected={files => {
+                  void attachments.addUploadedFiles(Array.from(files));
+                }}
               >
                 {attachments.isUploadingAttachments ? (
                   <LoaderCircle className="h-4 w-4 animate-spin" />
                 ) : (
                   <Paperclip className="h-4 w-4" />
                 )}
-              </Button>
+              </FileUploadTrigger>
               <Button
                 type="submit"
                 size="icon"

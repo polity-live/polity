@@ -1,6 +1,6 @@
 'use client';
 
-import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
+import { FormControlInput, FormControlLabel, SearchField } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Card,
@@ -15,7 +15,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { Filter, Hash, Search as SearchIcon } from 'lucide-react';
+import { Filter, Hash } from 'lucide-react';
 import type { AmendmentFilters } from '../hooks/useAmendmentFilters';
 
 interface AmendmentSearchAndFiltersProps {
@@ -52,15 +52,13 @@ export function AmendmentSearchAndFilters({
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <div className="relative flex-1">
-          <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <FormControlInput
-            placeholder={t('features.groups.amendments.searchPlaceholder')}
-            value={filters.searchQuery}
-            onChange={e => onSearchChange(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+        <SearchField
+          fieldClassName="flex-1"
+          placeholder={t('features.groups.amendments.searchPlaceholder')}
+          value={filters.searchQuery}
+          onValueChange={onSearchChange}
+          clearLabel={translateText('generated.inline.1132_clear_search_67300d0f')}
+        />
         <Button variant="outline" size="icon" onClick={onToggleFilters}>
           <Filter className="h-4 w-4" />
         </Button>
@@ -80,30 +78,36 @@ export function AmendmentSearchAndFilters({
             >
               {translateText('generated.inline.0643_status_11dc9e19')}
               {statusLabels[filters.statusFilter] ?? filters.statusFilter}
-              <button
-                className="hover:text-destructive ml-2"
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="hover:text-destructive ml-2 h-4 w-4 p-0 text-inherit hover:bg-transparent"
                 onClick={e => {
                   e.stopPropagation();
                   onClearStatusFilter();
                 }}
               >
                 ×
-              </button>
+              </Button>
             </StatusBadge>
           )}
           {filters.hashtagFilter && (
             <EntityBadge tone="neutral" className="cursor-pointer" onClick={onClearHashtagFilter}>
               <Hash className="mr-1 h-3 w-3" />
               {filters.hashtagFilter.replace(/^#/, '')}
-              <button
-                className="hover:text-destructive ml-2"
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="hover:text-destructive ml-2 h-4 w-4 p-0 text-inherit hover:bg-transparent"
                 onClick={e => {
                   e.stopPropagation();
                   onClearHashtagFilter();
                 }}
               >
                 ×
-              </button>
+              </Button>
             </EntityBadge>
           )}
         </div>

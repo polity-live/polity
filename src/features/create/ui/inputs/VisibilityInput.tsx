@@ -1,14 +1,16 @@
-import { VisibilitySelector } from '@/features/shared/ui/ui/visibility-selector'
+import { VisibilitySelector } from '@/features/shared/ui/form';
 
-type Visibility = 'public' | 'authenticated' | 'private'
+type Visibility = 'public' | 'authenticated' | 'private';
 
 interface VisibilityInputProps {
-  value: Visibility
-  onChange: (value: Visibility) => void
-  label?: string
-  showTooltip?: boolean
+  value: Visibility;
+  onChange: (value: Visibility) => void;
+  label?: string;
+  showTooltip?: boolean;
 }
 
 export function VisibilityInput({ value, onChange, label, showTooltip }: VisibilityInputProps) {
-  return <VisibilitySelector value={value} onChange={onChange} label={label} showTooltip={showTooltip} />
+  return (
+    <VisibilitySelector value={value} onChange={onChange} label={label} showTooltip={showTooltip} />
+  );
 }

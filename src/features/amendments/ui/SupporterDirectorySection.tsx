@@ -1,13 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
 import { ArrowUpRight, MapPinned } from 'lucide-react';
-import { useNavigate } from '@tanstack/react-router';
 import type {
   SupporterDirectoryItem,
   SupporterMapItem,
 } from '@/features/amendments/logic/supporterDirectory';
 import { cn } from '@/features/shared/utils/utils';
+import { useSupporterDirectorySectionModel } from '@/features/amendments/hooks/useSupporterDirectorySectionModel';
 import {
   Card,
   CardContent,
@@ -15,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
 import { SupporterDirectoryDetails } from '@/features/amendments/ui/SupporterDirectoryDetails';
 import { SupporterLocalityMap } from '@/features/amendments/ui/SupporterLocalityMap';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -24,34 +24,15 @@ interface SupporterDirectorySectionProps {
   mapItems: readonly SupporterMapItem[];
 }
 
-function compareByName(left: SupporterDirectoryItem, right: SupporterDirectoryItem) {
-  return left.name.localeCompare(right.name, undefined, { sensitivity: 'base' });
-}
-
 export function SupporterDirectorySection({ items, mapItems }: SupporterDirectorySectionProps) {
-  const navigate = useNavigate();
-  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
-
-  const sortedItems = useMemo(() => [...items].sort(compareByName), [items]);
-  const mapItemsByGroupId = useMemo(
-    () => new Map(mapItems.map(item => [item.groupId, item])),
-    [mapItems]
-  );
-  const sortedMapItems = useMemo(
-    () =>
-      sortedItems.flatMap(item => {
-        const mapItem = mapItemsByGroupId.get(item.groupId);
-        return mapItem ? [mapItem] : [];
-      }),
-    [mapItemsByGroupId, sortedItems]
-  );
-
-  const handleSelect = (groupId: string) => {
-    void navigate({
-      to: '/group/$id',
-      params: { id: groupId },
-    });
-  };
+  const {
+    activeGroupId,
+    onActiveGroupChange,
+    onClearActiveGroup,
+    onSelect,
+    sortedItems,
+    sortedMapItems,
+  } = useSupporterDirectorySectionModel({ items, mapItems });
 
   if (sortedItems.length === 0) {
     return null;
@@ -73,33 +54,26 @@ export function SupporterDirectorySection({ items, mapItems }: SupporterDirector
       <CardContent className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
         <div className="space-y-2">
           {sortedItems.map(item => (
-            <button
+            <Button
               key={item.groupId}
               type="button"
+              variant="ghost"
               data-testid={`supporter-directory-item-${item.groupId}`}
               className={cn(
-                'hover:border-primary/40 hover:bg-muted/40 w-full rounded-xl border p-3 text-left transition-colors',
+                'hover:border-primary/40 hover:bg-muted/40 h-auto w-full justify-start rounded-xl border p-3 text-left whitespace-normal transition-colors',
                 activeGroupId === item.groupId && 'border-primary bg-primary/5 shadow-sm'
               )}
-              onClick={() => handleSelect(item.groupId)}
-              onMouseEnter={() => setActiveGroupId(item.groupId)}
-              onMouseLeave={() =>
-                setActiveGroupId(currentGroupId =>
-                  currentGroupId === item.groupId ? null : currentGroupId
-                )
-              }
-              onFocus={() => setActiveGroupId(item.groupId)}
-              onBlur={() =>
-                setActiveGroupId(currentGroupId =>
-                  currentGroupId === item.groupId ? null : currentGroupId
-                )
-              }
+              onClick={() => onSelect(item.groupId)}
+              onMouseEnter={() => onActiveGroupChange(item.groupId)}
+              onMouseLeave={() => onClearActiveGroup(item.groupId)}
+              onFocus={() => onActiveGroupChange(item.groupId)}
+              onBlur={() => onClearActiveGroup(item.groupId)}
             >
               <div className="flex items-start justify-between gap-3">
                 <SupporterDirectoryDetails item={item} />
                 <ArrowUpRight className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
               </div>
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -107,8 +81,8 @@ export function SupporterDirectorySection({ items, mapItems }: SupporterDirector
           <SupporterLocalityMap
             items={sortedMapItems}
             activeGroupId={activeGroupId}
-            onHoverChange={setActiveGroupId}
-            onSelect={handleSelect}
+            onHoverChange={onActiveGroupChange}
+            onSelect={onSelect}
           />
         ) : (
           <div className="bg-muted/20 text-muted-foreground flex min-h-80 items-center justify-center rounded-xl border border-dashed px-4 text-center text-sm">

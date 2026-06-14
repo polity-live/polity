@@ -10,10 +10,9 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
-import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { CreateInputField, CreateTypeaheadField } from '../ui/CreateFields';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
@@ -234,106 +233,134 @@ export function useCreateBlogForm(): CreateFormConfig {
         {
           label: t('pages.create.blog.basicInfo'),
           isValid: () => !!title.trim(),
-          content: (
-            <div className="space-y-4">
-              <CreateInputField
-                label={t('pages.create.blog.titleLabel')}
-                required
-                hint={t('pages.create.blog.tips.title')}
-                value={title}
-                onValueChange={setTitle}
-                placeholder={t('pages.create.blog.titlePlaceholder')}
-              />
-              <CreateInputField
-                label={t('pages.create.blog.dateLabel')}
-                hint={t('pages.create.blog.tips.date')}
-                value={date}
-                onValueChange={setDate}
-                type="date"
-              />
-              <ImageUpload
-                currentImage={imageURL}
-                onImageChange={(url: string) => setImageURL(url)}
-                cleanupOnRemove
-                entityType="blogs"
-                entityId={blogId}
-                label={t('pages.create.blog.coverImage')}
-                description={t('pages.create.blog.coverImageDescription')}
-              />
-              <CreateTypeaheadField
-                label={t('pages.create.blog.attachTo')}
-                entityTypes={['group']}
-                value={groupId ?? undefined}
-                onChange={item => {
+          fields: [
+            {
+              key: 'title',
+              kind: 'text',
+              label: t('pages.create.blog.titleLabel'),
+              required: true,
+              hint: t('pages.create.blog.tips.title'),
+              value: title,
+              onValueChange: setTitle,
+              placeholder: t('pages.create.blog.titlePlaceholder'),
+            },
+            {
+              key: 'date',
+              kind: 'text',
+              label: t('pages.create.blog.dateLabel'),
+              hint: t('pages.create.blog.tips.date'),
+              value: date,
+              onValueChange: setDate,
+              type: 'date',
+            },
+            {
+              key: 'image',
+              kind: 'custom',
+              node: (
+                <ImageUpload
+                  currentImage={imageURL}
+                  onImageChange={(url: string) => setImageURL(url)}
+                  cleanupOnRemove
+                  entityType="blogs"
+                  entityId={blogId}
+                  label={t('pages.create.blog.coverImage')}
+                  description={t('pages.create.blog.coverImageDescription')}
+                />
+              ),
+            },
+            {
+              key: 'group',
+              kind: 'typeahead',
+              label: t('pages.create.blog.attachTo'),
+              props: {
+                entityTypes: ['group'],
+                value: groupId ?? undefined,
+                onChange: item => {
                   const nextGroupId = item?.id ?? null;
                   setGroupId(nextGroupId);
                   setGroupName(item?.label ?? '');
                   syncGroupSearch(nextGroupId);
-                }}
-                placeholder={t('pages.create.blog.groupPlaceholder')}
-                filterFn={item => memberGroupIds.has(item.id)}
-              />
-            </div>
-          ),
+                },
+                placeholder: t('pages.create.blog.groupPlaceholder'),
+                filterFn: item => memberGroupIds.has(item.id),
+              },
+            },
+          ],
         },
         {
           label: t('pages.create.blog.visibilityAndTags'),
           isValid: () => true,
           optional: true,
-          content: (
-            <div className="space-y-4">
-              <VisibilityInput value={visibility} onChange={setVisibility} />
-              <HashtagEditor
-                value={hashtags}
-                onChange={setHashtags}
-                placeholder={t('pages.create.blog.hashtagPlaceholder')}
-              />
-            </div>
-          ),
+          fields: [
+            {
+              key: 'visibility',
+              kind: 'custom',
+              node: <VisibilityInput value={visibility} onChange={setVisibility} />,
+            },
+            {
+              key: 'hashtags',
+              kind: 'custom',
+              node: (
+                <HashtagEditor
+                  value={hashtags}
+                  onChange={setHashtags}
+                  placeholder={t('pages.create.blog.hashtagPlaceholder')}
+                />
+              ),
+            },
+          ],
         },
         {
           label: t('pages.create.common.review'),
           isValid: () => !!title.trim(),
-          content: (
-            <CreateSummaryStep
-              entityType="blog"
-              badge={t('pages.create.blog.reviewBadge')}
-              secondaryBadge={visibilityLabel}
-              title={title || t('pages.create.blog.titlePlaceholder')}
-              media={
-                imageURL ? { imageUrl: imageURL, imageAlt: title || 'Blog cover image' } : undefined
-              }
-              hashtags={hashtags.length > 0 ? hashtags : undefined}
-              sections={[
-                {
-                  title: t('pages.create.blog.basicInfo'),
-                  fields: [
-                    { label: t('pages.create.blog.dateLabel'), value: date },
-                    ...(groupName
-                      ? [
-                          {
-                            label: t('pages.create.blog.attachTo'),
-                            value: groupName,
-                          },
-                        ]
-                      : []),
-                  ],
-                },
-                {
-                  title: t('pages.create.blog.visibilityAndTags'),
-                  fields: [
+          fields: [
+            {
+              key: 'review',
+              kind: 'custom',
+              node: (
+                <CreateSummaryStep
+                  entityType="blog"
+                  badge={t('pages.create.blog.reviewBadge')}
+                  secondaryBadge={visibilityLabel}
+                  title={title || t('pages.create.blog.titlePlaceholder')}
+                  media={
+                    imageURL
+                      ? { imageUrl: imageURL, imageAlt: title || 'Blog cover image' }
+                      : undefined
+                  }
+                  hashtags={hashtags.length > 0 ? hashtags : undefined}
+                  sections={[
                     {
-                      label: t('pages.create.common.visibility'),
-                      value: visibilityLabel,
+                      title: t('pages.create.blog.basicInfo'),
+                      fields: [
+                        { label: t('pages.create.blog.dateLabel'), value: date },
+                        ...(groupName
+                          ? [
+                              {
+                                label: t('pages.create.blog.attachTo'),
+                                value: groupName,
+                              },
+                            ]
+                          : []),
+                      ],
                     },
-                    ...(imageURL
-                      ? [{ label: t('pages.create.blog.coverImage'), value: 'Attached' }]
-                      : []),
-                  ],
-                },
-              ]}
-            />
-          ),
+                    {
+                      title: t('pages.create.blog.visibilityAndTags'),
+                      fields: [
+                        {
+                          label: t('pages.create.common.visibility'),
+                          value: visibilityLabel,
+                        },
+                        ...(imageURL
+                          ? [{ label: t('pages.create.blog.coverImage'), value: 'Attached' }]
+                          : []),
+                      ],
+                    },
+                  ]}
+                />
+              ),
+            },
+          ],
         },
       ],
     }),

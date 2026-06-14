@@ -12,11 +12,7 @@ import { cn } from '@/features/shared/utils/utils.ts';
 
 import { Caption, CaptionTextarea } from './caption.tsx';
 import { MediaToolbar } from './media-toolbar.tsx';
-import {
-  mediaResizeHandleVariants,
-  Resizable,
-  ResizeHandle,
-} from '@/features/shared/ui/ui/resize-handle.tsx';
+import { mediaResizeHandleVariants, Resizable, ResizeHandle } from '@/features/shared/ui/rich-text';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export const ImageElement = withHOC(

@@ -31,7 +31,7 @@ import {
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
 
-import { ToolbarButton } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarButton } from '@/features/shared/ui/layout';
 
 export function TableToolbarButton(props: DropdownMenuProps) {
   const tableSelected = useEditorSelector(
@@ -230,7 +230,7 @@ function TablePicker() {
 
   return (
     <div
-      className="flex! m-0 flex-col p-0"
+      className="m-0 flex! flex-col p-0"
       onClick={() => {
         tf.insert.table(tablePicker.size, { select: true });
         editor.tf.focus();
@@ -243,7 +243,7 @@ function TablePicker() {
               <div
                 key={`(${rowIndex},${columIndex})`}
                 className={cn(
-                  'col-span-1 size-3 border border-solid bg-secondary',
+                  'bg-secondary col-span-1 size-3 border border-solid',
                   !!value && 'border-current'
                 )}
                 onMouseMove={() => {

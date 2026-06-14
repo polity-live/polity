@@ -80,7 +80,7 @@ vi.mock('@/features/auth/ui/AccessDenied', () => ({
   AccessDenied: () => <div data-testid="access-denied" />,
 }));
 
-vi.mock('@/features/shared/ui/ui/global-loading-animation', () => ({
+vi.mock('@/features/shared/ui/feedback', () => ({
   GlobalLoadingAnimation: () => <div data-testid="global-loading-animation" />,
 }));
 

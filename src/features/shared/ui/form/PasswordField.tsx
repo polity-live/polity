@@ -8,31 +8,56 @@ import { cn } from '@/features/shared/utils/utils';
 
 interface PasswordFieldProps extends Omit<ComponentProps<typeof Input>, 'type'> {
   label?: ReactNode;
+  labelAction?: ReactNode;
   description?: ReactNode;
   error?: ReactNode;
+  invalid?: boolean;
+  required?: boolean;
   fieldClassName?: string;
+  labelClassName?: string;
+  descriptionClassName?: string;
+  errorClassName?: string;
+  inputClassName?: string;
+  onValueChange?: (value: string) => void;
   showPasswordLabel?: string;
   hidePasswordLabel?: string;
 }
 
 export function PasswordField({
   label,
+  labelAction,
   description,
   error,
+  invalid,
+  required,
   fieldClassName,
+  labelClassName,
+  descriptionClassName,
+  errorClassName,
+  inputClassName,
+  onValueChange,
   showPasswordLabel = 'Show password',
   hidePasswordLabel = 'Hide password',
   className,
+  id,
+  onChange,
   ...props
 }: PasswordFieldProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
     <FormFieldShell
+      id={id}
       label={label}
+      labelAction={labelAction}
       description={description}
       error={error}
+      invalid={invalid}
+      required={required}
       className={fieldClassName}
+      labelClassName={labelClassName}
+      descriptionClassName={descriptionClassName}
+      errorClassName={errorClassName}
     >
       {({ id, describedBy, invalid }) => (
         <div className="relative">
@@ -42,7 +67,12 @@ export function PasswordField({
             type={isVisible ? 'text' : 'password'}
             aria-describedby={describedBy}
             aria-invalid={invalid || undefined}
-            className={cn('pr-10', className)}
+            required={required}
+            onChange={event => {
+              onValueChange?.(event.target.value);
+              onChange?.(event);
+            }}
+            className={cn('pr-10', className, inputClassName)}
           />
           <Button
             type="button"

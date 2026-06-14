@@ -3,7 +3,7 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useUserState } from '@/zero/users/useUserState';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
 import { useConnectionState } from '@rocicorp/zero/react';
 
 interface EnsureUserProps {
@@ -19,7 +19,7 @@ const ZERO_SYNC_TIMEOUT_MS = 8000;
  */
 export function EnsureUser({ children }: EnsureUserProps) {
   const { user, loading } = useAuth();
-  const { currentUser, isLoading: userStateLoading } = useUserState();
+  const { isLoading: userStateLoading } = useUserState();
   const connectionState = useConnectionState();
   const [timedOut, setTimedOut] = useState(false);
 
@@ -37,10 +37,10 @@ export function EnsureUser({ children }: EnsureUserProps) {
   if (isLoading) {
     const status =
       connectionState.name === 'connected'
-        ? 'syncing' as const
+        ? ('syncing' as const)
         : connectionState.name === 'disconnected'
-          ? 'disconnected' as const
-          : 'connecting' as const;
+          ? ('disconnected' as const)
+          : ('connecting' as const);
 
     return <GlobalLoadingAnimation connectionStatus={status} />;
   }

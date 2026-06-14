@@ -38,7 +38,7 @@ import {
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
 import { insertBlock, insertInlineElement } from '@/features/shared/ui/kit-platejs/transforms.ts';
 
-import { ToolbarButton, ToolbarMenuGroup } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarButton, ToolbarMenuGroup } from '@/features/shared/ui/layout';
 import { CHART_NODE_TYPE } from '@/features/charts/types';
 import { openChartDialog } from '@/features/charts/ui/ChartDialog';
 

@@ -2,7 +2,6 @@ import type { LucideIcon } from 'lucide-react';
 
 import {
   PageHeader,
-  PageShell,
   Panel,
   PanelContent,
   PanelGrid,
@@ -32,13 +31,13 @@ interface CreateDashboardViewProps {
 
 export function CreateDashboardView({ title, subtitle, sections }: CreateDashboardViewProps) {
   return (
-    <PageShell contentClassName="max-w-5xl">
+    <div className="space-y-6">
       <PageHeader title={title} description={subtitle} />
 
       <div className="space-y-8">
         {sections.map(section => (
           <Section key={section.key} title={section.title}>
-            <PanelGrid className="xl:grid-cols-2">
+            <PanelGrid>
               {section.items.map(item => {
                 const Icon = item.icon;
 
@@ -60,6 +59,6 @@ export function CreateDashboardView({ title, subtitle, sections }: CreateDashboa
           </Section>
         ))}
       </div>
-    </PageShell>
+    </div>
   );
 }

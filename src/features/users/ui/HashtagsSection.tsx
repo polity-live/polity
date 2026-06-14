@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface HashtagsSectionProps {

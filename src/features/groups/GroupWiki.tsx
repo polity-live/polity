@@ -10,12 +10,12 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { LinkGroupDialog } from '@/features/network/ui/LinkGroupDialog';
 import { BookOpen, Network } from 'lucide-react';
-import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
 import { GRADIENTS } from '@/features/users/state/gradientColors';
-import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
-import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
+import { StatsBar } from '@/features/shared/ui/layout';
+import { ActionBar } from '@/features/shared/ui/layout';
 import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
 import { SocialBar } from '@/features/users/ui/SocialBar';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';

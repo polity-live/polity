@@ -4,7 +4,7 @@ import { useIndentButton, useOutdentButton } from '@platejs/indent/react';
 import { IndentIcon, OutdentIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { ToolbarButton } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarButton } from '@/features/shared/ui/layout';
 
 export function IndentToolbarButton(props: React.ComponentProps<typeof ToolbarButton>) {
   const { props: buttonProps } = useIndentButton();

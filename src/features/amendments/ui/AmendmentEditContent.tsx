@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { VideoUpload } from '@/features/file-upload/ui/VideoUpload.tsx';
-import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,7 +39,7 @@ import {
 } from '@/zero/rbac/workflow-constants';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
-import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
+import { CreateReviewCard, SummaryField } from '@/features/shared/ui/form';
 import {
   hasMinLength,
   isNonNegativeInteger,
@@ -50,7 +50,7 @@ import {
   EditingModeMenuItems,
   getEditingModeOption,
   type SelectableEditingMode,
-} from '@/features/shared/ui/ui/editing-mode.tsx';
+} from '@/features/shared/ui/status';
 
 interface AmendmentEditContentProps {
   amendmentId: string;

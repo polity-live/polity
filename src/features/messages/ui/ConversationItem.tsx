@@ -33,10 +33,12 @@ export function ConversationItem({
 
   return (
     <div className="group flex items-start gap-2">
-      <button
+      <Button
+        type="button"
+        variant="ghost"
         onClick={() => onSelect(conversation.id)}
         className={cn(
-          'hover:bg-accent flex min-w-0 flex-1 items-start gap-3 rounded-lg p-3 text-left transition-colors',
+          'hover:bg-accent h-auto min-w-0 flex-1 items-start justify-start gap-3 rounded-lg p-3 text-left whitespace-normal transition-colors',
           isSelected && 'bg-accent'
         )}
       >
@@ -86,7 +88,7 @@ export function ConversationItem({
             )}
           </div>
         </div>
-      </button>
+      </Button>
 
       {canDelete && onDelete && (
         <Button

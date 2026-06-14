@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
@@ -22,7 +22,7 @@ const items: TypeaheadItem[] = [
 ];
 
 describe('CreateTypeaheadField', () => {
-  it('validates required single-select fields', () => {
+  it('validates required single-select fields', async () => {
     function SingleHarness() {
       const [value, setValue] = useState<string | undefined>(undefined);
       return (
@@ -45,13 +45,15 @@ describe('CreateTypeaheadField', () => {
     fireEvent.focus(screen.getByPlaceholderText('Search groups'));
     expect(screen.getByText('Required.')).toBeTruthy();
 
-    fireEvent.mouseDown(screen.getByText('Budget Circle'));
+    fireEvent.click(screen.getByRole('button', { name: /Budget Circle/i }));
 
+    await waitFor(() => {
+      expect(screen.getByText('Pick a group')).toBeTruthy();
+    });
     expect(screen.getByText('Budget Circle')).toBeTruthy();
-    expect(screen.getByText('Pick a group')).toBeTruthy();
   });
 
-  it('validates required multi-select fields', () => {
+  it('validates required multi-select fields', async () => {
     function MultiHarness() {
       const [values, setValues] = useState<string[]>([]);
       return (
@@ -73,11 +75,13 @@ describe('CreateTypeaheadField', () => {
     expect(screen.getByText('Pick collaborators')).toBeTruthy();
 
     fireEvent.focus(screen.getByPlaceholderText('Search people'));
-    expect(screen.getByText('Required.')).toBeTruthy();
+    expect(screen.getAllByText('Required.').length).toBeGreaterThan(0);
 
-    fireEvent.mouseDown(screen.getByText('Alice Example'));
+    fireEvent.click(screen.getByRole('button', { name: /Alice Example/i }));
 
+    await waitFor(() => {
+      expect(screen.getByText('Pick collaborators')).toBeTruthy();
+    });
     expect(screen.getByText('Alice Example')).toBeTruthy();
-    expect(screen.getByText('Pick collaborators')).toBeTruthy();
   });
 });

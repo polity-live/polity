@@ -16,23 +16,35 @@ interface RadioGroupFieldProps extends Omit<
   'value' | 'onValueChange'
 > {
   label?: ReactNode;
+  labelAction?: ReactNode;
   description?: ReactNode;
   error?: ReactNode;
+  invalid?: boolean;
+  required?: boolean;
   value?: string;
   onValueChange: (value: string) => void;
   options: RadioGroupFieldOption[];
   fieldClassName?: string;
+  labelClassName?: string;
+  descriptionClassName?: string;
+  errorClassName?: string;
   optionClassName?: string;
 }
 
 export function RadioGroupField({
   label,
+  labelAction,
   description,
   error,
+  invalid,
+  required,
   value,
   onValueChange,
   options,
   fieldClassName,
+  labelClassName,
+  descriptionClassName,
+  errorClassName,
   optionClassName,
   className,
   ...props
@@ -40,15 +52,23 @@ export function RadioGroupField({
   return (
     <FormFieldShell
       label={label}
+      labelAction={labelAction}
       description={description}
       error={error}
+      invalid={invalid}
+      required={required}
       className={fieldClassName}
+      labelClassName={labelClassName}
+      descriptionClassName={descriptionClassName}
+      errorClassName={errorClassName}
     >
-      {({ describedBy }) => (
+      {({ describedBy, invalid }) => (
         <RadioGroup
           value={value}
           onValueChange={onValueChange}
           aria-describedby={describedBy}
+          aria-invalid={invalid || undefined}
+          aria-required={required || undefined}
           className={cn('gap-2', className)}
           {...props}
         >

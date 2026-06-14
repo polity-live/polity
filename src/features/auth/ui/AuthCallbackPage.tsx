@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export function AuthCallbackPage() {

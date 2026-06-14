@@ -39,7 +39,7 @@ import {
   InlineComboboxGroupLabel,
   InlineComboboxInput,
   InlineComboboxItem,
-} from '@/features/shared/ui/ui/inline-combobox.tsx';
+} from '@/features/shared/ui/rich-text';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface Group {

@@ -67,9 +67,11 @@ function CollapsibleSection({
 
   return (
     <div className="border-b border-gray-200 last:border-b-0 dark:border-gray-700">
-      <button
+      <Button
+        type="button"
+        variant="ghost"
         onClick={onToggle}
-        className="flex w-full items-center justify-between p-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
+        className="h-auto w-full justify-between rounded-none p-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
         aria-expanded={!isCollapsed}
       >
         <div className="flex items-center gap-2">
@@ -81,7 +83,7 @@ function CollapsibleSection({
         ) : (
           <ChevronUp className="h-4 w-4 text-gray-400" />
         )}
-      </button>
+      </Button>
 
       <div
         className={cn(

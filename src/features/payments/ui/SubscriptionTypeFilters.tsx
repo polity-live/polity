@@ -1,5 +1,5 @@
 import { Tabs, TabsTrigger } from '@/features/shared/ui/ui/tabs';
-import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
+import { ScrollableTabsList } from '@/features/shared/ui/navigation';
 import { User, Users, Scale, Calendar, BookOpen } from 'lucide-react';
 import type { FilterType, SubscriptionCounts } from '../hooks/useSubscriptionsFilters';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';

@@ -38,7 +38,7 @@ import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import { createGroupNodeLegendItem } from '@/features/network/ui/networkVisualHelpers';
 import { cn } from '@/features/shared/utils/utils';
 import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
-import { EntitySearchBar, type FilterOption } from '@/features/shared/ui/ui/entity-search-bar';
+import { EntitySearchBar, type FilterOption } from '@/features/shared/ui/typeahead';
 import { SearchResultCard } from '@/features/search/ui/SearchResultCard';
 import type { SearchDocument } from '@/features/search/types/search-document.types';
 import { MessageBubble } from '@/features/messages/ui/MessageBubble';

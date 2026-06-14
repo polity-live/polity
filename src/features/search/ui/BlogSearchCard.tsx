@@ -1,6 +1,6 @@
 import React from 'react';
 import { BlogsCard } from '@/features/users/ui/BlogsCard';
-import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { SEARCH_CARD_GRADIENTS } from '@/features/shared/utils/search-card-gradients';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 

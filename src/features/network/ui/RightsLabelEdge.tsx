@@ -1,7 +1,14 @@
 import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, useReactFlow } from '@xyflow/react';
 import type { Edge, EdgeProps, XYPosition } from '@xyflow/react';
 import { X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { resolveInnerAutoEdgeAnchors } from '@/features/network/logic/networkEdgeHelpers';
 import { RightBadge } from '@/features/network/ui/RightBadge';
 import { useEdgeClickContext } from '@/features/network/ui/NetworkFlowBase';
@@ -149,6 +156,12 @@ export function RightsLabelEdge({
   }, [bendPoints, resolvedEdgeEndpoints]);
 
   const middleSegment = edgeSegments[Math.floor(edgeSegments.length / 2)] ?? null;
+  const openRelationshipDetailsLabel = t(
+    'common.network.openRelationshipDetails',
+    'Open relationship details'
+  );
+  const moveBendPointLabel = t('common.network.moveEdgeBendPoint', 'Move edge bend point');
+  const removeBendPointLabel = t('common.network.removeEdgeBendPoint', 'Remove edge bend point');
 
   // visibleRights reflects the current filter selection; rights is the full set
   const displayRights = Array.isArray(data?.visibleRights)
@@ -266,7 +279,68 @@ export function RightsLabelEdge({
     );
   };
 
-  const handleLabelClick = (e: React.MouseEvent) => {
+  const nudgeBendPoint = (bendPointIndex: number, deltaX: number, deltaY: number) => {
+    if (!onBendPointsChange) {
+      return;
+    }
+
+    const activeBendPoint = bendPoints[bendPointIndex];
+    if (!activeBendPoint) {
+      return;
+    }
+
+    onBendPointsChange(
+      id,
+      bendPoints.map((bendPoint, index) =>
+        index === bendPointIndex
+          ? {
+              x: bendPoint.x + deltaX,
+              y: bendPoint.y + deltaY,
+            }
+          : bendPoint
+      )
+    );
+  };
+
+  const handleBendPointKeyDown = (
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    bendPointIndex: number
+  ) => {
+    const step = event.shiftKey ? 20 : 8;
+
+    switch (event.key) {
+      case 'ArrowLeft':
+        event.preventDefault();
+        event.stopPropagation();
+        nudgeBendPoint(bendPointIndex, -step, 0);
+        break;
+      case 'ArrowRight':
+        event.preventDefault();
+        event.stopPropagation();
+        nudgeBendPoint(bendPointIndex, step, 0);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        event.stopPropagation();
+        nudgeBendPoint(bendPointIndex, 0, -step);
+        break;
+      case 'ArrowDown':
+        event.preventDefault();
+        event.stopPropagation();
+        nudgeBendPoint(bendPointIndex, 0, step);
+        break;
+      case 'Backspace':
+      case 'Delete':
+        event.preventDefault();
+        event.stopPropagation();
+        removeBendPoint(bendPointIndex);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleLabelClick = (e: ReactMouseEvent) => {
     e.stopPropagation();
 
     if (suppressLabelClickRef.current) {
@@ -283,7 +357,7 @@ export function RightsLabelEdge({
   const middleSegmentIndex = Math.floor(edgeSegments.length / 2);
 
   const startSegmentDrag = (
-    event: React.MouseEvent,
+    event: ReactMouseEvent,
     segmentIndex: number,
     openOnClickWhenLocked = false
   ) => {
@@ -333,14 +407,13 @@ export function RightsLabelEdge({
         <EdgeLabelRenderer>
           <button
             type="button"
+            aria-label={openRelationshipDetailsLabel}
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${middleSegment.labelX}px,${middleSegment.labelY}px)`,
               pointerEvents: 'all',
             }}
-            className={
-              edgeEditingEnabled ? 'nodrag nopan cursor-grab' : 'nodrag nopan cursor-pointer'
-            }
+            className={`networkEdgeLabelButton ${edgeEditingEnabled ? 'nodrag nopan cursor-grab' : 'nodrag nopan cursor-pointer'}`}
             onMouseDown={event => startSegmentDrag(event, middleSegmentIndex)}
             onClick={handleLabelClick}
           >
@@ -373,6 +446,8 @@ export function RightsLabelEdge({
             >
               <button
                 type="button"
+                aria-label={moveBendPointLabel}
+                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Delete Backspace"
                 className={`networkEdgeBendPointButton${dragState?.kind === 'bend-point' && dragState.bendPointIndex === bendPointIndex && dragState.isActive ? 'is-dragging' : ''}`}
                 onMouseDown={event => {
                   event.preventDefault();
@@ -389,10 +464,11 @@ export function RightsLabelEdge({
                   event.preventDefault();
                   event.stopPropagation();
                 }}
+                onKeyDown={event => handleBendPointKeyDown(event, bendPointIndex)}
               />
               <button
                 type="button"
-                aria-label={t('common.network.removeEdgeBendPoint')}
+                aria-label={removeBendPointLabel}
                 className="networkEdgeBendPointDeleteButton"
                 onMouseDown={event => {
                   event.preventDefault();

@@ -10,7 +10,7 @@ import {
   getMarkerInsertionIndex,
   getMarkerViewportState,
   type MarkerViewportState,
-} from '@/features/calendar/logic/listViewHelpers';
+} from '@/features/shared/logic/calendarListHelpers';
 import { cn } from '@/features/shared/utils/utils.ts';
 
 export interface CalendarChronologicalListViewProps<TItem> {

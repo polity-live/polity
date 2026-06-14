@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import {
   DropdownMenu,
@@ -26,12 +26,10 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
-import { ConversationSelectorDialog } from './ConversationSelectorDialog.tsx';
 import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import type { SearchContentItem } from '@/features/search/types/search.types';
 
 type SharePlatform =
   | {
@@ -54,7 +52,16 @@ interface ShareButtonProps {
   url: string;
   title: string;
   description?: string;
-  shareContextItem?: SearchContentItem;
+  shareContextItem?: unknown;
+  renderConversationDialog?: (props: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    shareUrl: string;
+    shareTitle: string;
+    shareDescription?: string;
+    shareContextItem?: unknown;
+  }) => ReactNode;
+  internalShareLabel?: ReactNode;
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
@@ -65,6 +72,8 @@ export function ShareButton({
   title,
   description,
   shareContextItem,
+  renderConversationDialog,
+  internalShareLabel,
   variant = 'outline',
   size = 'default',
   className = '',
@@ -174,18 +183,24 @@ export function ShareButton({
               {t('common.labels.shareVia')}
             </div>
 
-            <DropdownMenuItem
-              onClick={() => {
-                setConversationDialogOpen(true);
-                setIsOpen(false);
-              }}
-              className="cursor-pointer"
-            >
-              <Send className="text-primary mr-2 h-4 w-4" />
-              <span>{translateText('generated.inline.1101_polity_f147ffe2')}</span>
-            </DropdownMenuItem>
+            {renderConversationDialog ? (
+              <>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setConversationDialogOpen(true);
+                    setIsOpen(false);
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Send className="text-primary mr-2 h-4 w-4" />
+                  <span>
+                    {internalShareLabel ?? translateText('generated.inline.1101_polity_f147ffe2')}
+                  </span>
+                </DropdownMenuItem>
 
-            <DropdownMenuSeparator />
+                <DropdownMenuSeparator />
+              </>
+            ) : null}
 
             {directSharePlatforms.map(platform => (
               <DropdownMenuItem
@@ -235,14 +250,14 @@ export function ShareButton({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <ConversationSelectorDialog
-        open={conversationDialogOpen}
-        onOpenChange={setConversationDialogOpen}
-        shareUrl={url}
-        shareTitle={title}
-        shareDescription={description}
-        shareContextItem={shareContextItem}
-      />
+      {renderConversationDialog?.({
+        open: conversationDialogOpen,
+        onOpenChange: setConversationDialogOpen,
+        shareUrl: url,
+        shareTitle: title,
+        shareDescription: description,
+        shareContextItem,
+      })}
     </>
   );
 }

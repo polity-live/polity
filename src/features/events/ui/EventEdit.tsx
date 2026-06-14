@@ -21,7 +21,7 @@ import { DelegateAllocationInput } from '@/features/create/ui/inputs/DelegateAll
 import { ElectionModeInput } from '@/features/elections/ui/ElectionModeInput';
 import { Loader2, XCircle } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
-import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { useEventUpdate } from '../hooks/useEventUpdate';
 import {
@@ -31,7 +31,7 @@ import {
 import { CancelEventDialog } from './CancelEventDialog';
 import { usePermissions } from '@/zero/rbac';
 import { useState, useRef, useMemo } from 'react';
-import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
+import { CreateReviewCard, SummaryField } from '@/features/shared/ui/form';
 import { useAllGroups, useUserGroupsWithManageEvents } from '@/zero/groups/useGroupState';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';

@@ -4,7 +4,7 @@ import { useLinkToolbarButton, useLinkToolbarButtonState } from '@platejs/link/r
 import { Link } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { ToolbarButton } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarButton } from '@/features/shared/ui/layout';
 
 export function LinkToolbarButton(props: React.ComponentProps<typeof ToolbarButton>) {
   const state = useLinkToolbarButtonState();

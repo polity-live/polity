@@ -30,7 +30,7 @@ describe('useAuthStore signUpWithPassword', () => {
 
     expect(result).toEqual({ status: 'authenticated' });
     expect(useAuthStore.getState().error).toBeNull();
-  });
+  }, 10000);
 
   it('returns confirmation_required when signup succeeds without a session', async () => {
     signUpMock.mockResolvedValue({

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs.tsx';
-import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs.tsx';
+import { ScrollableTabsList } from '@/features/shared/ui/navigation/ScrollableTabs';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import {

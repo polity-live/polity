@@ -1,6 +1,7 @@
 import type { EventForCalendarRow } from '@/zero/events/queries';
 
 export type CalendarView = 'day' | 'week' | 'month';
+export type CalendarViewMode = 'list' | 'week' | 'month';
 
 export interface CalendarUser {
   id: string;
@@ -8,7 +9,10 @@ export interface CalendarUser {
   avatar?: string;
 }
 
-export type CalendarEvent = Omit<EventForCalendarRow, 'start_date' | 'end_date' | 'title' | 'description'> & {
+export type CalendarEvent = Omit<
+  EventForCalendarRow,
+  'start_date' | 'end_date' | 'title' | 'description'
+> & {
   start_date: number;
   end_date: number;
   title: string;

@@ -1,26 +1,9 @@
 'use client';
 
-import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
-import { useState, useMemo } from 'react';
-import { useAuth } from '@/providers/auth-provider';
-import { useUserEventParticipations } from '@/zero/events/useEventState';
-import { useAgendaItemMutations } from '../hooks/useAgendaItemMutations';
-import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Dialog,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/features/shared/ui/ui/dialog';
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
-import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
-import { Card, CardContent } from '@/features/shared/ui/ui/card';
-import { ArrowRight, Calendar, AlertTriangle, Loader2 } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { toast } from 'sonner';
+import type { ReactNode } from 'react';
+
+import { useTransferAgendaItemDialogController } from '../hooks/useTransferAgendaItemDialogController';
+import { TransferAgendaItemDialogView } from './TransferAgendaItemDialogView';
 
 interface TransferAgendaItemDialogProps {
   agendaItemId: string;
@@ -28,17 +11,9 @@ interface TransferAgendaItemDialogProps {
   currentEventId: string;
   currentEventTitle: string;
   onTransferComplete?: () => void;
-  trigger?: React.ReactNode;
+  trigger?: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-}
-
-interface EventWithPermission {
-  id: string;
-  title: string;
-  start_date?: number | null;
-  location_name?: string | null;
-  group?: { name: string | null };
 }
 
 export function TransferAgendaItemDialog({
@@ -48,176 +23,25 @@ export function TransferAgendaItemDialog({
   currentEventTitle,
   onTransferComplete,
   trigger,
-  open: externalOpen,
-  onOpenChange: externalOnOpenChange,
+  open,
+  onOpenChange,
 }: TransferAgendaItemDialogProps) {
-  const { t } = useTranslation();
-  const { user } = useAuth();
-  const [internalOpen, setInternalOpen] = useState(false);
-  const [selectedEventId, setSelectedEventId] = useState('');
-
-  // Support both controlled and uncontrolled modes
-  const open = externalOpen !== undefined ? externalOpen : internalOpen;
-  const setOpen = externalOnOpenChange || setInternalOpen;
-
-  const { handleTransfer, transferLoading } = useAgendaItemMutations(agendaItemId, currentEventId);
-
-  // Query all events where user is a participant
-  const { participations: participationsData, isLoading: participationsLoading } =
-    useUserEventParticipations(user?.id);
-
-  // Filter events where user has agendaItems.manage permission
-  const eventsWithPermission = useMemo(() => {
-    if (!participationsData) return [];
-
-    const events: EventWithPermission[] = [];
-
-    participationsData.forEach(participation => {
-      // Skip current event
-      if (participation.event?.id === currentEventId) return;
-      if (!participation.event) return;
-
-      // Check if user has agendaItems.manage permission via role
-      const hasManagePermission = true; // Permission check handled by usePermissions hook
-
-      if (hasManagePermission) {
-        events.push({
-          id: participation.event.id,
-          title: participation.event.title || 'Untitled Event',
-          start_date: participation.event.start_date,
-          location_name: participation.event.location_name,
-          group: participation.event.group,
-        });
-      }
-    });
-
-    // Remove duplicates
-    return events.filter((event, index, self) => self.findIndex(e => e.id === event.id) === index);
-  }, [participationsData, currentEventId]);
-
-  const selectedEvent = eventsWithPermission.find(e => e.id === selectedEventId);
-
-  const handleConfirmTransfer = async () => {
-    if (!selectedEvent) return;
-
-    try {
-      await handleTransfer({
-        targetEventId: selectedEvent.id,
-        agendaItemTitle,
-        sourceEventTitle: currentEventTitle,
-        targetEventTitle: selectedEvent.title,
-      });
-
-      toast.success(t('features.events.agenda.transferSuccess'));
-      setOpen(false);
-      setSelectedEventId('');
-      onTransferComplete?.();
-    } catch (error) {
-      console.error('Transfer failed:', error);
-      toast.error(t('features.events.agenda.transferError'));
-    }
-  };
+  const controller = useTransferAgendaItemDialogController({
+    agendaItemId,
+    agendaItemTitle,
+    currentEventId,
+    currentEventTitle,
+    onTransferComplete,
+    open,
+    onOpenChange,
+  });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="outline" size="sm">
-            <ArrowRight className="mr-2 h-4 w-4" />
-            {t('features.events.agenda.moveToEvent')}
-          </Button>
-        )}
-      </DialogTrigger>
-      <ScrollableDialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{t('features.events.agenda.transferItem')}</DialogTitle>
-          <DialogDescription>
-            {t('features.events.agenda.selectDestinationEvent')}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-4">
-          {/* Current Event Display */}
-          <div className="space-y-2">
-            <label className="text-muted-foreground text-sm font-medium">
-              {t('features.events.agenda.currentEvent')}
-            </label>
-            <Card className="bg-muted/50">
-              <CardContent className="flex items-center gap-3 p-4">
-                <Calendar className="text-muted-foreground h-5 w-5" />
-                <div>
-                  <p className="font-medium">{currentEventTitle}</p>
-                  <p className="text-muted-foreground text-sm">{agendaItemTitle}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Arrow Indicator */}
-          <div className="flex justify-center">
-            <ArrowRight className="text-muted-foreground h-6 w-6" />
-          </div>
-
-          {/* Destination Event Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">
-              {t('features.events.agenda.destinationEvent')}
-            </label>
-            {participationsLoading ? (
-              <div className="flex items-center justify-center p-8">
-                <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-              </div>
-            ) : eventsWithPermission.length === 0 ? (
-              <Card className="bg-muted/50">
-                <CardContent className="text-muted-foreground p-6 text-center">
-                  <p>{t('features.events.agenda.noEventsWithPermission')}</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <TypeaheadSearch
-                items={toTypeaheadItems(
-                  eventsWithPermission,
-                  'event',
-                  (e: EventWithPermission) => e.title,
-                  (e: EventWithPermission) => e.group?.name
-                )}
-                value={selectedEventId}
-                onChange={(item: TypeaheadItem | null) => setSelectedEventId(item?.id ?? '')}
-                placeholder={t('features.events.agenda.searchEvents')}
-              />
-            )}
-          </div>
-
-          {/* Warning Message */}
-          {selectedEvent && (
-            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/50">
-              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-              <p className="text-sm text-amber-800 dark:text-amber-200">
-                {t('features.events.agenda.transferWarning')}
-              </p>
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={transferLoading}>
-            {t('common.cancel')}
-          </Button>
-          <Button onClick={handleConfirmTransfer} disabled={!selectedEventId || transferLoading}>
-            {transferLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t('features.events.agenda.transferring')}
-              </>
-            ) : (
-              <>
-                <ArrowRight className="mr-2 h-4 w-4" />
-                {t('features.events.agenda.transferConfirm')}
-              </>
-            )}
-          </Button>
-        </DialogFooter>
-      </ScrollableDialogContent>
-    </Dialog>
+    <TransferAgendaItemDialogView
+      agendaItemTitle={agendaItemTitle}
+      currentEventTitle={currentEventTitle}
+      trigger={trigger}
+      controller={controller}
+    />
   );
 }

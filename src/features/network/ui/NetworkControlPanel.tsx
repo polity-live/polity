@@ -244,9 +244,12 @@ export function NetworkControlPanel({
           ) : null}
 
           <div className="border-border/70 bg-background/95 dark:bg-card/95 mt-3 flex min-h-0 flex-1 flex-col rounded-lg border p-3 shadow-sm">
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => onLegendCollapsedChange(!legendCollapsed)}
-              className="hover:text-primary flex w-full shrink-0 items-center justify-between text-sm font-medium"
+              className="hover:text-primary flex h-auto w-full shrink-0 items-center justify-between px-0 py-0 text-sm font-medium"
             >
               <span>{legendTitle}</span>
               {legendCollapsed ? (
@@ -254,7 +257,7 @@ export function NetworkControlPanel({
               ) : (
                 <ChevronUp className="h-4 w-4" />
               )}
-            </button>
+            </Button>
             {!legendCollapsed && (
               <div className="mt-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 text-sm">
                 {legendItems.map(item => (

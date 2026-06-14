@@ -10,7 +10,7 @@ import {
 import type { ReactNode } from 'react';
 
 import { SearchField } from '@/features/shared/ui/form/SearchField';
-import { StatusBadge } from '@/features/shared/ui/status';
+import { StatusBadge } from '@/features/shared/ui/status/StatusBadges';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   DropdownMenu,

@@ -94,14 +94,15 @@ export function ForgotPasswordFormView({
           </form>
 
           <div className="text-muted-foreground mt-6 text-center text-sm">
-            <button
+            <FormButton
               type="button"
-              className="text-primary font-medium underline-offset-4 hover:underline"
+              variant="link"
+              className="h-auto p-0 font-medium"
               onClick={onBackToSignIn}
             >
               <ArrowLeft className="mr-1 inline h-3 w-3" />
               {copy.backToSignIn}
-            </button>
+            </FormButton>
           </div>
         </>
       )}

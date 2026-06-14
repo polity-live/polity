@@ -8,11 +8,10 @@ import {
 import { useAuth } from '@/providers/auth-provider';
 import { Button } from '@/features/shared/ui/ui/button';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
-import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
-import { SummaryPillList } from '@/features/shared/ui/ui/create-review-card';
+import { HashtagEditor } from '@/features/shared/ui/hashtags';
+import { SummaryPillList } from '@/features/shared/ui/form';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { CreateInputField } from '../ui/CreateFields';
 import {
   TargetGroupEventSelector,
   TargetGroupEventDisplay,
@@ -328,275 +327,334 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         {
           label: t('pages.create.amendment.basicInfo'),
           isValid: () => !!title.trim(),
-          content: (
-            <div className="space-y-4">
-              <CreateInputField
-                label={t('pages.create.amendment.titleLabel')}
-                required
-                hint={t('pages.create.amendment.tips.title')}
-                value={title}
-                onValueChange={setTitle}
-                placeholder={t('pages.create.amendment.titlePlaceholder')}
-              />
-              <CreateInputField
-                label={t('pages.create.amendment.subtitleOptional')}
-                hint={t('pages.create.amendment.tips.subtitle')}
-                value={subtitle}
-                onValueChange={setSubtitle}
-                placeholder={t('pages.create.amendment.subtitlePlaceholder')}
-              />
-              <ImageUpload
-                currentImage={imageURL}
-                onImageChange={(url: string) => setImageURL(url)}
-                cleanupOnRemove
-                entityType="amendments"
-                entityId={amendmentId}
-                label={t('pages.create.amendment.imageLabel')}
-                description={t('pages.create.amendment.imageDescription')}
-              />
-            </div>
-          ),
+          fields: [
+            {
+              key: 'title',
+              kind: 'text',
+              label: t('pages.create.amendment.titleLabel'),
+              required: true,
+              hint: t('pages.create.amendment.tips.title'),
+              value: title,
+              onValueChange: setTitle,
+              placeholder: t('pages.create.amendment.titlePlaceholder'),
+            },
+            {
+              key: 'subtitle',
+              kind: 'text',
+              label: t('pages.create.amendment.subtitleOptional'),
+              hint: t('pages.create.amendment.tips.subtitle'),
+              value: subtitle,
+              onValueChange: setSubtitle,
+              placeholder: t('pages.create.amendment.subtitlePlaceholder'),
+            },
+            {
+              key: 'image',
+              kind: 'custom',
+              node: (
+                <ImageUpload
+                  currentImage={imageURL}
+                  onImageChange={(url: string) => setImageURL(url)}
+                  cleanupOnRemove
+                  entityType="amendments"
+                  entityId={amendmentId}
+                  label={t('pages.create.amendment.imageLabel')}
+                  description={t('pages.create.amendment.imageDescription')}
+                />
+              ),
+            },
+          ],
         },
         {
           label: t('pages.create.amendment.targetGroupEvent'),
           isValid: () => true,
           optional: true,
-          content: (
-            <div className="space-y-4">
-              <p className="text-muted-foreground text-xs">
-                {t('pages.create.amendment.tips.targetGroupEvent')}
-              </p>
-              {user?.id ? (
-                <TargetGroupEventSelector
-                  userId={user.id}
-                  allowGroupWithoutEvent
-                  allowSourceGroupAsTarget
-                  layoutScope="create-amendment"
-                  onSourceGroupSelectionChange={handleSourceGroupSelectionChange}
-                  onGroupSelectionChange={handleGroupSelectionChange}
-                  onPathModeChange={handlePathModeChange}
-                  onWorkflowSelectionChange={handleWorkflowSelectionChange}
-                  onSelect={handleTargetSelection}
-                  selectedSourceGroupId={targetSelection?.sourceGroupId ?? sourceGroupIdParam}
-                  selectedGroupId={targetSelection?.groupId ?? targetGroupIdParam}
-                  selectedEventId={targetSelection?.eventId ?? undefined}
-                  selectedPathMode={pathMode}
-                  selectedWorkflowId={workflowId || undefined}
-                />
-              ) : (
-                <p className="text-muted-foreground text-sm">{t('pages.create.common.loading')}</p>
-              )}
+          fields: [
+            {
+              key: 'target',
+              kind: 'custom',
+              node: (
+                <div className="space-y-4">
+                  <p className="text-muted-foreground text-xs">
+                    {t('pages.create.amendment.tips.targetGroupEvent')}
+                  </p>
+                  {user?.id ? (
+                    <TargetGroupEventSelector
+                      userId={user.id}
+                      allowGroupWithoutEvent
+                      allowSourceGroupAsTarget
+                      layoutScope="create-amendment"
+                      onSourceGroupSelectionChange={handleSourceGroupSelectionChange}
+                      onGroupSelectionChange={handleGroupSelectionChange}
+                      onPathModeChange={handlePathModeChange}
+                      onWorkflowSelectionChange={handleWorkflowSelectionChange}
+                      onSelect={handleTargetSelection}
+                      selectedSourceGroupId={targetSelection?.sourceGroupId ?? sourceGroupIdParam}
+                      selectedGroupId={targetSelection?.groupId ?? targetGroupIdParam}
+                      selectedEventId={targetSelection?.eventId ?? undefined}
+                      selectedPathMode={pathMode}
+                      selectedWorkflowId={workflowId || undefined}
+                    />
+                  ) : (
+                    <p className="text-muted-foreground text-sm">
+                      {t('pages.create.common.loading')}
+                    </p>
+                  )}
 
-              {targetSelection && (
-                <div className="space-y-3">
-                  <TargetGroupEventDisplay
-                    groupData={targetSelection.groupData}
-                    eventData={targetSelection.eventData}
-                    pathWithEvents={targetSelection.pathWithEvents}
-                  />
-                  {targetSelection.missingEventSteps.length > 0 && (
-                    <div className="rounded-md border border-dashed p-3 text-sm">
-                      <p className="font-medium">
-                        {translateText('generated.inline.0318_offene_event_schritte_6d65e743')}
-                      </p>
-                      <p className="text-muted-foreground mt-1">
-                        {translateText(
-                          'generated.inline.0319_fuer_diese_gruppen_wird_beim_erstellen_automa_ead2264c'
-                        )}
-                      </p>
-                      <SummaryPillList
-                        items={targetSelection.missingEventSteps.map(step => step.groupName)}
+                  {targetSelection && (
+                    <div className="space-y-3">
+                      <TargetGroupEventDisplay
+                        groupData={targetSelection.groupData}
+                        eventData={targetSelection.eventData}
+                        pathWithEvents={targetSelection.pathWithEvents}
                       />
+                      {targetSelection.missingEventSteps.length > 0 && (
+                        <div className="rounded-md border border-dashed p-3 text-sm">
+                          <p className="font-medium">
+                            {translateText('generated.inline.0318_offene_event_schritte_6d65e743')}
+                          </p>
+                          <p className="text-muted-foreground mt-1">
+                            {translateText(
+                              'generated.inline.0319_fuer_diese_gruppen_wird_beim_erstellen_automa_ead2264c'
+                            )}
+                          </p>
+                          <SummaryPillList
+                            items={targetSelection.missingEventSteps.map(step => step.groupName)}
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          ),
+              ),
+            },
+          ],
         },
         {
           label: translateText('generated.inline.0050_evaluierung_581efef4'),
           isValid: () => evaluationMode !== 'fixed_date' || Boolean(evaluationDate),
           optional: true,
-          content: (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <FormControlLabel>
-                  {translateText('generated.inline.0320_evaluierungsmodus_37f2926b')}
-                </FormControlLabel>
-                <div className="flex flex-wrap gap-2">
-                  {(
-                    [
-                      ['none', 'Keine Evaluierung'],
-                      ['fixed_date', 'Fixes Datum'],
-                      ['relative_to_vote', 'Relativ zur Annahme'],
-                    ] as const
-                  ).map(([mode, label]) => (
-                    <Button
-                      key={mode}
-                      type="button"
-                      variant={evaluationMode === mode ? 'default' : 'outline'}
-                      onClick={() => {
-                        setEvaluationMode(mode);
-                        syncSearch({ evaluationMode: mode });
-                      }}
-                    >
-                      {label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {evaluationMode === 'fixed_date' && (
-                <CreateInputField
-                  label={translateText('generated.inline.0321_evaluierungsdatum_6b3d2c9b')}
-                  type="date"
-                  required
-                  value={evaluationDate}
-                  onValueChange={value => {
-                    setEvaluationDate(value);
-                    syncSearch({ evaluationDate: value || undefined });
-                  }}
-                />
-              )}
-
-              {evaluationMode === 'relative_to_vote' && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <CreateInputField
-                    label={translateText('generated.inline.0322_monate_nach_annahme_9ccb5844')}
-                    type="number"
-                    min={0}
-                    value={evaluationOffsetMonths}
-                    onValueChange={value => {
-                      setEvaluationOffsetMonths(value);
-                      syncSearch({
-                        evaluationOffsetMonths: value ? Number.parseInt(value, 10) : undefined,
-                      });
-                    }}
-                  />
-                  <CreateInputField
-                    label={translateText('generated.inline.0323_jahre_nach_annahme_42482627')}
-                    type="number"
-                    min={0}
-                    value={evaluationOffsetYears}
-                    onValueChange={value => {
-                      setEvaluationOffsetYears(value);
-                      syncSearch({
-                        evaluationOffsetYears: value ? Number.parseInt(value, 10) : undefined,
-                      });
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          ),
+          sections: [
+            {
+              key: 'mode',
+              fields: [
+                {
+                  key: 'mode-buttons',
+                  kind: 'custom',
+                  node: (
+                    <div className="space-y-2">
+                      <FormControlLabel>
+                        {translateText('generated.inline.0320_evaluierungsmodus_37f2926b')}
+                      </FormControlLabel>
+                      <div className="flex flex-wrap gap-2">
+                        {(
+                          [
+                            ['none', 'Keine Evaluierung'],
+                            ['fixed_date', 'Fixes Datum'],
+                            ['relative_to_vote', 'Relativ zur Annahme'],
+                          ] as const
+                        ).map(([mode, label]) => (
+                          <Button
+                            key={mode}
+                            type="button"
+                            variant={evaluationMode === mode ? 'default' : 'outline'}
+                            onClick={() => {
+                              setEvaluationMode(mode);
+                              syncSearch({ evaluationMode: mode });
+                            }}
+                          >
+                            {label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  ),
+                },
+              ],
+            },
+            ...(evaluationMode === 'fixed_date'
+              ? [
+                  {
+                    key: 'fixed-date',
+                    fields: [
+                      {
+                        key: 'evaluation-date',
+                        kind: 'text' as const,
+                        label: translateText('generated.inline.0321_evaluierungsdatum_6b3d2c9b'),
+                        type: 'date' as const,
+                        required: true,
+                        value: evaluationDate,
+                        onValueChange: (value: string) => {
+                          setEvaluationDate(value);
+                          syncSearch({ evaluationDate: value || undefined });
+                        },
+                      },
+                    ],
+                  },
+                ]
+              : []),
+            ...(evaluationMode === 'relative_to_vote'
+              ? [
+                  {
+                    key: 'relative-offset',
+                    layout: 'grid' as const,
+                    fields: [
+                      {
+                        key: 'evaluation-offset-months',
+                        kind: 'text' as const,
+                        label: translateText('generated.inline.0322_monate_nach_annahme_9ccb5844'),
+                        type: 'number' as const,
+                        min: 0,
+                        value: evaluationOffsetMonths,
+                        onValueChange: (value: string) => {
+                          setEvaluationOffsetMonths(value);
+                          syncSearch({
+                            evaluationOffsetMonths: value ? Number.parseInt(value, 10) : undefined,
+                          });
+                        },
+                      },
+                      {
+                        key: 'evaluation-offset-years',
+                        kind: 'text' as const,
+                        label: translateText('generated.inline.0323_jahre_nach_annahme_42482627'),
+                        type: 'number' as const,
+                        min: 0,
+                        value: evaluationOffsetYears,
+                        onValueChange: (value: string) => {
+                          setEvaluationOffsetYears(value);
+                          syncSearch({
+                            evaluationOffsetYears: value ? Number.parseInt(value, 10) : undefined,
+                          });
+                        },
+                      },
+                    ],
+                  },
+                ]
+              : []),
+          ],
         },
         {
           label: t('pages.create.amendment.visibilityAndTags'),
           isValid: () => true,
           optional: true,
-          content: (
-            <div className="space-y-4">
-              <VisibilityInput value={visibility} onChange={setVisibility} />
-              <HashtagEditor
-                value={hashtags}
-                onChange={setHashtags}
-                placeholder={t('pages.create.amendment.hashtagPlaceholder')}
-              />
-            </div>
-          ),
+          fields: [
+            {
+              key: 'visibility',
+              kind: 'custom',
+              node: <VisibilityInput value={visibility} onChange={setVisibility} />,
+            },
+            {
+              key: 'hashtags',
+              kind: 'custom',
+              node: (
+                <HashtagEditor
+                  value={hashtags}
+                  onChange={setHashtags}
+                  placeholder={t('pages.create.amendment.hashtagPlaceholder')}
+                />
+              ),
+            },
+          ],
         },
         {
           label: t('pages.create.common.review'),
           isValid: () => !!title.trim(),
-          content: (
-            <CreateSummaryStep
-              entityType="amendment"
-              badge={t('pages.create.amendment.reviewBadge')}
-              title={title || t('pages.create.amendment.titlePlaceholder')}
-              subtitle={subtitle || undefined}
-              media={
-                imageURL ? { imageUrl: imageURL, imageAlt: title || 'Amendment image' } : undefined
-              }
-              hashtags={hashtags.length > 0 ? hashtags : undefined}
-              sections={[
-                {
-                  title: t('pages.create.amendment.targetGroupEvent'),
-                  fields: [
-                    ...(targetSelection
-                      ? [
-                          {
-                            label: t('pages.create.amendment.target'),
-                            value: targetSelection.eventData
-                              ? `${String(targetSelection.groupData.name ?? '')} -> ${String(targetSelection.eventData.title ?? '')}`
-                              : String(targetSelection.groupData.name ?? ''),
-                          },
-                          {
-                            label: translateText('generated.inline.0051_startgruppe_27591dc9'),
-                            value:
-                              targetSelection.pathWithEvents[0]?.groupName ??
-                              targetSelection.groupData.name ??
-                              '',
-                          },
-                          ...(targetSelection.eventData && targetSelection.pathWithEvents.length > 0
-                            ? [
-                                {
-                                  label: translateText('generated.inline.0052_path_519e3913'),
-                                  value: (
-                                    <SummaryPillList
-                                      items={targetSelection.pathWithEvents.map(
-                                        segment =>
-                                          `${segment.groupName}: ${segment.eventTitle || t('pages.create.common.notSelected')}`
-                                      )}
-                                    />
-                                  ),
-                                },
-                              ]
-                            : []),
-                          ...(targetSelection.missingEventSteps.length > 0
-                            ? [
-                                {
-                                  label: translateText(
-                                    'generated.inline.0053_offene_event_schritte_6d65e743'
-                                  ),
-                                  value: (
-                                    <SummaryPillList
-                                      items={targetSelection.missingEventSteps.map(
-                                        step => step.groupName
-                                      )}
-                                    />
-                                  ),
-                                },
-                              ]
-                            : []),
-                        ]
-                      : []),
-                  ],
-                },
-                {
-                  title: translateText('generated.inline.0050_evaluierung_581efef4'),
-                  fields: [
+          fields: [
+            {
+              key: 'review',
+              kind: 'custom',
+              node: (
+                <CreateSummaryStep
+                  entityType="amendment"
+                  badge={t('pages.create.amendment.reviewBadge')}
+                  title={title || t('pages.create.amendment.titlePlaceholder')}
+                  subtitle={subtitle || undefined}
+                  media={
+                    imageURL
+                      ? { imageUrl: imageURL, imageAlt: title || 'Amendment image' }
+                      : undefined
+                  }
+                  hashtags={hashtags.length > 0 ? hashtags : undefined}
+                  sections={[
                     {
-                      label: translateText('generated.inline.0054_modus_a7f116c3'),
-                      value: evaluationSummary,
+                      title: t('pages.create.amendment.targetGroupEvent'),
+                      fields: [
+                        ...(targetSelection
+                          ? [
+                              {
+                                label: t('pages.create.amendment.target'),
+                                value: targetSelection.eventData
+                                  ? `${String(targetSelection.groupData.name ?? '')} -> ${String(targetSelection.eventData.title ?? '')}`
+                                  : String(targetSelection.groupData.name ?? ''),
+                              },
+                              {
+                                label: translateText('generated.inline.0051_startgruppe_27591dc9'),
+                                value:
+                                  targetSelection.pathWithEvents[0]?.groupName ??
+                                  targetSelection.groupData.name ??
+                                  '',
+                              },
+                              ...(targetSelection.eventData &&
+                              targetSelection.pathWithEvents.length > 0
+                                ? [
+                                    {
+                                      label: translateText('generated.inline.0052_path_519e3913'),
+                                      value: (
+                                        <SummaryPillList
+                                          items={targetSelection.pathWithEvents.map(
+                                            segment =>
+                                              `${segment.groupName}: ${segment.eventTitle || t('pages.create.common.notSelected')}`
+                                          )}
+                                        />
+                                      ),
+                                    },
+                                  ]
+                                : []),
+                              ...(targetSelection.missingEventSteps.length > 0
+                                ? [
+                                    {
+                                      label: translateText(
+                                        'generated.inline.0053_offene_event_schritte_6d65e743'
+                                      ),
+                                      value: (
+                                        <SummaryPillList
+                                          items={targetSelection.missingEventSteps.map(
+                                            step => step.groupName
+                                          )}
+                                        />
+                                      ),
+                                    },
+                                  ]
+                                : []),
+                            ]
+                          : []),
+                      ],
                     },
-                  ],
-                },
-                {
-                  title: t('pages.create.amendment.visibilityAndTags'),
-                  fields: [
                     {
-                      label: t('pages.create.common.visibility'),
-                      value: visibilityLabel,
+                      title: translateText('generated.inline.0050_evaluierung_581efef4'),
+                      fields: [
+                        {
+                          label: translateText('generated.inline.0054_modus_a7f116c3'),
+                          value: evaluationSummary,
+                        },
+                      ],
                     },
-                    ...(imageURL
-                      ? [{ label: t('pages.create.amendment.imageLabel'), value: 'Attached' }]
-                      : []),
-                  ],
-                },
-              ]}
-            />
-          ),
+                    {
+                      title: t('pages.create.amendment.visibilityAndTags'),
+                      fields: [
+                        {
+                          label: t('pages.create.common.visibility'),
+                          value: visibilityLabel,
+                        },
+                        ...(imageURL
+                          ? [{ label: t('pages.create.amendment.imageLabel'), value: 'Attached' }]
+                          : []),
+                      ],
+                    },
+                  ]}
+                />
+              ),
+            },
+          ],
         },
       ],
     }),

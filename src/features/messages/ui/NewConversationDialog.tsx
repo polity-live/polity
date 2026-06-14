@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Search } from 'lucide-react';
 import { useUserState } from '@/zero/users/useUserState';
 import { ARIA_KAI_USER_ID } from '@/features/auth/constants';
@@ -90,33 +91,29 @@ export function NewConversationDialog({
               </div>
             ) : (
               filteredUsers.map(searchUser => (
-                <div
+                <Button
                   key={searchUser.id}
-                  className="hover:bg-accent flex w-full items-center justify-between gap-3 rounded-lg p-3 transition-colors"
+                  type="button"
+                  variant="ghost"
+                  onClick={() => onUserSelect(searchUser.id)}
+                  className="h-auto w-full justify-start gap-3 rounded-lg p-3 text-left whitespace-normal transition-colors"
                 >
-                  <button
-                    onClick={() => onUserSelect(searchUser.id)}
-                    className="flex flex-1 items-center gap-3 text-left"
-                  >
-                    <Avatar className="h-10 w-10 flex-shrink-0">
-                      <AvatarImage src={searchUser.avatar ?? undefined} />
-                      <AvatarFallback>
-                        {searchUser.first_name?.[0]?.toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold">
-                        {[searchUser.first_name, searchUser.last_name].filter(Boolean).join(' ') ||
-                          t('common.labels.unspecifiedUser')}
-                      </p>
-                      {searchUser.handle && (
-                        <p className="text-muted-foreground truncate text-sm">
-                          @{searchUser.handle}
-                        </p>
-                      )}
-                    </div>
-                  </button>
-                </div>
+                  <Avatar className="h-10 w-10 flex-shrink-0">
+                    <AvatarImage src={searchUser.avatar ?? undefined} />
+                    <AvatarFallback>
+                      {searchUser.first_name?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold">
+                      {[searchUser.first_name, searchUser.last_name].filter(Boolean).join(' ') ||
+                        t('common.labels.unspecifiedUser')}
+                    </p>
+                    {searchUser.handle && (
+                      <p className="text-muted-foreground truncate text-sm">@{searchUser.handle}</p>
+                    )}
+                  </div>
+                </Button>
               ))
             )}
           </div>

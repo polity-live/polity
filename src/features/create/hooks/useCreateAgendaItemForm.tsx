@@ -13,10 +13,9 @@ import { useQuery, useZero } from '@rocicorp/zero/react';
 import { toast } from 'sonner';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import { TypeSelector } from '@/features/shared/ui/ui/type-selector';
+import { TypeSelector } from '@/features/shared/ui/form';
 import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { CreateInputField, CreateTextareaField, CreateTypeaheadField } from '../ui/CreateFields';
 import type { CreateFormConfig } from '../types/create-form.types';
 import { RoleSearchInput } from '../ui/inputs/RoleSearchInput';
 import {
@@ -732,49 +731,65 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         {
           label: t('pages.create.agendaItem.basicInfo'),
           isValid: () => !!eventId && !!title.trim() && !assignmentLookupFailed,
-          content: (
-            <div className="space-y-4">
-              {delegateAssignment ? (
-                <div className="bg-muted/30 rounded-2xl border p-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <BadgeControl variant="outline">
-                      {translateText('generated.inline.0305_delegiertenauftrag_5a165b38')}
-                    </BadgeControl>
-                    {assignmentModeLabel ? (
-                      <BadgeControl variant="secondary">{assignmentModeLabel}</BadgeControl>
-                    ) : null}
-                    <BadgeControl variant="secondary">
-                      {delegateSeatCount}{' '}
-                      {delegateSeatCount === 1
-                        ? translateText('generated.inline.0041_delegierte_109dfa4c')
-                        : translateText('generated.inline.0041_delegierte_109dfa4c')}
-                    </BadgeControl>
-                  </div>
-                  <p className="text-muted-foreground mt-3 text-sm">
-                    {translateText(
-                      'generated.inline.0306_dieses_election_agenda_item_meldet_delegierte_3d499eb7'
-                    )}{' '}
-                    <strong>
-                      {delegateAssignment.targetEvent?.title ||
-                        translateText('generated.inline.0042_das_ziel_event_97f4ce5e')}
-                    </strong>
-                    .
-                  </p>
-                </div>
-              ) : null}
-
-              {assignmentLookupFailed ? (
-                <div className="border-destructive/40 bg-destructive/5 text-destructive rounded-2xl border p-4 text-sm">
-                  {translateText(
-                    'generated.inline.0307_der_verlinkte_delegiertenauftrag_konnte_nicht_b7f62171'
-                  )}
-                </div>
-              ) : null}
-
-              <CreateTypeaheadField
-                label={t('pages.create.agendaItem.eventLabel')}
-                required
-                items={toTypeaheadItems(
+          fields: [
+            ...(delegateAssignment
+              ? [
+                  {
+                    key: 'delegate-assignment',
+                    kind: 'custom' as const,
+                    node: (
+                      <div className="bg-muted/30 rounded-2xl border p-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <BadgeControl variant="outline">
+                            {translateText('generated.inline.0305_delegiertenauftrag_5a165b38')}
+                          </BadgeControl>
+                          {assignmentModeLabel ? (
+                            <BadgeControl variant="secondary">{assignmentModeLabel}</BadgeControl>
+                          ) : null}
+                          <BadgeControl variant="secondary">
+                            {delegateSeatCount}{' '}
+                            {delegateSeatCount === 1
+                              ? translateText('generated.inline.0041_delegierte_109dfa4c')
+                              : translateText('generated.inline.0041_delegierte_109dfa4c')}
+                          </BadgeControl>
+                        </div>
+                        <p className="text-muted-foreground mt-3 text-sm">
+                          {translateText(
+                            'generated.inline.0306_dieses_election_agenda_item_meldet_delegierte_3d499eb7'
+                          )}{' '}
+                          <strong>
+                            {delegateAssignment.targetEvent?.title ||
+                              translateText('generated.inline.0042_das_ziel_event_97f4ce5e')}
+                          </strong>
+                          .
+                        </p>
+                      </div>
+                    ),
+                  },
+                ]
+              : []),
+            ...(assignmentLookupFailed
+              ? [
+                  {
+                    key: 'assignment-error',
+                    kind: 'custom' as const,
+                    node: (
+                      <div className="border-destructive/40 bg-destructive/5 text-destructive rounded-2xl border p-4 text-sm">
+                        {translateText(
+                          'generated.inline.0307_der_verlinkte_delegiertenauftrag_konnte_nicht_b7f62171'
+                        )}
+                      </div>
+                    ),
+                  },
+                ]
+              : []),
+            {
+              key: 'event',
+              kind: 'typeahead',
+              label: t('pages.create.agendaItem.eventLabel'),
+              required: true,
+              props: {
+                items: toTypeaheadItems(
                   userEvents,
                   'event',
                   event => event.title || 'Event',
@@ -784,71 +799,91 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                   },
                   undefined,
                   event => `/event/${event.id}`
-                )}
-                value={eventId || undefined}
-                onChange={item => setEventId(item?.id ?? '')}
-                placeholder={t('pages.create.agendaItem.eventPlaceholder')}
-              />
-              <CreateInputField
-                label={t('pages.create.agendaItem.titleLabel')}
-                required
-                value={title}
-                onValueChange={setTitle}
-                placeholder={t('pages.create.agendaItem.titlePlaceholder')}
-              />
-              <CreateTextareaField
-                label={t('pages.create.agendaItem.descriptionLabel')}
-                value={description}
-                onValueChange={setDescription}
-                placeholder={t('pages.create.agendaItem.descriptionPlaceholder')}
-                rows={3}
-              />
-            </div>
-          ),
+                ),
+                value: eventId || undefined,
+                onChange: item => setEventId(item?.id ?? ''),
+                placeholder: t('pages.create.agendaItem.eventPlaceholder'),
+              },
+            },
+            {
+              key: 'title',
+              kind: 'text',
+              label: t('pages.create.agendaItem.titleLabel'),
+              required: true,
+              value: title,
+              onValueChange: setTitle,
+              placeholder: t('pages.create.agendaItem.titlePlaceholder'),
+            },
+            {
+              key: 'description',
+              kind: 'text',
+              multiline: true,
+              label: t('pages.create.agendaItem.descriptionLabel'),
+              value: description,
+              onValueChange: setDescription,
+              placeholder: t('pages.create.agendaItem.descriptionPlaceholder'),
+              rows: 3,
+            },
+          ],
         },
         {
           label: t('pages.create.agendaItem.typeAndSettings'),
           isValid: () => true,
-          content: (
-            <div className="space-y-4">
-              {delegateAssignment ? (
-                <div className="bg-muted/30 rounded-2xl border p-4">
-                  <p className="text-sm font-medium">
-                    {translateText('generated.inline.0308_typ_edcaf9aa')}
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    {translateText(
-                      'generated.inline.0309_dieser_auftrag_erstellt_immer_einen_tagesordn_3d58b481'
-                    )}
-                  </p>
-                </div>
-              ) : (
-                <TooltipProvider>
-                  <TypeSelector value={type} onChange={setType} />
-                </TooltipProvider>
-              )}
-              <div className="grid gap-4 md:grid-cols-2">
-                <CreateInputField
-                  label={t('pages.create.agendaItem.orderLabel')}
-                  type="number"
-                  min="1"
-                  value={order}
-                  onValueChange={value => {
+          sections: [
+            {
+              key: 'type',
+              fields: [
+                {
+                  key: 'type-selector',
+                  kind: 'custom',
+                  node: delegateAssignment ? (
+                    <div className="bg-muted/30 rounded-2xl border p-4">
+                      <p className="text-sm font-medium">
+                        {translateText('generated.inline.0308_typ_edcaf9aa')}
+                      </p>
+                      <p className="text-muted-foreground text-sm">
+                        {translateText(
+                          'generated.inline.0309_dieser_auftrag_erstellt_immer_einen_tagesordn_3d58b481'
+                        )}
+                      </p>
+                    </div>
+                  ) : (
+                    <TooltipProvider>
+                      <TypeSelector value={type} onChange={setType} />
+                    </TooltipProvider>
+                  ),
+                },
+              ],
+            },
+            {
+              key: 'order-duration',
+              layout: 'grid',
+              fields: [
+                {
+                  key: 'order',
+                  kind: 'text',
+                  label: t('pages.create.agendaItem.orderLabel'),
+                  type: 'number',
+                  min: '1',
+                  value: order,
+                  onValueChange: value => {
                     setHasCustomOrder(true);
                     setOrder(parseInt(value, 10) || 1);
-                  }}
-                />
-                <CreateInputField
-                  label={t('pages.create.agendaItem.durationLabel')}
-                  type="number"
-                  min="1"
-                  placeholder={t('pages.create.agendaItem.durationPlaceholder')}
-                  value={duration}
-                  onValueChange={setDuration}
-                />
-              </div>
-            </div>
-          ),
+                  },
+                },
+                {
+                  key: 'duration',
+                  kind: 'text',
+                  label: t('pages.create.agendaItem.durationLabel'),
+                  type: 'number',
+                  min: '1',
+                  placeholder: t('pages.create.agendaItem.durationPlaceholder'),
+                  value: duration,
+                  onValueChange: setDuration,
+                },
+              ],
+            },
+          ],
         },
         ...(isElectionType || isVoteType
           ? [
@@ -857,100 +892,127 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                 isValid: () =>
                   !assignmentLookupFailed &&
                   (!isElectionType || resolvedElectionMode !== 'list' || resolvedSeatCount >= 1),
-                content: (
-                  <div className="space-y-4">
-                    {isElectionType ? (
-                      <>
-                        <ElectionModeInput
-                          value={resolvedElectionMode}
-                          onChange={mode => setElectionMode(mode)}
-                          label={translateText('generated.inline.0310_wahltyp_05ffc3a6')}
-                          hint={
-                            delegateAssignment
-                              ? 'Der Auftrag setzt die Zahl der zu vergebenden Sitze. Der Modus kann fuer diese Wahl noch angepasst werden.'
-                              : 'Waehle, ob Kandidierende einzeln oder als Listenwahl gewaehlt werden.'
-                          }
-                          descriptions={{
-                            list: 'Eine Wahl mit mehreren Stimmen und mehreren zu vergebenden Positionen.',
-                            single: 'Eine Wahl pro Position mit genau einer Stimme pro Waehler.',
-                          }}
-                        />
-
-                        {showSeatCountInput ? (
-                          <CreateInputField
-                            label={translateText(
-                              'generated.inline.0311_anzahl_positionen_479e7595'
-                            )}
-                            required
-                            type="number"
-                            min="1"
-                            value={seatCountInput}
-                            onValueChange={setSeatCountInput}
-                            disabled={Boolean(delegateAssignment)}
-                            hint={
-                              delegateAssignment
-                                ? 'Die Anzahl kommt direkt aus dem Delegiertenauftrag.'
-                                : 'So viele Positionen koennen in dieser Listenwahl vergeben werden.'
-                            }
-                          />
-                        ) : delegateAssignment ? (
-                          <div className="bg-muted/30 text-muted-foreground rounded-2xl border p-4 text-sm">
-                            {translateText('generated.inline.0312_es_werden_automatisch_1599e87a')}
-                            {delegateSeatCount}{' '}
-                            {delegateSeatCount === 1
-                              ? translateText('generated.inline.0043_einzelwahl_8c93376c')
-                              : translateText('generated.inline.0044_einzelwahlen_c5379380')}
-                            {translateText(
-                              'generated.inline.0313_fuer_die_aus_dem_auftrag_berechneten_delegier_67926bfc'
-                            )}
-                          </div>
-                        ) : null}
-                      </>
-                    ) : null}
-
-                    <div className="space-y-2">
-                      <FormControlLabel>
-                        {t('pages.create.agendaItem.majorityType')}
-                      </FormControlLabel>
-                      <FormControlSelect
-                        value={majorityType}
-                        onValueChange={(value: string) => setMajorityType(value as MajorityType)}
-                      >
-                        <FormControlSelectTrigger>
-                          <FormControlSelectValue />
-                        </FormControlSelectTrigger>
-                        <FormControlSelectContent>
-                          <FormControlSelectItem value="simple">
-                            {t('pages.create.agendaItem.majoritySimple')}
-                          </FormControlSelectItem>
-                          <FormControlSelectItem value="absolute">
-                            {t('pages.create.agendaItem.majorityAbsolute')}
-                          </FormControlSelectItem>
-                          <FormControlSelectItem value="two_thirds">
-                            {t('pages.create.agendaItem.majorityTwoThirds')}
-                          </FormControlSelectItem>
-                        </FormControlSelectContent>
-                      </FormControlSelect>
-                    </div>
-                    <CreateInputField
-                      label={t('pages.create.agendaItem.timeLimit')}
-                      type="number"
-                      min="1"
-                      placeholder={t('pages.create.agendaItem.timeLimitPlaceholder')}
-                      value={timeLimit}
-                      onValueChange={setTimeLimit}
-                    />
-                    <BallotVisibilityInput
-                      value={ballotVisibility}
-                      onChange={setBallotVisibility}
-                      hint={
-                        isElectionType
-                          ? 'Delegierten- und Personenwahlen sind standardmaessig geheim.'
-                          : 'Abstimmungen sind standardmaessig namentlich.'
-                      }
-                    />
-                  </div>
-                ),
+                fields: [
+                  ...(isElectionType
+                    ? [
+                        {
+                          key: 'election-mode',
+                          kind: 'custom' as const,
+                          node: (
+                            <ElectionModeInput
+                              value={resolvedElectionMode}
+                              onChange={mode => setElectionMode(mode)}
+                              label={translateText('generated.inline.0310_wahltyp_05ffc3a6')}
+                              hint={
+                                delegateAssignment
+                                  ? 'Der Auftrag setzt die Zahl der zu vergebenden Sitze. Der Modus kann fuer diese Wahl noch angepasst werden.'
+                                  : 'Waehle, ob Kandidierende einzeln oder als Listenwahl gewaehlt werden.'
+                              }
+                              descriptions={{
+                                list: 'Eine Wahl mit mehreren Stimmen und mehreren zu vergebenden Positionen.',
+                                single:
+                                  'Eine Wahl pro Position mit genau einer Stimme pro Waehler.',
+                              }}
+                            />
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(showSeatCountInput
+                    ? [
+                        {
+                          key: 'seat-count',
+                          kind: 'text' as const,
+                          label: translateText('generated.inline.0311_anzahl_positionen_479e7595'),
+                          required: true,
+                          type: 'number' as const,
+                          min: '1',
+                          value: seatCountInput,
+                          onValueChange: setSeatCountInput,
+                          disabled: Boolean(delegateAssignment),
+                          hint: delegateAssignment
+                            ? 'Die Anzahl kommt direkt aus dem Delegiertenauftrag.'
+                            : 'So viele Positionen koennen in dieser Listenwahl vergeben werden.',
+                        },
+                      ]
+                    : delegateAssignment
+                      ? [
+                          {
+                            key: 'delegate-seat-count',
+                            kind: 'custom' as const,
+                            node: (
+                              <div className="bg-muted/30 text-muted-foreground rounded-2xl border p-4 text-sm">
+                                {translateText(
+                                  'generated.inline.0312_es_werden_automatisch_1599e87a'
+                                )}
+                                {delegateSeatCount}{' '}
+                                {delegateSeatCount === 1
+                                  ? translateText('generated.inline.0043_einzelwahl_8c93376c')
+                                  : translateText('generated.inline.0044_einzelwahlen_c5379380')}
+                                {translateText(
+                                  'generated.inline.0313_fuer_die_aus_dem_auftrag_berechneten_delegier_67926bfc'
+                                )}
+                              </div>
+                            ),
+                          },
+                        ]
+                      : []),
+                  {
+                    key: 'majority-type',
+                    kind: 'custom' as const,
+                    node: (
+                      <div className="space-y-2">
+                        <FormControlLabel>
+                          {t('pages.create.agendaItem.majorityType')}
+                        </FormControlLabel>
+                        <FormControlSelect
+                          value={majorityType}
+                          onValueChange={(value: string) => setMajorityType(value as MajorityType)}
+                        >
+                          <FormControlSelectTrigger>
+                            <FormControlSelectValue />
+                          </FormControlSelectTrigger>
+                          <FormControlSelectContent>
+                            <FormControlSelectItem value="simple">
+                              {t('pages.create.agendaItem.majoritySimple')}
+                            </FormControlSelectItem>
+                            <FormControlSelectItem value="absolute">
+                              {t('pages.create.agendaItem.majorityAbsolute')}
+                            </FormControlSelectItem>
+                            <FormControlSelectItem value="two_thirds">
+                              {t('pages.create.agendaItem.majorityTwoThirds')}
+                            </FormControlSelectItem>
+                          </FormControlSelectContent>
+                        </FormControlSelect>
+                      </div>
+                    ),
+                  },
+                  {
+                    key: 'time-limit',
+                    kind: 'text' as const,
+                    label: t('pages.create.agendaItem.timeLimit'),
+                    type: 'number' as const,
+                    min: '1',
+                    placeholder: t('pages.create.agendaItem.timeLimitPlaceholder'),
+                    value: timeLimit,
+                    onValueChange: setTimeLimit,
+                  },
+                  {
+                    key: 'ballot-visibility',
+                    kind: 'custom' as const,
+                    node: (
+                      <BallotVisibilityInput
+                        value={ballotVisibility}
+                        onChange={setBallotVisibility}
+                        hint={
+                          isElectionType
+                            ? 'Delegierten- und Personenwahlen sind standardmaessig geheim.'
+                            : 'Abstimmungen sind standardmaessig namentlich.'
+                        }
+                      />
+                    ),
+                  },
+                ],
               },
             ]
           : []),
@@ -958,69 +1020,96 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           label: t('pages.create.agendaItem.additionalLinks'),
           isValid: () => true,
           optional: true,
-          content: (
-            <div className="space-y-4">
-              {isVoteType && (
-                <CreateTypeaheadField
-                  label={t('pages.create.agendaItem.amendmentOptional')}
-                  items={toTypeaheadItems(
-                    userAmendments,
-                    'amendment',
-                    amendment => amendment.title || 'Amendment',
-                    undefined,
-                    undefined,
-                    amendment => `/amendment/${amendment.id}`
-                  )}
-                  value={amendmentId || undefined}
-                  onChange={item => setAmendmentId(item?.id ?? '')}
-                  placeholder={t('pages.create.agendaItem.amendmentPlaceholder')}
-                />
-              )}
-
-              {isElectionType && !delegateAssignment && (
-                <div className="space-y-2">
-                  <RoleSearchInput
-                    value={roleId}
-                    onChange={setRoleId}
-                    label={t('pages.create.agendaItem.positionOptional')}
-                    placeholder={t('pages.create.agendaItem.positionPlaceholder')}
-                    groupIds={selectedEvent?.group_id ? [selectedEvent.group_id] : undefined}
-                    eventId={eventId || undefined}
-                  />
-                </div>
-              )}
-
-              {delegateAssignment ? (
-                <div className="bg-muted/30 rounded-2xl border p-4">
-                  <p className="text-sm font-medium">
-                    {translateText('generated.inline.0314_ziel_der_delegiertenwahl_b8a85d6c')}
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    {translateText(
-                      'generated.inline.0315_gewaehlte_delegierte_werden_automatisch_in_04270bde'
-                    )}{' '}
-                    <strong>
-                      {delegateAssignment.targetEvent?.title ||
-                        translateText('generated.inline.0045_die_delegiertenversammlung_9744e078')}
-                    </strong>{' '}
-                    {translateText('generated.inline.0316_als_participants_eingetragen_3c697639')}
-                  </p>
-                  {sourceGroup?.name ? (
-                    <p className="text-muted-foreground mt-2 text-sm">
-                      {translateText('generated.inline.0317_herkunftsgruppe_18ef20d3')}
-                      <strong>{sourceGroup.name}</strong>
-                    </p>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {!isVoteType && !isElectionType && (
-                <div className="text-muted-foreground py-8 text-center">
-                  {t('pages.create.agendaItem.noAdditionalConfig')}
-                </div>
-              )}
-            </div>
-          ),
+          fields: [
+            ...(isVoteType
+              ? [
+                  {
+                    key: 'amendment',
+                    kind: 'typeahead' as const,
+                    label: t('pages.create.agendaItem.amendmentOptional'),
+                    props: {
+                      items: toTypeaheadItems(
+                        userAmendments,
+                        'amendment',
+                        amendment => amendment.title || 'Amendment',
+                        undefined,
+                        undefined,
+                        amendment => `/amendment/${amendment.id}`
+                      ),
+                      value: amendmentId || undefined,
+                      onChange: (item: { id: string } | null) => setAmendmentId(item?.id ?? ''),
+                      placeholder: t('pages.create.agendaItem.amendmentPlaceholder'),
+                    },
+                  },
+                ]
+              : []),
+            ...(isElectionType && !delegateAssignment
+              ? [
+                  {
+                    key: 'role',
+                    kind: 'custom' as const,
+                    node: (
+                      <RoleSearchInput
+                        value={roleId}
+                        onChange={setRoleId}
+                        label={t('pages.create.agendaItem.positionOptional')}
+                        placeholder={t('pages.create.agendaItem.positionPlaceholder')}
+                        groupIds={selectedEvent?.group_id ? [selectedEvent.group_id] : undefined}
+                        eventId={eventId || undefined}
+                      />
+                    ),
+                  },
+                ]
+              : []),
+            ...(delegateAssignment
+              ? [
+                  {
+                    key: 'delegate-target',
+                    kind: 'custom' as const,
+                    node: (
+                      <div className="bg-muted/30 rounded-2xl border p-4">
+                        <p className="text-sm font-medium">
+                          {translateText('generated.inline.0314_ziel_der_delegiertenwahl_b8a85d6c')}
+                        </p>
+                        <p className="text-muted-foreground mt-1 text-sm">
+                          {translateText(
+                            'generated.inline.0315_gewaehlte_delegierte_werden_automatisch_in_04270bde'
+                          )}{' '}
+                          <strong>
+                            {delegateAssignment.targetEvent?.title ||
+                              translateText(
+                                'generated.inline.0045_die_delegiertenversammlung_9744e078'
+                              )}
+                          </strong>{' '}
+                          {translateText(
+                            'generated.inline.0316_als_participants_eingetragen_3c697639'
+                          )}
+                        </p>
+                        {sourceGroup?.name ? (
+                          <p className="text-muted-foreground mt-2 text-sm">
+                            {translateText('generated.inline.0317_herkunftsgruppe_18ef20d3')}
+                            <strong>{sourceGroup.name}</strong>
+                          </p>
+                        ) : null}
+                      </div>
+                    ),
+                  },
+                ]
+              : []),
+            ...(!isVoteType && !isElectionType
+              ? [
+                  {
+                    key: 'empty-state',
+                    kind: 'custom' as const,
+                    node: (
+                      <div className="text-muted-foreground py-8 text-center">
+                        {t('pages.create.agendaItem.noAdditionalConfig')}
+                      </div>
+                    ),
+                  },
+                ]
+              : []),
+          ],
         },
         {
           label: t('pages.create.common.review'),
@@ -1029,111 +1118,122 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
             !!title.trim() &&
             !assignmentLookupFailed &&
             (!isElectionType || resolvedElectionMode !== 'list' || resolvedSeatCount >= 1),
-          content: (
-            <CreateSummaryStep
-              entityType="agenda_item"
-              badge={t('pages.create.agendaItem.reviewBadge')}
-              secondaryBadge={agendaTypeLabel}
-              title={title || t('pages.create.agendaItem.titlePlaceholder')}
-              subtitle={description || undefined}
-              sections={[
-                {
-                  title: t('pages.create.agendaItem.basicInfo'),
-                  fields: [
+          fields: [
+            {
+              key: 'review',
+              kind: 'custom' as const,
+              node: (
+                <CreateSummaryStep
+                  entityType="agenda_item"
+                  badge={t('pages.create.agendaItem.reviewBadge')}
+                  secondaryBadge={agendaTypeLabel}
+                  title={title || t('pages.create.agendaItem.titlePlaceholder')}
+                  subtitle={description || undefined}
+                  sections={[
                     {
-                      label: t('pages.create.agendaItem.eventLabel'),
-                      value: selectedEvent?.title || t('pages.create.common.notSelected'),
+                      title: t('pages.create.agendaItem.basicInfo'),
+                      fields: [
+                        {
+                          label: t('pages.create.agendaItem.eventLabel'),
+                          value: selectedEvent?.title || t('pages.create.common.notSelected'),
+                        },
+                        { label: t('pages.create.agendaItem.typeLabel'), value: agendaTypeLabel },
+                        {
+                          label: t('pages.create.agendaItem.orderLabel'),
+                          value: `#${resolvedOrder}`,
+                        },
+                        ...(duration
+                          ? [
+                              {
+                                label: t('pages.create.agendaItem.durationLabel'),
+                                value: `${duration} ${t('pages.create.agendaItem.minutes')}`,
+                              },
+                            ]
+                          : []),
+                      ],
                     },
-                    { label: t('pages.create.agendaItem.typeLabel'), value: agendaTypeLabel },
-                    { label: t('pages.create.agendaItem.orderLabel'), value: `#${resolvedOrder}` },
-                    ...(duration
+                    {
+                      title: t('pages.create.agendaItem.additionalLinks'),
+                      fields: [
+                        ...(amendmentId
+                          ? [
+                              {
+                                label: t('pages.create.agendaItem.amendmentLabel'),
+                                value:
+                                  userAmendments.find(amendment => amendment.id === amendmentId)
+                                    ?.title || amendmentId,
+                              },
+                            ]
+                          : []),
+                        ...(roleId
+                          ? [
+                              {
+                                label: t('pages.create.agendaItem.positionLabel'),
+                                value: userRoles.find(role => role.id === roleId)?.title || roleId,
+                              },
+                            ]
+                          : []),
+                        ...(delegateAssignment
+                          ? [
+                              {
+                                label: translateText(
+                                  'generated.inline.0047_delegiertenauftrag_5a165b38'
+                                ),
+                                value:
+                                  delegateAssignment.targetEvent?.title || delegateAssignment.title,
+                              },
+                            ]
+                          : []),
+                      ],
+                    },
+                    ...(isElectionType || isVoteType
                       ? [
                           {
-                            label: t('pages.create.agendaItem.durationLabel'),
-                            value: `${duration} ${t('pages.create.agendaItem.minutes')}`,
+                            title: t('pages.create.agendaItem.votingSettings'),
+                            fields: [
+                              ...(isElectionType
+                                ? [
+                                    {
+                                      label: translateText(
+                                        'generated.inline.0048_wahltyp_05ffc3a6'
+                                      ),
+                                      value: getElectionModeSummaryLabel(
+                                        resolvedElectionMode,
+                                        resolvedSeatCount
+                                      ),
+                                    },
+                                  ]
+                                : []),
+                              {
+                                label: t('pages.create.agendaItem.majorityType'),
+                                value:
+                                  majorityType === 'two_thirds'
+                                    ? '⅔ Majority'
+                                    : majorityType === 'absolute'
+                                      ? 'Absolute'
+                                      : 'Simple',
+                              },
+                              ...(timeLimit
+                                ? [
+                                    {
+                                      label: t('pages.create.agendaItem.timeLimit'),
+                                      value: `${timeLimit} min`,
+                                    },
+                                  ]
+                                : []),
+                              {
+                                label: translateText('generated.inline.0049_stimmabgabe_65b7d215'),
+                                value: ballotVisibility === 'secret' ? 'Geheim' : 'Namentlich',
+                              },
+                            ],
                           },
                         ]
                       : []),
-                  ],
-                },
-                {
-                  title: t('pages.create.agendaItem.additionalLinks'),
-                  fields: [
-                    ...(amendmentId
-                      ? [
-                          {
-                            label: t('pages.create.agendaItem.amendmentLabel'),
-                            value:
-                              userAmendments.find(amendment => amendment.id === amendmentId)
-                                ?.title || amendmentId,
-                          },
-                        ]
-                      : []),
-                    ...(roleId
-                      ? [
-                          {
-                            label: t('pages.create.agendaItem.positionLabel'),
-                            value: userRoles.find(role => role.id === roleId)?.title || roleId,
-                          },
-                        ]
-                      : []),
-                    ...(delegateAssignment
-                      ? [
-                          {
-                            label: translateText(
-                              'generated.inline.0047_delegiertenauftrag_5a165b38'
-                            ),
-                            value:
-                              delegateAssignment.targetEvent?.title || delegateAssignment.title,
-                          },
-                        ]
-                      : []),
-                  ],
-                },
-                ...(isElectionType || isVoteType
-                  ? [
-                      {
-                        title: t('pages.create.agendaItem.votingSettings'),
-                        fields: [
-                          ...(isElectionType
-                            ? [
-                                {
-                                  label: translateText('generated.inline.0048_wahltyp_05ffc3a6'),
-                                  value: getElectionModeSummaryLabel(
-                                    resolvedElectionMode,
-                                    resolvedSeatCount
-                                  ),
-                                },
-                              ]
-                            : []),
-                          {
-                            label: t('pages.create.agendaItem.majorityType'),
-                            value:
-                              majorityType === 'two_thirds'
-                                ? '⅔ Majority'
-                                : majorityType === 'absolute'
-                                  ? 'Absolute'
-                                  : 'Simple',
-                          },
-                          ...(timeLimit
-                            ? [
-                                {
-                                  label: t('pages.create.agendaItem.timeLimit'),
-                                  value: `${timeLimit} min`,
-                                },
-                              ]
-                            : []),
-                          {
-                            label: translateText('generated.inline.0049_stimmabgabe_65b7d215'),
-                            value: ballotVisibility === 'secret' ? 'Geheim' : 'Namentlich',
-                          },
-                        ],
-                      },
-                    ]
-                  : []),
-              ]}
-            />
-          ),
+                  ]}
+                />
+              ),
+            },
+          ],
         },
       ],
     }),

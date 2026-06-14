@@ -4,6 +4,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CreateProgressIndicator } from './CreateProgressIndicator';
+import { CreateStepRenderer } from './CreateStepRenderer';
 import type { CreateFormStep } from '../types/create-form.types';
 
 interface CarouselFormLayoutProps {
@@ -97,7 +98,7 @@ export function CarouselFormLayout({
           {steps.map((step, index) => (
             <div key={index} className="min-h-0 min-w-0 flex-[0_0_100%] px-1">
               <div className="h-full overflow-y-auto py-2 pr-1">
-                <div className="space-y-4">{step.content}</div>
+                <CreateStepRenderer step={step} />
               </div>
             </div>
           ))}

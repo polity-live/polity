@@ -1,5 +1,5 @@
 import { Button } from '@/features/shared/ui/ui/button';
-import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
+import { ActionBar } from '@/features/shared/ui/layout';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { Calendar, Settings, UserPlus, UserMinus } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';

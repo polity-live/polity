@@ -33,8 +33,8 @@ import type { Role } from '../hooks/useCollaborators';
 interface RolesManagementCardProps {
   amendmentId: string;
   roles: Role[];
-  onCreateRole: (name: string, description: string, amendmentId: string) => Promise<void>;
-  onDeleteRole: (roleId: string) => Promise<void>;
+  onCreateRole: (name: string, description: string, amendmentId: string) => void | Promise<void>;
+  onDeleteRole: (roleId: string) => void | Promise<void>;
   onToggleActionRight: (
     roleId: string,
     resource: string,
@@ -42,7 +42,7 @@ interface RolesManagementCardProps {
     currentlyHas: boolean,
     roles: Role[],
     amendmentId: string
-  ) => Promise<void>;
+  ) => void | Promise<void>;
 }
 
 export function RolesManagementCard({

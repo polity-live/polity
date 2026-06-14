@@ -17,7 +17,7 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
-import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { BasicInfoSection } from './BasicInfoSection';
 import { GroupTypeSection } from './GroupTypeSection';
@@ -30,7 +30,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
+import { CreateReviewCard, SummaryField } from '@/features/shared/ui/form';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { useAllGroups, useGroupState } from '@/zero/groups/useGroupState';
 import { useGroupConnectionState } from '@/zero/network';

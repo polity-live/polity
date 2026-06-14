@@ -3,7 +3,7 @@ import {
   type ReviewCardField,
   type ReviewCardSection,
   type ReviewMediaPreview,
-} from '@/features/shared/ui/ui/create-review-card';
+} from '@/features/shared/ui/form';
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
 import type { ReactNode } from 'react';
 

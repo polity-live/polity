@@ -15,7 +15,7 @@ import {
 } from '@/features/shared/ui/layout';
 import { CountBadge, PhaseBadge, StatusBadge, VisibilityBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
-import { EventSelectCard } from '@/features/shared/ui/ui/entity-select-cards';
+import { EventSelectCard } from '@/features/shared/ui/typeahead';
 import { RoleTag } from './RoleTag';
 
 interface RoleRow {

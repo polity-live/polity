@@ -21,7 +21,7 @@ vi.mock('../FixedAgendaToolbar', () => ({
   ),
 }));
 
-vi.mock('@/features/shared/ui/ui/toolbar', () => ({
+vi.mock('@/features/shared/ui/layout', () => ({
   ToolbarButton: ({
     children,
     onClick,

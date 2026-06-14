@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { CommentItem, type CommentData } from './CommentItem';
@@ -19,6 +19,10 @@ interface CommentThreadProps {
   ) => Promise<void>;
   onDelete?: (commentId: string) => Promise<void>;
   hideHeader?: boolean;
+  sortBy?: CommentSortBy;
+  onSortChange?: (sortBy: CommentSortBy) => void;
+  emptyState?: ReactNode;
+  isSubmitting?: boolean;
   className?: string;
 }
 
@@ -29,9 +33,18 @@ export function CommentThread({
   onVote,
   onDelete,
   hideHeader,
+  sortBy: controlledSortBy,
+  onSortChange,
+  emptyState,
+  isSubmitting,
   className,
 }: CommentThreadProps) {
-  const [sortBy, setSortBy] = useState<CommentSortBy>('votes');
+  const [internalSortBy, setInternalSortBy] = useState<CommentSortBy>('votes');
+  const sortBy = controlledSortBy ?? internalSortBy;
+  const handleSortChange = (nextSortBy: CommentSortBy) => {
+    setInternalSortBy(nextSortBy);
+    onSortChange?.(nextSortBy);
+  };
 
   // Build threaded structure from flat list
   const threadedComments = useMemo(() => {
@@ -71,7 +84,7 @@ export function CommentThread({
             </span>
           </div>
         )}
-        <CommentSortSelect sortBy={sortBy} onSortChange={setSortBy} className="w-40" />
+        <CommentSortSelect sortBy={sortBy} onSortChange={handleSortChange} className="w-40" />
       </div>
 
       {/* New comment input */}
@@ -79,29 +92,30 @@ export function CommentThread({
         <CommentInput
           onSubmit={text => onAddComment(text)}
           placeholder={translateText('generated.inline.1115_add_a_comment_2339bc47')}
+          isSubmitting={isSubmitting}
         />
       )}
 
       {/* Comment list */}
       <div className="space-y-4">
-        {threadedComments.length === 0 ? (
-          <p className="text-muted-foreground py-8 text-center text-sm">
-            {translateText(
-              'generated.inline.0395_no_comments_yet_be_the_first_to_comment_ba5c0dff'
-            )}
-          </p>
-        ) : (
-          threadedComments.map(comment => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              currentUserId={currentUserId}
-              onVote={onVote}
-              onReply={handleReply}
-              onDelete={onDelete}
-            />
-          ))
-        )}
+        {threadedComments.length === 0
+          ? (emptyState ?? (
+              <p className="text-muted-foreground py-8 text-center text-sm">
+                {translateText(
+                  'generated.inline.0395_no_comments_yet_be_the_first_to_comment_ba5c0dff'
+                )}
+              </p>
+            ))
+          : threadedComments.map(comment => (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                currentUserId={currentUserId}
+                onVote={onVote}
+                onReply={handleReply}
+                onDelete={onDelete}
+              />
+            ))}
       </div>
     </div>
   );

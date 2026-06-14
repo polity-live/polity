@@ -1,7 +1,6 @@
 'use client';
 
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect } from 'react';
 import {
   Plus,
   Vote,
@@ -27,7 +26,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { ToolbarButton } from '@/features/shared/ui/ui/toolbar';
+import { ToolbarButton } from '@/features/shared/ui/layout';
 import { FixedAgendaToolbar } from './FixedAgendaToolbar';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -194,40 +193,6 @@ export function AgendaActionBar({
     isIndicationPhase &&
     isCurrentItemActive &&
     Boolean(onStartFinalVote);
-
-  useEffect(() => {
-    console.debug('[agenda-action-bar][final-vote]', {
-      eventId,
-      currentAgendaItemId: currentAgendaItem?.id ?? null,
-      currentAgendaItemType: currentAgendaItem?.type ?? null,
-      currentAgendaItemStatus: currentAgendaItem?.status ?? null,
-      votingPhase,
-      canManageAgenda,
-      isVotable,
-      isElection,
-      isVote,
-      isClosed,
-      isIndicationPhase,
-      isCurrentItemActive,
-      hasOnStartFinalVote: Boolean(onStartFinalVote),
-      showStartFinalVoteButton,
-    });
-  }, [
-    canManageAgenda,
-    currentAgendaItem?.id,
-    currentAgendaItem?.status,
-    currentAgendaItem?.type,
-    eventId,
-    isClosed,
-    isCurrentItemActive,
-    isElection,
-    isIndicationPhase,
-    isVote,
-    isVotable,
-    onStartFinalVote,
-    showStartFinalVoteButton,
-    votingPhase,
-  ]);
 
   return (
     <FixedAgendaToolbar className="gap-3">

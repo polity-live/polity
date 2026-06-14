@@ -14,4 +14,15 @@ export {
   TokenBadge,
   VisibilityBadge,
 } from './StatusBadges';
-export { getTableTagSurfaceClassName as getEntityBadgeSurfaceClassName } from '@/features/shared/ui/ui/table-tag';
+export {
+  EditingModeBadge,
+  EditingModeMenuItems,
+  getEditingModeOption,
+  getSelectableEditingModeOptions,
+  type SelectableEditingMode,
+} from './EditingMode';
+export {
+  getTableTagSurfaceClassName,
+  getTableTagSurfaceClassName as getEntityBadgeSurfaceClassName,
+  TableTag,
+} from './TableTag';

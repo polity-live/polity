@@ -2,14 +2,18 @@ import { cn } from '@/features/shared/utils/utils';
 import { useNavigationStore } from '@/features/navigation/state/navigation.store';
 import { useScreenStore } from '@/features/shared/global-state/screen.store';
 import { useNavigation } from '@/features/navigation/state/useNavigation';
-import { Toolbar } from '@/features/shared/ui/ui/toolbar';
+import { Toolbar } from '@/features/shared/ui/layout';
 
 /**
  * Fixed-position toolbar for agenda pages.
  * Mirrors the PlateJS FixedToolbar — positioned between left/right sidebars,
  * horizontally scrollable when content overflows.
  */
-export function FixedAgendaToolbar({ children, className, ...props }: React.ComponentProps<typeof Toolbar>) {
+export function FixedAgendaToolbar({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<typeof Toolbar>) {
   const { navigationView, navigationType } = useNavigationStore();
   const { isMobileScreen } = useScreenStore();
   const { secondaryNavItems } = useNavigation();
@@ -62,12 +66,12 @@ export function FixedAgendaToolbar({ children, className, ...props }: React.Comp
     <Toolbar
       {...props}
       className={cn(
-        'scrollbar-hide supports-backdrop-blur:bg-background/60 fixed z-50 justify-between overflow-x-auto border-b border-b-border bg-background/95 p-1 backdrop-blur-sm transition-all duration-300',
+        'scrollbar-hide supports-backdrop-blur:bg-background/60 border-b-border bg-background/95 fixed z-50 justify-between overflow-x-auto border-b p-1 backdrop-blur-sm transition-all duration-300',
         getTopOffset(),
         getLeftOffset(),
         getRightOffset(),
         getWidth(),
-        className,
+        className
       )}
     >
       {children}

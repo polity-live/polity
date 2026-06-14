@@ -13,11 +13,7 @@ import { PlateElement, useEditorMounted, withHOC } from 'platejs/react';
 import { cn } from '@/features/shared/utils/utils.ts';
 
 import { Caption, CaptionTextarea } from './caption.tsx';
-import {
-  mediaResizeHandleVariants,
-  Resizable,
-  ResizeHandle,
-} from '@/features/shared/ui/ui/resize-handle.tsx';
+import { mediaResizeHandleVariants, Resizable, ResizeHandle } from '@/features/shared/ui/rich-text';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export const VideoElement = withHOC(

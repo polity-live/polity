@@ -10,7 +10,7 @@ import { AddLinkDialog } from '@/features/network/ui/AddLinkDialog';
 import { LinksSection } from '@/features/network/ui/LinksSection';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { Panel, PanelContent, PanelHeader, PanelTitle } from '@/features/shared/ui/layout';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
 import type { Todo } from '@/features/todos/types/todo.types';
 import { usePermissions } from '@/zero/rbac';
 

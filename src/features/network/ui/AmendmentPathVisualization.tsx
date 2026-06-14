@@ -9,6 +9,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
+import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
 
 type ProcessNodeState = 'approved' | 'active-next' | 'rejected' | 'pending';
@@ -321,9 +322,10 @@ export function AmendmentPathVisualization({
           <div className="bg-background/95 w-72 rounded-xl border p-4 shadow-lg backdrop-blur">
             <Collapsible open={legendOpen} onOpenChange={setLegendOpen}>
               <CollapsibleTrigger asChild>
-                <button
+                <Button
                   type="button"
-                  className="flex w-full items-start justify-between gap-3 text-left"
+                  variant="ghost"
+                  className="h-auto w-full items-start justify-between p-0 text-left whitespace-normal hover:bg-transparent"
                   aria-label={t('features.amendments.process.pathVisualization')}
                 >
                   <div>
@@ -341,7 +343,7 @@ export function AmendmentPathVisualization({
                   ) : (
                     <ChevronRight className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
                   )}
-                </button>
+                </Button>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <p className="text-muted-foreground mt-3 text-xs">

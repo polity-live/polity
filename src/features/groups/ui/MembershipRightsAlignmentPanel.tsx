@@ -12,7 +12,7 @@ import {
 import { StatusBadge as SharedStatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
-import { UserTableCell } from '@/features/shared/ui/ui/user-table-cell';
+import { UserTableCell } from '@/features/shared/ui/data-table';
 import { cn } from '@/features/shared/utils/utils';
 import { getRightLabel } from '@/features/network/ui/RightFilters';
 import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';

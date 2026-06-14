@@ -1,4 +1,5 @@
 import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlLabel } from '@/features/shared/ui/form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Calendar, Tag, Users, Building2, AlertTriangle } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
@@ -20,9 +21,9 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
       {/* Status and Priority */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="mb-2 block text-sm font-medium">
+          <FormControlLabel className="mb-2 block text-sm font-medium">
             {translateText('generated.inline.0688_status_bae7d5be')}
-          </label>
+          </FormControlLabel>
           <div className="flex items-center gap-2">
             <TodoStatusIcon status={(todo.status ?? 'pending') as TodoStatus} />
             <span className="capitalize">{(todo.status ?? '').replace('_', ' ')}</span>
@@ -30,9 +31,9 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium">
+          <FormControlLabel className="mb-2 block text-sm font-medium">
             {translateText('generated.inline.0637_priority_886cbff9')}
-          </label>
+          </FormControlLabel>
           <div className="flex items-center gap-2">
             <TodoPriorityIcon priority={(todo.priority ?? 'medium') as TodoPriority} />
             <TodoPriorityBadge priority={(todo.priority ?? 'medium') as TodoPriority} />
@@ -42,9 +43,9 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
 
       {/* Description */}
       <div>
-        <label className="mb-2 block text-sm font-medium">
+        <FormControlLabel className="mb-2 block text-sm font-medium">
           {translateText('generated.inline.0030_description_55f8ebc8')}
-        </label>
+        </FormControlLabel>
         <p className="text-muted-foreground text-sm">
           {todo.description ||
             translateText('generated.inline.0145_no_description_provided_2145e21d')}
@@ -53,9 +54,9 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
 
       {/* Due Date */}
       <div>
-        <label className="mb-2 block text-sm font-medium">
+        <FormControlLabel className="mb-2 block text-sm font-medium">
           {translateText('generated.inline.1171_due_date_a1b308ec')}
-        </label>
+        </FormControlLabel>
         {todo.due_date ? (
           <div className="flex items-center gap-2">
             <Calendar className="text-muted-foreground h-4 w-4" />
@@ -79,9 +80,9 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
       {/* Creator */}
       {todo.creator && (
         <div>
-          <label className="mb-2 block text-sm font-medium">
+          <FormControlLabel className="mb-2 block text-sm font-medium">
             {translateText('generated.inline.1175_created_by_43de2bcd')}
-          </label>
+          </FormControlLabel>
           <Link
             to="/user/$id"
             params={{ id: todo.creator.id }}
@@ -102,10 +103,10 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
       {/* Assigned Users */}
       {todo.assignments && todo.assignments.length > 0 && (
         <div>
-          <label className="mb-2 block text-sm font-medium">
+          <FormControlLabel className="mb-2 block text-sm font-medium">
             <Users className="mr-2 inline h-4 w-4" />
             {translateText('generated.inline.1176_assigned_to_d00c2e68')}
-          </label>
+          </FormControlLabel>
           <div className="space-y-2">
             {todo.assignments.map((assignment, idx) => (
               <Link
@@ -133,10 +134,10 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
       {/* Group */}
       {todo.group && (
         <div>
-          <label className="mb-2 block text-sm font-medium">
+          <FormControlLabel className="mb-2 block text-sm font-medium">
             <Building2 className="mr-2 inline h-4 w-4" />
             {translateText('generated.inline.0608_group_171a0606')}
-          </label>
+          </FormControlLabel>
           <Link
             to="/group/$id"
             params={{ id: todo.group.id }}
@@ -154,10 +155,10 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
       {/* Tags */}
       {todo.tags && todo.tags.length > 0 && (
         <div>
-          <label className="mb-2 block text-sm font-medium">
+          <FormControlLabel className="mb-2 block text-sm font-medium">
             <Tag className="mr-2 inline h-4 w-4" />
             {translateText('generated.inline.1177_tags_848eed0f')}
-          </label>
+          </FormControlLabel>
           <div className="flex flex-wrap gap-2">
             {todo.tags.map((tag, idx) => (
               <BadgeControl key={idx} variant="secondary">

@@ -1,4 +1,3 @@
-import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -6,13 +5,17 @@ import { cn } from '@/features/shared/utils/utils';
 import { MapPin, Video } from 'lucide-react';
 import { formatTime } from '@/features/meet/logic/date-helpers.ts';
 import type { MeetingInstance } from '../hooks/useMeetPage';
+import { useMeetingWeekViewController } from '../hooks/useMeetingWeekViewController';
 import { MeetingInstanceCard } from './MeetingInstanceCard';
 import {
   buildDayTimeLayout,
   CalendarChronologicalListView,
-  DEFAULT_WEEK_VIEW_SCROLL_TOP,
-  getWeekGridDays,
+  getWeekViewBlockStyle,
   isSameWeekGridDay,
+  WeekViewBlockButton,
+  WeekViewDayHeaderButton,
+  WEEK_VIEW_GRID_MIN_WIDTH,
+  WEEK_VIEW_GRID_TEMPLATE_COLUMNS,
   WEEK_VIEW_HOUR_HEIGHT,
   WEEK_VIEW_SLOT_HEIGHT,
 } from '@/features/shared/ui/calendar';
@@ -97,28 +100,9 @@ function getCompactCardClassName(instance: MeetingInstance): string {
 }
 
 const MEETING_WEEK_TOTAL_DAY_HEIGHT = WEEK_VIEW_HOUR_HEIGHT * 24;
-const MEETING_WEEK_GRID_TEMPLATE_COLUMNS = '4.5rem repeat(7, minmax(10rem, 1fr))';
-const MEETING_WEEK_GRID_MIN_WIDTH = '74.5rem';
-const MEETING_WEEK_EVENT_COLUMN_GAP_PX = 6;
 
 function getMeetingLocationLabel(instance: MeetingInstance): string | null {
   return instance.locationName || ((instance.locationUrl ?? instance.streamUrl) ? 'Online' : null);
-}
-
-function getMeetingBlockStyle(
-  column: number,
-  columnCount: number,
-  top: number,
-  height: number
-): CSSProperties {
-  const widthPercent = 100 / columnCount;
-
-  return {
-    top: `${top}px`,
-    height: `${height}px`,
-    width: `calc(${widthPercent}% - ${MEETING_WEEK_EVENT_COLUMN_GAP_PX}px)`,
-    left: `calc(${widthPercent * column}% + ${MEETING_WEEK_EVENT_COLUMN_GAP_PX / 2}px)`,
-  };
 }
 
 function formatWeekHourLabel(hour: number, locale: string): string {
@@ -224,24 +208,11 @@ export function MeetingWeekView({
   onSelectInstance,
 }: MeetingWeekViewProps) {
   const { language } = useTranslation();
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const weekDays = useMemo(() => getWeekGridDays(selectedDate), [selectedDate]);
-  const weekStartKey = weekDays[0]?.getTime() ?? 0;
-  const halfHourMarkers = useMemo(
-    () =>
-      Array.from({ length: 24 }, (_, hour) => hour * WEEK_VIEW_HOUR_HEIGHT + WEEK_VIEW_SLOT_HEIGHT),
-    []
-  );
-  const hourMarkers = useMemo(() => Array.from({ length: 25 }, (_, hour) => hour), []);
-  const locale = language === 'de' ? 'de-DE' : 'en-US';
-
-  useEffect(() => {
-    if (!containerRef.current) {
-      return;
-    }
-
-    containerRef.current.scrollTop = DEFAULT_WEEK_VIEW_SCROLL_TOP;
-  }, [weekStartKey]);
+  const { containerRef, weekDays, halfHourMarkers, hourMarkers, locale } =
+    useMeetingWeekViewController({
+      selectedDate,
+      language,
+    });
 
   return (
     <Card>
@@ -254,8 +225,8 @@ export function MeetingWeekView({
           <div
             className="grid"
             style={{
-              gridTemplateColumns: MEETING_WEEK_GRID_TEMPLATE_COLUMNS,
-              minWidth: MEETING_WEEK_GRID_MIN_WIDTH,
+              gridTemplateColumns: WEEK_VIEW_GRID_TEMPLATE_COLUMNS,
+              minWidth: WEEK_VIEW_GRID_MIN_WIDTH,
             }}
           >
             <div className="bg-background/95 sticky top-0 left-0 z-40 border-r border-b backdrop-blur" />
@@ -265,31 +236,14 @@ export function MeetingWeekView({
               const isSelected = isSameWeekGridDay(day, selectedDate);
 
               return (
-                <button
+                <WeekViewDayHeaderButton
                   key={day.toISOString()}
-                  type="button"
-                  className={cn(
-                    'sticky top-0 z-30 border-b px-2 py-3 text-center backdrop-blur transition-colors',
-                    isSelected
-                      ? 'bg-accent/80'
-                      : isToday
-                        ? 'border-primary/30 bg-primary/10'
-                        : 'bg-background/95 hover:bg-accent/40'
-                  )}
-                  onClick={() => onDateSelect(day)}
-                >
-                  <p className="text-muted-foreground text-xs font-medium">
-                    {day.toLocaleDateString(locale, { weekday: 'short' })}
-                  </p>
-                  <p
-                    className={cn(
-                      'text-lg font-semibold',
-                      (isToday || isSelected) && 'text-primary'
-                    )}
-                  >
-                    {day.getDate()}
-                  </p>
-                </button>
+                  date={day}
+                  locale={locale}
+                  isSelected={isSelected}
+                  isToday={isToday}
+                  onSelect={onDateSelect}
+                />
               );
             })}
 
@@ -354,40 +308,36 @@ export function MeetingWeekView({
                     const showLocation = layout.height >= WEEK_VIEW_SLOT_HEIGHT * 2;
 
                     return (
-                      <button
+                      <WeekViewBlockButton
                         key={instance.id}
-                        type="button"
-                        className={cn(
-                          'bg-card hover:bg-accent absolute z-20 overflow-hidden rounded-md border p-1.5 text-left text-xs shadow-sm transition-colors',
-                          getCompactCardClassName(instance),
-                          isPast && 'opacity-50'
-                        )}
-                        style={getMeetingBlockStyle(
-                          layout.column,
-                          layout.columnCount,
-                          layout.top,
-                          layout.height
-                        )}
+                        tone="card"
+                        className={cn(getCompactCardClassName(instance), isPast && 'opacity-50')}
+                        style={getWeekViewBlockStyle({
+                          column: layout.column,
+                          columnCount: layout.columnCount,
+                          top: layout.top,
+                          height: layout.height,
+                        })}
                         onClick={event => {
                           event.stopPropagation();
                           onSelectInstance?.(instance);
                         }}
                       >
-                        <p className="truncate font-medium">{instance.title}</p>
-                        <p className="text-muted-foreground truncate">
+                        <span className="block truncate font-medium">{instance.title}</span>
+                        <span className="text-muted-foreground block truncate">
                           {formatMeetingTimeRange(instance.startDate, instance.endDate, locale)}
-                        </p>
+                        </span>
                         {showLocation && locationLabel && (
-                          <p className="text-muted-foreground mt-0.5 flex items-center gap-1 truncate">
+                          <span className="text-muted-foreground mt-0.5 flex items-center gap-1 truncate">
                             {instance.locationName ? (
                               <MapPin className="h-3 w-3 shrink-0" />
                             ) : (
                               <Video className="h-3 w-3 shrink-0" />
                             )}
                             <span className="truncate">{locationLabel}</span>
-                          </p>
+                          </span>
                         )}
-                      </button>
+                      </WeekViewBlockButton>
                     );
                   })}
                 </div>

@@ -11,4 +11,11 @@ export {
   SharedChronologicalListView,
   type CalendarChronologicalListViewProps,
 } from './CalendarChronologicalListView';
+export {
+  getWeekViewBlockStyle,
+  WeekViewBlockButton,
+  WeekViewDayHeaderButton,
+  WEEK_VIEW_GRID_MIN_WIDTH,
+  WEEK_VIEW_GRID_TEMPLATE_COLUMNS,
+} from './WeekViewControls';
 export * from './weekViewGrid';

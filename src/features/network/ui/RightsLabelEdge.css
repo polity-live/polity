@@ -3,6 +3,18 @@
   pointer-events: all;
 }
 
+.networkEdgeLabelButton {
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.networkEdgeLabelButton:focus-visible {
+  outline: 2px solid rgb(99 102 241);
+  outline-offset: 3px;
+}
+
 .networkEdgeBendPointContainer:hover .networkEdgeBendPointDeleteButton,
 .networkEdgeBendPointDeleteButton:focus-visible {
   opacity: 1;
@@ -27,6 +39,12 @@
 
 .networkEdgeBendPointButton:hover {
   box-shadow: 0 0 0 3px rgb(99 102 241 / 0.2);
+}
+
+.networkEdgeBendPointButton:focus-visible {
+  outline: 2px solid rgb(99 102 241);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgb(99 102 241 / 0.18);
 }
 
 .networkEdgeBendPointButton.is-dragging {
@@ -69,5 +87,6 @@
 .networkEdgeBendPointDeleteButton:focus-visible {
   background: rgb(254 242 242);
   color: rgb(185 28 28);
-  outline: none;
+  outline: 2px solid rgb(239 68 68 / 0.8);
+  outline-offset: 2px;
 }

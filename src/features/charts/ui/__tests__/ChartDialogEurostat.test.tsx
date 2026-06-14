@@ -86,10 +86,28 @@ vi.mock('platejs/react', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: {
+    type: '3rdParty',
+    init: vi.fn(),
+  },
   useTranslation: () => ({
     i18n: { resolvedLanguage: 'en' },
-    t: (_key: string, fallbackOrOptions?: string | Record<string, unknown>) =>
-      typeof fallbackOrOptions === 'string' ? fallbackOrOptions : _key,
+    t: (key: string, fallbackOrOptions?: string | Record<string, unknown>) => {
+      if (typeof fallbackOrOptions === 'string') return fallbackOrOptions;
+
+      const labels: Record<string, string> = {
+        'plateJs.chart.assignColumns': 'Assign columns',
+        'plateJs.chart.compareCountriesInYear': 'Compare countries in one year',
+        'plateJs.chart.createChartPreview': 'Create chart preview',
+        'plateJs.chart.filtersComplete': 'Filters complete',
+        'plateJs.chart.firstRows': 'First 5 downloaded rows',
+        'plateJs.chart.hoverValues': 'Show values on hover',
+        'plateJs.chart.showTimeSeriesForCountry': 'Show time series for one country',
+        'plateJs.chart.yValue': 'Y-axis / value',
+      };
+
+      return labels[key] ?? key;
+    },
   }),
 }));
 

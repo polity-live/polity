@@ -207,13 +207,15 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
                       ))}
                     </div>
                   </div>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => handleRemove(link.groupId)}
-                    className="hover:bg-destructive/10 hover:text-destructive rounded-full p-1"
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-destructive/10 hover:text-destructive h-7 w-7 rounded-full"
                   >
                     <X className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </div>
               </Card>
             ))}

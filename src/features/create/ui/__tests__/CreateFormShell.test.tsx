@@ -23,6 +23,7 @@ vi.mock('@/zero/preferences/usePreferenceActions', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string) => key,
   useTranslation: () => ({
     t: (key: string) =>
       ({

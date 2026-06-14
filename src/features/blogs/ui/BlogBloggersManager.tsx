@@ -20,7 +20,7 @@ import {
   type ColumnDef,
 } from '@/features/shared/ui/data-table';
 import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
-import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
+import { ScrollableTabsList } from '@/features/shared/ui/navigation';
 import { InlineCheckbox, SearchField, ValidatedField } from '@/features/shared/ui/form';
 import {
   Card,

@@ -9,6 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/features/shared/ui/ui/tooltip';
+import { Button } from '@/features/shared/ui/ui/button';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export type ReasonCategory = 'trending' | 'popular_topic' | 'similar_groups' | 'your_content';
@@ -86,9 +87,12 @@ export function ReasonTooltip({ category, context, className }: ReasonTooltipPro
     <TooltipProvider>
       <Tooltip open={open} onOpenChange={setOpen}>
         <TooltipTrigger asChild>
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             className={cn(
-              'inline-flex items-center justify-center rounded-full p-1 transition-colors',
+              'h-auto w-auto rounded-full p-1 transition-colors',
               'hover:bg-muted focus:ring-ring focus:ring-2 focus:outline-none',
               className
             )}
@@ -99,7 +103,7 @@ export function ReasonTooltip({ category, context, className }: ReasonTooltipPro
             aria-label={t('timeline.explore.whySeeing')}
           >
             <Info className="text-muted-foreground h-3.5 w-3.5" />
-          </button>
+          </Button>
         </TooltipTrigger>
         <TooltipContent
           side="bottom"

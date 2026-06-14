@@ -18,7 +18,7 @@ import {
   InlineComboboxGroup,
   InlineComboboxInput,
   InlineComboboxItem,
-} from '@/features/shared/ui/ui/inline-combobox.tsx';
+} from '@/features/shared/ui/rich-text';
 
 export function MentionElement(
   props: PlateElementProps<TMentionElement> & {
@@ -36,9 +36,9 @@ export function MentionElement(
     <PlateElement
       {...props}
       className={cn(
-        'inline-block rounded-md bg-muted px-1.5 py-0.5 align-baseline text-sm font-medium',
+        'bg-muted inline-block rounded-md px-1.5 py-0.5 align-baseline text-sm font-medium',
         !readOnly && 'cursor-pointer',
-        selected && focused && 'ring-2 ring-ring',
+        selected && focused && 'ring-ring ring-2',
         element.children[0][KEYS.bold] === true && 'font-bold',
         element.children[0][KEYS.italic] === true && 'italic',
         element.children[0][KEYS.underline] === true && 'underline'
@@ -85,7 +85,7 @@ export function MentionInputElement(props: PlateElementProps<TComboboxInputEleme
         showTrigger={false}
         trigger="@"
       >
-        <span className="inline-block rounded-md bg-muted px-1.5 py-0.5 align-baseline text-sm ring-ring focus-within:ring-2">
+        <span className="bg-muted ring-ring inline-block rounded-md px-1.5 py-0.5 align-baseline text-sm focus-within:ring-2">
           <InlineComboboxInput />
         </span>{' '}
         <InlineComboboxContent className="my-1.5">

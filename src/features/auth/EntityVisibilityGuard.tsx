@@ -6,8 +6,8 @@ import {
   resolveRouteVisibilityAccess,
   type RouteVisibilityInput,
 } from '@/features/auth/logic/routeVisibilityAccess';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
-import { NotFound } from '@/features/shared/ui/ui/not-found';
+import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
+import { NotFound } from '@/features/shared/ui/feedback';
 
 interface EntityVisibilityGuardProps {
   children: ReactNode;

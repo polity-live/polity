@@ -70,7 +70,7 @@ import { cn } from '@/features/shared/utils/utils.ts';
 
 import { blockSelectionVariants } from './block-selection.tsx';
 import { ColorDropdownMenuItems, DEFAULT_COLORS } from './font-color-toolbar-button.tsx';
-import { ResizeHandle } from '@/features/shared/ui/ui/resize-handle.tsx';
+import { ResizeHandle } from '@/features/shared/ui/rich-text';
 import {
   BorderAllIcon,
   BorderBottomIcon,
@@ -84,7 +84,7 @@ import {
   ToolbarButton,
   ToolbarGroup,
   ToolbarMenuGroup,
-} from '@/features/shared/ui/ui/toolbar.tsx';
+} from '@/features/shared/ui/layout';
 export const TableElement = withHOC(
   TableProvider,
   function TableElement({ children, ...props }: PlateElementProps<TTableElement>) {

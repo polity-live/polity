@@ -18,10 +18,9 @@ function sortMembershipRoles<TRole extends MembershipRoleLike>(roles: readonly T
   return [...roles].sort((left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1));
 }
 
-export function getMembershipRoles<
-  TRole extends MembershipRoleLike,
-  TMembership extends MembershipWithRoleLinks<TRole> | null | undefined,
->(membership: TMembership): TRole[] {
+export function getMembershipRoles<TRole extends MembershipRoleLike>(
+  membership: MembershipWithRoleLinks<TRole> | null | undefined
+): TRole[] {
   if (!membership) {
     return [];
   }
@@ -45,17 +44,15 @@ export function getMembershipRoles<
   return fallbackRole ? [fallbackRole] : [];
 }
 
-export function getPrimaryMembershipRole<
-  TRole extends MembershipRoleLike,
-  TMembership extends MembershipWithRoleLinks<TRole> | null | undefined,
->(membership: TMembership): TRole | null {
+export function getPrimaryMembershipRole<TRole extends MembershipRoleLike>(
+  membership: MembershipWithRoleLinks<TRole> | null | undefined
+): TRole | null {
   return getMembershipRoles(membership)[0] ?? null;
 }
 
-export function getMembershipRoleNames<
-  TRole extends MembershipRoleLike,
-  TMembership extends MembershipWithRoleLinks<TRole> | null | undefined,
->(membership: TMembership): string[] {
+export function getMembershipRoleNames<TRole extends MembershipRoleLike>(
+  membership: MembershipWithRoleLinks<TRole> | null | undefined
+): string[] {
   return getMembershipRoles(membership)
     .map(role => role.name?.trim() || '')
     .filter(Boolean);

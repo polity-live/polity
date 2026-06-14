@@ -1,7 +1,7 @@
 'use client';
 
 import { BadgeControl } from '@/features/shared/ui/status';
-import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
+import { EditingModeBadge } from '@/features/shared/ui/status';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
   TimelineCardBadge,

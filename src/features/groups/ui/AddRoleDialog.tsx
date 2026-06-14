@@ -13,7 +13,7 @@ import {
 
 import { Button } from '@/features/shared/ui/ui/button';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
-import { VisibilitySelector } from '@/features/shared/ui/ui/visibility-selector';
+import { VisibilitySelector } from '@/features/shared/ui/form';
 import { RecurringPatternInput } from '@/features/create/ui/inputs/RecurringPatternInput';
 import {
   Dialog,

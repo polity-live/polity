@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
-import { HashtagInput } from '@/features/shared/ui/ui/hashtag-input';
+import { HashtagInput } from '@/features/shared/ui/hashtags';
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
 import { FormFieldShell, InlineSwitch, PasswordField, TextField } from '@/features/shared/ui/form';
 import { DangerConfirmDialog, ScrollableDialogContent } from '@/features/shared/ui/dialog';

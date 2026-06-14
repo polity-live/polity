@@ -1,6 +1,4 @@
-import { useMemo, useState } from 'react';
 import type { Value } from 'platejs';
-import { createSlateEditor } from 'platejs';
 import {
   Collapsible,
   CollapsibleContent,
@@ -9,10 +7,9 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { EditorStatic } from '@/features/shared/ui/ui-platejs/editor-static';
-import { BaseEditorKit } from '@/features/shared/ui/kit-platejs/editor-base-kit';
-import { filterDocumentToSuggestions } from '../logic/filterDocumentToSingleSuggestion';
 import { InlineAmendmentEditor } from '@/features/editor/ui/InlineAmendmentEditor';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { useCREditorPreviewModel } from '../hooks/useCREditorPreviewModel';
 
 interface CREditorPreviewProps {
   documentContent: Value;
@@ -35,26 +32,15 @@ export function CREditorPreview({
   userId,
   agendaItemId,
 }: CREditorPreviewProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const isInteractive =
-    (editingMode === 'suggest_event' || editingMode === 'vote_event') && !!amendmentId;
-
-  // Stabilize the Set identity for memo deps by serializing to a sorted string
-  const suggestionIdsKey = useMemo(() => [...suggestionIds].sort().join(','), [suggestionIds]);
-
-  const editor = useMemo(() => {
-    if (!isOpen || isInteractive) return null;
-
-    const filteredContent = filterDocumentToSuggestions(documentContent, suggestionIds);
-
-    return createSlateEditor({
-      plugins: BaseEditorKit,
-      value: filteredContent,
-    });
-  }, [isOpen, isInteractive, documentContent, suggestionIdsKey]);
+  const { editor, isInteractive, isOpen, onOpenChange } = useCREditorPreviewModel({
+    amendmentId,
+    documentContent,
+    editingMode,
+    suggestionIds,
+  });
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+    <Collapsible open={isOpen} onOpenChange={onOpenChange}>
       <CollapsibleTrigger asChild>
         <Button variant="ghost" size="sm" className="text-muted-foreground gap-1 text-xs">
           {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
@@ -62,7 +48,7 @@ export function CREditorPreview({
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        {isInteractive ? (
+        {isInteractive && amendmentId ? (
           <div className="mt-2">
             <InlineAmendmentEditor
               amendmentId={amendmentId}

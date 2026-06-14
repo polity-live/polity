@@ -4,7 +4,7 @@ import { useToggleToolbarButton, useToggleToolbarButtonState } from '@platejs/to
 import { ListCollapseIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { ToolbarButton } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarButton } from '@/features/shared/ui/layout';
 
 export function ToggleToolbarButton(props: React.ComponentProps<typeof ToolbarButton>) {
   const state = useToggleToolbarButtonState();

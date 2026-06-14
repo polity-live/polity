@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
+import { FileUploadTrigger, FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
 import { X, Video, Loader2 } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { useUploadFile } from '@/features/file-upload/hooks/use-upload-file.ts';
@@ -134,18 +135,13 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({
 
           {/* Upload Button */}
           <div className="flex gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="video/*"
-              className="hidden"
-              onChange={handleFileSelect}
-              disabled={isUploading}
-            />
-            <Button
-              type="button"
+            <FileUploadTrigger
+              inputRef={fileInputRef}
+              inputProps={{
+                accept: 'video/*',
+                onChange: handleFileSelect,
+              }}
               variant="outline"
-              onClick={() => fileInputRef.current?.click()}
               className="flex-1"
               disabled={isUploading}
             >
@@ -160,18 +156,17 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({
                   {t('common.actions.uploadVideo')}
                 </>
               )}
-            </Button>
+            </FileUploadTrigger>
           </div>
 
           {/* URL Input */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">{t('common.labels.orProvideUrl')}</label>
-            <input
+            <FormControlLabel>{t('common.labels.orProvideUrl')}</FormControlLabel>
+            <FormControlInput
               type="url"
               value={videoUrl}
               onChange={e => handleUrlChange(e.target.value)}
               placeholder="https://example.com/video.mp4"
-              className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isUploading}
             />
           </div>

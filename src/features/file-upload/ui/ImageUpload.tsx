@@ -1,6 +1,6 @@
 'use client';
 
-import { FormControlInput } from '@/features/shared/ui/form';
+import { FileUploadTrigger, FormControlInput } from '@/features/shared/ui/form';
 import React, { useId, useState, useRef } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
@@ -261,14 +261,6 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             onDragOver={handleDragOver}
             onDrop={handleDrop}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              data-testid="image-upload-input"
-              onChange={handleFileSelect}
-            />
             <div className="mx-auto flex max-w-md flex-col items-center gap-4 text-center">
               <div className="bg-background/80 flex h-12 w-12 items-center justify-center rounded-full border shadow-sm">
                 <Upload className="text-primary h-5 w-5" />
@@ -281,10 +273,14 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                 </p>
                 <p className="text-muted-foreground">{t('common.actions.orClickToBrowse')}</p>
               </div>
-              <Button
-                type="button"
+              <FileUploadTrigger
+                inputRef={fileInputRef}
+                inputProps={{
+                  accept: 'image/*',
+                  'data-testid': 'image-upload-input',
+                  onChange: handleFileSelect,
+                }}
                 variant="outline"
-                onClick={() => fileInputRef.current?.click()}
                 className="mx-auto min-w-44"
                 disabled={isBusy}
               >
@@ -299,7 +295,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                     {t('common.actions.uploadImage')}
                   </>
                 )}
-              </Button>
+              </FileUploadTrigger>
               <div className="text-muted-foreground flex w-full items-center gap-3 text-[11px] font-medium tracking-[0.24em] uppercase">
                 <span className="bg-border h-px flex-1" />
                 <span>{t('common.labels.orProvideUrl')}</span>

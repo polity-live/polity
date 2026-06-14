@@ -16,7 +16,6 @@ import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { DirectionInput } from '../ui/inputs/DirectionInput';
 import { PaymentTypeInput } from '../ui/inputs/PaymentTypeInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { CreateInputField, CreateTypeaheadField } from '../ui/CreateFields';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import type { CreateFormConfig } from '../types/create-form.types';
 
@@ -153,49 +152,62 @@ export function useCreatePaymentForm(): CreateFormConfig {
         {
           label: t('pages.create.common.group'),
           isValid: () => !!groupId,
-          content: (
-            <CreateTypeaheadField
-              label={t('pages.create.common.group')}
-              required
-              entityTypes={['group']}
-              value={groupId || undefined}
-              onChange={item => {
-                const nextGroupId = item?.id ?? '';
-                setGroupId(nextGroupId);
-                syncGroupSearch(nextGroupId);
-              }}
-              placeholder={t('pages.create.common.searchGroup')}
-            />
-          ),
+          fields: [
+            {
+              key: 'group',
+              kind: 'typeahead',
+              label: t('pages.create.common.group'),
+              required: true,
+              props: {
+                entityTypes: ['group'],
+                value: groupId || undefined,
+                onChange: item => {
+                  const nextGroupId = item?.id ?? '';
+                  setGroupId(nextGroupId);
+                  syncGroupSearch(nextGroupId);
+                },
+                placeholder: t('pages.create.common.searchGroup'),
+              },
+            },
+          ],
         },
         {
           label: t('pages.create.payment.direction'),
           isValid: () => !!label.trim() && !!amount,
-          content: (
-            <div className="space-y-4">
-              <DirectionInput value={direction} onChange={setDirection} />
-              <CreateInputField
-                label={t('pages.create.payment.labelField')}
-                required
-                hint={t('pages.create.payment.tips.label')}
-                value={label}
-                onValueChange={setLabel}
-                placeholder={t('pages.create.payment.labelPlaceholder')}
-              />
-              <PaymentTypeInput value={type} onChange={setType} />
-              <CreateInputField
-                label={t('pages.create.payment.amount')}
-                required
-                hint={t('pages.create.payment.tips.amount')}
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={amount}
-                onValueChange={setAmount}
-              />
-            </div>
-          ),
+          fields: [
+            {
+              key: 'direction',
+              kind: 'custom',
+              node: <DirectionInput value={direction} onChange={setDirection} />,
+            },
+            {
+              key: 'label',
+              kind: 'text',
+              label: t('pages.create.payment.labelField'),
+              required: true,
+              hint: t('pages.create.payment.tips.label'),
+              value: label,
+              onValueChange: setLabel,
+              placeholder: t('pages.create.payment.labelPlaceholder'),
+            },
+            {
+              key: 'type',
+              kind: 'custom',
+              node: <PaymentTypeInput value={type} onChange={setType} />,
+            },
+            {
+              key: 'amount',
+              kind: 'text',
+              label: t('pages.create.payment.amount'),
+              required: true,
+              hint: t('pages.create.payment.tips.amount'),
+              type: 'number',
+              min: '0',
+              placeholder: '0.00',
+              value: amount,
+              onValueChange: setAmount,
+            },
+          ],
         },
         {
           label:
@@ -203,107 +215,131 @@ export function useCreatePaymentForm(): CreateFormConfig {
               ? t('pages.create.payment.fromPayer')
               : t('pages.create.payment.toReceiver'),
           isValid: () => hasEntity,
-          content: (
-            <div className="space-y-4">
-              <FormControlLabel>
-                {direction === 'income'
-                  ? t('pages.create.payment.fromPayer')
-                  : t('pages.create.payment.toReceiver')}
-              </FormControlLabel>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={entityType === 'user' ? 'default' : 'outline'}
-                  onClick={() => {
-                    setEntityType('user');
-                    setEntityGroupId('');
-                  }}
-                  className="flex-1"
-                >
-                  {t('pages.create.payment.entityUser')}
-                </Button>
-                <Button
-                  type="button"
-                  variant={entityType === 'group' ? 'default' : 'outline'}
-                  onClick={() => {
-                    setEntityType('group');
-                    setEntityId('');
-                  }}
-                  className="flex-1"
-                >
-                  {t('pages.create.payment.entityGroup')}
-                </Button>
-              </div>
-              {entityType === 'user' ? (
-                <UserSearchInput
-                  value={entityId ? [entityId] : []}
-                  onChange={ids => setEntityId(ids[0] || '')}
-                  required
-                  placeholder={t('pages.create.payment.searchUsers')}
-                  multi={false}
-                />
-              ) : (
-                <CreateTypeaheadField
-                  label={t('pages.create.payment.entityGroup')}
-                  required
-                  entityTypes={['group']}
-                  value={entityGroupId || undefined}
-                  onChange={item => {
-                    setEntityGroupId(item?.id ?? '');
-                  }}
-                  placeholder={t('pages.create.payment.searchGroups')}
-                />
-              )}
-            </div>
-          ),
+          fields: [
+            {
+              key: 'entity-type',
+              kind: 'custom',
+              node: (
+                <div className="space-y-4">
+                  <FormControlLabel>
+                    {direction === 'income'
+                      ? t('pages.create.payment.fromPayer')
+                      : t('pages.create.payment.toReceiver')}
+                  </FormControlLabel>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={entityType === 'user' ? 'default' : 'outline'}
+                      onClick={() => {
+                        setEntityType('user');
+                        setEntityGroupId('');
+                      }}
+                      className="flex-1"
+                    >
+                      {t('pages.create.payment.entityUser')}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={entityType === 'group' ? 'default' : 'outline'}
+                      onClick={() => {
+                        setEntityType('group');
+                        setEntityId('');
+                      }}
+                      className="flex-1"
+                    >
+                      {t('pages.create.payment.entityGroup')}
+                    </Button>
+                  </div>
+                </div>
+              ),
+            },
+            ...(entityType === 'user'
+              ? [
+                  {
+                    key: 'entity-user',
+                    kind: 'custom' as const,
+                    node: (
+                      <UserSearchInput
+                        value={entityId ? [entityId] : []}
+                        onChange={ids => setEntityId(ids[0] || '')}
+                        required
+                        placeholder={t('pages.create.payment.searchUsers')}
+                        multi={false}
+                      />
+                    ),
+                  },
+                ]
+              : [
+                  {
+                    key: 'entity-group',
+                    kind: 'typeahead' as const,
+                    label: t('pages.create.payment.entityGroup'),
+                    required: true,
+                    props: {
+                      entityTypes: ['group' as const],
+                      value: entityGroupId || undefined,
+                      onChange: (item: { id: string } | null) => {
+                        setEntityGroupId(item?.id ?? '');
+                      },
+                      placeholder: t('pages.create.payment.searchGroups'),
+                    },
+                  },
+                ]),
+          ],
         },
         {
           label: t('pages.create.common.review'),
           isValid: () => !!groupId && !!label.trim() && !!amount && hasEntity,
-          content: (
-            <CreateSummaryStep
-              entityType="payment"
-              badge={t('pages.create.payment.reviewBadge')}
-              secondaryBadge={directionLabel}
-              title={label || 'Untitled Payment'}
-              subtitle={`${parseFloat(amount || '0').toFixed(2)} €`}
-              sections={[
-                {
-                  title: t('pages.create.payment.direction'),
-                  fields: [
-                    ...(groupDisplayName
-                      ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
-                      : []),
+          fields: [
+            {
+              key: 'review',
+              kind: 'custom',
+              node: (
+                <CreateSummaryStep
+                  entityType="payment"
+                  badge={t('pages.create.payment.reviewBadge')}
+                  secondaryBadge={directionLabel}
+                  title={label || 'Untitled Payment'}
+                  subtitle={`${parseFloat(amount || '0').toFixed(2)} €`}
+                  sections={[
                     {
-                      label: t('pages.create.payment.direction'),
-                      value: directionLabel,
+                      title: t('pages.create.payment.direction'),
+                      fields: [
+                        ...(groupDisplayName
+                          ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
+                          : []),
+                        {
+                          label: t('pages.create.payment.direction'),
+                          value: directionLabel,
+                        },
+                        {
+                          label: t('pages.create.payment.typeField'),
+                          value: t(`pages.create.payment.types.${type}`),
+                        },
+                        {
+                          label: t('pages.create.payment.amount'),
+                          value: `${parseFloat(amount || '0').toFixed(2)} €`,
+                        },
+                      ],
                     },
                     {
-                      label: t('pages.create.payment.typeField'),
-                      value: t(`pages.create.payment.types.${type}`),
+                      title: counterpartLabel,
+                      fields: [
+                        {
+                          label: t('pages.create.payment.entityGroup'),
+                          value: counterpartTypeLabel,
+                        },
+                        {
+                          label: counterpartLabel,
+                          value: selectedEntityDisplayName || t('pages.create.common.notSelected'),
+                        },
+                      ],
                     },
-                    {
-                      label: t('pages.create.payment.amount'),
-                      value: `${parseFloat(amount || '0').toFixed(2)} €`,
-                    },
-                  ],
-                },
-                {
-                  title: counterpartLabel,
-                  fields: [
-                    {
-                      label: t('pages.create.payment.entityGroup'),
-                      value: counterpartTypeLabel,
-                    },
-                    {
-                      label: counterpartLabel,
-                      value: selectedEntityDisplayName || t('pages.create.common.notSelected'),
-                    },
-                  ],
-                },
-              ]}
-            />
-          ),
+                  ]}
+                />
+              ),
+            },
+          ],
         },
       ],
     }),

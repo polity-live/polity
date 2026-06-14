@@ -1,6 +1,6 @@
-import { Button } from '@/features/shared/ui/ui/button';
 import { Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { FormActions, SettingsPanel } from '@/features/shared/ui/form';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload';
 import { BasicInformationSection } from './BasicInformationSection';
@@ -167,59 +167,53 @@ export function UserProfileEditForm({
               onHashtagsChange={value => onFieldChange('hashtags', value)}
             />
 
-            <div className="flex gap-4">
-              <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-                {t('common.actions.cancel')}
-              </Button>
-              <Button type="submit" disabled={isSubmitting} className="flex-1">
-                {isSubmitting ? (
+            <FormActions
+              cancelLabel={t('common.actions.cancel')}
+              onCancel={onCancel}
+              isSubmitting={isSubmitting}
+              submitLabel={
+                isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     {t('pages.user.settingsTabs.saving')}
                   </>
                 ) : (
                   t('pages.user.settingsTabs.saveProfile')
-                )}
-              </Button>
-            </div>
+                )
+              }
+              submitDisabled={isSubmitting}
+              className="sm:justify-start"
+            />
           </form>
         </TabsContent>
 
         {/* Preferences Tab */}
         <TabsContent value="preferences">
           <div className="space-y-6">
-            <div className="rounded-lg border p-4">
-              <h3 className="mb-1 text-sm font-medium">{t('pages.user.preferences.theme')}</h3>
-              <p className="text-muted-foreground mb-3 text-sm">
-                {t('pages.user.preferences.themeDescription')}
-              </p>
+            <SettingsPanel
+              title={t('pages.user.preferences.theme')}
+              description={t('pages.user.preferences.themeDescription')}
+            >
               <ThemeToggle />
-            </div>
-            <div className="rounded-lg border p-4">
-              <h3 className="mb-1 text-sm font-medium">{t('pages.user.preferences.language')}</h3>
-              <p className="text-muted-foreground mb-3 text-sm">
-                {t('pages.user.preferences.languageDescription')}
-              </p>
+            </SettingsPanel>
+            <SettingsPanel
+              title={t('pages.user.preferences.language')}
+              description={t('pages.user.preferences.languageDescription')}
+            >
               <LanguageToggle side="bottom" />
-            </div>
-            <div className="rounded-lg border p-4">
-              <h3 className="mb-1 text-sm font-medium">
-                {t('pages.user.preferences.navigationStyle')}
-              </h3>
-              <p className="text-muted-foreground mb-3 text-sm">
-                {t('pages.user.preferences.navigationStyleDescription')}
-              </p>
+            </SettingsPanel>
+            <SettingsPanel
+              title={t('pages.user.preferences.navigationStyle')}
+              description={t('pages.user.preferences.navigationStyleDescription')}
+            >
               <StateToggle currentState={navigationView} onStateChange={setNavigationView} />
-            </div>
-            <div className="rounded-lg border p-4">
-              <h3 className="mb-1 text-sm font-medium">
-                {t('pages.create.preferences.formStyle')}
-              </h3>
-              <p className="text-muted-foreground mb-3 text-sm">
-                {t('pages.create.preferences.formStyleDescription')}
-              </p>
+            </SettingsPanel>
+            <SettingsPanel
+              title={t('pages.create.preferences.formStyle')}
+              description={t('pages.create.preferences.formStyleDescription')}
+            >
               <FormStyleSelector />
-            </div>
+            </SettingsPanel>
           </div>
         </TabsContent>
 

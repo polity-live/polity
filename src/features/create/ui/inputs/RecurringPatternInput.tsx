@@ -148,19 +148,21 @@ export function RecurringPatternInput({
               <FormControlLabel>{t('pages.create.event.recurringWeekdays')}</FormControlLabel>
               <div className="flex flex-wrap gap-2">
                 {WEEKDAY_INDICES.map(day => (
-                  <button
+                  <Button
                     key={day}
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => toggleWeekday(day)}
                     className={cn(
-                      'flex h-9 w-9 items-center justify-center rounded-full text-xs font-medium transition-colors',
+                      'h-9 w-9 rounded-full text-xs transition-colors',
                       weekdays.includes(day)
                         ? 'bg-primary text-primary-foreground shadow-sm'
                         : 'hover:bg-muted border'
                     )}
                   >
                     {dayLabels[day]}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>

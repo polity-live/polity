@@ -13,24 +13,51 @@ interface SearchFieldProps extends Omit<
   value: string;
   onValueChange: (value: string) => void;
   label?: ReactNode;
+  labelAction?: ReactNode;
   description?: ReactNode;
+  error?: ReactNode;
+  invalid?: boolean;
+  required?: boolean;
   clearLabel?: string;
   fieldClassName?: string;
+  labelClassName?: string;
+  descriptionClassName?: string;
+  errorClassName?: string;
+  inputClassName?: string;
 }
 
 export function SearchField({
   value,
   onValueChange,
   label,
+  labelAction,
   description,
+  error,
+  invalid,
+  required,
   clearLabel = 'Clear search',
   fieldClassName,
+  labelClassName,
+  descriptionClassName,
+  errorClassName,
+  inputClassName,
   className,
   ...props
 }: SearchFieldProps) {
   return (
-    <FormFieldShell label={label} description={description} className={fieldClassName}>
-      {({ id, describedBy }) => (
+    <FormFieldShell
+      label={label}
+      labelAction={labelAction}
+      description={description}
+      error={error}
+      invalid={invalid}
+      required={required}
+      className={fieldClassName}
+      labelClassName={labelClassName}
+      descriptionClassName={descriptionClassName}
+      errorClassName={errorClassName}
+    >
+      {({ id, describedBy, invalid }) => (
         <div className="relative">
           <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
@@ -39,8 +66,10 @@ export function SearchField({
             type="search"
             value={value}
             aria-describedby={describedBy}
+            aria-invalid={invalid || undefined}
             onChange={event => onValueChange(event.target.value)}
-            className={cn('pr-9 pl-9', className)}
+            required={required}
+            className={cn('pr-9 pl-9', className, inputClassName)}
           />
           {value ? (
             <Button

@@ -25,7 +25,7 @@ interface InviteDialogProps {
   amendmentId: string;
   existingCollaborators: Collaborator[];
   roles: Role[];
-  onInviteUsers: (userIds: string[], amendmentId: string, roleId: string) => Promise<void>;
+  onInviteUsers: (userIds: string[], amendmentId: string, roleId: string) => void | Promise<void>;
 }
 
 export function InviteDialog({

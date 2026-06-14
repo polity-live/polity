@@ -34,7 +34,7 @@ import {
   ToolbarSplitButton,
   ToolbarSplitButtonPrimary,
   ToolbarSplitButtonSecondary,
-} from '@/features/shared/ui/ui/toolbar.tsx';
+} from '@/features/shared/ui/layout';
 
 const getMediaConfig = (t: TFunction) => ({
   [KEYS.audio]: {

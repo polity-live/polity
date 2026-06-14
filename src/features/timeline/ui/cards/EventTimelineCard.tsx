@@ -10,7 +10,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
-import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { useEventParticipation } from '@/features/events/hooks/useEventParticipation';
 import { useSubscribeEvent } from '@/features/events/hooks/useSubscribeEvent';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';

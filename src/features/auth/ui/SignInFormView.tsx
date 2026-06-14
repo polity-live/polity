@@ -3,7 +3,7 @@
 import type { FormEvent } from 'react';
 import { ArrowRight, LogIn, Mail } from 'lucide-react';
 
-import { FormButton, FormCard, FormControlInput, FormFieldShell } from '@/features/shared/ui/form';
+import { FormButton, FormCard, PasswordField, TextField } from '@/features/shared/ui/form';
 import { InlineNotice, Spinner } from '@/features/shared/ui/feedback';
 import { cn } from '@/features/shared/utils/utils';
 import { GoogleIcon } from './GoogleIcon';
@@ -81,60 +81,47 @@ export function SignInFormView({
       icon={<LogIn className="text-brand h-12 w-12" />}
     >
       <form onSubmit={onSubmit} className="space-y-4">
-        <FormFieldShell
+        <TextField
           id="email"
+          type="email"
           label={copy.emailLabel}
+          placeholder={copy.emailPlaceholder}
+          value={email}
+          onValueChange={onEmailChange}
+          onBlur={onEmailBlur}
           description={copy.emailHint}
           descriptionClassName={cn(
             'text-xs',
             showEmailError && 'text-destructive',
             showEmailSuccess && 'text-emerald-600 dark:text-emerald-400'
           )}
-        >
-          {({ id, describedBy }) => (
-            <FormControlInput
-              id={id}
-              type="email"
-              placeholder={copy.emailPlaceholder}
-              value={email}
-              onChange={event => onEmailChange(event.target.value)}
-              onBlur={onEmailBlur}
-              required
-              disabled={isLoading}
-              autoComplete="email"
-              aria-describedby={describedBy}
-              aria-invalid={showEmailError}
-              data-valid={showEmailSuccess ? 'true' : undefined}
-            />
-          )}
-        </FormFieldShell>
+          invalid={showEmailError}
+          required
+          disabled={isLoading}
+          autoComplete="email"
+          data-valid={showEmailSuccess ? 'true' : undefined}
+        />
 
-        <FormFieldShell
+        <PasswordField
           id="password"
           label={copy.passwordLabel}
+          placeholder={copy.passwordPlaceholder}
+          value={password}
+          onValueChange={onPasswordChange}
+          required
+          disabled={isLoading}
+          autoComplete="current-password"
           labelAction={
-            <button
+            <FormButton
               type="button"
-              className="text-muted-foreground hover:text-primary text-xs underline-offset-4 hover:underline"
+              variant="link"
+              className="text-muted-foreground hover:text-primary h-auto p-0 text-xs"
               onClick={onForgotPassword}
             >
               {copy.forgotPassword}
-            </button>
+            </FormButton>
           }
-        >
-          {({ id }) => (
-            <FormControlInput
-              id={id}
-              type="password"
-              placeholder={copy.passwordPlaceholder}
-              value={password}
-              onChange={event => onPasswordChange(event.target.value)}
-              required
-              disabled={isLoading}
-              autoComplete="current-password"
-            />
-          )}
-        </FormFieldShell>
+        />
 
         {displayError ? <InlineNotice variant="destructive">{displayError}</InlineNotice> : null}
 
@@ -191,13 +178,14 @@ export function SignInFormView({
       <div className="text-muted-foreground mt-6 text-center text-sm">
         <p>
           {copy.noAccount}{' '}
-          <button
+          <FormButton
             type="button"
-            className="text-primary font-medium underline-offset-4 hover:underline"
+            variant="link"
+            className="h-auto p-0 font-medium"
             onClick={onGoToSignUp}
           >
             {copy.signUpLink}
-          </button>
+          </FormButton>
         </p>
       </div>
     </FormCard>

@@ -8,7 +8,7 @@ import {
   TYPEAHEAD_ENTITY_GROUP_LABELS,
   type TypeaheadItem,
 } from '@/features/shared/logic/typeaheadHelpers';
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
+import { TypeaheadCombobox, TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 
 afterEach(() => {
   cleanup();
@@ -146,5 +146,23 @@ describe('TypeaheadSearch', () => {
     expect(screen.getAllByText('Agenda Points').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Tasks').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Blogs').length).toBeGreaterThan(0);
+  });
+
+  it('exposes an items-only TypeaheadCombobox without the data facade', () => {
+    const onChange = vi.fn();
+
+    render(
+      <TypeaheadCombobox
+        items={[buildItem('role-1', 'Treasurer', 'role')]}
+        value={undefined}
+        onChange={onChange}
+        placeholder="Search roles"
+      />
+    );
+
+    fireEvent.focus(screen.getByPlaceholderText('Search roles'));
+    fireEvent.click(screen.getByRole('button', { name: /Treasurer Role/ }));
+
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ id: 'role-1' }));
   });
 });

@@ -15,10 +15,10 @@ import {
   EditingModeMenuItems,
   getEditingModeOption,
   type SelectableEditingMode,
-} from '@/features/shared/ui/ui/editing-mode.tsx';
+} from '@/features/shared/ui/status';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
-import { ToolbarButton } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarButton } from '@/features/shared/ui/layout';
 
 interface ModeToolbarButtonProps extends DropdownMenuProps {
   currentMode?: EditorMode;

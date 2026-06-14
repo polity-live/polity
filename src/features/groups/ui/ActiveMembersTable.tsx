@@ -18,7 +18,7 @@ import {
 } from '@/features/shared/ui/layout';
 import { EntityBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
-import { UserTableCell } from '@/features/shared/ui/ui/user-table-cell';
+import { UserTableCell } from '@/features/shared/ui/data-table';
 import type { ParticipationLike } from '@/features/shared/types/participation';
 import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';
 import { getMembershipProvenanceDisplayLabel } from '../logic/membershipComposition';

@@ -19,8 +19,8 @@ import {
   CarouselItem,
   CarouselApi,
 } from '@/features/shared/ui/ui/carousel';
-import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
-import { VisibilitySelector } from '@/features/shared/ui/ui/visibility-selector';
+import { HashtagEditor } from '@/features/shared/ui/hashtags';
+import { VisibilitySelector } from '@/features/shared/ui/form';
 import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useAuth } from '@/providers/auth-provider';
@@ -335,11 +335,13 @@ export function CreateBlogForm() {
           </Carousel>
           <div className="mt-4 flex justify-center gap-2">
             {[0, 1, 2].map(index => (
-              <button
+              <Button
                 key={index}
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => carouselApi?.scrollTo(index)}
-                className={`h-2 w-2 rounded-full transition-colors ${
+                className={`h-2 w-2 rounded-full p-0 transition-colors ${
                   currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
                 }`}
                 aria-label={`Go to step ${index + 1}`}

@@ -1,10 +1,8 @@
 /**
- * Main view for managing amendment collaborators
+ * Main view for managing amendment collaborators.
  */
 
-import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
+import { EntitySearchBar } from '@/features/shared/ui/typeahead';
 import { MembershipTabs } from '@/features/groups/ui/MembershipTabs';
 import { PendingRequestsTable } from '@/features/groups/ui/PendingRequestsTable';
 import { PendingInvitationsTable } from '@/features/groups/ui/PendingInvitationsTable';
@@ -12,95 +10,90 @@ import { ActiveMembersTable } from '@/features/groups/ui/ActiveMembersTable';
 import { MembershipsByRoleTables } from '@/features/groups/ui/MembershipsByRoleTables';
 import { ChangeRoleDialog } from '@/features/groups/ui/ChangeRoleDialog';
 import { MemberRightsDialog } from '@/features/groups/ui/MemberRightsDialog';
-import { useMembershipSearch } from '@/features/groups/hooks/useMembershipSearch';
-import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
 import type {
   MembershipSort,
   MembershipSortField,
   MembershipTab,
 } from '@/features/groups/types/group.types';
-import { useCollaborators } from '../hooks/useCollaborators';
-import { useCollaboratorMutations } from '../hooks/useCollaboratorMutations';
 import { InviteDialog } from './InviteDialog.tsx';
 import { RolesManagementCard } from './RolesManagementCard.tsx';
-import type { Collaborator } from '../hooks/useCollaborators';
+import type { Collaborator, Role } from '../hooks/useCollaborators';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface CollaboratorsViewProps {
+  activeCollaborators: Collaborator[];
+  activeTab: MembershipTab;
   amendmentId: string;
   amendmentTitle: string;
-  currentUserId: string | undefined;
+  changeRoleMembership: Collaborator | null;
+  changeRoleOpen: boolean;
+  memberRightsMembership: Collaborator | null;
+  memberRightsOpen: boolean;
+  membershipSort: MembershipSort;
+  onActiveTabChange: (tab: MembershipTab) => void;
+  onApproveRequest: (membershipId: string, userId: string) => void | Promise<void>;
+  onChangeRoleOpenChange: (open: boolean) => void;
+  onConfirmRoleChange: (newRoleIds: string[]) => void | Promise<void>;
+  onCreateRole: (name: string, description: string, amendmentId: string) => void | Promise<void>;
+  onDeleteRole: (roleId: string) => void | Promise<void>;
+  onInviteUsers: (userIds: string[], amendmentId: string, roleId: string) => void | Promise<void>;
+  onMemberRightsOpenChange: (open: boolean) => void;
+  onMembershipSortChange: (field: MembershipSortField) => void;
+  onNavigateToUser: (userId: string) => void;
+  onOpenChangeRoleDialog: (membership: Collaborator) => void;
+  onOpenMemberRightsDialog: (membership: Collaborator) => void;
+  onRejectRequest: (membershipId: string, userId: string) => void | Promise<void>;
+  onRemoveCollaborator: (membershipId: string, userId: string) => void | Promise<void>;
+  onRemoveRoleFromByRoleView: (membership: Collaborator, roleId: string) => void | Promise<void>;
+  onSearchQueryChange: (query: string) => void;
+  onToggleActionRight: (
+    roleId: string,
+    resource: string,
+    action: string,
+    currentlyHas: boolean,
+    roles: Role[],
+    amendmentId: string
+  ) => void | Promise<void>;
+  onWithdrawInvitation: (membershipId: string, userId: string) => void | Promise<void>;
+  pendingInvitations: Collaborator[];
+  pendingRequests: Collaborator[];
+  roles: Role[];
+  searchQuery: string;
 }
 
 export function CollaboratorsView({
+  activeCollaborators,
+  activeTab,
   amendmentId,
   amendmentTitle,
-  currentUserId,
+  changeRoleMembership,
+  changeRoleOpen,
+  memberRightsMembership,
+  memberRightsOpen,
+  membershipSort,
+  onActiveTabChange,
+  onApproveRequest,
+  onChangeRoleOpenChange,
+  onConfirmRoleChange,
+  onCreateRole,
+  onDeleteRole,
+  onInviteUsers,
+  onMemberRightsOpenChange,
+  onMembershipSortChange,
+  onNavigateToUser,
+  onOpenChangeRoleDialog,
+  onOpenMemberRightsDialog,
+  onRejectRequest,
+  onRemoveCollaborator,
+  onRemoveRoleFromByRoleView,
+  onSearchQueryChange,
+  onToggleActionRight,
+  onWithdrawInvitation,
+  pendingInvitations,
+  pendingRequests,
+  roles,
+  searchQuery,
 }: CollaboratorsViewProps) {
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<MembershipTab>('membershipsByUser');
-  const [membershipSort, setMembershipSort] = useState<MembershipSort>({
-    field: 'user',
-    direction: 'asc',
-  });
-  const [changeRoleOpen, setChangeRoleOpen] = useState(false);
-  const [changeRoleMembership, setChangeRoleMembership] = useState<Collaborator | null>(null);
-  const [memberRightsOpen, setMemberRightsOpen] = useState(false);
-  const [memberRightsMembership, setMemberRightsMembership] = useState<Collaborator | null>(null);
-
-  const { collaborators, roles } = useCollaborators(amendmentId, currentUserId, '');
-
-  const {
-    activeMembers: activeCollaborators,
-    pendingRequests,
-    pendingInvitations,
-  } = useMembershipSearch(collaborators, searchQuery, membershipSort, {
-    activeStatuses: ['member', 'admin'],
-    activeRoleNames: ['Author'],
-  });
-
-  const mutations = useCollaboratorMutations();
-
-  const navigateToUser = (userId: string) => {
-    navigate({ to: '/user/$id', params: { id: userId } });
-  };
-
-  const handleMembershipSortChange = (field: MembershipSortField) => {
-    setMembershipSort(currentSort => {
-      if (currentSort.field === field) {
-        return {
-          field,
-          direction: currentSort.direction === 'asc' ? 'desc' : 'asc',
-        };
-      }
-
-      return {
-        field,
-        direction: 'asc',
-      };
-    });
-  };
-
-  const handleOpenChangeRoleDialog = (membership: Collaborator) => {
-    setChangeRoleMembership(membership);
-    setChangeRoleOpen(true);
-  };
-
-  const handleConfirmRoleChange = async (newRoleIds: string[]) => {
-    if (!changeRoleMembership) return;
-
-    await mutations.changeCollaboratorRoles(changeRoleMembership.id, newRoleIds, roles);
-  };
-
-  const handleRemoveRoleFromByRoleView = async (membership: Collaborator, roleId: string) => {
-    const nextRoleIds = getMembershipDisplayRoles(membership)
-      .filter(role => role.id !== roleId)
-      .map(role => role.id);
-
-    await mutations.changeCollaboratorRoles(membership.id, nextRoleIds, roles);
-  };
-
   return (
     <div>
       <div className="mb-6">
@@ -118,7 +111,7 @@ export function CollaboratorsView({
       {activeTab !== 'roles' ? (
         <EntitySearchBar
           searchQuery={searchQuery}
-          onSearchQueryChange={setSearchQuery}
+          onSearchQueryChange={onSearchQueryChange}
           placeholder={translateText(
             'generated.inline.0099_search_collaborators_by_name_role_or_status_c0a4b06d'
           )}
@@ -128,7 +121,7 @@ export function CollaboratorsView({
 
       <MembershipTabs
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={onActiveTabChange}
         showGuests={false}
         membershipsByUserLabel={translateText(
           'generated.inline.0100_participants_by_user_99abf1d2'
@@ -142,7 +135,7 @@ export function CollaboratorsView({
               amendmentId={amendmentId}
               existingCollaborators={activeCollaborators}
               roles={roles}
-              onInviteUsers={mutations.inviteUsers}
+              onInviteUsers={onInviteUsers}
             />
           ) : null
         }
@@ -150,8 +143,8 @@ export function CollaboratorsView({
           <div className="space-y-4">
             <PendingRequestsTable
               requests={pendingRequests}
-              onApprove={membershipId => mutations.approveRequest(membershipId)}
-              onReject={membershipId => mutations.rejectRequest(membershipId)}
+              onApprove={onApproveRequest}
+              onReject={onRejectRequest}
               title={translateText('generated.inline.0102_pending_collaboration_requests_59419bb4')}
               description={translateText(
                 'generated.inline.0103_review_and_approve_collaboration_requests_0cd489d8'
@@ -162,7 +155,7 @@ export function CollaboratorsView({
             />
             <PendingInvitationsTable
               invitations={pendingInvitations}
-              onWithdraw={membershipId => mutations.withdrawInvitation(membershipId)}
+              onWithdraw={onWithdrawInvitation}
               description={translateText(
                 'generated.inline.0105_users_who_have_been_invited_to_this_amendment_525eacce'
               )}
@@ -171,13 +164,10 @@ export function CollaboratorsView({
             <ActiveMembersTable
               members={activeCollaborators}
               sort={membershipSort}
-              onSortChange={handleMembershipSortChange}
-              onOpenRightsDialog={membership => {
-                setMemberRightsMembership(membership);
-                setMemberRightsOpen(true);
-              }}
-              onOpenChangeRoleDialog={handleOpenChangeRoleDialog}
-              onRemove={membershipId => mutations.removeCollaborator(membershipId)}
+              onSortChange={onMembershipSortChange}
+              onOpenRightsDialog={onOpenMemberRightsDialog}
+              onOpenChangeRoleDialog={onOpenChangeRoleDialog}
+              onRemove={onRemoveCollaborator}
               title={translateText('generated.inline.0106_active_collaborators_6a0c51e8')}
               description={translateText(
                 'generated.inline.0088_current_amendment_collaborators_and_administr_a73f4579'
@@ -191,12 +181,9 @@ export function CollaboratorsView({
           <MembershipsByRoleTables
             roles={roles}
             members={activeCollaborators}
-            onOpenRightsDialog={membership => {
-              setMemberRightsMembership(membership);
-              setMemberRightsOpen(true);
-            }}
-            onRemoveRole={handleRemoveRoleFromByRoleView}
-            onSecondaryAction={handleOpenChangeRoleDialog}
+            onOpenRightsDialog={onOpenMemberRightsDialog}
+            onRemoveRole={onRemoveRoleFromByRoleView}
+            onSecondaryAction={onOpenChangeRoleDialog}
             secondaryActionLabel={translateText('generated.inline.0012_manage_roles_5f9b8531')}
             entityType="amendment"
             countLabel={translateText('generated.inline.0014_collaborators_8a37fa6f')}
@@ -212,18 +199,18 @@ export function CollaboratorsView({
           <RolesManagementCard
             amendmentId={amendmentId}
             roles={roles}
-            onCreateRole={mutations.createRole}
-            onDeleteRole={mutations.deleteRole}
-            onToggleActionRight={mutations.toggleActionRight}
+            onCreateRole={onCreateRole}
+            onDeleteRole={onDeleteRole}
+            onToggleActionRight={onToggleActionRight}
           />
         }
       />
 
       <MemberRightsDialog
         isOpen={memberRightsOpen}
-        onOpenChange={setMemberRightsOpen}
+        onOpenChange={onMemberRightsOpenChange}
         membership={memberRightsMembership}
-        onNavigateToUser={navigateToUser}
+        onNavigateToUser={onNavigateToUser}
         entityType="amendment"
         contextLabel={translateText('generated.inline.0015_amendment_61b2c1cd')}
         fallbackRoleLabel={translateText('generated.inline.0104_collaborator_794b34c1')}
@@ -231,7 +218,7 @@ export function CollaboratorsView({
 
       <ChangeRoleDialog
         isOpen={changeRoleOpen}
-        onOpenChange={setChangeRoleOpen}
+        onOpenChange={onChangeRoleOpenChange}
         memberName={
           changeRoleMembership
             ? [changeRoleMembership.user?.first_name, changeRoleMembership.user?.last_name]
@@ -244,7 +231,7 @@ export function CollaboratorsView({
           (changeRoleMembership?.role ? [changeRoleMembership.role] : [])
         }
         roles={roles}
-        onConfirm={handleConfirmRoleChange}
+        onConfirm={onConfirmRoleChange}
         title={translateText('generated.inline.0107_manage_collaborator_roles_f0c3f76e')}
       />
     </div>

@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { ContactDialog } from '@/features/shared/ui/ui/contact-dialog';
+import { ContactDialog } from '@/features/shared/ui/contact';
 import { cn } from '@/features/shared/utils/utils';
 
 export interface PricingTierViewModel {

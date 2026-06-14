@@ -29,7 +29,7 @@ import {
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
 import { getBlockType, setBlockType } from '@/features/shared/ui/kit-platejs/transforms.ts';
 
-import { ToolbarButton, ToolbarMenuGroup } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarButton, ToolbarMenuGroup } from '@/features/shared/ui/layout';
 import { useMemo, useState } from 'react';
 
 // Create base items without translations

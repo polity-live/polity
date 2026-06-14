@@ -34,8 +34,8 @@ export function CreateFormShellView({
     <div
       className={
         isCarouselLayout
-          ? 'mx-auto flex h-[calc(100dvh-3rem)] min-h-0 w-full max-w-2xl flex-col overflow-hidden px-4 py-6'
-          : 'mx-auto w-full max-w-2xl px-4 py-6'
+          ? 'flex h-[calc(100dvh-3rem)] min-h-0 w-full flex-col overflow-hidden'
+          : 'w-full'
       }
     >
       <SettingsPanel

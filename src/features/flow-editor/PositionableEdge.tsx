@@ -7,6 +7,7 @@ import {
 } from 'reactflow';
 
 import type { EdgeProps } from 'reactflow';
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 import ClickableBaseEdge from './ClickableBaseEdge.tsx';
 import './PositionableEdge.css';
@@ -89,6 +90,122 @@ export default function PositionableEdge({
   const middleSegmentIndex = Math.floor(edgeSegmentsArray.length / 2);
   const { labelX, labelY } = edgeSegmentsArray[middleSegmentIndex];
 
+  const updatePositionHandlers = (updater: (handlers: PositionHandler[]) => PositionHandler[]) => {
+    reactFlowInstance.setEdges(edges =>
+      edges.map(edge => {
+        if (edge.id !== id) {
+          return edge;
+        }
+
+        const nextPositionHandlers = updater([...(edge.data?.positionHandlers ?? [])]);
+
+        return {
+          ...edge,
+          data: {
+            ...edge.data,
+            positionHandlers: nextPositionHandlers,
+          },
+        };
+      })
+    );
+  };
+
+  const insertPositionHandler = (handlerIndex: number, handler: PositionHandler) => {
+    updatePositionHandlers(handlers => {
+      handlers.splice(handlerIndex, 0, handler);
+      return handlers;
+    });
+  };
+
+  const setPositionHandlerActive = (handlerIndex: number, active: boolean) => {
+    updatePositionHandlers(handlers =>
+      handlers.map((handler, index) => (index === handlerIndex ? { ...handler, active } : handler))
+    );
+  };
+
+  const movePositionHandlerTo = (handlerIndex: number, x: number, y: number) => {
+    updatePositionHandlers(handlers =>
+      handlers.map((handler, index) => (index === handlerIndex ? { ...handler, x, y } : handler))
+    );
+  };
+
+  const movePositionHandlerBy = (handlerIndex: number, deltaX: number, deltaY: number) => {
+    updatePositionHandlers(handlers =>
+      handlers.map((handler, index) =>
+        index === handlerIndex
+          ? {
+              ...handler,
+              x: handler.x + deltaX,
+              y: handler.y + deltaY,
+            }
+          : handler
+      )
+    );
+  };
+
+  const removePositionHandler = (handlerIndex: number) => {
+    updatePositionHandlers(handlers => handlers.filter((_, index) => index !== handlerIndex));
+  };
+
+  const clearActivePositionHandlers = () => {
+    reactFlowInstance.setEdges(edges =>
+      edges.map(edge => {
+        if (!edge.data?.positionHandlers) {
+          return edge;
+        }
+
+        return {
+          ...edge,
+          data: {
+            ...edge.data,
+            positionHandlers: edge.data.positionHandlers.map((handler: PositionHandler) => ({
+              ...handler,
+              active: false,
+            })),
+          },
+        };
+      })
+    );
+  };
+
+  const handlePositionHandlerKeyDown = (
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+    handlerIndex: number
+  ) => {
+    const step = event.shiftKey ? 20 : 8;
+
+    switch (event.key) {
+      case 'ArrowLeft':
+        event.preventDefault();
+        event.stopPropagation();
+        movePositionHandlerBy(handlerIndex, -step, 0);
+        break;
+      case 'ArrowRight':
+        event.preventDefault();
+        event.stopPropagation();
+        movePositionHandlerBy(handlerIndex, step, 0);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        event.stopPropagation();
+        movePositionHandlerBy(handlerIndex, 0, -step);
+        break;
+      case 'ArrowDown':
+        event.preventDefault();
+        event.stopPropagation();
+        movePositionHandlerBy(handlerIndex, 0, step);
+        break;
+      case 'Backspace':
+      case 'Delete':
+        event.preventDefault();
+        event.stopPropagation();
+        removePositionHandler(handlerIndex);
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <>
       {edgeSegmentsArray.map(({ edgePath }, index) => (
@@ -99,26 +216,11 @@ export default function PositionableEdge({
               y: event.clientY,
             });
 
-            reactFlowInstance.setEdges(edges =>
-              edges.map(edge => {
-                if (edge.id === id) {
-                  const newPositionHandlers = [...(edge.data?.positionHandlers ?? [])];
-                  newPositionHandlers.splice(index, 0, {
-                    x: position.x,
-                    y: position.y,
-                    active: false,
-                  });
-                  return {
-                    ...edge,
-                    data: {
-                      ...edge.data,
-                      positionHandlers: newPositionHandlers,
-                    },
-                  };
-                }
-                return edge;
-              })
-            );
+            insertPositionHandler(index, {
+              x: position.x,
+              y: position.y,
+              active: false,
+            });
           }}
           key={`edge${id}_segment${index}`}
           id={`edge${id}_segment${index}`}
@@ -165,92 +267,21 @@ export default function PositionableEdge({
                   x: event.clientX,
                   y: event.clientY,
                 });
-                reactFlowInstance.setEdges(edges =>
-                  edges.map(edge => {
-                    if (edge.id === id) {
-                      const newPositionHandlers = [...(edge.data?.positionHandlers ?? [])];
-                      newPositionHandlers[handlerIndex] = {
-                        ...newPositionHandlers[handlerIndex],
-                        x: position.x,
-                        y: position.y,
-                      };
-                      return {
-                        ...edge,
-                        data: {
-                          ...edge.data,
-                          positionHandlers: newPositionHandlers,
-                        },
-                      };
-                    }
-                    return edge;
-                  })
-                );
+                movePositionHandlerTo(handlerIndex, position.x, position.y);
               }}
-              onMouseUp={() => {
-                reactFlowInstance.setEdges(edges =>
-                  edges.map(edge => {
-                    if (edge.data?.positionHandlers) {
-                      const newPositionHandlers = edge.data.positionHandlers.map(
-                        (h: PositionHandler) => ({
-                          ...h,
-                          active: false,
-                        })
-                      );
-                      return {
-                        ...edge,
-                        data: {
-                          ...edge.data,
-                          positionHandlers: newPositionHandlers,
-                        },
-                      };
-                    }
-                    return edge;
-                  })
-                );
-              }}
+              onMouseUp={clearActivePositionHandlers}
             >
               <button
+                type="button"
+                aria-label="Move edge bend point"
+                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Delete Backspace"
                 className="positionHandler"
-                onMouseDown={() => {
-                  reactFlowInstance.setEdges(edges =>
-                    edges.map(edge => {
-                      if (edge.id === id) {
-                        const newPositionHandlers = [...(edge.data?.positionHandlers ?? [])];
-                        newPositionHandlers[handlerIndex] = {
-                          ...newPositionHandlers[handlerIndex],
-                          active: true,
-                        };
-                        return {
-                          ...edge,
-                          data: {
-                            ...edge.data,
-                            positionHandlers: newPositionHandlers,
-                          },
-                        };
-                      }
-                      return edge;
-                    })
-                  );
-                }}
+                onMouseDown={() => setPositionHandlerActive(handlerIndex, true)}
                 onContextMenu={event => {
                   event.preventDefault();
-                  reactFlowInstance.setEdges(edges =>
-                    edges.map(edge => {
-                      if (edge.id === id) {
-                        const newPositionHandlers = [...(edge.data?.positionHandlers ?? [])];
-                        newPositionHandlers.splice(handlerIndex, 1);
-                        return {
-                          ...edge,
-                          data: {
-                            ...edge.data,
-                            positionHandlers: newPositionHandlers,
-                          },
-                        };
-                      }
-                      return edge;
-                    })
-                  );
+                  removePositionHandler(handlerIndex);
                 }}
+                onKeyDown={event => handlePositionHandlerKeyDown(event, handlerIndex)}
               ></button>
             </div>
           </div>

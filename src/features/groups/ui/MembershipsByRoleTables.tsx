@@ -18,7 +18,7 @@ import {
 } from '@/features/shared/ui/layout';
 import { CountBadge, EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
-import { UserTableCell } from '@/features/shared/ui/ui/user-table-cell';
+import { UserTableCell } from '@/features/shared/ui/data-table';
 import type { SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
 import { RoleTag } from './RoleTag';
 

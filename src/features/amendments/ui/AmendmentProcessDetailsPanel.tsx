@@ -10,7 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
-import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
+import { EditingModeBadge } from '@/features/shared/ui/status';
 import { AmendmentForwardingPreview } from '@/features/amendments/ui/AmendmentForwardingPreview';
 import {
   AmendmentPathVisualization,

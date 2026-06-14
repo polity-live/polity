@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
 
-import { ToolbarButton } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarButton } from '@/features/shared/ui/layout';
 
 export function MoreToolbarButton(props: DropdownMenuProps) {
   const editor = useEditorRef();

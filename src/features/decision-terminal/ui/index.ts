@@ -1,7 +1,12 @@
 // Decision Terminal Components
 export { DecisionTerminal, type DecisionTerminalProps } from './DecisionTerminal';
 export { DecisionDashboardGrid } from './DecisionDashboardGrid';
+export {
+  DecisionDashboardGridView,
+  type DecisionDashboardGridViewProps,
+} from './DecisionDashboardGridView';
 export { DecisionDashboardHeader } from './DecisionDashboardHeader';
+export { DecisionTerminalView, type DecisionTerminalViewProps } from './DecisionTerminalView';
 export { DecisionVoteButton } from './DecisionVoteButton';
 export { DecisionVoteDialogController } from './DecisionVoteDialogController';
 export { DecisionWidgetContent } from './DecisionWidgetContent';

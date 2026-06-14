@@ -13,7 +13,7 @@ so that each layer can be tested, reused, and changed independently.
 │  UI Layer (rendering only)                                  │
 │  src/features/*/ui/*.tsx          — presentational components│
 │  src/features/*/<Page>.tsx        — thin shell (hook + JSX) │
-│  src/components/ui/*              — shadcn primitives        │
+│  src/features/shared/ui/ui/*      — shadcn primitives        │
 └───────────────────────┬─────────────────────────────────────┘
                         │ props / return values from hooks
 ┌───────────────────────┴─────────────────────────────────────┐
@@ -32,6 +32,21 @@ so that each layer can be tested, reused, and changed independently.
 │  src/zero/*/useXxxActions.ts      — write hooks + toasts    │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Design System Layers
+
+`src/features/shared/ui/ui/*` is the primitive layer configured by `components.json`.
+Keep these files close to shadcn/ui and free of app-specific composition or domain language.
+
+App-level UI belongs in the shared composition folders next to it:
+`layout`, `form`, `dialog`, `feedback`, `status`, `data-table`, `typeahead`, `voting`,
+`calendar`, `comments`, `navigation`, `rich-text`, `contact`, `hashtags`, `feed`, and `wiki`.
+
+Temporary compatibility files may remain in `src/features/shared/ui/ui/*` when old feature
+imports still depend on them, but those files should be pure re-export shims to the canonical
+composition location.
 
 ---
 

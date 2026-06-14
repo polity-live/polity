@@ -1,7 +1,7 @@
 import { BadgeControl } from '@/features/shared/ui/status';
-import { FormControlInput } from '@/features/shared/ui/form';
+import { SearchField } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Search as SearchIcon, Filter, X } from 'lucide-react';
+import { Filter, X } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface SearchHeaderProps {
@@ -37,24 +37,13 @@ export function SearchHeader({
       {/* Search Bar - Fixed/Sticky */}
       <div className="bg-background sticky top-0 z-10 mb-6 space-y-4 pt-2 pb-4">
         <div className="flex gap-2">
-          <div className="relative flex-1">
-            <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <FormControlInput
-              placeholder={t('features.search.placeholderDetailed')}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pr-10 pl-10"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
-                aria-label={t('common.actions.clear')}
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+          <SearchField
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            placeholder={t('features.search.placeholderDetailed')}
+            clearLabel={t('common.actions.clear')}
+            fieldClassName="flex-1"
+          />
           <Button
             variant="outline"
             size="icon"
@@ -79,15 +68,19 @@ export function SearchHeader({
                 onClick={() => onTopicRemove(topic)}
               >
                 {topic}
-                <button
-                  className="hover:text-destructive ml-2"
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="hover:text-destructive ml-2 h-4 w-4 p-0 text-inherit hover:bg-transparent"
+                  aria-label={t('common.actions.remove')}
                   onClick={e => {
                     e.stopPropagation();
                     onTopicRemove(topic);
                   }}
                 >
                   <X className="h-3 w-3" />
-                </button>
+                </Button>
               </BadgeControl>
             ))}
           </div>

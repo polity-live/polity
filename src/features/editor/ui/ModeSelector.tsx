@@ -14,10 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu';
-import {
-  EditingModeMenuItems,
-  getEditingModeOption,
-} from '@/features/shared/ui/ui/editing-mode.tsx';
+import { EditingModeMenuItems, getEditingModeOption } from '@/features/shared/ui/status';
 import { ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';

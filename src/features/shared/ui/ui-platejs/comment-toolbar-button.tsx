@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { commentPlugin } from '@/features/shared/ui/kit-platejs/comment-kit.tsx';
 
-import { ToolbarButton } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarButton } from '@/features/shared/ui/layout';
 
 export function CommentToolbarButton() {
   const editor = useEditorRef();

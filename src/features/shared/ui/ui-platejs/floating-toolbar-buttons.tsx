@@ -17,7 +17,7 @@ import { LinkToolbarButton } from './link-toolbar-button.tsx';
 import { MarkToolbarButton } from './mark-toolbar-button.tsx';
 import { MoreToolbarButton } from './more-toolbar-button.tsx';
 import { SuggestionToolbarButton } from './suggestion-toolbar-button.tsx';
-import { ToolbarGroup } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarGroup } from '@/features/shared/ui/layout';
 import { TurnIntoToolbarButton } from './turn-into-toolbar-button.tsx';
 
 export function FloatingToolbarButtons() {

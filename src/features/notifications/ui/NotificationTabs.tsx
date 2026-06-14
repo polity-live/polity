@@ -1,6 +1,6 @@
 import { BadgeControl } from '@/features/shared/ui/status';
 import { TabsTrigger } from '@/features/shared/ui/ui/tabs';
-import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
+import { ScrollableTabsList } from '@/features/shared/ui/navigation';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface NotificationTabsProps {

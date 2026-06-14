@@ -1,17 +1,8 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import { Calendar } from '@/features/shared/ui/ui/calendar';
-import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { useNavigate } from '@tanstack/react-router';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { CalendarEvent } from '../types/calendar.types';
-import { isSameDay, formatTime } from '../logic/dateUtils';
+
+import type { CalendarEvent } from '../types/calendar.types';
 import { getBaseEventId } from '../logic/eventIdUtils';
+import { MonthViewView } from './MonthViewView';
 
 interface MonthViewProps {
   selectedDate: Date;
@@ -20,108 +11,16 @@ interface MonthViewProps {
   allEvents: CalendarEvent[];
 }
 
-export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: MonthViewProps) => {
+export const MonthView = (props: MonthViewProps) => {
   const navigate = useNavigate();
-  const { t, language } = useTranslation();
-
-  const getEventsForDate = (date: Date) => {
-    return allEvents.filter(event => isSameDay(event.start_date, date));
-  };
-
-  const selectedDateEvents = getEventsForDate(selectedDate);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
-      <div className="lg:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('features.calendar.monthView.title')}</CardTitle>
-            <CardDescription>
-              {events.length === 1
-                ? t('features.calendar.monthView.eventCount', { count: events.length })
-                : t('features.calendar.monthView.eventCountPlural', { count: events.length })}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={date => date && onDateSelect(date)}
-              month={selectedDate}
-              onMonthChange={onDateSelect}
-              modifiers={{
-                hasEvents: (date: Date) => getEventsForDate(date).length > 0,
-              }}
-              modifiersClassNames={{
-                hasEvents:
-                  'font-bold text-primary relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:h-1 after:w-1 after:rounded-full after:bg-primary',
-              }}
-              className="w-full"
-            />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Events List for Selected Date */}
-      <div>
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {selectedDate.toLocaleDateString(language === 'de' ? 'de-DE' : 'en-US', {
-                month: 'short',
-                day: 'numeric',
-              })}
-            </CardTitle>
-            <CardDescription>
-              {selectedDateEvents.length === 1
-                ? t('features.calendar.monthView.eventCount', { count: selectedDateEvents.length })
-                : t('features.calendar.monthView.eventCountPlural', {
-                    count: selectedDateEvents.length,
-                  })}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {selectedDateEvents.length === 0 ? (
-              <div className="text-muted-foreground py-8 text-center text-sm">
-                {t('features.calendar.monthView.noEvents')}
-              </div>
-            ) : (
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-3">
-                  {selectedDateEvents.map(event => (
-                    <div
-                      key={event.id}
-                      className="hover:bg-accent cursor-pointer rounded-lg border p-3 transition-colors"
-                      onClick={() => {
-                        const baseEventId = getBaseEventId(event.id);
-                        navigate({ to: `/event/${baseEventId}` });
-                      }}
-                    >
-                      <h4 className="font-semibold">
-                        {event.isMeeting && '📅 '}
-                        {event.title}
-                      </h4>
-                      <p className="text-muted-foreground text-sm">
-                        {formatTime(event.start_date)}
-                      </p>
-                      {event.location && !event.isMeeting && (
-                        <p className="text-muted-foreground mt-1 text-xs">{event.location}</p>
-                      )}
-                      {event.isMeeting && (
-                        <p className="text-muted-foreground mt-1 text-xs">
-                          {event.visibility === 'public'
-                            ? t('features.calendar.eventCard.publicMeeting')
-                            : t('features.calendar.eventCard.privateMeeting')}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <MonthViewView
+      {...props}
+      onEventOpen={eventId => {
+        const baseEventId = getBaseEventId(eventId);
+        navigate({ to: `/event/${baseEventId}` });
+      }}
+    />
   );
 };

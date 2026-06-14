@@ -8,6 +8,7 @@ import {
 } from '@/features/shared/ui/form';
 import { Check } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
+import { Button } from '@/features/shared/ui/ui/button';
 import {
   useTranslation,
   translate as translateText,
@@ -1250,10 +1251,11 @@ export function GroupRelationshipRightsSelector({
                 !disabled && (isSelected ? 'hover:opacity-90' : 'hover:bg-accent')
               )}
             >
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => onToggleRight(option.value)}
-                className="flex w-full items-start gap-3 text-left"
+                className="h-auto w-full items-start justify-start p-0 text-left whitespace-normal hover:bg-transparent disabled:opacity-100"
                 disabled={disabled}
               >
                 <div
@@ -1287,7 +1289,7 @@ export function GroupRelationshipRightsSelector({
                     {t(option.descKey)}
                   </div>
                 </div>
-              </button>
+              </Button>
               {isSelected && onDirectionChange && directionOptions ? (
                 <div
                   className={cn(

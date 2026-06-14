@@ -7,10 +7,16 @@ import { cn } from '@/features/shared/utils/utils';
 
 interface TextFieldBaseProps {
   label?: ReactNode;
+  labelAction?: ReactNode;
   description?: ReactNode;
   error?: ReactNode;
   invalid?: boolean;
+  required?: boolean;
   fieldClassName?: string;
+  labelClassName?: string;
+  descriptionClassName?: string;
+  errorClassName?: string;
+  inputClassName?: string;
   value: string | number | null | undefined;
   onValueChange: (value: string) => void;
 }
@@ -36,7 +42,13 @@ export function TextField({
   description,
   error,
   invalid,
+  required,
   fieldClassName,
+  labelAction,
+  labelClassName,
+  descriptionClassName,
+  errorClassName,
+  inputClassName,
   value,
   onValueChange,
   onBlur,
@@ -50,10 +62,15 @@ export function TextField({
     <FormFieldShell
       id={props.id}
       label={label}
+      labelAction={labelAction}
       description={description}
       error={error}
       invalid={invalid}
+      required={required}
       className={fieldClassName}
+      labelClassName={labelClassName}
+      descriptionClassName={descriptionClassName}
+      errorClassName={errorClassName}
     >
       {({ id, describedBy, invalid }) =>
         multiline ? (
@@ -65,7 +82,8 @@ export function TextField({
             aria-invalid={invalid || undefined}
             onChange={event => onValueChange(event.target.value)}
             onBlur={event => (onBlur as ComponentProps<typeof Textarea>['onBlur'])?.(event)}
-            className={cn(className)}
+            required={required}
+            className={cn(className, inputClassName)}
           />
         ) : (
           <Input
@@ -76,7 +94,8 @@ export function TextField({
             aria-invalid={invalid || undefined}
             onChange={event => onValueChange(event.target.value)}
             onBlur={event => (onBlur as ComponentProps<typeof Input>['onBlur'])?.(event)}
-            className={cn(className)}
+            required={required}
+            className={cn(className, inputClassName)}
           />
         )
       }

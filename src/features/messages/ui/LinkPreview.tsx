@@ -1,29 +1,27 @@
 'use client';
 
-import { BadgeControl } from '@/features/shared/ui/status';
-import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
-import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
 import {
-  Users,
   Calendar,
-  FileText,
-  User,
-  MessageSquare,
   CheckSquare,
   ExternalLink,
+  FileText,
+  MessageSquare,
+  User,
+  Users,
 } from 'lucide-react';
-import { useUserState } from '@/zero/users/useUserState.ts';
-import { useGroupState } from '@/zero/groups/useGroupState.ts';
-import { useEventState } from '@/zero/events/useEventState.ts';
+
+import { BadgeControl, EditingModeBadge } from '@/features/shared/ui/status';
+import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState.ts';
 import { useBlogState } from '@/zero/blogs/useBlogState.ts';
+import { useEventState } from '@/zero/events/useEventState.ts';
+import { useGroupState } from '@/zero/groups/useGroupState.ts';
 import { useStatementState } from '@/zero/statements/useStatementState.ts';
 import { useTodoState } from '@/zero/todos/useTodoState.ts';
-import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import { useUserState } from '@/zero/users/useUserState.ts';
 import { normalizeMessagePreviewText } from '../logic/normalizeMessagePreviewText';
 import { isPolityLink, parsePolityUrl, type PolityLinkEntityType } from '../utils/url-utils';
-import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
+import { LinkPreviewCardView, LinkPreviewSkeleton } from './LinkPreviewView';
 
 interface LinkPreviewProps {
   url: string;
@@ -32,327 +30,261 @@ interface LinkPreviewProps {
 
 export function LinkPreview({ url, className = '' }: LinkPreviewProps) {
   const { t } = useTranslation();
-  const isPolity = isPolityLink(url);
-  const polityLink = isPolity ? parsePolityUrl(url) : null;
+  const polityLink = isPolityLink(url) ? parsePolityUrl(url) : null;
 
   if (!polityLink) {
-    // Generic external link preview
     return (
-      <Card asChild className={`hover:bg-accent ${className}`}>
-        <SmartLink href={url} target="_blank" rel="noopener noreferrer">
-          <CardContent className="flex items-center gap-3 p-3">
-            <div className="bg-muted flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
-              <ExternalLink className="text-muted-foreground h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{url}</p>
-              <p className="text-muted-foreground text-xs">
-                {t('components.linkPreview.externalLink')}
-              </p>
-            </div>
-          </CardContent>
-        </SmartLink>
-      </Card>
+      <LinkPreviewCardView
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+        icon={<ExternalLink className="text-muted-foreground h-5 w-5" />}
+        iconContainerClassName="bg-muted flex h-10 w-10 items-center justify-center rounded-lg"
+        title={url}
+        subtitle={t('components.linkPreview.externalLink')}
+      />
     );
   }
 
-  // Polity-specific preview
-  return <PolityLinkPreview type={polityLink.type} id={polityLink.id} className={className} />;
+  return (
+    <PolityLinkPreviewContainer type={polityLink.type} id={polityLink.id} className={className} />
+  );
 }
 
-interface PolityLinkPreviewProps {
+interface PolityLinkPreviewContainerProps {
   type: PolityLinkEntityType;
   id: string;
   className?: string;
 }
 
-function PolityLinkPreview({ type, id, className }: PolityLinkPreviewProps) {
+function PolityLinkPreviewContainer({ type, id, className }: PolityLinkPreviewContainerProps) {
   switch (type) {
     case 'user':
-      return <UserPreview userId={id} className={className} />;
+      return <UserPreviewContainer userId={id} className={className} />;
     case 'group':
-      return <GroupPreview groupId={id} className={className} />;
+      return <GroupPreviewContainer groupId={id} className={className} />;
     case 'event':
-      return <EventPreview eventId={id} className={className} />;
+      return <EventPreviewContainer eventId={id} className={className} />;
     case 'amendment':
-      return <AmendmentPreview amendmentId={id} className={className} />;
+      return <AmendmentPreviewContainer amendmentId={id} className={className} />;
     case 'blog':
-      return <BlogPreview blogId={id} className={className} />;
+      return <BlogPreviewContainer blogId={id} className={className} />;
     case 'statement':
-      return <StatementPreview statementId={id} className={className} />;
+      return <StatementPreviewContainer statementId={id} className={className} />;
     case 'todo':
-      return <TodoPreview todoId={id} className={className} />;
+      return <TodoPreviewContainer todoId={id} className={className} />;
     default:
       return null;
   }
 }
 
-function UserPreview({ userId, className }: { userId: string; className?: string }) {
+function UserPreviewContainer({ userId, className }: { userId: string; className?: string }) {
   const { t } = useTranslation();
   const { user } = useUserState({ userId });
 
   if (!user) {
-    return <PreviewSkeleton />;
+    return <LinkPreviewSkeleton />;
   }
 
-  const userBio = normalizeMessagePreviewText(user.bio);
+  const userName =
+    `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
+    t('components.linkPreview.unspecifiedUser');
 
   return (
-    <Card asChild className={`hover:bg-accent border-l-4 border-l-blue-500 ${className}`}>
-      <SmartLink href={`/user/${userId}`}>
-        <CardContent className="flex items-center gap-3 p-3">
-          <User className="h-5 w-5 flex-shrink-0 text-blue-500" />
-          <Avatar className="h-10 w-10 flex-shrink-0">
-            <AvatarImage src={user.avatar ?? undefined} />
-            <AvatarFallback>
-              {(user.first_name || user.handle)?.[0]?.toUpperCase() || 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">
-              {`${user.first_name || ''} ${user.last_name || ''}`.trim() ||
-                t('components.linkPreview.unspecifiedUser')}
-            </p>
-            {user.handle && (
-              <p className="text-muted-foreground truncate text-sm">@{user.handle}</p>
-            )}
-            {userBio && <p className="text-muted-foreground truncate text-xs">{userBio}</p>}
-          </div>
-          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
-            {t('components.linkPreview.user')}
-          </BadgeControl>
-        </CardContent>
-      </SmartLink>
-    </Card>
+    <LinkPreviewCardView
+      href={`/user/${userId}`}
+      className={className}
+      accentClassName="border-l-4 border-l-blue-500"
+      icon={<User className="h-5 w-5 text-blue-500" />}
+      avatar={{
+        src: user.avatar ?? undefined,
+        fallback: (user.first_name || user.handle)?.[0]?.toUpperCase() || 'U',
+      }}
+      title={userName}
+      subtitle={user.handle ? `@${user.handle}` : undefined}
+      description={normalizeMessagePreviewText(user.bio)}
+      badgeLabel={t('components.linkPreview.user')}
+    />
   );
 }
 
-function GroupPreview({ groupId, className }: { groupId: string; className?: string }) {
+function GroupPreviewContainer({ groupId, className }: { groupId: string; className?: string }) {
   const { t } = useTranslation();
   const { group } = useGroupState({ groupId });
 
   if (!group) {
-    return <PreviewSkeleton />;
+    return <LinkPreviewSkeleton />;
   }
 
-  const groupDescription = normalizeMessagePreviewText(group.description);
-
   return (
-    <Card asChild className={`hover:bg-accent border-l-4 border-l-purple-500 ${className}`}>
-      <SmartLink href={`/group/${groupId}`}>
-        <CardContent className="flex items-center gap-3 p-3">
-          <Users className="h-5 w-5 flex-shrink-0 text-purple-500" />
-          <Avatar className="h-10 w-10 flex-shrink-0">
-            <AvatarImage src={undefined} />
-            <AvatarFallback>{group.name?.[0]?.toUpperCase() || 'G'}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">{group.name}</p>
-            {groupDescription && (
-              <p className="text-muted-foreground line-clamp-1 text-xs">{groupDescription}</p>
-            )}
-            <p className="text-muted-foreground text-xs">
-              {group.member_count || 0} {t('components.linkPreview.members')}
-            </p>
-          </div>
-          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
-            {t('components.linkPreview.group')}
-          </BadgeControl>
-        </CardContent>
-      </SmartLink>
-    </Card>
+    <LinkPreviewCardView
+      href={`/group/${groupId}`}
+      className={className}
+      accentClassName="border-l-4 border-l-purple-500"
+      icon={<Users className="h-5 w-5 text-purple-500" />}
+      avatar={{ fallback: group.name?.[0]?.toUpperCase() || 'G' }}
+      title={group.name}
+      description={normalizeMessagePreviewText(group.description)}
+      meta={
+        <p className="text-muted-foreground text-xs">
+          {group.member_count || 0} {t('components.linkPreview.members')}
+        </p>
+      }
+      badgeLabel={t('components.linkPreview.group')}
+    />
   );
 }
 
-function EventPreview({ eventId, className }: { eventId: string; className?: string }) {
+function EventPreviewContainer({ eventId, className }: { eventId: string; className?: string }) {
   const { t } = useTranslation();
   const { event } = useEventState({ eventId });
 
   if (!event) {
-    return <PreviewSkeleton />;
+    return <LinkPreviewSkeleton />;
   }
 
   return (
-    <Card asChild className={`hover:bg-accent border-l-4 border-l-green-500 ${className}`}>
-      <SmartLink href={`/event/${eventId}`}>
-        <CardContent className="flex items-center gap-3 p-3">
-          <Calendar className="h-5 w-5 flex-shrink-0 text-green-500" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">{event.title}</p>
-            {event.start_date && (
-              <p className="text-muted-foreground text-xs">
-                {new Date(event.start_date).toLocaleDateString()}
-              </p>
-            )}
-            {event.location_name && (
-              <p className="text-muted-foreground truncate text-xs">{event.location_name}</p>
-            )}
-          </div>
-          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
-            {t('components.linkPreview.event')}
-          </BadgeControl>
-        </CardContent>
-      </SmartLink>
-    </Card>
+    <LinkPreviewCardView
+      href={`/event/${eventId}`}
+      className={className}
+      accentClassName="border-l-4 border-l-green-500"
+      icon={<Calendar className="h-5 w-5 text-green-500" />}
+      title={event.title}
+      subtitle={event.start_date ? new Date(event.start_date).toLocaleDateString() : undefined}
+      description={event.location_name}
+      badgeLabel={t('components.linkPreview.event')}
+    />
   );
 }
 
-function AmendmentPreview({ amendmentId, className }: { amendmentId: string; className?: string }) {
+function AmendmentPreviewContainer({
+  amendmentId,
+  className,
+}: {
+  amendmentId: string;
+  className?: string;
+}) {
   const { t } = useTranslation();
   const { amendment } = useAmendmentState({ amendmentId });
 
   if (!amendment) {
-    return <PreviewSkeleton />;
+    return <LinkPreviewSkeleton />;
   }
 
-  const amendmentReason = normalizeMessagePreviewText(amendment.reason);
-
   return (
-    <Card asChild className={`hover:bg-accent border-l-4 border-l-orange-500 ${className}`}>
-      <SmartLink href={`/amendment/${amendmentId}`}>
-        <CardContent className="flex items-center gap-3 p-3">
-          <FileText className="h-5 w-5 flex-shrink-0 text-orange-500" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">{amendment.title}</p>
-            {amendmentReason && (
-              <p className="text-muted-foreground truncate text-xs">{amendmentReason}</p>
-            )}
-            {amendment.editing_mode && (
-              <EditingModeBadge
-                mode={amendment.editing_mode}
-                variant="secondary"
-                className="mt-1 text-xs"
-              />
-            )}
-          </div>
-          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
-            {t('components.linkPreview.amendment')}
-          </BadgeControl>
-        </CardContent>
-      </SmartLink>
-    </Card>
+    <LinkPreviewCardView
+      href={`/amendment/${amendmentId}`}
+      className={className}
+      accentClassName="border-l-4 border-l-orange-500"
+      icon={<FileText className="h-5 w-5 text-orange-500" />}
+      title={amendment.title}
+      description={normalizeMessagePreviewText(amendment.reason)}
+      meta={
+        amendment.editing_mode ? (
+          <EditingModeBadge
+            mode={amendment.editing_mode}
+            variant="secondary"
+            className="mt-1 text-xs"
+          />
+        ) : null
+      }
+      badgeLabel={t('components.linkPreview.amendment')}
+    />
   );
 }
 
-function BlogPreview({ blogId, className }: { blogId: string; className?: string }) {
+function BlogPreviewContainer({ blogId, className }: { blogId: string; className?: string }) {
   const { t } = useTranslation();
   const { blogWithBloggers } = useBlogState({ blogId, includeBloggers: true });
   const blog = blogWithBloggers;
 
   if (!blog) {
-    return <PreviewSkeleton />;
+    return <LinkPreviewSkeleton />;
   }
 
-  const blogOwner = blog.bloggers?.find(b => b.status === 'owner')?.user;
+  const blogOwner = blog.bloggers?.find(blogger => blogger.status === 'owner')?.user;
   const blogViewUrl = blog.group_id
     ? `/group/${blog.group_id}/blog/${blogId}`
     : `/user/${blogOwner?.id || ''}/blog/${blogId}`;
 
   return (
-    <Card asChild className={`hover:bg-accent border-l-4 border-l-pink-500 ${className}`}>
-      <SmartLink href={blogViewUrl}>
-        <CardContent className="flex items-center gap-3 p-3">
-          <MessageSquare className="h-5 w-5 flex-shrink-0 text-pink-500" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">{blog.title}</p>
-            <div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs">
-              <span>
-                {blog.like_count || 0} {t('components.linkPreview.likes')}
-              </span>
-              <span>•</span>
-              <span>
-                {blog.comment_count || 0} {t('components.linkPreview.comments')}
-              </span>
-            </div>
-          </div>
-          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
-            {t('components.linkPreview.blog')}
-          </BadgeControl>
-        </CardContent>
-      </SmartLink>
-    </Card>
+    <LinkPreviewCardView
+      href={blogViewUrl}
+      className={className}
+      accentClassName="border-l-4 border-l-pink-500"
+      icon={<MessageSquare className="h-5 w-5 text-pink-500" />}
+      title={blog.title}
+      meta={
+        <div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs">
+          <span>
+            {blog.like_count || 0} {t('components.linkPreview.likes')}
+          </span>
+          <span>•</span>
+          <span>
+            {blog.comment_count || 0} {t('components.linkPreview.comments')}
+          </span>
+        </div>
+      }
+      badgeLabel={t('components.linkPreview.blog')}
+    />
   );
 }
 
-function StatementPreview({ statementId, className }: { statementId: string; className?: string }) {
+function StatementPreviewContainer({
+  statementId,
+  className,
+}: {
+  statementId: string;
+  className?: string;
+}) {
   const { t } = useTranslation();
   const { statement } = useStatementState({ id: statementId });
 
   if (!statement) {
-    return <PreviewSkeleton />;
+    return <LinkPreviewSkeleton />;
   }
-
-  if (!statement) {
-    return null;
-  }
-
-  const statementText = normalizeMessagePreviewText(statement.text);
 
   return (
-    <Card asChild className={`hover:bg-accent border-l-4 border-l-cyan-500 ${className}`}>
-      <SmartLink href={`/statement/${statementId}`}>
-        <CardContent className="flex items-center gap-3 p-3">
-          <FileText className="h-5 w-5 flex-shrink-0 text-cyan-500" />
-          <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 text-sm">{statementText ?? ''}</p>
-          </div>
-          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
-            {t('components.linkPreview.statement')}
-          </BadgeControl>
-        </CardContent>
-      </SmartLink>
-    </Card>
+    <LinkPreviewCardView
+      href={`/statement/${statementId}`}
+      className={className}
+      accentClassName="border-l-4 border-l-cyan-500"
+      icon={<FileText className="h-5 w-5 text-cyan-500" />}
+      title={normalizeMessagePreviewText(statement.text) ?? ''}
+      titleClassName="line-clamp-2 text-sm font-normal"
+      badgeLabel={t('components.linkPreview.statement')}
+    />
   );
 }
 
-function TodoPreview({ todoId, className }: { todoId: string; className?: string }) {
+function TodoPreviewContainer({ todoId, className }: { todoId: string; className?: string }) {
   const { t } = useTranslation();
   const { todo } = useTodoState({ todoId });
 
   if (!todo) {
-    return <PreviewSkeleton />;
+    return <LinkPreviewSkeleton />;
   }
 
-  const todoDescription = normalizeMessagePreviewText(todo.description);
-
   return (
-    <Card asChild className={`hover:bg-accent border-l-4 border-l-indigo-500 ${className}`}>
-      <SmartLink href={`/todos/${todoId}`}>
-        <CardContent className="flex items-center gap-3 p-3">
-          <CheckSquare className="h-5 w-5 flex-shrink-0 text-indigo-500" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">{todo.title}</p>
-            {todoDescription && (
-              <p className="text-muted-foreground line-clamp-1 text-xs">{todoDescription}</p>
-            )}
-            <div className="mt-1 flex items-center gap-2">
-              <BadgeControl variant="secondary" className="text-xs capitalize">
-                {todo.status?.replace('_', ' ')}
-              </BadgeControl>
-              <BadgeControl variant="outline" className="text-xs capitalize">
-                {todo.priority}
-              </BadgeControl>
-            </div>
-          </div>
-          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
-            {t('components.linkPreview.todo')}
+    <LinkPreviewCardView
+      href={`/todos/${todoId}`}
+      className={className}
+      accentClassName="border-l-4 border-l-indigo-500"
+      icon={<CheckSquare className="h-5 w-5 text-indigo-500" />}
+      title={todo.title}
+      description={normalizeMessagePreviewText(todo.description)}
+      meta={
+        <div className="mt-1 flex items-center gap-2">
+          <BadgeControl variant="secondary" className="text-xs capitalize">
+            {todo.status?.replace('_', ' ')}
           </BadgeControl>
-        </CardContent>
-      </SmartLink>
-    </Card>
-  );
-}
-
-function PreviewSkeleton() {
-  return (
-    <Card className="animate-pulse">
-      <CardContent className="flex items-center gap-3 p-3">
-        <div className="bg-muted h-10 w-10 flex-shrink-0 rounded-full"></div>
-        <div className="min-w-0 flex-1 space-y-2">
-          <div className="bg-muted h-4 w-3/4 rounded"></div>
-          <div className="bg-muted h-3 w-1/2 rounded"></div>
+          <BadgeControl variant="outline" className="text-xs capitalize">
+            {todo.priority}
+          </BadgeControl>
         </div>
-      </CardContent>
-    </Card>
+      }
+      badgeLabel={t('components.linkPreview.todo')}
+    />
   );
 }

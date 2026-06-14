@@ -36,7 +36,7 @@ export function ChartElement(props: PlateElementProps<TChartElement>) {
               variant="secondary"
               size="icon"
               className="pointer-events-none size-8 opacity-0 shadow-sm transition-opacity group-focus-within/chart:pointer-events-auto group-focus-within/chart:opacity-100 group-hover/chart:pointer-events-auto group-hover/chart:opacity-100"
-              title={t('plateJs.chart.edit')}
+              title={t('plateJs.chart.edit', 'Edit chart')}
               onClick={event => {
                 event.stopPropagation();
                 openChartDialog(props.element);
@@ -49,7 +49,7 @@ export function ChartElement(props: PlateElementProps<TChartElement>) {
               variant="secondary"
               size="icon"
               className="pointer-events-none size-8 opacity-0 shadow-sm transition-opacity group-focus-within/chart:pointer-events-auto group-focus-within/chart:opacity-100 group-hover/chart:pointer-events-auto group-hover/chart:opacity-100"
-              title={t('plateJs.chart.delete')}
+              title={t('plateJs.chart.delete', 'Delete chart')}
               onClick={event => {
                 event.stopPropagation();
                 const path = editor.api.findPath(props.element);

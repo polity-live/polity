@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { useMarkToolbarButton, useMarkToolbarButtonState } from 'platejs/react';
 
-import { ToolbarButton } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarButton } from '@/features/shared/ui/layout';
 
 export function MarkToolbarButton({
   clear,

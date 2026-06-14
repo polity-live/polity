@@ -17,34 +17,54 @@ interface SelectFieldOption {
 
 interface SelectFieldProps extends Omit<ComponentProps<typeof Select>, 'value' | 'onValueChange'> {
   label?: ReactNode;
+  labelAction?: ReactNode;
   description?: ReactNode;
   error?: ReactNode;
+  invalid?: boolean;
+  required?: boolean;
   placeholder?: ReactNode;
   value?: string;
   onValueChange: (value: string) => void;
   options: SelectFieldOption[];
   fieldClassName?: string;
+  labelClassName?: string;
+  descriptionClassName?: string;
+  errorClassName?: string;
+  inputClassName?: string;
   triggerClassName?: string;
 }
 
 export function SelectField({
   label,
+  labelAction,
   description,
   error,
+  invalid,
+  required,
   placeholder,
   value,
   onValueChange,
   options,
   fieldClassName,
+  labelClassName,
+  descriptionClassName,
+  errorClassName,
+  inputClassName,
   triggerClassName,
   ...props
 }: SelectFieldProps) {
   return (
     <FormFieldShell
       label={label}
+      labelAction={labelAction}
       description={description}
       error={error}
+      invalid={invalid}
+      required={required}
       className={fieldClassName}
+      labelClassName={labelClassName}
+      descriptionClassName={descriptionClassName}
+      errorClassName={errorClassName}
     >
       {({ id, describedBy, invalid }) => (
         <Select value={value} onValueChange={onValueChange} {...props}>
@@ -52,7 +72,8 @@ export function SelectField({
             id={id}
             aria-describedby={describedBy}
             aria-invalid={invalid || undefined}
-            className={triggerClassName}
+            aria-required={required || undefined}
+            className={triggerClassName ?? inputClassName}
           >
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>

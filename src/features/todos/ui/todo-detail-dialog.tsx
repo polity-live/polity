@@ -3,6 +3,7 @@
 import { BadgeControl } from '@/features/shared/ui/status';
 import {
   FormControlInput,
+  FormControlLabel,
   FormControlTextarea,
   FormControlSelect,
   FormControlSelectContent,
@@ -15,8 +16,8 @@ import { useState } from 'react';
 import { Dialog, DialogClose, DialogHeader, DialogTitle } from '@/features/shared/ui/ui/dialog.tsx';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
-import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor.tsx';
-import { VisibilitySelector } from '@/features/shared/ui/ui/visibility-selector.tsx';
+import { HashtagEditor } from '@/features/shared/ui/hashtags';
+import { VisibilitySelector } from '@/features/shared/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover.tsx';
 import {
   Command,
@@ -284,9 +285,9 @@ export function TodoDetailDialog({
           {/* Status and Priority */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-2 block text-sm font-medium">
+              <FormControlLabel className="mb-2 block text-sm font-medium">
                 {t('features.todos.detail.status')}
-              </label>
+              </FormControlLabel>
               {isEditing && canManageTodos ? (
                 <FormControlSelect
                   value={formData.status}
@@ -331,9 +332,9 @@ export function TodoDetailDialog({
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium">
+              <FormControlLabel className="mb-2 block text-sm font-medium">
                 {t('features.todos.detail.priority')}
-              </label>
+              </FormControlLabel>
               {isEditing && canManageTodos ? (
                 <FormControlSelect
                   value={formData.priority}
@@ -380,9 +381,9 @@ export function TodoDetailDialog({
 
           {/* Description */}
           <div>
-            <label className="mb-2 block text-sm font-medium">
+            <FormControlLabel className="mb-2 block text-sm font-medium">
               {t('features.todos.detail.description')}
-            </label>
+            </FormControlLabel>
             {isEditing && canManageTodos ? (
               <FormControlTextarea
                 value={formData.description}
@@ -399,9 +400,9 @@ export function TodoDetailDialog({
 
           {/* Due Date */}
           <div>
-            <label className="mb-2 block text-sm font-medium">
+            <FormControlLabel className="mb-2 block text-sm font-medium">
               {t('features.todos.dueDate.title')}
-            </label>
+            </FormControlLabel>
             {isEditing && canManageTodos ? (
               <FormControlInput
                 type="date"
@@ -437,9 +438,9 @@ export function TodoDetailDialog({
               />
             ) : (
               <div>
-                <label className="mb-2 block text-sm font-medium">
+                <FormControlLabel className="mb-2 block text-sm font-medium">
                   {t('common.visibility.label')}
-                </label>
+                </FormControlLabel>
                 <div className="text-muted-foreground flex items-center gap-2 text-sm">
                   <VisibilityIcon visibility={(todo.visibility || 'private') as TodoVisibility} />
                   <span>
@@ -458,9 +459,9 @@ export function TodoDetailDialog({
           {/* Creator */}
           {todo.creator && (
             <div>
-              <label className="mb-2 block text-sm font-medium">
+              <FormControlLabel className="mb-2 block text-sm font-medium">
                 {t('features.todos.detail.createdBy')}
-              </label>
+              </FormControlLabel>
               <Link
                 to="/user/$id"
                 params={{ id: todo.creator.id }}
@@ -484,10 +485,10 @@ export function TodoDetailDialog({
 
           {/* Assigned Users */}
           <div>
-            <label className="mb-2 block text-sm font-medium">
+            <FormControlLabel className="mb-2 block text-sm font-medium">
               <Users className="mr-2 inline h-4 w-4" />
               {t('features.todos.detail.assignedTo')}
-            </label>
+            </FormControlLabel>
             {isEditing && canManageTodos ? (
               <div className="space-y-3">
                 {/* Show currently selected users */}
@@ -644,10 +645,10 @@ export function TodoDetailDialog({
           {/* Group */}
           {todo.group && (
             <div>
-              <label className="mb-2 block text-sm font-medium">
+              <FormControlLabel className="mb-2 block text-sm font-medium">
                 <Building2 className="mr-2 inline h-4 w-4" />
                 {t('features.todos.group.title')}
-              </label>
+              </FormControlLabel>
               <Link
                 to="/group/$id"
                 params={{ id: todo.group.id }}
@@ -674,10 +675,10 @@ export function TodoDetailDialog({
                 />
               ) : (
                 <>
-                  <label className="mb-2 block text-sm font-medium">
+                  <FormControlLabel className="mb-2 block text-sm font-medium">
                     <Tag className="mr-2 inline h-4 w-4" />
                     {t('features.todos.detail.tags')}
-                  </label>
+                  </FormControlLabel>
                   <div className="flex flex-wrap gap-2">
                     {(todo.tags ?? []).map((tag: string, idx: number) => (
                       <BadgeControl key={idx} variant="secondary">

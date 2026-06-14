@@ -12,6 +12,7 @@ interface CommentInputProps {
   placeholder?: string;
   replyTo?: string;
   onCancelReply?: () => void;
+  isSubmitting?: boolean;
   className?: string;
 }
 
@@ -20,13 +21,15 @@ export function CommentInput({
   placeholder = translateText('generated.inline.0146_write_a_comment_7b01f9dc'),
   replyTo,
   onCancelReply,
+  isSubmitting: isSubmittingProp = false,
   className,
 }: CommentInputProps) {
   const [text, setText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isBusy = isSubmitting || isSubmittingProp;
 
   const handleSubmit = async () => {
-    if (!text.trim() || isSubmitting) return;
+    if (!text.trim() || isBusy) return;
     setIsSubmitting(true);
     try {
       await onSubmit(text.trim());
@@ -72,7 +75,7 @@ export function CommentInput({
         <Button
           size="sm"
           onClick={handleSubmit}
-          disabled={!text.trim() || isSubmitting}
+          disabled={!text.trim() || isBusy}
           className="self-end"
         >
           <Send className="h-4 w-4" />

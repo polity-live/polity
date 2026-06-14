@@ -1,5 +1,6 @@
 import { BadgeControl } from '@/features/shared/ui/status';
 import { FormControlLabel } from '@/features/shared/ui/form';
+import { Button } from '@/features/shared/ui/ui/button';
 import { type ReactNode } from 'react';
 import { getElectionModeLabel, type ElectionMode } from '@/features/elections/logic/electionMode';
 import { cn } from '@/features/shared/utils/utils';
@@ -31,12 +32,13 @@ export function ElectionModeInput({
 
       <div className="grid gap-3 md:grid-cols-2">
         {(['list', 'single'] as ElectionMode[]).map(mode => (
-          <button
+          <Button
             key={mode}
             type="button"
+            variant="outline"
             onClick={() => onChange(mode)}
             className={cn(
-              'rounded-2xl border p-4 text-left transition-all',
+              'h-auto justify-start rounded-2xl p-4 text-left whitespace-normal transition-all',
               value === mode
                 ? 'border-primary bg-primary/5 shadow-sm'
                 : 'border-border hover:border-primary/40 hover:bg-muted/40'
@@ -55,7 +57,7 @@ export function ElectionModeInput({
                   : translateText('generated.inline.0068_waehlen_ef754cb8')}
               </BadgeControl>
             </div>
-          </button>
+          </Button>
         ))}
       </div>
     </div>

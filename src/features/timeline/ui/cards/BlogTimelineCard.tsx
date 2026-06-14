@@ -7,7 +7,7 @@ import { cn } from '@/features/shared/utils/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
-import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
 import { Button } from '@/features/shared/ui/ui/button';

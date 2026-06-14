@@ -12,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/features/shared/ui/ui/table';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { MAX_MANUAL_CHART_COLUMNS, MAX_MANUAL_CHART_ROWS } from '../types';
 import type { ParsedChartTable } from '../logic/chartData';
 
@@ -165,7 +164,7 @@ export function ManualChartTableEditor({ table, onChange }: ManualChartTableEdit
         <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <span>
             {table.rows.length.toLocaleString()}
-            {translateText('generated.inline.0293_rows_df849afe')}
+            {t('generated.inline.0293_rows_df849afe')}
             {page + 1}/{pageCount}
           </span>
           <Button

@@ -1,4 +1,4 @@
-import { NotFound } from '@/features/shared/ui/ui/not-found';
+import { NotFound } from '@/features/shared/ui/feedback';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 import { isDocsTopicSlug } from './logic/docsTopics';

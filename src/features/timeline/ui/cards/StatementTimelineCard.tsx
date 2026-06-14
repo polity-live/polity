@@ -3,7 +3,7 @@
 import { Quote, ThumbsUp, ThumbsDown, MessageSquare, Video, BarChart3 } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
-import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';
 import {

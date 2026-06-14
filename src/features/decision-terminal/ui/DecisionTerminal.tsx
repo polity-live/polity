@@ -1,15 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { cn } from '@/features/shared/utils/utils';
-import { usePreferenceActions, usePreferenceState } from '@/zero/preferences';
-import type { DecisionTerminalDashboardConfig } from '@/zero/preferences';
-import {
-  createDefaultDecisionTerminalDashboardConfig,
-  normalizeDecisionTerminalDashboardConfig,
-} from '../logic/dashboard-config';
-import { DecisionDashboardGrid } from './DecisionDashboardGrid';
-import { DecisionDashboardHeader } from './DecisionDashboardHeader';
+import { useDecisionTerminalDashboardController } from '../hooks/useDecisionTerminalDashboardController';
+import { DecisionTerminalView } from './DecisionTerminalView';
 import { DecisionVoteDialogController } from './DecisionVoteDialogController';
 import type { DecisionItem } from './types';
 
@@ -27,76 +19,28 @@ export function DecisionTerminal({
   isLoading = false,
   className,
 }: DecisionTerminalProps) {
-  const { decisionTerminalDashboard, isLoading: preferencesLoading } = usePreferenceState();
-  const { saveDecisionTerminalDashboard } = usePreferenceActions();
-  const [dashboardConfig, setDashboardConfig] = useState<DecisionTerminalDashboardConfig>(() =>
-    createDefaultDecisionTerminalDashboardConfig()
-  );
-  const [searchQuery, setSearchQuery] = useState('');
-  const [voteTarget, setVoteTarget] = useState<DecisionItem | null>(null);
-  const [voteDialogOpen, setVoteDialogOpen] = useState(false);
-
-  useEffect(() => {
-    setDashboardConfig(normalizeDecisionTerminalDashboardConfig(decisionTerminalDashboard));
-  }, [decisionTerminalDashboard]);
-
-  const urgentCount = decisions.filter(
-    d => !d.isClosed && (d.isUrgent || d.status === 'final_minutes')
-  ).length;
-  const activeCount = decisions.filter(d => !d.isClosed && !d.isOpeningSoon).length;
-
-  const persistConfig = useCallback(
-    (nextConfig: DecisionTerminalDashboardConfig) => {
-      setDashboardConfig(nextConfig);
-      saveDecisionTerminalDashboard(nextConfig);
-    },
-    [saveDecisionTerminalDashboard]
-  );
-
-  const handleVoteDecision = useCallback((decision: DecisionItem) => {
-    setVoteTarget(decision);
-    setVoteDialogOpen(true);
-  }, []);
-
-  const handleResetLayout = useCallback(() => {
-    persistConfig(createDefaultDecisionTerminalDashboardConfig());
-  }, [persistConfig]);
+  const controller = useDecisionTerminalDashboardController({ decisions });
 
   return (
-    <div
-      className={cn(
-        'bg-card flex h-full min-h-[640px] flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700',
-        className
-      )}
-      data-testid="decision-terminal"
-    >
-      <DecisionDashboardHeader
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onResetLayout={handleResetLayout}
-        urgentCount={urgentCount}
-        activeCount={activeCount}
-      />
-
-      <div className="bg-muted/20 flex-1 overflow-auto">
-        <DecisionDashboardGrid
-          config={dashboardConfig}
-          decisions={decisions}
-          isLoading={isLoading || preferencesLoading}
-          searchQuery={searchQuery}
-          onConfigChange={persistConfig}
-          onVoteDecision={handleVoteDecision}
+    <DecisionTerminalView
+      decisions={decisions}
+      dashboardConfig={controller.dashboardConfig}
+      searchQuery={controller.searchQuery}
+      urgentCount={controller.urgentCount}
+      activeCount={controller.activeCount}
+      isLoading={isLoading || controller.preferencesLoading}
+      className={className}
+      onSearchChange={controller.setSearchQuery}
+      onResetLayout={controller.handleResetLayout}
+      onConfigChange={controller.persistConfig}
+      onVoteDecision={controller.handleVoteDecision}
+      voteDialog={
+        <DecisionVoteDialogController
+          decision={controller.voteTarget}
+          open={controller.voteDialogOpen}
+          onOpenChange={controller.handleVoteDialogOpenChange}
         />
-      </div>
-
-      <DecisionVoteDialogController
-        decision={voteTarget}
-        open={voteDialogOpen}
-        onOpenChange={open => {
-          setVoteDialogOpen(open);
-          if (!open) setVoteTarget(null);
-        }}
-      />
-    </div>
+      }
+    />
   );
 }

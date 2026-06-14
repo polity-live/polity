@@ -1,25 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTodoActions } from '@/zero/todos/useTodoActions.ts';
 import { toast } from 'sonner';
 import { TodoDetailDialog } from './todo-detail-dialog.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
-import { TodoTimelineCard } from '@/features/timeline/ui/cards/TodoTimelineCard';
 import type { Todo, TodoStatus } from '../types/todo.types';
+import { KanbanBoardView, type KanbanColumn } from './kanban-board-view';
 
 interface KanbanBoardProps {
   canManageTodos?: boolean;
   todos: Todo[];
-}
-
-function isTodoStatus(status: string | null | undefined): status is TodoStatus {
-  return (
-    status === 'pending' ||
-    status === 'in_progress' ||
-    status === 'completed' ||
-    status === 'cancelled'
-  );
 }
 
 export function KanbanBoard({ canManageTodos = true, todos }: KanbanBoardProps) {
@@ -28,27 +19,32 @@ export function KanbanBoard({ canManageTodos = true, todos }: KanbanBoardProps) 
   const [draggedTodoId, setDraggedTodoId] = useState<string | null>(null);
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const dragClickSuppressionRef = useRef<string | null>(null);
 
-  const COLUMNS: { id: TodoStatus; titleKey: string; color: string }[] = [
+  const columns: KanbanColumn[] = [
     {
       id: 'pending',
-      titleKey: 'features.todos.kanban.toDo',
-      color: 'border border-slate-200 bg-white dark:border-slate-800 dark:bg-black',
+      title: t('features.todos.kanban.toDo'),
+      todos: todos.filter(todo => todo.status === 'pending'),
+      className: 'border border-slate-200 bg-white dark:border-slate-800 dark:bg-black',
     },
     {
       id: 'in_progress',
-      titleKey: 'features.todos.kanban.inProgress',
-      color: 'border border-slate-200 bg-white dark:border-slate-800 dark:bg-black',
+      title: t('features.todos.kanban.inProgress'),
+      todos: todos.filter(todo => todo.status === 'in_progress'),
+      className: 'border border-slate-200 bg-white dark:border-slate-800 dark:bg-black',
     },
     {
       id: 'completed',
-      titleKey: 'features.todos.kanban.completed',
-      color: 'border border-slate-200 bg-white dark:border-slate-800 dark:bg-black',
+      title: t('features.todos.kanban.completed'),
+      todos: todos.filter(todo => todo.status === 'completed'),
+      className: 'border border-slate-200 bg-white dark:border-slate-800 dark:bg-black',
     },
     {
       id: 'cancelled',
-      titleKey: 'features.todos.kanban.cancelled',
-      color: 'border border-slate-200 bg-white dark:border-slate-800 dark:bg-black',
+      title: t('features.todos.kanban.cancelled'),
+      todos: todos.filter(todo => todo.status === 'cancelled'),
+      className: 'border border-slate-200 bg-white dark:border-slate-800 dark:bg-black',
     },
   ];
 
@@ -84,11 +80,12 @@ export function KanbanBoard({ canManageTodos = true, todos }: KanbanBoardProps) 
     }
   };
 
-  const getTodosByStatus = (status: TodoStatus) => {
-    return todos.filter(todo => todo.status === status);
-  };
-
   const handleTodoClick = (todo: Todo) => {
+    if (dragClickSuppressionRef.current === todo.id) {
+      dragClickSuppressionRef.current = null;
+      return;
+    }
+
     setSelectedTodo(todo);
     setIsDetailDialogOpen(true);
   };
@@ -108,43 +105,34 @@ export function KanbanBoard({ canManageTodos = true, todos }: KanbanBoardProps) 
     }
   };
 
+  const handleCardMouseDown = () => {
+    dragClickSuppressionRef.current = null;
+  };
+
+  const handleCardDragStart = (todo: Todo) => {
+    dragClickSuppressionRef.current = todo.id;
+    handleDragStart(todo.id);
+  };
+
+  const handleCardDragEnd = () => {
+    setDraggedTodoId(null);
+  };
+
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {COLUMNS.map(column => {
-          const columnTodos = getTodosByStatus(column.id);
-
-          return (
-            <div
-              key={column.id}
-              className={`rounded-lg ${column.color} min-h-125 p-4`}
-              onDragOver={handleDragOver}
-              onDrop={() => handleDrop(column.id)}
-            >
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">{t(column.titleKey)}</h3>
-                <p className="text-muted-foreground text-sm">
-                  {columnTodos.length} {t('features.todos.kanban.tasks')}
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {columnTodos.map(todo => (
-                  <TodoKanbanTimelineCard
-                    canManageTodos={canManageTodos}
-                    key={todo.id}
-                    todo={todo}
-                    onDragStart={handleDragStart}
-                    onClick={handleTodoClick}
-                    onToggleComplete={handleToggleComplete}
-                    isDragging={draggedTodoId === todo.id}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <KanbanBoardView
+        canManageTodos={canManageTodos}
+        columns={columns}
+        tasksLabel={t('features.todos.kanban.tasks')}
+        draggedTodoId={draggedTodoId}
+        onColumnDragOver={handleDragOver}
+        onColumnDrop={handleDrop}
+        onCardMouseDown={handleCardMouseDown}
+        onCardDragStart={handleCardDragStart}
+        onCardDragEnd={handleCardDragEnd}
+        onCardClick={handleTodoClick}
+        onToggleComplete={handleToggleComplete}
+      />
 
       {selectedTodo && (
         <TodoDetailDialog
@@ -155,72 +143,5 @@ export function KanbanBoard({ canManageTodos = true, todos }: KanbanBoardProps) 
         />
       )}
     </>
-  );
-}
-
-interface TodoKanbanTimelineCardProps {
-  canManageTodos: boolean;
-  todo: Todo;
-  onDragStart: (todoId: string) => void;
-  onClick: (todo: Todo) => void;
-  onToggleComplete: (todo: Todo) => void;
-  isDragging: boolean;
-}
-
-function TodoKanbanTimelineCard({
-  canManageTodos,
-  todo,
-  onDragStart,
-  onClick,
-  onToggleComplete,
-  isDragging,
-}: TodoKanbanTimelineCardProps) {
-  const [isDraggingCard, setIsDraggingCard] = useState(false);
-
-  const handleMouseDown = () => {
-    setIsDraggingCard(false);
-  };
-
-  const handleDragStart = () => {
-    setIsDraggingCard(true);
-    onDragStart(todo.id);
-  };
-
-  const handleClick = () => {
-    // Only trigger click if we didn't drag
-    if (!isDraggingCard) {
-      onClick(todo);
-    }
-    setIsDraggingCard(false);
-  };
-
-  return (
-    <div
-      draggable={canManageTodos}
-      onMouseDown={handleMouseDown}
-      onDragStart={canManageTodos ? handleDragStart : undefined}
-      onDragEnd={() => setIsDraggingCard(false)}
-      className={isDragging ? 'opacity-50' : undefined}
-    >
-      <TodoTimelineCard
-        todo={{
-          id: todo.id,
-          title: todo.title ?? '',
-          description: todo.description ?? undefined,
-          isCompleted: todo.status === 'completed',
-          dueDate: todo.due_date ?? undefined,
-          assigneeCount: todo.assignments?.length,
-          groupName: todo.group?.name ?? undefined,
-          groupId: todo.group?.id ?? undefined,
-          status: isTodoStatus(todo.status) ? todo.status : undefined,
-          creatorId: todo.creator?.id ?? undefined,
-        }}
-        canManageTodos={canManageTodos}
-        onToggle={canManageTodos ? () => onToggleComplete(todo) : undefined}
-        onCardClick={handleClick}
-        linkToDetail={false}
-        showStatusAction={false}
-      />
-    </div>
   );
 }

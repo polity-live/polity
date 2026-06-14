@@ -37,6 +37,19 @@ interface DataTableFilter {
   placeholder?: string;
 }
 
+export interface DataTableEmptyState {
+  title?: ReactNode;
+  description?: ReactNode;
+  action?: ReactNode;
+}
+
+export interface DataTablePaginationOptions {
+  enabled?: boolean;
+  pageSize?: number;
+  previousLabel?: ReactNode;
+  nextLabel?: ReactNode;
+}
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -46,6 +59,7 @@ interface DataTableProps<TData, TValue> {
   emptyTitle?: ReactNode;
   emptyDescription?: ReactNode;
   emptyAction?: ReactNode;
+  emptyState?: DataTableEmptyState;
   filter?: DataTableFilter;
   toolbar?: ReactNode;
   rowTestId?: string | ((row: TData) => string | undefined);
@@ -54,6 +68,7 @@ interface DataTableProps<TData, TValue> {
   nextLabel?: ReactNode;
   enablePagination?: boolean;
   initialPageSize?: number;
+  pagination?: DataTablePaginationOptions;
   className?: string;
   tableClassName?: string;
 }
@@ -77,6 +92,7 @@ export function DataTable<TData, TValue>({
   emptyTitle,
   emptyDescription,
   emptyAction,
+  emptyState,
   filter,
   toolbar,
   rowTestId,
@@ -85,6 +101,7 @@ export function DataTable<TData, TValue>({
   nextLabel = 'Next',
   enablePagination = true,
   initialPageSize = 10,
+  pagination,
   className,
   tableClassName,
 }: DataTableProps<TData, TValue>) {
@@ -93,6 +110,13 @@ export function DataTable<TData, TValue>({
   const globalFilter = filter?.value ?? internalFilter;
   const setGlobalFilter = filter?.onChange ?? setInternalFilter;
   const columnsLength = Math.max(columns.length, 1);
+  const paginationEnabled = pagination?.enabled ?? enablePagination;
+  const pageSize = pagination?.pageSize ?? initialPageSize;
+  const resolvedPreviousLabel = pagination?.previousLabel ?? previousLabel;
+  const resolvedNextLabel = pagination?.nextLabel ?? nextLabel;
+  const resolvedEmptyTitle = emptyState?.title ?? emptyTitle ?? 'No results';
+  const resolvedEmptyDescription = emptyState?.description ?? emptyDescription;
+  const resolvedEmptyAction = emptyState?.action ?? emptyAction;
   const loadingRows = useMemo(
     () => Array.from({ length: loadingRowCount }, (_, index) => index),
     [loadingRowCount]
@@ -108,7 +132,7 @@ export function DataTable<TData, TValue>({
     },
     initialState: {
       pagination: {
-        pageSize: initialPageSize,
+        pageSize,
       },
     },
     onSortingChange: setSorting,
@@ -116,10 +140,10 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: enablePagination ? getPaginationRowModel() : undefined,
+    getPaginationRowModel: paginationEnabled ? getPaginationRowModel() : undefined,
   });
 
-  const rows = enablePagination ? table.getRowModel().rows : table.getFilteredRowModel().rows;
+  const rows = paginationEnabled ? table.getRowModel().rows : table.getFilteredRowModel().rows;
 
   return (
     <div className={cn('space-y-3', className)}>
@@ -198,12 +222,14 @@ export function DataTable<TData, TValue>({
                 <TableCell colSpan={columnsLength} className="p-0">
                   <Empty className="border-0">
                     <EmptyHeader>
-                      <EmptyTitle>{emptyTitle ?? 'No results'}</EmptyTitle>
-                      {emptyDescription ? (
-                        <EmptyDescription>{emptyDescription}</EmptyDescription>
+                      <EmptyTitle>{resolvedEmptyTitle}</EmptyTitle>
+                      {resolvedEmptyDescription ? (
+                        <EmptyDescription>{resolvedEmptyDescription}</EmptyDescription>
                       ) : null}
                     </EmptyHeader>
-                    {emptyAction ? <EmptyContent>{emptyAction}</EmptyContent> : null}
+                    {resolvedEmptyAction ? (
+                      <EmptyContent>{resolvedEmptyAction}</EmptyContent>
+                    ) : null}
                   </Empty>
                 </TableCell>
               </TableRow>
@@ -212,7 +238,7 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      {enablePagination && table.getPageCount() > 1 ? (
+      {paginationEnabled && table.getPageCount() > 1 ? (
         <div className="flex items-center justify-end gap-2">
           <Button
             type="button"
@@ -221,7 +247,7 @@ export function DataTable<TData, TValue>({
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            {previousLabel}
+            {resolvedPreviousLabel}
           </Button>
           <Button
             type="button"
@@ -230,7 +256,7 @@ export function DataTable<TData, TValue>({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            {nextLabel}
+            {resolvedNextLabel}
           </Button>
         </div>
       ) : null}

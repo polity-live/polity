@@ -51,10 +51,14 @@ describe('groupSharedMutators.createOfflineMember', () => {
     const tx = createTx();
     canMock.mockResolvedValue(undefined);
     tx.run
-      .mockResolvedValueOnce({
-        id: 'group-1',
-        group_type: 'base',
-      })
+      .mockResolvedValueOnce([
+        {
+          id: 'group-1',
+          group_type: 'base',
+        },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce([
         {

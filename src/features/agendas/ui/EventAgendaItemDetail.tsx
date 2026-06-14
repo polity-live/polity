@@ -67,23 +67,7 @@ import {
 import { NamedBallotResultsDialog } from './NamedBallotResultsDialog';
 import { useDelegateAssemblyParticipantsComposition } from '@/features/events/hooks/useDelegateAssemblyParticipantsComposition';
 import { isNamedBallot } from '@/zero/shared';
-
-function getEffectiveVotingPhase(status?: string | null, fallback?: string | null): string | null {
-  const normalizePhase = (value?: string | null) => {
-    if (value === 'final' || value === 'final_vote') return 'final_vote';
-    if (value === 'closed') return 'closed';
-    if (value === 'indicative' || value === 'indication') return 'indication';
-    return null;
-  };
-
-  const resolvedStatus = normalizePhase(status);
-  const resolvedFallback = normalizePhase(fallback);
-
-  if (resolvedStatus === 'closed' || resolvedFallback === 'closed') return 'closed';
-  if (resolvedStatus === 'final_vote' || resolvedFallback === 'final_vote') return 'final_vote';
-
-  return 'indication';
-}
+import { getEffectiveVotingPhase, resolveAttendanceMode } from '../logic/agendaUiHelpers';
 
 function getEffectiveCRVotingPhase(
   item?: {
@@ -98,19 +82,6 @@ function getEffectiveCRVotingPhase(
   if (phase === 'final_vote') return 'final_vote';
   if (phase === 'closed') return 'closed';
   return 'indication';
-}
-
-function resolveAttendanceMode(
-  event?: {
-    attendance_mode?: string | null;
-    location_type?: string | null;
-  } | null
-) {
-  if (event?.attendance_mode === 'online' || event?.attendance_mode === 'hybrid') {
-    return event.attendance_mode;
-  }
-
-  return event?.location_type === 'online' ? 'online' : 'offline';
 }
 
 export function EventAgendaItemDetail({

@@ -19,7 +19,7 @@ import {
   ToolbarSplitButton,
   ToolbarSplitButtonPrimary,
   ToolbarSplitButtonSecondary,
-} from '@/features/shared/ui/ui/toolbar.tsx';
+} from '@/features/shared/ui/layout';
 
 export function BulletedListToolbarButton() {
   const editor = useEditorRef();

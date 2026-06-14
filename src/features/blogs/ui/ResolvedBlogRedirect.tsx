@@ -1,6 +1,6 @@
 import { Navigate } from '@tanstack/react-router';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 
 interface ResolvedBlogRedirectProps {

@@ -62,11 +62,7 @@ import { AgendaSpeakerListSection } from './AgendaSpeakerListSection';
 import { AgendaElectionSection } from './AgendaElectionSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
 import { OfflineTallyDialog } from './OfflineTallyDialog';
-import {
-  AgendaCard,
-  type AgendaItemType,
-  type AgendaItemStatus,
-} from '@/features/agendas/ui/AgendaCard.tsx';
+import { AgendaCard, type AgendaItemStatus } from '@/features/agendas/ui/AgendaCard.tsx';
 import {
   AgendaCountdownPill,
   AgendaEndedPill,
@@ -86,6 +82,14 @@ import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
 import { useAgendaItemCRVoting } from '../hooks/useAgendaItemCRVoting';
 import { getAgendaDisplayTimes } from '../logic/getAgendaDisplayTimes';
 import { getAgendaRuntimeStatus } from '../logic/getAgendaRuntimeStatus';
+import {
+  getAgendaDisplayType,
+  getEffectiveCRVotingPhase,
+  getEffectiveVotingPhase,
+  getYouTubeVideoId,
+  normalizeSearchToken,
+  resolveAttendanceMode,
+} from '../logic/agendaUiHelpers';
 import { buildFinalVoteFromAgendaVote } from '../logic/buildFinalVoteFromAgendaVote';
 import {
   getOfflineTallyDialogTitle,
@@ -105,87 +109,6 @@ interface EventAgendaProps {
 }
 
 type EventAgendaItemRow = ReturnType<typeof useAgendaItems>['agendaItems'][number];
-
-function getYouTubeVideoId(url: string | null | undefined): string | null {
-  if (!url) return null;
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-    /^([a-zA-Z0-9_-]{11})$/,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
-  }
-  return null;
-}
-
-function getEffectiveVotingPhase(status?: string | null, fallback?: string | null): string | null {
-  const normalizePhase = (value?: string | null) => {
-    if (value === 'final' || value === 'final_vote') return 'final_vote';
-    if (value === 'closed') return 'closed';
-    if (value === 'indicative' || value === 'indication') return 'indication';
-    return null;
-  };
-
-  const resolvedStatus = normalizePhase(status);
-  const resolvedFallback = normalizePhase(fallback);
-
-  if (resolvedStatus === 'closed' || resolvedFallback === 'closed') return 'closed';
-  if (resolvedStatus === 'final_vote' || resolvedFallback === 'final_vote') return 'final_vote';
-
-  return 'indication';
-}
-
-function getEffectiveCRVotingPhase(
-  item?: {
-    status?: string | null;
-    vote?: { status?: string | null } | null;
-  } | null
-): string | null {
-  if (!item) return null;
-  if (item.status === 'pending') return 'pending';
-
-  const phase = getEffectiveVotingPhase(item.vote?.status, null);
-  if (phase === 'final_vote') return 'final_vote';
-  if (phase === 'closed') return 'closed';
-  return 'indication';
-}
-
-function resolveAttendanceMode(
-  event?: {
-    attendance_mode?: string | null;
-    location_type?: string | null;
-  } | null
-) {
-  if (event?.attendance_mode === 'online' || event?.attendance_mode === 'hybrid') {
-    return event.attendance_mode;
-  }
-
-  return event?.location_type === 'online' ? 'online' : 'offline';
-}
-
-function normalizeSearchToken(value: string | null | undefined): string {
-  if (!value) return '';
-  return value.toLowerCase().replace(/[\s_-]+/g, '');
-}
-
-function getAgendaDisplayType(type?: string | null): AgendaItemType {
-  if (type === 'amendment' || type === 'implementation_review' || type === 'support_confirmation') {
-    return 'vote';
-  }
-
-  if (
-    type === 'election' ||
-    type === 'vote' ||
-    type === 'speech' ||
-    type === 'discussion' ||
-    type === 'accreditation'
-  ) {
-    return type;
-  }
-
-  return 'discussion';
-}
 
 export function EventAgenda({ eventId }: EventAgendaProps) {
   const { t } = useTranslation();
@@ -1607,9 +1530,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                 <div className="space-y-6">
                   <Collapsible open={streamDetailsOpen} onOpenChange={setStreamDetailsOpen}>
                     <CollapsibleTrigger asChild>
-                      <button
+                      <Button
                         type="button"
-                        className="bg-primary/5 hover:bg-primary/10 flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors"
+                        variant="ghost"
+                        className="bg-primary/5 hover:bg-primary/10 h-auto w-full justify-start rounded-lg p-3 text-left whitespace-normal transition-colors"
                       >
                         <div className="bg-primary text-primary-foreground relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
                           <Play className="h-4 w-4 fill-current" />
@@ -1659,7 +1583,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                         ) : (
                           <ChevronDown className="text-muted-foreground h-4 w-4" />
                         )}
-                      </button>
+                      </Button>
                     </CollapsibleTrigger>
 
                     <CollapsibleContent className="space-y-6 pt-3">

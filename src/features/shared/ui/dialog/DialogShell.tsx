@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { type ComponentProps, type FormEventHandler, type ReactNode } from 'react';
 
 import {
   AlertDialog,
@@ -24,7 +24,16 @@ import {
 import { SheetContent } from '@/features/shared/ui/ui/sheet';
 import { cn } from '@/features/shared/utils/utils';
 
-interface EntityDialogProps {
+const dialogShellSizeClassNames = {
+  sm: 'sm:max-w-sm',
+  md: 'sm:max-w-md',
+  lg: 'sm:max-w-lg',
+  xl: 'sm:max-w-xl',
+  '2xl': 'sm:max-w-2xl',
+  full: 'sm:max-w-[calc(100vw-2rem)]',
+} as const;
+
+export interface DialogShellProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: ReactNode;
@@ -32,6 +41,8 @@ interface EntityDialogProps {
   trigger?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
+  size?: keyof typeof dialogShellSizeClassNames;
+  scrollable?: boolean;
   className?: string;
   bodyClassName?: string;
 }
@@ -40,7 +51,7 @@ export function ScrollableDialogContent({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof DialogContent>) {
+}: ComponentProps<typeof DialogContent>) {
   return (
     <DialogContent className={cn('max-h-[calc(100vh-2rem)] overflow-y-auto', className)} {...props}>
       {children}
@@ -52,7 +63,7 @@ export function ScrollableAlertDialogContent({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof AlertDialogContent>) {
+}: ComponentProps<typeof AlertDialogContent>) {
   return (
     <AlertDialogContent
       className={cn('max-h-[calc(100vh-2rem)] overflow-y-auto', className)}
@@ -67,7 +78,7 @@ export function ScrollableSheetContent({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof SheetContent>) {
+}: ComponentProps<typeof SheetContent>) {
   return (
     <SheetContent className={cn('max-h-screen overflow-y-auto', className)} {...props}>
       {children}
@@ -75,7 +86,7 @@ export function ScrollableSheetContent({
   );
 }
 
-export function EntityDialog({
+export function DialogShell({
   open,
   onOpenChange,
   title,
@@ -83,27 +94,35 @@ export function EntityDialog({
   trigger,
   children,
   footer,
+  size = 'lg',
+  scrollable = true,
   className,
   bodyClassName,
-}: EntityDialogProps) {
+}: DialogShellProps) {
+  const Content = scrollable ? ScrollableDialogContent : DialogContent;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
-      <ScrollableDialogContent className={className}>
+      <Content className={cn(dialogShellSizeClassNames[size], className)}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
         <div className={cn('py-4', bodyClassName)}>{children}</div>
         {footer ? <DialogFooter>{footer}</DialogFooter> : null}
-      </ScrollableDialogContent>
+      </Content>
     </Dialog>
   );
 }
 
-interface FormDialogProps extends EntityDialogProps {
+export function EntityDialog(props: DialogShellProps) {
+  return <DialogShell {...props} />;
+}
+
+interface FormDialogProps extends DialogShellProps {
   formId?: string;
-  onSubmit?: React.FormEventHandler<HTMLFormElement>;
+  onSubmit?: FormEventHandler<HTMLFormElement>;
 }
 
 export function FormDialog({

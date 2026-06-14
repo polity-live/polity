@@ -1,4 +1,10 @@
-export { DataTable, type ColumnDef, type DataTableProps } from './DataTable';
+export {
+  DataTable,
+  type ColumnDef,
+  type DataTableEmptyState,
+  type DataTablePaginationOptions,
+  type DataTableProps,
+} from './DataTable';
 export {
   DataTablePagination,
   DataTableToolbar,
@@ -8,6 +14,7 @@ export {
   SortableHeader,
   StatusCell,
 } from './DataTableParts';
+export { UserTableCell, type UserTableCellProps } from './UserTableCell';
 export {
   MatrixCheckbox,
   MatrixTable,

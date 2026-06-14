@@ -158,12 +158,14 @@ export function ConversationHeader({
       <div className="ml-3 min-w-0">
         {titleContent}
         {display.isCollective ? (
-          <button
+          <Button
+            type="button"
+            variant="link"
             onClick={onMembersClick}
-            className="text-muted-foreground hover:text-foreground text-sm transition-colors hover:underline"
+            className="text-muted-foreground hover:text-foreground h-auto p-0 text-sm transition-colors"
           >
             {t('features.messages.conversation.members', { count: display.participantCount })}
-          </button>
+          </Button>
         ) : (
           display.handle && <p className="text-muted-foreground text-sm">@{display.handle}</p>
         )}

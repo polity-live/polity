@@ -1,6 +1,5 @@
 'use client';
 
-import { useId, useMemo, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -21,14 +20,11 @@ import {
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
-import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { cn } from '@/features/shared/utils/utils';
-import { UserTableCell } from '@/features/shared/ui/ui/user-table-cell';
+import { UserTableCell } from '@/features/shared/ui/data-table';
 import { RoleTag } from '@/features/groups/ui/RoleTag';
-import type { ParticipationUserLike } from '@/features/shared/types/participation';
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
-import { FormFieldShell, TextField } from '@/features/shared/ui/form';
+import { FileInputField, FormFieldShell, TextField } from '@/features/shared/ui/form';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import {
@@ -45,108 +41,26 @@ import {
   Users,
 } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  useOfflineRosterCardController,
+  type OfflineRosterCardController,
+} from '../hooks/useOfflineRosterCardController';
+import type {
+  DraftRosterEntry,
+  OfflineRosterCardProps,
+  OfflineRosterConnectedUser,
+  OfflineRosterGroupReference,
+  OfflineRosterRow,
+} from '../types';
 
-export interface OfflineRosterConnectedUser {
-  id: string;
-  first_name?: string | null;
-  last_name?: string | null;
-  handle?: string | null;
-  avatar?: string | null;
-  email?: string | null;
-}
-
-export interface OfflineRosterGroupReference {
-  id: string;
-  name?: string | null;
-}
-
-export interface OfflineRosterRow {
-  id: string;
-  kind: 'active' | 'offline';
-  effectiveMembershipId?: string | null;
-  user?: ParticipationUserLike | null;
-  firstName: string;
-  lastName: string;
-  isActiveUser: boolean;
-  reasonNotSignedUp?: string | null;
-  connectedUser?: OfflineRosterConnectedUser | null;
-  roles?: readonly { id: string; name?: string | null }[] | null;
-  partGroup?: OfflineRosterGroupReference | null;
-  baseGroup?: OfflineRosterGroupReference | null;
-  readOnlyIdentity?: boolean;
-  canConnect?: boolean;
-  canEdit?: boolean;
-  canDelete?: boolean;
-  canViewRights?: boolean;
-  canManageRoles?: boolean;
-  canConfirmParticipation?: boolean;
-  canWithdrawParticipation?: boolean;
-  canToggleChannel?: boolean;
-  attendanceStatus?: 'listed' | 'confirmed' | null;
-  participationChannel?: 'online' | 'offline' | null;
-}
-
-export type OfflineRosterCandidateUser = OfflineRosterConnectedUser;
-
-interface DraftRosterEntry {
-  firstName: string;
-  lastName: string;
-  reasonNotSignedUp: string;
-}
-
-interface ParsedCsvResult {
-  rows: DraftRosterEntry[];
-  skippedDuplicates: number;
-  skippedMissingNames: number;
-}
-
-interface OfflineRosterCardProps {
-  title: string;
-  description: string;
-  rows: OfflineRosterRow[];
-  connectedUserCandidates?: OfflineRosterCandidateUser[];
-  showManageButton?: boolean;
-  showProvenanceColumns?: boolean;
-  manageButtonLabel?: string;
-  tableVariant?: 'default' | 'membership';
-  fallbackRoleLabel?: string;
-  manageDialogTitle: string;
-  manageDialogDescription: string;
-  emptyStateLabel?: string;
-  onCreate?: (entry: DraftRosterEntry, correlationId: string) => Promise<unknown>;
-  onImport?: (entries: DraftRosterEntry[], correlationId: string) => Promise<unknown>;
-  onConnect?: (row: OfflineRosterRow, userId: string, correlationId: string) => Promise<unknown>;
-  onEdit?: (
-    row: OfflineRosterRow,
-    entry: DraftRosterEntry,
-    correlationId: string
-  ) => Promise<unknown>;
-  onDelete?: (row: OfflineRosterRow, correlationId: string) => Promise<unknown>;
-  onOpenRightsDialog?: (row: OfflineRosterRow) => void;
-  onOpenChangeRoleDialog?: (row: OfflineRosterRow) => void;
-  onSetParticipationStatus?: (
-    row: OfflineRosterRow,
-    nextStatus: 'listed' | 'confirmed',
-    correlationId: string
-  ) => Promise<unknown>;
-  onToggleChannel?: (
-    row: OfflineRosterRow,
-    nextChannel: 'online' | 'offline',
-    correlationId: string
-  ) => Promise<unknown>;
-}
-
-function buildCorrelationId(flow: string) {
-  return `${flow}:${crypto.randomUUID()}`;
-}
-
-function logRosterClient(flow: string, stage: string, payload: Record<string, unknown> = {}) {
-  console.info('[offline-roster]', {
-    flow,
-    stage,
-    ...payload,
-  });
-}
+export type {
+  DraftRosterEntry,
+  OfflineRosterCandidateUser,
+  OfflineRosterCardProps,
+  OfflineRosterConnectedUser,
+  OfflineRosterGroupReference,
+  OfflineRosterRow,
+} from '../types';
 
 function getUserDisplayName(user?: OfflineRosterConnectedUser | null) {
   if (!user) {
@@ -160,95 +74,6 @@ function getUserDisplayName(user?: OfflineRosterConnectedUser | null) {
 
 function getInitials(firstName?: string | null, lastName?: string | null) {
   return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.trim().toUpperCase() || 'U';
-}
-
-function normalizeDraftKey(entry: DraftRosterEntry) {
-  return `${entry.firstName.trim().toLowerCase()}|${entry.lastName.trim().toLowerCase()}|${entry.reasonNotSignedUp.trim().toLowerCase()}`;
-}
-
-function parseCsvLine(line: string) {
-  const values: string[] = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line[index];
-    const nextChar = line[index + 1];
-
-    if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        current += '"';
-        index += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-      continue;
-    }
-
-    if (char === ',' && !inQuotes) {
-      values.push(current.trim());
-      current = '';
-      continue;
-    }
-
-    current += char;
-  }
-
-  values.push(current.trim());
-  return values.map(value => value.replace(/^"|"$/g, '').trim());
-}
-
-function parseOfflineRosterCsv(content: string, existingKeys: Set<string>): ParsedCsvResult {
-  const lines = content
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(Boolean);
-
-  if (lines.length === 0) {
-    return { rows: [], skippedDuplicates: 0, skippedMissingNames: 0 };
-  }
-
-  const firstLineColumns = parseCsvLine(lines[0]).map(column => column.toLowerCase());
-  const hasHeader =
-    firstLineColumns.includes('firstname') ||
-    firstLineColumns.includes('first_name') ||
-    firstLineColumns.includes('lastname') ||
-    firstLineColumns.includes('last_name');
-
-  const rows = hasHeader ? lines.slice(1) : lines;
-  const seenKeys = new Set(existingKeys);
-  const parsedRows: DraftRosterEntry[] = [];
-  let skippedDuplicates = 0;
-  let skippedMissingNames = 0;
-
-  for (const line of rows) {
-    const [rawFirstName = '', rawLastName = '', rawReason = ''] = parseCsvLine(line);
-    const entry: DraftRosterEntry = {
-      firstName: rawFirstName.trim(),
-      lastName: rawLastName.trim(),
-      reasonNotSignedUp: rawReason.trim(),
-    };
-
-    if (!entry.firstName || !entry.lastName) {
-      skippedMissingNames += 1;
-      continue;
-    }
-
-    const key = normalizeDraftKey(entry);
-    if (seenKeys.has(key)) {
-      skippedDuplicates += 1;
-      continue;
-    }
-
-    seenKeys.add(key);
-    parsedRows.push(entry);
-  }
-
-  return {
-    rows: parsedRows,
-    skippedDuplicates,
-    skippedMissingNames,
-  };
 }
 
 function ConnectedUserChip({ user }: { user: OfflineRosterConnectedUser }) {
@@ -289,11 +114,30 @@ function ProvenanceTag({
   );
 }
 
-export function OfflineRosterCard({
+export function OfflineRosterCard(props: OfflineRosterCardProps) {
+  const controller = useOfflineRosterCardController({
+    rows: props.rows,
+    connectedUserCandidates: props.connectedUserCandidates,
+    onCreate: props.onCreate,
+    onImport: props.onImport,
+    onConnect: props.onConnect,
+    onEdit: props.onEdit,
+    onDelete: props.onDelete,
+    onSetParticipationStatus: props.onSetParticipationStatus,
+    onToggleChannel: props.onToggleChannel,
+  });
+
+  return <OfflineRosterCardView {...props} controller={controller} />;
+}
+
+interface OfflineRosterCardViewProps extends OfflineRosterCardProps {
+  controller: OfflineRosterCardController;
+}
+
+export function OfflineRosterCardView({
   title,
   description,
   rows,
-  connectedUserCandidates = [],
   showManageButton = false,
   showProvenanceColumns = false,
   manageButtonLabel = translateText('generated.inline.0132_manage_non_signed_up_users_a17fc54c'),
@@ -304,300 +148,48 @@ export function OfflineRosterCard({
   emptyStateLabel = translateText(
     'generated.inline.0133_no_offline_or_hybrid_users_have_been_added_ye_b4634e1a'
   ),
-  onCreate,
-  onImport,
-  onConnect,
-  onEdit,
-  onDelete,
   onOpenRightsDialog,
   onOpenChangeRoleDialog,
-  onSetParticipationStatus,
-  onToggleChannel,
-}: OfflineRosterCardProps) {
-  const [manageOpen, setManageOpen] = useState(false);
-  const [manageTab, setManageTab] = useState<'single' | 'csv'>('single');
-  const [editRow, setEditRow] = useState<OfflineRosterRow | null>(null);
-  const [connectRow, setConnectRow] = useState<OfflineRosterRow | null>(null);
-  const [singleDraft, setSingleDraft] = useState<DraftRosterEntry>({
-    firstName: '',
-    lastName: '',
-    reasonNotSignedUp: '',
-  });
-  const [editDraft, setEditDraft] = useState<DraftRosterEntry>({
-    firstName: '',
-    lastName: '',
-    reasonNotSignedUp: '',
-  });
-  const [selectedConnectedUser, setSelectedConnectedUser] = useState<TypeaheadItem | null>(null);
-  const [csvPreviewRows, setCsvPreviewRows] = useState<DraftRosterEntry[]>([]);
-  const [csvFeedback, setCsvFeedback] = useState<{ duplicates: number; missingNames: number }>({
-    duplicates: 0,
-    missingNames: 0,
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDraggingCsv, setIsDraggingCsv] = useState(false);
-  const fileInputId = useId();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const sortedRows = useMemo(
-    () =>
-      [...rows].sort((left, right) => {
-        if (left.isActiveUser !== right.isActiveUser) {
-          return left.isActiveUser ? -1 : 1;
-        }
-
-        const lastNameCompare = left.lastName.localeCompare(right.lastName, undefined, {
-          sensitivity: 'base',
-        });
-        if (lastNameCompare !== 0) {
-          return lastNameCompare;
-        }
-
-        return left.firstName.localeCompare(right.firstName, undefined, {
-          sensitivity: 'base',
-        });
-      }),
-    [rows]
-  );
-
-  const existingOfflineKeys = useMemo(() => {
-    const keys = new Set<string>();
-    for (const row of rows) {
-      if (row.kind !== 'offline') {
-        continue;
-      }
-
-      keys.add(
-        normalizeDraftKey({
-          firstName: row.firstName,
-          lastName: row.lastName,
-          reasonNotSignedUp: row.reasonNotSignedUp || '',
-        })
-      );
-    }
-    return keys;
-  }, [rows]);
-
-  const connectItems = useMemo(
-    () =>
-      toTypeaheadItems(
-        connectedUserCandidates,
-        'user',
-        user => getUserDisplayName(user),
-        user => (user.handle ? `@${user.handle}` : user.email),
-        user => user.avatar,
-        user => `/user/${user.id}`
-      ),
-    [connectedUserCandidates]
-  );
-  const showRolesColumn = useMemo(
-    () =>
-      rows.some(
-        row => (row.roles && row.roles.length > 0) || row.canViewRights || row.canManageRoles
-      ),
-    [rows]
-  );
-  const showConnectedUserColumn = useMemo(
-    () => rows.some(row => Boolean(row.connectedUser)),
-    [rows]
-  );
-
-  const handleCloseManageDialog = (open: boolean) => {
-    setManageOpen(open);
-    if (!open) {
-      setManageTab('single');
-      setSingleDraft({ firstName: '', lastName: '', reasonNotSignedUp: '' });
-      setCsvPreviewRows([]);
-      setCsvFeedback({ duplicates: 0, missingNames: 0 });
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
-
-  const readCsvFile = async (file: File) => {
-    const content = await file.text();
-    const parsed = parseOfflineRosterCsv(content, existingOfflineKeys);
-    setCsvPreviewRows(parsed.rows);
-    setCsvFeedback({
-      duplicates: parsed.skippedDuplicates,
-      missingNames: parsed.skippedMissingNames,
-    });
-  };
-
-  const handleCsvDrop = async (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDraggingCsv(false);
-    const file = event.dataTransfer.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    await readCsvFile(file);
-  };
-
-  const handleCreateSingle = async () => {
-    if (!onCreate || !singleDraft.firstName.trim() || !singleDraft.lastName.trim()) {
-      return;
-    }
-
-    const correlationId = buildCorrelationId('offline-roster-single-add');
-    logRosterClient('offline-roster-single-add', 'submit-started', {
-      correlationId,
-      firstName: singleDraft.firstName,
-      lastName: singleDraft.lastName,
-    });
-    setIsSubmitting(true);
-    try {
-      await onCreate(
-        {
-          firstName: singleDraft.firstName.trim(),
-          lastName: singleDraft.lastName.trim(),
-          reasonNotSignedUp: singleDraft.reasonNotSignedUp.trim(),
-        },
-        correlationId
-      );
-      logRosterClient('offline-roster-single-add', 'submit-confirmed', { correlationId });
-      handleCloseManageDialog(false);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleImportCsv = async () => {
-    if (!onImport || csvPreviewRows.length === 0) {
-      return;
-    }
-
-    const correlationId = buildCorrelationId('offline-roster-csv-import');
-    logRosterClient('offline-roster-csv-import', 'submit-started', {
-      correlationId,
-      rowCount: csvPreviewRows.length,
-    });
-    setIsSubmitting(true);
-    try {
-      await onImport(csvPreviewRows, correlationId);
-      logRosterClient('offline-roster-csv-import', 'submit-confirmed', {
-        correlationId,
-        rowCount: csvPreviewRows.length,
-      });
-      handleCloseManageDialog(false);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleConnect = async () => {
-    if (!connectRow || !selectedConnectedUser || !onConnect) {
-      return;
-    }
-
-    const correlationId = buildCorrelationId('offline-roster-connect');
-    logRosterClient('offline-roster-connect', 'submit-started', {
-      correlationId,
-      rowId: connectRow.id,
-      connectedUserId: selectedConnectedUser.id,
-    });
-    setIsSubmitting(true);
-    try {
-      await onConnect(connectRow, selectedConnectedUser.id, correlationId);
-      logRosterClient('offline-roster-connect', 'submit-confirmed', { correlationId });
-      setConnectRow(null);
-      setSelectedConnectedUser(null);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editRow || !onEdit || !editDraft.firstName.trim() || !editDraft.lastName.trim()) {
-      return;
-    }
-
-    const correlationId = buildCorrelationId('offline-roster-edit');
-    logRosterClient('offline-roster-edit', 'submit-started', {
-      correlationId,
-      rowId: editRow.id,
-    });
-    setIsSubmitting(true);
-    try {
-      await onEdit(
-        editRow,
-        {
-          firstName: editDraft.firstName.trim(),
-          lastName: editDraft.lastName.trim(),
-          reasonNotSignedUp: editDraft.reasonNotSignedUp.trim(),
-        },
-        correlationId
-      );
-      logRosterClient('offline-roster-edit', 'submit-confirmed', { correlationId });
-      setEditRow(null);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDelete = async (row: OfflineRosterRow) => {
-    if (!onDelete) {
-      return;
-    }
-
-    const correlationId = buildCorrelationId('offline-roster-delete');
-    logRosterClient('offline-roster-delete', 'submit-started', {
-      correlationId,
-      rowId: row.id,
-    });
-    await onDelete(row, correlationId);
-    logRosterClient('offline-roster-delete', 'submit-confirmed', {
-      correlationId,
-      rowId: row.id,
-    });
-  };
-
-  const handleSetParticipationStatus = async (
-    row: OfflineRosterRow,
-    nextStatus: 'listed' | 'confirmed'
-  ) => {
-    if (!onSetParticipationStatus) {
-      return;
-    }
-
-    const flow =
-      nextStatus === 'confirmed'
-        ? 'offline-roster-confirm-participation'
-        : 'offline-roster-withdraw-participation-confirmation';
-    const correlationId = buildCorrelationId(flow);
-    logRosterClient(flow, 'submit-started', {
-      correlationId,
-      rowId: row.id,
-      nextStatus,
-    });
-    await onSetParticipationStatus(row, nextStatus, correlationId);
-    logRosterClient(flow, 'submit-confirmed', {
-      correlationId,
-      rowId: row.id,
-      nextStatus,
-    });
-  };
-
-  const handleToggleChannel = async (row: OfflineRosterRow, nextChannel: 'online' | 'offline') => {
-    if (!onToggleChannel) {
-      return;
-    }
-
-    const correlationId = buildCorrelationId('offline-roster-toggle-channel');
-    logRosterClient('offline-roster-toggle-channel', 'submit-started', {
-      correlationId,
-      rowId: row.id,
-      nextChannel,
-    });
-    await onToggleChannel(row, nextChannel, correlationId);
-    logRosterClient('offline-roster-toggle-channel', 'submit-confirmed', {
-      correlationId,
-      rowId: row.id,
-      nextChannel,
-    });
-  };
+  controller,
+}: OfflineRosterCardViewProps) {
+  const {
+    manageOpen,
+    setManageOpen,
+    manageTab,
+    setManageTab,
+    editRow,
+    setEditRow,
+    connectRow,
+    setConnectRow,
+    singleDraft,
+    setSingleDraft,
+    editDraft,
+    setEditDraft,
+    selectedConnectedUser,
+    setSelectedConnectedUser,
+    csvPreviewRows,
+    csvFeedback,
+    isSubmitting,
+    isDraggingCsv,
+    setIsDraggingCsv,
+    fileInputId,
+    fileInputRef,
+    sortedRows,
+    connectItems,
+    showRolesColumn,
+    showConnectedUserColumn,
+    handleCloseManageDialog,
+    readCsvFile,
+    handleCsvDrop,
+    handleCreateSingle,
+    handleImportCsv,
+    handleConnect,
+    handleSaveEdit,
+    handleDelete,
+    handleSetParticipationStatus,
+    handleToggleChannel,
+    openEditRow,
+  } = controller;
 
   const renderReasonCell = (row: OfflineRosterRow) => (
     <div className="space-y-2">
@@ -683,19 +275,7 @@ export function OfflineRosterCard({
           </Button>
         ) : null}
         {row.canEdit ? (
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={() => {
-              setEditRow(row);
-              setEditDraft({
-                firstName: row.firstName,
-                lastName: row.lastName,
-                reasonNotSignedUp: row.reasonNotSignedUp || '',
-              });
-            }}
-          >
+          <Button type="button" size="icon" variant="ghost" onClick={() => openEditRow(row)}>
             <Pencil className="h-4 w-4" />
           </Button>
         ) : null}
@@ -1009,11 +589,11 @@ export function OfflineRosterCard({
                 >
                   {translateText('generated.inline.0963_choose_file_eb7eb7a8')}
                 </Button>
-                <input
+                <FileInputField
                   id={fileInputId}
                   ref={fileInputRef}
-                  type="file"
                   accept=".csv,text/csv"
+                  fieldClassName="hidden"
                   className="hidden"
                   onChange={event => {
                     const file = event.target.files?.[0];

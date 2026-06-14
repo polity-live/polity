@@ -1,10 +1,17 @@
-import { BadgeControl } from '@/features/shared/ui/status';
-import { FormControlInput, FormControlTextarea, FormControlLabel } from '@/features/shared/ui/form';
+import { Link } from '@tanstack/react-router';
+import { MessageSquare, Pencil, Trash2, User, Users } from 'lucide-react';
+
+import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
+import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
+import type { StatementDetailModel } from '@/features/statements/hooks/useStatementDetailModel';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton';
+import { CommentThread } from '@/features/shared/ui/comments';
 import { ScrollableAlertDialogContent, ScrollableDialogContent } from '@/features/shared/ui/dialog';
-import { useState } from 'react';
-import { PageWrapper } from '@/layout/page-wrapper';
-import { Card } from '@/features/shared/ui/ui/card';
+import { FormControlInput, FormControlLabel, FormControlTextarea } from '@/features/shared/ui/form';
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
+import { Card } from '@/features/shared/ui/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
   AlertDialog,
@@ -16,89 +23,39 @@ import {
   AlertDialogTitle,
 } from '@/features/shared/ui/ui/alert-dialog';
 import { Dialog, DialogFooter, DialogHeader, DialogTitle } from '@/features/shared/ui/ui/dialog';
-import { useStatementDetail } from '@/features/statements/hooks/useStatementDetail';
 import { VoteButtons } from '@/features/shared/ui/voting/VoteButtons';
-import { StatementTextRenderer } from './StatementTextRenderer';
+import { PageWrapper } from '@/layout/page-wrapper';
 import { StatementMediaDisplay } from './StatementMediaDisplay';
 import { StatementSurvey } from './StatementSurvey';
-import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton';
-import { CommentThread } from '@/features/shared/ui/comments';
-import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
-import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
-import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
-import { Link } from '@tanstack/react-router';
-import { MessageSquare, Trash2, Pencil, Users, User } from 'lucide-react';
-import { formatDistanceToNow, differenceInMinutes, format } from 'date-fns';
-import { de, enUS } from 'date-fns/locale';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import { StatementTextRenderer } from './StatementTextRenderer';
 
 interface StatementDetailProps {
-  statementId: string;
+  model: StatementDetailModel;
 }
 
-export function StatementDetail({ statementId }: StatementDetailProps) {
-  const { t } = useTranslation();
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [editText, setEditText] = useState('');
-  const [editImageUrl, setEditImageUrl] = useState('');
-  const [editVideoUrl, setEditVideoUrl] = useState('');
-  const [editVisibility, setEditVisibility] = useState<'public' | 'authenticated' | 'private'>(
-    'public'
-  );
-  const [editSurveyQuestion, setEditSurveyQuestion] = useState('');
-  const [editSurveyOptions, setEditSurveyOptions] = useState<string[]>(['', '']);
-  const [editSurveyDuration, setEditSurveyDuration] = useState(24);
-  const {
-    statement,
-    isLoading,
-    userId,
-    isOwner,
-    canAccess,
-    computedUpvotes,
-    computedDownvotes,
-    currentVoteValue,
-    handleVote,
-    survey,
-    handleSurveyVote,
-    handleSurveyRetract,
-    handleSaveSurvey,
-    handleDeleteSurvey,
-    handleDelete,
-    isEditOpen,
-    handleEditOpen,
-    handleEditClose,
-    handleUpdate,
-    comments,
-    handleAddComment,
-    handleCommentVote,
-    computedCommentCount,
-  } = useStatementDetail({ id: statementId });
-
-  if (isLoading) {
+export function StatementDetail({ model }: StatementDetailProps) {
+  if (model.status === 'loading') {
     return (
       <PageWrapper>
         <div className="py-12 text-center">
-          <p className="text-muted-foreground">{t('features.statements.detail.loading')}</p>
+          <p className="text-muted-foreground">{model.labels.loading}</p>
         </div>
       </PageWrapper>
     );
   }
 
-  if (!statement) {
+  if (model.status === 'not-found') {
     return (
       <PageWrapper>
         <div className="py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">{t('features.statements.detail.notFound')}</h1>
-          <p className="text-muted-foreground">
-            {t('features.statements.detail.notFoundDescription')}
-          </p>
+          <h1 className="mb-4 text-2xl font-bold">{model.labels.notFound}</h1>
+          <p className="text-muted-foreground">{model.labels.notFoundDescription}</p>
         </div>
       </PageWrapper>
     );
   }
 
-  if (!canAccess) {
+  if (model.status === 'access-denied') {
     return (
       <PageWrapper>
         <AccessDenied />
@@ -106,43 +63,40 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
     );
   }
 
-  const author = statement.user;
-  const group = statement.group;
-  const hashtags = extractHashtagTags(statement.statement_hashtags);
-  const authorName = author
-    ? `${author.first_name ?? ''} ${author.last_name ?? ''}`.trim() || author.handle || 'Unknown'
-    : 'Unknown';
-
-  const locale = t('locale') === 'de' ? de : enUS;
-  const createdAt = statement.created_at ? new Date(statement.created_at) : null;
-  const timeDisplay = (() => {
-    if (!createdAt) return null;
-    const minutesAgo = differenceInMinutes(new Date(), createdAt);
-    if (minutesAgo < 30) return formatDistanceToNow(createdAt, { addSuffix: true, locale });
-    return format(createdAt, 'PPp', { locale });
-  })();
+  const {
+    author,
+    computedCommentCount,
+    computedDownvotes,
+    computedUpvotes,
+    currentVoteValue,
+    editDialog,
+    group,
+    hashtags,
+    labels,
+    statement,
+    statementId,
+    survey,
+    timeDisplay,
+    userId,
+  } = model;
 
   return (
     <PageWrapper>
       <div className="mx-auto max-w-3xl">
-        {/* Reddit-style layout: vote column + content */}
         <Card>
           <div className="flex">
-            {/* Vote column */}
             <div className="bg-muted/30 flex flex-col items-center px-2 py-4">
               <VoteButtons
                 upvotes={computedUpvotes}
                 downvotes={computedDownvotes}
                 userVote={currentVoteValue}
-                onVote={handleVote}
+                onVote={model.onVote}
               />
             </div>
 
-            {/* Main content */}
             <div className="flex-1 p-4">
-              {/* Meta line */}
               <div className="text-muted-foreground mb-2 flex flex-wrap items-center gap-1.5 text-xs">
-                {group && (
+                {group ? (
                   <Link
                     to="/group/$id"
                     params={{ id: group.id }}
@@ -156,8 +110,8 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
                     </Avatar>
                     {group.name}
                   </Link>
-                )}
-                {group && <span>·</span>}
+                ) : null}
+                {group ? <span>·</span> : null}
                 <span className="flex items-center gap-1">
                   <Avatar className="h-4 w-4 shrink-0">
                     <AvatarImage src={author?.avatar ?? undefined} />
@@ -165,52 +119,48 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
                       <User className="h-2.5 w-2.5" />
                     </AvatarFallback>
                   </Avatar>
-                  {t('features.statements.view.by', { author: authorName })}
+                  {labels.authorByline}
                 </span>
-                {timeDisplay && (
+                {timeDisplay ? (
                   <>
                     <span>·</span>
                     <span>{timeDisplay}</span>
                   </>
-                )}
+                ) : null}
               </div>
 
-              {/* Statement text */}
               <div className="mb-3 text-lg leading-relaxed">
                 <StatementTextRenderer text={statement.text ?? ''} />
               </div>
 
-              {/* Media */}
               <StatementMediaDisplay
                 imageUrl={statement.image_url}
                 videoUrl={statement.video_url}
                 className="mb-3"
               />
 
-              {/* Survey */}
-              {survey && (
+              {survey ? (
                 <StatementSurvey
                   survey={{
                     id: survey.id,
                     question: survey.question,
                     ends_at: survey.ends_at,
-                    options: survey.options?.map(o => ({
-                      id: o.id,
-                      label: o.label,
-                      vote_count: o.vote_count,
-                      position: o.position,
-                      votes: o.votes ? [...o.votes] : undefined,
+                    options: survey.options?.map(option => ({
+                      id: option.id,
+                      label: option.label,
+                      vote_count: option.vote_count,
+                      position: option.position,
+                      votes: option.votes ? [...option.votes] : undefined,
                     })),
                   }}
                   userId={userId}
-                  onVote={handleSurveyVote}
-                  onRetract={handleSurveyRetract}
+                  onVote={model.onSurveyVote}
+                  onRetract={model.onSurveyRetract}
                   className="mb-3"
                 />
-              )}
+              ) : null}
 
-              {/* Hashtags */}
-              {hashtags.length > 0 && (
+              {hashtags.length > 0 ? (
                 <div className="mb-3 flex flex-wrap gap-1">
                   {hashtags.map(tag => (
                     <Link key={tag} to="/search" search={{ hashtag: tag }}>
@@ -223,14 +173,13 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
                     </Link>
                   ))}
                 </div>
-              )}
+              ) : null}
 
-              {/* Action bar */}
               <div className="border-t pt-2">
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="sm" className="text-muted-foreground text-xs">
                     <MessageSquare className="mr-1 h-4 w-4" />
-                    {computedCommentCount} {t('features.statements.comments.title')}
+                    {computedCommentCount} {labels.comments}
                   </Button>
 
                   <ShareButton
@@ -240,200 +189,151 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
                     size="sm"
                   />
 
-                  {isOwner && (
+                  {model.isOwner ? (
                     <>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="text-muted-foreground text-xs"
-                        onClick={() => {
-                          setEditText(statement.text ?? '');
-                          setEditImageUrl(statement.image_url ?? '');
-                          setEditVideoUrl(statement.video_url ?? '');
-                          setEditVisibility(
-                            (statement.visibility ?? 'public') as
-                              | 'public'
-                              | 'authenticated'
-                              | 'private'
-                          );
-                          setEditSurveyQuestion(survey?.question ?? '');
-                          setEditSurveyOptions(
-                            survey?.options?.length ? survey.options.map(o => o.label) : ['', '']
-                          );
-                          setEditSurveyDuration(24);
-                          handleEditOpen();
-                        }}
+                        onClick={model.onPrepareEdit}
                       >
                         <Pencil className="mr-1 h-4 w-4" />
-                        {t('features.statements.actions.edit')}
+                        {labels.edit}
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="text-destructive text-xs"
-                        onClick={() => setDeleteOpen(true)}
+                        onClick={() => model.onDeleteOpenChange(true)}
                       >
                         <Trash2 className="mr-1 h-4 w-4" />
-                        {t('features.statements.actions.delete')}
+                        {labels.deleteAction}
                       </Button>
                     </>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </div>
           </div>
         </Card>
 
-        {/* Comments Section */}
         <div className="mt-6">
           <CommentThread
-            comments={comments}
+            comments={model.comments}
             currentUserId={userId}
-            onAddComment={handleAddComment}
-            onVote={handleCommentVote}
+            onAddComment={model.onAddComment}
+            onVote={model.onCommentVote}
             hideHeader
           />
         </div>
       </div>
 
-      {/* Delete confirmation */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      <AlertDialog open={editDialog.deleteOpen} onOpenChange={model.onDeleteOpenChange}>
         <ScrollableAlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t('features.statements.actions.deleteConfirmTitle')}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('features.statements.actions.deleteConfirmDescription')}
-            </AlertDialogDescription>
+            <AlertDialogTitle>{labels.deleteConfirmTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{labels.deleteConfirmDescription}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel>{labels.cancel}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90 text-white"
-              onClick={async () => {
-                setDeleteOpen(false);
-                await handleDelete();
-              }}
+              onClick={model.onConfirmDelete}
             >
-              {t('common.actions.delete')}
+              {labels.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </ScrollableAlertDialogContent>
       </AlertDialog>
 
-      {/* Edit dialog */}
       <Dialog
-        open={isEditOpen}
+        open={model.isEditOpen}
         onOpenChange={open => {
-          if (!open) handleEditClose();
+          if (!open) model.onCloseEdit();
         }}
       >
         <ScrollableDialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t('features.statements.actions.edit')}</DialogTitle>
+            <DialogTitle>{labels.edit}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <FormControlLabel>{t('features.statements.form.text')}</FormControlLabel>
+              <FormControlLabel>{labels.formText}</FormControlLabel>
               <FormControlTextarea
-                value={editText}
-                onChange={e => setEditText(e.target.value.slice(0, 280))}
+                value={editDialog.editText}
+                onChange={event => model.onUpdateEditText(event.target.value.slice(0, 280))}
                 rows={4}
                 maxLength={280}
               />
               <p className="text-muted-foreground mt-1 text-right text-xs">
-                {t('features.statements.charsRemaining', { count: 280 - editText.length })}
+                {labels.charsRemaining}
               </p>
             </div>
 
             <MediaUpload
-              currentImage={editImageUrl || undefined}
-              onImageChange={setEditImageUrl}
-              currentVideo={editVideoUrl || undefined}
-              onVideoChange={setEditVideoUrl}
+              currentImage={editDialog.editImageUrl || undefined}
+              onImageChange={model.onUpdateEditImageUrl}
+              currentVideo={editDialog.editVideoUrl || undefined}
+              onVideoChange={model.onUpdateEditVideoUrl}
               entityType="statement"
               entityId={statementId}
             />
 
-            <VisibilityInput value={editVisibility} onChange={setEditVisibility} />
+            <VisibilityInput
+              value={editDialog.editVisibility}
+              onChange={model.onUpdateEditVisibility}
+            />
 
-            {/* Survey editing */}
             <div className="space-y-2 rounded-lg border p-4">
               <FormControlLabel className="text-base font-semibold">
-                {t('features.statements.survey.addSurvey')}
+                {labels.addSurvey}
               </FormControlLabel>
               <FormControlInput
-                value={editSurveyQuestion}
-                onChange={e => setEditSurveyQuestion(e.target.value)}
-                placeholder={t('features.statements.survey.question')}
+                value={editDialog.editSurveyQuestion}
+                onChange={event => model.onSurveyQuestionChange(event.target.value)}
+                placeholder={labels.question}
               />
-              {editSurveyOptions.map((opt, idx) => (
+              {editDialog.editSurveyOptions.map((option, index) => (
                 <FormControlInput
-                  key={idx}
-                  value={opt}
-                  onChange={e => {
-                    const newOpts = [...editSurveyOptions];
-                    newOpts[idx] = e.target.value;
-                    setEditSurveyOptions(newOpts);
-                  }}
-                  placeholder={`${t('features.statements.survey.option')} ${idx + 1}`}
+                  key={index}
+                  value={option}
+                  onChange={event => model.onSurveyOptionChange(index, event.target.value)}
+                  placeholder={`${labels.option} ${index + 1}`}
                 />
               ))}
-              {editSurveyOptions.length < 4 && (
-                <button
+              {editDialog.editSurveyOptions.length < 4 ? (
+                <Button
                   type="button"
-                  className="text-primary text-sm hover:underline"
-                  onClick={() => setEditSurveyOptions([...editSurveyOptions, ''])}
+                  variant="link"
+                  className="h-auto p-0"
+                  onClick={model.onAddSurveyOption}
                 >
-                  + {t('features.statements.survey.addOption')}
-                </button>
-              )}
+                  + {labels.addOption}
+                </Button>
+              ) : null}
               <div className="space-y-2">
-                <FormControlLabel>{t('features.statements.survey.duration')}</FormControlLabel>
+                <FormControlLabel>{labels.duration}</FormControlLabel>
                 <FormControlInput
                   type="number"
                   min={1}
                   max={168}
-                  value={editSurveyDuration}
-                  onChange={e => setEditSurveyDuration(Number(e.target.value))}
+                  value={editDialog.editSurveyDuration}
+                  onChange={event => model.onSurveyDurationChange(Number(event.target.value))}
                 />
               </div>
-              {survey && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={async () => {
-                    await handleDeleteSurvey();
-                    setEditSurveyQuestion('');
-                    setEditSurveyOptions(['', '']);
-                  }}
-                >
-                  {t('features.statements.survey.remove')}
+              {survey ? (
+                <Button variant="destructive" size="sm" onClick={model.onRemoveSurvey}>
+                  {labels.removeSurvey}
                 </Button>
-              )}
+              ) : null}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={handleEditClose}>
-              {t('common.actions.cancel')}
+            <Button variant="outline" onClick={model.onCloseEdit}>
+              {labels.cancel}
             </Button>
-            <Button
-              disabled={!editText.trim()}
-              onClick={async () => {
-                await handleUpdate(editText.trim(), {
-                  imageUrl: editImageUrl || null,
-                  videoUrl: editVideoUrl || null,
-                  visibility: editVisibility,
-                });
-                // Save survey if question and >=2 options provided
-                const validOptions = editSurveyOptions.filter(o => o.trim());
-                if (editSurveyQuestion.trim() && validOptions.length >= 2) {
-                  await handleSaveSurvey(editSurveyQuestion, editSurveyOptions, editSurveyDuration);
-                }
-              }}
-            >
-              {t('common.actions.save')}
+            <Button disabled={!editDialog.editText.trim()} onClick={model.onSaveEdit}>
+              {labels.save}
             </Button>
           </DialogFooter>
         </ScrollableDialogContent>

@@ -16,12 +16,21 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string, fallback?: string | Record<string, unknown>) =>
+    typeof fallback === 'string' ? fallback : key,
   useTranslation: () => ({
     t: (key: string, paramsOrFallback?: string | Record<string, unknown>, fallback?: string) => {
       const templates: Record<string, string> = {
         'common.network.thisGroup': 'Diese Gruppe',
         'common.network.thisGroupEmbedded': 'diese Gruppe',
+        'common.network.thisGroupWithName': 'Diese Gruppe ({{groupName}})',
         'common.network.thisGroupWithNameEmbedded': 'diese Gruppe ({{groupName}})',
+        'common.network.siblingMembershipExplanationElectedBeforeSource': 'Eine Gruppenrolle in',
+        'common.network.siblingMembershipExplanationElectedBetweenGroups':
+          'erzeugt die Mitgliedschaft in',
+        'common.network.siblingMembershipExplanationParliamentBeforeTarget': 'Mitgliedschaft in',
+        'common.network.siblingMembershipExplanationParliamentBetweenGroups':
+          'wird aus Gruppen abgeleitet, die passives Wahlrecht in',
         'common.unspecified': 'Unbekannt',
       };
       const template =

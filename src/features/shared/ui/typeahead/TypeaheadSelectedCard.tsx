@@ -10,7 +10,7 @@ import {
 import { ENTITY_COLORS } from '@/features/shared/utils/entity-colors';
 import { cn } from '@/features/shared/utils/utils';
 import { Hash, X } from 'lucide-react';
-import { getHashtagGradient } from '@/features/timeline/logic/gradient-assignment';
+import { getHashtagGradient } from '@/features/shared/logic/hashtagHelpers';
 import { LinkSurface } from '@/features/shared/ui/navigation/LinkSurface.tsx';
 import { isPlainLeftClick } from '@/features/shared/ui/navigation/SmartLink.tsx';
 

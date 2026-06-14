@@ -11,37 +11,57 @@ import { cn } from '@/features/shared/utils/utils';
 type TypeaheadFieldProps =
   | (Omit<TypeaheadSingleProps, 'label' | 'className'> & {
       label?: ReactNode;
+      labelAction?: ReactNode;
       description?: ReactNode;
       required?: boolean;
       error?: ReactNode;
+      invalid?: boolean;
       className?: string;
       fieldClassName?: string;
+      labelClassName?: string;
+      descriptionClassName?: string;
+      errorClassName?: string;
     })
   | (Omit<TypeaheadMultiProps, 'label' | 'className'> & {
       label?: ReactNode;
+      labelAction?: ReactNode;
       description?: ReactNode;
       required?: boolean;
       error?: ReactNode;
+      invalid?: boolean;
       className?: string;
       fieldClassName?: string;
+      labelClassName?: string;
+      descriptionClassName?: string;
+      errorClassName?: string;
     });
 
 export function TypeaheadField({
   label,
+  labelAction,
   description,
   required,
   error,
+  invalid,
   className,
   fieldClassName,
+  labelClassName,
+  descriptionClassName,
+  errorClassName,
   ...typeaheadProps
 }: TypeaheadFieldProps) {
   return (
     <FormFieldShell
       label={label}
+      labelAction={labelAction}
       description={description}
       error={error}
+      invalid={invalid}
       required={required}
       className={fieldClassName}
+      labelClassName={labelClassName}
+      descriptionClassName={descriptionClassName}
+      errorClassName={errorClassName}
     >
       {({ invalid }) => (
         <TypeaheadSearch

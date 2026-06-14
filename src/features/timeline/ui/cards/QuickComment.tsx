@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { MessageCircle, Send, X, Loader2 } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
+import { FormControlTextarea } from '@/features/shared/ui/form';
 import { cn } from '@/features/shared/utils/utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
@@ -30,8 +31,6 @@ export interface QuickCommentProps {
  * Expands on focus, collapses on blur when empty
  */
 export function QuickComment({
-  contentId,
-  contentType,
   onSubmit,
   commentCount = 0,
   placeholder,
@@ -90,19 +89,21 @@ export function QuickComment({
 
   if (compact && !isExpanded) {
     return (
-      <button
+      <Button
+        type="button"
+        variant="ghost"
         onClick={() => {
           setIsExpanded(true);
           setTimeout(() => inputRef.current?.focus(), 0);
         }}
         className={cn(
-          'flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground',
+          'text-muted-foreground hover:text-foreground h-auto gap-1.5 p-0 text-sm transition-colors hover:bg-transparent',
           className
         )}
       >
         <MessageCircle className="h-4 w-4" />
         {commentCount > 0 && <span>{commentCount}</span>}
-      </button>
+      </Button>
     );
   }
 
@@ -113,22 +114,22 @@ export function QuickComment({
         <div
           className={cn(
             'flex items-center gap-2 rounded-full px-3 py-2',
-            'cursor-text bg-muted/50 transition-colors hover:bg-muted'
+            'bg-muted/50 hover:bg-muted cursor-text transition-colors'
           )}
           onClick={() => {
             setIsExpanded(true);
             setTimeout(() => inputRef.current?.focus(), 0);
           }}
         >
-          <MessageCircle className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">{placeholder || defaultPlaceholder}</span>
+          <MessageCircle className="text-muted-foreground h-4 w-4" />
+          <span className="text-muted-foreground text-sm">{placeholder || defaultPlaceholder}</span>
         </div>
       )}
 
       {/* Expanded state - full textarea */}
       {isExpanded && (
         <div className="space-y-2">
-          <textarea
+          <FormControlTextarea
             ref={inputRef}
             value={comment}
             onChange={e => setComment(e.target.value)}
@@ -137,8 +138,8 @@ export function QuickComment({
             onKeyDown={handleKeyDown}
             placeholder={placeholder || defaultPlaceholder}
             className={cn(
-              'w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm',
-              'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+              'border-input bg-background w-full resize-none rounded-lg border px-3 py-2 text-sm',
+              'focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none',
               'placeholder:text-muted-foreground',
               'min-h-[80px]'
             )}
@@ -146,7 +147,7 @@ export function QuickComment({
             autoFocus
           />
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">
+            <span className="text-muted-foreground text-xs">
               {t('features.timeline.comments.ctrlEnterSubmit')}
             </span>
             <div className="flex items-center gap-2">
@@ -179,12 +180,12 @@ export function CommentPreview({
   onViewAll,
   className,
 }: {
-  comments: Array<{
+  comments: {
     id: string;
     author: string;
     content: string;
     createdAt: number;
-  }>;
+  }[];
   maxComments?: number;
   onViewAll?: () => void;
   className?: string;
@@ -199,14 +200,14 @@ export function CommentPreview({
     <div className={cn('space-y-2', className)}>
       {visibleComments.map(comment => (
         <div key={comment.id} className="flex gap-2 text-sm">
-          <span className="font-medium text-foreground">{comment.author}</span>
-          <span className="line-clamp-1 text-muted-foreground">{comment.content}</span>
+          <span className="text-foreground font-medium">{comment.author}</span>
+          <span className="text-muted-foreground line-clamp-1">{comment.content}</span>
         </div>
       ))}
       {hiddenCount > 0 && onViewAll && (
-        <button onClick={onViewAll} className="text-sm text-primary hover:underline">
+        <Button type="button" variant="link" className="h-auto p-0 text-sm" onClick={onViewAll}>
           {t('features.timeline.comments.viewAll', { count: comments.length })}
-        </button>
+        </Button>
       )}
     </div>
   );

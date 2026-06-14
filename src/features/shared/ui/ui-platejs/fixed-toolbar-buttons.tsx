@@ -39,7 +39,7 @@ import { ModeToolbarButton } from './mode-toolbar-button.tsx';
 import { MoreToolbarButton } from './more-toolbar-button.tsx';
 import { TableToolbarButton } from './table-toolbar-button.tsx';
 import { ToggleToolbarButton } from './toggle-toolbar-button.tsx';
-import { ToolbarGroup } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarGroup } from '@/features/shared/ui/layout';
 import { TurnIntoToolbarButton } from './turn-into-toolbar-button.tsx';
 import { useModeContext } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';

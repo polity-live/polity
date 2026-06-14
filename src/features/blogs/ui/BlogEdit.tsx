@@ -20,7 +20,7 @@ import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputFie
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
-import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { useBlogEditPage } from '../hooks/useBlogEditPage';
 import { useAuth } from '@/providers/auth-provider';
 import { useTranslation } from '@/features/shared/hooks/use-translation';

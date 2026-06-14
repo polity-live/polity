@@ -18,7 +18,7 @@ import {
 import { BaseEditorKit } from '@/features/shared/ui/kit-platejs/editor-base-kit.tsx';
 
 import { EditorStatic } from './editor-static.tsx';
-import { ToolbarButton } from '@/features/shared/ui/ui/toolbar.tsx';
+import { ToolbarButton } from '@/features/shared/ui/layout';
 
 const siteUrl = 'https://platejs.org';
 

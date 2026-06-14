@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
-import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
-import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
+import { ScrollableTabsList } from '@/features/shared/ui/navigation';
+import { EntitySearchBar } from '@/features/shared/ui/typeahead';
 import { BlogListTab } from './BlogListTab';
 import { GroupsListTab } from './GroupListTab';
 import { AmendmentListTab } from './AmendmentListTab';

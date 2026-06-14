@@ -302,20 +302,26 @@ export function ActionBarCompact({
 }) {
   return (
     <div className={cn('flex items-center gap-3 text-gray-500 dark:text-gray-400', className)}>
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
         onClick={onReact}
-        className="flex items-center gap-1 transition-colors hover:text-pink-500"
+        className="h-auto gap-1 p-0 transition-colors hover:bg-transparent hover:text-pink-500"
       >
         <Heart className="h-3.5 w-3.5" />
         {reactionCount > 0 && <span className="text-xs">{reactionCount}</span>}
-      </button>
-      <button
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
         onClick={onDiscuss}
-        className="flex items-center gap-1 transition-colors hover:text-blue-500"
+        className="h-auto gap-1 p-0 transition-colors hover:bg-transparent hover:text-blue-500"
       >
         <MessageCircle className="h-3.5 w-3.5" />
         {commentCount > 0 && <span className="text-xs">{commentCount}</span>}
-      </button>
+      </Button>
     </div>
   );
 }

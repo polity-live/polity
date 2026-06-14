@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/providers/auth-provider';
@@ -9,7 +9,7 @@ import {
 import { useEventMutations } from '../hooks/useEventMutations';
 import { useEventAccessRoles, useEventOfflineParticipants } from '@/zero/events/useEventState';
 import { Button } from '@/features/shared/ui/ui/button';
-import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
+import { EntitySearchBar } from '@/features/shared/ui/typeahead';
 import { MembershipTabs } from '@/features/groups/ui/MembershipTabs';
 import { ActiveMembersTable } from '@/features/groups/ui/ActiveMembersTable';
 import { MembershipsByRoleTables } from '@/features/groups/ui/MembershipsByRoleTables';
@@ -418,30 +418,16 @@ export function EventParticipants({
   }
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <Button variant="ghost" onClick={() => navigate({ to: '..' })}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {translateText('generated.inline.0493_back_b52b36b7')}
-        </Button>
-      </div>
-
-      <div className="mb-6">
-        <h1 className="mb-2 text-3xl font-bold">
-          {translateText('generated.inline.0441_event_participants_df407348')}
-        </h1>
-        <p className="text-muted-foreground">{eventTitle}</p>
-      </div>
-
-      {activeTab !== 'roles' && activeTab !== 'composition' ? (
-        <EntitySearchBar
-          searchQuery={participantSearchQuery}
-          onSearchQueryChange={setParticipantSearchQuery}
-          placeholder={translateText('generated.inline.0494_search_participants_1b38c2ef')}
-          className="mb-4"
-        />
-      ) : null}
-
+    <EventParticipantsView
+      title={translateText('generated.inline.0441_event_participants_df407348')}
+      subtitle={eventTitle}
+      backLabel={translateText('generated.inline.0493_back_b52b36b7')}
+      onBack={() => navigate({ to: '..' })}
+      showSearch={activeTab !== 'roles' && activeTab !== 'composition'}
+      searchQuery={participantSearchQuery}
+      onSearchQueryChange={setParticipantSearchQuery}
+      searchPlaceholder={translateText('generated.inline.0494_search_participants_1b38c2ef')}
+    >
       <MembershipTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -774,6 +760,57 @@ export function EventParticipants({
         onConfirm={handleConfirmRoleChange}
         title={translateText('generated.inline.0516_manage_participant_roles_eddec16c')}
       />
+    </EventParticipantsView>
+  );
+}
+
+interface EventParticipantsViewProps {
+  title: string;
+  subtitle: string;
+  backLabel: string;
+  onBack: () => void;
+  showSearch: boolean;
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
+  searchPlaceholder: string;
+  children: ReactNode;
+}
+
+export function EventParticipantsView({
+  title,
+  subtitle,
+  backLabel,
+  onBack,
+  showSearch,
+  searchQuery,
+  onSearchQueryChange,
+  searchPlaceholder,
+  children,
+}: EventParticipantsViewProps) {
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {backLabel}
+        </Button>
+      </div>
+
+      <div className="mb-6">
+        <h1 className="mb-2 text-3xl font-bold">{title}</h1>
+        <p className="text-muted-foreground">{subtitle}</p>
+      </div>
+
+      {showSearch ? (
+        <EntitySearchBar
+          searchQuery={searchQuery}
+          onSearchQueryChange={onSearchQueryChange}
+          placeholder={searchPlaceholder}
+          className="mb-4"
+        />
+      ) : null}
+
+      {children}
     </div>
   );
 }

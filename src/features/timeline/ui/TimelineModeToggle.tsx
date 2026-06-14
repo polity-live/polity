@@ -6,6 +6,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
+import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
 import { cn } from '@/features/shared/utils/utils';
 import { TimelineMode } from '../hooks/useTimelineMode';
 
@@ -37,13 +38,15 @@ const MODE_CONFIG: Record<
   timeline: {
     icon: MapPinned,
     labelKey: 'features.timeline.modes.timeline',
-    activeClass: 'bg-primary text-primary-foreground',
+    activeClass:
+      'bg-primary text-primary-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground',
     hoverClass: 'hover:bg-primary/10',
   },
   decisions: {
     icon: Monitor,
     labelKey: 'features.timeline.modes.decisions',
-    activeClass: 'bg-slate-900 text-slate-50 dark:bg-slate-100 dark:text-slate-900',
+    activeClass:
+      'bg-slate-900 text-slate-50 data-[state=on]:bg-slate-900 data-[state=on]:text-slate-50 dark:bg-slate-100 dark:text-slate-900 dark:data-[state=on]:bg-slate-100 dark:data-[state=on]:text-slate-900',
     hoverClass: 'hover:bg-slate-100 dark:hover:bg-slate-800',
   },
 };
@@ -73,9 +76,15 @@ export function TimelineModeToggle({
   const modes: TimelineMode[] = ['timeline', 'decisions'];
 
   return (
-    <div
+    <ToggleGroup
+      type="single"
+      value={mode}
+      onValueChange={nextMode => {
+        if (nextMode === 'timeline' || nextMode === 'decisions') {
+          onModeChange(nextMode);
+        }
+      }}
       className={cn('bg-muted/50 inline-flex items-center gap-1 rounded-lg border p-1', className)}
-      role="tablist"
       aria-label={translateText('generated.inline.1167_timeline_mode_8f6d2e57')}
     >
       {modes.map(m => {
@@ -87,14 +96,13 @@ export function TimelineModeToggle({
         const showBadge = badgeCount !== undefined && badgeCount > 0;
 
         return (
-          <button
+          <ToggleGroupItem
             key={m}
-            role="tab"
-            aria-selected={isActive}
+            value={m}
             aria-controls={`timeline-panel-${m}`}
-            onClick={() => onModeChange(m)}
+            aria-label={t(config.labelKey)}
             className={cn(
-              'relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200',
+              'relative h-auto gap-1.5 px-3 py-1.5 text-sm font-medium transition-all duration-200',
               isActive ? config.activeClass : cn('text-muted-foreground', config.hoverClass),
               m === 'decisions' && !isActive && 'font-mono text-xs tracking-tight'
             )}
@@ -127,10 +135,10 @@ export function TimelineModeToggle({
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
                 </span>
               )}
-          </button>
+          </ToggleGroupItem>
         );
       })}
-    </div>
+    </ToggleGroup>
   );
 }
 

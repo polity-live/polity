@@ -30,10 +30,10 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { GRADIENTS } from '@/features/users/state/gradientColors';
-import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
-import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
-import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
+import { StatsBar } from '@/features/shared/ui/layout';
+import { ActionBar } from '@/features/shared/ui/layout';
 import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
 import type { MembershipStatus } from '@/features/shared/ui/action-buttons/MembershipButton';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';

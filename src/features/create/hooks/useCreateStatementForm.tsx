@@ -1,4 +1,5 @@
 import { FormControlLabel } from '@/features/shared/ui/form';
+import { Button } from '@/features/shared/ui/ui/button';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
@@ -11,11 +12,11 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
-import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
-import { SummaryPillList } from '@/features/shared/ui/ui/create-review-card';
+import { HashtagEditor } from '@/features/shared/ui/hashtags';
+import { SummaryPillList } from '@/features/shared/ui/form';
 import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { CreateInputField, CreateTextareaField, CreateTypeaheadField } from '../ui/CreateFields';
+import { CreateInputField } from '../ui/CreateFields';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import type { CreateFormConfig } from '../types/create-form.types';
 
@@ -152,192 +153,230 @@ export function useCreateStatementForm(): CreateFormConfig {
         {
           label: t('pages.create.statement.textLabel'),
           isValid: () => !!text.trim() && text.length <= MAX_CHARS,
-          content: (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <CreateTextareaField
-                  label={t('pages.create.statement.textLabel')}
-                  required
-                  hint={t('pages.create.statement.tips.text')}
-                  value={text}
-                  onValueChange={value => setText(value.slice(0, MAX_CHARS))}
-                  placeholder={t('pages.create.statement.textPlaceholder')}
-                  rows={4}
-                  maxLength={MAX_CHARS}
-                />
+          fields: [
+            {
+              key: 'text',
+              kind: 'text',
+              multiline: true,
+              label: t('pages.create.statement.textLabel'),
+              required: true,
+              hint: t('pages.create.statement.tips.text'),
+              value: text,
+              onValueChange: value => setText(value.slice(0, MAX_CHARS)),
+              placeholder: t('pages.create.statement.textPlaceholder'),
+              rows: 4,
+              maxLength: MAX_CHARS,
+            },
+            {
+              key: 'characters-remaining',
+              kind: 'custom',
+              node: (
                 <p
                   className={`text-xs ${charsRemaining < 20 ? 'text-destructive' : 'text-muted-foreground'}`}
                 >
                   {t('features.statements.charsRemaining', { count: charsRemaining })}
                 </p>
-              </div>
-              <CreateTypeaheadField
-                label={t('pages.create.statement.attachTo')}
-                entityTypes={['group']}
-                value={groupId ?? undefined}
-                onChange={item => {
+              ),
+            },
+            {
+              key: 'group',
+              kind: 'typeahead',
+              label: t('pages.create.statement.attachTo'),
+              props: {
+                entityTypes: ['group'],
+                value: groupId ?? undefined,
+                onChange: item => {
                   const nextGroupId = item?.id ?? null;
                   setGroupId(nextGroupId);
                   setGroupName(item?.label ?? '');
                   syncGroupSearch(nextGroupId);
-                }}
-                placeholder={t('pages.create.statement.groupPlaceholder')}
-                filterFn={item => memberGroupIds.has(item.id)}
-              />
-            </div>
-          ),
+                },
+                placeholder: t('pages.create.statement.groupPlaceholder'),
+                filterFn: item => memberGroupIds.has(item.id),
+              },
+            },
+          ],
         },
         {
           label: t('features.statements.survey.addSurvey'),
           isValid: () => true,
           optional: true,
-          content: (
-            <div className="space-y-4">
-              <MediaUpload
-                currentImage={imageUrl}
-                onImageChange={(url: string) => setImageUrl(url)}
-                currentVideo={videoUrl}
-                onVideoChange={(url: string) => setVideoUrl(url)}
-                entityType="statements"
-                entityId={statementId}
-                imageLabel={t('pages.create.statement.imageUrl')}
-                imageDescription={t('pages.create.statement.imageDescription')}
-                videoLabel={t('pages.create.statement.videoUrl')}
-                videoDescription={t('pages.create.statement.videoDescription')}
-              />
-              <div className="space-y-2 rounded-lg border p-4">
-                <FormControlLabel className="text-base font-semibold">
-                  {t('features.statements.survey.addSurvey')}
-                </FormControlLabel>
-                <CreateInputField
-                  label={t('features.statements.survey.question')}
-                  value={surveyQuestion}
-                  onValueChange={setSurveyQuestion}
-                  placeholder={t('features.statements.survey.question')}
+          fields: [
+            {
+              key: 'media',
+              kind: 'custom',
+              node: (
+                <MediaUpload
+                  currentImage={imageUrl}
+                  onImageChange={(url: string) => setImageUrl(url)}
+                  currentVideo={videoUrl}
+                  onVideoChange={(url: string) => setVideoUrl(url)}
+                  entityType="statements"
+                  entityId={statementId}
+                  imageLabel={t('pages.create.statement.imageUrl')}
+                  imageDescription={t('pages.create.statement.imageDescription')}
+                  videoLabel={t('pages.create.statement.videoUrl')}
+                  videoDescription={t('pages.create.statement.videoDescription')}
                 />
-                {surveyOptions.map((opt, idx) => (
+              ),
+            },
+            {
+              key: 'survey',
+              kind: 'custom',
+              node: (
+                <div className="space-y-2 rounded-lg border p-4">
+                  <FormControlLabel className="text-base font-semibold">
+                    {t('features.statements.survey.addSurvey')}
+                  </FormControlLabel>
                   <CreateInputField
-                    key={idx}
-                    label={`${t('features.statements.survey.option')} ${idx + 1}`}
-                    value={opt}
-                    onValueChange={value => {
-                      const newOpts = [...surveyOptions];
-                      newOpts[idx] = value;
-                      setSurveyOptions(newOpts);
-                    }}
-                    placeholder={`${t('features.statements.survey.option')} ${idx + 1}`}
+                    label={t('features.statements.survey.question')}
+                    value={surveyQuestion}
+                    onValueChange={setSurveyQuestion}
+                    placeholder={t('features.statements.survey.question')}
                   />
-                ))}
-                {surveyOptions.length < 4 && (
-                  <button
-                    type="button"
-                    className="text-primary text-sm hover:underline"
-                    onClick={() => setSurveyOptions([...surveyOptions, ''])}
-                  >
-                    {translateText('generated.inline.0339_add_option_39780ac3')}
-                  </button>
-                )}
-                <div className="space-y-2">
-                  <CreateInputField
-                    label={t('features.statements.survey.duration')}
-                    type="number"
-                    min={1}
-                    max={168}
-                    value={surveyDurationHours}
-                    onValueChange={value => setSurveyDurationHours(Number(value) || 1)}
-                  />
+                  {surveyOptions.map((opt, idx) => (
+                    <CreateInputField
+                      key={idx}
+                      label={`${t('features.statements.survey.option')} ${idx + 1}`}
+                      value={opt}
+                      onValueChange={value => {
+                        const newOpts = [...surveyOptions];
+                        newOpts[idx] = value;
+                        setSurveyOptions(newOpts);
+                      }}
+                      placeholder={`${t('features.statements.survey.option')} ${idx + 1}`}
+                    />
+                  ))}
+                  {surveyOptions.length < 4 && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="h-auto p-0 text-sm"
+                      onClick={() => setSurveyOptions([...surveyOptions, ''])}
+                    >
+                      {translateText('generated.inline.0339_add_option_39780ac3')}
+                    </Button>
+                  )}
+                  <div className="space-y-2">
+                    <CreateInputField
+                      label={t('features.statements.survey.duration')}
+                      type="number"
+                      min={1}
+                      max={168}
+                      value={surveyDurationHours}
+                      onValueChange={value => setSurveyDurationHours(Number(value) || 1)}
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
-          ),
+              ),
+            },
+          ],
         },
         {
           label: t('pages.create.statement.hashtagsLabel'),
           isValid: () => true,
           optional: true,
-          content: (
-            <HashtagEditor
-              value={hashtags}
-              onChange={setHashtags}
-              placeholder={t('pages.create.statement.hashtagPlaceholder')}
-            />
-          ),
+          fields: [
+            {
+              key: 'hashtags',
+              kind: 'custom',
+              node: (
+                <HashtagEditor
+                  value={hashtags}
+                  onChange={setHashtags}
+                  placeholder={t('pages.create.statement.hashtagPlaceholder')}
+                />
+              ),
+            },
+          ],
         },
         {
           label: t('pages.create.common.visibility'),
           isValid: () => true,
-          content: <VisibilityInput value={visibility} onChange={setVisibility} />,
+          fields: [
+            {
+              key: 'visibility',
+              kind: 'custom',
+              node: <VisibilityInput value={visibility} onChange={setVisibility} />,
+            },
+          ],
         },
         {
           label: t('pages.create.common.review'),
           isValid: () => !!text.trim(),
-          content: (
-            <CreateSummaryStep
-              entityType="statement"
-              badge={t('pages.create.statement.reviewBadge')}
-              title={t('pages.create.statement.reviewBadge')}
-              subtitle={text || undefined}
-              secondaryBadge={visibilityLabel}
-              media={{
-                imageUrl: imageUrl || undefined,
-                imageAlt: t('pages.create.statement.reviewBadge'),
-                videoUrl: videoUrl || undefined,
-              }}
-              hashtags={hashtags.length > 0 ? hashtags : undefined}
-              sections={[
-                {
-                  title: t('pages.create.statement.textLabel'),
-                  fields: [
-                    ...(groupName
-                      ? [{ label: t('pages.create.statement.attachTo'), value: groupName }]
-                      : []),
-                    { label: t('pages.create.common.visibility'), value: visibilityLabel },
-                    ...(imageUrl
+          fields: [
+            {
+              key: 'review',
+              kind: 'custom',
+              node: (
+                <CreateSummaryStep
+                  entityType="statement"
+                  badge={t('pages.create.statement.reviewBadge')}
+                  title={t('pages.create.statement.reviewBadge')}
+                  subtitle={text || undefined}
+                  secondaryBadge={visibilityLabel}
+                  media={{
+                    imageUrl: imageUrl || undefined,
+                    imageAlt: t('pages.create.statement.reviewBadge'),
+                    videoUrl: videoUrl || undefined,
+                  }}
+                  hashtags={hashtags.length > 0 ? hashtags : undefined}
+                  sections={[
+                    {
+                      title: t('pages.create.statement.textLabel'),
+                      fields: [
+                        ...(groupName
+                          ? [{ label: t('pages.create.statement.attachTo'), value: groupName }]
+                          : []),
+                        { label: t('pages.create.common.visibility'), value: visibilityLabel },
+                        ...(imageUrl
+                          ? [
+                              {
+                                label: t('pages.create.statement.imageUrl'),
+                                value: 'Attached',
+                              },
+                            ]
+                          : []),
+                        ...(videoUrl
+                          ? [
+                              {
+                                label: t('pages.create.statement.videoUrl'),
+                                value: 'Attached',
+                              },
+                            ]
+                          : []),
+                      ],
+                    },
+                    ...(hasSurvey
                       ? [
                           {
-                            label: t('pages.create.statement.imageUrl'),
-                            value: 'Attached',
+                            title: t('features.statements.survey.addSurvey'),
+                            fields: [
+                              {
+                                label: t('features.statements.survey.question'),
+                                value: surveyQuestion,
+                              },
+                              {
+                                label: t('features.statements.survey.duration'),
+                                value: String(surveyDurationHours),
+                              },
+                              {
+                                label: t('features.statements.survey.option'),
+                                value: (
+                                  <SummaryPillList
+                                    items={surveyOptions.filter(option => option.trim())}
+                                  />
+                                ),
+                              },
+                            ],
                           },
                         ]
                       : []),
-                    ...(videoUrl
-                      ? [
-                          {
-                            label: t('pages.create.statement.videoUrl'),
-                            value: 'Attached',
-                          },
-                        ]
-                      : []),
-                  ],
-                },
-                ...(hasSurvey
-                  ? [
-                      {
-                        title: t('features.statements.survey.addSurvey'),
-                        fields: [
-                          {
-                            label: t('features.statements.survey.question'),
-                            value: surveyQuestion,
-                          },
-                          {
-                            label: t('features.statements.survey.duration'),
-                            value: String(surveyDurationHours),
-                          },
-                          {
-                            label: t('features.statements.survey.option'),
-                            value: (
-                              <SummaryPillList
-                                items={surveyOptions.filter(option => option.trim())}
-                              />
-                            ),
-                          },
-                        ],
-                      },
-                    ]
-                  : []),
-              ]}
-            />
-          ),
+                  ]}
+                />
+              ),
+            },
+          ],
         },
       ],
     }),

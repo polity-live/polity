@@ -1,22 +1,6 @@
-import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
-import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
-/**
- * Create Document Dialog Component
- *
- * Dialog for creating a new document in a group.
- */
-
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/features/shared/ui/ui/dialog';
-import { Button } from '@/features/shared/ui/ui/button';
-import { Plus, Loader2 } from 'lucide-react';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
+
+import { CreateDocumentDialogView } from './CreateDocumentDialogView';
 
 interface CreateDocumentDialogProps {
   groupId: string;
@@ -41,62 +25,22 @@ export function CreateDocumentDialog({
     setIsOpen(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isCreating) {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && !isCreating) {
       handleCreate();
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button size="lg">
-          <Plus className="mr-2 h-4 w-4" />
-          {translateText('generated.inline.0404_new_document_e69f5da6')}
-        </Button>
-      </DialogTrigger>
-      <ScrollableDialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {translateText('generated.inline.0405_create_new_document_07d90501')}
-          </DialogTitle>
-          <DialogDescription>
-            {translateText('generated.inline.0406_enter_a_title_for_your_new_document_749e9123')}
-            {groupName
-              ? translateText('generated.inline.0051_in_groupname_bd500208', {
-                  groupName: groupName,
-                })
-              : ''}
-            .
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <FormControlLabel htmlFor="title">
-              {translateText('generated.inline.0407_document_title_73ee9605')}
-            </FormControlLabel>
-            <FormControlInput
-              id="title"
-              placeholder={translateText('generated.inline.0408_my_document_3916ed57')}
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isCreating}
-              autoFocus
-            />
-          </div>
-          <Button onClick={handleCreate} className="w-full" disabled={isCreating || !title.trim()}>
-            {isCreating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {translateText('generated.inline.0409_creating_28ea7667')}
-              </>
-            ) : (
-              translateText('generated.inline.0059_create_document_040d4708')
-            )}
-          </Button>
-        </div>
-      </ScrollableDialogContent>
-    </Dialog>
+    <CreateDocumentDialogView
+      groupName={groupName}
+      isCreating={isCreating}
+      isOpen={isOpen}
+      onCreate={handleCreate}
+      onKeyDown={handleKeyDown}
+      onOpenChange={setIsOpen}
+      onTitleChange={setTitle}
+      title={title}
+    />
   );
 }
