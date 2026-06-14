@@ -62,6 +62,37 @@ interface InlineComboboxProps {
   setValue?: (value: string) => void;
 }
 
+function InlineComboboxView({
+  children,
+  contextValue,
+  hasEmpty,
+  hideWhenNoValue,
+  itemsLength,
+  store,
+  value,
+}: {
+  children: React.ReactNode;
+  contextValue: InlineComboboxContextValue;
+  hasEmpty: boolean;
+  hideWhenNoValue: boolean;
+  itemsLength: number;
+  store: ReturnType<typeof useComboboxStore>;
+  value: string;
+}) {
+  return (
+    <span contentEditable={false}>
+      <ComboboxProvider
+        open={(itemsLength > 0 || hasEmpty) && (!hideWhenNoValue || value.length > 0)}
+        store={store}
+      >
+        <InlineComboboxContext.Provider value={contextValue}>
+          {children}
+        </InlineComboboxContext.Provider>
+      </ComboboxProvider>
+    </span>
+  );
+}
+
 const InlineCombobox = ({
   children,
   element,
@@ -166,18 +197,51 @@ const InlineCombobox = ({
   }, [items, store]);
 
   return (
-    <span contentEditable={false}>
-      <ComboboxProvider
-        open={(items.length > 0 || hasEmpty) && (!hideWhenNoValue || value.length > 0)}
-        store={store}
-      >
-        <InlineComboboxContext.Provider value={contextValue}>
-          {children}
-        </InlineComboboxContext.Provider>
-      </ComboboxProvider>
-    </span>
+    <InlineComboboxView
+      contextValue={contextValue}
+      hasEmpty={hasEmpty}
+      hideWhenNoValue={hideWhenNoValue}
+      itemsLength={items.length}
+      store={store}
+      value={value}
+    >
+      {children}
+    </InlineComboboxView>
   );
 };
+
+const InlineComboboxInputView = React.forwardRef<
+  HTMLInputElement,
+  React.HTMLAttributes<HTMLInputElement> & {
+    inputProps: UseComboboxInputResult['props'];
+    showTrigger: boolean;
+    trigger: string;
+    value?: string;
+  }
+>(({ className, inputProps, showTrigger, trigger, value, ...props }, ref) => {
+  return (
+    <>
+      {showTrigger && trigger}
+
+      <span className="relative min-h-[1lh]">
+        <span className="invisible overflow-hidden text-nowrap" aria-hidden="true">
+          {value || '\u200B'}
+        </span>
+
+        <Combobox
+          ref={ref}
+          className={cn('absolute top-0 left-0 size-full bg-transparent outline-none', className)}
+          value={value}
+          autoSelect
+          {...inputProps}
+          {...props}
+        />
+      </span>
+    </>
+  );
+});
+
+InlineComboboxInputView.displayName = 'InlineComboboxInputView';
 
 const InlineComboboxInput = React.forwardRef<
   HTMLInputElement,
@@ -203,24 +267,15 @@ const InlineComboboxInput = React.forwardRef<
    */
 
   return (
-    <>
-      {showTrigger && trigger}
-
-      <span className="relative min-h-[1lh]">
-        <span className="invisible overflow-hidden text-nowrap" aria-hidden="true">
-          {value || '\u200B'}
-        </span>
-
-        <Combobox
-          ref={ref}
-          className={cn('absolute top-0 left-0 size-full bg-transparent outline-none', className)}
-          value={value}
-          autoSelect
-          {...inputProps}
-          {...props}
-        />
-      </span>
-    </>
+    <InlineComboboxInputView
+      ref={ref}
+      className={className}
+      inputProps={inputProps}
+      showTrigger={showTrigger}
+      trigger={trigger}
+      value={value}
+      {...props}
+    />
   );
 });
 
@@ -285,6 +340,31 @@ const InlineComboboxItem = ({
     [filter, group, keywords, label, value, search]
   );
 
+  return (
+    <InlineComboboxItemView
+      className={className}
+      focusEditor={focusEditor}
+      onClick={onClick}
+      removeInput={removeInput}
+      visible={visible}
+      {...props}
+    />
+  );
+};
+
+function InlineComboboxItemView({
+  className,
+  focusEditor,
+  onClick,
+  removeInput,
+  visible,
+  ...props
+}: {
+  focusEditor: boolean;
+  removeInput: InlineComboboxContextValue['removeInput'];
+  visible: boolean;
+} & ComboboxItemProps &
+  Required<Pick<ComboboxItemProps, 'value'>>) {
   if (!visible) return null;
 
   return (
@@ -297,7 +377,7 @@ const InlineComboboxItem = ({
       {...props}
     />
   );
-};
+}
 
 const InlineComboboxEmpty = ({ children, className }: React.HTMLAttributes<HTMLDivElement>) => {
   const { setHasEmpty } = React.useContext(InlineComboboxContext);
@@ -312,12 +392,24 @@ const InlineComboboxEmpty = ({ children, className }: React.HTMLAttributes<HTMLD
     };
   }, [setHasEmpty]);
 
-  if (!items || items.length > 0) return null;
+  return (
+    <InlineComboboxEmptyView className={className} visible={Boolean(items && items.length === 0)}>
+      {children}
+    </InlineComboboxEmptyView>
+  );
+};
+
+function InlineComboboxEmptyView({
+  children,
+  className,
+  visible,
+}: React.HTMLAttributes<HTMLDivElement> & { visible: boolean }) {
+  if (!visible) return null;
 
   return (
     <div className={cn(comboboxItemVariants({ interactive: false }), className)}>{children}</div>
   );
-};
+}
 
 const InlineComboboxRow = ComboboxRow;
 

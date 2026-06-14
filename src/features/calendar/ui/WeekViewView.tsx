@@ -29,7 +29,7 @@ export const WeekViewView = ({
   const weekDays = getWeekDays(selectedDate);
 
   const getEventsForDate = (date: Date) => {
-    return allEvents.filter(event => isSameDay(event.start_date, date));
+    return allEvents.filter((event: any) => isSameDay(event.start_date, date));
   };
 
   return (
@@ -44,7 +44,7 @@ export const WeekViewView = ({
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-7 gap-2">
-          {weekDays.map((day, index) => {
+          {weekDays.map((day: any, index: number) => {
             const dayEvents = getEventsForDate(day);
             const isToday = isSameDay(day, new Date());
             const isSelected = isSameDay(day, selectedDate);
@@ -76,7 +76,7 @@ export const WeekViewView = ({
                 </div>
                 <ScrollArea className="h-[140px]">
                   <div className="space-y-1">
-                    {dayEvents.map(event => (
+                    {dayEvents.map((event: any) => (
                       <Button
                         key={event.id}
                         type="button"

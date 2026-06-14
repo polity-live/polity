@@ -78,7 +78,7 @@ export function CommentThreadView({
                 )}
               </p>
             ))
-          : threadedComments.map(comment => (
+          : threadedComments.map((comment: any) => (
               <CommentItem
                 key={comment.id}
                 comment={comment}

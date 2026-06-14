@@ -204,7 +204,7 @@ export function SubscriptionStatusView({ data, isLoading, error }: SubscriptionS
           )}
         >
           <div className="space-y-3">
-            {payments.map(payment => (
+            {payments.map((payment: any) => (
               <div
                 key={payment.id}
                 className="flex items-center justify-between rounded-lg border p-3"
@@ -237,7 +237,7 @@ export function SubscriptionStatusView({ data, isLoading, error }: SubscriptionS
           )}
         >
           <div className="space-y-3">
-            {subscriptions.slice(1).map(subscription => (
+            {subscriptions.slice(1).map((subscription: any) => (
               <div
                 key={subscription.id}
                 className="flex items-center justify-between gap-4 rounded-lg border p-3"

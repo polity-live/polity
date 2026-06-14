@@ -1,13 +1,10 @@
 'use client';
 
-import {
-  featureThemeClassName,
-  featureThemeValue,
-  featureThemeMarkup,
-} from '@/features/shared/theme';
+import { featureThemeMarkup, featureThemeValue } from '@/features/shared/theme';
 import { useEffect, useMemo, useState } from 'react';
 import type { CivicTimelineItem } from '../logic/civicTimeline';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { CivicTimelineMapView } from './CivicTimelineMapView';
 
 type ReactLeafletModule = typeof import('react-leaflet');
 type LeafletModule = typeof import('leaflet');
@@ -55,6 +52,14 @@ function getMarkerColor(type: CivicTimelineItem['type']) {
     default:
       return featureThemeValue('networkAmendmentPathVisualizationNeutralColorBeta');
   }
+}
+
+function CivicTimelineMapMessageView({ message }: { message: string }) {
+  return (
+    <div className="bg-muted/20 text-muted-foreground flex h-72 items-center justify-center rounded-lg border border-dashed px-4 text-center text-sm lg:h-[calc(100dvh-12rem)]">
+      {message}
+    </div>
+  );
 }
 
 export function CivicTimelineMap({
@@ -128,93 +133,34 @@ export function CivicTimelineMap({
 
   if (items.length === 0) {
     return (
-      <div className="bg-muted/20 text-muted-foreground flex h-72 items-center justify-center rounded-lg border border-dashed px-4 text-center text-sm lg:h-[calc(100dvh-12rem)]">
-        {translateText('generated.inline.1165_no_mapped_activity_yet_caf1290e')}
-      </div>
+      <CivicTimelineMapMessageView
+        message={translateText('generated.inline.1165_no_mapped_activity_yet_caf1290e')}
+      />
     );
   }
 
   if (loadFailed || !reactLeafletModule || !leafletModule || !activeIcon) {
     return (
-      <div className="bg-muted/20 text-muted-foreground flex h-72 items-center justify-center rounded-lg border border-dashed px-4 text-center text-sm lg:h-[calc(100dvh-12rem)]">
-        {translateText('generated.inline.1166_map_is_loading_5299ec7c')}
-      </div>
+      <CivicTimelineMapMessageView
+        message={translateText('generated.inline.1166_map_is_loading_5299ec7c')}
+      />
     );
-  }
-
-  const { MapContainer, Marker, TileLayer, Tooltip, useMap } = reactLeafletModule;
-  const center = averageCenter(items);
-  const zoom = items.length === 1 ? 10 : 6;
-
-  function ActiveMarkerController({ active }: { active?: CivicTimelineItem | null }) {
-    const map = useMap();
-
-    useEffect(() => {
-      if (!active?.coordinates) return;
-
-      map.flyTo(
-        [active.coordinates.latitude, active.coordinates.longitude],
-        Math.max(map.getZoom(), 9),
-        {
-          animate: true,
-          duration: 0.35,
-        }
-      );
-    }, [active, map]);
-
-    return null;
   }
 
   const activeItem = items.find(item => item.id === activeItemId) ?? null;
 
   return (
-    <div
-      className="bg-background overflow-hidden rounded-lg border shadow-sm"
-      data-testid="civic-timeline-map"
-    >
-      <MapContainer
-        center={center}
-        zoom={zoom}
-        className="h-72 w-full lg:h-[calc(100dvh-12rem)]"
-        attributionControl={false}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
-        <ActiveMarkerController active={activeItem} />
-        {items.map(item => {
-          if (!item.coordinates) return null;
-
-          const isActive = item.id === activeItemId;
-          const markerIcon = isActive ? activeIcon : iconsByType.get(item.type);
-          if (!markerIcon) return null;
-
-          return (
-            <Marker
-              key={item.id}
-              position={[item.coordinates.latitude, item.coordinates.longitude]}
-              icon={markerIcon}
-              eventHandlers={{
-                mouseover: () => onActiveItemChange?.(item.id),
-                mouseout: () => onActiveItemChange?.(null),
-                click: () => onItemSelect?.(item),
-              }}
-            >
-              <Tooltip permanent={isActive} direction="top" offset={[0, -12]} opacity={1}>
-                <div className="max-w-48">
-                  <div className="text-xs font-semibold">{item.title}</div>
-                  {item.locationLabel && (
-                    <div className={featureThemeClassName('timelineCivicTimelineMapNeutralText')}>
-                      {item.locationLabel}
-                    </div>
-                  )}
-                </div>
-              </Tooltip>
-            </Marker>
-          );
-        })}
-      </MapContainer>
-    </div>
+    <CivicTimelineMapView
+      activeIcon={activeIcon}
+      activeItem={activeItem}
+      activeItemId={activeItemId}
+      center={averageCenter(items)}
+      iconsByType={iconsByType}
+      items={items}
+      onActiveItemChange={onActiveItemChange}
+      onItemSelect={onItemSelect}
+      reactLeafletModule={reactLeafletModule}
+      zoom={items.length === 1 ? 10 : 6}
+    />
   );
 }

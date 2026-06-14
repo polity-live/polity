@@ -76,6 +76,7 @@ export const navigationTranslations = {
       discussions: 'Diskussionen',
       collaborators: 'Mitarbeiter',
       process: 'Prozess',
+      streetscape: 'Straßenentwurf',
       notifications: 'Benachrichtigungen',
       edit: 'Amendment bearbeiten',
     },

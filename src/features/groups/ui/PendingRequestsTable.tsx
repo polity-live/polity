@@ -6,23 +6,12 @@
 
 import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
-import { Check, Trash2, Users } from 'lucide-react';
+import { type ColumnDef } from '@/features/shared/ui/data-table';
 import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';
 import type { ParticipationLike } from '@/features/shared/types/participation';
 import { RoleTag } from './RoleTag';
-import { useGroupConflictPreflight } from '../hooks/useGroupConflictPreflight';
 import type { GroupConflictMembershipPreflight } from '../logic/groupConflictPreflight';
-import { GroupConflictDialog } from './GroupConflictPanel';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface PendingRequestsTableProps<TParticipation extends ParticipationLike> {
@@ -41,63 +30,8 @@ interface PendingRequestsTableProps<TParticipation extends ParticipationLike> {
   secondaryActionLabel?: string;
 }
 
-interface PendingRequestActionCellProps<TParticipation extends ParticipationLike> {
-  membership: TParticipation;
-  onApprove: (membershipId: string, userId: string) => void;
-  onReject: (membershipId: string, userId: string) => void;
-  getApprovePreflightInput?: (
-    membership: TParticipation
-  ) => GroupConflictMembershipPreflight | null | undefined;
-  primaryActionLabel: string;
-  secondaryActionLabel: string;
-}
-
-function PendingRequestActionCell<TParticipation extends ParticipationLike>({
-  membership,
-  onApprove,
-  onReject,
-  getApprovePreflightInput,
-  primaryActionLabel,
-  secondaryActionLabel,
-}: PendingRequestActionCellProps<TParticipation>) {
-  const userId = membership.user?.id ?? null;
-  const preflightInput = getApprovePreflightInput?.(membership) ?? null;
-  const { response, blocking } = useGroupConflictPreflight(preflightInput, {
-    enabled: Boolean(preflightInput),
-  });
-
-  return (
-    <div className="flex justify-end gap-2">
-      <Button
-        variant="default"
-        size="sm"
-        disabled={!userId || blocking}
-        onClick={() => userId && onApprove(membership.id, userId)}
-      >
-        <Check className="mr-1 h-4 w-4" />
-        {primaryActionLabel}
-      </Button>
-      {blocking ? (
-        <GroupConflictDialog
-          response={response}
-          triggerLabel={translateText('generated.inline.0693_warum_194dad5c')}
-          triggerVariant="ghost"
-          title={translateText('generated.inline.0709_warum_ist_diese_freigabe_blockiert_29129791')}
-        />
-      ) : null}
-      <Button
-        variant="ghost"
-        size="sm"
-        disabled={!userId}
-        onClick={() => userId && onReject(membership.id, userId)}
-      >
-        <Trash2 className="h-4 w-4" />
-        <span className="ml-2">{secondaryActionLabel}</span>
-      </Button>
-    </div>
-  );
-}
-
+import { PendingRequestActionCell } from './PendingRequestActionCell';
+import { PendingRequestsTableView } from './PendingRequestsTableView';
 export function PendingRequestsTable<TParticipation extends ParticipationLike>({
   requests,
   onApprove,
@@ -223,29 +157,20 @@ export function PendingRequestsTable<TParticipation extends ParticipationLike>({
       secondaryActionLabel,
     ]
   );
-
-  if (requests.length === 0) {
-    return null;
-  }
-
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          {title} ({requests.length})
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <DataTable
-          columns={columns}
-          data={requests}
-          getRowId={membership => membership.id}
-          enablePagination={false}
-          tableClassName="[&_td:last-child]:text-right"
-        />
-      </CardContent>
-    </Card>
+    <PendingRequestsTableView
+      requests={requests}
+      onApprove={onApprove}
+      onReject={onReject}
+      getApprovePreflightInput={getApprovePreflightInput}
+      title={title}
+      description={description}
+      roleColumnLabel={roleColumnLabel}
+      dateColumnLabel={dateColumnLabel}
+      fallbackRoleLabel={fallbackRoleLabel}
+      primaryActionLabel={primaryActionLabel}
+      secondaryActionLabel={secondaryActionLabel}
+      columns={columns}
+    />
   );
 }

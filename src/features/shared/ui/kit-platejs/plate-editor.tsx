@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { type Value, type TElement } from 'platejs';
-import { Plate, usePlateEditor } from 'platejs/react';
+import { usePlateEditor } from 'platejs/react';
 
 import {
   EditorKit,
@@ -9,13 +9,8 @@ import {
 } from '@/features/shared/ui/kit-platejs/editor-kit.tsx';
 import { discussionPlugin } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import { suggestionPlugin } from '@/features/shared/ui/kit-platejs/suggestion-kit.tsx';
-import { SettingsDialog } from '@/features/shared/ui/kit-platejs/settings-dialog.tsx';
 import { Editor, EditorContainer } from '@/features/shared/ui/ui-platejs/editor.tsx';
-import { SuggestionCallbacksProvider } from '@/features/shared/ui/kit-platejs/suggestion-callbacks-context.tsx';
-import { ModeProvider } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
-import { ModeSync } from '@/features/shared/ui/kit-platejs/mode-sync.tsx';
 import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
-import { RemoteCursorsSync } from '@/features/editor/ui/RemoteCursorsSync';
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 import type { EditorMode } from '@/features/editor/types';
 
@@ -61,7 +56,7 @@ interface PlateEditorProps {
     onActiveCursorsChange?: (userIds: Set<string>) => void;
   };
 }
-
+import { PlateEditorView } from './PlateEditorView';
 export function PlateEditor({
   initialValue,
   value,
@@ -303,53 +298,47 @@ export function PlateEditor({
       onChangeRef.current(newValue);
     }
   }, []);
-
   return (
-    <ModeProvider
+    <PlateEditorView
+      initialValue={initialValue}
+      value={value}
+      onChange={onChange}
+      id={id}
+      placeholder={placeholder}
+      containerClassName={containerClassName}
+      editorClassName={editorClassName}
+      containerVariant={containerVariant}
+      editorVariant={editorVariant}
+      currentUser={currentUser}
+      users={users}
+      discussions={discussions}
+      onDiscussionsChange={onDiscussionsChange}
+      onSuggestionAccepted={onSuggestionAccepted}
+      onSuggestionDeclined={onSuggestionDeclined}
+      onVoteAccept={onVoteAccept}
+      onVoteReject={onVoteReject}
+      onVoteAbstain={onVoteAbstain}
+      documentId={documentId}
+      documentTitle={documentTitle}
       currentMode={currentMode}
       onModeChange={onModeChange}
       isOwnerOrCollaborator={isOwnerOrCollaborator}
+      readOnly={readOnly}
+      showFixedToolbar={showFixedToolbar}
       selectedCrIds={selectedCrIds}
       onSelectedCrIdsChange={onSelectedCrIdsChange}
-    >
-      <SuggestionCallbacksProvider
-        callbacks={{
-          onSuggestionAccepted,
-          onSuggestionDeclined,
-          onVoteAccept,
-          onVoteReject,
-          onVoteAbstain,
-        }}
-      >
-        <Plate editor={editor} onChange={handleEditorChange} readOnly={readOnly}>
-          {/* Sync external mode with PlateJS internal state */}
-          <ModeSync currentMode={currentMode} readOnly={readOnly} />
-
-          {/* Sync remote cursors via Supabase Realtime */}
-          {remoteCursors?.enabled && (
-            <RemoteCursorsSync
-              entityId={remoteCursors.entityId}
-              userId={remoteCursors.userId}
-              userName={remoteCursors.userName}
-              userColor={remoteCursors.userColor}
-              enabled={remoteCursors.enabled}
-              onActiveCursorsChange={remoteCursors.onActiveCursorsChange}
-            />
-          )}
-
-          <EditorContainer variant={containerVariant} className={containerClassName}>
-            <Editor
-              id={id}
-              variant={editorVariant}
-              placeholder={placeholder}
-              className={editorClassName}
-            />
-          </EditorContainer>
-
-          <SettingsDialog />
-        </Plate>
-      </SuggestionCallbacksProvider>
-    </ModeProvider>
+      remoteCursors={remoteCursors}
+      onChangeRef={onChangeRef}
+      isControlled={isControlled}
+      prevValueRef={prevValueRef}
+      initialValueRef={initialValueRef}
+      editorConfig={editorConfig}
+      editor={editor}
+      hasLoadedInitialDiscussions={hasLoadedInitialDiscussions}
+      lastSyncedDiscussionsRef={lastSyncedDiscussionsRef}
+      isUpdatingFromProps={isUpdatingFromProps}
+      handleEditorChange={handleEditorChange}
+    />
   );
 }
 

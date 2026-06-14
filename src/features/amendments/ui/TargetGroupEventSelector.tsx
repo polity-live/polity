@@ -1,17 +1,7 @@
 'use client';
 
 import { BadgeControl } from '@/features/shared/ui/status';
-import {
-  FormControlLabel,
-  FormControlSelect,
-  FormControlSelectContent,
-  FormControlSelectItem,
-  FormControlSelectTrigger,
-  FormControlSelectValue,
-} from '@/features/shared/ui/form';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/features/shared/ui/ui/tabs';
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
@@ -32,12 +22,11 @@ import {
   getWorkflowStartGroupId,
   rehydratePathSegmentsWithWindows,
 } from '@/features/amendments/logic/amendmentPathHelpers';
-import { CalendarClock, ChevronRight, GitBranch, Target, User, Workflow } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { EventTimelineCard } from '@/features/timeline/ui/cards/EventTimelineCard';
-import { UserNetworkFlow } from '@/features/network/ui/UserNetworkFlow';
-import { GroupNetworkFlow } from '@/features/network/ui/GroupNetworkFlow';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { TargetGroupEventSelectorView } from './TargetGroupEventSelectorView';
 
 export interface TargetGroupEventSelection {
   sourceGroupId: string;
@@ -95,15 +84,6 @@ function dedupeGroupsById(groups: AmendmentNetworkGroup[]) {
     return true;
   });
 }
-
-function formatPathOptionLabel(
-  pathOption: { groupIds: string[] },
-  groups: AmendmentNetworkGroup[]
-) {
-  const groupsById = new Map(groups.map(group => [group.id, group]));
-  return pathOption.groupIds.map(groupId => groupsById.get(groupId)?.name ?? groupId).join(' -> ');
-}
-
 export function TargetGroupEventSelector({
   userId,
   collaborators = [],
@@ -978,411 +958,106 @@ export function TargetGroupEventSelector({
     [upcomingEvents]
   );
 
+  const handleSelectedUserChange = useCallback((item: TypeaheadItem | null) => {
+    setSelectedUserId(item?.id ?? '');
+  }, []);
+
+  const handlePathModeValueChange = useCallback(
+    (value: string) => {
+      const nextMode = value as 'hierarchy' | 'workflow';
+      setPathMode(nextMode);
+      onPathModeChange?.(nextMode);
+      setSelectedGroup(null);
+      setSelectedEvent(null);
+      setPathWithEvents([]);
+      setPathValidationError(null);
+      if (nextMode === 'hierarchy') {
+        setSelectedWorkflowIdState('');
+        onWorkflowSelectionChange?.(null);
+      }
+    },
+    [onPathModeChange, onWorkflowSelectionChange]
+  );
+
+  const handleHierarchyPathValueChange = useCallback((value: string) => {
+    setSelectedHierarchyPathId(value);
+    setSelectedEvent(null);
+    setPathWithEvents([]);
+    setPathValidationError(null);
+  }, []);
+
+  const handleWorkflowItemChange = useCallback(
+    (item: TypeaheadItem | null) => {
+      const nextWorkflowId = item?.id ?? '';
+      setSelectedWorkflowIdState(nextWorkflowId);
+      onWorkflowSelectionChange?.(nextWorkflowId || null);
+      setSelectedGroup(null);
+      setSelectedEvent(null);
+      setPathWithEvents([]);
+      setSelectedHierarchyPathId('');
+      setPathValidationError(null);
+    },
+    [onWorkflowSelectionChange]
+  );
+
+  const handleTargetGroupChange = useCallback(
+    (item: TypeaheadItem | null) => handleGroupSelection(availableTargetGroups, item),
+    [availableTargetGroups, handleGroupSelection]
+  );
+
+  const handleTargetEventChange = useCallback(
+    (item: TypeaheadItem | null) => {
+      if (targetPathSegment) {
+        updatePathSegmentEvent(targetPathSegment.segmentKey, item);
+      }
+    },
+    [targetPathSegment, updatePathSegmentEvent]
+  );
+
+  const handlePathSegmentEventChange = useCallback(
+    (segmentKey: string, item: TypeaheadItem | null) => {
+      updatePathSegmentEvent(segmentKey, item);
+    },
+    [updatePathSegmentEvent]
+  );
+
   return (
-    <div className="space-y-4">
-      {collaborators.length > 0 && (
-        <div className="flex items-center gap-3">
-          <User className="text-muted-foreground h-4 w-4" />
-          <div className="flex-1">
-            <TypeaheadSearch
-              items={toTypeaheadItems(
-                collaborators,
-                'user',
-                collaborator => collaborator.name || 'User',
-                collaborator => collaborator.email,
-                collaborator => collaborator.avatar,
-                collaborator => `/user/${collaborator.id}`
-              )}
-              value={selectedUserId}
-              onChange={(item: TypeaheadItem | null) => setSelectedUserId(item?.id ?? '')}
-              placeholder={translateText(
-                'generated.inline.0176_netzwerk_einer_person_auswaehlen_3ec337aa'
-              )}
-              label={translateText('generated.inline.0177_netzwerk_9b8cf3f3')}
-              disablePortal={disablePortal}
-            />
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <FormControlLabel>
-          {translateText('generated.inline.0178_startgruppe_27591dc9')}
-        </FormControlLabel>
-        {activeSourceGroups.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            {translateText(
-              'generated.inline.0179_keine_aktive_mitgliedschaft_mit_moeglichem_am_3dc842fc'
-            )}
-          </p>
-        ) : (
-          <TypeaheadSearch
-            items={toTypeaheadItems(
-              activeSourceGroups,
-              'group',
-              group => group.name || 'Group',
-              group =>
-                typeof group.description === 'string'
-                  ? group.description.substring(0, 60)
-                  : undefined,
-              undefined,
-              group => `/group/${group.id}`
-            )}
-            value={selectedSourceGroup?.id || ''}
-            onChange={handleSourceGroupSelection}
-            placeholder={translateText('generated.inline.0180_startgruppe_auswaehlen_2ffb380f')}
-            disablePortal={disablePortal}
-          />
-        )}
-      </div>
-
-      {allWorkflows.length > 0 ? (
-        <Tabs
-          value={pathMode}
-          onValueChange={value => {
-            const nextMode = value as 'hierarchy' | 'workflow';
-            setPathMode(nextMode);
-            onPathModeChange?.(nextMode);
-            setSelectedGroup(null);
-            setSelectedEvent(null);
-            setPathWithEvents([]);
-            setPathValidationError(null);
-            if (nextMode === 'hierarchy') {
-              setSelectedWorkflowIdState('');
-              onWorkflowSelectionChange?.(null);
-            }
-          }}
-        >
-          <TabsList className="w-full">
-            <TabsTrigger value="hierarchy" className="flex-1">
-              <GitBranch className="mr-2 h-4 w-4" />
-              {translateText('generated.inline.0181_hierarchie_b73f9b95')}
-            </TabsTrigger>
-            <TabsTrigger value="workflow" className="flex-1">
-              <Workflow className="mr-2 h-4 w-4" />
-              {translateText('generated.inline.0182_workflow_d7a48414')}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="hierarchy" className="space-y-4">
-            <div className="space-y-2">
-              <FormControlLabel>
-                {translateText('generated.inline.0183_zielgruppe_10f54053')}
-              </FormControlLabel>
-              {availableTargetGroups.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  {translateText(
-                    'generated.inline.0184_fuer_diese_startgruppe_gibt_es_keine_rekursiv_5eba3922'
-                  )}
-                </p>
-              ) : (
-                <TypeaheadSearch
-                  items={toTypeaheadItems(
-                    availableTargetGroups,
-                    'group',
-                    group => group.name || 'Group',
-                    group =>
-                      typeof group.description === 'string'
-                        ? group.description.substring(0, 60)
-                        : undefined,
-                    undefined,
-                    group => `/group/${group.id}`
-                  )}
-                  value={selectedGroup?.id || ''}
-                  onChange={(item: TypeaheadItem | null) =>
-                    handleGroupSelection(availableTargetGroups, item)
-                  }
-                  placeholder={translateText('generated.inline.0185_zielgruppe_suchen_aa7a77c8')}
-                  disablePortal={disablePortal}
-                />
-              )}
-            </div>
-
-            {selectedSourceGroup && selectedGroup && availableHierarchyPaths.length > 1 ? (
-              <div className="space-y-2">
-                <FormControlLabel>
-                  {translateText('generated.inline.0186_route_4999528e')}
-                </FormControlLabel>
-                <FormControlSelect
-                  value={selectedHierarchyPathId}
-                  onValueChange={value => {
-                    setSelectedHierarchyPathId(value);
-                    setSelectedEvent(null);
-                    setPathWithEvents([]);
-                    setPathValidationError(null);
-                  }}
-                >
-                  <FormControlSelectTrigger>
-                    <FormControlSelectValue
-                      placeholder={translateText('generated.inline.0187_pfad_auswaehlen_42ca323f')}
-                    />
-                  </FormControlSelectTrigger>
-                  <FormControlSelectContent>
-                    {availableHierarchyPaths.map(pathOption => (
-                      <FormControlSelectItem key={pathOption.id} value={pathOption.id}>
-                        {formatPathOptionLabel(pathOption, networkGroups)}
-                      </FormControlSelectItem>
-                    ))}
-                  </FormControlSelectContent>
-                </FormControlSelect>
-                <p className="text-muted-foreground text-xs">
-                  {translateText(
-                    'generated.inline.0188_mehrere_gueltige_amendment_pfade_gefunden_hie_635b9345'
-                  )}
-                </p>
-              </div>
-            ) : null}
-          </TabsContent>
-
-          <TabsContent value="workflow" className="space-y-4">
-            <div className="space-y-2">
-              <FormControlLabel>
-                {translateText('generated.inline.0189_ziel_workflow_f6a9c843')}
-              </FormControlLabel>
-              <TypeaheadSearch
-                items={toTypeaheadItems(
-                  reachableWorkflows,
-                  'group',
-                  workflow => workflow.name || 'Workflow',
-                  workflow => (workflow.group?.name ? `Gruppe: ${workflow.group.name}` : undefined),
-                  undefined,
-                  workflow => (workflow.group_id ? `/group/${workflow.group_id}` : undefined)
-                )}
-                value={selectedWorkflowIdState}
-                onChange={(item: TypeaheadItem | null) => {
-                  const nextWorkflowId = item?.id ?? '';
-                  setSelectedWorkflowIdState(nextWorkflowId);
-                  onWorkflowSelectionChange?.(nextWorkflowId || null);
-                  setSelectedGroup(null);
-                  setSelectedEvent(null);
-                  setPathWithEvents([]);
-                  setSelectedHierarchyPathId('');
-                  setPathValidationError(null);
-                }}
-                placeholder={translateText('generated.inline.0190_workflow_auswaehlen_633186d5')}
-                disablePortal={disablePortal}
-              />
-            </div>
-
-            {selectedWorkflowIdState && (
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <FormControlLabel>
-                    {translateText('generated.inline.0191_workflow_start_24e8baa4')}
-                  </FormControlLabel>
-                  <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
-                    {selectedWorkflowStartGroup?.name ??
-                      translateText('generated.inline.0028_unbekannt_d0b00a9f')}
-                  </div>
-                  <p className="text-muted-foreground text-xs">
-                    {translateText(
-                      'generated.inline.0192_die_quellgruppe_erreicht_diesen_startpunkt_zu_0c954787'
-                    )}
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <FormControlLabel>
-                    {translateText('generated.inline.0193_abgeleitete_zielgruppe_28e1d067')}
-                  </FormControlLabel>
-                  <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
-                    {selectedWorkflowFinalGroup?.name ??
-                      translateText('generated.inline.0028_unbekannt_d0b00a9f')}
-                  </div>
-                  <p className="text-muted-foreground text-xs">
-                    {translateText(
-                      'generated.inline.0194_im_workflow_modus_wird_die_finale_zielgruppe__420dcffc'
-                    )}
-                  </p>
-                </div>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <div className="space-y-2">
-          <FormControlLabel>
-            {translateText('generated.inline.0183_zielgruppe_10f54053')}
-          </FormControlLabel>
-          {availableTargetGroups.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              {translateText(
-                'generated.inline.0184_fuer_diese_startgruppe_gibt_es_keine_rekursiv_5eba3922'
-              )}
-            </p>
-          ) : (
-            <TypeaheadSearch
-              items={toTypeaheadItems(
-                availableTargetGroups,
-                'group',
-                group => group.name || 'Group',
-                group =>
-                  typeof group.description === 'string'
-                    ? group.description.substring(0, 60)
-                    : undefined,
-                undefined,
-                group => `/group/${group.id}`
-              )}
-              value={selectedGroup?.id || ''}
-              onChange={(item: TypeaheadItem | null) =>
-                handleGroupSelection(availableTargetGroups, item)
-              }
-              placeholder={translateText('generated.inline.0185_zielgruppe_suchen_aa7a77c8')}
-              disablePortal={disablePortal}
-            />
-          )}
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <FormControlLabel>
-          {selectedSourceGroup
-            ? translateText('generated.inline.0029_netzwerk_der_startgruppe_e8e9bbf1')
-            : translateText('generated.inline.0030_startgruppen_netzwerk_83d1c873')}
-        </FormControlLabel>
-        <div className="h-[28rem] min-h-[28rem] overflow-hidden rounded-md border">
-          {selectedSourceGroup ? (
-            <GroupNetworkFlow
-              groupId={selectedSourceGroup.id}
-              filterRight="amendmentRight"
-              title={translateText('generated.inline.0195_zielgruppen_netzwerk_d91c9750')}
-              description={`Waehle eine erreichbare Zielgruppe ausgehend von ${selectedSourceGroup.data.name ?? 'der Startgruppe'}.`}
-              onGroupClick={groupId => handleTargetGraphGroupClick(groupId)}
-              showGroupDialogOnClick={false}
-              showWorkflowView={false}
-              layoutScopeKey={`amendment-selector:${layoutScope}:group:${selectedSourceGroup.id}`}
-            />
-          ) : (
-            <UserNetworkFlow
-              userId={selectedUserId}
-              filterRight="amendmentRight"
-              title={translateText('generated.inline.0196_startgruppen_netzwerk_83d1c873')}
-              description={translateText(
-                'generated.inline.0197_waehle_eine_deiner_aktiven_startgruppen_aus_d_058cc520'
-              )}
-              onGroupClick={groupId => handleStartGraphGroupClick(groupId)}
-              showGroupDialogOnClick={false}
-              layoutScopeKey={`amendment-selector:${layoutScope}:user:${selectedUserId}`}
-            />
-          )}
-        </div>
-      </div>
-
-      {selectedGroup && (
-        <div className="space-y-2">
-          <FormControlLabel>
-            {translateText('generated.inline.0198_ziel_event_8f4df57f')}
-          </FormControlLabel>
-          {upcomingEvents.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              {translateText(
-                'generated.inline.0199_fuer_die_zielgruppe_gibt_es_noch_kein_passend_f6bd2a81'
-              )}
-            </p>
-          ) : (
-            <TypeaheadSearch
-              items={targetEventItems}
-              value={selectedEvent?.id || ''}
-              onChange={(item: TypeaheadItem | null) =>
-                targetPathSegment
-                  ? updatePathSegmentEvent(targetPathSegment.segmentKey, item)
-                  : undefined
-              }
-              placeholder={translateText('generated.inline.0200_event_suchen_389f187f')}
-              disablePortal={disablePortal}
-            />
-          )}
-        </div>
-      )}
-
-      {pathWithEvents.length > 0 && (
-        <div className="border-border bg-muted/30 space-y-3 rounded-md border p-3">
-          <div className="flex items-center gap-2">
-            <Target className="text-muted-foreground h-4 w-4" />
-            <FormControlLabel className="text-sm">
-              {translateText('generated.inline.0201_prozesspfad_a9e34361')}
-            </FormControlLabel>
-          </div>
-
-          <div className="space-y-3">
-            {pathWithEvents.map((segment, index) => {
-              const segmentEvents =
-                segment.segmentKey === targetPathSegment?.segmentKey
-                  ? upcomingEvents
-                  : getUpcomingEventsForGroup(segment.groupId, segment);
-
-              return (
-                <div
-                  key={segment.segmentKey}
-                  className="border-border bg-background rounded-md border p-3"
-                >
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">{segment.groupName}</p>
-                      {segment.stepLabel ? (
-                        <p className="text-muted-foreground text-xs">{segment.stepLabel}</p>
-                      ) : null}
-                      <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
-                        {segment.requiredAfter ? (
-                          <span className="inline-flex items-center gap-1">
-                            <CalendarClock className="h-3 w-3" />
-                            {translateText('generated.inline.0202_nicht_vor_96c35f3c')}
-                            {formatEventWindowLabel(segment.requiredAfter)}
-                          </span>
-                        ) : null}
-                        {segment.requiredBefore ? (
-                          <span className="inline-flex items-center gap-1">
-                            <CalendarClock className="h-3 w-3" />
-                            {translateText('generated.inline.0203_nicht_nach_e88cbaab')}
-                            {formatEventWindowLabel(segment.requiredBefore)}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                    <BadgeControl
-                      variant={segment.eventId ? 'secondary' : 'outline'}
-                      className="text-xs"
-                    >
-                      {translateText('generated.inline.0204_schritt_cc71ba9d')}
-                      {index + 1}
-                    </BadgeControl>
-                  </div>
-
-                  {segmentEvents.length > 0 ? (
-                    <TypeaheadSearch
-                      items={toTypeaheadItems(
-                        segmentEvents,
-                        'event',
-                        event => event.title || 'Event',
-                        event => formatEventWindowLabel(event.start_date) ?? 'Kein Datum',
-                        undefined,
-                        event => `/event/${event.id}`
-                      )}
-                      value={segment.eventId ?? undefined}
-                      onChange={(item: TypeaheadItem | null) =>
-                        updatePathSegmentEvent(segment.segmentKey, item)
-                      }
-                      placeholder={translateText(
-                        'generated.inline.0205_event_fuer_diesen_schritt_auswaehlen_d72eb838'
-                      )}
-                      disablePortal={disablePortal}
-                    />
-                  ) : (
-                    <div className="text-muted-foreground rounded-md border border-dashed p-3 text-xs">
-                      {translateText(
-                        'generated.inline.0206_kein_passendes_event_gefunden_fuer_diesen_sch_36c2ce7b'
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {pathValidationError && <p className="text-destructive text-xs">{pathValidationError}</p>}
-        </div>
-      )}
-    </div>
+    <TargetGroupEventSelectorView
+      activeSourceGroups={activeSourceGroups}
+      allWorkflows={allWorkflows}
+      availableHierarchyPaths={availableHierarchyPaths}
+      availableTargetGroups={availableTargetGroups}
+      collaborators={collaborators}
+      disablePortal={disablePortal}
+      getUpcomingEventsForGroup={getUpcomingEventsForGroup}
+      handleSourceGroupSelection={handleSourceGroupSelection}
+      handleStartGraphGroupClick={handleStartGraphGroupClick}
+      handleTargetGraphGroupClick={handleTargetGraphGroupClick}
+      layoutScope={layoutScope}
+      networkGroups={networkGroups}
+      onHierarchyPathValueChange={handleHierarchyPathValueChange}
+      onPathModeValueChange={handlePathModeValueChange}
+      onPathSegmentEventChange={handlePathSegmentEventChange}
+      onSelectedUserChange={handleSelectedUserChange}
+      onTargetEventChange={handleTargetEventChange}
+      onTargetGroupChange={handleTargetGroupChange}
+      onWorkflowItemChange={handleWorkflowItemChange}
+      pathMode={pathMode}
+      pathValidationError={pathValidationError}
+      pathWithEvents={pathWithEvents}
+      reachableWorkflows={reachableWorkflows}
+      selectedGroup={selectedGroup}
+      selectedHierarchyPathId={selectedHierarchyPathId}
+      selectedEvent={selectedEvent}
+      selectedSourceGroup={selectedSourceGroup}
+      selectedUserId={selectedUserId}
+      selectedWorkflowFinalGroup={selectedWorkflowFinalGroup}
+      selectedWorkflowIdState={selectedWorkflowIdState}
+      selectedWorkflowStartGroup={selectedWorkflowStartGroup}
+      targetEventItems={targetEventItems}
+      targetPathSegment={targetPathSegment}
+      upcomingEvents={upcomingEvents}
+    />
   );
 }
 

@@ -108,7 +108,7 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
             {translateText('generated.inline.1176_assigned_to_d00c2e68')}
           </FormControlLabel>
           <div className="space-y-2">
-            {todo.assignments.map((assignment, idx) => (
+            {todo.assignments.map((assignment: any, idx: number) => (
               <Link
                 key={idx}
                 to="/user/$id"
@@ -160,7 +160,7 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
             {translateText('generated.inline.1177_tags_848eed0f')}
           </FormControlLabel>
           <div className="flex flex-wrap gap-2">
-            {todo.tags.map((tag, idx) => (
+            {todo.tags.map((tag: any, idx: number) => (
               <BadgeControl key={idx} variant="secondary">
                 {tag}
               </BadgeControl>

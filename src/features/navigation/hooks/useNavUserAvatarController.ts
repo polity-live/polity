@@ -4,24 +4,23 @@ import { useNavigate } from '@tanstack/react-router';
 
 import type { NavigationView } from '@/features/navigation/types/navigation.types.tsx';
 import { useUserData } from '@/features/users/hooks/useUserData.ts';
-import { useAuth } from '@/providers/auth-provider.tsx';
-import { useZeroReady } from '@/providers/zero-provider.tsx';
 
 interface UseNavUserAvatarControllerProps {
   navigationView: NavigationView;
+  authUser: {
+    id: string;
+    email?: string | null;
+  };
 }
 
-export function useNavUserAvatarController({ navigationView }: UseNavUserAvatarControllerProps) {
+export function useNavUserAvatarController({
+  navigationView,
+  authUser,
+}: UseNavUserAvatarControllerProps) {
   const navigate = useNavigate();
-  const { user: authUser } = useAuth();
-  const zeroReady = useZeroReady();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const { user } = useUserData(authUser?.id);
-
-  if (!authUser || !zeroReady) {
-    return null;
-  }
+  const { user } = useUserData(authUser.id);
 
   const displayName =
     [user?.first_name, user?.last_name].filter(Boolean).join(' ') ||

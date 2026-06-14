@@ -82,7 +82,7 @@ export function SharedMonthView({
 
   const getEventsForDate = (date: Date) =>
     events
-      .filter(e => isSameDay(e.start_date, date))
+      .filter((e: any) => isSameDay(e.start_date, date))
       .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
 
   return (
@@ -90,7 +90,7 @@ export function SharedMonthView({
       <CardContent className="pt-4">
         {/* Weekday headers */}
         <div className="grid grid-cols-7 gap-px border-b pb-2">
-          {weekdayLabels.map(label => (
+          {weekdayLabels.map((label: any) => (
             <div key={label} className="text-muted-foreground text-center text-xs font-medium">
               {label}
             </div>
@@ -99,8 +99,8 @@ export function SharedMonthView({
 
         {/* Week rows */}
         <div className="grid grid-cols-7 gap-px">
-          {weeks.map((week, weekIndex) =>
-            week.map((day, dayIndex) => {
+          {weeks.map((week: any, weekIndex: number) =>
+            week.map((day: any, dayIndex: number) => {
               if (!day) {
                 return (
                   <div key={`${weekIndex}-${dayIndex}`} className="bg-muted/30 min-h-[120px]" />
@@ -134,7 +134,7 @@ export function SharedMonthView({
                   </div>
                   <ScrollArea className="h-[90px]">
                     <div className="space-y-0.5">
-                      {dayEvents.map(event => (
+                      {dayEvents.map((event: any) => (
                         <div
                           key={event.id}
                           className={cn(

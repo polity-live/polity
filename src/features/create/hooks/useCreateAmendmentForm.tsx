@@ -1,4 +1,3 @@
-import { FormControlLabel } from '@/features/shared/ui/form';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
@@ -6,17 +5,13 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
-import { Button } from '@/features/shared/ui/ui/button';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
-import { SummaryPillList } from '@/features/shared/ui/form';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import {
-  TargetGroupEventSelector,
-  TargetGroupEventDisplay,
-  type TargetGroupEventSelection,
-} from '@/features/amendments/ui/TargetGroupEventSelector';
+import type { TargetGroupEventSelection } from '@/features/amendments/ui/TargetGroupEventSelector';
+import { AmendmentEvaluationModeInput } from '../ui/inputs/AmendmentEvaluationModeInput';
+import { AmendmentTargetSelectionField } from '../ui/inputs/AmendmentTargetSelectionField';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
@@ -353,18 +348,17 @@ export function useCreateAmendmentForm(): CreateFormConfig {
             },
             {
               key: 'image',
-              kind: 'custom',
-              node: (
-                <ImageUpload
-                  currentImage={imageURL}
-                  onImageChange={(url: string) => setImageURL(url)}
-                  cleanupOnRemove
-                  entityType="amendments"
-                  entityId={amendmentId}
-                  label={t('pages.create.amendment.imageLabel')}
-                  description={t('pages.create.amendment.imageDescription')}
-                />
-              ),
+              kind: 'customComponent',
+              component: ImageUpload,
+              props: {
+                currentImage: imageURL,
+                onImageChange: (url: string) => setImageURL(url),
+                cleanupOnRemove: true,
+                entityType: 'amendments',
+                entityId: amendmentId,
+                label: t('pages.create.amendment.imageLabel'),
+                description: t('pages.create.amendment.imageDescription'),
+              },
             },
           ],
         },
@@ -375,61 +369,29 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           fields: [
             {
               key: 'target',
-              kind: 'custom',
-              node: (
-                <div className="space-y-4">
-                  <p className="text-muted-foreground text-xs">
-                    {t('pages.create.amendment.tips.targetGroupEvent')}
-                  </p>
-                  {user?.id ? (
-                    <TargetGroupEventSelector
-                      userId={user.id}
-                      allowGroupWithoutEvent
-                      allowSourceGroupAsTarget
-                      layoutScope="create-amendment"
-                      onSourceGroupSelectionChange={handleSourceGroupSelectionChange}
-                      onGroupSelectionChange={handleGroupSelectionChange}
-                      onPathModeChange={handlePathModeChange}
-                      onWorkflowSelectionChange={handleWorkflowSelectionChange}
-                      onSelect={handleTargetSelection}
-                      selectedSourceGroupId={targetSelection?.sourceGroupId ?? sourceGroupIdParam}
-                      selectedGroupId={targetSelection?.groupId ?? targetGroupIdParam}
-                      selectedEventId={targetSelection?.eventId ?? undefined}
-                      selectedPathMode={pathMode}
-                      selectedWorkflowId={workflowId || undefined}
-                    />
-                  ) : (
-                    <p className="text-muted-foreground text-sm">
-                      {t('pages.create.common.loading')}
-                    </p>
-                  )}
-
-                  {targetSelection && (
-                    <div className="space-y-3">
-                      <TargetGroupEventDisplay
-                        groupData={targetSelection.groupData}
-                        eventData={targetSelection.eventData}
-                        pathWithEvents={targetSelection.pathWithEvents}
-                      />
-                      {targetSelection.missingEventSteps.length > 0 && (
-                        <div className="rounded-md border border-dashed p-3 text-sm">
-                          <p className="font-medium">
-                            {translateText('generated.inline.0318_offene_event_schritte_6d65e743')}
-                          </p>
-                          <p className="text-muted-foreground mt-1">
-                            {translateText(
-                              'generated.inline.0319_fuer_diese_gruppen_wird_beim_erstellen_automa_ead2264c'
-                            )}
-                          </p>
-                          <SummaryPillList
-                            items={targetSelection.missingEventSteps.map(step => step.groupName)}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ),
+              kind: 'customComponent',
+              component: AmendmentTargetSelectionField,
+              props: {
+                hint: t('pages.create.amendment.tips.targetGroupEvent'),
+                loadingLabel: t('pages.create.common.loading'),
+                userId: user?.id,
+                targetSelection,
+                sourceGroupIdParam,
+                targetGroupIdParam,
+                pathMode,
+                workflowId,
+                openEventStepsLabel: translateText(
+                  'generated.inline.0318_offene_event_schritte_6d65e743'
+                ),
+                missingEventStepsDescription: translateText(
+                  'generated.inline.0319_fuer_diese_gruppen_wird_beim_erstellen_automa_ead2264c'
+                ),
+                onSourceGroupSelectionChange: handleSourceGroupSelectionChange,
+                onGroupSelectionChange: handleGroupSelectionChange,
+                onPathModeChange: handlePathModeChange,
+                onWorkflowSelectionChange: handleWorkflowSelectionChange,
+                onSelect: handleTargetSelection,
+              },
             },
           ],
         },
@@ -443,35 +405,21 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               fields: [
                 {
                   key: 'mode-buttons',
-                  kind: 'custom',
-                  node: (
-                    <div className="space-y-2">
-                      <FormControlLabel>
-                        {translateText('generated.inline.0320_evaluierungsmodus_37f2926b')}
-                      </FormControlLabel>
-                      <div className="flex flex-wrap gap-2">
-                        {(
-                          [
-                            ['none', 'Keine Evaluierung'],
-                            ['fixed_date', 'Fixes Datum'],
-                            ['relative_to_vote', 'Relativ zur Annahme'],
-                          ] as const
-                        ).map(([mode, label]) => (
-                          <Button
-                            key={mode}
-                            type="button"
-                            variant={evaluationMode === mode ? 'default' : 'outline'}
-                            onClick={() => {
-                              setEvaluationMode(mode);
-                              syncSearch({ evaluationMode: mode });
-                            }}
-                          >
-                            {label}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  ),
+                  kind: 'customComponent',
+                  component: AmendmentEvaluationModeInput,
+                  props: {
+                    label: translateText('generated.inline.0320_evaluierungsmodus_37f2926b'),
+                    options: [
+                      { value: 'none', label: 'Keine Evaluierung' },
+                      { value: 'fixed_date', label: 'Fixes Datum' },
+                      { value: 'relative_to_vote', label: 'Relativ zur Annahme' },
+                    ],
+                    value: evaluationMode,
+                    onChange: (mode: CreateAmendmentEvaluationMode) => {
+                      setEvaluationMode(mode);
+                      syncSearch({ evaluationMode: mode });
+                    },
+                  },
                 },
               ],
             },
@@ -543,19 +491,19 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           fields: [
             {
               key: 'visibility',
-              kind: 'custom',
-              node: <VisibilityInput value={visibility} onChange={setVisibility} />,
+              kind: 'customComponent',
+              component: VisibilityInput,
+              props: { value: visibility, onChange: setVisibility },
             },
             {
               key: 'hashtags',
-              kind: 'custom',
-              node: (
-                <HashtagEditor
-                  value={hashtags}
-                  onChange={setHashtags}
-                  placeholder={t('pages.create.amendment.hashtagPlaceholder')}
-                />
-              ),
+              kind: 'customComponent',
+              component: HashtagEditor,
+              props: {
+                value: hashtags,
+                onChange: setHashtags,
+                placeholder: t('pages.create.amendment.hashtagPlaceholder'),
+              },
             },
           ],
         },
@@ -565,98 +513,89 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           fields: [
             {
               key: 'review',
-              kind: 'custom',
-              node: (
-                <CreateSummaryStep
-                  entityType="amendment"
-                  badge={t('pages.create.amendment.reviewBadge')}
-                  title={title || t('pages.create.amendment.titlePlaceholder')}
-                  subtitle={subtitle || undefined}
-                  media={
-                    imageURL
-                      ? { imageUrl: imageURL, imageAlt: title || 'Amendment image' }
-                      : undefined
-                  }
-                  hashtags={hashtags.length > 0 ? hashtags : undefined}
-                  sections={[
-                    {
-                      title: t('pages.create.amendment.targetGroupEvent'),
-                      fields: [
-                        ...(targetSelection
-                          ? [
-                              {
-                                label: t('pages.create.amendment.target'),
-                                value: targetSelection.eventData
-                                  ? `${String(targetSelection.groupData.name ?? '')} -> ${String(targetSelection.eventData.title ?? '')}`
-                                  : String(targetSelection.groupData.name ?? ''),
-                              },
-                              {
-                                label: translateText('generated.inline.0051_startgruppe_27591dc9'),
-                                value:
-                                  targetSelection.pathWithEvents[0]?.groupName ??
-                                  targetSelection.groupData.name ??
-                                  '',
-                              },
-                              ...(targetSelection.eventData &&
-                              targetSelection.pathWithEvents.length > 0
-                                ? [
-                                    {
-                                      label: translateText('generated.inline.0052_path_519e3913'),
-                                      value: (
-                                        <SummaryPillList
-                                          items={targetSelection.pathWithEvents.map(
-                                            segment =>
-                                              `${segment.groupName}: ${segment.eventTitle || t('pages.create.common.notSelected')}`
-                                          )}
-                                        />
-                                      ),
-                                    },
-                                  ]
-                                : []),
-                              ...(targetSelection.missingEventSteps.length > 0
-                                ? [
-                                    {
-                                      label: translateText(
-                                        'generated.inline.0053_offene_event_schritte_6d65e743'
-                                      ),
-                                      value: (
-                                        <SummaryPillList
-                                          items={targetSelection.missingEventSteps.map(
-                                            step => step.groupName
-                                          )}
-                                        />
-                                      ),
-                                    },
-                                  ]
-                                : []),
-                            ]
-                          : []),
-                      ],
-                    },
-                    {
-                      title: translateText('generated.inline.0050_evaluierung_581efef4'),
-                      fields: [
-                        {
-                          label: translateText('generated.inline.0054_modus_a7f116c3'),
-                          value: evaluationSummary,
-                        },
-                      ],
-                    },
-                    {
-                      title: t('pages.create.amendment.visibilityAndTags'),
-                      fields: [
-                        {
-                          label: t('pages.create.common.visibility'),
-                          value: visibilityLabel,
-                        },
-                        ...(imageURL
-                          ? [{ label: t('pages.create.amendment.imageLabel'), value: 'Attached' }]
-                          : []),
-                      ],
-                    },
-                  ]}
-                />
-              ),
+              kind: 'customComponent',
+              component: CreateSummaryStep,
+              props: {
+                entityType: 'amendment',
+                badge: t('pages.create.amendment.reviewBadge'),
+                title: title || t('pages.create.amendment.titlePlaceholder'),
+                subtitle: subtitle || undefined,
+                media: imageURL
+                  ? { imageUrl: imageURL, imageAlt: title || 'Amendment image' }
+                  : undefined,
+                hashtags: hashtags.length > 0 ? hashtags : undefined,
+                sections: [
+                  {
+                    title: t('pages.create.amendment.targetGroupEvent'),
+                    fields: [
+                      ...(targetSelection
+                        ? [
+                            {
+                              label: t('pages.create.amendment.target'),
+                              value: targetSelection.eventData
+                                ? `${String(targetSelection.groupData.name ?? '')} -> ${String(targetSelection.eventData.title ?? '')}`
+                                : String(targetSelection.groupData.name ?? ''),
+                            },
+                            {
+                              label: translateText('generated.inline.0051_startgruppe_27591dc9'),
+                              value:
+                                targetSelection.pathWithEvents[0]?.groupName ??
+                                targetSelection.groupData.name ??
+                                '',
+                            },
+                            ...(targetSelection.eventData &&
+                            targetSelection.pathWithEvents.length > 0
+                              ? [
+                                  {
+                                    label: translateText('generated.inline.0052_path_519e3913'),
+                                    value: targetSelection.pathWithEvents
+                                      .map(
+                                        segment =>
+                                          `${segment.groupName}: ${segment.eventTitle || t('pages.create.common.notSelected')}`
+                                      )
+                                      .join(', '),
+                                  },
+                                ]
+                              : []),
+                            ...(targetSelection.missingEventSteps.length > 0
+                              ? [
+                                  {
+                                    label: translateText(
+                                      'generated.inline.0053_offene_event_schritte_6d65e743'
+                                    ),
+                                    value: targetSelection.missingEventSteps
+                                      .map(step => step.groupName)
+                                      .join(', '),
+                                  },
+                                ]
+                              : []),
+                          ]
+                        : []),
+                    ],
+                  },
+                  {
+                    title: translateText('generated.inline.0050_evaluierung_581efef4'),
+                    fields: [
+                      {
+                        label: translateText('generated.inline.0054_modus_a7f116c3'),
+                        value: evaluationSummary,
+                      },
+                    ],
+                  },
+                  {
+                    title: t('pages.create.amendment.visibilityAndTags'),
+                    fields: [
+                      {
+                        label: t('pages.create.common.visibility'),
+                        value: visibilityLabel,
+                      },
+                      ...(imageURL
+                        ? [{ label: t('pages.create.amendment.imageLabel'), value: 'Attached' }]
+                        : []),
+                    ],
+                  },
+                ],
+              },
             },
           ],
         },

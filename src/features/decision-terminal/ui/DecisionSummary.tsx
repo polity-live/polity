@@ -1,11 +1,12 @@
 'use client';
 
-import { featureThemeClassName } from '@/features/shared/theme';
 import * as React from 'react';
-import { ChevronDown, ChevronUp, FileText, AlertCircle, Lightbulb } from 'lucide-react';
-import { Button } from '@/features/shared/ui/ui/button';
-import { cn } from '@/features/shared/utils/utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  CollapsibleSectionView,
+  DecisionSummaryCompactView,
+  DecisionSummaryView,
+} from './DecisionSummaryView';
 
 export interface DecisionSummarySection {
   type: 'summary' | 'problem' | 'proposal' | 'impact' | 'background';
@@ -23,25 +24,6 @@ export interface DecisionSummaryProps {
   className?: string;
 }
 
-const SECTION_ICONS: Record<
-  DecisionSummarySection['type'],
-  React.ComponentType<{ className?: string }>
-> = {
-  summary: FileText,
-  problem: AlertCircle,
-  proposal: Lightbulb,
-  impact: AlertCircle,
-  background: FileText,
-};
-
-const SECTION_COLORS: Record<DecisionSummarySection['type'], string> = {
-  summary: featureThemeClassName('decisionterminalDecisionSummaryInfoText'),
-  problem: featureThemeClassName('decisionterminalDecisionStatusDangerTextAlpha'),
-  proposal: featureThemeClassName('decisionterminalDecisionStatusSuccessText'),
-  impact: featureThemeClassName('decisionterminalCountdownTimerWarningText'),
-  background: featureThemeClassName('decisionterminalDecisionStatusNeutralText'),
-};
-
 interface CollapsibleSectionProps {
   section: DecisionSummarySection;
   isCollapsed: boolean;
@@ -49,14 +31,12 @@ interface CollapsibleSectionProps {
   maxContentHeight: number;
 }
 
-function CollapsibleSection({
+export function CollapsibleSection({
   section,
   isCollapsed,
   onToggle,
   maxContentHeight,
 }: CollapsibleSectionProps) {
-  const Icon = SECTION_ICONS[section.type];
-  const colorClass = SECTION_COLORS[section.type];
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [needsCollapse, setNeedsCollapse] = React.useState(false);
 
@@ -67,50 +47,14 @@ function CollapsibleSection({
   }, [section.content, maxContentHeight]);
 
   return (
-    <div className={featureThemeClassName('decisionterminalDecisionSummaryNeutralBorder')}>
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={onToggle}
-        className={featureThemeClassName('decisionterminalDecisionSummaryNeutralPanel')}
-        aria-expanded={!isCollapsed}
-      >
-        <div className="flex items-center gap-2">
-          <Icon className={cn('h-4 w-4', colorClass)} />
-          <span className="text-sm font-medium">{section.title}</span>
-        </div>
-        {isCollapsed ? (
-          <ChevronDown
-            className={featureThemeClassName('decisionterminalDecisionSummaryNeutralIcon')}
-          />
-        ) : (
-          <ChevronUp
-            className={featureThemeClassName('decisionterminalDecisionSummaryNeutralIcon')}
-          />
-        )}
-      </Button>
-
-      <div
-        className={cn(
-          'overflow-hidden transition-all duration-200',
-          isCollapsed ? 'max-h-0' : needsCollapse ? 'max-h-[500px]' : 'max-h-[2000px]'
-        )}
-      >
-        <div
-          ref={contentRef}
-          className={cn(
-            featureThemeClassName('decisionterminalDecisionSummaryNeutralText'),
-            isCollapsed ? 'opacity-0' : 'opacity-100'
-          )}
-          style={{
-            maxHeight: isCollapsed ? 0 : needsCollapse && isCollapsed ? maxContentHeight : 'none',
-            overflow: 'hidden',
-          }}
-        >
-          {section.content}
-        </div>
-      </div>
-    </div>
+    <CollapsibleSectionView
+      section={section}
+      isCollapsed={isCollapsed}
+      onToggle={onToggle}
+      maxContentHeight={maxContentHeight}
+      contentRef={contentRef}
+      needsCollapse={needsCollapse}
+    />
   );
 }
 
@@ -163,52 +107,30 @@ export function DecisionSummary({
   }
 
   return (
-    <div
-      className={cn(
-        featureThemeClassName('decisionterminalDecisionSummaryNeutralBorderAlpha'),
-        className
+    <DecisionSummaryView
+      sections={sections}
+      maxContentHeight={maxContentHeight}
+      className={className}
+      labels={{
+        details: t('features.timeline.terminal.details'),
+        expandAll: t('features.timeline.terminal.expandAll'),
+        collapseAll: t('features.timeline.terminal.collapseAll'),
+      }}
+      collapsedSections={collapsedSections}
+      onToggleSection={toggleSection}
+      onExpandAll={expandAll}
+      onCollapseAll={collapseAll}
+      allCollapsed={allCollapsed}
+      allExpanded={allExpanded}
+      renderSection={(section, index) => (
+        <CollapsibleSection
+          section={section}
+          isCollapsed={collapsedSections.has(index)}
+          onToggle={() => toggleSection(index)}
+          maxContentHeight={maxContentHeight}
+        />
       )}
-    >
-      {/* Header with expand/collapse all */}
-      <div className={featureThemeClassName('decisionterminalDecisionSummaryNeutralSurface')}>
-        <span className={featureThemeClassName('decisionterminalDecisionSummaryNeutralTextAlpha')}>
-          {t('features.timeline.terminal.details')}
-        </span>
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={expandAll}
-            disabled={allExpanded}
-            className="h-6 px-2 text-xs"
-          >
-            {t('features.timeline.terminal.expandAll')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={collapseAll}
-            disabled={allCollapsed}
-            className="h-6 px-2 text-xs"
-          >
-            {t('features.timeline.terminal.collapseAll')}
-          </Button>
-        </div>
-      </div>
-
-      {/* Sections */}
-      <div>
-        {sections.map((section, index) => (
-          <CollapsibleSection
-            key={`${section.type}-${index}`}
-            section={section}
-            isCollapsed={collapsedSections.has(index)}
-            onToggle={() => toggleSection(index)}
-            maxContentHeight={maxContentHeight}
-          />
-        ))}
-      </div>
-    </div>
+    />
   );
 }
 
@@ -226,27 +148,15 @@ export function DecisionSummaryCompact({
   const { t } = useTranslation();
 
   return (
-    <div className={cn('text-sm', className)}>
-      <p
-        className={cn(
-          featureThemeClassName('decisionterminalDecisionSummaryNeutralTextBeta'),
-          !isExpanded && 'line-clamp-2'
-        )}
-      >
-        {summary}
-      </p>
-      {summary.length > 150 && (
-        <Button
-          variant="link"
-          size="sm"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="h-auto p-0 text-xs"
-        >
-          {isExpanded
-            ? t('features.timeline.terminal.showLess')
-            : t('features.timeline.terminal.readMore')}
-        </Button>
-      )}
-    </div>
+    <DecisionSummaryCompactView
+      summary={summary}
+      className={className}
+      isExpanded={isExpanded}
+      onToggle={() => setIsExpanded(!isExpanded)}
+      labels={{
+        showLess: t('features.timeline.terminal.showLess'),
+        readMore: t('features.timeline.terminal.readMore'),
+      }}
+    />
   );
 }

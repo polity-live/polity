@@ -93,7 +93,7 @@ export function VirtualSearchGridView({
           </div>
         ) : (
           <div className="relative" style={{ height: totalHeight }}>
-            {cells.map(cell => (
+            {cells.map((cell: any) => (
               <div
                 key={cell.key}
                 data-index={cell.index}

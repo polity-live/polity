@@ -401,6 +401,16 @@ export const amendmentQueries = {
         .orderBy('created_at', 'desc')
   ),
 
+  streetDesigns: defineQuery(
+    z.object({ amendment_id: z.string() }),
+    ({ args: { amendment_id }, ctx: { userID } }) =>
+      zql.amendment_street_design
+        .where('amendment_id', amendment_id)
+        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
+        .related('created_by')
+        .orderBy('updated_at', 'desc')
+  ),
+
   // Current user's collaboration on a specific amendment
   userCollaboration: defineQuery(
     z.object({ amendment_id: z.string(), user_id: z.string() }),
@@ -808,6 +818,7 @@ export type AmendmentWithDocsAndCollabsRow = QueryRowType<
   typeof amendmentQueries.byIdWithDocsAndCollabs
 >;
 export type AmendmentCollaboratorRow = QueryRowType<typeof amendmentQueries.collaborators>;
+export type AmendmentStreetDesignRow = QueryRowType<typeof amendmentQueries.streetDesigns>;
 export type AmendmentThreadRow = QueryRowType<typeof amendmentQueries.threads>;
 export type AmendmentRoleRow = QueryRowType<typeof amendmentQueries.rolesByAmendment>;
 export type ChangeRequestRow = QueryRowType<typeof amendmentQueries.changeRequests>;

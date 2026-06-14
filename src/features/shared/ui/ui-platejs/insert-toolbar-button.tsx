@@ -19,7 +19,6 @@ import {
   ListOrderedIcon,
   MinusIcon,
   PilcrowIcon,
-  PlusIcon,
   QuoteIcon,
   RadicalIcon,
   SquareIcon,
@@ -30,15 +29,8 @@ import { KEYS } from 'platejs';
 import { type PlateEditor, useEditorRef } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/features/shared/ui/ui/dropdown-menu.tsx';
 import { insertBlock, insertInlineElement } from '@/features/shared/ui/kit-platejs/transforms.ts';
 
-import { ToolbarButton, ToolbarMenuGroup } from '@/features/shared/ui/layout';
 import { CHART_NODE_TYPE } from '@/features/charts/types';
 import { openChartDialog } from '@/features/charts/ui/ChartDialog';
 
@@ -219,43 +211,20 @@ const groups = (t: TFunction): Group[] => [
     })),
   },
 ];
-
+import { InsertToolbarButtonView } from './InsertToolbarButtonView';
 export function InsertToolbarButton(props: DropdownMenuProps) {
   const editor = useEditorRef();
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const groupsList = groups(t);
-
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
-      <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip={t('plateJs.toolbar.insert')} isDropdown>
-          <PlusIcon />
-        </ToolbarButton>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent
-        className="flex max-h-[500px] min-w-0 flex-col overflow-y-auto"
-        align="start"
-      >
-        {groupsList.map(({ group, items: nestedItems }) => (
-          <ToolbarMenuGroup key={group} label={group}>
-            {nestedItems.map(({ focusEditor, icon, label, value, onSelect }) => (
-              <DropdownMenuItem
-                key={value}
-                className="min-w-[180px]"
-                onSelect={() => {
-                  onSelect(editor, value);
-                  if (focusEditor !== false) editor.tf.focus();
-                }}
-              >
-                {icon}
-                {label}
-              </DropdownMenuItem>
-            ))}
-          </ToolbarMenuGroup>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <InsertToolbarButtonView
+      props={props}
+      editor={editor}
+      t={t}
+      open={open}
+      setOpen={setOpen}
+      groupsList={groupsList}
+    />
   );
 }

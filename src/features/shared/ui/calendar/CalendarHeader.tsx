@@ -1,16 +1,7 @@
 import type { ReactNode } from 'react';
 
-import { Button } from '@/features/shared/ui/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import {
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  Grid3x3,
-  List,
-  type LucideIcon,
-} from 'lucide-react';
+import { Calendar as CalendarIcon, Grid3x3, List, type LucideIcon } from 'lucide-react';
 
 export type CalendarHeaderView = 'list' | 'day' | 'week' | 'month';
 
@@ -34,14 +25,6 @@ export interface CalendarHeaderProps<TView extends string = CalendarHeaderView> 
   nextLabel?: string;
   views?: CalendarHeaderViewOption<TView>[];
 }
-
-const DEFAULT_ICON_BY_VIEW: Partial<Record<CalendarHeaderView, LucideIcon>> = {
-  day: List,
-  list: List,
-  week: Grid3x3,
-  month: CalendarIcon,
-};
-
 function useDefaultCalendarViews(): CalendarHeaderViewOption[] {
   const { t } = useTranslation();
 
@@ -51,6 +34,7 @@ function useDefaultCalendarViews(): CalendarHeaderViewOption[] {
     { value: 'month', label: t('features.calendar.views.month'), Icon: CalendarIcon },
   ];
 }
+import { CalendarHeaderPresenterView } from './CalendarHeaderPresenterView';
 
 export function CalendarHeader<TView extends string = CalendarHeaderView>({
   viewMode,
@@ -73,51 +57,20 @@ export function CalendarHeader<TView extends string = CalendarHeaderView>({
   const resolvedPreviousLabel =
     previousLabel ?? t('features.calendar.navigation.previous', 'Previous period');
   const resolvedNextLabel = nextLabel ?? t('features.calendar.navigation.next', 'Next period');
-
   return (
-    <>
-      {(title || actions) && (
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {title ? <h1 className="text-3xl font-bold">{title}</h1> : null}
-          {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
-        </div>
-      )}
-
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onPrevious}
-            aria-label={resolvedPreviousLabel}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" onClick={onToday}>
-            {resolvedTodayLabel}
-          </Button>
-          <Button variant="outline" size="icon" onClick={onNext} aria-label={resolvedNextLabel}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <h2 className="ml-0 text-lg font-semibold sm:ml-2">{currentViewTitle}</h2>
-        </div>
-
-        <Tabs value={viewMode} onValueChange={value => setViewMode(value as TView)}>
-          <TabsList>
-            {resolvedViews.map(view => {
-              const Icon =
-                view.Icon ?? DEFAULT_ICON_BY_VIEW[view.value as CalendarHeaderView] ?? CalendarIcon;
-
-              return (
-                <TabsTrigger key={view.value} value={view.value}>
-                  <Icon className="mr-2 h-4 w-4" />
-                  {view.label}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
-        </Tabs>
-      </div>
-    </>
+    <CalendarHeaderPresenterView
+      viewMode={viewMode}
+      setViewMode={setViewMode}
+      currentViewTitle={currentViewTitle}
+      onPrevious={onPrevious}
+      onNext={onNext}
+      onToday={onToday}
+      actions={actions}
+      title={title}
+      resolvedViews={resolvedViews}
+      resolvedTodayLabel={resolvedTodayLabel}
+      resolvedPreviousLabel={resolvedPreviousLabel}
+      resolvedNextLabel={resolvedNextLabel}
+    />
   );
 }

@@ -66,7 +66,7 @@ export const DayView = ({ selectedDate, events, allEvents, onDateSelect }: DayVi
             ) : (
               <ScrollArea className="h-[600px] pr-4">
                 <div className="space-y-6">
-                  {sortedEvents.map((event, index) => {
+                  {sortedEvents.map((event: any, index: number) => {
                     const startTime = new Date(event.start_date);
                     const endTime = new Date(event.end_date);
                     const duration = calculateDuration(startTime.getTime(), endTime.getTime());

@@ -30,7 +30,7 @@ export const MonthViewView = ({
   const { t, language } = useTranslation();
 
   const getEventsForDate = (date: Date) => {
-    return allEvents.filter(event => isSameDay(event.start_date, date));
+    return allEvents.filter((event: any) => isSameDay(event.start_date, date));
   };
 
   const selectedDateEvents = getEventsForDate(selectedDate);
@@ -92,7 +92,7 @@ export const MonthViewView = ({
             ) : (
               <ScrollArea className="h-[400px]">
                 <div className="space-y-3">
-                  {selectedDateEvents.map(event => (
+                  {selectedDateEvents.map((event: any) => (
                     <Button
                       key={event.id}
                       type="button"

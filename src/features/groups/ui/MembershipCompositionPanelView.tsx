@@ -118,7 +118,7 @@ function CompositionPieCard({
     'loading' | 'total' | 'leadershipFootnote'
   >;
 }) {
-  const total = rows.reduce((sum, row) => sum + row.value, 0);
+  const total = rows.reduce((sum: any, row: any) => sum + row.value, 0);
 
   return (
     <Card surface="subtleGradient">
@@ -135,11 +135,11 @@ function CompositionPieCard({
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center">
             <ChartRenderer
               chartType="pie"
-              points={rows.map(row => ({ x: row.label, value: row.value }))}
+              points={rows.map((row: any) => ({ x: row.label, value: row.value }))}
               presentation={{ donut: true, showLegend: false }}
               heightClassName="h-72"
               valueFormatter={(value, point) => {
-                const row = rows.find(item => item.label === point.x);
+                const row = rows.find((item: any) => item.label === point.x);
                 return displayMode === 'absolute'
                   ? value.toLocaleString()
                   : `${(row?.percentage ?? 0).toFixed(1)}%`;
@@ -149,7 +149,7 @@ function CompositionPieCard({
             <div className="space-y-3">
               <p className="text-muted-foreground text-sm">{labels.total(total)}</p>
               <ul className="space-y-2">
-                {rows.map(row => (
+                {rows.map((row: any) => (
                   <li key={row.key} className="flex items-center justify-between gap-3 text-sm">
                     <div className="flex min-w-0 items-center gap-2">
                       <span

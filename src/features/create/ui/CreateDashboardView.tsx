@@ -35,10 +35,10 @@ export function CreateDashboardView({ title, subtitle, sections }: CreateDashboa
       <PageHeader title={title} description={subtitle} />
 
       <div className="space-y-8">
-        {sections.map(section => (
+        {sections.map((section: any) => (
           <Section key={section.key} title={section.title}>
             <PanelGrid>
-              {section.items.map(item => {
+              {section.items.map((item: any) => {
                 const Icon = item.icon;
 
                 return (

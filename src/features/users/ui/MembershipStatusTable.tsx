@@ -1,19 +1,10 @@
-import { Check, Trash2, type LucideIcon, X } from 'lucide-react';
+import { Trash2, type LucideIcon } from 'lucide-react';
 
-import { GroupConflictDialog } from '@/features/groups/ui/GroupConflictPanel';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { useGroupConflictPreflight } from '@/features/groups/hooks/useGroupConflictPreflight';
 import type { GroupConflictMembershipPreflight } from '@/features/groups/logic/groupConflictPreflight';
 import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
-import { DataTable, EntityCell, type ColumnDef } from '@/features/shared/ui/data-table';
-import {
-  Panel,
-  PanelContent,
-  PanelDescription,
-  PanelHeader,
-  PanelTitle,
-} from '@/features/shared/ui/layout';
+import { EntityCell, type ColumnDef } from '@/features/shared/ui/data-table';
 import { EntityBadge } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -52,46 +43,8 @@ interface MembershipStatusTableProps {
   ) => GroupConflictMembershipPreflight | null | undefined;
 }
 
-function InvitationActions({
-  item,
-  onAccept,
-  onDecline,
-  getAcceptPreflightInput,
-}: {
-  item: FilterableRecord;
-  onAccept?: (id: string) => void;
-  onDecline?: (id: string) => void;
-  getAcceptPreflightInput?: (
-    membership: FilterableRecord
-  ) => GroupConflictMembershipPreflight | null | undefined;
-}) {
-  const preflightInput = getAcceptPreflightInput?.(item) ?? null;
-  const { response, blocking } = useGroupConflictPreflight(preflightInput, {
-    enabled: Boolean(preflightInput),
-  });
-
-  return (
-    <div className="flex justify-end gap-2">
-      <Button variant="default" size="sm" disabled={blocking} onClick={() => onAccept?.(item.id)}>
-        <Check className="mr-1 h-4 w-4" />
-        {translateText('generated.inline.0121_accept_bb54db51')}
-      </Button>
-      {blocking ? (
-        <GroupConflictDialog
-          response={response}
-          triggerLabel={translateText('generated.inline.0693_warum_194dad5c')}
-          triggerVariant="ghost"
-          title={translateText('generated.inline.1195_warum_ist_diese_annahme_blockiert_1fd1c7d1')}
-        />
-      ) : null}
-      <Button variant="outline" size="sm" onClick={() => onDecline?.(item.id)}>
-        <X className="mr-1 h-4 w-4" />
-        {translateText('generated.inline.0122_decline_b59cf9ed')}
-      </Button>
-    </div>
-  );
-}
-
+import { InvitationActions } from './InvitationActions';
+import { MembershipStatusTableView } from './MembershipStatusTableView';
 export function MembershipStatusTable({
   title,
   description,
@@ -242,31 +195,26 @@ export function MembershipStatusTable({
       ),
     },
   ];
-
-  if (items.length === 0 && statusType !== 'active') {
-    return null;
-  }
-
   return (
-    <Panel>
-      <PanelHeader>
-        <PanelTitle className="flex items-center gap-2">
-          <Icon className="h-5 w-5" />
-          {title}
-        </PanelTitle>
-        <PanelDescription>{description}</PanelDescription>
-      </PanelHeader>
-      <PanelContent>
-        <DataTable
-          columns={columns}
-          data={items}
-          getRowId={item => item.id}
-          enablePagination={false}
-          emptyTitle={`${translateText('generated.inline.0609_no_816c52fd')}${statusType}${translateText(
-            'generated.inline.1196_items_found_b7242dc8'
-          )}`}
-        />
-      </PanelContent>
-    </Panel>
+    <MembershipStatusTableView
+      title={title}
+      description={description}
+      Icon={Icon}
+      items={items}
+      statusType={statusType}
+      entityKey={entityKey}
+      FallbackIcon={FallbackIcon}
+      onAccept={onAccept}
+      onDecline={onDecline}
+      onLeave={onLeave}
+      onWithdraw={onWithdraw}
+      getEntityHref={getEntityHref}
+      getAcceptPreflightInput={getAcceptPreflightInput}
+      getEntityData={getEntityData}
+      getEntityName={getEntityName}
+      getEntityImage={getEntityImage}
+      buildDefaultEntityHref={buildDefaultEntityHref}
+      columns={columns}
+    />
   );
 }

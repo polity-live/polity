@@ -40,7 +40,7 @@ export function LineHeightToolbarButtonView({
 
       <DropdownMenuContent className="min-w-0" align="start">
         <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
-          {values.map(value => (
+          {values.map((value: any) => (
             <DropdownMenuRadioItem
               key={value}
               className="min-w-[180px] pl-2 *:first:[span]:hidden"

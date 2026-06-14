@@ -74,29 +74,46 @@ export function NetworkFlowBase<T extends Node = Node>({
   });
 
   return (
+    <NetworkFlowBaseProviderView
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onNodeClick={onNodeClick}
+      onEdgeClick={onEdgeClick}
+      nodesDraggable={nodesDraggable}
+      nodesFocusable={nodesFocusable}
+      nodesConnectable={nodesConnectable}
+      edgesFocusable={edgesFocusable}
+      panel={panel}
+      onInteractiveChange={onInteractiveChange}
+      containerClassName={containerClassName}
+      miniMapProps={miniMapProps}
+      showMiniMap={showMiniMap}
+      edgeTypes={edgeTypes}
+      isFullscreen={isFullscreen}
+      onFullscreenChange={setIsFullscreen}
+      handleEdgeLabelClick={handleEdgeLabelClick}
+    >
+      {children}
+    </NetworkFlowBaseProviderView>
+  );
+}
+
+interface NetworkFlowBaseProviderViewProps<
+  T extends Node = Node,
+> extends NetworkFlowBaseViewProps<T> {
+  handleEdgeLabelClick: (edgeId: string) => void;
+}
+
+function NetworkFlowBaseProviderView<T extends Node = Node>({
+  handleEdgeLabelClick,
+  children,
+  ...viewProps
+}: NetworkFlowBaseProviderViewProps<T>) {
+  return (
     <EdgeClickContext.Provider value={handleEdgeLabelClick}>
-      <NetworkFlowBaseView
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={onNodeClick}
-        onEdgeClick={onEdgeClick}
-        nodesDraggable={nodesDraggable}
-        nodesFocusable={nodesFocusable}
-        nodesConnectable={nodesConnectable}
-        edgesFocusable={edgesFocusable}
-        panel={panel}
-        onInteractiveChange={onInteractiveChange}
-        containerClassName={containerClassName}
-        miniMapProps={miniMapProps}
-        showMiniMap={showMiniMap}
-        edgeTypes={edgeTypes}
-        isFullscreen={isFullscreen}
-        onFullscreenChange={setIsFullscreen}
-      >
-        {children}
-      </NetworkFlowBaseView>
+      <NetworkFlowBaseView {...viewProps}>{children}</NetworkFlowBaseView>
     </EdgeClickContext.Provider>
   );
 }

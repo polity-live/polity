@@ -33,7 +33,7 @@ export function VotePasswordInputView({
         {t('features.events.voting.enterPin')}
       </p>
       <div className="flex justify-center gap-3" onPaste={onPaste}>
-        {digits.map((digit, index) => (
+        {digits.map((digit: any, index: number) => (
           <FormControlInput
             key={index}
             ref={element => {

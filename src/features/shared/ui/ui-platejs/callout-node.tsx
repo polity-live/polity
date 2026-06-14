@@ -1,13 +1,9 @@
 import * as React from 'react';
 
-import { useCalloutEmojiPicker } from '@platejs/callout/react';
-import { useEmojiDropdownMenuState } from '@platejs/emoji/react';
 import { PlateElement } from 'platejs/react';
 
-import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { cn } from '@/features/shared/utils/utils.ts';
-
-import { EmojiPicker, EmojiPopover } from './emoji-toolbar-button.tsx';
+import { useCalloutElementController } from './useCalloutElementController';
+import { CalloutElementView } from './CalloutElementView';
 
 export function CalloutElement({
   attributes,
@@ -15,48 +11,7 @@ export function CalloutElement({
   className,
   ...props
 }: React.ComponentProps<typeof PlateElement>) {
-  const { emojiPickerState, isOpen, setIsOpen } = useEmojiDropdownMenuState({
-    closeOnSelect: true,
-  });
+  const viewProps = useCalloutElementController({ attributes, children, className, ...props });
 
-  const { emojiToolbarDropdownProps, props: calloutProps } = useCalloutEmojiPicker({
-    isOpen,
-    setIsOpen,
-  });
-
-  return (
-    <PlateElement
-      className={cn('bg-muted my-1 flex rounded-sm p-4 pl-3', className)}
-      style={{
-        backgroundColor: (props.element as { backgroundColor?: string }).backgroundColor,
-      }}
-      attributes={{
-        ...attributes,
-        'data-plate-open-context-menu': true,
-      }}
-      {...props}
-    >
-      <div className="flex w-full gap-2 rounded-md">
-        <EmojiPopover
-          {...emojiToolbarDropdownProps}
-          control={
-            <Button
-              variant="ghost"
-              className="hover:bg-muted-foreground/15 size-6 p-1 text-[18px] select-none"
-              style={{
-                fontFamily:
-                  '"Apple Color Emoji", "Segoe UI Emoji", NotoColorEmoji, "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", EmojiSymbols',
-              }}
-              contentEditable={false}
-            >
-              {(props.element as { icon?: string }).icon || '💡'}
-            </Button>
-          }
-        >
-          <EmojiPicker {...emojiPickerState} {...calloutProps} />
-        </EmojiPopover>
-        <div className="w-full">{children}</div>
-      </div>
-    </PlateElement>
-  );
+  return <CalloutElementView {...viewProps} />;
 }

@@ -1,15 +1,12 @@
 'use client';
 
-import { Button } from '@/features/shared/ui/ui/button';
-import { Bell, BellOff } from 'lucide-react';
 import { useSubscribeEvent } from '../hooks/useSubscribeEvent';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface EventSubscribeButtonProps {
   eventId: string;
   onSubscribeChange?: (isSubscribed: boolean) => void;
 }
-
+import { EventSubscribeButtonView } from './EventSubscribeButtonView';
 export function EventSubscribeButton({ eventId, onSubscribeChange }: EventSubscribeButtonProps) {
   const { isSubscribed, toggleSubscribe, isLoading } = useSubscribeEvent(eventId);
 
@@ -17,20 +14,14 @@ export function EventSubscribeButton({ eventId, onSubscribeChange }: EventSubscr
     await toggleSubscribe();
     onSubscribeChange?.(!isSubscribed);
   };
-
   return (
-    <Button onClick={handleClick} disabled={isLoading} variant="outline">
-      {isSubscribed ? (
-        <>
-          <BellOff className="mr-2 h-4 w-4" />
-          {translateText('generated.inline.0169_unsubscribe_834cc0ee')}
-        </>
-      ) : (
-        <>
-          <Bell className="mr-2 h-4 w-4" />
-          {translateText('generated.inline.0170_subscribe_d6981f74')}
-        </>
-      )}
-    </Button>
+    <EventSubscribeButtonView
+      eventId={eventId}
+      onSubscribeChange={onSubscribeChange}
+      isSubscribed={isSubscribed}
+      toggleSubscribe={toggleSubscribe}
+      isLoading={isLoading}
+      handleClick={handleClick}
+    />
   );
 }

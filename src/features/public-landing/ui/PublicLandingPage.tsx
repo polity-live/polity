@@ -8,7 +8,6 @@ import {
   Calendar,
   CheckCircle2,
   FileText,
-  GitPullRequest,
   MapPinned,
   MessageSquare,
   Network,
@@ -17,7 +16,6 @@ import {
   Users,
   Vote,
   Workflow,
-  type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
@@ -38,7 +36,6 @@ import { NetworkControlPanel } from '@/features/network/ui/NetworkControlPanel';
 import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import { createGroupNodeLegendItem } from '@/features/network/ui/networkVisualHelpers';
 import { cn } from '@/features/shared/utils/utils';
-import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { EntitySearchBar, type FilterOption } from '@/features/shared/ui/typeahead';
 import { SearchResultCard } from '@/features/search/ui/SearchResultCard';
 import type { SearchDocument } from '@/features/search/types/search-document.types';
@@ -56,17 +53,13 @@ import {
   landingNetworkNodes,
 } from '@/features/public-landing/logic/landingNetworkPreview';
 import { useLandingNetworkPreviewState } from '@/features/public-landing/hooks/useLandingNetworkPreviewState';
-import { useLandingAmendmentPreviewData } from '@/features/public-landing/hooks/useLandingAmendmentPreviewData';
-import {
-  LANDING_AGENDA_ITEM_ID,
-  LANDING_AMENDMENT_REVIEWER_ID,
-  LANDING_AMENDMENT_USER_ID,
-  type LandingAmendmentPreviewData,
-} from '@/features/public-landing/logic/landingAmendmentPreview';
+import { LANDING_AGENDA_ITEM_ID } from '@/features/public-landing/logic/landingAmendmentPreview';
 import {
   landingActivityTimelineItems,
   landingActivityTimelineSections,
 } from '@/features/public-landing/logic/landingActivityPreview';
+import { ProductStoryPoint } from './ProductStoryPoint';
+import { LandingAmendmentSectionContentContainer } from './LandingAmendmentSectionContent';
 
 const featureCards = [
   { key: 'groups', icon: Users },
@@ -192,7 +185,7 @@ export function PublicLandingPage() {
         title={t('pages.home.publicLanding.sections.amendments.title')}
         description={t('pages.home.publicLanding.sections.amendments.description')}
       >
-        <LandingAmendmentSectionContent />
+        <LandingAmendmentSectionContentContainer />
       </StorySection>
 
       <StorySection
@@ -375,17 +368,6 @@ function SectionHeading({
   );
 }
 
-function ProductStoryPoint({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
-  return (
-    <div className="bg-card flex gap-3 rounded-lg border p-4 shadow-sm">
-      <div className="bg-brand/10 text-brand flex h-9 w-9 flex-none items-center justify-center rounded-md">
-        <Icon className="h-5 w-5" />
-      </div>
-      <p className="text-muted-foreground text-sm leading-6">{text}</p>
-    </div>
-  );
-}
-
 export function LandingNetworkFlowPreview() {
   const { t } = useTranslation();
   const translateRelationship = useCallback(
@@ -415,6 +397,63 @@ export function LandingNetworkFlowPreview() {
     translateRelationship,
   });
 
+  return (
+    <LandingNetworkFlowPreviewView
+      dialogOpen={dialogOpen}
+      legendCollapsed={legendCollapsed}
+      onEdgeClick={onEdgeClick}
+      onNodeClick={onNodeClick}
+      panelCollapsed={panelCollapsed}
+      selectedConnectionDirections={selectedConnectionDirections}
+      selectedEntity={selectedEntity}
+      selectedRights={selectedRights}
+      setDialogOpen={setDialogOpen}
+      setLegendCollapsed={setLegendCollapsed}
+      setPanelCollapsed={setPanelCollapsed}
+      t={t}
+      toggleConnectionDirection={toggleConnectionDirection}
+      toggleRight={toggleRight}
+      visibleEdges={visibleEdges}
+      visibleNodes={visibleNodes}
+    />
+  );
+}
+
+function LandingNetworkFlowPreviewView({
+  dialogOpen,
+  legendCollapsed,
+  onEdgeClick,
+  onNodeClick,
+  panelCollapsed,
+  selectedConnectionDirections,
+  selectedEntity,
+  selectedRights,
+  setDialogOpen,
+  setLegendCollapsed,
+  setPanelCollapsed,
+  t,
+  toggleConnectionDirection,
+  toggleRight,
+  visibleEdges,
+  visibleNodes,
+}: {
+  dialogOpen: boolean;
+  legendCollapsed: boolean;
+  onEdgeClick: (event: any, edge: any) => void;
+  onNodeClick: (event: any, node: any) => void;
+  panelCollapsed: boolean;
+  selectedConnectionDirections: Set<string>;
+  selectedEntity: any;
+  selectedRights: Set<string>;
+  setDialogOpen: (open: boolean) => void;
+  setLegendCollapsed: (collapsed: boolean) => void;
+  setPanelCollapsed: (collapsed: boolean) => void;
+  t: (key: string, fallback?: string) => string;
+  toggleConnectionDirection: (direction: any) => void;
+  toggleRight: (right: string) => void;
+  visibleEdges: any[];
+  visibleNodes: any[];
+}) {
   return (
     <div className="bg-card overflow-hidden rounded-lg border shadow-sm">
       <div className="border-b px-4 py-3">
@@ -612,108 +651,6 @@ export function LandingAgendaTimelinePreview() {
             </div>
           ))}
         </div>
-      </div>
-    </div>
-  );
-}
-
-function LandingAmendmentSectionContent() {
-  const { tArray } = useTranslation();
-  const previewData = useLandingAmendmentPreviewData();
-
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
-        <div className="space-y-4">
-          {tArray('pages.home.publicLanding.sections.amendments.points').map((point, index) => (
-            <ProductStoryPoint
-              key={point}
-              icon={index === 0 ? FileText : index === 1 ? GitPullRequest : Vote}
-              text={point}
-            />
-          ))}
-        </div>
-        <LandingAmendmentEditorPreview previewData={previewData} />
-      </div>
-    </div>
-  );
-}
-
-export function LandingAmendmentEditorPreview({
-  previewData,
-}: {
-  previewData: LandingAmendmentPreviewData;
-}) {
-  const { t } = useTranslation();
-
-  return (
-    <div className="bg-card h-full overflow-hidden rounded-lg border shadow-sm">
-      <div className="border-b px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold">
-              {t('pages.home.publicLanding.amendmentWorkspace.title')}
-            </p>
-            <p className="text-muted-foreground text-sm">
-              {t('pages.home.publicLanding.amendmentWorkspace.description')}
-            </p>
-          </div>
-          <BadgeControl variant="secondary">
-            {t('pages.home.publicLanding.amendmentWorkspace.badge')}
-          </BadgeControl>
-        </div>
-      </div>
-      <div className="space-y-4 p-5 pt-4">
-        <div className="flex items-center gap-3">
-          <div className="bg-brand/10 text-brand flex h-9 w-9 items-center justify-center rounded-md">
-            <FileText className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">
-              {t('pages.home.publicLanding.amendmentText.title')}
-            </h3>
-            <p className="text-muted-foreground text-sm">
-              {t('pages.home.publicLanding.amendmentText.subtitle')}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <BadgeControl variant="secondary">
-            {t('pages.home.publicLanding.amendmentText.status')}
-          </BadgeControl>
-          <BadgeControl variant="outline">#climate</BadgeControl>
-          <BadgeControl variant="outline">#budget</BadgeControl>
-        </div>
-        <PlateEditor
-          key={t('pages.home.publicLanding.amendmentText.documentTitle')}
-          initialValue={previewData.documentValue}
-          readOnly
-          showFixedToolbar={false}
-          documentId="landing-amendment-preview"
-          documentTitle={t('pages.home.publicLanding.amendmentText.documentTitle')}
-          currentMode="vote_event"
-          currentUser={{
-            id: LANDING_AMENDMENT_REVIEWER_ID,
-            name: 'Review delegate',
-          }}
-          users={{
-            [LANDING_AMENDMENT_USER_ID]: {
-              id: LANDING_AMENDMENT_USER_ID,
-              name: 'Policy lead',
-              avatarUrl: '',
-            },
-            [LANDING_AMENDMENT_REVIEWER_ID]: {
-              id: LANDING_AMENDMENT_REVIEWER_ID,
-              name: 'Review delegate',
-              avatarUrl: '',
-            },
-          }}
-          discussions={previewData.discussions}
-          editorVariant="demo"
-          containerVariant="demo"
-          containerClassName="max-h-[22rem] overflow-y-auto rounded-md border bg-background"
-          editorClassName="min-h-[16rem] px-5 py-4"
-        />
       </div>
     </div>
   );
@@ -991,17 +928,38 @@ export function LandingActivityStripPreview() {
   const [activeItemId, setActiveItemId] = useState<string | null>('landing-activity-hearing');
 
   return (
+    <LandingActivityStripPreviewView
+      activeItemId={activeItemId}
+      mappedCountLabel={t('features.timeline.around.mappedCount', {
+        count: landingActivityTimelineItems.length,
+        defaultValue: '{{count}} mapped',
+      })}
+      onActiveItemChange={setActiveItemId}
+      timelineBadge={t('pages.home.publicLanding.timeline.badge')}
+    />
+  );
+}
+
+function LandingActivityStripPreviewView({
+  activeItemId,
+  mappedCountLabel,
+  onActiveItemChange,
+  timelineBadge,
+}: {
+  activeItemId: string | null;
+  mappedCountLabel: string;
+  onActiveItemChange: (itemId: string | null) => void;
+  timelineBadge: string;
+}) {
+  return (
     <div className="bg-card space-y-4 rounded-lg border p-5 shadow-sm">
       <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
         <BadgeControl variant="outline" shape="rounded">
           <MapPinned className="mr-1.5 h-3.5 w-3.5" />
-          {t('features.timeline.around.mappedCount', {
-            count: landingActivityTimelineItems.length,
-            defaultValue: '{{count}} mapped',
-          })}
+          {mappedCountLabel}
         </BadgeControl>
         <BadgeControl variant="outline" shape="rounded">
-          {t('pages.home.publicLanding.timeline.badge')}
+          {timelineBadge}
         </BadgeControl>
       </div>
 
@@ -1010,15 +968,15 @@ export function LandingActivityStripPreview() {
           <CivicTimelineMap
             items={landingActivityTimelineItems}
             activeItemId={activeItemId}
-            onActiveItemChange={setActiveItemId}
-            onItemSelect={item => setActiveItemId(item.id)}
+            onActiveItemChange={onActiveItemChange}
+            onItemSelect={item => onActiveItemChange(item.id)}
           />
         </div>
         <CivicTimelineRail
           sections={landingActivityTimelineSections}
           activeItemId={activeItemId}
-          onActiveItemChange={setActiveItemId}
-          onItemSelect={item => setActiveItemId(item.id)}
+          onActiveItemChange={onActiveItemChange}
+          onItemSelect={item => onActiveItemChange(item.id)}
         />
       </div>
     </div>
@@ -1066,11 +1024,35 @@ export function LandingSearchPreview() {
   );
 
   return (
+    <LandingSearchPreviewView
+      documents={documents}
+      filters={filters}
+      onQueryChange={setQuery}
+      placeholder={t('pages.home.publicLanding.searchPreview.query')}
+      query={query}
+    />
+  );
+}
+
+function LandingSearchPreviewView({
+  documents,
+  filters,
+  onQueryChange,
+  placeholder,
+  query,
+}: {
+  documents: SearchDocument[];
+  filters: FilterOption[];
+  onQueryChange: (query: string) => void;
+  placeholder: string;
+  query: string;
+}) {
+  return (
     <div className="bg-card rounded-lg border p-5 shadow-sm">
       <EntitySearchBar
         searchQuery={query}
-        onSearchQueryChange={setQuery}
-        placeholder={t('pages.home.publicLanding.searchPreview.query')}
+        onSearchQueryChange={onQueryChange}
+        placeholder={placeholder}
         filterOptions={filters}
         onFilterToggle={() => undefined}
       />

@@ -22,6 +22,7 @@ interface AmendmentStateOptions {
   includeThreads?: boolean;
   includeDocuments?: boolean;
   includeChangeRequestsWithVotes?: boolean;
+  includeStreetDesign?: boolean;
   includeRoles?: boolean;
   includeAmendmentVotes?: boolean;
   includeSupportConfirmations?: boolean;
@@ -61,6 +62,7 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
     includeThreads,
     includeDocuments,
     includeChangeRequestsWithVotes,
+    includeStreetDesign,
     includeRoles,
     includeSupportConfirmations,
     includeDocumentVersions,
@@ -156,6 +158,12 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
   const [changeRequestsWithVotes] = useQuery(
     includeChangeRequestsWithVotes && amendmentId
       ? queries.amendments.changeRequestsWithVotes({ amendment_id: amendmentId })
+      : undefined
+  );
+
+  const [streetDesigns] = useQuery(
+    includeStreetDesign && amendmentId
+      ? queries.amendments.streetDesigns({ amendment_id: amendmentId })
       : undefined
   );
 
@@ -317,6 +325,8 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
     threads: threads ?? [],
     documents: resolvedDocuments,
     changeRequestsWithVotes: changeRequestsWithVotes ?? [],
+    streetDesigns: streetDesigns ?? [],
+    primaryStreetDesign: streetDesigns?.[0] ?? null,
     roles: roles ?? [],
     amendmentVotes: amendmentVotes ?? [],
     supportConfirmations: supportConfirmations ?? [],

@@ -242,7 +242,7 @@ export function CreateAgendaItemFormView({ controller }: CreateAgendaItemFormVie
                       <div className="flex items-center gap-2 text-sm">
                         <strong>{translateText('generated.inline.0041_event_e1d18730')}</strong>
                         <span className="text-muted-foreground">
-                          {userEvents.find(e => e.id === formData.eventId)?.title ||
+                          {userEvents.find((e: any) => e.id === formData.eventId)?.title ||
                             translateText('generated.inline.0012_not_selected_183079f3')}
                         </span>
                       </div>
@@ -267,7 +267,7 @@ export function CreateAgendaItemFormView({ controller }: CreateAgendaItemFormVie
                             {translateText('generated.inline.0044_amendment_e0b72231')}
                           </strong>
                           <span className="text-muted-foreground">
-                            {userAmendments.find(a => a.id === formData.amendmentId)?.title}
+                            {userAmendments.find((a: any) => a.id === formData.amendmentId)?.title}
                           </span>
                         </div>
                       )}
@@ -275,7 +275,7 @@ export function CreateAgendaItemFormView({ controller }: CreateAgendaItemFormVie
                         <div className="flex items-center gap-2 text-sm">
                           <strong>{translateText('generated.inline.0045_role_61e4c27b')}</strong>
                           <span className="text-muted-foreground">
-                            {userRoles.find(role => role.id === formData.roleId)?.title}
+                            {userRoles.find((role: any) => role.id === formData.roleId)?.title}
                           </span>
                         </div>
                       )}
@@ -286,7 +286,7 @@ export function CreateAgendaItemFormView({ controller }: CreateAgendaItemFormVie
             </CarouselContent>
           </Carousel>
           <div className="mt-4 flex justify-center gap-2">
-            {[0, 1, 2, 3].map(index => (
+            {[0, 1, 2, 3].map((index: any) => (
               <Button
                 key={index}
                 type="button"

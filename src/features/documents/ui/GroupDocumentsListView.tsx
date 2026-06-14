@@ -157,7 +157,7 @@ export function GroupDocumentsListView({
         />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {pql.filteredItems.map(document => (
+          {pql.filteredItems.map((document: any) => (
             <GroupDocumentCard
               key={document.id}
               document={document}

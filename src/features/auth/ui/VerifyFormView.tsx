@@ -67,7 +67,7 @@ export function VerifyFormView({
       <div className="space-y-2">
         <FormControlLabel>{copy.codeLabel}</FormControlLabel>
         <div className="flex justify-center gap-2">
-          {code.map((digit, index) => (
+          {code.map((digit: any, index: number) => (
             <FormControlInput
               key={index}
               ref={element => setInputRef(index, element)}
@@ -92,7 +92,7 @@ export function VerifyFormView({
           type="button"
           onClick={onVerify}
           className="w-full"
-          disabled={isVerifying || code.some(digit => digit === '')}
+          disabled={isVerifying || code.some((digit: any) => digit === '')}
         >
           {isVerifying ? (
             <>

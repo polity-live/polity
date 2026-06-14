@@ -1,9 +1,6 @@
-import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import { useElectionState } from '@/zero/elections/useElectionState';
-import { useMemo } from 'react';
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
-import { CreateTypeaheadField } from '@/features/shared/ui/form';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { useElectionSearchInputController } from '../../hooks/useElectionSearchInputController';
+import { ElectionSearchInputView } from './ElectionSearchInputView';
 
 interface ElectionSearchInputProps {
   value: string;
@@ -22,27 +19,12 @@ export function ElectionSearchInput({
   placeholder = translateText('generated.inline.0041_search_for_an_election_fce24966'),
   required,
 }: ElectionSearchInputProps) {
-  const { electionsForSearch } = useElectionState({ includeElectionsForSearch: true });
-
-  const items = useMemo(
-    () =>
-      toTypeaheadItems(
-        electionsForSearch ?? [],
-        'election',
-        e => e.title || 'Election',
-        e => (typeof e.description === 'string' ? e.description.substring(0, 60) : undefined)
-      ),
-    [electionsForSearch]
-  );
-
-  const handleChange = (item: TypeaheadItem | null) => {
-    onChange(item?.id ?? '');
-  };
+  const { items, handleChange } = useElectionSearchInputController({ onChange });
 
   return (
-    <CreateTypeaheadField
+    <ElectionSearchInputView
       items={items}
-      value={value || undefined}
+      value={value}
       onChange={handleChange}
       label={label}
       hint={hint}

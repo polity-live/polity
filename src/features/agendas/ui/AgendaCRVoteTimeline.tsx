@@ -1,12 +1,7 @@
 'use client';
 
-import { BadgeControl } from '@/features/shared/ui/status';
-import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Progress } from '@/features/shared/ui/ui/progress';
-import { Vote } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAgendaItemCRVoting } from '../hooks/useAgendaItemCRVoting';
-import { ChangeRequestTimelineCard } from './ChangeRequestTimelineCard';
 
 interface AgendaCRVoteTimelineProps {
   agendaItemId: string;
@@ -14,7 +9,7 @@ interface AgendaCRVoteTimelineProps {
   canManage?: boolean;
   canVote?: boolean;
 }
-
+import { AgendaCRVoteTimelineView } from './AgendaCRVoteTimelineView';
 export function AgendaCRVoteTimeline({
   agendaItemId,
   userId,
@@ -55,49 +50,27 @@ export function AgendaCRVoteTimeline({
   }
 
   const progressPercent = Math.round(progress * 100);
-
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Vote className="h-5 w-5" />
-            <CardTitle className="text-base">{t('features.agendas.crTimeline.title')}</CardTitle>
-          </div>
-          <div className="flex items-center gap-2">
-            <BadgeControl variant="outline">
-              {completedItems.length}/{crTimeline.length}
-            </BadgeControl>
-            {isTimelineComplete && (
-              <BadgeControl variant="default" tone="successStrong">
-                {t('features.agendas.crTimeline.allCompleted')}
-              </BadgeControl>
-            )}
-          </div>
-        </div>
-        <Progress value={progressPercent} className="mt-2" />
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {crTimeline.map((item, index) => (
-            <ChangeRequestTimelineCard
-              key={item.id}
-              item={item}
-              index={index}
-              isCurrent={currentItem?.id === item.id}
-              hasUserVoted={hasUserVoted(item)}
-              userSelectedChoiceIds={getUserSelectedChoiceIds(item)}
-              canManage={canManage}
-              canVote={canVote}
-              isFinalVoteLocked={item.is_final_vote && !allCRsProcessed}
-              onCastVote={castCRVote}
-              onStartIndicative={startIndicativePhase}
-              onStartFinal={startFinalPhase}
-              onCloseVoting={closeVoting}
-            />
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <AgendaCRVoteTimelineView
+      agendaItemId={agendaItemId}
+      allCRsProcessed={allCRsProcessed}
+      canManage={canManage}
+      canVote={canVote}
+      castCRVote={castCRVote}
+      closeVoting={closeVoting}
+      completedItems={completedItems}
+      crTimeline={crTimeline}
+      currentItem={currentItem}
+      getUserSelectedChoiceIds={getUserSelectedChoiceIds}
+      hasUserVoted={hasUserVoted}
+      isLoading={isLoading}
+      isTimelineComplete={isTimelineComplete}
+      progress={progress}
+      progressPercent={progressPercent}
+      startFinalPhase={startFinalPhase}
+      startIndicativePhase={startIndicativePhase}
+      t={t}
+      userId={userId}
+    />
   );
 }

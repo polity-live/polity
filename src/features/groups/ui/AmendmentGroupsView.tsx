@@ -30,7 +30,7 @@ export function AmendmentGroupsView({
 }: AmendmentGroupsViewProps) {
   return (
     <div className="space-y-6">
-      {sectionOrder.map(section => {
+      {sectionOrder.map((section: AmendmentGroupsViewProps['sectionOrder'][number]) => {
         if (section.items.length === 0) {
           return null;
         }
@@ -55,9 +55,16 @@ export function AmendmentGroupsView({
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="grid gap-4 p-4 md:grid-cols-2">
-                  {section.items.map(amendment => (
-                    <AmendmentTimelineCard key={amendment.id} amendment={amendment.cardAmendment} />
-                  ))}
+                  {section.items.map(
+                    (
+                      amendment: AmendmentGroupsViewProps['sectionOrder'][number]['items'][number]
+                    ) => (
+                      <AmendmentTimelineCard
+                        key={amendment.id}
+                        amendment={amendment.cardAmendment}
+                      />
+                    )
+                  )}
                 </div>
               </CollapsibleContent>
             </div>

@@ -1,25 +1,15 @@
 'use client';
 
-import type { ReactNode } from 'react';
-
 import {
   useGroupNetworkFlowController,
   type GroupNetworkFlowProps,
 } from '../hooks/useGroupNetworkFlowController';
+import { GroupNetworkFlowContentView } from './GroupNetworkFlowContentView';
 
 export type { GroupNetworkFlowProps };
 
-export interface GroupNetworkFlowViewProps {
-  content: ReactNode;
-  className?: string;
-}
-
 export function GroupNetworkFlow(props: GroupNetworkFlowProps) {
-  const content = useGroupNetworkFlowController(props);
+  const viewModel = useGroupNetworkFlowController(props);
 
-  return <GroupNetworkFlowView content={content} />;
-}
-
-export function GroupNetworkFlowView({ content, className }: GroupNetworkFlowViewProps) {
-  return className ? <div className={className}>{content}</div> : <>{content}</>;
+  return <GroupNetworkFlowContentView {...viewModel} />;
 }

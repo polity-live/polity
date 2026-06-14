@@ -1,19 +1,11 @@
 import * as React from 'react';
 
-import {
-  type FloatingToolbarState,
-  flip,
-  offset,
-  useFloatingToolbar,
-  useFloatingToolbarState,
-} from '@platejs/floating';
-import { useComposedRef } from '@udecode/cn';
-import { KEYS } from 'platejs';
-import { useEditorId, useEventEditorValue, usePluginOption } from 'platejs/react';
-
-import { cn } from '@/features/shared/utils/utils.ts';
+import { type FloatingToolbarState } from '@platejs/floating';
 
 import { Toolbar } from '@/features/shared/ui/layout';
+
+import { useFloatingToolbarController } from './useFloatingToolbarController';
+import { FloatingToolbarView } from './FloatingToolbarView';
 
 export function FloatingToolbar({
   children,
@@ -23,54 +15,7 @@ export function FloatingToolbar({
 }: React.ComponentProps<typeof Toolbar> & {
   state?: FloatingToolbarState;
 }) {
-  const editorId = useEditorId();
-  const focusedEditorId = useEventEditorValue('focus');
-  const isFloatingLinkOpen = !!usePluginOption({ key: KEYS.link }, 'mode');
-  const isAIChatOpen = usePluginOption({ key: KEYS.aiChat }, 'open');
+  const viewProps = useFloatingToolbarController({ children, className, state, ...props });
 
-  const floatingToolbarState = useFloatingToolbarState({
-    editorId,
-    focusedEditorId,
-    hideToolbar: isFloatingLinkOpen || isAIChatOpen,
-    ...state,
-    floatingOptions: {
-      middleware: [
-        offset(12),
-        flip({
-          fallbackPlacements: ['top-start', 'top-end', 'bottom-start', 'bottom-end'],
-          padding: 12,
-        }),
-      ],
-      placement: 'top',
-      ...state?.floatingOptions,
-    },
-  });
-
-  const {
-    clickOutsideRef,
-    hidden,
-    props: rootProps,
-    ref: floatingRef,
-  } = useFloatingToolbar(floatingToolbarState);
-
-  const ref = useComposedRef<HTMLDivElement>(props.ref, floatingRef);
-
-  if (hidden) return null;
-
-  return (
-    <div ref={clickOutsideRef}>
-      <Toolbar
-        {...props}
-        {...rootProps}
-        ref={ref}
-        className={cn(
-          'scrollbar-hide bg-popover absolute z-50 overflow-x-auto rounded-md border p-1 whitespace-nowrap opacity-100 shadow-md print:hidden',
-          'max-w-[80vw]',
-          className
-        )}
-      >
-        {children}
-      </Toolbar>
-    </div>
-  );
+  return <FloatingToolbarView {...viewProps} />;
 }

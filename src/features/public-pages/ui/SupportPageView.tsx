@@ -54,7 +54,7 @@ export function SupportPageView({
 
       <Section title={howCanHelp} headerClassName="justify-center text-center">
         <PanelGrid>
-          {areas.map(area => {
+          {areas.map((area: SupportAreaViewModel) => {
             const Icon = supportIcons[area.icon];
 
             return (
@@ -68,7 +68,7 @@ export function SupportPageView({
                 </PanelHeader>
                 <PanelContent className="space-y-4">
                   <ul className="space-y-2">
-                    {area.details.map(detail => (
+                    {area.details.map((detail: any) => (
                       <li key={detail} className="flex items-start gap-2 text-sm">
                         <span className="text-primary mt-0.5">{'\u2022'}</span>
                         <span>{detail}</span>

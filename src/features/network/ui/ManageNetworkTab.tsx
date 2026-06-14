@@ -1,23 +1,13 @@
-import type { ReactNode } from 'react';
-
 import {
   useManageNetworkTabController,
   type ManageNetworkTabProps,
 } from '../hooks/useManageNetworkTabController';
+import { ManageNetworkTabContentView } from './ManageNetworkTabContentView';
 
 export type { ManageNetworkTabProps };
 
-export interface ManageNetworkTabViewProps {
-  content: ReactNode;
-  className?: string;
-}
-
 export function ManageNetworkTab(props: ManageNetworkTabProps) {
-  const content = useManageNetworkTabController(props);
+  const viewModel = useManageNetworkTabController(props);
 
-  return <ManageNetworkTabView content={content} />;
-}
-
-export function ManageNetworkTabView({ content, className }: ManageNetworkTabViewProps) {
-  return className ? <div className={className}>{content}</div> : <>{content}</>;
+  return <ManageNetworkTabContentView {...viewModel} />;
 }

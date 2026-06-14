@@ -1,5 +1,3 @@
-import { FormControlLabel } from '@/features/shared/ui/form';
-import { Button } from '@/features/shared/ui/ui/button';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
@@ -13,11 +11,11 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
-import { SummaryPillList } from '@/features/shared/ui/form';
 import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { CreateInputField } from '@/features/shared/ui/form';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
+import { CreateCharacterCountNotice } from '../ui/CreateInlineNotice';
+import { StatementSurveyInput } from '../ui/inputs/StatementSurveyInput';
 import type { CreateFormConfig } from '../types/create-form.types';
 
 const MAX_CHARS = 280;
@@ -169,14 +167,12 @@ export function useCreateStatementForm(): CreateFormConfig {
             },
             {
               key: 'characters-remaining',
-              kind: 'custom',
-              node: (
-                <p
-                  className={`text-xs ${charsRemaining < 20 ? 'text-destructive' : 'text-muted-foreground'}`}
-                >
-                  {t('features.statements.charsRemaining', { count: charsRemaining })}
-                </p>
-              ),
+              kind: 'customComponent',
+              component: CreateCharacterCountNotice,
+              props: {
+                text: t('features.statements.charsRemaining', { count: charsRemaining }),
+                isWarning: charsRemaining < 20,
+              },
             },
             {
               key: 'group',
@@ -204,71 +200,38 @@ export function useCreateStatementForm(): CreateFormConfig {
           fields: [
             {
               key: 'media',
-              kind: 'custom',
-              node: (
-                <MediaUpload
-                  currentImage={imageUrl}
-                  onImageChange={(url: string) => setImageUrl(url)}
-                  currentVideo={videoUrl}
-                  onVideoChange={(url: string) => setVideoUrl(url)}
-                  entityType="statements"
-                  entityId={statementId}
-                  imageLabel={t('pages.create.statement.imageUrl')}
-                  imageDescription={t('pages.create.statement.imageDescription')}
-                  videoLabel={t('pages.create.statement.videoUrl')}
-                  videoDescription={t('pages.create.statement.videoDescription')}
-                />
-              ),
+              kind: 'customComponent',
+              component: MediaUpload,
+              props: {
+                currentImage: imageUrl,
+                onImageChange: (url: string) => setImageUrl(url),
+                currentVideo: videoUrl,
+                onVideoChange: (url: string) => setVideoUrl(url),
+                entityType: 'statements',
+                entityId: statementId,
+                imageLabel: t('pages.create.statement.imageUrl'),
+                imageDescription: t('pages.create.statement.imageDescription'),
+                videoLabel: t('pages.create.statement.videoUrl'),
+                videoDescription: t('pages.create.statement.videoDescription'),
+              },
             },
             {
               key: 'survey',
-              kind: 'custom',
-              node: (
-                <div className="space-y-2 rounded-lg border p-4">
-                  <FormControlLabel className="text-base font-semibold">
-                    {t('features.statements.survey.addSurvey')}
-                  </FormControlLabel>
-                  <CreateInputField
-                    label={t('features.statements.survey.question')}
-                    value={surveyQuestion}
-                    onValueChange={setSurveyQuestion}
-                    placeholder={t('features.statements.survey.question')}
-                  />
-                  {surveyOptions.map((opt, idx) => (
-                    <CreateInputField
-                      key={idx}
-                      label={`${t('features.statements.survey.option')} ${idx + 1}`}
-                      value={opt}
-                      onValueChange={value => {
-                        const newOpts = [...surveyOptions];
-                        newOpts[idx] = value;
-                        setSurveyOptions(newOpts);
-                      }}
-                      placeholder={`${t('features.statements.survey.option')} ${idx + 1}`}
-                    />
-                  ))}
-                  {surveyOptions.length < 4 && (
-                    <Button
-                      type="button"
-                      variant="link"
-                      className="h-auto p-0 text-sm"
-                      onClick={() => setSurveyOptions([...surveyOptions, ''])}
-                    >
-                      {translateText('generated.inline.0339_add_option_39780ac3')}
-                    </Button>
-                  )}
-                  <div className="space-y-2">
-                    <CreateInputField
-                      label={t('features.statements.survey.duration')}
-                      type="number"
-                      min={1}
-                      max={168}
-                      value={surveyDurationHours}
-                      onValueChange={value => setSurveyDurationHours(Number(value) || 1)}
-                    />
-                  </div>
-                </div>
-              ),
+              kind: 'customComponent',
+              component: StatementSurveyInput,
+              props: {
+                title: t('features.statements.survey.addSurvey'),
+                questionLabel: t('features.statements.survey.question'),
+                optionLabel: t('features.statements.survey.option'),
+                durationLabel: t('features.statements.survey.duration'),
+                addOptionLabel: translateText('generated.inline.0339_add_option_39780ac3'),
+                surveyQuestion,
+                surveyOptions,
+                surveyDurationHours,
+                onSurveyQuestionChange: setSurveyQuestion,
+                onSurveyOptionsChange: setSurveyOptions,
+                onSurveyDurationHoursChange: setSurveyDurationHours,
+              },
             },
           ],
         },
@@ -279,14 +242,13 @@ export function useCreateStatementForm(): CreateFormConfig {
           fields: [
             {
               key: 'hashtags',
-              kind: 'custom',
-              node: (
-                <HashtagEditor
-                  value={hashtags}
-                  onChange={setHashtags}
-                  placeholder={t('pages.create.statement.hashtagPlaceholder')}
-                />
-              ),
+              kind: 'customComponent',
+              component: HashtagEditor,
+              props: {
+                value: hashtags,
+                onChange: setHashtags,
+                placeholder: t('pages.create.statement.hashtagPlaceholder'),
+              },
             },
           ],
         },
@@ -296,8 +258,9 @@ export function useCreateStatementForm(): CreateFormConfig {
           fields: [
             {
               key: 'visibility',
-              kind: 'custom',
-              node: <VisibilityInput value={visibility} onChange={setVisibility} />,
+              kind: 'customComponent',
+              component: VisibilityInput,
+              props: { value: visibility, onChange: setVisibility },
             },
           ],
         },
@@ -307,74 +270,69 @@ export function useCreateStatementForm(): CreateFormConfig {
           fields: [
             {
               key: 'review',
-              kind: 'custom',
-              node: (
-                <CreateSummaryStep
-                  entityType="statement"
-                  badge={t('pages.create.statement.reviewBadge')}
-                  title={t('pages.create.statement.reviewBadge')}
-                  subtitle={text || undefined}
-                  secondaryBadge={visibilityLabel}
-                  media={{
-                    imageUrl: imageUrl || undefined,
-                    imageAlt: t('pages.create.statement.reviewBadge'),
-                    videoUrl: videoUrl || undefined,
-                  }}
-                  hashtags={hashtags.length > 0 ? hashtags : undefined}
-                  sections={[
-                    {
-                      title: t('pages.create.statement.textLabel'),
-                      fields: [
-                        ...(groupName
-                          ? [{ label: t('pages.create.statement.attachTo'), value: groupName }]
-                          : []),
-                        { label: t('pages.create.common.visibility'), value: visibilityLabel },
-                        ...(imageUrl
-                          ? [
-                              {
-                                label: t('pages.create.statement.imageUrl'),
-                                value: 'Attached',
-                              },
-                            ]
-                          : []),
-                        ...(videoUrl
-                          ? [
-                              {
-                                label: t('pages.create.statement.videoUrl'),
-                                value: 'Attached',
-                              },
-                            ]
-                          : []),
-                      ],
-                    },
-                    ...(hasSurvey
-                      ? [
-                          {
-                            title: t('features.statements.survey.addSurvey'),
-                            fields: [
-                              {
-                                label: t('features.statements.survey.question'),
-                                value: surveyQuestion,
-                              },
-                              {
-                                label: t('features.statements.survey.duration'),
-                                value: String(surveyDurationHours),
-                              },
-                              {
-                                label: t('features.statements.survey.option'),
-                                value: (
-                                  <SummaryPillList
-                                    items={surveyOptions.filter(option => option.trim())}
-                                  />
-                                ),
-                              },
-                            ],
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
-              ),
+              kind: 'customComponent',
+              component: CreateSummaryStep,
+              props: {
+                entityType: 'statement',
+                badge: t('pages.create.statement.reviewBadge'),
+                title: t('pages.create.statement.reviewBadge'),
+                subtitle: text || undefined,
+                secondaryBadge: visibilityLabel,
+                media: {
+                  imageUrl: imageUrl || undefined,
+                  imageAlt: t('pages.create.statement.reviewBadge'),
+                  videoUrl: videoUrl || undefined,
+                },
+                hashtags: hashtags.length > 0 ? hashtags : undefined,
+                sections: [
+                  {
+                    title: t('pages.create.statement.textLabel'),
+                    fields: [
+                      ...(groupName
+                        ? [{ label: t('pages.create.statement.attachTo'), value: groupName }]
+                        : []),
+                      { label: t('pages.create.common.visibility'), value: visibilityLabel },
+                      ...(imageUrl
+                        ? [
+                            {
+                              label: t('pages.create.statement.imageUrl'),
+                              value: 'Attached',
+                            },
+                          ]
+                        : []),
+                      ...(videoUrl
+                        ? [
+                            {
+                              label: t('pages.create.statement.videoUrl'),
+                              value: 'Attached',
+                            },
+                          ]
+                        : []),
+                    ],
+                  },
+                  ...(hasSurvey
+                    ? [
+                        {
+                          title: t('features.statements.survey.addSurvey'),
+                          fields: [
+                            {
+                              label: t('features.statements.survey.question'),
+                              value: surveyQuestion,
+                            },
+                            {
+                              label: t('features.statements.survey.duration'),
+                              value: String(surveyDurationHours),
+                            },
+                            {
+                              label: t('features.statements.survey.option'),
+                              value: surveyOptions.filter(option => option.trim()).join(', '),
+                            },
+                          ],
+                        },
+                      ]
+                    : []),
+                ],
+              },
             },
           ],
         },

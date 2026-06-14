@@ -32,7 +32,7 @@ export function TocElementStaticView({
     <SlateElement {...props} className="mb-1 p-0">
       <div>
         {headingList.length > 0 ? (
-          headingList.map(item => (
+          headingList.map((item: any) => (
             <Button
               key={item.title}
               variant="ghost"

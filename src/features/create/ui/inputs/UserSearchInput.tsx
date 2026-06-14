@@ -1,8 +1,6 @@
-import { useMemo } from 'react';
-import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import { useUserState } from '@/zero/users/useUserState';
-import { CreateTypeaheadField } from '@/features/shared/ui/form';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { useUserSearchInputController } from '../../hooks/useUserSearchInputController';
+import { UserSearchInputView } from './UserSearchInputView';
 
 interface UserSearchInputProps {
   value: string[];
@@ -33,54 +31,16 @@ export function UserSearchInput({
   disablePortal = false,
   showAllResults = false,
 }: UserSearchInputProps) {
-  const { allUsers } = useUserState({ includeAllUsers: true });
-
-  const filteredUsers = useMemo(() => {
-    const excludedIds = new Set(excludeUserIds);
-    if (excludeUserId) {
-      excludedIds.add(excludeUserId);
-    }
-
-    return (allUsers ?? []).filter(user => !excludedIds.has(user.id));
-  }, [allUsers, excludeUserId, excludeUserIds]);
-
-  const items = useMemo(
-    () =>
-      toTypeaheadItems(
-        filteredUsers,
-        'user',
-        user => `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.handle || 'User',
-        user => (user.handle ? `@${user.handle}` : user.email),
-        user => user.avatar,
-        user => `/user/${user.id}`
-      ),
-    [filteredUsers]
-  );
-
-  if (multi) {
-    return (
-      <CreateTypeaheadField
-        items={items}
-        multiple
-        values={value}
-        onValuesChange={onChange}
-        label={label}
-        hint={hint}
-        required={required}
-        placeholder={placeholder}
-        disablePortal={disablePortal}
-        showAllResults={showAllResults}
-      />
-    );
-  }
+  const { items } = useUserSearchInputController({ excludeUserId, excludeUserIds });
 
   return (
-    <CreateTypeaheadField
+    <UserSearchInputView
       items={items}
-      value={value[0] || undefined}
-      onChange={item => onChange(item ? [item.id] : [])}
+      value={value}
+      onChange={onChange}
       label={label}
       hint={hint}
+      multi={multi}
       required={required}
       placeholder={placeholder}
       disablePortal={disablePortal}

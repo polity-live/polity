@@ -1,26 +1,12 @@
 'use client';
 
-import { cn } from '@/features/shared/utils/utils';
-import { featureThemeClassName } from '@/features/shared/theme';
 import { useState } from 'react';
-import { Users, ScrollText, Calendar, UserPlus, UserMinus, Clock, Check, Bell } from 'lucide-react';
+import { Users, ScrollText, Calendar, UserPlus, UserMinus, Clock, Check } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Button } from '@/features/shared/ui/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
-import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
-import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
 import { useSubscribeGroup } from '@/features/groups/hooks/useSubscribeGroup';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';
-import {
-  TimelineCardBase,
-  TimelineCardHeader,
-  TimelineCardContent,
-  TimelineCardActions,
-  TimelineCardBadge,
-} from './TimelineCardBase';
 
 export interface GroupTimelineCardProps {
   group: {
@@ -54,21 +40,7 @@ export interface GroupTimelineCardProps {
   isSubscriptionLoading?: boolean;
   className?: string;
 }
-
-/**
- * GroupTimelineCard - The Community Hub card
- *
- * Displays a group with:
- * - Green-blue gradient header
- * - Clickable card that navigates to group page
- * - Group icon and name
- * - Description (max 3 lines)
- * - Topic pills
- * - Stats bar with tooltips (members, events, amendments)
- * - Membership button with popover
- * - Share button
- * - Subscribe button
- */
+import { GroupTimelineCardView } from './GroupTimelineCardView';
 export function GroupTimelineCard({
   group,
   onRequestMembership,
@@ -151,195 +123,35 @@ export function GroupTimelineCard({
         ]
       : []),
   ];
-
   return (
-    <TimelineCardBase contentType="group" className={className} href={`/group/${group.id}`}>
-      <TimelineCardHeader
-        contentType="group"
-        title={group.name}
-        href={`/group/${group.id}`}
-        badge={<TimelineCardBadge label={t('features.timeline.contentTypes.group')} icon={Users} />}
-      />
-
-      <TimelineCardContent>
-        <div className="mt-auto space-y-3">
-          {groupDescription && (
-            <p className="text-muted-foreground line-clamp-3 text-sm">{groupDescription}</p>
-          )}
-
-          {groupHashtags && groupHashtags.length > 0 && (
-            <div onClick={e => e.preventDefault()}>
-              <HashtagDisplay
-                hashtags={groupHashtags.slice(0, 3)}
-                centered={false}
-                badgeClassName={cn(
-                  featureThemeClassName('timelineAmendmentTimelineCardNeutralContrastSurface'),
-                  groupStyle.borderColor,
-                  groupStyle.accentColor
-                )}
-              />
-            </div>
-          )}
-
-          {/* Stats Bar with Tooltips */}
-          <div className="text-muted-foreground flex items-center gap-4 text-xs">
-            {stats.map((stat, index) => (
-              <Tooltip key={index}>
-                <TooltipTrigger asChild>
-                  <div className="flex cursor-help items-center gap-1">
-                    <stat.icon className="h-3.5 w-3.5" />
-                    <span className="font-medium">{stat.value}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {stat.value} {stat.label}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
-        </div>
-      </TimelineCardContent>
-
-      <TimelineCardActions>
-        {/* Membership Button with Popover */}
-        <Popover open={membershipOpen} onOpenChange={setMembershipOpen}>
-          <PopoverTrigger asChild onClick={e => e.stopPropagation()}>
-            <Button
-              variant={getMembershipVariant()}
-              size="sm"
-              disabled={isMembershipLoading || membership.isLoading || requestMembershipDisabled}
-              className="flex items-center gap-1.5"
-            >
-              <MembershipIcon className="h-3.5 w-3.5" />
-              <span className="text-xs">{getMembershipLabel()}</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-48 p-2" align="start" onClick={e => e.stopPropagation()}>
-            <div className="flex flex-col gap-1">
-              {isMember && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={e => {
-                    e.stopPropagation();
-                    (onLeave || membership.leaveGroup)?.();
-                    setMembershipOpen(false);
-                  }}
-                  disabled={isMembershipLoading || membership.isLoading}
-                  className="justify-start"
-                >
-                  {t('features.timeline.cards.group.leaveGroup')}
-                </Button>
-              )}
-              {isInvited && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={e => {
-                      e.stopPropagation();
-                      (onAcceptInvitation || membership.acceptInvitation)?.();
-                      setMembershipOpen(false);
-                    }}
-                    disabled={isMembershipLoading || membership.isLoading}
-                    className="justify-start"
-                  >
-                    {t('features.timeline.cards.group.acceptInvitation')}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={e => {
-                      e.stopPropagation();
-                      (onLeave || membership.leaveGroup)?.();
-                      setMembershipOpen(false);
-                    }}
-                    disabled={isMembershipLoading || membership.isLoading}
-                    className="text-destructive justify-start"
-                  >
-                    {t('features.timeline.cards.group.declineInvitation')}
-                  </Button>
-                </>
-              )}
-              {hasRequested && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={e => {
-                    e.stopPropagation();
-                    (onWithdrawRequest || membership.leaveGroup)?.();
-                    setMembershipOpen(false);
-                  }}
-                  disabled={isMembershipLoading || membership.isLoading}
-                  className="text-destructive justify-start"
-                >
-                  {t('features.timeline.cards.group.withdrawRequest')}
-                </Button>
-              )}
-              {!isMember && !isInvited && !hasRequested && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={e => {
-                    e.stopPropagation();
-                    (onRequestMembership || membership.requestJoin)?.();
-                    setMembershipOpen(false);
-                  }}
-                  disabled={
-                    isMembershipLoading || membership.isLoading || requestMembershipDisabled
-                  }
-                  className="justify-start"
-                >
-                  {t('features.timeline.cards.group.requestMembership')}
-                </Button>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        {/* Subscribe Button */}
-        <Button
-          variant={(group.isSubscribed ?? subscription.isSubscribed) ? 'outline' : 'ghost'}
-          size="sm"
-          onClick={e => {
-            e.stopPropagation();
-            (onToggleSubscription || subscription.toggleSubscribe)?.();
-          }}
-          disabled={isSubscriptionLoading || subscription.isLoading}
-          className="flex items-center gap-1.5"
-        >
-          <Bell
-            className={`h-3.5 w-3.5 ${(group.isSubscribed ?? subscription.isSubscribed) ? featureThemeClassName('timelineActionBarThemedStyle') : ''}`}
-          />
-        </Button>
-
-        {/* Share Button */}
-        <div onClick={e => e.stopPropagation()}>
-          <ShareButton
-            url={`/group/${group.id}`}
-            title={group.name}
-            description={groupDescription || ''}
-            variant="outline"
-            size="sm"
-            shareContextItem={{
-              id: group.id,
-              type: 'group',
-              title: group.name,
-              description: groupDescription,
-              createdAt: new Date(),
-              memberCount: group.memberCount,
-              eventCount: group.eventCount,
-              amendmentCount: group.amendmentCount,
-              tags: groupHashtags?.map(hashtag => hashtag.tag) ?? [],
-              stats: {
-                members: group.memberCount,
-              },
-            }}
-          />
-        </div>
-      </TimelineCardActions>
-    </TimelineCardBase>
+    <GroupTimelineCardView
+      group={group}
+      onRequestMembership={onRequestMembership}
+      onLeave={onLeave}
+      onAcceptInvitation={onAcceptInvitation}
+      onWithdrawRequest={onWithdrawRequest}
+      onToggleSubscription={onToggleSubscription}
+      isMembershipLoading={isMembershipLoading}
+      isSubscriptionLoading={isSubscriptionLoading}
+      className={className}
+      t={t}
+      membershipOpen={membershipOpen}
+      setMembershipOpen={setMembershipOpen}
+      membership={membership}
+      subscription={subscription}
+      groupStyle={groupStyle}
+      groupHashtags={groupHashtags}
+      groupDescription={groupDescription}
+      resolvedMembershipStatus={resolvedMembershipStatus}
+      isMember={isMember}
+      isInvited={isInvited}
+      hasRequested={hasRequested}
+      requestMembershipDisabled={requestMembershipDisabled}
+      getMembershipLabel={getMembershipLabel}
+      getMembershipVariant={getMembershipVariant}
+      getMembershipIcon={getMembershipIcon}
+      MembershipIcon={MembershipIcon}
+      stats={stats}
+    />
   );
 }

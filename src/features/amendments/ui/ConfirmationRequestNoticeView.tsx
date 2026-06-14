@@ -52,7 +52,7 @@ export function ConfirmationRequestNoticeView({
         </p>
 
         <div className="space-y-2">
-          {pendingConfirmations.map(confirmation => (
+          {pendingConfirmations.map((confirmation: any) => (
             <div
               key={confirmation.id}
               className={featureThemeClassName('featureThemeNeutralContrastSurface')}

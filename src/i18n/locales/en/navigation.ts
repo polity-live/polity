@@ -76,6 +76,7 @@ export const navigationTranslations = {
       discussions: 'Discussions',
       collaborators: 'Collaborators',
       process: 'Process',
+      streetscape: 'Street Design',
       notifications: 'Notifications',
       edit: 'Edit Amendment',
     },

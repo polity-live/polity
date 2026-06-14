@@ -1,4 +1,3 @@
-import { FormControlLabel } from '@/features/shared/ui/form';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import type { Value } from 'platejs';
@@ -8,16 +7,11 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { Button } from '@/features/shared/ui/ui/button';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
-import { HashtagEditor } from '@/features/shared/ui/hashtags';
-import { CreateInputField } from '@/features/shared/ui/form';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
-import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { EventTypeInput } from '../ui/inputs/EventTypeInput';
-import { DelegateAllocationInput, type DelegateConfig } from '../ui/inputs/DelegateAllocationInput';
-import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
+import { type DelegateConfig } from '../ui/inputs/DelegateAllocationInput';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useCurrentUserActiveGroupIds, useGroupById } from '@/zero/groups/useGroupState';
@@ -27,7 +21,11 @@ import { queries } from '@/zero/queries';
 import type { CreateFormConfig } from '../types/create-form.types';
 import { type RecurrencePattern } from '@/features/events/logic/rruleHelpers';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
-import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
+import { CreateRichTextField } from '../ui/inputs/CreateRichTextField';
+import { EventMeetingSettingsInput } from '../ui/inputs/EventMeetingSettingsInput';
+import { EventDelegateAllocationSettingsInput } from '../ui/inputs/EventDelegateAllocationSettingsInput';
+import { EventLocationInput } from '../ui/inputs/EventLocationInput';
+import { EventSettingsInput } from '../ui/inputs/EventSettingsInput';
 import {
   EMPTY_RICH_TEXT_VALUE,
   richTextToPlainText,
@@ -48,7 +46,6 @@ import {
 } from '@/features/events/logic/eventTimeSeriesValidation';
 import { buildRRule, getRecurrenceDescription } from '@/features/events/logic/rruleHelpers';
 import { EventTimeSeriesSection } from '@/features/events/ui/EventTimeSeriesSection';
-import { ElectionModeInput } from '@/features/elections/ui/ElectionModeInput';
 import { type ElectionMode } from '@/features/elections/logic/electionMode';
 import { attachProcessTaskToEvent } from '@/features/amendments/logic/attachProcessTaskToEvent';
 import {
@@ -470,35 +467,29 @@ export function useCreateEventForm(): CreateFormConfig {
             },
             {
               key: 'description',
-              kind: 'custom',
-              node: (
-                <div className="space-y-2">
-                  <FormControlLabel>{t('pages.create.event.descriptionLabel')}</FormControlLabel>
-                  <p className="text-muted-foreground text-xs">
-                    {t('pages.create.event.tips.description')}
-                  </p>
-                  <MiniPlateEditor
-                    value={descriptionContent}
-                    onChange={handleDescriptionContentChange}
-                    placeholder={t('pages.create.event.descriptionPlaceholder')}
-                  />
-                </div>
-              ),
+              kind: 'customComponent',
+              component: CreateRichTextField,
+              props: {
+                label: t('pages.create.event.descriptionLabel'),
+                description: t('pages.create.event.tips.description'),
+                value: descriptionContent,
+                onChange: handleDescriptionContentChange,
+                placeholder: t('pages.create.event.descriptionPlaceholder'),
+              },
             },
             {
               key: 'image',
-              kind: 'custom',
-              node: (
-                <ImageUpload
-                  currentImage={imageURL}
-                  onImageChange={(url: string) => setImageURL(url)}
-                  cleanupOnRemove
-                  entityType="events"
-                  entityId={eventId}
-                  label={t('pages.create.event.imageLabel')}
-                  description={t('pages.create.event.imageDescription')}
-                />
-              ),
+              kind: 'customComponent',
+              component: ImageUpload,
+              props: {
+                currentImage: imageURL,
+                onImageChange: (url: string) => setImageURL(url),
+                cleanupOnRemove: true,
+                entityType: 'events',
+                entityId: eventId,
+                label: t('pages.create.event.imageLabel'),
+                description: t('pages.create.event.imageDescription'),
+              },
             },
           ],
         },
@@ -509,8 +500,9 @@ export function useCreateEventForm(): CreateFormConfig {
           fields: [
             {
               key: 'event-type',
-              kind: 'custom',
-              node: <EventTypeInput value={eventType} onChange={setEventType} />,
+              kind: 'customComponent',
+              component: EventTypeInput,
+              props: { value: eventType, onChange: setEventType },
             },
           ],
         },
@@ -522,52 +514,27 @@ export function useCreateEventForm(): CreateFormConfig {
                 fields: [
                   {
                     key: 'meeting-settings',
-                    kind: 'custom' as const,
-                    node: (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <FormControlLabel>
-                            {t('pages.create.event.meetingFormat')}
-                          </FormControlLabel>
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              type="button"
-                              variant={meetingType === 'one-on-one' ? 'default' : 'outline'}
-                              onClick={() => setMeetingType('one-on-one')}
-                            >
-                              {t('pages.create.event.meetingFormats.oneOnOne')}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={meetingType === 'public-meeting' ? 'default' : 'outline'}
-                              onClick={() => setMeetingType('public-meeting')}
-                            >
-                              {t('pages.create.event.meetingFormats.publicMeeting')}
-                            </Button>
-                          </div>
-                          <p className="text-muted-foreground text-xs">
-                            {meetingType === 'public-meeting'
-                              ? t('pages.create.event.meetingFormats.publicMeetingDesc')
-                              : t('pages.create.event.meetingFormats.oneOnOneDesc')}
-                          </p>
-                        </div>
-                        {meetingType === 'public-meeting' ? (
-                          <CreateInputField
-                            label={t('pages.create.event.bookingLimit')}
-                            hint={t('pages.create.event.bookingLimitHint')}
-                            type="number"
-                            value={meetingMaxBookings}
-                            onValueChange={setMeetingMaxBookings}
-                            placeholder={t('pages.create.event.bookingLimitPlaceholder')}
-                            min={1}
-                          />
-                        ) : (
-                          <p className="text-muted-foreground text-xs">
-                            {t('pages.create.event.meetingFormats.oneOnOneLimit')}
-                          </p>
-                        )}
-                      </div>
-                    ),
+                    kind: 'customComponent' as const,
+                    component: EventMeetingSettingsInput,
+                    props: {
+                      meetingType,
+                      meetingMaxBookings,
+                      labels: {
+                        format: t('pages.create.event.meetingFormat'),
+                        oneOnOne: t('pages.create.event.meetingFormats.oneOnOne'),
+                        publicMeeting: t('pages.create.event.meetingFormats.publicMeeting'),
+                        oneOnOneDescription: t('pages.create.event.meetingFormats.oneOnOneDesc'),
+                        publicMeetingDescription: t(
+                          'pages.create.event.meetingFormats.publicMeetingDesc'
+                        ),
+                        oneOnOneLimit: t('pages.create.event.meetingFormats.oneOnOneLimit'),
+                        bookingLimit: t('pages.create.event.bookingLimit'),
+                        bookingLimitHint: t('pages.create.event.bookingLimitHint'),
+                        bookingLimitPlaceholder: t('pages.create.event.bookingLimitPlaceholder'),
+                      },
+                      onMeetingTypeChange: setMeetingType,
+                      onMeetingMaxBookingsChange: setMeetingMaxBookings,
+                    },
                   },
                 ],
               },
@@ -609,27 +576,24 @@ export function useCreateEventForm(): CreateFormConfig {
                 fields: [
                   {
                     key: 'delegate-allocation',
-                    kind: 'custom' as const,
-                    node: (
-                      <div className="space-y-4">
-                        <DelegateAllocationInput
-                          value={delegateConfig}
-                          onChange={setDelegateConfig}
-                        />
-                        <ElectionModeInput
-                          value={delegateElectionMode}
-                          onChange={setDelegateElectionMode}
-                          label={translateText('generated.inline.0325_delegiertenwahl_f860c1a3')}
-                          hint={translateText(
-                            'generated.inline.0326_dieser_modus_wird_als_default_fuer_untergrupp_c5a2f055'
-                          )}
-                          descriptions={{
-                            list: 'Untergruppen vergeben mehrere Stimmen in einer Listenwahl.',
-                            single: 'Untergruppen legen pro Delegiertensitz eine eigene Wahl an.',
-                          }}
-                        />
-                      </div>
-                    ),
+                    kind: 'customComponent' as const,
+                    component: EventDelegateAllocationSettingsInput,
+                    props: {
+                      delegateConfig,
+                      delegateElectionMode,
+                      electionModeLabel: translateText(
+                        'generated.inline.0325_delegiertenwahl_f860c1a3'
+                      ),
+                      electionModeHint: translateText(
+                        'generated.inline.0326_dieser_modus_wird_als_default_fuer_untergrupp_c5a2f055'
+                      ),
+                      electionModeDescriptions: {
+                        list: 'Untergruppen vergeben mehrere Stimmen in einer Listenwahl.',
+                        single: 'Untergruppen legen pro Delegiertensitz eine eigene Wahl an.',
+                      },
+                      onDelegateConfigChange: setDelegateConfig,
+                      onDelegateElectionModeChange: setDelegateElectionMode,
+                    },
                   },
                 ],
               },
@@ -643,57 +607,56 @@ export function useCreateEventForm(): CreateFormConfig {
           fields: [
             {
               key: 'time-series',
-              kind: 'custom',
-              node: (
-                <EventTimeSeriesSection
-                  startDate={startDate}
-                  startTime={startTime}
-                  endDate={endDate}
-                  endTime={endTime}
-                  onDateTimeChange={(field, value) => {
-                    if (field === 'startDate') setStartDate(value);
-                    else if (field === 'startTime') setStartTime(value);
-                    else if (field === 'endDate') setEndDate(value);
-                    else if (field === 'endTime') setEndTime(value);
-                  }}
-                  recurrencePattern={recurrencePattern}
-                  onRecurrencePatternChange={setRecurrencePattern}
-                  recurrenceEndDate={recurrenceEndDate}
-                  onRecurrenceEndDateChange={setRecurrenceEndDate}
-                  recurrenceInterval={recurrenceInterval}
-                  onRecurrenceIntervalChange={setRecurrenceInterval}
-                  recurrenceWeekdays={recurrenceWeekdays}
-                  onRecurrenceWeekdaysChange={setRecurrenceWeekdays}
-                  schedulingWindowMessage={processSchedulingWindowMessage}
-                  validationMessage={combinedTimeSeriesValidationMessage}
-                  minDate={searchParams.minStartDate}
-                  maxDate={searchParams.maxStartDate}
-                  deadlines={[
-                    ...(eventType === 'delegate_assembly'
-                      ? [
-                          {
-                            id: 'delegatesNominationDeadline',
-                            label: t('pages.create.event.delegateNominationDeadline'),
-                            value: delegatesNominationDeadline,
-                            onChange: setDelegatesNominationDeadline,
-                            hint: t('pages.create.event.delegateNominationDeadlineDesc'),
-                          },
-                        ]
-                      : []),
-                    ...(eventType === 'delegate_assembly' || eventType === 'general_assembly'
-                      ? [
-                          {
-                            id: 'amendmentDeadline',
-                            label: t('pages.create.event.amendmentCutoffDeadline'),
-                            value: amendmentDeadline,
-                            onChange: setAmendmentDeadline,
-                            hint: t('pages.create.event.amendmentCutoffDeadlineDesc'),
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
-              ),
+              kind: 'customComponent',
+              component: EventTimeSeriesSection,
+              props: {
+                startDate,
+                startTime,
+                endDate,
+                endTime,
+                onDateTimeChange: (field: string, value: string) => {
+                  if (field === 'startDate') setStartDate(value);
+                  else if (field === 'startTime') setStartTime(value);
+                  else if (field === 'endDate') setEndDate(value);
+                  else if (field === 'endTime') setEndTime(value);
+                },
+                recurrencePattern,
+                onRecurrencePatternChange: setRecurrencePattern,
+                recurrenceEndDate,
+                onRecurrenceEndDateChange: setRecurrenceEndDate,
+                recurrenceInterval,
+                onRecurrenceIntervalChange: setRecurrenceInterval,
+                recurrenceWeekdays,
+                onRecurrenceWeekdaysChange: setRecurrenceWeekdays,
+                schedulingWindowMessage: processSchedulingWindowMessage,
+                validationMessage: combinedTimeSeriesValidationMessage,
+                minDate: searchParams.minStartDate,
+                maxDate: searchParams.maxStartDate,
+                deadlines: [
+                  ...(eventType === 'delegate_assembly'
+                    ? [
+                        {
+                          id: 'delegatesNominationDeadline',
+                          label: t('pages.create.event.delegateNominationDeadline'),
+                          value: delegatesNominationDeadline,
+                          onChange: setDelegatesNominationDeadline,
+                          hint: t('pages.create.event.delegateNominationDeadlineDesc'),
+                        },
+                      ]
+                    : []),
+                  ...(eventType === 'delegate_assembly' || eventType === 'general_assembly'
+                    ? [
+                        {
+                          id: 'amendmentDeadline',
+                          label: t('pages.create.event.amendmentCutoffDeadline'),
+                          value: amendmentDeadline,
+                          onChange: setAmendmentDeadline,
+                          hint: t('pages.create.event.amendmentCutoffDeadlineDesc'),
+                        },
+                      ]
+                    : []),
+                ],
+              },
             },
           ],
         },
@@ -705,121 +668,84 @@ export function useCreateEventForm(): CreateFormConfig {
           fields: [
             {
               key: 'location',
-              kind: 'custom',
-              node: (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <FormControlLabel>
-                      {translateText('generated.inline.0327_attendance_mode_507f30a9')}
-                    </FormControlLabel>
-                    <div className="flex flex-wrap gap-2">
-                      {(['online', 'hybrid', 'offline'] as const).map(mode => (
-                        <Button
-                          key={mode}
-                          type="button"
-                          variant={attendanceMode === mode ? 'default' : 'outline'}
-                          onClick={() => setAttendanceMode(mode)}
-                        >
-                          {mode === 'online'
-                            ? translateText('generated.inline.0046_online_c3e839df')
-                            : mode === 'hybrid'
-                              ? translateText('generated.inline.0047_hybrid_8e01f6bc')
-                              : translateText('generated.inline.0048_offline_e01fa717')}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  {attendanceMode !== 'online' ? (
-                    <div className="space-y-4 rounded-xl border p-4">
-                      <CreateInputField
-                        label={t('pages.create.event.venueName')}
-                        hint={t('pages.create.event.tips.venueName')}
-                        value={locationName}
-                        onValueChange={setLocationName}
-                        placeholder={t('pages.create.event.venueNamePlaceholder')}
-                      />
-                      <GeoAddressPicker
-                        idPrefix="create-event-location"
-                        values={{
-                          country,
-                          region,
-                          city,
-                          post_code: postCode,
-                          street,
-                          house_number: houseNumber,
-                        }}
-                        coordinates={
-                          latitude !== null && longitude !== null ? { latitude, longitude } : null
-                        }
-                        onCoordinatesChange={coordinates => {
-                          setLatitude(coordinates?.latitude ?? null);
-                          setLongitude(coordinates?.longitude ?? null);
-                        }}
-                        onFieldChange={(field, value) => {
-                          switch (field) {
-                            case 'country':
-                              setCountry(value);
-                              break;
-                            case 'region':
-                              setRegion(value);
-                              break;
-                            case 'city':
-                              setCity(value);
-                              break;
-                            case 'post_code':
-                              setPostCode(value);
-                              break;
-                            case 'street':
-                              setStreet(value);
-                              break;
-                            case 'house_number':
-                              setHouseNumber(value);
-                              break;
-                          }
-                        }}
-                        labels={{
-                          country: t('pages.create.event.country'),
-                          region: t('pages.create.event.region'),
-                          city: t('pages.create.event.city'),
-                          post_code: t('pages.create.event.postalCode'),
-                          street: t('pages.create.event.street'),
-                          house_number: t('pages.create.event.houseNumber'),
-                        }}
-                        placeholders={{
-                          country: t('pages.create.event.country'),
-                          region: t('pages.create.event.region'),
-                          city: t('pages.create.event.city'),
-                          post_code: t('pages.create.event.postalCode'),
-                          street: t('pages.create.event.street'),
-                          house_number: t('pages.create.event.houseNumber'),
-                        }}
-                      />
-                    </div>
-                  ) : null}
-                  {attendanceMode !== 'offline' ? (
-                    <div className="space-y-4 rounded-xl border p-4">
-                      <CreateInputField
-                        label={t('pages.create.event.meetingLink')}
-                        hint={t('pages.create.event.tips.meetingLink')}
-                        value={onlineLink}
-                        onValueChange={setOnlineLink}
-                        placeholder={t('pages.create.event.meetingLinkPlaceholder')}
-                      />
-                    </div>
-                  ) : null}
-                  {!isMeetingEvent && (
-                    <CreateInputField
-                      label={t('pages.create.event.capacityLabel')}
-                      hint={t('pages.create.event.tips.capacity')}
-                      type="number"
-                      value={capacity}
-                      onValueChange={setCapacity}
-                      placeholder={t('pages.create.event.capacityPlaceholder')}
-                      min={1}
-                    />
-                  )}
-                </div>
-              ),
+              kind: 'customComponent',
+              component: EventLocationInput,
+              props: {
+                attendanceMode,
+                values: {
+                  locationName,
+                  onlineLink,
+                  country,
+                  region,
+                  postCode,
+                  city,
+                  street,
+                  houseNumber,
+                  latitude,
+                  longitude,
+                  capacity,
+                },
+                showCapacity: !isMeetingEvent,
+                labels: {
+                  attendanceMode: translateText('generated.inline.0327_attendance_mode_507f30a9'),
+                  online: translateText('generated.inline.0046_online_c3e839df'),
+                  hybrid: translateText('generated.inline.0047_hybrid_8e01f6bc'),
+                  offline: translateText('generated.inline.0048_offline_e01fa717'),
+                  venueName: t('pages.create.event.venueName'),
+                  venueNameHint: t('pages.create.event.tips.venueName'),
+                  venueNamePlaceholder: t('pages.create.event.venueNamePlaceholder'),
+                  meetingLink: t('pages.create.event.meetingLink'),
+                  meetingLinkHint: t('pages.create.event.tips.meetingLink'),
+                  meetingLinkPlaceholder: t('pages.create.event.meetingLinkPlaceholder'),
+                  capacity: t('pages.create.event.capacityLabel'),
+                  capacityHint: t('pages.create.event.tips.capacity'),
+                  capacityPlaceholder: t('pages.create.event.capacityPlaceholder'),
+                  country: t('pages.create.event.country'),
+                  region: t('pages.create.event.region'),
+                  city: t('pages.create.event.city'),
+                  postCode: t('pages.create.event.postalCode'),
+                  street: t('pages.create.event.street'),
+                  houseNumber: t('pages.create.event.houseNumber'),
+                },
+                onAttendanceModeChange: setAttendanceMode,
+                onValueChange: (field: string, value: string | number | null) => {
+                  switch (field) {
+                    case 'locationName':
+                      setLocationName(String(value ?? ''));
+                      break;
+                    case 'onlineLink':
+                      setOnlineLink(String(value ?? ''));
+                      break;
+                    case 'country':
+                      setCountry(String(value ?? ''));
+                      break;
+                    case 'region':
+                      setRegion(String(value ?? ''));
+                      break;
+                    case 'postCode':
+                      setPostCode(String(value ?? ''));
+                      break;
+                    case 'city':
+                      setCity(String(value ?? ''));
+                      break;
+                    case 'street':
+                      setStreet(String(value ?? ''));
+                      break;
+                    case 'houseNumber':
+                      setHouseNumber(String(value ?? ''));
+                      break;
+                    case 'latitude':
+                      setLatitude(typeof value === 'number' ? value : null);
+                      break;
+                    case 'longitude':
+                      setLongitude(typeof value === 'number' ? value : null);
+                      break;
+                    case 'capacity':
+                      setCapacity(String(value ?? ''));
+                      break;
+                  }
+                },
+              },
             },
           ],
         },
@@ -831,19 +757,16 @@ export function useCreateEventForm(): CreateFormConfig {
           fields: [
             {
               key: 'settings',
-              kind: 'custom',
-              node: (
-                <div className="space-y-4">
-                  {!isMeetingEvent && (
-                    <VisibilityInput value={visibility} onChange={setVisibility} />
-                  )}
-                  <HashtagEditor
-                    value={hashtags}
-                    onChange={setHashtags}
-                    placeholder={t('pages.create.event.hashtagPlaceholder')}
-                  />
-                </div>
-              ),
+              kind: 'customComponent',
+              component: EventSettingsInput,
+              props: {
+                showVisibility: !isMeetingEvent,
+                visibility,
+                hashtags,
+                hashtagPlaceholder: t('pages.create.event.hashtagPlaceholder'),
+                onVisibilityChange: setVisibility,
+                onHashtagsChange: setHashtags,
+              },
             },
           ],
         },
@@ -858,142 +781,139 @@ export function useCreateEventForm(): CreateFormConfig {
           fields: [
             {
               key: 'review',
-              kind: 'custom',
-              node: (
-                <CreateSummaryStep
-                  entityType="event"
-                  badge={t('pages.create.event.reviewBadge')}
-                  secondaryBadge={eventTypeLabel}
-                  title={title || t('pages.create.event.titlePlaceholder')}
-                  subtitle={description || undefined}
-                  media={
-                    imageURL
-                      ? { imageUrl: imageURL, imageAlt: title || 'Event cover image' }
-                      : undefined
-                  }
-                  hashtags={hashtags.length > 0 ? hashtags : undefined}
-                  sections={[
-                    {
-                      title: t('pages.create.event.basicInfo'),
-                      fields: [
-                        {
-                          label: t('pages.create.event.eventType'),
-                          value: eventTypeLabel,
-                        },
-                        ...(groupId
-                          ? [{ label: t('pages.create.event.associatedGroup'), value: groupName }]
-                          : []),
-                        ...(isMeetingEvent
-                          ? [
-                              {
-                                label: t('pages.create.event.meetingFormat'),
-                                value: meetingFormatLabel,
-                              },
-                              {
-                                label: t('pages.create.event.bookingLimit'),
-                                value: String(normalizedMeetingBookings),
-                              },
-                            ]
-                          : []),
-                        ...(!isMeetingEvent && capacity
-                          ? [{ label: t('pages.create.event.capacityLabel'), value: capacity }]
-                          : []),
-                        ...(eventType === 'delegate_assembly'
-                          ? [
-                              {
-                                label: t('pages.create.event.delegateAllocation'),
-                                value: delegateAllocationLabel,
-                              },
-                              {
-                                label: translateText(
-                                  'generated.inline.0057_delegiertenwahl_f860c1a3'
-                                ),
-                                value: delegateElectionModeLabel,
-                              },
-                            ]
-                          : []),
-                        {
-                          label: t('pages.create.common.visibility'),
-                          value: visibilityLabel,
-                        },
-                      ],
-                    },
-                    {
-                      title: t('pages.create.event.dateTime'),
-                      fields: [
-                        ...(startDate
-                          ? [
-                              {
-                                label: t('pages.create.event.startDate'),
-                                value: `${startDate}${startTime ? ` ${startTime}` : ''}`,
-                              },
-                            ]
-                          : []),
-                        ...(endDate
-                          ? [
-                              {
-                                label: t('pages.create.event.endDate'),
-                                value: `${endDate}${endTime ? ` ${endTime}` : ''}`,
-                              },
-                            ]
-                          : []),
-                        ...(recurrenceSummary
-                          ? [
-                              {
-                                label: t('pages.create.event.recurring'),
-                                value: recurrenceSummary,
-                              },
-                              ...(recurrenceEndDate
-                                ? [
-                                    {
-                                      label: t('pages.create.event.recurringEnds'),
-                                      value: recurrenceEndDate,
-                                    },
-                                  ]
-                                : []),
-                            ]
-                          : []),
-                        ...(delegatesNominationDeadline
-                          ? [
-                              {
-                                label: t('pages.create.event.delegateNominationDeadline'),
-                                value: delegatesNominationDeadline,
-                              },
-                            ]
-                          : []),
-                        ...(amendmentDeadline
-                          ? [
-                              {
-                                label: t('pages.create.event.amendmentCutoffDeadline'),
-                                value: amendmentDeadline,
-                              },
-                            ]
-                          : []),
-                      ],
-                    },
-                    {
-                      title: t('pages.create.event.location'),
-                      fields: [
-                        {
-                          label: t('pages.create.event.location'),
-                          value: locationTypeLabel,
-                        },
-                        ...(attendanceMode !== 'online'
-                          ? [
-                              {
-                                label: t('pages.create.event.venueName'),
-                                value: locationSummary || t('pages.create.event.inPerson'),
-                              },
-                            ]
-                          : []),
-                        ...(attendanceMode !== 'offline' && onlineLink
-                          ? [{ label: t('pages.create.event.meetingLink'), value: onlineLink }]
-                          : []),
-                      ],
-                    },
-                  ]}
-                />
-              ),
+              kind: 'customComponent',
+              component: CreateSummaryStep,
+              props: {
+                entityType: 'event',
+                badge: t('pages.create.event.reviewBadge'),
+                secondaryBadge: eventTypeLabel,
+                title: title || t('pages.create.event.titlePlaceholder'),
+                subtitle: description || undefined,
+                media: imageURL
+                  ? { imageUrl: imageURL, imageAlt: title || 'Event cover image' }
+                  : undefined,
+                hashtags: hashtags.length > 0 ? hashtags : undefined,
+                sections: [
+                  {
+                    title: t('pages.create.event.basicInfo'),
+                    fields: [
+                      {
+                        label: t('pages.create.event.eventType'),
+                        value: eventTypeLabel,
+                      },
+                      ...(groupId
+                        ? [{ label: t('pages.create.event.associatedGroup'), value: groupName }]
+                        : []),
+                      ...(isMeetingEvent
+                        ? [
+                            {
+                              label: t('pages.create.event.meetingFormat'),
+                              value: meetingFormatLabel,
+                            },
+                            {
+                              label: t('pages.create.event.bookingLimit'),
+                              value: String(normalizedMeetingBookings),
+                            },
+                          ]
+                        : []),
+                      ...(!isMeetingEvent && capacity
+                        ? [{ label: t('pages.create.event.capacityLabel'), value: capacity }]
+                        : []),
+                      ...(eventType === 'delegate_assembly'
+                        ? [
+                            {
+                              label: t('pages.create.event.delegateAllocation'),
+                              value: delegateAllocationLabel,
+                            },
+                            {
+                              label: translateText(
+                                'generated.inline.0057_delegiertenwahl_f860c1a3'
+                              ),
+                              value: delegateElectionModeLabel,
+                            },
+                          ]
+                        : []),
+                      {
+                        label: t('pages.create.common.visibility'),
+                        value: visibilityLabel,
+                      },
+                    ],
+                  },
+                  {
+                    title: t('pages.create.event.dateTime'),
+                    fields: [
+                      ...(startDate
+                        ? [
+                            {
+                              label: t('pages.create.event.startDate'),
+                              value: `${startDate}${startTime ? ` ${startTime}` : ''}`,
+                            },
+                          ]
+                        : []),
+                      ...(endDate
+                        ? [
+                            {
+                              label: t('pages.create.event.endDate'),
+                              value: `${endDate}${endTime ? ` ${endTime}` : ''}`,
+                            },
+                          ]
+                        : []),
+                      ...(recurrenceSummary
+                        ? [
+                            {
+                              label: t('pages.create.event.recurring'),
+                              value: recurrenceSummary,
+                            },
+                            ...(recurrenceEndDate
+                              ? [
+                                  {
+                                    label: t('pages.create.event.recurringEnds'),
+                                    value: recurrenceEndDate,
+                                  },
+                                ]
+                              : []),
+                          ]
+                        : []),
+                      ...(delegatesNominationDeadline
+                        ? [
+                            {
+                              label: t('pages.create.event.delegateNominationDeadline'),
+                              value: delegatesNominationDeadline,
+                            },
+                          ]
+                        : []),
+                      ...(amendmentDeadline
+                        ? [
+                            {
+                              label: t('pages.create.event.amendmentCutoffDeadline'),
+                              value: amendmentDeadline,
+                            },
+                          ]
+                        : []),
+                    ],
+                  },
+                  {
+                    title: t('pages.create.event.location'),
+                    fields: [
+                      {
+                        label: t('pages.create.event.location'),
+                        value: locationTypeLabel,
+                      },
+                      ...(attendanceMode !== 'online'
+                        ? [
+                            {
+                              label: t('pages.create.event.venueName'),
+                              value: locationSummary || t('pages.create.event.inPerson'),
+                            },
+                          ]
+                        : []),
+                      ...(attendanceMode !== 'offline' && onlineLink
+                        ? [{ label: t('pages.create.event.meetingLink'), value: onlineLink }]
+                        : []),
+                    ],
+                  },
+                ],
+              },
             },
           ],
         },

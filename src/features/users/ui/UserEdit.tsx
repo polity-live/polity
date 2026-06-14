@@ -1,16 +1,14 @@
-import { Loader2 } from 'lucide-react';
 import { useUserData } from '../hooks/useUserData';
 import { useUserProfileForm } from '../hooks/useUserProfileForm';
 import { useAvatarUpload } from '../hooks/useAvatarUpload';
 import { useSubscriptionManagement } from '@/features/payments/hooks/useSubscriptionManagement';
 import { useStripeCheckout } from '@/features/payments/hooks/useStripeCheckout';
-import { UserProfileEditForm } from './UserProfileEditForm';
 
 interface UserEditProps {
   userId: string;
   defaultTab?: string;
 }
-
+import { UserEditView } from './UserEditView';
 export function UserEdit({ userId, defaultTab }: UserEditProps) {
   const { user, isLoading } = useUserData(userId);
 
@@ -35,35 +33,27 @@ export function UserEdit({ userId, defaultTab }: UserEditProps) {
 
   const { isCheckoutLoading, handleSubscribe, handleCustomAmount, handleCancelSubscription } =
     useStripeCheckout({ userId, onSubscriptionChange: fetchSubscription });
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="text-primary h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
   return (
-    <UserProfileEditForm
-      formData={formData}
-      isSubmitting={isSubmitting}
+    <UserEditView
       userId={userId}
       defaultTab={defaultTab}
-      activeSubscriptionAmount={getActivePlanAmount()}
-      isCheckoutLoading={isCheckoutLoading}
+      user={user}
+      isLoading={isLoading}
+      formData={formData}
+      isSubmitting={isSubmitting}
+      handleSubmit={handleSubmit}
+      updateAboutContent={updateAboutContent}
+      updateField={updateField}
+      uploadAvatar={uploadAvatar}
+      activeSubscription={activeSubscription}
       isPlanActive={isPlanActive}
-      hasCustomPlan={hasCustomPlan()}
-      onSubmit={handleSubmit}
-      onCancel={() => window.history.back()}
-      onAvatarUpload={uploadAvatar}
-      onAboutContentChange={updateAboutContent}
-      onFieldChange={updateField}
-      onSubscribe={handleSubscribe}
-      onCustomAmount={handleCustomAmount}
-      onCancelSubscription={() =>
-        activeSubscription?.id ? handleCancelSubscription(activeSubscription.id) : undefined
-      }
+      hasCustomPlan={hasCustomPlan}
+      getActivePlanAmount={getActivePlanAmount}
+      fetchSubscription={fetchSubscription}
+      isCheckoutLoading={isCheckoutLoading}
+      handleSubscribe={handleSubscribe}
+      handleCustomAmount={handleCustomAmount}
+      handleCancelSubscription={handleCancelSubscription}
     />
   );
 }

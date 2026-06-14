@@ -1,55 +1,41 @@
 'use client';
 
-import { BadgeControl } from '@/features/shared/ui/status';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import { LinkGroupDialog } from '@/features/network/ui/LinkGroupDialog';
-import { BookOpen, Network } from 'lucide-react';
-import { HashtagDisplay } from '@/features/shared/ui/hashtags';
-import { extractHashtags } from '@/zero/common/hashtagHelpers';
-import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
-import { GRADIENTS } from '@/features/users/state/gradientColors';
-import { StatsBar } from '@/features/shared/ui/layout';
-import { ActionBar } from '@/features/shared/ui/layout';
-import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
-import { SocialBar } from '@/features/users/ui/SocialBar';
-import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
-import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
-import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
-import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
-import { SiblingMembershipModeDescription } from '@/features/network/ui/GroupRelationshipFields';
-import { getCanonicalMembershipModeLabel } from '@/features/network/logic/groupConnectionDerived';
-import { buildGroupWikiIncumbentSections } from '@/features/groups/logic/buildGroupWikiIncumbentSections';
-import {
-  countAcceptedMemberships,
-  groupRelationshipsByGroup,
-} from '@/features/groups/logic/groupWikiHelpers';
-import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import { AccessDenied as AccessDeniedView } from '@/features/auth/ui/AccessDenied';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
-import { WikiIncumbentPanel } from '@/features/shared/ui/wiki/WikiIncumbentPanel';
+import { buildGroupWikiIncumbentSections } from '@/features/groups/logic/buildGroupWikiIncumbentSections';
+import { groupRelationshipsByGroup } from '@/features/groups/logic/groupWikiHelpers';
+import { GroupWikiContentView } from './GroupWikiContentView';
 
 interface GroupWikiProps {
   groupId: string;
 }
 
+function GroupWikiNotFoundView() {
+  return (
+    <div>
+      <div className="py-12 text-center">
+        <h1 className="mb-4 text-2xl font-bold">
+          {translateText('generated.inline.0544_group_not_found_3e51f77a')}
+        </h1>
+        <p className="text-muted-foreground">
+          {translateText(
+            'generated.inline.0545_the_group_you_re_looking_for_doesn_t_exist_or_4cf69159'
+          )}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function toPlainDescription(value: unknown) {
+  const text = richTextToPlainText(value);
+  return text || undefined;
+}
+
 export function GroupWiki({ groupId }: GroupWikiProps) {
-  const { t } = useTranslation();
-
-  const toPlainDescription = (value: unknown) => {
-    const text = richTextToPlainText(value);
-    return text || undefined;
-  };
-
   const {
     group,
     canAccess,
@@ -78,24 +64,11 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
   } = useGroupWikiPage(groupId);
 
   if (!group) {
-    return (
-      <div>
-        <div className="py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">
-            {translateText('generated.inline.0544_group_not_found_3e51f77a')}
-          </h1>
-          <p className="text-muted-foreground">
-            {translateText(
-              'generated.inline.0545_the_group_you_re_looking_for_doesn_t_exist_or_4cf69159'
-            )}
-          </p>
-        </div>
-      </div>
-    );
+    return <GroupWikiNotFoundView />;
   }
 
   if (!canAccess) {
-    return <AccessDenied />;
+    return <AccessDeniedView />;
   }
 
   const groupLocation = formatLocation(group);
@@ -122,373 +95,40 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
   );
 
   return (
-    <div>
-      {/* Header with centered title and subtitle */}
-      <div className="mb-8 text-center">
-        <div className="mb-2 flex items-center justify-center gap-3">
-          <h1 className="text-4xl font-bold">{group.name}</h1>
-          {group.visibility === 'public' && (
-            <BadgeControl variant="secondary" size="sm">
-              {t('components.badges.public')}
-            </BadgeControl>
-          )}
-          <BadgeControl variant="outline" size="sm">
-            {isSibling
-              ? translateText('generated.inline.0080_geschwistergruppe_1053d99c')
-              : isHierarchical
-                ? t('components.badges.hierarchicalGroup')
-                : t('components.badges.baseGroup')}
-          </BadgeControl>
-        </div>
-        {groupLocation && <p className="text-muted-foreground">{groupLocation}</p>}
-      </div>
-
-      {group.image_url && (
-        <div className="mb-8">
-          <img
-            src={group.image_url}
-            alt={group.name ?? 'Group'}
-            className="mx-auto h-64 w-full max-w-4xl rounded-lg object-cover shadow-lg"
-          />
-        </div>
-      )}
-
-      {/* Stats Bar with Events and Amendments */}
-      <StatsBar
-        stats={[
-          { value: memberCount, labelKey: 'components.labels.members' },
-          { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-          { value: eventsCount, labelKey: 'components.labels.events' },
-          { value: amendmentsCount, labelKey: 'components.labels.amendments' },
-        ]}
-      />
-
-      {/* Action Bar */}
-      <ActionBar>
-        <LinkGroupDialog currentGroupId={groupId} currentGroupName={group.name ?? ''} />
-        <SubscribeButton
-          entityType="group"
-          entityId={groupId}
-          isSubscribed={isSubscribed}
-          onToggleSubscribe={toggleSubscribe}
-          isLoading={subscribeLoading}
-        />
-        <MembershipButton
-          actionType="join"
-          status={status}
-          isMember={isMember}
-          hasRequested={hasRequested}
-          isInvited={isInvited}
-          onRequest={requestJoin}
-          onLeave={leaveGroup}
-          onAcceptInvitation={acceptInvitation}
-          isLoading={membershipLoading}
-          disabled={requestJoinActionDisabled || acceptInvitationDisabled}
-          disabledReason={
-            acceptInvitationDisabled
-              ? (acceptInvitationConflictResponse?.summary ??
-                acceptInvitationConflictResponse?.conflicts[0]?.summary)
-              : requestJoinActionDisabled
-                ? requestJoinDisabledReason
-                : undefined
-          }
-          conflictResponse={
-            acceptInvitationDisabled
-              ? acceptInvitationConflictResponse
-              : requestJoinActionDisabled
-                ? requestJoinConflictResponse
-                : null
-          }
-        />
-        <ShareButton
-          url={`/group/${groupId}`}
-          title={group.name ?? ''}
-          description={groupDescription ?? ''}
-          shareContextItem={{
-            id: groupId,
-            type: 'group',
-            title: group.name ?? '',
-            description: groupDescription,
-            createdAt: new Date(),
-            memberCount,
-            eventCount: eventsCount,
-            amendmentCount: amendmentsCount,
-            stats: {
-              members: memberCount,
-            },
-          }}
-        />
-      </ActionBar>
-
-      {/* Hashtags */}
-      {group.group_hashtags && group.group_hashtags.length > 0 && (
-        <div className="mb-6">
-          <HashtagDisplay hashtags={extractHashtags(group.group_hashtags)} centered />
-        </div>
-      )}
-
-      {/* Social Media */}
-      <SocialBar
-        socialMedia={{
-          website: group.website ?? undefined,
-          youtube: group.youtube ?? undefined,
-          linkedin: group.linkedin ?? undefined,
-          whatsapp: group.whatsapp ?? undefined,
-          instagram: group.instagram ?? undefined,
-          twitter: group.twitter ?? group.x ?? undefined,
-          facebook: group.facebook ?? undefined,
-          snapchat: group.snapchat ?? undefined,
-          tiktok: group.tiktok ?? undefined,
-        }}
-      />
-
-      {/* About and Contact Tabs */}
-      <InfoTabs
-        about={groupDescription}
-        contact={{
-          email: group.email ?? undefined,
-          website: group.website ?? undefined,
-          youtube: group.youtube ?? undefined,
-          linkedin: group.linkedin ?? undefined,
-          whatsapp: group.whatsapp ?? undefined,
-          instagram: group.instagram ?? undefined,
-          twitter: group.twitter ?? group.x ?? undefined,
-          facebook: group.facebook ?? undefined,
-          snapchat: group.snapchat ?? undefined,
-          tiktok: group.tiktok ?? undefined,
-          country: group.country ?? undefined,
-          region: group.region ?? undefined,
-          post_code: group.post_code ?? undefined,
-          city: group.city ?? undefined,
-          street: group.street ?? undefined,
-          house_number: group.house_number ?? undefined,
-          latitude: group.latitude ?? null,
-          longitude: group.longitude ?? null,
-          location: groupLocation || undefined,
-        }}
-        className="mb-12"
-      />
-
-      {incumbentSections.length > 0 && (
-        <WikiIncumbentPanel
-          title={translateText('generated.inline.0431_roles_incumbents_07f9ca00')}
-          description={translateText(
-            'generated.inline.0546_assigned_and_elected_roles_with_their_active__a609ec72'
-          )}
-          sections={incumbentSections}
-        />
-      )}
-
-      {connectedGroup ? (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>
-              {translateText('generated.inline.0547_verbundene_gruppe_2d1da077')}
-            </CardTitle>
-            <CardDescription>
-              {group.sibling_membership_mode === 'elected'
-                ? translateText('generated.inline.0081_gewaehlte_geschwistergruppe_fb3714e2')
-                : group.sibling_membership_mode === 'parliament'
-                  ? translateText('generated.inline.0082_parlamentsgruppe_76cbe42e')
-                  : primarySiblingMembershipMode === 'none'
-                    ? translateText('generated.inline.0083_offene_geschwistergruppe_33bc5bda')
-                    : translateText('generated.inline.0080_geschwistergruppe_1053d99c')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {primarySiblingMembershipMode ? (
-              <BadgeControl variant="outline" size="xs" className="w-fit">
-                {getCanonicalMembershipModeLabel(primarySiblingMembershipMode)}
-              </BadgeControl>
-            ) : null}
-            {group.sibling_membership_mode ? (
-              <div className="border-border/70 bg-background/80 rounded-lg border px-3 py-3 shadow-sm">
-                <SiblingMembershipModeDescription
-                  siblingMembershipMode={group.sibling_membership_mode}
-                  currentGroupName={group.name ?? ''}
-                  selectedGroupName={connectedGroup.name ?? ''}
-                  currentGroupId={groupId}
-                  selectedGroupId={String(connectedGroup.id)}
-                />
-              </div>
-            ) : null}
-            <GroupTimelineCard
-              group={{
-                id: String(connectedGroup.id),
-                name: connectedGroup.name || t('common.unspecified'),
-                description: toPlainDescription(connectedGroup.description),
-                memberCount: connectedGroup.member_count || 0,
-                amendmentCount: connectedGroup.amendment_count || 0,
-                eventCount: connectedGroup.event_count || 0,
-              }}
-            />
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {parliamentSourceGroups.length > 0 ? (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>
-              {translateText('generated.inline.0548_parlamentsquellen_eefe6cad')}
-            </CardTitle>
-            <CardDescription>
-              {translateText(
-                'generated.inline.0549_diese_gruppen_speisen_die_mitglieder_dieser_p_6bf90be9'
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {parliamentSourceGroups.map(sourceGroup => (
-                <GroupTimelineCard
-                  key={`source-${sourceGroup.id}`}
-                  group={{
-                    id: String(sourceGroup.id),
-                    name: sourceGroup.name || t('common.unspecified'),
-                    description: toPlainDescription(sourceGroup.description),
-                    memberCount: sourceGroup.member_count || 0,
-                    amendmentCount: sourceGroup.amendment_count || 0,
-                    eventCount: sourceGroup.event_count || 0,
-                  }}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {siblingGroups.length > 0 ? (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Network className="h-5 w-5" />
-              {translateText('generated.inline.0550_geschwistergruppen_69f740ec')}
-            </CardTitle>
-            <CardDescription>
-              {translateText(
-                'generated.inline.0551_direkt_verbundene_geschwistergruppen_dieser_g_405521f2'
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {siblingGroups.map(siblingGroup => (
-                <GroupTimelineCard
-                  key={`sibling-${siblingGroup.id}`}
-                  group={{
-                    id: String(siblingGroup.id),
-                    name: siblingGroup.name || t('common.unspecified'),
-                    description: toPlainDescription(siblingGroup.description),
-                    memberCount: siblingGroup.member_count || 0,
-                    amendmentCount: siblingGroup.amendment_count || 0,
-                    eventCount: siblingGroup.event_count || 0,
-                  }}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {/* Parent & Child Groups */}
-      {parentGroups.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Network className="h-5 w-5" />
-              {t('pages.group.parentGroups.title')}
-            </CardTitle>
-            <CardDescription>{t('pages.group.parentGroups.description')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {parentGroups.map(({ group: relatedGroup }) => (
-                <GroupTimelineCard
-                  key={`parent-${relatedGroup.id}`}
-                  group={{
-                    id: String(relatedGroup.id),
-                    name: relatedGroup.name || t('common.unspecified'),
-                    description: toPlainDescription(relatedGroup.description),
-                    memberCount:
-                      relatedGroup.member_count ??
-                      countAcceptedMemberships(relatedGroup.memberships),
-                    amendmentCount: relatedGroup.amendments?.length || 0,
-                    eventCount: relatedGroup.events?.length || 0,
-                  }}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {childGroups.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Network className="h-5 w-5" />
-              {t('pages.group.childGroups.title')}
-            </CardTitle>
-            <CardDescription>{t('pages.group.childGroups.description')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {childGroups.map(({ group: relatedGroup }) => (
-                <GroupTimelineCard
-                  key={`child-${relatedGroup.id}`}
-                  group={{
-                    id: String(relatedGroup.id),
-                    name: relatedGroup.name || t('common.unspecified'),
-                    description: toPlainDescription(relatedGroup.description),
-                    memberCount:
-                      relatedGroup.member_count ??
-                      countAcceptedMemberships(relatedGroup.memberships),
-                    amendmentCount: relatedGroup.amendments?.length || 0,
-                    eventCount: relatedGroup.events?.length || 0,
-                  }}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Blogs Section */}
-      {group.blogs && group.blogs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              {translateText('generated.inline.0552_blog_posts_9a088442')}
-            </CardTitle>
-            <CardDescription>
-              {translateText('generated.inline.0553_recent_posts_from_this_group_fb8d3df3')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {group.blogs.map((blog, index: number) => (
-                <BlogTimelineCard
-                  key={blog.id}
-                  blog={{
-                    id: String(blog.id),
-                    title: blog.title ?? '',
-                    excerpt: blog.description ?? undefined,
-                    coverImageUrl: blog.image_url ?? undefined,
-                    commentCount: blog.comment_count,
-                    hashtags: extractHashtags(blog.blog_hashtags),
-                    authorName: group.name ?? undefined,
-                    groupId: group.id,
-                    publishedAt: blog.date ?? undefined,
-                  }}
-                  className={GRADIENTS[index % GRADIENTS.length]}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    <GroupWikiContentView
+      acceptInvitation={acceptInvitation}
+      acceptInvitationConflictResponse={acceptInvitationConflictResponse}
+      acceptInvitationDisabled={acceptInvitationDisabled}
+      amendmentsCount={amendmentsCount}
+      childGroups={childGroups}
+      connectedGroup={connectedGroup}
+      eventsCount={eventsCount}
+      group={group}
+      groupDescription={groupDescription}
+      groupId={groupId}
+      groupLocation={groupLocation}
+      hasRequested={hasRequested}
+      incumbentSections={incumbentSections}
+      isHierarchical={isHierarchical}
+      isInvited={isInvited}
+      isMember={isMember}
+      isSibling={isSibling}
+      isSubscribed={isSubscribed}
+      leaveGroup={leaveGroup}
+      memberCount={memberCount}
+      membershipLoading={membershipLoading}
+      parliamentSourceGroups={parliamentSourceGroups}
+      parentGroups={parentGroups}
+      primarySiblingMembershipMode={primarySiblingMembershipMode}
+      requestJoin={requestJoin}
+      requestJoinActionDisabled={requestJoinActionDisabled}
+      requestJoinConflictResponse={requestJoinConflictResponse}
+      requestJoinDisabledReason={requestJoinDisabledReason}
+      siblingGroups={siblingGroups}
+      status={status}
+      subscribeLoading={subscribeLoading}
+      subscriberCount={subscriberCount}
+      toggleSubscribe={toggleSubscribe}
+    />
   );
 }

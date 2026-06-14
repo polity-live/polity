@@ -1,15 +1,5 @@
-import { BadgeControl } from '@/features/shared/ui/status';
-import { FormControlLabel } from '@/features/shared/ui/form';
-import { useState, useMemo } from 'react';
-import { Button } from '@/features/shared/ui/ui/button';
-import { Card } from '@/features/shared/ui/ui/card';
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
-import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
-import { useAllGroups } from '@/zero/groups/useGroupState';
-import { X, Check, Link as LinkIcon } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { toast } from '@/features/shared/ui/ui/sonner';
+import { useGroupRelationshipsInputController } from '../../hooks/useGroupRelationshipsInputController';
+import { GroupRelationshipsInputView } from './GroupRelationshipsInputView';
 
 type RelationshipType = 'isParent' | 'isChild';
 
@@ -32,196 +22,22 @@ interface GroupRelationshipsInputProps {
   onChange: (links: GroupLink[]) => void;
 }
 
-const RIGHT_KEYS: WithRight[] = [
-  'informationRight',
-  'amendmentRight',
-  'rightToSpeak',
-  'activeVotingRight',
-  'passiveVotingRight',
-];
-
 export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsInputProps) {
-  const { t } = useTranslation();
-  const { groups } = useAllGroups();
-  const [selectedGroupId, setSelectedGroupId] = useState('');
-  const [relationshipType, setRelationshipType] = useState<RelationshipType>('isParent');
-  const [selectedRights, setSelectedRights] = useState<Set<WithRight>>(new Set());
-
-  const availableGroups = useMemo(
-    () => groups.filter(g => !value.some(link => link.groupId === g.id)),
-    [groups, value]
-  );
-
-  const toggleRight = (right: WithRight) => {
-    const next = new Set(selectedRights);
-    if (next.has(right)) next.delete(right);
-    else next.add(right);
-    setSelectedRights(next);
-  };
-
-  const handleAdd = () => {
-    if (!selectedGroupId || selectedRights.size === 0) {
-      toast.error(t('pages.create.group.selectGroupAndRights'));
-      return;
-    }
-    const group = groups.find(g => g.id === selectedGroupId);
-    if (!group) return;
-
-    const existing = value.find(link => link.groupId === selectedGroupId);
-    if (existing) {
-      onChange(
-        value.map(link =>
-          link.groupId === selectedGroupId
-            ? { ...link, rights: Array.from(selectedRights), relationshipType }
-            : link
-        )
-      );
-      toast.info(t('pages.create.group.groupAlreadyLinked'));
-    } else {
-      onChange([
-        ...value,
-        {
-          groupId: selectedGroupId,
-          groupName: group.name || '',
-          relationshipType,
-          rights: Array.from(selectedRights),
-        },
-      ]);
-    }
-
-    setSelectedGroupId('');
-    setSelectedRights(new Set());
-  };
-
-  const handleRemove = (groupId: string) => {
-    onChange(value.filter(link => link.groupId !== groupId));
-  };
+  const controller = useGroupRelationshipsInputController({ value, onChange });
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <FormControlLabel>{t('pages.create.group.linkGroupsOptional')}</FormControlLabel>
-        <BadgeControl variant="secondary">
-          {value.length} {t('pages.create.group.linked')}
-        </BadgeControl>
-      </div>
-      <p className="text-muted-foreground text-sm">
-        {t('pages.create.group.requestRelationships')}
-      </p>
-
-      {/* Group search */}
-      <div className="space-y-2">
-        <FormControlLabel>{t('pages.create.group.selectGroup')}</FormControlLabel>
-        <TypeaheadSearch
-          items={toTypeaheadItems(
-            availableGroups,
-            'group',
-            g => g.name || 'Group',
-            g => (typeof g.description === 'string' ? g.description.substring(0, 60) : undefined),
-            undefined,
-            g => `/group/${g.id}`
-          )}
-          value={selectedGroupId}
-          onChange={(item: TypeaheadItem | null) => setSelectedGroupId(item?.id ?? '')}
-          placeholder={t('pages.create.group.searchGroups')}
-        />
-      </div>
-
-      {/* Relationship type & rights (only when group selected) */}
-      {selectedGroupId && (
-        <>
-          <div className="space-y-2">
-            <FormControlLabel>{t('pages.create.group.relationshipType')}</FormControlLabel>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                variant={relationshipType === 'isParent' ? 'default' : 'outline'}
-                onClick={() => setRelationshipType('isParent')}
-              >
-                {t('pages.create.group.theyAreParent')}
-              </Button>
-              <Button
-                type="button"
-                variant={relationshipType === 'isChild' ? 'default' : 'outline'}
-                onClick={() => setRelationshipType('isChild')}
-              >
-                {t('pages.create.group.theyAreChild')}
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <FormControlLabel>{t('pages.create.group.selectRights')}</FormControlLabel>
-            <div className="grid grid-cols-2 gap-2">
-              {RIGHT_KEYS.map(right => (
-                <Button
-                  key={right}
-                  type="button"
-                  variant={selectedRights.has(right) ? 'default' : 'outline'}
-                  onClick={() => toggleRight(right)}
-                  className="h-auto justify-start py-3"
-                >
-                  {selectedRights.has(right) && <Check className="mr-2 h-4 w-4" />}
-                  <span className="text-sm">{t(`pages.create.group.rights.${right}`)}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <Button
-            type="button"
-            onClick={handleAdd}
-            disabled={selectedRights.size === 0}
-            className="w-full"
-          >
-            <LinkIcon className="mr-2 h-4 w-4" />
-            {t('pages.create.group.addGroupLink')}
-          </Button>
-        </>
-      )}
-
-      {/* Linked groups list */}
-      {value.length > 0 && (
-        <div className="mt-4 space-y-2">
-          <FormControlLabel className="text-sm">
-            {t('pages.create.group.linkedGroups')}
-          </FormControlLabel>
-          <div className="space-y-2">
-            {value.map(link => (
-              <Card key={link.groupId} className="p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <div className="mb-1 flex items-center gap-2">
-                      <span className="font-medium">{link.groupName}</span>
-                      <BadgeControl variant="outline" size="xs">
-                        {link.relationshipType === 'isParent'
-                          ? t('pages.create.group.parent')
-                          : t('pages.create.group.child')}
-                      </BadgeControl>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {link.rights.map(right => (
-                        <BadgeControl key={right} variant="secondary" size="xs">
-                          {t(`pages.create.group.rights.${right}`)}
-                        </BadgeControl>
-                      ))}
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={() => handleRemove(link.groupId)}
-                    variant="ghost"
-                    size="icon"
-                    className="hover:bg-destructive/10 hover:text-destructive h-7 w-7 rounded-full"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+    <GroupRelationshipsInputView
+      value={value}
+      groupItems={controller.groupItems}
+      selectedGroupId={controller.selectedGroupId}
+      relationshipType={controller.relationshipType}
+      selectedRights={controller.selectedRights}
+      rightKeys={controller.rightKeys}
+      onGroupChange={controller.handleGroupChange}
+      onRelationshipTypeChange={controller.setRelationshipType}
+      onToggleRight={controller.toggleRight}
+      onAdd={controller.handleAdd}
+      onRemove={controller.handleRemove}
+    />
   );
 }

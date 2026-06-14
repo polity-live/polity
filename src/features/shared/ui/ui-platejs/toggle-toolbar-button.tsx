@@ -1,19 +1,12 @@
 import * as React from 'react';
 
-import { useToggleToolbarButton, useToggleToolbarButtonState } from '@platejs/toggle/react';
-import { ListCollapseIcon } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-
 import { ToolbarButton } from '@/features/shared/ui/layout';
 
-export function ToggleToolbarButton(props: React.ComponentProps<typeof ToolbarButton>) {
-  const state = useToggleToolbarButtonState();
-  const { props: buttonProps } = useToggleToolbarButton(state);
-  const { t } = useTranslation();
+import { useToggleToolbarButtonController } from './useToggleToolbarButtonController';
+import { ToggleToolbarButtonView } from './ToggleToolbarButtonView';
 
-  return (
-    <ToolbarButton {...props} {...buttonProps} tooltip={t('plateJs.toolbar.toggleList')}>
-      <ListCollapseIcon />
-    </ToolbarButton>
-  );
+export function ToggleToolbarButton(props: React.ComponentProps<typeof ToolbarButton>) {
+  const viewProps = useToggleToolbarButtonController(props);
+
+  return <ToggleToolbarButtonView {...viewProps} />;
 }

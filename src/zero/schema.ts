@@ -26,6 +26,7 @@ import {
 import {
   amendment,
   amendmentCollaborator,
+  amendmentStreetDesign,
   amendmentPath,
   amendmentPathSegment,
   supportConfirmation,
@@ -158,6 +159,7 @@ const zeroTables = [
   // Amendments
   amendment,
   amendmentCollaborator,
+  amendmentStreetDesign,
   amendmentPath,
   amendmentPathSegment,
   supportConfirmation,
@@ -331,6 +333,7 @@ export type AmendmentSupportVote = Row<Schema['tables']['amendment_support_vote'
 export type ChangeRequest = Row<Schema['tables']['change_request']>;
 export type ChangeRequestVote = Row<Schema['tables']['change_request_vote']>;
 export type AmendmentCollaborator = Row<Schema['tables']['amendment_collaborator']>;
+export type AmendmentStreetDesign = Row<Schema['tables']['amendment_street_design']>;
 export type AmendmentPath = Row<Schema['tables']['amendment_path']>;
 export type AmendmentPathSegment = Row<Schema['tables']['amendment_path_segment']>;
 export type SupportConfirmation = Row<Schema['tables']['support_confirmation']>;

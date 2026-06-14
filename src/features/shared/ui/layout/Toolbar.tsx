@@ -278,28 +278,80 @@ function withTooltip<T extends React.ElementType>(Component: T) {
     tooltipTriggerProps,
     ...props
   }: TooltipProps<T>) {
-    const [mounted, setMounted] = React.useState(false);
-
-    React.useEffect(() => {
-      setMounted(true);
-    }, []);
-
-    const component = <Component {...(props as React.ComponentProps<T>)} />;
-
-    if (tooltip && mounted) {
-      return (
-        <Tooltip {...tooltipProps}>
-          <TooltipTrigger asChild {...tooltipTriggerProps}>
-            {component}
-          </TooltipTrigger>
-
-          <TooltipContent {...tooltipContentProps}>{tooltip}</TooltipContent>
-        </Tooltip>
-      );
-    }
-
-    return component;
+    return (
+      <ToolbarTooltipContainer
+        Component={Component}
+        componentProps={props as React.ComponentProps<T>}
+        tooltip={tooltip}
+        tooltipContentProps={tooltipContentProps}
+        tooltipProps={tooltipProps}
+        tooltipTriggerProps={tooltipTriggerProps}
+      />
+    );
   };
+}
+
+export function ToolbarTooltipContainer<T extends React.ElementType>({
+  Component,
+  componentProps,
+  tooltip,
+  tooltipContentProps,
+  tooltipProps,
+  tooltipTriggerProps,
+}: Omit<ToolbarTooltipWrapperViewProps<T>, 'mounted'>) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <ToolbarTooltipWrapperView
+      Component={Component}
+      componentProps={componentProps}
+      mounted={mounted}
+      tooltip={tooltip}
+      tooltipContentProps={tooltipContentProps}
+      tooltipProps={tooltipProps}
+      tooltipTriggerProps={tooltipTriggerProps}
+    />
+  );
+}
+
+interface ToolbarTooltipWrapperViewProps<T extends React.ElementType> {
+  Component: T;
+  componentProps: React.ComponentProps<T>;
+  mounted: boolean;
+  tooltip?: React.ReactNode;
+  tooltipContentProps?: Omit<React.ComponentPropsWithoutRef<typeof TooltipContent>, 'children'>;
+  tooltipProps?: Omit<React.ComponentPropsWithoutRef<typeof Tooltip>, 'children'>;
+  tooltipTriggerProps?: React.ComponentPropsWithoutRef<typeof TooltipTrigger>;
+}
+
+function ToolbarTooltipWrapperView<T extends React.ElementType>({
+  Component,
+  componentProps,
+  mounted,
+  tooltip,
+  tooltipContentProps,
+  tooltipProps,
+  tooltipTriggerProps,
+}: ToolbarTooltipWrapperViewProps<T>) {
+  const component = <Component {...componentProps} />;
+
+  if (tooltip && mounted) {
+    return (
+      <Tooltip {...tooltipProps}>
+        <TooltipTrigger asChild {...tooltipTriggerProps}>
+          {component}
+        </TooltipTrigger>
+
+        <TooltipContent {...tooltipContentProps}>{tooltip}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return component;
 }
 
 function TooltipContent({

@@ -99,7 +99,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
   searchPlaceholder,
   searchQuery,
 }: PqlToolbarViewProps<TItem, TFieldKey>) {
-  const getField = (fieldKey: TFieldKey) => fields.find(field => field.key === fieldKey);
+  const getField = (fieldKey: TFieldKey) => fields.find((field: any) => field.key === fieldKey);
 
   return (
     <>
@@ -114,7 +114,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
 
           {activeBadges.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {activeBadges.map(badge => (
+              {activeBadges.map((badge: any) => (
                 <BadgeControl key={badge.id} variant="secondary" className="gap-1">
                   <span>{badge.label}</span>
                   <Button
@@ -158,7 +158,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
 
                 <CollapsibleContent className="border-t px-4 py-4">
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {quickFilters.map(quickFilter => {
+                    {quickFilters.map((quickFilter: PqlQuickFilterDefinition<TFieldKey>) => {
                       const field = getField(quickFilter.fieldKey);
                       const values = quickFilterValues[quickFilter.fieldKey] ?? [];
                       const options = field?.options ?? [];
@@ -218,7 +218,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                               }
                               showLabel={false}
                               placeholder={quickFilter.placeholder ?? 'Add a tag'}
-                              suggestions={options.map(option => option.value)}
+                              suggestions={options.map((option: any) => option.value)}
                             />
                           ) : quickFilter.inputKind === 'date' ? (
                             <FormControlInput
@@ -233,7 +233,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                             />
                           ) : (
                             <div className="flex flex-wrap gap-2">
-                              {options.map(option => {
+                              {options.map((option: any) => {
                                 const isActive = values.includes(option.value);
                                 return (
                                   <Button
@@ -305,7 +305,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    {savedFilters.map(filter => {
+                    {savedFilters.map((filter: any) => {
                       const isActive = activeCustomFilterIds.includes(filter.id);
                       return (
                         <div

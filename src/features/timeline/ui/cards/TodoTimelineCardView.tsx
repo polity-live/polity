@@ -204,8 +204,8 @@ export function TodoTimelineCardView({
             >
               <div className="flex flex-col gap-1">
                 {(['pending', 'in_progress', 'completed', 'cancelled'] as TodoStatus[])
-                  .filter(status => status !== currentStatus)
-                  .map(status => (
+                  .filter((status: TodoStatus) => status !== currentStatus)
+                  .map((status: TodoStatus) => (
                     <Button
                       key={status}
                       variant="ghost"

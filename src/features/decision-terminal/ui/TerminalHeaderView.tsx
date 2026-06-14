@@ -89,7 +89,7 @@ export function TerminalHeaderView({
 
       <div className="flex flex-col gap-2 px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-1">
-          {filters.map(filter => (
+          {filters.map((filter: any) => (
             <Button
               key={filter.value}
               variant={activeFilter === filter.value ? 'secondary' : 'ghost'}

@@ -55,7 +55,7 @@ export function SupporterLocalityMapView({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
         />
-        {items.map(item => {
+        {items.map((item: any) => {
           const isActive = activeGroupId === item.groupId;
 
           return (

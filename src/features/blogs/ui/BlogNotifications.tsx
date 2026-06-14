@@ -1,19 +1,14 @@
 'use client';
 
-import { PageWrapper } from '@/layout/page-wrapper';
-import { EntityNotifications } from '@/features/notifications/ui/EntityNotifications.tsx';
-import { useBlogState } from '@/zero/blogs/useBlogState';
+import { useBlogNotificationsController } from '../hooks/useBlogNotificationsController';
+import { BlogNotificationsView } from './BlogNotificationsView';
 
 interface BlogNotificationsProps {
   blogId: string;
 }
 
 export function BlogNotifications({ blogId }: BlogNotificationsProps) {
-  const { blog } = useBlogState({ blogId });
+  const { entityName } = useBlogNotificationsController({ blogId });
 
-  return (
-    <PageWrapper>
-      <EntityNotifications entityId={blogId} entityType="blog" entityName={blog?.title || 'Blog'} />
-    </PageWrapper>
-  );
+  return <BlogNotificationsView blogId={blogId} entityName={entityName} />;
 }

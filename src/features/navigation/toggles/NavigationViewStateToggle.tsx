@@ -1,7 +1,11 @@
 import { useNavigationViewStateToggleController } from '@/features/navigation/hooks/useNavigationViewStateToggleController';
-import { StateToggle } from './state-toggle';
-
+import { NavigationViewStateToggleView } from './NavigationViewStateToggleView';
 export function NavigationViewStateToggle() {
   const { navigationView, setNavigationView } = useNavigationViewStateToggleController();
-  return <StateToggle currentState={navigationView} onStateChange={setNavigationView} />;
+  return (
+    <NavigationViewStateToggleView
+      navigationView={navigationView}
+      setNavigationView={setNavigationView}
+    />
+  );
 }

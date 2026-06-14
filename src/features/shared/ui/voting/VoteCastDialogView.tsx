@@ -94,8 +94,8 @@ export function VoteCastDialogView({
 }: VoteCastDialogViewProps) {
   const isElection = Boolean(candidates?.length);
   const selectedCandidates =
-    candidates?.filter(candidate => selectedCandidateIds.includes(candidate.id)) ?? [];
-  const selectedChoice = choices?.find(choice => choice.id === selectedChoiceId);
+    candidates?.filter((candidate: any) => selectedCandidateIds.includes(candidate.id)) ?? [];
+  const selectedChoice = choices?.find((choice: any) => choice.id === selectedChoiceId);
   const assignedVoteCount = selectedCandidateIds.length;
   const hasSelection = isElection ? selectedCandidateIds.length > 0 : Boolean(selectedChoiceId);
 
@@ -141,7 +141,7 @@ export function VoteCastDialogView({
                     {labels.electionModeSummary ? <p>{labels.electionModeSummary}</p> : null}
                   </div>
                 ) : null}
-                {candidates.map(candidate => {
+                {candidates.map((candidate: any) => {
                   const isSelected = selectedCandidateIds.includes(candidate.id);
 
                   return (
@@ -181,7 +181,7 @@ export function VoteCastDialogView({
               </>
             ) : choices && choices.length > 0 ? (
               <div className="grid gap-3">
-                {choices.map(choice => {
+                {choices.map((choice: any) => {
                   const isSelected = selectedChoiceId === choice.id;
 
                   return (
@@ -220,7 +220,7 @@ export function VoteCastDialogView({
             <p className="text-muted-foreground mb-2 text-sm font-medium">{labels.yourChoice}:</p>
             {isElection && selectedCandidates.length > 0 ? (
               <div className="space-y-2">
-                {selectedCandidates.map(candidate => (
+                {selectedCandidates.map((candidate: any) => (
                   <div key={candidate.id} className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={candidate.avatar} alt={candidate.name} />

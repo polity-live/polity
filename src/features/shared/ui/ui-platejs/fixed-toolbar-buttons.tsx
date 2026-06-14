@@ -1,54 +1,13 @@
-import {
-  ArrowUpToLineIcon,
-  BaselineIcon,
-  BoldIcon,
-  Code2Icon,
-  HighlighterIcon,
-  ItalicIcon,
-  PaintBucketIcon,
-  StrikethroughIcon,
-  UnderlineIcon,
-  WandSparklesIcon,
-} from 'lucide-react';
-import { KEYS } from 'platejs';
 import { useEditorReadOnly } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
 
-import { AIToolbarButton } from './ai-toolbar-button.tsx';
-import { AlignToolbarButton } from './align-toolbar-button.tsx';
-import { ChartToolbarButton } from './chart-toolbar-button.tsx';
-import { CommentToolbarButton } from './comment-toolbar-button.tsx';
-import { EmojiToolbarButton } from './emoji-toolbar-button.tsx';
-import { ExportToolbarButton } from './export-toolbar-button.tsx';
-import { FontColorToolbarButton } from './font-color-toolbar-button.tsx';
-import { FontSizeToolbarButton } from './font-size-toolbar-button.tsx';
-import { RedoToolbarButton, UndoToolbarButton } from './history-toolbar-button.tsx';
-import { ImportToolbarButton } from './import-toolbar-button.tsx';
-import { IndentToolbarButton, OutdentToolbarButton } from './indent-toolbar-button.tsx';
-import { InsertToolbarButton } from './insert-toolbar-button.tsx';
-import { LineHeightToolbarButton } from './line-height-toolbar-button.tsx';
-import { LinkToolbarButton } from './link-toolbar-button.tsx';
-import {
-  BulletedListToolbarButton,
-  NumberedListToolbarButton,
-  TodoListToolbarButton,
-} from './list-toolbar-button.tsx';
-import { MarkToolbarButton } from './mark-toolbar-button.tsx';
-import { MediaToolbarButton } from './media-toolbar-button.tsx';
-import { ModeToolbarButton } from './mode-toolbar-button.tsx';
-import { MoreToolbarButton } from './more-toolbar-button.tsx';
-import { TableToolbarButton } from './table-toolbar-button.tsx';
-import { ToggleToolbarButton } from './toggle-toolbar-button.tsx';
-import { ToolbarGroup } from '@/features/shared/ui/layout';
-import { TurnIntoToolbarButton } from './turn-into-toolbar-button.tsx';
 import { useModeContext } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
-import { cn } from '@/features/shared/utils/utils.ts';
 
 interface FixedToolbarButtonsProps {
   className?: string;
   showModeToolbarButton?: boolean;
 }
-
+import { FixedToolbarButtonsView } from './FixedToolbarButtonsView';
 export function FixedToolbarButtons({
   className,
   showModeToolbarButton = true,
@@ -56,125 +15,15 @@ export function FixedToolbarButtons({
   const readOnly = useEditorReadOnly();
   const { t } = useTranslation();
   const { currentMode, onModeChange, isOwnerOrCollaborator } = useModeContext();
-
   return (
-    <div className={cn('flex w-full min-w-max items-center', className)}>
-      <ToolbarGroup>
-        <MarkToolbarButton nodeType={KEYS.highlight} tooltip={t('plateJs.toolbar.highlight')}>
-          <HighlighterIcon />
-        </MarkToolbarButton>
-        <CommentToolbarButton />
-      </ToolbarGroup>
-
-      {showModeToolbarButton && (
-        <ToolbarGroup>
-          <ModeToolbarButton
-            currentMode={currentMode}
-            onModeChange={onModeChange}
-            isOwnerOrCollaborator={isOwnerOrCollaborator}
-          />
-        </ToolbarGroup>
-      )}
-
-      {!readOnly && (
-        <>
-          <ToolbarGroup>
-            <UndoToolbarButton />
-            <RedoToolbarButton />
-          </ToolbarGroup>
-
-          <ToolbarGroup>
-            <AIToolbarButton tooltip={t('plateJs.toolbar.aiCommands')}>
-              <WandSparklesIcon />
-            </AIToolbarButton>
-          </ToolbarGroup>
-
-          <ToolbarGroup>
-            <ExportToolbarButton>
-              <ArrowUpToLineIcon />
-            </ExportToolbarButton>
-
-            <ImportToolbarButton />
-          </ToolbarGroup>
-
-          <ToolbarGroup>
-            <InsertToolbarButton />
-            <TurnIntoToolbarButton />
-            <FontSizeToolbarButton />
-          </ToolbarGroup>
-
-          <ToolbarGroup>
-            <MarkToolbarButton nodeType={KEYS.bold} tooltip={t('plateJs.toolbar.bold')}>
-              <BoldIcon />
-            </MarkToolbarButton>
-
-            <MarkToolbarButton nodeType={KEYS.italic} tooltip={t('plateJs.toolbar.italic')}>
-              <ItalicIcon />
-            </MarkToolbarButton>
-
-            <MarkToolbarButton nodeType={KEYS.underline} tooltip={t('plateJs.toolbar.underline')}>
-              <UnderlineIcon />
-            </MarkToolbarButton>
-
-            <MarkToolbarButton
-              nodeType={KEYS.strikethrough}
-              tooltip={t('plateJs.toolbar.strikethrough')}
-            >
-              <StrikethroughIcon />
-            </MarkToolbarButton>
-
-            <MarkToolbarButton nodeType={KEYS.code} tooltip={t('plateJs.toolbar.code')}>
-              <Code2Icon />
-            </MarkToolbarButton>
-
-            <FontColorToolbarButton nodeType={KEYS.color} tooltip={t('plateJs.toolbar.textColor')}>
-              <BaselineIcon />
-            </FontColorToolbarButton>
-
-            <FontColorToolbarButton
-              nodeType={KEYS.backgroundColor}
-              tooltip={t('plateJs.toolbar.backgroundColor')}
-            >
-              <PaintBucketIcon />
-            </FontColorToolbarButton>
-          </ToolbarGroup>
-
-          <ToolbarGroup>
-            <AlignToolbarButton />
-
-            <NumberedListToolbarButton />
-            <BulletedListToolbarButton />
-            <TodoListToolbarButton />
-            <ToggleToolbarButton />
-          </ToolbarGroup>
-
-          <ToolbarGroup>
-            <LinkToolbarButton />
-            <TableToolbarButton />
-            <ChartToolbarButton />
-            <EmojiToolbarButton />
-          </ToolbarGroup>
-
-          <ToolbarGroup>
-            <MediaToolbarButton nodeType={KEYS.img} />
-            <MediaToolbarButton nodeType={KEYS.video} />
-            <MediaToolbarButton nodeType={KEYS.audio} />
-            <MediaToolbarButton nodeType={KEYS.file} />
-          </ToolbarGroup>
-
-          <ToolbarGroup>
-            <LineHeightToolbarButton />
-            <OutdentToolbarButton />
-            <IndentToolbarButton />
-          </ToolbarGroup>
-
-          <ToolbarGroup>
-            <MoreToolbarButton />
-          </ToolbarGroup>
-        </>
-      )}
-
-      <div className="grow" />
-    </div>
+    <FixedToolbarButtonsView
+      className={className}
+      showModeToolbarButton={showModeToolbarButton}
+      readOnly={readOnly}
+      t={t}
+      currentMode={currentMode}
+      onModeChange={onModeChange}
+      isOwnerOrCollaborator={isOwnerOrCollaborator}
+    />
   );
 }

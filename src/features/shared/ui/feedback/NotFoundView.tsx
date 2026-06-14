@@ -1,0 +1,45 @@
+import { Link } from '@tanstack/react-router';
+import { Button } from '@/features/shared/ui/ui/button.tsx';
+import { GITHUB_ISSUES_URL, SUPPORT_EMAIL } from '@/features/shared/constants';
+export interface NotFoundViewProps {
+  t: any;
+  router: any;
+}
+
+export function NotFoundView({ t, router }: NotFoundViewProps) {
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
+      <div className="space-y-2">
+        <h1 className="text-muted-foreground text-6xl font-bold">404</h1>
+        <h2 className="text-2xl font-semibold">{t('pages.notFound.title')}</h2>
+        <p className="text-muted-foreground">{t('pages.notFound.description')}</p>
+      </div>
+      <div className="flex gap-3">
+        <Button variant="outline" onClick={() => router.history.back()}>
+          {t('pages.notFound.goBack')}
+        </Button>
+        <Button asChild>
+          <Link to="/home">{t('pages.notFound.goHome')}</Link>
+        </Button>
+      </div>
+      <div className="mt-2 max-w-md border-t pt-4">
+        <p className="text-muted-foreground text-sm">
+          {t('errors.contactHint')}{' '}
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-foreground underline">
+            {SUPPORT_EMAIL}
+          </a>{' '}
+          {t('errors.contactHintOr')}{' '}
+          <a
+            href={GITHUB_ISSUES_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-foreground underline"
+          >
+            {t('errors.contactHintFileIssue')}
+          </a>
+          .
+        </p>
+      </div>
+    </div>
+  );
+}

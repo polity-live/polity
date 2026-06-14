@@ -87,6 +87,33 @@ export function useAmendmentActions() {
     [zero]
   );
 
+  const createStreetDesign = useCallback(
+    (args: Parameters<typeof mutators.amendments.createStreetDesign>[0]) => {
+      const result = zero.mutate(mutators.amendments.createStreetDesign(args));
+      onServerError(result, () => toast.error(t('features.amendments.toasts.updateFailed')));
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const updateStreetDesign = useCallback(
+    (args: Parameters<typeof mutators.amendments.updateStreetDesign>[0]) => {
+      const result = zero.mutate(mutators.amendments.updateStreetDesign(args));
+      onServerError(result, () => toast.error(t('features.amendments.toasts.updateFailed')));
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const deleteStreetDesign = useCallback(
+    (id: string) => {
+      const result = zero.mutate(mutators.amendments.deleteStreetDesign({ id }));
+      onServerError(result, () => toast.error(t('features.amendments.toasts.deleteFailed')));
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
   // ── Workflow ────────────────────────────────────────────────────────
   const updateEditingMode = useCallback(
     (id: string, editingMode: string) => {
@@ -476,6 +503,9 @@ export function useAmendmentActions() {
     leaveCollaboration,
     acceptInvitation,
     updateCollaborator,
+    createStreetDesign,
+    updateStreetDesign,
+    deleteStreetDesign,
 
     // Workflow
     updateEditingMode,

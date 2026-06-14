@@ -172,7 +172,7 @@ export function DiscussionsView({
           </Card>
         ) : (
           <>
-            {threads.map(thread => (
+            {threads.map((thread: any) => (
               <ThreadCard
                 key={thread.id}
                 thread={thread}

@@ -1,8 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Search } from 'lucide-react';
 import { useTypeaheadSearch } from '@/features/shared/hooks/useTypeaheadSearch';
 import {
   addUniqueTypeaheadValue,
@@ -13,10 +11,7 @@ import {
   type EntityType,
   type TypeaheadItem,
 } from '@/features/shared/logic/typeaheadHelpers';
-import { Input } from '@/features/shared/ui/ui/input';
-import { cn } from '@/features/shared/utils/utils';
-import { TypeaheadDropdown } from './TypeaheadDropdown';
-import { TypeaheadSelectedCard } from './TypeaheadSelectedCard';
+import { TypeaheadSearchBaseView } from './TypeaheadSearchBaseView';
 
 interface TypeaheadSearchBaseProps {
   entityTypes?: EntityType[];
@@ -80,7 +75,7 @@ export function TypeaheadCombobox(props: TypeaheadComboboxProps) {
   }, [query, sourceItems]);
 
   return (
-    <TypeaheadSearchBase
+    <TypeaheadSearchBaseContainer
       {...props}
       query={query}
       setQuery={setQuery}
@@ -90,12 +85,12 @@ export function TypeaheadCombobox(props: TypeaheadComboboxProps) {
   );
 }
 
-function TypeaheadSearchWithData(props: TypeaheadSearchProps) {
+export function TypeaheadSearchWithData(props: TypeaheadSearchProps) {
   const { entityTypes = [] } = props;
   const { query, setQuery, items: sourceItems, results } = useTypeaheadSearch({ entityTypes });
 
   return (
-    <TypeaheadSearchBase
+    <TypeaheadSearchBaseContainer
       {...props}
       query={query}
       setQuery={setQuery}
@@ -105,7 +100,7 @@ function TypeaheadSearchWithData(props: TypeaheadSearchProps) {
   );
 }
 
-function TypeaheadSearchBase(props: TypeaheadSearchBaseComponentProps) {
+export function TypeaheadSearchBaseContainer(props: TypeaheadSearchBaseComponentProps) {
   const {
     onInteract,
     placeholder = 'Search...',
@@ -345,103 +340,32 @@ function TypeaheadSearchBase(props: TypeaheadSearchBaseComponentProps) {
     [handleSelect, isOpen, selectedIndex, visibleResults]
   );
 
-  const dropdownContent = (
-    <TypeaheadDropdown
-      results={visibleResults}
+  return (
+    <TypeaheadSearchBaseView
+      className={className}
+      containerRef={containerRef}
+      disablePortal={disablePortal}
+      dropdownPortalRef={dropdownPortalRef}
+      dropdownStyle={dropdownStyle}
+      handleKeyDown={handleKeyDown}
+      handleRemoveSelection={handleRemoveSelection}
+      handleSelect={handleSelect}
+      inputRef={inputRef}
+      inputWrapperRef={inputWrapperRef}
+      isOpen={isOpen}
+      label={label}
+      multiple={multiple}
+      onInteract={onInteract}
+      placeholder={placeholder}
+      portalTarget={portalTarget}
       query={query}
       selectedIndex={selectedIndex}
-      onSelect={handleSelect}
-      onHoverIndex={setSelectedIndex}
+      selectedItem={selectedItem}
+      selectedItems={selectedItems}
+      setIsOpen={setIsOpen}
+      setQuery={setQuery}
+      setSelectedIndex={setSelectedIndex}
+      visibleResults={visibleResults}
     />
-  );
-
-  return (
-    <div
-      ref={containerRef}
-      tabIndex={-1}
-      className={cn(
-        'relative outline-none',
-        multiple && selectedItems.length > 0 && 'space-y-3',
-        className
-      )}
-    >
-      {label ? <label className="mb-2 block text-sm font-medium">{label}</label> : null}
-
-      {selectedItem && !isOpen ? (
-        <TypeaheadSelectedCard
-          item={selectedItem}
-          variant="compact"
-          onRemove={() => handleRemoveSelection(selectedItem.id)}
-          onClick={() => {
-            onInteract?.();
-            setIsOpen(true);
-          }}
-        />
-      ) : (
-        <div ref={inputWrapperRef} className="relative">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <Input
-            ref={inputRef}
-            placeholder={placeholder}
-            value={query}
-            onChange={event => {
-              onInteract?.();
-              setQuery(event.target.value);
-              setIsOpen(true);
-              setSelectedIndex(0);
-            }}
-            onFocus={() => {
-              onInteract?.();
-              setIsOpen(true);
-            }}
-            onKeyDown={handleKeyDown}
-            className="pl-10"
-          />
-        </div>
-      )}
-
-      {multiple && selectedItems.length > 0 ? (
-        <div data-slot="typeahead-selected-list" className="space-y-2">
-          {selectedItems.map((item: TypeaheadItem) => (
-            <TypeaheadSelectedCard
-              key={`${item.entityType}:${item.id}`}
-              item={item}
-              variant="stacked"
-              onRemove={() => handleRemoveSelection(item.id)}
-              onClick={() => {
-                onInteract?.();
-                setIsOpen(true);
-              }}
-            />
-          ))}
-        </div>
-      ) : null}
-
-      {isOpen &&
-        (disablePortal ? (
-          <div ref={dropdownPortalRef} className="absolute top-full right-0 left-0 z-[9999] mt-1">
-            {dropdownContent}
-          </div>
-        ) : portalTarget ? (
-          createPortal(
-            <div
-              ref={dropdownPortalRef}
-              data-typeahead-portal
-              style={{
-                position: 'absolute',
-                top: dropdownStyle.top,
-                left: dropdownStyle.left,
-                width: dropdownStyle.width,
-                zIndex: 9999,
-              }}
-              onPointerDown={event => event.stopPropagation()}
-              onMouseDown={event => event.stopPropagation()}
-            >
-              {dropdownContent}
-            </div>,
-            portalTarget
-          )
-        ) : null)}
-    </div>
   );
 }

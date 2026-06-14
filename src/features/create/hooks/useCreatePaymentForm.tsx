@@ -1,4 +1,3 @@
-import { FormControlLabel } from '@/features/shared/ui/form';
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
@@ -11,10 +10,10 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { toast } from '@/features/shared/ui/ui/sonner';
-import { Button } from '@/features/shared/ui/ui/button';
 import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { DirectionInput } from '../ui/inputs/DirectionInput';
 import { PaymentTypeInput } from '../ui/inputs/PaymentTypeInput';
+import { PaymentEntityTypeInput } from '../ui/inputs/PaymentEntityTypeInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import type { CreateFormConfig } from '../types/create-form.types';
@@ -177,8 +176,9 @@ export function useCreatePaymentForm(): CreateFormConfig {
           fields: [
             {
               key: 'direction',
-              kind: 'custom',
-              node: <DirectionInput value={direction} onChange={setDirection} />,
+              kind: 'customComponent',
+              component: DirectionInput,
+              props: { value: direction, onChange: setDirection },
             },
             {
               key: 'label',
@@ -192,8 +192,9 @@ export function useCreatePaymentForm(): CreateFormConfig {
             },
             {
               key: 'type',
-              kind: 'custom',
-              node: <PaymentTypeInput value={type} onChange={setType} />,
+              kind: 'customComponent',
+              component: PaymentTypeInput,
+              props: { value: type, onChange: setType },
             },
             {
               key: 'amount',
@@ -218,55 +219,34 @@ export function useCreatePaymentForm(): CreateFormConfig {
           fields: [
             {
               key: 'entity-type',
-              kind: 'custom',
-              node: (
-                <div className="space-y-4">
-                  <FormControlLabel>
-                    {direction === 'income'
-                      ? t('pages.create.payment.fromPayer')
-                      : t('pages.create.payment.toReceiver')}
-                  </FormControlLabel>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant={entityType === 'user' ? 'default' : 'outline'}
-                      onClick={() => {
-                        setEntityType('user');
-                        setEntityGroupId('');
-                      }}
-                      className="flex-1"
-                    >
-                      {t('pages.create.payment.entityUser')}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={entityType === 'group' ? 'default' : 'outline'}
-                      onClick={() => {
-                        setEntityType('group');
-                        setEntityId('');
-                      }}
-                      className="flex-1"
-                    >
-                      {t('pages.create.payment.entityGroup')}
-                    </Button>
-                  </div>
-                </div>
-              ),
+              kind: 'customComponent',
+              component: PaymentEntityTypeInput,
+              props: {
+                label:
+                  direction === 'income'
+                    ? t('pages.create.payment.fromPayer')
+                    : t('pages.create.payment.toReceiver'),
+                userLabel: t('pages.create.payment.entityUser'),
+                groupLabel: t('pages.create.payment.entityGroup'),
+                entityType,
+                onEntityTypeChange: setEntityType,
+                onClearUser: () => setEntityId(''),
+                onClearGroup: () => setEntityGroupId(''),
+              },
             },
             ...(entityType === 'user'
               ? [
                   {
                     key: 'entity-user',
-                    kind: 'custom' as const,
-                    node: (
-                      <UserSearchInput
-                        value={entityId ? [entityId] : []}
-                        onChange={ids => setEntityId(ids[0] || '')}
-                        required
-                        placeholder={t('pages.create.payment.searchUsers')}
-                        multi={false}
-                      />
-                    ),
+                    kind: 'customComponent' as const,
+                    component: UserSearchInput,
+                    props: {
+                      value: entityId ? [entityId] : [],
+                      onChange: (ids: string[]) => setEntityId(ids[0] || ''),
+                      required: true,
+                      placeholder: t('pages.create.payment.searchUsers'),
+                      multi: false,
+                    },
                   },
                 ]
               : [
@@ -293,51 +273,50 @@ export function useCreatePaymentForm(): CreateFormConfig {
           fields: [
             {
               key: 'review',
-              kind: 'custom',
-              node: (
-                <CreateSummaryStep
-                  entityType="payment"
-                  badge={t('pages.create.payment.reviewBadge')}
-                  secondaryBadge={directionLabel}
-                  title={label || 'Untitled Payment'}
-                  subtitle={`${parseFloat(amount || '0').toFixed(2)} €`}
-                  sections={[
-                    {
-                      title: t('pages.create.payment.direction'),
-                      fields: [
-                        ...(groupDisplayName
-                          ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
-                          : []),
-                        {
-                          label: t('pages.create.payment.direction'),
-                          value: directionLabel,
-                        },
-                        {
-                          label: t('pages.create.payment.typeField'),
-                          value: t(`pages.create.payment.types.${type}`),
-                        },
-                        {
-                          label: t('pages.create.payment.amount'),
-                          value: `${parseFloat(amount || '0').toFixed(2)} €`,
-                        },
-                      ],
-                    },
-                    {
-                      title: counterpartLabel,
-                      fields: [
-                        {
-                          label: t('pages.create.payment.entityGroup'),
-                          value: counterpartTypeLabel,
-                        },
-                        {
-                          label: counterpartLabel,
-                          value: selectedEntityDisplayName || t('pages.create.common.notSelected'),
-                        },
-                      ],
-                    },
-                  ]}
-                />
-              ),
+              kind: 'customComponent',
+              component: CreateSummaryStep,
+              props: {
+                entityType: 'payment',
+                badge: t('pages.create.payment.reviewBadge'),
+                secondaryBadge: directionLabel,
+                title: label || 'Untitled Payment',
+                subtitle: `${parseFloat(amount || '0').toFixed(2)} €`,
+                sections: [
+                  {
+                    title: t('pages.create.payment.direction'),
+                    fields: [
+                      ...(groupDisplayName
+                        ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
+                        : []),
+                      {
+                        label: t('pages.create.payment.direction'),
+                        value: directionLabel,
+                      },
+                      {
+                        label: t('pages.create.payment.typeField'),
+                        value: t(`pages.create.payment.types.${type}`),
+                      },
+                      {
+                        label: t('pages.create.payment.amount'),
+                        value: `${parseFloat(amount || '0').toFixed(2)} €`,
+                      },
+                    ],
+                  },
+                  {
+                    title: counterpartLabel,
+                    fields: [
+                      {
+                        label: t('pages.create.payment.entityGroup'),
+                        value: counterpartTypeLabel,
+                      },
+                      {
+                        label: counterpartLabel,
+                        value: selectedEntityDisplayName || t('pages.create.common.notSelected'),
+                      },
+                    ],
+                  },
+                ],
+              },
             },
           ],
         },

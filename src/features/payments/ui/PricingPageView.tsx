@@ -63,7 +63,7 @@ export function PricingPageView({
 
       <Section>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {tiers.map(tier => (
+          {tiers.map((tier: any) => (
             <Card
               key={tier.key}
               className={cn('flex h-full flex-col', tier.highlighted && 'border-primary shadow-md')}
@@ -104,7 +104,7 @@ export function PricingPageView({
               </CardHeader>
               <CardContent className="grow">
                 <ul className="space-y-2">
-                  {tier.features.map(feature => (
+                  {tier.features.map((feature: any) => (
                     <li key={feature} className="flex items-start gap-2 text-sm">
                       <Check className="text-primary mt-0.5 size-4 shrink-0" />
                       <span>{feature}</span>

@@ -1,10 +1,8 @@
 'use client';
 
-import { ModeSelector as EditorModeSelector } from '@/features/editor/ui/ModeSelector';
 import type { EditorMode } from '@/features/editor/types';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { useDocumentActions } from '@/zero/documents/useDocumentActions';
-import { toast } from '@/features/shared/ui/ui/sonner';
+import { useModeSelectorController } from '../hooks/useModeSelectorController';
+import { ModeSelectorView } from './ModeSelectorView';
 
 interface ModeSelectorProps {
   documentId: string;
@@ -17,22 +15,11 @@ export function ModeSelector({
   currentMode,
   isOwnerOrCollaborator,
 }: ModeSelectorProps) {
-  const { t } = useTranslation();
-  const { updateDocument } = useDocumentActions();
-
-  const handleModeChange = async (newMode: EditorMode) => {
-    await updateDocument({
-      id: documentId,
-      editing_mode: newMode,
-    });
-
-    toast.success(t('features.amendments.modeSelector.title'));
-  };
+  const { handleModeChange } = useModeSelectorController({ documentId });
 
   return (
-    <EditorModeSelector
-      entityType="amendment"
-      entityId={documentId}
+    <ModeSelectorView
+      documentId={documentId}
       currentMode={currentMode}
       isOwnerOrCollaborator={isOwnerOrCollaborator}
       onModeChange={handleModeChange}

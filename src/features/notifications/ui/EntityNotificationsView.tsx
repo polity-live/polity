@@ -239,7 +239,7 @@ function EntityNotificationList({
 
   return (
     <div className="space-y-3">
-      {notifications.map(notification => (
+      {notifications.map((notification: any) => (
         <EntityNotificationItem
           key={notification.id}
           notification={notification}

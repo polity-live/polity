@@ -1,0 +1,570 @@
+'use client';
+
+import { Button } from '@/features/shared/ui/ui/button';
+import { ArrowLeft, UserPlus, Loader2, Plus, Trash2, Shield } from 'lucide-react';
+import {
+  DataTable,
+  MatrixCheckbox,
+  MatrixTable,
+  MatrixTableBody,
+  MatrixTableCell,
+  MatrixTableHead,
+  MatrixTableHeader,
+  MatrixTableRow,
+} from '@/features/shared/ui/data-table';
+import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { ScrollableTabsList } from '@/features/shared/ui/navigation';
+import { InlineCheckbox, SearchField, ValidatedField } from '@/features/shared/ui/form';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import {
+  Dialog,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/features/shared/ui/ui/dialog';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/features/shared/ui/ui/command';
+import type { User } from '@/zero';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
+
+// Define available action rights for blogs
+const ACTION_RIGHTS = [
+  {
+    resource: 'blogs',
+    action: 'update',
+    label: translateText('generated.inline.0036_update_blog_09ea894c'),
+  },
+  {
+    resource: 'blogs',
+    action: 'delete',
+    label: translateText('generated.inline.0037_delete_blog_9c6feb0f'),
+  },
+  {
+    resource: 'blogBloggers',
+    action: 'manage',
+    label: translateText('generated.inline.0038_manage_bloggers_58827569'),
+  },
+  {
+    resource: 'notifications',
+    action: 'viewNotifications',
+    label: translateText('generated.inline.0039_view_notifications_26280ee0'),
+  },
+  {
+    resource: 'notifications',
+    action: 'manageNotifications',
+    label: translateText('generated.inline.0040_manage_notifications_32133a0a'),
+  },
+];
+
+function displayName(u: Pick<User, 'first_name' | 'last_name'> | undefined | null): string {
+  if (!u) return 'Unknown';
+  return [u.first_name, u.last_name].filter(Boolean).join(' ') || 'Unknown';
+}
+
+function initials(u: Pick<User, 'first_name' | 'last_name'> | undefined | null): string {
+  if (!u) return 'U';
+  return u.first_name?.charAt(0) || u.last_name?.charAt(0) || 'U';
+}
+export interface BlogBloggersManagerViewProps {
+  blogId: any;
+  blogActions: any;
+  groupActions: any;
+  blogWithManagement: any;
+  allUsers: any;
+  usersData: any;
+  searchQuery: any;
+  setSearchQuery: any;
+  inviteSearchQuery: any;
+  setInviteSearchQuery: any;
+  selectedUsers: any;
+  setSelectedUsers: any;
+  inviteDialogOpen: any;
+  setInviteDialogOpen: any;
+  isInviting: any;
+  setIsInviting: any;
+  activeTab: any;
+  setActiveTab: any;
+  newRoleName: any;
+  setNewRoleName: any;
+  newRoleDescription: any;
+  setNewRoleDescription: any;
+  addRoleDialogOpen: any;
+  setAddRoleDialogOpen: any;
+  blog: any;
+  bloggers: any;
+  rolesData: any;
+  isLoading: any;
+  isLoadingUsers: any;
+  error: any;
+  user: any;
+  currentUserId: any;
+  can: any;
+  canManageBloggers: any;
+  existingBloggerIds: any;
+  filteredUsers: any;
+  toggleUserSelection: any;
+  handleInviteBloggers: any;
+  handleUpdateRole: any;
+  handleRemoveBlogger: any;
+  handleToggleActionRight: any;
+  handleCreateRole: any;
+  handleDeleteRole: any;
+  filteredBloggers: any;
+  activeBloggers: any;
+  invitedBloggers: any;
+  requestedBloggers: any;
+  getCreatedAt: any;
+  invitedColumns: any;
+  activeColumns: any;
+  requestedColumns: any;
+}
+
+export function BlogBloggersManagerView({
+  searchQuery,
+  setSearchQuery,
+  inviteSearchQuery,
+  setInviteSearchQuery,
+  selectedUsers,
+  inviteDialogOpen,
+  setInviteDialogOpen,
+  isInviting,
+  activeTab,
+  setActiveTab,
+  newRoleName,
+  setNewRoleName,
+  newRoleDescription,
+  setNewRoleDescription,
+  addRoleDialogOpen,
+  setAddRoleDialogOpen,
+  blog,
+  bloggers,
+  rolesData,
+  isLoading,
+  isLoadingUsers,
+  error,
+  canManageBloggers,
+  filteredUsers,
+  toggleUserSelection,
+  handleInviteBloggers,
+  handleToggleActionRight,
+  handleCreateRole,
+  handleDeleteRole,
+  filteredBloggers,
+  activeBloggers,
+  invitedBloggers,
+  requestedBloggers,
+  invitedColumns,
+  activeColumns,
+  requestedColumns,
+}: BlogBloggersManagerViewProps) {
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !blog) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h2 className="mb-2 text-2xl font-bold">
+            {translateText('generated.inline.0239_blog_not_found_70b91de2')}
+          </h2>
+          <Button onClick={() => window.history.back()}>
+            {translateText('generated.inline.0240_go_back_f03e2d07')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto max-w-6xl p-8">
+      <div className="mb-6">
+        <Button variant="ghost" onClick={() => window.history.back()} className="mb-4">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {translateText('generated.inline.0241_back_to_blog_68c5e1c7')}
+        </Button>
+        <h1 className="text-3xl font-bold">
+          {translateText('generated.inline.0242_manage_bloggers_58827569')}
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          {translateText(
+            'generated.inline.0243_manage_blogger_access_roles_and_permissions_f_1fb4db78'
+          )}
+          {blog.title}
+        </p>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between gap-4">
+          <SearchField
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            placeholder={translateText('generated.inline.0244_search_bloggers_98b779c5')}
+            fieldClassName="flex-1"
+          />
+          {canManageBloggers && (
+            <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  {translateText('generated.inline.0245_invite_bloggers_0224f12b')}
+                </Button>
+              </DialogTrigger>
+              <ScrollableDialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>
+                    {translateText('generated.inline.0245_invite_bloggers_0224f12b')}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {translateText(
+                      'generated.inline.0246_search_and_select_users_to_invite_as_bloggers_c657d837'
+                    )}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Command className="rounded-lg border">
+                    <CommandInput
+                      placeholder={translateText('generated.inline.0247_search_users_8cdc4c09')}
+                      value={inviteSearchQuery}
+                      onValueChange={setInviteSearchQuery}
+                    />
+                    <CommandList className="max-h-[300px]">
+                      <CommandEmpty>
+                        {translateText('generated.inline.0248_no_users_found_e611ef57')}
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {isLoadingUsers ? (
+                          <div className="p-4 text-center">
+                            <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                          </div>
+                        ) : (
+                          filteredUsers?.map((u: any) => (
+                            <CommandItem
+                              key={u.id}
+                              className="flex cursor-pointer items-center space-x-2"
+                              onSelect={() => toggleUserSelection(u.id)}
+                            >
+                              <InlineCheckbox
+                                checked={selectedUsers.includes(u.id)}
+                                onCheckedChange={() => toggleUserSelection(u.id)}
+                              />
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={u.avatar || ''} />
+                                <AvatarFallback>{initials(u)}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <div className="font-medium">{displayName(u)}</div>
+                                <div className="text-muted-foreground text-sm">
+                                  @
+                                  {u.handle ||
+                                    u.email ||
+                                    translateText('generated.inline.0025_unknown_50d8b4a9')}
+                                </div>
+                              </div>
+                            </CommandItem>
+                          ))
+                        )}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                  {selectedUsers.length > 0 && (
+                    <div className="text-muted-foreground text-sm">
+                      {translateText('generated.inline.0249_selected_2e084478')}
+                      {selectedUsers.length}{' '}
+                      {selectedUsers.length === 1
+                        ? translateText('generated.inline.0026_user_12dea96f')
+                        : translateText('generated.inline.0027_users_5b7dcd14')}
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
+                    {translateText('generated.inline.0065_cancel_77dfd213')}
+                  </Button>
+                  <Button
+                    onClick={handleInviteBloggers}
+                    disabled={selectedUsers.length === 0 || isInviting}
+                  >
+                    {isInviting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {translateText('generated.inline.0113_inviting_dc7a6e8b')}
+                      </>
+                    ) : (
+                      `Invite ${selectedUsers.length || ''} ${selectedUsers.length === 1 ? translateText('generated.inline.0032_blogger_9b156370') : translateText('generated.inline.0033_bloggers_06e71e76')}`
+                    )}
+                  </Button>
+                </DialogFooter>
+              </ScrollableDialogContent>
+            </Dialog>
+          )}
+        </div>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <ScrollableTabsList>
+          <TabsTrigger value="bloggers">
+            {translateText('generated.inline.0250_bloggers_4e649307')}
+            {filteredBloggers.length})
+          </TabsTrigger>
+          <TabsTrigger value="roles">
+            {translateText('generated.inline.0251_roles_a7aef93e')}
+            {rolesData.roles.length})
+          </TabsTrigger>
+        </ScrollableTabsList>
+
+        <TabsContent value="bloggers" className="space-y-4">
+          {/* Invited Bloggers */}
+          {invitedBloggers.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {translateText('generated.inline.0252_invited_bloggers_ab803262')}
+                </CardTitle>
+                <CardDescription>
+                  {translateText(
+                    'generated.inline.0116_users_who_have_been_invited_but_haven_t_accep_6522078d'
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DataTable
+                  columns={invitedColumns}
+                  data={invitedBloggers}
+                  getRowId={(blogger: any) => blogger.id}
+                  enablePagination={false}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Active Bloggers */}
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {translateText('generated.inline.0253_active_bloggers_1806b44e')}
+              </CardTitle>
+              <CardDescription>
+                {translateText(
+                  'generated.inline.0254_users_with_blogger_access_to_this_blog_89f5e930'
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {activeBloggers.length === 0 ? (
+                <p className="text-muted-foreground py-8 text-center">
+                  {bloggers.length === 0
+                    ? translateText('generated.inline.0035_no_active_bloggers_yet_f9a61b2d')
+                    : translateText(
+                        'generated.inline.0036_no_active_bloggers_match_your_search_eae577bf'
+                      )}
+                </p>
+              ) : (
+                <DataTable
+                  columns={activeColumns}
+                  data={activeBloggers}
+                  getRowId={(blogger: any) => blogger.id}
+                  enablePagination={false}
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Pending Requests */}
+          {requestedBloggers.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {translateText('generated.inline.0256_pending_requests_45daa007')}
+                </CardTitle>
+                <CardDescription>
+                  {translateText(
+                    'generated.inline.0257_users_who_have_requested_to_be_bloggers_87cd4984'
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DataTable
+                  columns={requestedColumns}
+                  data={requestedBloggers}
+                  getRowId={(blogger: any) => blogger.id}
+                  enablePagination={false}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="roles" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    {translateText('generated.inline.0258_role_permissions_2dbfb26f')}
+                  </CardTitle>
+                  <CardDescription>
+                    {translateText(
+                      'generated.inline.0259_manage_roles_and_their_permissions_for_this_b_991517af'
+                    )}
+                  </CardDescription>
+                </div>
+                {canManageBloggers && (
+                  <Dialog open={addRoleDialogOpen} onOpenChange={setAddRoleDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="mr-2 h-4 w-4" />
+                        {translateText('generated.inline.0125_add_role_82d0afcc')}
+                      </Button>
+                    </DialogTrigger>
+                    <ScrollableDialogContent>
+                      <DialogHeader>
+                        <DialogTitle>
+                          {translateText('generated.inline.0126_add_new_role_241eb33f')}
+                        </DialogTitle>
+                        <DialogDescription>
+                          {translateText(
+                            'generated.inline.0260_create_a_new_role_with_custom_permissions_for_4c7a8490'
+                          )}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <ValidatedField
+                          label={translateText('generated.inline.0128_role_name_a8b23a08')}
+                          placeholder={translateText(
+                            'generated.inline.0261_e_g_editor_contributor_27c5d564'
+                          )}
+                          value={newRoleName}
+                          onValueChange={setNewRoleName}
+                          required
+                        />
+                        <ValidatedField
+                          label={translateText(
+                            'generated.inline.0130_description_optional_f1da5c02'
+                          )}
+                          placeholder={translateText(
+                            'generated.inline.0131_describe_this_role_s_purpose_16c2c88f'
+                          )}
+                          value={newRoleDescription}
+                          onValueChange={setNewRoleDescription}
+                        />
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setAddRoleDialogOpen(false)}
+                        >
+                          {translateText('generated.inline.0065_cancel_77dfd213')}
+                        </Button>
+                        <Button type="button" onClick={handleCreateRole}>
+                          {translateText('generated.inline.0132_create_role_5bea05a8')}
+                        </Button>
+                      </DialogFooter>
+                    </ScrollableDialogContent>
+                  </Dialog>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {rolesData.roles && rolesData.roles.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <MatrixTable>
+                    <MatrixTableHeader>
+                      <MatrixTableRow>
+                        <MatrixTableHead className="min-w-[200px]">
+                          {translateText('generated.inline.0262_permission_17857134')}
+                        </MatrixTableHead>
+                        {rolesData.roles.map((r: any) => (
+                          <MatrixTableHead key={r.id} className="min-w-[120px] text-center">
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="font-semibold">{r.name}</span>
+                              {r.description && (
+                                <span className="text-muted-foreground text-xs font-normal">
+                                  {r.description}
+                                </span>
+                              )}
+                              {canManageBloggers && r.name !== 'Owner' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="mt-1 h-6 w-6 p-0"
+                                  onClick={() => handleDeleteRole(r.id)}
+                                >
+                                  <Trash2 className="text-destructive h-3 w-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </MatrixTableHead>
+                        ))}
+                      </MatrixTableRow>
+                    </MatrixTableHeader>
+                    <MatrixTableBody>
+                      {ACTION_RIGHTS.map(({ resource, action, label }) => {
+                        const rightKey = `${resource}-${action}`;
+                        return (
+                          <MatrixTableRow key={rightKey}>
+                            <MatrixTableCell className="font-medium">{label}</MatrixTableCell>
+                            {rolesData.roles.map((r: any) => {
+                              const hasRight = r.action_rights?.some(
+                                (ar: any) => ar.resource === resource && ar.action === action
+                              );
+                              return (
+                                <MatrixTableCell key={r.id} className="text-center">
+                                  <div className="flex justify-center">
+                                    <MatrixCheckbox
+                                      checked={hasRight}
+                                      disabled={!canManageBloggers}
+                                      onCheckedChange={() =>
+                                        handleToggleActionRight(r.id, resource, action, hasRight)
+                                      }
+                                    />
+                                  </div>
+                                </MatrixTableCell>
+                              );
+                            })}
+                          </MatrixTableRow>
+                        );
+                      })}
+                    </MatrixTableBody>
+                  </MatrixTable>
+                </div>
+              ) : (
+                <div className="py-12 text-center">
+                  <Shield className="text-muted-foreground/50 mx-auto h-12 w-12" />
+                  <p className="text-muted-foreground mt-4">
+                    {translateText(
+                      'generated.inline.0134_no_roles_created_yet_click_add_role_to_create_5594310d'
+                    )}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

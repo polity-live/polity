@@ -371,6 +371,13 @@ export const navItemsAuthenticated = (
         href: `/amendment/${amendmentId}/process`,
         onClick: () => navigate({ to: `/amendment/${amendmentId}/process` }),
       },
+      {
+        id: 'streetscape',
+        label: t ? t('navigation.secondary.amendment.streetscape') : 'Strassenentwurf',
+        icon: 'Map',
+        href: `/amendment/${amendmentId}/streetscape`,
+        onClick: () => navigate({ to: `/amendment/${amendmentId}/streetscape` }),
+      },
     ];
 
     // Add items requiring view permission

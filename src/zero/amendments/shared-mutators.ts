@@ -6,6 +6,9 @@ import {
   createAmendmentCollaboratorSchema,
   updateAmendmentCollaboratorSchema,
   deleteAmendmentCollaboratorSchema,
+  createAmendmentStreetDesignSchema,
+  updateAmendmentStreetDesignSchema,
+  deleteAmendmentStreetDesignSchema,
   createAmendmentPathSchema,
   deleteAmendmentPathSchema,
   createAmendmentPathSegmentSchema,
@@ -90,6 +93,38 @@ export const amendmentSharedMutators = {
 
   removeCollaborator: defineMutator(deleteAmendmentCollaboratorSchema, async ({ tx, args }) => {
     await tx.mutate.amendment_collaborator.delete({ id: args.id });
+  }),
+
+  createStreetDesign: defineMutator(
+    createAmendmentStreetDesignSchema,
+    async ({ tx, ctx: { userID }, args }) => {
+      const now = Date.now();
+      await tx.mutate.amendment_street_design.insert({
+        ...args,
+        title: args.title ?? null,
+        bbox: args.bbox ?? null,
+        center_lat: args.center_lat ?? null,
+        center_lon: args.center_lon ?? null,
+        osm_snapshot: args.osm_snapshot ?? null,
+        design_state: args.design_state ?? null,
+        cost_catalog_version: args.cost_catalog_version ?? null,
+        cost_summary: args.cost_summary ?? null,
+        created_by_id: userID,
+        created_at: now,
+        updated_at: now,
+      });
+    }
+  ),
+
+  updateStreetDesign: defineMutator(updateAmendmentStreetDesignSchema, async ({ tx, args }) => {
+    await tx.mutate.amendment_street_design.update({
+      ...args,
+      updated_at: Date.now(),
+    });
+  }),
+
+  deleteStreetDesign: defineMutator(deleteAmendmentStreetDesignSchema, async ({ tx, args }) => {
+    await tx.mutate.amendment_street_design.delete({ id: args.id });
   }),
 
   createChangeRequest: defineMutator(

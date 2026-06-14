@@ -3,12 +3,7 @@
 import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
-import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
-import {
-  NetworkControlPanel,
-  NETWORK_FILTER_ACTIVE_CLASS_NAMES,
-} from '@/features/network/ui/NetworkControlPanel';
-import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
+import { NETWORK_FILTER_ACTIVE_CLASS_NAMES } from '@/features/network/ui/NetworkControlPanel';
 import { useNetworkFlowControls } from '@/features/network/hooks/useNetworkFlowControls';
 import { usePersistedNetworkLayout } from '@/features/network/hooks/usePersistedNetworkLayout';
 import { useEditableNetworkLayout } from '@/features/network/hooks/useEditableNetworkLayout';
@@ -26,7 +21,6 @@ import {
   filterNodesByEdges,
 } from '@/features/network/logic/networkFilterHelpers';
 import {
-  createGroupNodeLegendItem,
   getGroupNodeDisplayLabel,
   getGroupNodeStyle,
   getGroupNodeVisualVariant,
@@ -53,7 +47,6 @@ import {
 } from '../types/networkEdge.types';
 import type { CanonicalMembershipMode, NetworkGroupEntity } from '../types/network.types';
 import { deriveNormalizedGroupRelationships } from '../logic/groupConnectionDerived';
-import { Button } from '@/features/shared/ui/ui/button';
 
 interface NetworkNode extends Node {
   data: {
@@ -87,7 +80,7 @@ export function useUserNetworkFlowController({
   description,
   showGroupDialogOnClick = true,
   layoutScopeKey,
-}: UserNetworkFlowProps): React.ReactNode {
+}: UserNetworkFlowProps) {
   const { t } = useTranslation();
   const {
     savedLayout,
@@ -990,134 +983,39 @@ export function useUserNetworkFlowController({
     },
     [isInteractive, t]
   );
-
-  if (!userProfile) {
-    return (
-      <div className="bg-background flex h-full min-h-0 w-full items-center justify-center rounded-lg border">
-        <p className="text-muted-foreground">
-          {translateText('generated.inline.0803_loading_user_network_053d7b1c')}
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <NetworkFlowBase
-      nodes={filteredNodes.map(node => ({
-        ...node,
-        style: {
-          ...node.style,
-          boxShadow: selectedNodes.includes(node.id)
-            ? featureThemeClassName('floweditorUseFlowEditorThemedStyle')
-            : undefined,
-        },
-      }))}
-      edges={filteredEdges}
-      nodesDraggable={isInteractive}
-      nodesFocusable={isInteractive}
-      nodesConnectable={isInteractive}
-      edgesFocusable={isInteractive}
-      onNodesChange={isInteractive ? handleNodesChange : undefined}
-      onEdgesChange={isInteractive ? onEdgesChange : undefined}
-      onNodeClick={onNodeClick}
-      onEdgeClick={onEdgeClick}
-      onInteractiveChange={handleInteractiveChange}
-      containerClassName="h-full min-h-0"
-      panel={
-        <NetworkControlPanel
-          title={title ?? t('common.network.userNetwork')}
-          description={
-            description ??
-            t('common.network.userNetworkDescription', {
-              userName: userProfile.name,
-            })
-          }
-          panelCollapsed={panelCollapsed}
-          onPanelCollapsedChange={setPanelCollapsed}
-          legendCollapsed={legendCollapsed}
-          onLegendCollapsedChange={setLegendCollapsed}
-          legendTitle={t('common.network.legend')}
-          legendItems={[
-            {
-              id: 'user',
-              label: t('common.network.user'),
-              swatchClassName: featureThemeClassName('networkUseUserNetworkFlowThemedRoundIcon'),
-            },
-            createGroupNodeLegendItem({
-              id: 'current-group',
-              label: t('common.network.currentGroup'),
-              visualVariant: 'current',
-            }),
-            createGroupNodeLegendItem({
-              id: 'parent-group',
-              label: t('common.network.parentGroup'),
-              visualVariant: 'parent',
-            }),
-            createGroupNodeLegendItem({
-              id: 'child-group',
-              label: t('common.network.childGroup'),
-              visualVariant: 'child',
-            }),
-            createGroupNodeLegendItem({
-              id: 'sibling-group-open',
-              label: t('common.network.siblingGroupOpen'),
-              visualVariant: 'sibling-open',
-            }),
-            createGroupNodeLegendItem({
-              id: 'sibling-group-elected',
-              label: t('common.network.siblingGroupElected'),
-              visualVariant: 'sibling-elected',
-            }),
-            createGroupNodeLegendItem({
-              id: 'sibling-group-parliament',
-              label: t('common.network.siblingGroupParliament'),
-              visualVariant: 'sibling-parliament',
-            }),
-          ]}
-          depthFilters={depthFilters}
-          isInteractive={isInteractive}
-          onInteractiveChange={handleInteractiveChange}
-          directLabel={t('common.network.direct')}
-          indirectLabel={t('common.network.indirect')}
-          lockLabel={t('common.network.lockEditor')}
-          unlockLabel={t('common.network.unlockEditor')}
-          controlsExtraContent={
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleSaveLayout}
-                disabled={isLayoutLoading || !hasLayoutChanges}
-              >
-                {t('common.network.saveLayout')}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleResetLayout}
-                disabled={isLayoutLoading || (!hasSavedLayout && !hasLayoutChanges)}
-              >
-                {t('common.network.resetLayout')}
-              </Button>
-            </>
-          }
-          showRightsFilter={!filterRight}
-          selectedRights={selectedRights}
-          onToggleRight={toggleRight}
-          connectionDirectionFilters={connectionDirectionFilters}
-          relationshipStatusFilters={relationshipStatusFilters}
-          showConnectionDirectionLegend
-          connectionDirectionLegendTitle={t('common.network.connectionDirections')}
-          bidirectionalConnectionLabel={t('common.network.bidirectional')}
-          incomingConnectionLabel={t('common.network.incomingConnections')}
-          outgoingConnectionLabel={t('common.network.outgoingConnections')}
-          filterRight={filterRight}
-          filteredByPrefix={t('common.network.filteredBy')}
-          showRightsLegend
-        />
-      }
-    >
-      <NetworkEntityDialog open={dialogOpen} onOpenChange={setDialogOpen} entity={selectedEntity} />
-    </NetworkFlowBase>
-  );
+  return {
+    connectionDirectionFilters,
+    depthFilters,
+    description,
+    dialogOpen,
+    edges,
+    filteredEdges,
+    filteredNodes,
+    filterRight,
+    handleInteractiveChange,
+    handleNodesChange,
+    handleResetLayout,
+    handleSaveLayout,
+    hasLayoutChanges,
+    hasSavedLayout,
+    isInteractive,
+    isLayoutLoading,
+    legendCollapsed,
+    nodes,
+    onEdgeClick,
+    onEdgesChange,
+    onNodeClick,
+    panelCollapsed,
+    relationshipStatusFilters,
+    selectedEntity,
+    selectedNodes,
+    selectedRights,
+    setDialogOpen,
+    setLegendCollapsed,
+    setPanelCollapsed,
+    t,
+    title,
+    toggleRight,
+    userProfile,
+  };
 }

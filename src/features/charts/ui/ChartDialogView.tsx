@@ -87,7 +87,7 @@ function EurostatStepGuide({
 
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-      {steps.map((step, index) => (
+      {steps.map((step: any, index: number) => (
         <div
           key={step.label}
           className="border-border bg-background flex min-h-11 items-center gap-2 border px-3 py-2 text-sm"
@@ -133,7 +133,7 @@ function ChartTypePicker({
       variant="outline"
       className="grid grid-cols-2 sm:grid-cols-4"
     >
-      {options.map(option => (
+      {options.map((option: any) => (
         <ToggleGroupItem key={option.value} value={option.value} className="min-w-0 gap-2 px-2">
           <option.icon className="size-4 shrink-0" />
           <span className="truncate">{option.label}</span>
@@ -164,7 +164,7 @@ function MappingSelect({
       onValueChange={next => onChange(next === NO_SERIES ? null : next)}
       options={[
         ...(optional ? [{ value: NO_SERIES, label: t('plateJs.chart.none') }] : []),
-        ...columns.map(column => ({ value: column, label: column })),
+        ...columns.map((column: any) => ({ value: column, label: column })),
       ]}
     />
   );
@@ -339,7 +339,7 @@ export function ChartDialogView({ model }: ChartDialogViewProps) {
                   ) : null}
                   {searchResults.length > 0 ? (
                     <div className="bg-popover absolute top-full right-0 left-0 z-20 mt-1 max-h-64 overflow-y-auto border shadow-md">
-                      {searchResults.map(entry => (
+                      {searchResults.map((entry: any) => (
                         <Button
                           key={entry.code}
                           type="button"
@@ -505,7 +505,7 @@ export function ChartDialogView({ model }: ChartDialogViewProps) {
                           <MappingSelect
                             label={t('plateJs.chart.xDimension')}
                             value={xDimension}
-                            columns={details.dimensions.map(dimension => dimension.id)}
+                            columns={details.dimensions.map((dimension: any) => dimension.id)}
                             onChange={value => {
                               const next = value ?? '';
                               const nextSeriesDimension =
@@ -532,8 +532,8 @@ export function ChartDialogView({ model }: ChartDialogViewProps) {
                             label={t('plateJs.chart.seriesDimension')}
                             value={seriesDimension}
                             columns={details.dimensions
-                              .map(dimension => dimension.id)
-                              .filter(id => id !== xDimension)}
+                              .map((dimension: any) => dimension.id)
+                              .filter((id: any) => id !== xDimension)}
                             optional
                             onChange={value => {
                               setSeriesDimension(value);
@@ -558,10 +558,10 @@ export function ChartDialogView({ model }: ChartDialogViewProps) {
                           <div className="grid gap-3 sm:grid-cols-2">
                             {details.dimensions
                               .filter(
-                                dimension =>
+                                (dimension: any) =>
                                   dimension.id !== xDimension && dimension.id !== seriesDimension
                               )
-                              .map(dimension => (
+                              .map((dimension: any) => (
                                 <SelectField
                                   key={dimension.id}
                                   label={
@@ -577,7 +577,7 @@ export function ChartDialogView({ model }: ChartDialogViewProps) {
                                     }))
                                   }
                                   placeholder={t('plateJs.chart.chooseValue')}
-                                  options={dimension.values.map(value => ({
+                                  options={dimension.values.map((value: any) => ({
                                     value: value.id,
                                     label: value.label ? `${value.id} · ${value.label}` : value.id,
                                   }))}

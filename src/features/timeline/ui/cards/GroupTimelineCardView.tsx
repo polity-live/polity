@@ -1,0 +1,298 @@
+'use client';
+
+import { cn } from '@/features/shared/utils/utils';
+import { featureThemeClassName } from '@/features/shared/theme';
+import { Users, Bell } from 'lucide-react';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
+import { HashtagDisplay } from '@/features/shared/ui/hashtags';
+import {
+  TimelineCardBase,
+  TimelineCardHeader,
+  TimelineCardContent,
+  TimelineCardActions,
+  TimelineCardBadge,
+} from './TimelineCardBase';
+
+export interface GroupTimelineCardProps {
+  group: {
+    id: string;
+    name: string;
+    description?: string;
+    memberCount?: number;
+    eventCount?: number;
+    amendmentCount?: number;
+    activeDiscussions?: number;
+    topics?: string[];
+    hashtags?: { id: string; tag: string }[];
+    /** User's membership status */
+    membershipStatus?: 'active' | 'member' | 'admin' | 'invited' | 'requested' | null;
+    /** Whether user is subscribed to this group */
+    isSubscribed?: boolean;
+  };
+  /** Called when user requests membership */
+  onRequestMembership?: () => void;
+  /** Called when user leaves group */
+  onLeave?: () => void;
+  /** Called when user accepts invitation */
+  onAcceptInvitation?: () => void;
+  /** Called when user withdraws request */
+  onWithdrawRequest?: () => void;
+  /** Called when user toggles subscription */
+  onToggleSubscription?: () => void;
+  /** Loading state for membership actions */
+  isMembershipLoading?: boolean;
+  /** Loading state for subscription action */
+  isSubscriptionLoading?: boolean;
+  className?: string;
+}
+export interface GroupTimelineCardViewProps {
+  group: any;
+  onRequestMembership: any;
+  onLeave: any;
+  onAcceptInvitation: any;
+  onWithdrawRequest: any;
+  onToggleSubscription: any;
+  isMembershipLoading: any;
+  isSubscriptionLoading: any;
+  className: any;
+  t: any;
+  membershipOpen: any;
+  setMembershipOpen: any;
+  membership: any;
+  subscription: any;
+  groupStyle: any;
+  groupHashtags: any;
+  groupDescription: any;
+  resolvedMembershipStatus: any;
+  isMember: any;
+  isInvited: any;
+  hasRequested: any;
+  requestMembershipDisabled: any;
+  getMembershipLabel: any;
+  getMembershipVariant: any;
+  getMembershipIcon: any;
+  MembershipIcon: any;
+  stats: any;
+}
+
+export function GroupTimelineCardView({
+  group,
+  onRequestMembership,
+  onLeave,
+  onAcceptInvitation,
+  onWithdrawRequest,
+  onToggleSubscription,
+  isMembershipLoading,
+  isSubscriptionLoading,
+  className,
+  t,
+  membershipOpen,
+  setMembershipOpen,
+  membership,
+  subscription,
+  groupStyle,
+  groupHashtags,
+  groupDescription,
+  isMember,
+  isInvited,
+  hasRequested,
+  requestMembershipDisabled,
+  getMembershipLabel,
+  getMembershipVariant,
+  MembershipIcon,
+  stats,
+}: GroupTimelineCardViewProps) {
+  return (
+    <TimelineCardBase contentType="group" className={className} href={`/group/${group.id}`}>
+      <TimelineCardHeader
+        contentType="group"
+        title={group.name}
+        href={`/group/${group.id}`}
+        badge={<TimelineCardBadge label={t('features.timeline.contentTypes.group')} icon={Users} />}
+      />
+
+      <TimelineCardContent>
+        <div className="mt-auto space-y-3">
+          {groupDescription && (
+            <p className="text-muted-foreground line-clamp-3 text-sm">{groupDescription}</p>
+          )}
+
+          {groupHashtags && groupHashtags.length > 0 && (
+            <div onClick={e => e.preventDefault()}>
+              <HashtagDisplay
+                hashtags={groupHashtags.slice(0, 3)}
+                centered={false}
+                badgeClassName={cn(
+                  featureThemeClassName('timelineAmendmentTimelineCardNeutralContrastSurface'),
+                  groupStyle.borderColor,
+                  groupStyle.accentColor
+                )}
+              />
+            </div>
+          )}
+
+          {/* Stats Bar with Tooltips */}
+          <div className="text-muted-foreground flex items-center gap-4 text-xs">
+            {stats.map((stat: any, index: number) => (
+              <Tooltip key={index}>
+                <TooltipTrigger asChild>
+                  <div className="flex cursor-help items-center gap-1">
+                    <stat.icon className="h-3.5 w-3.5" />
+                    <span className="font-medium">{stat.value}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {stat.value} {stat.label}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        </div>
+      </TimelineCardContent>
+
+      <TimelineCardActions>
+        {/* Membership Button with Popover */}
+        <Popover open={membershipOpen} onOpenChange={setMembershipOpen}>
+          <PopoverTrigger asChild onClick={e => e.stopPropagation()}>
+            <Button
+              variant={getMembershipVariant()}
+              size="sm"
+              disabled={isMembershipLoading || membership.isLoading || requestMembershipDisabled}
+              className="flex items-center gap-1.5"
+            >
+              <MembershipIcon className="h-3.5 w-3.5" />
+              <span className="text-xs">{getMembershipLabel()}</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-2" align="start" onClick={e => e.stopPropagation()}>
+            <div className="flex flex-col gap-1">
+              {isMember && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={e => {
+                    e.stopPropagation();
+                    (onLeave || membership.leaveGroup)?.();
+                    setMembershipOpen(false);
+                  }}
+                  disabled={isMembershipLoading || membership.isLoading}
+                  className="justify-start"
+                >
+                  {t('features.timeline.cards.group.leaveGroup')}
+                </Button>
+              )}
+              {isInvited && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={e => {
+                      e.stopPropagation();
+                      (onAcceptInvitation || membership.acceptInvitation)?.();
+                      setMembershipOpen(false);
+                    }}
+                    disabled={isMembershipLoading || membership.isLoading}
+                    className="justify-start"
+                  >
+                    {t('features.timeline.cards.group.acceptInvitation')}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={e => {
+                      e.stopPropagation();
+                      (onLeave || membership.leaveGroup)?.();
+                      setMembershipOpen(false);
+                    }}
+                    disabled={isMembershipLoading || membership.isLoading}
+                    className="text-destructive justify-start"
+                  >
+                    {t('features.timeline.cards.group.declineInvitation')}
+                  </Button>
+                </>
+              )}
+              {hasRequested && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={e => {
+                    e.stopPropagation();
+                    (onWithdrawRequest || membership.leaveGroup)?.();
+                    setMembershipOpen(false);
+                  }}
+                  disabled={isMembershipLoading || membership.isLoading}
+                  className="text-destructive justify-start"
+                >
+                  {t('features.timeline.cards.group.withdrawRequest')}
+                </Button>
+              )}
+              {!isMember && !isInvited && !hasRequested && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={e => {
+                    e.stopPropagation();
+                    (onRequestMembership || membership.requestJoin)?.();
+                    setMembershipOpen(false);
+                  }}
+                  disabled={
+                    isMembershipLoading || membership.isLoading || requestMembershipDisabled
+                  }
+                  className="justify-start"
+                >
+                  {t('features.timeline.cards.group.requestMembership')}
+                </Button>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Subscribe Button */}
+        <Button
+          variant={(group.isSubscribed ?? subscription.isSubscribed) ? 'outline' : 'ghost'}
+          size="sm"
+          onClick={e => {
+            e.stopPropagation();
+            (onToggleSubscription || subscription.toggleSubscribe)?.();
+          }}
+          disabled={isSubscriptionLoading || subscription.isLoading}
+          className="flex items-center gap-1.5"
+        >
+          <Bell
+            className={`h-3.5 w-3.5 ${(group.isSubscribed ?? subscription.isSubscribed) ? featureThemeClassName('timelineActionBarThemedStyle') : ''}`}
+          />
+        </Button>
+
+        {/* Share Button */}
+        <div onClick={e => e.stopPropagation()}>
+          <ShareButton
+            url={`/group/${group.id}`}
+            title={group.name}
+            description={groupDescription || ''}
+            variant="outline"
+            size="sm"
+            shareContextItem={{
+              id: group.id,
+              type: 'group',
+              title: group.name,
+              description: groupDescription,
+              createdAt: new Date(),
+              memberCount: group.memberCount,
+              eventCount: group.eventCount,
+              amendmentCount: group.amendmentCount,
+              tags: groupHashtags?.map((hashtag: any) => hashtag.tag) ?? [],
+              stats: {
+                members: group.memberCount,
+              },
+            }}
+          />
+        </div>
+      </TimelineCardActions>
+    </TimelineCardBase>
+  );
+}

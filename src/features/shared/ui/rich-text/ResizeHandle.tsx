@@ -49,10 +49,40 @@ export function ResizeHandle({
   if (state.readOnly) return null;
 
   return (
+    <ResizeHandleView
+      className={className}
+      options={options}
+      isResizing={state.isResizing}
+      resizeHandleProps={resizeHandle.props}
+      props={props}
+    />
+  );
+}
+
+interface ResizeHandleViewProps {
+  className?: string;
+  options: (React.ComponentProps<typeof ResizeHandlePrimitive> &
+    VariantProps<typeof resizeHandleVariants>)['options'];
+  isResizing: boolean;
+  resizeHandleProps: React.HTMLAttributes<HTMLDivElement>;
+  props: Omit<
+    React.ComponentProps<typeof ResizeHandlePrimitive> & VariantProps<typeof resizeHandleVariants>,
+    'className' | 'options'
+  >;
+}
+
+function ResizeHandleView({
+  className,
+  options,
+  isResizing,
+  resizeHandleProps,
+  props,
+}: ResizeHandleViewProps) {
+  return (
     <div
       className={cn(resizeHandleVariants({ direction: options?.direction }), className)}
-      data-resizing={state.isResizing}
-      {...resizeHandle.props}
+      data-resizing={isResizing}
+      {...resizeHandleProps}
       {...props}
     />
   );

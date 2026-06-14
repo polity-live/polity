@@ -56,20 +56,20 @@ export function LegalInfoPageView({
       />
 
       <PanelGrid className="md:grid-cols-2 xl:grid-cols-2">
-        {sections.map(section => (
+        {sections.map((section: any) => (
           <Panel key={section.key} className="h-full">
             <PanelHeader>
               <PanelTitle className="text-xl">{section.title}</PanelTitle>
             </PanelHeader>
             <PanelContent className="space-y-4">
-              {section.paragraphs.map(paragraph => (
+              {section.paragraphs.map((paragraph: any) => (
                 <p key={paragraph} className="text-muted-foreground text-sm leading-6">
                   {paragraph}
                 </p>
               ))}
               {section.items.length > 0 ? (
                 <ul className="text-muted-foreground space-y-2 text-sm">
-                  {section.items.map(item => (
+                  {section.items.map((item: any) => (
                     <li key={item} className="flex items-start gap-2">
                       <span className="text-primary mt-0.5">{'\u2022'}</span>
                       <span>{item}</span>
@@ -87,7 +87,7 @@ export function LegalInfoPageView({
           <h2 className="text-2xl font-bold">{relatedTitle}</h2>
           <p className="text-muted-foreground max-w-2xl">{relatedDescription}</p>
           <div className="grid w-full gap-4 md:grid-cols-3">
-            {relatedLinks.map(link => (
+            {relatedLinks.map((link: any) => (
               <Panel key={link.to} className="text-left">
                 <PanelContent className="space-y-3 pt-4 sm:pt-5">
                   <div>

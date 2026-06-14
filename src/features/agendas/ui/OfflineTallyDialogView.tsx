@@ -85,7 +85,7 @@ export function OfflineTallyDialogView({
           </div>
 
           <div className="grid gap-3">
-            {choices.map(choice => (
+            {choices.map((choice: any) => (
               <div key={choice.id} className="grid gap-2 md:grid-cols-[1fr_120px] md:items-center">
                 <FormControlLabel htmlFor={`offline-tally-${choice.id}`}>
                   {choice.label}

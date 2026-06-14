@@ -61,7 +61,7 @@ export function NewConversationDialogView({
                 </p>
               </div>
             ) : (
-              filteredUsers.map(searchUser => (
+              filteredUsers.map((searchUser: any) => (
                 <Button
                   key={searchUser.id}
                   type="button"

@@ -1,20 +1,7 @@
-import {
-  EdgeLabelRenderer,
-  getBezierPath,
-  getSmoothStepPath,
-  getStraightPath,
-  useReactFlow,
-} from 'reactflow';
+import { getBezierPath, getSmoothStepPath, getStraightPath, useReactFlow } from 'reactflow';
 
 import type { EdgeProps } from 'reactflow';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
-
-import ClickableBaseEdge from './ClickableBaseEdge.tsx';
-import {
-  GraphEdgeLabel,
-  GraphPositionHandle,
-  GraphPositionHandleContainer,
-} from '@/features/shared/ui/graph';
 
 interface PositionHandler {
   x: number;
@@ -26,7 +13,7 @@ interface PositionableEdgeData {
   type?: 'straight' | 'smoothstep' | 'default';
   positionHandlers?: PositionHandler[];
 }
-
+import { PositionableEdgeView } from './PositionableEdgeView';
 export default function PositionableEdge({
   id,
   sourceX,
@@ -209,69 +196,36 @@ export default function PositionableEdge({
         break;
     }
   };
-
   return (
-    <>
-      {edgeSegmentsArray.map(({ edgePath }, index) => (
-        <ClickableBaseEdge
-          onDoubleClick={event => {
-            const position = reactFlowInstance.screenToFlowPosition({
-              x: event.clientX,
-              y: event.clientY,
-            });
-
-            insertPositionHandler(index, {
-              x: position.x,
-              y: position.y,
-              active: false,
-            });
-          }}
-          key={`edge${id}_segment${index}`}
-          id={`edge${id}_segment${index}`}
-          path={edgePath}
-          markerEnd={index === edgeSegmentsArray.length - 1 ? markerEnd : undefined}
-          style={style}
-        />
-      ))}
-      {label && (
-        <EdgeLabelRenderer>
-          <GraphEdgeLabel x={labelX} y={labelY}>
-            {label}
-          </GraphEdgeLabel>
-        </EdgeLabelRenderer>
-      )}
-      {positionHandlers.map(({ x, y, active }, handlerIndex) => (
-        <EdgeLabelRenderer key={`edge${id}_handler${handlerIndex}`}>
-          <GraphPositionHandleContainer
-            x={x}
-            y={y}
-            active={active}
-            onMouseMove={event => {
-              if (!active) {
-                return;
-              }
-              const position = reactFlowInstance.screenToFlowPosition({
-                x: event.clientX,
-                y: event.clientY,
-              });
-              movePositionHandlerTo(handlerIndex, position.x, position.y);
-            }}
-            onMouseUp={clearActivePositionHandlers}
-          >
-            <GraphPositionHandle
-              active={active}
-              aria-label="Move edge bend point"
-              aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Delete Backspace"
-              onMouseDown={() => setPositionHandlerActive(handlerIndex, true)}
-              onContextMenu={event => {
-                event.preventDefault();
-                removePositionHandler(handlerIndex);
-              }}
-              onKeyDown={event => handlePositionHandlerKeyDown(event, handlerIndex)}
-            />
-          </GraphPositionHandleContainer>
-        </EdgeLabelRenderer>
-      ))}
-    </>
+    <PositionableEdgeView
+      id={id}
+      sourceX={sourceX}
+      sourceY={sourceY}
+      targetX={targetX}
+      targetY={targetY}
+      sourcePosition={sourcePosition}
+      targetPosition={targetPosition}
+      style={style}
+      markerEnd={markerEnd}
+      data={data}
+      label={label}
+      reactFlowInstance={reactFlowInstance}
+      positionHandlers={positionHandlers}
+      type={type}
+      edgeSegmentsCount={edgeSegmentsCount}
+      edgeSegmentsArray={edgeSegmentsArray}
+      pathFunction={pathFunction}
+      middleSegmentIndex={middleSegmentIndex}
+      labelX={labelX}
+      labelY={labelY}
+      updatePositionHandlers={updatePositionHandlers}
+      insertPositionHandler={insertPositionHandler}
+      setPositionHandlerActive={setPositionHandlerActive}
+      movePositionHandlerTo={movePositionHandlerTo}
+      movePositionHandlerBy={movePositionHandlerBy}
+      removePositionHandler={removePositionHandler}
+      clearActivePositionHandlers={clearActivePositionHandlers}
+      handlePositionHandlerKeyDown={handlePositionHandlerKeyDown}
+    />
   );
 }

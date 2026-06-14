@@ -3,8 +3,7 @@ import { StatusDotIndicator } from '@/features/shared/ui/status';
 import { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
-import { CardHeader } from '@/features/shared/ui/ui/card';
-import { ArrowLeft, Check, Pencil, Pin, PinOff, Trash2, X } from 'lucide-react';
+import { Check, Pencil, X } from 'lucide-react';
 import { Conversation } from '../types/message.types';
 import { getConversationDisplay, getOtherParticipant } from '../logic/messageUtils';
 import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
@@ -21,7 +20,7 @@ interface ConversationHeaderProps {
   onMembersClick: () => void;
   onRenameConversation: (id: string, name: string | null) => Promise<boolean>;
 }
-
+import { ConversationHeaderView } from './ConversationHeaderView';
 export function ConversationHeader({
   conversation,
   currentUserId,
@@ -176,52 +175,33 @@ export function ConversationHeader({
       </div>
     </>
   );
-
   return (
-    <CardHeader separator className="flex-shrink-0 flex-row items-center justify-between space-y-0">
-      <div className="flex items-center">
-        <Button variant="ghost" size="icon" className="mr-2 md:hidden" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex items-center">{identityContent}</div>
-      </div>
-
-      {/* Action Bar */}
-      <div className="flex items-center gap-1">
-        {/* Only show pin for accepted conversations */}
-        {conversation.status === 'accepted' && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onTogglePin(conversation.id, conversation.pinned || false)}
-            title={
-              conversation.pinned
-                ? t('features.messages.conversation.unpin')
-                : t('features.messages.conversation.pin')
-            }
-          >
-            {conversation.pinned ? (
-              <PinOff className="text-primary h-4 w-4" />
-            ) : (
-              <Pin className="h-4 w-4" />
-            )}
-          </Button>
-        )}
-        {conversation.type !== 'group' && conversation.type !== 'event' && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onDeleteClick(conversation.id)}
-            title={
-              conversation.status === 'pending'
-                ? t('features.messages.conversation.cancelRequest')
-                : t('features.messages.conversation.delete')
-            }
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-    </CardHeader>
+    <ConversationHeaderView
+      conversation={conversation}
+      currentUserId={currentUserId}
+      isOnline={isOnline}
+      onBack={onBack}
+      onTogglePin={onTogglePin}
+      onDeleteClick={onDeleteClick}
+      onMembersClick={onMembersClick}
+      onRenameConversation={onRenameConversation}
+      t={t}
+      display={display}
+      otherParticipant={otherParticipant}
+      isAiConversation={isAiConversation}
+      userHref={userHref}
+      groupHref={groupHref}
+      eventHref={eventHref}
+      entityHref={entityHref}
+      isEditingName={isEditingName}
+      setIsEditingName={setIsEditingName}
+      draftName={draftName}
+      setDraftName={setDraftName}
+      handleCancelRename={handleCancelRename}
+      handleSaveRename={handleSaveRename}
+      avatarContent={avatarContent}
+      titleContent={titleContent}
+      identityContent={identityContent}
+    />
   );
 }

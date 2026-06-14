@@ -22,7 +22,10 @@ import { useTodoState } from '@/zero/todos/useTodoState.ts';
 import { useUserState } from '@/zero/users/useUserState.ts';
 import { normalizeMessagePreviewText } from '../logic/normalizeMessagePreviewText';
 import { isPolityLink, parsePolityUrl, type PolityLinkEntityType } from '../utils/url-utils';
-import { LinkPreviewCardView, LinkPreviewSkeleton } from './LinkPreviewView';
+import {
+  LinkPreviewCardView,
+  LinkPreviewSkeleton as LinkPreviewSkeletonView,
+} from './LinkPreviewView';
 
 interface LinkPreviewProps {
   url: string;
@@ -80,12 +83,18 @@ function PolityLinkPreviewContainer({ type, id, className }: PolityLinkPreviewCo
   }
 }
 
-function UserPreviewContainer({ userId, className }: { userId: string; className?: string }) {
+export function UserPreviewContainer({
+  userId,
+  className,
+}: {
+  userId: string;
+  className?: string;
+}) {
   const { t } = useTranslation();
   const { user } = useUserState({ userId });
 
   if (!user) {
-    return <LinkPreviewSkeleton />;
+    return <LinkPreviewSkeletonView />;
   }
 
   const userName =
@@ -110,12 +119,18 @@ function UserPreviewContainer({ userId, className }: { userId: string; className
   );
 }
 
-function GroupPreviewContainer({ groupId, className }: { groupId: string; className?: string }) {
+export function GroupPreviewContainer({
+  groupId,
+  className,
+}: {
+  groupId: string;
+  className?: string;
+}) {
   const { t } = useTranslation();
   const { group } = useGroupState({ groupId });
 
   if (!group) {
-    return <LinkPreviewSkeleton />;
+    return <LinkPreviewSkeletonView />;
   }
 
   return (
@@ -137,12 +152,18 @@ function GroupPreviewContainer({ groupId, className }: { groupId: string; classN
   );
 }
 
-function EventPreviewContainer({ eventId, className }: { eventId: string; className?: string }) {
+export function EventPreviewContainer({
+  eventId,
+  className,
+}: {
+  eventId: string;
+  className?: string;
+}) {
   const { t } = useTranslation();
   const { event } = useEventState({ eventId });
 
   if (!event) {
-    return <LinkPreviewSkeleton />;
+    return <LinkPreviewSkeletonView />;
   }
 
   return (
@@ -161,7 +182,7 @@ function EventPreviewContainer({ eventId, className }: { eventId: string; classN
   );
 }
 
-function AmendmentPreviewContainer({
+export function AmendmentPreviewContainer({
   amendmentId,
   className,
 }: {
@@ -172,7 +193,7 @@ function AmendmentPreviewContainer({
   const { amendment } = useAmendmentState({ amendmentId });
 
   if (!amendment) {
-    return <LinkPreviewSkeleton />;
+    return <LinkPreviewSkeletonView />;
   }
 
   return (
@@ -197,13 +218,19 @@ function AmendmentPreviewContainer({
   );
 }
 
-function BlogPreviewContainer({ blogId, className }: { blogId: string; className?: string }) {
+export function BlogPreviewContainer({
+  blogId,
+  className,
+}: {
+  blogId: string;
+  className?: string;
+}) {
   const { t } = useTranslation();
   const { blogWithBloggers } = useBlogState({ blogId, includeBloggers: true });
   const blog = blogWithBloggers;
 
   if (!blog) {
-    return <LinkPreviewSkeleton />;
+    return <LinkPreviewSkeletonView />;
   }
 
   const blogOwner = blog.bloggers?.find(blogger => blogger.status === 'owner')?.user;
@@ -236,7 +263,7 @@ function BlogPreviewContainer({ blogId, className }: { blogId: string; className
   );
 }
 
-function StatementPreviewContainer({
+export function StatementPreviewContainer({
   statementId,
   className,
 }: {
@@ -247,7 +274,7 @@ function StatementPreviewContainer({
   const { statement } = useStatementState({ id: statementId });
 
   if (!statement) {
-    return <LinkPreviewSkeleton />;
+    return <LinkPreviewSkeletonView />;
   }
 
   return (
@@ -263,12 +290,18 @@ function StatementPreviewContainer({
   );
 }
 
-function TodoPreviewContainer({ todoId, className }: { todoId: string; className?: string }) {
+export function TodoPreviewContainer({
+  todoId,
+  className,
+}: {
+  todoId: string;
+  className?: string;
+}) {
   const { t } = useTranslation();
   const { todo } = useTodoState({ todoId });
 
   if (!todo) {
-    return <LinkPreviewSkeleton />;
+    return <LinkPreviewSkeletonView />;
   }
 
   return (

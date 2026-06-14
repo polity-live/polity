@@ -1,23 +1,13 @@
-import type { ReactNode } from 'react';
-
 import {
   useManageWorkflowsTabViewModel,
   type ManageWorkflowsTabProps,
 } from '../hooks/useManageWorkflowsTabViewModel';
+import { ManageWorkflowsTabContentView } from './ManageWorkflowsTabContentView';
 
 export type { ManageWorkflowsTabProps };
 
-export interface ManageWorkflowsTabViewProps {
-  content: ReactNode;
-  className?: string;
-}
-
 export function ManageWorkflowsTab(props: ManageWorkflowsTabProps) {
-  const content = useManageWorkflowsTabViewModel(props);
+  const viewModel = useManageWorkflowsTabViewModel(props);
 
-  return <ManageWorkflowsTabView content={content} />;
-}
-
-export function ManageWorkflowsTabView({ content, className }: ManageWorkflowsTabViewProps) {
-  return className ? <div className={className}>{content}</div> : <>{content}</>;
+  return <ManageWorkflowsTabContentView {...viewModel} />;
 }

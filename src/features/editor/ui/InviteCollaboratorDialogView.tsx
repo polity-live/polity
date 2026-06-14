@@ -68,8 +68,8 @@ export function InviteCollaboratorDialogView({ model }: InviteCollaboratorDialog
           {/* Selected users */}
           {selectedUsers.length > 0 && (
             <div className="mb-4 flex flex-wrap gap-2">
-              {selectedUsers.map(userId => {
-                const user = users?.find(u => u.id === userId);
+              {selectedUsers.map((userId: any) => {
+                const user = users?.find((u: any) => u.id === userId);
                 if (!user) return null;
 
                 return (
@@ -128,7 +128,7 @@ export function InviteCollaboratorDialogView({ model }: InviteCollaboratorDialog
                 <>
                   <CommandEmpty>{t('features.editor.inviteDialog.noUsers')}</CommandEmpty>
                   <CommandGroup>
-                    {filteredUsers?.slice(0, 10).map(user => {
+                    {filteredUsers?.slice(0, 10).map((user: any) => {
                       const isSelected = selectedUsers.includes(user.id);
 
                       return (

@@ -17,19 +17,11 @@ export const blockSelectionVariants = cva(
     },
   }
 );
-
+import { BlockSelectionView } from './BlockSelectionView';
 export function BlockSelection(props: PlateElementProps) {
   const isBlockSelected = useBlockSelected();
   const isDragging = usePluginOption(DndPlugin, 'isDragging');
-
-  if (!isBlockSelected || props.plugin.key === 'tr') return null;
-
   return (
-    <div
-      className={blockSelectionVariants({
-        active: isBlockSelected && !isDragging,
-      })}
-      data-slot="block-selection"
-    />
+    <BlockSelectionView props={props} isBlockSelected={isBlockSelected} isDragging={isDragging} />
   );
 }

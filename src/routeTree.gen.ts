@@ -89,6 +89,7 @@ import { Route as AuthedEventIdNetworkImport } from './routes/_authed/event/$id/
 import { Route as AuthedEventIdAgendaImport } from './routes/_authed/event/$id/agenda'
 import { Route as AuthedBlogIdNotificationsImport } from './routes/_authed/blog/$id/notifications'
 import { Route as AuthedAmendmentIdTextImport } from './routes/_authed/amendment/$id/text'
+import { Route as AuthedAmendmentIdStreetscapeImport } from './routes/_authed/amendment/$id/streetscape'
 import { Route as AuthedAmendmentIdSettingsImport } from './routes/_authed/amendment/$id/settings'
 import { Route as AuthedAmendmentIdProcessImport } from './routes/_authed/amendment/$id/process'
 import { Route as AuthedAmendmentIdNotificationsImport } from './routes/_authed/amendment/$id/notifications'
@@ -588,6 +589,13 @@ const AuthedAmendmentIdTextRoute = AuthedAmendmentIdTextImport.update({
   getParentRoute: () => AuthedAmendmentIdRoute,
 } as any)
 
+const AuthedAmendmentIdStreetscapeRoute =
+  AuthedAmendmentIdStreetscapeImport.update({
+    id: '/streetscape',
+    path: '/streetscape',
+    getParentRoute: () => AuthedAmendmentIdRoute,
+  } as any)
+
 const AuthedAmendmentIdSettingsRoute = AuthedAmendmentIdSettingsImport.update({
   id: '/settings',
   path: '/settings',
@@ -1073,6 +1081,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAmendmentIdSettingsImport
       parentRoute: typeof AuthedAmendmentIdImport
     }
+    '/_authed/amendment/$id/streetscape': {
+      id: '/_authed/amendment/$id/streetscape'
+      path: '/streetscape'
+      fullPath: '/amendment/$id/streetscape'
+      preLoaderRoute: typeof AuthedAmendmentIdStreetscapeImport
+      parentRoute: typeof AuthedAmendmentIdImport
+    }
     '/_authed/amendment/$id/text': {
       id: '/_authed/amendment/$id/text'
       path: '/text'
@@ -1433,6 +1448,7 @@ interface AuthedAmendmentIdRouteChildren {
   AuthedAmendmentIdNotificationsRoute: typeof AuthedAmendmentIdNotificationsRoute
   AuthedAmendmentIdProcessRoute: typeof AuthedAmendmentIdProcessRoute
   AuthedAmendmentIdSettingsRoute: typeof AuthedAmendmentIdSettingsRoute
+  AuthedAmendmentIdStreetscapeRoute: typeof AuthedAmendmentIdStreetscapeRoute
   AuthedAmendmentIdTextRoute: typeof AuthedAmendmentIdTextRoute
   AuthedAmendmentIdIndexRoute: typeof AuthedAmendmentIdIndexRoute
 }
@@ -1444,6 +1460,7 @@ const AuthedAmendmentIdRouteChildren: AuthedAmendmentIdRouteChildren = {
   AuthedAmendmentIdNotificationsRoute: AuthedAmendmentIdNotificationsRoute,
   AuthedAmendmentIdProcessRoute: AuthedAmendmentIdProcessRoute,
   AuthedAmendmentIdSettingsRoute: AuthedAmendmentIdSettingsRoute,
+  AuthedAmendmentIdStreetscapeRoute: AuthedAmendmentIdStreetscapeRoute,
   AuthedAmendmentIdTextRoute: AuthedAmendmentIdTextRoute,
   AuthedAmendmentIdIndexRoute: AuthedAmendmentIdIndexRoute,
 }
@@ -1790,6 +1807,7 @@ export interface FileRoutesByFullPath {
   '/amendment/$id/notifications': typeof AuthedAmendmentIdNotificationsRoute
   '/amendment/$id/process': typeof AuthedAmendmentIdProcessRoute
   '/amendment/$id/settings': typeof AuthedAmendmentIdSettingsRoute
+  '/amendment/$id/streetscape': typeof AuthedAmendmentIdStreetscapeRoute
   '/amendment/$id/text': typeof AuthedAmendmentIdTextRoute
   '/blog/$id/notifications': typeof AuthedBlogIdNotificationsRoute
   '/event/$id/agenda': typeof AuthedEventIdAgendaRouteWithChildren
@@ -1884,6 +1902,7 @@ export interface FileRoutesByTo {
   '/amendment/$id/notifications': typeof AuthedAmendmentIdNotificationsRoute
   '/amendment/$id/process': typeof AuthedAmendmentIdProcessRoute
   '/amendment/$id/settings': typeof AuthedAmendmentIdSettingsRoute
+  '/amendment/$id/streetscape': typeof AuthedAmendmentIdStreetscapeRoute
   '/amendment/$id/text': typeof AuthedAmendmentIdTextRoute
   '/blog/$id/notifications': typeof AuthedBlogIdNotificationsRoute
   '/event/$id/network': typeof AuthedEventIdNetworkRoute
@@ -1981,6 +2000,7 @@ export interface FileRoutesById {
   '/_authed/amendment/$id/notifications': typeof AuthedAmendmentIdNotificationsRoute
   '/_authed/amendment/$id/process': typeof AuthedAmendmentIdProcessRoute
   '/_authed/amendment/$id/settings': typeof AuthedAmendmentIdSettingsRoute
+  '/_authed/amendment/$id/streetscape': typeof AuthedAmendmentIdStreetscapeRoute
   '/_authed/amendment/$id/text': typeof AuthedAmendmentIdTextRoute
   '/_authed/blog/$id/notifications': typeof AuthedBlogIdNotificationsRoute
   '/_authed/event/$id/agenda': typeof AuthedEventIdAgendaRouteWithChildren
@@ -2084,6 +2104,7 @@ export interface FileRouteTypes {
     | '/amendment/$id/notifications'
     | '/amendment/$id/process'
     | '/amendment/$id/settings'
+    | '/amendment/$id/streetscape'
     | '/amendment/$id/text'
     | '/blog/$id/notifications'
     | '/event/$id/agenda'
@@ -2177,6 +2198,7 @@ export interface FileRouteTypes {
     | '/amendment/$id/notifications'
     | '/amendment/$id/process'
     | '/amendment/$id/settings'
+    | '/amendment/$id/streetscape'
     | '/amendment/$id/text'
     | '/blog/$id/notifications'
     | '/event/$id/network'
@@ -2272,6 +2294,7 @@ export interface FileRouteTypes {
     | '/_authed/amendment/$id/notifications'
     | '/_authed/amendment/$id/process'
     | '/_authed/amendment/$id/settings'
+    | '/_authed/amendment/$id/streetscape'
     | '/_authed/amendment/$id/text'
     | '/_authed/blog/$id/notifications'
     | '/_authed/event/$id/agenda'
@@ -2524,6 +2547,7 @@ export const routeTree = rootRoute
         "/_authed/amendment/$id/notifications",
         "/_authed/amendment/$id/process",
         "/_authed/amendment/$id/settings",
+        "/_authed/amendment/$id/streetscape",
         "/_authed/amendment/$id/text",
         "/_authed/amendment/$id/"
       ]
@@ -2654,6 +2678,10 @@ export const routeTree = rootRoute
     },
     "/_authed/amendment/$id/settings": {
       "filePath": "_authed/amendment/$id/settings.tsx",
+      "parent": "/_authed/amendment/$id"
+    },
+    "/_authed/amendment/$id/streetscape": {
+      "filePath": "_authed/amendment/$id/streetscape.tsx",
       "parent": "/_authed/amendment/$id"
     },
     "/_authed/amendment/$id/text": {

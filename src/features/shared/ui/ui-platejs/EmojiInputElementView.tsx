@@ -49,7 +49,7 @@ export function EmojiInputElementView({
           )}
 
           <InlineComboboxGroup>
-            {filteredEmojis.map(emoji => (
+            {filteredEmojis.map((emoji: any) => (
               <InlineComboboxItem
                 key={emoji.id}
                 value={emoji.name}

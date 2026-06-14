@@ -1,10 +1,8 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { usePermissions } from '@/zero/rbac/usePermissions';
 import { ActionType, ResourceType, PermissionContext } from '@/zero/rbac/types';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied.tsx';
-import { Loader2 } from 'lucide-react';
 
 interface PermissionGuardProps {
   children: ReactNode;
@@ -14,14 +12,8 @@ interface PermissionGuardProps {
   fallback?: ReactNode;
   loadingComponent?: ReactNode;
 }
-
-/**
- * PermissionGuard
- *
- * A wrapper component that protects its children based on RBAC permissions.
- * If the user has the required permission, the children are rendered.
- * Otherwise, a fallback (defaulting to AccessDenied) is shown.
- */
+import { usePermissionGuardController } from './usePermissionGuardController';
+import { PermissionGuardView } from './PermissionGuardView';
 export function PermissionGuard({
   children,
   action,
@@ -30,21 +22,14 @@ export function PermissionGuard({
   fallback = <AccessDenied />,
   loadingComponent,
 }: PermissionGuardProps) {
-  const { can, isLoading } = usePermissions(context);
+  const viewProps = usePermissionGuardController({
+    children,
+    action,
+    resource,
+    context,
+    fallback,
+    loadingComponent,
+  });
 
-  if (isLoading) {
-    return (
-      loadingComponent || (
-        <div className="flex min-h-[200px] items-center justify-center">
-          <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
-        </div>
-      )
-    );
-  }
-
-  if (!can(action, resource)) {
-    return <>{fallback}</>;
-  }
-
-  return <>{children}</>;
+  return <PermissionGuardView {...viewProps} />;
 }

@@ -255,18 +255,17 @@ export function useCreateBlogForm(): CreateFormConfig {
             },
             {
               key: 'image',
-              kind: 'custom',
-              node: (
-                <ImageUpload
-                  currentImage={imageURL}
-                  onImageChange={(url: string) => setImageURL(url)}
-                  cleanupOnRemove
-                  entityType="blogs"
-                  entityId={blogId}
-                  label={t('pages.create.blog.coverImage')}
-                  description={t('pages.create.blog.coverImageDescription')}
-                />
-              ),
+              kind: 'customComponent',
+              component: ImageUpload,
+              props: {
+                currentImage: imageURL,
+                onImageChange: (url: string) => setImageURL(url),
+                cleanupOnRemove: true,
+                entityType: 'blogs',
+                entityId: blogId,
+                label: t('pages.create.blog.coverImage'),
+                description: t('pages.create.blog.coverImageDescription'),
+              },
             },
             {
               key: 'group',
@@ -294,19 +293,19 @@ export function useCreateBlogForm(): CreateFormConfig {
           fields: [
             {
               key: 'visibility',
-              kind: 'custom',
-              node: <VisibilityInput value={visibility} onChange={setVisibility} />,
+              kind: 'customComponent',
+              component: VisibilityInput,
+              props: { value: visibility, onChange: setVisibility },
             },
             {
               key: 'hashtags',
-              kind: 'custom',
-              node: (
-                <HashtagEditor
-                  value={hashtags}
-                  onChange={setHashtags}
-                  placeholder={t('pages.create.blog.hashtagPlaceholder')}
-                />
-              ),
+              kind: 'customComponent',
+              component: HashtagEditor,
+              props: {
+                value: hashtags,
+                onChange: setHashtags,
+                placeholder: t('pages.create.blog.hashtagPlaceholder'),
+              },
             },
           ],
         },
@@ -316,49 +315,46 @@ export function useCreateBlogForm(): CreateFormConfig {
           fields: [
             {
               key: 'review',
-              kind: 'custom',
-              node: (
-                <CreateSummaryStep
-                  entityType="blog"
-                  badge={t('pages.create.blog.reviewBadge')}
-                  secondaryBadge={visibilityLabel}
-                  title={title || t('pages.create.blog.titlePlaceholder')}
-                  media={
-                    imageURL
-                      ? { imageUrl: imageURL, imageAlt: title || 'Blog cover image' }
-                      : undefined
-                  }
-                  hashtags={hashtags.length > 0 ? hashtags : undefined}
-                  sections={[
-                    {
-                      title: t('pages.create.blog.basicInfo'),
-                      fields: [
-                        { label: t('pages.create.blog.dateLabel'), value: date },
-                        ...(groupName
-                          ? [
-                              {
-                                label: t('pages.create.blog.attachTo'),
-                                value: groupName,
-                              },
-                            ]
-                          : []),
-                      ],
-                    },
-                    {
-                      title: t('pages.create.blog.visibilityAndTags'),
-                      fields: [
-                        {
-                          label: t('pages.create.common.visibility'),
-                          value: visibilityLabel,
-                        },
-                        ...(imageURL
-                          ? [{ label: t('pages.create.blog.coverImage'), value: 'Attached' }]
-                          : []),
-                      ],
-                    },
-                  ]}
-                />
-              ),
+              kind: 'customComponent',
+              component: CreateSummaryStep,
+              props: {
+                entityType: 'blog',
+                badge: t('pages.create.blog.reviewBadge'),
+                secondaryBadge: visibilityLabel,
+                title: title || t('pages.create.blog.titlePlaceholder'),
+                media: imageURL
+                  ? { imageUrl: imageURL, imageAlt: title || 'Blog cover image' }
+                  : undefined,
+                hashtags: hashtags.length > 0 ? hashtags : undefined,
+                sections: [
+                  {
+                    title: t('pages.create.blog.basicInfo'),
+                    fields: [
+                      { label: t('pages.create.blog.dateLabel'), value: date },
+                      ...(groupName
+                        ? [
+                            {
+                              label: t('pages.create.blog.attachTo'),
+                              value: groupName,
+                            },
+                          ]
+                        : []),
+                    ],
+                  },
+                  {
+                    title: t('pages.create.blog.visibilityAndTags'),
+                    fields: [
+                      {
+                        label: t('pages.create.common.visibility'),
+                        value: visibilityLabel,
+                      },
+                      ...(imageURL
+                        ? [{ label: t('pages.create.blog.coverImage'), value: 'Attached' }]
+                        : []),
+                    ],
+                  },
+                ],
+              },
             },
           ],
         },

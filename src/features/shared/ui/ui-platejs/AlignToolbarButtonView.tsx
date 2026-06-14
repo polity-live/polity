@@ -46,7 +46,7 @@ export function AlignToolbarButtonView({
   value,
   onValueChange,
 }: AlignToolbarButtonViewProps) {
-  const IconValue = items.find(item => item.value === value)?.icon ?? AlignLeftIcon;
+  const IconValue = items.find((item: any) => item.value === value)?.icon ?? AlignLeftIcon;
 
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange} modal={false} {...dropdownProps}>

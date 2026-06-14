@@ -124,7 +124,7 @@ export function SharedWeekViewView({
           >
             <div className="bg-background/95 sticky top-0 left-0 z-40 border-r border-b backdrop-blur" />
 
-            {weekDays.map(day => {
+            {weekDays.map((day: any) => {
               const isToday = isSameWeekGridDay(day, new Date());
               const isSelected = isSameWeekGridDay(day, selectedDate);
 
@@ -142,7 +142,7 @@ export function SharedWeekViewView({
 
             <div className="bg-background/95 sticky left-0 z-[25] border-r backdrop-blur">
               <div className="relative" style={{ height: `${TOTAL_DAY_HEIGHT}px` }}>
-                {hourMarkers.map(hour => (
+                {hourMarkers.map((hour: any) => (
                   <div
                     key={`time-${hour}`}
                     className="border-border/80 absolute inset-x-0 border-t"
@@ -158,7 +158,7 @@ export function SharedWeekViewView({
               </div>
             </div>
 
-            {weekDays.map((day, dayIndex) => {
+            {weekDays.map((day: any, dayIndex: number) => {
               const isToday = isSameWeekGridDay(day, new Date());
               const isSelected = isSameWeekGridDay(day, selectedDate);
               const daySelection =
@@ -178,14 +178,14 @@ export function SharedWeekViewView({
                   onPointerMove={handleDayPointerMove(dayIndex)}
                   onPointerUp={handleDayPointerUp(dayIndex)}
                 >
-                  {hourMarkers.map(hour => (
+                  {hourMarkers.map((hour: any) => (
                     <div
                       key={`hour-line-${dayIndex}-${hour}`}
                       className="border-border/70 pointer-events-none absolute inset-x-0 border-t"
                       style={{ top: `${hour * WEEK_VIEW_HOUR_HEIGHT}px` }}
                     />
                   ))}
-                  {halfHourMarkers.map(offset => (
+                  {halfHourMarkers.map((offset: any) => (
                     <div
                       key={`half-line-${dayIndex}-${offset}`}
                       className="border-border/40 pointer-events-none absolute inset-x-0 border-t border-dashed"
@@ -221,7 +221,7 @@ export function SharedWeekViewView({
                     </div>
                   )}
 
-                  {dayLayouts[dayIndex]?.map(layout => {
+                  {dayLayouts[dayIndex]?.map((layout: any) => {
                     const event = layout.event as CalendarEvent;
                     const metaClassName = getCompactCalendarEventMetaClassName(event);
                     const showLocation = layout.height >= WEEK_VIEW_SLOT_HEIGHT * 2;

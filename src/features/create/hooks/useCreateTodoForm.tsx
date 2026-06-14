@@ -16,6 +16,7 @@ import { StatusInput } from '../ui/inputs/StatusInput';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
+import { CreateInlineNotice } from '../ui/CreateInlineNotice';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import type { CreateFormConfig } from '../types/create-form.types';
 
@@ -198,13 +199,15 @@ export function useCreateTodoForm(): CreateFormConfig {
           fields: [
             {
               key: 'priority',
-              kind: 'custom',
-              node: <PriorityInput value={priority} onChange={setPriority} />,
+              kind: 'customComponent',
+              component: PriorityInput,
+              props: { value: priority, onChange: setPriority },
             },
             {
               key: 'status',
-              kind: 'custom',
-              node: <StatusInput value={status} onChange={setStatus} />,
+              kind: 'customComponent',
+              component: StatusInput,
+              props: { value: status, onChange: setStatus },
             },
           ],
         },
@@ -215,15 +218,14 @@ export function useCreateTodoForm(): CreateFormConfig {
           fields: [
             {
               key: 'assignees',
-              kind: 'custom',
-              node: (
-                <UserSearchInput
-                  value={assigneeIds}
-                  onChange={setAssigneeIds}
-                  label={t('pages.create.todo.assignToLabel')}
-                  placeholder={t('pages.create.todo.assignToPlaceholder')}
-                />
-              ),
+              kind: 'customComponent',
+              component: UserSearchInput,
+              props: {
+                value: assigneeIds,
+                onChange: setAssigneeIds,
+                label: t('pages.create.todo.assignToLabel'),
+                placeholder: t('pages.create.todo.assignToPlaceholder'),
+              },
             },
           ],
         },
@@ -242,26 +244,22 @@ export function useCreateTodoForm(): CreateFormConfig {
             },
             {
               key: 'visibility',
-              kind: 'custom',
-              node: groupId ? (
-                <div className="bg-muted/40 text-muted-foreground rounded-md border px-3 py-2 text-sm">
-                  {t('pages.create.todo.groupVisibilityHint')}
-                </div>
-              ) : (
-                <VisibilityInput value={visibility} onChange={setVisibility} />
-              ),
+              kind: 'customComponent',
+              component: groupId ? CreateInlineNotice : VisibilityInput,
+              props: groupId
+                ? { children: t('pages.create.todo.groupVisibilityHint') }
+                : { value: visibility, onChange: setVisibility },
             },
             {
               key: 'tags',
-              kind: 'custom',
-              node: (
-                <HashtagEditor
-                  value={tags}
-                  onChange={setTags}
-                  label={t('pages.create.todo.tagsOptional')}
-                  placeholder={t('pages.create.todo.tagPlaceholder')}
-                />
-              ),
+              kind: 'customComponent',
+              component: HashtagEditor,
+              props: {
+                value: tags,
+                onChange: setTags,
+                label: t('pages.create.todo.tagsOptional'),
+                placeholder: t('pages.create.todo.tagPlaceholder'),
+              },
             },
           ],
         },
@@ -271,56 +269,55 @@ export function useCreateTodoForm(): CreateFormConfig {
           fields: [
             {
               key: 'review',
-              kind: 'custom',
-              node: (
-                <CreateSummaryStep
-                  entityType="todo"
-                  badge={t('pages.create.todo.reviewBadge')}
-                  title={title || t('pages.create.todo.titlePlaceholder')}
-                  subtitle={description || undefined}
-                  sections={[
-                    {
-                      title: t('pages.create.todo.priorityLabel'),
-                      fields: [
-                        ...(groupId
-                          ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
-                          : []),
-                        {
-                          label: t('pages.create.todo.priorityLabel'),
-                          value: t(`pages.create.todo.priority.${priority}`),
-                        },
-                        {
-                          label: t('pages.create.todo.statusLabel'),
-                          value: t(`features.todos.status.${status}`),
-                        },
-                        ...(dueDate
-                          ? [{ label: t('pages.create.todo.dueDateLabel'), value: dueDate }]
-                          : []),
-                      ],
-                    },
-                    {
-                      title: t('pages.create.todo.assignTo'),
-                      fields: [
-                        ...(assigneeNames.length > 0
-                          ? [
-                              {
-                                label: t('pages.create.todo.assignedTo'),
-                                value: assigneeNames.join(', '),
-                              },
-                            ]
-                          : []),
-                        {
-                          label: t('pages.create.common.visibility'),
-                          value: visibilityLabel,
-                        },
-                        ...(tags.length > 0
-                          ? [{ label: t('pages.create.todo.tagsLabel'), value: tags.join(', ') }]
-                          : []),
-                      ],
-                    },
-                  ]}
-                />
-              ),
+              kind: 'customComponent',
+              component: CreateSummaryStep,
+              props: {
+                entityType: 'todo',
+                badge: t('pages.create.todo.reviewBadge'),
+                title: title || t('pages.create.todo.titlePlaceholder'),
+                subtitle: description || undefined,
+                sections: [
+                  {
+                    title: t('pages.create.todo.priorityLabel'),
+                    fields: [
+                      ...(groupId
+                        ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
+                        : []),
+                      {
+                        label: t('pages.create.todo.priorityLabel'),
+                        value: t(`pages.create.todo.priority.${priority}`),
+                      },
+                      {
+                        label: t('pages.create.todo.statusLabel'),
+                        value: t(`features.todos.status.${status}`),
+                      },
+                      ...(dueDate
+                        ? [{ label: t('pages.create.todo.dueDateLabel'), value: dueDate }]
+                        : []),
+                    ],
+                  },
+                  {
+                    title: t('pages.create.todo.assignTo'),
+                    fields: [
+                      ...(assigneeNames.length > 0
+                        ? [
+                            {
+                              label: t('pages.create.todo.assignedTo'),
+                              value: assigneeNames.join(', '),
+                            },
+                          ]
+                        : []),
+                      {
+                        label: t('pages.create.common.visibility'),
+                        value: visibilityLabel,
+                      },
+                      ...(tags.length > 0
+                        ? [{ label: t('pages.create.todo.tagsLabel'), value: tags.join(', ') }]
+                        : []),
+                    ],
+                  },
+                ],
+              },
             },
           ],
         },

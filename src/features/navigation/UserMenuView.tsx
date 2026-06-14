@@ -167,7 +167,7 @@ export function UserMenuView({
                   </div>
                 </div>
               ) : null}
-              {groups.map(group => (
+              {groups.map((group: any) => (
                 <DropdownMenuItem key={group.id} asChild>
                   <Link
                     to="/group/$id"

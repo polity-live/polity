@@ -150,7 +150,7 @@ export function VersionControlView({ model }: VersionControlViewProps) {
               </div>
             ) : (
               <div className="space-y-3 pr-4">
-                {filteredVersions.map(version => (
+                {filteredVersions.map((version: any) => (
                   <div
                     key={version.id}
                     className="hover:bg-muted/50 flex items-start justify-between rounded-lg border p-3"

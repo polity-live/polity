@@ -83,7 +83,7 @@ export function OfflineElectionTallyDialogView({
           </div>
 
           <div className="grid gap-3">
-            {candidates.map(candidate => (
+            {candidates.map((candidate: any) => (
               <div
                 key={candidate.id}
                 className="grid gap-2 md:grid-cols-[1fr_120px] md:items-center"

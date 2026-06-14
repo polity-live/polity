@@ -1,12 +1,8 @@
 'use client';
 
-import { Card } from '@/features/shared/ui/ui/card';
-import { cn } from '@/features/shared/utils/utils';
 import type { Conversation, Message } from '../types/message.types';
-import { ConversationHeader } from './ConversationHeader';
-import { MessageList } from './MessageList';
-import { AssistantMessageInput } from './AssistantMessageInput';
 import { useAssistantChat } from '../hooks/useAssistantChat';
+import { AssistantMessageContentView } from './AssistantMessageContentView';
 
 interface AssistantMessageViewProps {
   conversation: Conversation;
@@ -42,51 +38,40 @@ export function AssistantMessageView({
   className,
 }: AssistantMessageViewProps) {
   const assistantChat = useAssistantChat(conversation, currentUserId);
+  const streamingAssistantMessage =
+    assistantChat.streamingText ||
+    assistantChat.isThinking ||
+    assistantChat.isToolCalling ||
+    assistantChat.streamError
+      ? {
+          text: assistantChat.streamingText,
+          isCompressing: assistantChat.isCompressing,
+          isThinking: assistantChat.isThinking,
+          isToolCalling: assistantChat.isToolCalling,
+          toolName: assistantChat.activeToolName,
+          toolPreview: assistantChat.activeToolCall?.preview ?? null,
+          errorMessage: assistantChat.streamError,
+        }
+      : undefined;
 
   return (
-    <Card className={cn('flex h-full min-h-0 flex-col overflow-hidden md:col-span-2', className)}>
-      <div className="flex h-full min-h-0 flex-col">
-        <ConversationHeader
-          conversation={conversation}
-          currentUserId={currentUserId}
-          isOnline={false}
-          onBack={onBack}
-          onTogglePin={onTogglePin}
-          onDeleteClick={onDeleteClick}
-          onMembersClick={onMembersClick}
-          onRenameConversation={onRenameConversation}
-        />
-
-        <MessageList
-          conversation={conversation}
-          messages={messages}
-          hasMoreOlderMessages={hasMoreOlderMessages}
-          onLoadOlderMessages={onLoadOlderMessages}
-          onAtEndChange={onAtEndChange}
-          currentUserId={currentUserId}
-          onAcceptConversation={onAcceptConversation}
-          onRejectConversation={onRejectConversation}
-          resolveAttachmentCardData={assistantChat.resolveAttachmentCardData}
-          streamingAssistantMessage={
-            assistantChat.streamingText ||
-            assistantChat.isThinking ||
-            assistantChat.isToolCalling ||
-            assistantChat.streamError
-              ? {
-                  text: assistantChat.streamingText,
-                  isCompressing: assistantChat.isCompressing,
-                  isThinking: assistantChat.isThinking,
-                  isToolCalling: assistantChat.isToolCalling,
-                  toolName: assistantChat.activeToolName,
-                  toolPreview: assistantChat.activeToolCall?.preview ?? null,
-                  errorMessage: assistantChat.streamError,
-                }
-              : undefined
-          }
-        />
-
-        <AssistantMessageInput assistantChat={assistantChat} />
-      </div>
-    </Card>
+    <AssistantMessageContentView
+      conversation={conversation}
+      messages={messages}
+      hasMoreOlderMessages={hasMoreOlderMessages}
+      onLoadOlderMessages={onLoadOlderMessages}
+      onAtEndChange={onAtEndChange}
+      currentUserId={currentUserId}
+      onBack={onBack}
+      onTogglePin={onTogglePin}
+      onDeleteClick={onDeleteClick}
+      onMembersClick={onMembersClick}
+      onRenameConversation={onRenameConversation}
+      onAcceptConversation={onAcceptConversation}
+      onRejectConversation={onRejectConversation}
+      className={className}
+      assistantChat={assistantChat}
+      streamingAssistantMessage={streamingAssistantMessage}
+    />
   );
 }

@@ -43,7 +43,7 @@ export function OnePageFormLayoutView({
       </div>
 
       <div className="space-y-8">
-        {steps.map((step, index) => (
+        {steps.map((step: any, index: number) => (
           <div
             key={index}
             ref={el => {

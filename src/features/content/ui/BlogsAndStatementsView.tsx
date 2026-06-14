@@ -117,7 +117,7 @@ export function BlogsAndStatementsView({
         </div>
 
         <div className="flex gap-1">
-          {filters.map(f => (
+          {filters.map((f: any) => (
             <Button
               key={f.value}
               variant={filter === f.value ? 'default' : 'outline'}
@@ -140,7 +140,7 @@ export function BlogsAndStatementsView({
             </h2>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
-            {blogs.map(blog => (
+            {blogs.map((blog: any) => (
               <div key={blog.id} className="relative">
                 <BlogTimelineCard
                   blog={{
@@ -153,8 +153,8 @@ export function BlogsAndStatementsView({
                     authorId: blog.user_id ?? undefined,
                     publishedAt: blog.date ?? undefined,
                     hashtags: (blog.blog_hashtags ?? [])
-                      .map(bh => bh.hashtag)
-                      .filter((h): h is { id: string; tag: string } => !!h),
+                      .map((bh: any) => bh.hashtag)
+                      .filter((h: any): h is { id: string; tag: string } => !!h),
                   }}
                 />
                 {canManage && (
@@ -197,7 +197,7 @@ export function BlogsAndStatementsView({
             </h2>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
-            {statements.map(s => (
+            {statements.map((s: any) => (
               <StatementTimelineCard
                 key={s.id}
                 statement={{
@@ -216,8 +216,8 @@ export function BlogsAndStatementsView({
                   videoUrl: s.video_url ?? undefined,
                   groupId: s.group_id ?? undefined,
                   hashtags: (s.statement_hashtags ?? [])
-                    .map(sh => sh.hashtag)
-                    .filter((h): h is { id: string; tag: string } => !!h),
+                    .map((sh: any) => sh.hashtag)
+                    .filter((h: any): h is { id: string; tag: string } => !!h),
                 }}
               />
             ))}

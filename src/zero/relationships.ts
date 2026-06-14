@@ -29,6 +29,7 @@ import {
 import {
   amendment,
   amendmentCollaborator,
+  amendmentStreetDesign,
   amendmentPath,
   amendmentPathSegment,
   supportConfirmation,
@@ -960,6 +961,11 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
     destSchema: amendmentCollaborator,
     destField: ['amendment_id'],
   }),
+  street_designs: many({
+    sourceField: ['id'],
+    destSchema: amendmentStreetDesign,
+    destField: ['amendment_id'],
+  }),
   paths: many({ sourceField: ['id'], destSchema: amendmentPath, destField: ['amendment_id'] }),
   process_runs: many({
     sourceField: ['id'],
@@ -1028,6 +1034,14 @@ export const amendmentCollaboratorRelationships = relationships(
     amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
     user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
     role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
+  })
+);
+
+export const amendmentStreetDesignRelationships = relationships(
+  amendmentStreetDesign,
+  ({ one }) => ({
+    amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
+    created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
   })
 );
 
@@ -2206,6 +2220,7 @@ export const allRelationships = [
   changeRequestRelationships,
   changeRequestVoteRelationships,
   amendmentCollaboratorRelationships,
+  amendmentStreetDesignRelationships,
   amendmentPathRelationships,
   amendmentPathSegmentRelationships,
   supportConfirmationRelationships,

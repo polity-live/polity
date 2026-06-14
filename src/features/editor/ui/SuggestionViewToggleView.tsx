@@ -92,7 +92,7 @@ export function SuggestionViewToggleView({
                   {labels.allSuggestions}
                   {selectedCrIds === null && <Check className="ml-auto h-4 w-4" />}
                 </CommandItem>
-                {crOptions.map(option => (
+                {crOptions.map((option: any) => (
                   <CommandItem key={option.crId} onSelect={() => onSelectCr(option.crId)}>
                     <Filter className="mr-2 h-4 w-4" />
                     <div className="flex flex-col">
@@ -117,7 +117,7 @@ export function SuggestionViewToggleView({
                   <FormControlCheckbox checked={allSelected} className="mr-2" tabIndex={-1} />
                   {allSelected ? labels.deselectAll : labels.selectAll}
                 </CommandItem>
-                {crOptions.map(option => {
+                {crOptions.map((option: any) => {
                   const isChecked = selectedCrIds?.has(option.crId) ?? false;
                   return (
                     <CommandItem key={option.crId} onSelect={() => onToggleCr(option.crId)}>

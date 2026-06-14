@@ -51,6 +51,26 @@ export const amendmentCollaborator = table('amendment_collaborator')
   })
   .primaryKey('id');
 
+export const amendmentStreetDesign = table('amendment_street_design')
+  .columns({
+    id: string(),
+    amendment_id: string(),
+    created_by_id: string(),
+    title: string().optional(),
+    bbox: json().optional(),
+    center_lat: number().optional(),
+    center_lon: number().optional(),
+    osm_snapshot: json().optional(),
+    design_state: json().optional(),
+    currency: string(),
+    estimated_total_cost_minor: number(),
+    cost_catalog_version: string().optional(),
+    cost_summary: json().optional(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
+
 export const amendmentPath = table('amendment_path')
   .columns({
     id: string(),

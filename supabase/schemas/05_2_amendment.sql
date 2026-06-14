@@ -68,6 +68,36 @@ CREATE INDEX idx_amendment_collaborator_user ON public.amendment_collaborator (u
 ALTER TABLE public.amendment_collaborator ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment_collaborator FOR ALL TO service_role USING (true);
 
+-- Amendment street design table
+CREATE TABLE IF NOT EXISTS public.amendment_street_design (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
+  created_by_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  title TEXT,
+  bbox JSONB,
+  center_lat NUMERIC,
+  center_lon NUMERIC,
+  osm_snapshot JSONB,
+  design_state JSONB,
+  currency TEXT NOT NULL DEFAULT 'EUR',
+  estimated_total_cost_minor INTEGER NOT NULL DEFAULT 0,
+  cost_catalog_version TEXT,
+  cost_summary JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_amendment_street_design_amendment
+  ON public.amendment_street_design (amendment_id);
+CREATE INDEX idx_amendment_street_design_created_by
+  ON public.amendment_street_design (created_by_id);
+CREATE INDEX idx_amendment_street_design_updated_at
+  ON public.amendment_street_design (updated_at DESC);
+
+ALTER TABLE public.amendment_street_design ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all"
+  ON public.amendment_street_design FOR ALL TO service_role USING (true);
+
 -- Amendment path table
 CREATE TABLE IF NOT EXISTS public.amendment_path (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

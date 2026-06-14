@@ -60,7 +60,7 @@ export function CarouselFormLayoutView({
 
       <div ref={emblaRef} className="min-h-0 flex-1 overflow-hidden">
         <div className="flex h-full">
-          {steps.map((step, index) => (
+          {steps.map((step: any, index: number) => (
             <div key={index} className="min-h-0 min-w-0 flex-[0_0_100%] px-1">
               <div className="h-full overflow-y-auto py-2 pr-1">
                 <CreateStepRenderer step={step} />

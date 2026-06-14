@@ -9,13 +9,10 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import { Loader2 } from 'lucide-react';
-import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { useEditor } from '../hooks/useEditor';
 import { useEditorOperations } from '../hooks/useEditorOperations';
 import { useSuggestionIdAssignment } from '@/features/documents/hooks/use-suggestion-id-assignment';
 import { countChangedCharactersForSuggestion } from '@/features/change-requests/utils/suggestion-extraction';
-import { SuggestionViewToggle } from './SuggestionViewToggle';
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion';
 import type { EditorUser } from '../types';
 
@@ -32,7 +29,7 @@ interface InlineAmendmentEditorProps {
   /** Editor mode to use — defaults to 'suggest_event' */
   editingMode?: string | null;
 }
-
+import { InlineAmendmentEditorView } from './InlineAmendmentEditorView';
 export function InlineAmendmentEditor({
   amendmentId,
   userId,
@@ -163,48 +160,31 @@ export function InlineAmendmentEditor({
       editorOps,
     ]
   );
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
-      </div>
-    );
-  }
-
-  if (!entity) return null;
-
   return (
-    <div className="space-y-2">
-      {discussions.length > 0 && (
-        <SuggestionViewToggle
-          discussions={discussions}
-          selectedCrIds={selectedCrIds}
-          onSelectedCrIdsChange={setSelectedCrIds}
-        />
-      )}
-      <div className="bg-background rounded-lg border">
-        <PlateEditor
-          key={contentEntityId}
-          value={content}
-          onChange={setContent}
-          documentId={contentEntityId}
-          currentMode={resolvedMode}
-          isOwnerOrCollaborator={true}
-          currentUser={
-            currentUser
-              ? { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatarUrl }
-              : undefined
-          }
-          users={editorUsers}
-          discussions={discussions}
-          onDiscussionsChange={setDiscussions}
-          onSuggestionAccepted={onSuggestionAccepted}
-          onSuggestionDeclined={onSuggestionDeclined}
-          selectedCrIds={selectedCrIds}
-          onSelectedCrIdsChange={setSelectedCrIds}
-        />
-      </div>
-    </div>
+    <InlineAmendmentEditorView
+      amendmentId={amendmentId}
+      userId={userId}
+      userRecord={userRecord}
+      agendaItemId={agendaItemId}
+      editingMode={editingMode}
+      resolvedMode={resolvedMode}
+      entity={entity}
+      isLoading={isLoading}
+      content={content}
+      discussions={discussions}
+      mode={mode}
+      selectedCrIds={selectedCrIds}
+      setContent={setContent}
+      setDiscussions={setDiscussions}
+      setSelectedCrIds={setSelectedCrIds}
+      contentEntityId={contentEntityId}
+      amendmentIdFromEntity={amendmentIdFromEntity}
+      editorOps={editorOps}
+      currentUser={currentUser}
+      editorUsers={editorUsers}
+      handleChangeRequestCreate={handleChangeRequestCreate}
+      onSuggestionAccepted={onSuggestionAccepted}
+      onSuggestionDeclined={onSuggestionDeclined}
+    />
   );
 }

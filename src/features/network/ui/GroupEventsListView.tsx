@@ -37,7 +37,7 @@ export function GroupEventsListView({
 
   return (
     <div className="space-y-2">
-      {futureEvents.map(event => (
+      {futureEvents.map((event: any) => (
         <EventSearchCard
           key={event.id}
           event={event}

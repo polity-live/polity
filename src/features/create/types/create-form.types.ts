@@ -1,4 +1,4 @@
-import type { ComponentProps, FocusEvent, ReactNode } from 'react';
+import type { ComponentProps, ComponentType, FocusEvent, ReactNode } from 'react';
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
 import type {
   TypeaheadMultiProps,
@@ -53,10 +53,17 @@ interface CreateCustomFieldDescriptor extends CreateDescriptorBase {
   node: ReactNode;
 }
 
+interface CreateCustomComponentFieldDescriptor extends CreateDescriptorBase {
+  kind: 'customComponent';
+  component: ComponentType<any>;
+  props?: Record<string, unknown>;
+}
+
 export type CreateFormFieldDescriptor =
   | CreateTextFieldDescriptor
   | CreateTypeaheadFieldDescriptor
-  | CreateCustomFieldDescriptor;
+  | CreateCustomFieldDescriptor
+  | CreateCustomComponentFieldDescriptor;
 
 export interface CreateFormSectionDescriptor {
   key: string;

@@ -64,16 +64,15 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
           fields: [
             {
               key: 'election',
-              kind: 'custom',
-              node: (
-                <ElectionSearchInput
-                  value={electionId}
-                  onChange={setElectionId}
-                  label={t('pages.create.electionCandidate.electionLabel')}
-                  required
-                  placeholder={t('pages.create.electionCandidate.electionPlaceholder')}
-                />
-              ),
+              kind: 'customComponent',
+              component: ElectionSearchInput,
+              props: {
+                value: electionId,
+                onChange: setElectionId,
+                label: t('pages.create.electionCandidate.electionLabel'),
+                required: true,
+                placeholder: t('pages.create.electionCandidate.electionPlaceholder'),
+              },
             },
           ],
         },
@@ -95,17 +94,16 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
             },
             {
               key: 'image',
-              kind: 'custom',
-              node: (
-                <ImageUpload
-                  currentImage={imageURL}
-                  onImageChange={setImageURL}
-                  entityType="election-candidates"
-                  entityId={candidateId}
-                  label={t('pages.create.electionCandidate.imageUrlLabel')}
-                  description={t('pages.create.electionCandidate.imageUrlOptional')}
-                />
-              ),
+              kind: 'customComponent',
+              component: ImageUpload,
+              props: {
+                currentImage: imageURL,
+                onImageChange: setImageURL,
+                entityType: 'election-candidates',
+                entityId: candidateId,
+                label: t('pages.create.electionCandidate.imageUrlLabel'),
+                description: t('pages.create.electionCandidate.imageUrlOptional'),
+              },
             },
           ],
         },
@@ -115,46 +113,45 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
           fields: [
             {
               key: 'review',
-              kind: 'custom',
-              node: (
-                <CreateSummaryStep
-                  entityType="election"
-                  badge={t('pages.create.electionCandidate.reviewBadge')}
-                  title={selectedElection?.title || 'Election Candidate'}
-                  subtitle={statement || undefined}
-                  media={
-                    imageURL ? { imageUrl: imageURL, imageAlt: selectedElectionTitle } : undefined
-                  }
-                  sections={[
-                    {
-                      title: t('pages.create.electionCandidate.electionLabel'),
-                      fields: [
-                        {
-                          label: t('pages.create.electionCandidate.electionLabel'),
-                          value: selectedElectionTitle,
-                        },
-                      ],
-                    },
-                    {
-                      title: t('pages.create.electionCandidate.descriptionLabel'),
-                      fields: [
-                        {
-                          label: t('pages.create.electionCandidate.descriptionLabel'),
-                          value: statement || t('pages.create.common.notSelected'),
-                        },
-                        ...(imageURL
-                          ? [
-                              {
-                                label: t('pages.create.electionCandidate.image'),
-                                value: 'Attached',
-                              },
-                            ]
-                          : []),
-                      ],
-                    },
-                  ]}
-                />
-              ),
+              kind: 'customComponent',
+              component: CreateSummaryStep,
+              props: {
+                entityType: 'election',
+                badge: t('pages.create.electionCandidate.reviewBadge'),
+                title: selectedElection?.title || 'Election Candidate',
+                subtitle: statement || undefined,
+                media: imageURL
+                  ? { imageUrl: imageURL, imageAlt: selectedElectionTitle }
+                  : undefined,
+                sections: [
+                  {
+                    title: t('pages.create.electionCandidate.electionLabel'),
+                    fields: [
+                      {
+                        label: t('pages.create.electionCandidate.electionLabel'),
+                        value: selectedElectionTitle,
+                      },
+                    ],
+                  },
+                  {
+                    title: t('pages.create.electionCandidate.descriptionLabel'),
+                    fields: [
+                      {
+                        label: t('pages.create.electionCandidate.descriptionLabel'),
+                        value: statement || t('pages.create.common.notSelected'),
+                      },
+                      ...(imageURL
+                        ? [
+                            {
+                              label: t('pages.create.electionCandidate.image'),
+                              value: 'Attached',
+                            },
+                          ]
+                        : []),
+                    ],
+                  },
+                ],
+              },
             },
           ],
         },

@@ -124,7 +124,7 @@ export function DocsTopicView({
               </PanelHeader>
               <PanelContent>
                 <ul className="text-muted-foreground space-y-3 text-sm leading-6">
-                  {actions.map(action => (
+                  {actions.map((action: any) => (
                     <li key={action} className="flex gap-3">
                       <span className="text-primary mt-1">•</span>
                       <span>{action}</span>
@@ -139,7 +139,7 @@ export function DocsTopicView({
               </PanelHeader>
               <PanelContent>
                 <ul className="text-muted-foreground space-y-3 text-sm leading-6">
-                  {concepts.map(concept => (
+                  {concepts.map((concept: any) => (
                     <li key={concept} className="flex gap-3">
                       <span className="text-primary mt-1">•</span>
                       <span>{concept}</span>
@@ -159,7 +159,7 @@ export function DocsTopicView({
               <AccordionTrigger className="text-base">{copy.watchFor}</AccordionTrigger>
               <AccordionContent>
                 <ul className="text-muted-foreground space-y-3 text-sm leading-6">
-                  {watchFor.map(item => (
+                  {watchFor.map((item: any) => (
                     <li key={item} className="flex gap-3">
                       <span className="text-primary mt-1">•</span>
                       <span>{item}</span>
@@ -172,7 +172,7 @@ export function DocsTopicView({
               <AccordionTrigger className="text-base">{copy.statesLabel}</AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-3">
-                  {states.map(state => (
+                  {states.map((state: any) => (
                     <div
                       key={state}
                       className="bg-background text-muted-foreground rounded-lg border p-4 text-sm leading-6"
@@ -192,7 +192,7 @@ export function DocsTopicView({
               <PanelTitle>{copy.relatedTopics}</PanelTitle>
             </PanelHeader>
             <PanelContent className="space-y-3">
-              {relatedTopics.map(relatedTopic => (
+              {relatedTopics.map((relatedTopic: any) => (
                 <Button
                   key={relatedTopic.slug}
                   asChild
@@ -221,7 +221,7 @@ export function DocsTopicView({
 
       <Section title={copy.exploreMore} description={copy.libraryDescription}>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {relatedTopics.map(relatedTopic => (
+          {relatedTopics.map((relatedTopic: any) => (
             <DocsTopicCard key={`card-${relatedTopic.slug}`} topic={relatedTopic} />
           ))}
         </div>

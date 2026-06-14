@@ -2,22 +2,8 @@ import type { TLinkElement } from 'platejs';
 import type { PlateElementProps } from 'platejs/react';
 
 import { useLink } from '@platejs/link/react';
-import { PlateElement } from 'platejs/react';
-
+import { LinkElementView } from './LinkElementView';
 export function LinkElement(props: PlateElementProps<TLinkElement>) {
   const { props: linkProps } = useLink({ element: props.element });
-
-  return (
-    <PlateElement
-      {...props}
-      as="a"
-      className="text-primary decoration-primary font-medium underline underline-offset-4"
-      attributes={{
-        ...props.attributes,
-        ...(linkProps as Record<string, unknown>),
-      }}
-    >
-      {props.children}
-    </PlateElement>
-  );
+  return <LinkElementView props={props} linkProps={linkProps} />;
 }

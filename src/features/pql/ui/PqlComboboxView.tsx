@@ -95,7 +95,7 @@ export function PqlComboboxView({
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
-              {filteredOptions.map(option => {
+              {filteredOptions.map((option: any) => {
                 const isSelected = option.value === value;
                 return (
                   <CommandItem

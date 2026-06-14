@@ -68,7 +68,7 @@ export function NavigationCommandDialogView({
       <CommandList>
         <CommandEmpty>{copy.noResults}</CommandEmpty>
         <CommandGroup heading={copy.primaryNavigation}>
-          {primaryNavItems.map(item => (
+          {primaryNavItems.map((item: any) => (
             <NavigationCommandItem key={item.id} item={item} onSelect={onSelectPrimaryItem} />
           ))}
         </CommandGroup>
@@ -77,7 +77,7 @@ export function NavigationCommandDialogView({
           <>
             <CommandSeparator />
             <CommandGroup heading={copy.userNavigation}>
-              {userNavItems.map(item => (
+              {userNavItems.map((item: any) => (
                 <NavigationCommandItem key={item.id} item={item} onSelect={onSelectUserItem} />
               ))}
             </CommandGroup>

@@ -90,7 +90,7 @@ export function EditorViewModeToggleView({
                   {translateText('generated.inline.0292_no_change_requests_found_05062147')}
                 </CommandEmpty>
                 <CommandGroup>
-                  {changeRequests.map(cr => (
+                  {changeRequests.map((cr: any) => (
                     <CommandItem
                       key={cr.id}
                       value={`${cr.crId} ${cr.title}`}

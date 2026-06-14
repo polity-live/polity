@@ -46,7 +46,7 @@ export function StatementSurveyView({
       <p className="font-semibold">{question}</p>
 
       <div className="space-y-2">
-        {options.map(option => {
+        {options.map((option: any) => {
           const isUserChoice = userVote?.option_id === option.optionId;
           const canChangeVote = hasVoted && !isExpired && !isUserChoice;
 

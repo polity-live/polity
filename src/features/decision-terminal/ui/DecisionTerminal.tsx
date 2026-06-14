@@ -2,7 +2,7 @@
 
 import { useDecisionTerminalDashboardController } from '../hooks/useDecisionTerminalDashboardController';
 import { DecisionTerminalView } from './DecisionTerminalView';
-import { DecisionVoteDialogController } from './DecisionVoteDialogController';
+import { DecisionVoteDialogController } from './DecisionVoteDialog';
 import type { DecisionItem } from './types';
 
 export interface DecisionTerminalProps {

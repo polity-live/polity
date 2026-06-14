@@ -1,15 +1,3 @@
-import { featureThemeClassName } from '@/features/shared/theme';
-import {
-  BadgeControl,
-  getRelationshipBadgeClassName as getRelationshipBadgeClasses,
-} from '@/features/shared/ui/status';
-import {
-  FileUploadTrigger,
-  FormControlLabel,
-  FormControlRadioGroup,
-  FormControlSwitch,
-  FormControlRadioGroupItem,
-} from '@/features/shared/ui/form';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
@@ -17,12 +5,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
-import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { DateTimeRangeInput } from '../ui/inputs/DateTimeRangeInput';
-import { VisibilityInput } from '../ui/inputs/VisibilityInput';
-import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
@@ -31,29 +14,11 @@ import { useUserState } from '@/zero/users/useUserState';
 import { useAuth } from '@/providers/auth-provider';
 import {
   getCurrentGroupRelationshipLabel,
-  GroupRelationshipRightSentenceList,
   type GroupRelationshipRight,
 } from '@/features/network/ui/GroupRelationshipFields';
 import { useGroupConnectionActions } from '@/zero/network';
-import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/features/shared/ui/ui/accordion';
-import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
-import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
-import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
+import type { ColumnDef } from '@/features/shared/ui/data-table';
 import { isValidOptionalEmailAddress } from '@/features/shared/logic/inputValidation';
-import { cn } from '@/features/shared/utils/utils.ts';
 import { matchInviteCsvUsers, type InviteCsvMatchResult } from '../logic/groupInviteCsv';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import {
@@ -61,7 +26,6 @@ import {
   richTextToPlainText,
   toZeroRichTextValue,
 } from '@/features/shared/logic/richText';
-import { X, Upload, Link2, FileSpreadsheet } from 'lucide-react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type { CreateFormConfig } from '../types/create-form.types';
@@ -74,11 +38,7 @@ import type {
   GroupConnectionPreset,
   RelativeMembershipDirection,
 } from '@/features/network/types/network.types';
-import {
-  getCanonicalMembershipModeLabel,
-  getSiblingMembershipKind,
-} from '@/features/network/logic/groupConnectionDerived';
-import { GroupConnectionComposer } from '@/features/network/ui/GroupConnectionComposer';
+import { getSiblingMembershipKind } from '@/features/network/logic/groupConnectionDerived';
 import { useGroupConnectionComposerPreflight } from '@/features/network/hooks/useGroupConnectionComposerPreflight';
 import {
   applyGroupConnectionPreset,
@@ -88,6 +48,14 @@ import {
   hasConfiguredGroupConnection,
   hasConfiguredMembership,
 } from '@/features/network/logic/groupConnectionComposer';
+import { CreateRichTextField } from '../ui/inputs/CreateRichTextField';
+import { GroupTypeInput } from '../ui/inputs/GroupTypeInput';
+import { GroupConnectionsInput } from '../ui/inputs/GroupConnectionsInput';
+import { GroupLocationInput } from '../ui/inputs/GroupLocationInput';
+import { GroupMediaSettingsInput } from '../ui/inputs/GroupMediaSettingsInput';
+import { GroupInvitePeopleInput } from '../ui/inputs/GroupInvitePeopleInput';
+import { ConstitutionalEventToggleInput } from '../ui/inputs/ConstitutionalEventToggleInput';
+import { CreateGroupSummaryStep } from '../ui/CreateGroupSummaryStep';
 
 type GroupType = 'base' | 'hierarchical' | 'sibling';
 type RelationshipDirection = GroupRelationshipDirection;
@@ -807,20 +775,15 @@ export function useCreateGroupForm(): CreateFormConfig {
             },
             {
               key: 'description',
-              kind: 'custom',
-              node: (
-                <div className="space-y-2">
-                  <FormControlLabel>{t('pages.create.group.descriptionLabel')}</FormControlLabel>
-                  <p className="text-muted-foreground text-xs">
-                    {t('pages.create.group.tips.description')}
-                  </p>
-                  <MiniPlateEditor
-                    value={descriptionContent}
-                    onChange={handleDescriptionContentChange}
-                    placeholder={t('pages.create.group.descriptionPlaceholder')}
-                  />
-                </div>
-              ),
+              kind: 'customComponent',
+              component: CreateRichTextField,
+              props: {
+                label: t('pages.create.group.descriptionLabel'),
+                description: t('pages.create.group.tips.description'),
+                value: descriptionContent,
+                onChange: handleDescriptionContentChange,
+                placeholder: t('pages.create.group.descriptionPlaceholder'),
+              },
             },
             {
               key: 'email',
@@ -835,63 +798,23 @@ export function useCreateGroupForm(): CreateFormConfig {
             },
             {
               key: 'group-type',
-              kind: 'custom',
-              node: (
-                <div className="space-y-2">
-                  <FormControlLabel>{t('pages.create.group.groupType')}</FormControlLabel>
-                  <FormControlRadioGroup
-                    value={radioGroupType}
-                    onValueChange={value => setGroupType(value as GroupType)}
-                  >
-                    <div className="space-y-2">
-                      <FormControlLabel
-                        htmlFor="group-type-base"
-                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                          radioGroupType === 'base'
-                            ? 'border-primary bg-primary/5'
-                            : 'hover:bg-muted/50'
-                        }`}
-                      >
-                        <FormControlRadioGroupItem
-                          value="base"
-                          id="group-type-base"
-                          className="mt-0.5"
-                        />
-                        <div>
-                          <div className="text-sm font-medium">
-                            {t('pages.create.group.groupTypes.base')}
-                          </div>
-                          <div className="text-muted-foreground text-xs">
-                            {t('pages.create.group.groupTypes.baseDesc')}
-                          </div>
-                        </div>
-                      </FormControlLabel>
-                      <FormControlLabel
-                        htmlFor="group-type-hierarchical"
-                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                          radioGroupType === 'hierarchical'
-                            ? 'border-primary bg-primary/5'
-                            : 'hover:bg-muted/50'
-                        }`}
-                      >
-                        <FormControlRadioGroupItem
-                          value="hierarchical"
-                          id="group-type-hierarchical"
-                          className="mt-0.5"
-                        />
-                        <div>
-                          <div className="text-sm font-medium">
-                            {t('pages.create.group.groupTypes.hierarchical')}
-                          </div>
-                          <div className="text-muted-foreground text-xs">
-                            {t('pages.create.group.groupTypes.hierarchicalDesc')}
-                          </div>
-                        </div>
-                      </FormControlLabel>
-                    </div>
-                  </FormControlRadioGroup>
-                </div>
-              ),
+              kind: 'customComponent',
+              component: GroupTypeInput,
+              props: {
+                value: radioGroupType,
+                label: t('pages.create.group.groupType'),
+                options: {
+                  base: {
+                    label: t('pages.create.group.groupTypes.base'),
+                    description: t('pages.create.group.groupTypes.baseDesc'),
+                  },
+                  hierarchical: {
+                    label: t('pages.create.group.groupTypes.hierarchical'),
+                    description: t('pages.create.group.groupTypes.hierarchicalDesc'),
+                  },
+                },
+                onChange: setGroupType,
+              },
             },
           ],
         },
@@ -901,156 +824,62 @@ export function useCreateGroupForm(): CreateFormConfig {
           fields: [
             {
               key: 'link-groups',
-              kind: 'custom',
-              node: (
-                <div className="space-y-6">
-                  <div className="space-y-4 rounded-lg border p-4">
-                    <div className="space-y-1">
-                      <FormControlLabel>
-                        {translateText(
-                          'generated.inline.0330_verbindungen_zu_anderen_gruppen_99ad40c5'
-                        )}
-                      </FormControlLabel>
-                      <p className="text-muted-foreground text-xs">
-                        {groupType === 'base'
-                          ? t('pages.create.group.tips.linkGroups')
-                          : translateText(
-                              'generated.inline.0049_waehle_zuerst_eine_gruppe_im_beziehungstyp_en_e6ccef15'
-                            )}
-                      </p>
-                    </div>
-
-                    <GroupConnectionComposer
-                      activeTab={linkComposerTab}
-                      onActiveTabChange={setLinkComposerTab}
-                      value={linkComposerValue}
-                      onValueChange={nextValue => {
-                        setLinkGroupId(nextValue.selectedGroupId);
-                        setLinkType(nextValue.relationshipType);
-                        setLinkMembershipDirection(nextValue.membershipDirection);
-                        setLinkMembershipRule(nextValue.membershipRule);
-                        setLinkRightDirections(nextValue.rightDirections);
-                        setLinkPreset(nextValue.preset);
-                      }}
-                      currentGroupId={groupId}
-                      currentGroupName={name}
-                      availableGroups={selectableLinkGroups}
-                      selectableRolesByDirection={selectableRolesByDirection}
-                      existingRightStatuses={existingRightStatuses}
-                      preflight={activeLinkConflictPreflight}
-                      groupSelectorLabel={t('pages.create.group.selectGroup')}
-                    />
-
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleAddLinkedGroup}
-                        disabled={
-                          !linkGroupId ||
-                          !hasConfiguredConnection ||
-                          activeLinkConflictPreflight.isLoading ||
-                          activeLinkConflictPreflight.blocking ||
-                          hasIncompleteLinkMembershipRules
-                        }
-                      >
-                        <Link2 className="mr-1 h-4 w-4" />
-                        {t('pages.create.group.addGroupLink')}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          const resetState = buildCreateLinkPresetDefaults();
-                          setLinkGroupId('');
-                          setLinkType(resetState.type);
-                          setLinkRightDirections(resetState.rightDirections);
-                          setLinkMembershipDirection(resetState.membershipDirection);
-                          setLinkMembershipRule(resetState.membershipRule);
-                          setLinkComposerTab('preset');
-                          setLinkPreset(resetState.preset);
-                        }}
-                      >
-                        {translateText('generated.inline.0331_abbrechen_07af7cb3')}
-                      </Button>
-                    </div>
-                    {activeLinkConflictPreflight.isLoading ? (
-                      <div className="text-muted-foreground text-sm">
-                        {translateText('generated.inline.0332_pruefe_konflikte_33f6ced2')}
-                      </div>
-                    ) : null}
-                  </div>
-
-                  {linkedGroups.length > 0 ? (
-                    <div className="space-y-2">
-                      <FormControlLabel className="text-muted-foreground text-xs">
-                        {t('pages.create.group.linkedGroups')}
-                      </FormControlLabel>
-                      {linkedGroups.map(linkedGroup => (
-                        <div
-                          key={`${linkedGroup.type}-${linkedGroup.groupId}`}
-                          className="flex items-start gap-3 rounded-md border p-3"
-                        >
-                          <BadgeControl
-                            className={cn(
-                              'border text-xs hover:opacity-100',
-                              getRelationshipBadgeClasses(linkedGroup.type)
-                            )}
-                          >
-                            {linkedGroup.type === 'parent'
-                              ? t('pages.create.group.parent')
-                              : linkedGroup.type === 'child'
-                                ? t('pages.create.group.child')
-                                : t('common.network.sibling')}
-                          </BadgeControl>
-                          <BadgeControl tone="mutedContrast" size="xs">
-                            {getCanonicalMembershipModeLabel(linkedGroup.membershipMode)}
-                          </BadgeControl>
-                          <div className="min-w-0 flex-1 space-y-2">
-                            <div className="space-y-1">
-                              <span className="block text-sm font-medium">
-                                {linkedGroup.groupName}
-                              </span>
-                              <p className="text-muted-foreground text-xs">
-                                {getCurrentGroupRelationshipLabel({
-                                  relationshipType: linkedGroup.type,
-                                  currentGroupName: name,
-                                  selectedGroupName: linkedGroup.groupName,
-                                  siblingMembershipMode:
-                                    linkedGroup.type === 'sibling'
-                                      ? (getSiblingMembershipKind(linkedGroup.membershipMode) ??
-                                        undefined)
-                                      : undefined,
-                                  t,
-                                })}
-                              </p>
-                            </div>
-                            <GroupRelationshipRightSentenceList
-                              rights={getSelectedRights(linkedGroup.rightDirections)}
-                              rightDirections={linkedGroup.rightDirections}
-                              currentGroupName={name}
-                              selectedGroupName={linkedGroup.groupName}
-                              currentGroupId={groupId}
-                              selectedGroupId={linkedGroup.groupId}
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            onClick={() => handleRemoveLinkedGroup(linkedGroup.groupId)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              ),
+              kind: 'customComponent',
+              component: GroupConnectionsInput,
+              props: {
+                label: translateText(
+                  'generated.inline.0330_verbindungen_zu_anderen_gruppen_99ad40c5'
+                ),
+                hint:
+                  groupType === 'base'
+                    ? t('pages.create.group.tips.linkGroups')
+                    : translateText(
+                        'generated.inline.0049_waehle_zuerst_eine_gruppe_im_beziehungstyp_en_e6ccef15'
+                      ),
+                linkedGroupsLabel: t('pages.create.group.linkedGroups'),
+                addLabel: t('pages.create.group.addGroupLink'),
+                cancelLabel: translateText('generated.inline.0331_abbrechen_07af7cb3'),
+                checkingLabel: translateText('generated.inline.0332_pruefe_konflikte_33f6ced2'),
+                currentGroupId: groupId,
+                currentGroupName: name,
+                activeTab: linkComposerTab,
+                value: linkComposerValue,
+                availableGroups: selectableLinkGroups,
+                selectableRolesByDirection,
+                existingRightStatuses,
+                preflight: activeLinkConflictPreflight,
+                groupSelectorLabel: t('pages.create.group.selectGroup'),
+                linkedGroups,
+                addDisabled:
+                  !linkGroupId ||
+                  !hasConfiguredConnection ||
+                  activeLinkConflictPreflight.isLoading ||
+                  activeLinkConflictPreflight.blocking ||
+                  hasIncompleteLinkMembershipRules,
+                onActiveTabChange: setLinkComposerTab,
+                onValueChange: (nextValue: any) => {
+                  setLinkGroupId(nextValue.selectedGroupId);
+                  setLinkType(nextValue.relationshipType);
+                  setLinkMembershipDirection(nextValue.membershipDirection);
+                  setLinkMembershipRule(nextValue.membershipRule);
+                  setLinkRightDirections(nextValue.rightDirections);
+                  setLinkPreset(nextValue.preset);
+                },
+                onAdd: handleAddLinkedGroup,
+                onCancel: () => {
+                  const resetState = buildCreateLinkPresetDefaults();
+                  setLinkGroupId('');
+                  setLinkType(resetState.type);
+                  setLinkRightDirections(resetState.rightDirections);
+                  setLinkMembershipDirection(resetState.membershipDirection);
+                  setLinkMembershipRule(resetState.membershipRule);
+                  setLinkComposerTab('preset');
+                  setLinkPreset(resetState.preset);
+                },
+                onRemove: handleRemoveLinkedGroup,
+                getSelectedRights,
+                t,
+              },
             },
           ],
         },
@@ -1061,70 +890,65 @@ export function useCreateGroupForm(): CreateFormConfig {
           fields: [
             {
               key: 'location',
-              kind: 'custom',
-              node: (
-                <div className="space-y-4">
-                  <p className="text-muted-foreground text-xs">
-                    {t('pages.create.group.tips.location')}
-                  </p>
-                  <GeoAddressPicker
-                    idPrefix="create-group-location"
-                    values={{
-                      country,
-                      region,
-                      city,
-                      post_code,
-                      street,
-                      house_number,
-                    }}
-                    coordinates={
-                      latitude !== null && longitude !== null ? { latitude, longitude } : null
-                    }
-                    onCoordinatesChange={coordinates => {
-                      setLatitude(coordinates?.latitude ?? null);
-                      setLongitude(coordinates?.longitude ?? null);
-                    }}
-                    onFieldChange={(field, value) => {
-                      switch (field) {
-                        case 'country':
-                          setCountry(value);
-                          break;
-                        case 'region':
-                          setRegion(value);
-                          break;
-                        case 'city':
-                          setCity(value);
-                          break;
-                        case 'post_code':
-                          setPostCode(value);
-                          break;
-                        case 'street':
-                          setStreet(value);
-                          break;
-                        case 'house_number':
-                          setHouseNumber(value);
-                          break;
-                      }
-                    }}
-                    labels={{
-                      country: t('pages.create.group.countryLabel'),
-                      region: t('pages.create.group.regionLabel'),
-                      city: t('pages.create.event.city'),
-                      post_code: t('pages.create.event.postalCode'),
-                      street: t('pages.create.event.street'),
-                      house_number: t('pages.create.event.houseNumber'),
-                    }}
-                    placeholders={{
-                      country: t('pages.create.group.countryPlaceholder'),
-                      region: t('pages.create.group.regionPlaceholder'),
-                      city: t('pages.create.event.city'),
-                      post_code: t('pages.create.event.postalCode'),
-                      street: t('pages.create.event.street'),
-                      house_number: t('pages.create.event.houseNumber'),
-                    }}
-                  />
-                </div>
-              ),
+              kind: 'customComponent',
+              component: GroupLocationInput,
+              props: {
+                hint: t('pages.create.group.tips.location'),
+                values: {
+                  country,
+                  region,
+                  city,
+                  post_code,
+                  street,
+                  house_number,
+                  latitude,
+                  longitude,
+                },
+                labels: {
+                  country: t('pages.create.group.countryLabel'),
+                  region: t('pages.create.group.regionLabel'),
+                  city: t('pages.create.event.city'),
+                  post_code: t('pages.create.event.postalCode'),
+                  street: t('pages.create.event.street'),
+                  house_number: t('pages.create.event.houseNumber'),
+                },
+                placeholders: {
+                  country: t('pages.create.group.countryPlaceholder'),
+                  region: t('pages.create.group.regionPlaceholder'),
+                  city: t('pages.create.event.city'),
+                  post_code: t('pages.create.event.postalCode'),
+                  street: t('pages.create.event.street'),
+                  house_number: t('pages.create.event.houseNumber'),
+                },
+                onCoordinatesChange: (
+                  coordinates: { latitude: number; longitude: number } | null
+                ) => {
+                  setLatitude(coordinates?.latitude ?? null);
+                  setLongitude(coordinates?.longitude ?? null);
+                },
+                onFieldChange: (field: string, value: string) => {
+                  switch (field) {
+                    case 'country':
+                      setCountry(value);
+                      break;
+                    case 'region':
+                      setRegion(value);
+                      break;
+                    case 'city':
+                      setCity(value);
+                      break;
+                    case 'post_code':
+                      setPostCode(value);
+                      break;
+                    case 'street':
+                      setStreet(value);
+                      break;
+                    case 'house_number':
+                      setHouseNumber(value);
+                      break;
+                  }
+                },
+              },
             },
           ],
         },
@@ -1135,26 +959,20 @@ export function useCreateGroupForm(): CreateFormConfig {
           fields: [
             {
               key: 'image-tags',
-              kind: 'custom',
-              node: (
-                <div className="space-y-4">
-                  <ImageUpload
-                    currentImage={imageURL}
-                    onImageChange={(url: string) => setImageURL(url)}
-                    cleanupOnRemove
-                    entityType="groups"
-                    entityId={groupId}
-                    label={t('pages.create.group.imageLabel')}
-                    description={t('pages.create.group.imageDescription')}
-                  />
-                  <VisibilityInput value={visibility} onChange={setVisibility} />
-                  <HashtagEditor
-                    value={hashtags}
-                    onChange={setHashtags}
-                    placeholder={t('pages.create.group.hashtagPlaceholder')}
-                  />
-                </div>
-              ),
+              kind: 'customComponent',
+              component: GroupMediaSettingsInput,
+              props: {
+                imageURL,
+                groupId,
+                imageLabel: t('pages.create.group.imageLabel'),
+                imageDescription: t('pages.create.group.imageDescription'),
+                visibility,
+                hashtags,
+                hashtagPlaceholder: t('pages.create.group.hashtagPlaceholder'),
+                onImageChange: (url: string) => setImageURL(url),
+                onVisibilityChange: setVisibility,
+                onHashtagsChange: setHashtags,
+              },
             },
           ],
         },
@@ -1166,245 +984,72 @@ export function useCreateGroupForm(): CreateFormConfig {
           fields: [
             {
               key: 'invite-people',
-              kind: 'custom',
-              node: (
-                <div className="space-y-4">
-                  <p className="text-muted-foreground text-xs">
-                    {allowGuestInvites
-                      ? translateText(
-                          'generated.inline.0050_diese_gruppe_vergibt_mitgliedschaft_automatis_1a57fa5b'
-                        )
-                      : t('pages.create.group.tips.inviteMembers')}
-                  </p>
-                  <UserSearchInput
-                    value={invitedUserIds}
-                    onChange={setInvitedUserIds}
-                    label={
-                      allowGuestInvites ? 'Gaeste suchen' : t('pages.create.group.searchUsers')
+              kind: 'customComponent',
+              component: GroupInvitePeopleInput,
+              props: {
+                hint: allowGuestInvites
+                  ? translateText(
+                      'generated.inline.0050_diese_gruppe_vergibt_mitgliedschaft_automatis_1a57fa5b'
+                    )
+                  : t('pages.create.group.tips.inviteMembers'),
+                searchLabel: allowGuestInvites
+                  ? 'Gaeste suchen'
+                  : t('pages.create.group.searchUsers'),
+                searchPlaceholder: allowGuestInvites
+                  ? 'Gaeste nach Name oder Handle suchen'
+                  : t('pages.create.group.searchUsers'),
+                excludeUserId: user?.id,
+                invitedUserIds,
+                onInvitedUserIdsChange: setInvitedUserIds,
+                csvGuideTitle: allowGuestInvites
+                  ? translateText('generated.inline.0051_gaeste_per_csv_vorbereiten_7af02b36')
+                  : t('pages.create.group.csvGuideTitle'),
+                csvGuideDescription: allowGuestInvites
+                  ? translateText(
+                      'generated.inline.0052_importiere_gaeste_aus_einer_csv_mit_vor_und_n_4c551db1'
+                    )
+                  : t('pages.create.group.csvGuideDescription'),
+                csvGuideTrigger: t('pages.create.group.csvGuideTrigger'),
+                csvGuideFootnote: t('pages.create.group.csvGuideFootnote'),
+                csvGuideColumns,
+                csvGuideRows,
+                csvUploadLabel: allowGuestInvites
+                  ? translateText('generated.inline.0053_gaeste_importieren_b28ba907')
+                  : t('pages.create.group.inviteMembersOptional'),
+                csvLabel: translateText('generated.inline.0337_csv_bba7e432'),
+                onCsvUpload: handleCsvUpload,
+                csvInviteSummary: csvInviteSummary
+                  ? {
+                      ...csvInviteSummary,
+                      ambiguousNames: csvInviteSummary.ambiguousNames.map(entry => ({
+                        ...entry,
+                        candidatesLabel: t('pages.create.group.csvAmbiguousCandidates', {
+                          candidates: entry.candidates.map(candidate => candidate.name).join(', '),
+                        }),
+                      })),
                     }
-                    placeholder={
-                      allowGuestInvites
-                        ? 'Gaeste nach Name oder Handle suchen'
-                        : t('pages.create.group.searchUsers')
-                    }
-                    excludeUserId={user?.id}
-                    multi
-                  />
-                  <Card surface="mutedSubtle" borderStyle="dashed" elevation="none">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <FileSpreadsheet
-                          className={featureThemeClassName('createUseCreateGroupFormSuccessIcon')}
-                        />
-                        {allowGuestInvites
-                          ? translateText(
-                              'generated.inline.0051_gaeste_per_csv_vorbereiten_7af02b36'
-                            )
-                          : t('pages.create.group.csvGuideTitle')}
-                      </CardTitle>
-                      <CardDescription>
-                        {allowGuestInvites
-                          ? translateText(
-                              'generated.inline.0052_importiere_gaeste_aus_einer_csv_mit_vor_und_n_4c551db1'
-                            )
-                          : t('pages.create.group.csvGuideDescription')}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <Accordion type="single" collapsible>
-                        <AccordionItem value="csv-format" className="border-none">
-                          <AccordionTrigger className="hover:bg-muted/50 rounded-md px-3 py-2 text-sm hover:no-underline">
-                            {t('pages.create.group.csvGuideTrigger')}
-                          </AccordionTrigger>
-                          <AccordionContent className="space-y-3 px-1 pt-2">
-                            <DataTable
-                              columns={csvGuideColumns}
-                              data={csvGuideRows}
-                              getRowId={row => `${row.firstName}-${row.lastName}`}
-                              enablePagination={false}
-                              className="space-y-0"
-                            />
-                            <p className="text-muted-foreground text-xs">
-                              {t('pages.create.group.csvGuideFootnote')}
-                            </p>
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
-                    </CardContent>
-                  </Card>
-                  <div className="flex items-center gap-2">
-                    <FileUploadTrigger
-                      inputProps={{
-                        id: 'csv-upload',
-                        accept: '.csv',
-                        onChange: handleCsvUpload,
-                      }}
-                      variant="outline"
-                      className="h-auto cursor-pointer px-3 py-2 text-sm"
-                    >
-                      <Upload className="h-4 w-4" />
-                      {allowGuestInvites
-                        ? translateText('generated.inline.0053_gaeste_importieren_b28ba907')
-                        : t('pages.create.group.inviteMembersOptional')}{' '}
-                      {translateText('generated.inline.0337_csv_bba7e432')}
-                    </FileUploadTrigger>
-                  </div>
-                  {csvInviteSummary && (
-                    <Card surface="background" borderStyle="muted" elevation="none">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base">
-                          {t('pages.create.group.csvSummaryTitle')}
-                        </CardTitle>
-                        <CardDescription>
-                          {t('pages.create.group.csvSummaryDescription')}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="flex flex-wrap gap-2">
-                          <BadgeControl tone="successPale">
-                            {t('pages.create.group.csvFoundCount', {
-                              count: csvInviteSummary.matchedNames.length,
-                            })}
-                          </BadgeControl>
-                          <BadgeControl tone="dangerPale">
-                            {t('pages.create.group.csvNotFoundCount', {
-                              count: csvInviteSummary.notFoundNames.length,
-                            })}
-                          </BadgeControl>
-                          {csvInviteSummary.ambiguousNames.length > 0 && (
-                            <BadgeControl tone="warningPale">
-                              {t('pages.create.group.csvAmbiguousCount', {
-                                count: csvInviteSummary.ambiguousNames.length,
-                              })}
-                            </BadgeControl>
-                          )}
-                        </div>
-
-                        {csvInviteSummary.matchedNames.length > 0 && (
-                          <div className="space-y-2">
-                            <FormControlLabel
-                              className={featureThemeClassName(
-                                'createUseCreateGroupFormSuccessText'
-                              )}
-                            >
-                              {t('pages.create.group.csvFoundNames')}
-                            </FormControlLabel>
-                            <div className="flex flex-wrap gap-2">
-                              {csvInviteSummary.matchedNames.map(name => (
-                                <BadgeControl
-                                  key={name}
-                                  className={featureThemeClassName(
-                                    'createUseCreateGroupFormSuccessBadge'
-                                  )}
-                                >
-                                  {name}
-                                </BadgeControl>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {csvInviteSummary.notFoundNames.length > 0 && (
-                          <div className="space-y-2">
-                            <FormControlLabel
-                              className={featureThemeClassName(
-                                'createUseCreateGroupFormDangerText'
-                              )}
-                            >
-                              {t('pages.create.group.csvNotFoundNames')}
-                            </FormControlLabel>
-                            <div className="flex flex-wrap gap-2">
-                              {csvInviteSummary.notFoundNames.map(name => (
-                                <BadgeControl
-                                  key={name}
-                                  className={featureThemeClassName(
-                                    'createUseCreateGroupFormDangerBadge'
-                                  )}
-                                >
-                                  {name}
-                                </BadgeControl>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {csvInviteSummary.ambiguousNames.length > 0 && (
-                          <div className="space-y-2">
-                            <FormControlLabel
-                              className={featureThemeClassName(
-                                'createUseCreateGroupFormWarningText'
-                              )}
-                            >
-                              {t('pages.create.group.csvAmbiguousNames')}
-                            </FormControlLabel>
-                            <div className="space-y-2">
-                              {csvInviteSummary.ambiguousNames.map(entry => (
-                                <div
-                                  key={entry.fullName}
-                                  className={featureThemeClassName(
-                                    'createUseCreateGroupFormWarningSurface'
-                                  )}
-                                >
-                                  <div
-                                    className={featureThemeClassName(
-                                      'createUseCreateGroupFormWarningTextAlpha'
-                                    )}
-                                  >
-                                    {entry.fullName}
-                                  </div>
-                                  <div
-                                    className={featureThemeClassName(
-                                      'createUseCreateGroupFormWarningTextBeta'
-                                    )}
-                                  >
-                                    {t('pages.create.group.csvAmbiguousCandidates', {
-                                      candidates: entry.candidates
-                                        .map(candidate => candidate.name)
-                                        .join(', '),
-                                    })}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {csvInviteSummary.invalidRows.length > 0 && (
-                          <div className="space-y-2">
-                            <FormControlLabel
-                              className={featureThemeClassName(
-                                'createUseCreateGroupFormWarningText'
-                              )}
-                            >
-                              {t('pages.create.group.csvInvalidRows')}
-                            </FormControlLabel>
-                            <div className="flex flex-wrap gap-2">
-                              {csvInviteSummary.invalidRows.map(row => (
-                                <BadgeControl
-                                  key={row}
-                                  className={featureThemeClassName(
-                                    'createUseCreateGroupFormWarningBadge'
-                                  )}
-                                >
-                                  {row}
-                                </BadgeControl>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
-                  {invitedUserIds.length > 0 && (
-                    <p className="text-muted-foreground text-sm">
-                      {invitedUserIds.length}{' '}
-                      {allowGuestInvites
-                        ? translateText('generated.inline.0054_gaeste_vorgemerkt_9ea73a37')
-                        : t('pages.create.group.invited')}
-                    </p>
-                  )}
-                </div>
-              ),
+                  : null,
+                csvLabels: {
+                  summaryTitle: t('pages.create.group.csvSummaryTitle'),
+                  summaryDescription: t('pages.create.group.csvSummaryDescription'),
+                  foundCount: t('pages.create.group.csvFoundCount', {
+                    count: csvInviteSummary?.matchedNames.length ?? 0,
+                  }),
+                  notFoundCount: t('pages.create.group.csvNotFoundCount', {
+                    count: csvInviteSummary?.notFoundNames.length ?? 0,
+                  }),
+                  ambiguousCount: t('pages.create.group.csvAmbiguousCount', {
+                    count: csvInviteSummary?.ambiguousNames.length ?? 0,
+                  }),
+                  foundNames: t('pages.create.group.csvFoundNames'),
+                  notFoundNames: t('pages.create.group.csvNotFoundNames'),
+                  ambiguousNames: t('pages.create.group.csvAmbiguousNames'),
+                  invalidRows: t('pages.create.group.csvInvalidRows'),
+                },
+                invitedCountLabel: allowGuestInvites
+                  ? translateText('generated.inline.0054_gaeste_vorgemerkt_9ea73a37')
+                  : t('pages.create.group.invited'),
+              },
             },
           ],
         },
@@ -1416,28 +1061,15 @@ export function useCreateGroupForm(): CreateFormConfig {
           fields: [
             {
               key: 'constitutional-toggle',
-              kind: 'custom',
-              node: (
-                <div className="space-y-4">
-                  <p className="text-muted-foreground text-xs">
-                    {t('pages.create.group.tips.constitutionalEvent')}
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <FormControlSwitch
-                      checked={createConstitutionalEvent}
-                      onCheckedChange={setCreateConstitutionalEvent}
-                    />
-                    <FormControlLabel>
-                      {t('pages.create.group.optionalGeneralAssembly')}
-                    </FormControlLabel>
-                  </div>
-                  {createConstitutionalEvent ? (
-                    <p className="text-muted-foreground rounded-md border p-4 text-xs">
-                      {t('pages.create.group.eventTypeDescription')}
-                    </p>
-                  ) : null}
-                </div>
-              ),
+              kind: 'customComponent',
+              component: ConstitutionalEventToggleInput,
+              props: {
+                hint: t('pages.create.group.tips.constitutionalEvent'),
+                checked: createConstitutionalEvent,
+                onCheckedChange: setCreateConstitutionalEvent,
+                label: t('pages.create.group.optionalGeneralAssembly'),
+                description: t('pages.create.group.eventTypeDescription'),
+              },
             },
             ...(createConstitutionalEvent
               ? [
@@ -1459,18 +1091,17 @@ export function useCreateGroupForm(): CreateFormConfig {
                   },
                   {
                     key: 'event-time',
-                    kind: 'custom' as const,
-                    node: (
-                      <DateTimeRangeInput
-                        startDate={eventStartDate}
-                        startTime={eventStartTime}
-                        showEnd={false}
-                        onChange={(field, value) => {
-                          if (field === 'startDate') setEventStartDate(value);
-                          else if (field === 'startTime') setEventStartTime(value);
-                        }}
-                      />
-                    ),
+                    kind: 'customComponent' as const,
+                    component: DateTimeRangeInput,
+                    props: {
+                      startDate: eventStartDate,
+                      startTime: eventStartTime,
+                      showEnd: false,
+                      onChange: (field: string, value: string) => {
+                        if (field === 'startDate') setEventStartDate(value);
+                        else if (field === 'startTime') setEventStartTime(value);
+                      },
+                    },
                   },
                 ]
               : []),
@@ -1482,136 +1113,102 @@ export function useCreateGroupForm(): CreateFormConfig {
           fields: [
             {
               key: 'review',
-              kind: 'custom',
-              node: (
-                <CreateSummaryStep
-                  entityType="group"
-                  badge={t('pages.create.group.reviewBadge')}
-                  secondaryBadge={groupTypeLabel}
-                  title={name || t('pages.create.group.namePlaceholder')}
-                  subtitle={description || undefined}
-                  media={
-                    imageURL ? { imageUrl: imageURL, imageAlt: name || 'Group image' } : undefined
-                  }
-                  hashtags={hashtags.length > 0 ? hashtags : undefined}
-                  sections={[
-                    {
-                      title: t('pages.create.group.basicInfo'),
-                      fields: [
-                        ...(email
-                          ? [{ label: t('pages.create.group.emailLabel'), value: email }]
-                          : []),
+              kind: 'customComponent',
+              component: CreateGroupSummaryStep,
+              props: {
+                badge: t('pages.create.group.reviewBadge'),
+                secondaryBadge: groupTypeLabel,
+                title: name || t('pages.create.group.namePlaceholder'),
+                subtitle: description || undefined,
+                media: imageURL
+                  ? { imageUrl: imageURL, imageAlt: name || 'Group image' }
+                  : undefined,
+                hashtags: hashtags.length > 0 ? hashtags : undefined,
+                groupLinksTitle: t('pages.create.group.groupLinksLabel'),
+                linkedGroupReviewData,
+                currentGroupName: name,
+                currentGroupId: groupId,
+                sections: [
+                  {
+                    title: t('pages.create.group.basicInfo'),
+                    fields: [
+                      ...(email
+                        ? [{ label: t('pages.create.group.emailLabel'), value: email }]
+                        : []),
+                      {
+                        label: t('pages.create.group.groupType'),
+                        value: groupTypeLabel,
+                      },
+                      {
+                        label: t('pages.create.common.visibility'),
+                        value: visibilityLabel,
+                      },
+                    ],
+                  },
+                  {
+                    title: t('pages.create.group.locationLabel'),
+                    fields: [
+                      ...(locationSummary
+                        ? [
+                            {
+                              label: t('pages.create.group.locationLabel'),
+                              value: locationSummary,
+                            },
+                          ]
+                        : []),
+                      ...(imageURL
+                        ? [{ label: t('pages.create.group.imageLabel'), value: 'Attached' }]
+                        : []),
+                    ],
+                  },
+                  {
+                    title: allowGuestInvites
+                      ? 'Gaeste einladen'
+                      : t('pages.create.group.inviteMembers'),
+                    fields: [
+                      ...(invitedUserNames.length > 0
+                        ? [
+                            {
+                              label: allowGuestInvites
+                                ? 'Eingeladene Gaeste'
+                                : t('pages.create.group.invitedMembersLabel'),
+                              value: invitedUserNames.join(', '),
+                            },
+                          ]
+                        : []),
+                    ],
+                  },
+                  ...(createConstitutionalEvent && eventName
+                    ? [
                         {
-                          label: t('pages.create.group.groupType'),
-                          value: groupTypeLabel,
+                          title: t('pages.create.group.createConstitutionalEvent'),
+                          fields: [
+                            {
+                              label: t('pages.create.group.constitutionalEventLabel'),
+                              value: eventName,
+                            },
+                            ...(eventLocation
+                              ? [
+                                  {
+                                    label: t('pages.create.group.eventLocation'),
+                                    value: eventLocation,
+                                  },
+                                ]
+                              : []),
+                            ...(constitutionalEventStart
+                              ? [
+                                  {
+                                    label: t('pages.create.event.startDate'),
+                                    value: constitutionalEventStart,
+                                  },
+                                ]
+                              : []),
+                          ],
                         },
-                        {
-                          label: t('pages.create.common.visibility'),
-                          value: visibilityLabel,
-                        },
-                      ],
-                    },
-                    {
-                      title: t('pages.create.group.locationLabel'),
-                      fields: [
-                        ...(locationSummary
-                          ? [
-                              {
-                                label: t('pages.create.group.locationLabel'),
-                                value: locationSummary,
-                              },
-                            ]
-                          : []),
-                        ...(imageURL
-                          ? [{ label: t('pages.create.group.imageLabel'), value: 'Attached' }]
-                          : []),
-                      ],
-                    },
-                    {
-                      title: allowGuestInvites
-                        ? 'Gaeste einladen'
-                        : t('pages.create.group.inviteMembers'),
-                      fields: [
-                        ...(invitedUserNames.length > 0
-                          ? [
-                              {
-                                label: allowGuestInvites
-                                  ? 'Eingeladene Gaeste'
-                                  : t('pages.create.group.invitedMembersLabel'),
-                                value: invitedUserNames.join(', '),
-                              },
-                            ]
-                          : []),
-                      ],
-                    },
-                    {
-                      title: t('pages.create.group.groupLinksLabel'),
-                      content:
-                        linkedGroupReviewData.length > 0 ? (
-                          <div className="space-y-3">
-                            {linkedGroupReviewData.map(linkedGroup => (
-                              <div
-                                key={linkedGroup.id}
-                                className="border-border/70 bg-card/70 rounded-xl border p-3"
-                              >
-                                <p className="text-sm font-semibold">{linkedGroup.groupName}</p>
-                                <p className="text-muted-foreground mt-1 text-sm">
-                                  {linkedGroup.relationshipLabel}
-                                </p>
-                                <p className="text-muted-foreground mt-1 text-xs">
-                                  {translateText(
-                                    'generated.inline.0338_mitgliedschaftsmodus_f28df59b'
-                                  )}{' '}
-                                  {getCanonicalMembershipModeLabel(linkedGroup.membershipMode)}
-                                </p>
-                                {linkedGroup.rights.length > 0 ? (
-                                  <GroupRelationshipRightSentenceList
-                                    className="mt-3"
-                                    rights={linkedGroup.rights}
-                                    rightDirections={linkedGroup.rightDirections}
-                                    currentGroupName={name}
-                                    selectedGroupName={linkedGroup.groupName}
-                                    currentGroupId={groupId}
-                                    selectedGroupId={linkedGroup.id}
-                                  />
-                                ) : null}
-                              </div>
-                            ))}
-                          </div>
-                        ) : undefined,
-                    },
-                    ...(createConstitutionalEvent && eventName
-                      ? [
-                          {
-                            title: t('pages.create.group.createConstitutionalEvent'),
-                            fields: [
-                              {
-                                label: t('pages.create.group.constitutionalEventLabel'),
-                                value: eventName,
-                              },
-                              ...(eventLocation
-                                ? [
-                                    {
-                                      label: t('pages.create.group.eventLocation'),
-                                      value: eventLocation,
-                                    },
-                                  ]
-                                : []),
-                              ...(constitutionalEventStart
-                                ? [
-                                    {
-                                      label: t('pages.create.event.startDate'),
-                                      value: constitutionalEventStart,
-                                    },
-                                  ]
-                                : []),
-                            ],
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
-              ),
+                      ]
+                    : []),
+                ],
+              },
             },
           ],
         },

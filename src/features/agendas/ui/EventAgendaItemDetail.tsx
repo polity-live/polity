@@ -1,27 +1,8 @@
-import { Link, useNavigate } from '@tanstack/react-router';
-import { Card, CardContent } from '@/features/shared/ui/ui/card';
-import { Button } from '@/features/shared/ui/ui/button';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
 import { useEventAgendaItem } from '../hooks/useEventAgendaItem';
-import type { CandidatesByElectionRow } from '@/zero/elections/queries';
-import type { ChoicesByVoteRow } from '@/zero/votes/queries';
-import { AgendaItemContextCard } from './AgendaItemContextCard';
-import { EventSearchCard } from '@/features/search/ui/EventSearchCard';
-import { AgendaSpeakerListSection } from './AgendaSpeakerListSection';
-import { AgendaVoteSection } from './AgendaVoteSection';
-import { AgendaElectionSection } from './AgendaElectionSection';
-import { OfflineTallyDialog } from './OfflineTallyDialog';
-import { AgendaActionBar } from './AgendaActionBar';
-import { EditElectionVoteDialog } from './EditElectionVoteDialog';
 import { useAgendaActionBar } from '../hooks/useAgendaActionBar';
 import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
-import { VoteCastDialog } from '@/features/vote-cast/ui/VoteCastDialog';
-import { ChangeRequestCardsList } from './ChangeRequestCardsList';
-import {
-  MergeVariantComparisonPanel,
-  type MergeVariantCandidate,
-} from './MergeVariantComparisonPanel';
-import { AccreditationSection } from './AccreditationSection';
+import { type MergeVariantCandidate } from './MergeVariantComparisonPanel';
 import { usePermissions } from '@/zero/rbac';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
@@ -44,7 +25,6 @@ import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import { extractSuggestionContent } from '@/features/change-requests/utils/suggestion-extraction';
 import type { ChangeRequestDiffData } from './ChangeRequestTimelineCard';
 import { getAgendaRuntimeStatus } from '../logic/getAgendaRuntimeStatus';
-import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 import {
   buildAmendmentPathGroupTypeById,
   buildAmendmentPathVisualizationData,
@@ -53,9 +33,7 @@ import {
   isLikelyActiveAmendmentStep,
 } from '@/features/amendments/logic/buildAmendmentPathVisualizationData';
 import {
-  getOfflineTallyDialogTitle,
   getOfflineTallySuccessMessage,
-  getOfflineTallyTooltip,
   resolveOfflineTallyMode,
   resolveOfflineTallyPhase,
   shouldShowOfflineTallyToolbarButton,
@@ -64,9 +42,7 @@ import {
   buildNamedElectionResultsModel,
   buildNamedVoteResultsModel,
 } from '../logic/buildNamedBallotResults';
-import { NamedBallotResultsDialog } from './NamedBallotResultsDialog';
 import { useDelegateAssemblyParticipantsComposition } from '@/features/events/hooks/useDelegateAssemblyParticipantsComposition';
-import { isNamedBallot } from '@/zero/shared';
 import { getEffectiveVotingPhase, resolveAttendanceMode } from '../logic/agendaUiHelpers';
 
 function getEffectiveCRVotingPhase(
@@ -83,7 +59,7 @@ function getEffectiveCRVotingPhase(
   if (phase === 'closed') return 'closed';
   return 'indication';
 }
-
+import { EventAgendaItemDetailView } from './EventAgendaItemDetailView';
 export function EventAgendaItemDetail({
   eventId,
   agendaItemId,
@@ -1096,409 +1072,156 @@ export function EventAgendaItemDetail({
       verifyVotingPassword,
     ]
   );
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="bg-muted h-8 animate-pulse rounded"></div>
-        <div className="bg-muted h-64 animate-pulse rounded"></div>
-      </div>
-    );
-  }
-
-  if (!agendaItem || !event) {
-    return (
-      <Card>
-        <CardContent align="center" className="p-6">
-          <AlertCircle className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-          <h2 className="mb-2 text-2xl font-bold">
-            {translateText('generated.inline.0051_tagesordnungspunkt_nicht_gefunden_6faf6631')}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {translateText(
-              'generated.inline.0052_der_gesuchte_tagesordnungspunkt_existiert_nic_234c07d7'
-            )}
-          </p>
-          <Button asChild>
-            <Link to="/event/$id/agenda" params={{ id: eventId }}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {translateText('generated.inline.0053_zur_ck_zur_tagesordnung_c45114ea')}
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Fixed Action Bar */}
-      <AgendaActionBar
-        eventId={eventId}
-        currentAgendaItem={{
-          id: agendaItem.id,
-          type: agendaItem.type,
-          status: detailRuntimeStatus,
-          voting_phase: toolbarVotingPhase,
-          election: election ? { id: election.id } : null,
-          vote: isCRToolbarActive
-            ? selectedCRToolbarItem?.vote
-              ? { id: selectedCRToolbarItem.vote.id }
-              : null
-            : vote
-              ? { id: vote.id }
-              : null,
-        }}
-        canManageAgenda={actionBarHook.canManageAgenda}
-        canVote={actionBarHook.hasVotingRight}
-        canBeCandidate={actionBarHook.hasCandidateRight}
-        isEventStarted={event?.status === 'active' || event?.status === 'in-progress'}
-        isUserInSpeakerList={actionBarHook.isUserInSpeakerList}
-        isUserCandidate={actionBarHook.isUserCandidate}
-        currentItemLabel={
-          toolbarAgendaItemTopNumber ? `TOP-${toolbarAgendaItemTopNumber}` : undefined
-        }
-        currentItemTitle={toolbarAgendaItem?.title ?? undefined}
-        onOpenCurrentItem={
-          toolbarAgendaItem
-            ? () =>
-                navigate({
-                  to: '/event/$id/agenda/$agendaItemId',
-                  params: { id: eventId, agendaItemId: toolbarAgendaItem.id },
-                })
-            : undefined
-        }
-        hasPreviousItem={agendaNav.hasPreviousItem}
-        hasNextItem={agendaNav.hasNextItem}
-        hasStartableItem={agendaNav.hasStartableItem}
-        canMoveToNextItem={agendaNav.canMoveToNextItem}
-        isCurrentItemCompleted={agendaNav.isCurrentItemCompleted}
-        onStartItem={handleToolbarStartItem}
-        onPreviousItem={agendaNav.moveToPreviousItem}
-        onNextItem={agendaNav.moveToNextItem}
-        onCompleteItem={agendaNav.completeCurrentItem}
-        hasPreviousChangeRequest={isCRToolbarActive ? hasPreviousChangeRequest : undefined}
-        hasNextChangeRequest={isCRToolbarActive ? hasNextChangeRequest : undefined}
-        onPreviousChangeRequest={isCRToolbarActive ? handlePreviousChangeRequest : undefined}
-        onNextChangeRequest={isCRToolbarActive ? handleNextChangeRequest : undefined}
-        navigationLoading={agendaNav.isLoading}
-        speakerLoading={actionBarHook.speakerLoading}
-        candidateLoading={actionBarHook.candidateLoading}
-        onBackToAgenda={() => navigate({ to: '/event/$id/agenda', params: { id: eventId } })}
-        onEditItem={actionBarHook.handleEditClick}
-        onDeleteItem={handleDelete}
-        onJoinSpeakerList={actionBarHook.handleJoinSpeakerList}
-        onLeaveSpeakerList={actionBarHook.handleLeaveSpeakerList}
-        onBecomeCandidate={actionBarHook.handleBecomeCandidate}
-        onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
-        onStartVote={
-          isCRToolbarActive
-            ? toolbarVotingPhase === 'pending'
-              ? handleToolbarStartVote
-              : undefined
-            : toolbarVotingPhase === 'pending'
-              ? actionBarHook.handleStartVote
-              : undefined
-        }
-        onStartFinalVote={
-          isCRToolbarActive
-            ? toolbarVotingPhase === 'indication'
-              ? handleToolbarStartFinalVote
-              : undefined
-            : handleToolbarStartFinalVote
-        }
-        onCloseFinalVote={
-          isCRToolbarActive
-            ? toolbarVotingPhase === 'final_vote'
-              ? handleToolbarCloseVote
-              : undefined
-            : handleToolbarCloseVote
-        }
-        onVoteClick={
-          isCRToolbarActive
-            ? toolbarVotingPhase !== 'pending' &&
-              toolbarVotingPhase !== 'closed' &&
-              !hasUserVotedOnSelectedCR
-              ? actionBarHook.handleVoteClick
-              : undefined
-            : actionBarHook.handleVoteClick
-        }
-        disableVoteButton={!isCRToolbarActive && disableVoteButton}
-        disabledVoteTooltip={translateText(
-          'generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792'
-        )}
-        showOfflineTallyButton={!isCRToolbarActive && showOfflineTallyButton}
-        onOfflineTallyClick={
-          !isCRToolbarActive && showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined
-        }
-        offlineTallyMode={offlineTallyActionMode}
-        offlineTallyTooltip={getOfflineTallyTooltip({
-          phase: offlineTallyPhase,
-          mode: offlineTallyActionMode,
-        })}
-        startVoteTooltip={startVoteTooltip}
-        startFinalVoteTooltip={startFinalVoteTooltip}
-        closeVoteTooltip={closeVoteTooltip}
-        castIndicativeVoteTooltip={castIndicativeVoteTooltip}
-        castFinalVoteTooltip={castFinalVoteTooltip}
-      />
-      {/* Spacer for fixed toolbar */}
-      <div className="h-10" />
-
-      <OfflineTallyDialog
-        open={offlineTallyDialogOpen}
-        onOpenChange={handleOfflineTallyDialogOpenChange}
-        title={getOfflineTallyDialogTitle(offlineTallyPhase ?? 'indicative')}
-        description={`Enter aggregated offline or hybrid selections for ${offlineTallyEntity?.title ?? 'this item'} and confirm with your voting PIN.`}
-        phase={offlineTallyPhase ?? 'indicative'}
-        choices={offlineTallyEntity?.choices ?? []}
-        tallies={offlineTallyEntity?.tallies ?? []}
-        maxTotalVotes={offlineTallyEntity?.maxTotalVotes ?? null}
-        isSubmitting={isOfflineTallySubmitting}
-        passwordError={offlineTallyPasswordError}
-        submitError={offlineTallySubmitError}
-        onSubmit={handleSubmitOfflineTally}
-      />
-
-      <NamedBallotResultsDialog
-        open={namedResultsTarget !== null}
-        onOpenChange={open => {
-          if (!open) {
-            setNamedResultsTarget(null);
-          }
-        }}
-        title={namedResultsDialogConfig?.title ?? 'Namentliche Ergebnisse'}
-        description={namedResultsDialogConfig?.description ?? ''}
-        model={namedResultsDialogConfig?.model ?? null}
-      />
-
-      {/* Vote Cast Dialog (with password support) */}
-      <VoteCastDialog
-        open={actionBarHook.voteDialogOpen}
-        onOpenChange={actionBarHook.setVoteDialogOpen}
-        phase={isCRToolbarActive ? selectedCRDialogPhase : actionBarHook.voteCasting.phase}
-        title={isCRToolbarActive ? selectedCRTitle : (agendaItem.title ?? undefined)}
-        forwardingPreview={voteDialogForwardingPreview}
-        candidates={
-          isCRToolbarActive
-            ? undefined
-            : election
-              ? candidates.map(c => ({
-                  id: c.id,
-                  name: c.user
-                    ? `${c.user.first_name ?? ''} ${c.user.last_name ?? ''}`.trim() ||
-                      c.user.email ||
-                      'Candidate'
-                    : c.name || 'Candidate',
-                  avatar: c.user?.avatar ?? undefined,
-                }))
-              : undefined
-        }
-        maxVotes={election?.max_votes ?? 1}
-        electionMode={
-          election?.election_mode ? normalizeElectionMode(election.election_mode) : null
-        }
-        seatCount={election?.seat_count ?? null}
-        choices={
-          isCRToolbarActive
-            ? selectedCRChoices
-            : vote
-              ? choices.map(c => ({
-                  id: c.id,
-                  label: c.label || 'Choice',
-                }))
-              : undefined
-        }
-        requirePassword
-        passwordError={passwordError}
-        isPasswordVerifying={isPasswordVerifying}
-        onPasswordSubmit={async (password: string) => {
-          setPasswordError(null);
-          setIsPasswordVerifying(true);
-          try {
-            await verifyVotingPassword(password);
-          } catch (err) {
-            const message =
-              err instanceof Error
-                ? err.message
-                : translateText('generated.inline.0010_verification_failed_e10d7e51');
-            setPasswordError(message);
-            throw err;
-          } finally {
-            setIsPasswordVerifying(false);
-          }
-        }}
-        onCastVote={
-          isCRToolbarActive
-            ? handleCastCRVoteFromDialog
-            : actionBarHook.voteCasting.castAmendmentVote
-        }
-        onCastElectionVote={
-          isCRToolbarActive ? undefined : actionBarHook.voteCasting.castElectionVote
-        }
-        isLoading={isCRToolbarActive ? false : actionBarHook.voteCasting.isLoading}
-      />
-
-      {/* Edit Election/Vote Dialog */}
-      <EditElectionVoteDialog
-        open={actionBarHook.editDialogOpen}
-        onOpenChange={actionBarHook.setEditDialogOpen}
-        agendaItemId={agendaItem.id}
-        agendaItemTitle={agendaItem.title ?? null}
-        agendaItemDescription={agendaItem.description ?? null}
-        agendaItemDuration={agendaItem.duration ?? null}
-        election={election ?? undefined}
-        vote={vote ?? undefined}
-        choices={choices.map(c => ({
-          id: c.id,
-          label: c.label,
-          order_index: c.order_index,
-        }))}
-      />
-
-      {/* Section 1: Context Card */}
-      <AgendaItemContextCard
-        agendaItem={{
-          id: agendaItem.id,
-          title: agendaItem.title || '',
-          description: agendaItem.description ?? undefined,
-          type: agendaItem.type === 'amendment' ? 'vote' : agendaItem.type || '',
-          status: detailRuntimeStatus,
-          duration: agendaItem.duration ?? undefined,
-          scheduledTime:
-            estimatedStartTime?.toISOString() ?? agendaItem.scheduled_time ?? undefined,
-          startTime: agendaItem.start_time ? new Date(agendaItem.start_time) : undefined,
-          endTime: agendaItem.end_time ? new Date(agendaItem.end_time) : undefined,
-          activatedAt: agendaItem.activated_at ? new Date(agendaItem.activated_at) : undefined,
-          completedAt: agendaItem.completed_at ? new Date(agendaItem.completed_at) : undefined,
-        }}
-        amendment={agendaItem.amendment ?? undefined}
-        amendmentForwardingPreview={agendaForwardingPreview}
-        amendmentPathVisualizationData={detailPathVisualizationData}
-        amendmentGroupTypeById={detailGroupTypeById}
-        onAmendmentGroupClick={groupId => navigate({ to: '/group/$id', params: { id: groupId } })}
-        onAmendmentEventClick={targetEventId =>
-          navigate({ to: '/event/$id/agenda', params: { id: targetEventId } })
-        }
-        election={election ?? undefined}
-        votingStartTime={agendaItem.start_time ? new Date(agendaItem.start_time) : undefined}
-        votingEndTime={
-          (election?.closing_end_time ?? vote?.closing_end_time)
-            ? new Date(election?.closing_end_time ?? vote?.closing_end_time ?? 0)
-            : undefined
-        }
-      />
-
-      {delegateTargetEvent ? <EventSearchCard event={delegateTargetEvent} /> : null}
-
-      <MergeVariantComparisonPanel candidates={mergeVariantCandidates} />
-
-      {/* Section 2: Speaker List */}
-      <AgendaSpeakerListSection
-        speakers={speakerListData}
-        isUserInSpeakerList={isUserInSpeakerList}
-        canManageSpeakers={canManageAgenda}
-        isAddingSpeaker={addingSpeaker}
-        isRemovingSpeaker={actionBarHook.speakerLoading}
-        userId={user?.id}
-        agendaStartTime={agendaItem.start_time ?? undefined}
-        onAddToSpeakerList={handleAddToSpeakerList}
-        onRemoveFromSpeakerList={actionBarHook.handleLeaveSpeakerList}
-        onMarkCompleted={handleMarkSpeakerCompleted}
-      />
-
-      {/* Accreditation Section */}
-      {agendaItem.type === 'accreditation' && (
-        <AccreditationSection eventId={eventId} agendaItemId={agendaItemId} />
-      )}
-
-      {/* Change Request Cards — always shown for amendment agenda items */}
-      {agendaItem.amendment_id && hasAmendmentCRs && (
-        <ChangeRequestCardsList
-          items={crDisplayItems}
-          editingMode={agendaItem.amendment?.editing_mode}
-          isVotingActive={isCRVotingActive}
-          userId={user?.id}
-          canManage={canManageAgenda}
-          canVote={hasVotingRight}
-          currentItemId={isCRVotingActive ? currentCRItem?.id : null}
-          progress={isCRVotingActive ? progress : undefined}
-          completedCount={isCRVotingActive ? completedItems.length : undefined}
-          allCRsProcessed={isCRVotingActive ? allCRsProcessed : undefined}
-          isTimelineComplete={isCRVotingActive ? isTimelineComplete : undefined}
-          diffMap={crDiffMap}
-          documentContent={documentContent}
-          discussions={amendmentDiscussions}
-          amendmentId={agendaItem.amendment_id ?? undefined}
-          agendaItemId={agendaItemId}
-          hasUserVoted={isCRVotingActive ? hasUserVotedOnCR : undefined}
-          getUserSelectedChoiceIds={isCRVotingActive ? getUserSelectedChoiceIds : undefined}
-          onCastVote={isCRVotingActive ? castCRVote : undefined}
-          onStartIndicative={isCRVotingActive ? startIndicativePhase : undefined}
-          onStartFinal={isCRVotingActive ? startFinalPhase : undefined}
-          onCloseVoting={isCRVotingActive ? closeVoting : undefined}
-        />
-      )}
-
-      {/* Section 3: Election */}
-      {election && (
-        <div className="space-y-4">
-          <AgendaElectionSection
-            roleName={election.title ?? t('features.events.agenda.role')}
-            electionMode={
-              election.election_mode ? normalizeElectionMode(election.election_mode) : null
-            }
-            seatCount={election.seat_count}
-            candidates={[...candidates] as CandidatesByElectionRow[]}
-            indicativeSelections={indicativeSelections}
-            finalSelections={finalSelections}
-            offlineTallies={election.offline_tallies ?? []}
-            attendanceMode={attendanceMode}
-            userHasVoted={userHasElectionVoted}
-            userSelectedCandidateIds={userSelectedCandidateIds}
-            electionStatus={election.status}
-            canVote={hasVotingRight}
-            canBeCandidate={hasCandidateRight}
-            isUserCandidate={actionBarHook.isUserCandidate}
-            isVotingLoading={votingLoading === election.id}
-            isCandidateLoading={actionBarHook.candidateLoading}
-            onBecomeCandidate={actionBarHook.handleBecomeCandidate}
-            onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
-            onOpenNamedResults={
-              isNamedBallot(election.ballot_visibility)
-                ? () => setNamedResultsTarget('election')
-                : undefined
-            }
-          />
-        </div>
-      )}
-
-      {/* Section 3: Vote — hidden when vote is embedded in the CR list */}
-      {vote && !isVoteInCRList && (
-        <div className="space-y-4">
-          <AgendaVoteSection
-            voteId={vote.id}
-            voteTitle={vote.title || agendaItem.title || 'Vote'}
-            choices={[...choices] as ChoicesByVoteRow[]}
-            indicativeDecisions={indicativeDecisions}
-            finalDecisions={finalDecisions}
-            offlineTallies={vote.offline_tallies ?? []}
-            attendanceMode={attendanceMode}
-            userHasVoted={userHasVoteVoted}
-            userSelectedChoiceIds={userSelectedChoiceIds}
-            voteStatus={vote.status}
-            majorityType={vote.majority_type}
-            totalEligibleVoters={(vote.voters?.length ?? 0) + confirmedOfflineParticipantCount}
-            canManageOfflineResults={canManageAgenda}
-            offlineEligibleCount={confirmedOfflineParticipantCount}
-            onOpenNamedResults={
-              isNamedBallot(vote.ballot_visibility)
-                ? () => setNamedResultsTarget('vote')
-                : undefined
-            }
-          />
-        </div>
-      )}
-    </div>
+    <EventAgendaItemDetailView
+      eventId={eventId}
+      agendaItemId={agendaItemId}
+      t={t}
+      navigate={navigate}
+      updateSpeaker={updateSpeaker}
+      agendaItem={agendaItem}
+      event={event}
+      user={user}
+      isLoading={isLoading}
+      votingLoading={votingLoading}
+      addingSpeaker={addingSpeaker}
+      election={election}
+      candidates={candidates}
+      vote={vote}
+      choices={choices}
+      userElector={userElector}
+      userVoter={userVoter}
+      estimatedStartTime={estimatedStartTime}
+      forwardingContext={forwardingContext}
+      handleDelete={handleDelete}
+      handleAddToSpeakerList={handleAddToSpeakerList}
+      delegateAssignmentMeta={delegateAssignmentMeta}
+      delegateTargetEvent={delegateTargetEvent}
+      can={can}
+      canVote={canVote}
+      canBeCandidate={canBeCandidate}
+      canManageAgenda={canManageAgenda}
+      canManageVotes={canManageVotes}
+      canManageOfflineTallies={canManageOfflineTallies}
+      hasVotingRight={hasVotingRight}
+      hasCandidateRight={hasCandidateRight}
+      rosterEvent={rosterEvent}
+      attendanceMode={attendanceMode}
+      disableVoteButton={disableVoteButton}
+      allowsOfflineTallies={allowsOfflineTallies}
+      confirmedOfflineParticipantCount={confirmedOfflineParticipantCount}
+      agendaNav={agendaNav}
+      verifyVotingPassword={verifyVotingPassword}
+      upsertElectionOfflineTally={upsertElectionOfflineTally}
+      upsertVoteOfflineTally={upsertVoteOfflineTally}
+      passwordError={passwordError}
+      setPasswordError={setPasswordError}
+      isPasswordVerifying={isPasswordVerifying}
+      setIsPasswordVerifying={setIsPasswordVerifying}
+      offlineTallyDialogOpen={offlineTallyDialogOpen}
+      setOfflineTallyDialogOpen={setOfflineTallyDialogOpen}
+      offlineTallyPasswordError={offlineTallyPasswordError}
+      setOfflineTallyPasswordError={setOfflineTallyPasswordError}
+      offlineTallySubmitError={offlineTallySubmitError}
+      setOfflineTallySubmitError={setOfflineTallySubmitError}
+      isOfflineTallySubmitting={isOfflineTallySubmitting}
+      setIsOfflineTallySubmitting={setIsOfflineTallySubmitting}
+      namedResultsTarget={namedResultsTarget}
+      setNamedResultsTarget={setNamedResultsTarget}
+      effectiveVotingPhase={effectiveVotingPhase}
+      crTimeline={crTimeline}
+      currentCRItem={currentCRItem}
+      completedItems={completedItems}
+      progress={progress}
+      isTimelineComplete={isTimelineComplete}
+      allCRsProcessed={allCRsProcessed}
+      hasUserVotedOnCR={hasUserVotedOnCR}
+      getUserSelectedChoiceIds={getUserSelectedChoiceIds}
+      startIndicativePhase={startIndicativePhase}
+      startFinalPhase={startFinalPhase}
+      closeVoting={closeVoting}
+      castCRVote={castCRVote}
+      actionBarHook={actionBarHook}
+      setMarkingSpeakerComplete={setMarkingSpeakerComplete}
+      selectedCRToolbarItemId={selectedCRToolbarItemId}
+      setSelectedCRToolbarItemId={setSelectedCRToolbarItemId}
+      mockCRItems={mockCRItems}
+      documentContent={documentContent}
+      amendmentDiscussions={amendmentDiscussions}
+      crDiffMap={crDiffMap}
+      hasAmendmentCRs={hasAmendmentCRs}
+      crDisplayItemsBase={crDisplayItemsBase}
+      isCRVotingActive={isCRVotingActive}
+      timelineHasFinalVote={timelineHasFinalVote}
+      synthesizedFinalVoteItem={synthesizedFinalVoteItem}
+      crDisplayItems={crDisplayItems}
+      effectiveFinalVoteItem={effectiveFinalVoteItem}
+      isVoteInCRList={isVoteInCRList}
+      nonFinalCRItems={nonFinalCRItems}
+      fallbackSelectedCRItemId={fallbackSelectedCRItemId}
+      selectedCRToolbarItem={selectedCRToolbarItem}
+      isCRToolbarActive={isCRToolbarActive}
+      selectedCRPhase={selectedCRPhase}
+      isSelectedCRFinalVote={isSelectedCRFinalVote}
+      hasUserVotedOnSelectedCR={hasUserVotedOnSelectedCR}
+      selectedCRToolbarIndex={selectedCRToolbarIndex}
+      hasPreviousChangeRequest={hasPreviousChangeRequest}
+      hasNextChangeRequest={hasNextChangeRequest}
+      handlePreviousChangeRequest={handlePreviousChangeRequest}
+      handleNextChangeRequest={handleNextChangeRequest}
+      handleToolbarStartVote={handleToolbarStartVote}
+      handleToolbarStartFinalVote={handleToolbarStartFinalVote}
+      handleToolbarCloseVote={handleToolbarCloseVote}
+      handleCastCRVoteFromDialog={handleCastCRVoteFromDialog}
+      selectedCRTitle={selectedCRTitle}
+      selectedCRChoices={selectedCRChoices}
+      selectedCRDialogPhase={selectedCRDialogPhase}
+      agendaForwardingPreview={agendaForwardingPreview}
+      voteDialogForwardingPreview={voteDialogForwardingPreview}
+      mergeVariantCandidates={mergeVariantCandidates}
+      detailGroupTypeById={detailGroupTypeById}
+      detailDerivedActiveStepRun={detailDerivedActiveStepRun}
+      detailResolvedActiveBranchId={detailResolvedActiveBranchId}
+      detailFirstUnresolvedStepId={detailFirstUnresolvedStepId}
+      detailPathVisualizationData={detailPathVisualizationData}
+      toolbarVotingPhase={toolbarVotingPhase}
+      toolbarAgendaItem={toolbarAgendaItem}
+      toolbarAgendaItemIndex={toolbarAgendaItemIndex}
+      toolbarAgendaItemTopNumber={toolbarAgendaItemTopNumber}
+      detailRuntimeStatus={detailRuntimeStatus}
+      handleToolbarStartItem={handleToolbarStartItem}
+      startVoteTooltip={startVoteTooltip}
+      startFinalVoteTooltip={startFinalVoteTooltip}
+      closeVoteTooltip={closeVoteTooltip}
+      castIndicativeVoteTooltip={castIndicativeVoteTooltip}
+      castFinalVoteTooltip={castFinalVoteTooltip}
+      handleMarkSpeakerCompleted={handleMarkSpeakerCompleted}
+      speakerListData={speakerListData}
+      isUserInSpeakerList={isUserInSpeakerList}
+      activeRosterParticipants={activeRosterParticipants}
+      isDelegateAssembly={isDelegateAssembly}
+      participantsWithProvenance={participantsWithProvenance}
+      eligibleParticipantsForNamedResults={eligibleParticipantsForNamedResults}
+      confirmedOfflineParticipants={confirmedOfflineParticipants}
+      indicativeSelections={indicativeSelections}
+      finalSelections={finalSelections}
+      userHasElectionVoted={userHasElectionVoted}
+      userSelectedCandidateIds={userSelectedCandidateIds}
+      offlineTallyPhaseSource={offlineTallyPhaseSource}
+      offlineTallyPhase={offlineTallyPhase}
+      indicativeDecisions={indicativeDecisions}
+      finalDecisions={finalDecisions}
+      userHasVoteVoted={userHasVoteVoted}
+      userSelectedChoiceIds={userSelectedChoiceIds}
+      namedElectionResults={namedElectionResults}
+      namedVoteResults={namedVoteResults}
+      namedResultsDialogConfig={namedResultsDialogConfig}
+      offlineTallyEntity={offlineTallyEntity}
+      offlineTallyActionMode={offlineTallyActionMode}
+      showOfflineTallyButton={showOfflineTallyButton}
+      handleOfflineTallyDialogOpenChange={handleOfflineTallyDialogOpenChange}
+      handleOpenOfflineTallyDialog={handleOpenOfflineTallyDialog}
+      handleSubmitOfflineTally={handleSubmitOfflineTally}
+    />
   );
 }

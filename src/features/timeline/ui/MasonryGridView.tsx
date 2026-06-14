@@ -41,7 +41,7 @@ export function MasonryGridView<T>({
   emptyLabels,
 }: MasonryGridViewProps<T>) {
   const gapClass = GAP_CLASSES[gap];
-  const skeletons = skeletonIndexes.map(index => (
+  const skeletons = skeletonIndexes.map((index: any) => (
     <MasonryGridSkeleton key={`skeleton-${index}`} index={index} />
   ));
 
@@ -60,7 +60,7 @@ export function MasonryGridView<T>({
   return (
     <div className="space-y-6">
       <div className={cn('columns-1 sm:columns-2 lg:columns-3 xl:columns-4', gapClass, className)}>
-        {items.map((item, index) => (
+        {items.map((item: any, index: number) => (
           <div key={keyExtractor(item, index)} className="mb-4 break-inside-avoid">
             {renderItem(item, index)}
           </div>

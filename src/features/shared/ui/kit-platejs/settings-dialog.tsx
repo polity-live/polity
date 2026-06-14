@@ -3,37 +3,11 @@
 import * as React from 'react';
 
 import { CopilotPlugin } from '@platejs/ai/react';
-import {
-  Check,
-  ChevronsUpDown,
-  ExternalLinkIcon,
-  Eye,
-  EyeOff,
-  Settings,
-  Wand2Icon,
-} from 'lucide-react';
+import { ExternalLinkIcon, Eye, EyeOff } from 'lucide-react';
 import { useEditorRef } from 'platejs/react';
 
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/features/shared/ui/ui/command.tsx';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/features/shared/ui/ui/dialog.tsx';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
-import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover.tsx';
-import { cn } from '@/features/shared/utils/utils.ts';
 import { aiChatPlugin } from '@/features/shared/ui/kit-platejs/ai-kit.tsx';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -50,7 +24,7 @@ export const models: Model[] = [
   { label: 'gpt-3.5-turbo', value: 'gpt-3.5-turbo' },
   { label: 'gpt-3.5-turbo-instruct', value: 'gpt-3.5-turbo-instruct' },
 ];
-
+import { SettingsDialogView } from './SettingsDialogView';
 export function SettingsDialog() {
   const editor = useEditorRef();
 
@@ -145,131 +119,22 @@ export function SettingsDialog() {
       </Button>
     </div>
   );
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          size="icon"
-          variant="default"
-          className={cn(
-            'group fixed right-4 bottom-4 z-50 size-10 overflow-hidden',
-            'rounded-full shadow-md hover:shadow-lg'
-          )}
-          // data-block-hide
-        >
-          <Settings className="size-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="text-xl">
-            {translateText('generated.inline.1117_settings_c7f73bb5')}
-          </DialogTitle>
-          <DialogDescription>
-            {translateText(
-              'generated.inline.1118_configure_your_api_keys_and_preferences_843203c4'
-            )}
-          </DialogDescription>
-        </DialogHeader>
-
-        <form className="space-y-10" onSubmit={handleSubmit}>
-          {/* AI Settings Group */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="size-8 rounded-full bg-purple-100 p-2 dark:bg-purple-900">
-                <Wand2Icon className="size-4 text-purple-600 dark:text-purple-400" />
-              </div>
-              <h4 className="font-semibold">
-                {translateText('generated.inline.0148_ai_560040c5')}
-              </h4>
-            </div>
-
-            <div className="space-y-4">
-              {renderApiKeyInput('openai', 'OpenAI API key')}
-
-              <div className="group relative">
-                <label
-                  className="bg-background text-foreground absolute start-1 top-0 z-10 block -translate-y-1/2 px-2 text-xs font-medium group-has-disabled:opacity-50"
-                  htmlFor="select-model"
-                >
-                  {translateText('generated.inline.1119_model_68c2cc7f')}
-                </label>
-                <Popover open={openModel} onOpenChange={setOpenModel}>
-                  <PopoverTrigger id="select-model" asChild>
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="w-full justify-between"
-                      aria-expanded={openModel}
-                      role="combobox"
-                    >
-                      <code>{tempModel.label}</code>
-                      <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
-                    <Command>
-                      <CommandInput
-                        placeholder={translateText('generated.inline.1120_search_model_9285447e')}
-                      />
-                      <CommandEmpty>
-                        {translateText('generated.inline.1121_no_model_found_387f665d')}
-                      </CommandEmpty>
-                      <CommandList>
-                        <CommandGroup>
-                          {models.map(m => (
-                            <CommandItem
-                              key={m.value}
-                              value={m.value}
-                              onSelect={() => {
-                                setTempModel(m);
-                                setOpenModel(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  'mr-2 size-4',
-                                  tempModel.value === m.value ? 'opacity-100' : 'opacity-0'
-                                )}
-                              />
-                              <code>{m.label}</code>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          </div>
-
-          {/* Upload Settings Group */}
-          {/* <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="size-8 rounded-full bg-red-100 p-2 dark:bg-red-900">
-                <Upload className="size-4 text-red-600 dark:text-red-400" />
-              </div>
-              <h4 className="font-semibold">Upload</h4>
-            </div>
-
-            <div className="space-y-4">
-              {renderApiKeyInput('uploadthing', 'Uploadthing API key')}
-            </div>
-          </div> */}
-
-          <Button size="lg" className="w-full" type="submit">
-            {translateText('generated.inline.1122_save_changes_179359b3')}
-          </Button>
-        </form>
-
-        <p className="text-muted-foreground text-sm">
-          {translateText(
-            'generated.inline.1123_not_stored_anywhere_used_only_for_current_ses_40e9429c'
-          )}
-        </p>
-      </DialogContent>
-    </Dialog>
+    <SettingsDialogView
+      editor={editor}
+      tempModel={tempModel}
+      setTempModel={setTempModel}
+      tempKeys={tempKeys}
+      setTempKeys={setTempKeys}
+      showKey={showKey}
+      setShowKey={setShowKey}
+      open={open}
+      setOpen={setOpen}
+      openModel={openModel}
+      setOpenModel={setOpenModel}
+      handleSubmit={handleSubmit}
+      toggleKeyVisibility={toggleKeyVisibility}
+      renderApiKeyInput={renderApiKeyInput}
+    />
   );
 }

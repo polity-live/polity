@@ -1,8 +1,9 @@
 import * as React from 'react';
 
-import { useMarkToolbarButton, useMarkToolbarButtonState } from 'platejs/react';
-
 import { ToolbarButton } from '@/features/shared/ui/layout';
+
+import { useMarkToolbarButtonController } from './useMarkToolbarButtonController';
+import { MarkToolbarButtonView } from './MarkToolbarButtonView';
 
 export function MarkToolbarButton({
   clear,
@@ -12,8 +13,7 @@ export function MarkToolbarButton({
   nodeType: string;
   clear?: string[] | string;
 }) {
-  const state = useMarkToolbarButtonState({ clear, nodeType });
-  const { props: buttonProps } = useMarkToolbarButton(state);
+  const viewProps = useMarkToolbarButtonController({ clear, nodeType, ...props });
 
-  return <ToolbarButton {...props} {...buttonProps} />;
+  return <MarkToolbarButtonView {...viewProps} />;
 }

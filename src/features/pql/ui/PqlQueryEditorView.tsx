@@ -74,7 +74,7 @@ export function PqlQueryEditorView<TItem, TFieldKey extends string>({
 
         {suggestionsOpen && suggestions.length > 0 ? (
           <div className="bg-popover absolute z-50 mt-2 w-full rounded-md border p-1 shadow-md">
-            {suggestions.map((suggestion, index) => (
+            {suggestions.map((suggestion: any, index: number) => (
               <Button
                 key={`${suggestion.kind}-${suggestion.label}-${suggestion.insertText}`}
                 type="button"
@@ -112,7 +112,7 @@ export function PqlQueryEditorView<TItem, TFieldKey extends string>({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {visibleFields.map(field => (
+        {visibleFields.map((field: any) => (
           <BadgeControl key={field.key} variant="secondary" size="xs" textStyle="mono">
             {field.key}
           </BadgeControl>
@@ -133,7 +133,7 @@ export function PqlQueryEditorView<TItem, TFieldKey extends string>({
 
       {issues.length > 0 ? (
         <div className="border-destructive/40 bg-destructive/5 text-destructive rounded-md border px-3 py-2 text-sm">
-          {issues.slice(0, 3).map(issue => (
+          {issues.slice(0, 3).map((issue: any) => (
             <p key={`${issue.start}-${issue.end}-${issue.message}`}>{issue.message}</p>
           ))}
         </div>

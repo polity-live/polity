@@ -134,6 +134,52 @@ export const updateAmendmentCollaboratorSchema = baseAmendmentCollaboratorSchema
 export const deleteAmendmentCollaboratorSchema = z.object({ id: z.string() });
 
 // ============================================
+// Amendment Street Design Schemas
+// ============================================
+
+const baseAmendmentStreetDesignSchema = z.object({
+  id: z.string(),
+  amendment_id: z.string(),
+  created_by_id: z.string(),
+  title: z.string().nullable(),
+  bbox: jsonSchema.nullable(),
+  center_lat: z.number().nullable(),
+  center_lon: z.number().nullable(),
+  osm_snapshot: jsonSchema.nullable(),
+  design_state: jsonSchema.nullable(),
+  currency: z.string(),
+  estimated_total_cost_minor: z.number(),
+  cost_catalog_version: z.string().nullable(),
+  cost_summary: jsonSchema.nullable(),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+});
+
+export const selectAmendmentStreetDesignSchema = baseAmendmentStreetDesignSchema;
+
+export const createAmendmentStreetDesignSchema = baseAmendmentStreetDesignSchema
+  .omit({ id: true, created_at: true, updated_at: true, created_by_id: true })
+  .extend({ id: z.string() });
+
+export const updateAmendmentStreetDesignSchema = baseAmendmentStreetDesignSchema
+  .pick({
+    title: true,
+    bbox: true,
+    center_lat: true,
+    center_lon: true,
+    osm_snapshot: true,
+    design_state: true,
+    currency: true,
+    estimated_total_cost_minor: true,
+    cost_catalog_version: true,
+    cost_summary: true,
+  })
+  .partial()
+  .extend({ id: z.string() });
+
+export const deleteAmendmentStreetDesignSchema = z.object({ id: z.string() });
+
+// ============================================
 // Amendment Path Schemas
 // ============================================
 
@@ -536,6 +582,7 @@ export const completeProcessTaskWithEventSchema = z.object({
 
 export type Amendment = z.infer<typeof selectAmendmentSchema>;
 export type AmendmentCollaborator = z.infer<typeof selectAmendmentCollaboratorSchema>;
+export type AmendmentStreetDesign = z.infer<typeof selectAmendmentStreetDesignSchema>;
 export type AmendmentPath = z.infer<typeof selectAmendmentPathSchema>;
 export type AmendmentPathSegment = z.infer<typeof selectAmendmentPathSegmentSchema>;
 export type SupportConfirmation = z.infer<typeof selectSupportConfirmationSchema>;

@@ -1,9 +1,3 @@
-import { FormControlLabel } from '@/features/shared/ui/form';
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
-import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import { useAllAmendments } from '@/zero/events/useEventState';
-import { useMemo } from 'react';
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface AmendmentSearchInputProps {
@@ -12,41 +6,15 @@ interface AmendmentSearchInputProps {
   label?: string;
   placeholder?: string;
 }
-
+import { useAmendmentSearchInputController } from './useAmendmentSearchInputController';
+import { AmendmentSearchInputView } from './AmendmentSearchInputView';
 export function AmendmentSearchInput({
   value,
   onChange,
   label,
   placeholder = translateText('generated.inline.0040_search_for_an_amendment_5231be40'),
 }: AmendmentSearchInputProps) {
-  const { amendments } = useAllAmendments();
+  const viewProps = useAmendmentSearchInputController({ value, onChange, label, placeholder });
 
-  const items = useMemo(
-    () =>
-      toTypeaheadItems(
-        amendments ?? [],
-        'amendment',
-        a => a.title || 'Amendment',
-        undefined,
-        undefined,
-        a => `/amendment/${a.id}`
-      ),
-    [amendments]
-  );
-
-  const handleChange = (item: TypeaheadItem | null) => {
-    onChange(item?.id ?? '');
-  };
-
-  return (
-    <div>
-      {label && <FormControlLabel className="mb-2 block">{label}</FormControlLabel>}
-      <TypeaheadSearch
-        items={items}
-        value={value}
-        onChange={handleChange}
-        placeholder={placeholder}
-      />
-    </div>
-  );
+  return <AmendmentSearchInputView {...viewProps} />;
 }

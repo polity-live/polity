@@ -38,9 +38,7 @@ export function ZeroAppProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <Suspense
-      fallback={<ZeroReadyContext.Provider value={false}>{children}</ZeroReadyContext.Provider>}
-    >
+    <Suspense fallback={null}>
       <ZeroReadyContext.Provider value={true}>
         <ZeroProvider
           userID={zeroContext.userID}

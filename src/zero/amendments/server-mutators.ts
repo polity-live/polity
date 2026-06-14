@@ -18,6 +18,9 @@ import {
   createAmendmentCollaboratorSchema,
   deleteAmendmentCollaboratorSchema,
   updateAmendmentCollaboratorSchema,
+  createAmendmentStreetDesignSchema,
+  updateAmendmentStreetDesignSchema,
+  deleteAmendmentStreetDesignSchema,
   createAmendmentSchema,
   deleteAmendmentSchema,
   createSupportConfirmationSchema,
@@ -163,6 +166,14 @@ async function loadCollaboratorForMutation(tx: AmendmentServerTx, collaboratorId
     throw new Error('Amendment collaborator not found');
   }
   return collaborator;
+}
+
+async function loadStreetDesignForMutation(tx: AmendmentServerTx, streetDesignId: string) {
+  const streetDesign = await tx.run(zql.amendment_street_design.where('id', streetDesignId).one());
+  if (!streetDesign) {
+    throw new Error('Amendment street design not found');
+  }
+  return streetDesign;
 }
 
 async function loadChangeRequestForMutation(tx: AmendmentServerTx, changeRequestId: string) {
@@ -665,6 +676,32 @@ export const amendmentServerMutators = {
           nextStatus
         );
       }
+    }
+  ),
+
+  createStreetDesign: defineMutator(
+    createAmendmentStreetDesignSchema,
+    async ({ tx, ctx, args }) => {
+      await assertCanMutateAmendment(tx, ctx, args.amendment_id, 'update');
+      await mutators.amendments.createStreetDesign.fn({ tx, ctx, args });
+    }
+  ),
+
+  updateStreetDesign: defineMutator(
+    updateAmendmentStreetDesignSchema,
+    async ({ tx, ctx, args }) => {
+      const streetDesign = await loadStreetDesignForMutation(tx, args.id);
+      await assertCanMutateAmendment(tx, ctx, streetDesign.amendment_id, 'update');
+      await mutators.amendments.updateStreetDesign.fn({ tx, ctx, args });
+    }
+  ),
+
+  deleteStreetDesign: defineMutator(
+    deleteAmendmentStreetDesignSchema,
+    async ({ tx, ctx, args }) => {
+      const streetDesign = await loadStreetDesignForMutation(tx, args.id);
+      await assertCanMutateAmendment(tx, ctx, streetDesign.amendment_id, 'update');
+      await mutators.amendments.deleteStreetDesign.fn({ tx, ctx, args });
     }
   ),
 

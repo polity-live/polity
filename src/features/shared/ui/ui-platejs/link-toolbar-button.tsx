@@ -1,19 +1,12 @@
 import * as React from 'react';
 
-import { useLinkToolbarButton, useLinkToolbarButtonState } from '@platejs/link/react';
-import { Link } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-
 import { ToolbarButton } from '@/features/shared/ui/layout';
 
-export function LinkToolbarButton(props: React.ComponentProps<typeof ToolbarButton>) {
-  const state = useLinkToolbarButtonState();
-  const { props: buttonProps } = useLinkToolbarButton(state);
-  const { t } = useTranslation();
+import { useLinkToolbarButtonController } from './useLinkToolbarButtonController';
+import { LinkToolbarButtonView } from './LinkToolbarButtonView';
 
-  return (
-    <ToolbarButton {...props} {...buttonProps} data-plate-focus tooltip={t('plateJs.toolbar.link')}>
-      <Link />
-    </ToolbarButton>
-  );
+export function LinkToolbarButton(props: React.ComponentProps<typeof ToolbarButton>) {
+  const viewProps = useLinkToolbarButtonController(props);
+
+  return <LinkToolbarButtonView {...viewProps} />;
 }

@@ -59,7 +59,7 @@ export function FontSizeToolbarButtonView({
           className="w-10 px-px py-1"
           onOpenAutoFocus={event => event.preventDefault()}
         >
-          {fontSizes.map(size => (
+          {fontSizes.map((size: any) => (
             <button
               key={size}
               className={cn(

@@ -8,7 +8,7 @@ export {
 export { DecisionDashboardHeader } from './DecisionDashboardHeader';
 export { DecisionTerminalView, type DecisionTerminalViewProps } from './DecisionTerminalView';
 export { DecisionVoteButton } from './DecisionVoteButton';
-export { DecisionVoteDialogController } from './DecisionVoteDialogController';
+export { DecisionVoteDialogController } from './DecisionVoteDialog';
 export { DecisionWidgetContent } from './DecisionWidgetContent';
 export { DecisionWidgetFrame } from './DecisionWidgetFrame';
 export { TerminalHeader, type TerminalHeaderProps, type TerminalFilter } from './TerminalHeader';
