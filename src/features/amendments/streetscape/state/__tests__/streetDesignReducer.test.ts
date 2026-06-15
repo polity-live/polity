@@ -69,6 +69,33 @@ describe('streetDesignReducer', () => {
     expect(finalized.selectedObjectId).toBe('parking-1');
   });
 
+  it('finalizes an active corridor draft with the finish action after dragging', () => {
+    const initialState = createInitialStreetDesignEditorState();
+    const withTool = streetDesignReducer(initialState, {
+      type: 'set_tool',
+      objectType: 'parking_area',
+    });
+    const withStart = streetDesignReducer(withTool, {
+      type: 'scene_pointer_down',
+      point: { x: 0, z: 0 },
+      id: 'draft-id',
+    });
+    const withPreview = streetDesignReducer(withStart, {
+      type: 'scene_pointer_move',
+      point: { x: 10, z: 0 },
+    });
+    const finalized = streetDesignReducer(withPreview, {
+      type: 'finish_placement',
+      id: 'parking-keyboard-1',
+    });
+
+    expect(finalized.placementDraft).toBeNull();
+    expect(finalized.design.objects).toHaveLength(1);
+    expect(finalized.design.objects[0].type).toBe('parking_area');
+    expect(finalized.design.objects[0].geometry.kind).toBe('corridor');
+    expect(finalized.selectedObjectId).toBe('parking-keyboard-1');
+  });
+
   it('collects linear path points and finalizes them with the finish action', () => {
     const initialState = createInitialStreetDesignEditorState();
     const withTool = streetDesignReducer(initialState, {
@@ -105,6 +132,33 @@ describe('streetDesignReducer', () => {
     expect(finalized.design.objects[0].type).toBe('bike_lane');
     expect(finalized.design.objects[0].geometry.kind).toBe('path_corridor');
     expect(finalized.selectedObjectId).toBe('bike-path-1');
+  });
+
+  it('finalizes an active path draft with the generic finish action', () => {
+    const initialState = createInitialStreetDesignEditorState();
+    const withTool = streetDesignReducer(initialState, {
+      type: 'set_tool',
+      objectType: 'bike_lane',
+    });
+    const withStart = streetDesignReducer(withTool, {
+      type: 'scene_pointer_down',
+      point: { x: 0, z: 0 },
+      id: 'draft-id',
+    });
+    const withSecondPoint = streetDesignReducer(withStart, {
+      type: 'scene_pointer_down',
+      point: { x: 10, z: 0 },
+      id: 'unused-id',
+    });
+    const finalized = streetDesignReducer(withSecondPoint, {
+      type: 'finish_placement',
+      id: 'bike-path-keyboard-1',
+    });
+
+    expect(finalized.placementDraft).toBeNull();
+    expect(finalized.design.objects).toHaveLength(1);
+    expect(finalized.design.objects[0].geometry.kind).toBe('path_corridor');
+    expect(finalized.selectedObjectId).toBe('bike-path-keyboard-1');
   });
 
   it('creates tree rows as path corridor objects', () => {

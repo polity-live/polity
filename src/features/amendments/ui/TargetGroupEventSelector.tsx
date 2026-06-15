@@ -1097,6 +1097,7 @@ export function TargetGroupEventDisplay({
           {translateText('generated.inline.0207_target_group_155fdbe3')}
         </h4>
         <GroupTimelineCard
+          className="entity-search-card-no-spotlight"
           group={{
             id: groupData.id,
             name: groupData.name ?? '',
@@ -1114,6 +1115,7 @@ export function TargetGroupEventDisplay({
         </h4>
         {eventData ? (
           <EventTimelineCard
+            className="entity-search-card-no-spotlight"
             event={{
               id: eventData.id,
               title: eventData.title ?? '',

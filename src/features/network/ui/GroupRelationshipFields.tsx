@@ -1,4 +1,8 @@
-import { featureThemeClassName } from '@/features/shared/theme';
+import {
+  getEntityToneClasses,
+  getRightToneClasses,
+  getSemanticToneClasses,
+} from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import {
   FormControlLabel,
@@ -31,7 +35,7 @@ import type {
   GroupRelationshipType,
   RelativeMembershipDirection,
 } from '../types/network.types';
-import { RIGHT_GRADIENTS, type RightType } from '@/features/shared/ui/status';
+import { type RightType } from '@/features/shared/ui/status';
 
 export type GroupRelationshipRight = RightType;
 export type GroupRelationshipPhraseMode = 'selection' | 'statement' | 'role';
@@ -244,30 +248,21 @@ function getRelationshipConnectorLabel(
 
 function getRelationshipConnectorClasses(relationshipType: GroupRelationshipType) {
   if (relationshipType === 'parent') {
-    return featureThemeClassName('networkGroupRelationshipFieldsDangerWarningGradientSurface');
+    return getSemanticToneClasses('warning').badge;
   }
 
   if (relationshipType === 'child') {
-    return featureThemeClassName('networkGroupRelationshipFieldsInfoAccentGradientSurface');
+    return getSemanticToneClasses('info').badge;
   }
 
-  return featureThemeClassName('networkGroupRelationshipFieldsWarningAccentGradientSurface');
+  return getSemanticToneClasses('accent').badge;
 }
 
 function getGroupTagClasses(kind: 'current' | 'selected') {
-  return kind === 'current'
-    ? [
-        featureThemeClassName('networkGroupRelationshipFieldsSuccessInfoGradientSurface'),
-        featureThemeClassName('networkGroupRelationshipFieldsSuccessInfoGradientSurfaceAlpha'),
-        featureThemeClassName('networkGroupRelationshipFieldsSuccessInfoGradientSurfaceBeta'),
-        featureThemeClassName('networkGroupRelationshipFieldsSuccessInfoGradientSurfaceGamma'),
-      ].join(' ')
-    : [
-        featureThemeClassName('networkGroupRelationshipFieldsInfoAccentGradientSurfaceAlpha'),
-        featureThemeClassName('networkGroupRelationshipFieldsInfoAccentGradientSurfaceBeta'),
-        featureThemeClassName('networkGroupRelationshipFieldsInfoAccentGradientSurfaceGamma'),
-        featureThemeClassName('networkGroupRelationshipFieldsInfoAccentGradientSurfaceDelta'),
-      ].join(' ');
+  return cn(
+    getEntityToneClasses('group').badge,
+    kind === 'current' && 'ring-1 ring-[var(--entity-group-ring)]'
+  );
 }
 
 export function GroupRelationshipNameTag({
@@ -306,10 +301,7 @@ export function GroupRelationshipNameTag({
   const badge = (
     <BadgeControl
       variant="outline"
-      className={cn(
-        translateText('generated.inline.0116_max_w_full_text_11px_font_semibold_c328bdd2'),
-        getGroupTagClasses(kind)
-      )}
+      className={cn('max-w-full text-[11px] font-semibold', getGroupTagClasses(kind))}
     >
       <span className="truncate">{displayName}</span>
     </BadgeControl>
@@ -344,15 +336,16 @@ export function GroupRelationshipConnector({
   const { t } = useTranslation();
 
   return (
-    <span
+    <BadgeControl
+      variant="outline"
       className={cn(
-        featureThemeClassName('networkGroupRelationshipFieldsThemedGradientSurface'),
+        'max-w-full text-[11px] font-medium',
         getRelationshipConnectorClasses(relationshipType),
         className
       )}
     >
       {getRelationshipConnectorLabel(relationshipType, t, mode, siblingMembershipMode)}
-    </span>
+    </BadgeControl>
   );
 }
 
@@ -881,39 +874,13 @@ interface GroupRelationshipRightsSelectorProps {
   optionsContainerClassName?: string;
 }
 
-function getRightUnderlineClasses(right: GroupRelationshipRight) {
-  switch (right) {
-    case 'informationRight':
-      return featureThemeClassName('networkGroupRelationshipFieldsInfoGradientSurface');
-    case 'amendmentRight':
-      return featureThemeClassName(
-        'networkGroupRelationshipFieldsDangerWarningGradientSurfaceAlpha'
-      );
-    case 'rightToSpeak':
-      return featureThemeClassName('networkGroupRelationshipFieldsDangerAccentGradientSurface');
-    case 'activeVotingRight':
-      return featureThemeClassName('networkGroupRelationshipFieldsSuccessInfoGradientSurfaceDelta');
-    case 'passiveVotingRight':
-      return featureThemeClassName(
-        'networkGroupRelationshipFieldsInfoAccentGradientSurfaceEpsilon'
-      );
-    default:
-      return 'from-foreground to-foreground decoration-foreground/80';
-  }
-}
-
 function RightSentenceEmphasis({ right }: { right: GroupRelationshipRight }) {
   const { t } = useTranslation();
 
   return (
-    <span
-      className={cn(
-        featureThemeClassName('networkGroupRelationshipFieldsThemedGradientSurface'),
-        getRightUnderlineClasses(right)
-      )}
-    >
+    <BadgeControl className={cn('text-[11px]', getRightToneClasses(right).badge)}>
       {getGroupRelationshipRightLabel(right, t)}
-    </span>
+    </BadgeControl>
   );
 }
 
@@ -1251,26 +1218,23 @@ export function GroupRelationshipRightsSelector({
               className={cn(
                 'rounded-lg border p-3 transition-colors',
                 isSelected
-                  ? cn(
-                      featureThemeClassName('networkGroupRelationshipFieldsContrastBorder'),
-                      RIGHT_GRADIENTS[option.value]
-                    )
+                  ? cn(getRightToneClasses(option.value).surface, 'shadow-sm')
                   : 'border-border bg-muted/20',
-                !disabled && (isSelected ? 'hover:opacity-90' : 'hover:bg-accent')
+                !disabled && (isSelected ? 'hover:shadow-md' : 'hover:bg-accent')
               )}
             >
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => onToggleRight(option.value)}
-                className={featureThemeClassName('networkGroupRelationshipFieldsContrastPanel')}
+                className="h-auto w-full items-start justify-start p-0 text-left whitespace-normal hover:bg-transparent disabled:opacity-100"
                 disabled={disabled}
               >
                 <div
                   className={cn(
                     'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border',
                     isSelected
-                      ? featureThemeClassName('networkGroupRelationshipFieldsContrastBadge')
+                      ? cn(getRightToneClasses(option.value).badge, 'shadow-sm')
                       : 'border-muted-foreground'
                   )}
                 >
@@ -1288,25 +1252,14 @@ export function GroupRelationshipRightsSelector({
                       </BadgeControl>
                     ) : null}
                   </div>
-                  <div
-                    className={cn(
-                      'text-sm',
-                      isSelected
-                        ? featureThemeClassName('networkGroupRelationshipFieldsContrastText')
-                        : 'text-muted-foreground'
-                    )}
-                  >
-                    {t(option.descKey)}
-                  </div>
+                  <div className="text-muted-foreground text-sm">{t(option.descKey)}</div>
                 </div>
               </Button>
               {isSelected && onDirectionChange && directionOptions ? (
                 <div
                   className={cn(
                     'mt-3 ml-8 rounded-md border px-3 py-2',
-                    isSelected
-                      ? featureThemeClassName('networkGroupRelationshipFieldsContrastSurface')
-                      : 'border-border bg-background'
+                    isSelected ? 'border-border/70 bg-background/80' : 'border-border bg-background'
                   )}
                 >
                   <FormControlSelect
@@ -1316,13 +1269,7 @@ export function GroupRelationshipRightsSelector({
                     }
                     disabled={disabled}
                   >
-                    <FormControlSelectTrigger
-                      className={cn(
-                        featureThemeClassName('networkGroupRelationshipFieldsContrastBadgeAlpha'),
-                        isSelected &&
-                          featureThemeClassName('networkGroupRelationshipFieldsContrastTextAlpha')
-                      )}
-                    >
+                    <FormControlSelectTrigger className="border-border bg-background/80 h-auto min-h-10 py-2 text-left shadow-none">
                       <div className="min-w-0 flex-1 text-left">
                         <GroupRelationshipDirectionSentence
                           direction={selectedDirection}

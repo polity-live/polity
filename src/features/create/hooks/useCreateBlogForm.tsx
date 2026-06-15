@@ -16,7 +16,13 @@ import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
-import type { CreateFormConfig } from '../types/create-form.types';
+import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
+import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
+import {
+  createBlockedSubmitOutcome,
+  createRouteSubmitTarget,
+  createSuccessSubmitOutcome,
+} from '../logic/createSubmitTargets';
 
 interface CreateBlogSearch {
   groupId?: string;
@@ -30,7 +36,14 @@ export function useCreateBlogForm(): CreateFormConfig {
   const { user } = useAuth();
   const { createBlogFull } = useBlogActions();
   const commonActions = useCommonActions();
-  const { allHashtags } = useCommonState({ loadAllHashtags: true });
+  const { allHashtags, userHashtags } = useCommonState({
+    user_id: user?.id,
+    loadAllHashtags: true,
+  });
+  const preferredHashtagSuggestions = useMemo(
+    () => extractHashtagTags(userHashtags),
+    [userHashtags]
+  );
   const { currentUserMembershipsWithGroups } = useGroupState({
     includeCurrentUserMembershipsWithGroups: true,
   });
@@ -85,17 +98,12 @@ export function useCreateBlogForm(): CreateFormConfig {
     });
   };
 
-  const handleSubmit = async () => {
-    if (!user?.id || !title.trim()) return;
+  const handleSubmit = async (context?: CreateSubmitContext) => {
+    if (!user?.id || !title.trim()) return createBlockedSubmitOutcome();
     setIsSubmitting(true);
 
     try {
-      const ownerRoleId = crypto.randomUUID();
-      const writerRoleId = crypto.randomUUID();
-      const bloggerId = crypto.randomUUID();
-      const ownerManageBlogsId = crypto.randomUUID();
-      const ownerManageBloggersId = crypto.randomUUID();
-      const writerUpdateRightId = crypto.randomUUID();
+      context?.reportProgress({ key: 'create', status: 'active' });
 
       const createBlogResults = createBlogFull({
         blog: {
@@ -114,112 +122,56 @@ export function useCreateBlogForm(): CreateFormConfig {
           discussions: null,
           group_id: groupId,
         },
-        roles: [
-          {
-            id: ownerRoleId,
-            name: 'Owner',
-            description: translateText(
-              'generated.inline.0041_blog_owner_with_full_permissions_2ffcc97f'
-            ),
-            scope: 'blog',
-            group_id: null,
-            event_id: null,
-            amendment_id: null,
-            blog_id: blogId,
-            sort_order: 1,
-          },
-          {
-            id: writerRoleId,
-            name: 'Writer',
-            description: translateText(
-              'generated.inline.0042_blog_writer_with_edit_access_43b09221'
-            ),
-            scope: 'blog',
-            group_id: null,
-            event_id: null,
-            amendment_id: null,
-            blog_id: blogId,
-            sort_order: 0,
-          },
-        ],
-        actionRights: [
-          {
-            id: ownerManageBlogsId,
-            resource: 'blogs',
-            action: 'manage',
-            role_id: ownerRoleId,
-            group_id: null,
-            event_id: null,
-            amendment_id: null,
-            blog_id: blogId,
-          },
-          {
-            id: ownerManageBloggersId,
-            resource: 'blogBloggers',
-            action: 'manage',
-            role_id: ownerRoleId,
-            group_id: null,
-            event_id: null,
-            amendment_id: null,
-            blog_id: blogId,
-          },
-          {
-            id: writerUpdateRightId,
-            resource: 'blogs',
-            action: 'update',
-            role_id: writerRoleId,
-            group_id: null,
-            event_id: null,
-            amendment_id: null,
-            blog_id: blogId,
-          },
-        ],
-        entry: {
-          id: bloggerId,
-          blog_id: blogId,
-          user_id: user.id,
-          role_id: ownerRoleId,
-          status: 'member',
-          visibility,
-        },
       });
+      await serverConfirmed(createBlogResults.blogResult);
+      context?.reportProgress({ key: 'create', status: 'complete' });
+      context?.reportProgress({ key: 'sync', status: 'active' });
+
       await Promise.all([
-        serverConfirmed(createBlogResults.blogResult),
-        ...createBlogResults.roleResults.map(serverConfirmed),
-        ...createBlogResults.actionRightResults.map(serverConfirmed),
-        serverConfirmed(createBlogResults.entryResult),
+        hashtags.length > 0
+          ? commonActions.syncEntityHashtags('blog', blogId, hashtags, [], allHashtags ?? [])
+          : Promise.resolve(),
+        visibility === 'public'
+          ? createTimelineEvent({
+              data: {
+                eventType: 'created',
+                entityType: 'blog',
+                entityId: blogId,
+                actorId: user.id,
+                title: translateText('generated.inline.0055_new_blog_post_value2775_8f2fb838', {
+                  value2775: title.trim(),
+                }),
+                description: translateText(
+                  'generated.inline.0044_a_new_blog_post_has_been_published_055ff55e'
+                ),
+              },
+            })
+          : Promise.resolve(),
       ]);
 
-      if (hashtags.length > 0) {
-        await commonActions.syncEntityHashtags('blog', blogId, hashtags, [], allHashtags ?? []);
-      }
-
-      if (visibility === 'public') {
-        await createTimelineEvent({
-          data: {
-            eventType: 'created',
-            entityType: 'blog',
-            entityId: blogId,
-            actorId: user.id,
-            title: translateText('generated.inline.0055_new_blog_post_value2775_8f2fb838', {
-              value2775: title.trim(),
-            }),
-            description: translateText(
-              'generated.inline.0044_a_new_blog_post_has_been_published_055ff55e'
-            ),
-          },
-        });
-      }
-
       toast.success(t('pages.create.success.created'));
+      context?.reportProgress({ key: 'sync', status: 'complete' });
+      context?.reportProgress({ key: 'ready', status: 'active' });
+      setIsSubmitting(false);
       if (groupId) {
-        navigate({ to: '/group/$id/blog/$entryId', params: { id: groupId, entryId: blogId } });
-      } else {
-        navigate({ to: '/user/$id/blog/$entryId', params: { id: user.id, entryId: blogId } });
+        return createSuccessSubmitOutcome(
+          createRouteSubmitTarget('blog', {
+            to: '/group/$id/blog/$entryId',
+            params: { id: groupId, entryId: blogId },
+          })
+        );
       }
-    } catch {
+
+      return createSuccessSubmitOutcome(
+        createRouteSubmitTarget('blog', {
+          to: '/user/$id/blog/$entryId',
+          params: { id: user.id, entryId: blogId },
+        })
+      );
+    } catch (error) {
       toast.error(t('pages.create.error.createFailed'));
       setIsSubmitting(false);
+      throw error;
     }
   };
 
@@ -229,6 +181,11 @@ export function useCreateBlogForm(): CreateFormConfig {
       title: 'pages.create.blog.title',
       isSubmitting,
       onSubmit: handleSubmit,
+      submissionSteps: [
+        { key: 'create', label: 'Erstellt Blog' },
+        { key: 'sync', label: 'Synchronisiert Rollen und Timeline' },
+        { key: 'ready', label: 'Bereitet Blogseite vor' },
+      ],
       steps: [
         {
           label: t('pages.create.blog.basicInfo'),
@@ -305,6 +262,7 @@ export function useCreateBlogForm(): CreateFormConfig {
                 value: hashtags,
                 onChange: setHashtags,
                 placeholder: t('pages.create.blog.hashtagPlaceholder'),
+                preferredSuggestions: preferredHashtagSuggestions,
               },
             },
           ],
@@ -366,6 +324,7 @@ export function useCreateBlogForm(): CreateFormConfig {
       visibility,
       visibilityLabel,
       hashtags,
+      preferredHashtagSuggestions,
       imageURL,
       isSubmitting,
       blogId,

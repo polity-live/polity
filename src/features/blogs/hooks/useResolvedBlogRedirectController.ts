@@ -1,16 +1,22 @@
 import { useBlogState } from '@/zero/blogs/useBlogState';
 
-type ResolvedBlogRedirectTarget = 'detail' | 'notifications';
+type ResolvedBlogRedirectTarget = 'detail' | 'notifications' | 'edit';
 type ResolvedBlogRedirectState =
   | { status: 'loading' }
   | {
       status: 'group';
-      to: '/group/$id/blog/$entryId' | '/group/$id/blog/$entryId/notifications';
+      to:
+        | '/group/$id/blog/$entryId'
+        | '/group/$id/blog/$entryId/notifications'
+        | '/group/$id/blog/$entryId/edit';
       params: { id: string; entryId: string };
     }
   | {
       status: 'user';
-      to: '/user/$id/blog/$entryId' | '/user/$id/blog/$entryId/notifications';
+      to:
+        | '/user/$id/blog/$entryId'
+        | '/user/$id/blog/$entryId/notifications'
+        | '/user/$id/blog/$entryId/edit';
       params: { id: string; entryId: string };
     }
   | { status: 'denied' };
@@ -40,11 +46,15 @@ export function useResolvedBlogRedirectController({
   const destination =
     target === 'notifications'
       ? '/group/$id/blog/$entryId/notifications'
-      : '/group/$id/blog/$entryId';
+      : target === 'edit'
+        ? '/group/$id/blog/$entryId/edit'
+        : '/group/$id/blog/$entryId';
   const userDestination =
     target === 'notifications'
       ? '/user/$id/blog/$entryId/notifications'
-      : '/user/$id/blog/$entryId';
+      : target === 'edit'
+        ? '/user/$id/blog/$entryId/edit'
+        : '/user/$id/blog/$entryId';
 
   if (blog?.group_id) {
     return {

@@ -8,6 +8,8 @@ import {
 } from '@/features/timeline/hooks/useTimelineFilters';
 import { type ContentType } from '@/features/timeline/constants/content-type-config';
 
+export type SearchViewMode = 'list' | 'spatial';
+
 export function useSearchURL() {
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as Record<string, string>;
@@ -20,6 +22,7 @@ export function useSearchURL() {
   const hashtagParam = searchParams.hashtag || '';
   const engagementParam = (searchParams.engagement || 'all') as EngagementFilter;
   const sortParam = (searchParams.sort || 'recent') as TimelineSortOption;
+  const viewParam = searchParams.view || 'list';
 
   const parsedContentTypes = useMemo<ContentType[]>(() => {
     if (!typesParam) return [...ALL_CONTENT_TYPES];
@@ -60,6 +63,7 @@ export function useSearchURL() {
 
   const parsedSort: TimelineSortOption =
     sortParam === 'trending' || sortParam === 'engagement' ? sortParam : 'recent';
+  const parsedView: SearchViewMode = viewParam === 'spatial' ? 'spatial' : 'list';
 
   // Local state
   const [searchQuery, setSearchQuery] = useState(queryParam);
@@ -68,6 +72,7 @@ export function useSearchURL() {
   const [topics, setTopics] = useState<string[]>(parsedTopics);
   const [engagement, setEngagement] = useState<EngagementFilter>(parsedEngagement);
   const [sortBy, setSortBy] = useState<TimelineSortOption>(parsedSort);
+  const [view, setView] = useState<SearchViewMode>(parsedView);
 
   // Update URL when search parameters change
   const updateURL = (updates: Record<string, string>) => {
@@ -97,11 +102,12 @@ export function useSearchURL() {
         topics: topics.length > 0 ? topics.join(',') : '',
         engagement: engagement !== 'all' ? engagement : '',
         sort: sortBy !== 'recent' ? sortBy : '',
+        view: view !== 'list' ? view : '',
       });
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, contentTypes, dateRange, topics, engagement, sortBy]);
+  }, [searchQuery, contentTypes, dateRange, topics, engagement, sortBy, view]);
 
   return {
     searchQuery,
@@ -116,5 +122,7 @@ export function useSearchURL() {
     setEngagement,
     sortBy,
     setSortBy,
+    view,
+    setView,
   };
 }

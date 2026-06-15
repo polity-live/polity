@@ -4,6 +4,8 @@ import { useMemo } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { queries } from '@/zero/queries';
 import { useUserState } from '@/zero/users/useUserState';
+import { useCommonState } from '@/zero/common';
+import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { useAgendaState, type AgendaStateItem } from '@/zero/agendas/useAgendaState';
 import { useSubscribedTimeline, type TimelineItem } from './useSubscribedTimeline';
 import { useSubscriptionTimeline } from './useSubscriptionTimeline';
@@ -151,8 +153,16 @@ function getReasonForItem(item: {
   isDiscover?: boolean;
   coordinates?: CivicTimelineCoordinates | null;
   userCoordinates?: CivicTimelineCoordinates | null;
+  tags?: string[];
+  interestTags?: string[];
 }): CivicTimelineReason {
   if (item.isUrgent) return 'urgent_decision';
+  if (
+    item.isDiscover &&
+    getMatchingInterestTags(item.tags ?? [], item.interestTags ?? []).length > 0
+  ) {
+    return 'interest_match';
+  }
   if (item.isDiscover)
     return item.coordinates && item.userCoordinates ? 'near_you' : 'public_discovery';
   if (item.type === 'vote' || item.type === 'election') return 'active_now';
@@ -199,6 +209,13 @@ function getStatsLabel(item: Pick<CivicTimelineItem, 'stats' | 'type'>) {
     return `${item.stats.members} members`;
   }
   return null;
+}
+
+function getMatchingInterestTags(tags: string[], interestTags: string[]) {
+  if (tags.length === 0 || interestTags.length === 0) return [];
+
+  const interestSet = new Set(interestTags.map(tag => tag.toLowerCase()));
+  return tags.filter(tag => interestSet.has(tag.toLowerCase()));
 }
 
 function getTagsFromJunctions(
@@ -433,7 +450,8 @@ function mapDecisionItem(decision: DecisionItem): CivicTimelineItem {
 
 function mapSearchDocument(
   document: SearchDocumentLike,
-  userCoordinates: CivicTimelineCoordinates | null
+  userCoordinates: CivicTimelineCoordinates | null,
+  interestTags: string[]
 ): CivicTimelineItem | null {
   const payload = isRecord(document.card_payload) ? document.card_payload : {};
   const type = normalizeTimelineType(asString(payload.type) ?? document.entity_type);
@@ -456,11 +474,15 @@ function mapSearchDocument(
     (document.group ? formatLocation(document.group) : undefined) ??
     document.subtitle;
   const engagementScore = document.engagement_score ?? document.trending_score ?? 0;
+  const tags = Array.from(new Set([...payloadTags, ...topics]));
+  const reasonTags = getMatchingInterestTags(tags, interestTags);
   const reason = getReasonForItem({
     type,
     isDiscover: true,
     coordinates,
     userCoordinates,
+    tags,
+    interestTags,
   });
   const civicItem: CivicTimelineItem = {
     id: `discover:${document.id}`,
@@ -477,7 +499,7 @@ function mapSearchDocument(
     status: asString(payload.status),
     locationLabel,
     coordinates,
-    tags: Array.from(new Set([...payloadTags, ...topics])),
+    tags,
     stats: {
       reactions: asNumber(isRecord(payload.stats) ? payload.stats.reactions : undefined),
       comments: asNumber(isRecord(payload.stats) ? payload.stats.comments : undefined),
@@ -489,6 +511,7 @@ function mapSearchDocument(
     relationshipStrength: coordinates ? 0.35 : 0.2,
     isDiscover: true,
     reason,
+    reasonTags,
     primaryActionLabel: getPrimaryActionLabel(type),
   };
 
@@ -562,6 +585,7 @@ export function useCivicTimeline({
   decisionsLoading = false,
 }: UseCivicTimelineOptions): UseCivicTimelineReturn {
   const { user: dbUser, isLoading: userLoading } = useUserState({ userId });
+  const { userHashtags } = useCommonState({ user_id: userId });
   const subscribedTimeline = useSubscribedTimeline({
     userId,
     userEmail,
@@ -601,6 +625,7 @@ export function useCivicTimeline({
   );
 
   const userCoordinates = useMemo(() => deriveCivicCoordinates(dbUser), [dbUser]);
+  const interestTags = useMemo(() => extractHashtagTags(userHashtags), [userHashtags]);
 
   const primaryItems = useMemo(() => {
     const items: CivicTimelineItem[] = [];
@@ -622,9 +647,9 @@ export function useCivicTimeline({
   const discoverItems = useMemo(
     () =>
       ((discoverRows ?? []) as unknown as SearchDocumentLike[]).flatMap(
-        document => mapSearchDocument(document, userCoordinates) ?? []
+        document => mapSearchDocument(document, userCoordinates, interestTags) ?? []
       ),
-    [discoverRows, userCoordinates]
+    [discoverRows, interestTags, userCoordinates]
   );
 
   const filteredPrimaryItems = useMemo(
@@ -645,10 +670,11 @@ export function useCivicTimeline({
         context: {
           userId,
           coordinates: userCoordinates,
+          interestTags,
         },
         minPrimaryItems: 8,
       }),
-    [filteredDiscoverItems, filteredPrimaryItems, userCoordinates, userId]
+    [filteredDiscoverItems, filteredPrimaryItems, interestTags, userCoordinates, userId]
   );
 
   const sections = useMemo(() => groupCivicTimelineItems(items), [items]);

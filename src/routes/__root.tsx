@@ -4,6 +4,7 @@ import { OnlineUsersProvider } from '@/presence';
 import { ZeroAppProvider } from '@/providers/zero-provider';
 import { AppShell } from '@/layout/app-shell';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
+import { MotionProvider } from '@/features/shared/motion';
 import stylesAssetHref from '../styles.css?url';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -67,15 +68,17 @@ function RootLayout() {
             __html: `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches);if(d)document.documentElement.classList.add('dark')}catch(e){}})()`,
           }}
         />
-        <AuthProvider>
-          <OnlineUsersProvider>
-            <ZeroAppProvider>
-              <AppShell>
-                <Outlet />
-              </AppShell>
-            </ZeroAppProvider>
-          </OnlineUsersProvider>
-        </AuthProvider>
+        <MotionProvider>
+          <AuthProvider>
+            <OnlineUsersProvider>
+              <ZeroAppProvider>
+                <AppShell>
+                  <Outlet />
+                </AppShell>
+              </ZeroAppProvider>
+            </OnlineUsersProvider>
+          </AuthProvider>
+        </MotionProvider>
         <Scripts />
       </body>
     </html>

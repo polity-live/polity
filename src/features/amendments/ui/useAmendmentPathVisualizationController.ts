@@ -1,5 +1,4 @@
 'use client';
-import { featureThemeValue } from '@/features/shared/theme';
 import { useEffect } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
@@ -7,6 +6,15 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
+import {
+  getCivicNetworkEdgeStyle,
+  getCivicNetworkLabelStyle,
+} from '@/features/network/logic/networkEdgeHelpers';
+import {
+  getGroupNodeStyle,
+  getGroupNodeVisualTokens,
+  type GroupNodeVisualVariant,
+} from '@/features/network/ui/networkVisualHelpers';
 interface AmendmentPathVisualizationProps {
   amendmentId: string;
 }
@@ -54,6 +62,11 @@ export function useAmendmentPathVisualizationController({
       const yPos = 200;
       const isFirst = index === 0;
       const isTarget = index === segments.length - 1;
+      const visualVariant: GroupNodeVisualVariant = isFirst
+        ? 'current'
+        : isTarget
+          ? 'child'
+          : 'parent';
 
       newNodes.push({
         id: `path-node-${index}`,
@@ -65,18 +78,15 @@ export function useAmendmentPathVisualizationController({
           type: 'group',
         },
         style: {
-          background: isTarget
-            ? featureThemeValue('amendmentAmendmentPathVisualizationDangerColor')
-            : isFirst
-              ? featureThemeValue('amendmentAmendmentPathVisualizationThemeValue')
-              : featureThemeValue('amendmentAmendmentPathVisualizationSuccessColor'),
-          color: featureThemeValue('amendmentAmendmentPathVisualizationNeutralColor'),
-          border: `2px solid ${isTarget ? featureThemeValue('amendmentAmendmentPathVisualizationDangerColorAlpha') : isFirst ? featureThemeValue('amendmentAmendmentPathVisualizationInfoColor') : featureThemeValue('amendmentAmendmentPathVisualizationThemeValueAlpha')}`,
-          borderRadius: '5px',
-          padding: '10px',
+          ...getGroupNodeStyle(visualVariant, {
+            width: 180,
+            borderRadius: '10px',
+            padding: '10px',
+            fontSize: '12px',
+            fontWeight: '500',
+          }),
           fontSize: '12px',
           fontWeight: '500',
-          width: 180,
           textAlign: 'center',
         },
       });
@@ -92,24 +102,15 @@ export function useAmendmentPathVisualizationController({
           type: 'smoothstep',
           animated: true,
           label: translateText('generated.inline.0021_amendmentright_eba6c724'),
-          style: {
-            stroke: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
-            strokeWidth: 2,
-          },
-          labelStyle: {
-            fill: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorBeta'),
-            fontWeight: 600,
-            fontSize: '11px',
-          },
-          labelBgStyle: {
-            fill: 'white',
-            fillOpacity: 0.9,
-          },
-          labelBgPadding: [8, 4] as [number, number],
-          labelBgBorderRadius: 4,
+          style: getCivicNetworkEdgeStyle({
+            color: getGroupNodeVisualTokens('parent').borderColor,
+          }),
+          ...getCivicNetworkLabelStyle({
+            color: getGroupNodeVisualTokens('parent').borderColor,
+          }),
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+            color: getGroupNodeVisualTokens('parent').borderColor,
           },
         });
       }

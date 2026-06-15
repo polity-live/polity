@@ -1,5 +1,5 @@
 import { featureThemeClassName } from '@/features/shared/theme';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
   Card,
@@ -9,6 +9,10 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
+import {
+  ActionSubmissionOverlay,
+  useActionSubmission,
+} from '@/features/shared/ui/action-submission';
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
 import { DangerConfirmDialog } from '@/features/shared/ui/dialog';
 import { StatusBadge } from '@/features/shared/ui/status';
@@ -230,6 +234,11 @@ export function ManageWorkflowsTabContentView({
   onRejectWorkflowApproval,
 }: ManageWorkflowsTabProps) {
   const { t } = useTranslation();
+  const approvalSubmission = useActionSubmission('accept');
+  const [approvalPreview, setApprovalPreview] = useState<{
+    title: string;
+    path: string[];
+  } | null>(null);
 
   const incomingRows = useMemo(
     () =>
@@ -287,6 +296,28 @@ export function ManageWorkflowsTabContentView({
     />
   );
 
+  const handleApproveWorkflow = (
+    workflow: WorkflowWithStepsRow,
+    approval: WorkflowWithStepsRow['approvals'][number]
+  ) => {
+    const startGroup = getWorkflowStartGroup(workflow);
+    const path = [
+      startGroup.name,
+      ...getSortedWorkflowSteps(workflow).map(step => step.group?.name ?? step.group_id),
+    ].filter(Boolean);
+
+    setApprovalPreview({
+      title: workflow.name ?? t('common.untitled'),
+      path,
+    });
+
+    void approvalSubmission
+      .runActionWithSubmission(async () => onApproveWorkflowApproval(approval.id), {
+        onSuccess: approvalSubmission.reset,
+      })
+      .catch(() => undefined);
+  };
+
   const incomingColumns: ColumnDef<IncomingWorkflowRow>[] = [
     {
       id: 'name',
@@ -327,7 +358,11 @@ export function ManageWorkflowsTabContentView({
       },
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-2">
-          <Button size="sm" onClick={() => onApproveWorkflowApproval(row.original.approval.id)}>
+          <Button
+            size="sm"
+            disabled={approvalSubmission.isActive}
+            onClick={() => handleApproveWorkflow(row.original.workflow, row.original.approval)}
+          >
             {t('common.actions.confirm')}
           </Button>
           <Button
@@ -608,6 +643,21 @@ export function ManageWorkflowsTabContentView({
         onRemoveStep={onRemoveWorkflowStep}
         onMoveStep={onMoveWorkflowStep}
         onSave={onSaveWorkflow}
+      />
+      <ActionSubmissionOverlay
+        kind="accept"
+        status={approvalSubmission.status}
+        steps={approvalSubmission.progressSteps}
+        error={approvalSubmission.error}
+        preview={{
+          entityLabel: t('features.network.workflows.incomingRequests'),
+          title: approvalPreview?.title ?? t('features.network.workflows.title'),
+          description: t('features.network.workflows.incomingRequestsDescription'),
+          path: approvalPreview?.path,
+        }}
+        target={{ label: t('common.done', 'Fertig'), onClick: approvalSubmission.reset }}
+        onBack={approvalSubmission.reset}
+        onRetry={() => void approvalSubmission.retry()}
       />
     </div>
   );

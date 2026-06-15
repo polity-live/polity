@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import {
   useTranslation,
   translate as translateText,
@@ -9,8 +8,6 @@ import { useEventWikiPage } from './hooks/useEventWikiPage';
 import { AccessDenied as AccessDeniedView } from '@/features/auth/ui/AccessDenied';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
 import { MeetingPage as MeetingPageView } from '@/features/meet/MeetingPage';
-import { buildEventWikiIncumbentSections } from './logic/buildEventWikiIncumbentSections';
-import { useDelegateAssemblyParticipantsComposition } from './hooks/useDelegateAssemblyParticipantsComposition';
 import { EventWikiContentView } from './EventWikiContentView';
 
 interface EventWikiProps {
@@ -53,8 +50,6 @@ export function EventWiki({ eventId }: EventWikiProps) {
     setConfirmDialogOpen,
     selectedElection,
     isSubmitting,
-    participantsDialogOpen,
-    setParticipantsDialogOpen,
     getUserCandidacy,
     handleElectionClick,
     handleConfirmCandidacy,
@@ -74,10 +69,6 @@ export function EventWiki({ eventId }: EventWikiProps) {
 
   const { electionsCount, amendmentsCount, openChangeRequestsCount } = agendaStats;
   const formattedLocation = formatNamedLocation(event.location_name, event);
-  const incumbentSections = buildEventWikiIncumbentSections(
-    event.roles ?? [],
-    event.participants ?? []
-  );
   const isAssemblyEventType =
     event.event_type === 'delegate_assembly' || event.event_type === 'general_assembly';
   const shouldDisableParticipationRequest =
@@ -88,33 +79,13 @@ export function EventWiki({ eventId }: EventWikiProps) {
   const participationDisabledReason = shouldDisableParticipationRequest
     ? 'Only members of the associated group can participate in this general assembly'
     : undefined;
-  const activeDelegateAssemblyParticipants = useMemo(
-    () =>
-      (event.participants ?? []).filter(participant =>
-        ['active', 'member', 'admin', 'confirmed'].includes(participant.status ?? '')
-      ),
-    [event.participants]
-  );
   const eventDescription = typeof event.description === 'string' ? event.description : undefined;
-  const {
-    showComposition,
-    participantsWithProvenance,
-    compositionBuckets,
-    isLoading: compositionIsLoading,
-  } = useDelegateAssemblyParticipantsComposition(event, activeDelegateAssemblyParticipants);
-  const delegateParticipantsForDialog = showComposition
-    ? participantsWithProvenance
-    : activeDelegateAssemblyParticipants;
   return (
     <EventWikiContentView
-      activeDelegateAssemblyParticipants={activeDelegateAssemblyParticipants}
       agendaStats={agendaStats}
       amendmentsCount={amendmentsCount}
       canAccess={canAccess}
-      compositionBuckets={compositionBuckets}
-      compositionIsLoading={compositionIsLoading}
       confirmDialogOpen={confirmDialogOpen}
-      delegateParticipantsForDialog={delegateParticipantsForDialog}
       elections={elections}
       electionsCount={electionsCount}
       electionsDialogOpen={electionsDialogOpen}
@@ -125,21 +96,16 @@ export function EventWiki({ eventId }: EventWikiProps) {
       getUserCandidacy={getUserCandidacy}
       handleConfirmCandidacy={handleConfirmCandidacy}
       handleElectionClick={handleElectionClick}
-      incumbentSections={incumbentSections}
       isAssemblyEventType={isAssemblyEventType}
       isSubmitting={isSubmitting}
       isSubscribed={isSubscribed}
       openChangeRequestsCount={openChangeRequestsCount}
-      participantsDialogOpen={participantsDialogOpen}
-      participantsWithProvenance={participantsWithProvenance}
       participation={participation}
       participationDisabledReason={participationDisabledReason}
       selectedElection={selectedElection}
       setConfirmDialogOpen={setConfirmDialogOpen}
       setElectionsDialogOpen={setElectionsDialogOpen}
-      setParticipantsDialogOpen={setParticipantsDialogOpen}
       shouldDisableParticipationRequest={shouldDisableParticipationRequest}
-      showComposition={showComposition}
       subscribeLoading={subscribeLoading}
       subscriberCount={subscriberCount}
       t={t}

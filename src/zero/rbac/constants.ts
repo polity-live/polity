@@ -47,6 +47,7 @@ export const DEFAULT_GROUP_ROLES = [
       { resource: 'events' as ResourceType, action: 'manage_participants' as ActionType },
       { resource: 'events' as ResourceType, action: 'manage_speakers' as ActionType },
       { resource: 'events' as ResourceType, action: 'manage_votes' as ActionType },
+      { resource: 'events' as ResourceType, action: 'speak' as ActionType },
       { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
       { resource: 'events' as ResourceType, action: 'passive_voting' as ActionType },
       { resource: 'events' as ResourceType, action: 'view' as ActionType },
@@ -271,6 +272,7 @@ export const DEFAULT_EVENT_ROLES = [
       { resource: 'events' as ResourceType, action: 'manage_participants' as ActionType },
       { resource: 'events' as ResourceType, action: 'manage_speakers' as ActionType },
       { resource: 'events' as ResourceType, action: 'manage_votes' as ActionType },
+      { resource: 'events' as ResourceType, action: 'speak' as ActionType },
       { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
       { resource: 'events' as ResourceType, action: 'passive_voting' as ActionType },
       { resource: 'agendaItems' as ResourceType, action: 'view' as ActionType },
@@ -299,6 +301,7 @@ export const DEFAULT_EVENT_ROLES = [
     permissions: [
       { resource: 'events' as ResourceType, action: 'view' as ActionType },
       { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
+      { resource: 'events' as ResourceType, action: 'speak' as ActionType },
       { resource: 'agendaItems' as ResourceType, action: 'view' as ActionType },
       {
         resource: 'notifications' as ResourceType,
@@ -316,6 +319,7 @@ export const DEFAULT_EVENT_ROLES = [
       { resource: 'events' as ResourceType, action: 'view' as ActionType },
       { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
       { resource: 'events' as ResourceType, action: 'passive_voting' as ActionType },
+      { resource: 'events' as ResourceType, action: 'speak' as ActionType },
       { resource: 'agendaItems' as ResourceType, action: 'view' as ActionType },
       {
         resource: 'notifications' as ResourceType,

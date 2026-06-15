@@ -9,6 +9,7 @@ import {
   PanelTitle,
   Section,
 } from '@/features/shared/ui/layout';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 
 export interface CreateDashboardItemViewModel {
   href: string;
@@ -42,7 +43,7 @@ export function CreateDashboardView({ title, subtitle, sections }: CreateDashboa
                 const Icon = item.icon;
 
                 return (
-                  <a key={item.href} href={item.href} className="block">
+                  <SmartLink key={item.href} href={item.href} className="block">
                     <Panel className="hover:bg-accent/60 focus-within:ring-ring h-full transition-colors focus-within:ring-2">
                       <PanelHeader>
                         <Icon className="text-primary size-7" />
@@ -52,7 +53,7 @@ export function CreateDashboardView({ title, subtitle, sections }: CreateDashboa
                         <p className="text-muted-foreground text-sm">{item.description}</p>
                       </PanelContent>
                     </Panel>
-                  </a>
+                  </SmartLink>
                 );
               })}
             </PanelGrid>

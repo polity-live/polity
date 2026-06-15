@@ -17,6 +17,7 @@ export interface MasonryGridProps<T> {
   loadingSkeletonCount?: number;
   className?: string;
   gap?: 'sm' | 'md' | 'lg';
+  itemMotion?: 'none' | 'reveal';
 }
 
 export function MasonryGrid<T>({
@@ -29,6 +30,7 @@ export function MasonryGrid<T>({
   loadingSkeletonCount = 6,
   className,
   gap = 'md',
+  itemMotion = 'none',
 }: MasonryGridProps<T>) {
   const controller = useMasonryGridController({
     hasMore,
@@ -48,6 +50,7 @@ export function MasonryGrid<T>({
       onLoadMore={onLoadMore}
       className={className}
       gap={gap}
+      itemMotion={itemMotion}
       emptyLabels={emptyController.labels}
       {...controller}
     />

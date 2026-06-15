@@ -621,6 +621,7 @@ export const createPageTranslations = {
     formStyleDescription: 'Choose how create forms are displayed',
   },
   progress: {
+    label: 'Create flow',
     stepOf: 'Step {{current}} of {{total}}',
   },
   summary: {

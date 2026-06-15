@@ -3,7 +3,10 @@
 import type { MouseEventHandler, ReactNode } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { TargetGroupEventSelector } from '@/features/amendments/ui/TargetGroupEventSelector';
+import {
+  TargetGroupEventDisplay,
+  TargetGroupEventSelector,
+} from '@/features/amendments/ui/TargetGroupEventSelector';
 import { Button } from '@/features/shared/ui/ui/button';
 
 const amendmentGroups = [
@@ -120,11 +123,19 @@ vi.mock('@/zero/amendments/useAmendmentState', () => ({
 }));
 
 vi.mock('@/features/timeline/ui/cards/GroupTimelineCard', () => ({
-  GroupTimelineCard: ({ group }: { group: { name: string } }) => <div>{group.name}</div>,
+  GroupTimelineCard: ({ group, className }: { group: { name: string }; className?: string }) => (
+    <div data-testid="target-group-card" data-card-class={className ?? ''}>
+      {group.name}
+    </div>
+  ),
 }));
 
 vi.mock('@/features/timeline/ui/cards/EventTimelineCard', () => ({
-  EventTimelineCard: ({ event }: { event: { title: string } }) => <div>{event.title}</div>,
+  EventTimelineCard: ({ event, className }: { event: { title: string }; className?: string }) => (
+    <div data-testid="target-event-card" data-card-class={className ?? ''}>
+      {event.title}
+    </div>
+  ),
 }));
 
 vi.mock('@/features/network/ui/UserNetworkFlow', () => ({
@@ -195,6 +206,34 @@ function hasButtonText(text: string) {
 }
 
 describe('TargetGroupEventSelector', () => {
+  it('marks create-flow target summary cards as no-spotlight entity cards', () => {
+    render(
+      <TargetGroupEventDisplay
+        groupData={{
+          id: 'group-target',
+          name: 'Parliament',
+          description: 'Target group',
+          member_count: 5,
+          event_count: 1,
+          amendment_count: 0,
+        }}
+        eventData={{
+          id: 'event-target',
+          title: 'Assembly',
+          start_date: Date.now(),
+          participant_count: 12,
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('target-group-card').getAttribute('data-card-class')).toContain(
+      'entity-search-card-no-spotlight'
+    );
+    expect(screen.getByTestId('target-event-card').getAttribute('data-card-class')).toContain(
+      'entity-search-card-no-spotlight'
+    );
+  });
+
   it('keeps the selected start group when choosing a target from dropdown', async () => {
     const onSelect = vi.fn();
 

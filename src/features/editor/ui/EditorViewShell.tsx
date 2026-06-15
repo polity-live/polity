@@ -1,5 +1,6 @@
 'use client';
 
+import { useLayoutEffect, useRef } from 'react';
 import { featureThemeValue } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft, FileText, Loader2 } from 'lucide-react';
@@ -11,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/features/shared/ui/ui/card';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
 import { generateUserColor } from '../logic/editor-helpers';
 import type { EditorViewModel } from '../hooks/useEditorViewModel';
 
@@ -21,6 +23,70 @@ import { VersionControl } from './VersionControl';
 
 interface EditorViewShellProps {
   model: EditorViewModel;
+}
+
+const changeRequestMotionStepMs = 1200;
+
+function assignChangeRequestMotionDelays(scope: HTMLElement) {
+  const suggestionOrder = new Map<string, number>();
+  const motionElements = Array.from(
+    scope.querySelectorAll<HTMLElement>('[data-suggestion-id], button[data-suggestion-ids]')
+  ).sort((a, b) => {
+    const position = a.compareDocumentPosition(b);
+
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) {
+      return -1;
+    }
+
+    if (position & Node.DOCUMENT_POSITION_PRECEDING) {
+      return 1;
+    }
+
+    return 0;
+  });
+
+  const registerSuggestionId = (suggestionId: string | null | undefined) => {
+    if (!suggestionId || suggestionOrder.has(suggestionId)) {
+      return;
+    }
+
+    suggestionOrder.set(suggestionId, suggestionOrder.size);
+  };
+
+  motionElements.forEach(element => {
+    registerSuggestionId(element.dataset.suggestionId);
+
+    element
+      .getAttribute('data-suggestion-ids')
+      ?.split(/\s+/)
+      .filter(Boolean)
+      .forEach(registerSuggestionId);
+  });
+
+  scope.querySelectorAll<HTMLElement>('[data-suggestion-id]').forEach(element => {
+    const order = suggestionOrder.get(element.dataset.suggestionId ?? '');
+    if (order == null) return;
+
+    element.style.setProperty(
+      '--change-request-motion-delay',
+      `${order * changeRequestMotionStepMs}ms`
+    );
+  });
+
+  scope.querySelectorAll<HTMLElement>('button[data-suggestion-ids]').forEach(element => {
+    const orders = (element.getAttribute('data-suggestion-ids') ?? '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(suggestionId => suggestionOrder.get(suggestionId))
+      .filter((order): order is number => order != null);
+
+    if (orders.length === 0) return;
+
+    element.style.setProperty(
+      '--change-request-motion-delay',
+      `${Math.min(...orders) * changeRequestMotionStepMs}ms`
+    );
+  });
 }
 
 export function EditorViewShell({ model }: EditorViewShellProps) {
@@ -74,6 +140,41 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
     userId,
   } = model;
   const { t } = useTranslation();
+  const changeRequestMotionScopeRef = useRef<HTMLDivElement>(null);
+  const enableChangeRequestLoadMotion = entityType === 'amendment' || entityType === 'blog';
+
+  useLayoutEffect(() => {
+    if (!enableChangeRequestLoadMotion) {
+      return;
+    }
+
+    const scope = changeRequestMotionScopeRef.current;
+
+    if (!scope) {
+      return;
+    }
+
+    scope.setAttribute('data-change-request-motion-ready', 'false');
+    assignChangeRequestMotionDelays(scope);
+    scope.setAttribute('data-change-request-motion-ready', 'true');
+
+    if (typeof MutationObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new MutationObserver(() => {
+      assignChangeRequestMotionDelays(scope);
+    });
+
+    observer.observe(scope, {
+      attributeFilter: ['data-suggestion-id', 'data-suggestion-ids'],
+      attributes: true,
+      childList: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, [contentEntityId, enableChangeRequestLoadMotion]);
 
   // Loading state
   if (isLoading) {
@@ -277,7 +378,14 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
           )}
         </CardHeader>
         <CardContent>
-          <div className="min-h-[600px]">
+          <div
+            ref={changeRequestMotionScopeRef}
+            className={cn(
+              'min-h-[600px]',
+              enableChangeRequestLoadMotion && 'change-request-load-motion'
+            )}
+            data-change-request-motion-ready={enableChangeRequestLoadMotion ? 'false' : undefined}
+          >
             <PlateEditor
               key={contentEntityId}
               value={content}

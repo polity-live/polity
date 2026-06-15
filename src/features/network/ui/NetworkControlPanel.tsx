@@ -21,6 +21,12 @@ export interface NetworkLegendItem {
   swatch?: ReactNode;
 }
 
+export interface CivicNetworkLegendSection {
+  id: string;
+  title?: string;
+  items: readonly NetworkLegendItem[];
+}
+
 export interface NetworkRelationshipStatusFilter {
   id: string;
   label: string;
@@ -39,14 +45,15 @@ export const NETWORK_FILTER_ACTIVE_CLASS_NAMES = {
   purple: featureThemeClassName('networkNetworkControlPanelAccentBadge'),
 } as const;
 
-interface NetworkControlPanelProps {
+export interface NetworkControlPanelProps {
   title: string;
   description?: string;
   panelCollapsed: boolean;
   onPanelCollapsedChange: (collapsed: boolean) => void;
   legendCollapsed: boolean;
   onLegendCollapsedChange: (collapsed: boolean) => void;
-  legendItems: readonly NetworkLegendItem[];
+  legendItems?: readonly NetworkLegendItem[];
+  legendSections?: readonly CivicNetworkLegendSection[];
   legendTitle?: string;
   showGroupTypeLegend?: boolean;
   baseGroupLabel?: string;
@@ -89,6 +96,7 @@ export function NetworkControlPanel({
   legendCollapsed,
   onLegendCollapsedChange,
   legendItems,
+  legendSections,
   legendTitle = 'Legend',
   showGroupTypeLegend = false,
   baseGroupLabel = translateText('generated.inline.0118_base_group_51212428'),
@@ -177,6 +185,16 @@ export function NetworkControlPanel({
       </div>
     );
   };
+  const resolvedLegendSections =
+    legendSections ??
+    (legendItems
+      ? [
+          {
+            id: 'default',
+            items: legendItems,
+          },
+        ]
+      : []);
 
   return (
     <Panel
@@ -255,14 +273,28 @@ export function NetworkControlPanel({
             </Button>
             {!legendCollapsed && (
               <div className="mt-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 text-sm">
-                {legendItems.map(item => (
-                  <div key={item.id} className="flex items-center gap-2">
-                    {item.swatch ? (
-                      item.swatch
-                    ) : item.swatchClassName ? (
-                      <div className={item.swatchClassName}></div>
+                {resolvedLegendSections.map((section, sectionIndex) => (
+                  <div key={section.id} className="space-y-2">
+                    {sectionIndex > 0 ? (
+                      <hr
+                        className={featureThemeClassName('networkUseGroupNetworkFlowNeutralBorder')}
+                      />
                     ) : null}
-                    <span>{item.label}</span>
+                    {section.title ? (
+                      <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                        {section.title}
+                      </div>
+                    ) : null}
+                    {section.items.map(item => (
+                      <div key={item.id} className="flex items-center gap-2">
+                        {item.swatch ? (
+                          item.swatch
+                        ) : item.swatchClassName ? (
+                          <div className={item.swatchClassName}></div>
+                        ) : null}
+                        <span>{item.label}</span>
+                      </div>
+                    ))}
                   </div>
                 ))}
 

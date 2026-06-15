@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { flexRender, type Row, type Table as TanStackTable } from '@tanstack/react-table';
 import { Search } from 'lucide-react';
 
@@ -108,7 +108,7 @@ export function DataTableView<TData>({
         className={cn(
           'overflow-hidden',
           resolvedSurface === 'standalone'
-            ? 'bg-card rounded-md border shadow-[var(--shadow-panel)]'
+            ? 'civic-page-reveal bg-card rounded-md border shadow-[var(--shadow-panel)]'
             : 'border-border/70 border-y bg-transparent shadow-none'
         )}
         data-slot="data-table-surface"
@@ -153,6 +153,12 @@ export function DataTableView<TData>({
                     key={row.id}
                     data-state={row.getIsSelected() && 'selected'}
                     data-testid={testId}
+                    className="civic-stagger-item"
+                    style={
+                      {
+                        '--civic-stagger-index': row.index % 12,
+                      } as CSSProperties
+                    }
                   >
                     {row.getVisibleCells().map((cell: any) => {
                       const meta = getColumnMeta(cell.column.columnDef);

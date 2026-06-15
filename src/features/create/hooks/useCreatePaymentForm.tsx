@@ -16,7 +16,12 @@ import { PaymentTypeInput } from '../ui/inputs/PaymentTypeInput';
 import { PaymentEntityTypeInput } from '../ui/inputs/PaymentEntityTypeInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
-import type { CreateFormConfig } from '../types/create-form.types';
+import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
+import {
+  createBlockedSubmitOutcome,
+  createRouteSubmitTarget,
+  createSuccessSubmitOutcome,
+} from '../logic/createSubmitTargets';
 
 interface CreatePaymentSearch {
   groupId?: string;
@@ -69,10 +74,11 @@ export function useCreatePaymentForm(): CreateFormConfig {
     });
   };
 
-  const handleSubmit = async () => {
-    if (!user) return;
+  const handleSubmit = async (context?: CreateSubmitContext) => {
+    if (!user) return createBlockedSubmitOutcome();
     setIsSubmitting(true);
     try {
+      context?.reportProgress({ key: 'create', status: 'active' });
       const paymentId = crypto.randomUUID();
       const parsedAmount = parseFloat(amount);
 
@@ -102,19 +108,29 @@ export function useCreatePaymentForm(): CreateFormConfig {
         receiver_group_id,
       });
       toast.success(t('pages.create.success.created'));
+      context?.reportProgress({ key: 'create', status: 'complete' });
+      context?.reportProgress({ key: 'sync', status: 'complete' });
+      context?.reportProgress({ key: 'ready', status: 'active' });
 
       if (returnSection === 'payments' && groupId) {
-        navigate({
-          to: '/group/$id/operation',
-          params: { id: groupId },
-          hash: returnSection,
-        });
-        return;
+        return createSuccessSubmitOutcome(
+          createRouteSubmitTarget('payment', {
+            to: '/group/$id/operation',
+            params: { id: groupId },
+            hash: returnSection,
+          })
+        );
       }
 
-      navigate({ to: '/group/$id', params: { id: groupId } });
-    } catch {
+      return createSuccessSubmitOutcome(
+        createRouteSubmitTarget('payment', {
+          to: '/group/$id',
+          params: { id: groupId },
+        })
+      );
+    } catch (error) {
       toast.error(t('pages.create.error.createFailed'));
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
@@ -147,6 +163,11 @@ export function useCreatePaymentForm(): CreateFormConfig {
       title: 'pages.create.payment.title',
       isSubmitting,
       onSubmit: handleSubmit,
+      submissionSteps: [
+        { key: 'create', label: 'Erstellt Zahlung' },
+        { key: 'sync', label: 'Synchronisiert Buchung' },
+        { key: 'ready', label: 'Bereitet Zielseite vor' },
+      ],
       steps: [
         {
           label: t('pages.create.common.group'),

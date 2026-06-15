@@ -57,9 +57,14 @@ export function useAgendaActions() {
   const addSpeaker = useCallback(
     (args: Parameters<typeof mutators.agendas.addSpeaker>[0]) => {
       const result = zero.mutate(mutators.agendas.addSpeaker(args));
-      toast.success(t('common.agendaToasts.speakerAdded'));
-      onServerError(result, () => toast.error(t('common.agendaToasts.speakerAddFailed')));
-      return serverConfirmed(result);
+      return serverConfirmed(result)
+        .then(() => {
+          toast.success(t('common.agendaToasts.speakerAdded'));
+        })
+        .catch(error => {
+          toast.error(t('common.agendaToasts.speakerAddFailed'));
+          throw error;
+        });
     },
     [t, zero]
   );
@@ -76,9 +81,14 @@ export function useAgendaActions() {
   const removeSpeaker = useCallback(
     (id: string) => {
       const result = zero.mutate(mutators.agendas.removeSpeaker({ id }));
-      toast.success(t('common.agendaToasts.speakerRemoved'));
-      onServerError(result, () => toast.error(t('common.agendaToasts.speakerRemoveFailed')));
-      return serverConfirmed(result);
+      return serverConfirmed(result)
+        .then(() => {
+          toast.success(t('common.agendaToasts.speakerRemoved'));
+        })
+        .catch(error => {
+          toast.error(t('common.agendaToasts.speakerRemoveFailed'));
+          throw error;
+        });
     },
     [t, zero]
   );

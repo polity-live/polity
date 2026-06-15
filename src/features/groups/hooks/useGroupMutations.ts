@@ -89,28 +89,30 @@ export function useGroupMutations(groupId: string) {
     try {
       const dedupedRoleIds = [...new Set(roleIds.filter(Boolean))];
 
-      for (const userId of userIds) {
-        const membershipId = crypto.randomUUID();
-        await serverConfirmed(
-          inviteMember({
-            id: membershipId,
-            user_id: userId,
-            group_id: groupId,
-            initial_role_id: dedupedRoleIds[0] ?? null,
-            visibility: '',
-            status: 'invited',
-          })
-        );
-        if (dedupedRoleIds.length > 0) {
+      await Promise.all(
+        userIds.map(async userId => {
+          const membershipId = crypto.randomUUID();
           await serverConfirmed(
-            syncMembershipRoles({
-              group_membership_id: membershipId,
-              role_ids: dedupedRoleIds,
-              assigned_by_id: senderId ?? null,
+            inviteMember({
+              id: membershipId,
+              user_id: userId,
+              group_id: groupId,
+              initial_role_id: dedupedRoleIds[0] ?? null,
+              visibility: '',
+              status: 'invited',
             })
           );
-        }
-      }
+          if (dedupedRoleIds.length > 0) {
+            await serverConfirmed(
+              syncMembershipRoles({
+                group_membership_id: membershipId,
+                role_ids: dedupedRoleIds,
+                assigned_by_id: senderId ?? null,
+              })
+            );
+          }
+        })
+      );
       toast.success(`Successfully invited ${userIds.length} user(s)`);
       return { success: true };
     } catch (error) {
@@ -129,18 +131,20 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      for (const userId of userIds) {
-        await serverConfirmed(
-          inviteGuest({
-            id: crypto.randomUUID(),
-            group_id: groupId,
-            user_id: userId,
-            status: 'invited',
-            role_ids: roleIds,
-            invited_by_id: senderId ?? null,
-          })
-        );
-      }
+      await Promise.all(
+        userIds.map(userId =>
+          serverConfirmed(
+            inviteGuest({
+              id: crypto.randomUUID(),
+              group_id: groupId,
+              user_id: userId,
+              status: 'invited',
+              role_ids: roleIds,
+              invited_by_id: senderId ?? null,
+            })
+          )
+        )
+      );
 
       toast.success(`Successfully invited ${userIds.length} guest(s)`);
       return { success: true };

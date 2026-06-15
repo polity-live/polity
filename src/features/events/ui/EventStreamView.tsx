@@ -63,6 +63,7 @@ export interface EventStreamViewProps {
   isLoading: any;
   addingSpeaker: any;
   removingSpeaker: any;
+  canJoinSpeakerList: any;
   userSpeaker: any;
   handleAddToSpeakerList: any;
   handleRemoveFromSpeakerList: any;
@@ -105,6 +106,7 @@ export function EventStreamView({
   isLoading,
   addingSpeaker,
   removingSpeaker,
+  canJoinSpeakerList,
   userSpeaker,
   handleAddToSpeakerList,
   handleRemoveFromSpeakerList,
@@ -309,7 +311,7 @@ export function EventStreamView({
                     ? translateText('generated.inline.0015_removing_2a76d431')
                     : translateText('generated.inline.0016_remove_yourself_fa3b0e30')}
                 </Button>
-              ) : (
+              ) : canJoinSpeakerList ? (
                 <Button
                   onClick={handleAddToSpeakerList}
                   disabled={addingSpeaker || !user}
@@ -320,7 +322,7 @@ export function EventStreamView({
                     ? translateText('generated.inline.0017_adding_268c06a2')
                     : translateText('generated.inline.0018_add_yourself_71fba1c3')}
                 </Button>
-              )}
+              ) : null}
             </div>
           </CardHeader>
           <CollapsibleContent>

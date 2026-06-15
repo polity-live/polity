@@ -290,6 +290,8 @@ export const timelineTranslations = {
       subscribed: 'Gefolgt',
       memberContext: 'Verbunden',
       nearYou: 'In deiner Nähe',
+      interestMatch: 'Wegen deiner Interessen',
+      interestMatchTag: 'Wegen #{{tag}}',
       activeNow: 'Jetzt aktiv',
       popularNearby: 'Beliebt in der Nähe',
       publicDiscovery: 'Entdecken',

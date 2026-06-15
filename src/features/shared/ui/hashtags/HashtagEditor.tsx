@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import { HashtagInput } from './HashtagInput';
 
 interface HashtagEditorProps {
@@ -10,6 +12,7 @@ interface HashtagEditorProps {
   placeholder?: string;
   maxTags?: number;
   suggestions?: string[];
+  preferredSuggestions?: string[];
 }
 
 export function HashtagEditor({
@@ -20,7 +23,19 @@ export function HashtagEditor({
   placeholder,
   maxTags,
   suggestions = [],
+  preferredSuggestions = [],
 }: HashtagEditorProps) {
+  const prioritizedSuggestions = useMemo(() => {
+    const seen = new Set<string>();
+
+    return [...preferredSuggestions, ...suggestions].filter(tag => {
+      const key = tag.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [preferredSuggestions, suggestions]);
+
   return (
     <HashtagInput
       value={value}
@@ -29,7 +44,7 @@ export function HashtagEditor({
       showLabel={showLabel}
       placeholder={placeholder}
       maxTags={maxTags}
-      suggestions={suggestions}
+      suggestions={prioritizedSuggestions}
     />
   );
 }

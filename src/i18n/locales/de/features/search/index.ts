@@ -3,6 +3,7 @@ export const searchTranslations = {
   description: 'Finde wonach du suchst',
   placeholder: 'Suchen...',
   placeholderDetailed: 'Suche nach Gruppen, Veranstaltungen, Anträgen, Nutzern...',
+  personalTopics: 'Deine Themen',
   noResults: 'Keine Ergebnisse gefunden',
   noResultsFor: 'Keine Ergebnisse für "{{query}}" gefunden',
   tryDifferent: 'Versuche einen anderen Suchbegriff',

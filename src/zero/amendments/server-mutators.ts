@@ -49,6 +49,7 @@ import { PermissionError } from '../rbac/errors';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = new Set(['collaborator', 'member', 'admin']);
+const ACTIVE_GROUP_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
 
 type AmendmentServerTx = Parameters<typeof mutators.amendments.create.fn>[0]['tx'];
 type AmendmentServerCtx = Parameters<typeof mutators.amendments.create.fn>[0]['ctx'];
@@ -61,19 +62,42 @@ async function loadAmendmentForMutation(tx: AmendmentServerTx, amendmentId: stri
   return amendment;
 }
 
-async function assertCanCreateAmendment(
+async function assertCanCreateAmendment(tx: AmendmentServerTx, ctx: AmendmentServerCtx) {
+  requireAuthenticated(tx, ctx, { action: 'create', resource: 'amendments' });
+}
+
+async function assertCanUseAmendmentPathSourceGroup(
   tx: AmendmentServerTx,
   ctx: AmendmentServerCtx,
-  args: { group_id?: string | null; event_id?: string | null }
+  sourceGroupId: string | null | undefined
 ) {
   requireAuthenticated(tx, ctx, { action: 'create', resource: 'amendments' });
 
-  if (args.group_id) {
-    await can(tx, ctx, { action: 'create', resource: 'amendments', groupId: args.group_id });
+  if (!sourceGroupId) {
+    throw new PermissionError('create', 'amendments', 'source-group required');
   }
 
-  if (args.event_id) {
-    await can(tx, ctx, { action: 'create', resource: 'amendments', eventId: args.event_id });
+  const ownedGroup = await tx.run(
+    zql.group.where('id', sourceGroupId).where('owner_id', ctx.userID).one()
+  );
+  if (ownedGroup) {
+    return;
+  }
+
+  const activeMemberships = await tx.run(
+    zql.group_membership
+      .where('group_id', sourceGroupId)
+      .where('user_id', ctx.userID)
+      .where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+      .related('membership_roles')
+  );
+
+  const hasAnyRole = activeMemberships.some(membership =>
+    (membership.membership_roles ?? []).some(roleLink => Boolean(roleLink.role_id))
+  );
+
+  if (!hasAnyRole) {
+    throw new PermissionError('create', 'amendments', `group:${sourceGroupId}`);
   }
 }
 
@@ -307,7 +331,7 @@ async function notifyAmendmentCollaboratorRoleChange(
 
 export const amendmentServerMutators = {
   create: defineMutator(createAmendmentSchema, async ({ tx, ctx, args }) => {
-    await assertCanCreateAmendment(tx, ctx, args);
+    await assertCanCreateAmendment(tx, ctx);
 
     const sourceAmendment = args.clone_source_id
       ? await tx.run(zql.amendment.where('id', args.clone_source_id).one())
@@ -883,6 +907,7 @@ export const amendmentServerMutators = {
   initializeProcessPath: defineMutator(
     initializeAmendmentProcessPathSchema,
     async ({ tx, ctx, args }) => {
+      await assertCanUseAmendmentPathSourceGroup(tx, ctx, args.source_group_id);
       await assertCanMutateAmendment(tx, ctx, args.amendment_id, 'manage');
       await initializeAmendmentProcessPath(tx, ctx.userID, args);
     }

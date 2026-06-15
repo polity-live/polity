@@ -14,6 +14,7 @@ import { DecisionVoteButton } from './DecisionVoteButton';
 import { TrendIndicator } from './TrendIndicator';
 import type { DecisionItem } from './types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 
 interface DecisionWidgetContentProps {
   widget: DecisionTerminalWidgetConfig;
@@ -92,9 +93,9 @@ function DecisionLink({
   }
 
   return (
-    <a href={href} className={cn('hover:text-primary hover:underline', className)}>
+    <SmartLink href={href} className={cn('hover:text-primary hover:underline', className)}>
       {children}
-    </a>
+    </SmartLink>
   );
 }
 

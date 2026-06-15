@@ -5,21 +5,14 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
 
+type ZeroMutationResult = ReturnType<ReturnType<typeof useZero>['mutate']>;
+
+interface BlogFullMutationArgs {
+  blog: Parameters<typeof mutators.blogs.create>[0];
+}
+
 interface BlogFullMutationResult {
-  blogResult: ReturnType<typeof useZero>['mutate'] extends (...args: never[]) => infer TResult
-    ? TResult
-    : never;
-  roleResults: (ReturnType<typeof useZero>['mutate'] extends (...args: never[]) => infer TResult
-    ? TResult
-    : never)[];
-  actionRightResults: (ReturnType<typeof useZero>['mutate'] extends (
-    ...args: never[]
-  ) => infer TResult
-    ? TResult
-    : never)[];
-  entryResult: ReturnType<typeof useZero>['mutate'] extends (...args: never[]) => infer TResult
-    ? TResult
-    : never;
+  blogResult: ZeroMutationResult;
 }
 
 /**
@@ -123,38 +116,14 @@ export function useBlogActions() {
     [zero]
   );
 
-  /** Full blog creation orchestration (blog + roles + action rights + entry) */
+  /** Full blog creation. The server-side create mutator bootstraps roles, rights, and owner entry. */
   const createBlogFull = useCallback(
-    (args: {
-      blog: Parameters<typeof mutators.blogs.create>[0];
-      roles: Parameters<typeof mutators.blogs.createRole>[0][];
-      actionRights: Parameters<typeof mutators.blogs.assignActionRight>[0][];
-      entry: Parameters<typeof mutators.blogs.createEntry>[0];
-    }) => {
+    (args: BlogFullMutationArgs) => {
       const blogResult = zero.mutate(mutators.blogs.create(args.blog));
       onServerError(blogResult, msg => console.error('Failed to create blog:', msg));
-      const roleResults = [];
-      for (const role of args.roles) {
-        const roleResult = zero.mutate(mutators.blogs.createRole(role));
-        roleResults.push(roleResult);
-        onServerError(roleResult, msg => console.error('Failed to create blog role:', msg));
-      }
-      const actionRightResults = [];
-      for (const right of args.actionRights) {
-        const actionRightResult = zero.mutate(mutators.blogs.assignActionRight(right));
-        actionRightResults.push(actionRightResult);
-        onServerError(actionRightResult, msg =>
-          console.error('Failed to assign blog action right:', msg)
-        );
-      }
-      const entryResult = zero.mutate(mutators.blogs.createEntry(args.entry));
-      onServerError(entryResult, msg => console.error('Failed to create blog entry:', msg));
 
       return {
         blogResult,
-        roleResults,
-        actionRightResults,
-        entryResult,
       } satisfies BlogFullMutationResult;
     },
     [zero]

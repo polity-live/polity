@@ -3,7 +3,7 @@ import * as React from 'react';
 import * as ToolbarPrimitive from '@radix-ui/react-toolbar';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { type VariantProps, cva } from 'class-variance-authority';
-import { ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Loader2 } from 'lucide-react';
 
 import {
   DropdownMenuLabel,
@@ -116,41 +116,91 @@ const dropdownArrowVariants = cva(
 type ToolbarButtonProps = {
   isDropdown?: boolean;
   pressed?: boolean;
+  loading?: boolean;
+  loadingLabel?: React.ReactNode;
+  successState?: boolean;
+  successLabel?: React.ReactNode;
 } & Omit<React.ComponentPropsWithoutRef<typeof ToolbarToggleItem>, 'asChild' | 'value'> &
   VariantProps<typeof toolbarButtonVariants>;
+
+function renderToolbarButtonContent({
+  children,
+  loading,
+  loadingLabel,
+  successState,
+  successLabel,
+}: Pick<
+  ToolbarButtonProps,
+  'children' | 'loading' | 'loadingLabel' | 'successState' | 'successLabel'
+>) {
+  if (!loading && !successState) {
+    return children;
+  }
+
+  const label = loading ? loadingLabel : successLabel;
+
+  return (
+    <>
+      <span className="invisible inline-flex items-center gap-2">{children}</span>
+      <span className="pointer-events-none absolute inset-0 inline-flex items-center justify-center gap-2 px-2">
+        {loading ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+        {label ? <span>{label}</span> : null}
+      </span>
+    </>
+  );
+}
 
 export const ToolbarButton = withTooltip(function ToolbarButton({
   children,
   className,
   isDropdown,
   pressed,
+  loading = false,
+  loadingLabel,
+  successState = false,
+  successLabel,
+  disabled,
   size = 'sm',
   variant,
   ...props
 }: ToolbarButtonProps) {
+  const showStatus = loading || successState;
+  const content = renderToolbarButtonContent({
+    children,
+    loading,
+    loadingLabel,
+    successState,
+    successLabel,
+  });
+
   return typeof pressed === 'boolean' ? (
-    <ToolbarToggleGroup disabled={props.disabled} value="single" type="single">
+    <ToolbarToggleGroup disabled={loading || disabled} value="single" type="single">
       <ToolbarToggleItem
         className={cn(
           toolbarButtonVariants({
             size,
             variant,
           }),
+          showStatus && 'relative',
           isDropdown && 'justify-between gap-1 pr-1',
           className
         )}
         value={pressed ? 'single' : ''}
+        disabled={loading || disabled}
+        aria-busy={loading || undefined}
+        data-loading={loading ? 'true' : undefined}
+        data-success={successState ? 'true' : undefined}
         {...props}
       >
         {isDropdown ? (
           <>
-            <div className="flex flex-1 items-center gap-2 whitespace-nowrap">{children}</div>
+            <div className="flex flex-1 items-center gap-2 whitespace-nowrap">{content}</div>
             <div>
               <ChevronDown className="text-muted-foreground size-3.5" data-icon />
             </div>
           </>
         ) : (
-          children
+          content
         )}
       </ToolbarToggleItem>
     </ToolbarToggleGroup>
@@ -161,12 +211,17 @@ export const ToolbarButton = withTooltip(function ToolbarButton({
           size,
           variant,
         }),
+        showStatus && 'relative',
         isDropdown && 'pr-1',
         className
       )}
+      disabled={loading || disabled}
+      aria-busy={loading || undefined}
+      data-loading={loading ? 'true' : undefined}
+      data-success={successState ? 'true' : undefined}
       {...props}
     >
-      {children}
+      {content}
     </ToolbarPrimitive.Button>
   );
 });

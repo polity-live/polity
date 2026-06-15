@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import type { ComponentProps, ReactNode } from 'react';
+import type { AnchorHTMLAttributes, ComponentProps, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CivicTimelineItem, CivicTimelineSection } from '../../logic/civicTimeline';
 import { CivicTimelineMap } from '../CivicTimelineMap';
@@ -19,6 +19,18 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({
     t: (_key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? _key,
   }),
+}));
+
+vi.mock('@/features/shared/ui/navigation/SmartLink', () => ({
+  SmartLink: ({
+    children,
+    href,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock('leaflet', () => ({
@@ -185,6 +197,56 @@ describe('CivicTimelineRail', () => {
 
     fireEvent.click(titleLink);
     expect(onItemSelect).toHaveBeenCalledWith(item);
+  });
+
+  it('staggers load reveal indexes across timeline sections', () => {
+    const secondItem: CivicTimelineItem = {
+      ...item,
+      id: 'group-1',
+      entityId: 'group-1',
+      type: 'group',
+      title: 'Neighborhood working group',
+      href: '/group/group-1',
+      reason: 'member_context',
+    };
+    const thirdItem: CivicTimelineItem = {
+      ...item,
+      id: 'amendment-1',
+      entityId: 'amendment-1',
+      type: 'amendment',
+      title: 'Climate reporting amendment',
+      href: '/amendment/amendment-1',
+      reason: 'urgent_decision',
+    };
+    const multiSectionTimeline: CivicTimelineSection[] = [
+      {
+        id: 'today',
+        labelKey: 'features.timeline.around.sections.today',
+        items: [item, secondItem],
+      },
+      {
+        id: 'this_week',
+        labelKey: 'features.timeline.around.sections.thisWeek',
+        items: [thirdItem],
+      },
+    ];
+
+    render(<CivicTimelineRail sections={multiSectionTimeline} />);
+
+    const firstItem = document.querySelector('[data-timeline-item-id="event-1"]') as HTMLElement;
+    const secondTimelineItem = document.querySelector(
+      '[data-timeline-item-id="group-1"]'
+    ) as HTMLElement;
+    const thirdTimelineItem = document.querySelector(
+      '[data-timeline-item-id="amendment-1"]'
+    ) as HTMLElement;
+
+    expect(firstItem.className).toContain('civic-load-card-reveal');
+    expect(secondTimelineItem.className).toContain('civic-load-card-reveal');
+    expect(thirdTimelineItem.className).toContain('civic-load-card-reveal');
+    expect(firstItem.style.getPropertyValue('--civic-load-index')).toBe('0');
+    expect(secondTimelineItem.style.getPropertyValue('--civic-load-index')).toBe('1');
+    expect(thirdTimelineItem.style.getPropertyValue('--civic-load-index')).toBe('2');
   });
 });
 

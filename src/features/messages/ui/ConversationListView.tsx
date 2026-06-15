@@ -1,11 +1,13 @@
-import { getMotionPreset } from '@/features/shared/theme';
 import { FormControlInput } from '@/features/shared/ui/form';
+import type { CSSProperties } from 'react';
 import { Card, CardHeader } from '@/features/shared/ui/ui/card';
 import { Separator } from '@/features/shared/ui/ui/separator';
 import { Button } from '@/features/shared/ui/ui/button';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { Search, MessageCircle, Bot } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { ConversationItem } from './ConversationItem';
+
 export interface ConversationListViewProps {
   className: any;
   conversationFilter: any;
@@ -13,7 +15,7 @@ export interface ConversationListViewProps {
   conversations: any;
   currentUserId: any;
   filterButtons: any;
-  filterGradients: any;
+  isLoading?: boolean;
   onConversationFilterChange: any;
   onDeleteConversationClick: any;
   onNewAiConversationClick: any;
@@ -34,7 +36,7 @@ export function ConversationListView({
   conversations,
   currentUserId,
   filterButtons,
-  filterGradients,
+  isLoading = false,
   onConversationFilterChange,
   onDeleteConversationClick,
   onNewAiConversationClick,
@@ -47,6 +49,8 @@ export function ConversationListView({
   selectedConversationId,
   t,
 }: ConversationListViewProps) {
+  const showSkeletons = isLoading && conversations.length === 0;
+
   return (
     <Card
       className={cn(
@@ -92,41 +96,44 @@ export function ConversationListView({
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            {filterButtons.map((filter: any) =>
-              (() => {
-                const gradient = filterGradients[filter];
-
-                return (
-                  <Button
-                    key={filter}
-                    type="button"
-                    size="sm"
-                    variant={
-                      gradient ? 'outline' : conversationFilter === filter ? 'default' : 'outline'
-                    }
-                    className={cn(
-                      gradient && gradient,
-                      gradient && 'text-foreground hover:text-foreground border-transparent',
-                      gradient && getMotionPreset('colors'),
-                      gradient &&
-                        (conversationFilter === filter
-                          ? 'ring-ring ring-2'
-                          : 'opacity-70 hover:opacity-100')
-                    )}
-                    onClick={() => onConversationFilterChange(filter)}
-                  >
-                    {t(`features.messages.filters.${filter}`)}
-                  </Button>
-                );
-              })()
-            )}
+            {filterButtons.map((filter: any) => (
+              <Button
+                key={filter}
+                type="button"
+                size="sm"
+                variant={conversationFilter === filter ? 'default' : 'outline'}
+                className="civic-motion-selectable"
+                onClick={() => onConversationFilterChange(filter)}
+              >
+                {t(`features.messages.filters.${filter}`)}
+              </Button>
+            ))}
           </div>
         </div>
       </CardHeader>
       <Separator />
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
         <div className="p-4">
-          {conversations.length === 0 ? (
+          {showSkeletons ? (
+            <div className="space-y-3" data-slot="conversation-list-skeleton">
+              {Array.from({ length: 7 }, (_, index) => (
+                <div
+                  key={index}
+                  className="civic-stagger-item flex items-center gap-3 rounded-lg border border-transparent p-3"
+                  style={{ '--civic-stagger-index': index } as CSSProperties}
+                >
+                  <Skeleton className="h-12 w-12 rounded-2xl" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Skeleton className="h-3 w-2/3" />
+                    <Skeleton className="h-3 w-5/6" />
+                  </div>
+                </div>
+              ))}
+              <p className="animate-loading-fade-in text-muted-foreground px-3 text-center text-xs opacity-0 [animation-delay:800ms]">
+                {t('features.messages.syncingConversations', 'Conversations are syncing')}
+              </p>
+            </div>
+          ) : conversations.length === 0 ? (
             <div className="py-8 text-center">
               <p className="text-muted-foreground">
                 {searchQuery || conversationFilter !== 'all'

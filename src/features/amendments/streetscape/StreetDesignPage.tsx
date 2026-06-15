@@ -12,7 +12,7 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
     <StreetDesignPageView
       amendment={controller.amendment}
       isLoading={controller.isLoading}
-      canEdit={controller.canEdit}
+      readOnly={controller.readOnly}
       design={controller.design}
       selectedObject={controller.selectedObject}
       selectedOsmWay={controller.selectedOsmWay}
@@ -25,11 +25,18 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       selectedMapSelection={controller.selectedMapSelection}
       costSummary={controller.costSummary}
       isDirty={controller.state.isDirty}
+      placementPreview={controller.placementPreview}
+      placementPreviewType={controller.placementPreviewType}
+      placementStart={controller.placementStart}
+      placementMode={controller.placementMode}
+      placementPointCount={controller.placementPointCount}
+      canFinishPathPlacement={controller.canFinishPathPlacement}
+      osmLayerVisibility={controller.osmLayerVisibility}
+      showStreetMarkings={controller.showStreetMarkings}
       isLoadingOsm={controller.isLoadingOsm}
       osmError={controller.osmError}
       isSaving={controller.isSaving}
       saveError={controller.saveError}
-      placementDraft={controller.state.placementDraft}
       onSelectedMapSelectionChange={controller.onSelectedMapSelectionChange}
       onLoadOsm={controller.onLoadOsm}
       onLoadSample={controller.onLoadSample}
@@ -39,6 +46,7 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       onComparisonModeChange={controller.setComparisonMode}
       onScenePointerDown={controller.handleScenePointerDown}
       onScenePointerMove={controller.handleScenePointerMove}
+      onFinishPlacement={controller.finishPlacement}
       onFinishPathPlacement={controller.finishPathPlacement}
       onCancelPlacement={controller.cancelPlacement}
       onObjectSelect={controller.selectObject}

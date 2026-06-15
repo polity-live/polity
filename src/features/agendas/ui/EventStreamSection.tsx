@@ -73,7 +73,7 @@ interface EventStreamSectionProps {
   removingSpeaker: string | null;
   votingLoading: string | null;
   userSpeaker?: { id: string };
-  onAddToSpeakerList: () => void;
+  onAddToSpeakerList?: () => void;
   onRemoveFromSpeakerList: (speakerId: string) => void;
   onBecomeCandidate?: () => void;
   onWithdrawCandidacy?: () => void;

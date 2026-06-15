@@ -1,4 +1,6 @@
-import { FeedList, FeedStatePanel } from '@/features/shared/ui/feed';
+import type { CSSProperties } from 'react';
+
+import { FeedStatePanel } from '@/features/shared/ui/feed';
 import type { Notification } from '../types/notification.types';
 import { NotificationItem } from './NotificationItem';
 
@@ -36,18 +38,28 @@ export function NotificationsList({
   }
 
   return (
-    <FeedList>
-      {notifications.map(notification => (
-        <NotificationItem
+    <div data-slot="feed-list" className="space-y-3">
+      {notifications.map((notification, index) => (
+        <div
           key={notification.id}
-          notification={notification}
-          onNotificationClick={onNotificationClick}
-          onDeleteNotification={onDeleteNotification}
-          formatTime={formatTime}
-          mode={mode}
-          showRecipientBadge={showRecipientBadge}
-        />
+          data-slot="notification-list-item"
+          className="civic-load-card-reveal"
+          style={
+            {
+              '--civic-load-index': Math.min(index, 11),
+            } as CSSProperties
+          }
+        >
+          <NotificationItem
+            notification={notification}
+            onNotificationClick={onNotificationClick}
+            onDeleteNotification={onDeleteNotification}
+            formatTime={formatTime}
+            mode={mode}
+            showRecipientBadge={showRecipientBadge}
+          />
+        </div>
       ))}
-    </FeedList>
+    </div>
   );
 }

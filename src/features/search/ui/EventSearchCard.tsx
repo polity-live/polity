@@ -1,4 +1,5 @@
 import { EventTimelineCard } from '@/features/timeline/ui/cards/EventTimelineCard';
+import { cn } from '@/features/shared/utils/utils';
 import type { CalendarEvent } from '@/features/calendar/types/calendar.types';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import type { EventByIdFullRow } from '@/zero/events/queries';
@@ -148,7 +149,7 @@ export function EventSearchCard({
 
   return (
     <EventTimelineCard
-      className={className}
+      className={cn('entity-search-card-no-spotlight', className)}
       href={href}
       onSelect={onSelect}
       event={{

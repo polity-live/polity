@@ -63,10 +63,9 @@ export function EntitySearchBar({
             {filterOptions.map(option => (
               <Badge
                 key={option.value}
-                variant={option.active ? 'default' : 'outline'}
+                variant={option.active && !option.gradient ? 'default' : 'outline'}
                 className={cn(
                   'cursor-pointer transition-colors select-none',
-                  option.active && option.gradient && 'border-0 text-white',
                   option.active && option.gradient && option.gradient
                 )}
                 onClick={() => onFilterToggle(option.value)}

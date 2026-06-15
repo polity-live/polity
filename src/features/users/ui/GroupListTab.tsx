@@ -70,20 +70,25 @@ export const GroupsListTab: React.FC<GroupsListTabProps> = ({
         <p className="text-muted-foreground py-8 text-center">{t('pages.user.groups.noResults')}</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {unique.map(membership => {
+          {unique.map((membership, index) => {
             const group = membership.group;
             return (
-              <GroupTimelineCard
+              <div
                 key={membership.id}
-                group={{
-                  id: String(group.id),
-                  name: group.name ?? '',
-                  description: richTextToPlainText(group.description) || undefined,
-                  memberCount: group.member_count ?? 0,
-                  eventCount: group.event_count ?? group.events?.length,
-                  amendmentCount: group.amendment_count ?? group.amendments?.length,
-                }}
-              />
+                className="civic-load-card-reveal"
+                style={{ '--civic-load-index': Math.min(index, 11) } as React.CSSProperties}
+              >
+                <GroupTimelineCard
+                  group={{
+                    id: String(group.id),
+                    name: group.name ?? '',
+                    description: richTextToPlainText(group.description) || undefined,
+                    memberCount: group.member_count ?? 0,
+                    eventCount: group.event_count ?? group.events?.length,
+                    amendmentCount: group.amendment_count ?? group.amendments?.length,
+                  }}
+                />
+              </div>
             );
           })}
         </div>

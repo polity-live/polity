@@ -1,5 +1,7 @@
 'use client';
 
+import type { CSSProperties } from 'react';
+
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import {
@@ -42,6 +44,7 @@ import {
   Clock,
   Info,
   GripVertical,
+  Maximize2,
 } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
@@ -63,6 +66,7 @@ import {
 import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 import { AgendaActionBar } from './AgendaActionBar';
 import { VoteCastDialog } from '@/features/vote-cast/ui/VoteCastDialog';
+import { EventLiveFocusDialog } from './EventLiveFocusDialog';
 import { getAgendaDisplayTimes } from '../logic/getAgendaDisplayTimes';
 import { getAgendaRuntimeStatus } from '../logic/getAgendaRuntimeStatus';
 import { getAgendaDisplayType, getYouTubeVideoId } from '../logic/agendaUiHelpers';
@@ -102,6 +106,8 @@ export interface EventAgendaViewProps {
   setStreamOpen: any;
   streamDetailsOpen: any;
   setStreamDetailsOpen: any;
+  liveFocusOpen: any;
+  setLiveFocusOpen: any;
   addingSpeaker: any;
   setAddingSpeaker: any;
   removingSpeaker: any;
@@ -130,6 +136,7 @@ export interface EventAgendaViewProps {
   setDismissedOverdueAgendaItemId: any;
   canManageAgenda: any;
   canManageVotes: any;
+  canJoinSpeakerList: any;
   canManageOfflineTallies: any;
   draggedAgendaItemId: any;
   setDraggedAgendaItemId: any;
@@ -248,6 +255,8 @@ export function EventAgendaView({
   setStreamOpen,
   streamDetailsOpen,
   setStreamDetailsOpen,
+  liveFocusOpen,
+  setLiveFocusOpen,
   addingSpeaker,
   removingSpeaker,
   verifyVotingPassword,
@@ -263,6 +272,7 @@ export function EventAgendaView({
   offlineTallySubmitError,
   isOfflineTallySubmitting,
   canManageAgenda,
+  canJoinSpeakerList,
   draggedAgendaItemId,
   dragOverAgendaItemId,
   setDragOverAgendaItemId,
@@ -331,6 +341,47 @@ export function EventAgendaView({
   scheduledButUnconfirmedAgendaItems,
   formatTime,
 }: EventAgendaViewProps) {
+  const liveFocusVoteClick = isCRToolbarActive
+    ? selectedCRPhase !== 'closed'
+      ? actionBarHook.handleVoteClick
+      : undefined
+    : actionBarHook.handleVoteClick;
+  const liveFocusStartVoteClick = isCRToolbarActive
+    ? selectedCRPhase === 'pending'
+      ? handleToolbarStartVote
+      : undefined
+    : effectiveToolbarVotingPhase === 'pending'
+      ? actionBarHook.handleStartVote
+      : undefined;
+  const liveFocusStartFinalVoteClick = isCRToolbarActive
+    ? selectedCRPhase === 'indication'
+      ? handleToolbarStartFinalVote
+      : undefined
+    : effectiveToolbarVotingPhase === 'indication'
+      ? handleToolbarStartFinalVote
+      : undefined;
+  const liveFocusCloseFinalVoteClick = isCRToolbarActive
+    ? selectedCRPhase === 'final_vote'
+      ? handleToolbarCloseVote
+      : undefined
+    : effectiveToolbarVotingPhase === 'final_vote'
+      ? handleToolbarCloseVote
+      : undefined;
+  const liveFocusVotingPhase = isCRToolbarActive ? selectedCRPhase : effectiveToolbarVotingPhase;
+  const liveFocusIsVotingActionAvailable = isCRToolbarActive
+    ? Boolean(activeCRToolbarItem?.vote)
+    : Boolean(streamElection || streamVote);
+  const liveFocusHasUserVoted = isCRToolbarActive
+    ? hasUserVotedOnSelectedCR
+    : Boolean(streamElection ? userHasElectionVoted : streamVote ? userHasVoteVoted : false);
+  const liveFocusCompleteItemDisabled =
+    !toolbarAgendaItem || Boolean(agendaNav.isCurrentItemCompleted) || Boolean(agendaNav.isLoading);
+  const liveFocusNextItemDisabled =
+    !agendaNav.hasNextItem ||
+    !agendaNav.canMoveToNextItem ||
+    Boolean(agendaNav.isLoading) ||
+    !toolbarAgendaItem;
+
   const renderAgendaTimer = (agendaItem: {
     status?: string | null;
     calculated_start_time?: number;
@@ -376,9 +427,10 @@ export function EventAgendaView({
     return null;
   };
 
-  const renderAgendaItemsList = (items: EventAgendaItemRow[]) => (
+  const renderAgendaItemsList = (items: EventAgendaItemRow[], revealStartIndex = 0) => (
     <div className="space-y-6">
       {items.map((item, index) => {
+        const revealIndex = Math.min(revealStartIndex + index, 11);
         const runtimeStatus = getAgendaRuntimeStatus({
           id: item.id,
           status: item.status,
@@ -459,58 +511,73 @@ export function EventAgendaView({
               duration={item.duration || 30}
             >
               <div
-                className={cn(
-                  'relative',
-                  isSpotlightItem && isLiveItem ? 'animate-pulse-subtle' : '',
-                  isCompleted ? 'opacity-70' : ''
-                )}
+                className="civic-load-card-reveal"
+                data-agenda-item-id={item.id}
+                data-slot="agenda-item-reveal"
+                style={
+                  {
+                    '--civic-load-index': revealIndex,
+                  } as CSSProperties
+                }
               >
-                {isCompleted && (
-                  <div className="absolute -top-2 -right-2 z-10">
-                    <div
-                      className={featureThemeClassName('agendaEventAgendaSuccessContrastRoundIcon')}
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                    </div>
-                  </div>
-                )}
-                <AgendaCard
-                  id={item.id}
-                  title={`TOP-${topNumber}-${item.title ?? ''}`}
-                  description={item.description ?? undefined}
-                  type={getAgendaDisplayType(item.type)}
-                  status={runtimeStatus as AgendaItemStatus}
-                  creatorName={
-                    [item.creator?.first_name, item.creator?.last_name].filter(Boolean).join(' ') ||
-                    (item.creator?.email ?? undefined)
-                  }
-                  detailsLink={`/event/${eventId}/agenda/${item.id}`}
-                  isActive={isActive}
-                  footerRight={renderAgendaTimer(item)}
+                <div
                   className={cn(
-                    isCompleted
-                      ? featureThemeClassName('agendaEventAgendaSuccessBorder')
-                      : undefined,
-                    isSpotlightItem
-                      ? isLiveItem
-                        ? featureThemeClassName('agendaEventAgendaThemedBorder')
-                        : 'border-primary/60'
-                      : undefined
+                    'relative',
+                    isSpotlightItem && isLiveItem ? 'animate-pulse-subtle' : '',
+                    isCompleted ? 'opacity-70' : ''
                   )}
-                  dragHandle={renderAgendaDragHandle(item.id, runtimeStatus)}
-                  amendment={item.amendment ?? undefined}
-                  election={
-                    item.election?.[0]
-                      ? {
-                          election_mode: item.election[0].election_mode
-                            ? normalizeElectionMode(item.election[0].election_mode)
-                            : null,
-                          seat_count: item.election[0].seat_count ?? null,
-                          role: item.election[0].role ?? null,
-                        }
-                      : undefined
-                  }
-                />
+                >
+                  {isCompleted && (
+                    <div className="absolute -top-2 -right-2 z-10">
+                      <div
+                        className={featureThemeClassName(
+                          'agendaEventAgendaSuccessContrastRoundIcon'
+                        )}
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      </div>
+                    </div>
+                  )}
+                  <AgendaCard
+                    id={item.id}
+                    title={`TOP-${topNumber}-${item.title ?? ''}`}
+                    description={item.description ?? undefined}
+                    type={getAgendaDisplayType(item.type)}
+                    status={runtimeStatus as AgendaItemStatus}
+                    creatorName={
+                      [item.creator?.first_name, item.creator?.last_name]
+                        .filter(Boolean)
+                        .join(' ') ||
+                      (item.creator?.email ?? undefined)
+                    }
+                    detailsLink={`/event/${eventId}/agenda/${item.id}`}
+                    isActive={isActive}
+                    footerRight={renderAgendaTimer(item)}
+                    className={cn(
+                      isCompleted
+                        ? featureThemeClassName('agendaEventAgendaSuccessBorder')
+                        : undefined,
+                      isSpotlightItem
+                        ? isLiveItem
+                          ? featureThemeClassName('agendaEventAgendaThemedBorder')
+                          : 'border-primary/60'
+                        : undefined
+                    )}
+                    dragHandle={renderAgendaDragHandle(item.id, runtimeStatus)}
+                    amendment={item.amendment ?? undefined}
+                    election={
+                      item.election?.[0]
+                        ? {
+                            election_mode: item.election[0].election_mode
+                              ? normalizeElectionMode(item.election[0].election_mode)
+                              : null,
+                            seat_count: item.election[0].seat_count ?? null,
+                            role: item.election[0].role ?? null,
+                          }
+                        : undefined
+                    }
+                  />
+                </div>
               </div>
             </TimelineItem>
             {dragOverAgendaItemId === item.id && dragInsertPosition === 'below' && (
@@ -646,7 +713,9 @@ export function EventAgendaView({
         navigationLoading={agendaNav.isLoading}
         speakerLoading={actionBarHook.speakerLoading}
         candidateLoading={actionBarHook.candidateLoading}
-        onJoinSpeakerList={actionBarHook.handleJoinSpeakerList}
+        onJoinSpeakerList={
+          actionBarHook.canJoinSpeakerList ? actionBarHook.handleJoinSpeakerList : undefined
+        }
         onLeaveSpeakerList={actionBarHook.handleLeaveSpeakerList}
         onBecomeCandidate={actionBarHook.handleBecomeCandidate}
         onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
@@ -677,15 +746,7 @@ export function EventAgendaView({
               ? handleToolbarCloseVote
               : undefined
         }
-        onVoteClick={
-          isCRToolbarActive
-            ? selectedCRPhase !== 'pending' &&
-              selectedCRPhase !== 'closed' &&
-              !hasUserVotedOnSelectedCR
-              ? actionBarHook.handleVoteClick
-              : undefined
-            : actionBarHook.handleVoteClick
-        }
+        onVoteClick={liveFocusVoteClick}
         disableVoteButton={!isCRToolbarActive && disableVoteButton}
         disabledVoteTooltip={translateText(
           'generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792'
@@ -723,33 +784,103 @@ export function EventAgendaView({
         onSubmit={handleSubmitOfflineTally}
       />
 
+      <EventLiveFocusDialog
+        open={liveFocusOpen}
+        onOpenChange={setLiveFocusOpen}
+        t={t}
+        streamUrl={event?.stream_url}
+        currentAgendaItem={streamAgendaItem}
+        currentAgendaItemTopNumber={streamAgendaItemTopNumber}
+        streamRuntimeStatus={streamRuntimeStatus}
+        streamIsLive={streamIsLive}
+        isEventStarted={isEventStarted}
+        eventStartTimestamp={eventStartTimestamp}
+        speakerList={streamSpeakerListData}
+        userId={user?.id}
+        isUserInSpeakerList={actionBarHook.isUserInSpeakerList}
+        speakerLoading={actionBarHook.speakerLoading}
+        onJoinSpeakerList={
+          actionBarHook.canJoinSpeakerList ? actionBarHook.handleJoinSpeakerList : undefined
+        }
+        onLeaveSpeakerList={actionBarHook.handleLeaveSpeakerList}
+        onMarkSpeakerCompleted={canManageAgenda ? handleMarkSpeakerCompleted : undefined}
+        canManageAgenda={canManageAgenda}
+        navigationLoading={agendaNav.isLoading}
+        onStartVote={liveFocusStartVoteClick}
+        onStartFinalVote={liveFocusStartFinalVoteClick}
+        onCloseFinalVote={liveFocusCloseFinalVoteClick}
+        onCompleteItem={agendaNav.completeCurrentItem}
+        completeItemDisabled={liveFocusCompleteItemDisabled}
+        onNextItem={agendaNav.moveToNextItem}
+        nextItemDisabled={liveFocusNextItemDisabled}
+        votingPhase={liveFocusVotingPhase}
+        isVotingActionAvailable={liveFocusIsVotingActionAvailable}
+        canVote={actionBarHook.hasVotingRight}
+        hasUserVoted={liveFocusHasUserVoted}
+        voteLoading={actionBarHook.voteCasting.isLoading}
+        disableVoteButton={!isCRToolbarActive && disableVoteButton}
+        onVoteClick={liveFocusVoteClick}
+        attendanceMode={attendanceMode}
+        confirmedOfflineParticipantCount={confirmedOfflineParticipantCount}
+        streamElection={streamElection}
+        streamVote={streamVote}
+        indicativeSelections={indicativeSelections}
+        finalSelections={finalSelections}
+        userHasElectionVoted={userHasElectionVoted}
+        userSelectedCandidateIds={userSelectedCandidateIds}
+        indicativeDecisions={indicativeDecisions}
+        finalDecisions={finalDecisions}
+        userHasVoteVoted={userHasVoteVoted}
+        userSelectedChoiceIds={userSelectedChoiceIds}
+      />
+
       {/* Stream Section */}
       <Collapsible open={streamOpen} onOpenChange={setStreamOpen}>
         <Card>
           <CardHeader className="pb-3">
-            <CollapsibleTrigger asChild>
+            <div className="flex items-center gap-2">
               <Button
-                variant="ghost"
-                className={featureThemeClassName('agendaEventAgendaThemedPanel')}
+                type="button"
+                variant="outline"
+                size="icon"
+                className="shrink-0"
+                onClick={event => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setLiveFocusOpen(true);
+                }}
+                aria-label={t('features.events.stream.openLiveFocus', 'Open live focus')}
+                title={t('features.events.stream.openLiveFocus', 'Open live focus')}
               >
-                <div className="flex items-center gap-2">
-                  <Radio className={featureThemeClassName('agendaEventAgendaDangerIcon')} />
-                  <CardTitle className="text-lg">
-                    {t('features.events.stream.liveStream')}
-                  </CardTitle>
-                  {streamIsLive && (
-                    <BadgeControl variant="default" pulse>
-                      {t('features.events.stream.live', 'LIVE')}
-                    </BadgeControl>
-                  )}
-                </div>
-                {streamOpen ? (
-                  <ChevronUp className="text-muted-foreground h-5 w-5" />
-                ) : (
-                  <ChevronDown className="text-muted-foreground h-5 w-5" />
-                )}
+                <Maximize2 className="h-4 w-4" />
               </Button>
-            </CollapsibleTrigger>
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    featureThemeClassName('agendaEventAgendaThemedPanel'),
+                    'min-w-0 flex-1'
+                  )}
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Radio className={featureThemeClassName('agendaEventAgendaDangerIcon')} />
+                    <CardTitle className="truncate text-lg">
+                      {t('features.events.stream.liveStream')}
+                    </CardTitle>
+                    {streamIsLive && (
+                      <BadgeControl variant="default" pulse>
+                        {t('features.events.stream.live', 'LIVE')}
+                      </BadgeControl>
+                    )}
+                  </div>
+                  {streamOpen ? (
+                    <ChevronUp className="text-muted-foreground h-5 w-5" />
+                  ) : (
+                    <ChevronDown className="text-muted-foreground h-5 w-5" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+            </div>
           </CardHeader>
           <CollapsibleContent>
             <CardContent>
@@ -893,7 +1024,9 @@ export function EventAgendaView({
                           isRemovingSpeaker={removingSpeaker}
                           userId={user?.id}
                           agendaStartTime={streamAgendaItem.start_time ?? undefined}
-                          onAddToSpeakerList={handleAddToSpeakerList}
+                          onAddToSpeakerList={
+                            canJoinSpeakerList ? handleAddToSpeakerList : undefined
+                          }
                           onRemoveFromSpeakerList={handleRemoveFromSpeakerList}
                           onMarkCompleted={canManageAgenda ? handleMarkSpeakerCompleted : undefined}
                         />
@@ -1153,7 +1286,12 @@ export function EventAgendaView({
                   {t('features.events.agenda.scheduledButUnconfirmedDescription')}
                 </CardDescription>
               </CardHeader>
-              <CardContent>{renderAgendaItemsList(scheduledButUnconfirmedAgendaItems)}</CardContent>
+              <CardContent>
+                {renderAgendaItemsList(
+                  scheduledButUnconfirmedAgendaItems,
+                  confirmedAgendaItems.length
+                )}
+              </CardContent>
             </Card>
           ) : null}
         </div>

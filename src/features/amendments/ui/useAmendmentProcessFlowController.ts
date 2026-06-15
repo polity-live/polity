@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
+import { useActionSubmission } from '@/features/shared/ui/action-submission';
 import { useAuth } from '@/providers/auth-provider';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { type TargetGroupEventSelection } from '@/features/amendments/ui/TargetGroupEventSelector';
@@ -41,6 +42,8 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
   const [pendingSelection, setPendingSelection] = useState<TargetGroupEventSelection | null>(null);
 
   const [isSaving, setIsSaving] = useState(false);
+
+  const processSubmission = useActionSubmission('process');
 
   const { createAmendmentPath } = useCreateAmendmentPath();
 
@@ -377,52 +380,62 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
     [collaborators]
   );
 
-  const handleConfirmSelection = async () => {
+  const handleConfirmSelection = () => {
     if (!pendingSelection || !amendment || !user) {
       return;
     }
 
-    setIsSaving(true);
-    try {
-      const enrichedPath = enrichPathSegments(
-        pendingSelection.pathWithEvents,
-        pendingSelection.groupId,
-        pendingSelection.eventId,
-        pendingSelection.eventData?.title ?? null,
-        pendingSelection.eventData?.start_date ?? null,
-        pendingSelection.eventData?.end_date ?? null
-      );
+    void processSubmission
+      .runActionWithSubmission(
+        async () => {
+          setIsSaving(true);
 
-      await createAmendmentPath({
-        amendmentId,
-        amendmentTitle: amendment.title ?? '',
-        amendmentReason: amendment.reason ?? null,
-        enrichedPath,
-        sourceGroupId: pendingSelection.sourceGroupId,
-        workflowId: pendingSelection.workflowId,
-        pathMode: pendingSelection.pathMode,
+          const enrichedPath = enrichPathSegments(
+            pendingSelection.pathWithEvents,
+            pendingSelection.groupId,
+            pendingSelection.eventId,
+            pendingSelection.eventData?.title ?? null,
+            pendingSelection.eventData?.start_date ?? null,
+            pendingSelection.eventData?.end_date ?? null
+          );
+
+          await createAmendmentPath({
+            amendmentId,
+            amendmentTitle: amendment.title ?? '',
+            amendmentReason: amendment.reason ?? null,
+            enrichedPath,
+            sourceGroupId: pendingSelection.sourceGroupId,
+            workflowId: pendingSelection.workflowId,
+            pathMode: pendingSelection.pathMode,
+          });
+
+          await updateAmendment({
+            id: amendmentId,
+            group_id: pendingSelection.groupId,
+            event_id: pendingSelection.eventId ?? null,
+          });
+
+          toast.success(
+            currentRun
+              ? t('features.amendments.process.retargetSuccess')
+              : t('features.amendments.process.targetSetSuccess')
+          );
+        },
+        {
+          onSuccess: () => {
+            processSubmission.reset();
+            setSelectorOpen(false);
+            setPendingSelection(null);
+          },
+        }
+      )
+      .catch(error => {
+        console.error('Error starting amendment process:', error);
+        toast.error(t('features.amendments.process.startFailed'));
+      })
+      .finally(() => {
+        setIsSaving(false);
       });
-
-      await updateAmendment({
-        id: amendmentId,
-        group_id: pendingSelection.groupId,
-        event_id: pendingSelection.eventId ?? null,
-      });
-
-      toast.success(
-        currentRun
-          ? t('features.amendments.process.retargetSuccess')
-          : t('features.amendments.process.targetSetSuccess')
-      );
-
-      setSelectorOpen(false);
-      setPendingSelection(null);
-    } catch (error) {
-      console.error('Error starting amendment process:', error);
-      toast.error(t('features.amendments.process.startFailed'));
-    } finally {
-      setIsSaving(false);
-    }
   };
 
   return {
@@ -436,6 +449,7 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
     setPendingSelection,
     isSaving,
     setIsSaving,
+    processSubmission,
     createAmendmentPath,
     updateAmendment,
     amendment,

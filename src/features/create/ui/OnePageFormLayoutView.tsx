@@ -1,7 +1,6 @@
 import type { RefObject } from 'react';
 
-import { Loader2 } from 'lucide-react';
-
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 
 import type { CreateFormStep } from '../types/create-form.types';
@@ -32,43 +31,48 @@ export function OnePageFormLayoutView({
   createButtonLabel,
 }: OnePageFormLayoutViewProps) {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="bg-background/95 sticky top-0 z-10 pt-2 pb-2 backdrop-blur-sm">
-        <CreateProgressIndicator
-          currentStep={activeSection}
-          totalSteps={steps.length}
-          stepLabels={stepLabels}
-          onStepClick={onStepClick}
-        />
-      </div>
+    <div className="flex flex-col gap-5">
+      <CreateProgressIndicator
+        sticky
+        className="-mx-4 sm:-mx-5 lg:-mx-6"
+        currentStep={activeSection}
+        totalSteps={steps.length}
+        stepLabels={stepLabels}
+        onStepClick={onStepClick}
+        validSteps={steps.map(() => true)}
+      />
 
-      <div className="space-y-8">
+      <div className="space-y-10">
         {steps.map((step: any, index: number) => (
           <div
             key={index}
             ref={el => {
               sectionRefs.current[index] = el;
             }}
-            className="scroll-mt-24"
+            className="scroll-mt-32"
+            data-testid="one-page-create-section"
           >
-            <h3 className="text-muted-foreground mb-3 text-sm font-medium">
-              {index + 1}. {step.label}
-            </h3>
-            <CreateStepRenderer step={step} />
+            <div className="mb-5 flex items-center gap-3 border-b pb-4">
+              <BadgeControl variant="outline" size="xs">
+                {index + 1}
+              </BadgeControl>
+              <h3 className="text-foreground text-base leading-tight font-semibold">
+                {step.label}
+              </h3>
+            </div>
+
+            <div className="min-w-0">
+              <CreateStepRenderer step={step} />
+            </div>
           </div>
         ))}
       </div>
 
-      <Button onClick={onSubmit} disabled={isSubmitting} className="w-full" size="lg">
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {creatingLabel}
-          </>
-        ) : (
-          createButtonLabel
-        )}
-      </Button>
+      <div className="border-t pt-5">
+        <Button onClick={onSubmit} disabled={isSubmitting} className="w-full" size="lg">
+          {isSubmitting ? creatingLabel : createButtonLabel}
+        </Button>
+      </div>
     </div>
   );
 }

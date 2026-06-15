@@ -21,14 +21,20 @@ import {
 } from '@/features/amendments/logic/amendmentPathHelpers';
 import { useCreateAmendmentPath } from '@/features/amendments/hooks/useCreateAmendmentPath';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import {
   type CreateAmendmentEvaluationMode,
   type CreateAmendmentSearch,
   normalizeCreateAmendmentSearch,
 } from '../logic/createAmendmentSearch';
-import type { CreateFormConfig } from '../types/create-form.types';
+import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
 import { formatImplementationEvaluationSummary } from '@/features/amendments/logic/implementationEvaluation';
+import {
+  createBlockedSubmitOutcome,
+  createRouteSubmitTarget,
+  createSuccessSubmitOutcome,
+} from '../logic/createSubmitTargets';
 
 interface CreateTargetGroupData {
   id: string;
@@ -99,7 +105,14 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         ? t('pages.create.common.authenticated')
         : t('pages.create.common.private');
 
-  const { allHashtags } = useCommonState({ loadAllHashtags: true });
+  const { allHashtags, userHashtags } = useCommonState({
+    user_id: user?.id,
+    loadAllHashtags: true,
+  });
+  const preferredHashtagSuggestions = useMemo(
+    () => extractHashtagTags(userHashtags),
+    [userHashtags]
+  );
 
   const syncSearch = useCallback(
     (updates: Partial<CreateAmendmentSearch>) => {
@@ -207,10 +220,11 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     setWorkflowId(selection.workflowId ?? '');
   }, []);
 
-  const handleSubmit = async () => {
-    if (!title.trim() || !user?.id) return;
+  const handleSubmit = async (context?: CreateSubmitContext) => {
+    if (!title.trim() || !user?.id) return createBlockedSubmitOutcome();
     setIsSubmitting(true);
     try {
+      context?.reportProgress({ key: 'create', status: 'active' });
       const normalizedGroupId = targetSelection?.groupId ? targetSelection.groupId : null;
       const normalizedEventId = targetSelection?.eventId ? targetSelection.eventId : null;
       const documentId = crypto.randomUUID();
@@ -237,6 +251,8 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         website: null,
       });
       await serverConfirmed(createAmendmentResult);
+      context?.reportProgress({ key: 'create', status: 'complete' });
+      context?.reportProgress({ key: 'sync', status: 'active' });
 
       const createDocumentResult = createDocument({
         id: documentId,
@@ -249,11 +265,6 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       });
       await serverConfirmed(createDocumentResult);
 
-      await updateAmendment({
-        id: amendmentId,
-        document_id: documentId,
-      });
-
       // Add creator as document collaborator
       const addCollaboratorResult = addCollaborator({
         id: crypto.randomUUID(),
@@ -263,7 +274,13 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         status: 'active',
         visibility: 'public',
       });
-      await serverConfirmed(addCollaboratorResult);
+      await Promise.all([
+        updateAmendment({
+          id: amendmentId,
+          document_id: documentId,
+        }),
+        serverConfirmed(addCollaboratorResult),
+      ]);
 
       if (hashtags.length > 0) {
         await commonActions.syncEntityHashtags(
@@ -310,9 +327,18 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         });
       }
 
-      navigate({ to: `/amendment/${amendmentId}` });
-    } catch {
+      context?.reportProgress({ key: 'sync', status: 'complete' });
+      context?.reportProgress({ key: 'ready', status: 'active' });
       setIsSubmitting(false);
+      return createSuccessSubmitOutcome(
+        createRouteSubmitTarget('amendment', {
+          to: '/amendment/$id',
+          params: { id: amendmentId },
+        })
+      );
+    } catch (error) {
+      setIsSubmitting(false);
+      throw error;
     }
   };
 
@@ -322,6 +348,11 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       title: 'pages.create.amendment.title',
       isSubmitting,
       onSubmit: handleSubmit,
+      submissionSteps: [
+        { key: 'create', label: 'Erstellt Antrag' },
+        { key: 'sync', label: 'Verknüpft Dokument und Kontext' },
+        { key: 'ready', label: 'Bereitet Antragseite vor' },
+      ],
       steps: [
         {
           label: t('pages.create.amendment.basicInfo'),
@@ -503,6 +534,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                 value: hashtags,
                 onChange: setHashtags,
                 placeholder: t('pages.create.amendment.hashtagPlaceholder'),
+                preferredSuggestions: preferredHashtagSuggestions,
               },
             },
           ],
@@ -608,6 +640,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       visibility,
       visibilityLabel,
       hashtags,
+      preferredHashtagSuggestions,
       targetSelection,
       sourceGroupIdParam,
       targetGroupIdParam,

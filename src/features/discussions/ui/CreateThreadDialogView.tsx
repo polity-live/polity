@@ -1,7 +1,7 @@
-import { File, X } from 'lucide-react';
+import { File as FileIcon, Loader2, Upload, X } from 'lucide-react';
 
 import {
-  FileInputField,
+  FileUploadTrigger,
   FormControlInput,
   FormControlLabel,
   FormControlTextarea,
@@ -9,6 +9,7 @@ import {
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
+import { cn } from '@/features/shared/utils/utils';
 import {
   Dialog,
   DialogDescription,
@@ -30,6 +31,18 @@ interface CreateThreadDialogViewProps {
   onRemoveFile: () => void;
   onSubmit: () => void;
   onTitleChange: (value: string) => void;
+}
+
+function formatFileSize(size: number) {
+  if (size < 1024) {
+    return `${size} B`;
+  }
+
+  if (size < 1024 * 1024) {
+    return `${(size / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function CreateThreadDialogView({
@@ -89,25 +102,81 @@ export function CreateThreadDialogView({
             <FormControlLabel htmlFor="file">
               {translateText('generated.inline.0384_attachment_optional_fe28692b')}
             </FormControlLabel>
-            <div className="mt-2">
-              {selectedFile ? (
-                <div className="flex items-center justify-between rounded-lg border p-3">
-                  <div className="flex items-center gap-2">
-                    <File className="h-4 w-4" />
-                    <span className="text-sm">{selectedFile.name}</span>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={onRemoveFile} disabled={isUploading}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <FileInputField
-                  id="file"
-                  aria-label={translateText('generated.inline.0385_choose_file_to_attach_b555434d')}
-                  className="hover:bg-muted h-auto cursor-pointer rounded-lg border-2 border-dashed p-4 file:mr-3 file:rounded-md file:border file:px-3 file:py-1.5 file:shadow-xs"
-                  onChange={event => onFileChange(event.target.files?.[0] ?? null)}
-                />
+            <div
+              className={cn(
+                'mt-2 rounded-2xl border border-dashed px-4 py-5 transition-all sm:px-6',
+                selectedFile ? 'border-primary/35 bg-primary/5' : 'border-border bg-muted/20',
+                (isUploading || isSubmitting) && 'pointer-events-none opacity-70'
               )}
+            >
+              <div className="mx-auto flex max-w-md flex-col items-center gap-4 text-center">
+                <div className="bg-background/80 flex h-12 w-12 items-center justify-center rounded-full border shadow-sm">
+                  {isUploading ? (
+                    <Loader2 className="text-primary h-5 w-5 animate-spin" />
+                  ) : (
+                    <Upload className="text-primary h-5 w-5" />
+                  )}
+                </div>
+
+                {selectedFile ? (
+                  <div className="bg-background/90 border-border/70 flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2 text-left shadow-sm">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <FileIcon className="text-muted-foreground h-4 w-4 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{selectedFile.name}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {formatFileSize(selectedFile.size)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onRemoveFile}
+                      disabled={isUploading || isSubmitting}
+                      aria-label="Remove attachment"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-1 text-sm">
+                    <p className="text-foreground font-medium">
+                      {translateText('generated.inline.0385_choose_file_to_attach_b555434d')}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {translateText('generated.inline.0384_attachment_optional_fe28692b')}
+                    </p>
+                  </div>
+                )}
+
+                <FileUploadTrigger
+                  inputProps={{
+                    id: 'file',
+                    'aria-label': translateText(
+                      'generated.inline.0385_choose_file_to_attach_b555434d'
+                    ),
+                  }}
+                  onFilesSelected={files => onFileChange(files[0] ?? null)}
+                  variant="outline"
+                  className="mx-auto min-w-44"
+                  disabled={isUploading || isSubmitting}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {translateText('generated.inline.0057_uploading_070e328e')}
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      {selectedFile
+                        ? translateText('generated.inline.0385_choose_file_to_attach_b555434d')
+                        : translateText('generated.inline.0963_choose_file_eb7eb7a8')}
+                    </>
+                  )}
+                </FileUploadTrigger>
+              </div>
             </div>
           </div>
         </div>

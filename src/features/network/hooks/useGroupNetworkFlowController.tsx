@@ -1,12 +1,13 @@
 'use client';
 
-import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Node, Edge, useNodesState, useEdgesState } from '@xyflow/react';
 import {
   getGroupNodeDisplayLabel,
   getGroupNodeStyle,
+  getGroupNodeVisualTokens,
   getGroupNodeVisualVariant,
+  getNetworkSelectionStyle,
 } from '@/features/network/ui/networkVisualHelpers';
 import { NETWORK_FILTER_ACTIVE_CLASS_NAMES } from '@/features/network/ui/NetworkControlPanel';
 import { useNetworkFlowControls } from '@/features/network/hooks/useNetworkFlowControls';
@@ -1012,7 +1013,7 @@ export function useGroupNetworkFlowController({
         memberTargetGroupId: parent.memberTargetGroupId,
         rightEdgeDirections,
         relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
-        strokeColor: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+        strokeColor: getGroupNodeVisualTokens('parent').borderColor,
         strokeDasharray: '5 5',
       });
     });
@@ -1055,7 +1056,7 @@ export function useGroupNetworkFlowController({
         memberTargetGroupId: child.memberTargetGroupId,
         rightEdgeDirections,
         relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
-        strokeColor: featureThemeValue('networkUseGroupNetworkFlowWarningColor'),
+        strokeColor: getGroupNodeVisualTokens('child').borderColor,
         strokeDasharray: '5 5',
       });
     });
@@ -1082,9 +1083,9 @@ export function useGroupNetworkFlowController({
         memberTargetGroupId: entry.memberTargetGroupId,
         rightEdgeDirections: entry.rightEdgeDirections,
         relationshipDepth: 'direct',
-        strokeColor: isHorizontalSiblingLink
-          ? featureThemeValue('networkUseGroupNetworkFlowWarningColorAlpha')
-          : featureThemeValue('networkUseGroupNetworkFlowAccentColor'),
+        strokeColor: getGroupNodeVisualTokens(
+          isHorizontalSiblingLink ? 'sibling-open' : 'sibling-parliament'
+        ).borderColor,
         strokeDasharray: isHorizontalSiblingLink ? undefined : '6 4',
       });
     });
@@ -1156,7 +1157,7 @@ export function useGroupNetworkFlowController({
           animated: true,
           style: {
             ...edge.style,
-            stroke: featureThemeValue('networkUseGroupNetworkFlowSuccessColor'),
+            stroke: getGroupNodeVisualTokens('parent').borderColor,
             strokeWidth: 4,
           },
         };
@@ -1176,15 +1177,13 @@ export function useGroupNetworkFlowController({
           style: {
             ...node.style,
             borderColor: isHighlighted
-              ? featureThemeValue('networkUseGroupNetworkFlowSuccessColor')
+              ? getGroupNodeVisualTokens('parent').borderColor
               : node.style?.borderColor,
             boxShadow: isSelected
-              ? isHighlighted
-                ? featureThemeClassName('networkUseGroupNetworkFlowThemedStyle')
-                : featureThemeClassName('floweditorUseFlowEditorThemedStyle')
+              ? getNetworkSelectionStyle(true).boxShadow
               : isHighlighted
-                ? featureThemeClassName('networkUseGroupNetworkFlowThemedStyleAlpha')
-                : undefined,
+                ? `0 0 0 2px color-mix(in oklab, ${getGroupNodeVisualTokens('parent').borderColor} 36%, transparent), var(--shadow-panel)`
+                : node.style?.boxShadow,
           },
         };
       }),

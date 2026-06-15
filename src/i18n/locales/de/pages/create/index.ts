@@ -630,6 +630,7 @@ export const createPageTranslations = {
     description: 'Ein neues Dokument erstellen',
   },
   progress: {
+    label: 'Erstellen',
     stepOf: 'Schritt {{current}} von {{total}}',
   },
   summary: {

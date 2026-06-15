@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { FileText, GitPullRequest, Vote } from 'lucide-react';
+import { ChangeRequestSummaryItem } from '@/features/change-requests/ui/ChangeRequestSummaryItem';
 import { useLandingAmendmentPreviewData } from '@/features/public-landing/hooks/useLandingAmendmentPreviewData';
 import {
   LANDING_AMENDMENT_REVIEWER_ID,
@@ -11,6 +13,8 @@ import {
   type LandingAmendmentPreviewData,
 } from '@/features/public-landing/logic/landingAmendmentPreview';
 import { ProductStoryPoint } from './ProductStoryPoint';
+
+const amendmentRequestAnimationStepMs = 1200;
 
 export function LandingAmendmentSectionContentContainer() {
   const { tArray } = useTranslation();
@@ -51,6 +55,38 @@ function LandingAmendmentEditorPreview({
   previewData: LandingAmendmentPreviewData;
 }) {
   const { t } = useTranslation();
+  const motionScopeRef = useRef<HTMLDivElement>(null);
+  const [hasMotionStarted, setHasMotionStarted] = useState(false);
+
+  useEffect(() => {
+    if (hasMotionStarted) {
+      return;
+    }
+
+    const motionScope = motionScopeRef.current;
+
+    if (!motionScope || typeof IntersectionObserver === 'undefined') {
+      setHasMotionStarted(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          setHasMotionStarted(true);
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin: '0px 0px -18% 0px',
+        threshold: 0.2,
+      }
+    );
+
+    observer.observe(motionScope);
+
+    return () => observer.disconnect();
+  }, [hasMotionStarted]);
 
   return (
     <div className="bg-card h-full overflow-hidden rounded-lg border shadow-sm">
@@ -90,36 +126,56 @@ function LandingAmendmentEditorPreview({
           <BadgeControl variant="outline">#climate</BadgeControl>
           <BadgeControl variant="outline">#budget</BadgeControl>
         </div>
-        <PlateEditor
-          key={t('pages.home.publicLanding.amendmentText.documentTitle')}
-          initialValue={previewData.documentValue}
-          readOnly
-          showFixedToolbar={false}
-          documentId="landing-amendment-preview"
-          documentTitle={t('pages.home.publicLanding.amendmentText.documentTitle')}
-          currentMode="vote_event"
-          currentUser={{
-            id: LANDING_AMENDMENT_REVIEWER_ID,
-            name: 'Review delegate',
-          }}
-          users={{
-            [LANDING_AMENDMENT_USER_ID]: {
-              id: LANDING_AMENDMENT_USER_ID,
-              name: 'Policy lead',
-              avatarUrl: '',
-            },
-            [LANDING_AMENDMENT_REVIEWER_ID]: {
-              id: LANDING_AMENDMENT_REVIEWER_ID,
-              name: 'Review delegate',
-              avatarUrl: '',
-            },
-          }}
-          discussions={previewData.discussions}
-          editorVariant="demo"
-          containerVariant="demo"
-          containerClassName="max-h-[22rem] overflow-y-auto rounded-md border bg-background"
-          editorClassName="min-h-[16rem] px-5 py-4"
-        />
+        <div
+          ref={motionScopeRef}
+          className="landing-amendment-motion-scope space-y-4"
+          data-motion-started={hasMotionStarted ? 'true' : 'false'}
+        >
+          <div className="landing-amendment-request-tray grid gap-2 sm:grid-cols-2">
+            {previewData.changeRequests.map((request, index) => (
+              <ChangeRequestSummaryItem
+                key={request.id}
+                identifier={request.crId}
+                title={request.title}
+                changeType={request.type}
+                motionDelayMs={index * amendmentRequestAnimationStepMs}
+                variant="preview"
+              />
+            ))}
+          </div>
+          <div className="change-request-load-motion landing-amendment-editor-motion relative">
+            <PlateEditor
+              key={t('pages.home.publicLanding.amendmentText.documentTitle')}
+              initialValue={previewData.documentValue}
+              readOnly
+              showFixedToolbar={false}
+              documentId="landing-amendment-preview"
+              documentTitle={t('pages.home.publicLanding.amendmentText.documentTitle')}
+              currentMode="vote_event"
+              currentUser={{
+                id: LANDING_AMENDMENT_REVIEWER_ID,
+                name: 'Review delegate',
+              }}
+              users={{
+                [LANDING_AMENDMENT_USER_ID]: {
+                  id: LANDING_AMENDMENT_USER_ID,
+                  name: 'Policy lead',
+                  avatarUrl: '',
+                },
+                [LANDING_AMENDMENT_REVIEWER_ID]: {
+                  id: LANDING_AMENDMENT_REVIEWER_ID,
+                  name: 'Review delegate',
+                  avatarUrl: '',
+                },
+              }}
+              discussions={previewData.discussions}
+              editorVariant="demo"
+              containerVariant="demo"
+              containerClassName="max-h-[22rem] overflow-y-auto rounded-md border bg-background"
+              editorClassName="min-h-[16rem] px-5 py-4"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

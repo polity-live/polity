@@ -8,8 +8,11 @@ import {
   TYPEAHEAD_ENTITY_LABELS,
   type TypeaheadItem,
 } from '@/features/shared/logic/typeaheadHelpers';
-import { ENTITY_COLORS } from '@/features/shared/utils/entity-colors';
-import { getEntityToneClasses, type EntityTone } from '@/features/shared/theme';
+import {
+  getEntityToneClasses,
+  isPrimaryEntityTone,
+  type EntityTone,
+} from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 import { getHashtagGradient } from '@/features/shared/logic/hashtagHelpers';
 import { Hash } from 'lucide-react';
@@ -53,8 +56,13 @@ export function TypeaheadResultCard({
   onMouseEnter,
 }: TypeaheadResultCardProps) {
   const Icon = getEntityIcon(item.entityType);
-  const colors = ENTITY_COLORS[item.entityType as keyof typeof ENTITY_COLORS];
-  const toneClasses = getEntityToneClasses(item.entityType as EntityTone);
+  const entityType = item.entityType as EntityTone;
+  const toneClasses = getEntityToneClasses(entityType);
+  const primaryToneClasses = isPrimaryEntityTone(entityType)
+    ? getEntityToneClasses(entityType)
+    : null;
+  const selectedSurfaceClassName = primaryToneClasses?.softSurface ?? toneClasses.surface;
+  const entityIconClassName = primaryToneClasses?.base ?? toneClasses.text;
 
   const handleMouseDown = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -64,8 +72,10 @@ export function TypeaheadResultCard({
     <button
       type="button"
       className={cn(
-        'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-[color,background-color,box-shadow,transform] duration-[var(--motion-duration-fast)]',
-        isSelected ? cn('translate-x-0.5 shadow-sm', toneClasses.surface) : toneClasses.typeaheadRow
+        'flex w-full items-start gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left transition-[color,background-color,border-color,box-shadow,transform] duration-[var(--motion-duration-fast)]',
+        isSelected
+          ? cn('translate-x-0.5 shadow-sm', selectedSurfaceClassName)
+          : toneClasses.typeaheadRow
       )}
       onMouseDown={handleMouseDown}
       onClick={onClick}
@@ -73,8 +83,8 @@ export function TypeaheadResultCard({
     >
       <Avatar className="mt-0.5 h-8 w-8 shrink-0">
         <AvatarImage src={item.avatar ?? undefined} />
-        <AvatarFallback className={cn('text-xs', colors?.badgeBg)}>
-          <Icon className="h-4 w-4" />
+        <AvatarFallback className={cn('text-xs', toneClasses.badge)}>
+          <Icon data-slot="typeahead-entity-icon" className={cn('h-4 w-4', entityIconClassName)} />
         </AvatarFallback>
       </Avatar>
 
@@ -83,7 +93,11 @@ export function TypeaheadResultCard({
           <span className="truncate text-sm font-medium">
             <HighlightedText text={item.label} query={query} />
           </span>
-          <Badge variant="outline" className={cn('shrink-0 text-[10px]', toneClasses.badge)}>
+          <Badge
+            variant="outline"
+            data-slot="typeahead-entity-badge"
+            className={cn('shrink-0 text-[10px]', toneClasses.badge)}
+          >
             {TYPEAHEAD_ENTITY_LABELS[item.entityType]}
           </Badge>
         </div>
@@ -103,7 +117,12 @@ export function TypeaheadResultCard({
         {item.metadata?.length || item.hashtags?.length ? (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {item.metadata?.slice(0, 2).map(metadata => (
-              <Badge key={metadata} variant="secondary" className="h-5 px-1.5 text-[10px]">
+              <Badge
+                key={metadata}
+                variant="secondary"
+                data-slot="typeahead-metadata-badge"
+                className={cn('h-5 px-1.5 text-[10px]', toneClasses.tableTag)}
+              >
                 {metadata}
               </Badge>
             ))}

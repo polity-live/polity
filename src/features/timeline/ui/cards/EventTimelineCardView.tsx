@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  getEntityToneClasses,
-  getHashtagToneClasses,
-  getSemanticToneClasses,
-} from '@/features/shared/theme';
+import { getEntityToneClasses, getHashtagToneClasses } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Calendar, MapPin, Bell } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
@@ -146,7 +142,6 @@ export function EventTimelineCardView({
   stats,
 }: EventTimelineCardViewProps) {
   const eventTone = getEntityToneClasses('event');
-  const dangerTone = getSemanticToneClasses('danger');
   const hashtagTone = getHashtagToneClasses();
 
   return (
@@ -157,20 +152,26 @@ export function EventTimelineCardView({
         href={eventHref}
         subtitle={eventSubtitle}
         subtitleHref={eventSubtitleHref}
+        className={eventTone.gradient}
         badge={
           eventTimeStatus === 'live' ? (
-            <BadgeControl variant="destructive" pulse>
-              <span className={cn('h-2 w-2 rounded-full', dangerTone.dot)} />
+            <BadgeControl variant="outline" className={eventTone.badge}>
+              <span className={cn('h-2 w-2 rounded-full', eventTone.dot)} />
               {t('features.timeline.cards.happeningNow')}
             </BadgeControl>
           ) : (
-            <TimelineCardBadge label={t('features.timeline.contentTypes.event')} icon={Calendar} />
+            <TimelineCardBadge
+              label={t('features.timeline.contentTypes.event')}
+              icon={Calendar}
+              className={eventTone.badge}
+            />
           )
         }
       >
         {/* Prominent Date Badge */}
         <div className="mt-3 flex justify-center">
           <div
+            data-slot="event-date-chip"
             className={cn(
               'min-w-20 rounded-xl border px-3 py-2 text-center shadow-sm',
               eventTone.softSurface,

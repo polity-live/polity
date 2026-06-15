@@ -1,8 +1,10 @@
 import { BadgeControl } from '@/features/shared/ui/status';
 import { SearchField } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Filter, X } from 'lucide-react';
+import { Filter, List, MapPinned } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+import type { SearchViewMode } from '../hooks/useSearchURL';
 
 interface SearchHeaderProps {
   searchQuery: string;
@@ -10,9 +12,12 @@ interface SearchHeaderProps {
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
   activeTopics: string[];
-  onTopicRemove: (topic: string) => void;
+  personalTopics?: string[];
+  onTopicToggle: (topic: string) => void;
   totalResults: number;
   queryParam: string;
+  view: SearchViewMode;
+  onViewChange: (view: SearchViewMode) => void;
 }
 
 export function SearchHeader({
@@ -21,9 +26,12 @@ export function SearchHeader({
   showFilters,
   setShowFilters,
   activeTopics,
-  onTopicRemove,
+  personalTopics = [],
+  onTopicToggle,
   totalResults,
   queryParam,
+  view,
+  onViewChange,
 }: SearchHeaderProps) {
   const { t } = useTranslation();
 
@@ -35,7 +43,7 @@ export function SearchHeader({
       </div>
 
       {/* Search Bar - Fixed/Sticky */}
-      <div className="bg-background sticky top-0 z-10 mb-6 space-y-4 pt-2 pb-4">
+      <div className="bg-background sticky top-0 z-10 mb-2 space-y-3 pt-2 pb-2">
         <div className="flex gap-2">
           <SearchField
             value={searchQuery}
@@ -44,6 +52,32 @@ export function SearchHeader({
             clearLabel={t('common.actions.clear')}
             fieldClassName="flex-1"
           />
+          <div
+            className="border-input bg-background inline-flex shrink-0 overflow-hidden rounded-md border"
+            role="group"
+            aria-label={t('features.search.viewToggle', { defaultValue: 'Search view' })}
+          >
+            <Button
+              variant={view === 'list' ? 'secondary' : 'ghost'}
+              size="icon"
+              className="rounded-none border-0"
+              onClick={() => onViewChange('list')}
+              aria-label={t('features.search.listView', { defaultValue: 'List view' })}
+              aria-pressed={view === 'list'}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={view === 'spatial' ? 'secondary' : 'ghost'}
+              size="icon"
+              className="rounded-none border-0"
+              onClick={() => onViewChange('spatial')}
+              aria-label={t('features.search.spatialView', { defaultValue: 'Spatial view' })}
+              aria-pressed={view === 'spatial'}
+            >
+              <MapPinned className="h-4 w-4" />
+            </Button>
+          </div>
           <Button
             variant="outline"
             size="icon"
@@ -54,48 +88,38 @@ export function SearchHeader({
           </Button>
         </div>
 
-        {/* Active Filters Display */}
-        {activeTopics.length > 0 && !showFilters && (
+        {personalTopics.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground text-sm">
-              {t('features.search.filters.title')}:
+            <span className="text-muted-foreground text-xs font-medium">
+              {t('features.search.personalTopics')}
             </span>
-            {activeTopics.map(topic => (
-              <BadgeControl
-                key={topic}
-                variant="secondary"
-                className="cursor-pointer"
-                onClick={() => onTopicRemove(topic)}
-              >
-                {topic}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="hover:text-destructive ml-2 h-4 w-4 p-0 text-inherit hover:bg-transparent"
-                  aria-label={t('common.actions.remove')}
-                  onClick={e => {
-                    e.stopPropagation();
-                    onTopicRemove(topic);
-                  }}
+            {personalTopics.slice(0, 8).map(topic => {
+              const isActive = activeTopics.some(
+                activeTopic => activeTopic.toLowerCase() === topic.toLowerCase()
+              );
+
+              return (
+                <BadgeControl
+                  key={topic}
+                  asChild
+                  variant={isActive ? 'default' : 'outline'}
+                  className={cn('rounded-md', isActive && 'shadow-sm')}
                 >
-                  <X className="h-3 w-3" />
-                </Button>
-              </BadgeControl>
-            ))}
+                  <button type="button" onClick={() => onTopicToggle(topic)}>
+                    #{topic}
+                  </button>
+                </BadgeControl>
+              );
+            })}
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Results Summary */}
-      {(queryParam || activeTopics.length > 0) && (
+      {queryParam && (
         <div className="mb-4">
           <p className="text-muted-foreground text-sm">
-            {queryParam &&
-              t('features.search.results.showingFor', { count: totalResults, query: queryParam })}
-            {queryParam && activeTopics.length > 0 && ' '}
-            {activeTopics.length > 0 &&
-              `${t('features.search.filters.title')}: ${activeTopics.join(', ')}`}
+            {t('features.search.results.showingFor', { count: totalResults, query: queryParam })}
           </p>
         </div>
       )}

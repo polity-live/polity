@@ -301,7 +301,6 @@ export function GroupMembershipsContentContainer({
       await inviteUsers(selectedUserIds, selectedInviteRoleIds, authUser?.id ?? undefined);
       setSelectedUserIds([]);
       setSelectedInviteRoleIds([]);
-      setInviteOpen(false);
     } finally {
       setIsInviting(false);
     }
@@ -315,7 +314,6 @@ export function GroupMembershipsContentContainer({
       await inviteGuests(selectedGuestUserIds, selectedGuestRoleIds, authUser?.id ?? undefined);
       setSelectedGuestUserIds([]);
       setSelectedGuestRoleIds([]);
-      setInviteOpen(false);
     } finally {
       setIsInvitingGuests(false);
     }

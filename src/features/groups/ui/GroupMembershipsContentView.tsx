@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { MembershipTabs } from '@/features/groups/ui/MembershipTabs';
 import { ActiveMembersTable } from '@/features/groups/ui/ActiveMembersTable';
 import { MembershipsByRoleTables } from '@/features/groups/ui/MembershipsByRoleTables';
@@ -18,6 +18,10 @@ import { AssignHolderDialog } from '@/features/groups/ui/AssignHolderDialog';
 import { OfflineRosterCard } from '@/features/offline-roster/ui/OfflineRosterCard';
 import { RoleHolderHistoryDialog } from '@/features/roles/ui/RoleHolderHistoryDialog';
 import { EntitySearchBar } from '@/features/shared/ui/typeahead';
+import {
+  ParticipationRoleFilterBar,
+  filterParticipationsByRole,
+} from '@/features/shared/ui/participation';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -208,19 +212,66 @@ export function GroupMembershipsContentView({
   t,
   updateOfflineMember,
 }: GroupMembershipsContentViewProps) {
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const showMembershipSearch =
+    canManageMembers &&
+    activeTab !== 'roles' &&
+    activeTab !== 'composition' &&
+    activeTab !== 'rightsAlignment' &&
+    activeTab !== 'openAssignments';
+  const roleFilterRoles = useMemo(
+    () => (activeTab === 'guests' ? [...guestRoles] : [...memberRoles]),
+    [activeTab, guestRoles, memberRoles]
+  );
+  const roleFilterRoleIds = useMemo(
+    () => new Set(roleFilterRoles.map((role: any) => role.id).filter(Boolean)),
+    [roleFilterRoles]
+  );
+  const activeRoleFilterIds = useMemo(
+    () => selectedRoleIds.filter(roleId => roleFilterRoleIds.has(roleId)),
+    [roleFilterRoleIds, selectedRoleIds]
+  );
+  const filteredPendingRequests = useMemo(
+    () => filterParticipationsByRole(pendingRequests, activeRoleFilterIds),
+    [activeRoleFilterIds, pendingRequests]
+  );
+  const filteredPendingInvitations = useMemo(
+    () => filterParticipationsByRole(pendingInvitations, activeRoleFilterIds),
+    [activeRoleFilterIds, pendingInvitations]
+  );
+  const filteredActiveMembers = useMemo(
+    () => filterParticipationsByRole(activeMembers, activeRoleFilterIds),
+    [activeMembers, activeRoleFilterIds]
+  );
+  const filteredMembershipsByRoleMembers = useMemo(
+    () => filterParticipationsByRole(membershipsByRoleMembers, activeRoleFilterIds),
+    [activeRoleFilterIds, membershipsByRoleMembers]
+  );
+  const filteredGuestAccesses = useMemo(
+    () =>
+      filterParticipationsByRole(
+        [...requestedGuestAccesses, ...activeGuestAccesses, ...invitedGuestAccesses],
+        activeRoleFilterIds
+      ),
+    [activeGuestAccesses, activeRoleFilterIds, invitedGuestAccesses, requestedGuestAccesses]
+  );
+  const roleFilterContent =
+    showMembershipSearch && roleFilterRoles.length > 0 ? (
+      <ParticipationRoleFilterBar
+        roles={roleFilterRoles}
+        selectedRoleIds={activeRoleFilterIds}
+        onSelectedRoleIdsChange={setSelectedRoleIds}
+      />
+    ) : null;
+
   return (
     <GroupMembershipsPageView
       title={t('features.groups.memberships.manage')}
-      showSearch={
-        canManageMembers &&
-        activeTab !== 'roles' &&
-        activeTab !== 'composition' &&
-        activeTab !== 'rightsAlignment' &&
-        activeTab !== 'openAssignments'
-      }
+      showSearch={showMembershipSearch}
       searchQuery={memberSearchQuery}
       onSearchQueryChange={setMemberSearchQuery}
       searchPlaceholder={t('features.groups.memberships.searchPlaceholder')}
+      secondaryFilterContent={roleFilterContent}
     >
       <MembershipTabs
         activeTab={activeTab}
@@ -335,7 +386,7 @@ export function GroupMembershipsContentView({
         membershipsByUserContent={
           <div className="space-y-4">
             <PendingRequestsTable
-              requests={pendingRequests}
+              requests={filteredPendingRequests}
               getApprovePreflightInput={membership => ({
                 kind: 'membership_activation',
                 membership_id: membership.id,
@@ -377,7 +428,7 @@ export function GroupMembershipsContentView({
               }}
             />
             <PendingInvitationsTable
-              invitations={pendingInvitations}
+              invitations={filteredPendingInvitations}
               onWithdraw={(membershipId, userId) => {
                 console.info('Delete button clicked', {
                   flow: 'group-membership-invitation-withdraw',
@@ -397,7 +448,7 @@ export function GroupMembershipsContentView({
               }}
             />
             <ActiveMembersTable
-              members={activeMembers}
+              members={filteredActiveMembers}
               sort={membershipSort}
               onSortChange={handleMembershipSortChange}
               onOpenRightsDialog={handleOpenMemberRights}
@@ -422,106 +473,109 @@ export function GroupMembershipsContentView({
                 );
               }}
             />
-            <OfflineRosterCard
-              title={t('features.groups.memberships.offlineRoster.title')}
-              description={t('features.groups.memberships.offlineRoster.description')}
-              rows={allUserRows}
-              connectedUserCandidates={connectedUserCandidates}
-              tableVariant="membership"
-              fallbackRoleLabel={translateText('generated.inline.1266_no_user_role_c1541334')}
-              showManageButton={canManageMembers && !showComposition}
-              showProvenanceColumns={showComposition}
-              onOpenRightsDialog={row => {
-                if (!row.effectiveMembershipId) {
-                  return;
-                }
+            {activeRoleFilterIds.length === 0 ? (
+              <OfflineRosterCard
+                title={t('features.groups.memberships.offlineRoster.title')}
+                description={t('features.groups.memberships.offlineRoster.description')}
+                rows={allUserRows}
+                connectedUserCandidates={connectedUserCandidates}
+                tableVariant="membership"
+                fallbackRoleLabel={translateText('generated.inline.1266_no_user_role_c1541334')}
+                showManageButton={canManageMembers && !showComposition}
+                showProvenanceColumns={showComposition}
+                onOpenRightsDialog={row => {
+                  if (!row.effectiveMembershipId) {
+                    return;
+                  }
 
-                const membership = offlineMembershipsById.get(row.effectiveMembershipId);
-                if (membership) {
-                  handleOpenMemberRights(membership);
-                }
-              }}
-              onOpenChangeRoleDialog={row => {
-                if (!row.effectiveMembershipId) {
-                  return;
-                }
+                  const membership = offlineMembershipsById.get(row.effectiveMembershipId);
+                  if (membership) {
+                    handleOpenMemberRights(membership);
+                  }
+                }}
+                onOpenChangeRoleDialog={row => {
+                  if (!row.effectiveMembershipId) {
+                    return;
+                  }
 
-                const membership = offlineMembershipsById.get(row.effectiveMembershipId);
-                if (membership) {
-                  handleOpenChangeRoleDialog(membership);
-                }
-              }}
-              manageDialogTitle={t('features.groups.memberships.offlineRoster.manageDialogTitle')}
-              manageDialogDescription={t(
-                'features.groups.memberships.offlineRoster.manageDialogDescription'
-              )}
-              onCreate={(entry, correlationId) =>
-                serverConfirmed(
-                  createOfflineMember({
-                    id: crypto.randomUUID(),
-                    group_id: groupId,
-                    first_name: entry.firstName,
-                    last_name: entry.lastName,
-                    reason_not_signed_up: entry.reasonNotSignedUp || null,
-                    connected_user_id: null,
-                    debug_correlation_id: correlationId,
-                  })
-                )
-              }
-              onImport={(entries, correlationId) =>
-                serverConfirmed(
-                  importOfflineMembers({
-                    group_id: groupId,
-                    entries: entries.map(entry => ({
+                  const membership = offlineMembershipsById.get(row.effectiveMembershipId);
+                  if (membership) {
+                    handleOpenChangeRoleDialog(membership);
+                  }
+                }}
+                manageDialogTitle={t('features.groups.memberships.offlineRoster.manageDialogTitle')}
+                manageDialogDescription={t(
+                  'features.groups.memberships.offlineRoster.manageDialogDescription'
+                )}
+                onCreate={(entry, correlationId) =>
+                  serverConfirmed(
+                    createOfflineMember({
+                      id: crypto.randomUUID(),
+                      group_id: groupId,
                       first_name: entry.firstName,
                       last_name: entry.lastName,
                       reason_not_signed_up: entry.reasonNotSignedUp || null,
-                    })),
-                    debug_correlation_id: correlationId,
-                  })
-                )
-              }
-              onConnect={(row, userId, correlationId) =>
-                serverConfirmed(
-                  updateOfflineMember({
-                    id: row.id,
-                    connected_user_id: userId,
-                    debug_correlation_id: correlationId,
-                  })
-                )
-              }
-              onEdit={(row, entry, correlationId) =>
-                serverConfirmed(
-                  updateOfflineMember({
-                    id: row.id,
-                    first_name: entry.firstName,
-                    last_name: entry.lastName,
-                    reason_not_signed_up: entry.reasonNotSignedUp || null,
-                    debug_correlation_id: correlationId,
-                  })
-                )
-              }
-              onDelete={(row, correlationId) =>
-                serverConfirmed(
-                  deleteOfflineMember({
-                    id: row.id,
-                    debug_correlation_id: correlationId,
-                  })
-                )
-              }
-            />
+                      connected_user_id: null,
+                      debug_correlation_id: correlationId,
+                    })
+                  )
+                }
+                onImport={(entries, correlationId) =>
+                  serverConfirmed(
+                    importOfflineMembers({
+                      group_id: groupId,
+                      entries: entries.map(entry => ({
+                        first_name: entry.firstName,
+                        last_name: entry.lastName,
+                        reason_not_signed_up: entry.reasonNotSignedUp || null,
+                      })),
+                      debug_correlation_id: correlationId,
+                    })
+                  )
+                }
+                onConnect={(row, userId, correlationId) =>
+                  serverConfirmed(
+                    updateOfflineMember({
+                      id: row.id,
+                      connected_user_id: userId,
+                      debug_correlation_id: correlationId,
+                    })
+                  )
+                }
+                onEdit={(row, entry, correlationId) =>
+                  serverConfirmed(
+                    updateOfflineMember({
+                      id: row.id,
+                      first_name: entry.firstName,
+                      last_name: entry.lastName,
+                      reason_not_signed_up: entry.reasonNotSignedUp || null,
+                      debug_correlation_id: correlationId,
+                    })
+                  )
+                }
+                onDelete={(row, correlationId) =>
+                  serverConfirmed(
+                    deleteOfflineMember({
+                      id: row.id,
+                      debug_correlation_id: correlationId,
+                    })
+                  )
+                }
+              />
+            ) : null}
           </div>
         }
         membershipsByRoleContent={
           <div className="space-y-4">
             <MembershipsByRoleTables
               roles={[...memberRoles]}
-              members={membershipsByRoleMembers}
+              members={filteredMembershipsByRoleMembers}
               onOpenRightsDialog={handleOpenMemberRights}
               onRemoveRole={handleRemoveRoleFromMembershipTypeView}
               onSecondaryAction={handleOpenChangeRoleDialog}
               secondaryActionLabel={translateText('generated.inline.0012_manage_roles_5f9b8531')}
               showProvenanceColumns={showComposition}
+              hideEmptyRoleSections
             />
           </div>
         }
@@ -555,7 +609,7 @@ export function GroupMembershipsContentView({
         guestsContent={
           <div className="space-y-4">
             <GuestsTable
-              guests={[...requestedGuestAccesses, ...activeGuestAccesses, ...invitedGuestAccesses]}
+              guests={filteredGuestAccesses}
               onApprove={guestAccessId => void approveGuestAccess(guestAccessId)}
               onRevoke={guestAccessId => void revokeGuest(guestAccessId)}
             />
@@ -680,6 +734,7 @@ interface GroupMembershipsPageViewProps {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   searchPlaceholder: string;
+  secondaryFilterContent?: ReactNode;
   children: ReactNode;
 }
 
@@ -689,6 +744,7 @@ export function GroupMembershipsPageView({
   searchQuery,
   onSearchQueryChange,
   searchPlaceholder,
+  secondaryFilterContent,
   children,
 }: GroupMembershipsPageViewProps) {
   return (
@@ -703,6 +759,7 @@ export function GroupMembershipsPageView({
           className="mb-4"
         />
       ) : null}
+      {secondaryFilterContent}
 
       {children}
     </div>

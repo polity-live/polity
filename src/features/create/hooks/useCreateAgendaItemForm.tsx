@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useSearch } from '@tanstack/react-router';
 import { useQuery, useZero } from '@rocicorp/zero/react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import type { CreateFormConfig } from '../types/create-form.types';
+import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
 import { RoleSearchInput } from '../ui/inputs/RoleSearchInput';
 import { CreateInlineNotice } from '../ui/CreateInlineNotice';
 import { AgendaDelegateAssignmentNotice } from '../ui/inputs/AgendaDelegateAssignmentNotice';
@@ -60,6 +60,11 @@ import {
   defaultVoteBallotVisibility,
   type BallotVisibility,
 } from '@/zero/shared';
+import {
+  createBlockedSubmitOutcome,
+  createRouteSubmitTarget,
+  createSuccessSubmitOutcome,
+} from '../logic/createSubmitTargets';
 
 type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion' | 'accreditation';
 type MajorityType = 'simple' | 'absolute' | 'two_thirds';
@@ -84,7 +89,6 @@ function parsePositiveInteger(value: string) {
 
 export function useCreateAgendaItemForm(): CreateFormConfig {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const zero = useZero();
   const searchParams = useSearch({ strict: false }) as CreateAgendaItemSearch;
 
@@ -571,9 +575,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
     });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!eventId || !title.trim()) {
-      return;
+      return createBlockedSubmitOutcome();
     }
 
     if (assignmentId && isAssignmentLoading) {
@@ -582,7 +586,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           'generated.inline.0302_der_delegiertenauftrag_wird_noch_geladen_bitt_da98e584'
         )
       );
-      return;
+      return createBlockedSubmitOutcome();
     }
 
     if (assignmentLookupFailed) {
@@ -591,7 +595,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           'generated.inline.0303_der_delegiertenauftrag_konnte_nicht_gefunden__b1fb330a'
         )
       );
-      return;
+      return createBlockedSubmitOutcome();
     }
 
     if (isElectionType && resolvedElectionMode === 'list' && resolvedSeatCount < 1) {
@@ -600,10 +604,11 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           'generated.inline.0304_bitte_gib_mindestens_eine_zu_vergebende_posit_d79ad3b6'
         )
       );
-      return;
+      return createBlockedSubmitOutcome();
     }
 
     setIsSubmitting(true);
+    context?.reportProgress({ key: 'create', status: 'active' });
     const correlationId = createElectionFlowCorrelationId(
       isDelegateAssignmentElection ? 'delegate-assignment-create' : 'agenda-item-create'
     );
@@ -671,18 +676,20 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
             )
           );
 
-          for (const [index, label] of ['Yes', 'No', 'Abstain'].entries()) {
-            await serverConfirmed(
-              zero.mutate(
-                mutators.votes.createVoteChoice({
-                  id: crypto.randomUUID(),
-                  vote_id: voteId,
-                  label,
-                  order_index: index + 1,
-                })
+          await Promise.all(
+            ['Yes', 'No', 'Abstain'].map((label, index) =>
+              serverConfirmed(
+                zero.mutate(
+                  mutators.votes.createVoteChoice({
+                    id: crypto.randomUUID(),
+                    vote_id: voteId,
+                    label,
+                    order_index: index + 1,
+                  })
+                )
               )
-            );
-          }
+            )
+          );
         }
       }
 
@@ -699,7 +706,16 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       );
 
       toast.success(t('pages.create.success.created'));
-      navigate({ to: `/event/${eventId}/agenda` });
+      context?.reportProgress({ key: 'create', status: 'complete' });
+      context?.reportProgress({ key: 'sync', status: 'complete' });
+      context?.reportProgress({ key: 'ready', status: 'active' });
+      setIsSubmitting(false);
+      return createSuccessSubmitOutcome(
+        createRouteSubmitTarget('agenda_item', {
+          to: '/event/$id/agenda',
+          params: { id: eventId },
+        })
+      );
     } catch (error) {
       logElectionFlowClientError(
         isDelegateAssignmentElection ? 'delegate-assignment-create' : 'agenda-item-create',
@@ -713,6 +729,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       );
       toast.error(t('pages.create.error.createFailed'));
       setIsSubmitting(false);
+      throw error;
     }
   };
 
@@ -722,6 +739,11 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       title: translateText('generated.inline.0046_pages_create_agendaitem_title_c019a31a'),
       isSubmitting,
       onSubmit: handleSubmit,
+      submissionSteps: [
+        { key: 'create', label: 'Erstellt Agendapunkt' },
+        { key: 'sync', label: 'Synchronisiert Abstimmung und Rollen' },
+        { key: 'ready', label: 'Bereitet Agenda vor' },
+      ],
       steps: [
         {
           label: t('pages.create.agendaItem.basicInfo'),

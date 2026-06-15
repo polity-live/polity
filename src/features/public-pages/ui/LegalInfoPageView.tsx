@@ -11,6 +11,7 @@ import {
   Section,
 } from '@/features/shared/ui/layout';
 import { Button } from '@/features/shared/ui/ui/button';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 
 export interface LegalInfoSectionViewModel {
   key: string;
@@ -95,7 +96,7 @@ export function LegalInfoPageView({
                     <p className="text-muted-foreground mt-2 text-sm">{link.description}</p>
                   </div>
                   <Button asChild variant="outline" size="sm">
-                    <a href={link.to}>{relatedActionLabel ?? link.title}</a>
+                    <SmartLink href={link.to}>{relatedActionLabel ?? link.title}</SmartLink>
                   </Button>
                 </PanelContent>
               </Panel>

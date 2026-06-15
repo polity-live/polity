@@ -159,6 +159,18 @@ export function useStreetDesignPageController(amendmentId: string) {
     () => getStreetDesignMapSelectionBoundingBox(selectedMapSelection),
     [selectedMapSelection]
   );
+  const readOnly = !canEdit;
+  const placementDraft = editor.state.placementDraft;
+  const placementPreview = placementDraft?.preview ?? null;
+  const canFinishPathPlacement =
+    placementDraft?.mode === 'path' && placementDraft.points.length >= 2;
+  const osmLayerVisibility = editor.design.osmLayerVisibility ?? {
+    road: true,
+    building: true,
+    green: true,
+    water: true,
+  };
+  const showStreetMarkings = editor.design.showStreetMarkings ?? true;
 
   const handleLoadOsm = useCallback(async () => {
     setIsLoadingOsm(true);
@@ -276,9 +288,18 @@ export function useStreetDesignPageController(amendmentId: string) {
     amendment,
     isLoading,
     canEdit,
+    readOnly,
     selectedCenter,
     selectedBbox,
     selectedMapSelection,
+    placementPreview,
+    placementPreviewType: placementDraft?.type ?? null,
+    placementStart: placementDraft?.start ?? null,
+    placementMode: placementDraft?.mode ?? null,
+    placementPointCount: placementDraft?.points.length ?? 0,
+    canFinishPathPlacement,
+    osmLayerVisibility,
+    showStreetMarkings,
     onSelectedMapSelectionChange: setSelectedMapSelection,
     isLoadingOsm,
     osmError,

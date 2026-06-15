@@ -122,6 +122,7 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
             items={filteredAllItems}
             renderItem={renderMixedTimelineCard}
             keyExtractor={item => `${item.type}-${item.id}`}
+            itemMotion="reveal"
           />
         </TabsContent>
 

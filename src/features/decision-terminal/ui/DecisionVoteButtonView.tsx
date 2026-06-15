@@ -3,6 +3,7 @@
 import { ExternalLink, Loader2, Vote } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 export interface DecisionVoteButtonViewProps {
   decision: any;
   compact: any;
@@ -26,10 +27,10 @@ export function DecisionVoteButtonView({
         className="text-muted-foreground gap-2 rounded-md"
         asChild
       >
-        <a href={decision.href}>
+        <SmartLink href={decision.href}>
           <ExternalLink className="h-4 w-4" />
           {!compact ? <span>{translateText('generated.inline.0347_view_69bd4ef9')}</span> : null}
-        </a>
+        </SmartLink>
       </Button>
     );
   }

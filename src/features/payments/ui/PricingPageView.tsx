@@ -13,6 +13,7 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { ContactDialog } from '@/features/shared/ui/contact';
 import { cn } from '@/features/shared/utils/utils';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 
 export interface PricingTierViewModel {
   key: string;
@@ -118,7 +119,7 @@ export function PricingPageView({
                   className="w-full"
                   variant={tier.highlighted ? 'default' : 'outline'}
                 >
-                  <a href="/auth">{tier.cta}</a>
+                  <SmartLink href="/auth">{tier.cta}</SmartLink>
                 </Button>
               </CardFooter>
             </Card>

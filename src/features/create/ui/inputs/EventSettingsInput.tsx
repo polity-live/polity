@@ -7,6 +7,7 @@ interface EventSettingsInputProps {
   visibility: Visibility;
   hashtags: string[];
   hashtagPlaceholder: string;
+  preferredHashtagSuggestions?: string[];
   onVisibilityChange: (value: Visibility) => void;
   onHashtagsChange: (value: string[]) => void;
 }
@@ -16,6 +17,7 @@ export function EventSettingsInput({
   visibility,
   hashtags,
   hashtagPlaceholder,
+  preferredHashtagSuggestions,
   onVisibilityChange,
   onHashtagsChange,
 }: EventSettingsInputProps) {
@@ -26,6 +28,7 @@ export function EventSettingsInput({
         value={hashtags}
         onChange={onHashtagsChange}
         placeholder={hashtagPlaceholder}
+        preferredSuggestions={preferredHashtagSuggestions}
       />
     </div>
   );

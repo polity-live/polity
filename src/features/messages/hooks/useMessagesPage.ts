@@ -48,7 +48,7 @@ export function useMessagesPage() {
     useConversationSelection(conversations, {
       openAriaKai: shouldOpenAriaKai,
     });
-  const { messages: selectedMessages } = useMessageState({
+  const { messages: selectedMessages, isLoading: isSelectedMessagesLoading } = useMessageState({
     conversationId: selectedConversationId ?? undefined,
     messageLimit,
   });
@@ -343,6 +343,7 @@ export function useMessagesPage() {
     setSelectedConversationId,
     selectedConversation,
     selectedMessages,
+    isSelectedMessagesLoading: Boolean(selectedConversationId && isSelectedMessagesLoading),
     hasMoreOlderMessages: selectedMessages.length >= messageLimit,
     loadOlderMessages,
     setIsSelectedConversationAtEnd,

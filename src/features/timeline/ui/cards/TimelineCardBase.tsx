@@ -48,6 +48,7 @@ export function TimelineCardBase({
     CARD_RADIUS.card,
     shadowClasses,
     getMotionPreset('hoverLift'),
+    (onClick || href) && getMotionPreset('spotlight'),
     (onClick || href) && 'cursor-pointer',
     className
   );

@@ -1,14 +1,19 @@
 'use client';
-import { featureThemeValue } from '@/features/shared/theme';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { sortWorkflowSteps } from '../logic/workflowHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { getCivicNetworkEdgeStyle } from '@/features/network/logic/networkEdgeHelpers';
+import {
+  getGroupNodeVisualTokens,
+  getWorkflowStepNodeStyle,
+  type WorkflowStepVisualRole,
+} from '@/features/network/ui/networkVisualHelpers';
 interface WorkflowNode extends Node {
   data: {
     label: string;
     stepIndex: number;
-    role: 'first' | 'middle' | 'last';
+    role: WorkflowStepVisualRole;
   };
 }
 interface WorkflowFlowVisualizationStep {
@@ -35,24 +40,29 @@ export interface WorkflowFlowVisualizationWorkflow {
 interface WorkflowFlowVisualizationProps {
   workflow: WorkflowFlowVisualizationWorkflow;
 }
-// Color palette matching the group network hierarchy style
-const NODE_COLORS = {
-  first: {
-    bg: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColor'),
-    border: featureThemeValue('amendmentAmendmentPathVisualizationThemeValueAlpha'),
-    stroke: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
-  }, // green – start
-  middle: {
-    bg: featureThemeValue('floweditorUseFlowEditorInfoColor'),
-    border: featureThemeValue('amendmentAmendmentPathVisualizationInfoColor'),
-    stroke: featureThemeValue('networkWorkflowFlowVisualizationInfoColor'),
-  }, // blue – intermediate
-  last: {
-    bg: featureThemeValue('floweditorFlowEditorDefaultsWarningColor'),
-    border: featureThemeValue('networkWorkflowFlowVisualizationWarningColor'),
-    stroke: featureThemeValue('networkUseGroupNetworkFlowWarningColor'),
-  }, // orange – end
-} as const;
+
+function getWorkflowStepRole(index: number, totalNodes: number): WorkflowStepVisualRole {
+  if (index === 0) {
+    return 'start';
+  }
+
+  if (index === totalNodes - 1) {
+    return 'end';
+  }
+
+  return 'intermediate';
+}
+
+function getWorkflowEdgeVisualTokens(index: number, totalNodes: number) {
+  const role = getWorkflowStepRole(index, Math.max(totalNodes - 1, 1));
+  if (role === 'start') {
+    return getGroupNodeVisualTokens('current');
+  }
+  if (role === 'end') {
+    return getGroupNodeVisualTokens('child');
+  }
+  return getGroupNodeVisualTokens('parent');
+}
 
 export function useWorkflowFlowVisualizationController({
   workflow,
@@ -90,9 +100,7 @@ export function useWorkflowFlowVisualizationController({
     const totalNodes = sequence.length;
     // Lay nodes out in a horizontal line, spaced 280px apart
     const newNodes: WorkflowNode[] = sequence.map((entry, index) => {
-      const role: 'first' | 'middle' | 'last' =
-        index === 0 ? 'first' : index === totalNodes - 1 ? 'last' : 'middle';
-      const colors = NODE_COLORS[role];
+      const role = getWorkflowStepRole(index, totalNodes);
 
       return {
         id: entry.id,
@@ -103,25 +111,13 @@ export function useWorkflowFlowVisualizationController({
           stepIndex: index,
           role,
         },
-        style: {
-          background: colors.bg,
-          color: featureThemeValue('amendmentAmendmentPathVisualizationNeutralColor'),
-          border: `2px solid ${colors.border}`,
-          borderRadius: '5px',
-          padding: '10px',
-          fontSize: '12px',
-          fontWeight: '500',
-          width: 180,
-          textAlign: 'center' as const,
-        },
+        style: getWorkflowStepNodeStyle(role),
       };
     });
 
     const newEdges: Edge[] = sequence.slice(0, -1).map((entry, index) => {
       const nextEntry = sequence[index + 1];
-      const role: 'first' | 'middle' | 'last' =
-        index === 0 ? 'first' : index === totalNodes - 2 ? 'last' : 'middle';
-      const colors = NODE_COLORS[role];
+      const visual = getWorkflowEdgeVisualTokens(index, totalNodes);
 
       return {
         id: `edge-${entry.id}-${nextEntry.id}`,
@@ -129,8 +125,11 @@ export function useWorkflowFlowVisualizationController({
         target: nextEntry.id,
         type: 'rightsLabel',
         animated: true,
-        style: { stroke: colors.stroke, strokeWidth: 2, strokeDasharray: '5 5' },
-        markerEnd: { type: MarkerType.ArrowClosed, color: colors.stroke },
+        style: getCivicNetworkEdgeStyle({
+          color: visual.borderColor,
+          strokeDasharray: '5 5',
+        }),
+        markerEnd: { type: MarkerType.ArrowClosed, color: visual.borderColor },
         data: {
           rights: [`Step ${index + 1} → ${index + 2}`],
           sourceName: newNodes[index].data.label,

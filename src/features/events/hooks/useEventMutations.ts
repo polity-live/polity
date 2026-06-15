@@ -38,18 +38,19 @@ export function useEventMutations(eventId: string) {
           ? [roleIds]
           : [];
 
-      for (const userId of userIds) {
-        const participantId = crypto.randomUUID();
-        await inviteParticipant({
-          id: participantId,
-          status: 'invited',
-          user_id: userId,
-          event_id: eventId,
-          group_id: null,
-          visibility: 'public',
-          initial_role_ids: normalizedRoleIds,
-        });
-      }
+      await Promise.all(
+        userIds.map(userId =>
+          inviteParticipant({
+            id: crypto.randomUUID(),
+            status: 'invited',
+            user_id: userId,
+            event_id: eventId,
+            group_id: null,
+            visibility: 'public',
+            initial_role_ids: normalizedRoleIds,
+          })
+        )
+      );
 
       toast.success(`Successfully invited ${userIds.length} participant(s)`);
       return { success: true };

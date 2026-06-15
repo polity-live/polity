@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
+import { useActionSubmission } from '@/features/shared/ui/action-submission';
 import { toast } from '@/features/shared/ui/ui/sonner';
 
 import type { Collaborator, Role } from './useCollaborators';
@@ -23,6 +24,7 @@ export function useInviteDialogController({
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
+  const actionSubmission = useActionSubmission('invite');
 
   const existingCollaboratorIds = existingCollaborators
     .map(collaborator => collaborator.user?.id)
@@ -53,18 +55,26 @@ export function useInviteDialogController({
     }
 
     setIsInviting(true);
-    try {
-      await onInviteUsers(selectedUsers, amendmentId, collaboratorRole.id);
-      setSelectedUsers([]);
-      setInviteDialogOpen(false);
-    } catch (error) {
-      console.error('Failed to invite collaborators:', error);
-    } finally {
-      setIsInviting(false);
-    }
+    void actionSubmission
+      .runActionWithSubmission(
+        async () => onInviteUsers(selectedUsers, amendmentId, collaboratorRole.id),
+        {
+          onSuccess: () => {
+            setSelectedUsers([]);
+            setIsInviting(false);
+            actionSubmission.reset();
+            setInviteDialogOpen(false);
+          },
+        }
+      )
+      .catch(error => {
+        console.error('Failed to invite collaborators:', error);
+        setIsInviting(false);
+      });
   };
 
   return {
+    actionSubmission,
     inviteDialogOpen,
     isInviting,
     isLoading,

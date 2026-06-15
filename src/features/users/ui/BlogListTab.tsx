@@ -63,28 +63,33 @@ export const BlogListTab: React.FC<BlogListTabProps> = ({
         <p className="text-muted-foreground py-8 text-center">{t('pages.user.blogs.noResults')}</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredBlogs.map(relation => {
+          {filteredBlogs.map((relation, index) => {
             const blog = relation.blog;
             const hashtags = (blog.blog_hashtags ?? [])
               .map(j => j.hashtag)
               .filter((h): h is NonNullable<typeof h> => !!h);
             return (
-              <BlogTimelineCard
+              <div
                 key={blog.id}
-                blog={{
-                  id: String(blog.id),
-                  title: blog.title ?? '',
-                  excerpt: blog.description ?? undefined,
-                  coverImageUrl: blog.image_url ?? undefined,
-                  commentCount: blog.comment_count ?? 0,
-                  hashtags,
-                  authorName: authorName || t('common.labels.unspecifiedUser'),
-                  authorAvatar,
-                  authorId: userId,
-                  groupId: blog.group_id ?? undefined,
-                  publishedAt: blog.date ?? '',
-                }}
-              />
+                className="civic-load-card-reveal"
+                style={{ '--civic-load-index': Math.min(index, 11) } as React.CSSProperties}
+              >
+                <BlogTimelineCard
+                  blog={{
+                    id: String(blog.id),
+                    title: blog.title ?? '',
+                    excerpt: blog.description ?? undefined,
+                    coverImageUrl: blog.image_url ?? undefined,
+                    commentCount: blog.comment_count ?? 0,
+                    hashtags,
+                    authorName: authorName || t('common.labels.unspecifiedUser'),
+                    authorAvatar,
+                    authorId: userId,
+                    groupId: blog.group_id ?? undefined,
+                    publishedAt: blog.date ?? '',
+                  }}
+                />
+              </div>
             );
           })}
         </div>

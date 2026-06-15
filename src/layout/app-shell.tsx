@@ -30,6 +30,7 @@ import { usePreferenceSync } from '@/zero/preferences/usePreferenceSync.ts';
 import { useNotificationDispatch } from '@/features/notifications/hooks/useNotificationDispatch.ts';
 import { useBrowserNotifications } from '@/features/notifications/hooks/useBrowserNotifications.ts';
 import { useToastSettingsSync } from '@/features/notifications/hooks/useToastSettingsSync.ts';
+import { MotionPage } from '@/features/shared/motion';
 
 export function AppShell({ children }: { children: ReactNode }) {
   return <AppShellInner>{children}</AppShellInner>;
@@ -108,7 +109,7 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
             }
           )}`}
         >
-          {children}
+          <MotionPage>{children}</MotionPage>
         </main>
 
         <NavigationCommandDialog
@@ -184,7 +185,9 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
             }
           )}`}
         >
-          <div className={`mx-auto px-4 py-6 ${isFullWidth ? '' : 'max-w-7xl'}`}>{children}</div>
+          <div className={`mx-auto px-4 py-6 ${isFullWidth ? '' : 'max-w-7xl'}`}>
+            <MotionPage>{children}</MotionPage>
+          </div>
         </main>
 
         <NavigationCommandDialog

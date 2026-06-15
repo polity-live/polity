@@ -5,6 +5,7 @@ import { useGroupRoles, useGroupState } from '@/zero/groups/useGroupState';
 import { useGroupConnectionActions, useGroupConnectionState } from '@/zero/network';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { toast } from '@/features/shared/ui/ui/sonner';
+import { useActionSubmission } from '@/features/shared/ui/action-submission';
 import type {
   CanonicalMembershipMode,
   GroupRelationshipType,
@@ -120,6 +121,7 @@ export function useLinkGroupDialogController({
   const { proposeGroupConnectionChange } = useGroupConnectionActions();
 
   const [open, setOpen] = useState(false);
+  const actionSubmission = useActionSubmission('link');
 
   const initializedForOpenRef = useRef(false);
 
@@ -448,7 +450,7 @@ export function useLinkGroupDialogController({
     value,
   ]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!value.selectedGroupId) {
       return;
     }
@@ -498,109 +500,122 @@ export function useLinkGroupDialogController({
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const payload = buildCanonicalGroupConnectionPayload({
-        currentGroupId,
-        otherGroupId: value.selectedGroupId,
-        relationshipType: value.relationshipType,
-        rightDirections: value.rightDirections,
-        membershipDirection: value.membershipDirection,
-        membershipRule: value.membershipRule,
-        connectionId:
-          currentPrimaryConnection?.id ??
-          currentPrimaryRequest?.proposed_connection_id ??
-          undefined,
-        existingRightIdsByKey,
-        existingGrantIdsByKeyAndHolder,
-        membershipRuleId: currentPrimaryConnection?.membership_rule?.id ?? undefined,
-        initiatorGroupId: currentGroupId,
-        status: 'requested',
-      });
+    void actionSubmission
+      .runActionWithSubmission(
+        async () => {
+          setIsSubmitting(true);
 
-      const desiredGrantKeys = new Set(
-        payload.grants.map(
-          grant => `${grant.right_key}:${grant.holder_group_id}:${grant.scope_group_id}`
-        )
-      );
-      const grants = [
-        ...payload.grants.map(grant => ({
-          id: crypto.randomUUID(),
-          existing_grant_id:
-            existingGrantIdsByKeyAndHolder[`${grant.right_key}:${grant.holder_group_id}`] ?? null,
-          operation: 'upsert' as const,
-          right_key: grant.right_key,
-          holder_group_id: grant.holder_group_id,
-          scope_group_id: grant.scope_group_id,
-        })),
-        ...(currentPrimaryConnection?.grants ?? [])
-          .filter(
-            grant =>
-              isGroupRelationshipRight(grant.right_key) &&
-              !desiredGrantKeys.has(
-                `${grant.right_key}:${grant.holder_group_id}:${grant.scope_group_id}`
-              )
-          )
-          .map(grant => ({
-            id: crypto.randomUUID(),
-            existing_grant_id: grant.id,
-            operation: 'remove' as const,
-            right_key: grant.right_key as GroupRelationshipRight,
-            holder_group_id: grant.holder_group_id,
-            scope_group_id: grant.scope_group_id,
-          })),
-      ];
-      const existingMembershipRule = currentPrimaryConnection?.membership_rule ?? null;
-      const membershipRule = payload.membership_rule
-        ? {
-            ...payload.membership_rule,
-            id: crypto.randomUUID(),
-            existing_membership_rule_id: existingMembershipRule?.id ?? null,
-            operation: 'upsert' as const,
-          }
-        : existingMembershipRule && isStoredMembershipMode(existingMembershipRule.membership_mode)
-          ? {
+          const payload = buildCanonicalGroupConnectionPayload({
+            currentGroupId,
+            otherGroupId: value.selectedGroupId,
+            relationshipType: value.relationshipType,
+            rightDirections: value.rightDirections,
+            membershipDirection: value.membershipDirection,
+            membershipRule: value.membershipRule,
+            connectionId:
+              currentPrimaryConnection?.id ??
+              currentPrimaryRequest?.proposed_connection_id ??
+              undefined,
+            existingRightIdsByKey,
+            existingGrantIdsByKeyAndHolder,
+            membershipRuleId: currentPrimaryConnection?.membership_rule?.id ?? undefined,
+            initiatorGroupId: currentGroupId,
+            status: 'requested',
+          });
+
+          const desiredGrantKeys = new Set(
+            payload.grants.map(
+              grant => `${grant.right_key}:${grant.holder_group_id}:${grant.scope_group_id}`
+            )
+          );
+          const grants = [
+            ...payload.grants.map(grant => ({
               id: crypto.randomUUID(),
-              existing_membership_rule_id: existingMembershipRule.id,
-              operation: 'remove' as const,
-              member_source_group_id: existingMembershipRule.member_source_group_id,
-              member_target_group_id: existingMembershipRule.member_target_group_id,
-              membership_mode: existingMembershipRule.membership_mode,
-              required_source_role_id: existingMembershipRule.required_source_role_id,
-              eligible_origin_group_ids:
-                existingMembershipRule.origins
-                  ?.map(origin => origin.eligible_origin_group_id)
-                  .filter((id): id is string => Boolean(id)) ?? [],
-            }
-          : null;
+              existing_grant_id:
+                existingGrantIdsByKeyAndHolder[`${grant.right_key}:${grant.holder_group_id}`] ??
+                null,
+              operation: 'upsert' as const,
+              right_key: grant.right_key,
+              holder_group_id: grant.holder_group_id,
+              scope_group_id: grant.scope_group_id,
+            })),
+            ...(currentPrimaryConnection?.grants ?? [])
+              .filter(
+                grant =>
+                  isGroupRelationshipRight(grant.right_key) &&
+                  !desiredGrantKeys.has(
+                    `${grant.right_key}:${grant.holder_group_id}:${grant.scope_group_id}`
+                  )
+              )
+              .map(grant => ({
+                id: crypto.randomUUID(),
+                existing_grant_id: grant.id,
+                operation: 'remove' as const,
+                right_key: grant.right_key as GroupRelationshipRight,
+                holder_group_id: grant.holder_group_id,
+                scope_group_id: grant.scope_group_id,
+              })),
+          ];
+          const existingMembershipRule = currentPrimaryConnection?.membership_rule ?? null;
+          const membershipRule = payload.membership_rule
+            ? {
+                ...payload.membership_rule,
+                id: crypto.randomUUID(),
+                existing_membership_rule_id: existingMembershipRule?.id ?? null,
+                operation: 'upsert' as const,
+              }
+            : existingMembershipRule &&
+                isStoredMembershipMode(existingMembershipRule.membership_mode)
+              ? {
+                  id: crypto.randomUUID(),
+                  existing_membership_rule_id: existingMembershipRule.id,
+                  operation: 'remove' as const,
+                  member_source_group_id: existingMembershipRule.member_source_group_id,
+                  member_target_group_id: existingMembershipRule.member_target_group_id,
+                  membership_mode: existingMembershipRule.membership_mode,
+                  required_source_role_id: existingMembershipRule.required_source_role_id,
+                  eligible_origin_group_ids:
+                    existingMembershipRule.origins
+                      ?.map(origin => origin.eligible_origin_group_id)
+                      .filter((id): id is string => Boolean(id)) ?? [],
+                }
+              : null;
 
-      const result = proposeGroupConnectionChange({
-        id: currentPrimaryRequest?.id ?? crypto.randomUUID(),
-        active_connection_id: currentPrimaryConnection?.id ?? null,
-        proposed_connection_id: payload.id,
-        group_a_id: payload.group_a_id,
-        group_b_id: payload.group_b_id,
-        desired_connection_type: payload.connection_type,
-        desired_parent_group_id: payload.parent_group_id,
-        desired_child_group_id: payload.child_group_id,
-        initiator_group_id: currentGroupId,
-        grants,
-        membership_rule: membershipRule,
+          const result = proposeGroupConnectionChange({
+            id: currentPrimaryRequest?.id ?? crypto.randomUUID(),
+            active_connection_id: currentPrimaryConnection?.id ?? null,
+            proposed_connection_id: payload.id,
+            group_a_id: payload.group_a_id,
+            group_b_id: payload.group_b_id,
+            desired_connection_type: payload.connection_type,
+            desired_parent_group_id: payload.parent_group_id,
+            desired_child_group_id: payload.child_group_id,
+            initiator_group_id: currentGroupId,
+            grants,
+            membership_rule: membershipRule,
+          });
+          await serverConfirmed(result);
+
+          toast.success(
+            isEditMode
+              ? t('common.network.relationshipsUpdated')
+              : t('common.network.relationshipsCreated')
+          );
+        },
+        {
+          onSuccess: () => {
+            actionSubmission.reset();
+            setOpen(false);
+          },
+        }
+      )
+      .catch(error => {
+        console.error('Error managing group relationships:', error);
+        toast.error(t('common.network.relationshipSaveError'));
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
-      await serverConfirmed(result);
-
-      toast.success(
-        isEditMode
-          ? t('common.network.relationshipsUpdated')
-          : t('common.network.relationshipsCreated')
-      );
-      setOpen(false);
-    } catch (error) {
-      console.error('Error managing group relationships:', error);
-      toast.error(t('common.network.relationshipSaveError'));
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   return {
@@ -615,6 +630,7 @@ export function useLinkGroupDialogController({
     proposeGroupConnectionChange,
     open,
     setOpen,
+    actionSubmission,
     initializedForOpenRef,
     lastHydratedStateRef,
     isEditMode,

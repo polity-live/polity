@@ -77,6 +77,12 @@ export const eventsTranslations = {
     },
   },
   backToEvent: 'Back to Event',
+  timeline: {
+    ariaLabel: 'Event timeline',
+    title: 'Schedule',
+    eventStart: 'Event start',
+    eventEnd: 'Event end',
+  },
   agenda: {
     title: 'Agenda',
     backToAgenda: 'Back to agenda',
@@ -136,6 +142,7 @@ export const eventsTranslations = {
     notScheduled: 'Not scheduled',
     notStarted: 'Not started',
     notCompleted: 'Not completed',
+    timeline: 'Agenda timeline',
     editItemDescriptionPlaceholder: 'Add context for this agenda item...',
     // Speaker section
     currentSpeaker: 'Current Speaker',

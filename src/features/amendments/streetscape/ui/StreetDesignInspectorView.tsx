@@ -135,7 +135,7 @@ export function StreetDesignInspectorView({
           </div>
         ) : null}
 
-        {definition.propertySchema.map((field: any) => {
+        {definition.propertySchema.map(field => {
           const value = selectedObject.properties[field.key];
 
           if (field.fieldType === 'boolean') {
@@ -169,7 +169,7 @@ export function StreetDesignInspectorView({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(field.options ?? []).map((option: any) => (
+                    {(field.options ?? []).map(option => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>

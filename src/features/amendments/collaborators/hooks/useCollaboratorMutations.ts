@@ -22,16 +22,18 @@ export function useCollaboratorMutations() {
 
   const inviteUsers = useCallback(
     async (userIds: string[], amendmentId: string, roleId: string) => {
-      for (const userId of userIds) {
-        await requestCollaboration({
-          id: crypto.randomUUID(),
-          user_id: userId,
-          amendment_id: amendmentId,
-          role_id: roleId,
-          status: 'invited',
-          visibility: null,
-        });
-      }
+      await Promise.all(
+        userIds.map(userId =>
+          requestCollaboration({
+            id: crypto.randomUUID(),
+            user_id: userId,
+            amendment_id: amendmentId,
+            role_id: roleId,
+            status: 'invited',
+            visibility: null,
+          })
+        )
+      );
     },
     [requestCollaboration]
   );

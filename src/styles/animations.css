@@ -119,6 +119,34 @@
   }
 }
 
+@keyframes civic-loading-dossier {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  35% {
+    transform: translateY(-2px) rotate(-1deg);
+  }
+  70% {
+    transform: translateY(1px) rotate(1deg);
+  }
+}
+
+@keyframes civic-loading-ballot {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(1px) scale(1);
+  }
+  100% {
+    opacity: 0.78;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .animate-loading-steam {
   animation: loading-steam 2s ease-in-out infinite;
 }
@@ -139,4 +167,12 @@
 
 .animate-loading-progress {
   animation: loading-progress 2s ease-in-out infinite;
+}
+
+.animate-civic-loading-dossier {
+  animation: civic-loading-dossier 2.4s ease-in-out infinite;
+}
+
+.animate-civic-loading-ballot {
+  animation: civic-loading-ballot 1.6s ease-in-out infinite;
 }

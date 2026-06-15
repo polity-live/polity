@@ -25,18 +25,26 @@ export function useOnboardingWizardController({
 
   const {
     step,
+    error,
     data,
     isLoading,
     setFirstName,
     setLastName,
-    setSelectedGroup,
+    setSelectedInterestTags,
+    toggleInterestTag,
+    clearInterestTags,
+    toggleSelectedGroup,
+    setActiveGroupId,
+    clearSelectedGroups,
     setDontShowAriaKaiAgain,
     nextStep,
     previousStep,
     goToStep,
-    sendMembershipRequest,
+    saveInterests,
+    sendMembershipRequests,
     skipMembership,
     completeOnboarding,
+    allInterestSuggestions,
   } = useOnboarding();
 
   console.log('🎯 OnboardingWizard state:', { step, isLoading, data });
@@ -47,13 +55,20 @@ export function useOnboardingWizardController({
     nextStep();
   };
 
+  const handleInterestsNext = async () => {
+    const success = await saveInterests();
+    if (success) {
+      nextStep();
+    }
+  };
+
   const handleGroupNext = async () => {
     // Name is already saved in handleNameNext
     nextStep();
   };
 
   const handleMembershipConfirm = async () => {
-    const success = await sendMembershipRequest();
+    const success = await sendMembershipRequests();
     if (success) {
       // Move to ariaKai step
       goToStep('ariaKai');
@@ -87,12 +102,23 @@ export function useOnboardingWizardController({
   };
 
   const handleGoToGroup = () => {
-    if (!data.selectedGroup) {
+    const targetGroup =
+      data.selectedGroups.find(group => group.id === data.activeGroupId) ??
+      data.selectedGroups[0] ??
+      null;
+
+    if (!targetGroup) {
       console.warn('⚠️ No selected group');
       return;
     }
-    console.log('👥 handleGoToGroup called — navigating to group:', data.selectedGroup.id);
-    navigate({ to: `/group/${data.selectedGroup.id}` });
+    console.log('👥 handleGoToGroup called — navigating to group:', targetGroup.id);
+    navigate({ to: `/group/${targetGroup.id}` });
+    onComplete();
+  };
+
+  const handleGoToTimeline = () => {
+    console.log('handleGoToTimeline called — navigating to /home');
+    navigate({ to: '/home' });
     onComplete();
   };
 
@@ -110,25 +136,35 @@ export function useOnboardingWizardController({
     user,
     updateProfileConfirmed,
     step,
+    error,
     data,
     isLoading,
     setFirstName,
     setLastName,
-    setSelectedGroup,
+    setSelectedInterestTags,
+    toggleInterestTag,
+    clearInterestTags,
+    toggleSelectedGroup,
+    setActiveGroupId,
+    clearSelectedGroups,
     setDontShowAriaKaiAgain,
     nextStep,
     previousStep,
     goToStep,
-    sendMembershipRequest,
+    saveInterests,
+    sendMembershipRequests,
     skipMembership,
     completeOnboarding,
+    allInterestSuggestions,
     handleNameNext,
+    handleInterestsNext,
     handleGroupNext,
     handleMembershipConfirm,
     handleMembershipDecline,
     handleAriaKaiNext,
     handleGoToProfile,
     handleGoToGroup,
+    handleGoToTimeline,
     handleGoToAssistant,
   };
 }

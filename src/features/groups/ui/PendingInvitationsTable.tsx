@@ -4,7 +4,7 @@
  * Displays pending invitations that haven't been accepted yet.
  */
 
-import { useMemo } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
@@ -153,7 +153,10 @@ export function PendingInvitationsTable<TParticipation extends ParticipationLike
   }
 
   return (
-    <section className="space-y-3">
+    <section
+      className="civic-load-card-reveal space-y-3"
+      style={{ '--civic-load-index': 1 } as CSSProperties}
+    >
       <div className="space-y-1.5 px-3 sm:px-4">
         <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
           <UserPlus className="h-5 w-5" />

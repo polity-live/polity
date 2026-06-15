@@ -54,7 +54,12 @@ export type MotionPreset =
   | 'rowHighlight'
   | 'loadingShimmer'
   | 'attention'
-  | 'navigation';
+  | 'navigation'
+  | 'spotlight'
+  | 'selectable'
+  | 'iconNudge'
+  | 'successSettle'
+  | 'ballotSubmit';
 
 export interface CivicToneClasses {
   badge: string;
@@ -185,11 +190,96 @@ const SEMANTIC_TONE_CLASS_NAMES: Record<SemanticTone, CivicToneClasses> = {
 };
 
 const PRIMARY_ENTITY_CLASS_NAMES: Record<PrimaryEntityTone, CivicEntityToneClasses> = {
-  user: createEntityToneClasses('user'),
-  group: createEntityToneClasses('group'),
-  event: createEntityToneClasses('event'),
-  amendment: createEntityToneClasses('amendment'),
-  blog: createEntityToneClasses('blog'),
+  user: {
+    base: 'text-[var(--entity-user-base)]',
+    badge:
+      'border-[var(--entity-user-border)] bg-[var(--entity-user-bg)] text-[var(--entity-user-fg)]',
+    dot: 'bg-[var(--entity-user-base)]',
+    text: 'text-[var(--entity-user-fg)]',
+    border: 'border-[var(--entity-user-border)]',
+    surface:
+      'border-[var(--entity-user-border)] bg-[var(--entity-user-bg)] text-[var(--entity-user-fg)]',
+    softSurface: 'border-[var(--entity-user-border)] bg-[var(--entity-user-bg)]',
+    ring: 'ring-[var(--entity-user-ring)]',
+    gradient: 'border-[var(--entity-user-border)] bg-[var(--entity-user-bg)]',
+    headerAccent: 'border-l-4 border-l-[var(--entity-user-base)]',
+    tableTag:
+      'border-[var(--entity-user-border)] bg-[var(--entity-user-bg)] text-[var(--entity-user-fg)]',
+    typeaheadRow:
+      'hover:bg-[var(--entity-user-bg)] data-[selected=true]:bg-[var(--entity-user-bg)]',
+  },
+  group: {
+    base: 'text-[var(--entity-group-base)]',
+    badge:
+      'border-[var(--entity-group-border)] bg-[var(--entity-group-bg)] text-[var(--entity-group-fg)]',
+    dot: 'bg-[var(--entity-group-base)]',
+    text: 'text-[var(--entity-group-fg)]',
+    border: 'border-[var(--entity-group-border)]',
+    surface:
+      'border-[var(--entity-group-border)] bg-[var(--entity-group-bg)] text-[var(--entity-group-fg)]',
+    softSurface: 'border-[var(--entity-group-border)] bg-[var(--entity-group-bg)]',
+    ring: 'ring-[var(--entity-group-ring)]',
+    gradient: 'border-[var(--entity-group-border)] bg-[var(--entity-group-bg)]',
+    headerAccent: 'border-l-4 border-l-[var(--entity-group-base)]',
+    tableTag:
+      'border-[var(--entity-group-border)] bg-[var(--entity-group-bg)] text-[var(--entity-group-fg)]',
+    typeaheadRow:
+      'hover:bg-[var(--entity-group-bg)] data-[selected=true]:bg-[var(--entity-group-bg)]',
+  },
+  event: {
+    base: 'text-[var(--entity-event-base)]',
+    badge:
+      'border-[var(--entity-event-border)] bg-[var(--entity-event-bg)] text-[var(--entity-event-fg)]',
+    dot: 'bg-[var(--entity-event-base)]',
+    text: 'text-[var(--entity-event-fg)]',
+    border: 'border-[var(--entity-event-border)]',
+    surface:
+      'border-[var(--entity-event-border)] bg-[var(--entity-event-bg)] text-[var(--entity-event-fg)]',
+    softSurface: 'border-[var(--entity-event-border)] bg-[var(--entity-event-bg)]',
+    ring: 'ring-[var(--entity-event-ring)]',
+    gradient: 'border-[var(--entity-event-border)] bg-[var(--entity-event-bg)]',
+    headerAccent: 'border-l-4 border-l-[var(--entity-event-base)]',
+    tableTag:
+      'border-[var(--entity-event-border)] bg-[var(--entity-event-bg)] text-[var(--entity-event-fg)]',
+    typeaheadRow:
+      'hover:bg-[var(--entity-event-bg)] data-[selected=true]:bg-[var(--entity-event-bg)]',
+  },
+  amendment: {
+    base: 'text-[var(--entity-amendment-base)]',
+    badge:
+      'border-[var(--entity-amendment-border)] bg-[var(--entity-amendment-bg)] text-[var(--entity-amendment-fg)]',
+    dot: 'bg-[var(--entity-amendment-base)]',
+    text: 'text-[var(--entity-amendment-fg)]',
+    border: 'border-[var(--entity-amendment-border)]',
+    surface:
+      'border-[var(--entity-amendment-border)] bg-[var(--entity-amendment-bg)] text-[var(--entity-amendment-fg)]',
+    softSurface: 'border-[var(--entity-amendment-border)] bg-[var(--entity-amendment-bg)]',
+    ring: 'ring-[var(--entity-amendment-ring)]',
+    gradient: 'border-[var(--entity-amendment-border)] bg-[var(--entity-amendment-bg)]',
+    headerAccent: 'border-l-4 border-l-[var(--entity-amendment-base)]',
+    tableTag:
+      'border-[var(--entity-amendment-border)] bg-[var(--entity-amendment-bg)] text-[var(--entity-amendment-fg)]',
+    typeaheadRow:
+      'hover:bg-[var(--entity-amendment-bg)] data-[selected=true]:bg-[var(--entity-amendment-bg)]',
+  },
+  blog: {
+    base: 'text-[var(--entity-blog-base)]',
+    badge:
+      'border-[var(--entity-blog-border)] bg-[var(--entity-blog-bg)] text-[var(--entity-blog-fg)]',
+    dot: 'bg-[var(--entity-blog-base)]',
+    text: 'text-[var(--entity-blog-fg)]',
+    border: 'border-[var(--entity-blog-border)]',
+    surface:
+      'border-[var(--entity-blog-border)] bg-[var(--entity-blog-bg)] text-[var(--entity-blog-fg)]',
+    softSurface: 'border-[var(--entity-blog-border)] bg-[var(--entity-blog-bg)]',
+    ring: 'ring-[var(--entity-blog-ring)]',
+    gradient: 'border-[var(--entity-blog-border)] bg-[var(--entity-blog-bg)]',
+    headerAccent: 'border-l-4 border-l-[var(--entity-blog-base)]',
+    tableTag:
+      'border-[var(--entity-blog-border)] bg-[var(--entity-blog-bg)] text-[var(--entity-blog-fg)]',
+    typeaheadRow:
+      'hover:bg-[var(--entity-blog-bg)] data-[selected=true]:bg-[var(--entity-blog-bg)]',
+  },
 };
 
 const SECONDARY_ENTITY_TO_SEMANTIC_TONE = {
@@ -277,24 +367,12 @@ const MOTION_PRESET_CLASS_NAMES: Record<MotionPreset, string> = {
   attention: 'animate-civic-scale-in',
   navigation:
     'transition-[transform,opacity,box-shadow] duration-[var(--motion-duration-slow)] ease-[var(--motion-ease-soft)]',
+  spotlight: 'civic-motion-spotlight',
+  selectable: 'civic-motion-selectable',
+  iconNudge: 'civic-icon-nudge',
+  successSettle: 'civic-success-settle',
+  ballotSubmit: 'civic-ballot-submit',
 };
-
-function createEntityToneClasses(entity: PrimaryEntityTone): CivicEntityToneClasses {
-  return {
-    base: `text-[var(--entity-${entity}-base)]`,
-    badge: `border-[var(--entity-${entity}-border)] bg-[var(--entity-${entity}-bg)] text-[var(--entity-${entity}-fg)]`,
-    dot: `bg-[var(--entity-${entity}-base)]`,
-    text: `text-[var(--entity-${entity}-fg)]`,
-    border: `border-[var(--entity-${entity}-border)]`,
-    surface: `border-[var(--entity-${entity}-border)] bg-[var(--entity-${entity}-bg)] text-[var(--entity-${entity}-fg)]`,
-    softSurface: `border-[var(--entity-${entity}-border)] bg-[var(--entity-${entity}-bg)]`,
-    ring: `ring-[var(--entity-${entity}-ring)]`,
-    gradient: `border-[var(--entity-${entity}-border)] bg-[var(--entity-${entity}-bg)]`,
-    headerAccent: `border-l-4 border-l-[var(--entity-${entity}-base)]`,
-    tableTag: `border-[var(--entity-${entity}-border)] bg-[var(--entity-${entity}-bg)] text-[var(--entity-${entity}-fg)]`,
-    typeaheadRow: `hover:bg-[var(--entity-${entity}-bg)] data-[selected=true]:bg-[var(--entity-${entity}-bg)]`,
-  };
-}
 
 export function getSemanticToneClasses(tone: SemanticTone): CivicToneClasses {
   return SEMANTIC_TONE_CLASS_NAMES[tone];

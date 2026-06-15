@@ -5,6 +5,10 @@ import {
   getAmendmentProcessStatusBadgeClassName as getStatusBadgeClassName,
 } from '@/features/shared/ui/status';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import {
+  ActionSubmissionOverlay,
+  type ActionSubmissionController,
+} from '@/features/shared/ui/action-submission';
 import { Link } from '@tanstack/react-router';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
@@ -154,6 +158,7 @@ export interface AmendmentProcessFlowViewProps {
   setPendingSelection: any;
   isSaving: any;
   setIsSaving: any;
+  processSubmission: ActionSubmissionController;
   createAmendmentPath: any;
   updateAmendment: any;
   amendment: any;
@@ -191,6 +196,7 @@ export function AmendmentProcessFlowView({
   pendingSelection,
   setPendingSelection,
   isSaving,
+  processSubmission,
   amendment,
   isLoading,
   currentRun,
@@ -206,6 +212,8 @@ export function AmendmentProcessFlowView({
   selectorCollaborators,
   handleConfirmSelection,
 }: AmendmentProcessFlowViewProps) {
+  const processSubmissionActive = processSubmission.isActive;
+
   if (!user) {
     return (
       <div className="flex h-[480px] items-center justify-center">
@@ -747,86 +755,141 @@ export function AmendmentProcessFlowView({
       <Dialog
         open={selectorOpen}
         onOpenChange={open => {
+          if (processSubmissionActive) {
+            return;
+          }
           setSelectorOpen(open);
           if (!open) {
             setPendingSelection(null);
           }
         }}
       >
-        <ScrollableDialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none border-0 p-0 sm:h-screen sm:max-w-none">
-          <DialogHeader>
-            <DialogTitle className="px-6 pt-6">
-              {currentRun
-                ? t('features.amendments.process.retargetDialogTitle')
-                : t('features.amendments.process.startDialogTitle')}
-            </DialogTitle>
-            <DialogDescription className="px-6">
-              {t('features.amendments.process.selectorDescription')}
-            </DialogDescription>
-          </DialogHeader>
+        <ScrollableDialogContent
+          showCloseButton={!processSubmissionActive}
+          className="flex h-screen w-screen max-w-none flex-col overflow-hidden rounded-none border-0 p-0 sm:h-screen sm:max-w-none"
+        >
+          {!processSubmissionActive ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="px-6 pt-6">
+                  {currentRun
+                    ? t('features.amendments.process.retargetDialogTitle')
+                    : t('features.amendments.process.startDialogTitle')}
+                </DialogTitle>
+                <DialogDescription className="px-6">
+                  {t('features.amendments.process.selectorDescription')}
+                </DialogDescription>
+              </DialogHeader>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
-            <div className="space-y-6">
-              <TargetGroupEventSelector
-                userId={user.id}
-                collaborators={selectorCollaborators}
-                disablePortal
-                allowGroupWithoutEvent
-                allowSourceGroupAsTarget
-                layoutScope={currentRun ? 'amendment-process-retarget' : 'amendment-process-start'}
-                onSelect={setPendingSelection}
-              />
+              <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+                <div className="space-y-6">
+                  <TargetGroupEventSelector
+                    userId={user.id}
+                    collaborators={selectorCollaborators}
+                    disablePortal
+                    allowGroupWithoutEvent
+                    allowSourceGroupAsTarget
+                    layoutScope={
+                      currentRun ? 'amendment-process-retarget' : 'amendment-process-start'
+                    }
+                    onSelect={setPendingSelection}
+                  />
 
-              {pendingSelection ? (
-                <TargetGroupEventDisplay
-                  groupData={{
-                    id: pendingSelection.groupData.id,
-                    name: pendingSelection.groupData.name ?? null,
-                    description: richTextToPlainText(pendingSelection.groupData.description),
-                    member_count: pendingSelection.groupData.member_count ?? null,
-                    event_count: pendingSelection.groupData.event_count ?? null,
-                    amendment_count: pendingSelection.groupData.amendment_count ?? null,
-                  }}
-                  eventData={
-                    pendingSelection.eventData
-                      ? {
-                          id: pendingSelection.eventData.id,
-                          title: pendingSelection.eventData.title ?? null,
-                          start_date: pendingSelection.eventData.start_date ?? null,
-                          location_name: pendingSelection.eventData.location_name ?? null,
-                          description: richTextToPlainText(pendingSelection.eventData.description),
-                          participant_count: pendingSelection.eventData.participant_count ?? null,
-                        }
-                      : null
-                  }
-                  pathWithEvents={pendingSelection.pathWithEvents}
-                />
-              ) : (
-                <div className="border-border bg-muted/30 rounded-lg border border-dashed p-4 text-sm">
-                  {t('features.amendments.process.selectorHint')}
+                  {pendingSelection ? (
+                    <TargetGroupEventDisplay
+                      groupData={{
+                        id: pendingSelection.groupData.id,
+                        name: pendingSelection.groupData.name ?? null,
+                        description: richTextToPlainText(pendingSelection.groupData.description),
+                        member_count: pendingSelection.groupData.member_count ?? null,
+                        event_count: pendingSelection.groupData.event_count ?? null,
+                        amendment_count: pendingSelection.groupData.amendment_count ?? null,
+                      }}
+                      eventData={
+                        pendingSelection.eventData
+                          ? {
+                              id: pendingSelection.eventData.id,
+                              title: pendingSelection.eventData.title ?? null,
+                              start_date: pendingSelection.eventData.start_date ?? null,
+                              location_name: pendingSelection.eventData.location_name ?? null,
+                              description: richTextToPlainText(
+                                pendingSelection.eventData.description
+                              ),
+                              participant_count:
+                                pendingSelection.eventData.participant_count ?? null,
+                            }
+                          : null
+                      }
+                      pathWithEvents={pendingSelection.pathWithEvents}
+                    />
+                  ) : (
+                    <div className="border-border bg-muted/30 rounded-lg border border-dashed p-4 text-sm">
+                      {t('features.amendments.process.selectorHint')}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
 
-          <DialogFooter separator className="px-6 py-4">
-            <Button
-              variant="outline"
-              onClick={() => {
+              <DialogFooter separator className="px-6 py-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectorOpen(false);
+                    setPendingSelection(null);
+                  }}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button onClick={handleConfirmSelection} disabled={!pendingSelection || isSaving}>
+                  {isSaving
+                    ? t('features.amendments.process.processing')
+                    : currentRun
+                      ? t('features.amendments.process.confirmRetarget')
+                      : t('features.amendments.process.confirmStart')}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : null}
+          <ActionSubmissionOverlay
+            kind="process"
+            status={processSubmission.status}
+            steps={processSubmission.progressSteps}
+            error={processSubmission.error}
+            preview={{
+              entityLabel: currentRun
+                ? t('features.amendments.process.retarget')
+                : t('features.amendments.process.start'),
+              title:
+                amendment?.title ??
+                (currentRun
+                  ? t('features.amendments.process.retargetDialogTitle')
+                  : t('features.amendments.process.startDialogTitle')),
+              description: pendingSelection?.eventData?.title
+                ? `${pendingSelection.groupData.name ?? pendingSelection.groupId} · ${
+                    pendingSelection.eventData.title
+                  }`
+                : (pendingSelection?.groupData.name ?? pendingSelection?.groupId),
+              path:
+                pendingSelection?.pathWithEvents
+                  ?.map(
+                    (segment: any) => segment.group?.name ?? segment.groupName ?? segment.group_id
+                  )
+                  .filter(Boolean) ?? [],
+              badges: [
+                pendingSelection?.pathMode === 'workflow' ? 'Workflow-Pfad' : 'Hierarchie-Pfad',
+              ],
+            }}
+            target={{
+              label: t('common.done', 'Fertig'),
+              onClick: () => {
+                processSubmission.reset();
                 setSelectorOpen(false);
                 setPendingSelection(null);
-              }}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button onClick={handleConfirmSelection} disabled={!pendingSelection || isSaving}>
-              {isSaving
-                ? t('features.amendments.process.processing')
-                : currentRun
-                  ? t('features.amendments.process.confirmRetarget')
-                  : t('features.amendments.process.confirmStart')}
-            </Button>
-          </DialogFooter>
+              },
+            }}
+            onBack={processSubmission.reset}
+            onRetry={() => void processSubmission.retry()}
+          />
         </ScrollableDialogContent>
       </Dialog>
     </div>

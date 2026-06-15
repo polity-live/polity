@@ -17,10 +17,13 @@ import { z } from 'zod';
 import { can } from '../rbac/can';
 import { denyPublicApiMutation, requireAuthenticated } from '../rbac/authorize';
 import { PermissionError } from '../rbac/errors';
+import type { ActionType } from '../rbac/types';
 import { zql } from '../schema';
 
 type AgendaTx = Parameters<typeof can>[0];
 type AgendaCtx = Parameters<typeof can>[1];
+
+const DEFAULT_EVENT_SPEAKER_ROLE_NAMES = new Set(['Organizer', 'Voter', 'Participant']);
 
 async function loadAgendaItem(tx: AgendaTx, agendaItemId: string) {
   const item = await tx.run(zql.agenda_item.where('id', agendaItemId).one());
@@ -53,6 +56,41 @@ async function assertAgendaItemAccess(
   }
 
   throw new PermissionError(action, 'agendaItems', 'parent required');
+}
+
+async function ensureDefaultEventSpeakerRights(tx: AgendaTx, eventId: string) {
+  if (tx.location === 'client') return;
+
+  const roles = await tx.run(
+    zql.role.where('event_id', eventId).where('scope', 'event').related('action_rights')
+  );
+  const now = Date.now();
+
+  for (const role of roles) {
+    if (!DEFAULT_EVENT_SPEAKER_ROLE_NAMES.has(role.name ?? '') || role.assignee_kind === 'guest') {
+      continue;
+    }
+
+    const hasSpeakRight = (role.action_rights ?? []).some(
+      right => right.resource === 'events' && right.action === 'speak'
+    );
+
+    if (hasSpeakRight) {
+      continue;
+    }
+
+    await tx.mutate.action_right.insert({
+      id: crypto.randomUUID(),
+      resource: 'events',
+      action: 'speak',
+      role_id: role.id,
+      group_id: null,
+      event_id: eventId,
+      amendment_id: null,
+      blog_id: null,
+      created_at: now,
+    });
+  }
 }
 
 async function assertAgendaItemAccessById(
@@ -93,7 +131,24 @@ async function assertCanManageSpeakersForAgendaItem(
   });
 }
 
-async function assertCanAddOrRemoveSpeaker(
+async function hasEventPermission(
+  tx: AgendaTx,
+  ctx: AgendaCtx,
+  eventId: string,
+  action: ActionType
+) {
+  try {
+    await can(tx, ctx, { action, resource: 'events', eventId });
+    return true;
+  } catch (error) {
+    if (error instanceof PermissionError) {
+      return false;
+    }
+    throw error;
+  }
+}
+
+async function assertCanAddSpeaker(
   tx: AgendaTx,
   ctx: AgendaCtx,
   agendaItem: { event_id?: string | null },
@@ -103,21 +158,52 @@ async function assertCanAddOrRemoveSpeaker(
 
   requireAuthenticated(tx, ctx, { action: 'speak', resource: 'events' });
 
+  if (!agendaItem.event_id) {
+    throw new PermissionError('speak', 'events', 'event required');
+  }
+
+  await ensureDefaultEventSpeakerRights(tx, agendaItem.event_id);
+
   if (speakerUserId === ctx.userID && agendaItem.event_id) {
-    await can(tx, ctx, { action: 'speak', resource: 'events', eventId: agendaItem.event_id });
+    for (const action of ['speak', 'manage_speakers', 'active_voting', 'passive_voting'] as const) {
+      if (await hasEventPermission(tx, ctx, agendaItem.event_id, action)) {
+        return;
+      }
+    }
+
+    throw new PermissionError('speak', 'events', `event:${agendaItem.event_id}`);
+  }
+
+  await can(tx, ctx, {
+    action: 'manage_speakers',
+    resource: 'events',
+    eventId: agendaItem.event_id,
+  });
+}
+
+async function assertCanRemoveSpeaker(
+  tx: AgendaTx,
+  ctx: AgendaCtx,
+  agendaItem: { event_id?: string | null },
+  speakerUserId: string | null | undefined
+) {
+  if (tx.location === 'client') return;
+
+  requireAuthenticated(tx, ctx, { action: 'speak', resource: 'events' });
+
+  if (!agendaItem.event_id) {
+    throw new PermissionError('speak', 'events', 'event required');
+  }
+
+  if (speakerUserId === ctx.userID) {
     return;
   }
 
-  if (agendaItem.event_id) {
-    await can(tx, ctx, {
-      action: 'manage_speakers',
-      resource: 'events',
-      eventId: agendaItem.event_id,
-    });
-    return;
-  }
-
-  throw new PermissionError('speak', 'events', 'event required');
+  await can(tx, ctx, {
+    action: 'manage_speakers',
+    resource: 'events',
+    eventId: agendaItem.event_id,
+  });
 }
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
@@ -162,7 +248,7 @@ export const agendaSharedMutators = {
   addSpeaker: defineMutator(createSpeakerListSchema, async ({ tx, ctx, args }) => {
     if (tx.location !== 'client') {
       const agendaItem = await loadAgendaItem(tx, args.agenda_item_id);
-      await assertCanAddOrRemoveSpeaker(tx, ctx, agendaItem, args.user_id);
+      await assertCanAddSpeaker(tx, ctx, agendaItem, args.user_id);
     }
 
     const now = Date.now();
@@ -182,7 +268,7 @@ export const agendaSharedMutators = {
   removeSpeaker: defineMutator(deleteSpeakerListSchema, async ({ tx, ctx, args }) => {
     if (tx.location !== 'client') {
       const { speaker, agendaItem } = await loadAgendaItemForSpeaker(tx, args.id);
-      await assertCanAddOrRemoveSpeaker(tx, ctx, agendaItem, speaker.user_id);
+      await assertCanRemoveSpeaker(tx, ctx, agendaItem, speaker.user_id);
     }
 
     await tx.mutate.speaker_list.delete({ id: args.id });

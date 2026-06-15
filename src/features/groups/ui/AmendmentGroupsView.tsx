@@ -1,3 +1,4 @@
+import type { ComponentProps, CSSProperties } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 import { CountBadge } from '@/features/shared/ui/status';
@@ -17,7 +18,7 @@ interface AmendmentGroupsViewProps {
     label: string;
     items: {
       id: string;
-      cardAmendment: React.ComponentProps<typeof AmendmentTimelineCard>['amendment'];
+      cardAmendment: ComponentProps<typeof AmendmentTimelineCard>['amendment'];
     }[];
   }[];
   onToggleSection: (section: GroupAmendmentDisplayStatus) => void;
@@ -28,6 +29,8 @@ export function AmendmentGroupsView({
   sectionOrder,
   onToggleSection,
 }: AmendmentGroupsViewProps) {
+  let nextMotionIndex = 0;
+
   return (
     <div className="space-y-6">
       {sectionOrder.map((section: AmendmentGroupsViewProps['sectionOrder'][number]) => {
@@ -35,16 +38,22 @@ export function AmendmentGroupsView({
           return null;
         }
 
+        const isSectionOpen = openSections[section.key];
+        const sectionMotionStartIndex = nextMotionIndex;
+        if (isSectionOpen) {
+          nextMotionIndex += section.items.length;
+        }
+
         return (
           <Collapsible
             key={section.key}
-            open={openSections[section.key]}
+            open={isSectionOpen}
             onOpenChange={() => onToggleSection(section.key)}
           >
             <div className="bg-card rounded-lg border">
               <CollapsibleTrigger className="hover:bg-accent flex w-full items-center justify-between p-4">
                 <div className="flex items-center gap-2">
-                  {openSections[section.key] ? (
+                  {isSectionOpen ? (
                     <ChevronDown className="h-5 w-5" />
                   ) : (
                     <ChevronRight className="h-5 w-5" />
@@ -57,12 +66,22 @@ export function AmendmentGroupsView({
                 <div className="grid gap-4 p-4 md:grid-cols-2">
                   {section.items.map(
                     (
-                      amendment: AmendmentGroupsViewProps['sectionOrder'][number]['items'][number]
+                      amendment: AmendmentGroupsViewProps['sectionOrder'][number]['items'][number],
+                      index: number
                     ) => (
-                      <AmendmentTimelineCard
+                      <div
                         key={amendment.id}
-                        amendment={amendment.cardAmendment}
-                      />
+                        className={isSectionOpen ? 'civic-load-card-reveal' : undefined}
+                        style={
+                          isSectionOpen
+                            ? ({
+                                '--civic-load-index': Math.min(sectionMotionStartIndex + index, 11),
+                              } as CSSProperties)
+                            : undefined
+                        }
+                      >
+                        <AmendmentTimelineCard amendment={amendment.cardAmendment} />
+                      </div>
                     )
                   )}
                 </div>

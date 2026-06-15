@@ -28,6 +28,7 @@ import {
   normalizeSearchToken,
   resolveAttendanceMode,
 } from '../logic/agendaUiHelpers';
+import { canJoinEventSpeakerList } from '../logic/speakerListPermissions';
 import { buildFinalVoteFromAgendaVote } from '../logic/buildFinalVoteFromAgendaVote';
 import {
   getOfflineTallySuccessMessage,
@@ -67,6 +68,8 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const [statsOpen, setStatsOpen] = useState(false);
   const [streamOpen, setStreamOpen] = useState(true);
   const [streamDetailsOpen, setStreamDetailsOpen] = useState(false);
+  const [liveFocusOpen, setLiveFocusOpen] = useState(false);
+  const [selectedCRToolbarItemId, setSelectedCRToolbarItemId] = useState<string | null>(null);
   const [addingSpeaker, setAddingSpeaker] = useState(false);
   const [removingSpeaker, setRemovingSpeaker] = useState(false);
   const [, setMarkingSpeakerComplete] = useState<string | null>(null);
@@ -114,6 +117,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   // Check if user can manage agenda items
   const canManageAgenda = can('manage', 'agendaItems');
   const canManageVotes = can('manage_votes', 'events');
+  const canJoinSpeakerList = canJoinEventSpeakerList(can);
   const canManageOfflineTallies = can('manage_votes', 'events') || canManageAgenda;
   const [draggedAgendaItemId, setDraggedAgendaItemId] = useState<string | null>(null);
   const [dragOverAgendaItemId, setDragOverAgendaItemId] = useState<string | null>(null);
@@ -214,6 +218,25 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   );
 
   const liveAgendaItem = useMemo<EventAgendaItemRow | null>(() => {
+    if (currentAgendaItemId) {
+      const eventCurrentItem = agendaItems.find(item => item.id === currentAgendaItemId);
+      const eventCurrentRuntimeStatus = eventCurrentItem
+        ? getAgendaRuntimeStatus({
+            id: eventCurrentItem.id,
+            status: eventCurrentItem.status,
+            start_time: eventCurrentItem.start_time,
+            end_time: eventCurrentItem.end_time,
+            activated_at: eventCurrentItem.activated_at,
+            completed_at: eventCurrentItem.completed_at,
+            currentAgendaItemId,
+          })
+        : null;
+
+      if (eventCurrentItem && eventCurrentRuntimeStatus !== 'completed') {
+        return eventCurrentItem;
+      }
+    }
+
     if (agendaNav.currentAgendaItem?.id) {
       return (
         agendaItems.find(item => item.id === agendaNav.currentAgendaItem?.id) ?? activeAgendaItem
@@ -221,7 +244,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     }
 
     return activeAgendaItem;
-  }, [agendaItems, agendaNav.currentAgendaItem?.id, activeAgendaItem]);
+  }, [agendaItems, currentAgendaItemId, agendaNav.currentAgendaItem?.id, activeAgendaItem]);
   const liveAgendaItemId = liveAgendaItem?.id;
 
   // Unified spotlight used by stream panel, toolbar TOP label and agenda pointer.
@@ -390,19 +413,66 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     () => crVoting.finalVoteItem ?? synthesizedFinalVoteItem,
     [crVoting.finalVoteItem, synthesizedFinalVoteItem]
   );
-  const nextPendingCRItem = useMemo(
-    () =>
-      crVoting.crTimeline.find(item => !item.is_final_vote && item.status !== 'completed') ?? null,
+  const nonFinalCRItems = useMemo(
+    () => crVoting.crTimeline.filter(item => !item.is_final_vote),
     [crVoting.crTimeline]
   );
+  const nextPendingCRItem = useMemo(
+    () => nonFinalCRItems.find(item => item.status !== 'completed') ?? null,
+    [nonFinalCRItems]
+  );
+  const fallbackSelectedCRItemId = useMemo(() => {
+    if (crVoting.currentItem?.id) return crVoting.currentItem.id;
+    if (nextPendingCRItem?.id) return nextPendingCRItem.id;
+    return effectiveFinalVoteItem?.id ?? null;
+  }, [crVoting.currentItem?.id, effectiveFinalVoteItem?.id, nextPendingCRItem?.id]);
+
+  useEffect(() => {
+    if (!streamAgendaItem?.amendment_id) {
+      if (selectedCRToolbarItemId) {
+        setSelectedCRToolbarItemId(null);
+      }
+      return;
+    }
+
+    if (crVoting.currentItem?.id && crVoting.currentItem.id !== selectedCRToolbarItemId) {
+      setSelectedCRToolbarItemId(crVoting.currentItem.id);
+      return;
+    }
+
+    const selectedItemStillExists = selectedCRToolbarItemId
+      ? crVoting.crTimeline.some(item => item.id === selectedCRToolbarItemId) ||
+        effectiveFinalVoteItem?.id === selectedCRToolbarItemId
+      : false;
+
+    if (!selectedItemStillExists && fallbackSelectedCRItemId) {
+      setSelectedCRToolbarItemId(fallbackSelectedCRItemId);
+      return;
+    }
+
+    if (!selectedItemStillExists && selectedCRToolbarItemId) {
+      setSelectedCRToolbarItemId(null);
+    }
+  }, [
+    crVoting.crTimeline,
+    crVoting.currentItem?.id,
+    effectiveFinalVoteItem?.id,
+    fallbackSelectedCRItemId,
+    selectedCRToolbarItemId,
+    streamAgendaItem?.amendment_id,
+  ]);
+
   const activeCRToolbarItem = useMemo(
     () =>
-      crVoting.currentItem ??
-      nextPendingCRItem ??
-      (crVoting.allCRsProcessed ? effectiveFinalVoteItem : null),
-    [crVoting.allCRsProcessed, crVoting.currentItem, effectiveFinalVoteItem, nextPendingCRItem]
+      crVoting.crTimeline.find(item => item.id === selectedCRToolbarItemId) ??
+      (effectiveFinalVoteItem?.id === selectedCRToolbarItemId ? effectiveFinalVoteItem : null) ??
+      crVoting.crTimeline.find(item => item.id === fallbackSelectedCRItemId) ??
+      (effectiveFinalVoteItem?.id === fallbackSelectedCRItemId ? effectiveFinalVoteItem : null) ??
+      null,
+    [crVoting.crTimeline, effectiveFinalVoteItem, fallbackSelectedCRItemId, selectedCRToolbarItemId]
   );
-  const isCRToolbarActive = !!streamAgendaItem?.amendment_id && !!activeCRToolbarItem;
+  const isCRToolbarActive =
+    !!streamAgendaItem?.amendment_id && crVoting.crTimeline.length > 0 && !!activeCRToolbarItem;
   const selectedCRPhase = getEffectiveCRVotingPhase(activeCRToolbarItem);
   const isSelectedCRFinalVote = !!activeCRToolbarItem?.is_final_vote;
   const hasUserVotedOnSelectedCR = useMemo(
@@ -654,6 +724,15 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       (voter: { user_id?: string | null }) => voter.user_id === user?.id
     );
   }, [streamVote?.voters, user?.id]);
+  const toolbarVote = useMemo(
+    () => (isCRToolbarActive ? (activeCRToolbarItem?.vote ?? streamVote) : streamVote),
+    [activeCRToolbarItem?.vote, isCRToolbarActive, streamVote]
+  );
+  const toolbarUserVoter = useMemo(() => {
+    return toolbarVote?.voters?.find(
+      (voter: { user_id?: string | null }) => voter.user_id === user?.id
+    );
+  }, [toolbarVote?.voters, user?.id]);
   const actionBarHook = useAgendaActionBar({
     eventId,
     currentAgendaItem: streamAgendaItem
@@ -667,9 +746,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       : null,
     eventTitle: event?.title,
     election: toolbarElection,
-    vote: streamVote,
+    vote: toolbarVote,
     electorId: userElector?.id,
-    voterId: userVoter?.id,
+    voterId: toolbarUserVoter?.id,
   });
   const toolbarAgendaItem = spotlightAgendaItem as EventAgendaItemRow | null;
   const topNumberByAgendaItemId = useMemo(
@@ -902,7 +981,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   );
 
   const handleAddToSpeakerList = async () => {
-    if (!user?.id || !streamAgendaItem?.id) return;
+    if (!user?.id || !streamAgendaItem?.id || !canJoinSpeakerList) return;
 
     setAddingSpeaker(true);
     try {
@@ -1070,6 +1149,8 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       setStreamOpen={setStreamOpen}
       streamDetailsOpen={streamDetailsOpen}
       setStreamDetailsOpen={setStreamDetailsOpen}
+      liveFocusOpen={liveFocusOpen}
+      setLiveFocusOpen={setLiveFocusOpen}
       addingSpeaker={addingSpeaker}
       setAddingSpeaker={setAddingSpeaker}
       removingSpeaker={removingSpeaker}
@@ -1098,6 +1179,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       setDismissedOverdueAgendaItemId={setDismissedOverdueAgendaItemId}
       canManageAgenda={canManageAgenda}
       canManageVotes={canManageVotes}
+      canJoinSpeakerList={canJoinSpeakerList}
       canManageOfflineTallies={canManageOfflineTallies}
       draggedAgendaItemId={draggedAgendaItemId}
       setDraggedAgendaItemId={setDraggedAgendaItemId}

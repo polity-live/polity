@@ -3,7 +3,7 @@ import { ResolvedBlogRedirectView } from './ResolvedBlogRedirectView';
 
 interface ResolvedBlogRedirectProps {
   blogId: string;
-  target?: 'detail' | 'notifications';
+  target?: 'detail' | 'notifications' | 'edit';
 }
 
 export function ResolvedBlogRedirect({ blogId, target = 'detail' }: ResolvedBlogRedirectProps) {

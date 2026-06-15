@@ -18,23 +18,17 @@ function renderCanvasView(
   return render(
     <StreetSceneCanvasViewView
       design={createEmptyStreetDesignState()}
-      placementPreview={null}
       placementMode={null}
       placementPointCount={0}
       canFinishPathPlacement={false}
-      selectedObjectId={tree.id}
       selectedObject={tree}
       interactionMode="place"
       readOnly={false}
-      onPointerDown={vi.fn()}
-      onPointerMove={vi.fn()}
       onFinishPathPlacement={vi.fn()}
       onCancelPlacement={vi.fn()}
-      onObjectSelect={vi.fn()}
       onDeleteObject={vi.fn()}
       canvasRef={{ current: null }}
       loadFailed={false}
-      setLoadFailed={vi.fn()}
       {...overrides}
     />
   );
@@ -55,7 +49,6 @@ describe('StreetSceneCanvasViewView', () => {
     const onCancelPlacement = vi.fn();
     renderCanvasView({
       selectedObject: null,
-      selectedObjectId: null,
       placementMode: 'path',
       placementPointCount: 2,
       canFinishPathPlacement: true,

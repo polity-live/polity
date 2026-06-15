@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useBlogState } from '@/zero/blogs/useBlogState';
@@ -10,37 +10,48 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 
 export interface BlogFormData {
   title: string;
-  description: string;
+  date: string;
   imageURL: string;
   visibility: Visibility;
-  tags: string[];
+  hashtags: string[];
 }
 
 /**
  * Hook for blog update functionality
  */
-export function useBlogEditPage(blogId: string, actorId?: string) {
+export function useBlogEditPage(
+  blogId: string,
+  actorId?: string,
+  routeContext: { groupId?: string; userId?: string } = {}
+) {
   const navigate = useNavigate();
-  const { updateBlog, updateBlogSilent } = useBlogActions();
+  const { updateBlog } = useBlogActions();
   const commonActions = useCommonActions();
 
   const [formData, setFormData] = useState<BlogFormData>({
     title: '',
-    description: '',
+    date: new Date().toISOString().split('T')[0] ?? '',
     imageURL: '',
     visibility: 'public' as Visibility,
-    tags: [],
+    hashtags: [],
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch blog data
-  const { blogWithHashtags } = useBlogState({ blogId, includeHashtags: true });
-  const { blogHashtags, allHashtags } = useCommonState({
+  const { blogWithHashtags, isLoading: isBlogLoading } = useBlogState({
+    blogId,
+    includeHashtags: true,
+  });
+  const {
+    blogHashtags,
+    allHashtags,
+    isLoading: isCommonLoading,
+  } = useCommonState({
     blog_id: blogId,
     loadAllHashtags: true,
   });
-  const isLoading = false;
+  const isLoading = isBlogLoading || isCommonLoading;
 
   const blog = blogWithHashtags;
 
@@ -56,10 +67,10 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
         .filter((t): t is string => !!t);
       setFormData({
         title: blog.title || '',
-        description: blog.description || '',
+        date: blog.date || new Date().toISOString().split('T')[0] || '',
         imageURL: blog.image_url || '',
         visibility: (blog.visibility as Visibility) ?? 'public',
-        tags: existingTags.length > 0 ? existingTags : [],
+        hashtags: existingTags.length > 0 ? existingTags : [],
       });
     }
   }, [blog]);
@@ -69,7 +80,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
     if (blogHashtags && blogHashtags.length > 0 && !hashtagsInitializedRef.current) {
       hashtagsInitializedRef.current = true;
       const tags = blogHashtags.map(j => j.hashtag?.tag).filter((t): t is string => !!t);
-      setFormData(prev => ({ ...prev, tags }));
+      setFormData(prev => ({ ...prev, hashtags: tags }));
     }
   }, [blogHashtags]);
 
@@ -79,14 +90,31 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
   };
 
   const removeImage = () => {
-    updateBlogSilent({
-      id: blogId,
-      image_url: null,
-    });
+    updateField('imageURL', '');
+  };
+
+  const navigateToBlog = () => {
+    const groupId = routeContext.groupId ?? blog?.group_id;
+    const userId = routeContext.userId ?? actorId;
+
+    if (groupId) {
+      navigate({
+        to: '/group/$id/blog/$entryId',
+        params: { id: groupId, entryId: blogId },
+      });
+      return;
+    }
+
+    if (userId) {
+      navigate({ to: '/user/$id/blog/$entryId', params: { id: userId, entryId: blogId } });
+      return;
+    }
+
+    navigate({ to: '/blog/$id', params: { id: blogId } });
   };
 
   // Submit handler
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -99,7 +127,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
       await updateBlog({
         id: blogId,
         title: formData.title,
-        description: formData.description,
+        date: formData.date,
         image_url: formData.imageURL,
         visibility: formData.visibility,
       });
@@ -133,20 +161,13 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
       await commonActions.syncEntityHashtags(
         'blog',
         blogId,
-        formData.tags,
+        formData.hashtags,
         blogHashtags ?? [],
         allHashtags ?? []
       );
 
       toast.success(translateText('generated.inline.0221_blog_updated_successfully_8a7cc27d'));
-      if (blog?.group_id) {
-        navigate({
-          to: '/group/$id/blog/$entryId',
-          params: { id: blog.group_id, entryId: blogId },
-        });
-      } else {
-        navigate({ to: '/user/$id/blog/$entryId', params: { id: actorId || '', entryId: blogId } });
-      }
+      navigateToBlog();
     } catch (error) {
       console.error('Update error:', error);
       toast.error(translateText('generated.inline.0222_failed_to_update_blog_68056f92'));
@@ -164,5 +185,6 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
     isSubmitting,
     blog,
     isLoading,
+    navigateToBlog,
   };
 }

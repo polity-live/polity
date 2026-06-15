@@ -4,6 +4,8 @@ import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-a
 import { NotFound } from '@/features/shared/ui/ui/not-found';
 import type { Amendment } from '@/zero/amendments/schema';
 import type {
+  CorridorGeometry,
+  PathCorridorGeometry,
   StreetDesignBoundingBox,
   StreetDesignCostLine,
   StreetDesignCostSummary,
@@ -15,7 +17,6 @@ import type {
   StreetDesignObjectType,
   StreetDesignOsmLayerVisibility,
   StreetDesignOsmWay,
-  StreetDesignPlacementDraft,
   StreetDesignPropertyValue,
   StreetDesignStateV1,
 } from '../types';
@@ -28,7 +29,7 @@ import { StreetSceneCanvasView } from './StreetSceneCanvasView';
 interface StreetDesignPageViewProps {
   amendment: Amendment | null | undefined;
   isLoading: boolean;
-  canEdit: boolean;
+  readOnly: boolean;
   design: StreetDesignStateV1;
   selectedObject: StreetDesignObject | null;
   selectedOsmWay: StreetDesignOsmWay | null;
@@ -41,11 +42,18 @@ interface StreetDesignPageViewProps {
   selectedMapSelection: StreetDesignMapSelection;
   costSummary: StreetDesignCostSummary;
   isDirty: boolean;
+  placementPreview: CorridorGeometry | PathCorridorGeometry | null;
+  placementPreviewType: StreetDesignObjectType | null;
+  placementStart: StreetDesignLocalPoint | null;
+  placementMode: 'drag_band' | 'path' | null;
+  placementPointCount: number;
+  canFinishPathPlacement: boolean;
+  osmLayerVisibility: StreetDesignOsmLayerVisibility;
+  showStreetMarkings: boolean;
   isLoadingOsm: boolean;
   osmError: string | null;
   isSaving: boolean;
   saveError: string | null;
-  placementDraft: StreetDesignPlacementDraft | null;
   onSelectedMapSelectionChange: (selection: StreetDesignMapSelection) => void;
   onLoadOsm: () => void;
   onLoadSample: () => void;
@@ -55,6 +63,7 @@ interface StreetDesignPageViewProps {
   onComparisonModeChange: (mode: StreetDesignStateV1['comparisonMode']) => void;
   onScenePointerDown: (point: StreetDesignLocalPoint) => void;
   onScenePointerMove: (point: StreetDesignLocalPoint) => void;
+  onFinishPlacement: () => void;
   onFinishPathPlacement: () => void;
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
@@ -74,7 +83,7 @@ interface StreetDesignPageViewProps {
 export function StreetDesignPageView({
   amendment,
   isLoading,
-  canEdit,
+  readOnly,
   design,
   selectedObject,
   selectedOsmWay,
@@ -87,11 +96,18 @@ export function StreetDesignPageView({
   selectedMapSelection,
   costSummary,
   isDirty,
+  placementPreview,
+  placementPreviewType,
+  placementStart,
+  placementMode,
+  placementPointCount,
+  canFinishPathPlacement,
+  osmLayerVisibility,
+  showStreetMarkings,
   isLoadingOsm,
   osmError,
   isSaving,
   saveError,
-  placementDraft,
   onSelectedMapSelectionChange,
   onLoadOsm,
   onLoadSample,
@@ -101,6 +117,7 @@ export function StreetDesignPageView({
   onComparisonModeChange,
   onScenePointerDown,
   onScenePointerMove,
+  onFinishPlacement,
   onFinishPathPlacement,
   onCancelPlacement,
   onObjectSelect,
@@ -120,18 +137,6 @@ export function StreetDesignPageView({
   if (!amendment) {
     return <NotFound />;
   }
-
-  const readOnly = !canEdit;
-  const placementPreview = placementDraft?.preview ?? null;
-  const canFinishPathPlacement =
-    placementDraft?.mode === 'path' && placementDraft.points.length >= 2;
-  const osmLayerVisibility = design.osmLayerVisibility ?? {
-    road: true,
-    building: true,
-    green: true,
-    water: true,
-  };
-  const showStreetMarkings = design.showStreetMarkings ?? true;
 
   return (
     <main className="mx-auto flex w-full max-w-[1600px] flex-col gap-4 p-4 lg:p-6">
@@ -178,10 +183,10 @@ export function StreetDesignPageView({
         <StreetSceneCanvasView
           design={design}
           placementPreview={placementPreview}
-          placementPreviewType={placementDraft?.type ?? null}
-          placementStart={placementDraft?.start ?? null}
-          placementMode={placementDraft?.mode ?? null}
-          placementPointCount={placementDraft?.points.length ?? 0}
+          placementPreviewType={placementPreviewType}
+          placementStart={placementStart}
+          placementMode={placementMode}
+          placementPointCount={placementPointCount}
           canFinishPathPlacement={canFinishPathPlacement}
           selectedObjectId={selectedObjectId}
           selectedObject={selectedObject}
@@ -190,6 +195,7 @@ export function StreetDesignPageView({
           readOnly={readOnly}
           onPointerDown={onScenePointerDown}
           onPointerMove={onScenePointerMove}
+          onFinishPlacement={onFinishPlacement}
           onFinishPathPlacement={onFinishPathPlacement}
           onCancelPlacement={onCancelPlacement}
           onObjectSelect={onObjectSelect}

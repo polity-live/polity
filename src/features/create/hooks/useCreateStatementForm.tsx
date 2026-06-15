@@ -4,6 +4,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { useStatementMutations } from '@/features/statements/hooks/useStatementMutations';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useCommonState } from '@/zero/common/useCommonState';
+import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { useGroupById, useGroupState } from '@/zero/groups/useGroupState';
 import {
   useTranslation,
@@ -16,7 +17,12 @@ import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import { CreateCharacterCountNotice } from '../ui/CreateInlineNotice';
 import { StatementSurveyInput } from '../ui/inputs/StatementSurveyInput';
-import type { CreateFormConfig } from '../types/create-form.types';
+import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
+import {
+  createBlockedSubmitOutcome,
+  createRouteSubmitTarget,
+  createSuccessSubmitOutcome,
+} from '../logic/createSubmitTargets';
 
 const MAX_CHARS = 280;
 
@@ -32,7 +38,14 @@ export function useCreateStatementForm(): CreateFormConfig {
   const { user } = useAuth();
   const { createStatement, createSurvey, createSurveyOption, isLoading } = useStatementMutations();
   const { syncEntityHashtags } = useCommonActions();
-  const { allHashtags } = useCommonState({ loadAllHashtags: true });
+  const { allHashtags, userHashtags } = useCommonState({
+    user_id: user?.id,
+    loadAllHashtags: true,
+  });
+  const preferredHashtagSuggestions = useMemo(
+    () => extractHashtagTags(userHashtags),
+    [userHashtags]
+  );
   const { currentUserMembershipsWithGroups } = useGroupState({
     includeCurrentUserMembershipsWithGroups: true,
   });
@@ -101,8 +114,9 @@ export function useCreateStatementForm(): CreateFormConfig {
     });
   };
 
-  const handleSubmit = async () => {
-    if (!user) return;
+  const handleSubmit = async (context?: CreateSubmitContext) => {
+    if (!user) return createBlockedSubmitOutcome();
+    context?.reportProgress({ key: 'create', status: 'active' });
     const result = await createStatement(user.id, text.trim(), {
       groupId,
       imageUrl: imageUrl || null,
@@ -111,6 +125,8 @@ export function useCreateStatementForm(): CreateFormConfig {
     });
 
     if (result.success && result.statementId) {
+      context?.reportProgress({ key: 'create', status: 'complete' });
+      context?.reportProgress({ key: 'sync', status: 'active' });
       // Sync hashtags
       if (hashtags.length > 0) {
         await syncEntityHashtags('statement', result.statementId, hashtags, [], allHashtags ?? []);
@@ -127,18 +143,29 @@ export function useCreateStatementForm(): CreateFormConfig {
           ends_at: endsAt,
         });
         const validOptions = surveyOptions.filter(o => o.trim());
-        for (let i = 0; i < validOptions.length; i++) {
-          await createSurveyOption({
-            id: crypto.randomUUID(),
-            survey_id: surveyId,
-            label: validOptions[i].trim(),
-            position: i,
-          });
-        }
+        await Promise.all(
+          validOptions.map((option, index) =>
+            createSurveyOption({
+              id: crypto.randomUUID(),
+              survey_id: surveyId,
+              label: option.trim(),
+              position: index,
+            })
+          )
+        );
       }
 
-      navigate({ to: '/statement/$id', params: { id: result.statementId } });
+      context?.reportProgress({ key: 'sync', status: 'complete' });
+      context?.reportProgress({ key: 'ready', status: 'active' });
+      return createSuccessSubmitOutcome(
+        createRouteSubmitTarget('statement', {
+          to: '/statement/$id',
+          params: { id: result.statementId },
+        })
+      );
     }
+
+    throw new Error(t('pages.create.error.createFailed'));
   };
 
   const config = useMemo(
@@ -147,6 +174,11 @@ export function useCreateStatementForm(): CreateFormConfig {
       title: 'pages.create.statement.title',
       isSubmitting: isLoading,
       onSubmit: handleSubmit,
+      submissionSteps: [
+        { key: 'create', label: 'Erstellt Aussage' },
+        { key: 'sync', label: 'Synchronisiert Hashtags und Umfrage' },
+        { key: 'ready', label: 'Bereitet Aussage vor' },
+      ],
       steps: [
         {
           label: t('pages.create.statement.textLabel'),
@@ -248,6 +280,7 @@ export function useCreateStatementForm(): CreateFormConfig {
                 value: hashtags,
                 onChange: setHashtags,
                 placeholder: t('pages.create.statement.hashtagPlaceholder'),
+                preferredSuggestions: preferredHashtagSuggestions,
               },
             },
           ],
@@ -348,6 +381,7 @@ export function useCreateStatementForm(): CreateFormConfig {
       surveyOptions,
       surveyDurationHours,
       hashtags,
+      preferredHashtagSuggestions,
       visibility,
       visibilityLabel,
       isLoading,

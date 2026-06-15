@@ -2,6 +2,10 @@
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Link } from 'lucide-react';
 import {
+  ActionSubmissionOverlay,
+  type ActionSubmissionController,
+} from '@/features/shared/ui/action-submission';
+import {
   Dialog,
   DialogDescription,
   DialogFooter,
@@ -25,6 +29,7 @@ export interface LinkGroupDialogViewProps {
   proposeGroupConnectionChange: any;
   open: any;
   setOpen: any;
+  actionSubmission: ActionSubmissionController;
   initializedForOpenRef: any;
   lastHydratedStateRef: any;
   isEditMode: any;
@@ -67,6 +72,7 @@ export function LinkGroupDialogView({
   t,
   open,
   setOpen,
+  actionSubmission,
   isEditMode,
   groupStateLoading,
   availableGroups,
@@ -82,8 +88,16 @@ export function LinkGroupDialogView({
   preflight,
   handleSubmit,
 }: LinkGroupDialogViewProps) {
+  const submissionActive = actionSubmission.isActive;
+  const selectedGroupName =
+    availableGroups.find((group: any) => group.id === value.selectedGroupId)?.name ??
+    value.selectedGroupId;
+  const relationshipLabel = isEditMode
+    ? t('common.network.editRelationship')
+    : t('common.network.linkGroupTitle');
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={submissionActive ? undefined : setOpen}>
       <DialogTrigger asChild>
         {trigger ? (
           trigger
@@ -94,83 +108,118 @@ export function LinkGroupDialogView({
           </Button>
         )}
       </DialogTrigger>
-      <ScrollableDialogContent className="h-[min(90dvh,46rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-[760px]">
-        <DialogHeader className="px-6 pt-6 pr-12 pb-4">
-          <DialogTitle>
-            {isEditMode ? t('common.network.editRelationship') : t('common.network.linkGroupTitle')}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditMode
-              ? t('common.network.editRelationshipDescription', {
-                  groupName: currentGroupName || t('common.unspecified'),
-                })
-              : t('common.network.linkGroupDescription', { groupName: currentGroupName })}
-          </DialogDescription>
-        </DialogHeader>
+      <ScrollableDialogContent
+        showCloseButton={!submissionActive}
+        className={
+          submissionActive
+            ? 'h-dvh max-h-none w-screen max-w-none overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none sm:max-w-none'
+            : 'h-[min(90dvh,46rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-[760px]'
+        }
+      >
+        {!submissionActive ? (
+          <>
+            <DialogHeader className="px-6 pt-6 pr-12 pb-4">
+              <DialogTitle>{relationshipLabel}</DialogTitle>
+              <DialogDescription>
+                {isEditMode
+                  ? t('common.network.editRelationshipDescription', {
+                      groupName: currentGroupName || t('common.unspecified'),
+                    })
+                  : t('common.network.linkGroupDescription', { groupName: currentGroupName })}
+              </DialogDescription>
+            </DialogHeader>
 
-        <div className="grid min-h-0 content-start gap-4 overflow-y-auto px-6 py-4">
-          <GroupConnectionComposer
-            activeTab={activeTab}
-            onActiveTabChange={setActiveTab}
-            value={value}
-            onValueChange={setValue}
-            currentGroupId={currentGroupId}
-            currentGroupName={currentGroupName}
-            availableGroups={availableGroups}
-            selectableRolesByDirection={selectableRolesByDirection}
-            existingRightStatuses={existingRightStatuses}
-            preflight={preflight}
-            disableGroupSelection={isEditMode}
-            groupSelectorLabel={t('common.network.selectGroup')}
-          />
-        </div>
-
-        <DialogFooter separator className="px-6 py-4">
-          {preflight.isLoading ? (
-            <div className="text-muted-foreground mr-auto text-sm">
-              {translateText('generated.inline.0798_pr_fe_konflikte_f9c644cd')}
+            <div className="grid min-h-0 content-start gap-4 overflow-y-auto px-6 py-4">
+              <GroupConnectionComposer
+                activeTab={activeTab}
+                onActiveTabChange={setActiveTab}
+                value={value}
+                onValueChange={setValue}
+                currentGroupId={currentGroupId}
+                currentGroupName={currentGroupName}
+                availableGroups={availableGroups}
+                selectableRolesByDirection={selectableRolesByDirection}
+                existingRightStatuses={existingRightStatuses}
+                preflight={preflight}
+                disableGroupSelection={isEditMode}
+                groupSelectorLabel={t('common.network.selectGroup')}
+              />
             </div>
-          ) : null}
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
-            {t('common.actions.cancel')}
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={
-              !value.selectedGroupId ||
-              isSubmitting ||
-              groupStateLoading ||
-              pairConnectionsLoading ||
-              pairConnectionRequestsLoading ||
-              preflight.isLoading ||
-              preflight.blocking ||
-              (() => {
-                const selectedMembershipDirection = getSelectedMembershipDirection({
-                  membershipDirection: value.membershipDirection,
-                  membershipRule: value.membershipRule,
-                });
 
-                if (!selectedMembershipDirection) {
-                  return false;
+            <DialogFooter separator className="px-6 py-4">
+              {preflight.isLoading ? (
+                <div className="text-muted-foreground mr-auto text-sm">
+                  {translateText('generated.inline.0798_pr_fe_konflikte_f9c644cd')}
+                </div>
+              ) : null}
+              <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
+                {t('common.actions.cancel')}
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={
+                  !value.selectedGroupId ||
+                  isSubmitting ||
+                  groupStateLoading ||
+                  pairConnectionsLoading ||
+                  pairConnectionRequestsLoading ||
+                  preflight.isLoading ||
+                  preflight.blocking ||
+                  (() => {
+                    const selectedMembershipDirection = getSelectedMembershipDirection({
+                      membershipDirection: value.membershipDirection,
+                      membershipRule: value.membershipRule,
+                    });
+
+                    if (!selectedMembershipDirection) {
+                      return false;
+                    }
+
+                    const selectedMembershipRule = value.membershipRule;
+                    return (
+                      (selectedMembershipRule.membershipMode === 'role_members' &&
+                        !selectedMembershipRule.roleId) ||
+                      (selectedMembershipRule.membershipMode === 'selected_source_groups' &&
+                        selectedMembershipRule.sourceGroupIds.length === 0)
+                    );
+                  })()
                 }
-
-                const selectedMembershipRule = value.membershipRule;
-                return (
-                  (selectedMembershipRule.membershipMode === 'role_members' &&
-                    !selectedMembershipRule.roleId) ||
-                  (selectedMembershipRule.membershipMode === 'selected_source_groups' &&
-                    selectedMembershipRule.sourceGroupIds.length === 0)
-                );
-              })()
-            }
-          >
-            {isSubmitting
-              ? t('common.network.saving')
-              : isEditMode
-                ? t('common.network.saveChanges')
-                : t('common.actions.create')}
-          </Button>
-        </DialogFooter>
+              >
+                {isSubmitting
+                  ? t('common.network.saving')
+                  : isEditMode
+                    ? t('common.network.saveChanges')
+                    : t('common.actions.create')}
+              </Button>
+            </DialogFooter>
+          </>
+        ) : null}
+        <ActionSubmissionOverlay
+          kind="link"
+          status={actionSubmission.status}
+          steps={actionSubmission.progressSteps}
+          error={actionSubmission.error}
+          preview={{
+            entityLabel: relationshipLabel,
+            title: selectedGroupName || t('common.network.linkGroupTitle'),
+            description: t('common.network.linkPreviewDescription', {
+              groupName: currentGroupName || t('common.unspecified'),
+              otherGroupName: selectedGroupName || t('common.unspecified'),
+              rights: value.relationshipType,
+            }),
+            path: [currentGroupName || t('common.unspecified'), selectedGroupName].filter(Boolean),
+            badges: [value.relationshipType],
+          }}
+          target={{
+            label: t('common.done', 'Fertig'),
+            onClick: () => {
+              actionSubmission.reset();
+              setOpen(false);
+            },
+          }}
+          onBack={actionSubmission.reset}
+          onRetry={() => void actionSubmission.retry()}
+        />
       </ScrollableDialogContent>
     </Dialog>
   );

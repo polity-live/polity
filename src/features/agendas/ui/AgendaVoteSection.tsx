@@ -4,13 +4,13 @@ import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Vote, CheckCircle2, Crown, Expand } from 'lucide-react';
+import { Vote, CheckCircle2, Expand } from 'lucide-react';
 import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
-import { VoteResultsDisplay } from '@/features/vote-cast/ui/VoteResultsDisplay';
+import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/VoteResultsDisplay';
 import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
 import { VotingPhaseBadge as VotePhaseBadge } from '@/features/shared/ui/voting';
 import {
@@ -210,6 +210,22 @@ export function AgendaVoteSection({
 
   const isInteractive = Boolean(onOpenNamedResults);
   const ResultsWrapper = isInteractive ? 'button' : 'div';
+  const voteOptions = useMemo<VoteBarOption[]>(() => {
+    return choiceStats.map((cs, idx) => {
+      const colors = CHOICE_COLORS[idx % CHOICE_COLORS.length];
+
+      return {
+        key: cs.choice.id,
+        label: cs.choice.label || `Choice ${idx + 1}`,
+        color: colors.color,
+        lightColor: colors.light,
+        finalCount: cs.finalCount,
+        finalPercent: cs.finalPercentage,
+        indicationCount: cs.indicativeCount,
+        indicationPercent: cs.indicativePercentage,
+      };
+    });
+  }, [choiceStats]);
 
   return (
     <Card className={cn(className)}>
@@ -283,56 +299,16 @@ export function AgendaVoteSection({
               <p className="text-muted-foreground">{t('features.events.agenda.noChoices')}</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {choiceStats.map((cs, idx) => {
-                const isWinner = cs.choice.id === winningChoiceId && !isIndicationPhase;
-                const isSelected = userSelectedChoiceIds.includes(cs.choice.id);
-                const colors = CHOICE_COLORS[idx % CHOICE_COLORS.length];
-
-                return (
-                  <div
-                    key={cs.choice.id}
-                    className={cn(
-                      'rounded-lg border p-3 transition-colors',
-                      isSelected && 'border-primary bg-primary/5',
-                      isWinner &&
-                        isClosed &&
-                        featureThemeClassName('agendaAgendaElectionSectionWarningSurface')
-                    )}
-                  >
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="font-medium">{cs.choice.label || `Choice ${idx + 1}`}</span>
-                      {isWinner && isClosed && (
-                        <Crown
-                          className={featureThemeClassName(
-                            'agendaAgendaElectionSectionWarningIcon'
-                          )}
-                        />
-                      )}
-                      {isSelected && <CheckCircle2 className="text-primary h-4 w-4" />}
-                    </div>
-
-                    <VoteResultsDisplay
-                      options={[
-                        {
-                          key: cs.choice.id,
-                          label: cs.choice.label || `Choice ${idx + 1}`,
-                          color: colors.color,
-                          lightColor: colors.light,
-                          finalCount: cs.finalCount,
-                          finalPercent: cs.finalPercentage,
-                          indicationCount: cs.indicativeCount,
-                          indicationPercent: cs.indicativePercentage,
-                        },
-                      ]}
-                      phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
-                      totalFinal={totalFinal}
-                      totalIndication={totalIndicative}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+            <VoteResultsDisplay
+              options={voteOptions}
+              phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
+              totalFinal={totalFinal}
+              totalIndication={totalIndicative}
+              totalEligible={totalEligibleVoters}
+              selectedOptionIds={userSelectedChoiceIds}
+              winnerOptionId={isIndicationPhase ? null : winningChoiceId}
+              showWinner={!isIndicationPhase}
+            />
           )}
 
           {userHasVoted ? (

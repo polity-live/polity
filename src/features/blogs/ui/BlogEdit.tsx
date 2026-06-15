@@ -12,9 +12,11 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface BlogEditProps {
   blogId: string;
+  groupId?: string;
+  userId?: string;
 }
 import { BlogEditView } from './BlogEditView';
-export function BlogEdit({ blogId }: BlogEditProps) {
+export function BlogEdit({ blogId, groupId, userId }: BlogEditProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -27,12 +29,12 @@ export function BlogEdit({ blogId }: BlogEditProps) {
     isSubmitting,
     blog,
     isLoading,
-  } = useBlogEditPage(blogId, user?.id);
+    navigateToBlog,
+  } = useBlogEditPage(blogId, user?.id, { groupId, userId });
   return (
     <BlogEditView
       blogId={blogId}
       navigate={navigate}
-      user={user}
       t={t}
       formData={formData}
       setFormData={setFormData}
@@ -42,6 +44,7 @@ export function BlogEdit({ blogId }: BlogEditProps) {
       isSubmitting={isSubmitting}
       blog={blog}
       isLoading={isLoading}
+      navigateToBlog={navigateToBlog}
     />
   );
 }

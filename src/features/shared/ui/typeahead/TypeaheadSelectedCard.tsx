@@ -2,13 +2,16 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import { getEntityGradient, getEntityIcon } from '@/features/shared/logic/entityCardHelpers';
+import { getEntityIcon } from '@/features/shared/logic/entityCardHelpers';
 import {
   TYPEAHEAD_ENTITY_LABELS,
   type TypeaheadItem,
 } from '@/features/shared/logic/typeaheadHelpers';
-import { ENTITY_COLORS } from '@/features/shared/utils/entity-colors';
-import { getEntityToneClasses, type EntityTone } from '@/features/shared/theme';
+import {
+  getEntityToneClasses,
+  isPrimaryEntityTone,
+  type EntityTone,
+} from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 import { Hash, X } from 'lucide-react';
 import { getHashtagGradient } from '@/features/shared/logic/hashtagHelpers';
@@ -31,8 +34,13 @@ export function TypeaheadSelectedCard({
   onClick,
 }: TypeaheadSelectedCardProps) {
   const Icon = getEntityIcon(item.entityType);
-  const colors = ENTITY_COLORS[item.entityType as keyof typeof ENTITY_COLORS];
-  const toneClasses = getEntityToneClasses(item.entityType as EntityTone);
+  const entityType = item.entityType as EntityTone;
+  const toneClasses = getEntityToneClasses(entityType);
+  const primaryToneClasses = isPrimaryEntityTone(entityType)
+    ? getEntityToneClasses(entityType)
+    : null;
+  const entitySurfaceClassName = primaryToneClasses?.softSurface ?? toneClasses.surface;
+  const entityIconClassName = primaryToneClasses?.base ?? toneClasses.text;
   const isCompact = variant === 'compact';
   const detailMetadata = item.metadata?.filter(Boolean).slice(0, isCompact ? 1 : 3) ?? [];
   const detailHashtags = item.hashtags?.slice(0, isCompact ? 1 : 3) ?? [];
@@ -48,8 +56,11 @@ export function TypeaheadSelectedCard({
     <div className="flex items-start gap-3">
       <Avatar className={cn('shrink-0 ring-1 ring-white/60', isCompact ? 'h-8 w-8' : 'h-10 w-10')}>
         <AvatarImage src={item.avatar ?? undefined} />
-        <AvatarFallback className={cn('text-xs', colors?.badgeBg)}>
-          <Icon className={cn(isCompact ? 'h-4 w-4' : 'h-5 w-5')} />
+        <AvatarFallback className={cn('text-xs', toneClasses.badge)}>
+          <Icon
+            data-slot="typeahead-entity-icon"
+            className={cn(isCompact ? 'h-4 w-4' : 'h-5 w-5', entityIconClassName)}
+          />
         </AvatarFallback>
       </Avatar>
 
@@ -60,7 +71,11 @@ export function TypeaheadSelectedCard({
               <span className={cn('truncate font-medium', isCompact ? 'text-sm' : 'text-base')}>
                 {item.label}
               </span>
-              <Badge variant="outline" className={cn('text-[10px]', toneClasses.badge)}>
+              <Badge
+                variant="outline"
+                data-slot="typeahead-entity-badge"
+                className={cn('text-[10px]', toneClasses.badge)}
+              >
                 {TYPEAHEAD_ENTITY_LABELS[item.entityType]}
               </Badge>
             </div>
@@ -89,7 +104,12 @@ export function TypeaheadSelectedCard({
         {!isCompact && (detailMetadata.length > 0 || detailHashtags.length > 0) ? (
           <div className="mt-3 flex flex-wrap gap-2">
             {detailMetadata.map(metadata => (
-              <Badge key={metadata} variant="secondary" className="bg-white/70 text-[11px]">
+              <Badge
+                key={metadata}
+                variant="secondary"
+                data-slot="typeahead-metadata-badge"
+                className={cn('text-[11px]', toneClasses.tableTag)}
+              >
                 {metadata}
               </Badge>
             ))}
@@ -110,9 +130,9 @@ export function TypeaheadSelectedCard({
   );
 
   const surfaceClassName = cn(
-    'relative block overflow-hidden rounded-xl border shadow-sm transition-[color,background-color,border-color,box-shadow,transform] duration-[var(--motion-duration-base)]',
+    'entity-search-card-no-spotlight relative block overflow-hidden rounded-xl border shadow-sm transition-[border-color,box-shadow,transform] duration-[var(--motion-duration-base)]',
     item.url && 'civic-motion-hover-lift civic-motion-press hover:border-foreground/20',
-    getEntityGradient(item.entityType as keyof typeof ENTITY_COLORS),
+    entitySurfaceClassName,
     isCompact ? 'px-3 py-2' : 'px-4 py-3',
     className
   );

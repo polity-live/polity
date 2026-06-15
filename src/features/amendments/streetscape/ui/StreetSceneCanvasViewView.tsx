@@ -1,26 +1,26 @@
+import type { RefObject } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
+import type {
+  StreetDesignInteractionMode,
+  StreetDesignObject,
+  StreetDesignStateV1,
+} from '../types';
 import { getStreetDesignObjectDefinition } from '../logic/streetDesignObjectRegistry';
 
 export interface StreetSceneCanvasViewViewProps {
-  design: any;
-  placementPreview: any;
-  placementMode: any;
-  placementPointCount: any;
-  canFinishPathPlacement: any;
-  selectedObjectId: any;
-  selectedObject: any;
-  interactionMode: any;
-  readOnly: any;
-  onPointerDown: any;
-  onPointerMove: any;
-  onFinishPathPlacement: any;
-  onCancelPlacement: any;
-  onObjectSelect: any;
-  onDeleteObject: any;
-  canvasRef: any;
-  loadFailed: any;
-  setLoadFailed: any;
+  design: StreetDesignStateV1;
+  placementMode: 'drag_band' | 'path' | null;
+  placementPointCount: number;
+  canFinishPathPlacement: boolean;
+  selectedObject: StreetDesignObject | null;
+  interactionMode: StreetDesignInteractionMode;
+  readOnly: boolean;
+  onFinishPathPlacement: () => void;
+  onCancelPlacement: () => void;
+  onDeleteObject: (objectId: string) => void;
+  canvasRef: RefObject<HTMLCanvasElement | null>;
+  loadFailed: boolean;
 }
 
 export function StreetSceneCanvasViewView({

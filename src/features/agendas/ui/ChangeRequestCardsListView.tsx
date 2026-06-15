@@ -178,19 +178,6 @@ export function ChangeRequestCardsListView({
 
         {sharedPreviewEnabled && (
           <div className="bg-muted/20 space-y-2 rounded-lg border p-3">
-            {amendmentId && (
-              <EditingModeSelector amendmentId={amendmentId} currentMode={editingMode} />
-            )}
-            {editingMode !== 'suggest_event' &&
-              editingMode !== 'vote_event' &&
-              discussions &&
-              discussions.length > 1 && (
-                <SuggestionViewToggle
-                  discussions={discussions}
-                  selectedCrIds={effectivePreviewCrIds}
-                  onSelectedCrIdsChange={setSelectedPreviewCrIds}
-                />
-              )}
             <CREditorPreview
               documentContent={documentContent ?? ([] as Value)}
               suggestionIds={selectedPreviewSuggestionIds}
@@ -198,6 +185,23 @@ export function ChangeRequestCardsListView({
               amendmentId={amendmentId}
               userId={userId}
               agendaItemId={agendaItemId}
+              toolbarEnd={
+                <>
+                  {amendmentId && (
+                    <EditingModeSelector amendmentId={amendmentId} currentMode={editingMode} />
+                  )}
+                  {editingMode !== 'suggest_event' &&
+                    editingMode !== 'vote_event' &&
+                    discussions &&
+                    discussions.length > 1 && (
+                      <SuggestionViewToggle
+                        discussions={discussions}
+                        selectedCrIds={effectivePreviewCrIds}
+                        onSelectedCrIdsChange={setSelectedPreviewCrIds}
+                      />
+                    )}
+                </>
+              }
             />
           </div>
         )}

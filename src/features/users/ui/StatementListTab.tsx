@@ -49,40 +49,45 @@ export const StatementListTab: React.FC<StatementListTabProps> = ({
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredStatements.map(statement => {
+          {filteredStatements.map((statement, index) => {
             const supportVotes = statement.support_votes ?? [];
             const survey = statement.surveys?.[0];
 
             return (
-              <StatementTimelineCard
+              <div
                 key={statement.id}
-                statement={{
-                  id: String(statement.id),
-                  content: statement.text ?? '',
-                  authorName,
-                  authorTitle,
-                  authorAvatar,
-                  imageUrl: statement.image_url ?? undefined,
-                  videoUrl: statement.video_url ?? undefined,
-                  groupName: statement.group?.name ?? undefined,
-                  groupAvatar: statement.group?.image_url ?? undefined,
-                  groupId: statement.group_id ?? undefined,
-                  supportCount: supportVotes.filter(vote => vote.vote === 1).length,
-                  opposeCount: supportVotes.filter(vote => vote.vote === -1).length,
-                  commentCount: statement.comment_count ?? 0,
-                  surveyQuestion: survey?.question ?? undefined,
-                  surveyOptions: survey?.options?.map(option => ({
-                    label: option.label,
-                    voteCount: option.votes?.length ?? 0,
-                  })),
-                  hashtags: (statement.statement_hashtags ?? [])
-                    .map(junction => ({
-                      id: junction.hashtag?.id ?? junction.id,
-                      tag: junction.hashtag?.tag ?? '',
-                    }))
-                    .filter(hashtag => hashtag.tag),
-                }}
-              />
+                className="civic-load-card-reveal"
+                style={{ '--civic-load-index': Math.min(index, 11) } as React.CSSProperties}
+              >
+                <StatementTimelineCard
+                  statement={{
+                    id: String(statement.id),
+                    content: statement.text ?? '',
+                    authorName,
+                    authorTitle,
+                    authorAvatar,
+                    imageUrl: statement.image_url ?? undefined,
+                    videoUrl: statement.video_url ?? undefined,
+                    groupName: statement.group?.name ?? undefined,
+                    groupAvatar: statement.group?.image_url ?? undefined,
+                    groupId: statement.group_id ?? undefined,
+                    supportCount: supportVotes.filter(vote => vote.vote === 1).length,
+                    opposeCount: supportVotes.filter(vote => vote.vote === -1).length,
+                    commentCount: statement.comment_count ?? 0,
+                    surveyQuestion: survey?.question ?? undefined,
+                    surveyOptions: survey?.options?.map(option => ({
+                      label: option.label,
+                      voteCount: option.votes?.length ?? 0,
+                    })),
+                    hashtags: (statement.statement_hashtags ?? [])
+                      .map(junction => ({
+                        id: junction.hashtag?.id ?? junction.id,
+                        tag: junction.hashtag?.tag ?? '',
+                      }))
+                      .filter(hashtag => hashtag.tag),
+                  }}
+                />
+              </div>
             );
           })}
         </div>

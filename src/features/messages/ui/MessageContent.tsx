@@ -1,6 +1,7 @@
 'use client';
 
 import { isPolityLink, parseMessageWithLinks } from '@/features/messages/utils/url-utils.ts';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 import { LinkPreview } from './LinkPreview.tsx';
 
 interface MessageContentProps {
@@ -25,19 +26,32 @@ export function MessageContent({
         {parts.map((part, index) => {
           if (part.type === 'text') {
             return <span key={index}>{part.content}</span>;
-          } else {
+          }
+
+          if (isPolityLink(part.content)) {
+            const href = toInternalPolityHref(part.content);
             return (
-              <a
+              <SmartLink
                 key={index}
-                href={part.content}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={href}
                 className="text-primary hover:text-primary/80 underline"
               >
                 {part.content}
-              </a>
+              </SmartLink>
             );
           }
+
+          return (
+            <a
+              key={index}
+              href={part.content}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-primary/80 underline"
+            >
+              {part.content}
+            </a>
+          );
         })}
       </div>
 
@@ -51,4 +65,17 @@ export function MessageContent({
       )}
     </div>
   );
+}
+
+function toInternalPolityHref(href: string): string {
+  try {
+    const baseOrigin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'https://polity.local';
+    const url = new URL(href, baseOrigin);
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return href.startsWith('/') ? href : `/${href}`;
+  }
 }

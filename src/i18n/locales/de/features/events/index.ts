@@ -77,6 +77,12 @@ export const eventsTranslations = {
     },
   },
   backToEvent: 'Zurück zur Veranstaltung',
+  timeline: {
+    ariaLabel: 'Veranstaltungs-Zeitachse',
+    title: 'Zeitplan',
+    eventStart: 'Event-Start',
+    eventEnd: 'Event-Ende',
+  },
   agenda: {
     title: 'Tagesordnung',
     backToAgenda: 'Zurück zur Tagesordnung',
@@ -136,6 +142,7 @@ export const eventsTranslations = {
     notScheduled: 'Nicht geplant',
     notStarted: 'Nicht gestartet',
     notCompleted: 'Nicht abgeschlossen',
+    timeline: 'Tagesordnungs-Zeitachse',
     editItemDescriptionPlaceholder: 'Kontext für diesen Tagesordnungspunkt hinzufügen...',
     // Speaker section
     currentSpeaker: 'Aktueller Redner',

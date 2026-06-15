@@ -25,6 +25,7 @@ interface StreetSceneCanvasViewProps {
   readOnly: boolean;
   onPointerDown: (point: StreetDesignLocalPoint) => void;
   onPointerMove: (point: StreetDesignLocalPoint) => void;
+  onFinishPlacement: () => void;
   onFinishPathPlacement: () => void;
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
@@ -47,6 +48,7 @@ export function useStreetSceneCanvasViewController({
   readOnly,
   onPointerDown,
   onPointerMove,
+  onFinishPlacement,
   onFinishPathPlacement,
   onCancelPlacement,
   onObjectSelect,
@@ -57,6 +59,30 @@ export function useStreetSceneCanvasViewController({
   const cameraPoseRef = useRef<StreetDesignCameraPose | null>(null);
 
   const [loadFailed, setLoadFailed] = useState(false);
+
+  useEffect(() => {
+    if (readOnly || !placementMode) return undefined;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || isEditableKeyboardTarget(event.target)) return;
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onCancelPlacement();
+        return;
+      }
+
+      const canFinishPlacement =
+        placementMode === 'drag_band' || (placementMode === 'path' && canFinishPathPlacement);
+      if (event.key === 'Enter' && canFinishPlacement) {
+        event.preventDefault();
+        onFinishPlacement();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [canFinishPathPlacement, onCancelPlacement, onFinishPlacement, placementMode, readOnly]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -116,26 +142,24 @@ export function useStreetSceneCanvasViewController({
 
   return {
     design,
-    placementPreview,
-    placementPreviewType,
-    placementStart,
     placementMode,
     placementPointCount,
     canFinishPathPlacement,
-    selectedObjectId,
     selectedObject,
-    selectedOsmWayId,
     interactionMode,
     readOnly,
-    onPointerDown,
-    onPointerMove,
     onFinishPathPlacement,
     onCancelPlacement,
-    onObjectSelect,
-    onOsmWaySelect,
     onDeleteObject,
     canvasRef,
     loadFailed,
-    setLoadFailed,
   };
+}
+
+function isEditableKeyboardTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+
+  return Boolean(
+    target.closest('input, textarea, select, button, [contenteditable="true"], [role="textbox"]')
+  );
 }

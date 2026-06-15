@@ -90,6 +90,26 @@ export interface CreateFormStep {
   optional?: boolean;
 }
 
+export type CreateSubmitProgressStatus = 'pending' | 'active' | 'complete' | 'error';
+
+export interface CreateSubmitProgressStep {
+  key: string;
+  label: string;
+  status?: CreateSubmitProgressStatus;
+  progress?: number;
+}
+
+export interface CreateSubmitProgressUpdate {
+  key: string;
+  label?: string;
+  status?: CreateSubmitProgressStatus;
+  progress?: number;
+}
+
+export interface CreateSubmitContext {
+  reportProgress: (update: CreateSubmitProgressUpdate) => void;
+}
+
 /** Configuration for a create form */
 export interface CreateFormConfig {
   /** Entity type for color coding and review card gradient */
@@ -97,12 +117,42 @@ export interface CreateFormConfig {
   /** Array of form steps (last one is typically the review step) */
   steps: CreateFormStep[];
   /** Handler called when the user clicks "Create" on the review step */
-  onSubmit: () => Promise<void>;
+  onSubmit: (context?: CreateSubmitContext) => Promise<CreateSubmitOutcome>;
+  /** Optional labels for the fullscreen submission progress. */
+  submissionSteps?: CreateSubmitProgressStep[];
   /** Whether the form is currently submitting */
   isSubmitting: boolean;
   /** i18n key for the form title */
   title: string;
 }
+
+export interface CreateRouteSubmitTarget {
+  kind: 'route';
+  entityType: ContentType;
+  label: string;
+  to: string;
+  params?: Record<string, string>;
+  search?: unknown;
+  hash?: string;
+}
+
+export interface CreateExternalSubmitTarget {
+  kind: 'external';
+  entityType: ContentType;
+  label: string;
+  href: string;
+}
+
+export type CreateSubmitTarget = CreateRouteSubmitTarget | CreateExternalSubmitTarget;
+
+export type CreateSubmitOutcome =
+  | {
+      status: 'success';
+      target: CreateSubmitTarget;
+    }
+  | {
+      status: 'blocked';
+    };
 
 /** The three form display styles */
 export type FormStyle = 'one_page' | 'carousel' | 'auto';

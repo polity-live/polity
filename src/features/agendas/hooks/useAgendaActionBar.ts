@@ -10,6 +10,7 @@ import {
   logElectionFlowClient,
   logElectionFlowClientError,
 } from '@/features/elections/logic/electionFlowLogging';
+import { canJoinEventSpeakerList } from '../logic/speakerListPermissions';
 
 interface AgendaItem {
   id: string;
@@ -67,6 +68,8 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   const { can, canVote, canBeCandidate } = usePermissions({ eventId });
 
   const canManageAgenda = can('manage', 'agendaItems');
+  const canManageSpeakers = can('manage_speakers', 'events');
+  const canJoinSpeakerList = canJoinEventSpeakerList(can);
   const hasVotingRight = canVote();
   const hasCandidateRight = canBeCandidate();
 
@@ -110,7 +113,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
 
   // Handlers
   const handleJoinSpeakerList = useCallback(async () => {
-    if (!user?.id || !currentAgendaItem?.id) return;
+    if (!user?.id || !currentAgendaItem?.id || !canJoinSpeakerList) return;
     setSpeakerLoading(true);
     try {
       await addSpeaker({
@@ -129,7 +132,13 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     } finally {
       setSpeakerLoading(false);
     }
-  }, [user?.id, currentAgendaItem?.id, currentAgendaItem?.speaker_list?.length, addSpeaker]);
+  }, [
+    user?.id,
+    currentAgendaItem?.id,
+    currentAgendaItem?.speaker_list?.length,
+    canJoinSpeakerList,
+    addSpeaker,
+  ]);
 
   const handleLeaveSpeakerList = useCallback(async () => {
     if (!user?.id || !currentAgendaItem?.speaker_list) return;
@@ -332,6 +341,8 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   return {
     // Permissions
     canManageAgenda,
+    canManageSpeakers,
+    canJoinSpeakerList,
     hasVotingRight,
     hasCandidateRight,
 

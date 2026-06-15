@@ -1,16 +1,20 @@
 import { useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { usePermissions } from '@/zero/rbac';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { canJoinEventSpeakerList } from '@/features/agendas/logic/speakerListPermissions';
 
-export function useSpeakerList(agendaItemId?: string) {
+export function useSpeakerList(agendaItemId?: string, eventId?: string) {
   const { user } = useAuth();
+  const { can } = usePermissions({ eventId });
   const { addSpeaker, removeSpeaker } = useAgendaActions();
   const [addingSpeaker, setAddingSpeaker] = useState(false);
   const [removingSpeaker, setRemovingSpeaker] = useState<string | null>(null);
+  const canJoinSpeakerList = eventId ? canJoinEventSpeakerList(can) : true;
 
   const handleAddToSpeakerList = async (speakerList: { order?: number }[] = []) => {
-    if (!user?.id || !agendaItemId) return;
+    if (!user?.id || !agendaItemId || !canJoinSpeakerList) return;
 
     setAddingSpeaker(true);
     try {
@@ -53,6 +57,7 @@ export function useSpeakerList(agendaItemId?: string) {
   return {
     handleAddToSpeakerList,
     handleRemoveFromSpeakerList,
+    canJoinSpeakerList,
     addingSpeaker,
     removingSpeaker,
   };

@@ -40,7 +40,13 @@ export default tseslint.config(
   },
   {
     // Allow CommonJS in config files
-    files: ['*.config.js', '*.config.mjs', 'postcss.config.js', 'tailwind.config.js'],
+    files: [
+      '*.config.js',
+      '*.config.mjs',
+      'app.config.timestamp_*.js',
+      'postcss.config.js',
+      'tailwind.config.js',
+    ],
     languageOptions: {
       globals: {
         module: 'readonly',

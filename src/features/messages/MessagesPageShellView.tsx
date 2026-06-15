@@ -3,9 +3,12 @@
 import { PageWrapper } from '@/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard';
 import { MessagesPageView as MessagesPageContentView } from './ui/MessagesPageView';
+import type { useMessagesPage } from './hooks/useMessagesPage';
+
+type MessagesPageModel = ReturnType<typeof useMessagesPage>;
 
 export interface MessagesPageShellViewProps {
-  mp: any;
+  mp: MessagesPageModel;
 }
 
 export function MessagesPageShellView({ mp }: MessagesPageShellViewProps) {
@@ -21,6 +24,7 @@ export function MessagesPageShellView({ mp }: MessagesPageShellViewProps) {
           onSelectConversation={mp.setSelectedConversationId}
           selectedConversation={mp.selectedConversation}
           selectedMessages={mp.selectedMessages}
+          isThreadLoading={mp.isSelectedMessagesLoading}
           hasMoreOlderMessages={mp.hasMoreOlderMessages}
           onLoadOlderMessages={mp.loadOlderMessages}
           onAtEndChange={mp.setIsSelectedConversationAtEnd}
@@ -37,15 +41,15 @@ export function MessagesPageShellView({ mp }: MessagesPageShellViewProps) {
           onMemberListDialogOpenChange={mp.setMemberListDialogOpen}
           deleteDialogOpen={mp.deleteDialogOpen}
           onDeleteDialogOpenChange={mp.setDeleteDialogOpen}
-          onTogglePin={mp.handleTogglePin}
-          onCreateConversationRequest={mp.handleCreateConversation}
+          onTogglePin={mp.togglePin}
+          onCreateConversationRequest={mp.handleCreateConversationRequest}
           onDeleteConversation={mp.handleDeleteConversation}
           onAcceptConversation={mp.handleAcceptConversation}
           onRejectConversation={mp.handleRejectConversation}
           onSendMessage={mp.handleSendMessage}
-          onNewConversationClick={mp.handleNewConversationClick}
-          onNewAiConversationClick={mp.handleNewAiConversationClick}
-          onDeleteConversationClick={mp.handleDeleteConversationClick}
+          onNewConversationClick={mp.openNewConversationDialog}
+          onNewAiConversationClick={mp.handleCreateAssistantConversation}
+          onDeleteConversationClick={mp.openDeleteDialog}
           onRenameConversation={mp.handleRenameConversation}
         />
       </PageWrapper>

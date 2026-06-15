@@ -1,7 +1,8 @@
 'use client';
-import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
-import { NetworkFlowBase, Panel } from '@/features/network/ui/NetworkFlowBase';
+import { useState } from 'react';
+import { CivicNetworkFlow } from '@/features/network/ui/CivicNetworkFlow';
+import { createGroupNodeLegendItem } from '@/features/network/ui/networkVisualHelpers';
 import {
   Card,
   CardContent,
@@ -30,6 +31,9 @@ export function AmendmentPathVisualizationView({
   hasTarget,
   pathSegments,
 }: AmendmentPathVisualizationViewProps) {
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const [legendCollapsed, setLegendCollapsed] = useState(false);
+
   if (!amendment) {
     return (
       <Card>
@@ -152,46 +156,47 @@ export function AmendmentPathVisualizationView({
 
           {/* Path visualization */}
           <div className="bg-background h-[250px] overflow-hidden rounded-lg border">
-            <NetworkFlowBase
+            <CivicNetworkFlow
               nodes={nodes}
               edges={edges}
               nodesDraggable={false}
+              nodesFocusable={false}
+              nodesConnectable={false}
+              edgesFocusable={false}
               containerClassName="h-full min-h-0"
-              panel={
-                <Panel
-                  position="top-right"
-                  className={featureThemeClassName(
-                    'amendmentAmendmentPathVisualizationContrastPanel'
-                  )}
-                >
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={featureThemeClassName(
-                          'amendmentAmendmentPathVisualizationThemedSurface'
-                        )}
-                      ></div>
-                      <span>{t('features.amendments.pathVisualization.start')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={featureThemeClassName(
-                          'amendmentAmendmentPathVisualizationThemedSurfaceAlpha'
-                        )}
-                      ></div>
-                      <span>{t('features.amendments.pathVisualization.path')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={featureThemeClassName(
-                          'amendmentAmendmentPathVisualizationThemedSurfaceBeta'
-                        )}
-                      ></div>
-                      <span>{t('features.amendments.process.target')}</span>
-                    </div>
-                  </div>
-                </Panel>
-              }
+              showMiniMap={false}
+              panelConfig={{
+                title: t('features.amendments.pathVisualization.title'),
+                description: t('features.amendments.pathVisualization.shortestPath', {
+                  count: pathSegments.length,
+                }),
+                panelCollapsed,
+                onPanelCollapsedChange: setPanelCollapsed,
+                legendCollapsed,
+                onLegendCollapsedChange: setLegendCollapsed,
+                legendTitle: t('common.network.legend'),
+                showDisplayControls: false,
+                showInteractiveToggle: false,
+                isInteractive: false,
+                onInteractiveChange: () => undefined,
+              }}
+              legendItems={[
+                createGroupNodeLegendItem({
+                  id: 'path-start',
+                  label: t('features.amendments.pathVisualization.start'),
+                  visualVariant: 'current',
+                }),
+                createGroupNodeLegendItem({
+                  id: 'path-step',
+                  label: t('features.amendments.pathVisualization.path'),
+                  visualVariant: 'parent',
+                }),
+                createGroupNodeLegendItem({
+                  id: 'path-target',
+                  label: t('features.amendments.process.target'),
+                  visualVariant: 'child',
+                }),
+              ]}
             />
           </div>
 

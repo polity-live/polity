@@ -11,6 +11,10 @@ import { useEventAccessRoles, useEventOfflineParticipants } from '@/zero/events/
 import { Button } from '@/features/shared/ui/ui/button';
 import { EntitySearchBar } from '@/features/shared/ui/typeahead';
 import { MembershipTabs } from '@/features/groups/ui/MembershipTabs';
+import {
+  ParticipationRoleFilterBar,
+  filterParticipationsByRole,
+} from '@/features/shared/ui/participation';
 import { ActiveMembersTable } from '@/features/groups/ui/ActiveMembersTable';
 import { MembershipsByRoleTables } from '@/features/groups/ui/MembershipsByRoleTables';
 import { MembershipCompositionPanel } from '@/features/groups/ui/MembershipCompositionPanel';
@@ -89,6 +93,7 @@ export function EventParticipants({
     direction: 'asc',
   });
   const [participantSearchQuery, setParticipantSearchQuery] = useState('');
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [selectedInviteRoleIds, setSelectedInviteRoleIds] = useState<string[]>([]);
@@ -166,6 +171,35 @@ export function EventParticipants({
         })),
     [participants]
   );
+  const showParticipantSearch = activeTab !== 'roles' && activeTab !== 'composition';
+  const roleFilterRoles = useMemo(
+    () => (activeTab === 'guests' ? guestRoles : accessRoles),
+    [accessRoles, activeTab, guestRoles]
+  );
+  const roleFilterRoleIds = useMemo(
+    () => new Set(roleFilterRoles.map(role => role.id).filter(Boolean)),
+    [roleFilterRoles]
+  );
+  const activeRoleFilterIds = useMemo(
+    () => selectedRoleIds.filter(roleId => roleFilterRoleIds.has(roleId)),
+    [roleFilterRoleIds, selectedRoleIds]
+  );
+  const filteredPendingRequests = useMemo(
+    () => filterParticipationsByRole(pendingRequests, activeRoleFilterIds),
+    [activeRoleFilterIds, pendingRequests]
+  );
+  const filteredPendingInvitations = useMemo(
+    () => filterParticipationsByRole(pendingInvitations, activeRoleFilterIds),
+    [activeRoleFilterIds, pendingInvitations]
+  );
+  const filteredActiveParticipantsForTables = useMemo(
+    () => filterParticipationsByRole(activeParticipantsForTables, activeRoleFilterIds),
+    [activeParticipantsForTables, activeRoleFilterIds]
+  );
+  const filteredGuestParticipants = useMemo(
+    () => filterParticipationsByRole(guestParticipants, activeRoleFilterIds),
+    [activeRoleFilterIds, guestParticipants]
+  );
   const activePlatformParticipants = useMemo(
     () =>
       participants.filter(
@@ -219,7 +253,6 @@ export function EventParticipants({
       );
       setSelectedUserIds([]);
       setSelectedInviteRoleIds([]);
-      setInviteOpen(false);
     } finally {
       setIsInviting(false);
     }
@@ -238,7 +271,6 @@ export function EventParticipants({
       );
       setSelectedGuestUserIds([]);
       setSelectedGuestRoleIds([]);
-      setInviteOpen(false);
     } finally {
       setIsInvitingGuests(false);
     }
@@ -423,10 +455,19 @@ export function EventParticipants({
       subtitle={eventTitle}
       backLabel={translateText('generated.inline.0493_back_b52b36b7')}
       onBack={() => navigate({ to: '..' })}
-      showSearch={activeTab !== 'roles' && activeTab !== 'composition'}
+      showSearch={showParticipantSearch}
       searchQuery={participantSearchQuery}
       onSearchQueryChange={setParticipantSearchQuery}
       searchPlaceholder={translateText('generated.inline.0494_search_participants_1b38c2ef')}
+      secondaryFilterContent={
+        showParticipantSearch && roleFilterRoles.length > 0 ? (
+          <ParticipationRoleFilterBar
+            roles={roleFilterRoles}
+            selectedRoleIds={activeRoleFilterIds}
+            onSelectedRoleIdsChange={setSelectedRoleIds}
+          />
+        ) : null
+      }
     >
       <MembershipTabs
         activeTab={activeTab}
@@ -501,7 +542,7 @@ export function EventParticipants({
         membershipsByUserContent={
           <div className="space-y-4">
             <PendingRequestsTable
-              requests={pendingRequests}
+              requests={filteredPendingRequests}
               onApprove={(membershipId, userId) =>
                 approveParticipation(membershipId, userId, authUser?.id ?? undefined, eventTitle)
               }
@@ -515,7 +556,7 @@ export function EventParticipants({
               fallbackRoleLabel={translateText('generated.inline.0506_participant_a77366e9')}
             />
             <PendingInvitationsTable
-              invitations={pendingInvitations}
+              invitations={filteredPendingInvitations}
               onWithdraw={(membershipId, userId) =>
                 rejectParticipation(membershipId, userId, authUser?.id ?? undefined, eventTitle)
               }
@@ -525,7 +566,7 @@ export function EventParticipants({
               fallbackRoleLabel={translateText('generated.inline.0506_participant_a77366e9')}
             />
             <ActiveMembersTable
-              members={activeParticipantsForTables}
+              members={filteredActiveParticipantsForTables}
               sort={membershipSort}
               onSortChange={handleParticipantSortChange}
               onOpenRightsDialog={membership => {
@@ -543,7 +584,7 @@ export function EventParticipants({
               fallbackRoleLabel={translateText('generated.inline.0506_participant_a77366e9')}
               showProvenanceColumns={showComposition}
             />
-            {showOfflineRoster ? (
+            {showOfflineRoster && activeRoleFilterIds.length === 0 ? (
               <OfflineRosterCard
                 title={translateText(
                   'generated.inline.0510_all_participants_incl_offline_hybrid_particip_12560f8c'
@@ -647,7 +688,7 @@ export function EventParticipants({
         membershipsByRoleContent={
           <MembershipsByRoleTables
             roles={[...accessRoles]}
-            members={activeParticipantsForTables}
+            members={filteredActiveParticipantsForTables}
             onOpenRightsDialog={membership => {
               setMemberRightsMembership(membership);
               setMemberRightsOpen(true);
@@ -664,6 +705,7 @@ export function EventParticipants({
               'generated.inline.0116_no_participants_currently_carry_this_role_18087ba6'
             )}
             showProvenanceColumns={showComposition}
+            hideEmptyRoleSections={activeRoleFilterIds.length > 0}
           />
         }
         compositionContent={
@@ -675,7 +717,7 @@ export function EventParticipants({
         guestsContent={
           <div className="space-y-4">
             <GuestsTable
-              guests={guestParticipants}
+              guests={filteredGuestParticipants}
               onApprove={guestAccessId => {
                 const guest = guestParticipants.find(
                   participant => participant.id === guestAccessId
@@ -773,6 +815,7 @@ interface EventParticipantsViewProps {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   searchPlaceholder: string;
+  secondaryFilterContent?: ReactNode;
   children: ReactNode;
 }
 
@@ -785,6 +828,7 @@ export function EventParticipantsView({
   searchQuery,
   onSearchQueryChange,
   searchPlaceholder,
+  secondaryFilterContent,
   children,
 }: EventParticipantsViewProps) {
   return (
@@ -809,6 +853,7 @@ export function EventParticipantsView({
           className="mb-4"
         />
       ) : null}
+      {secondaryFilterContent}
 
       {children}
     </div>

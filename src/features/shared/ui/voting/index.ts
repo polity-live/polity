@@ -25,6 +25,7 @@ export {
 export { VoteCastDialogView } from './VoteCastDialogView';
 export { VotePasswordInput } from './VotePasswordInput';
 export { VoteResultsDisplay } from './VoteResultsDisplay';
+export { VoteSubmissionOverlay } from './VoteSubmissionOverlay';
 export type {
   CompactBarSegment,
   GroupedVoteResultBarProps,
@@ -51,3 +52,12 @@ export type {
 } from './VoteCastDialogView';
 export type { VotePasswordInputProps } from './VotePasswordInput';
 export type { VoteBarOption, VoteResultsDisplayProps } from './VoteResultsDisplay';
+export type {
+  VoteSubmissionCandidate,
+  VoteSubmissionContext,
+  VoteSubmissionProgressStatus,
+  VoteSubmissionProgressStep,
+  VoteSubmissionSelection,
+  VoteSubmissionStatus,
+  VoteSubmissionStepKey,
+} from './VoteSubmissionOverlay';

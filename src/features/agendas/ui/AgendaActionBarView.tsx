@@ -16,7 +16,6 @@ import {
   MicOff,
   UserPlus,
   UserMinus,
-  Loader2,
   ListOrdered,
   ArrowRightLeft,
   FileEdit,
@@ -260,8 +259,9 @@ export function AgendaActionBarView({
             tooltip={t('features.events.agenda.actions.joinSpeakerList')}
             onClick={onJoinSpeakerList}
             disabled={speakerLoading}
+            loading={speakerLoading}
           >
-            {speakerLoading ? <Loader2 className="animate-spin" /> : <Mic />}
+            <Mic />
           </ToolbarButton>
         ) : null}
         {currentAgendaItem && isUserInSpeakerList && onLeaveSpeakerList ? (
@@ -269,8 +269,9 @@ export function AgendaActionBarView({
             tooltip={t('features.events.agenda.actions.leaveSpeakerList')}
             onClick={onLeaveSpeakerList}
             disabled={speakerLoading}
+            loading={speakerLoading}
           >
-            {speakerLoading ? <Loader2 className="animate-spin" /> : <MicOff />}
+            <MicOff />
           </ToolbarButton>
         ) : null}
         {isElection && canBeCandidate && !isUserCandidate && onBecomeCandidate ? (
@@ -278,8 +279,9 @@ export function AgendaActionBarView({
             tooltip={t('features.events.agenda.actions.becomeCandidate')}
             onClick={onBecomeCandidate}
             disabled={candidateLoading}
+            loading={candidateLoading}
           >
-            {candidateLoading ? <Loader2 className="animate-spin" /> : <UserPlus />}
+            <UserPlus />
           </ToolbarButton>
         ) : null}
         {isElection && canBeCandidate && isUserCandidate && onWithdrawCandidacy ? (
@@ -287,24 +289,27 @@ export function AgendaActionBarView({
             tooltip={t('features.events.agenda.actions.withdrawCandidacy')}
             onClick={onWithdrawCandidacy}
             disabled={candidateLoading}
+            loading={candidateLoading}
           >
-            {candidateLoading ? <Loader2 className="animate-spin" /> : <UserMinus />}
+            <UserMinus />
           </ToolbarButton>
         ) : null}
-        {isVotable && canVote && !isClosed && !isPendingVote && onVoteClick ? (
+        {isVotable && canVote && !isClosed && onVoteClick ? (
           <ToolbarButton
             tooltip={voteTooltip}
             onClick={disableVoteButton ? undefined : onVoteClick}
             disabled={voteLoading}
+            loading={voteLoading}
             aria-disabled={disableVoteButton || undefined}
             className={cn(
+              'civic-ballot-submit',
               'bg-background border px-3 font-semibold shadow-sm transition-all',
               disableVoteButton
                 ? 'border-muted-foreground/30 text-muted-foreground opacity-70'
                 : featureThemeClassName('agendaAgendaActionBarAccentBadge')
             )}
           >
-            {voteLoading ? <Loader2 className="animate-spin" /> : <Vote />}
+            <Vote />
             <span>{translateText('generated.inline.0011_vote_64f87291')}</span>
             {disableVoteButton ? <CircleHelp className="h-4 w-4" /> : null}
           </ToolbarButton>
@@ -328,8 +333,9 @@ export function AgendaActionBarView({
             tooltip={t('features.events.navigation.previous')}
             onClick={onPreviousItem}
             disabled={!hasPreviousItem || navigationLoading}
+            loading={navigationLoading}
           >
-            {navigationLoading ? <Loader2 className="animate-spin" /> : <ChevronLeft />}
+            <ChevronLeft />
           </ToolbarButton>
         ) : null}
         {currentAgendaItem ? (
@@ -350,9 +356,10 @@ export function AgendaActionBarView({
             tooltip={t('features.events.navigation.start')}
             onClick={onStartItem}
             disabled={startDisabled}
+            loading={navigationLoading}
             className={featureThemeClassName('agendaAgendaActionBarSuccessBorder')}
           >
-            {navigationLoading ? <Loader2 className="animate-spin" /> : <Play />}
+            <Play />
           </ToolbarButton>
         ) : null}
         {currentAgendaItem && isCurrentItemActive && onCompleteItem ? (
@@ -360,13 +367,15 @@ export function AgendaActionBarView({
             tooltip={t('features.events.navigation.complete')}
             onClick={onCompleteItem}
             disabled={completeDisabled}
+            loading={navigationLoading}
+            successState={isCurrentItemCompleted}
             className={cn(
               isCurrentItemCompleted
                 ? featureThemeClassName('agendaAgendaActionBarSuccessBadge')
                 : featureThemeClassName('agendaAgendaActionBarSuccessBorder')
             )}
           >
-            {navigationLoading ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
+            <CheckCircle2 />
           </ToolbarButton>
         ) : null}
         {onNextItem ? (
@@ -374,8 +383,9 @@ export function AgendaActionBarView({
             tooltip={t('features.events.navigation.next')}
             onClick={onNextItem}
             disabled={nextDisabled}
+            loading={navigationLoading}
           >
-            {navigationLoading ? <Loader2 className="animate-spin" /> : <ChevronRight />}
+            <ChevronRight />
           </ToolbarButton>
         ) : null}
       </div>

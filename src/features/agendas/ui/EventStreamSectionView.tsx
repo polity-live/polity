@@ -316,7 +316,7 @@ export function EventStreamSectionView({
                         ? translateText('generated.inline.0015_removing_2a76d431')
                         : translateText('generated.inline.0016_remove_yourself_fa3b0e30')}
                     </Button>
-                  ) : (
+                  ) : onAddToSpeakerList ? (
                     <Button
                       onClick={onAddToSpeakerList}
                       disabled={addingSpeaker || !userId}
@@ -327,7 +327,7 @@ export function EventStreamSectionView({
                         ? translateText('generated.inline.0017_adding_268c06a2')
                         : translateText('generated.inline.0018_add_yourself_71fba1c3')}
                     </Button>
-                  )}
+                  ) : null}
                 </div>
 
                 <CollapsibleContent>

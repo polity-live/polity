@@ -21,6 +21,11 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
       const labels: Record<string, string> = {
         'common.network.structureMembership': 'Structure / membership',
         'common.network.structureMembershipChange': 'Structure / membership change',
+        'common.network.directionHas': 'has',
+        'common.network.directionIn': 'in',
+        'common.network.rightInfo': 'Information Right',
+        'common.network.rightAmendment': 'Amendment Right',
+        'common.rights.information': 'Info',
       };
 
       return labels[key] ?? (typeof fallback === 'string' ? fallback : key);
@@ -150,13 +155,18 @@ function renderManageNetworkTab(canManageRelationships: boolean) {
 
 describe('ManageNetworkTab', () => {
   it('renders a read-only management view for users with only relationship view rights', () => {
-    renderManageNetworkTab(false);
+    const { container } = renderManageNetworkTab(false);
 
     expect(screen.queryAllByText('common.actions.actions')).toHaveLength(0);
     expect(screen.queryAllByText('common.network.manage')).toHaveLength(0);
     expect(screen.queryAllByText('common.actions.confirm')).toHaveLength(0);
     expect(screen.queryByTestId('link-group-dialog-create')).toBeNull();
     expect(screen.queryAllByText('Partner Group').length).toBeGreaterThan(0);
+    expect(container.innerHTML).toContain('var(--entity-group-bg)');
+    expect(container.innerHTML).toContain('var(--badge-info-bg)');
+    expect(container.innerHTML).not.toContain('bg-gradient');
+    expect(container.innerHTML).not.toContain('text-transparent');
+    expect(container.innerHTML).not.toContain('text-white');
   });
 
   it('shows create, row actions, and workflows for users with manage rights', () => {

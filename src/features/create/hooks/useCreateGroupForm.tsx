@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Value } from 'platejs';
-import { useNavigate } from '@tanstack/react-router';
 import {
   useTranslation,
   translate as translateText,
@@ -28,7 +27,8 @@ import {
 } from '@/features/shared/logic/richText';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
-import type { CreateFormConfig } from '../types/create-form.types';
+import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
+import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
 import type {
   CanonicalMembershipMode,
   GroupRelationshipDirection,
@@ -56,6 +56,11 @@ import { GroupMediaSettingsInput } from '../ui/inputs/GroupMediaSettingsInput';
 import { GroupInvitePeopleInput } from '../ui/inputs/GroupInvitePeopleInput';
 import { ConstitutionalEventToggleInput } from '../ui/inputs/ConstitutionalEventToggleInput';
 import { CreateGroupSummaryStep } from '../ui/CreateGroupSummaryStep';
+import {
+  createBlockedSubmitOutcome,
+  createRouteSubmitTarget,
+  createSuccessSubmitOutcome,
+} from '../logic/createSubmitTargets';
 
 type GroupType = 'base' | 'hierarchical' | 'sibling';
 type RelationshipDirection = GroupRelationshipDirection;
@@ -197,7 +202,6 @@ function buildCanonicalGroupConnection(args: {
 
 export function useCreateGroupForm(): CreateFormConfig {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { createGroup, createRole, inviteGuest, inviteMember } = useGroupActions();
   const { createEvent } = useEventActions();
@@ -264,7 +268,14 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [eventStartDate, setEventStartDate] = useState('');
   const [eventStartTime, setEventStartTime] = useState('');
 
-  const { allHashtags } = useCommonState({ loadAllHashtags: true });
+  const { allHashtags, userHashtags } = useCommonState({
+    user_id: user?.id,
+    loadAllHashtags: true,
+  });
+  const preferredHashtagSuggestions = useMemo(
+    () => extractHashtagTags(userHashtags),
+    [userHashtags]
+  );
   const emailValidationMessage = t('common.validation.emailHint');
   const emailIsValid = isValidOptionalEmailAddress(email);
   const radioGroupType = groupType === 'sibling' ? 'hierarchical' : groupType;
@@ -480,16 +491,17 @@ export function useCreateGroupForm(): CreateFormConfig {
     setLinkedGroups(prev => prev.filter(g => g.groupId !== gId));
   }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!name.trim() || !emailIsValid) {
       if (!emailIsValid) {
         toast.error(emailValidationMessage);
       }
-      return;
+      return createBlockedSubmitOutcome();
     }
 
     setIsSubmitting(true);
     try {
+      context?.reportProgress({ key: 'create', status: 'active' });
       const createGroupResult = createGroup({
         id: groupId,
         name: name.trim(),
@@ -518,20 +530,25 @@ export function useCreateGroupForm(): CreateFormConfig {
         owner_id: null,
       });
       await serverConfirmed(createGroupResult);
+      context?.reportProgress({ key: 'create', status: 'complete' });
+      context?.reportProgress({ key: 'sync', status: 'active' });
+
       if (hashtags.length > 0) {
         await commonActions.syncEntityHashtags('group', groupId, hashtags, [], allHashtags ?? []);
       }
 
       if (allowOfficialMemberInvites) {
-        for (const userId of invitedUserIds) {
-          await inviteMember({
-            id: crypto.randomUUID(),
-            user_id: userId,
-            group_id: groupId,
-            visibility: '',
-            status: 'invited',
-          });
-        }
+        await Promise.all(
+          invitedUserIds.map(userId =>
+            inviteMember({
+              id: crypto.randomUUID(),
+              user_id: userId,
+              group_id: groupId,
+              visibility: '',
+              status: 'invited',
+            })
+          )
+        );
       } else if (allowGuestInvites) {
         const guestRoleId = crypto.randomUUID();
         const guestRoleResult = createRole({
@@ -555,62 +572,66 @@ export function useCreateGroupForm(): CreateFormConfig {
         });
         await serverConfirmed(guestRoleResult);
 
-        for (const userId of invitedUserIds) {
-          await inviteGuest({
-            id: crypto.randomUUID(),
-            group_id: groupId,
-            user_id: userId,
-            status: 'invited',
-            role_ids: [guestRoleId],
-            invited_by_id: user?.id ?? null,
-          });
-        }
+        await Promise.all(
+          invitedUserIds.map(userId =>
+            inviteGuest({
+              id: crypto.randomUUID(),
+              group_id: groupId,
+              user_id: userId,
+              status: 'invited',
+              role_ids: [guestRoleId],
+              invited_by_id: user?.id ?? null,
+            })
+          )
+        );
       }
 
       // Create group relationships
-      for (const link of linkedGroups) {
-        await serverConfirmed(
-          proposeGroupConnectionChange({
-            id: crypto.randomUUID(),
-            active_connection_id: null,
-            ...(() => {
-              const payload = buildCanonicalGroupConnection({
-                currentGroupId: groupId,
-                otherGroupId: link.groupId,
-                connectionType: link.type,
-                rightDirections: link.rightDirections,
-                membershipDirection: link.membershipDirection,
-                membershipRule: link.membershipRule,
-              });
-              return {
-                proposed_connection_id: payload.id,
-                group_a_id: payload.group_a_id,
-                group_b_id: payload.group_b_id,
-                desired_connection_type: payload.connection_type,
-                desired_parent_group_id: payload.parent_group_id,
-                desired_child_group_id: payload.child_group_id,
-                initiator_group_id: groupId,
-                grants: payload.grants.map(right => ({
-                  id: crypto.randomUUID(),
-                  existing_grant_id: null,
-                  operation: 'upsert' as const,
-                  right_key: right.right_key,
-                  holder_group_id: right.holder_group_id,
-                  scope_group_id: right.scope_group_id,
-                })),
-                membership_rule: payload.membership_rule
-                  ? {
-                      ...payload.membership_rule,
-                      id: crypto.randomUUID(),
-                      existing_membership_rule_id: null,
-                      operation: 'upsert' as const,
-                    }
-                  : null,
-              };
-            })(),
-          })
-        );
-      }
+      await Promise.all(
+        linkedGroups.map(link =>
+          serverConfirmed(
+            proposeGroupConnectionChange({
+              id: crypto.randomUUID(),
+              active_connection_id: null,
+              ...(() => {
+                const payload = buildCanonicalGroupConnection({
+                  currentGroupId: groupId,
+                  otherGroupId: link.groupId,
+                  connectionType: link.type,
+                  rightDirections: link.rightDirections,
+                  membershipDirection: link.membershipDirection,
+                  membershipRule: link.membershipRule,
+                });
+                return {
+                  proposed_connection_id: payload.id,
+                  group_a_id: payload.group_a_id,
+                  group_b_id: payload.group_b_id,
+                  desired_connection_type: payload.connection_type,
+                  desired_parent_group_id: payload.parent_group_id,
+                  desired_child_group_id: payload.child_group_id,
+                  initiator_group_id: groupId,
+                  grants: payload.grants.map(right => ({
+                    id: crypto.randomUUID(),
+                    existing_grant_id: null,
+                    operation: 'upsert' as const,
+                    right_key: right.right_key,
+                    holder_group_id: right.holder_group_id,
+                    scope_group_id: right.scope_group_id,
+                  })),
+                  membership_rule: payload.membership_rule
+                    ? {
+                        ...payload.membership_rule,
+                        id: crypto.randomUUID(),
+                        existing_membership_rule_id: null,
+                        operation: 'upsert' as const,
+                      }
+                    : null,
+                };
+              })(),
+            })
+          )
+        )
+      );
 
       // Create constitutional event
       if (createConstitutionalEvent && eventName.trim() && user?.id) {
@@ -630,9 +651,18 @@ export function useCreateGroupForm(): CreateFormConfig {
         });
       }
 
-      navigate({ to: `/group/${groupId}` });
-    } catch {
+      context?.reportProgress({ key: 'sync', status: 'complete' });
+      context?.reportProgress({ key: 'ready', status: 'active' });
       setIsSubmitting(false);
+      return createSuccessSubmitOutcome(
+        createRouteSubmitTarget('group', {
+          to: '/group/$id',
+          params: { id: groupId },
+        })
+      );
+    } catch (error) {
+      setIsSubmitting(false);
+      throw error;
     }
   };
 
@@ -758,6 +788,11 @@ export function useCreateGroupForm(): CreateFormConfig {
       title: 'pages.create.group.title',
       isSubmitting,
       onSubmit: handleSubmit,
+      submissionSteps: [
+        { key: 'create', label: 'Erstellt Gruppe' },
+        { key: 'sync', label: 'Lädt Einladungen und Verknüpfungen' },
+        { key: 'ready', label: 'Bereitet Gruppenseite vor' },
+      ],
       steps: [
         {
           label: t('pages.create.group.basicInfo'),
@@ -969,6 +1004,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                 visibility,
                 hashtags,
                 hashtagPlaceholder: t('pages.create.group.hashtagPlaceholder'),
+                preferredHashtagSuggestions,
                 onImageChange: (url: string) => setImageURL(url),
                 onVisibilityChange: setVisibility,
                 onHashtagsChange: setHashtags,
@@ -1228,6 +1264,7 @@ export function useCreateGroupForm(): CreateFormConfig {
       locationSummary,
       imageURL,
       hashtags,
+      preferredHashtagSuggestions,
       visibility,
       visibilityLabel,
       groupType,

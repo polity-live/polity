@@ -7,7 +7,7 @@ import {
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
 import type { ReactNode } from 'react';
 
-interface CreateSummaryStepProps {
+export interface CreateSummaryStepProps {
   entityType: ContentType;
   badge: string;
   secondaryBadge?: string;
@@ -17,6 +17,8 @@ interface CreateSummaryStepProps {
   fields?: ReviewCardField[];
   sections?: ReviewCardSection[];
   media?: ReviewMediaPreview;
+  layoutId?: string;
+  overlayMode?: boolean;
   /** Extra content to render below the sections. */
   children?: ReactNode;
 }
@@ -31,6 +33,8 @@ export function CreateSummaryStep({
   fields,
   sections,
   media,
+  layoutId = 'create-review-card',
+  overlayMode = false,
   children,
 }: CreateSummaryStepProps) {
   const resolvedSections =
@@ -50,6 +54,8 @@ export function CreateSummaryStep({
       hashtags={hashtags}
       media={media}
       sections={resolvedSections}
+      layoutId={layoutId}
+      overlayMode={overlayMode}
     >
       {children}
     </CreateReviewCard>

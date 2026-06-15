@@ -1,4 +1,4 @@
-import { Fragment, useCallback } from 'react';
+import { Fragment, useCallback, type CSSProperties } from 'react';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
@@ -10,6 +10,7 @@ export interface CalendarChronologicalListContentViewProps {
   emptyText: any;
   getItemKey: any;
   groupedEntries: any;
+  itemMotion: 'none' | 'place';
   items: any;
   language: any;
   renderItem: any;
@@ -27,6 +28,7 @@ export function CalendarChronologicalListContentView({
   emptyText,
   getItemKey,
   groupedEntries,
+  itemMotion,
   items,
   language,
   renderItem,
@@ -70,6 +72,8 @@ export function CalendarChronologicalListContentView({
       </Card>
     );
   }
+
+  let itemRenderIndex = 0;
 
   return (
     <div className="relative">
@@ -128,9 +132,29 @@ export function CalendarChronologicalListContentView({
                     )}
                   </h3>
                   <div className="space-y-3">
-                    {dayItems.map((item: any) => (
-                      <Fragment key={getItemKey(item)}>{renderItem(item)}</Fragment>
-                    ))}
+                    {dayItems.map((item: any) => {
+                      const itemKey = getItemKey(item);
+                      const motionIndex = itemRenderIndex;
+                      itemRenderIndex += 1;
+
+                      if (itemMotion === 'place') {
+                        return (
+                          <div
+                            key={itemKey}
+                            className="civic-load-card-place"
+                            style={
+                              {
+                                '--civic-load-index': Math.min(motionIndex, 11),
+                              } as CSSProperties
+                            }
+                          >
+                            {renderItem(item)}
+                          </div>
+                        );
+                      }
+
+                      return <Fragment key={itemKey}>{renderItem(item)}</Fragment>;
+                    })}
                   </div>
                 </div>
               </Fragment>

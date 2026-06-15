@@ -109,17 +109,6 @@ interface ExistingCandidateRow {
   id: string;
 }
 
-interface ScopedPermission {
-  resource: string;
-  action: string;
-}
-
-interface ScopedRoleDefinition {
-  name: string;
-  description: string;
-  permissions: readonly ScopedPermission[];
-}
-
 interface CreateEventArgs {
   id: string;
   title: string;
@@ -264,20 +253,6 @@ function buildCreatedResult(summary: string, attachment: AiChatAttachment, route
     route,
     items: [toItemSummary(attachment)],
     attachments: [attachment],
-  };
-}
-
-function buildScopeRecord(scope: {
-  group_id?: string | null;
-  event_id?: string | null;
-  amendment_id?: string | null;
-  blog_id?: string | null;
-}) {
-  return {
-    group_id: scope.group_id ?? null,
-    event_id: scope.event_id ?? null,
-    amendment_id: scope.amendment_id ?? null,
-    blog_id: scope.blog_id ?? null,
   };
 }
 
@@ -538,68 +513,6 @@ async function assertElectionAccess(
     ...election,
     eventId,
   };
-}
-
-async function createScopedRolesAndRights(
-  tx: ZeroTransaction,
-  roles: readonly ScopedRoleDefinition[],
-  scope: {
-    group_id?: string | null;
-    event_id?: string | null;
-    amendment_id?: string | null;
-    blog_id?: string | null;
-  },
-  getSortOrder: (index: number, total: number) => number
-): Promise<Map<string, string>> {
-  const roleIds = new Map<string, string>();
-  const now = Date.now();
-
-  for (let index = 0; index < roles.length; index += 1) {
-    const role = roles[index];
-    const roleId = crypto.randomUUID();
-    roleIds.set(role.name, roleId);
-
-    await tx.mutate.role.insert({
-      id: roleId,
-      name: role.name,
-      description: role.description,
-      scope:
-        (scope.group_id && 'group') ||
-        (scope.event_id && 'event') ||
-        (scope.amendment_id && 'amendment') ||
-        (scope.blog_id && 'blog') ||
-        null,
-      ...buildScopeRecord(scope),
-      assignee_kind: 'member',
-      assignment_mode: 'assigned',
-      visibility: 'public',
-      term_start_date: null,
-      is_recurring: false,
-      recurrence_pattern: null,
-      recurrence_rule: null,
-      recurrence_interval: null,
-      recurrence_days: null,
-      recurrence_end_date: null,
-      scheduled_revote_date: null,
-      default_request_role: false,
-      default_invite_role: false,
-      sort_order: getSortOrder(index, roles.length),
-      created_at: now,
-    });
-
-    for (const permission of role.permissions) {
-      await tx.mutate.action_right.insert({
-        id: crypto.randomUUID(),
-        resource: permission.resource,
-        action: permission.action,
-        role_id: roleId,
-        ...buildScopeRecord(scope),
-        created_at: now,
-      });
-    }
-  }
-
-  return roleIds;
 }
 
 async function linkEntityHashtags(
@@ -1449,44 +1362,6 @@ export function buildAiCreateTools(userId: string) {
               editing_mode: '',
               discussions: null,
               group_id: resolvedGroupId,
-            }),
-            ctx
-          );
-
-          const roleIds = await createScopedRolesAndRights(
-            tx,
-            [
-              {
-                name: 'Owner',
-                description: translateText(
-                  'generated.inline.0041_blog_owner_with_full_permissions_2ffcc97f'
-                ),
-                permissions: [
-                  { resource: 'blogs', action: 'manage' },
-                  { resource: 'blogBloggers', action: 'manage' },
-                ],
-              },
-              {
-                name: 'Writer',
-                description: translateText(
-                  'generated.inline.0042_blog_writer_with_edit_access_43b09221'
-                ),
-                permissions: [{ resource: 'blogs', action: 'update' }],
-              },
-            ],
-            { blog_id: blogId },
-            (index, total) => total - 1 - index
-          );
-
-          await runZeroMutator(
-            tx,
-            serverMutators.blogs.createEntry({
-              id: crypto.randomUUID(),
-              blog_id: blogId,
-              user_id: userId,
-              role_id: roleIds.get('Owner') ?? null,
-              status: 'member',
-              visibility,
             }),
             ctx
           );

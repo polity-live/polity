@@ -28,7 +28,7 @@ interface AgendaSpeakerListSectionProps {
   isRemovingSpeaker?: boolean;
   userId?: string;
   agendaStartTime?: number;
-  onAddToSpeakerList: () => void;
+  onAddToSpeakerList?: () => void;
   onRemoveFromSpeakerList?: () => void;
   onMarkCompleted?: (speakerId: string) => void;
   className?: string;

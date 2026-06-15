@@ -23,6 +23,7 @@ export function UserSearchCard({ user, actions }: UserSearchCardProps) {
 
   return (
     <UserTimelineCard
+      className="entity-search-card-no-spotlight"
       user={{
         id: user.id,
         name: displayName,

@@ -7,5 +7,5 @@ interface GroupSearchCardViewProps {
 }
 
 export function GroupSearchCardView({ group }: GroupSearchCardViewProps) {
-  return <GroupTimelineCard group={group} />;
+  return <GroupTimelineCard group={group} className="entity-search-card-no-spotlight" />;
 }

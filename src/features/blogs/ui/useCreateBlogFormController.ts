@@ -9,6 +9,7 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 export function useCreateBlogFormController() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -52,23 +53,7 @@ export function useCreateBlogFormController() {
         return;
       }
 
-      // blogId already generated upfront for ImageUpload path
-
-      // Create roles for the blog
-      const ownerRoleId = crypto.randomUUID();
-      const writerRoleId = crypto.randomUUID();
-
-      // Create the blogger entry for the creator (as Owner)
-      const bloggerId = crypto.randomUUID();
-
-      // Create action rights for Owner role
-      const ownerManageBlogsId = crypto.randomUUID();
-      const ownerManageBloggersId = crypto.randomUUID();
-
-      // Create action right for Writer role
-      const writerUpdateRightId = crypto.randomUUID();
-
-      await createBlogFull({
+      const createBlogResults = createBlogFull({
         blog: {
           id: blogId,
           title: formData.title,
@@ -85,75 +70,8 @@ export function useCreateBlogFormController() {
           discussions: null,
           group_id: null,
         },
-        roles: [
-          {
-            id: ownerRoleId,
-            name: 'Owner',
-            description: translateText(
-              'generated.inline.0041_blog_owner_with_full_permissions_2ffcc97f'
-            ),
-            scope: 'blog',
-            group_id: null,
-            event_id: null,
-            amendment_id: null,
-            blog_id: blogId,
-            sort_order: 1,
-          },
-          {
-            id: writerRoleId,
-            name: 'Writer',
-            description: translateText(
-              'generated.inline.0042_blog_writer_with_edit_access_43b09221'
-            ),
-            scope: 'blog',
-            group_id: null,
-            event_id: null,
-            amendment_id: null,
-            blog_id: blogId,
-            sort_order: 0,
-          },
-        ],
-        actionRights: [
-          {
-            id: ownerManageBlogsId,
-            resource: 'blogs',
-            action: 'manage',
-            role_id: ownerRoleId,
-            group_id: null,
-            event_id: null,
-            amendment_id: null,
-            blog_id: blogId,
-          },
-          {
-            id: ownerManageBloggersId,
-            resource: 'blogBloggers',
-            action: 'manage',
-            role_id: ownerRoleId,
-            group_id: null,
-            event_id: null,
-            amendment_id: null,
-            blog_id: blogId,
-          },
-          {
-            id: writerUpdateRightId,
-            resource: 'blogs',
-            action: 'update',
-            role_id: writerRoleId,
-            group_id: null,
-            event_id: null,
-            amendment_id: null,
-            blog_id: blogId,
-          },
-        ],
-        entry: {
-          id: bloggerId,
-          blog_id: blogId,
-          user_id: user.id,
-          role_id: ownerRoleId,
-          status: 'member',
-          visibility: formData.visibility,
-        },
       });
+      await serverConfirmed(createBlogResults.blogResult);
 
       // Sync hashtags via junction tables
       if (formData.hashtags.length > 0) {

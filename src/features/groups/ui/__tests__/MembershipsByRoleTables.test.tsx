@@ -113,6 +113,25 @@ describe('MembershipsByRoleTables', () => {
     expect(screen.getByText('Grace Hopper')).toBeTruthy();
   });
 
+  it('can hide role tables that have no members', () => {
+    render(
+      <MembershipsByRoleTables
+        roles={[
+          { id: 'role-1', name: 'Chair', description: 'Chairs the group.' },
+          { id: 'role-2', name: 'Treasurer', description: 'Tracks finances.' },
+        ]}
+        members={[member]}
+        onOpenRightsDialog={vi.fn()}
+        onRemoveRole={vi.fn()}
+        hideEmptyRoleSections
+      />
+    );
+
+    expect(screen.getByText('Chair')).toBeTruthy();
+    expect(screen.queryByText('Treasurer')).toBeNull();
+    expect(screen.queryByText('Tracks finances.')).toBeNull();
+  });
+
   it('renders role headers outside the table card surface', () => {
     const { container } = render(
       <MembershipsByRoleTables

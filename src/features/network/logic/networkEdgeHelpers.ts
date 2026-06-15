@@ -1,5 +1,6 @@
-import { featureThemeValue } from '@/features/shared/theme';
+import type { PrimaryEntityTone } from '@/features/shared/theme';
 import { MarkerType, Position, type Edge } from '@xyflow/react';
+import type { CSSProperties } from 'react';
 import { getHierarchyRelationshipPair } from './groupRelationshipOrientation';
 import type { NetworkRelationshipKind } from './networkRelationshipHelpers';
 import { getRelativeMembershipDirectionForRelationship } from './networkRelationshipHelpers';
@@ -22,6 +23,33 @@ import type {
 
 type TranslationFn = (key: string, defaultValue?: string) => string;
 type DirectionInput = Exclude<NetworkEdgeRelationshipDirection, 'bidirectional'>;
+export type CivicNetworkEdgeTone =
+  | 'neutral'
+  | 'accent'
+  | 'info'
+  | 'warning'
+  | 'success'
+  | 'danger'
+  | 'group'
+  | PrimaryEntityTone;
+
+export interface CivicNetworkEdgeStyleArgs {
+  tone?: CivicNetworkEdgeTone;
+  color?: string;
+  strokeWidth?: number;
+  strokeDasharray?: string;
+  dashed?: boolean;
+  animationDirection?: 'reverse';
+}
+
+export interface CivicNetworkLabelStyleArgs {
+  tone?: CivicNetworkEdgeTone;
+  color?: string;
+}
+
+type CivicNetworkEdgeStyle = CSSProperties & {
+  animationDirection?: 'reverse';
+};
 
 interface CreateNetworkRelationshipEdgeDataArgs {
   rights: string[];
@@ -114,11 +142,67 @@ interface ResolvedInnerAutoEdgeAnchors {
   targetPosition: Position;
 }
 
-export const NETWORK_CONNECTION_DIRECTION_COLORS: Record<NetworkConnectionDirection, string> = {
-  bidirectional: featureThemeValue('chartChartRendererAccentColor'),
-  incoming: featureThemeValue('chartChartRendererInfoColor'),
-  outgoing: featureThemeValue('networkNetworkEdgeHelpersWarningColor'),
+const CIVIC_NETWORK_EDGE_COLORS: Record<CivicNetworkEdgeTone, string> = {
+  neutral: 'var(--border)',
+  accent: 'var(--badge-accent-border)',
+  info: 'var(--badge-info-border)',
+  warning: 'var(--badge-warning-border)',
+  success: 'var(--badge-success-border)',
+  danger: 'var(--badge-danger-border)',
+  group: 'var(--entity-group-border)',
+  user: 'var(--entity-user-border)',
+  event: 'var(--entity-event-border)',
+  amendment: 'var(--entity-amendment-border)',
+  blog: 'var(--entity-blog-border)',
 };
+
+export const NETWORK_CONNECTION_DIRECTION_COLORS: Record<NetworkConnectionDirection, string> = {
+  bidirectional: CIVIC_NETWORK_EDGE_COLORS.accent,
+  incoming: CIVIC_NETWORK_EDGE_COLORS.info,
+  outgoing: CIVIC_NETWORK_EDGE_COLORS.warning,
+};
+
+export function getCivicNetworkEdgeColor(tone: CivicNetworkEdgeTone = 'neutral'): string {
+  return CIVIC_NETWORK_EDGE_COLORS[tone] ?? CIVIC_NETWORK_EDGE_COLORS.neutral;
+}
+
+export function getCivicNetworkEdgeStyle({
+  tone = 'neutral',
+  color,
+  strokeWidth = 2,
+  strokeDasharray,
+  dashed,
+  animationDirection,
+}: CivicNetworkEdgeStyleArgs = {}): CivicNetworkEdgeStyle {
+  return {
+    stroke: color ?? getCivicNetworkEdgeColor(tone),
+    strokeWidth,
+    strokeDasharray: strokeDasharray ?? (dashed ? '5 5' : undefined),
+    animationDirection,
+  };
+}
+
+export function getCivicNetworkLabelStyle({
+  tone = 'neutral',
+  color,
+}: CivicNetworkLabelStyleArgs = {}) {
+  const resolvedColor = color ?? getCivicNetworkEdgeColor(tone);
+
+  return {
+    labelStyle: {
+      fill: 'var(--foreground)',
+      color: 'var(--foreground)',
+      fontWeight: 600,
+    } satisfies CSSProperties,
+    labelBgStyle: {
+      fill: 'var(--card)',
+      stroke: resolvedColor,
+      strokeWidth: 1,
+    } satisfies CSSProperties,
+    labelBgPadding: [8, 5] as [number, number],
+    labelBgBorderRadius: 8,
+  };
+}
 
 export function resolveInnerAutoEdgeAnchors({
   sourceRect,
@@ -712,12 +796,11 @@ export function buildNetworkRelationshipEdge({
     target: targetId,
     type: 'rightsLabel',
     animated: animatedFlowDirection !== null,
-    style: {
-      stroke: resolvedStrokeColor,
-      strokeWidth: 2,
+    style: getCivicNetworkEdgeStyle({
+      color: resolvedStrokeColor,
       strokeDasharray,
       animationDirection: animatedFlowDirection === 'backward' ? 'reverse' : undefined,
-    },
+    }),
     ...edgeMarkers,
     data: createNetworkRelationshipEdgeData({
       rights,

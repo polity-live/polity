@@ -1,5 +1,7 @@
 'use client';
 
+import type { CSSProperties } from 'react';
+
 import { Button } from '@/features/shared/ui/ui/button';
 import { ArrowLeft, UserPlus, Loader2, Plus, Trash2, Shield } from 'lucide-react';
 import {
@@ -26,6 +28,11 @@ import {
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import {
+  ActionSubmissionOverlay,
+  type ActionSubmissionController,
+} from '@/features/shared/ui/action-submission';
+import { ParticipationRoleFilterBar } from '@/features/shared/ui/participation';
 import {
   Command,
   CommandEmpty,
@@ -81,9 +88,12 @@ export interface BlogBloggersManagerViewProps {
   groupActions: any;
   blogWithManagement: any;
   allUsers: any;
+  actionSubmission: ActionSubmissionController;
   usersData: any;
   searchQuery: any;
   setSearchQuery: any;
+  selectedRoleIds: string[];
+  setSelectedRoleIds: (roleIds: string[]) => void;
   inviteSearchQuery: any;
   setInviteSearchQuery: any;
   selectedUsers: any;
@@ -130,8 +140,12 @@ export interface BlogBloggersManagerViewProps {
 }
 
 export function BlogBloggersManagerView({
+  allUsers,
+  actionSubmission,
   searchQuery,
   setSearchQuery,
+  selectedRoleIds,
+  setSelectedRoleIds,
   inviteSearchQuery,
   setInviteSearchQuery,
   selectedUsers,
@@ -167,6 +181,15 @@ export function BlogBloggersManagerView({
   activeColumns,
   requestedColumns,
 }: BlogBloggersManagerViewProps) {
+  const submissionActive = actionSubmission.isActive;
+  const selectedPeople = (allUsers ?? [])
+    .filter((selectedUser: any) => selectedUsers.includes(selectedUser.id))
+    .map((selectedUser: any) => ({
+      id: selectedUser.id,
+      name: displayName(selectedUser),
+      avatar: selectedUser.avatar,
+    }));
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -216,6 +239,13 @@ export function BlogBloggersManagerView({
           placeholder={translateText('generated.inline.0244_search_bloggers_98b779c5')}
         />
       </div>
+      {activeTab !== 'roles' && rolesData.roles.length > 0 ? (
+        <ParticipationRoleFilterBar
+          roles={rolesData.roles}
+          selectedRoleIds={selectedRoleIds}
+          onSelectedRoleIdsChange={setSelectedRoleIds}
+        />
+      ) : null}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -235,91 +265,117 @@ export function BlogBloggersManagerView({
                   {translateText('generated.inline.0245_invite_bloggers_0224f12b')}
                 </Button>
               </DialogTrigger>
-              <ScrollableDialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>
-                    {translateText('generated.inline.0245_invite_bloggers_0224f12b')}
-                  </DialogTitle>
-                  <DialogDescription>
-                    {translateText(
-                      'generated.inline.0246_search_and_select_users_to_invite_as_bloggers_c657d837'
-                    )}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <Command className="rounded-lg border">
-                    <CommandInput
-                      placeholder={translateText('generated.inline.0247_search_users_8cdc4c09')}
-                      value={inviteSearchQuery}
-                      onValueChange={setInviteSearchQuery}
-                    />
-                    <CommandList className="max-h-[300px]">
-                      <CommandEmpty>
-                        {translateText('generated.inline.0248_no_users_found_e611ef57')}
-                      </CommandEmpty>
-                      <CommandGroup>
-                        {isLoadingUsers ? (
-                          <div className="p-4 text-center">
-                            <Loader2 className="mx-auto h-6 w-6 animate-spin" />
-                          </div>
-                        ) : (
-                          filteredUsers?.map((u: any) => (
-                            <CommandItem
-                              key={u.id}
-                              className="flex cursor-pointer items-center space-x-2"
-                              onSelect={() => toggleUserSelection(u.id)}
-                            >
-                              <InlineCheckbox
-                                checked={selectedUsers.includes(u.id)}
-                                onCheckedChange={() => toggleUserSelection(u.id)}
-                              />
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage src={u.avatar || ''} />
-                                <AvatarFallback>{initials(u)}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <div className="font-medium">{displayName(u)}</div>
-                                <div className="text-muted-foreground text-sm">
-                                  @
-                                  {u.handle ||
-                                    u.email ||
-                                    translateText('generated.inline.0025_unknown_50d8b4a9')}
-                                </div>
-                              </div>
-                            </CommandItem>
-                          ))
+              <ScrollableDialogContent
+                showCloseButton={!submissionActive}
+                className={
+                  submissionActive
+                    ? 'h-dvh max-h-none w-screen max-w-none overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none sm:max-w-none'
+                    : 'max-w-2xl'
+                }
+              >
+                {!submissionActive ? (
+                  <>
+                    <DialogHeader>
+                      <DialogTitle>
+                        {translateText('generated.inline.0245_invite_bloggers_0224f12b')}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {translateText(
+                          'generated.inline.0246_search_and_select_users_to_invite_as_bloggers_c657d837'
                         )}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                  {selectedUsers.length > 0 ? (
-                    <div className="text-muted-foreground text-sm">
-                      {translateText('generated.inline.0249_selected_2e084478')}
-                      {selectedUsers.length}{' '}
-                      {selectedUsers.length === 1
-                        ? translateText('generated.inline.0026_user_12dea96f')
-                        : translateText('generated.inline.0027_users_5b7dcd14')}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <Command className="rounded-lg border">
+                        <CommandInput
+                          placeholder={translateText('generated.inline.0247_search_users_8cdc4c09')}
+                          value={inviteSearchQuery}
+                          onValueChange={setInviteSearchQuery}
+                        />
+                        <CommandList className="max-h-[300px]">
+                          <CommandEmpty>
+                            {translateText('generated.inline.0248_no_users_found_e611ef57')}
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {isLoadingUsers ? (
+                              <div className="p-4 text-center">
+                                <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                              </div>
+                            ) : (
+                              filteredUsers?.map((u: any) => (
+                                <CommandItem
+                                  key={u.id}
+                                  className="flex cursor-pointer items-center space-x-2"
+                                  onSelect={() => toggleUserSelection(u.id)}
+                                >
+                                  <InlineCheckbox
+                                    checked={selectedUsers.includes(u.id)}
+                                    onCheckedChange={() => toggleUserSelection(u.id)}
+                                  />
+                                  <Avatar className="h-8 w-8">
+                                    <AvatarImage src={u.avatar || ''} />
+                                    <AvatarFallback>{initials(u)}</AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1">
+                                    <div className="font-medium">{displayName(u)}</div>
+                                    <div className="text-muted-foreground text-sm">
+                                      @
+                                      {u.handle ||
+                                        u.email ||
+                                        translateText('generated.inline.0025_unknown_50d8b4a9')}
+                                    </div>
+                                  </div>
+                                </CommandItem>
+                              ))
+                            )}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                      {selectedUsers.length > 0 ? (
+                        <div className="text-muted-foreground text-sm">
+                          {translateText('generated.inline.0249_selected_2e084478')}
+                          {selectedUsers.length}{' '}
+                          {selectedUsers.length === 1
+                            ? translateText('generated.inline.0026_user_12dea96f')
+                            : translateText('generated.inline.0027_users_5b7dcd14')}
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
-                    {translateText('generated.inline.0065_cancel_77dfd213')}
-                  </Button>
-                  <Button
-                    onClick={handleInviteBloggers}
-                    disabled={selectedUsers.length === 0 || isInviting}
-                  >
-                    {isInviting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {translateText('generated.inline.0113_inviting_dc7a6e8b')}
-                      </>
-                    ) : (
-                      `Invite ${selectedUsers.length || ''} ${selectedUsers.length === 1 ? translateText('generated.inline.0032_blogger_9b156370') : translateText('generated.inline.0033_bloggers_06e71e76')}`
-                    )}
-                  </Button>
-                </DialogFooter>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
+                        {translateText('generated.inline.0065_cancel_77dfd213')}
+                      </Button>
+                      <Button
+                        onClick={handleInviteBloggers}
+                        disabled={selectedUsers.length === 0 || isInviting}
+                      >
+                        {`Invite ${selectedUsers.length || ''} ${selectedUsers.length === 1 ? translateText('generated.inline.0032_blogger_9b156370') : translateText('generated.inline.0033_bloggers_06e71e76')}`}
+                      </Button>
+                    </DialogFooter>
+                  </>
+                ) : null}
+                <ActionSubmissionOverlay
+                  kind="invite"
+                  status={actionSubmission.status}
+                  steps={actionSubmission.progressSteps}
+                  error={actionSubmission.error}
+                  preview={{
+                    entityLabel: translateText('generated.inline.0245_invite_bloggers_0224f12b'),
+                    title:
+                      blog.title || translateText('generated.inline.0245_invite_bloggers_0224f12b'),
+                    description: translateText(
+                      'generated.inline.0246_search_and_select_users_to_invite_as_bloggers_c657d837'
+                    ),
+                    people: selectedPeople,
+                    badges: ['Writer'],
+                  }}
+                  target={{
+                    label: translateText('common.done', 'Fertig'),
+                    onClick: actionSubmission.reset,
+                  }}
+                  onBack={actionSubmission.reset}
+                  onRetry={() => void actionSubmission.retry()}
+                />
               </ScrollableDialogContent>
             </Dialog>
           ) : null}
@@ -328,7 +384,10 @@ export function BlogBloggersManagerView({
         <TabsContent value="bloggers" className="space-y-4">
           {/* Invited Bloggers */}
           {invitedBloggers.length > 0 ? (
-            <section className="space-y-3">
+            <section
+              className="civic-load-card-reveal space-y-3"
+              style={{ '--civic-load-index': 0 } as CSSProperties}
+            >
               <div className="space-y-1.5 px-3 sm:px-4">
                 <h2 className="text-base leading-none font-semibold">
                   {translateText('generated.inline.0252_invited_bloggers_ab803262')}
@@ -349,7 +408,10 @@ export function BlogBloggersManagerView({
           ) : null}
 
           {/* Active Bloggers */}
-          <section className="space-y-3">
+          <section
+            className="civic-load-card-reveal space-y-3"
+            style={{ '--civic-load-index': 1 } as CSSProperties}
+          >
             <div className="space-y-1.5 px-3 sm:px-4">
               <h2 className="text-base leading-none font-semibold">
                 {translateText('generated.inline.0253_active_bloggers_1806b44e')}
@@ -377,7 +439,10 @@ export function BlogBloggersManagerView({
 
           {/* Pending Requests */}
           {requestedBloggers.length > 0 ? (
-            <section className="space-y-3">
+            <section
+              className="civic-load-card-reveal space-y-3"
+              style={{ '--civic-load-index': 2 } as CSSProperties}
+            >
               <div className="space-y-1.5 px-3 sm:px-4">
                 <h2 className="text-base leading-none font-semibold">
                   {translateText('generated.inline.0256_pending_requests_45daa007')}

@@ -242,6 +242,7 @@ export function useBlogDetailController({ blogId }: UseBlogDetailControllerOptio
         }
       : undefined,
     blogId,
+    bloggers: blog?.bloggers ?? [],
     canAccess: blog ? checkEntityAccess(blog.visibility, !!user, isBlogger) : true,
     canDelete,
     canEdit,

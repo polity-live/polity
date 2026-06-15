@@ -2,7 +2,7 @@
 
 import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
   Calendar,
@@ -60,6 +60,8 @@ import {
 } from '@/features/public-landing/logic/landingActivityPreview';
 import { ProductStoryPoint } from './ProductStoryPoint';
 import { LandingAmendmentSectionContentContainer } from './LandingAmendmentSectionContent';
+import { MotionGroup, MotionItem, ScrollReveal } from '@/features/shared/motion';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 
 const featureCards = [
   { key: 'groups', icon: Users },
@@ -73,17 +75,19 @@ const featureCards = [
 const solutionKeys = ['humans', 'parties', 'ngos', 'corporations', 'government'] as const;
 const imprintSectionKeys = ['overview', 'operator', 'responsibility', 'legalNotice'] as const;
 const landingPreviewUserId = 'landing-preview-user';
+const landingDecisionFlowIcons = [FileText, Workflow, Vote] as const;
+const landingDecisionFlowFallbackSteps = ['Proposal', 'Amendment', 'Vote'] as const;
 type LandingAssistantChatPreview = Parameters<typeof AssistantMessageInput>[0]['assistantChat'];
 
 export function PublicLandingPage() {
   const { t, tArray } = useTranslation();
 
   return (
-    <div className="bg-background text-foreground min-h-screen">
+    <div className="public-landing-page bg-background text-foreground min-h-screen overflow-x-clip">
       <section id="home" className="scroll-mt-24 border-b">
         <div className="mx-auto flex max-w-7xl flex-col justify-center gap-8 px-4 py-12 sm:px-6 sm:py-16 lg:min-h-[62svh] lg:px-8">
-          <div className="max-w-4xl space-y-6">
-            <div className="bg-background inline-flex items-center gap-3 rounded-lg border px-4 py-3 shadow-sm">
+          <MotionGroup className="max-w-4xl space-y-6">
+            <MotionItem className="bg-background inline-flex items-center gap-3 rounded-lg border px-4 py-3 shadow-sm">
               <span
                 className={featureThemeClassName('publiclandingPublicLandingPageNeutralBackground')}
               >
@@ -103,31 +107,32 @@ export function PublicLandingPage() {
                   {t('pages.home.publicLanding.hero.productLine')}
                 </p>
               </div>
-            </div>
+            </MotionItem>
 
-            <div className="space-y-4">
+            <MotionItem className="space-y-4">
               <p className="text-brand text-sm font-semibold uppercase">
                 {t('pages.home.publicLanding.hero.eyebrow')}
               </p>
               <h1 className="max-w-4xl text-4xl leading-tight font-bold sm:text-5xl lg:text-6xl">
                 {t('pages.home.publicLanding.hero.title')}
               </h1>
+              <LandingDecisionFlow steps={tArray('pages.home.publicLanding.hero.decisionFlow')} />
               <p className="text-muted-foreground max-w-3xl text-lg leading-8">
                 {t('pages.home.publicLanding.hero.subtitle')}
               </p>
-            </div>
+            </MotionItem>
 
-            <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg">
+            <MotionItem className="flex flex-wrap gap-3">
+              <Button asChild size="lg" className="landing-hero-primary-cta">
                 <Link to="/auth">{t('pages.home.publicLanding.hero.primaryCta')}</Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <a href={featureThemeClassName('publiclandingPublicLandingPageThemedStyle')}>
+                <SmartLink href="/#features">
                   {t('pages.home.publicLanding.hero.secondaryCta')}
-                </a>
+                </SmartLink>
               </Button>
-            </div>
-          </div>
+            </MotionItem>
+          </MotionGroup>
         </div>
       </section>
 
@@ -138,25 +143,27 @@ export function PublicLandingPage() {
             title={t('pages.home.publicLanding.sections.features.title')}
             description={t('pages.home.publicLanding.sections.features.description')}
           />
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <MotionGroup className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {featureCards.map(({ key, icon: Icon }) => (
-              <Card key={key} className="h-full">
-                <CardHeader className="space-y-3 p-5">
-                  <div className="bg-brand/10 text-brand flex h-9 w-9 items-center justify-center rounded-md">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">
-                      {t(`pages.features.features.${key}.title`)}
-                    </CardTitle>
-                    <CardDescription leading="relaxed" className="mt-2">
-                      {t(`pages.features.features.${key}.description`)}
-                    </CardDescription>
-                  </div>
-                </CardHeader>
-              </Card>
+              <MotionItem key={key}>
+                <Card className="landing-feature-card h-full" interactive="spotlight">
+                  <CardHeader className="space-y-3 p-5">
+                    <div className="landing-feature-icon bg-brand/10 text-brand flex h-9 w-9 items-center justify-center rounded-md">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">
+                        {t(`pages.features.features.${key}.title`)}
+                      </CardTitle>
+                      <CardDescription leading="relaxed" className="mt-2">
+                        {t(`pages.features.features.${key}.description`)}
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </MotionItem>
             ))}
-          </div>
+          </MotionGroup>
         </div>
       </section>
 
@@ -341,12 +348,12 @@ function StorySection({
   muted?: boolean;
 }) {
   return (
-    <section className={cn('border-b', muted ? 'bg-muted/20' : 'bg-background')}>
+    <ScrollReveal as="section" className={cn('border-b', muted ? 'bg-muted/20' : 'bg-background')}>
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <SectionHeading eyebrow={eyebrow} title={title} description={description} />
         <div className="mt-8">{children}</div>
       </div>
-    </section>
+    </ScrollReveal>
   );
 }
 
@@ -364,6 +371,47 @@ function SectionHeading({
       <p className="text-brand text-sm font-semibold uppercase">{eyebrow}</p>
       <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
       <p className="text-muted-foreground text-base leading-7">{description}</p>
+    </div>
+  );
+}
+
+function LandingDecisionFlow({ steps }: { steps: string[] }) {
+  const flowSteps =
+    steps.length >= landingDecisionFlowIcons.length
+      ? steps.slice(0, landingDecisionFlowIcons.length)
+      : [...landingDecisionFlowFallbackSteps];
+
+  return (
+    <div aria-hidden="true" className="max-w-2xl pt-1">
+      <div className="relative grid grid-cols-3 gap-2 pt-1">
+        <div className="bg-border absolute top-5 right-[16.666%] left-[16.666%] h-px" />
+        <span className="landing-decision-flow-marker bg-highlight ring-highlight/20 absolute top-[0.875rem] h-3 w-3 -translate-x-1/2 rounded-full shadow-sm ring-4" />
+        {flowSteps.map((step, index) => {
+          const Icon = landingDecisionFlowIcons[index] ?? CheckCircle2;
+          const isFinalStep = index === flowSteps.length - 1;
+
+          return (
+            <div
+              key={`${step}-${index}`}
+              className="relative z-10 flex min-w-0 flex-col items-center gap-2"
+            >
+              <span
+                className={cn(
+                  'bg-background flex h-8 w-8 items-center justify-center rounded-full border shadow-sm',
+                  isFinalStep
+                    ? 'border-highlight/50 text-highlight'
+                    : 'border-border text-muted-foreground'
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+              </span>
+              <span className="text-muted-foreground max-w-24 text-center text-xs font-semibold sm:max-w-none">
+                {step}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -455,7 +503,7 @@ function LandingNetworkFlowPreviewView({
   visibleNodes: any[];
 }) {
   return (
-    <div className="bg-card overflow-hidden rounded-lg border shadow-sm">
+    <div className="landing-network-preview bg-card overflow-hidden rounded-lg border shadow-sm">
       <div className="border-b px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -619,7 +667,7 @@ export function LandingAgendaTimelinePreview() {
   ];
 
   return (
-    <div className="bg-card overflow-hidden rounded-lg border shadow-sm">
+    <div className="landing-agenda-preview bg-card overflow-hidden rounded-lg border shadow-sm">
       <div className="border-b px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
@@ -640,13 +688,13 @@ export function LandingAgendaTimelinePreview() {
       </div>
 
       <div className="p-5">
-        <div className="before:bg-border relative space-y-4 pl-6 before:absolute before:top-3 before:bottom-3 before:left-2 before:w-px">
+        <div className="landing-agenda-timeline before:bg-border relative space-y-4 pl-6 before:absolute before:top-3 before:bottom-3 before:left-2 before:w-px">
           {agendaTimelineItems.map((item, index) => (
-            <div key={item.id} className="relative">
-              <span className="border-background bg-brand absolute top-5 -left-[22px] h-3 w-3 rounded-full border-2 shadow-sm" />
+            <div key={item.id} className="landing-agenda-step relative">
+              <span className="landing-timeline-dot border-background bg-brand absolute top-5 -left-[22px] h-3 w-3 rounded-full border-2 shadow-sm" />
               <AgendaItemTimelineCard
                 agendaItem={item}
-                className={cn(index === 0 && 'ring-brand/30 ring-2')}
+                className={cn('landing-agenda-card', index === 0 && 'ring-brand/30 ring-2')}
               />
             </div>
           ))}
@@ -836,8 +884,8 @@ export function LandingSocialAiPreview() {
   }, [t]);
 
   return (
-    <div className="bg-card grid gap-5 rounded-lg border p-5 shadow-sm lg:grid-cols-[0.92fr_1.08fr]">
-      <Card className="h-full overflow-hidden">
+    <div className="landing-social-ai-preview bg-card grid gap-5 rounded-lg border p-5 shadow-sm lg:grid-cols-[0.92fr_1.08fr]">
+      <Card className="h-full min-w-0 overflow-hidden">
         <CardHeader separator className="p-4">
           <div className="flex items-center gap-3">
             <div className="bg-brand/10 text-brand flex h-9 w-9 items-center justify-center rounded-md">
@@ -893,7 +941,7 @@ export function LandingSocialAiPreview() {
         </CardContent>
       </Card>
 
-      <Card className="h-full overflow-hidden">
+      <Card className="landing-ai-conversation-card h-full min-w-0 overflow-hidden">
         <ConversationHeader
           conversation={conversation}
           currentUserId={landingPreviewUserId}
@@ -906,7 +954,7 @@ export function LandingSocialAiPreview() {
         />
         <CardContent className="space-y-4 p-4">
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
-            <Sparkles className="text-brand h-4 w-4" />
+            <Sparkles className="landing-ai-spark text-brand h-4 w-4" />
             {t('pages.home.publicLanding.social.aiSubtitle')}
           </div>
           {messages.map(message => (
@@ -985,7 +1033,44 @@ function LandingActivityStripPreviewView({
 
 export function LandingSearchPreview() {
   const { t, tArray } = useTranslation();
-  const [query, setQuery] = useState(t('pages.home.publicLanding.searchPreview.query'));
+  const searchPreviewQuery = t('pages.home.publicLanding.searchPreview.query');
+  const [query, setQuery] = useState('');
+  const [typingCycle, setTypingCycle] = useState(0);
+
+  useEffect(() => {
+    const timers: number[] = [];
+    const startDelayMs = 520;
+    const typeStepMs = 54;
+    const visibleHoldMs = 3600;
+    const resetPauseMs = 520;
+
+    setQuery('');
+
+    for (let index = 0; index < searchPreviewQuery.length; index += 1) {
+      timers.push(
+        window.setTimeout(
+          () => {
+            setQuery(searchPreviewQuery.slice(0, index + 1));
+          },
+          startDelayMs + index * typeStepMs
+        )
+      );
+    }
+
+    timers.push(
+      window.setTimeout(
+        () => {
+          setTypingCycle(cycle => cycle + 1);
+        },
+        startDelayMs + searchPreviewQuery.length * typeStepMs + visibleHoldMs + resetPauseMs
+      )
+    );
+
+    return () => {
+      timers.forEach(timer => window.clearTimeout(timer));
+    };
+  }, [searchPreviewQuery, typingCycle]);
+
   const filters = useMemo<FilterOption[]>(
     () =>
       tArray('pages.home.publicLanding.searchPreview.filters').map((filter, index) => ({
@@ -1009,6 +1094,10 @@ export function LandingSearchPreview() {
         owner_user_id: null,
         group_id: 'landing-group',
         image_url: null,
+        location_latitude: null,
+        location_longitude: null,
+        location_label: null,
+        location_source: null,
         card_payload: {
           type: 'workflow',
           tags: ['climate', 'budget', 'committee'],
@@ -1028,8 +1117,10 @@ export function LandingSearchPreview() {
       documents={documents}
       filters={filters}
       onQueryChange={setQuery}
-      placeholder={t('pages.home.publicLanding.searchPreview.query')}
+      placeholder={t('features.search.placeholder', { defaultValue: 'Search...' })}
       query={query}
+      typingCycle={typingCycle}
+      typingTargetLength={searchPreviewQuery.length}
     />
   );
 }
@@ -1040,25 +1131,42 @@ function LandingSearchPreviewView({
   onQueryChange,
   placeholder,
   query,
+  typingCycle,
+  typingTargetLength,
 }: {
   documents: SearchDocument[];
   filters: FilterOption[];
   onQueryChange: (query: string) => void;
   placeholder: string;
   query: string;
+  typingCycle: number;
+  typingTargetLength: number;
 }) {
+  const resultBaseDelayMs = 520 + typingTargetLength * 54 + 260;
+  const caretOffset = `${Math.min(query.length, 28)}ch`;
+
   return (
-    <div className="bg-card rounded-lg border p-5 shadow-sm">
-      <EntitySearchBar
-        searchQuery={query}
-        onSearchQueryChange={onQueryChange}
-        placeholder={placeholder}
-        filterOptions={filters}
-        onFilterToggle={() => undefined}
-      />
+    <div className="landing-search-preview bg-card rounded-lg border p-5 shadow-sm">
+      <div className="landing-search-field relative overflow-hidden rounded-md">
+        <EntitySearchBar
+          searchQuery={query}
+          onSearchQueryChange={onQueryChange}
+          placeholder={placeholder}
+          filterOptions={filters}
+          onFilterToggle={() => undefined}
+        />
+        <span
+          className="landing-search-typing-caret pointer-events-none absolute top-3 left-9 h-5 w-px"
+          style={{ transform: `translateX(${caretOffset})` }}
+        />
+      </div>
       <div className="mt-5 grid gap-4 md:grid-cols-3">
-        {documents.map(document => (
-          <div key={document.id} className="min-h-[14rem]">
+        {documents.map((document, index) => (
+          <div
+            key={`${typingCycle}-${document.id}`}
+            className="landing-search-result-card min-h-[14rem]"
+            style={{ animationDelay: `${resultBaseDelayMs + index * 140}ms` }}
+          >
             <SearchResultCard document={document} />
           </div>
         ))}
@@ -1081,7 +1189,7 @@ function ContactLink({
   external?: boolean;
 }) {
   return (
-    <a
+    <SmartLink
       href={href}
       target={external ? '_blank' : undefined}
       rel={external ? 'noopener noreferrer' : undefined}
@@ -1090,6 +1198,6 @@ function ContactLink({
       <p className="font-semibold">{title}</p>
       <p className="text-muted-foreground mt-2 text-sm break-words">{value}</p>
       <p className="text-muted-foreground mt-3 text-sm leading-6">{description}</p>
-    </a>
+    </SmartLink>
   );
 }

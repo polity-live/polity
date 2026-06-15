@@ -51,6 +51,7 @@ export interface EditableRightsLabelEdgeData extends Record<string, unknown> {
   selectedGroupId?: string;
   selectedGroupName?: string | null;
   rightDisplayDirections?: Record<string, GroupRelationshipDirection>;
+  contextLabel?: string | null;
   anchorStrategy?: NetworkEdgeAnchorStrategy;
   useInnerVerticalAnchors?: boolean;
   bendPoints?: NetworkEdgeBendPoint[];

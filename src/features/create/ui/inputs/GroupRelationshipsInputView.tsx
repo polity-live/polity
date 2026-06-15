@@ -1,4 +1,4 @@
-import { BadgeControl } from '@/features/shared/ui/status';
+import { BadgeControl, RIGHT_GRADIENTS, RightBadge } from '@/features/shared/ui/status';
 import { FormControlLabel } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card } from '@/features/shared/ui/ui/card';
@@ -7,6 +7,7 @@ import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { X, Check, Link as LinkIcon } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { GroupLink } from './GroupRelationshipsInput';
+import { cn } from '@/features/shared/utils/utils';
 
 type RelationshipType = 'isParent' | 'isChild';
 type WithRight =
@@ -96,9 +97,14 @@ export function GroupRelationshipsInputView({
                 <Button
                   key={right}
                   type="button"
-                  variant={selectedRights.has(right) ? 'default' : 'outline'}
+                  variant="outline"
                   onClick={() => onToggleRight(right)}
-                  className="h-auto justify-start py-3"
+                  className={cn(
+                    'h-auto justify-start py-3 text-left',
+                    selectedRights.has(right)
+                      ? cn(RIGHT_GRADIENTS[right], 'shadow-sm')
+                      : 'border-border bg-background text-foreground hover:bg-accent hover:text-accent-foreground'
+                  )}
                 >
                   {selectedRights.has(right) ? <Check className="mr-2 h-4 w-4" /> : null}
                   <span className="text-sm">{t(`pages.create.group.rights.${right}`)}</span>
@@ -139,9 +145,7 @@ export function GroupRelationshipsInputView({
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {link.rights.map((right: any) => (
-                        <BadgeControl key={right} variant="secondary" size="xs">
-                          {t(`pages.create.group.rights.${right}`)}
-                        </BadgeControl>
+                        <RightBadge key={right} right={right} size="compact" />
                       ))}
                     </div>
                   </div>

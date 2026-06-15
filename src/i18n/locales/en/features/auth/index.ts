@@ -104,6 +104,41 @@ export const authTranslations = {
   },
   onboarding: {
     welcome: 'Welcome to Polity!',
+    shell: {
+      progressLabel: 'First setup',
+      title: 'Set up your civic workspace',
+      subtitle:
+        'A few focused choices help Polity connect you with people, groups, decisions, and support.',
+      contextTitle: 'Why this matters',
+      contextDescription:
+        'Polity works best when your profile, group context, and assistant are ready before you enter the timeline.',
+      steps: {
+        name: {
+          label: 'Profile',
+          description: 'Make yourself recognizable.',
+        },
+        interests: {
+          label: 'Interests',
+          description: 'Follow topics you care about.',
+        },
+        groupSearch: {
+          label: 'Group',
+          description: 'Find where you already participate.',
+        },
+        confirm: {
+          label: 'Request',
+          description: 'Decide whether to ask for access.',
+        },
+        ariaKai: {
+          label: 'Assistant',
+          description: 'Know where to get help later.',
+        },
+        summary: {
+          label: 'Start',
+          description: 'Choose your first useful destination.',
+        },
+      },
+    },
     nameStep: {
       title: "What's your name?",
       description: 'Help others recognize you',
@@ -118,47 +153,120 @@ export const authTranslations = {
       },
       continue: 'Continue',
     },
+    interestStep: {
+      title: 'What are you interested in?',
+      description:
+        'Pick a few topics so Polity can surface groups, events, and decisions that fit your start.',
+      suggestions:
+        'climate,mobility,housing,education,democracy,health,digital,participation,budget,neighborhood,transport',
+      pickTitle: 'Choose topics',
+      selectedCountOne: '1 interest selected',
+      selectedCount: '{{count}} interests selected',
+      emptySelection: 'Pick 3-8 topics, or skip for now.',
+      clear: 'Clear',
+      customLabel: 'Add your own topics',
+      customPlaceholder: 'Add a topic, e.g. climate',
+      previewTitle: 'Where this shows up',
+      previewDescription:
+        'We use these topics to rank group matches, personalize Discover, and explain recommendations.',
+      continue: 'Continue',
+      skip: 'Skip for now',
+    },
     groupStep: {
       title: 'Find your group',
       description: "Search for a location or group you're active in",
       searchPlaceholder: 'Search groups or locations...',
+      matchesTitle: 'Recommended matches',
+      matchesDescription: 'Select one or more groups to personalize your start.',
       noResults: 'No groups found',
+      noResultsHint:
+        'Try another place, organization name, or topic. You can also continue without a group.',
+      selectionTitle: 'Selected groups',
+      selectedCount: '{{count}} selected',
+      clearSelection: 'Clear all',
+      selectionDescription:
+        'Next you can send a request, or keep the group as context and continue exploring.',
+      emptySelectionDescription:
+        'You can pick a group now or skip this step and find one from search later.',
+      mapTitle: 'Group map',
+      mapDescription: 'Click a marker to focus it. Select groups from the list.',
+      mapNoGroups: 'No mapped groups in these results.',
+      mapUnavailable: 'Map is loading...',
+      mappableCount: '{{count}} mapped',
+      unmappedCount: '{{count}} without location',
+      activeTitle: 'Focused group',
+      activeDescription: 'Select this group from the list if you want to request access.',
+      activeSelectedDescription: 'This group is selected for your membership request batch.',
+      emptyActiveDescription: 'Choose a group or marker to preview it here.',
+      interestMatch: 'Matches your interests',
       skip: 'Skip this step',
       continue: 'Continue',
+      continueWithoutGroup: 'Continue without group',
     },
     confirmStep: {
       title: 'Join this group?',
-      description:
-        'Would you like to participate in this group and send a membership request?',
+      titleMultiple: 'Send group requests?',
+      description: 'Would you like to participate in this group and send a membership request?',
+      descriptionMultiple: 'Send membership requests to {{count}} selected groups.',
+      nextTitle: 'What happens next',
+      nextPrivacy: 'The group receives a membership request, not automatic access.',
+      nextReview: 'You can track the request later from your profile.',
       yes: 'Yes, send request',
+      yesMultiple: 'Send {{count}} requests',
       no: 'No, just continue',
       requestSending: 'Sending request...',
       requestSent: 'Request sent!',
+      requestSentMultiple: '{{count}} requests sent',
     },
     summaryStep: {
       title: "You're all set!",
       description: "Here's what we've done for you:",
       nameUpdated: 'Name set to',
       groupSelected: 'Group selected',
+      groupsSelected: 'Groups selected',
+      groupCountOne: '1 group selected',
+      groupCount: '{{count}} groups selected',
       membershipRequested: 'Membership request sent to',
+      membershipRequestsSent: 'Membership requests sent',
+      requestCountOne: '1 request sent',
+      requestCount: '{{count}} requests sent',
       noGroup: 'No group selected',
+      interestsSelected: 'Interests selected',
+      recommendationTitle: 'Recommended next step',
+      recommendations: {
+        profile:
+          'Your request is sent. Open your profile next to review memberships and pending access.',
+        group:
+          'You selected a group without sending a request. Open it now to understand its work.',
+        timeline:
+          'Your interests are saved. Open the timeline to see matching activity and discover new groups.',
+        assistant: 'Start with Aria & Kai if you want a guided tour before exploring on your own.',
+      },
+      nextStepLabel: 'Next step',
       goToProfile: 'Go to my profile',
       goToGroup: 'Go to group',
-      showAssistant: 'Show me my assistant location',
+      goToTimeline: 'Open timeline',
+      showAssistant: 'Open assistant',
     },
     ariaKaiStep: {
       title: 'Welcome to Polity!',
       subtitle: 'Meet Aria & Kai, your personal assistants',
-      intro: "Hey! We're <1>Aria & Kai</1>, and we're here to help you navigate Polity and make the most of all its features.",
-      helpText: "Whenever you need assistance, tips, or want to learn about groups, events, amendments, and more, just <1>find us in your message conversations</1>. We're always ready to help!",
+      intro:
+        "Hey! We're <1>Aria & Kai</1>, and we're here to help you navigate Polity and make the most of all its features.",
+      helpText:
+        "Whenever you need assistance, tips, or want to learn about groups, events, amendments, and more, just <1>find us in your message conversations</1>. We're always ready to help!",
       quickTip: 'Quick Tip:',
-      tipText: "We've already started a conversation with you. Click below to see where you can always find us!",
+      tipText:
+        "We've already started a conversation with you. Click below to see where you can always find us!",
       dontShowAgain: "Don't show me this introduction again",
+      assistantBadge: 'AI',
+      previewPrompt: 'What should I do first?',
       continue: 'Continue',
     },
   },
   errors: {
-    systemAssistantNotFound: 'System assistant (Aria & Kai) is not available. Please contact support or run the seed script to initialize system users.',
+    systemAssistantNotFound:
+      'System assistant (Aria & Kai) is not available. Please contact support or run the seed script to initialize system users.',
     systemAssistantCheckFailed: 'Failed to verify system assistant availability. Please try again.',
     verificationFailed: 'Verification failed',
     invalidOrExpiredCode: 'Invalid or expired code',
@@ -169,10 +277,14 @@ export const authTranslations = {
     fillBothFields: 'Please fill in both fields',
     nameTooShort: 'Name must be at least 2 characters long',
     membershipRequestFailed: 'Request could not be sent',
+    membershipRequestsPartialFailed:
+      'Some requests could not be sent. Successful requests are marked.',
+    interestsSaveFailed: 'Interests could not be saved',
     profileUpdateFailed: 'Profile could not be updated',
   },
   success: {
     welcome: 'Welcome to Polity! 🎉',
     membershipRequestSent: 'Membership request sent!',
+    membershipRequestsSent: '{{count}} membership requests sent!',
   },
 } as const;

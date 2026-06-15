@@ -6,6 +6,7 @@ import {
   type EngagementFilter,
 } from '@/features/timeline/hooks/useTimelineFilters';
 import { TimelineFilterPanel } from '@/features/timeline/ui/TimelineFilterPanel';
+import type { SearchViewMode } from '../hooks/useSearchURL';
 import { SearchHeader } from './SearchHeader';
 
 export interface SearchPageViewProps {
@@ -20,12 +21,15 @@ export interface SearchPageViewProps {
   onDateRangeChange: (range: DateRangeFilter) => void;
   topics: string[];
   availableTopics: string[];
+  personalTopics?: string[];
   onTopicToggle: (topic: string) => void;
   engagement: EngagementFilter;
   onEngagementChange: (engagement: EngagementFilter) => void;
   onResetFilters: () => void;
   hasActiveFilters: boolean;
   totalResults: number;
+  view: SearchViewMode;
+  onViewChange: (view: SearchViewMode) => void;
   results: ReactNode;
 }
 
@@ -41,12 +45,15 @@ export function SearchPageView({
   onDateRangeChange,
   topics,
   availableTopics,
+  personalTopics = [],
   onTopicToggle,
   engagement,
   onEngagementChange,
   onResetFilters,
   hasActiveFilters,
   totalResults,
+  view,
+  onViewChange,
   results,
 }: SearchPageViewProps) {
   return (
@@ -57,9 +64,12 @@ export function SearchPageView({
         showFilters={showFilters}
         setShowFilters={onShowFiltersChange}
         activeTopics={topics}
-        onTopicRemove={onTopicToggle}
+        personalTopics={personalTopics}
+        onTopicToggle={onTopicToggle}
         totalResults={totalResults}
         queryParam={searchQuery}
+        view={view}
+        onViewChange={onViewChange}
       />
 
       {showFilters ? (

@@ -1,8 +1,8 @@
-import { featureThemeValue } from '@/features/shared/theme';
 import { MarkerType, type Edge } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 
 import { filterEdgesByConnectionDirections, filterEdgesByRights } from '../networkFilterHelpers';
+import { getCivicNetworkEdgeColor } from '../networkEdgeHelpers';
 import type { EditableRightsLabelEdgeData } from '../../types/networkEdge.types';
 
 function createRelationshipEdge(): Edge<EditableRightsLabelEdgeData> {
@@ -12,16 +12,16 @@ function createRelationshipEdge(): Edge<EditableRightsLabelEdgeData> {
     target: 'group-b',
     type: 'rightsLabel',
     style: {
-      stroke: featureThemeValue('networkNetworkFilterHelpersNeutralColor'),
+      stroke: getCivicNetworkEdgeColor('neutral'),
       strokeWidth: 2,
     },
     markerStart: {
       type: MarkerType.ArrowClosed,
-      color: featureThemeValue('networkNetworkFilterHelpersNeutralColor'),
+      color: getCivicNetworkEdgeColor('neutral'),
     },
     markerEnd: {
       type: MarkerType.ArrowClosed,
-      color: featureThemeValue('networkNetworkFilterHelpersNeutralColor'),
+      color: getCivicNetworkEdgeColor('neutral'),
     },
     data: {
       rights: ['amendmentRight', 'rightToSpeak'],
@@ -45,7 +45,7 @@ describe('networkFilterHelpers', () => {
       new Set(['amendmentRight', 'rightToSpeak'])
     );
 
-    expect(edge?.style?.stroke).toBe(featureThemeValue('chartChartRendererAccentColor'));
+    expect(edge?.style?.stroke).toBe(getCivicNetworkEdgeColor('accent'));
     expect(edge?.animated).toBe(false);
     expect((edge?.data as EditableRightsLabelEdgeData | undefined)?.visibleFlowDirection).toBe(
       'bidirectional'
@@ -65,7 +65,7 @@ describe('networkFilterHelpers', () => {
     expect((edge?.data as EditableRightsLabelEdgeData | undefined)?.visibleRights).toEqual([
       'amendmentRight',
     ]);
-    expect(edge?.style?.stroke).toBe(featureThemeValue('chartChartRendererInfoColor'));
+    expect(edge?.style?.stroke).toBe(getCivicNetworkEdgeColor('info'));
     expect(edge?.animated).toBe(true);
     expect(edge?.style?.animationDirection).toBeUndefined();
   });
@@ -93,7 +93,7 @@ describe('networkFilterHelpers', () => {
     expect((edge?.data as EditableRightsLabelEdgeData | undefined)?.visibleRights).toEqual([
       'rightToSpeak',
     ]);
-    expect(edge?.style?.stroke).toBe(featureThemeValue('networkNetworkEdgeHelpersWarningColor'));
+    expect(edge?.style?.stroke).toBe(getCivicNetworkEdgeColor('warning'));
     expect(edge?.animated).toBe(true);
     expect(edge?.style?.animationDirection).toBe('reverse');
   });

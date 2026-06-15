@@ -28,10 +28,10 @@ const TIMELINE_SEARCH_TYPES = new Set<SearchResultType>([
 ]);
 
 const SEARCH_TIMELINE_CARD_CLASS = [
+  'entity-search-card-no-spotlight',
   'border-0 bg-transparent shadow-none hover:shadow-none',
   '[&_[data-timeline-card-header]]:rounded-t-2xl',
   '[&_[data-timeline-card-header]]:border',
-  '[&_[data-timeline-card-header]]:border-border/70',
   '[&_[data-timeline-card-header]]:border-b-0',
   '[&_[data-timeline-card-media]]:max-h-36',
   '[&_[data-timeline-card-media]]:overflow-hidden',
@@ -235,7 +235,7 @@ export function SearchResultCard({ document }: { document: SearchDocument }) {
 
   if (!item) {
     return (
-      <div className="rounded-xl">
+      <div className="civic-page-reveal rounded-xl">
         <SearchFallbackCard document={document} />
       </div>
     );
@@ -247,7 +247,7 @@ export function SearchResultCard({ document }: { document: SearchDocument }) {
   }
 
   return (
-    <div className="rounded-xl">
+    <div className="civic-page-reveal rounded-xl">
       <DynamicTimelineCard
         cardType={cardType}
         cardProps={{

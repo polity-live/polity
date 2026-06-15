@@ -6,6 +6,7 @@
 
 import { DataTable } from '@/features/shared/ui/data-table';
 import { Users } from 'lucide-react';
+import type { CSSProperties } from 'react';
 export interface PendingRequestsTableViewProps {
   requests: any;
   onApprove: any;
@@ -32,7 +33,10 @@ export function PendingRequestsTableView({
   }
 
   return (
-    <section className="mb-6 space-y-3">
+    <section
+      className="civic-load-card-reveal mb-6 space-y-3"
+      style={{ '--civic-load-index': 0 } as CSSProperties}
+    >
       <div className="space-y-1.5 px-3 sm:px-4">
         <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
           <Users className="h-5 w-5" />

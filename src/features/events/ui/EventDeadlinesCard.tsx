@@ -1,19 +1,26 @@
 import { BadgeControl } from '@/features/shared/ui/status';
-import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Clock, CalendarClock } from 'lucide-react';
+import {
+  CivicMotionTimeline,
+  type CivicMotionTimelineItem,
+} from '@/features/shared/ui/timeline/CivicMotionTimeline';
+import { Clock } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface DeadlineItem {
+  id: string;
   label: string;
   timestamp: number | null | undefined;
 }
 
 type ActiveDeadlineItem = DeadlineItem & { timestamp: number };
+type EventTimelineCandidate = CivicMotionTimelineItem & { timestamp: number };
 
 interface EventDeadlinesCardProps {
-  registrationDeadline?: number | null;
   amendmentDeadline?: number | null;
   candidacyDeadline?: number | null;
+  endDate?: number | string | null;
+  registrationDeadline?: number | null;
+  startDate?: number | string | null;
 }
 
 function formatDeadlineDate(timestamp: number): string {
@@ -47,63 +54,161 @@ function hasDeadlineTimestamp(deadline: DeadlineItem): deadline is ActiveDeadlin
   return deadline.timestamp != null;
 }
 
+function normalizeEventTimestamp(timestamp: number | string | null | undefined): number | null {
+  if (typeof timestamp === 'number' && Number.isFinite(timestamp) && timestamp > 0) {
+    return timestamp;
+  }
+
+  if (typeof timestamp === 'string') {
+    const parsedTimestamp = Date.parse(timestamp);
+    return Number.isNaN(parsedTimestamp) ? null : parsedTimestamp;
+  }
+
+  return null;
+}
+
+function getEventTimelineActiveIndex(items: EventTimelineCandidate[]) {
+  const now = Date.now();
+  let activeIndex = 0;
+
+  items.forEach((item, index) => {
+    if (item.timestamp <= now) {
+      activeIndex = index;
+    }
+  });
+
+  return activeIndex;
+}
+
 export function EventDeadlinesCard({
   registrationDeadline,
   amendmentDeadline,
   candidacyDeadline,
+  startDate,
+  endDate,
 }: EventDeadlinesCardProps) {
   const { t } = useTranslation();
 
   const deadlines: ActiveDeadlineItem[] = [
     {
+      id: 'registration-deadline',
       label: t('features.events.deadlines.registration'),
       timestamp: registrationDeadline,
     },
     {
+      id: 'amendment-deadline',
       label: t('features.events.deadlines.amendment'),
       timestamp: amendmentDeadline,
     },
     {
+      id: 'candidacy-deadline',
       label: t('features.events.deadlines.candidacy'),
       timestamp: candidacyDeadline,
     },
   ].filter(hasDeadlineTimestamp);
 
-  if (deadlines.length === 0) return null;
+  const eventStartTimestamp = normalizeEventTimestamp(startDate);
+  const eventEndTimestamp = normalizeEventTimestamp(endDate);
+  const timelineCandidates: EventTimelineCandidate[] = deadlines.map(deadline => {
+    const remaining = getTimeRemaining(deadline.timestamp);
+
+    return {
+      description: (
+        <BadgeControl
+          variant={remaining.isPast ? 'destructive' : 'secondary'}
+          className="inline-flex items-center gap-1"
+        >
+          <Clock className="h-3 w-3" />
+          {remaining.isPast ? t('features.events.deadlines.expired') : remaining.text}
+        </BadgeControl>
+      ),
+      id: deadline.id,
+      label: deadline.label,
+      timestamp: deadline.timestamp,
+      tone: remaining.isPast ? 'danger' : 'warning',
+      value: formatDeadlineDate(deadline.timestamp),
+    };
+  });
+
+  if (eventStartTimestamp) {
+    timelineCandidates.push({
+      id: 'event-start',
+      label: t('features.events.timeline.eventStart', 'Event start'),
+      timestamp: eventStartTimestamp,
+      tone: 'success',
+      value: formatDeadlineDate(eventStartTimestamp),
+    });
+  }
+
+  if (eventEndTimestamp) {
+    timelineCandidates.push({
+      id: 'event-end',
+      label: t('features.events.timeline.eventEnd', 'Event end'),
+      timestamp: eventEndTimestamp,
+      tone: 'info',
+      value: formatDeadlineDate(eventEndTimestamp),
+    });
+  }
+
+  const timelineItems = timelineCandidates.sort(
+    (first, second) => first.timestamp - second.timestamp
+  );
+  const timelineActiveIndex = getEventTimelineActiveIndex(timelineItems);
+  const motionTimelineItems = timelineItems.map((item, index) => ({
+    ...item,
+    isActive: index === timelineActiveIndex,
+    isComplete: item.timestamp <= Date.now(),
+  }));
+
+  if (deadlines.length === 0 && motionTimelineItems.length < 2) return null;
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CalendarClock className="h-5 w-5" />
-          {t('features.events.deadlines.title')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {deadlines.map(deadline => {
-          const remaining = getTimeRemaining(deadline.timestamp);
-          return (
-            <div
-              key={deadline.label}
-              className="flex items-center justify-between rounded-lg border p-3"
-            >
-              <div className="space-y-1">
-                <p className="text-sm font-medium">{deadline.label}</p>
-                <p className="text-muted-foreground text-xs">
-                  {formatDeadlineDate(deadline.timestamp)}
-                </p>
-              </div>
-              <BadgeControl
-                variant={remaining.isPast ? 'destructive' : 'secondary'}
-                className="flex items-center gap-1"
+    <section className="mb-8 space-y-4">
+      <div className="px-3 sm:px-4">
+        <h2 className="text-xl font-semibold">
+          {motionTimelineItems.length > deadlines.length
+            ? t('features.events.timeline.title', 'Schedule')
+            : t('features.events.deadlines.title')}
+        </h2>
+      </div>
+
+      {motionTimelineItems.length > 1 ? (
+        <div className="px-3 py-2 sm:px-4">
+          <CivicMotionTimeline
+            activeIndex={timelineActiveIndex}
+            ariaLabel={t('features.events.timeline.ariaLabel', 'Event timeline')}
+            items={motionTimelineItems}
+          />
+        </div>
+      ) : null}
+
+      {deadlines.length > 0 ? (
+        <div className="space-y-3 px-3 sm:px-4">
+          {deadlines.map(deadline => {
+            const remaining = getTimeRemaining(deadline.timestamp);
+            return (
+              <div
+                key={deadline.label}
+                className="flex items-center justify-between rounded-lg border p-3"
               >
-                <Clock className="h-3 w-3" />
-                {remaining.isPast ? t('features.events.deadlines.expired') : remaining.text}
-              </BadgeControl>
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">{deadline.label}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {formatDeadlineDate(deadline.timestamp)}
+                  </p>
+                </div>
+                <BadgeControl
+                  variant={remaining.isPast ? 'destructive' : 'secondary'}
+                  className="flex items-center gap-1"
+                >
+                  <Clock className="h-3 w-3" />
+                  {remaining.isPast ? t('features.events.deadlines.expired') : remaining.text}
+                </BadgeControl>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </section>
   );
 }

@@ -28,7 +28,7 @@ export function BlogSearchCard({ blog, gradientClass }: BlogSearchCardProps) {
       : `/blog/${blog.id}`;
 
   return (
-    <div className="space-y-0">
+    <div className="entity-search-card-no-spotlight space-y-0">
       <BlogsCard
         blog={{
           id: blog.id,

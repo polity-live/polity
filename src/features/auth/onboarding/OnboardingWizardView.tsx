@@ -1,20 +1,55 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card.tsx';
+import {
+  CheckCircle2,
+  Circle,
+  Hash,
+  MessageCircle,
+  Sparkles,
+  User,
+  UserPlus,
+  Users,
+} from 'lucide-react';
+
+import { SectionProgressTopBar } from '@/features/shared/ui/navigation';
 import { Progress } from '@/features/shared/ui/ui/progress.tsx';
+import { BadgeControl } from '@/features/shared/ui/status';
+import { cn } from '@/features/shared/utils/utils.ts';
 import { type OnboardingStep } from '../hooks/useOnboarding.ts';
 import { NameStep } from './NameStep.tsx';
 import { GroupSearchStep } from './GroupSearchStep.tsx';
 import { MembershipConfirmStep } from './MembershipConfirmStep.tsx';
 import { SummaryStep } from './SummaryStep.tsx';
 import { AriaKaiStep } from '@/features/assistant/ui/AriaKaiStep.tsx';
+import { InterestStep } from './InterestStep.tsx';
+
 const STEP_PROGRESS: Record<OnboardingStep, number> = {
-  name: 20,
-  groupSearch: 40,
-  confirm: 60,
-  ariaKai: 80,
+  name: 16,
+  interests: 32,
+  groupSearch: 48,
+  confirm: 64,
+  ariaKai: 82,
   summary: 100,
 };
+
+const STEP_ORDER: OnboardingStep[] = [
+  'name',
+  'interests',
+  'groupSearch',
+  'confirm',
+  'ariaKai',
+  'summary',
+];
+
+const STEP_ICONS = {
+  name: User,
+  interests: Hash,
+  groupSearch: Users,
+  confirm: UserPlus,
+  ariaKai: MessageCircle,
+  summary: Sparkles,
+} satisfies Record<OnboardingStep, typeof User>;
+
 export interface OnboardingWizardViewProps {
   userId: any;
   userEmail: any;
@@ -24,120 +59,257 @@ export interface OnboardingWizardViewProps {
   user: any;
   updateProfileConfirmed: any;
   step: OnboardingStep;
+  error: any;
   data: any;
   isLoading: any;
   setFirstName: any;
   setLastName: any;
-  setSelectedGroup: any;
+  setSelectedInterestTags: any;
+  toggleInterestTag: any;
+  clearInterestTags: any;
+  toggleSelectedGroup: any;
+  setActiveGroupId: any;
+  clearSelectedGroups: any;
   setDontShowAriaKaiAgain: any;
   nextStep: any;
   previousStep: any;
   goToStep: any;
-  sendMembershipRequest: any;
+  saveInterests: any;
+  sendMembershipRequests: any;
   skipMembership: any;
   completeOnboarding: any;
+  allInterestSuggestions: any;
   handleNameNext: any;
+  handleInterestsNext: any;
   handleGroupNext: any;
   handleMembershipConfirm: any;
   handleMembershipDecline: any;
   handleAriaKaiNext: any;
   handleGoToProfile: any;
   handleGoToGroup: any;
+  handleGoToTimeline: any;
   handleGoToAssistant: any;
 }
 
 export function OnboardingWizardView({
   t,
   step,
+  error,
   data,
   isLoading,
   setFirstName,
   setLastName,
-  setSelectedGroup,
+  setSelectedInterestTags,
+  toggleInterestTag,
+  clearInterestTags,
+  toggleSelectedGroup,
+  setActiveGroupId,
+  clearSelectedGroups,
   setDontShowAriaKaiAgain,
   previousStep,
+  allInterestSuggestions,
   handleNameNext,
+  handleInterestsNext,
   handleGroupNext,
   handleMembershipConfirm,
   handleMembershipDecline,
   handleAriaKaiNext,
   handleGoToProfile,
   handleGoToGroup,
+  handleGoToTimeline,
   handleGoToAssistant,
 }: OnboardingWizardViewProps) {
+  const activeStepIndex = STEP_ORDER.indexOf(step);
+  const mobileStepItems = STEP_ORDER.map((item, index) => ({
+    id: item,
+    label: t(`onboarding.shell.steps.${item}.label`),
+    description: t(`onboarding.shell.steps.${item}.description`),
+    icon: STEP_ICONS[item],
+    completed: index < activeStepIndex,
+  }));
+
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="pb-2">
-          <div className="mb-2 flex items-center justify-between">
-            <CardTitle tone="muted" size="lg">
-              {t('onboarding.welcome')}
-            </CardTitle>
-            <span className="text-muted-foreground text-sm">
-              {step === 'name' && '1/5'}
-              {step === 'groupSearch' && '2/5'}
-              {step === 'confirm' && '3/5'}
-              {step === 'ariaKai' && '4/5'}
-              {step === 'summary' && '5/5'}
-            </span>
+    <div className="bg-background min-h-screen">
+      <SectionProgressTopBar
+        sticky
+        activeId={step}
+        className="lg:hidden"
+        countLabel={`${activeStepIndex + 1}/${STEP_ORDER.length}`}
+        items={mobileStepItems}
+        label={t('onboarding.shell.progressLabel')}
+        progressValue={STEP_PROGRESS[step]}
+      />
+
+      <main className="mx-auto grid min-h-[calc(100svh-5.75rem)] w-full max-w-7xl gap-5 px-4 py-4 sm:px-6 lg:min-h-screen lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)] lg:gap-8 lg:px-8 lg:py-10">
+        <aside className="hidden flex-col justify-between gap-6 lg:sticky lg:top-10 lg:flex lg:max-h-[calc(100svh-5rem)] lg:border-r lg:pr-8">
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <BadgeControl variant="outline">{t('onboarding.shell.progressLabel')}</BadgeControl>
+              <div className="space-y-3">
+                <h1 className="text-3xl leading-tight font-bold tracking-tight sm:text-4xl">
+                  {t('onboarding.shell.title')}
+                </h1>
+                <p className="text-muted-foreground max-w-lg text-base leading-7">
+                  {t('onboarding.shell.subtitle')}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground text-sm font-medium">
+                  {activeStepIndex + 1}/{STEP_ORDER.length}
+                </span>
+                <span className="text-muted-foreground text-sm">{STEP_PROGRESS[step]}%</span>
+              </div>
+              <Progress value={STEP_PROGRESS[step]} className="h-2" />
+            </div>
+
+            <ol className="space-y-2">
+              {STEP_ORDER.map((item, index) => {
+                const Icon = STEP_ICONS[item];
+                const isActive = item === step;
+                const isComplete = index < activeStepIndex;
+
+                return (
+                  <li
+                    key={item}
+                    className={cn(
+                      'rounded-lg border p-3 transition-colors',
+                      isActive
+                        ? 'border-primary bg-primary/5 text-foreground'
+                        : isComplete
+                          ? 'border-success/30 bg-success/5'
+                          : 'bg-card text-muted-foreground'
+                    )}
+                  >
+                    <div className="flex gap-3">
+                      <div
+                        className={cn(
+                          'flex h-8 w-8 flex-none items-center justify-center rounded-md border',
+                          isActive
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : isComplete
+                              ? 'border-success/40 bg-success/10 text-success'
+                              : 'bg-background'
+                        )}
+                      >
+                        {isComplete ? (
+                          <CheckCircle2 className="h-4 w-4" />
+                        ) : isActive ? (
+                          <Icon className="h-4 w-4" />
+                        ) : (
+                          <Circle className="h-3 w-3" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold">
+                          {t(`onboarding.shell.steps.${item}.label`)}
+                        </p>
+                        <p className="text-muted-foreground mt-1 text-xs leading-5">
+                          {t(`onboarding.shell.steps.${item}.description`)}
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
           </div>
-          <Progress value={STEP_PROGRESS[step]} className="h-2" />
-        </CardHeader>
-        <CardContent className="pt-4">
-          {step === 'name' && (
-            <NameStep
-              firstName={data.firstName}
-              lastName={data.lastName}
-              onFirstNameChange={setFirstName}
-              onLastNameChange={setLastName}
-              onNext={handleNameNext}
-              isLoading={isLoading}
-            />
-          )}
 
-          {step === 'groupSearch' && (
-            <GroupSearchStep
-              selectedGroup={data.selectedGroup}
-              onSelectGroup={setSelectedGroup}
-              onNext={handleGroupNext}
-              onBack={previousStep}
-              isLoading={isLoading}
-            />
-          )}
+          <div className="bg-card hidden rounded-lg border p-4 shadow-sm lg:block">
+            <p className="text-sm font-semibold">{t('onboarding.shell.contextTitle')}</p>
+            <p className="text-muted-foreground mt-2 text-sm leading-6">
+              {t('onboarding.shell.contextDescription')}
+            </p>
+          </div>
+        </aside>
 
-          {step === 'confirm' && data.selectedGroup && (
-            <MembershipConfirmStep
-              group={data.selectedGroup}
-              onConfirm={handleMembershipConfirm}
-              onDecline={handleMembershipDecline}
-              onBack={previousStep}
-              isLoading={isLoading}
-              requestSent={data.membershipRequestSent}
-            />
-          )}
+        <section className="flex items-start justify-center lg:min-h-0 lg:items-center">
+          <div className="w-full max-w-5xl">
+            {error && (
+              <div className="border-destructive/40 bg-destructive/10 text-destructive mb-5 rounded-lg border px-4 py-3 text-sm">
+                {error}
+              </div>
+            )}
 
-          {step === 'ariaKai' && (
-            <AriaKaiStep
-              onNext={handleAriaKaiNext}
-              dontShowAgain={data.dontShowAriaKaiAgain}
-              onDontShowAgainChange={setDontShowAriaKaiAgain}
-            />
-          )}
+            <div className="space-y-8">
+              {step === 'name' && (
+                <NameStep
+                  firstName={data.firstName}
+                  lastName={data.lastName}
+                  onFirstNameChange={setFirstName}
+                  onLastNameChange={setLastName}
+                  onNext={handleNameNext}
+                  isLoading={isLoading}
+                />
+              )}
 
-          {step === 'summary' && (
-            <SummaryStep
-              firstName={data.firstName}
-              lastName={data.lastName}
-              selectedGroup={data.selectedGroup}
-              membershipRequestSent={data.membershipRequestSent}
-              onGoToProfile={handleGoToProfile}
-              onGoToGroup={handleGoToGroup}
-              onGoToAssistant={handleGoToAssistant}
-              isLoading={isLoading}
-            />
-          )}
-        </CardContent>
-      </Card>
+              {step === 'interests' && (
+                <InterestStep
+                  selectedInterestTags={data.selectedInterestTags}
+                  suggestions={allInterestSuggestions}
+                  onSelectedInterestTagsChange={setSelectedInterestTags}
+                  onToggleInterestTag={toggleInterestTag}
+                  onClearInterestTags={clearInterestTags}
+                  onNext={handleInterestsNext}
+                  onBack={previousStep}
+                  isLoading={isLoading}
+                />
+              )}
+
+              {step === 'groupSearch' && (
+                <GroupSearchStep
+                  selectedGroups={data.selectedGroups}
+                  interestTags={data.selectedInterestTags}
+                  activeGroupId={data.activeGroupId}
+                  onToggleGroup={toggleSelectedGroup}
+                  onActiveGroupChange={setActiveGroupId}
+                  onClearSelectedGroups={clearSelectedGroups}
+                  onNext={handleGroupNext}
+                  onBack={previousStep}
+                  isLoading={isLoading}
+                />
+              )}
+
+              {step === 'confirm' && data.selectedGroups.length > 0 && (
+                <MembershipConfirmStep
+                  groups={data.selectedGroups}
+                  requestedGroupIds={data.membershipRequestSentGroupIds}
+                  onConfirm={handleMembershipConfirm}
+                  onDecline={handleMembershipDecline}
+                  onBack={previousStep}
+                  isLoading={isLoading}
+                />
+              )}
+
+              {step === 'ariaKai' && (
+                <AriaKaiStep
+                  onNext={handleAriaKaiNext}
+                  dontShowAgain={data.dontShowAriaKaiAgain}
+                  onDontShowAgainChange={setDontShowAriaKaiAgain}
+                />
+              )}
+
+              {step === 'summary' && (
+                <SummaryStep
+                  firstName={data.firstName}
+                  lastName={data.lastName}
+                  selectedGroups={data.selectedGroups}
+                  selectedInterestTags={data.selectedInterestTags}
+                  activeGroupId={data.activeGroupId}
+                  membershipRequestSentGroupIds={data.membershipRequestSentGroupIds}
+                  onGoToProfile={handleGoToProfile}
+                  onGoToGroup={handleGoToGroup}
+                  onGoToTimeline={handleGoToTimeline}
+                  onGoToAssistant={handleGoToAssistant}
+                  isLoading={isLoading}
+                />
+              )}
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

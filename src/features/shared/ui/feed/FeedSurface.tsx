@@ -1,7 +1,9 @@
+import { Children } from 'react';
 import type { ComponentType, CSSProperties, HTMLAttributes, ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { MotionGroup, MotionItem } from '@/features/shared/motion';
 import { cn } from '@/features/shared/utils/utils';
 
 type IconComponent = ComponentType<{ className?: string }>;
@@ -47,8 +49,14 @@ function FeedToolbar({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   );
 }
 
-function FeedList({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div data-slot="feed-list" className={cn('space-y-3', className)} {...props} />;
+function FeedList({ className, children, ...props }: HTMLAttributes<HTMLDivElement>) {
+  return (
+    <MotionGroup data-slot="feed-list" className={cn('space-y-3', className)} {...props}>
+      {Children.map(children, (child, index) => (
+        <MotionItem key={index}>{child}</MotionItem>
+      ))}
+    </MotionGroup>
+  );
 }
 
 interface FeedStatePanelProps {
@@ -82,8 +90,17 @@ function FeedStatePanel({
       >
         {StateIcon ? (
           <StateIcon
-            className={cn('text-muted-foreground mb-4 h-12 w-12', isLoading && 'animate-spin')}
+            className={cn(
+              'text-muted-foreground mb-4 h-12 w-12',
+              isLoading && 'animate-civic-loading-dossier'
+            )}
           />
+        ) : null}
+        {isLoading ? (
+          <div className="mb-4 w-full max-w-48 space-y-2">
+            <div className="civic-shimmer mx-auto h-2 w-3/4 rounded-full" />
+            <div className="civic-shimmer mx-auto h-2 w-1/2 rounded-full [animation-delay:120ms]" />
+          </div>
         ) : null}
         {title ? <p className="text-lg font-semibold">{title}</p> : null}
         {description ? <p className="text-muted-foreground text-sm">{description}</p> : null}

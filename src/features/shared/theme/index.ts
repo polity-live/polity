@@ -575,9 +575,10 @@ export const FEATURE_THEME_CLASS_NAMES = {
   notificationNotificationWarningTextBeta: 'text-amber-400',
   notificationNotificationDangerTextAlpha: 'text-rose-500',
   notificationNotificationDangerTextBeta: 'text-rose-400',
-  paymentSubscriptionPlansGridSuccessSurface: 'border-emerald-500 bg-emerald-100 shadow-md',
+  paymentSubscriptionPlansGridSuccessSurface:
+    'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] shadow-[var(--shadow-card)]',
   paymentSubscriptionPlansGridSuccessPanel:
-    'text-emerald-foreground rounded-full bg-emerald-500 px-2 py-0.5 text-xs',
+    'rounded-full border border-[var(--badge-success-border)] bg-[var(--surface-overlay)] px-2 py-0.5 text-xs font-medium text-[var(--badge-success-fg)] shadow-sm',
   paymentSubscriptionStatusDangerIcon: 'h-4 w-4 text-red-500',
   positionPositionsTableWarningIcon: 'h-4 w-4 text-orange-500',
   positionPositionsTableWarningText: 'mt-2 block font-semibold text-orange-600',

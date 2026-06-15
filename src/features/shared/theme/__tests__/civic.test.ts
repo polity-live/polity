@@ -42,8 +42,16 @@ describe('civic theme helpers', () => {
   });
 
   it('maps content types, plain surfaces, roles, hashtags, and rights to Civic tokens', () => {
+    expect(getEntityToneClasses('event').gradient).toBe(
+      'border-[var(--entity-event-border)] bg-[var(--entity-event-bg)]'
+    );
+    expect(getEntityToneClasses('event').softSurface).toBe(
+      'border-[var(--entity-event-border)] bg-[var(--entity-event-bg)]'
+    );
     expect(getContentTypeToneClasses('event').badge).toContain('--entity-event-bg');
     expect(getContentTypeToneClasses('vote').badge).toContain('--badge-danger-bg');
+    expect(getEntityGradientClasses('event')).toContain('--entity-event-bg');
+    expect(getEntityGradientClasses('event')).not.toContain('bg-gradient');
     expect(getEntityGradientClasses('group')).toContain('--entity-group-bg');
     expect(getEntityGradientClasses('group')).not.toContain('bg-gradient');
     expect(getEntityGradientClasses('agenda_item')).toContain('--badge-info-bg');

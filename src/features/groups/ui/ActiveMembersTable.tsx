@@ -5,6 +5,7 @@
  */
 
 import { Link } from '@tanstack/react-router';
+import type { CSSProperties } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Trash2, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -173,7 +174,10 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
   ];
 
   return (
-    <section className="space-y-3">
+    <section
+      className="civic-load-card-reveal space-y-3"
+      style={{ '--civic-load-index': 2 } as CSSProperties}
+    >
       <div className="space-y-1.5 px-3 sm:px-4">
         <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
           <Users className="h-5 w-5" />

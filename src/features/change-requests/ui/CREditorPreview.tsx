@@ -1,4 +1,5 @@
 import type { Value } from 'platejs';
+import type { ReactNode } from 'react';
 import { useCREditorPreviewModel } from '../hooks/useCREditorPreviewModel';
 
 interface CREditorPreviewProps {
@@ -12,6 +13,7 @@ interface CREditorPreviewProps {
   userId?: string;
   /** Agenda item ID — optional, passed to interactive editor */
   agendaItemId?: string;
+  toolbarEnd?: ReactNode;
 }
 import { CREditorPreviewView } from './CREditorPreviewView';
 export function CREditorPreview({
@@ -21,6 +23,7 @@ export function CREditorPreview({
   amendmentId,
   userId,
   agendaItemId,
+  toolbarEnd,
 }: CREditorPreviewProps) {
   const { editor, isInteractive, isOpen, onOpenChange } = useCREditorPreviewModel({
     amendmentId,
@@ -40,6 +43,7 @@ export function CREditorPreview({
       isInteractive={isInteractive}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
+      toolbarEnd={toolbarEnd}
     />
   );
 }

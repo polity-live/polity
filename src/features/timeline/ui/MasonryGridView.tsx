@@ -1,4 +1,4 @@
-import type { ReactNode, RefObject } from 'react';
+import type { CSSProperties, ReactNode, RefObject } from 'react';
 
 import { Link } from '@tanstack/react-router';
 import { Rss, Search } from 'lucide-react';
@@ -16,6 +16,7 @@ export interface MasonryGridViewProps<T> {
   onLoadMore?: () => void;
   className?: string;
   gap: 'sm' | 'md' | 'lg';
+  itemMotion: 'none' | 'reveal';
   loadMoreTriggerRef: RefObject<HTMLDivElement | null>;
   skeletonIndexes: number[];
   emptyLabels: { title: string; hint: string; discoverContent: string };
@@ -36,6 +37,7 @@ export function MasonryGridView<T>({
   onLoadMore,
   className,
   gap,
+  itemMotion,
   loadMoreTriggerRef,
   skeletonIndexes,
   emptyLabels,
@@ -61,7 +63,18 @@ export function MasonryGridView<T>({
     <div className="space-y-6">
       <div className={cn('columns-1 sm:columns-2 lg:columns-3 xl:columns-4', gapClass, className)}>
         {items.map((item: any, index: number) => (
-          <div key={keyExtractor(item, index)} className="mb-4 break-inside-avoid">
+          <div
+            key={keyExtractor(item, index)}
+            className={cn(
+              'mb-4 break-inside-avoid',
+              itemMotion === 'reveal' && 'civic-load-card-reveal'
+            )}
+            style={
+              itemMotion === 'reveal'
+                ? ({ '--civic-load-index': Math.min(index, 11) } as CSSProperties)
+                : undefined
+            }
+          >
             {renderItem(item, index)}
           </div>
         ))}

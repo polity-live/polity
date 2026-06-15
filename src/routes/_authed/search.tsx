@@ -10,6 +10,7 @@ const searchSchema = z.object({
   hashtag: z.string().optional().catch(undefined),
   engagement: z.enum(['all', 'popular', 'rising', 'discussed']).optional().catch(undefined),
   sort: z.enum(['recent', 'engagement', 'trending']).optional().catch(undefined),
+  view: z.enum(['list', 'spatial']).optional().catch(undefined),
   result: z.string().optional().catch(undefined),
 });
 

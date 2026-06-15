@@ -1,15 +1,5 @@
-import { featureThemeClassName } from '@/features/shared/theme';
-import { cn } from '@/features/shared/utils/utils';
-import { Button } from '@/features/shared/ui/ui/button';
-import { Progress } from '@/features/shared/ui/ui/progress';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/features/shared/ui/ui/carousel';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { SectionProgressTopBar } from '@/features/shared/ui/navigation';
 
 interface CreateProgressIndicatorProps {
   currentStep: number;
@@ -18,6 +8,8 @@ interface CreateProgressIndicatorProps {
   onStepClick?: (step: number) => void;
   /** Which steps are valid (clickable) — defaults to all steps up to current */
   validSteps?: boolean[];
+  sticky?: boolean;
+  className?: string;
 }
 
 export function CreateProgressIndicator({
@@ -26,69 +18,37 @@ export function CreateProgressIndicator({
   stepLabels,
   onStepClick,
   validSteps,
+  sticky = false,
+  className,
 }: CreateProgressIndicatorProps) {
   const { t } = useTranslation();
-  const progressPercent = ((currentStep + 1) / totalSteps) * 100;
+  const progressPercent = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0;
+  const items = Array.from({ length: totalSteps }, (_, index) => {
+    const isCompleted = index < currentStep;
+    const isClickable =
+      onStepClick && (isCompleted || (validSteps ? validSteps[index] : index <= currentStep));
+
+    return {
+      id: String(index),
+      label: stepLabels[index] ?? String(index + 1),
+      completed: isCompleted,
+      disabled: !isClickable,
+    };
+  });
 
   return (
-    <div className="w-full space-y-3">
-      {/* Progress bar */}
-      <div className="flex items-center gap-3">
-        <Progress value={progressPercent} className="h-2 flex-1" />
-        <span className="text-muted-foreground text-xs whitespace-nowrap">
-          {t('pages.create.progress.stepOf', {
-            current: currentStep + 1,
-            total: totalSteps,
-          })}
-        </span>
-      </div>
-
-      {/* Step badges carousel */}
-      <Carousel
-        opts={{ dragFree: true, containScroll: 'trimSnaps', align: 'start' }}
-        className="w-full"
-      >
-        <CarouselContent className="-ml-2">
-          {stepLabels.map((label, index) => {
-            const isCompleted = index < currentStep;
-            const isCurrent = index === currentStep;
-            const isClickable =
-              onStepClick &&
-              (isCompleted || (validSteps ? validSteps[index] : index <= currentStep));
-
-            return (
-              <CarouselItem key={index} className="basis-auto pl-2">
-                <Button
-                  type="button"
-                  onClick={() => isClickable && onStepClick(index)}
-                  disabled={!isClickable}
-                  variant="ghost"
-                  className={cn(
-                    'h-8 rounded-full px-3.5 text-xs transition-all',
-                    isCurrent && 'bg-primary text-primary-foreground shadow-sm',
-                    isCompleted && 'bg-primary/20 text-primary hover:bg-primary/30 cursor-pointer',
-                    !isCurrent &&
-                      !isCompleted &&
-                      'bg-muted text-muted-foreground cursor-default opacity-50'
-                  )}
-                  title={label}
-                >
-                  <span
-                    className={featureThemeClassName(
-                      'createCreateProgressIndicatorThemedRoundIcon'
-                    )}
-                  >
-                    {index + 1}
-                  </span>
-                  <span className="hidden sm:inline">{label}</span>
-                </Button>
-              </CarouselItem>
-            );
-          })}
-        </CarouselContent>
-        <CarouselPrevious className="-left-3 h-6 w-6" />
-        <CarouselNext className="-right-3 h-6 w-6" />
-      </Carousel>
-    </div>
+    <SectionProgressTopBar
+      activeId={String(currentStep)}
+      className={className}
+      countLabel={t('pages.create.progress.stepOf', {
+        current: currentStep + 1,
+        total: totalSteps,
+      })}
+      items={items}
+      label={t('pages.create.progress.label')}
+      onItemSelect={onStepClick ? id => onStepClick(Number(id)) : undefined}
+      progressValue={progressPercent}
+      sticky={sticky}
+    />
   );
 }

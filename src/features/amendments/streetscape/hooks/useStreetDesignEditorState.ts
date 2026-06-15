@@ -83,6 +83,10 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
     dispatch({ type: 'finish_path_placement', id: createObjectId() });
   }, []);
 
+  const finishPlacement = useCallback(() => {
+    dispatch({ type: 'finish_placement', id: createObjectId() });
+  }, []);
+
   const cancelPlacement = useCallback(() => {
     dispatch({ type: 'cancel_placement' });
   }, []);
@@ -134,6 +138,7 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
     setShowStreetMarkings,
     handleScenePointerDown,
     handleScenePointerMove,
+    finishPlacement,
     finishPathPlacement,
     cancelPlacement,
     selectObject,

@@ -1,6 +1,6 @@
 'use client';
 
-import { featureThemeMarkup, featureThemeValue } from '@/features/shared/theme';
+import { featureThemeMarkup } from '@/features/shared/theme';
 import { createContext, ReactNode, useContext, type ComponentProps } from 'react';
 import {
   ReactFlow,
@@ -17,6 +17,7 @@ import {
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { RightsLabelEdge } from '@/features/network/ui/RightsLabelEdge';
 import { useNetworkFlowBaseController } from '@/features/network/hooks/useNetworkFlowBaseController';
+import { getCivicNetworkMiniMapNodeColor } from '@/features/network/ui/networkVisualHelpers';
 import { cn } from '@/features/shared/utils/utils';
 
 // Context to allow custom edge components to trigger onEdgeClick
@@ -25,7 +26,7 @@ export const useEdgeClickContext = () => useContext(EdgeClickContext);
 
 const edgeTypes = { rightsLabel: RightsLabelEdge };
 
-interface NetworkFlowBaseProps<T extends Node = Node> {
+export interface NetworkFlowBaseProps<T extends Node = Node> {
   nodes: T[];
   edges: Edge[];
   onNodesChange?: OnNodesChange<T>;
@@ -142,9 +143,9 @@ export function NetworkFlowBaseView<T extends Node = Node>({
   return (
     <div
       className={cn(
-        'bg-background w-full border',
+        'bg-card text-card-foreground border-border/70 w-full border shadow-[var(--shadow-panel)]',
         isFullscreen
-          ? 'fixed inset-0 z-50 h-dvh min-h-0 rounded-none border-0'
+          ? 'fixed inset-0 z-50 h-dvh min-h-0 rounded-none border-0 shadow-none'
           : ['rounded-lg', containerClassName]
       )}
     >
@@ -174,8 +175,22 @@ export function NetworkFlowBaseView<T extends Node = Node>({
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </ControlButton>
         </Controls>
-        {showMiniMap && <MiniMap zoomable pannable {...miniMapProps} />}
-        <Background color={featureThemeValue('floweditorFlowEditorNeutralColor')} gap={16} />
+        {showMiniMap && (
+          <MiniMap
+            zoomable
+            pannable
+            {...miniMapProps}
+            nodeColor={miniMapProps?.nodeColor ?? getCivicNetworkMiniMapNodeColor}
+            maskColor={
+              miniMapProps?.maskColor ?? 'color-mix(in oklab, var(--background) 74%, transparent)'
+            }
+            className={cn(
+              '!bg-card/95 !border-border/70 !border !shadow-[var(--shadow-panel)]',
+              miniMapProps?.className
+            )}
+          />
+        )}
+        <Background color="color-mix(in oklab, var(--border) 58%, transparent)" gap={16} />
       </ReactFlow>
       {children}
     </div>

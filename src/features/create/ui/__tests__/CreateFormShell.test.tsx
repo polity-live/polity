@@ -1,11 +1,13 @@
 /* @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CreateFormStyle } from '@/zero/preferences/schema';
+import type { CreateSubmitOutcome } from '../../types/create-form.types';
 
 let createFormStyle: CreateFormStyle = 'carousel';
 const updateFormStyle = vi.fn();
+const navigate = vi.fn();
 
 vi.mock('@/zero/preferences/usePreferenceState', () => ({
   usePreferenceState: () => ({
@@ -40,29 +42,105 @@ vi.mock('@/features/timeline/hooks/useIsMobile', () => ({
   useIsMobile: () => false,
 }));
 
+vi.mock('@tanstack/react-router', () => ({
+  useNavigate: () => navigate,
+}));
+
 vi.mock('../CarouselFormLayout', () => ({
-  CarouselFormLayout: () => <div data-testid="carousel-layout" />,
+  CarouselFormLayout: ({
+    onSubmit,
+    isSubmitting,
+  }: {
+    onSubmit: () => Promise<void>;
+    isSubmitting: boolean;
+  }) => (
+    <div data-testid="carousel-layout">
+      <button type="button" disabled={isSubmitting} onClick={onSubmit}>
+        Submit
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock('../OnePageFormLayout', () => ({
-  OnePageFormLayout: () => <div data-testid="one-page-layout" />,
+  OnePageFormLayout: ({
+    onSubmit,
+    isSubmitting,
+  }: {
+    onSubmit: () => Promise<void>;
+    isSubmitting: boolean;
+  }) => (
+    <div data-testid="one-page-layout">
+      <button type="button" disabled={isSubmitting} onClick={onSubmit}>
+        Submit
+      </button>
+    </div>
+  ),
 }));
 
 import { CreateFormShell } from '../CreateFormShell';
-import type { CreateFormConfig } from '../../types/create-form.types';
+import { CreateSummaryStep } from '../CreateSummaryStep';
+import type { CreateFormConfig, CreateSubmitContext } from '../../types/create-form.types';
 
 const config: CreateFormConfig = {
   entityType: 'group',
   isSubmitting: false,
-  onSubmit: vi.fn(),
-  steps: [],
+  onSubmit: vi.fn().mockResolvedValue({ status: 'blocked' }),
+  steps: [
+    {
+      label: 'Review',
+      isValid: () => true,
+      fields: [
+        {
+          key: 'review',
+          kind: 'customComponent',
+          component: CreateSummaryStep,
+          props: {
+            entityType: 'group',
+            badge: 'Group',
+            title: 'Alpha Group Review',
+            sections: [
+              {
+                title: 'Basics',
+                fields: [{ label: 'Name', value: 'Alpha Group' }],
+              },
+            ],
+          },
+        },
+      ],
+    },
+  ],
   title: 'pages.create.group.title',
 };
+
+const groupSuccessOutcome: CreateSubmitOutcome = {
+  status: 'success',
+  target: {
+    kind: 'route',
+    entityType: 'group',
+    label: 'Zur Gruppe',
+    to: '/group/$id',
+    params: { id: 'group-1' },
+  },
+};
+
+afterEach(cleanup);
 
 describe('CreateFormShell', () => {
   beforeEach(() => {
     createFormStyle = 'carousel';
     updateFormStyle.mockClear();
+    navigate.mockClear();
+    vi.mocked(config.onSubmit).mockReset();
+    vi.mocked(config.onSubmit).mockResolvedValue({ status: 'blocked' });
+  });
+
+  it('renders the create flow frame with the title and form style selector', () => {
+    render(<CreateFormShell config={config} />);
+
+    expect(screen.getByTestId('create-flow-frame')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Neue Gruppe erstellen' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /eine seite/i })).toBeTruthy();
   });
 
   it('switches to one-page layout immediately when the preference button is clicked', () => {
@@ -76,5 +154,111 @@ describe('CreateFormShell', () => {
     expect(screen.queryByTestId('carousel-layout')).toBeNull();
     expect(screen.queryByTestId('one-page-layout')).not.toBeNull();
     expect(updateFormStyle).toHaveBeenCalledWith('one_page');
+  });
+
+  it('shows the fullscreen submit overlay and activates the target button after success', async () => {
+    let resolveSubmit: (outcome: CreateSubmitOutcome) => void = () => undefined;
+    vi.mocked(config.onSubmit).mockImplementation(
+      () =>
+        new Promise<CreateSubmitOutcome>(resolve => {
+          resolveSubmit = resolve;
+        })
+    );
+
+    render(<CreateFormShell config={config} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByRole('dialog')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'POLITY arbeitet.' })).toBeTruthy();
+    expect(screen.getByText('Alpha Group Review')).toBeTruthy();
+    expect(screen.getByText('Alpha Group')).toBeTruthy();
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: /zur gruppe/i }).disabled).toBe(
+      true
+    );
+
+    await act(async () => {
+      resolveSubmit(groupSuccessOutcome);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole<HTMLButtonElement>('button', { name: /zur gruppe/i }).disabled).toBe(
+        false
+      );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /zur gruppe/i }));
+
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/group/$id',
+      params: { id: 'group-1' },
+      search: undefined,
+      hash: undefined,
+    });
+  });
+
+  it('updates fullscreen progress from the submit context', async () => {
+    let submitContext: CreateSubmitContext | undefined;
+    let resolveSubmit: (outcome: CreateSubmitOutcome) => void = () => undefined;
+    vi.mocked(config.onSubmit).mockImplementation(
+      context =>
+        new Promise<CreateSubmitOutcome>(resolve => {
+          submitContext = context;
+          resolveSubmit = resolve;
+        })
+    );
+
+    render(<CreateFormShell config={config} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByRole('dialog')).toBeTruthy();
+
+    act(() => {
+      submitContext?.reportProgress({ key: 'create', status: 'complete' });
+      submitContext?.reportProgress({
+        key: 'sync',
+        label: 'Synchronisiert Testdaten',
+        status: 'active',
+      });
+    });
+
+    expect(screen.getByText('Synchronisiert Testdaten')).toBeTruthy();
+    expect(screen.getByText('Läuft')).toBeTruthy();
+
+    await act(async () => {
+      resolveSubmit(groupSuccessOutcome);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Bereit')).toBeTruthy();
+    });
+  });
+
+  it('does not show the overlay when submit is blocked by validation', async () => {
+    vi.mocked(config.onSubmit).mockResolvedValue({ status: 'blocked' });
+
+    render(<CreateFormShell config={config} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await waitFor(() => {
+      expect(config.onSubmit).toHaveBeenCalled();
+    });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('keeps form data available after a submit error and can return to the form', async () => {
+    vi.mocked(config.onSubmit).mockRejectedValue(new Error('Create failed'));
+
+    render(<CreateFormShell config={config} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByRole('dialog')).toBeTruthy();
+    expect(screen.getByText('Create failed')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /zurück zum formular/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+    expect(screen.getByTestId('carousel-layout')).toBeTruthy();
   });
 });

@@ -4,7 +4,7 @@ import { BadgeControl } from '@/features/shared/ui/status';
 import { ScrollableAlertDialogContent, ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Trophy, Users, Repeat } from 'lucide-react';
+import { Trophy, Repeat } from 'lucide-react';
 import {
   Dialog,
   DialogHeader,
@@ -27,7 +27,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { getEntityGradientClasses, getMotionPreset } from '@/features/shared/theme';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
@@ -39,24 +38,23 @@ import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
-import { DelegatesOverview } from '@/features/delegates/ui/DelegatesOverview';
-import { MembershipCompositionPanel } from '@/features/groups/ui/MembershipCompositionPanel';
 import { EventDeadlinesCard } from './ui/EventDeadlinesCard';
 import { getEventTypeTranslationKey } from './logic/getEventTypeTranslationKey';
+import {
+  getWikiParticipationName,
+  isVisibleWikiParticipationStatus,
+  normalizeWikiParticipationRole,
+  WikiParticipationDirectory,
+  type WikiParticipationItem,
+  type WikiParticipationRole,
+} from '@/features/shared/ui/wiki';
 
-const EVENT_CARD_SURFACE = `${getEntityGradientClasses('event')} ${getMotionPreset('hoverLift')}`;
 const ELECTION_CARD_SURFACE = `${getEntityGradientClasses('election')} ${getMotionPreset('hoverLift')}`;
-import { WikiIncumbentPanel } from '@/features/shared/ui/wiki/WikiIncumbentPanel';
-import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
 export interface EventWikiContentViewProps {
-  activeDelegateAssemblyParticipants: any;
   agendaStats: any;
   amendmentsCount: any;
   canAccess: any;
-  compositionBuckets: any;
-  compositionIsLoading: any;
   confirmDialogOpen: any;
-  delegateParticipantsForDialog: any;
   elections: any;
   electionsCount: any;
   electionsDialogOpen: any;
@@ -67,21 +65,16 @@ export interface EventWikiContentViewProps {
   getUserCandidacy: any;
   handleConfirmCandidacy: any;
   handleElectionClick: any;
-  incumbentSections: any;
   isAssemblyEventType: any;
   isSubmitting: any;
   isSubscribed: any;
   openChangeRequestsCount: any;
-  participantsDialogOpen: any;
-  participantsWithProvenance: any;
   participation: any;
   participationDisabledReason: any;
   selectedElection: any;
   setConfirmDialogOpen: any;
   setElectionsDialogOpen: any;
-  setParticipantsDialogOpen: any;
   shouldDisableParticipationRequest: any;
-  showComposition: any;
   subscribeLoading: any;
   subscriberCount: any;
   t: any;
@@ -91,10 +84,7 @@ export interface EventWikiContentViewProps {
 
 export function EventWikiContentView({
   amendmentsCount,
-  compositionBuckets,
-  compositionIsLoading,
   confirmDialogOpen,
-  delegateParticipantsForDialog,
   elections,
   electionsCount,
   electionsDialogOpen,
@@ -105,25 +95,55 @@ export function EventWikiContentView({
   getUserCandidacy,
   handleConfirmCandidacy,
   handleElectionClick,
-  incumbentSections,
   isSubmitting,
   isSubscribed,
   openChangeRequestsCount,
-  participantsDialogOpen,
   participation,
   participationDisabledReason,
   selectedElection,
   setConfirmDialogOpen,
   setElectionsDialogOpen,
-  setParticipantsDialogOpen,
   shouldDisableParticipationRequest,
-  showComposition,
   subscribeLoading,
   subscriberCount,
   t,
   toggleSubscribe,
   user,
 }: EventWikiContentViewProps) {
+  const participantRoles: WikiParticipationRole[] = (event.roles ?? [])
+    .map((role: any) => normalizeWikiParticipationRole(role))
+    .filter((role: WikiParticipationRole | null): role is WikiParticipationRole => Boolean(role));
+  const participantRoleById = new Map(participantRoles.map(role => [role.id, role]));
+  const participantDirectoryItems: WikiParticipationItem[] = (event.participants ?? [])
+    .filter((participant: any) => isVisibleWikiParticipationStatus(participant.status))
+    .filter((participant: any) => participant.user?.id)
+    .map((participant: any) => {
+      const roles = (
+        participant.roles?.length
+          ? participant.roles
+          : participant.role
+            ? [participant.role]
+            : participant.role_id && participantRoleById.has(participant.role_id)
+              ? [participantRoleById.get(participant.role_id)]
+              : []
+      )
+        .map((role: any) => normalizeWikiParticipationRole(role))
+        .filter((role: WikiParticipationRole | null): role is WikiParticipationRole =>
+          Boolean(role)
+        );
+
+      return {
+        id: participant.id ?? `participant-${participant.user.id}`,
+        userId: participant.user.id,
+        name: getWikiParticipationName(participant.user),
+        handle: participant.user.handle ?? null,
+        email: participant.user.email ?? null,
+        avatar: participant.user.avatar ?? null,
+        status: participant.status ?? null,
+        roles,
+      };
+    });
+
   return (
     <div>
       {/* Header with centered title and subtitle */}
@@ -324,37 +344,29 @@ export function EventWikiContentView({
         registrationDeadline={event.registration_deadline}
         amendmentDeadline={event.amendment_deadline}
         candidacyDeadline={event.candidacy_deadline}
+        startDate={event.start_date}
+        endDate={event.end_date}
       />
 
-      {/* Public Participants Card */}
-      {event.visibility === 'public' && (
-        <Card
-          className={`mb-6 cursor-pointer overflow-hidden ${EVENT_CARD_SURFACE}`}
-          onClick={() => setParticipantsDialogOpen(true)}
-        >
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              {translateText('generated.inline.0429_participants_cd56e083')}
-            </CardTitle>
-            <CardDescription>
-              {event.participants?.length || 0}
-              {translateText('generated.inline.0430_participant_s_click_to_view_list_29dca775')}
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      )}
-
-      {incumbentSections.length > 0 && (
-        <WikiIncumbentPanel
-          title={translateText('generated.inline.0431_roles_incumbents_07f9ca00')}
-          description={translateText(
-            'generated.inline.0432_visible_event_roles_and_their_current_incumbe_9f923058'
-          )}
-          sections={incumbentSections}
-          entityType="event"
-        />
-      )}
+      <WikiParticipationDirectory
+        title={translateText('generated.inline.0429_participants_cd56e083', 'Participants')}
+        description={translateText(
+          'generated.inline.0442_participant_s_registered_for_this_event_4d97759f',
+          'Participants registered for this event.'
+        )}
+        items={participantDirectoryItems}
+        roles={participantRoles}
+        entityType="event"
+        searchPlaceholder={translateText(
+          'generated.inline.0494_search_participants_1b38c2ef',
+          'Search participants'
+        )}
+        emptyLabel={translateText('generated.inline.0447_no_participants_yet_aa90337a')}
+        noResultsLabel={translateText(
+          'features.events.wiki.noParticipantsMatch',
+          'No participants match your filters.'
+        )}
+      />
 
       {/* Elections Selection Dialog */}
       <Dialog open={electionsDialogOpen} onOpenChange={setElectionsDialogOpen}>
@@ -492,200 +504,6 @@ export function EventWikiContentView({
           </AlertDialogFooter>
         </ScrollableAlertDialogContent>
       </AlertDialog>
-
-      {/* Participants Dialog */}
-      <Dialog open={participantsDialogOpen} onOpenChange={setParticipantsDialogOpen}>
-        <ScrollableDialogContent className="max-h-[80vh] max-w-3xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {translateText('generated.inline.0441_event_participants_df407348')}
-            </DialogTitle>
-            <DialogDescription>
-              {event.participants?.length || 0}
-              {translateText(
-                'generated.inline.0442_participant_s_registered_for_this_event_4d97759f'
-              )}
-            </DialogDescription>
-          </DialogHeader>
-
-          {event.event_type === 'delegate_assembly' ? (
-            <Tabs defaultValue="participants" className="w-full">
-              <TabsList
-                className={`grid w-full ${showComposition ? 'grid-cols-3' : 'grid-cols-2'}`}
-              >
-                <TabsTrigger value="participants">
-                  {translateText('generated.inline.0429_participants_cd56e083')}
-                </TabsTrigger>
-                <TabsTrigger value="delegates">
-                  {translateText('generated.inline.0443_delegates_by_subgroup_5f5d3271')}
-                </TabsTrigger>
-                {showComposition ? (
-                  <TabsTrigger value="composition">
-                    {translateText('generated.inline.0444_composition_ca5e0012')}
-                  </TabsTrigger>
-                ) : null}
-              </TabsList>
-
-              <TabsContent value="participants" className="space-y-4">
-                <div className="grid gap-4 py-4 sm:grid-cols-2">
-                  {delegateParticipantsForDialog.length > 0 ? (
-                    (delegateParticipantsForDialog as any[]).map(participant => {
-                      const participantHref = participant.user?.id
-                        ? `/user/${participant.user.id}`
-                        : null;
-                      const participantContent = (
-                        <CardContent className="flex items-center gap-4 p-4">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage
-                              src={participant.user?.avatar ?? undefined}
-                              alt={
-                                `${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() ||
-                                'User'
-                              }
-                            />
-                            <AvatarFallback>
-                              {participant.user?.first_name?.[0]?.toUpperCase() || '?'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 space-y-1">
-                            <p className="leading-none font-semibold">
-                              {`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() ||
-                                translateText('generated.inline.0031_unknown_bc7819b3')}
-                            </p>
-                            {participant.user?.handle && (
-                              <p className="text-muted-foreground text-sm">
-                                @{participant.user.handle}
-                              </p>
-                            )}
-                            {participant.status && (
-                              <BadgeControl variant="secondary" size="xs">
-                                {participant.status}
-                              </BadgeControl>
-                            )}
-                            {showComposition && participant.partGroup?.name ? (
-                              <BadgeControl variant="outline" size="xs">
-                                {translateText('generated.inline.0445_subgroup_a9453c74')}
-                                {participant.partGroup.name}
-                              </BadgeControl>
-                            ) : null}
-                            {showComposition && participant.baseGroup?.name ? (
-                              <BadgeControl variant="outline" size="xs">
-                                {translateText('generated.inline.0446_base_group_1e6d0a99')}
-                                {participant.baseGroup.name}
-                              </BadgeControl>
-                            ) : null}
-                          </div>
-                        </CardContent>
-                      );
-
-                      return participantHref ? (
-                        <Card
-                          key={participant.id}
-                          asChild
-                          className="transition-all duration-300 hover:shadow-lg"
-                        >
-                          <SmartLink href={participantHref} className="block cursor-pointer">
-                            {participantContent}
-                          </SmartLink>
-                        </Card>
-                      ) : (
-                        <Card
-                          key={participant.id}
-                          className="transition-all duration-300 hover:shadow-lg"
-                        >
-                          {participantContent}
-                        </Card>
-                      );
-                    })
-                  ) : (
-                    <div className="text-muted-foreground col-span-2 py-8 text-center">
-                      {translateText('generated.inline.0447_no_participants_yet_aa90337a')}
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="delegates" className="space-y-4">
-                <DelegatesOverview eventId={event.id} groupId={event.group?.id} />
-              </TabsContent>
-
-              {showComposition ? (
-                <TabsContent value="composition" className="space-y-4 py-4">
-                  <MembershipCompositionPanel
-                    buckets={compositionBuckets}
-                    isLoading={compositionIsLoading}
-                  />
-                </TabsContent>
-              ) : null}
-            </Tabs>
-          ) : (
-            <div className="grid gap-4 py-4 sm:grid-cols-2">
-              {event.participants && event.participants.length > 0 ? (
-                event.participants.map((participant: any) => {
-                  const participantHref = participant.user?.id
-                    ? `/user/${participant.user.id}`
-                    : null;
-                  const participantContent = (
-                    <CardContent className="flex items-center gap-4 p-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage
-                          src={participant.user?.avatar ?? undefined}
-                          alt={
-                            `${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() ||
-                            'User'
-                          }
-                        />
-                        <AvatarFallback>
-                          {participant.user?.first_name?.[0]?.toUpperCase() || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 space-y-1">
-                        <p className="leading-none font-semibold">
-                          {`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() ||
-                            translateText('generated.inline.0031_unknown_bc7819b3')}
-                        </p>
-                        {participant.user?.handle && (
-                          <p className="text-muted-foreground text-sm">
-                            @{participant.user.handle}
-                          </p>
-                        )}
-                        {participant.status && (
-                          <BadgeControl variant="secondary" size="xs">
-                            {participant.status}
-                          </BadgeControl>
-                        )}
-                      </div>
-                    </CardContent>
-                  );
-
-                  return participantHref ? (
-                    <Card
-                      key={participant.id}
-                      asChild
-                      className="transition-all duration-300 hover:shadow-lg"
-                    >
-                      <SmartLink href={participantHref} className="block cursor-pointer">
-                        {participantContent}
-                      </SmartLink>
-                    </Card>
-                  ) : (
-                    <Card
-                      key={participant.id}
-                      className="transition-all duration-300 hover:shadow-lg"
-                    >
-                      {participantContent}
-                    </Card>
-                  );
-                })
-              ) : (
-                <div className="text-muted-foreground col-span-2 py-8 text-center">
-                  {translateText('generated.inline.0447_no_participants_yet_aa90337a')}
-                </div>
-              )}
-            </div>
-          )}
-        </ScrollableDialogContent>
-      </Dialog>
     </div>
   );
 }

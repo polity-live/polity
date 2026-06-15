@@ -3,6 +3,7 @@ import { useQuery } from '@rocicorp/zero/react';
 import type { Value } from 'platejs';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
+import { useAuth } from '@/providers/auth-provider';
 import {
   useTranslation,
   translate as translateText,
@@ -17,8 +18,9 @@ import { useCommonState, useCommonActions } from '@/zero/common';
 import { useCurrentUserActiveGroupIds, useGroupById } from '@/zero/groups/useGroupState';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { queries } from '@/zero/queries';
-import type { CreateFormConfig } from '../types/create-form.types';
+import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
 import { type RecurrencePattern } from '@/features/events/logic/rruleHelpers';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
 import { CreateRichTextField } from '../ui/inputs/CreateRichTextField';
@@ -54,6 +56,12 @@ import {
   getProcessTaskSchedulingWindow,
   isEventWithinSchedulingWindow,
 } from '@/features/amendments/logic/processTaskEventScheduling';
+import {
+  createBlockedSubmitOutcome,
+  createExternalSubmitTarget,
+  createRouteSubmitTarget,
+  createSuccessSubmitOutcome,
+} from '../logic/createSubmitTargets';
 
 type EventType = CreateEventType;
 type MeetingType = 'one-on-one' | 'public-meeting';
@@ -63,6 +71,7 @@ export function useCreateEventForm(): CreateFormConfig {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as CreateEventSearch;
+  const { user } = useAuth();
   const { createEvent } = useEventActions();
   const { completeProcessTaskWithEvent } = useAmendmentActions();
   const commonActions = useCommonActions();
@@ -124,7 +133,14 @@ export function useCreateEventForm(): CreateFormConfig {
     house_number: houseNumber,
   });
 
-  const { allHashtags } = useCommonState({ loadAllHashtags: true });
+  const { allHashtags, userHashtags } = useCommonState({
+    user_id: user?.id,
+    loadAllHashtags: true,
+  });
+  const preferredHashtagSuggestions = useMemo(
+    () => extractHashtagTags(userHashtags),
+    [userHashtags]
+  );
   const { activeGroupIds } = useCurrentUserActiveGroupIds();
   const [openProcessTasks] = useQuery(
     groupId ? queries.amendments.openProcessTasksByGroup({ group_id: groupId }) : undefined
@@ -270,8 +286,8 @@ export function useCreateEventForm(): CreateFormConfig {
     [navigate, searchParams]
   );
 
-  const handleSubmit = async () => {
-    if (!title.trim()) return;
+  const handleSubmit = async (context?: CreateSubmitContext) => {
+    if (!title.trim()) return createBlockedSubmitOutcome();
     if (
       eventType === 'delegate_assembly' &&
       (!group ||
@@ -287,31 +303,32 @@ export function useCreateEventForm(): CreateFormConfig {
           'generated.inline.0324_delegiertenversammlungen_koennen_nur_fuer_hie_dc8b32df'
         )
       );
-      return;
+      return createBlockedSubmitOutcome();
     }
 
     if (timeSeriesValidationError === 'missing-required-range') {
       toast.error(t('pages.create.event.timeSeries.validation.dateTimeRangeRequired'));
-      return;
+      return createBlockedSubmitOutcome();
     }
 
     if (timeSeriesValidationError === 'missing-start-date') {
       toast.error(t('pages.create.event.timeSeries.validation.startDateRequired'));
-      return;
+      return createBlockedSubmitOutcome();
     }
 
     if (timeSeriesValidationError === 'missing-weekdays') {
       toast.error(t('pages.create.event.timeSeries.validation.weekdaysRequired'));
-      return;
+      return createBlockedSubmitOutcome();
     }
 
     if (processSchedulingValidationMessage) {
       toast.error(processSchedulingValidationMessage);
-      return;
+      return createBlockedSubmitOutcome();
     }
 
     setIsSubmitting(true);
     try {
+      context?.reportProgress({ key: 'create', status: 'active' });
       const recurringFields = buildRecurringEventFields({
         isRecurring,
         recurrence: {
@@ -381,6 +398,8 @@ export function useCreateEventForm(): CreateFormConfig {
           : {}),
       });
       await serverConfirmed(createEventResult);
+      context?.reportProgress({ key: 'create', status: 'complete' });
+      context?.reportProgress({ key: 'sync', status: 'active' });
 
       if (hashtags.length > 0) {
         await commonActions.syncEntityHashtags('event', eventId, hashtags, [], allHashtags ?? []);
@@ -416,30 +435,46 @@ export function useCreateEventForm(): CreateFormConfig {
       });
 
       const attachedTaskIds = new Set<string>();
-      for (const task of matchingProcessTasks) {
-        if (attachedTaskIds.has(task.id)) {
-          continue;
-        }
+      await Promise.all(
+        matchingProcessTasks
+          .filter(task => {
+            if (attachedTaskIds.has(task.id)) {
+              return false;
+            }
 
-        attachedTaskIds.add(task.id);
-        await attachProcessTaskToEvent({
-          task,
-          event: createdEvent,
-          description:
-            task.description?.trim() ||
-            `Automatisch mit dem neuen Event "${title.trim()}" verknuepft.`,
-          completeProcessTaskWithEvent,
-        });
-      }
+            attachedTaskIds.add(task.id);
+            return true;
+          })
+          .map(task =>
+            attachProcessTaskToEvent({
+              task,
+              event: createdEvent,
+              description:
+                task.description?.trim() ||
+                `Automatisch mit dem neuen Event "${title.trim()}" verknuepft.`,
+              completeProcessTaskWithEvent,
+            })
+          )
+      );
+
+      context?.reportProgress({ key: 'sync', status: 'complete' });
+      context?.reportProgress({ key: 'ready', status: 'active' });
 
       if (searchParams.returnTo) {
-        window.location.assign(searchParams.returnTo);
-        return;
+        setIsSubmitting(false);
+        return createSuccessSubmitOutcome(createReturnToSubmitTarget(searchParams.returnTo));
       }
 
-      navigate({ to: `/event/${eventId}` });
-    } catch {
       setIsSubmitting(false);
+      return createSuccessSubmitOutcome(
+        createRouteSubmitTarget('event', {
+          to: '/event/$id',
+          params: { id: eventId },
+        })
+      );
+    } catch (error) {
+      setIsSubmitting(false);
+      throw error;
     }
   };
 
@@ -449,6 +484,11 @@ export function useCreateEventForm(): CreateFormConfig {
       title: 'pages.create.event.title',
       isSubmitting,
       onSubmit: handleSubmit,
+      submissionSteps: [
+        { key: 'create', label: 'Erstellt Event' },
+        { key: 'sync', label: 'Verknüpft Kontext und Aufgaben' },
+        { key: 'ready', label: 'Bereitet Eventseite vor' },
+      ],
       steps: [
         // 1. Basic Info first — title, description, image
         {
@@ -764,6 +804,7 @@ export function useCreateEventForm(): CreateFormConfig {
                 visibility,
                 hashtags,
                 hashtagPlaceholder: t('pages.create.event.hashtagPlaceholder'),
+                preferredHashtagSuggestions,
                 onVisibilityChange: setVisibility,
                 onHashtagsChange: setHashtags,
               },
@@ -941,6 +982,7 @@ export function useCreateEventForm(): CreateFormConfig {
       imageURL,
       visibility,
       hashtags,
+      preferredHashtagSuggestions,
       eventType,
       meetingType,
       meetingMaxBookings,
@@ -982,4 +1024,58 @@ export function useCreateEventForm(): CreateFormConfig {
   );
 
   return config;
+}
+
+function createReturnToSubmitTarget(returnTo: string) {
+  const routeTarget = parseInternalReturnTo(returnTo);
+
+  if (routeTarget) {
+    return createRouteSubmitTarget('event', {
+      ...routeTarget,
+      label: 'Zur Zielseite',
+    });
+  }
+
+  return createExternalSubmitTarget('event', {
+    href: returnTo,
+    label: 'Zur Zielseite',
+  });
+}
+
+function parseInternalReturnTo(returnTo: string): {
+  to: string;
+  search?: Record<string, string>;
+  hash?: string;
+} | null {
+  try {
+    const isRootRelative = returnTo.startsWith('/');
+    const isHttpUrl = /^https?:\/\//i.test(returnTo);
+
+    if (!isRootRelative && !isHttpUrl) {
+      return null;
+    }
+
+    const baseOrigin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'https://polity.local';
+    const url = new URL(returnTo, baseOrigin);
+
+    if (!isRootRelative && url.origin !== baseOrigin) {
+      return null;
+    }
+
+    const search: Record<string, string> = {};
+    url.searchParams.forEach((value, key) => {
+      search[key] = value;
+    });
+
+    return {
+      to: url.pathname,
+      search: Object.keys(search).length > 0 ? search : undefined,
+      hash: url.hash ? url.hash.slice(1) : undefined,
+    };
+  } catch {
+    return null;
+  }
 }

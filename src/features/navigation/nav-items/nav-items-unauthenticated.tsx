@@ -1,4 +1,3 @@
-import { featureThemeClassName } from '@/features/shared/theme';
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
 import { docsTopicDefinitions } from '@/features/docs/logic/docsTopics.ts';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -66,7 +65,7 @@ export const createLandingSecondaryNavItems = (
       id: 'landing-features',
       icon: 'Sparkles',
       label: t ? t('pages.home.publicLanding.nav.features') : 'Features',
-      href: featureThemeClassName('navigationNavItemsUnauthenticatedThemedStyle'),
+      href: '/#features',
       onClick: () => navigate({ to: '/', hash: 'features' }),
     },
     {

@@ -1,15 +1,13 @@
 export const authTranslations = {
   login: {
     title: 'Bei Polity anmelden',
-    description:
-      'Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen sicheren Magic-Code',
+    description: 'Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen sicheren Magic-Code',
     emailLabel: 'E-Mail-Adresse',
     emailPlaceholder: 'ihre.email@beispiel.de',
     sendCode: 'Magic-Code senden',
     sending: 'Wird gesendet...',
     footer: {
-      noPassword:
-        'Kein Passwort erforderlich - wir senden Ihnen stattdessen einen sicheren Code.',
+      noPassword: 'Kein Passwort erforderlich - wir senden Ihnen stattdessen einen sicheren Code.',
       checkEmail: 'Überprüfen Sie Ihre E-Mails für den Bestätigungscode.',
     },
   },
@@ -107,6 +105,41 @@ export const authTranslations = {
   },
   onboarding: {
     welcome: 'Willkommen bei Polity!',
+    shell: {
+      progressLabel: 'Erste Einrichtung',
+      title: 'Richte deinen politischen Arbeitsbereich ein',
+      subtitle:
+        'Ein paar gezielte Entscheidungen helfen Polity, dich mit Menschen, Gruppen, Entscheidungen und Unterstützung zu verbinden.',
+      contextTitle: 'Warum das wichtig ist',
+      contextDescription:
+        'Polity funktioniert am besten, wenn Profil, Gruppenkontext und Assistenz bereit sind, bevor du in die Timeline gehst.',
+      steps: {
+        name: {
+          label: 'Profil',
+          description: 'Mach dich für andere erkennbar.',
+        },
+        interests: {
+          label: 'Interessen',
+          description: 'Folge Themen, die dich interessieren.',
+        },
+        groupSearch: {
+          label: 'Gruppe',
+          description: 'Finde den Ort, an dem du aktiv bist.',
+        },
+        confirm: {
+          label: 'Anfrage',
+          description: 'Entscheide, ob du Zugang anfragen möchtest.',
+        },
+        ariaKai: {
+          label: 'Assistenz',
+          description: 'Wisse, wo du später Hilfe findest.',
+        },
+        summary: {
+          label: 'Start',
+          description: 'Wähle dein erstes sinnvolles Ziel.',
+        },
+      },
+    },
     nameStep: {
       title: 'Wie heißt du?',
       description: 'Damit andere dich erkennen können',
@@ -121,61 +154,143 @@ export const authTranslations = {
       },
       continue: 'Weiter',
     },
+    interestStep: {
+      title: 'Was interessiert dich?',
+      description:
+        'Wähle ein paar Themen aus, damit Polity dir passende Gruppen, Events und Entscheidungen zeigen kann.',
+      suggestions:
+        'Klima,Mobilität,Wohnen,Bildung,Demokratie,Gesundheit,Digitales,Beteiligung,Haushalt,Nachbarschaft,Verkehr',
+      pickTitle: 'Themen wählen',
+      selectedCountOne: '1 Interesse ausgewählt',
+      selectedCount: '{{count}} Interessen ausgewählt',
+      emptySelection: 'Wähle idealerweise 3-8 Themen oder überspringe den Schritt.',
+      clear: 'Zurücksetzen',
+      customLabel: 'Eigene Themen hinzufügen',
+      customPlaceholder: 'Thema hinzufügen, z.B. Klima',
+      previewTitle: 'Wo das später hilft',
+      previewDescription:
+        'Wir nutzen diese Themen, um Gruppen-Treffer, Discover-Inhalte und Empfehlungen nachvollziehbarer zu machen.',
+      continue: 'Weiter',
+      skip: 'Erstmal überspringen',
+    },
     groupStep: {
       title: 'Finde deine Gruppe',
       description: 'Suche nach einem Ort oder einer Gruppe, in der du aktiv bist',
       searchPlaceholder: 'Gruppen oder Orte suchen...',
+      matchesTitle: 'Passende Treffer',
+      matchesDescription:
+        'Wähle eine oder mehrere Gruppen aus, um deinen Start zu personalisieren.',
       noResults: 'Keine Gruppen gefunden',
+      noResultsHint:
+        'Versuche einen anderen Ort, Organisationsnamen oder ein Thema. Du kannst auch ohne Gruppe fortfahren.',
+      selectionTitle: 'Ausgewählte Gruppen',
+      selectedCount: '{{count}} ausgewählt',
+      clearSelection: 'Alle löschen',
+      selectionDescription:
+        'Als Nächstes kannst du eine Anfrage senden oder die Gruppe als Kontext behalten und weiter erkunden.',
+      emptySelectionDescription:
+        'Du kannst jetzt eine Gruppe wählen oder diesen Schritt überspringen und später über die Suche weitermachen.',
+      mapTitle: 'Gruppenkarte',
+      mapDescription:
+        'Klicke auf eine Markierung, um sie zu fokussieren. Wähle Gruppen aus der Liste.',
+      mapNoGroups: 'Keine Gruppen mit Kartenposition in diesen Treffern.',
+      mapUnavailable: 'Karte wird geladen...',
+      mappableCount: '{{count}} auf der Karte',
+      unmappedCount: '{{count}} ohne Standort',
+      activeTitle: 'Fokussierte Gruppe',
+      activeDescription: 'Wähle diese Gruppe aus der Liste, wenn du Zugang anfragen möchtest.',
+      activeSelectedDescription: 'Diese Gruppe ist für deine Beitrittsanfragen ausgewählt.',
+      emptyActiveDescription: 'Wähle eine Gruppe oder Markierung, um sie hier anzusehen.',
+      interestMatch: 'Passt zu deinen Interessen',
       skip: 'Überspringen',
       continue: 'Weiter',
+      continueWithoutGroup: 'Ohne Gruppe weiter',
     },
     confirmStep: {
       title: 'Dieser Gruppe beitreten?',
-      description:
-        'Möchtest du in dieser Gruppe mitarbeiten und eine Beitrittsanfrage senden?',
+      titleMultiple: 'Gruppenanfragen senden?',
+      description: 'Möchtest du in dieser Gruppe mitarbeiten und eine Beitrittsanfrage senden?',
+      descriptionMultiple: 'Sende Beitrittsanfragen an {{count}} ausgewählte Gruppen.',
+      nextTitle: 'Was danach passiert',
+      nextPrivacy: 'Die Gruppe erhält eine Beitrittsanfrage, keinen automatischen Zugriff.',
+      nextReview: 'Du kannst die Anfrage später in deinem Profil verfolgen.',
       yes: 'Ja, Anfrage senden',
+      yesMultiple: '{{count}} Anfragen senden',
       no: 'Nein, einfach weitermachen',
       requestSending: 'Anfrage wird gesendet...',
       requestSent: 'Anfrage gesendet!',
+      requestSentMultiple: '{{count}} Anfragen gesendet',
     },
     summaryStep: {
       title: 'Alles erledigt!',
       description: 'Das haben wir für dich getan:',
       nameUpdated: 'Name gesetzt auf',
       groupSelected: 'Gruppe ausgewählt',
+      groupsSelected: 'Gruppen ausgewählt',
+      groupCountOne: '1 Gruppe ausgewählt',
+      groupCount: '{{count}} Gruppen ausgewählt',
       membershipRequested: 'Beitrittsanfrage gesendet an',
+      membershipRequestsSent: 'Beitrittsanfragen gesendet',
+      requestCountOne: '1 Anfrage gesendet',
+      requestCount: '{{count}} Anfragen gesendet',
       noGroup: 'Keine Gruppe ausgewählt',
+      interestsSelected: 'Interessen ausgewählt',
+      recommendationTitle: 'Empfohlener nächster Schritt',
+      recommendations: {
+        profile:
+          'Deine Anfrage wurde gesendet. Öffne als Nächstes dein Profil, um Mitgliedschaften und offenen Zugang zu prüfen.',
+        group:
+          'Du hast eine Gruppe ausgewählt, ohne eine Anfrage zu senden. Öffne sie jetzt, um ihre Arbeit zu verstehen.',
+        timeline:
+          'Deine Interessen sind gespeichert. Öffne die Timeline, um passende Aktivität und neue Gruppen zu entdecken.',
+        assistant:
+          'Starte mit Aria & Kai, wenn du vor dem Erkunden eine geführte Einführung möchtest.',
+      },
+      nextStepLabel: 'Nächster Schritt',
       goToProfile: 'Zu meinem Profil',
       goToGroup: 'Zur Gruppe',
-      showAssistant: 'Zeig mir meinen Assistenten',
+      goToTimeline: 'Timeline öffnen',
+      showAssistant: 'Assistent öffnen',
     },
     ariaKaiStep: {
       title: 'Willkommen bei Polity!',
       subtitle: 'Lerne Aria & Kai kennen, deine persönlichen Assistenten',
-      intro: 'Hey! Wir sind <1>Aria & Kai</1> und wir sind hier, um dir zu helfen, Polity zu erkunden und das Beste aus allen Funktionen herauszuholen.',
-      helpText: 'Wann immer du Hilfe, Tipps oder Informationen über Gruppen, Events, Anträge und mehr brauchst, <1>findest du uns in deinen Nachrichten</1>. Wir sind immer bereit zu helfen!',
+      intro:
+        'Hey! Wir sind <1>Aria & Kai</1> und wir sind hier, um dir zu helfen, Polity zu erkunden und das Beste aus allen Funktionen herauszuholen.',
+      helpText:
+        'Wann immer du Hilfe, Tipps oder Informationen über Gruppen, Events, Anträge und mehr brauchst, <1>findest du uns in deinen Nachrichten</1>. Wir sind immer bereit zu helfen!',
       quickTip: 'Schneller Tipp:',
-      tipText: 'Wir haben bereits eine Unterhaltung mit dir begonnen. Klicke unten, um zu sehen, wo du uns immer finden kannst!',
+      tipText:
+        'Wir haben bereits eine Unterhaltung mit dir begonnen. Klicke unten, um zu sehen, wo du uns immer finden kannst!',
       dontShowAgain: 'Diese Einführung nicht mehr anzeigen',
+      assistantBadge: 'KI',
+      previewPrompt: 'Was sollte ich zuerst tun?',
       continue: 'Weiter',
     },
   },
   errors: {
-    systemAssistantNotFound: 'Systemassistent (Aria & Kai) ist nicht verfügbar. Bitte kontaktiere den Support oder führe das Seed-Skript aus, um Systembenutzer zu initialisieren.',
-    systemAssistantCheckFailed: 'Fehler bei der Überprüfung der Systemassistenten-Verfügbarkeit. Bitte versuche es erneut.',
+    systemAssistantNotFound:
+      'Systemassistent (Aria & Kai) ist nicht verfügbar. Bitte kontaktiere den Support oder führe das Seed-Skript aus, um Systembenutzer zu initialisieren.',
+    systemAssistantCheckFailed:
+      'Fehler bei der Überprüfung der Systemassistenten-Verfügbarkeit. Bitte versuche es erneut.',
     verificationFailed: 'Verifizierung fehlgeschlagen',
     invalidOrExpiredCode: 'Ungültiger oder abgelaufener Code',
     authenticationFailed: 'Authentifizierung fehlgeschlagen',
-    userInitializationFailed: 'Dein Konto konnte nicht initialisiert werden. Bitte kontaktiere den Support.',
+    userInitializationFailed:
+      'Dein Konto konnte nicht initialisiert werden. Bitte kontaktiere den Support.',
     magicLinkFailed: 'Magic-Link konnte nicht gesendet werden',
     unexpectedError: 'Ein unerwarteter Fehler ist aufgetreten',
     fillBothFields: 'Bitte fülle beide Felder aus',
     nameTooShort: 'Name muss mindestens 2 Zeichen lang sein',
     membershipRequestFailed: 'Anfrage konnte nicht gesendet werden',
+    membershipRequestsPartialFailed:
+      'Einige Anfragen konnten nicht gesendet werden. Erfolgreiche Anfragen sind markiert.',
+    interestsSaveFailed: 'Interessen konnten nicht gespeichert werden',
     profileUpdateFailed: 'Profil konnte nicht aktualisiert werden',
   },
   success: {
     welcome: 'Willkommen bei Polity! 🎉',
     membershipRequestSent: 'Beitrittsanfrage gesendet!',
+    membershipRequestsSent: '{{count}} Beitrittsanfragen gesendet!',
   },
 } as const;

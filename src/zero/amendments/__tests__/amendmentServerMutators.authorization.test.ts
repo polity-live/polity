@@ -72,6 +72,10 @@ import { amendmentServerMutators } from '../server-mutators';
 type AmendmentMutatorInput = Parameters<typeof amendmentServerMutators.delete.fn>[0];
 type AmendmentMutatorTx = AmendmentMutatorInput['tx'];
 type AmendmentMutatorCtx = AmendmentMutatorInput['ctx'];
+type CreateAmendmentArgs = Parameters<typeof amendmentServerMutators.create.fn>[0]['args'];
+type InitializeProcessPathArgs = Parameters<
+  typeof amendmentServerMutators.initializeProcessPath.fn
+>[0]['args'];
 
 function createTx(location: AmendmentMutatorTx['location'] = 'server') {
   return {
@@ -91,6 +95,74 @@ function createCtx(): AmendmentMutatorCtx {
   };
 }
 
+function createAmendmentCreateTx(location: AmendmentMutatorTx['location'] = 'server') {
+  return {
+    ...createTx(location),
+    mutate: {
+      role: {
+        insert: vi.fn(),
+      },
+      action_right: {
+        insert: vi.fn(),
+      },
+      amendment_collaborator: {
+        insert: vi.fn(),
+        update: vi.fn(),
+      },
+    },
+  };
+}
+
+function createAmendmentArgs(overrides: Partial<CreateAmendmentArgs> = {}): CreateAmendmentArgs {
+  return {
+    id: 'amendment-1',
+    code: null,
+    title: 'Amendment',
+    reason: null,
+    category: null,
+    preamble: null,
+    group_id: null,
+    event_id: null,
+    clone_source_id: null,
+    document_id: null,
+    tags: null,
+    visibility: 'public',
+    editing_mode: 'edit',
+    discussions: null,
+    image_url: null,
+    x: null,
+    youtube: null,
+    linkedin: null,
+    website: null,
+    ...overrides,
+  };
+}
+
+function initializeProcessPathArgs(
+  overrides: Partial<InitializeProcessPathArgs> = {}
+): InitializeProcessPathArgs {
+  return {
+    amendment_id: 'amendment-1',
+    amendment_title: 'Amendment',
+    amendment_reason: null,
+    enriched_path: [
+      {
+        groupId: 'group-target',
+        groupName: 'Target group',
+        eventId: 'event-1',
+        eventTitle: 'Vote event',
+        eventStartDate: Date.now() + 1000,
+        agendaItemId: 'agenda-1',
+        amendmentVoteId: 'vote-1',
+        forwardingStatus: 'forward_confirmed',
+      },
+    ],
+    source_group_id: 'group-source',
+    workflow_id: null,
+    ...overrides,
+  };
+}
+
 describe('amendmentServerMutators authorization', () => {
   beforeEach(() => {
     canMock.mockReset();
@@ -100,6 +172,31 @@ describe('amendmentServerMutators authorization', () => {
     fireNotificationMock.mockReset();
     userNameMock.mockReset();
     Object.values(processEngineMocks).forEach(mock => mock.mockReset());
+  });
+
+  it('creates amendments without checking target group or event permissions', async () => {
+    const tx = createAmendmentCreateTx('server');
+    tx.run.mockResolvedValueOnce(null);
+
+    await expect(
+      amendmentServerMutators.create.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: createAmendmentArgs({
+          group_id: 'group-target',
+          event_id: 'event-1',
+        }),
+      })
+    ).resolves.toBeUndefined();
+
+    expect(canMock).not.toHaveBeenCalled();
+    expect(tx.mutate.amendment_collaborator.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amendment_id: 'amendment-1',
+        user_id: 'user-1',
+        status: 'admin',
+      })
+    );
   });
 
   it('rejects amendment deletion before calling the shared mutator', async () => {
@@ -201,34 +298,83 @@ describe('amendmentServerMutators authorization', () => {
     expect(fireNotificationMock).not.toHaveBeenCalled();
   });
 
+  it('rejects process path initialization without a source group', async () => {
+    const tx = createTx('server');
+
+    await expect(
+      amendmentServerMutators.initializeProcessPath.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: initializeProcessPathArgs({ source_group_id: null }),
+      })
+    ).rejects.toThrow(PermissionError);
+
+    expect(canMock).not.toHaveBeenCalled();
+    expect(processEngineMocks.initializeAmendmentProcessPath).not.toHaveBeenCalled();
+  });
+
+  it('rejects process path initialization without source group membership role', async () => {
+    const tx = createTx('server');
+    tx.run.mockResolvedValueOnce(null).mockResolvedValueOnce([
+      {
+        id: 'membership-1',
+        membership_roles: [],
+      },
+    ]);
+
+    await expect(
+      amendmentServerMutators.initializeProcessPath.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: initializeProcessPathArgs(),
+      })
+    ).rejects.toThrow(PermissionError);
+
+    expect(canMock).not.toHaveBeenCalled();
+    expect(processEngineMocks.initializeAmendmentProcessPath).not.toHaveBeenCalled();
+  });
+
+  it('allows process path initialization for a member with any source group role', async () => {
+    const tx = createTx('server');
+    const args = initializeProcessPathArgs();
+    tx.run.mockResolvedValueOnce(null).mockResolvedValueOnce([
+      {
+        id: 'membership-1',
+        membership_roles: [{ role_id: 'role-1' }],
+      },
+    ]);
+
+    await expect(
+      amendmentServerMutators.initializeProcessPath.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(canMock).toHaveBeenCalledWith(tx, createCtx(), {
+      action: 'manage',
+      resource: 'amendments',
+      amendmentId: 'amendment-1',
+    });
+    expect(processEngineMocks.initializeAmendmentProcessPath).toHaveBeenCalledWith(
+      tx,
+      'user-1',
+      args
+    );
+  });
+
   it('rejects process path initialization without amendment manage rights', async () => {
     const tx = createTx('server');
     const error = new PermissionError('manage', 'amendments', 'amendment:amendment-1');
+    tx.run.mockResolvedValueOnce({ id: 'group-source' });
     canMock.mockRejectedValueOnce(error);
 
     await expect(
       amendmentServerMutators.initializeProcessPath.fn({
         tx: tx as never,
         ctx: createCtx(),
-        args: {
-          amendment_id: 'amendment-1',
-          amendment_title: 'Amendment',
-          amendment_reason: null,
-          enriched_path: [
-            {
-              groupId: 'group-1',
-              groupName: 'Group',
-              eventId: null,
-              eventTitle: '',
-              eventStartDate: null,
-              agendaItemId: null,
-              amendmentVoteId: null,
-              forwardingStatus: '',
-            },
-          ],
-          source_group_id: null,
-          workflow_id: null,
-        },
+        args: initializeProcessPathArgs(),
       })
     ).rejects.toBe(error);
 

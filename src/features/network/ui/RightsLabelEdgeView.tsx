@@ -53,6 +53,7 @@ export function RightsLabelEdgeView({
   style,
   markerStart,
   markerEnd,
+  data,
   dragState,
   setDragState,
   bendPoints,
@@ -71,6 +72,9 @@ export function RightsLabelEdgeView({
   middleSegmentIndex,
   startSegmentDrag,
 }: RightsLabelEdgeViewProps) {
+  const contextLabel = typeof data?.contextLabel === 'string' ? data.contextLabel : null;
+  const showLabel = (displayRights.length > 0 || contextLabel) && middleSegment;
+
   return (
     <>
       {edgeSegments.map(({ edgePath }: any, segmentIndex: number) => (
@@ -92,7 +96,7 @@ export function RightsLabelEdgeView({
           />
         </g>
       ))}
-      {displayRights.length > 0 && middleSegment && (
+      {showLabel && (
         <EdgeLabelRenderer>
           <GraphEdgeLabelButton
             aria-label={openRelationshipDetailsLabel}
@@ -103,19 +107,21 @@ export function RightsLabelEdgeView({
             onClick={handleLabelClick}
           >
             <GraphEdgeLabelSurface>
-              {displayRights.map((right: any) => (
-                <RightBadge
-                  key={right}
-                  right={right}
-                  requestKind={
-                    rightRelationshipKinds[right] === 'incoming' ||
-                    rightRelationshipKinds[right] === 'outgoing'
-                      ? rightRelationshipKinds[right]
-                      : null
-                  }
-                  size="compact"
-                />
-              ))}
+              {displayRights.length > 0
+                ? displayRights.map((right: any) => (
+                    <RightBadge
+                      key={right}
+                      right={right}
+                      requestKind={
+                        rightRelationshipKinds[right] === 'incoming' ||
+                        rightRelationshipKinds[right] === 'outgoing'
+                          ? rightRelationshipKinds[right]
+                          : null
+                      }
+                      size="compact"
+                    />
+                  ))
+                : contextLabel}
             </GraphEdgeLabelSurface>
           </GraphEdgeLabelButton>
         </EdgeLabelRenderer>

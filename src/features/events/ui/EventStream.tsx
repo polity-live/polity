@@ -35,6 +35,7 @@ export function EventStream({ eventId }: { eventId: string }) {
     isLoading,
     addingSpeaker,
     removingSpeaker,
+    canJoinSpeakerList,
     userSpeaker,
     handleAddToSpeakerList,
     handleRemoveFromSpeakerList,
@@ -228,6 +229,7 @@ export function EventStream({ eventId }: { eventId: string }) {
       isLoading={isLoading}
       addingSpeaker={addingSpeaker}
       removingSpeaker={removingSpeaker}
+      canJoinSpeakerList={canJoinSpeakerList}
       userSpeaker={userSpeaker}
       handleAddToSpeakerList={handleAddToSpeakerList}
       handleRemoveFromSpeakerList={handleRemoveFromSpeakerList}

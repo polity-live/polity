@@ -1,4 +1,5 @@
 import { featureThemeClassName } from '@/features/shared/theme';
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -7,6 +8,10 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
+import {
+  ActionSubmissionOverlay,
+  useActionSubmission,
+} from '@/features/shared/ui/action-submission';
 import { EntitySearchBar, type FilterOption } from '@/features/shared/ui/typeahead';
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
 import { DangerConfirmDialog } from '@/features/shared/ui/dialog';
@@ -113,6 +118,12 @@ export function ManageNetworkTabContentView({
   manageDialogCanAccept,
 }: ManageNetworkTabContentViewProps) {
   const { t } = useTranslation();
+  const linkSubmission = useActionSubmission('link');
+  const [linkPreview, setLinkPreview] = useState<{
+    title: string;
+    path: string[];
+    badges: string[];
+  } | null>(null);
 
   const currentGroupTagName = groupName || '';
   const incomingRequestCount = incomingRequests.length;
@@ -371,6 +382,21 @@ export function ManageNetworkTabContentView({
     );
   };
 
+  const handleAcceptLinkRequest = (rels: NormalizedGroupRelationship[], otherGroupName: string) => {
+    setLinkPreview({
+      title: otherGroupName,
+      path: [groupName || groupId, otherGroupName],
+      badges: rels.map(rel => rel.with_right).filter((right): right is string => Boolean(right)),
+    });
+
+    return linkSubmission.runActionWithSubmission(async () => onAcceptRequest(rels), {
+      onSuccess: () => {
+        linkSubmission.reset();
+        setManageDialog(null);
+      },
+    });
+  };
+
   const renderIncomingRequestActions = (row: RequestTableRow) => {
     const otherGroupName = row.request.group.name ?? t('common.unspecified');
     const canLink = row.rels.every(rel => canActivateLink(rel));
@@ -378,7 +404,14 @@ export function ManageNetworkTabContentView({
     return (
       <div className="flex items-center justify-end gap-1">
         {canLink ? (
-          <Button size="sm" variant="default" onClick={() => onAcceptRequest(row.rels)}>
+          <Button
+            size="sm"
+            variant="default"
+            disabled={linkSubmission.isActive}
+            onClick={() =>
+              void handleAcceptLinkRequest(row.rels, otherGroupName).catch(() => undefined)
+            }
+          >
             {t('common.actions.confirm')}
           </Button>
         ) : (
@@ -765,13 +798,29 @@ export function ManageNetworkTabContentView({
           partnerUsers={manageDialogPartnerUsers}
           canAccept={manageDialogCanAccept}
           onAccept={async () => {
-            await onAcceptRequest(manageDialog.rels);
+            await handleAcceptLinkRequest(manageDialog.rels, manageDialog.otherGroupName);
           }}
           onReject={async () => {
             await onRejectRequest(manageDialog.rels);
           }}
         />
       ) : null}
+      <ActionSubmissionOverlay
+        kind="link"
+        status={linkSubmission.status}
+        steps={linkSubmission.progressSteps}
+        error={linkSubmission.error}
+        preview={{
+          entityLabel: t('common.network.relationship'),
+          title: linkPreview?.title ?? t('common.network.groupNetwork'),
+          description: t('common.network.linkAcceptBlocked'),
+          path: linkPreview?.path,
+          badges: linkPreview?.badges,
+        }}
+        target={{ label: t('common.done', 'Fertig'), onClick: linkSubmission.reset }}
+        onBack={linkSubmission.reset}
+        onRetry={() => void linkSubmission.retry()}
+      />
     </div>
   );
 }

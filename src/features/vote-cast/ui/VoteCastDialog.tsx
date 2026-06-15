@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AmendmentForwardingPreview } from '@/features/amendments/ui/AmendmentForwardingPreview';
 import {
@@ -17,6 +17,12 @@ import {
   type VoteCastCandidate,
   type VoteCastChoice,
   type VoteCastDialogStep,
+  VoteSubmissionOverlay,
+  type VoteSubmissionContext,
+  type VoteSubmissionProgressStatus,
+  type VoteSubmissionProgressStep,
+  type VoteSubmissionStatus,
+  type VoteSubmissionStepKey,
 } from '@/features/shared/ui/voting';
 import type { VotingPhase } from '../logic/votePhaseHelpers';
 
@@ -39,10 +45,32 @@ interface VoteCastDialogProps {
   requirePassword?: boolean;
   passwordError?: string | null;
   isPasswordVerifying?: boolean;
-  onCastVote?: (choiceId: string) => Promise<void>;
-  onCastElectionVote?: (candidateIds: string[]) => Promise<void>;
+  onCastVote?: (choiceId: string, context?: VoteSubmissionContext) => Promise<void>;
+  onCastElectionVote?: (candidateIds: string[], context?: VoteSubmissionContext) => Promise<void>;
   onPasswordSubmit?: (password: string) => Promise<void>;
   isLoading?: boolean;
+}
+
+const SUBMISSION_SUCCESS_CLOSE_DELAY_MS = 780;
+
+function createInitialProgressSteps(): VoteSubmissionProgressStep[] {
+  return [
+    { key: 'verify', label: 'Stimmrecht prüfen', status: 'pending' },
+    { key: 'cast', label: 'Stimme versiegeln', status: 'pending' },
+    { key: 'sync', label: 'Ergebnis synchronisieren', status: 'pending' },
+  ];
+}
+
+function getSubmissionStatusForStep(
+  stepKey: VoteSubmissionStepKey,
+  stepStatus: VoteSubmissionProgressStatus
+): VoteSubmissionStatus | null {
+  if (stepStatus === 'error') return 'error';
+  if (stepStatus !== 'active') return null;
+
+  if (stepKey === 'verify') return 'verifying';
+  if (stepKey === 'cast') return 'casting';
+  return 'syncing';
 }
 
 export function VoteCastDialog({
@@ -68,6 +96,12 @@ export function VoteCastDialog({
   const [step, setStep] = useState<VoteCastDialogStep>('choice');
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
+  const [submissionStatus, setSubmissionStatus] = useState<VoteSubmissionStatus>('idle');
+  const [submissionError, setSubmissionError] = useState<unknown>(null);
+  const [submissionSteps, setSubmissionSteps] = useState<VoteSubmissionProgressStep[]>(
+    createInitialProgressSteps
+  );
+  const [lastSubmittedPassword, setLastSubmittedPassword] = useState<string | null>(null);
 
   const isElection = Boolean(candidates?.length);
   const isMultiSelect = isElection && maxVotes > 1;
@@ -79,6 +113,10 @@ export function VoteCastDialog({
     setStep('choice');
     setSelectedChoiceId(null);
     setSelectedCandidateIds([]);
+    setSubmissionStatus('idle');
+    setSubmissionError(null);
+    setSubmissionSteps(createInitialProgressSteps());
+    setLastSubmittedPassword(null);
   }, []);
 
   const handleOpenChange = (value: boolean) => {
@@ -86,33 +124,104 @@ export function VoteCastDialog({
     onOpenChange(value);
   };
 
-  const submitVote = async () => {
-    if (isElection && selectedCandidateIds.length > 0 && onCastElectionVote) {
-      await onCastElectionVote(selectedCandidateIds);
-    } else if (selectedChoiceId && onCastVote) {
-      await onCastVote(selectedChoiceId);
-    }
-    handleReset();
-    onOpenChange(false);
-  };
+  const reportProgress = useCallback(
+    (stepKey: VoteSubmissionStepKey, stepStatus: VoteSubmissionProgressStatus) => {
+      setSubmissionSteps(prev =>
+        prev.map(stepItem =>
+          stepItem.key === stepKey ? { ...stepItem, status: stepStatus } : stepItem
+        )
+      );
+
+      const nextStatus = getSubmissionStatusForStep(stepKey, stepStatus);
+      if (nextStatus) {
+        setSubmissionStatus(nextStatus);
+      }
+    },
+    []
+  );
+
+  const markStep = useCallback(
+    (stepKey: VoteSubmissionStepKey, stepStatus: VoteSubmissionProgressStatus) => {
+      reportProgress(stepKey, stepStatus);
+    },
+    [reportProgress]
+  );
+
+  const submissionContext = useMemo<VoteSubmissionContext>(
+    () => ({
+      reportProgress,
+    }),
+    [reportProgress]
+  );
+
+  const submitVote = useCallback(
+    async (context: VoteSubmissionContext) => {
+      markStep('cast', 'active');
+
+      if (isElection && selectedCandidateIds.length > 0 && onCastElectionVote) {
+        await onCastElectionVote(selectedCandidateIds, context);
+      } else if (selectedChoiceId && onCastVote) {
+        await onCastVote(selectedChoiceId, context);
+      }
+
+      markStep('cast', 'complete');
+      markStep('sync', 'active');
+      markStep('sync', 'complete');
+    },
+    [isElection, markStep, onCastElectionVote, onCastVote, selectedCandidateIds, selectedChoiceId]
+  );
+
+  const performSubmission = useCallback(
+    async (password?: string | null) => {
+      setSubmissionError(null);
+      setSubmissionSteps(createInitialProgressSteps());
+      setSubmissionStatus('verifying');
+      markStep('verify', 'active');
+
+      try {
+        if (password && onPasswordSubmit) {
+          await onPasswordSubmit(password);
+        }
+        markStep('verify', 'complete');
+
+        await submitVote(submissionContext);
+        setSubmissionSteps(prev => prev.map(stepItem => ({ ...stepItem, status: 'complete' })));
+        setSubmissionStatus('success');
+      } catch (error) {
+        setSubmissionError(error);
+        setSubmissionStatus('error');
+        setSubmissionSteps(prev =>
+          prev.map(stepItem =>
+            stepItem.status === 'active' ? { ...stepItem, status: 'error' } : stepItem
+          )
+        );
+      }
+    },
+    [markStep, onPasswordSubmit, submissionContext, submitVote]
+  );
 
   const handleConfirm = async () => {
     if (requirePassword) {
       setStep('password');
       return;
     }
-    await submitVote();
+    await performSubmission(null);
   };
 
   const handlePasswordSubmit = async (password: string) => {
-    try {
-      if (onPasswordSubmit) {
-        await onPasswordSubmit(password);
-      }
-      await submitVote();
-    } catch {
-      // Verification feedback is handled by the password hook that owns passwordError.
-    }
+    setLastSubmittedPassword(password);
+    await performSubmission(password);
+  };
+
+  const handleSubmissionBack = () => {
+    setSubmissionStatus('idle');
+    setSubmissionError(null);
+    setSubmissionSteps(createInitialProgressSteps());
+    setStep(requirePassword ? 'password' : 'choice');
+  };
+
+  const handleSubmissionRetry = () => {
+    void performSubmission(lastSubmittedPassword);
   };
 
   const toggleCandidate = (candidateId: string) => {
@@ -138,6 +247,21 @@ export function VoteCastDialog({
     />
   ) : null;
 
+  const selectedCandidates =
+    candidates?.filter((candidate: any) => selectedCandidateIds.includes(candidate.id)) ?? [];
+  const selectedChoice = choices?.find((choice: any) => choice.id === selectedChoiceId);
+
+  useEffect(() => {
+    if (submissionStatus !== 'success') return;
+
+    const timeoutId = window.setTimeout(() => {
+      handleReset();
+      onOpenChange(false);
+    }, SUBMISSION_SUCCESS_CLOSE_DELAY_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [handleReset, onOpenChange, submissionStatus]);
+
   return (
     <VoteCastDialogView
       open={open}
@@ -154,9 +278,27 @@ export function VoteCastDialog({
       isListElection={isListElection}
       requirePassword={requirePassword}
       passwordError={passwordError}
-      isPasswordVerifying={isPasswordVerifying}
-      isLoading={isLoading}
+      isPasswordVerifying={isPasswordVerifying || submissionStatus === 'verifying'}
+      isLoading={isLoading || submissionStatus !== 'idle'}
+      submissionActive={submissionStatus !== 'idle'}
       forwardingPreviewContent={forwardingPreviewContent}
+      submissionOverlay={
+        <VoteSubmissionOverlay
+          status={submissionStatus}
+          selection={{
+            type: isElection ? 'election' : 'vote',
+            title,
+            phase,
+            choiceLabel: selectedChoice?.label,
+            candidates: selectedCandidates,
+            maxVotes,
+          }}
+          progressSteps={submissionSteps}
+          error={submissionError}
+          onBack={handleSubmissionBack}
+          onRetry={handleSubmissionRetry}
+        />
+      }
       labels={{
         castVote: t('features.events.voting.castVote'),
         confirmWithPassword: t('features.events.voting.confirmWithPassword'),

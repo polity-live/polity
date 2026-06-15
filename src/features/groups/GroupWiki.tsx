@@ -5,7 +5,6 @@ import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
 import { AccessDenied as AccessDeniedView } from '@/features/auth/ui/AccessDenied';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
-import { buildGroupWikiIncumbentSections } from '@/features/groups/logic/buildGroupWikiIncumbentSections';
 import { groupRelationshipsByGroup } from '@/features/groups/logic/groupWikiHelpers';
 import { GroupWikiContentView } from './GroupWikiContentView';
 
@@ -89,11 +88,6 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
         NonNullable<typeof group.sibling_sources>[number]['source_group']
       > => Boolean(sourceGroup)
     );
-  const incumbentSections = buildGroupWikiIncumbentSections(
-    group.roles ?? [],
-    group.memberships ?? []
-  );
-
   return (
     <GroupWikiContentView
       acceptInvitation={acceptInvitation}
@@ -108,7 +102,6 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       groupId={groupId}
       groupLocation={groupLocation}
       hasRequested={hasRequested}
-      incumbentSections={incumbentSections}
       isHierarchical={isHierarchical}
       isInvited={isInvited}
       isMember={isMember}

@@ -22,6 +22,7 @@ interface StreetSceneCanvasViewProps {
   readOnly: boolean;
   onPointerDown: (point: StreetDesignLocalPoint) => void;
   onPointerMove: (point: StreetDesignLocalPoint) => void;
+  onFinishPlacement: () => void;
   onFinishPathPlacement: () => void;
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
@@ -47,6 +48,7 @@ export function StreetSceneCanvasView({
   readOnly,
   onPointerDown,
   onPointerMove,
+  onFinishPlacement,
   onFinishPathPlacement,
   onCancelPlacement,
   onObjectSelect,
@@ -68,6 +70,7 @@ export function StreetSceneCanvasView({
     readOnly,
     onPointerDown,
     onPointerMove,
+    onFinishPlacement,
     onFinishPathPlacement,
     onCancelPlacement,
     onObjectSelect,

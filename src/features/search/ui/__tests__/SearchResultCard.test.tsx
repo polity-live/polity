@@ -35,7 +35,12 @@ describe('SearchResultCard', () => {
             subtitle: null,
             summary: 'A group for civic work.',
             search_text: '',
+            visibility: 'public',
             image_url: null,
+            location_latitude: null,
+            location_longitude: null,
+            location_label: null,
+            location_source: null,
             created_at: Date.now(),
             updated_at: Date.now(),
             owner_user_id: null,
@@ -45,6 +50,8 @@ describe('SearchResultCard', () => {
               stats: { members: 12 },
               tags: ['planning'],
             },
+            engagement_score: 0,
+            trending_score: 0,
             topics: [],
             group: null,
           } as SearchDocument
@@ -58,7 +65,12 @@ describe('SearchResultCard', () => {
     expect(card.getAttribute('data-card-class')).not.toContain('h-full');
     expect(card.getAttribute('data-card-class')).toContain('bg-transparent');
     expect(card.getAttribute('data-card-class')).toContain('shadow-none');
+    expect(card.getAttribute('data-card-class')).toContain('entity-search-card-no-spotlight');
+    expect(card.getAttribute('data-card-class')).not.toContain('search-card-no-background-motion');
     expect(card.getAttribute('data-card-class')).toContain('[data-timeline-card-media]');
+    expect(card.getAttribute('data-card-class')).not.toContain(
+      '[data-timeline-card-header]]:border-border/70'
+    );
     expect(card.getAttribute('data-card-class')).toContain(
       '[data-timeline-card-content]]:rounded-b-2xl'
     );

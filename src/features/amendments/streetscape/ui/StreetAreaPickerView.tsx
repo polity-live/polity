@@ -1,35 +1,33 @@
-import { useEffect } from 'react';
+import type { DivIcon, LatLngBounds } from 'leaflet';
 import { MapPinned } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
-import type { StreetDesignGeoPoint, StreetDesignMapSelection } from '../types';
+import type { StreetDesignGeoPoint } from '../types';
 import type { StreetDesignBboxResizeHandle } from '../logic/streetDesignBbox';
-type ReactLeafletModule = typeof import('react-leaflet');
+import {
+  StreetAreaPickerMapViewport,
+  StreetAreaPickerSelectionOverlay,
+  type LeafletPosition,
+  type ReactLeafletModule,
+} from './StreetAreaPickerMapController';
+
 export interface StreetAreaPickerViewProps {
-  center: any;
-  bbox: any;
-  mapSelection: StreetDesignMapSelection;
-  isLoadingOsm: any;
-  osmError: any;
-  readOnly: any;
-  onMapSelectionChange: any;
-  onLoadOsm: any;
-  onLoadSample: any;
-  reactLeafletModule: any;
-  setReactLeafletModule: any;
-  leafletModule: any;
-  setLeafletModule: any;
-  loadFailed: any;
-  setLoadFailed: any;
-  markerIcon: any;
-  resizeMarkerIcon: any;
-  rotateMarkerIcon: any;
-  position: any;
-  bounds: any;
-  selectionCorners: [number, number][];
-  rotateHandlePosition: [number, number];
-  resizeHandles: { handle: StreetDesignBboxResizeHandle; position: [number, number] }[];
+  center: StreetDesignGeoPoint;
+  isLoadingOsm: boolean;
+  osmError: string | null;
+  readOnly: boolean;
+  onLoadOsm: () => void;
+  onLoadSample: () => void;
+  reactLeafletModule: ReactLeafletModule | null;
+  markerIcon: DivIcon | null;
+  resizeMarkerIcon: DivIcon | null;
+  rotateMarkerIcon: DivIcon | null;
+  position: LeafletPosition;
+  bounds: LatLngBounds | null;
+  selectionCorners: LeafletPosition[];
+  rotateHandlePosition: LeafletPosition;
+  resizeHandles: { handle: StreetDesignBboxResizeHandle; position: LeafletPosition }[];
   widthMeters: number;
   heightMeters: number;
   rotationDeg: number;
@@ -39,7 +37,7 @@ export interface StreetAreaPickerViewProps {
   onWidthMetersChange: (widthMeters: number) => void;
   onHeightMetersChange: (heightMeters: number) => void;
   onRotationDegreesChange: (rotationDeg: number) => void;
-  mapUnavailable: any;
+  mapUnavailable: boolean;
 }
 
 export function StreetAreaPickerView({
@@ -80,6 +78,13 @@ export function StreetAreaPickerView({
   const updateRotation = (value: number) => {
     if (Number.isFinite(value)) onRotationDegreesChange(value);
   };
+
+  const mapReady =
+    !mapUnavailable &&
+    reactLeafletModule != null &&
+    markerIcon != null &&
+    resizeMarkerIcon != null &&
+    rotateMarkerIcon != null;
 
   return (
     <section className="border-border bg-background rounded-md border p-3 shadow-sm">
@@ -135,7 +140,7 @@ export function StreetAreaPickerView({
         </div>
       </div>
 
-      {mapUnavailable ? (
+      {!mapReady ? (
         <div className="bg-muted/20 text-muted-foreground flex h-96 items-center justify-center rounded-md border border-dashed text-sm">
           Karte konnte nicht geladen werden.
         </div>
@@ -151,7 +156,7 @@ export function StreetAreaPickerView({
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap contributors"
             />
-            <MapViewport
+            <StreetAreaPickerMapViewport
               center={position}
               bounds={bounds}
               reactLeafletModule={reactLeafletModule}
@@ -167,43 +172,18 @@ export function StreetAreaPickerView({
                 pathOptions={{ color: '#0f766e', weight: 2, fillOpacity: 0.08 }}
               />
             ) : null}
-            <reactLeafletModule.Marker
+            <StreetAreaPickerSelectionOverlay
+              readOnly={readOnly}
+              reactLeafletModule={reactLeafletModule}
+              markerIcon={markerIcon}
+              resizeMarkerIcon={resizeMarkerIcon}
+              rotateMarkerIcon={rotateMarkerIcon}
               position={position}
-              icon={markerIcon}
-              draggable={!readOnly}
-              eventHandlers={{
-                drag(event: any) {
-                  const latLng = event.target.getLatLng();
-                  onBboxMove({ lat: latLng.lat, lon: latLng.lng });
-                },
-              }}
-            />
-            {resizeHandles.map(item => (
-              <reactLeafletModule.Marker
-                key={item.handle}
-                position={item.position}
-                icon={resizeMarkerIcon}
-                draggable={!readOnly}
-                title={`Ausschnitt ${item.handle} ziehen`}
-                eventHandlers={{
-                  drag(event: any) {
-                    const latLng = event.target.getLatLng();
-                    onBboxResize(item.handle, { lat: latLng.lat, lon: latLng.lng });
-                  },
-                }}
-              />
-            ))}
-            <reactLeafletModule.Marker
-              position={rotateHandlePosition}
-              icon={rotateMarkerIcon}
-              draggable={!readOnly}
-              title="Ausschnitt drehen"
-              eventHandlers={{
-                drag(event: any) {
-                  const latLng = event.target.getLatLng();
-                  onSelectionRotate({ lat: latLng.lat, lon: latLng.lng });
-                },
-              }}
+              rotateHandlePosition={rotateHandlePosition}
+              resizeHandles={resizeHandles}
+              onBboxMove={onBboxMove}
+              onBboxResize={onBboxResize}
+              onSelectionRotate={onSelectionRotate}
             />
           </reactLeafletModule.MapContainer>
         </div>
@@ -212,29 +192,6 @@ export function StreetAreaPickerView({
       {osmError ? <p className="text-destructive mt-2 text-xs">{osmError}</p> : null}
     </section>
   );
-}
-
-function MapViewport({
-  center,
-  bounds,
-  reactLeafletModule,
-}: {
-  center: [number, number];
-  bounds: any;
-  reactLeafletModule: ReactLeafletModule;
-}) {
-  const map = reactLeafletModule.useMap();
-
-  useEffect(() => {
-    if (bounds) {
-      map.fitBounds(bounds, { animate: true, duration: 0.25, padding: [18, 18], maxZoom: 18 });
-      return;
-    }
-
-    map.flyTo(center, 17, { animate: true, duration: 0.25 });
-  }, [bounds, center, map]);
-
-  return null;
 }
 
 function MapClickHandler({

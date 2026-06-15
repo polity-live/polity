@@ -13,6 +13,7 @@ import { CivicTimelineMap } from './CivicTimelineMap';
 import { CivicTimelineRail } from './CivicTimelineRail';
 import { TimelineFilterPanel } from './TimelineFilterPanel';
 import { TimelineHeader } from './TimelineHeader';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 
 export interface ModernTimelineViewProps extends UseTimelinePageReturn {
   className?: string;
@@ -164,9 +165,9 @@ export function ModernTimelineView({
           {civicTimeline.items.length > 0 ? (
             <div className="mt-6 flex justify-center">
               <Button variant="outline" asChild>
-                <a href="/search">
+                <SmartLink href="/search">
                   {t('features.timeline.discoverContent', { defaultValue: 'Discover Content' })}
-                </a>
+                </SmartLink>
               </Button>
             </div>
           ) : null}

@@ -4,6 +4,8 @@ import { useAuth } from '@/providers/auth-provider';
 import { useGroupById, useGroupState } from '@/zero/groups/useGroupState';
 import { useUserState } from '@/zero/users/useUserState';
 import { useTodoMutations } from '@/features/todos/hooks/useTodoMutations';
+import { useCommonState } from '@/zero/common/useCommonState';
+import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { getUserDisplayName } from '@/features/search/utils/searchUtils';
 import {
   useTranslation,
@@ -18,7 +20,12 @@ import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { CreateInlineNotice } from '../ui/CreateInlineNotice';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
-import type { CreateFormConfig } from '../types/create-form.types';
+import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
+import {
+  createBlockedSubmitOutcome,
+  createRouteSubmitTarget,
+  createSuccessSubmitOutcome,
+} from '../logic/createSubmitTargets';
 
 interface CreateTodoSearch {
   groupId?: string;
@@ -32,6 +39,7 @@ export function useCreateTodoForm(): CreateFormConfig {
   const { user } = useAuth();
   const { createTodo, isLoading } = useTodoMutations();
   const { allUsers } = useUserState({ includeAllUsers: true });
+  const { userHashtags } = useCommonState({ user_id: user?.id });
   const groupIdParam = searchParams.groupId ?? '';
   const returnSection = searchParams.returnSection;
   const [groupId, setGroupId] = useState(() => groupIdParam);
@@ -44,6 +52,10 @@ export function useCreateTodoForm(): CreateFormConfig {
   const memberGroupIds = useMemo(
     () => new Set(currentUserMembershipsWithGroups.map(membership => membership.group_id)),
     [currentUserMembershipsWithGroups]
+  );
+  const preferredHashtagSuggestions = useMemo(
+    () => extractHashtagTags(userHashtags),
+    [userHashtags]
   );
 
   const [title, setTitle] = useState('');
@@ -112,9 +124,10 @@ export function useCreateTodoForm(): CreateFormConfig {
         ? t('pages.create.common.authenticated')
         : t('pages.create.common.private');
 
-  const handleSubmit = async () => {
-    if (!title.trim() || !user?.id) return;
+  const handleSubmit = async (context?: CreateSubmitContext) => {
+    if (!title.trim() || !user?.id) return createBlockedSubmitOutcome();
     try {
+      context?.reportProgress({ key: 'create', status: 'active' });
       await createTodo({
         title: title.trim(),
         description: description.trim() || undefined,
@@ -128,19 +141,28 @@ export function useCreateTodoForm(): CreateFormConfig {
         visibility: groupId ? 'group' : visibility,
       });
       toast.success(t('pages.create.success.created'));
+      context?.reportProgress({ key: 'create', status: 'complete' });
+      context?.reportProgress({ key: 'sync', status: 'complete' });
+      context?.reportProgress({ key: 'ready', status: 'active' });
 
       if (returnSection === 'todos' && groupId) {
-        navigate({
-          to: '/group/$id/operation',
-          params: { id: groupId },
-          hash: returnSection,
-        });
-        return;
+        return createSuccessSubmitOutcome(
+          createRouteSubmitTarget('todo', {
+            to: '/group/$id/operation',
+            params: { id: groupId },
+            hash: returnSection,
+          })
+        );
       }
 
-      navigate({ to: '/todos' });
-    } catch {
+      return createSuccessSubmitOutcome(
+        createRouteSubmitTarget('todo', {
+          to: '/todos',
+        })
+      );
+    } catch (error) {
       toast.error(t('pages.create.error.createFailed'));
+      throw error;
     }
   };
 
@@ -150,6 +172,11 @@ export function useCreateTodoForm(): CreateFormConfig {
       title: 'pages.create.todo.title',
       isSubmitting: isLoading,
       onSubmit: handleSubmit,
+      submissionSteps: [
+        { key: 'create', label: 'Erstellt Aufgabe' },
+        { key: 'sync', label: 'Synchronisiert Zuweisung' },
+        { key: 'ready', label: 'Bereitet Aufgabenliste vor' },
+      ],
       steps: [
         {
           label: t('pages.create.todo.titleLabel'),
@@ -259,6 +286,7 @@ export function useCreateTodoForm(): CreateFormConfig {
                 onChange: setTags,
                 label: t('pages.create.todo.tagsOptional'),
                 placeholder: t('pages.create.todo.tagPlaceholder'),
+                preferredSuggestions: preferredHashtagSuggestions,
               },
             },
           ],
@@ -333,6 +361,7 @@ export function useCreateTodoForm(): CreateFormConfig {
       visibility,
       visibilityLabel,
       tags,
+      preferredHashtagSuggestions,
       assigneeNames,
       memberGroupIds,
       isLoading,

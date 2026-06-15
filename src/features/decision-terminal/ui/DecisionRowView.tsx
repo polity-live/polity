@@ -11,6 +11,7 @@ import { TrendIndicator } from './TrendIndicator';
 import { CountdownTimer, EndedAgo } from './CountdownTimer';
 import { CandidateBarCompact, VoteBarCompact } from './VoteProgressBar';
 import type { DecisionItem } from './types';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 export interface DecisionRowProps {
   decision: DecisionItem;
 }
@@ -31,9 +32,9 @@ function DecisionLink({
   }
 
   return (
-    <a href={href} className={cn('hover:text-primary hover:underline', className)}>
+    <SmartLink href={href} className={cn('hover:text-primary hover:underline', className)}>
       {children}
-    </a>
+    </SmartLink>
   );
 }
 function DecisionContextLinks({ decision }: { decision: DecisionItem }) {

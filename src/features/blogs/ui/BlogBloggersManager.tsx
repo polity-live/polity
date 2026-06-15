@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
@@ -12,6 +12,8 @@ import { RoleTag } from '@/features/groups/ui/RoleTag';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { NativeSelect } from '@/features/shared/ui/ui/native-select';
 import { toast } from '@/features/shared/ui/ui/sonner';
+import { useActionSubmission } from '@/features/shared/ui/action-submission';
+import { filterParticipationsByRole } from '@/features/shared/ui/participation';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import type { User } from '@/zero';
@@ -25,6 +27,8 @@ function initials(u: Pick<User, 'first_name' | 'last_name'> | undefined | null):
   if (!u) return 'U';
   return u.first_name?.charAt(0) || u.last_name?.charAt(0) || 'U';
 }
+
+const ACTIVE_BLOGGER_STATUSES = new Set(['owner', 'admin', 'member', 'writer']);
 
 interface BloggerUserLike extends Pick<User, 'first_name' | 'last_name'> {
   avatar?: string | null;
@@ -67,7 +71,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
+  const actionSubmission = useActionSubmission('invite');
   const [activeTab, setActiveTab] = useState('bloggers');
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleDescription, setNewRoleDescription] = useState('');
   const [addRoleDialogOpen, setAddRoleDialogOpen] = useState(false);
@@ -86,6 +92,14 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   // Use permission hooks to check access
   const { can } = usePermissions({ blogId });
   const canManageBloggers = can('manage', 'blogBloggers');
+  const roleFilterRoleIds = useMemo(
+    () => new Set(rolesData.roles.map(role => role.id).filter(Boolean)),
+    [rolesData.roles]
+  );
+  const activeRoleFilterIds = useMemo(
+    () => selectedRoleIds.filter(roleId => roleFilterRoleIds.has(roleId)),
+    [roleFilterRoleIds, selectedRoleIds]
+  );
 
   // Get existing blogger IDs to exclude from invite search
   const existingBloggerIds = bloggers.map(b => b.user_id).filter(Boolean) as string[];
@@ -114,41 +128,49 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
     if (selectedUsers.length === 0) return;
 
     setIsInviting(true);
-    try {
-      // Find Writer role ID
-      const writerRole = rolesData.roles.find(r => r.name === 'Writer');
-      if (!writerRole) {
-        throw new Error('Writer role not found');
-      }
+    void actionSubmission
+      .runActionWithSubmission(
+        async () => {
+          // Find Writer role ID
+          const writerRole = rolesData.roles.find(r => r.name === 'Writer');
+          if (!writerRole) {
+            throw new Error('Writer role not found');
+          }
 
-      for (const userId of selectedUsers) {
-        const bloggerId = crypto.randomUUID();
-        await blogActions.createEntry({
-          id: bloggerId,
-          status: 'invited',
-          user_id: userId,
-          blog_id: blogId,
-          role_id: writerRole.id,
-          visibility: '',
-        });
-      }
+          await Promise.all(
+            selectedUsers.map(userId =>
+              blogActions.createEntry({
+                id: crypto.randomUUID(),
+                status: 'invited',
+                user_id: userId,
+                blog_id: blogId,
+                role_id: writerRole.id,
+                visibility: '',
+              })
+            )
+          );
 
-      toast.success(
-        `Invited ${selectedUsers.length} ${selectedUsers.length === 1 ? 'blogger' : 'bloggers'}`
-      );
-
-      // Reset state
-      setSelectedUsers([]);
-      setInviteSearchQuery('');
-      setInviteDialogOpen(false);
-    } catch (error) {
-      console.error('Failed to invite bloggers:', error);
-      toast.error(
-        translateText('generated.inline.0227_failed_to_invite_bloggers_please_try_again_76577b9e')
-      );
-    } finally {
-      setIsInviting(false);
-    }
+          toast.success(
+            `Invited ${selectedUsers.length} ${selectedUsers.length === 1 ? 'blogger' : 'bloggers'}`
+          );
+        },
+        {
+          onSuccess: () => {
+            setSelectedUsers([]);
+            setInviteSearchQuery('');
+            setIsInviting(false);
+            actionSubmission.reset();
+            setInviteDialogOpen(false);
+          },
+        }
+      )
+      .catch(error => {
+        console.error('Failed to invite bloggers:', error);
+        toast.error(
+          translateText('generated.inline.0227_failed_to_invite_bloggers_please_try_again_76577b9e')
+        );
+        setIsInviting(false);
+      });
   };
 
   // Handle role updates
@@ -263,7 +285,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   };
 
   // Filter bloggers based on search and status
-  const filteredBloggers = bloggers.filter(blogger => {
+  const searchFilteredBloggers = bloggers.filter(blogger => {
     const q = searchQuery.toLowerCase();
     const matchesSearch =
       displayName(blogger.user).toLowerCase().includes(q) ||
@@ -272,9 +294,10 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
 
     return matchesSearch;
   });
+  const filteredBloggers = filterParticipationsByRole(searchFilteredBloggers, activeRoleFilterIds);
 
   // Separate bloggers by status
-  const activeBloggers = filteredBloggers.filter(b => b.status === 'member');
+  const activeBloggers = filteredBloggers.filter(b => ACTIVE_BLOGGER_STATUSES.has(b.status ?? ''));
   const invitedBloggers = filteredBloggers.filter(b => b.status === 'invited');
   const requestedBloggers = filteredBloggers.filter(b => b.status === 'requested');
   type BloggerRow = (typeof bloggers)[number];
@@ -445,9 +468,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
       usersData={usersData}
       searchQuery={searchQuery}
       setSearchQuery={setSearchQuery}
+      selectedRoleIds={activeRoleFilterIds}
+      setSelectedRoleIds={setSelectedRoleIds}
       inviteSearchQuery={inviteSearchQuery}
       setInviteSearchQuery={setInviteSearchQuery}
       selectedUsers={selectedUsers}
+      actionSubmission={actionSubmission}
       setSelectedUsers={setSelectedUsers}
       inviteDialogOpen={inviteDialogOpen}
       setInviteDialogOpen={setInviteDialogOpen}

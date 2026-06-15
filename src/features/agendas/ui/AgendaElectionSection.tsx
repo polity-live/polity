@@ -212,6 +212,19 @@ export function AgendaElectionSection({
     });
   }, [candidateStats, electionMode, isClosed, seatCount]);
 
+  const candidateOptions = useMemo<VoteBarOption[]>(() => {
+    return candidateStats.map(stats =>
+      buildCandidateOption(
+        stats.candidate.id,
+        getCandidateDisplayName(stats.candidate),
+        stats.indicativeCount,
+        stats.indicativePercentage,
+        stats.finalCount,
+        stats.finalPercentage
+      )
+    );
+  }, [candidateStats]);
+
   const isInteractive = Boolean(onOpenNamedResults);
   const ResultsWrapper = isInteractive ? 'button' : 'div';
 
@@ -305,78 +318,77 @@ export function AgendaElectionSection({
             </div>
           ) : (
             <div className="space-y-4">
-              {visibleCandidates.map(candidate => {
-                const stats = candidateStats.find(s => s.candidate.id === candidate.id);
-                const isLeading = winningCandidateIds.includes(candidate.id);
-                const isSelected = userSelectedCandidateIds.includes(candidate.id);
-                const displayName = getCandidateDisplayName(candidate);
+              <div className="bg-card/70 border-border/70 divide-border/70 overflow-hidden rounded-md border">
+                {visibleCandidates.map(candidate => {
+                  const stats = candidateStats.find(s => s.candidate.id === candidate.id);
+                  const isLeading = winningCandidateIds.includes(candidate.id);
+                  const isSelected = userSelectedCandidateIds.includes(candidate.id);
+                  const displayName = getCandidateDisplayName(candidate);
 
-                return (
-                  <div
-                    key={candidate.id}
-                    className={cn(
-                      'rounded-lg border p-4 transition-colors',
-                      isSelected && 'border-primary bg-primary/5',
-                      isLeading &&
-                        isClosed &&
-                        featureThemeClassName('agendaAgendaElectionSectionWarningSurface')
-                    )}
-                  >
-                    <div className="mb-3 flex items-center gap-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={candidate.user?.avatar ?? undefined} alt={displayName} />
-                        <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{displayName}</span>
-                          <BadgeControl
-                            variant={candidate.status === 'accepted' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {candidate.status === 'accepted'
-                              ? t('features.events.agenda.candidateAccepted')
-                              : t('features.events.agenda.candidateNominated')}
-                          </BadgeControl>
-                          {isLeading && isClosed ? (
-                            <Crown
-                              className={featureThemeClassName(
-                                'agendaAgendaElectionSectionWarningIcon'
-                              )}
-                            />
+                  return (
+                    <div
+                      key={candidate.id}
+                      className={cn(
+                        'px-3 py-2.5 transition-colors',
+                        isSelected && 'bg-primary/5',
+                        isLeading &&
+                          isClosed &&
+                          featureThemeClassName('agendaAgendaElectionSectionWarningSurface')
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage
+                            src={candidate.user?.avatar ?? undefined}
+                            alt={displayName}
+                          />
+                          <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex min-w-0 flex-wrap items-center gap-2">
+                            <span className="font-medium">{displayName}</span>
+                            <BadgeControl
+                              variant={candidate.status === 'accepted' ? 'default' : 'secondary'}
+                              className="text-xs"
+                            >
+                              {candidate.status === 'accepted'
+                                ? t('features.events.agenda.candidateAccepted')
+                                : t('features.events.agenda.candidateNominated')}
+                            </BadgeControl>
+                            {isLeading && isClosed ? (
+                              <Crown
+                                className={featureThemeClassName(
+                                  'agendaAgendaElectionSectionWarningIcon'
+                                )}
+                              />
+                            ) : null}
+                            {isSelected ? <CheckCircle2 className="text-primary h-4 w-4" /> : null}
+                          </div>
+                          {candidate.user?.email && displayName !== candidate.user.email ? (
+                            <span className="text-muted-foreground block truncate text-sm">
+                              {candidate.user.email}
+                            </span>
                           ) : null}
-                          {isSelected ? <CheckCircle2 className="text-primary h-4 w-4" /> : null}
                         </div>
-                        {candidate.user?.email && displayName !== candidate.user.email ? (
-                          <span className="text-muted-foreground text-sm">
-                            {candidate.user.email}
+                        {stats ? (
+                          <span className="text-muted-foreground text-xs tabular-nums">
+                            {isIndicationPhase ? stats.indicativeCount : stats.finalCount}
                           </span>
                         ) : null}
                       </div>
                     </div>
-
-                    {stats ? (
-                      <VoteResultsDisplay
-                        options={[
-                          buildCandidateOption(
-                            candidate.id,
-                            displayName,
-                            stats.indicativeCount,
-                            stats.indicativePercentage,
-                            stats.finalCount,
-                            stats.finalPercentage
-                          ),
-                        ]}
-                        phase={
-                          isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'
-                        }
-                        totalFinal={totalFinal}
-                        totalIndication={totalIndicative}
-                      />
-                    ) : null}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+              <VoteResultsDisplay
+                options={candidateOptions}
+                phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
+                totalFinal={totalFinal}
+                totalIndication={totalIndicative}
+                selectedOptionIds={userSelectedCandidateIds}
+                winnerOptionIds={winningCandidateIds}
+                showWinner={isClosed}
+              />
             </div>
           )}
 

@@ -24,6 +24,7 @@ import {
   searchSortField,
   searchStartRow,
   sortDirection,
+  type SearchBounds,
   type SearchDirection,
   type SearchEngagementFilter,
   type SearchSortOption,
@@ -47,6 +48,14 @@ const searchStartSchema = z
     trending_score: z.number().optional(),
   })
   .nullable();
+const searchBoundsSchema = z
+  .object({
+    north: z.number(),
+    south: z.number(),
+    east: z.number(),
+    west: z.number(),
+  })
+  .nullable();
 
 const searchDocumentPageArgsSchema = z.object({
   query: z.string().default(''),
@@ -59,6 +68,7 @@ const searchDocumentPageArgsSchema = z.object({
   limit: z.number().min(1).max(200).default(60),
   start: searchStartSchema.default(null),
   dir: searchDirectionSchema.default('forward'),
+  bounds: searchBoundsSchema.default(null),
 });
 
 function applySearchAccess(q: any, userID: string | undefined) {
@@ -99,6 +109,25 @@ function applyEngagementFilter(q: any, engagement: SearchEngagementFilter) {
   return q;
 }
 
+function applySpatialBounds(q: any, bounds: SearchBounds | null) {
+  if (!bounds) return q;
+
+  const south = Math.min(bounds.south, bounds.north);
+  const north = Math.max(bounds.south, bounds.north);
+  const west = bounds.west;
+  const east = bounds.east;
+
+  q = q.where('location_latitude', '>=', south).where('location_latitude', '<=', north);
+
+  if (west <= east) {
+    return q.where('location_longitude', '>=', west).where('location_longitude', '<=', east);
+  }
+
+  return q.where(({ or, cmp }: any) =>
+    or(cmp('location_longitude', '>=', west), cmp('location_longitude', '<=', east))
+  );
+}
+
 function applySearchOrdering(
   q: any,
   sort: SearchSortOption,
@@ -126,12 +155,25 @@ export const searchQueries = {
   searchDocumentPage: defineQuery(
     searchDocumentPageArgsSchema,
     ({
-      args: { query, types, topics, createdAfter, engagement, sort, snapshotAt, limit, start, dir },
+      args: {
+        query,
+        types,
+        topics,
+        createdAfter,
+        engagement,
+        sort,
+        snapshotAt,
+        limit,
+        start,
+        dir,
+        bounds,
+      },
       ctx: { userID },
     }) => {
       let q: any = zql.search_document.related('topics').related('group');
       q = applySearchAccess(q, userID);
       q = applySearchText(q, query);
+      q = applySpatialBounds(q, bounds);
 
       const normalizedTypes = types.map(type => type.trim()).filter(Boolean);
       if (normalizedTypes.length > 0) {

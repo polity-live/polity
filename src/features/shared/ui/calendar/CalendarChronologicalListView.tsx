@@ -16,6 +16,7 @@ export interface CalendarChronologicalListViewProps<TItem> {
   getItemKey: (item: TItem) => string;
   renderItem: (item: TItem) => ReactNode;
   emptyText: string;
+  itemMotion?: 'none' | 'place';
 }
 
 function groupByDate<TItem>(
@@ -47,6 +48,7 @@ export function CalendarChronologicalListView<TItem>({
   getItemKey,
   renderItem,
   emptyText,
+  itemMotion = 'none',
 }: CalendarChronologicalListViewProps<TItem>) {
   const { t, language } = useTranslation();
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
@@ -128,6 +130,7 @@ export function CalendarChronologicalListView<TItem>({
       emptyText={emptyText}
       getItemKey={getItemKey}
       groupedEntries={groupedEntries}
+      itemMotion={itemMotion}
       items={items}
       language={language}
       renderItem={renderItem}

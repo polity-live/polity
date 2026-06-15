@@ -8,6 +8,7 @@ interface InvitationActionsViewProps {
   onAccept?: (id: string) => void;
   onDecline?: (id: string) => void;
   blocking: boolean;
+  acceptDisabled?: boolean;
   response: any;
   labels: {
     accept: string;
@@ -22,12 +23,18 @@ export function InvitationActionsView({
   onAccept,
   onDecline,
   blocking,
+  acceptDisabled = false,
   response,
   labels,
 }: InvitationActionsViewProps) {
   return (
     <div className="flex justify-end gap-2">
-      <Button variant="default" size="sm" disabled={blocking} onClick={() => onAccept?.(item.id)}>
+      <Button
+        variant="default"
+        size="sm"
+        disabled={blocking || acceptDisabled}
+        onClick={() => onAccept?.(item.id)}
+      >
         <Check className="mr-1 h-4 w-4" />
         {labels.accept}
       </Button>

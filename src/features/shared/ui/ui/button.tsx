@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { Check, Loader2 } from 'lucide-react';
 
 import { cn } from '@/features/shared/utils/utils.ts';
 import { getMotionPreset } from '@/features/shared/theme';
@@ -36,6 +37,10 @@ const buttonVariants = cva(
 type ButtonProps = React.ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
+    loading?: boolean;
+    loadingLabel?: React.ReactNode;
+    successState?: boolean;
+    successLabel?: React.ReactNode;
     presentation?:
       | 'default'
       | 'transparentGhost'
@@ -59,23 +64,51 @@ function Button({
   variant,
   size,
   asChild = false,
+  loading = false,
+  loadingLabel,
+  successState = false,
+  successLabel,
+  disabled,
+  children,
   presentation = 'default',
   ...props
 }: ButtonProps) {
   const Comp = asChild ? Slot : 'button';
+  const showStatus = !asChild && (loading || successState);
+  const statusLabel = loading ? loadingLabel : successLabel;
+  const renderedStatusLabel = statusLabel ?? (size === 'icon' ? null : children);
 
   return (
     <Comp
       data-slot="button"
+      data-loading={loading ? 'true' : undefined}
+      data-success={successState ? 'true' : undefined}
+      aria-busy={loading || undefined}
+      disabled={loading || disabled}
       className={cn(
+        showStatus && 'relative',
         buttonVariants({ variant, size }),
         getMotionPreset('colors'),
         variant !== 'link' && getMotionPreset('press'),
+        getMotionPreset('iconNudge'),
+        successState && getMotionPreset('successSettle'),
         buttonPresentationClasses[presentation],
         className
       )}
       {...props}
-    />
+    >
+      {showStatus ? (
+        <>
+          <span className="invisible inline-flex items-center gap-2">{children}</span>
+          <span className="pointer-events-none absolute inset-0 inline-flex items-center justify-center gap-2 px-3">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            {renderedStatusLabel ? <span>{renderedStatusLabel}</span> : null}
+          </span>
+        </>
+      ) : (
+        children
+      )}
+    </Comp>
   );
 }
 

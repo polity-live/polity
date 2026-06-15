@@ -20,6 +20,7 @@ import {
   logElectionFlowClientError,
 } from '@/features/elections/logic/electionFlowLogging';
 import { isNamedBallot } from '@/zero/shared';
+import type { VoteSubmissionContext } from '@/features/shared/ui/voting';
 
 interface UseVoteCastingOptions {
   agendaItemId: string;
@@ -65,7 +66,7 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
 
   // Cast an election vote (creates participation + selection(s))
   const castElectionVote = useCallback(
-    async (candidateIds: string[]) => {
+    async (candidateIds: string[], context?: VoteSubmissionContext) => {
       if (!userId || !userCanVote || !electionId) return;
 
       const correlationId = createElectionFlowCorrelationId('election-vote-cast');
@@ -77,6 +78,8 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
       });
 
       try {
+        context?.reportProgress('cast', 'active');
+
         let resolvedElectorId = electorId;
         if (!resolvedElectorId) {
           resolvedElectorId = crypto.randomUUID();
@@ -101,11 +104,16 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
           elector_participation_id: shouldRecordParticipation ? participationId : null,
         }));
 
+        context?.reportProgress('cast', 'complete');
+        context?.reportProgress('sync', 'active');
+
         if (isIndicationPhase) {
           await electionActions.castIndicativeVote(participationArgs, selections);
         } else {
           await electionActions.castFinalVote(participationArgs, selections);
         }
+
+        context?.reportProgress('sync', 'complete');
 
         logElectionFlowClient('election-vote-cast', 'submit-confirmed', {
           correlationId,
@@ -114,6 +122,7 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
           phase,
         });
       } catch (error) {
+        context?.reportProgress('sync', 'error');
         logElectionFlowClientError('election-vote-cast', 'submit-failed', {
           correlationId,
           electionId,
@@ -138,7 +147,7 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
 
   // Cast an amendment/discussion vote (creates participation + decision)
   const castAmendmentVote = useCallback(
-    async (choiceId: string) => {
+    async (choiceId: string, context?: VoteSubmissionContext) => {
       if (!userId || !userCanVote || !voteId) return;
 
       const correlationId = createElectionFlowCorrelationId('vote-cast');
@@ -150,6 +159,8 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
       });
 
       try {
+        context?.reportProgress('cast', 'active');
+
         let resolvedVoterId = voterId;
         if (!resolvedVoterId) {
           resolvedVoterId = crypto.randomUUID();
@@ -176,11 +187,16 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
           },
         ];
 
+        context?.reportProgress('cast', 'complete');
+        context?.reportProgress('sync', 'active');
+
         if (isIndicationPhase) {
           await voteActions.castIndicativeVote(participationArgs, decisions);
         } else {
           await voteActions.castFinalVote(participationArgs, decisions);
         }
+
+        context?.reportProgress('sync', 'complete');
 
         logElectionFlowClient('vote-cast', 'submit-confirmed', {
           correlationId,
@@ -189,6 +205,7 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
           phase,
         });
       } catch (error) {
+        context?.reportProgress('sync', 'error');
         logElectionFlowClientError('vote-cast', 'submit-failed', {
           correlationId,
           voteId,

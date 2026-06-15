@@ -203,7 +203,7 @@ export function StreetDesignToolbarView({
           Vergleich
         </div>
         <div className="grid grid-cols-2 gap-2">
-          {comparisonModes.map((item: any) => (
+          {comparisonModes.map(item => (
             <Button
               key={item.mode}
               type="button"

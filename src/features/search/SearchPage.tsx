@@ -1,9 +1,24 @@
 import { useSearchPage } from './hooks/useSearchPage';
 import { SearchPageView } from './ui/SearchPageView';
+import { SpatialSearchView } from './ui/SpatialSearchView';
 import { VirtualSearchGrid } from './ui/VirtualSearchGrid';
 
 export function SearchPage() {
   const sp = useSearchPage();
+  const results =
+    sp.view === 'spatial' ? (
+      <SpatialSearchView
+        context={sp.searchContext}
+        permalinkID={sp.permalinkId}
+        onTotalChange={sp.setTotalResults}
+      />
+    ) : (
+      <VirtualSearchGrid
+        context={sp.searchContext}
+        permalinkID={sp.permalinkId}
+        onTotalChange={sp.setTotalResults}
+      />
+    );
 
   return (
     <SearchPageView
@@ -18,19 +33,16 @@ export function SearchPage() {
       onDateRangeChange={sp.setDateRange}
       topics={sp.topics}
       availableTopics={sp.availableTopics}
+      personalTopics={sp.personalTopics}
       onTopicToggle={sp.toggleTopic}
       engagement={sp.engagement}
       onEngagementChange={sp.setEngagement}
       onResetFilters={sp.resetFilters}
       hasActiveFilters={sp.hasActiveFilters}
       totalResults={sp.totalResults}
-      results={
-        <VirtualSearchGrid
-          context={sp.searchContext}
-          permalinkID={sp.permalinkId}
-          onTotalChange={sp.setTotalResults}
-        />
-      }
+      view={sp.view}
+      onViewChange={sp.setView}
+      results={results}
     />
   );
 }

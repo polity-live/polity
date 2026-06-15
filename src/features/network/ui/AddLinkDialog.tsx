@@ -10,7 +10,7 @@ import { AddLinkDialogView } from './AddLinkDialogView';
 interface AddLinkDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { label: string; url: string }) => void;
+  onSubmit: (data: { label: string; url: string }) => unknown | Promise<unknown>;
 }
 
 export function AddLinkDialog({ isOpen, onOpenChange, onSubmit }: AddLinkDialogProps) {
@@ -18,7 +18,10 @@ export function AddLinkDialog({ isOpen, onOpenChange, onSubmit }: AddLinkDialogP
     <AddLinkDialogView
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      {...useAddLinkDialogController({ onSubmit })}
+      {...useAddLinkDialogController({
+        onSubmit,
+        onSuccess: () => onOpenChange(false),
+      })}
     />
   );
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import type { CSSProperties } from 'react';
+
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { ArrowUpRight, Clock3, MapPin, Radio, Sparkles } from 'lucide-react';
@@ -14,6 +16,7 @@ import {
   type CivicTimelineReason,
   type CivicTimelineSection,
 } from '../logic/civicTimeline';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 
 interface CivicTimelineRailProps {
   sections: CivicTimelineSection[];
@@ -27,6 +30,7 @@ const REASON_LABELS: Record<CivicTimelineReason, string> = {
   subscribed: 'features.timeline.around.reasons.subscribed',
   member_context: 'features.timeline.around.reasons.memberContext',
   near_you: 'features.timeline.around.reasons.nearYou',
+  interest_match: 'features.timeline.around.reasons.interestMatch',
   active_now: 'features.timeline.around.reasons.activeNow',
   popular_nearby: 'features.timeline.around.reasons.popularNearby',
   public_discovery: 'features.timeline.around.reasons.publicDiscovery',
@@ -37,6 +41,7 @@ const REASON_FALLBACKS: Record<CivicTimelineReason, string> = {
   subscribed: 'Following',
   member_context: 'Connected',
   near_you: 'Near you',
+  interest_match: 'Because of your interests',
   active_now: 'Active now',
   popular_nearby: 'Popular nearby',
   public_discovery: 'Discover',
@@ -56,6 +61,28 @@ function getItemTime(item: CivicTimelineItem) {
 
 function getTypeIcon(item: CivicTimelineItem) {
   return CONTENT_TYPE_CONFIG[item.type]?.icon ?? Radio;
+}
+
+function getReasonLabel(
+  item: CivicTimelineItem,
+  t: (
+    key: string,
+    paramsOrFallback?: string | Record<string, string | number | null | undefined>,
+    fallback?: string
+  ) => string
+) {
+  const matchedTag = item.reason === 'interest_match' ? item.reasonTags?.[0] : undefined;
+
+  if (matchedTag) {
+    return t('features.timeline.around.reasons.interestMatchTag', {
+      tag: matchedTag,
+      defaultValue: `Because of #${matchedTag}`,
+    });
+  }
+
+  return t(REASON_LABELS[item.reason], {
+    defaultValue: REASON_FALLBACKS[item.reason],
+  });
 }
 
 function TimelineSkeleton() {
@@ -109,6 +136,8 @@ export function CivicTimelineRail({
     );
   }
 
+  let revealItemIndex = 0;
+
   return (
     <div className="space-y-7" data-testid="civic-timeline-rail">
       {sections.map(section => (
@@ -125,11 +154,10 @@ export function CivicTimelineRail({
 
           <div className="before:bg-border relative space-y-3 pl-4 before:absolute before:top-2 before:bottom-2 before:left-[3px] before:w-px">
             {section.items.map(item => {
+              const revealIndex = revealItemIndex++;
               const Icon = getTypeIcon(item);
               const isActive = activeItemId === item.id;
-              const reasonLabel = t(REASON_LABELS[item.reason], {
-                defaultValue: REASON_FALLBACKS[item.reason],
-              });
+              const reasonLabel = getReasonLabel(item, t);
               const distanceLabel = formatDistanceKm(item.distanceKm);
 
               return (
@@ -137,9 +165,14 @@ export function CivicTimelineRail({
                   key={item.id}
                   data-timeline-item-id={item.id}
                   className={cn(
-                    'bg-background relative rounded-lg border p-4 shadow-sm transition-colors',
+                    'bg-background civic-load-card-reveal relative rounded-lg border p-4 shadow-sm transition-colors',
                     isActive && 'border-primary bg-primary/5'
                   )}
+                  style={
+                    {
+                      '--civic-load-index': Math.min(revealIndex, 11),
+                    } as CSSProperties
+                  }
                   onMouseEnter={() => onActiveItemChange?.(item.id)}
                   onMouseLeave={() => onActiveItemChange?.(null)}
                   onFocus={() => onActiveItemChange?.(item.id)}
@@ -187,24 +220,24 @@ export function CivicTimelineRail({
                       </div>
 
                       <h3 className="mt-2 text-base leading-snug font-semibold">
-                        <a
+                        <SmartLink
                           href={item.href}
                           onClick={() => onItemSelect?.(item)}
                           className="hover:underline"
                         >
                           {item.title}
-                        </a>
+                        </SmartLink>
                       </h3>
 
                       {(item.sourceName || item.locationLabel) && (
                         <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                           {item.sourceName && (
-                            <a
+                            <SmartLink
                               href={item.sourceHref ?? item.href}
                               className="hover:text-foreground hover:underline"
                             >
                               {item.sourceName}
-                            </a>
+                            </SmartLink>
                           )}
                           {item.locationLabel && (
                             <span className="inline-flex items-center gap-1">
@@ -245,14 +278,14 @@ export function CivicTimelineRail({
                     </div>
 
                     <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" asChild>
-                      <a
+                      <SmartLink
                         href={item.href}
                         aria-label={
                           item.primaryActionLabel ?? t('features.timeline.cards.viewDetails')
                         }
                       >
                         <ArrowUpRight className="h-4 w-4" />
-                      </a>
+                      </SmartLink>
                     </Button>
                   </div>
                 </article>

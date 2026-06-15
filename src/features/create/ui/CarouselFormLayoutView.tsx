@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 import { Button } from '@/features/shared/ui/ui/button';
 
@@ -50,6 +50,7 @@ export function CarouselFormLayoutView({
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="shrink-0">
         <CreateProgressIndicator
+          className="-mx-4 sm:-mx-5 lg:-mx-6"
           currentStep={currentStep}
           totalSteps={steps.length}
           stepLabels={stepLabels}
@@ -58,11 +59,11 @@ export function CarouselFormLayoutView({
         />
       </div>
 
-      <div ref={emblaRef} className="min-h-0 flex-1 overflow-hidden">
+      <div ref={emblaRef} className="min-h-0 flex-1 overflow-hidden py-4">
         <div className="flex h-full">
           {steps.map((step: any, index: number) => (
             <div key={index} className="min-h-0 min-w-0 flex-[0_0_100%] px-1">
-              <div className="h-full overflow-y-auto py-2 pr-1">
+              <div className="h-full overflow-y-auto pr-1">
                 <CreateStepRenderer step={step} />
               </div>
             </div>
@@ -70,7 +71,7 @@ export function CarouselFormLayoutView({
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center justify-between border-t pt-4">
+      <div className="bg-background/95 flex shrink-0 items-center justify-between border-t pt-4">
         <Button
           type="button"
           variant="outline"
@@ -89,14 +90,7 @@ export function CarouselFormLayoutView({
             onClick={onSubmit}
             disabled={isSubmitting || !currentStepValid}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                {labels.creating}
-              </>
-            ) : (
-              labels.createButton
-            )}
+            {isSubmitting ? labels.creating : labels.createButton}
           </Button>
         ) : (
           <Button

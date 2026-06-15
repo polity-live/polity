@@ -4,18 +4,22 @@ import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useEventStreamData } from '@/zero/events/useEventState';
+import { usePermissions } from '@/zero/rbac';
 import { calculateSpeakerTime as calcSpeakerTime, formatTime } from '../logic/eventStreamHelpers';
 import { isNamedBallot } from '@/zero/shared';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { canJoinEventSpeakerList } from '@/features/agendas/logic/speakerListPermissions';
 
 export function useEventStream(eventId: string) {
   const { user } = useAuth();
+  const { can } = usePermissions({ eventId });
   const { addSpeaker, removeSpeaker } = useAgendaActions();
   const electionActions = useElectionActions();
   const voteActionsHook = useVoteActions();
   const [addingSpeaker, setAddingSpeaker] = useState(false);
   const [removingSpeaker, setRemovingSpeaker] = useState<string | null>(null);
   const [votingLoading, setVotingLoading] = useState<string | null>(null);
+  const canJoinSpeakerList = canJoinEventSpeakerList(can);
 
   // Query event and agenda items
   const { event: eventRaw, isLoading } = useEventStreamData(eventId);
@@ -57,7 +61,7 @@ export function useEventStream(eventId: string) {
 
   // Handle adding yourself to speakers list
   const handleAddToSpeakerList = async () => {
-    if (!user?.id || !currentAgendaItem?.id) return;
+    if (!user?.id || !currentAgendaItem?.id || !canJoinSpeakerList) return;
 
     setAddingSpeaker(true);
     try {
@@ -242,6 +246,7 @@ export function useEventStream(eventId: string) {
     addingSpeaker,
     removingSpeaker,
     votingLoading,
+    canJoinSpeakerList,
     userSpeaker,
     handleAddToSpeakerList,
     handleRemoveFromSpeakerList,

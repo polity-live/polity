@@ -87,6 +87,7 @@ export function EventAgendaItemDetail({
     forwardingContext,
     handleDelete,
     handleAddToSpeakerList,
+    canJoinSpeakerList,
   } = useEventAgendaItem(eventId, agendaItemId);
   const delegateAssignmentMeta = (
     election as { delegate_assignment_meta?: { targetEventId?: string } | null } | null
@@ -1102,6 +1103,7 @@ export function EventAgendaItemDetail({
       canBeCandidate={canBeCandidate}
       canManageAgenda={canManageAgenda}
       canManageVotes={canManageVotes}
+      canJoinSpeakerList={canJoinSpeakerList}
       canManageOfflineTallies={canManageOfflineTallies}
       hasVotingRight={hasVotingRight}
       hasCandidateRight={hasCandidateRight}

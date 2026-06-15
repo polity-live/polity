@@ -458,16 +458,9 @@ export const navItemsAuthenticated = (
       },
     ];
 
-    // Only add bloggers, editor and edit items if user is owner
+    // Only add editor and edit items if user is owner
     if (isOwner) {
       items.push(
-        {
-          id: 'bloggers',
-          label: t ? t('navigation.secondary.blog.bloggers') : 'Bloggers',
-          icon: 'Users',
-          href: `${blogBase}/bloggers`,
-          onClick: () => navigate({ to: `${blogBase}/bloggers` }),
-        },
         {
           id: 'editor',
           label: t ? t('navigation.secondary.blog.editor') : 'Editor',
@@ -479,8 +472,8 @@ export const navItemsAuthenticated = (
           id: 'edit',
           label: t ? t('navigation.secondary.blog.edit') : 'Edit Blog',
           icon: 'Settings',
-          href: `${blogBase}/settings`,
-          onClick: () => navigate({ to: `${blogBase}/settings` }),
+          href: `${blogBase}/edit`,
+          onClick: () => navigate({ to: `${blogBase}/edit` }),
         }
       );
     }

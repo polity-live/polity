@@ -2,7 +2,6 @@
 import { type VoteValue } from '@/features/shared/ui/voting';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAmendmentWikiPage } from './hooks/useAmendmentWikiPage';
-import { buildAmendmentWikiCollaboratorSections } from '@/features/amendments/logic/buildAmendmentWikiCollaboratorSections';
 import { SupporterDirectorySection } from './ui/SupporterDirectorySection';
 
 interface AmendmentWikiProps {
@@ -52,7 +51,6 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   } = useAmendmentWikiPage(amendmentId);
   const normalizedVoteValue: VoteValue =
     currentVoteValue === -1 ? -1 : currentVoteValue === 1 ? 1 : 0;
-  const collaboratorSections = buildAmendmentWikiCollaboratorSections(roles, collaborators);
   const supporterDirectorySection = (
     <SupporterDirectorySection items={supporterDirectoryItems} mapItems={supporterMapItems} />
   );
@@ -98,7 +96,6 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
       handleConfirmClone={handleConfirmClone}
       usersData={usersData}
       normalizedVoteValue={normalizedVoteValue}
-      collaboratorSections={collaboratorSections}
       supporterDirectorySection={supporterDirectorySection}
     />
   );

@@ -243,6 +243,11 @@ const BlockCommentContent = ({
                 variant="ghost"
                 className="text-muted-foreground/80 hover:text-muted-foreground/80 data-[active=true]:bg-muted mt-1 ml-1 flex h-6 gap-1 !px-1.5 py-0"
                 data-active={open}
+                data-suggestion-ids={
+                  filteredSuggestions.length > 0
+                    ? filteredSuggestions.map(suggestion => suggestion.suggestionId).join(' ')
+                    : undefined
+                }
                 contentEditable={false}
               >
                 {suggestionsCount > 0 && discussionsCount === 0 && (

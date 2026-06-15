@@ -17,7 +17,15 @@ import { StatsBar } from '@/features/shared/ui/layout';
 import { ActionBar } from '@/features/shared/ui/layout';
 import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
 import { SocialBar } from '@/features/users/ui/SocialBar';
-import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
+import {
+  getWikiParticipationName,
+  InfoTabs,
+  isVisibleWikiParticipationStatus,
+  normalizeWikiParticipationRole,
+  WikiParticipationDirectory,
+  type WikiParticipationItem,
+  type WikiParticipationRole,
+} from '@/features/shared/ui/wiki';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import {
   useTranslation,
@@ -26,9 +34,8 @@ import {
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { SiblingMembershipModeDescription } from '@/features/network/ui/GroupRelationshipFields';
 import { getCanonicalMembershipModeLabel } from '@/features/network/logic/groupConnectionDerived';
-import { countAcceptedMemberships } from '@/features/groups/logic/groupWikiHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
-import { WikiIncumbentPanel } from '@/features/shared/ui/wiki/WikiIncumbentPanel';
+import { RelatedGroupsTabs } from '@/features/groups/ui/RelatedGroupsTabs';
 
 export interface GroupWikiContentViewProps {
   groupId: string;
@@ -63,7 +70,6 @@ export interface GroupWikiContentViewProps {
   connectedGroup: any;
   primarySiblingMembershipMode: string | null;
   parliamentSourceGroups: any[];
-  incumbentSections: any[];
 }
 
 export function GroupWikiContentView({
@@ -99,7 +105,6 @@ export function GroupWikiContentView({
   connectedGroup,
   primarySiblingMembershipMode,
   parliamentSourceGroups,
-  incumbentSections,
 }: GroupWikiContentViewProps) {
   const { t } = useTranslation();
 
@@ -107,6 +112,33 @@ export function GroupWikiContentView({
     const text = richTextToPlainText(value);
     return text || undefined;
   };
+
+  const memberRoles: WikiParticipationRole[] = (group.roles ?? [])
+    .map((role: any) => normalizeWikiParticipationRole(role))
+    .filter((role: WikiParticipationRole | null): role is WikiParticipationRole => Boolean(role));
+  const memberDirectoryItems: WikiParticipationItem[] = (group.memberships ?? [])
+    .filter((membership: any) => isVisibleWikiParticipationStatus(membership.status))
+    .filter((membership: any) => membership.user?.id)
+    .map((membership: any) => {
+      const roles = (
+        membership.roles?.length ? membership.roles : membership.role ? [membership.role] : []
+      )
+        .map((role: any) => normalizeWikiParticipationRole(role))
+        .filter((role: WikiParticipationRole | null): role is WikiParticipationRole =>
+          Boolean(role)
+        );
+
+      return {
+        id: membership.id ?? `member-${membership.user.id}`,
+        userId: membership.user.id,
+        name: getWikiParticipationName(membership.user),
+        handle: membership.user.handle ?? null,
+        email: membership.user.email ?? null,
+        avatar: membership.user.avatar ?? null,
+        status: membership.status ?? null,
+        roles,
+      };
+    });
 
   return (
     <div>
@@ -256,16 +288,22 @@ export function GroupWikiContentView({
         className="mb-12"
       />
 
-      {incumbentSections.length > 0 && (
-        <WikiIncumbentPanel
-          title={translateText('generated.inline.0431_roles_incumbents_07f9ca00')}
-          description={translateText(
-            'generated.inline.0546_assigned_and_elected_roles_with_their_active__a609ec72'
-          )}
-          sections={incumbentSections}
-          entityType="group"
-        />
-      )}
+      <WikiParticipationDirectory
+        title={translateText('generated.inline.0554_members_5d2292cf', 'Members')}
+        description={translateText(
+          'features.groups.wiki.membersDescription',
+          'Active members visible in this group.'
+        )}
+        items={memberDirectoryItems}
+        roles={memberRoles}
+        entityType="group"
+        searchPlaceholder={translateText('features.groups.wiki.membersSearch', 'Search members')}
+        emptyLabel={translateText('features.groups.wiki.noMembers', 'No active members yet.')}
+        noResultsLabel={translateText(
+          'features.groups.wiki.noMembersMatch',
+          'No members match your filters.'
+        )}
+      />
 
       {connectedGroup ? (
         <Card className="mb-6">
@@ -379,68 +417,7 @@ export function GroupWikiContentView({
         </Card>
       ) : null}
 
-      {/* Parent & Child Groups */}
-      {parentGroups.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Network className="h-5 w-5" />
-              {t('pages.group.parentGroups.title')}
-            </CardTitle>
-            <CardDescription>{t('pages.group.parentGroups.description')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {parentGroups.map(({ group: relatedGroup }) => (
-                <GroupTimelineCard
-                  key={`parent-${relatedGroup.id}`}
-                  group={{
-                    id: String(relatedGroup.id),
-                    name: relatedGroup.name || t('common.unspecified'),
-                    description: toPlainDescription(relatedGroup.description),
-                    memberCount:
-                      relatedGroup.member_count ??
-                      countAcceptedMemberships(relatedGroup.memberships),
-                    amendmentCount: relatedGroup.amendments?.length || 0,
-                    eventCount: relatedGroup.events?.length || 0,
-                  }}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {childGroups.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Network className="h-5 w-5" />
-              {t('pages.group.childGroups.title')}
-            </CardTitle>
-            <CardDescription>{t('pages.group.childGroups.description')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {childGroups.map(({ group: relatedGroup }) => (
-                <GroupTimelineCard
-                  key={`child-${relatedGroup.id}`}
-                  group={{
-                    id: String(relatedGroup.id),
-                    name: relatedGroup.name || t('common.unspecified'),
-                    description: toPlainDescription(relatedGroup.description),
-                    memberCount:
-                      relatedGroup.member_count ??
-                      countAcceptedMemberships(relatedGroup.memberships),
-                    amendmentCount: relatedGroup.amendments?.length || 0,
-                    eventCount: relatedGroup.events?.length || 0,
-                  }}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <RelatedGroupsTabs parentGroups={parentGroups} childGroups={childGroups} />
 
       {/* Blogs Section */}
       {group.blogs && group.blogs.length > 0 && (

@@ -12,6 +12,7 @@ interface GroupMediaSettingsInputProps {
   visibility: Visibility;
   hashtags: string[];
   hashtagPlaceholder: string;
+  preferredHashtagSuggestions?: string[];
   onImageChange: (value: string) => void;
   onVisibilityChange: (value: Visibility) => void;
   onHashtagsChange: (value: string[]) => void;
@@ -25,6 +26,7 @@ export function GroupMediaSettingsInput({
   visibility,
   hashtags,
   hashtagPlaceholder,
+  preferredHashtagSuggestions,
   onImageChange,
   onVisibilityChange,
   onHashtagsChange,
@@ -45,6 +47,7 @@ export function GroupMediaSettingsInput({
         value={hashtags}
         onChange={onHashtagsChange}
         placeholder={hashtagPlaceholder}
+        preferredSuggestions={preferredHashtagSuggestions}
       />
     </div>
   );

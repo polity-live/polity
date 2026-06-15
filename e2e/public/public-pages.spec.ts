@@ -44,10 +44,10 @@ test.describe('Public Pages', () => {
     await expect(page.getByText(/Parent group|Übergeordnete Gruppe/i)).toBeVisible();
     await expect(page.getByText(/Info/i).first()).toBeVisible();
     await expect(page.getByText(/Amendment|Antrag/i).first()).toBeVisible();
-    await expect(page.getByText(/Public Committee Hearing/i)).toBeVisible();
-    await expect(page.getByText(/Parliamentary Group Meeting/i)).toBeVisible();
+    await expect(page.getByText(/Public Committee Hearing/i).first()).toBeVisible();
+    await expect(page.getByText(/Parliamentary Group Meeting/i).first()).toBeVisible();
     await expect(page.getByText(/agenda-item-climate-budget-18/i)).toBeVisible();
-    await expect(page.getByText(/AI drafting assistant|KI-Entwurfsassistenz/i)).toBeVisible();
+    await expect(page.getByText(/AI drafting assistant|KI-Entwurfsassistenz/i).first()).toBeVisible();
     await expect(
       page.getByPlaceholder(/Search: climate reporting|Suche: Klimabericht/i)
     ).toBeVisible();
@@ -112,17 +112,36 @@ test.describe('Public Pages', () => {
     await page.waitForLoadState('networkidle');
     await dismissAlphaWarning(page);
 
+    await page.evaluate(() => {
+      (window as Window & { __spaMarker?: string }).__spaMarker = 'landing-nav';
+    });
+
     await page.locator('a[href="/#features"]').last().click();
     await expect(page).toHaveURL(/\/#features$/);
     await expect(page.locator('#features')).toBeInViewport();
+    await expect
+      .poll(() =>
+        page.evaluate(() => (window as Window & { __spaMarker?: string }).__spaMarker)
+      )
+      .toBe('landing-nav');
 
     await page.locator('a[href="/#solutions"]').last().click();
     await expect(page).toHaveURL(/\/#solutions$/);
     await expect(page.locator('#solutions')).toBeInViewport();
+    await expect
+      .poll(() =>
+        page.evaluate(() => (window as Window & { __spaMarker?: string }).__spaMarker)
+      )
+      .toBe('landing-nav');
 
     await page.locator('a[href="/#imprint"]').last().click();
     await expect(page).toHaveURL(/\/#imprint$/);
     await expect(page.locator('#imprint')).toBeInViewport();
+    await expect
+      .poll(() =>
+        page.evaluate(() => (window as Window & { __spaMarker?: string }).__spaMarker)
+      )
+      .toBe('landing-nav');
   });
 
   test('legacy public routes should redirect to landing sections', async ({ page }) => {

@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { CheckCircle2, Crown } from 'lucide-react';
 
 import {
   Tooltip,
@@ -22,6 +23,8 @@ export interface VoteBarOption {
   finalPercent: number;
   indicationCount: number;
   indicationPercent: number;
+  description?: string;
+  badge?: ReactNode;
 }
 
 export interface VoteResultsDisplayProps {
@@ -33,35 +36,60 @@ export interface VoteResultsDisplayProps {
   openedAt?: string;
   closedAt?: string;
   className?: string;
+  compact?: boolean;
+  showWinner?: boolean;
+  selectedOptionIds?: string[];
+  winnerOptionId?: string | null;
+  winnerOptionIds?: string[];
+  animate?: boolean;
 }
 
-function BarRow({
+function normalizePercent(percent: number) {
+  if (!Number.isFinite(percent)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, percent));
+}
+
+function ResultBar({
   percent,
   count,
   total,
   barClass,
-  suffix,
   tooltipLabel,
+  animate,
+  subtle,
 }: {
   percent: number;
   count: number;
   total: number;
   barClass: string;
-  suffix?: string;
   tooltipLabel: string;
+  animate: boolean;
+  subtle?: boolean;
 }) {
+  const width = normalizePercent(percent);
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex items-center gap-2">
-          <div className="bg-muted h-2.5 flex-1 overflow-hidden rounded-full">
+        <div className="flex items-center gap-2" data-slot="vote-result-bar">
+          <div
+            className={cn('bg-muted/70 h-2 flex-1 overflow-hidden rounded-full', subtle && 'h-1.5')}
+          >
             <div
-              className={cn('h-full transition-all', barClass)}
-              style={{ width: `${percent}%` }}
+              className={cn(
+                'h-full rounded-full',
+                animate && 'transition-[width] duration-500 ease-out',
+                barClass,
+                subtle && 'opacity-70'
+              )}
+              style={{ width: `${width}%` }}
             />
           </div>
-          <span className="text-muted-foreground min-w-[60px] text-right text-xs">
-            {count} ({percent.toFixed(0)}%){suffix}
+          <span className="text-muted-foreground min-w-[4.5rem] text-right text-xs tabular-nums">
+            {count} ({width.toFixed(0)}%)
           </span>
         </div>
       </TooltipTrigger>
@@ -83,71 +111,140 @@ export function VoteResultsDisplay({
   openedAt,
   closedAt,
   className,
+  compact = true,
+  showWinner = false,
+  selectedOptionIds = [],
+  winnerOptionId,
+  winnerOptionIds = [],
+  animate = true,
 }: VoteResultsDisplayProps) {
   const { t } = useTranslation();
   const showBoth = phase !== 'indication' && totalIndication > 0;
   const isIndicationPhase = phase === 'indication';
   const visibleTotal = isIndicationPhase ? totalIndication : totalFinal;
+  const selectedOptionIdSet = new Set(selectedOptionIds);
+  const winnerOptionIdSet = new Set([
+    ...winnerOptionIds,
+    ...(winnerOptionId ? [winnerOptionId] : []),
+  ]);
+  const hasAnyVotes = totalFinal > 0 || totalIndication > 0;
+  const phaseVoteLabel = isIndicationPhase
+    ? t('features.events.agenda.indicationVotes', 'indications')
+    : t('features.events.agenda.votes', 'votes');
 
   return (
     <TooltipProvider>
-      <div className={cn('space-y-4', className)}>
-        <div className="flex items-center justify-between">
-          <VotingPhaseBadge phase={phase} />
-          <span className="text-muted-foreground text-xs">
-            {isIndicationPhase
-              ? `${totalIndication} ${t('features.events.agenda.indicationVotes', 'indications')}`
-              : `${totalFinal} ${t('features.events.agenda.votes', 'votes')}`}
-          </span>
+      <div
+        className={cn('space-y-3', compact ? 'text-sm' : 'space-y-4', className)}
+        data-slot="vote-results-display"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <VotingPhaseBadge phase={phase} />
+            <span className="text-muted-foreground text-xs">
+              {visibleTotal} {phaseVoteLabel}
+            </span>
+          </div>
+          {showBoth ? (
+            <span className="text-muted-foreground text-xs">
+              {totalIndication} {t('features.events.agenda.indicationVotes', 'indications')}
+            </span>
+          ) : null}
         </div>
 
-        {options.map(option => (
-          <div key={option.key} className="space-y-1.5">
-            <div className="flex items-center gap-1.5 text-sm font-medium">
-              {option.icon}
-              <span>{option.label}</span>
-            </div>
+        <div className="bg-card/70 border-border/70 divide-border/70 overflow-hidden rounded-md border">
+          {options.map(option => {
+            const isSelected = selectedOptionIdSet.has(option.key);
+            const isWinner = showWinner && winnerOptionIdSet.has(option.key);
+            const primaryPercent = isIndicationPhase
+              ? option.indicationPercent
+              : option.finalPercent;
+            const primaryCount = isIndicationPhase ? option.indicationCount : option.finalCount;
+            const primaryTotal = isIndicationPhase ? totalIndication : totalFinal;
 
-            <div className="space-y-1 pl-1">
-              {!isIndicationPhase || showBoth ? (
-                <div className="flex items-center gap-1">
-                  <span className="text-muted-foreground w-16 text-[10px]">
-                    {t('features.events.agenda.actualShort')}
-                  </span>
-                  <div className="flex-1">
-                    <BarRow
-                      percent={option.finalPercent}
-                      count={option.finalCount}
-                      total={totalFinal}
-                      barClass={option.color}
-                      tooltipLabel={t('features.events.agenda.actual')}
-                    />
+            return (
+              <div
+                key={option.key}
+                className={cn(
+                  'space-y-2 border-b px-3 py-2.5 last:border-b-0',
+                  isSelected && 'bg-primary/5',
+                  isWinner && 'bg-[var(--badge-warning-bg)]'
+                )}
+                data-selected={isSelected ? 'true' : undefined}
+                data-winner={isWinner ? 'true' : undefined}
+                data-slot="vote-result-option"
+              >
+                <div className="flex min-w-0 items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-start gap-2">
+                    {option.icon ? (
+                      <span className="text-muted-foreground mt-0.5 shrink-0">{option.icon}</span>
+                    ) : null}
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        <span className="truncate font-medium">{option.label}</span>
+                        {option.badge}
+                        {isSelected ? (
+                          <span className="text-primary inline-flex items-center gap-1 text-xs font-medium">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            {t('features.events.agenda.selected', 'Selected')}
+                          </span>
+                        ) : null}
+                        {isWinner ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--badge-warning-fg)]">
+                            <Crown className="h-3.5 w-3.5" />
+                            {t('features.events.agenda.winner', 'Winner')}
+                          </span>
+                        ) : null}
+                      </div>
+                      {option.description ? (
+                        <p className="text-muted-foreground mt-0.5 truncate text-xs">
+                          {option.description}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              ) : null}
-              {isIndicationPhase || showBoth ? (
-                <div className="flex items-center gap-1">
-                  <span className="text-muted-foreground w-16 text-[10px]">
-                    {t('features.events.agenda.indicationShort')}
+                  <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                    {primaryCount} ({normalizePercent(primaryPercent).toFixed(0)}%)
                   </span>
-                  <div className="flex-1">
-                    <BarRow
-                      percent={option.indicationPercent}
-                      count={option.indicationCount}
-                      total={totalIndication}
-                      barClass={option.lightColor}
-                      suffix=" *"
-                      tooltipLabel={t('features.events.agenda.indication')}
-                    />
-                  </div>
                 </div>
-              ) : null}
-            </div>
-          </div>
-        ))}
 
-        {totalFinal === 0 && totalIndication === 0 ? (
-          <div className="text-muted-foreground text-xs">
+                <div className="space-y-1.5">
+                  <ResultBar
+                    percent={primaryPercent}
+                    count={primaryCount}
+                    total={primaryTotal}
+                    barClass={isIndicationPhase ? option.lightColor : option.color}
+                    tooltipLabel={
+                      isIndicationPhase
+                        ? t('features.events.agenda.indication')
+                        : t('features.events.agenda.actual')
+                    }
+                    animate={animate}
+                  />
+                  {showBoth ? (
+                    <div className="grid grid-cols-[2.25rem_1fr] items-center gap-2">
+                      <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
+                        {t('features.events.agenda.indicationShort')}
+                      </span>
+                      <ResultBar
+                        percent={option.indicationPercent}
+                        count={option.indicationCount}
+                        total={totalIndication}
+                        barClass={option.lightColor}
+                        tooltipLabel={t('features.events.agenda.indication')}
+                        animate={animate}
+                        subtle
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {!hasAnyVotes ? (
+          <div className="text-muted-foreground bg-muted/35 rounded-md border border-dashed px-3 py-2 text-center text-xs">
             {t('features.events.agenda.noVotesYet')}
           </div>
         ) : null}

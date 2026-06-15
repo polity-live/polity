@@ -7,5 +7,7 @@ interface AmendmentSearchCardViewProps {
 }
 
 export function AmendmentSearchCardView({ amendment }: AmendmentSearchCardViewProps) {
-  return <AmendmentTimelineCard amendment={amendment} />;
+  return (
+    <AmendmentTimelineCard amendment={amendment} className="entity-search-card-no-spotlight" />
+  );
 }

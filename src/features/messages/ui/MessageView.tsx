@@ -1,4 +1,5 @@
 import { Card } from '@/features/shared/ui/ui/card';
+import type { CSSProperties } from 'react';
 import { cn } from '@/features/shared/utils/utils';
 import { Conversation, Message } from '../types/message.types';
 import { ConversationHeader } from './ConversationHeader';
@@ -7,10 +8,12 @@ import { MessageInput } from './MessageInput';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 import { AssistantMessageView } from './AssistantMessageView';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 
 interface MessageViewProps {
   conversation?: Conversation;
   messages?: Message[];
+  isThreadLoading?: boolean;
   hasMoreOlderMessages?: boolean;
   onLoadOlderMessages?: () => void;
   onAtEndChange?: (isAtEnd: boolean) => void;
@@ -30,6 +33,7 @@ interface MessageViewProps {
 export function MessageView({
   conversation,
   messages,
+  isThreadLoading = false,
   hasMoreOlderMessages,
   onLoadOlderMessages,
   onAtEndChange,
@@ -88,16 +92,20 @@ export function MessageView({
             onMembersClick={onMembersClick}
             onRenameConversation={onRenameConversation}
           />
-          <MessageList
-            conversation={conversation}
-            messages={messages}
-            hasMoreOlderMessages={hasMoreOlderMessages}
-            onLoadOlderMessages={onLoadOlderMessages}
-            onAtEndChange={onAtEndChange}
-            currentUserId={currentUserId}
-            onAcceptConversation={onAcceptConversation}
-            onRejectConversation={onRejectConversation}
-          />
+          {isThreadLoading ? (
+            <MessageThreadSkeleton />
+          ) : (
+            <MessageList
+              conversation={conversation}
+              messages={messages}
+              hasMoreOlderMessages={hasMoreOlderMessages}
+              onLoadOlderMessages={onLoadOlderMessages}
+              onAtEndChange={onAtEndChange}
+              currentUserId={currentUserId}
+              onAcceptConversation={onAcceptConversation}
+              onRejectConversation={onRejectConversation}
+            />
+          )}
           <MessageInput
             conversation={conversation}
             currentUserId={currentUserId}
@@ -115,5 +123,35 @@ export function MessageView({
         </div>
       )}
     </Card>
+  );
+}
+
+function MessageThreadSkeleton() {
+  return (
+    <div
+      className="flex min-h-0 flex-1 flex-col justify-end gap-4 overflow-hidden p-4"
+      data-slot="message-thread-skeleton"
+    >
+      {Array.from({ length: 6 }, (_, index) => {
+        const own = index % 3 === 1;
+
+        return (
+          <div
+            key={index}
+            className={cn(
+              'civic-stagger-item flex items-end gap-2',
+              own ? 'justify-end' : 'justify-start'
+            )}
+            style={{ '--civic-stagger-index': index } as CSSProperties}
+          >
+            {!own ? <Skeleton className="h-8 w-8 rounded-full" /> : null}
+            <div className={cn('space-y-2', own ? 'w-1/2' : 'w-2/3')}>
+              <Skeleton className="h-16 rounded-2xl" />
+              <Skeleton className="h-2 w-24 rounded-full" />
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

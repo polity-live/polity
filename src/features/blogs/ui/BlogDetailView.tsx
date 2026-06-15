@@ -25,6 +25,14 @@ import { CommentThread, type CommentData } from '@/features/shared/ui/comments';
 import { RichTextPreview } from '@/features/shared/ui/rich-text';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import {
+  getWikiParticipationName,
+  isVisibleWikiParticipationStatus,
+  normalizeWikiParticipationRole,
+  WikiParticipationDirectory,
+  type WikiParticipationItem,
+  type WikiParticipationRole,
+} from '@/features/shared/ui/wiki';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -61,6 +69,7 @@ interface BlogDetailShareContextItem {
 interface BlogDetailViewProps {
   author?: BlogDetailAuthor;
   blogId: string;
+  bloggers: any[];
   canAccess: boolean;
   canDelete: boolean;
   canEdit: boolean;
@@ -94,6 +103,7 @@ interface BlogDetailViewProps {
 export function BlogDetailView({
   author,
   blogId,
+  bloggers,
   canAccess,
   canDelete,
   canEdit,
@@ -151,6 +161,36 @@ export function BlogDetailView({
       </PageWrapper>
     );
   }
+
+  const bloggerDirectoryItems: WikiParticipationItem[] = (bloggers ?? [])
+    .filter(blogger => isVisibleWikiParticipationStatus(blogger.status))
+    .filter(blogger => blogger.user?.id)
+    .map(blogger => {
+      const fallbackRole: WikiParticipationRole =
+        blogger.status === 'owner'
+          ? { id: 'owner', name: translateText('generated.inline.0029_owner_4e45963f', 'Owner') }
+          : {
+              id: 'blogger',
+              name: translateText('generated.inline.0032_blogger_9b156370', 'Blogger'),
+            };
+      const role = normalizeWikiParticipationRole(blogger.role) ?? fallbackRole;
+
+      return {
+        id: blogger.id ?? `blogger-${blogger.user.id}`,
+        userId: blogger.user.id,
+        name: getWikiParticipationName(blogger.user),
+        handle: blogger.user.handle ?? null,
+        email: blogger.user.email ?? null,
+        avatar: blogger.user.avatar ?? null,
+        status: blogger.status ?? null,
+        roles: [role],
+      };
+    });
+  const bloggerRoles = bloggerDirectoryItems
+    .flatMap(item => item.roles ?? [])
+    .filter(
+      (role, index, allRoles) => allRoles.findIndex(candidate => candidate.id === role.id) === index
+    );
 
   return (
     <PageWrapper>
@@ -224,6 +264,22 @@ export function BlogDetailView({
           <HashtagDisplay hashtags={hashtags} centered />
         </div>
       ) : null}
+
+      <WikiParticipationDirectory
+        title={translateText('generated.inline.0250_bloggers_4e649307', 'Bloggers')}
+        description={translateText(
+          'features.blogs.wiki.bloggersDescription',
+          'People who can write or manage this blog.'
+        )}
+        items={bloggerDirectoryItems}
+        roles={bloggerRoles}
+        entityType="blog"
+        searchPlaceholder={translateText('generated.inline.0244_search_bloggers_98b779c5')}
+        emptyLabel={translateText('generated.inline.0035_no_active_bloggers_yet_f9a61b2d')}
+        noResultsLabel={translateText(
+          'generated.inline.0036_no_active_bloggers_match_your_search_eae577bf'
+        )}
+      />
 
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">

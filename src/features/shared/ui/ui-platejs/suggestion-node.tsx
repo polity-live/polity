@@ -72,6 +72,8 @@ export function SuggestionLeaf(props: PlateLeafProps<TSuggestionText>) {
       )}
       attributes={{
         ...props.attributes,
+        'data-suggestion-id': leafId || undefined,
+        'data-suggestion-type': hasRemove ? 'remove' : 'insert',
         onMouseEnter: () => setOption('hoverId', leafId),
         onMouseLeave: () => setOption('hoverId', null),
       }}

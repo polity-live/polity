@@ -80,6 +80,7 @@ export function useVirtualSearchGridController({
       engagement: context.engagement,
       sort: context.sort,
       snapshotAt: context.snapshotAt,
+      bounds: context.bounds ?? null,
     }),
     [context]
   );

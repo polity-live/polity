@@ -52,6 +52,7 @@ export type StreetDesignEditorAction =
   | { type: 'set_show_street_markings'; visible: boolean }
   | { type: 'scene_pointer_down'; point: StreetDesignLocalPoint; id: string }
   | { type: 'scene_pointer_move'; point: StreetDesignLocalPoint }
+  | { type: 'finish_placement'; id: string }
   | { type: 'finish_path_placement'; id: string }
   | { type: 'cancel_placement' }
   | { type: 'select_object'; objectId: string | null }
@@ -155,6 +156,64 @@ function snapPointToSameTypeEndpoint(args: {
   });
 
   return bestPoint;
+}
+
+function addFinishedPlacementObject(
+  state: StreetDesignEditorState,
+  object: StreetDesignObject
+): StreetDesignEditorState {
+  return {
+    ...state,
+    design: {
+      ...state.design,
+      objects: [...state.design.objects, object],
+    },
+    selectedObjectId: object.id,
+    selectedOsmWayId: null,
+    placementDraft: null,
+    isDirty: true,
+  };
+}
+
+function finishPathPlacementDraft(
+  state: StreetDesignEditorState,
+  id: string
+): StreetDesignEditorState {
+  if (!state.placementDraft || state.placementDraft.mode !== 'path') return state;
+  if (state.placementDraft.points.length < 2) return state;
+
+  const object = createPathCorridorStreetDesignObject({
+    id,
+    type: state.placementDraft.type,
+    points: state.placementDraft.points,
+    width: getCorridorDefaultWidth(state.placementDraft.type),
+  });
+
+  return addFinishedPlacementObject(state, object);
+}
+
+function finishCurrentPlacementDraft(
+  state: StreetDesignEditorState,
+  id: string
+): StreetDesignEditorState {
+  if (!state.placementDraft) return state;
+
+  if (state.placementDraft.mode === 'path') {
+    return finishPathPlacementDraft(state, id);
+  }
+
+  const preview = state.placementDraft.preview;
+  if (!preview || preview.kind !== 'corridor') return state;
+
+  const object = createCorridorStreetDesignObject({
+    id,
+    type: state.placementDraft.type,
+    start: preview.start,
+    end: preview.end,
+    width: preview.width,
+  });
+
+  return addFinishedPlacementObject(state, object);
 }
 
 export function streetDesignReducer(
@@ -406,28 +465,11 @@ export function streetDesignReducer(
         },
       };
 
+    case 'finish_placement':
+      return finishCurrentPlacementDraft(state, action.id);
+
     case 'finish_path_placement': {
-      if (!state.placementDraft || state.placementDraft.mode !== 'path') return state;
-      if (state.placementDraft.points.length < 2) return state;
-
-      const object = createPathCorridorStreetDesignObject({
-        id: action.id,
-        type: state.placementDraft.type,
-        points: state.placementDraft.points,
-        width: getCorridorDefaultWidth(state.placementDraft.type),
-      });
-
-      return {
-        ...state,
-        design: {
-          ...state.design,
-          objects: [...state.design.objects, object],
-        },
-        selectedObjectId: object.id,
-        selectedOsmWayId: null,
-        placementDraft: null,
-        isDirty: true,
-      };
+      return finishPathPlacementDraft(state, action.id);
     }
 
     case 'cancel_placement':

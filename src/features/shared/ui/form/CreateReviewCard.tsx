@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { motion } from 'motion/react';
 import {
   Award,
   BookOpen,
@@ -322,6 +323,8 @@ interface CreateReviewCardProps {
   sections?: ReviewCardSection[];
   children?: ReactNode;
   className?: string;
+  layoutId?: string;
+  overlayMode?: boolean;
 }
 
 export function CreateReviewCard({
@@ -336,14 +339,17 @@ export function CreateReviewCard({
   sections,
   children,
   className,
+  layoutId,
+  overlayMode = false,
 }: CreateReviewCardProps) {
   const theme = getReviewCardTheme(entityType, gradient);
   const Icon = theme.icon as LucideIcon;
 
-  return (
+  const card = (
     <Card
       className={cn(
         'border-border/70 bg-card text-card-foreground overflow-hidden rounded-[28px] border shadow-[var(--shadow-floating)]',
+        overlayMode && 'max-h-[min(64dvh,720px)] overflow-y-auto overscroll-contain',
         className
       )}
     >
@@ -442,4 +448,14 @@ export function CreateReviewCard({
       </CardContent>
     </Card>
   );
+
+  if (layoutId) {
+    return (
+      <motion.div data-slot="create-review-card-motion" layoutId={layoutId}>
+        {card}
+      </motion.div>
+    );
+  }
+
+  return card;
 }

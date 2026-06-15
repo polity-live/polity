@@ -1,4 +1,4 @@
-import { FormControlLabel, FormControlTextarea } from '@/features/shared/ui/form';
+import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
 /**
  * Blog Edit Component
  *
@@ -20,10 +20,10 @@ import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 export interface BlogEditViewProps {
   blogId: any;
   navigate: any;
-  user: any;
   t: any;
   formData: any;
   setFormData: any;
@@ -33,12 +33,12 @@ export interface BlogEditViewProps {
   isSubmitting: any;
   blog: any;
   isLoading: any;
+  navigateToBlog: any;
 }
 
 export function BlogEditView({
   blogId,
   navigate,
-  user,
   t,
   formData,
   setFormData,
@@ -48,6 +48,7 @@ export function BlogEditView({
   isSubmitting,
   blog,
   isLoading,
+  navigateToBlog,
 }: BlogEditViewProps) {
   // Loading state
   if (isLoading) {
@@ -117,15 +118,15 @@ export function BlogEditView({
               required
             />
             <div className="space-y-2">
-              <FormControlLabel htmlFor="description">
-                {t('features.blogs.editPage.descriptionLabel')}
+              <FormControlLabel htmlFor="date">
+                {translateText('generated.inline.0277_date_eb9a4bc1')}
               </FormControlLabel>
-              <FormControlTextarea
-                id="description"
-                value={formData.description}
-                onChange={e => updateField('description', e.target.value)}
-                placeholder={t('features.blogs.editPage.descriptionPlaceholder')}
-                rows={6}
+              <FormControlInput
+                id="date"
+                type="date"
+                value={formData.date}
+                onChange={e => updateField('date', e.target.value)}
+                required
               />
             </div>
             <VisibilityInput
@@ -143,8 +144,8 @@ export function BlogEditView({
           </CardHeader>
           <CardContent>
             <HashtagEditor
-              value={formData.tags}
-              onChange={tags => setFormData({ ...formData, tags })}
+              value={formData.hashtags}
+              onChange={hashtags => setFormData({ ...formData, hashtags })}
               placeholder={t('features.blogs.editPage.addTagPlaceholder')}
             />
           </CardContent>
@@ -152,24 +153,7 @@ export function BlogEditView({
 
         {/* Action Buttons */}
         <div className="flex gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              if (blog?.group_id) {
-                navigate({
-                  to: '/group/$id/blog/$entryId',
-                  params: { id: blog.group_id, entryId: blogId },
-                });
-              } else {
-                navigate({
-                  to: '/user/$id/blog/$entryId',
-                  params: { id: user?.id || '', entryId: blogId },
-                });
-              }
-            }}
-            disabled={isSubmitting}
-          >
+          <Button type="button" variant="outline" onClick={navigateToBlog} disabled={isSubmitting}>
             {t('features.blogs.editPage.cancel')}
           </Button>
           <Button type="submit" disabled={isSubmitting} className="flex-1">

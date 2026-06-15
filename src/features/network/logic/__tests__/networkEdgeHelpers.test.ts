@@ -1,4 +1,4 @@
-import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Position } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 
@@ -8,6 +8,9 @@ import {
   buildCurrentPerspectiveRightDisplayDirections,
   buildNetworkRelationshipEdge,
   buildNetworkRelationshipDialogData,
+  getCivicNetworkEdgeColor,
+  getCivicNetworkEdgeStyle,
+  getCivicNetworkLabelStyle,
   getAnchorUsageConnectionDirection,
   getRelationshipStrokeColor,
   getVisibleFlowDirection,
@@ -15,6 +18,8 @@ import {
   orientRelationshipEdgeForCurrentPerspective,
   resolveInnerAutoEdgeAnchors,
 } from '../networkEdgeHelpers';
+
+const FALLBACK_STROKE = 'var(--badge-success-border)';
 
 describe('networkEdgeHelpers', () => {
   it('anchors horizontally separated nodes on their inner left and right sides', () => {
@@ -51,61 +56,68 @@ describe('networkEdgeHelpers', () => {
 
   it('keeps the fallback stroke color for single-direction edges', () => {
     expect(
-      getRelationshipStrokeColor(
-        featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
-        {
-          amendmentRight: 'forward',
-        }
-      )
-    ).toBe(featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'));
+      getRelationshipStrokeColor(FALLBACK_STROKE, {
+        amendmentRight: 'forward',
+      })
+    ).toBe(FALLBACK_STROKE);
   });
 
   it('uses the shared bidirectional color when a right is explicitly bidirectional', () => {
     expect(
-      getRelationshipStrokeColor(
-        featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
-        {
-          amendmentRight: 'bidirectional',
-        }
-      )
-    ).toBe(featureThemeValue('chartChartRendererAccentColor'));
+      getRelationshipStrokeColor(FALLBACK_STROKE, {
+        amendmentRight: 'bidirectional',
+      })
+    ).toBe(getCivicNetworkEdgeColor('accent'));
   });
 
   it('uses the shared bidirectional color when different rights point in opposite directions', () => {
     expect(
-      getRelationshipStrokeColor(
-        featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
-        {
-          amendmentRight: 'forward',
-          informationRight: 'backward',
-        }
-      )
-    ).toBe(featureThemeValue('chartChartRendererAccentColor'));
+      getRelationshipStrokeColor(FALLBACK_STROKE, {
+        amendmentRight: 'forward',
+        informationRight: 'backward',
+      })
+    ).toBe(getCivicNetworkEdgeColor('accent'));
   });
 
   it('uses the connection-direction color when the visible rights are unidirectional', () => {
     expect(
       getVisibleRelationshipStrokeColor({
-        fallbackColor: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+        fallbackColor: FALLBACK_STROKE,
         connectionDirection: 'incoming',
         rightEdgeDirections: {
           amendmentRight: 'forward',
         },
       })
-    ).toBe(featureThemeValue('chartChartRendererInfoColor'));
+    ).toBe(getCivicNetworkEdgeColor('info'));
   });
 
   it('prefers purple over incoming/outgoing colors when visible rights are mixed-opposite', () => {
     expect(
       getVisibleRelationshipStrokeColor({
-        fallbackColor: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+        fallbackColor: FALLBACK_STROKE,
         connectionDirection: 'incoming',
         rightEdgeDirections: {
           amendmentRight: 'forward',
           informationRight: 'backward',
         },
       })
-    ).toBe(featureThemeValue('chartChartRendererAccentColor'));
+    ).toBe(getCivicNetworkEdgeColor('accent'));
+  });
+
+  it('exposes shared civic edge and label styles', () => {
+    expect(getCivicNetworkEdgeStyle({ tone: 'event' })).toMatchObject({
+      stroke: 'var(--entity-event-border)',
+      strokeWidth: 2,
+    });
+    expect(getCivicNetworkEdgeStyle({ tone: 'warning', dashed: true }).strokeDasharray).toBe('5 5');
+
+    const labelStyle = getCivicNetworkLabelStyle({ tone: 'user' });
+
+    expect(labelStyle.labelBgStyle).toMatchObject({
+      fill: 'var(--card)',
+      stroke: 'var(--entity-user-border)',
+    });
+    expect(labelStyle.labelBgBorderRadius).toBe(8);
   });
 
   it('maps forward and backward edge directions to anchor-usage directions', () => {
@@ -315,29 +327,23 @@ describe('networkEdgeHelpers', () => {
 
   it('places forward markers at the edge end and backward markers at the edge start', () => {
     expect(
-      buildRelationshipEdgeMarkers(
-        featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
-        {
-          amendmentRight: 'forward',
-        }
-      )
+      buildRelationshipEdgeMarkers(FALLBACK_STROKE, {
+        amendmentRight: 'forward',
+      })
     ).toMatchObject({
       markerStart: undefined,
       markerEnd: {
-        color: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+        color: FALLBACK_STROKE,
       },
     });
 
     expect(
-      buildRelationshipEdgeMarkers(
-        featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
-        {
-          amendmentRight: 'backward',
-        }
-      )
+      buildRelationshipEdgeMarkers(FALLBACK_STROKE, {
+        amendmentRight: 'backward',
+      })
     ).toMatchObject({
       markerStart: {
-        color: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+        color: FALLBACK_STROKE,
       },
       markerEnd: undefined,
     });
@@ -378,9 +384,7 @@ describe('networkEdgeHelpers', () => {
       memberSourceGroupId: 'group-b1',
       memberTargetGroupId: 'group-h1',
       rightEdgeDirections: { amendmentRight: 'backward' },
-      fallbackStrokeColor: featureThemeValue(
-        'amendmentAmendmentPathVisualizationSuccessColorAlpha'
-      ),
+      fallbackStrokeColor: FALLBACK_STROKE,
       sourceName: 'H1',
       targetName: 'B1',
       previewCurrentGroupId: 'group-b1',
@@ -418,9 +422,7 @@ describe('networkEdgeHelpers', () => {
       rightRelationshipKinds: { amendmentRight: 'active' },
       membershipMode: 'none',
       rightEdgeDirections: { amendmentRight: 'forward' },
-      fallbackStrokeColor: featureThemeValue(
-        'amendmentAmendmentPathVisualizationSuccessColorAlpha'
-      ),
+      fallbackStrokeColor: FALLBACK_STROKE,
       sourceName: 'B1',
       targetName: 'H1',
     });
@@ -446,9 +448,7 @@ describe('networkEdgeHelpers', () => {
       memberSourceGroupId: 'group-f1',
       memberTargetGroupId: 'group-h1',
       rightEdgeDirections: { amendmentRight: 'backward' },
-      fallbackStrokeColor: featureThemeValue(
-        'amendmentAmendmentPathVisualizationSuccessColorAlpha'
-      ),
+      fallbackStrokeColor: FALLBACK_STROKE,
       sourceName: 'H1',
       targetName: 'Fraktion H1',
       graphRootGroupId: 'group-h1',

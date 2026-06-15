@@ -2,8 +2,13 @@
  * Main view for managing amendment collaborators.
  */
 
+import { useMemo, useState } from 'react';
 import { EntitySearchBar } from '@/features/shared/ui/typeahead';
 import { MembershipTabs } from '@/features/groups/ui/MembershipTabs';
+import {
+  ParticipationRoleFilterBar,
+  filterParticipationsByRole,
+} from '@/features/shared/ui/participation';
 import { PendingRequestsTable } from '@/features/groups/ui/PendingRequestsTable';
 import { PendingInvitationsTable } from '@/features/groups/ui/PendingInvitationsTable';
 import { ActiveMembersTable } from '@/features/groups/ui/ActiveMembersTable';
@@ -94,6 +99,29 @@ export function CollaboratorsView({
   roles,
   searchQuery,
 }: CollaboratorsViewProps) {
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const showCollaboratorFilters = activeTab !== 'roles' && roles.length > 0;
+  const roleFilterRoleIds = useMemo(
+    () => new Set(roles.map(role => role.id).filter(Boolean)),
+    [roles]
+  );
+  const activeRoleFilterIds = useMemo(
+    () => selectedRoleIds.filter(roleId => roleFilterRoleIds.has(roleId)),
+    [roleFilterRoleIds, selectedRoleIds]
+  );
+  const filteredPendingRequests = useMemo(
+    () => filterParticipationsByRole(pendingRequests, activeRoleFilterIds),
+    [activeRoleFilterIds, pendingRequests]
+  );
+  const filteredPendingInvitations = useMemo(
+    () => filterParticipationsByRole(pendingInvitations, activeRoleFilterIds),
+    [activeRoleFilterIds, pendingInvitations]
+  );
+  const filteredActiveCollaborators = useMemo(
+    () => filterParticipationsByRole(activeCollaborators, activeRoleFilterIds),
+    [activeCollaborators, activeRoleFilterIds]
+  );
+
   return (
     <div>
       <div className="mb-6">
@@ -109,14 +137,23 @@ export function CollaboratorsView({
       </div>
 
       {activeTab !== 'roles' ? (
-        <EntitySearchBar
-          searchQuery={searchQuery}
-          onSearchQueryChange={onSearchQueryChange}
-          placeholder={translateText(
-            'generated.inline.0099_search_collaborators_by_name_role_or_status_c0a4b06d'
-          )}
-          className="mb-4"
-        />
+        <>
+          <EntitySearchBar
+            searchQuery={searchQuery}
+            onSearchQueryChange={onSearchQueryChange}
+            placeholder={translateText(
+              'generated.inline.0099_search_collaborators_by_name_role_or_status_c0a4b06d'
+            )}
+            className="mb-4"
+          />
+          {showCollaboratorFilters ? (
+            <ParticipationRoleFilterBar
+              roles={roles}
+              selectedRoleIds={activeRoleFilterIds}
+              onSelectedRoleIdsChange={setSelectedRoleIds}
+            />
+          ) : null}
+        </>
       ) : null}
 
       <MembershipTabs
@@ -142,7 +179,7 @@ export function CollaboratorsView({
         membershipsByUserContent={
           <div className="space-y-4">
             <PendingRequestsTable
-              requests={pendingRequests}
+              requests={filteredPendingRequests}
               onApprove={onApproveRequest}
               onReject={onRejectRequest}
               title={translateText('generated.inline.0102_pending_collaboration_requests_59419bb4')}
@@ -154,7 +191,7 @@ export function CollaboratorsView({
               secondaryActionLabel={translateText('generated.inline.0011_decline_b59cf9ed')}
             />
             <PendingInvitationsTable
-              invitations={pendingInvitations}
+              invitations={filteredPendingInvitations}
               onWithdraw={onWithdrawInvitation}
               description={translateText(
                 'generated.inline.0105_users_who_have_been_invited_to_this_amendment_525eacce'
@@ -162,7 +199,7 @@ export function CollaboratorsView({
               fallbackRoleLabel={translateText('generated.inline.0104_collaborator_794b34c1')}
             />
             <ActiveMembersTable
-              members={activeCollaborators}
+              members={filteredActiveCollaborators}
               sort={membershipSort}
               onSortChange={onMembershipSortChange}
               onOpenRightsDialog={onOpenMemberRightsDialog}
@@ -180,7 +217,7 @@ export function CollaboratorsView({
         membershipsByRoleContent={
           <MembershipsByRoleTables
             roles={roles}
-            members={activeCollaborators}
+            members={filteredActiveCollaborators}
             onOpenRightsDialog={onOpenMemberRightsDialog}
             onRemoveRole={onRemoveRoleFromByRoleView}
             onSecondaryAction={onOpenChangeRoleDialog}
@@ -193,6 +230,7 @@ export function CollaboratorsView({
             emptyStateLabel={translateText(
               'generated.inline.0014_no_collaborators_currently_carry_this_role_c0b5b930'
             )}
+            hideEmptyRoleSections={activeRoleFilterIds.length > 0}
           />
         }
         rolesContent={

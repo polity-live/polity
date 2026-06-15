@@ -22,6 +22,7 @@ export const homePageTranslations = {
       title: 'Understand your organization, decisions, and amendment flows in one place.',
       subtitle:
         'Polity gives civic groups a shared workspace for networks, events, amendments, change requests, votes, and public documentation.',
+      decisionFlow: ['Proposal', 'Amendment', 'Vote'],
       primaryCta: 'Start with Polity',
       secondaryCta: 'Explore the product',
     },

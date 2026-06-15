@@ -21,6 +21,16 @@ export const amendmentsTranslations = {
     passed: 'Angenommen',
     rejected: 'Abgelehnt',
   },
+  workflowPhases: {
+    ariaLabel: 'Antrags-Workflow',
+    creation: 'Erarbeitung',
+    creationDescription: 'Bearbeiten, prüfen, intern abstimmen',
+    decision: 'Beschlussfindung',
+    decisionDescription: 'Event-Vorschläge und Abstimmung',
+    result: 'Ergebnis',
+    accepted: 'Angenommen',
+    rejected: 'Abgelehnt',
+  },
   editContent: {
     loading: 'Antragsdaten werden geladen...',
     notFound: 'Antrag nicht gefunden',

@@ -1,6 +1,5 @@
 'use client';
 
-import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { NETWORK_FILTER_ACTIVE_CLASS_NAMES } from '@/features/network/ui/NetworkControlPanel';
@@ -23,6 +22,8 @@ import {
 import {
   getGroupNodeDisplayLabel,
   getGroupNodeStyle,
+  getGroupNodeVisualTokens,
+  getEntityNetworkNodeStyle,
   getGroupNodeVisualVariant,
 } from '@/features/network/ui/networkVisualHelpers';
 import { useUserState } from '@/zero/users/useUserState';
@@ -38,6 +39,9 @@ import {
   buildNetworkRelationshipEdge,
   buildSingleDirectionRightEdgeDirections,
   createNetworkRelationshipEdgeData,
+  getCivicNetworkEdgeColor,
+  getCivicNetworkEdgeStyle,
+  getCivicNetworkLabelStyle,
   mergeNetworkEdgeRelationshipDirection,
   mergeNetworkRightRelationshipKind,
 } from '../logic/networkEdgeHelpers';
@@ -291,19 +295,18 @@ export function useUserNetworkFlowController({
         type: 'user',
       },
       style: {
-        background: featureThemeValue('amendmentAmendmentPathVisualizationThemeValue'),
-        color: featureThemeValue('amendmentAmendmentPathVisualizationNeutralColor'),
-        border: featureThemeClassName('networkUseUserNetworkFlowThemedStyle'),
-        borderRadius: '50%',
-        padding: '20px',
-        fontSize: '14px',
-        fontWeight: 'bold',
-        width: 180,
-        height: 180,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
+        ...getEntityNetworkNodeStyle('user', {
+          width: 180,
+          height: 180,
+          borderRadius: '999px',
+          padding: '20px',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }),
       },
     });
 
@@ -344,24 +347,11 @@ export function useUserNetworkFlowController({
           type: 'smoothstep',
           animated: true,
           label: translateText('generated.inline.0200_member_6853c98a'),
-          style: {
-            stroke: featureThemeValue('networkUseUserNetworkFlowInfoColor'),
-            strokeWidth: 2,
-          },
-          labelStyle: {
-            fill: featureThemeValue('networkUseUserNetworkFlowInfoColorAlpha'),
-            fontWeight: 600,
-            fontSize: '11px',
-          },
-          labelBgStyle: {
-            fill: 'white',
-            fillOpacity: 0.9,
-          },
-          labelBgPadding: [8, 4] as [number, number],
-          labelBgBorderRadius: 4,
+          style: getCivicNetworkEdgeStyle({ tone: 'user' }),
+          ...getCivicNetworkLabelStyle({ tone: 'user' }),
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: featureThemeValue('networkUseUserNetworkFlowInfoColor'),
+            color: getCivicNetworkEdgeColor('user'),
           },
           data: createNetworkRelationshipEdgeData({
             rights: [],
@@ -466,9 +456,7 @@ export function useUserNetworkFlowController({
               memberTargetGroupId: parent.memberTargetGroupId ?? null,
               rightEdgeDirections,
               relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
-              fallbackStrokeColor: featureThemeValue(
-                'amendmentAmendmentPathVisualizationSuccessColorAlpha'
-              ),
+              fallbackStrokeColor: getGroupNodeVisualTokens('parent').borderColor,
               strokeDasharray: '5 5',
               sourceName: groupNameMap.get(edgeSourceGroupId) ?? null,
               targetName: groupNameMap.get(edgeTargetGroupId) ?? null,
@@ -532,7 +520,7 @@ export function useUserNetworkFlowController({
               memberTargetGroupId: child.memberTargetGroupId ?? null,
               rightEdgeDirections,
               relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
-              fallbackStrokeColor: featureThemeValue('networkUseGroupNetworkFlowWarningColor'),
+              fallbackStrokeColor: getGroupNodeVisualTokens('child').borderColor,
               strokeDasharray: '5 5',
               sourceName: groupNameMap.get(edgeSource) ?? null,
               targetName: groupNameMap.get(child.group.id) ?? null,
@@ -853,9 +841,9 @@ export function useUserNetworkFlowController({
               memberTargetGroupId,
               rightEdgeDirections,
               relationshipDepth: 'direct',
-              fallbackStrokeColor: isSiblingToSibling
-                ? featureThemeValue('networkUseGroupNetworkFlowWarningColorAlpha')
-                : featureThemeValue('networkUseGroupNetworkFlowAccentColor'),
+              fallbackStrokeColor: getGroupNodeVisualTokens(
+                isSiblingToSibling ? 'sibling-open' : 'sibling-parliament'
+              ).borderColor,
               strokeDasharray: isSiblingToSibling ? undefined : '6 4',
               sourceName: groupNameMap.get(sourceId) ?? null,
               targetName: groupNameMap.get(targetId) ?? null,

@@ -2,29 +2,20 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl, StatusBadge, type BadgeTone } from '@/features/shared/ui/status';
 import type { Value } from 'platejs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Card, CardContent, CardHeader } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
-import {
-  ChevronDown,
-  CheckCircle2,
-  Circle,
-  Loader2,
-  Vote,
-  Play,
-  Flag,
-  Lock,
-  Crown,
-} from 'lucide-react';
+import { ChevronDown, CheckCircle2, Play, Flag, Lock } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { VotingPhaseBadge as VotePhaseBadge } from '@/features/shared/ui/voting';
 import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/VoteResultsDisplay';
 import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
+import { ChangeRequestSummaryItem } from '@/features/change-requests/ui/ChangeRequestSummaryItem';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
 import { SuggestionViewToggle } from '@/features/editor/ui/SuggestionViewToggle';
 import { EditingModeSelector } from '@/features/editor/ui/EditingModeSelector';
@@ -53,7 +44,9 @@ const CR_CHOICE_COLORS = [
     color: featureThemeClassName('agendaAgendaVoteSectionWarningBackground'),
     light: featureThemeClassName('agendaAgendaVoteSectionWarningBackgroundAlpha'),
   },
-]; /** Optional text diff data to render inside the card. */
+];
+
+/** Optional text diff data to render inside the card. */
 export interface ChangeRequestDiffData {
   changeType?: string;
   originalText?: string;
@@ -61,21 +54,6 @@ export interface ChangeRequestDiffData {
   properties?: Record<string, string>;
   newProperties?: Record<string, string>;
   justification?: string;
-}
-function getStatusIcon(status: string | null, isCurrent: boolean) {
-  if (status === 'completed')
-    return (
-      <CheckCircle2
-        className={featureThemeClassName('agendaChangeRequestTimelineCardSuccessIcon')}
-      />
-    );
-  if (isCurrent)
-    return (
-      <Loader2
-        className={featureThemeClassName('agendaChangeRequestTimelineCardInfoLoadingIcon')}
-      />
-    );
-  return <Circle className="text-muted-foreground h-5 w-5" />;
 }
 function getStatusBadge(
   status: string | null,
@@ -192,6 +170,7 @@ export interface ChangeRequestTimelineCardViewProps {
 
 export function ChangeRequestTimelineCardView({
   item,
+  index,
   isCurrent,
   hasUserVoted,
   userSelectedChoiceIds,
@@ -200,6 +179,7 @@ export function ChangeRequestTimelineCardView({
   diff,
   documentContent,
   suggestionId,
+  crId,
   discussions,
   editingMode,
   amendmentId,
@@ -233,6 +213,24 @@ export function ChangeRequestTimelineCardView({
   handleCastVote,
   isLocked,
 }: ChangeRequestTimelineCardViewProps) {
+  const summaryIdentifier = item.is_final_vote
+    ? t('features.agendas.crTimeline.finalVoteShort', 'Final')
+    : (crId ?? cr?.crId ?? `CR-${Number(index) + 1 || 1}`);
+  const voteOptions: VoteBarOption[] = choiceStats.map((cs: any, idx: number) => {
+    const colors = CR_CHOICE_COLORS[idx % CR_CHOICE_COLORS.length];
+
+    return {
+      key: cs.choice.id,
+      label: cs.choice.label || `Choice ${idx + 1}`,
+      color: colors.color,
+      lightColor: colors.light,
+      finalCount: cs.finalCount,
+      finalPercent: cs.finalPercentage,
+      indicationCount: cs.indicativeCount,
+      indicationPercent: cs.indicativePercentage,
+    };
+  });
+
   return (
     <Collapsible defaultOpen={isCurrent || item.is_final_vote}>
       <Card
@@ -247,23 +245,28 @@ export function ChangeRequestTimelineCardView({
       >
         <CollapsibleTrigger className="w-full">
           <CardHeader className="flex flex-row items-center justify-between py-3">
-            <div className="flex items-center gap-3">
-              {isLocked ? (
-                <Lock className="text-muted-foreground h-5 w-5" />
-              ) : (
-                getStatusIcon(item.status, isCurrent)
-              )}
-              <CardTitle size="sm" weight="medium">
-                {item.is_final_vote && <Vote className="mr-1 inline h-4 w-4" />}
-                {title}
-              </CardTitle>
+            <div className="min-w-0 flex-1 pr-3">
+              <ChangeRequestSummaryItem
+                identifier={summaryIdentifier}
+                title={title}
+                status={item.status}
+                changeType={item.is_final_vote ? 'final' : diff?.changeType}
+                selected={isCurrent && !isLocked}
+                variant="trigger"
+              />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               {hasUserVoted && (
                 <BadgeControl variant="outline" size="xs">
                   {t('features.agendas.crTimeline.voted')}
                 </BadgeControl>
               )}
+              {isLocked ? (
+                <BadgeControl variant="outline" size="xs" className="gap-1">
+                  <Lock className="h-3 w-3" />
+                  {t('features.agendas.crTimeline.locked', 'Locked')}
+                </BadgeControl>
+              ) : null}
               {!isLocked && vote && (
                 <VotePhaseBadge
                   phase={isIndicative ? 'indication' : isClosed ? 'closed' : 'final_vote'}
@@ -424,21 +427,6 @@ export function ChangeRequestTimelineCardView({
               (((editingMode === 'suggest_event' || editingMode === 'vote_event') && amendmentId) ||
                 (documentContent && suggestionId)) && (
                 <div className="space-y-2">
-                  {/* Mode selector — always shown when amendmentId is available */}
-                  {amendmentId && (
-                    <EditingModeSelector amendmentId={amendmentId} currentMode={editingMode} />
-                  )}
-                  {/* Suggestion filter — only for read-only preview (interactive editor has its own) */}
-                  {editingMode !== 'suggest_event' &&
-                    editingMode !== 'vote_event' &&
-                    discussions &&
-                    discussions.length > 1 && (
-                      <SuggestionViewToggle
-                        discussions={discussions}
-                        selectedCrIds={selectedCrIds}
-                        onSelectedCrIdsChange={setSelectedCrIds}
-                      />
-                    )}
                   <CREditorPreview
                     documentContent={documentContent ?? ([] as Value)}
                     suggestionIds={selectedSuggestionIds}
@@ -446,6 +434,28 @@ export function ChangeRequestTimelineCardView({
                     amendmentId={amendmentId}
                     userId={userId}
                     agendaItemId={agendaItemId}
+                    toolbarEnd={
+                      <>
+                        {/* Mode selector — always shown when amendmentId is available */}
+                        {amendmentId && (
+                          <EditingModeSelector
+                            amendmentId={amendmentId}
+                            currentMode={editingMode}
+                          />
+                        )}
+                        {/* Suggestion filter — only for read-only preview (interactive editor has its own) */}
+                        {editingMode !== 'suggest_event' &&
+                          editingMode !== 'vote_event' &&
+                          discussions &&
+                          discussions.length > 1 && (
+                            <SuggestionViewToggle
+                              discussions={discussions}
+                              selectedCrIds={selectedCrIds}
+                              onSelectedCrIdsChange={setSelectedCrIds}
+                            />
+                          )}
+                      </>
+                    }
                   />
                 </div>
               )}
@@ -461,66 +471,23 @@ export function ChangeRequestTimelineCardView({
               />
             )}
 
-            {/* Vote results with one bar block per choice */}
+            {/* Vote results */}
             {!isLocked &&
               (choices.length === 0 ? (
                 <div className="rounded-lg border border-dashed p-6 text-center">
                   <p className="text-muted-foreground">{t('features.events.agenda.noChoices')}</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {choiceStats.map((cs: any, idx: number) => {
-                    const isWinner = cs.choice.id === winningChoiceId && !isIndicative;
-                    const isSelected = userSelectedChoiceIds.includes(cs.choice.id);
-                    const colors = CR_CHOICE_COLORS[idx % CR_CHOICE_COLORS.length];
-
-                    const option: VoteBarOption = {
-                      key: cs.choice.id,
-                      label: cs.choice.label || `Choice ${idx + 1}`,
-                      color: colors.color,
-                      lightColor: colors.light,
-                      finalCount: cs.finalCount,
-                      finalPercent: cs.finalPercentage,
-                      indicationCount: cs.indicativeCount,
-                      indicationPercent: cs.indicativePercentage,
-                    };
-
-                    return (
-                      <div
-                        key={cs.choice.id}
-                        className={cn(
-                          'rounded-lg border p-3 transition-colors',
-                          isSelected && 'border-primary bg-primary/5',
-                          isWinner &&
-                            isClosed &&
-                            featureThemeClassName('agendaAgendaElectionSectionWarningSurface')
-                        )}
-                      >
-                        <div className="mb-2 flex items-center gap-2">
-                          <span className="font-medium">
-                            {cs.choice.label || `Choice ${idx + 1}`}
-                          </span>
-                          {isWinner && isClosed && (
-                            <Crown
-                              className={featureThemeClassName(
-                                'agendaAgendaElectionSectionWarningIcon'
-                              )}
-                            />
-                          )}
-                          {isSelected && <CheckCircle2 className="text-primary h-4 w-4" />}
-                        </div>
-
-                        <VoteResultsDisplay
-                          options={[option]}
-                          phase={isIndicative ? 'indication' : isClosed ? 'closed' : 'final_vote'}
-                          totalFinal={totalFinal}
-                          totalIndication={totalIndicative}
-                          totalEligible={totalVoters}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
+                <VoteResultsDisplay
+                  options={voteOptions}
+                  phase={isIndicative ? 'indication' : isClosed ? 'closed' : 'final_vote'}
+                  totalFinal={totalFinal}
+                  totalIndication={totalIndicative}
+                  totalEligible={totalVoters}
+                  selectedOptionIds={userSelectedChoiceIds}
+                  winnerOptionId={isIndicative ? null : winningChoiceId}
+                  showWinner={!isIndicative}
+                />
               ))}
 
             {/* Participation count */}

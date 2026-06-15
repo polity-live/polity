@@ -1,5 +1,5 @@
-import { z } from 'zod'
-import { timestampSchema, nullableTimestampSchema, jsonSchema } from '../shared/helpers'
+import { z } from 'zod';
+import { timestampSchema, jsonSchema } from '../shared/helpers';
 
 // ============================================
 // Blog Zod Schemas
@@ -24,19 +24,26 @@ const baseBlogSchema = z.object({
   group_id: z.string().nullable(),
   updated_at: timestampSchema,
   created_at: timestampSchema,
-})
+});
 
-export const selectBlogSchema = baseBlogSchema
+export const selectBlogSchema = baseBlogSchema;
 
 export const createBlogSchema = baseBlogSchema
-  .omit({ id: true, created_at: true, updated_at: true, subscriber_count: true, supporter_count: true })
-  .extend({ id: z.string() })
+  .omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+    subscriber_count: true,
+    supporter_count: true,
+  })
+  .extend({ id: z.string() });
 
 export const updateBlogSchema = baseBlogSchema
   .pick({
     title: true,
     description: true,
     content: true,
+    date: true,
     image_url: true,
     visibility: true,
     editing_mode: true,
@@ -45,9 +52,9 @@ export const updateBlogSchema = baseBlogSchema
     downvotes: true,
   })
   .partial()
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 
-export const deleteBlogSchema = z.object({ id: z.string() })
+export const deleteBlogSchema = z.object({ id: z.string() });
 
 // ============================================
 // BlogBlogger Zod Schemas
@@ -61,24 +68,24 @@ const baseBlogBloggerSchema = z.object({
   status: z.string().nullable(),
   visibility: z.string().nullable(),
   created_at: timestampSchema,
-})
+});
 
-export const selectBlogBloggerSchema = baseBlogBloggerSchema
+export const selectBlogBloggerSchema = baseBlogBloggerSchema;
 
 export const createBlogBloggerSchema = baseBlogBloggerSchema
   .omit({ id: true, created_at: true })
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 
 export const updateBlogBloggerSchema = baseBlogBloggerSchema
   .pick({ role_id: true, status: true, visibility: true })
   .partial()
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 
-export const deleteBlogBloggerSchema = z.object({ id: z.string() })
+export const deleteBlogBloggerSchema = z.object({ id: z.string() });
 
 // ============================================
 // Inferred Types
 // ============================================
 
-export type Blog = z.infer<typeof selectBlogSchema>
-export type BlogBlogger = z.infer<typeof selectBlogBloggerSchema>
+export type Blog = z.infer<typeof selectBlogSchema>;
+export type BlogBlogger = z.infer<typeof selectBlogBloggerSchema>;

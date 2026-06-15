@@ -1,4 +1,4 @@
-import type { Key, RefCallback, RefObject, UIEventHandler } from 'react';
+import type { CSSProperties, Key, RefCallback, RefObject, UIEventHandler } from 'react';
 
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card } from '@/features/shared/ui/ui/card';
@@ -105,11 +105,20 @@ export function VirtualSearchGridView({
                   transform: `translate(${cell.left}px, ${cell.top}px)`,
                 }}
               >
-                {cell.document ? (
-                  <SearchResultCard document={cell.document} />
-                ) : (
-                  <SearchCardSkeleton />
-                )}
+                <div
+                  className="civic-load-card-reveal h-full"
+                  style={
+                    {
+                      '--civic-load-index': Math.min(cell.index, 11),
+                    } as CSSProperties
+                  }
+                >
+                  {cell.document ? (
+                    <SearchResultCard document={cell.document} />
+                  ) : (
+                    <SearchCardSkeleton />
+                  )}
+                </div>
               </div>
             ))}
           </div>

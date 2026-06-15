@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { EVENT_ACTION_RIGHTS } from '../constants';
+import {
+  DEFAULT_ASSEMBLY_EVENT_GUEST_ROLE,
+  DEFAULT_EVENT_ROLES,
+  EVENT_ACTION_RIGHTS,
+} from '../constants';
 
 describe('EVENT_ACTION_RIGHTS', () => {
   it('exposes the event-specific permission catalog without generic event view rights', () => {
@@ -37,5 +41,22 @@ describe('EVENT_ACTION_RIGHTS', () => {
         right => right.resource === 'events' && String(right.action) === 'delete'
       )
     ).toBe(false);
+  });
+});
+
+describe('DEFAULT_EVENT_ROLES', () => {
+  it('allows standard event participants to speak by default', () => {
+    for (const roleName of ['Organizer', 'Voter', 'Participant']) {
+      const role = DEFAULT_EVENT_ROLES.find(defaultRole => defaultRole.name === roleName);
+
+      expect(role?.permissions).toContainEqual({ resource: 'events', action: 'speak' });
+    }
+  });
+
+  it('keeps event guests out of the speaker list by default', () => {
+    expect(DEFAULT_ASSEMBLY_EVENT_GUEST_ROLE.permissions).not.toContainEqual({
+      resource: 'events',
+      action: 'speak',
+    });
   });
 });

@@ -29,7 +29,7 @@ type CardProps = React.ComponentPropsWithoutRef<'div'> & {
   borderStyle?: 'default' | 'none' | 'dashed' | 'muted';
   elevation?: 'default' | 'none' | 'lg' | 'ringPrimary' | 'ringSuccess';
   shape?: 'default' | 'xl';
-  interactive?: 'default' | 'shadow' | 'lift' | 'accent';
+  interactive?: 'default' | 'shadow' | 'lift' | 'accent' | 'spotlight' | 'selectable';
 };
 
 const cardSurfaceClasses: Record<NonNullable<CardProps['surface']>, string> = {
@@ -82,6 +82,8 @@ const cardInteractiveClasses: Record<NonNullable<CardProps['interactive']>, stri
     'transition-shadow duration-[var(--motion-duration-base)] hover:shadow-[var(--shadow-card)]',
   lift: 'civic-motion-hover-lift hover:border-primary/40',
   accent: 'hover:bg-accent',
+  spotlight: 'civic-motion-spotlight civic-motion-hover-lift',
+  selectable: 'civic-motion-selectable cursor-pointer',
 };
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(

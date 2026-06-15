@@ -82,10 +82,8 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
 
     if (event.current_agenda_item_id) {
       const currentItem = event.agenda_items.find(item => item.id === event.current_agenda_item_id);
-      if (
-        currentItem &&
-        (currentItem.status === 'in-progress' || currentItem.status === 'active')
-      ) {
+      const isCompleted = currentItem?.status === 'completed' || Boolean(currentItem?.completed_at);
+      if (currentItem && !isCompleted) {
         return currentItem.id;
       }
     }

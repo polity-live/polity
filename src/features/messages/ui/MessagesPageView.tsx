@@ -1,13 +1,11 @@
-import { FeedSplitLayout, FeedStatePanel } from '@/features/shared/ui/feed';
+import { FeedSplitLayout } from '@/features/shared/ui/feed';
 import type { ConversationFilter } from '../hooks/useConversationFilters';
 import type { Conversation, Message } from '../types/message.types';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ConversationList } from './ConversationList';
 import { DeleteConversationDialog } from './DeleteConversationDialog';
 import { GroupMembersDialog } from './GroupMembersDialog';
 import { MessageView } from './MessageView';
 import { NewConversationDialog } from './NewConversationDialog';
-
 export interface MessagesPageViewProps {
   isLoading: boolean;
   currentUserId?: string;
@@ -17,6 +15,7 @@ export interface MessagesPageViewProps {
   onSelectConversation: (id: string | null) => void;
   selectedConversation?: Conversation;
   selectedMessages: Message[];
+  isThreadLoading?: boolean;
   hasMoreOlderMessages: boolean;
   onLoadOlderMessages: () => void;
   onAtEndChange: (isAtEnd: boolean) => void;
@@ -54,6 +53,7 @@ export function MessagesPageView({
   onSelectConversation,
   selectedConversation,
   selectedMessages,
+  isThreadLoading = false,
   hasMoreOlderMessages,
   onLoadOlderMessages,
   onAtEndChange,
@@ -81,29 +81,17 @@ export function MessagesPageView({
   onDeleteConversationClick,
   onRenameConversation,
 }: MessagesPageViewProps) {
-  const { t } = useTranslation();
   const messagesLayoutStyle = {
     height:
       'calc(100dvh - var(--app-shell-mobile-top-offset, 0rem) - var(--app-shell-mobile-bottom-offset, 0rem) - 3rem)',
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex h-[600px] items-center justify-center">
-        <FeedStatePanel
-          isLoading
-          title={t('features.messages.loading')}
-          className="w-full max-w-md"
-        />
-      </div>
-    );
-  }
 
   return (
     <>
       <FeedSplitLayout style={messagesLayoutStyle}>
         <ConversationList
           className="h-full"
+          isLoading={isLoading}
           conversations={filteredConversations}
           conversationOnlineStatus={conversationOnlineStatus}
           selectedConversationId={selectedConversationId}
@@ -122,6 +110,7 @@ export function MessagesPageView({
           className="h-full"
           conversation={selectedConversation}
           messages={selectedMessages}
+          isThreadLoading={isThreadLoading}
           hasMoreOlderMessages={hasMoreOlderMessages}
           onLoadOlderMessages={onLoadOlderMessages}
           onAtEndChange={onAtEndChange}

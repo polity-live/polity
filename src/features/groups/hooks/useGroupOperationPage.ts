@@ -27,7 +27,6 @@ export function useGroupOperationPage(groupId: string) {
 
   const handleAddLink = async (data: { label: string; url: string }) => {
     await addLink(data.label, data.url, user?.id);
-    setLinkDialogOpen(false);
   };
 
   return {

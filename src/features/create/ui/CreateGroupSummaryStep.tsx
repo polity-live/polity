@@ -15,6 +15,8 @@ interface CreateGroupSummaryStepProps {
   linkedGroupReviewData: any[];
   currentGroupName: string;
   currentGroupId: string;
+  layoutId?: string;
+  overlayMode?: boolean;
 }
 
 export function CreateGroupSummaryStep({
@@ -29,6 +31,8 @@ export function CreateGroupSummaryStep({
   linkedGroupReviewData,
   currentGroupName,
   currentGroupId,
+  layoutId,
+  overlayMode,
 }: CreateGroupSummaryStepProps) {
   return (
     <CreateSummaryStep
@@ -39,6 +43,8 @@ export function CreateGroupSummaryStep({
       subtitle={subtitle}
       media={media}
       hashtags={hashtags}
+      layoutId={layoutId}
+      overlayMode={overlayMode}
       sections={[
         ...sections,
         {

@@ -22,6 +22,7 @@ export const homePageTranslations = {
       title: 'Verstehe Organisation, Entscheidungen und Antragsflüsse an einem Ort.',
       subtitle:
         'Polity gibt zivilgesellschaftlichen Gruppen einen gemeinsamen Arbeitsbereich für Netzwerke, Veranstaltungen, Anträge, Änderungsanträge, Abstimmungen und öffentliche Dokumentation.',
+      decisionFlow: ['Vorschlag', 'Änderung', 'Abstimmung'],
       primaryCta: 'Mit Polity starten',
       secondaryCta: 'Produkt ansehen',
     },

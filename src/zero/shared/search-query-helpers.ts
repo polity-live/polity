@@ -2,6 +2,13 @@ export type SearchSortOption = 'recent' | 'engagement' | 'trending';
 export type SearchDirection = 'forward' | 'backward';
 export type SearchEngagementFilter = 'all' | 'popular' | 'rising' | 'discussed';
 
+export interface SearchBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
 export interface SearchStart {
   id: string;
   created_at: number;
@@ -17,6 +24,7 @@ export interface SearchListContext {
   engagement: SearchEngagementFilter;
   sort: SearchSortOption;
   snapshotAt: number | null;
+  bounds?: SearchBounds | null;
 }
 
 export function normalizeSearchQuery(input: string): string {

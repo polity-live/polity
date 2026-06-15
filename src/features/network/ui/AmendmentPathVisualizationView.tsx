@@ -1,16 +1,22 @@
-import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import { MarkerType, type Edge, type Node } from '@xyflow/react';
-import { CalendarClock, ChevronDown, ChevronRight, Clock3, ScrollText } from 'lucide-react';
-import { Panel, NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
-import { getGroupDisplayLabel } from '@/features/network/ui/networkVisualHelpers';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import type { CSSProperties } from 'react';
+import { useState } from 'react';
+import { CalendarClock, Clock3, ScrollText } from 'lucide-react';
+import { CivicNetworkFlow } from '@/features/network/ui/CivicNetworkFlow';
+import { getCivicNetworkEdgeStyle } from '@/features/network/logic/networkEdgeHelpers';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/features/shared/ui/ui/collapsible';
-import { Button } from '@/features/shared/ui/ui/button';
-import { cn } from '@/features/shared/utils/utils';
+  createEntityNodeLegendItem,
+  createGroupNodeLegendItem,
+  createProcessStatusLegendItem,
+  getEntityNetworkNodeStyle,
+  getGroupDisplayLabel,
+  getGroupNodeStyle,
+  getGroupNodeVisualVariant,
+  getProcessStatusNodeAccent,
+  getProcessStatusVisualTokens,
+  type GroupNodeVisualVariant,
+} from '@/features/network/ui/networkVisualHelpers';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 type ProcessNodeState = 'approved' | 'active-next' | 'rejected' | 'pending';
 
@@ -43,40 +49,6 @@ const GROUP_X_SPACING = 320;
 const GROUP_NODE_Y = 80;
 const EVENT_NODE_Y = 270;
 
-function getNodeStatePalette(state: ProcessNodeState) {
-  switch (state) {
-    case 'approved':
-      return {
-        borderColor: featureThemeValue('editorEditorViewShellSuccessColor'),
-        backgroundColor: featureThemeValue('networkAmendmentPathVisualizationSuccessColor'),
-        textColor: featureThemeValue('networkAmendmentPathVisualizationSuccessColorAlpha'),
-        shadowColor: featureThemeValue('networkAmendmentPathVisualizationOverlayColor'),
-      };
-    case 'active-next':
-      return {
-        borderColor: featureThemeValue('networkAmendmentPathVisualizationAccentColor'),
-        backgroundColor: featureThemeValue('networkAmendmentPathVisualizationAccentColorAlpha'),
-        textColor: featureThemeValue('networkAmendmentPathVisualizationDangerColor'),
-        shadowColor: featureThemeValue('networkAmendmentPathVisualizationOverlayColorAlpha'),
-      };
-    case 'rejected':
-      return {
-        borderColor: featureThemeValue('networkAmendmentPathVisualizationDangerColorAlpha'),
-        backgroundColor: featureThemeValue('networkAmendmentPathVisualizationDangerColorBeta'),
-        textColor: featureThemeValue('networkAmendmentPathVisualizationDangerColorGamma'),
-        shadowColor: featureThemeValue('networkAmendmentPathVisualizationOverlayColorBeta'),
-      };
-    case 'pending':
-    default:
-      return {
-        borderColor: featureThemeValue('networkAmendmentPathVisualizationNeutralColor'),
-        backgroundColor: featureThemeValue('networkAmendmentPathVisualizationNeutralColorAlpha'),
-        textColor: featureThemeValue('networkAmendmentPathVisualizationNeutralColorBeta'),
-        shadowColor: featureThemeValue('networkAmendmentPathVisualizationOverlayColorGamma'),
-      };
-  }
-}
-
 function mapForwardingStatusToNodeState(status?: string | null): ProcessNodeState {
   switch (status) {
     case 'approved':
@@ -98,21 +70,6 @@ function mapForwardingStatusToNodeState(status?: string | null): ProcessNodeStat
     default:
       return 'pending';
   }
-}
-
-function buildProcessNodeStyle(state: ProcessNodeState, width: number) {
-  const palette = getNodeStatePalette(state);
-
-  return {
-    width,
-    border: `3px solid ${palette.borderColor}`,
-    borderRadius: '16px',
-    background: palette.backgroundColor,
-    color: palette.textColor,
-    padding: '14px',
-    boxShadow: `0 14px 28px ${palette.shadowColor}`,
-    textAlign: 'left' as const,
-  };
 }
 
 function buildSegmentsWithVisualStates(segments: AmendmentPathVisualizationSegment[]) {
@@ -153,6 +110,110 @@ function getEventCaption(segment: AmendmentPathVisualizationSegment) {
   return segment.eventRequestPending ? 'Event requested, pending' : 'Event pending';
 }
 
+function getGroupVisualVariantForSegment({
+  index,
+  totalSegments,
+  groupType,
+}: {
+  index: number;
+  totalSegments: number;
+  groupType?: string | null;
+}): GroupNodeVisualVariant {
+  const role = index === 0 ? 'current' : index === totalSegments - 1 ? 'child' : 'parent';
+
+  return getGroupNodeVisualVariant({
+    role,
+    siblingMembershipMode: groupType,
+  });
+}
+
+function buildGroupProcessNodeStyle({
+  state,
+  visualVariant,
+  isClickable,
+}: {
+  state: ProcessNodeState;
+  visualVariant: GroupNodeVisualVariant;
+  isClickable: boolean;
+}): CSSProperties {
+  const status = getProcessStatusNodeAccent(state);
+  const baseStyle = getGroupNodeStyle(visualVariant, {
+    width: 240,
+    textAlign: 'left',
+    padding: '12px',
+    borderRadius: '10px',
+    cursor: isClickable ? 'pointer' : undefined,
+  });
+
+  if (state === 'pending') {
+    return baseStyle;
+  }
+
+  return {
+    ...baseStyle,
+    outline: `2px solid ${status.borderColor}`,
+    outlineOffset: 3,
+    boxShadow:
+      state === 'active-next'
+        ? `0 0 0 5px color-mix(in oklab, ${status.borderColor} 18%, transparent), ${baseStyle.boxShadow ?? 'var(--shadow-panel)'}`
+        : baseStyle.boxShadow,
+  };
+}
+
+function buildEventProcessNodeStyle({
+  state,
+  isClickable,
+}: {
+  state: ProcessNodeState;
+  isClickable: boolean;
+}): CSSProperties {
+  const status = getProcessStatusNodeAccent(state);
+  const baseStyle = getEntityNetworkNodeStyle('event', {
+    width: 216,
+    padding: '12px',
+    textAlign: 'left',
+    cursor: isClickable ? 'pointer' : undefined,
+  });
+
+  return {
+    ...baseStyle,
+    border: `2px solid ${
+      state === 'active-next' ? status.borderColor : 'var(--entity-event-border)'
+    }`,
+    boxShadow:
+      state === 'active-next'
+        ? `0 0 0 5px color-mix(in oklab, ${status.borderColor} 18%, transparent), var(--shadow-panel)`
+        : baseStyle.boxShadow,
+  };
+}
+
+function ProcessStatusBadge({ state, label }: { state: ProcessNodeState; label: string }) {
+  const status = getProcessStatusVisualTokens(state);
+
+  return (
+    <div
+      className="inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium"
+      style={{
+        backgroundColor: `color-mix(in oklab, ${status.borderColor} 12%, var(--card))`,
+        borderColor: status.borderColor,
+        color: status.textColor,
+      }}
+    >
+      <span
+        aria-hidden="true"
+        className="flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold"
+        style={{
+          backgroundColor: 'var(--card)',
+          color: status.textColor,
+        }}
+      >
+        {status.symbol}
+      </span>
+      {label}
+    </div>
+  );
+}
+
 export function AmendmentPathVisualizationView({
   enrichedPathData,
   groupTypeById = new Map<string, string | null>(),
@@ -162,23 +223,11 @@ export function AmendmentPathVisualizationView({
   onLegendOpenChange,
 }: AmendmentPathVisualizationViewProps) {
   const { t } = useTranslation();
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
 
   const segments = buildSegmentsWithVisualStates(enrichedPathData);
   const nodes: Node[] = [];
   const edges: Edge[] = [];
-
-  console.log('PROCESS LOG [amendment-path-visualization]', {
-    segments: segments.map(segment => ({
-      order: segment.order,
-      groupName: segment.groupName,
-      eventTitle: segment.eventTitle,
-      forwardingStatus: segment.forwardingStatus,
-      rawStatus: segment.rawStatus,
-      rawDecisionStatus: segment.rawDecisionStatus,
-      isActiveStep: segment.isActiveStep ?? false,
-      visualState: segment.visualState,
-    })),
-  });
 
   segments.forEach((segment, index) => {
     const x = 80 + index * GROUP_X_SPACING;
@@ -186,40 +235,41 @@ export function AmendmentPathVisualizationView({
     const eventNodeId = `process-event-${index}`;
     const nodeState = segment.visualState;
     const eventCaption = getEventCaption(segment);
+    const groupType = groupTypeById.get(segment.groupId ?? '') ?? null;
+    const groupVisualVariant = getGroupVisualVariantForSegment({
+      index,
+      totalSegments: segments.length,
+      groupType,
+    });
+    const nodeStatusLabel =
+      nodeState === 'approved'
+        ? t('features.amendments.process.stepApproved')
+        : nodeState === 'active-next'
+          ? t('features.amendments.process.stepActiveNext')
+          : nodeState === 'rejected'
+            ? t('features.amendments.process.stepRejected')
+            : t('features.amendments.process.stepPending');
 
     nodes.push({
       id: groupNodeId,
       position: { x, y: GROUP_NODE_Y },
-      className: cn(
-        segment.groupId && 'cursor-pointer',
-        nodeState === 'active-next' ? 'animate-pulse' : undefined
-      ),
-      style: buildProcessNodeStyle(nodeState, 240),
+      className: segment.groupId ? 'cursor-pointer' : undefined,
+      style: buildGroupProcessNodeStyle({
+        state: nodeState,
+        visualVariant: groupVisualVariant,
+        isClickable: Boolean(segment.groupId),
+      }),
       data: {
         groupId: segment.groupId,
         label: (
           <div className="space-y-3">
-            <div className={featureThemeClassName('networkAmendmentPathVisualizationThemedText')}>
+            <div className="text-xs font-medium tracking-wide uppercase opacity-75">
               {t('features.amendments.process.groupNode')}
             </div>
             <div className="text-sm font-semibold">
-              {getGroupDisplayLabel(
-                segment.groupName,
-                groupTypeById.get(segment.groupId ?? '') ?? null
-              )}
+              {getGroupDisplayLabel(segment.groupName, groupType)}
             </div>
-            <div
-              className={featureThemeClassName('networkAmendmentPathVisualizationContrastBadge')}
-            >
-              <ScrollText className="h-3.5 w-3.5" />
-              {nodeState === 'approved'
-                ? t('features.amendments.process.stepApproved')
-                : nodeState === 'active-next'
-                  ? t('features.amendments.process.stepActiveNext')
-                  : nodeState === 'rejected'
-                    ? t('features.amendments.process.stepRejected')
-                    : t('features.amendments.process.stepPending')}
-            </div>
+            <ProcessStatusBadge state={nodeState} label={nodeStatusLabel} />
           </div>
         ),
       },
@@ -228,16 +278,21 @@ export function AmendmentPathVisualizationView({
     nodes.push({
       id: eventNodeId,
       position: { x: x + 12, y: EVENT_NODE_Y },
-      className: cn(
-        segment.eventId && 'cursor-pointer',
-        nodeState === 'active-next' ? 'animate-pulse' : undefined
-      ),
-      style: buildProcessNodeStyle(nodeState, 216),
+      className: segment.eventId ? 'cursor-pointer' : undefined,
+      style: buildEventProcessNodeStyle({
+        state: nodeState,
+        isClickable: Boolean(segment.eventId),
+      }),
       data: {
         eventId: segment.eventId,
         label: (
           <div className="space-y-3">
-            <div className={featureThemeClassName('networkAmendmentPathVisualizationThemedText')}>
+            <div className="inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium tracking-wide uppercase">
+              {segment.eventId ? (
+                <CalendarClock className="h-3.5 w-3.5" />
+              ) : (
+                <Clock3 className="h-3.5 w-3.5" />
+              )}
               {t('features.amendments.process.eventNode')}
             </div>
             <div className="text-sm font-semibold">
@@ -246,11 +301,7 @@ export function AmendmentPathVisualizationView({
                 : t('features.amendments.process.eventRequestedPending')}
             </div>
             <div className="flex items-center gap-2 text-xs opacity-80">
-              {segment.eventId ? (
-                <CalendarClock className="h-3.5 w-3.5" />
-              ) : (
-                <Clock3 className="h-3.5 w-3.5" />
-              )}
+              <ScrollText className="h-3.5 w-3.5" />
               <span>{eventCaption}</span>
             </div>
           </div>
@@ -263,15 +314,14 @@ export function AmendmentPathVisualizationView({
       source: groupNodeId,
       target: eventNodeId,
       type: 'smoothstep',
-      style: {
-        stroke: getNodeStatePalette(nodeState).borderColor,
-        strokeWidth: 2,
+      style: getCivicNetworkEdgeStyle({
+        color: getProcessStatusNodeAccent(nodeState).borderColor,
         strokeDasharray: segment.eventId ? undefined : '5 5',
-      },
+      }),
       animated: nodeState === 'active-next',
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        color: getNodeStatePalette(nodeState).borderColor,
+        color: getProcessStatusNodeAccent(nodeState).borderColor,
       },
     });
 
@@ -282,21 +332,20 @@ export function AmendmentPathVisualizationView({
         source: eventNodeId,
         target: `process-group-${index + 1}`,
         type: 'smoothstep',
-        style: {
-          stroke: getNodeStatePalette(nextState).borderColor,
-          strokeWidth: 2.5,
-        },
+        style: getCivicNetworkEdgeStyle({
+          color: getProcessStatusNodeAccent(nextState).borderColor,
+        }),
         animated: nextState === 'active-next',
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          color: getNodeStatePalette(nextState).borderColor,
+          color: getProcessStatusNodeAccent(nextState).borderColor,
         },
       });
     }
   });
 
   return (
-    <NetworkFlowBase
+    <CivicNetworkFlow
       nodes={nodes}
       edges={edges}
       nodesDraggable={false}
@@ -314,81 +363,79 @@ export function AmendmentPathVisualizationView({
           onNodeClick(eventId);
         }
       }}
-      panel={
-        <Panel position="top-right">
-          <div className="bg-background/95 w-72 rounded-xl border p-4 shadow-lg backdrop-blur">
-            <Collapsible open={legendOpen} onOpenChange={onLegendOpenChange}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className={featureThemeClassName(
-                    'networkAmendmentPathVisualizationContrastPanel'
-                  )}
-                  aria-label={t('features.amendments.process.pathVisualization')}
-                >
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {t('features.amendments.process.pathVisualization')}
-                    </p>
-                    <p className="text-muted-foreground mt-1 text-xs">
-                      {legendOpen
-                        ? t('features.amendments.process.pathLegendHideHint')
-                        : t('features.amendments.process.pathLegendShowHint')}
-                    </p>
-                  </div>
-                  {legendOpen ? (
-                    <ChevronDown className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
-                  ) : (
-                    <ChevronRight className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
-                  )}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <p className="text-muted-foreground mt-3 text-xs">
-                  {t('features.amendments.process.pathNetworkDescription')}
-                </p>
-                <div className="mt-4 space-y-2 text-xs">
-                  {[
-                    {
-                      id: 'approved',
-                      label: t('features.amendments.process.stepApproved'),
-                      color: getNodeStatePalette('approved').borderColor,
-                    },
-                    {
-                      id: 'active',
-                      label: t('features.amendments.process.stepActiveNext'),
-                      color: getNodeStatePalette('active-next').borderColor,
-                      pulse: true,
-                    },
-                    {
-                      id: 'pending',
-                      label: t('features.amendments.process.stepPending'),
-                      color: getNodeStatePalette('pending').borderColor,
-                    },
-                    {
-                      id: 'rejected',
-                      label: t('features.amendments.process.stepRejected'),
-                      color: getNodeStatePalette('rejected').borderColor,
-                    },
-                  ].map(item => (
-                    <div key={item.id} className="flex items-center gap-3">
-                      <span
-                        className={cn(
-                          'inline-flex h-4 w-4 rounded-full border-2',
-                          item.pulse ? 'animate-pulse' : undefined
-                        )}
-                        style={{ borderColor: item.color }}
-                      />
-                      <span>{item.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        </Panel>
-      }
+      panelConfig={{
+        title: t('features.amendments.process.pathVisualization'),
+        description: t('features.amendments.process.pathNetworkDescription'),
+        panelCollapsed,
+        onPanelCollapsedChange: setPanelCollapsed,
+        legendCollapsed: !legendOpen,
+        onLegendCollapsedChange: collapsed => onLegendOpenChange(!collapsed),
+        legendTitle: t('common.network.legend'),
+        showDisplayControls: false,
+        showInteractiveToggle: false,
+        isInteractive: false,
+        onInteractiveChange: () => undefined,
+      }}
+      legendSections={[
+        {
+          id: 'groups',
+          title: t('features.amendments.process.groupNode'),
+          items: [
+            createGroupNodeLegendItem({
+              id: 'process-start-group',
+              label: t('common.network.currentGroup'),
+              visualVariant: 'current',
+            }),
+            createGroupNodeLegendItem({
+              id: 'process-intermediate-group',
+              label: t('features.amendments.process.groupNode'),
+              visualVariant: 'parent',
+            }),
+            createGroupNodeLegendItem({
+              id: 'process-target-group',
+              label: t('common.network.childGroup'),
+              visualVariant: 'child',
+            }),
+          ],
+        },
+        {
+          id: 'events',
+          title: t('features.amendments.process.eventNode'),
+          items: [
+            createEntityNodeLegendItem({
+              id: 'process-event-node',
+              label: t('features.amendments.process.eventNode'),
+              entityType: 'event',
+            }),
+          ],
+        },
+        {
+          id: 'status',
+          title: t('features.amendments.process.pathVisualization'),
+          items: [
+            createProcessStatusLegendItem({
+              id: 'approved',
+              label: t('features.amendments.process.stepApproved'),
+              state: 'approved',
+            }),
+            createProcessStatusLegendItem({
+              id: 'active',
+              label: t('features.amendments.process.stepActiveNext'),
+              state: 'active-next',
+            }),
+            createProcessStatusLegendItem({
+              id: 'pending',
+              label: t('features.amendments.process.stepPending'),
+              state: 'pending',
+            }),
+            createProcessStatusLegendItem({
+              id: 'rejected',
+              label: t('features.amendments.process.stepRejected'),
+              state: 'rejected',
+            }),
+          ],
+        },
+      ]}
       containerClassName="h-full min-h-[22rem]"
     />
   );

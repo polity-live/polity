@@ -7,6 +7,7 @@ import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-a
 const GUEST_ACCESSIBLE_ENTITY_PREFIXES = ['/user/', '/group/', '/amendment/', '/event/'];
 const GUEST_RESTRICTED_ENTITY_SEGMENTS = [
   '/settings',
+  '/edit',
   '/editor',
   '/notifications',
   '/notification-settings',

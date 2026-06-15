@@ -57,6 +57,7 @@ export function SharedListView({ events, selectedDate, onEventSelect }: SharedLi
       getItemDate={event => event.start_date}
       getItemKey={event => event.id}
       emptyText={t('features.calendar.dayView.noEvents')}
+      itemMotion="place"
       renderItem={event => {
         if (event.isMeeting) {
           return (

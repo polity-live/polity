@@ -588,7 +588,12 @@ export const groupQueries = {
   }),
 
   /** Public groups with optional limit */
-  publicGroups: defineQuery(z.object({}), () => zql.group.where('visibility', 'public').limit(100)),
+  publicGroups: defineQuery(z.object({}), () =>
+    zql.group
+      .where('visibility', 'public')
+      .related('group_hashtags', q => q.related('hashtag'))
+      .limit(100)
+  ),
 
   /** User's group memberships with nested group→hashtags, events, amendments (for timeline) */
   userMembershipsWithGroupRelations: defineQuery(

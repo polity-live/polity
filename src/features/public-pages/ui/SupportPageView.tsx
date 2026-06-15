@@ -11,6 +11,7 @@ import {
   Section,
 } from '@/features/shared/ui/layout';
 import { Button } from '@/features/shared/ui/ui/button';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 
 export interface SupportAreaViewModel {
   key: string;
@@ -83,7 +84,7 @@ export function SupportPageView({
                     </Button>
                   ) : (
                     <Button asChild variant="outline" className="w-full">
-                      <a href={area.href}>{area.cta}</a>
+                      <SmartLink href={area.href}>{area.cta}</SmartLink>
                     </Button>
                   )}
                 </PanelContent>
@@ -98,7 +99,7 @@ export function SupportPageView({
           <h2 className="text-2xl font-bold">{communityTitle}</h2>
           <p className="text-muted-foreground">{communityDescription}</p>
           <Button asChild size="lg">
-            <a href="/auth">{getStartedLabel}</a>
+            <SmartLink href="/auth">{getStartedLabel}</SmartLink>
           </Button>
         </div>
       </Section>

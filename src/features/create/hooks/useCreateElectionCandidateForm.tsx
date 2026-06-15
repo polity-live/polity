@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useElectionState } from '@/zero/elections/useElectionState';
@@ -11,11 +10,15 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { ElectionSearchInput } from '../ui/inputs/ElectionSearchInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import type { CreateFormConfig } from '../types/create-form.types';
+import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
+import {
+  createBlockedSubmitOutcome,
+  createRouteSubmitTarget,
+  createSuccessSubmitOutcome,
+} from '../logic/createSubmitTargets';
 
 export function useCreateElectionCandidateForm(): CreateFormConfig {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { addCandidate } = useElectionActions();
   const { electionsForSearch } = useElectionState({ includeElectionsForSearch: true });
@@ -28,10 +31,11 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
   const selectedElection = electionsForSearch.find(election => election.id === electionId);
   const selectedElectionTitle = selectedElection?.title || t('pages.create.common.notSelected');
 
-  const handleSubmit = async () => {
-    if (!user) return;
+  const handleSubmit = async (context?: CreateSubmitContext) => {
+    if (!user) return createBlockedSubmitOutcome();
     setIsSubmitting(true);
     try {
+      context?.reportProgress({ key: 'create', status: 'active' });
       await addCandidate({
         id: candidateId,
         name: '',
@@ -43,9 +47,17 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
         image_url: imageURL,
       });
       toast.success(t('pages.create.success.created'));
-      navigate({ to: '/create' });
-    } catch {
+      context?.reportProgress({ key: 'create', status: 'complete' });
+      context?.reportProgress({ key: 'sync', status: 'complete' });
+      context?.reportProgress({ key: 'ready', status: 'active' });
+      return createSuccessSubmitOutcome(
+        createRouteSubmitTarget('election', {
+          to: '/create',
+        })
+      );
+    } catch (error) {
       toast.error(t('pages.create.error.createFailed'));
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
@@ -57,6 +69,11 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
       title: translateText('generated.inline.0056_pages_create_electioncandidate_title_b1daefe6'),
       isSubmitting,
       onSubmit: handleSubmit,
+      submissionSteps: [
+        { key: 'create', label: 'Erstellt Kandidatur' },
+        { key: 'sync', label: 'Synchronisiert Wahlkontext' },
+        { key: 'ready', label: 'Bereitet Zielseite vor' },
+      ],
       steps: [
         {
           label: t('pages.create.electionCandidate.electionLabel'),

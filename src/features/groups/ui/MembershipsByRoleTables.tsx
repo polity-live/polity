@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import type { CSSProperties } from 'react';
 import { Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -40,6 +41,7 @@ interface MembershipsByRoleTablesProps<
   secondaryActionTooltip?: string;
   emptyStateLabel?: string;
   showProvenanceColumns?: boolean;
+  hideEmptyRoleSections?: boolean;
 }
 
 export function MembershipsByRoleTables<
@@ -62,6 +64,7 @@ export function MembershipsByRoleTables<
   secondaryActionTooltip,
   emptyStateLabel,
   showProvenanceColumns = false,
+  hideEmptyRoleSections = false,
 }: MembershipsByRoleTablesProps<TRole, TParticipation>) {
   const { t } = useTranslation();
   const directWithoutPathLabel = t('features.groups.memberships.composition.directWithoutPath');
@@ -102,17 +105,20 @@ export function MembershipsByRoleTables<
   const membersWithoutRoles = members.filter(
     membership => getMembershipDisplayRoles(membership).length === 0
   );
+  const roleSections = roles.map(role => ({
+    kind: 'role' as const,
+    id: role.id,
+    title: role.name || roleFallbackLabel,
+    description: role.description || resolvedMemberDescriptionFallback,
+    role,
+    members: members.filter(membership =>
+      getMembershipDisplayRoles(membership).some(membershipRole => membershipRole.id === role.id)
+    ),
+  }));
   const sections = [
-    ...roles.map(role => ({
-      kind: 'role' as const,
-      id: role.id,
-      title: role.name || roleFallbackLabel,
-      description: role.description || resolvedMemberDescriptionFallback,
-      role,
-      members: members.filter(membership =>
-        getMembershipDisplayRoles(membership).some(membershipRole => membershipRole.id === role.id)
-      ),
-    })),
+    ...(hideEmptyRoleSections
+      ? roleSections.filter(section => section.members.length > 0)
+      : roleSections),
     ...(membersWithoutRoles.length > 0
       ? [
           {
@@ -151,7 +157,7 @@ export function MembershipsByRoleTables<
 
   return (
     <div className="space-y-4">
-      {sections.map(section => {
+      {sections.map((section, sectionIndex) => {
         const roleMembers = section.members;
         const provenanceColumns: ColumnDef<TParticipation>[] = showProvenanceColumns
           ? [
@@ -265,7 +271,11 @@ export function MembershipsByRoleTables<
         ];
 
         return (
-          <section key={section.id} className="space-y-3">
+          <section
+            key={section.id}
+            className="civic-load-card-reveal space-y-3"
+            style={{ '--civic-load-index': Math.min(sectionIndex, 11) } as CSSProperties}
+          >
             <div className="flex flex-wrap items-start justify-between gap-3 px-3 sm:px-4">
               <div className="space-y-1.5">
                 <h2 className="flex items-center gap-2 text-base leading-none font-semibold">

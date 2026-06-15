@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import type { CSSProperties } from 'react';
 import { Check, Trash2, UserRoundCheck } from 'lucide-react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -175,7 +176,10 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
   ];
 
   return (
-    <section className="space-y-3">
+    <section
+      className="civic-load-card-reveal space-y-3"
+      style={{ '--civic-load-index': 3 } as CSSProperties}
+    >
       <div className="space-y-1.5 px-3 sm:px-4">
         <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
           <UserRoundCheck className="h-5 w-5" />

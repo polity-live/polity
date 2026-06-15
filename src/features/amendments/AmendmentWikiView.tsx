@@ -1,7 +1,11 @@
 'use client';
 
 import { getEntityGradientClasses, getMotionPreset } from '@/features/shared/theme';
-import { BadgeControl } from '@/features/shared/ui/status';
+import { BadgeControl, getEditingModeOption } from '@/features/shared/ui/status';
+import {
+  CivicMotionTimeline,
+  type CivicMotionTimelineItem,
+} from '@/features/shared/ui/timeline/CivicMotionTimeline';
 import {
   Card,
   CardContent,
@@ -16,7 +20,15 @@ import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { StatsBar } from '@/features/shared/ui/layout';
 import { ActionBar } from '@/features/shared/ui/layout';
 import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
-import { InfoTabs, WikiIncumbentPanel } from '@/features/shared/ui/wiki';
+import {
+  getWikiParticipationName,
+  InfoTabs,
+  isVisibleWikiParticipationStatus,
+  normalizeWikiParticipationRole,
+  WikiParticipationDirectory,
+  type WikiParticipationItem,
+  type WikiParticipationRole,
+} from '@/features/shared/ui/wiki';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { EditingModeBadge } from '@/features/shared/ui/status';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
@@ -28,6 +40,73 @@ import { Link } from '@tanstack/react-router';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 const AMENDMENT_CARD_SURFACE = `${getEntityGradientClasses('amendment')} ${getMotionPreset('hoverLift')}`;
+
+const AMENDMENT_CREATION_MODES = new Set(['edit', 'view', 'suggest_internal', 'vote_internal']);
+const AMENDMENT_DECISION_MODES = new Set(['suggest_event', 'vote_event']);
+
+function AmendmentWorkflowPhaseRail({ mode, t }: { mode: any; t: any }) {
+  const currentMode = getEditingModeOption(mode, t).value;
+  const isCreationPhase = AMENDMENT_CREATION_MODES.has(currentMode);
+  const isDecisionPhase = AMENDMENT_DECISION_MODES.has(currentMode);
+  const isAccepted = currentMode === 'passed';
+  const isRejected = currentMode === 'rejected';
+  const isResultPhase = isAccepted || isRejected;
+  const activeIndex = isCreationPhase ? 0 : 1;
+
+  const items: CivicMotionTimelineItem[] = [
+    {
+      id: 'creation',
+      label: t('features.amendments.workflowPhases.creation', 'Erarbeitung'),
+      value: t(
+        'features.amendments.workflowPhases.creationDescription',
+        'Bearbeiten, prüfen, intern abstimmen'
+      ),
+      tone: 'accent',
+      isActive: isCreationPhase,
+      isComplete: isDecisionPhase || isResultPhase,
+    },
+    {
+      id: 'decision',
+      label: t('features.amendments.workflowPhases.decision', 'Beschlussfindung'),
+      value: t(
+        'features.amendments.workflowPhases.decisionDescription',
+        'Event-Vorschläge und Abstimmung'
+      ),
+      tone: 'info',
+      isActive: isDecisionPhase,
+      isComplete: isResultPhase,
+    },
+  ];
+
+  const branches: CivicMotionTimelineItem[] = [
+    {
+      id: 'passed',
+      label: t('features.amendments.workflowPhases.accepted', 'Angenommen'),
+      tone: 'success',
+      isActive: isAccepted,
+    },
+    {
+      id: 'rejected',
+      label: t('features.amendments.workflowPhases.rejected', 'Abgelehnt'),
+      tone: 'danger',
+      isActive: isRejected,
+    },
+  ];
+
+  return (
+    <div className="mx-auto mb-8 w-full max-w-2xl px-3 sm:px-4">
+      <CivicMotionTimeline
+        activeIndex={activeIndex}
+        ariaLabel={t('features.amendments.workflowPhases.ariaLabel', 'Amendment workflow')}
+        branchLabel={t('features.amendments.workflowPhases.result', 'Ergebnis')}
+        branches={branches}
+        compact
+        items={items}
+      />
+    </div>
+  );
+}
+
 export interface AmendmentWikiViewProps {
   amendmentId: any;
   t: any;
@@ -69,7 +148,6 @@ export interface AmendmentWikiViewProps {
   handleConfirmClone: any;
   usersData: any;
   normalizedVoteValue: any;
-  collaboratorSections: any;
   supporterDirectorySection: any;
 }
 
@@ -84,6 +162,7 @@ export function AmendmentWikiView({
   subscribeLoading,
   collaboration,
   amendment,
+  roles,
   collaborators,
   supporterDirectoryItems,
   supportingGroupCount,
@@ -111,7 +190,6 @@ export function AmendmentWikiView({
   handleConfirmClone,
   usersData,
   normalizedVoteValue,
-  collaboratorSections,
   supporterDirectorySection,
 }: AmendmentWikiViewProps) {
   if (!amendment) {
@@ -134,6 +212,30 @@ export function AmendmentWikiView({
   if (!canAccess) {
     return <AccessDenied />;
   }
+
+  const collaboratorRoles: WikiParticipationRole[] = (roles ?? [])
+    .map((role: any) => normalizeWikiParticipationRole(role))
+    .filter((role: WikiParticipationRole | null): role is WikiParticipationRole => Boolean(role));
+  const collaboratorRoleById = new Map(collaboratorRoles.map(role => [role.id, role]));
+  const collaboratorDirectoryItems: WikiParticipationItem[] = (collaborators ?? [])
+    .filter((collaborator: any) => isVisibleWikiParticipationStatus(collaborator.status))
+    .filter((collaborator: any) => collaborator.user?.id)
+    .map((collaborator: any) => {
+      const role =
+        normalizeWikiParticipationRole(collaborator.role) ??
+        (collaborator.role_id ? collaboratorRoleById.get(collaborator.role_id) : null);
+
+      return {
+        id: collaborator.id ?? `collaborator-${collaborator.user.id}`,
+        userId: collaborator.user.id,
+        name: getWikiParticipationName(collaborator.user),
+        handle: collaborator.user.handle ?? null,
+        email: collaborator.user.email ?? null,
+        avatar: collaborator.user.avatar ?? null,
+        status: collaborator.status ?? null,
+        roles: role ? [role] : [],
+      };
+    });
 
   return (
     <div>
@@ -235,7 +337,6 @@ export function AmendmentWikiView({
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
           { value: amendment.clone_count ?? clones.length, labelKey: 'components.labels.clones' },
           { value: supportingGroupCount, labelKey: 'components.labels.supportingGroups' },
-          { value: totalSupportingMembers, labelKey: 'components.labels.supportingMembers' },
           {
             value: amendment.change_request_count ?? (amendment.change_requests?.length || 0),
             labelKey: 'components.labels.changeRequests',
@@ -307,21 +408,32 @@ export function AmendmentWikiView({
       <InfoTabs
         about={amendment.code || 'No description available.'}
         contact={{}}
-        className="mb-12"
+        className="mb-8"
       />
 
-      {/* Collaborators Carousel */}
-      {collaboratorSections.length > 0 && (
-        <WikiIncumbentPanel
-          title={`Collaborators (${collaborators.length})`}
-          description={translateText(
-            'generated.inline.0072_active_collaborators_grouped_by_role_7813f854'
-          )}
-          sections={collaboratorSections}
-          icon={Users}
-          entityType="amendment"
-        />
-      )}
+      <AmendmentWorkflowPhaseRail mode={amendment.editing_mode} t={t} />
+
+      <WikiParticipationDirectory
+        title={translateText('generated.inline.0020_collaborators_6eb695e5', 'Collaborators')}
+        description={translateText(
+          'generated.inline.0072_active_collaborators_grouped_by_role_7813f854'
+        )}
+        items={collaboratorDirectoryItems}
+        roles={collaboratorRoles}
+        entityType="amendment"
+        searchPlaceholder={translateText(
+          'generated.inline.0099_search_collaborators_by_name_role_or_status_c0a4b06d',
+          'Search collaborators'
+        )}
+        emptyLabel={translateText(
+          'features.amendments.wiki.noCollaborators',
+          'No active collaborators yet.'
+        )}
+        noResultsLabel={translateText(
+          'features.amendments.wiki.noCollaboratorsMatch',
+          'No collaborators match your filters.'
+        )}
+      />
 
       {/* Supported By Section */}
       {supporterDirectoryItems.length > 0 && (

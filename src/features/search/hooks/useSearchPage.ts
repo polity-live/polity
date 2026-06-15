@@ -2,7 +2,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { useSearch } from '@tanstack/react-router';
 
+import { useAuth } from '@/providers/auth-provider';
 import { queries } from '@/zero/queries';
+import { useCommonState } from '@/zero/common';
+import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import {
   ALL_CONTENT_TYPES,
   type DateRangeFilter,
@@ -23,6 +26,7 @@ function createdAfterForRange(range: DateRangeFilter) {
 }
 
 export function useSearchPage() {
+  const { user } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
   const [totalResults, setTotalResults] = useState(0);
   const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
@@ -38,14 +42,26 @@ export function useSearchPage() {
     engagement,
     setEngagement,
     sortBy,
+    view,
+    setView,
   } = useSearchURL();
 
   const [topicRows] = useQuery(queries.search.searchDocumentTopics({ limit: 160 }));
+  const { userHashtags } = useCommonState({ user_id: user?.id });
+  const personalTopics = useMemo(() => extractHashtagTags(userHashtags), [userHashtags]);
 
-  const availableTopics = useMemo(
-    () => Array.from(new Set((topicRows ?? []).map(row => row.topic))).slice(0, 80),
-    [topicRows]
-  );
+  const availableTopics = useMemo(() => {
+    const seen = new Set<string>();
+
+    return [...personalTopics, ...(topicRows ?? []).map(row => row.topic)]
+      .filter(topic => {
+        const key = topic.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 80);
+  }, [personalTopics, topicRows]);
 
   const toggleContentType = useCallback(
     (type: ContentType) => {
@@ -91,6 +107,7 @@ export function useSearchPage() {
       engagement,
       sort: sortBy,
       snapshotAt: null,
+      bounds: null,
     }),
     [contentTypes, dateRange, engagement, searchQuery, sortBy, topics]
   );
@@ -109,7 +126,10 @@ export function useSearchPage() {
     setShowFilters,
     totalResults,
     setTotalResults,
+    view,
+    setView,
     availableTopics,
+    personalTopics,
     toggleContentType,
     toggleTopic,
     resetFilters,

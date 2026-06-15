@@ -173,6 +173,12 @@ describe('Zero query contracts', () => {
         engagement: 'popular',
         sort: 'engagement',
         direction: 'backward',
+        bounds: {
+          north: 53,
+          south: 52,
+          east: 14,
+          west: 13,
+        },
         start: {
           id: 'search-1',
           created_at: 1_700_000_000_000,
@@ -186,6 +192,10 @@ describe('Zero query contracts', () => {
     expect(calls).toEqual(
       expect.arrayContaining([
         ['where', 'search_text', 'ILIKE', '%budget%2026%'],
+        ['where', 'location_latitude', '>=', 52],
+        ['where', 'location_latitude', '<=', 53],
+        ['where', 'location_longitude', '>=', 13],
+        ['where', 'location_longitude', '<=', 14],
         ['where', 'entity_type', 'IN', ['group']],
         ['whereExists', 'topics', [['where', 'topic', 'finance']]],
         ['where', 'created_at', '>=', 1_600_000_000_000],

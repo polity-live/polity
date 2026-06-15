@@ -265,7 +265,7 @@ export function AgendaSpeakerListSectionView({
                   )}
                 </div>
               </div>
-            ) : (
+            ) : onAddToSpeakerList ? (
               <Button
                 onClick={onAddToSpeakerList}
                 disabled={!userId || isAddingSpeaker}
@@ -276,7 +276,7 @@ export function AgendaSpeakerListSectionView({
                   ? t('common.loading.default')
                   : t('features.events.agenda.joinSpeakerList')}
               </Button>
-            )}
+            ) : null}
           </CardContent>
         </CollapsibleContent>
       </Card>

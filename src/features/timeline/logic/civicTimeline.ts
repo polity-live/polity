@@ -16,6 +16,7 @@ export type CivicTimelineReason =
   | 'subscribed'
   | 'member_context'
   | 'near_you'
+  | 'interest_match'
   | 'active_now'
   | 'popular_nearby'
   | 'public_discovery'
@@ -59,6 +60,7 @@ export interface CivicTimelineItem {
   engagementScore?: number;
   isDiscover?: boolean;
   reason: CivicTimelineReason;
+  reasonTags?: string[];
   distanceKm?: number | null;
   score?: number;
   scoreBreakdown?: CivicTimelineScoreBreakdown;
@@ -76,6 +78,7 @@ export interface CivicTimelineScoreBreakdown {
 export interface CivicTimelineUserContext {
   userId: string;
   coordinates?: CivicTimelineCoordinates | null;
+  interestTags?: string[];
   now?: Date;
 }
 
@@ -245,16 +248,29 @@ function calculateEngagementScore(item: CivicTimelineItem): number {
   return clamp(Math.log10(rawScore + 1) / 3);
 }
 
+function calculateInterestMatchScore(item: CivicTimelineItem, context: CivicTimelineUserContext) {
+  if (!context.interestTags || context.interestTags.length === 0 || !item.tags?.length) {
+    return 0;
+  }
+
+  const interestSet = new Set(context.interestTags.map(tag => tag.toLowerCase()));
+  const matchingTags = item.tags.filter(tag => interestSet.has(tag.toLowerCase()));
+
+  return clamp(matchingTags.length / Math.min(context.interestTags.length, 3));
+}
+
 export function scoreCivicTimelineItem(
   item: CivicTimelineItem,
   context: CivicTimelineUserContext
 ): CivicTimelineItem {
   const now = context.now ?? new Date();
   const distanceKm = calculateDistanceKm(context.coordinates, item.coordinates);
+  const interestMatchScore = calculateInterestMatchScore(item, context);
   const breakdown: CivicTimelineScoreBreakdown = {
     relationship:
-      clamp(item.relationshipStrength ?? (item.isDiscover ? 0 : 0.65)) *
-      SCORING_WEIGHTS.relationship,
+      clamp(
+        (item.relationshipStrength ?? (item.isDiscover ? 0 : 0.65)) + interestMatchScore * 0.35
+      ) * SCORING_WEIGHTS.relationship,
     proximity: calculateProximityScore(distanceKm) * SCORING_WEIGHTS.proximity,
     urgency: calculateUrgencyScore(item, now) * SCORING_WEIGHTS.urgency,
     freshness: calculateFreshnessScore(item, now) * SCORING_WEIGHTS.freshness,

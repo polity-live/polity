@@ -4,19 +4,60 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { usePublicGroups } from '@/zero/groups/useGroupState.ts';
 import type { Group } from '../hooks/useOnboarding.ts';
-import { buildLocationSearchValue, formatLocation } from '@/features/shared/logic/locationHelpers';
+import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 
+type PublicGroup = NonNullable<ReturnType<typeof usePublicGroups>['groups']>[number];
+
 interface GroupSearchStepProps {
-  selectedGroup: Group | null;
-  onSelectGroup: (group: Group | null) => void;
+  selectedGroups: Group[];
+  interestTags: string[];
+  activeGroupId: string | null;
+  onToggleGroup: (group: Group) => void;
+  onActiveGroupChange: (groupId: string | null) => void;
+  onClearSelectedGroups: () => void;
   onNext: () => void;
   onBack: () => void;
   isLoading?: boolean;
 }
+
+function toOnboardingGroup(group: PublicGroup): Group {
+  const location = formatLocation(group);
+  const description = richTextToPlainText(group.description);
+  const hashtags =
+    group.group_hashtags
+      ?.map(junction => junction.hashtag?.tag)
+      .filter((tag): tag is string => !!tag) ?? [];
+
+  return {
+    id: group.id,
+    name: group.name ?? '',
+    description: description || undefined,
+    member_count: group.member_count ?? 0,
+    location: location || undefined,
+    visibility: group.visibility ?? 'public',
+    latitude: typeof group.latitude === 'number' ? group.latitude : null,
+    longitude: typeof group.longitude === 'number' ? group.longitude : null,
+    hashtags,
+  };
+}
+
+function hasMappableCoordinates(group: Group) {
+  return (
+    typeof group.latitude === 'number' &&
+    Number.isFinite(group.latitude) &&
+    typeof group.longitude === 'number' &&
+    Number.isFinite(group.longitude)
+  );
+}
+
 export function useGroupSearchStepController({
-  selectedGroup,
-  onSelectGroup,
+  selectedGroups,
+  interestTags,
+  activeGroupId,
+  onToggleGroup,
+  onActiveGroupChange,
+  onClearSelectedGroups,
   onNext,
   onBack,
   isLoading,
@@ -27,50 +68,92 @@ export function useGroupSearchStepController({
   // Query all public groups via facade
   const { groups: groupsData, isLoading: groupsLoading } = usePublicGroups();
 
+  const normalizedInterestTags = useMemo(
+    () => interestTags.map(tag => tag.toLowerCase()),
+    [interestTags]
+  );
+
+  const groups = useMemo(() => {
+    return (groupsData ?? []).map(group => {
+      const onboardingGroup = toOnboardingGroup(group);
+      const matchingInterestTags =
+        onboardingGroup.hashtags?.filter(tag =>
+          normalizedInterestTags.includes(tag.toLowerCase())
+        ) ?? [];
+
+      return {
+        ...onboardingGroup,
+        matchingInterestTags,
+      };
+    });
+  }, [groupsData, normalizedInterestTags]);
+
   // Filter groups based on search term
   const filteredGroups = useMemo(() => {
-    const groups = groupsData ?? [];
+    const sortByInterestMatch = (groupList: Group[]) =>
+      [...groupList].sort((left, right) => {
+        const leftMatches = left.matchingInterestTags?.length ?? 0;
+        const rightMatches = right.matchingInterestTags?.length ?? 0;
+
+        if (leftMatches !== rightMatches) return rightMatches - leftMatches;
+        return (right.member_count ?? 0) - (left.member_count ?? 0);
+      });
+
     if (!searchTerm.trim()) {
-      return groups.slice(0, 10); // Show first 10 if no search
+      return sortByInterestMatch(groups).slice(0, 10); // Show first 10 if no search
     }
 
     const term = searchTerm.toLowerCase();
-    return groups.filter(group => {
-      const description = richTextToPlainText(group.description).toLowerCase();
+    return sortByInterestMatch(
+      groups.filter(group => {
+        return (
+          group.name?.toLowerCase().includes(term) ||
+          group.description?.toLowerCase().includes(term) ||
+          group.location?.toLowerCase().includes(term) ||
+          group.hashtags?.some(tag => tag.toLowerCase().includes(term))
+        );
+      })
+    );
+  }, [groups, searchTerm]);
 
-      return (
-        group.name?.toLowerCase().includes(term) ||
-        description.includes(term) ||
-        buildLocationSearchValue(group).includes(term)
-      );
-    });
-  }, [groupsData, searchTerm]);
+  const selectedGroupIds = useMemo(
+    () => new Set(selectedGroups.map(group => group.id)),
+    [selectedGroups]
+  );
 
-  const handleSelectGroup = (group: (typeof filteredGroups)[number]) => {
-    const location = formatLocation(group);
-    const description = richTextToPlainText(group.description);
+  const mappableGroups = useMemo(
+    () => filteredGroups.filter(hasMappableCoordinates),
+    [filteredGroups]
+  );
 
-    if (selectedGroup?.id === group.id) {
-      onSelectGroup(null); // Deselect
-    } else {
-      onSelectGroup({
-        id: group.id,
-        name: group.name ?? '',
-        description: description || undefined,
-        member_count: group.member_count || 0,
-        location: location || undefined,
-        visibility: group.visibility ?? 'public',
-      });
-    }
+  const activeGroup =
+    filteredGroups.find(group => group.id === activeGroupId) ??
+    selectedGroups.find(group => group.id === activeGroupId) ??
+    selectedGroups[0] ??
+    null;
+
+  const handleSelectGroup = (group: Group) => {
+    onActiveGroupChange(group.id);
+    onToggleGroup(group);
+  };
+
+  const handleActivateGroup = (groupId: string | null) => {
+    onActiveGroupChange(groupId);
   };
 
   const handleSkip = () => {
-    onSelectGroup(null);
+    onClearSelectedGroups();
     onNext();
   };
   return {
-    selectedGroup,
-    onSelectGroup,
+    selectedGroups,
+    selectedGroupIds,
+    activeGroupId,
+    activeGroup,
+    hasSelectedGroups: selectedGroups.length > 0,
+    mappableGroups,
+    unmappableGroupCount: filteredGroups.length - mappableGroups.length,
+    onClearSelectedGroups,
     onNext,
     onBack,
     isLoading,
@@ -81,6 +164,7 @@ export function useGroupSearchStepController({
     groupsLoading,
     filteredGroups,
     handleSelectGroup,
+    handleActivateGroup,
     handleSkip,
   };
 }

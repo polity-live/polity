@@ -144,6 +144,9 @@ describe('NotificationItem', () => {
     expect(card).toBeTruthy();
     expect(card?.getAttribute('data-mode')).toBe('entity');
     expect(container.querySelector('[data-slot="feed-list"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="notification-list-item"]')?.className).toContain(
+      'civic-load-card-reveal'
+    );
     expectNoLeftBorderClasses(container);
   });
 });

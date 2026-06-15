@@ -84,4 +84,20 @@ describe('AgendaActionBar', () => {
 
     expect(screen.queryByText('Enter Tally')).toBeNull();
   });
+
+  it('renders the Vote button for pending votable items when voting is available', () => {
+    const { container } = render(
+      <AgendaActionBar
+        {...baseProps}
+        currentAgendaItem={{
+          ...baseProps.currentAgendaItem,
+          voting_phase: 'pending',
+        }}
+        canVote
+        onVoteClick={() => undefined}
+      />
+    );
+
+    expect(container.querySelector('.civic-ballot-submit')).toBeTruthy();
+  });
 });

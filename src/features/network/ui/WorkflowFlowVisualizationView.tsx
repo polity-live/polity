@@ -1,7 +1,7 @@
 'use client';
 import { featureThemeClassName } from '@/features/shared/theme';
-import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
-import { NetworkControlPanel } from '@/features/network/ui/NetworkControlPanel';
+import { CivicNetworkFlow } from '@/features/network/ui/CivicNetworkFlow';
+import { createWorkflowStepLegendItem } from '@/features/network/ui/networkVisualHelpers';
 import { CheckCircle2, Clock3 } from 'lucide-react';
 interface WorkflowFlowVisualizationStep {
   id: string;
@@ -69,7 +69,7 @@ export function WorkflowFlowVisualizationView({
   }
 
   return (
-    <NetworkFlowBase
+    <CivicNetworkFlow
       nodes={nodes}
       edges={edges}
       nodesDraggable={isInteractive}
@@ -80,61 +80,53 @@ export function WorkflowFlowVisualizationView({
       onEdgesChange={isInteractive ? onEdgesChange : undefined}
       onInteractiveChange={handleInteractiveChange}
       containerClassName="h-full min-h-0"
-      panel={
-        <NetworkControlPanel
-          title={workflow.name ?? t('features.network.workflows.title')}
-          description={workflow.description ?? undefined}
-          panelCollapsed={panelCollapsed}
-          onPanelCollapsedChange={setPanelCollapsed}
-          legendCollapsed={legendCollapsed}
-          onLegendCollapsedChange={setLegendCollapsed}
-          legendTitle={t('common.network.legend')}
-          legendItems={[
-            {
-              id: 'start-step',
-              label: t('features.network.workflows.legendStart'),
-              swatchClassName: featureThemeClassName(
-                'amendmentAmendmentPathVisualizationThemedSurfaceAlpha'
-              ),
-            },
-            {
-              id: 'intermediate-step',
-              label: t('features.network.workflows.legendIntermediate'),
-              swatchClassName: featureThemeClassName(
-                'networkWorkflowFlowVisualizationThemedSurface'
-              ),
-            },
-            {
-              id: 'end-step',
-              label: t('features.network.workflows.legendEnd'),
-              swatchClassName: featureThemeClassName(
-                'networkWorkflowFlowVisualizationThemedSurfaceAlpha'
-              ),
-            },
-            {
-              id: 'workflow-approval-state',
-              label: isAcceptedByAllGroups
-                ? t('features.network.workflows.legendAccepted')
-                : t('features.network.workflows.legendPending'),
-              swatch: isAcceptedByAllGroups ? (
-                <CheckCircle2
-                  className={featureThemeClassName('networkWorkflowFlowVisualizationSuccessIcon')}
-                />
-              ) : (
-                <Clock3
-                  className={featureThemeClassName('networkWorkflowFlowVisualizationWarningIcon')}
-                />
-              ),
-            },
-          ]}
-          showDisplayControls={false}
-          showInteractiveToggle
-          isInteractive={isInteractive}
-          onInteractiveChange={setIsInteractive}
-          lockLabel={t('common.network.lockEditor')}
-          unlockLabel={t('common.network.unlockEditor')}
-        />
-      }
+      panelConfig={{
+        title: workflow.name ?? t('features.network.workflows.title'),
+        description: workflow.description ?? undefined,
+        panelCollapsed,
+        onPanelCollapsedChange: setPanelCollapsed,
+        legendCollapsed,
+        onLegendCollapsedChange: setLegendCollapsed,
+        legendTitle: t('common.network.legend'),
+        showDisplayControls: false,
+        showInteractiveToggle: true,
+        isInteractive,
+        onInteractiveChange: setIsInteractive,
+        lockLabel: t('common.network.lockEditor'),
+        unlockLabel: t('common.network.unlockEditor'),
+      }}
+      legendItems={[
+        createWorkflowStepLegendItem({
+          id: 'start-step',
+          label: t('features.network.workflows.legendStart'),
+          role: 'start',
+        }),
+        createWorkflowStepLegendItem({
+          id: 'intermediate-step',
+          label: t('features.network.workflows.legendIntermediate'),
+          role: 'intermediate',
+        }),
+        createWorkflowStepLegendItem({
+          id: 'end-step',
+          label: t('features.network.workflows.legendEnd'),
+          role: 'end',
+        }),
+        {
+          id: 'workflow-approval-state',
+          label: isAcceptedByAllGroups
+            ? t('features.network.workflows.legendAccepted')
+            : t('features.network.workflows.legendPending'),
+          swatch: isAcceptedByAllGroups ? (
+            <CheckCircle2
+              className={featureThemeClassName('networkWorkflowFlowVisualizationSuccessIcon')}
+            />
+          ) : (
+            <Clock3
+              className={featureThemeClassName('networkWorkflowFlowVisualizationWarningIcon')}
+            />
+          ),
+        },
+      ]}
     />
   );
 }

@@ -80,7 +80,7 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
         </p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {unique.map(collab => {
+          {unique.map((collab, index) => {
             const a = collab.amendment;
             const hashtagTags = (a.amendment_hashtags ?? [])
               .map(j => j.hashtag?.tag)
@@ -94,22 +94,27 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
                   : undefined;
 
             return (
-              <AmendmentTimelineCard
+              <div
                 key={a.id}
-                amendment={{
-                  id: String(a.id),
-                  title: a.title ?? '',
-                  subtitle: a.reason ?? undefined,
-                  description: a.reason ?? undefined,
-                  status: normalizeEditingMode(a.editing_mode),
-                  groupName: a.group?.name ?? undefined,
-                  groupId: a.group?.id,
-                  hashtags: tags?.map((tag, index) => ({
-                    id: `${a.id}-${index}-${tag}`,
-                    tag,
-                  })),
-                }}
-              />
+                className="civic-load-card-reveal"
+                style={{ '--civic-load-index': Math.min(index, 11) } as React.CSSProperties}
+              >
+                <AmendmentTimelineCard
+                  amendment={{
+                    id: String(a.id),
+                    title: a.title ?? '',
+                    subtitle: a.reason ?? undefined,
+                    description: a.reason ?? undefined,
+                    status: normalizeEditingMode(a.editing_mode),
+                    groupName: a.group?.name ?? undefined,
+                    groupId: a.group?.id,
+                    hashtags: tags?.map((tag, index) => ({
+                      id: `${a.id}-${index}-${tag}`,
+                      tag,
+                    })),
+                  }}
+                />
+              </div>
             );
           })}
         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { UserPlus } from 'lucide-react';
+import { useActionSubmission } from '@/features/shared/ui/action-submission';
 import type { ParticipationRoleLike } from '@/features/shared/types/participation';
 import type { GroupConflictResponse } from '../logic/groupConflict';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -80,6 +81,7 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
   submitConflictResponse,
   submitConflictLoading = false,
 }: InviteMembersDialogProps<TRole>) {
+  const actionSubmission = useActionSubmission('invite');
   const defaultRoleId = useMemo(
     () =>
       roles.find(role => role.default_invite_role)?.id ??
@@ -123,8 +125,21 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
       {triggerLabel}
     </Button>
   );
+
+  const handleInvite = () => {
+    void actionSubmission
+      .runActionWithSubmission(async () => onInvite(), {
+        onSuccess: () => {
+          actionSubmission.reset();
+          onOpenChange(false);
+        },
+      })
+      .catch(() => undefined);
+  };
+
   return (
     <InviteMembersDialogView
+      actionSubmission={actionSubmission}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       selectedUsers={selectedUsers}
@@ -134,7 +149,7 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
       roles={roles}
       selectedRoleIds={selectedRoleIds}
       onSelectedRoleIdsChange={onSelectedRoleIdsChange}
-      onInvite={onInvite}
+      onInvite={handleInvite}
       isInviting={isInviting}
       disabled={disabled}
       disabledReason={disabledReason}

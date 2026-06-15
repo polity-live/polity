@@ -1,11 +1,11 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useRef } from 'react';
-import { SEARCH_CARD_GRADIENTS } from '@/features/shared/utils/search-card-gradients';
 import { Conversation } from '../types/message.types';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { ConversationFilter } from '../hooks/useConversationFilters';
 
 interface ConversationListProps {
+  isLoading?: boolean;
   conversations: Conversation[];
   conversationOnlineStatus: Readonly<Record<string, boolean>>;
   selectedConversationId: string | null;
@@ -22,6 +22,7 @@ interface ConversationListProps {
 }
 import { ConversationListView } from './ConversationListView';
 export function ConversationList({
+  isLoading = false,
   conversations,
   conversationOnlineStatus,
   selectedConversationId,
@@ -39,11 +40,6 @@ export function ConversationList({
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const filterButtons: ConversationFilter[] = ['all', 'direct', 'group', 'event', 'ai'];
-  const filterGradients: Partial<Record<ConversationFilter, string>> = {
-    direct: SEARCH_CARD_GRADIENTS.user,
-    group: SEARCH_CARD_GRADIENTS.group,
-    event: SEARCH_CARD_GRADIENTS.event,
-  };
   const rowVirtualizer = useVirtualizer({
     count: conversations.length,
     getScrollElement: () => scrollRef.current,
@@ -59,7 +55,7 @@ export function ConversationList({
       conversations={conversations}
       currentUserId={currentUserId}
       filterButtons={filterButtons}
-      filterGradients={filterGradients}
+      isLoading={isLoading}
       onConversationFilterChange={onConversationFilterChange}
       onDeleteConversationClick={onDeleteConversationClick}
       onNewAiConversationClick={onNewAiConversationClick}

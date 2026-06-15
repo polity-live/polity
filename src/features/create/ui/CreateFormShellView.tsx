@@ -1,12 +1,25 @@
 import { FormStyleSelector } from './FormStyleSelector';
 import { CarouselFormLayout } from './CarouselFormLayout';
 import { OnePageFormLayout } from './OnePageFormLayout';
-import { SettingsPanel } from '@/features/shared/ui/form';
-import type { CreateFormConfig } from '../types/create-form.types';
+import type { ContentType } from '@/features/timeline/constants/content-type-config';
+import type {
+  CreateFormConfig,
+  CreateSubmitProgressStep,
+  CreateSubmitTarget,
+} from '../types/create-form.types';
 import type { CreateFormStyle } from '@/zero/preferences/schema';
+import {
+  CreateSubmissionOverlay,
+  type CreateSubmissionOverlayStatus,
+} from './CreateSubmissionOverlay';
+import { cn } from '@/features/shared/utils/utils';
+import { LayoutGroup } from 'motion/react';
+import { getCreateReviewPreview } from '../logic/createReviewPreview';
+import { CreateFlowFrame } from './CreateFlowFrame';
 
 interface CreateFormShellViewProps {
   title: string;
+  entityType: ContentType;
   isCarouselLayout: boolean;
   selectedFormStyle: CreateFormStyle;
   steps: CreateFormConfig['steps'];
@@ -14,11 +27,21 @@ interface CreateFormShellViewProps {
   isSubmitting: boolean;
   onFormStyleChange: (style: CreateFormStyle) => void;
   onStepChange: (step: number) => void;
-  onSubmit: CreateFormConfig['onSubmit'];
+  onSubmit: () => Promise<void>;
+  submission: {
+    status: CreateSubmissionOverlayStatus;
+    target: CreateSubmitTarget | null;
+    error: unknown;
+    progressSteps: CreateSubmitProgressStep[];
+    onNavigate: () => void;
+    onBack: () => void;
+    onRetry: () => void;
+  };
 }
 
 export function CreateFormShellView({
   title,
+  entityType,
   isCarouselLayout,
   selectedFormStyle,
   steps,
@@ -27,31 +50,51 @@ export function CreateFormShellView({
   onFormStyleChange,
   onStepChange,
   onSubmit,
+  submission,
 }: CreateFormShellViewProps) {
   const Layout = isCarouselLayout ? CarouselFormLayout : OnePageFormLayout;
+  const overlayOpen = submission.status !== 'idle';
+  const reviewPreview = getCreateReviewPreview(steps);
 
   return (
-    <div
-      className={
-        isCarouselLayout
-          ? 'flex h-[calc(100dvh-3rem)] min-h-0 w-full flex-col overflow-hidden'
-          : 'w-full'
-      }
-    >
-      <SettingsPanel
-        title={title}
-        action={<FormStyleSelector value={selectedFormStyle} onChange={onFormStyleChange} />}
-        className={isCarouselLayout ? 'flex min-h-0 flex-1 flex-col overflow-hidden' : undefined}
-        contentClassName={isCarouselLayout ? 'flex min-h-0 flex-1 flex-col' : undefined}
+    <LayoutGroup id={`create-${entityType}`}>
+      <div
+        aria-hidden={overlayOpen || undefined}
+        className={cn(
+          isCarouselLayout
+            ? 'flex h-[calc(100dvh-3rem)] min-h-0 w-full flex-col overflow-hidden'
+            : 'w-full',
+          overlayOpen &&
+            'pointer-events-none opacity-30 blur-[1px] transition-[filter,opacity] duration-[var(--motion-duration-base)] select-none'
+        )}
       >
-        <Layout
-          steps={steps}
-          currentStep={currentStep}
-          onStepChange={onStepChange}
-          onSubmit={onSubmit}
-          isSubmitting={isSubmitting}
-        />
-      </SettingsPanel>
-    </div>
+        <CreateFlowFrame
+          title={title}
+          action={<FormStyleSelector value={selectedFormStyle} onChange={onFormStyleChange} />}
+          isCarouselLayout={isCarouselLayout}
+        >
+          <Layout
+            steps={steps}
+            currentStep={currentStep}
+            onStepChange={onStepChange}
+            onSubmit={onSubmit}
+            isSubmitting={isSubmitting}
+          />
+        </CreateFlowFrame>
+      </div>
+
+      <CreateSubmissionOverlay
+        status={submission.status}
+        entityType={entityType}
+        title={title}
+        target={submission.target}
+        error={submission.error}
+        progressSteps={submission.progressSteps}
+        reviewPreview={reviewPreview}
+        onNavigate={submission.onNavigate}
+        onBack={submission.onBack}
+        onRetry={submission.onRetry}
+      />
+    </LayoutGroup>
   );
 }

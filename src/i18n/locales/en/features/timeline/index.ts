@@ -289,6 +289,8 @@ export const timelineTranslations = {
       subscribed: 'Following',
       memberContext: 'Connected',
       nearYou: 'Near you',
+      interestMatch: 'Because of your interests',
+      interestMatchTag: 'Because of #{{tag}}',
       activeNow: 'Active now',
       popularNearby: 'Popular nearby',
       publicDiscovery: 'Discover',

@@ -89,6 +89,37 @@ describe('civic timeline logic', () => {
     expect(ranked[0].scoreBreakdown?.urgency).toBeGreaterThan(15);
   });
 
+  it('boosts discover items that match user interest tags', () => {
+    const ranked = rankCivicTimelineItems(
+      [
+        item({
+          id: 'general-discover',
+          type: 'group',
+          title: 'General discover item',
+          isDiscover: true,
+          reason: 'public_discovery',
+          tags: ['sports'],
+          relationshipStrength: 0.1,
+        }),
+        item({
+          id: 'interest-discover',
+          type: 'group',
+          title: 'Interest discover item',
+          isDiscover: true,
+          reason: 'interest_match',
+          tags: ['housing'],
+          relationshipStrength: 0.1,
+        }),
+      ],
+      { userId: 'user-1', coordinates: berlin, interestTags: ['housing'], now }
+    );
+
+    expect(ranked[0].id).toBe('interest-discover');
+    expect(ranked[0].scoreBreakdown?.relationship).toBeGreaterThan(
+      ranked[1].scoreBreakdown?.relationship ?? 0
+    );
+  });
+
   it('uses discover fallback only when primary activity is sparse and dedupes entities', () => {
     const timeline = buildCivicTimelineItems({
       primaryItems: [item({ id: 'event-1', entityId: 'shared', type: 'event' })],
