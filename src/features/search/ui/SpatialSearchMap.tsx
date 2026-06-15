@@ -1,28 +1,22 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ComponentType,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
-import {
-  featureThemeClassName,
-  featureThemeMarkup,
-  featureThemeValue,
-} from '@/features/shared/theme';
+import { featureThemeMarkup, featureThemeValue } from '@/features/shared/theme';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import {
-  getSpiderfyOffsets,
-  spatialCoordinateKey,
-  type SearchBounds,
-  type SearchSpatialItem,
-  type SpatialCoordinates,
-} from '../logic/searchSpatial';
+import { type SearchBounds, type SearchSpatialItem } from '../logic/searchSpatial';
 
 type ReactLeafletModule = typeof import('react-leaflet');
 type LeafletModule = typeof import('leaflet');
-type LeafletMap = import('leaflet').Map;
 type LeafletDivIcon = import('leaflet').DivIcon;
-
-const CLUSTER_RADIUS_PX = 36;
-const CLUSTER_MAX_ZOOM = 17;
 
 interface SpatialSearchMapProps {
   items: SearchSpatialItem[];
@@ -32,6 +26,27 @@ interface SpatialSearchMapProps {
   onBoundsChange: (bounds: SearchBounds) => void;
   onActiveDocumentChange?: (documentId: string | null) => void;
   onItemSelect: (documentId: string) => void;
+}
+
+interface MarkerClusterGroupProps {
+  children: ReactNode;
+  chunkedLoading?: boolean;
+  iconCreateFunction?: (cluster: { getChildCount: () => number }) => LeafletDivIcon;
+  maxClusterRadius?: number;
+  showCoverageOnHover?: boolean;
+  spiderfyDistanceMultiplier?: number;
+  spiderfyOnEveryZoom?: boolean;
+  spiderfyOnMaxZoom?: boolean;
+  spiderLegPolylineOptions?: {
+    color: string;
+    opacity: number;
+    weight: number;
+  };
+  zoomToBoundsOnClick?: boolean;
+}
+
+interface LeafletMouseEventLike {
+  originalEvent?: Event;
 }
 
 function getMarkerColor(type: string) {
@@ -57,23 +72,12 @@ function getMarkerColor(type: string) {
   }
 }
 
-interface SpatialMarkerCluster {
-  id: string;
-  items: SearchSpatialItem[];
-  coordinates: SpatialCoordinates;
-  isExactStack: boolean;
-}
-
-interface SpatialSpiderfiedItem {
-  item: SearchSpatialItem;
-  coordinates: SpatialCoordinates;
-}
-
 function clusterCountLabel(count: number) {
   return count > 99 ? '99+' : String(count);
 }
 
-function createClusterIcon(leafletModule: LeafletModule, count: number) {
+function createClusterIcon(leafletModule: LeafletModule, cluster: { getChildCount: () => number }) {
+  const count = cluster.getChildCount();
   const size = count > 99 ? 44 : count > 9 ? 40 : 34;
 
   return leafletModule.divIcon({
@@ -81,96 +85,6 @@ function createClusterIcon(leafletModule: LeafletModule, count: number) {
     html: `<span style="display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:9999px;background:hsl(var(--primary));color:hsl(var(--primary-foreground));border:2px solid white;box-shadow:0 2px 10px rgba(15,23,42,.35);font-size:12px;font-weight:700;">${clusterCountLabel(count)}</span>`,
     iconAnchor: [size / 2, size / 2],
     iconSize: [size, size],
-  });
-}
-
-function squaredDistance(left: { x: number; y: number }, right: { x: number; y: number }) {
-  const dx = left.x - right.x;
-  const dy = left.y - right.y;
-  return dx * dx + dy * dy;
-}
-
-function buildMarkerClusters(items: SearchSpatialItem[], map: LeafletMap): SpatialMarkerCluster[] {
-  const zoom = map.getZoom();
-  const clusters: {
-    items: SearchSpatialItem[];
-    point: { x: number; y: number };
-  }[] = [];
-  const radiusSquared = CLUSTER_RADIUS_PX * CLUSTER_RADIUS_PX;
-
-  for (const item of items) {
-    const point = map.project([item.coordinates.latitude, item.coordinates.longitude], zoom);
-    let nearestCluster:
-      | {
-          items: SearchSpatialItem[];
-          point: { x: number; y: number };
-        }
-      | undefined;
-
-    for (const cluster of clusters) {
-      if (squaredDistance(cluster.point, point) <= radiusSquared) {
-        nearestCluster = cluster;
-        break;
-      }
-    }
-
-    if (!nearestCluster) {
-      clusters.push({
-        items: [item],
-        point: { x: point.x, y: point.y },
-      });
-      continue;
-    }
-
-    const nextCount = nearestCluster.items.length + 1;
-    nearestCluster.point = {
-      x: (nearestCluster.point.x * nearestCluster.items.length + point.x) / nextCount,
-      y: (nearestCluster.point.y * nearestCluster.items.length + point.y) / nextCount,
-    };
-    nearestCluster.items.push(item);
-  }
-
-  return clusters.map(cluster => {
-    const keys = new Set(cluster.items.map(item => spatialCoordinateKey(item.coordinates)));
-    const isExactStack = keys.size === 1;
-    const center = isExactStack
-      ? cluster.items[0].coordinates
-      : (() => {
-          const latLng = map.unproject([cluster.point.x, cluster.point.y], zoom);
-          return { latitude: latLng.lat, longitude: latLng.lng };
-        })();
-
-    return {
-      id: cluster.items.map(item => item.id).join('|'),
-      items: cluster.items,
-      coordinates: center,
-      isExactStack,
-    };
-  });
-}
-
-function getSpiderfiedItems(
-  cluster: SpatialMarkerCluster,
-  map: LeafletMap
-): SpatialSpiderfiedItem[] {
-  const zoom = map.getZoom();
-  const centerPoint = map.project(
-    [cluster.coordinates.latitude, cluster.coordinates.longitude],
-    zoom
-  );
-  const offsets = getSpiderfyOffsets(cluster.items.length);
-
-  return cluster.items.map((item, index) => {
-    const offset = offsets[index] ?? { x: 0, y: 0 };
-    const latLng = map.unproject([centerPoint.x + offset.x, centerPoint.y + offset.y], zoom);
-
-    return {
-      item,
-      coordinates: {
-        latitude: latLng.lat,
-        longitude: latLng.lng,
-      },
-    };
   });
 }
 
@@ -265,6 +179,7 @@ function SpatialSearchMarkers({
   items,
   activeDocumentId,
   reactLeafletModule,
+  MarkerClusterGroup,
   leafletModule,
   iconsByType,
   activeIcon,
@@ -274,172 +189,72 @@ function SpatialSearchMarkers({
   items: SearchSpatialItem[];
   activeDocumentId?: string | null;
   reactLeafletModule: ReactLeafletModule;
+  MarkerClusterGroup: ComponentType<MarkerClusterGroupProps>;
   leafletModule: LeafletModule;
   iconsByType: Map<string, LeafletDivIcon>;
   activeIcon: LeafletDivIcon;
   onActiveDocumentChange?: (documentId: string | null) => void;
   onItemSelect: (documentId: string) => void;
 }) {
-  const { Marker, Polyline, Tooltip, useMap, useMapEvents } = reactLeafletModule;
-  const map = useMap();
-  const [mapRevision, setMapRevision] = useState(0);
-  const [spiderfiedClusterId, setSpiderfiedClusterId] = useState<string | null>(null);
-
-  const refreshClusters = useCallback(() => {
-    setMapRevision(revision => revision + 1);
-  }, []);
-
-  useMapEvents({
-    moveend: refreshClusters,
-    zoomend: () => {
-      setSpiderfiedClusterId(null);
-      refreshClusters();
-    },
-  });
-
-  const clusters = useMemo(() => buildMarkerClusters(items, map), [items, map, mapRevision]);
-  const clusterIcons = useMemo(() => {
-    const icons = new Map<number, LeafletDivIcon>();
-    for (const cluster of clusters) {
-      if (cluster.items.length <= 1 || icons.has(cluster.items.length)) continue;
-      icons.set(cluster.items.length, createClusterIcon(leafletModule, cluster.items.length));
-    }
-    return icons;
-  }, [clusters, leafletModule]);
-
-  useEffect(() => {
-    if (!activeDocumentId) return;
-
-    const activeCluster = clusters.find(
-      cluster =>
-        cluster.items.length > 1 && cluster.items.some(item => item.id === activeDocumentId)
-    );
-
-    if (activeCluster) {
-      setSpiderfiedClusterId(activeCluster.id);
-    }
-  }, [activeDocumentId, clusters]);
-
-  const spiderfiedCluster = clusters.find(cluster => cluster.id === spiderfiedClusterId) ?? null;
-  const spiderfiedItems = spiderfiedCluster ? getSpiderfiedItems(spiderfiedCluster, map) : [];
-  const spiderfiedItemIds = new Set(spiderfiedItems.map(({ item }) => item.id));
-
-  const handleClusterClick = useCallback(
-    (cluster: SpatialMarkerCluster) => {
-      onActiveDocumentChange?.(cluster.items[0]?.id ?? null);
-
-      if (cluster.isExactStack || map.getZoom() >= CLUSTER_MAX_ZOOM) {
-        setSpiderfiedClusterId(currentId => (currentId === cluster.id ? null : cluster.id));
-        return;
-      }
-
-      const bounds = leafletModule.latLngBounds(
-        cluster.items.map(
-          item => [item.coordinates.latitude, item.coordinates.longitude] as [number, number]
-        )
-      );
-
-      if (bounds.isValid()) {
-        map.fitBounds(bounds.pad(0.25), {
-          animate: true,
-          maxZoom: CLUSTER_MAX_ZOOM,
-        });
-      } else {
-        setSpiderfiedClusterId(cluster.id);
-      }
-    },
-    [leafletModule, map, onActiveDocumentChange]
+  const { Marker, Tooltip } = reactLeafletModule;
+  const iconCreateFunction = useCallback(
+    (cluster: { getChildCount: () => number }) => createClusterIcon(leafletModule, cluster),
+    [leafletModule]
+  );
+  const spiderLegPolylineOptions = useMemo(
+    () => ({
+      color: featureThemeValue('networkAmendmentPathVisualizationNeutralColorBeta'),
+      opacity: 0.55,
+      weight: 1,
+    }),
+    []
   );
 
-  const renderItemMarker = (
-    item: SearchSpatialItem,
-    coordinates: SpatialCoordinates = item.coordinates
-  ) => {
-    const isActive = item.id === activeDocumentId;
-    const markerIcon = isActive ? activeIcon : iconsByType.get(item.type);
-    if (!markerIcon) return null;
-
-    return (
-      <Marker
-        key={coordinates === item.coordinates ? item.id : `spider-${item.id}`}
-        position={[coordinates.latitude, coordinates.longitude]}
-        icon={markerIcon}
-        eventHandlers={{
-          mouseover: () => onActiveDocumentChange?.(item.id),
-          click: () => onItemSelect(item.id),
-        }}
-      >
-        <Tooltip permanent={isActive} direction="top" offset={[0, -12]} opacity={1}>
-          <div className="max-w-48">
-            <div className="text-xs font-semibold">{item.title}</div>
-            {item.locationLabel ? (
-              <div className={featureThemeClassName('timelineCivicTimelineMapNeutralText')}>
-                {item.locationLabel}
-              </div>
-            ) : null}
-          </div>
-        </Tooltip>
-      </Marker>
-    );
-  };
-
   return (
-    <>
-      {clusters.map(cluster => {
-        if (cluster.items.length === 1) {
-          const item = cluster.items[0];
-          return spiderfiedItemIds.has(item.id) ? null : renderItemMarker(item);
-        }
-
-        if (cluster.id === spiderfiedClusterId) return null;
-
-        const clusterIcon = clusterIcons.get(cluster.items.length);
-        if (!clusterIcon) return null;
+    <MarkerClusterGroup
+      chunkedLoading
+      iconCreateFunction={iconCreateFunction}
+      maxClusterRadius={44}
+      showCoverageOnHover={false}
+      spiderfyDistanceMultiplier={1.15}
+      spiderfyOnEveryZoom={false}
+      spiderfyOnMaxZoom
+      spiderLegPolylineOptions={spiderLegPolylineOptions}
+      zoomToBoundsOnClick
+    >
+      {items.map(item => {
+        const isActive = item.id === activeDocumentId;
+        const markerIcon = isActive ? activeIcon : iconsByType.get(item.type);
+        if (!markerIcon) return null;
 
         return (
           <Marker
-            key={cluster.id}
-            position={[cluster.coordinates.latitude, cluster.coordinates.longitude]}
-            icon={clusterIcon}
+            key={item.id}
+            position={[item.coordinates.latitude, item.coordinates.longitude]}
+            icon={markerIcon}
+            bubblingMouseEvents={false}
             eventHandlers={{
-              click: () => handleClusterClick(cluster),
+              click: (event?: LeafletMouseEventLike) => {
+                if (event?.originalEvent) {
+                  leafletModule.DomEvent.stopPropagation(event.originalEvent);
+                }
+                onActiveDocumentChange?.(item.id);
+                onItemSelect(item.id);
+              },
             }}
           >
-            <Tooltip direction="top" offset={[0, -18]} opacity={1}>
+            <Tooltip permanent={isActive} direction="top" offset={[0, -12]} opacity={1}>
               <div className="max-w-48">
-                <div className="text-xs font-semibold">
-                  {cluster.items.length} {translateText('features.search.results', 'results')}
-                </div>
-                <div className={featureThemeClassName('timelineCivicTimelineMapNeutralText')}>
-                  {cluster.isExactStack
-                    ? translateText('features.search.sameLocation', 'Same location')
-                    : translateText('features.search.nearbyLocations', 'Nearby locations')}
-                </div>
+                <div className="text-xs font-semibold">{item.title}</div>
+                {item.locationLabel ? (
+                  <div className="text-muted-foreground text-[11px]">{item.locationLabel}</div>
+                ) : null}
               </div>
             </Tooltip>
           </Marker>
         );
       })}
-
-      {spiderfiedCluster
-        ? spiderfiedItems.map(({ item, coordinates }) => (
-            <Polyline
-              key={`line-${item.id}`}
-              positions={[
-                [spiderfiedCluster.coordinates.latitude, spiderfiedCluster.coordinates.longitude],
-                [coordinates.latitude, coordinates.longitude],
-              ]}
-              pathOptions={{
-                color: featureThemeValue('networkAmendmentPathVisualizationNeutralColorBeta'),
-                opacity: 0.55,
-                weight: 1,
-              }}
-            />
-          ))
-        : null}
-
-      {spiderfiedItems.map(({ item, coordinates }) => renderItemMarker(item, coordinates))}
-    </>
+    </MarkerClusterGroup>
   );
 }
 
@@ -454,6 +269,8 @@ export function SpatialSearchMap({
 }: SpatialSearchMapProps) {
   const [reactLeafletModule, setReactLeafletModule] = useState<ReactLeafletModule | null>(null);
   const [leafletModule, setLeafletModule] = useState<LeafletModule | null>(null);
+  const [MarkerClusterGroup, setMarkerClusterGroup] =
+    useState<ComponentType<MarkerClusterGroupProps> | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
@@ -461,15 +278,20 @@ export function SpatialSearchMap({
 
     const loadModules = async () => {
       try {
-        const [nextReactLeafletModule, nextLeafletModule] = await Promise.all([
-          import('react-leaflet'),
-          import('leaflet'),
-        ]);
+        const [nextReactLeafletModule, nextLeafletModule, nextMarkerClusterModule] =
+          await Promise.all([
+            import('react-leaflet'),
+            import('leaflet'),
+            import('react-leaflet-cluster'),
+          ]);
 
         if (!isActive) return;
 
         setReactLeafletModule(nextReactLeafletModule);
         setLeafletModule(nextLeafletModule);
+        setMarkerClusterGroup(
+          () => nextMarkerClusterModule.default as ComponentType<MarkerClusterGroupProps>
+        );
       } catch {
         if (isActive) {
           setLoadFailed(true);
@@ -515,7 +337,7 @@ export function SpatialSearchMap({
     });
   }, [leafletModule]);
 
-  if (loadFailed || !reactLeafletModule || !leafletModule || !activeIcon) {
+  if (loadFailed || !reactLeafletModule || !leafletModule || !MarkerClusterGroup || !activeIcon) {
     return (
       <SpatialSearchMapMessageView
         message={translateText('generated.inline.1166_map_is_loading_5299ec7c')}
@@ -550,6 +372,7 @@ export function SpatialSearchMap({
           items={items}
           activeDocumentId={activeDocumentId}
           reactLeafletModule={reactLeafletModule}
+          MarkerClusterGroup={MarkerClusterGroup}
           leafletModule={leafletModule}
           iconsByType={iconsByType}
           activeIcon={activeIcon}

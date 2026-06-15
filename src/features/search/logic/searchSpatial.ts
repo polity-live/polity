@@ -35,11 +35,6 @@ export interface SearchSpatialItem {
   coordinates: SpatialCoordinates;
 }
 
-export interface SpatialPixelOffset {
-  x: number;
-  y: number;
-}
-
 export const GERMANY_CENTER: [number, number] = [51.1657, 10.4515];
 
 export const GERMANY_SEARCH_BOUNDS: SearchBounds = {
@@ -116,35 +111,6 @@ export function resolveSearchDocumentSpatialLocation(
 export function getSearchSpatialType(document: SearchDocument): string {
   const payload = asPayload(document.card_payload);
   return String(payload.type || payload.entity_type || document.entity_type || 'result').trim();
-}
-
-export function spatialCoordinateKey(coordinates: SpatialCoordinates, precision = 6): string {
-  return `${coordinates.latitude.toFixed(precision)}:${coordinates.longitude.toFixed(precision)}`;
-}
-
-export function getSpiderfyOffsets(count: number): SpatialPixelOffset[] {
-  if (count <= 0) return [];
-  if (count === 1) return [{ x: 0, y: 0 }];
-
-  if (count <= 8) {
-    const radius = 34 + count * 2;
-    return Array.from({ length: count }, (_, index) => {
-      const angle = -Math.PI / 2 + (index * 2 * Math.PI) / count;
-      return {
-        x: Math.cos(angle) * radius,
-        y: Math.sin(angle) * radius,
-      };
-    });
-  }
-
-  return Array.from({ length: count }, (_, index) => {
-    const angle = index * 0.72;
-    const radius = 34 + index * 4;
-    return {
-      x: Math.cos(angle) * radius,
-      y: Math.sin(angle) * radius,
-    };
-  });
 }
 
 export function mapSearchDocumentToSpatialItem(document: SearchDocument): SearchSpatialItem | null {

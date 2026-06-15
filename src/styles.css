@@ -2,6 +2,8 @@
 @import 'tw-animate-css';
 @import '@xyflow/react/dist/style.css';
 @import 'leaflet/dist/leaflet.css';
+@import 'react-leaflet-cluster/dist/assets/MarkerCluster.css';
+@import 'react-leaflet-cluster/dist/assets/MarkerCluster.Default.css';
 @import './styles/animations.css';
 
 @plugin '@tailwindcss/typography';

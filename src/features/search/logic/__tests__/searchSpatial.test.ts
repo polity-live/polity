@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  getSpiderfyOffsets,
-  mapSearchDocumentToSpatialItem,
-  resolveSpatialLocation,
-  spatialCoordinateKey,
-} from '../searchSpatial';
+import { mapSearchDocumentToSpatialItem, resolveSpatialLocation } from '../searchSpatial';
 import type { SearchDocument } from '../../types/search-document.types';
 
 describe('searchSpatial', () => {
@@ -94,21 +89,5 @@ describe('searchSpatial', () => {
       locationSource: 'event',
       coordinates: { latitude: 52.52, longitude: 13.405 },
     });
-  });
-
-  it('builds stable coordinate keys for exact-location grouping', () => {
-    expect(spatialCoordinateKey({ latitude: 52.5200004, longitude: 13.4049996 })).toBe(
-      '52.520000:13.405000'
-    );
-  });
-
-  it('spreads stacked markers around the original point', () => {
-    const offsets = getSpiderfyOffsets(4);
-
-    expect(offsets).toHaveLength(4);
-    expect(offsets.every(offset => Math.hypot(offset.x, offset.y) > 0)).toBe(true);
-    expect(
-      new Set(offsets.map(offset => `${offset.x.toFixed(2)}:${offset.y.toFixed(2)}`)).size
-    ).toBe(4);
   });
 });
