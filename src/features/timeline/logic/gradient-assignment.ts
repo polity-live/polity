@@ -1,4 +1,4 @@
-import { featureThemeClassName } from '@/features/shared/theme';
+import { getEntityGradientClasses, getHashtagToneClasses } from '@/features/shared/theme';
 import { ContentType, getContentTypeGradient } from '../constants/content-type-config';
 
 /**
@@ -6,28 +6,21 @@ import { ContentType, getContentTypeGradient } from '../constants/content-type-c
  * Includes warm, cool, and neutral spectrum options
  */
 export const EXTENDED_GRADIENTS = [
-  // Warm Spectrum
-  featureThemeClassName('timelineGradientAssignmentInfoAccentGradientSurface'), // Soft Bloom
-  featureThemeClassName('timelineGradientAssignmentWarningGradientSurface'), // Sunrise (using orange/amber fallback)
-  featureThemeClassName('timelineGradientAssignmentWarningGradientSurfaceAlpha'), // Citrus
-  featureThemeClassName('timelineGradientAssignmentDangerAccentGradientSurface'), // Rose
-
-  // Cool Spectrum
-  featureThemeClassName('timelineGradientAssignmentInfoAccentGradientSurfaceAlpha'), // Twilight
-  featureThemeClassName('timelineGradientAssignmentInfoTealGradientSurface'), // Ocean
-  featureThemeClassName('timelineGradientAssignmentSuccessGradientSurface'), // Forest
-  featureThemeClassName('timelineGradientAssignmentSuccessTealGradientSurface'), // Sage
-
-  // Neutral/Earth Spectrum
-  featureThemeClassName('timelineGradientAssignmentNeutralGradientSurface'), // Cloud
-  featureThemeClassName('timelineGradientAssignmentWarningNeutralGradientSurface'), // Sand
-  featureThemeClassName('timelineGradientAssignmentAccentNeutralGradientSurface'), // Night
-
-  // Additional variety
-  featureThemeClassName('timelineGradientAssignmentAccentGradientSurface'), // Lavender
-  featureThemeClassName('timelineGradientAssignmentSuccessGradientSurfaceAlpha'), // Spring
-  featureThemeClassName('timelineGradientAssignmentInfoAccentGradientSurfaceBeta'), // Azure
-  featureThemeClassName('timelineGradientAssignmentDangerWarningGradientSurface'), // Sunset
+  getEntityGradientClasses('group'),
+  getEntityGradientClasses('event'),
+  getEntityGradientClasses('amendment'),
+  getEntityGradientClasses('blog'),
+  getEntityGradientClasses('user'),
+  getEntityGradientClasses('agenda_item'),
+  getEntityGradientClasses('vote'),
+  getEntityGradientClasses('election'),
+  getEntityGradientClasses('todo'),
+  getEntityGradientClasses('role'),
+  getEntityGradientClasses('group'),
+  getEntityGradientClasses('event'),
+  getEntityGradientClasses('amendment'),
+  getEntityGradientClasses('blog'),
+  getEntityGradientClasses('user'),
 ] as const;
 
 /**
@@ -90,7 +83,8 @@ export const CARD_SHADOWS = {
   default: 'shadow-sm',
   hover: 'hover:shadow-md',
   elevated: 'shadow-md hover:shadow-lg',
-  transition: 'transition-shadow duration-300',
+  transition:
+    'transition-shadow duration-[var(--motion-duration-base)] ease-[var(--motion-ease-standard)]',
 } as const;
 
 /**
@@ -125,23 +119,7 @@ export const CARD_ASPECT_RATIOS = {
  * Badge-sized gradients — more vibrant than card backgrounds, with
  * white text in light mode and light text in dark mode.
  */
-export const BADGE_GRADIENTS = [
-  featureThemeClassName('timelineGradientAssignmentDangerAccentGradientSurfaceAlpha'),
-  featureThemeClassName('timelineGradientAssignmentAccentGradientSurfaceAlpha'),
-  featureThemeClassName('timelineGradientAssignmentInfoGradientSurface'),
-  featureThemeClassName('timelineGradientAssignmentSuccessTealGradientSurfaceAlpha'),
-  featureThemeClassName('timelineGradientAssignmentSuccessGradientSurfaceBeta'),
-  featureThemeClassName('timelineGradientAssignmentWarningGradientSurfaceBeta'),
-  featureThemeClassName('timelineGradientAssignmentDangerWarningGradientSurfaceAlpha'),
-  featureThemeClassName('timelineGradientAssignmentAccentGradientSurfaceBeta'),
-  featureThemeClassName('timelineGradientAssignmentInfoAccentGradientSurfaceGamma'),
-  featureThemeClassName('timelineGradientAssignmentInfoTealGradientSurfaceAlpha'),
-  featureThemeClassName('timelineGradientAssignmentSuccessGradientSurfaceGamma'),
-  featureThemeClassName('timelineGradientAssignmentDangerWarningGradientSurfaceBeta'),
-  featureThemeClassName('timelineGradientAssignmentInfoAccentGradientSurfaceDelta'),
-  featureThemeClassName('timelineGradientAssignmentSuccessGradientSurfaceDelta'),
-  featureThemeClassName('timelineGradientAssignmentDangerAccentGradientSurfaceBeta'),
-] as const;
+export const BADGE_GRADIENTS = [getHashtagToneClasses().badge] as const;
 
 /**
  * Get a deterministic badge gradient for a hashtag string.

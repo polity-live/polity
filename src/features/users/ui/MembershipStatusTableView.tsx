@@ -1,12 +1,5 @@
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { DataTable } from '@/features/shared/ui/data-table';
-import {
-  Panel,
-  PanelContent,
-  PanelDescription,
-  PanelHeader,
-  PanelTitle,
-} from '@/features/shared/ui/layout';
 export interface MembershipStatusTableViewProps {
   title: any;
   description: any;
@@ -41,25 +34,23 @@ export function MembershipStatusTableView({
   }
 
   return (
-    <Panel>
-      <PanelHeader>
-        <PanelTitle className="flex items-center gap-2">
+    <section className="space-y-3">
+      <div className="space-y-1.5 px-3 sm:px-4">
+        <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
           <Icon className="h-5 w-5" />
           {title}
-        </PanelTitle>
-        <PanelDescription>{description}</PanelDescription>
-      </PanelHeader>
-      <PanelContent>
-        <DataTable
-          columns={columns}
-          data={items}
-          getRowId={(item: any) => item.id}
-          enablePagination={false}
-          emptyTitle={`${translateText('generated.inline.0609_no_816c52fd')}${statusType}${translateText(
-            'generated.inline.1196_items_found_b7242dc8'
-          )}`}
-        />
-      </PanelContent>
-    </Panel>
+        </h2>
+        <p className="text-muted-foreground text-sm">{description}</p>
+      </div>
+      <DataTable
+        columns={columns}
+        data={items}
+        getRowId={(item: any) => item.id}
+        enablePagination={false}
+        emptyTitle={`${translateText('generated.inline.0609_no_816c52fd')}${statusType}${translateText(
+          'generated.inline.1196_items_found_b7242dc8'
+        )}`}
+      />
+    </section>
   );
 }

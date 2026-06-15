@@ -1,18 +1,10 @@
 import { Badge, type BadgeProps } from '@/features/shared/ui/ui/badge';
-import {
-  SEARCH_CARD_GRADIENTS,
-  type SearchCardGradientEntity,
-} from '@/features/shared/utils/search-card-gradients';
+import { type SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
 import { getEntityToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils.ts';
 
 export function getTableTagSurfaceClassName(entityType: SearchCardGradientEntity): string {
-  return cn(
-    SEARCH_CARD_GRADIENTS[entityType],
-    getEntityToneClasses(entityType).tableTag,
-    'shadow-sm',
-    '[&>svg]:opacity-70'
-  );
+  return cn(getEntityToneClasses(entityType).tableTag, 'shadow-sm', '[&>svg]:opacity-70');
 }
 
 interface TableTagProps extends BadgeProps {

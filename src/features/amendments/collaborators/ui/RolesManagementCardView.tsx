@@ -10,13 +10,6 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
 import { ValidatedField } from '@/features/shared/ui/form';
-import {
-  Panel,
-  PanelContent,
-  PanelDescription,
-  PanelHeader,
-  PanelTitle,
-} from '@/features/shared/ui/layout';
 import { CountBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
@@ -104,85 +97,77 @@ export function RolesManagementCardView({
 
   return (
     <div className="space-y-6">
-      <Panel>
-        <PanelHeader>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <PanelTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                {translateText('generated.inline.0123_roles_list_11a0593d')}
-              </PanelTitle>
-              <PanelDescription>
-                {translateText(
-                  'generated.inline.0124_add_and_manage_collaborator_roles_for_this_am_fd3611c6'
-                )}
-              </PanelDescription>
-            </div>
-            <Dialog open={addRoleDialogOpen} onOpenChange={setAddRoleDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  {translateText('generated.inline.0125_add_role_82d0afcc')}
-                </Button>
-              </DialogTrigger>
-              <ScrollableDialogContent>
-                <DialogHeader>
-                  <DialogTitle>
-                    {translateText('generated.inline.0126_add_new_role_241eb33f')}
-                  </DialogTitle>
-                  <DialogDescription>
-                    {translateText(
-                      'generated.inline.0127_create_a_new_role_with_custom_permissions_for_39fc44c1'
-                    )}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <ValidatedField
-                    label={translateText('generated.inline.0128_role_name_a8b23a08')}
-                    placeholder={translateText(
-                      'generated.inline.0129_e_g_editor_reviewer_contributor_e1cf8527'
-                    )}
-                    value={newRoleName}
-                    onValueChange={setNewRoleName}
-                    required
-                  />
-                  <ValidatedField
-                    label={translateText('generated.inline.0130_description_optional_f1da5c02')}
-                    placeholder={translateText(
-                      'generated.inline.0131_describe_this_role_s_purpose_16c2c88f'
-                    )}
-                    value={newRoleDescription}
-                    onValueChange={setNewRoleDescription}
-                  />
-                </div>
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setAddRoleDialogOpen(false)}
-                  >
-                    {translateText('generated.inline.0065_cancel_77dfd213')}
-                  </Button>
-                  <Button type="button" onClick={handleAddRole}>
-                    {translateText('generated.inline.0132_create_role_5bea05a8')}
-                  </Button>
-                </DialogFooter>
-              </ScrollableDialogContent>
-            </Dialog>
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3 px-3 sm:px-4">
+          <div className="space-y-1.5">
+            <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
+              <Users className="h-5 w-5" />
+              {translateText('generated.inline.0123_roles_list_11a0593d')}
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              {translateText(
+                'generated.inline.0124_add_and_manage_collaborator_roles_for_this_am_fd3611c6'
+              )}
+            </p>
           </div>
-        </PanelHeader>
-        <PanelContent>
-          <DataTable
-            columns={columns}
-            data={roles}
-            getRowId={role => role.id}
-            enablePagination={false}
-            emptyTitle={translateText(
-              'generated.inline.0134_no_roles_created_yet_click_add_role_to_create_5594310d'
-            )}
-          />
-        </PanelContent>
-      </Panel>
+          <Dialog open={addRoleDialogOpen} onOpenChange={setAddRoleDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                {translateText('generated.inline.0125_add_role_82d0afcc')}
+              </Button>
+            </DialogTrigger>
+            <ScrollableDialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {translateText('generated.inline.0126_add_new_role_241eb33f')}
+                </DialogTitle>
+                <DialogDescription>
+                  {translateText(
+                    'generated.inline.0127_create_a_new_role_with_custom_permissions_for_39fc44c1'
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <ValidatedField
+                  label={translateText('generated.inline.0128_role_name_a8b23a08')}
+                  placeholder={translateText(
+                    'generated.inline.0129_e_g_editor_reviewer_contributor_e1cf8527'
+                  )}
+                  value={newRoleName}
+                  onValueChange={setNewRoleName}
+                  required
+                />
+                <ValidatedField
+                  label={translateText('generated.inline.0130_description_optional_f1da5c02')}
+                  placeholder={translateText(
+                    'generated.inline.0131_describe_this_role_s_purpose_16c2c88f'
+                  )}
+                  value={newRoleDescription}
+                  onValueChange={setNewRoleDescription}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setAddRoleDialogOpen(false)}>
+                  {translateText('generated.inline.0065_cancel_77dfd213')}
+                </Button>
+                <Button type="button" onClick={handleAddRole}>
+                  {translateText('generated.inline.0132_create_role_5bea05a8')}
+                </Button>
+              </DialogFooter>
+            </ScrollableDialogContent>
+          </Dialog>
+        </div>
+        <DataTable
+          columns={columns}
+          data={roles}
+          getRowId={role => role.id}
+          enablePagination={false}
+          emptyTitle={translateText(
+            'generated.inline.0134_no_roles_created_yet_click_add_role_to_create_5594310d'
+          )}
+        />
+      </section>
 
       <RolesPermissionsTable
         roles={roles}

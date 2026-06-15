@@ -6,6 +6,12 @@ export {
   PanelHeader,
   PanelTitle,
 } from './Panel';
+export {
+  SurfaceLayerProvider,
+  useResolvedSurfaceMode,
+  type ResolvedSurfaceMode,
+  type SurfaceMode,
+} from './SurfaceDepthContext';
 export { ActionBar } from './ActionBar';
 export {
   EntityPageShell,

@@ -13,7 +13,6 @@ import { BookOpen, Network } from 'lucide-react';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
-import { GRADIENTS } from '@/features/users/state/gradientColors';
 import { StatsBar } from '@/features/shared/ui/layout';
 import { ActionBar } from '@/features/shared/ui/layout';
 import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
@@ -264,6 +263,7 @@ export function GroupWikiContentView({
             'generated.inline.0546_assigned_and_elected_roles_with_their_active__a609ec72'
           )}
           sections={incumbentSections}
+          entityType="group"
         />
       )}
 
@@ -456,7 +456,7 @@ export function GroupWikiContentView({
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {group.blogs.map((blog: any, index: number) => (
+              {group.blogs.map((blog: any) => (
                 <BlogTimelineCard
                   key={blog.id}
                   blog={{
@@ -470,7 +470,6 @@ export function GroupWikiContentView({
                     groupId: group.id,
                     publishedAt: blog.date ?? undefined,
                   }}
-                  className={GRADIENTS[index % GRADIENTS.length]}
                 />
               ))}
             </div>

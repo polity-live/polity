@@ -1,4 +1,4 @@
-import { featureThemeClassName } from '@/features/shared/theme';
+import { getMotionPreset } from '@/features/shared/theme';
 import { FormControlInput } from '@/features/shared/ui/form';
 import { Card, CardHeader } from '@/features/shared/ui/ui/card';
 import { Separator } from '@/features/shared/ui/ui/separator';
@@ -107,9 +107,10 @@ export function ConversationListView({
                     className={cn(
                       gradient && gradient,
                       gradient && 'text-foreground hover:text-foreground border-transparent',
+                      gradient && getMotionPreset('colors'),
                       gradient &&
                         (conversationFilter === filter
-                          ? featureThemeClassName('messageConversationListContrastRing')
+                          ? 'ring-ring ring-2'
                           : 'opacity-70 hover:opacity-100')
                     )}
                     onClick={() => onConversationFilterChange(filter)}

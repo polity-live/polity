@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 
 import { useDataTableController } from '@/features/shared/hooks/useDataTableController';
+import type { SurfaceMode } from '@/features/shared/ui/layout/SurfaceDepthContext';
 
 import { DataTableView } from './DataTableView';
 
@@ -43,6 +44,7 @@ interface DataTableProps<TData, TValue> {
   enablePagination?: boolean;
   initialPageSize?: number;
   pagination?: DataTablePaginationOptions;
+  surface?: SurfaceMode;
   className?: string;
   tableClassName?: string;
 }
@@ -66,6 +68,7 @@ export function DataTable<TData, TValue>({
   enablePagination = true,
   initialPageSize = 10,
   pagination,
+  surface = 'standalone',
   className,
   tableClassName,
 }: DataTableProps<TData, TValue>) {
@@ -93,6 +96,7 @@ export function DataTable<TData, TValue>({
       toolbar={toolbar}
       rowTestId={rowTestId}
       filterPlaceholder={filterPlaceholder}
+      surface={surface}
       className={className}
       tableClassName={tableClassName}
       {...controller}

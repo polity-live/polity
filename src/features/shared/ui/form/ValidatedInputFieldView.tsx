@@ -1,5 +1,6 @@
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
+import { getSemanticToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 
 export interface ValidatedInputSuggestion {
@@ -150,7 +151,7 @@ export function ValidatedInputFieldView({
           className={cn(
             'text-muted-foreground text-xs',
             computedInvalid && 'text-destructive',
-            computedValid && 'text-emerald-600 dark:text-emerald-400'
+            computedValid && getSemanticToneClasses('success').text
           )}
         >
           {hint}

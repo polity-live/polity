@@ -1,17 +1,11 @@
 'use client';
 
 import { Link } from '@tanstack/react-router';
-import { CircleHelp, Mail, User, UserCheck, type LucideIcon } from 'lucide-react';
+import { CircleHelp, Mail, User, type LucideIcon } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import {
   Carousel,
   CarouselContent,
@@ -21,6 +15,12 @@ import {
 } from '@/features/shared/ui/ui/carousel';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import {
+  getEntityToneClasses,
+  getMotionPreset,
+  getRoleToneClasses,
+  type PrimaryEntityTone,
+} from '@/features/shared/theme';
 import type {
   WikiIncumbentCard,
   WikiIncumbentCarouselSection,
@@ -29,29 +29,12 @@ import type {
 } from '@/features/shared/logic/wikiIncumbentSections';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
-const WIKI_INCUMBENT_GRADIENTS = [
-  'bg-gradient-to-br from-pink-100 to-blue-100 dark:from-pink-900/40 dark:to-blue-900/50',
-  'bg-gradient-to-br from-orange-100 to-yellow-100 dark:from-orange-900/40 dark:to-yellow-900/50',
-  'bg-gradient-to-br from-red-100 to-pink-100 dark:from-red-900/40 dark:to-pink-900/50',
-  'bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/40 dark:to-orange-900/50',
-  'bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/50',
-  'bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/40 dark:to-blue-900/50',
-  'bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/40 dark:to-cyan-900/50',
-  'bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/50',
-  'bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/40 dark:to-teal-900/50',
-  'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50',
-  'bg-gradient-to-br from-red-100 to-yellow-100 dark:from-red-900/40 dark:to-yellow-900/50',
-  'bg-gradient-to-br from-teal-100 to-green-100 dark:from-teal-900/40 dark:to-green-900/50',
-  'bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-900/40 dark:to-fuchsia-900/50',
-  'bg-gradient-to-br from-sky-100 to-indigo-100 dark:from-sky-900/40 dark:to-indigo-900/50',
-  'bg-gradient-to-br from-rose-100 to-amber-100 dark:from-rose-900/40 dark:to-amber-900/50',
-] as const;
-
 interface WikiIncumbentPanelProps {
   title: string;
   description: string;
   sections: readonly WikiIncumbentCarouselSection[];
   icon?: LucideIcon;
+  entityType?: PrimaryEntityTone;
   className?: string;
 }
 
@@ -59,30 +42,40 @@ export function WikiIncumbentPanel({
   title,
   description,
   sections,
-  icon: Icon = UserCheck,
+  entityType = 'group',
   className,
 }: WikiIncumbentPanelProps) {
-  if (sections.length === 0) {
+  const visibleSections = sections.filter(section => section.cards.length > 0);
+
+  if (visibleSections.length === 0) {
     return null;
   }
 
   return (
-    <Card className={cn('border-border/60 mb-6 overflow-hidden', className)}>
-      <CardHeader className="border-border/60 bg-muted/30 border-b">
-        <CardTitle className="flex items-center gap-2">
-          <Icon className="h-5 w-5" />
-          {title}
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-8 p-6">
-        {sections.map(section => (
-          <section key={section.id} className="space-y-4">
-            <div className="flex flex-col gap-1">
-              <h3 className="text-lg leading-tight font-semibold">{section.title}</h3>
-              <p className="text-muted-foreground text-sm">{section.description}</p>
-            </div>
+    <section data-slot="wiki-incumbent-panel" className={cn('mb-6 space-y-5', className)}>
+      <Card data-slot="wiki-incumbent-header-card">
+        <CardHeader className="p-4 md:p-5">
+          <CardTitle size="lg" className="leading-tight">
+            {title}
+          </CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+      </Card>
+
+      <div className="space-y-6">
+        {visibleSections.map(section => (
+          <section key={section.id} data-slot="wiki-incumbent-section" className="space-y-4">
+            <Card data-slot="wiki-incumbent-section-header-card">
+              <CardHeader className="p-4 md:p-5">
+                <CardTitle size="lg" className="leading-tight">
+                  {section.title}
+                </CardTitle>
+                <CardDescription>{section.description}</CardDescription>
+              </CardHeader>
+            </Card>
+
             <Carousel
+              data-slot="wiki-incumbent-carousel"
               opts={{
                 align: 'start',
                 dragFree: true,
@@ -90,17 +83,12 @@ export function WikiIncumbentPanel({
               className="w-full px-10"
             >
               <CarouselContent className="-ml-3 md:-ml-4">
-                {section.cards.map((card, index) => (
+                {section.cards.map(card => (
                   <CarouselItem
                     key={card.id}
                     className="basis-[86%] pl-3 sm:basis-[68%] md:basis-[50%] md:pl-4 lg:basis-[38%] xl:basis-[30%]"
                   >
-                    <WikiIncumbentCardTile
-                      card={card}
-                      accentClassName={
-                        WIKI_INCUMBENT_GRADIENTS[index % WIKI_INCUMBENT_GRADIENTS.length]
-                      }
-                    />
+                    <WikiIncumbentCardTile card={card} entityType={entityType} />
                   </CarouselItem>
                 ))}
               </CarouselContent>
@@ -109,43 +97,46 @@ export function WikiIncumbentPanel({
             </Carousel>
           </section>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
 
 interface WikiIncumbentCardTileProps {
   card: WikiIncumbentCard;
-  accentClassName: string;
+  entityType: PrimaryEntityTone;
 }
 
-function WikiIncumbentCardTile({ card, accentClassName }: WikiIncumbentCardTileProps) {
+function WikiIncumbentCardTile({ card, entityType }: WikiIncumbentCardTileProps) {
   if (card.kind === 'vacancy') {
-    return <VacancyCard card={card} accentClassName={accentClassName} />;
+    return <VacancyCard card={card} />;
   }
 
-  return <PersonCard card={card} accentClassName={accentClassName} />;
+  return <PersonCard card={card} entityType={entityType} />;
 }
 
 function PersonCard({
   card,
-  accentClassName,
+  entityType,
 }: {
   card: WikiIncumbentPersonCard;
-  accentClassName: string;
+  entityType: PrimaryEntityTone;
 }) {
+  const entityTone = getEntityToneClasses(entityType);
+  const roleTone = getRoleToneClasses();
+
   return (
     <Card
-      className={cn(
-        'relative h-full overflow-hidden border-0 shadow-sm ring-1 ring-black/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl',
-        accentClassName
-      )}
+      data-slot="wiki-incumbent-card"
+      className={cn('relative h-full overflow-hidden shadow-sm', getMotionPreset('hoverLift'))}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-white/10 to-black/5" />
       <Link
         to="/user/$id"
         params={{ id: card.userId }}
-        className="focus-visible:ring-primary absolute inset-0 z-10 rounded-[inherit] focus-visible:ring-2 focus-visible:outline-none"
+        className={cn(
+          'absolute inset-0 z-10 rounded-[inherit] focus-visible:ring-2 focus-visible:outline-none',
+          entityTone.ring
+        )}
         aria-label={`Open profile for ${card.name}`}
       >
         <span className="sr-only">
@@ -184,8 +175,13 @@ function PersonCard({
           </div>
         </div>
 
-        <div className="bg-background/80 flex items-center justify-center gap-2 rounded-full border border-black/5 px-4 py-2 text-center shadow-sm backdrop-blur-sm">
-          <span className="text-foreground/85 text-sm font-medium">{card.roleTitle}</span>
+        <div
+          className={cn(
+            'flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-center shadow-sm backdrop-blur-sm',
+            roleTone.badge
+          )}
+        >
+          <span className="text-sm font-medium">{card.roleTitle}</span>
           <RoleDescriptionButton title={card.roleTitle} description={card.roleDescription} />
         </div>
       </div>
@@ -193,21 +189,14 @@ function PersonCard({
   );
 }
 
-function VacancyCard({
-  card,
-  accentClassName,
-}: {
-  card: WikiIncumbentVacancyCard;
-  accentClassName: string;
-}) {
+function VacancyCard({ card }: { card: WikiIncumbentVacancyCard }) {
+  const roleTone = getRoleToneClasses();
+
   return (
     <Card
-      className={cn(
-        'relative h-full overflow-hidden border-0 shadow-sm ring-1 ring-black/5 transition-all duration-300',
-        accentClassName
-      )}
+      data-slot="wiki-incumbent-card"
+      className={cn('relative h-full overflow-hidden shadow-sm', getMotionPreset('colors'))}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/5 to-black/5" />
       <div className="relative flex h-full flex-col gap-6 p-5">
         <div className="flex justify-end">
           <RoleDescriptionButton title={card.roleTitle} description={card.roleDescription} />
@@ -227,8 +216,13 @@ function VacancyCard({
           </div>
         </div>
 
-        <div className="bg-background/80 flex items-center justify-center gap-2 rounded-full border border-dashed border-black/10 px-4 py-2 text-center shadow-sm backdrop-blur-sm">
-          <span className="text-foreground/85 text-sm font-medium">{card.roleTitle}</span>
+        <div
+          className={cn(
+            'flex items-center justify-center gap-2 rounded-full border border-dashed px-4 py-2 text-center shadow-sm backdrop-blur-sm',
+            roleTone.badge
+          )}
+        >
+          <span className="text-sm font-medium">{card.roleTitle}</span>
           <RoleDescriptionButton title={card.roleTitle} description={card.roleDescription} />
         </div>
       </div>

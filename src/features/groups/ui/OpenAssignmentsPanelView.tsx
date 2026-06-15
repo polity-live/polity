@@ -15,13 +15,7 @@ import { DynamicTimelineCard } from '@/features/timeline/ui/LazyCardComponents';
 import { DataTable } from '@/features/shared/ui/data-table';
 import { StatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import {
   Dialog,
   DialogDescription,
@@ -146,7 +140,7 @@ export function OpenAssignmentsPanelView({
 
   if (assignments.length === 0) {
     return (
-      <Card surface="subtleGradient">
+      <Card>
         <CardHeader>
           <CardTitle>{t('features.groups.memberships.openAssignments.title')}</CardTitle>
           <CardDescription>
@@ -159,27 +153,25 @@ export function OpenAssignmentsPanelView({
 
   return (
     <>
-      <Card surface="subtleGradient">
-        <CardHeader>
-          <CardTitle>
+      <section className="space-y-3">
+        <div className="space-y-1.5 px-3 sm:px-4">
+          <h2 className="text-base leading-none font-semibold">
             {t('features.groups.memberships.openAssignments.titleWithCount', {
               count: assignments.length,
               defaultValue: 'Open Assignments ({{count}})',
             })}
-          </CardTitle>
-          <CardDescription>
+          </h2>
+          <p className="text-muted-foreground text-sm">
             {t('features.groups.memberships.openAssignments.description')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={assignmentColumns}
-            data={assignmentsWithProgress}
-            getRowId={(row: any) => row.assignment.id}
-            enablePagination={false}
-          />
-        </CardContent>
-      </Card>
+          </p>
+        </div>
+        <DataTable
+          columns={assignmentColumns}
+          data={assignmentsWithProgress}
+          getRowId={(row: any) => row.assignment.id}
+          enablePagination={false}
+        />
+      </section>
 
       <Dialog open={!!activeDelegateAssignment} onOpenChange={closeDelegateDialog}>
         <ScrollableDialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">

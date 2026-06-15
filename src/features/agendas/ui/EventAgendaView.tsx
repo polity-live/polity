@@ -35,7 +35,7 @@ import {
   Search as SearchIcon,
   Filter,
   Play,
-  Check,
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
   Radio,
@@ -470,7 +470,7 @@ export function EventAgendaView({
                     <div
                       className={featureThemeClassName('agendaEventAgendaSuccessContrastRoundIcon')}
                     >
-                      <Check className="h-4 w-4" />
+                      <CheckCircle2 className="h-3.5 w-3.5" />
                     </div>
                   </div>
                 )}

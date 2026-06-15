@@ -43,6 +43,7 @@ import {
 } from './process-engine';
 import { notifyProcessVoteResolution } from './process-notifications';
 import { can } from '../rbac/can';
+import { assertCanViewAmendment } from '../rbac/amendment-access';
 import { canReadVisibility, requireAuthenticated, requireOwner } from '../rbac/authorize';
 import { PermissionError } from '../rbac/errors';
 
@@ -906,10 +907,33 @@ export const amendmentServerMutators = {
 
   supportAmendment: defineMutator(createAmendmentSupportVoteSchema, async ({ tx, ctx, args }) => {
     requireAuthenticated(tx, ctx, { action: 'vote', resource: 'amendments' });
-    await can(tx, ctx, { action: 'vote', resource: 'amendments', amendmentId: args.amendment_id });
+    const amendment = await assertCanViewAmendment(tx, ctx, args.amendment_id);
 
     await mutators.amendments.supportAmendment.fn({ tx, ctx, args });
     await recomputeAmendmentCounters(tx, args.amendment_id);
+
+    const [senderName, adminCollaborator] = await Promise.all([
+      userName(tx, ctx.userID),
+      tx.run(
+        zql.amendment_collaborator
+          .where('amendment_id', args.amendment_id)
+          .where('status', 'admin')
+          .one()
+      ),
+    ]);
+    const recipientUserId = [adminCollaborator?.user_id, amendment.created_by_id].find(
+      id => id && id !== ctx.userID
+    );
+    if (recipientUserId) {
+      fireNotification('notifyAmendmentVoted', {
+        senderId: ctx.userID,
+        senderName,
+        recipientUserId,
+        amendmentId: args.amendment_id,
+        amendmentTitle: amendment.title ?? 'Amendment',
+        voteType: (args.vote ?? 1) > 0 ? 'upvote' : 'downvote',
+      });
+    }
   }),
 
   updateSupportVote: defineMutator(updateAmendmentSupportVoteSchema, async ({ tx, ctx, args }) => {

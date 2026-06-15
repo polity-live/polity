@@ -36,11 +36,7 @@ export function HashtagDisplay({
             <Badge
               key={id}
               variant="secondary"
-              className={cn(
-                'border-0 text-white hover:opacity-80',
-                getHashtagGradient(tag),
-                badgeClassName
-              )}
+              className={cn('hover:opacity-85', getHashtagGradient(tag), badgeClassName)}
               asChild
             >
               <SmartLink href={`/search?hashtag=${encodeURIComponent(tag)}`}>
@@ -52,7 +48,7 @@ export function HashtagDisplay({
             <Badge
               key={id}
               variant="secondary"
-              className={cn('border-0 text-white', getHashtagGradient(tag), badgeClassName)}
+              className={cn(getHashtagGradient(tag), badgeClassName)}
             >
               <Hash className="mr-1 h-3 w-3" />
               {tag}

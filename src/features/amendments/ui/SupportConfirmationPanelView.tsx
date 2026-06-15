@@ -20,7 +20,8 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { VersionComparisonView } from './VersionComparisonView.tsx';
 import { CheckCircle, XCircle, GitCompare, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { GRADIENTS } from '@/features/users/state/gradientColors';
+import { getEntityGradientClasses, getMotionPreset } from '@/features/shared/theme';
+import { cn } from '@/features/shared/utils/utils';
 
 export interface SupportConfirmationPanelViewProps {
   groupId: any;
@@ -81,10 +82,14 @@ export function SupportConfirmationPanelView({
         </BadgeControl>
       </div>
 
-      {pendingConfirmations.map((confirmation: any, index: number) => (
+      {pendingConfirmations.map((confirmation: any) => (
         <Card
           key={confirmation.id}
-          className={`overflow-hidden ${GRADIENTS[index % GRADIENTS.length]}`}
+          className={cn(
+            'overflow-hidden',
+            getEntityGradientClasses('amendment'),
+            getMotionPreset('colors')
+          )}
         >
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between">

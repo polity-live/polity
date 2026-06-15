@@ -1,4 +1,4 @@
-import { featureThemeClassName } from '@/features/shared/theme';
+import { getContentTypeToneClasses, getEntityGradientClasses } from '@/features/shared/theme';
 import {
   Building2,
   Calendar,
@@ -50,157 +50,63 @@ export interface ContentTypeConfig {
   borderColor: string;
 }
 
+function createContentTypeConfig(
+  type: ContentType,
+  icon: LucideIcon,
+  labelKey: string
+): ContentTypeConfig {
+  const tone = getContentTypeToneClasses(type);
+
+  return {
+    icon,
+    labelKey,
+    gradient: getEntityGradientClasses(type),
+    gradientDark: '',
+    accentColor: tone.text,
+    borderColor: tone.border,
+  };
+}
+
 export const CONTENT_TYPE_CONFIG: Record<ContentType, ContentTypeConfig> = {
-  group: {
-    icon: Building2,
-    labelKey: 'features.timeline.contentTypes.group',
-    gradient: featureThemeClassName('timelineContentTypeConfigSuccessInfoGradientSurface'),
-    gradientDark: featureThemeClassName('timelineContentTypeConfigSuccessInfoGradientSurfaceAlpha'),
-    accentColor: featureThemeClassName('authNameStepSuccessText'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigSuccessBorder'),
-  },
-  event: {
-    icon: Calendar,
-    labelKey: 'features.timeline.contentTypes.event',
-    gradient: featureThemeClassName('timelineContentTypeConfigWarningGradientSurface'),
-    gradientDark: featureThemeClassName('timelineContentTypeConfigWarningGradientSurfaceAlpha'),
-    accentColor: featureThemeClassName('decisionterminalCountdownTimerWarningText'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigWarningBorder'),
-  },
-  meetup: {
-    icon: Video,
-    labelKey: 'features.timeline.contentTypes.meetup',
-    gradient: featureThemeClassName('timelineContentTypeConfigInfoAccentGradientSurface'),
-    gradientDark: featureThemeClassName('timelineContentTypeConfigInfoAccentGradientSurfaceAlpha'),
-    accentColor: featureThemeClassName('timelineContentTypeConfigInfoText'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigInfoBorder'),
-  },
-  amendment: {
-    icon: ScrollText,
-    labelKey: 'features.timeline.contentTypes.amendment',
-    gradient: featureThemeClassName('timelineContentTypeConfigInfoAccentGradientSurfaceBeta'),
-    gradientDark: featureThemeClassName('timelineContentTypeConfigInfoAccentGradientSurfaceGamma'),
-    accentColor: featureThemeClassName('timelineContentTypeConfigAccentText'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigAccentBorder'),
-  },
-  agenda_item: {
-    icon: ListOrdered,
-    labelKey: 'features.timeline.contentTypes.agendaItem',
-    gradient: featureThemeClassName('timelineContentTypeConfigInfoGradientSurface'),
-    gradientDark: featureThemeClassName('timelineContentTypeConfigInfoGradientSurfaceAlpha'),
-    accentColor: featureThemeClassName('timelineContentTypeConfigInfoText'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigInfoBorder'),
-  },
-  vote: {
-    icon: Vote,
-    labelKey: 'features.timeline.contentTypes.vote',
-    gradient: featureThemeClassName('timelineContentTypeConfigDangerWarningGradientSurface'),
-    gradientDark: featureThemeClassName(
-      'timelineContentTypeConfigDangerWarningGradientSurfaceAlpha'
-    ),
-    accentColor: featureThemeClassName('decisionterminalDecisionStatusDangerTextAlpha'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigDangerBorder'),
-  },
-  election: {
-    icon: Award,
-    labelKey: 'features.timeline.contentTypes.election',
-    gradient: featureThemeClassName('timelineContentTypeConfigDangerAccentGradientSurface'),
-    gradientDark: featureThemeClassName(
-      'timelineContentTypeConfigDangerAccentGradientSurfaceAlpha'
-    ),
-    accentColor: featureThemeClassName('timelineContentTypeConfigDangerText'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigDangerBorderAlpha'),
-  },
-  video: {
-    icon: Video,
-    labelKey: 'features.timeline.contentTypes.video',
-    gradient: featureThemeClassName('timelineContentTypeConfigDangerAccentGradientSurfaceBeta'),
-    gradientDark: featureThemeClassName(
-      'timelineContentTypeConfigDangerAccentGradientSurfaceGamma'
-    ),
-    accentColor: featureThemeClassName('timelineContentTypeConfigDangerText'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigDangerBorderAlpha'),
-  },
-  image: {
-    icon: Image,
-    labelKey: 'features.timeline.contentTypes.image',
-    gradient: featureThemeClassName('timelineContentTypeConfigInfoGradientSurfaceBeta'),
-    gradientDark: featureThemeClassName('timelineContentTypeConfigInfoGradientSurfaceGamma'),
-    accentColor: featureThemeClassName('timelineContentTypeConfigInfoTextAlpha'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigInfoBorder'),
-  },
-  statement: {
-    icon: Quote,
-    labelKey: 'features.timeline.contentTypes.statement',
-    gradient: featureThemeClassName('timelineContentTypeConfigAccentGradientSurface'),
-    gradientDark: featureThemeClassName('timelineContentTypeConfigAccentGradientSurfaceAlpha'),
-    accentColor: featureThemeClassName('timelineContentTypeConfigAccentTextAlpha'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigAccentBorderAlpha'),
-  },
-  todo: {
-    icon: CheckSquare,
-    labelKey: 'features.timeline.contentTypes.todo',
-    gradient: featureThemeClassName('timelineContentTypeConfigSuccessGradientSurface'),
-    gradientDark: featureThemeClassName('timelineContentTypeConfigSuccessGradientSurfaceAlpha'),
-    accentColor: featureThemeClassName('timelineContentTypeConfigThemedText'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigThemedBorder'),
-  },
-  blog: {
-    icon: BookOpen,
-    labelKey: 'features.timeline.contentTypes.blog',
-    gradient: featureThemeClassName('timelineContentTypeConfigSuccessTealGradientSurface'),
-    gradientDark: featureThemeClassName('timelineContentTypeConfigSuccessTealGradientSurfaceAlpha'),
-    accentColor: featureThemeClassName('timelineContentTypeConfigTealText'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigTealBorder'),
-  },
-  payment: {
-    icon: Wallet,
-    labelKey: 'features.timeline.contentTypes.payment',
-    gradient: featureThemeClassName('timelineContentTypeConfigSuccessTealGradientSurfaceBeta'),
-    gradientDark: featureThemeClassName('timelineContentTypeConfigSuccessTealGradientSurfaceGamma'),
-    accentColor: featureThemeClassName('timelineContentTypeConfigSuccessText'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigSuccessBorder'),
-  },
-  action: {
-    icon: Zap,
-    labelKey: 'features.timeline.contentTypes.action',
-    gradient: featureThemeClassName('timelineContentTypeConfigNeutralGradientSurface'),
-    gradientDark: featureThemeClassName('timelineContentTypeConfigNeutralGradientSurfaceAlpha'),
-    accentColor: featureThemeClassName('timelineContentTypeConfigNeutralText'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigNeutralBorder'),
-  },
-  workflow: {
-    icon: GitBranch,
-    labelKey: 'features.timeline.contentTypes.workflow',
-    gradient: featureThemeClassName('timelineContentTypeConfigDangerAccentGradientSurfaceDelta'),
-    gradientDark: featureThemeClassName(
-      'timelineContentTypeConfigDangerAccentGradientSurfaceEpsilon'
-    ),
-    accentColor: featureThemeClassName('timelineContentTypeConfigAccentTextBeta'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigAccentBorderBeta'),
-  },
-  user: {
-    icon: User,
-    labelKey: 'features.timeline.contentTypes.user',
-    gradient: featureThemeClassName('timelineContentTypeConfigInfoAccentGradientSurfaceDelta'),
-    gradientDark: featureThemeClassName(
-      'timelineContentTypeConfigInfoAccentGradientSurfaceEpsilon'
-    ),
-    accentColor: featureThemeClassName('decisionterminalDecisionSummaryInfoText'),
-    borderColor: featureThemeClassName('timelineContentTypeConfigInfoBorderAlpha'),
-  },
+  group: createContentTypeConfig('group', Building2, 'features.timeline.contentTypes.group'),
+  event: createContentTypeConfig('event', Calendar, 'features.timeline.contentTypes.event'),
+  meetup: createContentTypeConfig('meetup', Video, 'features.timeline.contentTypes.meetup'),
+  amendment: createContentTypeConfig(
+    'amendment',
+    ScrollText,
+    'features.timeline.contentTypes.amendment'
+  ),
+  agenda_item: createContentTypeConfig(
+    'agenda_item',
+    ListOrdered,
+    'features.timeline.contentTypes.agendaItem'
+  ),
+  vote: createContentTypeConfig('vote', Vote, 'features.timeline.contentTypes.vote'),
+  election: createContentTypeConfig('election', Award, 'features.timeline.contentTypes.election'),
+  video: createContentTypeConfig('video', Video, 'features.timeline.contentTypes.video'),
+  image: createContentTypeConfig('image', Image, 'features.timeline.contentTypes.image'),
+  statement: createContentTypeConfig(
+    'statement',
+    Quote,
+    'features.timeline.contentTypes.statement'
+  ),
+  todo: createContentTypeConfig('todo', CheckSquare, 'features.timeline.contentTypes.todo'),
+  blog: createContentTypeConfig('blog', BookOpen, 'features.timeline.contentTypes.blog'),
+  payment: createContentTypeConfig('payment', Wallet, 'features.timeline.contentTypes.payment'),
+  action: createContentTypeConfig('action', Zap, 'features.timeline.contentTypes.action'),
+  workflow: createContentTypeConfig(
+    'workflow',
+    GitBranch,
+    'features.timeline.contentTypes.workflow'
+  ),
+  user: createContentTypeConfig('user', User, 'features.timeline.contentTypes.user'),
 };
 
 /**
  * Get the full gradient class for a content type
  */
 export function getContentTypeGradient(type: ContentType): string {
-  const config = CONTENT_TYPE_CONFIG[type];
-  return [
-    featureThemeClassName('timelineContentTypeConfigThemedGradientSurface'),
-    config.gradient,
-    config.gradientDark,
-  ].join(' ');
+  return getEntityGradientClasses(type);
 }
 
 /**

@@ -1,8 +1,7 @@
-import { featureThemeClassName } from '@/features/shared/theme';
+import { getRoleToneClasses } from '@/features/shared/theme';
 import type { ComponentProps, ReactNode } from 'react';
 
 import { RoleBadge } from '@/features/shared/ui/status';
-import { BADGE_GRADIENTS } from '@/features/timeline/logic/gradient-assignment';
 import { cn } from '@/features/shared/utils/utils';
 
 interface RoleTagProps extends Omit<ComponentProps<typeof RoleBadge>, 'children'> {
@@ -21,29 +20,11 @@ export function RoleTag({
   ...props
 }: RoleTagProps) {
   const roleKey = roleId ?? roleName ?? fallbackKey;
+  const roleTone = getRoleToneClasses();
 
   return (
-    <RoleBadge
-      className={cn(
-        featureThemeClassName('groupRoleTagContrastBorder'),
-        getRoleGradientClassName(roleKey),
-        className
-      )}
-      {...props}
-    >
+    <RoleBadge className={cn(roleTone.badge, className)} data-role-key={roleKey} {...props}>
       {children ?? roleName ?? 'Role'}
     </RoleBadge>
   );
-}
-
-function getRoleGradientClassName(roleKey: string) {
-  let hash = 0;
-
-  for (let index = 0; index < roleKey.length; index++) {
-    const charCode = roleKey.charCodeAt(index);
-    hash = (hash << 5) - hash + charCode;
-    hash &= hash;
-  }
-
-  return BADGE_GRADIENTS[Math.abs(hash) % BADGE_GRADIENTS.length];
 }

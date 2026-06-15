@@ -2,9 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getBadgeToneClasses,
+  getContentTypeToneClasses,
   getEntityToneClasses,
+  getEntityGradientClasses,
+  getHashtagToneClasses,
   getMotionPreset,
   getPlateSurfaceClasses,
+  getRightToneClasses,
+  getRoleToneClasses,
   getSemanticToneClasses,
   getTableTagToneClasses,
   getTypeaheadRowToneClasses,
@@ -34,5 +39,18 @@ describe('civic theme helpers', () => {
     expect(getTypeaheadRowToneClasses('user')).toContain('--entity-user-bg');
     expect(getPlateSurfaceClasses('toolbar')).toContain('--surface-overlay');
     expect(getMotionPreset('hoverLift')).toBe('civic-motion-hover-lift');
+  });
+
+  it('maps content types, plain surfaces, roles, hashtags, and rights to Civic tokens', () => {
+    expect(getContentTypeToneClasses('event').badge).toContain('--entity-event-bg');
+    expect(getContentTypeToneClasses('vote').badge).toContain('--badge-danger-bg');
+    expect(getEntityGradientClasses('group')).toContain('--entity-group-bg');
+    expect(getEntityGradientClasses('group')).not.toContain('bg-gradient');
+    expect(getEntityGradientClasses('agenda_item')).toContain('--badge-info-bg');
+    expect(getEntityGradientClasses('agenda_item')).not.toContain('bg-gradient');
+    expect(getRoleToneClasses().badge).toContain('--badge-neutral-bg');
+    expect(getHashtagToneClasses().badge).toContain('--badge-accent-bg');
+    expect(getRightToneClasses('amendmentRight').badge).toContain('--entity-amendment-bg');
+    expect(getRightToneClasses('unknownRight').badge).toContain('--badge-neutral-bg');
   });
 });

@@ -14,6 +14,31 @@ export type EntityTone = PrimaryEntityTone | 'agenda_item' | 'vote' | 'election'
 
 export type BadgeToneKind = SemanticTone | EntityTone;
 
+export type CivicContentType =
+  | 'group'
+  | 'event'
+  | 'meetup'
+  | 'amendment'
+  | 'agenda_item'
+  | 'vote'
+  | 'election'
+  | 'video'
+  | 'image'
+  | 'statement'
+  | 'todo'
+  | 'blog'
+  | 'payment'
+  | 'action'
+  | 'workflow'
+  | 'user';
+
+export type CivicRightType =
+  | 'informationRight'
+  | 'amendmentRight'
+  | 'rightToSpeak'
+  | 'activeVotingRight'
+  | 'passiveVotingRight';
+
 export type ValidationState = 'idle' | 'valid' | 'invalid' | 'warning' | 'pending';
 
 export type PlateSurface = 'editor' | 'toolbar' | 'floating' | 'suggestion' | 'comment' | 'code';
@@ -175,6 +200,44 @@ const SECONDARY_ENTITY_TO_SEMANTIC_TONE = {
   role: 'neutral',
 } as const satisfies Record<Exclude<EntityTone, PrimaryEntityTone>, SemanticTone>;
 
+const CONTENT_TYPE_TO_TONE = {
+  group: 'group',
+  event: 'event',
+  meetup: 'event',
+  amendment: 'amendment',
+  agenda_item: 'agenda_item',
+  vote: 'vote',
+  election: 'election',
+  video: 'accent',
+  image: 'info',
+  statement: 'accent',
+  todo: 'todo',
+  blog: 'blog',
+  payment: 'success',
+  action: 'neutral',
+  workflow: 'accent',
+  user: 'user',
+} as const satisfies Record<CivicContentType, BadgeToneKind>;
+
+const SEMANTIC_SURFACE_CLASS_NAMES: Record<SemanticTone, string> = {
+  neutral: 'border-[var(--badge-neutral-border)] bg-[var(--badge-neutral-bg)]',
+  info: 'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)]',
+  success: 'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)]',
+  warning: 'border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)]',
+  danger: 'border-[var(--badge-danger-border)] bg-[var(--badge-danger-bg)]',
+  destructive: 'border-[var(--badge-danger-border)] bg-[var(--badge-danger-bg)]',
+  accent: 'border-[var(--badge-accent-border)] bg-[var(--badge-accent-bg)]',
+  outline: 'border-border bg-background',
+};
+
+const RIGHT_TYPE_TO_TONE = {
+  informationRight: 'info',
+  amendmentRight: 'amendment',
+  rightToSpeak: 'accent',
+  activeVotingRight: 'vote',
+  passiveVotingRight: 'neutral',
+} as const satisfies Record<CivicRightType, BadgeToneKind>;
+
 const VALIDATION_CLASS_NAMES: Record<ValidationState, string> = {
   idle: 'border-input focus-visible:border-ring focus-visible:ring-ring/35',
   valid:
@@ -226,7 +289,7 @@ function createEntityToneClasses(entity: PrimaryEntityTone): CivicEntityToneClas
     surface: `border-[var(--entity-${entity}-border)] bg-[var(--entity-${entity}-bg)] text-[var(--entity-${entity}-fg)]`,
     softSurface: `border-[var(--entity-${entity}-border)] bg-[var(--entity-${entity}-bg)]`,
     ring: `ring-[var(--entity-${entity}-ring)]`,
-    gradient: `bg-[image:var(--entity-${entity}-gradient)]`,
+    gradient: `border-[var(--entity-${entity}-border)] bg-[var(--entity-${entity}-bg)]`,
     headerAccent: `border-l-4 border-l-[var(--entity-${entity}-base)]`,
     tableTag: `border-[var(--entity-${entity}-border)] bg-[var(--entity-${entity}-bg)] text-[var(--entity-${entity}-fg)]`,
     typeaheadRow: `hover:bg-[var(--entity-${entity}-bg)] data-[selected=true]:bg-[var(--entity-${entity}-bg)]`,
@@ -237,6 +300,13 @@ export function getSemanticToneClasses(tone: SemanticTone): CivicToneClasses {
   return SEMANTIC_TONE_CLASS_NAMES[tone];
 }
 
+export function getEntityToneClasses(entityType: PrimaryEntityTone): CivicEntityToneClasses;
+export function getEntityToneClasses(
+  entityType: Exclude<EntityTone, PrimaryEntityTone>
+): CivicToneClasses;
+export function getEntityToneClasses(
+  entityType: EntityTone
+): CivicEntityToneClasses | CivicToneClasses;
 export function getEntityToneClasses(
   entityType: EntityTone
 ): CivicEntityToneClasses | CivicToneClasses {
@@ -245,6 +315,42 @@ export function getEntityToneClasses(
   }
 
   return getSemanticToneClasses(SECONDARY_ENTITY_TO_SEMANTIC_TONE[entityType]);
+}
+
+export function getContentTypeToneClasses(
+  contentType: CivicContentType
+): CivicEntityToneClasses | CivicToneClasses {
+  return getToneClasses(CONTENT_TYPE_TO_TONE[contentType]);
+}
+
+export function getEntityGradientClasses(
+  entityType: CivicContentType | EntityTone | SemanticTone
+): string {
+  const tone = resolveToneKind(entityType);
+
+  if (tone in PRIMARY_ENTITY_CLASS_NAMES) {
+    return PRIMARY_ENTITY_CLASS_NAMES[tone as PrimaryEntityTone].gradient;
+  }
+
+  if (tone in SEMANTIC_TONE_CLASS_NAMES) {
+    return SEMANTIC_SURFACE_CLASS_NAMES[tone as SemanticTone];
+  }
+
+  return SEMANTIC_SURFACE_CLASS_NAMES[SECONDARY_ENTITY_TO_SEMANTIC_TONE[tone as EntityTone]];
+}
+
+export function getRoleToneClasses(): CivicToneClasses {
+  return getSemanticToneClasses('neutral');
+}
+
+export function getHashtagToneClasses(): CivicToneClasses {
+  return getSemanticToneClasses('accent');
+}
+
+export function getRightToneClasses(
+  rightType: CivicRightType | string
+): CivicEntityToneClasses | CivicToneClasses {
+  return getToneClasses(RIGHT_TYPE_TO_TONE[rightType as CivicRightType] ?? 'neutral');
 }
 
 export function getBadgeToneClasses(kind: BadgeToneKind): string {
@@ -285,4 +391,20 @@ export function getMotionPreset(preset: MotionPreset): string {
 
 export function isPrimaryEntityTone(entityType: EntityTone): entityType is PrimaryEntityTone {
   return entityType in PRIMARY_ENTITY_CLASS_NAMES;
+}
+
+function getToneClasses(kind: BadgeToneKind): CivicEntityToneClasses | CivicToneClasses {
+  if (kind in SEMANTIC_TONE_CLASS_NAMES) {
+    return getSemanticToneClasses(kind as SemanticTone);
+  }
+
+  return getEntityToneClasses(kind as EntityTone);
+}
+
+function resolveToneKind(contentType: CivicContentType | EntityTone | SemanticTone): BadgeToneKind {
+  if (contentType in CONTENT_TYPE_TO_TONE) {
+    return CONTENT_TYPE_TO_TONE[contentType as CivicContentType];
+  }
+
+  return contentType as BadgeToneKind;
 }

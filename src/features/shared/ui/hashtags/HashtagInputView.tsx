@@ -6,6 +6,7 @@ import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { X, Hash } from 'lucide-react';
 import { getHashtagGradient } from '@/features/shared/logic/hashtagHelpers';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
 export interface HashtagInputViewProps {
   value: any[];
   onChange: any;
@@ -59,14 +60,17 @@ export function HashtagInputView({
           {value.map((tag: string) => (
             <span
               key={tag}
-              className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm text-white ${getHashtagGradient(tag)}`}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm',
+                getHashtagGradient(tag)
+              )}
             >
               <Hash className="h-3 w-3" />
               {tag}
               <button
                 type="button"
                 onClick={() => removeHashtag(tag)}
-                className="ml-1 rounded-full hover:bg-white/20"
+                className="hover:bg-muted/40 ml-1 rounded-full"
               >
                 <X className="h-3 w-3" />
               </button>

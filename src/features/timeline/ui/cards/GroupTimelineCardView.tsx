@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/features/shared/utils/utils';
-import { featureThemeClassName } from '@/features/shared/theme';
+import { getEntityToneClasses, getHashtagToneClasses } from '@/features/shared/theme';
 import { Users, Bell } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
@@ -93,7 +93,6 @@ export function GroupTimelineCardView({
   setMembershipOpen,
   membership,
   subscription,
-  groupStyle,
   groupHashtags,
   groupDescription,
   isMember,
@@ -105,6 +104,9 @@ export function GroupTimelineCardView({
   MembershipIcon,
   stats,
 }: GroupTimelineCardViewProps) {
+  const groupTone = getEntityToneClasses('group');
+  const hashtagTone = getHashtagToneClasses();
+
   return (
     <TimelineCardBase contentType="group" className={className} href={`/group/${group.id}`}>
       <TimelineCardHeader
@@ -125,11 +127,7 @@ export function GroupTimelineCardView({
               <HashtagDisplay
                 hashtags={groupHashtags.slice(0, 3)}
                 centered={false}
-                badgeClassName={cn(
-                  featureThemeClassName('timelineAmendmentTimelineCardNeutralContrastSurface'),
-                  groupStyle.borderColor,
-                  groupStyle.accentColor
-                )}
+                badgeClassName={hashtagTone.badge}
               />
             </div>
           )}
@@ -264,7 +262,10 @@ export function GroupTimelineCardView({
           className="flex items-center gap-1.5"
         >
           <Bell
-            className={`h-3.5 w-3.5 ${(group.isSubscribed ?? subscription.isSubscribed) ? featureThemeClassName('timelineActionBarThemedStyle') : ''}`}
+            className={cn(
+              'h-3.5 w-3.5',
+              (group.isSubscribed ?? subscription.isSubscribed) && groupTone.text
+            )}
           />
         </Button>
 

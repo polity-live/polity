@@ -1,5 +1,6 @@
 import { defineMutator } from '@rocicorp/zero';
 import { can } from '../rbac/can';
+import { assertCanViewAmendment } from '../rbac/amendment-access';
 import {
   denyPublicApiMutation,
   requireAuthenticated,
@@ -70,7 +71,7 @@ async function assertCanViewSubscriptionTarget(
     await can(tx, ctx, { action: 'view', resource: 'groups', groupId: args.group_id });
   }
   if (args.amendment_id) {
-    await can(tx, ctx, { action: 'view', resource: 'amendments', amendmentId: args.amendment_id });
+    await assertCanViewAmendment(tx, ctx, args.amendment_id);
   }
   if (args.event_id) {
     await can(tx, ctx, { action: 'view', resource: 'events', eventId: args.event_id });

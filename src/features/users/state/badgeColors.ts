@@ -1,31 +1,31 @@
-import { featureThemeClassName } from '@/features/shared/theme';
+import { getSemanticToneClasses } from '@/features/shared/theme';
 export const BADGE_COLORS = [
   {
-    bg: featureThemeClassName('timelineActionTimelineCardInfoBackground'),
-    text: featureThemeClassName('userBadgeColorsInfoText'),
+    bg: getSemanticToneClasses('info').surface,
+    text: getSemanticToneClasses('info').text,
   },
   {
-    bg: featureThemeClassName('timelineUseTodoTimelineCardSuccessBackground'),
-    text: featureThemeClassName('userBadgeColorsSuccessText'),
+    bg: getSemanticToneClasses('success').surface,
+    text: getSemanticToneClasses('success').text,
   },
   {
-    bg: featureThemeClassName('timelineActionTimelineCardAccentBackground'),
-    text: featureThemeClassName('userBadgeColorsAccentText'),
+    bg: getSemanticToneClasses('accent').surface,
+    text: getSemanticToneClasses('accent').text,
   },
   {
-    bg: featureThemeClassName('timelineActionTimelineCardWarningBackground'),
-    text: featureThemeClassName('userBadgeColorsWarningText'),
+    bg: getSemanticToneClasses('warning').surface,
+    text: getSemanticToneClasses('warning').text,
   },
   {
-    bg: featureThemeClassName('timelineActionTimelineCardDangerBackground'),
-    text: featureThemeClassName('userBadgeColorsDangerText'),
+    bg: getSemanticToneClasses('danger').surface,
+    text: getSemanticToneClasses('danger').text,
   },
   {
-    bg: featureThemeClassName('userBadgeColorsAccentBackground'),
-    text: featureThemeClassName('userBadgeColorsAccentTextAlpha'),
+    bg: getSemanticToneClasses('accent').surface,
+    text: getSemanticToneClasses('accent').text,
   },
   {
-    bg: featureThemeClassName('timelineTopicPillTealBackground'),
-    text: featureThemeClassName('userBadgeColorsTealText'),
+    bg: getSemanticToneClasses('info').surface,
+    text: getSemanticToneClasses('info').text,
   },
 ];

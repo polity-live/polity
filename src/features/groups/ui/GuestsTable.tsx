@@ -1,16 +1,8 @@
-import { featureThemeClassName } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
 import { Check, Trash2, UserRoundCheck } from 'lucide-react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { DataTable, EntityCell, type ColumnDef } from '@/features/shared/ui/data-table';
-import {
-  Panel,
-  PanelContent,
-  PanelDescription,
-  PanelHeader,
-  PanelTitle,
-} from '@/features/shared/ui/layout';
 import { StatusBadge } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -183,23 +175,21 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
   ];
 
   return (
-    <Panel className={featureThemeClassName('groupActiveMembersTableThemedGradientSurface')}>
-      <PanelHeader>
-        <PanelTitle className="flex items-center gap-2">
+    <section className="space-y-3">
+      <div className="space-y-1.5 px-3 sm:px-4">
+        <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
           <UserRoundCheck className="h-5 w-5" />
           {title} ({guests.length})
-        </PanelTitle>
-        <PanelDescription>{description}</PanelDescription>
-      </PanelHeader>
-      <PanelContent>
-        <DataTable
-          columns={columns}
-          data={[...guests]}
-          getRowId={guest => guest.id}
-          enablePagination={false}
-          emptyTitle={translateText('generated.inline.0687_no_guests_yet_a19e5185')}
-        />
-      </PanelContent>
-    </Panel>
+        </h2>
+        <p className="text-muted-foreground text-sm">{description}</p>
+      </div>
+      <DataTable
+        columns={columns}
+        data={[...guests]}
+        getRowId={guest => guest.id}
+        enablePagination={false}
+        emptyTitle={translateText('generated.inline.0687_no_guests_yet_a19e5185')}
+      />
+    </section>
   );
 }

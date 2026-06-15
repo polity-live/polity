@@ -84,8 +84,8 @@ export const FEATURE_THEME_CLASS_NAMES = {
   agendaEventAgendaThemedBackground:
     'bg-primary absolute -top-3 right-6 left-6 z-20 h-0.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.9)]',
   agendaEventAgendaSuccessContrastRoundIcon:
-    'flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white',
-  agendaEventAgendaSuccessBorder: 'border-emerald-500/70',
+    'flex h-6 w-6 items-center justify-center rounded-full border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)] shadow-sm',
+  agendaEventAgendaSuccessBorder: 'border-[var(--badge-success-border)]',
   agendaEventAgendaThemedBorder: 'border-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.25)]',
   agendaEventAgendaThemedBackgroundAlpha:
     'bg-primary absolute right-6 -bottom-3 left-6 z-20 h-0.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.9)]',

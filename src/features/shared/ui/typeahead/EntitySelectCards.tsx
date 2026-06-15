@@ -9,6 +9,14 @@ import {
 } from '@/features/shared/ui/ui/card.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { EditingModeBadge } from '@/features/shared/ui/status/EditingMode';
+import {
+  getEntityGradientClasses,
+  getEntityToneClasses,
+  getMotionPreset,
+  getRoleToneClasses,
+  type EntityTone,
+} from '@/features/shared/theme';
+import { cn } from '@/features/shared/utils/utils';
 import { Calendar, Users, MapPin, Scale, FileText } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -56,6 +64,19 @@ interface SelectableAgendaItem {
   event?: { title?: string | null } | null;
 }
 
+function selectCardClassName(tone: EntityTone): string {
+  return cn(
+    'overflow-hidden',
+    getEntityGradientClasses(tone),
+    getEntityToneClasses(tone).border,
+    getMotionPreset('hoverLift')
+  );
+}
+
+function entityBadgeClassName(tone: EntityTone): string {
+  return cn('flex-shrink-0', getEntityToneClasses(tone).badge);
+}
+
 // Event Selection Card
 export function EventSelectCard({ event }: { event: SelectableEvent }) {
   const formatDate = (date: string | Date) => {
@@ -67,11 +88,11 @@ export function EventSelectCard({ event }: { event: SelectableEvent }) {
   };
 
   return (
-    <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 transition-all hover:shadow-md dark:from-indigo-900/40 dark:to-purple-900/50">
+    <Card className={selectCardClassName('event')}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{event.title}</CardTitle>
-          <Badge variant="outline" className="flex-shrink-0">
+          <Badge variant="outline" className={entityBadgeClassName('event')}>
             <Calendar className="mr-1 h-3 w-3" />
             {translateText('generated.inline.0026_event_ad8919ac')}
           </Badge>
@@ -107,11 +128,11 @@ export function EventSelectCard({ event }: { event: SelectableEvent }) {
 // Group Selection Card
 export function GroupSelectCard({ group }: { group: SelectableGroup }) {
   return (
-    <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 transition-all hover:shadow-md dark:from-indigo-900/40 dark:to-purple-900/50">
+    <Card className={selectCardClassName('group')}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{group.name}</CardTitle>
-          <Badge variant="outline" className="flex-shrink-0">
+          <Badge variant="outline" className={entityBadgeClassName('group')}>
             <Users className="mr-1 h-3 w-3" />
             {translateText('generated.inline.0608_group_171a0606')}
           </Badge>
@@ -136,11 +157,11 @@ export function GroupSelectCard({ group }: { group: SelectableGroup }) {
 // Amendment Selection Card
 export function AmendmentSelectCard({ amendment }: { amendment: SelectableAmendment }) {
   return (
-    <Card className="transition-all hover:shadow-md">
+    <Card className={selectCardClassName('amendment')}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{amendment.title}</CardTitle>
-          <Badge variant="outline" className="flex-shrink-0">
+          <Badge variant="outline" className={entityBadgeClassName('amendment')}>
             <Scale className="mr-1 h-3 w-3" />
             {translateText('generated.inline.1133_amendment_664ccfae')}
           </Badge>
@@ -161,11 +182,11 @@ export function AmendmentSelectCard({ amendment }: { amendment: SelectableAmendm
 // Election Selection Card
 export function ElectionSelectCard({ election }: { election: SelectableElection }) {
   return (
-    <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 transition-all hover:shadow-md dark:from-indigo-900/40 dark:to-purple-900/50">
+    <Card className={selectCardClassName('election')}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{election.title}</CardTitle>
-          <Badge variant="outline" className="flex-shrink-0">
+          <Badge variant="outline" className={entityBadgeClassName('election')}>
             {translateText('generated.inline.1052_election_217da2dc')}
           </Badge>
         </div>
@@ -187,11 +208,11 @@ export function ElectionSelectCard({ election }: { election: SelectableElection 
 // Role Selection Card
 export function RoleSelectCard({ role }: { role: SelectableRole }) {
   return (
-    <Card className="transition-all hover:shadow-md">
+    <Card className={selectCardClassName('role')}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{role.title}</CardTitle>
-          <Badge variant="outline" className="flex-shrink-0">
+          <Badge variant="outline" className={cn('flex-shrink-0', getRoleToneClasses().badge)}>
             {translateText('generated.inline.0091_role_c3f104d1')}
           </Badge>
         </div>
@@ -226,11 +247,11 @@ export function AmendmentVoteSelectCard({
   amendmentVote: SelectableAmendmentVote;
 }) {
   return (
-    <Card className="transition-all hover:shadow-md">
+    <Card className={selectCardClassName('vote')}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{amendmentVote.title}</CardTitle>
-          <Badge variant="outline" className="flex-shrink-0">
+          <Badge variant="outline" className={entityBadgeClassName('vote')}>
             <FileText className="mr-1 h-3 w-3" />
             {translateText('generated.inline.0011_vote_64f87291')}
           </Badge>
@@ -255,11 +276,11 @@ export function AmendmentVoteSelectCard({
 // Agenda Item Selection Card (for elections/votes)
 export function AgendaItemSelectCard({ agendaItem }: { agendaItem: SelectableAgendaItem }) {
   return (
-    <Card className="transition-all hover:shadow-md">
+    <Card className={selectCardClassName('agenda_item')}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{agendaItem.title}</CardTitle>
-          <Badge variant="outline" className="flex-shrink-0">
+          <Badge variant="outline" className={entityBadgeClassName('agenda_item')}>
             {agendaItem.type}
           </Badge>
         </div>

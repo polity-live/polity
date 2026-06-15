@@ -1,5 +1,5 @@
-import { featureThemeClassName } from '@/features/shared/theme';
 import { Search } from 'lucide-react';
+import { getHashtagToneClasses } from '@/features/shared/theme';
 import { DynamicTimelineCard } from '@/features/timeline/ui/LazyCardComponents';
 import {
   TimelineCardBase,
@@ -27,8 +27,30 @@ const TIMELINE_SEARCH_TYPES = new Set<SearchResultType>([
   'vote',
 ]);
 
-const SEARCH_TIMELINE_CARD_CLASS =
-  'h-full [&_[data-timeline-card-media]]:max-h-36 [&_[data-timeline-card-media]]:overflow-hidden';
+const SEARCH_TIMELINE_CARD_CLASS = [
+  'border-0 bg-transparent shadow-none hover:shadow-none',
+  '[&_[data-timeline-card-header]]:rounded-t-2xl',
+  '[&_[data-timeline-card-header]]:border',
+  '[&_[data-timeline-card-header]]:border-border/70',
+  '[&_[data-timeline-card-header]]:border-b-0',
+  '[&_[data-timeline-card-media]]:max-h-36',
+  '[&_[data-timeline-card-media]]:overflow-hidden',
+  '[&_[data-timeline-card-media]]:rounded-t-2xl',
+  '[&_[data-timeline-card-media]]:border',
+  '[&_[data-timeline-card-media]]:border-border/70',
+  '[&_[data-timeline-card-media]]:border-b-0',
+  '[&_[data-timeline-card-content]]:rounded-b-2xl',
+  '[&_[data-timeline-card-content]]:border-x',
+  '[&_[data-timeline-card-content]]:border-b',
+  '[&_[data-timeline-card-content]]:border-border/70',
+  '[&_[data-timeline-card-content]]:bg-card',
+  '[&_[data-timeline-card-content]]:shadow-sm',
+  '[&_[data-timeline-card-actions]]:mt-3',
+  '[&_[data-timeline-card-actions]]:border-0',
+  '[&_[data-timeline-card-actions]]:bg-transparent',
+  '[&_[data-timeline-card-actions]]:px-4',
+  '[&_[data-timeline-card-actions]]:py-0',
+].join(' ');
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -169,11 +191,12 @@ function toContentItem(document: SearchDocument): SearchContentItem | null {
 function SearchFallbackCard({ document }: { document: SearchDocument }) {
   const payload = asPayload(document.card_payload);
   const tags = collectTags(document, payload).slice(0, 3);
+  const hashtagTone = getHashtagToneClasses();
 
   return (
     <TimelineCardBase
       contentType="action"
-      className="h-full"
+      className={SEARCH_TIMELINE_CARD_CLASS}
       href={`/search?result=${encodeURIComponent(document.id)}`}
     >
       <TimelineCardHeader
@@ -195,7 +218,7 @@ function SearchFallbackCard({ document }: { document: SearchDocument }) {
             {tags.map(tag => (
               <span
                 key={tag}
-                className={featureThemeClassName('searchSearchResultCardNeutralContrastBadge')}
+                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${hashtagTone.badge}`}
               >
                 #{tag}
               </span>
@@ -212,7 +235,7 @@ export function SearchResultCard({ document }: { document: SearchDocument }) {
 
   if (!item) {
     return (
-      <div className="h-full overflow-hidden rounded-xl">
+      <div className="rounded-xl">
         <SearchFallbackCard document={document} />
       </div>
     );
@@ -224,7 +247,7 @@ export function SearchResultCard({ document }: { document: SearchDocument }) {
   }
 
   return (
-    <div className="h-full overflow-hidden rounded-xl">
+    <div className="rounded-xl">
       <DynamicTimelineCard
         cardType={cardType}
         cardProps={{

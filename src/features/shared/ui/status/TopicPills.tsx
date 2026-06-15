@@ -1,4 +1,4 @@
-import { featureThemeClassName } from '@/features/shared/theme';
+import { getSemanticToneClasses } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status/StatusBadges';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -20,44 +20,44 @@ export interface TopicPillProps {
 
 const TOPIC_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   climate: {
-    bg: featureThemeClassName('timelineUseTodoTimelineCardSuccessBackground'),
-    text: featureThemeClassName('timelineTopicPillSuccessText'),
-    border: featureThemeClassName('timelineTopicPillSuccessBorder'),
+    bg: getSemanticToneClasses('success').surface,
+    text: getSemanticToneClasses('success').text,
+    border: getSemanticToneClasses('success').border,
   },
   urban: {
-    bg: featureThemeClassName('timelineActionTimelineCardInfoBackground'),
-    text: featureThemeClassName('networkNetworkControlPanelInfoText'),
-    border: featureThemeClassName('timelineTopicPillInfoBorder'),
+    bg: getSemanticToneClasses('info').surface,
+    text: getSemanticToneClasses('info').text,
+    border: getSemanticToneClasses('info').border,
   },
   transport: {
-    bg: featureThemeClassName('timelineUseTodoTimelineCardWarningBackground'),
-    text: featureThemeClassName('timelineTopicPillWarningText'),
-    border: featureThemeClassName('timelineTopicPillWarningBorder'),
+    bg: getSemanticToneClasses('warning').surface,
+    text: getSemanticToneClasses('warning').text,
+    border: getSemanticToneClasses('warning').border,
   },
   budget: {
-    bg: featureThemeClassName('timelineUseTodoTimelineCardWarningBackgroundAlpha'),
-    text: featureThemeClassName('timelineTopicPillWarningTextAlpha'),
-    border: featureThemeClassName('timelineTopicPillWarningBorderAlpha'),
+    bg: getSemanticToneClasses('warning').surface,
+    text: getSemanticToneClasses('warning').text,
+    border: getSemanticToneClasses('warning').border,
   },
   education: {
-    bg: featureThemeClassName('timelineActionTimelineCardAccentBackground'),
-    text: featureThemeClassName('timelineTopicPillAccentText'),
-    border: featureThemeClassName('timelineTopicPillAccentBorder'),
+    bg: getSemanticToneClasses('accent').surface,
+    text: getSemanticToneClasses('accent').text,
+    border: getSemanticToneClasses('accent').border,
   },
   health: {
-    bg: featureThemeClassName('timelineUseTodoTimelineCardDangerBackground'),
-    text: featureThemeClassName('timelineTopicPillDangerText'),
-    border: featureThemeClassName('timelineTopicPillDangerBorder'),
+    bg: getSemanticToneClasses('danger').surface,
+    text: getSemanticToneClasses('danger').text,
+    border: getSemanticToneClasses('danger').border,
   },
   housing: {
-    bg: featureThemeClassName('timelineTopicPillTealBackground'),
-    text: featureThemeClassName('timelineTopicPillTealText'),
-    border: featureThemeClassName('timelineTopicPillTealBorder'),
+    bg: getSemanticToneClasses('info').surface,
+    text: getSemanticToneClasses('info').text,
+    border: getSemanticToneClasses('info').border,
   },
   default: {
-    bg: featureThemeClassName('timelineTopicPillNeutralBackground'),
-    text: featureThemeClassName('timelineTopicPillNeutralText'),
-    border: featureThemeClassName('timelineTopicPillNeutralBorder'),
+    bg: getSemanticToneClasses('neutral').surface,
+    text: getSemanticToneClasses('neutral').text,
+    border: getSemanticToneClasses('neutral').border,
   },
 };
 

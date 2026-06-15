@@ -1,7 +1,6 @@
 import React from 'react';
 import { BlogsCard } from '@/features/users/ui/BlogsCard';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
-import { SEARCH_CARD_GRADIENTS } from '@/features/shared/utils/search-card-gradients';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 
 import { type SearchBlog } from '../types/search.types';
@@ -11,10 +10,7 @@ interface BlogSearchCardProps {
   gradientClass?: string;
 }
 
-export function BlogSearchCard({
-  blog,
-  gradientClass = SEARCH_CARD_GRADIENTS.blog,
-}: BlogSearchCardProps) {
+export function BlogSearchCard({ blog, gradientClass }: BlogSearchCardProps) {
   // Calculate supporters from upvotes and downvotes
   const supporters = (blog.upvotes || 0) - (blog.downvotes || 0);
   const comments = blog.comment_count || 0;

@@ -1,17 +1,20 @@
 import * as React from 'react';
 
 import { cn } from '@/features/shared/utils/utils';
+import { SurfaceLayerProvider } from './SurfaceDepthContext';
 
 function Panel({ className, ...props }: React.ComponentProps<'section'>) {
   return (
-    <section
-      data-slot="panel"
-      className={cn(
-        'bg-card text-card-foreground rounded-lg border shadow-[var(--shadow-panel)] transition-[color,background-color,border-color,box-shadow] duration-[var(--motion-duration-base)]',
-        className
-      )}
-      {...props}
-    />
+    <SurfaceLayerProvider>
+      <section
+        data-slot="panel"
+        className={cn(
+          'bg-card text-card-foreground rounded-lg border shadow-[var(--shadow-panel)] transition-[color,background-color,border-color,box-shadow] duration-[var(--motion-duration-base)]',
+          className
+        )}
+        {...props}
+      />
+    </SurfaceLayerProvider>
   );
 }
 

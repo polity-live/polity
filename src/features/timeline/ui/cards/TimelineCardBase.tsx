@@ -1,6 +1,6 @@
 'use client';
 
-import { featureThemeClassName } from '@/features/shared/theme';
+import { getContentTypeToneClasses, getMotionPreset } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
@@ -40,14 +40,14 @@ export function TimelineCardBase({
   href,
 }: TimelineCardBaseProps) {
   const shadowClasses = getCardShadowClasses(elevated);
+  const tone = getContentTypeToneClasses(contentType);
 
   const cardStyles = cn(
-    featureThemeClassName('timelineTimelineCardBaseNeutralBorder'),
+    tone.border,
     'bg-card text-card-foreground',
     CARD_RADIUS.card,
     shadowClasses,
-    'transform transition-all duration-200',
-    'hover:-translate-y-1',
+    getMotionPreset('hoverLift'),
     (onClick || href) && 'cursor-pointer',
     className
   );

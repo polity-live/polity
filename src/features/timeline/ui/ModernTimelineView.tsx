@@ -148,13 +148,18 @@ export function ModernTimelineView({
         </div>
 
         <div>
-          <CivicTimelineRail
-            sections={civicTimeline.sections}
-            activeItemId={activeItemId}
-            isLoading={civicTimeline.isLoading}
-            onActiveItemChange={setActiveItemId}
-            onItemSelect={handleRailItemSelect}
-          />
+          <div
+            className="bg-card rounded-lg border p-4 shadow-sm sm:p-5"
+            data-testid="timeline-rail-surface"
+          >
+            <CivicTimelineRail
+              sections={civicTimeline.sections}
+              activeItemId={activeItemId}
+              isLoading={civicTimeline.isLoading}
+              onActiveItemChange={setActiveItemId}
+              onItemSelect={handleRailItemSelect}
+            />
+          </div>
 
           {civicTimeline.items.length > 0 ? (
             <div className="mt-6 flex justify-center">

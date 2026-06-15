@@ -1,6 +1,6 @@
 'use client';
 
-import { featureThemeClassName } from '@/features/shared/theme';
+import { getEntityToneClasses, getSemanticToneClasses } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { Clock, ExternalLink, MapPin, Trash2, Users, Video } from 'lucide-react';
@@ -79,11 +79,11 @@ function getStateClassName(options: {
   isFull: boolean;
 }) {
   if (options.isBookedByMe) {
-    return featureThemeClassName('meetMeetingCalendarViewsSuccessBorder');
+    return getSemanticToneClasses('success').border;
   }
 
   if (options.isBookable && !options.isFull && !options.isPast) {
-    return featureThemeClassName('meetMeetingCalendarViewsInfoBorder');
+    return getSemanticToneClasses('info').border;
   }
 
   if (options.isPast) {
@@ -127,6 +127,8 @@ export function MeetupTimelineCard({
       ? t('features.calendar.eventCard.publicMeeting')
       : t('features.calendar.eventCard.privateMeeting');
   const participants = meetup.participants ?? [];
+  const eventTone = getEntityToneClasses('event');
+  const dangerTone = getSemanticToneClasses('danger');
 
   return (
     <TimelineCardBase
@@ -151,9 +153,7 @@ export function MeetupTimelineCard({
         badge={
           state === 'live' ? (
             <BadgeControl variant="destructive" pulse>
-              <span
-                className={featureThemeClassName('timelineEventTimelineCardContrastPulseDot')}
-              />
+              <span className={cn('h-2 w-2 rounded-full', dangerTone.dot)} />
               {t('features.timeline.cards.happeningNow')}
             </BadgeControl>
           ) : (
@@ -167,7 +167,8 @@ export function MeetupTimelineCard({
         <div className="mt-3 flex justify-center">
           <div
             className={cn(
-              featureThemeClassName('timelineEventTimelineCardNeutralContrastPanel'),
+              'min-w-20 rounded-xl border px-3 py-2 text-center shadow-sm',
+              eventTone.softSurface,
               isPast && 'opacity-60'
             )}
           >

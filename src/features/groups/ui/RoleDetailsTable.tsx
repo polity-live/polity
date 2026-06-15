@@ -6,13 +6,6 @@ import { getNextRoleElectionEvent } from '@/features/groups/logic/openAssignment
 import { formatRoleTermLabel } from '@/features/groups/logic/roleFormHelpers';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
-import {
-  Panel,
-  PanelContent,
-  PanelDescription,
-  PanelHeader,
-  PanelTitle,
-} from '@/features/shared/ui/layout';
 import { CountBadge, PhaseBadge, StatusBadge, VisibilityBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import { EventSelectCard } from '@/features/shared/ui/typeahead';
@@ -278,38 +271,34 @@ export function RoleDetailsTable<TRole extends RoleRow>({
   ];
 
   return (
-    <Panel>
-      <PanelHeader>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <PanelTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              {translateText('generated.inline.0717_role_details_99faf6f7')}
-            </PanelTitle>
-            <PanelDescription>
-              {scope === 'event'
-                ? translateText(
-                    'generated.inline.0106_review_event_role_visibility_assignment_mode__9d3e73c1'
-                  )
-                : translateText(
-                    'generated.inline.0107_review_role_visibility_assignment_mode_defaul_332a8a56'
-                  )}
-            </PanelDescription>
-          </div>
-          {addRoleButton}
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-start justify-between gap-4 px-3 sm:px-4">
+        <div className="space-y-1.5">
+          <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
+            <Users className="h-5 w-5" />
+            {translateText('generated.inline.0717_role_details_99faf6f7')}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {scope === 'event'
+              ? translateText(
+                  'generated.inline.0106_review_event_role_visibility_assignment_mode__9d3e73c1'
+                )
+              : translateText(
+                  'generated.inline.0107_review_role_visibility_assignment_mode_defaul_332a8a56'
+                )}
+          </p>
         </div>
-      </PanelHeader>
-      <PanelContent>
-        <DataTable
-          columns={columns}
-          data={roles}
-          getRowId={role => role.id}
-          enablePagination={false}
-          emptyTitle={translateText(
-            'generated.inline.0730_no_roles_are_ready_for_detailed_management_ye_9b3fe260'
-          )}
-        />
-      </PanelContent>
-    </Panel>
+        {addRoleButton}
+      </div>
+      <DataTable
+        columns={columns}
+        data={roles}
+        getRowId={role => role.id}
+        enablePagination={false}
+        emptyTitle={translateText(
+          'generated.inline.0730_no_roles_are_ready_for_detailed_management_ye_9b3fe260'
+        )}
+      />
+    </section>
   );
 }

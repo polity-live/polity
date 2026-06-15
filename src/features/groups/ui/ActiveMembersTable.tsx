@@ -1,4 +1,3 @@
-import { featureThemeClassName } from '@/features/shared/theme';
 /**
  * Active Members Table Component
  *
@@ -10,13 +9,6 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Trash2, Users } from 'lucide-reac
 import { useTranslation } from 'react-i18next';
 
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
-import {
-  Panel,
-  PanelContent,
-  PanelDescription,
-  PanelHeader,
-  PanelTitle,
-} from '@/features/shared/ui/layout';
 import { EntityBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import { UserTableCell } from '@/features/shared/ui/data-table';
@@ -181,24 +173,22 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
   ];
 
   return (
-    <Panel className={featureThemeClassName('groupActiveMembersTableThemedGradientSurface')}>
-      <PanelHeader>
-        <PanelTitle className="flex items-center gap-2">
+    <section className="space-y-3">
+      <div className="space-y-1.5 px-3 sm:px-4">
+        <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
           <Users className="h-5 w-5" />
           {resolvedTitle} ({members.length})
-        </PanelTitle>
-        <PanelDescription>{resolvedDescription}</PanelDescription>
-      </PanelHeader>
-      <PanelContent>
-        <DataTable
-          columns={columns}
-          data={members}
-          getRowId={membership => membership.id}
-          enablePagination={false}
-          emptyTitle={t('components.membershipTables.noActiveMembers')}
-        />
-      </PanelContent>
-    </Panel>
+        </h2>
+        <p className="text-muted-foreground text-sm">{resolvedDescription}</p>
+      </div>
+      <DataTable
+        columns={columns}
+        data={members}
+        getRowId={membership => membership.id}
+        enablePagination={false}
+        emptyTitle={t('components.membershipTables.noActiveMembers')}
+      />
+    </section>
   );
 }
 

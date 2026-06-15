@@ -121,7 +121,7 @@ function CompositionPieCard({
   const total = rows.reduce((sum: any, row: any) => sum + row.value, 0);
 
   return (
-    <Card surface="subtleGradient">
+    <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>

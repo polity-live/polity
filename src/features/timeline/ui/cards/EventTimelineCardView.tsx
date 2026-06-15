@@ -1,6 +1,10 @@
 'use client';
 
-import { featureThemeClassName } from '@/features/shared/theme';
+import {
+  getEntityToneClasses,
+  getHashtagToneClasses,
+  getSemanticToneClasses,
+} from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Calendar, MapPin, Bell } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
@@ -129,7 +133,6 @@ export function EventTimelineCardView({
   eventTimeStatus,
   dateLabel,
   locationDisplay,
-  eventStyle,
   eventHref,
   eventDescription,
   eventSubtitle,
@@ -142,6 +145,10 @@ export function EventTimelineCardView({
   getRsvpVariant,
   stats,
 }: EventTimelineCardViewProps) {
+  const eventTone = getEntityToneClasses('event');
+  const dangerTone = getSemanticToneClasses('danger');
+  const hashtagTone = getHashtagToneClasses();
+
   return (
     <TimelineCardBase contentType="event" className={className} onClick={onSelect} href={eventHref}>
       <TimelineCardHeader
@@ -153,9 +160,7 @@ export function EventTimelineCardView({
         badge={
           eventTimeStatus === 'live' ? (
             <BadgeControl variant="destructive" pulse>
-              <span
-                className={featureThemeClassName('timelineEventTimelineCardContrastPulseDot')}
-              />
+              <span className={cn('h-2 w-2 rounded-full', dangerTone.dot)} />
               {t('features.timeline.cards.happeningNow')}
             </BadgeControl>
           ) : (
@@ -167,7 +172,8 @@ export function EventTimelineCardView({
         <div className="mt-3 flex justify-center">
           <div
             className={cn(
-              featureThemeClassName('timelineEventTimelineCardNeutralContrastPanel'),
+              'min-w-20 rounded-xl border px-3 py-2 text-center shadow-sm',
+              eventTone.softSurface,
               eventTimeStatus === 'past' && 'opacity-60'
             )}
           >
@@ -201,11 +207,7 @@ export function EventTimelineCardView({
               <HashtagDisplay
                 hashtags={event.hashtags.slice(0, 3)}
                 centered={false}
-                badgeClassName={cn(
-                  featureThemeClassName('timelineEventTimelineCardNeutralContrastSurface'),
-                  eventStyle.borderColor,
-                  eventStyle.accentColor
-                )}
+                badgeClassName={hashtagTone.badge}
               />
             </div>
           )}
@@ -343,7 +345,10 @@ export function EventTimelineCardView({
           className="flex items-center gap-1.5"
         >
           <Bell
-            className={`h-3.5 w-3.5 ${(event.isSubscribed ?? subscription.isSubscribed) ? featureThemeClassName('timelineActionBarThemedStyle') : ''}`}
+            className={cn(
+              'h-3.5 w-3.5',
+              (event.isSubscribed ?? subscription.isSubscribed) && eventTone.text
+            )}
           />
         </Button>
 

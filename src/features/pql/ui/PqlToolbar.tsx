@@ -2,6 +2,7 @@ import { type PqlFieldDefinition, type PqlFilter } from '../logic/applyPqlFilter
 import type { PqlQuickFilterDefinition, PqlQuickFilterValues } from '../hooks/usePqlCollection';
 import { usePqlToolbarController } from '../hooks/usePqlToolbarController';
 import { PqlToolbarView } from './PqlToolbarView';
+import type { SurfaceMode } from '@/features/shared/ui/layout/SurfaceDepthContext';
 
 interface PqlToolbarProps<TItem, TFieldKey extends string> {
   fields: readonly PqlFieldDefinition<TItem, TFieldKey>[];
@@ -18,6 +19,7 @@ interface PqlToolbarProps<TItem, TFieldKey extends string> {
   onCustomFilterToggle: (filterId: string) => void;
   onCustomFilterDelete: (filterId: string) => void;
   onCustomFilterSave: (filter: PqlFilter<TFieldKey>) => void;
+  surface?: SurfaceMode;
 }
 
 export function PqlToolbar<TItem, TFieldKey extends string>({
@@ -35,6 +37,7 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
   onCustomFilterToggle,
   onCustomFilterDelete,
   onCustomFilterSave,
+  surface = 'auto',
 }: PqlToolbarProps<TItem, TFieldKey>) {
   return (
     <PqlToolbarView
@@ -52,6 +55,7 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
       savedFilters={savedFilters}
       searchPlaceholder={searchPlaceholder}
       searchQuery={searchQuery}
+      surface={surface}
       {...usePqlToolbarController({
         fields,
         quickFilters,

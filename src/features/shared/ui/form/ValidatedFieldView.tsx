@@ -1,5 +1,6 @@
 import type { ComponentProps, ReactNode } from 'react';
 
+import { getValidationToneClasses } from '@/features/shared/theme';
 import { FormFieldShell } from '@/features/shared/ui/form/FormFieldShell';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
@@ -78,11 +79,7 @@ export function ValidatedFieldView({
               markTouched();
               (onBlur as ComponentProps<typeof Textarea>['onBlur'])?.(event);
             }}
-            className={cn(
-              isValid &&
-                'border-emerald-500 focus-visible:ring-emerald-500/20 dark:border-emerald-400 dark:focus-visible:ring-emerald-500/30',
-              className
-            )}
+            className={cn(isValid && getValidationToneClasses('valid'), className)}
           />
         ) : (
           <Input

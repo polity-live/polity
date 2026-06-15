@@ -2,13 +2,6 @@ import { featureThemeClassName } from '@/features/shared/theme';
 import { useTranslation } from 'react-i18next';
 import { ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react';
 import { DataTable } from '@/features/shared/ui/data-table';
-import {
-  Panel,
-  PanelContent,
-  PanelDescription,
-  PanelHeader,
-  PanelTitle,
-} from '@/features/shared/ui/layout';
 import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
 import { cn } from '@/features/shared/utils/utils';
 import type { MembershipRightsAlignmentStatus } from '../logic/membershipRightsAlignment';
@@ -91,7 +84,7 @@ export function MembershipRightsAlignmentPanelView({
 }: MembershipRightsAlignmentPanelViewProps) {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 px-3 sm:px-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-semibold">
             {t('features.groups.memberships.rightsAlignment.title')}
@@ -137,35 +130,31 @@ export function MembershipRightsAlignmentPanelView({
         <SummaryTile status="mixed" count={counts.mixed} />
       </div>
 
-      <Panel
-        className={featureThemeClassName(
-          'groupMembershipRightsAlignmentPanelThemedGradientSurface'
-        )}
-      >
-        <PanelHeader>
-          <PanelTitle>{t('features.groups.memberships.rightsAlignment.tableTitle')}</PanelTitle>
-          <PanelDescription>
+      <section className="space-y-3">
+        <div className="space-y-1.5 px-3 sm:px-4">
+          <h2 className="text-base leading-none font-semibold">
+            {t('features.groups.memberships.rightsAlignment.tableTitle')}
+          </h2>
+          <p className="text-muted-foreground text-sm">
             {t('features.groups.memberships.rightsAlignment.tableDescription', {
               count: visibleRows.length,
               defaultValue: '{{count}} visible members',
             })}
-          </PanelDescription>
-        </PanelHeader>
-        <PanelContent>
-          <DataTable
-            columns={columns}
-            data={visibleRows}
-            getRowId={(row: any) => row.membership.id}
-            isLoading={isLoading}
-            loadingRowCount={4}
-            enablePagination={false}
-            emptyTitle={t('features.groups.memberships.rightsAlignment.empty')}
-            emptyDescription={
-              isLoading ? t('features.groups.memberships.rightsAlignment.loading') : undefined
-            }
-          />
-        </PanelContent>
-      </Panel>
+          </p>
+        </div>
+        <DataTable
+          columns={columns}
+          data={visibleRows}
+          getRowId={(row: any) => row.membership.id}
+          isLoading={isLoading}
+          loadingRowCount={4}
+          enablePagination={false}
+          emptyTitle={t('features.groups.memberships.rightsAlignment.empty')}
+          emptyDescription={
+            isLoading ? t('features.groups.memberships.rightsAlignment.loading') : undefined
+          }
+        />
+      </section>
     </div>
   );
 }

@@ -21,6 +21,10 @@ import {
   TableRow,
 } from '@/features/shared/ui/ui/table';
 import { cn } from '@/features/shared/utils/utils';
+import {
+  type SurfaceMode,
+  useResolvedSurfaceMode,
+} from '@/features/shared/ui/layout/SurfaceDepthContext';
 
 import type { DataTableFilter } from './DataTable';
 
@@ -40,6 +44,7 @@ interface DataTableViewProps<TData> {
   toolbar?: ReactNode;
   rowTestId?: string | ((row: TData) => string | undefined);
   filterPlaceholder: string;
+  surface?: SurfaceMode;
   className?: string;
   tableClassName?: string;
   table: TanStackTable<TData>;
@@ -62,6 +67,7 @@ export function DataTableView<TData>({
   toolbar,
   rowTestId,
   filterPlaceholder,
+  surface = 'auto',
   className,
   tableClassName,
   table,
@@ -77,6 +83,8 @@ export function DataTableView<TData>({
   resolvedEmptyAction,
   loadingRows,
 }: DataTableViewProps<TData>) {
+  const resolvedSurface = useResolvedSurfaceMode(surface);
+
   return (
     <div className={cn('space-y-3', className)}>
       {filter || toolbar ? (
@@ -96,7 +104,16 @@ export function DataTableView<TData>({
         </div>
       ) : null}
 
-      <div className="bg-card overflow-hidden rounded-md border shadow-[var(--shadow-panel)]">
+      <div
+        className={cn(
+          'overflow-hidden',
+          resolvedSurface === 'standalone'
+            ? 'bg-card rounded-md border shadow-[var(--shadow-panel)]'
+            : 'border-border/70 border-y bg-transparent shadow-none'
+        )}
+        data-slot="data-table-surface"
+        data-surface={resolvedSurface}
+      >
         <Table className={tableClassName}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup: any) => (

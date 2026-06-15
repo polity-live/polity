@@ -6,13 +6,6 @@
 
 import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
@@ -160,23 +153,21 @@ export function PendingInvitationsTable<TParticipation extends ParticipationLike
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <section className="space-y-3">
+      <div className="space-y-1.5 px-3 sm:px-4">
+        <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
           <UserPlus className="h-5 w-5" />
           {title} ({invitations.length})
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <DataTable
-          columns={columns}
-          data={invitations}
-          getRowId={membership => membership.id}
-          enablePagination={false}
-          tableClassName="[&_td:last-child]:text-right"
-        />
-      </CardContent>
-    </Card>
+        </h2>
+        <p className="text-muted-foreground text-sm">{description}</p>
+      </div>
+      <DataTable
+        columns={columns}
+        data={invitations}
+        getRowId={membership => membership.id}
+        enablePagination={false}
+        tableClassName="[&_td:last-child]:text-right"
+      />
+    </section>
   );
 }

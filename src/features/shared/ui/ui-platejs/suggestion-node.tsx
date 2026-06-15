@@ -13,6 +13,7 @@ import {
 } from '@/features/shared/ui/kit-platejs/suggestion-kit.tsx';
 import { discussionPlugin } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import { useModeContext } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
+import { getMotionPreset, getSemanticToneClasses } from '@/features/shared/theme';
 
 export function SuggestionLeaf(props: PlateLeafProps<TSuggestionText>) {
   const { api, setOption } = useEditorPlugin(suggestionPlugin);
@@ -52,6 +53,8 @@ export function SuggestionLeaf(props: PlateLeafProps<TSuggestionText>) {
   }
 
   const diffOperation = { type: hasRemove ? 'delete' : 'insert' } as const;
+  const insertTone = getSemanticToneClasses('success');
+  const removeTone = getSemanticToneClasses('danger');
 
   const Component = ({ delete: 'del', insert: 'ins', update: 'span' } as const)[diffOperation.type];
 
@@ -60,10 +63,12 @@ export function SuggestionLeaf(props: PlateLeafProps<TSuggestionText>) {
       {...props}
       as={Component}
       className={cn(
-        'bg-emerald-100 text-emerald-700 no-underline transition-colors duration-200',
-        (hasActive || hasHover) && 'bg-emerald-200/80',
-        hasRemove && 'bg-red-100 text-red-700',
-        (hasActive || hasHover) && hasRemove && 'bg-red-200/80 no-underline'
+        'no-underline',
+        getMotionPreset('colors'),
+        insertTone.surface,
+        (hasActive || hasHover) && `ring-1 ${insertTone.ring}`,
+        hasRemove && removeTone.surface,
+        (hasActive || hasHover) && hasRemove && `no-underline ring-1 ${removeTone.ring}`
       )}
       attributes={{
         ...props.attributes,
@@ -114,6 +119,8 @@ function SuggestionLineBreakContent({ suggestionData }: { suggestionData: TSugge
 
   const isActive = activeSuggestionId === suggestionData.id;
   const isHover = hoverSuggestionId === suggestionData.id;
+  const insertTone = getSemanticToneClasses('success');
+  const removeTone = getSemanticToneClasses('danger');
 
   const spanRef = React.useRef<HTMLSpanElement>(null);
 
@@ -121,12 +128,12 @@ function SuggestionLineBreakContent({ suggestionData }: { suggestionData: TSugge
     <span
       ref={spanRef}
       className={cn(
-        'border-b-brand/[.24] bg-brand/[.08] text-brand/80 absolute border-b-2 text-justify no-underline transition-colors duration-200',
-        isInsert && (isActive || isHover) && 'border-b-brand/[.60] bg-brand/[.13]',
-        isRemove && 'border-b-gray-300 bg-gray-300/25 text-gray-400 line-through',
-        isRemove &&
-          (isActive || isHover) &&
-          'border-b-gray-500 bg-gray-400/25 text-gray-500 no-underline'
+        'absolute border-b-2 text-justify no-underline',
+        getMotionPreset('colors'),
+        isInsert && insertTone.surface,
+        isInsert && (isActive || isHover) && `ring-1 ${insertTone.ring}`,
+        isRemove && `${removeTone.surface} line-through`,
+        isRemove && (isActive || isHover) && `no-underline ring-1 ${removeTone.ring}`
       )}
       style={{
         bottom: 4.5,

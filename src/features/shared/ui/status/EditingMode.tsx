@@ -11,6 +11,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { getEntityToneClasses, getSemanticToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils.ts';
 
 import { Badge } from '@/features/shared/ui/ui/badge';
@@ -161,14 +162,14 @@ const MODE_DESCRIPTION_KEYS: Record<EditingMode, { fallback: string; key: string
 };
 
 const MODE_COLOR_CLASSES: Record<EditingMode, string> = {
-  edit: 'bg-blue-500',
-  view: 'bg-gray-500',
-  suggest_internal: 'bg-purple-500',
-  suggest_event: 'bg-teal-500',
-  vote_internal: 'bg-orange-500',
-  vote_event: 'bg-red-500',
-  passed: 'bg-green-500',
-  rejected: 'bg-red-700',
+  edit: getEntityToneClasses('amendment').dot,
+  view: getSemanticToneClasses('neutral').dot,
+  suggest_internal: getSemanticToneClasses('accent').dot,
+  suggest_event: getEntityToneClasses('event').dot,
+  vote_internal: getEntityToneClasses('vote').dot,
+  vote_event: getEntityToneClasses('event').dot,
+  passed: getSemanticToneClasses('success').dot,
+  rejected: getSemanticToneClasses('danger').dot,
 };
 
 export function getEditingModeOption(

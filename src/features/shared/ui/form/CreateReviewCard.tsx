@@ -24,10 +24,14 @@ import {
 import { AspectRatio } from '@/features/shared/ui/ui/aspect-ratio';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { Card, CardContent, CardDescription, CardTitle } from '@/features/shared/ui/ui/card.tsx';
+import type { EntityType as ReviewEntityType } from '@/features/shared/utils/entity-colors';
 import {
-  ENTITY_COLORS,
-  type EntityType as ReviewEntityType,
-} from '@/features/shared/utils/entity-colors';
+  getContentTypeToneClasses,
+  getEntityGradientClasses,
+  getEntityToneClasses,
+  getSemanticToneClasses,
+  type CivicContentType,
+} from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 import { getHashtagGradient } from '@/features/shared/logic/hashtagHelpers';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -52,96 +56,36 @@ interface ReviewThemeConfig {
   borderColor: string;
 }
 
+function createReviewThemeConfig(type: ReviewContentType, icon: LucideIcon): ReviewThemeConfig {
+  const tone = getReviewToneClasses(type);
+
+  return {
+    icon,
+    gradient: getReviewContentTypeGradient(type),
+    gradientDark: '',
+    accentColor: tone.text,
+    borderColor: tone.border,
+  };
+}
+
 const REVIEW_CONTENT_TYPE_CONFIG: Record<ReviewContentType, ReviewThemeConfig> = {
-  group: {
-    icon: Building2,
-    ...ENTITY_COLORS.group,
-  },
-  event: {
-    icon: Calendar,
-    ...ENTITY_COLORS.event,
-  },
-  meetup: {
-    icon: Video,
-    gradient: 'from-cyan-100 via-sky-100 to-indigo-100',
-    gradientDark: 'dark:from-cyan-900/40 dark:via-sky-900/40 dark:to-indigo-900/50',
-    accentColor: 'text-sky-700 dark:text-sky-300',
-    borderColor: 'border-sky-500',
-  },
-  amendment: {
-    icon: FileText,
-    ...ENTITY_COLORS.amendment,
-  },
-  agenda_item: {
-    icon: ListOrdered,
-    ...ENTITY_COLORS.agenda_item,
-  },
-  vote: {
-    icon: Vote,
-    ...ENTITY_COLORS.vote,
-  },
-  election: {
-    icon: Award,
-    ...ENTITY_COLORS.election,
-  },
-  video: {
-    icon: Video,
-    gradient: 'from-pink-100 to-red-100',
-    gradientDark: 'dark:from-pink-900/40 dark:to-red-900/50',
-    accentColor: 'text-rose-600 dark:text-rose-400',
-    borderColor: 'border-rose-500',
-  },
-  image: {
-    icon: Image,
-    gradient: 'from-cyan-100 to-blue-100',
-    gradientDark: 'dark:from-cyan-900/40 dark:to-blue-900/50',
-    accentColor: 'text-sky-600 dark:text-sky-400',
-    borderColor: 'border-sky-500',
-  },
-  statement: {
-    icon: Quote,
-    gradient: 'from-indigo-100 to-purple-100',
-    gradientDark: 'dark:from-indigo-900/40 dark:to-purple-900/50',
-    accentColor: 'text-indigo-600 dark:text-indigo-400',
-    borderColor: 'border-indigo-500',
-  },
-  todo: {
-    icon: CheckSquare,
-    ...ENTITY_COLORS.todo,
-  },
-  blog: {
-    icon: BookOpen,
-    ...ENTITY_COLORS.blog,
-  },
-  payment: {
-    icon: Wallet,
-    gradient: 'from-emerald-100 to-teal-100',
-    gradientDark: 'dark:from-emerald-900/40 dark:to-teal-900/50',
-    accentColor: 'text-emerald-700 dark:text-emerald-300',
-    borderColor: 'border-emerald-500',
-  },
-  action: {
-    icon: Zap,
-    gradient: 'from-gray-100 to-slate-100',
-    gradientDark: 'dark:from-gray-900/40 dark:to-slate-900/50',
-    accentColor: 'text-slate-600 dark:text-slate-400',
-    borderColor: 'border-slate-500',
-  },
-  workflow: {
-    icon: GitBranch,
-    gradient: 'from-fuchsia-100 to-rose-100',
-    gradientDark: 'dark:from-fuchsia-900/40 dark:to-rose-900/50',
-    accentColor: 'text-fuchsia-700 dark:text-fuchsia-300',
-    borderColor: 'border-fuchsia-500',
-  },
-  user: {
-    icon: User,
-    ...ENTITY_COLORS.user,
-  },
-  role: {
-    icon: User,
-    ...ENTITY_COLORS.role,
-  },
+  group: createReviewThemeConfig('group', Building2),
+  event: createReviewThemeConfig('event', Calendar),
+  meetup: createReviewThemeConfig('meetup', Video),
+  amendment: createReviewThemeConfig('amendment', FileText),
+  agenda_item: createReviewThemeConfig('agenda_item', ListOrdered),
+  vote: createReviewThemeConfig('vote', Vote),
+  election: createReviewThemeConfig('election', Award),
+  video: createReviewThemeConfig('video', Video),
+  image: createReviewThemeConfig('image', Image),
+  statement: createReviewThemeConfig('statement', Quote),
+  todo: createReviewThemeConfig('todo', CheckSquare),
+  blog: createReviewThemeConfig('blog', BookOpen),
+  payment: createReviewThemeConfig('payment', Wallet),
+  action: createReviewThemeConfig('action', Zap),
+  workflow: createReviewThemeConfig('workflow', GitBranch),
+  user: createReviewThemeConfig('user', User),
+  role: createReviewThemeConfig('role', User),
 };
 
 export interface ReviewCardField {
@@ -168,26 +112,16 @@ interface SummaryFieldProps extends ReviewCardField {
   className?: string;
 }
 
-const REVIEW_BADGE_TONES: Partial<Record<ReviewContentType, string>> = {
-  statement: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-200',
-  payment: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-200',
-  action: 'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
-};
-const DEFAULT_REVIEW_BADGE_TONE =
-  'bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-200';
-
 function getReviewBadgeClassName(entityType: ReviewContentType): string {
-  const entityColor = ENTITY_COLORS[entityType as ReviewEntityType];
-  if (entityColor) {
-    return entityColor.badgeBg;
-  }
-
-  return REVIEW_BADGE_TONES[entityType] ?? REVIEW_BADGE_TONES.action ?? DEFAULT_REVIEW_BADGE_TONE;
+  return getReviewToneClasses(entityType).badge;
 }
 
 function getReviewContentTypeGradient(entityType: ReviewContentType): string {
-  const config = REVIEW_CONTENT_TYPE_CONFIG[entityType];
-  return `bg-gradient-to-br ${config.gradient} ${config.gradientDark}`;
+  if (entityType === 'role') {
+    return getEntityGradientClasses('role');
+  }
+
+  return getEntityGradientClasses(entityType as CivicContentType);
 }
 
 function normalizeGradientClassName(
@@ -198,7 +132,17 @@ function normalizeGradientClassName(
     return getReviewContentTypeGradient(entityType);
   }
 
-  return gradient.includes('bg-gradient') ? gradient : `bg-gradient-to-br ${gradient}`;
+  return gradient.includes('bg-gradient') || /(^|\s)bg-/.test(gradient)
+    ? gradient
+    : `bg-gradient-to-br ${gradient}`;
+}
+
+function getReviewToneClasses(entityType: ReviewContentType) {
+  if (entityType === 'role') {
+    return getEntityToneClasses('role');
+  }
+
+  return getContentTypeToneClasses(entityType as CivicContentType);
 }
 
 function getReviewCardTheme(entityType: ReviewContentType = 'statement', gradient?: string) {
@@ -334,7 +278,7 @@ function ReviewMediaBlock({ media, title }: { media: ReviewMediaPreview; title: 
             )}
           >
             <div className="mb-2 flex items-center gap-2">
-              <div className="rounded-full bg-rose-100 p-2 text-rose-600 dark:bg-rose-950/70 dark:text-rose-300">
+              <div className={cn('rounded-full p-2', getSemanticToneClasses('danger').badge)}>
                 <PlayCircle className="h-4 w-4" />
               </div>
               <div>
@@ -399,12 +343,12 @@ export function CreateReviewCard({
   return (
     <Card
       className={cn(
-        'border-border/70 bg-card text-card-foreground overflow-hidden rounded-[28px] border shadow-[0_18px_50px_-28px_rgba(15,23,42,0.45)]',
+        'border-border/70 bg-card text-card-foreground overflow-hidden rounded-[28px] border shadow-[var(--shadow-floating)]',
         className
       )}
     >
       <div className={cn('relative overflow-hidden px-5 py-5 sm:px-6', theme.gradientClassName)}>
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.38),rgba(255,255,255,0.08)_42%,rgba(15,23,42,0.08))] dark:bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02)_42%,rgba(2,6,23,0.32))]" />
+        <div className="absolute inset-0 bg-[var(--surface-overlay)] opacity-55" />
 
         <div className="relative">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -422,7 +366,10 @@ export function CreateReviewCard({
               {secondaryBadge && (
                 <Badge
                   variant="outline"
-                  className="border-white/60 bg-white/75 px-3 py-1 text-[11px] font-semibold text-slate-900 backdrop-blur-sm dark:border-white/15 dark:bg-slate-950/70 dark:text-slate-100"
+                  className={cn(
+                    'px-3 py-1 text-[11px] font-semibold backdrop-blur-sm',
+                    getSemanticToneClasses('neutral').badge
+                  )}
                 >
                   {secondaryBadge}
                 </Badge>
@@ -431,16 +378,16 @@ export function CreateReviewCard({
           </div>
 
           <div className="mt-4 flex items-start gap-4">
-            <div className="rounded-2xl border border-white/70 bg-white/80 p-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-slate-950/60">
+            <div className="border-border rounded-2xl border bg-[var(--surface-overlay)] p-3 shadow-sm backdrop-blur-sm">
               <Icon className={cn('h-5 w-5', theme.accentColor)} />
             </div>
 
             <div className="min-w-0 flex-1">
-              <CardTitle className="text-xl leading-tight font-semibold text-slate-950 sm:text-2xl dark:text-slate-50">
+              <CardTitle className="text-foreground text-xl leading-tight font-semibold sm:text-2xl">
                 {title}
               </CardTitle>
               {subtitle && (
-                <CardDescription className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                <CardDescription className="text-muted-foreground mt-2 max-w-3xl text-sm leading-relaxed">
                   {subtitle}
                 </CardDescription>
               )}
@@ -453,7 +400,7 @@ export function CreateReviewCard({
                 <Badge
                   key={tag}
                   className={cn(
-                    'border-0 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm',
+                    'px-2.5 py-1 text-[11px] font-semibold shadow-sm',
                     getHashtagGradient(tag)
                   )}
                 >

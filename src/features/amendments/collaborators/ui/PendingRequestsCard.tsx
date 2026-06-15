@@ -7,13 +7,6 @@ import { Check, Trash2, Users } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
 import { DataTable, EntityCell, type ColumnDef } from '@/features/shared/ui/data-table';
-import {
-  Panel,
-  PanelContent,
-  PanelDescription,
-  PanelHeader,
-  PanelTitle,
-} from '@/features/shared/ui/layout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
 import type { Collaborator } from '../hooks/useCollaborators';
@@ -103,27 +96,25 @@ export function PendingRequestsCard({
   ];
 
   return (
-    <Panel className="mb-6">
-      <PanelHeader>
-        <PanelTitle className="flex items-center gap-2">
+    <section className="mb-6 space-y-3">
+      <div className="space-y-1.5 px-3 sm:px-4">
+        <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
           <Users className="h-5 w-5" />
           {translateText('generated.inline.0119_pending_collaboration_requests_0e65bf5a')}
           {requests.length})
-        </PanelTitle>
-        <PanelDescription>
+        </h2>
+        <p className="text-muted-foreground text-sm">
           {translateText(
             'generated.inline.0103_review_and_approve_collaboration_requests_0cd489d8'
           )}
-        </PanelDescription>
-      </PanelHeader>
-      <PanelContent>
-        <DataTable
-          columns={columns}
-          data={requests}
-          getRowId={request => request.id}
-          enablePagination={false}
-        />
-      </PanelContent>
-    </Panel>
+        </p>
+      </div>
+      <DataTable
+        columns={columns}
+        data={requests}
+        getRowId={request => request.id}
+        enablePagination={false}
+      />
+    </section>
   );
 }

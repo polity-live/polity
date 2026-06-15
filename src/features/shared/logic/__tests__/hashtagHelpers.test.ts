@@ -5,7 +5,7 @@ import { getHashtagGradient, parseHashtagsFromText } from '@/features/shared/log
 describe('hashtagHelpers', () => {
   it('returns deterministic gradients for the same tag', () => {
     expect(getHashtagGradient('assembly')).toBe(getHashtagGradient('assembly'));
-    expect(getHashtagGradient('assembly')).toContain('bg-gradient-to-r');
+    expect(getHashtagGradient('assembly')).toContain('--badge-accent-bg');
   });
 
   it('parses unique hashtag tokens from free text', () => {

@@ -4,13 +4,6 @@
  * Displays pending membership requests for group admins to approve or reject.
  */
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
 import { DataTable } from '@/features/shared/ui/data-table';
 import { Users } from 'lucide-react';
 export interface PendingRequestsTableViewProps {
@@ -39,23 +32,21 @@ export function PendingRequestsTableView({
   }
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <section className="mb-6 space-y-3">
+      <div className="space-y-1.5 px-3 sm:px-4">
+        <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
           <Users className="h-5 w-5" />
           {title} ({requests.length})
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <DataTable
-          columns={columns}
-          data={requests}
-          getRowId={(membership: any) => membership.id}
-          enablePagination={false}
-          tableClassName="[&_td:last-child]:text-right"
-        />
-      </CardContent>
-    </Card>
+        </h2>
+        <p className="text-muted-foreground text-sm">{description}</p>
+      </div>
+      <DataTable
+        columns={columns}
+        data={requests}
+        getRowId={(membership: any) => membership.id}
+        enablePagination={false}
+        tableClassName="[&_td:last-child]:text-right"
+      />
+    </section>
   );
 }

@@ -22,6 +22,7 @@ import {
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover.tsx';
+import { getSemanticToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -96,8 +97,10 @@ export function SettingsDialogView({
           {/* AI Settings Group */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="size-8 rounded-full bg-purple-100 p-2 dark:bg-purple-900">
-                <Wand2Icon className="size-4 text-purple-600 dark:text-purple-400" />
+              <div
+                className={cn('size-8 rounded-full p-2', getSemanticToneClasses('accent').surface)}
+              >
+                <Wand2Icon className={cn('size-4', getSemanticToneClasses('accent').text)} />
               </div>
               <h4 className="font-semibold">
                 {translateText('generated.inline.0148_ai_560040c5')}

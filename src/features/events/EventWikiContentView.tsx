@@ -28,7 +28,7 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
-import { GRADIENTS } from '@/features/users/state/gradientColors';
+import { getEntityGradientClasses, getMotionPreset } from '@/features/shared/theme';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { StatsBar } from '@/features/shared/ui/layout';
@@ -43,6 +43,9 @@ import { DelegatesOverview } from '@/features/delegates/ui/DelegatesOverview';
 import { MembershipCompositionPanel } from '@/features/groups/ui/MembershipCompositionPanel';
 import { EventDeadlinesCard } from './ui/EventDeadlinesCard';
 import { getEventTypeTranslationKey } from './logic/getEventTypeTranslationKey';
+
+const EVENT_CARD_SURFACE = `${getEntityGradientClasses('event')} ${getMotionPreset('hoverLift')}`;
+const ELECTION_CARD_SURFACE = `${getEntityGradientClasses('election')} ${getMotionPreset('hoverLift')}`;
 import { WikiIncumbentPanel } from '@/features/shared/ui/wiki/WikiIncumbentPanel';
 import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
 export interface EventWikiContentViewProps {
@@ -326,7 +329,7 @@ export function EventWikiContentView({
       {/* Public Participants Card */}
       {event.visibility === 'public' && (
         <Card
-          className={`mb-6 cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${GRADIENTS[1]}`}
+          className={`mb-6 cursor-pointer overflow-hidden ${EVENT_CARD_SURFACE}`}
           onClick={() => setParticipantsDialogOpen(true)}
         >
           <CardHeader>
@@ -349,6 +352,7 @@ export function EventWikiContentView({
             'generated.inline.0432_visible_event_roles_and_their_current_incumbe_9f923058'
           )}
           sections={incumbentSections}
+          entityType="event"
         />
       )}
 
@@ -366,14 +370,13 @@ export function EventWikiContentView({
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4 sm:grid-cols-2">
-            {elections.map((election: any, index: number) => {
+            {elections.map((election: any) => {
               const existingCandidacy = getUserCandidacy(election);
-              const gradientClass = GRADIENTS[index % GRADIENTS.length];
 
               return (
                 <Card
                   key={election.id}
-                  className={`cursor-pointer overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${gradientClass} ${existingCandidacy ? 'opacity-60' : ''}`}
+                  className={`cursor-pointer overflow-hidden ${ELECTION_CARD_SURFACE} ${existingCandidacy ? 'opacity-60' : ''}`}
                   onClick={() => !existingCandidacy && handleElectionClick(election)}
                 >
                   <CardHeader>
@@ -434,9 +437,7 @@ export function EventWikiContentView({
           </AlertDialogHeader>
 
           {selectedElection && (
-            <Card
-              className={`overflow-hidden ${GRADIENTS[elections.indexOf(selectedElection) % GRADIENTS.length]}`}
-            >
+            <Card className={`overflow-hidden ${ELECTION_CARD_SURFACE}`}>
               <CardHeader>
                 <CardTitle>{selectedElection.title}</CardTitle>
                 {selectedElection.description && (

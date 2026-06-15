@@ -5,13 +5,6 @@ import { Link } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import {
   Dialog,
   DialogDescription,
   DialogFooter,
@@ -476,14 +469,14 @@ export function OfflineRosterCardView({
 
   return (
     <>
-      <Card surface="subtleGradient">
-        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-2">
-            <CardTitle className="flex items-center gap-2">
+      <section className="space-y-3">
+        <div className="flex flex-col gap-4 px-3 sm:flex-row sm:items-start sm:justify-between sm:px-4">
+          <div className="space-y-1.5">
+            <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
               <Users className="h-5 w-5" />
               {title} ({rows.length})
-            </CardTitle>
-            <CardDescription>{description}</CardDescription>
+            </h2>
+            <p className="text-muted-foreground text-sm">{description}</p>
           </div>
           {showManageButton ? (
             <Button type="button" onClick={() => setManageOpen(true)}>
@@ -491,18 +484,16 @@ export function OfflineRosterCardView({
               {manageButtonLabel}
             </Button>
           ) : null}
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={tableVariant === 'membership' ? membershipColumns : defaultColumns}
-            data={sortedRows}
-            getRowId={row => row.id}
-            enablePagination={false}
-            emptyTitle={title}
-            emptyDescription={emptyStateLabel}
-          />
-        </CardContent>
-      </Card>
+        </div>
+        <DataTable
+          columns={tableVariant === 'membership' ? membershipColumns : defaultColumns}
+          data={sortedRows}
+          getRowId={row => row.id}
+          enablePagination={false}
+          emptyTitle={title}
+          emptyDescription={emptyStateLabel}
+        />
+      </section>
 
       <Dialog open={manageOpen} onOpenChange={handleCloseManageDialog}>
         <ScrollableDialogContent className="max-h-[90vh] max-w-4xl">

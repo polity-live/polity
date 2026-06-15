@@ -2,6 +2,7 @@ import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { getRightToneClasses } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status/StatusBadges';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
@@ -33,16 +34,11 @@ export const RIGHT_LABELS: Record<RightType, string> = {
 };
 
 export const RIGHT_GRADIENTS: Record<string, string> = {
-  informationRight:
-    'bg-gradient-to-r from-blue-500 to-cyan-400 dark:from-blue-700 dark:to-cyan-600',
-  amendmentRight:
-    'bg-gradient-to-r from-violet-500 to-purple-400 dark:from-violet-700 dark:to-purple-600',
-  rightToSpeak:
-    'bg-gradient-to-r from-teal-500 to-emerald-400 dark:from-teal-700 dark:to-emerald-600',
-  activeVotingRight:
-    'bg-gradient-to-r from-orange-500 to-red-400 dark:from-orange-700 dark:to-red-600',
-  passiveVotingRight:
-    'bg-gradient-to-r from-pink-500 to-rose-400 dark:from-pink-700 dark:to-rose-600',
+  informationRight: getRightToneClasses('informationRight').badge,
+  amendmentRight: getRightToneClasses('amendmentRight').badge,
+  rightToSpeak: getRightToneClasses('rightToSpeak').badge,
+  activeVotingRight: getRightToneClasses('activeVotingRight').badge,
+  passiveVotingRight: getRightToneClasses('passiveVotingRight').badge,
 };
 
 type RightRequestKind = 'incoming' | 'outgoing';
@@ -105,9 +101,9 @@ export function RightBadgeVisual({
     ) : (
       <BadgeControl
         className={cn(
-          'border-0 text-xs text-white',
+          'text-xs',
           size === 'compact' && 'px-1.5 py-0.5 text-[10px] leading-tight',
-          RIGHT_GRADIENTS[right] ?? 'bg-muted text-muted-foreground',
+          RIGHT_GRADIENTS[right] ?? getRightToneClasses(right).badge,
           className
         )}
       >
@@ -121,8 +117,10 @@ export function RightBadgeVisual({
       {requestKind && requestStatusLabel ? (
         <span
           className={cn(
-            'border-background absolute -top-1 -right-1 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full border text-white shadow-sm',
-            requestKind === 'incoming' ? 'bg-blue-500' : 'bg-amber-500'
+            'border-background absolute -top-1 -right-1 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full border shadow-sm',
+            requestKind === 'incoming'
+              ? 'text-background bg-[var(--badge-info-fg)]'
+              : 'text-background bg-[var(--badge-warning-fg)]'
           )}
           aria-label={requestStatusLabel}
           title={requestStatusLabel}
@@ -188,7 +186,7 @@ export function RightFilterOptionButton({
       className={cn(
         'text-xs',
         active
-          ? `${RIGHT_GRADIENTS[right] ?? 'bg-primary'} border-0 text-white hover:text-white`
+          ? `${RIGHT_GRADIENTS[right] ?? getRightToneClasses(right).badge} shadow-sm`
           : 'border-border bg-background/90 text-foreground hover:bg-accent hover:text-accent-foreground dark:bg-card/90 dark:text-foreground'
       )}
     >

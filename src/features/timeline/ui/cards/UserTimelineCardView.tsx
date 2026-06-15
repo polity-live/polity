@@ -1,7 +1,11 @@
 'use client';
 
 import { cn } from '@/features/shared/utils/utils';
-import { featureThemeClassName } from '@/features/shared/theme';
+import {
+  getEntityGradientClasses,
+  getEntityToneClasses,
+  getHashtagToneClasses,
+} from '@/features/shared/theme';
 import { User, Users, MapPin, Mail, Bell, Star } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
@@ -62,10 +66,12 @@ export function UserTimelineCardView({
   className,
   t,
   subscription,
-  amendmentStyle,
   location,
   initials,
 }: UserTimelineCardViewProps) {
+  const userTone = getEntityToneClasses('user');
+  const hashtagTone = getHashtagToneClasses();
+
   return (
     <TimelineCardBase contentType="user" className={className} href={`/user/${user.id}`}>
       <TimelineCardHeader
@@ -80,9 +86,7 @@ export function UserTimelineCardView({
         <div className="mb-3 flex flex-col items-center gap-2 text-center">
           <Avatar className="border-background h-16 w-16 border-2 shadow-md">
             <AvatarImage src={user.avatarUrl} alt={user.name} />
-            <AvatarFallback
-              className={featureThemeClassName('timelineUserTimelineCardInfoAccentGradientSurface')}
-            >
+            <AvatarFallback className={cn(getEntityGradientClasses('user'), userTone.text)}>
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -106,11 +110,7 @@ export function UserTimelineCardView({
               <HashtagDisplay
                 hashtags={user.hashtags.slice(0, 3)}
                 centered={false}
-                badgeClassName={cn(
-                  featureThemeClassName('timelineAmendmentTimelineCardNeutralContrastSurface'),
-                  amendmentStyle.borderColor,
-                  amendmentStyle.accentColor
-                )}
+                badgeClassName={hashtagTone.badge}
               />
             </div>
           )}
@@ -198,9 +198,7 @@ export function UserTimelineCardView({
               disabled={subscription.isLoading}
               className="flex items-center gap-1.5"
             >
-              <Bell
-                className={`h-3.5 w-3.5 ${subscription.isSubscribed ? featureThemeClassName('timelineActionBarThemedStyle') : ''}`}
-              />
+              <Bell className={cn('h-3.5 w-3.5', subscription.isSubscribed && userTone.text)} />
             </Button>
             <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
               <Link

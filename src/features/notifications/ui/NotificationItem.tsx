@@ -1,4 +1,9 @@
-import { featureThemeClassName } from '@/features/shared/theme';
+import type { MouseEvent } from 'react';
+import {
+  featureThemeClassName,
+  getSemanticToneClasses,
+  type SemanticTone,
+} from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -7,10 +12,10 @@ import { LinkSurface } from '@/features/shared/ui/navigation/LinkSurface.tsx';
 import { SmartLink, isPlainLeftClick } from '@/features/shared/ui/navigation/SmartLink.tsx';
 import { Users, X } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
-import { Notification, NotificationType } from '../types/notification.types';
-import { getNotificationIcon, getNotificationColor } from '../utils/notificationConstants';
+import type { Notification, NotificationType } from '../types/notification.types';
+import { getNotificationIcon } from '../utils/notificationConstants';
 import {
-  formatTime,
+  formatTime as formatNotificationTime,
   getDisplayName,
   getNotificationNavigationHref,
 } from '../logic/notificationHelpers';
@@ -23,236 +28,342 @@ import {
   type EntityType as EntityColorType,
 } from '@/features/shared/utils/entity-colors';
 
+type NotificationEntity =
+  | NonNullable<Notification['recipient_group']>
+  | NonNullable<Notification['recipient_event']>
+  | NonNullable<Notification['recipient_amendment']>
+  | NonNullable<Notification['recipient_blog']>
+  | NonNullable<Notification['on_behalf_of_group']>
+  | NonNullable<Notification['on_behalf_of_event']>
+  | NonNullable<Notification['on_behalf_of_amendment']>
+  | NonNullable<Notification['on_behalf_of_blog']>;
+
 interface NotificationItemProps {
   notification: Notification;
-  onNotificationClick: (notification: Notification) => void;
-  onDeleteNotification: (notificationId: string, e: React.MouseEvent) => void;
+  onNotificationClick: (notification: Notification) => void | Promise<void>;
+  onDeleteNotification?: (notificationId: string, e: MouseEvent) => void | Promise<void>;
+  formatTime?: (date: string | number) => string;
+  mode?: 'global' | 'entity';
+  showRecipientBadge?: boolean;
+}
+
+function getEntityLabel(entity: NotificationEntity | null | undefined) {
+  if (!entity) {
+    return translateText('generated.inline.0119_entity_c7fb3177');
+  }
+
+  if ('name' in entity && entity.name) {
+    return entity.name;
+  }
+
+  if ('title' in entity && entity.title) {
+    return entity.title;
+  }
+
+  return translateText('generated.inline.0119_entity_c7fb3177');
+}
+
+function getEntityInitial(entity: NotificationEntity | null | undefined) {
+  return getEntityLabel(entity)[0]?.toUpperCase() || 'E';
+}
+
+function getEntityImage(entity: NotificationEntity | null | undefined) {
+  return entity && 'image_url' in entity ? entity.image_url : undefined;
+}
+
+function getEntityHref(notification: Notification, entity: NotificationEntity | null) {
+  if (!entity?.id) {
+    return null;
+  }
+
+  if (entity === notification.recipient_group || entity === notification.on_behalf_of_group) {
+    return `/group/${entity.id}`;
+  }
+
+  if (entity === notification.recipient_event || entity === notification.on_behalf_of_event) {
+    return `/event/${entity.id}`;
+  }
+
+  if (
+    entity === notification.recipient_amendment ||
+    entity === notification.on_behalf_of_amendment
+  ) {
+    return `/amendment/${entity.id}`;
+  }
+
+  if (entity === notification.recipient_blog || entity === notification.on_behalf_of_blog) {
+    return `/blog/${entity.id}`;
+  }
+
+  return null;
+}
+
+function getRecipientEntity(notification: Notification) {
+  return (
+    notification.recipient_group ||
+    notification.recipient_event ||
+    notification.recipient_amendment ||
+    notification.recipient_blog ||
+    null
+  );
+}
+
+function getOnBehalfEntity(notification: Notification) {
+  return (
+    notification.on_behalf_of_group ||
+    notification.on_behalf_of_event ||
+    notification.on_behalf_of_amendment ||
+    notification.on_behalf_of_blog ||
+    null
+  );
+}
+
+function getEntityType(notification: Notification): EntityColorType | null {
+  if (notification.recipient_group || notification.on_behalf_of_group) return 'group';
+  if (notification.recipient_event || notification.on_behalf_of_event) return 'event';
+  if (notification.recipient_amendment || notification.on_behalf_of_amendment) return 'amendment';
+  if (notification.recipient_blog || notification.on_behalf_of_blog) return 'blog';
+  return null;
+}
+
+function getNotificationTone(type: NotificationType): SemanticTone {
+  if (type.includes('rejected') || type.includes('declined') || type.includes('removed')) {
+    return 'danger';
+  }
+
+  if (type.includes('deleted') || type.includes('cancelled') || type.includes('failed')) {
+    return 'danger';
+  }
+
+  if (type.includes('approved') || type.includes('accepted') || type.includes('confirmed')) {
+    return 'success';
+  }
+
+  if (type.includes('completed') || type.includes('succeeded') || type.includes('promoted')) {
+    return 'success';
+  }
+
+  if (type.includes('required') || type.includes('due_soon') || type.includes('ending_soon')) {
+    return 'warning';
+  }
+
+  if (type.includes('overdue') || type.includes('recalculation')) {
+    return 'warning';
+  }
+
+  if (type.includes('vote') || type.includes('election')) {
+    return 'accent';
+  }
+
+  if (type.includes('request') || type.includes('invite') || type.includes('assigned')) {
+    return 'info';
+  }
+
+  return 'neutral';
+}
+
+function UserMeta({
+  user,
+  linkAfterName = false,
+}: {
+  user: Notification['sender'] | Notification['related_user'];
+  linkAfterName?: boolean;
+}) {
+  if (!user) {
+    return null;
+  }
+
+  const userName = getDisplayName(user);
+  const avatar = (
+    <Avatar className="h-5 w-5 shrink-0">
+      <AvatarImage src={user.avatar ?? undefined} />
+      <AvatarFallback className={featureThemeClassName('agendaAccreditationSectionThemedText')}>
+        {userName[0]?.toUpperCase() || 'U'}
+      </AvatarFallback>
+    </Avatar>
+  );
+  const name = user.id ? (
+    <SmartLink
+      href={`/user/${user.id}`}
+      className="hover:text-primary truncate font-medium hover:underline"
+    >
+      {userName}
+    </SmartLink>
+  ) : (
+    <span className="truncate font-medium">{userName}</span>
+  );
+
+  if (!user.id) {
+    return linkAfterName ? (
+      <>
+        {name}
+        {avatar}
+      </>
+    ) : (
+      <>
+        {avatar}
+        {name}
+      </>
+    );
+  }
+
+  const linkedAvatar = (
+    <SmartLink href={`/user/${user.id}`} className="shrink-0">
+      <Avatar className="hover:ring-primary h-5 w-5 hover:ring-1">
+        <AvatarImage src={user.avatar ?? undefined} />
+        <AvatarFallback className={featureThemeClassName('agendaAccreditationSectionThemedText')}>
+          {userName[0]?.toUpperCase() || 'U'}
+        </AvatarFallback>
+      </Avatar>
+    </SmartLink>
+  );
+
+  return linkAfterName ? (
+    <>
+      {name}
+      {linkedAvatar}
+    </>
+  ) : (
+    <>
+      {linkedAvatar}
+      {name}
+    </>
+  );
+}
+
+function EntityMeta({
+  notification,
+  entity,
+}: {
+  notification: Notification;
+  entity: NotificationEntity;
+}) {
+  const href = getEntityHref(notification, entity);
+  const label = getEntityLabel(entity);
+  const avatar = (
+    <Avatar className="h-5 w-5 shrink-0">
+      <AvatarImage src={getEntityImage(entity) ?? undefined} />
+      <AvatarFallback
+        className={featureThemeClassName('notificationNotificationItemInfoContrastBackground')}
+      >
+        {getEntityInitial(entity)}
+      </AvatarFallback>
+    </Avatar>
+  );
+
+  return (
+    <>
+      {href ? (
+        <SmartLink href={href} className="shrink-0">
+          {avatar}
+        </SmartLink>
+      ) : (
+        avatar
+      )}
+      {href ? (
+        <SmartLink href={href} className="hover:text-primary truncate font-medium hover:underline">
+          {label}
+        </SmartLink>
+      ) : (
+        <span className="truncate font-medium">{label}</span>
+      )}
+    </>
+  );
 }
 
 export function NotificationItem({
   notification,
   onNotificationClick,
   onDeleteNotification,
+  formatTime = formatNotificationTime,
+  mode = 'global',
+  showRecipientBadge = true,
 }: NotificationItemProps) {
   const { t } = useTranslation();
   const Icon = getNotificationIcon(notification.type as NotificationType);
-  const iconColor = getNotificationColor(notification.type as NotificationType);
+  const iconTone = getSemanticToneClasses(
+    getNotificationTone(notification.type as NotificationType)
+  );
   const notificationHref = getNotificationNavigationHref(notification);
-
-  // Determine if this is a personal or entity notification
-  const recipientEntity =
-    notification.recipient_group ||
-    notification.recipient_event ||
-    notification.recipient_amendment ||
-    notification.recipient_blog ||
-    notification.on_behalf_of_group ||
-    notification.on_behalf_of_event ||
-    notification.on_behalf_of_amendment ||
-    notification.on_behalf_of_blog;
-
-  const isEntityNotification = !!recipientEntity;
-
-  // Determine entity type for color coding
-  const entityType: EntityColorType | null = notification.recipient_group
-    ? 'group'
-    : notification.recipient_event
-      ? 'event'
-      : notification.recipient_amendment
-        ? 'amendment'
-        : notification.recipient_blog
-          ? 'blog'
-          : notification.on_behalf_of_group
-            ? 'group'
-            : notification.on_behalf_of_event
-              ? 'event'
-              : notification.on_behalf_of_amendment
-                ? 'amendment'
-                : notification.on_behalf_of_blog
-                  ? 'blog'
-                  : null;
-
+  const recipientEntity = getRecipientEntity(notification);
+  const onBehalfEntity = getOnBehalfEntity(notification);
+  const entityType = getEntityType(notification);
   const entityColors = entityType ? ENTITY_COLORS[entityType] : null;
-
-  // Get entity sent on behalf of
-  const onBehalfEntity =
-    notification.on_behalf_of_group ||
-    notification.on_behalf_of_event ||
-    notification.on_behalf_of_amendment ||
-    notification.on_behalf_of_blog;
-  const onBehalfEntityHref = onBehalfEntity
-    ? notification.on_behalf_of_group
-      ? `/group/${notification.on_behalf_of_group.id}`
-      : notification.on_behalf_of_event
-        ? `/event/${notification.on_behalf_of_event.id}`
-        : notification.on_behalf_of_amendment
-          ? `/amendment/${notification.on_behalf_of_amendment.id}`
-          : `/blog/${notification.on_behalf_of_blog?.id}`
-    : null;
+  const hasEntityContext = Boolean(recipientEntity || onBehalfEntity);
+  const hasRelatedUser = Boolean(notification.related_user);
 
   const cardContent = (
     <CardContent className="flex items-start gap-3 p-3">
-      {/* Notification Icon */}
-      <div
-        className={cn(
-          'bg-muted mt-0.5 rounded-full p-1.5',
-          !notification.is_read && 'bg-primary/10'
-        )}
-      >
-        <Icon className={cn('h-3.5 w-3.5', iconColor)} />
+      <div className={cn('mt-0.5 rounded-full border p-1.5', iconTone.surface)}>
+        <Icon className="h-3.5 w-3.5" />
       </div>
 
-      {/* Content */}
-      <div className="min-w-0 flex-1 space-y-0.5">
-        {/* Sender + On-behalf-of entity line */}
-        {(notification.sender || onBehalfEntity) && (
+      <div className="min-w-0 flex-1 space-y-1">
+        {notification.sender || notification.related_user || onBehalfEntity ? (
           <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-            {notification.sender && (
-              <>
-                {notification.sender.id ? (
-                  <SmartLink href={`/user/${notification.sender.id}`} className="shrink-0">
-                    <Avatar className="hover:ring-primary h-5 w-5 hover:ring-1">
-                      <AvatarImage src={notification.sender.avatar ?? undefined} />
-                      <AvatarFallback
-                        className={featureThemeClassName('agendaAccreditationSectionThemedText')}
-                      >
-                        {getDisplayName(notification.sender)?.[0]?.toUpperCase() || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                  </SmartLink>
-                ) : (
-                  <Avatar className="h-5 w-5 shrink-0">
-                    <AvatarImage src={notification.sender.avatar ?? undefined} />
-                    <AvatarFallback
-                      className={featureThemeClassName('agendaAccreditationSectionThemedText')}
-                    >
-                      {getDisplayName(notification.sender)?.[0]?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                {notification.sender.id ? (
-                  <SmartLink
-                    href={`/user/${notification.sender.id}`}
-                    className="hover:text-primary truncate font-medium hover:underline"
-                  >
-                    {getDisplayName(notification.sender)}
-                  </SmartLink>
-                ) : (
-                  <span className="truncate font-medium">
-                    {getDisplayName(notification.sender)}
-                  </span>
-                )}
-              </>
-            )}
-            {notification.sender && onBehalfEntity && (
+            <UserMeta user={notification.sender} />
+            {notification.sender && onBehalfEntity ? (
               <span className="shrink-0">{t('features.notifications.item.for')}</span>
-            )}
-            {onBehalfEntity && (
-              <>
-                {onBehalfEntityHref ? (
-                  <SmartLink href={onBehalfEntityHref} className="shrink-0">
-                    <Avatar
-                      className={featureThemeClassName('notificationNotificationItemInfoRing')}
-                    >
-                      <AvatarImage src={onBehalfEntity.image_url ?? undefined} />
-                      <AvatarFallback
-                        className={featureThemeClassName(
-                          'notificationNotificationItemInfoContrastBackground'
-                        )}
-                      >
-                        {('name' in onBehalfEntity
-                          ? onBehalfEntity.name?.[0]
-                          : 'title' in onBehalfEntity
-                            ? onBehalfEntity.title?.[0]
-                            : ''
-                        )?.toUpperCase() || 'E'}
-                      </AvatarFallback>
-                    </Avatar>
-                  </SmartLink>
-                ) : (
-                  <Avatar className="h-5 w-5 shrink-0">
-                    <AvatarImage src={onBehalfEntity.image_url ?? undefined} />
-                    <AvatarFallback
-                      className={featureThemeClassName(
-                        'notificationNotificationItemInfoContrastBackground'
-                      )}
-                    >
-                      {('name' in onBehalfEntity
-                        ? onBehalfEntity.name?.[0]
-                        : 'title' in onBehalfEntity
-                          ? onBehalfEntity.title?.[0]
-                          : ''
-                      )?.toUpperCase() || 'E'}
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                {onBehalfEntityHref ? (
-                  <SmartLink
-                    href={onBehalfEntityHref}
-                    className="hover:text-primary truncate font-medium hover:underline"
-                  >
-                    {'name' in onBehalfEntity
-                      ? onBehalfEntity.name
-                      : 'title' in onBehalfEntity
-                        ? onBehalfEntity.title
-                        : translateText('generated.inline.0119_entity_c7fb3177')}
-                  </SmartLink>
-                ) : (
-                  <span className="truncate font-medium">
-                    {'name' in onBehalfEntity
-                      ? onBehalfEntity.name
-                      : 'title' in onBehalfEntity
-                        ? onBehalfEntity.title
-                        : translateText('generated.inline.0119_entity_c7fb3177')}
-                  </span>
-                )}
-              </>
-            )}
+            ) : null}
+            {onBehalfEntity ? (
+              <EntityMeta notification={notification} entity={onBehalfEntity} />
+            ) : null}
+            {(notification.sender || onBehalfEntity) && hasRelatedUser ? (
+              <span className="shrink-0">-&gt;</span>
+            ) : null}
+            {hasRelatedUser ? <UserMeta user={notification.related_user} linkAfterName /> : null}
           </div>
-        )}
+        ) : null}
+
         <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-col gap-1">
+          <div className="flex min-w-0 flex-col gap-1">
             <p className={cn('text-sm font-medium', !notification.is_read && 'font-semibold')}>
               {notification.title}
             </p>
-            {isEntityNotification && recipientEntity && (
-              <BadgeControl variant="outline" className={cn('w-fit', entityColors?.badgeBg)}>
-                <Users className="mr-1 h-3 w-3" />
-                {'name' in recipientEntity
-                  ? recipientEntity.name
-                  : 'title' in recipientEntity
-                    ? recipientEntity.title
-                    : translateText('generated.inline.0119_entity_c7fb3177')}{' '}
-                {t('features.notifications.item.notification')}
+            {showRecipientBadge && hasEntityContext && (recipientEntity || onBehalfEntity) ? (
+              <BadgeControl
+                variant="outline"
+                className={cn('w-fit max-w-full truncate', entityColors?.badgeBg)}
+              >
+                <Users className="mr-1 h-3 w-3 shrink-0" />
+                <span className="truncate">
+                  {getEntityLabel(recipientEntity || onBehalfEntity)}{' '}
+                  {t('features.notifications.item.notification')}
+                </span>
               </BadgeControl>
-            )}
+            ) : null}
           </div>
-          {!notification.is_read && <BadgeControl variant="default" size="dot" />}
+          {!notification.is_read ? <BadgeControl variant="default" size="dot" /> : null}
         </div>
+
         <p className="text-muted-foreground text-sm">{notification.message}</p>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <p className="text-muted-foreground text-xs">{formatTime(notification.created_at)}</p>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={e => onDeleteNotification(notification.id, e)}
-          >
-            <X className="h-3 w-3" />
-          </Button>
+          {onDeleteNotification ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0"
+              onClick={e => {
+                e.preventDefault();
+                void onDeleteNotification(notification.id, e);
+              }}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          ) : null}
         </div>
       </div>
     </CardContent>
   );
 
   const cardClassName = cn(
-    'cursor-pointer transition-all hover:shadow-md',
-    !notification.is_read && 'border-l-primary bg-accent/50 border-l-4',
-    isEntityNotification && entityColors && `border-l-4 ${entityColors.notificationBorderLeft}`
+    'bg-card border-border/70 cursor-pointer rounded-md shadow-[var(--shadow-panel)] transition-shadow hover:shadow-md'
   );
 
   if (notificationHref) {
     return (
-      <Card className={cardClassName}>
+      <Card data-slot="notification-card" data-mode={mode} className={cardClassName}>
         <LinkSurface
           href={notificationHref}
           mode="overlay"
@@ -273,7 +384,12 @@ export function NotificationItem({
   }
 
   return (
-    <Card className={cardClassName} onClick={() => onNotificationClick(notification)}>
+    <Card
+      data-slot="notification-card"
+      data-mode={mode}
+      className={cardClassName}
+      onClick={() => void onNotificationClick(notification)}
+    >
       {cardContent}
     </Card>
   );

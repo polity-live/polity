@@ -111,10 +111,7 @@ export function TypeaheadResultCard({
               <Badge
                 key={tag}
                 variant="secondary"
-                className={cn(
-                  'h-5 border-0 px-1.5 text-[10px] text-white',
-                  getHashtagGradient(tag)
-                )}
+                className={cn('h-5 px-1.5 text-[10px]', getHashtagGradient(tag))}
               >
                 <Hash className="mr-0.5 h-2.5 w-2.5" />
                 {tag}

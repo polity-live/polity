@@ -24,7 +24,6 @@ import {
   deriveSupporterMapItems,
   type SupporterMapItem,
 } from '../logic/supporterDirectory';
-import { notifyAmendmentVoted } from '@/features/notifications/utils/notification-helpers.ts';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import type { VoteValue } from '@/features/shared/ui/voting/VoteButtons';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -178,19 +177,6 @@ export function useAmendmentWikiPage(amendmentId: string) {
           amendment_id: amendmentId,
           vote: voteValue,
         });
-
-        const adminCollab = collaborators.find(c => c.status === 'admin');
-        const authorUserId = adminCollab?.user?.id;
-        if (authorUserId && authorUserId !== user.id) {
-          await notifyAmendmentVoted({
-            senderId: user.id,
-            senderName: user.email || 'Someone',
-            recipientUserId: authorUserId,
-            amendmentId,
-            amendmentTitle: amendment.title ?? '',
-            voteType: voteValue === 1 ? 'upvote' : 'downvote',
-          });
-        }
       }
     } catch (error) {
       console.error('Error voting:', error);

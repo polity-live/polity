@@ -4,6 +4,10 @@ import { FormControlInput, SearchField } from '@/features/shared/ui/form';
 import { ChevronDown, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
+import {
+  type SurfaceMode,
+  useResolvedSurfaceMode,
+} from '@/features/shared/ui/layout/SurfaceDepthContext';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { HashtagInput } from '@/features/shared/ui/hashtags';
 import {
@@ -67,6 +71,7 @@ interface PqlToolbarViewProps<TItem, TFieldKey extends string> {
   savedFilters: readonly PqlFilter<TFieldKey>[];
   searchPlaceholder: string;
   searchQuery: string;
+  surface?: SurfaceMode;
 }
 
 function describeFilter<TFieldKey extends string>(filter: PqlFilter<TFieldKey>): string {
@@ -98,280 +103,286 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
   savedFilters,
   searchPlaceholder,
   searchQuery,
+  surface = 'auto',
 }: PqlToolbarViewProps<TItem, TFieldKey>) {
   const getField = (fieldKey: TFieldKey) => fields.find((field: any) => field.key === fieldKey);
-
-  return (
+  const resolvedSurface = useResolvedSurfaceMode(surface);
+  const toolbarContent = (
     <>
-      <Card className="mb-6">
-        <CardContent className="space-y-4 pt-6">
-          <SearchField
-            placeholder={searchPlaceholder}
-            value={searchQuery}
-            onValueChange={onSearchQueryChange}
-            clearLabel={translateText('generated.inline.1132_clear_search_67300d0f')}
-          />
+      <SearchField
+        placeholder={searchPlaceholder}
+        value={searchQuery}
+        onValueChange={onSearchQueryChange}
+        clearLabel={translateText('generated.inline.1132_clear_search_67300d0f')}
+      />
 
-          {activeBadges.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {activeBadges.map((badge: any) => (
-                <BadgeControl key={badge.id} variant="secondary" className="gap-1">
-                  <span>{badge.label}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className={featureThemeClassName('pqlPqlToolbarThemedPanel')}
-                    onClick={badge.onClear}
-                    aria-label={`Remove ${badge.label}`}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </BadgeControl>
-              ))}
-            </div>
-          ) : null}
+      {activeBadges.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {activeBadges.map((badge: any) => (
+            <BadgeControl key={badge.id} variant="secondary" className="gap-1">
+              <span>{badge.label}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={featureThemeClassName('pqlPqlToolbarThemedPanel')}
+                onClick={badge.onClear}
+                aria-label={`Remove ${badge.label}`}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </BadgeControl>
+          ))}
+        </div>
+      ) : null}
 
-          {quickFilters.length > 0 ? (
-            <Collapsible open={fieldFiltersOpen} onOpenChange={onFieldFiltersOpenChange}>
-              <div className="rounded-lg border">
-                <CollapsibleTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="flex w-full items-center justify-between rounded-lg px-4 py-3"
-                  >
-                    <span className="font-medium">
-                      {translateText('generated.inline.1095_field_filters_8d9ccc52')}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <BadgeControl variant="outline">{activeQuickBadgeCount}</BadgeControl>
-                      <ChevronDown
-                        className={cn(
-                          'h-4 w-4 transition-transform',
-                          fieldFiltersOpen && 'rotate-180'
-                        )}
-                      />
-                    </div>
-                  </Button>
-                </CollapsibleTrigger>
-
-                <CollapsibleContent className="border-t px-4 py-4">
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {quickFilters.map((quickFilter: PqlQuickFilterDefinition<TFieldKey>) => {
-                      const field = getField(quickFilter.fieldKey);
-                      const values = quickFilterValues[quickFilter.fieldKey] ?? [];
-                      const options = field?.options ?? [];
-
-                      return (
-                        <div key={quickFilter.fieldKey} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">
-                              {quickFilter.label ?? field?.label ?? quickFilter.fieldKey}
-                            </span>
-                            {values.length > 0 ? (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onQuickFilterClear(quickFilter.fieldKey)}
-                              >
-                                {translateText('generated.inline.1096_clear_719ea396')}
-                              </Button>
-                            ) : null}
-                          </div>
-                          {(quickFilter.inputKind ?? 'buttons') === 'typeahead' ? (
-                            quickFilter.multiple ? (
-                              <TypeaheadSearch
-                                items={quickFilter.typeaheadItems ?? []}
-                                multiple
-                                values={values}
-                                onValuesChange={nextValues =>
-                                  onQuickFilterValuesChange(quickFilter.fieldKey, nextValues)
-                                }
-                                placeholder={
-                                  quickFilter.placeholder ??
-                                  `Search ${quickFilter.label ?? field?.label ?? ''}...`
-                                }
-                              />
-                            ) : (
-                              <TypeaheadSearch
-                                items={quickFilter.typeaheadItems ?? []}
-                                value={values[0]}
-                                onChange={item =>
-                                  onQuickFilterValuesChange(
-                                    quickFilter.fieldKey,
-                                    item ? [item.id] : []
-                                  )
-                                }
-                                placeholder={
-                                  quickFilter.placeholder ??
-                                  `Search ${quickFilter.label ?? field?.label ?? ''}...`
-                                }
-                              />
-                            )
-                          ) : quickFilter.inputKind === 'hashtag' ? (
-                            <HashtagInput
-                              value={values}
-                              onChange={nextValues =>
-                                onQuickFilterValuesChange(quickFilter.fieldKey, nextValues)
-                              }
-                              showLabel={false}
-                              placeholder={quickFilter.placeholder ?? 'Add a tag'}
-                              suggestions={options.map((option: any) => option.value)}
-                            />
-                          ) : quickFilter.inputKind === 'date' ? (
-                            <FormControlInput
-                              type="date"
-                              value={values[0] ?? ''}
-                              onChange={event =>
-                                onQuickFilterValuesChange(
-                                  quickFilter.fieldKey,
-                                  event.target.value ? [event.target.value] : []
-                                )
-                              }
-                            />
-                          ) : (
-                            <div className="flex flex-wrap gap-2">
-                              {options.map((option: any) => {
-                                const isActive = values.includes(option.value);
-                                return (
-                                  <Button
-                                    key={option.value}
-                                    type="button"
-                                    variant={isActive ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() =>
-                                      onQuickFilterToggle(quickFilter.fieldKey, option.value)
-                                    }
-                                  >
-                                    {option.label}
-                                  </Button>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CollapsibleContent>
-              </div>
-            </Collapsible>
-          ) : null}
-
-          <Collapsible open={customFiltersOpen} onOpenChange={onCustomFiltersOpenChange}>
-            <div className="rounded-lg border">
-              <CollapsibleTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="flex w-full items-center justify-between rounded-lg px-4 py-3"
-                >
-                  <span className="font-medium">
-                    {translateText('generated.inline.1097_custom_filters_3be34e01')}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <BadgeControl variant="outline">{savedFilters.length}</BadgeControl>
-                    <ChevronDown
-                      className={cn(
-                        'h-4 w-4 transition-transform',
-                        customFiltersOpen && 'rotate-180'
-                      )}
-                    />
-                  </div>
-                </Button>
-              </CollapsibleTrigger>
-
-              <CollapsibleContent className="border-t px-4 py-4">
-                <div className="mb-4 flex justify-end">
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      onEditFilter(null);
-                      onBuilderOpenChange(true);
-                    }}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    {translateText('generated.inline.1098_add_custom_filter_9a08c207')}
-                  </Button>
+      {quickFilters.length > 0 ? (
+        <Collapsible open={fieldFiltersOpen} onOpenChange={onFieldFiltersOpenChange}>
+          <div className="border-border/70 border-t pt-2" data-slot="pql-filter-section">
+            <CollapsibleTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                className="flex w-full items-center justify-between px-0 py-3 hover:bg-transparent"
+              >
+                <span className="font-medium">
+                  {translateText('generated.inline.1095_field_filters_8d9ccc52')}
+                </span>
+                <div className="flex items-center gap-2">
+                  <BadgeControl variant="outline">{activeQuickBadgeCount}</BadgeControl>
+                  <ChevronDown
+                    className={cn('h-4 w-4 transition-transform', fieldFiltersOpen && 'rotate-180')}
+                  />
                 </div>
+              </Button>
+            </CollapsibleTrigger>
 
-                {savedFilters.length === 0 ? (
-                  <p className="text-muted-foreground rounded-lg border border-dashed px-4 py-8 text-center text-sm">
-                    {translateText(
-                      'generated.inline.1099_save_reusable_pql_filters_here_suggestions_su_d54a75af'
-                    )}
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {savedFilters.map((filter: any) => {
-                      const isActive = activeCustomFilterIds.includes(filter.id);
-                      return (
-                        <div
-                          key={filter.id}
-                          className="flex flex-col gap-3 rounded-lg border p-4 lg:flex-row lg:items-start lg:justify-between"
-                        >
+            <CollapsibleContent className="border-border/70 border-t py-4">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {quickFilters.map((quickFilter: PqlQuickFilterDefinition<TFieldKey>) => {
+                  const field = getField(quickFilter.fieldKey);
+                  const values = quickFilterValues[quickFilter.fieldKey] ?? [];
+                  const options = field?.options ?? [];
+
+                  return (
+                    <div key={quickFilter.fieldKey} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">
+                          {quickFilter.label ?? field?.label ?? quickFilter.fieldKey}
+                        </span>
+                        {values.length > 0 ? (
                           <Button
                             type="button"
                             variant="ghost"
-                            className={featureThemeClassName('pqlPqlToolbarContrastPanel')}
-                            onClick={() => onCustomFilterToggle(filter.id)}
+                            size="sm"
+                            onClick={() => onQuickFilterClear(quickFilter.fieldKey)}
                           >
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{filter.label}</span>
-                              <BadgeControl variant={isActive ? 'default' : 'outline'}>
-                                {isActive
-                                  ? translateText('generated.inline.0126_active_a733b809')
-                                  : translateText('generated.inline.0134_inactive_09af574c')}
-                              </BadgeControl>
-                            </div>
-                            <p className="text-muted-foreground mt-1 font-mono text-xs break-words">
-                              {describeFilter(filter)}
-                            </p>
+                            {translateText('generated.inline.1096_clear_719ea396')}
                           </Button>
-
-                          <div className="flex items-center gap-2">
-                            <Button
-                              type="button"
-                              variant={isActive ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => onCustomFilterToggle(filter.id)}
-                            >
-                              {isActive
-                                ? translateText('generated.inline.0135_applied_a3e4a569')
-                                : translateText('generated.inline.0136_apply_cfea419c')}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              onClick={() => {
-                                onEditFilter(filter);
-                                onBuilderOpenChange(true);
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onCustomFilterDelete(filter.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                        ) : null}
+                      </div>
+                      {(quickFilter.inputKind ?? 'buttons') === 'typeahead' ? (
+                        quickFilter.multiple ? (
+                          <TypeaheadSearch
+                            items={quickFilter.typeaheadItems ?? []}
+                            multiple
+                            values={values}
+                            onValuesChange={nextValues =>
+                              onQuickFilterValuesChange(quickFilter.fieldKey, nextValues)
+                            }
+                            placeholder={
+                              quickFilter.placeholder ??
+                              `Search ${quickFilter.label ?? field?.label ?? ''}...`
+                            }
+                          />
+                        ) : (
+                          <TypeaheadSearch
+                            items={quickFilter.typeaheadItems ?? []}
+                            value={values[0]}
+                            onChange={item =>
+                              onQuickFilterValuesChange(quickFilter.fieldKey, item ? [item.id] : [])
+                            }
+                            placeholder={
+                              quickFilter.placeholder ??
+                              `Search ${quickFilter.label ?? field?.label ?? ''}...`
+                            }
+                          />
+                        )
+                      ) : quickFilter.inputKind === 'hashtag' ? (
+                        <HashtagInput
+                          value={values}
+                          onChange={nextValues =>
+                            onQuickFilterValuesChange(quickFilter.fieldKey, nextValues)
+                          }
+                          showLabel={false}
+                          placeholder={quickFilter.placeholder ?? 'Add a tag'}
+                          suggestions={options.map((option: any) => option.value)}
+                        />
+                      ) : quickFilter.inputKind === 'date' ? (
+                        <FormControlInput
+                          type="date"
+                          value={values[0] ?? ''}
+                          onChange={event =>
+                            onQuickFilterValuesChange(
+                              quickFilter.fieldKey,
+                              event.target.value ? [event.target.value] : []
+                            )
+                          }
+                        />
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {options.map((option: any) => {
+                            const isActive = values.includes(option.value);
+                            return (
+                              <Button
+                                key={option.value}
+                                type="button"
+                                variant={isActive ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() =>
+                                  onQuickFilterToggle(quickFilter.fieldKey, option.value)
+                                }
+                              >
+                                {option.label}
+                              </Button>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CollapsibleContent>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CollapsibleContent>
+          </div>
+        </Collapsible>
+      ) : null}
+
+      <Collapsible open={customFiltersOpen} onOpenChange={onCustomFiltersOpenChange}>
+        <div className="border-border/70 border-t pt-2" data-slot="pql-filter-section">
+          <CollapsibleTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              className="flex w-full items-center justify-between px-0 py-3 hover:bg-transparent"
+            >
+              <span className="font-medium">
+                {translateText('generated.inline.1097_custom_filters_3be34e01')}
+              </span>
+              <div className="flex items-center gap-2">
+                <BadgeControl variant="outline">{savedFilters.length}</BadgeControl>
+                <ChevronDown
+                  className={cn('h-4 w-4 transition-transform', customFiltersOpen && 'rotate-180')}
+                />
+              </div>
+            </Button>
+          </CollapsibleTrigger>
+
+          <CollapsibleContent className="border-border/70 border-t py-4">
+            <div className="mb-4 flex justify-end">
+              <Button
+                type="button"
+                onClick={() => {
+                  onEditFilter(null);
+                  onBuilderOpenChange(true);
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                {translateText('generated.inline.1098_add_custom_filter_9a08c207')}
+              </Button>
             </div>
-          </Collapsible>
-        </CardContent>
-      </Card>
+
+            {savedFilters.length === 0 ? (
+              <p className="text-muted-foreground rounded-lg border border-dashed px-4 py-8 text-center text-sm">
+                {translateText(
+                  'generated.inline.1099_save_reusable_pql_filters_here_suggestions_su_d54a75af'
+                )}
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {savedFilters.map((filter: any) => {
+                  const isActive = activeCustomFilterIds.includes(filter.id);
+                  return (
+                    <div
+                      key={filter.id}
+                      className="flex flex-col gap-3 rounded-lg border p-4 lg:flex-row lg:items-start lg:justify-between"
+                    >
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className={featureThemeClassName('pqlPqlToolbarContrastPanel')}
+                        onClick={() => onCustomFilterToggle(filter.id)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{filter.label}</span>
+                          <BadgeControl variant={isActive ? 'default' : 'outline'}>
+                            {isActive
+                              ? translateText('generated.inline.0126_active_a733b809')
+                              : translateText('generated.inline.0134_inactive_09af574c')}
+                          </BadgeControl>
+                        </div>
+                        <p className="text-muted-foreground mt-1 font-mono text-xs break-words">
+                          {describeFilter(filter)}
+                        </p>
+                      </Button>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant={isActive ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => onCustomFilterToggle(filter.id)}
+                        >
+                          {isActive
+                            ? translateText('generated.inline.0135_applied_a3e4a569')
+                            : translateText('generated.inline.0136_apply_cfea419c')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            onEditFilter(filter);
+                            onBuilderOpenChange(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onCustomFilterDelete(filter.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+    </>
+  );
+
+  return (
+    <>
+      {resolvedSurface === 'standalone' ? (
+        <Card className="mb-6" data-slot="pql-toolbar-surface" data-surface={resolvedSurface}>
+          <CardContent className="space-y-4 pt-6">{toolbarContent}</CardContent>
+        </Card>
+      ) : (
+        <div
+          className="mb-6 space-y-4"
+          data-slot="pql-toolbar-surface"
+          data-surface={resolvedSurface}
+        >
+          {toolbarContent}
+        </div>
+      )}
 
       <PqlFilterBuilderDialog
         open={builderOpen}

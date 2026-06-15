@@ -1,6 +1,8 @@
+import { getEntityGradientClasses, getEntityToneClasses } from '@/features/shared/theme';
+
 /**
  * Shared entity color definitions for use across the codebase.
- * Extracted from content-type-config.ts for reuse outside timeline code.
+ * Kept as a compatibility layer over the Civic Atelier token helpers.
  */
 
 export type EntityType =
@@ -26,95 +28,45 @@ export interface EntityColorConfig {
   badgeBg: string;
 }
 
+function createEntityColorConfig(entityType: EntityType): EntityColorConfig {
+  const tone = getEntityToneClasses(entityType);
+  const isPrimary = ['group', 'event', 'amendment', 'blog', 'user'].includes(entityType);
+  const notificationBorderLeft = isPrimary
+    ? `border-l-[var(--entity-${entityType}-base)]`
+    : SECONDARY_NOTIFICATION_BORDERS[
+        entityType as Exclude<EntityType, 'group' | 'event' | 'amendment' | 'blog' | 'user'>
+      ];
+
+  return {
+    gradient: getEntityGradientClasses(entityType),
+    gradientDark: '',
+    accentColor: tone.text,
+    borderColor: tone.border,
+    notificationBorderLeft,
+    badgeBg: tone.badge,
+  };
+}
+
+const SECONDARY_NOTIFICATION_BORDERS: Record<
+  Exclude<EntityType, 'group' | 'event' | 'amendment' | 'blog' | 'user'>,
+  string
+> = {
+  agenda_item: 'border-l-[var(--badge-info-fg)]',
+  vote: 'border-l-[var(--badge-danger-fg)]',
+  election: 'border-l-[var(--badge-accent-fg)]',
+  todo: 'border-l-[var(--badge-success-fg)]',
+  role: 'border-l-[var(--badge-neutral-fg)]',
+};
+
 export const ENTITY_COLORS: Record<EntityType, EntityColorConfig> = {
-  group: {
-    gradient: 'from-[var(--entity-group-bg)] to-[var(--background)]',
-    gradientDark: '',
-    accentColor: 'text-[var(--entity-group-fg)]',
-    borderColor: 'border-[var(--entity-group-border)]',
-    notificationBorderLeft: 'border-l-[var(--entity-group-base)]',
-    badgeBg:
-      'border-[var(--entity-group-border)] bg-[var(--entity-group-bg)] text-[var(--entity-group-fg)]',
-  },
-  event: {
-    gradient: 'from-[var(--entity-event-bg)] to-[var(--background)]',
-    gradientDark: '',
-    accentColor: 'text-[var(--entity-event-fg)]',
-    borderColor: 'border-[var(--entity-event-border)]',
-    notificationBorderLeft: 'border-l-[var(--entity-event-base)]',
-    badgeBg:
-      'border-[var(--entity-event-border)] bg-[var(--entity-event-bg)] text-[var(--entity-event-fg)]',
-  },
-  agenda_item: {
-    gradient: 'from-[var(--badge-info-bg)] to-[var(--background)]',
-    gradientDark: '',
-    accentColor: 'text-[var(--badge-info-fg)]',
-    borderColor: 'border-[var(--badge-info-border)]',
-    notificationBorderLeft: 'border-l-[var(--badge-info-fg)]',
-    badgeBg:
-      'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] text-[var(--badge-info-fg)]',
-  },
-  amendment: {
-    gradient: 'from-[var(--entity-amendment-bg)] to-[var(--background)]',
-    gradientDark: '',
-    accentColor: 'text-[var(--entity-amendment-fg)]',
-    borderColor: 'border-[var(--entity-amendment-border)]',
-    notificationBorderLeft: 'border-l-[var(--entity-amendment-base)]',
-    badgeBg:
-      'border-[var(--entity-amendment-border)] bg-[var(--entity-amendment-bg)] text-[var(--entity-amendment-fg)]',
-  },
-  vote: {
-    gradient: 'from-[var(--badge-danger-bg)] to-[var(--background)]',
-    gradientDark: '',
-    accentColor: 'text-[var(--badge-danger-fg)]',
-    borderColor: 'border-[var(--badge-danger-border)]',
-    notificationBorderLeft: 'border-l-[var(--badge-danger-fg)]',
-    badgeBg:
-      'border-[var(--badge-danger-border)] bg-[var(--badge-danger-bg)] text-[var(--badge-danger-fg)]',
-  },
-  election: {
-    gradient: 'from-[var(--badge-accent-bg)] to-[var(--background)]',
-    gradientDark: '',
-    accentColor: 'text-[var(--badge-accent-fg)]',
-    borderColor: 'border-[var(--badge-accent-border)]',
-    notificationBorderLeft: 'border-l-[var(--badge-accent-fg)]',
-    badgeBg:
-      'border-[var(--badge-accent-border)] bg-[var(--badge-accent-bg)] text-[var(--badge-accent-fg)]',
-  },
-  todo: {
-    gradient: 'from-[var(--badge-success-bg)] to-[var(--background)]',
-    gradientDark: '',
-    accentColor: 'text-[var(--badge-success-fg)]',
-    borderColor: 'border-[var(--badge-success-border)]',
-    notificationBorderLeft: 'border-l-[var(--badge-success-fg)]',
-    badgeBg:
-      'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]',
-  },
-  blog: {
-    gradient: 'from-[var(--entity-blog-bg)] to-[var(--background)]',
-    gradientDark: '',
-    accentColor: 'text-[var(--entity-blog-fg)]',
-    borderColor: 'border-[var(--entity-blog-border)]',
-    notificationBorderLeft: 'border-l-[var(--entity-blog-base)]',
-    badgeBg:
-      'border-[var(--entity-blog-border)] bg-[var(--entity-blog-bg)] text-[var(--entity-blog-fg)]',
-  },
-  user: {
-    gradient: 'from-[var(--entity-user-bg)] to-[var(--background)]',
-    gradientDark: '',
-    accentColor: 'text-[var(--entity-user-fg)]',
-    borderColor: 'border-[var(--entity-user-border)]',
-    notificationBorderLeft: 'border-l-[var(--entity-user-base)]',
-    badgeBg:
-      'border-[var(--entity-user-border)] bg-[var(--entity-user-bg)] text-[var(--entity-user-fg)]',
-  },
-  role: {
-    gradient: 'from-[var(--badge-neutral-bg)] to-[var(--background)]',
-    gradientDark: '',
-    accentColor: 'text-[var(--badge-neutral-fg)]',
-    borderColor: 'border-[var(--badge-neutral-border)]',
-    notificationBorderLeft: 'border-l-[var(--badge-neutral-fg)]',
-    badgeBg:
-      'border-[var(--badge-neutral-border)] bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)]',
-  },
+  group: createEntityColorConfig('group'),
+  event: createEntityColorConfig('event'),
+  agenda_item: createEntityColorConfig('agenda_item'),
+  amendment: createEntityColorConfig('amendment'),
+  vote: createEntityColorConfig('vote'),
+  election: createEntityColorConfig('election'),
+  todo: createEntityColorConfig('todo'),
+  blog: createEntityColorConfig('blog'),
+  user: createEntityColorConfig('user'),
+  role: createEntityColorConfig('role'),
 };

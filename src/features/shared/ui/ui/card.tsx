@@ -3,6 +3,7 @@ import { Slot } from '@radix-ui/react-slot';
 
 import { cn } from '@/features/shared/utils/utils.ts';
 import { getMotionPreset } from '@/features/shared/theme';
+import { SurfaceLayerProvider } from '@/features/shared/ui/layout/SurfaceDepthContext';
 
 type CardProps = React.ComponentPropsWithoutRef<'div'> & {
   asChild?: boolean;
@@ -100,20 +101,22 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     const Comp = asChild ? Slot : 'div';
 
     return (
-      <Comp
-        ref={ref}
-        className={cn(
-          'bg-card text-card-foreground rounded-lg border shadow-[var(--shadow-panel)]',
-          getMotionPreset('colors'),
-          cardSurfaceClasses[surface],
-          cardBorderClasses[borderStyle],
-          cardElevationClasses[elevation],
-          shape === 'xl' && 'rounded-xl',
-          cardInteractiveClasses[interactive],
-          className
-        )}
-        {...props}
-      />
+      <SurfaceLayerProvider>
+        <Comp
+          ref={ref}
+          className={cn(
+            'bg-card text-card-foreground rounded-lg border shadow-[var(--shadow-panel)]',
+            getMotionPreset('colors'),
+            cardSurfaceClasses[surface],
+            cardBorderClasses[borderStyle],
+            cardElevationClasses[elevation],
+            shape === 'xl' && 'rounded-xl',
+            cardInteractiveClasses[interactive],
+            className
+          )}
+          {...props}
+        />
+      </SurfaceLayerProvider>
     );
   }
 );

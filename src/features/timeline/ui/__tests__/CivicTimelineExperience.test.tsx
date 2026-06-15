@@ -1,11 +1,12 @@
 /* @vitest-environment jsdom */
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CivicTimelineItem, CivicTimelineSection } from '../../logic/civicTimeline';
 import { CivicTimelineMap } from '../CivicTimelineMap';
 import { CivicTimelineRail } from '../CivicTimelineRail';
+import { ModernTimelineView } from '../ModernTimelineView';
 import { Button } from '@/features/shared/ui/ui/button';
 
 const { mockFlyTo, mockGetZoom } = vi.hoisted(() => ({
@@ -93,6 +94,53 @@ const sections: CivicTimelineSection[] = [
   },
 ];
 
+function createTimelineViewProps(): ComponentProps<typeof ModernTimelineView> {
+  return {
+    userId: 'user-1',
+    mode: 'timeline',
+    setMode: vi.fn(),
+    filters: {
+      contentTypes: ['event'],
+      dateRange: 'all',
+      topics: [],
+      engagement: 'all',
+      sortBy: 'recent',
+      searchQuery: '',
+    },
+    setContentTypes: vi.fn(),
+    toggleContentType: vi.fn(),
+    setDateRange: vi.fn(),
+    toggleTopic: vi.fn(),
+    setEngagement: vi.fn(),
+    showFilterPanel: false,
+    setShowFilterPanel: vi.fn(),
+    radiusKm: 'all',
+    setRadiusKm: vi.fn(),
+    activeItemId: null,
+    setActiveItemId: vi.fn(),
+    decisionTerminal: {
+      decisions: [],
+      isLoading: false,
+      urgentCount: 0,
+    },
+    civicTimeline: {
+      items: [item],
+      sections,
+      mapItems: [item],
+      availableTopics: ['mobility'],
+      discoverCount: 0,
+      isLoading: false,
+      userCoordinates: item.coordinates,
+    },
+    activeFilterCount: 0,
+    hasActiveFilters: false,
+    handleSortChange: vi.fn(),
+    handleResetFilters: vi.fn(),
+    handleMapItemSelect: vi.fn(),
+    handleRailItemSelect: vi.fn(),
+  } as unknown as ComponentProps<typeof ModernTimelineView>;
+}
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -174,5 +222,19 @@ describe('CivicTimelineMap', () => {
       animate: true,
       duration: 0.35,
     });
+  });
+});
+
+describe('ModernTimelineView', () => {
+  it('places the live timeline rail on the same subtle card surface as the landing preview', () => {
+    render(<ModernTimelineView {...createTimelineViewProps()} />);
+
+    const surface = screen.getByTestId('timeline-rail-surface');
+
+    expect(surface.className).toContain('bg-card');
+    expect(surface.className).toContain('rounded-lg');
+    expect(surface.className).toContain('border');
+    expect(surface.className).toContain('shadow-sm');
+    expect(screen.getByTestId('civic-timeline-rail')).toBeTruthy();
   });
 });

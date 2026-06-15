@@ -8,7 +8,7 @@ import { useUserState } from '@/zero/users/useUserState';
 import { Button } from '@/features/shared/ui/ui/button';
 import { UserX, X, Check } from 'lucide-react';
 import { EntityCell, type ColumnDef } from '@/features/shared/ui/data-table';
-import { RoleBadge } from '@/features/shared/ui/status';
+import { RoleTag } from '@/features/groups/ui/RoleTag';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { NativeSelect } from '@/features/shared/ui/ui/native-select';
 import { toast } from '@/features/shared/ui/ui/sonner';
@@ -292,9 +292,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
       id: 'role',
       header: translateText('generated.inline.0091_role_c3f104d1'),
       cell: ({ row }) => (
-        <RoleBadge>
-          {row.original.role?.name || translateText('generated.inline.0034_no_role_2e54b8e7')}
-        </RoleBadge>
+        <RoleTag
+          roleId={row.original.role?.id}
+          roleName={
+            row.original.role?.name || translateText('generated.inline.0034_no_role_2e54b8e7')
+          }
+        />
       ),
     },
     {
@@ -346,9 +349,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
             ))}
           </NativeSelect>
         ) : (
-          <RoleBadge>
-            {row.original.role?.name || translateText('generated.inline.0034_no_role_2e54b8e7')}
-          </RoleBadge>
+          <RoleTag
+            roleId={row.original.role?.id}
+            roleName={
+              row.original.role?.name || translateText('generated.inline.0034_no_role_2e54b8e7')
+            }
+          />
         ),
     },
     {
@@ -382,9 +388,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
       id: 'role',
       header: translateText('generated.inline.0091_role_c3f104d1'),
       cell: ({ row }) => (
-        <RoleBadge>
-          {row.original.role?.name || translateText('generated.inline.0034_no_role_2e54b8e7')}
-        </RoleBadge>
+        <RoleTag
+          roleId={row.original.role?.id}
+          roleName={
+            row.original.role?.name || translateText('generated.inline.0034_no_role_2e54b8e7')
+          }
+        />
       ),
     },
     {

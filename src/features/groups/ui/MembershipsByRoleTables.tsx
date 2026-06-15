@@ -1,4 +1,3 @@
-import { featureThemeClassName } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
 import { Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -10,13 +9,6 @@ import type {
   ParticipationRoleLike,
 } from '@/features/shared/types/participation';
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
-import {
-  Panel,
-  PanelContent,
-  PanelDescription,
-  PanelHeader,
-  PanelTitle,
-} from '@/features/shared/ui/layout';
 import { CountBadge, EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import { UserTableCell } from '@/features/shared/ui/data-table';
@@ -58,7 +50,6 @@ export function MembershipsByRoleTables<
   members,
   onOpenRightsDialog,
   onRemoveRole,
-  entityType = 'group',
   countLabel,
   memberDescriptionFallback,
   defaultRequestLabel,
@@ -107,7 +98,7 @@ export function MembershipsByRoleTables<
   const rightsLabel = t('components.membershipTables.rights');
   const secondaryActionDefaultLabel = t('components.membershipTables.manage');
   const notAvailableLabel = t('components.membershipTables.notAvailable', 'N/A');
-  const countTone = entityType === 'event' ? 'info' : 'neutral';
+  const countTone = 'neutral';
   const membersWithoutRoles = members.filter(
     membership => getMembershipDisplayRoles(membership).length === 0
   );
@@ -274,53 +265,44 @@ export function MembershipsByRoleTables<
         ];
 
         return (
-          <Panel
-            key={section.id}
-            className={featureThemeClassName(
-              'groupMembershipRightsAlignmentPanelThemedGradientSurface'
-            )}
-          >
-            <PanelHeader>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <PanelTitle className="flex items-center gap-2">
-                    {section.kind === 'role' && section.role ? (
-                      <RoleTag roleId={section.role.id} roleName={section.title} />
-                    ) : (
-                      <span className="font-semibold">{section.title}</span>
-                    )}
-                    <CountBadge
-                      count={roleMembers.length}
-                      label={resolvedCountLabel}
-                      tone={countTone}
-                    />
-                  </PanelTitle>
-                  <PanelDescription>{section.description}</PanelDescription>
-                </div>
-                {section.kind === 'role' && section.role ? (
-                  <div className="flex flex-wrap gap-2">
-                    {section.role.default_request_role ? (
-                      <StatusBadge status="active">{resolvedDefaultRequestLabel}</StatusBadge>
-                    ) : null}
-                    {section.role.default_invite_role ? (
-                      <StatusBadge status="invited" tone="info">
-                        {resolvedDefaultInviteLabel}
-                      </StatusBadge>
-                    ) : null}
-                  </div>
-                ) : null}
+          <section key={section.id} className="space-y-3">
+            <div className="flex flex-wrap items-start justify-between gap-3 px-3 sm:px-4">
+              <div className="space-y-1.5">
+                <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
+                  {section.kind === 'role' && section.role ? (
+                    <RoleTag roleId={section.role.id} roleName={section.title} />
+                  ) : (
+                    <span>{section.title}</span>
+                  )}
+                  <CountBadge
+                    count={roleMembers.length}
+                    label={resolvedCountLabel}
+                    tone={countTone}
+                  />
+                </h2>
+                <p className="text-muted-foreground text-sm">{section.description}</p>
               </div>
-            </PanelHeader>
-            <PanelContent>
-              <DataTable
-                columns={columns}
-                data={roleMembers}
-                getRowId={membership => `${section.id}-${membership.id}`}
-                enablePagination={false}
-                emptyTitle={resolvedEmptyStateLabel}
-              />
-            </PanelContent>
-          </Panel>
+              {section.kind === 'role' && section.role ? (
+                <div className="flex flex-wrap gap-2">
+                  {section.role.default_request_role ? (
+                    <StatusBadge status="active">{resolvedDefaultRequestLabel}</StatusBadge>
+                  ) : null}
+                  {section.role.default_invite_role ? (
+                    <StatusBadge status="invited" tone="info">
+                      {resolvedDefaultInviteLabel}
+                    </StatusBadge>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+            <DataTable
+              columns={columns}
+              data={roleMembers}
+              getRowId={membership => `${section.id}-${membership.id}`}
+              enablePagination={false}
+              emptyTitle={resolvedEmptyStateLabel}
+            />
+          </section>
         );
       })}
     </div>

@@ -44,6 +44,7 @@ describe('CreateReviewCard', () => {
       'https://example.com/town-hall-video'
     );
     expect(container.firstElementChild?.className).toContain('rounded-[28px]');
-    expect(container.innerHTML).toContain('from-orange-100');
+    expect(container.innerHTML).toContain('--entity-event-bg');
+    expect(container.innerHTML).not.toContain('bg-gradient-to-br');
   });
 });

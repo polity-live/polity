@@ -1,5 +1,5 @@
 import { FeedList, FeedStatePanel } from '@/features/shared/ui/feed';
-import { Notification } from '../types/notification.types';
+import type { Notification } from '../types/notification.types';
 import { NotificationItem } from './NotificationItem';
 
 interface NotificationsListProps {
@@ -8,8 +8,11 @@ interface NotificationsListProps {
   emptyIcon: React.ComponentType<{ className?: string }>;
   emptyTitle: string;
   emptyDescription: string;
-  onNotificationClick: (notification: Notification) => void;
-  onDeleteNotification: (notificationId: string, e: React.MouseEvent) => void;
+  onNotificationClick: (notification: Notification) => void | Promise<void>;
+  onDeleteNotification?: (notificationId: string, e: React.MouseEvent) => void | Promise<void>;
+  formatTime?: (date: string | number) => string;
+  mode?: 'global' | 'entity';
+  showRecipientBadge?: boolean;
 }
 
 export function NotificationsList({
@@ -20,6 +23,9 @@ export function NotificationsList({
   emptyDescription,
   onNotificationClick,
   onDeleteNotification,
+  formatTime,
+  mode = 'global',
+  showRecipientBadge = true,
 }: NotificationsListProps) {
   if (isLoading) {
     return <FeedStatePanel isLoading />;
@@ -37,6 +43,9 @@ export function NotificationsList({
           notification={notification}
           onNotificationClick={onNotificationClick}
           onDeleteNotification={onDeleteNotification}
+          formatTime={formatTime}
+          mode={mode}
+          showRecipientBadge={showRecipientBadge}
         />
       ))}
     </FeedList>

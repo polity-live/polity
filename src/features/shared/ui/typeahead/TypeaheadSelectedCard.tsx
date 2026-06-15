@@ -97,7 +97,7 @@ export function TypeaheadSelectedCard({
               <Badge
                 key={tag}
                 variant="secondary"
-                className={cn('border-0 text-[11px] text-white', getHashtagGradient(tag))}
+                className={cn('text-[11px]', getHashtagGradient(tag))}
               >
                 <Hash className="mr-1 h-2.5 w-2.5" />
                 {tag}

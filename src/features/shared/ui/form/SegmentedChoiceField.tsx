@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from 'react';
 
+import { getBadgeToneClasses } from '@/features/shared/theme';
 import { FormFieldShell } from '@/features/shared/ui/form/FormFieldShell';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
@@ -27,11 +28,11 @@ interface SegmentedChoiceFieldProps<TValue extends string = string> {
 }
 
 const selectedToneClasses: Record<SegmentedChoiceTone, string> = {
-  neutral: 'bg-muted text-foreground hover:bg-muted',
-  success: 'bg-emerald-600 text-white hover:bg-emerald-700',
-  warning: 'bg-amber-500 text-white hover:bg-amber-600',
-  destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-  accent: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  neutral: getBadgeToneClasses('neutral'),
+  success: getBadgeToneClasses('success'),
+  warning: getBadgeToneClasses('warning'),
+  destructive: getBadgeToneClasses('danger'),
+  accent: getBadgeToneClasses('accent'),
 };
 
 export function SegmentedChoiceField<TValue extends string = string>({

@@ -1,6 +1,6 @@
 import { Info, Star, TrendingUp, User, Users } from 'lucide-react';
 
-import { featureThemeClassName } from '@/features/shared/theme';
+import { getSemanticToneClasses } from '@/features/shared/theme';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -12,37 +12,37 @@ export function getReasonConfig(category: ReasonCategory) {
       return {
         Icon: TrendingUp,
         labelKey: 'timeline.explore.reasons.trending',
-        colorClass: featureThemeClassName('discussionsCommentTreeWarningText'),
-        bgClass: featureThemeClassName('timelineReasonDisplayWarningBackground'),
+        colorClass: getSemanticToneClasses('warning').text,
+        bgClass: getSemanticToneClasses('warning').surface,
       };
     case 'popular_topic':
       return {
         Icon: Star,
         labelKey: 'timeline.explore.reasons.popularTopic',
-        colorClass: featureThemeClassName('notificationNotificationWarningTextAlpha'),
-        bgClass: featureThemeClassName('decisionterminalFlashRowWarningBackground'),
+        colorClass: getSemanticToneClasses('warning').text,
+        bgClass: getSemanticToneClasses('warning').surface,
         contextPrefix: 'in ',
       };
     case 'similar_groups':
       return {
         Icon: Users,
         labelKey: 'timeline.explore.reasons.similarGroups',
-        colorClass: featureThemeClassName('discussionsCommentTreeInfoText'),
-        bgClass: featureThemeClassName('timelineReasonDisplayInfoBackground'),
+        colorClass: getSemanticToneClasses('info').text,
+        bgClass: getSemanticToneClasses('info').surface,
       };
     case 'your_content':
       return {
         Icon: User,
         labelKey: 'timeline.explore.reasons.yourContent',
-        colorClass: featureThemeClassName('notificationNotificationSuccessText'),
-        bgClass: featureThemeClassName('decisionterminalFlashRowSuccessBackground'),
+        colorClass: getSemanticToneClasses('success').text,
+        bgClass: getSemanticToneClasses('success').surface,
       };
     default:
       return {
         Icon: Info,
         labelKey: 'timeline.explore.reasons.default',
-        colorClass: featureThemeClassName('timelineReasonDisplayNeutralText'),
-        bgClass: featureThemeClassName('timelineReasonDisplayNeutralBackground'),
+        colorClass: getSemanticToneClasses('neutral').text,
+        bgClass: getSemanticToneClasses('neutral').surface,
       };
   }
 }

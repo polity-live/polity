@@ -36,5 +36,10 @@ describe('RolesPermissionsTable', () => {
 
     expect(within(contentSection).getByText('Manage Amendments')).toBeTruthy();
     expect(within(contentSection).getByText('Manage Blogs')).toBeTruthy();
+
+    const matrixSurface = operationsSection.querySelector('.bg-card');
+    expect(matrixSurface).toBeTruthy();
+    expect(matrixSurface?.className).toContain('rounded-md');
+    expect(matrixSurface?.className).toContain('shadow-[var(--shadow-panel)]');
   });
 });

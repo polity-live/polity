@@ -4,7 +4,10 @@ import { PermissionError } from '../../rbac/errors';
 
 const canMock = vi.fn();
 const amendmentDeleteMock = vi.fn();
+const supportAmendmentMock = vi.fn();
 const updateSupportVoteMock = vi.fn();
+const fireNotificationMock = vi.fn();
+const userNameMock = vi.fn();
 const processEngineMocks = vi.hoisted(() => ({
   completeProcessTaskWithEvent: vi.fn(),
   initializeAmendmentProcessPath: vi.fn(),
@@ -29,7 +32,7 @@ vi.mock('../../mutators', () => ({
       updateChangeRequest: { fn: vi.fn() },
       createSupportConfirmation: { fn: vi.fn() },
       updateSupportConfirmation: { fn: vi.fn() },
-      supportAmendment: { fn: vi.fn() },
+      supportAmendment: { fn: (...args: unknown[]) => supportAmendmentMock(...args) },
       updateSupportVote: { fn: (...args: unknown[]) => updateSupportVoteMock(...args) },
       deleteSupportVote: { fn: vi.fn() },
     },
@@ -37,7 +40,7 @@ vi.mock('../../mutators', () => ({
 }));
 
 vi.mock('../../server-notify', () => ({
-  fireNotification: vi.fn(),
+  fireNotification: (...args: unknown[]) => fireNotificationMock(...args),
 }));
 
 vi.mock('../../server-helpers', () => ({
@@ -48,7 +51,7 @@ vi.mock('../../server-helpers', () => ({
   recomputeEventCounters: vi.fn(),
   recomputeGroupCounters: vi.fn(),
   recomputeUserCounters: vi.fn(),
-  userName: vi.fn(),
+  userName: (...args: unknown[]) => userNameMock(...args),
 }));
 
 vi.mock('../process-engine', () => ({
@@ -92,7 +95,10 @@ describe('amendmentServerMutators authorization', () => {
   beforeEach(() => {
     canMock.mockReset();
     amendmentDeleteMock.mockReset();
+    supportAmendmentMock.mockReset();
     updateSupportVoteMock.mockReset();
+    fireNotificationMock.mockReset();
+    userNameMock.mockReset();
     Object.values(processEngineMocks).forEach(mock => mock.mockReset());
   });
 
@@ -129,6 +135,70 @@ describe('amendmentServerMutators authorization', () => {
     ).rejects.toThrow(PermissionError);
 
     expect(updateSupportVoteMock).not.toHaveBeenCalled();
+  });
+
+  it('allows a signed-in viewer to support vote a public amendment without amendment vote rights', async () => {
+    const tx = createTx('server');
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'amendment-1',
+        title: 'Open amendment',
+        visibility: 'public',
+        created_by_id: 'author-user',
+        group_id: null,
+        event_id: null,
+      })
+      .mockResolvedValueOnce({
+        id: 'collab-1',
+        amendment_id: 'amendment-1',
+        user_id: 'admin-user',
+        status: 'admin',
+      });
+    userNameMock.mockResolvedValueOnce('Voting User');
+
+    await expect(
+      amendmentServerMutators.supportAmendment.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: { id: 'support-vote-1', amendment_id: 'amendment-1', vote: 1 },
+      })
+    ).resolves.toBeUndefined();
+
+    expect(canMock).not.toHaveBeenCalled();
+    expect(supportAmendmentMock).toHaveBeenCalled();
+    expect(fireNotificationMock).toHaveBeenCalledWith('notifyAmendmentVoted', {
+      senderId: 'user-1',
+      senderName: 'Voting User',
+      recipientUserId: 'admin-user',
+      amendmentId: 'amendment-1',
+      amendmentTitle: 'Open amendment',
+      voteType: 'upvote',
+    });
+  });
+
+  it('rejects support voting on a private amendment without view access', async () => {
+    const tx = createTx('server');
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'amendment-1',
+        title: 'Private amendment',
+        visibility: 'private',
+        created_by_id: 'author-user',
+        group_id: null,
+        event_id: null,
+      })
+      .mockResolvedValueOnce(null);
+
+    await expect(
+      amendmentServerMutators.supportAmendment.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: { id: 'support-vote-1', amendment_id: 'amendment-1', vote: 1 },
+      })
+    ).rejects.toThrow(PermissionError);
+
+    expect(supportAmendmentMock).not.toHaveBeenCalled();
+    expect(fireNotificationMock).not.toHaveBeenCalled();
   });
 
   it('rejects process path initialization without amendment manage rights', async () => {

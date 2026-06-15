@@ -1,6 +1,10 @@
 'use client';
 
-import { featureThemeClassName } from '@/features/shared/theme';
+import {
+  getEntityGradientClasses,
+  getEntityToneClasses,
+  getHashtagToneClasses,
+} from '@/features/shared/theme';
 import { BookOpen, Clock, User, Bell } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { cn } from '@/features/shared/utils/utils';
@@ -61,10 +65,13 @@ export function BlogTimelineCardView({
   t,
   gradient,
   subscription,
-  blogStyle,
   blogUrl,
   stats,
 }: BlogTimelineCardViewProps) {
+  const blogTone = getEntityToneClasses('blog');
+  const hashtagTone = getHashtagToneClasses();
+  const headerGradient = gradient || getEntityGradientClasses('blog');
+
   return (
     <TimelineCardBase contentType="blog" className={className} href={blogUrl}>
       {/* Cover Image or Gradient Header */}
@@ -76,13 +83,11 @@ export function BlogTimelineCardView({
             className="h-full w-full object-cover"
             loading="lazy"
           />
-          <div
-            className={featureThemeClassName('timelineBlogTimelineCardContrastGradientSurface')}
-          />
+          <div className="from-foreground/80 via-foreground/25 absolute inset-0 bg-gradient-to-t to-transparent" />
 
           {/* Title Overlay */}
           <div className="absolute right-0 bottom-0 left-0 p-4">
-            <h3 className={featureThemeClassName('timelineBlogTimelineCardContrastText')}>
+            <h3 className="text-background line-clamp-2 text-base leading-tight font-bold">
               <Link to={blogUrl} onClick={e => e.stopPropagation()} className="hover:underline">
                 {blog.title}
               </Link>
@@ -90,9 +95,9 @@ export function BlogTimelineCardView({
           </div>
         </div>
       ) : (
-        <div className={cn('shrink-0 p-4', gradient)}>
+        <div className={cn('shrink-0 p-4', headerGradient)} data-timeline-card-header>
           <div className="mb-2 flex items-start gap-2">
-            <BookOpen className={featureThemeClassName('timelineBlogTimelineCardTealIcon')} />
+            <BookOpen className={cn('h-5 w-5 flex-shrink-0', blogTone.text)} />
             <TimelineCardBadge label={t('features.timeline.contentTypes.blog')} icon={BookOpen} />
           </div>
           <h3 className="line-clamp-2 text-lg leading-tight font-bold">
@@ -125,11 +130,7 @@ export function BlogTimelineCardView({
               <HashtagDisplay
                 hashtags={blog.hashtags.slice(0, 3)}
                 centered={false}
-                badgeClassName={cn(
-                  featureThemeClassName('timelineAmendmentTimelineCardNeutralContrastSurface'),
-                  blogStyle.borderColor,
-                  blogStyle.accentColor
-                )}
+                badgeClassName={hashtagTone.badge}
               />
             </div>
           )}
@@ -201,9 +202,7 @@ export function BlogTimelineCardView({
           disabled={subscription.isLoading}
           className="flex items-center gap-1.5"
         >
-          <Bell
-            className={`h-3.5 w-3.5 ${subscription.isSubscribed ? featureThemeClassName('timelineActionBarThemedStyle') : ''}`}
-          />
+          <Bell className={cn('h-3.5 w-3.5', subscription.isSubscribed && blogTone.text)} />
         </Button>
 
         {/* Share Button */}

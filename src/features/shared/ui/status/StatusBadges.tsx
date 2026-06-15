@@ -6,24 +6,61 @@ import {
   getBadgeToneClasses,
   getEntityToneClasses,
   getSemanticToneClasses,
+  type BadgeToneKind,
   type EntityTone,
   type SemanticTone,
 } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 
-export type BadgeTone = SemanticTone;
+export type BadgeTone = BadgeToneKind;
+
+const BADGE_TONES = [
+  'neutral',
+  'info',
+  'success',
+  'warning',
+  'danger',
+  'destructive',
+  'accent',
+  'outline',
+  'user',
+  'group',
+  'event',
+  'amendment',
+  'blog',
+  'agenda_item',
+  'vote',
+  'election',
+  'todo',
+  'role',
+] as const satisfies readonly BadgeToneKind[];
 
 const toneClasses = Object.fromEntries(
-  (
-    ['neutral', 'info', 'success', 'warning', 'danger', 'destructive', 'accent', 'outline'] as const
-  ).map(tone => [tone, getSemanticToneClasses(tone).badge])
+  BADGE_TONES.map(tone => [tone, getBadgeToneClasses(tone)])
 ) as Record<BadgeTone, string>;
 
 const dotToneClasses = Object.fromEntries(
-  (
-    ['neutral', 'info', 'success', 'warning', 'danger', 'destructive', 'accent', 'outline'] as const
-  ).map(tone => [tone, getSemanticToneClasses(tone).dot])
+  BADGE_TONES.map(tone => [tone, getBadgeDotToneClasses(tone)])
 ) as Record<BadgeTone, string>;
+
+function getBadgeDotToneClasses(tone: BadgeToneKind): string {
+  if (
+    [
+      'neutral',
+      'info',
+      'success',
+      'warning',
+      'danger',
+      'destructive',
+      'accent',
+      'outline',
+    ].includes(tone)
+  ) {
+    return getSemanticToneClasses(tone as SemanticTone).dot;
+  }
+
+  return getEntityToneClasses(tone as EntityTone).dot;
+}
 
 function statusTone(status: string | null | undefined): BadgeTone {
   const value = String(status ?? '').toLowerCase();
@@ -105,7 +142,7 @@ export function EntityBadge({ entityType, className, tone, ...props }: EntityBad
 }
 
 export function RoleBadge(props: StatusBadgeProps) {
-  return <StatusBadge tone={props.tone ?? 'accent'} {...props} />;
+  return <StatusBadge tone={props.tone ?? 'neutral'} {...props} />;
 }
 
 interface CountBadgeProps extends Omit<BaseStatusBadgeProps, 'children'> {
@@ -155,10 +192,10 @@ export function PriorityIcon({ value, className }: { value?: string | null; clas
   const Icon = normalizedValue === 'urgent' ? AlertCircle : Flag;
   const colorClass =
     normalizedValue === 'urgent' || normalizedValue === 'high'
-      ? 'text-destructive'
+      ? getSemanticToneClasses('danger').text
       : normalizedValue === 'medium'
-        ? 'text-amber-500'
-        : 'text-sky-500';
+        ? getSemanticToneClasses('warning').text
+        : getSemanticToneClasses('info').text;
 
   return <Icon className={cn('mr-1 h-3.5 w-3.5', colorClass, className)} />;
 }

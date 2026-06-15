@@ -1,10 +1,11 @@
-import { featureThemeClassName } from '@/features/shared/theme';
+import { getEntityToneClasses, getSemanticToneClasses } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton';
 import { ThumbsUp, MessageSquare, User, Users, Video, BarChart3 } from 'lucide-react';
 import type { SearchContentItem } from '../types/search.types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
 
 interface StatementSearchCardProps {
   item: SearchContentItem;
@@ -15,6 +16,10 @@ export function StatementSearchCard({ item }: StatementSearchCardProps) {
   const surveyOptions = item.surveyOptions ?? [];
   const hasSurvey = !!(item.surveyQuestion && surveyOptions.length);
   const score = (item.upvotes ?? 0) - (item.downvotes ?? 0);
+  const userTone = getEntityToneClasses('user');
+  const groupTone = getEntityToneClasses('group');
+  const scoreTone =
+    score >= 0 ? getSemanticToneClasses('success') : getSemanticToneClasses('danger');
 
   return (
     <Link
@@ -64,14 +69,12 @@ export function StatementSearchCard({ item }: StatementSearchCardProps) {
           )}
 
           {/* Bottom row: creator, group, stats */}
-          <div className={featureThemeClassName('searchStatementSearchCardThemedText')}>
+          <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs">
             {/* Creator */}
             <div className="flex min-w-0 items-center gap-1">
               <Avatar className="h-4 w-4 shrink-0">
                 <AvatarImage src={item.authorAvatar ?? undefined} />
-                <AvatarFallback
-                  className={featureThemeClassName('editorInviteCollaboratorDialogThemedText')}
-                >
+                <AvatarFallback className={cn(userTone.badge)}>
                   <User className="h-2.5 w-2.5" />
                 </AvatarFallback>
               </Avatar>
@@ -88,11 +91,7 @@ export function StatementSearchCard({ item }: StatementSearchCardProps) {
                   {item.groupImageUrl ? (
                     <Avatar className="h-4 w-4 shrink-0">
                       <AvatarImage src={item.groupImageUrl} />
-                      <AvatarFallback
-                        className={featureThemeClassName(
-                          'editorInviteCollaboratorDialogThemedText'
-                        )}
-                      >
+                      <AvatarFallback className={cn(groupTone.badge)}>
                         <Users className="h-2.5 w-2.5" />
                       </AvatarFallback>
                     </Avatar>
@@ -107,7 +106,7 @@ export function StatementSearchCard({ item }: StatementSearchCardProps) {
             <span className="ml-auto" />
 
             {/* Score */}
-            <div className="flex shrink-0 items-center gap-0.5">
+            <div className={cn('flex shrink-0 items-center gap-0.5', scoreTone.text)}>
               <ThumbsUp className="h-3 w-3" />
               <span>{score >= 0 ? `+${score}` : score}</span>
             </div>

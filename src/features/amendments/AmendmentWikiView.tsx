@@ -1,6 +1,6 @@
 'use client';
 
-import { featureThemeClassName } from '@/features/shared/theme';
+import { getEntityGradientClasses, getMotionPreset } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import {
   Card,
@@ -27,12 +27,7 @@ import { TargetSelectionDialog } from '@/features/amendments/ui/TargetSelectionD
 import { Link } from '@tanstack/react-router';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-const GRADIENTS = [
-  featureThemeClassName('amendmentAmendmentWikiNeutralContrastGradientSurface'),
-  featureThemeClassName('amendmentAmendmentWikiSuccessTealGradientSurface'),
-  featureThemeClassName('amendmentAmendmentWikiWarningContrastGradientSurface'),
-  featureThemeClassName('amendmentAmendmentWikiInfoContrastGradientSurface'),
-] as const;
+const AMENDMENT_CARD_SURFACE = `${getEntityGradientClasses('amendment')} ${getMotionPreset('hoverLift')}`;
 export interface AmendmentWikiViewProps {
   amendmentId: any;
   t: any;
@@ -324,6 +319,7 @@ export function AmendmentWikiView({
           )}
           sections={collaboratorSections}
           icon={Users}
+          entityType="amendment"
         />
       )}
 
@@ -467,16 +463,14 @@ export function AmendmentWikiView({
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {clones.map((clone: any, index: number) => (
+              {clones.map((clone: any) => (
                 <Link
                   key={clone.id}
                   to="/amendment/$id"
                   params={{ id: clone.id }}
                   className="block transition-opacity hover:opacity-90"
                 >
-                  <Card
-                    className={`overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${GRADIENTS[index % GRADIENTS.length]}`}
-                  >
+                  <Card className={`overflow-hidden ${AMENDMENT_CARD_SURFACE}`}>
                     <CardHeader className="space-y-2 pb-4">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">

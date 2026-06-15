@@ -1,4 +1,5 @@
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
+import { getSemanticToneClasses } from '@/features/shared/theme';
 
 interface AlphaWarningToastContentProps {
   title: string;
@@ -9,9 +10,7 @@ export function AlphaWarningToastContent({ title, version }: AlphaWarningToastCo
   return (
     <span className="flex items-center gap-2">
       <span>{title}</span>
-      <Badge className="border-0 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 font-bold text-slate-950 shadow-sm">
-        {version}
-      </Badge>
+      <Badge className={getSemanticToneClasses('warning').badge}>{version}</Badge>
     </span>
   );
 }
