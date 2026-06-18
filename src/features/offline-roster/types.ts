@@ -55,6 +55,8 @@ export interface OfflineRosterCardProps {
   connectedUserCandidates?: OfflineRosterCandidateUser[];
   showManageButton?: boolean;
   showProvenanceColumns?: boolean;
+  showPartGroupColumn?: boolean;
+  showBaseGroupColumn?: boolean;
   manageButtonLabel?: string;
   tableVariant?: 'default' | 'membership';
   fallbackRoleLabel?: string;

@@ -306,8 +306,8 @@ export function VoteCastDialog({
         confirm: t('common.actions.confirm'),
         yourChoice: t('features.events.voting.yourChoice'),
         selectUpTo: t('features.events.voting.selectUpTo', `Select up to ${maxVotes} candidates`),
-        assignedVotes: `${assignedVoteCount}${translateText('generated.inline.0183_von_445584ed')}${maxVotes}${translateText('generated.inline.1231_stimmen_vergeben_6192649c')}`,
-        remainingVotes: `${remainingVoteCount}${translateText('generated.inline.1232_stimmen_offen_628de92d')}`,
+        assignedVotes: `${assignedVoteCount} ${translateText('generated.inline.0183_von_445584ed')} ${maxVotes} ${translateText('generated.inline.1231_stimmen_vergeben_6192649c')}`,
+        remainingVotes: `${remainingVoteCount} ${translateText('generated.inline.1232_stimmen_offen_628de92d')}`,
         electionModeSummary: isListElection
           ? `${getElectionModeLabel('list')}${seatCount ? ` · ${getSeatCountLabel(seatCount)}` : ''}`
           : undefined,

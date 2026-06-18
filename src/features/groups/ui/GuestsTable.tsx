@@ -3,13 +3,15 @@ import type { CSSProperties } from 'react';
 import { Check, Trash2, UserRoundCheck } from 'lucide-react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { getMembershipProvenanceDisplayLabel } from '@/features/groups/logic/membershipComposition';
+import type { ParticipationProvenanceGroupLike } from '@/features/shared/types/participation';
 import {
   DataTable,
   EntityCell,
   TableActionIconButton,
   type ColumnDef,
 } from '@/features/shared/ui/data-table';
-import { StatusBadge } from '@/features/shared/ui/status';
+import { EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { RoleTag } from './RoleTag';
 
@@ -30,6 +32,9 @@ interface GuestAccessLike {
   status?: string | null;
   user?: GuestAccessUserLike | null;
   roles?: GuestAccessRoleLike[] | null;
+  partGroup?: ParticipationProvenanceGroupLike | null;
+  baseGroup?: ParticipationProvenanceGroupLike | null;
+  provenanceBucketLabel?: string | null;
 }
 
 interface GuestsTableProps<TGuestAccess extends GuestAccessLike> {
@@ -38,6 +43,7 @@ interface GuestsTableProps<TGuestAccess extends GuestAccessLike> {
   onRevoke?: (guestAccessId: string) => void;
   title?: string;
   description?: string;
+  showBaseGroupColumn?: boolean;
 }
 
 function getGuestDisplayName(user: GuestAccessUserLike | null | undefined) {
@@ -104,7 +110,38 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
   description = translateText(
     'generated.inline.0086_users_with_guest_roles_and_access_rights_6ef79881'
   ),
+  showBaseGroupColumn = false,
 }: GuestsTableProps<TGuestAccess>) {
+  const directWithoutPathLabel = translateText(
+    'features.groups.memberships.composition.directWithoutPath',
+    'Direct / no path'
+  );
+  const renderBaseGroupTag = (guest: TGuestAccess) => {
+    const label = getMembershipProvenanceDisplayLabel(guest, 'baseGroup', {
+      directWithoutPathLabel,
+    });
+
+    if (!guest.baseGroup?.id) {
+      return <span className="text-muted-foreground">{label}</span>;
+    }
+
+    return (
+      <EntityBadge asChild tone="info" className="hover:opacity-90">
+        <Link to="/group/$id" params={{ id: guest.baseGroup.id }}>
+          {label}
+        </Link>
+      </EntityBadge>
+    );
+  };
+  const baseGroupColumns: ColumnDef<TGuestAccess>[] = showBaseGroupColumn
+    ? [
+        {
+          id: 'baseGroup',
+          header: () => translateText('components.tableColumns.baseGroup', 'Base group'),
+          cell: ({ row }) => renderBaseGroupTag(row.original),
+        },
+      ]
+    : [];
   const columns: ColumnDef<TGuestAccess>[] = [
     {
       id: 'user',
@@ -145,6 +182,7 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
         );
       },
     },
+    ...baseGroupColumns,
     {
       id: 'actions',
       header: translateText('generated.inline.0093_actions_c3cd636a'),

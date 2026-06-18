@@ -5,6 +5,7 @@ import {
   Circle,
   Hash,
   MessageCircle,
+  Smartphone,
   Sparkles,
   User,
   UserPlus,
@@ -22,13 +23,15 @@ import { MembershipConfirmStep } from './MembershipConfirmStep.tsx';
 import { SummaryStep } from './SummaryStep.tsx';
 import { AriaKaiStep } from '@/features/assistant/ui/AriaKaiStep.tsx';
 import { InterestStep } from './InterestStep.tsx';
+import { AppInstallStep } from './AppInstallStep.tsx';
 
 const STEP_PROGRESS: Record<OnboardingStep, number> = {
-  name: 16,
-  interests: 32,
-  groupSearch: 48,
-  confirm: 64,
-  ariaKai: 82,
+  name: 14,
+  interests: 28,
+  groupSearch: 42,
+  confirm: 56,
+  ariaKai: 70,
+  appInstall: 84,
   summary: 100,
 };
 
@@ -38,6 +41,7 @@ const STEP_ORDER: OnboardingStep[] = [
   'groupSearch',
   'confirm',
   'ariaKai',
+  'appInstall',
   'summary',
 ];
 
@@ -47,6 +51,7 @@ const STEP_ICONS = {
   groupSearch: Users,
   confirm: UserPlus,
   ariaKai: MessageCircle,
+  appInstall: Smartphone,
   summary: Sparkles,
 } satisfies Record<OnboardingStep, typeof User>;
 
@@ -85,6 +90,7 @@ export interface OnboardingWizardViewProps {
   handleMembershipConfirm: any;
   handleMembershipDecline: any;
   handleAriaKaiNext: any;
+  handleAppInstallNext: any;
   handleGoToProfile: any;
   handleGoToGroup: any;
   handleGoToTimeline: any;
@@ -114,6 +120,7 @@ export function OnboardingWizardView({
   handleMembershipConfirm,
   handleMembershipDecline,
   handleAriaKaiNext,
+  handleAppInstallNext,
   handleGoToProfile,
   handleGoToGroup,
   handleGoToTimeline,
@@ -288,6 +295,14 @@ export function OnboardingWizardView({
                   onNext={handleAriaKaiNext}
                   dontShowAgain={data.dontShowAriaKaiAgain}
                   onDontShowAgainChange={setDontShowAriaKaiAgain}
+                />
+              )}
+
+              {step === 'appInstall' && (
+                <AppInstallStep
+                  onNext={handleAppInstallNext}
+                  onBack={previousStep}
+                  isLoading={isLoading}
                 />
               )}
 

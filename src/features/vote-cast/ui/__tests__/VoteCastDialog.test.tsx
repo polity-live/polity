@@ -27,6 +27,52 @@ afterEach(() => {
 });
 
 describe('VoteCastDialog', () => {
+  it('renders the list election choice dialog fullscreen with spaced vote counts', () => {
+    render(
+      <VoteCastDialog
+        open
+        onOpenChange={vi.fn()}
+        phase="indication"
+        title="Delegiertenwahl"
+        candidates={[
+          { id: 'alice', name: 'Alice' },
+          { id: 'bob', name: 'Bob' },
+          { id: 'carla', name: 'Carla' },
+        ]}
+        maxVotes={3}
+        electionMode="list"
+        seatCount={3}
+        onCastElectionVote={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('0 von 3 Stimmen vergeben')).toBeTruthy();
+    expect(screen.getByText('3 Stimmen offen')).toBeTruthy();
+
+    const dialogContent = document.querySelector('[data-slot="dialog-content"]');
+    if (!dialogContent) {
+      throw new Error('Expected fullscreen choice dialog content to be rendered');
+    }
+    const dialogContentClasses = Array.from(dialogContent.classList);
+    expect(dialogContentClasses).toContain('h-dvh');
+    expect(dialogContentClasses).toContain('w-screen');
+    expect(dialogContentClasses).toContain('max-h-none');
+    expect(dialogContentClasses).toContain('max-w-none');
+    expect(dialogContentClasses).toContain('rounded-none');
+    expect(dialogContentClasses).toContain('sm:max-w-none');
+    expect(dialogContentClasses).not.toContain('max-h-[80vh]');
+    expect(dialogContentClasses).not.toContain('sm:max-w-lg');
+
+    const centeredShell = document.querySelector('[data-slot="vote-cast-centered-shell"]');
+    if (!centeredShell) {
+      throw new Error('Expected centered vote cast shell to be rendered');
+    }
+    const shellClasses = Array.from(centeredShell.classList);
+    expect(shellClasses).toContain('min-h-dvh');
+    expect(shellClasses).toContain('justify-center');
+    expect(shellClasses).toContain('max-w-5xl');
+  });
+
   it('shows the fullscreen submission overlay after password submit and auto-closes on success', async () => {
     const onOpenChange = vi.fn();
     const onPasswordSubmit = vi.fn().mockResolvedValue(undefined);
@@ -57,6 +103,12 @@ describe('VoteCastDialog', () => {
     expect(screen.getAllByText('Support')).toHaveLength(2);
 
     clickConfirmButton();
+    const centeredShell = document.querySelector('[data-slot="vote-cast-centered-shell"]');
+    if (!centeredShell) {
+      throw new Error('Expected centered vote cast shell during PIN step');
+    }
+    expect(Array.from(centeredShell.classList)).toContain('justify-center');
+
     await enterPin();
 
     expect(await screen.findByText('POLITY zählt.')).toBeTruthy();

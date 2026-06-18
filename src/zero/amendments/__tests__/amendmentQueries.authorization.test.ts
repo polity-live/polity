@@ -131,6 +131,24 @@ beforeEach(() => {
 });
 
 describe('amendment query nested authorization', () => {
+  it('loads all active wiki collaborators without pending statuses', () => {
+    amendmentQueries.byIdFull.fn({ args: { id: 'amendment-1' }, ctx });
+
+    const amendmentCalls = lastQuery('amendment').calls;
+    const collaboratorCalls = relatedCalls(amendmentCalls, 'collaborators');
+
+    expect(collaboratorCalls).toContainEqual([
+      'where',
+      'status',
+      'IN',
+      ['collaborator', 'member', 'admin'],
+    ]);
+    expect(
+      collaboratorCalls.some(call => call[0] === 'where' && typeof call[1] === 'function')
+    ).toBe(false);
+    expect(collaboratorCalls.some(call => call[0] === 'related' && call[1] === 'user')).toBe(true);
+  });
+
   it('filters support votes in full amendment details', () => {
     amendmentQueries.byIdFull.fn({ args: { id: 'amendment-1' }, ctx });
 

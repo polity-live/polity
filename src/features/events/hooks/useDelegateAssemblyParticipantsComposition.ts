@@ -1,71 +1,60 @@
 import { useMemo } from 'react';
 import { useGroupMembershipComposition } from '@/features/groups/hooks/useGroupMembershipComposition';
-import type {
-  MembershipCompositionGroupLike,
-  MembershipProvenanceFields,
-  MembershipWithCompositionSource,
-} from '@/features/groups/logic/membershipComposition';
 import type { ParticipationLike } from '@/features/shared/types/participation';
+import {
+  buildEventParticipantCompositionBuckets,
+  buildEventParticipantCompositionSources,
+  maskUnmatchedEventParticipantComposition,
+  type EventParticipantCompositionEventLike,
+  type EventParticipantWithCompositionProvenance,
+} from '../logic/eventParticipantComposition';
 
-interface DelegateLike {
-  user_id?: string | null;
-  group_id?: string | null;
-  group?: MembershipCompositionGroupLike | null;
-}
-
-interface DelegateAssemblyEventLike {
-  event_type?: string | null;
-  group?: MembershipCompositionGroupLike | null;
-  delegates?: readonly DelegateLike[] | null;
-}
-
-type CompositionParticipant = MembershipWithCompositionSource & MembershipProvenanceFields;
-
-export function useDelegateAssemblyParticipantsComposition<
+export function useEventParticipantsComposition<
   TParticipant extends ParticipationLike,
-  TEvent extends DelegateAssemblyEventLike,
+  TEvent extends EventParticipantCompositionEventLike,
 >(event: TEvent | null | undefined, participants: readonly TParticipant[]) {
-  const isDelegateAssembly = event?.event_type === 'delegate_assembly';
-
-  const participantsWithDelegateSource = useMemo(() => {
-    if (!isDelegateAssembly) {
-      return participants as (TParticipant & MembershipProvenanceFields)[];
-    }
-
-    const delegateByUserId = new Map<string, DelegateLike>();
-    for (const delegate of event?.delegates || []) {
-      if (!delegate.user_id || !delegate.group_id) {
-        continue;
-      }
-
-      delegateByUserId.set(delegate.user_id, delegate);
-    }
-
-    return participants.map(participant => {
-      const delegate = participant.user_id ? delegateByUserId.get(participant.user_id) : undefined;
-      if (!delegate?.group_id) {
-        return participant;
-      }
-
-      return {
-        ...participant,
-        source_group_id: delegate.group_id,
-        source_group: delegate.group ?? participant.source_group ?? null,
-      };
-    }) as (TParticipant & MembershipProvenanceFields)[];
-  }, [event?.delegates, isDelegateAssembly, participants]);
+  const compositionSources = useMemo(
+    () => buildEventParticipantCompositionSources(event, participants),
+    [event, participants]
+  );
 
   const composition = useGroupMembershipComposition(
-    isDelegateAssembly ? event?.group : null,
-    participantsWithDelegateSource as CompositionParticipant[]
+    compositionSources.shouldResolveGroupComposition ? event?.group : null,
+    compositionSources.participants
+  );
+
+  const participantsWithProvenance = useMemo(
+    () =>
+      maskUnmatchedEventParticipantComposition(
+        (composition.showComposition
+          ? composition.membershipsWithProvenance
+          : compositionSources.participants) as EventParticipantWithCompositionProvenance<TParticipant>[]
+      ),
+    [
+      composition.membershipsWithProvenance,
+      composition.showComposition,
+      compositionSources.participants,
+    ]
+  );
+
+  const compositionBuckets = useMemo(
+    () =>
+      composition.isLoading
+        ? []
+        : buildEventParticipantCompositionBuckets(participantsWithProvenance),
+    [composition.isLoading, participantsWithProvenance]
   );
 
   return {
-    isDelegateAssembly,
-    showComposition: isDelegateAssembly && composition.showComposition,
-    participantsWithProvenance: composition.membershipsWithProvenance as (TParticipant &
-      MembershipProvenanceFields)[],
-    compositionBuckets: composition.compositionBuckets,
+    isDelegateAssembly: compositionSources.isDelegateAssembly,
+    showComposition:
+      compositionSources.hasGroupBackedComposition ||
+      compositionSources.shouldResolveGroupComposition ||
+      compositionBuckets.length > 0,
+    participantsWithProvenance,
+    compositionBuckets,
     isLoading: composition.isLoading,
   };
 }
+
+export const useDelegateAssemblyParticipantsComposition = useEventParticipantsComposition;

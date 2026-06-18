@@ -15,6 +15,15 @@ import type {
   OfflineRosterRow,
 } from '../types';
 
+type OfflineRosterManageSubmitStatus =
+  | 'idle'
+  | 'submitting-single'
+  | 'submitting-csv'
+  | 'success-single'
+  | 'success-csv';
+
+const MANAGE_SUBMIT_SUCCESS_DELAY_MS = 650;
+
 function buildCorrelationId(flow: string) {
   return `${flow}:${crypto.randomUUID()}`;
 }
@@ -78,6 +87,8 @@ export function useOfflineRosterCardController({
   const [csvPreviewRows, setCsvPreviewRows] = useState<DraftRosterEntry[]>([]);
   const [csvFeedback, setCsvFeedback] = useState({ duplicates: 0, missingNames: 0 });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [manageSubmitStatus, setManageSubmitStatus] =
+    useState<OfflineRosterManageSubmitStatus>('idle');
   const [isDraggingCsv, setIsDraggingCsv] = useState(false);
   const fileInputId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -154,6 +165,7 @@ export function useOfflineRosterCardController({
       setSingleDraft({ firstName: '', lastName: '', reasonNotSignedUp: '' });
       setCsvPreviewRows([]);
       setCsvFeedback({ duplicates: 0, missingNames: 0 });
+      setManageSubmitStatus('idle');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -193,6 +205,7 @@ export function useOfflineRosterCardController({
       lastName: singleDraft.lastName,
     });
     setIsSubmitting(true);
+    setManageSubmitStatus('submitting-single');
     try {
       await onCreate(
         {
@@ -203,7 +216,12 @@ export function useOfflineRosterCardController({
         correlationId
       );
       logRosterClient('offline-roster-single-add', 'submit-confirmed', { correlationId });
+      setManageSubmitStatus('success-single');
+      await new Promise(resolve => globalThis.setTimeout(resolve, MANAGE_SUBMIT_SUCCESS_DELAY_MS));
       handleCloseManageDialog(false);
+    } catch (error) {
+      setManageSubmitStatus('idle');
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
@@ -220,13 +238,19 @@ export function useOfflineRosterCardController({
       rowCount: csvPreviewRows.length,
     });
     setIsSubmitting(true);
+    setManageSubmitStatus('submitting-csv');
     try {
       await onImport(csvPreviewRows, correlationId);
       logRosterClient('offline-roster-csv-import', 'submit-confirmed', {
         correlationId,
         rowCount: csvPreviewRows.length,
       });
+      setManageSubmitStatus('success-csv');
+      await new Promise(resolve => globalThis.setTimeout(resolve, MANAGE_SUBMIT_SUCCESS_DELAY_MS));
       handleCloseManageDialog(false);
+    } catch (error) {
+      setManageSubmitStatus('idle');
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
@@ -371,6 +395,7 @@ export function useOfflineRosterCardController({
     csvPreviewRows,
     csvFeedback,
     isSubmitting,
+    manageSubmitStatus,
     isDraggingCsv,
     setIsDraggingCsv,
     fileInputId,

@@ -45,11 +45,59 @@ interface MembershipStatusLike {
 interface RelationshipRow {
   group?: RelatedGroupLike | null;
   related_group?: RelatedGroupLike | null;
+  request_item_kind?: 'structure' | 'right' | 'membership' | string | null;
+  connection_type?: 'hierarchy' | 'peer' | string | null;
+  group_id?: string | null;
+  related_group_id?: string | null;
+  parent_group_id?: string | null;
+  child_group_id?: string | null;
+  relationship_type?: 'parent' | 'child' | 'sibling' | string | null;
   with_right?: string | null;
   status?: string | null;
 }
 
 type GroupEntry = RelationshipRow['group'] & {};
+
+interface RelatedGroupEntry {
+  group: GroupEntry;
+  rights: string[];
+}
+
+function getRelationshipGroupById(rel: RelationshipRow, groupId: string | null | undefined) {
+  if (!groupId) {
+    return null;
+  }
+
+  if (rel.group?.id === groupId) {
+    return rel.group;
+  }
+
+  if (rel.related_group?.id === groupId) {
+    return rel.related_group;
+  }
+
+  return null;
+}
+
+function isHierarchyRelationship(rel: RelationshipRow) {
+  return rel.connection_type !== 'peer' && rel.relationship_type !== 'sibling';
+}
+
+function isStructureRelationship(rel: RelationshipRow) {
+  return (
+    isHierarchyRelationship(rel) &&
+    !rel.with_right &&
+    (rel.request_item_kind == null || rel.request_item_kind === 'structure') &&
+    Boolean(rel.parent_group_id) &&
+    Boolean(rel.child_group_id)
+  );
+}
+
+function addRightToEntry(entry: RelatedGroupEntry | undefined, right: string | null | undefined) {
+  if (entry && right && !entry.rights.includes(right)) {
+    entry.rights.push(right);
+  }
+}
 
 export function countAcceptedMemberships(
   memberships: readonly MembershipStatusLike[] | null | undefined
@@ -90,4 +138,68 @@ export function groupRelationshipsByGroup(
   });
 
   return Array.from(grouped.values());
+}
+
+export function groupWikiRelatedGroupsByOrientation(
+  relationships: RelationshipRow[],
+  currentGroupId: string
+): { parentGroups: RelatedGroupEntry[]; childGroups: RelatedGroupEntry[] } {
+  const parentGroups = new Map<string, RelatedGroupEntry>();
+  const childGroups = new Map<string, RelatedGroupEntry>();
+  const activeHierarchyRelationships = relationships.filter(
+    rel => isActiveGroupRelationshipStatus(rel.status) && isHierarchyRelationship(rel)
+  );
+
+  activeHierarchyRelationships.forEach(rel => {
+    if (!isStructureRelationship(rel)) {
+      return;
+    }
+
+    const parentGroupId = rel.parent_group_id ?? null;
+    const childGroupId = rel.child_group_id ?? null;
+
+    if (!parentGroupId || !childGroupId || parentGroupId === childGroupId) {
+      return;
+    }
+
+    if (parentGroupId === currentGroupId) {
+      const childGroup = getRelationshipGroupById(rel, childGroupId);
+      if (childGroup && !childGroups.has(childGroup.id)) {
+        childGroups.set(childGroup.id, { group: childGroup, rights: [] });
+      }
+    }
+
+    if (childGroupId === currentGroupId) {
+      const parentGroup = getRelationshipGroupById(rel, parentGroupId);
+      if (parentGroup && !parentGroups.has(parentGroup.id)) {
+        parentGroups.set(parentGroup.id, { group: parentGroup, rights: [] });
+      }
+    }
+  });
+
+  activeHierarchyRelationships.forEach(rel => {
+    if (!rel.with_right) {
+      return;
+    }
+
+    const parentGroupId = rel.parent_group_id ?? null;
+    const childGroupId = rel.child_group_id ?? null;
+
+    if (!parentGroupId || !childGroupId || parentGroupId === childGroupId) {
+      return;
+    }
+
+    if (parentGroupId === currentGroupId) {
+      addRightToEntry(childGroups.get(childGroupId), rel.with_right);
+    }
+
+    if (childGroupId === currentGroupId) {
+      addRightToEntry(parentGroups.get(parentGroupId), rel.with_right);
+    }
+  });
+
+  return {
+    parentGroups: [...parentGroups.values()],
+    childGroups: [...childGroups.values()],
+  };
 }

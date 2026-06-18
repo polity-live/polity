@@ -2,6 +2,7 @@
 
 import { featureThemeClassName } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
@@ -136,6 +137,8 @@ export function OfflineRosterCardView({
   rows,
   showManageButton = false,
   showProvenanceColumns = false,
+  showPartGroupColumn = false,
+  showBaseGroupColumn = false,
   manageButtonLabel = translateText('generated.inline.0132_manage_non_signed_up_users_a17fc54c'),
   tableVariant = 'default',
   fallbackRoleLabel = '-',
@@ -166,6 +169,7 @@ export function OfflineRosterCardView({
     csvPreviewRows,
     csvFeedback,
     isSubmitting,
+    manageSubmitStatus,
     isDraggingCsv,
     setIsDraggingCsv,
     fileInputId,
@@ -186,6 +190,9 @@ export function OfflineRosterCardView({
     handleToggleChannel,
     openEditRow,
   } = controller;
+  const reducedMotion = useReducedMotion();
+  const shouldShowPartGroupColumn = showProvenanceColumns || showPartGroupColumn;
+  const shouldShowBaseGroupColumn = showProvenanceColumns || showBaseGroupColumn;
 
   const renderReasonCell = (row: OfflineRosterRow) => (
     <div className="space-y-2">
@@ -352,7 +359,7 @@ export function OfflineRosterCardView({
       header: translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9'),
       cell: ({ row }) => renderReasonCell(row.original),
     },
-    ...(showProvenanceColumns
+    ...(shouldShowPartGroupColumn
       ? [
           {
             id: 'part-group',
@@ -364,6 +371,10 @@ export function OfflineRosterCardView({
               />
             ),
           } satisfies ColumnDef<OfflineRosterRow>,
+        ]
+      : []),
+    ...(shouldShowBaseGroupColumn
+      ? [
           {
             id: 'base-group',
             header: translateText('generated.inline.0954_base_group_6c9d0b40'),
@@ -431,7 +442,7 @@ export function OfflineRosterCardView({
       header: translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9'),
       cell: ({ row }) => renderReasonCell(row.original),
     },
-    ...(showProvenanceColumns
+    ...(shouldShowPartGroupColumn
       ? [
           {
             id: 'part-group',
@@ -443,6 +454,10 @@ export function OfflineRosterCardView({
               />
             ),
           } satisfies ColumnDef<OfflineRosterRow>,
+        ]
+      : []),
+    ...(shouldShowBaseGroupColumn
+      ? [
           {
             id: 'base-group',
             header: translateText('generated.inline.0954_base_group_6c9d0b40'),
@@ -482,6 +497,53 @@ export function OfflineRosterCardView({
     },
   ];
 
+  const isManageSubmitting =
+    manageSubmitStatus === 'submitting-single' || manageSubmitStatus === 'submitting-csv';
+  const isManageSubmitSuccess =
+    manageSubmitStatus === 'success-single' || manageSubmitStatus === 'success-csv';
+  const isManageSubmitActive = manageSubmitStatus !== 'idle';
+  const activeManageSubmitIsCsv =
+    manageSubmitStatus === 'submitting-csv' ||
+    manageSubmitStatus === 'success-csv' ||
+    (manageSubmitStatus === 'idle' && manageTab === 'csv');
+  const manageSubmittingLabel = activeManageSubmitIsCsv
+    ? translateText('generated.inline.offline_roster_csv_importing_status')
+    : translateText('generated.inline.offline_roster_user_adding_status');
+  const manageSuccessLabel = activeManageSubmitIsCsv
+    ? translateText('generated.inline.offline_roster_csv_imported_status')
+    : translateText('generated.inline.offline_roster_user_added_status');
+  const manageSubmitStatusLabel = isManageSubmitSuccess
+    ? manageSuccessLabel
+    : isManageSubmitting
+      ? manageSubmittingLabel
+      : null;
+  const manageSubmitSteps = [
+    {
+      key: 'check',
+      label: translateText('generated.inline.offline_roster_submit_step_check'),
+      status: 'complete',
+    },
+    {
+      key: 'save',
+      label: activeManageSubmitIsCsv
+        ? translateText('generated.inline.offline_roster_submit_step_sync_imported_memberships')
+        : translateText('generated.inline.offline_roster_submit_step_sync_memberships'),
+      status: isManageSubmitSuccess ? 'complete' : 'active',
+    },
+    {
+      key: 'refresh',
+      label: translateText('generated.inline.offline_roster_submit_step_update_events_delegates'),
+      status: isManageSubmitSuccess ? 'complete' : 'waiting',
+    },
+  ] as const;
+  const handleManageOpenChange = (open: boolean) => {
+    if (!open && isManageSubmitActive) {
+      return;
+    }
+
+    handleCloseManageDialog(open);
+  };
+
   return (
     <>
       <section className="space-y-3">
@@ -510,162 +572,319 @@ export function OfflineRosterCardView({
         />
       </section>
 
-      <Dialog open={manageOpen} onOpenChange={handleCloseManageDialog}>
-        <ScrollableDialogContent className="max-h-[90vh] max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>{manageDialogTitle}</DialogTitle>
-            <DialogDescription>{manageDialogDescription}</DialogDescription>
-          </DialogHeader>
-          <Tabs
-            value={manageTab}
-            onValueChange={value => setManageTab(value as 'single' | 'csv')}
-            className="space-y-4"
+      <Dialog open={manageOpen} onOpenChange={handleManageOpenChange}>
+        <ScrollableDialogContent
+          className="bg-background h-dvh !max-h-none max-h-none w-screen max-w-none overflow-y-auto rounded-none border-0 p-0 shadow-none sm:max-w-none"
+          showCloseButton={!isManageSubmitActive}
+        >
+          <div
+            className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col items-center justify-center px-4 py-6 sm:py-8"
+            data-slot="offline-roster-manage-centered-shell"
           >
-            <TabsList>
-              <TabsTrigger value="single">
-                {translateText('generated.inline.0959_einzeluser_9d0b4724')}
-              </TabsTrigger>
-              <TabsTrigger value="csv">
-                {translateText('generated.inline.0960_csv_upload_7aa7415d')}
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="single" className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <TextField
-                  id="offline-single-first-name"
-                  label={translateText('generated.inline.0956_firstname_cf23ba48')}
-                  value={singleDraft.firstName}
-                  onValueChange={value =>
-                    setSingleDraft(current => ({ ...current, firstName: value }))
+            <div
+              className="bg-card text-card-foreground w-full rounded-lg border p-5 shadow-[var(--shadow-floating)] sm:p-6"
+              data-slot="offline-roster-manage-card"
+            >
+              <DialogHeader className="text-center sm:text-center">
+                <DialogTitle>{manageDialogTitle}</DialogTitle>
+                <DialogDescription>{manageDialogDescription}</DialogDescription>
+              </DialogHeader>
+              <Tabs
+                value={manageTab}
+                onValueChange={value => {
+                  if (!isManageSubmitActive) {
+                    setManageTab(value as 'single' | 'csv');
                   }
-                />
-                <TextField
-                  id="offline-single-last-name"
-                  label={translateText('generated.inline.0957_lastname_639860fb')}
-                  value={singleDraft.lastName}
-                  onValueChange={value =>
-                    setSingleDraft(current => ({ ...current, lastName: value }))
-                  }
-                />
-              </div>
-              <TextField
-                id="offline-single-reason"
-                label={translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9')}
-                value={singleDraft.reasonNotSignedUp}
-                onValueChange={value =>
-                  setSingleDraft(current => ({
-                    ...current,
-                    reasonNotSignedUp: value,
-                  }))
-                }
-                multiline
-                rows={4}
-              />
-            </TabsContent>
-            <TabsContent value="csv" className="space-y-4">
-              <div
-                className={cn(
-                  'border-muted-foreground/30 rounded-xl border border-dashed p-6 text-center transition-colors',
-                  isDraggingCsv && 'border-primary bg-primary/5'
-                )}
-                onDragEnter={event => {
-                  event.preventDefault();
-                  setIsDraggingCsv(true);
                 }}
-                onDragOver={event => event.preventDefault()}
-                onDragLeave={event => {
-                  event.preventDefault();
-                  setIsDraggingCsv(false);
-                }}
-                onDrop={event => void handleCsvDrop(event)}
+                className="mt-5 space-y-4"
               >
-                <Upload className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
-                <p className="font-medium">
-                  {translateText('generated.inline.0961_upload_csv_0b77a04d')}
-                </p>
-                <p className="text-muted-foreground text-sm">
-                  {translateText(
-                    'generated.inline.0962_drag_and_drop_a_csv_with_the_columns_firstnam_8d747f0d'
+                <TabsList className="grid w-full grid-cols-2 sm:w-auto">
+                  <TabsTrigger value="single" disabled={isManageSubmitActive}>
+                    {translateText('generated.inline.0959_einzeluser_9d0b4724')}
+                  </TabsTrigger>
+                  <TabsTrigger value="csv" disabled={isManageSubmitActive}>
+                    {translateText('generated.inline.0960_csv_upload_7aa7415d')}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="single" className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <TextField
+                      id="offline-single-first-name"
+                      label={translateText('generated.inline.0956_firstname_cf23ba48')}
+                      value={singleDraft.firstName}
+                      disabled={isManageSubmitActive}
+                      onValueChange={value =>
+                        setSingleDraft(current => ({ ...current, firstName: value }))
+                      }
+                    />
+                    <TextField
+                      id="offline-single-last-name"
+                      label={translateText('generated.inline.0957_lastname_639860fb')}
+                      value={singleDraft.lastName}
+                      disabled={isManageSubmitActive}
+                      onValueChange={value =>
+                        setSingleDraft(current => ({ ...current, lastName: value }))
+                      }
+                    />
+                  </div>
+                  <TextField
+                    id="offline-single-reason"
+                    label={translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9')}
+                    value={singleDraft.reasonNotSignedUp}
+                    disabled={isManageSubmitActive}
+                    onValueChange={value =>
+                      setSingleDraft(current => ({
+                        ...current,
+                        reasonNotSignedUp: value,
+                      }))
+                    }
+                    multiline
+                    rows={4}
+                  />
+                </TabsContent>
+                <TabsContent value="csv" className="space-y-4">
+                  <div
+                    className={cn(
+                      'border-muted-foreground/30 rounded-xl border border-dashed p-6 text-center transition-colors',
+                      isDraggingCsv && 'border-primary bg-primary/5',
+                      isManageSubmitActive && 'pointer-events-none opacity-60'
+                    )}
+                    aria-disabled={isManageSubmitActive}
+                    onDragEnter={event => {
+                      event.preventDefault();
+                      if (!isManageSubmitActive) {
+                        setIsDraggingCsv(true);
+                      }
+                    }}
+                    onDragOver={event => event.preventDefault()}
+                    onDragLeave={event => {
+                      event.preventDefault();
+                      setIsDraggingCsv(false);
+                    }}
+                    onDrop={event => {
+                      if (isManageSubmitActive) {
+                        event.preventDefault();
+                        return;
+                      }
+
+                      void handleCsvDrop(event);
+                    }}
+                  >
+                    <Upload className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
+                    <p className="font-medium">
+                      {translateText('generated.inline.0961_upload_csv_0b77a04d')}
+                    </p>
+                    <p className="text-muted-foreground text-sm">
+                      {translateText(
+                        'generated.inline.0962_drag_and_drop_a_csv_with_the_columns_firstnam_8d747f0d'
+                      )}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-4"
+                      disabled={isManageSubmitActive}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {translateText('generated.inline.0963_choose_file_eb7eb7a8')}
+                    </Button>
+                    <FileInputField
+                      id={fileInputId}
+                      ref={fileInputRef}
+                      accept=".csv,text/csv"
+                      disabled={isManageSubmitActive}
+                      fieldClassName="hidden"
+                      className="hidden"
+                      onChange={event => {
+                        const file = event.target.files?.[0];
+                        if (file && !isManageSubmitActive) {
+                          void readCsvFile(file);
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {(csvFeedback.duplicates > 0 || csvFeedback.missingNames > 0) && (
+                    <div className="text-muted-foreground flex flex-wrap gap-3 text-sm">
+                      {csvFeedback.duplicates > 0 ? (
+                        <span>
+                          {csvFeedback.duplicates}
+                          {translateText(
+                            'generated.inline.0964_duplicate_rows_were_skipped_3d5f6530'
+                          )}
+                        </span>
+                      ) : null}
+                      {csvFeedback.missingNames > 0 ? (
+                        <span>
+                          {csvFeedback.missingNames}
+                          {translateText(
+                            'generated.inline.0965_rows_without_first_and_last_name_were_skipped_2fc1a545'
+                          )}
+                        </span>
+                      ) : null}
+                    </div>
                   )}
-                </p>
+
+                  {csvPreviewRows.length > 0 ? (
+                    <FormFieldShell label={translateText('generated.inline.0520_preview_f1fbb2b4')}>
+                      {() => (
+                        <ScrollArea
+                          className="h-[min(40vh,24rem)] rounded-xl border"
+                          data-slot="offline-roster-csv-preview"
+                        >
+                          <DataTable
+                            columns={csvPreviewColumns}
+                            data={csvPreviewRows}
+                            getRowId={(row, index) => `${row.firstName}-${row.lastName}-${index}`}
+                            enablePagination={false}
+                            className="space-y-0"
+                          />
+                        </ScrollArea>
+                      )}
+                    </FormFieldShell>
+                  ) : null}
+                </TabsContent>
+              </Tabs>
+
+              <AnimatePresence mode="wait" initial={false}>
+                {isManageSubmitActive && manageSubmitStatusLabel ? (
+                  <motion.div
+                    key={manageSubmitStatus}
+                    role="status"
+                    aria-live="polite"
+                    className={cn(
+                      'mt-5 space-y-3',
+                      isManageSubmitSuccess && 'civic-success-settle'
+                    )}
+                    initial={reducedMotion ? false : { opacity: 0, y: 8, scale: 0.99 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={reducedMotion ? undefined : { opacity: 0, y: -4, scale: 0.99 }}
+                    transition={{ duration: reducedMotion ? 0 : 0.18, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <p className="text-muted-foreground text-center text-sm font-medium">
+                      {manageSubmitStatusLabel}
+                    </p>
+                    <div
+                      className="grid w-full gap-2 sm:grid-cols-3"
+                      data-slot="offline-roster-manage-submit-steps"
+                      aria-label={translateText(
+                        'generated.inline.offline_roster_submit_steps_label'
+                      )}
+                    >
+                      {manageSubmitSteps.map((step, index) => {
+                        const isComplete = step.status === 'complete';
+                        const isActive = step.status === 'active';
+
+                        return (
+                          <div
+                            key={step.key}
+                            className={cn(
+                              'border-border/70 bg-card/90 relative overflow-hidden rounded-2xl border px-3 py-3 shadow-[var(--shadow-panel)]',
+                              isActive && 'border-foreground/20',
+                              isComplete && 'border-success/40'
+                            )}
+                          >
+                            <div className="flex items-center gap-3">
+                              <motion.span
+                                className={cn(
+                                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
+                                  isComplete
+                                    ? 'border-success/40 bg-success/10 text-success'
+                                    : 'border-border bg-muted text-muted-foreground'
+                                )}
+                                animate={
+                                  isActive && !reducedMotion
+                                    ? { scale: [1, 1.05, 1], y: [0, -1, 0] }
+                                    : undefined
+                                }
+                                transition={
+                                  isActive && !reducedMotion
+                                    ? { duration: 1.15, repeat: Infinity, ease: 'easeInOut' }
+                                    : undefined
+                                }
+                              >
+                                {isComplete ? (
+                                  <Check className="h-4 w-4" />
+                                ) : isActive ? (
+                                  <span className="bg-primary h-2.5 w-2.5 rounded-full" />
+                                ) : (
+                                  index + 1
+                                )}
+                              </motion.span>
+
+                              <div className="min-w-0 text-left">
+                                <p className="truncate text-sm font-medium">{step.label}</p>
+                                <p className="text-muted-foreground text-xs">
+                                  {isComplete
+                                    ? translateText(
+                                        'generated.inline.offline_roster_submit_step_complete'
+                                      )
+                                    : isActive
+                                      ? translateText(
+                                          'generated.inline.offline_roster_submit_step_running'
+                                        )
+                                      : translateText(
+                                          'generated.inline.offline_roster_submit_step_waiting'
+                                        )}
+                                </p>
+                              </div>
+                            </div>
+
+                            {isActive ? (
+                              <div className="bg-muted mt-3 h-1 overflow-hidden rounded-full">
+                                <motion.div
+                                  className="bg-primary h-full rounded-full"
+                                  initial={reducedMotion ? false : { width: '18%' }}
+                                  animate={
+                                    reducedMotion
+                                      ? { width: '52%' }
+                                      : { width: ['18%', '68%', '38%'] }
+                                  }
+                                  transition={
+                                    reducedMotion
+                                      ? { duration: 0 }
+                                      : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }
+                                  }
+                                />
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+
+              <DialogFooter className="mt-5 sm:items-center">
                 <Button
                   type="button"
                   variant="outline"
-                  className="mt-4"
-                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isManageSubmitActive}
+                  onClick={() => handleCloseManageDialog(false)}
                 >
-                  {translateText('generated.inline.0963_choose_file_eb7eb7a8')}
+                  {translateText('generated.inline.0331_abbrechen_07af7cb3')}
                 </Button>
-                <FileInputField
-                  id={fileInputId}
-                  ref={fileInputRef}
-                  accept=".csv,text/csv"
-                  fieldClassName="hidden"
-                  className="hidden"
-                  onChange={event => {
-                    const file = event.target.files?.[0];
-                    if (file) {
-                      void readCsvFile(file);
-                    }
-                  }}
-                />
-              </div>
-
-              {(csvFeedback.duplicates > 0 || csvFeedback.missingNames > 0) && (
-                <div className="text-muted-foreground flex flex-wrap gap-3 text-sm">
-                  {csvFeedback.duplicates > 0 ? (
-                    <span>
-                      {csvFeedback.duplicates}
-                      {translateText('generated.inline.0964_duplicate_rows_were_skipped_3d5f6530')}
-                    </span>
-                  ) : null}
-                  {csvFeedback.missingNames > 0 ? (
-                    <span>
-                      {csvFeedback.missingNames}
-                      {translateText(
-                        'generated.inline.0965_rows_without_first_and_last_name_were_skipped_2fc1a545'
-                      )}
-                    </span>
-                  ) : null}
-                </div>
-              )}
-
-              {csvPreviewRows.length > 0 ? (
-                <FormFieldShell label={translateText('generated.inline.0520_preview_f1fbb2b4')}>
-                  {() => (
-                    <ScrollArea className="h-[40vh] rounded-xl border">
-                      <DataTable
-                        columns={csvPreviewColumns}
-                        data={csvPreviewRows}
-                        getRowId={(row, index) => `${row.firstName}-${row.lastName}-${index}`}
-                        enablePagination={false}
-                        className="space-y-0"
-                      />
-                    </ScrollArea>
-                  )}
-                </FormFieldShell>
-              ) : null}
-            </TabsContent>
-          </Tabs>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => handleCloseManageDialog(false)}>
-              {translateText('generated.inline.0331_abbrechen_07af7cb3')}
-            </Button>
-            <Button
-              type="button"
-              disabled={
-                isSubmitting ||
-                (manageTab === 'single'
-                  ? !singleDraft.firstName.trim() || !singleDraft.lastName.trim()
-                  : csvPreviewRows.length === 0)
-              }
-              onClick={() =>
-                manageTab === 'csv' ? void handleImportCsv() : void handleCreateSingle()
-              }
-            >
-              {translateText('generated.inline.0966_hinzufuegen_38099f83')}
-            </Button>
-          </DialogFooter>
+                <Button
+                  type="button"
+                  loading={isManageSubmitting}
+                  successState={isManageSubmitSuccess}
+                  disabled={
+                    isManageSubmitActive ||
+                    isSubmitting ||
+                    (manageTab === 'single'
+                      ? !singleDraft.firstName.trim() || !singleDraft.lastName.trim()
+                      : csvPreviewRows.length === 0)
+                  }
+                  onClick={() =>
+                    manageTab === 'csv' ? void handleImportCsv() : void handleCreateSingle()
+                  }
+                >
+                  {translateText('generated.inline.0966_hinzufuegen_38099f83')}
+                </Button>
+              </DialogFooter>
+            </div>
+          </div>
         </ScrollableDialogContent>
       </Dialog>
 

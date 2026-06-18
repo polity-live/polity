@@ -5,7 +5,7 @@ import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
 import { AccessDenied as AccessDeniedView } from '@/features/auth/ui/AccessDenied';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
-import { groupRelationshipsByGroup } from '@/features/groups/logic/groupWikiHelpers';
+import { groupWikiRelatedGroupsByOrientation } from '@/features/groups/logic/groupWikiHelpers';
 import { GroupWikiContentView } from './GroupWikiContentView';
 
 interface GroupWikiProps {
@@ -73,8 +73,10 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
 
   const groupLocation = formatLocation(group);
   const groupDescription = toPlainDescription(group.description);
-  const parentGroups = groupRelationshipsByGroup(group.relationships_as_target ?? [], 'parent');
-  const childGroups = groupRelationshipsByGroup(group.relationships_as_source ?? [], 'child');
+  const { parentGroups, childGroups } = groupWikiRelatedGroupsByOrientation(
+    [...(group.relationships_as_source ?? []), ...(group.relationships_as_target ?? [])],
+    groupId
+  );
   const siblingGroups = group.sibling_groups ?? [];
   const connectedGroup = group.connected_group;
   const primarySiblingMembershipMode = group.primary_sibling_membership_mode ?? null;

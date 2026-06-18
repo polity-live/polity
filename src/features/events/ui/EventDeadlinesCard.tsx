@@ -3,10 +3,11 @@ import {
   CivicMotionTimeline,
   type CivicMotionTimelineItem,
 } from '@/features/shared/ui/timeline/CivicMotionTimeline';
-import { Clock } from 'lucide-react';
+import { CalendarClock, Clock, FileEdit, Flag, Play, UserCheck } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface DeadlineItem {
+  icon?: CivicMotionTimelineItem['icon'];
   id: string;
   label: string;
   timestamp: number | null | undefined;
@@ -92,16 +93,19 @@ export function EventDeadlinesCard({
   const deadlines: ActiveDeadlineItem[] = [
     {
       id: 'registration-deadline',
+      icon: CalendarClock,
       label: t('features.events.deadlines.registration'),
       timestamp: registrationDeadline,
     },
     {
       id: 'amendment-deadline',
+      icon: FileEdit,
       label: t('features.events.deadlines.amendment'),
       timestamp: amendmentDeadline,
     },
     {
       id: 'candidacy-deadline',
+      icon: UserCheck,
       label: t('features.events.deadlines.candidacy'),
       timestamp: candidacyDeadline,
     },
@@ -133,6 +137,7 @@ export function EventDeadlinesCard({
   if (eventStartTimestamp) {
     timelineCandidates.push({
       id: 'event-start',
+      icon: Play,
       label: t('features.events.timeline.eventStart', 'Event start'),
       timestamp: eventStartTimestamp,
       tone: 'success',
@@ -143,6 +148,7 @@ export function EventDeadlinesCard({
   if (eventEndTimestamp) {
     timelineCandidates.push({
       id: 'event-end',
+      icon: Flag,
       label: t('features.events.timeline.eventEnd', 'Event end'),
       timestamp: eventEndTimestamp,
       tone: 'info',

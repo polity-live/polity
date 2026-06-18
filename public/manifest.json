@@ -2,6 +2,7 @@
   "short_name": "Polity",
   "name": "Polity - Modern Political Platform",
   "description": "Collaborate on amendments, organize meetings, and engage in political discourse",
+  "id": "/",
   "icons": [
     {
       "src": "/favicon.ico",

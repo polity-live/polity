@@ -224,8 +224,12 @@ export async function computeDistinctEventParticipantCount(tx: ZeroTransaction, 
     tx.run(zql.event_offline_participant.where('event_id', eventId)),
   ]);
 
+  const activeUserIds = participants
+    .filter(participant => isActiveEventStatus(participant.status))
+    .map(participant => participant.user_id);
+
   return buildDistinctPersonIds({
-    activeUserIds: [...new Set(participants.map(participant => participant.user_id))],
+    activeUserIds: [...new Set(activeUserIds)],
     offlinePeople: offlineParticipants,
   }).size;
 }

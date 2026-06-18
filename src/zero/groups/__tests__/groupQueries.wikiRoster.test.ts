@@ -65,7 +65,7 @@ vi.mock('../../schema', () => {
   };
 });
 
-import { eventQueries } from '../queries';
+import { groupQueries } from '../queries';
 
 const ctx = { userID: 'user-1', email: 'user@example.com' };
 
@@ -81,59 +81,26 @@ function relatedCalls(calls: QueryCall[], relation: string): QueryCall[] {
   return call[2] as QueryCall[];
 }
 
-function expectDelegateAccessFilter(calls: QueryCall[]) {
-  expect(calls[0][0]).toBe('where');
-  expect(typeof calls[0][1]).toBe('function');
-}
-
 beforeEach(() => {
   queryState.byTable = {};
 });
 
-describe('event query delegate authorization', () => {
-  it('filters direct delegate lists to self or event participants', () => {
-    eventQueries.delegates.fn({ args: { eventId: 'event-1' }, ctx });
+describe('group wiki roster query', () => {
+  it('loads all active wiki memberships without self-or-manager filtering', () => {
+    groupQueries.wikiData.fn({ args: { id: 'group-1' }, ctx });
 
-    expectDelegateAccessFilter(lastQuery('event_delegate').calls);
-  });
+    const groupCalls = lastQuery('group').calls;
+    const membershipCalls = relatedCalls(groupCalls, 'memberships');
 
-  it('filters nested wiki delegates to self or event participants', () => {
-    eventQueries.wikiData.fn({ args: { id: 'event-1' }, ctx });
-
-    const eventCalls = lastQuery('event').calls;
-    const delegateCalls = relatedCalls(eventCalls, 'delegates');
-
-    expectDelegateAccessFilter(delegateCalls);
-  });
-
-  it('loads all active wiki participants without self-or-manager filtering', () => {
-    eventQueries.wikiData.fn({ args: { id: 'event-1' }, ctx });
-
-    const eventCalls = lastQuery('event').calls;
-    const participantCalls = relatedCalls(eventCalls, 'participants');
-
-    expect(participantCalls).toContainEqual([
+    expect(membershipCalls).toContainEqual([
       'where',
       'status',
       'IN',
-      ['active', 'confirmed', 'member', 'admin'],
+      ['active', 'member', 'admin'],
     ]);
-    expect(
-      participantCalls.some(call => call[0] === 'where' && typeof call[1] === 'function')
-    ).toBe(false);
-    expect(participantCalls.some(call => call[0] === 'related' && call[1] === 'user')).toBe(true);
-  });
-
-  it('filters delegates nested under delegate allocation target events', () => {
-    eventQueries.delegateAllocationsBySourceGroup.fn({
-      args: { groupId: 'group-1' },
-      ctx,
-    });
-
-    const allocationCalls = lastQuery('group_delegate_allocation').calls;
-    const eventCalls = relatedCalls(allocationCalls, 'event');
-    const delegateCalls = relatedCalls(eventCalls, 'delegates');
-
-    expectDelegateAccessFilter(delegateCalls);
+    expect(membershipCalls.some(call => call[0] === 'where' && typeof call[1] === 'function')).toBe(
+      false
+    );
+    expect(membershipCalls.some(call => call[0] === 'related' && call[1] === 'user')).toBe(true);
   });
 });

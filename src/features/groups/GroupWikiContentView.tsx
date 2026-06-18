@@ -23,6 +23,7 @@ import {
   isVisibleWikiParticipationStatus,
   normalizeWikiParticipationRole,
   WikiParticipationDirectory,
+  WikiRosterSummaryCard,
   type WikiParticipationItem,
   type WikiParticipationRole,
 } from '@/features/shared/ui/wiki';
@@ -298,22 +299,28 @@ export function GroupWikiContentView({
         className="mb-12"
       />
 
-      <WikiParticipationDirectory
-        title={translateText('generated.inline.0554_members_5d2292cf', 'Members')}
-        description={translateText(
-          'features.groups.wiki.membersDescription',
-          'Active members visible in this group.'
-        )}
-        items={memberDirectoryItems}
-        roles={memberRoles}
-        entityType="group"
-        searchPlaceholder={translateText('features.groups.wiki.membersSearch', 'Search members')}
-        emptyLabel={translateText('features.groups.wiki.noMembers', 'No active members yet.')}
-        noResultsLabel={translateText(
-          'features.groups.wiki.noMembersMatch',
-          'No members match your filters.'
-        )}
-      />
+      <div className="mb-8">
+        <WikiParticipationDirectory
+          className="mb-0"
+          title={translateText('generated.inline.0554_members_5d2292cf', 'Members')}
+          description={translateText(
+            'features.groups.wiki.membersDescription',
+            'Active members visible in this group.'
+          )}
+          items={memberDirectoryItems}
+          roles={memberRoles}
+          entityType="group"
+          searchPlaceholder={translateText('features.groups.wiki.membersSearch', 'Search members')}
+          emptyLabel={translateText('features.groups.wiki.noMembers', 'No active members yet.')}
+          noResultsLabel={translateText(
+            'features.groups.wiki.noMembersMatch',
+            'No members match your filters.'
+          )}
+          leadingCard={
+            <WikiRosterSummaryCard totalCount={memberCount} items={memberDirectoryItems} />
+          }
+        />
+      </div>
 
       {connectedGroup ? (
         <Card className="mb-6">

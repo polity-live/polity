@@ -2561,6 +2561,19 @@ const generatedInlineTranslations: Record<string, string> = {
   '0965_rows_without_first_and_last_name_were_skipped_2fc1a545':
     'rows without first and last name were skipped.',
   '0966_hinzufuegen_38099f83': 'Hinzufuegen',
+  offline_roster_user_adding_status: 'Offline-Nutzer wird hinzugefügt',
+  offline_roster_user_added_status: 'Offline-Nutzer hinzugefügt',
+  offline_roster_csv_importing_status: 'Offline-Nutzer werden importiert',
+  offline_roster_csv_imported_status: 'Offline-Nutzer importiert',
+  offline_roster_submit_steps_label: 'Fortschritt beim Speichern der Offline-Nutzer',
+  offline_roster_submit_step_check: 'Eingaben prüfen',
+  offline_roster_submit_step_sync_memberships: 'Mitgliedschaften synchronisieren',
+  offline_roster_submit_step_sync_imported_memberships:
+    'Importierte Mitgliedschaften synchronisieren',
+  offline_roster_submit_step_update_events_delegates: 'Events & Delegierte aktualisieren',
+  offline_roster_submit_step_complete: 'Abgeschlossen',
+  offline_roster_submit_step_running: 'Läuft',
+  offline_roster_submit_step_waiting: 'Wartet',
   '0967_connect_active_user_3b32e5de': 'Connect active user',
   '0968_search_for_an_active_platform_user_who_should_4ddfcc2a':
     'Search for an active platform user who should be connected to this offline roster entry.',

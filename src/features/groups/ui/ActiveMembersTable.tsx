@@ -32,6 +32,8 @@ interface ActiveMembersTableProps<TMembership extends ParticipationLike> {
   manageRolesLabel?: string;
   removeLabel?: string;
   showProvenanceColumns?: boolean;
+  showPartGroupColumn?: boolean;
+  showBaseGroupColumn?: boolean;
   showDelegateRepresentationColumn?: boolean;
 }
 
@@ -48,6 +50,8 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
   manageRolesLabel,
   removeLabel,
   showProvenanceColumns = false,
+  showPartGroupColumn = false,
+  showBaseGroupColumn = false,
   showDelegateRepresentationColumn = false,
 }: ActiveMembersTableProps<TMembership>) {
   const { t } = useTranslation();
@@ -69,6 +73,8 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
     'components.membershipTables.noDelegateRepresentation',
     '-'
   );
+  const shouldShowPartGroupColumn = showProvenanceColumns || showPartGroupColumn;
+  const shouldShowBaseGroupColumn = showProvenanceColumns || showBaseGroupColumn;
 
   const renderProvenanceGroupTag = (membership: TMembership, column: 'partGroup' | 'baseGroup') => {
     const group = column === 'partGroup' ? membership.partGroup : membership.baseGroup;
@@ -123,13 +129,18 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
       ]
     : [];
 
-  const provenanceColumns: ColumnDef<TMembership>[] = showProvenanceColumns
+  const partGroupColumns: ColumnDef<TMembership>[] = shouldShowPartGroupColumn
     ? [
         {
           id: 'partGroup',
           header: () => t('components.tableColumns.partGroup'),
           cell: ({ row }) => renderProvenanceGroupTag(row.original, 'partGroup'),
         },
+      ]
+    : [];
+
+  const baseGroupColumns: ColumnDef<TMembership>[] = shouldShowBaseGroupColumn
+    ? [
         {
           id: 'baseGroup',
           header: () => t('components.tableColumns.baseGroup'),
@@ -169,7 +180,8 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
       },
     },
     ...delegateRepresentationColumns,
-    ...provenanceColumns,
+    ...partGroupColumns,
+    ...baseGroupColumns,
     {
       id: 'joined',
       header: joinedColumnLabel,

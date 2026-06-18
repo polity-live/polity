@@ -3,10 +3,12 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { MembershipCompositionPanel } from '../MembershipCompositionPanel';
 import { MembershipCompositionPanelView } from '../MembershipCompositionPanelView';
 
 vi.mock('@/features/charts/ui/ChartRenderer', () => ({
   ChartRenderer: () => <div data-testid="chart" />,
+  CHART_PALETTE: ['#111111', '#222222'],
 }));
 
 afterEach(() => {
@@ -30,6 +32,30 @@ const labels = {
 };
 
 describe('MembershipCompositionPanelView', () => {
+  it('allows event-specific participant labels to override member copy', () => {
+    render(
+      <MembershipCompositionPanel
+        buckets={[
+          {
+            key: 'B1',
+            label: 'B1',
+            memberCount: 1,
+            leadershipAssignmentCount: 0,
+            memberPercentage: 100,
+            leadershipPercentage: 0,
+          },
+        ]}
+        labelOverrides={{
+          membersTitle: 'Participants',
+          membersDescription: 'Participants by event provenance',
+        }}
+      />
+    );
+
+    expect(screen.getByText('Participants')).toBeTruthy();
+    expect(screen.getByText('Participants by event provenance')).toBeTruthy();
+  });
+
   it('shows absolute counts next to percentages in the composition table', () => {
     render(
       <MembershipCompositionPanelView

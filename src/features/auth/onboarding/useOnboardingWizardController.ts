@@ -92,6 +92,10 @@ export function useOnboardingWizardController({
       }
     }
 
+    goToStep('appInstall');
+  };
+
+  const handleAppInstallNext = () => {
     goToStep('summary');
   };
 
@@ -162,6 +166,7 @@ export function useOnboardingWizardController({
     handleMembershipConfirm,
     handleMembershipDecline,
     handleAriaKaiNext,
+    handleAppInstallNext,
     handleGoToProfile,
     handleGoToGroup,
     handleGoToTimeline,

@@ -12,6 +12,8 @@ import {
 } from '../rbac/query-access';
 import { zql } from '../schema';
 
+const WIKI_ACTIVE_GROUP_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
+
 function applyGroupAccess<T>(q: T, userID: string | undefined): T {
   const query = q as any;
 
@@ -241,7 +243,8 @@ export const groupQueries = {
           .related('created_by')
       )
       .related('memberships', q =>
-        applyGroupMembershipSelfOrManagerQueryAccess(q, userID)
+        q
+          .where('status', 'IN', WIKI_ACTIVE_GROUP_MEMBERSHIP_STATUSES)
           .related('user')
           .related('source_group')
           .related('part_group')

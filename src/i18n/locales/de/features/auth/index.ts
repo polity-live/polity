@@ -134,6 +134,10 @@ export const authTranslations = {
           label: 'Assistenz',
           description: 'Wisse, wo du später Hilfe findest.',
         },
+        appInstall: {
+          label: 'App installieren',
+          description: 'Nutze Polity auf diesem Gerät wie eine App.',
+        },
         summary: {
           label: 'Start',
           description: 'Wähle dein erstes sinnvolles Ziel.',
@@ -266,6 +270,12 @@ export const authTranslations = {
       assistantBadge: 'KI',
       previewPrompt: 'Was sollte ich zuerst tun?',
       continue: 'Weiter',
+    },
+    appInstallStep: {
+      title: 'Polity auf diesem Gerät installieren',
+      description:
+        'Nutze Polity vom Home-Bildschirm oder App-Launcher, wenn dein Browser es unterstützt.',
+      continue: 'Weiter zum Start',
     },
   },
   errors: {

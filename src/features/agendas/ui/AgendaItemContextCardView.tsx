@@ -145,12 +145,14 @@ export function AgendaItemContextCardView({
   const addAgendaTimelineItem = ({
     date,
     description,
+    icon,
     id,
     label,
     tone,
   }: {
     date: Date | null | undefined;
     description?: ReactNode;
+    icon?: CivicMotionTimelineItem['icon'];
     id: string;
     label: string;
     tone: CivicMotionTimelineItem['tone'];
@@ -161,6 +163,7 @@ export function AgendaItemContextCardView({
 
     agendaTimelineCandidates.push({
       description,
+      icon,
       id,
       label,
       timestamp: date.getTime(),
@@ -189,6 +192,7 @@ export function AgendaItemContextCardView({
         ) : null}
       </div>
     ),
+    icon: Play,
     id: 'agenda-start',
     label:
       actualStartedAt && (isCompleted || isOngoing)
@@ -220,6 +224,7 @@ export function AgendaItemContextCardView({
         ) : null}
       </div>
     ),
+    icon: CheckCircle2,
     id: 'agenda-end',
     label:
       actualCompletedAt && isCompleted
@@ -242,6 +247,7 @@ export function AgendaItemContextCardView({
         ) : null}
       </div>
     ),
+    icon: Vote,
     id: 'voting-start',
     label: t('features.events.agenda.votingStart'),
     tone: 'warning',
@@ -263,6 +269,7 @@ export function AgendaItemContextCardView({
         ) : null}
       </div>
     ),
+    icon: CheckCircle2,
     id: 'voting-end',
     label: t('features.events.agenda.votingEnd'),
     tone: 'danger',

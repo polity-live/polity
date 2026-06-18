@@ -406,6 +406,53 @@ export const commonTranslations = {
     dismiss: 'Dismiss',
     notNow: 'Not now',
     install: 'Install',
+    installPanel: {
+      settingsTitle: 'Install app',
+      settingsDescription:
+        'Use Polity from your home screen or app launcher when your browser supports it.',
+      onboarding: {
+        promptableTitle: 'Want to use Polity like an app?',
+        promptableDescription:
+          'Install Polity on this device for quick access from your home screen or app launcher.',
+        manualTitle: 'Want to use Polity from your home screen?',
+        manualDescription:
+          'This device supports home screen web apps, but installation has to start from the browser share menu.',
+      },
+      settings: {
+        promptableTitle: 'Polity is ready to install',
+        promptableDescription: 'Your browser can open the app installation dialog from this page.',
+        manualTitle: 'Install Polity from the share menu',
+        manualDescription:
+          'On iPhone and iPad, use the browser share menu to add Polity to your home screen.',
+      },
+      installedTitle: 'Polity is installed',
+      installedDescription: 'You are already using Polity as an installed app on this device.',
+      checkingTitle: 'Checking app installation',
+      checkingDescription:
+        'Polity is preparing app installation. Chrome may need a moment after the app worker is ready.',
+      reloadRequiredTitle: 'Reload to finish app setup',
+      reloadRequiredDescription:
+        'Polity registered the app worker. Reload this page once so Chrome can re-check installation from a controlled page.',
+      unavailableTitle: 'App installation is not available right now',
+      unavailableDescription:
+        'Chrome has not offered a direct install prompt for this page yet. Check the browser menu, try again later in Settings, or open Polity in Chrome or Safari.',
+      installAction: 'Install Polity',
+      installingAction: 'Installing...',
+      reloadAction: 'Reload page',
+      dismissedMessage:
+        'The install dialog was dismissed. Your browser may offer the prompt again later.',
+      iosStepShare: 'Open the share menu in your browser.',
+      iosStepAdd: 'Choose "Add to Home Screen".',
+      iosStepConfirm: 'Confirm the name and add Polity.',
+      status: {
+        checking: 'Checking',
+        installed: 'Installed',
+        promptable: 'Ready to install',
+        'manual-ios': 'Manual install',
+        'reload-required': 'Reload needed',
+        unavailable: 'Unavailable',
+      },
+    },
   },
   goBack: 'Go Back',
   goHome: 'Go Home',

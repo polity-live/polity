@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Users, Copy } from 'lucide-react';
+import { CheckCircle2, Copy, FileText, Users, Vote, XCircle } from 'lucide-react';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { StatsBar } from '@/features/shared/ui/layout';
@@ -56,6 +56,7 @@ function AmendmentWorkflowPhaseRail({ mode, t }: { mode: any; t: any }) {
   const items: CivicMotionTimelineItem[] = [
     {
       id: 'creation',
+      icon: FileText,
       label: t('features.amendments.workflowPhases.creation', 'Erarbeitung'),
       value: t(
         'features.amendments.workflowPhases.creationDescription',
@@ -67,6 +68,7 @@ function AmendmentWorkflowPhaseRail({ mode, t }: { mode: any; t: any }) {
     },
     {
       id: 'decision',
+      icon: Vote,
       label: t('features.amendments.workflowPhases.decision', 'Beschlussfindung'),
       value: t(
         'features.amendments.workflowPhases.decisionDescription',
@@ -81,12 +83,14 @@ function AmendmentWorkflowPhaseRail({ mode, t }: { mode: any; t: any }) {
   const branches: CivicMotionTimelineItem[] = [
     {
       id: 'passed',
+      icon: CheckCircle2,
       label: t('features.amendments.workflowPhases.accepted', 'Angenommen'),
       tone: 'success',
       isActive: isAccepted,
     },
     {
       id: 'rejected',
+      icon: XCircle,
       label: t('features.amendments.workflowPhases.rejected', 'Abgelehnt'),
       tone: 'danger',
       isActive: isRejected,

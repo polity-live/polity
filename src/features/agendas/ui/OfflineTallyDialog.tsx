@@ -31,6 +31,14 @@ interface OfflineTallyDialogProps {
   onSubmit: (args: { password: string; counts: Record<string, number> }) => Promise<void>;
 }
 
+function getOfflineTallyEntryId(tally: OfflineTallyValue) {
+  return tally.id;
+}
+
+function getOfflineTallyCount(tally: OfflineTallyValue) {
+  return tally.count;
+}
+
 export function OfflineTallyDialog({
   open,
   onOpenChange,
@@ -50,8 +58,8 @@ export function OfflineTallyDialog({
     entries: choices,
     tallies,
     maxTotalVotes,
-    getTallyEntryId: tally => tally.id,
-    getTallyCount: tally => tally.count,
+    getTallyEntryId: getOfflineTallyEntryId,
+    getTallyCount: getOfflineTallyCount,
     onSubmit,
   });
 

@@ -133,6 +133,10 @@ export const authTranslations = {
           label: 'Assistant',
           description: 'Know where to get help later.',
         },
+        appInstall: {
+          label: 'Install app',
+          description: 'Use Polity from this device like an app.',
+        },
         summary: {
           label: 'Start',
           description: 'Choose your first useful destination.',
@@ -262,6 +266,12 @@ export const authTranslations = {
       assistantBadge: 'AI',
       previewPrompt: 'What should I do first?',
       continue: 'Continue',
+    },
+    appInstallStep: {
+      title: 'Install Polity on this device',
+      description:
+        'Use Polity from your home screen or app launcher when your browser supports it.',
+      continue: 'Continue to start',
     },
   },
   errors: {

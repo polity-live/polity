@@ -17,6 +17,10 @@ export const Route = createRootRoute({
       { charSet: 'UTF-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1.0' },
       { name: 'theme-color', content: '#F7F5EF' },
+      { name: 'mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-title', content: 'Polity' },
+      { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
       {
         name: 'google-site-verification',
         content: 'nIqXCPvlgZ-T0vUb9DimlNa8oLmNZbj5VLIYfN_s08g',

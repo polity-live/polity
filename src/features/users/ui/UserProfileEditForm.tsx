@@ -14,6 +14,7 @@ import { FormStyleSelector } from '@/features/create/ui/FormStyleSelector';
 import { ThemeToggle } from '@/features/navigation/toggles/theme-toggle';
 import { LanguageToggle } from '@/features/navigation/toggles/language-toggle';
 import { NavigationViewStateToggle } from '@/features/navigation/toggles/NavigationViewStateToggle';
+import { PwaInstallPanel } from '@/features/pwa/ui';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { VotingPasswordTab } from './VotingPasswordTab';
 import { AccountPasswordSection } from './AccountPasswordSection';
@@ -211,6 +212,12 @@ export function UserProfileEditForm({
               description={t('pages.create.preferences.formStyleDescription')}
             >
               <FormStyleSelector />
+            </SettingsPanel>
+            <SettingsPanel
+              title={t('common.pwa.installPanel.settingsTitle')}
+              description={t('common.pwa.installPanel.settingsDescription')}
+            >
+              <PwaInstallPanel surface="settings" />
             </SettingsPanel>
           </div>
         </TabsContent>

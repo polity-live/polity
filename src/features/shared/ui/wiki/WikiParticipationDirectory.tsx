@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 
@@ -52,10 +52,18 @@ export interface WikiParticipationDirectoryProps {
   searchPlaceholder?: string;
   emptyLabel?: string;
   noResultsLabel?: string;
+  leadingCard?: ReactNode;
   className?: string;
 }
 
-const VISIBLE_PARTICIPATION_STATUSES = new Set(['active', 'admin', 'confirmed', 'member', 'owner']);
+const VISIBLE_PARTICIPATION_STATUSES = new Set([
+  'active',
+  'admin',
+  'collaborator',
+  'confirmed',
+  'member',
+  'owner',
+]);
 
 export function isVisibleWikiParticipationStatus(status: string | null | undefined) {
   return VISIBLE_PARTICIPATION_STATUSES.has(status ?? '');
@@ -138,6 +146,7 @@ export function WikiParticipationDirectory({
   searchPlaceholder = translateText('common.actions.search', 'Search'),
   emptyLabel = translateText('components.empty.noResults', 'No results found.'),
   noResultsLabel = translateText('components.empty.noResults', 'No results found.'),
+  leadingCard,
   className,
 }: WikiParticipationDirectoryProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -196,7 +205,20 @@ export function WikiParticipationDirectory({
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {leadingCard ? (
+            <div
+              className="civic-load-card-reveal"
+              style={
+                {
+                  '--civic-load-index': 0,
+                } as CSSProperties
+              }
+            >
+              {leadingCard}
+            </div>
+          ) : null}
           {visibleItems.map((item, index) => {
+            const loadIndex = Math.min(index + (leadingCard ? 1 : 0), 11);
             const card = (
               <Card interactive={item.userId ? 'lift' : 'default'} className="h-full">
                 <CardContent className="flex h-full flex-col gap-4 p-4">
@@ -248,7 +270,7 @@ export function WikiParticipationDirectory({
                 className="civic-load-card-reveal"
                 style={
                   {
-                    '--civic-load-index': Math.min(index, 11),
+                    '--civic-load-index': loadIndex,
                   } as CSSProperties
                 }
               >

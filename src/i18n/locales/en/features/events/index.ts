@@ -304,6 +304,12 @@ export const eventsTranslations = {
         share: 'Share',
       },
     },
+    participantComposition: {
+      participantsTitle: 'Participants',
+      participantsDescription: 'Share of part groups across all active/offline event participants.',
+      participantsEmpty: 'No participants found.',
+      noBaseGroup: 'No base group',
+    },
     pendingRequests: 'Pending Requests ({{count}})',
     activeParticipants: 'Active Participants ({{count}})',
     pendingInvitations: 'Pending Invitations ({{count}})',

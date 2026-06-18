@@ -68,6 +68,33 @@ const i18n = vi.hoisted(() => {
     'onboarding.summaryStep.goToGroup': 'Go to group',
     'onboarding.summaryStep.goToTimeline': 'Open timeline',
     'onboarding.summaryStep.showAssistant': 'Open assistant',
+    'onboarding.appInstallStep.title': 'Install Polity on this device',
+    'onboarding.appInstallStep.description': 'Use Polity from your home screen.',
+    'onboarding.appInstallStep.continue': 'Continue to start',
+    'common.pwa.installPanel.onboarding.promptableTitle': 'Want to use Polity like an app?',
+    'common.pwa.installPanel.onboarding.promptableDescription': 'Install Polity on this device.',
+    'common.pwa.installPanel.onboarding.manualTitle': 'Want to use Polity from your home screen?',
+    'common.pwa.installPanel.onboarding.manualDescription': 'Install from the share menu.',
+    'common.pwa.installPanel.installedTitle': 'Polity is installed',
+    'common.pwa.installPanel.installedDescription': 'Already installed.',
+    'common.pwa.installPanel.checkingTitle': 'Checking app installation',
+    'common.pwa.installPanel.checkingDescription': 'Preparing installation.',
+    'common.pwa.installPanel.reloadRequiredTitle': 'Reload to finish app setup',
+    'common.pwa.installPanel.reloadRequiredDescription': 'Reload before installing.',
+    'common.pwa.installPanel.unavailableTitle': 'App installation is not available right now',
+    'common.pwa.installPanel.unavailableDescription': 'No install action is available.',
+    'common.pwa.installPanel.installAction': 'Install Polity',
+    'common.pwa.installPanel.installingAction': 'Installing...',
+    'common.pwa.installPanel.reloadAction': 'Reload page',
+    'common.pwa.installPanel.iosStepShare': 'Open the share menu.',
+    'common.pwa.installPanel.iosStepAdd': 'Choose Add to Home Screen.',
+    'common.pwa.installPanel.iosStepConfirm': 'Confirm the name.',
+    'common.pwa.installPanel.status.checking': 'Checking',
+    'common.pwa.installPanel.status.installed': 'Installed',
+    'common.pwa.installPanel.status.promptable': 'Ready to install',
+    'common.pwa.installPanel.status.manual-ios': 'Manual install',
+    'common.pwa.installPanel.status.reload-required': 'Reload needed',
+    'common.pwa.installPanel.status.unavailable': 'Unavailable',
     'features.auth.errors.fillBothFields': 'Fill both fields',
     'features.auth.errors.nameTooShort': 'Name too short',
     'features.auth.errors.membershipRequestFailed': 'Request failed',
@@ -153,6 +180,8 @@ vi.mock('../OnboardingGroupMap.tsx', () => ({
 }));
 
 import { useOnboarding } from '../../hooks/useOnboarding.ts';
+import { resetPwaInstallStateForTests } from '../../../pwa/hooks/usePwaInstallPrompt.ts';
+import { AppInstallStep } from '../AppInstallStep.tsx';
 import { GroupSearchStepView } from '../GroupSearchStepView.tsx';
 import { SummaryStep } from '../SummaryStep.tsx';
 
@@ -247,8 +276,23 @@ function getGroupCardButton(groupName: string) {
   return button as HTMLButtonElement;
 }
 
+function dispatchBeforeInstallPrompt() {
+  const event = new Event('beforeinstallprompt') as Event & {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' }>;
+  };
+
+  event.prompt = vi.fn().mockResolvedValue(undefined);
+  event.userChoice = Promise.resolve({ outcome: 'accepted' });
+
+  act(() => {
+    window.dispatchEvent(event);
+  });
+}
+
 afterEach(() => {
   cleanup();
+  resetPwaInstallStateForTests();
   vi.clearAllMocks();
 });
 
@@ -368,5 +412,50 @@ describe('onboarding multi-group flow', () => {
     expect(screen.getByText('Interests selected')).toBeTruthy();
     expect(screen.getByText('#climate')).toBeTruthy();
     expect(screen.getByText('Beta Offline Group')).toBeTruthy();
+    expect(screen.queryByText('Want to use Polity like an app?')).toBeNull();
+  });
+
+  it('moves from the assistant step to app install before summary', () => {
+    const { result } = renderHook(() => useOnboarding());
+
+    act(() => {
+      result.current.goToStep('ariaKai');
+    });
+
+    act(() => {
+      result.current.nextStep();
+    });
+
+    expect(result.current.step).toBe('appInstall');
+
+    act(() => {
+      result.current.nextStep();
+    });
+
+    expect(result.current.step).toBe('summary');
+
+    act(() => {
+      result.current.previousStep();
+    });
+
+    expect(result.current.step).toBe('appInstall');
+  });
+
+  it('shows the app install step with an unavailable status and a continue button', async () => {
+    render(<AppInstallStep onNext={() => undefined} onBack={() => undefined} isLoading={false} />);
+
+    expect(screen.getByText('Install Polity on this device')).toBeTruthy();
+    expect(await screen.findByText('App installation is not available right now')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Continue to start/i })).toBeTruthy();
+  });
+
+  it('shows an install button in the app install step when the browser can prompt', async () => {
+    render(<AppInstallStep onNext={() => undefined} onBack={() => undefined} isLoading={false} />);
+
+    dispatchBeforeInstallPrompt();
+
+    expect(await screen.findByText('Want to use Polity like an app?')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Install Polity/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Continue to start/i })).toBeTruthy();
   });
 });

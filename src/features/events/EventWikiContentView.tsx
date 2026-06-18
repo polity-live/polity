@@ -45,6 +45,7 @@ import {
   isVisibleWikiParticipationStatus,
   normalizeWikiParticipationRole,
   WikiParticipationDirectory,
+  WikiRosterSummaryCard,
   type WikiParticipationItem,
   type WikiParticipationRole,
 } from '@/features/shared/ui/wiki';
@@ -114,6 +115,7 @@ export function EventWikiContentView({
     .map((role: any) => normalizeWikiParticipationRole(role))
     .filter((role: WikiParticipationRole | null): role is WikiParticipationRole => Boolean(role));
   const participantRoleById = new Map(participantRoles.map(role => [role.id, role]));
+  const participantTotalCount = event.participant_count ?? participation.participantCount ?? 0;
   const participantDirectoryItems: WikiParticipationItem[] = (event.participants ?? [])
     .filter((participant: any) => isVisibleWikiParticipationStatus(participant.status))
     .filter((participant: any) => participant.user?.id)
@@ -240,7 +242,7 @@ export function EventWikiContentView({
       <StatsBar
         stats={[
           {
-            value: event.participant_count ?? participation.participantCount,
+            value: participantTotalCount,
             labelKey: 'components.labels.participants',
           },
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
@@ -348,25 +350,34 @@ export function EventWikiContentView({
         endDate={event.end_date}
       />
 
-      <WikiParticipationDirectory
-        title={translateText('generated.inline.0429_participants_cd56e083', 'Participants')}
-        description={translateText(
-          'generated.inline.0442_participant_s_registered_for_this_event_4d97759f',
-          'Participants registered for this event.'
-        )}
-        items={participantDirectoryItems}
-        roles={participantRoles}
-        entityType="event"
-        searchPlaceholder={translateText(
-          'generated.inline.0494_search_participants_1b38c2ef',
-          'Search participants'
-        )}
-        emptyLabel={translateText('generated.inline.0447_no_participants_yet_aa90337a')}
-        noResultsLabel={translateText(
-          'features.events.wiki.noParticipantsMatch',
-          'No participants match your filters.'
-        )}
-      />
+      <div className="mb-8">
+        <WikiParticipationDirectory
+          className="mb-0"
+          title={translateText('generated.inline.0429_participants_cd56e083', 'Participants')}
+          description={translateText(
+            'generated.inline.0442_participant_s_registered_for_this_event_4d97759f',
+            'Participants registered for this event.'
+          )}
+          items={participantDirectoryItems}
+          roles={participantRoles}
+          entityType="event"
+          searchPlaceholder={translateText(
+            'generated.inline.0494_search_participants_1b38c2ef',
+            'Search participants'
+          )}
+          emptyLabel={translateText('generated.inline.0447_no_participants_yet_aa90337a')}
+          noResultsLabel={translateText(
+            'features.events.wiki.noParticipantsMatch',
+            'No participants match your filters.'
+          )}
+          leadingCard={
+            <WikiRosterSummaryCard
+              totalCount={participantTotalCount}
+              items={participantDirectoryItems}
+            />
+          }
+        />
+      </div>
 
       {/* Elections Selection Dialog */}
       <Dialog open={electionsDialogOpen} onOpenChange={setElectionsDialogOpen}>

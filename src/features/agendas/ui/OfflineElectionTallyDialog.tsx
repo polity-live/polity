@@ -29,6 +29,14 @@ interface OfflineElectionTallyDialogProps {
   onSubmit: (args: { password: string; counts: Record<string, number> }) => Promise<void>;
 }
 
+function getOfflineElectionTallyEntryId(tally: OfflineElectionTallyValue) {
+  return tally.candidate_id;
+}
+
+function getOfflineElectionTallyCount(tally: OfflineElectionTallyValue) {
+  return tally.count;
+}
+
 export function OfflineElectionTallyDialog({
   open,
   onOpenChange,
@@ -48,8 +56,8 @@ export function OfflineElectionTallyDialog({
     entries: candidates,
     tallies,
     maxTotalVotes,
-    getTallyEntryId: tally => tally.candidate_id,
-    getTallyCount: tally => tally.count,
+    getTallyEntryId: getOfflineElectionTallyEntryId,
+    getTallyCount: getOfflineElectionTallyCount,
     onSubmit,
   });
 

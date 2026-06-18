@@ -7,7 +7,30 @@ import type { MembershipCompositionBucket } from '../types/group.types';
 
 export type CompositionDisplayMode = 'percent' | 'absolute';
 
-export function useMembershipCompositionPanelController(buckets: MembershipCompositionBucket[]) {
+export interface MembershipCompositionPanelLabels {
+  title: string;
+  description: string;
+  modePercent: string;
+  modeAbsolute: string;
+  membersTitle: string;
+  membersDescription: string;
+  membersEmpty: string;
+  leadershipTitle: string;
+  leadershipDescription: string;
+  leadershipEmpty: string;
+  loading: string;
+  total: (count: number) => string;
+  leadershipFootnote: string;
+}
+
+interface MembershipCompositionPanelControllerOptions {
+  labelOverrides?: Partial<MembershipCompositionPanelLabels>;
+}
+
+export function useMembershipCompositionPanelController(
+  buckets: MembershipCompositionBucket[],
+  options: MembershipCompositionPanelControllerOptions = {}
+) {
   const { t } = useTranslation();
   const [displayMode, setDisplayMode] = useState<CompositionDisplayMode>('percent');
   const directWithoutPathLabel = t('features.groups.memberships.composition.directWithoutPath');
@@ -67,7 +90,8 @@ export function useMembershipCompositionPanelController(buckets: MembershipCompo
           count,
         }),
       leadershipFootnote: t('features.groups.memberships.composition.leadershipFootnote'),
-    },
+      ...options.labelOverrides,
+    } satisfies MembershipCompositionPanelLabels,
     onDisplayModeChange: handleDisplayModeChange,
   };
 }

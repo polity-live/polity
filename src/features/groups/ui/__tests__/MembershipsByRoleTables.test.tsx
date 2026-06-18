@@ -4,6 +4,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ActiveMembersTable } from '../ActiveMembersTable';
+import { GuestsTable } from '../GuestsTable';
 import { MembershipsByRoleTables } from '../MembershipsByRoleTables';
 import { PendingInvitationsTable } from '../PendingInvitationsTable';
 import { PendingRequestsTable } from '../PendingRequestsTable';
@@ -228,6 +229,51 @@ describe('MembershipsByRoleTables', () => {
     expect(screen.getByText('Base Group Name')).toBeTruthy();
   });
 
+  it('can show only the base group provenance column in the active members table', () => {
+    render(
+      <ActiveMembersTable
+        members={[
+          {
+            ...member,
+            partGroup: { id: 'part-group-id', name: 'Part Group Name' },
+            baseGroup: { id: 'base-group-id', name: 'Base Group Name' },
+          },
+        ]}
+        sort={{ field: 'user', direction: 'asc' }}
+        onSortChange={vi.fn()}
+        onOpenRightsDialog={vi.fn()}
+        onOpenChangeRoleDialog={vi.fn()}
+        onRemove={vi.fn()}
+        showBaseGroupColumn
+      />
+    );
+
+    expect(screen.getByText('Base Group Name')).toBeTruthy();
+    expect(screen.queryByText('Part Group Name')).toBeNull();
+  });
+
+  it('shows the base group column in by-role tables', () => {
+    render(
+      <MembershipsByRoleTables
+        roles={[{ id: 'role-1', name: 'Chair', description: 'Chairs the group.' }]}
+        members={[
+          {
+            ...member,
+            baseGroup: { id: 'base-group-id', name: 'Base Group Name' },
+          },
+        ]}
+        onOpenRightsDialog={vi.fn()}
+        onRemoveRole={vi.fn()}
+        showBaseGroupColumn
+      />
+    );
+
+    expect(screen.getByText('Base Group Name')).toBeTruthy();
+    expect(screen.getByText('Base Group Name').closest('a')?.getAttribute('href')).toBe(
+      '/group/base-group-id'
+    );
+  });
+
   it('renders delegate representation badges in the active members table', () => {
     render(
       <ActiveMembersTable
@@ -293,5 +339,73 @@ describe('MembershipsByRoleTables', () => {
 
     expectStandaloneTableSurface();
     expectIconOnlyButton('generated.inline.0105_withdraw_invitation_0beb2d10');
+  });
+
+  it('shows the base group column in pending requests', () => {
+    render(
+      <PendingRequestsTable
+        requests={[
+          {
+            ...member,
+            baseGroup: { id: 'base-group-id', name: 'Base Group Name' },
+          },
+        ]}
+        onApprove={vi.fn()}
+        onReject={vi.fn()}
+        showBaseGroupColumn
+      />
+    );
+
+    expect(screen.getByText('Base Group Name')).toBeTruthy();
+    expect(screen.getByText('Base Group Name').closest('a')?.getAttribute('href')).toBe(
+      '/group/base-group-id'
+    );
+  });
+
+  it('shows the base group column in pending invitations', () => {
+    render(
+      <PendingInvitationsTable
+        invitations={[
+          {
+            ...member,
+            baseGroup: { id: 'base-group-id', name: 'Base Group Name' },
+          },
+        ]}
+        onWithdraw={vi.fn()}
+        showBaseGroupColumn
+      />
+    );
+
+    expect(screen.getByText('Base Group Name')).toBeTruthy();
+    expect(screen.getByText('Base Group Name').closest('a')?.getAttribute('href')).toBe(
+      '/group/base-group-id'
+    );
+  });
+
+  it('shows the base group column in guests', () => {
+    render(
+      <GuestsTable
+        guests={[
+          {
+            id: 'guest-1',
+            status: 'active',
+            user: {
+              id: 'user-1',
+              first_name: 'Ada',
+              last_name: 'Lovelace',
+              email: 'ada@example.org',
+            },
+            roles: [{ id: 'role-1', name: 'Guest' }],
+            baseGroup: { id: 'base-group-id', name: 'Base Group Name' },
+          },
+        ]}
+        showBaseGroupColumn
+      />
+    );
+
+    expect(screen.getByText('Base Group Name')).toBeTruthy();
+    expect(screen.getByText('Base Group Name').closest('a')?.getAttribute('href')).toBe(
+      '/group/base-group-id'
+    );
   });
 });

@@ -8,8 +8,10 @@ import { useMemo, type CSSProperties } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { DataTable, TableActionIconButton, type ColumnDef } from '@/features/shared/ui/data-table';
+import { EntityBadge } from '@/features/shared/ui/status';
 import { Trash2, UserPlus } from 'lucide-react';
 import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';
+import { getMembershipProvenanceDisplayLabel } from '../logic/membershipComposition';
 import type { ParticipationLike } from '@/features/shared/types/participation';
 import { RoleTag } from './RoleTag';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -23,6 +25,7 @@ interface PendingInvitationsTableProps<TParticipation extends ParticipationLike>
   dateColumnLabel?: string;
   fallbackRoleLabel?: string;
   withdrawActionLabel?: string;
+  showBaseGroupColumn?: boolean;
 }
 
 export function PendingInvitationsTable<TParticipation extends ParticipationLike>({
@@ -36,7 +39,38 @@ export function PendingInvitationsTable<TParticipation extends ParticipationLike
   dateColumnLabel = 'Invited',
   fallbackRoleLabel = 'Member',
   withdrawActionLabel = translateText('generated.inline.0105_withdraw_invitation_0beb2d10'),
+  showBaseGroupColumn = false,
 }: PendingInvitationsTableProps<TParticipation>) {
+  const directWithoutPathLabel = translateText(
+    'features.groups.memberships.composition.directWithoutPath',
+    'Direct / no path'
+  );
+  const renderBaseGroupTag = (membership: TParticipation) => {
+    const label = getMembershipProvenanceDisplayLabel(membership, 'baseGroup', {
+      directWithoutPathLabel,
+    });
+
+    if (!membership.baseGroup?.id) {
+      return <span className="text-muted-foreground">{label}</span>;
+    }
+
+    return (
+      <EntityBadge asChild tone="info" className="hover:opacity-90">
+        <Link to="/group/$id" params={{ id: membership.baseGroup.id }}>
+          {label}
+        </Link>
+      </EntityBadge>
+    );
+  };
+  const baseGroupColumns: ColumnDef<TParticipation>[] = showBaseGroupColumn
+    ? [
+        {
+          id: 'baseGroup',
+          header: () => translateText('components.tableColumns.baseGroup', 'Base group'),
+          cell: ({ row }) => renderBaseGroupTag(row.original),
+        },
+      ]
+    : [];
   const columns = useMemo<ColumnDef<TParticipation>[]>(
     () => [
       {
@@ -105,6 +139,7 @@ export function PendingInvitationsTable<TParticipation extends ParticipationLike
           );
         },
       },
+      ...baseGroupColumns,
       {
         id: 'createdAt',
         header: dateColumnLabel,
@@ -143,7 +178,14 @@ export function PendingInvitationsTable<TParticipation extends ParticipationLike
         },
       },
     ],
-    [dateColumnLabel, fallbackRoleLabel, onWithdraw, roleColumnLabel, withdrawActionLabel]
+    [
+      baseGroupColumns,
+      dateColumnLabel,
+      fallbackRoleLabel,
+      onWithdraw,
+      roleColumnLabel,
+      withdrawActionLabel,
+    ]
   );
 
   if (invitations.length === 0) {

@@ -308,6 +308,13 @@ export const eventsTranslations = {
         share: 'Anteil',
       },
     },
+    participantComposition: {
+      participantsTitle: 'Teilnehmer',
+      participantsDescription:
+        'Anteil der Teilgruppen an allen aktiven/Offline-Teilnehmern dieses Events.',
+      participantsEmpty: 'Keine Teilnehmer gefunden.',
+      noBaseGroup: 'Ohne Basisgruppe',
+    },
     pendingRequests: 'Ausstehende Anfragen ({{count}})',
     activeParticipants: 'Aktive Teilnehmer ({{count}})',
     pendingInvitations: 'Ausstehende Einladungen ({{count}})',

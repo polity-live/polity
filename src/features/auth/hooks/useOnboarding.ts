@@ -14,6 +14,7 @@ export type OnboardingStep =
   | 'groupSearch'
   | 'confirm'
   | 'ariaKai'
+  | 'appInstall'
   | 'summary';
 
 export interface Group {
@@ -70,6 +71,7 @@ const STEP_ORDER: OnboardingStep[] = [
   'groupSearch',
   'confirm',
   'ariaKai',
+  'appInstall',
   'summary',
 ];
 
@@ -208,7 +210,7 @@ export function useOnboarding(): UseOnboardingReturn {
       if (step === 'ariaKai' && data.selectedGroups.length === 0) {
         setStep('groupSearch');
       } else if (step === 'summary') {
-        setStep('ariaKai');
+        setStep('appInstall');
       } else {
         setStep(STEP_ORDER[currentIndex - 1]);
       }

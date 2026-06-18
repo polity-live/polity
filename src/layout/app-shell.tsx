@@ -10,7 +10,7 @@ import {
 import { useNavigationStore } from '@/features/navigation/state/navigation.store.tsx';
 import { useThemeInitializer } from '@/features/shared/global-state/theme.store.tsx';
 import { I18nSyncProvider } from '@/i18n/i18n-sync-provider.tsx';
-import { PWAInstallPrompt } from '@/features/pwa/ui/pwa-install-prompt.tsx';
+import { PwaInstallProvider } from '@/features/pwa/hooks/usePwaInstallPrompt.ts';
 import { AlphaWarningDialog } from '@/features/shared/ui/AlphaWarningDialog.tsx';
 import type {
   NavigationItem,
@@ -33,7 +33,12 @@ import { useToastSettingsSync } from '@/features/notifications/hooks/useToastSet
 import { MotionPage } from '@/features/shared/motion';
 
 export function AppShell({ children }: { children: ReactNode }) {
-  return <AppShellInner>{children}</AppShellInner>;
+  return (
+    <>
+      <PwaInstallProvider />
+      <AppShellInner>{children}</AppShellInner>
+    </>
+  );
 }
 
 function AppShellInner({ children }: { children: ReactNode }) {
@@ -118,7 +123,6 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
         />
 
         <Toaster richColors position="top-right" />
-        <PWAInstallPrompt />
         <AlphaWarningDialog />
       </div>
     </I18nSyncProvider>
@@ -178,7 +182,6 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
           </main>
 
           <Toaster richColors position="top-right" />
-          <PWAInstallPrompt />
           <AlphaWarningDialog />
         </div>
       </I18nSyncProvider>
@@ -232,7 +235,6 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
         />
 
         <Toaster richColors position="top-right" />
-        <PWAInstallPrompt />
         <AlphaWarningDialog />
       </div>
     </I18nSyncProvider>

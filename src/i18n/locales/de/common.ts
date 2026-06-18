@@ -424,6 +424,54 @@ export const commonTranslations = {
     dismiss: 'Schließen',
     notNow: 'Nicht jetzt',
     install: 'Installieren',
+    installPanel: {
+      settingsTitle: 'App installieren',
+      settingsDescription:
+        'Nutze Polity vom Home-Bildschirm oder App-Launcher, wenn dein Browser es unterstützt.',
+      onboarding: {
+        promptableTitle: 'Möchtest du Polity wie eine App nutzen?',
+        promptableDescription:
+          'Installiere Polity auf diesem Gerät für schnellen Zugriff vom Home-Bildschirm oder App-Launcher.',
+        manualTitle: 'Möchtest du Polity vom Home-Bildschirm nutzen?',
+        manualDescription:
+          'Dieses Gerät unterstützt Web-Apps auf dem Home-Bildschirm, aber die Installation muss über das Teilen-Menü des Browsers gestartet werden.',
+      },
+      settings: {
+        promptableTitle: 'Polity kann installiert werden',
+        promptableDescription:
+          'Dein Browser kann den Installationsdialog direkt von dieser Seite öffnen.',
+        manualTitle: 'Polity über das Teilen-Menü installieren',
+        manualDescription:
+          'Auf iPhone und iPad fügst du Polity über das Teilen-Menü deines Browsers zum Home-Bildschirm hinzu.',
+      },
+      installedTitle: 'Polity ist installiert',
+      installedDescription: 'Du nutzt Polity auf diesem Gerät bereits als installierte App.',
+      checkingTitle: 'App-Installation wird geprüft',
+      checkingDescription:
+        'Polity bereitet die App-Installation vor. Chrome braucht nach dem App-Worker manchmal einen Moment.',
+      reloadRequiredTitle: 'Neu laden, um die App-Einrichtung abzuschließen',
+      reloadRequiredDescription:
+        'Polity hat den App-Worker registriert. Lade die Seite einmal neu, damit Chrome die Installation von einer kontrollierten Seite erneut prüfen kann.',
+      unavailableTitle: 'App-Installation ist gerade nicht verfügbar',
+      unavailableDescription:
+        'Chrome hat für diese Seite noch keinen direkten Installationsdialog angeboten. Prüfe dein Browser-Menü, versuche es später erneut in den Einstellungen oder öffne Polity in Chrome oder Safari.',
+      installAction: 'Polity installieren',
+      installingAction: 'Wird installiert...',
+      reloadAction: 'Seite neu laden',
+      dismissedMessage:
+        'Der Installationsdialog wurde geschlossen. Dein Browser kann den Hinweis später erneut anbieten.',
+      iosStepShare: 'Öffne das Teilen-Menü in deinem Browser.',
+      iosStepAdd: 'Wähle "Zum Home-Bildschirm".',
+      iosStepConfirm: 'Bestätige den Namen und füge Polity hinzu.',
+      status: {
+        checking: 'Prüfung',
+        installed: 'Installiert',
+        promptable: 'Bereit zur Installation',
+        'manual-ios': 'Manuelle Installation',
+        'reload-required': 'Neu laden nötig',
+        unavailable: 'Nicht verfügbar',
+      },
+    },
   },
   goBack: 'Zurück',
   goHome: 'Zur Startseite',

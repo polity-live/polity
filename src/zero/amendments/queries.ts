@@ -12,6 +12,8 @@ import {
 import { zql } from '../schema';
 import type { NormalizedGroupRelationship } from '@/features/network/types/network.types';
 
+const WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['collaborator', 'member', 'admin'];
+
 function applyAmendmentAccess<T>(q: T, userID: string | undefined): T {
   const query = q as any;
 
@@ -156,7 +158,9 @@ export const amendmentQueries = {
   // Full amendment for wiki view (all relations)
   byIdFull: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
     applyAmendmentAccess(zql.amendment.where('id', id), userID)
-      .related('collaborators', q => q.related('user'))
+      .related('collaborators', q =>
+        q.where('status', 'IN', WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES).related('user')
+      )
       .related('amendment_hashtags', q => q.related('hashtag'))
       .related('support_votes', q => applyAmendmentUserPrivateAccess(q, userID).related('user'))
       .related('vote_entries', q => q.related('choices'))

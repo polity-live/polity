@@ -8,7 +8,9 @@ import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { type ColumnDef } from '@/features/shared/ui/data-table';
+import { EntityBadge } from '@/features/shared/ui/status';
 import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';
+import { getMembershipProvenanceDisplayLabel } from '../logic/membershipComposition';
 import type { ParticipationLike } from '@/features/shared/types/participation';
 import { RoleTag } from './RoleTag';
 import type { GroupConflictMembershipPreflight } from '../logic/groupConflictPreflight';
@@ -28,6 +30,7 @@ interface PendingRequestsTableProps<TParticipation extends ParticipationLike> {
   fallbackRoleLabel?: string;
   primaryActionLabel?: string;
   secondaryActionLabel?: string;
+  showBaseGroupColumn?: boolean;
 }
 
 import { PendingRequestActionCell } from './PendingRequestActionCell';
@@ -46,7 +49,38 @@ export function PendingRequestsTable<TParticipation extends ParticipationLike>({
   fallbackRoleLabel = 'Member',
   primaryActionLabel = 'Accept',
   secondaryActionLabel = 'Remove',
+  showBaseGroupColumn = false,
 }: PendingRequestsTableProps<TParticipation>) {
+  const directWithoutPathLabel = translateText(
+    'features.groups.memberships.composition.directWithoutPath',
+    'Direct / no path'
+  );
+  const renderBaseGroupTag = (membership: TParticipation) => {
+    const label = getMembershipProvenanceDisplayLabel(membership, 'baseGroup', {
+      directWithoutPathLabel,
+    });
+
+    if (!membership.baseGroup?.id) {
+      return <span className="text-muted-foreground">{label}</span>;
+    }
+
+    return (
+      <EntityBadge asChild tone="info" className="hover:opacity-90">
+        <Link to="/group/$id" params={{ id: membership.baseGroup.id }}>
+          {label}
+        </Link>
+      </EntityBadge>
+    );
+  };
+  const baseGroupColumns: ColumnDef<TParticipation>[] = showBaseGroupColumn
+    ? [
+        {
+          id: 'baseGroup',
+          header: () => translateText('components.tableColumns.baseGroup', 'Base group'),
+          cell: ({ row }) => renderBaseGroupTag(row.original),
+        },
+      ]
+    : [];
   const columns = useMemo<ColumnDef<TParticipation>[]>(
     () => [
       {
@@ -115,6 +149,7 @@ export function PendingRequestsTable<TParticipation extends ParticipationLike>({
           );
         },
       },
+      ...baseGroupColumns,
       {
         id: 'createdAt',
         header: dateColumnLabel,
@@ -148,6 +183,7 @@ export function PendingRequestsTable<TParticipation extends ParticipationLike>({
     ],
     [
       dateColumnLabel,
+      baseGroupColumns,
       fallbackRoleLabel,
       getApprovePreflightInput,
       onApprove,

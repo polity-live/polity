@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface OfflineTallyEntry {
   id: string;
@@ -14,6 +14,43 @@ interface UseOfflineTallyDialogControllerOptions<TValue> {
   onSubmit: (args: { password: string; counts: Record<string, number> }) => Promise<void>;
 }
 
+function areDraftsEqual(left: Record<string, string>, right: Record<string, string>) {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+
+  if (leftKeys.length !== rightKeys.length) {
+    return false;
+  }
+
+  return rightKeys.every(key => left[key] === right[key]);
+}
+
+function buildDraftSeed<TValue>({
+  entries,
+  tallies,
+  getTallyEntryId,
+  getTallyCount,
+}: Pick<
+  UseOfflineTallyDialogControllerOptions<TValue>,
+  'entries' | 'tallies' | 'getTallyEntryId' | 'getTallyCount'
+>) {
+  const draft: Record<string, string> = {};
+  const signatureEntries: [string, string][] = [];
+
+  for (const entry of entries) {
+    const tally = tallies.find(item => getTallyEntryId(item) === entry.id);
+    const value = String(tally ? (getTallyCount(tally) ?? 0) : 0);
+
+    draft[entry.id] = value;
+    signatureEntries.push([entry.id, value]);
+  }
+
+  return {
+    draft,
+    signature: JSON.stringify(signatureEntries),
+  };
+}
+
 export function useOfflineTallyDialogController<TValue>({
   open,
   entries,
@@ -24,18 +61,22 @@ export function useOfflineTallyDialogController<TValue>({
   onSubmit,
 }: UseOfflineTallyDialogControllerOptions<TValue>) {
   const [draft, setDraft] = useState<Record<string, string>>({});
+  const seededDraftSignatureRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!open) {
+      seededDraftSignatureRef.current = null;
       return;
     }
 
-    const nextDraft: Record<string, string> = {};
-    for (const entry of entries) {
-      const tally = tallies.find(item => getTallyEntryId(item) === entry.id);
-      nextDraft[entry.id] = String(tally ? (getTallyCount(tally) ?? 0) : 0);
+    const seed = buildDraftSeed({ entries, tallies, getTallyEntryId, getTallyCount });
+
+    if (seededDraftSignatureRef.current === seed.signature) {
+      return;
     }
-    setDraft(nextDraft);
+
+    seededDraftSignatureRef.current = seed.signature;
+    setDraft(current => (areDraftsEqual(current, seed.draft) ? current : seed.draft));
   }, [entries, getTallyCount, getTallyEntryId, open, tallies]);
 
   const normalizedCounts = useMemo(() => {
@@ -53,15 +94,23 @@ export function useOfflineTallyDialogController<TValue>({
 
   const isOverLimit = maxTotalVotes != null && totalVotes > maxTotalVotes;
 
-  const setDraftValue = (id: string, value: string) => {
-    setDraft(current => ({
-      ...current,
-      [id]: value,
-    }));
-  };
+  const setDraftValue = useCallback((id: string, value: string) => {
+    setDraft(current => {
+      if (current[id] === value) {
+        return current;
+      }
 
-  const handlePasswordSubmit = (password: string) =>
-    onSubmit({ password, counts: normalizedCounts });
+      return {
+        ...current,
+        [id]: value,
+      };
+    });
+  }, []);
+
+  const handlePasswordSubmit = useCallback(
+    (password: string) => onSubmit({ password, counts: normalizedCounts }),
+    [normalizedCounts, onSubmit]
+  );
 
   return {
     draft,

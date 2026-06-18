@@ -1,21 +1,27 @@
+/* global caches, clients, console, fetch, importScripts, Response, self, URL, workbox */
+
 // Custom Service Worker for Push Notifications
 // This extends the default PWA service worker with push notification capabilities
 
-// Import Workbox libraries (these are injected by next-pwa)
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
+let workboxReady = false;
 
-workbox.setConfig({
-  debug: false,
-});
+try {
+  importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
+  workboxReady = typeof workbox !== 'undefined';
+} catch (error) {
+  console.warn('[Service Worker] Workbox could not be loaded:', error);
+}
 
-// Initialize Workbox
-const { BackgroundSyncPlugin } = workbox.backgroundSync;
-const { CacheFirst, NetworkFirst, StaleWhileRevalidate } = workbox.strategies;
-const { ExpirationPlugin } = workbox.expiration;
-const { precacheAndRoute } = workbox.precaching;
+if (workboxReady) {
+  workbox.setConfig({
+    debug: false,
+  });
 
-// Precache files (will be populated by next-pwa)
-precacheAndRoute(self.__WB_MANIFEST || []);
+  const { precacheAndRoute } = workbox.precaching;
+
+  // Precache files (will be populated by next-pwa)
+  precacheAndRoute(self.__WB_MANIFEST || []);
+}
 
 // ============================================================================
 // PUSH NOTIFICATION HANDLERS
@@ -101,8 +107,7 @@ self.addEventListener('notificationclick', (event) => {
     })
     .then((windowClients) => {
       // Check if there's already a window open with this URL
-      for (let i = 0; i < windowClients.length; i++) {
-        const client = windowClients[i];
+      for (const client of windowClients) {
         const clientUrl = new URL(client.url);
         const targetUrl = new URL(urlToOpen, self.location.origin);
 
@@ -167,57 +172,100 @@ async function syncPushSubscription() {
 // CACHE STRATEGIES (from next-pwa configuration)
 // ============================================================================
 
-// These strategies are configured in next.config.mjs but can be extended here
+if (workboxReady) {
+  const { CacheFirst, NetworkFirst, StaleWhileRevalidate } = workbox.strategies;
+  const { ExpirationPlugin } = workbox.expiration;
 
-// Google Fonts
-workbox.routing.registerRoute(
-  /^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,
-  new CacheFirst({
-    cacheName: 'google-fonts-webfonts',
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 4,
-        maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
-      }),
-    ],
-  })
-);
+  // Google Fonts
+  workbox.routing.registerRoute(
+    /^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,
+    new CacheFirst({
+      cacheName: 'google-fonts-webfonts',
+      plugins: [
+        new ExpirationPlugin({
+          maxEntries: 4,
+          maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
+        }),
+      ],
+    })
+  );
 
-// Images
-workbox.routing.registerRoute(
-  /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
-  new StaleWhileRevalidate({
-    cacheName: 'static-image-assets',
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 64,
-        maxAgeSeconds: 24 * 60 * 60, // 24 hours
-      }),
-    ],
-  })
-);
+  // Images
+  workbox.routing.registerRoute(
+    /\.(?:jpg|jpeg|gif|png|svg|ico|webp)$/i,
+    new StaleWhileRevalidate({
+      cacheName: 'static-image-assets',
+      plugins: [
+        new ExpirationPlugin({
+          maxEntries: 64,
+          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+        }),
+      ],
+    })
+  );
 
-// API calls
-workbox.routing.registerRoute(
-  /\/api\/.*$/i,
-  new NetworkFirst({
-    cacheName: 'apis',
-    networkTimeoutSeconds: 10,
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 16,
-        maxAgeSeconds: 24 * 60 * 60, // 24 hours
-      }),
-    ],
-  }),
-  'GET'
-);
+  // API calls
+  workbox.routing.registerRoute(
+    /\/api\/.*$/i,
+    new NetworkFirst({
+      cacheName: 'apis',
+      networkTimeoutSeconds: 10,
+      plugins: [
+        new ExpirationPlugin({
+          maxEntries: 16,
+          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+        }),
+      ],
+    }),
+    'GET'
+  );
+}
+
+const NAVIGATION_CACHE = 'polity-navigation-v1';
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET' || event.request.mode !== 'navigate') {
+    return;
+  }
+
+  event.respondWith(handleNavigationRequest(event.request));
+});
+
+async function handleNavigationRequest(request) {
+  const cache = await caches.open(NAVIGATION_CACHE);
+
+  try {
+    const response = await fetch(request);
+
+    if (response.ok && response.type === 'basic') {
+      await cache.put(request, response.clone());
+    }
+
+    return response;
+  } catch (error) {
+    console.warn('[Service Worker] Navigation request failed:', error);
+
+    const cachedResponse = await cache.match(request);
+    const cachedRoot = await cache.match('/');
+
+    if (cachedResponse || cachedRoot) {
+      return cachedResponse || cachedRoot;
+    }
+
+    return new Response('Polity is offline right now.', {
+      status: 503,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+      },
+    });
+  }
+}
 
 // ============================================================================
 // SERVICE WORKER LIFECYCLE
 // ============================================================================
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   console.log('[Service Worker] Installing...');
   // Force the waiting service worker to become the active service worker
   self.skipWaiting();

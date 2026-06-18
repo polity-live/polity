@@ -8,3 +8,10 @@ export {
   type WikiParticipationRole,
   type WikiParticipationDirectoryProps,
 } from './WikiParticipationDirectory';
+export {
+  buildWikiRosterSummary,
+  getDistinctSignedUpRosterCount,
+  WikiRosterSummaryCard,
+  type WikiRosterSummary,
+  type WikiRosterSummaryCardProps,
+} from './WikiRosterSummaryCard';

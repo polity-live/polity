@@ -16,6 +16,8 @@ import {
 } from '../rbac/query-access';
 import { zql } from '../schema';
 
+const WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
+
 function applyEventAccess<T>(q: T, userID: string | undefined): T {
   const query = q as any;
 
@@ -176,7 +178,14 @@ export const eventQueries = {
       .related('creator')
       .related('group', groupQuery =>
         groupQuery.related('memberships', membershipQuery =>
-          applyGroupMembershipSelfOrManagerQueryAccess(membershipQuery, userID).related('user')
+          applyGroupMembershipSelfOrManagerQueryAccess(membershipQuery, userID)
+            .related('user')
+            .related('source_group')
+            .related('part_group')
+            .related('base_group')
+            .related('origins', originQuery =>
+              originQuery.related('source_group').related('part_group').related('base_group')
+            )
         )
       )
       .related('participants', participantQuery =>
@@ -769,7 +778,8 @@ export const eventQueries = {
         applyEventDelegateSelfOrParticipantAccess(q, userID).related('user').related('group')
       )
       .related('participants', q =>
-        applyEventParticipantOrManagerQueryAccess(q, userID)
+        q
+          .where('status', 'IN', WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES)
           .related('user')
           .related('participant_roles', pq => pq.related('role'))
       )
