@@ -157,6 +157,15 @@ export function AgendaActionBarView({
   voteTooltip,
   showStartFinalVoteButton,
 }: AgendaActionBarViewProps) {
+  const candidateTooltip = canBeCandidate
+    ? t('features.events.agenda.actions.becomeCandidate')
+    : t(
+        'features.events.agenda.actions.candidateRequiresPassiveVotingRight',
+        'Passive Voting Rights are required to become a candidate in this event.'
+      );
+  const isCandidateActionBlocked = !canBeCandidate;
+  const isVoteActionBlocked = !canVote || disableVoteButton;
+
   return (
     <FixedAgendaToolbar className="gap-3">
       <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
@@ -274,14 +283,21 @@ export function AgendaActionBarView({
             <MicOff />
           </ToolbarButton>
         ) : null}
-        {isElection && canBeCandidate && !isUserCandidate && onBecomeCandidate ? (
+        {isElection && !isClosed && !isUserCandidate && onBecomeCandidate ? (
           <ToolbarButton
-            tooltip={t('features.events.agenda.actions.becomeCandidate')}
-            onClick={onBecomeCandidate}
+            tooltip={candidateTooltip}
+            onClick={isCandidateActionBlocked ? undefined : onBecomeCandidate}
             disabled={candidateLoading}
             loading={candidateLoading}
+            aria-disabled={isCandidateActionBlocked || undefined}
+            aria-label={candidateTooltip}
+            className={cn(
+              isCandidateActionBlocked &&
+                'border-muted-foreground/30 text-muted-foreground border opacity-70'
+            )}
           >
             <UserPlus />
+            {isCandidateActionBlocked ? <CircleHelp className="h-4 w-4" /> : null}
           </ToolbarButton>
         ) : null}
         {isElection && canBeCandidate && isUserCandidate && onWithdrawCandidacy ? (
@@ -294,24 +310,24 @@ export function AgendaActionBarView({
             <UserMinus />
           </ToolbarButton>
         ) : null}
-        {isVotable && canVote && !isClosed && onVoteClick ? (
+        {isVotable && !isClosed && onVoteClick ? (
           <ToolbarButton
             tooltip={voteTooltip}
-            onClick={disableVoteButton ? undefined : onVoteClick}
+            onClick={isVoteActionBlocked ? undefined : onVoteClick}
             disabled={voteLoading}
             loading={voteLoading}
-            aria-disabled={disableVoteButton || undefined}
+            aria-disabled={isVoteActionBlocked || undefined}
             className={cn(
               'civic-ballot-submit',
               'bg-background border px-3 font-semibold shadow-sm transition-all',
-              disableVoteButton
+              isVoteActionBlocked
                 ? 'border-muted-foreground/30 text-muted-foreground opacity-70'
                 : featureThemeClassName('agendaAgendaActionBarAccentBadge')
             )}
           >
             <Vote />
             <span>{translateText('generated.inline.0011_vote_64f87291')}</span>
-            {disableVoteButton ? <CircleHelp className="h-4 w-4" /> : null}
+            {isVoteActionBlocked ? <CircleHelp className="h-4 w-4" /> : null}
           </ToolbarButton>
         ) : null}
         {!isClosed && !isPendingVote && (showOfflineTallyButton || onOfflineTallyClick) ? (

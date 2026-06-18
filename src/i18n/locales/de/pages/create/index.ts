@@ -607,6 +607,9 @@ export const createPageTranslations = {
     noGroupsFound: 'Keine Gruppen gefunden.',
     createButton: 'Zahlung erstellen',
     reviewBadge: 'Zahlung',
+    validation: {
+      amountInvalid: 'Gib einen gültigen nicht-negativen Betrag ein.',
+    },
     types: {
       membership_fee: 'Mitgliedsbeitrag',
       donation: 'Spende',

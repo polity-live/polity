@@ -17,6 +17,9 @@ export {
   useAgendaItemsByEvent,
   useAgendaItemDetail,
   useEventDelegates,
+  useDelegateAssemblyCompositionData,
+  useEventAssemblyScopes,
+  useDelegateElectionAssignments,
   useEventSubscribers,
   useEventWikiData,
   useEventAccessRoles,
@@ -25,6 +28,7 @@ export {
   useAllAmendments,
   useRolesWithGroups,
   useUserEventParticipations,
+  useEventParticipantsByParticipatedEventIds,
   useEventWithGroup,
   useGroupRelationships,
   useElectionWithVotes,
@@ -40,7 +44,12 @@ export type {
   Event,
   EventParticipant,
   EventOfflineParticipant,
+  EventAssemblyScope,
   Participant,
   EventException,
 } from './schema';
-export type { EventDelegate, GroupDelegateAllocation } from '../delegates/schema';
+export type {
+  EventDelegate,
+  GroupDelegateAllocation,
+  DelegateElectionAssignment,
+} from '../delegates/schema';

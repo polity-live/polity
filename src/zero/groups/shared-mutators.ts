@@ -748,6 +748,7 @@ export const groupSharedMutators = {
 
     await tx.mutate.group.insert({
       ...args,
+      group_type: args.group_type ?? 'base',
       owner_id: userID,
       member_count: 1,
       subscriber_count: 0,

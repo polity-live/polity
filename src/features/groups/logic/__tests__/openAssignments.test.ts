@@ -96,6 +96,27 @@ describe('open assignments', () => {
     expect(assignment.linkedEvent).toBeNull();
   });
 
+  it('exposes generated delegate allocations as open delegate-election assignments', () => {
+    const assignments = buildOpenAssignments({
+      currentGroupId: 'local-group',
+      allocations: [allocation('allocation-1')],
+      roles: [],
+      referenceTime: REFERENCE_TIME,
+    });
+
+    expect(assignments).toMatchObject([
+      {
+        id: 'delegate:allocation-1',
+        kind: 'delegate_election',
+        status: 'open',
+        seatCount: 3,
+        scheduledSeatCount: 0,
+        completedSeatCount: 0,
+        remainingSeatCount: 3,
+      },
+    ]);
+  });
+
   it('marks delegate allocations as scheduled when a future subgroup election is linked', () => {
     const targetEvent = eventSummary('delegate-assembly');
     const subgroupEvent = eventSummary('local-assembly', {

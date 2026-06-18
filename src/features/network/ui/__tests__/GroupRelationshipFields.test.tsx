@@ -5,7 +5,9 @@ import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  GroupRelationshipConnector,
   GroupRelationshipDirectionSentence,
+  GroupRelationshipMembershipModeDescription,
   GroupRelationshipNameTag,
   GroupRelationshipRightsSelector,
   SiblingMembershipModeDescription,
@@ -34,9 +36,18 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'common.network.siblingMembershipExplanationParliamentBetweenGroups':
           'wird aus Gruppen abgeleitet, die passives Wahlrecht in',
         'common.network.directionHas': 'hat',
+        'common.network.directionGrants': 'gibt',
         'common.network.directionIn': 'in',
+        'common.network.directionTo': 'an',
+        'common.network.directionAnd': 'und',
+        'common.network.directionHaveMutually': 'haben gegenseitig',
+        'common.network.asChildGroupOf': 'as child group of',
+        'common.network.currentGroupGivesRightTo':
+          '{{currentGroupName}} gibt {{rightLabel}} an {{selectedGroupName}}',
         'common.network.currentGroupHasRightIn':
           '{{currentGroupName}} hat {{rightLabel}} in {{selectedGroupName}}',
+        'common.network.groupsMutuallyShareRight':
+          '{{currentGroupName}} und {{selectedGroupName}} haben gegenseitig {{rightLabel}}',
         'common.network.rightInfo': 'Information Right',
         'common.network.rightInfoDesc': 'Right to information and access',
         'common.network.rightAmendment': 'Antragsrecht',
@@ -47,6 +58,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'common.network.rightActiveVotingDesc': 'Recht, an Abstimmungen teilzunehmen',
         'common.network.rightPassiveVoting': 'Passives Wahlrecht',
         'common.network.rightPassiveVotingDesc': 'Recht, gewählt zu werden',
+        'common.network.selectedRole': 'selected role',
         'common.unspecified': 'Unbekannt',
       };
       const template =
@@ -101,6 +113,41 @@ describe('SiblingMembershipModeDescription', () => {
   });
 });
 
+describe('GroupRelationshipMembershipModeDescription', () => {
+  it('renders role-members membership with the selected role tag', () => {
+    const { container } = render(
+      <GroupRelationshipMembershipModeDescription
+        membershipMode="role_members"
+        direction="partner_members_to_current"
+        currentGroupName="Parlament Rosbach"
+        selectedGroupName="Fraktion H66"
+        currentGroupId="group-parliament"
+        selectedGroupId="group-faction"
+        requiredSourceRoleId="role-admin"
+        requiredSourceRoleName="Admin"
+      />
+    );
+
+    expect(container.textContent).toMatch(
+      /Add only[\s\S]*Fraktion H66[\s\S]*members with role[\s\S]*Admin[\s\S]*to[\s\S]*Parlament Rosbach/
+    );
+    expect(screen.getByText('Admin').closest('[data-role-key="role-admin"]')).toBeTruthy();
+  });
+
+  it('falls back to selected role when role data is missing', () => {
+    render(
+      <GroupRelationshipMembershipModeDescription
+        membershipMode="role_members"
+        direction="current_members_to_partner"
+        currentGroupName="H66"
+        selectedGroupName="H66 Fraktion"
+      />
+    );
+
+    expect(screen.getByText('selected role')).toBeTruthy();
+  });
+});
+
 describe('GroupRelationshipNameTag', () => {
   it('renders a non-clickable badge when links are disabled for interactive containers', () => {
     const { container } = render(
@@ -112,8 +159,27 @@ describe('GroupRelationshipNameTag', () => {
       />
     );
 
+    const badge = screen
+      .getByText('Diese Gruppe (Parlament Rosbach)')
+      .closest('[data-slot="badge-control"]');
+
     expect(screen.getByText('Diese Gruppe (Parlament Rosbach)')).toBeTruthy();
+    expect(badge?.className).toContain('hover:bg-accent');
+    expect(badge?.className).toContain('hover:text-accent-foreground');
+    expect(badge?.className).not.toContain('hover:bg-primary');
     expect(container.querySelector('a')).toBeNull();
+  });
+});
+
+describe('GroupRelationshipConnector', () => {
+  it('keeps relationship type badges readable on hover like right filters', () => {
+    render(<GroupRelationshipConnector relationshipType="child" />);
+
+    const badge = screen.getByText('as child group of');
+
+    expect(badge.className).toContain('hover:bg-accent');
+    expect(badge.className).toContain('hover:text-accent-foreground');
+    expect(badge.className).not.toContain('hover:bg-primary');
   });
 });
 
@@ -121,7 +187,7 @@ describe('GroupRelationshipDirectionSentence', () => {
   it('renders right sentences with token chips instead of legacy gradient text', () => {
     const { container } = render(
       <GroupRelationshipDirectionSentence
-        direction="current_has_right_in_partner"
+        direction="current_grants_right_to_partner"
         right="amendmentRight"
         currentGroupName="B1"
         selectedGroupName="H1"
@@ -129,13 +195,34 @@ describe('GroupRelationshipDirectionSentence', () => {
       />
     );
 
-    expect(container.textContent).toContain('B1hatAntragsrechtinH1');
-    expect(screen.getByText('Antragsrecht')).toBeTruthy();
+    const rightChip = screen.getByText('Antragsrecht');
+
+    expect(container.textContent).toContain('Diese GruppegibtAntragsrechtanH1');
+    expect(rightChip).toBeTruthy();
+    expect(rightChip.className).toContain('hover:bg-accent');
+    expect(rightChip.className).toContain('hover:text-accent-foreground');
+    expect(rightChip.className).not.toContain('hover:bg-primary');
     expect(container.innerHTML).toContain('var(--entity-group-bg)');
     expect(container.innerHTML).toContain('var(--entity-amendment-bg)');
     expect(container.innerHTML).not.toContain('bg-gradient');
     expect(container.innerHTML).not.toContain('text-transparent');
     expect(container.innerHTML).not.toContain('text-white');
+  });
+
+  it('renders partner-held rights as rights this group has in the partner group', () => {
+    const { container } = render(
+      <GroupRelationshipDirectionSentence
+        direction="partner_grants_right_to_current"
+        right="amendmentRight"
+        currentGroupName="B1"
+        selectedGroupName="H1"
+        linkGroups={false}
+      />
+    );
+
+    expect(container.textContent).toContain('Diese GruppehatAntragsrechtinH1');
+    expect(container.textContent).not.toContain('H1gibtAntragsrechtan');
+    expect(container.textContent).not.toContain('gives');
   });
 });
 

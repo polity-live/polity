@@ -6,7 +6,17 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Vote, UserPlus, CheckCircle2, Crown, User, Loader2, Expand } from 'lucide-react';
+import {
+  Vote,
+  UserPlus,
+  CheckCircle2,
+  Crown,
+  User,
+  Loader2,
+  Expand,
+  CircleHelp,
+} from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import {
   useTranslation,
   translate as translateText,
@@ -227,6 +237,13 @@ export function AgendaElectionSection({
 
   const isInteractive = Boolean(onOpenNamedResults);
   const ResultsWrapper = isInteractive ? 'button' : 'div';
+  const isCandidateActionBlocked = !canBeCandidate;
+  const candidateActionTooltip = isCandidateActionBlocked
+    ? t(
+        'features.events.agenda.actions.candidateRequiresPassiveVotingRight',
+        'Passive Voting Rights are required to become a candidate in this event.'
+      )
+    : t('features.events.agenda.becomeCandidate');
 
   return (
     <Card className={cn(className)}>
@@ -407,16 +424,32 @@ export function AgendaElectionSection({
         </ResultsWrapper>
 
         {/* Become Candidate Button */}
-        {!isClosed && canBeCandidate && !isUserCandidate && (
+        {!isClosed && !isUserCandidate && onBecomeCandidate && (
           <div className="flex justify-center pt-4">
-            <Button variant="outline" onClick={onBecomeCandidate} disabled={isCandidateLoading}>
-              {isCandidateLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <UserPlus className="mr-2 h-4 w-4" />
-              )}
-              {t('features.events.agenda.becomeCandidate')}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={isCandidateActionBlocked ? undefined : onBecomeCandidate}
+                  disabled={isCandidateLoading}
+                  aria-disabled={isCandidateActionBlocked || undefined}
+                  className={cn(
+                    isCandidateActionBlocked &&
+                      'border-muted-foreground/30 text-muted-foreground opacity-70'
+                  )}
+                  title={isCandidateActionBlocked ? candidateActionTooltip : undefined}
+                >
+                  {isCandidateLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <UserPlus className="mr-2 h-4 w-4" />
+                  )}
+                  {t('features.events.agenda.becomeCandidate')}
+                  {isCandidateActionBlocked ? <CircleHelp className="h-4 w-4" /> : null}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{candidateActionTooltip}</TooltipContent>
+            </Tooltip>
           </div>
         )}
 

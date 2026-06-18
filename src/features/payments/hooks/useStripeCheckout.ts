@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { stripeCreateCheckoutFn } from '@/server/stripe-create-checkout';
 import { stripeCancelSubscriptionFn } from '@/server/stripe-cancel-subscription';
+import { stripeRepairCheckoutSessionFn } from '@/server/stripe-repair-checkout-session';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { useAuth } from '@/providers/auth-provider';
 
 // Co-located types
 export interface UseStripeCheckoutOptions {
@@ -24,22 +26,59 @@ export function useStripeCheckout({
 }: UseStripeCheckoutOptions): UseStripeCheckoutReturn {
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as Record<string, string>;
+  const { session } = useAuth();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const handledRedirectRef = useRef<string | null>(null);
+
+  const getAuthHeaders = () => {
+    if (!session?.access_token) {
+      toast.error(translateText('generated.inline.0976_checkout_error_6173a608'));
+      return null;
+    }
+
+    return { Authorization: `Bearer ${session.access_token}` };
+  };
 
   // Show success/cancel message from Stripe redirect
   useEffect(() => {
-    const { success, canceled, ...remainingSearch } = searchParams;
+    const { success, canceled, session_id: sessionId, ...remainingSearch } = searchParams;
+    const redirectKey =
+      success === 'true'
+        ? `success:${sessionId ?? 'missing'}`
+        : canceled === 'true'
+          ? 'canceled'
+          : null;
 
     if (success === 'true') {
-      toast.success(
-        translateText(
-          'generated.inline.0973_subscription_successful_thank_you_for_your_su_5b3118fb'
-        )
-      );
-      // Clear the query param to prevent duplicate toasts
-      navigate({ to: window.location.pathname, search: remainingSearch, replace: true });
-      onSubscriptionChange?.();
+      if (!session?.access_token) return;
+      if (handledRedirectRef.current === redirectKey) return;
+      handledRedirectRef.current = redirectKey;
+
+      void (async () => {
+        try {
+          if (sessionId) {
+            await stripeRepairCheckoutSessionFn({
+              data: { sessionId, userId },
+              headers: { Authorization: `Bearer ${session.access_token}` },
+            });
+          }
+        } catch (error) {
+          console.error('Checkout repair sync failed:', error);
+        } finally {
+          toast.success(
+            translateText(
+              'generated.inline.0973_subscription_successful_thank_you_for_your_su_5b3118fb'
+            )
+          );
+          // Clear the query param to prevent duplicate toasts
+          navigate({ to: window.location.pathname, search: remainingSearch, replace: true });
+          onSubscriptionChange?.();
+        }
+      })();
     } else if (canceled === 'true') {
+      if (handledRedirectRef.current === redirectKey) return;
+      handledRedirectRef.current = redirectKey;
+
       toast.info(
         translateText(
           'generated.inline.0974_subscription_canceled_you_can_subscribe_anyti_7b8dd755'
@@ -48,13 +87,17 @@ export function useStripeCheckout({
       // Clear the query param to prevent duplicate toasts
       navigate({ to: window.location.pathname, search: remainingSearch, replace: true });
     }
-  }, [searchParams, navigate, onSubscriptionChange]);
+  }, [searchParams, navigate, onSubscriptionChange, session?.access_token, userId]);
 
   const handleSubscribe = async (priceId: string) => {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
     setIsCheckoutLoading(true);
     try {
       const data = await stripeCreateCheckoutFn({
-        data: { priceId, userId, origin: window.location.origin },
+        data: { priceId, userId },
+        headers,
       });
 
       if (data.url) {
@@ -74,11 +117,14 @@ export function useStripeCheckout({
 
   const handleCustomAmount = async (euros: number) => {
     if (euros <= 0) return;
+    const headers = getAuthHeaders();
+    if (!headers) return;
 
     setIsCheckoutLoading(true);
     try {
       const data = await stripeCreateCheckoutFn({
-        data: { amount: euros * 100, userId, origin: window.location.origin },
+        data: { amount: euros * 100, userId },
+        headers,
       });
 
       if (data.url) {
@@ -98,11 +144,14 @@ export function useStripeCheckout({
 
   const handleCancelSubscription = async (subscriptionId: string) => {
     if (!subscriptionId) return;
+    const headers = getAuthHeaders();
+    if (!headers) return;
 
     setIsCheckoutLoading(true);
     try {
       const data = await stripeCancelSubscriptionFn({
         data: { subscriptionId },
+        headers,
       });
 
       if (data.success) {

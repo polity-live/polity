@@ -5,9 +5,8 @@ import { CalendarClock, History, PencilLine, Trash2, UserPlus, Users, Vote } fro
 import { getNextRoleElectionEvent } from '@/features/groups/logic/openAssignments';
 import { formatRoleTermLabel } from '@/features/groups/logic/roleFormHelpers';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { DataTable, TableActionIconButton, type ColumnDef } from '@/features/shared/ui/data-table';
 import { CountBadge, PhaseBadge, StatusBadge, VisibilityBadge } from '@/features/shared/ui/status';
-import { Button } from '@/features/shared/ui/ui/button';
 import { EventSelectCard } from '@/features/shared/ui/typeahead';
 import { RoleTag } from './RoleTag';
 
@@ -224,46 +223,57 @@ export function RoleDetailsTable<TRole extends RoleRow>({
       cell: ({ row }) => {
         const role = row.original;
         const holderManagedFromMembership = role.currentHolder?.source === 'membership';
+        const viewHistoryLabel = translateText('generated.inline.0726_view_history_8bc3b1ed');
+        const assignLabel = translateText('generated.inline.0727_assign_24449284');
+        const createElectionLabel = translateText('generated.inline.0728_create_election_678ef240');
+        const editLabel = translateText('generated.inline.0729_edit_5301648d');
+        const deleteLabel = translateText('generated.inline.0537_delete_f6fdbe48');
 
         return (
           <div className="flex flex-wrap justify-end gap-2">
             {onViewHistory ? (
-              <Button variant="outline" size="sm" onClick={() => onViewHistory(role)}>
-                <History className="mr-2 h-4 w-4" />
-                {translateText('generated.inline.0726_view_history_8bc3b1ed')}
-              </Button>
+              <TableActionIconButton
+                label={viewHistoryLabel}
+                icon={<History className="h-4 w-4" />}
+                variant="outline"
+                onClick={() => onViewHistory(role)}
+              />
             ) : null}
             {role.assignment_mode === 'assigned' ? (
               onAssignHolder ? (
-                <Button
+                <TableActionIconButton
+                  label={assignLabel}
+                  icon={<UserPlus className="h-4 w-4" />}
                   variant="outline"
-                  size="sm"
                   disabled={holderManagedFromMembership}
                   onClick={() => onAssignHolder(role)}
-                  title={
+                  tooltip={
                     holderManagedFromMembership
                       ? 'This incumbent is currently derived from membership roles.'
-                      : 'Assign or replace the incumbent for this role.'
+                      : assignLabel
                   }
-                >
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  {translateText('generated.inline.0727_assign_24449284')}
-                </Button>
+                />
               ) : null
             ) : onCreateElection ? (
-              <Button variant="outline" size="sm" onClick={() => onCreateElection(role.id)}>
-                <Vote className="mr-2 h-4 w-4" />
-                {translateText('generated.inline.0728_create_election_678ef240')}
-              </Button>
+              <TableActionIconButton
+                label={createElectionLabel}
+                icon={<Vote className="h-4 w-4" />}
+                variant="outline"
+                onClick={() => onCreateElection(role.id)}
+              />
             ) : null}
-            <Button variant="outline" size="sm" onClick={() => onEdit(role)}>
-              <PencilLine className="mr-2 h-4 w-4" />
-              {translateText('generated.inline.0729_edit_5301648d')}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => onDelete(role.id)}>
-              <Trash2 className="text-destructive mr-2 h-4 w-4" />
-              {translateText('generated.inline.0537_delete_f6fdbe48')}
-            </Button>
+            <TableActionIconButton
+              label={editLabel}
+              icon={<PencilLine className="h-4 w-4" />}
+              variant="outline"
+              onClick={() => onEdit(role)}
+            />
+            <TableActionIconButton
+              label={deleteLabel}
+              icon={<Trash2 className="h-4 w-4" />}
+              destructive
+              onClick={() => onDelete(role.id)}
+            />
           </div>
         );
       },

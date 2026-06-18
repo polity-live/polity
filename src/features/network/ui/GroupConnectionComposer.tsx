@@ -1,17 +1,15 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
-import {
+  applyGroupConnectionPreset,
+  GROUP_CONNECTION_PRESET_OPTIONS,
   getPresetMembershipDirection,
   getRelationshipTypeForPreset,
   getSelectedMembershipDirection,
 } from '../logic/groupConnectionComposer';
 import type {
-  CanonicalMembershipMode,
   GroupRelationshipDirection,
   GroupRelationshipType,
   GroupConnectionComposerMembershipRuleValue,
@@ -37,37 +35,7 @@ interface SelectableRole {
   name: string | null;
   description?: string | null;
 }
-const PRESET_OPTIONS: {
-  value: GroupConnectionPreset;
-  label: string;
-  relationshipType: GroupRelationshipType;
-  membershipMode: CanonicalMembershipMode;
-}[] = [
-  {
-    value: 'parent',
-    label: translateText('generated.inline.0196_parentgroup_6feee3ae'),
-    relationshipType: 'child',
-    membershipMode: 'all_members',
-  },
-  {
-    value: 'child',
-    label: translateText('generated.inline.0197_childgroup_9644e4dc'),
-    relationshipType: 'parent',
-    membershipMode: 'all_members',
-  },
-  {
-    value: 'parliament',
-    label: translateText('generated.inline.0198_parlamentgruppe_e4c4ebd8'),
-    relationshipType: 'sibling',
-    membershipMode: 'selected_source_groups',
-  },
-  {
-    value: 'elected',
-    label: translateText('generated.inline.0199_gew_hlte_gruppe_0b4e1e5c'),
-    relationshipType: 'sibling',
-    membershipMode: 'role_members',
-  },
-];
+const PRESET_OPTIONS = [...GROUP_CONNECTION_PRESET_OPTIONS];
 interface GroupConnectionComposerProps {
   activeTab: GroupConnectionComposerTab;
   onActiveTabChange: (tab: GroupConnectionComposerTab) => void;
@@ -87,6 +55,8 @@ interface GroupConnectionComposerProps {
     } & Record<string, unknown>;
   };
   disabledRelationshipOptions?: Partial<Record<GroupRelationshipType, boolean>>;
+  disabledPresets?: Partial<Record<GroupConnectionPreset, string>>;
+  disabledPresetFallback?: GroupConnectionPreset;
   disableGroupSelection?: boolean;
   groupSelectorLabel?: string;
 }
@@ -103,6 +73,8 @@ export function GroupConnectionComposer({
   existingRightStatuses = new Map<string, GroupRelationshipRightDisplayStatus>(),
   preflight,
   disabledRelationshipOptions,
+  disabledPresets = {},
+  disabledPresetFallback,
   disableGroupSelection = false,
   groupSelectorLabel = 'Partnergruppe',
 }: GroupConnectionComposerProps) {
@@ -136,18 +108,51 @@ export function GroupConnectionComposer({
       membershipRule: value.membershipRule,
     }) ?? getPresetMembershipDirection(value.preset);
   const presetDisabled = (preset: GroupConnectionPreset) =>
+    Boolean(disabledPresets[preset]) ||
     Boolean(disabledRelationshipOptions?.[getRelationshipTypeForPreset(preset)]);
+  const getPresetDisabledReason = (preset: GroupConnectionPreset) => disabledPresets[preset];
+  const currentRoleMembershipDisabled = Boolean(disabledPresets.role_members_to_partner);
+
+  useEffect(() => {
+    if (!presetDisabled(value.preset)) {
+      return;
+    }
+
+    const fallbackPreset =
+      disabledPresetFallback && !presetDisabled(disabledPresetFallback)
+        ? disabledPresetFallback
+        : (PRESET_OPTIONS.find(option => !presetDisabled(option.value))?.value ?? 'parent');
+
+    onValueChange({
+      ...value,
+      ...applyGroupConnectionPreset(fallbackPreset, value),
+    });
+  }, [disabledPresetFallback, disabledPresets, disabledRelationshipOptions, onValueChange, value]);
+
+  useEffect(() => {
+    if (
+      !currentRoleMembershipDisabled ||
+      value.membershipDirection !== 'current_members_to_partner' ||
+      value.membershipRule.membershipMode !== 'role_members'
+    ) {
+      return;
+    }
+
+    onValueChange({
+      ...value,
+      membershipRule: {
+        ...value.membershipRule,
+        membershipMode: 'none',
+        roleId: '',
+        sourceGroupIds: [],
+      },
+    });
+  }, [currentRoleMembershipDisabled, onValueChange, value]);
   const [membershipDirection, setMembershipDirection] = useState<RelativeMembershipDirection>(
     hydratedMembershipDirection
   );
   const activeMembershipRule = value.membershipRule;
   const selectableRoles = selectableRolesByDirection[membershipDirection] ?? [];
-  const presetMembershipSourceGroupId =
-    selectedPresetMembershipDirection === 'partner_members_to_current'
-      ? value.selectedGroupId
-      : currentGroupId;
-  const activeMembershipSourceGroupId =
-    membershipDirection === 'partner_members_to_current' ? value.selectedGroupId : currentGroupId;
 
   useEffect(() => {
     setMembershipDirection(hydratedMembershipDirection);
@@ -157,6 +162,14 @@ export function GroupConnectionComposer({
     direction: RelativeMembershipDirection,
     patch: Partial<GroupConnectionComposerMembershipRuleValue>
   ) => {
+    if (
+      direction === 'current_members_to_partner' &&
+      patch.membershipMode === 'role_members' &&
+      currentRoleMembershipDisabled
+    ) {
+      return;
+    }
+
     const nextMembershipRule = {
       ...value.membershipRule,
       ...patch,
@@ -171,9 +184,22 @@ export function GroupConnectionComposer({
   };
 
   const setActiveMembershipDirection = (direction: RelativeMembershipDirection) => {
+    const membershipRule =
+      direction === 'current_members_to_partner' &&
+      value.membershipRule.membershipMode === 'role_members' &&
+      currentRoleMembershipDisabled
+        ? {
+            ...value.membershipRule,
+            membershipMode: 'none' as const,
+            roleId: '',
+            sourceGroupIds: [],
+          }
+        : value.membershipRule;
+
     onValueChange({
       ...value,
       membershipDirection: direction,
+      membershipRule,
     });
     setMembershipDirection(direction);
   };
@@ -212,14 +238,11 @@ export function GroupConnectionComposer({
       selectedPreset={selectedPreset}
       selectedPresetMembershipDirection={selectedPresetMembershipDirection}
       presetMembershipRule={presetMembershipRule}
-      hydratedMembershipDirection={hydratedMembershipDirection}
       presetDisabled={presetDisabled}
+      getPresetDisabledReason={getPresetDisabledReason}
       membershipDirection={membershipDirection}
-      setMembershipDirection={setMembershipDirection}
       activeMembershipRule={activeMembershipRule}
       selectableRoles={selectableRoles}
-      presetMembershipSourceGroupId={presetMembershipSourceGroupId}
-      activeMembershipSourceGroupId={activeMembershipSourceGroupId}
       updateMembershipRule={updateMembershipRule}
       setActiveMembershipDirection={setActiveMembershipDirection}
       updateRightDirection={updateRightDirection}

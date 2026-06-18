@@ -1,4 +1,4 @@
-import { table, string, number } from '@rocicorp/zero'
+import { table, string, number } from '@rocicorp/zero';
 
 export const eventDelegate = table('event_delegate')
   .columns({
@@ -10,7 +10,7 @@ export const eventDelegate = table('event_delegate')
     seat_count: number(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const groupDelegateAllocation = table('group_delegate_allocation')
   .columns({
@@ -20,4 +20,19 @@ export const groupDelegateAllocation = table('group_delegate_allocation')
     allocated_seats: number(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
+
+export const delegateElectionAssignment = table('delegate_election_assignment')
+  .columns({
+    id: string(),
+    target_event_id: string(),
+    source_group_id: string(),
+    allocation_id: string().optional(),
+    required_seats: number(),
+    confirmed_seats: number(),
+    linked_event_id: string().optional(),
+    status: string(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');

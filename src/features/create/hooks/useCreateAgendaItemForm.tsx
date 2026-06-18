@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearch } from '@tanstack/react-router';
 import { useQuery, useZero } from '@rocicorp/zero/react';
 import { toast } from '@/features/shared/ui/ui/sonner';
+import { useAuth } from '@/providers/auth-provider';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
@@ -21,9 +22,10 @@ import {
   useAllAmendments,
   useAllEvents,
   useEventAgenda,
+  useUserEventParticipations,
   useRolesWithGroups,
 } from '@/zero/events/useEventState';
-import { useGroupById } from '@/zero/groups/useGroupState';
+import { useCurrentUserActiveGroupIds, useGroupById } from '@/zero/groups/useGroupState';
 import { queries } from '@/zero/queries';
 import {
   buildOpenAssignments,
@@ -65,6 +67,7 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
+import { getCreateSelectableEventIds } from '../logic/createEligibility';
 
 type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion' | 'accreditation';
 type MajorityType = 'simple' | 'absolute' | 'two_thirds';
@@ -90,6 +93,7 @@ function parsePositiveInteger(value: string) {
 export function useCreateAgendaItemForm(): CreateFormConfig {
   const { t } = useTranslation();
   const zero = useZero();
+  const { user } = useAuth();
   const searchParams = useSearch({ strict: false }) as CreateAgendaItemSearch;
 
   const eventIdParam = searchParams.eventId;
@@ -102,6 +106,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   const { events: userEvents } = useAllEvents();
   const { amendments: userAmendments } = useAllAmendments();
   const { roles: userRoles } = useRolesWithGroups();
+  const { activeGroupIds } = useCurrentUserActiveGroupIds();
+  const { participations: userEventParticipations } = useUserEventParticipations(user?.id);
   const { group: sourceGroup } = useGroupById(sourceGroupId || undefined);
 
   const [sourceAllocations, sourceAllocationsResult] = useQuery(
@@ -263,7 +269,16 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   ]);
 
   const resolvedOrder = hasCustomOrder ? order : nextOrder;
-  const selectedEvent = userEvents.find(event => event.id === eventId);
+  const selectableEventIds = useMemo(
+    () => getCreateSelectableEventIds(userEvents, activeGroupIds, userEventParticipations),
+    [activeGroupIds, userEventParticipations, userEvents]
+  );
+  const selectableEvents = useMemo(
+    () => userEvents.filter(event => event.id && selectableEventIds.has(event.id)),
+    [selectableEventIds, userEvents]
+  );
+  const selectedEvent = selectableEvents.find(event => event.id === eventId);
+  const hasSelectableEvent = Boolean(eventId && selectableEventIds.has(eventId));
   const agendaTypeLabel = type.replace(/_/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase());
   const isElectionType = type === 'election';
   const isVoteType = type === 'vote';
@@ -576,7 +591,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   };
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
-    if (!eventId || !title.trim()) {
+    if (!hasSelectableEvent || !title.trim()) {
       return createBlockedSubmitOutcome();
     }
 
@@ -747,8 +762,27 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       steps: [
         {
           label: t('pages.create.agendaItem.basicInfo'),
-          isValid: () => !!eventId && !!title.trim() && !assignmentLookupFailed,
+          isValid: () => hasSelectableEvent && !!title.trim() && !assignmentLookupFailed,
           fields: [
+            {
+              key: 'title',
+              kind: 'text',
+              label: t('pages.create.agendaItem.titleLabel'),
+              required: true,
+              value: title,
+              onValueChange: setTitle,
+              placeholder: t('pages.create.agendaItem.titlePlaceholder'),
+            },
+            {
+              key: 'description',
+              kind: 'text',
+              multiline: true,
+              label: t('pages.create.agendaItem.descriptionLabel'),
+              value: description,
+              onValueChange: setDescription,
+              placeholder: t('pages.create.agendaItem.descriptionPlaceholder'),
+              rows: 3,
+            },
             ...(delegateAssignment
               ? [
                   {
@@ -795,7 +829,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
               required: true,
               props: {
                 items: toTypeaheadItems(
-                  userEvents,
+                  selectableEvents,
                   'event',
                   event => event.title || 'Event',
                   event => {
@@ -809,25 +843,6 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                 onChange: item => setEventId(item?.id ?? ''),
                 placeholder: t('pages.create.agendaItem.eventPlaceholder'),
               },
-            },
-            {
-              key: 'title',
-              kind: 'text',
-              label: t('pages.create.agendaItem.titleLabel'),
-              required: true,
-              value: title,
-              onValueChange: setTitle,
-              placeholder: t('pages.create.agendaItem.titlePlaceholder'),
-            },
-            {
-              key: 'description',
-              kind: 'text',
-              multiline: true,
-              label: t('pages.create.agendaItem.descriptionLabel'),
-              value: description,
-              onValueChange: setDescription,
-              placeholder: t('pages.create.agendaItem.descriptionPlaceholder'),
-              rows: 3,
             },
           ],
         },
@@ -1082,7 +1097,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         {
           label: t('pages.create.common.review'),
           isValid: () =>
-            !!eventId &&
+            hasSelectableEvent &&
             !!title.trim() &&
             !assignmentLookupFailed &&
             (!isElectionType || resolvedElectionMode !== 'list' || resolvedSeatCount >= 1),
@@ -1215,6 +1230,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       eventId,
       eventIdParam,
       handleSubmit,
+      hasSelectableEvent,
       isElectionType,
       isSubmitting,
       isVoteType,
@@ -1226,13 +1242,13 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       roleId,
       seatCountInput,
       selectedEvent,
+      selectableEvents,
       sourceGroup?.name,
       t,
       timeLimit,
       title,
       type,
       userAmendments,
-      userEvents,
       userRoles,
       electionMode,
       showSeatCountInput,

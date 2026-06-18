@@ -78,6 +78,8 @@ export function GroupEditView({
         actorId={user?.id ?? undefined}
         visibility={group?.visibility as 'public' | 'private' | 'authenticated' | undefined}
         groupType={group.group_type as GroupType}
+        hasHierarchyChildren={group.has_hierarchy_children}
+        hasSiblingConnections={group.has_sibling_connections}
       />
     </div>
   );

@@ -412,6 +412,8 @@ export function useUserNetworkFlowController({
             membershipMode: parent.membershipMode ?? null,
             memberSourceGroupId: parent.memberSourceGroupId ?? null,
             memberTargetGroupId: parent.memberTargetGroupId ?? null,
+            requiredSourceRoleId: parent.requiredSourceRoleId ?? null,
+            requiredSourceRoleName: parent.requiredSourceRoleName ?? null,
             level: parent.level,
             childId: parent.childId,
             isParent: true,
@@ -454,6 +456,8 @@ export function useUserNetworkFlowController({
               membershipMode: parent.membershipMode ?? null,
               memberSourceGroupId: parent.memberSourceGroupId ?? null,
               memberTargetGroupId: parent.memberTargetGroupId ?? null,
+              membershipRequiredSourceRoleId: parent.requiredSourceRoleId ?? null,
+              membershipRequiredSourceRoleName: parent.requiredSourceRoleName ?? null,
               rightEdgeDirections,
               relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
               fallbackStrokeColor: getGroupNodeVisualTokens('parent').borderColor,
@@ -485,6 +489,8 @@ export function useUserNetworkFlowController({
             membershipMode: child.membershipMode ?? null,
             memberSourceGroupId: child.memberSourceGroupId ?? null,
             memberTargetGroupId: child.memberTargetGroupId ?? null,
+            requiredSourceRoleId: child.requiredSourceRoleId ?? null,
+            requiredSourceRoleName: child.requiredSourceRoleName ?? null,
             level: child.level,
             parentId: child.parentId,
             isParent: false,
@@ -518,6 +524,8 @@ export function useUserNetworkFlowController({
               membershipMode: child.membershipMode ?? null,
               memberSourceGroupId: child.memberSourceGroupId ?? null,
               memberTargetGroupId: child.memberTargetGroupId ?? null,
+              membershipRequiredSourceRoleId: child.requiredSourceRoleId ?? null,
+              membershipRequiredSourceRoleName: child.requiredSourceRoleName ?? null,
               rightEdgeDirections,
               relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
               fallbackStrokeColor: getGroupNodeVisualTokens('child').borderColor,
@@ -627,6 +635,8 @@ export function useUserNetworkFlowController({
         membershipMode?: CanonicalMembershipMode | null;
         memberSourceGroupId?: string | null;
         memberTargetGroupId?: string | null;
+        requiredSourceRoleId?: string | null;
+        requiredSourceRoleName?: string | null;
         currentGroupId: string;
         sourceGroupType?: string | null;
         targetGroupType?: string | null;
@@ -693,6 +703,8 @@ export function useUserNetworkFlowController({
             membershipMode: relationship.membership_mode ?? null,
             memberSourceGroupId: relationship.member_source_group_id ?? null,
             memberTargetGroupId: relationship.member_target_group_id ?? null,
+            requiredSourceRoleId: relationship.required_source_role_id ?? null,
+            requiredSourceRoleName: relationship.required_source_role?.name ?? null,
             currentGroupId: relationshipContextGroupId,
             sourceGroupType: relationship.group.group_type ?? null,
             targetGroupType: relationship.related_group.group_type ?? null,
@@ -749,6 +761,8 @@ export function useUserNetworkFlowController({
           siblingEdgeEntry.membershipMode = relationship.membership_mode;
           siblingEdgeEntry.memberSourceGroupId = relationship.member_source_group_id ?? null;
           siblingEdgeEntry.memberTargetGroupId = relationship.member_target_group_id ?? null;
+          siblingEdgeEntry.requiredSourceRoleId = relationship.required_source_role_id ?? null;
+          siblingEdgeEntry.requiredSourceRoleName = relationship.required_source_role?.name ?? null;
         }
       });
     }
@@ -811,6 +825,8 @@ export function useUserNetworkFlowController({
           membershipMode,
           memberSourceGroupId,
           memberTargetGroupId,
+          requiredSourceRoleId,
+          requiredSourceRoleName,
           currentGroupId,
           sourceGroupType,
           targetGroupType,
@@ -839,6 +855,8 @@ export function useUserNetworkFlowController({
               membershipMode,
               memberSourceGroupId,
               memberTargetGroupId,
+              membershipRequiredSourceRoleId: requiredSourceRoleId,
+              membershipRequiredSourceRoleName: requiredSourceRoleName,
               rightEdgeDirections,
               relationshipDepth: 'direct',
               fallbackStrokeColor: getGroupNodeVisualTokens(

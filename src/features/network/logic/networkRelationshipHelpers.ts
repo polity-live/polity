@@ -247,10 +247,20 @@ function applyRelationshipToEntry(
     entry.membershipMode = relationship.membership_mode;
     entry.memberSourceGroupId = relationship.member_source_group_id ?? null;
     entry.memberTargetGroupId = relationship.member_target_group_id ?? null;
+    entry.requiredSourceRoleId = relationship.required_source_role_id ?? null;
+    entry.requiredSourceRoleName = relationship.required_source_role?.name ?? null;
     entry.membershipDirection = getRelativeMembershipDirectionForRelationship({
       relationship,
       currentGroupId,
     });
+  } else if (
+    entry.membershipMode === 'role_members' &&
+    relationship.membership_mode === 'role_members'
+  ) {
+    entry.requiredSourceRoleId =
+      entry.requiredSourceRoleId ?? relationship.required_source_role_id ?? null;
+    entry.requiredSourceRoleName =
+      entry.requiredSourceRoleName ?? relationship.required_source_role?.name ?? null;
   }
 }
 
@@ -263,6 +273,8 @@ export interface RelationshipEntry {
   membershipMode?: CanonicalMembershipMode | null;
   memberSourceGroupId?: string | null;
   memberTargetGroupId?: string | null;
+  requiredSourceRoleId?: string | null;
+  requiredSourceRoleName?: string | null;
   membershipDirection?: RelativeMembershipDirection | null;
   level?: number;
   childId?: string;
@@ -626,6 +638,8 @@ export function buildIndirectRelationships(
       membershipMode: entry.membershipMode ?? null,
       memberSourceGroupId: entry.memberSourceGroupId ?? null,
       memberTargetGroupId: entry.memberTargetGroupId ?? null,
+      requiredSourceRoleId: entry.requiredSourceRoleId ?? null,
+      requiredSourceRoleName: entry.requiredSourceRoleName ?? null,
       membershipDirection: entry.membershipDirection ?? null,
       level: 1,
       childId: branch === 'parent' ? targetGroupId : undefined,
@@ -698,6 +712,8 @@ export function buildIndirectRelationships(
       membershipMode: parent.membershipMode ?? null,
       memberSourceGroupId: parent.memberSourceGroupId ?? null,
       memberTargetGroupId: parent.memberTargetGroupId ?? null,
+      requiredSourceRoleId: parent.requiredSourceRoleId ?? null,
+      requiredSourceRoleName: parent.requiredSourceRoleName ?? null,
       membershipDirection: parent.membershipDirection ?? null,
       level: 1,
       childId: targetGroupId,
@@ -765,6 +781,8 @@ export function buildIndirectRelationships(
       membershipMode: child.membershipMode ?? null,
       memberSourceGroupId: child.memberSourceGroupId ?? null,
       memberTargetGroupId: child.memberTargetGroupId ?? null,
+      requiredSourceRoleId: child.requiredSourceRoleId ?? null,
+      requiredSourceRoleName: child.requiredSourceRoleName ?? null,
       membershipDirection: child.membershipDirection ?? null,
       level: 1,
       parentId: targetGroupId,

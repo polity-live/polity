@@ -2,7 +2,6 @@ import { featureThemeClassName } from '@/features/shared/theme';
 import {
   FormControlLabel,
   FormControlSelect,
-  FormControlCheckbox,
   FormControlSelectContent,
   FormControlSelectItem,
   FormControlSelectTrigger,
@@ -32,6 +31,7 @@ import { getGroupRelationshipRightLabel } from '@/features/network/ui/GroupRelat
 import { RIGHT_TYPES, type RightType } from '@/features/shared/ui/status';
 import { GroupConflictDialog, GroupConflictPanel } from './GroupConflictPanel';
 import { getCanonicalMembershipModeLabel } from '@/features/network/logic/groupConnectionDerived';
+import { GROUP_EDIT_MEMBERSHIP_MODE_OPTIONS } from './groupEditMembershipModes';
 export interface GroupEditFormViewProps {
   groupId: any;
   initialData: any;
@@ -39,6 +39,9 @@ export interface GroupEditFormViewProps {
   actorId: any;
   visibility: any;
   groupType: any;
+  hasHierarchyChildren?: boolean | null;
+  hasSiblingConnections?: boolean | null;
+  showSiblingRelationshipEditor: boolean;
   t: any;
   isCreating: any;
   showReview: any;
@@ -52,7 +55,6 @@ export interface GroupEditFormViewProps {
   handleSubmit: any;
   isSubmitting: any;
   allGroups: any[];
-  availableGroups: any[];
   connectedGroupRoles?: any[];
   groupConnections: any[];
   selectableConnectedGroups: any[];
@@ -64,6 +66,7 @@ export interface GroupEditFormViewProps {
   siblingMembershipRule: any;
   pair: any;
   hasSiblingMembership: any;
+  hasLegacySelectedSourceMembership: any;
   siblingConfigurationPreflight: any;
   onFormSubmit: any;
   confirmCreate: any;
@@ -73,6 +76,9 @@ export function GroupEditFormView({
   groupId,
   onCancel,
   groupType,
+  hasHierarchyChildren,
+  hasSiblingConnections,
+  showSiblingRelationshipEditor,
   t,
   isCreating,
   showReview,
@@ -84,11 +90,11 @@ export function GroupEditFormView({
   updateField,
   removeImage,
   isSubmitting,
-  availableGroups,
   selectableConnectedGroups,
   selectableConnectedRoles,
   relationshipDirectionOptions,
   membershipDirectionOptions,
+  hasLegacySelectedSourceMembership,
   siblingConfigurationPreflight,
   onFormSubmit,
   confirmCreate,
@@ -172,9 +178,15 @@ export function GroupEditFormView({
       <VisibilityInput value={formData.visibility} onChange={v => updateField('visibility', v)} />
 
       {/* Group Type */}
-      {groupType && <GroupTypeSection groupType={groupType} />}
+      {groupType && (
+        <GroupTypeSection
+          groupType={groupType}
+          hasHierarchyChildren={hasHierarchyChildren}
+          hasSiblingConnections={hasSiblingConnections}
+        />
+      )}
 
-      {groupType === 'sibling' ? (
+      {showSiblingRelationshipEditor ? (
         <div className="space-y-4 rounded-lg border p-4">
           <div className="space-y-2">
             <FormControlLabel>
@@ -247,16 +259,24 @@ export function GroupEditFormView({
                 <FormControlSelectValue />
               </FormControlSelectTrigger>
               <FormControlSelectContent>
-                {(['none', 'all_members', 'role_members', 'selected_source_groups'] as const).map(
-                  (mode: any) => (
-                    <FormControlSelectItem key={mode} value={mode}>
-                      {getCanonicalMembershipModeLabel(mode)}
-                    </FormControlSelectItem>
-                  )
-                )}
+                {GROUP_EDIT_MEMBERSHIP_MODE_OPTIONS.map((mode: any) => (
+                  <FormControlSelectItem key={mode} value={mode}>
+                    {getCanonicalMembershipModeLabel(mode)}
+                  </FormControlSelectItem>
+                ))}
               </FormControlSelectContent>
             </FormControlSelect>
           </div>
+
+          {hasLegacySelectedSourceMembership ? (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              <div className="font-medium">Legacy source-group membership</div>
+              <div className="mt-1 text-amber-800">
+                This group uses an old source-group membership rule. Choose one of the supported
+                membership modes before saving changes.
+              </div>
+            </div>
+          ) : null}
 
           {formData.sibling_membership_mode === 'role_members' ? (
             <div className="space-y-2">
@@ -280,50 +300,6 @@ export function GroupEditFormView({
                   ))}
                 </FormControlSelectContent>
               </FormControlSelect>
-            </div>
-          ) : null}
-
-          {formData.sibling_membership_mode === 'selected_source_groups' ? (
-            <div className="space-y-2">
-              <FormControlLabel>
-                {translateText('generated.inline.0679_source_groups_ad11f792')}
-              </FormControlLabel>
-              <div className="grid gap-2 rounded-lg border p-3">
-                {availableGroups
-                  .filter((group: any) => group.id !== groupId)
-                  .map((group: any) => {
-                    const checked =
-                      formData.parliament_source_group_ids?.includes(group.id) ?? false;
-                    return (
-                      <FormControlLabel
-                        key={group.id}
-                        className="flex items-center gap-3 rounded-md border px-3 py-2"
-                      >
-                        <FormControlCheckbox
-                          checked={checked}
-                          onCheckedChange={(nextChecked: boolean | 'indeterminate') =>
-                            updateField(
-                              'parliament_source_group_ids',
-                              nextChecked === true
-                                ? [
-                                    ...new Set([
-                                      ...(formData.parliament_source_group_ids ?? []),
-                                      group.id,
-                                    ]),
-                                  ]
-                                : (formData.parliament_source_group_ids ?? []).filter(
-                                    (currentId: string) => currentId !== group.id
-                                  )
-                            )
-                          }
-                        />
-                        <span className="text-sm">
-                          {group.name || translateText('generated.inline.0094_group_171a0606')}
-                        </span>
-                      </FormControlLabel>
-                    );
-                  })}
-              </div>
             </div>
           ) : null}
 
@@ -432,7 +408,11 @@ export function GroupEditFormView({
         )}
         <Button
           type="submit"
-          disabled={isSubmitting || siblingConfigurationPreflight.blocking}
+          disabled={
+            isSubmitting ||
+            siblingConfigurationPreflight.blocking ||
+            hasLegacySelectedSourceMembership
+          }
           className="flex-1"
         >
           {isSubmitting ? (

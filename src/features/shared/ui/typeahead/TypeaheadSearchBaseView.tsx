@@ -12,6 +12,7 @@ export interface TypeaheadSearchBaseViewProps {
   className: any;
   containerRef: any;
   disablePortal: any;
+  disabled: any;
   dropdownPortalRef: any;
   dropdownStyle: any;
   handleKeyDown: any;
@@ -29,6 +30,7 @@ export interface TypeaheadSearchBaseViewProps {
   selectedIndex: any;
   selectedItem: any;
   selectedItems: any;
+  ariaRequired: any;
   setIsOpen: any;
   setQuery: any;
   setSelectedIndex: any;
@@ -39,6 +41,7 @@ export function TypeaheadSearchBaseView({
   className,
   containerRef,
   disablePortal,
+  disabled,
   dropdownPortalRef,
   dropdownStyle,
   handleKeyDown,
@@ -56,6 +59,7 @@ export function TypeaheadSearchBaseView({
   selectedIndex,
   selectedItem,
   selectedItems,
+  ariaRequired,
   setIsOpen,
   setQuery,
   setSelectedIndex,
@@ -78,6 +82,7 @@ export function TypeaheadSearchBaseView({
       className={cn(
         'relative outline-none',
         multiple && selectedItems.length > 0 && 'space-y-3',
+        disabled && 'opacity-60',
         className
       )}
     >
@@ -87,8 +92,10 @@ export function TypeaheadSearchBaseView({
         <TypeaheadSelectedCard
           item={selectedItem}
           variant="compact"
+          disabled={disabled}
           onRemove={() => handleRemoveSelection(selectedItem.id)}
           onClick={() => {
+            if (disabled) return;
             onInteract?.();
             setIsOpen(true);
           }}
@@ -100,13 +107,17 @@ export function TypeaheadSearchBaseView({
             ref={inputRef}
             placeholder={placeholder}
             value={query}
+            disabled={disabled}
+            aria-required={ariaRequired || undefined}
             onChange={event => {
+              if (disabled) return;
               onInteract?.();
               setQuery(event.target.value);
               setIsOpen(true);
               setSelectedIndex(0);
             }}
             onFocus={() => {
+              if (disabled) return;
               onInteract?.();
               setIsOpen(true);
             }}
@@ -123,8 +134,10 @@ export function TypeaheadSearchBaseView({
               key={`${item.entityType}:${item.id}`}
               item={item}
               variant="stacked"
+              disabled={disabled}
               onRemove={() => handleRemoveSelection(item.id)}
               onClick={() => {
+                if (disabled) return;
                 onInteract?.();
                 setIsOpen(true);
               }}

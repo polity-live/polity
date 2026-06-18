@@ -24,6 +24,58 @@ interface OfflineRosterProvenanceResult {
   provenanceBucketLabel: string | null;
 }
 
+function hydrateProvenanceGroupName(
+  group: ParticipationProvenanceGroupLike | null,
+  groupsById: ReadonlyMap<string, OfflineRosterGroupLike>,
+  fallbackGroup?: ParticipationProvenanceGroupLike | null
+): ParticipationProvenanceGroupLike | null {
+  if (!group) {
+    return null;
+  }
+
+  const lookupGroup = groupsById.get(group.id) ?? null;
+  const matchingFallbackGroup = fallbackGroup?.id === group.id ? fallbackGroup : null;
+  const displayName =
+    [group, lookupGroup, matchingFallbackGroup].find(
+      candidate => candidate?.name && candidate.name !== candidate.id
+    )?.name ??
+    group.name ??
+    lookupGroup?.name ??
+    matchingFallbackGroup?.name ??
+    group.id;
+
+  return {
+    ...group,
+    name: displayName,
+    group_type: group.group_type ?? lookupGroup?.group_type ?? matchingFallbackGroup?.group_type,
+  };
+}
+
+function addOfflineRosterGroupToLookup(
+  groupsById: Map<string, OfflineRosterGroupLike>,
+  group: OfflineRosterGroupLike | null | undefined
+) {
+  if (!group?.id) {
+    return;
+  }
+
+  const existingGroup = groupsById.get(group.id);
+  if (!existingGroup) {
+    groupsById.set(group.id, group);
+    return;
+  }
+
+  const incomingHasDisplayName = Boolean(group.name && group.name !== group.id);
+  const existingHasDisplayName = Boolean(existingGroup.name && existingGroup.name !== group.id);
+
+  groupsById.set(group.id, {
+    ...existingGroup,
+    ...group,
+    name: incomingHasDisplayName || !existingHasDisplayName ? group.name : existingGroup.name,
+    group_type: group.group_type ?? existingGroup.group_type,
+  });
+}
+
 function pickSourceRootGroupId(args: {
   baseGroupId: string;
   siblingRootGroupIds: readonly string[];
@@ -84,6 +136,11 @@ export function resolveOfflineRosterProvenance(args: {
 }) {
   const { group, offlineMembers, relationships, groupsById, siblingRootGroupIds = [] } = args;
   const provenanceByOfflineMemberId = new Map<string, OfflineRosterProvenanceResult>();
+  const hydratedGroupsById = new Map(groupsById);
+
+  for (const offlineMember of offlineMembers) {
+    addOfflineRosterGroupToLookup(hydratedGroupsById, offlineMember.group);
+  }
 
   if (!group || !supportsMembershipComposition(group) || offlineMembers.length === 0) {
     return provenanceByOfflineMemberId;
@@ -95,7 +152,7 @@ export function resolveOfflineRosterProvenance(args: {
       return [];
     }
 
-    const baseGroup = groupsById.get(baseGroupId) ?? offlineMember.group ?? null;
+    const baseGroup = hydratedGroupsById.get(baseGroupId) ?? offlineMember.group ?? null;
     if (group.group_type === 'hierarchical') {
       return [
         buildPseudoMembership({
@@ -111,14 +168,14 @@ export function resolveOfflineRosterProvenance(args: {
       baseGroupId,
       siblingRootGroupIds,
       relationships,
-      groupsById,
+      groupsById: hydratedGroupsById,
     });
     return [
       buildPseudoMembership({
         id: offlineMember.id,
         userId: offlineMember.id,
         sourceGroupId: sourceRootGroupId,
-        sourceGroup: groupsById.get(sourceRootGroupId) ?? baseGroup,
+        sourceGroup: hydratedGroupsById.get(sourceRootGroupId) ?? baseGroup,
       }),
     ];
   });
@@ -135,7 +192,7 @@ export function resolveOfflineRosterProvenance(args: {
             baseGroupId,
             siblingRootGroupIds,
             relationships,
-            groupsById,
+            groupsById: hydratedGroupsById,
           });
 
           if (sourceRootGroupId === baseGroupId) {
@@ -147,9 +204,9 @@ export function resolveOfflineRosterProvenance(args: {
               id: `root:${offlineMember.id}`,
               userId: offlineMember.id,
               groupId: sourceRootGroupId,
-              group: groupsById.get(sourceRootGroupId) ?? null,
+              group: hydratedGroupsById.get(sourceRootGroupId) ?? null,
               sourceGroupId: baseGroupId,
-              sourceGroup: groupsById.get(baseGroupId) ?? offlineMember.group ?? null,
+              sourceGroup: hydratedGroupsById.get(baseGroupId) ?? offlineMember.group ?? null,
             }),
           ];
         })
@@ -163,9 +220,16 @@ export function resolveOfflineRosterProvenance(args: {
   });
 
   for (const membership of resolvedMemberships) {
+    const baseGroup = hydrateProvenanceGroupName(membership.baseGroup, hydratedGroupsById);
+    const partGroup = hydrateProvenanceGroupName(
+      membership.partGroup,
+      hydratedGroupsById,
+      baseGroup
+    );
+
     provenanceByOfflineMemberId.set(membership.id, {
-      partGroup: membership.partGroup,
-      baseGroup: membership.baseGroup,
+      partGroup,
+      baseGroup,
       provenanceBucketLabel: membership.provenanceBucketLabel,
     });
   }

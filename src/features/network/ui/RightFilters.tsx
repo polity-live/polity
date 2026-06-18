@@ -3,15 +3,17 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
-  RIGHT_TYPES,
+  NETWORK_FLOW_FILTER_TYPES,
   RightFilterOptionButton,
   getRightLabel,
-  type RightType,
+  type NetworkFlowFilterType,
 } from '@/features/shared/ui/status';
 
 export {
   RIGHT_GRADIENTS,
   RIGHT_LABELS,
+  MEMBERSHIP_FLOW_RIGHT,
+  NETWORK_FLOW_FILTER_TYPES,
   RIGHT_TYPES,
   formatRights,
   getRightLabel,
@@ -28,14 +30,14 @@ interface RightFiltersProps {
 export function RightFilters({ selectedRights, onToggleRight }: RightFiltersProps) {
   const { t } = useTranslation();
 
-  const getTranslatedRightLabel = (right: RightType): string =>
+  const getTranslatedRightLabel = (right: NetworkFlowFilterType): string =>
     getRightLabel(right, (key, fallback) => t(key) || fallback || key);
 
   return (
     <div className={featureThemeClassName('networkRightFiltersThemedSurface')}>
       <h3 className="mb-2 text-sm font-semibold">{t('common.labels.filterByRights')}:</h3>
       <div className="flex flex-wrap gap-2">
-        {RIGHT_TYPES.map(right => {
+        {NETWORK_FLOW_FILTER_TYPES.map(right => {
           const isActive = selectedRights.has(right);
           return (
             <RightFilterOptionButton

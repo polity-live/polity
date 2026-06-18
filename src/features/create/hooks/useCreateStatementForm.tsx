@@ -117,7 +117,7 @@ export function useCreateStatementForm(): CreateFormConfig {
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!user) return createBlockedSubmitOutcome();
     context?.reportProgress({ key: 'create', status: 'active' });
-    const result = await createStatement(user.id, text.trim(), {
+    const result = await createStatement(text.trim(), {
       groupId,
       imageUrl: imageUrl || null,
       videoUrl: videoUrl || null,

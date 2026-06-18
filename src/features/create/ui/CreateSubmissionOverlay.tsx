@@ -58,12 +58,13 @@ export function CreateSubmissionOverlay({
   const Icon = config.icon as LucideIcon;
   const open = status !== 'idle';
   const targetLabel = target?.label ?? getCreateSubmitTargetLabel(entityType);
+  const canNavigateToTarget = status === 'ready' || (status === 'error' && Boolean(target));
 
   useEffect(() => {
-    if (status === 'ready') {
+    if (canNavigateToTarget) {
       document.querySelector<HTMLButtonElement>('[data-create-submit-target="true"]')?.focus();
     }
-  }, [status]);
+  }, [canNavigateToTarget]);
 
   return (
     <AnimatePresence>
@@ -219,7 +220,17 @@ export function CreateSubmissionOverlay({
                 })}
               </div>
 
-              {status === 'error' ? (
+              {status === 'error' && target ? (
+                <Button
+                  type="button"
+                  size="lg"
+                  onClick={onNavigate}
+                  data-create-submit-target="true"
+                  className="mx-auto flex w-full max-w-xs"
+                >
+                  {targetLabel}
+                </Button>
+              ) : status === 'error' ? (
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Button type="button" variant="outline" onClick={onBack}>
                     Zurück zum Formular
@@ -232,7 +243,7 @@ export function CreateSubmissionOverlay({
                 <Button
                   type="button"
                   size="lg"
-                  disabled={status !== 'ready'}
+                  disabled={!canNavigateToTarget}
                   onClick={onNavigate}
                   data-create-submit-target="true"
                   className="mx-auto flex w-full max-w-xs"

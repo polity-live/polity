@@ -3,7 +3,6 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import {
   FormControlLabel,
-  FormControlCheckbox,
   FormControlRadioGroup,
   FormControlRadioGroupItem,
 } from '@/features/shared/ui/form';
@@ -12,16 +11,24 @@ import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch'
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
 import { GroupConflictDialog, GroupConflictPanel } from '@/features/groups/ui/GroupConflictPanel';
-import { applyGroupConnectionPreset } from '../logic/groupConnectionComposer';
+import {
+  applyGroupConnectionPreset,
+  GROUP_CONNECTION_PRESET_OPTIONS,
+  getPresetMembershipDirection,
+  SELECTABLE_MEMBERSHIP_MODES,
+} from '../logic/groupConnectionComposer';
 import {
   getCanonicalMembershipModeLabel,
   getSiblingMembershipKind,
 } from '../logic/groupConnectionDerived';
 import type {
   CanonicalMembershipMode,
-  GroupRelationshipType,
   GroupConnectionComposerTab,
   GroupConnectionPreset,
   RelativeMembershipDirection,
@@ -32,55 +39,19 @@ import {
   GroupRelationshipRightsSelector,
   GroupRelationshipTypeSelect,
 } from './GroupRelationshipFields';
-const MEMBERSHIP_MODE_OPTIONS: CanonicalMembershipMode[] = [
-  'none',
-  'all_members',
-  'role_members',
-  'selected_source_groups',
-];
-
-const PRESET_OPTIONS: {
-  value: GroupConnectionPreset;
-  label: string;
-  relationshipType: GroupRelationshipType;
-  membershipMode: CanonicalMembershipMode;
-}[] = [
-  {
-    value: 'parent',
-    label: translateText('generated.inline.0196_parentgroup_6feee3ae'),
-    relationshipType: 'child',
-    membershipMode: 'all_members',
-  },
-  {
-    value: 'child',
-    label: translateText('generated.inline.0197_childgroup_9644e4dc'),
-    relationshipType: 'parent',
-    membershipMode: 'all_members',
-  },
-  {
-    value: 'parliament',
-    label: translateText('generated.inline.0198_parlamentgruppe_e4c4ebd8'),
-    relationshipType: 'sibling',
-    membershipMode: 'selected_source_groups',
-  },
-  {
-    value: 'elected',
-    label: translateText('generated.inline.0199_gew_hlte_gruppe_0b4e1e5c'),
-    relationshipType: 'sibling',
-    membershipMode: 'role_members',
-  },
-];
+const MEMBERSHIP_MODE_OPTIONS = [...SELECTABLE_MEMBERSHIP_MODES];
+const PRESET_OPTIONS = [...GROUP_CONNECTION_PRESET_OPTIONS];
 
 function getMembershipDirectionLabel(direction: RelativeMembershipDirection) {
   return direction === 'partner_members_to_current'
-    ? 'Partnergruppe -> aktuelle Gruppe'
-    : 'Aktuelle Gruppe -> Partnergruppe';
+    ? 'This group receives members'
+    : 'This group sends members';
 }
 
 function getMembershipDirectionDescription(direction: RelativeMembershipDirection) {
   return direction === 'partner_members_to_current'
-    ? 'Mitglieder fliessen aus der Partnergruppe in die aktuelle Gruppe.'
-    : 'Mitglieder fliessen aus der aktuellen Gruppe in die Partnergruppe.';
+    ? 'Members flow from the selected group into this group.'
+    : 'Members flow from this group into the selected group.';
 }
 
 function getSafeGroupDisplayName(name: string | null | undefined, fallback: string) {
@@ -88,25 +59,59 @@ function getSafeGroupDisplayName(name: string | null | undefined, fallback: stri
   return trimmedName ? trimmedName : fallback;
 }
 
+function getPresetLabel(preset: GroupConnectionPreset) {
+  if (preset === 'parent') {
+    return 'This group is child';
+  }
+
+  if (preset === 'child') {
+    return 'This group is parent';
+  }
+
+  if (preset === 'role_members_to_partner') {
+    return 'This group sends role members';
+  }
+
+  return 'This group receives role members';
+}
+
+function getRoleSelectorLabel(direction: RelativeMembershipDirection) {
+  return direction === 'partner_members_to_current'
+    ? 'Role in selected group'
+    : 'Role in this group';
+}
+
+function RequiredRoleSelectorLabel({ label }: { label: string }) {
+  return (
+    <>
+      {label}{' '}
+      <span className="text-destructive" aria-hidden="true">
+        *
+      </span>
+    </>
+  );
+}
+
 function PresetDescription({
   preset,
   currentGroupId,
-  currentGroupName,
   selectedGroupId,
   selectedGroupName,
 }: {
   preset: GroupConnectionPreset;
   currentGroupId: string;
-  currentGroupName: string;
   selectedGroupId: string;
   selectedGroupName: string;
 }) {
-  const safeCurrentGroupName = getSafeGroupDisplayName(currentGroupName, 'diese Gruppe');
-  const safeSelectedGroupName = getSafeGroupDisplayName(selectedGroupName, 'Partnergruppe');
+  const { t } = useTranslation();
+  const safeSelectedGroupName = getSafeGroupDisplayName(
+    selectedGroupName,
+    t('common.network.selectedPartnerGroup', 'Gewählte Partnergruppe')
+  );
 
   const currentTag = (
     <GroupRelationshipNameTag
-      name={safeCurrentGroupName}
+      name=""
       kind="current"
       caseStyle="embedded"
       groupId={currentGroupId}
@@ -128,13 +133,9 @@ function PresetDescription({
   if (preset === 'parent') {
     return (
       <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs leading-relaxed">
-        <span>{translateText('generated.inline.0769_diese_gew_hlte_partnergruppe_5fc97466')}</span>
-        {selectedTag}
-        <span>
-          {translateText('generated.inline.0770_ist_bergeordnet_die_aktuelle_gruppe_36b12d80')}
-        </span>
         {currentTag}
-        <span>{translateText('generated.inline.0771_ist_untergeordnet_9610f87b')}</span>
+        <span>is the child group of</span>
+        {selectedTag}
       </div>
     );
   }
@@ -142,48 +143,28 @@ function PresetDescription({
   if (preset === 'child') {
     return (
       <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs leading-relaxed">
-        <span>{translateText('generated.inline.0772_die_aktuelle_gruppe_d7fbaf59')}</span>
         {currentTag}
-        <span>
-          {translateText(
-            'generated.inline.0773_ist_bergeordnet_die_gew_hlte_partnergruppe_4d9d2a93'
-          )}
-        </span>
+        <span>is the parent group of</span>
         {selectedTag}
-        <span>{translateText('generated.inline.0771_ist_untergeordnet_9610f87b')}</span>
       </div>
     );
   }
 
-  if (preset === 'parliament') {
+  if (preset === 'role_members_to_partner') {
     return (
       <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs leading-relaxed">
-        <span>{translateText('generated.inline.0772_die_aktuelle_gruppe_d7fbaf59')}</span>
         {currentTag}
-        <span>
-          {translateText('generated.inline.0774_und_die_gew_hlte_partnergruppe_a51207fb')}
-        </span>
+        <span>sends members with the selected role to</span>
         {selectedTag}
-        <span>
-          {translateText(
-            'generated.inline.0775_werden_als_parlamentgruppe_miteinander_verbun_ccaad49c'
-          )}
-        </span>
       </div>
     );
   }
 
   return (
     <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs leading-relaxed">
-      <span>{translateText('generated.inline.0772_die_aktuelle_gruppe_d7fbaf59')}</span>
       {currentTag}
-      <span>{translateText('generated.inline.0774_und_die_gew_hlte_partnergruppe_a51207fb')}</span>
+      <span>receives members with the selected role from</span>
       {selectedTag}
-      <span>
-        {translateText(
-          'generated.inline.0776_werden_als_gew_hlte_gruppe_miteinander_verbun_333f88b7'
-        )}
-      </span>
     </div>
   );
 }
@@ -208,14 +189,11 @@ export interface GroupConnectionComposerViewProps {
   selectedPreset: any;
   selectedPresetMembershipDirection: any;
   presetMembershipRule: any;
-  hydratedMembershipDirection: any;
   presetDisabled: any;
+  getPresetDisabledReason: any;
   membershipDirection: any;
-  setMembershipDirection: any;
   activeMembershipRule: any;
   selectableRoles: any;
-  presetMembershipSourceGroupId: any;
-  activeMembershipSourceGroupId: any;
   updateMembershipRule: any;
   setActiveMembershipDirection: any;
   updateRightDirection: any;
@@ -243,15 +221,17 @@ export function GroupConnectionComposerView({
   selectedPresetMembershipDirection,
   presetMembershipRule,
   presetDisabled,
+  getPresetDisabledReason,
   membershipDirection,
   activeMembershipRule,
   selectableRoles,
-  presetMembershipSourceGroupId,
-  activeMembershipSourceGroupId,
   updateMembershipRule,
   setActiveMembershipDirection,
   updateRightDirection,
 }: GroupConnectionComposerViewProps) {
+  const hasLegacySelectedSourceMembership =
+    activeMembershipRule.membershipMode === 'selected_source_groups';
+
   return (
     <div className="space-y-4">
       <Tabs
@@ -318,15 +298,19 @@ export function GroupConnectionComposerView({
                 </FormControlLabel>
                 <FormControlRadioGroup
                   value={value.preset}
-                  onValueChange={nextValue =>
+                  onValueChange={nextValue => {
+                    if (presetDisabled(nextValue as GroupConnectionPreset)) {
+                      return;
+                    }
                     onValueChange(
                       applyGroupConnectionPreset(nextValue as GroupConnectionPreset, value)
-                    )
-                  }
+                    );
+                  }}
                 >
                   <div className="grid gap-2 md:grid-cols-2">
                     {PRESET_OPTIONS.map((option: any) => {
                       const disabled = presetDisabled(option.value);
+                      const disabledReason = getPresetDisabledReason?.(option.value);
                       const isSelected = selectedPreset.value === option.value;
                       return (
                         <FormControlLabel
@@ -342,21 +326,44 @@ export function GroupConnectionComposerView({
                             disabled={disabled}
                             className="mt-0.5"
                           />
-                          <div className="space-y-1">
-                            <div className="text-sm font-medium">{option.label}</div>
-                            <PresetDescription
-                              preset={option.value}
-                              currentGroupId={currentGroupId}
-                              currentGroupName={currentGroupName}
-                              selectedGroupId={value.selectedGroupId}
-                              selectedGroupName={selectedGroupName}
-                            />
+                          <div className="min-w-0 flex-1 space-y-3">
+                            <div className="text-sm font-medium">
+                              {getPresetLabel(option.value)}
+                            </div>
+                            {disabledReason ? (
+                              <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                {disabledReason}
+                              </div>
+                            ) : null}
+                            <div className="bg-muted/30 rounded-md px-3 py-2">
+                              <div className="text-muted-foreground mb-1 text-[11px] font-semibold uppercase">
+                                Relationship
+                              </div>
+                              <PresetDescription
+                                preset={option.value}
+                                currentGroupId={currentGroupId}
+                                selectedGroupId={value.selectedGroupId}
+                                selectedGroupName={selectedGroupName}
+                              />
+                            </div>
                             <div
-                              className={featureThemeClassName(
-                                'networkGroupConnectionComposerThemedText'
+                              className={cn(
+                                'rounded-md px-3 py-2',
+                                featureThemeClassName('networkGroupConnectionComposerThemedText')
                               )}
                             >
-                              {`Membership: ${getCanonicalMembershipModeLabel(option.membershipMode)}`}
+                              <div className="mb-1 text-[11px] font-semibold uppercase">
+                                {t('common.network.membershipLabel', 'Membership')}
+                              </div>
+                              <GroupRelationshipMembershipModeDescription
+                                membershipMode={option.membershipMode}
+                                direction={getPresetMembershipDirection(option.value)}
+                                currentGroupId={currentGroupId}
+                                currentGroupName=""
+                                selectedGroupId={value.selectedGroupId}
+                                selectedGroupName={selectedGroupName}
+                                linkGroups={false}
+                              />
                             </div>
                           </div>
                         </FormControlLabel>
@@ -366,10 +373,23 @@ export function GroupConnectionComposerView({
                 </FormControlRadioGroup>
               </div>
 
-              {selectedPreset.value === 'elected' ? (
+              {hasLegacySelectedSourceMembership ? (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                  <div className="font-medium">Legacy source-group membership</div>
+                  <div className="mt-1 text-amber-800">
+                    This connection uses an old source-group rule. Choose one of the supported
+                    membership modes before saving changes.
+                  </div>
+                </div>
+              ) : null}
+
+              {selectedPreset.value === 'elected' ||
+              selectedPreset.value === 'role_members_to_partner' ? (
                 <div className="grid gap-2">
                   <FormControlLabel>
-                    {translateText('generated.inline.0781_rolle_der_verbundenen_gruppe_b0e1caee')}
+                    <RequiredRoleSelectorLabel
+                      label={getRoleSelectorLabel(selectedPresetMembershipDirection)}
+                    />
                   </FormControlLabel>
                   <TypeaheadSearch
                     items={toTypeaheadItems(
@@ -381,58 +401,16 @@ export function GroupConnectionComposerView({
                     value={presetMembershipRule.roleId}
                     onChange={(item: TypeaheadItem | null) =>
                       updateMembershipRule(selectedPresetMembershipDirection, {
+                        membershipMode: 'role_members',
                         roleId: item?.id ?? '',
+                        sourceGroupIds: [],
                       })
                     }
-                    placeholder={translateText(
-                      'generated.inline.0782_mitgliedsrolle_der_verbundenen_gruppe_w_hlen_61c518a8'
-                    )}
+                    placeholder={getRoleSelectorLabel(selectedPresetMembershipDirection)}
+                    ariaRequired
                     disablePortal
                     showAllOnFocus
                   />
-                </div>
-              ) : null}
-
-              {selectedPreset.value === 'parliament' ? (
-                <div className="grid gap-2">
-                  <FormControlLabel>
-                    {translateText('generated.inline.0679_source_groups_ad11f792')}
-                  </FormControlLabel>
-                  <div className="grid gap-2 rounded-lg border p-3">
-                    {availableGroups
-                      .filter((group: any) => group.id !== presetMembershipSourceGroupId)
-                      .map((group: any) => {
-                        const checked = presetMembershipRule.sourceGroupIds.includes(group.id);
-                        return (
-                          <FormControlLabel
-                            key={group.id}
-                            className="flex items-center gap-3 rounded-md border px-3 py-2"
-                          >
-                            <FormControlCheckbox
-                              checked={checked}
-                              onCheckedChange={nextChecked =>
-                                updateMembershipRule(selectedPresetMembershipDirection, {
-                                  sourceGroupIds:
-                                    nextChecked === true
-                                      ? [
-                                          ...new Set([
-                                            ...presetMembershipRule.sourceGroupIds,
-                                            group.id,
-                                          ]),
-                                        ]
-                                      : presetMembershipRule.sourceGroupIds.filter(
-                                          (id: any) => id !== group.id
-                                        ),
-                                })
-                              }
-                            />
-                            <span className="text-sm">
-                              {group.name || translateText('generated.inline.0094_group_171a0606')}
-                            </span>
-                          </FormControlLabel>
-                        );
-                      })}
-                  </div>
                 </div>
               ) : null}
             </>
@@ -520,47 +498,69 @@ export function GroupConnectionComposerView({
                         updateMembershipRule(membershipDirection, {
                           membershipMode: nextValue as CanonicalMembershipMode,
                           roleId: nextValue === 'role_members' ? activeMembershipRule.roleId : '',
-                          sourceGroupIds:
-                            nextValue === 'selected_source_groups'
-                              ? activeMembershipRule.sourceGroupIds
-                              : [],
+                          sourceGroupIds: [],
                         })
                       }
                     >
                       <div className="grid gap-2 sm:grid-cols-2">
-                        {MEMBERSHIP_MODE_OPTIONS.map((option: any) => (
-                          <FormControlLabel
-                            key={`${membershipDirection}-${option}`}
-                            htmlFor={`advanced-membership-mode-${membershipDirection}-${option}`}
-                            className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                              activeMembershipRule.membershipMode === option
-                                ? 'border-primary bg-primary/5'
-                                : 'hover:bg-muted/50'
-                            }`}
-                          >
-                            <FormControlRadioGroupItem
-                              id={`advanced-membership-mode-${membershipDirection}-${option}`}
-                              value={option}
-                              className="mt-0.5"
-                            />
-                            <div>
-                              <div className="text-sm font-medium">
-                                {getCanonicalMembershipModeLabel(option)}
-                              </div>
-                              <div className="text-muted-foreground text-xs">
-                                <GroupRelationshipMembershipModeDescription
-                                  membershipMode={option}
-                                  direction={membershipDirection}
-                                  currentGroupId={currentGroupId}
-                                  currentGroupName={currentGroupName}
-                                  selectedGroupId={value.selectedGroupId}
-                                  selectedGroupName={selectedGroupName}
-                                  linkGroups={false}
-                                />
-                              </div>
+                        {hasLegacySelectedSourceMembership ? (
+                          <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 sm:col-span-2">
+                            <div className="font-medium">Legacy source-group membership</div>
+                            <div className="mt-1 text-amber-800">
+                              This connection uses an old source-group rule. Select a supported
+                              membership mode before saving changes.
                             </div>
-                          </FormControlLabel>
-                        ))}
+                          </div>
+                        ) : null}
+                        {MEMBERSHIP_MODE_OPTIONS.map((option: any) => {
+                          const disabled =
+                            option === 'role_members' &&
+                            membershipDirection === 'current_members_to_partner' &&
+                            Boolean(getPresetDisabledReason?.('role_members_to_partner'));
+                          const disabledReason = disabled
+                            ? getPresetDisabledReason?.('role_members_to_partner')
+                            : null;
+
+                          return (
+                            <FormControlLabel
+                              key={`${membershipDirection}-${option}`}
+                              htmlFor={`advanced-membership-mode-${membershipDirection}-${option}`}
+                              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                                activeMembershipRule.membershipMode === option
+                                  ? 'border-primary bg-primary/5'
+                                  : 'hover:bg-muted/50'
+                              } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                            >
+                              <FormControlRadioGroupItem
+                                id={`advanced-membership-mode-${membershipDirection}-${option}`}
+                                value={option}
+                                disabled={disabled}
+                                className="mt-0.5"
+                              />
+                              <div>
+                                <div className="text-sm font-medium">
+                                  {getCanonicalMembershipModeLabel(option)}
+                                </div>
+                                <div className="text-muted-foreground text-xs">
+                                  <GroupRelationshipMembershipModeDescription
+                                    membershipMode={option}
+                                    direction={membershipDirection}
+                                    currentGroupId={currentGroupId}
+                                    currentGroupName={currentGroupName}
+                                    selectedGroupId={value.selectedGroupId}
+                                    selectedGroupName={selectedGroupName}
+                                    linkGroups={false}
+                                  />
+                                </div>
+                                {disabledReason ? (
+                                  <div className="mt-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                    {disabledReason}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </FormControlLabel>
+                          );
+                        })}
                       </div>
                     </FormControlRadioGroup>
                   </div>
@@ -568,7 +568,9 @@ export function GroupConnectionComposerView({
                   {activeMembershipRule.membershipMode === 'role_members' ? (
                     <div className="grid gap-2">
                       <FormControlLabel>
-                        {translateText('generated.inline.0785_rolle_der_quellgruppe_808d2b9d')}
+                        <RequiredRoleSelectorLabel
+                          label={getRoleSelectorLabel(membershipDirection)}
+                        />
                       </FormControlLabel>
                       <TypeaheadSearch
                         items={toTypeaheadItems(
@@ -583,56 +585,11 @@ export function GroupConnectionComposerView({
                             roleId: item?.id ?? '',
                           })
                         }
-                        placeholder={translateText(
-                          'generated.inline.0786_mitgliedsrolle_w_hlen_f325f806'
-                        )}
+                        placeholder={getRoleSelectorLabel(membershipDirection)}
+                        ariaRequired
                         disablePortal
                         showAllOnFocus
                       />
-                    </div>
-                  ) : null}
-
-                  {activeMembershipRule.membershipMode === 'selected_source_groups' ? (
-                    <div className="grid gap-2">
-                      <FormControlLabel>
-                        {translateText('generated.inline.0679_source_groups_ad11f792')}
-                      </FormControlLabel>
-                      <div className="grid gap-2 rounded-lg border p-3">
-                        {availableGroups
-                          .filter((group: any) => group.id !== activeMembershipSourceGroupId)
-                          .map((group: any) => {
-                            const checked = activeMembershipRule.sourceGroupIds.includes(group.id);
-                            return (
-                              <FormControlLabel
-                                key={`${membershipDirection}-${group.id}`}
-                                className="flex items-center gap-3 rounded-md border px-3 py-2"
-                              >
-                                <FormControlCheckbox
-                                  checked={checked}
-                                  onCheckedChange={nextChecked =>
-                                    updateMembershipRule(membershipDirection, {
-                                      sourceGroupIds:
-                                        nextChecked === true
-                                          ? [
-                                              ...new Set([
-                                                ...activeMembershipRule.sourceGroupIds,
-                                                group.id,
-                                              ]),
-                                            ]
-                                          : activeMembershipRule.sourceGroupIds.filter(
-                                              (id: any) => id !== group.id
-                                            ),
-                                    })
-                                  }
-                                />
-                                <span className="text-sm">
-                                  {group.name ||
-                                    translateText('generated.inline.0094_group_171a0606')}
-                                </span>
-                              </FormControlLabel>
-                            );
-                          })}
-                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -650,7 +607,7 @@ export function GroupConnectionComposerView({
           onToggleRight={right =>
             updateRightDirection(
               right,
-              value.rightDirections[right] === 'none' ? 'current_has_right_in_partner' : 'none'
+              value.rightDirections[right] === 'none' ? 'current_grants_right_to_partner' : 'none'
             )
           }
           existingRightStatuses={existingRightStatuses}

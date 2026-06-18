@@ -17,6 +17,8 @@ function rel(
     connection_id: overrides.connection_id ?? `connection:${overrides.id}`,
     grant_id:
       overrides.grant_id ?? (overrides.with_right === null ? null : `grant:${overrides.id}`),
+    membership_request_id: overrides.membership_request_id ?? null,
+    request_item_kind: overrides.request_item_kind ?? 'right',
     group_id: groupId,
     related_group_id: relatedGroupId,
     relationship_type: overrides.relationship_type ?? null,

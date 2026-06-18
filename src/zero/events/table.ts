@@ -99,6 +99,21 @@ export const eventException = table('event_exception')
   })
   .primaryKey('id');
 
+export const eventAssemblyScope = table('event_assembly_scope')
+  .columns({
+    id: string(),
+    event_id: string(),
+    host_group_id: string(),
+    source_group_id: string(),
+    scope_kind: string(),
+    participant_mode: string(),
+    required_role_id: string().optional(),
+    status: string(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
+
 export const eventParticipant = table('event_participant')
   .columns({
     id: string(),

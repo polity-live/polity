@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { ActionSubmissionContext } from '@/features/shared/ui/action-submission';
 import { useHierarchyLinkConflicts } from './useHierarchyLinkConflicts';
 import type {
   GroupRelationshipFilter,
@@ -28,7 +29,10 @@ export interface ManageNetworkTabProps {
   filteredRelationships: GroupedRelationshipSummary[];
   allRelationships: NormalizedGroupRelationship[];
   // Handlers
-  onAcceptRequest: (rels: NormalizedGroupRelationship[]) => Promise<void>;
+  onAcceptRequest: (
+    rels: NormalizedGroupRelationship[],
+    submissionContext?: ActionSubmissionContext
+  ) => Promise<void>;
   onRejectRequest: (rels: NormalizedGroupRelationship[]) => Promise<void>;
   onDeleteRelationship: (targetGroupId: string) => void;
 }

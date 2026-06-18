@@ -36,6 +36,12 @@ export interface ParticipationProvenanceGroupLike {
   group_type?: string | null;
 }
 
+export interface ParticipationDelegateRepresentedGroupLike {
+  id: string;
+  name: string;
+  seatCount: number;
+}
+
 export interface ParticipationLike<TRole extends ParticipationRoleLike = ParticipationRoleLike> {
   id: string;
   user_id?: string | null;
@@ -52,4 +58,5 @@ export interface ParticipationLike<TRole extends ParticipationRoleLike = Partici
   partGroup?: ParticipationProvenanceGroupLike | null;
   baseGroup?: ParticipationProvenanceGroupLike | null;
   provenanceBucketLabel?: string | null;
+  delegateRepresentedGroups?: readonly ParticipationDelegateRepresentedGroupLike[] | null;
 }

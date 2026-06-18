@@ -3,11 +3,11 @@ export type GroupRelationshipType = 'parent' | 'child' | 'sibling';
 export type GroupRelationshipFilter = 'all' | GroupRelationshipType;
 export type GroupRelationshipDirection =
   | 'none'
-  | 'current_has_right_in_partner'
-  | 'partner_has_right_in_current'
+  | 'current_grants_right_to_partner'
+  | 'partner_grants_right_to_current'
   | 'mutual';
 export type GroupConnectionComposerTab = 'advanced' | 'preset';
-export type GroupConnectionPreset = 'parent' | 'child' | 'parliament' | 'elected';
+export type GroupConnectionPreset = 'parent' | 'child' | 'elected' | 'role_members_to_partner';
 export type CanonicalMembershipMode =
   | 'none'
   | 'all_members'
@@ -27,11 +27,11 @@ export interface NetworkGroupDerivedMetaFields {
   group_type?: 'base' | 'hierarchical' | 'sibling' | string | null;
   connected_group_id?: string | null;
   sibling_membership_mode?: 'open' | 'elected' | 'parliament' | string | null;
-  primary_sibling_membership_mode?: CanonicalMembershipMode | null;
+  primary_sibling_membership_mode?: CanonicalMembershipMode | string | null;
   sibling_role_id?: string | null;
   parliament_source_group_ids?: readonly string[] | null;
-  primary_incoming_sibling_membership_mode?: CanonicalMembershipMode | null;
-  primary_outgoing_sibling_membership_mode?: CanonicalMembershipMode | null;
+  primary_incoming_sibling_membership_mode?: CanonicalMembershipMode | string | null;
+  primary_outgoing_sibling_membership_mode?: CanonicalMembershipMode | string | null;
   incoming_sibling_role_id?: string | null;
   outgoing_sibling_role_id?: string | null;
   incoming_parliament_source_group_ids?: readonly string[] | null;
@@ -71,6 +71,8 @@ export interface NormalizedGroupRelationship {
   connection_id: string;
   grant_id: string | null;
   connection_request_id?: string | null;
+  membership_request_id?: string | null;
+  request_item_kind: 'structure' | 'right' | 'membership';
   group_id: string;
   related_group_id: string;
   relationship_type: GroupRelationshipType | null;
@@ -85,6 +87,7 @@ export interface NormalizedGroupRelationship {
   member_target_group_id: string | null;
   membership_mode: CanonicalMembershipMode;
   required_source_role_id: string | null;
+  required_source_role?: { id: string; name?: string | null } | null;
   eligible_origin_group_ids: string[];
   group: NetworkGroupEntity | null;
   related_group: NetworkGroupEntity | null;
@@ -95,6 +98,8 @@ export interface GroupedRelationshipSummary {
   rights: string[];
   type: GroupRelationshipType;
   membershipMode?: CanonicalMembershipMode | null;
+  requiredSourceRoleId?: string | null;
+  requiredSourceRoleName?: string | null;
 }
 
 export interface GroupedRelationshipRequest {
@@ -102,6 +107,7 @@ export interface GroupedRelationshipRequest {
   requestId: string | null;
   allRels: NormalizedGroupRelationship[];
   rightRels: NormalizedGroupRelationship[];
+  membershipRels: NormalizedGroupRelationship[];
   structureRel: NormalizedGroupRelationship | null;
   rels: NormalizedGroupRelationship[];
   type: GroupRelationshipType;

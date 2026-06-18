@@ -29,14 +29,24 @@ vi.mock('@/features/shared/ui/layout', () => ({
     disabled,
     className,
     title,
+    tooltip,
+    ...props
   }: {
     children: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
     className?: string;
     title?: string;
+    tooltip?: React.ReactNode;
   }) => (
-    <Button className={className} disabled={disabled} onClick={onClick} title={title} type="button">
+    <Button
+      className={className}
+      disabled={disabled}
+      onClick={onClick}
+      title={title || (typeof tooltip === 'string' ? tooltip : undefined)}
+      type="button"
+      {...props}
+    >
       {children}
     </Button>
   ),
@@ -99,5 +109,38 @@ describe('AgendaActionBar', () => {
     );
 
     expect(container.querySelector('.civic-ballot-submit')).toBeTruthy();
+  });
+
+  it('renders the Vote button as blocked with help when active voting rights are missing', () => {
+    const { container } = render(<AgendaActionBar {...baseProps} onVoteClick={() => undefined} />);
+
+    const voteButton = container.querySelector('.civic-ballot-submit');
+
+    expect(voteButton).toBeTruthy();
+    expect(voteButton?.getAttribute('aria-disabled')).toBe('true');
+    expect(voteButton?.className).toContain('text-muted-foreground');
+  });
+
+  it('renders the candidate button as blocked with help when passive voting rights are missing', () => {
+    render(
+      <AgendaActionBar
+        {...baseProps}
+        currentAgendaItem={{
+          id: 'item-1',
+          type: 'election',
+          status: 'in-progress',
+          voting_phase: 'indication',
+          election: { id: 'election-1' },
+        }}
+        onBecomeCandidate={() => undefined}
+      />
+    );
+
+    const candidateButton = screen.getByRole('button', {
+      name: 'Passive Voting Rights are required to become a candidate in this event.',
+    });
+
+    expect(candidateButton.getAttribute('aria-disabled')).toBe('true');
+    expect(candidateButton.className).toContain('text-muted-foreground');
   });
 });

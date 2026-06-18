@@ -18,6 +18,7 @@ import { todoServerMutators } from './todos/server-mutators';
 import { paymentServerMutators } from './payments/server-mutators';
 import { documentServerMutators } from './documents/server-mutators';
 import { commonServerMutators } from './common/server-mutators';
+import { statementServerMutators } from './statements/server-mutators';
 import { votingPasswordServerMutators } from './voting-password/server-mutators';
 import { accreditationServerMutators } from './accreditation/server-mutators';
 import { messageServerMutators } from './messages/server-mutators';
@@ -35,6 +36,7 @@ export const serverMutators = defineMutators(mutators, {
   payments: paymentServerMutators,
   documents: documentServerMutators,
   common: commonServerMutators,
+  statements: statementServerMutators,
   messages: messageServerMutators,
   votingPassword: votingPasswordServerMutators,
   accreditation: accreditationServerMutators,

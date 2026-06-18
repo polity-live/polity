@@ -1053,6 +1053,7 @@ SECURITY DEFINER SET search_path = ''
 AS $$
 DECLARE
   related_group_id UUID;
+  related_event_id UUID;
 BEGIN
   IF TG_OP = 'DELETE' THEN
     DELETE FROM public.search_document
@@ -1064,6 +1065,11 @@ BEGIN
   INTO related_group_id
   FROM public.role
   WHERE id = NEW.role_id;
+
+  SELECT event_id
+  INTO related_event_id
+  FROM public.agenda_item
+  WHERE id = NEW.agenda_item_id;
 
   INSERT INTO public.search_document (
     id,
@@ -1094,8 +1100,12 @@ BEGIN
     jsonb_build_object(
       'type', 'election',
       'status', NEW.status,
+      'agenda_event_id', related_event_id,
+      'agenda_item_id', NEW.agenda_item_id,
       'metadata', jsonb_build_object(
         'role_id', NEW.role_id,
+        'event_id', related_event_id,
+        'agenda_event_id', related_event_id,
         'agenda_item_id', NEW.agenda_item_id,
         'election_mode', NEW.election_mode
       )

@@ -6,13 +6,30 @@ import {
   buildCanonicalGroupConnectionPayload,
   buildGroupConnectionComposerDefaults,
   buildRelativeMembershipRuleFromCanonical,
+  GROUP_CONNECTION_PRESET_OPTIONS,
   hasConfiguredMembership,
   hasConfiguredGroupConnection,
+  hasIncompleteMembershipRule,
   getPresetForRelationshipType,
+  SELECTABLE_MEMBERSHIP_MODES,
 } from '../groupConnectionComposer';
 
 describe('groupConnectionComposer presets', () => {
-  it('maps the parent preset to current members flowing into the partner parent group', () => {
+  it('exposes exactly four selectable presets', () => {
+    const values = GROUP_CONNECTION_PRESET_OPTIONS.map(option => option.value) as string[];
+
+    expect(values).toEqual(['parent', 'child', 'elected', 'role_members_to_partner']);
+    expect(values).not.toContain('parliament');
+  });
+
+  it('exposes exactly three selectable membership modes', () => {
+    const values = [...SELECTABLE_MEMBERSHIP_MODES] as string[];
+
+    expect(values).toEqual(['none', 'all_members', 'role_members']);
+    expect(values).not.toContain('selected_source_groups');
+  });
+
+  it('maps the parent preset to this child group sending members into the selected parent group', () => {
     const value = applyGroupConnectionPreset('parent', buildGroupConnectionComposerDefaults());
     const payload = buildCanonicalGroupConnectionPayload({
       currentGroupId: 'B1',
@@ -44,7 +61,7 @@ describe('groupConnectionComposer presets', () => {
     });
   });
 
-  it('maps the child preset to partner members flowing into the current parent group', () => {
+  it('maps the child preset to selected child group members flowing into this parent group', () => {
     const value = applyGroupConnectionPreset('child', buildGroupConnectionComposerDefaults());
     const payload = buildCanonicalGroupConnectionPayload({
       currentGroupId: 'H1',
@@ -90,6 +107,95 @@ describe('groupConnectionComposer presets', () => {
         membershipRule: buildGroupConnectionComposerDefaults().membershipRule,
       })
     ).toBe('parent');
+
+    expect(
+      getPresetForRelationshipType({
+        relationshipType: 'sibling',
+        membershipDirection: 'partner_members_to_current',
+        membershipRule: {
+          membershipMode: 'selected_source_groups',
+          roleId: '',
+          sourceGroupIds: ['B1'],
+        },
+      })
+    ).toBe('elected');
+
+    expect(
+      getPresetForRelationshipType({
+        relationshipType: 'sibling',
+        membershipDirection: 'current_members_to_partner',
+        membershipRule: {
+          membershipMode: 'role_members',
+          roleId: 'role-1',
+          sourceGroupIds: [],
+        },
+      })
+    ).toBe('role_members_to_partner');
+  });
+
+  it('maps the role receive preset to selected group role members flowing into this group', () => {
+    const value = applyGroupConnectionPreset('elected', buildGroupConnectionComposerDefaults());
+    const payload = buildCanonicalGroupConnectionPayload({
+      currentGroupId: 'S1',
+      otherGroupId: 'H1',
+      relationshipType: value.relationshipType,
+      rightDirections: value.rightDirections,
+      membershipDirection: value.membershipDirection,
+      membershipRule: { ...value.membershipRule, roleId: 'role-1' },
+      initiatorGroupId: 'S1',
+    });
+
+    expect(value.relationshipType).toBe('sibling');
+    expect(value.membershipDirection).toBe('partner_members_to_current');
+    expect(value.membershipRule.membershipMode).toBe('role_members');
+    expect(payload).toMatchObject({
+      group_a_id: 'H1',
+      group_b_id: 'S1',
+      connection_type: 'peer',
+      parent_group_id: null,
+      child_group_id: null,
+    });
+    expect(payload.membership_rule).toMatchObject({
+      member_source_group_id: 'H1',
+      member_target_group_id: 'S1',
+      membership_mode: 'role_members',
+      required_source_role_id: 'role-1',
+      eligible_origin_group_ids: [],
+    });
+  });
+
+  it('maps the role send preset to this group role members flowing into the selected group', () => {
+    const value = applyGroupConnectionPreset(
+      'role_members_to_partner',
+      buildGroupConnectionComposerDefaults()
+    );
+    const payload = buildCanonicalGroupConnectionPayload({
+      currentGroupId: 'S1',
+      otherGroupId: 'H1',
+      relationshipType: value.relationshipType,
+      rightDirections: value.rightDirections,
+      membershipDirection: value.membershipDirection,
+      membershipRule: { ...value.membershipRule, roleId: 'role-1' },
+      initiatorGroupId: 'S1',
+    });
+
+    expect(value.relationshipType).toBe('sibling');
+    expect(value.membershipDirection).toBe('current_members_to_partner');
+    expect(value.membershipRule.membershipMode).toBe('role_members');
+    expect(payload).toMatchObject({
+      group_a_id: 'H1',
+      group_b_id: 'S1',
+      connection_type: 'peer',
+      parent_group_id: null,
+      child_group_id: null,
+    });
+    expect(payload.membership_rule).toMatchObject({
+      member_source_group_id: 'S1',
+      member_target_group_id: 'H1',
+      membership_mode: 'role_members',
+      required_source_role_id: 'role-1',
+      eligible_origin_group_ids: [],
+    });
   });
 
   it('treats membership-only links as configured links', () => {
@@ -121,7 +227,44 @@ describe('groupConnectionComposer presets', () => {
     ).toBe(false);
   });
 
-  it('requires the dependent membership details for role and source-group modes', () => {
+  it('requires dependent membership details for role mode and legacy source-group compatibility', () => {
+    expect(
+      hasIncompleteMembershipRule({
+        membershipDirection: 'partner_members_to_current',
+        membershipRule: { membershipMode: 'role_members', roleId: '', sourceGroupIds: [] },
+      })
+    ).toBe(true);
+    expect(
+      hasIncompleteMembershipRule({
+        membershipDirection: 'partner_members_to_current',
+        membershipRule: {
+          membershipMode: 'role_members',
+          roleId: 'role-1',
+          sourceGroupIds: [],
+        },
+      })
+    ).toBe(false);
+    expect(
+      hasIncompleteMembershipRule({
+        membershipDirection: 'partner_members_to_current',
+        membershipRule: {
+          membershipMode: 'selected_source_groups',
+          roleId: '',
+          sourceGroupIds: [],
+        },
+      })
+    ).toBe(true);
+    expect(
+      hasIncompleteMembershipRule({
+        membershipDirection: 'partner_members_to_current',
+        membershipRule: {
+          membershipMode: 'selected_source_groups',
+          roleId: '',
+          sourceGroupIds: ['B1'],
+        },
+      })
+    ).toBe(false);
+
     expect(
       hasConfiguredMembership({
         membershipDirection: 'partner_members_to_current',
@@ -180,35 +323,9 @@ describe('groupConnectionComposer presets', () => {
     expect(payload.grants).toEqual([
       expect.objectContaining({
         right_key: 'amendmentRight',
-        holder_group_id: 'B1',
-        scope_group_id: 'H1',
-      }),
-      expect.objectContaining({
-        right_key: 'amendmentRight',
         holder_group_id: 'H1',
         scope_group_id: 'B1',
       }),
-    ]);
-  });
-
-  it('stores current_has_right_in_partner as current holder and partner scope', () => {
-    const payload = buildCanonicalGroupConnectionPayload({
-      currentGroupId: 'B1',
-      otherGroupId: 'H1',
-      relationshipType: 'child',
-      rightDirections: {
-        informationRight: 'none',
-        amendmentRight: 'current_has_right_in_partner',
-        rightToSpeak: 'none',
-        activeVotingRight: 'none',
-        passiveVotingRight: 'none',
-      },
-      membershipDirection: null,
-      membershipRule: { membershipMode: 'none', roleId: '', sourceGroupIds: [] },
-      initiatorGroupId: 'B1',
-    });
-
-    expect(payload.grants).toEqual([
       expect.objectContaining({
         right_key: 'amendmentRight',
         holder_group_id: 'B1',
@@ -217,14 +334,14 @@ describe('groupConnectionComposer presets', () => {
     ]);
   });
 
-  it('stores partner_has_right_in_current as partner holder and current scope', () => {
+  it('stores current_grants_right_to_partner as partner holder and current scope', () => {
     const payload = buildCanonicalGroupConnectionPayload({
       currentGroupId: 'B1',
       otherGroupId: 'H1',
       relationshipType: 'child',
       rightDirections: {
         informationRight: 'none',
-        amendmentRight: 'partner_has_right_in_current',
+        amendmentRight: 'current_grants_right_to_partner',
         rightToSpeak: 'none',
         activeVotingRight: 'none',
         passiveVotingRight: 'none',
@@ -239,6 +356,32 @@ describe('groupConnectionComposer presets', () => {
         right_key: 'amendmentRight',
         holder_group_id: 'H1',
         scope_group_id: 'B1',
+      }),
+    ]);
+  });
+
+  it('stores partner_grants_right_to_current as current holder and partner scope', () => {
+    const payload = buildCanonicalGroupConnectionPayload({
+      currentGroupId: 'B1',
+      otherGroupId: 'H1',
+      relationshipType: 'child',
+      rightDirections: {
+        informationRight: 'none',
+        amendmentRight: 'partner_grants_right_to_current',
+        rightToSpeak: 'none',
+        activeVotingRight: 'none',
+        passiveVotingRight: 'none',
+      },
+      membershipDirection: null,
+      membershipRule: { membershipMode: 'none', roleId: '', sourceGroupIds: [] },
+      initiatorGroupId: 'B1',
+    });
+
+    expect(payload.grants).toEqual([
+      expect.objectContaining({
+        right_key: 'amendmentRight',
+        holder_group_id: 'B1',
+        scope_group_id: 'H1',
       }),
     ]);
   });

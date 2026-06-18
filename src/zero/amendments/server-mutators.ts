@@ -28,6 +28,7 @@ import {
   initializeAmendmentProcessPathSchema,
   resolveAmendmentProcessVoteSchema,
   completeProcessTaskWithEventSchema,
+  createProcessTaskSchema,
 } from './schema';
 import { createChangeRequestSchema, updateChangeRequestSchema } from '../change-requests/schema';
 import {
@@ -53,6 +54,25 @@ const ACTIVE_GROUP_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
 
 type AmendmentServerTx = Parameters<typeof mutators.amendments.create.fn>[0]['tx'];
 type AmendmentServerCtx = Parameters<typeof mutators.amendments.create.fn>[0]['ctx'];
+
+function getProcessTaskNotificationTitle(
+  taskType: string | null | undefined,
+  title?: string | null
+) {
+  const trimmedTitle = title?.trim();
+  if (trimmedTitle) {
+    return trimmedTitle;
+  }
+
+  switch (taskType) {
+    case 'implementation_evaluation':
+      return 'Umsetzung evaluieren';
+    case 'support_confirmation':
+      return 'Unterstützung bestätigen';
+    default:
+      return 'Event planen';
+  }
+}
 
 async function loadAmendmentForMutation(tx: AmendmentServerTx, amendmentId: string) {
   const amendment = await tx.run(zql.amendment.where('id', amendmentId).one());
@@ -751,6 +771,15 @@ export const amendmentServerMutators = {
     });
 
     if (amendment?.event_id) {
+      fireNotification('notifyEventChangeRequestCreated', {
+        senderId: ctx.userID,
+        senderName,
+        eventId: amendment.event_id,
+        eventTitle: await eventTitle(tx, amendment.event_id),
+        amendmentId: args.amendment_id,
+        amendmentTitle: aTitle,
+      });
+
       await recomputeEventCounters(tx, amendment.event_id);
     }
   }),
@@ -877,9 +906,12 @@ export const amendmentServerMutators = {
         return;
       }
 
-      const [aTitle, gName] = await Promise.all([
+      const [aTitle, gName, eTitle] = await Promise.all([
         amendmentTitle(tx, previousConfirmation.amendment_id),
         groupName(tx, previousConfirmation.group_id),
+        previousConfirmation.event_id
+          ? eventTitle(tx, previousConfirmation.event_id)
+          : Promise.resolve(undefined),
       ]);
 
       if (args.status === 'confirmed') {
@@ -889,6 +921,15 @@ export const amendmentServerMutators = {
           amendmentTitle: aTitle,
           groupId: previousConfirmation.group_id,
           groupName: gName,
+        });
+        fireNotification('notifyGroupAmendmentSupportConfirmed', {
+          senderId: ctx.userID,
+          amendmentId: previousConfirmation.amendment_id,
+          amendmentTitle: aTitle,
+          groupId: previousConfirmation.group_id,
+          groupName: gName,
+          eventId: previousConfirmation.event_id ?? undefined,
+          eventTitle: eTitle,
         });
       }
 
@@ -904,6 +945,21 @@ export const amendmentServerMutators = {
     }
   ),
 
+  createProcessTask: defineMutator(createProcessTaskSchema, async ({ tx, ctx, args }) => {
+    await mutators.amendments.createProcessTask.fn({ tx, ctx, args });
+
+    if (args.status !== 'open' || !args.group_id) {
+      return;
+    }
+
+    fireNotification('notifyProcessTaskCreated', {
+      senderId: ctx.userID,
+      groupId: args.group_id,
+      groupName: await groupName(tx, args.group_id),
+      taskTitle: getProcessTaskNotificationTitle(args.task_type, args.title),
+    });
+  }),
+
   initializeProcessPath: defineMutator(
     initializeAmendmentProcessPathSchema,
     async ({ tx, ctx, args }) => {
@@ -917,7 +973,7 @@ export const amendmentServerMutators = {
     resolveAmendmentProcessVoteSchema,
     async ({ tx, ctx, args }) => {
       await assertCanResolveProcessVote(tx, ctx, args.agenda_item_id);
-      const resolution = await resolveAmendmentProcessVote(tx, args);
+      const resolution = await resolveAmendmentProcessVote(tx, args, ctx.userID);
       await notifyProcessVoteResolution(tx, ctx.userID, args.agenda_item_id, resolution);
     }
   ),

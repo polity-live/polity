@@ -1,8 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { createPathCorridorStreetDesignObject } from '../../logic/streetDesignPlacement';
+import {
+  createPathCorridorStreetDesignObject,
+  createPointStreetDesignObject,
+  getStreetDesignGeometryRotationDeg,
+} from '../../logic/streetDesignPlacement';
 import { createInitialStreetDesignEditorState, streetDesignReducer } from '../streetDesignReducer';
 
 describe('streetDesignReducer', () => {
+  it('starts in select mode by default', () => {
+    const initialState = createInitialStreetDesignEditorState();
+
+    expect(initialState.interactionMode).toBe('select');
+  });
+
   it('does not place objects while camera mode is active', () => {
     const initialState = createInitialStreetDesignEditorState();
     const cameraState = streetDesignReducer(initialState, {
@@ -17,6 +27,18 @@ describe('streetDesignReducer', () => {
 
     expect(nextState.design.objects).toHaveLength(0);
     expect(nextState.interactionMode).toBe('camera');
+  });
+
+  it('does not place objects while select mode is active', () => {
+    const initialState = createInitialStreetDesignEditorState();
+    const nextState = streetDesignReducer(initialState, {
+      type: 'scene_pointer_down',
+      point: { x: 3, z: 4 },
+      id: 'tree-1',
+    });
+
+    expect(nextState.design.objects).toHaveLength(0);
+    expect(nextState.interactionMode).toBe('select');
   });
 
   it('switches from original to overlay when placement starts', () => {
@@ -282,6 +304,85 @@ describe('streetDesignReducer', () => {
     expect(finalized.selectedObjectId).toBe('parking-1');
   });
 
+  it('applies current draft settings to placed objects and then resets them', () => {
+    const initialState = createInitialStreetDesignEditorState();
+    const withTool = streetDesignReducer(initialState, {
+      type: 'set_tool',
+      objectType: 'building',
+    });
+    const withWidth = streetDesignReducer(withTool, {
+      type: 'set_placement_width',
+      width: 12,
+    });
+    const withHeight = streetDesignReducer(withWidth, {
+      type: 'set_placement_property',
+      key: 'height',
+      value: 14,
+    });
+    const withCost = streetDesignReducer(withHeight, {
+      type: 'set_placement_unit_cost',
+      unitCostMinor: 300000,
+    });
+    const withStart = streetDesignReducer(withCost, {
+      type: 'scene_pointer_down',
+      point: { x: 0, z: 0 },
+      id: 'draft-id',
+    });
+    const withSecondPoint = streetDesignReducer(withStart, {
+      type: 'scene_pointer_down',
+      point: { x: 10, z: 0 },
+      id: 'unused-id',
+    });
+    const finalized = streetDesignReducer(withSecondPoint, {
+      type: 'finish_path_placement',
+      id: 'building-custom',
+    });
+
+    const object = finalized.design.objects[0];
+    expect(object.type).toBe('building');
+    expect(object.properties.height).toBe(14);
+    expect(object.cost.customUnitCostMinor).toBe(300000);
+    expect(object.geometry.kind).toBe('path_corridor');
+    if (object.geometry.kind === 'path_corridor') {
+      expect(object.geometry.width).toBe(12);
+    }
+    expect(finalized.placementSettings.width).toBe(10);
+    expect(finalized.interactionMode).toBe('select');
+  });
+
+  it('rotates selected corridor objects around their center', () => {
+    const initialState = createInitialStreetDesignEditorState();
+    const withTool = streetDesignReducer(initialState, {
+      type: 'set_tool',
+      objectType: 'parking_area',
+    });
+    const withStart = streetDesignReducer(withTool, {
+      type: 'scene_pointer_down',
+      point: { x: 0, z: 0 },
+      id: 'draft-id',
+    });
+    const withObject = streetDesignReducer(withStart, {
+      type: 'scene_pointer_down',
+      point: { x: 10, z: 0 },
+      id: 'parking-rotate',
+    });
+    const rotated = streetDesignReducer(withObject, {
+      type: 'rotate_object',
+      objectId: 'parking-rotate',
+      rotationDeg: 0,
+    });
+    const object = rotated.design.objects[0];
+
+    expect(getStreetDesignGeometryRotationDeg(object.geometry)).toBe(0);
+    expect(object.geometry.kind).toBe('corridor');
+    if (object.geometry.kind === 'corridor') {
+      expect(object.geometry.start.x).toBeCloseTo(5);
+      expect(object.geometry.end.x).toBeCloseTo(5);
+      expect(object.geometry.start.z).toBeCloseTo(-5);
+      expect(object.geometry.end.z).toBeCloseTo(5);
+    }
+  });
+
   it('creates building objects through path placement', () => {
     const initialState = createInitialStreetDesignEditorState();
     const withTool = streetDesignReducer(initialState, {
@@ -339,6 +440,121 @@ describe('streetDesignReducer', () => {
 
     expect(nextState.design.osmLayerVisibility?.building).toBe(false);
     expect(nextState.design.osmLayerVisibility?.road).toBe(true);
+    expect(nextState.isDirty).toBe(true);
+  });
+
+  it('creates a new OSM focus request when selecting an existing object again', () => {
+    const initialState = createInitialStreetDesignEditorState();
+    const selected = streetDesignReducer(initialState, {
+      type: 'select_osm_way',
+      osmWayId: 'building-1',
+    });
+    const selectedAgain = streetDesignReducer(selected, {
+      type: 'select_osm_way',
+      osmWayId: 'building-1',
+    });
+
+    expect(selected.selectedOsmWayId).toBe('building-1');
+    expect(selected.selectedOsmFocusRequestKey).toBe(1);
+    expect(selectedAgain.selectedOsmWayId).toBe('building-1');
+    expect(selectedAgain.selectedOsmFocusRequestKey).toBe(2);
+  });
+
+  it('creates a new design object focus request when selecting an element again', () => {
+    const initialState = createInitialStreetDesignEditorState();
+    const selected = streetDesignReducer(initialState, {
+      type: 'select_object',
+      objectId: 'building-1',
+    });
+    const selectedAgain = streetDesignReducer(selected, {
+      type: 'select_object',
+      objectId: 'building-1',
+    });
+
+    expect(selected.selectedObjectId).toBe('building-1');
+    expect(selected.selectedObjectFocusRequestKey).toBe(1);
+    expect(selectedAgain.selectedObjectId).toBe('building-1');
+    expect(selectedAgain.selectedObjectFocusRequestKey).toBe(2);
+  });
+
+  it('keeps a selected design object when clearing OSM selection', () => {
+    const tree = createPointStreetDesignObject({
+      id: 'tree-1',
+      type: 'tree',
+      point: { x: 0, z: 0 },
+    });
+    const initialState = createInitialStreetDesignEditorState({
+      ...createInitialStreetDesignEditorState().design,
+      objects: [tree],
+    });
+    const selected = streetDesignReducer(initialState, {
+      type: 'select_object',
+      objectId: 'tree-1',
+    });
+    const clearedOsmSelection = streetDesignReducer(selected, {
+      type: 'select_osm_way',
+      osmWayId: null,
+    });
+    const selectedOsmWay = streetDesignReducer(clearedOsmSelection, {
+      type: 'select_osm_way',
+      osmWayId: 'osm-building-1',
+    });
+
+    expect(clearedOsmSelection.selectedObjectId).toBe('tree-1');
+    expect(clearedOsmSelection.selectedOsmWayId).toBeNull();
+    expect(selectedOsmWay.selectedObjectId).toBeNull();
+    expect(selectedOsmWay.selectedOsmWayId).toBe('osm-building-1');
+  });
+
+  it('tracks hidden design elements and groups without changing saved objects', () => {
+    const tree = createPointStreetDesignObject({
+      id: 'tree-1',
+      type: 'tree',
+      point: { x: 0, z: 0 },
+    });
+    const initialState = createInitialStreetDesignEditorState({
+      ...createInitialStreetDesignEditorState().design,
+      objects: [tree],
+    });
+    const hiddenObject = streetDesignReducer(initialState, {
+      type: 'set_object_visibility',
+      objectId: 'tree-1',
+      visible: false,
+    });
+    const hiddenGroup = streetDesignReducer(hiddenObject, {
+      type: 'set_object_category_visibility',
+      category: 'greenery',
+      visible: false,
+    });
+
+    expect(hiddenObject.hiddenObjectIds).toContain('tree-1');
+    expect(hiddenObject.design.objects).toHaveLength(1);
+    expect(hiddenGroup.hiddenObjectCategories).toContain('greenery');
+    expect(hiddenGroup.design.objects).toHaveLength(1);
+  });
+
+  it('removes all design elements in a group', () => {
+    const tree = createPointStreetDesignObject({
+      id: 'tree-1',
+      type: 'tree',
+      point: { x: 0, z: 0 },
+    });
+    const bank = createPointStreetDesignObject({
+      id: 'bank-1',
+      type: 'bank',
+      point: { x: 1, z: 1 },
+    });
+    const initialState = createInitialStreetDesignEditorState({
+      ...createInitialStreetDesignEditorState().design,
+      objects: [tree, bank],
+    });
+    const nextState = streetDesignReducer(initialState, {
+      type: 'delete_object_category',
+      category: 'greenery',
+    });
+
+    expect(nextState.design.objects).toHaveLength(1);
+    expect(nextState.design.objects[0]?.id).toBe('bank-1');
     expect(nextState.isDirty).toBe(true);
   });
 

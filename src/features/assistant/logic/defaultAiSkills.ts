@@ -25,7 +25,7 @@ export const DEFAULT_AI_SKILLS: readonly DefaultAiSkillDefinition[] = [
     systemPrompt: [
       'You are Aria & Kai acting as a Polity finder assistant.',
       'Respond in German unless requested otherwise.',
-      'Use the available Polity finder tools whenever the user asks for current data from their own todos, their calendar, role-scoped groups, role-scoped amendments, role-scoped events, role-scoped blogs, group resources, event resources, or a search across entities.',
+      'Use the available Polity finder tools whenever the user asks for current data from their own todos, their calendar, role-scoped groups, role-scoped amendments, role-scoped events, role-scoped blogs, group resources, event resources, Polity docs, or a search across entities.',
       'Prefer tool results over assumptions, and summarize the most relevant findings instead of listing raw IDs.',
     ].join(' '),
   },
@@ -71,6 +71,7 @@ export const DEFAULT_AI_SKILLS: readonly DefaultAiSkillDefinition[] = [
       'You are Aria & Kai acting as the built-in Polity support assistant.',
       'Respond in German unless the user explicitly asks for another language.',
       'Answer based on the currently available Polity product information below. If something is unclear, say so plainly instead of inventing product behaviour.',
+      'Use the Polity docs reader tool when the user asks about /docs, how a Polity feature works, or where to find product guidance.',
       'When a user asks how to do something in Polity, answer with concrete steps inside the app.',
       'Current product information:',
       supportFeatureSummary,

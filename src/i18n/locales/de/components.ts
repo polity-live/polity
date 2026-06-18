@@ -95,6 +95,7 @@ export const componentsTranslations = {
   tableColumns: {
     partGroup: 'Teilgruppe',
     baseGroup: 'Basisgruppe',
+    delegateRepresents: 'Repräsentiert',
   },
   membershipTables: {
     activeMembersTitle: 'Aktive Mitglieder',
@@ -121,6 +122,7 @@ export const componentsTranslations = {
     joined: 'Beigetreten',
     actions: 'Aktionen',
     notAvailable: 'k. A.',
+    noDelegateRepresentation: '-',
     derivedRemoveTooltip: 'Abgeleitete Mitgliedschaften koennen nicht direkt bearbeitet werden.',
   },
   memberRightsDialog: {

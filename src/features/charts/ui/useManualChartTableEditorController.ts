@@ -8,10 +8,12 @@ const PAGE_SIZE = 20;
 interface ManualChartTableEditorProps {
   table: ParsedChartTable;
   onChange: (table: ParsedChartTable) => void;
+  readOnly?: boolean;
 }
 export function useManualChartTableEditorController({
   table,
   onChange,
+  readOnly = false,
 }: ManualChartTableEditorProps) {
   const { t } = useTranslation();
   const [page, setPage] = React.useState(0);
@@ -23,6 +25,7 @@ export function useManualChartTableEditorController({
   }, [pageCount]);
 
   const renameColumn = (oldName: string, nextName: string) => {
+    if (readOnly) return;
     const normalized = nextName.trim();
     if (!normalized || (normalized !== oldName && table.columns.includes(normalized))) return;
     onChange({
@@ -36,6 +39,7 @@ export function useManualChartTableEditorController({
   };
 
   const removeColumn = (column: string) => {
+    if (readOnly) return;
     if (table.columns.length <= 2) return;
     onChange({
       columns: table.columns.filter(item => item !== column),
@@ -56,5 +60,6 @@ export function useManualChartTableEditorController({
     visibleRows,
     renameColumn,
     removeColumn,
+    readOnly,
   };
 }

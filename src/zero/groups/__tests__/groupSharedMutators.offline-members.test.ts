@@ -57,8 +57,6 @@ describe('groupSharedMutators.createOfflineMember', () => {
           group_type: 'base',
         },
       ])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce([
         {

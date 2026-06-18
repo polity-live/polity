@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { Notification } from '../../types/notification.types';
 import {
+  collectAmendmentCollaboratorManagerRecipientIds,
+  collectEventParticipantManagerRecipientIds,
+  collectEventParticipantRecipientIds,
+  collectGroupMemberRecipientIds,
+  collectGroupMembershipManagerRecipientIds,
+  collectProcessTaskEventManagerRecipientIds,
+  collectRelationshipManagerRecipientIds,
+} from '../../utils/notification-helpers';
+import {
   filterAccessibleNotifications,
   getNotificationNavigationTarget,
 } from '../notificationHelpers';
@@ -94,6 +103,20 @@ describe('getNotificationNavigationTarget', () => {
       to: '/group/group-1/memberships',
     });
   });
+
+  it('preserves route action url search parameters', () => {
+    const target = getNotificationNavigationTarget(
+      createNotification({
+        type: 'group_connection_request',
+        action_url: '/group/group-1/network?tab=manage-network',
+      })
+    );
+
+    expect(target).toEqual({
+      kind: 'route',
+      to: '/group/group-1/network?tab=manage-network',
+    });
+  });
 });
 
 describe('filterAccessibleNotifications', () => {
@@ -180,5 +203,584 @@ describe('filterAccessibleNotifications', () => {
     );
 
     expect(result).toEqual([]);
+  });
+});
+
+describe('collectRelationshipManagerRecipientIds', () => {
+  it('collects owners, active membership managers, and active guest managers', () => {
+    const recipients = collectRelationshipManagerRecipientIds(
+      {
+        owner_id: 'owner-user',
+        memberships: [
+          {
+            user_id: 'member-manager',
+            status: 'active',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groupRelationships', action: 'manage' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'member-viewer',
+            status: 'active',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groupRelationships', action: 'view' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'requested-manager',
+            status: 'requested',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groupRelationships', action: 'manage' }],
+                },
+              },
+            ],
+          },
+        ],
+        guest_accesses: [
+          {
+            user_id: 'guest-manager',
+            status: 'active',
+            guest_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groupRelationships', action: 'manage' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'revoked-guest-manager',
+            status: 'revoked',
+            guest_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groupRelationships', action: 'manage' }],
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'actor-user'
+    );
+
+    expect(recipients.sort()).toEqual(['guest-manager', 'member-manager', 'owner-user']);
+  });
+
+  it('deduplicates recipients and excludes the actor', () => {
+    const recipients = collectRelationshipManagerRecipientIds(
+      {
+        owner_id: 'actor-user',
+        memberships: [
+          {
+            user_id: 'manager-user',
+            status: 'admin',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groupRelationships', action: 'manage' }],
+                },
+              },
+            ],
+          },
+        ],
+        guest_accesses: [
+          {
+            user_id: 'manager-user',
+            status: 'active',
+            guest_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groupRelationships', action: 'manage' }],
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'actor-user'
+    );
+
+    expect(recipients).toEqual(['manager-user']);
+  });
+});
+
+describe('collectEventParticipantRecipientIds', () => {
+  it('collects distinct active event participants', () => {
+    const recipients = collectEventParticipantRecipientIds([
+      { user_id: 'active-user', status: 'active' },
+      { user_id: 'confirmed-user', status: 'confirmed' },
+      { user_id: 'member-user', status: 'member' },
+      { user_id: 'admin-user', status: 'admin' },
+      { user_id: 'requested-user', status: 'requested' },
+      { user_id: 'invited-user', status: 'invited' },
+      { user_id: 'active-user', status: 'active' },
+      { user_id: null, status: 'active' },
+    ]);
+
+    expect(recipients.sort()).toEqual([
+      'active-user',
+      'admin-user',
+      'confirmed-user',
+      'member-user',
+    ]);
+  });
+});
+
+describe('collectGroupMemberRecipientIds', () => {
+  it('collects owners and distinct active group members without guest access users', () => {
+    const recipients = collectGroupMemberRecipientIds({
+      owner_id: 'owner-user',
+      memberships: [
+        { user_id: 'active-user', status: 'active' },
+        { user_id: 'member-user', status: 'member' },
+        { user_id: 'admin-user', status: 'admin' },
+        { user_id: 'requested-user', status: 'requested' },
+        { user_id: 'invited-user', status: 'invited' },
+        { user_id: 'active-user', status: 'active' },
+        { user_id: null, status: 'active' },
+      ],
+      guest_accesses: [{ user_id: 'guest-user', status: 'active' }],
+    });
+
+    expect(recipients.sort()).toEqual(['active-user', 'admin-user', 'member-user', 'owner-user']);
+  });
+});
+
+describe('collectGroupMembershipManagerRecipientIds', () => {
+  it('collects owners and active members or guests with member-management rights', () => {
+    const recipients = collectGroupMembershipManagerRecipientIds(
+      {
+        owner_id: 'owner-user',
+        memberships: [
+          {
+            user_id: 'member-manager',
+            status: 'active',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groupMemberships', action: 'manage' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'member-manage-members',
+            status: 'admin',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groups', action: 'manage_members' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'viewer',
+            status: 'active',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groups', action: 'view' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'requested-manager',
+            status: 'requested',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groupMemberships', action: 'manage' }],
+                },
+              },
+            ],
+          },
+        ],
+        guest_accesses: [
+          {
+            user_id: 'guest-manager',
+            status: 'active',
+            guest_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groupMemberships', action: 'manage_members' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'revoked-guest',
+            status: 'revoked',
+            guest_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groups', action: 'manage' }],
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'actor-user'
+    );
+
+    expect(recipients.sort()).toEqual([
+      'guest-manager',
+      'member-manage-members',
+      'member-manager',
+      'owner-user',
+    ]);
+  });
+
+  it('deduplicates recipients and excludes the actor', () => {
+    const recipients = collectGroupMembershipManagerRecipientIds(
+      {
+        owner_id: 'actor-user',
+        memberships: [
+          {
+            user_id: 'manager-user',
+            status: 'active',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groups', action: 'manage_members' }],
+                },
+              },
+            ],
+          },
+        ],
+        guest_accesses: [
+          {
+            user_id: 'manager-user',
+            status: 'active',
+            guest_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'groupMemberships', action: 'manage' }],
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'actor-user'
+    );
+
+    expect(recipients).toEqual(['manager-user']);
+  });
+});
+
+describe('collectEventParticipantManagerRecipientIds', () => {
+  it('collects creators and active participants with participant-management rights', () => {
+    const recipients = collectEventParticipantManagerRecipientIds(
+      {
+        creator_id: 'creator-user',
+        participants: [
+          {
+            user_id: 'event-manager',
+            status: 'active',
+            participant_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'events', action: 'manage_participants' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'event-admin',
+            status: 'confirmed',
+            participant_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'events', action: 'manage' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'event-viewer',
+            status: 'active',
+            participant_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'events', action: 'view' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'requested-manager',
+            status: 'requested',
+            participant_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'events', action: 'manage' }],
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'actor-user'
+    );
+
+    expect(recipients.sort()).toEqual(['creator-user', 'event-admin', 'event-manager']);
+  });
+
+  it('deduplicates recipients and excludes the actor', () => {
+    const recipients = collectEventParticipantManagerRecipientIds(
+      {
+        creator_id: 'actor-user',
+        participants: [
+          {
+            user_id: 'manager-user',
+            status: 'active',
+            participant_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'events', action: 'manage_participants' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'manager-user',
+            status: 'confirmed',
+            participant_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'events', action: 'manage' }],
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'actor-user'
+    );
+
+    expect(recipients).toEqual(['manager-user']);
+  });
+});
+
+describe('collectAmendmentCollaboratorManagerRecipientIds', () => {
+  it('collects authors and active collaborators with amendment manage rights', () => {
+    const recipients = collectAmendmentCollaboratorManagerRecipientIds(
+      {
+        created_by_id: 'author-user',
+        collaborators: [
+          {
+            user_id: 'collaborator-manager',
+            status: 'member',
+            role: {
+              action_rights: [{ resource: 'amendments', action: 'manage' }],
+            },
+          },
+          {
+            user_id: 'collaborator-viewer',
+            status: 'member',
+            role: {
+              action_rights: [{ resource: 'amendments', action: 'view' }],
+            },
+          },
+          {
+            user_id: 'requested-manager',
+            status: 'requested',
+            role: {
+              action_rights: [{ resource: 'amendments', action: 'manage' }],
+            },
+          },
+        ],
+      },
+      'actor-user'
+    );
+
+    expect(recipients.sort()).toEqual(['author-user', 'collaborator-manager']);
+  });
+
+  it('deduplicates recipients and excludes the actor', () => {
+    const recipients = collectAmendmentCollaboratorManagerRecipientIds(
+      {
+        created_by_id: 'actor-user',
+        collaborators: [
+          {
+            user_id: 'manager-user',
+            status: 'member',
+            role: {
+              action_rights: [{ resource: 'amendments', action: 'manage' }],
+            },
+          },
+          {
+            user_id: 'manager-user',
+            status: 'active',
+            role: {
+              action_rights: [{ resource: 'amendments', action: 'manage' }],
+            },
+          },
+        ],
+      },
+      'actor-user'
+    );
+
+    expect(recipients).toEqual(['manager-user']);
+  });
+});
+
+describe('collectProcessTaskEventManagerRecipientIds', () => {
+  it('collects owners and active members or guests with group-scoped event management rights', () => {
+    const recipients = collectProcessTaskEventManagerRecipientIds(
+      {
+        owner_id: 'owner-user',
+        memberships: [
+          {
+            user_id: 'member-manager',
+            status: 'active',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'events', action: 'manage', group_id: 'group-1' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'member-vote-manager',
+            status: 'member',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [
+                    { resource: 'events', action: 'manage_votes', group_id: 'group-1' },
+                  ],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'member-viewer',
+            status: 'active',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'events', action: 'view', group_id: 'group-1' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'wrong-group-manager',
+            status: 'active',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'events', action: 'manage', group_id: 'group-2' }],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'requested-manager',
+            status: 'requested',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [
+                    { resource: 'events', action: 'manage_votes', group_id: 'group-1' },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+        guest_accesses: [
+          {
+            user_id: 'guest-manager',
+            status: 'active',
+            guest_roles: [
+              {
+                role: {
+                  action_rights: [
+                    { resource: 'events', action: 'manage_votes', group_id: 'group-1' },
+                  ],
+                },
+              },
+            ],
+          },
+          {
+            user_id: 'revoked-guest-manager',
+            status: 'revoked',
+            guest_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'events', action: 'manage', group_id: 'group-1' }],
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'group-1',
+      'actor-user'
+    );
+
+    expect(recipients.sort()).toEqual([
+      'guest-manager',
+      'member-manager',
+      'member-vote-manager',
+      'owner-user',
+    ]);
+  });
+
+  it('deduplicates recipients and excludes the actor from personal copies', () => {
+    const recipients = collectProcessTaskEventManagerRecipientIds(
+      {
+        owner_id: 'actor-user',
+        memberships: [
+          {
+            user_id: 'manager-user',
+            status: 'admin',
+            membership_roles: [
+              {
+                role: {
+                  action_rights: [{ resource: 'events', action: 'manage', group_id: 'group-1' }],
+                },
+              },
+            ],
+          },
+        ],
+        guest_accesses: [
+          {
+            user_id: 'manager-user',
+            status: 'active',
+            guest_roles: [
+              {
+                role: {
+                  action_rights: [
+                    { resource: 'events', action: 'manage_votes', group_id: 'group-1' },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
+      'group-1',
+      'actor-user'
+    );
+
+    expect(recipients).toEqual(['manager-user']);
   });
 });

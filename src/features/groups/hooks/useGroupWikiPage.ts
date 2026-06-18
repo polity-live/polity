@@ -4,6 +4,7 @@ import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
 import { countAcceptedMemberships } from '@/features/groups/logic/groupWikiHelpers';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { useAuth } from '@/providers/auth-provider';
+import { getGroupTypeFlags } from '@/features/groups/logic/groupTypeFlags';
 
 export function useGroupWikiPage(groupId: string) {
   const { user } = useAuth();
@@ -36,6 +37,7 @@ export function useGroupWikiPage(groupId: string) {
 
   // Fetch group data
   const { group } = useGroupWikiData(groupId);
+  const groupTypeFlags = getGroupTypeFlags(group);
 
   // ── Derived counts ────────────────────────────────────────────────
   const memberCount =
@@ -64,10 +66,10 @@ export function useGroupWikiPage(groupId: string) {
     toggleSubscribe,
 
     // Group type
-    isHierarchical: group?.group_type === 'hierarchical',
-    isSibling: group?.group_type === 'sibling',
-    isOpenSibling:
-      group?.group_type === 'sibling' && group?.primary_sibling_membership_mode === 'none',
+    isBase: groupTypeFlags.isBase,
+    isHierarchical: groupTypeFlags.isHierarchical,
+    isSibling: groupTypeFlags.isSibling,
+    isOpenSibling: groupTypeFlags.isSibling && group?.primary_sibling_membership_mode === 'none',
 
     // Membership
     status,

@@ -1,10 +1,12 @@
 // Table
-export { eventDelegate, groupDelegateAllocation } from './table'
+export { eventDelegate, groupDelegateAllocation, delegateElectionAssignment } from './table';
 
 // Zod Schemas
 export {
   eventDelegateSelectSchema,
   groupDelegateAllocationSelectSchema,
+  delegateElectionAssignmentSelectSchema,
   type EventDelegate,
   type GroupDelegateAllocation,
-} from './schema'
+  type DelegateElectionAssignment,
+} from './schema';

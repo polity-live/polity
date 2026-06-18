@@ -82,6 +82,26 @@ function asNumber(value: unknown): number | undefined {
   return undefined;
 }
 
+function asString(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function getFirstString(
+  records: readonly Record<string, unknown>[],
+  ...keys: readonly string[]
+): string | undefined {
+  for (const record of records) {
+    for (const key of keys) {
+      const value = asString(record[key]);
+      if (value) return value;
+    }
+  }
+
+  return undefined;
+}
+
 function getStat(
   payload: SearchDocumentCardPayload,
   ...keys: readonly string[]
@@ -112,12 +132,22 @@ function toContentItem(document: SearchDocument): SearchContentItem | null {
   const type = getSearchType(document, payload);
   if (!type) return null;
 
+  const payloadRecord = payload as Record<string, unknown>;
+  const metadata = isRecord(payload.metadata) ? payload.metadata : {};
   const createdAt = asDate(document.created_at) ?? new Date();
   const updatedAt = asDate(document.updated_at);
   const tags = collectTags(document, payload);
   const groupName = document.group?.name ?? undefined;
   const subtitle = document.subtitle ?? undefined;
   const handle = payload.handle ?? (subtitle?.startsWith('@') ? subtitle.slice(1) : undefined);
+  const agendaEventId = getFirstString(
+    [payloadRecord, metadata],
+    'agendaEventId',
+    'agenda_event_id',
+    'eventId',
+    'event_id'
+  );
+  const agendaItemId = getFirstString([payloadRecord, metadata], 'agendaItemId', 'agenda_item_id');
 
   const item: SearchContentItem = {
     id: document.entity_id,
@@ -134,6 +164,8 @@ function toContentItem(document: SearchDocument): SearchContentItem | null {
     handle,
     location: payload.location ?? cleanSubtitle(subtitle),
     status: payload.status,
+    agendaEventId,
+    agendaItemId,
     dueDate: asDate(payload.due_at),
     startDate: asDate(payload.starts_at),
     endDate: asDate(payload.ends_at),

@@ -16,6 +16,9 @@ export const RIGHT_TYPES = [
 ] as const;
 
 export type RightType = (typeof RIGHT_TYPES)[number];
+export const MEMBERSHIP_FLOW_RIGHT = 'membership' as const;
+export const NETWORK_FLOW_FILTER_TYPES = [...RIGHT_TYPES, MEMBERSHIP_FLOW_RIGHT] as const;
+export type NetworkFlowFilterType = (typeof NETWORK_FLOW_FILTER_TYPES)[number];
 
 const RIGHT_TRANSLATION_KEYS: Record<RightType, string> = {
   informationRight: 'common.rights.information',
@@ -39,7 +42,11 @@ export const RIGHT_GRADIENTS: Record<string, string> = {
   rightToSpeak: getRightToneClasses('rightToSpeak').badge,
   activeVotingRight: getRightToneClasses('activeVotingRight').badge,
   passiveVotingRight: getRightToneClasses('passiveVotingRight').badge,
+  [MEMBERSHIP_FLOW_RIGHT]:
+    'border-[var(--entity-group-border)] bg-[var(--entity-group-bg)] text-[var(--entity-group-fg)]',
 };
+
+export const TOKEN_BADGE_FILTER_HOVER_CLASSES = 'hover:bg-accent hover:text-accent-foreground';
 
 type RightRequestKind = 'incoming' | 'outgoing';
 type RightLabelTranslateFn = (key: string, fallback?: string) => string;
@@ -49,6 +56,11 @@ export function isRightType(right: string): right is RightType {
 }
 
 export function getRightLabel(right: string, t?: RightLabelTranslateFn): string {
+  if (right === MEMBERSHIP_FLOW_RIGHT) {
+    const fallback = 'Membership';
+    return t ? t('common.network.membershipLabel', fallback) || fallback : fallback;
+  }
+
   if (!isRightType(right)) {
     return right;
   }
@@ -104,6 +116,7 @@ export function RightBadgeVisual({
           'text-xs',
           size === 'compact' && 'px-1.5 py-0.5 text-[10px] leading-tight',
           RIGHT_GRADIENTS[right] ?? getRightToneClasses(right).badge,
+          TOKEN_BADGE_FILTER_HOVER_CLASSES,
           className
         )}
       >
@@ -186,7 +199,11 @@ export function RightFilterOptionButton({
       className={cn(
         'text-xs',
         active
-          ? `${RIGHT_GRADIENTS[right] ?? getRightToneClasses(right).badge} shadow-sm`
+          ? cn(
+              RIGHT_GRADIENTS[right] ?? getRightToneClasses(right).badge,
+              TOKEN_BADGE_FILTER_HOVER_CLASSES,
+              'shadow-sm'
+            )
           : 'border-border bg-background/90 text-foreground hover:bg-accent hover:text-accent-foreground dark:bg-card/90 dark:text-foreground'
       )}
     >

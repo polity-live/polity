@@ -52,6 +52,7 @@ vi.mock('@/zero/mutate-with-server-check', () => ({
 }));
 
 import { useNetworkPage } from '../useNetworkPage';
+import type { NetworkTab } from '../../types/network.types';
 
 function createRelationship(overrides: Record<string, unknown> = {}) {
   return {
@@ -59,6 +60,8 @@ function createRelationship(overrides: Record<string, unknown> = {}) {
     connection_id: 'connection-1',
     grant_id: 'right-1',
     connection_request_id: 'request-1',
+    membership_request_id: null,
+    request_item_kind: 'right',
     group_id: 'group-a',
     related_group_id: 'group-b',
     relationship_type: 'parent',
@@ -167,6 +170,22 @@ beforeEach(() => {
 });
 
 describe('useNetworkPage request actions', () => {
+  it('uses and updates a requested network tab from route state', () => {
+    const initialProps: { tab?: NetworkTab } = { tab: 'manage-network' };
+    const { result, rerender } = renderHook(
+      ({ tab }: { tab?: NetworkTab }) => useNetworkPage('group-1', tab),
+      { initialProps }
+    );
+
+    expect(result.current.activeTab).toBe('manage-network');
+
+    act(() => {
+      rerender({ tab: 'manage-workflows' });
+    });
+
+    expect(result.current.activeTab).toBe('manage-workflows');
+  });
+
   it('includes the current page group in availableGroups when the global group list omits it', () => {
     useGroupDataMock.mockReturnValue({
       group: {
@@ -241,6 +260,70 @@ describe('useNetworkPage request actions', () => {
     expect(serverConfirmedMock).toHaveBeenCalledWith('approve-result');
   });
 
+  it('approves membership rows without selecting rights', async () => {
+    const approveGroupConnectionRequest = vi.fn(() => 'approve-membership-result');
+    useGroupConnectionActionsMock.mockReturnValue({
+      approveGroupConnectionRequest,
+      rejectGroupConnectionRequest: vi.fn(),
+      deleteGroupConnection: vi.fn(),
+    });
+
+    const { result } = renderHook(() => useNetworkPage('group-1'));
+
+    await act(async () => {
+      await result.current.handleAcceptRequest([
+        createRelationship({
+          id: 'membership-request-1',
+          grant_id: null,
+          membership_request_id: 'membership-request-1',
+          request_item_kind: 'membership',
+          with_right: null,
+          member_source_group_id: 'group-b',
+          member_target_group_id: 'group-a',
+          membership_mode: 'all_members',
+        }),
+      ] as never);
+    });
+
+    expect(approveGroupConnectionRequest).toHaveBeenCalledWith({
+      id: 'request-1',
+      grant_request_ids: [],
+      approve_membership: true,
+    });
+    expect(serverConfirmedMock).toHaveBeenCalledWith('approve-membership-result');
+  });
+
+  it('keeps membership pending when a single right row is approved', async () => {
+    const approveGroupConnectionRequest = vi.fn(() => 'approve-right-result');
+    useGroupConnectionActionsMock.mockReturnValue({
+      approveGroupConnectionRequest,
+      rejectGroupConnectionRequest: vi.fn(),
+      deleteGroupConnection: vi.fn(),
+    });
+
+    const { result } = renderHook(() => useNetworkPage('group-1'));
+
+    await act(async () => {
+      await result.current.handleAcceptRequest([
+        createRelationship({
+          id: 'grant-request-1',
+          connection_request_id: 'request-1',
+          grant_id: 'grant-request-1',
+          request_item_kind: 'right',
+          member_source_group_id: 'group-b',
+          member_target_group_id: 'group-a',
+          membership_mode: 'all_members',
+        }),
+      ] as never);
+    });
+
+    expect(approveGroupConnectionRequest).toHaveBeenCalledWith({
+      id: 'request-1',
+      grant_request_ids: ['grant-request-1'],
+      approve_membership: false,
+    });
+  });
+
   it('rejects only the selected right ids for each request', async () => {
     const rejectGroupConnectionRequest = vi.fn(() => 'reject-result');
     useGroupConnectionActionsMock.mockReturnValue({
@@ -270,13 +353,96 @@ describe('useNetworkPage request actions', () => {
     expect(serverConfirmedMock).toHaveBeenCalledWith('reject-result');
   });
 
-  it('groups structure and right request rows under one outgoing request', () => {
+  it('rejects membership rows without rejecting rights or structure', async () => {
+    const rejectGroupConnectionRequest = vi.fn(() => 'reject-membership-result');
+    useGroupConnectionActionsMock.mockReturnValue({
+      approveGroupConnectionRequest: vi.fn(),
+      rejectGroupConnectionRequest,
+      deleteGroupConnection: vi.fn(),
+    });
+
+    const { result } = renderHook(() => useNetworkPage('group-1'));
+
+    await act(async () => {
+      await result.current.handleRejectRequest([
+        createRelationship({
+          id: 'membership-request-1',
+          grant_id: null,
+          membership_request_id: 'membership-request-1',
+          request_item_kind: 'membership',
+          with_right: null,
+          member_source_group_id: 'group-b',
+          member_target_group_id: 'group-a',
+          membership_mode: 'all_members',
+        }),
+      ] as never);
+    });
+
+    expect(rejectGroupConnectionRequest).toHaveBeenCalledWith({
+      id: 'request-1',
+      grant_request_ids: [],
+      reject_membership: true,
+      reject_structure: false,
+    });
+    expect(serverConfirmedMock).toHaveBeenCalledWith('reject-membership-result');
+  });
+
+  it('deletes matching relationships from the current page group as acting group', async () => {
+    const deleteGroupConnection = vi
+      .fn()
+      .mockReturnValueOnce('delete-result-1')
+      .mockReturnValueOnce('delete-result-2');
+    useGroupConnectionActionsMock.mockReturnValue({
+      approveGroupConnectionRequest: vi.fn(),
+      rejectGroupConnectionRequest: vi.fn(),
+      deleteGroupConnection,
+    });
+    useGroupNetworkMock.mockReturnValue({
+      networkData: { parents: [], children: [], siblings: [] },
+      showIndirect: false,
+      setShowIndirect: vi.fn(),
+      selectedRights: new Set(),
+      toggleRight: vi.fn(),
+      activeRelationships: [],
+      incomingRequests: [],
+      outgoingRequests: [],
+      allRelationships: [],
+      groupConnections: [
+        { id: 'connection-1', group_a_id: 'group-1', group_b_id: 'group-2' },
+        { id: 'connection-2', group_a_id: 'group-2', group_b_id: 'group-1' },
+        { id: 'connection-other', group_a_id: 'group-1', group_b_id: 'group-3' },
+      ],
+      isLoading: false,
+    });
+
+    const { result } = renderHook(() => useNetworkPage('group-1'));
+
+    await act(async () => {
+      await result.current.handleDeleteRelationship('group-2');
+    });
+
+    expect(deleteGroupConnection).toHaveBeenCalledTimes(2);
+    expect(deleteGroupConnection).toHaveBeenNthCalledWith(1, {
+      id: 'connection-1',
+      acting_group_id: 'group-1',
+    });
+    expect(deleteGroupConnection).toHaveBeenNthCalledWith(2, {
+      id: 'connection-2',
+      acting_group_id: 'group-1',
+    });
+    expect(serverConfirmedMock).toHaveBeenNthCalledWith(1, 'delete-result-1');
+    expect(serverConfirmedMock).toHaveBeenNthCalledWith(2, 'delete-result-2');
+  });
+
+  it('groups structure, membership, and right request rows under one outgoing request', () => {
     const currentGroup = { id: 'group-1', name: 'Current Group' };
     const partnerGroup = { id: 'group-2', name: 'Partner Group' };
     const structureRel = createRelationship({
       id: 'request-1:structure',
       connection_request_id: 'request-1',
       grant_id: null,
+      membership_request_id: null,
+      request_item_kind: 'structure',
       group_id: 'group-1',
       related_group_id: 'group-2',
       parent_group_id: 'group-1',
@@ -289,10 +455,30 @@ describe('useNetworkPage request actions', () => {
       group: currentGroup,
       related_group: partnerGroup,
     });
+    const membershipRel = createRelationship({
+      id: 'membership-request-1',
+      connection_request_id: 'request-1',
+      grant_id: null,
+      membership_request_id: 'membership-request-1',
+      request_item_kind: 'membership',
+      group_id: 'group-2',
+      related_group_id: 'group-1',
+      parent_group_id: 'group-1',
+      child_group_id: 'group-2',
+      with_right: null,
+      initiator_group_id: 'group-1',
+      member_source_group_id: 'group-2',
+      member_target_group_id: 'group-1',
+      membership_mode: 'all_members',
+      group: partnerGroup,
+      related_group: currentGroup,
+    });
     const grantRel = createRelationship({
       id: 'grant-request-1',
       connection_request_id: 'request-1',
       grant_id: 'grant-request-1',
+      membership_request_id: null,
+      request_item_kind: 'right',
       group_id: 'group-1',
       related_group_id: 'group-2',
       parent_group_id: 'group-1',
@@ -314,8 +500,8 @@ describe('useNetworkPage request actions', () => {
       toggleRight: vi.fn(),
       activeRelationships: [],
       incomingRequests: [],
-      outgoingRequests: [structureRel, grantRel],
-      allRelationships: [structureRel, grantRel],
+      outgoingRequests: [structureRel, membershipRel, grantRel],
+      allRelationships: [structureRel, membershipRel, grantRel],
       groupConnections: [],
       isLoading: false,
     });
@@ -326,10 +512,11 @@ describe('useNetworkPage request actions', () => {
     expect(result.current.filteredOutgoing).toHaveLength(1);
     expect(result.current.filteredOutgoing[0]).toMatchObject({
       requestId: 'request-1',
-      allRels: [structureRel, grantRel],
+      allRels: [structureRel, membershipRel, grantRel],
       rightRels: [grantRel],
+      membershipRels: [membershipRel],
       structureRel,
-      rels: [grantRel],
+      rels: [membershipRel, grantRel],
       membershipMode: 'all_members',
     });
   });

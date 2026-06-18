@@ -8,6 +8,8 @@ interface RelationshipSummarySourceItem {
   group: NetworkGroupEntity;
   rights: string[];
   membershipMode?: CanonicalMembershipMode | null;
+  requiredSourceRoleId?: string | null;
+  requiredSourceRoleName?: string | null;
 }
 
 interface ActiveRelationshipSummarySource {
@@ -37,6 +39,8 @@ export function buildActiveRelationshipSummaries(
       rights: item.rights,
       type: 'sibling' as const,
       membershipMode: item.membershipMode ?? null,
+      requiredSourceRoleId: item.requiredSourceRoleId ?? null,
+      requiredSourceRoleName: item.requiredSourceRoleName ?? null,
     })),
   ];
 }

@@ -15,7 +15,10 @@ import {
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { getSelectedMembershipDirection } from '../logic/groupConnectionComposer';
+import {
+  getSelectedMembershipDirection,
+  hasIncompleteMembershipRule,
+} from '../logic/groupConnectionComposer';
 import { GroupConnectionComposer } from './GroupConnectionComposer';
 export interface LinkGroupDialogViewProps {
   currentGroupId: any;
@@ -177,10 +180,10 @@ export function LinkGroupDialogView({
 
                     const selectedMembershipRule = value.membershipRule;
                     return (
-                      (selectedMembershipRule.membershipMode === 'role_members' &&
-                        !selectedMembershipRule.roleId) ||
-                      (selectedMembershipRule.membershipMode === 'selected_source_groups' &&
-                        selectedMembershipRule.sourceGroupIds.length === 0)
+                      hasIncompleteMembershipRule({
+                        membershipDirection: value.membershipDirection,
+                        membershipRule: value.membershipRule,
+                      }) || selectedMembershipRule.membershipMode === 'selected_source_groups'
                     );
                   })()
                 }

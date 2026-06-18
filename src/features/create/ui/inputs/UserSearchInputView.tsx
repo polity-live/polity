@@ -12,6 +12,7 @@ interface UserSearchInputViewProps {
   required?: boolean;
   disablePortal?: boolean;
   showAllResults?: boolean;
+  disabled?: boolean;
 }
 
 export function UserSearchInputView({
@@ -25,6 +26,7 @@ export function UserSearchInputView({
   required,
   disablePortal = false,
   showAllResults = false,
+  disabled = false,
 }: UserSearchInputViewProps) {
   if (multi) {
     return (
@@ -39,6 +41,7 @@ export function UserSearchInputView({
         placeholder={placeholder}
         disablePortal={disablePortal}
         showAllResults={showAllResults}
+        disabled={disabled}
       />
     );
   }
@@ -54,6 +57,7 @@ export function UserSearchInputView({
       placeholder={placeholder}
       disablePortal={disablePortal}
       showAllResults={showAllResults}
+      disabled={disabled}
     />
   );
 }

@@ -48,6 +48,7 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
     progressSteps: normalizeCreateSubmitProgressSteps(config.entityType, config.submissionSteps),
   });
   const submitInFlightRef = useRef(false);
+  const recoveryTargetRef = useRef<CreateSubmitTarget | null>(null);
   const progressStepsRef = useRef<CreateSubmitProgressStep[]>(
     normalizeCreateSubmitProgressSteps(config.entityType, config.submissionSteps)
   );
@@ -77,6 +78,7 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
     }
 
     submitInFlightRef.current = true;
+    recoveryTargetRef.current = null;
     progressStepsRef.current = activateCreateSubmitProgressStep(
       normalizeCreateSubmitProgressSteps(config.entityType, config.submissionSteps),
       'create'
@@ -94,10 +96,22 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
       );
     };
 
+    const setRecoveryTarget = (target: CreateSubmitTarget | null) => {
+      recoveryTargetRef.current = target;
+      setSubmissionState(previous =>
+        previous.status === 'idle'
+          ? previous
+          : {
+              ...previous,
+              target,
+            }
+      );
+    };
+
     let overlayTimer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
       setSubmissionState({
         status: 'submitting',
-        target: null,
+        target: recoveryTargetRef.current,
         error: null,
         progressSteps: progressStepsRef.current,
       });
@@ -105,7 +119,7 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
     }, 120);
 
     try {
-      const outcome = await config.onSubmit({ reportProgress });
+      const outcome = await config.onSubmit({ reportProgress, setRecoveryTarget });
 
       if (overlayTimer) {
         clearTimeout(overlayTimer);
@@ -113,6 +127,7 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
 
       if (outcome.status === 'blocked') {
         submitInFlightRef.current = false;
+        recoveryTargetRef.current = null;
         setSubmissionState({
           status: 'idle',
           target: null,
@@ -139,9 +154,10 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
 
       submitInFlightRef.current = false;
       progressStepsRef.current = failActiveCreateSubmitProgressStep(progressStepsRef.current);
+      const recoveryTarget = recoveryTargetRef.current;
       setSubmissionState({
         status: 'error',
-        target: null,
+        target: recoveryTarget,
         error,
         progressSteps: progressStepsRef.current,
       });
@@ -150,6 +166,7 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
 
   const handleBackToForm = useCallback(() => {
     submitInFlightRef.current = false;
+    recoveryTargetRef.current = null;
     setSubmissionState({
       status: 'idle',
       target: null,

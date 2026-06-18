@@ -31,12 +31,12 @@ export function getRequestRightDirectionForCurrentGroup(
   relationship: Pick<NormalizedGroupRelationship, 'group_id' | 'related_group_id'>,
   currentGroupId: string
 ): Exclude<GroupRelationshipDirection, 'none' | 'mutual'> | null {
-  if (relationship.group_id === currentGroupId) {
-    return 'current_has_right_in_partner';
+  if (relationship.related_group_id === currentGroupId) {
+    return 'current_grants_right_to_partner';
   }
 
-  if (relationship.related_group_id === currentGroupId) {
-    return 'partner_has_right_in_current';
+  if (relationship.group_id === currentGroupId) {
+    return 'partner_grants_right_to_current';
   }
 
   return null;

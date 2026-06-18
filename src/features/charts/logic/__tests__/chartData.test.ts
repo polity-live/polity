@@ -43,6 +43,45 @@ describe('chart data', () => {
     ).toThrow('CHART_DUPLICATE_POINT');
   });
 
+  it('maps wide percentage tables with dates on the X-axis and rows as series', () => {
+    const table = parseChartCsv(
+      'Column 1,31.12.2019,31.03.2020\nStadt Kleve,"5,70%","4,90%"\nKreis Kleve,"4,80%","4,90%"'
+    );
+    const mapping = inferChartMapping(table);
+
+    expect(mapping).toMatchObject({
+      tableMode: 'rowsAsSeries',
+      xColumn: 'Column 1',
+      valueColumns: ['31.12.2019', '31.03.2020'],
+    });
+    expect(buildChartPoints(table.rows, mapping)).toEqual([
+      { x: '31.12.2019', value: 5.7, series: 'Stadt Kleve' },
+      { x: '31.03.2020', value: 4.9, series: 'Stadt Kleve' },
+      { x: '31.12.2019', value: 4.8, series: 'Kreis Kleve' },
+      { x: '31.03.2020', value: 4.9, series: 'Kreis Kleve' },
+    ]);
+  });
+
+  it('can put row labels on the X-axis and value columns into series', () => {
+    const table = parseChartCsv(
+      'City,31.12.2019,31.03.2020\nStadt Kleve,"5,70%","4,90%"\nKreis Kleve,"4,80%","4,90%"'
+    );
+
+    expect(
+      buildChartPoints(table.rows, {
+        xColumn: 'City',
+        valueColumn: '31.12.2019',
+        valueColumns: ['31.12.2019', '31.03.2020'],
+        tableMode: 'columnsAsSeries',
+      })
+    ).toEqual([
+      { x: 'Stadt Kleve', value: 5.7, series: '31.12.2019' },
+      { x: 'Stadt Kleve', value: 4.9, series: '31.03.2020' },
+      { x: 'Kreis Kleve', value: 4.8, series: '31.12.2019' },
+      { x: 'Kreis Kleve', value: 4.9, series: '31.03.2020' },
+    ]);
+  });
+
   it('enforces CSV and point limits', () => {
     expect(() => parseChartCsv(`x,value\n${'a'.repeat(MAX_MANUAL_CSV_BYTES)},1`)).toThrow(
       'CSV_FILE_TOO_LARGE'

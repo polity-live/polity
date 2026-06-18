@@ -61,6 +61,7 @@ describe('create form submit layouts', () => {
       <OnePageFormLayoutView
         steps={steps}
         activeSection={0}
+        allStepsValid
         sectionRefs={{ current: [] }}
         stepLabels={['Review']}
         onStepClick={vi.fn()}

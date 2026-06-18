@@ -4,7 +4,9 @@ import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
 import {
+  amendmentTitle,
   blogTitle,
+  eventTitle,
   groupName,
   userName,
   roleName,
@@ -17,6 +19,7 @@ import {
 import { DEFAULT_GROUP_ROLES } from '../rbac/constants';
 import { reconcileGeneralAssemblyParticipantsForGroups } from '../events/assembly-reconcile';
 import { reconcileDelegateAllocationsForGroups } from '../events/delegate-allocation-reconcile';
+import { reconcileGroupGraph } from '../network/group-graph-reconcile';
 import {
   groupCreateSchema,
   groupMembershipCreateSchema,
@@ -48,7 +51,6 @@ import {
 } from './schema';
 import {
   loadGroupWithDerivedNetworkMeta,
-  reconcileHierarchyForBaseGroup,
   recomputeSiblingMembershipsForGroup,
 } from './membership-helpers';
 import {
@@ -137,6 +139,14 @@ async function groupMembershipRoleIds(
   return links.map(link => link.role_id).filter(Boolean);
 }
 
+async function groupGuestRoleIds(
+  tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
+  guestAccessId: string
+) {
+  const links = await tx.run(zql.group_guest_role.where('group_guest_access_id', guestAccessId));
+  return links.map(link => link.role_id).filter(Boolean);
+}
+
 async function roleSummary(
   tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
   roleIds: readonly string[],
@@ -172,6 +182,31 @@ async function notifyActiveMembershipRoleChange(
   });
 }
 
+async function notifyActiveGuestAccessRoleChange(
+  tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
+  actorUserId: string,
+  guestAccess: { id: string; group_id: string; user_id: string; status?: string | null },
+  previousRoleIds: readonly string[]
+) {
+  if (guestAccess.status !== 'active') return;
+
+  const nextRoleIds = await groupGuestRoleIds(tx, guestAccess.id);
+  if (sameStringSet(previousRoleIds, nextRoleIds)) return;
+
+  const [gName, newRole] = await Promise.all([
+    groupName(tx, guestAccess.group_id),
+    roleSummary(tx, nextRoleIds, 'Guest'),
+  ]);
+
+  fireNotification('notifyGuestAccessRoleChanged', {
+    senderId: actorUserId,
+    recipientUserId: guestAccess.user_id,
+    groupId: guestAccess.group_id,
+    groupName: gName,
+    newRole,
+  });
+}
+
 async function loadBlogRoleNotificationContext(
   tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
   blogId: string
@@ -197,17 +232,21 @@ async function reconcileBaseGroupHierarchyMemberships(
   assignedById?: string | null
 ) {
   const affectedMembershipGroupIds = new Set<string>();
+  const graphResult = await reconcileGroupGraph(tx, {
+    groupIds: baseGroupIds,
+    assignedById,
+    reason: 'group-membership-hierarchy',
+  });
+
+  for (const affectedGroupId of graphResult.affectedGroupIds) {
+    affectedMembershipGroupIds.add(affectedGroupId);
+  }
 
   for (const baseGroupId of [...new Set(baseGroupIds.filter(Boolean))]) {
-    const [
-      { affectedGroupIds: onlineAffectedGroupIds },
-      { affectedGroupIds: offlineAffectedGroupIds },
-    ] = await Promise.all([
-      reconcileHierarchyForBaseGroup(tx, baseGroupId, assignedById),
-      reconcileOfflineHierarchyForBaseGroup(tx, baseGroupId),
-    ]);
+    const { affectedGroupIds: offlineAffectedGroupIds } =
+      await reconcileOfflineHierarchyForBaseGroup(tx, baseGroupId);
 
-    for (const affectedGroupId of [...onlineAffectedGroupIds, ...offlineAffectedGroupIds]) {
+    for (const affectedGroupId of offlineAffectedGroupIds) {
       affectedMembershipGroupIds.add(affectedGroupId);
     }
   }
@@ -288,6 +327,11 @@ async function reconcileMembershipDrivenEventsForGroups(
 
   await reconcileGeneralAssemblyParticipantsForGroups(tx, uniqueGroupIds, assignedById);
   await reconcileDelegateAllocationsForGroups(tx, uniqueGroupIds);
+  await reconcileGroupGraph(tx, {
+    groupIds: uniqueGroupIds,
+    assignedById,
+    reason: 'group-membership-event-reconcile',
+  });
 
   console.info('Server successful', {
     flow: 'group-membership-event-reconcile',
@@ -394,6 +438,12 @@ export const groupServerMutators = {
 
     await recomputeGroupCounters(tx, args.id);
     await recomputeUserCounters(tx, ctx.userID);
+    await reconcileGroupGraph(tx, {
+      groupIds: [args.id],
+      userIds: [ctx.userID],
+      assignedById: ctx.userID,
+      reason: 'group-create',
+    });
   }),
 
   createOfflineMember: defineMutator(groupOfflineMemberCreateSchema, async ({ tx, ctx, args }) => {
@@ -601,6 +651,7 @@ export const groupServerMutators = {
         affectedMembershipGroupIds,
         ctx.userID
       );
+      await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
       await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
       return;
     }
@@ -619,6 +670,7 @@ export const groupServerMutators = {
       affectedMembershipGroupIds,
       ctx.userID
     );
+    await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
     await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
   }),
 
@@ -786,8 +838,33 @@ export const groupServerMutators = {
     }
   ),
 
+  requestGuestAccess: defineMutator(groupGuestAccessCreateSchema, async ({ tx, ctx, args }) => {
+    await mutators.groups.requestGuestAccess.fn({ tx, ctx, args });
+
+    const [gName, uName] = await Promise.all([
+      groupName(tx, args.group_id),
+      userName(tx, ctx.userID),
+    ]);
+    fireNotification('notifyGuestAccessRequest', {
+      senderId: ctx.userID,
+      senderName: uName,
+      groupId: args.group_id,
+      groupName: gName,
+    });
+  }),
+
   inviteGuest: defineMutator(groupGuestAccessCreateSchema, async ({ tx, ctx, args }) => {
     await mutators.groups.inviteGuest.fn({ tx, ctx, args });
+
+    if (args.user_id && args.group_id) {
+      const gName = await groupName(tx, args.group_id);
+      fireNotification('notifyGuestAccessInvite', {
+        senderId: ctx.userID,
+        recipientUserId: args.user_id,
+        groupId: args.group_id,
+        groupName: gName,
+      });
+    }
 
     if (args.status === 'active') {
       await syncUserWithGroupConversation(tx, {
@@ -810,6 +887,28 @@ export const groupServerMutators = {
       groupId: guestAccess.group_id,
       userId: guestAccess.user_id,
     });
+
+    const [gName, uName] = await Promise.all([
+      groupName(tx, guestAccess.group_id),
+      userName(tx, guestAccess.user_id),
+    ]);
+    const isSelf = ctx.userID === guestAccess.user_id;
+
+    if (isSelf) {
+      fireNotification('notifyGroupInvitationAccepted', {
+        senderId: ctx.userID,
+        senderName: uName,
+        groupId: guestAccess.group_id,
+        groupName: gName,
+      });
+    } else {
+      fireNotification('notifyGuestAccessApproved', {
+        senderId: ctx.userID,
+        recipientUserId: guestAccess.user_id,
+        groupId: guestAccess.group_id,
+        groupName: gName,
+      });
+    }
   }),
 
   revokeGuestAccess: defineMutator(groupGuestAccessDeleteSchema, async ({ tx, ctx, args }) => {
@@ -825,18 +924,94 @@ export const groupServerMutators = {
       groupId: guestAccess.group_id,
       userId: guestAccess.user_id,
     });
+
+    const gId = guestAccess.group_id;
+    const guestUserId = guestAccess.user_id;
+    const status = guestAccess.status;
+    const isSelf = ctx.userID === guestUserId;
+
+    const [gName, uName] = await Promise.all([groupName(tx, gId), userName(tx, guestUserId)]);
+
+    if (isSelf) {
+      if (status === 'requested') {
+        fireNotification('notifyGroupRequestWithdrawn', {
+          senderId: ctx.userID,
+          senderName: uName,
+          groupId: gId,
+          groupName: gName,
+        });
+      } else if (status === 'invited') {
+        fireNotification('notifyGroupInvitationDeclined', {
+          senderId: ctx.userID,
+          senderName: uName,
+          groupId: gId,
+          groupName: gName,
+        });
+      } else {
+        fireNotification('notifyGuestAccessWithdrawn', {
+          senderId: ctx.userID,
+          senderName: uName,
+          groupId: gId,
+          groupName: gName,
+        });
+      }
+    } else if (status === 'requested') {
+      fireNotification('notifyMembershipRejected', {
+        senderId: ctx.userID,
+        recipientUserId: guestUserId,
+        groupId: gId,
+        groupName: gName,
+      });
+    } else {
+      fireNotification('notifyGuestAccessRemoved', {
+        senderId: ctx.userID,
+        recipientUserId: guestUserId,
+        groupId: gId,
+        groupName: gName,
+      });
+    }
   }),
 
   addGuestRole: defineMutator(groupGuestRoleAssignSchema, async ({ tx, ctx, args }) => {
+    const guestAccess = await tx.run(
+      zql.group_guest_access.where('id', args.group_guest_access_id).one()
+    );
+    const previousRoleIds = guestAccess
+      ? await groupGuestRoleIds(tx, args.group_guest_access_id)
+      : [];
+
     await mutators.groups.addGuestRole.fn({ tx, ctx, args });
+
+    if (!guestAccess) return;
+    await notifyActiveGuestAccessRoleChange(tx, ctx.userID, guestAccess, previousRoleIds);
   }),
 
   removeGuestRole: defineMutator(groupGuestRoleUnassignSchema, async ({ tx, ctx, args }) => {
+    const guestAccess = await tx.run(
+      zql.group_guest_access.where('id', args.group_guest_access_id).one()
+    );
+    const previousRoleIds = guestAccess
+      ? await groupGuestRoleIds(tx, args.group_guest_access_id)
+      : [];
+
     await mutators.groups.removeGuestRole.fn({ tx, ctx, args });
+
+    if (!guestAccess) return;
+    await notifyActiveGuestAccessRoleChange(tx, ctx.userID, guestAccess, previousRoleIds);
   }),
 
   syncGuestRoles: defineMutator(groupGuestRolesSyncSchema, async ({ tx, ctx, args }) => {
+    const guestAccess = await tx.run(
+      zql.group_guest_access.where('id', args.group_guest_access_id).one()
+    );
+    const previousRoleIds = guestAccess
+      ? await groupGuestRoleIds(tx, args.group_guest_access_id)
+      : [];
+
     await mutators.groups.syncGuestRoles.fn({ tx, ctx, args });
+
+    if (!guestAccess) return;
+    await notifyActiveGuestAccessRoleChange(tx, ctx.userID, guestAccess, previousRoleIds);
   }),
 
   acceptInvitation: defineMutator(z.object({ id: z.string() }), async ({ tx, ctx, args }) => {
@@ -890,6 +1065,7 @@ export const groupServerMutators = {
         affectedMembershipGroupIds,
         ctx.userID
       );
+      await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
       await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
       console.info('Server successful', {
         flow: 'group-membership-invitation-accept',
@@ -916,6 +1092,7 @@ export const groupServerMutators = {
       affectedMembershipGroupIds,
       ctx.userID
     );
+    await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
     await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
 
     console.info('Server successful', {
@@ -1018,6 +1195,7 @@ export const groupServerMutators = {
       affectedMembershipGroupIds,
       ctx.userID
     );
+    await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
     await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
 
     console.info('Server successful', {
@@ -1177,6 +1355,7 @@ export const groupServerMutators = {
           affectedMembershipGroupIds,
           ctx.userID
         );
+        await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
         await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
       }
 
@@ -1277,6 +1456,28 @@ export const groupServerMutators = {
         groupName: gName,
         roleName: rInfo.name,
       });
+    } else if (args.role_id && args.event_id) {
+      const [eTitle, rInfo] = await Promise.all([
+        eventTitle(tx, args.event_id),
+        roleName(tx, args.role_id),
+      ]);
+      fireNotification('notifyEventRoleUpdated', {
+        senderId: ctx.userID,
+        eventId: args.event_id,
+        eventTitle: eTitle,
+        roleTitle: rInfo.name,
+      });
+    } else if (args.role_id && args.amendment_id) {
+      const [aTitle, rInfo] = await Promise.all([
+        amendmentTitle(tx, args.amendment_id),
+        roleName(tx, args.role_id),
+      ]);
+      fireNotification('notifyAmendmentRoleUpdated', {
+        senderId: ctx.userID,
+        amendmentId: args.amendment_id,
+        amendmentTitle: aTitle,
+        roleName: rInfo.name,
+      });
     } else if (args.role_id && args.blog_id) {
       const [blogContext, rInfo] = await Promise.all([
         loadBlogRoleNotificationContext(tx, args.blog_id),
@@ -1307,6 +1508,28 @@ export const groupServerMutators = {
         senderId: ctx.userID,
         groupId: right.group_id,
         groupName: gName,
+        roleName: rInfo.name,
+      });
+    } else if (right?.role_id && right?.event_id) {
+      const [eTitle, rInfo] = await Promise.all([
+        eventTitle(tx, right.event_id),
+        roleName(tx, right.role_id),
+      ]);
+      fireNotification('notifyEventRoleUpdated', {
+        senderId: ctx.userID,
+        eventId: right.event_id,
+        eventTitle: eTitle,
+        roleTitle: rInfo.name,
+      });
+    } else if (right?.role_id && right?.amendment_id) {
+      const [aTitle, rInfo] = await Promise.all([
+        amendmentTitle(tx, right.amendment_id),
+        roleName(tx, right.role_id),
+      ]);
+      fireNotification('notifyAmendmentRoleUpdated', {
+        senderId: ctx.userID,
+        amendmentId: right.amendment_id,
+        amendmentTitle: aTitle,
         roleName: rInfo.name,
       });
     } else if (right?.role_id && right?.blog_id) {

@@ -35,6 +35,12 @@ export interface EditableRightsLabelEdgeData extends Record<string, unknown> {
   relationshipType?: GroupRelationshipType | 'membership';
   membershipMode?: CanonicalMembershipMode | null;
   membershipDirection?: RelativeMembershipDirection | null;
+  membershipSourceGroupId?: string | null;
+  membershipTargetGroupId?: string | null;
+  membershipSourceGroupName?: string | null;
+  membershipTargetGroupName?: string | null;
+  membershipRequiredSourceRoleId?: string | null;
+  membershipRequiredSourceRoleName?: string | null;
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
   visibleFlowDirection?: NetworkEdgeRelationshipDirection | null;
   rightConnectionDirections?: Record<string, NetworkConnectionDirection>;
@@ -71,6 +77,12 @@ export interface NetworkRelationshipDialogData {
   relationshipType?: GroupRelationshipType | 'membership';
   membershipMode?: CanonicalMembershipMode | null;
   membershipDirection?: RelativeMembershipDirection | null;
+  membershipSourceGroupId?: string | null;
+  membershipTargetGroupId?: string | null;
+  membershipSourceGroupName?: string | null;
+  membershipTargetGroupName?: string | null;
+  membershipRequiredSourceRoleId?: string | null;
+  membershipRequiredSourceRoleName?: string | null;
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
   rightConnectionDirections?: Record<string, NetworkConnectionDirection>;
   connectionDirection?: NetworkConnectionDirection;

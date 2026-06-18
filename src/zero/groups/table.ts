@@ -20,6 +20,13 @@ export const group = table('group')
     event_count: number(),
     amendment_count: number(),
     document_count: number(),
+    group_type: string().optional(),
+    has_hierarchy_children: boolean().optional(),
+    has_sibling_connections: boolean().optional(),
+    connected_group_id: string().optional(),
+    primary_sibling_membership_mode: string().optional(),
+    sibling_membership_mode: string().optional(),
+    sibling_role_id: string().optional(),
     x: string().optional(),
     youtube: string().optional(),
     linkedin: string().optional(),
@@ -46,6 +53,30 @@ export const groupMembership = table('group_membership')
     visibility: string(),
     source: string(),
     source_group_id: string().optional(),
+    origin_kind: string().optional(),
+    connection_id: string().optional(),
+    membership_rule_id: string().optional(),
+    part_group_id: string().optional(),
+    base_group_id: string().optional(),
+    is_auto_managed: boolean().optional(),
+    created_at: number(),
+  })
+  .primaryKey('id');
+
+export const groupMembershipOrigin = table('group_membership_origin')
+  .columns({
+    id: string(),
+    group_membership_id: string(),
+    origin_kind: string(),
+    source_group_id: string().optional(),
+    source_membership_id: string().optional(),
+    connection_id: string().optional(),
+    membership_rule_id: string().optional(),
+    source_role_id: string().optional(),
+    part_group_id: string().optional(),
+    base_group_id: string().optional(),
+    depth: number(),
+    path_group_ids: json<ReadonlyJSONValue>(),
     created_at: number(),
   })
   .primaryKey('id');

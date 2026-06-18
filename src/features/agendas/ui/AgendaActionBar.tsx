@@ -156,9 +156,14 @@ export function AgendaActionBar({
   const defaultVoteTooltip = isFinalVotePhase
     ? castFinalVoteTooltip || t('features.events.agenda.actions.castFinalVote')
     : castIndicativeVoteTooltip || t('features.events.agenda.actions.castIndicativeVote');
-  const voteTooltip = disableVoteButton
-    ? disabledVoteTooltip || defaultVoteTooltip
-    : defaultVoteTooltip;
+  const voteTooltip = !canVote
+    ? t(
+        'features.events.agenda.actions.voteRequiresActiveVotingRight',
+        'Active Voting Rights are required to vote in this event.'
+      )
+    : disableVoteButton
+      ? disabledVoteTooltip || defaultVoteTooltip
+      : defaultVoteTooltip;
   const showStartFinalVoteButton =
     canManageAgenda &&
     isVotable &&

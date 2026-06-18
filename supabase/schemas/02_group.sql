@@ -25,6 +25,22 @@ CREATE TABLE IF NOT EXISTS public."group" (
   event_count INTEGER NOT NULL DEFAULT 0,
   amendment_count INTEGER NOT NULL DEFAULT 0,
   document_count INTEGER NOT NULL DEFAULT 0,
+  group_type TEXT NOT NULL DEFAULT 'base'
+    CHECK (group_type IN ('base', 'hierarchical', 'sibling', 'parliament', 'committee', 'institution')),
+  has_hierarchy_children BOOLEAN NOT NULL DEFAULT false,
+  has_sibling_connections BOOLEAN NOT NULL DEFAULT false,
+  connected_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
+  primary_sibling_membership_mode TEXT
+    CHECK (
+      primary_sibling_membership_mode IS NULL
+      OR primary_sibling_membership_mode IN ('none', 'all_members', 'role_members', 'selected_source_groups')
+    ),
+  sibling_membership_mode TEXT
+    CHECK (
+      sibling_membership_mode IS NULL
+      OR sibling_membership_mode IN ('open', 'elected', 'parliament')
+    ),
+  sibling_role_id UUID,
   x TEXT,
   youtube TEXT,
   linkedin TEXT,
@@ -41,6 +57,10 @@ CREATE TABLE IF NOT EXISTS public."group" (
 );
 
 CREATE INDEX idx_group_owner ON public."group" (owner_id);
+CREATE INDEX idx_group_type ON public."group" (group_type);
+CREATE INDEX idx_group_connected_group ON public."group" (connected_group_id);
+CREATE INDEX idx_group_hierarchy_children ON public."group" (has_hierarchy_children);
+CREATE INDEX idx_group_sibling_connections ON public."group" (has_sibling_connections);
 
 ALTER TABLE public."group" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public."group" FOR ALL TO service_role USING (true);
@@ -106,6 +126,22 @@ CREATE TABLE IF NOT EXISTS public.group_membership (
   visibility TEXT NOT NULL DEFAULT 'public',
   source TEXT NOT NULL DEFAULT 'direct',
   source_group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
+  origin_kind TEXT NOT NULL DEFAULT 'direct'
+    CHECK (
+      origin_kind IN (
+        'direct',
+        'hierarchy',
+        'sibling_all_members',
+        'sibling_role_members',
+        'sibling_selected_source_groups',
+        'manual_projection'
+      )
+    ),
+  connection_id UUID,
+  membership_rule_id UUID,
+  part_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
+  base_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
+  is_auto_managed BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (user_id, group_id)
 );
@@ -113,9 +149,64 @@ CREATE TABLE IF NOT EXISTS public.group_membership (
 CREATE INDEX idx_group_membership_group ON public.group_membership (group_id);
 CREATE INDEX idx_group_membership_user ON public.group_membership (user_id);
 CREATE INDEX idx_group_membership_source_group ON public.group_membership (source_group_id);
+CREATE INDEX idx_group_membership_group_status ON public.group_membership (group_id, status);
+CREATE INDEX idx_group_membership_user_status ON public.group_membership (user_id, status);
+CREATE INDEX idx_group_membership_origin_kind ON public.group_membership (origin_kind);
+CREATE INDEX idx_group_membership_connection ON public.group_membership (connection_id);
+CREATE INDEX idx_group_membership_membership_rule ON public.group_membership (membership_rule_id);
+CREATE INDEX idx_group_membership_part_group ON public.group_membership (part_group_id);
+CREATE INDEX idx_group_membership_base_group ON public.group_membership (base_group_id);
 
 ALTER TABLE public.group_membership ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_membership FOR ALL TO service_role USING (true);
+
+-- Explicit provenance for projected memberships. One membership row stays the
+-- read-compatible canonical membership; this table explains why it exists.
+CREATE TABLE IF NOT EXISTS public.group_membership_origin (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_membership_id UUID NOT NULL REFERENCES public.group_membership (id) ON DELETE CASCADE,
+  origin_kind TEXT NOT NULL
+    CHECK (
+      origin_kind IN (
+        'direct',
+        'hierarchy',
+        'sibling_all_members',
+        'sibling_role_members',
+        'sibling_selected_source_groups',
+        'manual_projection'
+      )
+    ),
+  source_group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
+  source_membership_id UUID REFERENCES public.group_membership (id) ON DELETE SET NULL,
+  connection_id UUID,
+  membership_rule_id UUID,
+  source_role_id UUID,
+  part_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
+  base_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
+  depth INTEGER NOT NULL DEFAULT 0,
+  path_group_ids UUID[] NOT NULL DEFAULT ARRAY[]::UUID[],
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (group_membership_id, origin_kind, source_group_id, connection_id, membership_rule_id, source_role_id)
+);
+
+CREATE INDEX idx_group_membership_origin_membership
+  ON public.group_membership_origin (group_membership_id);
+CREATE INDEX idx_group_membership_origin_source_group
+  ON public.group_membership_origin (source_group_id);
+CREATE INDEX idx_group_membership_origin_source_membership
+  ON public.group_membership_origin (source_membership_id);
+CREATE INDEX idx_group_membership_origin_connection
+  ON public.group_membership_origin (connection_id);
+CREATE INDEX idx_group_membership_origin_rule
+  ON public.group_membership_origin (membership_rule_id);
+CREATE INDEX idx_group_membership_origin_part_group
+  ON public.group_membership_origin (part_group_id);
+CREATE INDEX idx_group_membership_origin_base_group
+  ON public.group_membership_origin (base_group_id);
+
+ALTER TABLE public.group_membership_origin ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.group_membership_origin
+  FOR ALL TO service_role USING (true);
 
 -- Offline group members (real-world members without platform signup)
 CREATE TABLE IF NOT EXISTS public.group_offline_member (

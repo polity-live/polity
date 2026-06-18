@@ -9,7 +9,7 @@ import type { CSSProperties } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Trash2, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { DataTable, TableActionIconButton, type ColumnDef } from '@/features/shared/ui/data-table';
 import { EntityBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import { UserTableCell } from '@/features/shared/ui/data-table';
@@ -32,6 +32,7 @@ interface ActiveMembersTableProps<TMembership extends ParticipationLike> {
   manageRolesLabel?: string;
   removeLabel?: string;
   showProvenanceColumns?: boolean;
+  showDelegateRepresentationColumn?: boolean;
 }
 
 export function ActiveMembersTable<TMembership extends ParticipationLike>({
@@ -47,6 +48,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
   manageRolesLabel,
   removeLabel,
   showProvenanceColumns = false,
+  showDelegateRepresentationColumn = false,
 }: ActiveMembersTableProps<TMembership>) {
   const { t } = useTranslation();
   const directWithoutPathLabel = t('features.groups.memberships.composition.directWithoutPath');
@@ -63,6 +65,10 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
   const actionsColumnLabel = t('components.membershipTables.actions');
   const rightsLabel = t('components.membershipTables.rights');
   const notAvailableLabel = t('components.membershipTables.notAvailable', 'N/A');
+  const noDelegateRepresentationLabel = t(
+    'components.membershipTables.noDelegateRepresentation',
+    '-'
+  );
 
   const renderProvenanceGroupTag = (membership: TMembership, column: 'partGroup' | 'baseGroup') => {
     const group = column === 'partGroup' ? membership.partGroup : membership.baseGroup;
@@ -82,6 +88,40 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
       </EntityBadge>
     );
   };
+
+  const renderDelegateRepresentationTags = (membership: TMembership) => {
+    const groups = membership.delegateRepresentedGroups ?? [];
+
+    if (groups.length === 0) {
+      return <span className="text-muted-foreground">{noDelegateRepresentationLabel}</span>;
+    }
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        {groups.map(group => {
+          const label = group.seatCount > 1 ? `${group.name} (${group.seatCount})` : group.name;
+
+          return (
+            <EntityBadge key={group.id} asChild tone="info" className="hover:opacity-90">
+              <Link to="/group/$id" params={{ id: group.id }}>
+                {label}
+              </Link>
+            </EntityBadge>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const delegateRepresentationColumns: ColumnDef<TMembership>[] = showDelegateRepresentationColumn
+    ? [
+        {
+          id: 'delegateRepresents',
+          header: () => t('components.tableColumns.delegateRepresents'),
+          cell: ({ row }) => renderDelegateRepresentationTags(row.original),
+        },
+      ]
+    : [];
 
   const provenanceColumns: ColumnDef<TMembership>[] = showProvenanceColumns
     ? [
@@ -128,6 +168,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
         );
       },
     },
+    ...delegateRepresentationColumns,
     ...provenanceColumns,
     {
       id: 'joined',
@@ -150,22 +191,32 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
       cell: ({ row }) => {
         const membership = row.original;
         const userId = membership.user?.id || null;
+        const effectiveReadOnly = Boolean(
+          (membership as TMembership & { effectiveReadOnly?: boolean }).effectiveReadOnly
+        );
 
         return (
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => onOpenRightsDialog(membership)}>
-              <Eye className="mr-1 h-4 w-4" />
-              {rightsLabel}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => onOpenChangeRoleDialog(membership)}>
-              <ArrowUpDown className="mr-1 h-4 w-4" />
-              {resolvedManageRolesLabel}
-            </Button>
-            {membership.source !== 'derived' && userId ? (
-              <Button variant="ghost" size="sm" onClick={() => onRemove(membership.id, userId)}>
-                <Trash2 className="h-4 w-4" />
-                <span className="ml-2">{resolvedRemoveLabel}</span>
-              </Button>
+            <TableActionIconButton
+              label={rightsLabel}
+              icon={<Eye className="h-4 w-4" />}
+              onClick={() => onOpenRightsDialog(membership)}
+            />
+            {!effectiveReadOnly ? (
+              <TableActionIconButton
+                label={resolvedManageRolesLabel}
+                icon={<ArrowUpDown className="h-4 w-4" />}
+                variant="outline"
+                onClick={() => onOpenChangeRoleDialog(membership)}
+              />
+            ) : null}
+            {membership.source !== 'derived' && !effectiveReadOnly && userId ? (
+              <TableActionIconButton
+                label={resolvedRemoveLabel}
+                icon={<Trash2 className="h-4 w-4" />}
+                destructive
+                onClick={() => onRemove(membership.id, userId)}
+              />
             ) : null}
           </div>
         );

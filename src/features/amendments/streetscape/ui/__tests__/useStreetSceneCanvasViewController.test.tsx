@@ -15,12 +15,14 @@ function ControllerHarness({
   placementMode = null,
   canFinishPathPlacement = false,
   readOnly = false,
+  interactionMode = 'place',
 }: {
   onFinishPlacement?: () => void;
   onCancelPlacement?: () => void;
   placementMode?: 'drag_band' | 'path' | null;
   canFinishPathPlacement?: boolean;
   readOnly?: boolean;
+  interactionMode?: 'place' | 'select' | 'camera';
 }) {
   const viewProps = useStreetSceneCanvasViewController({
     design: createEmptyStreetDesignState(),
@@ -32,8 +34,12 @@ function ControllerHarness({
     canFinishPathPlacement,
     selectedObjectId: null,
     selectedObject: null,
+    selectedObjectFocusRequestKey: 0,
+    hiddenObjectIds: [],
+    hiddenObjectCategories: [],
     selectedOsmWayId: null,
-    interactionMode: 'place',
+    selectedOsmFocusRequestKey: 0,
+    interactionMode,
     readOnly,
     onPointerDown: vi.fn(),
     onPointerMove: vi.fn(),
@@ -42,6 +48,7 @@ function ControllerHarness({
     onCancelPlacement,
     onObjectSelect: vi.fn(),
     onOsmWaySelect: vi.fn(),
+    onObjectRotate: vi.fn(),
     onDeleteObject: vi.fn(),
   });
 
@@ -132,6 +139,25 @@ describe('useStreetSceneCanvasViewController', () => {
       <ControllerHarness
         placementMode="drag_band"
         readOnly
+        onFinishPlacement={onFinishPlacement}
+        onCancelPlacement={onCancelPlacement}
+      />
+    );
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    expect(onFinishPlacement).not.toHaveBeenCalled();
+    expect(onCancelPlacement).not.toHaveBeenCalled();
+  });
+
+  it('ignores placement keys outside placement mode', () => {
+    const onFinishPlacement = vi.fn();
+    const onCancelPlacement = vi.fn();
+    render(
+      <ControllerHarness
+        placementMode="drag_band"
+        interactionMode="select"
         onFinishPlacement={onFinishPlacement}
         onCancelPlacement={onCancelPlacement}
       />

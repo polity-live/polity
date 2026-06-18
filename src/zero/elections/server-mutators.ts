@@ -47,6 +47,12 @@ interface SelectionLike {
   candidate_id?: string | null;
 }
 
+interface ElectionOfflineTallyLike {
+  candidate_id?: string | null;
+  phase?: string | null;
+  count?: number | null;
+}
+
 interface WinnerResolutionResult {
   winners: CandidateLike[];
   voteCountByCandidateId: Map<string, number>;
@@ -59,6 +65,10 @@ interface ElectionAssignmentResult {
   winners: CandidateLike[];
   seatCount: number;
   tiedCandidateIds: string[];
+}
+
+function isFinalElectionVoteStatus(status?: string | null) {
+  return status === 'final' || status === 'final_vote';
 }
 
 async function loadElectionEventId(tx: ElectionServerTx, electionId: string) {
@@ -137,7 +147,8 @@ async function assertOfflineElectionTallyWithinCap(
 
 function tallyCandidateVotes(
   candidates: readonly CandidateLike[],
-  selections: readonly SelectionLike[]
+  selections: readonly SelectionLike[],
+  offlineTallies: readonly ElectionOfflineTallyLike[] = []
 ) {
   const voteCountByCandidateId = new Map<string, number>();
 
@@ -156,7 +167,25 @@ function tallyCandidateVotes(
     );
   }
 
+  for (const tally of offlineTallies) {
+    if (tally.phase !== 'final' || !tally.candidate_id) {
+      continue;
+    }
+
+    voteCountByCandidateId.set(
+      tally.candidate_id,
+      (voteCountByCandidateId.get(tally.candidate_id) ?? 0) + Math.max(0, tally.count ?? 0)
+    );
+  }
+
   return voteCountByCandidateId;
+}
+
+function countFinalOfflineTallies(offlineTallies: readonly ElectionOfflineTallyLike[] = []) {
+  return offlineTallies.reduce(
+    (sum, tally) => (tally.phase === 'final' ? sum + Math.max(0, tally.count ?? 0) : sum),
+    0
+  );
 }
 
 function getEligibleCandidates(candidates: readonly CandidateLike[]) {
@@ -165,10 +194,15 @@ function getEligibleCandidates(candidates: readonly CandidateLike[]) {
 
 function sortCandidatesByVotes(
   candidates: readonly CandidateLike[],
-  selections: readonly SelectionLike[]
+  selections: readonly SelectionLike[],
+  offlineTallies: readonly ElectionOfflineTallyLike[] = []
 ) {
   const eligibleCandidates = getEligibleCandidates(candidates);
-  const voteCountByCandidateId = tallyCandidateVotes(eligibleCandidates, selections);
+  const voteCountByCandidateId = tallyCandidateVotes(
+    eligibleCandidates,
+    selections,
+    offlineTallies
+  );
   const sortedCandidates = [...eligibleCandidates].sort((left, right) => {
     const voteDelta =
       (voteCountByCandidateId.get(right.id) ?? 0) - (voteCountByCandidateId.get(left.id) ?? 0);
@@ -195,11 +229,13 @@ function sortCandidatesByVotes(
 function resolveSingleWinner(args: {
   candidates: readonly CandidateLike[];
   selections: readonly SelectionLike[];
+  offlineTallies?: readonly ElectionOfflineTallyLike[];
   majorityType?: string | null;
 }): WinnerResolutionResult {
   const { sortedCandidates, voteCountByCandidateId } = sortCandidatesByVotes(
     args.candidates,
-    args.selections
+    args.selections,
+    args.offlineTallies
   );
 
   const winner = sortedCandidates[0];
@@ -236,7 +272,7 @@ function resolveSingleWinner(args: {
     };
   }
 
-  const totalVotes = args.selections.length;
+  const totalVotes = args.selections.length + countFinalOfflineTallies(args.offlineTallies);
   if (args.majorityType === 'absolute' && winnerVotes <= totalVotes / 2) {
     return {
       winners: [],
@@ -266,6 +302,7 @@ function resolveSingleWinner(args: {
 function resolveMultiSeatWinners(args: {
   candidates: readonly CandidateLike[];
   selections: readonly SelectionLike[];
+  offlineTallies?: readonly ElectionOfflineTallyLike[];
   seatCount: number;
 }): WinnerResolutionResult {
   const seatCount = Math.max(0, args.seatCount);
@@ -280,7 +317,8 @@ function resolveMultiSeatWinners(args: {
 
   const { sortedCandidates, voteCountByCandidateId } = sortCandidatesByVotes(
     args.candidates,
-    args.selections
+    args.selections,
+    args.offlineTallies
   );
 
   const positiveVoteCandidates = sortedCandidates.filter(
@@ -328,6 +366,12 @@ function resolveMultiSeatWinners(args: {
     tiedCandidateIds: [],
   };
 }
+
+export const electionWinnerResolutionTestApi = {
+  resolveMultiSeatWinners,
+  resolveSingleWinner,
+  tallyCandidateVotes,
+};
 
 async function addEventParticipantRoleLink(
   tx: ElectionServerTx,
@@ -663,6 +707,7 @@ async function applyElectionAssignments(
       .related('role')
       .related('candidates')
       .related('final_selections')
+      .related('offline_tallies')
       .one()
   );
 
@@ -696,11 +741,13 @@ async function applyElectionAssignments(
       ? resolveMultiSeatWinners({
           candidates: election.candidates || [],
           selections: election.final_selections || [],
+          offlineTallies: election.offline_tallies || [],
           seatCount: resolvedSeatCount,
         })
       : resolveSingleWinner({
           candidates: election.candidates || [],
           selections: election.final_selections || [],
+          offlineTallies: election.offline_tallies || [],
           majorityType: election.majority_type,
         });
 
@@ -887,6 +934,12 @@ export const electionServerMutators = {
 
   updateElection: defineMutator(updateElectionSchema, async ({ tx, ctx, args }) => {
     const oldElection = await tx.run(zql.election.where('id', args.id).one());
+    const isStartingFinalVote =
+      oldElection &&
+      !isFinalElectionVoteStatus(oldElection.status) &&
+      isFinalElectionVoteStatus(args.status);
+    const isClosingFinalVote =
+      oldElection && oldElection.status !== 'closed' && args.status === 'closed';
 
     await mutators.elections.updateElection.fn({ tx, ctx, args });
 
@@ -897,19 +950,32 @@ export const electionServerMutators = {
       if (agendaItem?.event_id) {
         await recomputeEventCounters(tx, agendaItem.event_id);
 
-        if (args.status === 'final' && oldElection.status !== 'final') {
+        if (isStartingFinalVote || isClosingFinalVote) {
           const eTitle = await eventTitle(tx, agendaItem.event_id);
-          fireNotification('notifyElectionStarted', {
-            senderId: ctx.userID,
-            eventId: agendaItem.event_id,
-            eventTitle: eTitle,
-            electionTitle: args.title ?? oldElection.title ?? 'Election',
-          });
+          const electionTitle = args.title ?? oldElection.title ?? 'Election';
+
+          if (isStartingFinalVote) {
+            fireNotification('notifyElectionStarted', {
+              senderId: ctx.userID,
+              eventId: agendaItem.event_id,
+              eventTitle: eTitle,
+              electionTitle,
+            });
+          }
+
+          if (isClosingFinalVote) {
+            fireNotification('notifyElectionEnded', {
+              senderId: ctx.userID,
+              eventId: agendaItem.event_id,
+              eventTitle: eTitle,
+              electionTitle,
+            });
+          }
         }
       }
     }
 
-    if (args.status === 'closed' && oldElection?.agenda_item_id) {
+    if (isClosingFinalVote && oldElection?.agenda_item_id) {
       const assignmentResult = await applyElectionAssignments(tx, {
         electionId: args.id,
         assignedById: ctx.userID,

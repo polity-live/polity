@@ -2,7 +2,7 @@
 
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GroupNetworkPage, Route as NetworkRoute } from '../../../routes/_authed/group/$id/network';
 import {
@@ -155,7 +155,28 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+beforeEach(() => {
+  vi.spyOn(NetworkRoute, 'useSearch').mockReturnValue({ tab: undefined } as never);
+});
+
 describe('group relationship routes', () => {
+  it('passes the network tab search parameter into the network page state', () => {
+    vi.spyOn(NetworkRoute, 'useParams').mockReturnValue({ id: 'group-1' } as never);
+    vi.spyOn(NetworkRoute, 'useSearch').mockReturnValue({ tab: 'manage-network' } as never);
+    useNetworkPageMock.mockReturnValue(createBaseNetworkPageState());
+    usePermissionsMock.mockReturnValue(
+      createPermissions({
+        canManage: true,
+        canView: true,
+        isMember: true,
+      })
+    );
+
+    render(<GroupNetworkPage />);
+
+    expect(useNetworkPageMock).toHaveBeenCalledWith('group-1', 'manage-network');
+  });
+
   it('shows the manage-network tab for users with view but without manage rights', () => {
     vi.spyOn(NetworkRoute, 'useParams').mockReturnValue({ id: 'group-1' } as never);
     useNetworkPageMock.mockReturnValue(createBaseNetworkPageState());

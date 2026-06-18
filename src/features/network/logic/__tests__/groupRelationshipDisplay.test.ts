@@ -29,6 +29,8 @@ function rel(
     connection_id: overrides.connection_id ?? `connection:${overrides.id}`,
     grant_id:
       overrides.grant_id ?? (overrides.with_right === null ? null : `grant:${overrides.id}`),
+    membership_request_id: overrides.membership_request_id ?? null,
+    request_item_kind: overrides.request_item_kind ?? 'right',
     group_id: groupId,
     related_group_id: relatedGroupId,
     relationship_type: relationshipType,
@@ -56,7 +58,7 @@ function rel(
 }
 
 describe('groupRelationshipDisplay', () => {
-  it('keeps an outgoing request anchored to the current group perspective', () => {
+  it('shows a holder row as a right granted by the partner into the current group', () => {
     const relationship = rel({
       id: 'outgoing-child-request',
       group_id: 'base',
@@ -66,16 +68,16 @@ describe('groupRelationshipDisplay', () => {
 
     expect(getRelationshipPartnerGroup(relationship, 'base')?.id).toBe('hier');
     expect(getRequestRightDirectionForCurrentGroup(relationship, 'base')).toBe(
-      'current_has_right_in_partner'
+      'partner_grants_right_to_current'
     );
     expect(getCurrentGroupRelationshipDisplay(relationship, 'base')).toEqual({
       partnerGroup: relationship.related_group,
       relationshipType: 'child',
-      rightDirection: 'current_has_right_in_partner',
+      rightDirection: 'partner_grants_right_to_current',
     });
   });
 
-  it('maps the same request to an incoming parent view for the recipient group', () => {
+  it('shows a scope row as the current group granting the right to the partner', () => {
     const relationship = rel({
       id: 'incoming-parent-request',
       group_id: 'base',
@@ -85,12 +87,12 @@ describe('groupRelationshipDisplay', () => {
 
     expect(getRelationshipPartnerGroup(relationship, 'hier')?.id).toBe('base');
     expect(getRequestRightDirectionForCurrentGroup(relationship, 'hier')).toBe(
-      'partner_has_right_in_current'
+      'current_grants_right_to_partner'
     );
     expect(getCurrentGroupRelationshipDisplay(relationship, 'hier')).toEqual({
       partnerGroup: relationship.group,
       relationshipType: 'parent',
-      rightDirection: 'partner_has_right_in_current',
+      rightDirection: 'current_grants_right_to_partner',
     });
   });
 
@@ -116,7 +118,7 @@ describe('groupRelationshipDisplay', () => {
     expect(getCurrentGroupRelationshipDisplay(relationship, 'hier')).toEqual({
       partnerGroup: relationship.related_group,
       relationshipType: 'parent',
-      rightDirection: 'current_has_right_in_partner',
+      rightDirection: 'partner_grants_right_to_current',
     });
   });
 

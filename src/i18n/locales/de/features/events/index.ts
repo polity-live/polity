@@ -260,7 +260,53 @@ export const eventsTranslations = {
     notFound: 'Veranstaltung nicht gefunden',
     tabs: {
       participants: 'Teilnehmer',
+      composition: 'Zusammensetzung',
       roles: 'Rollen',
+    },
+    composition: {
+      title: 'Delegierten-Zusammensetzung',
+      description: 'Sitzverteilung der Untergruppen fuer diese Delegiertenversammlung.',
+      loading: 'Zusammensetzung wird geladen...',
+      empty: 'Noch keine Delegiertensitze fuer Untergruppen gefunden.',
+      total: '{{count}} Sitze gesamt',
+      metrics: {
+        planned: 'Geplant',
+        scheduled: 'Wahlen geplant',
+        elected: 'Gewählt',
+      },
+      metricTitles: {
+        planned: 'Geplante Delegiertensitze',
+        scheduled: 'Geplante Wahlen',
+        elected: 'Bereits gewählte Delegierte',
+      },
+      metricDescriptions: {
+        planned: 'Sitze aus der aktuellen Delegiertenverteilung der Untergruppen.',
+        scheduled: 'Sitze, fuer die bereits Untergruppen-Wahlen geplant sind.',
+        elected: 'Bestätigte Delegierte auf dieser Delegiertenversammlung.',
+      },
+      sectionTitles: {
+        planned: 'Geplante Delegierte',
+        scheduled: 'Geplante Delegiertenwahlen',
+        elected: 'Gewählte Delegierte',
+      },
+      sectionDescriptions: {
+        planned: 'Sitze aus der aktuellen Delegiertenverteilung der Untergruppen.',
+        scheduled: 'Sitze mit geplanter Untergruppen-Wahl plus noch nicht geplante Sitze.',
+        elected: 'Bestätigte Delegierte plus noch nicht gewählte Sitze.',
+      },
+      remainder: {
+        unscheduled: 'Noch nicht geplant',
+        notYetElected: 'Noch nicht gewählt',
+      },
+      columns: {
+        category: 'Kategorie',
+        group: 'Untergruppe',
+        absolute: 'Absolut',
+        planned: 'Geplant',
+        scheduled: 'Wahl geplant',
+        elected: 'Gewählt',
+        share: 'Anteil',
+      },
     },
     pendingRequests: 'Ausstehende Anfragen ({{count}})',
     activeParticipants: 'Aktive Teilnehmer ({{count}})',

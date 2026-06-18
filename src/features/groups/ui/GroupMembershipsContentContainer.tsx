@@ -27,7 +27,11 @@ import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembersh
 import { resolveChildBaseGroups } from '@/features/groups/logic/hierarchy';
 import { buildMembershipRightsAlignmentRowsFromRelationships } from '@/features/groups/logic/membershipRightsAlignment';
 import { resolveOfflineRosterProvenance } from '@/features/groups/logic/offlineRosterProvenance';
-import type { MembershipCompositionGroupLike } from '@/features/groups/logic/membershipComposition';
+import {
+  buildMembershipCompositionBuckets,
+  type MembershipCompositionGroupLike,
+} from '@/features/groups/logic/membershipComposition';
+import { selectMaterializedHierarchicalMemberships } from '@/features/groups/logic/effectiveMemberships';
 import { queries } from '@/zero/queries';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useGroupOfflineMembershipsByGroupIds, useGroupState } from '@/zero/groups/useGroupState';
@@ -54,9 +58,42 @@ type EffectiveOfflineMembership = GroupOfflineMembershipWithRolesAndRightsByGrou
   role: ParticipationRoleLike | null;
   partGroup?: ParticipationProvenanceGroupLike | null;
   baseGroup?: ParticipationProvenanceGroupLike | null;
+  provenanceBucketLabel?: string | null;
+  effectiveReadOnly?: boolean;
+  effectiveSourceMembershipId?: string;
 };
 
 type MembershipParticipant = GroupMembershipWithUser | EffectiveOfflineMembership;
+
+export function buildCompositionOfflineRosterRows(
+  memberships: readonly EffectiveOfflineMembership[],
+  canManageMembers: boolean
+): OfflineRosterRow[] {
+  return memberships.map<OfflineRosterRow>(membership => {
+    const offlineMember = membership.group_offline_member;
+
+    return {
+      id: offlineMember?.id ?? membership.group_offline_member_id,
+      kind: 'offline',
+      effectiveMembershipId: membership.id,
+      user: null,
+      firstName: offlineMember?.first_name ?? membership.user.first_name ?? '',
+      lastName: offlineMember?.last_name ?? membership.user.last_name ?? '',
+      isActiveUser: false,
+      reasonNotSignedUp: offlineMember?.reason_not_signed_up ?? null,
+      connectedUser: offlineMember?.connected_user ?? null,
+      partGroup: membership.partGroup ?? null,
+      baseGroup: membership.baseGroup ?? null,
+      roles: membership.roles ?? [],
+      canViewRights: true,
+      canManageRoles: canManageMembers,
+      readOnlyIdentity: true,
+      canConnect: false,
+      canEdit: false,
+      canDelete: false,
+    };
+  });
+}
 
 function isOfflineMembershipParticipant(
   membership: MembershipParticipant | null | undefined
@@ -94,6 +131,20 @@ function toMembershipCompositionGroup(
 function toOfflineRosterGroupReference(
   groupRef: GroupReferenceLike | null | undefined
 ): GroupReferenceWithType | null {
+  if (!groupRef?.id) {
+    return null;
+  }
+
+  return {
+    id: groupRef.id,
+    name: groupRef.name ?? groupRef.id,
+    group_type: groupRef.group_type ?? null,
+  };
+}
+
+function toProvenanceGroupReference(
+  groupRef: GroupReferenceLike | null | undefined
+): ParticipationProvenanceGroupLike | null {
   if (!groupRef?.id) {
     return null;
   }
@@ -166,16 +217,78 @@ export function GroupMembershipsContentContainer({
 
   const { activeMemberships, invitedMemberships, requestedMemberships } =
     useGroupMemberships(groupId);
+  const compositionGroupIds = useMemo(() => {
+    if (!compositionGroup) {
+      return [groupId];
+    }
+
+    if (
+      compositionGroup.group_type !== 'hierarchical' &&
+      compositionGroup.group_type !== 'sibling'
+    ) {
+      return [groupId];
+    }
+
+    const groupsById = new Map<
+      string,
+      { id: string; group_type?: string | null; name?: string | null }
+    >();
+    for (const relationship of allRelationshipsWithGroups) {
+      if (relationship.group?.id) {
+        groupsById.set(relationship.group.id, relationship.group);
+      }
+      if (relationship.related_group?.id) {
+        groupsById.set(relationship.related_group.id, relationship.related_group);
+      }
+    }
+    groupsById.set(compositionGroup.id, compositionGroup);
+
+    if (compositionGroup.group_type === 'hierarchical') {
+      return [
+        compositionGroup.id,
+        ...resolveChildBaseGroups(compositionGroup.id, hierarchyRelationships, groupsById),
+      ];
+    }
+
+    const sourceGroupIds =
+      compositionGroup.sibling_membership_mode === 'elected'
+        ? compositionGroup.connected_group_id
+          ? [compositionGroup.connected_group_id]
+          : []
+        : (group?.sibling_sources || [])
+            .map(source => source.source_group?.id || source.source_group_id)
+            .filter((candidate): candidate is string => Boolean(candidate));
+    const expandedGroupIds = new Set<string>([compositionGroup.id]);
+
+    for (const sourceGroupId of sourceGroupIds) {
+      expandedGroupIds.add(sourceGroupId);
+      const sourceGroup = groupsById.get(sourceGroupId);
+      if (sourceGroup?.group_type === 'hierarchical') {
+        for (const baseGroupId of resolveChildBaseGroups(
+          sourceGroupId,
+          hierarchyRelationships,
+          groupsById
+        )) {
+          expandedGroupIds.add(baseGroupId);
+        }
+      }
+    }
+
+    return [...expandedGroupIds];
+  }, [compositionGroup, group, groupId, hierarchyRelationships]);
+  const effectiveActiveMemberships = useMemo(
+    () => activeMemberships as GroupMembershipWithUser[],
+    [activeMemberships]
+  );
   const { activeGuestAccesses, requestedGuestAccesses, invitedGuestAccesses } =
     useGroupGuestAccesses(groupId);
   const {
     showComposition,
     membershipsWithProvenance,
-    compositionBuckets,
     isLoading: compositionIsLoading,
   } = useGroupMembershipComposition(
     compositionGroup,
-    activeMemberships as GroupMembershipWithUser[]
+    effectiveActiveMemberships as GroupMembershipWithUser[]
   );
   const {
     openAssignments,
@@ -247,6 +360,7 @@ export function GroupMembershipsContentContainer({
 
   const handleConfirmRoleChange = async (newRoleIds: string[]) => {
     if (!changeRoleMembership) return;
+    if ((changeRoleMembership as { effectiveReadOnly?: boolean }).effectiveReadOnly) return;
 
     if (isOfflineMembershipParticipant(changeRoleMembership)) {
       await serverConfirmed(
@@ -386,6 +500,10 @@ export function GroupMembershipsContentContainer({
     membership: MembershipParticipant,
     roleId: string
   ) => {
+    if ((membership as { effectiveReadOnly?: boolean }).effectiveReadOnly) {
+      return;
+    }
+
     const nextRoleIds = getMembershipDisplayRoles(membership)
       .filter(role => role.id !== roleId)
       .map(role => role.id);
@@ -416,72 +534,12 @@ export function GroupMembershipsContentContainer({
 
   const groupRoleHook = useGroupRoles(groupId);
 
-  const compositionGroupIds = useMemo(() => {
-    if (!compositionGroup) {
-      return [groupId];
-    }
-
-    if (
-      compositionGroup.group_type !== 'hierarchical' &&
-      compositionGroup.group_type !== 'sibling'
-    ) {
-      return [groupId];
-    }
-
-    const groupsById = new Map<
-      string,
-      { id: string; group_type?: string | null; name?: string | null }
-    >();
-    for (const relationship of allRelationshipsWithGroups) {
-      if (relationship.group?.id) {
-        groupsById.set(relationship.group.id, relationship.group);
-      }
-      if (relationship.related_group?.id) {
-        groupsById.set(relationship.related_group.id, relationship.related_group);
-      }
-    }
-    groupsById.set(compositionGroup.id, compositionGroup);
-
-    if (compositionGroup.group_type === 'hierarchical') {
-      return [
-        compositionGroup.id,
-        ...resolveChildBaseGroups(compositionGroup.id, hierarchyRelationships, groupsById),
-      ];
-    }
-
-    const sourceGroupIds =
-      compositionGroup.sibling_membership_mode === 'elected'
-        ? compositionGroup.connected_group_id
-          ? [compositionGroup.connected_group_id]
-          : []
-        : (group?.sibling_sources || [])
-            .map(source => source.source_group?.id || source.source_group_id)
-            .filter((candidate): candidate is string => Boolean(candidate));
-    const expandedGroupIds = new Set<string>([compositionGroup.id]);
-
-    for (const sourceGroupId of sourceGroupIds) {
-      expandedGroupIds.add(sourceGroupId);
-      const sourceGroup = groupsById.get(sourceGroupId);
-      if (sourceGroup?.group_type === 'hierarchical') {
-        for (const baseGroupId of resolveChildBaseGroups(
-          sourceGroupId,
-          hierarchyRelationships,
-          groupsById
-        )) {
-          expandedGroupIds.add(baseGroupId);
-        }
-      }
-    }
-
-    return [...expandedGroupIds];
-  }, [compositionGroup, group, groupId, hierarchyRelationships]);
-
-  const [offlineMembersData] = useQuery(
+  const [offlineMembersData, offlineMembersResult] = useQuery(
     compositionGroupIds.length > 0
       ? queries.groups.offlineMembersByGroupIds({ groupIds: compositionGroupIds })
       : undefined
   );
-  const { offlineMemberships: offlineMembershipsData } =
+  const { offlineMemberships: offlineMembershipsData, isLoading: offlineMembershipsIsLoading } =
     useGroupOfflineMembershipsByGroupIds(compositionGroupIds);
 
   const groupsById = useMemo(() => {
@@ -552,33 +610,57 @@ export function GroupMembershipsContentContainer({
   );
 
   const allEffectiveOfflineMemberships = useMemo<EffectiveOfflineMembership[]>(() => {
-    return (offlineMembershipsData || [])
-      .filter(membership => membership.group_id === groupId)
-      .map(membership => {
-        const offlineMember = membership.group_offline_member;
-        const provenance = offlineMember?.id
-          ? offlineProvenanceByMemberId.get(offlineMember.id)
-          : undefined;
+    const hierarchyOfflineMemberships =
+      compositionGroup?.group_type === 'hierarchical'
+        ? selectMaterializedHierarchicalMemberships({
+            targetGroup: compositionGroup,
+            memberships: offlineMembershipsData || [],
+            relationships: hierarchyRelationships,
+          })
+        : (offlineMembershipsData || []).filter(membership => membership.group_id === groupId);
 
-        return {
-          ...membership,
-          membershipKind: 'offline' as const,
-          user_id: `offline:${membership.group_offline_member_id}`,
-          user: {
-            id: null,
-            first_name: offlineMember?.first_name ?? null,
-            last_name: offlineMember?.last_name ?? null,
-            handle: null,
-            avatar: null,
-            email: null,
-          },
-          roles: membership.roles ?? [],
-          role: membership.role ?? null,
-          partGroup: showComposition ? (provenance?.partGroup ?? null) : null,
-          baseGroup: showComposition ? (provenance?.baseGroup ?? null) : null,
-        };
-      });
-  }, [groupId, offlineMembershipsData, offlineProvenanceByMemberId, showComposition]);
+    return hierarchyOfflineMemberships.map(membership => {
+      const effectiveFields = membership as typeof membership & {
+        effectiveReadOnly?: boolean;
+        effectiveSourceMembershipId?: string;
+      };
+      const offlineMember = membership.group_offline_member;
+      const provenance = offlineMember?.id
+        ? offlineProvenanceByMemberId.get(offlineMember.id)
+        : undefined;
+      const sourceGroupRef = toProvenanceGroupReference(
+        membership.source_group ?? offlineMember?.group
+      );
+
+      return {
+        ...membership,
+        membershipKind: 'offline' as const,
+        user_id: `offline:${membership.group_offline_member_id}`,
+        user: {
+          id: null,
+          first_name: offlineMember?.first_name ?? null,
+          last_name: offlineMember?.last_name ?? null,
+          handle: null,
+          avatar: null,
+          email: null,
+        },
+        roles: membership.roles ?? [],
+        role: membership.role ?? null,
+        partGroup: showComposition ? (provenance?.partGroup ?? sourceGroupRef ?? null) : null,
+        baseGroup: showComposition ? (provenance?.baseGroup ?? sourceGroupRef ?? null) : null,
+        provenanceBucketLabel: showComposition ? (provenance?.provenanceBucketLabel ?? null) : null,
+        effectiveReadOnly: effectiveFields.effectiveReadOnly,
+        effectiveSourceMembershipId: effectiveFields.effectiveSourceMembershipId,
+      };
+    });
+  }, [
+    compositionGroup,
+    groupId,
+    hierarchyRelationships,
+    offlineMembershipsData,
+    offlineProvenanceByMemberId,
+    showComposition,
+  ]);
 
   const effectiveOfflineMemberships = useMemo<EffectiveOfflineMembership[]>(() => {
     const searchValue = memberSearchQuery.trim().toLowerCase();
@@ -616,53 +698,7 @@ export function GroupMembershipsContentContainer({
     );
 
     if (showComposition) {
-      return (offlineMembersData || [])
-        .filter(offlineMember => {
-          if (!searchValue) {
-            return true;
-          }
-
-          const effectiveMembership = effectiveMembershipByOfflineMemberId.get(offlineMember.id);
-          const haystack = [
-            offlineMember.first_name,
-            offlineMember.last_name,
-            offlineMember.reason_not_signed_up,
-            offlineMember.connected_user?.first_name,
-            offlineMember.connected_user?.last_name,
-            offlineMember.connected_user?.handle,
-            ...(effectiveMembership?.roles ?? []).map(role => role.name),
-          ]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase();
-
-          return haystack.includes(searchValue);
-        })
-        .map<OfflineRosterRow>(offlineMember => {
-          const effectiveMembership = effectiveMembershipByOfflineMemberId.get(offlineMember.id);
-          const provenance = offlineProvenanceByMemberId.get(offlineMember.id);
-
-          return {
-            id: offlineMember.id,
-            kind: 'offline',
-            effectiveMembershipId: effectiveMembership?.id ?? null,
-            user: null,
-            firstName: offlineMember.first_name,
-            lastName: offlineMember.last_name,
-            isActiveUser: false,
-            reasonNotSignedUp: offlineMember.reason_not_signed_up,
-            connectedUser: offlineMember.connected_user ?? null,
-            partGroup: provenance?.partGroup ?? null,
-            baseGroup: provenance?.baseGroup ?? null,
-            roles: effectiveMembership?.roles ?? [],
-            canViewRights: Boolean(effectiveMembership),
-            canManageRoles: canManageMembers && Boolean(effectiveMembership),
-            readOnlyIdentity: true,
-            canConnect: false,
-            canEdit: false,
-            canDelete: false,
-          };
-        });
+      return buildCompositionOfflineRosterRows(effectiveOfflineMemberships, canManageMembers);
     }
 
     return (offlineMembersData || [])
@@ -718,7 +754,6 @@ export function GroupMembershipsContentContainer({
     groupId,
     memberSearchQuery,
     offlineMembersData,
-    offlineProvenanceByMemberId,
     showComposition,
   ]);
 
@@ -744,6 +779,26 @@ export function GroupMembershipsContentContainer({
     () => [...activeMembers, ...effectiveOfflineMemberships],
     [activeMembers, effectiveOfflineMemberships]
   );
+  const compositionPanelIsLoading =
+    compositionIsLoading ||
+    (showComposition &&
+      compositionGroupIds.length > 0 &&
+      (offlineMembersResult.type === 'unknown' || offlineMembershipsIsLoading));
+  const compositionPanelBuckets = useMemo(() => {
+    if (!showComposition || compositionPanelIsLoading) {
+      return [];
+    }
+
+    return buildMembershipCompositionBuckets([
+      ...membershipsWithProvenance,
+      ...allEffectiveOfflineMemberships,
+    ]);
+  }, [
+    allEffectiveOfflineMemberships,
+    compositionPanelIsLoading,
+    membershipsWithProvenance,
+    showComposition,
+  ]);
   const rightsAlignmentRows = useMemo(
     () =>
       showRightsAlignment
@@ -779,7 +834,7 @@ export function GroupMembershipsContentContainer({
 
   const connectedUserCandidates = useMemo<OfflineRosterCandidateUser[]>(
     () =>
-      activeMemberships.flatMap(membership => {
+      effectiveActiveMemberships.flatMap(membership => {
         const user = membership.user;
         if (!user?.id || offlineConnectedUserIds.has(user.id)) {
           return [];
@@ -787,7 +842,7 @@ export function GroupMembershipsContentContainer({
 
         return [user as OfflineRosterCandidateUser];
       }),
-    [activeMemberships, offlineConnectedUserIds]
+    [effectiveActiveMemberships, offlineConnectedUserIds]
   );
 
   return (
@@ -808,8 +863,8 @@ export function GroupMembershipsContentContainer({
       canManageMembers={canManageMembers}
       changeRoleMembership={changeRoleMembership}
       changeRoleOpen={changeRoleOpen}
-      compositionBuckets={compositionBuckets}
-      compositionIsLoading={compositionIsLoading}
+      compositionBuckets={compositionPanelBuckets}
+      compositionIsLoading={compositionPanelIsLoading}
       connectedUserCandidates={connectedUserCandidates}
       createOfflineMember={createOfflineMember}
       deleteOfflineMember={deleteOfflineMember}

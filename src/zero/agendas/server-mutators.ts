@@ -8,6 +8,7 @@ import { eventTitle, recomputeEventCounters, recomputeEventEndDate } from '../se
 import {
   createAgendaItemSchema,
   deleteAgendaItemSchema,
+  reorderAgendaItemsSchema,
   updateAgendaItemSchema,
   createSpeakerListSchema,
   updateAgendaItemChangeRequestSchema,
@@ -156,6 +157,41 @@ export const agendaServerMutators = {
         sourceEventTitle: sourceTitle,
         targetEventId: args.event_id,
         targetEventTitle: targetTitle,
+      });
+    }
+  }),
+
+  reorderAgendaItems: defineMutator(reorderAgendaItemsSchema, async ({ tx, ctx, args }) => {
+    if (args.items.length === 0) {
+      return;
+    }
+
+    const existingItems = await tx.run(
+      zql.agenda_item.where(
+        'id',
+        'IN',
+        args.items.map(item => item.id)
+      )
+    );
+    const existingById = new Map(existingItems.map(item => [item.id, item]));
+    const changedEventIds = new Set<string>();
+
+    for (const item of args.items) {
+      const existing = existingById.get(item.id);
+      if (existing?.event_id && existing.order_index !== item.order_index) {
+        changedEventIds.add(existing.event_id);
+      }
+    }
+
+    await mutators.agendas.reorderAgendaItems.fn({ tx, ctx, args });
+
+    for (const eventId of changedEventIds) {
+      await recomputeEventEndDate(tx, eventId);
+      const eTitle = await eventTitle(tx, eventId);
+      fireNotification('notifyScheduleChanged', {
+        senderId: ctx.userID,
+        eventId,
+        eventTitle: eTitle,
       });
     }
   }),

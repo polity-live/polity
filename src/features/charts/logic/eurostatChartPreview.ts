@@ -1,10 +1,12 @@
 import {
   EUROSTAT_DEFAULT_VALUE_FIELD,
   EUROSTAT_VALUE_FIELDS,
+  type ChartPoint,
   type ChartType,
   type EurostatDimension,
   type EurostatDimensionValue,
 } from '../types';
+import type { ParsedChartTable } from './chartData';
 
 export type EurostatChartPreset = 'compareCountriesInYear' | 'showTimeSeriesForCountry';
 
@@ -85,6 +87,66 @@ export function createEurostatPreviewRows(
         .join(' · '),
     };
   });
+}
+
+export function createEurostatPreviewTable(
+  rows: readonly EurostatObservationLike[],
+  dimensions: readonly EurostatDimension[]
+): ParsedChartTable {
+  const hasAttributes = rows.some(
+    row => Object.keys(normalizeEurostatJsonRecord(row.attributes)).length > 0
+  );
+  const columns = [
+    ...dimensions.map(dimension =>
+      dimension.label ? `${dimension.id} · ${dimension.label}` : dimension.id
+    ),
+    EUROSTAT_DEFAULT_VALUE_FIELD,
+    ...(hasAttributes ? ['Attributes'] : []),
+  ];
+  const previewRows = createEurostatPreviewRows(rows, dimensions);
+
+  return {
+    columns,
+    rows: previewRows.map(row => ({
+      ...Object.fromEntries(
+        dimensions.map(dimension => [
+          dimension.label ? `${dimension.id} · ${dimension.label}` : dimension.id,
+          row.dimensionValues[dimension.id] || '',
+        ])
+      ),
+      [EUROSTAT_DEFAULT_VALUE_FIELD]: row.value,
+      ...(hasAttributes ? { Attributes: row.attributesText } : {}),
+    })),
+  };
+}
+
+export function createEurostatEditableTable({
+  points,
+  xDimension,
+  valueField = EUROSTAT_DEFAULT_VALUE_FIELD,
+  seriesDimension,
+}: {
+  points: readonly ChartPoint[];
+  xDimension: string;
+  valueField?: string | null;
+  seriesDimension?: string | null;
+}): ParsedChartTable {
+  const normalizedValueField = valueField || EUROSTAT_DEFAULT_VALUE_FIELD;
+  const normalizedSeriesDimension = seriesDimension || null;
+  const columns = [
+    xDimension,
+    normalizedValueField,
+    ...(normalizedSeriesDimension ? [normalizedSeriesDimension] : []),
+  ];
+
+  return {
+    columns,
+    rows: points.map(point => ({
+      [xDimension]: point.x,
+      [normalizedValueField]: String(point.value),
+      ...(normalizedSeriesDimension ? { [normalizedSeriesDimension]: point.series ?? '' } : {}),
+    })),
+  };
 }
 
 export function getDefaultEurostatXDimension(dimensions: readonly EurostatDimension[]) {

@@ -65,7 +65,9 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
 
   // Group — Content
   group_new_event: Calendar,
+  group_event_assigned: Calendar,
   group_new_amendment: FileText,
+  group_amendment_support_confirmed: CheckCircle,
   group_profile_updated: Edit,
   group_new_subscriber: Star,
   group_link_added: LinkIcon,
@@ -85,6 +87,7 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   group_todo_assigned: CheckCircle,
   group_todo_updated: Edit,
   group_todo_deleted: Trash2,
+  group_process_task_created: Workflow,
 
   // Group — Payments
   group_payment_created: CreditCard,
@@ -123,6 +126,7 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   event_agenda_item_created: FileText,
   event_agenda_item_deleted: FileX,
   event_agenda_item_transferred: Workflow,
+  event_change_request_created: FilePlus,
   event_schedule_changed: Calendar,
 
   // Event — Elections & Roles
@@ -131,6 +135,7 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   event_election_ended: Vote,
   event_role_created: Briefcase,
   event_role_deleted: Briefcase,
+  event_role_updated: Shield,
   event_delegates_finalized: Users,
   event_delegate_nominated: UserCheck,
 
@@ -166,6 +171,7 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   amendment_new_subscriber: Star,
   amendment_owner_promoted: ShieldCheck,
   amendment_owner_demoted: ShieldX,
+  amendment_role_updated: Shield,
   amendment_workflow_changed: Workflow,
   amendment_path_advanced: GitBranch,
   amendment_cloned: Copy,
@@ -265,7 +271,9 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
 
   // Group — Content (cyan tones)
   group_new_event: featureThemeClassName('notificationNotificationAccentText'),
+  group_event_assigned: featureThemeClassName('notificationNotificationAccentText'),
   group_new_amendment: featureThemeClassName('notificationNotificationWarningText'),
+  group_amendment_support_confirmed: featureThemeClassName('notificationNotificationSuccessText'),
   group_profile_updated: featureThemeClassName('notificationNotificationInfoText'),
   group_new_subscriber: featureThemeClassName('notificationNotificationWarningTextAlpha'),
   group_link_added: featureThemeClassName('notificationNotificationInfoTextBeta'),
@@ -285,6 +293,7 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   group_todo_assigned: featureThemeClassName('discussionsCommentTreeInfoText'),
   group_todo_updated: featureThemeClassName('notificationNotificationInfoTextAlpha'),
   group_todo_deleted: featureThemeClassName('notificationNotificationDangerText'),
+  group_process_task_created: featureThemeClassName('discussionsCommentTreeInfoText'),
 
   // Group — Payments
   group_payment_created: featureThemeClassName('notificationNotificationSuccessTextAlpha'),
@@ -323,6 +332,7 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   event_agenda_item_created: featureThemeClassName('notificationNotificationAccentTextEpsilon'),
   event_agenda_item_deleted: featureThemeClassName('notificationNotificationNeutralText'),
   event_agenda_item_transferred: featureThemeClassName('notificationNotificationAccentTextEpsilon'),
+  event_change_request_created: featureThemeClassName('notificationNotificationWarningText'),
   event_schedule_changed: featureThemeClassName('notificationNotificationAccentTextBeta'),
 
   // Event — Elections & Roles
@@ -331,6 +341,7 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   event_election_ended: featureThemeClassName('notificationNotificationAccentTextGamma'),
   event_role_created: featureThemeClassName('notificationNotificationAccentTextGamma'),
   event_role_deleted: featureThemeClassName('notificationNotificationNeutralText'),
+  event_role_updated: featureThemeClassName('notificationNotificationNeutralText'),
   event_delegates_finalized: featureThemeClassName('notificationNotificationAccentTextGamma'),
   event_delegate_nominated: featureThemeClassName('notificationNotificationAccentTextZeta'),
 
@@ -366,6 +377,7 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   amendment_new_subscriber: featureThemeClassName('notificationNotificationWarningTextAlpha'),
   amendment_owner_promoted: featureThemeClassName('notificationNotificationSuccessTextAlpha'),
   amendment_owner_demoted: featureThemeClassName('discussionsCommentTreeWarningText'),
+  amendment_role_updated: featureThemeClassName('notificationNotificationNeutralText'),
   amendment_workflow_changed: featureThemeClassName('notificationNotificationWarningTextBeta'),
   amendment_path_advanced: featureThemeClassName('notificationNotificationWarningTextBeta'),
   amendment_cloned: featureThemeClassName('notificationNotificationWarningTextBeta'),

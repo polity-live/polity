@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { execSync } from 'node:child_process';
+import { stdin as input, stdout as output } from 'node:process';
+import { createInterface } from 'node:readline/promises';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -15,15 +17,18 @@ const RESET = '\x1b[0m';
 // ── Parse CLI flags ──────────────────────────────────────────
 const args = new Set(process.argv.slice(2));
 
-const skipSupabase = args.has('--skip-supabase');
-const skipFly = args.has('--skip-fly');
-const skipVercel = args.has('--skip-vercel');
+const skipSupabaseFlag = args.has('--skip-supabase');
+const skipFlyFlag = args.has('--skip-fly');
+const skipVercelFlag = args.has('--skip-vercel');
+const deployAll = args.has('--all') || args.has('--yes');
 const dryRun = args.has('--dry-run');
 
 const ALLOWED_FLAGS = new Set([
   '--skip-supabase',
   '--skip-fly',
   '--skip-vercel',
+  '--all',
+  '--yes',
   '--dry-run',
 ]);
 
@@ -75,6 +80,91 @@ function hasCommand(name) {
   }
 }
 
+function formatTargets({ supabase, fly, vercel }) {
+  const selected = [];
+  if (vercel) {
+    selected.push('Frontend → Vercel');
+  }
+  if (supabase) {
+    selected.push('Supabase → Supabase');
+  }
+  if (fly) {
+    selected.push('Docker/Zero → Fly.io');
+  }
+  return selected.length ? selected.join(', ') : 'none';
+}
+
+async function confirmTarget(readline, question, defaultValue = true) {
+  const hint = defaultValue ? 'Y/n' : 'y/N';
+
+  while (true) {
+    const answer = (await readline.question(`${question} (${hint}) `)).trim().toLowerCase();
+
+    if (!answer) {
+      return defaultValue;
+    }
+
+    if (['y', 'yes', 'j', 'ja'].includes(answer)) {
+      return true;
+    }
+
+    if (['n', 'no', 'nein'].includes(answer)) {
+      return false;
+    }
+
+    warn('Please answer with y/yes/j/ja or n/no/nein.');
+  }
+}
+
+async function promptDeployTargets() {
+  step('Deploy targets');
+  info('Choose which parts should be deployed. Press Enter for yes.');
+
+  const readline = createInterface({ input, output });
+
+  try {
+    return {
+      vercel: await confirmTarget(readline, 'Deploy frontend to Vercel?'),
+      supabase: await confirmTarget(readline, 'Deploy Supabase migrations to Supabase?'),
+      fly: await confirmTarget(readline, 'Deploy Docker/Zero to Fly.io?'),
+    };
+  } finally {
+    readline.close();
+  }
+}
+
+const skipFlagsProvided = skipSupabaseFlag || skipFlyFlag || skipVercelFlag;
+const promptForTargets = !deployAll && !skipFlagsProvided;
+
+if (promptForTargets && !input.isTTY) {
+  error('Interactive target selection requires a terminal.');
+  info('Use --all for a full deploy or --skip-* flags for non-interactive target selection.');
+  process.exit(1);
+}
+
+const targets = promptForTargets
+  ? await promptDeployTargets()
+  : {
+      supabase: !skipSupabaseFlag,
+      fly: !skipFlyFlag,
+      vercel: !skipVercelFlag,
+    };
+
+const skipSupabase = !targets.supabase;
+const skipFly = !targets.fly;
+const skipVercel = !targets.vercel;
+
+if (!promptForTargets) {
+  step('Deploy targets');
+}
+
+info(`Selected: ${formatTargets(targets)}`);
+
+if (!targets.supabase && !targets.fly && !targets.vercel) {
+  warn('No deploy targets selected. Nothing to do.');
+  process.exit(0);
+}
+
 // ── 1. Git branch check ─────────────────────────────────────
 step('Pre-flight checks');
 
@@ -82,7 +172,9 @@ const branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf-8' }
 const allowedBranches = ['master', 'deploy'];
 
 if (!allowedBranches.includes(branch)) {
-  error(`Current branch is "${branch}". Deploy is only allowed from: ${allowedBranches.join(', ')}`);
+  error(
+    `Current branch is "${branch}". Deploy is only allowed from: ${allowedBranches.join(', ')}`
+  );
   process.exit(1);
 }
 
@@ -158,7 +250,7 @@ if (!skipFly) {
       } catch (err) {
         lastError = err.cause?.code || err.message || String(err);
       }
-      await new Promise((r) => setTimeout(r, interval));
+      await new Promise(r => setTimeout(r, interval));
     }
 
     if (healthy) {

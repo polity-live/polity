@@ -38,4 +38,19 @@ describe('MembershipTabs', () => {
 
     expect(screen.queryByRole('tab', { name: 'Rights alignment' })).toBeNull();
   });
+
+  it('shows the composition tab when delegate assembly callers enable it', () => {
+    render(
+      <MembershipTabs
+        {...defaultProps}
+        activeTab="composition"
+        showComposition
+        compositionLabel="Composition"
+        compositionContent={<div>Composition content</div>}
+      />
+    );
+
+    expect(screen.getByRole('tab', { name: 'Composition' })).toBeTruthy();
+    expect(screen.getByText('Composition content')).toBeTruthy();
+  });
 });

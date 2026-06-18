@@ -11,6 +11,13 @@ import {
 } from '../../api/eurostatClient';
 import { ChartDialog, openChartDialog } from '../ChartDialog';
 
+const editorMocks = vi.hoisted(() => ({
+  findPath: vi.fn(() => [0]),
+  focus: vi.fn(),
+  insertNodes: vi.fn(),
+  setNodes: vi.fn(),
+}));
+
 vi.mock('@/features/shared/ui/ui/dialog', () => ({
   Dialog: ({ children, open }: { children: ReactNode; open: boolean }) =>
     open ? <div>{children}</div> : null,
@@ -80,8 +87,12 @@ vi.mock('@/providers/auth-provider', () => ({
 
 vi.mock('platejs/react', () => ({
   useEditorRef: () => ({
-    api: { findPath: vi.fn(() => [0]) },
-    tf: { focus: vi.fn(), insertNodes: vi.fn(), setNodes: vi.fn() },
+    api: { findPath: editorMocks.findPath },
+    tf: {
+      focus: editorMocks.focus,
+      insertNodes: editorMocks.insertNodes,
+      setNodes: editorMocks.setNodes,
+    },
   }),
 }));
 
@@ -95,14 +106,49 @@ vi.mock('react-i18next', () => ({
     t: (key: string, fallbackOrOptions?: string | Record<string, unknown>) => {
       if (typeof fallbackOrOptions === 'string') return fallbackOrOptions;
 
+      if (key === 'plateJs.chart.editableTableSummary') {
+        return `${fallbackOrOptions?.rows} rows · ${fallbackOrOptions?.columns} columns editable`;
+      }
+
       const labels: Record<string, string> = {
         'plateJs.chart.assignColumns': 'Assign columns',
+        'plateJs.chart.bar': 'Bar',
+        'plateJs.chart.buildEditableTable': 'Build editable table',
+        'plateJs.chart.buildEditableTableFirst': 'Build editable table first',
+        'plateJs.chart.cancel': 'Cancel',
+        'plateJs.chart.category': 'Category / X',
+        'plateJs.chart.chartType': 'Chart type',
         'plateJs.chart.compareCountriesInYear': 'Compare countries in one year',
         'plateJs.chart.createChartPreview': 'Create chart preview',
+        'plateJs.chart.csvSource': 'CSV',
+        'plateJs.chart.dataTable': 'Data table',
+        'plateJs.chart.descriptionLabel': 'Description',
+        'plateJs.chart.donut': 'Donut',
+        'plateJs.chart.editableTableNeeded': 'Build an editable table',
+        'plateJs.chart.editableTableReady': 'Editable table ready',
+        'plateJs.chart.editTitle': 'Edit chart',
+        'plateJs.chart.eurostatSource': 'Eurostat',
         'plateJs.chart.filtersComplete': 'Filters complete',
         'plateJs.chart.firstRows': 'First 5 downloaded rows',
+        'plateJs.chart.grid': 'Grid',
         'plateJs.chart.hoverValues': 'Show values on hover',
+        'plateJs.chart.legend': 'Legend',
+        'plateJs.chart.none': 'None',
+        'plateJs.chart.numericValue': 'Numeric value',
+        'plateJs.chart.officialDataSource': 'Official data source',
+        'plateJs.chart.officialSettingsHint': 'Select official data',
+        'plateJs.chart.orientationColumnMapping': 'Column mapping',
+        'plateJs.chart.orientationColumnsAsXAxis': 'Columns on X-axis',
+        'plateJs.chart.orientationRowsAsXAxis': 'Rows on X-axis',
+        'plateJs.chart.preview': 'Preview',
+        'plateJs.chart.rebuildEditableTable': 'Rebuild editable table',
+        'plateJs.chart.series': 'Series',
         'plateJs.chart.showTimeSeriesForCountry': 'Show time series for one country',
+        'plateJs.chart.tableOrientation': 'Table orientation',
+        'plateJs.chart.title': 'Title',
+        'plateJs.chart.update': 'Update chart',
+        'plateJs.chart.xAxisLabel': 'X-axis label',
+        'plateJs.chart.yAxisLabel': 'Y-axis label',
         'plateJs.chart.yValue': 'Y-axis / value',
       };
 
@@ -169,7 +215,7 @@ const eurostatElement: TChartElement = {
     projectionId: 'projection-old',
     filters: { geo: 'DE', unit: 'PC_GDP' },
   },
-  points: [],
+  points: [{ x: '2019', value: 90, series: null }],
   children: [{ text: '' }],
 };
 
@@ -182,12 +228,8 @@ describe('ChartDialog Eurostat flow', () => {
     cleanup();
   });
 
-  it('shows downloaded preview rows and creates a chart projection preview', async () => {
+  it('loads an existing Eurostat chart as an editable table and saves edited values', async () => {
     vi.mocked(loadEurostatDatasetDetails).mockResolvedValue(details);
-    vi.mocked(createEurostatChartProjection).mockResolvedValue({
-      projectionId: 'projection-new',
-      points: [{ x: '2020', value: 100, series: null }],
-    });
 
     render(<ChartDialog />);
 
@@ -196,31 +238,29 @@ describe('ChartDialog Eurostat flow', () => {
     });
 
     await waitFor(() => expect(loadEurostatDatasetDetails).toHaveBeenCalledWith('DEMO', 'en'));
-    expect(await screen.findByText('First 5 downloaded rows')).toBeTruthy();
-    expect(screen.getAllByTestId('eurostat-observation-preview-row')).toHaveLength(5);
-    expect(screen.getAllByText('DE · Germany').length).toBeGreaterThan(0);
-    expect(screen.getByText('OBS_STATUS: A')).toBeTruthy();
+    expect(await screen.findByText('Data table')).toBeTruthy();
+    expect(screen.getByDisplayValue('2019')).toBeTruthy();
+    fireEvent.change(screen.getByDisplayValue('90'), { target: { value: '123' } });
     expect(screen.getByText('Filters complete')).toBeTruthy();
     expect(screen.getByText('Y-axis / value')).toBeTruthy();
     expect(screen.getAllByText('OBS_VALUE').length).toBeGreaterThan(0);
     expect(screen.getByText('Show values on hover')).toBeTruthy();
-    expect(screen.getByTestId('chart-points').textContent).toBe('0');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Create chart preview' }));
-
-    await waitFor(() =>
-      expect(createEurostatChartProjection).toHaveBeenCalledWith(
-        {
-          datasetId: 'dataset-1',
-          filters: { geo: 'DE', unit: 'PC_GDP' },
-          xDimension: 'TIME_PERIOD',
-          seriesDimension: null,
-          valueField: 'OBS_VALUE',
-        },
-        'token'
-      )
-    );
     expect(screen.getByTestId('chart-points').textContent).toBe('1');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Update chart' }));
+
+    await waitFor(() => expect(editorMocks.setNodes).toHaveBeenCalled());
+    const updatedNode = editorMocks.setNodes.mock.calls[0][0];
+    expect(updatedNode.source).toMatchObject({
+      kind: 'eurostat',
+      datasetId: 'dataset-1',
+      datasetCode: 'DEMO',
+      snapshotKey: 'snap-demo',
+      projectionId: 'projection-old',
+      columns: ['TIME_PERIOD', 'OBS_VALUE'],
+      rows: [{ TIME_PERIOD: '2019', OBS_VALUE: '123' }],
+    });
+    expect(updatedNode.points).toEqual([{ x: '2019', value: 123, series: null }]);
   });
 
   it('sets geo on the X-axis when comparing countries in one year', async () => {
@@ -238,7 +278,7 @@ describe('ChartDialog Eurostat flow', () => {
 
     await screen.findByText('Assign columns');
     fireEvent.click(screen.getByRole('button', { name: 'Compare countries in one year' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Create chart preview' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Build editable table' }));
 
     await waitFor(() =>
       expect(createEurostatChartProjection).toHaveBeenCalledWith(
@@ -269,7 +309,7 @@ describe('ChartDialog Eurostat flow', () => {
 
     await screen.findByText('Assign columns');
     fireEvent.click(screen.getByRole('button', { name: 'Show time series for one country' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Create chart preview' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Build editable table' }));
 
     await waitFor(() =>
       expect(createEurostatChartProjection).toHaveBeenCalledWith(

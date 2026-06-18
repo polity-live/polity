@@ -24,6 +24,7 @@ interface TypeaheadSelectedCardProps {
   onRemove: () => void;
   className?: string;
   onClick?: (event: React.MouseEvent) => void;
+  disabled?: boolean;
 }
 
 export function TypeaheadSelectedCard({
@@ -32,6 +33,7 @@ export function TypeaheadSelectedCard({
   onRemove,
   className,
   onClick,
+  disabled = false,
 }: TypeaheadSelectedCardProps) {
   const Icon = getEntityIcon(item.entityType);
   const entityType = item.entityType as EntityTone;
@@ -46,6 +48,10 @@ export function TypeaheadSelectedCard({
   const detailHashtags = item.hashtags?.slice(0, isCompact ? 1 : 3) ?? [];
 
   const handleContainerClick = (event: React.MouseEvent) => {
+    if (disabled) {
+      return;
+    }
+
     if (onClick && isPlainLeftClick(event)) {
       event.preventDefault();
       onClick(event);
@@ -83,18 +89,20 @@ export function TypeaheadSelectedCard({
               <p className="text-muted-foreground mt-0.5 truncate text-xs">{item.secondaryLabel}</p>
             ) : null}
           </div>
-          <button
-            type="button"
-            onClick={e => {
-              e.preventDefault();
-              e.stopPropagation();
-              onRemove();
-            }}
-            className="hover:bg-destructive/10 hover:text-destructive relative z-10 rounded-full p-1.5 transition-colors"
-            aria-label={`Remove ${item.label}`}
-          >
-            <X className="h-4 w-4" />
-          </button>
+          {disabled ? null : (
+            <button
+              type="button"
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                onRemove();
+              }}
+              className="hover:bg-destructive/10 hover:text-destructive relative z-10 rounded-full p-1.5 transition-colors"
+              aria-label={`Remove ${item.label}`}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         {!isCompact && item.description ? (
@@ -131,13 +139,16 @@ export function TypeaheadSelectedCard({
 
   const surfaceClassName = cn(
     'entity-search-card-no-spotlight relative block overflow-hidden rounded-xl border shadow-sm transition-[border-color,box-shadow,transform] duration-[var(--motion-duration-base)]',
-    item.url && 'civic-motion-hover-lift civic-motion-press hover:border-foreground/20',
+    item.url &&
+      !disabled &&
+      'civic-motion-hover-lift civic-motion-press hover:border-foreground/20',
+    disabled && 'cursor-not-allowed',
     entitySurfaceClassName,
     isCompact ? 'px-3 py-2' : 'px-4 py-3',
     className
   );
 
-  if (item.url) {
+  if (item.url && !disabled) {
     return (
       <LinkSurface
         href={item.url}

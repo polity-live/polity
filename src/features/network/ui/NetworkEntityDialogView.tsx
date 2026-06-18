@@ -1,7 +1,7 @@
 'use client';
 
 import { featureThemeClassName } from '@/features/shared/theme';
-import { BadgeControl } from '@/features/shared/ui/status';
+import { BadgeControl, isRightType } from '@/features/shared/ui/status';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import {
   Dialog,
@@ -79,6 +79,11 @@ export function NetworkEntityDialogView({
   siblingMembershipMode,
   t,
 }: NetworkEntityDialogViewProps) {
+  const relationshipRights =
+    entity.type === 'relationship' && Array.isArray(entity.data?.rights)
+      ? (entity.data.rights as string[]).filter(isRightType)
+      : [];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <ScrollableDialogContent className="max-w-2xl">
@@ -214,6 +219,12 @@ export function NetworkEntityDialogView({
                   selectedGroupName={relationshipPreviewData.selectedGroupName}
                   currentGroupId={relationshipPreviewData.currentGroupId}
                   selectedGroupId={relationshipPreviewData.selectedGroupId}
+                  membershipSourceGroupId={entity.data.membershipSourceGroupId}
+                  membershipTargetGroupId={entity.data.membershipTargetGroupId}
+                  membershipSourceGroupName={entity.data.membershipSourceGroupName}
+                  membershipTargetGroupName={entity.data.membershipTargetGroupName}
+                  requiredSourceRoleId={entity.data.membershipRequiredSourceRoleId}
+                  requiredSourceRoleName={entity.data.membershipRequiredSourceRoleName}
                 />
               ) : entity.data.membershipMode ? (
                 <div className="rounded-lg border p-4">
@@ -261,22 +272,22 @@ export function NetworkEntityDialogView({
                   </div>
                 )}
 
-              {entity.data.rights && (entity.data.rights as string[]).length > 0 ? (
+              {relationshipRights.length > 0 ? (
                 <div className="space-y-3">
                   {relationshipPreviewData ? (
                     <GroupRelationshipRightsSummary
                       label={t('common.network.selectRights')}
-                      selectedRights={entity.data.rights as GroupRelationshipRight[]}
+                      selectedRights={relationshipRights as GroupRelationshipRight[]}
                       helperText={t('common.network.directionDetails')}
                       existingRightStatuses={getExistingRightStatuses(entity.data)}
                       rightDirections={
                         Object.fromEntries(
-                          getRightDirectionDetails(entity.data).map(
-                            ({ right, direction }: { right: string; direction: any }) => [
+                          getRightDirectionDetails(entity.data)
+                            .filter(({ right }: { right: string }) => isRightType(right))
+                            .map(({ right, direction }: { right: string; direction: any }) => [
                               right,
                               direction,
-                            ]
-                          )
+                            ])
                         ) as Partial<Record<GroupRelationshipRight, GroupRelationshipDirection>>
                       }
                       currentGroupName={relationshipPreviewData.currentGroupName}
@@ -291,7 +302,7 @@ export function NetworkEntityDialogView({
                         {t('common.network.selectRights')}
                       </p>
                       <p className="text-muted-foreground mt-1 text-xs">
-                        {(entity.data.rights as string[]).length} {t('common.labels.rightsGranted')}
+                        {relationshipRights.length} {t('common.labels.rightsGranted')}
                       </p>
                     </div>
                   )}

@@ -4,9 +4,13 @@ import { PermissionError } from '../../rbac/errors';
 
 const canMock = vi.fn();
 const amendmentDeleteMock = vi.fn();
+const createProcessTaskMock = vi.fn();
 const supportAmendmentMock = vi.fn();
 const updateSupportVoteMock = vi.fn();
 const fireNotificationMock = vi.fn();
+const amendmentTitleMock = vi.fn();
+const eventTitleMock = vi.fn();
+const groupNameMock = vi.fn();
 const userNameMock = vi.fn();
 const processEngineMocks = vi.hoisted(() => ({
   completeProcessTaskWithEvent: vi.fn(),
@@ -32,6 +36,7 @@ vi.mock('../../mutators', () => ({
       updateChangeRequest: { fn: vi.fn() },
       createSupportConfirmation: { fn: vi.fn() },
       updateSupportConfirmation: { fn: vi.fn() },
+      createProcessTask: { fn: (...args: unknown[]) => createProcessTaskMock(...args) },
       supportAmendment: { fn: (...args: unknown[]) => supportAmendmentMock(...args) },
       updateSupportVote: { fn: (...args: unknown[]) => updateSupportVoteMock(...args) },
       deleteSupportVote: { fn: vi.fn() },
@@ -44,9 +49,9 @@ vi.mock('../../server-notify', () => ({
 }));
 
 vi.mock('../../server-helpers', () => ({
-  amendmentTitle: vi.fn(),
-  eventTitle: vi.fn(),
-  groupName: vi.fn(),
+  amendmentTitle: (...args: unknown[]) => amendmentTitleMock(...args),
+  eventTitle: (...args: unknown[]) => eventTitleMock(...args),
+  groupName: (...args: unknown[]) => groupNameMock(...args),
   recomputeAmendmentCounters: vi.fn(),
   recomputeEventCounters: vi.fn(),
   recomputeGroupCounters: vi.fn(),
@@ -75,6 +80,12 @@ type AmendmentMutatorCtx = AmendmentMutatorInput['ctx'];
 type CreateAmendmentArgs = Parameters<typeof amendmentServerMutators.create.fn>[0]['args'];
 type InitializeProcessPathArgs = Parameters<
   typeof amendmentServerMutators.initializeProcessPath.fn
+>[0]['args'];
+type CreateProcessTaskArgs = Parameters<
+  typeof amendmentServerMutators.createProcessTask.fn
+>[0]['args'];
+type UpdateSupportConfirmationArgs = Parameters<
+  typeof amendmentServerMutators.updateSupportConfirmation.fn
 >[0]['args'];
 
 function createTx(location: AmendmentMutatorTx['location'] = 'server') {
@@ -163,13 +174,51 @@ function initializeProcessPathArgs(
   };
 }
 
+function createProcessTaskArgs(
+  overrides: Partial<CreateProcessTaskArgs> = {}
+): CreateProcessTaskArgs {
+  return {
+    id: 'task-1',
+    process_run_id: 'run-1',
+    branch_id: null,
+    step_run_id: null,
+    task_type: 'schedule_event',
+    status: 'open',
+    title: 'Manual assignment',
+    description: null,
+    group_id: 'group-target',
+    target_group_id: null,
+    event_id: null,
+    agenda_item_id: null,
+    support_confirmation_id: null,
+    due_at: null,
+    resolved_at: null,
+    metadata: null,
+    ...overrides,
+  };
+}
+
+function updateSupportConfirmationArgs(
+  overrides: Partial<UpdateSupportConfirmationArgs> = {}
+): UpdateSupportConfirmationArgs {
+  return {
+    id: 'support-confirmation-1',
+    status: 'confirmed',
+    ...overrides,
+  };
+}
+
 describe('amendmentServerMutators authorization', () => {
   beforeEach(() => {
     canMock.mockReset();
     amendmentDeleteMock.mockReset();
+    createProcessTaskMock.mockReset();
     supportAmendmentMock.mockReset();
     updateSupportVoteMock.mockReset();
     fireNotificationMock.mockReset();
+    amendmentTitleMock.mockReset();
+    eventTitleMock.mockReset();
+    groupNameMock.mockReset();
     userNameMock.mockReset();
     Object.values(processEngineMocks).forEach(mock => mock.mockReset());
   });
@@ -406,6 +455,91 @@ describe('amendmentServerMutators authorization', () => {
       eventId: 'event-1',
     });
     expect(processEngineMocks.resolveAmendmentProcessVote).not.toHaveBeenCalled();
+  });
+
+  it('notifies process task recipients for manual open group tasks', async () => {
+    const tx = createTx('server');
+    groupNameMock.mockResolvedValueOnce('Target group');
+    const args = createProcessTaskArgs();
+
+    await expect(
+      amendmentServerMutators.createProcessTask.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(createProcessTaskMock).toHaveBeenCalledWith({ tx, ctx: createCtx(), args });
+    expect(fireNotificationMock).toHaveBeenCalledWith('notifyProcessTaskCreated', {
+      senderId: 'user-1',
+      groupId: 'group-target',
+      groupName: 'Target group',
+      taskTitle: 'Manual assignment',
+    });
+  });
+
+  it('does not notify for manual process tasks without group visibility or open status', async () => {
+    const tx = createTx('server');
+
+    await amendmentServerMutators.createProcessTask.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: createProcessTaskArgs({ group_id: null }),
+    });
+    await amendmentServerMutators.createProcessTask.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: createProcessTaskArgs({ id: 'task-2', status: 'scheduled' }),
+    });
+
+    expect(createProcessTaskMock).toHaveBeenCalledTimes(2);
+    expect(groupNameMock).not.toHaveBeenCalled();
+    expect(fireNotificationMock).not.toHaveBeenCalledWith(
+      'notifyProcessTaskCreated',
+      expect.anything()
+    );
+  });
+
+  it('notifies amendment followers and group members when group support is confirmed', async () => {
+    const tx = createTx('server');
+    const previousConfirmation = {
+      id: 'support-confirmation-1',
+      amendment_id: 'amendment-1',
+      group_id: 'group-target',
+      event_id: 'event-1',
+      status: 'pending',
+    };
+    tx.run.mockResolvedValueOnce(previousConfirmation);
+    amendmentTitleMock.mockResolvedValueOnce('Safer Streets');
+    groupNameMock.mockResolvedValueOnce('Target group');
+    eventTitleMock.mockResolvedValueOnce('Planning Event');
+    const args = updateSupportConfirmationArgs();
+
+    await expect(
+      amendmentServerMutators.updateSupportConfirmation.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(fireNotificationMock).toHaveBeenCalledWith('notifySupportConfirmed', {
+      senderId: 'user-1',
+      amendmentId: 'amendment-1',
+      amendmentTitle: 'Safer Streets',
+      groupId: 'group-target',
+      groupName: 'Target group',
+    });
+    expect(fireNotificationMock).toHaveBeenCalledWith('notifyGroupAmendmentSupportConfirmed', {
+      senderId: 'user-1',
+      amendmentId: 'amendment-1',
+      amendmentTitle: 'Safer Streets',
+      groupId: 'group-target',
+      groupName: 'Target group',
+      eventId: 'event-1',
+      eventTitle: 'Planning Event',
+    });
   });
 
   it('requires amendment and target event rights before completing a process task', async () => {

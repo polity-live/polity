@@ -46,6 +46,7 @@ describe('OnePageFormLayoutView topbar', () => {
       <OnePageFormLayoutView
         steps={steps}
         activeSection={1}
+        allStepsValid
         sectionRefs={{ current: [] }}
         stepLabels={steps.map(step => step.label)}
         onStepClick={onStepClick}

@@ -3,6 +3,7 @@ import { computeVoteResult, type MajorityType } from '@/features/votes/logic/com
 import type { Schema } from '../schema';
 import { zql } from '../schema';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { fireNotification } from '../server-notify';
 
 type ZeroTransaction = Transaction<Schema>;
 
@@ -22,6 +23,10 @@ type StepKind = 'group_vote' | 'merge_vote' | 'workflow_handoff';
 type SelectionMode = 'default_target_workflow' | 'explicit_workflow' | null;
 type MergeStrategy = 'winner_continues' | null;
 type AgendaType = 'amendment' | 'implementation_review' | 'support_confirmation';
+type ProcessTaskNotificationType =
+  | 'schedule_event'
+  | 'implementation_evaluation'
+  | 'support_confirmation';
 
 interface EnrichedPathSegmentInput {
   groupId: string;
@@ -77,6 +82,44 @@ interface VoteOutcome {
   result: VoteResult;
   totalEligible: number;
   tallyByChoiceId: Map<string, number>;
+}
+
+function getProcessTaskNotificationTitle(
+  taskType: string | null | undefined,
+  title?: string | null
+) {
+  const trimmedTitle = title?.trim();
+  if (trimmedTitle) {
+    return trimmedTitle;
+  }
+
+  switch (taskType) {
+    case 'implementation_evaluation':
+      return 'Umsetzung evaluieren';
+    case 'support_confirmation':
+      return 'Unterstützung bestätigen';
+    default:
+      return 'Event planen';
+  }
+}
+
+function fireProcessTaskCreatedNotification(args: {
+  senderId?: string | null;
+  groupId?: string | null;
+  groupName?: string | null;
+  taskTitle?: string | null;
+  taskType: ProcessTaskNotificationType;
+}) {
+  if (!args.senderId || !args.groupId) {
+    return;
+  }
+
+  fireNotification('notifyProcessTaskCreated', {
+    senderId: args.senderId,
+    groupId: args.groupId,
+    groupName: args.groupName || 'die zuständige Gruppe',
+    taskTitle: getProcessTaskNotificationTitle(args.taskType, args.taskTitle),
+  });
 }
 
 interface MergeRoundOneOutcome {
@@ -408,6 +451,8 @@ async function createScheduleEventTask(
     groupId: string;
     targetGroupId: string | null;
     metadata: Record<string, unknown>;
+    senderId?: string | null;
+    groupName?: string | null;
   }
 ) {
   const now = Date.now();
@@ -441,6 +486,13 @@ async function createScheduleEventTask(
     created_at: now,
     updated_at: now,
   });
+  fireProcessTaskCreatedNotification({
+    senderId: args.senderId,
+    groupId: args.groupId,
+    groupName: args.groupName,
+    taskTitle: args.taskTitle,
+    taskType: 'schedule_event',
+  });
   return id;
 }
 
@@ -455,6 +507,7 @@ async function createImplementationEvaluationTask(
     dueAt: number;
     requiredAfter: number;
     evaluationMode: 'fixed_date' | 'relative_to_vote';
+    senderId?: string | null;
   }
 ) {
   const existingTasks = await tx.run(
@@ -474,16 +527,22 @@ async function createImplementationEvaluationTask(
       return reusableTask.id;
     }
 
+    const taskTitle = translateText(
+      'generated.inline.0682_umsetzung_evaluieren_amendmenttitle_7226ff50',
+      {
+        amendmentTitle: args.amendmentTitle,
+      }
+    );
+    const taskDescription = translateText(
+      'generated.inline.0683_plane_die_umsetzungspruefung_fuer_amendmentti_14e50868',
+      { amendmentTitle: args.amendmentTitle, targetGroupName: args.targetGroupName }
+    );
+
     await tx.mutate.process_task.update({
       id: reusableTask.id,
       status: 'open',
-      title: translateText('generated.inline.0682_umsetzung_evaluieren_amendmenttitle_7226ff50', {
-        amendmentTitle: args.amendmentTitle,
-      }),
-      description: translateText(
-        'generated.inline.0683_plane_die_umsetzungspruefung_fuer_amendmentti_14e50868',
-        { amendmentTitle: args.amendmentTitle, targetGroupName: args.targetGroupName }
-      ),
+      title: taskTitle,
+      description: taskDescription,
       group_id: args.targetGroupId,
       target_group_id: args.targetGroupId,
       event_id: null,
@@ -503,12 +562,29 @@ async function createImplementationEvaluationTask(
       } as never,
       updated_at: Date.now(),
     });
+    fireProcessTaskCreatedNotification({
+      senderId: args.senderId,
+      groupId: args.targetGroupId,
+      groupName: args.targetGroupName,
+      taskTitle,
+      taskType: 'implementation_evaluation',
+    });
 
     return reusableTask.id;
   }
 
   const now = Date.now();
   const taskId = crypto.randomUUID();
+  const taskTitle = translateText(
+    'generated.inline.0682_umsetzung_evaluieren_amendmenttitle_7226ff50',
+    {
+      amendmentTitle: args.amendmentTitle,
+    }
+  );
+  const taskDescription = translateText(
+    'generated.inline.0683_plane_die_umsetzungspruefung_fuer_amendmentti_14e50868',
+    { amendmentTitle: args.amendmentTitle, targetGroupName: args.targetGroupName }
+  );
   await tx.mutate.process_task.insert({
     id: taskId,
     process_run_id: args.processRunId,
@@ -516,13 +592,8 @@ async function createImplementationEvaluationTask(
     step_run_id: null,
     task_type: 'implementation_evaluation',
     status: 'open',
-    title: translateText('generated.inline.0682_umsetzung_evaluieren_amendmenttitle_7226ff50', {
-      amendmentTitle: args.amendmentTitle,
-    }),
-    description: translateText(
-      'generated.inline.0683_plane_die_umsetzungspruefung_fuer_amendmentti_14e50868',
-      { amendmentTitle: args.amendmentTitle, targetGroupName: args.targetGroupName }
-    ),
+    title: taskTitle,
+    description: taskDescription,
     group_id: args.targetGroupId,
     target_group_id: args.targetGroupId,
     event_id: null,
@@ -542,6 +613,13 @@ async function createImplementationEvaluationTask(
     } as never,
     created_at: now,
     updated_at: now,
+  });
+  fireProcessTaskCreatedNotification({
+    senderId: args.senderId,
+    groupId: args.targetGroupId,
+    groupName: args.targetGroupName,
+    taskTitle,
+    taskType: 'implementation_evaluation',
   });
 
   return taskId;
@@ -1492,6 +1570,7 @@ async function createRoundTwoMergeApprovalStep(
       taskDescription: 'A follow-up yes/no merge confirmation event is still missing.',
       groupId: winnerStepRun.target_group_id ?? winnerStepRun.source_group_id ?? '',
       targetGroupId: winnerStepRun.target_group_id ?? null,
+      senderId: args.creatorId,
       metadata: {
         amendmentId: args.amendmentId,
         stepKind: 'group_vote',
@@ -1704,6 +1783,8 @@ async function insertWorkflowRuntimeStep(
       taskDescription: `No eligible event is selected yet for ${args.template.groupName}.`,
       groupId: args.template.targetGroupId,
       targetGroupId: args.terminalTargetGroupId,
+      senderId: args.creatorId,
+      groupName: args.template.groupName,
       metadata: {
         amendmentId: args.amendmentId,
         amendmentTitle: args.amendmentTitle,
@@ -1880,6 +1961,8 @@ async function createInitialStepRunFromPathSegment(
       taskDescription: `No eligible event is selected yet for ${args.segment.groupName}.`,
       groupId: args.segment.groupId,
       targetGroupId: args.targetGroupId,
+      senderId: args.creatorId,
+      groupName: args.segment.groupName,
       metadata: {
         amendmentId: args.amendmentId,
         amendmentTitle: args.amendmentTitle,
@@ -2210,7 +2293,8 @@ export async function completeProcessTaskWithEvent(
 
 export async function resolveAmendmentProcessVote(
   tx: ZeroTransaction,
-  args: ResolveAmendmentProcessVoteArgs
+  args: ResolveAmendmentProcessVoteArgs,
+  actorUserId?: string | null
 ) {
   const stepRuns = await tx.run(
     zql.amendment_process_step_run
@@ -2568,10 +2652,11 @@ export async function resolveAmendmentProcessVote(
           amendmentId,
           amendmentTitle: amendment?.title ?? agendaItem.title ?? 'Amendment',
           targetGroupId,
-          targetGroupName: targetGroup?.name ?? 'die zustaendige Gruppe',
+          targetGroupName: targetGroup?.name ?? 'die zuständige Gruppe',
           dueAt: concreteEvaluationDate,
           requiredAfter: now,
           evaluationMode,
+          senderId: actorUserId ?? processRun.created_by_id,
         });
         implementationStatus = 'awaiting_evaluation';
       }
@@ -2596,6 +2681,7 @@ export async function resolveAmendmentProcessVote(
       voteResult: 'passed' as const,
       runStatus: runSync.status,
       terminalDecision: 'accepted' as const,
+      supportedGroupId: stepRun.target_group_id ?? null,
     };
   }
 
@@ -2670,5 +2756,6 @@ export async function resolveAmendmentProcessVote(
     runStatus: runSync.status,
     branchStatus: branchSync.branchStatus,
     terminalDecision: null,
+    supportedGroupId: stepRun.target_group_id ?? null,
   };
 }

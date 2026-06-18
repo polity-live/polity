@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { stripeSubscriptionStatusFn } from '@/server/stripe-subscription-status';
+import { useAuth } from '@/providers/auth-provider';
 import type { SubscriptionData } from '../ui/SubscriptionStatusView';
 
 interface UseSubscriptionStatusControllerOptions {
@@ -13,14 +14,23 @@ export function useSubscriptionStatusController({
   const [data, setData] = useState<SubscriptionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { session } = useAuth();
 
   useEffect(() => {
     async function fetchSubscriptionStatus() {
+      if (!session?.access_token) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         setError(null);
 
-        const result = await stripeSubscriptionStatusFn({ data: { userId } });
+        const result = await stripeSubscriptionStatusFn({
+          data: { userId },
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
         setData(result);
       } catch (err) {
         console.error('[SubscriptionStatus] Fetch error:', err);
@@ -33,7 +43,7 @@ export function useSubscriptionStatusController({
     if (userId) {
       void fetchSubscriptionStatus();
     }
-  }, [userId]);
+  }, [session?.access_token, userId]);
 
   return {
     data,

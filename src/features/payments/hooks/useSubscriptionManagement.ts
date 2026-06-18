@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { stripeSubscriptionStatusFn } from '@/server/stripe-subscription-status';
+import { useAuth } from '@/providers/auth-provider';
 
 // Co-located types
 export interface SubscriptionData {
@@ -28,13 +29,17 @@ export function useSubscriptionManagement({
 }: UseSubscriptionManagementOptions): UseSubscriptionManagementReturn {
   const [activeSubscription, setActiveSubscription] = useState<SubscriptionData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { session } = useAuth();
 
   const fetchSubscription = async () => {
-    if (!userId) return;
+    if (!userId || !session?.access_token) return;
 
     setIsLoading(true);
     try {
-      const data = await stripeSubscriptionStatusFn({ data: { userId } });
+      const data = await stripeSubscriptionStatusFn({
+        data: { userId },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
       setActiveSubscription(data.subscription);
     } catch (error) {
       console.error('Failed to fetch subscription:', error);
@@ -46,7 +51,7 @@ export function useSubscriptionManagement({
   // Fetch active subscription on mount and when userId changes
   useEffect(() => {
     fetchSubscription();
-  }, [userId]);
+  }, [session?.access_token, userId]);
 
   // Helper to check if a plan is currently active
   const isPlanActive = (amount: number): boolean => {

@@ -176,6 +176,11 @@ function getNetworkMembershipSourceForMode(mode: string | null | undefined) {
   }
 }
 
+interface SelectedOfflineSourceGroupMembershipContext {
+  connectedGroupId: string;
+  selectedSourceGroupIds: string[];
+}
+
 function getOfflineMembershipKey(groupId: string, groupOfflineMemberId: string) {
   return `${groupId}:${groupOfflineMemberId}`;
 }
@@ -345,6 +350,7 @@ async function getDesiredOfflineGroupConnectionMembershipSources(
       sourceGroupId: string | null;
     }
   >();
+  const selectedSourceGroupContexts: SelectedOfflineSourceGroupMembershipContext[] = [];
 
   const sortedConnections = [...connections].sort(
     (left, right) => left.created_at - right.created_at
@@ -371,12 +377,13 @@ async function getDesiredOfflineGroupConnectionMembershipSources(
       }
 
       const connectedGroupId = directionalContext.connectedGroupId;
-      const connectedMemberships = await loadActiveOfflineMembershipsForGroup(tx, connectedGroupId);
-      const connectedOfflineMemberIds = new Set(
-        connectedMemberships.map(membership => membership.group_offline_member_id)
-      );
 
       if (directionalContext.membershipRule.membership_mode === 'all_members') {
+        const connectedMemberships = await loadActiveOfflineMembershipsForGroup(
+          tx,
+          connectedGroupId
+        );
+
         for (const membership of connectedMemberships) {
           if (!desiredMembershipSources.has(membership.group_offline_member_id)) {
             desiredMembershipSources.set(membership.group_offline_member_id, {
@@ -416,37 +423,78 @@ async function getDesiredOfflineGroupConnectionMembershipSources(
         continue;
       }
 
-      const sourceGroupsByOfflineMemberId = new Map<string, Set<string>>();
-      for (const sourceGroupId of selectedSourceGroupIds) {
-        const sourceMemberships = await loadActiveOfflineMembershipsForGroup(tx, sourceGroupId);
-        for (const membership of sourceMemberships) {
-          const sourceGroupIds =
-            sourceGroupsByOfflineMemberId.get(membership.group_offline_member_id) ??
-            new Set<string>();
-          sourceGroupIds.add(sourceGroupId);
-          sourceGroupsByOfflineMemberId.set(membership.group_offline_member_id, sourceGroupIds);
-        }
-      }
+      selectedSourceGroupContexts.push({
+        connectedGroupId,
+        selectedSourceGroupIds,
+      });
+    }
+  }
 
-      for (const [
-        groupOfflineMemberId,
-        sourceGroupIds,
-      ] of sourceGroupsByOfflineMemberId.entries()) {
-        if (!connectedOfflineMemberIds.has(groupOfflineMemberId) || sourceGroupIds.size !== 1) {
+  await addSelectedOfflineSourceGroupMembershipSources(
+    tx,
+    selectedSourceGroupContexts,
+    desiredMembershipSources
+  );
+
+  return desiredMembershipSources;
+}
+
+async function addSelectedOfflineSourceGroupMembershipSources(
+  tx: ZeroTransactionLike,
+  contexts: readonly SelectedOfflineSourceGroupMembershipContext[],
+  desiredMembershipSources: Map<
+    string,
+    {
+      source:
+        | typeof SIBLING_ALL_MEMBERSHIP_SOURCE
+        | typeof SIBLING_ELECTED_MEMBERSHIP_SOURCE
+        | typeof SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE;
+      sourceGroupId: string | null;
+    }
+  >
+) {
+  if (contexts.length === 0) {
+    return;
+  }
+
+  const sourceGroupsByOfflineMemberId = new Map<string, Set<string>>();
+
+  for (const context of contexts) {
+    const connectedMemberships = await loadActiveOfflineMembershipsForGroup(
+      tx,
+      context.connectedGroupId
+    );
+    const connectedOfflineMemberIds = new Set(
+      connectedMemberships.map(membership => membership.group_offline_member_id)
+    );
+
+    for (const sourceGroupId of context.selectedSourceGroupIds) {
+      const sourceMemberships = await loadActiveOfflineMembershipsForGroup(tx, sourceGroupId);
+
+      for (const membership of sourceMemberships) {
+        if (!connectedOfflineMemberIds.has(membership.group_offline_member_id)) {
           continue;
         }
 
-        if (!desiredMembershipSources.has(groupOfflineMemberId)) {
-          desiredMembershipSources.set(groupOfflineMemberId, {
-            source: membershipSource,
-            sourceGroupId: [...sourceGroupIds][0] ?? null,
-          });
-        }
+        const sourceGroupIds =
+          sourceGroupsByOfflineMemberId.get(membership.group_offline_member_id) ??
+          new Set<string>();
+        sourceGroupIds.add(sourceGroupId);
+        sourceGroupsByOfflineMemberId.set(membership.group_offline_member_id, sourceGroupIds);
       }
     }
   }
 
-  return desiredMembershipSources;
+  for (const [groupOfflineMemberId, sourceGroupIds] of sourceGroupsByOfflineMemberId.entries()) {
+    if (sourceGroupIds.size !== 1 || desiredMembershipSources.has(groupOfflineMemberId)) {
+      continue;
+    }
+
+    desiredMembershipSources.set(groupOfflineMemberId, {
+      source: SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE,
+      sourceGroupId: [...sourceGroupIds][0] ?? null,
+    });
+  }
 }
 
 export async function loadEffectiveOfflineMembershipsForGroup(

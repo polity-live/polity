@@ -127,7 +127,6 @@ export function getGroupRelationshipNameText({
 export function getGroupRelationshipRightSentenceText({
   direction,
   rightLabel,
-  currentGroupName,
   selectedGroupName,
   t,
 }: {
@@ -137,42 +136,46 @@ export function getGroupRelationshipRightSentenceText({
   selectedGroupName: string;
   t: TranslateFn;
 }) {
-  const currentGroupLabel = getGroupRelationshipNameText({
-    name: currentGroupName,
-    kind: 'current',
-    t,
-  });
-  const embeddedCurrentGroupLabel = getGroupRelationshipNameText({
-    name: currentGroupName,
-    kind: 'current',
-    caseStyle: 'embedded',
-    t,
-  });
+  const currentGroupLabel = t('common.network.thisGroup');
   const selectedGroupLabel = getGroupRelationshipNameText({
     name: selectedGroupName,
     kind: 'selected',
     t,
   });
+  const templateParams = {
+    currentGroupName: currentGroupLabel,
+    rightLabel,
+    selectedGroupName: selectedGroupLabel,
+  };
 
-  if (direction === 'current_has_right_in_partner') {
-    return t('common.network.currentGroupHasRightIn', {
-      currentGroupName: currentGroupLabel,
-      rightLabel,
-      selectedGroupName: selectedGroupLabel,
-    });
+  if (direction === 'current_grants_right_to_partner') {
+    return t(
+      'common.network.currentGroupGivesRightTo',
+      templateParams,
+      `${currentGroupLabel} ${t('common.network.directionGrants', 'gives')} ${rightLabel} ${t(
+        'common.network.directionTo',
+        'to'
+      )} ${selectedGroupLabel}`
+    );
   }
 
   if (direction === 'mutual') {
-    return t('common.network.groupsMutuallyShareRight', {
-      currentGroupName: currentGroupLabel,
-      rightLabel,
-      selectedGroupName: selectedGroupLabel,
-    });
+    return t(
+      'common.network.groupsMutuallyShareRight',
+      templateParams,
+      `${currentGroupLabel} ${t('common.network.directionAnd', 'and')} ${selectedGroupLabel} ${t(
+        'common.network.directionHaveMutually',
+        'give each other'
+      )} ${rightLabel}`
+    );
   }
 
-  return t('common.network.selectedGroupHasRightInCurrentGroup', {
-    currentGroupName: embeddedCurrentGroupLabel,
-    rightLabel,
-    selectedGroupName: selectedGroupLabel,
-  });
+  return t(
+    'common.network.currentGroupHasRightIn',
+    templateParams,
+    `${currentGroupLabel} ${t('common.network.directionHas', 'has')} ${rightLabel} ${t(
+      'common.network.directionIn',
+      'in'
+    )} ${selectedGroupLabel}`
+  );
 }

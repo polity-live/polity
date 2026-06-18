@@ -1,6 +1,6 @@
 import { Check, Trash2 } from 'lucide-react';
 
-import { Button } from '@/features/shared/ui/ui/button';
+import { TableActionIconButton } from '@/features/shared/ui/data-table';
 import { GroupConflictDialog } from './GroupConflictPanel';
 
 interface PendingRequestActionCellViewProps {
@@ -31,15 +31,13 @@ export function PendingRequestActionCellView({
 }: PendingRequestActionCellViewProps) {
   return (
     <div className="flex justify-end gap-2">
-      <Button
+      <TableActionIconButton
+        label={primaryActionLabel}
+        icon={<Check className="h-4 w-4" />}
         variant="default"
-        size="sm"
         disabled={!userId || blocking}
         onClick={() => userId && onApprove(membership.id, userId)}
-      >
-        <Check className="mr-1 h-4 w-4" />
-        {primaryActionLabel}
-      </Button>
+      />
       {blocking ? (
         <GroupConflictDialog
           response={response}
@@ -48,15 +46,14 @@ export function PendingRequestActionCellView({
           title={labels.blockedTitle}
         />
       ) : null}
-      <Button
+      <TableActionIconButton
+        label={secondaryActionLabel}
+        icon={<Trash2 className="h-4 w-4" />}
         variant="ghost"
-        size="sm"
+        destructive
         disabled={!userId}
         onClick={() => userId && onReject(membership.id, userId)}
-      >
-        <Trash2 className="h-4 w-4" />
-        <span className="ml-2">{secondaryActionLabel}</span>
-      </Button>
+      />
     </div>
   );
 }

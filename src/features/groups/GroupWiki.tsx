@@ -49,6 +49,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
     isMember,
     hasRequested,
     isInvited,
+    isBase,
     isHierarchical,
     isSibling,
     membershipLoading,
@@ -102,6 +103,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       groupId={groupId}
       groupLocation={groupLocation}
       hasRequested={hasRequested}
+      isBase={isBase}
       isHierarchical={isHierarchical}
       isInvited={isInvited}
       isMember={isMember}

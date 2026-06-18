@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
-import { useGroupById, useGroupState } from '@/zero/groups/useGroupState';
+import {
+  useAssignableGroupMembersByGroupIds,
+  useGroupById,
+  useGroupState,
+} from '@/zero/groups/useGroupState';
+import {
+  useEventParticipantsByParticipatedEventIds,
+  useUserEventParticipations,
+} from '@/zero/events/useEventState';
 import { useUserState } from '@/zero/users/useUserState';
 import { useTodoMutations } from '@/features/todos/hooks/useTodoMutations';
 import { useCommonState } from '@/zero/common/useCommonState';
@@ -20,6 +28,12 @@ import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { CreateInlineNotice } from '../ui/CreateInlineNotice';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
+import {
+  collectUserIds,
+  isActiveEventParticipantStatus,
+  isActiveGroupMemberStatus,
+  uniqueUserIds,
+} from '../logic/eligibleUsers';
 import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
 import {
   createBlockedSubmitOutcome,
@@ -49,10 +63,57 @@ export function useCreateTodoForm(): CreateFormConfig {
     includeCurrentUserMembershipsWithGroups: true,
   });
 
-  const memberGroupIds = useMemo(
-    () => new Set(currentUserMembershipsWithGroups.map(membership => membership.group_id)),
+  const activeMemberGroupIds = useMemo(
+    () => [
+      ...new Set(
+        currentUserMembershipsWithGroups
+          .filter(membership => isActiveGroupMemberStatus(membership.status))
+          .map(membership => membership.group_id)
+          .filter((currentGroupId): currentGroupId is string => Boolean(currentGroupId))
+      ),
+    ],
     [currentUserMembershipsWithGroups]
   );
+  const memberGroupIds = useMemo(() => new Set(activeMemberGroupIds), [activeMemberGroupIds]);
+  const eligibleGroupIds = useMemo(
+    () => (groupId ? [groupId] : activeMemberGroupIds),
+    [activeMemberGroupIds, groupId]
+  );
+  const { members: eligibleGroupMembers, isLoading: isEligibleGroupMembersLoading } =
+    useAssignableGroupMembersByGroupIds(eligibleGroupIds);
+  const { participations: userEventParticipations } = useUserEventParticipations(user?.id);
+  const participatedEventIds = useMemo(
+    () =>
+      groupId
+        ? []
+        : [
+            ...new Set(
+              userEventParticipations
+                .filter(participation => isActiveEventParticipantStatus(participation.status))
+                .map(participation => participation.event_id)
+                .filter((eventId): eventId is string => Boolean(eventId))
+            ),
+          ],
+    [groupId, userEventParticipations]
+  );
+  const { participants: eligibleEventParticipants, isLoading: isEligibleEventParticipantsLoading } =
+    useEventParticipantsByParticipatedEventIds(participatedEventIds);
+  const allowedAssigneeUserIds = useMemo(
+    () =>
+      groupId
+        ? collectUserIds(eligibleGroupMembers)
+        : uniqueUserIds(
+            collectUserIds(eligibleGroupMembers),
+            collectUserIds(eligibleEventParticipants)
+          ),
+    [eligibleEventParticipants, eligibleGroupMembers, groupId]
+  );
+  const allowedAssigneeUserIdSet = useMemo(
+    () => new Set(allowedAssigneeUserIds),
+    [allowedAssigneeUserIds]
+  );
+  const isAssigneeEligibilityLoading =
+    isEligibleGroupMembersLoading || (!groupId && isEligibleEventParticipantsLoading);
   const preferredHashtagSuggestions = useMemo(
     () => extractHashtagTags(userHashtags),
     [userHashtags]
@@ -67,7 +128,7 @@ export function useCreateTodoForm(): CreateFormConfig {
   const [dueDate, setDueDate] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('private');
   const [tags, setTags] = useState<string[]>([]);
-  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const [assigneeId, setAssigneeId] = useState('');
 
   useEffect(() => {
     setGroupId(groupIdParam);
@@ -109,13 +170,15 @@ export function useCreateTodoForm(): CreateFormConfig {
     [syncGroupSearch]
   );
 
+  useEffect(() => {
+    if (assigneeId && !isAssigneeEligibilityLoading && !allowedAssigneeUserIdSet.has(assigneeId)) {
+      setAssigneeId('');
+    }
+  }, [allowedAssigneeUserIdSet, assigneeId, isAssigneeEligibilityLoading]);
+
   const groupDisplayName = groupName || group?.name || groupId;
-  const assigneeNames = assigneeIds
-    .map(assigneeId => {
-      const matchedUser = allUsers.find(currentUser => currentUser.id === assigneeId);
-      return getUserDisplayName(matchedUser) || assigneeId;
-    })
-    .filter(Boolean);
+  const selectedAssignee = allUsers.find(currentUser => currentUser.id === assigneeId);
+  const assigneeName = assigneeId ? getUserDisplayName(selectedAssignee) || assigneeId : '';
   const visibilityLabel = groupId
     ? t('pages.create.todo.groupVisibilityLabel')
     : visibility === translateText('generated.inline.0030_public_61c9b2b1')
@@ -132,7 +195,7 @@ export function useCreateTodoForm(): CreateFormConfig {
         title: title.trim(),
         description: description.trim() || undefined,
         ownerId: user.id,
-        assigneeId: assigneeIds.length > 0 ? assigneeIds[0] : user.id,
+        assigneeId: assigneeId || user.id,
         priority,
         status,
         dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
@@ -183,21 +246,6 @@ export function useCreateTodoForm(): CreateFormConfig {
           isValid: () => !!title.trim(),
           fields: [
             {
-              key: 'group',
-              kind: 'typeahead',
-              label: t('pages.create.common.group'),
-              hint: t('pages.create.todo.groupHint'),
-              props: {
-                entityTypes: ['group'],
-                value: groupId || undefined,
-                onChange: item => {
-                  handleGroupChange(item?.id ?? '', item?.label ?? '');
-                },
-                placeholder: t('pages.create.common.searchGroup'),
-                filterFn: item => memberGroupIds.has(item.id),
-              },
-            },
-            {
               key: 'title',
               kind: 'text',
               label: t('pages.create.todo.titleLabel'),
@@ -221,6 +269,42 @@ export function useCreateTodoForm(): CreateFormConfig {
           ],
         },
         {
+          label: t('pages.create.todo.assignTo'),
+          isValid: () => true,
+          optional: true,
+          fields: [
+            {
+              key: 'group',
+              kind: 'typeahead',
+              label: t('pages.create.common.group'),
+              hint: t('pages.create.todo.groupHint'),
+              props: {
+                entityTypes: ['group'],
+                value: groupId || undefined,
+                onChange: item => {
+                  handleGroupChange(item?.id ?? '', item?.label ?? '');
+                },
+                placeholder: t('pages.create.common.searchGroup'),
+                filterFn: item => memberGroupIds.has(item.id),
+              },
+            },
+            {
+              key: 'assignee',
+              kind: 'customComponent',
+              component: UserSearchInput,
+              props: {
+                value: assigneeId ? [assigneeId] : [],
+                onChange: (ids: string[]) => setAssigneeId(ids[0] ?? ''),
+                label: t('pages.create.todo.assignToLabel'),
+                placeholder: t('pages.create.todo.assignToPlaceholder'),
+                allowedUserIds: allowedAssigneeUserIds,
+                multi: false,
+                showAllResults: true,
+              },
+            },
+          ],
+        },
+        {
           label: t('pages.create.todo.priorityLabel'),
           isValid: () => true,
           fields: [
@@ -235,24 +319,6 @@ export function useCreateTodoForm(): CreateFormConfig {
               kind: 'customComponent',
               component: StatusInput,
               props: { value: status, onChange: setStatus },
-            },
-          ],
-        },
-        {
-          label: t('pages.create.todo.assignTo'),
-          isValid: () => true,
-          optional: true,
-          fields: [
-            {
-              key: 'assignees',
-              kind: 'customComponent',
-              component: UserSearchInput,
-              props: {
-                value: assigneeIds,
-                onChange: setAssigneeIds,
-                label: t('pages.create.todo.assignToLabel'),
-                placeholder: t('pages.create.todo.assignToPlaceholder'),
-              },
             },
           ],
         },
@@ -308,9 +374,6 @@ export function useCreateTodoForm(): CreateFormConfig {
                   {
                     title: t('pages.create.todo.priorityLabel'),
                     fields: [
-                      ...(groupId
-                        ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
-                        : []),
                       {
                         label: t('pages.create.todo.priorityLabel'),
                         value: t(`pages.create.todo.priority.${priority}`),
@@ -327,11 +390,14 @@ export function useCreateTodoForm(): CreateFormConfig {
                   {
                     title: t('pages.create.todo.assignTo'),
                     fields: [
-                      ...(assigneeNames.length > 0
+                      ...(groupId
+                        ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
+                        : []),
+                      ...(assigneeName
                         ? [
                             {
                               label: t('pages.create.todo.assignedTo'),
-                              value: assigneeNames.join(', '),
+                              value: assigneeName,
                             },
                           ]
                         : []),
@@ -356,13 +422,14 @@ export function useCreateTodoForm(): CreateFormConfig {
       description,
       priority,
       status,
-      assigneeIds,
+      assigneeId,
       dueDate,
       visibility,
       visibilityLabel,
       tags,
       preferredHashtagSuggestions,
-      assigneeNames,
+      assigneeName,
+      allowedAssigneeUserIds,
       memberGroupIds,
       isLoading,
       groupId,

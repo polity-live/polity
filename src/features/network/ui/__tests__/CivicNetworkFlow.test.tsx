@@ -5,11 +5,14 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CivicNetworkFlow } from '../CivicNetworkFlow';
+import { RightFilters } from '../RightFilters';
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, fallback?: string) => fallback ?? key,
+  translate: (key: string, fallback?: string) =>
+    key === 'common.network.membershipLabel' ? 'Membership' : (fallback ?? key),
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
+    t: (key: string, fallback?: string) =>
+      key === 'common.network.membershipLabel' ? 'Membership' : (fallback ?? key),
   }),
 }));
 
@@ -70,5 +73,11 @@ describe('CivicNetworkFlow', () => {
     expect(screen.getByText('Status')).toBeTruthy();
     expect(screen.getByText('Active')).toBeTruthy();
     expect(screen.getByText('Dialog child')).toBeTruthy();
+  });
+
+  it('shows membership as an additional flow filter option', () => {
+    render(<RightFilters selectedRights={new Set(['membership'])} onToggleRight={vi.fn()} />);
+
+    expect(screen.getByText('Membership')).toBeTruthy();
   });
 });

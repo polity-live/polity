@@ -53,6 +53,7 @@ export interface GroupWikiContentViewProps {
   isMember: boolean;
   hasRequested: boolean;
   isInvited: boolean;
+  isBase: boolean;
   isHierarchical: boolean;
   isSibling: boolean;
   membershipLoading: boolean;
@@ -88,6 +89,7 @@ export function GroupWikiContentView({
   isMember,
   hasRequested,
   isInvited,
+  isBase,
   isHierarchical,
   isSibling,
   membershipLoading,
@@ -151,13 +153,21 @@ export function GroupWikiContentView({
               {t('components.badges.public')}
             </BadgeControl>
           )}
-          <BadgeControl variant="outline" size="sm">
-            {isSibling
-              ? translateText('generated.inline.0080_geschwistergruppe_1053d99c')
-              : isHierarchical
-                ? t('components.badges.hierarchicalGroup')
-                : t('components.badges.baseGroup')}
-          </BadgeControl>
+          {isHierarchical ? (
+            <BadgeControl variant="outline" size="sm">
+              {t('components.badges.hierarchicalGroup')}
+            </BadgeControl>
+          ) : null}
+          {isSibling ? (
+            <BadgeControl variant="outline" size="sm">
+              {translateText('generated.inline.0080_geschwistergruppe_1053d99c')}
+            </BadgeControl>
+          ) : null}
+          {isBase ? (
+            <BadgeControl variant="outline" size="sm">
+              {t('components.badges.baseGroup')}
+            </BadgeControl>
+          ) : null}
         </div>
         {groupLocation && <p className="text-muted-foreground">{groupLocation}</p>}
       </div>

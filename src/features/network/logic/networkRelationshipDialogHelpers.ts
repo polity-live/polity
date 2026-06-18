@@ -108,11 +108,11 @@ export function getRelationshipDirectionForPreview({
 
   if (isIncomingPerspective) {
     return edgeDirection === 'forward'
-      ? 'partner_has_right_in_current'
-      : 'current_has_right_in_partner';
+      ? 'current_grants_right_to_partner'
+      : 'partner_grants_right_to_current';
   }
 
   return edgeDirection === 'forward'
-    ? 'current_has_right_in_partner'
-    : 'partner_has_right_in_current';
+    ? 'partner_grants_right_to_current'
+    : 'current_grants_right_to_partner';
 }

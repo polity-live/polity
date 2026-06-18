@@ -5,8 +5,10 @@ import { EventParticipants } from '@/features/events/ui/EventParticipants';
 import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
 import { usePermissions } from '@/zero/rbac';
 
-const participantsSearchSchema = z.object({
-  tab: z.enum(['membershipsByUser', 'membershipsByRole', 'guests', 'roles']).optional(),
+export const participantsSearchSchema = z.object({
+  tab: z
+    .enum(['membershipsByUser', 'membershipsByRole', 'composition', 'guests', 'roles'])
+    .optional(),
 });
 
 export const Route = createFileRoute('/_authed/event/$id/participants')({

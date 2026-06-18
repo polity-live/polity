@@ -56,7 +56,7 @@ export function FloatingNavigationButton({
       variant="default"
       size="icon"
       className={cn(
-        'fixed bottom-6 z-50 h-14 w-14 rounded-full shadow-[var(--shadow-floating)]',
+        'fixed bottom-6 z-50 h-14 w-14 rounded-lg shadow-[var(--shadow-floating)]',
         getMotionPreset('hoverLift'),
         side === 'left' ? 'left-6' : 'right-6'
       )}

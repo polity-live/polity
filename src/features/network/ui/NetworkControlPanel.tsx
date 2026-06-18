@@ -5,7 +5,11 @@ import type { ReactNode } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Panel } from '@/features/network/ui/NetworkFlowBase';
-import { RIGHT_GRADIENTS, RIGHT_TYPES, getRightLabel } from '@/features/shared/ui/status';
+import {
+  NETWORK_FLOW_FILTER_TYPES,
+  RIGHT_GRADIENTS,
+  getRightLabel,
+} from '@/features/shared/ui/status';
 import { RightFilters } from '@/features/network/ui/RightFilters';
 import { NETWORK_CONNECTION_DIRECTION_COLORS } from '@/features/network/logic/networkEdgeHelpers';
 import { cn } from '@/features/shared/utils/utils';
@@ -388,7 +392,7 @@ export function NetworkControlPanel({
                     <hr
                       className={featureThemeClassName('networkUseGroupNetworkFlowNeutralBorder')}
                     />
-                    {RIGHT_TYPES.map(right => (
+                    {NETWORK_FLOW_FILTER_TYPES.map(right => (
                       <div key={right} className="flex items-center gap-2">
                         <div className={`h-3 w-6 rounded-sm ${RIGHT_GRADIENTS[right]}`}></div>
                         <span>

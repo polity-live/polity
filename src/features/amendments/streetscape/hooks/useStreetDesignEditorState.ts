@@ -3,6 +3,7 @@ import type {
   StreetDesignComparisonMode,
   StreetDesignInteractionMode,
   StreetDesignLocalPoint,
+  StreetDesignObjectCategory,
   StreetDesignObjectType,
   StreetDesignOsmLayerVisibility,
   StreetDesignPropertyValue,
@@ -71,6 +72,22 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
     dispatch({ type: 'set_show_street_markings', visible });
   }, []);
 
+  const updatePlacementProperty = useCallback((key: string, value: StreetDesignPropertyValue) => {
+    dispatch({ type: 'set_placement_property', key, value });
+  }, []);
+
+  const updatePlacementWidth = useCallback((width: number) => {
+    dispatch({ type: 'set_placement_width', width });
+  }, []);
+
+  const updatePlacementRotation = useCallback((rotationDeg: number) => {
+    dispatch({ type: 'set_placement_rotation', rotationDeg });
+  }, []);
+
+  const updatePlacementUnitCost = useCallback((unitCostMinor: number | null) => {
+    dispatch({ type: 'set_placement_unit_cost', unitCostMinor });
+  }, []);
+
   const handleScenePointerDown = useCallback((point: StreetDesignLocalPoint) => {
     dispatch({ type: 'scene_pointer_down', point, id: createObjectId() });
   }, []);
@@ -99,6 +116,17 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
     dispatch({ type: 'select_osm_way', osmWayId });
   }, []);
 
+  const setObjectVisibility = useCallback((objectId: string, visible: boolean) => {
+    dispatch({ type: 'set_object_visibility', objectId, visible });
+  }, []);
+
+  const setObjectCategoryVisibility = useCallback(
+    (category: StreetDesignObjectCategory, visible: boolean) => {
+      dispatch({ type: 'set_object_category_visibility', category, visible });
+    },
+    []
+  );
+
   const hideOsmWay = useCallback((osmWayId: string) => {
     dispatch({ type: 'hide_osm_way', osmWayId });
   }, []);
@@ -114,6 +142,10 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
     dispatch({ type: 'update_object_width', objectId, width });
   }, []);
 
+  const rotateObject = useCallback((objectId: string, rotationDeg: number) => {
+    dispatch({ type: 'rotate_object', objectId, rotationDeg });
+  }, []);
+
   const updateObjectUnitCost = useCallback((objectId: string, unitCostMinor: number | null) => {
     dispatch({ type: 'update_object_unit_cost', objectId, unitCostMinor });
   }, []);
@@ -122,10 +154,15 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
     dispatch({ type: 'delete_object', objectId });
   }, []);
 
+  const deleteObjectCategory = useCallback((category: StreetDesignObjectCategory) => {
+    dispatch({ type: 'delete_object_category', category });
+  }, []);
+
   return {
     state,
     design: state.design,
     interactionMode: state.interactionMode,
+    placementSettings: state.placementSettings,
     selectedObject,
     selectedOsmWay,
     selectedObjectCostLine,
@@ -136,6 +173,10 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
     setSelectedTool,
     setOsmLayerVisibility,
     setShowStreetMarkings,
+    updatePlacementProperty,
+    updatePlacementWidth,
+    updatePlacementRotation,
+    updatePlacementUnitCost,
     handleScenePointerDown,
     handleScenePointerMove,
     finishPlacement,
@@ -143,10 +184,14 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
     cancelPlacement,
     selectObject,
     selectOsmWay,
+    setObjectVisibility,
+    setObjectCategoryVisibility,
     hideOsmWay,
     updateObjectProperty,
     updateObjectWidth,
+    rotateObject,
     updateObjectUnitCost,
     deleteObject,
+    deleteObjectCategory,
   };
 }

@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { useStatementActions } from '@/zero/statements/useStatementActions';
-import { useCommonActions } from '@/zero/common/useCommonActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**
- * Hook for statement mutations with cross-domain orchestration (timeline events).
- * Composes useStatementActions + useCommonActions.
+ * Hook for statement mutations.
+ * Server-side mutator overrides own cross-domain timeline side effects.
  */
 export function useStatementMutations() {
   const {
@@ -23,11 +21,9 @@ export function useStatementMutations() {
     createSurveyVote,
     deleteSurveyVote,
   } = useStatementActions();
-  const { createTimelineEvent } = useCommonActions();
   const [isLoading, setIsLoading] = useState(false);
 
   const createStatement = async (
-    userId: string,
     text: string,
     options: {
       groupId?: string | null;
@@ -51,37 +47,6 @@ export function useStatementMutations() {
       });
       await serverConfirmed(createResult);
 
-      if (visibility === 'public') {
-        await createTimelineEvent({
-          id: crypto.randomUUID(),
-          event_type: 'statement_posted',
-          entity_type: 'statement',
-          entity_id: statementId,
-          actor_id: userId,
-          title: translateText('generated.inline.0529_new_statement_posted_06a106be'),
-          description: text ? text.substring(0, 100) + (text.length > 100 ? '...' : '') : '',
-          content_type: 'statement',
-          metadata: {},
-          image_url: imageUrl ?? '',
-          video_url: videoUrl ?? '',
-          video_thumbnail_url: '',
-          tags: [],
-          stats: {},
-          vote_status: '',
-          election_status: '',
-          ends_at: 0,
-          user_id: userId,
-          group_id: groupId ?? null,
-          amendment_id: null,
-          event_id: null,
-          todo_id: null,
-          blog_id: null,
-          statement_id: statementId,
-          election_id: null,
-          amendment_vote_id: null,
-        });
-      }
-
       return { success: true, statementId };
     } catch (error) {
       console.error('Failed to create statement:', error);
@@ -98,50 +63,19 @@ export function useStatementMutations() {
       imageUrl?: string | null;
       videoUrl?: string | null;
       visibility?: 'public' | 'authenticated' | 'private';
-      userId?: string;
     } = {}
   ) => {
-    const { imageUrl, videoUrl, visibility, userId } = options;
+    const { imageUrl, videoUrl, visibility } = options;
     setIsLoading(true);
     try {
-      await update({
+      const updateResult = update({
         id: statementId,
         text,
         ...(imageUrl !== undefined && { image_url: imageUrl }),
         ...(videoUrl !== undefined && { video_url: videoUrl }),
         ...(visibility !== undefined && { visibility }),
       });
-
-      if (visibility === 'public' && userId) {
-        await createTimelineEvent({
-          id: crypto.randomUUID(),
-          event_type: 'updated',
-          entity_type: 'statement',
-          entity_id: statementId,
-          actor_id: userId,
-          title: translateText('generated.inline.0530_statement_updated_939da7bf'),
-          description: text ? text.substring(0, 100) + (text.length > 100 ? '...' : '') : '',
-          content_type: 'statement',
-          metadata: {},
-          image_url: imageUrl ?? '',
-          video_url: videoUrl ?? '',
-          video_thumbnail_url: '',
-          tags: [],
-          stats: {},
-          vote_status: '',
-          election_status: '',
-          ends_at: 0,
-          user_id: userId,
-          group_id: null,
-          amendment_id: null,
-          event_id: null,
-          todo_id: null,
-          blog_id: null,
-          statement_id: statementId,
-          election_id: null,
-          amendment_vote_id: null,
-        });
-      }
+      await serverConfirmed(updateResult);
 
       return { success: true };
     } catch (error) {

@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { CountBadge, EntityBadge, StatusBadge, VisibilityBadge } from '../StatusBadges';
+import { RightBadge } from '../RightVisuals';
 
 describe('StatusBadges', () => {
   it('maps common statuses to badge text', () => {
@@ -29,5 +30,15 @@ describe('StatusBadges', () => {
     render(<EntityBadge entityType="blog">Blog</EntityBadge>);
 
     expect(screen.getByText('Blog').className).toContain('--entity-blog-bg');
+  });
+
+  it('keeps gradient right badges readable on hover like right filters', () => {
+    render(<RightBadge right="amendmentRight" />);
+
+    const badge = screen.getByText('Amendment');
+
+    expect(badge.className).toContain('hover:bg-accent');
+    expect(badge.className).toContain('hover:text-accent-foreground');
+    expect(badge.className).not.toContain('hover:bg-primary');
   });
 });

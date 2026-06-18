@@ -5,6 +5,7 @@ import { ElectionSearchInputView } from './ElectionSearchInputView';
 interface ElectionSearchInputProps {
   value: string;
   onChange: (electionId: string) => void;
+  allowedElectionIds?: readonly string[];
   label?: string;
   hint?: string;
   placeholder?: string;
@@ -14,12 +15,16 @@ interface ElectionSearchInputProps {
 export function ElectionSearchInput({
   value,
   onChange,
+  allowedElectionIds,
   label,
   hint,
   placeholder = translateText('generated.inline.0041_search_for_an_election_fce24966'),
   required,
 }: ElectionSearchInputProps) {
-  const { items, handleChange } = useElectionSearchInputController({ onChange });
+  const { items, handleChange } = useElectionSearchInputController({
+    onChange,
+    allowedElectionIds,
+  });
 
   return (
     <ElectionSearchInputView

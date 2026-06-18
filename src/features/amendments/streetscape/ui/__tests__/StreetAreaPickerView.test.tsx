@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { StreetAreaPickerView } from '../StreetAreaPickerView';
 
 describe('StreetAreaPickerView', () => {
-  it('renders the map fallback at double height', () => {
+  it('renders the compact map fallback', () => {
     render(
       <StreetAreaPickerView
         center={{ lat: 52.52, lon: 13.405 }}
@@ -38,7 +38,7 @@ describe('StreetAreaPickerView', () => {
       />
     );
 
-    expect(screen.getByText('Karte konnte nicht geladen werden.').className).toContain('h-96');
+    expect(screen.getByText('Karte konnte nicht geladen werden.').className).toContain('h-64');
   });
 
   it('keeps the viewport stable while the selection changes', () => {

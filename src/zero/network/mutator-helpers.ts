@@ -427,7 +427,7 @@ export async function approveGroupConnectionRequest(
     zql.group_right_grant_request.where('connection_request_id', requestId)
   );
   const selectedIds =
-    grantRequestIds && grantRequestIds.length > 0 ? new Set(grantRequestIds) : null;
+    grantRequestIds === undefined || grantRequestIds === null ? null : new Set(grantRequestIds);
   const selectedGrants = allGrantRequests.filter(
     (item: { id: string; status: string }) =>
       item.status === 'pending' && (!selectedIds || selectedIds.has(item.id))
@@ -563,7 +563,7 @@ export async function rejectGroupConnectionRequest(
   }
 
   const selectedIds =
-    grantRequestIds && grantRequestIds.length > 0 ? new Set(grantRequestIds) : null;
+    grantRequestIds === undefined || grantRequestIds === null ? null : new Set(grantRequestIds);
   const grantRequests = await tx.run(
     zql.group_right_grant_request.where('connection_request_id', requestId)
   );

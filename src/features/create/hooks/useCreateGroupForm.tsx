@@ -46,7 +46,7 @@ import {
   buildGroupConnectionComposerDefaults,
   createEmptyMembershipRule,
   hasConfiguredGroupConnection,
-  hasConfiguredMembership,
+  hasIncompleteMembershipRule,
 } from '@/features/network/logic/groupConnectionComposer';
 import { CreateRichTextField } from '../ui/inputs/CreateRichTextField';
 import { GroupTypeInput } from '../ui/inputs/GroupTypeInput';
@@ -106,6 +106,8 @@ function getSelectedRights(rightDirections: Record<GroupRelationshipRight, Relat
 }
 
 const CREATE_LINK_DEFAULT_PRESET: GroupConnectionPreset = 'child';
+const CREATE_GROUP_CURRENT_ROLE_MEMBERSHIP_DISABLED_REASON =
+  'Create this group first before sending members by one of its roles. Roles for this group are created after the group exists.';
 
 function cloneMembershipRule(
   membershipRule: GroupConnectionComposerMembershipRuleValue | null | undefined
@@ -116,30 +118,6 @@ function cloneMembershipRule(
     roleId: membershipRule?.roleId ?? fallbackRule.roleId,
     sourceGroupIds: [...(membershipRule?.sourceGroupIds ?? fallbackRule.sourceGroupIds)],
   };
-}
-
-function hasIncompleteMembershipRule(args: {
-  membershipDirection: RelativeMembershipDirection | null;
-  membershipRule: GroupConnectionComposerMembershipRuleValue;
-}) {
-  if (
-    !hasConfiguredMembership({
-      membershipDirection: args.membershipDirection,
-      membershipRule: args.membershipRule,
-    })
-  ) {
-    return false;
-  }
-
-  if (args.membershipRule.membershipMode === 'role_members') {
-    return !args.membershipRule.roleId;
-  }
-
-  if (args.membershipRule.membershipMode === 'selected_source_groups') {
-    return args.membershipRule.sourceGroupIds.length === 0;
-  }
-
-  return false;
 }
 
 function toLinkedGroup(args: {
@@ -293,16 +271,16 @@ export function useCreateGroupForm(): CreateFormConfig {
     membershipDirection: linkMembershipDirection,
     membershipRule: linkMembershipRule,
   });
-  const resolvedGroupType: GroupType = siblingLinks.length > 0 ? 'sibling' : groupType;
+  const hasSiblingLinks = siblingLinks.length > 0;
+  const siblingLinksAllowOfficialInvites = siblingMembershipModes.every(
+    mode => mode === 'none' || mode === 'all_members'
+  );
+  const hasGuestOnlySiblingMembership = siblingMembershipModes.some(
+    mode => mode === 'role_members' || mode === 'selected_source_groups'
+  );
   const allowOfficialMemberInvites =
-    resolvedGroupType === 'base' ||
-    (resolvedGroupType === 'sibling' &&
-      siblingMembershipModes.every(mode => mode === 'none' || mode === 'all_members'));
-  const allowGuestInvites =
-    resolvedGroupType === 'hierarchical' ||
-    siblingMembershipModes.some(
-      mode => mode === 'role_members' || mode === 'selected_source_groups'
-    );
+    groupType === 'base' && (!hasSiblingLinks || siblingLinksAllowOfficialInvites);
+  const allowGuestInvites = groupType === 'hierarchical' || hasGuestOnlySiblingMembership;
   const linkComposerValue = useMemo(
     () => ({
       selectedGroupId: linkGroupId,
@@ -527,9 +505,15 @@ export function useCreateGroupForm(): CreateFormConfig {
         snapchat: null,
         tiktok: null,
         visibility,
+        group_type: groupType,
         owner_id: null,
       });
       await serverConfirmed(createGroupResult);
+      const groupSubmitTarget = createRouteSubmitTarget('group', {
+        to: '/group/$id',
+        params: { id: groupId },
+      });
+      context?.setRecoveryTarget(groupSubmitTarget);
       context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'active' });
 
@@ -654,12 +638,7 @@ export function useCreateGroupForm(): CreateFormConfig {
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
       setIsSubmitting(false);
-      return createSuccessSubmitOutcome(
-        createRouteSubmitTarget('group', {
-          to: '/group/$id',
-          params: { id: groupId },
-        })
-      );
+      return createSuccessSubmitOutcome(groupSubmitTarget);
     } catch (error) {
       setIsSubmitting(false);
       throw error;
@@ -676,9 +655,9 @@ export function useCreateGroupForm(): CreateFormConfig {
   });
 
   const groupTypeLabel =
-    resolvedGroupType === translateText('generated.inline.0037_base_1405df66')
+    groupType === 'base'
       ? t('pages.create.group.groupTypes.base')
-      : resolvedGroupType === translateText('generated.inline.0038_hierarchical_9876c412')
+      : groupType === 'hierarchical'
         ? t('pages.create.group.groupTypes.hierarchical')
         : t('common.network.sibling');
   const visibilityLabel =
@@ -883,6 +862,10 @@ export function useCreateGroupForm(): CreateFormConfig {
                 selectableRolesByDirection,
                 existingRightStatuses,
                 preflight: activeLinkConflictPreflight,
+                disabledPresets: {
+                  role_members_to_partner: CREATE_GROUP_CURRENT_ROLE_MEMBERSHIP_DISABLED_REASON,
+                },
+                disabledPresetFallback: CREATE_LINK_DEFAULT_PRESET,
                 groupSelectorLabel: t('pages.create.group.selectGroup'),
                 linkedGroups,
                 addDisabled:
@@ -1268,7 +1251,6 @@ export function useCreateGroupForm(): CreateFormConfig {
       visibility,
       visibilityLabel,
       groupType,
-      resolvedGroupType,
       groupTypeLabel,
       siblingMembershipMode,
       connectedRoleId,

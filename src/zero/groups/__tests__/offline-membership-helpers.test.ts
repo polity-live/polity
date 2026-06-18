@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   loadEffectiveOfflineMembershipsForGroup,
+  reconcileOfflineHierarchyForBaseGroup,
   recomputeOfflineSiblingGroupMemberships,
 } from '../offline-membership-helpers';
 
@@ -19,6 +20,58 @@ function createHelperTx() {
 }
 
 describe('offline-membership-helpers', () => {
+  it('projects active direct offline memberships into hierarchy ancestors', async () => {
+    const tx = createHelperTx();
+    tx.run
+      .mockResolvedValueOnce([
+        { id: 'B2', group_type: 'base' },
+        { id: 'H1', group_type: 'hierarchical' },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'connection-b2-h1',
+          group_a_id: 'H1',
+          group_b_id: 'B2',
+          connection_type: 'hierarchy',
+          parent_group_id: 'H1',
+          child_group_id: 'B2',
+          status: 'active',
+        },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'offline-membership-b2',
+          group_id: 'B2',
+          group_offline_member_id: 'offline-1',
+          status: 'active',
+          visibility: 'public',
+          source: 'direct',
+          source_group_id: null,
+          group_offline_member: {
+            id: 'offline-1',
+            connected_user_id: null,
+          },
+        },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(null);
+
+    const result = await reconcileOfflineHierarchyForBaseGroup(tx as never, 'B2');
+
+    expect(tx.mutate.group_offline_membership.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        group_id: 'H1',
+        group_offline_member_id: 'offline-1',
+        status: 'active',
+        source: 'derived',
+        source_group_id: 'B2',
+      })
+    );
+    expect(result.affectedGroupIds).toEqual(new Set(['H1']));
+  });
+
   it('filters connected offline members out of effective memberships', async () => {
     const tx = createHelperTx();
     tx.run.mockResolvedValueOnce([
@@ -84,18 +137,6 @@ describe('offline-membership-helpers', () => {
         },
       ])
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        {
-          id: 'connected-membership-1',
-          group_id: 'connected-1',
-          group_offline_member_id: 'offline-1',
-          status: 'active',
-          group_offline_member: {
-            id: 'offline-1',
-            connected_user_id: null,
-          },
-        },
-      ])
       .mockResolvedValueOnce([]);
 
     await recomputeOfflineSiblingGroupMemberships(tx as never, 'sibling-1');
@@ -129,28 +170,6 @@ describe('offline-membership-helpers', () => {
         },
       ])
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        {
-          id: 'connected-membership-1',
-          group_id: 'connected-1',
-          group_offline_member_id: 'offline-1',
-          status: 'active',
-          group_offline_member: {
-            id: 'offline-1',
-            connected_user_id: null,
-          },
-        },
-        {
-          id: 'connected-membership-2',
-          group_id: 'connected-1',
-          group_offline_member_id: 'offline-2',
-          status: 'active',
-          group_offline_member: {
-            id: 'offline-2',
-            connected_user_id: 'user-2',
-          },
-        },
-      ])
       .mockResolvedValueOnce([
         {
           id: 'link-1',

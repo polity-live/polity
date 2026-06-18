@@ -12,10 +12,12 @@ const messages: Record<string, string> = {
   'common.network.thisGroupWithName': 'Diese Gruppe ({{groupName}})',
   'common.network.thisGroupWithNameEmbedded': 'diese Gruppe ({{groupName}})',
   'common.unspecified': 'Unbekannt',
+  'common.network.currentGroupGivesRightTo':
+    '{{currentGroupName}} gibt {{rightLabel}} an {{selectedGroupName}}',
   'common.network.currentGroupHasRightIn':
     '{{currentGroupName}} hat {{rightLabel}} in {{selectedGroupName}}',
   'common.network.selectedGroupHasRightInCurrentGroup':
-    '{{selectedGroupName}} hat {{rightLabel}} in {{currentGroupName}}',
+    '{{currentGroupName}} hat {{rightLabel}} in {{selectedGroupName}}',
   'common.network.groupsMutuallyShareRight':
     '{{currentGroupName}} und {{selectedGroupName}} haben gegenseitig {{rightLabel}}',
 };
@@ -44,25 +46,25 @@ describe('groupRelationshipSentence', () => {
   it('renders incoming rights from the current group perspective', () => {
     expect(
       getGroupRelationshipRightSentenceText({
-        direction: 'current_has_right_in_partner',
+        direction: 'current_grants_right_to_partner',
         rightLabel: 'Informationsrecht',
         currentGroupName: 'Basistest99',
         selectedGroupName: 'Hierarchie99',
         t,
       })
-    ).toBe('Diese Gruppe (Basistest99) hat Informationsrecht in Hierarchie99');
+    ).toBe('Diese Gruppe gibt Informationsrecht an Hierarchie99');
   });
 
-  it('renders partner-held rights as right in the current group', () => {
+  it('renders partner-held rights from the current group perspective', () => {
     expect(
       getGroupRelationshipRightSentenceText({
-        direction: 'partner_has_right_in_current',
+        direction: 'partner_grants_right_to_current',
         rightLabel: 'Antragsrecht',
         currentGroupName: 'Basistest99',
         selectedGroupName: 'Hierarchie99',
         t,
       })
-    ).toBe('Hierarchie99 hat Antragsrecht in diese Gruppe (Basistest99)');
+    ).toBe('Diese Gruppe hat Antragsrecht in Hierarchie99');
   });
 
   it('renders mutual rights as mutual sharing', () => {
@@ -74,6 +76,6 @@ describe('groupRelationshipSentence', () => {
         selectedGroupName: 'Hierarchie99',
         t,
       })
-    ).toBe('Diese Gruppe (Basistest99) und Hierarchie99 haben gegenseitig Informationsrecht');
+    ).toBe('Diese Gruppe und Hierarchie99 haben gegenseitig Informationsrecht');
   });
 });

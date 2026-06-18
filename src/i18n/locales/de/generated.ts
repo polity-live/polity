@@ -1,4 +1,7 @@
 const generatedInlineTranslations: Record<string, string> = {
+  '9001_neuer_auftrag_5f7c1b2a': 'Neuer Auftrag',
+  '9002_in_groupname_wartet_ein_neuer_auftrag_tasktitle_63c4f1b8':
+    'In {{groupName}} wartet ein neuer Auftrag: {{taskTitle}}',
   '0001_cannot_cast_vote_missing_user_or_vote_data_32ecb2cb':
     'Cannot cast vote: missing user or vote data',
   '0001_formatting_changed_a569a947': 'Formatting Changed:',
@@ -748,29 +751,30 @@ const generatedInlineTranslations: Record<string, string> = {
   '0159_vorschl_ge_7f907c67': 'Vorschläge',
   '0159_you_must_be_logged_in_702ab856': 'You must be logged in',
   '0160_aktuelle_gruppe_hat_recht_in_partnergruppe_ca1db0de':
-    'Aktuelle Gruppe hat Recht in Partnergruppe',
+    'Diese Gruppe gibt das Recht an die Partnergruppe',
   '0160_confirmation_not_found_98db8f71': 'Confirmation not found',
   '0160_finale_abstimmung_ba186955': 'Finale Abstimmung',
   '0160_months_f1494311': 'months',
   '0161_coffee_44213f9f': 'coffee',
   '0161_partnergruppe_hat_recht_in_aktueller_gruppe_8b85ec2f':
-    'Partnergruppe hat Recht in aktueller Gruppe',
+    'Diese Gruppe hat das Recht in der Partnergruppe',
   '0161_support_confirmed_9a48851e': 'Support confirmed',
   '0162_add_a_hashtag_09f298a1': 'Add a hashtag',
-  '0162_beide_haben_das_recht_gegenseitig_a982cb49': 'Beide haben das Recht gegenseitig',
+  '0162_beide_haben_das_recht_gegenseitig_a982cb49':
+    'Beide Gruppen geben sich das Recht gegenseitig',
   '0162_failed_to_confirm_support_deffd413': 'Failed to confirm support',
   '0163_hashtags_7cdf4266': 'hashtags',
-  '0163_partnergruppe_aktuelle_gruppe_d9e667ae': 'Partnergruppe -> aktuelle Gruppe',
+  '0163_partnergruppe_aktuelle_gruppe_d9e667ae': 'Diese Gruppe erhält Mitglieder',
   '0163_support_declined_10a02268': 'Support declined',
   '0164_failed_to_decline_support_6fb6e4aa': 'Failed to decline support',
   '0164_mitglieder_fliessen_aus_der_partnergruppe_in__034d78c0':
-    'Mitglieder fliessen aus der Partnergruppe in die aktuelle Gruppe.',
+    'Mitglieder fließen aus der ausgewählten Gruppe in diese Gruppe.',
   '0164_px_2_py_1_5_text_sm_font_semibold_7453663d': 'px-2 py-1.5 text-sm font-semibold',
   '0165_accept_invitation_f41d2aa6': 'Accept Invitation',
-  '0165_aktuelle_gruppe_partnergruppe_e947dfc0': 'Aktuelle Gruppe -> Partnergruppe',
+  '0165_aktuelle_gruppe_partnergruppe_e947dfc0': 'Diese Gruppe sendet Mitglieder',
   '0165_pagination_31fbb9d2': 'pagination',
   '0166_mitglieder_fliessen_aus_der_aktuellen_gruppe__57884822':
-    'Mitglieder fliessen aus der aktuellen Gruppe in die Partnergruppe.',
+    'Mitglieder fließen aus dieser Gruppe in die ausgewählte Gruppe.',
   '0166_py_1_5_pl_8_pr_2_text_sm_font_semibold_3d524ba5': 'py-1.5 pl-8 pr-2 text-sm font-semibold',
   '0166_request_pending_cdab22cf': 'Request Pending',
   '0167_label_74341e3c': 'Label',
@@ -875,11 +879,11 @@ const generatedInlineTranslations: Record<string, string> = {
   '0197_childgroup_9644e4dc': 'Childgroup',
   '0197_waehle_eine_deiner_aktiven_startgruppen_aus_d_058cc520':
     'Waehle eine deiner aktiven Startgruppen aus dem Netzwerk oder ueber die Suche aus.',
-  '0198_parlamentgruppe_e4c4ebd8': 'Parlamentgruppe',
+  '0198_parlamentgruppe_e4c4ebd8': 'Rollenbasierte Partnergruppe',
   '0198_ziel_event_8f4df57f': 'Ziel-Event',
   '0199_fuer_die_zielgruppe_gibt_es_noch_kein_passend_f6bd2a81':
     'Fuer die Zielgruppe gibt es noch kein passendes Event. Der Schritt kann trotzdem als Event-Anfrage angelegt werden.',
-  '0199_gew_hlte_gruppe_0b4e1e5c': 'Gewählte Gruppe',
+  '0199_gew_hlte_gruppe_0b4e1e5c': 'Rollenbasierte Partnergruppe',
   '0200_event_suchen_389f187f': 'Event suchen...',
   '0200_member_6853c98a': 'Member',
   '0201_group_invitation_3afe15fe': 'Group Invitation',
@@ -1242,7 +1246,7 @@ const generatedInlineTranslations: Record<string, string> = {
   '0331_role_created_a7153118': 'Role Created',
   '0332_a_new_role_roletitle_has_been_created_in_even_a725e0ae':
     'A new role "{{roleTitle}}" has been created in {{eventTitle}}',
-  '0332_pruefe_konflikte_33f6ced2': 'Pruefe Konflikte...',
+  '0332_pruefe_konflikte_33f6ced2': 'Prüfe Konflikte...',
   '0333_ada_5c3cb098': 'Ada',
   '0333_the_role_roletitle_has_been_deleted_from_even_aeaf5d1a':
     'The role "{{roleTitle}}" has been deleted from {{eventTitle}}',
@@ -1796,7 +1800,7 @@ const generatedInlineTranslations: Record<string, string> = {
   '0546_assigned_and_elected_roles_with_their_active__a609ec72':
     'Assigned and elected roles with their active incumbents in this group',
   '0547_avatar_updated_46e014bb': 'Avatar updated',
-  '0547_verbundene_gruppe_2d1da077': 'Verbundene Gruppe',
+  '0547_verbundene_gruppe_2d1da077': 'Gewählte Partnergruppe',
   '0548_parlamentsquellen_eefe6cad': 'Parlamentsquellen',
   '0548_user_uploaded_a_new_profile_image_6d8365b5': 'User uploaded a new profile image',
   '0549_constitutional_law_expert_395f8319': 'Constitutional Law Expert',
@@ -2132,26 +2136,26 @@ const generatedInlineTranslations: Record<string, string> = {
   '0672_upload_a_group_image_or_provide_a_url_7f743f85': 'Upload a group image or provide a URL',
   '0673_falls_du_die_konkurrierende_untergruppe_nicht_3f8b37a2':
     'Falls du die konkurrierende Untergruppe nicht selbst verwalten kannst, braucht es die zustaendige Admin-Seite.',
-  '0673_gruppe_waehlen_ef267c5c': 'Gruppe waehlen',
+  '0673_gruppe_waehlen_ef267c5c': 'Gruppe wählen',
   '0674_einen_pfad_entfernen_oder_deaktivieren_1a612b63': 'Einen Pfad entfernen oder deaktivieren',
-  '0674_membership_richtung_3a1dbdaf': 'Membership-Richtung',
+  '0674_membership_richtung_3a1dbdaf': 'Mitgliedschaftsrichtung',
   '0675_die_verknuepfung_ist_erst_moeglich_wenn_nur_n_0af11a5e':
     'Die Verknuepfung ist erst moeglich, wenn nur noch ein aktiver Pfad zwischen Basisgruppe und Ziel-Hierarchie uebrig bleibt.',
-  '0675_richtung_waehlen_2c1eefdb': 'Richtung waehlen',
+  '0675_richtung_waehlen_2c1eefdb': 'Richtung wählen',
   '0676_mitgliedschaftsmodus_cb90aa67': 'Mitgliedschaftsmodus',
   '0676_zustaendige_gruppe_kontaktieren_5200317b': 'Zustaendige Gruppe kontaktieren',
-  '0677_verbundene_rolle_6c578cbb': 'Verbundene Rolle',
+  '0677_verbundene_rolle_6c578cbb': 'Rolle der gewählten Partnergruppe',
   '0677_wenn_du_den_konkurrierenden_pfad_nicht_selbst_a30ea1ef':
     'Wenn du den konkurrierenden Pfad nicht selbst verwalten kannst, braucht es die Admin-Seite der betroffenen Hierarchie.',
-  '0678_rolle_waehlen_51cf1595': 'Rolle waehlen',
+  '0678_rolle_waehlen_51cf1595': 'Rolle wählen',
   '0678_source_gruppen_bereinigen_010e44a9': 'Source-Gruppen bereinigen',
   '0679_entferne_ueberschneidende_source_gruppen_oder_4948994c':
     'Entferne ueberschneidende Source-Gruppen oder klaere die Mitgliedschaften, bis jede Person nur noch in einer speisenden Gruppe landet.',
-  '0679_source_groups_ad11f792': 'Source groups',
+  '0679_source_groups_ad11f792': 'Source-Gruppen',
   '0680_no_subscriptions_found_6f645f78': 'No subscriptions found',
   '0680_rechterichtung_75533cc6': 'Rechterichtung',
   '0681_lege_pro_recht_fest_in_welche_richtung_die_ve_27eaae4c':
-    'Lege pro Recht fest, in welche Richtung die Verbindung zur verbundenen Gruppe wirkt.',
+    'Lege pro Recht fest, in welche Richtung die Verbindung zur gewählten Partnergruppe wirkt.',
   '0681_push_notifications_sent_adb2827e': 'Push notifications sent',
   '0682_bitte_bereinige_die_konflikte_bevor_du_speich_ec2bc1a4':
     'Bitte bereinige die Konflikte, bevor du speicherst.',
@@ -2347,11 +2351,11 @@ const generatedInlineTranslations: Record<string, string> = {
   '0778_link_selbst_konfigurieren_7eab7242': 'Link selbst konfigurieren',
   '0779_gruppe_ausw_hlen_e7c82c9a': 'Gruppe auswählen',
   '0780_variante_f51a07e2': 'Variante',
-  '0781_rolle_der_verbundenen_gruppe_b0e1caee': 'Rolle der verbundenen Gruppe',
+  '0781_rolle_der_verbundenen_gruppe_b0e1caee': 'Rolle der gewählten Partnergruppe',
   '0782_mitgliedsrolle_der_verbundenen_gruppe_w_hlen_61c518a8':
-    'Mitgliedsrolle der verbundenen Gruppe wählen',
+    'Rolle der gewählten Partnergruppe wählen',
   '0783_beziehungsart_e1412743': 'Beziehungsart',
-  '0784_membership_mode_5a0af553': 'Membership mode',
+  '0784_membership_mode_5a0af553': 'Mitgliedschaftsmodus',
   '0785_rolle_der_quellgruppe_808d2b9d': 'Rolle der Quellgruppe',
   '0786_mitgliedsrolle_w_hlen_f325f806': 'Mitgliedsrolle wählen',
   '0787_rechte_11cf94d4': 'Rechte',
@@ -3168,6 +3172,8 @@ export const generatedTranslations = {
           },
           actions: {
             becomeCandidate: 'Become Candidate',
+            candidateRequiresPassiveVotingRight:
+              'Für eine Kandidatur in dieser Veranstaltung ist passives Wahlrecht erforderlich.',
             castFinalVote: 'Cast Final Vote',
             castIndicativeVote: 'Cast Indication',
             closeFinalVote: 'Close Final Vote',
@@ -3175,6 +3181,8 @@ export const generatedTranslations = {
             leaveSpeakerList: 'Leave Speaker List',
             startFinalVote: 'Start Final Vote',
             startVote: 'Start Vote',
+            voteRequiresActiveVotingRight:
+              'Für die Stimmabgabe in dieser Veranstaltung ist aktives Wahlrecht erforderlich.',
             withdrawCandidacy: 'Withdraw Candidacy',
           },
           amendmentDetails: 'Amendment Details',

@@ -17,7 +17,6 @@ import {
 } from '@/features/shared/ui/participation';
 import { ActiveMembersTable } from '@/features/groups/ui/ActiveMembersTable';
 import { MembershipsByRoleTables } from '@/features/groups/ui/MembershipsByRoleTables';
-import { MembershipCompositionPanel } from '@/features/groups/ui/MembershipCompositionPanel';
 import { PendingRequestsTable } from '@/features/groups/ui/PendingRequestsTable';
 import { PendingInvitationsTable } from '@/features/groups/ui/PendingInvitationsTable';
 import { InviteMembersDialog } from '@/features/groups/ui/InviteMembersDialog';
@@ -39,11 +38,18 @@ import type {
 } from '@/features/groups/types/group.types';
 import { EVENT_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import { useDelegateAssemblyParticipantsComposition } from '../hooks/useDelegateAssemblyParticipantsComposition';
+import { DelegateAssemblyCompositionPanel } from './DelegateAssemblyCompositionPanel';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type EventParticipantRow = ReturnType<typeof useEventParticipantsData>['participants'][number];
+
+interface DelegateRepresentedGroup {
+  id: string;
+  name: string;
+  seatCount: number;
+}
 
 function resolveAttendanceMode(event: {
   attendance_mode?: string | null;
@@ -118,21 +124,77 @@ export function EventParticipants({
     activeStatuses: ['active', 'member', 'admin', 'confirmed'],
     activeRoleNames: ['Organizer'],
   });
-  const {
-    showComposition,
-    participantsWithProvenance,
-    compositionBuckets,
-    isLoading: compositionIsLoading,
-  } = useDelegateAssemblyParticipantsComposition(event, activeParticipants);
-  const activeParticipantsForTables = showComposition
+  const showDelegateComposition = event?.event_type === 'delegate_assembly';
+  const { showComposition: showParticipantComposition, participantsWithProvenance } =
+    useDelegateAssemblyParticipantsComposition(event, activeParticipants);
+  const activeParticipantsForTables = showParticipantComposition
     ? participantsWithProvenance
     : activeParticipants;
+  const delegateRepresentedGroupsByUserId = useMemo(() => {
+    const groupsByUserId = new Map<string, Map<string, DelegateRepresentedGroup>>();
+
+    if (!showDelegateComposition) {
+      return new Map<string, DelegateRepresentedGroup[]>();
+    }
+
+    for (const delegate of event?.delegates || []) {
+      if (delegate.status !== 'confirmed' || !delegate.user_id) {
+        continue;
+      }
+
+      const groupId = delegate.group_id || delegate.group?.id;
+      if (!groupId) {
+        continue;
+      }
+
+      const userGroups =
+        groupsByUserId.get(delegate.user_id) ?? new Map<string, DelegateRepresentedGroup>();
+      const existingGroup = userGroups.get(groupId);
+      const seatCount = Math.max(1, delegate.seat_count ?? 1);
+
+      if (existingGroup) {
+        existingGroup.seatCount += seatCount;
+      } else {
+        userGroups.set(groupId, {
+          id: groupId,
+          name: delegate.group?.name || groupId,
+          seatCount,
+        });
+      }
+
+      groupsByUserId.set(delegate.user_id, userGroups);
+    }
+
+    return new Map(
+      [...groupsByUserId.entries()].map(([userId, representedGroups]) => [
+        userId,
+        [...representedGroups.values()].sort((left, right) =>
+          left.name.localeCompare(right.name, undefined, { sensitivity: 'base' })
+        ),
+      ])
+    );
+  }, [event?.delegates, showDelegateComposition]);
+  const activeParticipantsWithDelegateRepresentation = useMemo(
+    () =>
+      activeParticipantsForTables.map(participant => {
+        const userId = participant.user_id || participant.user?.id;
+        const delegateRepresentedGroups = userId
+          ? (delegateRepresentedGroupsByUserId.get(userId) ?? [])
+          : [];
+
+        return {
+          ...participant,
+          delegateRepresentedGroups,
+        };
+      }),
+    [activeParticipantsForTables, delegateRepresentedGroupsByUserId]
+  );
 
   useEffect(() => {
-    if (activeTab === 'composition' && !showComposition) {
+    if (event && activeTab === 'composition' && !showDelegateComposition) {
       setActiveTab('membershipsByUser');
     }
-  }, [activeTab, showComposition]);
+  }, [activeTab, event, showDelegateComposition]);
 
   const existingParticipantIds = Array.from(
     new Set(
@@ -193,8 +255,9 @@ export function EventParticipants({
     [activeRoleFilterIds, pendingInvitations]
   );
   const filteredActiveParticipantsForTables = useMemo(
-    () => filterParticipationsByRole(activeParticipantsForTables, activeRoleFilterIds),
-    [activeParticipantsForTables, activeRoleFilterIds]
+    () =>
+      filterParticipationsByRole(activeParticipantsWithDelegateRepresentation, activeRoleFilterIds),
+    [activeParticipantsWithDelegateRepresentation, activeRoleFilterIds]
   );
   const filteredGuestParticipants = useMemo(
     () => filterParticipationsByRole(guestParticipants, activeRoleFilterIds),
@@ -366,14 +429,14 @@ export function EventParticipants({
           reasonNotSignedUp: offlineParticipant.reason_not_signed_up,
           connectedUser: offlineParticipant.connected_user ?? null,
           partGroup:
-            showComposition && offlineParticipant.group_offline_member?.group
+            showParticipantComposition && offlineParticipant.group_offline_member?.group
               ? {
                   id: offlineParticipant.group_offline_member.group.id,
                   name: offlineParticipant.group_offline_member.group.name ?? null,
                 }
               : null,
           baseGroup:
-            showComposition && offlineParticipant.group_offline_member?.group
+            showParticipantComposition && offlineParticipant.group_offline_member?.group
               ? {
                   id: offlineParticipant.group_offline_member.group.id,
                   name: offlineParticipant.group_offline_member.group.name ?? null,
@@ -392,12 +455,12 @@ export function EventParticipants({
           participationChannel:
             offlineParticipant.participation_channel === 'online' ? 'online' : 'offline',
         })),
-    [attendanceMode, offlineParticipants, participantSearchQuery, showComposition]
+    [attendanceMode, offlineParticipants, participantSearchQuery, showParticipantComposition]
   );
 
   const allParticipantRows = useMemo(
     () => [
-      ...activeParticipantsForTables.map<OfflineRosterRow>(participant => ({
+      ...activeParticipantsWithDelegateRepresentation.map<OfflineRosterRow>(participant => ({
         id: `active:${participant.id}`,
         kind: 'active',
         firstName: participant.user?.first_name || '',
@@ -406,7 +469,7 @@ export function EventParticipants({
         connectedUser: null,
         reasonNotSignedUp: null,
         partGroup:
-          showComposition &&
+          showParticipantComposition &&
           'partGroup' in participant &&
           participant.partGroup &&
           typeof participant.partGroup === 'object' &&
@@ -421,7 +484,7 @@ export function EventParticipants({
               }
             : null,
         baseGroup:
-          showComposition &&
+          showParticipantComposition &&
           'baseGroup' in participant &&
           participant.baseGroup &&
           typeof participant.baseGroup === 'object' &&
@@ -438,7 +501,7 @@ export function EventParticipants({
       })),
       ...filteredOfflineRows,
     ],
-    [activeParticipantsForTables, filteredOfflineRows, showComposition]
+    [activeParticipantsWithDelegateRepresentation, filteredOfflineRows, showParticipantComposition]
   );
 
   if (isLoading) {
@@ -506,7 +569,7 @@ export function EventParticipants({
                 'generated.inline.0499_create_a_guest_role_first_before_inviting_gue_13882d1d'
               )}
             />
-          ) : activeTab !== 'roles' ? (
+          ) : activeTab !== 'roles' && activeTab !== 'composition' ? (
             <InviteMembersDialog
               isOpen={inviteOpen}
               onOpenChange={setInviteOpen}
@@ -582,7 +645,8 @@ export function EventParticipants({
                 'generated.inline.0509_current_event_participants_and_organizers_cf1218e5'
               )}
               fallbackRoleLabel={translateText('generated.inline.0506_participant_a77366e9')}
-              showProvenanceColumns={showComposition}
+              showProvenanceColumns={showParticipantComposition}
+              showDelegateRepresentationColumn={showDelegateComposition}
             />
             {showOfflineRoster && activeRoleFilterIds.length === 0 ? (
               <OfflineRosterCard
@@ -595,7 +659,7 @@ export function EventParticipants({
                 rows={allParticipantRows}
                 connectedUserCandidates={connectedUserCandidates}
                 showManageButton
-                showProvenanceColumns={showComposition}
+                showProvenanceColumns={showParticipantComposition}
                 manageDialogTitle={translateText(
                   'generated.inline.0512_manage_offline_and_hybrid_participants_32ec2f90'
                 )}
@@ -704,16 +768,12 @@ export function EventParticipants({
             emptyStateLabel={translateText(
               'generated.inline.0116_no_participants_currently_carry_this_role_18087ba6'
             )}
-            showProvenanceColumns={showComposition}
+            showProvenanceColumns={showParticipantComposition}
+            showDelegateRepresentationColumn={showDelegateComposition}
             hideEmptyRoleSections={activeRoleFilterIds.length > 0}
           />
         }
-        compositionContent={
-          <MembershipCompositionPanel
-            buckets={compositionBuckets}
-            isLoading={compositionIsLoading}
-          />
-        }
+        compositionContent={<DelegateAssemblyCompositionPanel eventId={eventId} />}
         guestsContent={
           <div className="space-y-4">
             <GuestsTable
@@ -766,7 +826,8 @@ export function EventParticipants({
           </div>
         }
         rolesContent={<EventRoles eventId={eventId} />}
-        showComposition={showComposition}
+        showComposition={showDelegateComposition}
+        compositionLabel={translateText('features.events.participants.tabs.composition')}
         showGuests
       />
 

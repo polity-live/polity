@@ -6,6 +6,7 @@ import {
   countMissingEurostatFilters,
   createDefaultEurostatFilters,
   createEurostatChartPresetRoles,
+  createEurostatEditableTable,
   createEurostatPreviewRows,
   createEurostatProjectionPreviewKey,
   formatEurostatDimensionValue,
@@ -134,6 +135,26 @@ describe('eurostatChartPreview', () => {
       xDimension: 'TIME_PERIOD',
       seriesDimension: null,
       filters: { geo: 'DE', unit: 'PC_GDP' },
+    });
+  });
+
+  it('materializes projection points into an editable chart table', () => {
+    const table = createEurostatEditableTable({
+      points: [
+        { x: '2020', value: 100, series: 'DE' },
+        { x: '2021', value: 110, series: 'DE' },
+      ],
+      xDimension: 'TIME_PERIOD',
+      valueField: 'OBS_VALUE',
+      seriesDimension: 'geo',
+    });
+
+    expect(table).toEqual({
+      columns: ['TIME_PERIOD', 'OBS_VALUE', 'geo'],
+      rows: [
+        { TIME_PERIOD: '2020', OBS_VALUE: '100', geo: 'DE' },
+        { TIME_PERIOD: '2021', OBS_VALUE: '110', geo: 'DE' },
+      ],
     });
   });
 });

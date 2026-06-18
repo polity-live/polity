@@ -326,6 +326,124 @@ describe('group connection request helpers', () => {
     });
   });
 
+  it('approves membership while leaving pending rights untouched', async () => {
+    const tx = createTx();
+    const request = {
+      id: 'request-membership-only-approval',
+      active_connection_id: 'connection-b1-h1',
+      proposed_connection_id: 'connection-b1-h1',
+      group_a_id: 'B1',
+      group_b_id: 'H1',
+      desired_connection_type: 'peer',
+      desired_parent_group_id: null,
+      desired_child_group_id: null,
+      structure_status: 'approved',
+    };
+    const grantRequest = {
+      id: 'grant-request-stays-pending',
+      existing_grant_id: null,
+      operation: 'upsert',
+      right_key: 'informationRight',
+      holder_group_id: 'B1',
+      scope_group_id: 'H1',
+      status: 'pending',
+      initiator_group_id: 'B1',
+    };
+    const membershipRequest = {
+      id: 'membership-request-remove',
+      existing_membership_rule_id: 'membership-rule-1',
+      operation: 'remove',
+      status: 'pending',
+    };
+    tx.run
+      .mockResolvedValueOnce(request)
+      .mockResolvedValueOnce(activePeerConnection)
+      .mockResolvedValueOnce([grantRequest])
+      .mockResolvedValueOnce(membershipRequest)
+      .mockResolvedValueOnce([grantRequest])
+      .mockResolvedValueOnce({ ...membershipRequest, status: 'approved' });
+
+    await approveGroupConnectionRequest(tx as never, 'request-membership-only-approval', [], true);
+
+    expect(tx.mutate.group_right_grant.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.group_right_grant_request.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'grant-request-stays-pending',
+        status: 'approved',
+      })
+    );
+    expect(tx.mutate.group_membership_rule_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'membership-request-remove',
+        status: 'approved',
+      })
+    );
+    expect(tx.mutate.group_connection_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'request-membership-only-approval',
+        status: 'partially_approved',
+      })
+    );
+    expect(tx.mutate.group_connection_request.delete).not.toHaveBeenCalled();
+  });
+
+  it('rejects membership while leaving pending rights untouched', async () => {
+    const tx = createTx();
+    const request = {
+      id: 'request-membership-only-reject',
+      active_connection_id: 'connection-b1-h1',
+      proposed_connection_id: 'connection-b1-h1',
+      group_a_id: 'B1',
+      group_b_id: 'H1',
+      desired_connection_type: 'peer',
+      desired_parent_group_id: null,
+      desired_child_group_id: null,
+      structure_status: 'approved',
+    };
+    const grantRequest = {
+      id: 'grant-request-stays-pending',
+      status: 'pending',
+    };
+    const membershipRequest = {
+      id: 'membership-request-reject',
+      status: 'pending',
+    };
+    tx.run
+      .mockResolvedValueOnce(request)
+      .mockResolvedValueOnce([grantRequest])
+      .mockResolvedValueOnce(membershipRequest)
+      .mockResolvedValueOnce([grantRequest])
+      .mockResolvedValueOnce({ ...membershipRequest, status: 'rejected' });
+
+    await rejectGroupConnectionRequest(
+      tx as never,
+      'request-membership-only-reject',
+      [],
+      true,
+      false
+    );
+
+    expect(tx.mutate.group_right_grant_request.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'grant-request-stays-pending',
+        status: 'rejected',
+      })
+    );
+    expect(tx.mutate.group_membership_rule_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'membership-request-reject',
+        status: 'rejected',
+      })
+    );
+    expect(tx.mutate.group_connection_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'request-membership-only-reject',
+        status: 'partially_approved',
+      })
+    );
+    expect(tx.mutate.group_connection_request.delete).not.toHaveBeenCalled();
+  });
+
   it('rejects structure and marks still-open child items as rejected', async () => {
     const tx = createTx();
     const request = {

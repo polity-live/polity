@@ -23,6 +23,7 @@ export interface ManualChartTableEditorViewProps {
   visibleRows: any[];
   renameColumn: any;
   removeColumn: any;
+  readOnly?: boolean;
 }
 
 export function ManualChartTableEditorView({
@@ -35,6 +36,7 @@ export function ManualChartTableEditorView({
   visibleRows,
   renameColumn,
   removeColumn,
+  readOnly = false,
 }: ManualChartTableEditorViewProps) {
   return (
     <div className="grid gap-3">
@@ -49,19 +51,22 @@ export function ManualChartTableEditorView({
                     <Input
                       defaultValue={column}
                       className="hover:border-input h-8 border-transparent px-2 font-medium"
+                      readOnly={readOnly}
                       onBlur={event => renameColumn(column, event.target.value)}
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 shrink-0"
-                      disabled={table.columns.length <= 2}
-                      onClick={() => removeColumn(column)}
-                      title={t('plateJs.chart.removeColumn')}
-                    >
-                      <Trash2Icon className="size-4" />
-                    </Button>
+                    {!readOnly ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 shrink-0"
+                        disabled={table.columns.length <= 2}
+                        onClick={() => removeColumn(column)}
+                        title={t('plateJs.chart.removeColumn')}
+                      >
+                        <Trash2Icon className="size-4" />
+                      </Button>
+                    ) : null}
                   </div>
                 </TableHead>
               ))}
@@ -80,7 +85,9 @@ export function ManualChartTableEditorView({
                       <Input
                         value={row[column] ?? ''}
                         className="hover:border-input h-9 min-w-32 border-transparent"
+                        readOnly={readOnly}
                         onChange={event => {
+                          if (readOnly) return;
                           const rows = [...table.rows];
                           rows[rowIndex] = { ...row, [column]: event.target.value };
                           onChange({ ...table, rows });
@@ -95,47 +102,51 @@ export function ManualChartTableEditorView({
         </Table>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={table.rows.length >= MAX_MANUAL_CHART_ROWS}
-            onClick={() =>
-              onChange({
-                ...table,
-                rows: [
-                  ...table.rows,
-                  Object.fromEntries(table.columns.map((column: any) => [column, ''])),
-                ],
-              })
-            }
-          >
-            <PlusIcon className="size-4" />
-            {t('plateJs.chart.row')}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={table.columns.length >= MAX_MANUAL_CHART_COLUMNS}
-            onClick={() => {
-              let index = table.columns.length + 1;
-              let name = `Column ${index}`;
-              while (table.columns.includes(name)) {
-                index += 1;
-                name = `Column ${index}`;
+        {!readOnly ? (
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={table.rows.length >= MAX_MANUAL_CHART_ROWS}
+              onClick={() =>
+                onChange({
+                  ...table,
+                  rows: [
+                    ...table.rows,
+                    Object.fromEntries(table.columns.map((column: any) => [column, ''])),
+                  ],
+                })
               }
-              onChange({
-                columns: [...table.columns, name],
-                rows: table.rows.map((row: any) => ({ ...row, [name]: '' })),
-              });
-            }}
-          >
-            <PlusIcon className="size-4" />
-            {t('plateJs.chart.column')}
-          </Button>
-        </div>
+            >
+              <PlusIcon className="size-4" />
+              {t('plateJs.chart.row')}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={table.columns.length >= MAX_MANUAL_CHART_COLUMNS}
+              onClick={() => {
+                let index = table.columns.length + 1;
+                let name = `Column ${index}`;
+                while (table.columns.includes(name)) {
+                  index += 1;
+                  name = `Column ${index}`;
+                }
+                onChange({
+                  columns: [...table.columns, name],
+                  rows: table.rows.map((row: any) => ({ ...row, [name]: '' })),
+                });
+              }}
+            >
+              <PlusIcon className="size-4" />
+              {t('plateJs.chart.column')}
+            </Button>
+          </div>
+        ) : (
+          <div />
+        )}
         <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <span>
             {table.rows.length.toLocaleString()}

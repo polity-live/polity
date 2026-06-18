@@ -19,7 +19,7 @@ import { useGroupConflictPreflight } from '../hooks/useGroupConflictPreflight';
 import {
   canonicalGroupPair,
   getExpandedRightDirections,
-  getRightGrantEndpoints,
+  getGrantEndpointsForRightDirection,
 } from '@/features/network/logic/groupConnectionComposer';
 interface GroupEditFormProps {
   groupId: string;
@@ -28,6 +28,8 @@ interface GroupEditFormProps {
   actorId?: string;
   visibility?: 'public' | 'private' | 'authenticated';
   groupType?: GroupType;
+  hasHierarchyChildren?: boolean | null;
+  hasSiblingConnections?: boolean | null;
 }
 
 export function useGroupEditFormController({
@@ -37,6 +39,8 @@ export function useGroupEditFormController({
   actorId,
   visibility,
   groupType,
+  hasHierarchyChildren,
+  hasSiblingConnections,
 }: GroupEditFormProps) {
   const { t } = useTranslation();
 
@@ -54,7 +58,12 @@ export function useGroupEditFormController({
     removeImage,
     handleSubmit,
     isSubmitting,
-  } = useGroupUpdate(groupId, initialData, { actorId, visibility, groupType });
+  } = useGroupUpdate(groupId, initialData, {
+    actorId,
+    visibility,
+    groupType,
+    hasSiblingConnections,
+  });
 
   const { groups: allGroups } = useAllGroups();
 
@@ -80,20 +89,25 @@ export function useGroupEditFormController({
   }[] = [
     { value: 'none', label: translateText('generated.inline.0159_keine_3ce60e74') },
     {
-      value: 'current_has_right_in_partner',
-      label: translateText(
-        'generated.inline.0160_aktuelle_gruppe_hat_recht_in_partnergruppe_ca1db0de'
+      value: 'current_grants_right_to_partner',
+      label: t(
+        'common.network.currentGroupGrantsRightToPartnerLabel',
+        'Diese Gruppe gibt das Recht an die Partnergruppe'
       ),
     },
     {
-      value: 'partner_has_right_in_current',
-      label: translateText(
-        'generated.inline.0161_partnergruppe_hat_recht_in_aktueller_gruppe_8b85ec2f'
+      value: 'partner_grants_right_to_current',
+      label: t(
+        'common.network.currentGroupHasRightInPartnerLabel',
+        'Diese Gruppe hat das Recht in der Partnergruppe'
       ),
     },
     {
       value: 'mutual',
-      label: translateText('generated.inline.0162_beide_haben_das_recht_gegenseitig_a982cb49'),
+      label: t(
+        'common.network.groupsMutuallyGrantRightLabel',
+        'Beide Gruppen gewähren sich das Recht gegenseitig'
+      ),
     },
   ];
 
@@ -133,7 +147,7 @@ export function useGroupEditFormController({
   const siblingGrants = RIGHT_TYPES.flatMap(right => {
     const direction = formData.connectedRelationshipDirections[right];
     return getExpandedRightDirections(direction).map(selectedDirection => {
-      const endpoints = getRightGrantEndpoints(
+      const endpoints = getGrantEndpointsForRightDirection(
         selectedDirection,
         groupId,
         formData.connected_group_id ?? ''
@@ -173,9 +187,13 @@ export function useGroupEditFormController({
     formData.sibling_membership_mode != null &&
     formData.sibling_membership_mode !== 'none' &&
     formData.siblingMembershipDirection != null;
+  const hasLegacySelectedSourceMembership =
+    formData.sibling_membership_mode === 'selected_source_groups';
+
+  const showSiblingRelationshipEditor = groupType === 'sibling' || Boolean(hasSiblingConnections);
 
   const siblingConfigurationPreflight = useGroupConflictPreflight(
-    groupType === 'sibling' &&
+    showSiblingRelationshipEditor &&
       formData.connected_group_id &&
       pair &&
       (siblingGrants.length > 0 || hasSiblingMembership)
@@ -209,13 +227,18 @@ export function useGroupEditFormController({
       : null,
     {
       enabled:
-        groupType === 'sibling' &&
+        showSiblingRelationshipEditor &&
         Boolean(formData.connected_group_id) &&
         (siblingGrants.length > 0 || hasSiblingMembership),
     }
   );
 
   const onFormSubmit = (e: React.FormEvent) => {
+    if (hasLegacySelectedSourceMembership) {
+      e.preventDefault();
+      return;
+    }
+
     if (siblingConfigurationPreflight.blocking) {
       e.preventDefault();
       return;
@@ -243,6 +266,9 @@ export function useGroupEditFormController({
     actorId,
     visibility,
     groupType,
+    hasHierarchyChildren,
+    hasSiblingConnections,
+    showSiblingRelationshipEditor,
     t,
     isCreating,
     showReview,
@@ -268,6 +294,7 @@ export function useGroupEditFormController({
     siblingMembershipRule,
     pair,
     hasSiblingMembership,
+    hasLegacySelectedSourceMembership,
     siblingConfigurationPreflight,
     onFormSubmit,
     confirmCreate,

@@ -256,7 +256,53 @@ export const eventsTranslations = {
     notFound: 'Event not found',
     tabs: {
       participants: 'Participants',
+      composition: 'Composition',
       roles: 'Roles',
+    },
+    composition: {
+      title: 'Delegate Composition',
+      description: 'Seat distribution by subgroup for this delegate assembly.',
+      loading: 'Loading composition...',
+      empty: 'No delegate seats have been allocated to subgroups yet.',
+      total: '{{count}} total seats',
+      metrics: {
+        planned: 'Planned',
+        scheduled: 'Votes scheduled',
+        elected: 'Elected',
+      },
+      metricTitles: {
+        planned: 'Planned Delegate Seats',
+        scheduled: 'Scheduled Elections',
+        elected: 'Already Elected Delegates',
+      },
+      metricDescriptions: {
+        planned: 'Seats from the current subgroup delegate allocation.',
+        scheduled: 'Seats that already have scheduled subgroup delegate elections.',
+        elected: 'Confirmed delegates on this delegate assembly.',
+      },
+      sectionTitles: {
+        planned: 'Planned delegates',
+        scheduled: 'Scheduled delegates',
+        elected: 'Elected delegates',
+      },
+      sectionDescriptions: {
+        planned: 'Seats from the current subgroup delegate allocation.',
+        scheduled: 'Seats with scheduled subgroup elections plus seats not yet scheduled.',
+        elected: 'Confirmed delegates plus seats not yet elected.',
+      },
+      remainder: {
+        unscheduled: 'Unscheduled',
+        notYetElected: 'Not yet elected',
+      },
+      columns: {
+        category: 'Category',
+        group: 'Subgroup',
+        absolute: 'Absolute',
+        planned: 'Planned',
+        scheduled: 'Scheduled',
+        elected: 'Elected',
+        share: 'Share',
+      },
     },
     pendingRequests: 'Pending Requests ({{count}})',
     activeParticipants: 'Active Participants ({{count}})',

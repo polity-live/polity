@@ -1,21 +1,19 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
-import { useAllGroups, useGroupById } from '@/zero/groups/useGroupState';
+import { useAssignableGroupMembersByGroupIds, useGroupById } from '@/zero/groups/useGroupState';
 import { usePaymentActions } from '@/zero/payments/usePaymentActions';
 import { useUserState } from '@/zero/users/useUserState';
 import { getUserDisplayName } from '@/features/search/utils/searchUtils';
-import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { DirectionInput } from '../ui/inputs/DirectionInput';
 import { PaymentTypeInput } from '../ui/inputs/PaymentTypeInput';
-import { PaymentEntityTypeInput } from '../ui/inputs/PaymentEntityTypeInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
+import { parseCreatePaymentAmount } from '../logic/paymentAmount';
+import { collectUserIds } from '../logic/eligibleUsers';
 import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
 import {
   createBlockedSubmitOutcome,
@@ -36,7 +34,6 @@ export function useCreatePaymentForm(): CreateFormConfig {
   const { user } = useAuth();
   const { createPayment } = usePaymentActions();
   const { allUsers } = useUserState({ includeAllUsers: true });
-  const { groups: allGroups } = useAllGroups();
 
   const groupIdParam = searchParams.groupId;
   const directionParam = searchParams.direction;
@@ -49,13 +46,22 @@ export function useCreatePaymentForm(): CreateFormConfig {
     'membership_fee' | 'donation' | 'subsidies' | 'campaign' | 'material' | 'events' | 'others'
   >('donation');
   const [amount, setAmount] = useState('');
-  const [entityType, setEntityType] = useState<'user' | 'group'>('user');
   const [entityId, setEntityId] = useState('');
-  const [entityGroupId, setEntityGroupId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { members: assignableGroupMembers, isLoading: isAssignableGroupMembersLoading } =
+    useAssignableGroupMembersByGroupIds(groupId ? [groupId] : []);
+  const allowedCounterpartyUserIds = useMemo(
+    () => collectUserIds(assignableGroupMembers),
+    [assignableGroupMembers]
+  );
+  const allowedCounterpartyUserIdSet = useMemo(
+    () => new Set(allowedCounterpartyUserIds),
+    [allowedCounterpartyUserIds]
+  );
 
   useEffect(() => {
     setGroupId(groupIdParam ?? '');
+    setEntityId('');
   }, [groupIdParam]);
 
   useEffect(() => {
@@ -64,23 +70,48 @@ export function useCreatePaymentForm(): CreateFormConfig {
     }
   }, [directionParam]);
 
-  const syncGroupSearch = (nextGroupId: string) => {
-    navigate({
-      to: '/create/payment',
-      search: mergeCreateSearchParams(searchParams, {
-        groupId: nextGroupId || undefined,
-      }),
-      replace: true,
-    });
-  };
+  const syncGroupSearch = useCallback(
+    (nextGroupId: string) => {
+      navigate({
+        to: '/create/payment',
+        search: mergeCreateSearchParams(searchParams, {
+          groupId: nextGroupId || undefined,
+        }),
+        replace: true,
+      });
+    },
+    [navigate, searchParams]
+  );
+
+  const handleGroupChange = useCallback(
+    (nextGroupId: string) => {
+      setGroupId(nextGroupId);
+      setEntityId('');
+      syncGroupSearch(nextGroupId);
+    },
+    [syncGroupSearch]
+  );
+
+  useEffect(() => {
+    if (
+      entityId &&
+      !isAssignableGroupMembersLoading &&
+      !allowedCounterpartyUserIdSet.has(entityId)
+    ) {
+      setEntityId('');
+    }
+  }, [allowedCounterpartyUserIdSet, entityId, isAssignableGroupMembersLoading]);
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!user) return createBlockedSubmitOutcome();
+    if (!groupId || !entityId) return createBlockedSubmitOutcome();
+    const parsedAmount = parseCreatePaymentAmount(amount);
+    if (parsedAmount == null) return createBlockedSubmitOutcome();
+
     setIsSubmitting(true);
     try {
       context?.reportProgress({ key: 'create', status: 'active' });
       const paymentId = crypto.randomUUID();
-      const parsedAmount = parseFloat(amount);
 
       let payer_user_id: string | null = null;
       let payer_group_id: string | null = null;
@@ -88,13 +119,11 @@ export function useCreatePaymentForm(): CreateFormConfig {
       let receiver_group_id: string | null = null;
 
       if (direction === 'income') {
-        receiver_group_id = groupId || null;
-        if (entityType === 'user') payer_user_id = entityId || null;
-        else payer_group_id = entityGroupId || null;
+        payer_user_id = entityId;
+        receiver_group_id = groupId;
       } else {
-        payer_group_id = groupId || null;
-        if (entityType === 'user') receiver_user_id = entityId || null;
-        else receiver_group_id = entityGroupId || null;
+        payer_group_id = groupId;
+        receiver_user_id = entityId;
       }
 
       await createPayment({
@@ -136,26 +165,19 @@ export function useCreatePaymentForm(): CreateFormConfig {
     }
   };
 
-  const hasEntity = entityType === 'user' ? !!entityId : !!entityGroupId;
+  const hasEntity = !!entityId;
+  const parsedAmount = parseCreatePaymentAmount(amount);
+  const hasValidAmount = parsedAmount != null;
+  const formattedAmount = `${(parsedAmount ?? 0).toFixed(2)} €`;
   const groupDisplayName = group?.name ?? groupId;
   const selectedUser = allUsers.find(currentUser => currentUser.id === entityId);
-  const selectedGroup = allGroups.find(currentGroup => currentGroup.id === entityGroupId);
-  const selectedEntityDisplayName =
-    entityType === 'user'
-      ? getUserDisplayName(selectedUser) || entityId
-      : selectedGroup?.name || entityGroupId;
+  const selectedEntityDisplayName = getUserDisplayName(selectedUser) || entityId;
   const directionLabel =
-    direction === translateText('generated.inline.0039_income_0f613350')
-      ? t('pages.create.payment.income')
-      : t('pages.create.payment.expense');
+    direction === 'income' ? t('pages.create.payment.income') : t('pages.create.payment.expense');
   const counterpartLabel =
-    direction === translateText('generated.inline.0039_income_0f613350')
+    direction === 'income'
       ? t('pages.create.payment.fromPayer')
       : t('pages.create.payment.toReceiver');
-  const counterpartTypeLabel =
-    entityType === translateText('generated.inline.0026_user_12dea96f')
-      ? t('pages.create.payment.entityUser')
-      : t('pages.create.payment.entityGroup');
 
   const config = useMemo(
     (): CreateFormConfig => ({
@@ -170,37 +192,9 @@ export function useCreatePaymentForm(): CreateFormConfig {
       ],
       steps: [
         {
-          label: t('pages.create.common.group'),
-          isValid: () => !!groupId,
-          fields: [
-            {
-              key: 'group',
-              kind: 'typeahead',
-              label: t('pages.create.common.group'),
-              required: true,
-              props: {
-                entityTypes: ['group'],
-                value: groupId || undefined,
-                onChange: item => {
-                  const nextGroupId = item?.id ?? '';
-                  setGroupId(nextGroupId);
-                  syncGroupSearch(nextGroupId);
-                },
-                placeholder: t('pages.create.common.searchGroup'),
-              },
-            },
-          ],
-        },
-        {
           label: t('pages.create.payment.direction'),
-          isValid: () => !!label.trim() && !!amount,
+          isValid: () => !!label.trim() && hasValidAmount,
           fields: [
-            {
-              key: 'direction',
-              kind: 'customComponent',
-              component: DirectionInput,
-              props: { value: direction, onChange: setDirection },
-            },
             {
               key: 'label',
               kind: 'text',
@@ -228,69 +222,61 @@ export function useCreatePaymentForm(): CreateFormConfig {
               placeholder: '0.00',
               value: amount,
               onValueChange: setAmount,
+              validator: value =>
+                parseCreatePaymentAmount(value) == null
+                  ? t('pages.create.payment.validation.amountInvalid')
+                  : null,
+            },
+            {
+              key: 'direction',
+              kind: 'customComponent',
+              component: DirectionInput,
+              props: { value: direction, onChange: setDirection },
             },
           ],
         },
         {
-          label:
-            direction === 'income'
-              ? t('pages.create.payment.fromPayer')
-              : t('pages.create.payment.toReceiver'),
-          isValid: () => hasEntity,
+          label: counterpartLabel,
+          isValid: () => !!groupId && hasEntity,
           fields: [
             {
-              key: 'entity-type',
-              kind: 'customComponent',
-              component: PaymentEntityTypeInput,
+              key: 'group',
+              kind: 'typeahead',
+              label: t('pages.create.common.group'),
+              required: true,
               props: {
+                entityTypes: ['group'],
+                value: groupId || undefined,
+                onChange: item => {
+                  handleGroupChange(item?.id ?? '');
+                },
+                placeholder: t('pages.create.common.searchGroup'),
+              },
+            },
+            {
+              key: 'entity-user',
+              kind: 'customComponent',
+              component: UserSearchInput,
+              props: {
+                value: entityId ? [entityId] : [],
+                onChange: (ids: string[]) => setEntityId(ids[0] || ''),
                 label:
                   direction === 'income'
                     ? t('pages.create.payment.fromPayer')
                     : t('pages.create.payment.toReceiver'),
-                userLabel: t('pages.create.payment.entityUser'),
-                groupLabel: t('pages.create.payment.entityGroup'),
-                entityType,
-                onEntityTypeChange: setEntityType,
-                onClearUser: () => setEntityId(''),
-                onClearGroup: () => setEntityGroupId(''),
+                required: true,
+                placeholder: t('pages.create.payment.searchUsers'),
+                allowedUserIds: allowedCounterpartyUserIds,
+                disabled: !groupId,
+                multi: false,
+                showAllResults: true,
               },
             },
-            ...(entityType === 'user'
-              ? [
-                  {
-                    key: 'entity-user',
-                    kind: 'customComponent' as const,
-                    component: UserSearchInput,
-                    props: {
-                      value: entityId ? [entityId] : [],
-                      onChange: (ids: string[]) => setEntityId(ids[0] || ''),
-                      required: true,
-                      placeholder: t('pages.create.payment.searchUsers'),
-                      multi: false,
-                    },
-                  },
-                ]
-              : [
-                  {
-                    key: 'entity-group',
-                    kind: 'typeahead' as const,
-                    label: t('pages.create.payment.entityGroup'),
-                    required: true,
-                    props: {
-                      entityTypes: ['group' as const],
-                      value: entityGroupId || undefined,
-                      onChange: (item: { id: string } | null) => {
-                        setEntityGroupId(item?.id ?? '');
-                      },
-                      placeholder: t('pages.create.payment.searchGroups'),
-                    },
-                  },
-                ]),
           ],
         },
         {
           label: t('pages.create.common.review'),
-          isValid: () => !!groupId && !!label.trim() && !!amount && hasEntity,
+          isValid: () => !!groupId && !!label.trim() && hasValidAmount && hasEntity,
           fields: [
             {
               key: 'review',
@@ -301,7 +287,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
                 badge: t('pages.create.payment.reviewBadge'),
                 secondaryBadge: directionLabel,
                 title: label || 'Untitled Payment',
-                subtitle: `${parseFloat(amount || '0').toFixed(2)} €`,
+                subtitle: formattedAmount,
                 sections: [
                   {
                     title: t('pages.create.payment.direction'),
@@ -319,17 +305,13 @@ export function useCreatePaymentForm(): CreateFormConfig {
                       },
                       {
                         label: t('pages.create.payment.amount'),
-                        value: `${parseFloat(amount || '0').toFixed(2)} €`,
+                        value: formattedAmount,
                       },
                     ],
                   },
                   {
                     title: counterpartLabel,
                     fields: [
-                      {
-                        label: t('pages.create.payment.entityGroup'),
-                        value: counterpartTypeLabel,
-                      },
                       {
                         label: counterpartLabel,
                         value: selectedEntityDisplayName || t('pages.create.common.notSelected'),
@@ -349,17 +331,17 @@ export function useCreatePaymentForm(): CreateFormConfig {
       label,
       type,
       amount,
-      entityType,
+      hasValidAmount,
+      formattedAmount,
       entityId,
-      entityGroupId,
       isSubmitting,
       hasEntity,
       groupDisplayName,
       selectedEntityDisplayName,
       directionLabel,
       counterpartLabel,
-      counterpartTypeLabel,
-      syncGroupSearch,
+      allowedCounterpartyUserIds,
+      handleGroupChange,
       t,
     ]
   );

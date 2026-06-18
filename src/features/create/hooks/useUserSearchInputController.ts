@@ -4,12 +4,14 @@ import { useUserState } from '@/zero/users/useUserState';
 
 interface UseUserSearchInputControllerProps {
   excludeUserId?: string;
-  excludeUserIds: string[];
+  excludeUserIds: readonly string[];
+  allowedUserIds?: readonly string[];
 }
 
 export function useUserSearchInputController({
   excludeUserId,
   excludeUserIds,
+  allowedUserIds,
 }: UseUserSearchInputControllerProps) {
   const { allUsers } = useUserState({ includeAllUsers: true });
 
@@ -19,8 +21,12 @@ export function useUserSearchInputController({
       excludedIds.add(excludeUserId);
     }
 
-    return (allUsers ?? []).filter(user => !excludedIds.has(user.id));
-  }, [allUsers, excludeUserId, excludeUserIds]);
+    const allowedIds = allowedUserIds ? new Set(allowedUserIds) : null;
+
+    return (allUsers ?? []).filter(
+      user => !excludedIds.has(user.id) && (!allowedIds || allowedIds.has(user.id))
+    );
+  }, [allUsers, allowedUserIds, excludeUserId, excludeUserIds]);
 
   const items = useMemo(
     () =>

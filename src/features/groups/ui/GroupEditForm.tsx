@@ -13,6 +13,8 @@ interface GroupEditFormProps {
   actorId?: string;
   visibility?: 'public' | 'private' | 'authenticated';
   groupType?: GroupType;
+  hasHierarchyChildren?: boolean | null;
+  hasSiblingConnections?: boolean | null;
 }
 
 import { useGroupEditFormController } from './useGroupEditFormController';
@@ -25,6 +27,8 @@ export function GroupEditForm({
   actorId,
   visibility,
   groupType,
+  hasHierarchyChildren,
+  hasSiblingConnections,
 }: GroupEditFormProps) {
   const viewProps = useGroupEditFormController({
     groupId,
@@ -33,6 +37,8 @@ export function GroupEditForm({
     actorId,
     visibility,
     groupType,
+    hasHierarchyChildren,
+    hasSiblingConnections,
   });
 
   return <GroupEditFormView {...viewProps} />;

@@ -2,7 +2,9 @@ import { Save } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
+import { BadgeControl } from '@/features/shared/ui/status';
 import type { Amendment } from '@/zero/amendments/schema';
+import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
 import type {
   CorridorGeometry,
   PathCorridorGeometry,
@@ -14,9 +16,11 @@ import type {
   StreetDesignLocalPoint,
   StreetDesignMapSelection,
   StreetDesignObject,
+  StreetDesignObjectCategory,
   StreetDesignObjectType,
   StreetDesignOsmLayerVisibility,
   StreetDesignOsmWay,
+  StreetDesignPlacementSettings,
   StreetDesignPropertyValue,
   StreetDesignStateV1,
 } from '../types';
@@ -35,8 +39,13 @@ interface StreetDesignPageViewProps {
   selectedOsmWay: StreetDesignOsmWay | null;
   selectedObjectCostLine: StreetDesignCostLine | null;
   selectedObjectId: string | null;
+  selectedObjectFocusRequestKey: number;
+  selectedOsmFocusRequestKey: number;
+  hiddenObjectIds: string[];
+  hiddenObjectCategories: StreetDesignObjectCategory[];
   selectedTool: StreetDesignObjectType;
   interactionMode: StreetDesignInteractionMode;
+  placementSettings: StreetDesignPlacementSettings;
   selectedCenter: StreetDesignGeoPoint;
   selectedBbox: StreetDesignBoundingBox;
   selectedMapSelection: StreetDesignMapSelection;
@@ -68,16 +77,27 @@ interface StreetDesignPageViewProps {
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
   onOsmWaySelect: (osmWayId: string | null) => void;
+  onObjectVisibilityChange: (objectId: string, visible: boolean) => void;
+  onObjectCategoryVisibilityChange: (
+    category: StreetDesignObjectCategory,
+    visible: boolean
+  ) => void;
   onOsmWayHide: (osmWayId: string) => void;
   onOsmLayerVisibilityChange: (
     layer: keyof StreetDesignOsmLayerVisibility,
     visible: boolean
   ) => void;
   onShowStreetMarkingsChange: (visible: boolean) => void;
+  onPlacementPropertyChange: (key: string, value: StreetDesignPropertyValue) => void;
+  onPlacementWidthChange: (width: number) => void;
+  onPlacementRotationChange: (rotationDeg: number) => void;
+  onPlacementUnitCostChange: (unitCostMinor: number | null) => void;
   onPropertyChange: (objectId: string, key: string, value: StreetDesignPropertyValue) => void;
   onWidthChange: (objectId: string, width: number) => void;
+  onRotationChange: (objectId: string, rotationDeg: number) => void;
   onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
   onDeleteObject: (objectId: string) => void;
+  onDeleteObjectCategory: (category: StreetDesignObjectCategory) => void;
 }
 
 export function StreetDesignPageView({
@@ -89,8 +109,13 @@ export function StreetDesignPageView({
   selectedOsmWay,
   selectedObjectCostLine,
   selectedObjectId,
+  selectedObjectFocusRequestKey,
+  selectedOsmFocusRequestKey,
+  hiddenObjectIds,
+  hiddenObjectCategories,
   selectedTool,
   interactionMode,
+  placementSettings,
   selectedCenter,
   selectedBbox,
   selectedMapSelection,
@@ -122,13 +147,21 @@ export function StreetDesignPageView({
   onCancelPlacement,
   onObjectSelect,
   onOsmWaySelect,
+  onObjectVisibilityChange,
+  onObjectCategoryVisibilityChange,
   onOsmWayHide,
   onOsmLayerVisibilityChange,
   onShowStreetMarkingsChange,
+  onPlacementPropertyChange,
+  onPlacementWidthChange,
+  onPlacementRotationChange,
+  onPlacementUnitCostChange,
   onPropertyChange,
   onWidthChange,
+  onRotationChange,
   onUnitCostChange,
   onDeleteObject,
+  onDeleteObjectCategory,
 }: StreetDesignPageViewProps) {
   if (isLoading) {
     return <GlobalLoadingAnimation connectionStatus="connecting" />;
@@ -138,19 +171,45 @@ export function StreetDesignPageView({
     return <NotFound />;
   }
 
+  const osmWayCount = design.osmSnapshot?.ways.length ?? 0;
+  const metricLabels = [
+    `${design.objects.length} Elemente`,
+    `${osmWayCount} Bestand`,
+    formatMinorCurrency(costSummary.totalCostMinor, costSummary.currency),
+  ];
+
   return (
-    <main className="mx-auto flex w-full max-w-[1600px] flex-col gap-4 p-4 lg:p-6">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-muted-foreground text-xs uppercase">Amendment</p>
-          <h1 className="text-2xl font-semibold">{amendment.title ?? 'Strassenentwurf'}</h1>
+    <main className="flex w-full flex-col gap-4 p-3 sm:p-4 lg:p-6">
+      <header className="bg-card overflow-hidden rounded-lg border shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b px-4 py-4 sm:px-5">
+          <div className="min-w-0 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <BadgeControl variant="outline">Streetscape</BadgeControl>
+              <BadgeControl variant={readOnly ? 'secondary' : isDirty ? 'outline' : 'secondary'}>
+                {readOnly ? 'Nur Ansicht' : isDirty ? 'Ungespeichert' : 'Gespeichert'}
+              </BadgeControl>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-xs font-medium uppercase">Amendment</p>
+              <h1 className="text-2xl leading-tight font-semibold tracking-tight">
+                {amendment.title ?? 'Strassenentwurf'}
+              </h1>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {saveError ? <span className="text-destructive text-xs">{saveError}</span> : null}
+            <Button type="button" onClick={onSave} disabled={readOnly || isSaving || !isDirty}>
+              <Save className="size-4" />
+              {isSaving ? 'Speichert...' : 'Speichern'}
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {saveError ? <span className="text-destructive text-xs">{saveError}</span> : null}
-          <Button type="button" onClick={onSave} disabled={readOnly || isSaving || !isDirty}>
-            <Save className="size-4" />
-            {isSaving ? 'Speichert...' : 'Speichern'}
-          </Button>
+        <div className="grid gap-3 px-4 py-3 text-sm sm:grid-cols-3 sm:px-5">
+          {metricLabels.map(label => (
+            <div key={label} className="bg-muted/20 rounded-md border px-3 py-2 font-medium">
+              {label}
+            </div>
+          ))}
         </div>
       </header>
 
@@ -166,60 +225,108 @@ export function StreetDesignPageView({
         onLoadSample={onLoadSample}
       />
 
-      <div className="grid gap-4 xl:grid-cols-[240px_minmax(0,1fr)_320px]">
-        <StreetDesignToolbarView
-          selectedTool={selectedTool}
-          interactionMode={interactionMode}
-          comparisonMode={design.comparisonMode}
-          osmLayerVisibility={osmLayerVisibility}
-          showStreetMarkings={showStreetMarkings}
-          readOnly={readOnly}
-          onToolChange={onToolChange}
-          onInteractionModeChange={onInteractionModeChange}
-          onComparisonModeChange={onComparisonModeChange}
-          onOsmLayerVisibilityChange={onOsmLayerVisibilityChange}
-          onShowStreetMarkingsChange={onShowStreetMarkingsChange}
-        />
-        <StreetSceneCanvasView
-          design={design}
-          placementPreview={placementPreview}
-          placementPreviewType={placementPreviewType}
-          placementStart={placementStart}
-          placementMode={placementMode}
-          placementPointCount={placementPointCount}
-          canFinishPathPlacement={canFinishPathPlacement}
-          selectedObjectId={selectedObjectId}
-          selectedObject={selectedObject}
-          selectedOsmWayId={selectedOsmWay?.id ?? null}
-          interactionMode={interactionMode}
-          readOnly={readOnly}
-          onPointerDown={onScenePointerDown}
-          onPointerMove={onScenePointerMove}
-          onFinishPlacement={onFinishPlacement}
-          onFinishPathPlacement={onFinishPathPlacement}
-          onCancelPlacement={onCancelPlacement}
-          onObjectSelect={onObjectSelect}
-          onOsmWaySelect={onOsmWaySelect}
-          onDeleteObject={onDeleteObject}
-        />
-        <StreetDesignInspectorView
-          selectedObject={selectedObject}
-          selectedOsmWay={selectedOsmWay}
-          selectedObjectCostLine={selectedObjectCostLine}
-          readOnly={readOnly}
-          onPropertyChange={onPropertyChange}
-          onWidthChange={onWidthChange}
-          onUnitCostChange={onUnitCostChange}
-          onDeleteObject={onDeleteObject}
-          onHideOsmWay={onOsmWayHide}
-        />
-      </div>
+      <section className="bg-card overflow-hidden rounded-lg border shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold">Strassenraum-Entwurf</h2>
+            <p className="text-muted-foreground text-sm">
+              Werkzeug, 3D-Modell, Inspector und Kosten in einer Arbeitsflaeche.
+            </p>
+          </div>
+          <BadgeControl variant="outline">
+            {design.comparisonMode === 'new_design'
+              ? 'Neu'
+              : design.comparisonMode === 'original'
+                ? 'Original'
+                : design.comparisonMode === 'split'
+                  ? 'Split'
+                  : 'Overlay'}
+          </BadgeControl>
+        </div>
 
-      <StreetCostSummaryView
-        summary={costSummary}
-        readOnly={readOnly}
-        onDeleteObject={onDeleteObject}
-      />
+        <div className="grid gap-0 xl:grid-cols-[240px_minmax(0,1fr)_320px]">
+          <StreetDesignToolbarView
+            selectedTool={selectedTool}
+            interactionMode={interactionMode}
+            objects={design.objects}
+            selectedObjectId={selectedObjectId}
+            hiddenObjectIds={hiddenObjectIds}
+            hiddenObjectCategories={hiddenObjectCategories}
+            osmLayerVisibility={osmLayerVisibility}
+            showStreetMarkings={showStreetMarkings}
+            readOnly={readOnly}
+            onToolChange={onToolChange}
+            onInteractionModeChange={onInteractionModeChange}
+            onObjectSelect={onObjectSelect}
+            onObjectVisibilityChange={onObjectVisibilityChange}
+            onObjectCategoryVisibilityChange={onObjectCategoryVisibilityChange}
+            onObjectDelete={onDeleteObject}
+            onObjectCategoryDelete={onDeleteObjectCategory}
+            onOsmLayerVisibilityChange={onOsmLayerVisibilityChange}
+            onShowStreetMarkingsChange={onShowStreetMarkingsChange}
+          />
+          <StreetSceneCanvasView
+            design={design}
+            metricLabels={metricLabels}
+            placementPreview={placementPreview}
+            placementPreviewType={placementPreviewType}
+            placementStart={placementStart}
+            placementMode={placementMode}
+            placementPointCount={placementPointCount}
+            canFinishPathPlacement={canFinishPathPlacement}
+            selectedObjectId={selectedObjectId}
+            selectedObject={selectedObject}
+            selectedObjectFocusRequestKey={selectedObjectFocusRequestKey}
+            hiddenObjectIds={hiddenObjectIds}
+            hiddenObjectCategories={hiddenObjectCategories}
+            selectedOsmWayId={selectedOsmWay?.id ?? null}
+            selectedOsmFocusRequestKey={selectedOsmFocusRequestKey}
+            interactionMode={interactionMode}
+            readOnly={readOnly}
+            onPointerDown={onScenePointerDown}
+            onPointerMove={onScenePointerMove}
+            onFinishPlacement={onFinishPlacement}
+            onFinishPathPlacement={onFinishPathPlacement}
+            onCancelPlacement={onCancelPlacement}
+            onObjectSelect={onObjectSelect}
+            onOsmWaySelect={onOsmWaySelect}
+            onObjectRotate={onRotationChange}
+            onDeleteObject={onDeleteObject}
+          />
+          <StreetDesignInspectorView
+            selectedObject={selectedObject}
+            selectedOsmWay={selectedOsmWay}
+            selectedObjectCostLine={selectedObjectCostLine}
+            selectedTool={selectedTool}
+            interactionMode={interactionMode}
+            placementSettings={placementSettings}
+            placementPreview={placementPreview}
+            placementMode={placementMode}
+            readOnly={readOnly}
+            onPlacementPropertyChange={onPlacementPropertyChange}
+            onPlacementWidthChange={onPlacementWidthChange}
+            onPlacementRotationChange={onPlacementRotationChange}
+            onPlacementUnitCostChange={onPlacementUnitCostChange}
+            onPropertyChange={onPropertyChange}
+            onWidthChange={onWidthChange}
+            onRotationChange={onRotationChange}
+            onUnitCostChange={onUnitCostChange}
+            onDeleteObject={onDeleteObject}
+            onHideOsmWay={onOsmWayHide}
+          />
+        </div>
+
+        <StreetCostSummaryView
+          summary={costSummary}
+          comparisonMode={design.comparisonMode}
+          selectedObjectId={selectedObjectId}
+          readOnly={readOnly}
+          onComparisonModeChange={onComparisonModeChange}
+          onObjectSelect={onObjectSelect}
+          onDeleteObject={onDeleteObject}
+          onDeleteObjectCategory={onDeleteObjectCategory}
+        />
+      </section>
     </main>
   );
 }

@@ -75,6 +75,41 @@ async function assertElectionManagerForAgendaItem(
   await assertElectionManagerForEvent(tx, ctx, agendaItem?.event_id);
 }
 
+async function assertElectionEventRight(
+  tx: ElectionTx,
+  ctx: ElectionCtx,
+  electionId: string,
+  action: 'active_voting' | 'passive_voting'
+) {
+  if (tx.location === 'client') return;
+  const { eventId } = await loadElectionEventId(tx, electionId);
+  if (!eventId) throw new PermissionError(action, 'events', 'event required');
+  await can(tx, ctx, { action, resource: 'events', eventId });
+}
+
+async function assertSelfElectionEventRightOrManager(
+  tx: ElectionTx,
+  ctx: ElectionCtx,
+  args: {
+    electionId: string;
+    userId: string;
+    action: 'active_voting' | 'passive_voting';
+  }
+) {
+  if (tx.location === 'client') return;
+
+  if (args.userId === ctx.userID) {
+    try {
+      await assertElectionEventRight(tx, ctx, args.electionId, args.action);
+      return;
+    } catch (error) {
+      if (!isPermissionError(error)) throw error;
+    }
+  }
+
+  await assertElectionManager(tx, ctx, args.electionId);
+}
+
 async function assertElectorOwner(
   tx: ElectionTx,
   ctx: ElectionCtx,
@@ -87,6 +122,10 @@ async function assertElectorOwner(
     throw new Error('Elector not found for this election.');
   }
   requireOwner(tx, ctx, elector.user_id, { action: 'active_voting', resource: 'events' });
+  const { eventId } = await loadElectionEventId(tx, electionId);
+  if (eventId) {
+    await can(tx, ctx, { action: 'active_voting', resource: 'events', eventId });
+  }
 }
 
 async function assertElectorParticipationOwner(
@@ -102,6 +141,72 @@ async function assertElectorParticipationOwner(
       : await tx.run(zql.final_elector_participation.where('id', participationId).one());
   if (!participation) throw new Error('Election participation not found');
   await assertElectorOwner(tx, ctx, participation.elector_id, participation.election_id);
+}
+
+async function assertCandidateBelongsToElection(
+  tx: ElectionTx,
+  electionId: string,
+  candidateId: string
+) {
+  if (tx.location === 'client') return;
+  const candidate = await tx.run(zql.election_candidate.where('id', candidateId).one());
+  if (!candidate || candidate.election_id !== electionId) {
+    throw new Error('Election candidate not found for this election.');
+  }
+}
+
+async function assertSecretElectionSelectionOwner(
+  tx: ElectionTx,
+  ctx: ElectionCtx,
+  electionId: string,
+  phase: 'indicative' | 'final'
+) {
+  if (tx.location === 'client') return;
+  const { eventId } = await loadElectionEventId(tx, electionId);
+  if (!eventId) {
+    throw new PermissionError('active_voting', 'events', 'event required');
+  }
+
+  const elector = await tx.run(
+    zql.elector.where('election_id', electionId).where('user_id', ctx.userID).one()
+  );
+  if (!elector) {
+    throw new PermissionError('active_voting', 'events', `election:${electionId}`);
+  }
+
+  await assertElectorOwner(tx, ctx, elector.id, electionId);
+
+  const participation =
+    phase === 'indicative'
+      ? await tx.run(
+          zql.indicative_elector_participation
+            .where('election_id', electionId)
+            .where('elector_id', elector.id)
+            .one()
+        )
+      : await tx.run(
+          zql.final_elector_participation
+            .where('election_id', electionId)
+            .where('elector_id', elector.id)
+            .one()
+        );
+
+  if (!participation) throw new Error('Election participation not found');
+}
+
+async function assertSecretElectionSelectionOwnerOrManager(
+  tx: ElectionTx,
+  ctx: ElectionCtx,
+  electionId: string,
+  phase: 'indicative' | 'final'
+) {
+  if (tx.location === 'client') return;
+
+  try {
+    await assertSecretElectionSelectionOwner(tx, ctx, electionId, phase);
+  } catch {
+    await assertElectionManager(tx, ctx, electionId);
+  }
 }
 
 /** Shared mutators — run on both client and server. */
@@ -178,7 +283,11 @@ export const electionSharedMutators = {
 
   // Add a candidate to an election
   addCandidate: defineMutator(createElectionCandidateSchema, async ({ tx, ctx, args }) => {
-    await assertElectionManager(tx, ctx, args.election_id);
+    await assertSelfElectionEventRightOrManager(tx, ctx, {
+      electionId: args.election_id,
+      userId: args.user_id,
+      action: 'passive_voting',
+    });
     const now = Date.now();
     await tx.mutate.election_candidate.insert({
       ...args,
@@ -208,7 +317,11 @@ export const electionSharedMutators = {
 
   // Add an elector
   createElector: defineMutator(createElectorSchema, async ({ tx, ctx, args }) => {
-    await assertElectionManager(tx, ctx, args.election_id);
+    await assertSelfElectionEventRightOrManager(tx, ctx, {
+      electionId: args.election_id,
+      userId: args.user_id,
+      action: 'active_voting',
+    });
     const now = Date.now();
     await tx.mutate.elector.insert({
       ...args,
@@ -243,10 +356,11 @@ export const electionSharedMutators = {
   createIndicativeCandidateSelection: defineMutator(
     createIndicativeCandidateSelectionSchema,
     async ({ tx, ctx, args }) => {
+      await assertCandidateBelongsToElection(tx, args.election_id, args.candidate_id);
       if (args.elector_participation_id) {
         await assertElectorParticipationOwner(tx, ctx, args.elector_participation_id, 'indicative');
       } else {
-        await assertElectionManager(tx, ctx, args.election_id);
+        await assertSecretElectionSelectionOwnerOrManager(tx, ctx, args.election_id, 'indicative');
       }
       const now = Date.now();
       await tx.mutate.indicative_candidate_selection.insert({
@@ -273,10 +387,11 @@ export const electionSharedMutators = {
   createFinalCandidateSelection: defineMutator(
     createFinalCandidateSelectionSchema,
     async ({ tx, ctx, args }) => {
+      await assertCandidateBelongsToElection(tx, args.election_id, args.candidate_id);
       if (args.elector_participation_id) {
         await assertElectorParticipationOwner(tx, ctx, args.elector_participation_id, 'final');
       } else {
-        await assertElectionManager(tx, ctx, args.election_id);
+        await assertSecretElectionSelectionOwnerOrManager(tx, ctx, args.election_id, 'final');
       }
       const now = Date.now();
       await tx.mutate.final_candidate_selection.insert({

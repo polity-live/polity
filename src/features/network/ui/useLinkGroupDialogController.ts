@@ -19,6 +19,7 @@ import {
   buildGroupConnectionComposerDefaults,
   createInitialRelationshipDirections,
   hasConfiguredGroupConnection,
+  hasIncompleteMembershipRule,
   getPresetForRelationshipType,
   getSelectedMembershipDirection,
   getSelectedRights,
@@ -311,7 +312,7 @@ export function useLinkGroupDialogController({
     const relationshipType = initialRelationshipType ?? 'child';
     const preset = getPresetForRelationshipType({
       relationshipType,
-      membershipDirection: baseValue.membershipDirection,
+      membershipDirection: null,
       membershipRule: baseValue.membershipRule,
     });
     const nextValue: GroupConnectionComposerValue = applyGroupConnectionPreset(preset, {
@@ -325,7 +326,7 @@ export function useLinkGroupDialogController({
       for (const right of initialRights) {
         if (right in nextValue.rightDirections) {
           nextValue.rightDirections[right as keyof typeof nextValue.rightDirections] =
-            'current_has_right_in_partner';
+            'current_grants_right_to_partner';
         }
       }
     }
@@ -460,8 +461,13 @@ export function useLinkGroupDialogController({
       membershipRule: value.membershipRule,
     });
     const selectedMembershipRule = selectedMembershipDirection ? value.membershipRule : null;
+    const incompleteMembershipRule = hasIncompleteMembershipRule({
+      membershipDirection: value.membershipDirection,
+      membershipRule: value.membershipRule,
+    });
 
     if (
+      incompleteMembershipRule &&
       selectedMembershipRule?.membershipMode === 'role_members' &&
       !selectedMembershipRule.roleId
     ) {
@@ -474,13 +480,20 @@ export function useLinkGroupDialogController({
     }
 
     if (
-      selectedMembershipRule?.membershipMode === 'selected_source_groups' &&
-      selectedMembershipRule.sourceGroupIds.length === 0
+      incompleteMembershipRule &&
+      selectedMembershipRule?.membershipMode === 'selected_source_groups'
     ) {
       toast.error(
         selectedMembershipDirection === 'partner_members_to_current'
           ? 'Wähle mindestens eine Source-Gruppe für den eingehenden Mitgliedschaftsfluss.'
           : 'Wähle mindestens eine Source-Gruppe für den ausgehenden Mitgliedschaftsfluss.'
+      );
+      return;
+    }
+
+    if (selectedMembershipRule?.membershipMode === 'selected_source_groups') {
+      toast.error(
+        'This connection uses a legacy source-group membership rule. Choose one of the supported membership modes before saving.'
       );
       return;
     }

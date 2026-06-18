@@ -27,6 +27,7 @@ describe('Zero registry smoke tests', () => {
     expect(serverMutators.groups.create).toBeDefined();
     expect(serverMutators.events.create).toBeDefined();
     expect(serverMutators.amendments.initializeProcessPath).toBeDefined();
+    expect(serverMutators.statements.create).toBeDefined();
     expect(serverMutators.votes.castIndicativeVote).toBeDefined();
     expect(serverMutators.network.createGroupConnection).toBeDefined();
   });

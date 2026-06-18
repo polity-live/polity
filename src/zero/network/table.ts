@@ -1,4 +1,4 @@
-import { table, string, number, boolean } from '@rocicorp/zero';
+import { table, string, number, boolean, json, type ReadonlyJSONValue } from '@rocicorp/zero';
 
 export const follow = table('follow')
   .columns({
@@ -15,6 +15,9 @@ export const groupConnection = table('group_connection')
     group_a_id: string(),
     group_b_id: string(),
     connection_type: string(),
+    from_group_id: string().optional(),
+    to_group_id: string().optional(),
+    connection_kind: string().optional(),
     parent_group_id: string().optional(),
     child_group_id: string().optional(),
     status: string(),
@@ -57,6 +60,62 @@ export const groupMembershipRuleOrigin = table('group_membership_rule_origin')
     membership_rule_id: string(),
     eligible_origin_group_id: string(),
     created_at: number(),
+  })
+  .primaryKey('id');
+
+export const groupHierarchyPath = table('group_hierarchy_path')
+  .columns({
+    id: string(),
+    ancestor_group_id: string(),
+    descendant_group_id: string(),
+    direct_child_group_id: string().optional(),
+    base_group_id: string(),
+    depth: number(),
+    path_group_ids: json<ReadonlyJSONValue>(),
+    status: string(),
+    connection_id: string().optional(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
+
+export const groupEffectiveRight = table('group_effective_right')
+  .columns({
+    id: string(),
+    holder_group_id: string(),
+    scope_group_id: string(),
+    right_key: string(),
+    source_connection_id: string().optional(),
+    source_grant_id: string().optional(),
+    status: string(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
+
+export const groupMembershipExclusivityLock = table('group_membership_exclusivity_lock')
+  .columns({
+    id: string(),
+    user_id: string(),
+    hierarchy_group_id: string(),
+    source_group_id: string(),
+    group_membership_id: string(),
+    status: string(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
+
+export const groupSiblingSourceLock = table('group_sibling_source_lock')
+  .columns({
+    id: string(),
+    user_id: string(),
+    sibling_group_id: string(),
+    source_group_id: string(),
+    group_membership_id: string(),
+    status: string(),
+    created_at: number(),
+    updated_at: number(),
   })
   .primaryKey('id');
 

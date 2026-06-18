@@ -170,6 +170,8 @@ function mergeRelationshipEntryMaps(
         membershipMode: entry.membershipMode ?? null,
         memberSourceGroupId: entry.memberSourceGroupId ?? null,
         memberTargetGroupId: entry.memberTargetGroupId ?? null,
+        requiredSourceRoleId: entry.requiredSourceRoleId ?? null,
+        requiredSourceRoleName: entry.requiredSourceRoleName ?? null,
         membershipDirection: entry.membershipDirection ?? null,
         level: entry.level,
         childId: entry.childId,
@@ -194,6 +196,8 @@ function mergeRelationshipEntryMaps(
       existing.membershipMode = entry.membershipMode;
       existing.memberSourceGroupId = entry.memberSourceGroupId ?? null;
       existing.memberTargetGroupId = entry.memberTargetGroupId ?? null;
+      existing.requiredSourceRoleId = entry.requiredSourceRoleId ?? null;
+      existing.requiredSourceRoleName = entry.requiredSourceRoleName ?? null;
       if (entry.membershipDirection) {
         existing.membershipDirection = entry.membershipDirection;
       }
@@ -665,6 +669,8 @@ export function useGroupNetworkFlowController({
       membershipMode,
       memberSourceGroupId,
       memberTargetGroupId,
+      requiredSourceRoleId,
+      requiredSourceRoleName,
       rightEdgeDirections,
       relationshipDepth,
       strokeColor,
@@ -682,6 +688,8 @@ export function useGroupNetworkFlowController({
       membershipMode: CanonicalMembershipMode | null | undefined;
       memberSourceGroupId?: string | null;
       memberTargetGroupId?: string | null;
+      requiredSourceRoleId?: string | null;
+      requiredSourceRoleName?: string | null;
       rightEdgeDirections: Record<string, NetworkEdgeRelationshipDirection> | undefined;
       relationshipDepth: 'direct' | 'indirect';
       strokeColor: string;
@@ -701,6 +709,8 @@ export function useGroupNetworkFlowController({
           membershipMode,
           memberSourceGroupId,
           memberTargetGroupId,
+          membershipRequiredSourceRoleId: requiredSourceRoleId,
+          membershipRequiredSourceRoleName: requiredSourceRoleName,
           rightEdgeDirections,
           relationshipDepth,
           fallbackStrokeColor: strokeColor,
@@ -728,6 +738,8 @@ export function useGroupNetworkFlowController({
         membershipMode?: CanonicalMembershipMode | null;
         memberSourceGroupId?: string | null;
         memberTargetGroupId?: string | null;
+        requiredSourceRoleId?: string | null;
+        requiredSourceRoleName?: string | null;
         rightEdgeDirections: Record<string, NetworkEdgeRelationshipDirection>;
       }
     >();
@@ -926,6 +938,8 @@ export function useGroupNetworkFlowController({
             membershipMode: null,
             memberSourceGroupId: null,
             memberTargetGroupId: null,
+            requiredSourceRoleId: null,
+            requiredSourceRoleName: null,
             rightEdgeDirections: {},
           };
           siblingRelationshipEntries.set(edgeKey, entry);
@@ -950,6 +964,8 @@ export function useGroupNetworkFlowController({
           entry.membershipMode = rel.membership_mode;
           entry.memberSourceGroupId = rel.member_source_group_id ?? null;
           entry.memberTargetGroupId = rel.member_target_group_id ?? null;
+          entry.requiredSourceRoleId = rel.required_source_role_id ?? null;
+          entry.requiredSourceRoleName = rel.required_source_role?.name ?? null;
         }
 
         const rightDirection =
@@ -1011,6 +1027,8 @@ export function useGroupNetworkFlowController({
         membershipMode: parent.membershipMode,
         memberSourceGroupId: parent.memberSourceGroupId,
         memberTargetGroupId: parent.memberTargetGroupId,
+        requiredSourceRoleId: parent.requiredSourceRoleId,
+        requiredSourceRoleName: parent.requiredSourceRoleName,
         rightEdgeDirections,
         relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
         strokeColor: getGroupNodeVisualTokens('parent').borderColor,
@@ -1054,6 +1072,8 @@ export function useGroupNetworkFlowController({
         membershipMode: child.membershipMode,
         memberSourceGroupId: child.memberSourceGroupId,
         memberTargetGroupId: child.memberTargetGroupId,
+        requiredSourceRoleId: child.requiredSourceRoleId,
+        requiredSourceRoleName: child.requiredSourceRoleName,
         rightEdgeDirections,
         relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
         strokeColor: getGroupNodeVisualTokens('child').borderColor,
@@ -1081,6 +1101,8 @@ export function useGroupNetworkFlowController({
         membershipMode: entry.membershipMode,
         memberSourceGroupId: entry.memberSourceGroupId,
         memberTargetGroupId: entry.memberTargetGroupId,
+        requiredSourceRoleId: entry.requiredSourceRoleId,
+        requiredSourceRoleName: entry.requiredSourceRoleName,
         rightEdgeDirections: entry.rightEdgeDirections,
         relationshipDepth: 'direct',
         strokeColor: getGroupNodeVisualTokens(

@@ -6,6 +6,7 @@ import { user, file } from './users/table';
 import {
   group,
   groupMembership,
+  groupMembershipOrigin,
   groupOfflineMember,
   groupOfflineMembership,
   groupMembershipRole,
@@ -24,6 +25,7 @@ import {
   eventParticipantRole,
   participant,
   eventException,
+  eventAssemblyScope,
 } from './events/table';
 // Amendments
 import {
@@ -76,7 +78,11 @@ import { changeRequest } from './change-requests/table';
 // Discussions
 import { thread, comment } from './discussions/table';
 // Delegates
-import { eventDelegate, groupDelegateAllocation } from './delegates/table';
+import {
+  eventDelegate,
+  groupDelegateAllocation,
+  delegateElectionAssignment,
+} from './delegates/table';
 // Network
 import {
   follow,
@@ -84,6 +90,10 @@ import {
   groupRightGrant,
   groupMembershipRule,
   groupMembershipRuleOrigin,
+  groupHierarchyPath,
+  groupEffectiveRight,
+  groupMembershipExclusivityLock,
+  groupSiblingSourceLock,
   groupConnectionRequest,
   groupRightGrantRequest,
   groupMembershipRuleRequest,
@@ -428,6 +438,36 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
     destSchema: groupConnection,
     destField: ['group_b_id'],
   }),
+  connections_from: many({
+    sourceField: ['id'],
+    destSchema: groupConnection,
+    destField: ['from_group_id'],
+  }),
+  connections_to: many({
+    sourceField: ['id'],
+    destSchema: groupConnection,
+    destField: ['to_group_id'],
+  }),
+  hierarchy_paths_as_ancestor: many({
+    sourceField: ['id'],
+    destSchema: groupHierarchyPath,
+    destField: ['ancestor_group_id'],
+  }),
+  hierarchy_paths_as_descendant: many({
+    sourceField: ['id'],
+    destSchema: groupHierarchyPath,
+    destField: ['descendant_group_id'],
+  }),
+  effective_rights_held: many({
+    sourceField: ['id'],
+    destSchema: groupEffectiveRight,
+    destField: ['holder_group_id'],
+  }),
+  effective_rights_scoped: many({
+    sourceField: ['id'],
+    destSchema: groupEffectiveRight,
+    destField: ['scope_group_id'],
+  }),
   roles: many({ sourceField: ['id'], destSchema: role, destField: ['group_id'] }),
   events: many({ sourceField: ['id'], destSchema: event, destField: ['group_id'] }),
   amendments: many({ sourceField: ['id'], destSchema: amendment, destField: ['group_id'] }),
@@ -485,12 +525,59 @@ export const groupMembershipRelationships = relationships(groupMembership, ({ on
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
   source_group: one({ sourceField: ['source_group_id'], destSchema: group, destField: ['id'] }),
+  part_group: one({ sourceField: ['part_group_id'], destSchema: group, destField: ['id'] }),
+  base_group: one({ sourceField: ['base_group_id'], destSchema: group, destField: ['id'] }),
+  connection: one({
+    sourceField: ['connection_id'],
+    destSchema: groupConnection,
+    destField: ['id'],
+  }),
+  membership_rule: one({
+    sourceField: ['membership_rule_id'],
+    destSchema: groupMembershipRule,
+    destField: ['id'],
+  }),
+  origins: many({
+    sourceField: ['id'],
+    destSchema: groupMembershipOrigin,
+    destField: ['group_membership_id'],
+  }),
   membership_roles: many({
     sourceField: ['id'],
     destSchema: groupMembershipRole,
     destField: ['group_membership_id'],
   }),
 }));
+
+export const groupMembershipOriginRelationships = relationships(
+  groupMembershipOrigin,
+  ({ one }) => ({
+    group_membership: one({
+      sourceField: ['group_membership_id'],
+      destSchema: groupMembership,
+      destField: ['id'],
+    }),
+    source_group: one({ sourceField: ['source_group_id'], destSchema: group, destField: ['id'] }),
+    source_membership: one({
+      sourceField: ['source_membership_id'],
+      destSchema: groupMembership,
+      destField: ['id'],
+    }),
+    connection: one({
+      sourceField: ['connection_id'],
+      destSchema: groupConnection,
+      destField: ['id'],
+    }),
+    membership_rule: one({
+      sourceField: ['membership_rule_id'],
+      destSchema: groupMembershipRule,
+      destField: ['id'],
+    }),
+    source_role: one({ sourceField: ['source_role_id'], destSchema: role, destField: ['id'] }),
+    part_group: one({ sourceField: ['part_group_id'], destSchema: group, destField: ['id'] }),
+    base_group: one({ sourceField: ['base_group_id'], destSchema: group, destField: ['id'] }),
+  })
+);
 
 export const groupOfflineMemberRelationships = relationships(
   groupOfflineMember,
@@ -580,6 +667,8 @@ export const groupGuestRoleRelationships = relationships(groupGuestRole, ({ one 
 export const groupConnectionRelationships = relationships(groupConnection, ({ one, many }) => ({
   group_a: one({ sourceField: ['group_a_id'], destSchema: group, destField: ['id'] }),
   group_b: one({ sourceField: ['group_b_id'], destSchema: group, destField: ['id'] }),
+  from_group: one({ sourceField: ['from_group_id'], destSchema: group, destField: ['id'] }),
+  to_group: one({ sourceField: ['to_group_id'], destSchema: group, destField: ['id'] }),
   parent_group: one({ sourceField: ['parent_group_id'], destSchema: group, destField: ['id'] }),
   child_group: one({ sourceField: ['child_group_id'], destSchema: group, destField: ['id'] }),
   created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
@@ -657,6 +746,77 @@ export const groupMembershipRuleOriginRelationships = relationships(
     eligible_origin_group: one({
       sourceField: ['eligible_origin_group_id'],
       destSchema: group,
+      destField: ['id'],
+    }),
+  })
+);
+
+export const groupHierarchyPathRelationships = relationships(groupHierarchyPath, ({ one }) => ({
+  ancestor_group: one({ sourceField: ['ancestor_group_id'], destSchema: group, destField: ['id'] }),
+  descendant_group: one({
+    sourceField: ['descendant_group_id'],
+    destSchema: group,
+    destField: ['id'],
+  }),
+  direct_child_group: one({
+    sourceField: ['direct_child_group_id'],
+    destSchema: group,
+    destField: ['id'],
+  }),
+  base_group: one({ sourceField: ['base_group_id'], destSchema: group, destField: ['id'] }),
+  connection: one({
+    sourceField: ['connection_id'],
+    destSchema: groupConnection,
+    destField: ['id'],
+  }),
+}));
+
+export const groupEffectiveRightRelationships = relationships(groupEffectiveRight, ({ one }) => ({
+  holder_group: one({ sourceField: ['holder_group_id'], destSchema: group, destField: ['id'] }),
+  scope_group: one({ sourceField: ['scope_group_id'], destSchema: group, destField: ['id'] }),
+  source_connection: one({
+    sourceField: ['source_connection_id'],
+    destSchema: groupConnection,
+    destField: ['id'],
+  }),
+  source_grant: one({
+    sourceField: ['source_grant_id'],
+    destSchema: groupRightGrant,
+    destField: ['id'],
+  }),
+}));
+
+export const groupMembershipExclusivityLockRelationships = relationships(
+  groupMembershipExclusivityLock,
+  ({ one }) => ({
+    user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+    hierarchy_group: one({
+      sourceField: ['hierarchy_group_id'],
+      destSchema: group,
+      destField: ['id'],
+    }),
+    source_group: one({ sourceField: ['source_group_id'], destSchema: group, destField: ['id'] }),
+    group_membership: one({
+      sourceField: ['group_membership_id'],
+      destSchema: groupMembership,
+      destField: ['id'],
+    }),
+  })
+);
+
+export const groupSiblingSourceLockRelationships = relationships(
+  groupSiblingSourceLock,
+  ({ one }) => ({
+    user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+    sibling_group: one({
+      sourceField: ['sibling_group_id'],
+      destSchema: group,
+      destField: ['id'],
+    }),
+    source_group: one({ sourceField: ['source_group_id'], destSchema: group, destField: ['id'] }),
+    group_membership: one({
+      sourceField: ['group_membership_id'],
+      destSchema: groupMembership,
       destField: ['id'],
     }),
   })
@@ -831,6 +991,21 @@ export const eventRelationships = relationships(event, ({ one, many }) => ({
     destSchema: groupDelegateAllocation,
     destField: ['event_id'],
   }),
+  assembly_scopes: many({
+    sourceField: ['id'],
+    destSchema: eventAssemblyScope,
+    destField: ['event_id'],
+  }),
+  delegate_election_assignments: many({
+    sourceField: ['id'],
+    destSchema: delegateElectionAssignment,
+    destField: ['target_event_id'],
+  }),
+  linked_delegate_election_assignments: many({
+    sourceField: ['id'],
+    destSchema: delegateElectionAssignment,
+    destField: ['linked_event_id'],
+  }),
   links: many({ sourceField: ['id'], destSchema: link, destField: ['event_id'] }),
   event_participants: many({
     sourceField: ['id'],
@@ -905,9 +1080,35 @@ export const eventDelegateRelationships = relationships(eventDelegate, ({ one })
 
 export const groupDelegateAllocationRelationships = relationships(
   groupDelegateAllocation,
-  ({ one }) => ({
+  ({ one, many }) => ({
     event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
     group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+    delegate_election_assignments: many({
+      sourceField: ['id'],
+      destSchema: delegateElectionAssignment,
+      destField: ['allocation_id'],
+    }),
+  })
+);
+
+export const eventAssemblyScopeRelationships = relationships(eventAssemblyScope, ({ one }) => ({
+  event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
+  host_group: one({ sourceField: ['host_group_id'], destSchema: group, destField: ['id'] }),
+  source_group: one({ sourceField: ['source_group_id'], destSchema: group, destField: ['id'] }),
+  required_role: one({ sourceField: ['required_role_id'], destSchema: role, destField: ['id'] }),
+}));
+
+export const delegateElectionAssignmentRelationships = relationships(
+  delegateElectionAssignment,
+  ({ one }) => ({
+    target_event: one({ sourceField: ['target_event_id'], destSchema: event, destField: ['id'] }),
+    source_group: one({ sourceField: ['source_group_id'], destSchema: group, destField: ['id'] }),
+    allocation: one({
+      sourceField: ['allocation_id'],
+      destSchema: groupDelegateAllocation,
+      destField: ['id'],
+    }),
+    linked_event: one({ sourceField: ['linked_event_id'], destSchema: event, destField: ['id'] }),
   })
 );
 
@@ -2189,6 +2390,7 @@ export const allRelationships = [
   // Groups
   groupRelationships,
   groupMembershipRelationships,
+  groupMembershipOriginRelationships,
   groupOfflineMemberRelationships,
   groupOfflineMembershipRelationships,
   groupMembershipRoleRelationships,
@@ -2199,6 +2401,10 @@ export const allRelationships = [
   groupRightGrantRelationships,
   groupMembershipRuleRelationships,
   groupMembershipRuleOriginRelationships,
+  groupHierarchyPathRelationships,
+  groupEffectiveRightRelationships,
+  groupMembershipExclusivityLockRelationships,
+  groupSiblingSourceLockRelationships,
   groupConnectionRequestRelationships,
   groupRightGrantRequestRelationships,
   groupMembershipRuleRequestRelationships,
@@ -2213,6 +2419,8 @@ export const allRelationships = [
   eventParticipantRoleRelationships,
   eventDelegateRelationships,
   groupDelegateAllocationRelationships,
+  eventAssemblyScopeRelationships,
+  delegateElectionAssignmentRelationships,
   participantRelationships,
   // Amendments
   amendmentRelationships,

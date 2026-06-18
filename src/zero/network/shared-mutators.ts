@@ -69,6 +69,44 @@ async function assertCanManageConnection(
   }
 }
 
+function assertGroupBelongsToConnection(
+  connection: {
+    group_a_id?: string | null;
+    group_b_id?: string | null;
+    parent_group_id?: string | null;
+    child_group_id?: string | null;
+  },
+  groupId: string
+) {
+  const groupIds = new Set(
+    [
+      connection.group_a_id,
+      connection.group_b_id,
+      connection.parent_group_id,
+      connection.child_group_id,
+    ].filter(Boolean)
+  );
+
+  if (!groupIds.has(groupId)) {
+    throw new Error('Acting group is not part of this connection');
+  }
+}
+
+async function assertCanDeleteConnectionFromActingGroup(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  connection: {
+    group_a_id?: string | null;
+    group_b_id?: string | null;
+    parent_group_id?: string | null;
+    child_group_id?: string | null;
+  },
+  actingGroupId: string
+) {
+  assertGroupBelongsToConnection(connection, actingGroupId);
+  await assertCanManageGroupRelationship(tx, ctx, actingGroupId);
+}
+
 export const networkSharedMutators = {
   createGroupConnection: defineMutator(createGroupConnectionSchema, async ({ tx, ctx, args }) => {
     await assertCanManageConnection(tx, ctx, args);
@@ -128,7 +166,12 @@ export const networkSharedMutators = {
     if (tx.location !== 'client') {
       const existingConnection = await tx.run(zql.group_connection.where('id', args.id).one());
       if (existingConnection) {
-        await assertCanManageConnection(tx, ctx, existingConnection);
+        await assertCanDeleteConnectionFromActingGroup(
+          tx,
+          ctx,
+          existingConnection,
+          args.acting_group_id
+        );
       }
     }
     await deleteGroupConnectionAndRequests(tx, args.id);

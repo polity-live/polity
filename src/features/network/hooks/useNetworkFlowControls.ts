@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { RIGHT_TYPES } from '@/features/shared/ui/status';
+import { NETWORK_FLOW_FILTER_TYPES } from '@/features/shared/ui/status';
 import type { NetworkDialogEntity } from '@/features/network/ui/NetworkEntityDialog';
 import type { NetworkRelationshipKind } from '@/features/network/logic/networkRelationshipHelpers';
 import type {
@@ -12,7 +12,9 @@ export function useNetworkFlowControls() {
   const [relationshipDepthFilter, setRelationshipDepthFilter] = useState<NetworkDepthFilter>('all');
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   const [isInteractive, setIsInteractive] = useState(true);
-  const [selectedRights, setSelectedRights] = useState<Set<string>>(new Set(RIGHT_TYPES));
+  const [selectedRights, setSelectedRights] = useState<Set<string>>(
+    new Set(NETWORK_FLOW_FILTER_TYPES)
+  );
   const [relationshipStatusFilter, setRelationshipStatusFilter] =
     useState<NetworkRelationshipKind>('active');
   const [connectionDirectionFilter, setConnectionDirectionFilter] =

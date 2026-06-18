@@ -18,8 +18,13 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       selectedOsmWay={controller.selectedOsmWay}
       selectedObjectCostLine={controller.selectedObjectCostLine}
       selectedObjectId={controller.state.selectedObjectId}
+      selectedObjectFocusRequestKey={controller.state.selectedObjectFocusRequestKey}
+      selectedOsmFocusRequestKey={controller.state.selectedOsmFocusRequestKey}
+      hiddenObjectIds={controller.state.hiddenObjectIds}
+      hiddenObjectCategories={controller.state.hiddenObjectCategories}
       selectedTool={controller.state.selectedTool}
       interactionMode={controller.interactionMode}
+      placementSettings={controller.placementSettings}
       selectedCenter={controller.selectedCenter}
       selectedBbox={controller.selectedBbox}
       selectedMapSelection={controller.selectedMapSelection}
@@ -51,13 +56,21 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       onCancelPlacement={controller.cancelPlacement}
       onObjectSelect={controller.selectObject}
       onOsmWaySelect={controller.selectOsmWay}
+      onObjectVisibilityChange={controller.setObjectVisibility}
+      onObjectCategoryVisibilityChange={controller.setObjectCategoryVisibility}
       onOsmWayHide={controller.hideOsmWay}
       onOsmLayerVisibilityChange={controller.setOsmLayerVisibility}
       onShowStreetMarkingsChange={controller.setShowStreetMarkings}
+      onPlacementPropertyChange={controller.updatePlacementProperty}
+      onPlacementWidthChange={controller.updatePlacementWidth}
+      onPlacementRotationChange={controller.updatePlacementRotation}
+      onPlacementUnitCostChange={controller.updatePlacementUnitCost}
       onPropertyChange={controller.updateObjectProperty}
       onWidthChange={controller.updateObjectWidth}
+      onRotationChange={controller.rotateObject}
       onUnitCostChange={controller.updateObjectUnitCost}
       onDeleteObject={controller.deleteObject}
+      onDeleteObjectCategory={controller.deleteObjectCategory}
     />
   );
 }

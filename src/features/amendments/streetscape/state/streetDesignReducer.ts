@@ -3,11 +3,13 @@ import type {
   StreetDesignInteractionMode,
   StreetDesignLocalPoint,
   StreetDesignObject,
+  StreetDesignObjectCategory,
   StreetDesignObjectType,
   StreetDesignOsmLayerVisibility,
   StreetDesignOrigin,
   StreetDesignOsmSnapshot,
   StreetDesignPlacementDraft,
+  StreetDesignPlacementSettings,
   StreetDesignPropertyValue,
   StreetDesignStateV1,
 } from '../types';
@@ -20,6 +22,7 @@ import {
   createPointStreetDesignObject,
   distanceBetweenPoints,
   isPathCorridorObjectType,
+  rotateStreetDesignObject,
   updateCorridorWidth,
 } from '../logic/streetDesignPlacement';
 import {
@@ -34,7 +37,12 @@ export interface StreetDesignEditorState {
   interactionMode: StreetDesignInteractionMode;
   selectedObjectId: string | null;
   selectedOsmWayId: string | null;
+  selectedObjectFocusRequestKey: number;
+  selectedOsmFocusRequestKey: number;
+  hiddenObjectIds: string[];
+  hiddenObjectCategories: StreetDesignObjectCategory[];
   placementDraft: StreetDesignPlacementDraft | null;
+  placementSettings: StreetDesignPlacementSettings;
   isDirty: boolean;
 }
 
@@ -50,6 +58,10 @@ export type StreetDesignEditorAction =
       visible: boolean;
     }
   | { type: 'set_show_street_markings'; visible: boolean }
+  | { type: 'set_placement_property'; key: string; value: StreetDesignPropertyValue }
+  | { type: 'set_placement_width'; width: number }
+  | { type: 'set_placement_rotation'; rotationDeg: number }
+  | { type: 'set_placement_unit_cost'; unitCostMinor: number | null }
   | { type: 'scene_pointer_down'; point: StreetDesignLocalPoint; id: string }
   | { type: 'scene_pointer_move'; point: StreetDesignLocalPoint }
   | { type: 'finish_placement'; id: string }
@@ -57,6 +69,12 @@ export type StreetDesignEditorAction =
   | { type: 'cancel_placement' }
   | { type: 'select_object'; objectId: string | null }
   | { type: 'select_osm_way'; osmWayId: string | null }
+  | { type: 'set_object_visibility'; objectId: string; visible: boolean }
+  | {
+      type: 'set_object_category_visibility';
+      category: StreetDesignObjectCategory;
+      visible: boolean;
+    }
   | { type: 'hide_osm_way'; osmWayId: string }
   | {
       type: 'update_object_property';
@@ -65,8 +83,10 @@ export type StreetDesignEditorAction =
       value: StreetDesignPropertyValue;
     }
   | { type: 'update_object_width'; objectId: string; width: number }
+  | { type: 'rotate_object'; objectId: string; rotationDeg: number }
   | { type: 'update_object_unit_cost'; objectId: string; unitCostMinor: number | null }
-  | { type: 'delete_object'; objectId: string };
+  | { type: 'delete_object'; objectId: string }
+  | { type: 'delete_object_category'; category: StreetDesignObjectCategory };
 
 export function createEmptyStreetDesignState(origin?: StreetDesignOrigin): StreetDesignStateV1 {
   return {
@@ -98,10 +118,15 @@ export function createInitialStreetDesignEditorState(
   return {
     design,
     selectedTool: 'tree',
-    interactionMode: 'place',
+    interactionMode: 'select',
     selectedObjectId: null,
     selectedOsmWayId: null,
+    selectedObjectFocusRequestKey: 0,
+    selectedOsmFocusRequestKey: 0,
+    hiddenObjectIds: [],
+    hiddenObjectCategories: [],
     placementDraft: null,
+    placementSettings: createPlacementSettings('tree'),
     isDirty: false,
   };
 }
@@ -114,9 +139,68 @@ function updateObject(
   return objects.map(object => (object.id === objectId ? updater(object) : object));
 }
 
+function getObjectCategory(object: StreetDesignObject) {
+  return getStreetDesignObjectDefinition(object.type).category;
+}
+
+function showObjectCategory(categories: StreetDesignObjectCategory[], object: StreetDesignObject) {
+  const category = getObjectCategory(object);
+  return categories.filter(item => item !== category);
+}
+
 function getCorridorDefaultWidth(objectType: StreetDesignObjectType) {
   const definition = getStreetDesignObjectDefinition(objectType);
   return definition.defaultWidth ?? 2;
+}
+
+function createPlacementSettings(
+  objectType: StreetDesignObjectType
+): StreetDesignPlacementSettings {
+  const definition = getStreetDesignObjectDefinition(objectType);
+
+  return {
+    type: objectType,
+    width: getCorridorDefaultWidth(objectType),
+    rotationDeg: 0,
+    rotationLocked: false,
+    properties: { ...definition.defaultProperties },
+    customUnitCostMinor: null,
+  };
+}
+
+function getPlacementOverrides(settings: StreetDesignPlacementSettings) {
+  return {
+    properties: settings.properties,
+    customUnitCostMinor: settings.customUnitCostMinor,
+    ...(settings.rotationLocked ? { rotationDeg: settings.rotationDeg } : {}),
+  };
+}
+
+function resetPlacementSettings(state: StreetDesignEditorState): StreetDesignPlacementSettings {
+  return createPlacementSettings(state.selectedTool);
+}
+
+function updatePlacementDraftWidth(
+  draft: StreetDesignPlacementDraft | null,
+  width: number
+): StreetDesignPlacementDraft | null {
+  if (!draft?.preview) return draft;
+
+  if (draft.preview.kind === 'path_corridor') {
+    return {
+      ...draft,
+      preview: createPathCorridorPreview(
+        draft.preview.points.slice(0, -1),
+        draft.preview.points[draft.preview.points.length - 1] ?? draft.start,
+        width
+      ),
+    };
+  }
+
+  return {
+    ...draft,
+    preview: createCorridorPreview(draft.preview.start, draft.preview.end, width),
+  };
 }
 
 function getStreetDesignObjectEndpoints(object: StreetDesignObject) {
@@ -170,7 +254,12 @@ function addFinishedPlacementObject(
     },
     selectedObjectId: object.id,
     selectedOsmWayId: null,
+    selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
+    hiddenObjectIds: state.hiddenObjectIds.filter(objectId => objectId !== object.id),
+    hiddenObjectCategories: showObjectCategory(state.hiddenObjectCategories, object),
     placementDraft: null,
+    placementSettings: resetPlacementSettings(state),
+    interactionMode: 'select',
     isDirty: true,
   };
 }
@@ -186,7 +275,8 @@ function finishPathPlacementDraft(
     id,
     type: state.placementDraft.type,
     points: state.placementDraft.points,
-    width: getCorridorDefaultWidth(state.placementDraft.type),
+    width: state.placementSettings.width,
+    overrides: getPlacementOverrides(state.placementSettings),
   });
 
   return addFinishedPlacementObject(state, object);
@@ -211,6 +301,7 @@ function finishCurrentPlacementDraft(
     start: preview.start,
     end: preview.end,
     width: preview.width,
+    overrides: getPlacementOverrides(state.placementSettings),
   });
 
   return addFinishedPlacementObject(state, object);
@@ -225,6 +316,7 @@ export function streetDesignReducer(
       return {
         ...createInitialStreetDesignEditorState(action.design),
         selectedTool: state.selectedTool,
+        placementSettings: createPlacementSettings(state.selectedTool),
         isDirty: action.dirty ?? false,
       };
 
@@ -238,6 +330,8 @@ export function streetDesignReducer(
           hiddenOsmWayIds: [],
         },
         selectedOsmWayId: null,
+        selectedObjectFocusRequestKey: 0,
+        selectedOsmFocusRequestKey: 0,
         isDirty: true,
       };
 
@@ -255,7 +349,11 @@ export function streetDesignReducer(
       return {
         ...state,
         interactionMode: action.interactionMode,
-        placementDraft: action.interactionMode === 'camera' ? null : state.placementDraft,
+        placementDraft: action.interactionMode === 'place' ? state.placementDraft : null,
+        placementSettings:
+          action.interactionMode === 'place'
+            ? state.placementSettings
+            : resetPlacementSettings(state),
       };
 
     case 'set_osm_layer_visibility':
@@ -292,22 +390,64 @@ export function streetDesignReducer(
         selectedObjectId: null,
         selectedOsmWayId: null,
         placementDraft: null,
+        placementSettings: createPlacementSettings(action.objectType),
+      };
+
+    case 'set_placement_property':
+      return {
+        ...state,
+        placementSettings: {
+          ...state.placementSettings,
+          properties: {
+            ...state.placementSettings.properties,
+            [action.key]: action.value,
+          },
+        },
+      };
+
+    case 'set_placement_width':
+      return {
+        ...state,
+        placementSettings: {
+          ...state.placementSettings,
+          width: action.width,
+        },
+        placementDraft: updatePlacementDraftWidth(state.placementDraft, action.width),
+      };
+
+    case 'set_placement_rotation':
+      return {
+        ...state,
+        placementSettings: {
+          ...state.placementSettings,
+          rotationDeg: action.rotationDeg,
+          rotationLocked: true,
+        },
+      };
+
+    case 'set_placement_unit_cost':
+      return {
+        ...state,
+        placementSettings: {
+          ...state.placementSettings,
+          customUnitCostMinor: action.unitCostMinor,
+        },
       };
 
     case 'scene_pointer_down': {
-      if (state.interactionMode === 'camera') {
+      if (state.interactionMode !== 'place') {
         return state;
       }
 
-      const definition = getStreetDesignObjectDefinition(state.selectedTool);
+      const definition = getStreetDesignObjectDefinition(state.placementSettings.type);
       const nextComparisonMode =
         state.design.comparisonMode === 'original' ? 'overlay' : state.design.comparisonMode;
-      const isPathTool = isPathCorridorObjectType(state.selectedTool);
+      const isPathTool = isPathCorridorObjectType(state.placementSettings.type);
       const placementPoint = isPathTool
         ? snapPointToSameTypeEndpoint({
             point: action.point,
             objects: state.design.objects,
-            type: state.selectedTool,
+            type: state.placementSettings.type,
           })
         : action.point;
 
@@ -322,7 +462,7 @@ export function streetDesignReducer(
             selectedObjectId: null,
             selectedOsmWayId: null,
             placementDraft: {
-              type: state.selectedTool,
+              type: state.placementSettings.type,
               mode: 'path',
               start: placementPoint,
               points: [placementPoint],
@@ -356,7 +496,7 @@ export function streetDesignReducer(
                 ? createPathCorridorPreview(
                     points.slice(0, -1),
                     finalPoint,
-                    getCorridorDefaultWidth(state.placementDraft.type)
+                    state.placementSettings.width
                   )
                 : null,
           },
@@ -366,8 +506,12 @@ export function streetDesignReducer(
       if (definition.geometryKind === 'point') {
         const object = createPointStreetDesignObject({
           id: action.id,
-          type: state.selectedTool,
+          type: state.placementSettings.type,
           point: placementPoint,
+          overrides: {
+            ...getPlacementOverrides(state.placementSettings),
+            rotationDeg: state.placementSettings.rotationDeg,
+          },
         });
 
         return {
@@ -379,7 +523,12 @@ export function streetDesignReducer(
           },
           selectedObjectId: object.id,
           selectedOsmWayId: null,
+          selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
+          hiddenObjectIds: state.hiddenObjectIds.filter(objectId => objectId !== object.id),
+          hiddenObjectCategories: showObjectCategory(state.hiddenObjectCategories, object),
           placementDraft: null,
+          placementSettings: resetPlacementSettings(state),
+          interactionMode: 'select',
           isDirty: true,
         };
       }
@@ -395,7 +544,7 @@ export function streetDesignReducer(
             selectedObjectId: null,
             selectedOsmWayId: null,
             placementDraft: {
-              type: state.selectedTool,
+              type: state.placementSettings.type,
               mode: 'drag_band',
               start: placementPoint,
               points: [placementPoint],
@@ -409,7 +558,8 @@ export function streetDesignReducer(
           type: state.placementDraft.type,
           start: state.placementDraft.start,
           end: placementPoint,
-          width: getCorridorDefaultWidth(state.placementDraft.type),
+          width: state.placementSettings.width,
+          overrides: getPlacementOverrides(state.placementSettings),
         });
 
         return {
@@ -421,7 +571,12 @@ export function streetDesignReducer(
           },
           selectedObjectId: object.id,
           selectedOsmWayId: null,
+          selectedObjectFocusRequestKey: state.selectedObjectFocusRequestKey + 1,
+          hiddenObjectIds: state.hiddenObjectIds.filter(objectId => objectId !== object.id),
+          hiddenObjectCategories: showObjectCategory(state.hiddenObjectCategories, object),
           placementDraft: null,
+          placementSettings: resetPlacementSettings(state),
+          interactionMode: 'select',
           isDirty: true,
         };
       }
@@ -430,7 +585,7 @@ export function streetDesignReducer(
     }
 
     case 'scene_pointer_move':
-      if (state.interactionMode === 'camera') return state;
+      if (state.interactionMode !== 'place') return state;
       if (!state.placementDraft) return state;
 
       if (state.placementDraft.mode === 'path') {
@@ -447,7 +602,7 @@ export function streetDesignReducer(
             preview: createPathCorridorPreview(
               state.placementDraft.points,
               point,
-              getCorridorDefaultWidth(state.placementDraft.type)
+              state.placementSettings.width
             ),
           },
         };
@@ -460,7 +615,7 @@ export function streetDesignReducer(
           preview: createCorridorPreview(
             state.placementDraft.start,
             action.point,
-            getCorridorDefaultWidth(state.placementDraft.type)
+            state.placementSettings.width
           ),
         },
       };
@@ -476,6 +631,8 @@ export function streetDesignReducer(
       return {
         ...state,
         placementDraft: null,
+        placementSettings: resetPlacementSettings(state),
+        interactionMode: 'select',
       };
 
     case 'select_object':
@@ -483,16 +640,55 @@ export function streetDesignReducer(
         ...state,
         selectedObjectId: action.objectId,
         selectedOsmWayId: null,
+        selectedObjectFocusRequestKey: action.objectId
+          ? state.selectedObjectFocusRequestKey + 1
+          : state.selectedObjectFocusRequestKey,
         placementDraft: null,
+        placementSettings: resetPlacementSettings(state),
+        interactionMode: 'select',
       };
 
     case 'select_osm_way':
       return {
         ...state,
-        selectedObjectId: null,
+        selectedObjectId: action.osmWayId ? null : state.selectedObjectId,
         selectedOsmWayId: action.osmWayId,
+        selectedOsmFocusRequestKey: action.osmWayId
+          ? state.selectedOsmFocusRequestKey + 1
+          : state.selectedOsmFocusRequestKey,
         placementDraft: null,
+        placementSettings: resetPlacementSettings(state),
+        interactionMode: 'select',
       };
+
+    case 'set_object_visibility':
+      return {
+        ...state,
+        hiddenObjectIds: action.visible
+          ? state.hiddenObjectIds.filter(objectId => objectId !== action.objectId)
+          : Array.from(new Set([...state.hiddenObjectIds, action.objectId])),
+        selectedObjectId:
+          action.visible || state.selectedObjectId !== action.objectId
+            ? state.selectedObjectId
+            : null,
+      };
+
+    case 'set_object_category_visibility': {
+      const selectedObject = state.design.objects.find(
+        object => object.id === state.selectedObjectId
+      );
+
+      return {
+        ...state,
+        hiddenObjectCategories: action.visible
+          ? state.hiddenObjectCategories.filter(category => category !== action.category)
+          : Array.from(new Set([...state.hiddenObjectCategories, action.category])),
+        selectedObjectId:
+          action.visible || !selectedObject || getObjectCategory(selectedObject) !== action.category
+            ? state.selectedObjectId
+            : null,
+      };
+    }
 
     case 'hide_osm_way':
       return {
@@ -536,6 +732,18 @@ export function streetDesignReducer(
         isDirty: true,
       };
 
+    case 'rotate_object':
+      return {
+        ...state,
+        design: {
+          ...state.design,
+          objects: updateObject(state.design.objects, action.objectId, object =>
+            rotateStreetDesignObject(object, action.rotationDeg)
+          ),
+        },
+        isDirty: true,
+      };
+
     case 'update_object_unit_cost':
       return {
         ...state,
@@ -555,10 +763,36 @@ export function streetDesignReducer(
           ...state.design,
           objects: state.design.objects.filter(object => object.id !== action.objectId),
         },
+        hiddenObjectIds: state.hiddenObjectIds.filter(objectId => objectId !== action.objectId),
         selectedObjectId:
           state.selectedObjectId === action.objectId ? null : state.selectedObjectId,
         isDirty: true,
       };
+
+    case 'delete_object_category': {
+      const deletedObjectIds = new Set(
+        state.design.objects
+          .filter(object => getObjectCategory(object) === action.category)
+          .map(object => object.id)
+      );
+
+      return {
+        ...state,
+        design: {
+          ...state.design,
+          objects: state.design.objects.filter(object => !deletedObjectIds.has(object.id)),
+        },
+        hiddenObjectIds: state.hiddenObjectIds.filter(objectId => !deletedObjectIds.has(objectId)),
+        hiddenObjectCategories: state.hiddenObjectCategories.filter(
+          category => category !== action.category
+        ),
+        selectedObjectId:
+          state.selectedObjectId && deletedObjectIds.has(state.selectedObjectId)
+            ? null
+            : state.selectedObjectId,
+        isDirty: deletedObjectIds.size > 0 ? true : state.isDirty,
+      };
+    }
 
     default:
       return state;

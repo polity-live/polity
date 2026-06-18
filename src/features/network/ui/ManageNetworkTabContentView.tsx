@@ -1,5 +1,6 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import { useState } from 'react';
+import { RoleTag } from '@/features/groups/ui/RoleTag';
 import {
   Card,
   CardContent,
@@ -11,15 +12,19 @@ import { Button } from '@/features/shared/ui/ui/button';
 import {
   ActionSubmissionOverlay,
   useActionSubmission,
+  type ActionSubmissionContext,
+  type ActionSubmissionStep,
 } from '@/features/shared/ui/action-submission';
 import { EntitySearchBar, type FilterOption } from '@/features/shared/ui/typeahead';
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
 import { DangerConfirmDialog } from '@/features/shared/ui/dialog';
 import {
+  MEMBERSHIP_FLOW_RIGHT,
+  NETWORK_FLOW_FILTER_TYPES,
   RIGHT_GRADIENTS,
-  RIGHT_TYPES,
   RightBadge,
   StatusBadge,
+  getRightLabel,
   isRightType,
 } from '@/features/shared/ui/status';
 import {
@@ -71,7 +76,10 @@ export interface ManageNetworkTabProps {
   filteredRelationships: GroupedRelationshipSummary[];
   allRelationships: NormalizedGroupRelationship[];
   // Handlers
-  onAcceptRequest: (rels: NormalizedGroupRelationship[]) => Promise<void>;
+  onAcceptRequest: (
+    rels: NormalizedGroupRelationship[],
+    submissionContext?: ActionSubmissionContext
+  ) => Promise<void>;
   onRejectRequest: (rels: NormalizedGroupRelationship[]) => Promise<void>;
   onDeleteRelationship: (targetGroupId: string) => void;
 }
@@ -89,6 +97,12 @@ export interface ManageNetworkTabContentViewProps extends ManageNetworkTabProps 
   manageDialogPartnerUsers: any[];
   manageDialogCanAccept: boolean;
 }
+
+const GROUP_LINK_APPROVAL_STEPS: ActionSubmissionStep[] = [
+  { key: 'prepare', label: 'Verbindung prüfen', status: 'pending' },
+  { key: 'commit', label: 'Link aktivieren', status: 'pending' },
+  { key: 'sync', label: 'Netzwerkfolgen synchronisieren', status: 'pending' },
+];
 
 export function ManageNetworkTabContentView({
   canManageRelationships,
@@ -118,7 +132,7 @@ export function ManageNetworkTabContentView({
   manageDialogCanAccept,
 }: ManageNetworkTabContentViewProps) {
   const { t } = useTranslation();
-  const linkSubmission = useActionSubmission('link');
+  const linkSubmission = useActionSubmission('link', GROUP_LINK_APPROVAL_STEPS);
   const [linkPreview, setLinkPreview] = useState<{
     title: string;
     path: string[];
@@ -183,15 +197,34 @@ export function ManageNetworkTabContentView({
     return currentSiblingMembershipMode ?? partnerSiblingMembershipMode ?? null;
   };
 
-  const renderMembershipBadge = (membershipMode?: CanonicalMembershipMode | null) => {
+  const renderMembershipBadge = (
+    membershipMode?: CanonicalMembershipMode | null,
+    requiredSourceRoleId?: string | null,
+    requiredSourceRoleName?: string | null,
+    showRoleTag = false
+  ) => {
     if (!membershipMode) {
       return null;
     }
 
+    const roleName =
+      requiredSourceRoleName ?? t('common.network.selectedRole', 'ausgewählte Rolle');
+
     return (
-      <StatusBadge status={membershipMode} tone="outline" className="text-xs">
-        {getCanonicalMembershipModeLabel(membershipMode)}
-      </StatusBadge>
+      <div className="flex flex-wrap items-center gap-1">
+        <StatusBadge status={membershipMode} tone="outline" className="text-xs">
+          {getCanonicalMembershipModeLabel(membershipMode)}
+        </StatusBadge>
+        {showRoleTag && membershipMode === 'role_members' ? (
+          <RoleTag
+            roleId={requiredSourceRoleId}
+            roleName={requiredSourceRoleName ?? null}
+            fallbackKey="active-relationship-membership-role"
+          >
+            {roleName}
+          </RoleTag>
+        ) : null}
+      </div>
     );
   };
 
@@ -221,11 +254,13 @@ export function ManageNetworkTabContentView({
     </div>
   );
 
-  const filterOptions: FilterOption[] = RIGHT_TYPES.map(right => ({
+  const filterOptions: FilterOption[] = NETWORK_FLOW_FILTER_TYPES.map(right => ({
     label:
-      t(
-        `common.rights.${right === 'informationRight' ? 'information' : right === 'amendmentRight' ? 'amendment' : right === 'rightToSpeak' ? 'speak' : right === 'activeVotingRight' ? 'activeVoting' : 'passiveVoting'}`
-      ) || right,
+      right === MEMBERSHIP_FLOW_RIGHT
+        ? getRightLabel(right, (key, fallback) => t(key) || fallback || key)
+        : t(
+            `common.rights.${right === 'informationRight' ? 'information' : right === 'amendmentRight' ? 'amendment' : right === 'rightToSpeak' ? 'speak' : right === 'activeVotingRight' ? 'activeVoting' : 'passiveVoting'}`
+          ) || right,
     value: right,
     active: manageRightFilter.has(right),
     gradient: RIGHT_GRADIENTS[right as keyof typeof RIGHT_GRADIENTS],
@@ -302,7 +337,9 @@ export function ManageNetworkTabContentView({
   }
 
   const getRequestRows = (request: GroupedRelationshipRequest): RequestTableRow[] => {
-    if (request.rightRels.length === 0 && request.structureRel) {
+    const actionableRels = [...request.membershipRels, ...request.rightRels];
+
+    if (actionableRels.length === 0 && request.structureRel) {
       return [
         {
           id: request.structureRel.id,
@@ -314,7 +351,7 @@ export function ManageNetworkTabContentView({
       ];
     }
 
-    return request.rightRels.map(rel => ({
+    return actionableRels.map(rel => ({
       id: rel.id,
       request,
       rel,
@@ -323,9 +360,92 @@ export function ManageNetworkTabContentView({
     }));
   };
 
+  const getRequestEndpoint = (rel: NormalizedGroupRelationship, endpointGroupId: string | null) => {
+    if (!endpointGroupId) {
+      return { id: null, name: t('common.unspecified') };
+    }
+    if (rel.group_id === endpointGroupId) {
+      return { id: endpointGroupId, name: rel.group?.name ?? endpointGroupId };
+    }
+    if (rel.related_group_id === endpointGroupId) {
+      return { id: endpointGroupId, name: rel.related_group?.name ?? endpointGroupId };
+    }
+    return { id: endpointGroupId, name: endpointGroupId };
+  };
+
+  const renderMembershipGroupTag = (endpoint: { id: string | null; name: string }) => {
+    return (
+      <GroupRelationshipNameTag
+        name={endpoint.name}
+        kind={endpoint.id === groupId ? 'current' : 'selected'}
+        caseStyle="embedded"
+        groupId={endpoint.id ?? undefined}
+        displayMode="name-only"
+      />
+    );
+  };
+
+  const renderMembershipRequestRelationshipCell = (rel: NormalizedGroupRelationship) => {
+    const sourceGroup = getRequestEndpoint(rel, rel.member_source_group_id);
+    const targetGroup = getRequestEndpoint(rel, rel.member_target_group_id);
+    const roleName =
+      rel.required_source_role?.name ?? t('common.network.selectedRole', 'ausgewählte Rolle');
+
+    if (rel.membership_mode === 'role_members') {
+      return (
+        <div className="flex flex-wrap items-center gap-1.5 leading-tight">
+          <span>{t('common.network.membersOf', 'Mitglieder von')}</span>
+          {renderMembershipGroupTag(sourceGroup)}
+          <span>{t('common.network.withRole', 'mit Rolle')}</span>
+          <RoleTag
+            roleId={rel.required_source_role_id}
+            roleName={rel.required_source_role?.name ?? null}
+            fallbackKey={`membership-request-role-${rel.id}`}
+          >
+            {roleName}
+          </RoleTag>
+          <span>{t('common.network.areAddedTo', 'werden')}</span>
+          {renderMembershipGroupTag(targetGroup)}
+          <span>{t('common.network.added', 'hinzugefügt')}</span>
+        </div>
+      );
+    }
+
+    if (rel.membership_mode === 'selected_source_groups') {
+      return (
+        <div className="flex flex-wrap items-center gap-1.5 leading-tight">
+          <span>
+            {t(
+              'common.network.membersFromSelectedSourcesOf',
+              'Mitglieder aus ausgewählten Quellen von'
+            )}
+          </span>
+          {renderMembershipGroupTag(sourceGroup)}
+          <span>{t('common.network.areAddedTo', 'werden')}</span>
+          {renderMembershipGroupTag(targetGroup)}
+          <span>{t('common.network.added', 'hinzugefügt')}</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-wrap items-center gap-1.5 leading-tight">
+        <span>{t('common.network.allMembersOf', 'Alle Mitglieder von')}</span>
+        {renderMembershipGroupTag(sourceGroup)}
+        <span>{t('common.network.areAddedTo', 'werden')}</span>
+        {renderMembershipGroupTag(targetGroup)}
+        <span>{t('common.network.added', 'hinzugefügt')}</span>
+      </div>
+    );
+  };
+
   const renderRequestRelationshipCell = (row: RequestTableRow) => {
     if (row.isStructure) {
       return renderRequestFallbackRelationshipCell();
+    }
+
+    if (row.rel.request_item_kind === 'membership') {
+      return renderMembershipRequestRelationshipCell(row.rel);
     }
 
     const display = getCurrentGroupRelationshipDisplay(row.rel, groupId);
@@ -350,6 +470,8 @@ export function ManageNetworkTabContentView({
       <StatusBadge status="structure-membership" tone="outline">
         {t('common.network.structureMembership')}
       </StatusBadge>
+    ) : row.rel.request_item_kind === 'membership' ? (
+      <RightBadge right={MEMBERSHIP_FLOW_RIGHT} />
     ) : (
       <RightBadge right={row.rel.with_right ?? ''} />
     );
@@ -386,16 +508,33 @@ export function ManageNetworkTabContentView({
     setLinkPreview({
       title: otherGroupName,
       path: [groupName || groupId, otherGroupName],
-      badges: rels.map(rel => rel.with_right).filter((right): right is string => Boolean(right)),
+      badges: rels
+        .map(rel =>
+          rel.request_item_kind === 'membership' ? MEMBERSHIP_FLOW_RIGHT : rel.with_right
+        )
+        .filter((right): right is string => Boolean(right)),
     });
 
-    return linkSubmission.runActionWithSubmission(async () => onAcceptRequest(rels), {
+    return linkSubmission.runActionWithSubmission(async context => onAcceptRequest(rels, context), {
       onSuccess: () => {
         linkSubmission.reset();
         setManageDialog(null);
       },
     });
   };
+
+  const linkSubmissionErrorMessage =
+    linkSubmission.error instanceof Error
+      ? linkSubmission.error.message
+      : typeof linkSubmission.error === 'string'
+        ? linkSubmission.error
+        : '';
+  const linkSubmissionPreviewDescription =
+    linkSubmission.status === 'error' &&
+    (linkSubmissionErrorMessage.toLowerCase().includes('hierarchy member conflict') ||
+      linkSubmissionErrorMessage.includes('hierarchy_member_overlap'))
+      ? t('common.network.linkAcceptBlocked')
+      : undefined;
 
   const renderIncomingRequestActions = (row: RequestTableRow) => {
     const otherGroupName = row.request.group.name ?? t('common.unspecified');
@@ -557,7 +696,12 @@ export function ManageNetworkTabContentView({
               row.original.membershipMode
             )}
           />
-          {renderMembershipBadge(row.original.membershipMode)}
+          {renderMembershipBadge(
+            row.original.membershipMode,
+            row.original.requiredSourceRoleId,
+            row.original.requiredSourceRoleName,
+            true
+          )}
         </div>
       ),
     },
@@ -712,7 +856,7 @@ export function ManageNetworkTabContentView({
                       req.group,
                       req.type,
                       req.membershipMode,
-                      req.rightRels.length > 0
+                      req.rels.length > 0
                     )}
                   </CardDescription>
                 </CardHeader>
@@ -746,7 +890,7 @@ export function ManageNetworkTabContentView({
                       req.group,
                       req.type,
                       req.membershipMode,
-                      req.rightRels.length > 0
+                      req.rels.length > 0
                     )}
                   </CardDescription>
                 </CardHeader>
@@ -813,7 +957,7 @@ export function ManageNetworkTabContentView({
         preview={{
           entityLabel: t('common.network.relationship'),
           title: linkPreview?.title ?? t('common.network.groupNetwork'),
-          description: t('common.network.linkAcceptBlocked'),
+          description: linkSubmissionPreviewDescription,
           path: linkPreview?.path,
           badges: linkPreview?.badges,
         }}

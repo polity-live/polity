@@ -11,6 +11,8 @@ import type {
 } from '../types/network.types';
 
 export type DerivedGroupNetworkMeta = ReturnType<typeof getDefaultDerivedGroupNetworkMeta>;
+type NormalizableGroupConnection = Omit<GroupConnectionListRow, 'from_group' | 'to_group'> &
+  Partial<Pick<GroupConnectionListRow, 'from_group' | 'to_group'>>;
 
 function isActiveConnectionStatus(status: string | null | undefined) {
   return status === 'active';
@@ -29,7 +31,7 @@ function getRelationshipTypeForGroup(
   return connection.parent_group_id === groupId ? 'parent' : 'child';
 }
 
-function getMembershipFields(connection: GroupConnectionListRow) {
+function getMembershipFields(connection: NormalizableGroupConnection) {
   const rule = connection.membership_rule;
   const mode =
     rule?.membership_mode === 'all_members' ||
@@ -42,6 +44,7 @@ function getMembershipFields(connection: GroupConnectionListRow) {
     member_target_group_id: rule?.member_target_group_id ?? null,
     membership_mode: mode as CanonicalMembershipMode,
     required_source_role_id: rule?.required_source_role_id ?? null,
+    required_source_role: rule?.required_source_role ?? null,
     eligible_origin_group_ids:
       rule?.origins
         ?.map(origin => origin.eligible_origin_group_id)
@@ -49,7 +52,7 @@ function getMembershipFields(connection: GroupConnectionListRow) {
   };
 }
 
-function groupForId(connection: GroupConnectionListRow, groupId: string) {
+function groupForId(connection: NormalizableGroupConnection, groupId: string) {
   if (connection.group_a_id === groupId) {
     return connection.group_a ?? null;
   }
@@ -59,7 +62,7 @@ function groupForId(connection: GroupConnectionListRow, groupId: string) {
   return null;
 }
 
-function structuralEndpoints(connection: GroupConnectionListRow) {
+function structuralEndpoints(connection: NormalizableGroupConnection) {
   if (
     connection.connection_type === 'hierarchy' &&
     connection.parent_group_id &&
@@ -94,13 +97,13 @@ export function getCanonicalMembershipModeLabel(
 ) {
   switch (membershipMode) {
     case 'all_members':
-      return 'All members';
+      return 'All active members';
     case 'role_members':
-      return 'Role members';
+      return 'Members with selected role';
     case 'selected_source_groups':
-      return 'Selected source groups';
+      return 'Legacy source-group membership';
     default:
-      return 'None';
+      return 'No automatic membership';
   }
 }
 
@@ -117,27 +120,28 @@ export function getCanonicalRelationshipTypeForGroup(
   return getRelationshipTypeForGroup(connection as GroupConnectionListRow, currentGroupId);
 }
 
-export function getRelativeRightDirectionForGroup(args: {
+export function getRightDirectionFromGrantEndpoints(args: {
   currentGroupId: string;
   grant: { holder_group_id: string; scope_group_id: string };
 }): Exclude<GroupRelationshipDirection, 'none' | 'mutual'> | null {
-  if (args.grant.holder_group_id === args.currentGroupId) {
-    return 'current_has_right_in_partner';
-  }
   if (args.grant.scope_group_id === args.currentGroupId) {
-    return 'partner_has_right_in_current';
+    return 'current_grants_right_to_partner';
+  }
+  if (args.grant.holder_group_id === args.currentGroupId) {
+    return 'partner_grants_right_to_current';
   }
   return null;
 }
 
 export function deriveNormalizedGroupConnectionRelationships(
-  connection: GroupConnectionListRow
+  connection: NormalizableGroupConnection
 ): NormalizedGroupRelationship[] {
   const membership = getMembershipFields(connection);
   const structure = structuralEndpoints(connection);
   const base = {
     connection_id: connection.id,
     connection_request_id: null,
+    membership_request_id: null,
     connection_type:
       connection.connection_type === 'peer' ? ('peer' as const) : ('hierarchy' as const),
     parent_group_id: connection.parent_group_id ?? null,
@@ -149,6 +153,7 @@ export function deriveNormalizedGroupConnectionRelationships(
       ...base,
       id: `${connection.id}:structure`,
       grant_id: null,
+      request_item_kind: 'structure',
       group_id: structure.groupId,
       related_group_id: structure.relatedGroupId,
       relationship_type: getRelationshipTypeForGroup(connection, structure.groupId),
@@ -166,6 +171,7 @@ export function deriveNormalizedGroupConnectionRelationships(
       ...base,
       id: grant.id,
       grant_id: grant.id,
+      request_item_kind: 'right',
       group_id: grant.holder_group_id,
       related_group_id: grant.scope_group_id,
       relationship_type: getRelationshipTypeForGroup(connection, grant.holder_group_id),
@@ -180,12 +186,20 @@ export function deriveNormalizedGroupConnectionRelationships(
   return rows;
 }
 
-export function deriveNormalizedGroupRelationships(connections: readonly GroupConnectionListRow[]) {
+export function deriveNormalizedGroupRelationships(
+  connections: readonly NormalizableGroupConnection[]
+) {
   return connections.flatMap(deriveNormalizedGroupConnectionRelationships);
 }
 
 function requestGroupForId(request: GroupConnectionRequestListRow, groupId: string) {
-  return request.group_a_id === groupId ? (request.group_a ?? null) : (request.group_b ?? null);
+  if (request.group_a_id === groupId) {
+    return request.group_a ?? null;
+  }
+  if (request.group_b_id === groupId) {
+    return request.group_b ?? null;
+  }
+  return null;
 }
 
 function getPrimaryMembershipRuleRequest(request: GroupConnectionRequestListRow) {
@@ -221,6 +235,7 @@ export function deriveNormalizedGroupConnectionRequestRelationships(
   const base = {
     connection_id: request.active_connection_id ?? request.proposed_connection_id,
     connection_request_id: request.id,
+    membership_request_id: null,
     connection_type:
       request.desired_connection_type === 'peer' ? ('peer' as const) : ('hierarchy' as const),
     parent_group_id: request.desired_parent_group_id ?? null,
@@ -229,6 +244,7 @@ export function deriveNormalizedGroupConnectionRequestRelationships(
     member_target_group_id: membershipRequest?.member_target_group_id ?? null,
     membership_mode: membershipMode as CanonicalMembershipMode,
     required_source_role_id: membershipRequest?.required_source_role_id ?? null,
+    required_source_role: membershipRequest?.required_source_role ?? null,
     eligible_origin_group_ids:
       membershipRequest?.origins
         ?.map(origin => origin.eligible_origin_group_id)
@@ -245,6 +261,7 @@ export function deriveNormalizedGroupConnectionRequestRelationships(
       ...base,
       id: `${request.id}:structure`,
       grant_id: null,
+      request_item_kind: 'structure',
       group_id: sourceId,
       related_group_id: targetId,
       relationship_type: relationshipType(sourceId),
@@ -257,11 +274,38 @@ export function deriveNormalizedGroupConnectionRequestRelationships(
     },
   ];
 
+  if (
+    membershipRequest &&
+    membershipMode !== 'none' &&
+    membershipRequest.member_source_group_id &&
+    membershipRequest.member_target_group_id
+  ) {
+    const membershipSourceId = membershipRequest.member_source_group_id;
+    const membershipTargetId = membershipRequest.member_target_group_id;
+    rows.push({
+      ...base,
+      id: membershipRequest.id,
+      grant_id: null,
+      membership_request_id: membershipRequest.id,
+      request_item_kind: 'membership',
+      group_id: membershipSourceId,
+      related_group_id: membershipTargetId,
+      relationship_type: relationshipType(membershipSourceId),
+      with_right: null,
+      status: membershipRequest.status,
+      initiator_group_id: request.initiator_group_id,
+      created_at: membershipRequest.created_at ?? request.created_at,
+      group: requestGroupForId(request, membershipSourceId),
+      related_group: requestGroupForId(request, membershipTargetId),
+    });
+  }
+
   for (const grant of request.grant_requests ?? []) {
     rows.push({
       ...base,
       id: grant.id,
       grant_id: grant.id,
+      request_item_kind: 'right',
       group_id: grant.holder_group_id,
       related_group_id: grant.scope_group_id,
       relationship_type: relationshipType(grant.holder_group_id),
@@ -283,7 +327,7 @@ export function deriveNormalizedGroupConnectionRequestRows(
 }
 
 export function buildDerivedGroupNetworkMetaMap(
-  connections: readonly GroupConnectionListRow[],
+  connections: readonly NormalizableGroupConnection[],
   explicitGroupIds?: readonly string[]
 ) {
   const groupIds = new Set(explicitGroupIds ?? []);
@@ -357,7 +401,7 @@ export function buildRightDirectionsForConnection(args: {
     ) {
       continue;
     }
-    const relative = getRelativeRightDirectionForGroup({
+    const relative = getRightDirectionFromGrantEndpoints({
       currentGroupId: args.currentGroupId,
       grant,
     });

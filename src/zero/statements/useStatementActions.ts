@@ -29,6 +29,7 @@ export function useStatementActions() {
     (args: Parameters<typeof mutators.statements.update>[0]) => {
       const result = zero.mutate(mutators.statements.update(args));
       onServerError(result, () => toast.error(t('features.statements.toasts.updateFailed')));
+      return result;
     },
     [zero]
   );

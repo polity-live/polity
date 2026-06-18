@@ -5,14 +5,27 @@ import { BadgeControl } from '@/features/shared/ui/status';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
+  BarChart3,
+  Bike,
+  Building2,
   Calendar,
+  Calculator,
+  CarFront,
   CheckCircle2,
+  Database,
   FileText,
+  Footprints,
+  Globe2,
+  Layers,
   MapPinned,
   MessageSquare,
   Network,
+  Route,
   Search,
+  ShieldCheck,
   Sparkles,
+  Sprout,
+  TreePine,
   Users,
   Vote,
   Workflow,
@@ -193,6 +206,45 @@ export function PublicLandingPage() {
         description={t('pages.home.publicLanding.sections.amendments.description')}
       >
         <LandingAmendmentSectionContentContainer />
+      </StorySection>
+
+      <StorySection
+        eyebrow={t('pages.home.publicLanding.sections.officialData.eyebrow')}
+        title={t('pages.home.publicLanding.sections.officialData.title')}
+        description={t('pages.home.publicLanding.sections.officialData.description')}
+      >
+        <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
+          <div className="space-y-4">
+            {tArray('pages.home.publicLanding.sections.officialData.points').map((point, index) => (
+              <ProductStoryPoint
+                key={point}
+                icon={index === 0 ? Database : index === 1 ? ShieldCheck : BarChart3}
+                text={point}
+              />
+            ))}
+          </div>
+          <LandingOfficialDataPreview />
+        </div>
+      </StorySection>
+
+      <StorySection
+        muted
+        eyebrow={t('pages.home.publicLanding.sections.streetDesign.eyebrow')}
+        title={t('pages.home.publicLanding.sections.streetDesign.title')}
+        description={t('pages.home.publicLanding.sections.streetDesign.description')}
+      >
+        <div className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
+          <div className="space-y-4">
+            {tArray('pages.home.publicLanding.sections.streetDesign.points').map((point, index) => (
+              <ProductStoryPoint
+                key={point}
+                icon={index === 0 ? MapPinned : index === 1 ? Route : Calculator}
+                text={point}
+              />
+            ))}
+          </div>
+          <LandingStreetDesignPreview />
+        </div>
       </StorySection>
 
       <StorySection
@@ -624,6 +676,513 @@ function LandingNetworkFlowPreviewView({
           entity={selectedEntity}
         />
       </NetworkFlowBase>
+    </div>
+  );
+}
+
+type LandingOfficialDataPhase = 'typing' | 'results' | 'selected' | 'data';
+
+const landingOfficialDataProviderKeys = ['eurostat', 'govdata', 'destatis'] as const;
+const landingOfficialDataProviderIcons = [Globe2, Database, Building2] as const;
+const landingOfficialDataChartBars = [42, 64, 56, 82, 70] as const;
+const landingOfficialDataSelectedResultIndex = 1;
+
+function usePrefersReducedMotion() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return;
+    }
+
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updatePreference = () => setPrefersReducedMotion(media.matches);
+    updatePreference();
+
+    media.addEventListener('change', updatePreference);
+    return () => media.removeEventListener('change', updatePreference);
+  }, []);
+
+  return prefersReducedMotion;
+}
+
+export function LandingOfficialDataPreview() {
+  const { t, tArray } = useTranslation();
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const searchQuery = t('pages.home.publicLanding.officialDataPreview.query');
+  const resultTitles = tArray('pages.home.publicLanding.officialDataPreview.resultTitles');
+  const resultSources = tArray('pages.home.publicLanding.officialDataPreview.resultSources');
+  const resultMeta = tArray('pages.home.publicLanding.officialDataPreview.resultMeta');
+  const resultProviders = tArray('pages.home.publicLanding.officialDataPreview.resultProviders');
+  const tableColumns = tArray('pages.home.publicLanding.officialDataPreview.tableColumns');
+  const tableRows = tArray('pages.home.publicLanding.officialDataPreview.tableRows').map(row =>
+    row.split('|').map(cell => cell.trim())
+  );
+  const metrics = tArray('pages.home.publicLanding.officialDataPreview.metrics');
+  const chartLabels = tArray('pages.home.publicLanding.officialDataPreview.chartLabels');
+  const [phase, setPhase] = useState<LandingOfficialDataPhase>('typing');
+  const [typedLength, setTypedLength] = useState(0);
+  const [animationCycle, setAnimationCycle] = useState(0);
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      setPhase('data');
+      setTypedLength(searchQuery.length);
+      return;
+    }
+
+    const timers: ReturnType<typeof window.setTimeout>[] = [];
+    const typeStepMs = 48;
+    const typeStartDelayMs = 320;
+    const typedDurationMs = typeStartDelayMs + searchQuery.length * typeStepMs;
+
+    setPhase('typing');
+    setTypedLength(0);
+
+    for (let index = 0; index < searchQuery.length; index += 1) {
+      timers.push(
+        window.setTimeout(() => setTypedLength(index + 1), typeStartDelayMs + index * typeStepMs)
+      );
+    }
+
+    timers.push(window.setTimeout(() => setPhase('results'), typedDurationMs + 360));
+    timers.push(window.setTimeout(() => setPhase('selected'), typedDurationMs + 1720));
+    timers.push(window.setTimeout(() => setPhase('data'), typedDurationMs + 2880));
+    timers.push(
+      window.setTimeout(() => setAnimationCycle(cycle => cycle + 1), typedDurationMs + 7600)
+    );
+
+    return () => timers.forEach(timer => window.clearTimeout(timer));
+  }, [animationCycle, prefersReducedMotion, searchQuery]);
+
+  const typedQuery = phase === 'typing' ? searchQuery.slice(0, typedLength) : searchQuery;
+  const hasResults = phase === 'results' || phase === 'selected' || phase === 'data';
+  const hasSelection = phase === 'selected' || phase === 'data';
+  const hasData = phase === 'data';
+  const activeStatus = prefersReducedMotion ? 'data' : phase;
+  const motionClassName = prefersReducedMotion ? '' : 'transition-all duration-500 ease-out';
+
+  return (
+    <div className="landing-official-data-preview bg-card overflow-hidden rounded-lg border shadow-sm">
+      <div className="border-b px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">
+              {t('pages.home.publicLanding.officialDataPreview.title')}
+            </p>
+            <p className="text-muted-foreground text-sm">
+              {t('pages.home.publicLanding.officialDataPreview.subtitle')}
+            </p>
+          </div>
+          <BadgeControl variant="secondary">
+            <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />
+            {t(`pages.home.publicLanding.officialDataPreview.statuses.${activeStatus}`)}
+          </BadgeControl>
+        </div>
+      </div>
+
+      <div className="space-y-4 p-5">
+        <div className="bg-background flex h-12 min-w-0 items-center gap-3 rounded-md border px-3">
+          <Search className="text-muted-foreground h-4 w-4 flex-none" />
+          <span className="min-w-0 flex-1 truncate text-sm">
+            {typedQuery || (
+              <span className="text-muted-foreground">
+                {t('pages.home.publicLanding.officialDataPreview.searchPlaceholder')}
+              </span>
+            )}
+          </span>
+          <span
+            aria-hidden="true"
+            className={cn(
+              'bg-brand h-5 w-px flex-none',
+              phase === 'typing' && !prefersReducedMotion && 'animate-pulse'
+            )}
+          />
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-3">
+          {landingOfficialDataProviderKeys.map((providerKey, index) => {
+            const Icon = landingOfficialDataProviderIcons[index] ?? Database;
+            const isActive = providerKey === 'govdata' || (hasData && providerKey === 'destatis');
+
+            return (
+              <div
+                key={providerKey}
+                className={cn(
+                  'flex min-h-24 flex-col justify-between rounded-md border p-3',
+                  isActive ? 'border-brand/40 bg-brand/10' : 'bg-background',
+                  motionClassName
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      'flex h-8 w-8 flex-none items-center justify-center rounded-md border',
+                      isActive
+                        ? 'border-brand/40 bg-background text-brand'
+                        : 'bg-muted/20 text-muted-foreground'
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0 truncate text-sm font-semibold">
+                    {t(`pages.home.publicLanding.officialDataPreview.providers.${providerKey}`)}
+                  </span>
+                </div>
+                <span className="text-muted-foreground mt-2 text-xs leading-5">
+                  {t(`pages.home.publicLanding.officialDataPreview.providerHints.${providerKey}`)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-[1fr_0.86fr]">
+          <div className="bg-background min-h-[22rem] overflow-hidden rounded-md border">
+            <div className="border-b px-3 py-2">
+              <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium uppercase">
+                <Database className="h-3.5 w-3.5" />
+                {t('pages.home.publicLanding.officialDataPreview.resultsTitle')}
+              </div>
+            </div>
+            <div className="space-y-2 p-3">
+              {resultTitles.map((title, index) => {
+                const isSelected = hasSelection && index === landingOfficialDataSelectedResultIndex;
+
+                return (
+                  <div
+                    key={title}
+                    className={cn(
+                      'grid min-h-[5.75rem] gap-2 rounded-md border px-3 py-3 sm:grid-cols-[1fr_auto]',
+                      hasResults ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0',
+                      isSelected
+                        ? 'border-brand/50 bg-brand/10 ring-brand/20 ring-2'
+                        : 'bg-muted/20',
+                      motionClassName
+                    )}
+                    style={{
+                      transitionDelay:
+                        hasResults && !prefersReducedMotion ? `${index * 110}ms` : undefined,
+                    }}
+                    aria-hidden={!hasResults}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{title}</p>
+                      <p className="text-muted-foreground mt-1 truncate text-xs">
+                        {resultSources[index] ?? ''}
+                      </p>
+                      <p className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-5">
+                        {resultMeta[index] ?? ''}
+                      </p>
+                    </div>
+                    <div className="flex items-start justify-start sm:justify-end">
+                      <BadgeControl
+                        variant={isSelected ? 'secondary' : 'outline'}
+                        size="tiny"
+                        className="max-w-full"
+                      >
+                        {isSelected
+                          ? t('pages.home.publicLanding.officialDataPreview.selectedLabel')
+                          : (resultProviders[index] ?? '')}
+                      </BadgeControl>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              'bg-background min-h-[22rem] space-y-3 rounded-md border p-3',
+              hasData ? 'opacity-100' : 'opacity-45',
+              motionClassName
+            )}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">
+                  {t('pages.home.publicLanding.officialDataPreview.dataTitle')}
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {t('pages.home.publicLanding.officialDataPreview.dataSubtitle')}
+                </p>
+              </div>
+              <BarChart3 className="text-brand h-5 w-5 flex-none" />
+            </div>
+
+            <div className="overflow-hidden rounded-md border">
+              <div className="bg-muted/20 grid grid-cols-3 gap-2 border-b px-3 py-2 text-xs font-semibold">
+                {tableColumns.map(column => (
+                  <span key={column} className="truncate">
+                    {column}
+                  </span>
+                ))}
+              </div>
+              <div className="divide-y">
+                {tableRows.map((row, rowIndex) => (
+                  <div
+                    key={`${row.join('-')}-${rowIndex}`}
+                    className={cn(
+                      'grid min-h-10 grid-cols-3 gap-2 px-3 py-2 text-xs',
+                      hasData ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-0',
+                      motionClassName
+                    )}
+                    style={{
+                      transitionDelay:
+                        hasData && !prefersReducedMotion ? `${rowIndex * 90}ms` : undefined,
+                    }}
+                  >
+                    {tableColumns.map((column, columnIndex) => (
+                      <span
+                        key={`${column}-${columnIndex}`}
+                        className={cn(
+                          columnIndex === 1 ? 'font-semibold' : 'text-muted-foreground'
+                        )}
+                      >
+                        {row[columnIndex] ?? ''}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">
+                    {t('pages.home.publicLanding.officialDataPreview.chartTitle')}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    {t('pages.home.publicLanding.officialDataPreview.chartSubtitle')}
+                  </p>
+                </div>
+              </div>
+              <div className="bg-muted/20 flex h-32 items-end gap-2 rounded-md border px-3 pt-4 pb-3">
+                {landingOfficialDataChartBars.map((height, index) => (
+                  <div
+                    key={`${height}-${index}`}
+                    className="flex min-w-0 flex-1 flex-col items-center gap-2"
+                  >
+                    <div
+                      className={cn(
+                        'w-full max-w-10 rounded-t-md',
+                        index === 3 ? 'bg-brand' : 'bg-brand/35'
+                      )}
+                      style={{
+                        height: `${hasData ? height : 8}%`,
+                        transition: prefersReducedMotion
+                          ? undefined
+                          : `height 620ms ease ${index * 80}ms`,
+                      }}
+                    />
+                    <span className="text-muted-foreground max-w-full truncate text-[10px] font-medium">
+                      {chartLabels[index] ?? ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
+              {metrics.map(metric => (
+                <div
+                  key={metric}
+                  className={cn(
+                    'bg-muted/20 flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium',
+                    hasData ? 'opacity-100' : 'opacity-50',
+                    motionClassName
+                  )}
+                >
+                  <CheckCircle2 className="text-success h-3.5 w-3.5 flex-none" />
+                  <span className="min-w-0 truncate">{metric}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const landingStreetDesignToolIcons = [Route, Bike, Footprints, TreePine, Sprout] as const;
+const landingStreetDesignLayerIcons = [Route, Building2, Sprout] as const;
+
+export function LandingStreetDesignPreview() {
+  const { t, tArray } = useTranslation();
+  const tools = tArray('pages.home.publicLanding.streetDesignPreview.tools');
+  const layers = tArray('pages.home.publicLanding.streetDesignPreview.layers');
+  const comparisonModes = tArray('pages.home.publicLanding.streetDesignPreview.comparisonModes');
+  const metrics = tArray('pages.home.publicLanding.streetDesignPreview.metrics');
+
+  return (
+    <div className="landing-street-design-preview bg-card overflow-hidden rounded-lg border shadow-sm">
+      <div className="border-b px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">
+              {t('pages.home.publicLanding.streetDesignPreview.title')}
+            </p>
+            <p className="text-muted-foreground text-sm">
+              {t('pages.home.publicLanding.streetDesignPreview.subtitle')}
+            </p>
+          </div>
+          <BadgeControl variant="outline">
+            {t('pages.home.publicLanding.streetDesignPreview.badge')}
+          </BadgeControl>
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="space-y-5 border-b p-4 lg:border-r lg:border-b-0">
+          <div>
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+              <Route className="text-muted-foreground h-4 w-4" />
+              {t('pages.home.publicLanding.streetDesignPreview.toolsTitle')}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {tools.map((tool, index) => {
+                const Icon = landingStreetDesignToolIcons[index] ?? Route;
+                const isActive = index === 1 || index === 3;
+
+                return (
+                  <div
+                    key={tool}
+                    className={cn(
+                      'flex min-h-14 flex-col items-center justify-center gap-1 rounded-md border px-2 text-center text-[11px] leading-tight',
+                      isActive
+                        ? 'border-brand/40 bg-brand/10 text-brand'
+                        : 'bg-background text-muted-foreground'
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="max-w-full truncate">{tool}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+              <Layers className="text-muted-foreground h-4 w-4" />
+              {t('pages.home.publicLanding.streetDesignPreview.layersTitle')}
+            </div>
+            <div className="space-y-2">
+              {layers.map((layer, index) => {
+                const Icon = landingStreetDesignLayerIcons[index] ?? Layers;
+
+                return (
+                  <div
+                    key={layer}
+                    className="bg-muted/20 flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs"
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <Icon className="text-muted-foreground h-3.5 w-3.5 flex-none" />
+                      <span className="truncate">{layer}</span>
+                    </span>
+                    <span className="bg-success h-2 w-2 flex-none rounded-full" />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4 p-4">
+          <div
+            role="img"
+            aria-label={t('pages.home.publicLanding.streetDesignPreview.canvasLabel')}
+            className="from-background via-muted/30 to-muted/60 relative min-h-[22rem] overflow-hidden rounded-md border bg-gradient-to-br"
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_18%,rgba(20,184,166,0.18),transparent_22%),radial-gradient(circle_at_82%_12%,rgba(234,179,8,0.16),transparent_20%),linear-gradient(135deg,transparent_0%,transparent_58%,rgba(15,23,42,0.08)_58%,rgba(15,23,42,0.08)_59%,transparent_59%)]" />
+            <div
+              aria-hidden="true"
+              className="absolute top-1/2 left-1/2 h-64 w-[34rem] max-w-[92%] rounded-xl border border-white/50 bg-stone-200 shadow-2xl"
+              style={{
+                transform: 'translate(-50%, -50%) rotateX(58deg) rotateZ(-28deg)',
+                transformStyle: 'preserve-3d',
+              }}
+            >
+              <div className="absolute inset-y-0 left-6 w-16 rounded-l-xl bg-emerald-100" />
+              <div className="absolute inset-y-0 right-6 w-14 rounded-r-xl bg-lime-100" />
+              <div className="absolute top-1/2 right-20 left-20 h-28 -translate-y-1/2 rounded-md bg-zinc-700 shadow-inner" />
+              <div className="absolute top-1/2 right-20 left-20 h-px -translate-y-1/2 border-t border-dashed border-white/70" />
+              <div className="absolute top-[4.9rem] right-20 left-20 h-8 rounded-sm bg-sky-500/80" />
+              <div className="absolute top-[5.9rem] right-20 left-20 h-px border-t border-dashed border-white/80" />
+              <div className="absolute top-[9.9rem] right-20 left-20 h-9 rounded-sm bg-neutral-300" />
+              <div className="absolute top-[10.8rem] right-20 left-20 h-px border-t border-dashed border-zinc-500/50" />
+              <div className="absolute top-9 left-28 h-10 w-16 rounded-sm bg-zinc-500/30 shadow-sm" />
+              <div className="absolute right-24 bottom-9 h-12 w-20 rounded-sm bg-zinc-500/25 shadow-sm" />
+              {[0, 1, 2, 3, 4, 5].map(index => (
+                <span
+                  key={index}
+                  className="absolute h-5 w-5 rounded-full bg-emerald-600 shadow-md ring-2 ring-emerald-200"
+                  style={{
+                    left: `${16 + index * 12}%`,
+                    top: index % 2 === 0 ? '18%' : '70%',
+                  }}
+                />
+              ))}
+              <div className="absolute right-8 bottom-12 h-20 w-16 rounded-sm bg-teal-500/40" />
+              <div className="absolute top-12 left-8 h-24 w-12 rounded-sm bg-amber-300/50" />
+            </div>
+
+            <div className="absolute top-4 right-4 flex flex-wrap justify-end gap-2">
+              {metrics.map(metric => (
+                <span
+                  key={metric}
+                  className="bg-background/90 rounded-full border px-3 py-1 text-xs font-medium shadow-sm backdrop-blur"
+                >
+                  {metric}
+                </span>
+              ))}
+            </div>
+
+            <div className="bg-background/90 absolute bottom-4 left-4 flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium shadow-sm backdrop-blur">
+              <CarFront className="text-muted-foreground h-3.5 w-3.5" />
+              {comparisonModes[1] ?? t('pages.home.publicLanding.streetDesignPreview.badge')}
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-[0.86fr_1.14fr]">
+            <div className="bg-background rounded-md border p-3">
+              <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium uppercase">
+                <Calculator className="h-3.5 w-3.5" />
+                {t('pages.home.publicLanding.streetDesignPreview.costTitle')}
+              </div>
+              <p className="text-xl font-semibold">
+                {t('pages.home.publicLanding.streetDesignPreview.totalCost')}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {t('pages.home.publicLanding.streetDesignPreview.estimate')}
+              </p>
+            </div>
+
+            <div className="bg-background rounded-md border p-3">
+              <div className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium uppercase">
+                <Layers className="h-3.5 w-3.5" />
+                {t('pages.home.publicLanding.streetDesignPreview.comparisonTitle')}
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {comparisonModes.map((mode, index) => (
+                  <div
+                    key={mode}
+                    className={cn(
+                      'rounded-md border px-2 py-2 text-center text-xs font-medium',
+                      index === 2 ? 'border-brand/40 bg-brand/10 text-brand' : 'bg-muted/20'
+                    )}
+                  >
+                    {mode}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

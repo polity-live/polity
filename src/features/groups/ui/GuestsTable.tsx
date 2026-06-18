@@ -3,10 +3,14 @@ import type { CSSProperties } from 'react';
 import { Check, Trash2, UserRoundCheck } from 'lucide-react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { DataTable, EntityCell, type ColumnDef } from '@/features/shared/ui/data-table';
+import {
+  DataTable,
+  EntityCell,
+  TableActionIconButton,
+  type ColumnDef,
+} from '@/features/shared/ui/data-table';
 import { StatusBadge } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Button } from '@/features/shared/ui/ui/button';
 import { RoleTag } from './RoleTag';
 
 interface GuestAccessRoleLike {
@@ -150,24 +154,28 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
       },
       cell: ({ row }) => {
         const guest = row.original;
+        const revokeLabel =
+          guest.status === 'requested'
+            ? translateText('generated.inline.0099_reject_2b03b592')
+            : translateText('generated.inline.0100_revoke_0be72075');
 
         return (
           <div className="flex justify-end gap-2">
             {guest.status === 'requested' && onApprove ? (
-              <Button variant="default" size="sm" onClick={() => onApprove(guest.id)}>
-                <Check className="mr-1 h-4 w-4" />
-                {translateText('generated.inline.0691_approve_7b2c7f14')}
-              </Button>
+              <TableActionIconButton
+                label={translateText('generated.inline.0691_approve_7b2c7f14')}
+                icon={<Check className="h-4 w-4" />}
+                variant="default"
+                onClick={() => onApprove(guest.id)}
+              />
             ) : null}
             {onRevoke ? (
-              <Button variant="ghost" size="sm" onClick={() => onRevoke(guest.id)}>
-                <Trash2 className="h-4 w-4" />
-                <span className="ml-2">
-                  {guest.status === 'requested'
-                    ? translateText('generated.inline.0099_reject_2b03b592')
-                    : translateText('generated.inline.0100_revoke_0be72075')}
-                </span>
-              </Button>
+              <TableActionIconButton
+                label={revokeLabel}
+                icon={<Trash2 className="h-4 w-4" />}
+                destructive
+                onClick={() => onRevoke(guest.id)}
+              />
             ) : null}
           </div>
         );

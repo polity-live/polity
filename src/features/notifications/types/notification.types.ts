@@ -20,7 +20,9 @@ export type NotificationType =
   | 'membership_withdrawn' // Member left/withdrew
   | 'member_removed' // 1.4: Member removed
   | 'group_new_event' // 1.5: New event created
+  | 'group_event_assigned' // 1.5b: Event assigned to group
   | 'group_new_amendment' // 1.6: New amendment linked
+  | 'group_amendment_support_confirmed' // 1.6b: Group amendment support confirmed
   | 'group_profile_updated' // 1.7: Profile updated
   | 'group_new_subscriber' // 1.8: New subscriber
   | 'group_link_added' // 1.9: Link added
@@ -35,6 +37,7 @@ export type NotificationType =
   | 'group_todo_assigned' // 1.15: Todo assigned
   | 'group_todo_updated' // 1.15: Todo updated
   | 'group_todo_deleted' // 1.15b: Todo deleted
+  | 'group_process_task_created' // 1.15c: Process assignment created
   | 'group_payment_created' // 1.16: Payment created
   | 'group_payment_deleted' // 1.16: Payment deleted
   | 'group_connection_request' // 1.17: Relationship requested
@@ -64,12 +67,14 @@ export type NotificationType =
   | 'event_agenda_item_created' // 2.9: Agenda item created
   | 'event_agenda_item_deleted' // 2.9: Agenda item deleted
   | 'event_agenda_item_transferred' // 2.9b: Agenda item transferred
+  | 'event_change_request_created' // 2.9c: Change request created for event-linked amendment
   | 'event_schedule_changed' // 2.10: Schedule changed
   | 'event_candidate_added' // 2.11: Election candidate added
   | 'event_election_started' // 2.11: Election started
   | 'event_election_ended' // 2.11: Election ended
   | 'event_role_created' // 2.12: Role created
   | 'event_role_deleted' // 2.12: Role deleted
+  | 'event_role_updated' // 2.12b: Role action rights changed
   | 'event_delegates_finalized' // 2.13: Delegates finalized
   | 'event_delegate_nominated' // 2.13: Delegate nominated
   | 'event_meeting_booked' // 2.14: Meeting booked
@@ -100,6 +105,7 @@ export type NotificationType =
   | 'amendment_new_subscriber' // 3.6: New subscriber
   | 'amendment_owner_promoted' // 3.7: Promoted to owner
   | 'amendment_owner_demoted' // 3.8: Demoted from owner
+  | 'amendment_role_updated' // 3.8b: Role action rights changed
   | 'amendment_workflow_changed' // 3.9: Workflow changed
   | 'amendment_path_advanced' // 3.10: Path advanced
   | 'amendment_cloned' // 3.11: Amendment cloned

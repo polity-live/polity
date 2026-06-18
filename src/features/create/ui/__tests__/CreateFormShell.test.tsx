@@ -261,4 +261,29 @@ describe('CreateFormShell', () => {
     });
     expect(screen.getByTestId('carousel-layout')).toBeTruthy();
   });
+
+  it('navigates to the recovery target after a submit error that happens after creation', async () => {
+    vi.mocked(config.onSubmit).mockImplementation(async context => {
+      context?.setRecoveryTarget(groupSuccessOutcome.target);
+      throw new Error('Link failed');
+    });
+
+    render(<CreateFormShell config={config} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(await screen.findByRole('dialog')).toBeTruthy();
+    expect(screen.getByText('Link failed')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /zur gruppe/i })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /zurück zum formular/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /erneut versuchen/i })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /zur gruppe/i }));
+
+    expect(navigate).toHaveBeenCalledWith({
+      to: '/group/$id',
+      params: { id: 'group-1' },
+      search: undefined,
+      hash: undefined,
+    });
+  });
 });

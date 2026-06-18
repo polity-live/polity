@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, Eye } from 'lucide-react';
-import { type ColumnDef } from '@/features/shared/ui/data-table';
+import { TableActionIconButton, type ColumnDef } from '@/features/shared/ui/data-table';
 import { StatusBadge as SharedStatusBadge } from '@/features/shared/ui/status';
-import { Button } from '@/features/shared/ui/ui/button';
 import { UserTableCell } from '@/features/shared/ui/data-table';
 import { getRightLabel } from '@/features/shared/ui/status';
 import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';
@@ -138,22 +137,17 @@ export function MembershipRightsAlignmentPanel<TMembership extends Participation
       },
       cell: ({ row }) => (
         <div className="flex justify-end gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
+          <TableActionIconButton
+            label={t('features.groups.memberships.rightsAlignment.actions.rights')}
+            icon={<Eye className="h-4 w-4" />}
             onClick={() => onOpenRightsDialog(row.original.membership)}
-          >
-            <Eye className="mr-1 h-4 w-4" />
-            {t('features.groups.memberships.rightsAlignment.actions.rights')}
-          </Button>
-          <Button
+          />
+          <TableActionIconButton
+            label={t('features.groups.memberships.rightsAlignment.actions.manageRoles')}
+            icon={<ArrowUpDown className="h-4 w-4" />}
             variant="outline"
-            size="sm"
             onClick={() => onOpenChangeRoleDialog(row.original.membership)}
-          >
-            <ArrowUpDown className="mr-1 h-4 w-4" />
-            {t('features.groups.memberships.rightsAlignment.actions.manageRoles')}
-          </Button>
+          />
         </div>
       ),
     },

@@ -1,6 +1,7 @@
 import type { PrimaryEntityTone } from '@/features/shared/theme';
 import { MarkerType, Position, type Edge } from '@xyflow/react';
 import type { CSSProperties } from 'react';
+import { MEMBERSHIP_FLOW_RIGHT } from '@/features/shared/ui/status';
 import { getHierarchyRelationshipPair } from './groupRelationshipOrientation';
 import type { NetworkRelationshipKind } from './networkRelationshipHelpers';
 import { getRelativeMembershipDirectionForRelationship } from './networkRelationshipHelpers';
@@ -58,6 +59,12 @@ interface CreateNetworkRelationshipEdgeDataArgs {
   relationshipType?: GroupRelationshipType | 'membership';
   membershipMode?: CanonicalMembershipMode | null;
   membershipDirection?: RelativeMembershipDirection | null;
+  membershipSourceGroupId?: string | null;
+  membershipTargetGroupId?: string | null;
+  membershipSourceGroupName?: string | null;
+  membershipTargetGroupName?: string | null;
+  membershipRequiredSourceRoleId?: string | null;
+  membershipRequiredSourceRoleName?: string | null;
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
   visibleFlowDirection?: NetworkEdgeRelationshipDirection | null;
   rightConnectionDirections?: Record<string, NetworkConnectionDirection>;
@@ -108,6 +115,8 @@ interface BuildNetworkRelationshipEdgeArgs {
   membershipMode?: CanonicalMembershipMode | null;
   memberSourceGroupId?: string | null;
   memberTargetGroupId?: string | null;
+  membershipRequiredSourceRoleId?: string | null;
+  membershipRequiredSourceRoleName?: string | null;
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
   relationshipDepth?: NetworkRelationshipDepth;
   fallbackStrokeColor: string;
@@ -439,6 +448,89 @@ function filterRecordToVisibleRights<T>(
   ) as Record<string, T>;
 }
 
+function isMembershipFlowEnabled(membershipMode: CanonicalMembershipMode | null | undefined) {
+  return Boolean(membershipMode && membershipMode !== 'none');
+}
+
+function getMembershipFlowDirection({
+  sourceGroupId,
+  targetGroupId,
+  memberSourceGroupId,
+  memberTargetGroupId,
+}: {
+  sourceGroupId: string;
+  targetGroupId: string;
+  memberSourceGroupId?: string | null;
+  memberTargetGroupId?: string | null;
+}): DirectionInput | null {
+  if (!memberSourceGroupId || !memberTargetGroupId) {
+    return null;
+  }
+
+  if (memberSourceGroupId === sourceGroupId && memberTargetGroupId === targetGroupId) {
+    return 'forward';
+  }
+
+  if (memberSourceGroupId === targetGroupId && memberTargetGroupId === sourceGroupId) {
+    return 'backward';
+  }
+
+  return null;
+}
+
+function withMembershipFlowChannel({
+  rights,
+  relationshipKinds,
+  rightRelationshipKinds,
+  rightEdgeDirections,
+  membershipMode,
+  sourceGroupId,
+  targetGroupId,
+  memberSourceGroupId,
+  memberTargetGroupId,
+}: {
+  rights: string[];
+  relationshipKinds: readonly NetworkRelationshipKind[];
+  rightRelationshipKinds: Record<string, NetworkRelationshipKind>;
+  rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
+  membershipMode?: CanonicalMembershipMode | null;
+  sourceGroupId: string;
+  targetGroupId: string;
+  memberSourceGroupId?: string | null;
+  memberTargetGroupId?: string | null;
+}) {
+  const membershipDirection = isMembershipFlowEnabled(membershipMode)
+    ? getMembershipFlowDirection({
+        sourceGroupId,
+        targetGroupId,
+        memberSourceGroupId,
+        memberTargetGroupId,
+      })
+    : null;
+
+  if (!membershipDirection) {
+    return {
+      rights,
+      rightRelationshipKinds,
+      rightEdgeDirections,
+    };
+  }
+
+  const structureKind = relationshipKinds[0] ?? 'active';
+
+  return {
+    rights: rights.includes(MEMBERSHIP_FLOW_RIGHT) ? rights : [...rights, MEMBERSHIP_FLOW_RIGHT],
+    rightRelationshipKinds: {
+      ...rightRelationshipKinds,
+      [MEMBERSHIP_FLOW_RIGHT]: structureKind,
+    },
+    rightEdgeDirections: {
+      ...(rightEdgeDirections ?? {}),
+      [MEMBERSHIP_FLOW_RIGHT]: membershipDirection,
+    },
+  };
+}
+
 export function buildSingleDirectionRightEdgeDirections(
   rights: readonly string[],
   direction: DirectionInput = 'forward'
@@ -480,13 +572,17 @@ export function buildCurrentPerspectiveRightDisplayDirections({
       if (currentIsSource) {
         return [
           right,
-          direction === 'forward' ? 'current_has_right_in_partner' : 'partner_has_right_in_current',
+          direction === 'forward'
+            ? 'partner_grants_right_to_current'
+            : 'current_grants_right_to_partner',
         ];
       }
 
       return [
         right,
-        direction === 'forward' ? 'partner_has_right_in_current' : 'current_has_right_in_partner',
+        direction === 'forward'
+          ? 'current_grants_right_to_partner'
+          : 'partner_grants_right_to_current',
       ];
     })
   ) as Record<string, GroupRelationshipDirection>;
@@ -745,6 +841,8 @@ export function buildNetworkRelationshipEdge({
   membershipMode,
   memberSourceGroupId,
   memberTargetGroupId,
+  membershipRequiredSourceRoleId,
+  membershipRequiredSourceRoleName,
   rightEdgeDirections,
   relationshipDepth = 'direct',
   fallbackStrokeColor,
@@ -759,8 +857,25 @@ export function buildNetworkRelationshipEdge({
   edgeEditingEnabled = false,
   onBendPointsChange,
 }: BuildNetworkRelationshipEdgeArgs): Edge<EditableRightsLabelEdgeData> {
-  const resolvedStrokeColor = getRelationshipStrokeColor(fallbackStrokeColor, rightEdgeDirections);
-  const edgeMarkers = buildRelationshipEdgeMarkers(resolvedStrokeColor, rightEdgeDirections);
+  const flowChannels = withMembershipFlowChannel({
+    rights,
+    relationshipKinds,
+    rightRelationshipKinds,
+    rightEdgeDirections,
+    membershipMode,
+    sourceGroupId,
+    targetGroupId,
+    memberSourceGroupId,
+    memberTargetGroupId,
+  });
+  const resolvedStrokeColor = getRelationshipStrokeColor(
+    fallbackStrokeColor,
+    flowChannels.rightEdgeDirections
+  );
+  const edgeMarkers = buildRelationshipEdgeMarkers(
+    resolvedStrokeColor,
+    flowChannels.rightEdgeDirections
+  );
   const previewContext = resolveNetworkRelationshipPreviewContext({
     graphRootGroupId,
     currentGroupId: previewCurrentGroupId,
@@ -769,26 +884,38 @@ export function buildNetworkRelationshipEdge({
     targetGroupId,
     sourceGroupName: sourceName,
     targetGroupName: targetName,
-    rightEdgeDirections,
+    rightEdgeDirections: flowChannels.rightEdgeDirections,
     memberSourceGroupId,
     memberTargetGroupId,
   });
   const pageCurrentGroupId = currentGroupId ?? graphRootGroupId ?? previewContext.currentGroupId;
-  const visibleFlowDirection = getVisibleFlowDirection(rightEdgeDirections);
+  const visibleFlowDirection = getVisibleFlowDirection(flowChannels.rightEdgeDirections);
   const animatedFlowDirection = getAnimatedFlowDirection(visibleFlowDirection);
   const pageRightConnectionDirections =
     buildCurrentPerspectiveRightConnectionDirections({
       currentNodeId: pageCurrentGroupId,
       sourceId: sourceGroupId,
       targetId: targetGroupId,
-      rightEdgeDirections,
+      rightEdgeDirections: flowChannels.rightEdgeDirections,
     }) ?? {};
   const rightDisplayDirections = buildCurrentPerspectiveRightDisplayDirections({
     currentNodeId: previewContext.currentGroupId,
     sourceId: sourceGroupId,
     targetId: targetGroupId,
-    rightEdgeDirections,
+    rightEdgeDirections: flowChannels.rightEdgeDirections,
   });
+  const membershipSourceGroupName =
+    memberSourceGroupId === sourceGroupId
+      ? sourceName
+      : memberSourceGroupId === targetGroupId
+        ? targetName
+        : null;
+  const membershipTargetGroupName =
+    memberTargetGroupId === sourceGroupId
+      ? sourceName
+      : memberTargetGroupId === targetGroupId
+        ? targetName
+        : null;
 
   return {
     id: edgeId,
@@ -803,9 +930,9 @@ export function buildNetworkRelationshipEdge({
     }),
     ...edgeMarkers,
     data: createNetworkRelationshipEdgeData({
-      rights,
+      rights: flowChannels.rights,
       relationshipKinds,
-      rightRelationshipKinds,
+      rightRelationshipKinds: flowChannels.rightRelationshipKinds,
       relationshipType: previewContext.relationshipType,
       membershipMode,
       membershipDirection: getNetworkPreviewMembershipDirection({
@@ -813,7 +940,13 @@ export function buildNetworkRelationshipEdge({
         memberSourceGroupId,
         memberTargetGroupId,
       }),
-      rightEdgeDirections,
+      membershipSourceGroupId: memberSourceGroupId ?? null,
+      membershipTargetGroupId: memberTargetGroupId ?? null,
+      membershipSourceGroupName,
+      membershipTargetGroupName,
+      membershipRequiredSourceRoleId: membershipRequiredSourceRoleId ?? null,
+      membershipRequiredSourceRoleName: membershipRequiredSourceRoleName ?? null,
+      rightEdgeDirections: flowChannels.rightEdgeDirections,
       visibleFlowDirection,
       rightConnectionDirections: pageRightConnectionDirections,
       userConnectionDirections: getNetworkUserConnectionDirections(pageRightConnectionDirections),
@@ -842,6 +975,12 @@ export function createNetworkRelationshipEdgeData({
   relationshipType,
   membershipMode,
   membershipDirection,
+  membershipSourceGroupId,
+  membershipTargetGroupId,
+  membershipSourceGroupName,
+  membershipTargetGroupName,
+  membershipRequiredSourceRoleId,
+  membershipRequiredSourceRoleName,
   rightEdgeDirections,
   visibleFlowDirection,
   rightConnectionDirections,
@@ -866,6 +1005,12 @@ export function createNetworkRelationshipEdgeData({
     relationshipType,
     membershipMode,
     membershipDirection,
+    membershipSourceGroupId,
+    membershipTargetGroupId,
+    membershipSourceGroupName,
+    membershipTargetGroupName,
+    membershipRequiredSourceRoleId,
+    membershipRequiredSourceRoleName,
     rightEdgeDirections,
     visibleFlowDirection,
     rightConnectionDirections,
@@ -906,17 +1051,22 @@ export function buildNetworkRelationshipDialogData(
   t: TranslationFn
 ): NetworkRelationshipDialogData {
   const edgeData = edge.data as EditableRightsLabelEdgeData | undefined;
-  const visibleRights = Array.isArray(edgeData?.visibleRights)
+  const visibleFlowChannels = Array.isArray(edgeData?.visibleRights)
     ? (edgeData.visibleRights as string[])
     : Array.isArray(edgeData?.rights)
       ? (edgeData.rights as string[])
       : [];
+  const visibleRights = visibleFlowChannels.filter(right => right !== MEMBERSHIP_FLOW_RIGHT);
+  const visibleFlowRelationshipKinds = filterRecordToVisibleRights(
+    edgeData?.visibleRightRelationshipKinds ?? edgeData?.rightRelationshipKinds,
+    visibleFlowChannels
+  ) as Record<string, NetworkRelationshipKind> | undefined;
   const visibleRightRelationshipKinds = filterRecordToVisibleRights(
     edgeData?.visibleRightRelationshipKinds ?? edgeData?.rightRelationshipKinds,
     visibleRights
   ) as Record<string, NetworkRelationshipKind> | undefined;
-  const relationshipKinds = visibleRightRelationshipKinds
-    ? Array.from(new Set(Object.values(visibleRightRelationshipKinds)))
+  const relationshipKinds = visibleFlowRelationshipKinds
+    ? Array.from(new Set(Object.values(visibleFlowRelationshipKinds)))
     : Array.isArray(edgeData?.relationshipKinds)
       ? (edgeData.relationshipKinds as NetworkRelationshipKind[])
       : [];
@@ -951,6 +1101,30 @@ export function buildNetworkRelationshipDialogData(
       edgeData?.membershipDirection === 'partner_members_to_current'
         ? edgeData.membershipDirection
         : undefined,
+    membershipSourceGroupId:
+      typeof edgeData?.membershipSourceGroupId === 'string'
+        ? edgeData.membershipSourceGroupId
+        : null,
+    membershipTargetGroupId:
+      typeof edgeData?.membershipTargetGroupId === 'string'
+        ? edgeData.membershipTargetGroupId
+        : null,
+    membershipSourceGroupName:
+      typeof edgeData?.membershipSourceGroupName === 'string'
+        ? edgeData.membershipSourceGroupName
+        : null,
+    membershipTargetGroupName:
+      typeof edgeData?.membershipTargetGroupName === 'string'
+        ? edgeData.membershipTargetGroupName
+        : null,
+    membershipRequiredSourceRoleId:
+      typeof edgeData?.membershipRequiredSourceRoleId === 'string'
+        ? edgeData.membershipRequiredSourceRoleId
+        : null,
+    membershipRequiredSourceRoleName:
+      typeof edgeData?.membershipRequiredSourceRoleName === 'string'
+        ? edgeData.membershipRequiredSourceRoleName
+        : null,
     rightEdgeDirections: filterRecordToVisibleRights(
       edgeData?.rightEdgeDirections,
       visibleRights

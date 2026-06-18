@@ -2,7 +2,8 @@ import { MarkerType, type Edge } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 
 import { filterEdgesByConnectionDirections, filterEdgesByRights } from '../networkFilterHelpers';
-import { getCivicNetworkEdgeColor } from '../networkEdgeHelpers';
+import { MEMBERSHIP_FLOW_RIGHT } from '@/features/shared/ui/status';
+import { buildNetworkRelationshipEdge, getCivicNetworkEdgeColor } from '../networkEdgeHelpers';
 import type { EditableRightsLabelEdgeData } from '../../types/networkEdge.types';
 
 function createRelationshipEdge(): Edge<EditableRightsLabelEdgeData> {
@@ -120,5 +121,45 @@ describe('networkFilterHelpers', () => {
     expect((filteredEdge?.data as EditableRightsLabelEdgeData | undefined)?.visibleRights).toEqual([
       'amendmentRight',
     ]);
+  });
+
+  it('filters membership flow independently from real right flow', () => {
+    const edge = buildNetworkRelationshipEdge({
+      edgeId: 'edge-h1-b1',
+      sourceId: 'group-h1',
+      targetId: 'group-b1',
+      sourceGroupId: 'group-h1',
+      targetGroupId: 'group-b1',
+      structuralType: 'parent',
+      rights: ['informationRight'],
+      relationshipKinds: ['active'],
+      rightRelationshipKinds: { informationRight: 'active' },
+      membershipMode: 'all_members',
+      memberSourceGroupId: 'group-b1',
+      memberTargetGroupId: 'group-h1',
+      rightEdgeDirections: { informationRight: 'forward' },
+      fallbackStrokeColor: getCivicNetworkEdgeColor('success'),
+      sourceName: 'H1',
+      targetName: 'B1',
+      graphRootGroupId: 'group-h1',
+      currentGroupId: 'group-h1',
+    });
+
+    const [membershipEdge] = filterEdgesByRights([edge], new Set([MEMBERSHIP_FLOW_RIGHT]));
+    const [rightEdge] = filterEdgesByRights([edge], new Set(['informationRight']));
+
+    expect(
+      (membershipEdge?.data as EditableRightsLabelEdgeData | undefined)?.visibleRights
+    ).toEqual([MEMBERSHIP_FLOW_RIGHT]);
+    expect(membershipEdge?.markerStart).toBeDefined();
+    expect(membershipEdge?.markerEnd).toBeUndefined();
+    expect(membershipEdge?.style?.animationDirection).toBe('reverse');
+
+    expect((rightEdge?.data as EditableRightsLabelEdgeData | undefined)?.visibleRights).toEqual([
+      'informationRight',
+    ]);
+    expect(rightEdge?.markerStart).toBeUndefined();
+    expect(rightEdge?.markerEnd).toBeDefined();
+    expect(rightEdge?.style?.animationDirection).toBeUndefined();
   });
 });

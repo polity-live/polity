@@ -166,7 +166,7 @@ const groups: Group[] = [
       {
         focusEditor: false,
         icon: <ChartNoAxesCombinedIcon />,
-        keywords: ['graph', 'diagram', 'csv', 'eurostat'],
+        keywords: ['graph', 'diagram', 'csv', 'govdata', 'eurostat'],
         value: CHART_NODE_TYPE,
         onSelect: () => openChartDialog(),
       },

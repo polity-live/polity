@@ -108,6 +108,7 @@ export interface CreateSubmitProgressUpdate {
 
 export interface CreateSubmitContext {
   reportProgress: (update: CreateSubmitProgressUpdate) => void;
+  setRecoveryTarget: (target: CreateSubmitTarget | null) => void;
 }
 
 /** Configuration for a create form */

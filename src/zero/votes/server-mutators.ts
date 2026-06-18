@@ -1,4 +1,9 @@
 import { defineMutator } from '@rocicorp/zero';
+import {
+  computeVoteResultSummary,
+  type MajorityType,
+  type VoteResult,
+} from '@/features/vote-cast/logic/computeVoteResults';
 import { mutators } from '../mutators';
 import {
   eventAllowsOnlineVoting,
@@ -6,7 +11,12 @@ import {
   isUserForcedOfflineForEvent,
 } from '../offline-roster-helpers';
 import { zql } from '../schema';
-import { recomputeEventCounters, requireRecentVotingPasswordVerification } from '../server-helpers';
+import {
+  eventTitle,
+  recomputeEventCounters,
+  requireRecentVotingPasswordVerification,
+} from '../server-helpers';
+import { fireNotification } from '../server-notify';
 import { resolveAmendmentProcessVote } from '../amendments/process-engine';
 import { notifyProcessVoteResolution } from '../amendments/process-notifications';
 import {
@@ -86,8 +96,34 @@ async function assertOfflineVoteTallyWithinCap(
 
 type VoteTx = Parameters<typeof mutators.votes.updateVote.fn>[0]['tx'];
 
+function isFinalVoteOpenStatus(status?: string | null) {
+  return status === 'final' || status === 'final_vote';
+}
+
 function isFinalizingVoteStatus(status?: string | null) {
   return status === 'final' || status === 'final_vote' || status === 'closed';
+}
+
+function normalizeMajorityType(value?: string | null): MajorityType {
+  if (value === 'absolute' || value === 'two_thirds') {
+    return value;
+  }
+
+  return 'simple';
+}
+
+function normalizeChoiceLabel(label?: string | null) {
+  return label?.trim().toLowerCase() ?? null;
+}
+
+function isAcceptChoice(label?: string | null) {
+  const normalized = normalizeChoiceLabel(label);
+  return normalized === 'accept' || normalized === 'yes';
+}
+
+function isRejectChoice(label?: string | null) {
+  const normalized = normalizeChoiceLabel(label);
+  return normalized === 'reject' || normalized === 'no';
 }
 
 async function assertCurrentCRVoteOrder(
@@ -162,6 +198,69 @@ async function assertNoOpenChangeRequestsBeforeFinalVote(
   return { isChangeRequestVote: false };
 }
 
+async function loadVoteContext(
+  tx: VoteTx,
+  vote: {
+    id: string;
+    agenda_item_id?: string | null;
+  }
+) {
+  if (!vote.agenda_item_id) {
+    return { isChangeRequestVote: false };
+  }
+
+  const timelineLink = await tx.run(zql.agenda_item_change_request.where('vote_id', vote.id).one());
+  return { isChangeRequestVote: Boolean(timelineLink) };
+}
+
+async function summarizeFinalVoteResult(
+  tx: VoteTx,
+  vote: {
+    id: string;
+    majority_type?: string | null;
+  }
+): Promise<{ result: VoteResult; acceptVotes: number; rejectVotes: number }> {
+  const [choices, finalDecisions, voters, offlineTallies] = await Promise.all([
+    tx.run(zql.vote_choice.where('vote_id', vote.id)),
+    tx.run(zql.final_choice_decision.where('vote_id', vote.id)),
+    tx.run(zql.voter.where('vote_id', vote.id)),
+    tx.run(zql.vote_offline_tally.where('vote_id', vote.id)),
+  ]);
+
+  const sortedChoices = [...choices].sort(
+    (left, right) => (left.order_index ?? 0) - (right.order_index ?? 0)
+  );
+  const acceptChoice = choices.find(choice => isAcceptChoice(choice.label)) ?? sortedChoices[0];
+  const rejectChoice = choices.find(choice => isRejectChoice(choice.label)) ?? sortedChoices[1];
+  const offlineFinalCount = offlineTallies.reduce(
+    (sum, tally) => (tally.phase === 'final' ? sum + (tally.count ?? 0) : sum),
+    0
+  );
+  const summary = computeVoteResultSummary(
+    sortedChoices.map((choice, index) => ({
+      id: choice.id,
+      label: choice.label ?? `Choice ${index + 1}`,
+      order_index: choice.order_index ?? index,
+    })),
+    finalDecisions
+      .map(decision => ({ choice_id: decision.choice_id ?? '' }))
+      .filter(decision => Boolean(decision.choice_id)),
+    Math.max(voters.length, finalDecisions.length + offlineFinalCount),
+    normalizeMajorityType(vote.majority_type),
+    offlineTallies
+  );
+
+  return {
+    result: summary.result,
+    acceptVotes: acceptChoice
+      ? (summary.choiceTallies.find(tally => tally.choiceId === acceptChoice.id)?.count ?? 0)
+      : 0,
+    rejectVotes: rejectChoice
+      ? (summary.choiceTallies.find(tally => tally.choiceId === rejectChoice.id)?.count ?? 0)
+      : 0,
+  };
+}
+
 /** Server-only mutators — override shared mutators with additional server-side logic. */
 export const voteServerMutators = {
   createVote: defineMutator(createVoteSchema, async ({ tx, ctx, args }) => {
@@ -177,10 +276,16 @@ export const voteServerMutators = {
 
   updateVote: defineMutator(updateVoteSchema, async ({ tx, ctx, args }) => {
     const oldVote = await tx.run(zql.vote.where('id', args.id).one());
+    const isStartingFinalVote =
+      oldVote && !isFinalVoteOpenStatus(oldVote.status) && isFinalVoteOpenStatus(args.status);
+    const isClosingFinalVote =
+      oldVote && isFinalVoteOpenStatus(oldVote.status) && args.status === 'closed';
     const voteContext =
       oldVote && !isFinalizingVoteStatus(oldVote.status) && isFinalizingVoteStatus(args.status)
         ? await assertNoOpenChangeRequestsBeforeFinalVote(tx, oldVote)
-        : { isChangeRequestVote: false };
+        : oldVote && isClosingFinalVote
+          ? await loadVoteContext(tx, oldVote)
+          : { isChangeRequestVote: false };
 
     await mutators.votes.updateVote.fn({ tx, ctx, args });
 
@@ -190,9 +295,13 @@ export const voteServerMutators = {
       args.status === 'closed' &&
       oldVote?.agenda_item_id
     ) {
-      const resolution = await resolveAmendmentProcessVote(tx, {
-        agenda_item_id: oldVote.agenda_item_id,
-      });
+      const resolution = await resolveAmendmentProcessVote(
+        tx,
+        {
+          agenda_item_id: oldVote.agenda_item_id,
+        },
+        ctx.userID
+      );
       await notifyProcessVoteResolution(tx, ctx.userID, oldVote.agenda_item_id, resolution);
     }
 
@@ -200,6 +309,34 @@ export const voteServerMutators = {
       const agendaItem = await tx.run(zql.agenda_item.where('id', oldVote.agenda_item_id).one());
       if (agendaItem?.event_id) {
         await recomputeEventCounters(tx, agendaItem.event_id);
+
+        if (!voteContext.isChangeRequestVote && (isStartingFinalVote || isClosingFinalVote)) {
+          const eTitle = await eventTitle(tx, agendaItem.event_id);
+          const agendaItemTitle = agendaItem.title ?? oldVote.title ?? 'Agenda item';
+
+          if (isStartingFinalVote) {
+            fireNotification('notifyVotingPhaseStarted', {
+              senderId: ctx.userID,
+              eventId: agendaItem.event_id,
+              eventTitle: eTitle,
+              agendaItemTitle,
+              votingType: 'final',
+            });
+          }
+
+          if (isClosingFinalVote) {
+            const summary = await summarizeFinalVoteResult(tx, oldVote);
+            fireNotification('notifyVotingCompleted', {
+              senderId: ctx.userID,
+              eventId: agendaItem.event_id,
+              eventTitle: eTitle,
+              agendaItemTitle,
+              result: summary.result,
+              acceptVotes: summary.acceptVotes,
+              rejectVotes: summary.rejectVotes,
+            });
+          }
+        }
       }
     }
   }),

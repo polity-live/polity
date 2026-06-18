@@ -1,10 +1,10 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useGroupNetwork } from './useGroupNetwork';
 import { useGroupData } from '@/features/groups/hooks/useGroupData';
 import { useGroupConnectionActions, useWorkflowActions } from '@/zero/network';
 import { useAllGroups } from '@/zero/groups/useGroupState';
 import { useAuth } from '@/providers/auth-provider';
-import { RIGHT_TYPES } from '@/features/shared/ui/status';
+import { MEMBERSHIP_FLOW_RIGHT, NETWORK_FLOW_FILTER_TYPES } from '@/features/shared/ui/status';
 import { useWorkflowEditor } from './useWorkflowEditor';
 import { useHierarchyLinkConflicts } from './useHierarchyLinkConflicts';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -12,6 +12,7 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 import { getRelationshipTypeForGroup } from '../logic/groupRelationshipOrientation';
 import { buildActiveRelationshipSummaries } from '../logic/relationshipSummaryHelpers';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import type { ActionSubmissionContext } from '@/features/shared/ui/action-submission';
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
 import type {
   GroupRelationshipFilter,
@@ -21,7 +22,39 @@ import type {
 } from '../types/network.types';
 
 function isRequestRightRelationship(rel: NormalizedGroupRelationship) {
-  return Boolean(rel.grant_id && rel.with_right);
+  return rel.request_item_kind === 'right' || Boolean(rel.grant_id && rel.with_right);
+}
+
+function isRequestMembershipRelationship(rel: NormalizedGroupRelationship) {
+  return rel.request_item_kind === 'membership';
+}
+
+function isRequestStructureRelationship(rel: NormalizedGroupRelationship) {
+  return rel.request_item_kind === 'structure' || (!rel.grant_id && !rel.membership_request_id);
+}
+
+function getActionableRequestRels(entry: GroupedRelationshipRequest) {
+  return [...entry.rightRels, ...entry.membershipRels];
+}
+
+function filterGroupedRequestItems(
+  entry: GroupedRelationshipRequest,
+  manageRightFilter: Set<string>,
+  hasRightFilter: boolean
+): GroupedRelationshipRequest {
+  const rightRels = hasRightFilter
+    ? entry.rightRels.filter(rel => manageRightFilter.has(rel.with_right ?? ''))
+    : entry.rightRels;
+  const membershipRels = hasRightFilter
+    ? entry.membershipRels.filter(() => manageRightFilter.has(MEMBERSHIP_FLOW_RIGHT))
+    : entry.membershipRels;
+
+  return {
+    ...entry,
+    rightRels,
+    membershipRels,
+    rels: [...membershipRels, ...rightRels],
+  };
 }
 
 function groupRequestRelationships(
@@ -47,6 +80,7 @@ function groupRequestRelationships(
         requestId,
         allRels: [],
         rightRels: [],
+        membershipRels: [],
         structureRel: null,
         rels: [],
         type: relationshipType,
@@ -59,6 +93,9 @@ function groupRequestRelationships(
 
     if (isRequestRightRelationship(rel)) {
       entry.rightRels.push(rel);
+      entry.rels.push(rel);
+    } else if (isRequestMembershipRelationship(rel)) {
+      entry.membershipRels.push(rel);
       entry.rels.push(rel);
     } else if (!entry.structureRel) {
       entry.structureRel = rel;
@@ -83,7 +120,7 @@ function countGroupedRequestHeaders(entries: readonly GroupedRelationshipRequest
   return ids.size;
 }
 
-export function useNetworkPage(groupId: string) {
+export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
   const { t } = useTranslation();
   const { user: authUser } = useAuth();
   const { group } = useGroupData(groupId);
@@ -106,12 +143,20 @@ export function useNetworkPage(groupId: string) {
   const { canActivateLink } = useHierarchyLinkConflicts(groupId, allRelationships);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<NetworkTab>('current-network');
+  const [activeTab, setActiveTab] = useState<NetworkTab>(initialTab ?? 'current-network');
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   // Search & filter state for manage tab
   const [searchQuery, setSearchQuery] = useState('');
   const [directionFilter, setDirectionFilter] = useState<GroupRelationshipFilter>('all');
-  const [manageRightFilter, setManageRightFilter] = useState<Set<string>>(new Set(RIGHT_TYPES));
+  const [manageRightFilter, setManageRightFilter] = useState<Set<string>>(
+    new Set(NETWORK_FLOW_FILTER_TYPES)
+  );
 
   const toggleManageRightFilter = useCallback((right: string) => {
     setManageRightFilter(prev => {
@@ -171,52 +216,36 @@ export function useNetworkPage(groupId: string) {
 
   // Filtered incoming/outgoing by search and right filters
   const filteredIncoming = useMemo(() => {
-    const hasRightFilter = manageRightFilter.size !== RIGHT_TYPES.length;
+    const hasRightFilter = manageRightFilter.size !== NETWORK_FLOW_FILTER_TYPES.length;
     const query = searchQuery.toLowerCase();
     return groupedIncoming
       .filter(entry => !query || entry.group.name?.toLowerCase().includes(query))
-      .map(entry => ({
-        ...entry,
-        rightRels: hasRightFilter
-          ? entry.rightRels.filter(rel => manageRightFilter.has(rel.with_right ?? ''))
-          : entry.rightRels,
-        rels: hasRightFilter
-          ? entry.rightRels.filter(rel => manageRightFilter.has(rel.with_right ?? ''))
-          : entry.rightRels,
-      }))
+      .map(entry => filterGroupedRequestItems(entry, manageRightFilter, hasRightFilter))
       .filter(
         entry =>
           !hasRightFilter ||
-          entry.rightRels.length > 0 ||
-          entry.allRels.every(rel => !isRequestRightRelationship(rel))
+          getActionableRequestRels(entry).length > 0 ||
+          entry.allRels.every(isRequestStructureRelationship)
       );
   }, [groupedIncoming, searchQuery, manageRightFilter]);
 
   const filteredOutgoing = useMemo(() => {
-    const hasRightFilter = manageRightFilter.size !== RIGHT_TYPES.length;
+    const hasRightFilter = manageRightFilter.size !== NETWORK_FLOW_FILTER_TYPES.length;
     const query = searchQuery.toLowerCase();
     return groupedOutgoing
       .filter(entry => !query || entry.group.name?.toLowerCase().includes(query))
-      .map(entry => ({
-        ...entry,
-        rightRels: hasRightFilter
-          ? entry.rightRels.filter(rel => manageRightFilter.has(rel.with_right ?? ''))
-          : entry.rightRels,
-        rels: hasRightFilter
-          ? entry.rightRels.filter(rel => manageRightFilter.has(rel.with_right ?? ''))
-          : entry.rightRels,
-      }))
+      .map(entry => filterGroupedRequestItems(entry, manageRightFilter, hasRightFilter))
       .filter(
         entry =>
           !hasRightFilter ||
-          entry.rightRels.length > 0 ||
-          entry.allRels.every(rel => !isRequestRightRelationship(rel))
+          getActionableRequestRels(entry).length > 0 ||
+          entry.allRels.every(isRequestStructureRelationship)
       );
   }, [groupedOutgoing, searchQuery, manageRightFilter]);
 
   // Handlers
   const handleAcceptRequest = useCallback(
-    async (rels: NormalizedGroupRelationship[]) => {
+    async (rels: NormalizedGroupRelationship[], submissionContext?: ActionSubmissionContext) => {
       const blocked = rels.filter(rel => !canActivateLink(rel));
       if (blocked.length > 0) {
         toast.error(t('common.network.linkAcceptBlocked'));
@@ -241,8 +270,14 @@ export function useNetworkPage(groupId: string) {
           id: requestId,
           grant_request_ids: [...rightIds],
           approve_membership: rels.some(
-            rel => rel.connection_request_id === requestId && rel.membership_mode !== 'none'
+            rel => rel.connection_request_id === requestId && isRequestMembershipRelationship(rel)
           ),
+        });
+        submissionContext?.reportProgress({ key: 'commit', status: 'complete' });
+        submissionContext?.reportProgress({
+          key: 'sync',
+          status: 'active',
+          label: 'Netzwerkfolgen synchronisieren',
         });
         await serverConfirmed(result);
       }
@@ -270,10 +305,10 @@ export function useNetworkPage(groupId: string) {
           id: requestId,
           grant_request_ids: [...rightIds],
           reject_membership: rels.some(
-            rel => rel.connection_request_id === requestId && rel.membership_mode !== 'none'
+            rel => rel.connection_request_id === requestId && isRequestMembershipRelationship(rel)
           ),
           reject_structure: rels.some(
-            rel => rel.connection_request_id === requestId && !isRequestRightRelationship(rel)
+            rel => rel.connection_request_id === requestId && isRequestStructureRelationship(rel)
           ),
         });
         await serverConfirmed(result);
@@ -291,7 +326,7 @@ export function useNetworkPage(groupId: string) {
       );
 
       for (const connection of connectionsToDelete) {
-        const result = deleteGroupConnection({ id: connection.id });
+        const result = deleteGroupConnection({ id: connection.id, acting_group_id: groupId });
         await serverConfirmed(result);
       }
     },

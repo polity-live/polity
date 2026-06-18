@@ -10,6 +10,7 @@ import { CreateStepRenderer } from './CreateStepRenderer';
 interface OnePageFormLayoutViewProps {
   steps: CreateFormStep[];
   activeSection: number;
+  allStepsValid: boolean;
   sectionRefs: RefObject<(HTMLDivElement | null)[]>;
   stepLabels: string[];
   onStepClick: (step: number) => void;
@@ -22,6 +23,7 @@ interface OnePageFormLayoutViewProps {
 export function OnePageFormLayoutView({
   steps,
   activeSection,
+  allStepsValid,
   sectionRefs,
   stepLabels,
   onStepClick,
@@ -69,7 +71,12 @@ export function OnePageFormLayoutView({
       </div>
 
       <div className="border-t pt-5">
-        <Button onClick={onSubmit} disabled={isSubmitting} className="w-full" size="lg">
+        <Button
+          onClick={onSubmit}
+          disabled={isSubmitting || !allStepsValid}
+          className="w-full"
+          size="lg"
+        >
           {isSubmitting ? creatingLabel : createButtonLabel}
         </Button>
       </div>

@@ -1,6 +1,6 @@
 export type StreetDesignComparisonMode = 'original' | 'new_design' | 'overlay' | 'split';
 
-export type StreetDesignInteractionMode = 'place' | 'camera';
+export type StreetDesignInteractionMode = 'place' | 'select' | 'camera';
 
 export type StreetDesignGeometryKind = 'point' | 'line' | 'polygon' | 'corridor';
 
@@ -143,6 +143,15 @@ export interface StreetDesignObject {
   cost: StreetDesignObjectCost;
 }
 
+export interface StreetDesignPlacementSettings {
+  type: StreetDesignObjectType;
+  width: number;
+  rotationDeg: number;
+  rotationLocked: boolean;
+  properties: Record<string, StreetDesignPropertyValue>;
+  customUnitCostMinor: number | null;
+}
+
 export interface StreetDesignObjectDefinition {
   type: StreetDesignObjectType;
   label: string;
@@ -158,6 +167,8 @@ export interface StreetDesignObjectDefinition {
   defaultWidth?: number;
   color: string;
 }
+
+export type StreetDesignObjectCategory = StreetDesignObjectDefinition['category'];
 
 export interface StreetDesignCostLine {
   objectId: string;

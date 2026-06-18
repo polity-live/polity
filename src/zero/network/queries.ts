@@ -9,7 +9,9 @@ function applyGroupConnectionAccess<T>(q: T, userID: string | undefined | null):
       exists('group_a', (group: any) => applyGroupQueryAccess(group, userID)),
       exists('group_b', (group: any) => applyGroupQueryAccess(group, userID)),
       exists('parent_group', (group: any) => applyGroupQueryAccess(group, userID)),
-      exists('child_group', (group: any) => applyGroupQueryAccess(group, userID))
+      exists('child_group', (group: any) => applyGroupQueryAccess(group, userID)),
+      exists('from_group', (group: any) => applyGroupQueryAccess(group, userID)),
+      exists('to_group', (group: any) => applyGroupQueryAccess(group, userID))
     )
   ) as T;
 }
@@ -49,12 +51,19 @@ export const networkQueries = {
     ({ args: { groupId }, ctx: { userID } }) =>
       applyGroupConnectionAccess(zql.group_connection, userID)
         .where(({ cmp, or }) =>
-          or(cmp('group_a_id', '=', groupId), cmp('group_b_id', '=', groupId))
+          or(
+            cmp('group_a_id', '=', groupId),
+            cmp('group_b_id', '=', groupId),
+            cmp('from_group_id', '=', groupId),
+            cmp('to_group_id', '=', groupId)
+          )
         )
         .related('group_a')
         .related('group_b')
         .related('parent_group')
         .related('child_group')
+        .related('from_group')
+        .related('to_group')
         .related('created_by')
         .related('grants', grantsQuery =>
           grantsQuery
@@ -80,13 +89,17 @@ export const networkQueries = {
         .where(({ and, cmp, or }) =>
           or(
             and(cmp('group_a_id', '=', groupAId), cmp('group_b_id', '=', groupBId)),
-            and(cmp('group_a_id', '=', groupBId), cmp('group_b_id', '=', groupAId))
+            and(cmp('group_a_id', '=', groupBId), cmp('group_b_id', '=', groupAId)),
+            and(cmp('from_group_id', '=', groupAId), cmp('to_group_id', '=', groupBId)),
+            and(cmp('from_group_id', '=', groupBId), cmp('to_group_id', '=', groupAId))
           )
         )
         .related('group_a')
         .related('group_b')
         .related('parent_group')
         .related('child_group')
+        .related('from_group')
+        .related('to_group')
         .related('created_by')
         .related('grants', grantsQuery =>
           grantsQuery
@@ -111,6 +124,8 @@ export const networkQueries = {
       .related('group_b')
       .related('parent_group')
       .related('child_group')
+      .related('from_group')
+      .related('to_group')
       .related('created_by')
       .related('grants', grantsQuery =>
         grantsQuery
@@ -138,6 +153,8 @@ export const networkQueries = {
         .related('group_b')
         .related('parent_group')
         .related('child_group')
+        .related('from_group')
+        .related('to_group')
         .related('created_by')
         .related('grants', grantsQuery =>
           grantsQuery
@@ -154,6 +171,91 @@ export const networkQueries = {
             .related('origins', originQuery => originQuery.related('eligible_origin_group'))
         )
         .one()
+  ),
+
+  hierarchyPathsByGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      zql.group_hierarchy_path
+        .where('status', 'active')
+        .where(({ cmp, or }) =>
+          or(cmp('ancestor_group_id', '=', groupId), cmp('descendant_group_id', '=', groupId))
+        )
+        .where(({ or, exists }: any) =>
+          or(
+            exists('ancestor_group', (group: any) => applyGroupQueryAccess(group, userID)),
+            exists('descendant_group', (group: any) => applyGroupQueryAccess(group, userID))
+          )
+        )
+        .related('ancestor_group')
+        .related('descendant_group')
+        .related('direct_child_group')
+        .related('base_group')
+        .related('connection')
+        .orderBy('depth', 'asc')
+  ),
+
+  effectiveRightsByGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      zql.group_effective_right
+        .where('status', 'active')
+        .where(({ cmp, or }) =>
+          or(cmp('holder_group_id', '=', groupId), cmp('scope_group_id', '=', groupId))
+        )
+        .where(({ or, exists }: any) =>
+          or(
+            exists('holder_group', (group: any) => applyGroupQueryAccess(group, userID)),
+            exists('scope_group', (group: any) => applyGroupQueryAccess(group, userID))
+          )
+        )
+        .related('holder_group')
+        .related('scope_group')
+        .related('source_connection')
+        .related('source_grant')
+        .orderBy('right_key', 'asc')
+  ),
+
+  membershipExclusivityLocksByGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      zql.group_membership_exclusivity_lock
+        .where('status', 'active')
+        .where(({ cmp, or }) =>
+          or(cmp('hierarchy_group_id', '=', groupId), cmp('source_group_id', '=', groupId))
+        )
+        .where(({ or, exists }: any) =>
+          or(
+            exists('hierarchy_group', (group: any) => applyGroupQueryAccess(group, userID)),
+            exists('source_group', (group: any) => applyGroupQueryAccess(group, userID))
+          )
+        )
+        .related('user')
+        .related('hierarchy_group')
+        .related('source_group')
+        .related('group_membership')
+        .orderBy('created_at', 'asc')
+  ),
+
+  siblingSourceLocksByGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      zql.group_sibling_source_lock
+        .where('status', 'active')
+        .where(({ cmp, or }) =>
+          or(cmp('sibling_group_id', '=', groupId), cmp('source_group_id', '=', groupId))
+        )
+        .where(({ or, exists }: any) =>
+          or(
+            exists('sibling_group', (group: any) => applyGroupQueryAccess(group, userID)),
+            exists('source_group', (group: any) => applyGroupQueryAccess(group, userID))
+          )
+        )
+        .related('user')
+        .related('sibling_group')
+        .related('source_group')
+        .related('group_membership')
+        .orderBy('created_at', 'asc')
   ),
 
   groupConnectionRequestsByGroup: defineQuery(
@@ -315,6 +417,14 @@ export type GroupConnectionWithRelationsRow = NonNullable<
 >;
 export type GroupConnectionListRow = QueryRowType<typeof networkQueries.groupConnectionsByGroup>;
 export type GroupConnectionPairRow = QueryRowType<typeof networkQueries.groupConnectionsByPair>;
+export type GroupHierarchyPathRow = QueryRowType<typeof networkQueries.hierarchyPathsByGroup>;
+export type GroupEffectiveRightRow = QueryRowType<typeof networkQueries.effectiveRightsByGroup>;
+export type GroupMembershipExclusivityLockRow = QueryRowType<
+  typeof networkQueries.membershipExclusivityLocksByGroup
+>;
+export type GroupSiblingSourceLockRow = QueryRowType<
+  typeof networkQueries.siblingSourceLocksByGroup
+>;
 export type GroupConnectionRequestListRow = QueryRowType<
   typeof networkQueries.groupConnectionRequestsByGroup
 >;

@@ -1,4 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+const fireNotificationMock = vi.hoisted(() => vi.fn());
+
+vi.mock('../../server-notify', () => ({
+  fireNotification: (...args: unknown[]) => fireNotificationMock(...args),
+}));
+
 import { completeProcessTaskWithEvent, resolveAmendmentProcessVote } from '../process-engine';
 
 function createQueueTx(runResults: unknown[]) {
@@ -100,6 +107,7 @@ function addRelativeOffset(timestamp: number, years: number, months: number) {
 }
 
 afterEach(() => {
+  fireNotificationMock.mockReset();
   vi.restoreAllMocks();
 });
 
@@ -203,7 +211,13 @@ describe('process-engine implementation evaluation', () => {
       [{ id: 'branch-1', status: 'completed', created_at: 1 }],
     ]);
 
-    await resolveAmendmentProcessVote(tx as never, { agenda_item_id: 'agenda-1' });
+    const resolution = await resolveAmendmentProcessVote(tx as never, {
+      agenda_item_id: 'agenda-1',
+    });
+
+    expect(resolution).toMatchObject({
+      supportedGroupId: 'target-group-1',
+    });
 
     expect(tx.mutate.process_task.insert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -219,6 +233,12 @@ describe('process-engine implementation evaluation', () => {
         }),
       })
     );
+    expect(fireNotificationMock).toHaveBeenCalledWith('notifyProcessTaskCreated', {
+      senderId: 'user-1',
+      groupId: 'target-group-1',
+      groupName: 'Target Group',
+      taskTitle: 'Umsetzung evaluieren: Housing Reform',
+    });
     const processRunUpdateCalls = tx.mutate.amendment_process_run.update.mock.calls as unknown as [
       Record<string, unknown>,
     ][];
@@ -273,6 +293,10 @@ describe('process-engine implementation evaluation', () => {
     await resolveAmendmentProcessVote(tx as never, { agenda_item_id: 'agenda-1' });
 
     expect(tx.mutate.process_task.insert).not.toHaveBeenCalled();
+    expect(fireNotificationMock).not.toHaveBeenCalledWith(
+      'notifyProcessTaskCreated',
+      expect.anything()
+    );
     const processRunUpdateCalls = tx.mutate.amendment_process_run.update.mock.calls as unknown as [
       Record<string, unknown>,
     ][];
@@ -322,6 +346,134 @@ describe('process-engine implementation evaluation', () => {
         id: 'run-1',
         implementation_status: 'implemented',
       })
+    );
+  });
+
+  it('reopens a cancelled implementation evaluation task and notifies the target group', async () => {
+    const now = new Date(2026, 5, 15, 12, 0, 0, 0).getTime();
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+    const expectedEvaluationDate = now + 30 * 24 * 60 * 60 * 1000;
+    const tx = createQueueTx([
+      [
+        {
+          id: 'step-1',
+          process_run_id: 'run-1',
+          branch_id: 'branch-1',
+          vote_id: 'vote-1',
+          target_group_id: 'target-group-1',
+          order_index: 1,
+          status: 'scheduled',
+          step_kind: 'group_vote',
+        },
+      ],
+      { id: 'agenda-1', amendment_id: 'amendment-1', title: 'Final Vote' },
+      {
+        id: 'run-1',
+        amendment_id: 'amendment-1',
+        created_by_id: 'user-creator',
+        evaluation_mode: 'fixed_date',
+        evaluation_date: expectedEvaluationDate,
+        evaluation_offset_months: null,
+        evaluation_offset_years: null,
+        implementation_status: null,
+        selected_target_group_id: 'target-group-1',
+      },
+      { id: 'amendment-1', title: 'Housing Reform', reason: 'Reason' },
+      buildDecisionVote({ accept: 2, reject: 1 }),
+      { id: 'branch-1', status: 'scheduled', created_at: 1 },
+      [],
+      null,
+      [],
+      null,
+      { id: 'target-group-1', name: 'Target Group' },
+      [
+        {
+          id: 'task-cancelled-1',
+          status: 'cancelled',
+          created_at: 1,
+        },
+      ],
+      [{ id: 'branch-1', status: 'completed', created_at: 1 }],
+    ]);
+
+    await resolveAmendmentProcessVote(tx as never, { agenda_item_id: 'agenda-1' }, 'closing-user');
+
+    expect(tx.mutate.process_task.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.process_task.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'task-cancelled-1',
+        status: 'open',
+        group_id: 'target-group-1',
+        target_group_id: 'target-group-1',
+      })
+    );
+    expect(fireNotificationMock).toHaveBeenCalledWith('notifyProcessTaskCreated', {
+      senderId: 'closing-user',
+      groupId: 'target-group-1',
+      groupName: 'Target Group',
+      taskTitle: 'Umsetzung evaluieren: Housing Reform',
+    });
+  });
+
+  it('does not notify again when an implementation evaluation task is already open', async () => {
+    const now = new Date(2026, 5, 15, 12, 0, 0, 0).getTime();
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+    const expectedEvaluationDate = now + 30 * 24 * 60 * 60 * 1000;
+    const tx = createQueueTx([
+      [
+        {
+          id: 'step-1',
+          process_run_id: 'run-1',
+          branch_id: 'branch-1',
+          vote_id: 'vote-1',
+          target_group_id: 'target-group-1',
+          order_index: 1,
+          status: 'scheduled',
+          step_kind: 'group_vote',
+        },
+      ],
+      { id: 'agenda-1', amendment_id: 'amendment-1', title: 'Final Vote' },
+      {
+        id: 'run-1',
+        amendment_id: 'amendment-1',
+        created_by_id: 'user-creator',
+        evaluation_mode: 'fixed_date',
+        evaluation_date: expectedEvaluationDate,
+        evaluation_offset_months: null,
+        evaluation_offset_years: null,
+        implementation_status: null,
+        selected_target_group_id: 'target-group-1',
+      },
+      { id: 'amendment-1', title: 'Housing Reform', reason: 'Reason' },
+      buildDecisionVote({ accept: 2, reject: 1 }),
+      { id: 'branch-1', status: 'scheduled', created_at: 1 },
+      [],
+      null,
+      [],
+      null,
+      { id: 'target-group-1', name: 'Target Group' },
+      [
+        {
+          id: 'task-open-1',
+          status: 'open',
+          created_at: 1,
+        },
+      ],
+      [{ id: 'branch-1', status: 'completed', created_at: 1 }],
+    ]);
+
+    await resolveAmendmentProcessVote(tx as never, { agenda_item_id: 'agenda-1' }, 'closing-user');
+
+    expect(tx.mutate.process_task.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.process_task.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'task-open-1',
+        status: 'open',
+      })
+    );
+    expect(fireNotificationMock).not.toHaveBeenCalledWith(
+      'notifyProcessTaskCreated',
+      expect.anything()
     );
   });
 });

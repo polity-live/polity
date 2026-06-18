@@ -10,12 +10,14 @@ interface UserSearchInputProps {
   placeholder?: string;
   /** User ID to exclude (usually the current user) */
   excludeUserId?: string;
-  excludeUserIds?: string[];
+  excludeUserIds?: readonly string[];
+  allowedUserIds?: readonly string[];
   /** Allow selecting multiple users */
   multi?: boolean;
   required?: boolean;
   disablePortal?: boolean;
   showAllResults?: boolean;
+  disabled?: boolean;
 }
 
 export function UserSearchInput({
@@ -26,12 +28,18 @@ export function UserSearchInput({
   placeholder = translateText('generated.inline.0044_search_users_by_name_or_handle_00f8d0a6'),
   excludeUserId,
   excludeUserIds = [],
+  allowedUserIds,
   multi = true,
   required,
   disablePortal = false,
   showAllResults = false,
+  disabled = false,
 }: UserSearchInputProps) {
-  const { items } = useUserSearchInputController({ excludeUserId, excludeUserIds });
+  const { items } = useUserSearchInputController({
+    allowedUserIds,
+    excludeUserId,
+    excludeUserIds,
+  });
 
   return (
     <UserSearchInputView
@@ -45,6 +53,7 @@ export function UserSearchInput({
       placeholder={placeholder}
       disablePortal={disablePortal}
       showAllResults={showAllResults}
+      disabled={disabled}
     />
   );
 }

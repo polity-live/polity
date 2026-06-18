@@ -57,6 +57,7 @@ export function useOnePageFormLayoutController({
 
   return {
     activeSection,
+    allStepsValid: steps.every(step => step.optional || step.isValid()),
     sectionRefs,
     stepLabels: steps.map(s => s.label),
     creatingLabel: t('pages.create.creating'),

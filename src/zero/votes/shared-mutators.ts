@@ -2,7 +2,7 @@ import { defineMutator } from '@rocicorp/zero';
 import { zql } from '../schema';
 import { can } from '../rbac/can';
 import { requireOwner } from '../rbac/authorize';
-import { PermissionError } from '../rbac/errors';
+import { PermissionError, isPermissionError } from '../rbac/errors';
 import { defaultVoteBallotVisibility } from '../shared';
 import {
   createVoteSchema,
@@ -94,6 +94,35 @@ async function assertVoteManager(tx: VoteTx, ctx: VoteCtx, voteId: string) {
   await assertVoteManagerForScope(tx, ctx, { eventId, amendmentId });
 }
 
+async function assertActiveVotingRightForVote(tx: VoteTx, ctx: VoteCtx, voteId: string) {
+  if (tx.location === 'client') return;
+  const { eventId } = await loadVoteScope(tx, voteId);
+  if (!eventId) throw new PermissionError('active_voting', 'events', 'event required');
+  await can(tx, ctx, { action: 'active_voting', resource: 'events', eventId });
+}
+
+async function assertSelfActiveVotingRightOrVoteManager(
+  tx: VoteTx,
+  ctx: VoteCtx,
+  args: {
+    voteId: string;
+    userId: string;
+  }
+) {
+  if (tx.location === 'client') return;
+
+  if (args.userId === ctx.userID) {
+    try {
+      await assertActiveVotingRightForVote(tx, ctx, args.voteId);
+      return;
+    } catch (error) {
+      if (!isPermissionError(error)) throw error;
+    }
+  }
+
+  await assertVoteManager(tx, ctx, args.voteId);
+}
+
 async function assertVoterOwner(tx: VoteTx, ctx: VoteCtx, voterId: string, voteId: string) {
   if (tx.location === 'client') return;
   const voter = await tx.run(zql.voter.where('id', voterId).one());
@@ -101,6 +130,10 @@ async function assertVoterOwner(tx: VoteTx, ctx: VoteCtx, voterId: string, voteI
     throw new Error('Voter not found for this vote.');
   }
   requireOwner(tx, ctx, voter.user_id, { action: 'active_voting', resource: 'events' });
+  const { eventId } = await loadVoteScope(tx, voteId);
+  if (eventId) {
+    await can(tx, ctx, { action: 'active_voting', resource: 'events', eventId });
+  }
 }
 
 async function assertVoterParticipationOwner(
@@ -116,6 +149,63 @@ async function assertVoterParticipationOwner(
       : await tx.run(zql.final_voter_participation.where('id', participationId).one());
   if (!participation) throw new Error('Vote participation not found');
   await assertVoterOwner(tx, ctx, participation.voter_id, participation.vote_id);
+}
+
+async function assertChoiceBelongsToVote(tx: VoteTx, voteId: string, choiceId: string) {
+  if (tx.location === 'client') return;
+  const choice = await tx.run(zql.vote_choice.where('id', choiceId).one());
+  if (!choice || choice.vote_id !== voteId) {
+    throw new Error('Vote choice not found for this vote.');
+  }
+}
+
+async function assertSecretChoiceDecisionOwner(
+  tx: VoteTx,
+  ctx: VoteCtx,
+  voteId: string,
+  phase: 'indicative' | 'final'
+) {
+  if (tx.location === 'client') return;
+  const { eventId } = await loadVoteScope(tx, voteId);
+  if (!eventId) {
+    throw new PermissionError('active_voting', 'events', 'event required');
+  }
+
+  const voter = await tx.run(zql.voter.where('vote_id', voteId).where('user_id', ctx.userID).one());
+  if (!voter) {
+    throw new PermissionError('active_voting', 'events', `vote:${voteId}`);
+  }
+
+  await assertVoterOwner(tx, ctx, voter.id, voteId);
+
+  const participation =
+    phase === 'indicative'
+      ? await tx.run(
+          zql.indicative_voter_participation
+            .where('vote_id', voteId)
+            .where('voter_id', voter.id)
+            .one()
+        )
+      : await tx.run(
+          zql.final_voter_participation.where('vote_id', voteId).where('voter_id', voter.id).one()
+        );
+
+  if (!participation) throw new Error('Vote participation not found');
+}
+
+async function assertSecretChoiceDecisionOwnerOrManager(
+  tx: VoteTx,
+  ctx: VoteCtx,
+  voteId: string,
+  phase: 'indicative' | 'final'
+) {
+  if (tx.location === 'client') return;
+
+  try {
+    await assertSecretChoiceDecisionOwner(tx, ctx, voteId, phase);
+  } catch {
+    await assertVoteManager(tx, ctx, voteId);
+  }
 }
 
 /** Shared mutators — run on both client and server. */
@@ -187,7 +277,10 @@ export const voteSharedMutators = {
 
   // Add a voter
   createVoter: defineMutator(createVoterSchema, async ({ tx, ctx, args }) => {
-    await assertVoteManager(tx, ctx, args.vote_id);
+    await assertSelfActiveVotingRightOrVoteManager(tx, ctx, {
+      voteId: args.vote_id,
+      userId: args.user_id,
+    });
     const now = Date.now();
     await tx.mutate.voter.insert({
       ...args,
@@ -222,10 +315,11 @@ export const voteSharedMutators = {
   createIndicativeChoiceDecision: defineMutator(
     createIndicativeChoiceDecisionSchema,
     async ({ tx, ctx, args }) => {
+      await assertChoiceBelongsToVote(tx, args.vote_id, args.choice_id);
       if (args.voter_participation_id) {
         await assertVoterParticipationOwner(tx, ctx, args.voter_participation_id, 'indicative');
       } else {
-        await assertVoteManager(tx, ctx, args.vote_id);
+        await assertSecretChoiceDecisionOwnerOrManager(tx, ctx, args.vote_id, 'indicative');
       }
       const now = Date.now();
       await tx.mutate.indicative_choice_decision.insert({
@@ -249,10 +343,11 @@ export const voteSharedMutators = {
   createFinalChoiceDecision: defineMutator(
     createFinalChoiceDecisionSchema,
     async ({ tx, ctx, args }) => {
+      await assertChoiceBelongsToVote(tx, args.vote_id, args.choice_id);
       if (args.voter_participation_id) {
         await assertVoterParticipationOwner(tx, ctx, args.voter_participation_id, 'final');
       } else {
-        await assertVoteManager(tx, ctx, args.vote_id);
+        await assertSecretChoiceDecisionOwnerOrManager(tx, ctx, args.vote_id, 'final');
       }
       const now = Date.now();
       await tx.mutate.final_choice_decision.insert({

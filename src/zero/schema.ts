@@ -5,6 +5,7 @@ import { user, file } from './users/table';
 import {
   group,
   groupMembership,
+  groupMembershipOrigin,
   groupOfflineMember,
   groupOfflineMembership,
   groupMembershipRole,
@@ -22,6 +23,7 @@ import {
   eventParticipantRole,
   participant,
   eventException,
+  eventAssemblyScope,
 } from './events/table';
 import {
   amendment,
@@ -96,13 +98,21 @@ import {
 } from './votes/table';
 import { changeRequest } from './change-requests/table';
 import { thread, comment } from './discussions/table';
-import { eventDelegate, groupDelegateAllocation } from './delegates/table';
+import {
+  eventDelegate,
+  groupDelegateAllocation,
+  delegateElectionAssignment,
+} from './delegates/table';
 import {
   follow,
   groupConnection,
   groupRightGrant,
   groupMembershipRule,
   groupMembershipRuleOrigin,
+  groupHierarchyPath,
+  groupEffectiveRight,
+  groupMembershipExclusivityLock,
+  groupSiblingSourceLock,
   groupConnectionRequest,
   groupRightGrantRequest,
   groupMembershipRuleRequest,
@@ -140,6 +150,7 @@ const zeroTables = [
   // Groups
   group,
   groupMembership,
+  groupMembershipOrigin,
   groupOfflineMember,
   groupOfflineMembership,
   groupMembershipRole,
@@ -156,6 +167,7 @@ const zeroTables = [
   eventParticipantRole,
   participant,
   eventException,
+  eventAssemblyScope,
   // Amendments
   amendment,
   amendmentCollaborator,
@@ -209,12 +221,17 @@ const zeroTables = [
   // Delegates
   eventDelegate,
   groupDelegateAllocation,
+  delegateElectionAssignment,
   // Network
   follow,
   groupConnection,
   groupRightGrant,
   groupMembershipRule,
   groupMembershipRuleOrigin,
+  groupHierarchyPath,
+  groupEffectiveRight,
+  groupMembershipExclusivityLock,
+  groupSiblingSourceLock,
   groupConnectionRequest,
   groupRightGrantRequest,
   groupMembershipRuleRequest,
@@ -303,6 +320,7 @@ export type Follow = Row<Schema['tables']['follow']>;
 // Groups
 export type Group = Row<Schema['tables']['group']>;
 export type GroupMembership = Row<Schema['tables']['group_membership']>;
+export type GroupMembershipOrigin = Row<Schema['tables']['group_membership_origin']>;
 export type GroupOfflineMember = Row<Schema['tables']['group_offline_member']>;
 export type GroupOfflineMembership = Row<Schema['tables']['group_offline_membership']>;
 export type GroupMembershipRole = Row<Schema['tables']['group_membership_role']>;
@@ -312,6 +330,12 @@ export type GroupGuestRole = Row<Schema['tables']['group_guest_role']>;
 export type GroupConnection = Row<Schema['tables']['group_connection']>;
 export type GroupRightGrant = Row<Schema['tables']['group_right_grant']>;
 export type GroupMembershipRule = Row<Schema['tables']['group_membership_rule']>;
+export type GroupHierarchyPath = Row<Schema['tables']['group_hierarchy_path']>;
+export type GroupEffectiveRight = Row<Schema['tables']['group_effective_right']>;
+export type GroupMembershipExclusivityLock = Row<
+  Schema['tables']['group_membership_exclusivity_lock']
+>;
+export type GroupSiblingSourceLock = Row<Schema['tables']['group_sibling_source_lock']>;
 export type Role = Row<Schema['tables']['role']>;
 export type RoleHolderHistory = Row<Schema['tables']['role_holder_history']>;
 export type ActionRight = Row<Schema['tables']['action_right']>;
@@ -321,8 +345,10 @@ export type Event = Row<Schema['tables']['event']>;
 export type EventParticipant = Row<Schema['tables']['event_participant']>;
 export type EventOfflineParticipant = Row<Schema['tables']['event_offline_participant']>;
 export type EventParticipantRole = Row<Schema['tables']['event_participant_role']>;
+export type EventAssemblyScope = Row<Schema['tables']['event_assembly_scope']>;
 export type EventDelegate = Row<Schema['tables']['event_delegate']>;
 export type GroupDelegateAllocation = Row<Schema['tables']['group_delegate_allocation']>;
+export type DelegateElectionAssignment = Row<Schema['tables']['delegate_election_assignment']>;
 export type Participant = Row<Schema['tables']['participant']>;
 export type EventException = Row<Schema['tables']['event_exception']>;
 export type CalendarSubscription = Row<Schema['tables']['calendar_subscription']>;

@@ -119,6 +119,13 @@ function CompositionPieCard({
   >;
 }) {
   const total = rows.reduce((sum: any, row: any) => sum + row.value, 0);
+  const formatRowValue = (row: { value: number; percentage: number }) => {
+    const absolute = row.value.toLocaleString();
+    const percentage = `${row.percentage.toFixed(1)}%`;
+    return displayMode === 'absolute'
+      ? `${absolute} (${percentage})`
+      : `${percentage} (${absolute})`;
+  };
 
   return (
     <Card>
@@ -159,9 +166,7 @@ function CompositionPieCard({
                       <span className="truncate">{row.label}</span>
                     </div>
                     <span className="text-muted-foreground shrink-0 tabular-nums">
-                      {displayMode === 'absolute'
-                        ? row.value.toLocaleString()
-                        : `${row.percentage.toFixed(1)}%`}
+                      {formatRowValue(row)}
                     </span>
                   </li>
                 ))}

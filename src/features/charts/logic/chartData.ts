@@ -6,6 +6,7 @@ import {
   MAX_MANUAL_CSV_BYTES,
   type ChartMapping,
   type ChartPoint,
+  type ChartTableMode,
 } from '../types';
 
 export interface ParsedChartTable {
@@ -63,29 +64,114 @@ export function parseChartCsv(text: string): ParsedChartTable {
   return { columns, rows };
 }
 
+function parseChartNumber(rawValue: string) {
+  const normalized = rawValue.trim();
+  if (!normalized) return Number.NaN;
+
+  const withoutPercent = normalized.replace(/%$/, '').trim();
+  const withoutSpaces = withoutPercent.replace(/\s+/g, '');
+  const commaCount = (withoutSpaces.match(/,/g) ?? []).length;
+  const dotCount = (withoutSpaces.match(/\./g) ?? []).length;
+  let numericText = withoutSpaces;
+
+  if (commaCount > 0 && dotCount > 0) {
+    numericText =
+      withoutSpaces.lastIndexOf(',') > withoutSpaces.lastIndexOf('.')
+        ? withoutSpaces.replace(/\./g, '').replace(',', '.')
+        : withoutSpaces.replace(/,/g, '');
+  } else if (commaCount === 1 && dotCount === 0) {
+    numericText = withoutSpaces.replace(',', '.');
+  } else if (commaCount > 1 && dotCount === 0) {
+    numericText = withoutSpaces.replace(/,/g, '');
+  }
+
+  return Number(numericText);
+}
+
+function hasNumericValue(rows: readonly Record<string, string>[], column: string) {
+  return rows.some(row => Number.isFinite(parseChartNumber(String(row[column] ?? ''))));
+}
+
+function isDateLikeColumnName(column: string) {
+  const value = column.trim();
+  return (
+    /^\d{4}$/.test(value) ||
+    /^\*?\d{1,2}[./-]\d{1,2}[./-]\d{2,4}$/.test(value) ||
+    /^\d{4}[./-]\d{1,2}([./-]\d{1,2})?$/.test(value)
+  );
+}
+
+export function getChartMappingValueColumns(table: ParsedChartTable, mapping: ChartMapping) {
+  const explicitValueColumns = mapping.valueColumns?.filter(column =>
+    table.columns.includes(column)
+  );
+  if (explicitValueColumns?.length) return explicitValueColumns;
+
+  return table.columns.filter(
+    column => column !== mapping.xColumn && hasNumericValue(table.rows, column)
+  );
+}
+
 export function inferChartMapping(table: ParsedChartTable): ChartMapping {
   const xColumn = table.columns[0] ?? '';
   const valueColumn =
-    table.columns.find(column =>
-      table.rows.some(row => {
-        const value = Number(row[column]);
-        return row[column] !== '' && Number.isFinite(value);
-      })
-    ) ??
+    table.columns.find(column => hasNumericValue(table.rows, column)) ??
     table.columns[1] ??
     xColumn;
+  const numericColumns = table.columns.filter(
+    column => column !== xColumn && hasNumericValue(table.rows, column)
+  );
+  const dateLikeNumericColumns = numericColumns.filter(isDateLikeColumnName);
+
+  if (dateLikeNumericColumns.length >= 2 || numericColumns.length >= 3) {
+    const valueColumns =
+      dateLikeNumericColumns.length >= 2 ? dateLikeNumericColumns : numericColumns;
+    return {
+      xColumn,
+      valueColumn: valueColumns[0] ?? valueColumn,
+      seriesColumn: null,
+      tableMode: 'rowsAsSeries',
+      valueColumns,
+    };
+  }
 
   return {
     xColumn,
     valueColumn,
     seriesColumn: null,
+    tableMode: 'columnMapping',
   };
 }
 
-export function buildChartPoints(
+function pushChartPoint(
+  points: ChartPoint[],
+  keys: Set<string>,
+  x: string,
+  rawValue: string,
+  series: string
+) {
+  const value = parseChartNumber(rawValue);
+  if (!x || rawValue === '' || !Number.isFinite(value)) {
+    throw new Error('CHART_INVALID_NUMBER');
+  }
+
+  const key = `${x}\u0000${series}`;
+  if (keys.has(key)) {
+    throw new Error('CHART_DUPLICATE_POINT');
+  }
+  keys.add(key);
+
+  points.push({
+    x,
+    value,
+    series: series || null,
+  });
+}
+
+function buildColumnMappedChartPoints(
   rows: readonly Record<string, string>[],
   mapping: ChartMapping
-): ChartPoint[] {
+) {
   if (!mapping.xColumn || !mapping.valueColumn) {
     throw new Error('CHART_MAPPING_INCOMPLETE');
   }
@@ -102,23 +188,48 @@ export function buildChartPoints(
       continue;
     }
 
-    const value = Number(rawValue);
-    if (!x || rawValue === '' || !Number.isFinite(value)) {
-      throw new Error('CHART_INVALID_NUMBER');
-    }
-
-    const key = `${x}\u0000${series}`;
-    if (keys.has(key)) {
-      throw new Error('CHART_DUPLICATE_POINT');
-    }
-    keys.add(key);
-
-    points.push({
-      x,
-      value,
-      series: series || null,
-    });
+    pushChartPoint(points, keys, x, rawValue, series);
   }
+
+  return points;
+}
+
+function buildWideTableChartPoints(rows: readonly Record<string, string>[], mapping: ChartMapping) {
+  if (!mapping.xColumn || !mapping.valueColumns?.length) {
+    throw new Error('CHART_MAPPING_INCOMPLETE');
+  }
+
+  const points: ChartPoint[] = [];
+  const keys = new Set<string>();
+
+  for (const row of rows) {
+    const rowLabel = String(row[mapping.xColumn] ?? '').trim();
+    if (!rowLabel) continue;
+
+    for (const valueColumn of mapping.valueColumns) {
+      const rawValue = String(row[valueColumn] ?? '').trim();
+      if (!rawValue) continue;
+
+      if (mapping.tableMode === 'columnsAsSeries') {
+        pushChartPoint(points, keys, rowLabel, rawValue, valueColumn);
+      } else {
+        pushChartPoint(points, keys, valueColumn.replace(/^\*/, ''), rawValue, rowLabel);
+      }
+    }
+  }
+
+  return points;
+}
+
+export function buildChartPoints(
+  rows: readonly Record<string, string>[],
+  mapping: ChartMapping
+): ChartPoint[] {
+  const mode: ChartTableMode = mapping.tableMode ?? 'columnMapping';
+  const points =
+    mode === 'columnMapping'
+      ? buildColumnMappedChartPoints(rows, mapping)
+      : buildWideTableChartPoints(rows, mapping);
 
   if (points.length === 0) {
     throw new Error('CHART_HAS_NO_POINTS');

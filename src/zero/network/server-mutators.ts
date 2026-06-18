@@ -23,19 +23,33 @@ import {
 } from './connectionValidation';
 import {
   buildGroupsById,
-  reconcileHierarchyForBaseGroup,
   loadGroupWithDerivedNetworkMeta,
   recomputeSiblingGroupMemberships,
 } from '../groups/membership-helpers';
+import { reconcileOfflineHierarchyForBaseGroup } from '../groups/offline-membership-helpers';
 import { reconcileDelegateAllocationsForGroups } from '../events/delegate-allocation-reconcile';
 import { reconcileGeneralAssemblyParticipantsForGroups } from '../events/assembly-reconcile';
+import { reconcileGroupGraph } from './group-graph-reconcile';
+import { fireNotification } from '../server-notify';
+import {
+  groupName,
+  recomputeGroupCounters,
+  recomputeUserCounters,
+  syncUserWithGroupConversation,
+} from '../server-helpers';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { assertNoBlockingGroupConflicts } from '@/server/group-conflict-validation';
 
 const GUEST_ONLY_SIBLING_MEMBERSHIP_MODES = new Set([
   'all_members',
   'role_members',
   'selected_source_groups',
 ]);
+const GROUP_MEMBERSHIP_MODES = ['all_members', 'role_members', 'selected_source_groups'] as const;
+
+function isGroupMembershipMode(value: unknown): value is (typeof GROUP_MEMBERSHIP_MODES)[number] {
+  return GROUP_MEMBERSHIP_MODES.some(mode => mode === value);
+}
 
 function requiresGuestAccessFlow(group: {
   group_type?: string | null;
@@ -152,9 +166,16 @@ async function reconcileConnectionSideEffects(
   const groupsById = await buildGroupsById(tx);
   const groups = [...groupsById.values()];
   const allGroupIds = groups.map(group => group.id);
-  for (const group of groups) {
-    if (group.group_type === 'base') {
-      await reconcileHierarchyForBaseGroup(tx, group.id, assignedById);
+  const firstGraphResult = await reconcileGroupGraph(tx, {
+    groupIds: allGroupIds,
+    assignedById,
+    reason: 'network-connection-side-effects-hierarchy',
+  });
+  const offlineHierarchyAffectedGroupIds = new Set<string>();
+  for (const groupId of allGroupIds) {
+    const { affectedGroupIds } = await reconcileOfflineHierarchyForBaseGroup(tx, groupId);
+    for (const affectedGroupId of affectedGroupIds) {
+      offlineHierarchyAffectedGroupIds.add(affectedGroupId);
     }
   }
   for (const groupId of allGroupIds) {
@@ -163,6 +184,37 @@ async function reconcileConnectionSideEffects(
   }
   await reconcileGeneralAssemblyParticipantsForGroups(tx, allGroupIds, assignedById);
   await reconcileDelegateAllocationsForGroups(tx, allGroupIds);
+  const finalGraphResult = await reconcileGroupGraph(tx, {
+    groupIds: allGroupIds,
+    assignedById,
+    reason: 'network-connection-side-effects',
+  });
+  const affectedGroupIds = new Set([
+    ...firstGraphResult.affectedGroupIds,
+    ...offlineHierarchyAffectedGroupIds,
+    ...finalGraphResult.affectedGroupIds,
+  ]);
+  const affectedUserIds = new Set([
+    ...firstGraphResult.affectedUserIds,
+    ...finalGraphResult.affectedUserIds,
+  ]);
+  const affectedMembershipPairs = new Set([
+    ...firstGraphResult.affectedMembershipPairs,
+    ...finalGraphResult.affectedMembershipPairs,
+  ]);
+
+  for (const groupId of affectedGroupIds) {
+    await recomputeGroupCounters(tx, groupId);
+  }
+  for (const userId of affectedUserIds) {
+    await recomputeUserCounters(tx, userId);
+  }
+  for (const membershipPair of affectedMembershipPairs) {
+    const [groupId, userId] = membershipPair.split(':');
+    if (groupId && userId) {
+      await syncUserWithGroupConversation(tx, { groupId, userId });
+    }
+  }
 }
 
 async function assertPayload(
@@ -227,15 +279,14 @@ async function assertCanManageGroupRelationship(
   });
 }
 
-async function assertCanManageConnection(
-  tx: Parameters<typeof can>[0],
-  ctx: Parameters<typeof can>[1],
+function assertGroupBelongsToConnection(
   connection: {
     group_a_id?: string | null;
     group_b_id?: string | null;
     parent_group_id?: string | null;
     child_group_id?: string | null;
-  }
+  },
+  groupId: string
 ) {
   const groupIds = new Set(
     [
@@ -246,9 +297,154 @@ async function assertCanManageConnection(
     ].filter(Boolean)
   );
 
-  for (const groupId of groupIds) {
+  if (!groupIds.has(groupId)) {
+    throw new Error('Acting group is not part of this connection');
+  }
+}
+
+async function assertCanDeleteConnectionFromActingGroup(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  connection: {
+    group_a_id?: string | null;
+    group_b_id?: string | null;
+    parent_group_id?: string | null;
+    child_group_id?: string | null;
+  },
+  actingGroupId: string
+) {
+  assertGroupBelongsToConnection(connection, actingGroupId);
+  await assertCanManageGroupRelationship(tx, ctx, actingGroupId);
+}
+
+async function assertCanManageConnectionRequestCounterparty(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  request: {
+    group_a_id?: string | null;
+    group_b_id?: string | null;
+    initiator_group_id?: string | null;
+  }
+) {
+  const endpointGroupIds = [
+    ...new Set([request.group_a_id, request.group_b_id].filter((id): id is string => Boolean(id))),
+  ];
+  const counterpartyGroupIds = endpointGroupIds.filter(id => id !== request.initiator_group_id);
+  const groupIdsToCheck = counterpartyGroupIds.length > 0 ? counterpartyGroupIds : endpointGroupIds;
+
+  for (const groupId of groupIdsToCheck) {
     await assertCanManageGroupRelationship(tx, ctx, groupId);
   }
+}
+
+function getPendingGrantRequestsForApproval(
+  grantRequests: readonly any[],
+  grantRequestIds?: readonly string[] | null
+) {
+  const selectedIds =
+    grantRequestIds === undefined || grantRequestIds === null ? null : new Set(grantRequestIds);
+
+  return grantRequests.filter(
+    item =>
+      item.status === 'pending' &&
+      item.operation === 'upsert' &&
+      (!selectedIds || selectedIds.has(item.id))
+  );
+}
+
+function shouldApproveMembershipRequest(
+  membershipRequest: any,
+  grantRequestIds?: readonly string[] | null,
+  approveMembership?: boolean
+) {
+  const approvingAllGrantRequests = grantRequestIds === undefined || grantRequestIds === null;
+  return (
+    membershipRequest?.status === 'pending' &&
+    (approveMembership === true || (approveMembership == null && approvingAllGrantRequests))
+  );
+}
+
+function getOtherConnectionGroupId(
+  connection: { group_a_id: string; group_b_id: string },
+  groupId: string | null | undefined
+) {
+  return connection.group_a_id === groupId ? connection.group_b_id : connection.group_a_id;
+}
+
+async function notifyRelationshipRequestCreated(
+  tx: Parameters<typeof can>[0],
+  senderId: string,
+  args: {
+    group_a_id: string;
+    group_b_id: string;
+    desired_connection_type: string;
+    initiator_group_id: string;
+  }
+) {
+  const targetGroupId = getOtherConnectionGroupId(args, args.initiator_group_id);
+  const [sourceGroupName, targetGroupName] = await Promise.all([
+    groupName(tx, args.initiator_group_id),
+    groupName(tx, targetGroupId),
+  ]);
+  const notificationParams = {
+    senderId,
+    sourceGroupId: args.initiator_group_id,
+    sourceGroupName,
+    targetGroupId,
+    targetGroupName,
+    relationshipType: args.desired_connection_type,
+  };
+
+  fireNotification('notifyRelationshipRequested', {
+    ...notificationParams,
+    recipientGroupId: targetGroupId,
+  });
+  fireNotification('notifyRelationshipRequested', {
+    ...notificationParams,
+    recipientGroupId: args.initiator_group_id,
+  });
+}
+
+function shouldNotifyRelationshipApproval(args: {
+  request: { structure_status?: string | null };
+  grantRequests: readonly any[];
+  membershipRequest?: any;
+  grantRequestIds?: readonly string[] | null;
+  approveMembership?: boolean;
+}) {
+  return (
+    args.request.structure_status !== 'approved' ||
+    getPendingGrantRequestsForApproval(args.grantRequests, args.grantRequestIds).length > 0 ||
+    shouldApproveMembershipRequest(
+      args.membershipRequest,
+      args.grantRequestIds,
+      args.approveMembership
+    )
+  );
+}
+
+async function notifyRelationshipRequestApproved(
+  tx: Parameters<typeof can>[0],
+  senderId: string,
+  request: {
+    group_a_id: string;
+    group_b_id: string;
+    initiator_group_id: string;
+  }
+) {
+  const approverGroupId = getOtherConnectionGroupId(request, request.initiator_group_id);
+  const [sourceGroupName, targetGroupName] = await Promise.all([
+    groupName(tx, request.initiator_group_id),
+    groupName(tx, approverGroupId),
+  ]);
+
+  fireNotification('notifyRelationshipApproved', {
+    senderId,
+    sourceGroupId: request.initiator_group_id,
+    sourceGroupName,
+    targetGroupId: approverGroupId,
+    targetGroupName,
+  });
 }
 
 export const networkServerMutators = {
@@ -298,7 +494,7 @@ export const networkServerMutators = {
   deleteGroupConnection: defineMutator(deleteGroupConnectionSchema, async ({ tx, ctx, args }) => {
     const existing = await tx.run(zql.group_connection.where('id', args.id).one());
     if (existing) {
-      await assertCanManageConnection(tx, ctx, existing);
+      await assertCanDeleteConnectionFromActingGroup(tx, ctx, existing, args.acting_group_id);
     }
 
     await deleteGroupConnectionAndRequests(tx, args.id);
@@ -327,6 +523,7 @@ export const networkServerMutators = {
       });
       await proposeGroupConnectionChange(tx, args);
       await reconcileConnectionSideEffects(tx, ctx.userID, [args.group_a_id, args.group_b_id]);
+      await notifyRelationshipRequestCreated(tx, ctx.userID, args);
     }
   ),
 
@@ -337,12 +534,7 @@ export const networkServerMutators = {
       if (!request) {
         throw new Error('Group connection request not found');
       }
-      await assertCanManageConnection(tx, ctx, {
-        group_a_id: request.group_a_id,
-        group_b_id: request.group_b_id,
-        parent_group_id: request.desired_parent_group_id,
-        child_group_id: request.desired_child_group_id,
-      });
+      await assertCanManageConnectionRequestCounterparty(tx, ctx, request);
 
       const grantRequests = await tx.run(
         zql.group_right_grant_request.where('connection_request_id', args.id)
@@ -373,7 +565,7 @@ export const networkServerMutators = {
         membershipRequest?.operation === 'upsert' &&
         membershipRequest.member_source_group_id &&
         membershipRequest.member_target_group_id &&
-        membershipRequest.membership_mode
+        isGroupMembershipMode(membershipRequest.membership_mode)
           ? {
               member_source_group_id: membershipRequest.member_source_group_id,
               member_target_group_id: membershipRequest.member_target_group_id,
@@ -383,6 +575,14 @@ export const networkServerMutators = {
                 (origin: any) => origin.eligible_origin_group_id
               ),
             }
+          : null;
+      const approvedMembership =
+        shouldApproveMembershipRequest(
+          membershipRequest,
+          args.grant_request_ids,
+          args.approve_membership
+        ) && requestedMembership
+          ? requestedMembership
           : null;
       await assertPayload(tx, {
         id: request.active_connection_id ?? request.proposed_connection_id,
@@ -394,6 +594,33 @@ export const networkServerMutators = {
         grants: grantRequests.filter((item: any) => item.operation === 'upsert'),
         membership_rule: requestedMembership,
       });
+      await assertNoBlockingGroupConflicts(tx, ctx, {
+        kind: 'group_connection_upsert',
+        connection_id: request.active_connection_id ?? request.proposed_connection_id,
+        group_a_id: request.group_a_id,
+        group_b_id: request.group_b_id,
+        connection_type: request.desired_connection_type,
+        parent_group_id: request.desired_parent_group_id ?? null,
+        child_group_id: request.desired_child_group_id ?? null,
+        grants: getPendingGrantRequestsForApproval(grantRequests, args.grant_request_ids).map(
+          (item: any) => ({
+            id: item.existing_grant_id ?? item.id,
+            right_key: item.right_key,
+            holder_group_id: item.holder_group_id,
+            scope_group_id: item.scope_group_id,
+            status: 'active' as const,
+            initiator_group_id: item.initiator_group_id ?? null,
+          })
+        ),
+        membership_rule: approvedMembership,
+      });
+      const shouldNotifyApproval = shouldNotifyRelationshipApproval({
+        request,
+        grantRequests,
+        membershipRequest,
+        grantRequestIds: args.grant_request_ids,
+        approveMembership: args.approve_membership,
+      });
       await approveGroupConnectionRequest(
         tx,
         args.id,
@@ -404,6 +631,9 @@ export const networkServerMutators = {
         request.group_a_id,
         request.group_b_id,
       ]);
+      if (shouldNotifyApproval) {
+        await notifyRelationshipRequestApproved(tx, ctx.userID, request);
+      }
     }
   ),
 
@@ -414,12 +644,7 @@ export const networkServerMutators = {
       if (!existingRequest) {
         throw new Error('Group connection request not found');
       }
-      await assertCanManageConnection(tx, ctx, {
-        group_a_id: existingRequest.group_a_id,
-        group_b_id: existingRequest.group_b_id,
-        parent_group_id: existingRequest.desired_parent_group_id,
-        child_group_id: existingRequest.desired_child_group_id,
-      });
+      await assertCanManageConnectionRequestCounterparty(tx, ctx, existingRequest);
 
       const request = await rejectGroupConnectionRequest(
         tx,

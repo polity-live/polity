@@ -1,4 +1,5 @@
 import type {
+  CanonicalMembershipMode,
   GroupRelationshipDirection,
   GroupRelationshipType,
   GroupConnectionComposerMembershipRuleValue,
@@ -20,6 +21,39 @@ export const RELATIVE_MEMBERSHIP_DIRECTIONS: RelativeMembershipDirection[] = [
   'partner_members_to_current',
   'current_members_to_partner',
 ];
+
+export const SELECTABLE_MEMBERSHIP_MODES = [
+  'none',
+  'all_members',
+  'role_members',
+] as const satisfies readonly CanonicalMembershipMode[];
+
+export const GROUP_CONNECTION_PRESET_OPTIONS = [
+  {
+    value: 'parent',
+    relationshipType: 'child',
+    membershipMode: 'all_members',
+  },
+  {
+    value: 'child',
+    relationshipType: 'parent',
+    membershipMode: 'all_members',
+  },
+  {
+    value: 'elected',
+    relationshipType: 'sibling',
+    membershipMode: 'role_members',
+  },
+  {
+    value: 'role_members_to_partner',
+    relationshipType: 'sibling',
+    membershipMode: 'role_members',
+  },
+] as const satisfies readonly {
+  value: GroupConnectionPreset;
+  relationshipType: GroupRelationshipType;
+  membershipMode: CanonicalMembershipMode;
+}[];
 
 export function createInitialRelationshipDirections(): Record<
   GroupRelationshipRight,
@@ -59,6 +93,25 @@ export function hasSelectedMembership(args: {
   membershipRule: GroupConnectionComposerMembershipRuleValue;
 }) {
   return args.membershipDirection != null && args.membershipRule.membershipMode !== 'none';
+}
+
+export function hasIncompleteMembershipRule(args: {
+  membershipDirection: RelativeMembershipDirection | null;
+  membershipRule: GroupConnectionComposerMembershipRuleValue;
+}) {
+  if (!hasSelectedMembership(args)) {
+    return false;
+  }
+
+  if (args.membershipRule.membershipMode === 'role_members') {
+    return !args.membershipRule.roleId;
+  }
+
+  if (args.membershipRule.membershipMode === 'selected_source_groups') {
+    return args.membershipRule.sourceGroupIds.length === 0;
+  }
+
+  return false;
 }
 
 export function hasConfiguredMembership(args: {
@@ -126,8 +179,8 @@ export function getPresetForRelationshipType(args: {
   membershipRule: GroupConnectionComposerMembershipRuleValue;
 }): GroupConnectionPreset {
   if (args.relationshipType === 'sibling') {
-    return args.membershipRule.membershipMode === 'selected_source_groups'
-      ? 'parliament'
+    return args.membershipDirection === 'current_members_to_partner'
+      ? 'role_members_to_partner'
       : 'elected';
   }
   return args.relationshipType === 'parent' ? 'child' : 'parent';
@@ -136,7 +189,14 @@ export function getPresetForRelationshipType(args: {
 export function getPresetMembershipDirection(
   preset: GroupConnectionPreset
 ): RelativeMembershipDirection {
-  return preset === 'parent' ? 'current_members_to_partner' : 'partner_members_to_current';
+  switch (preset) {
+    case 'parent':
+    case 'role_members_to_partner':
+      return 'current_members_to_partner';
+    case 'child':
+    case 'elected':
+      return 'partner_members_to_current';
+  }
 }
 
 export function applyGroupConnectionPreset(
@@ -146,11 +206,7 @@ export function applyGroupConnectionPreset(
   const membershipDirection = getPresetMembershipDirection(preset);
   const currentRule = current.membershipRule ?? createEmptyMembershipRule();
   const membershipMode =
-    preset === 'elected'
-      ? 'role_members'
-      : preset === 'parliament'
-        ? 'selected_source_groups'
-        : 'all_members';
+    preset === 'elected' || preset === 'role_members_to_partner' ? 'role_members' : 'all_members';
 
   return {
     ...current,
@@ -160,7 +216,7 @@ export function applyGroupConnectionPreset(
     membershipRule: {
       membershipMode,
       roleId: membershipMode === 'role_members' ? currentRule.roleId : '',
-      sourceGroupIds: membershipMode === 'selected_source_groups' ? currentRule.sourceGroupIds : [],
+      sourceGroupIds: [],
     },
     rightDirections: getPresetRightDirections(),
   };
@@ -195,14 +251,14 @@ function getStructure(args: {
   };
 }
 
-export function getRightGrantEndpoints(
+export function getGrantEndpointsForRightDirection(
   direction: Exclude<GroupRelationshipDirection, 'none' | 'mutual'>,
   currentGroupId: string,
   partnerGroupId: string
 ) {
-  return direction === 'current_has_right_in_partner'
-    ? { holder_group_id: currentGroupId, scope_group_id: partnerGroupId }
-    : { holder_group_id: partnerGroupId, scope_group_id: currentGroupId };
+  return direction === 'current_grants_right_to_partner'
+    ? { holder_group_id: partnerGroupId, scope_group_id: currentGroupId }
+    : { holder_group_id: currentGroupId, scope_group_id: partnerGroupId };
 }
 
 export function getExpandedRightDirections(direction: GroupRelationshipDirection) {
@@ -211,7 +267,7 @@ export function getExpandedRightDirections(direction: GroupRelationshipDirection
   }
 
   if (direction === 'mutual') {
-    return ['current_has_right_in_partner', 'partner_has_right_in_current'] as Exclude<
+    return ['current_grants_right_to_partner', 'partner_grants_right_to_current'] as Exclude<
       GroupRelationshipDirection,
       'none' | 'mutual'
     >[];
@@ -239,7 +295,11 @@ export function buildCanonicalGroupConnectionPayload(args: {
     const directions = getExpandedRightDirections(args.rightDirections[right]);
 
     return directions.map(direction => {
-      const endpoints = getRightGrantEndpoints(direction, args.currentGroupId, args.otherGroupId);
+      const endpoints = getGrantEndpointsForRightDirection(
+        direction,
+        args.currentGroupId,
+        args.otherGroupId
+      );
       const existingId =
         args.existingGrantIdsByKeyAndHolder?.[`${right}:${endpoints.holder_group_id}`] ??
         args.existingRightIdsByKey?.[right];

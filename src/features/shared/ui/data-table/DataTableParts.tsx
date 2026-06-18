@@ -11,7 +11,7 @@ import type { ReactNode } from 'react';
 
 import { SearchField } from '@/features/shared/ui/form/SearchField';
 import { StatusBadge } from '@/features/shared/ui/status/StatusBadges';
-import { Button } from '@/features/shared/ui/ui/button';
+import { Button, type ButtonProps } from '@/features/shared/ui/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { cn } from '@/features/shared/utils/utils';
 
 interface SortableHeaderProps<TData, TValue> {
@@ -163,6 +164,55 @@ export function RowActions({ actions, label = 'Open row actions', className }: R
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+interface TableActionIconButtonProps extends Omit<
+  ButtonProps,
+  'aria-label' | 'children' | 'size' | 'title'
+> {
+  label: string;
+  icon: ReactNode;
+  tooltip?: ReactNode;
+  destructive?: boolean;
+}
+
+export function TableActionIconButton({
+  label,
+  icon,
+  tooltip,
+  className,
+  destructive = false,
+  disabled,
+  type = 'button',
+  variant = 'ghost',
+  ...props
+}: TableActionIconButtonProps) {
+  const button = (
+    <Button
+      type={type}
+      variant={variant}
+      size="icon"
+      aria-label={label}
+      disabled={disabled}
+      className={cn(
+        'size-8',
+        destructive && 'text-destructive hover:text-destructive focus-visible:ring-destructive/20',
+        className
+      )}
+      {...props}
+    >
+      {icon}
+    </Button>
+  );
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {disabled ? <span className="inline-flex cursor-not-allowed">{button}</span> : button}
+      </TooltipTrigger>
+      <TooltipContent sideOffset={6}>{tooltip ?? label}</TooltipContent>
+    </Tooltip>
   );
 }
 

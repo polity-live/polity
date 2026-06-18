@@ -42,6 +42,23 @@ test.describe('First-Time User Authentication & Onboarding', () => {
       // Under load, redirect may lose the onboarding parameter — navigate manually
       await page.goto('/?onboarding=true');
     }
+
+    await expectOnboardingFullscreen(page);
+  }
+
+  async function expectOnboardingFullscreen(page: any) {
+    await expect(page.getByText(/What's your name/i)).toBeVisible();
+    await expect(page.locator('.fixed.z-40, .fixed.bottom-6.z-50')).toHaveCount(0);
+
+    const viewport = page.viewportSize();
+    const shellMainBox = await page.locator('main').first().boundingBox();
+
+    if (!viewport || !shellMainBox) {
+      throw new Error('Unable to measure onboarding shell dimensions');
+    }
+
+    expect(shellMainBox.x).toBeLessThanOrEqual(1);
+    expect(Math.abs(shellMainBox.width - viewport.width)).toBeLessThanOrEqual(1);
   }
 
   // Helper to fill name step
@@ -51,6 +68,11 @@ test.describe('First-Time User Authentication & Onboarding', () => {
     await page.getByLabel(/Last name/i).fill(lastName);
     await page.getByRole('button', { name: /Continue/i }).click();
   }
+
+  test('Shows onboarding fullscreen without app navigation chrome', async ({ page }) => {
+    const email = getUniqueEmail();
+    await authenticateNewUser(page, email);
+  });
 
   test('Complete onboarding: search group by name + send request + navigate to profile', async ({
     page,

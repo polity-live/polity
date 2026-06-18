@@ -87,10 +87,12 @@ export function StreetAreaPickerView({
     rotateMarkerIcon != null;
 
   return (
-    <section className="border-border bg-background rounded-md border p-3 shadow-sm">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <section className="bg-card overflow-hidden rounded-lg border shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
         <div className="flex items-center gap-2">
-          <MapPinned className="text-muted-foreground size-4" />
+          <div className="bg-muted/40 flex size-9 items-center justify-center rounded-md border">
+            <MapPinned className="text-muted-foreground size-4" />
+          </div>
           <div>
             <h2 className="text-sm font-semibold">Kartenausschnitt</h2>
             <p className="text-muted-foreground text-xs">
@@ -140,56 +142,58 @@ export function StreetAreaPickerView({
         </div>
       </div>
 
-      {!mapReady ? (
-        <div className="bg-muted/20 text-muted-foreground flex h-96 items-center justify-center rounded-md border border-dashed text-sm">
-          Karte konnte nicht geladen werden.
-        </div>
-      ) : (
-        <div className="h-96 overflow-hidden rounded-md border">
-          <reactLeafletModule.MapContainer
-            center={position}
-            zoom={17}
-            className="h-full w-full"
-            attributionControl={false}
-          >
-            <reactLeafletModule.TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors"
-            />
-            <StreetAreaPickerMapViewport
+      <div className="p-3">
+        {!mapReady ? (
+          <div className="bg-muted/20 text-muted-foreground flex h-64 items-center justify-center rounded-md border border-dashed text-sm">
+            Karte konnte nicht geladen werden.
+          </div>
+        ) : (
+          <div className="h-64 overflow-hidden rounded-md border md:h-72">
+            <reactLeafletModule.MapContainer
               center={position}
-              bounds={bounds}
-              reactLeafletModule={reactLeafletModule}
-            />
-            <MapClickHandler
-              disabled={readOnly}
-              reactLeafletModule={reactLeafletModule}
-              onBboxMove={onBboxMove}
-            />
-            {selectionCorners.length >= 3 ? (
-              <reactLeafletModule.Polygon
-                positions={selectionCorners}
-                pathOptions={{ color: '#0f766e', weight: 2, fillOpacity: 0.08 }}
+              zoom={17}
+              className="h-full w-full"
+              attributionControl={false}
+            >
+              <reactLeafletModule.TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution="&copy; OpenStreetMap contributors"
               />
-            ) : null}
-            <StreetAreaPickerSelectionOverlay
-              readOnly={readOnly}
-              reactLeafletModule={reactLeafletModule}
-              markerIcon={markerIcon}
-              resizeMarkerIcon={resizeMarkerIcon}
-              rotateMarkerIcon={rotateMarkerIcon}
-              position={position}
-              rotateHandlePosition={rotateHandlePosition}
-              resizeHandles={resizeHandles}
-              onBboxMove={onBboxMove}
-              onBboxResize={onBboxResize}
-              onSelectionRotate={onSelectionRotate}
-            />
-          </reactLeafletModule.MapContainer>
-        </div>
-      )}
+              <StreetAreaPickerMapViewport
+                center={position}
+                bounds={bounds}
+                reactLeafletModule={reactLeafletModule}
+              />
+              <MapClickHandler
+                disabled={readOnly}
+                reactLeafletModule={reactLeafletModule}
+                onBboxMove={onBboxMove}
+              />
+              {selectionCorners.length >= 3 ? (
+                <reactLeafletModule.Polygon
+                  positions={selectionCorners}
+                  pathOptions={{ color: '#0f766e', weight: 2, fillOpacity: 0.08 }}
+                />
+              ) : null}
+              <StreetAreaPickerSelectionOverlay
+                readOnly={readOnly}
+                reactLeafletModule={reactLeafletModule}
+                markerIcon={markerIcon}
+                resizeMarkerIcon={resizeMarkerIcon}
+                rotateMarkerIcon={rotateMarkerIcon}
+                position={position}
+                rotateHandlePosition={rotateHandlePosition}
+                resizeHandles={resizeHandles}
+                onBboxMove={onBboxMove}
+                onBboxResize={onBboxResize}
+                onSelectionRotate={onSelectionRotate}
+              />
+            </reactLeafletModule.MapContainer>
+          </div>
+        )}
+      </div>
 
-      {osmError ? <p className="text-destructive mt-2 text-xs">{osmError}</p> : null}
+      {osmError ? <p className="text-destructive px-4 pb-3 text-xs">{osmError}</p> : null}
     </section>
   );
 }

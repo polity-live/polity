@@ -43,7 +43,9 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
 
   // Content
   group_new_event: { category: 'groupNotifications', key: 'newEvents' },
+  group_event_assigned: { category: 'groupNotifications', key: 'newEvents' },
   group_new_amendment: { category: 'groupNotifications', key: 'newAmendments' },
+  group_amendment_support_confirmed: { category: 'groupNotifications', key: 'newAmendments' },
   group_profile_updated: { category: 'groupNotifications', key: 'profileUpdates' },
   group_update: { category: 'groupNotifications', key: 'profileUpdates' },
   group_new_subscriber: { category: 'groupNotifications', key: 'newSubscribers' },
@@ -62,6 +64,7 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   // Todos
   group_todo_assigned: { category: 'groupNotifications', key: 'tasksAssigned' },
   group_todo_updated: { category: 'groupNotifications', key: 'tasksAssigned' },
+  group_process_task_created: { category: 'groupNotifications', key: 'tasksAssigned' },
 
   // Payments
   group_payment_created: { category: 'groupNotifications', key: 'paymentNotifications' },
@@ -103,6 +106,7 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   event_agenda_item_created: { category: 'eventNotifications', key: 'agendaItems' },
   event_agenda_item_deleted: { category: 'eventNotifications', key: 'agendaItems' },
   event_agenda_item_transferred: { category: 'eventNotifications', key: 'agendaItems' },
+  event_change_request_created: { category: 'eventNotifications', key: 'votes' },
   event_schedule_changed: { category: 'eventNotifications', key: 'scheduleChanges' },
 
   // Elections & Roles
@@ -111,6 +115,7 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   event_election_ended: { category: 'eventNotifications', key: 'elections' },
   event_role_created: { category: 'eventNotifications', key: 'roleChanges' },
   event_role_deleted: { category: 'eventNotifications', key: 'roleChanges' },
+  event_role_updated: { category: 'eventNotifications', key: 'roleChanges' },
   event_delegates_finalized: { category: 'eventNotifications', key: 'delegateNominations' },
   event_delegate_nominated: { category: 'eventNotifications', key: 'delegateNominations' },
 
@@ -156,6 +161,7 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   amendment_new_subscriber: { category: 'amendmentNotifications', key: 'newSubscribers' },
   amendment_owner_promoted: { category: 'amendmentNotifications', key: 'roleUpdates' },
   amendment_owner_demoted: { category: 'amendmentNotifications', key: 'roleUpdates' },
+  amendment_role_updated: { category: 'amendmentNotifications', key: 'roleUpdates' },
   amendment_workflow_changed: { category: 'amendmentNotifications', key: 'workflowChanges' },
   amendment_path_advanced: { category: 'amendmentNotifications', key: 'processProgress' },
   amendment_cloned: { category: 'amendmentNotifications', key: 'clones' },

@@ -2,7 +2,7 @@ import { type Transaction } from '@rocicorp/zero';
 import type { Schema } from '../schema';
 import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
-import { amendmentTitle, eventTitle } from '../server-helpers';
+import { amendmentTitle, eventTitle, groupName } from '../server-helpers';
 
 type ZeroTransaction = Transaction<Schema>;
 
@@ -10,6 +10,7 @@ interface ProcessVoteResolution {
   handled: boolean;
   amendmentId?: string | null;
   terminalDecision?: 'accepted' | 'rejected' | null;
+  supportedGroupId?: string | null;
 }
 
 export async function notifyProcessVoteResolution(
@@ -27,6 +28,22 @@ export async function notifyProcessVoteResolution(
     amendmentTitle(tx, amendmentId),
     tx.run(zql.agenda_item.where('id', agendaItemId).one()),
   ]);
+  const needsEventTitle =
+    Boolean(resolution.supportedGroupId) || resolution.terminalDecision === 'rejected';
+  const resolvedEventTitle =
+    needsEventTitle && agendaItem?.event_id ? await eventTitle(tx, agendaItem.event_id) : undefined;
+
+  if (resolution.supportedGroupId) {
+    fireNotification('notifyGroupAmendmentSupportConfirmed', {
+      senderId,
+      amendmentId,
+      amendmentTitle: title,
+      groupId: resolution.supportedGroupId,
+      groupName: await groupName(tx, resolution.supportedGroupId),
+      eventId: agendaItem?.event_id ?? undefined,
+      eventTitle: resolvedEventTitle,
+    });
+  }
 
   if (resolution.terminalDecision === 'rejected') {
     fireNotification('notifyAmendmentRejected', {
@@ -34,7 +51,7 @@ export async function notifyProcessVoteResolution(
       amendmentId,
       amendmentTitle: title,
       eventId: agendaItem?.event_id ?? undefined,
-      eventTitle: agendaItem?.event_id ? await eventTitle(tx, agendaItem.event_id) : 'Event',
+      eventTitle: resolvedEventTitle ?? 'Event',
     });
   }
 

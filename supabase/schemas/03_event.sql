@@ -91,6 +91,35 @@ CREATE INDEX idx_event_start_date ON public.event (start_date);
 ALTER TABLE public.event ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.event FOR ALL TO service_role USING (true);
 
+-- Explicit participant scope for assemblies. Reconciliation reads this instead
+-- of interpreting the full group graph on every event operation.
+CREATE TABLE IF NOT EXISTS public.event_assembly_scope (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
+  host_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  source_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  scope_kind TEXT NOT NULL
+    CHECK (scope_kind IN ('general_member_source', 'delegate_source', 'delegate_assignment_source')),
+  participant_mode TEXT NOT NULL
+    CHECK (participant_mode IN ('all_members', 'delegates', 'role_members', 'none')),
+  required_role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (event_id, source_group_id, scope_kind, participant_mode)
+);
+
+CREATE INDEX idx_event_assembly_scope_event
+  ON public.event_assembly_scope (event_id, status);
+CREATE INDEX idx_event_assembly_scope_host_group
+  ON public.event_assembly_scope (host_group_id, status);
+CREATE INDEX idx_event_assembly_scope_source_group
+  ON public.event_assembly_scope (source_group_id, status);
+
+ALTER TABLE public.event_assembly_scope ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.event_assembly_scope
+  FOR ALL TO service_role USING (true);
+
 -- Event participant table
 -- Also stores meeting bookings. For recurring meetings, instance_date identifies the booked occurrence.
 CREATE TABLE IF NOT EXISTS public.event_participant (

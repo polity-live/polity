@@ -50,29 +50,13 @@ beforeEach(() => {
 describe('groupSharedMutators guest-only sibling flow', () => {
   it('rejects official membership requests for guest-only sibling groups', async () => {
     const tx = createTx();
-    tx.run
-      .mockResolvedValueOnce([{ id: 'group-1' }])
-      .mockResolvedValueOnce([
-        {
-          id: 'connection-1',
-          group_a_id: 'group-1',
-          group_b_id: 'group-2',
-          connection_type: 'peer',
-          status: 'active',
-        },
-      ])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        {
-          id: 'rule-1',
-          connection_id: 'connection-1',
-          member_source_group_id: 'group-2',
-          member_target_group_id: 'group-1',
-          membership_mode: 'role_members',
-          required_source_role_id: null,
-        },
-      ])
-      .mockResolvedValueOnce([]);
+    tx.run.mockResolvedValueOnce([
+      {
+        id: 'group-1',
+        group_type: 'sibling',
+        primary_sibling_membership_mode: 'role_members',
+      },
+    ]);
 
     await expect(
       groupSharedMutators.joinGroup.fn({
@@ -94,32 +78,11 @@ describe('groupSharedMutators guest-only sibling flow', () => {
   it('creates requested guest access with the default guest request role', async () => {
     const tx = createTx();
     tx.run
-      .mockResolvedValueOnce([{ id: 'group-1' }])
       .mockResolvedValueOnce([
         {
-          id: 'connection-1',
-          group_a_id: 'group-1',
-          group_b_id: 'group-2',
-          connection_type: 'peer',
-          status: 'active',
-        },
-      ])
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([
-        {
-          id: 'rule-1',
-          connection_id: 'connection-1',
-          member_source_group_id: 'group-2',
-          member_target_group_id: 'group-1',
-          membership_mode: 'selected_source_groups',
-          required_source_role_id: null,
-        },
-      ])
-      .mockResolvedValueOnce([
-        {
-          id: 'origin-1',
-          membership_rule_id: 'rule-1',
-          eligible_origin_group_id: 'group-2',
+          id: 'group-1',
+          group_type: 'sibling',
+          primary_sibling_membership_mode: 'selected_source_groups',
         },
       ])
       .mockResolvedValueOnce(null)

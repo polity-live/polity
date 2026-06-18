@@ -23,6 +23,13 @@ CREATE TABLE IF NOT EXISTS public.group_connection (
   group_a_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   group_b_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   connection_type TEXT NOT NULL CHECK (connection_type IN ('hierarchy', 'peer')),
+  from_group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
+  to_group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
+  connection_kind TEXT
+    CHECK (
+      connection_kind IS NULL
+      OR connection_kind IN ('hierarchy', 'sibling', 'parliament', 'committee', 'institution')
+    ),
   parent_group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
   child_group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
   status TEXT NOT NULL DEFAULT 'active',
@@ -54,6 +61,9 @@ CREATE INDEX idx_group_connection_group_b ON public.group_connection (group_b_id
 CREATE INDEX idx_group_connection_parent ON public.group_connection (parent_group_id);
 CREATE INDEX idx_group_connection_child ON public.group_connection (child_group_id);
 CREATE INDEX idx_group_connection_type ON public.group_connection (connection_type);
+CREATE INDEX idx_group_connection_from ON public.group_connection (from_group_id);
+CREATE INDEX idx_group_connection_to ON public.group_connection (to_group_id);
+CREATE INDEX idx_group_connection_kind ON public.group_connection (connection_kind);
 
 ALTER TABLE public.group_connection ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_connection FOR ALL TO service_role USING (true);
@@ -136,6 +146,115 @@ CREATE INDEX idx_group_membership_rule_origin_group
 
 ALTER TABLE public.group_membership_rule_origin ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_membership_rule_origin
+  FOR ALL TO service_role USING (true);
+
+-- Materialized hierarchy closure. Reads should not have to walk the graph.
+CREATE TABLE IF NOT EXISTS public.group_hierarchy_path (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  ancestor_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  descendant_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  direct_child_group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
+  base_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  depth INTEGER NOT NULL,
+  path_group_ids UUID[] NOT NULL DEFAULT ARRAY[]::UUID[],
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  connection_id UUID REFERENCES public.group_connection (id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT group_hierarchy_path_distinct_check CHECK (ancestor_group_id <> descendant_group_id),
+  UNIQUE (ancestor_group_id, descendant_group_id, base_group_id, path_group_ids)
+);
+
+CREATE INDEX idx_group_hierarchy_path_ancestor
+  ON public.group_hierarchy_path (ancestor_group_id, status);
+CREATE INDEX idx_group_hierarchy_path_descendant
+  ON public.group_hierarchy_path (descendant_group_id, status);
+CREATE INDEX idx_group_hierarchy_path_base
+  ON public.group_hierarchy_path (base_group_id, status);
+CREATE INDEX idx_group_hierarchy_path_direct_child
+  ON public.group_hierarchy_path (direct_child_group_id);
+
+ALTER TABLE public.group_hierarchy_path ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.group_hierarchy_path
+  FOR ALL TO service_role USING (true);
+
+-- Materialized rights between groups. This is the read-optimized surface for
+-- permission checks and workflow routing.
+CREATE TABLE IF NOT EXISTS public.group_effective_right (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  holder_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  scope_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  right_key TEXT NOT NULL
+    CHECK (right_key IN ('informationRight', 'amendmentRight', 'rightToSpeak', 'activeVotingRight', 'passiveVotingRight')),
+  source_connection_id UUID REFERENCES public.group_connection (id) ON DELETE CASCADE,
+  source_grant_id UUID REFERENCES public.group_right_grant (id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT group_effective_right_endpoints_check CHECK (holder_group_id <> scope_group_id),
+  UNIQUE (holder_group_id, scope_group_id, right_key, source_connection_id, source_grant_id)
+);
+
+CREATE INDEX idx_group_effective_right_holder
+  ON public.group_effective_right (holder_group_id, right_key, status);
+CREATE INDEX idx_group_effective_right_scope
+  ON public.group_effective_right (scope_group_id, right_key, status);
+CREATE INDEX idx_group_effective_right_pair
+  ON public.group_effective_right (holder_group_id, scope_group_id, right_key, status);
+
+ALTER TABLE public.group_effective_right ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.group_effective_right
+  FOR ALL TO service_role USING (true);
+
+-- Explicit exclusivity locks make membership activation checks cheap.
+CREATE TABLE IF NOT EXISTS public.group_membership_exclusivity_lock (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  hierarchy_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  source_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  group_membership_id UUID NOT NULL REFERENCES public.group_membership (id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX idx_group_membership_exclusivity_unique_active
+  ON public.group_membership_exclusivity_lock (user_id, hierarchy_group_id)
+  WHERE status = 'active';
+CREATE INDEX idx_group_membership_exclusivity_user
+  ON public.group_membership_exclusivity_lock (user_id, status);
+CREATE INDEX idx_group_membership_exclusivity_hierarchy
+  ON public.group_membership_exclusivity_lock (hierarchy_group_id, status);
+CREATE INDEX idx_group_membership_exclusivity_source
+  ON public.group_membership_exclusivity_lock (source_group_id, status);
+
+ALTER TABLE public.group_membership_exclusivity_lock ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.group_membership_exclusivity_lock
+  FOR ALL TO service_role USING (true);
+
+CREATE TABLE IF NOT EXISTS public.group_sibling_source_lock (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  sibling_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  source_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  group_membership_id UUID NOT NULL REFERENCES public.group_membership (id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX idx_group_sibling_source_lock_unique_active
+  ON public.group_sibling_source_lock (user_id, sibling_group_id)
+  WHERE status = 'active';
+CREATE INDEX idx_group_sibling_source_lock_user
+  ON public.group_sibling_source_lock (user_id, status);
+CREATE INDEX idx_group_sibling_source_lock_sibling
+  ON public.group_sibling_source_lock (sibling_group_id, status);
+CREATE INDEX idx_group_sibling_source_lock_source
+  ON public.group_sibling_source_lock (source_group_id, status);
+
+ALTER TABLE public.group_sibling_source_lock ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.group_sibling_source_lock
   FOR ALL TO service_role USING (true);
 
 -- Normalized change request header. Structure must be accepted before child items.

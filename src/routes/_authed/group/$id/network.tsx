@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { z } from 'zod';
 import { useNetworkPage } from '@/features/network/hooks/useNetworkPage';
 import { NetworkTabs } from '@/features/network/ui/NetworkTabs';
 import { CurrentNetworkTab } from '@/features/network/ui/CurrentNetworkTab';
@@ -7,13 +8,19 @@ import { ManageWorkflowsTab } from '@/features/network/ui/ManageWorkflowsTab';
 import { NetworkViewportPanel } from '@/features/network/ui/NetworkViewportPanel';
 import { usePermissions } from '@/zero/rbac';
 
+const networkSearchSchema = z.object({
+  tab: z.enum(['current-network', 'manage-network', 'manage-workflows']).optional(),
+});
+
 export const Route = createFileRoute('/_authed/group/$id/network')({
+  validateSearch: networkSearchSchema,
   component: GroupNetworkPage,
 });
 
 export function GroupNetworkPage() {
   const { id: groupId } = Route.useParams();
-  const np = useNetworkPage(groupId);
+  const { tab } = Route.useSearch();
+  const np = useNetworkPage(groupId, tab);
   const { canManage, canView, isMember } = usePermissions({ groupId });
   const canAccessManageNetwork = isMember() && canView('groupRelationships');
   const canManageNetwork = isMember() && canManage('groupRelationships');

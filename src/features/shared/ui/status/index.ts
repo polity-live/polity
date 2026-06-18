@@ -42,14 +42,18 @@ export {
 export {
   RIGHT_GRADIENTS,
   RIGHT_LABELS,
+  MEMBERSHIP_FLOW_RIGHT,
+  NETWORK_FLOW_FILTER_TYPES,
   RIGHT_TYPES,
   RightBadge,
   RightBadgeVisual,
   RightFilterOptionButton,
+  TOKEN_BADGE_FILTER_HOVER_CLASSES,
   formatRights,
   getRightLabel,
   isEdgeVisible,
   isRightType,
+  type NetworkFlowFilterType,
   type RightType,
 } from './RightVisuals';
 export {

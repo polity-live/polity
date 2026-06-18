@@ -7,6 +7,7 @@ import {
   resolveMembershipProvenance,
   supportsMembershipComposition,
   type MembershipCompositionGroupLike,
+  type MembershipProvenanceFields,
   type MembershipWithCompositionSource,
 } from '@/features/groups/logic/membershipComposition';
 import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
@@ -40,6 +41,7 @@ type NormalizedMembership = MembershipWithCompositionSource<{
   sort_order?: number | null;
   action_rights?: readonly { resource?: string | null; action?: string | null }[] | null;
 }>;
+type NormalizedMembershipWithProvenance = NormalizedMembership & MembershipProvenanceFields;
 
 type LoadedNetworkRelationship = DerivedNetworkRelationshipRow & {
   group: MembershipCompositionGroupLike | null;
@@ -264,7 +266,7 @@ function buildOfflineBucketRootResolver(args: {
   };
 }
 
-function buildOpenGroupAllocations(args: {
+export function buildOpenGroupAllocations(args: {
   bucketRows: { partGroupId: string; memberCount: number }[];
   lockedSeatCountsByGroupId: Map<string, number>;
   totalSeatCount: number;
@@ -287,6 +289,93 @@ function buildOpenGroupAllocations(args: {
   return new Map(
     dynamicAllocations.map(allocation => [allocation.groupId, allocation.allocatedDelegates])
   );
+}
+
+function normalizeDirectHierarchyMembership(
+  membership: NormalizedMembership
+): NormalizedMembership {
+  if (membership.source_group_id || !membership.group_id) {
+    return membership;
+  }
+
+  return {
+    ...membership,
+    source_group_id: membership.group_id,
+    source_group: membership.source_group ?? membership.group ?? null,
+  };
+}
+
+function getMembershipCountKey(membership: NormalizedMembershipWithProvenance) {
+  const userId = membership.user?.id || membership.user_id || membership.id;
+  const groupId = membership.baseGroup?.id || membership.source_group_id || membership.group_id;
+  return groupId ? `${groupId}:${userId}` : membership.id;
+}
+
+function addMembershipCounts(args: {
+  memberCountsByPartGroupId: Map<string, number>;
+  countedMembershipKeys: Set<string>;
+  memberships: readonly NormalizedMembershipWithProvenance[];
+}) {
+  for (const membership of args.memberships) {
+    const partGroupId = membership.partGroup?.id;
+    if (!partGroupId) {
+      continue;
+    }
+
+    const countKey = getMembershipCountKey(membership);
+    if (args.countedMembershipKeys.has(countKey)) {
+      continue;
+    }
+
+    args.countedMembershipKeys.add(countKey);
+    args.memberCountsByPartGroupId.set(
+      partGroupId,
+      (args.memberCountsByPartGroupId.get(partGroupId) ?? 0) + 1
+    );
+  }
+}
+
+export function buildDelegateAllocationBucketRows(args: {
+  targetGroup: MembershipCompositionGroupLike;
+  relationships: readonly LoadedNetworkRelationship[];
+  targetMemberships: readonly NormalizedMembership[];
+  hierarchyBaseMemberships?: readonly NormalizedMembership[];
+  rootMemberships?: readonly NormalizedMembership[];
+}) {
+  const memberCountsByPartGroupId = new Map<string, number>();
+  const countedMembershipKeys = new Set<string>();
+  const targetMembershipsWithProvenance = resolveMembershipProvenance({
+    group: args.targetGroup,
+    memberships: args.targetMemberships,
+    relationships: args.relationships,
+    rootMemberships: (args.rootMemberships ?? []).filter(isActiveMembership),
+  });
+
+  addMembershipCounts({
+    memberCountsByPartGroupId,
+    countedMembershipKeys,
+    memberships: targetMembershipsWithProvenance,
+  });
+
+  if (args.targetGroup.group_type === 'hierarchical' && args.hierarchyBaseMemberships?.length) {
+    const hierarchyMembershipsWithProvenance = resolveMembershipProvenance({
+      group: args.targetGroup,
+      memberships: args.hierarchyBaseMemberships.map(normalizeDirectHierarchyMembership),
+      relationships: args.relationships,
+      rootMemberships: [],
+    });
+
+    addMembershipCounts({
+      memberCountsByPartGroupId,
+      countedMembershipKeys,
+      memberships: hierarchyMembershipsWithProvenance,
+    });
+  }
+
+  return [...memberCountsByPartGroupId.entries()].map(([partGroupId, memberCount]) => ({
+    partGroupId,
+    memberCount,
+  }));
 }
 
 export async function reconcileDelegateAllocationsForEvent(tx: EventServerTx, eventId: string) {
@@ -323,6 +412,17 @@ export async function reconcileDelegateAllocationsForEvent(tx: EventServerTx, ev
   const targetMemberships = (await loadGroupMemberships(tx, [targetGroup.id])).filter(
     isActiveMembership
   );
+  const hierarchyBaseMemberships =
+    targetGroup.group_type === 'hierarchical'
+      ? (
+          await loadGroupMemberships(
+            tx,
+            resolveChildBaseGroups(targetGroup.id, relationships, groupsByIdFromRelationships)
+          )
+        )
+          .filter(isActiveMembership)
+          .map(normalizeDirectHierarchyMembership)
+      : [];
   const [existingRows, confirmedDelegates, offlineMemberships] = await Promise.all([
     tx.run(zql.group_delegate_allocation.where('event_id', eventId)),
     tx.run(zql.event_delegate.where('event_id', eventId).where('status', 'confirmed')),
@@ -353,31 +453,23 @@ export async function reconcileDelegateAllocationsForEvent(tx: EventServerTx, ev
       : [];
   const rootMemberships = await loadGroupMemberships(tx, sourceGroupIds);
 
-  const membershipsWithProvenance = resolveMembershipProvenance({
-    group: targetGroup,
-    memberships: targetMemberships,
+  const bucketRowsFromOnlineMemberships = buildDelegateAllocationBucketRows({
+    targetGroup,
     relationships,
-    rootMemberships: rootMemberships.filter(isActiveMembership),
+    targetMemberships,
+    hierarchyBaseMemberships,
+    rootMemberships,
   });
-
-  const memberCountsByPartGroupId = new Map<string, number>();
-
-  for (const membership of membershipsWithProvenance) {
-    const partGroupId = membership.partGroup?.id;
-    if (!partGroupId) {
-      continue;
-    }
-
-    memberCountsByPartGroupId.set(
-      partGroupId,
-      (memberCountsByPartGroupId.get(partGroupId) ?? 0) + 1
-    );
-  }
+  const memberCountsByPartGroupId = new Map(
+    bucketRowsFromOnlineMemberships.map(row => [row.partGroupId, row.memberCount])
+  );
 
   const groupsById = new Map<string, MembershipCompositionGroupLike>();
   for (const group of [
     targetGroup,
     ...relationships.flatMap(relationship => [relationship.group, relationship.related_group]),
+    ...targetMemberships.flatMap(membership => [membership.group, membership.source_group]),
+    ...hierarchyBaseMemberships.flatMap(membership => [membership.group, membership.source_group]),
     ...rootMemberships.flatMap(membership => [membership.group, membership.source_group]),
     ...offlineMemberships.flatMap(membership => [
       membership.group,

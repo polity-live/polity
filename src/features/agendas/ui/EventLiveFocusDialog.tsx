@@ -18,6 +18,7 @@ import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 import {
   CheckCircle2,
   ChevronRight,
+  CircleHelp,
   Clock,
   Gavel,
   Mic,
@@ -354,10 +355,19 @@ export function EventLiveFocusDialog({
     currentAgendaItem?.type === 'vote' ||
     Boolean(streamVote);
   const isVotable = Boolean(isVotingActionAvailable) || isElectionItem || isVoteItem;
-  const showVoteButton =
-    isVotable && canVote && canShowVotingAction(votingPhase) && Boolean(onVoteClick);
+  const showVoteButton = isVotable && canShowVotingAction(votingPhase) && Boolean(onVoteClick);
   const showVotedState =
     isVotable && canVote && canShowVotingAction(votingPhase) && hasUserVoted && !onVoteClick;
+  const isVoteActionBlocked = !canVote || Boolean(disableVoteButton);
+  const voteBlockedReason = !canVote
+    ? t(
+        'features.events.agenda.actions.voteRequiresActiveVotingRight',
+        'Active Voting Rights are required to vote in this event.'
+      )
+    : t(
+        'generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792',
+        'Offline votes are entered via tallies.'
+      );
   const videoId = isEventStarted && streamUrl ? getYouTubeVideoId(streamUrl) : null;
   const visualStatus = getAgendaVisualStatus(streamRuntimeStatus, streamIsLive);
   const activeSpeakersCount = speakerList.filter(speaker => !speaker.completed).length;
@@ -551,20 +561,22 @@ export function EventLiveFocusDialog({
                 <Button
                   type="button"
                   size="lg"
-                  onClick={disableVoteButton ? undefined : onVoteClick}
-                  disabled={disableVoteButton || voteLoading}
+                  onClick={isVoteActionBlocked ? undefined : onVoteClick}
+                  disabled={voteLoading}
                   loading={voteLoading}
-                  aria-disabled={disableVoteButton || undefined}
+                  aria-disabled={isVoteActionBlocked || undefined}
+                  title={isVoteActionBlocked ? voteBlockedReason : undefined}
                   className={cn(
                     'civic-ballot-submit',
                     'bg-background min-w-[160px] border px-3 font-semibold shadow-sm transition-all',
-                    disableVoteButton
+                    isVoteActionBlocked
                       ? 'border-muted-foreground/30 text-muted-foreground opacity-70'
                       : featureThemeClassName('agendaAgendaActionBarAccentBadge')
                   )}
                 >
                   <Vote className="h-4 w-4" />
                   <span>{translateText('generated.inline.0011_vote_64f87291')}</span>
+                  {isVoteActionBlocked ? <CircleHelp className="h-4 w-4" /> : null}
                 </Button>
               ) : showVotedState ? (
                 <BadgeControl variant="secondary" className="justify-center px-4 py-2">
@@ -601,10 +613,8 @@ export function EventLiveFocusDialog({
                 </Button>
               ) : null}
 
-              {disableVoteButton && isVotable ? (
-                <p className="text-muted-foreground text-sm">
-                  Offline-Stimmen werden über Tallies erfasst.
-                </p>
+              {isVoteActionBlocked && isVotable ? (
+                <p className="text-muted-foreground text-sm">{voteBlockedReason}</p>
               ) : null}
             </div>
 

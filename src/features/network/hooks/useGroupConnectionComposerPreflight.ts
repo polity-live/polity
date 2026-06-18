@@ -3,6 +3,7 @@ import { useGroupConflictPreflight } from '@/features/groups/hooks/useGroupConfl
 import {
   buildCanonicalGroupConnectionPayload,
   hasConfiguredGroupConnection,
+  hasIncompleteMembershipRule,
 } from '../logic/groupConnectionComposer';
 import type { GroupConnectionComposerValue } from '../types/network.types';
 
@@ -35,6 +36,10 @@ export function useGroupConnectionComposerPreflight(args: {
   const preflightInput = useMemo(() => {
     if (
       !args.value.selectedGroupId ||
+      hasIncompleteMembershipRule({
+        membershipDirection: args.value.membershipDirection,
+        membershipRule: args.value.membershipRule,
+      }) ||
       !hasConfiguredGroupConnection({
         rightDirections: args.value.rightDirections,
         membershipDirection: args.value.membershipDirection,

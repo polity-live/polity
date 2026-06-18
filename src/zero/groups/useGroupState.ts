@@ -3,7 +3,6 @@ import { useQuery } from '@rocicorp/zero/react';
 import { queries } from '../queries';
 import type { GroupConnectionListRow } from '../network/queries';
 import {
-  buildDerivedGroupNetworkMetaMap,
   type DerivedGroupNetworkMeta,
   deriveNormalizedGroupRelationships,
 } from '@/features/network/logic/groupConnectionDerived';
@@ -232,6 +231,13 @@ export type AugmentedGroupWithDerivedNetworkMeta<TGroup extends { id?: string | 
 function augmentGroupWithDerivedNetworkMeta<
   TGroup extends {
     id?: string | null;
+    group_type?: string | null;
+    has_hierarchy_children?: boolean | null;
+    has_sibling_connections?: boolean | null;
+    connected_group_id?: string | null;
+    primary_sibling_membership_mode?: string | null;
+    sibling_membership_mode?: string | null;
+    sibling_role_id?: string | null;
   },
 >(
   group: TGroup | null | undefined,
@@ -243,17 +249,40 @@ function augmentGroupWithDerivedNetworkMeta<
   }
 
   const groupId = group.id;
-  const derivedMeta = buildDerivedGroupNetworkMetaMap(allConnections, [groupId]).get(groupId) ?? {
+  const fallbackMeta = {
     group_type: 'base' as const,
+    has_hierarchy_children: false,
+    has_sibling_connections: false,
     connected_group_id: null,
     sibling_membership_mode: null,
     primary_sibling_membership_mode: null,
     sibling_role_id: null,
     parliament_source_group_ids: [],
+    primary_incoming_sibling_membership_mode: null,
+    primary_outgoing_sibling_membership_mode: null,
+    incoming_sibling_role_id: null,
+    outgoing_sibling_role_id: null,
+    incoming_parliament_source_group_ids: [],
+    outgoing_parliament_source_group_ids: [],
     primary_sibling_connection_id: null,
   };
+  const derivedMeta = {
+    ...fallbackMeta,
+    group_type: group.group_type ?? fallbackMeta.group_type,
+    has_hierarchy_children: group.has_hierarchy_children ?? fallbackMeta.has_hierarchy_children,
+    has_sibling_connections: group.has_sibling_connections ?? fallbackMeta.has_sibling_connections,
+    connected_group_id: group.connected_group_id ?? fallbackMeta.connected_group_id,
+    primary_sibling_membership_mode:
+      group.primary_sibling_membership_mode ?? fallbackMeta.primary_sibling_membership_mode,
+    sibling_membership_mode: group.sibling_membership_mode ?? fallbackMeta.sibling_membership_mode,
+    sibling_role_id: group.sibling_role_id ?? fallbackMeta.sibling_role_id,
+  };
   const relevantConnections = allConnections.filter(
-    connection => connection.group_a_id === groupId || connection.group_b_id === groupId
+    connection =>
+      connection.group_a_id === groupId ||
+      connection.group_b_id === groupId ||
+      connection.from_group_id === groupId ||
+      connection.to_group_id === groupId
   );
   const relationshipRows = deriveNormalizedGroupRelationships(relevantConnections);
   const groupsById = new Map(
@@ -269,6 +298,12 @@ function augmentGroupWithDerivedNetworkMeta<
     if (connection.group_b?.id) {
       groupsById.set(connection.group_b.id, connection.group_b);
     }
+    if (connection.from_group?.id) {
+      groupsById.set(connection.from_group.id, connection.from_group);
+    }
+    if (connection.to_group?.id) {
+      groupsById.set(connection.to_group.id, connection.to_group);
+    }
   }
 
   const primarySiblingLink =
@@ -276,23 +311,33 @@ function augmentGroupWithDerivedNetworkMeta<
       connection => connection.id === derivedMeta.primary_sibling_connection_id
     ) ?? null;
   const connectedGroup =
-    primarySiblingLink == null
-      ? null
-      : primarySiblingLink.group_a_id === groupId
-        ? (primarySiblingLink.group_b ?? groupsById.get(primarySiblingLink.group_b_id) ?? null)
-        : (primarySiblingLink.group_a ?? groupsById.get(primarySiblingLink.group_a_id) ?? null);
+    derivedMeta.connected_group_id != null
+      ? (groupsById.get(derivedMeta.connected_group_id) ?? null)
+      : primarySiblingLink == null
+        ? null
+        : primarySiblingLink.group_a_id === groupId
+          ? (primarySiblingLink.group_b ?? groupsById.get(primarySiblingLink.group_b_id) ?? null)
+          : (primarySiblingLink.group_a ?? groupsById.get(primarySiblingLink.group_a_id) ?? null);
 
   const siblingGroups = uniqueById(
     relevantConnections
       .filter(
         connection =>
-          connection.connection_type === 'peer' && isActiveConnectionStatus(connection.status)
+          (connection.connection_type === 'peer' || connection.connection_kind === 'sibling') &&
+          isActiveConnectionStatus(connection.status)
       )
-      .map(connection =>
-        connection.group_a_id === groupId
-          ? (connection.group_b ?? groupsById.get(connection.group_b_id) ?? null)
-          : (connection.group_a ?? groupsById.get(connection.group_a_id) ?? null)
-      )
+      .map(connection => {
+        if (connection.group_a_id === groupId) {
+          return connection.group_b ?? groupsById.get(connection.group_b_id) ?? null;
+        }
+        if (connection.group_b_id === groupId) {
+          return connection.group_a ?? groupsById.get(connection.group_a_id) ?? null;
+        }
+        if (connection.from_group_id === groupId) {
+          return connection.to_group ?? groupsById.get(connection.to_group_id ?? '') ?? null;
+        }
+        return connection.from_group ?? groupsById.get(connection.from_group_id ?? '') ?? null;
+      })
       .filter(Boolean) as readonly { id?: string | null }[]
   );
 
@@ -672,7 +717,66 @@ export function useGroupMemberships(groupId?: string) {
       const requested: (typeof memberships)[number][] = [];
       const pending: (typeof memberships)[number][] = [];
       memberships.forEach(m => {
-        if (m.status === 'active' || m.status === 'admin' || m.role?.name === 'Board Member') {
+        if (
+          m.status === 'active' ||
+          m.status === 'admin' ||
+          m.status === 'member' ||
+          m.role?.name === 'Board Member'
+        ) {
+          active.push(m);
+        } else if (m.status === 'invited') {
+          invited.push(m);
+          pending.push(m);
+        } else if (m.status === 'requested') {
+          requested.push(m);
+          pending.push(m);
+        }
+      });
+      return {
+        activeMemberships: active,
+        invitedMemberships: invited,
+        requestedMemberships: requested,
+        pendingMemberships: pending,
+      };
+    }, [memberships]);
+
+  return {
+    memberships,
+    activeMemberships,
+    invitedMemberships,
+    requestedMemberships,
+    pendingMemberships,
+    isLoading,
+  };
+}
+
+export function useGroupMembershipsByGroupIds(groupIds?: readonly string[]) {
+  const normalizedGroupIds = useMemo(
+    () => (groupIds ? [...new Set(groupIds.filter(Boolean))] : []),
+    [groupIds]
+  );
+  const [membershipsData, membershipsResult] = useQuery(
+    normalizedGroupIds.length > 0
+      ? queries.groups.membershipsWithRolesAndRightsByGroupIds({ groupIds: normalizedGroupIds })
+      : undefined
+  );
+
+  const isLoading = normalizedGroupIds.length > 0 && membershipsResult.type === 'unknown';
+  const memberships = useMemo(() => normalizeMemberships(membershipsData), [membershipsData]);
+
+  const { activeMemberships, invitedMemberships, requestedMemberships, pendingMemberships } =
+    useMemo(() => {
+      const active: (typeof memberships)[number][] = [];
+      const invited: (typeof memberships)[number][] = [];
+      const requested: (typeof memberships)[number][] = [];
+      const pending: (typeof memberships)[number][] = [];
+      memberships.forEach(m => {
+        if (
+          m.status === 'active' ||
+          m.status === 'admin' ||
+          m.status === 'member' ||
+          m.role?.name === 'Board Member'
+        ) {
           active.push(m);
         } else if (m.status === 'invited') {
           invited.push(m);
@@ -931,6 +1035,23 @@ export function useGroupActiveMembers(groupId: string) {
   return {
     members: membershipsData || [],
     isLoading: membershipsResult.type === 'unknown',
+  };
+}
+
+export function useAssignableGroupMembersByGroupIds(groupIds?: readonly string[]) {
+  const normalizedGroupIds = useMemo(
+    () => (groupIds ? [...new Set(groupIds.filter(Boolean))] : []),
+    [groupIds]
+  );
+  const [membershipsData, membershipsResult] = useQuery(
+    normalizedGroupIds.length > 0
+      ? queries.groups.assignableActiveMembersByGroupIds({ groupIds: normalizedGroupIds })
+      : undefined
+  );
+
+  return {
+    members: membershipsData || [],
+    isLoading: normalizedGroupIds.length > 0 && membershipsResult.type === 'unknown',
   };
 }
 

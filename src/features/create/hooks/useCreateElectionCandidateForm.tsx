@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useElectionState } from '@/zero/elections/useElectionState';
+import { useUserEventParticipations } from '@/zero/events/useEventState';
+import { useCurrentUserActiveGroupIds } from '@/zero/groups/useGroupState';
 import {
   useTranslation,
   translate as translateText,
@@ -16,23 +18,47 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
+import {
+  getCreateSelectableEventIds,
+  isCreateSelectableElection,
+} from '../logic/createEligibility';
 
 export function useCreateElectionCandidateForm(): CreateFormConfig {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { addCandidate } = useElectionActions();
   const { electionsForSearch } = useElectionState({ includeElectionsForSearch: true });
+  const { activeGroupIds } = useCurrentUserActiveGroupIds();
+  const { participations: userEventParticipations } = useUserEventParticipations(user?.id);
 
   const [candidateId] = useState(() => crypto.randomUUID());
   const [electionId, setElectionId] = useState('');
   const [statement, setStatement] = useState('');
   const [imageURL, setImageURL] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const selectedElection = electionsForSearch.find(election => election.id === electionId);
+  const selectableEventIds = useMemo(() => {
+    const electionEvents = electionsForSearch.flatMap(election =>
+      election.agenda_item?.event ? [election.agenda_item.event] : []
+    );
+
+    return getCreateSelectableEventIds(electionEvents, activeGroupIds, userEventParticipations);
+  }, [activeGroupIds, electionsForSearch, userEventParticipations]);
+  const eligibleElections = useMemo(
+    () =>
+      electionsForSearch.filter(election =>
+        isCreateSelectableElection(election, selectableEventIds)
+      ),
+    [electionsForSearch, selectableEventIds]
+  );
+  const eligibleElectionIds = useMemo(
+    () => eligibleElections.map(election => election.id),
+    [eligibleElections]
+  );
+  const selectedElection = eligibleElections.find(election => election.id === electionId);
   const selectedElectionTitle = selectedElection?.title || t('pages.create.common.notSelected');
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
-    if (!user) return createBlockedSubmitOutcome();
+    if (!user || !selectedElection) return createBlockedSubmitOutcome();
     setIsSubmitting(true);
     try {
       context?.reportProgress({ key: 'create', status: 'active' });
@@ -77,7 +103,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
       steps: [
         {
           label: t('pages.create.electionCandidate.electionLabel'),
-          isValid: () => !!electionId,
+          isValid: () => Boolean(selectedElection),
           fields: [
             {
               key: 'election',
@@ -86,6 +112,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
               props: {
                 value: electionId,
                 onChange: setElectionId,
+                allowedElectionIds: eligibleElectionIds,
                 label: t('pages.create.electionCandidate.electionLabel'),
                 required: true,
                 placeholder: t('pages.create.electionCandidate.electionPlaceholder'),
@@ -126,7 +153,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
         },
         {
           label: t('pages.create.common.review'),
-          isValid: () => !!electionId,
+          isValid: () => Boolean(selectedElection),
           fields: [
             {
               key: 'review',
@@ -177,6 +204,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
     [
       candidateId,
       electionId,
+      eligibleElectionIds,
       imageURL,
       isSubmitting,
       selectedElection,

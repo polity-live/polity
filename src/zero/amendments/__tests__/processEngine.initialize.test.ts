@@ -1,4 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const fireNotificationMock = vi.hoisted(() => vi.fn());
+
+vi.mock('../../server-notify', () => ({
+  fireNotification: (...args: unknown[]) => fireNotificationMock(...args),
+}));
 
 import { initializeAmendmentProcessPath } from '../process-engine';
 
@@ -175,6 +181,10 @@ function createTxForMissingEvent() {
 }
 
 describe('initializeAmendmentProcessPath', () => {
+  beforeEach(() => {
+    fireNotificationMock.mockReset();
+  });
+
   it('creates the process run before attaching its active branch id', async () => {
     const tx = createTx();
 
@@ -252,6 +262,12 @@ describe('initializeAmendmentProcessPath', () => {
         group_id: 'group-later',
       })
     );
+    expect(fireNotificationMock).toHaveBeenCalledWith('notifyProcessTaskCreated', {
+      senderId: 'user-1',
+      groupId: 'group-later',
+      groupName: 'Later Assembly',
+      taskTitle: 'Schedule amendment vote for Later Assembly',
+    });
     expect(tx.mutate.amendment_process_step_run.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         status: 'pending_event',

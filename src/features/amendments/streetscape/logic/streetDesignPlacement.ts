@@ -2,10 +2,13 @@ import type {
   CorridorGeometry,
   PathCorridorGeometry,
   PointGeometry,
+  PolygonGeometry,
+  StreetDesignGeometry,
   StreetDesignLocalPoint,
   StreetDesignObject,
   StreetDesignObjectDefinition,
   StreetDesignObjectType,
+  StreetDesignPropertyValue,
 } from '../types';
 import { getStreetDesignCostCatalogEntry } from './streetDesignCostCatalog';
 import { getStreetDesignObjectDefinition } from './streetDesignObjectRegistry';
@@ -26,6 +29,20 @@ const PATH_CORRIDOR_TYPES = new Set<StreetDesignObjectType>([
 
 function roundMetric(value: number) {
   return Math.round(value * 1000) / 1000;
+}
+
+function radToDeg(value: number) {
+  return (value * 180) / Math.PI;
+}
+
+function degToRad(value: number) {
+  return (value * Math.PI) / 180;
+}
+
+function normalizeDegrees(value: number) {
+  const normalized = value % 360;
+  if (Object.is(normalized, -0) || normalized === 0) return 0;
+  return normalized < 0 ? normalized + 360 : normalized;
 }
 
 export function distanceBetweenPoints(start: StreetDesignLocalPoint, end: StreetDesignLocalPoint) {
@@ -150,6 +167,132 @@ export function createPointGeometry(point: StreetDesignLocalPoint, rotation = 0)
   };
 }
 
+function getPolygonArea(points: StreetDesignLocalPoint[]) {
+  if (points.length < 3) return 0;
+
+  const sum = points.reduce((area, point, index) => {
+    const next = points[(index + 1) % points.length];
+    return area + point.x * next.z - next.x * point.z;
+  }, 0);
+
+  return roundMetric(Math.abs(sum) / 2);
+}
+
+function rotatePointAround(
+  point: StreetDesignLocalPoint,
+  center: StreetDesignLocalPoint,
+  rotationRad: number
+): StreetDesignLocalPoint {
+  const dx = point.x - center.x;
+  const dz = point.z - center.z;
+  const cos = Math.cos(rotationRad);
+  const sin = Math.sin(rotationRad);
+
+  return {
+    x: roundMetric(center.x + dx * cos - dz * sin),
+    z: roundMetric(center.z + dx * sin + dz * cos),
+  };
+}
+
+export function getStreetDesignGeometryCenter(
+  geometry: StreetDesignGeometry
+): StreetDesignLocalPoint {
+  if (geometry.kind === 'point') {
+    return geometry.point;
+  }
+
+  const points =
+    geometry.kind === 'corridor'
+      ? [geometry.start, geometry.end]
+      : geometry.kind === 'path_corridor'
+        ? geometry.points
+        : geometry.points;
+
+  if (points.length === 0) {
+    return { x: 0, z: 0 };
+  }
+
+  return {
+    x: roundMetric(points.reduce((sum, point) => sum + point.x, 0) / points.length),
+    z: roundMetric(points.reduce((sum, point) => sum + point.z, 0) / points.length),
+  };
+}
+
+export function getStreetDesignGeometryRotationDeg(geometry: StreetDesignGeometry) {
+  if (geometry.kind === 'point') {
+    return normalizeDegrees(roundMetric(radToDeg(geometry.rotation)));
+  }
+
+  if (geometry.kind === 'corridor') {
+    return normalizeDegrees(roundMetric(radToDeg(geometry.rotation)));
+  }
+
+  const points = geometry.kind === 'path_corridor' ? geometry.points : geometry.points;
+  const first = points[0];
+  const last = points[points.length - 1];
+  if (!first || !last || distanceBetweenPoints(first, last) < MIN_CORRIDOR_LENGTH) {
+    return 0;
+  }
+
+  return normalizeDegrees(roundMetric(radToDeg(Math.atan2(last.x - first.x, last.z - first.z))));
+}
+
+function rotatePolygonGeometry(geometry: PolygonGeometry, rotationDeg: number): PolygonGeometry {
+  const center = getStreetDesignGeometryCenter(geometry);
+  const rotationRad = degToRad(getStreetDesignGeometryRotationDeg(geometry) - rotationDeg);
+  const points = geometry.points.map(point => rotatePointAround(point, center, rotationRad));
+
+  return {
+    ...geometry,
+    points,
+    area: getPolygonArea(points),
+  };
+}
+
+export function rotateStreetDesignObject(
+  object: StreetDesignObject,
+  rotationDeg: number
+): StreetDesignObject {
+  const normalizedRotationDeg = normalizeDegrees(rotationDeg);
+  const currentRotationDeg = getStreetDesignGeometryRotationDeg(object.geometry);
+  const rotationRad = degToRad(currentRotationDeg - normalizedRotationDeg);
+
+  if (object.geometry.kind === 'point') {
+    return {
+      ...object,
+      geometry: createPointGeometry(object.geometry.point, degToRad(normalizedRotationDeg)),
+    };
+  }
+
+  const center = getStreetDesignGeometryCenter(object.geometry);
+
+  if (object.geometry.kind === 'corridor') {
+    return {
+      ...object,
+      geometry: createCorridorGeometry(
+        rotatePointAround(object.geometry.start, center, rotationRad),
+        rotatePointAround(object.geometry.end, center, rotationRad),
+        object.geometry.width
+      ),
+    };
+  }
+
+  if (object.geometry.kind === 'path_corridor') {
+    return {
+      ...object,
+      geometry: createPathCorridorGeometry(
+        object.geometry.points.map(point => rotatePointAround(point, center, rotationRad)),
+        object.geometry.width
+      ),
+    };
+  }
+
+  return {
+    ...object,
+    geometry: rotatePolygonGeometry(object.geometry, normalizedRotationDeg),
+  };
+}
+
 export function createCorridorGeometry(
   start: StreetDesignLocalPoint,
   end: StreetDesignLocalPoint,
@@ -228,13 +371,33 @@ export function createPathCorridorPreview(
   return createPathCorridorGeometry([...points, cursor], width);
 }
 
-function createBaseObjectCost(definition: StreetDesignObjectDefinition) {
+export interface StreetDesignObjectCreationOverrides {
+  properties?: Record<string, StreetDesignPropertyValue>;
+  customUnitCostMinor?: number | null;
+  rotationDeg?: number;
+}
+
+function createBaseObjectCost(
+  definition: StreetDesignObjectDefinition,
+  customUnitCostMinor?: number | null
+) {
   const catalogEntry = getStreetDesignCostCatalogEntry(definition.type);
 
   return {
     rule: definition.costRule,
     currency: catalogEntry.currency,
     suggestedUnitCostMinor: catalogEntry.unitCostMinor,
+    ...(customUnitCostMinor == null ? {} : { customUnitCostMinor }),
+  };
+}
+
+function createObjectProperties(
+  definition: StreetDesignObjectDefinition,
+  overrides?: Record<string, StreetDesignPropertyValue>
+) {
+  return {
+    ...definition.defaultProperties,
+    ...(overrides ?? {}),
   };
 }
 
@@ -242,6 +405,7 @@ export function createPointStreetDesignObject(args: {
   id: string;
   type: StreetDesignObjectType;
   point: StreetDesignLocalPoint;
+  overrides?: StreetDesignObjectCreationOverrides;
 }): StreetDesignObject {
   const definition = getStreetDesignObjectDefinition(args.type);
 
@@ -252,9 +416,9 @@ export function createPointStreetDesignObject(args: {
   return {
     id: args.id,
     type: args.type,
-    geometry: createPointGeometry(args.point),
-    properties: { ...definition.defaultProperties },
-    cost: createBaseObjectCost(definition),
+    geometry: createPointGeometry(args.point, degToRad(args.overrides?.rotationDeg ?? 0)),
+    properties: createObjectProperties(definition, args.overrides?.properties),
+    cost: createBaseObjectCost(definition, args.overrides?.customUnitCostMinor),
   };
 }
 
@@ -264,6 +428,7 @@ export function createCorridorStreetDesignObject(args: {
   start: StreetDesignLocalPoint;
   end: StreetDesignLocalPoint;
   width?: number;
+  overrides?: StreetDesignObjectCreationOverrides;
 }): StreetDesignObject {
   const definition = getStreetDesignObjectDefinition(args.type);
 
@@ -271,7 +436,7 @@ export function createCorridorStreetDesignObject(args: {
     throw new Error(`${args.type} is not a corridor element`);
   }
 
-  return {
+  const object: StreetDesignObject = {
     id: args.id,
     type: args.type,
     geometry: createCorridorGeometry(
@@ -279,9 +444,13 @@ export function createCorridorStreetDesignObject(args: {
       args.end,
       args.width ?? definition.defaultWidth ?? 2
     ),
-    properties: { ...definition.defaultProperties },
-    cost: createBaseObjectCost(definition),
+    properties: createObjectProperties(definition, args.overrides?.properties),
+    cost: createBaseObjectCost(definition, args.overrides?.customUnitCostMinor),
   };
+
+  return typeof args.overrides?.rotationDeg === 'number'
+    ? rotateStreetDesignObject(object, args.overrides.rotationDeg)
+    : object;
 }
 
 export function createPathCorridorStreetDesignObject(args: {
@@ -289,6 +458,7 @@ export function createPathCorridorStreetDesignObject(args: {
   type: StreetDesignObjectType;
   points: StreetDesignLocalPoint[];
   width?: number;
+  overrides?: StreetDesignObjectCreationOverrides;
 }): StreetDesignObject {
   const definition = getStreetDesignObjectDefinition(args.type);
 
@@ -296,16 +466,20 @@ export function createPathCorridorStreetDesignObject(args: {
     throw new Error(`${args.type} is not a path corridor element`);
   }
 
-  return {
+  const object: StreetDesignObject = {
     id: args.id,
     type: args.type,
     geometry: createPathCorridorGeometry(
       args.points,
       args.width ?? ('defaultWidth' in definition ? definition.defaultWidth : undefined) ?? 2
     ),
-    properties: { ...definition.defaultProperties },
-    cost: createBaseObjectCost(definition),
+    properties: createObjectProperties(definition, args.overrides?.properties),
+    cost: createBaseObjectCost(definition, args.overrides?.customUnitCostMinor),
   };
+
+  return typeof args.overrides?.rotationDeg === 'number'
+    ? rotateStreetDesignObject(object, args.overrides.rotationDeg)
+    : object;
 }
 
 export function updateCorridorWidth(object: StreetDesignObject, width: number): StreetDesignObject {

@@ -27,6 +27,7 @@ function membership(
   id: string,
   overrides: Partial<{
     user_id: string;
+    group_id: string | null;
     status: string;
     source: string;
     source_group_id: string | null;
@@ -38,6 +39,7 @@ function membership(
     id,
     user_id: overrides.user_id ?? `user-${id}`,
     user: { id: overrides.user_id ?? `user-${id}` },
+    group_id: overrides.group_id ?? null,
     status: overrides.status ?? 'active',
     source: overrides.source ?? 'derived',
     source_group_id: overrides.source_group_id ?? null,
@@ -56,6 +58,22 @@ function relationship(id: string, parentGroupId: string, childGroupId: string) {
     with_right: 'passiveVotingRight',
     status: 'active',
   };
+}
+
+function peerRelationship(id: string, firstGroupId: string, secondGroupId: string) {
+  return {
+    id,
+    group_id: firstGroupId,
+    related_group_id: secondGroupId,
+    relationship_type: 'sibling',
+    connection_type: 'peer',
+    with_right: null,
+    status: 'active',
+  };
+}
+
+function rawGroup(id: string, name = id) {
+  return { id, name } as ReturnType<typeof group>;
 }
 
 describe('membership composition provenance', () => {
@@ -165,6 +183,131 @@ describe('membership composition provenance', () => {
     expect(resolvedMembership.baseGroup).toMatchObject({ id: 'base-a', name: 'base-a' });
   });
 
+  it('shows a raw parliament base source group instead of the direct fallback', () => {
+    const parliamentGroup = group('assembly', 'sibling', {
+      sibling_membership_mode: 'parliament',
+    });
+
+    const [resolvedMembership] = resolveMembershipProvenance({
+      group: parliamentGroup,
+      memberships: [
+        membership('membership-1', {
+          user_id: 'u1',
+          source: 'sibling_parliament',
+          source_group_id: 'source-base',
+          source_group: rawGroup('source-base', 'Source Base'),
+        }),
+      ],
+      relationships: [],
+    });
+
+    expect(resolvedMembership.partGroup).toMatchObject({
+      id: 'source-base',
+      name: 'Source Base',
+    });
+    expect(resolvedMembership.baseGroup).toMatchObject({
+      id: 'source-base',
+      name: 'Source Base',
+    });
+    expect(resolvedMembership.provenanceBucketLabel).toBeNull();
+  });
+
+  it('derives parliament provenance from raw hierarchy relationships when group_type is absent', () => {
+    const parliamentGroup = group('assembly', 'sibling', {
+      sibling_membership_mode: 'parliament',
+    });
+
+    const [resolvedMembership] = resolveMembershipProvenance({
+      group: parliamentGroup,
+      memberships: [
+        membership('membership-1', {
+          user_id: 'u1',
+          source: 'sibling_parliament',
+          source_group_id: 'source-root',
+          source_group: rawGroup('source-root'),
+        }),
+      ],
+      rootMemberships: [
+        membership('root-membership-1', {
+          user_id: 'u1',
+          group_id: 'source-root',
+          source_group_id: 'base-a',
+          source_group: rawGroup('base-a'),
+        } as Parameters<typeof membership>[1]),
+      ],
+      relationships: [
+        relationship('source-root-local', 'source-root', 'local'),
+        relationship('local-base-a', 'local', 'base-a'),
+      ],
+    });
+
+    expect(resolvedMembership.partGroup).toMatchObject({ id: 'local', name: 'local' });
+    expect(resolvedMembership.baseGroup).toMatchObject({ id: 'base-a', name: 'base-a' });
+  });
+
+  it('shows a parliament sibling source group as the feeding subgroup', () => {
+    const parliamentGroup = group('assembly', 'sibling', {
+      sibling_membership_mode: 'parliament',
+    });
+
+    const [resolvedMembership] = resolveMembershipProvenance({
+      group: parliamentGroup,
+      memberships: [
+        membership('membership-1', {
+          user_id: 'u1',
+          source: 'sibling_parliament',
+          source_group_id: 'source-sibling',
+          source_group: rawGroup('source-sibling', 'Source Sibling'),
+        }),
+      ],
+      relationships: [peerRelationship('source-sibling-peer', 'source-sibling', 'source-root')],
+    });
+
+    expect(resolvedMembership.partGroup).toMatchObject({
+      id: 'source-sibling',
+      name: 'Source Sibling',
+    });
+    expect(resolvedMembership.baseGroup).toMatchObject({
+      id: 'source-sibling',
+      name: 'Source Sibling',
+    });
+    expect(resolvedMembership.provenanceBucketLabel).toBeNull();
+  });
+
+  it('keeps the sibling source as subgroup while showing a deeper base group when available', () => {
+    const parliamentGroup = group('assembly', 'sibling', {
+      sibling_membership_mode: 'parliament',
+    });
+
+    const [resolvedMembership] = resolveMembershipProvenance({
+      group: parliamentGroup,
+      memberships: [
+        membership('membership-1', {
+          user_id: 'u1',
+          source: 'sibling_parliament',
+          source_group_id: 'source-sibling',
+          source_group: rawGroup('source-sibling', 'Source Sibling'),
+        }),
+      ],
+      rootMemberships: [
+        membership('source-sibling-membership-1', {
+          user_id: 'u1',
+          group_id: 'source-sibling',
+          source: 'sibling_parliament',
+          source_group_id: 'base-a',
+          source_group: rawGroup('base-a', 'Base A'),
+        } as Parameters<typeof membership>[1]),
+      ],
+      relationships: [peerRelationship('source-sibling-peer', 'source-sibling', 'source-root')],
+    });
+
+    expect(resolvedMembership.partGroup).toMatchObject({
+      id: 'source-sibling',
+      name: 'Source Sibling',
+    });
+    expect(resolvedMembership.baseGroup).toMatchObject({ id: 'base-a', name: 'Base A' });
+  });
+
   it('treats a base root group as both part group and base group', () => {
     const siblingGroup = group('parliament', 'sibling', { sibling_membership_mode: 'elected' });
     const baseGroup = group('base-a', 'base');
@@ -202,6 +345,38 @@ describe('membership composition provenance', () => {
 });
 
 describe('membership composition aggregation', () => {
+  it('counts active and offline memberships in the same hierarchy bucket', () => {
+    const buckets = buildMembershipCompositionBuckets([
+      {
+        id: 'active-membership',
+        partGroup: { id: 'district-a', name: 'District A', group_type: 'hierarchical' },
+        baseGroup: { id: 'base-a', name: 'Base A', group_type: 'base' },
+        provenanceBucketLabel: null,
+        roles: [{ id: 'member', name: 'Member' }],
+      },
+      {
+        id: 'offline-membership',
+        user_id: 'offline:offline-member-1',
+        partGroup: { id: 'district-a', name: 'District A', group_type: 'hierarchical' },
+        baseGroup: { id: 'base-a', name: 'Base A', group_type: 'base' },
+        provenanceBucketLabel: null,
+        roles: [{ id: 'member', name: 'Member' }],
+      },
+    ]);
+
+    expect(buckets).toHaveLength(1);
+    expect(buckets[0]).toEqual(
+      expect.objectContaining({
+        key: 'district-a',
+        label: 'District A',
+        memberCount: 2,
+        leadershipAssignmentCount: 0,
+        memberPercentage: 100,
+        leadershipPercentage: 0,
+      })
+    );
+  });
+
   it('counts members once and leadership roles per assignment', () => {
     const buckets = buildMembershipCompositionBuckets([
       {

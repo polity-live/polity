@@ -194,6 +194,12 @@ export const eventQueries = {
           .related('connected_user')
           .related('group_offline_member', q => q.related('group').related('connected_user'))
       )
+      .related('assembly_scopes', scopeQuery =>
+        scopeQuery.related('host_group').related('source_group').related('required_role')
+      )
+      .related('delegate_election_assignments', assignmentQuery =>
+        assignmentQuery.related('source_group').related('allocation').related('linked_event')
+      )
       .related('delegates', delegateQuery =>
         applyEventDelegateSelfOrParticipantAccess(delegateQuery, userID)
           .related('user')
@@ -356,8 +362,17 @@ export const eventQueries = {
     applyEventAccess(zql.event.where('id', id), userID)
       .related('group', q =>
         q.related('memberships', q =>
-          applyGroupMembershipSelfOrManagerQueryAccess(q, userID).related('user')
+          applyGroupMembershipSelfOrManagerQueryAccess(q, userID)
+            .related('user')
+            .related('part_group')
+            .related('base_group')
+            .related('origins', oq =>
+              oq.related('source_group').related('part_group').related('base_group')
+            )
         )
+      )
+      .related('assembly_scopes', scopeQuery =>
+        scopeQuery.related('host_group').related('source_group').related('required_role')
       )
       .related('delegates', q =>
         applyEventDelegateSelfOrParticipantAccess(q, userID).related('user')
@@ -570,7 +585,76 @@ export const eventQueries = {
       .related('delegates', q =>
         applyEventDelegateSelfOrParticipantAccess(q, userID).related('user').related('group')
       )
-      .related('delegate_allocations', q => q.related('group'))
+      .related('delegate_allocations', q =>
+        q.related('group').related('delegate_election_assignments')
+      )
+      .related('assembly_scopes', q =>
+        q.related('host_group').related('source_group').related('required_role')
+      )
+      .related('delegate_election_assignments', q =>
+        q.related('source_group').related('allocation').related('linked_event')
+      )
+  ),
+
+  /** Delegate assembly composition data with planned, scheduled, and elected seats. */
+  delegateAssemblyComposition: defineQuery(
+    z.object({ id: z.string() }),
+    ({ args: { id }, ctx: { userID } }) =>
+      applyEventManagerQueryAccess(zql.event.where('id', id), userID, 'manage_participants')
+        .related('group')
+        .related('delegates', q =>
+          applyEventDelegateSelfOrParticipantAccess(q, userID).related('group')
+        )
+        .related('assembly_scopes', q =>
+          q.related('host_group').related('source_group').related('required_role')
+        )
+        .related('delegate_election_assignments', q =>
+          q.related('source_group').related('allocation').related('linked_event')
+        )
+        .related('delegate_allocations', allocationQuery =>
+          allocationQuery.related('group', groupQuery =>
+            groupQuery.related('roles', roleQuery =>
+              roleQuery
+                .where('scope', 'group')
+                .where('assignment_mode', 'elected')
+                .related('elections', electionQuery =>
+                  applyElectionQueryAccess(electionQuery, userID).related(
+                    'agenda_item',
+                    agendaItemQuery => agendaItemQuery.related('event')
+                  )
+                )
+            )
+          )
+        )
+  ),
+
+  assemblyScopesByEvent: defineQuery(
+    z.object({ eventId: z.string() }),
+    ({ args: { eventId }, ctx: { userID } }) =>
+      zql.event_assembly_scope
+        .where('event_id', eventId)
+        .where('status', 'active')
+        .whereExists('event', event => applyEventAccess(event, userID))
+        .related('event')
+        .related('host_group')
+        .related('source_group')
+        .related('required_role')
+        .orderBy('created_at', 'asc')
+  ),
+
+  delegateElectionAssignmentsByEvent: defineQuery(
+    z.object({ eventId: z.string() }),
+    ({ args: { eventId }, ctx: { userID } }) =>
+      zql.delegate_election_assignment
+        .where('target_event_id', eventId)
+        .whereExists('target_event', event =>
+          applyEventManagerQueryAccess(event, userID, 'manage_participants')
+        )
+        .related('target_event')
+        .related('source_group')
+        .related('allocation')
+        .related('linked_event')
+        .orderBy('created_at', 'asc')
   ),
 
   /** Delegate allocations assigned to one source group across target events. */
@@ -586,8 +670,15 @@ export const eventQueries = {
             .related('delegates', dq =>
               applyEventDelegateSelfOrParticipantAccess(dq, userID).related('user').related('group')
             )
+            .related('assembly_scopes', sq =>
+              sq.related('host_group').related('source_group').related('required_role')
+            )
+            .related('delegate_election_assignments', aq =>
+              aq.related('source_group').related('allocation').related('linked_event')
+            )
         )
         .related('group')
+        .related('delegate_election_assignments')
   ),
 
   /** Explicit group connections by optional endpoint group. */
@@ -600,13 +691,17 @@ export const eventQueries = {
             exists('group_a', (group: any) => applyGroupQueryAccess(group, userID)),
             exists('group_b', (group: any) => applyGroupQueryAccess(group, userID)),
             exists('parent_group', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('child_group', (group: any) => applyGroupQueryAccess(group, userID))
+            exists('child_group', (group: any) => applyGroupQueryAccess(group, userID)),
+            exists('from_group', (group: any) => applyGroupQueryAccess(group, userID)),
+            exists('to_group', (group: any) => applyGroupQueryAccess(group, userID))
           )
         )
         .related('group_a')
         .related('group_b')
         .related('parent_group')
         .related('child_group')
+        .related('from_group')
+        .related('to_group')
         .related('created_by')
         .related('grants', grantQuery =>
           grantQuery
@@ -625,7 +720,12 @@ export const eventQueries = {
         .orderBy('updated_at', 'desc');
       if (groupId) {
         q = q.where(({ cmp, or }) =>
-          or(cmp('group_a_id', '=', groupId), cmp('group_b_id', '=', groupId))
+          or(
+            cmp('group_a_id', '=', groupId),
+            cmp('group_b_id', '=', groupId),
+            cmp('from_group_id', '=', groupId),
+            cmp('to_group_id', '=', groupId)
+          )
         ) as typeof q;
       }
       return q;
@@ -740,6 +840,17 @@ export const eventQueries = {
         .where('user_id', userId)
         .where('user_id', userID)
         .related('event', q => q.related('group'))
+  ),
+
+  /** Active participants for events where the current user participates or is creator. */
+  participantsByParticipatedEventIds: defineQuery(
+    z.object({ eventIds: z.array(z.string()) }),
+    ({ args: { eventIds }, ctx: { userID } }) =>
+      zql.event_participant
+        .where('event_id', 'IN', eventIds)
+        .where('status', 'IN', ['active', 'admin', 'member', 'confirmed'])
+        .whereExists('event', event => applyEventParticipantEventAccess(event, userID))
+        .related('user')
   ),
 
   /** Event with group relation (simple) */
@@ -901,4 +1012,14 @@ export type EventWikiAgendaRow = QueryRowType<typeof eventQueries.wikiAgendaItem
 export type EventRoleWithHoldersRow = QueryRowType<typeof eventQueries.rolesWithHolders>;
 export type EventElectionWithVotesRow = QueryRowType<typeof eventQueries.electionWithVotes>;
 export type EventDelegatesFullRow = QueryRowType<typeof eventQueries.delegatesFull>;
+export type EventDelegateAssemblyCompositionRow = QueryRowType<
+  typeof eventQueries.delegateAssemblyComposition
+>;
+export type EventAssemblyScopeRow = QueryRowType<typeof eventQueries.assemblyScopesByEvent>;
+export type DelegateElectionAssignmentRow = QueryRowType<
+  typeof eventQueries.delegateElectionAssignmentsByEvent
+>;
 export type EventParticipantsByUserRow = QueryRowType<typeof eventQueries.participantsByUser>;
+export type EventParticipantByParticipatedEventIdsRow = QueryRowType<
+  typeof eventQueries.participantsByParticipatedEventIds
+>;

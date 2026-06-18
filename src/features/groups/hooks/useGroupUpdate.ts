@@ -31,7 +31,7 @@ import type {
 import {
   canonicalGroupPair,
   getExpandedRightDirections,
-  getRightGrantEndpoints,
+  getGrantEndpointsForRightDirection,
 } from '@/features/network/logic/groupConnectionComposer';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -141,6 +141,7 @@ export function useGroupUpdate(
     actorId?: string;
     visibility?: 'public' | 'private' | 'authenticated';
     groupType?: GroupType;
+    hasSiblingConnections?: boolean | null;
   }
 ): UseGroupUpdateResult {
   const navigate = useNavigate();
@@ -158,6 +159,8 @@ export function useGroupUpdate(
   const [formData, setFormData] = useState<GroupFormData>(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [originalName, setOriginalName] = useState('');
+  const shouldSyncSiblingRelationships =
+    options?.groupType === 'sibling' || Boolean(options?.hasSiblingConnections);
 
   const initializedRef = useRef(false);
   const hashtagsInitializedRef = useRef(false);
@@ -316,12 +319,16 @@ export function useGroupUpdate(
       previousConnectedGroupId != null && previousConnectedGroupId !== nextConnectedGroupId;
 
     if (partnerChanged && previousConnection) {
-      await serverConfirmed(deleteGroupConnection({ id: previousConnection.id }));
+      await serverConfirmed(
+        deleteGroupConnection({ id: previousConnection.id, acting_group_id: groupId })
+      );
     }
 
     if (!nextConnectedGroupId) {
       if (!partnerChanged && previousConnection) {
-        await serverConfirmed(deleteGroupConnection({ id: previousConnection.id }));
+        await serverConfirmed(
+          deleteGroupConnection({ id: previousConnection.id, acting_group_id: groupId })
+        );
       }
       return;
     }
@@ -330,7 +337,7 @@ export function useGroupUpdate(
       const direction = formData.connectedRelationshipDirections[right];
       return getExpandedRightDirections(direction).map(selectedDirection => ({
         right_key: right,
-        ...getRightGrantEndpoints(selectedDirection, groupId, nextConnectedGroupId),
+        ...getGrantEndpointsForRightDirection(selectedDirection, groupId, nextConnectedGroupId),
       }));
     });
 
@@ -452,6 +459,16 @@ export function useGroupUpdate(
       return;
     }
 
+    if (
+      shouldSyncSiblingRelationships &&
+      formData.sibling_membership_mode === 'selected_source_groups'
+    ) {
+      toast.error(
+        'This group uses a legacy source-group membership rule. Choose one of the supported membership modes before saving.'
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -490,10 +507,11 @@ export function useGroupUpdate(
           snapchat: formData.snapchat || null,
           tiktok: formData.tiktok || null,
           visibility: formData.visibility,
+          group_type: options.groupType,
           owner_id: null,
         });
         await serverConfirmed(createGroupResult);
-        if (options.groupType === 'sibling') {
+        if (shouldSyncSiblingRelationships) {
           await syncConnectedSiblingRelationships();
         }
       } else {
@@ -526,7 +544,7 @@ export function useGroupUpdate(
           visibility: formData.visibility,
         });
 
-        if (options?.groupType === 'sibling') {
+        if (shouldSyncSiblingRelationships) {
           await syncConnectedSiblingRelationships();
         }
 

@@ -62,4 +62,24 @@ describe('EventLiveFocusDialog', () => {
     expect(voteButton.className).toContain('civic-ballot-submit');
     expect(screen.queryByText('Stimme abgegeben')).toBeNull();
   });
+
+  it('renders the Vote button as blocked with help when active voting rights are missing', () => {
+    render(
+      <EventLiveFocusDialog
+        {...baseProps}
+        canVote={false}
+        hasUserVoted={false}
+        isVotingActionAvailable={false}
+        onVoteClick={() => undefined}
+      />
+    );
+
+    const voteButton = screen.getByRole('button', { name: 'Vote' });
+
+    expect(voteButton.getAttribute('aria-disabled')).toBe('true');
+    expect(voteButton.className).toContain('text-muted-foreground');
+    expect(
+      screen.getByText('Active Voting Rights are required to vote in this event.')
+    ).toBeTruthy();
+  });
 });

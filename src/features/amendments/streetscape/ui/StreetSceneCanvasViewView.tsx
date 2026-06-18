@@ -10,6 +10,7 @@ import { getStreetDesignObjectDefinition } from '../logic/streetDesignObjectRegi
 
 export interface StreetSceneCanvasViewViewProps {
   design: StreetDesignStateV1;
+  metricLabels?: string[];
   placementMode: 'drag_band' | 'path' | null;
   placementPointCount: number;
   canFinishPathPlacement: boolean;
@@ -25,6 +26,7 @@ export interface StreetSceneCanvasViewViewProps {
 
 export function StreetSceneCanvasViewView({
   design,
+  metricLabels = [],
   placementMode,
   placementPointCount,
   canFinishPathPlacement,
@@ -39,42 +41,59 @@ export function StreetSceneCanvasViewView({
 }: StreetSceneCanvasViewViewProps) {
   if (loadFailed) {
     return (
-      <div className="border-border bg-muted/30 text-muted-foreground flex min-h-[560px] items-center justify-center rounded-md border text-sm">
+      <div className="bg-muted/20 text-muted-foreground flex min-h-[28rem] items-center justify-center border-b p-4 text-sm xl:border-r xl:border-b-0">
         Three.js konnte nicht geladen werden.
       </div>
     );
   }
 
+  const comparisonLabel =
+    design.comparisonMode === 'split'
+      ? 'Split'
+      : design.comparisonMode === 'original'
+        ? 'Original'
+        : design.comparisonMode === 'new_design'
+          ? 'Neues Design'
+          : 'Overlay';
+  const modeLabel =
+    interactionMode === 'place'
+      ? 'Platzieren'
+      : interactionMode === 'select'
+        ? 'Selektieren'
+        : 'Kamera';
+
   return (
-    <div className="border-border bg-muted/20 relative min-h-[560px] overflow-hidden rounded-md border">
-      <canvas
-        ref={canvasRef}
-        className={
-          interactionMode === 'camera'
-            ? 'h-[560px] w-full cursor-grab'
-            : 'h-[560px] w-full cursor-crosshair'
-        }
-      />
-      <div className="pointer-events-none absolute top-3 left-3 flex gap-2 text-xs font-medium">
-        {design.comparisonMode === 'split' ? (
-          <>
-            <span className="bg-background/90 rounded-md border px-2 py-1 shadow-sm">Original</span>
-            <span className="bg-background/90 rounded-md border px-2 py-1 shadow-sm">
-              Neues Design
+    <div className="from-background via-muted/20 to-muted/50 relative min-h-[30rem] overflow-hidden border-b bg-gradient-to-br p-3 xl:border-r xl:border-b-0">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_18%,rgba(20,184,166,0.16),transparent_22%),radial-gradient(circle_at_82%_12%,rgba(234,179,8,0.12),transparent_20%)]" />
+      <div className="bg-background/40 relative overflow-hidden rounded-md border shadow-inner">
+        <canvas
+          ref={canvasRef}
+          className={
+            interactionMode === 'camera'
+              ? 'h-[30rem] w-full cursor-grab sm:h-[34rem] 2xl:h-[38rem]'
+              : interactionMode === 'select'
+                ? 'h-[30rem] w-full cursor-pointer sm:h-[34rem] 2xl:h-[38rem]'
+                : 'h-[30rem] w-full cursor-crosshair sm:h-[34rem] 2xl:h-[38rem]'
+          }
+        />
+      </div>
+      <div className="pointer-events-none absolute top-6 right-6 left-6 flex flex-wrap items-start justify-between gap-2 text-xs font-medium">
+        <span className="bg-background/90 rounded-md border px-3 py-1.5 shadow-sm backdrop-blur">
+          {comparisonLabel} · {modeLabel}
+        </span>
+        <div className="flex flex-wrap justify-end gap-2">
+          {metricLabels.map(label => (
+            <span
+              key={label}
+              className="bg-background/90 rounded-full border px-3 py-1.5 shadow-sm backdrop-blur"
+            >
+              {label}
             </span>
-          </>
-        ) : (
-          <span className="bg-background/90 rounded-md border px-2 py-1 shadow-sm">
-            {design.comparisonMode === 'original'
-              ? 'Original'
-              : design.comparisonMode === 'new_design'
-                ? 'Neues Design'
-                : 'Overlay'}
-          </span>
-        )}
+          ))}
+        </div>
       </div>
       {placementMode === 'path' ? (
-        <div className="border-border bg-background/95 absolute bottom-3 left-3 flex items-center gap-3 rounded-md border px-3 py-2 text-xs shadow-lg backdrop-blur">
+        <div className="border-border bg-background/95 absolute bottom-6 left-6 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 text-xs shadow-lg backdrop-blur">
           <div>
             <p className="font-semibold">Kurve zeichnen</p>
             <p className="text-muted-foreground">{placementPointCount} Punkte gesetzt</p>
@@ -101,7 +120,7 @@ export function StreetSceneCanvasViewView({
         </div>
       ) : null}
       {selectedObject ? (
-        <div className="border-border bg-background/95 absolute right-3 bottom-3 flex items-center gap-3 rounded-md border px-3 py-2 text-xs shadow-lg backdrop-blur">
+        <div className="border-border bg-background/95 absolute right-6 bottom-6 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 text-xs shadow-lg backdrop-blur">
           <div>
             <p className="font-semibold">
               {getStreetDesignObjectDefinition(selectedObject.type).label}

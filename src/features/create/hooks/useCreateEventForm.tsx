@@ -43,6 +43,10 @@ import { getEventTypeTranslationKey } from '@/features/events/logic/getEventType
 import { buildRecurringEventFields } from '@/features/events/logic/buildRecurringEventFields';
 import { buildEventTemporalFields } from '@/features/events/logic/buildEventTemporalFields';
 import {
+  canCreateDelegateAssemblyForGroup,
+  DELEGATE_ASSEMBLY_GROUP_ELIGIBILITY_MESSAGE,
+} from '@/features/events/logic/delegateAssemblyEligibility';
+import {
   getEventTimeSeriesValidationError,
   hasRequiredEventDateTimeRange,
 } from '@/features/events/logic/eventTimeSeriesValidation';
@@ -288,21 +292,8 @@ export function useCreateEventForm(): CreateFormConfig {
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!title.trim()) return createBlockedSubmitOutcome();
-    if (
-      eventType === 'delegate_assembly' &&
-      (!group ||
-        (group.group_type !== 'hierarchical' &&
-          !(
-            group.group_type === 'sibling' &&
-            (group.sibling_membership_mode === 'parliament' ||
-              group.sibling_membership_mode === 'elected')
-          )))
-    ) {
-      toast.error(
-        translateText(
-          'generated.inline.0324_delegiertenversammlungen_koennen_nur_fuer_hie_dc8b32df'
-        )
-      );
+    if (eventType === 'delegate_assembly' && !canCreateDelegateAssemblyForGroup(group)) {
+      toast.error(DELEGATE_ASSEMBLY_GROUP_ELIGIBILITY_MESSAGE);
       return createBlockedSubmitOutcome();
     }
 

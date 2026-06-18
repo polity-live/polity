@@ -113,6 +113,11 @@ export const groupQueries = {
         .related('group')
         .related('user')
         .related('source_group')
+        .related('part_group')
+        .related('base_group')
+        .related('origins', originQuery =>
+          originQuery.related('source_group').related('part_group').related('base_group')
+        )
         .related('membership_roles', q => q.related('role'))
   ),
 
@@ -239,6 +244,11 @@ export const groupQueries = {
         applyGroupMembershipSelfOrManagerQueryAccess(q, userID)
           .related('user')
           .related('source_group')
+          .related('part_group')
+          .related('base_group')
+          .related('origins', originQuery =>
+            originQuery.related('source_group').related('part_group').related('base_group')
+          )
           .related('membership_roles', mq => mq.related('role'))
       )
       .related('guest_accesses', q =>
@@ -270,6 +280,11 @@ export const groupQueries = {
         .where('group_id', groupId)
         .related('group')
         .related('source_group')
+        .related('part_group')
+        .related('base_group')
+        .related('origins', originQuery =>
+          originQuery.related('source_group').related('part_group').related('base_group')
+        )
         .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
 
@@ -283,6 +298,11 @@ export const groupQueries = {
         .related('group')
         .related('user')
         .related('source_group')
+        .related('part_group')
+        .related('base_group')
+        .related('origins', originQuery =>
+          originQuery.related('source_group').related('part_group').related('base_group')
+        )
         .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
 
@@ -352,6 +372,11 @@ export const groupQueries = {
         applyGroupMembershipSelfOrManagerQueryAccess(q, userID)
           .related('user')
           .related('source_group')
+          .related('part_group')
+          .related('base_group')
+          .related('origins', originQuery =>
+            originQuery.related('source_group').related('part_group').related('base_group')
+          )
           .related('membership_roles', mq => mq.related('role'))
       )
       .related('guest_accesses', q =>
@@ -381,6 +406,11 @@ export const groupQueries = {
         .related('group')
         .related('user')
         .related('source_group')
+        .related('part_group')
+        .related('base_group')
+        .related('origins', originQuery =>
+          originQuery.related('source_group').related('part_group').related('base_group')
+        )
         .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
 
@@ -394,6 +424,11 @@ export const groupQueries = {
         .related('group')
         .related('user')
         .related('source_group')
+        .related('part_group')
+        .related('base_group')
+        .related('origins', originQuery =>
+          originQuery.related('source_group').related('part_group').related('base_group')
+        )
         .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
 
@@ -577,6 +612,17 @@ export const groupQueries = {
         .related('user')
   ),
 
+  /** Active memberships for accessible groups, with user data (for assignment pickers). */
+  assignableActiveMembersByGroupIds: defineQuery(
+    z.object({ groupIds: z.array(z.string()) }),
+    ({ args: { groupIds }, ctx: { userID } }) =>
+      zql.group_membership
+        .where('group_id', 'IN', groupIds)
+        .where('status', 'IN', ['active', 'admin', 'member'])
+        .whereExists('group', group => applyGroupAccess(group, userID))
+        .related('user')
+  ),
+
   /** All users limited to 20 (for user search / invite dialogs) */
   allUsersLimited: defineQuery(z.object({}), ({ ctx: { userID } }) => {
     if (!userID || userID === 'anon') return zql.user.where('visibility', 'public').limit(20);
@@ -675,3 +721,6 @@ export type GroupDirectMembershipRow = QueryRowType<typeof groupQueries.directMe
 export type GroupSubscriberRow = QueryRowType<typeof groupQueries.subscribersByGroup>;
 export type GroupPaymentRow = QueryRowType<typeof groupQueries.paymentsReceivedByGroup>;
 export type GroupLinkRow = QueryRowType<typeof groupQueries.linksByGroup>;
+export type GroupAssignableActiveMemberRow = QueryRowType<
+  typeof groupQueries.assignableActiveMembersByGroupIds
+>;

@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import type { CSSProperties } from 'react';
-import { Eye } from 'lucide-react';
+import { ArrowUpDown, Eye, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { getMembershipDisplayRoles } from '@/features/groups/logic/membershipDisplayRoles';
@@ -9,9 +9,8 @@ import type {
   ParticipationLike,
   ParticipationRoleLike,
 } from '@/features/shared/types/participation';
-import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { DataTable, TableActionIconButton, type ColumnDef } from '@/features/shared/ui/data-table';
 import { CountBadge, EntityBadge, StatusBadge } from '@/features/shared/ui/status';
-import { Button } from '@/features/shared/ui/ui/button';
 import { UserTableCell } from '@/features/shared/ui/data-table';
 import type { SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
 import { RoleTag } from './RoleTag';
@@ -41,6 +40,7 @@ interface MembershipsByRoleTablesProps<
   secondaryActionTooltip?: string;
   emptyStateLabel?: string;
   showProvenanceColumns?: boolean;
+  showDelegateRepresentationColumn?: boolean;
   hideEmptyRoleSections?: boolean;
 }
 
@@ -64,6 +64,7 @@ export function MembershipsByRoleTables<
   secondaryActionTooltip,
   emptyStateLabel,
   showProvenanceColumns = false,
+  showDelegateRepresentationColumn = false,
   hideEmptyRoleSections = false,
 }: MembershipsByRoleTablesProps<TRole, TParticipation>) {
   const { t } = useTranslation();
@@ -101,6 +102,10 @@ export function MembershipsByRoleTables<
   const rightsLabel = t('components.membershipTables.rights');
   const secondaryActionDefaultLabel = t('components.membershipTables.manage');
   const notAvailableLabel = t('components.membershipTables.notAvailable', 'N/A');
+  const noDelegateRepresentationLabel = t(
+    'components.membershipTables.noDelegateRepresentation',
+    '-'
+  );
   const countTone = 'neutral';
   const membersWithoutRoles = members.filter(
     membership => getMembershipDisplayRoles(membership).length === 0
@@ -155,10 +160,44 @@ export function MembershipsByRoleTables<
     );
   };
 
+  const renderDelegateRepresentationTags = (membership: TParticipation) => {
+    const groups = membership.delegateRepresentedGroups ?? [];
+
+    if (groups.length === 0) {
+      return <span className="text-muted-foreground">{noDelegateRepresentationLabel}</span>;
+    }
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        {groups.map(group => {
+          const label = group.seatCount > 1 ? `${group.name} (${group.seatCount})` : group.name;
+
+          return (
+            <EntityBadge key={group.id} asChild tone="info" className="hover:opacity-90">
+              <Link to="/group/$id" params={{ id: group.id }}>
+                {label}
+              </Link>
+            </EntityBadge>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       {sections.map((section, sectionIndex) => {
         const roleMembers = section.members;
+        const delegateRepresentationColumns: ColumnDef<TParticipation>[] =
+          showDelegateRepresentationColumn
+            ? [
+                {
+                  id: 'delegateRepresents',
+                  header: () => t('components.tableColumns.delegateRepresents'),
+                  cell: ({ row }) => renderDelegateRepresentationTags(row.original),
+                },
+              ]
+            : [];
         const provenanceColumns: ColumnDef<TParticipation>[] = showProvenanceColumns
           ? [
               {
@@ -211,6 +250,7 @@ export function MembershipsByRoleTables<
               );
             },
           },
+          ...delegateRepresentationColumns,
           ...provenanceColumns,
           {
             id: 'joined',
@@ -232,37 +272,40 @@ export function MembershipsByRoleTables<
             },
             cell: ({ row }) => {
               const membership = row.original;
+              const effectiveReadOnly = Boolean(
+                (membership as TParticipation & { effectiveReadOnly?: boolean }).effectiveReadOnly
+              );
 
               return (
                 <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => onOpenRightsDialog(membership)}>
-                    <Eye className="mr-1 h-4 w-4" />
-                    {rightsLabel}
-                  </Button>
-                  {onSecondaryAction ? (
-                    <Button
+                  <TableActionIconButton
+                    label={rightsLabel}
+                    icon={<Eye className="h-4 w-4" />}
+                    onClick={() => onOpenRightsDialog(membership)}
+                  />
+                  {onSecondaryAction && !effectiveReadOnly ? (
+                    <TableActionIconButton
+                      label={secondaryActionLabel || secondaryActionDefaultLabel}
+                      tooltip={secondaryActionTooltip}
+                      icon={<ArrowUpDown className="h-4 w-4" />}
                       variant="outline"
-                      size="sm"
                       onClick={() => onSecondaryAction(membership)}
-                      title={secondaryActionTooltip}
-                    >
-                      {secondaryActionLabel || secondaryActionDefaultLabel}
-                    </Button>
+                    />
                   ) : null}
                   {section.kind === 'role' && section.role ? (
-                    <Button
+                    <TableActionIconButton
+                      label={resolvedRemoveActionLabel}
+                      icon={<Trash2 className="h-4 w-4" />}
                       variant="ghost"
-                      size="sm"
-                      disabled={membership.source === 'derived'}
+                      destructive
+                      disabled={membership.source === 'derived' || effectiveReadOnly}
                       onClick={() => onRemoveRole(membership, section.role.id)}
-                      title={
-                        membership.source === 'derived'
+                      tooltip={
+                        membership.source === 'derived' || effectiveReadOnly
                           ? resolvedDerivedRemoveTooltip
-                          : 'Remove this role from the member.'
+                          : resolvedRemoveActionLabel
                       }
-                    >
-                      {resolvedRemoveActionLabel}
-                    </Button>
+                    />
                   ) : null}
                 </div>
               );

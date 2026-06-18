@@ -71,14 +71,17 @@ export function EventWiki({ eventId }: EventWikiProps) {
   const formattedLocation = formatNamedLocation(event.location_name, event);
   const isAssemblyEventType =
     event.event_type === 'delegate_assembly' || event.event_type === 'general_assembly';
+  const isInviteOnlyEvent = event.event_type === 'on_invite';
+  const canStartParticipationRequest =
+    !participation.isParticipant && !participation.hasRequested && !participation.isInvited;
   const shouldDisableParticipationRequest =
-    isAssemblyEventType &&
-    !participation.isParticipant &&
-    !participation.hasRequested &&
-    !participation.isInvited;
-  const participationDisabledReason = shouldDisableParticipationRequest
-    ? 'Only members of the associated group can participate in this general assembly'
-    : undefined;
+    canStartParticipationRequest && (isAssemblyEventType || isInviteOnlyEvent);
+  const participationDisabledReason =
+    canStartParticipationRequest && isInviteOnlyEvent
+      ? translateText('generated.inline.0468_this_event_is_by_invitation_only_904d226e')
+      : canStartParticipationRequest && isAssemblyEventType
+        ? 'Only members of the associated group can participate in this general assembly'
+        : undefined;
   const eventDescription = typeof event.description === 'string' ? event.description : undefined;
   return (
     <EventWikiContentView

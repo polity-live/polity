@@ -6,12 +6,14 @@ import type {
   StreetDesignInteractionMode,
   StreetDesignLocalPoint,
   StreetDesignObject,
+  StreetDesignObjectCategory,
   StreetDesignObjectType,
   StreetDesignStateV1,
 } from '../types';
 import { mountStreetDesignScene } from '../logic/streetDesignScene';
 interface StreetSceneCanvasViewProps {
   design: StreetDesignStateV1;
+  metricLabels?: string[];
   placementPreview: CorridorGeometry | PathCorridorGeometry | null;
   placementPreviewType: StreetDesignObjectType | null;
   placementStart: StreetDesignLocalPoint | null;
@@ -20,7 +22,11 @@ interface StreetSceneCanvasViewProps {
   canFinishPathPlacement: boolean;
   selectedObjectId: string | null;
   selectedObject: StreetDesignObject | null;
+  selectedObjectFocusRequestKey: number;
+  hiddenObjectIds: string[];
+  hiddenObjectCategories: StreetDesignObjectCategory[];
   selectedOsmWayId: string | null;
+  selectedOsmFocusRequestKey: number;
   interactionMode: StreetDesignInteractionMode;
   readOnly: boolean;
   onPointerDown: (point: StreetDesignLocalPoint) => void;
@@ -30,11 +36,13 @@ interface StreetSceneCanvasViewProps {
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
   onOsmWaySelect: (osmWayId: string | null) => void;
+  onObjectRotate: (objectId: string, rotationDeg: number) => void;
   onDeleteObject: (objectId: string) => void;
 }
 
 export function useStreetSceneCanvasViewController({
   design,
+  metricLabels,
   placementPreview,
   placementPreviewType,
   placementStart,
@@ -43,7 +51,11 @@ export function useStreetSceneCanvasViewController({
   canFinishPathPlacement,
   selectedObjectId,
   selectedObject,
+  selectedObjectFocusRequestKey,
+  hiddenObjectIds,
+  hiddenObjectCategories,
   selectedOsmWayId,
+  selectedOsmFocusRequestKey,
   interactionMode,
   readOnly,
   onPointerDown,
@@ -53,15 +65,18 @@ export function useStreetSceneCanvasViewController({
   onCancelPlacement,
   onObjectSelect,
   onOsmWaySelect,
+  onObjectRotate,
   onDeleteObject,
 }: StreetSceneCanvasViewProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const cameraPoseRef = useRef<StreetDesignCameraPose | null>(null);
+  const lastObjectFocusRequestKeyRef = useRef(0);
+  const lastOsmFocusRequestKeyRef = useRef(0);
 
   const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
-    if (readOnly || !placementMode) return undefined;
+    if (readOnly || interactionMode !== 'place' || !placementMode) return undefined;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || isEditableKeyboardTarget(event.target)) return;
@@ -82,7 +97,14 @@ export function useStreetSceneCanvasViewController({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [canFinishPathPlacement, onCancelPlacement, onFinishPlacement, placementMode, readOnly]);
+  }, [
+    canFinishPathPlacement,
+    interactionMode,
+    onCancelPlacement,
+    onFinishPlacement,
+    placementMode,
+    readOnly,
+  ]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -90,6 +112,21 @@ export function useStreetSceneCanvasViewController({
 
     let cleanup: (() => void) | undefined;
     let isActive = true;
+    const focusObjectId =
+      selectedObjectId && selectedObjectFocusRequestKey !== lastObjectFocusRequestKeyRef.current
+        ? selectedObjectId
+        : null;
+    const focusOsmWayId =
+      selectedOsmWayId && selectedOsmFocusRequestKey !== lastOsmFocusRequestKeyRef.current
+        ? selectedOsmWayId
+        : null;
+
+    if (focusObjectId) {
+      lastObjectFocusRequestKeyRef.current = selectedObjectFocusRequestKey;
+    }
+    if (focusOsmWayId) {
+      lastOsmFocusRequestKeyRef.current = selectedOsmFocusRequestKey;
+    }
 
     mountStreetDesignScene({
       canvas,
@@ -99,6 +136,10 @@ export function useStreetSceneCanvasViewController({
       placementStart,
       selectedObjectId,
       selectedOsmWayId,
+      hiddenObjectIds,
+      hiddenObjectCategories,
+      focusObjectId,
+      focusOsmWayId,
       interactionMode,
       readOnly,
       initialCameraPose: cameraPoseRef.current,
@@ -106,6 +147,7 @@ export function useStreetSceneCanvasViewController({
       onPointerMove,
       onObjectSelect,
       onOsmWaySelect,
+      onObjectRotate,
       onCameraPoseChange: pose => {
         cameraPoseRef.current = pose;
       },
@@ -130,6 +172,7 @@ export function useStreetSceneCanvasViewController({
     interactionMode,
     onObjectSelect,
     onOsmWaySelect,
+    onObjectRotate,
     onPointerDown,
     onPointerMove,
     placementPreview,
@@ -137,11 +180,16 @@ export function useStreetSceneCanvasViewController({
     placementStart,
     readOnly,
     selectedObjectId,
+    selectedObjectFocusRequestKey,
+    hiddenObjectIds,
+    hiddenObjectCategories,
     selectedOsmWayId,
+    selectedOsmFocusRequestKey,
   ]);
 
   return {
     design,
+    metricLabels,
     placementMode,
     placementPointCount,
     canFinishPathPlacement,

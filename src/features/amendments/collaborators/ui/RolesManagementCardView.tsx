@@ -8,7 +8,7 @@ import { RolesPermissionsTable } from '@/features/groups/ui/RolesPermissionsTabl
 import { RoleTag } from '@/features/groups/ui/RoleTag';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
-import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { DataTable, TableActionIconButton, type ColumnDef } from '@/features/shared/ui/data-table';
 import { ValidatedField } from '@/features/shared/ui/form';
 import { CountBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -87,10 +87,12 @@ export function RolesManagementCardView({
       },
       cell: ({ row }) =>
         row.original.scope === 'amendment' ? (
-          <Button variant="ghost" size="sm" onClick={() => handleRemoveRole(row.original.id)}>
-            <Trash2 className="text-destructive mr-1 h-4 w-4" />
-            {translateText('generated.inline.0096_remove_e963907d')}
-          </Button>
+          <TableActionIconButton
+            label={translateText('generated.inline.0096_remove_e963907d')}
+            icon={<Trash2 className="h-4 w-4" />}
+            destructive
+            onClick={() => handleRemoveRole(row.original.id)}
+          />
         ) : null,
     },
   ];

@@ -357,28 +357,18 @@ export const navItemsAuthenticated = (
         href: `/amendment/${amendmentId}`,
         onClick: () => navigate({ to: `/amendment/${amendmentId}` }),
       },
-      {
-        id: 'discussions',
-        label: t ? t('navigation.secondary.amendment.discussions') : 'Discussions',
-        icon: 'MessageSquare',
-        href: `/amendment/${amendmentId}/discussions`,
-        onClick: () => navigate({ to: `/amendment/${amendmentId}/discussions` }),
-      },
-      {
-        id: 'process',
-        label: t ? t('navigation.secondary.amendment.process') : 'Process',
-        icon: 'Workflow',
-        href: `/amendment/${amendmentId}/process`,
-        onClick: () => navigate({ to: `/amendment/${amendmentId}/process` }),
-      },
-      {
-        id: 'streetscape',
-        label: t ? t('navigation.secondary.amendment.streetscape') : 'Strassenentwurf',
-        icon: 'Map',
-        href: `/amendment/${amendmentId}/streetscape`,
-        onClick: () => navigate({ to: `/amendment/${amendmentId}/streetscape` }),
-      },
     ];
+
+    // Add items requiring update/manage permission
+    if (canUpdate || canManage) {
+      items.push({
+        id: 'text',
+        label: t ? t('navigation.secondary.amendment.text') : 'Full Text',
+        icon: 'File',
+        href: `/amendment/${amendmentId}/text`,
+        onClick: () => navigate({ to: `/amendment/${amendmentId}/text` }),
+      });
+    }
 
     // Add items requiring view permission
     if (canView) {
@@ -391,16 +381,29 @@ export const navItemsAuthenticated = (
       });
     }
 
-    // Add items requiring manage permission
-    if (canUpdate || canManage) {
-      items.push({
-        id: 'text',
-        label: t ? t('navigation.secondary.amendment.text') : 'Full Text',
-        icon: 'File',
-        href: `/amendment/${amendmentId}/text`,
-        onClick: () => navigate({ to: `/amendment/${amendmentId}/text` }),
-      });
-    }
+    items.push(
+      {
+        id: 'discussions',
+        label: t ? t('navigation.secondary.amendment.discussions') : 'Discussions',
+        icon: 'MessageSquare',
+        href: `/amendment/${amendmentId}/discussions`,
+        onClick: () => navigate({ to: `/amendment/${amendmentId}/discussions` }),
+      },
+      {
+        id: 'streetscape',
+        label: t ? t('navigation.secondary.amendment.streetscape') : 'Strassenentwurf',
+        icon: 'Map',
+        href: `/amendment/${amendmentId}/streetscape`,
+        onClick: () => navigate({ to: `/amendment/${amendmentId}/streetscape` }),
+      },
+      {
+        id: 'process',
+        label: t ? t('navigation.secondary.amendment.process') : 'Process',
+        icon: 'Workflow',
+        href: `/amendment/${amendmentId}/process`,
+        onClick: () => navigate({ to: `/amendment/${amendmentId}/process` }),
+      }
+    );
 
     if (canManage) {
       items.push({

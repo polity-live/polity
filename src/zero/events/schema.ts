@@ -168,6 +168,23 @@ export const eventCancelSchema = z.object({
 export type Event = z.infer<typeof eventSelectSchema>;
 export type EventUpdateInput = z.infer<typeof eventUpdateSchema>;
 
+// ── event_assembly_scope ─────────────────────────────────────────────
+const eventAssemblyScopeBaseSchema = z.object({
+  id: z.string(),
+  event_id: z.string(),
+  host_group_id: z.string(),
+  source_group_id: z.string(),
+  scope_kind: z.string(),
+  participant_mode: z.string(),
+  required_role_id: z.string().nullable(),
+  status: z.string(),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+});
+
+export const eventAssemblyScopeSelectSchema = eventAssemblyScopeBaseSchema;
+export type EventAssemblyScope = z.infer<typeof eventAssemblyScopeSelectSchema>;
+
 // ── event_participant ─────────────────────────────────────────────────
 const eventParticipantBaseSchema = z.object({
   id: z.string(),

@@ -6,9 +6,8 @@
 
 import { useMemo, type CSSProperties } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { DataTable, TableActionIconButton, type ColumnDef } from '@/features/shared/ui/data-table';
 import { Trash2, UserPlus } from 'lucide-react';
 import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';
 import type { ParticipationLike } from '@/features/shared/types/participation';
@@ -131,15 +130,14 @@ export function PendingInvitationsTable<TParticipation extends ParticipationLike
 
           return (
             <div className="flex justify-end">
-              <Button
+              <TableActionIconButton
+                label={withdrawActionLabel}
+                icon={<Trash2 className="h-4 w-4" />}
                 variant="ghost"
-                size="sm"
+                destructive
                 disabled={!userId}
                 onClick={() => userId && onWithdraw(membership.id, userId)}
-              >
-                <Trash2 className="h-4 w-4" />
-                <span className="ml-2">{withdrawActionLabel}</span>
-              </Button>
+              />
             </div>
           );
         },

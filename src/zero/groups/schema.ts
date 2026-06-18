@@ -7,6 +7,14 @@ import {
 } from '../shared/helpers';
 const roleAssigneeKindSchema = z.enum(['member', 'guest']);
 const groupGuestStatusSchema = z.enum(['requested', 'invited', 'active', 'revoked']);
+export const groupTypeSchema = z.enum([
+  'base',
+  'hierarchical',
+  'sibling',
+  'parliament',
+  'committee',
+  'institution',
+]);
 
 // ── group ─────────────────────────────────────────────────────────────
 const groupBaseSchema = z.object({
@@ -28,6 +36,13 @@ const groupBaseSchema = z.object({
   event_count: z.number(),
   amendment_count: z.number(),
   document_count: z.number(),
+  group_type: groupTypeSchema.nullable().optional(),
+  has_hierarchy_children: z.boolean().optional(),
+  has_sibling_connections: z.boolean().optional(),
+  connected_group_id: z.string().nullable().optional(),
+  primary_sibling_membership_mode: z.string().nullable().optional(),
+  sibling_membership_mode: z.string().nullable().optional(),
+  sibling_role_id: z.string().nullable().optional(),
   x: z.string().nullable(),
   youtube: z.string().nullable(),
   linkedin: z.string().nullable(),
@@ -55,9 +70,16 @@ export const groupCreateSchema = groupBaseSchema
     event_count: true,
     amendment_count: true,
     document_count: true,
+    has_hierarchy_children: true,
+    has_sibling_connections: true,
+    connected_group_id: true,
+    primary_sibling_membership_mode: true,
+    sibling_membership_mode: true,
+    sibling_role_id: true,
   })
   .extend({
     id: z.string(),
+    group_type: groupTypeSchema.default('base'),
   });
 export const groupUpdateSchema = groupBaseSchema
   .pick({
@@ -79,6 +101,13 @@ export const groupUpdateSchema = groupBaseSchema
     latitude: true,
     longitude: true,
     image_url: true,
+    group_type: true,
+    has_hierarchy_children: true,
+    has_sibling_connections: true,
+    connected_group_id: true,
+    primary_sibling_membership_mode: true,
+    sibling_membership_mode: true,
+    sibling_role_id: true,
     x: true,
     youtube: true,
     linkedin: true,
@@ -99,12 +128,30 @@ const groupMembershipBaseSchema = z.object({
   visibility: z.string(),
   source: z.string(),
   source_group_id: z.string().nullable(),
+  origin_kind: z.string().nullable().optional(),
+  connection_id: z.string().nullable().optional(),
+  membership_rule_id: z.string().nullable().optional(),
+  part_group_id: z.string().nullable().optional(),
+  base_group_id: z.string().nullable().optional(),
+  is_auto_managed: z.boolean().optional(),
   created_at: timestampSchema,
 });
 
 export const groupMembershipSelectSchema = groupMembershipBaseSchema;
 export const groupMembershipCreateSchema = groupMembershipBaseSchema
-  .omit({ id: true, created_at: true, user_id: true, source: true, source_group_id: true })
+  .omit({
+    id: true,
+    created_at: true,
+    user_id: true,
+    source: true,
+    source_group_id: true,
+    origin_kind: true,
+    connection_id: true,
+    membership_rule_id: true,
+    part_group_id: true,
+    base_group_id: true,
+    is_auto_managed: true,
+  })
   .extend({
     id: z.string(),
     user_id: z.string().optional(),
@@ -121,6 +168,26 @@ export const groupMembershipLegacyRoleUpdateSchema = groupMembershipUpdateSchema
 });
 export const groupMembershipDeleteSchema = z.object({ id: z.string() });
 export type GroupMembership = z.infer<typeof groupMembershipSelectSchema>;
+
+// ── group_membership_origin ──────────────────────────────────────────
+const groupMembershipOriginBaseSchema = z.object({
+  id: z.string(),
+  group_membership_id: z.string(),
+  origin_kind: z.string(),
+  source_group_id: z.string().nullable(),
+  source_membership_id: z.string().nullable(),
+  connection_id: z.string().nullable(),
+  membership_rule_id: z.string().nullable(),
+  source_role_id: z.string().nullable(),
+  part_group_id: z.string().nullable(),
+  base_group_id: z.string().nullable(),
+  depth: z.number(),
+  path_group_ids: z.array(z.string()),
+  created_at: timestampSchema,
+});
+
+export const groupMembershipOriginSelectSchema = groupMembershipOriginBaseSchema;
+export type GroupMembershipOrigin = z.infer<typeof groupMembershipOriginSelectSchema>;
 
 // ── group_offline_member ─────────────────────────────────────────────
 const groupOfflineMemberBaseSchema = z.object({

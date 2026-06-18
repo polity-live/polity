@@ -149,13 +149,15 @@ The project deploys to three services:
 ### Deploy script
 
 ```bash
-npm run deploy          # Full deploy: Supabase → Fly.io → Vercel
-npm run deploy:dry      # Dry-run (prints commands without executing)
+npm run deploy          # Interactive target selection
+npm run deploy:dry      # Interactive dry-run (prints commands without executing)
+npm run deploy -- --all # Full deploy without prompt: Supabase → Fly.io → Vercel
 ```
 
 Skip individual steps with flags:
 
 ```bash
+npm run deploy -- --skip-supabase --skip-fly # Only frontend to Vercel
 npm run deploy -- --skip-supabase   # Skip Supabase migrations
 npm run deploy -- --skip-fly        # Skip Fly.io deploy
 npm run deploy -- --skip-vercel     # Skip Vercel deploy

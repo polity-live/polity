@@ -23,7 +23,11 @@ export interface ChartMapping {
   xColumn: string;
   valueColumn: string;
   seriesColumn?: string | null;
+  tableMode?: ChartTableMode;
+  valueColumns?: string[];
 }
+
+export type ChartTableMode = 'columnMapping' | 'rowsAsSeries' | 'columnsAsSeries';
 
 export interface ChartPresentation {
   title?: string;
@@ -42,6 +46,56 @@ export interface ManualChartSource {
   rows: Record<string, string>[];
 }
 
+export interface GovDataResourceSummary {
+  id: string;
+  name: string;
+  format: string;
+  mimetype?: string | null;
+  size?: number | null;
+  modified?: string | null;
+  url: string;
+}
+
+export interface GovDataCatalogueEntry {
+  id: string;
+  name: string;
+  title: string;
+  notes?: string | null;
+  publisher?: string | null;
+  organizationTitle?: string | null;
+  modified?: string | null;
+  resources: GovDataResourceSummary[];
+}
+
+export interface GovDataProvenance {
+  packageId: string;
+  packageName: string;
+  packageTitle: string;
+  resourceId: string;
+  resourceName: string;
+  resourceUrl: string;
+  publisher?: string | null;
+  organizationTitle?: string | null;
+  modified?: string | null;
+  resourceModified?: string | null;
+  licenseTitle?: string | null;
+  importedAt: string;
+}
+
+export interface GovDataChartSource extends GovDataProvenance {
+  kind: 'govdata';
+  snapshotKey: string;
+  columns: string[];
+  rows: Record<string, string>[];
+}
+
+export interface GovDataImportResult {
+  snapshotKey: string;
+  columns: string[];
+  rows: Record<string, string>[];
+  provenance: GovDataProvenance;
+}
+
 export interface EurostatChartSource {
   kind: 'eurostat';
   datasetId: string;
@@ -49,9 +103,11 @@ export interface EurostatChartSource {
   snapshotKey: string;
   projectionId: string;
   filters: Record<string, string>;
+  columns?: string[];
+  rows?: Record<string, string>[];
 }
 
-export type ChartSource = ManualChartSource | EurostatChartSource;
+export type ChartSource = ManualChartSource | GovDataChartSource | EurostatChartSource;
 
 export interface TChartElement extends TElement {
   type: typeof CHART_NODE_TYPE;
@@ -120,4 +176,19 @@ export interface EurostatProjectionRequest {
 export interface EurostatProjectionResult {
   projectionId: string;
   points: ChartPoint[];
+}
+
+export type OfficialDataProviderId = 'govdata' | 'eurostat';
+
+export interface OfficialDataSearchResult {
+  id: string;
+  provider: OfficialDataProviderId;
+  title: string;
+  code?: string;
+  description?: string | null;
+  source?: string | null;
+  modified?: string | null;
+  formatSummary?: string | null;
+  valueSummary?: string | null;
+  entry: GovDataCatalogueEntry | EurostatCatalogueEntry;
 }

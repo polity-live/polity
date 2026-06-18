@@ -21,6 +21,9 @@ type EventAgendaItemsFullRow = QueryRowType<typeof queries.events.agendaItemsFul
 type EventAgendaItemDetailRow = QueryRowType<typeof queries.events.agendaItemDetail>;
 type EventWikiDataRow = QueryRowType<typeof queries.events.wikiData>;
 type EventWikiAgendaItemRow = QueryRowType<typeof queries.events.wikiAgendaItems>;
+type EventDelegateAssemblyCompositionRow = QueryRowType<
+  typeof queries.events.delegateAssemblyComposition
+>;
 
 interface EventStateOptions {
   eventId?: string;
@@ -566,6 +569,48 @@ export function useEventDelegates(eventId: string, groupId?: string) {
   };
 }
 
+export function useDelegateAssemblyCompositionData(eventId: string) {
+  const [eventData, eventResult] = useQuery(
+    queries.events.delegateAssemblyComposition({ id: eventId })
+  );
+  const event = (eventData?.[0] as EventDelegateAssemblyCompositionRow | undefined) || null;
+  const scheduledElections = useMemo(
+    () =>
+      (event?.delegate_allocations || []).flatMap(allocation =>
+        (allocation.group?.roles || []).flatMap(role => role.elections || [])
+      ),
+    [event]
+  );
+
+  return {
+    event,
+    allocations: event?.delegate_allocations || [],
+    delegates: event?.delegates || [],
+    scheduledElections,
+    isLoading: eventResult.type === 'unknown',
+  };
+}
+
+export function useEventAssemblyScopes(eventId: string) {
+  const [scopes, result] = useQuery(queries.events.assemblyScopesByEvent({ eventId }));
+
+  return {
+    scopes: scopes || [],
+    isLoading: result.type === 'unknown',
+  };
+}
+
+export function useDelegateElectionAssignments(eventId: string) {
+  const [assignments, result] = useQuery(
+    queries.events.delegateElectionAssignmentsByEvent({ eventId })
+  );
+
+  return {
+    assignments: assignments || [],
+    isLoading: result.type === 'unknown',
+  };
+}
+
 // ── Additional hooks ────────────────────────────────────────────────
 
 export function useEventSubscribers(eventId?: string) {
@@ -666,6 +711,23 @@ export function useUserEventParticipations(userId?: string) {
   return {
     participations: participations || [],
     isLoading: !participations && !!userId,
+  };
+}
+
+export function useEventParticipantsByParticipatedEventIds(eventIds?: readonly string[]) {
+  const normalizedEventIds = useMemo(
+    () => (eventIds ? [...new Set(eventIds.filter(Boolean))] : []),
+    [eventIds]
+  );
+  const [participantsData, participantsResult] = useQuery(
+    normalizedEventIds.length > 0
+      ? queries.events.participantsByParticipatedEventIds({ eventIds: normalizedEventIds })
+      : undefined
+  );
+
+  return {
+    participants: participantsData || [],
+    isLoading: normalizedEventIds.length > 0 && participantsResult.type === 'unknown',
   };
 }
 

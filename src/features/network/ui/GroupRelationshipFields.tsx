@@ -3,7 +3,12 @@ import {
   getRightToneClasses,
   getSemanticToneClasses,
 } from '@/features/shared/theme';
-import { BadgeControl } from '@/features/shared/ui/status';
+import { RoleTag } from '@/features/groups/ui/RoleTag';
+import {
+  BadgeControl,
+  TOKEN_BADGE_FILTER_HOVER_CLASSES,
+  type RightType,
+} from '@/features/shared/ui/status';
 import {
   FormControlLabel,
   FormControlSelect,
@@ -14,10 +19,7 @@ import {
 import { Check } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import {
   getSiblingMembershipModeLabel,
@@ -35,7 +37,6 @@ import type {
   GroupRelationshipType,
   RelativeMembershipDirection,
 } from '../types/network.types';
-import { type RightType } from '@/features/shared/ui/status';
 
 export type GroupRelationshipRight = RightType;
 export type GroupRelationshipPhraseMode = 'selection' | 'statement' | 'role';
@@ -84,11 +85,11 @@ export function getGroupRelationshipDirectionOptions(
 ): GroupRelationshipDirectionOption[] {
   return [
     {
-      value: 'current_has_right_in_partner',
+      value: 'current_grants_right_to_partner',
       label: t('common.network.directionOutgoingLabel'),
     },
     {
-      value: 'partner_has_right_in_current',
+      value: 'partner_grants_right_to_current',
       label: t('common.network.directionIncomingLabel'),
     },
     {
@@ -248,19 +249,20 @@ function getRelationshipConnectorLabel(
 
 function getRelationshipConnectorClasses(relationshipType: GroupRelationshipType) {
   if (relationshipType === 'parent') {
-    return getSemanticToneClasses('warning').badge;
+    return cn(getSemanticToneClasses('warning').badge, TOKEN_BADGE_FILTER_HOVER_CLASSES);
   }
 
   if (relationshipType === 'child') {
-    return getSemanticToneClasses('info').badge;
+    return cn(getSemanticToneClasses('info').badge, TOKEN_BADGE_FILTER_HOVER_CLASSES);
   }
 
-  return getSemanticToneClasses('accent').badge;
+  return cn(getSemanticToneClasses('accent').badge, TOKEN_BADGE_FILTER_HOVER_CLASSES);
 }
 
 function getGroupTagClasses(kind: 'current' | 'selected') {
   return cn(
     getEntityToneClasses('group').badge,
+    TOKEN_BADGE_FILTER_HOVER_CLASSES,
     kind === 'current' && 'ring-1 ring-[var(--entity-group-ring)]'
   );
 }
@@ -284,9 +286,9 @@ export function GroupRelationshipNameTag({
   const fallback =
     kind === 'current'
       ? caseStyle === 'embedded'
-        ? 'diese Gruppe'
-        : 'Diese Gruppe'
-      : 'andere Gruppe';
+        ? t('common.network.thisGroupEmbedded')
+        : t('common.network.thisGroup')
+      : t('common.network.selectedPartnerGroup', 'Gewählte Partnergruppe');
   const safeName = getSafeGroupName(name, fallback);
   const displayName =
     displayMode === 'name-only'
@@ -416,6 +418,8 @@ export function GroupRelationshipMembershipModeDescription({
   selectedGroupName,
   currentGroupId,
   selectedGroupId,
+  requiredSourceRoleId,
+  requiredSourceRoleName,
   className,
   linkGroups = true,
 }: {
@@ -425,6 +429,8 @@ export function GroupRelationshipMembershipModeDescription({
   selectedGroupName: string;
   currentGroupId?: string;
   selectedGroupId?: string;
+  requiredSourceRoleId?: string | null;
+  requiredSourceRoleName?: string | null;
   className?: string;
   linkGroups?: boolean;
 }) {
@@ -458,15 +464,16 @@ export function GroupRelationshipMembershipModeDescription({
 
   const sourceTag = direction === 'partner_members_to_current' ? selectedTag : currentTag;
   const targetTag = direction === 'partner_members_to_current' ? currentTag : selectedTag;
+  const selectedRoleLabel = t('common.network.selectedRole', 'selected role');
 
   if (membershipMode === 'all_members') {
     return (
       <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
-        <span>{translateText('generated.inline.0788_alle_aktiven_mitglieder_von_f860cd6f')}</span>
+        <span>Add all active members of</span>
         {sourceTag}
-        <span>{translateText('generated.inline.0789_werden_in_96b98a79')}</span>
+        <span>to</span>
         {targetTag}
-        <span>{translateText('generated.inline.0790_bernommen_edf81839')}</span>
+        <span>.</span>
       </div>
     );
   }
@@ -474,15 +481,19 @@ export function GroupRelationshipMembershipModeDescription({
   if (membershipMode === 'role_members') {
     return (
       <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
-        <span>
-          {translateText(
-            'generated.inline.0791_nur_mitglieder_mit_der_gew_hlten_rolle_in_82006765'
-          )}
-        </span>
+        <span>Add only</span>
         {sourceTag}
-        <span>{translateText('generated.inline.0789_werden_in_96b98a79')}</span>
+        <span>members with role</span>
+        <RoleTag
+          roleId={requiredSourceRoleId}
+          roleName={requiredSourceRoleName ?? null}
+          fallbackKey="membership-required-source-role"
+        >
+          {requiredSourceRoleName ?? selectedRoleLabel}
+        </RoleTag>
+        <span>to</span>
         {targetTag}
-        <span>{translateText('generated.inline.0790_bernommen_edf81839')}</span>
+        <span>.</span>
       </div>
     );
   }
@@ -490,26 +501,18 @@ export function GroupRelationshipMembershipModeDescription({
   if (membershipMode === 'selected_source_groups') {
     return (
       <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
-        <span>
-          {translateText(
-            'generated.inline.0792_nur_mitglieder_aus_den_gew_hlten_source_grupp_b86ab3d3'
-          )}
-        </span>
+        <span>This connection uses a legacy source-group rule from</span>
         {sourceTag}
-        <span>{translateText('generated.inline.0789_werden_in_96b98a79')}</span>
+        <span>to</span>
         {targetTag}
-        <span>{translateText('generated.inline.0790_bernommen_edf81839')}</span>
+        <span>.</span>
       </div>
     );
   }
 
   return (
     <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
-      <span>{translateText('generated.inline.0793_mitglieder_von_1bf6d7fb')}</span>
-      {sourceTag}
-      <span>{translateText('generated.inline.0794_werden_nicht_automatisch_in_7bcc7b9c')}</span>
-      {targetTag}
-      <span>{translateText('generated.inline.0790_bernommen_edf81839')}</span>
+      <span>Do not add members automatically.</span>
     </div>
   );
 }
@@ -618,7 +621,6 @@ export function SiblingMembershipModeDescription({
 
 function RelationshipTypeOptionContent({
   relationshipType,
-  currentGroupName,
   selectedGroupName,
   siblingMembershipMode,
   currentGroupId,
@@ -634,12 +636,14 @@ function RelationshipTypeOptionContent({
   linkGroups?: boolean;
 }) {
   const { t } = useTranslation();
-  const safeCurrentGroupName = getSafeGroupName(currentGroupName, 'diese Gruppe');
-  const safeSelectedGroupName = getSafeGroupName(selectedGroupName, 'Partnergruppe');
+  const safeSelectedGroupName = getSafeGroupName(
+    selectedGroupName,
+    t('common.network.selectedPartnerGroup', 'Gewählte Partnergruppe')
+  );
 
   const currentTag = (
     <GroupRelationshipNameTag
-      name={safeCurrentGroupName}
+      name=""
       kind="current"
       caseStyle="embedded"
       groupId={currentGroupId}
@@ -662,19 +666,9 @@ function RelationshipTypeOptionContent({
   if (relationshipType === 'parent') {
     return (
       <div className="flex flex-wrap items-center gap-1.5 leading-relaxed">
-        <span className="text-xs">
-          {translateText('generated.inline.0772_die_aktuelle_gruppe_d7fbaf59')}
-        </span>
         {currentTag}
-        <span className="text-xs">
-          {translateText(
-            'generated.inline.0773_ist_bergeordnet_die_gew_hlte_partnergruppe_4d9d2a93'
-          )}
-        </span>
+        <span className="text-xs">is the parent group of</span>
         {selectedTag}
-        <span className="text-xs">
-          {translateText('generated.inline.0771_ist_untergeordnet_9610f87b')}
-        </span>
       </div>
     );
   }
@@ -682,17 +676,9 @@ function RelationshipTypeOptionContent({
   if (relationshipType === 'child') {
     return (
       <div className="flex flex-wrap items-center gap-1.5 leading-relaxed">
-        <span className="text-xs">
-          {translateText('generated.inline.0795_die_gew_hlte_partnergruppe_1a260d6d')}
-        </span>
-        {selectedTag}
-        <span className="text-xs">
-          {translateText('generated.inline.0770_ist_bergeordnet_die_aktuelle_gruppe_36b12d80')}
-        </span>
         {currentTag}
-        <span className="text-xs">
-          {translateText('generated.inline.0771_ist_untergeordnet_9610f87b')}
-        </span>
+        <span className="text-xs">is the child group of</span>
+        {selectedTag}
       </div>
     );
   }
@@ -700,18 +686,11 @@ function RelationshipTypeOptionContent({
   const siblingType = getSiblingMembershipModeLabel(siblingMembershipMode, t);
   return (
     <div className="flex flex-wrap items-center gap-1.5 leading-relaxed">
-      <span className="text-xs">
-        {translateText('generated.inline.0772_die_aktuelle_gruppe_d7fbaf59')}
-      </span>
       {currentTag}
-      <span className="text-xs">
-        {translateText('generated.inline.0774_und_die_gew_hlte_partnergruppe_a51207fb')}
-      </span>
+      <span className="text-xs">is connected with</span>
       {selectedTag}
       <span className="text-xs">
-        {translateText('generated.inline.0117_sind_7377a06f')}
-        {siblingType ? ` ${siblingType.toLowerCase()}` : ''}
-        {translateText('generated.inline.0796_geschwistergruppen_7f9c060b')}
+        {siblingType ? `as ${siblingType.toLowerCase()} partner groups` : 'as partner groups'}
       </span>
     </div>
   );
@@ -874,11 +853,17 @@ interface GroupRelationshipRightsSelectorProps {
   optionsContainerClassName?: string;
 }
 
+function getRightSentenceBadgeClasses(right: GroupRelationshipRight) {
+  const tone = getRightToneClasses(right);
+
+  return cn(tone.badge, TOKEN_BADGE_FILTER_HOVER_CLASSES);
+}
+
 function RightSentenceEmphasis({ right }: { right: GroupRelationshipRight }) {
   const { t } = useTranslation();
 
   return (
-    <BadgeControl className={cn('text-[11px]', getRightToneClasses(right).badge)}>
+    <BadgeControl className={cn('text-[11px]', getRightSentenceBadgeClasses(right))}>
       {getGroupRelationshipRightLabel(right, t)}
     </BadgeControl>
   );
@@ -912,25 +897,25 @@ export function GroupRelationshipDirectionSentence({
     t,
   });
 
-  if (direction === 'partner_has_right_in_current') {
+  if (direction === 'partner_grants_right_to_current') {
     return (
       <div className="flex flex-wrap items-center gap-1.5 leading-tight">
         <GroupRelationshipNameTag
-          name={safeSelectedGroupName}
-          kind="selected"
+          name=""
+          kind="current"
           caseStyle="sentence-start"
-          groupId={selectedGroupId}
+          groupId={currentGroupId}
           displayMode="name-only"
           linkGroups={linkGroups}
         />
-        <span className="text-xs">{t('common.network.directionHas')}</span>
+        <span className="text-xs">{t('common.network.directionHas', 'has')}</span>
         <RightSentenceEmphasis right={right} />
-        <span className="text-xs">{t('common.network.directionIn')}</span>
+        <span className="text-xs">{t('common.network.directionIn', 'in')}</span>
         <GroupRelationshipNameTag
-          name={safeCurrentGroupName}
-          kind="current"
+          name={safeSelectedGroupName}
+          kind="selected"
           caseStyle="embedded"
-          groupId={currentGroupId}
+          groupId={selectedGroupId}
           displayMode="name-only"
           linkGroups={linkGroups}
         />
@@ -943,14 +928,14 @@ export function GroupRelationshipDirectionSentence({
     return (
       <div className="flex flex-wrap items-center gap-1.5 leading-tight">
         <GroupRelationshipNameTag
-          name={safeCurrentGroupName}
+          name=""
           kind="current"
           caseStyle="sentence-start"
           groupId={currentGroupId}
           displayMode="name-only"
           linkGroups={linkGroups}
         />
-        <span className="text-xs">{t('common.network.directionAnd')}</span>
+        <span className="text-xs">{t('common.network.directionAnd', 'and')}</span>
         <GroupRelationshipNameTag
           name={safeSelectedGroupName}
           kind="selected"
@@ -959,7 +944,9 @@ export function GroupRelationshipDirectionSentence({
           displayMode="name-only"
           linkGroups={linkGroups}
         />
-        <span className="text-xs">{t('common.network.directionHaveMutually')}</span>
+        <span className="text-xs">
+          {t('common.network.directionHaveMutually', 'give each other')}
+        </span>
         <RightSentenceEmphasis right={right} />
         <span className="sr-only">{srText}</span>
       </div>
@@ -969,16 +956,16 @@ export function GroupRelationshipDirectionSentence({
   return (
     <div className="flex flex-wrap items-center gap-1.5 leading-tight">
       <GroupRelationshipNameTag
-        name={safeCurrentGroupName}
+        name=""
         kind="current"
         caseStyle="sentence-start"
         groupId={currentGroupId}
         displayMode="name-only"
         linkGroups={linkGroups}
       />
-      <span className="text-xs">{t('common.network.directionHas')}</span>
+      <span className="text-xs">{t('common.network.directionGrants', 'gives')}</span>
       <RightSentenceEmphasis right={right} />
-      <span className="text-xs">{t('common.network.directionIn')}</span>
+      <span className="text-xs">{t('common.network.directionTo', 'to')}</span>
       <GroupRelationshipNameTag
         name={safeSelectedGroupName}
         kind="selected"
@@ -1063,6 +1050,12 @@ export function GroupRelationshipMembershipModeSummary({
   selectedGroupName,
   currentGroupId,
   selectedGroupId,
+  membershipSourceGroupName,
+  membershipTargetGroupName,
+  membershipSourceGroupId,
+  membershipTargetGroupId,
+  requiredSourceRoleId,
+  requiredSourceRoleName,
 }: {
   label: string;
   membershipMode: 'none' | 'all_members' | 'role_members' | 'selected_source_groups';
@@ -1071,21 +1064,48 @@ export function GroupRelationshipMembershipModeSummary({
   selectedGroupName: string;
   currentGroupId?: string;
   selectedGroupId?: string;
+  membershipSourceGroupName?: string | null;
+  membershipTargetGroupName?: string | null;
+  membershipSourceGroupId?: string | null;
+  membershipTargetGroupId?: string | null;
+  requiredSourceRoleId?: string | null;
+  requiredSourceRoleName?: string | null;
 }) {
+  const hasCanonicalMembershipEndpoints =
+    Boolean(membershipSourceGroupName || membershipSourceGroupId) &&
+    Boolean(membershipTargetGroupName || membershipTargetGroupId);
+  const descriptionDirection = hasCanonicalMembershipEndpoints
+    ? 'current_members_to_partner'
+    : membershipDirection;
+  const descriptionCurrentGroupName = hasCanonicalMembershipEndpoints
+    ? (membershipSourceGroupName ?? membershipSourceGroupId ?? currentGroupName)
+    : currentGroupName;
+  const descriptionSelectedGroupName = hasCanonicalMembershipEndpoints
+    ? (membershipTargetGroupName ?? membershipTargetGroupId ?? selectedGroupName)
+    : selectedGroupName;
+  const descriptionCurrentGroupId = hasCanonicalMembershipEndpoints
+    ? (membershipSourceGroupId ?? undefined)
+    : currentGroupId;
+  const descriptionSelectedGroupId = hasCanonicalMembershipEndpoints
+    ? (membershipTargetGroupId ?? undefined)
+    : selectedGroupId;
+
   return (
     <div className="rounded-lg border p-4">
       <div className="space-y-2">
         <p className="text-muted-foreground text-sm font-medium">{label}</p>
         <p className="text-lg font-semibold">{getCanonicalMembershipModeLabel(membershipMode)}</p>
-        {membershipDirection ? (
+        {descriptionDirection ? (
           <div className="text-muted-foreground text-sm">
             <GroupRelationshipMembershipModeDescription
               membershipMode={membershipMode}
-              direction={membershipDirection}
-              currentGroupName={currentGroupName}
-              selectedGroupName={selectedGroupName}
-              currentGroupId={currentGroupId}
-              selectedGroupId={selectedGroupId}
+              direction={descriptionDirection}
+              currentGroupName={descriptionCurrentGroupName}
+              selectedGroupName={descriptionSelectedGroupName}
+              currentGroupId={descriptionCurrentGroupId}
+              selectedGroupId={descriptionSelectedGroupId}
+              requiredSourceRoleId={requiredSourceRoleId}
+              requiredSourceRoleName={requiredSourceRoleName}
               className="text-sm"
             />
           </div>
@@ -1140,7 +1160,7 @@ export function GroupRelationshipRightsSummary({
           const direction: SelectableGroupRelationshipDirection =
             configuredDirection && configuredDirection !== 'none'
               ? configuredDirection
-              : 'current_has_right_in_partner';
+              : 'current_grants_right_to_partner';
 
           return (
             <div key={option.value} className="rounded-lg border p-3">
@@ -1210,7 +1230,7 @@ export function GroupRelationshipRightsSelector({
           const selectedDirection: SelectableGroupRelationshipDirection =
             configuredDirection && configuredDirection !== 'none'
               ? configuredDirection
-              : 'current_has_right_in_partner';
+              : 'current_grants_right_to_partner';
 
           return (
             <div

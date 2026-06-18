@@ -171,9 +171,125 @@ describe('zero network derived helpers', () => {
     });
 
     expect(meta.get('H1')?.group_type).toBe('hierarchical');
+    expect(meta.get('H1')?.has_hierarchy_children).toBe(true);
+    expect(meta.get('H1')?.has_sibling_connections).toBe(false);
     expect(meta.get('B1')?.group_type).toBe('sibling');
+    expect(meta.get('B1')?.has_hierarchy_children).toBe(false);
+    expect(meta.get('B1')?.has_sibling_connections).toBe(true);
     expect(meta.get('B1')?.primary_outgoing_sibling_membership_mode).toBe('selected_source_groups');
     expect(meta.get('S1')?.primary_incoming_sibling_membership_mode).toBe('selected_source_groups');
     expect(meta.get('S1')?.incoming_parliament_source_group_ids).toEqual(['B1', 'B2']);
+  });
+
+  it('keeps hierarchical as the primary type for groups that also have peer connections', () => {
+    const meta = buildDerivedGroupNetworkMetaMap({
+      groupIds: ['H1', 'B1', 'B2', 'H1-faction'],
+      connections: [
+        {
+          id: 'hierarchy-1',
+          group_a_id: 'H1',
+          group_b_id: 'B1',
+          connection_type: 'hierarchy',
+          parent_group_id: 'H1',
+          child_group_id: 'B1',
+          status: 'active',
+          created_at: 1,
+          updated_at: 1,
+        },
+        {
+          id: 'hierarchy-2',
+          group_a_id: 'H1',
+          group_b_id: 'B2',
+          connection_type: 'hierarchy',
+          parent_group_id: 'H1',
+          child_group_id: 'B2',
+          status: 'active',
+          created_at: 2,
+          updated_at: 2,
+        },
+        {
+          id: 'peer-1',
+          group_a_id: 'H1',
+          group_b_id: 'H1-faction',
+          connection_type: 'peer',
+          status: 'active',
+          created_at: 3,
+          updated_at: 3,
+        },
+      ],
+      grants: [],
+      rules: [
+        {
+          id: 'rule-1',
+          connection_id: 'peer-1',
+          member_source_group_id: 'H1',
+          member_target_group_id: 'H1-faction',
+          membership_mode: 'role_members',
+          required_source_role_id: 'role-members',
+          origins: [],
+        },
+      ],
+    });
+
+    expect(meta.get('H1')).toMatchObject({
+      group_type: 'hierarchical',
+      has_hierarchy_children: true,
+      has_sibling_connections: true,
+      primary_outgoing_sibling_membership_mode: 'role_members',
+    });
+  });
+
+  it('aggregates parliament source groups from multiple incoming peer connections', () => {
+    const meta = buildDerivedGroupNetworkMetaMap({
+      groupIds: ['S1', 'C1', 'C2'],
+      connections: [
+        {
+          id: 'peer-older',
+          group_a_id: 'C1',
+          group_b_id: 'S1',
+          connection_type: 'peer',
+          status: 'active',
+          created_at: 1,
+          updated_at: 1,
+        },
+        {
+          id: 'peer-newer',
+          group_a_id: 'C2',
+          group_b_id: 'S1',
+          connection_type: 'peer',
+          status: 'active',
+          created_at: 2,
+          updated_at: 2,
+        },
+      ],
+      grants: [],
+      rules: [
+        {
+          id: 'rule-older',
+          connection_id: 'peer-older',
+          member_source_group_id: 'C1',
+          member_target_group_id: 'S1',
+          membership_mode: 'selected_source_groups',
+          required_source_role_id: null,
+          origins: [{ eligible_origin_group_id: 'P1' }],
+        },
+        {
+          id: 'rule-newer',
+          connection_id: 'peer-newer',
+          member_source_group_id: 'C2',
+          member_target_group_id: 'S1',
+          membership_mode: 'selected_source_groups',
+          required_source_role_id: null,
+          origins: [{ eligible_origin_group_id: 'P2' }, { eligible_origin_group_id: 'P3' }],
+        },
+      ],
+    });
+
+    expect(meta.get('S1')).toMatchObject({
+      connected_group_id: 'C2',
+      primary_incoming_sibling_membership_mode: 'selected_source_groups',
+      incoming_parliament_source_group_ids: ['P2', 'P3', 'P1'],
+      parliament_source_group_ids: ['P2', 'P3', 'P1'],
+    });
   });
 });

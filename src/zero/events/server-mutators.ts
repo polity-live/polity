@@ -4,6 +4,7 @@ import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
 import {
   eventTitle,
+  groupName,
   userName,
   isActiveEventStatus,
   isActiveGroupStatus,
@@ -34,7 +35,12 @@ import {
 } from './schema';
 import { reconcileGeneralAssemblyParticipantsForEvent } from './assembly-reconcile';
 import { reconcileDelegateAllocationsForEvent } from './delegate-allocation-reconcile';
+import { reconcileGroupGraph } from '../network/group-graph-reconcile';
 import { loadGroupWithDerivedNetworkMeta } from '../groups/membership-helpers';
+import {
+  canCreateDelegateAssemblyForGroup,
+  DELEGATE_ASSEMBLY_GROUP_ELIGIBILITY_MESSAGE,
+} from '@/features/events/logic/delegateAssemblyEligibility';
 
 async function addEventParticipantRoleLink(
   tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
@@ -376,14 +382,8 @@ async function assertDelegateAssemblyGroupEligibility(
     throw new Error('Associated group not found.');
   }
 
-  const isEligibleSiblingGroup =
-    group.group_type === 'sibling' &&
-    (group.sibling_membership_mode === 'parliament' || group.sibling_membership_mode === 'elected');
-
-  if (group.group_type !== 'hierarchical' && !isEligibleSiblingGroup) {
-    throw new Error(
-      'Delegate assemblies can only be created for hierarchical groups or elected/parliament sibling groups.'
-    );
+  if (!canCreateDelegateAssemblyForGroup(group)) {
+    throw new Error(DELEGATE_ASSEMBLY_GROUP_ELIGIBILITY_MESSAGE);
   }
 }
 
@@ -547,6 +547,15 @@ export const eventServerMutators = {
       await reconcileDelegateAllocationsForEvent(tx, args.id);
     }
 
+    if (isAssemblyEventType(args.event_type)) {
+      await reconcileGroupGraph(tx, {
+        groupIds: [args.group_id],
+        eventIds: [args.id],
+        assignedById: ctx.userID,
+        reason: 'event-create',
+      });
+    }
+
     // Auto-invite specific users for OnInvite events
     if (args.event_type === 'on_invite' && args.invited_user_ids?.length) {
       for (const userId of args.invited_user_ids) {
@@ -576,6 +585,13 @@ export const eventServerMutators = {
 
     if (args.group_id) {
       await recomputeGroupCounters(tx, args.group_id);
+      fireNotification('notifyGroupEventAssigned', {
+        senderId: ctx.userID,
+        groupId: args.group_id,
+        groupName: await groupName(tx, args.group_id),
+        eventId: args.id,
+        eventTitle: args.title,
+      });
     }
   }),
 
@@ -938,6 +954,10 @@ export const eventServerMutators = {
     const nextEventType = args.event_type ?? previousEvent?.event_type ?? null;
     const nextGroupId =
       args.group_id !== undefined ? args.group_id : (previousEvent?.group_id ?? null);
+    const assignedGroupId =
+      previousEvent && args.group_id && args.group_id !== previousEvent.group_id
+        ? args.group_id
+        : null;
     const nextAttendanceMode = resolveAttendanceMode({
       attendance_mode: args.attendance_mode ?? previousEvent?.attendance_mode,
       location_type: args.location_type ?? previousEvent?.location_type,
@@ -975,6 +995,16 @@ export const eventServerMutators = {
       eventTitle: eTitle,
     });
 
+    if (assignedGroupId) {
+      fireNotification('notifyGroupEventAssigned', {
+        senderId: ctx.userID,
+        groupId: assignedGroupId,
+        groupName: await groupName(tx, assignedGroupId),
+        eventId: args.id,
+        eventTitle: eTitle,
+      });
+    }
+
     if (attendanceModeChanged) {
       await normalizeOfflineParticipantChannelsForEvent(tx, args.id);
     }
@@ -985,6 +1015,15 @@ export const eventServerMutators = {
 
     if (nextEventType === 'delegate_assembly') {
       await reconcileDelegateAllocationsForEvent(tx, args.id);
+    }
+
+    if (isAssemblyEventType(nextEventType)) {
+      await reconcileGroupGraph(tx, {
+        groupIds: [nextGroupId],
+        eventIds: [args.id],
+        assignedById: ctx.userID,
+        reason: 'event-update',
+      });
     }
   }),
 

@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { StreetDesignCostSummary } from '../../types';
 import { StreetCostSummaryView } from '../StreetCostSummaryView';
 
@@ -27,12 +27,81 @@ function summary(): StreetDesignCostSummary {
 }
 
 describe('StreetCostSummaryView', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it('can delete an object from a cost row', () => {
     const onDeleteObject = vi.fn();
 
-    render(<StreetCostSummaryView summary={summary()} onDeleteObject={onDeleteObject} />);
-    fireEvent.click(screen.getByTitle('Element loeschen'));
+    render(
+      <StreetCostSummaryView
+        summary={summary()}
+        comparisonMode="overlay"
+        onComparisonModeChange={vi.fn()}
+        onDeleteObject={onDeleteObject}
+      />
+    );
+    fireEvent.click(screen.getByTitle('Gruen ausklappen'));
+    fireEvent.click(screen.getByTitle('Baum loeschen'));
 
     expect(onDeleteObject).toHaveBeenCalledWith('tree-1');
+  });
+
+  it('can select an added element from the cost list', () => {
+    const onObjectSelect = vi.fn();
+
+    render(
+      <StreetCostSummaryView
+        summary={summary()}
+        comparisonMode="overlay"
+        selectedObjectId={null}
+        onComparisonModeChange={vi.fn()}
+        onObjectSelect={onObjectSelect}
+        onDeleteObject={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Kosten Aufschlüsselung')).toBeTruthy();
+    expect(screen.getByTitle('Gruen ausklappen')).toBeTruthy();
+    fireEvent.click(screen.getByTitle('Gruen ausklappen'));
+    fireEvent.click(screen.getByTitle('Baum auswählen'));
+
+    expect(onObjectSelect).toHaveBeenCalledWith('tree-1');
+  });
+
+  it('can delete a grouped cost category', () => {
+    const onDeleteObjectCategory = vi.fn();
+
+    render(
+      <StreetCostSummaryView
+        summary={summary()}
+        comparisonMode="overlay"
+        onComparisonModeChange={vi.fn()}
+        onDeleteObject={vi.fn()}
+        onDeleteObjectCategory={onDeleteObjectCategory}
+      />
+    );
+
+    fireEvent.click(screen.getByTitle('Gruen entfernen'));
+
+    expect(onDeleteObjectCategory).toHaveBeenCalledWith('greenery');
+  });
+
+  it('moves comparison mode from the toolbar into the cost area', () => {
+    const onComparisonModeChange = vi.fn();
+
+    render(
+      <StreetCostSummaryView
+        summary={summary()}
+        comparisonMode="overlay"
+        onComparisonModeChange={onComparisonModeChange}
+        onDeleteObject={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /neu/i }));
+
+    expect(onComparisonModeChange).toHaveBeenCalledWith('new_design');
   });
 });

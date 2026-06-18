@@ -32,6 +32,8 @@ interface GroupConnectionsInputProps {
   selectableRolesByDirection: any;
   existingRightStatuses: any;
   preflight: any;
+  disabledPresets?: any;
+  disabledPresetFallback?: any;
   groupSelectorLabel: string;
   linkedGroups: any[];
   addDisabled: boolean;
@@ -61,6 +63,8 @@ export function GroupConnectionsInput({
   selectableRolesByDirection,
   existingRightStatuses,
   preflight,
+  disabledPresets,
+  disabledPresetFallback,
   groupSelectorLabel,
   linkedGroups,
   addDisabled,
@@ -91,6 +95,8 @@ export function GroupConnectionsInput({
           selectableRolesByDirection={selectableRolesByDirection}
           existingRightStatuses={existingRightStatuses}
           preflight={preflight}
+          disabledPresets={disabledPresets}
+          disabledPresetFallback={disabledPresetFallback}
           groupSelectorLabel={groupSelectorLabel}
         />
 

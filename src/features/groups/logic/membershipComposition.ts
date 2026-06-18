@@ -32,6 +32,9 @@ export interface MembershipCompositionRelationshipLike {
   group_id: string;
   related_group_id: string;
   relationship_type?: string | null;
+  connection_type?: string | null;
+  parent_group_id?: string | null;
+  child_group_id?: string | null;
   with_right?: string | null;
   status?: string | null;
   group?: ParticipationGroupLike | null;
@@ -45,8 +48,23 @@ export interface MembershipWithCompositionSource<
   user_id?: string | null;
   group_id?: string | null;
   source_group_id?: string | null;
+  part_group_id?: string | null;
+  base_group_id?: string | null;
   group?: MembershipCompositionGroupLike | null;
   source_group?: MembershipCompositionGroupLike | null;
+  part_group?: MembershipCompositionGroupLike | null;
+  base_group?: MembershipCompositionGroupLike | null;
+  origins?:
+    | readonly {
+        origin_kind?: string | null;
+        source_group_id?: string | null;
+        part_group_id?: string | null;
+        base_group_id?: string | null;
+        part_group?: MembershipCompositionGroupLike | null;
+        base_group?: MembershipCompositionGroupLike | null;
+        source_group?: MembershipCompositionGroupLike | null;
+      }[]
+    | null;
 }
 
 export interface MembershipProvenanceFields {
@@ -213,6 +231,10 @@ function resolveSingleMembershipProvenance<
     activeRootMembershipByKey,
     activeRootMemberships,
   } = args;
+  const explicitProvenance = resolveExplicitMembershipProvenance(membership, groupsById);
+  if (explicitProvenance) {
+    return explicitProvenance;
+  }
 
   if (isHierarchicalGroup(currentGroup)) {
     return resolveProvenanceWithinRootGroup(
@@ -234,7 +256,7 @@ function resolveSingleMembershipProvenance<
   }
 
   const rootGroup =
-    normalizeGroup(membership.source_group) ||
+    resolveGroupReference(groupsById, rootGroupId, membership.source_group) ||
     normalizeGroup(groupsById.get(rootGroupId), rootGroupId);
   if (!rootGroup) {
     return createFallbackProvenance();
@@ -244,24 +266,145 @@ function resolveSingleMembershipProvenance<
     return createDirectProvenance(rootGroup);
   }
 
-  const rootMembership =
-    activeRootMembershipByKey.get(getRootMembershipKey(rootGroupId, userId)) ||
+  const exactRootMembership = activeRootMembershipByKey.get(
+    getRootMembershipKey(rootGroupId, userId)
+  );
+  const compatibleRootMembership =
+    exactRootMembership ||
     findCompatibleRootMembership({
       rootGroupId,
       userId,
       activeRootMemberships,
       relationships: activeRelationships,
     });
-  if (!rootMembership) {
-    return createFallbackProvenance();
+
+  if (rootGroup.group_type === 'sibling') {
+    return resolveSiblingSourceProvenance({
+      sourceGroup: rootGroup,
+      sourceMembership: exactRootMembership ?? null,
+      userId,
+      activeRelationships,
+      groupsById,
+      activeRootMembershipByKey,
+      activeRootMemberships,
+    });
+  }
+
+  if (!compatibleRootMembership) {
+    return createDirectProvenance(rootGroup);
   }
 
   return resolveProvenanceWithinRootGroup(
     rootGroup,
-    rootMembership,
+    compatibleRootMembership,
     activeRelationships,
     groupsById
   );
+}
+
+function resolveExplicitMembershipProvenance(
+  membership: MembershipWithCompositionSource,
+  groupsById: Map<string, ResolvedMembershipCompositionGroup>
+): MembershipProvenanceFields | null {
+  const primaryOrigin = membership.origins?.[0] ?? null;
+  const partGroupId = membership.part_group_id ?? primaryOrigin?.part_group_id ?? null;
+  const baseGroupId = membership.base_group_id ?? primaryOrigin?.base_group_id ?? null;
+
+  if (!partGroupId && !baseGroupId) {
+    return null;
+  }
+
+  const partGroup =
+    partGroupId != null
+      ? resolveGroupReference(
+          groupsById,
+          partGroupId,
+          membership.part_group ?? primaryOrigin?.part_group ?? null
+        )
+      : null;
+  const baseGroup =
+    baseGroupId != null
+      ? resolveGroupReference(
+          groupsById,
+          baseGroupId,
+          membership.base_group ?? primaryOrigin?.base_group ?? null
+        )
+      : null;
+
+  return {
+    partGroup: partGroup ?? baseGroup,
+    baseGroup: baseGroup ?? partGroup,
+    provenanceBucketLabel: null,
+  };
+}
+
+function resolveSiblingSourceProvenance<
+  TRootMembership extends MembershipWithCompositionSource,
+>(args: {
+  sourceGroup: ResolvedMembershipCompositionGroup;
+  sourceMembership: TRootMembership | null;
+  userId: string;
+  activeRelationships: readonly MembershipCompositionRelationshipLike[];
+  groupsById: Map<string, ResolvedMembershipCompositionGroup>;
+  activeRootMembershipByKey: Map<string, TRootMembership>;
+  activeRootMemberships: readonly TRootMembership[];
+}): MembershipProvenanceFields {
+  const {
+    sourceGroup,
+    sourceMembership,
+    userId,
+    activeRelationships,
+    groupsById,
+    activeRootMembershipByKey,
+    activeRootMemberships,
+  } = args;
+  const normalizedSourceGroup = normalizeGroup(sourceGroup, sourceGroup.id);
+
+  if (!normalizedSourceGroup) {
+    return createFallbackProvenance();
+  }
+
+  let baseGroup: MembershipProvenanceGroup = normalizedSourceGroup;
+  const nestedSourceGroupId = sourceMembership?.source_group_id;
+
+  if (nestedSourceGroupId && nestedSourceGroupId !== sourceGroup.id) {
+    const nestedSourceGroup = resolveGroupReference(
+      groupsById,
+      nestedSourceGroupId,
+      sourceMembership?.source_group
+    );
+
+    if (nestedSourceGroup?.group_type === 'base') {
+      baseGroup = nestedSourceGroup;
+    } else if (nestedSourceGroup && isHierarchicalGroup(nestedSourceGroup)) {
+      const nestedMembership =
+        activeRootMembershipByKey.get(getRootMembershipKey(nestedSourceGroup.id, userId)) ||
+        findCompatibleRootMembership({
+          rootGroupId: nestedSourceGroup.id,
+          userId,
+          activeRootMemberships,
+          relationships: activeRelationships,
+        });
+      const nestedProvenance = nestedMembership
+        ? resolveProvenanceWithinRootGroup(
+            nestedSourceGroup,
+            nestedMembership,
+            activeRelationships,
+            groupsById
+          )
+        : null;
+
+      baseGroup = nestedProvenance?.baseGroup ?? nestedSourceGroup;
+    } else if (nestedSourceGroup?.group_type === 'sibling') {
+      baseGroup = nestedSourceGroup;
+    }
+  }
+
+  return {
+    partGroup: normalizedSourceGroup,
+    baseGroup,
+    provenanceBucketLabel: null,
+  };
 }
 
 function findCompatibleRootMembership<
@@ -316,7 +459,7 @@ function resolveProvenanceWithinRootGroup(
   }
 
   const baseGroup =
-    normalizeGroup(membership.source_group) ||
+    resolveGroupReference(groupsById, baseGroupId, membership.source_group) ||
     normalizeGroup(groupsById.get(baseGroupId), baseGroupId);
   const partGroup = resolvePartGroupForBase({
     rootGroupId: rootGroup.id,
@@ -430,14 +573,73 @@ function buildGroupLookup(
   for (const relationship of relationships) {
     addGroupToLookup(groupsById, relationship.group);
     addGroupToLookup(groupsById, relationship.related_group);
+    addGroupToLookup(groupsById, normalizeGroup(null, relationship.group_id));
+    addGroupToLookup(groupsById, normalizeGroup(null, relationship.related_group_id));
   }
 
   for (const membership of [...memberships, ...rootMemberships]) {
     addGroupToLookup(groupsById, membership.group);
     addGroupToLookup(groupsById, membership.source_group);
+    addGroupToLookup(groupsById, membership.part_group);
+    addGroupToLookup(groupsById, membership.base_group);
+    addGroupToLookup(groupsById, normalizeGroup(null, membership.part_group_id));
+    addGroupToLookup(groupsById, normalizeGroup(null, membership.base_group_id));
+    for (const origin of membership.origins ?? []) {
+      addGroupToLookup(groupsById, origin.source_group);
+      addGroupToLookup(groupsById, origin.part_group);
+      addGroupToLookup(groupsById, origin.base_group);
+      addGroupToLookup(groupsById, normalizeGroup(null, origin.source_group_id));
+      addGroupToLookup(groupsById, normalizeGroup(null, origin.part_group_id));
+      addGroupToLookup(groupsById, normalizeGroup(null, origin.base_group_id));
+    }
   }
 
+  applyRelationshipDerivedGroupTypes(groupsById, relationships);
+
   return groupsById;
+}
+
+function applyRelationshipDerivedGroupTypes(
+  groupsById: Map<string, ResolvedMembershipCompositionGroup>,
+  relationships: readonly MembershipCompositionRelationshipLike[]
+) {
+  const parentGroupIds = new Set<string>();
+  const peerGroupIds = new Set<string>();
+
+  for (const relationship of relationships) {
+    if (relationship.status !== 'active') {
+      continue;
+    }
+
+    const hierarchyPair = getHierarchyRelationshipPair(relationship);
+    if (hierarchyPair) {
+      parentGroupIds.add(hierarchyPair.parentGroupId);
+      addGroupToLookup(groupsById, normalizeGroup(null, hierarchyPair.parentGroupId));
+      addGroupToLookup(groupsById, normalizeGroup(null, hierarchyPair.childGroupId));
+      continue;
+    }
+
+    if (relationship.connection_type === 'peer' || relationship.relationship_type === 'sibling') {
+      peerGroupIds.add(relationship.group_id);
+      peerGroupIds.add(relationship.related_group_id);
+    }
+  }
+
+  for (const [groupId, group] of groupsById) {
+    const inferredGroupType = parentGroupIds.has(groupId)
+      ? 'hierarchical'
+      : peerGroupIds.has(groupId)
+        ? 'sibling'
+        : 'base';
+
+    groupsById.set(groupId, {
+      ...group,
+      group_type:
+        group.group_type === 'hierarchical' || group.group_type === 'sibling'
+          ? group.group_type
+          : inferredGroupType,
+    });
+  }
 }
 
 function addGroupToLookup(
@@ -469,6 +671,32 @@ function normalizeGroup(
     group_type: group?.group_type ?? null,
     connected_group_id: extendedGroup?.connected_group_id ?? null,
     sibling_membership_mode: extendedGroup?.sibling_membership_mode ?? null,
+  };
+}
+
+function resolveGroupReference(
+  groupsById: Map<string, ResolvedMembershipCompositionGroup>,
+  groupId: string,
+  group?: ParticipationGroupLike | MembershipCompositionGroupLike | null
+): ResolvedMembershipCompositionGroup | null {
+  const lookupGroup = groupsById.get(groupId) ?? null;
+  const normalizedGroup = normalizeGroup(group, groupId);
+
+  if (!lookupGroup) {
+    return normalizedGroup;
+  }
+
+  if (!normalizedGroup) {
+    return lookupGroup;
+  }
+
+  return {
+    ...lookupGroup,
+    ...normalizedGroup,
+    group_type: lookupGroup.group_type ?? normalizedGroup.group_type,
+    connected_group_id: normalizedGroup.connected_group_id ?? lookupGroup.connected_group_id,
+    sibling_membership_mode:
+      normalizedGroup.sibling_membership_mode ?? lookupGroup.sibling_membership_mode,
   };
 }
 

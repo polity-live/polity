@@ -31,6 +31,13 @@ export const groupRightKeySchema = z.enum([
   'passiveVotingRight',
 ]);
 export const groupConnectionTypeSchema = z.enum(['hierarchy', 'peer']);
+export const groupConnectionKindSchema = z.enum([
+  'hierarchy',
+  'sibling',
+  'parliament',
+  'committee',
+  'institution',
+]);
 export const groupMembershipModeSchema = z.enum([
   'all_members',
   'role_members',
@@ -52,6 +59,9 @@ const groupConnectionBaseSchema = z.object({
   group_a_id: z.string(),
   group_b_id: z.string(),
   connection_type: groupConnectionTypeSchema,
+  from_group_id: z.string().nullable().optional(),
+  to_group_id: z.string().nullable().optional(),
+  connection_kind: groupConnectionKindSchema.nullable().optional(),
   parent_group_id: z.string().nullable(),
   child_group_id: z.string().nullable(),
   status: z.string(),
@@ -79,6 +89,54 @@ const groupMembershipRuleBaseSchema = z.object({
   member_target_group_id: z.string(),
   membership_mode: groupMembershipModeSchema,
   required_source_role_id: z.string().nullable(),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+});
+
+const groupHierarchyPathBaseSchema = z.object({
+  id: z.string(),
+  ancestor_group_id: z.string(),
+  descendant_group_id: z.string(),
+  direct_child_group_id: z.string().nullable(),
+  base_group_id: z.string(),
+  depth: z.number(),
+  path_group_ids: z.array(z.string()),
+  status: z.string(),
+  connection_id: z.string().nullable(),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+});
+
+const groupEffectiveRightBaseSchema = z.object({
+  id: z.string(),
+  holder_group_id: z.string(),
+  scope_group_id: z.string(),
+  right_key: groupRightKeySchema,
+  source_connection_id: z.string().nullable(),
+  source_grant_id: z.string().nullable(),
+  status: z.string(),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+});
+
+const groupMembershipExclusivityLockBaseSchema = z.object({
+  id: z.string(),
+  user_id: z.string(),
+  hierarchy_group_id: z.string(),
+  source_group_id: z.string(),
+  group_membership_id: z.string(),
+  status: z.string(),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+});
+
+const groupSiblingSourceLockBaseSchema = z.object({
+  id: z.string(),
+  user_id: z.string(),
+  sibling_group_id: z.string(),
+  source_group_id: z.string(),
+  group_membership_id: z.string(),
+  status: z.string(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
@@ -120,6 +178,10 @@ const groupConnectionRequestBaseSchema = z.object({
 export const groupConnectionSelectSchema = groupConnectionBaseSchema;
 export const groupRightGrantSelectSchema = groupRightGrantBaseSchema;
 export const groupMembershipRuleSelectSchema = groupMembershipRuleBaseSchema;
+export const groupHierarchyPathSelectSchema = groupHierarchyPathBaseSchema;
+export const groupEffectiveRightSelectSchema = groupEffectiveRightBaseSchema;
+export const groupMembershipExclusivityLockSelectSchema = groupMembershipExclusivityLockBaseSchema;
+export const groupSiblingSourceLockSelectSchema = groupSiblingSourceLockBaseSchema;
 export const groupConnectionRequestSelectSchema = groupConnectionRequestBaseSchema;
 
 export const createGroupConnectionSchema = groupConnectionBaseSchema
@@ -156,7 +218,10 @@ export const updateGroupConnectionSchema = groupConnectionBaseSchema
     membership_rule: groupMembershipRuleMutationSchema.nullable().optional(),
   });
 
-export const deleteGroupConnectionSchema = z.object({ id: z.string() });
+export const deleteGroupConnectionSchema = z.object({
+  id: z.string(),
+  acting_group_id: z.string(),
+});
 
 export const proposeGroupConnectionChangeSchema = groupConnectionRequestBaseSchema
   .omit({ created_at: true, updated_at: true, status: true, structure_status: true })
@@ -366,6 +431,12 @@ export type GroupRelationship = DerivedNetworkRelationshipRow;
 export type GroupConnection = z.infer<typeof groupConnectionSelectSchema>;
 export type GroupRightGrant = z.infer<typeof groupRightGrantSelectSchema>;
 export type GroupMembershipRule = z.infer<typeof groupMembershipRuleSelectSchema>;
+export type GroupHierarchyPath = z.infer<typeof groupHierarchyPathSelectSchema>;
+export type GroupEffectiveRight = z.infer<typeof groupEffectiveRightSelectSchema>;
+export type GroupMembershipExclusivityLock = z.infer<
+  typeof groupMembershipExclusivityLockSelectSchema
+>;
+export type GroupSiblingSourceLock = z.infer<typeof groupSiblingSourceLockSelectSchema>;
 export type GroupConnectionRequest = z.infer<typeof groupConnectionRequestSelectSchema>;
 export type Subscriber = z.infer<typeof selectSubscriberSchema>;
 export type GroupWorkflow = z.infer<typeof groupWorkflowSelectSchema>;

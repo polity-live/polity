@@ -28,6 +28,8 @@ interface TypeaheadSearchBaseProps {
   showAllResults?: boolean;
   /** When true, opening the field with an empty query shows all available items immediately. */
   showAllOnFocus?: boolean;
+  disabled?: boolean;
+  ariaRequired?: boolean;
 }
 
 export interface TypeaheadSingleProps extends TypeaheadSearchBaseProps {
@@ -110,6 +112,8 @@ export function TypeaheadSearchBaseContainer(props: TypeaheadSearchBaseComponent
     disablePortal = false,
     showAllResults = false,
     showAllOnFocus = false,
+    disabled = false,
+    ariaRequired = false,
     query,
     setQuery,
     sourceItems,
@@ -209,10 +213,15 @@ export function TypeaheadSearchBaseContainer(props: TypeaheadSearchBaseComponent
   }, [visibleResults.length]);
 
   useEffect(() => {
+    if (disabled) {
+      setIsOpen(false);
+      return;
+    }
+
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isOpen]);
+  }, [disabled, isOpen]);
 
   useLayoutEffect(() => {
     if (disablePortal) {
@@ -282,6 +291,10 @@ export function TypeaheadSearchBaseContainer(props: TypeaheadSearchBaseComponent
 
   const handleSelect = useCallback(
     (item: TypeaheadItem) => {
+      if (disabled) {
+        return;
+      }
+
       onInteract?.();
 
       // Add to known items to ensure it stays available during re-renders
@@ -301,11 +314,15 @@ export function TypeaheadSearchBaseContainer(props: TypeaheadSearchBaseComponent
         containerRef.current?.focus();
       }, 0);
     },
-    [multiValues, multiple, onInteract, onMultiChange, onSingleChange, setQuery]
+    [disabled, multiValues, multiple, onInteract, onMultiChange, onSingleChange, setQuery]
   );
 
   const handleRemoveSelection = useCallback(
     (itemId: string) => {
+      if (disabled) {
+        return;
+      }
+
       onInteract?.();
       if (multiple) {
         onMultiChange?.(removeTypeaheadValue(multiValues, itemId));
@@ -314,11 +331,15 @@ export function TypeaheadSearchBaseContainer(props: TypeaheadSearchBaseComponent
         setQuery('');
       }
     },
-    [multiValues, multiple, onInteract, onMultiChange, onSingleChange, setQuery]
+    [disabled, multiValues, multiple, onInteract, onMultiChange, onSingleChange, setQuery]
   );
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (disabled) {
+        return;
+      }
+
       if (!isOpen && (event.key === 'ArrowDown' || event.key === 'Enter')) {
         setIsOpen(true);
         return;
@@ -337,7 +358,7 @@ export function TypeaheadSearchBaseContainer(props: TypeaheadSearchBaseComponent
         setIsOpen(false);
       }
     },
-    [handleSelect, isOpen, selectedIndex, visibleResults]
+    [disabled, handleSelect, isOpen, selectedIndex, visibleResults]
   );
 
   return (
@@ -345,6 +366,7 @@ export function TypeaheadSearchBaseContainer(props: TypeaheadSearchBaseComponent
       className={className}
       containerRef={containerRef}
       disablePortal={disablePortal}
+      disabled={disabled}
       dropdownPortalRef={dropdownPortalRef}
       dropdownStyle={dropdownStyle}
       handleKeyDown={handleKeyDown}
@@ -362,6 +384,7 @@ export function TypeaheadSearchBaseContainer(props: TypeaheadSearchBaseComponent
       selectedIndex={selectedIndex}
       selectedItem={selectedItem}
       selectedItems={selectedItems}
+      ariaRequired={ariaRequired}
       setIsOpen={setIsOpen}
       setQuery={setQuery}
       setSelectedIndex={setSelectedIndex}

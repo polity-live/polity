@@ -17,7 +17,7 @@ import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
 import { cn } from '@/features/shared/utils/utils';
 import { UserTableCell } from '@/features/shared/ui/data-table';
 import { RoleTag } from '@/features/groups/ui/RoleTag';
-import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { DataTable, TableActionIconButton, type ColumnDef } from '@/features/shared/ui/data-table';
 import { FileInputField, FormFieldShell, TextField } from '@/features/shared/ui/form';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { EntityBadge, StatusBadge } from '@/features/shared/ui/status';
@@ -33,6 +33,8 @@ import {
   Upload,
   UserRoundPlus,
   Users,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import {
@@ -209,74 +211,87 @@ export function OfflineRosterCardView({
 
   const renderRowActions = (row: OfflineRosterRow) => {
     const nextChannel = row.participationChannel === 'offline' ? 'online' : 'offline';
+    const rightsLabel = translateText('generated.inline.0133_rights_db94ff6b');
+    const manageRolesLabel = translateText('generated.inline.0947_manage_roles_5f9b8531');
+    const confirmLabel = translateText('generated.inline.0948_confirm_04a21221');
+    const withdrawLabel = translateText('generated.inline.0949_withdraw_confirmation_ed1f407d');
+    const setChannelLabel =
+      nextChannel === 'offline'
+        ? translateText('generated.inline.0124_set_offline_8b45cb62')
+        : translateText('generated.inline.0125_set_online_5ac7fe77');
+    const connectLabel = translateText('generated.inline.0950_connect_b65463cb');
+    const editLabel = translateText('generated.inline.0729_edit_5301648d');
+    const deleteLabel = translateText('generated.inline.0537_delete_f6fdbe48');
 
     return (
       <div className="flex flex-wrap justify-end gap-2">
         {row.canViewRights ? (
-          <Button type="button" size="sm" variant="ghost" onClick={() => onOpenRightsDialog?.(row)}>
-            <Eye className="mr-2 h-4 w-4" />
-            {translateText('generated.inline.0133_rights_db94ff6b')}
-          </Button>
+          <TableActionIconButton
+            label={rightsLabel}
+            icon={<Eye className="h-4 w-4" />}
+            onClick={() => onOpenRightsDialog?.(row)}
+          />
         ) : null}
         {row.canManageRoles ? (
-          <Button
-            type="button"
-            size="sm"
+          <TableActionIconButton
+            label={manageRolesLabel}
+            icon={<ArrowUpDown className="h-4 w-4" />}
             variant="outline"
             onClick={() => onOpenChangeRoleDialog?.(row)}
-          >
-            <ArrowUpDown className="mr-2 h-4 w-4" />
-            {translateText('generated.inline.0947_manage_roles_5f9b8531')}
-          </Button>
+          />
         ) : null}
         {row.canConfirmParticipation ? (
-          <Button
-            type="button"
-            size="sm"
+          <TableActionIconButton
+            label={confirmLabel}
+            icon={<Check className="h-4 w-4" />}
             variant="outline"
             onClick={() => void handleSetParticipationStatus(row, 'confirmed')}
-          >
-            <Check className="mr-2 h-4 w-4" />
-            {translateText('generated.inline.0948_confirm_04a21221')}
-          </Button>
+          />
         ) : null}
         {row.canWithdrawParticipation ? (
-          <Button
-            type="button"
-            size="sm"
+          <TableActionIconButton
+            label={withdrawLabel}
+            icon={<CircleX className="h-4 w-4" />}
             variant="outline"
             onClick={() => void handleSetParticipationStatus(row, 'listed')}
-          >
-            {translateText('generated.inline.0949_withdraw_confirmation_ed1f407d')}
-          </Button>
+          />
         ) : null}
         {row.canToggleChannel ? (
-          <Button
-            type="button"
-            size="sm"
+          <TableActionIconButton
+            label={setChannelLabel}
+            icon={
+              nextChannel === 'offline' ? (
+                <WifiOff className="h-4 w-4" />
+              ) : (
+                <Wifi className="h-4 w-4" />
+              )
+            }
             variant="outline"
             onClick={() => void handleToggleChannel(row, nextChannel)}
-          >
-            {nextChannel === 'offline'
-              ? translateText('generated.inline.0124_set_offline_8b45cb62')
-              : translateText('generated.inline.0125_set_online_5ac7fe77')}
-          </Button>
+          />
         ) : null}
         {row.canConnect ? (
-          <Button type="button" size="sm" variant="outline" onClick={() => setConnectRow(row)}>
-            <Link2 className="mr-2 h-4 w-4" />
-            {translateText('generated.inline.0950_connect_b65463cb')}
-          </Button>
+          <TableActionIconButton
+            label={connectLabel}
+            icon={<Link2 className="h-4 w-4" />}
+            variant="outline"
+            onClick={() => setConnectRow(row)}
+          />
         ) : null}
         {row.canEdit ? (
-          <Button type="button" size="icon" variant="ghost" onClick={() => openEditRow(row)}>
-            <Pencil className="h-4 w-4" />
-          </Button>
+          <TableActionIconButton
+            label={editLabel}
+            icon={<Pencil className="h-4 w-4" />}
+            onClick={() => openEditRow(row)}
+          />
         ) : null}
         {row.canDelete ? (
-          <Button type="button" size="icon" variant="ghost" onClick={() => void handleDelete(row)}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <TableActionIconButton
+            label={deleteLabel}
+            icon={<Trash2 className="h-4 w-4" />}
+            destructive
+            onClick={() => void handleDelete(row)}
+          />
         ) : null}
       </div>
     );

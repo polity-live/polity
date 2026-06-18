@@ -50,6 +50,8 @@ function getRelationshipMemoKey(relationship: NormalizedGroupRelationship) {
     relationship.status ?? '',
     relationship.with_right ?? '',
     relationship.membership_mode ?? '',
+    relationship.required_source_role_id ?? '',
+    relationship.required_source_role?.name ?? '',
     relationship.connection_request_id ?? '',
     relationship.group?.id ?? '',
     relationship.group?.name ?? '',
@@ -181,6 +183,8 @@ export function useGroupNetwork(groupId: string) {
             rights: rel.with_right ? [rel.with_right] : [],
             type: 'sibling',
             membershipMode: rel.membership_mode ?? null,
+            requiredSourceRoleId: rel.required_source_role_id ?? null,
+            requiredSourceRoleName: rel.required_source_role?.name ?? null,
           });
           return;
         }
@@ -193,6 +197,8 @@ export function useGroupNetwork(groupId: string) {
           (existingEntry.membershipMode === 'none' && rel.membership_mode !== 'none')
         ) {
           existingEntry.membershipMode = rel.membership_mode;
+          existingEntry.requiredSourceRoleId = rel.required_source_role_id ?? null;
+          existingEntry.requiredSourceRoleName = rel.required_source_role?.name ?? null;
         }
       });
 

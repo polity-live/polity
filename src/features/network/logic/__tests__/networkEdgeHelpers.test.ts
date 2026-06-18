@@ -1,4 +1,5 @@
 import { featureThemeClassName } from '@/features/shared/theme';
+import { MEMBERSHIP_FLOW_RIGHT } from '@/features/shared/ui/status';
 import { Position } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 
@@ -18,6 +19,7 @@ import {
   orientRelationshipEdgeForCurrentPerspective,
   resolveInnerAutoEdgeAnchors,
 } from '../networkEdgeHelpers';
+import type { EditableRightsLabelEdgeData } from '../../types/networkEdge.types';
 
 const FALLBACK_STROKE = 'var(--badge-success-border)';
 
@@ -162,8 +164,8 @@ describe('networkEdgeHelpers', () => {
         },
       })
     ).toEqual({
-      informationRight: 'partner_has_right_in_current',
-      amendmentRight: 'current_has_right_in_partner',
+      informationRight: 'current_grants_right_to_partner',
+      amendmentRight: 'partner_grants_right_to_current',
     });
   });
 
@@ -184,7 +186,7 @@ describe('networkEdgeHelpers', () => {
         informationRight: 'forward',
       },
       rightDisplayDirections: {
-        informationRight: 'partner_has_right_in_current',
+        informationRight: 'current_grants_right_to_partner',
       },
     });
   });
@@ -206,7 +208,7 @@ describe('networkEdgeHelpers', () => {
         informationRight: 'backward',
       },
       rightDisplayDirections: {
-        informationRight: 'current_has_right_in_partner',
+        informationRight: 'partner_grants_right_to_current',
       },
     });
   });
@@ -230,8 +232,8 @@ describe('networkEdgeHelpers', () => {
         amendmentRight: 'backward',
       },
       rightDisplayDirections: {
-        informationRight: 'current_has_right_in_partner',
-        amendmentRight: 'partner_has_right_in_current',
+        informationRight: 'partner_grants_right_to_current',
+        amendmentRight: 'current_grants_right_to_partner',
       },
     });
   });
@@ -265,6 +267,8 @@ describe('networkEdgeHelpers', () => {
             id: 'rel-1',
             connection_id: 'connection-1',
             grant_id: 'grant-1',
+            membership_request_id: null,
+            request_item_kind: 'right',
             group_id: 'group-parent',
             related_group_id: 'group-child',
             relationship_type: 'child',
@@ -298,6 +302,8 @@ describe('networkEdgeHelpers', () => {
             id: 'rel-2',
             connection_id: 'connection-2',
             grant_id: 'grant-2',
+            membership_request_id: null,
+            request_item_kind: 'right',
             group_id: 'group-child',
             related_group_id: 'group-parent',
             relationship_type: 'parent',
@@ -360,6 +366,8 @@ describe('networkEdgeHelpers', () => {
           relationshipType: 'sibling',
           membershipMode: 'role_members',
           membershipDirection: 'partner_members_to_current',
+          membershipRequiredSourceRoleId: 'role-admin',
+          membershipRequiredSourceRoleName: 'Admin',
         },
       } as never,
       key => key
@@ -367,6 +375,8 @@ describe('networkEdgeHelpers', () => {
 
     expect(dialogData.membershipMode).toBe('role_members');
     expect(dialogData.membershipDirection).toBe('partner_members_to_current');
+    expect(dialogData.membershipRequiredSourceRoleId).toBe('role-admin');
+    expect(dialogData.membershipRequiredSourceRoleName).toBe('Admin');
   });
 
   it('builds shared relationship edges with the same preview metadata used by the group network', () => {
@@ -400,13 +410,95 @@ describe('networkEdgeHelpers', () => {
     expect(dialogData.selectedGroupName).toBe('H1');
     expect(dialogData.membershipMode).toBe('all_members');
     expect(dialogData.membershipDirection).toBe('current_members_to_partner');
+    expect(dialogData.membershipSourceGroupId).toBe('group-b1');
+    expect(dialogData.membershipTargetGroupId).toBe('group-h1');
+    expect(dialogData.membershipSourceGroupName).toBe('B1');
+    expect(dialogData.membershipTargetGroupName).toBe('H1');
     expect(dialogData.rightDisplayDirections).toEqual({
-      amendmentRight: 'current_has_right_in_partner',
+      amendmentRight: 'partner_grants_right_to_current',
     });
     expect(edge.animated).toBe(true);
     expect(edge.markerStart).toBeDefined();
     expect(edge.markerEnd).toBeUndefined();
     expect(edge.style?.animationDirection).toBe('reverse');
+  });
+
+  it('keeps membership-only hierarchy flow canonical when viewed from the parent root', () => {
+    const edge = buildNetworkRelationshipEdge({
+      edgeId: 'edge-membership-flow',
+      sourceId: 'group-h1',
+      targetId: 'group-b2',
+      sourceGroupId: 'group-h1',
+      targetGroupId: 'group-b2',
+      structuralType: 'parent',
+      rights: [],
+      relationshipKinds: ['active'],
+      rightRelationshipKinds: {},
+      membershipMode: 'all_members',
+      memberSourceGroupId: 'group-b2',
+      memberTargetGroupId: 'group-h1',
+      rightEdgeDirections: {},
+      fallbackStrokeColor: FALLBACK_STROKE,
+      sourceName: 'H1',
+      targetName: 'B2',
+      graphRootGroupId: 'group-h1',
+      currentGroupId: 'group-h1',
+    });
+
+    const dialogData = buildNetworkRelationshipDialogData(edge, key => key);
+
+    expect(dialogData.currentGroupId).toBe('group-h1');
+    expect(dialogData.currentGroupName).toBe('H1');
+    expect(dialogData.selectedGroupId).toBe('group-b2');
+    expect(dialogData.selectedGroupName).toBe('B2');
+    expect(dialogData.membershipDirection).toBe('partner_members_to_current');
+    expect(dialogData.membershipSourceGroupId).toBe('group-b2');
+    expect(dialogData.membershipTargetGroupId).toBe('group-h1');
+    expect(dialogData.membershipSourceGroupName).toBe('B2');
+    expect(dialogData.membershipTargetGroupName).toBe('H1');
+  });
+
+  it('adds membership as a synthetic flow channel without exposing it as a dialog right', () => {
+    const edge = buildNetworkRelationshipEdge({
+      edgeId: 'edge-membership-and-rights',
+      sourceId: 'group-h1',
+      targetId: 'group-b1',
+      sourceGroupId: 'group-h1',
+      targetGroupId: 'group-b1',
+      structuralType: 'parent',
+      rights: ['informationRight'],
+      relationshipKinds: ['active'],
+      rightRelationshipKinds: { informationRight: 'active' },
+      membershipMode: 'all_members',
+      memberSourceGroupId: 'group-b1',
+      memberTargetGroupId: 'group-h1',
+      rightEdgeDirections: { informationRight: 'forward' },
+      fallbackStrokeColor: FALLBACK_STROKE,
+      sourceName: 'H1',
+      targetName: 'B1',
+      graphRootGroupId: 'group-h1',
+      currentGroupId: 'group-h1',
+    });
+
+    const edgeData = edge.data as EditableRightsLabelEdgeData;
+
+    expect(edgeData.rights).toEqual(['informationRight', MEMBERSHIP_FLOW_RIGHT]);
+    expect(edgeData.rightEdgeDirections).toEqual({
+      informationRight: 'forward',
+      [MEMBERSHIP_FLOW_RIGHT]: 'backward',
+    });
+    expect(edgeData.visibleFlowDirection).toBe('bidirectional');
+    expect(edge.markerStart).toBeDefined();
+    expect(edge.markerEnd).toBeDefined();
+    expect(edge.style?.animationDirection).toBeUndefined();
+
+    const dialogData = buildNetworkRelationshipDialogData(edge, key => key);
+
+    expect(dialogData.rights).toEqual(['informationRight']);
+    expect(dialogData.rightEdgeDirections).toEqual({ informationRight: 'forward' });
+    expect(dialogData.rightRelationshipKinds).toEqual({ informationRight: 'active' });
+    expect(dialogData.membershipSourceGroupId).toBe('group-b1');
+    expect(dialogData.membershipTargetGroupId).toBe('group-h1');
   });
 
   it('animates forward rights toward the edge end marker', () => {
@@ -447,6 +539,8 @@ describe('networkEdgeHelpers', () => {
       membershipMode: 'role_members',
       memberSourceGroupId: 'group-f1',
       memberTargetGroupId: 'group-h1',
+      membershipRequiredSourceRoleId: 'role-admin',
+      membershipRequiredSourceRoleName: 'Admin',
       rightEdgeDirections: { amendmentRight: 'backward' },
       fallbackStrokeColor: FALLBACK_STROKE,
       sourceName: 'H1',
@@ -461,11 +555,13 @@ describe('networkEdgeHelpers', () => {
     expect(dialogData.selectedGroupId).toBe('group-f1');
     expect(dialogData.selectedGroupName).toBe('Fraktion H1');
     expect(dialogData.membershipDirection).toBe('partner_members_to_current');
+    expect(dialogData.membershipRequiredSourceRoleId).toBe('role-admin');
+    expect(dialogData.membershipRequiredSourceRoleName).toBe('Admin');
     expect(dialogData.rightConnectionDirections).toEqual({
       amendmentRight: 'incoming',
     });
     expect(dialogData.rightDisplayDirections).toEqual({
-      amendmentRight: 'partner_has_right_in_current',
+      amendmentRight: 'current_grants_right_to_partner',
     });
   });
 });

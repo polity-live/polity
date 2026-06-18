@@ -13,6 +13,7 @@ export {
   RowActions,
   SortableHeader,
   StatusCell,
+  TableActionIconButton,
 } from './DataTableParts';
 export { UserTableCell, type UserTableCellProps } from './UserTableCell';
 export {

@@ -134,6 +134,18 @@ function isLandingPath(pathname: string): boolean {
   );
 }
 
+const UNCONTAINED_AUTHENTICATED_PAGE_PATTERNS = [
+  /^\/group\/[^/]+\/network$/,
+  /^\/user\/[^/]+\/network$/,
+  /^\/event\/[^/]+\/network$/,
+  /^\/amendment\/[^/]+\/process$/,
+  /^\/amendment\/[^/]+\/streetscape$/,
+];
+
+function isUncontainedAuthenticatedPage(pathname: string): boolean {
+  return UNCONTAINED_AUTHENTICATED_PAGE_PATTERNS.some(pattern => pattern.test(pathname));
+}
+
 function AuthenticatedShell({ children }: { children: ReactNode }) {
   usePreferenceSync();
   useNotificationDispatch();
@@ -145,7 +157,9 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: s => s.location.pathname });
 
   const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen);
+  const isFullscreenOnboarding = pathname === '/';
   const isFullWidth = pathname === '/home' || pathname === '/search';
+  const isUncontainedPage = isUncontainedAuthenticatedPage(pathname);
   const isSecondaryNavVisible =
     Boolean(secondaryNavItems) && ['secondary', 'combined'].includes(navigationType);
   const shellOffsets = getMobileShellOffsets({
@@ -154,6 +168,22 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
     isSecondaryNavVisible,
   });
   const mainStyle = getMainStyleWithShellOffsets(shellOffsets);
+
+  if (isFullscreenOnboarding) {
+    return (
+      <I18nSyncProvider>
+        <div className="bg-background min-h-screen">
+          <main className="min-h-screen">
+            <MotionPage>{children}</MotionPage>
+          </main>
+
+          <Toaster richColors position="top-right" />
+          <PWAInstallPrompt />
+          <AlphaWarningDialog />
+        </div>
+      </I18nSyncProvider>
+    );
+  }
 
   return (
     <I18nSyncProvider>
@@ -185,9 +215,15 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
             }
           )}`}
         >
-          <div className={`mx-auto px-4 py-6 ${isFullWidth ? '' : 'max-w-7xl'}`}>
-            <MotionPage>{children}</MotionPage>
-          </div>
+          {isUncontainedPage ? (
+            <div className="p-2">
+              <MotionPage>{children}</MotionPage>
+            </div>
+          ) : (
+            <div className={`mx-auto px-4 py-6 ${isFullWidth ? '' : 'max-w-7xl'}`}>
+              <MotionPage>{children}</MotionPage>
+            </div>
+          )}
         </main>
 
         <NavigationCommandDialog

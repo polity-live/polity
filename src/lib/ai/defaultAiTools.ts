@@ -7,6 +7,7 @@ export const DEFAULT_AI_TOOL_NAMES = [
   'find_my_role_events',
   'find_my_blogs',
   'search_polity_entities',
+  'read_polity_docs',
   'find_group_resources',
   'find_event_resources',
   'open_create_flow',
@@ -85,6 +86,15 @@ export const DEFAULT_AI_TOOLS: readonly DefaultAiToolDefinition[] = [
     kind: 'search',
     description: translateText(
       'generated.inline.0589_durchsucht_zentrale_polity_entit_ten_wie_nutz_b4e241bf'
+    ),
+  },
+  {
+    name: 'read_polity_docs',
+    label: translateText('generated.inline.ai_polity_docs_label', 'Polity Docs'),
+    kind: 'search',
+    description: translateText(
+      'generated.inline.ai_polity_docs_description',
+      'Liest und durchsucht die vorhandene Polity /docs Dokumentation.'
     ),
   },
   {

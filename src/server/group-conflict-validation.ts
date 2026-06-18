@@ -121,12 +121,24 @@ async function buildConflictUser(tx: ZeroTransactionLike, userId: string) {
 }
 
 async function loadGroupGraphSnapshot(tx: ZeroTransactionLike) {
-  const [groups, memberships, connections, grants, rules] = await Promise.all([
+  const [
+    groups,
+    memberships,
+    connections,
+    grants,
+    rules,
+    hierarchyPaths,
+    membershipLocks,
+    siblingSourceLocks,
+  ] = await Promise.all([
     tx.run(zql.group),
     tx.run(zql.group_membership),
     tx.run(zql.group_connection),
     tx.run(zql.group_right_grant),
     tx.run(zql.group_membership_rule),
+    tx.run(zql.group_hierarchy_path),
+    tx.run(zql.group_membership_exclusivity_lock),
+    tx.run(zql.group_sibling_source_lock),
   ]);
 
   const derivedGroupMetaById = buildDerivedGroupNetworkMetaMap({
@@ -138,6 +150,16 @@ async function loadGroupGraphSnapshot(tx: ZeroTransactionLike) {
   const groupsWithDerivedNetworkMeta = groups.map(group => ({
     ...group,
     ...(derivedGroupMetaById.get(group.id) ?? {}),
+    group_type: group.group_type ?? derivedGroupMetaById.get(group.id)?.group_type,
+    has_hierarchy_children:
+      group.has_hierarchy_children ?? derivedGroupMetaById.get(group.id)?.has_hierarchy_children,
+    has_sibling_connections:
+      group.has_sibling_connections ?? derivedGroupMetaById.get(group.id)?.has_sibling_connections,
+    connected_group_id:
+      group.connected_group_id ?? derivedGroupMetaById.get(group.id)?.connected_group_id,
+    sibling_membership_mode:
+      group.sibling_membership_mode ?? derivedGroupMetaById.get(group.id)?.sibling_membership_mode,
+    sibling_role_id: group.sibling_role_id ?? derivedGroupMetaById.get(group.id)?.sibling_role_id,
   })) as GroupRow[];
   const groupsById = new Map(groupsWithDerivedNetworkMeta.map(group => [group.id, group]));
   return {
@@ -150,6 +172,9 @@ async function loadGroupGraphSnapshot(tx: ZeroTransactionLike) {
       includeInactive: true,
     }),
     memberships: memberships as MembershipRow[],
+    hierarchyPaths,
+    membershipLocks,
+    siblingSourceLocks,
   };
 }
 
@@ -303,6 +328,61 @@ async function buildMembershipActivationConflicts(
   const conflicts: GroupConflict[] = [];
 
   if (targetGroup.group_type === 'base') {
+    const targetHierarchyGroupIds = new Set(
+      snapshot.hierarchyPaths
+        .filter(
+          (path: any) =>
+            path.status === 'active' &&
+            (path.base_group_id === targetGroupId || path.descendant_group_id === targetGroupId)
+        )
+        .map((path: any) => path.ancestor_group_id)
+    );
+
+    for (const lock of snapshot.membershipLocks as any[]) {
+      if (
+        lock.status !== 'active' ||
+        lock.user_id !== targetUserId ||
+        !targetHierarchyGroupIds.has(lock.hierarchy_group_id) ||
+        lock.source_group_id === targetGroupId ||
+        (membership?.id && lock.group_membership_id === membership.id)
+      ) {
+        continue;
+      }
+
+      conflicts.push({
+        kind: 'hierarchy_member_overlap',
+        blocking: true,
+        summary: 'Nur eine speisende Untergruppe pro Hierarchie ist erlaubt.',
+        explanation:
+          'Die Aktivierung wuerde diese Person in zwei Untergruppen derselben Hierarchie gleichzeitig aktiv machen.',
+        details: {
+          users: [await buildConflictUser(tx, targetUserId)],
+          groups: [
+            toConflictGroup(lock.hierarchy_group_id, snapshot.groupsById),
+            toConflictGroup(targetGroupId, snapshot.groupsById),
+            toConflictGroup(lock.source_group_id, snapshot.groupsById),
+          ],
+          source_groups: [
+            toConflictGroup(targetGroupId, snapshot.groupsById),
+            toConflictGroup(lock.source_group_id, snapshot.groupsById),
+          ],
+          paths: [],
+          target_group: toConflictGroup(lock.hierarchy_group_id, snapshot.groupsById),
+        },
+        resolutions: [
+          {
+            label: translateText('generated.inline.0661_mitgliedschaft_zuerst_klaeren_d4f1a8e1'),
+            description: translateText(
+              'generated.inline.0662_die_person_braucht_vor_der_aktivierung_genau__e776cbaa'
+            ),
+            self_service: ctx.userID === targetUserId,
+            group_id: lock.source_group_id,
+            required_role: ctx.userID === targetUserId ? undefined : 'Admin',
+          },
+        ],
+      });
+    }
+
     const targetAncestors = resolveHierarchicalAncestors(
       targetGroupId,
       [...activePvrRelationships],

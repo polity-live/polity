@@ -33,8 +33,8 @@ const groupMembershipModeSchema = z.enum([
 const membershipFlowSchema = z.enum(['current_members_to_partner', 'partner_members_to_current']);
 const relationshipDirectionSchema = z.enum([
   'none',
-  'current_has_right_in_partner',
-  'partner_has_right_in_current',
+  'current_grants_right_to_partner',
+  'partner_grants_right_to_current',
   'mutual',
 ]);
 const eventTypeSchema = z.enum(['delegate_assembly', 'general_assembly', 'open', 'on_invite']);
@@ -824,6 +824,7 @@ export function buildAiCreateTools(userId: string) {
               snapchat: null,
               tiktok: null,
               visibility,
+              group_type: groupType,
               owner_id: userId,
             }),
             ctx
@@ -856,7 +857,10 @@ export function buildAiCreateTools(userId: string) {
 
               const directions =
                 direction === 'mutual'
-                  ? (['current_has_right_in_partner', 'partner_has_right_in_current'] as const)
+                  ? ([
+                      'current_grants_right_to_partner',
+                      'partner_grants_right_to_current',
+                    ] as const)
                   : [direction];
 
               return directions.map(grantDirection => ({
@@ -870,9 +874,9 @@ export function buildAiCreateTools(userId: string) {
                   | 'activeVotingRight'
                   | 'passiveVotingRight',
                 holder_group_id:
-                  grantDirection === 'current_has_right_in_partner' ? groupId : partnerGroupId,
+                  grantDirection === 'current_grants_right_to_partner' ? partnerGroupId : groupId,
                 scope_group_id:
-                  grantDirection === 'current_has_right_in_partner' ? partnerGroupId : groupId,
+                  grantDirection === 'current_grants_right_to_partner' ? groupId : partnerGroupId,
               }));
             });
             const [groupAId, groupBId] = [groupId, partnerGroupId].sort();

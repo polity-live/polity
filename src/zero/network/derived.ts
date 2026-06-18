@@ -58,6 +58,8 @@ export interface DerivedNetworkRelationshipRow {
 
 export interface DerivedGroupNetworkMeta {
   group_type: 'base' | 'hierarchical' | 'sibling';
+  has_hierarchy_children: boolean;
+  has_sibling_connections: boolean;
   connected_group_id: string | null;
   sibling_membership_mode: 'open' | 'elected' | 'parliament' | null;
   primary_sibling_membership_mode:
@@ -90,6 +92,8 @@ export interface DerivedGroupNetworkMeta {
 export function getDefaultDerivedGroupNetworkMeta(): DerivedGroupNetworkMeta {
   return {
     group_type: 'base',
+    has_hierarchy_children: false,
+    has_sibling_connections: false,
     connected_group_id: null,
     sibling_membership_mode: null,
     primary_sibling_membership_mode: null,
@@ -222,6 +226,10 @@ function toSiblingMembershipKind(
   }
 }
 
+function uniqueStrings(values: readonly (string | null | undefined)[]) {
+  return [...new Set(values.filter((value): value is string => Boolean(value)))];
+}
+
 export function buildDerivedGroupNetworkMetaMap(args: {
   groupIds: readonly string[];
   connections?: readonly GroupConnectionRowLike[];
@@ -240,57 +248,81 @@ export function buildDerivedGroupNetworkMetaMap(args: {
         (connection.group_a_id === groupId || connection.group_b_id === groupId)
     );
 
-    if (
-      activeConnections.some(
-        connection =>
-          connection.connection_type === 'hierarchy' && connection.parent_group_id === groupId
-      )
-    ) {
+    meta.has_hierarchy_children = activeConnections.some(
+      connection =>
+        connection.connection_type === 'hierarchy' && connection.parent_group_id === groupId
+    );
+
+    if (meta.has_hierarchy_children) {
       meta.group_type = 'hierarchical';
     }
 
-    const peerConnection = [...activeConnections]
-      .filter(connection => connection.connection_type === 'peer')
-      .sort(
-        (left, right) =>
-          (right.updated_at ?? right.created_at ?? 0) - (left.updated_at ?? left.created_at ?? 0)
-      )[0];
+    const peerConnections = activeConnections.filter(
+      connection => connection.connection_type === 'peer'
+    );
+    meta.has_sibling_connections = peerConnections.length > 0;
+
+    const sortedPeerConnections = [...peerConnections].sort(
+      (left, right) =>
+        (right.updated_at ?? right.created_at ?? 0) - (left.updated_at ?? left.created_at ?? 0)
+    );
+    const peerConnection = sortedPeerConnections[0];
 
     if (peerConnection) {
-      const rule = rulesByConnectionId.get(peerConnection.id);
-      const normalized = normalizeMembershipRule(rule);
-      const isTarget = normalized?.member_target_group_id === groupId;
-      const isSource = normalized?.member_source_group_id === groupId;
+      const peerMembershipContexts = sortedPeerConnections.map(connection => ({
+        connection,
+        rule: normalizeMembershipRule(rulesByConnectionId.get(connection.id)),
+      }));
+      const primaryIncomingContext =
+        peerMembershipContexts.find(context => context.rule?.member_target_group_id === groupId) ??
+        null;
+      const primaryOutgoingContext =
+        peerMembershipContexts.find(context => context.rule?.member_source_group_id === groupId) ??
+        null;
+      const incomingParliamentSourceGroupIds = uniqueStrings(
+        peerMembershipContexts.flatMap(context =>
+          context.rule?.member_target_group_id === groupId &&
+          context.rule.membership_mode === 'selected_source_groups'
+            ? context.rule.eligible_origin_group_ids
+            : []
+        )
+      );
+      const outgoingParliamentSourceGroupIds = uniqueStrings(
+        peerMembershipContexts.flatMap(context =>
+          context.rule?.member_source_group_id === groupId &&
+          context.rule.membership_mode === 'selected_source_groups'
+            ? context.rule.eligible_origin_group_ids
+            : []
+        )
+      );
 
-      meta.group_type = 'sibling';
+      if (!meta.has_hierarchy_children) {
+        meta.group_type = 'sibling';
+      }
       meta.primary_sibling_connection_id = peerConnection.id;
       meta.connected_group_id =
         peerConnection.group_a_id === groupId
           ? peerConnection.group_b_id
           : peerConnection.group_a_id;
-      meta.primary_incoming_sibling_membership_mode = isTarget
-        ? (normalized?.membership_mode ?? 'none')
+      meta.primary_incoming_sibling_membership_mode = primaryIncomingContext
+        ? (primaryIncomingContext.rule?.membership_mode ?? 'none')
         : 'none';
-      meta.primary_outgoing_sibling_membership_mode = isSource
-        ? (normalized?.membership_mode ?? 'none')
+      meta.primary_outgoing_sibling_membership_mode = primaryOutgoingContext
+        ? (primaryOutgoingContext.rule?.membership_mode ?? 'none')
         : 'none';
       meta.primary_sibling_membership_mode = meta.primary_incoming_sibling_membership_mode;
       meta.sibling_membership_mode = toSiblingMembershipKind(
         meta.primary_incoming_sibling_membership_mode
       );
-      meta.incoming_sibling_role_id = isTarget
-        ? (normalized?.required_source_role_id ?? null)
+      meta.incoming_sibling_role_id = primaryIncomingContext
+        ? (primaryIncomingContext.rule?.required_source_role_id ?? null)
         : null;
-      meta.outgoing_sibling_role_id = isSource
-        ? (normalized?.required_source_role_id ?? null)
+      meta.outgoing_sibling_role_id = primaryOutgoingContext
+        ? (primaryOutgoingContext.rule?.required_source_role_id ?? null)
         : null;
       meta.sibling_role_id = meta.incoming_sibling_role_id;
-      meta.incoming_parliament_source_group_ids = isTarget
-        ? (normalized?.eligible_origin_group_ids ?? [])
-        : [];
-      meta.outgoing_parliament_source_group_ids = isSource
-        ? (normalized?.eligible_origin_group_ids ?? [])
-        : [];
+      meta.incoming_parliament_source_group_ids = incomingParliamentSourceGroupIds;
+      meta.outgoing_parliament_source_group_ids = outgoingParliamentSourceGroupIds;
       meta.parliament_source_group_ids = meta.incoming_parliament_source_group_ids;
     }
 

@@ -276,6 +276,1331 @@ async function insertServerNotification(config: NotificationConfig, notification
   return true;
 }
 
+const ACTIVE_GROUP_MANAGER_STATUSES = new Set(['active', 'member', 'admin']);
+const ACTIVE_GROUP_GUEST_MANAGER_STATUSES = new Set(['active']);
+const ACTIVE_EVENT_PARTICIPANT_STATUSES = new Set(['active', 'confirmed', 'member', 'admin']);
+const ACTIVE_AMENDMENT_COLLABORATOR_MANAGER_STATUSES = new Set(['active', 'member']);
+const RELATIONSHIP_APPROVAL_DEDUPE_WINDOW_MS = 60_000;
+
+function buildGroupRelationshipManageUrl(groupId: string): string {
+  return `/group/${groupId}/network?tab=manage-network`;
+}
+
+interface RelationshipActionRightLike {
+  resource?: string | null;
+  action?: string | null;
+  group_id?: string | null;
+  event_id?: string | null;
+  amendment_id?: string | null;
+}
+
+interface RelationshipRoleLike {
+  action_rights?: readonly RelationshipActionRightLike[] | null;
+}
+
+interface RelationshipRoleLinkLike {
+  role?: RelationshipRoleLike | null;
+}
+
+interface RelationshipMembershipLike {
+  user_id?: string | null;
+  status?: string | null;
+  membership_roles?: readonly RelationshipRoleLinkLike[] | null;
+}
+
+interface RelationshipGuestAccessLike {
+  user_id?: string | null;
+  status?: string | null;
+  guest_roles?: readonly RelationshipRoleLinkLike[] | null;
+}
+
+interface EventParticipantAudienceLike {
+  user_id?: string | null;
+  status?: string | null;
+  participant_roles?: readonly RelationshipRoleLinkLike[] | null;
+}
+
+interface AmendmentCollaboratorManagerLike {
+  user_id?: string | null;
+  status?: string | null;
+  role?: RelationshipRoleLike | null;
+}
+
+export interface RelationshipManagerGroupLike {
+  owner_id?: string | null;
+  memberships?: readonly RelationshipMembershipLike[] | null;
+  guest_accesses?: readonly RelationshipGuestAccessLike[] | null;
+}
+
+export interface EventParticipantManagerEventLike {
+  creator_id?: string | null;
+  participants?: readonly EventParticipantAudienceLike[] | null;
+}
+
+export interface AmendmentCollaboratorManagerAmendmentLike {
+  created_by_id?: string | null;
+  collaborators?: readonly AmendmentCollaboratorManagerLike[] | null;
+}
+
+function roleCanManageGroupRelationships(role: RelationshipRoleLike | null | undefined) {
+  return (role?.action_rights ?? []).some(
+    right => right.resource === 'groupRelationships' && right.action === 'manage'
+  );
+}
+
+function roleCanManageGroupMemberships(role: RelationshipRoleLike | null | undefined) {
+  return (role?.action_rights ?? []).some(
+    right =>
+      (right.resource === 'groups' || right.resource === 'groupMemberships') &&
+      (right.action === 'manage' || right.action === 'manage_members')
+  );
+}
+
+function roleCanManageEventParticipants(role: RelationshipRoleLike | null | undefined) {
+  return (role?.action_rights ?? []).some(
+    right =>
+      right.resource === 'events' &&
+      (right.action === 'manage' || right.action === 'manage_participants')
+  );
+}
+
+function roleCanManageAmendmentCollaborators(role: RelationshipRoleLike | null | undefined) {
+  return (role?.action_rights ?? []).some(
+    right => right.resource === 'amendments' && right.action === 'manage'
+  );
+}
+
+function roleCanManageProcessTaskEvents(
+  role: RelationshipRoleLike | null | undefined,
+  groupId: string
+) {
+  return (role?.action_rights ?? []).some(
+    right =>
+      right.resource === 'events' &&
+      (right.action === 'manage' || right.action === 'manage_votes') &&
+      right.group_id === groupId
+  );
+}
+
+export function collectRelationshipManagerRecipientIds(
+  group: RelationshipManagerGroupLike | null | undefined,
+  senderId?: string | null
+) {
+  const recipients = new Set<string>();
+  const addRecipient = (userId: string | null | undefined) => {
+    if (userId && userId !== senderId) {
+      recipients.add(userId);
+    }
+  };
+
+  addRecipient(group?.owner_id);
+
+  for (const membership of group?.memberships ?? []) {
+    if (!ACTIVE_GROUP_MANAGER_STATUSES.has(membership.status ?? '')) {
+      continue;
+    }
+    if (membership.membership_roles?.some(link => roleCanManageGroupRelationships(link.role))) {
+      addRecipient(membership.user_id);
+    }
+  }
+
+  for (const guestAccess of group?.guest_accesses ?? []) {
+    if (!ACTIVE_GROUP_GUEST_MANAGER_STATUSES.has(guestAccess.status ?? '')) {
+      continue;
+    }
+    if (guestAccess.guest_roles?.some(link => roleCanManageGroupRelationships(link.role))) {
+      addRecipient(guestAccess.user_id);
+    }
+  }
+
+  return [...recipients];
+}
+
+export function collectGroupMembershipManagerRecipientIds(
+  group: RelationshipManagerGroupLike | null | undefined,
+  senderId?: string | null
+) {
+  const recipients = new Set<string>();
+  const addRecipient = (userId: string | null | undefined) => {
+    if (userId && userId !== senderId) {
+      recipients.add(userId);
+    }
+  };
+
+  addRecipient(group?.owner_id);
+
+  for (const membership of group?.memberships ?? []) {
+    if (!ACTIVE_GROUP_MANAGER_STATUSES.has(membership.status ?? '')) {
+      continue;
+    }
+    if (membership.membership_roles?.some(link => roleCanManageGroupMemberships(link.role))) {
+      addRecipient(membership.user_id);
+    }
+  }
+
+  for (const guestAccess of group?.guest_accesses ?? []) {
+    if (!ACTIVE_GROUP_GUEST_MANAGER_STATUSES.has(guestAccess.status ?? '')) {
+      continue;
+    }
+    if (guestAccess.guest_roles?.some(link => roleCanManageGroupMemberships(link.role))) {
+      addRecipient(guestAccess.user_id);
+    }
+  }
+
+  return [...recipients];
+}
+
+export function collectEventParticipantManagerRecipientIds(
+  event: EventParticipantManagerEventLike | null | undefined,
+  senderId?: string | null
+) {
+  const recipients = new Set<string>();
+  const addRecipient = (userId: string | null | undefined) => {
+    if (userId && userId !== senderId) {
+      recipients.add(userId);
+    }
+  };
+
+  addRecipient(event?.creator_id);
+
+  for (const participant of event?.participants ?? []) {
+    if (!ACTIVE_EVENT_PARTICIPANT_STATUSES.has(participant.status ?? '')) {
+      continue;
+    }
+    if (participant.participant_roles?.some(link => roleCanManageEventParticipants(link.role))) {
+      addRecipient(participant.user_id);
+    }
+  }
+
+  return [...recipients];
+}
+
+export function collectAmendmentCollaboratorManagerRecipientIds(
+  amendment: AmendmentCollaboratorManagerAmendmentLike | null | undefined,
+  senderId?: string | null
+) {
+  const recipients = new Set<string>();
+  const addRecipient = (userId: string | null | undefined) => {
+    if (userId && userId !== senderId) {
+      recipients.add(userId);
+    }
+  };
+
+  addRecipient(amendment?.created_by_id);
+
+  for (const collaborator of amendment?.collaborators ?? []) {
+    if (!ACTIVE_AMENDMENT_COLLABORATOR_MANAGER_STATUSES.has(collaborator.status ?? '')) {
+      continue;
+    }
+    if (roleCanManageAmendmentCollaborators(collaborator.role)) {
+      addRecipient(collaborator.user_id);
+    }
+  }
+
+  return [...recipients];
+}
+
+export function collectProcessTaskEventManagerRecipientIds(
+  group: RelationshipManagerGroupLike | null | undefined,
+  groupId: string,
+  senderId?: string | null
+) {
+  const recipients = new Set<string>();
+  const addRecipient = (userId: string | null | undefined) => {
+    if (userId && userId !== senderId) {
+      recipients.add(userId);
+    }
+  };
+
+  addRecipient(group?.owner_id);
+
+  for (const membership of group?.memberships ?? []) {
+    if (!ACTIVE_GROUP_MANAGER_STATUSES.has(membership.status ?? '')) {
+      continue;
+    }
+    if (
+      membership.membership_roles?.some(link => roleCanManageProcessTaskEvents(link.role, groupId))
+    ) {
+      addRecipient(membership.user_id);
+    }
+  }
+
+  for (const guestAccess of group?.guest_accesses ?? []) {
+    if (!ACTIVE_GROUP_GUEST_MANAGER_STATUSES.has(guestAccess.status ?? '')) {
+      continue;
+    }
+    if (guestAccess.guest_roles?.some(link => roleCanManageProcessTaskEvents(link.role, groupId))) {
+      addRecipient(guestAccess.user_id);
+    }
+  }
+
+  return [...recipients];
+}
+
+export function collectEventParticipantRecipientIds(
+  participants: readonly EventParticipantAudienceLike[] | null | undefined
+) {
+  const recipients = new Set<string>();
+
+  for (const participant of participants ?? []) {
+    if (participant.user_id && ACTIVE_EVENT_PARTICIPANT_STATUSES.has(participant.status ?? '')) {
+      recipients.add(participant.user_id);
+    }
+  }
+
+  return [...recipients];
+}
+
+export function collectGroupMemberRecipientIds(
+  group: RelationshipManagerGroupLike | null | undefined
+) {
+  const recipients = new Set<string>();
+  const addRecipient = (userId: string | null | undefined) => {
+    if (userId) {
+      recipients.add(userId);
+    }
+  };
+
+  addRecipient(group?.owner_id);
+
+  for (const membership of group?.memberships ?? []) {
+    if (membership.user_id && ACTIVE_GROUP_MANAGER_STATUSES.has(membership.status ?? '')) {
+      recipients.add(membership.user_id);
+    }
+  }
+
+  return [...recipients];
+}
+
+async function loadGroupRelationshipManagerRecipientIds(groupId: string, senderId: string) {
+  const supabase = getServerSupabase();
+  const { data: group, error: groupError } = await supabase
+    .from('group')
+    .select('owner_id')
+    .eq('id', groupId)
+    .maybeSingle();
+
+  if (groupError) {
+    console.error(
+      '[Notification] Failed to load group owner for relationship notification:',
+      groupError
+    );
+  }
+
+  const recipients = new Set(
+    collectRelationshipManagerRecipientIds(
+      { owner_id: (group as { owner_id?: string | null } | null)?.owner_id },
+      senderId
+    )
+  );
+
+  const { data: memberships, error: membershipsError } = await supabase
+    .from('group_membership')
+    .select('id, user_id, status')
+    .eq('group_id', groupId)
+    .in('status', [...ACTIVE_GROUP_MANAGER_STATUSES]);
+
+  if (membershipsError) {
+    console.error(
+      '[Notification] Failed to load group memberships for relationship notification:',
+      membershipsError
+    );
+  }
+
+  const membershipRows = (memberships ?? []) as {
+    id: string;
+    user_id?: string | null;
+    status?: string | null;
+  }[];
+  const membershipIds = membershipRows.map(membership => membership.id);
+  if (membershipIds.length > 0) {
+    const { data: roleLinks, error: roleLinksError } = await supabase
+      .from('group_membership_role')
+      .select('group_membership_id, role_id')
+      .in('group_membership_id', membershipIds);
+
+    if (roleLinksError) {
+      console.error(
+        '[Notification] Failed to load membership roles for relationship notification:',
+        roleLinksError
+      );
+    }
+
+    const links = (roleLinks ?? []) as {
+      group_membership_id: string;
+      role_id?: string | null;
+    }[];
+    const managingRoleIds = await loadManagingRelationshipRoleIds(
+      links.map(link => link.role_id).filter((roleId): roleId is string => Boolean(roleId))
+    );
+    const membershipsById = new Map(membershipRows.map(membership => [membership.id, membership]));
+    for (const link of links) {
+      if (link.role_id && managingRoleIds.has(link.role_id)) {
+        const userId = membershipsById.get(link.group_membership_id)?.user_id;
+        if (userId && userId !== senderId) {
+          recipients.add(userId);
+        }
+      }
+    }
+  }
+
+  const { data: guestAccesses, error: guestAccessesError } = await supabase
+    .from('group_guest_access')
+    .select('id, user_id, status')
+    .eq('group_id', groupId)
+    .in('status', [...ACTIVE_GROUP_GUEST_MANAGER_STATUSES]);
+
+  if (guestAccessesError) {
+    console.error(
+      '[Notification] Failed to load group guests for relationship notification:',
+      guestAccessesError
+    );
+  }
+
+  const guestRows = (guestAccesses ?? []) as {
+    id: string;
+    user_id?: string | null;
+    status?: string | null;
+  }[];
+  const guestAccessIds = guestRows.map(guestAccess => guestAccess.id);
+  if (guestAccessIds.length > 0) {
+    const { data: guestRoleLinks, error: guestRoleLinksError } = await supabase
+      .from('group_guest_role')
+      .select('group_guest_access_id, role_id')
+      .in('group_guest_access_id', guestAccessIds);
+
+    if (guestRoleLinksError) {
+      console.error(
+        '[Notification] Failed to load guest roles for relationship notification:',
+        guestRoleLinksError
+      );
+    }
+
+    const links = (guestRoleLinks ?? []) as {
+      group_guest_access_id: string;
+      role_id?: string | null;
+    }[];
+    const managingRoleIds = await loadManagingRelationshipRoleIds(
+      links.map(link => link.role_id).filter((roleId): roleId is string => Boolean(roleId))
+    );
+    const guestsById = new Map(guestRows.map(guestAccess => [guestAccess.id, guestAccess]));
+    for (const link of links) {
+      if (link.role_id && managingRoleIds.has(link.role_id)) {
+        const userId = guestsById.get(link.group_guest_access_id)?.user_id;
+        if (userId && userId !== senderId) {
+          recipients.add(userId);
+        }
+      }
+    }
+  }
+
+  return [...recipients];
+}
+
+function filterExcludedRecipientIds(
+  recipientIds: readonly string[],
+  excludeUserIds?: readonly string[]
+) {
+  if (!excludeUserIds?.length) {
+    return [...recipientIds];
+  }
+
+  const excluded = new Set(excludeUserIds);
+  return recipientIds.filter(userId => !excluded.has(userId));
+}
+
+async function loadGroupMembershipManagerRecipientIds(
+  groupId: string,
+  senderId: string,
+  excludeUserIds?: readonly string[]
+) {
+  const supabase = getServerSupabase();
+  const { data: group, error: groupError } = await supabase
+    .from('group')
+    .select('owner_id')
+    .eq('id', groupId)
+    .maybeSingle();
+
+  if (groupError) {
+    console.error(
+      '[Notification] Failed to load group owner for manager notification:',
+      groupError
+    );
+  }
+
+  const recipients = new Set(
+    collectGroupMembershipManagerRecipientIds(
+      { owner_id: (group as { owner_id?: string | null } | null)?.owner_id },
+      senderId
+    )
+  );
+
+  const { data: memberships, error: membershipsError } = await supabase
+    .from('group_membership')
+    .select('id, user_id, status')
+    .eq('group_id', groupId)
+    .in('status', [...ACTIVE_GROUP_MANAGER_STATUSES]);
+
+  if (membershipsError) {
+    console.error(
+      '[Notification] Failed to load group memberships for manager notification:',
+      membershipsError
+    );
+  }
+
+  const membershipRows = (memberships ?? []) as {
+    id: string;
+    user_id?: string | null;
+    status?: string | null;
+  }[];
+  const membershipIds = membershipRows.map(membership => membership.id);
+  if (membershipIds.length > 0) {
+    const { data: roleLinks, error: roleLinksError } = await supabase
+      .from('group_membership_role')
+      .select('group_membership_id, role_id')
+      .in('group_membership_id', membershipIds);
+
+    if (roleLinksError) {
+      console.error(
+        '[Notification] Failed to load membership roles for manager notification:',
+        roleLinksError
+      );
+    }
+
+    const links = (roleLinks ?? []) as {
+      group_membership_id: string;
+      role_id?: string | null;
+    }[];
+    const managingRoleIds = await loadGroupMembershipManagerRoleIds(
+      links.map(link => link.role_id).filter((roleId): roleId is string => Boolean(roleId)),
+      groupId
+    );
+    const membershipsById = new Map(membershipRows.map(membership => [membership.id, membership]));
+    for (const link of links) {
+      if (link.role_id && managingRoleIds.has(link.role_id)) {
+        const userId = membershipsById.get(link.group_membership_id)?.user_id;
+        if (userId && userId !== senderId) {
+          recipients.add(userId);
+        }
+      }
+    }
+  }
+
+  const { data: guestAccesses, error: guestAccessesError } = await supabase
+    .from('group_guest_access')
+    .select('id, user_id, status')
+    .eq('group_id', groupId)
+    .in('status', [...ACTIVE_GROUP_GUEST_MANAGER_STATUSES]);
+
+  if (guestAccessesError) {
+    console.error(
+      '[Notification] Failed to load group guests for manager notification:',
+      guestAccessesError
+    );
+  }
+
+  const guestRows = (guestAccesses ?? []) as {
+    id: string;
+    user_id?: string | null;
+    status?: string | null;
+  }[];
+  const guestAccessIds = guestRows.map(guestAccess => guestAccess.id);
+  if (guestAccessIds.length > 0) {
+    const { data: guestRoleLinks, error: guestRoleLinksError } = await supabase
+      .from('group_guest_role')
+      .select('group_guest_access_id, role_id')
+      .in('group_guest_access_id', guestAccessIds);
+
+    if (guestRoleLinksError) {
+      console.error(
+        '[Notification] Failed to load guest roles for manager notification:',
+        guestRoleLinksError
+      );
+    }
+
+    const links = (guestRoleLinks ?? []) as {
+      group_guest_access_id: string;
+      role_id?: string | null;
+    }[];
+    const managingRoleIds = await loadGroupMembershipManagerRoleIds(
+      links.map(link => link.role_id).filter((roleId): roleId is string => Boolean(roleId)),
+      groupId
+    );
+    const guestsById = new Map(guestRows.map(guestAccess => [guestAccess.id, guestAccess]));
+    for (const link of links) {
+      if (link.role_id && managingRoleIds.has(link.role_id)) {
+        const userId = guestsById.get(link.group_guest_access_id)?.user_id;
+        if (userId && userId !== senderId) {
+          recipients.add(userId);
+        }
+      }
+    }
+  }
+
+  return filterExcludedRecipientIds([...recipients], excludeUserIds);
+}
+
+async function loadEventParticipantManagerRecipientIds(
+  eventId: string,
+  senderId: string,
+  excludeUserIds?: readonly string[]
+) {
+  const supabase = getServerSupabase();
+  const { data: event, error: eventError } = await supabase
+    .from('event')
+    .select('creator_id')
+    .eq('id', eventId)
+    .maybeSingle();
+
+  if (eventError) {
+    console.error(
+      '[Notification] Failed to load event creator for manager notification:',
+      eventError
+    );
+  }
+
+  const recipients = new Set(
+    collectEventParticipantManagerRecipientIds(
+      { creator_id: (event as { creator_id?: string | null } | null)?.creator_id },
+      senderId
+    )
+  );
+
+  const { data: participants, error: participantsError } = await supabase
+    .from('event_participant')
+    .select('id, user_id, status')
+    .eq('event_id', eventId)
+    .in('status', [...ACTIVE_EVENT_PARTICIPANT_STATUSES]);
+
+  if (participantsError) {
+    console.error(
+      '[Notification] Failed to load event participants for manager notification:',
+      participantsError
+    );
+  }
+
+  const participantRows = (participants ?? []) as {
+    id: string;
+    user_id?: string | null;
+    status?: string | null;
+  }[];
+  const participantIds = participantRows.map(participant => participant.id);
+  if (participantIds.length > 0) {
+    const { data: roleLinks, error: roleLinksError } = await supabase
+      .from('event_participant_role')
+      .select('event_participant_id, role_id')
+      .in('event_participant_id', participantIds);
+
+    if (roleLinksError) {
+      console.error(
+        '[Notification] Failed to load participant roles for manager notification:',
+        roleLinksError
+      );
+    }
+
+    const links = (roleLinks ?? []) as {
+      event_participant_id: string;
+      role_id?: string | null;
+    }[];
+    const managingRoleIds = await loadEventParticipantManagerRoleIds(
+      links.map(link => link.role_id).filter((roleId): roleId is string => Boolean(roleId)),
+      eventId
+    );
+    const participantsById = new Map(
+      participantRows.map(participant => [participant.id, participant])
+    );
+    for (const link of links) {
+      if (link.role_id && managingRoleIds.has(link.role_id)) {
+        const userId = participantsById.get(link.event_participant_id)?.user_id;
+        if (userId && userId !== senderId) {
+          recipients.add(userId);
+        }
+      }
+    }
+  }
+
+  return filterExcludedRecipientIds([...recipients], excludeUserIds);
+}
+
+async function loadAmendmentCollaboratorManagerRecipientIds(
+  amendmentId: string,
+  senderId: string,
+  excludeUserIds?: readonly string[]
+) {
+  const supabase = getServerSupabase();
+  const { data: amendment, error: amendmentError } = await supabase
+    .from('amendment')
+    .select('created_by_id')
+    .eq('id', amendmentId)
+    .maybeSingle();
+
+  if (amendmentError) {
+    console.error(
+      '[Notification] Failed to load amendment author for manager notification:',
+      amendmentError
+    );
+  }
+
+  const recipients = new Set(
+    collectAmendmentCollaboratorManagerRecipientIds(
+      { created_by_id: (amendment as { created_by_id?: string | null } | null)?.created_by_id },
+      senderId
+    )
+  );
+
+  const { data: collaborators, error: collaboratorsError } = await supabase
+    .from('amendment_collaborator')
+    .select('user_id, status, role_id')
+    .eq('amendment_id', amendmentId)
+    .in('status', [...ACTIVE_AMENDMENT_COLLABORATOR_MANAGER_STATUSES]);
+
+  if (collaboratorsError) {
+    console.error(
+      '[Notification] Failed to load amendment collaborators for manager notification:',
+      collaboratorsError
+    );
+  }
+
+  const collaboratorRows = (collaborators ?? []) as {
+    user_id?: string | null;
+    status?: string | null;
+    role_id?: string | null;
+  }[];
+  const managingRoleIds = await loadAmendmentCollaboratorManagerRoleIds(
+    collaboratorRows
+      .map(collaborator => collaborator.role_id)
+      .filter((roleId): roleId is string => Boolean(roleId)),
+    amendmentId
+  );
+
+  for (const collaborator of collaboratorRows) {
+    if (
+      collaborator.user_id &&
+      collaborator.user_id !== senderId &&
+      collaborator.role_id &&
+      managingRoleIds.has(collaborator.role_id)
+    ) {
+      recipients.add(collaborator.user_id);
+    }
+  }
+
+  return filterExcludedRecipientIds([...recipients], excludeUserIds);
+}
+
+async function loadProcessTaskEventManagerRecipientIds(groupId: string, senderId: string) {
+  const supabase = getServerSupabase();
+  const { data: group, error: groupError } = await supabase
+    .from('group')
+    .select('owner_id')
+    .eq('id', groupId)
+    .maybeSingle();
+
+  if (groupError) {
+    console.error(
+      '[Notification] Failed to load group owner for process task notification:',
+      groupError
+    );
+  }
+
+  const recipients = new Set(
+    collectProcessTaskEventManagerRecipientIds(
+      { owner_id: (group as { owner_id?: string | null } | null)?.owner_id },
+      groupId,
+      senderId
+    )
+  );
+
+  const { data: memberships, error: membershipsError } = await supabase
+    .from('group_membership')
+    .select('id, user_id, status')
+    .eq('group_id', groupId)
+    .in('status', [...ACTIVE_GROUP_MANAGER_STATUSES]);
+
+  if (membershipsError) {
+    console.error(
+      '[Notification] Failed to load group memberships for process task notification:',
+      membershipsError
+    );
+  }
+
+  const membershipRows = (memberships ?? []) as {
+    id: string;
+    user_id?: string | null;
+    status?: string | null;
+  }[];
+  const membershipIds = membershipRows.map(membership => membership.id);
+  if (membershipIds.length > 0) {
+    const { data: roleLinks, error: roleLinksError } = await supabase
+      .from('group_membership_role')
+      .select('group_membership_id, role_id')
+      .in('group_membership_id', membershipIds);
+
+    if (roleLinksError) {
+      console.error(
+        '[Notification] Failed to load membership roles for process task notification:',
+        roleLinksError
+      );
+    }
+
+    const links = (roleLinks ?? []) as {
+      group_membership_id: string;
+      role_id?: string | null;
+    }[];
+    const managingRoleIds = await loadProcessTaskEventManagerRoleIds(
+      links.map(link => link.role_id).filter((roleId): roleId is string => Boolean(roleId)),
+      groupId
+    );
+    const membershipsById = new Map(membershipRows.map(membership => [membership.id, membership]));
+    for (const link of links) {
+      if (link.role_id && managingRoleIds.has(link.role_id)) {
+        const userId = membershipsById.get(link.group_membership_id)?.user_id;
+        if (userId && userId !== senderId) {
+          recipients.add(userId);
+        }
+      }
+    }
+  }
+
+  const { data: guestAccesses, error: guestAccessesError } = await supabase
+    .from('group_guest_access')
+    .select('id, user_id, status')
+    .eq('group_id', groupId)
+    .in('status', [...ACTIVE_GROUP_GUEST_MANAGER_STATUSES]);
+
+  if (guestAccessesError) {
+    console.error(
+      '[Notification] Failed to load group guests for process task notification:',
+      guestAccessesError
+    );
+  }
+
+  const guestRows = (guestAccesses ?? []) as {
+    id: string;
+    user_id?: string | null;
+    status?: string | null;
+  }[];
+  const guestAccessIds = guestRows.map(guestAccess => guestAccess.id);
+  if (guestAccessIds.length > 0) {
+    const { data: guestRoleLinks, error: guestRoleLinksError } = await supabase
+      .from('group_guest_role')
+      .select('group_guest_access_id, role_id')
+      .in('group_guest_access_id', guestAccessIds);
+
+    if (guestRoleLinksError) {
+      console.error(
+        '[Notification] Failed to load guest roles for process task notification:',
+        guestRoleLinksError
+      );
+    }
+
+    const links = (guestRoleLinks ?? []) as {
+      group_guest_access_id: string;
+      role_id?: string | null;
+    }[];
+    const managingRoleIds = await loadProcessTaskEventManagerRoleIds(
+      links.map(link => link.role_id).filter((roleId): roleId is string => Boolean(roleId)),
+      groupId
+    );
+    const guestsById = new Map(guestRows.map(guestAccess => [guestAccess.id, guestAccess]));
+    for (const link of links) {
+      if (link.role_id && managingRoleIds.has(link.role_id)) {
+        const userId = guestsById.get(link.group_guest_access_id)?.user_id;
+        if (userId && userId !== senderId) {
+          recipients.add(userId);
+        }
+      }
+    }
+  }
+
+  return [...recipients];
+}
+
+async function loadEventParticipantRecipientIds(eventId: string) {
+  const { data, error } = await getServerSupabase()
+    .from('event_participant')
+    .select('user_id, status')
+    .eq('event_id', eventId)
+    .in('status', [...ACTIVE_EVENT_PARTICIPANT_STATUSES]);
+
+  if (error) {
+    console.error('[Notification] Failed to load event participants for notification:', error);
+    return [];
+  }
+
+  return collectEventParticipantRecipientIds(
+    (data ?? []) as { user_id?: string | null; status?: string | null }[]
+  );
+}
+
+async function loadGroupMemberRecipientIds(groupId: string) {
+  const supabase = getServerSupabase();
+  const { data: group, error: groupError } = await supabase
+    .from('group')
+    .select('owner_id')
+    .eq('id', groupId)
+    .maybeSingle();
+
+  if (groupError) {
+    console.error('[Notification] Failed to load group owner for member notification:', groupError);
+  }
+
+  const { data: memberships, error: membershipsError } = await supabase
+    .from('group_membership')
+    .select('user_id, status')
+    .eq('group_id', groupId)
+    .in('status', [...ACTIVE_GROUP_MANAGER_STATUSES]);
+
+  if (membershipsError) {
+    console.error(
+      '[Notification] Failed to load group memberships for member notification:',
+      membershipsError
+    );
+  }
+
+  return collectGroupMemberRecipientIds({
+    owner_id: (group as { owner_id?: string | null } | null)?.owner_id,
+    memberships: (memberships ?? []) as {
+      user_id?: string | null;
+      status?: string | null;
+    }[],
+  });
+}
+
+async function loadManagingRelationshipRoleIds(roleIds: readonly string[]) {
+  const uniqueRoleIds = [...new Set(roleIds)];
+  if (uniqueRoleIds.length === 0) {
+    return new Set<string>();
+  }
+
+  const { data, error } = await getServerSupabase()
+    .from('action_right')
+    .select('role_id')
+    .in('role_id', uniqueRoleIds)
+    .eq('resource', 'groupRelationships')
+    .eq('action', 'manage');
+
+  if (error) {
+    console.error(
+      '[Notification] Failed to load relationship action rights for notification recipients:',
+      error
+    );
+    return new Set<string>();
+  }
+
+  return new Set(
+    ((data ?? []) as { role_id?: string | null }[])
+      .map(row => row.role_id)
+      .filter((roleId): roleId is string => Boolean(roleId))
+  );
+}
+
+async function loadGroupMembershipManagerRoleIds(roleIds: readonly string[], groupId: string) {
+  const uniqueRoleIds = [...new Set(roleIds)];
+  if (uniqueRoleIds.length === 0) {
+    return new Set<string>();
+  }
+
+  const { data, error } = await getServerSupabase()
+    .from('action_right')
+    .select('role_id')
+    .in('role_id', uniqueRoleIds)
+    .eq('group_id', groupId)
+    .in('resource', ['groups', 'groupMemberships'])
+    .in('action', ['manage', 'manage_members']);
+
+  if (error) {
+    console.error(
+      '[Notification] Failed to load group manager action rights for notification recipients:',
+      error
+    );
+    return new Set<string>();
+  }
+
+  return new Set(
+    ((data ?? []) as { role_id?: string | null }[])
+      .map(row => row.role_id)
+      .filter((roleId): roleId is string => Boolean(roleId))
+  );
+}
+
+async function loadEventParticipantManagerRoleIds(roleIds: readonly string[], eventId: string) {
+  const uniqueRoleIds = [...new Set(roleIds)];
+  if (uniqueRoleIds.length === 0) {
+    return new Set<string>();
+  }
+
+  const { data, error } = await getServerSupabase()
+    .from('action_right')
+    .select('role_id')
+    .in('role_id', uniqueRoleIds)
+    .eq('event_id', eventId)
+    .eq('resource', 'events')
+    .in('action', ['manage', 'manage_participants']);
+
+  if (error) {
+    console.error(
+      '[Notification] Failed to load event manager action rights for notification recipients:',
+      error
+    );
+    return new Set<string>();
+  }
+
+  return new Set(
+    ((data ?? []) as { role_id?: string | null }[])
+      .map(row => row.role_id)
+      .filter((roleId): roleId is string => Boolean(roleId))
+  );
+}
+
+async function loadAmendmentCollaboratorManagerRoleIds(
+  roleIds: readonly string[],
+  amendmentId: string
+) {
+  const uniqueRoleIds = [...new Set(roleIds)];
+  if (uniqueRoleIds.length === 0) {
+    return new Set<string>();
+  }
+
+  const { data, error } = await getServerSupabase()
+    .from('action_right')
+    .select('role_id')
+    .in('role_id', uniqueRoleIds)
+    .eq('amendment_id', amendmentId)
+    .eq('resource', 'amendments')
+    .eq('action', 'manage');
+
+  if (error) {
+    console.error(
+      '[Notification] Failed to load amendment manager action rights for notification recipients:',
+      error
+    );
+    return new Set<string>();
+  }
+
+  return new Set(
+    ((data ?? []) as { role_id?: string | null }[])
+      .map(row => row.role_id)
+      .filter((roleId): roleId is string => Boolean(roleId))
+  );
+}
+
+async function loadProcessTaskEventManagerRoleIds(roleIds: readonly string[], groupId: string) {
+  const uniqueRoleIds = [...new Set(roleIds)];
+  if (uniqueRoleIds.length === 0) {
+    return new Set<string>();
+  }
+
+  const { data, error } = await getServerSupabase()
+    .from('action_right')
+    .select('role_id')
+    .in('role_id', uniqueRoleIds)
+    .eq('group_id', groupId)
+    .eq('resource', 'events')
+    .in('action', ['manage', 'manage_votes']);
+
+  if (error) {
+    console.error(
+      '[Notification] Failed to load process task event action rights for notification recipients:',
+      error
+    );
+    return new Set<string>();
+  }
+
+  return new Set(
+    ((data ?? []) as { role_id?: string | null }[])
+      .map(row => row.role_id)
+      .filter((roleId): roleId is string => Boolean(roleId))
+  );
+}
+
+function applyNullableFilter(query: any, column: string, value: string | null | undefined) {
+  return value ? query.eq(column, value) : query.is(column, null);
+}
+
+async function findRecentRelationshipNotification(
+  config: NotificationConfig,
+  dedupeWindowMs: number
+) {
+  const cutoff = new Date(Date.now() - dedupeWindowMs).toISOString();
+  let query = getServerSupabase()
+    .from('notification')
+    .select('id, recipient_entity_type')
+    .eq('type', config.type)
+    .gte('created_at', cutoff)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  query = applyNullableFilter(query, 'action_url', config.actionUrl ?? null);
+  query = applyNullableFilter(query, 'related_group_id', config.relatedGroupId ?? null);
+
+  if (config.recipientUserId) {
+    query = query.eq('recipient_id', config.recipientUserId).is('recipient_group_id', null);
+  } else if (config.recipientEntityType === 'group' && config.recipientEntityId) {
+    query = query
+      .eq('recipient_entity_type', 'group')
+      .eq('recipient_group_id', config.recipientEntityId);
+  } else {
+    return null;
+  }
+
+  const { data, error } = await query.maybeSingle();
+  if (error) {
+    console.error('[Notification] Failed to find recent relationship notification:', error);
+    return null;
+  }
+
+  return (data as { id: string; recipient_entity_type?: string | null } | null) ?? null;
+}
+
+async function upsertServerRelationshipNotification(
+  config: NotificationConfig,
+  options?: { dedupeWindowMs?: number }
+) {
+  if (config.recipientUserId) {
+    const settings = await getRecipientNotificationSettings(config.recipientUserId);
+    if (!shouldDispatchNotification(config.type, settings)) {
+      return null;
+    }
+  }
+
+  const recent =
+    options?.dedupeWindowMs != null
+      ? await findRecentRelationshipNotification(config, options.dedupeWindowMs)
+      : null;
+
+  if (!recent) {
+    return insertServerNotification(config, crypto.randomUUID());
+  }
+
+  const personalizedConfig = await personalizeNotificationConfig(config);
+  const { error } = await getServerSupabase()
+    .from('notification')
+    .update({
+      title: personalizedConfig.title,
+      message: personalizedConfig.message,
+      is_read: false,
+      created_at: new Date().toISOString(),
+    })
+    .eq('id', recent.id);
+
+  if (error) {
+    console.error('[Notification] Failed to update relationship notification:', error);
+    return false;
+  }
+
+  if (recent.recipient_entity_type) {
+    const { error: readError } = await getServerSupabase()
+      .from('notification_read')
+      .delete()
+      .eq('notification_id', recent.id);
+
+    if (readError) {
+      console.error(
+        '[Notification] Failed to reset relationship notification read state:',
+        readError
+      );
+    }
+  }
+
+  return true;
+}
+
+async function notifyRelationshipGroupAudience(
+  config: NotificationConfig & {
+    recipientEntityType: 'group';
+    recipientEntityId: string;
+  },
+  options?: { dedupeWindowMs?: number }
+) {
+  await upsertServerRelationshipNotification(config, options);
+
+  const recipientUserIds = await loadGroupRelationshipManagerRecipientIds(
+    config.recipientEntityId,
+    config.senderId
+  );
+
+  await Promise.all(
+    recipientUserIds.map(recipientUserId =>
+      upsertServerRelationshipNotification(
+        {
+          ...config,
+          recipientUserId,
+          recipientEntityType: undefined,
+          recipientEntityId: undefined,
+          onBehalfOfEntityType: config.onBehalfOfEntityType ?? 'group',
+          onBehalfOfEntityId: config.onBehalfOfEntityId ?? config.recipientEntityId,
+        },
+        options
+      )
+    )
+  );
+}
+
+async function notifyGroupMembershipManagerAudience(
+  config: NotificationConfig & {
+    recipientEntityType: 'group';
+    recipientEntityId: string;
+  },
+  options?: { excludeUserIds?: readonly string[] }
+) {
+  const groupNotificationId = await createNotification(config);
+
+  if (_clientDispatch) {
+    return groupNotificationId;
+  }
+
+  const recipientUserIds = await loadGroupMembershipManagerRecipientIds(
+    config.recipientEntityId,
+    config.senderId,
+    options?.excludeUserIds
+  );
+
+  await Promise.all(
+    recipientUserIds.map(recipientUserId =>
+      createNotification({
+        ...config,
+        recipientUserId,
+        recipientEntityType: undefined,
+        recipientEntityId: undefined,
+        onBehalfOfEntityType: config.onBehalfOfEntityType ?? 'group',
+        onBehalfOfEntityId: config.onBehalfOfEntityId ?? config.recipientEntityId,
+      })
+    )
+  );
+
+  return groupNotificationId;
+}
+
+async function notifyGroupMemberAudience(
+  config: NotificationConfig & {
+    recipientEntityType: 'group';
+    recipientEntityId: string;
+  }
+) {
+  const groupNotificationId = await createNotification(config);
+
+  if (_clientDispatch) {
+    return groupNotificationId;
+  }
+
+  const recipientUserIds = await loadGroupMemberRecipientIds(config.recipientEntityId);
+
+  await Promise.all(
+    recipientUserIds.map(recipientUserId =>
+      createNotification({
+        ...config,
+        recipientUserId,
+        recipientEntityType: undefined,
+        recipientEntityId: undefined,
+        onBehalfOfEntityType: config.onBehalfOfEntityType ?? 'group',
+        onBehalfOfEntityId: config.onBehalfOfEntityId ?? config.recipientEntityId,
+      })
+    )
+  );
+
+  return groupNotificationId;
+}
+
+async function notifyEventManagerAudience(
+  config: NotificationConfig & {
+    recipientEntityType: 'event';
+    recipientEntityId: string;
+  },
+  options?: { excludeUserIds?: readonly string[] }
+) {
+  const eventNotificationId = await createNotification(config);
+
+  if (_clientDispatch) {
+    return eventNotificationId;
+  }
+
+  const recipientUserIds = await loadEventParticipantManagerRecipientIds(
+    config.recipientEntityId,
+    config.senderId,
+    options?.excludeUserIds
+  );
+
+  await Promise.all(
+    recipientUserIds.map(recipientUserId =>
+      createNotification({
+        ...config,
+        recipientUserId,
+        recipientEntityType: undefined,
+        recipientEntityId: undefined,
+        onBehalfOfEntityType: config.onBehalfOfEntityType ?? 'event',
+        onBehalfOfEntityId: config.onBehalfOfEntityId ?? config.recipientEntityId,
+      })
+    )
+  );
+
+  return eventNotificationId;
+}
+
+async function notifyAmendmentManagerAudience(
+  config: NotificationConfig & {
+    recipientEntityType: 'amendment';
+    recipientEntityId: string;
+  },
+  options?: { excludeUserIds?: readonly string[] }
+) {
+  const amendmentNotificationId = await createNotification(config);
+
+  if (_clientDispatch) {
+    return amendmentNotificationId;
+  }
+
+  const recipientUserIds = await loadAmendmentCollaboratorManagerRecipientIds(
+    config.recipientEntityId,
+    config.senderId,
+    options?.excludeUserIds
+  );
+
+  await Promise.all(
+    recipientUserIds.map(recipientUserId =>
+      createNotification({
+        ...config,
+        recipientUserId,
+        recipientEntityType: undefined,
+        recipientEntityId: undefined,
+        onBehalfOfEntityType: config.onBehalfOfEntityType ?? 'amendment',
+        onBehalfOfEntityId: config.onBehalfOfEntityId ?? config.recipientEntityId,
+      })
+    )
+  );
+
+  return amendmentNotificationId;
+}
+
+async function notifyEventParticipantAudience(
+  config: NotificationConfig & {
+    recipientEntityType: 'event';
+    recipientEntityId: string;
+  }
+) {
+  const eventNotificationId = await createNotification(config);
+
+  if (_clientDispatch) {
+    return eventNotificationId;
+  }
+
+  const recipientUserIds = await loadEventParticipantRecipientIds(config.recipientEntityId);
+
+  await Promise.all(
+    recipientUserIds.map(recipientUserId =>
+      createNotification({
+        ...config,
+        recipientUserId,
+        recipientEntityType: undefined,
+        recipientEntityId: undefined,
+        onBehalfOfEntityType: config.onBehalfOfEntityType ?? 'event',
+        onBehalfOfEntityId: config.onBehalfOfEntityId ?? config.recipientEntityId,
+      })
+    )
+  );
+
+  return eventNotificationId;
+}
+
 /**
  * Creates a notification.
  *
@@ -369,7 +1694,7 @@ export async function notifyGroupInvite(params: {
   groupId: string;
   groupName: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'group',
@@ -383,6 +1708,27 @@ export async function notifyGroupInvite(params: {
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
   });
+
+  return notifyGroupMembershipManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'group',
+      recipientEntityId: params.groupId,
+      type: 'group_invite',
+      title: translateText('generated.inline.0201_group_invitation_3afe15fe'),
+      message: translateText(
+        'generated.inline.0202_you_ve_been_invited_to_join_groupname_c44a7ef2',
+        {
+          groupName: params.groupName,
+        }
+      ),
+      actionUrl: `/group/${params.groupId}/memberships`,
+      relatedEntityType: 'group',
+      relatedGroupId: params.groupId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -411,22 +1757,64 @@ export async function notifyMembershipApproved(params: {
     relatedGroupId: params.groupId,
   });
 
-  // Entity notification (action log) to the group
-  return createNotification({
+  // Entity notification (action log) to the group and managers
+  return notifyGroupMembershipManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'group',
+      recipientEntityId: params.groupId,
+      type: 'membership_approved',
+      title: translateText('generated.inline.0203_membership_approved_a127fbbf'),
+      message: translateText(
+        'generated.inline.0205_a_membership_request_in_groupname_has_been_ap_b9fe8010',
+        { groupName: params.groupName }
+      ),
+      actionUrl: `/group/${params.groupId}/memberships`,
+      relatedEntityType: 'group',
+      relatedGroupId: params.groupId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
+}
+
+export async function notifyGuestAccessApproved(params: {
+  senderId: string;
+  recipientUserId: string;
+  groupId: string;
+  groupName: string;
+}) {
+  await createNotification({
     senderId: params.senderId,
-    recipientEntityType: 'group',
-    recipientEntityId: params.groupId,
+    recipientUserId: params.recipientUserId,
+    onBehalfOfEntityType: 'group',
+    onBehalfOfEntityId: params.groupId,
     type: 'membership_approved',
     title: translateText('generated.inline.0203_membership_approved_a127fbbf'),
     message: translateText(
-      'generated.inline.0205_a_membership_request_in_groupname_has_been_ap_b9fe8010',
+      'generated.inline.0204_your_request_to_join_groupname_has_been_appro_8014ede6',
       { groupName: params.groupName }
     ),
-    actionUrl: `/group/${params.groupId}/memberships`,
+    actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
-    relatedUserId: params.recipientUserId,
   });
+
+  return notifyGroupMembershipManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'group',
+      recipientEntityId: params.groupId,
+      type: 'membership_approved',
+      title: translateText('generated.inline.0203_membership_approved_a127fbbf'),
+      message: `A guest access request in ${params.groupName} has been approved.`,
+      actionUrl: `/group/${params.groupId}/memberships`,
+      relatedEntityType: 'group',
+      relatedGroupId: params.groupId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -454,22 +1842,25 @@ export async function notifyMembershipRejected(params: {
     relatedGroupId: params.groupId,
   });
 
-  // Entity notification (action log) to the group
-  return createNotification({
-    senderId: params.senderId,
-    recipientEntityType: 'group',
-    recipientEntityId: params.groupId,
-    type: 'membership_rejected',
-    title: translateText('generated.inline.0206_membership_request_rejected_9fd79626'),
-    message: translateText(
-      'generated.inline.0208_a_membership_request_in_groupname_has_been_re_a1c26341',
-      { groupName: params.groupName }
-    ),
-    actionUrl: `/group/${params.groupId}/memberships`,
-    relatedEntityType: 'group',
-    relatedGroupId: params.groupId,
-    relatedUserId: params.recipientUserId,
-  });
+  // Entity notification (action log) to the group and managers
+  return notifyGroupMembershipManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'group',
+      recipientEntityId: params.groupId,
+      type: 'membership_rejected',
+      title: translateText('generated.inline.0206_membership_request_rejected_9fd79626'),
+      message: translateText(
+        'generated.inline.0208_a_membership_request_in_groupname_has_been_re_a1c26341',
+        { groupName: params.groupName }
+      ),
+      actionUrl: `/group/${params.groupId}/memberships`,
+      relatedEntityType: 'group',
+      relatedGroupId: params.groupId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -499,22 +1890,25 @@ export async function notifyMembershipRoleChanged(params: {
     relatedGroupId: params.groupId,
   });
 
-  // Entity notification (action log) to the group
-  return createNotification({
-    senderId: params.senderId,
-    recipientEntityType: 'group',
-    recipientEntityId: params.groupId,
-    type: 'membership_role_changed',
-    title: translateText('generated.inline.0209_role_changed_08011f35'),
-    message: translateText(
-      'generated.inline.0211_a_member_s_role_in_groupname_has_been_changed_b027577f',
-      { groupName: params.groupName }
-    ),
-    actionUrl: `/group/${params.groupId}/memberships`,
-    relatedEntityType: 'group',
-    relatedGroupId: params.groupId,
-    relatedUserId: params.recipientUserId,
-  });
+  // Entity notification (action log) to the group and managers
+  return notifyGroupMembershipManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'group',
+      recipientEntityId: params.groupId,
+      type: 'membership_role_changed',
+      title: translateText('generated.inline.0209_role_changed_08011f35'),
+      message: translateText(
+        'generated.inline.0211_a_member_s_role_in_groupname_has_been_changed_b027577f',
+        { groupName: params.groupName }
+      ),
+      actionUrl: `/group/${params.groupId}/memberships`,
+      relatedEntityType: 'group',
+      relatedGroupId: params.groupId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -541,22 +1935,25 @@ export async function notifyMembershipRemoved(params: {
     relatedGroupId: params.groupId,
   });
 
-  // Entity notification (action log) to the group
-  return createNotification({
-    senderId: params.senderId,
-    recipientEntityType: 'group',
-    recipientEntityId: params.groupId,
-    type: 'member_removed',
-    title: translateText('generated.inline.0214_member_removed_f9078b1f'),
-    message: translateText(
-      'generated.inline.0215_a_member_has_been_removed_from_groupname_7badeb49',
-      { groupName: params.groupName }
-    ),
-    actionUrl: `/group/${params.groupId}/memberships`,
-    relatedEntityType: 'group',
-    relatedGroupId: params.groupId,
-    relatedUserId: params.recipientUserId,
-  });
+  // Entity notification (action log) to the group and managers
+  return notifyGroupMembershipManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'group',
+      recipientEntityId: params.groupId,
+      type: 'member_removed',
+      title: translateText('generated.inline.0214_member_removed_f9078b1f'),
+      message: translateText(
+        'generated.inline.0215_a_member_has_been_removed_from_groupname_7badeb49',
+        { groupName: params.groupName }
+      ),
+      actionUrl: `/group/${params.groupId}/memberships`,
+      relatedEntityType: 'group',
+      relatedGroupId: params.groupId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -568,7 +1965,7 @@ export async function notifyMembershipWithdrawn(params: {
   groupId: string;
   groupName: string;
 }) {
-  return createNotification({
+  return notifyGroupMembershipManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
@@ -594,7 +1991,7 @@ export async function notifyMembershipRequest(params: {
   groupId: string;
   groupName: string;
 }) {
-  return createNotification({
+  return notifyGroupMembershipManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
@@ -611,6 +2008,164 @@ export async function notifyMembershipRequest(params: {
   });
 }
 
+export async function notifyGuestAccessRequest(params: {
+  senderId: string;
+  senderName: string;
+  groupId: string;
+  groupName: string;
+}) {
+  return notifyGroupMembershipManagerAudience({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'membership_request',
+    title: translateText('generated.inline.0218_membership_request_bbfcdecb'),
+    message: `${params.senderName} has requested guest access to ${params.groupName}.`,
+    actionUrl: `/group/${params.groupId}/memberships`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+    relatedUserId: params.senderId,
+  });
+}
+
+export async function notifyGuestAccessInvite(params: {
+  senderId: string;
+  recipientUserId: string;
+  groupId: string;
+  groupName: string;
+}) {
+  await createNotification({
+    senderId: params.senderId,
+    recipientUserId: params.recipientUserId,
+    onBehalfOfEntityType: 'group',
+    onBehalfOfEntityId: params.groupId,
+    type: 'group_invite',
+    title: translateText('generated.inline.0201_group_invitation_3afe15fe'),
+    message: translateText('generated.inline.0202_you_ve_been_invited_to_join_groupname_c44a7ef2', {
+      groupName: params.groupName,
+    }),
+    actionUrl: `/group/${params.groupId}/memberships`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+  });
+
+  return notifyGroupMembershipManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'group',
+      recipientEntityId: params.groupId,
+      type: 'group_invite',
+      title: translateText('generated.inline.0201_group_invitation_3afe15fe'),
+      message: `A guest has been invited to ${params.groupName}.`,
+      actionUrl: `/group/${params.groupId}/memberships`,
+      relatedEntityType: 'group',
+      relatedGroupId: params.groupId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
+}
+
+export async function notifyGuestAccessRoleChanged(params: {
+  senderId: string;
+  recipientUserId: string;
+  groupId: string;
+  groupName: string;
+  newRole: string;
+}) {
+  await createNotification({
+    senderId: params.senderId,
+    recipientUserId: params.recipientUserId,
+    onBehalfOfEntityType: 'group',
+    onBehalfOfEntityId: params.groupId,
+    type: 'membership_role_changed',
+    title: translateText('generated.inline.0209_role_changed_08011f35'),
+    message: translateText(
+      'generated.inline.0210_your_role_in_groupname_has_been_changed_to_ne_ba73b7a5',
+      {
+        groupName: params.groupName,
+        newRole: params.newRole,
+      }
+    ),
+    actionUrl: `/group/${params.groupId}`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+  });
+
+  return notifyGroupMembershipManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'group',
+      recipientEntityId: params.groupId,
+      type: 'membership_role_changed',
+      title: translateText('generated.inline.0209_role_changed_08011f35'),
+      message: `A guest role in ${params.groupName} has been changed.`,
+      actionUrl: `/group/${params.groupId}/memberships`,
+      relatedEntityType: 'group',
+      relatedGroupId: params.groupId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
+}
+
+export async function notifyGuestAccessRemoved(params: {
+  senderId: string;
+  recipientUserId: string;
+  groupId: string;
+  groupName: string;
+}) {
+  await createNotification({
+    senderId: params.senderId,
+    recipientUserId: params.recipientUserId,
+    onBehalfOfEntityType: 'group',
+    onBehalfOfEntityId: params.groupId,
+    type: 'member_removed',
+    title: translateText('generated.inline.0212_removed_from_group_b1e83b77'),
+    message: translateText('generated.inline.0213_you_have_been_removed_from_groupname_e50d8fca', {
+      groupName: params.groupName,
+    }),
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+  });
+
+  return notifyGroupMembershipManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'group',
+      recipientEntityId: params.groupId,
+      type: 'member_removed',
+      title: translateText('generated.inline.0214_member_removed_f9078b1f'),
+      message: `A guest has been removed from ${params.groupName}.`,
+      actionUrl: `/group/${params.groupId}/memberships`,
+      relatedEntityType: 'group',
+      relatedGroupId: params.groupId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
+}
+
+export async function notifyGuestAccessWithdrawn(params: {
+  senderId: string;
+  senderName: string;
+  groupId: string;
+  groupName: string;
+}) {
+  return notifyGroupMembershipManagerAudience({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'membership_withdrawn',
+    title: translateText('generated.inline.0216_member_left_group_1978def2'),
+    message: `${params.senderName} has left guest access to ${params.groupName}.`,
+    actionUrl: `/group/${params.groupId}/memberships`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+    relatedUserId: params.senderId,
+  });
+}
+
 /**
  * Send notification when a user is invited to an event
  */
@@ -620,7 +2175,7 @@ export async function notifyEventInvite(params: {
   eventId: string;
   eventTitle: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'event',
@@ -634,6 +2189,24 @@ export async function notifyEventInvite(params: {
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
   });
+
+  return notifyEventManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'event',
+      recipientEntityId: params.eventId,
+      type: 'event_invite',
+      title: translateText('generated.inline.0220_event_invitation_1bdc1b8f'),
+      message: translateText('generated.inline.0221_you_ve_been_invited_to_eventtitle_ab9cba01', {
+        eventTitle: params.eventTitle,
+      }),
+      actionUrl: `/event/${params.eventId}/participants`,
+      relatedEntityType: 'event',
+      relatedEventId: params.eventId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -645,7 +2218,7 @@ export async function notifyParticipationApproved(params: {
   eventId: string;
   eventTitle: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'event',
@@ -660,6 +2233,22 @@ export async function notifyParticipationApproved(params: {
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
   });
+
+  return notifyEventManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'event',
+      recipientEntityId: params.eventId,
+      type: 'participation_approved',
+      title: translateText('generated.inline.0222_participation_approved_a6a048de'),
+      message: `A participation request in ${params.eventTitle} has been approved.`,
+      actionUrl: `/event/${params.eventId}/participants`,
+      relatedEntityType: 'event',
+      relatedEventId: params.eventId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -671,7 +2260,7 @@ export async function notifyParticipationRejected(params: {
   eventId: string;
   eventTitle: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'event',
@@ -685,6 +2274,22 @@ export async function notifyParticipationRejected(params: {
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
   });
+
+  return notifyEventManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'event',
+      recipientEntityId: params.eventId,
+      type: 'participation_rejected',
+      title: translateText('generated.inline.0224_participation_request_rejected_7db189bc'),
+      message: `A participation request in ${params.eventTitle} has been rejected.`,
+      actionUrl: `/event/${params.eventId}/participants`,
+      relatedEntityType: 'event',
+      relatedEventId: params.eventId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -713,21 +2318,24 @@ export async function notifyParticipationRoleChanged(params: {
     relatedEventId: params.eventId,
   });
 
-  return createNotification({
-    senderId: params.senderId,
-    recipientEntityType: 'event',
-    recipientEntityId: params.eventId,
-    type: 'participation_role_changed',
-    title: translateText('generated.inline.0209_role_changed_08011f35'),
-    message: translateText(
-      'generated.inline.0227_a_participant_s_role_in_eventtitle_has_been_c_c6fa953c',
-      { eventTitle: params.eventTitle, newRole: params.newRole }
-    ),
-    actionUrl: `/event/${params.eventId}/participants`,
-    relatedEntityType: 'event',
-    relatedEventId: params.eventId,
-    relatedUserId: params.recipientUserId,
-  });
+  return notifyEventManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'event',
+      recipientEntityId: params.eventId,
+      type: 'participation_role_changed',
+      title: translateText('generated.inline.0209_role_changed_08011f35'),
+      message: translateText(
+        'generated.inline.0227_a_participant_s_role_in_eventtitle_has_been_c_c6fa953c',
+        { eventTitle: params.eventTitle, newRole: params.newRole }
+      ),
+      actionUrl: `/event/${params.eventId}/participants`,
+      relatedEntityType: 'event',
+      relatedEventId: params.eventId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -739,7 +2347,7 @@ export async function notifyParticipationRemoved(params: {
   eventId: string;
   eventTitle: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'event',
@@ -752,6 +2360,22 @@ export async function notifyParticipationRemoved(params: {
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
   });
+
+  return notifyEventManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'event',
+      recipientEntityId: params.eventId,
+      type: 'participant_removed',
+      title: translateText('generated.inline.0228_removed_from_event_3aa364a1'),
+      message: `A participant has been removed from ${params.eventTitle}.`,
+      actionUrl: `/event/${params.eventId}/participants`,
+      relatedEntityType: 'event',
+      relatedEventId: params.eventId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -763,7 +2387,7 @@ export async function notifyParticipationWithdrawn(params: {
   eventId: string;
   eventTitle: string;
 }) {
-  return createNotification({
+  return notifyEventManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
@@ -789,7 +2413,7 @@ export async function notifyParticipationRequest(params: {
   eventId: string;
   eventTitle: string;
 }) {
-  return createNotification({
+  return notifyEventManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
@@ -836,6 +2460,30 @@ export async function notifyGroupEventCreated(params: {
 }
 
 /**
+ * Send notification to group members when an event is assigned to their group
+ */
+export async function notifyGroupEventAssigned(params: {
+  senderId: string;
+  groupId: string;
+  groupName: string;
+  eventId: string;
+  eventTitle: string;
+}) {
+  return notifyGroupMemberAudience({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'group_event_assigned',
+    title: 'Event assigned to group',
+    message: `${params.eventTitle} has been assigned to ${params.groupName}.`,
+    actionUrl: `/event/${params.eventId}`,
+    relatedEntityType: 'event',
+    relatedEventId: params.eventId,
+    relatedGroupId: params.groupId,
+  });
+}
+
+/**
  * Send notification when a user is invited to collaborate on an amendment
  */
 export async function notifyCollaborationInvite(params: {
@@ -844,7 +2492,7 @@ export async function notifyCollaborationInvite(params: {
   amendmentId: string;
   amendmentTitle: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'amendment',
@@ -859,6 +2507,22 @@ export async function notifyCollaborationInvite(params: {
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
   });
+
+  return notifyAmendmentManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'amendment',
+      recipientEntityId: params.amendmentId,
+      type: 'collaboration_invite',
+      title: translateText('generated.inline.0236_collaboration_invitation_de4beb09'),
+      message: `A collaborator has been invited to ${params.amendmentTitle}.`,
+      actionUrl: `/amendment/${params.amendmentId}/collaborators`,
+      relatedEntityType: 'amendment',
+      relatedAmendmentId: params.amendmentId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -870,7 +2534,7 @@ export async function notifyCollaborationApproved(params: {
   amendmentId: string;
   amendmentTitle: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'amendment',
@@ -885,6 +2549,22 @@ export async function notifyCollaborationApproved(params: {
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
   });
+
+  return notifyAmendmentManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'amendment',
+      recipientEntityId: params.amendmentId,
+      type: 'collaboration_approved',
+      title: translateText('generated.inline.0238_collaboration_approved_d0f11ac2'),
+      message: `A collaboration request for ${params.amendmentTitle} has been approved.`,
+      actionUrl: `/amendment/${params.amendmentId}/collaborators`,
+      relatedEntityType: 'amendment',
+      relatedAmendmentId: params.amendmentId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -896,7 +2576,7 @@ export async function notifyCollaborationRejected(params: {
   amendmentId: string;
   amendmentTitle: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'amendment',
@@ -910,6 +2590,22 @@ export async function notifyCollaborationRejected(params: {
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
   });
+
+  return notifyAmendmentManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'amendment',
+      recipientEntityId: params.amendmentId,
+      type: 'collaboration_rejected',
+      title: translateText('generated.inline.0240_collaboration_request_rejected_82754325'),
+      message: `A collaboration request for ${params.amendmentTitle} has been rejected.`,
+      actionUrl: `/amendment/${params.amendmentId}/collaborators`,
+      relatedEntityType: 'amendment',
+      relatedAmendmentId: params.amendmentId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -938,21 +2634,24 @@ export async function notifyCollaborationRoleChanged(params: {
     relatedAmendmentId: params.amendmentId,
   });
 
-  return createNotification({
-    senderId: params.senderId,
-    recipientEntityType: 'amendment',
-    recipientEntityId: params.amendmentId,
-    type: 'collaboration_role_changed',
-    title: translateText('generated.inline.0209_role_changed_08011f35'),
-    message: translateText(
-      'generated.inline.0243_a_collaborator_s_role_in_amendmenttitle_has_b_2b1e9b8f',
-      { amendmentTitle: params.amendmentTitle, newRole: params.newRole }
-    ),
-    actionUrl: `/amendment/${params.amendmentId}/collaborators`,
-    relatedEntityType: 'amendment',
-    relatedAmendmentId: params.amendmentId,
-    relatedUserId: params.recipientUserId,
-  });
+  return notifyAmendmentManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'amendment',
+      recipientEntityId: params.amendmentId,
+      type: 'collaboration_role_changed',
+      title: translateText('generated.inline.0209_role_changed_08011f35'),
+      message: translateText(
+        'generated.inline.0243_a_collaborator_s_role_in_amendmenttitle_has_b_2b1e9b8f',
+        { amendmentTitle: params.amendmentTitle, newRole: params.newRole }
+      ),
+      actionUrl: `/amendment/${params.amendmentId}/collaborators`,
+      relatedEntityType: 'amendment',
+      relatedAmendmentId: params.amendmentId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -980,21 +2679,24 @@ export async function notifyAmendmentOwnerPromoted(params: {
     relatedAmendmentId: params.amendmentId,
   });
 
-  return createNotification({
-    senderId: params.senderId,
-    recipientEntityType: 'amendment',
-    recipientEntityId: params.amendmentId,
-    type: 'amendment_owner_promoted',
-    title: translateText('generated.inline.0246_owner_promoted_0b242b3c'),
-    message: translateText(
-      'generated.inline.0247_a_collaborator_has_been_promoted_to_owner_of__783c97f0',
-      { amendmentTitle: params.amendmentTitle }
-    ),
-    actionUrl: `/amendment/${params.amendmentId}/collaborators`,
-    relatedEntityType: 'amendment',
-    relatedAmendmentId: params.amendmentId,
-    relatedUserId: params.recipientUserId,
-  });
+  return notifyAmendmentManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'amendment',
+      recipientEntityId: params.amendmentId,
+      type: 'amendment_owner_promoted',
+      title: translateText('generated.inline.0246_owner_promoted_0b242b3c'),
+      message: translateText(
+        'generated.inline.0247_a_collaborator_has_been_promoted_to_owner_of__783c97f0',
+        { amendmentTitle: params.amendmentTitle }
+      ),
+      actionUrl: `/amendment/${params.amendmentId}/collaborators`,
+      relatedEntityType: 'amendment',
+      relatedAmendmentId: params.amendmentId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -1022,21 +2724,24 @@ export async function notifyAmendmentOwnerDemoted(params: {
     relatedAmendmentId: params.amendmentId,
   });
 
-  return createNotification({
-    senderId: params.senderId,
-    recipientEntityType: 'amendment',
-    recipientEntityId: params.amendmentId,
-    type: 'amendment_owner_demoted',
-    title: translateText('generated.inline.0250_owner_demoted_cc125907'),
-    message: translateText(
-      'generated.inline.0251_a_collaborator_has_been_demoted_from_owner_of_bc931d6c',
-      { amendmentTitle: params.amendmentTitle }
-    ),
-    actionUrl: `/amendment/${params.amendmentId}/collaborators`,
-    relatedEntityType: 'amendment',
-    relatedAmendmentId: params.amendmentId,
-    relatedUserId: params.recipientUserId,
-  });
+  return notifyAmendmentManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'amendment',
+      recipientEntityId: params.amendmentId,
+      type: 'amendment_owner_demoted',
+      title: translateText('generated.inline.0250_owner_demoted_cc125907'),
+      message: translateText(
+        'generated.inline.0251_a_collaborator_has_been_demoted_from_owner_of_bc931d6c',
+        { amendmentTitle: params.amendmentTitle }
+      ),
+      actionUrl: `/amendment/${params.amendmentId}/collaborators`,
+      relatedEntityType: 'amendment',
+      relatedAmendmentId: params.amendmentId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -1048,7 +2753,7 @@ export async function notifyCollaborationRemoved(params: {
   amendmentId: string;
   amendmentTitle: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'amendment',
@@ -1062,6 +2767,22 @@ export async function notifyCollaborationRemoved(params: {
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
   });
+
+  return notifyAmendmentManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'amendment',
+      recipientEntityId: params.amendmentId,
+      type: 'collaborator_removed',
+      title: translateText('generated.inline.0252_removed_from_amendment_7a038fd7'),
+      message: `A collaborator has been removed from ${params.amendmentTitle}.`,
+      actionUrl: `/amendment/${params.amendmentId}/collaborators`,
+      relatedEntityType: 'amendment',
+      relatedAmendmentId: params.amendmentId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -1073,7 +2794,7 @@ export async function notifyCollaborationWithdrawn(params: {
   amendmentId: string;
   amendmentTitle: string;
 }) {
-  return createNotification({
+  return notifyAmendmentManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
@@ -1099,7 +2820,7 @@ export async function notifyCollaborationRequest(params: {
   amendmentId: string;
   amendmentTitle: string;
 }) {
-  return createNotification({
+  return notifyAmendmentManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
@@ -1113,6 +2834,28 @@ export async function notifyCollaborationRequest(params: {
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
     relatedUserId: params.senderId,
+  });
+}
+
+/**
+ * Send notification when an amendment role's action rights are updated
+ */
+export async function notifyAmendmentRoleUpdated(params: {
+  senderId: string;
+  amendmentId: string;
+  amendmentTitle: string;
+  roleName: string;
+}) {
+  return notifyAmendmentManagerAudience({
+    senderId: params.senderId,
+    recipientEntityType: 'amendment',
+    recipientEntityId: params.amendmentId,
+    type: 'amendment_role_updated',
+    title: translateText('generated.inline.0418_role_updated_ede48dff'),
+    message: `The permissions for ${params.roleName} have been updated in ${params.amendmentTitle}.`,
+    actionUrl: `/amendment/${params.amendmentId}/collaborators`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
   });
 }
 
@@ -1145,21 +2888,24 @@ export async function notifyAdminPromoted(params: {
     relatedGroupId: params.groupId,
   });
 
-  return createNotification({
-    senderId: params.senderId,
-    recipientEntityType: 'group',
-    recipientEntityId: params.groupId,
-    type: 'group_admin_promoted',
-    title: translateText('generated.inline.0260_admin_promoted_8f9557c7'),
-    message: translateText(
-      'generated.inline.0261_a_member_has_been_promoted_to_admin_in_groupn_1d9a2cef',
-      { groupName: params.groupName }
-    ),
-    actionUrl: `/group/${params.groupId}/memberships`,
-    relatedEntityType: 'group',
-    relatedGroupId: params.groupId,
-    relatedUserId: params.recipientUserId,
-  });
+  return notifyGroupMembershipManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'group',
+      recipientEntityId: params.groupId,
+      type: 'group_admin_promoted',
+      title: translateText('generated.inline.0260_admin_promoted_8f9557c7'),
+      message: translateText(
+        'generated.inline.0261_a_member_has_been_promoted_to_admin_in_groupn_1d9a2cef',
+        { groupName: params.groupName }
+      ),
+      actionUrl: `/group/${params.groupId}/memberships`,
+      relatedEntityType: 'group',
+      relatedGroupId: params.groupId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -1187,21 +2933,24 @@ export async function notifyAdminDemoted(params: {
     relatedGroupId: params.groupId,
   });
 
-  return createNotification({
-    senderId: params.senderId,
-    recipientEntityType: 'group',
-    recipientEntityId: params.groupId,
-    type: 'group_admin_demoted',
-    title: translateText('generated.inline.0264_admin_demoted_a12ec36e'),
-    message: translateText(
-      'generated.inline.0265_an_admin_has_been_demoted_to_member_in_groupn_91d6a811',
-      { groupName: params.groupName }
-    ),
-    actionUrl: `/group/${params.groupId}/memberships`,
-    relatedEntityType: 'group',
-    relatedGroupId: params.groupId,
-    relatedUserId: params.recipientUserId,
-  });
+  return notifyGroupMembershipManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'group',
+      recipientEntityId: params.groupId,
+      type: 'group_admin_demoted',
+      title: translateText('generated.inline.0264_admin_demoted_a12ec36e'),
+      message: translateText(
+        'generated.inline.0265_an_admin_has_been_demoted_to_member_in_groupn_91d6a811',
+        { groupName: params.groupName }
+      ),
+      actionUrl: `/group/${params.groupId}/memberships`,
+      relatedEntityType: 'group',
+      relatedGroupId: params.groupId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -1263,7 +3012,7 @@ export async function notifyActionRightsChanged(params: {
   groupName: string;
   roleName: string;
 }) {
-  return createNotification({
+  return notifyGroupMembershipManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
@@ -1609,11 +3358,16 @@ export async function notifyRelationshipRequested(params: {
   targetGroupId: string;
   targetGroupName: string;
   relationshipType: string;
+  recipientGroupId?: string | null;
 }) {
-  return createNotification({
+  const recipientGroupId = params.recipientGroupId || params.targetGroupId;
+  const relatedGroupId =
+    recipientGroupId === params.sourceGroupId ? params.targetGroupId : params.sourceGroupId;
+
+  return notifyRelationshipGroupAudience({
     senderId: params.senderId,
     recipientEntityType: 'group',
-    recipientEntityId: params.targetGroupId,
+    recipientEntityId: recipientGroupId,
     type: 'group_connection_request',
     title: translateText('generated.inline.0292_relationship_request_bf705eeb'),
     message: translateText(
@@ -1624,9 +3378,11 @@ export async function notifyRelationshipRequested(params: {
         targetGroupName: params.targetGroupName,
       }
     ),
-    actionUrl: `/group/${params.targetGroupId}/network`,
+    actionUrl: buildGroupRelationshipManageUrl(recipientGroupId),
     relatedEntityType: 'group',
-    relatedGroupId: params.sourceGroupId,
+    relatedGroupId,
+    onBehalfOfEntityType: 'group',
+    onBehalfOfEntityId: recipientGroupId,
   });
 }
 
@@ -1640,20 +3396,25 @@ export async function notifyRelationshipApproved(params: {
   targetGroupId: string;
   targetGroupName: string;
 }) {
-  return createNotification({
-    senderId: params.senderId,
-    recipientEntityType: 'group',
-    recipientEntityId: params.sourceGroupId,
-    type: 'group_connection_approved',
-    title: translateText('generated.inline.0294_relationship_approved_6481e419'),
-    message: translateText(
-      'generated.inline.0295_targetgroupname_has_approved_the_relationship_34ae443b',
-      { targetGroupName: params.targetGroupName }
-    ),
-    actionUrl: `/group/${params.sourceGroupId}/network`,
-    relatedEntityType: 'group',
-    relatedGroupId: params.targetGroupId,
-  });
+  return notifyRelationshipGroupAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'group',
+      recipientEntityId: params.sourceGroupId,
+      type: 'group_connection_approved',
+      title: translateText('generated.inline.0294_relationship_approved_6481e419'),
+      message: translateText(
+        'generated.inline.0295_targetgroupname_has_approved_the_relationship_34ae443b',
+        { targetGroupName: params.targetGroupName }
+      ),
+      actionUrl: buildGroupRelationshipManageUrl(params.sourceGroupId),
+      relatedEntityType: 'group',
+      relatedGroupId: params.targetGroupId,
+      onBehalfOfEntityType: 'group',
+      onBehalfOfEntityId: params.sourceGroupId,
+    },
+    { dedupeWindowMs: RELATIONSHIP_APPROVAL_DEDUPE_WINDOW_MS }
+  );
 }
 
 /**
@@ -1676,7 +3437,7 @@ export async function notifyRelationshipRejected(params: {
       'generated.inline.0297_targetgroupname_has_rejected_the_relationship_7e2ac392',
       { targetGroupName: params.targetGroupName }
     ),
-    actionUrl: `/group/${params.sourceGroupId}/network`,
+    actionUrl: buildGroupRelationshipManageUrl(params.sourceGroupId),
     relatedEntityType: 'group',
     relatedGroupId: params.targetGroupId,
   });
@@ -1767,6 +3528,53 @@ export async function notifyTodoDeleted(params: {
   });
 }
 
+/**
+ * Send notification when a process task is created for a group.
+ */
+export async function notifyProcessTaskCreated(params: {
+  senderId: string;
+  groupId: string;
+  groupName: string;
+  taskTitle: string;
+}) {
+  const actionUrl = `/group/${params.groupId}/memberships?tab=openAssignments`;
+  const config: NotificationConfig = {
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'group_process_task_created',
+    title: translateText('generated.inline.9001_neuer_auftrag_5f7c1b2a'),
+    message: translateText(
+      'generated.inline.9002_in_groupname_wartet_ein_neuer_auftrag_tasktitle_63c4f1b8',
+      { groupName: params.groupName, taskTitle: params.taskTitle }
+    ),
+    actionUrl,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+  };
+
+  const groupNotificationId = await createNotification(config);
+  const recipientUserIds = await loadProcessTaskEventManagerRecipientIds(
+    params.groupId,
+    params.senderId
+  );
+
+  await Promise.all(
+    recipientUserIds.map(recipientUserId =>
+      createNotification({
+        ...config,
+        recipientUserId,
+        recipientEntityType: undefined,
+        recipientEntityId: undefined,
+        onBehalfOfEntityType: 'group',
+        onBehalfOfEntityId: params.groupId,
+      })
+    )
+  );
+
+  return groupNotificationId;
+}
+
 // ============================================================================
 // GROUP PAYMENT NOTIFICATIONS
 // ============================================================================
@@ -1850,21 +3658,24 @@ export async function notifyOrganizerPromoted(params: {
     relatedEventId: params.eventId,
   });
 
-  return createNotification({
-    senderId: params.senderId,
-    recipientEntityType: 'event',
-    recipientEntityId: params.eventId,
-    type: 'event_organizer_promoted',
-    title: translateText('generated.inline.0310_organizer_promoted_7fd41cd1'),
-    message: translateText(
-      'generated.inline.0311_a_participant_has_been_promoted_to_organizer__cff7ef52',
-      { eventTitle: params.eventTitle }
-    ),
-    actionUrl: `/event/${params.eventId}/participants`,
-    relatedEntityType: 'event',
-    relatedEventId: params.eventId,
-    relatedUserId: params.recipientUserId,
-  });
+  return notifyEventManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'event',
+      recipientEntityId: params.eventId,
+      type: 'event_organizer_promoted',
+      title: translateText('generated.inline.0310_organizer_promoted_7fd41cd1'),
+      message: translateText(
+        'generated.inline.0311_a_participant_has_been_promoted_to_organizer__cff7ef52',
+        { eventTitle: params.eventTitle }
+      ),
+      actionUrl: `/event/${params.eventId}/participants`,
+      relatedEntityType: 'event',
+      relatedEventId: params.eventId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -1892,21 +3703,24 @@ export async function notifyOrganizerDemoted(params: {
     relatedEventId: params.eventId,
   });
 
-  return createNotification({
-    senderId: params.senderId,
-    recipientEntityType: 'event',
-    recipientEntityId: params.eventId,
-    type: 'event_organizer_demoted',
-    title: translateText('generated.inline.0314_organizer_demoted_a9eca1ad'),
-    message: translateText(
-      'generated.inline.0315_an_organizer_has_been_demoted_in_eventtitle_ae372619',
-      { eventTitle: params.eventTitle }
-    ),
-    actionUrl: `/event/${params.eventId}/participants`,
-    relatedEntityType: 'event',
-    relatedEventId: params.eventId,
-    relatedUserId: params.recipientUserId,
-  });
+  return notifyEventManagerAudience(
+    {
+      senderId: params.senderId,
+      recipientEntityType: 'event',
+      recipientEntityId: params.eventId,
+      type: 'event_organizer_demoted',
+      title: translateText('generated.inline.0314_organizer_demoted_a9eca1ad'),
+      message: translateText(
+        'generated.inline.0315_an_organizer_has_been_demoted_in_eventtitle_ae372619',
+        { eventTitle: params.eventTitle }
+      ),
+      actionUrl: `/event/${params.eventId}/participants`,
+      relatedEntityType: 'event',
+      relatedEventId: params.eventId,
+      relatedUserId: params.recipientUserId,
+    },
+    { excludeUserIds: [params.recipientUserId] }
+  );
 }
 
 /**
@@ -1918,7 +3732,7 @@ export async function notifyAgendaItemCreated(params: {
   eventTitle: string;
   agendaItemTitle: string;
 }) {
-  return createNotification({
+  return notifyEventParticipantAudience({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
@@ -1943,7 +3757,7 @@ export async function notifyAgendaItemDeleted(params: {
   eventTitle: string;
   agendaItemTitle: string;
 }) {
-  return createNotification({
+  return notifyEventParticipantAudience({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
@@ -2014,7 +3828,7 @@ export async function notifyScheduleChanged(params: {
   eventId: string;
   eventTitle: string;
 }) {
-  return createNotification({
+  return notifyEventParticipantAudience({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
@@ -2039,7 +3853,7 @@ export async function notifyCandidateAdded(params: {
   eventTitle: string;
   candidateName: string;
 }) {
-  return createNotification({
+  return notifyEventParticipantAudience({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
@@ -2064,7 +3878,7 @@ export async function notifyElectionStarted(params: {
   eventTitle: string;
   electionTitle: string;
 }) {
-  return createNotification({
+  return notifyEventParticipantAudience({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
@@ -2089,7 +3903,7 @@ export async function notifyElectionEnded(params: {
   eventTitle: string;
   electionTitle: string;
 }) {
-  return createNotification({
+  return notifyEventParticipantAudience({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
@@ -2150,6 +3964,28 @@ export async function notifyEventRoleDeleted(params: {
       { roleTitle: params.roleTitle, eventTitle: params.eventTitle }
     ),
     actionUrl: `/event/${params.eventId}`,
+    relatedEntityType: 'event',
+    relatedEventId: params.eventId,
+  });
+}
+
+/**
+ * Send notification when an event role's action rights are updated
+ */
+export async function notifyEventRoleUpdated(params: {
+  senderId: string;
+  eventId: string;
+  eventTitle: string;
+  roleTitle: string;
+}) {
+  return notifyEventManagerAudience({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.eventId,
+    type: 'event_role_updated',
+    title: translateText('generated.inline.0418_role_updated_ede48dff'),
+    message: `The permissions for ${params.roleTitle} have been updated in ${params.eventTitle}.`,
+    actionUrl: `/event/${params.eventId}/participants`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
   });
@@ -2388,7 +4224,7 @@ export async function notifyVotingPhaseStarted(params: {
   votingType: string;
   timeLimit?: number;
 }) {
-  return createNotification({
+  return notifyEventParticipantAudience({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
@@ -2446,12 +4282,12 @@ export async function notifyVotingCompleted(params: {
   rejectVotes: number;
 }) {
   const resultText =
-    params.result === translateText('generated.inline.0126_passed_6a9f6c3f')
+    params.result === 'passed'
       ? translateText('generated.inline.0127_accepted_51c817ab')
-      : params.result === translateText('generated.inline.0128_rejected_1f087a59')
+      : params.result === 'rejected'
         ? translateText('generated.inline.0128_rejected_1f087a59')
         : translateText('generated.inline.0129_resulted_in_a_tie_03c92e81');
-  return createNotification({
+  return notifyEventParticipantAudience({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
@@ -2716,6 +4552,39 @@ export async function notifySupportConfirmed(params: {
 }
 
 /**
+ * Send notification to group members when their group confirms support for an amendment
+ */
+export async function notifyGroupAmendmentSupportConfirmed(params: {
+  senderId: string;
+  amendmentId: string;
+  amendmentTitle: string;
+  groupId: string;
+  groupName: string;
+  eventId?: string;
+  eventTitle?: string;
+}) {
+  const message = params.eventTitle
+    ? `${params.eventTitle} confirmed that ${params.groupName} supports ${params.amendmentTitle}.`
+    : `${params.groupName} confirmed support for ${params.amendmentTitle}.`;
+
+  return notifyGroupMemberAudience({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'group_amendment_support_confirmed',
+    title: 'Amendment support confirmed',
+    message,
+    actionUrl: params.eventId
+      ? `/event/${params.eventId}/agenda`
+      : `/amendment/${params.amendmentId}`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+    relatedGroupId: params.groupId,
+    relatedEventId: params.eventId,
+  });
+}
+
+/**
  * Send notification when a group declines support for an amendment
  */
 export async function notifySupportDeclined(params: {
@@ -2896,6 +4765,35 @@ export async function notifyChangeRequestCreated(params: {
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
     relatedUserId: params.senderId,
+  });
+}
+
+/**
+ * Send notification to an event audience when a change request is created
+ * for an amendment linked to that event.
+ */
+export async function notifyEventChangeRequestCreated(params: {
+  senderId: string;
+  senderName: string;
+  eventId: string;
+  eventTitle: string;
+  amendmentId: string;
+  amendmentTitle: string;
+}) {
+  return notifyEventParticipantAudience({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.eventId,
+    type: 'event_change_request_created',
+    title: translateText('generated.inline.0382_change_request_created_93edbe54'),
+    message: translateText(
+      'generated.inline.0383_sendername_has_created_a_change_request_for_a_d95b5647',
+      { senderName: params.senderName, amendmentTitle: params.amendmentTitle }
+    ),
+    actionUrl: `/amendment/${params.amendmentId}/change-requests`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+    relatedEventId: params.eventId,
   });
 }
 
@@ -3749,7 +5647,7 @@ export async function notifyGroupInvitationAccepted(params: {
   groupId: string;
   groupName: string;
 }) {
-  return createNotification({
+  return notifyGroupMembershipManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
@@ -3775,7 +5673,7 @@ export async function notifyGroupInvitationDeclined(params: {
   groupId: string;
   groupName: string;
 }) {
-  return createNotification({
+  return notifyGroupMembershipManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
@@ -3801,7 +5699,7 @@ export async function notifyGroupRequestWithdrawn(params: {
   groupId: string;
   groupName: string;
 }) {
-  return createNotification({
+  return notifyGroupMembershipManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
@@ -3829,7 +5727,7 @@ export async function notifyEventInvitationAccepted(params: {
   eventId: string;
   eventTitle: string;
 }) {
-  return createNotification({
+  return notifyEventManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
@@ -3855,7 +5753,7 @@ export async function notifyEventInvitationDeclined(params: {
   eventId: string;
   eventTitle: string;
 }) {
-  return createNotification({
+  return notifyEventManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
@@ -3881,7 +5779,7 @@ export async function notifyEventRequestWithdrawn(params: {
   eventId: string;
   eventTitle: string;
 }) {
-  return createNotification({
+  return notifyEventManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
@@ -3909,7 +5807,7 @@ export async function notifyCollaborationInvitationAccepted(params: {
   amendmentId: string;
   amendmentTitle: string;
 }) {
-  return createNotification({
+  return notifyAmendmentManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
@@ -3935,7 +5833,7 @@ export async function notifyCollaborationInvitationDeclined(params: {
   amendmentId: string;
   amendmentTitle: string;
 }) {
-  return createNotification({
+  return notifyAmendmentManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
@@ -3961,7 +5859,7 @@ export async function notifyCollaborationRequestWithdrawn(params: {
   amendmentId: string;
   amendmentTitle: string;
 }) {
-  return createNotification({
+  return notifyAmendmentManagerAudience({
     senderId: params.senderId,
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
