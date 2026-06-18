@@ -9,6 +9,7 @@ import stylesAssetHref from '../styles.css?url';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const stylesHref = import.meta.env.DEV ? '/_build/src/styles.css' : stylesAssetHref;
+export const earlyPwaInstallPromptCaptureScript = `(function(){try{if(window.__polityPwaInstallPromptCaptureReady)return;window.__polityPwaInstallPromptCaptureReady=true;window.addEventListener('beforeinstallprompt',function(event){event.preventDefault();window.__polityPwaInstallPromptEvent=event;window.__polityPwaInstallPromptCapturedAt=Date.now();window.dispatchEvent(new CustomEvent('polity:pwa-install-prompt-captured',{detail:{promptEvent:event,capturedAt:window.__polityPwaInstallPromptCapturedAt}}));});}catch(error){console.warn('Failed to initialize PWA install prompt capture:',error);}})()`;
 
 export const Route = createRootRoute({
   notFoundComponent: NotFound,
@@ -70,6 +71,11 @@ function RootLayout() {
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches);if(d)document.documentElement.classList.add('dark')}catch(e){}})()`,
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: earlyPwaInstallPromptCaptureScript,
           }}
         />
         <MotionProvider>

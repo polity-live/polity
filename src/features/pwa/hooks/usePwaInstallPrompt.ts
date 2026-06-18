@@ -19,10 +19,19 @@ export type PwaServiceWorkerStatus =
   | 'ready'
   | 'controlled'
   | 'error';
+export type PwaInstallPromptSource = 'early-script' | 'react-listener' | null;
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform?: string }>;
+}
+
+declare global {
+  interface Window {
+    __polityPwaInstallPromptCaptureReady?: boolean;
+    __polityPwaInstallPromptCapturedAt?: number;
+    __polityPwaInstallPromptEvent?: BeforeInstallPromptEvent;
+  }
 }
 
 interface NavigatorWithStandalone extends Navigator {
@@ -39,6 +48,7 @@ export interface PwaInstallSnapshot {
   serviceWorkerStatus: PwaServiceWorkerStatus;
   isControlledByServiceWorker: boolean;
   lastError: string | null;
+  promptSource: PwaInstallPromptSource;
 }
 
 const INITIAL_SNAPSHOT: PwaInstallSnapshot = {
@@ -51,6 +61,7 @@ const INITIAL_SNAPSHOT: PwaInstallSnapshot = {
   serviceWorkerStatus: 'checking',
   isControlledByServiceWorker: false,
   lastError: null,
+  promptSource: null,
 };
 
 let snapshot = INITIAL_SNAPSHOT;
@@ -59,6 +70,7 @@ let initialized = false;
 let cleanupInstallListeners: (() => void) | null = null;
 let serviceWorkerRegistrationPromise: Promise<void> | null = null;
 
+const PWA_INSTALL_PROMPT_CAPTURED_EVENT = 'polity:pwa-install-prompt-captured';
 const subscribers = new Set<() => void>();
 
 function emitChange() {
@@ -121,6 +133,40 @@ function isControlledByServiceWorker() {
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
+}
+
+function isBeforeInstallPromptEvent(event: unknown): event is BeforeInstallPromptEvent {
+  return (
+    event instanceof Event &&
+    typeof (event as Partial<BeforeInstallPromptEvent>).prompt === 'function' &&
+    'userChoice' in event
+  );
+}
+
+function getEarlyCapturedPromptEvent() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const event = window.__polityPwaInstallPromptEvent;
+
+  return isBeforeInstallPromptEvent(event) ? event : null;
+}
+
+function clearEarlyCapturedPromptEvent(promptEvent: BeforeInstallPromptEvent) {
+  if (typeof window !== 'undefined' && window.__polityPwaInstallPromptEvent === promptEvent) {
+    delete window.__polityPwaInstallPromptEvent;
+    delete window.__polityPwaInstallPromptCapturedAt;
+  }
+}
+
+function adoptInstallPromptEvent(
+  event: BeforeInstallPromptEvent,
+  promptSource: Exclude<PwaInstallPromptSource, null>
+) {
+  event.preventDefault();
+  deferredPrompt = event;
+  refreshSnapshot({ outcome: null, promptSource });
 }
 
 function buildSnapshot(partial?: Partial<PwaInstallSnapshot>): PwaInstallSnapshot {
@@ -267,19 +313,34 @@ export function initPwaInstallListener() {
   });
 
   const handleBeforeInstallPrompt = (event: Event) => {
-    event.preventDefault();
-    deferredPrompt = event as BeforeInstallPromptEvent;
-    refreshSnapshot({ outcome: null });
+    adoptInstallPromptEvent(event as BeforeInstallPromptEvent, 'react-listener');
+  };
+
+  const handleCapturedInstallPrompt = (event: Event) => {
+    const promptEvent = isBeforeInstallPromptEvent(
+      (event as CustomEvent<{ promptEvent?: unknown }>).detail?.promptEvent
+    )
+      ? (event as CustomEvent<{ promptEvent: BeforeInstallPromptEvent }>).detail.promptEvent
+      : getEarlyCapturedPromptEvent();
+
+    if (promptEvent) {
+      adoptInstallPromptEvent(promptEvent, 'early-script');
+    }
   };
 
   const handleAppInstalled = () => {
     deferredPrompt = null;
+    if (typeof window !== 'undefined') {
+      delete window.__polityPwaInstallPromptEvent;
+      delete window.__polityPwaInstallPromptCapturedAt;
+    }
     mergeSnapshot({
       status: 'installed',
       isInstalled: true,
       canPrompt: false,
       isInstalling: false,
       outcome: 'accepted',
+      promptSource: null,
     });
   };
 
@@ -298,8 +359,15 @@ export function initPwaInstallListener() {
   };
 
   window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  window.addEventListener(PWA_INSTALL_PROMPT_CAPTURED_EVENT, handleCapturedInstallPrompt);
   window.addEventListener('appinstalled', handleAppInstalled);
   document.addEventListener('visibilitychange', handleEnvironmentChange);
+
+  const earlyPromptEvent = getEarlyCapturedPromptEvent();
+
+  if (earlyPromptEvent) {
+    adoptInstallPromptEvent(earlyPromptEvent, 'early-script');
+  }
 
   if (isServiceWorkerSupported()) {
     navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
@@ -320,6 +388,7 @@ export function initPwaInstallListener() {
 
   cleanupInstallListeners = () => {
     window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.removeEventListener(PWA_INSTALL_PROMPT_CAPTURED_EVENT, handleCapturedInstallPrompt);
     window.removeEventListener('appinstalled', handleAppInstalled);
     document.removeEventListener('visibilitychange', handleEnvironmentChange);
 
@@ -374,6 +443,8 @@ export async function triggerPwaInstall(): Promise<PwaInstallOutcome> {
       deferredPrompt = null;
     }
 
+    clearEarlyCapturedPromptEvent(promptEvent);
+
     if (outcome === 'accepted') {
       mergeSnapshot({
         status: 'installed',
@@ -381,9 +452,10 @@ export async function triggerPwaInstall(): Promise<PwaInstallOutcome> {
         canPrompt: false,
         isInstalling: false,
         outcome,
+        promptSource: null,
       });
     } else {
-      refreshSnapshot({ outcome, isInstalling: false });
+      refreshSnapshot({ outcome, isInstalling: false, promptSource: null });
     }
 
     return outcome;
@@ -438,4 +510,10 @@ export function resetPwaInstallStateForTests() {
   initialized = false;
   serviceWorkerRegistrationPromise = null;
   snapshot = INITIAL_SNAPSHOT;
+
+  if (typeof window !== 'undefined') {
+    delete window.__polityPwaInstallPromptEvent;
+    delete window.__polityPwaInstallPromptCapturedAt;
+    delete window.__polityPwaInstallPromptCaptureReady;
+  }
 }

@@ -454,7 +454,7 @@ export const commonTranslations = {
         'Polity hat den App-Worker registriert. Lade die Seite einmal neu, damit Chrome die Installation von einer kontrollierten Seite erneut prüfen kann.',
       unavailableTitle: 'App-Installation ist gerade nicht verfügbar',
       unavailableDescription:
-        'Chrome hat für diese Seite noch keinen direkten Installationsdialog angeboten. Prüfe dein Browser-Menü, versuche es später erneut in den Einstellungen oder öffne Polity in Chrome oder Safari.',
+        'Dein Browser zeigt die Installation eventuell in der Adressleiste oder im Browser-Menü an. Der Button erscheint hier, sobald Chrome oder Edge den Installationsdialog an Polity übergibt.',
       installAction: 'Polity installieren',
       installingAction: 'Wird installiert...',
       reloadAction: 'Seite neu laden',

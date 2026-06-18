@@ -435,7 +435,7 @@ export const commonTranslations = {
         'Polity registered the app worker. Reload this page once so Chrome can re-check installation from a controlled page.',
       unavailableTitle: 'App installation is not available right now',
       unavailableDescription:
-        'Chrome has not offered a direct install prompt for this page yet. Check the browser menu, try again later in Settings, or open Polity in Chrome or Safari.',
+        'Your browser may still show installation in the address bar or browser menu. This button appears here as soon as Chrome or Edge passes the install dialog to Polity.',
       installAction: 'Install Polity',
       installingAction: 'Installing...',
       reloadAction: 'Reload page',

@@ -37,7 +37,8 @@ const translations: Record<string, string> = {
   'common.pwa.installPanel.reloadRequiredTitle': 'Reload to finish app setup',
   'common.pwa.installPanel.reloadRequiredDescription': 'Reload before installing.',
   'common.pwa.installPanel.unavailableTitle': 'App installation is not available right now',
-  'common.pwa.installPanel.unavailableDescription': 'No install action is available.',
+  'common.pwa.installPanel.unavailableDescription':
+    'Your browser may still show installation in the address bar.',
   'common.pwa.installPanel.installAction': 'Install Polity',
   'common.pwa.installPanel.installingAction': 'Installing...',
   'common.pwa.installPanel.reloadAction': 'Reload page',
@@ -105,7 +106,7 @@ function mockNavigator({
   });
 }
 
-function dispatchBeforeInstallPrompt(outcome: 'accepted' | 'dismissed' = 'accepted') {
+function createBeforeInstallPromptEvent(outcome: 'accepted' | 'dismissed' = 'accepted') {
   const prompt = vi.fn().mockResolvedValue(undefined);
   const event = new Event('beforeinstallprompt') as Event & {
     prompt: () => Promise<void>;
@@ -114,6 +115,12 @@ function dispatchBeforeInstallPrompt(outcome: 'accepted' | 'dismissed' = 'accept
 
   event.prompt = prompt;
   event.userChoice = Promise.resolve({ outcome });
+
+  return { event, prompt };
+}
+
+function dispatchBeforeInstallPrompt(outcome: 'accepted' | 'dismissed' = 'accepted') {
+  const { event, prompt } = createBeforeInstallPromptEvent(outcome);
 
   act(() => {
     window.dispatchEvent(event);
@@ -189,6 +196,47 @@ describe('usePwaInstall', () => {
     expect(prompt).toHaveBeenCalledTimes(1);
     expect(result.current.status).toBe('installed');
     expect(result.current.canPrompt).toBe(false);
+  });
+
+  it('adopts an install prompt captured before the hook initializes', async () => {
+    const { event, prompt } = createBeforeInstallPromptEvent('accepted');
+    window.__polityPwaInstallPromptEvent = event;
+
+    const { result } = renderHook(() => usePwaInstall());
+
+    await waitFor(() => expect(result.current.status).toBe('promptable'));
+    expect(result.current.promptSource).toBe('early-script');
+
+    await act(async () => {
+      const outcome = await result.current.install();
+      expect(outcome).toBe('accepted');
+    });
+
+    expect(prompt).toHaveBeenCalledTimes(1);
+    expect(window.__polityPwaInstallPromptEvent).toBeUndefined();
+  });
+
+  it('adopts an install prompt from the early capture custom event', async () => {
+    const { result } = renderHook(() => usePwaInstall());
+    const { event, prompt } = createBeforeInstallPromptEvent('accepted');
+
+    act(() => {
+      window.__polityPwaInstallPromptEvent = event;
+      window.dispatchEvent(
+        new CustomEvent('polity:pwa-install-prompt-captured', {
+          detail: { promptEvent: event, capturedAt: Date.now() },
+        })
+      );
+    });
+
+    await waitFor(() => expect(result.current.status).toBe('promptable'));
+    expect(result.current.promptSource).toBe('early-script');
+
+    await act(async () => {
+      await result.current.install();
+    });
+
+    expect(prompt).toHaveBeenCalledTimes(1);
   });
 
   it('sets installed status when appinstalled fires', async () => {
