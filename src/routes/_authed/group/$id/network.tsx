@@ -70,6 +70,7 @@ export function GroupNetworkPage() {
               groupName={np.groupName}
               allRelationships={np.allRelationships}
               incomingRequests={np.workflowIncomingRequests}
+              acceptedPendingRequests={np.workflowAcceptedPendingRequests}
               outgoingRequests={np.workflowOutgoingRequests}
               activeRelevantWorkflows={np.workflowActiveRelevant}
               isWorkflowEditorOpen={np.isWorkflowEditorOpen}

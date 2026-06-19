@@ -1,9 +1,8 @@
-import { BadgeControl } from '@/features/shared/ui/status';
 import { SearchField } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
+import { FilterButton } from '@/features/shared/ui/filter-controls';
 import { Filter, List, MapPinned } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { cn } from '@/features/shared/utils/utils';
 import type { SearchViewMode } from '../hooks/useSearchURL';
 
 interface SearchHeaderProps {
@@ -99,16 +98,14 @@ export function SearchHeader({
               );
 
               return (
-                <BadgeControl
+                <FilterButton
                   key={topic}
-                  asChild
-                  variant={isActive ? 'default' : 'outline'}
-                  className={cn('rounded-md', isActive && 'shadow-sm')}
+                  active={isActive}
+                  className="rounded-md"
+                  onClick={() => onTopicToggle(topic)}
                 >
-                  <button type="button" onClick={() => onTopicToggle(topic)}>
-                    #{topic}
-                  </button>
-                </BadgeControl>
+                  #{topic}
+                </FilterButton>
               );
             })}
           </div>

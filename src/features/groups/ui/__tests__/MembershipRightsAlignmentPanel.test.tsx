@@ -173,6 +173,10 @@ describe('MembershipRightsAlignmentPanel', () => {
 
     fireEvent.click(screen.getByRole('radio', { name: /missing/i }));
 
+    const missingFilter = screen.getByRole('radio', { name: /missing/i });
+    expect(missingFilter.getAttribute('data-slot')).toBe('filter-toggle-group-item');
+    expect(missingFilter.className).toContain('data-[state=on]:bg-primary');
+
     expect(screen.getByText('Ada Lovelace')).toBeTruthy();
     expect(screen.queryByText('Grace Hopper')).toBeNull();
     expect(rows).toHaveLength(2);

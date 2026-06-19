@@ -2,7 +2,8 @@ import { featureThemeClassName } from '@/features/shared/theme';
 import { useTranslation } from 'react-i18next';
 import { ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react';
 import { DataTable } from '@/features/shared/ui/data-table';
-import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
+import { FilterToggleGroupItem } from '@/features/shared/ui/filter-controls';
+import { ToggleGroup } from '@/features/shared/ui/ui/toggle-group';
 import { cn } from '@/features/shared/utils/utils';
 import type { MembershipRightsAlignmentStatus } from '../logic/membershipRightsAlignment';
 type AlignmentFilter = 'all' | MembershipRightsAlignmentStatus;
@@ -105,21 +106,21 @@ export function MembershipRightsAlignmentPanelView({
           size="sm"
           className="justify-start"
         >
-          <ToggleGroupItem value="all">
+          <FilterToggleGroupItem value="all">
             {t('features.groups.memberships.rightsAlignment.filters.all')} ({rows.length})
-          </ToggleGroupItem>
-          <ToggleGroupItem value="missing">
+          </FilterToggleGroupItem>
+          <FilterToggleGroupItem value="missing">
             {t('features.groups.memberships.rightsAlignment.filters.missing')} ({counts.missing})
-          </ToggleGroupItem>
-          <ToggleGroupItem value="extra">
+          </FilterToggleGroupItem>
+          <FilterToggleGroupItem value="extra">
             {t('features.groups.memberships.rightsAlignment.filters.extra')} ({counts.extra})
-          </ToggleGroupItem>
-          <ToggleGroupItem value="mixed">
+          </FilterToggleGroupItem>
+          <FilterToggleGroupItem value="mixed">
             {t('features.groups.memberships.rightsAlignment.filters.mixed')} ({counts.mixed})
-          </ToggleGroupItem>
-          <ToggleGroupItem value="aligned">
+          </FilterToggleGroupItem>
+          <FilterToggleGroupItem value="aligned">
             {t('features.groups.memberships.rightsAlignment.filters.aligned')} ({counts.aligned})
-          </ToggleGroupItem>
+          </FilterToggleGroupItem>
         </ToggleGroup>
       </div>
 

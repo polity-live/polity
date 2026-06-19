@@ -12,6 +12,7 @@ import {
   Calculator,
   CarFront,
   CheckCircle2,
+  Crown,
   Database,
   FileText,
   Footprints,
@@ -91,6 +92,15 @@ const landingPreviewUserId = 'landing-preview-user';
 const landingDecisionFlowIcons = [FileText, Workflow, Vote] as const;
 const landingDecisionFlowFallbackSteps = ['Proposal', 'Amendment', 'Vote'] as const;
 type LandingAssistantChatPreview = Parameters<typeof AssistantMessageInput>[0]['assistantChat'];
+
+function getWinningPreviewPercentage(items: { percentage: number }[]) {
+  const winningPercentage = items.reduce(
+    (max, item) => Math.max(max, Number.isFinite(item.percentage) ? item.percentage : 0),
+    0
+  );
+
+  return winningPercentage > 0 ? winningPercentage : null;
+}
 
 export function PublicLandingPage() {
   const { t, tArray } = useTranslation();
@@ -1298,6 +1308,7 @@ export function LandingVoteElectionPreview() {
       };
     }
   );
+  const winningVotePercentage = getWinningPreviewPercentage(voteChoices);
   const electionCandidates = tArray(
     'pages.home.publicLanding.voteElectionPreview.electionCandidates'
   ).map(candidate => {
@@ -1311,8 +1322,10 @@ export function LandingVoteElectionPreview() {
       percentage: Number.isFinite(parsedPercentage) ? parsedPercentage : 0,
     };
   });
+  const winningCandidatePercentage = getWinningPreviewPercentage(electionCandidates);
   const metrics = tArray('pages.home.publicLanding.voteElectionPreview.metrics');
   const checklist = tArray('pages.home.publicLanding.voteElectionPreview.checklist');
+  const winnerLabel = t('features.events.agenda.winner', 'Winner');
 
   return (
     <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
@@ -1347,25 +1360,53 @@ export function LandingVoteElectionPreview() {
             </div>
 
             <div className="space-y-3">
-              {voteChoices.map((choice, index) => (
-                <div key={choice.label} className="space-y-1.5">
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="min-w-0 truncate font-medium">{choice.label}</span>
-                    <span className="text-muted-foreground flex-none">
-                      {choice.count} · {choice.percentage}%
-                    </span>
+              {voteChoices.map((choice, index) => {
+                const isWinner =
+                  winningVotePercentage !== null && choice.percentage === winningVotePercentage;
+
+                return (
+                  <div
+                    key={choice.label}
+                    className={cn(
+                      'space-y-1.5 transition-[background-color,border-color,box-shadow]',
+                      isWinner &&
+                        'bg-card rounded-lg border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] px-3 py-3 shadow-sm'
+                    )}
+                    data-slot="landing-vote-choice"
+                    data-winner={isWinner ? 'true' : undefined}
+                    data-framed={isWinner ? 'true' : undefined}
+                  >
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        <span className="min-w-0 truncate font-medium">{choice.label}</span>
+                        {isWinner ? (
+                          <BadgeControl tone="success" size="tiny" className="gap-1">
+                            <Crown className="h-3.5 w-3.5" />
+                            {winnerLabel}
+                          </BadgeControl>
+                        ) : null}
+                      </div>
+                      <span className="text-muted-foreground flex-none">
+                        {choice.count} · {choice.percentage}%
+                      </span>
+                    </div>
+                    <div className="bg-muted/40 h-2 overflow-hidden rounded-full">
+                      <div
+                        data-slot="landing-vote-choice-bar"
+                        className={cn(
+                          'h-full rounded-full',
+                          isWinner
+                            ? 'bg-[var(--badge-success-fg)]'
+                            : index === 0
+                              ? 'bg-brand'
+                              : 'bg-brand/35'
+                        )}
+                        style={{ width: `${choice.percentage}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="bg-muted/40 h-2 overflow-hidden rounded-full">
-                    <div
-                      className={cn(
-                        'h-full rounded-full',
-                        index === 0 ? 'bg-brand' : 'bg-brand/35'
-                      )}
-                      style={{ width: `${choice.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -1394,32 +1435,60 @@ export function LandingVoteElectionPreview() {
           </div>
 
           <div className="space-y-3">
-            {electionCandidates.map(candidate => (
-              <div key={candidate.name} className="space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="bg-brand/10 text-brand flex h-9 w-9 flex-none items-center justify-center rounded-md text-sm font-semibold">
-                    {candidate.name
-                      .split(' ')
-                      .map(part => part[0])
-                      .join('')
-                      .slice(0, 2)}
+            {electionCandidates.map(candidate => {
+              const isWinner =
+                winningCandidatePercentage !== null &&
+                candidate.percentage === winningCandidatePercentage;
+
+              return (
+                <div
+                  key={candidate.name}
+                  className={cn(
+                    'space-y-2 transition-[background-color,border-color,box-shadow]',
+                    isWinner &&
+                      'bg-card rounded-lg border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] px-3 py-3 shadow-sm'
+                  )}
+                  data-slot="landing-election-candidate"
+                  data-winner={isWinner ? 'true' : undefined}
+                  data-framed={isWinner ? 'true' : undefined}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="bg-brand/10 text-brand flex h-9 w-9 flex-none items-center justify-center rounded-md text-sm font-semibold">
+                      {candidate.name
+                        .split(' ')
+                        .map(part => part[0])
+                        .join('')
+                        .slice(0, 2)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        <p className="truncate text-sm font-medium">{candidate.name}</p>
+                        {isWinner ? (
+                          <BadgeControl tone="success" size="tiny" className="gap-1">
+                            <Crown className="h-3.5 w-3.5" />
+                            {winnerLabel}
+                          </BadgeControl>
+                        ) : null}
+                      </div>
+                      <p className="text-muted-foreground truncate text-xs">{candidate.role}</p>
+                    </div>
+                    <span className="text-muted-foreground flex-none text-xs">
+                      {candidate.count} · {candidate.percentage}%
+                    </span>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{candidate.name}</p>
-                    <p className="text-muted-foreground truncate text-xs">{candidate.role}</p>
+                  <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
+                    <div
+                      data-slot="landing-election-candidate-bar"
+                      className={cn(
+                        'h-full rounded-full',
+                        isWinner ? 'bg-[var(--badge-success-fg)]' : 'bg-brand/70'
+                      )}
+                      style={{ width: `${candidate.percentage}%` }}
+                    />
                   </div>
-                  <span className="text-muted-foreground flex-none text-xs">
-                    {candidate.count} · {candidate.percentage}%
-                  </span>
                 </div>
-                <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
-                  <div
-                    className="bg-brand/70 h-full rounded-full"
-                    style={{ width: `${candidate.percentage}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

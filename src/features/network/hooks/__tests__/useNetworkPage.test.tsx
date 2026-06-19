@@ -565,8 +565,32 @@ describe('useNetworkPage request actions', () => {
       ],
     });
 
+    const acceptedPendingWorkflow = createWorkflow('accepted-pending', {
+      group_id: 'foreign-final-group',
+      status: 'pending_approval',
+      approvals: [
+        {
+          id: 'approval-accepted-current',
+          group_id: 'group-1',
+          status: 'accepted',
+          requested_by_group_id: 'group-4',
+        },
+        {
+          id: 'approval-still-pending',
+          group_id: 'group-5',
+          status: 'pending',
+          requested_by_group_id: 'group-4',
+        },
+      ],
+    });
+
     useWorkflowEditorMock.mockReturnValue({
-      workflows: [incomingWorkflow, outgoingWorkflow, activeCoOwnedWorkflow],
+      workflows: [
+        incomingWorkflow,
+        outgoingWorkflow,
+        activeCoOwnedWorkflow,
+        acceptedPendingWorkflow,
+      ],
       allWorkflows: [],
       isLoading: false,
       isEditorOpen: false,
@@ -595,6 +619,7 @@ describe('useNetworkPage request actions', () => {
 
     expect(result.current.workflowIncomingRequests).toEqual([incomingWorkflow]);
     expect(result.current.workflowOutgoingRequests).toEqual([outgoingWorkflow]);
+    expect(result.current.workflowAcceptedPendingRequests).toEqual([acceptedPendingWorkflow]);
     expect(result.current.workflowActiveRelevant).toEqual([activeCoOwnedWorkflow]);
   });
 });

@@ -106,7 +106,7 @@ test.describe('Event Voting - Cast Vote with Password Confirmation', () => {
       // Error message must be displayed.
       const errorState = dialog
         .getByText(/invalid|wrong|incorrect|error/i)
-        .or(dialog.locator('.text-destructive, .text-red-500'));
+        .or(dialog.locator('.text-destructive'));
       await expect(errorState.first()).toBeVisible();
 
       // Vote count must not have changed.

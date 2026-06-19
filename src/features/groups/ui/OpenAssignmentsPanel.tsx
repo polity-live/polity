@@ -38,6 +38,7 @@ import {
 import { type ColumnDef } from '@/features/shared/ui/data-table';
 import { CountBadge, EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
+import { FilterButton } from '@/features/shared/ui/filter-controls';
 import type { DelegateElectionMode } from '../hooks/useGroupOpenAssignments';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { OpenAssignmentsPanelView } from './OpenAssignmentsPanelView';
@@ -99,16 +100,13 @@ function AssignmentFilterBadgeGroup<TValue extends string>({
         const selected = option.value === value;
 
         return (
-          <Button
+          <FilterButton
             key={option.value}
-            type="button"
-            variant={selected ? 'default' : 'outline'}
-            size="sm"
-            aria-pressed={selected}
+            active={selected}
             onClick={() => onValueChange(option.value)}
           >
             {option.label}
-          </Button>
+          </FilterButton>
         );
       })}
     </div>

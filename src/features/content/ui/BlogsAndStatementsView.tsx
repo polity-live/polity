@@ -2,6 +2,7 @@ import { FormControlInput } from '@/features/shared/ui/form';
 import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
 import { StatementTimelineCard } from '@/features/timeline/ui/cards/StatementTimelineCard';
 import { Button } from '@/features/shared/ui/ui/button';
+import { FilterButton } from '@/features/shared/ui/filter-controls';
 import {
   useTranslation,
   translate as translateText,
@@ -118,14 +119,13 @@ export function BlogsAndStatementsView({
 
         <div className="flex gap-1">
           {filters.map((f: any) => (
-            <Button
+            <FilterButton
               key={f.value}
-              variant={filter === f.value ? 'default' : 'outline'}
-              size="sm"
+              active={filter === f.value}
               onClick={() => setFilter(f.value)}
             >
               {f.label}
-            </Button>
+            </FilterButton>
           ))}
         </div>
       </div>

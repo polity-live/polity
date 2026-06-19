@@ -153,13 +153,13 @@ export const EDITING_MODE_METADATA: Record<
   passed: {
     label: translateText('generated.inline.0752_angenommen_187cf380'),
     description: translateText('generated.inline.0753_amendment_wurde_angenommen_ee1c7af2'),
-    color: 'bg-green-500',
+    color: 'bg-[var(--badge-success-fg)]',
     icon: 'CheckCircle',
   },
   rejected: {
     label: translateText('generated.inline.0754_abgelehnt_110d6fe7'),
     description: translateText('generated.inline.0755_amendment_wurde_abgelehnt_6d6cc595'),
-    color: 'bg-red-700',
+    color: 'bg-[var(--badge-danger-fg)]',
     icon: 'XCircle',
   },
 };

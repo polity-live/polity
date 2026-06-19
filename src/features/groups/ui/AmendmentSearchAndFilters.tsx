@@ -10,7 +10,8 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { EntityBadge, StatusBadge } from '@/features/shared/ui/status';
-import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
+import { FilterToggleGroupItem } from '@/features/shared/ui/filter-controls';
+import { ToggleGroup } from '@/features/shared/ui/ui/toggle-group';
 import {
   useTranslation,
   translate as translateText,
@@ -137,36 +138,36 @@ export function AmendmentSearchAndFilters({
                   }
                 }}
               >
-                <ToggleGroupItem
+                <FilterToggleGroupItem
                   value="all"
                   aria-label={t('features.groups.common.filters.allStatuses')}
                 >
                   {t('features.groups.common.filters.allStatuses')}
-                </ToggleGroupItem>
-                <ToggleGroupItem
+                </FilterToggleGroupItem>
+                <FilterToggleGroupItem
                   value="accepted"
                   aria-label={t('features.groups.common.status.acceptedApproved')}
                 >
                   {t('features.groups.common.status.acceptedApproved')}
-                </ToggleGroupItem>
-                <ToggleGroupItem
+                </FilterToggleGroupItem>
+                <FilterToggleGroupItem
                   value="pending"
                   aria-label={t('features.groups.common.status.pending')}
                 >
                   {t('features.groups.common.status.pending')}
-                </ToggleGroupItem>
-                <ToggleGroupItem
+                </FilterToggleGroupItem>
+                <FilterToggleGroupItem
                   value="rejected"
                   aria-label={t('features.groups.common.status.rejected')}
                 >
                   {t('features.groups.common.status.rejected')}
-                </ToggleGroupItem>
-                <ToggleGroupItem
+                </FilterToggleGroupItem>
+                <FilterToggleGroupItem
                   value="withdrawn"
                   aria-label={t('features.groups.common.status.withdrawn')}
                 >
                   {t('features.groups.common.status.withdrawn')}
-                </ToggleGroupItem>
+                </FilterToggleGroupItem>
               </ToggleGroup>
             </div>
 

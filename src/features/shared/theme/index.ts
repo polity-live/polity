@@ -2,25 +2,29 @@ export * from './civic';
 
 export const FEATURE_THEME_CLASS_NAMES = {
   agendaAccreditationSectionSuccessSurface:
-    'flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-950',
-  agendaAccreditationSectionSuccessIcon: 'h-5 w-5 text-green-600 dark:text-green-400',
-  agendaAccreditationSectionSuccessText: 'font-medium text-green-700 dark:text-green-300',
+    'flex items-center gap-2 rounded-lg border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] p-3 text-[var(--badge-success-fg)]',
+  agendaAccreditationSectionSuccessIcon: 'h-5 w-5 text-[var(--badge-success-fg)]',
+  agendaAccreditationSectionSuccessText: 'font-medium text-[var(--badge-success-fg)]',
   agendaAccreditationSectionThemedText: 'text-[10px]',
-  agendaAccreditationSectionSuccessIconAlpha: 'h-3 w-3 text-green-500',
+  agendaAccreditationSectionSuccessIconAlpha: 'h-3 w-3 text-[var(--badge-success-fg)]',
   agendaAgendaActionBarAccentBadge:
     'animate-pulse border-fuchsia-300 text-fuchsia-700 hover:border-fuchsia-400 hover:bg-fuchsia-50 hover:text-fuchsia-800',
-  agendaAgendaActionBarInfoBorder: 'border border-sky-300 px-3 text-sky-700',
-  agendaAgendaActionBarSuccessBorder: 'border border-emerald-300 text-emerald-700',
-  agendaAgendaActionBarSuccessBadge: 'border border-emerald-500 bg-emerald-500/10 text-emerald-700',
+  agendaAgendaActionBarInfoBorder:
+    'border border-[var(--badge-info-border)] px-3 text-[var(--badge-info-fg)]',
+  agendaAgendaActionBarSuccessBorder:
+    'border border-[var(--badge-success-border)] text-[var(--badge-success-fg)]',
+  agendaAgendaActionBarSuccessBadge:
+    'border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]',
   agendaAgendaBadgesThemedText: 'font-mono text-[11px] tracking-wide uppercase',
   agendaAgendaCardSuccessGradientSurface:
     'before:animate-spin-slow relative overflow-hidden before:absolute before:inset-0 before:-z-10 before:rounded-lg before:bg-gradient-to-r before:from-green-500 before:via-emerald-500 before:to-green-500 before:p-[3px]',
-  agendaAgendaElectionSectionInfoBackground: 'bg-blue-400/50',
+  agendaAgendaElectionSectionInfoBackground: 'bg-[var(--badge-info-bg)]',
   agendaAgendaElectionSectionWarningBadge:
-    'rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-100',
-  agendaAgendaElectionSectionWarningSurface: 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30',
-  agendaAgendaElectionSectionWarningIcon: 'h-4 w-4 text-yellow-500',
-  agendaAgendaElectionSectionSuccessIcon: 'h-4 w-4 text-green-500',
+    'rounded-lg border border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)] p-3 text-sm text-[var(--badge-warning-fg)]',
+  agendaAgendaElectionSectionWarningSurface:
+    'border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)]',
+  agendaAgendaElectionSectionWarningIcon: 'h-4 w-4 text-[var(--badge-warning-fg)]',
+  agendaAgendaElectionSectionSuccessIcon: 'h-4 w-4 text-[var(--badge-success-fg)]',
   agendaAgendaItemContextCardDangerAccentGradientSurface:
     'bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-900/40 dark:to-pink-900/50',
   agendaAgendaItemContextCardDangerWarningGradientSurface:
@@ -41,46 +45,48 @@ export const FEATURE_THEME_CLASS_NAMES = {
   agendaAgendaItemContextCardNeutralContrastBadgeAlpha:
     'border-white/50 bg-white/70 text-gray-700 dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-200',
   agendaAgendaItemContextCardWarningSurface:
-    'rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 shadow-sm',
+    'rounded-xl border border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)] p-3 shadow-sm',
   agendaAgendaItemContextCardSuccessSurface:
-    'rounded-xl border border-green-500/25 bg-green-500/10 p-3 shadow-sm',
+    'rounded-xl border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] p-3 shadow-sm',
   agendaAgendaItemContextCardInfoSurface:
-    'rounded-xl border border-blue-500/25 bg-blue-500/10 p-3 shadow-sm',
+    'rounded-xl border border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] p-3 shadow-sm',
   agendaAgendaItemContextCardNeutralSurface:
     'rounded-xl border border-slate-500/20 bg-slate-500/5 p-3 shadow-sm',
   agendaAgendaItemContextCardDangerSurface:
-    'rounded-xl border border-red-500/25 bg-red-500/10 p-3 shadow-sm',
+    'rounded-xl border border-[var(--badge-danger-border)] bg-[var(--badge-danger-bg)] p-3 shadow-sm',
   agendaAgendaVoteSectionSuccessBackground: 'bg-[var(--badge-success-fg)]',
   agendaAgendaVoteSectionSuccessBackgroundAlpha: 'bg-[var(--badge-success-bg)]',
   agendaAgendaVoteSectionDangerBackground: 'bg-[var(--badge-danger-fg)]',
   agendaAgendaVoteSectionDangerBackgroundAlpha: 'bg-[var(--badge-danger-bg)]',
-  agendaAgendaVoteSectionNeutralBackground: 'bg-gray-400',
-  agendaAgendaVoteSectionNeutralBackgroundAlpha: 'bg-gray-300/60',
-  agendaAgendaVoteSectionInfoBackground: 'bg-blue-500',
-  agendaAgendaVoteSectionInfoBackgroundAlpha: 'bg-blue-300/60',
-  agendaAgendaVoteSectionAccentBackground: 'bg-purple-500',
-  agendaAgendaVoteSectionAccentBackgroundAlpha: 'bg-purple-300/60',
-  agendaAgendaVoteSectionWarningBackground: 'bg-orange-500',
-  agendaAgendaVoteSectionWarningBackgroundAlpha: 'bg-orange-300/60',
+  agendaAgendaVoteSectionNeutralBackground: 'bg-[var(--badge-neutral-fg)]',
+  agendaAgendaVoteSectionNeutralBackgroundAlpha: 'bg-[var(--badge-neutral-bg)]',
+  agendaAgendaVoteSectionInfoBackground: 'bg-[var(--badge-info-fg)]',
+  agendaAgendaVoteSectionInfoBackgroundAlpha: 'bg-[var(--badge-info-bg)]',
+  agendaAgendaVoteSectionAccentBackground: 'bg-[var(--badge-accent-fg)]',
+  agendaAgendaVoteSectionAccentBackgroundAlpha: 'bg-[var(--badge-accent-bg)]',
+  agendaAgendaVoteSectionWarningBackground: 'bg-[var(--badge-warning-fg)]',
+  agendaAgendaVoteSectionWarningBackgroundAlpha: 'bg-[var(--badge-warning-bg)]',
   agendaChangeRequestCardsListSuccessBadge:
-    'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400',
+    'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]',
   agendaChangeRequestCardsListWarningBadge:
-    'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400',
+    'border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)] text-[var(--badge-warning-fg)]',
   agendaChangeRequestCardsListSuccessBadgeAlpha:
-    'ml-0.5 border-green-500/30 bg-green-500/10 text-xs text-green-700 dark:text-green-400',
-  agendaChangeRequestTimelineCardSuccessIcon: 'h-5 w-5 text-green-500',
-  agendaChangeRequestTimelineCardInfoLoadingIcon: 'h-5 w-5 animate-spin text-blue-500',
-  agendaChangeRequestTimelineCardInfoRing: 'ring-2 ring-blue-500/50',
-  agendaChangeRequestTimelineCardInfoText:
-    'mb-2 text-sm font-semibold text-blue-600 dark:text-blue-400',
-  agendaChangeRequestTimelineCardInfoPanel: 'rounded-lg bg-blue-500/10 p-3',
+    'ml-0.5 border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-xs text-[var(--badge-success-fg)]',
+  agendaChangeRequestTimelineCardSuccessIcon: 'h-5 w-5 text-[var(--badge-success-fg)]',
+  agendaChangeRequestTimelineCardInfoLoadingIcon:
+    'h-5 w-5 animate-spin text-[var(--badge-info-fg)]',
+  agendaChangeRequestTimelineCardInfoRing: 'ring-2 ring-[var(--badge-info-border)]',
+  agendaChangeRequestTimelineCardInfoText: 'mb-2 text-sm font-semibold text-[var(--badge-info-fg)]',
+  agendaChangeRequestTimelineCardInfoPanel: 'rounded-lg bg-[var(--badge-info-bg)] p-3',
   agendaChangeRequestTimelineCardDangerText:
-    'mb-1 text-sm font-semibold text-red-600 dark:text-red-400',
-  agendaChangeRequestTimelineCardDangerPanel: 'rounded-lg bg-red-500/10 p-3 line-through',
+    'mb-1 text-sm font-semibold text-[var(--badge-danger-fg)]',
+  agendaChangeRequestTimelineCardDangerPanel:
+    'rounded-lg bg-[var(--badge-danger-bg)] p-3 line-through',
   agendaChangeRequestTimelineCardSuccessText:
-    'mb-1 text-sm font-semibold text-green-600 dark:text-green-400',
-  agendaChangeRequestTimelineCardSuccessPanel: 'rounded-lg bg-green-500/10 p-3',
-  agendaChangeRequestTimelineCardSuccessBackground: 'bg-green-600 hover:bg-green-700',
+    'mb-1 text-sm font-semibold text-[var(--badge-success-fg)]',
+  agendaChangeRequestTimelineCardSuccessPanel: 'rounded-lg bg-[var(--badge-success-bg)] p-3',
+  agendaChangeRequestTimelineCardSuccessBackground:
+    'bg-[var(--badge-success-fg)] hover:bg-[var(--badge-success-fg)]',
   agendaEventAgendaThemedBackground:
     'bg-primary absolute -top-3 right-6 left-6 z-20 h-0.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.9)]',
   agendaEventAgendaSuccessContrastRoundIcon:
@@ -90,45 +96,44 @@ export const FEATURE_THEME_CLASS_NAMES = {
   agendaEventAgendaThemedBackgroundAlpha:
     'bg-primary absolute right-6 -bottom-3 left-6 z-20 h-0.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.9)]',
   agendaEventAgendaThemedPanel: 'flex w-full items-center justify-between p-0 hover:bg-transparent',
-  agendaEventAgendaDangerIcon: 'h-5 w-5 text-red-500',
+  agendaEventAgendaDangerIcon: 'h-5 w-5 text-[var(--badge-danger-fg)]',
   agendaEventAgendaThemedStyle: 'h-4 w-4 fill-current',
   agendaEventAgendaSuccessPulseDot:
-    'absolute -top-1 -right-1 h-3 w-3 animate-pulse rounded-full bg-green-500',
-  agendaEventAgendaWarningRoundIcon: 'absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-500',
+    'absolute -top-1 -right-1 h-3 w-3 animate-pulse rounded-full bg-[var(--badge-success-fg)]',
+  agendaEventAgendaWarningRoundIcon:
+    'absolute -top-1 -right-1 h-3 w-3 rounded-full bg-[var(--badge-warning-fg)]',
   agendaEventAgendaContrastBackground: 'relative w-full overflow-hidden rounded-lg bg-black',
   agendaEventAgendaAccentRoundIcon:
     'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-purple-100 md:h-10 md:w-10 dark:bg-purple-900',
-  agendaEventAgendaAccentIcon: 'h-4 w-4 text-purple-600 md:h-5 md:w-5 dark:text-purple-300',
+  agendaEventAgendaAccentIcon: 'h-4 w-4 text-[var(--badge-accent-fg)] md:h-5 md:w-5',
   agendaEventAgendaWarningRoundIconAlpha:
-    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 md:h-10 md:w-10 dark:bg-orange-900',
-  agendaEventAgendaWarningIcon: 'h-4 w-4 text-orange-600 md:h-5 md:w-5 dark:text-orange-300',
+    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--badge-warning-bg)] md:h-10 md:w-10',
+  agendaEventAgendaWarningIcon: 'h-4 w-4 text-[var(--badge-warning-fg)] md:h-5 md:w-5',
   agendaEventAgendaInfoRoundIcon:
-    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 md:h-10 md:w-10 dark:bg-blue-900',
-  agendaEventAgendaInfoIcon: 'h-4 w-4 text-blue-600 md:h-5 md:w-5 dark:text-blue-300',
+    'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--badge-info-bg)] md:h-10 md:w-10',
+  agendaEventAgendaInfoIcon: 'h-4 w-4 text-[var(--badge-info-fg)] md:h-5 md:w-5',
   agendaEventStreamSectionSuccessBackground:
-    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  agendaEventStreamSectionInfoBackground:
-    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    'bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]',
+  agendaEventStreamSectionInfoBackground: 'bg-[var(--badge-info-bg)] text-[var(--badge-info-fg)]',
   agendaEventStreamSectionNeutralBackground:
-    'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+    'bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)]',
   agendaEventStreamSectionAccentBackground:
-    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    'bg-[var(--badge-accent-bg)] text-[var(--badge-accent-fg)]',
   agendaEventStreamSectionWarningBackground:
-    'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+    'bg-[var(--badge-warning-bg)] text-[var(--badge-warning-fg)]',
   agendaEventStreamSectionTealBackground:
     'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
   agendaEventStreamSectionSuccessContrastPulseDot:
-    'absolute -top-1 -right-1 flex h-4 w-4 animate-pulse items-center justify-center rounded-full bg-green-500 text-white',
+    'absolute -top-1 -right-1 flex h-4 w-4 animate-pulse items-center justify-center rounded-full bg-[var(--badge-success-fg)] text-white',
   agendaEventStreamSectionContrastStyle: 'h-2 w-2 fill-white',
   agendaEventStreamSectionContrastBackground:
     'relative w-full overflow-hidden rounded-lg bg-black shadow-xl',
   agendaEventStreamSectionThemedPanel: 'flex items-center gap-2 p-0 hover:bg-transparent',
-  agendaEventStreamSectionSuccessBackgroundAlpha: 'bg-green-100 dark:bg-green-900',
+  agendaEventStreamSectionSuccessBackgroundAlpha: 'bg-[var(--badge-success-bg)]',
   agendaTransferAgendaItemDialogWarningSurface:
-    'flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/50',
-  agendaTransferAgendaItemDialogWarningIcon:
-    'h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400',
-  agendaTransferAgendaItemDialogWarningText: 'text-sm text-amber-800 dark:text-amber-200',
+    'flex items-start gap-3 rounded-lg border border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)] p-4',
+  agendaTransferAgendaItemDialogWarningIcon: 'h-5 w-5 flex-shrink-0 text-[var(--badge-warning-fg)]',
+  agendaTransferAgendaItemDialogWarningText: 'text-sm text-[var(--badge-warning-fg)]',
   amendmentAmendmentWikiNeutralContrastGradientSurface:
     'bg-gradient-to-br from-slate-50 via-white to-slate-100',
   amendmentAmendmentWikiSuccessTealGradientSurface:
@@ -137,19 +142,24 @@ export const FEATURE_THEME_CLASS_NAMES = {
     'bg-gradient-to-br from-amber-50 via-white to-orange-100',
   amendmentAmendmentWikiInfoContrastGradientSurface:
     'bg-gradient-to-br from-sky-50 via-white to-cyan-100',
-  amendmentAmendmentHelpersSuccessBadge: 'bg-green-500/10 text-green-500 border-green-500/20',
-  amendmentAmendmentHelpersDangerBadge: 'bg-red-500/10 text-red-500 border-red-500/20',
-  amendmentAmendmentHelpersWarningBadge: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+  amendmentAmendmentHelpersSuccessBadge:
+    'bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)] border-[var(--badge-success-border)]',
+  amendmentAmendmentHelpersDangerBadge:
+    'bg-[var(--badge-danger-bg)] text-[var(--badge-danger-fg)] border-[var(--badge-danger-border)]',
+  amendmentAmendmentHelpersWarningBadge:
+    'bg-[var(--badge-warning-bg)] text-[var(--badge-warning-fg)] border-[var(--badge-warning-border)]',
   amendmentAmendmentHelpersWarningBadgeAlpha:
-    'bg-orange-500/10 text-orange-500 border-orange-500/20',
-  amendmentAmendmentHelpersInfoBadge: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  amendmentAmendmentHelpersNeutralBadge: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
+    'bg-[var(--badge-warning-bg)] text-[var(--badge-warning-fg)] border-[var(--badge-warning-border)]',
+  amendmentAmendmentHelpersInfoBadge:
+    'bg-[var(--badge-info-bg)] text-[var(--badge-info-fg)] border-[var(--badge-info-border)]',
+  amendmentAmendmentHelpersNeutralBadge:
+    'bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)] border-[var(--badge-neutral-border)]',
   amendmentAmendmentPathHelpersThemedGradientSurface:
     'traverses explicit holder-to-scope grants from B2 through H2 to K2 only forward',
-  amendmentAmendmentEditContentWarningText: 'text-xs text-amber-600',
-  amendmentAmendmentEditContentInfoPanel: 'rounded-lg bg-blue-50 p-4 dark:bg-blue-950',
-  amendmentAmendmentEditContentInfoText: 'text-sm font-semibold text-blue-900 dark:text-blue-100',
-  amendmentAmendmentEditContentInfoTextAlpha: 'mt-1 text-xs text-blue-700 dark:text-blue-300',
+  amendmentAmendmentEditContentWarningText: 'text-xs text-[var(--badge-warning-fg)]',
+  amendmentAmendmentEditContentInfoPanel: 'rounded-lg bg-[var(--badge-info-bg)] p-4',
+  amendmentAmendmentEditContentInfoText: 'text-sm font-semibold text-[var(--badge-info-fg)]',
+  amendmentAmendmentEditContentInfoTextAlpha: 'mt-1 text-xs text-[var(--badge-info-fg)]',
   amendmentAmendmentForwardingPreviewAccentSurface:
     'rounded-xl border border-pink-500/25 bg-pink-500/10',
   amendmentAmendmentForwardingPreviewAccentText:
@@ -164,91 +174,98 @@ export const FEATURE_THEME_CLASS_NAMES = {
     'h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]',
   amendmentAmendmentPathVisualizationThemedSurfaceBeta:
     'h-4 w-4 rounded border border-[#ef9a9a] bg-[#ffcdd2]',
-  featureThemeWarningSurface: 'mb-4 border-amber-500/50 bg-amber-50 dark:bg-amber-950/20',
-  featureThemeWarningIcon: 'h-5 w-5 text-amber-600',
-  featureThemeWarningText: 'text-amber-800 dark:text-amber-200',
-  featureThemeWarningTextAlpha: 'mb-3 text-sm text-amber-700 dark:text-amber-300',
+  featureThemeWarningSurface:
+    'mb-4 border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)]',
+  featureThemeWarningIcon: 'h-5 w-5 text-[var(--badge-warning-fg)]',
+  featureThemeWarningText: 'text-[var(--badge-warning-fg)]',
+  featureThemeWarningTextAlpha: 'mb-3 text-sm text-[var(--badge-warning-fg)]',
   featureThemeNeutralContrastSurface:
     'flex items-center justify-between gap-2 rounded-md border bg-white p-2 dark:bg-gray-900',
-  featureThemeSuccessBackground: 'h-8 w-8 text-green-600 hover:bg-green-50 hover:text-green-700',
-  featureThemeDangerBackground: 'h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700',
+  featureThemeSuccessBackground:
+    'h-8 w-8 text-[var(--badge-success-fg)] hover:bg-[var(--badge-success-bg)] hover:text-[var(--badge-success-fg)]',
+  featureThemeDangerBackground:
+    'h-8 w-8 text-[var(--badge-danger-fg)] hover:bg-[var(--badge-danger-bg)] hover:text-[var(--badge-danger-fg)]',
   assistantAriaKaiStepInfoAccentGradientSurface:
     'bg-gradient-to-br from-purple-500 to-blue-500 text-2xl text-white',
-  assistantAriaKaiStepAccentIcon: 'mt-0.5 h-5 w-5 flex-shrink-0 text-purple-500',
-  assistantAriaKaiStepInfoIcon: 'mt-0.5 h-5 w-5 flex-shrink-0 text-blue-500',
-  authAuthGuardInfoLoadingIcon: 'h-8 w-8 animate-spin text-blue-500',
+  assistantAriaKaiStepAccentIcon: 'mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--badge-accent-fg)]',
+  assistantAriaKaiStepInfoIcon: 'mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--badge-info-fg)]',
+  authAuthGuardInfoLoadingIcon: 'h-8 w-8 animate-spin text-[var(--badge-info-fg)]',
   authGroupSearchStepSuccessGradientSurface:
     'rounded-full bg-gradient-to-br from-green-500 to-emerald-600 p-4',
   authGroupSearchStepContrastIcon: 'h-8 w-8 text-white',
   authGroupSearchStepSuccessNeutralBorder:
-    'border-emerald-500 ring-2 ring-emerald-500/20 ring-offset-2 dark:border-emerald-400 dark:ring-emerald-400/25 dark:ring-offset-gray-900',
-  authGroupSearchStepSuccessPanel: 'rounded-full bg-emerald-500 p-1 dark:bg-emerald-400',
-  authGroupSearchStepSuccessContrastIcon: 'h-3 w-3 text-white dark:text-emerald-950',
+    'border-[var(--badge-success-border)] ring-2 ring-[var(--badge-success-border)] ring-offset-2 dark:ring-offset-gray-900',
+  authGroupSearchStepSuccessPanel: 'rounded-full bg-[var(--badge-success-fg)] p-1',
+  authGroupSearchStepSuccessContrastIcon: 'h-3 w-3 text-white',
   authMembershipConfirmStepAccentGradientSurface:
     'rounded-full bg-gradient-to-br from-purple-500 to-violet-600 p-4',
   authMembershipConfirmStepSuccessBadge:
-    'rounded-lg border border-green-200 bg-green-50 p-4 text-center dark:border-green-800 dark:bg-green-950',
-  authMembershipConfirmStepSuccessPanel: 'rounded-full bg-green-500 p-2',
+    'rounded-lg border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] p-4 text-center',
+  authMembershipConfirmStepSuccessPanel: 'rounded-full bg-[var(--badge-success-fg)] p-2',
   authMembershipConfirmStepContrastIcon: 'h-5 w-5 text-white',
-  authMembershipConfirmStepSuccessText: 'font-medium text-green-800 dark:text-green-200',
+  authMembershipConfirmStepSuccessText: 'font-medium text-[var(--badge-success-fg)]',
   authNameStepInfoAccentGradientSurface:
     'rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 p-4',
-  authNameStepSuccessText: 'text-emerald-600 dark:text-emerald-400',
+  authNameStepSuccessText: 'text-[var(--badge-success-fg)]',
   authSummaryStepWarningGradientSurface:
     'rounded-full bg-gradient-to-br from-amber-500 to-orange-600 p-4',
   authSummaryStepContrastIcon: 'h-4 w-4 text-white',
-  authSummaryStepSuccessText: 'text-sm text-green-700 dark:text-green-300',
-  authSummaryStepSuccessTextAlpha: 'font-semibold text-green-900 dark:text-green-100',
-  authSummaryStepInfoPanel: 'rounded-full bg-blue-500 p-2',
-  authSummaryStepInfoText: 'text-sm text-blue-700 dark:text-blue-300',
-  authSummaryStepInfoTextAlpha: 'font-semibold text-blue-900 dark:text-blue-100',
-  authSummaryStepInfoIcon: 'h-5 w-5 text-blue-600 dark:text-blue-400',
-  authSummaryStepNeutralPanel: 'rounded-full bg-gray-400 p-2',
-  authSummaryStepNeutralText: 'text-sm text-gray-600 dark:text-gray-400',
-  authSummaryStepAccentPanel: 'rounded-full bg-purple-500 p-2',
-  authSummaryStepAccentText: 'text-sm text-purple-700 dark:text-purple-300',
-  authSummaryStepAccentTextAlpha: 'font-semibold text-purple-900 dark:text-purple-100',
-  authSummaryStepAccentIcon: 'h-5 w-5 text-purple-600 dark:text-purple-400',
+  authSummaryStepSuccessText: 'text-sm text-[var(--badge-success-fg)]',
+  authSummaryStepSuccessTextAlpha: 'font-semibold text-[var(--badge-success-fg)]',
+  authSummaryStepInfoPanel: 'rounded-full bg-[var(--badge-info-fg)] p-2',
+  authSummaryStepInfoText: 'text-sm text-[var(--badge-info-fg)]',
+  authSummaryStepInfoTextAlpha: 'font-semibold text-[var(--badge-info-fg)]',
+  authSummaryStepInfoIcon: 'h-5 w-5 text-[var(--badge-info-fg)]',
+  authSummaryStepNeutralPanel: 'rounded-full bg-[var(--badge-neutral-fg)] p-2',
+  authSummaryStepNeutralText: 'text-sm text-[var(--badge-neutral-fg)]',
+  authSummaryStepAccentPanel: 'rounded-full bg-[var(--badge-accent-fg)] p-2',
+  authSummaryStepAccentText: 'text-sm text-[var(--badge-accent-fg)]',
+  authSummaryStepAccentTextAlpha: 'font-semibold text-[var(--badge-accent-fg)]',
+  authSummaryStepAccentIcon: 'h-5 w-5 text-[var(--badge-accent-fg)]',
   authAccessDeniedDangerRoundIcon:
-    'mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20',
-  authAccessDeniedDangerIcon: 'h-10 w-10 text-red-600 dark:text-red-400',
-  authForgotPasswordFormSuccessIcon: 'h-12 w-12 text-emerald-500',
-  authForgotPasswordFormInfoIcon: 'h-12 w-12 text-blue-500',
+    'mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[var(--badge-danger-bg)]',
+  authAccessDeniedDangerIcon: 'h-10 w-10 text-[var(--badge-danger-fg)]',
+  authForgotPasswordFormSuccessIcon: 'h-12 w-12 text-[var(--badge-success-fg)]',
+  authForgotPasswordFormInfoIcon: 'h-12 w-12 text-[var(--badge-info-fg)]',
   authSignInFormContrastBadge:
     'mt-4 w-full border border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f8f9fa] dark:border-[#5f6368] dark:bg-[#202124] dark:text-[#e8eaed] dark:hover:bg-[#303134]',
-  createUseCreateGroupFormSuccessIcon: 'h-4 w-4 text-emerald-700',
-  createUseCreateGroupFormSuccessText: 'text-xs tracking-wide text-emerald-700 uppercase',
+  createUseCreateGroupFormSuccessIcon: 'h-4 w-4 text-[var(--badge-success-fg)]',
+  createUseCreateGroupFormSuccessText:
+    'text-xs tracking-wide text-[var(--badge-success-fg)] uppercase',
   createUseCreateGroupFormSuccessBadge:
-    'border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-50',
-  createUseCreateGroupFormDangerText: 'text-xs tracking-wide text-rose-700 uppercase',
-  createUseCreateGroupFormDangerBadge: 'border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-50',
-  createUseCreateGroupFormWarningText: 'text-xs tracking-wide text-amber-700 uppercase',
-  createUseCreateGroupFormWarningSurface: 'rounded-md border border-amber-200 bg-amber-50/60 p-3',
-  createUseCreateGroupFormWarningTextAlpha: 'text-sm font-medium text-amber-900',
-  createUseCreateGroupFormWarningTextBeta: 'text-xs text-amber-800',
+    'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)] hover:bg-[var(--badge-success-bg)]',
+  createUseCreateGroupFormDangerText:
+    'text-xs tracking-wide text-[var(--badge-danger-fg)] uppercase',
+  createUseCreateGroupFormDangerBadge:
+    'border-[var(--badge-danger-border)] bg-[var(--badge-danger-bg)] text-[var(--badge-danger-fg)] hover:bg-[var(--badge-danger-bg)]',
+  createUseCreateGroupFormWarningText:
+    'text-xs tracking-wide text-[var(--badge-warning-fg)] uppercase',
+  createUseCreateGroupFormWarningSurface:
+    'rounded-md border border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)] p-3',
+  createUseCreateGroupFormWarningTextAlpha: 'text-sm font-medium text-[var(--badge-warning-fg)]',
+  createUseCreateGroupFormWarningTextBeta: 'text-xs text-[var(--badge-warning-fg)]',
   createUseCreateGroupFormWarningBadge:
-    'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-50',
-  createCreateFieldsSuccessRing:
-    'focus-visible:ring-emerald-500/20 dark:focus-visible:ring-emerald-500/30',
+    'border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)] text-[var(--badge-warning-fg)] hover:bg-[var(--badge-warning-bg)]',
+  createCreateFieldsSuccessRing: 'focus-visible:ring-[var(--badge-success-border)]',
   createCreateFieldsThemedBorder:
     'border-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
   createCreateFieldsSuccessBorder:
-    'border-emerald-500 focus-visible:ring-emerald-500/20 dark:border-emerald-400 dark:focus-visible:ring-emerald-500/30',
+    'border-[var(--badge-success-border)] focus-visible:ring-[var(--badge-success-border)]',
   createCreateFieldsThemedBorderAlpha:
     '[&_[data-slot=input]]:border-destructive [&_[data-slot=input]]:focus-visible:ring-destructive/20 dark:[&_[data-slot=input]]:focus-visible:ring-destructive/40 [&_[data-slot=typeahead-selected]]:border-destructive [&_[data-slot=typeahead-selected-list]]:border-destructive',
   createCreateFieldsSuccessBorderAlpha:
-    '[&_[data-slot=input]]:border-emerald-500 [&_[data-slot=input]]:focus-visible:ring-emerald-500/20 dark:[&_[data-slot=input]]:border-emerald-400 dark:[&_[data-slot=input]]:focus-visible:ring-emerald-500/30 [&_[data-slot=typeahead-selected]]:border-emerald-500 dark:[&_[data-slot=typeahead-selected]]:border-emerald-400',
+    '[&_[data-slot=input]]:border-[var(--badge-success-border)] [&_[data-slot=input]]:focus-visible:ring-[var(--badge-success-border)] [&_[data-slot=typeahead-selected]]:border-[var(--badge-success-border)]',
   createCreateFieldsThemedBorderBeta:
     '[&_[data-slot=input]]:border-destructive [&_[data-slot=input]]:focus-visible:ring-destructive/20 dark:[&_[data-slot=input]]:focus-visible:ring-destructive/40 [&_[data-slot=typeahead-selected]]:border-destructive',
   createCreateProgressIndicatorThemedRoundIcon:
     'flex h-4 w-4 items-center justify-center rounded-full text-[10px]',
-  decisionterminalDecisionStatusSuccessText: 'text-green-600 dark:text-green-400',
-  decisionterminalDecisionStatusWarningText: 'text-yellow-600 dark:text-yellow-400',
-  decisionterminalDecisionStatusWarningTextAlpha: 'text-orange-600 dark:text-orange-400',
-  decisionterminalDecisionStatusDangerText: 'text-red-600 dark:text-red-400 animate-pulse',
-  decisionterminalDecisionStatusDangerTextAlpha: 'text-red-600 dark:text-red-400',
-  decisionterminalDecisionStatusNeutralText: 'text-gray-600 dark:text-gray-400',
-  decisionterminalCountdownTimerWarningText: 'text-amber-600 dark:text-amber-400',
+  decisionterminalDecisionStatusSuccessText: 'text-[var(--badge-success-fg)]',
+  decisionterminalDecisionStatusWarningText: 'text-[var(--badge-warning-fg)]',
+  decisionterminalDecisionStatusWarningTextAlpha: 'text-[var(--badge-warning-fg)]',
+  decisionterminalDecisionStatusDangerText: 'text-[var(--badge-danger-fg)] animate-pulse',
+  decisionterminalDecisionStatusDangerTextAlpha: 'text-[var(--badge-danger-fg)]',
+  decisionterminalDecisionStatusNeutralText: 'text-[var(--badge-neutral-fg)]',
+  decisionterminalCountdownTimerWarningText: 'text-[var(--badge-warning-fg)]',
   decisionterminalCountdownTimerThemedText:
     'text-muted-foreground text-[9px] tracking-[1px] uppercase',
   decisionterminalDecisionRowThemedText:
@@ -260,20 +277,20 @@ export const FEATURE_THEME_CLASS_NAMES = {
     'text-muted-foreground shrink-0 font-mono text-[9px] uppercase',
   decisionterminalDecisionRowThemedTextDelta:
     'text-muted-foreground shrink-0 font-mono text-[10px]',
-  decisionterminalDecisionSummaryInfoText: 'text-blue-600 dark:text-blue-400',
+  decisionterminalDecisionSummaryInfoText: 'text-[var(--badge-info-fg)]',
   decisionterminalDecisionSummaryNeutralBorder:
     'border-b border-gray-200 last:border-b-0 dark:border-gray-700',
   decisionterminalDecisionSummaryNeutralPanel:
     'h-auto w-full justify-between rounded-none p-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50',
-  decisionterminalDecisionSummaryNeutralIcon: 'h-4 w-4 text-gray-400',
-  decisionterminalDecisionSummaryNeutralText: 'px-3 pb-3 text-sm text-gray-600 dark:text-gray-300',
+  decisionterminalDecisionSummaryNeutralIcon: 'h-4 w-4 text-[var(--badge-neutral-fg)]',
+  decisionterminalDecisionSummaryNeutralText: 'px-3 pb-3 text-sm text-[var(--badge-neutral-fg)]',
   decisionterminalDecisionSummaryNeutralBorderAlpha:
     'rounded-lg border border-gray-200 dark:border-gray-700',
   decisionterminalDecisionSummaryNeutralSurface:
     'flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/50',
   decisionterminalDecisionSummaryNeutralTextAlpha:
-    'text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400',
-  decisionterminalDecisionSummaryNeutralTextBeta: 'text-gray-600 transition-all dark:text-gray-300',
+    'text-xs font-medium tracking-wide text-[var(--badge-neutral-fg)] uppercase',
+  decisionterminalDecisionSummaryNeutralTextBeta: 'text-[var(--badge-neutral-fg)] transition-all',
   decisionterminalDecisionTableThemedText:
     'text-muted-foreground font-mono text-[10px] font-semibold tracking-[1px] uppercase',
   decisionterminalDecisionTerminalNeutralSurface:
@@ -286,113 +303,116 @@ export const FEATURE_THEME_CLASS_NAMES = {
     'text-muted-foreground shrink-0 font-mono text-[11px]',
   decisionterminalDecisionWidgetContentThemedTextGamma:
     'text-muted-foreground mt-0.5 font-mono text-[11px]',
-  decisionterminalDecisionWidgetContentSuccessBackground: 'bg-emerald-500',
-  decisionterminalDecisionWidgetContentWarningBackground: 'bg-amber-500',
+  decisionterminalDecisionWidgetContentSuccessBackground: 'bg-[var(--badge-success-fg)]',
+  decisionterminalDecisionWidgetContentWarningBackground: 'bg-[var(--badge-warning-fg)]',
   decisionterminalDecisionWidgetContentThemedTextDelta:
     'text-muted-foreground mt-0.5 flex items-center gap-2 font-mono text-[11px]',
   decisionterminalDecisionWidgetContentThemedTextEpsilon:
     'text-muted-foreground truncate text-[11px]',
-  decisionterminalFlashRowSuccessShadow: 'shadow-green-500/30',
-  decisionterminalFlashRowDangerShadow: 'shadow-red-500/30',
-  decisionterminalFlashRowWarningShadow: 'shadow-yellow-500/30',
-  decisionterminalFlashRowSuccessBackground: 'bg-green-50 dark:bg-green-950/30',
-  decisionterminalFlashRowDangerBackground: 'bg-red-50 dark:bg-red-950/30',
-  decisionterminalFlashRowWarningBackground: 'bg-yellow-50 dark:bg-yellow-950/30',
-  decisionterminalFlashRowWarningBackgroundAlpha: 'bg-yellow-500',
+  decisionterminalFlashRowSuccessShadow: 'shadow-[color:var(--badge-success-border)]',
+  decisionterminalFlashRowDangerShadow: 'shadow-[color:var(--badge-danger-border)]',
+  decisionterminalFlashRowWarningShadow: 'shadow-[color:var(--badge-warning-border)]',
+  decisionterminalFlashRowSuccessBackground: 'bg-[var(--badge-success-bg)]',
+  decisionterminalFlashRowDangerBackground: 'bg-[var(--badge-danger-bg)]',
+  decisionterminalFlashRowWarningBackground: 'bg-[var(--badge-warning-bg)]',
+  decisionterminalFlashRowWarningBackgroundAlpha: 'bg-[var(--badge-warning-fg)]',
   decisionterminalMobileDecisionCardThemedText: 'text-muted-foreground mr-2 font-mono text-[10px]',
   decisionterminalMobileDecisionCardThemedTextAlpha:
     'text-muted-foreground mt-0.5 truncate font-mono text-[10px] tracking-[1px] uppercase',
-  decisionterminalTerminalHeaderNeutralBorder: 'border-b border-gray-200 dark:border-gray-700',
-  decisionterminalTerminalHeaderDangerText: 'animate-pulse text-red-500',
-  decisionterminalTerminalHeaderDangerTextAlpha: 'font-medium text-red-600 dark:text-red-400',
-  decisionterminalTrendIndicatorSuccessBackground: 'bg-emerald-50 dark:bg-emerald-950/30',
-  decisionterminalTrendIndicatorWarningBackground: 'bg-amber-50 dark:bg-amber-950/30',
+  decisionterminalTerminalHeaderNeutralBorder: 'border-b border-[var(--badge-neutral-border)]',
+  decisionterminalTerminalHeaderDangerText: 'animate-pulse text-[var(--badge-danger-fg)]',
+  decisionterminalTerminalHeaderDangerTextAlpha: 'font-medium text-[var(--badge-danger-fg)]',
+  decisionterminalTrendIndicatorSuccessBackground: 'bg-[var(--badge-success-bg)]',
+  decisionterminalTrendIndicatorWarningBackground: 'bg-[var(--badge-warning-bg)]',
   delegateDelegatesOverviewWarningSurface:
-    'flex items-center gap-2 rounded-lg border border-yellow-500/50 bg-yellow-50 p-3 dark:bg-yellow-900/20',
-  delegateDelegatesOverviewWarningIcon: 'h-4 w-4 text-yellow-600 dark:text-yellow-400',
-  delegateDelegatesOverviewWarningText: 'text-sm text-yellow-800 dark:text-yellow-200',
+    'flex items-center gap-2 rounded-lg border border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)] p-3',
+  delegateDelegatesOverviewWarningIcon: 'h-4 w-4 text-[var(--badge-warning-fg)]',
+  delegateDelegatesOverviewWarningText: 'text-sm text-[var(--badge-warning-fg)]',
   delegateDelegatesOverviewSuccessSurface:
-    'flex items-center gap-3 rounded-lg border bg-green-50 p-3 dark:bg-green-900/20',
+    'flex items-center gap-3 rounded-lg border bg-[var(--badge-success-bg)] p-3',
   delegateDelegatesOverviewInfoSurface:
-    'flex items-center gap-3 rounded-lg border bg-blue-50 p-3 dark:bg-blue-900/20',
-  discussionsCommentTreeWarningText: 'text-orange-500',
-  discussionsCommentTreeInfoText: 'text-blue-500',
+    'flex items-center gap-3 rounded-lg border bg-[var(--badge-info-bg)] p-3',
+  discussionsCommentTreeWarningText: 'text-[var(--badge-warning-fg)]',
+  discussionsCommentTreeInfoText: 'text-[var(--badge-info-fg)]',
   docsDocsTopicsThemedGradientSurface: 'jump-to-target',
   documentUseAutoSaveThemedStyle: 'Auto-save failed:',
   documentPresenceIndicatorsContrastText: 'text-xs text-white',
-  editorEditorHeaderWarningText: 'text-yellow-600',
+  editorEditorHeaderWarningText: 'text-[var(--badge-warning-fg)]',
   editorInviteCollaboratorDialogThemedText: 'text-[8px]',
   editorInviteCollaboratorDialogThemedPanel: 'h-4 w-4 p-0 hover:bg-transparent',
-  eventCompactCalendarEventStylesSuccessBackground: 'bg-green-500/15 hover:bg-green-500/25',
+  eventCompactCalendarEventStylesSuccessBackground:
+    'bg-[var(--badge-success-bg)] hover:bg-[var(--badge-success-bg)]',
   eventCompactCalendarEventStylesInfoSurface:
-    'border border-dashed border-blue-300 bg-blue-500/10 hover:bg-blue-500/20 dark:border-blue-700',
+    'border border-dashed border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] hover:bg-[var(--badge-info-bg)]',
   eventCompactCalendarEventStylesWarningBorder:
-    'border border-amber-200/80 text-amber-950 shadow-sm hover:opacity-90 dark:border-amber-800/60 dark:text-amber-50',
-  eventCompactCalendarEventStylesWarningText: 'text-amber-800/90 dark:text-amber-100/90',
+    'border border-[var(--badge-warning-border)] text-[var(--badge-warning-fg)] shadow-sm hover:opacity-90',
+  eventCompactCalendarEventStylesWarningText: 'text-[var(--badge-warning-fg)]',
   eventSharedMonthThemedText:
     'cursor-pointer rounded px-1 py-0.5 text-[11px] leading-tight transition-all',
   eventSharedWeekViewNeutralText:
     'text-muted-foreground absolute top-0 right-2 -translate-y-1/2 text-[11px] font-medium',
   eventSharedWeekViewThemedText: 'text-muted-foreground mb-2 text-[10px] font-medium',
-  eventCancelEventDialogInfoIcon: 'h-4 w-4 text-blue-500',
-  eventCancelEventDialogAccentIcon: 'h-4 w-4 text-purple-500',
+  eventCancelEventDialogInfoIcon: 'h-4 w-4 text-[var(--badge-info-fg)]',
+  eventCancelEventDialogAccentIcon: 'h-4 w-4 text-[var(--badge-accent-fg)]',
   eventEventEditSuccessBadge:
-    'rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm',
+    'rounded-xl border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] p-4 text-sm',
   eventEventStreamSuccessContrastPulseDot:
-    'absolute -top-1 -right-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-green-500 text-white',
+    'absolute -top-1 -right-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-[var(--badge-success-fg)] text-white',
   eventEventStreamContrastStyle: 'h-3 w-3 fill-white',
   eventEventTimeSeriesSectionInfoBadge:
-    'rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 py-3 text-sm',
+    'rounded-xl border border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] px-4 py-3 text-sm',
   eventEventTimeSeriesSectionWarningBadge:
-    'rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm',
+    'rounded-xl border border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)] px-4 py-3 text-sm',
   fileuploadImageUploadThemedText:
     'text-muted-foreground flex w-full items-center gap-3 text-[11px] font-medium tracking-[0.24em] uppercase',
   floweditorFlowEditorContrastPanel: 'rounded bg-white p-4 shadow',
-  floweditorFlowEditorNeutralText: 'mb-3 text-sm text-gray-600',
+  floweditorFlowEditorNeutralText: 'mb-3 text-sm text-[var(--badge-neutral-fg)]',
   floweditorFlowEditorContrastPanelAlpha: 'w-80 rounded bg-white p-4 shadow',
   floweditorUseFlowEditorThemedStyle: '0 0 0 2px #ff0072',
   floweditorUseFlowEditorThemedStyleAlpha: '1px dashed #aaa',
-  groupAddRoleDialogSuccessSurface: 'rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4',
+  groupAddRoleDialogSuccessSurface:
+    'rounded-2xl border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] p-4',
   groupAddRoleDialogSuccessBorder:
-    'border-emerald-500 text-emerald-950 dark:border-emerald-400 dark:text-emerald-50',
+    'border-[var(--badge-success-border)] text-[var(--badge-success-fg)]',
   groupAssignHolderDialogInfoBadge:
-    'rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900',
-  groupAssignHolderDialogWarningSurface: 'rounded-lg border border-orange-200 bg-orange-50 p-3',
+    'rounded-lg border border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] p-3 text-sm text-[var(--badge-info-fg)]',
+  groupAssignHolderDialogWarningSurface:
+    'rounded-lg border border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)] p-3',
   groupGroupConflictPanelWarningSurface:
-    'space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4',
-  groupGroupConflictPanelWarningIcon: 'mt-0.5 h-4 w-4 shrink-0 text-amber-700',
+    'space-y-3 rounded-lg border border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)] p-4',
+  groupGroupConflictPanelWarningIcon: 'mt-0.5 h-4 w-4 shrink-0 text-[var(--badge-warning-fg)]',
   groupMembershipRightsAlignmentPanelSuccessBackground:
-    'bg-emerald-50 text-emerald-950 dark:bg-emerald-950/30 dark:text-emerald-100',
+    'bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]',
   groupMembershipRightsAlignmentPanelWarningBackground:
-    'bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100',
+    'bg-[var(--badge-warning-bg)] text-[var(--badge-warning-fg)]',
   groupMembershipRightsAlignmentPanelInfoBackground:
-    'bg-sky-50 text-sky-950 dark:bg-sky-950/30 dark:text-sky-100',
+    'bg-[var(--badge-info-bg)] text-[var(--badge-info-fg)]',
   groupMembershipRightsAlignmentPanelDangerBackground:
-    'bg-rose-50 text-rose-950 dark:bg-rose-950/30 dark:text-rose-100',
+    'bg-[var(--badge-danger-bg)] text-[var(--badge-danger-fg)]',
   groupOpenAssignmentsPanelSuccessBadge:
-    'flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-700',
+    'flex items-center gap-2 rounded-lg border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] px-3 py-2 text-sm text-[var(--badge-success-fg)]',
   groupOpenAssignmentsPanelThemedBorder:
     'border-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.35)]',
   groupOpenAssignmentsPanelThemedBorderAlpha: 'border-transparent',
-  groupPaymentsSectionSuccessText: 'text-xl font-semibold text-green-600 dark:text-green-400',
-  groupPaymentsSectionDangerText: 'text-xl font-semibold text-red-600 dark:text-red-400',
+  groupPaymentsSectionSuccessText: 'text-xl font-semibold text-[var(--badge-success-fg)]',
+  groupPaymentsSectionDangerText: 'text-xl font-semibold text-[var(--badge-danger-fg)]',
   groupRolesPermissionsTableThemedText: 'pointer-events-none text-[11px]',
   groupRoleTagContrastBorder: 'border-0 text-white shadow-sm shadow-black/10 dark:text-white',
-  meetMeetingCalendarViewsSuccessBorder: 'border-green-300 dark:border-green-800',
-  meetMeetingCalendarViewsInfoBorder: 'border-dashed border-blue-300 dark:border-blue-800',
+  meetMeetingCalendarViewsSuccessBorder: 'border-[var(--badge-success-border)]',
+  meetMeetingCalendarViewsInfoBorder: 'border-dashed border-[var(--badge-info-border)]',
   meetMeetingCalendarViewsThemedBackground: 'cursor-default hover:bg-transparent',
-  messageAiContextCardsInfoIcon: 'h-5 w-5 text-sky-700 dark:text-sky-300',
+  messageAiContextCardsInfoIcon: 'h-5 w-5 text-[var(--badge-info-fg)]',
   messageAiContextCardsInfoBadge:
-    'inline-flex items-center gap-1.5 rounded-md border border-sky-500/20 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-700 transition-colors hover:bg-sky-500/15 dark:text-sky-300',
+    'inline-flex items-center gap-1.5 rounded-md border border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] px-3 py-1.5 text-xs font-medium text-[var(--badge-info-fg)] transition-colors hover:bg-[var(--badge-info-bg)]',
   messageAiContextCardsThemedGradientSurface: 'overflow-hidden rounded-2xl bg-gradient-to-br',
   messageAiContextCardsThemedBorder:
     'flex items-center gap-1.5 border-b px-3 py-2 text-[11px] font-semibold tracking-[0.16em] uppercase',
   messageAiContextCardsSuccessBadge:
-    'border-emerald-500/15 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+    'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]',
   messageAiContextCardsInfoBadgeAlpha:
-    'border-sky-500/15 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+    'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] text-[var(--badge-info-fg)]',
   messageAiContextCardsSuccessText:
-    'mb-1 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.16em] text-emerald-700 uppercase dark:text-emerald-300',
+    'mb-1 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.16em] text-[var(--badge-success-fg)] uppercase',
   messageAssistantMessageInputNeutralGradientSurface:
     'bg-gradient-to-br from-slate-200/80 via-slate-200/60 to-slate-100/40 text-slate-700 dark:bg-slate-700/20 dark:text-slate-200',
   messageAssistantMessageInputWarningGradientSurface:
@@ -402,38 +422,38 @@ export const FEATURE_THEME_CLASS_NAMES = {
   messageAssistantMessageInputThemedText:
     'text-muted-foreground px-2 pt-1 text-[11px] font-semibold tracking-[0.14em] uppercase',
   messageAssistantMessageInputSuccessRoundIcon:
-    'inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold leading-none text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+    'inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[var(--badge-success-bg)] text-[11px] font-bold leading-none text-[var(--badge-success-fg)]',
   messageAssistantMessageInputWarningRoundIcon:
-    'inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-[11px] font-bold leading-none text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+    'inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[var(--badge-warning-bg)] text-[11px] font-bold leading-none text-[var(--badge-warning-fg)]',
   messageAssistantMessageInputSuccessRoundIconAlpha:
-    'inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold leading-none text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+    'inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--badge-success-bg)] text-[11px] font-bold leading-none text-[var(--badge-success-fg)]',
   messageAssistantMessageInputWarningRoundIconAlpha:
-    'inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-[11px] font-bold leading-none text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  messageAssistantMessageInputNeutralText: 'text-xs font-medium text-slate-900 dark:text-slate-100',
-  messageAssistantMessageInputNeutralBorder: 'border-t border-slate-200 dark:border-slate-700',
+    'inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--badge-warning-bg)] text-[11px] font-bold leading-none text-[var(--badge-warning-fg)]',
+  messageAssistantMessageInputNeutralText: 'text-xs font-medium text-[var(--badge-neutral-fg)]',
+  messageAssistantMessageInputNeutralBorder: 'border-t border-[var(--badge-neutral-border)]',
   messageConversationListContrastRing:
     'opacity-100 shadow-sm ring-1 ring-black/10 dark:ring-white/15',
-  messageLinkPreviewInfoIcon: 'h-5 w-5 text-blue-500',
-  messageLinkPreviewAccentIcon: 'h-5 w-5 text-purple-500',
-  messageLinkPreviewWarningIcon: 'h-5 w-5 text-orange-500',
+  messageLinkPreviewInfoIcon: 'h-5 w-5 text-[var(--badge-info-fg)]',
+  messageLinkPreviewAccentIcon: 'h-5 w-5 text-[var(--badge-accent-fg)]',
+  messageLinkPreviewWarningIcon: 'h-5 w-5 text-[var(--badge-warning-fg)]',
   messageLinkPreviewAccentIconAlpha: 'h-5 w-5 text-pink-500',
   messageLinkPreviewInfoIconAlpha: 'h-5 w-5 text-cyan-500',
   messageLinkPreviewAccentIconBeta: 'h-5 w-5 text-indigo-500',
   messageMessageBubbleDangerBadge:
-    'border border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-300',
-  messageMessageBubbleDangerText: 'text-red-700/70 dark:text-red-300/70',
+    'border border-[var(--badge-danger-border)] bg-[var(--badge-danger-bg)] text-[var(--badge-danger-fg)]',
+  messageMessageBubbleDangerText: 'text-[var(--badge-danger-fg)] opacity-70',
   messageMessageListDangerBadge:
-    'flex items-start gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300',
+    'flex items-start gap-2 rounded-md border border-[var(--badge-danger-border)] bg-[var(--badge-danger-bg)] px-3 py-2 text-sm text-[var(--badge-danger-fg)]',
   messageMessageListThemedText:
     'text-muted-foreground mb-1 text-[11px] font-medium tracking-[0.18em] uppercase',
-  messageMessageListDangerText: 'flex items-start gap-2 text-sm text-red-700 dark:text-red-300',
+  messageMessageListDangerText: 'flex items-start gap-2 text-sm text-[var(--badge-danger-fg)]',
   navigationNavItemListLayout:
     'grid w-full auto-rows-max grid-cols-2 gap-8 p-4 sm:grid-cols-3 md:grid-cols-4',
   navigationNavItemsUnauthenticatedThemedStyle: '/#features',
-  navigationUserMenuDangerText: 'text-red-600 focus:text-red-600',
+  navigationUserMenuDangerText: 'text-[var(--badge-danger-fg)] focus:text-[var(--badge-danger-fg)]',
   networkUseGroupNetworkFlowThemedStyle: '0 0 0 2px #ff0072, 0 0 0 5px rgba(16, 185, 129, 0.35)',
   networkUseGroupNetworkFlowThemedStyleAlpha: '0 0 0 4px rgba(16, 185, 129, 0.35)',
-  networkUseGroupNetworkFlowNeutralBorder: 'my-1 border-gray-200 dark:border-gray-700',
+  networkUseGroupNetworkFlowNeutralBorder: 'my-1 border-[var(--badge-neutral-border)]',
   networkUseGroupNetworkFlowNeutralSurface:
     'relative h-3 w-6 rounded-sm border border-gray-300 bg-gray-100',
   networkUseManageNetworkTabSuccessTealGradientSurface:
@@ -442,8 +462,10 @@ export const FEATURE_THEME_CLASS_NAMES = {
     'border-0 bg-gradient-to-r from-sky-500 to-violet-500 text-white hover:opacity-90',
   networkUseManageNetworkTabWarningAccentGradientSurface:
     'border-0 bg-gradient-to-r from-fuchsia-500 to-amber-500 text-white hover:opacity-90',
-  networkUseManageWorkflowsTabWarningSurface: 'border-amber-500/20 bg-amber-500/5',
-  networkUseManageWorkflowsTabSuccessSurface: 'border-emerald-500/20 bg-emerald-500/5',
+  networkUseManageWorkflowsTabWarningSurface:
+    'border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)]',
+  networkUseManageWorkflowsTabSuccessSurface:
+    'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)]',
   networkUseUserNetworkFlowThemedStyle: '3px solid #2196f3',
   networkUseUserNetworkFlowThemedRoundIcon:
     'h-4 w-4 rounded-full border-2 border-[#2196f3] bg-[#e3f2fd]',
@@ -465,7 +487,7 @@ export const FEATURE_THEME_CLASS_NAMES = {
   networkEventNetworkFlowThemedStyle: '3px solid #66bb6a',
   networkEventNetworkFlowThemedSurface: 'h-4 w-4 rounded border-2 border-[#66bb6a] bg-[#e8f5e9]',
   networkGroupConnectionComposerThemedText: 'text-muted-foreground text-[11px]',
-  networkGroupConnectionStatusCellSuccessText: 'inline-flex text-emerald-600',
+  networkGroupConnectionStatusCellSuccessText: 'inline-flex text-[var(--badge-success-fg)]',
   networkGroupRelationshipFieldsDangerWarningGradientSurface:
     'from-amber-600 via-orange-500 to-rose-500 decoration-orange-400/90',
   networkGroupRelationshipFieldsInfoAccentGradientSurface:
@@ -511,28 +533,28 @@ export const FEATURE_THEME_CLASS_NAMES = {
   networkGroupRelationshipFieldsContrastTextAlpha:
     'text-white data-[placeholder]:text-white/70 [&>svg]:text-white/80',
   networkHierarchyConflictDialogSuccessBadge:
-    'flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm',
-  networkHierarchyConflictDialogSuccessIcon: 'h-4 w-4 shrink-0 text-emerald-600',
+    'flex items-center gap-2 rounded-md border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] px-3 py-2 text-sm',
+  networkHierarchyConflictDialogSuccessIcon: 'h-4 w-4 shrink-0 text-[var(--badge-success-fg)]',
   networkNetworkControlPanelNeutralContrastBadge:
     'border-slate-200 bg-slate-100 text-slate-900 hover:bg-slate-200 hover:text-slate-950 dark:border-white/70 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 dark:hover:text-white',
   networkNetworkControlPanelSuccessBadge:
-    'border-emerald-200 bg-emerald-100 text-emerald-900 hover:bg-emerald-200 hover:text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-100 dark:hover:bg-emerald-900 dark:hover:text-emerald-50',
+    'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)] hover:bg-[var(--badge-success-bg)] hover:text-[var(--badge-success-fg)]',
   networkNetworkControlPanelInfoBadge:
-    'border-blue-200 bg-blue-100 text-blue-900 hover:bg-blue-200 hover:text-blue-950 dark:border-blue-800 dark:bg-blue-950/70 dark:text-blue-100 dark:hover:bg-blue-900 dark:hover:text-blue-50',
+    'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] text-[var(--badge-info-fg)] hover:bg-[var(--badge-info-bg)] hover:text-[var(--badge-info-fg)]',
   networkNetworkControlPanelWarningBadge:
-    'border-amber-200 bg-amber-100 text-amber-900 hover:bg-amber-200 hover:text-amber-950 dark:border-amber-800 dark:bg-amber-950/70 dark:text-amber-100 dark:hover:bg-amber-900 dark:hover:text-amber-50',
+    'border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)] text-[var(--badge-warning-fg)] hover:bg-[var(--badge-warning-bg)] hover:text-[var(--badge-warning-fg)]',
   networkNetworkControlPanelAccentBadge:
-    'border-violet-200 bg-violet-100 text-violet-900 hover:bg-violet-200 hover:text-violet-950 dark:border-violet-800 dark:bg-violet-950/70 dark:text-violet-100 dark:hover:bg-violet-900 dark:hover:text-violet-50',
+    'border-[var(--badge-accent-border)] bg-[var(--badge-accent-bg)] text-[var(--badge-accent-fg)] hover:bg-[var(--badge-accent-bg)] hover:text-[var(--badge-accent-fg)]',
   networkNetworkControlPanelThemedSurface:
     'border-border/70 bg-background/95 dark:bg-card/95 rounded-lg border p-2 shadow-sm',
   networkNetworkControlPanelThemedBadge:
     'border-border bg-background/90 text-foreground hover:bg-accent hover:text-accent-foreground dark:bg-card/90 dark:text-foreground',
   networkNetworkControlPanelThemedSurfaceAlpha:
     'border-border/80 bg-background/95 dark:bg-background/95 flex max-h-[calc(100%-1rem)] w-[calc(100%-1rem)] max-w-sm flex-col overflow-hidden rounded border p-4 shadow-lg supports-[backdrop-filter]:backdrop-blur-sm',
-  networkNetworkControlPanelNeutralText: 'mb-3 text-sm text-gray-600 dark:text-gray-400',
+  networkNetworkControlPanelNeutralText: 'mb-3 text-sm text-[var(--badge-neutral-fg)]',
   networkNetworkControlPanelInfoPanel:
-    'mt-3 shrink-0 rounded-md bg-blue-50 p-2 text-sm dark:bg-blue-950/20',
-  networkNetworkControlPanelInfoText: 'text-blue-700 dark:text-blue-300',
+    'mt-3 shrink-0 rounded-md bg-[var(--badge-info-bg)] p-2 text-sm',
+  networkNetworkControlPanelInfoText: 'text-[var(--badge-info-fg)]',
   networkNetworkControlPanelThemedSurfaceBeta:
     'border-border/70 bg-background/95 dark:bg-card/95 mt-3 flex min-h-0 flex-1 flex-col rounded-lg border p-3 shadow-sm',
   networkNetworkControlPanelNeutralSurface:
@@ -541,49 +563,54 @@ export const FEATURE_THEME_CLASS_NAMES = {
     'h-4 w-4 rounded border-2 border-dashed border-gray-400 bg-gray-100',
   networkNetworkControlPanelThemedSurfaceGamma:
     'h-4 w-4 rounded border-2 border-[#fbbf24] bg-[#fff8e1]',
-  networkNetworkEntityDialogSuccessBadge: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-  networkNetworkEntityDialogInfoBadge: 'border-blue-200 bg-blue-50 text-blue-700',
-  networkNetworkEntityDialogWarningBadge: 'border-amber-200 bg-amber-50 text-amber-700',
+  networkNetworkEntityDialogSuccessBadge:
+    'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]',
+  networkNetworkEntityDialogInfoBadge:
+    'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] text-[var(--badge-info-fg)]',
+  networkNetworkEntityDialogWarningBadge:
+    'border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)] text-[var(--badge-warning-fg)]',
   networkRightFiltersThemedSurface:
     'border-border/70 bg-background/95 dark:bg-card/95 mt-4 rounded-lg border p-3 shadow-sm',
   networkWorkflowFlowVisualizationThemedSurface:
     'h-4 w-4 rounded border border-[#90caf9] bg-[#bbdefb]',
   networkWorkflowFlowVisualizationThemedSurfaceAlpha:
     'h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]',
-  networkWorkflowFlowVisualizationSuccessIcon: 'h-4 w-4 text-emerald-600',
-  networkWorkflowFlowVisualizationWarningIcon: 'h-4 w-4 text-amber-600',
+  networkWorkflowFlowVisualizationSuccessIcon: 'h-4 w-4 text-[var(--badge-success-fg)]',
+  networkWorkflowFlowVisualizationWarningIcon: 'h-4 w-4 text-[var(--badge-warning-fg)]',
   networkWorkflowEditorThemedGradientSurface:
     'offers next workflow-step targets only in holder-to-scope grant direction',
-  notificationNotificationItemInfoRing: 'h-5 w-5 hover:ring-1 hover:ring-blue-500',
-  notificationNotificationItemInfoContrastBackground: 'bg-blue-500 text-[10px] text-white',
-  notificationNotificationAccentText: 'text-purple-500',
-  notificationNotificationSuccessText: 'text-green-500',
+  notificationNotificationItemInfoRing:
+    'h-5 w-5 hover:ring-1 hover:ring-[var(--badge-info-border)]',
+  notificationNotificationItemInfoContrastBackground:
+    'bg-[var(--badge-info-fg)] text-[10px] text-white',
+  notificationNotificationAccentText: 'text-[var(--badge-accent-fg)]',
+  notificationNotificationSuccessText: 'text-[var(--badge-success-fg)]',
   notificationNotificationAccentTextAlpha: 'text-pink-500',
   notificationNotificationAccentTextBeta: 'text-indigo-500',
-  notificationNotificationInfoText: 'text-cyan-500',
-  notificationNotificationDangerText: 'text-red-500',
-  notificationNotificationInfoTextAlpha: 'text-blue-400',
-  notificationNotificationNeutralText: 'text-slate-500',
-  notificationNotificationWarningText: 'text-amber-500',
-  notificationNotificationWarningTextAlpha: 'text-yellow-500',
-  notificationNotificationInfoTextBeta: 'text-cyan-400',
-  notificationNotificationSuccessTextAlpha: 'text-emerald-500',
-  notificationNotificationAccentTextGamma: 'text-violet-500',
-  notificationNotificationAccentTextDelta: 'text-purple-400',
+  notificationNotificationInfoText: 'text-[var(--badge-info-fg)]',
+  notificationNotificationDangerText: 'text-[var(--badge-danger-fg)]',
+  notificationNotificationInfoTextAlpha: 'text-[var(--badge-info-fg)]',
+  notificationNotificationNeutralText: 'text-[var(--badge-neutral-fg)]',
+  notificationNotificationWarningText: 'text-[var(--badge-warning-fg)]',
+  notificationNotificationWarningTextAlpha: 'text-[var(--badge-warning-fg)]',
+  notificationNotificationInfoTextBeta: 'text-[var(--badge-info-fg)]',
+  notificationNotificationSuccessTextAlpha: 'text-[var(--badge-success-fg)]',
+  notificationNotificationAccentTextGamma: 'text-[var(--badge-accent-fg)]',
+  notificationNotificationAccentTextDelta: 'text-[var(--badge-accent-fg)]',
   notificationNotificationAccentTextEpsilon: 'text-indigo-400',
-  notificationNotificationAccentTextZeta: 'text-violet-400',
-  notificationNotificationWarningTextBeta: 'text-amber-400',
-  notificationNotificationDangerTextAlpha: 'text-rose-500',
-  notificationNotificationDangerTextBeta: 'text-rose-400',
+  notificationNotificationAccentTextZeta: 'text-[var(--badge-accent-fg)]',
+  notificationNotificationWarningTextBeta: 'text-[var(--badge-warning-fg)]',
+  notificationNotificationDangerTextAlpha: 'text-[var(--badge-danger-fg)]',
+  notificationNotificationDangerTextBeta: 'text-[var(--badge-danger-fg)]',
   paymentSubscriptionPlansGridSuccessSurface:
     'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] shadow-[var(--shadow-card)]',
   paymentSubscriptionPlansGridSuccessPanel:
     'rounded-full border border-[var(--badge-success-border)] bg-[var(--surface-overlay)] px-2 py-0.5 text-xs font-medium text-[var(--badge-success-fg)] shadow-sm',
-  paymentSubscriptionStatusDangerIcon: 'h-4 w-4 text-red-500',
-  positionPositionsTableWarningIcon: 'h-4 w-4 text-orange-500',
-  positionPositionsTableWarningText: 'mt-2 block font-semibold text-orange-600',
+  paymentSubscriptionStatusDangerIcon: 'h-4 w-4 text-[var(--badge-danger-fg)]',
+  positionPositionsTableWarningIcon: 'h-4 w-4 text-[var(--badge-warning-fg)]',
+  positionPositionsTableWarningText: 'mt-2 block font-semibold text-[var(--badge-warning-fg)]',
   pqlPqlFilterBuilderDialogSuccessBorder:
-    'border-emerald-500 focus-visible:ring-emerald-500 dark:border-emerald-400',
+    'border-[var(--badge-success-border)] focus-visible:ring-[var(--badge-success-border)]',
   pqlPqlQueryEditorThemedText: 'min-w-16 justify-center text-[10px] uppercase',
   pqlPqlToolbarThemedPanel: 'h-4 w-4 p-0 text-inherit hover:bg-transparent',
   pqlPqlToolbarContrastPanel:
@@ -602,79 +629,79 @@ export const FEATURE_THEME_CLASS_NAMES = {
   timelineContentTypeConfigSuccessInfoGradientSurface: 'from-green-100 to-blue-100',
   timelineContentTypeConfigSuccessInfoGradientSurfaceAlpha:
     'dark:from-green-900/40 dark:to-blue-900/50',
-  timelineContentTypeConfigSuccessBorder: 'border-emerald-500',
+  timelineContentTypeConfigSuccessBorder: 'border-[var(--badge-success-border)]',
   timelineContentTypeConfigWarningGradientSurface: 'from-orange-100 to-yellow-100',
   timelineContentTypeConfigWarningGradientSurfaceAlpha:
     'dark:from-orange-900/40 dark:to-yellow-900/50',
-  timelineContentTypeConfigWarningBorder: 'border-amber-500',
+  timelineContentTypeConfigWarningBorder: 'border-[var(--badge-warning-border)]',
   timelineContentTypeConfigInfoAccentGradientSurface: 'from-cyan-100 via-sky-100 to-indigo-100',
   timelineContentTypeConfigInfoAccentGradientSurfaceAlpha:
     'dark:from-cyan-900/40 dark:via-sky-900/40 dark:to-indigo-900/50',
-  timelineContentTypeConfigInfoText: 'text-sky-700 dark:text-sky-300',
-  timelineContentTypeConfigInfoBorder: 'border-sky-500',
+  timelineContentTypeConfigInfoText: 'text-[var(--badge-info-fg)]',
+  timelineContentTypeConfigInfoBorder: 'border-[var(--badge-info-border)]',
   timelineContentTypeConfigInfoAccentGradientSurfaceBeta: 'from-purple-100 to-blue-100',
   timelineContentTypeConfigInfoAccentGradientSurfaceGamma:
     'dark:from-purple-900/40 dark:to-blue-900/50',
-  timelineContentTypeConfigAccentText: 'text-violet-600 dark:text-violet-400',
-  timelineContentTypeConfigAccentBorder: 'border-violet-500',
+  timelineContentTypeConfigAccentText: 'text-[var(--badge-accent-fg)]',
+  timelineContentTypeConfigAccentBorder: 'border-[var(--badge-accent-border)]',
   timelineContentTypeConfigInfoGradientSurface: 'from-sky-100 to-cyan-100',
   timelineContentTypeConfigInfoGradientSurfaceAlpha: 'dark:from-sky-900/40 dark:to-cyan-900/50',
   timelineContentTypeConfigDangerWarningGradientSurface: 'from-red-100 to-orange-100',
   timelineContentTypeConfigDangerWarningGradientSurfaceAlpha:
     'dark:from-red-900/40 dark:to-orange-900/50',
-  timelineContentTypeConfigDangerBorder: 'border-red-500',
+  timelineContentTypeConfigDangerBorder: 'border-[var(--badge-danger-border)]',
   timelineContentTypeConfigDangerAccentGradientSurface: 'from-rose-100 to-pink-100',
   timelineContentTypeConfigDangerAccentGradientSurfaceAlpha:
     'dark:from-rose-900/40 dark:to-pink-900/50',
-  timelineContentTypeConfigDangerText: 'text-rose-600 dark:text-rose-400',
-  timelineContentTypeConfigDangerBorderAlpha: 'border-rose-500',
+  timelineContentTypeConfigDangerText: 'text-[var(--badge-danger-fg)]',
+  timelineContentTypeConfigDangerBorderAlpha: 'border-[var(--badge-danger-border)]',
   timelineContentTypeConfigDangerAccentGradientSurfaceBeta: 'from-pink-100 to-red-100',
   timelineContentTypeConfigDangerAccentGradientSurfaceGamma:
     'dark:from-pink-900/40 dark:to-red-900/50',
   timelineContentTypeConfigInfoGradientSurfaceBeta: 'from-cyan-100 to-blue-100',
   timelineContentTypeConfigInfoGradientSurfaceGamma: 'dark:from-cyan-900/40 dark:to-blue-900/50',
-  timelineContentTypeConfigInfoTextAlpha: 'text-sky-600 dark:text-sky-400',
+  timelineContentTypeConfigInfoTextAlpha: 'text-[var(--badge-info-fg)]',
   timelineContentTypeConfigAccentGradientSurface: 'from-indigo-100 to-purple-100',
   timelineContentTypeConfigAccentGradientSurfaceAlpha:
     'dark:from-indigo-900/40 dark:to-purple-900/50',
-  timelineContentTypeConfigAccentTextAlpha: 'text-indigo-600 dark:text-indigo-400',
-  timelineContentTypeConfigAccentBorderAlpha: 'border-indigo-500',
+  timelineContentTypeConfigAccentTextAlpha: 'text-[var(--badge-accent-fg)]',
+  timelineContentTypeConfigAccentBorderAlpha: 'border-[var(--badge-accent-border)]',
   timelineContentTypeConfigSuccessGradientSurface: 'from-lime-100 to-emerald-100',
   timelineContentTypeConfigSuccessGradientSurfaceAlpha:
     'dark:from-lime-900/40 dark:to-emerald-900/50',
-  timelineContentTypeConfigThemedText: 'text-lime-700 dark:text-lime-300',
-  timelineContentTypeConfigThemedBorder: 'border-lime-500',
+  timelineContentTypeConfigThemedText: 'text-[var(--badge-success-fg)]',
+  timelineContentTypeConfigThemedBorder: 'border-[var(--badge-success-border)]',
   timelineContentTypeConfigSuccessTealGradientSurface: 'from-teal-100 to-green-100',
   timelineContentTypeConfigSuccessTealGradientSurfaceAlpha:
     'dark:from-teal-900/40 dark:to-green-900/50',
-  timelineContentTypeConfigTealText: 'text-teal-600 dark:text-teal-400',
-  timelineContentTypeConfigTealBorder: 'border-teal-500',
+  timelineContentTypeConfigTealText: 'text-[var(--badge-success-fg)]',
+  timelineContentTypeConfigTealBorder: 'border-[var(--badge-success-border)]',
   timelineContentTypeConfigSuccessTealGradientSurfaceBeta: 'from-emerald-100 to-teal-100',
   timelineContentTypeConfigSuccessTealGradientSurfaceGamma:
     'dark:from-emerald-900/40 dark:to-teal-900/50',
-  timelineContentTypeConfigSuccessText: 'text-emerald-700 dark:text-emerald-300',
+  timelineContentTypeConfigSuccessText: 'text-[var(--badge-success-fg)]',
   timelineContentTypeConfigNeutralGradientSurface: 'from-gray-100 to-slate-100',
   timelineContentTypeConfigNeutralGradientSurfaceAlpha:
     'dark:from-gray-900/40 dark:to-slate-900/50',
-  timelineContentTypeConfigNeutralText: 'text-slate-600 dark:text-slate-400',
-  timelineContentTypeConfigNeutralBorder: 'border-slate-500',
+  timelineContentTypeConfigNeutralText: 'text-[var(--badge-neutral-fg)]',
+  timelineContentTypeConfigNeutralBorder: 'border-[var(--badge-neutral-border)]',
   timelineContentTypeConfigDangerAccentGradientSurfaceDelta: 'from-fuchsia-100 to-rose-100',
   timelineContentTypeConfigDangerAccentGradientSurfaceEpsilon:
     'dark:from-fuchsia-900/40 dark:to-rose-900/50',
-  timelineContentTypeConfigAccentTextBeta: 'text-fuchsia-700 dark:text-fuchsia-300',
-  timelineContentTypeConfigAccentBorderBeta: 'border-fuchsia-500',
+  timelineContentTypeConfigAccentTextBeta: 'text-[var(--badge-accent-fg)]',
+  timelineContentTypeConfigAccentBorderBeta: 'border-[var(--badge-accent-border)]',
   timelineContentTypeConfigInfoAccentGradientSurfaceDelta: 'from-blue-100 to-indigo-100',
   timelineContentTypeConfigInfoAccentGradientSurfaceEpsilon:
     'dark:from-blue-900/40 dark:to-indigo-900/50',
-  timelineContentTypeConfigInfoBorderAlpha: 'border-blue-500',
-  timelineUseSwipeGesturesNeutralBackground: 'bg-gray-500',
-  timelineUseTodoTimelineCardDangerText: 'text-red-600',
-  timelineUseTodoTimelineCardDangerBackground: 'bg-red-100 dark:bg-red-900/40',
-  timelineUseTodoTimelineCardWarningText: 'text-orange-600',
-  timelineUseTodoTimelineCardWarningBackground: 'bg-orange-100 dark:bg-orange-900/40',
-  timelineUseTodoTimelineCardWarningBackgroundAlpha: 'bg-yellow-100 dark:bg-yellow-900/40',
-  timelineUseTodoTimelineCardSuccessText: 'text-green-600',
-  timelineUseTodoTimelineCardSuccessBackground: 'bg-green-100 dark:bg-green-900/40',
+  timelineContentTypeConfigInfoBorderAlpha: 'border-[var(--badge-info-border)]',
+  timelineUseSwipeGesturesNeutralBackground: 'bg-[var(--badge-neutral-fg)]',
+  timelineUseTodoTimelineCardDangerText: 'text-[var(--badge-danger-fg)]',
+  timelineUseTodoTimelineCardDangerBackground: 'bg-[var(--badge-danger-bg)]',
+  timelineUseTodoTimelineCardWarningText: 'text-[var(--badge-warning-fg)]',
+  timelineUseTodoTimelineCardWarningBackground: 'bg-[var(--badge-warning-bg)]',
+  timelineUseTodoTimelineCardWarningBackgroundAlpha: 'bg-[var(--badge-warning-bg)]',
+  timelineUseTodoTimelineCardSuccessText: 'text-[var(--badge-success-fg)]',
+  timelineUseTodoTimelineCardSuccessBackground: 'bg-[var(--badge-success-bg)]',
   timelineGradientAssignmentInfoAccentGradientSurface:
     'bg-gradient-to-br from-pink-100 to-blue-100 dark:from-pink-900/40 dark:to-blue-900/50',
   timelineGradientAssignmentWarningGradientSurface:
@@ -737,45 +764,45 @@ export const FEATURE_THEME_CLASS_NAMES = {
     'bg-gradient-to-r from-red-500 to-pink-400 dark:from-red-700 dark:to-pink-600',
   timelineActionBarAccentText: 'text-pink-600 dark:text-pink-400',
   timelineActionBarThemedStyle: 'fill-current',
-  timelineActionBarNeutralText: 'flex items-center gap-3 text-gray-500 dark:text-gray-400',
+  timelineActionBarNeutralText: 'flex items-center gap-3 text-[var(--badge-neutral-fg)]',
   timelineActionBarAccentPanel:
     'h-auto gap-1 p-0 transition-colors hover:bg-transparent hover:text-pink-500',
   timelineActionBarInfoPanel:
     'h-auto gap-1 p-0 transition-colors hover:bg-transparent hover:text-blue-500',
-  timelineActionTimelineCardAccentBackground: 'bg-purple-100 dark:bg-purple-900/40',
-  timelineActionTimelineCardAccentText: 'text-purple-600 dark:text-purple-400',
-  timelineActionTimelineCardInfoBackground: 'bg-blue-100 dark:bg-blue-900/40',
-  timelineActionTimelineCardSuccessBackground: 'bg-emerald-100 dark:bg-emerald-900/40',
-  timelineActionTimelineCardDangerBackground: 'bg-rose-100 dark:bg-rose-900/40',
-  timelineActionTimelineCardWarningBackground: 'bg-amber-100 dark:bg-amber-900/40',
-  timelineActionTimelineCardNeutralBackground: 'bg-gray-100 text-xs dark:bg-gray-800',
+  timelineActionTimelineCardAccentBackground: 'bg-[var(--badge-accent-bg)]',
+  timelineActionTimelineCardAccentText: 'text-[var(--badge-accent-fg)]',
+  timelineActionTimelineCardInfoBackground: 'bg-[var(--badge-info-bg)]',
+  timelineActionTimelineCardSuccessBackground: 'bg-[var(--badge-success-bg)]',
+  timelineActionTimelineCardDangerBackground: 'bg-[var(--badge-danger-bg)]',
+  timelineActionTimelineCardWarningBackground: 'bg-[var(--badge-warning-bg)]',
+  timelineActionTimelineCardNeutralBackground: 'bg-[var(--badge-neutral-bg)] text-xs',
   timelineActionTimelineCardNeutralRoundIcon:
     'border-background flex h-8 w-8 items-center justify-center rounded-full border-2 bg-gray-100 text-xs font-medium dark:bg-gray-800',
   timelineActionTimelineCardNeutralPanel:
     'inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700',
-  timelineAmendmentTimelineCardSuccessIcon: 'h-3.5 w-3.5 text-green-600',
-  timelineAmendmentTimelineCardDangerIcon: 'h-3.5 w-3.5 text-red-600',
+  timelineAmendmentTimelineCardSuccessIcon: 'h-3.5 w-3.5 text-[var(--badge-success-fg)]',
+  timelineAmendmentTimelineCardDangerIcon: 'h-3.5 w-3.5 text-[var(--badge-danger-fg)]',
   timelineBlogTimelineCardContrastGradientSurface:
     'absolute inset-0 bg-gradient-to-t from-black/50 to-transparent',
   timelineBlogTimelineCardContrastText: 'line-clamp-2 text-lg leading-tight font-bold text-white',
   timelineBlogTimelineCardTealIcon: 'mt-0.5 h-5 w-5 flex-shrink-0 text-teal-600 dark:text-teal-400',
-  timelineElectionTimelineCardNeutralBackground: 'bg-gray-100 dark:bg-gray-900/40',
-  timelineElectionTimelineCardDangerBackground: 'bg-rose-400 dark:bg-rose-500',
-  timelineElectionTimelineCardDangerBackgroundAlpha: 'bg-rose-600 dark:bg-rose-400',
-  timelineElectionTimelineCardNeutralBackgroundAlpha: 'bg-gray-300 dark:bg-gray-600',
-  timelineElectionTimelineCardWarningRing: 'ring-2 ring-amber-400',
-  timelineElectionTimelineCardDangerBackgroundBeta: 'bg-rose-100 text-xs dark:bg-rose-900/40',
+  timelineElectionTimelineCardNeutralBackground: 'bg-[var(--badge-neutral-bg)]',
+  timelineElectionTimelineCardDangerBackground: 'bg-[var(--badge-danger-fg)]',
+  timelineElectionTimelineCardDangerBackgroundAlpha: 'bg-[var(--badge-danger-fg)]',
+  timelineElectionTimelineCardNeutralBackgroundAlpha: 'bg-[var(--badge-neutral-bg)]',
+  timelineElectionTimelineCardWarningRing: 'ring-2 ring-[var(--badge-warning-border)]',
+  timelineElectionTimelineCardDangerBackgroundBeta: 'bg-[var(--badge-danger-bg)] text-xs',
   timelineElectionTimelineCardWarningNeutralIcon:
-    'absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 text-amber-500',
+    'absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 text-[var(--badge-warning-fg)]',
   timelineElectionTimelineCardNeutralRoundIcon:
     'border-background flex h-10 w-10 items-center justify-center rounded-full border-2 bg-gray-100 text-xs font-medium dark:bg-gray-800',
   timelineElectionTimelineCardWarningBorder:
-    'h-16 w-16 border-4 border-amber-400 ring-2 ring-amber-200 dark:ring-amber-800',
-  timelineElectionTimelineCardDangerBackgroundGamma: 'bg-rose-100 text-lg dark:bg-rose-900/40',
+    'h-16 w-16 border-4 border-[var(--badge-warning-border)] ring-2 ring-[var(--badge-warning-border)]',
+  timelineElectionTimelineCardDangerBackgroundGamma: 'bg-[var(--badge-danger-bg)] text-lg',
   timelineElectionTimelineCardWarningNeutralIconAlpha:
-    'absolute -top-3 left-1/2 h-6 w-6 -translate-x-1/2 text-amber-500',
+    'absolute -top-3 left-1/2 h-6 w-6 -translate-x-1/2 text-[var(--badge-warning-fg)]',
   timelineElectionTimelineCardWarningText:
-    'mt-1 text-sm font-medium text-amber-600 dark:text-amber-400',
+    'mt-1 text-sm font-medium text-[var(--badge-warning-fg)]',
   timelineEventTimelineCardContrastPulseDot: 'mr-1.5 h-2 w-2 animate-pulse rounded-full bg-white',
   timelineEventTimelineCardNeutralContrastPanel:
     'flex flex-col items-center rounded-xl bg-white/80 px-4 py-2 shadow-sm dark:bg-gray-900/80',
@@ -787,16 +814,17 @@ export const FEATURE_THEME_CLASS_NAMES = {
   timelineImageTimelineCardContrastTextAlpha: 'flex items-center gap-1 text-xs text-white/80',
   timelineImageTimelineCardNeutralContrastBackground:
     'absolute top-2 left-2 bg-white/80 text-xs dark:bg-gray-900/80',
-  timelinePaymentTimelineCardDangerText: 'text-rose-700 dark:text-rose-300',
+  timelinePaymentTimelineCardDangerText: 'text-[var(--badge-danger-fg)]',
   timelinePaymentTimelineCardSuccessBackground:
-    'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-  timelinePaymentTimelineCardDangerBackground: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
+    'bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]',
+  timelinePaymentTimelineCardDangerBackground:
+    'bg-[var(--badge-danger-bg)] text-[var(--badge-danger-fg)]',
   timelineQuickCommentThemedPanel:
     'text-muted-foreground hover:text-foreground h-auto gap-1.5 p-0 text-sm transition-colors hover:bg-transparent',
-  timelineReasonDisplayWarningBackground: 'bg-orange-50 dark:bg-orange-950/30',
-  timelineReasonDisplayInfoBackground: 'bg-blue-50 dark:bg-blue-950/30',
-  timelineReasonDisplayNeutralText: 'text-gray-500',
-  timelineReasonDisplayNeutralBackground: 'bg-gray-50 dark:bg-gray-950/30',
+  timelineReasonDisplayWarningBackground: 'bg-[var(--badge-warning-bg)]',
+  timelineReasonDisplayInfoBackground: 'bg-[var(--badge-info-bg)]',
+  timelineReasonDisplayNeutralText: 'text-[var(--badge-neutral-fg)]',
+  timelineReasonDisplayNeutralBackground: 'bg-[var(--badge-neutral-bg)]',
   timelineStatementTimelineCardContrastBackground:
     'h-32 w-full overflow-hidden rounded-xl bg-black/10',
   timelineStatementTimelineCardAccentIcon: 'h-8 w-8 text-indigo-200',
@@ -811,24 +839,24 @@ export const FEATURE_THEME_CLASS_NAMES = {
     'flex min-h-0 flex-col overflow-hidden border border-gray-100 dark:border-gray-800',
   timelineTodoTimelineCardNeutralContrastBadge:
     'text-foreground h-auto gap-2 rounded-full border-white/70 bg-white/80 px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur transition-colors hover:bg-white dark:border-gray-700/70 dark:bg-gray-950/70 dark:text-gray-100 dark:hover:bg-gray-950',
-  timelineTodoTimelineCardSuccessIcon: 'h-4 w-4 text-green-600',
-  timelineTopicPillSuccessText: 'text-green-700 dark:text-green-300',
-  timelineTopicPillSuccessBorder: 'border-green-200 dark:border-green-800',
-  timelineTopicPillInfoBorder: 'border-blue-200 dark:border-blue-800',
-  timelineTopicPillWarningText: 'text-orange-700 dark:text-orange-300',
-  timelineTopicPillWarningBorder: 'border-orange-200 dark:border-orange-800',
-  timelineTopicPillWarningTextAlpha: 'text-yellow-700 dark:text-yellow-300',
-  timelineTopicPillWarningBorderAlpha: 'border-yellow-200 dark:border-yellow-800',
-  timelineTopicPillAccentText: 'text-purple-700 dark:text-purple-300',
-  timelineTopicPillAccentBorder: 'border-purple-200 dark:border-purple-800',
-  timelineTopicPillDangerText: 'text-red-700 dark:text-red-300',
-  timelineTopicPillDangerBorder: 'border-red-200 dark:border-red-800',
+  timelineTodoTimelineCardSuccessIcon: 'h-4 w-4 text-[var(--badge-success-fg)]',
+  timelineTopicPillSuccessText: 'text-[var(--badge-success-fg)]',
+  timelineTopicPillSuccessBorder: 'border-[var(--badge-success-border)]',
+  timelineTopicPillInfoBorder: 'border-[var(--badge-info-border)]',
+  timelineTopicPillWarningText: 'text-[var(--badge-warning-fg)]',
+  timelineTopicPillWarningBorder: 'border-[var(--badge-warning-border)]',
+  timelineTopicPillWarningTextAlpha: 'text-[var(--badge-warning-fg)]',
+  timelineTopicPillWarningBorderAlpha: 'border-[var(--badge-warning-border)]',
+  timelineTopicPillAccentText: 'text-[var(--badge-accent-fg)]',
+  timelineTopicPillAccentBorder: 'border-[var(--badge-accent-border)]',
+  timelineTopicPillDangerText: 'text-[var(--badge-danger-fg)]',
+  timelineTopicPillDangerBorder: 'border-[var(--badge-danger-border)]',
   timelineTopicPillTealBackground: 'bg-teal-100 dark:bg-teal-900/40',
   timelineTopicPillTealText: 'text-teal-700 dark:text-teal-300',
   timelineTopicPillTealBorder: 'border-teal-200 dark:border-teal-800',
-  timelineTopicPillNeutralBackground: 'bg-gray-100 dark:bg-gray-800',
-  timelineTopicPillNeutralText: 'text-gray-700 dark:text-gray-300',
-  timelineTopicPillNeutralBorder: 'border-gray-200 dark:border-gray-700',
+  timelineTopicPillNeutralBackground: 'bg-[var(--badge-neutral-bg)]',
+  timelineTopicPillNeutralText: 'text-[var(--badge-neutral-fg)]',
+  timelineTopicPillNeutralBorder: 'border-[var(--badge-neutral-border)]',
   timelineUserTimelineCardInfoAccentGradientSurface:
     'bg-gradient-to-br from-blue-500 to-purple-500 text-white',
   timelineVideoTimelineCardDangerAccentGradientSurface:
@@ -837,32 +865,33 @@ export const FEATURE_THEME_CLASS_NAMES = {
     'absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100',
   timelineVideoTimelineCardContrastPanel:
     'transform rounded-full bg-white/90 p-4 shadow-lg transition-transform group-hover:scale-110',
-  timelineVideoTimelineCardNeutralIcon: 'h-8 w-8 fill-gray-900 text-gray-900',
+  timelineVideoTimelineCardNeutralIcon:
+    'h-8 w-8 fill-[var(--badge-neutral-fg)] text-[var(--badge-neutral-fg)]',
   timelineVideoTimelineCardContrastBackgroundAlpha:
     'absolute right-2 bottom-2 bg-black/80 font-mono text-xs text-white',
   timelineVideoTimelineCardContrastBackgroundBeta:
     'aspect-video w-full overflow-hidden rounded-lg bg-black',
-  timelineVoteTimelineCardNeutralText: 'text-gray-600',
-  timelineVoteTimelineCardDangerRing: 'ring-opacity-50 ring-2 ring-red-500',
-  timelineVoteTimelineCardDangerBackground: 'animate-pulse bg-red-500',
-  timelineVoteTimelineCardInfoIcon: 'h-3 w-3 text-blue-500',
-  timelineVoteTimelineCardInfoIconAlpha: 'h-3 w-3 text-blue-400',
-  timelineVoteTimelineCardInfoIconBeta: 'h-3 w-3 text-blue-300',
-  timelineVoteTimelineCardSuccessIcon: 'h-3 w-3 text-green-600',
-  timelineVoteTimelineCardDangerIcon: 'h-3 w-3 text-red-600',
+  timelineVoteTimelineCardNeutralText: 'text-[var(--badge-neutral-fg)]',
+  timelineVoteTimelineCardDangerRing: 'ring-opacity-50 ring-2 ring-[var(--badge-danger-border)]',
+  timelineVoteTimelineCardDangerBackground: 'animate-pulse bg-[var(--badge-danger-fg)]',
+  timelineVoteTimelineCardInfoIcon: 'h-3 w-3 text-[var(--badge-info-fg)]',
+  timelineVoteTimelineCardInfoIconAlpha: 'h-3 w-3 text-[var(--badge-info-fg)]',
+  timelineVoteTimelineCardInfoIconBeta: 'h-3 w-3 text-[var(--badge-info-fg)]',
+  timelineVoteTimelineCardSuccessIcon: 'h-3 w-3 text-[var(--badge-success-fg)]',
+  timelineVoteTimelineCardDangerIcon: 'h-3 w-3 text-[var(--badge-danger-fg)]',
   featureThemeThemedBorder:
     'display:block;width:18px;height:18px;border-radius:9999px;background:${color};border:3px solid #ffffff;box-shadow:0 10px 24px rgba(15,23,42,0.26);',
-  timelineCivicTimelineMapNeutralText: 'text-[11px] text-slate-500',
-  timelineCivicTimelineRailDangerBackground: 'bg-red-600',
-  timelineCivicTimelineRailInfoBackground: 'bg-blue-600',
-  timelineCivicTimelineRailSuccessBackground: 'bg-emerald-600',
+  timelineCivicTimelineMapNeutralText: 'text-[11px] text-[var(--badge-neutral-fg)]',
+  timelineCivicTimelineRailDangerBackground: 'bg-[var(--badge-danger-fg)]',
+  timelineCivicTimelineRailInfoBackground: 'bg-[var(--badge-info-fg)]',
+  timelineCivicTimelineRailSuccessBackground: 'bg-[var(--badge-success-fg)]',
   timelineTimelineModeToggleNeutralBackground:
     'bg-slate-900 text-slate-50 data-[state=on]:bg-slate-900 data-[state=on]:text-slate-50 dark:bg-slate-100 dark:text-slate-900 dark:data-[state=on]:bg-slate-100 dark:data-[state=on]:text-slate-900',
-  timelineTimelineModeToggleNeutralBackgroundAlpha: 'hover:bg-slate-100 dark:hover:bg-slate-800',
+  timelineTimelineModeToggleNeutralBackgroundAlpha: 'hover:bg-[var(--badge-neutral-bg)]',
   timelineTimelineModeToggleDangerRoundIcon:
-    'absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75',
+    'absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--badge-danger-fg)] opacity-75',
   timelineTimelineModeToggleDangerRoundIconAlpha:
-    'relative inline-flex h-2 w-2 rounded-full bg-red-500',
+    'relative inline-flex h-2 w-2 rounded-full bg-[var(--badge-danger-fg)]',
   timelineGradientAssignmentThemedGradientSurface: 'bg-gradient-to-br',
   timelineGradientAssignmentThemedGradientSurfaceAlpha: 'from-',
   timelineGradientAssignmentThemedGradientSurfaceBeta: 'to-',
@@ -870,11 +899,11 @@ export const FEATURE_THEME_CLASS_NAMES = {
   timelineGradientAssignmentThemedGradientSurfaceGamma: 'bg-gradient',
   todoUseKanbanBoardNeutralContrastSurface:
     'border border-slate-200 bg-white dark:border-slate-800 dark:bg-black',
-  userBadgeColorsInfoText: 'text-blue-800 dark:text-blue-300',
-  userBadgeColorsSuccessText: 'text-green-800 dark:text-green-300',
-  userBadgeColorsAccentText: 'text-purple-800 dark:text-purple-300',
-  userBadgeColorsWarningText: 'text-amber-800 dark:text-amber-300',
-  userBadgeColorsDangerText: 'text-rose-800 dark:text-rose-300',
+  userBadgeColorsInfoText: 'text-[var(--badge-info-fg)]',
+  userBadgeColorsSuccessText: 'text-[var(--badge-success-fg)]',
+  userBadgeColorsAccentText: 'text-[var(--badge-accent-fg)]',
+  userBadgeColorsWarningText: 'text-[var(--badge-warning-fg)]',
+  userBadgeColorsDangerText: 'text-[var(--badge-danger-fg)]',
   userBadgeColorsAccentBackground: 'bg-indigo-100 dark:bg-indigo-900/40',
   userBadgeColorsAccentTextAlpha: 'text-indigo-800 dark:text-indigo-300',
   userBadgeColorsTealText: 'text-teal-800 dark:text-teal-300',
@@ -888,8 +917,10 @@ export const FEATURE_THEME_CLASS_NAMES = {
     'bg-gradient-to-br from-red-100 to-yellow-100 dark:from-red-900/40 dark:to-yellow-900/50',
   userGradientColorsSuccessTealGradientSurface:
     'bg-gradient-to-br from-teal-100 to-green-100 dark:from-teal-900/40 dark:to-green-900/50',
-  userAiSettingsTabDangerBorder: 'border-red-500 focus-visible:ring-red-500',
-  userAiSettingsTabSuccessBorder: 'border-emerald-500 focus-visible:ring-emerald-500',
+  userAiSettingsTabDangerBorder:
+    'border-[var(--badge-danger-border)] focus-visible:ring-[var(--badge-danger-border)]',
+  userAiSettingsTabSuccessBorder:
+    'border-[var(--badge-success-border)] focus-visible:ring-[var(--badge-success-border)]',
   userSocialBarInfoText:
     'text-cyan-600 transition-transform duration-200 hover:scale-110 hover:text-cyan-700',
   userSocialBarDangerText:
@@ -897,7 +928,7 @@ export const FEATURE_THEME_CLASS_NAMES = {
   userSocialBarInfoTextAlpha:
     'text-sky-700 transition-transform duration-200 hover:scale-110 hover:text-sky-800',
   userSocialBarSuccessText:
-    'text-green-500 transition-transform duration-200 hover:scale-110 hover:text-green-600',
+    'text-[var(--badge-success-fg)] transition-transform duration-200 hover:scale-110 hover:text-[var(--badge-success-fg)]',
   userSocialBarAccentText:
     'text-pink-500 transition-transform duration-200 hover:scale-110 hover:text-pink-600',
   userSocialBarNeutralText:
@@ -908,70 +939,79 @@ export const FEATURE_THEME_CLASS_NAMES = {
     'text-yellow-400 transition-transform duration-200 hover:scale-110 hover:text-yellow-500',
   userSocialBarNeutralTextAlpha:
     'text-zinc-900 transition-transform duration-200 hover:scale-110 hover:text-zinc-700 dark:text-zinc-100 dark:hover:text-zinc-300',
-  featureThemeInfoBackground: 'bg-blue-100',
-  featureThemeInfoText: 'text-blue-700',
+  featureThemeInfoBackground: 'bg-[var(--badge-info-bg)]',
+  featureThemeInfoText: 'text-[var(--badge-info-fg)]',
   userUserWikiSuccessGradientSurface:
     'bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/50',
-  userUserWikiSuccessContrastBackground: 'bg-green-600 text-white hover:bg-green-700',
+  userUserWikiSuccessContrastBackground:
+    'bg-[var(--badge-success-fg)] text-white hover:bg-[var(--badge-success-fg)]',
   userUserWikiDangerGradientSurface:
     'bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-900/40 dark:to-rose-900/50',
-  userUserWikiDangerText: 'text-red-800 dark:text-red-300',
+  userUserWikiDangerText: 'text-[var(--badge-danger-fg)]',
   userUserWikiContrastText: 'text-white',
   userUserWikiInfoAccentGradientSurface:
     'bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-900/50',
   userUserWikiNeutralGradientSurface:
     'bg-gradient-to-br from-gray-50 to-slate-100 dark:from-gray-900/40 dark:to-slate-900/50',
-  userUserWikiNeutralText: 'text-gray-800 dark:text-gray-300',
-  userUserWikiNeutralBackground: 'bg-gray-100 dark:bg-gray-800/40',
+  userUserWikiNeutralText: 'text-[var(--badge-neutral-fg)]',
+  userUserWikiNeutralBackground: 'bg-[var(--badge-neutral-bg)]',
   votecastVoteResultSentenceWarningText:
-    'font-semibold text-yellow-700 underline underline-offset-4 hover:text-yellow-600 dark:text-yellow-400',
-  votecastVoteResultSentenceWarningTextAlpha: 'font-semibold text-yellow-700 dark:text-yellow-400',
+    'font-semibold text-[var(--badge-warning-fg)] underline underline-offset-4 hover:text-[var(--badge-warning-fg)]',
+  votecastVoteResultSentenceWarningTextAlpha: 'font-semibold text-[var(--badge-warning-fg)]',
   votecastVoteResultSentenceWarningPanel:
-    'flex items-center gap-2 rounded-lg bg-yellow-50 px-4 py-3 text-sm dark:bg-yellow-950/30',
-  votecastVoteResultSentenceWarningIcon: 'h-5 w-5 shrink-0 text-yellow-500',
+    'flex items-center gap-2 rounded-lg bg-[var(--badge-warning-bg)] px-4 py-3 text-sm',
+  votecastVoteResultSentenceWarningIcon: 'h-5 w-5 shrink-0 text-[var(--badge-warning-fg)]',
   votecastVoteResultSentenceSuccessBackground:
-    'bg-green-50 text-green-800 dark:bg-green-950/30 dark:text-green-300',
+    'bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]',
   votecastVoteResultSentenceDangerBackground:
-    'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300',
+    'bg-[var(--badge-danger-bg)] text-[var(--badge-danger-fg)]',
   votecastVoteResultSentenceWarningBackground:
-    'bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-300',
-  voteAmendmentVotingQueueInfoSurface: 'border-blue-500 bg-blue-50 dark:bg-blue-950',
-  voteAmendmentVotingQueueNeutralSurface: 'border-gray-300 bg-gray-50 dark:bg-gray-900',
-  voteAmendmentVotingQueueNeutralBorder: 'border-gray-200',
-  voteAmendmentVotingQueueNeutralText: 'text-sm font-semibold text-gray-600',
-  voteAmendmentVotingQueueDangerIcon: 'h-4 w-4 text-red-600',
-  voteAmendmentVotingQueueNeutralIcon: 'h-4 w-4 text-gray-600',
-  voteAmendmentVotingQueueSuccessBadge: 'flex-1 border-green-500 text-green-600 hover:bg-green-50',
-  voteAmendmentVotingQueueDangerBadge: 'flex-1 border-red-500 text-red-600 hover:bg-red-50',
-  voteAmendmentVotingQueueSuccessSurface: 'border-green-500 bg-green-50 dark:bg-green-950',
-  voteAmendmentVotingQueueNeutralBorderAlpha: 'border-gray-300',
-  voteVoteControlsSuccessBackground: 'flex-1 bg-green-600 hover:bg-green-700',
+    'bg-[var(--badge-warning-bg)] text-[var(--badge-warning-fg)]',
+  voteAmendmentVotingQueueInfoSurface:
+    'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)]',
+  voteAmendmentVotingQueueNeutralSurface:
+    'border-[var(--badge-neutral-border)] bg-[var(--badge-neutral-bg)]',
+  voteAmendmentVotingQueueNeutralBorder: 'border-[var(--badge-neutral-border)]',
+  voteAmendmentVotingQueueNeutralText: 'text-sm font-semibold text-[var(--badge-neutral-fg)]',
+  voteAmendmentVotingQueueDangerIcon: 'h-4 w-4 text-[var(--badge-danger-fg)]',
+  voteAmendmentVotingQueueNeutralIcon: 'h-4 w-4 text-[var(--badge-neutral-fg)]',
+  voteAmendmentVotingQueueSuccessBadge:
+    'flex-1 border-[var(--badge-success-border)] text-[var(--badge-success-fg)] hover:bg-[var(--badge-success-bg)]',
+  voteAmendmentVotingQueueDangerBadge:
+    'flex-1 border-[var(--badge-danger-border)] text-[var(--badge-danger-fg)] hover:bg-[var(--badge-danger-bg)]',
+  voteAmendmentVotingQueueSuccessSurface:
+    'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)]',
+  voteAmendmentVotingQueueNeutralBorderAlpha: 'border-[var(--badge-neutral-border)]',
+  voteVoteControlsSuccessBackground:
+    'flex-1 bg-[var(--badge-success-fg)] hover:bg-[var(--badge-success-fg)]',
   voteVoteControlsNeutralBackground:
-    'h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700',
-  voteVoteControlsSuccessBackgroundAlpha: 'h-full bg-green-600 transition-all',
-  voteVoteControlsDangerBackground: 'h-full bg-red-600 transition-all',
-  voteVoteControlsNeutralIcon: 'h-3 w-3 text-gray-600',
-  voteVoteControlsNeutralBackgroundAlpha: 'h-full bg-gray-600 transition-all',
-  voteVoteControlsSuccessBorder: 'border-green-600 text-green-600',
-  voteVoteControlsDangerBorder: 'border-red-600 text-red-600',
-  voteVoteControlsNeutralBorder: 'border-gray-600 text-gray-600',
-  voteVotingPhaseIndicatorInfoBackground: 'bg-blue-400',
-  voteVotingPhaseIndicatorSuccessBackground: 'bg-green-100 dark:bg-green-900/30',
-  voteVotingPhaseIndicatorDangerBackground: 'bg-red-100 dark:bg-red-900/30',
-  voteVotingPhaseIndicatorWarningText: 'text-amber-600',
-  voteVotingPhaseIndicatorWarningBackground: 'bg-amber-100 dark:bg-amber-900/30',
-  voteVotingPhaseIndicatorSuccessText: 'text-2xl font-bold text-green-600',
-  voteVotingPhaseIndicatorDangerText: 'text-2xl font-bold text-red-600',
-  voteVotingPhaseIndicatorNeutralText: 'text-2xl font-bold text-gray-600',
+    'h-2 overflow-hidden rounded-full bg-[var(--badge-neutral-bg)]',
+  voteVoteControlsSuccessBackgroundAlpha: 'h-full bg-[var(--badge-success-fg)] transition-all',
+  voteVoteControlsDangerBackground: 'h-full bg-[var(--badge-danger-fg)] transition-all',
+  voteVoteControlsNeutralIcon: 'h-3 w-3 text-[var(--badge-neutral-fg)]',
+  voteVoteControlsNeutralBackgroundAlpha: 'h-full bg-[var(--badge-neutral-fg)] transition-all',
+  voteVoteControlsSuccessBorder:
+    'border-[var(--badge-success-border)] text-[var(--badge-success-fg)]',
+  voteVoteControlsDangerBorder: 'border-[var(--badge-danger-border)] text-[var(--badge-danger-fg)]',
+  voteVoteControlsNeutralBorder:
+    'border-[var(--badge-neutral-border)] text-[var(--badge-neutral-fg)]',
+  voteVotingPhaseIndicatorInfoBackground: 'bg-[var(--badge-info-fg)]',
+  voteVotingPhaseIndicatorSuccessBackground: 'bg-[var(--badge-success-bg)]',
+  voteVotingPhaseIndicatorDangerBackground: 'bg-[var(--badge-danger-bg)]',
+  voteVotingPhaseIndicatorWarningText: 'text-[var(--badge-warning-fg)]',
+  voteVotingPhaseIndicatorWarningBackground: 'bg-[var(--badge-warning-bg)]',
+  voteVotingPhaseIndicatorSuccessText: 'text-2xl font-bold text-[var(--badge-success-fg)]',
+  voteVotingPhaseIndicatorDangerText: 'text-2xl font-bold text-[var(--badge-danger-fg)]',
+  voteVotingPhaseIndicatorNeutralText: 'text-2xl font-bold text-[var(--badge-neutral-fg)]',
   voteVotingPhaseIndicatorDangerBackgroundAlpha:
-    'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  voteVotingSessionManagerWarningIcon: 'h-5 w-5 text-yellow-500',
-  voteVotingSessionManagerSuccessPanel: 'rounded bg-green-100 p-2 dark:bg-green-900/30',
-  voteVotingSessionManagerSuccessText: 'text-2xl font-bold text-green-600 dark:text-green-400',
-  voteVotingSessionManagerDangerPanel: 'rounded bg-red-100 p-2 dark:bg-red-900/30',
-  voteVotingSessionManagerDangerText: 'text-2xl font-bold text-red-600 dark:text-red-400',
-  voteVotingSessionManagerNeutralPanel: 'rounded bg-gray-100 p-2 dark:bg-gray-800',
-  voteVotingSessionManagerNeutralText: 'text-2xl font-bold text-gray-600 dark:text-gray-400',
+    'bg-[var(--badge-danger-bg)] text-[var(--badge-danger-fg)]',
+  voteVotingSessionManagerWarningIcon: 'h-5 w-5 text-[var(--badge-warning-fg)]',
+  voteVotingSessionManagerSuccessPanel: 'rounded bg-[var(--badge-success-bg)] p-2',
+  voteVotingSessionManagerSuccessText: 'text-2xl font-bold text-[var(--badge-success-fg)]',
+  voteVotingSessionManagerDangerPanel: 'rounded bg-[var(--badge-danger-bg)] p-2',
+  voteVotingSessionManagerDangerText: 'text-2xl font-bold text-[var(--badge-danger-fg)]',
+  voteVotingSessionManagerNeutralPanel: 'rounded bg-[var(--badge-neutral-bg)] p-2',
+  voteVotingSessionManagerNeutralText: 'text-2xl font-bold text-[var(--badge-neutral-fg)]',
   messageAiContextCardsSuccessTealGradientSurface:
     'via-background/80 border border-emerald-500/20 from-emerald-500/10 to-teal-500/10',
   messageAiContextCardsInfoGradientSurface:
@@ -988,14 +1028,15 @@ export const FEATURE_THEME_CLASS_NAMES = {
     'border-border/70 from-background to-muted/20 mb-6 bg-gradient-to-b',
   groupMembershipRightsAlignmentPanelThemedGradientSurface:
     'border-border/70 from-background to-muted/20 bg-gradient-to-b',
-  groupAddRoleDialogSuccessSurfaceAlpha: 'bg-muted/20 rounded-2xl border border-emerald-500/15 p-4',
+  groupAddRoleDialogSuccessSurfaceAlpha:
+    'bg-muted/20 rounded-2xl border border-[var(--badge-success-border)] p-4',
   networkUseGroupNetworkFlowInfoContrastRoundIcon:
-    'border-background absolute -top-1.5 -right-1.5 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full border bg-blue-500 text-white shadow-sm',
+    'border-background absolute -top-1.5 -right-1.5 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full border bg-[var(--badge-info-fg)] text-white shadow-sm',
   networkUseGroupNetworkFlowWarningContrastRoundIcon:
-    'border-background absolute -top-1.5 -right-1.5 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full border bg-amber-500 text-white shadow-sm',
-  timelineVoteTimelineCardInfoProgressFill: 'h-2 opacity-60 [&>div]:bg-blue-400',
-  timelineTodoTimelineCardSuccessProgressFill: '[&>div]:bg-green-500',
-  timelineVoteTimelineCardDangerProgressFill: '[&>div]:bg-red-500',
+    'border-background absolute -top-1.5 -right-1.5 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full border bg-[var(--badge-warning-fg)] text-white shadow-sm',
+  timelineVoteTimelineCardInfoProgressFill: 'h-2 opacity-60 [&>div]:bg-[var(--badge-info-fg)]',
+  timelineTodoTimelineCardSuccessProgressFill: '[&>div]:bg-[var(--badge-success-fg)]',
+  timelineVoteTimelineCardDangerProgressFill: '[&>div]:bg-[var(--badge-danger-fg)]',
   timelineAmendmentTimelineCardNeutralContrastSurface: 'border bg-white/70 dark:bg-gray-900/60',
   timelineContentTypeConfigThemedGradientSurface: 'bg-gradient-to-br',
 } as const;

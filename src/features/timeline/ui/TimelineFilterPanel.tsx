@@ -1,6 +1,5 @@
 'use client';
 
-import { BadgeControl } from '@/features/shared/ui/status';
 import { FormControlLabel, FormControlCheckbox } from '@/features/shared/ui/form';
 import { X, RotateCcw } from 'lucide-react';
 import {
@@ -9,6 +8,7 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { Button } from '@/features/shared/ui/ui/button';
+import { FilterButton } from '@/features/shared/ui/filter-controls';
 import { Separator } from '@/features/shared/ui/ui/separator';
 import { ScrollableSheetContent } from '@/features/shared/ui/dialog';
 import { Sheet, SheetDescription, SheetHeader, SheetTitle } from '@/features/shared/ui/ui/sheet';
@@ -241,15 +241,14 @@ export function TimelineFilterPanel({
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {RADIUS_OPTIONS.map(option => (
-                    <Button
+                    <FilterButton
                       key={option.value}
-                      variant={radiusKm === option.value ? 'default' : 'outline'}
-                      size="sm"
+                      active={radiusKm === option.value}
                       onClick={() => onRadiusChange(option.value)}
                       className="h-8"
                     >
                       {t(option.labelKey, { defaultValue: option.label })}
-                    </Button>
+                    </FilterButton>
                   ))}
                 </div>
               </div>
@@ -265,15 +264,14 @@ export function TimelineFilterPanel({
             </h4>
             <div className="flex flex-wrap gap-2">
               {DATE_RANGE_OPTIONS.map(option => (
-                <Button
+                <FilterButton
                   key={option.value}
-                  variant={dateRange === option.value ? 'default' : 'outline'}
-                  size="sm"
+                  active={dateRange === option.value}
                   onClick={() => onDateRangeChange(option.value)}
                   className="h-8"
                 >
                   {t(option.labelKey)}
-                </Button>
+                </FilterButton>
               ))}
             </div>
           </div>
@@ -289,15 +287,14 @@ export function TimelineFilterPanel({
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {ENGAGEMENT_OPTIONS.map(option => (
-                    <Button
+                    <FilterButton
                       key={option.value}
-                      variant={engagement === option.value ? 'default' : 'outline'}
-                      size="sm"
+                      active={engagement === option.value}
                       onClick={() => onEngagementChange(option.value)}
                       className="h-8"
                     >
                       {t(option.labelKey, { defaultValue: option.value })}
-                    </Button>
+                    </FilterButton>
                   ))}
                 </div>
               </div>
@@ -316,18 +313,14 @@ export function TimelineFilterPanel({
                   {availableTopics.map(topic => {
                     const isSelected = topics.includes(topic);
                     return (
-                      <BadgeControl
+                      <FilterButton
                         key={topic}
-                        variant={isSelected ? 'default' : 'outline'}
-                        className={cn(
-                          'cursor-pointer transition-colors',
-                          isSelected && 'bg-primary'
-                        )}
+                        active={isSelected}
                         onClick={() => onTopicToggle(topic)}
                       >
                         {topic}
                         {isSelected && <X className="ml-1 h-3 w-3" />}
-                      </BadgeControl>
+                      </FilterButton>
                     );
                   })}
                 </div>

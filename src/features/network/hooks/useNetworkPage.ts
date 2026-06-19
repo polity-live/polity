@@ -426,6 +426,28 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
     [groupId, workflowEditor.workflows]
   );
 
+  const workflowAcceptedPendingRequests = useMemo(
+    () =>
+      workflowEditor.workflows.filter(workflow => {
+        const approvals = workflow.approvals ?? [];
+        const currentGroupApproval = approvals.find(
+          (approval: WorkflowWithStepsRow['approvals'][number]) =>
+            approval.group_id === groupId && approval.status === 'accepted'
+        );
+        const isOutgoingFromCurrentGroup = approvals.some(
+          (approval: WorkflowWithStepsRow['approvals'][number]) =>
+            approval.requested_by_group_id === groupId && approval.group_id !== groupId
+        );
+
+        return (
+          workflow.status === 'pending_approval' &&
+          Boolean(currentGroupApproval) &&
+          !isOutgoingFromCurrentGroup
+        );
+      }),
+    [groupId, workflowEditor.workflows]
+  );
+
   const workflowActiveRelevant = useMemo(
     () =>
       workflowEditor.workflows.filter(
@@ -486,6 +508,7 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
     workflowsLoading: workflowEditor.isLoading,
     workflowIncomingRequests,
     workflowOutgoingRequests,
+    workflowAcceptedPendingRequests,
     workflowActiveRelevant,
     isWorkflowEditorOpen: workflowEditor.isEditorOpen,
     editingWorkflow: workflowEditor.editingWorkflow,

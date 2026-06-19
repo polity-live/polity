@@ -4,6 +4,7 @@ import { FormControlInput, SearchField } from '@/features/shared/ui/form';
 import { ChevronDown, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
+import { FilterButton } from '@/features/shared/ui/filter-controls';
 import {
   type SurfaceMode,
   useResolvedSurfaceMode,
@@ -119,13 +120,13 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
       {activeBadges.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {activeBadges.map((badge: any) => (
-            <BadgeControl key={badge.id} variant="secondary" className="gap-1">
+            <BadgeControl key={badge.id} variant="default" className="gap-1">
               <span>{badge.label}</span>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className={featureThemeClassName('pqlPqlToolbarThemedPanel')}
+                className="hover:bg-primary-foreground/20 h-5 w-5 text-current hover:text-current"
                 onClick={badge.onClear}
                 aria-label={`Remove ${badge.label}`}
               >
@@ -234,17 +235,15 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                           {options.map((option: any) => {
                             const isActive = values.includes(option.value);
                             return (
-                              <Button
+                              <FilterButton
                                 key={option.value}
-                                type="button"
-                                variant={isActive ? 'default' : 'outline'}
-                                size="sm"
+                                active={isActive}
                                 onClick={() =>
                                   onQuickFilterToggle(quickFilter.fieldKey, option.value)
                                 }
                               >
                                 {option.label}
-                              </Button>
+                              </FilterButton>
                             );
                           })}
                         </div>
@@ -327,16 +326,14 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                       </Button>
 
                       <div className="flex items-center gap-2">
-                        <Button
-                          type="button"
-                          variant={isActive ? 'default' : 'outline'}
-                          size="sm"
+                        <FilterButton
+                          active={isActive}
                           onClick={() => onCustomFilterToggle(filter.id)}
                         >
                           {isActive
                             ? translateText('generated.inline.0135_applied_a3e4a569')
                             : translateText('generated.inline.0136_apply_cfea419c')}
-                        </Button>
+                        </FilterButton>
                         <Button
                           type="button"
                           variant="outline"

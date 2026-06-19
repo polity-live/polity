@@ -302,13 +302,31 @@ describe('OpenAssignmentsPanel', () => {
       within(statusFilter).getByRole('button', { name: 'All' }).getAttribute('aria-pressed')
     ).toBe('true');
     expect(
+      within(statusFilter).getByRole('button', { name: 'All' }).getAttribute('data-active')
+    ).toBe('true');
+    expect(within(statusFilter).getByRole('button', { name: 'All' }).className).toContain(
+      'bg-primary'
+    );
+    expect(
       within(typeFilter).getByRole('button', { name: 'All' }).getAttribute('aria-pressed')
     ).toBe('true');
+    expect(
+      within(typeFilter).getByRole('button', { name: 'Votes' }).getAttribute('data-active')
+    ).toBe('false');
 
     fireEvent.click(within(typeFilter).getByRole('button', { name: 'Votes' }));
 
     expect(screen.getByText('Schedule amendment vote')).toBeTruthy();
     expect(screen.queryByText('Role renewal for Chairperson')).toBeNull();
+    expect(
+      within(typeFilter).getByRole('button', { name: 'Votes' }).getAttribute('aria-pressed')
+    ).toBe('true');
+    expect(
+      within(typeFilter).getByRole('button', { name: 'Votes' }).getAttribute('data-active')
+    ).toBe('true');
+    expect(within(typeFilter).getByRole('button', { name: 'Votes' }).className).toContain(
+      'bg-primary'
+    );
 
     fireEvent.click(within(typeFilter).getByRole('button', { name: 'Elections' }));
 

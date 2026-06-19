@@ -176,7 +176,7 @@ describe('AgendaVoteSection', () => {
     expect(pendingResults).toBeTruthy();
     expect(pendingNotice).toBeTruthy();
     expect(
-      pendingResults?.compareDocumentPosition(pendingNotice as HTMLElement) &
+      (pendingResults as HTMLElement).compareDocumentPosition(pendingNotice as HTMLElement) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
 
@@ -205,7 +205,7 @@ describe('AgendaVoteSection', () => {
     expect(completedResults).toBeTruthy();
     expect(completedNotice).toBeTruthy();
     expect(
-      completedResults?.compareDocumentPosition(completedNotice as HTMLElement) &
+      (completedResults as HTMLElement).compareDocumentPosition(completedNotice as HTMLElement) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
   });

@@ -1,4 +1,3 @@
-import { featureThemeClassName } from '@/features/shared/theme';
 import { useState } from 'react';
 import { RoleTag } from '@/features/groups/ui/RoleTag';
 import {
@@ -9,6 +8,7 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
+import { FilterButton } from '@/features/shared/ui/filter-controls';
 import {
   ActionSubmissionOverlay,
   useActionSubmission,
@@ -269,7 +269,6 @@ export function ManageNetworkTabContentView({
   const directionOptions: {
     value: GroupRelationshipFilter;
     label: string;
-    activeClassName?: string;
   }[] = [
     {
       value: 'all',
@@ -278,21 +277,14 @@ export function ManageNetworkTabContentView({
     {
       value: 'parent',
       label: t('common.network.thisGroupAsParent'),
-      activeClassName: featureThemeClassName(
-        'networkUseManageNetworkTabSuccessTealGradientSurface'
-      ),
     },
     {
       value: 'child',
       label: t('common.network.thisGroupAsChild'),
-      activeClassName: featureThemeClassName('networkUseManageNetworkTabInfoAccentGradientSurface'),
     },
     {
       value: 'sibling',
       label: t('common.network.thisGroupAsSibling'),
-      activeClassName: featureThemeClassName(
-        'networkUseManageNetworkTabWarningAccentGradientSurface'
-      ),
     },
   ];
 
@@ -821,17 +813,13 @@ export function ManageNetworkTabContentView({
                 const isActive = directionFilter === option.value;
 
                 return (
-                  <Button
+                  <FilterButton
                     key={option.value}
-                    type="button"
-                    variant={isActive ? 'default' : 'outline'}
-                    className={
-                      isActive && option.activeClassName ? option.activeClassName : undefined
-                    }
+                    active={isActive}
                     onClick={() => onDirectionFilterChange(option.value)}
                   >
                     {option.label}
-                  </Button>
+                  </FilterButton>
                 );
               })}
             </div>

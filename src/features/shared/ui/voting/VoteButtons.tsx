@@ -45,7 +45,7 @@ export function VoteButtons({
       <Button
         variant="ghost"
         size="icon"
-        className={cn(s.btn, userVote === 1 && 'text-orange-500')}
+        className={cn(s.btn, userVote === 1 && 'text-[var(--badge-success-fg)]')}
         onClick={handleUp}
         aria-label={translateText('generated.inline.1150_upvote_c52661f1')}
       >
@@ -55,8 +55,8 @@ export function VoteButtons({
       <span
         className={cn(
           'text-sm font-semibold tabular-nums select-none',
-          score > 0 && 'text-orange-500',
-          score < 0 && 'text-blue-500'
+          score > 0 && 'text-[var(--badge-success-fg)]',
+          score < 0 && 'text-[var(--badge-danger-fg)]'
         )}
       >
         {score}
@@ -65,7 +65,7 @@ export function VoteButtons({
       <Button
         variant="ghost"
         size="icon"
-        className={cn(s.btn, userVote === -1 && 'text-blue-500')}
+        className={cn(s.btn, userVote === -1 && 'text-[var(--badge-danger-fg)]')}
         onClick={handleDown}
         aria-label={translateText('generated.inline.1151_downvote_fef514a0')}
       >

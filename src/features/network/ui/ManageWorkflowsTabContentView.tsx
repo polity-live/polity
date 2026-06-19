@@ -15,7 +15,10 @@ import {
 } from '@/features/shared/ui/action-submission';
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
 import { DangerConfirmDialog } from '@/features/shared/ui/dialog';
+import { SearchField } from '@/features/shared/ui/form';
 import { StatusBadge } from '@/features/shared/ui/status';
+import { FilterToggleGroupItem } from '@/features/shared/ui/filter-controls';
+import { ToggleGroup } from '@/features/shared/ui/ui/toggle-group';
 import { WorkflowEditor } from '../ui/WorkflowEditor';
 import {
   useTranslation,
@@ -26,7 +29,16 @@ import type { NormalizedGroupRelationship, NetworkGroupEntity } from '../types/n
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
 import { GroupRelationshipNameTag } from '../ui/GroupRelationshipFields';
 import { RightBadge } from '@/features/shared/ui/status';
-import { ArrowRight, Clock, Pencil, Plus, Send, Trash2, Workflow } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  Pencil,
+  Plus,
+  Send,
+  Trash2,
+  Workflow,
+} from 'lucide-react';
 
 interface AvailableGroup {
   id: string;
@@ -50,6 +62,7 @@ export interface ManageWorkflowsTabProps {
   groupName: string;
   allRelationships: NormalizedGroupRelationship[];
   incomingRequests: WorkflowWithStepsRow[];
+  acceptedPendingRequests: WorkflowWithStepsRow[];
   outgoingRequests: WorkflowWithStepsRow[];
   activeRelevantWorkflows: WorkflowWithStepsRow[];
   isWorkflowEditorOpen: boolean;
@@ -78,10 +91,22 @@ export interface ManageWorkflowsTabProps {
   onRejectWorkflowApproval: (approvalId: string) => void;
 }
 
-function getSectionCardClasses(section: 'incoming' | 'outgoing' | 'active') {
+type WorkflowStatusFilter = 'all' | 'pending_approval' | 'active' | 'rejected' | 'archived';
+
+const WORKFLOW_STATUS_FILTERS: WorkflowStatusFilter[] = [
+  'all',
+  'pending_approval',
+  'active',
+  'rejected',
+  'archived',
+];
+
+function getSectionCardClasses(section: 'incoming' | 'accepted' | 'outgoing' | 'active') {
   switch (section) {
     case 'incoming':
       return 'border-primary/20 bg-primary/5';
+    case 'accepted':
+      return 'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)]';
     case 'outgoing':
       return featureThemeClassName('networkUseManageWorkflowsTabWarningSurface');
     default:
@@ -117,6 +142,54 @@ function getWorkflowFinalGroup(workflow: WorkflowWithStepsRow) {
     id: lastStep?.group?.id ?? lastStep?.group_id ?? workflow.group?.id ?? workflow.group_id,
     name: lastStep?.group?.name ?? workflow.group?.name ?? workflow.group_id,
   };
+}
+
+function collectWorkflowGroupSearchValues(workflow: WorkflowWithStepsRow) {
+  const startGroup = getWorkflowStartGroup(workflow);
+  const finalGroup = getWorkflowFinalGroup(workflow);
+  const values = [
+    startGroup.id,
+    startGroup.name,
+    finalGroup.id,
+    finalGroup.name,
+    workflow.group?.id,
+    workflow.group?.name,
+    workflow.group_id,
+    ...getSortedWorkflowSteps(workflow).flatMap(step => [
+      step.group_id,
+      step.group?.id,
+      step.group?.name,
+    ]),
+    ...(workflow.approvals ?? []).flatMap(approval => [
+      approval.group_id,
+      approval.group?.id,
+      approval.group?.name,
+      approval.requested_by_group_id,
+      approval.requested_by_group?.id,
+      approval.requested_by_group?.name,
+    ]),
+  ];
+
+  return values.filter((value): value is string => typeof value === 'string' && value.length > 0);
+}
+
+function matchesWorkflowFilters(
+  workflow: WorkflowWithStepsRow,
+  statusFilter: WorkflowStatusFilter,
+  normalizedSearchQuery: string
+) {
+  const workflowStatus = workflow.status ?? 'pending_approval';
+  if (statusFilter !== 'all' && workflowStatus !== statusFilter) {
+    return false;
+  }
+
+  if (!normalizedSearchQuery) {
+    return true;
+  }
+
+  return collectWorkflowGroupSearchValues(workflow).some(value =>
+    value.toLowerCase().includes(normalizedSearchQuery)
+  );
 }
 
 function renderWorkflowGroupTag(args: {
@@ -206,6 +279,7 @@ export function ManageWorkflowsTabContentView({
   groupName,
   allRelationships,
   incomingRequests,
+  acceptedPendingRequests,
   outgoingRequests,
   activeRelevantWorkflows,
   isWorkflowEditorOpen,
@@ -235,14 +309,57 @@ export function ManageWorkflowsTabContentView({
 }: ManageWorkflowsTabProps) {
   const { t } = useTranslation();
   const approvalSubmission = useActionSubmission('accept');
+  const [workflowSearchQuery, setWorkflowSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<WorkflowStatusFilter>('all');
   const [approvalPreview, setApprovalPreview] = useState<{
     title: string;
     path: string[];
   } | null>(null);
+  const normalizedSearchQuery = workflowSearchQuery.trim().toLowerCase();
+
+  const statusFilterLabels: Record<WorkflowStatusFilter, string> = {
+    all: t('features.network.workflows.filters.allStatuses', 'All statuses'),
+    pending_approval: t('features.network.workflows.filters.pendingApproval', 'Pending approval'),
+    active: t('features.network.workflows.filters.active', 'Active'),
+    rejected: t('features.network.workflows.filters.rejected', 'Rejected'),
+    archived: t('features.network.workflows.filters.archived', 'Archived'),
+  };
+
+  const filteredIncomingRequests = useMemo(
+    () =>
+      incomingRequests.filter(workflow =>
+        matchesWorkflowFilters(workflow, statusFilter, normalizedSearchQuery)
+      ),
+    [incomingRequests, normalizedSearchQuery, statusFilter]
+  );
+
+  const filteredAcceptedPendingRequests = useMemo(
+    () =>
+      acceptedPendingRequests.filter(workflow =>
+        matchesWorkflowFilters(workflow, statusFilter, normalizedSearchQuery)
+      ),
+    [acceptedPendingRequests, normalizedSearchQuery, statusFilter]
+  );
+
+  const filteredOutgoingRequests = useMemo(
+    () =>
+      outgoingRequests.filter(workflow =>
+        matchesWorkflowFilters(workflow, statusFilter, normalizedSearchQuery)
+      ),
+    [outgoingRequests, normalizedSearchQuery, statusFilter]
+  );
+
+  const filteredActiveRelevantWorkflows = useMemo(
+    () =>
+      activeRelevantWorkflows.filter(workflow =>
+        matchesWorkflowFilters(workflow, statusFilter, normalizedSearchQuery)
+      ),
+    [activeRelevantWorkflows, normalizedSearchQuery, statusFilter]
+  );
 
   const incomingRows = useMemo(
     () =>
-      incomingRequests
+      filteredIncomingRequests
         .map(workflow => ({
           workflow,
           approval:
@@ -256,10 +373,18 @@ export function ManageWorkflowsTabContentView({
             approval: NonNullable<typeof entry.approval>;
           } => Boolean(entry.approval)
         ),
-    [groupId, incomingRequests]
+    [filteredIncomingRequests, groupId]
   );
+  const hasAnyTables =
+    incomingRequests.length > 0 ||
+    acceptedPendingRequests.length > 0 ||
+    outgoingRequests.length > 0 ||
+    activeRelevantWorkflows.length > 0;
   const hasVisibleTables =
-    incomingRows.length > 0 || outgoingRequests.length > 0 || activeRelevantWorkflows.length > 0;
+    incomingRows.length > 0 ||
+    filteredAcceptedPendingRequests.length > 0 ||
+    filteredOutgoingRequests.length > 0 ||
+    filteredActiveRelevantWorkflows.length > 0;
 
   type IncomingWorkflowRow = (typeof incomingRows)[number];
 
@@ -445,6 +570,47 @@ export function ManageWorkflowsTabContentView({
       : []),
   ];
 
+  const acceptedPendingColumns: ColumnDef<WorkflowWithStepsRow>[] = [
+    {
+      id: 'name',
+      header: t('common.name'),
+      cell: ({ row }) => renderWorkflowTitleCell(row.original, 'pending_approval'),
+    },
+    {
+      id: 'start-group',
+      header: t('features.network.workflows.startGroup'),
+      cell: ({ row }) =>
+        renderWorkflowGroupTag({
+          groupId: getWorkflowStartGroup(row.original).id,
+          groupName: getWorkflowStartGroup(row.original).name,
+          currentGroupId: groupId,
+        }),
+    },
+    {
+      id: 'final-group',
+      header: t('features.network.workflows.finalGroup'),
+      cell: ({ row }) =>
+        renderWorkflowGroupTag({
+          groupId: getWorkflowFinalGroup(row.original).id,
+          groupName: getWorkflowFinalGroup(row.original).name,
+          currentGroupId: groupId,
+        }),
+    },
+    {
+      id: 'approvals',
+      header: t('features.network.workflows.approvals'),
+      cell: ({ row }) => (
+        <div className="flex flex-wrap gap-2">
+          {(row.original.approvals ?? []).map(approval => (
+            <div key={approval.id}>
+              {renderWorkflowApprovalTag({ approval, currentGroupId: groupId })}
+            </div>
+          ))}
+        </div>
+      ),
+    },
+  ];
+
   const activeColumns: ColumnDef<WorkflowWithStepsRow>[] = [
     {
       id: 'name',
@@ -537,7 +703,43 @@ export function ManageWorkflowsTabContentView({
         ) : null}
       </div>
 
-      {!hasVisibleTables ? (
+      {hasAnyTables ? (
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <SearchField
+            fieldClassName="min-w-0 flex-1 md:max-w-md"
+            placeholder={t(
+              'features.network.workflows.filters.groupSearchPlaceholder',
+              'Search involved groups...'
+            )}
+            value={workflowSearchQuery}
+            onValueChange={setWorkflowSearchQuery}
+            clearLabel={t('features.network.workflows.filters.clearSearch', 'Clear search')}
+          />
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            className="flex flex-wrap justify-start"
+            value={statusFilter}
+            onValueChange={value => {
+              if (value) {
+                setStatusFilter(value as WorkflowStatusFilter);
+              }
+            }}
+          >
+            {WORKFLOW_STATUS_FILTERS.map(filter => (
+              <FilterToggleGroupItem
+                key={filter}
+                value={filter}
+                aria-label={statusFilterLabels[filter]}
+              >
+                {statusFilterLabels[filter]}
+              </FilterToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </div>
+      ) : null}
+
+      {!hasAnyTables ? (
         <Card borderStyle="dashed">
           <CardContent
             align="center"
@@ -548,6 +750,28 @@ export function ManageWorkflowsTabContentView({
               <p className="font-medium">{t('features.network.workflows.emptyTitle')}</p>
               <p className="text-muted-foreground text-sm">
                 {t('features.network.workflows.emptyDescription')}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {hasAnyTables && !hasVisibleTables ? (
+        <Card borderStyle="dashed">
+          <CardContent
+            align="center"
+            className="flex flex-col items-center justify-center gap-3 py-12"
+          >
+            <Workflow className="text-muted-foreground h-8 w-8" />
+            <div className="space-y-1">
+              <p className="font-medium">
+                {t('features.network.workflows.filters.emptyTitle', 'No matching workflows')}
+              </p>
+              <p className="text-muted-foreground text-sm">
+                {t(
+                  'features.network.workflows.filters.emptyDescription',
+                  'No workflows match the selected status or group search.'
+                )}
               </p>
             </div>
           </CardContent>
@@ -576,12 +800,38 @@ export function ManageWorkflowsTabContentView({
         </Card>
       ) : null}
 
-      {outgoingRequests.length > 0 ? (
+      {filteredAcceptedPendingRequests.length > 0 ? (
+        <Card className={getSectionCardClasses('accepted')}>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CheckCircle2 className="h-4 w-4" />
+              {t('features.network.workflows.acceptedPending', 'Accepted, waiting for others')} (
+              {filteredAcceptedPendingRequests.length})
+            </CardTitle>
+            <CardDescription>
+              {t(
+                'features.network.workflows.acceptedPendingDescription',
+                'Workflow requests this group accepted that still need confirmations from other groups.'
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={acceptedPendingColumns}
+              data={filteredAcceptedPendingRequests}
+              getRowId={workflow => workflow.id}
+              enablePagination={false}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {filteredOutgoingRequests.length > 0 ? (
         <Card className={getSectionCardClasses('outgoing')}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Send className="h-4 w-4" />
-              {t('features.network.workflows.outgoingRequests')} ({outgoingRequests.length})
+              {t('features.network.workflows.outgoingRequests')} ({filteredOutgoingRequests.length})
             </CardTitle>
             <CardDescription>
               {t('features.network.workflows.outgoingRequestsDescription')}
@@ -590,7 +840,7 @@ export function ManageWorkflowsTabContentView({
           <CardContent>
             <DataTable
               columns={outgoingColumns}
-              data={outgoingRequests}
+              data={filteredOutgoingRequests}
               getRowId={workflow => workflow.id}
               enablePagination={false}
             />
@@ -598,12 +848,13 @@ export function ManageWorkflowsTabContentView({
         </Card>
       ) : null}
 
-      {activeRelevantWorkflows.length > 0 ? (
+      {filteredActiveRelevantWorkflows.length > 0 ? (
         <Card className={getSectionCardClasses('active')}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Workflow className="h-4 w-4" />
-              {t('features.network.workflows.activeRelevant')} ({activeRelevantWorkflows.length})
+              {t('features.network.workflows.activeRelevant')} (
+              {filteredActiveRelevantWorkflows.length})
             </CardTitle>
             <CardDescription>
               {t('features.network.workflows.activeRelevantDescription')}
@@ -612,7 +863,7 @@ export function ManageWorkflowsTabContentView({
           <CardContent>
             <DataTable
               columns={activeColumns}
-              data={activeRelevantWorkflows}
+              data={filteredActiveRelevantWorkflows}
               getRowId={workflow => workflow.id}
               enablePagination={false}
             />

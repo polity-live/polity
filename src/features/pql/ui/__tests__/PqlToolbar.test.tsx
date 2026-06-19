@@ -7,7 +7,7 @@ import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { PqlToolbar } from '@/features/pql/ui/PqlToolbar';
 import { Card } from '@/features/shared/ui/ui/card';
 
-type FieldKey = 'assignee_ids';
+type FieldKey = 'assignee_ids' | 'status';
 
 const assigneeItems: TypeaheadItem[] = [
   {
@@ -32,6 +32,17 @@ function ToolbarHarness({ embedded = false }: { embedded?: boolean }) {
     <PqlToolbar<unknown, FieldKey>
       fields={[
         {
+          key: 'status',
+          label: 'Status',
+          kind: 'enum',
+          operators: ['eq', 'in'],
+          options: [
+            { value: 'open', label: 'Open' },
+            { value: 'closed', label: 'Closed' },
+          ],
+          getValue: () => 'open',
+        },
+        {
           key: 'assignee_ids',
           label: 'Assignees',
           kind: 'entity',
@@ -48,6 +59,11 @@ function ToolbarHarness({ embedded = false }: { embedded?: boolean }) {
       searchPlaceholder="Search todos"
       quickFilters={[
         {
+          fieldKey: 'status',
+          label: 'Status',
+          multiple: true,
+        },
+        {
           fieldKey: 'assignee_ids',
           label: 'Assignees',
           multiple: true,
@@ -60,7 +76,16 @@ function ToolbarHarness({ embedded = false }: { embedded?: boolean }) {
       onQuickFilterValuesChange={(fieldKey, nextValues) =>
         setValues(currentValues => ({ ...currentValues, [fieldKey]: [...nextValues] }))
       }
-      onQuickFilterToggle={() => undefined}
+      onQuickFilterToggle={(fieldKey, value) =>
+        setValues(currentValues => {
+          const currentFieldValues = currentValues[fieldKey] ?? [];
+          const nextFieldValues = currentFieldValues.includes(value)
+            ? currentFieldValues.filter(currentValue => currentValue !== value)
+            : [...currentFieldValues, value];
+
+          return { ...currentValues, [fieldKey]: nextFieldValues };
+        })
+      }
       onQuickFilterClear={fieldKey =>
         setValues(currentValues => ({ ...currentValues, [fieldKey]: [] }))
       }
@@ -80,6 +105,23 @@ afterEach(() => {
 });
 
 describe('PqlToolbar', () => {
+  it('renders active button quick filters as pressed colored controls', () => {
+    render(<ToolbarHarness />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Field filters/i }));
+
+    const openButton = screen.getByRole('button', { name: 'Open' });
+    expect(openButton.getAttribute('aria-pressed')).toBe('false');
+    expect(openButton.getAttribute('data-active')).toBe('false');
+
+    fireEvent.click(openButton);
+
+    expect(openButton.getAttribute('aria-pressed')).toBe('true');
+    expect(openButton.getAttribute('data-active')).toBe('true');
+    expect(openButton.className).toContain('bg-primary');
+    expect(screen.getByText('Status: Open')).toBeTruthy();
+  });
+
   it('uses the reusable multi-select typeahead for quick filters', () => {
     render(<ToolbarHarness />);
 

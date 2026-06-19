@@ -53,10 +53,10 @@ describe('ParticipationRoleFilterBar', () => {
     ).toEqual(['four']);
   });
 
-  it('toggles neutral role filter chips', () => {
+  it('toggles colored role filter buttons', () => {
     const onSelectedRoleIdsChange = vi.fn();
 
-    render(
+    const { rerender } = render(
       <ParticipationRoleFilterBar
         roles={roles}
         selectedRoleIds={[]}
@@ -64,10 +64,31 @@ describe('ParticipationRoleFilterBar', () => {
       />
     );
 
+    const allRolesButton = screen.getByRole('button', { name: 'All roles' });
+    const adminButton = screen.getByRole('button', { name: 'Admin' });
+
+    expect(allRolesButton.getAttribute('aria-pressed')).toBe('true');
+    expect(allRolesButton.getAttribute('data-active')).toBe('true');
+    expect(allRolesButton.className).toContain('bg-primary');
+    expect(adminButton.getAttribute('aria-pressed')).toBe('false');
+    expect(adminButton.getAttribute('data-active')).toBe('false');
+
     fireEvent.click(screen.getByRole('button', { name: 'Admin' }));
     expect(onSelectedRoleIdsChange).toHaveBeenCalledWith(['admin']);
 
     fireEvent.click(screen.getByRole('button', { name: 'All roles' }));
     expect(onSelectedRoleIdsChange).toHaveBeenCalledWith([]);
+
+    rerender(
+      <ParticipationRoleFilterBar
+        roles={roles}
+        selectedRoleIds={['admin']}
+        onSelectedRoleIdsChange={onSelectedRoleIdsChange}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Admin' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Admin' }).getAttribute('data-active')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Admin' }).className).toContain('bg-primary');
   });
 });

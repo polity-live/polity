@@ -138,14 +138,17 @@ export function VoteProgressBar({
       >
         {percentages.support > 0 ? (
           <div
-            className={cn('bg-emerald-500', animated && 'transition-all duration-500')}
+            className={cn(
+              'bg-[var(--badge-success-fg)]',
+              animated && 'transition-all duration-500'
+            )}
             style={{ width: `${Math.round(percentages.support)}%` }}
             title={t('timeline.terminal.support', { count: votes.support })}
           />
         ) : null}
         {percentages.oppose > 0 ? (
           <div
-            className={cn('bg-red-500', animated && 'transition-all duration-500')}
+            className={cn('bg-[var(--badge-danger-fg)]', animated && 'transition-all duration-500')}
             style={{ width: `${Math.round(percentages.oppose)}%` }}
             title={t('timeline.terminal.oppose', { count: votes.oppose })}
           />
@@ -162,23 +165,23 @@ export function VoteProgressBar({
       {showLabels || showPercentages ? (
         <div className="flex justify-between text-xs">
           <div className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="h-2 w-2 rounded-full bg-[var(--badge-success-fg)]" />
             {showLabels ? (
               <span className="text-muted-foreground">{t('timeline.terminal.support')}</span>
             ) : null}
             {showPercentages ? (
-              <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">
+              <span className="font-mono font-medium text-[var(--badge-success-fg)]">
                 {percentages.support}%
               </span>
             ) : null}
           </div>
           <div className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-red-500" />
+            <span className="h-2 w-2 rounded-full bg-[var(--badge-danger-fg)]" />
             {showLabels ? (
               <span className="text-muted-foreground">{t('timeline.terminal.oppose')}</span>
             ) : null}
             {showPercentages ? (
-              <span className="font-mono font-medium text-red-600 dark:text-red-400">
+              <span className="font-mono font-medium text-[var(--badge-danger-fg)]">
                 {percentages.oppose}%
               </span>
             ) : null}
@@ -208,13 +211,13 @@ export function VoteBarCompact({ votes, className }: { votes: VoteData; classNam
       id: 'support',
       label: translateText('generated.inline.0083_support_f32d5a3b'),
       value: votes.support,
-      colorClass: 'bg-emerald-500',
+      colorClass: 'bg-[var(--badge-success-fg)]',
     },
     {
       id: 'oppose',
       label: translateText('generated.inline.0084_oppose_3ea20ee5'),
       value: votes.oppose,
-      colorClass: 'bg-red-500',
+      colorClass: 'bg-[var(--badge-danger-fg)]',
     },
     {
       id: 'abstain',

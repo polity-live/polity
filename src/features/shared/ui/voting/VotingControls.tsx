@@ -32,7 +32,8 @@ const choiceConfig: Record<
   accept: {
     Icon: Check,
     buttonVariant: 'default',
-    buttonClassName: 'bg-green-600 hover:bg-green-700',
+    buttonClassName:
+      'bg-[var(--badge-success-fg)] text-white hover:bg-[var(--badge-success-fg)] hover:opacity-90',
     tone: 'success',
   },
   reject: {
@@ -145,7 +146,10 @@ export function VotingPhaseBadge({ phase, labels, className, ...props }: VotingP
       <StatusBadge
         status={phase}
         tone="success"
-        className={cn('animate-pulse border-green-500 bg-green-600 text-xs text-white', className)}
+        className={cn(
+          'animate-pulse border-[var(--badge-success-border)] bg-[var(--badge-success-fg)] text-xs text-white',
+          className
+        )}
         {...props}
       >
         {resolvedLabels.final_vote}
@@ -157,7 +161,11 @@ export function VotingPhaseBadge({ phase, labels, className, ...props }: VotingP
     <StatusBadge
       status={phase}
       tone={phase === 'closed' ? 'success' : 'neutral'}
-      className={cn('text-xs', phase === 'closed' && 'border-green-500 text-green-600', className)}
+      className={cn(
+        'text-xs',
+        phase === 'closed' && 'border-[var(--badge-success-border)] text-[var(--badge-success-fg)]',
+        className
+      )}
       {...props}
     >
       {resolvedLabels[phase]}

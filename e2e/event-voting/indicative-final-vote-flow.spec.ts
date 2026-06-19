@@ -6,9 +6,7 @@ import { TEST_ENTITY_IDS } from '../test-entity-ids';
 test.describe('Event Voting - Indicative to Final Vote Flow', () => {
   test('Agenda item shows indication phase badge', async ({ authenticatedPage: page }) => {
     // Navigate to a votable agenda item
-    await page.goto(
-      `/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`
-    );
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`);
     await page.waitForLoadState('networkidle');
 
     // Check for voting phase indicator
@@ -30,9 +28,7 @@ test.describe('Event Voting - Indicative to Final Vote Flow', () => {
   });
 
   test('Vote button opens vote cast dialog', async ({ authenticatedPage: page }) => {
-    await page.goto(
-      `/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`
-    );
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`);
     await page.waitForLoadState('networkidle');
 
     // Look for Vote button in action bar
@@ -64,14 +60,16 @@ test.describe('Event Voting - Indicative to Final Vote Flow', () => {
     }
   });
 
-  test('Organizer can advance from indication to final vote', async ({ authenticatedPage: page }) => {
-    await page.goto(
-      `/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`
-    );
+  test('Organizer can advance from indication to final vote', async ({
+    authenticatedPage: page,
+  }) => {
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`);
     await page.waitForLoadState('networkidle');
 
     // Look for "Start Final Vote" button (organizer only)
-    const startFinalVoteButton = page.getByRole('button', { name: /start final vote|begin final/i });
+    const startFinalVoteButton = page.getByRole('button', {
+      name: /start final vote|begin final/i,
+    });
 
     if ((await startFinalVoteButton.count()) > 0) {
       // Button is present - user has organizer permissions
@@ -80,9 +78,7 @@ test.describe('Event Voting - Indicative to Final Vote Flow', () => {
   });
 
   test('Organizer can close final vote', async ({ authenticatedPage: page }) => {
-    await page.goto(
-      `/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`
-    );
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`);
     await page.waitForLoadState('networkidle');
 
     // Look for "Close Final Vote" button
@@ -94,21 +90,19 @@ test.describe('Event Voting - Indicative to Final Vote Flow', () => {
   });
 
   test('Vote results display shows grouped bars', async ({ authenticatedPage: page }) => {
-    await page.goto(
-      `/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`
-    );
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`);
     await page.waitForLoadState('networkidle');
 
     // Check for vote results display
-    const resultsSection = page.locator('[data-testid="vote-results"]').or(
-      page.getByText(/vote results|results/i)
-    );
+    const resultsSection = page
+      .locator('[data-testid="vote-results"]')
+      .or(page.getByText(/vote results|results/i));
 
     if ((await resultsSection.count()) > 0) {
       // Should show result bars
-      const resultBars = page.locator('[data-testid="result-bar"]').or(
-        page.locator('.bg-green-500, .bg-red-500, .bg-yellow-500')
-      );
+      const resultBars = page
+        .locator('[data-testid="result-bar"]')
+        .or(page.locator('[data-slot="vote-result-bar"]'));
 
       if ((await resultBars.count()) > 0) {
         await expect(resultBars.first()).toBeVisible();

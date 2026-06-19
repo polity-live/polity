@@ -30,9 +30,17 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
       const labels: Record<string, string> = {
         'common.actions.confirm': 'Confirm',
         'common.actions.reject': 'Reject',
+        'features.network.workflows.acceptedPending': 'Accepted, waiting for others',
         'features.network.workflows.activeRelevant': 'Active workflows',
         'features.network.workflows.create': 'New Workflow',
         'features.network.workflows.edit': 'Edit Workflow',
+        'features.network.workflows.filters.active': 'Active',
+        'features.network.workflows.filters.allStatuses': 'All statuses',
+        'features.network.workflows.filters.archived': 'Archived',
+        'features.network.workflows.filters.emptyTitle': 'No matching workflows',
+        'features.network.workflows.filters.groupSearchPlaceholder': 'Search involved groups...',
+        'features.network.workflows.filters.pendingApproval': 'Pending approval',
+        'features.network.workflows.filters.rejected': 'Rejected',
         'features.network.workflows.incomingRequests': 'Incoming requests',
         'features.network.workflows.outgoingRequests': 'Outgoing requests',
         'features.network.workflows.readOnlyNoPermission': 'Read-only without manage rights',
@@ -131,6 +139,26 @@ describe('ManageWorkflowsTab', () => {
       ],
     });
 
+    const acceptedPendingWorkflow = buildWorkflow('accepted-pending-workflow', {
+      group_id: 'foreign-owner',
+      group: { id: 'foreign-owner', name: 'Foreign Owner' },
+      status: 'pending_approval',
+      approvals: [
+        {
+          id: 'approval-accepted-current',
+          group_id: 'current-group',
+          status: 'accepted',
+          group: { id: 'current-group', name: 'Current Group' },
+        },
+        {
+          id: 'approval-waiting-partner',
+          group_id: 'partner-group',
+          status: 'pending',
+          group: { id: 'partner-group', name: 'Partner Group' },
+        },
+      ],
+    });
+
     render(
       <ManageWorkflowsTab
         canManageWorkflows
@@ -138,6 +166,7 @@ describe('ManageWorkflowsTab', () => {
         groupName="Current Group"
         allRelationships={[]}
         incomingRequests={[incomingWorkflow as never]}
+        acceptedPendingRequests={[acceptedPendingWorkflow as never]}
         outgoingRequests={[outgoingWorkflow as never]}
         activeRelevantWorkflows={[outgoingWorkflow as never, participantWorkflow as never]}
         isWorkflowEditorOpen={false}
@@ -168,12 +197,15 @@ describe('ManageWorkflowsTab', () => {
     );
 
     expect(screen.getByText(/Incoming requests/)).toBeTruthy();
+    expect(screen.getByText(/Accepted, waiting for others/)).toBeTruthy();
     expect(screen.getByText(/Outgoing requests/)).toBeTruthy();
     expect(screen.getByText(/Active workflows/)).toBeTruthy();
     expect(screen.getByText('Co-owner')).toBeTruthy();
     expect(screen.getAllByRole('link', { name: 'Start Group' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: 'Committee Group' }).length).toBeGreaterThan(0);
-    expect(screen.getByRole('link', { name: 'Partner Group: pending' })).toBeTruthy();
+    expect(screen.getAllByRole('link', { name: 'Partner Group: pending' }).length).toBeGreaterThan(
+      0
+    );
     expect(screen.getAllByText('Final group').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: 'Edit Workflow' })).toHaveLength(3);
 
@@ -198,6 +230,7 @@ describe('ManageWorkflowsTab', () => {
         groupName="Owner Group"
         allRelationships={[]}
         incomingRequests={[]}
+        acceptedPendingRequests={[]}
         outgoingRequests={[]}
         activeRelevantWorkflows={[ownerWorkflow as never]}
         isWorkflowEditorOpen={false}
@@ -232,5 +265,180 @@ describe('ManageWorkflowsTab', () => {
     expect(screen.queryByText('Outgoing requests')).toBeNull();
     expect(screen.getByText('Read-only without manage rights')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Edit Workflow' })).toBeNull();
+  });
+
+  it('keeps accepted pending workflows visible and filters sections by status', () => {
+    const acceptedPendingWorkflow = buildWorkflow('accepted-pending-filter', {
+      status: 'pending_approval',
+      approvals: [
+        {
+          id: 'approval-current-accepted',
+          group_id: 'current-group',
+          status: 'accepted',
+          group: { id: 'current-group', name: 'Current Group' },
+        },
+        {
+          id: 'approval-partner-pending',
+          group_id: 'partner-group',
+          status: 'pending',
+          group: { id: 'partner-group', name: 'Partner Group' },
+        },
+      ],
+    });
+    const activeWorkflow = buildWorkflow('active-filter', {
+      status: 'active',
+      approvals: [
+        {
+          id: 'approval-current-active',
+          group_id: 'current-group',
+          status: 'accepted',
+          group: { id: 'current-group', name: 'Current Group' },
+        },
+      ],
+    });
+
+    render(
+      <ManageWorkflowsTab
+        canManageWorkflows
+        groupId="current-group"
+        groupName="Current Group"
+        allRelationships={[]}
+        incomingRequests={[]}
+        acceptedPendingRequests={[acceptedPendingWorkflow as never]}
+        outgoingRequests={[]}
+        activeRelevantWorkflows={[activeWorkflow as never]}
+        isWorkflowEditorOpen={false}
+        editingWorkflow={null}
+        workflowDraftStartGroupId="start-group"
+        onWorkflowDraftStartGroupIdChange={vi.fn()}
+        workflowDraftName=""
+        onWorkflowDraftNameChange={vi.fn()}
+        workflowDraftDescription=""
+        onWorkflowDraftDescriptionChange={vi.fn()}
+        workflowDraftIsDefaultEntry={false}
+        onWorkflowDraftIsDefaultEntryChange={vi.fn()}
+        workflowDraftSteps={[]}
+        availableGroups={[]}
+        availableWorkflows={[]}
+        onOpenNewWorkflow={vi.fn()}
+        onOpenEditWorkflow={vi.fn()}
+        onCloseWorkflowEditor={vi.fn()}
+        onAddWorkflowStep={vi.fn()}
+        onUpdateWorkflowStep={vi.fn()}
+        onRemoveWorkflowStep={vi.fn()}
+        onMoveWorkflowStep={vi.fn()}
+        onSaveWorkflow={vi.fn()}
+        onDeleteWorkflow={vi.fn()}
+        onApproveWorkflowApproval={vi.fn()}
+        onRejectWorkflowApproval={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/Accepted, waiting for others/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Active' }));
+
+    expect(screen.queryByText(/Accepted, waiting for others/)).toBeNull();
+    expect(screen.getByText(/Active workflows/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Pending approval' }));
+
+    expect(screen.getByText(/Accepted, waiting for others/)).toBeTruthy();
+    expect(screen.queryByText(/Active workflows/)).toBeNull();
+  });
+
+  it('filters workflows by involved group names and shows a filter empty state', () => {
+    const acceptedPendingWorkflow = buildWorkflow('accepted-pending-search', {
+      status: 'pending_approval',
+      approvals: [
+        {
+          id: 'approval-current-accepted',
+          group_id: 'current-group',
+          status: 'accepted',
+          group: { id: 'current-group', name: 'Current Group' },
+        },
+        {
+          id: 'approval-review-board',
+          group_id: 'review-board',
+          status: 'pending',
+          group: { id: 'review-board', name: 'Review Board' },
+        },
+      ],
+      steps: [
+        {
+          id: 'accepted-pending-search-step-1',
+          group_id: 'review-board',
+          order_index: 0,
+          label: 'Review',
+          group: { id: 'review-board', name: 'Review Board' },
+        },
+        {
+          id: 'accepted-pending-search-step-2',
+          group_id: 'owner-group',
+          order_index: 1,
+          label: 'Final vote',
+          group: { id: 'owner-group', name: 'Owner Group' },
+        },
+      ],
+    });
+    const activeWorkflow = buildWorkflow('active-search', {
+      status: 'active',
+      approvals: [
+        {
+          id: 'approval-current-active',
+          group_id: 'current-group',
+          status: 'accepted',
+          group: { id: 'current-group', name: 'Current Group' },
+        },
+      ],
+    });
+
+    render(
+      <ManageWorkflowsTab
+        canManageWorkflows
+        groupId="current-group"
+        groupName="Current Group"
+        allRelationships={[]}
+        incomingRequests={[]}
+        acceptedPendingRequests={[acceptedPendingWorkflow as never]}
+        outgoingRequests={[]}
+        activeRelevantWorkflows={[activeWorkflow as never]}
+        isWorkflowEditorOpen={false}
+        editingWorkflow={null}
+        workflowDraftStartGroupId="start-group"
+        onWorkflowDraftStartGroupIdChange={vi.fn()}
+        workflowDraftName=""
+        onWorkflowDraftNameChange={vi.fn()}
+        workflowDraftDescription=""
+        onWorkflowDraftDescriptionChange={vi.fn()}
+        workflowDraftIsDefaultEntry={false}
+        onWorkflowDraftIsDefaultEntryChange={vi.fn()}
+        workflowDraftSteps={[]}
+        availableGroups={[]}
+        availableWorkflows={[]}
+        onOpenNewWorkflow={vi.fn()}
+        onOpenEditWorkflow={vi.fn()}
+        onCloseWorkflowEditor={vi.fn()}
+        onAddWorkflowStep={vi.fn()}
+        onUpdateWorkflowStep={vi.fn()}
+        onRemoveWorkflowStep={vi.fn()}
+        onMoveWorkflowStep={vi.fn()}
+        onSaveWorkflow={vi.fn()}
+        onDeleteWorkflow={vi.fn()}
+        onApproveWorkflowApproval={vi.fn()}
+        onRejectWorkflowApproval={vi.fn()}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText('Search involved groups...');
+
+    fireEvent.change(searchInput, { target: { value: 'Review Board' } });
+
+    expect(screen.getByText(/Accepted, waiting for others/)).toBeTruthy();
+    expect(screen.queryByText(/Active workflows/)).toBeNull();
+
+    fireEvent.change(searchInput, { target: { value: 'No matching group' } });
+
+    expect(screen.getByText('No matching workflows')).toBeTruthy();
   });
 });

@@ -3,6 +3,7 @@ import React from 'react';
 import { EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import { Search, X } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
+import { FilterButton } from '@/features/shared/ui/filter-controls';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface GroupsFiltersProps {
@@ -63,14 +64,9 @@ export const GroupsFilters: React.FC<GroupsFiltersProps> = ({
           {allTags.map(tag => {
             const isSelected = selectedTags.includes(tag);
             return (
-              <EntityBadge
-                key={tag}
-                tone={isSelected ? 'accent' : 'outline'}
-                className="cursor-pointer transition-opacity hover:opacity-80"
-                onClick={() => toggleTag(tag)}
-              >
+              <FilterButton key={tag} active={isSelected} onClick={() => toggleTag(tag)}>
                 #{tag}
-              </EntityBadge>
+              </FilterButton>
             );
           })}
         </div>

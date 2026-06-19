@@ -4,7 +4,7 @@ import type {
 } from '@/features/shared/types/participation';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
-import { BadgeControl } from '@/features/shared/ui/status';
+import { FilterButton } from '@/features/shared/ui/filter-controls';
 
 export interface ParticipationRoleFilterBarProps<TRole extends ParticipationRoleLike> {
   roles: readonly TRole[];
@@ -78,34 +78,26 @@ export function ParticipationRoleFilterBar<TRole extends ParticipationRoleLike>(
       className={cn('mb-4 flex flex-wrap items-center gap-2', className)}
     >
       {label ? <span className="text-muted-foreground text-xs font-medium">{label}</span> : null}
-      <BadgeControl
-        asChild
-        variant={selectedRoleIds.length === 0 ? 'default' : 'outline'}
-        className={cn('rounded-md', selectedRoleIds.length === 0 && 'shadow-sm')}
+      <FilterButton
+        active={selectedRoleIds.length === 0}
+        className="rounded-md"
+        onClick={() => onSelectedRoleIdsChange([])}
       >
-        <button
-          type="button"
-          aria-pressed={selectedRoleIds.length === 0}
-          onClick={() => onSelectedRoleIdsChange([])}
-        >
-          {allLabel}
-        </button>
-      </BadgeControl>
+        {allLabel}
+      </FilterButton>
 
       {roles.map(role => {
         const selected = selectedRoleIdSet.has(role.id);
 
         return (
-          <BadgeControl
+          <FilterButton
             key={role.id}
-            asChild
-            variant={selected ? 'default' : 'outline'}
-            className={cn('rounded-md', selected && 'shadow-sm')}
+            active={selected}
+            className="rounded-md"
+            onClick={() => toggleRole(role.id)}
           >
-            <button type="button" aria-pressed={selected} onClick={() => toggleRole(role.id)}>
-              {role.name || translateText('components.membershipTables.roleFallback', 'Role')}
-            </button>
-          </BadgeControl>
+            {role.name || translateText('components.membershipTables.roleFallback', 'Role')}
+          </FilterButton>
         );
       })}
     </div>

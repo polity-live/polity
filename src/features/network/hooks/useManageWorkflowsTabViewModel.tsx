@@ -24,6 +24,7 @@ export interface ManageWorkflowsTabProps {
   groupName: string;
   allRelationships: NormalizedGroupRelationship[];
   incomingRequests: WorkflowWithStepsRow[];
+  acceptedPendingRequests: WorkflowWithStepsRow[];
   outgoingRequests: WorkflowWithStepsRow[];
   activeRelevantWorkflows: WorkflowWithStepsRow[];
   isWorkflowEditorOpen: boolean;
