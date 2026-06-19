@@ -13,6 +13,7 @@ import { NETWORK_FILTER_ACTIVE_CLASS_NAMES } from '@/features/network/ui/Network
 import { useNetworkFlowControls } from '@/features/network/hooks/useNetworkFlowControls';
 import { usePersistedNetworkLayout } from '@/features/network/hooks/usePersistedNetworkLayout';
 import { useEditableNetworkLayout } from '@/features/network/hooks/useEditableNetworkLayout';
+import { resolveInitialNetworkNodeOverlaps } from '@/features/network/logic/networkLayoutHelpers';
 import { useGroupNetwork } from '@/features/network/hooks/useGroupNetwork';
 import {
   addUniqueValue,
@@ -274,6 +275,7 @@ export function useGroupNetworkFlowController({
     hasLayoutChanges,
     nodePositionsRef,
     edgeBendPointsRef,
+    fixedNodeIdsRef,
     isInteractiveRef,
     handleNodesChange,
     handleEdgeBendPointsChange,
@@ -1112,11 +1114,15 @@ export function useGroupNetworkFlowController({
       });
     });
 
-    syncGeneratedLayoutState(newNodes, newEdges);
-    setNodes(newNodes);
+    const nextNodes = resolveInitialNetworkNodeOverlaps(newNodes, {
+      fixedNodeIds: fixedNodeIdsRef.current,
+    });
+    syncGeneratedLayoutState(nextNodes, newEdges);
+    setNodes(nextNodes);
     setEdges(newEdges);
   }, [
     filterRight,
+    fixedNodeIdsRef,
     graphRootGroup,
     graphRootGroupId,
     group,

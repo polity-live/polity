@@ -35,6 +35,7 @@ export function useEditableNetworkLayout<
 }: UseEditableNetworkLayoutArgs<TNode, TEdge>) {
   const edgeBendPointsRef = useRef<Record<string, NetworkEdgeBendPoint[]>>({});
   const nodePositionsRef = useRef<Record<string, { x: number; y: number }>>({});
+  const fixedNodeIdsRef = useRef<Set<string>>(new Set());
   const isInteractiveRef = useRef(isInteractive);
 
   const currentLayout = useMemo<GroupNetworkLayout>(
@@ -70,10 +71,17 @@ export function useEditableNetworkLayout<
   useEffect(() => {
     nodePositionsRef.current = savedLayout?.node_positions ?? {};
     edgeBendPointsRef.current = savedLayout?.edge_bend_points ?? {};
+    fixedNodeIdsRef.current = new Set(Object.keys(savedLayout?.node_positions ?? {}));
   }, [savedLayout]);
 
   const handleNodesChange = useCallback(
     (changes: NodeChange<TNode>[]) => {
+      changes.forEach(change => {
+        if (change.type === 'position') {
+          fixedNodeIdsRef.current.add(change.id);
+        }
+      });
+
       setNodes(currentNodes => {
         const nextNodes = applyNodeChanges(changes, currentNodes);
         nodePositionsRef.current = Object.fromEntries(
@@ -146,6 +154,7 @@ export function useEditableNetworkLayout<
   const clearPersistedLayoutState = useCallback(() => {
     nodePositionsRef.current = {};
     edgeBendPointsRef.current = {};
+    fixedNodeIdsRef.current = new Set();
   }, []);
 
   useEffect(() => {
@@ -162,6 +171,7 @@ export function useEditableNetworkLayout<
     hasLayoutChanges,
     nodePositionsRef,
     edgeBendPointsRef,
+    fixedNodeIdsRef,
     isInteractiveRef,
     handleNodesChange,
     handleEdgeBendPointsChange,

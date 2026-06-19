@@ -10,6 +10,7 @@ import { NETWORK_FILTER_ACTIVE_CLASS_NAMES } from '@/features/network/ui/Network
 import { useNetworkFlowControls } from '@/features/network/hooks/useNetworkFlowControls';
 import { usePersistedNetworkLayout } from '@/features/network/hooks/usePersistedNetworkLayout';
 import { useEditableNetworkLayout } from '@/features/network/hooks/useEditableNetworkLayout';
+import { resolveInitialNetworkNodeOverlaps } from '@/features/network/logic/networkLayoutHelpers';
 import {
   buildHierarchyRightEdgeDirections,
   getCivicNetworkEdgeColor,
@@ -101,6 +102,7 @@ export function useEventNetworkFlowController({ eventId }: EventNetworkFlowProps
     hasLayoutChanges,
     nodePositionsRef,
     edgeBendPointsRef,
+    fixedNodeIdsRef,
     isInteractiveRef,
     handleNodesChange,
     handleEdgeBendPointsChange,
@@ -451,13 +453,17 @@ export function useEventNetworkFlowController({ eventId }: EventNetworkFlowProps
       );
     });
 
-    syncGeneratedLayoutState(newNodes, newEdges);
-    setNodes(newNodes);
+    const nextNodes = resolveInitialNetworkNodeOverlaps(newNodes, {
+      fixedNodeIds: fixedNodeIdsRef.current,
+    });
+    syncGeneratedLayoutState(nextNodes, newEdges);
+    setNodes(nextNodes);
     setEdges(newEdges);
   }, [
     edgeBendPointsRef,
     event,
     eventId,
+    fixedNodeIdsRef,
     group,
     handleEdgeBendPointsChange,
     isInteractiveRef,

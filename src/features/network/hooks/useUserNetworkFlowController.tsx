@@ -6,6 +6,7 @@ import { NETWORK_FILTER_ACTIVE_CLASS_NAMES } from '@/features/network/ui/Network
 import { useNetworkFlowControls } from '@/features/network/hooks/useNetworkFlowControls';
 import { usePersistedNetworkLayout } from '@/features/network/hooks/usePersistedNetworkLayout';
 import { useEditableNetworkLayout } from '@/features/network/hooks/useEditableNetworkLayout';
+import { resolveInitialNetworkNodeOverlaps } from '@/features/network/logic/networkLayoutHelpers';
 import {
   buildDirectRelationships,
   buildIndirectRelationships,
@@ -125,6 +126,7 @@ export function useUserNetworkFlowController({
     hasLayoutChanges,
     nodePositionsRef,
     edgeBendPointsRef,
+    fixedNodeIdsRef,
     isInteractiveRef,
     handleNodesChange,
     handleEdgeBendPointsChange,
@@ -877,11 +879,15 @@ export function useUserNetworkFlowController({
     }
 
     const nextEdges = Array.from(allEdgesMap.values());
-    syncGeneratedLayoutState(newNodes, nextEdges);
-    setNodes(newNodes);
+    const nextNodes = resolveInitialNetworkNodeOverlaps(newNodes, {
+      fixedNodeIds: fixedNodeIdsRef.current,
+    });
+    syncGeneratedLayoutState(nextNodes, nextEdges);
+    setNodes(nextNodes);
     setEdges(nextEdges);
   }, [
     edgeBendPointsRef,
+    fixedNodeIdsRef,
     filterRight,
     handleEdgeBendPointsChange,
     isInteractiveRef,
