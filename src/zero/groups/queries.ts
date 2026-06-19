@@ -98,6 +98,15 @@ export const groupQueries = {
       .related('membership_roles', q => q.related('role'))
   ),
 
+  currentUserActiveMembershipsWithGroups: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    zql.group_membership
+      .where('user_id', userID)
+      .where('status', 'IN', WIKI_ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+      .whereExists('group', group => applyGroupAccess(group, userID))
+      .related('group')
+      .related('membership_roles', q => q.related('role'))
+  ),
+
   /** Current user's memberships with group and role→action_rights (for permission-filtered dropdowns) */
   currentUserMembershipsWithRights: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.group_membership

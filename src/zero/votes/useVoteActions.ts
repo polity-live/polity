@@ -104,17 +104,14 @@ export function useVoteActions() {
       participationArgs: Parameters<typeof mutators.votes.castIndicativeVote>[0],
       decisions: Parameters<typeof mutators.votes.createIndicativeChoiceDecision>[0][]
     ) => {
-      const participationResult = zero.mutate(mutators.votes.castIndicativeVote(participationArgs));
-      onServerError(participationResult, () =>
-        toast.error(t('common.agendaToasts.voteCastFailed'))
+      const result = zero.mutate(
+        mutators.votes.replaceIndicativeVote({
+          participation: participationArgs,
+          decisions,
+        })
       );
-      await serverConfirmed(participationResult);
-
-      for (const decision of decisions) {
-        const decisionResult = zero.mutate(mutators.votes.createIndicativeChoiceDecision(decision));
-        onServerError(decisionResult, () => toast.error(t('common.agendaToasts.voteCastFailed')));
-        await serverConfirmed(decisionResult);
-      }
+      onServerError(result, () => toast.error(t('common.agendaToasts.voteCastFailed')));
+      await serverConfirmed(result);
 
       toast.success(t('common.agendaToasts.voteCast'));
     },

@@ -539,6 +539,15 @@ export const createPageTranslations = {
     amendmentPlaceholder: 'Search for an amendment',
     positionOptional: 'Elective Role (Optional)',
     positionPlaceholder: 'Search for an elective role',
+    assignmentLoading: 'The linked assignment is still loading. Please try again in a moment.',
+    assignmentNotFound: 'The linked assignment could not be found.',
+    assignmentLookupFailed:
+      'The linked assignment could not be loaded. Please restart the flow from the assignments tab.',
+    assignmentLabel: 'Assignment',
+    roleRenewalAssignmentNotice:
+      'This role election will be created from the open assignment for {{roleTitle}}.',
+    roleRenewalRoleNotice:
+      'The winners of this election will automatically be assigned to the {{roleTitle}} role.',
     noAdditionalConfig: 'No additional configuration for this type',
     reviewBadge: 'Agenda Item',
     typeLabel: 'Type',

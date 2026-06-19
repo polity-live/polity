@@ -952,7 +952,7 @@ export function ChartDialogView({ model }: ChartDialogViewProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <ScrollableDialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto p-0 sm:max-w-5xl">
+      <ScrollableDialogContent className="bg-background flex h-dvh !max-h-none max-h-none w-screen max-w-none flex-col overflow-hidden rounded-none border-0 p-0 shadow-none sm:max-w-none">
         <DialogHeader separator className="px-5 py-4 pr-12">
           <DialogTitle>
             {editingElement ? t('plateJs.chart.editTitle') : t('plateJs.chart.insertTitle')}
@@ -960,204 +960,217 @@ export function ChartDialogView({ model }: ChartDialogViewProps) {
           <DialogDescription>{t('plateJs.chart.description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 px-5 pb-2 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-          <div className="min-w-0 space-y-5">
-            <Tabs value={activeSourceTab} onValueChange={handleSourceTabChange}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="manual" onClick={() => handleSourceTabChange('manual')}>
-                  {t('plateJs.chart.csvSource')}
-                </TabsTrigger>
-                <TabsTrigger value="official" onClick={() => handleSourceTabChange('official')}>
-                  {t('plateJs.chart.officialDataSource')}
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="grid gap-6 px-5 py-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+            <div className="min-w-0 space-y-5">
+              <Tabs value={activeSourceTab} onValueChange={handleSourceTabChange}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="manual" onClick={() => handleSourceTabChange('manual')}>
+                    {t('plateJs.chart.csvSource')}
+                  </TabsTrigger>
+                  <TabsTrigger value="official" onClick={() => handleSourceTabChange('official')}>
+                    {t('plateJs.chart.officialDataSource')}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
 
-            {sourceKind === 'manual' ? (
-              <>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium">{t('plateJs.chart.dataTable')}</p>
-                    <p className="text-muted-foreground mt-1 text-xs">
-                      {t('plateJs.chart.dataLimits')}
-                    </p>
+              {sourceKind === 'manual' ? (
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium">{t('plateJs.chart.dataTable')}</p>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {t('plateJs.chart.dataLimits')}
+                      </p>
+                    </div>
+                    <FileUploadTrigger
+                      inputRef={fileInputRef}
+                      inputProps={{
+                        accept: '.csv,text/csv',
+                        onChange: event => {
+                          const file = event.target.files?.[0];
+                          if (!file) return;
+                          void file
+                            .text()
+                            .then(text => {
+                              const parsed = parseChartCsv(text);
+                              setTable(parsed);
+                              setMapping(inferChartMapping(parsed));
+                              setError(null);
+                            })
+                            .catch(parseError =>
+                              setError(
+                                parseError instanceof Error
+                                  ? parseError.message
+                                  : String(parseError)
+                              )
+                            );
+                          event.target.value = '';
+                        },
+                      }}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <UploadIcon className="size-4" />
+                      {t('plateJs.chart.uploadCsv')}
+                    </FileUploadTrigger>
                   </div>
-                  <FileUploadTrigger
-                    inputRef={fileInputRef}
-                    inputProps={{
-                      accept: '.csv,text/csv',
-                      onChange: event => {
-                        const file = event.target.files?.[0];
-                        if (!file) return;
-                        void file
-                          .text()
-                          .then(text => {
-                            const parsed = parseChartCsv(text);
-                            setTable(parsed);
-                            setMapping(inferChartMapping(parsed));
-                            setError(null);
-                          })
-                          .catch(parseError =>
-                            setError(
-                              parseError instanceof Error ? parseError.message : String(parseError)
-                            )
-                          );
-                        event.target.value = '';
-                      },
-                    }}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <UploadIcon className="size-4" />
-                    {t('plateJs.chart.uploadCsv')}
-                  </FileUploadTrigger>
-                </div>
-                <ManualChartTableEditor table={table} onChange={setTable} />
-                <TableAxisSetup table={table} mapping={mapping} setMapping={setMapping} />
-              </>
-            ) : (
-              <OfficialDataSourcePanel model={model} />
-            )}
-          </div>
+                  <ManualChartTableEditor table={table} onChange={setTable} />
+                  <TableAxisSetup table={table} mapping={mapping} setMapping={setMapping} />
+                </>
+              ) : (
+                <OfficialDataSourcePanel model={model} />
+              )}
+            </div>
 
-          <div className="min-w-0 space-y-5 border-t pt-5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-5">
-            {showChartSettings ? (
-              <>
-                <FormFieldShell label={t('plateJs.chart.chartType')}>
-                  {() => <ChartTypePicker value={chartType} onChange={setChartType} />}
-                </FormFieldShell>
-                <TextField
-                  id="chart-title"
-                  label={t('plateJs.chart.title')}
-                  value={presentation.title ?? ''}
-                  onValueChange={value =>
-                    setPresentation(current => ({ ...current, title: value }))
-                  }
-                />
-                <TextField
-                  id="chart-description"
-                  label={t('plateJs.chart.descriptionLabel')}
-                  rows={2}
-                  value={presentation.description ?? ''}
-                  onValueChange={value =>
-                    setPresentation(current => ({
-                      ...current,
-                      description: value,
-                    }))
-                  }
-                  multiline
-                />
-                <div className="grid gap-3 sm:grid-cols-2">
+            <div className="min-w-0 space-y-5 border-t pt-5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-5">
+              {showChartSettings ? (
+                <>
+                  <FormFieldShell label={t('plateJs.chart.chartType')}>
+                    {() => <ChartTypePicker value={chartType} onChange={setChartType} />}
+                  </FormFieldShell>
                   <TextField
-                    id="chart-x-axis-label"
-                    label={t('plateJs.chart.xAxisLabel')}
-                    value={presentation.xAxisLabel ?? ''}
+                    id="chart-title"
+                    label={t('plateJs.chart.title')}
+                    value={presentation.title ?? ''}
                     onValueChange={value =>
-                      setPresentation(current => ({
-                        ...current,
-                        xAxisLabel: value,
-                      }))
+                      setPresentation(current => ({ ...current, title: value }))
                     }
                   />
                   <TextField
-                    id="chart-y-axis-label"
-                    label={t('plateJs.chart.yAxisLabel')}
-                    value={presentation.yAxisLabel ?? ''}
+                    id="chart-description"
+                    label={t('plateJs.chart.descriptionLabel')}
+                    rows={2}
+                    value={presentation.description ?? ''}
                     onValueChange={value =>
                       setPresentation(current => ({
                         ...current,
-                        yAxisLabel: value,
+                        description: value,
                       }))
                     }
+                    multiline
                   />
-                </div>
-                <div className="flex flex-wrap gap-x-5 gap-y-3">
-                  <div className="flex items-center gap-2">
-                    <InlineCheckbox
-                      id="chart-show-legend"
-                      checked={presentation.showLegend !== false}
-                      onCheckedChange={checked =>
-                        setPresentation(current => ({ ...current, showLegend: checked === true }))
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <TextField
+                      id="chart-x-axis-label"
+                      label={t('plateJs.chart.xAxisLabel')}
+                      value={presentation.xAxisLabel ?? ''}
+                      onValueChange={value =>
+                        setPresentation(current => ({
+                          ...current,
+                          xAxisLabel: value,
+                        }))
                       }
                     />
-                    <FormControlLabel htmlFor="chart-show-legend">
-                      {t('plateJs.chart.legend')}
-                    </FormControlLabel>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <InlineCheckbox
-                      id="chart-show-tooltip"
-                      checked={presentation.showTooltip !== false}
-                      onCheckedChange={checked =>
-                        setPresentation(current => ({ ...current, showTooltip: checked === true }))
+                    <TextField
+                      id="chart-y-axis-label"
+                      label={t('plateJs.chart.yAxisLabel')}
+                      value={presentation.yAxisLabel ?? ''}
+                      onValueChange={value =>
+                        setPresentation(current => ({
+                          ...current,
+                          yAxisLabel: value,
+                        }))
                       }
                     />
-                    <FormControlLabel htmlFor="chart-show-tooltip">
-                      {t('plateJs.chart.hoverValues')}
-                    </FormControlLabel>
                   </div>
-                  {chartType !== 'pie' ? (
+                  <div className="flex flex-wrap gap-x-5 gap-y-3">
                     <div className="flex items-center gap-2">
                       <InlineCheckbox
-                        id="chart-show-grid"
-                        checked={presentation.showGrid !== false}
+                        id="chart-show-legend"
+                        checked={presentation.showLegend !== false}
                         onCheckedChange={checked =>
-                          setPresentation(current => ({ ...current, showGrid: checked === true }))
+                          setPresentation(current => ({
+                            ...current,
+                            showLegend: checked === true,
+                          }))
                         }
                       />
-                      <FormControlLabel htmlFor="chart-show-grid">
-                        {t('plateJs.chart.grid')}
+                      <FormControlLabel htmlFor="chart-show-legend">
+                        {t('plateJs.chart.legend')}
                       </FormControlLabel>
                     </div>
-                  ) : (
                     <div className="flex items-center gap-2">
                       <InlineCheckbox
-                        id="chart-donut"
-                        checked={presentation.donut !== false}
+                        id="chart-show-tooltip"
+                        checked={presentation.showTooltip !== false}
                         onCheckedChange={checked =>
-                          setPresentation(current => ({ ...current, donut: checked === true }))
+                          setPresentation(current => ({
+                            ...current,
+                            showTooltip: checked === true,
+                          }))
                         }
                       />
-                      <FormControlLabel htmlFor="chart-donut">
-                        {t('plateJs.chart.donut')}
+                      <FormControlLabel htmlFor="chart-show-tooltip">
+                        {t('plateJs.chart.hoverValues')}
                       </FormControlLabel>
                     </div>
-                  )}
+                    {chartType !== 'pie' ? (
+                      <div className="flex items-center gap-2">
+                        <InlineCheckbox
+                          id="chart-show-grid"
+                          checked={presentation.showGrid !== false}
+                          onCheckedChange={checked =>
+                            setPresentation(current => ({
+                              ...current,
+                              showGrid: checked === true,
+                            }))
+                          }
+                        />
+                        <FormControlLabel htmlFor="chart-show-grid">
+                          {t('plateJs.chart.grid')}
+                        </FormControlLabel>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <InlineCheckbox
+                          id="chart-donut"
+                          checked={presentation.donut !== false}
+                          onCheckedChange={checked =>
+                            setPresentation(current => ({ ...current, donut: checked === true }))
+                          }
+                        />
+                        <FormControlLabel htmlFor="chart-donut">
+                          {t('plateJs.chart.donut')}
+                        </FormControlLabel>
+                      </div>
+                    )}
+                  </div>
+                  <div className="border-t pt-4">
+                    <p className="mb-3 text-sm font-medium">{t('plateJs.chart.preview')}</p>
+                    <ChartRenderer
+                      chartType={chartType}
+                      points={previewPoints}
+                      presentation={presentation}
+                      className="min-h-64"
+                    />
+                    {sourceKind === 'eurostat' ? (
+                      <p className="text-muted-foreground mt-2 text-xs">
+                        {t('plateJs.chart.editableTableReady')}
+                      </p>
+                    ) : sourceKind === 'govdata' && govDataImported ? (
+                      <p className="text-muted-foreground mt-2 text-xs">
+                        {t('plateJs.chart.govDataPreviewReady')}
+                      </p>
+                    ) : null}
+                  </div>
+                </>
+              ) : (
+                <div className="text-muted-foreground flex min-h-64 items-center justify-center border border-dashed px-6 text-center text-sm">
+                  {t('plateJs.chart.officialSettingsHint')}
                 </div>
-                <div className="border-t pt-4">
-                  <p className="mb-3 text-sm font-medium">{t('plateJs.chart.preview')}</p>
-                  <ChartRenderer
-                    chartType={chartType}
-                    points={previewPoints}
-                    presentation={presentation}
-                    className="min-h-64"
-                  />
-                  {sourceKind === 'eurostat' ? (
-                    <p className="text-muted-foreground mt-2 text-xs">
-                      {t('plateJs.chart.editableTableReady')}
-                    </p>
-                  ) : sourceKind === 'govdata' && govDataImported ? (
-                    <p className="text-muted-foreground mt-2 text-xs">
-                      {t('plateJs.chart.govDataPreviewReady')}
-                    </p>
-                  ) : null}
-                </div>
-              </>
-            ) : (
-              <div className="text-muted-foreground flex min-h-64 items-center justify-center border border-dashed px-6 text-center text-sm">
-                {t('plateJs.chart.officialSettingsHint')}
-              </div>
-            )}
+              )}
+            </div>
           </div>
+
+          {error ? (
+            <p className="border-destructive/30 bg-destructive/5 text-destructive mx-5 mb-5 border px-3 py-2 text-sm">
+              {error}
+            </p>
+          ) : null}
         </div>
 
-        {error ? (
-          <p className="border-destructive/30 bg-destructive/5 text-destructive mx-5 border px-3 py-2 text-sm">
-            {error}
-          </p>
-        ) : null}
-
-        <DialogFooter separator surface="background" sticky className="px-5 py-4">
+        <DialogFooter separator surface="background" className="px-5 py-4">
           <Button type="button" variant="outline" onClick={() => setOpen(false)}>
             {t('plateJs.chart.cancel')}
           </Button>

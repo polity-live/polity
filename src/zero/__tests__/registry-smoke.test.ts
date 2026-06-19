@@ -14,8 +14,11 @@ describe('Zero registry smoke tests', () => {
 
     expect(queries.users.current).toBeDefined();
     expect(queries.groups.byId).toBeDefined();
+    expect(queries.groups.currentUserActiveMembershipsWithGroups).toBeDefined();
     expect(queries.events.byIdFull).toBeDefined();
+    expect(queries.events.currentUserActiveParticipationsWithEvents).toBeDefined();
     expect(queries.amendments.byIdFull).toBeDefined();
+    expect(queries.amendments.currentUserActiveCollaborationsWithAmendments).toBeDefined();
     expect(queries.network.allGroupConnections).toBeDefined();
 
     expect(mutators.users.updateProfile).toBeDefined();

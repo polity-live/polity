@@ -38,6 +38,7 @@ interface DataTableProps<TData, TValue> {
   filter?: DataTableFilter;
   toolbar?: ReactNode;
   rowTestId?: string | ((row: TData) => string | undefined);
+  getRowClassName?: (row: TData) => string | undefined;
   filterPlaceholder?: string;
   previousLabel?: ReactNode;
   nextLabel?: ReactNode;
@@ -62,6 +63,7 @@ export function DataTable<TData, TValue>({
   filter,
   toolbar,
   rowTestId,
+  getRowClassName,
   filterPlaceholder = 'Filter...',
   previousLabel = 'Previous',
   nextLabel = 'Next',
@@ -95,6 +97,7 @@ export function DataTable<TData, TValue>({
       filter={filter}
       toolbar={toolbar}
       rowTestId={rowTestId}
+      getRowClassName={getRowClassName}
       filterPlaceholder={filterPlaceholder}
       surface={surface}
       className={className}

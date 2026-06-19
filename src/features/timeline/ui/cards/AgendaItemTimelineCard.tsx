@@ -25,6 +25,7 @@ export interface AgendaItemTimelineCardProps {
     eventName?: string | null;
     createdAt?: string | Date | null;
   };
+  href?: string;
   className?: string;
 }
 
@@ -68,9 +69,14 @@ function getStatusBadgeTone(status?: string | null): BadgeTone {
   }
 }
 
-export function AgendaItemTimelineCard({ agendaItem, className }: AgendaItemTimelineCardProps) {
+export function AgendaItemTimelineCard({
+  agendaItem,
+  href,
+  className,
+}: AgendaItemTimelineCardProps) {
   const { t } = useTranslation();
-  const eventHref = agendaItem.eventId ? `/event/${agendaItem.eventId}/agenda` : undefined;
+  const eventHref =
+    href ?? (agendaItem.eventId ? `/event/${agendaItem.eventId}/agenda` : undefined);
   const typeLabel = formatLabel(agendaItem.type);
   const statusLabel = formatLabel(agendaItem.status);
   const scheduledTimeLabel = formatDateTime(agendaItem.scheduledTime);

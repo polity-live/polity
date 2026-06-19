@@ -112,6 +112,7 @@ export function TodoKanbanCardView({
       onDragStart={canManageTodos ? () => onDragStart(todo) : undefined}
       onDragEnd={() => onDragEnd(todo)}
       className={isDragging ? 'opacity-50' : undefined}
+      data-swipe-lock
     >
       <TodoTimelineCard
         todo={{

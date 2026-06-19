@@ -23,6 +23,11 @@ import {
   isEventWithinSchedulingWindow,
 } from '@/features/amendments/logic/processTaskEventScheduling';
 import {
+  buildCreateEventSearchFromDelegateElectionAssignment,
+  isEventWithinDelegateElectionSchedulingWindow,
+} from '@/features/groups/logic/delegateElectionScheduling';
+import { getDelegateMembersPerSeatInfo } from '@/features/delegates/logic/delegateRatio';
+import {
   createElectionFlowCorrelationId,
   logElectionFlowClient,
 } from '@/features/elections/logic/electionFlowLogging';
@@ -35,6 +40,7 @@ import { CountBadge, EntityBadge, StatusBadge } from '@/features/shared/ui/statu
 import { Button } from '@/features/shared/ui/ui/button';
 import type { DelegateElectionMode } from '../hooks/useGroupOpenAssignments';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { OpenAssignmentsPanelView } from './OpenAssignmentsPanelView';
 
 interface AvailableEventLike {
   id: string;
@@ -52,6 +58,7 @@ interface OpenAssignmentsPanelProps {
   availableEvents: AvailableEventLike[];
   isLoading?: boolean;
   isScheduling?: boolean;
+  focusAssignmentId?: string;
   onScheduleRoleRenewal: (assignment: GroupOpenAssignment, eventId: string) => Promise<void>;
   onScheduleDelegateElection: (
     assignment: GroupOpenAssignment,
@@ -165,6 +172,12 @@ function getEligibleEventsForAssignment(
   groupId: string,
   availableEvents: readonly AvailableEventLike[]
 ) {
+  if (assignment.kind === 'delegate_election') {
+    return availableEvents.filter(event =>
+      isEventWithinDelegateElectionSchedulingWindow(event, assignment)
+    );
+  }
+
   const task = buildProcessTaskScheduleSource(assignment, groupId);
   if (!task) {
     return [...availableEvents];
@@ -175,6 +188,20 @@ function getEligibleEventsForAssignment(
 }
 
 function getAssignmentSchedulingWindowLabel(assignment: GroupOpenAssignment, groupId: string) {
+  if (assignment.kind === 'delegate_election') {
+    const createEventSearch = buildCreateEventSearchFromDelegateElectionAssignment({
+      assignment,
+      groupId,
+    });
+
+    return getSchedulingWindowDisplayLabel({
+      minStartDate: createEventSearch.minStartDate ?? null,
+      minStartTime: createEventSearch.minStartTime ?? null,
+      maxStartDate: createEventSearch.maxStartDate ?? null,
+      maxStartTime: createEventSearch.maxStartTime ?? null,
+    });
+  }
+
   const task = buildProcessTaskScheduleSource(assignment, groupId);
   if (!task) {
     return null;
@@ -192,6 +219,40 @@ function getAssignmentSchedulingWindowLabel(assignment: GroupOpenAssignment, gro
     maxStartTime: createEventSearch.maxStartTime ?? null,
   });
 }
+
+function buildCreateEventSearchForAssignment(assignment: GroupOpenAssignment, groupId: string) {
+  const openAssignmentsReturnTo = `/group/${groupId}/memberships?tab=openAssignments`;
+  const returnTo =
+    assignment.kind === 'role_renewal'
+      ? `${openAssignmentsReturnTo}&assignmentId=${assignment.id}`
+      : openAssignmentsReturnTo;
+
+  if (assignment.kind === 'delegate_election') {
+    return buildCreateEventSearchFromDelegateElectionAssignment({
+      assignment,
+      groupId,
+      returnTo,
+    });
+  }
+
+  if (assignment.kind === 'process_task' && assignment.processTaskId) {
+    return buildCreateEventSearchFromProcessTask({
+      task: {
+        id: assignment.processTaskId,
+        group_id: groupId,
+        process_run_id: assignment.processRunId ?? null,
+        step_run_id: assignment.stepRunId ?? null,
+        due_at: assignment.dueAt ?? null,
+        metadata: assignment.processTaskMetadata,
+      },
+      groupId,
+      returnTo,
+    });
+  }
+
+  return assignment.kind === 'role_renewal' ? { groupId, returnTo } : { groupId };
+}
+
 function formatDateTime(timestamp: number | null | undefined, locale: string) {
   if (!timestamp) {
     return null;
@@ -218,11 +279,11 @@ function EventTag({
 }) {
   return (
     <EntityBadge asChild tone="info" className="max-w-full hover:opacity-90">
-      <Link to="/event/$id" params={{ id: event.id }} className="inline-flex">
+      <a href={`/event/${event.id}`} className="inline-flex">
         <span className="truncate">
           {label}: {event.title || translateText('generated.inline.0102_veranstaltung_e6fdb4cc')}
         </span>
-      </Link>
+      </a>
     </EntityBadge>
   );
 }
@@ -230,13 +291,99 @@ function EventTag({
 function AmendmentTag({ amendment }: { amendment: NonNullable<GroupOpenAssignment['amendment']> }) {
   return (
     <EntityBadge asChild tone="accent" className="max-w-full hover:opacity-90">
-      <Link to="/amendment/$id" params={{ id: amendment.id }} className="inline-flex">
+      <a href={`/amendment/${amendment.id}`} className="inline-flex">
         <span className="truncate">{amendment.title}</span>
-      </Link>
+      </a>
     </EntityBadge>
   );
 }
-import { OpenAssignmentsPanelView } from './OpenAssignmentsPanelView';
+
+function GroupInlineLink({
+  group,
+  fallback,
+}: {
+  group?: GroupOpenAssignment['sourceGroup'] | GroupOpenAssignment['targetGroup'];
+  fallback: string;
+}) {
+  const label = group?.name || fallback;
+
+  if (!group?.id) {
+    return <>{label}</>;
+  }
+
+  return (
+    <a
+      href={`/group/${group.id}`}
+      className="text-primary underline-offset-4 hover:underline"
+      title={label}
+    >
+      {label}
+    </a>
+  );
+}
+
+function DelegateAssignmentDescription({ assignment }: { assignment: GroupOpenAssignment }) {
+  const { t } = useTranslation();
+  const sourceGroupFallback =
+    assignment.sourceGroup?.name ||
+    t('features.groups.memberships.openAssignments.delegateDescription.sourceGroupFallback');
+  const targetGroupFallback =
+    assignment.targetGroup?.name ||
+    t('features.groups.memberships.openAssignments.delegateDescription.targetGroupFallback');
+  const seatCount = assignment.seatCount ?? 0;
+
+  return (
+    <p className="text-muted-foreground text-sm">
+      <GroupInlineLink group={assignment.sourceGroup} fallback={sourceGroupFallback} />{' '}
+      {t('features.groups.memberships.openAssignments.delegateDescription.hasCurrently')}{' '}
+      {seatCount.toLocaleString()}{' '}
+      {seatCount === 1
+        ? t('features.groups.memberships.openAssignments.delegateDescription.seatSingular')
+        : t('features.groups.memberships.openAssignments.delegateDescription.seatPlural')}{' '}
+      {t('features.groups.memberships.openAssignments.delegateDescription.for')}{' '}
+      <GroupInlineLink group={assignment.targetGroup} fallback={targetGroupFallback} />.
+    </p>
+  );
+}
+
+function DelegateElectionHelp({
+  assignment,
+  fallbackGroupName,
+}: {
+  assignment: GroupOpenAssignment;
+  fallbackGroupName: string;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <p className="text-muted-foreground text-sm">
+      {t('features.groups.memberships.openAssignments.delegateElectionHelpBeforeGroup')}{' '}
+      <GroupInlineLink group={assignment.sourceGroup} fallback={fallbackGroupName} />{' '}
+      {t('features.groups.memberships.openAssignments.delegateElectionHelpAfterGroup')}
+    </p>
+  );
+}
+
+function RoleRenewalHelp({ assignment }: { assignment: GroupOpenAssignment }) {
+  const { t } = useTranslation();
+
+  return (
+    <p className="text-muted-foreground text-sm">
+      {t('features.groups.memberships.openAssignments.roleRenewalHelp', {
+        roleTitle: assignment.title,
+        defaultValue:
+          'Choose an upcoming or ongoing event where this role election should be created.',
+      })}
+    </p>
+  );
+}
+
+function getAssignmentSearchFlow(assignment: GroupOpenAssignment) {
+  return assignment.kind === 'role_renewal'
+    ? 'role-renewal-assignment-search'
+    : 'delegate-assignment-search';
+}
+
 export function OpenAssignmentsPanel({
   groupId,
   groupName,
@@ -244,18 +391,17 @@ export function OpenAssignmentsPanel({
   availableEvents,
   isLoading = false,
   isScheduling = false,
+  focusAssignmentId,
   onScheduleRoleRenewal,
   onScheduleDelegateElection,
   onScheduleProcessTask,
 }: OpenAssignmentsPanelProps) {
   const { t, i18n } = useTranslation();
   const [selectedEventIds, setSelectedEventIds] = useState<Record<string, string>>({});
-  const [delegateDialogAssignmentId, setDelegateDialogAssignmentId] = useState<string | null>(null);
-  const [delegateDialogEventId, setDelegateDialogEventId] = useState<string>('');
-  const [delegateDialogSearchQuery, setDelegateDialogSearchQuery] = useState('');
-  const [delegateDialogCorrelationId, setDelegateDialogCorrelationId] = useState<string | null>(
-    null
-  );
+  const [eventDialogAssignmentId, setEventDialogAssignmentId] = useState<string | null>(null);
+  const [eventDialogEventId, setEventDialogEventId] = useState<string>('');
+  const [eventDialogSearchQuery, setEventDialogSearchQuery] = useState('');
+  const [eventDialogCorrelationId, setEventDialogCorrelationId] = useState<string | null>(null);
   const [agendaPreviewAssignmentId, setAgendaPreviewAssignmentId] = useState<string | null>(null);
 
   const assignmentsWithProgress = useMemo(
@@ -268,13 +414,14 @@ export function OpenAssignmentsPanel({
     [assignments]
   );
 
-  const activeDelegateAssignment = useMemo(
+  const activeEventAssignment = useMemo(
     () =>
       assignments.find(
         assignment =>
-          assignment.kind === 'delegate_election' && assignment.id === delegateDialogAssignmentId
+          (assignment.kind === 'delegate_election' || assignment.kind === 'role_renewal') &&
+          assignment.id === eventDialogAssignmentId
       ) ?? null,
-    [assignments, delegateDialogAssignmentId]
+    [assignments, eventDialogAssignmentId]
   );
   const activeAgendaPreviewAssignment = useMemo(
     () =>
@@ -285,65 +432,85 @@ export function OpenAssignmentsPanel({
     [agendaPreviewAssignmentId, assignments]
   );
 
-  const filteredDelegateDialogEvents = useMemo(() => {
-    const normalizedQuery = delegateDialogSearchQuery.trim().toLowerCase();
+  const eventDialogAvailableEvents = useMemo(
+    () =>
+      activeEventAssignment
+        ? getEligibleEventsForAssignment(activeEventAssignment, groupId, availableEvents)
+        : [],
+    [activeEventAssignment, availableEvents, groupId]
+  );
+
+  const filteredEventDialogEvents = useMemo(() => {
+    const normalizedQuery = eventDialogSearchQuery.trim().toLowerCase();
     if (!normalizedQuery) {
-      return availableEvents;
+      return eventDialogAvailableEvents;
     }
 
-    return availableEvents.filter(event =>
+    return eventDialogAvailableEvents.filter(event =>
       [event.title].filter(Boolean).some(value => value?.toLowerCase().includes(normalizedQuery))
     );
-  }, [availableEvents, delegateDialogSearchQuery]);
+  }, [eventDialogAvailableEvents, eventDialogSearchQuery]);
 
-  const openDelegateDialog = (assignment: GroupOpenAssignment) => {
-    const correlationId = createElectionFlowCorrelationId('delegate-assignment-search');
-    setDelegateDialogAssignmentId(assignment.id);
-    setDelegateDialogEventId(getDefaultEventId(assignment, availableEvents, selectedEventIds));
-    setDelegateDialogSearchQuery('');
-    setDelegateDialogCorrelationId(correlationId);
+  const openEventDialog = (assignment: GroupOpenAssignment) => {
+    const flow = getAssignmentSearchFlow(assignment);
+    const correlationId = createElectionFlowCorrelationId(flow);
+    const eligibleEvents = getEligibleEventsForAssignment(assignment, groupId, availableEvents);
+    setEventDialogAssignmentId(assignment.id);
+    setEventDialogEventId(getDefaultEventId(assignment, eligibleEvents, selectedEventIds));
+    setEventDialogSearchQuery('');
+    setEventDialogCorrelationId(correlationId);
 
-    logElectionFlowClient('delegate-assignment-search', 'dialog-opened', {
+    logElectionFlowClient(flow, 'dialog-opened', {
       correlationId,
       assignmentId: assignment.id,
+      assignmentKind: assignment.kind,
       targetEventId: assignment.targetEvent?.id ?? null,
       targetEventTitle: assignment.targetEvent?.title ?? null,
       remainingSeatCount: getRemainingSeatCount(assignment),
     });
   };
 
-  const closeDelegateDialog = (open: boolean) => {
+  const closeEventDialog = (open: boolean) => {
     if (open) {
       return;
     }
 
-    setDelegateDialogAssignmentId(null);
-    setDelegateDialogEventId('');
-    setDelegateDialogSearchQuery('');
-    setDelegateDialogCorrelationId(null);
+    setEventDialogAssignmentId(null);
+    setEventDialogEventId('');
+    setEventDialogSearchQuery('');
+    setEventDialogCorrelationId(null);
   };
 
-  const handleCreateDelegateElection = async () => {
-    if (!activeDelegateAssignment || !delegateDialogEventId) {
+  const handleCreateAssignmentElection = async () => {
+    if (!activeEventAssignment || !eventDialogEventId) {
       return;
     }
 
-    logElectionFlowClient('delegate-assignment-search', 'create-clicked', {
-      correlationId: delegateDialogCorrelationId,
-      assignmentId: activeDelegateAssignment.id,
-      selectedEventId: delegateDialogEventId,
-      mode: normalizeDelegateElectionMode(
-        activeDelegateAssignment.targetEvent?.delegate_election_mode
-      ),
+    const flow = getAssignmentSearchFlow(activeEventAssignment);
+    const mode =
+      activeEventAssignment.kind === 'delegate_election'
+        ? normalizeDelegateElectionMode(activeEventAssignment.targetEvent?.delegate_election_mode)
+        : null;
+
+    logElectionFlowClient(flow, 'create-clicked', {
+      correlationId: eventDialogCorrelationId,
+      assignmentId: activeEventAssignment.id,
+      assignmentKind: activeEventAssignment.kind,
+      selectedEventId: eventDialogEventId,
+      mode,
     });
 
-    await onScheduleDelegateElection(
-      activeDelegateAssignment,
-      delegateDialogEventId,
-      normalizeDelegateElectionMode(activeDelegateAssignment.targetEvent?.delegate_election_mode)
-    );
+    if (activeEventAssignment.kind === 'delegate_election') {
+      await onScheduleDelegateElection(
+        activeEventAssignment,
+        eventDialogEventId,
+        normalizeDelegateElectionMode(activeEventAssignment.targetEvent?.delegate_election_mode)
+      );
+    } else {
+      await onScheduleRoleRenewal(activeEventAssignment, eventDialogEventId);
+    }
 
-    closeDelegateDialog(false);
+    closeEventDialog(false);
   };
 
   const isAmendmentProcessAssignment = (assignment: GroupOpenAssignment) =>
@@ -359,6 +526,10 @@ export function OpenAssignmentsPanel({
       cell: ({ row }) => {
         const { assignment, remainingSeatCount } = row.original;
         const dueAtLabel = formatDateTime(assignment.dueAt, i18n.language);
+        const delegateRatioInfo =
+          assignment.kind === 'delegate_election'
+            ? getDelegateMembersPerSeatInfo(assignment.targetEvent)
+            : null;
 
         return (
           <div className="space-y-2">
@@ -370,7 +541,11 @@ export function OpenAssignmentsPanel({
               )}
               <div className="min-w-0">
                 <p className="font-medium">{assignment.title}</p>
-                <p className="text-muted-foreground text-sm">{assignment.description}</p>
+                {assignment.kind === 'delegate_election' ? (
+                  <DelegateAssignmentDescription assignment={assignment} />
+                ) : (
+                  <p className="text-muted-foreground text-sm">{assignment.description}</p>
+                )}
               </div>
             </div>
 
@@ -400,6 +575,11 @@ export function OpenAssignmentsPanel({
                     normalizeDelegateElectionMode(assignment.targetEvent?.delegate_election_mode)
                   )}
                 </StatusBadge>
+                {delegateRatioInfo ? (
+                  <StatusBadge status="delegate-ratio" tone="neutral" className="font-normal">
+                    {t(delegateRatioInfo.translationKey, { count: delegateRatioInfo.count })}
+                  </StatusBadge>
+                ) : null}
               </div>
             ) : null}
 
@@ -498,6 +678,14 @@ export function OpenAssignmentsPanel({
                   {t('features.groups.memberships.openAssignments.showAgendaItems')}
                 </Button>
               ) : null}
+              {assignment.kind === 'delegate_election' && assignment.linkedEvent?.id ? (
+                <Button asChild variant="outline" className="w-full justify-center">
+                  <a href={`/event/${assignment.linkedEvent.id}`}>
+                    <Vote className="mr-2 h-4 w-4" />
+                    {t('features.groups.memberships.openAssignments.toScheduledElection')}
+                  </a>
+                </Button>
+              ) : null}
             </div>
           );
         }
@@ -523,22 +711,7 @@ export function OpenAssignmentsPanel({
               <Button asChild variant="outline" className="w-full justify-center">
                 <Link
                   to="/create/event"
-                  search={
-                    assignment.kind === 'process_task' && assignment.processTaskId
-                      ? buildCreateEventSearchFromProcessTask({
-                          task: {
-                            id: assignment.processTaskId,
-                            group_id: groupId,
-                            process_run_id: assignment.processRunId ?? null,
-                            step_run_id: assignment.stepRunId ?? null,
-                            due_at: assignment.dueAt ?? null,
-                            metadata: assignment.processTaskMetadata,
-                          },
-                          groupId,
-                          returnTo: `/group/${groupId}/memberships?tab=openAssignments`,
-                        })
-                      : { groupId }
-                  }
+                  search={buildCreateEventSearchForAssignment(assignment, groupId)}
                 >
                   <CalendarPlus2 className="mr-2 h-4 w-4" />
                   {t('features.groups.memberships.openAssignments.createEvent')}
@@ -557,24 +730,31 @@ export function OpenAssignmentsPanel({
           );
         }
 
-        if (assignment.kind === 'delegate_election') {
+        if (assignment.kind === 'delegate_election' || assignment.kind === 'role_renewal') {
+          const fallbackGroupName =
+            groupName || t('features.groups.memberships.openAssignments.thisGroup');
+          const searchLabel =
+            assignment.kind === 'delegate_election'
+              ? t('features.groups.memberships.openAssignments.searchDelegateElectionEvent')
+              : t('features.groups.memberships.openAssignments.searchRoleRenewalEvent');
+
           return (
             <div className="space-y-2">
-              <p className="text-muted-foreground text-sm">
-                {t('features.groups.memberships.openAssignments.delegateElectionHelp', {
-                  groupName:
-                    groupName || t('features.groups.memberships.openAssignments.thisGroup'),
-                  defaultValue:
-                    'Delegates must be elected at an upcoming or ongoing event for {{groupName}}.',
-                })}
-              </p>
+              {assignment.kind === 'delegate_election' ? (
+                <DelegateElectionHelp
+                  assignment={assignment}
+                  fallbackGroupName={fallbackGroupName}
+                />
+              ) : (
+                <RoleRenewalHelp assignment={assignment} />
+              )}
               <Button
                 className="w-full justify-center"
                 disabled={isScheduling}
-                onClick={() => openDelegateDialog(assignment)}
+                onClick={() => openEventDialog(assignment)}
               >
                 <Search className="mr-2 h-4 w-4" />
-                {t('features.groups.memberships.openAssignments.searchDelegateElectionEvent')}
+                {searchLabel}
               </Button>
             </div>
           );
@@ -621,22 +801,14 @@ export function OpenAssignmentsPanel({
                 <Button
                   className="w-full justify-center"
                   disabled={!selectedEventId || isScheduling}
-                  onClick={() =>
-                    void (assignment.kind === 'process_task'
-                      ? onScheduleProcessTask(assignment, selectedEventId)
-                      : onScheduleRoleRenewal(assignment, selectedEventId))
-                  }
+                  onClick={() => void onScheduleProcessTask(assignment, selectedEventId)}
                 >
                   <CalendarPlus2 className="mr-2 h-4 w-4" />
-                  {assignment.kind === 'process_task'
-                    ? assignment.processTaskType === 'implementation_evaluation'
-                      ? t(
-                          'features.groups.memberships.openAssignments.scheduleImplementationReview'
-                        )
-                      : assignment.processTaskType === 'support_confirmation'
-                        ? t('features.groups.memberships.openAssignments.scheduleConfirmation')
-                        : t('features.groups.memberships.openAssignments.attachToEvent')
-                    : t('features.groups.memberships.openAssignments.attachToEvent')}
+                  {assignment.processTaskType === 'implementation_evaluation'
+                    ? t('features.groups.memberships.openAssignments.scheduleImplementationReview')
+                    : assignment.processTaskType === 'support_confirmation'
+                      ? t('features.groups.memberships.openAssignments.scheduleConfirmation')
+                      : t('features.groups.memberships.openAssignments.attachToEvent')}
                 </Button>
               </div>
             </div>
@@ -663,6 +835,7 @@ export function OpenAssignmentsPanel({
       availableEvents={availableEvents}
       isLoading={isLoading}
       isScheduling={isScheduling}
+      focusAssignmentId={focusAssignmentId}
       onScheduleRoleRenewal={onScheduleRoleRenewal}
       onScheduleDelegateElection={onScheduleDelegateElection}
       onScheduleProcessTask={onScheduleProcessTask}
@@ -670,23 +843,23 @@ export function OpenAssignmentsPanel({
       i18n={i18n}
       selectedEventIds={selectedEventIds}
       setSelectedEventIds={setSelectedEventIds}
-      delegateDialogAssignmentId={delegateDialogAssignmentId}
-      setDelegateDialogAssignmentId={setDelegateDialogAssignmentId}
-      delegateDialogEventId={delegateDialogEventId}
-      setDelegateDialogEventId={setDelegateDialogEventId}
-      delegateDialogSearchQuery={delegateDialogSearchQuery}
-      setDelegateDialogSearchQuery={setDelegateDialogSearchQuery}
-      delegateDialogCorrelationId={delegateDialogCorrelationId}
-      setDelegateDialogCorrelationId={setDelegateDialogCorrelationId}
+      eventDialogAssignmentId={eventDialogAssignmentId}
+      setEventDialogAssignmentId={setEventDialogAssignmentId}
+      eventDialogEventId={eventDialogEventId}
+      setEventDialogEventId={setEventDialogEventId}
+      eventDialogSearchQuery={eventDialogSearchQuery}
+      setEventDialogSearchQuery={setEventDialogSearchQuery}
+      eventDialogCorrelationId={eventDialogCorrelationId}
+      setEventDialogCorrelationId={setEventDialogCorrelationId}
       agendaPreviewAssignmentId={agendaPreviewAssignmentId}
       setAgendaPreviewAssignmentId={setAgendaPreviewAssignmentId}
       assignmentsWithProgress={assignmentsWithProgress}
-      activeDelegateAssignment={activeDelegateAssignment}
+      activeEventAssignment={activeEventAssignment}
       activeAgendaPreviewAssignment={activeAgendaPreviewAssignment}
-      filteredDelegateDialogEvents={filteredDelegateDialogEvents}
-      openDelegateDialog={openDelegateDialog}
-      closeDelegateDialog={closeDelegateDialog}
-      handleCreateDelegateElection={handleCreateDelegateElection}
+      filteredEventDialogEvents={filteredEventDialogEvents}
+      openEventDialog={openEventDialog}
+      closeEventDialog={closeEventDialog}
+      handleCreateAssignmentElection={handleCreateAssignmentElection}
       isAmendmentProcessAssignment={isAmendmentProcessAssignment}
       assignmentColumns={assignmentColumns}
     />

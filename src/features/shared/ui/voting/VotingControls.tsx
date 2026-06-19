@@ -190,7 +190,7 @@ export function VotingResultBadge({
     <StatusBadge
       tone={tone}
       className={cn(
-        'max-w-full rounded-md px-2 py-0.5 font-mono text-xs font-bold tracking-wide uppercase',
+        'max-w-full rounded-md px-2 py-0.5 font-mono text-xs font-bold tracking-wide uppercase shadow-sm',
         className
       )}
       {...props}
@@ -217,7 +217,7 @@ export function VotingResultCompact({
   return (
     <span
       className={cn(
-        'flex max-w-full min-w-0 items-center font-mono text-xs font-medium',
+        'bg-muted/20 inline-flex max-w-full min-w-0 items-center rounded-md border px-2 py-1 font-mono text-xs font-medium',
         className
       )}
       title={typeof label === 'string' ? label : undefined}

@@ -87,7 +87,7 @@ export function StreetAreaPickerView({
     rotateMarkerIcon != null;
 
   return (
-    <section className="bg-card overflow-hidden rounded-lg border shadow-sm">
+    <section className="bg-card overflow-hidden rounded-lg border shadow-sm" data-swipe-lock>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
         <div className="flex items-center gap-2">
           <div className="bg-muted/40 flex size-9 items-center justify-center rounded-md border">

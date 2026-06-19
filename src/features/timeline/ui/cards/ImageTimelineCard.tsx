@@ -18,7 +18,7 @@ export interface ImageTimelineCardProps {
     comments?: number;
     authorName?: string;
     authorAvatar?: string;
-    sourceType?: 'user' | 'group' | 'event' | 'amendment' | 'blog';
+    sourceType?: 'user' | 'group' | 'event' | 'amendment' | 'blog' | 'statement';
     sourceName?: string;
     sourceId?: string;
     isLiked?: boolean;
@@ -27,6 +27,7 @@ export interface ImageTimelineCardProps {
   onComment?: () => void;
   onShare?: () => void;
   onImageClick?: () => void;
+  href?: string;
   className?: string;
 }
 
@@ -49,6 +50,7 @@ const SOURCE_LABELS: Record<string, string> = {
   event: 'Event Photo',
   amendment: 'Amendment Image',
   blog: 'Blog Image',
+  statement: 'Statement Image',
 };
 
 /**
@@ -62,10 +64,16 @@ const SOURCE_LABELS: Record<string, string> = {
  * - Like and comment counts
  * - Actions: Like, Comment, Share
  */
-export function ImageTimelineCard({ image, onImageClick, className }: ImageTimelineCardProps) {
+export function ImageTimelineCard({
+  image,
+  onImageClick,
+  href,
+  className,
+}: ImageTimelineCardProps) {
   const { t } = useTranslation();
   const sourceHref =
-    image.sourceType && image.sourceId ? `/${image.sourceType}/${image.sourceId}` : undefined;
+    href ??
+    (image.sourceType && image.sourceId ? `/${image.sourceType}/${image.sourceId}` : undefined);
 
   return (
     <TimelineCardBase contentType="image" className={className} href={sourceHref}>

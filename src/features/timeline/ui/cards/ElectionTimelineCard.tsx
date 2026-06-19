@@ -3,6 +3,7 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Award, Users, Calendar, Crown, Trophy } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
@@ -53,6 +54,7 @@ export interface ElectionTimelineCardProps {
   onNominate?: () => void;
   onViewCandidates?: () => void;
   onViewResults?: () => void;
+  href?: string;
   className?: string;
 }
 
@@ -104,6 +106,18 @@ function getInitials(name: string): string {
     .join('')
     .toUpperCase()
     .slice(0, 2);
+}
+
+function normalizePercent(percent: number | null | undefined) {
+  if (!Number.isFinite(percent ?? 0)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, percent ?? 0));
+}
+
+function formatCountPercent(count: number | null | undefined, percent: number | null | undefined) {
+  return `${Math.round(count ?? 0)} · ${normalizePercent(percent).toFixed(0)}%`;
 }
 
 /**
@@ -170,79 +184,128 @@ function CandidateAvatars({
   candidates,
   maxDisplay = 5,
   winnerId,
+  winnerName,
   isIndicationPhase,
 }: {
   candidates: ElectionCandidate[];
   maxDisplay?: number;
   winnerId?: string;
+  winnerName?: string;
   isIndicationPhase?: boolean;
 }) {
+  const { t } = useTranslation();
+  const [showIndicationResults, setShowIndicationResults] = useState(false);
   const displayCandidates = candidates.slice(0, maxDisplay);
   const remaining = candidates.length - maxDisplay;
 
-  // Check if we have indication data
-  const hasIndication = displayCandidates.some(c => c.indicationPercentage !== undefined);
-  const showBothResults = !isIndicationPhase && hasIndication;
+  const hasIndication = displayCandidates.some(
+    c => c.indicationCount !== undefined || c.indicationPercentage !== undefined
+  );
+  const hasFinalVotes = displayCandidates.some(
+    c => (c.voteCount ?? 0) > 0 || (c.votePercentage ?? 0) > 0
+  );
+  const canToggleIndicationResults = !isIndicationPhase && hasFinalVotes && hasIndication;
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="flex -space-x-2">
-        {displayCandidates.map(candidate => (
-          <div key={candidate.id} className="relative">
-            <Avatar
-              className={cn(
-                'border-background h-10 w-10 border-2',
-                candidate.id === winnerId &&
-                  featureThemeClassName('timelineElectionTimelineCardWarningRing')
-              )}
+    <div className="space-y-2">
+      {canToggleIndicationResults ? (
+        <div className="flex justify-end">
+          <BadgeControl asChild variant={showIndicationResults ? 'secondary' : 'outline'} size="xs">
+            <button
+              type="button"
+              onClick={event => {
+                event.preventDefault();
+                event.stopPropagation();
+                setShowIndicationResults(current => !current);
+              }}
             >
-              <AvatarImage src={candidate.avatarUrl} alt={candidate.name} />
-              <AvatarFallback
-                className={featureThemeClassName(
-                  'timelineElectionTimelineCardDangerBackgroundBeta'
-                )}
-              >
-                {getInitials(candidate.name)}
-              </AvatarFallback>
-            </Avatar>
-            {candidate.id === winnerId && (
-              <Crown
-                className={featureThemeClassName('timelineElectionTimelineCardWarningNeutralIcon')}
-              />
+              {showIndicationResults
+                ? t('features.events.agenda.hideIndicationResults', 'Hide indication results')
+                : t('features.events.agenda.showIndicationResults', 'Show indication results')}
+            </button>
+          </BadgeControl>
+        </div>
+      ) : null}
+      {displayCandidates.map(candidate => {
+        const visiblePercentage =
+          isIndicationPhase && candidate.indicationPercentage !== undefined
+            ? candidate.indicationPercentage
+            : (candidate.votePercentage ?? candidate.indicationPercentage ?? 0);
+        const visibleCount =
+          isIndicationPhase && candidate.indicationCount !== undefined
+            ? candidate.indicationCount
+            : (candidate.voteCount ?? candidate.indicationCount);
+        const isWinner =
+          (winnerId !== undefined && candidate.id === winnerId) ||
+          (winnerId === undefined && winnerName !== undefined && candidate.name === winnerName);
+
+        return (
+          <div
+            key={candidate.id}
+            className={cn(
+              'bg-card space-y-2 rounded-lg border px-3 py-2 shadow-sm transition-[background-color,border-color,box-shadow]',
+              isWinner && featureThemeClassName('timelineElectionTimelineCardWarningRing')
             )}
-          </div>
-        ))}
-        {remaining > 0 && (
-          <div className={featureThemeClassName('timelineElectionTimelineCardNeutralRoundIcon')}>
-            +{remaining}
-          </div>
-        )}
-      </div>
-      {/* Candidate names and vote percentages */}
-      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
-        {displayCandidates.slice(0, 3).map(candidate => (
-          <span key={candidate.id} className="flex items-center gap-1">
-            <span className="text-muted-foreground">{candidate.name}</span>
-            {/* Show indication or actual percentage */}
-            {isIndicationPhase && candidate.indicationPercentage !== undefined ? (
-              <span className={featureThemeClassName('discussionsCommentTreeInfoText')}>
-                {candidate.indicationPercentage}% *
+            data-election-candidate-row="true"
+            data-winner={isWinner ? 'true' : undefined}
+          >
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10 shrink-0 rounded-md">
+                <AvatarImage src={candidate.avatarUrl} alt={candidate.name} />
+                <AvatarFallback
+                  className={cn(
+                    'rounded-md text-xs font-semibold',
+                    featureThemeClassName('timelineElectionTimelineCardDangerBackgroundBeta')
+                  )}
+                >
+                  {getInitials(candidate.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs">
+                  <span className="truncate font-medium">{candidate.name}</span>
+                  {isWinner ? (
+                    <BadgeControl tone="warning" size="tiny" className="gap-1">
+                      <Crown className="h-3 w-3" />
+                      {t('features.timeline.cards.election.winnerAnnounced')}
+                    </BadgeControl>
+                  ) : null}
+                </div>
+              </div>
+              <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                {formatCountPercent(visibleCount, visiblePercentage)}
               </span>
-            ) : showBothResults && candidate.indicationPercentage !== undefined ? (
-              <span className="text-muted-foreground">
-                <span className={featureThemeClassName('notificationNotificationInfoTextAlpha')}>
-                  {candidate.indicationPercentage}%
+            </div>
+            <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
+              <div
+                className={cn('h-full rounded-full', isWinner ? 'bg-brand' : 'bg-brand/70')}
+                style={{ width: `${Math.max(0, Math.min(100, visiblePercentage))}%` }}
+              />
+            </div>
+            {canToggleIndicationResults && showIndicationResults ? (
+              <div className="grid grid-cols-[2.25rem_1fr_auto] items-center gap-2">
+                <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
+                  {t('features.events.agenda.indicationShort', 'IND')}
                 </span>
-                {' → '}
-                <span className="text-foreground font-medium">{candidate.votePercentage}%</span>
-              </span>
-            ) : candidate.votePercentage !== undefined ? (
-              <span className="font-medium">{candidate.votePercentage}%</span>
+                <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
+                  <div
+                    className="bg-brand/35 h-full rounded-full"
+                    style={{ width: `${normalizePercent(candidate.indicationPercentage)}%` }}
+                  />
+                </div>
+                <span className="text-muted-foreground text-xs tabular-nums">
+                  {formatCountPercent(candidate.indicationCount, candidate.indicationPercentage)}
+                </span>
+              </div>
             ) : null}
-          </span>
-        ))}
-        {candidates.length > 3 && <span className="text-muted-foreground">...</span>}
-      </div>
+          </div>
+        );
+      })}
+      {remaining > 0 ? (
+        <div className="text-muted-foreground bg-muted/20 rounded-md border px-3 py-2 text-center text-xs">
+          +{remaining}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -264,11 +327,11 @@ function WinnerDisplay({
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col items-center gap-2 py-2">
+    <div className="bg-card rounded-lg border p-4 text-center shadow-sm">
       <div className="text-muted-foreground text-sm font-medium">
-        🎉 {t('features.timeline.cards.election.winnerAnnounced')}
+        {t('features.timeline.cards.election.winnerAnnounced')}
       </div>
-      <div className="relative">
+      <div className="relative mx-auto mt-2 w-fit">
         <Avatar className={featureThemeClassName('timelineElectionTimelineCardWarningBorder')}>
           <AvatarImage src={avatarUrl} alt={name} />
           <AvatarFallback
@@ -281,7 +344,7 @@ function WinnerDisplay({
           className={featureThemeClassName('timelineElectionTimelineCardWarningNeutralIconAlpha')}
         />
       </div>
-      <div className="text-center">
+      <div className="mt-2">
         <div className="font-semibold">{name}</div>
         <div className="text-muted-foreground text-sm">{roleName}</div>
         {votePercentage !== undefined && (
@@ -312,6 +375,7 @@ export function ElectionTimelineCard({
   onNominate,
   onViewCandidates,
   onViewResults,
+  href,
   className,
 }: ElectionTimelineCardProps) {
   const { t } = useTranslation();
@@ -326,6 +390,7 @@ export function ElectionTimelineCard({
       ? `/event/${election.agendaEventId}/agenda/${election.agendaItemId}`
       : undefined;
   const fallbackHref = election.groupId ? `/group/${election.groupId}` : undefined;
+  const electionHref = href ?? agendaHref ?? fallbackHref;
   // Get status label
   const getStatusLabel = () => {
     switch (election.status) {
@@ -356,15 +421,11 @@ export function ElectionTimelineCard({
   const dateText = getDateText();
 
   return (
-    <TimelineCardBase
-      contentType="election"
-      className={className}
-      href={agendaHref || fallbackHref}
-    >
+    <TimelineCardBase contentType="election" className={className} href={electionHref}>
       <TimelineCardHeader
         contentType="election"
         title={election.title}
-        href={agendaHref || fallbackHref}
+        href={electionHref}
         subtitle={election.groupName}
         subtitleHref={election.groupId ? `/group/${election.groupId}` : undefined}
         badge={
@@ -397,22 +458,21 @@ export function ElectionTimelineCard({
         </div>
 
         {/* Winner display or candidate avatars */}
-        {isWinnerAnnounced && election.winnerName ? (
+        {election.candidates.length > 0 ? (
+          <CandidateAvatars
+            candidates={election.candidates}
+            winnerId={isWinnerAnnounced ? election.winnerId : undefined}
+            winnerName={isWinnerAnnounced ? election.winnerName : undefined}
+            isIndicationPhase={election.isIndicationPhase}
+          />
+        ) : isWinnerAnnounced && election.winnerName ? (
           <WinnerDisplay
             name={election.winnerName}
             avatarUrl={election.winnerAvatarUrl}
             votePercentage={election.winnerVotePercentage}
             roleName={election.roleName}
           />
-        ) : (
-          election.candidates.length > 0 && (
-            <CandidateAvatars
-              candidates={election.candidates}
-              winnerId={isWinnerAnnounced ? election.winnerId : undefined}
-              isIndicationPhase={election.isIndicationPhase}
-            />
-          )
-        )}
+        ) : null}
 
         <div className="mt-auto space-y-3">
           {/* Phase timeline */}
@@ -503,7 +563,7 @@ export function ElectionTimelineCard({
         )}
         <div onClick={e => e.preventDefault()}>
           <ShareButton
-            url={agendaHref || fallbackHref || `/election/${election.id}`}
+            url={electionHref || `/election/${election.id}`}
             title={election.title}
             description={election.roleName}
             variant="outline"

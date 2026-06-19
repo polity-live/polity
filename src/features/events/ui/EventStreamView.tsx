@@ -23,7 +23,10 @@ import {
 } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { AgendaNavigationControls } from '@/features/agendas/ui/AgendaNavigationControls';
-import { AgendaElectionSection } from '@/features/agendas/ui/AgendaElectionSection';
+import {
+  AgendaElectionSection,
+  isAutoAssignedRoleElection,
+} from '@/features/agendas/ui/AgendaElectionSection';
 import { AgendaVoteSection } from '@/features/agendas/ui/AgendaVoteSection';
 import type { CandidatesByElectionRow } from '@/zero/elections/queries';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
@@ -249,6 +252,11 @@ export function EventStreamView({
           finalSelections={finalSelections}
           offlineTallies={election.offline_tallies ?? []}
           attendanceMode={attendanceMode}
+          delegateTargetEventId={
+            (election as { delegate_assignment_meta?: { targetEventId?: string } | null })
+              .delegate_assignment_meta?.targetEventId
+          }
+          showRoleAssignedMessage={isAutoAssignedRoleElection(election)}
           userHasVoted={userHasElectionVoted}
           userSelectedCandidateIds={userSelectedCandidateIds}
           electionStatus={election.status ?? 'indicative'}

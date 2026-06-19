@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { importGovDataCsvResource, searchGovDataDatasets } from '../../api/govdataClient';
@@ -17,7 +17,15 @@ const editorMocks = vi.hoisted(() => ({
 vi.mock('@/features/shared/ui/ui/dialog', () => ({
   Dialog: ({ children, open }: { children: ReactNode; open: boolean }) =>
     open ? <div>{children}</div> : null,
-  DialogContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DialogContent: ({
+    children,
+    className,
+    ...props
+  }: HTMLAttributes<HTMLDivElement> & { children: ReactNode }) => (
+    <div {...props} data-slot="dialog-content" className={className}>
+      {children}
+    </div>
+  ),
   DialogDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
   DialogFooter: ({ children }: { children: ReactNode }) => <footer>{children}</footer>,
   DialogHeader: ({ children }: { children: ReactNode }) => <header>{children}</header>,
@@ -142,6 +150,22 @@ vi.mock('sonner', () => ({
   toast: { error: vi.fn() },
 }));
 
+function expectFullscreenChartDialog() {
+  const dialogContent = document.querySelector('[data-slot="dialog-content"]');
+  if (!dialogContent) {
+    throw new Error('Expected chart dialog content to be rendered');
+  }
+
+  const dialogClasses = Array.from(dialogContent.classList);
+  expect(dialogClasses).toContain('h-dvh');
+  expect(dialogClasses).toContain('w-screen');
+  expect(dialogClasses).toContain('max-w-none');
+  expect(dialogClasses).toContain('rounded-none');
+  expect(dialogClasses).toContain('border-0');
+  expect(dialogClasses).toContain('p-0');
+  expect(dialogClasses).toContain('shadow-none');
+}
+
 describe('ChartDialog GovData flow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -202,6 +226,7 @@ describe('ChartDialog GovData flow', () => {
       openChartDialog();
     });
 
+    expectFullscreenChartDialog();
     fireEvent.click(screen.getByRole('tab', { name: 'Official data source' }));
     expect(screen.getByText('Select official data')).toBeTruthy();
     expect(screen.queryByTestId('chart-points')).toBeNull();

@@ -103,7 +103,11 @@ export function PlateEditorView({
             />
           )}
 
-          <EditorContainer variant={containerVariant} className={containerClassName}>
+          <EditorContainer
+            variant={containerVariant}
+            className={containerClassName}
+            data-swipe-lock
+          >
             <Editor
               id={id}
               variant={editorVariant}

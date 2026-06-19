@@ -46,10 +46,11 @@ export interface StatementTimelineCardProps {
   onReact?: (reaction: 'support' | 'oppose' | 'interested') => void;
   onComment?: () => void;
   onShare?: () => void;
+  href?: string;
   className?: string;
 }
 
-export function StatementTimelineCard({ statement, className }: StatementTimelineCardProps) {
+export function StatementTimelineCard({ statement, href, className }: StatementTimelineCardProps) {
   const hasMedia = !!(statement.imageUrl || statement.videoUrl);
   const rawOptions = statement.surveyOptions ?? [];
   // Normalize: options can be strings or { label, voteCount } objects
@@ -61,6 +62,7 @@ export function StatementTimelineCard({ statement, className }: StatementTimelin
   const score = (statement.supportCount ?? 0) - (statement.opposeCount ?? 0);
 
   const statementStyle = CONTENT_TYPE_CONFIG.statement;
+  const statementHref = href ?? `/statement/${statement.id}`;
 
   // Title: survey question or first 100 chars of content
   const displayTitle = hasSurvey
@@ -91,15 +93,11 @@ export function StatementTimelineCard({ statement, className }: StatementTimelin
   ];
 
   return (
-    <TimelineCardBase
-      contentType="statement"
-      className={className}
-      href={`/statement/${statement.id}`}
-    >
+    <TimelineCardBase contentType="statement" className={className} href={statementHref}>
       <TimelineCardHeader
         contentType="statement"
         title={displayTitle}
-        href={`/statement/${statement.id}`}
+        href={statementHref}
         subtitle={statement.groupName ?? statement.authorName}
         subtitleHref={statement.groupId ? `/group/${statement.groupId}` : undefined}
         badge={
@@ -218,7 +216,7 @@ export function StatementTimelineCard({ statement, className }: StatementTimelin
         {/* Share Button */}
         <div className="ml-auto" onClick={e => e.preventDefault()}>
           <ShareButton
-            url={`/statement/${statement.id}`}
+            url={statementHref}
             title={statement.authorName}
             description={statement.content}
             variant="outline"

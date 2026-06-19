@@ -5,6 +5,8 @@ import { EntitySearchBar } from '@/features/shared/ui/typeahead';
 import { FeedToolbar } from '@/features/shared/ui/feed';
 import { Tabs, TabsContent } from '@/features/shared/ui/ui/tabs';
 import type { Notification } from '../types/notification.types';
+import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
+import type { NotificationTab } from '../hooks/useNotificationsPage';
 import { NotificationHeader } from './NotificationHeader';
 import { NotificationsList } from './NotificationsList';
 import { NotificationTabs } from './NotificationTabs';
@@ -20,6 +22,9 @@ interface NotificationBuckets {
 export interface NotificationsPageViewProps {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
+  selectedTab: NotificationTab;
+  onSelectedTabChange: (tab: NotificationTab) => void;
+  tabSwipeHandlers: SwipeNavigationHandlers;
   unreadCount: number;
   searchFilteredNotifications: NotificationBuckets;
   paginatedNotifications: NotificationBuckets;
@@ -47,6 +52,9 @@ export interface NotificationsPageViewProps {
 export function NotificationsPageView({
   searchQuery,
   onSearchQueryChange,
+  selectedTab,
+  onSelectedTabChange,
+  tabSwipeHandlers,
   unreadCount,
   searchFilteredNotifications,
   paginatedNotifications,
@@ -59,8 +67,12 @@ export function NotificationsPageView({
   onDeleteNotification,
 }: NotificationsPageViewProps) {
   return (
-    <div>
-      <Tabs defaultValue="all" className="w-full">
+    <div style={{ touchAction: 'pan-y' }} {...tabSwipeHandlers}>
+      <Tabs
+        value={selectedTab}
+        onValueChange={value => onSelectedTabChange(value as NotificationTab)}
+        className="w-full"
+      >
         <FeedToolbar>
           <NotificationHeader unreadCount={unreadCount} onMarkAllAsRead={onMarkAllAsRead} />
 

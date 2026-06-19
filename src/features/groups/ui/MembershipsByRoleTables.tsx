@@ -3,7 +3,10 @@ import type { CSSProperties } from 'react';
 import { ArrowUpDown, Eye, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { getMembershipDisplayRoles } from '@/features/groups/logic/membershipDisplayRoles';
+import {
+  getMembershipDisplayRoles,
+  hasElectedDisplayRole,
+} from '@/features/groups/logic/membershipDisplayRoles';
 import { getMembershipProvenanceDisplayLabel } from '@/features/groups/logic/membershipComposition';
 import type {
   ParticipationLike,
@@ -286,6 +289,14 @@ export function MembershipsByRoleTables<
               const effectiveReadOnly = Boolean(
                 (membership as TParticipation & { effectiveReadOnly?: boolean }).effectiveReadOnly
               );
+              const isElectedRoleAssignment =
+                section.kind === 'role' &&
+                section.role &&
+                (section.role.assignment_mode === 'elected' ||
+                  hasElectedDisplayRole(membership, section.role.id));
+              const disableRemove = Boolean(
+                membership.source === 'derived' || effectiveReadOnly || isElectedRoleAssignment
+              );
 
               return (
                 <div className="flex justify-end gap-2">
@@ -309,12 +320,10 @@ export function MembershipsByRoleTables<
                       icon={<Trash2 className="h-4 w-4" />}
                       variant="ghost"
                       destructive
-                      disabled={membership.source === 'derived' || effectiveReadOnly}
+                      disabled={disableRemove}
                       onClick={() => onRemoveRole(membership, section.role.id)}
                       tooltip={
-                        membership.source === 'derived' || effectiveReadOnly
-                          ? resolvedDerivedRemoveTooltip
-                          : resolvedRemoveActionLabel
+                        disableRemove ? resolvedDerivedRemoveTooltip : resolvedRemoveActionLabel
                       }
                     />
                   ) : null}

@@ -7,13 +7,15 @@ import { GroupMembershipsContentContainer } from '@/features/groups/ui/GroupMemb
 interface GroupMembershipsPageContainerProps {
   groupId: string;
   defaultTab?: MembershipTab;
+  focusAssignmentId?: string;
 }
 
 export function GroupMembershipsPageContainer({
   groupId,
   defaultTab,
+  focusAssignmentId,
 }: GroupMembershipsPageContainerProps) {
-  const controller = useGroupMembershipsPageController({ groupId, defaultTab });
+  const controller = useGroupMembershipsPageController({ groupId, defaultTab, focusAssignmentId });
 
   if (controller.isLoading) {
     return <GroupMembershipsLoadingView />;
@@ -29,6 +31,7 @@ export function GroupMembershipsPageContainer({
       canManageMembers={controller.canManageMembers}
       canManageAssignments={controller.canManageAssignments}
       defaultTab={controller.defaultTab}
+      focusAssignmentId={controller.focusAssignmentId}
     />
   );
 }
@@ -36,6 +39,7 @@ export function GroupMembershipsPageContainer({
 export function useGroupMembershipsPageController({
   groupId,
   defaultTab,
+  focusAssignmentId,
 }: GroupMembershipsPageContainerProps) {
   const { can, isMember, isLoading } = usePermissions({ groupId });
   const canManageMembers = can('manage', 'groupMemberships');
@@ -45,6 +49,7 @@ export function useGroupMembershipsPageController({
   return {
     groupId,
     defaultTab,
+    focusAssignmentId,
     isLoading,
     canAccess: isMember() && (canManageMembers || canManageAssignments),
     canManageMembers,

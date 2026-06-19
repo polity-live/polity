@@ -6,6 +6,7 @@ import { DeleteConversationDialog } from './DeleteConversationDialog';
 import { GroupMembersDialog } from './GroupMembersDialog';
 import { MessageView } from './MessageView';
 import { NewConversationDialog } from './NewConversationDialog';
+import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
 export interface MessagesPageViewProps {
   isLoading: boolean;
   currentUserId?: string;
@@ -24,6 +25,7 @@ export interface MessagesPageViewProps {
   onSearchChange: (query: string) => void;
   conversationFilter: ConversationFilter;
   onConversationFilterChange: (filter: ConversationFilter) => void;
+  conversationSwipeHandlers: SwipeNavigationHandlers;
   existingConversationUserIds: string[];
   userSearchDialogOpen: boolean;
   onUserSearchDialogOpenChange: (open: boolean) => void;
@@ -62,6 +64,7 @@ export function MessagesPageView({
   onSearchChange,
   conversationFilter,
   onConversationFilterChange,
+  conversationSwipeHandlers,
   existingConversationUserIds,
   userSearchDialogOpen,
   onUserSearchDialogOpenChange,
@@ -124,6 +127,7 @@ export function MessagesPageView({
           onSendMessage={onSendMessage}
           onAcceptConversation={onAcceptConversation}
           onRejectConversation={onRejectConversation}
+          swipeHandlers={conversationSwipeHandlers}
         />
       </FeedSplitLayout>
 

@@ -6,14 +6,18 @@ import { useUserNotifications } from './useUserNotifications';
 import { useNotificationActions as useZeroNotificationActions } from '@/zero/notifications/useNotificationActions';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { Notification } from '../types/notification.types';
+import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation';
 
 const EMPTY_NOTIFICATIONS: Notification[] = [];
 const PAGE_SIZE = 30;
+export type NotificationTab = 'all' | 'unread' | 'read' | 'personal' | 'entity';
+const NOTIFICATION_TAB_ORDER: NotificationTab[] = ['all', 'unread', 'read', 'personal', 'entity'];
 
 export function useNotificationsPage() {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [selectedTab, setSelectedTab] = useState<NotificationTab>('all');
 
   const { data, isLoading, userId } = useUserNotifications();
   const { markRead, markEntityNotificationRead } = useZeroNotificationActions();
@@ -83,11 +87,31 @@ export function useNotificationsPage() {
   });
 
   const isInitialLoading = isLoading && notifications.length === 0;
+  const selectedTabIndex = NOTIFICATION_TAB_ORDER.indexOf(selectedTab);
+  const { handlers: tabSwipeHandlers } = useSwipeNavigation({
+    canSwipePrev: selectedTabIndex > 0,
+    canSwipeNext: selectedTabIndex >= 0 && selectedTabIndex < NOTIFICATION_TAB_ORDER.length - 1,
+    onSwipePrev: () => {
+      const previousTab = NOTIFICATION_TAB_ORDER[selectedTabIndex - 1];
+      if (previousTab) {
+        setSelectedTab(previousTab);
+      }
+    },
+    onSwipeNext: () => {
+      const nextTab = NOTIFICATION_TAB_ORDER[selectedTabIndex + 1];
+      if (nextTab) {
+        setSelectedTab(nextTab);
+      }
+    },
+  });
 
   return {
     t,
     searchQuery,
     setSearchQuery,
+    selectedTab,
+    setSelectedTab,
+    tabSwipeHandlers,
     filteredNotifications,
     searchFilteredNotifications,
     paginatedNotifications,

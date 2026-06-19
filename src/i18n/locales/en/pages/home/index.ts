@@ -94,6 +94,17 @@ export const homePageTranslations = {
           'Keep participants oriented with a chronological timeline of what changed and what comes next.',
         ],
       },
+      votesElections: {
+        eyebrow: 'Votes and elections',
+        title: 'Run votes, candidacies, and results in one decision workspace.',
+        description:
+          'Polity brings active votes and elections together with deadlines, voting status, election modes, and result summaries so members know when to act and what was decided.',
+        points: [
+          'Make votes visible with clear deadlines, quorums, and ballot options.',
+          'Keep candidacies, roles, and election rounds beside the right group or event context.',
+          'Publish results with turnout, majorities, and traceability right after the decision.',
+        ],
+      },
       social: {
         eyebrow: 'Social workspace and AI',
         title: 'Bring discussion, coordination, and assisted drafting into the same flow.',
@@ -139,6 +150,28 @@ export const homePageTranslations = {
           meta: '74% support',
         },
       },
+    },
+    voteElectionPreview: {
+      title: 'Decision overview',
+      subtitle: 'Active votes and elections with status.',
+      badge: 'Live',
+      voteTitle: 'Final climate budget vote',
+      voteMeta: 'Closes today at 18:00',
+      voteChoices: ['Yes|138|62', 'No|54|24', 'Abstain|31|14'],
+      electionTitle: 'Committee speaker election',
+      electionMeta: '3 candidacies confirmed',
+      electionCandidates: [
+        'Maya Schneider|Speaker|84|44',
+        'Jonas Weber|Deputy|61|32',
+        'Aylin Kaya|Board seat|45|24',
+      ],
+      statusTitle: 'Decision status',
+      metrics: ['223 votes recorded', '71% turnout', 'Quorum reached'],
+      checklist: [
+        'Voting window open',
+        'Named results prepared',
+        'Election record generated automatically',
+      ],
     },
     amendmentText: {
       title: 'Sample amendment text',

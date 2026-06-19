@@ -170,6 +170,20 @@ export const eventQueries = {
         .related('participant_roles', q => q.related('role'))
   ),
 
+  currentUserActiveParticipationsWithEvents: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    zql.event_participant
+      .where('user_id', userID)
+      .where('status', 'IN', WIKI_ACTIVE_EVENT_PARTICIPANT_STATUSES)
+      .whereExists('event', event => applyEventAccess(event, userID))
+      .related('event', q =>
+        q
+          .related('creator')
+          .related('group')
+          .related('event_hashtags', hq => hq.related('hashtag'))
+      )
+      .related('participant_roles', q => q.related('role'))
+  ),
+
   // ── New queries (extracted from hooks.ts) ─────────────────────────
 
   /** Deep event by ID with creator, group→memberships→user, participants→user+role→action_rights, delegates→user, agenda_items→election, roles */
@@ -318,6 +332,7 @@ export const eventQueries = {
               .related('electors', elector =>
                 applyElectionElectorOrManagerQueryAccess(elector, userID)
               )
+              .related('role')
           )
           .related('votes', q =>
             q
@@ -435,7 +450,7 @@ export const eventQueries = {
     ({ args: { eventId }, ctx: { userID } }) =>
       applyAgendaItemQueryAccess(zql.agenda_item, userID)
         .where('event_id', eventId)
-        .related('election', q => q.related('candidates'))
+        .related('election', q => q.related('candidates').related('role'))
         .related('amendment')
   ),
 
@@ -561,6 +576,7 @@ export const eventQueries = {
           .related('electors', e =>
             applyElectionElectorOrManagerQueryAccess(e, userID).related('user')
           )
+          .related('role')
       )
       .related('votes', q =>
         q
@@ -850,6 +866,7 @@ export const eventQueries = {
         .where('user_id', userId)
         .where('user_id', userID)
         .related('event', q => q.related('group'))
+        .related('participant_roles', q => q.related('role'))
   ),
 
   /** Active participants for events where the current user participates or is creator. */

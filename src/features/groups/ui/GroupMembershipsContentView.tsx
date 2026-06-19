@@ -21,6 +21,7 @@ import { EntitySearchBar } from '@/features/shared/ui/typeahead';
 import {
   ParticipationRoleFilterBar,
   filterParticipationsByRole,
+  getParticipationDisplayRoles,
 } from '@/features/shared/ui/participation';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -51,6 +52,7 @@ export interface GroupMembershipsContentViewProps {
   editRoleForm: any;
   editRoleOpen: any;
   existingMemberIds: any;
+  focusAssignmentId?: string;
   group: any;
   groupId: any;
   groupName: any;
@@ -145,6 +147,7 @@ export function GroupMembershipsContentView({
   editRoleForm,
   editRoleOpen,
   existingMemberIds,
+  focusAssignmentId,
   group,
   groupId,
   groupName,
@@ -219,9 +222,28 @@ export function GroupMembershipsContentView({
     activeTab !== 'composition' &&
     activeTab !== 'rightsAlignment' &&
     activeTab !== 'openAssignments';
+  const displayMemberRoles = useMemo(() => {
+    const roleById = new Map<string, any>();
+    const addRole = (role: any) => {
+      if (role?.id && !roleById.has(role.id)) {
+        roleById.set(role.id, role);
+      }
+    };
+
+    memberRoles.forEach(addRole);
+    [...activeMembers, ...membershipsByRoleMembers].forEach((membership: any) =>
+      getParticipationDisplayRoles(membership).forEach(addRole)
+    );
+
+    return [...roleById.values()].sort(
+      (left, right) =>
+        (right.sort_order ?? -1) - (left.sort_order ?? -1) ||
+        (left.name ?? '').localeCompare(right.name ?? '', undefined, { sensitivity: 'base' })
+    );
+  }, [activeMembers, memberRoles, membershipsByRoleMembers]);
   const roleFilterRoles = useMemo(
-    () => (activeTab === 'guests' ? [...guestRoles] : [...memberRoles]),
-    [activeTab, guestRoles, memberRoles]
+    () => (activeTab === 'guests' ? [...guestRoles] : [...displayMemberRoles]),
+    [activeTab, displayMemberRoles, guestRoles]
   );
   const roleFilterRoleIds = useMemo(
     () => new Set(roleFilterRoles.map((role: any) => role.id).filter(Boolean)),
@@ -568,7 +590,7 @@ export function GroupMembershipsContentView({
         membershipsByRoleContent={
           <div className="space-y-4">
             <MembershipsByRoleTables
-              roles={[...memberRoles]}
+              roles={[...displayMemberRoles]}
               members={filteredMembershipsByRoleMembers}
               onOpenRightsDialog={handleOpenMemberRights}
               onRemoveRole={handleRemoveRoleFromMembershipTypeView}
@@ -601,6 +623,7 @@ export function GroupMembershipsContentView({
             availableEvents={availableEvents}
             isLoading={assignmentsAreLoading}
             isScheduling={assignmentsAreScheduling}
+            focusAssignmentId={focusAssignmentId}
             onScheduleRoleRenewal={scheduleRoleRenewal}
             onScheduleDelegateElection={scheduleDelegateElection}
             onScheduleProcessTask={scheduleProcessTask}
@@ -635,7 +658,13 @@ export function GroupMembershipsContentView({
               onDelete={roleId => groupRoleHook.actions.delete(roleId)}
               onAssignHolder={groupRoleHook.actions.openAssignHolder}
               onViewHistory={groupRoleHook.actions.openHistory}
-              onCreateElection={roleId => groupRoleHook.actions.createElection(roleId)}
+              onOpenElectionAssignment={roleId =>
+                navigate({
+                  to: '/group/$id/memberships',
+                  params: { id: groupId },
+                  search: { tab: 'openAssignments', assignmentId: `role:${roleId}` },
+                })
+              }
               addRoleButton={
                 <AddRoleDialog
                   isOpen={addRoleOpen}

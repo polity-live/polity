@@ -156,6 +156,7 @@ export const groupsTranslations = {
       linkedEventLabel: 'Angehängt',
       noEventLinked: 'Noch keine Veranstaltung verknüpft',
       completedBanner: 'Vollständig geplant oder abgeschlossen',
+      toScheduledElection: 'Zur geplanten Wahl',
       showAgendaItems: 'Neue Agenda items anzeigen',
       thisGroup: 'diese Gruppe',
       noEligibleEventsForGroup:
@@ -163,7 +164,21 @@ export const groupsTranslations = {
       createEvent: 'Veranstaltung erstellen',
       delegateElectionHelp:
         'Die Delegierten müssen auf einem anstehenden oder laufenden Event von {{groupName}} gewählt werden.',
+      delegateElectionHelpBeforeGroup:
+        'Die Delegierten müssen auf einem anstehenden oder laufenden Event von',
+      delegateElectionHelpAfterGroup: 'gewählt werden.',
+      delegateDescription: {
+        sourceGroupFallback: 'Diese Untergruppe',
+        targetGroupFallback: 'die Zielgruppe',
+        hasCurrently: 'hat aktuell',
+        seatSingular: 'Delegiertensitz',
+        seatPlural: 'Delegiertensitze',
+        for: 'für',
+      },
       searchDelegateElectionEvent: 'Event für Delegiertenwahl suchen',
+      searchRoleRenewalEvent: 'Event für Rollenwahl suchen',
+      roleRenewalHelp:
+        'Wähle ein anstehendes oder laufendes Event aus, auf dem diese Rollenwahl angelegt werden soll.',
       selectEventLabel: 'An welche Veranstaltung soll der Auftrag gehängt werden?',
       selectEventPlaceholder: 'Veranstaltung auswählen',
       eventFallback: 'Veranstaltung',
@@ -188,6 +203,17 @@ export const groupsTranslations = {
           'Wähle ein anstehendes oder laufendes Event von {{groupName}} aus, auf dem die Delegiertenwahl angelegt werden soll.',
         remainingSeats: '{{count}} Delegierte zu wählen',
         targetEvent: 'Ziel-Event der Delegiertenwahl:',
+        searchLabel: 'Suche anstehende oder laufende Events',
+        searchPlaceholder: 'Suche nach Titel',
+        emptySearch:
+          'Für die aktuelle Suche wurden keine anstehenden oder laufenden Events gefunden.',
+        cancel: 'Abbrechen',
+        create: 'Wahl erstellen',
+      },
+      roleRenewalDialog: {
+        title: 'Wahl-Event für Rollenauftrag suchen',
+        description:
+          'Wähle ein anstehendes oder laufendes Event aus, auf dem diese Rollenwahl angelegt werden soll.',
         searchLabel: 'Suche anstehende oder laufende Events',
         searchPlaceholder: 'Suche nach Titel',
         emptySearch:

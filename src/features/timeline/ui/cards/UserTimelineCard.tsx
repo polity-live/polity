@@ -27,6 +27,7 @@ export interface UserTimelineCardProps {
   onFollow?: () => void;
   onMessage?: () => void;
   actions?: React.ReactNode;
+  href?: string;
   className?: string;
 }
 import { UserTimelineCardView } from './UserTimelineCardView';
@@ -35,6 +36,7 @@ export function UserTimelineCard({
   onFollow,
   onMessage,
   actions,
+  href,
   className,
 }: UserTimelineCardProps) {
   const { t } = useTranslation();
@@ -56,6 +58,7 @@ export function UserTimelineCard({
       onFollow={onFollow}
       onMessage={onMessage}
       actions={actions}
+      href={href}
       className={className}
       t={t}
       subscription={subscription}

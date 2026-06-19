@@ -18,6 +18,7 @@ interface PaymentTimelineCardItem {
   groupId?: string | null;
   groupName?: string | null;
   counterpartyLabel?: string | null;
+  href?: string | null;
 }
 
 interface AgendaItemTimelineCardItem {
@@ -34,6 +35,7 @@ interface AgendaItemTimelineCardItem {
   durationMinutes?: number | null;
   eventId?: string | null;
   eventName?: string | null;
+  href?: string | null;
 }
 
 export type TimelineCardItem =
@@ -51,6 +53,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
   switch (item.type) {
     case 'group':
       cardProps = {
+        href: item.href,
         group: {
           id: item.groupId ?? item.id,
           name: item.title,
@@ -65,6 +68,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
       break;
     case 'event':
       cardProps = {
+        href: item.href,
         event: {
           id: item.eventId ?? item.id,
           title: item.title,
@@ -88,6 +92,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
       break;
     case 'amendment':
       cardProps = {
+        href: item.href,
         amendment: {
           id: item.id,
           title: item.title,
@@ -103,6 +108,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
       break;
     case 'agenda_item':
       cardProps = {
+        href: item.href,
         agendaItem: {
           id: item.id,
           title: item.title,
@@ -120,6 +126,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
       break;
     case 'blog':
       cardProps = {
+        href: item.href,
         blog: {
           id: item.id,
           title: item.title,
@@ -137,6 +144,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
       break;
     case 'statement':
       cardProps = {
+        href: item.href,
         statement: {
           id: item.id,
           content: item.description || item.title,
@@ -158,6 +166,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
       break;
     case 'todo':
       cardProps = {
+        href: item.href,
         todo: {
           id: item.id,
           title: item.title,
@@ -172,6 +181,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
       break;
     case 'payment':
       cardProps = {
+        href: item.href,
         payment: {
           id: item.id,
           label: item.title,
@@ -188,6 +198,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
       break;
     case 'user':
       cardProps = {
+        href: item.href,
         user: {
           id: item.id,
           name: item.title,
@@ -209,6 +220,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
       const supportPercentage = totalVotes > 0 ? Math.round((supportCount / totalVotes) * 100) : 0;
 
       cardProps = {
+        href: item.href,
         vote: {
           id: item.id,
           amendmentId: item.id,
@@ -227,6 +239,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
     }
     case 'election':
       cardProps = {
+        href: item.href,
         election: {
           id: item.id,
           title: item.title,
@@ -244,14 +257,18 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
       break;
     case 'video':
       cardProps = {
+        href: item.href,
         video: {
           id: item.id,
           title: item.title,
           thumbnailUrl: item.imageUrl,
+          videoUrl: item.videoUrl,
           views: item.stats?.views,
           likes: item.stats?.reactions,
           authorName: item.authorName,
           authorAvatar: item.authorAvatar,
+          sourceType: item.sourceType,
+          sourceId: item.sourceId,
           sourceName: item.groupName,
         },
       };
@@ -263,6 +280,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
       }
 
       cardProps = {
+        href: item.href,
         image: {
           id: item.id,
           imageUrl: item.imageUrl,
@@ -272,6 +290,8 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
           comments: item.stats?.comments,
           authorName: item.authorName,
           authorAvatar: item.authorAvatar,
+          sourceType: item.sourceType,
+          sourceId: item.sourceId,
           sourceName: item.groupName,
         },
       };

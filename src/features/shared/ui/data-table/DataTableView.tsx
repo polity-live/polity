@@ -43,6 +43,7 @@ interface DataTableViewProps<TData> {
   filter?: DataTableFilter;
   toolbar?: ReactNode;
   rowTestId?: string | ((row: TData) => string | undefined);
+  getRowClassName?: (row: TData) => string | undefined;
   filterPlaceholder: string;
   surface?: SurfaceMode;
   className?: string;
@@ -66,6 +67,7 @@ export function DataTableView<TData>({
   filter,
   toolbar,
   rowTestId,
+  getRowClassName,
   filterPlaceholder,
   surface = 'auto',
   className,
@@ -147,13 +149,14 @@ export function DataTableView<TData>({
               rows.map((row: any) => {
                 const testId =
                   typeof rowTestId === 'function' ? rowTestId(row.original) : rowTestId;
+                const rowClassName = getRowClassName?.(row.original);
 
                 return (
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && 'selected'}
                     data-testid={testId}
-                    className="civic-stagger-item"
+                    className={cn('civic-stagger-item', rowClassName)}
                     style={
                       {
                         '--civic-stagger-index': row.index % 12,

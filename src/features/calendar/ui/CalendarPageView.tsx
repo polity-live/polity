@@ -8,6 +8,7 @@ import { CalendarViewContainer } from '@/features/events/ui/calendar/CalendarVie
 import type { CalendarEvent, CalendarViewMode } from '../types/calendar.types';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { CalendarGroupFilter } from './CalendarGroupFilter';
+import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
 
 export interface CalendarPageViewProps {
   isLoading: boolean;
@@ -34,6 +35,7 @@ export interface CalendarPageViewProps {
   filteredEvents: CalendarEvent[];
   onEventSelect: (event: CalendarEvent) => void;
   onCreateEventRange: (range: { start: Date; end: Date }) => void;
+  swipeHandlers: SwipeNavigationHandlers;
 }
 
 export function CalendarPageView({
@@ -61,13 +63,14 @@ export function CalendarPageView({
   filteredEvents,
   onEventSelect,
   onCreateEventRange,
+  swipeHandlers,
 }: CalendarPageViewProps) {
   if (isLoading) {
     return <LoadingState label={loadingLabel} className="h-[400px]" />;
   }
 
   return (
-    <>
+    <div style={{ touchAction: 'pan-y' }} {...swipeHandlers}>
       <CalendarHeader
         viewMode={viewMode}
         setViewMode={setViewMode}
@@ -110,6 +113,6 @@ export function CalendarPageView({
         onEventSelect={onEventSelect}
         onCreateEventRange={onCreateEventRange}
       />
-    </>
+    </div>
   );
 }

@@ -2,8 +2,14 @@
 
 import { useCalendarPage } from './hooks/useCalendarPage';
 import { CalendarPageShellView } from './CalendarPageShellView';
+import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation';
 
 export default function CalendarPage() {
   const cp = useCalendarPage();
-  return <CalendarPageShellView cp={cp} />;
+  const { handlers: periodSwipeHandlers } = useSwipeNavigation({
+    onSwipePrev: cp.goToPrevious,
+    onSwipeNext: cp.goToNext,
+  });
+
+  return <CalendarPageShellView cp={cp} swipeHandlers={periodSwipeHandlers} />;
 }

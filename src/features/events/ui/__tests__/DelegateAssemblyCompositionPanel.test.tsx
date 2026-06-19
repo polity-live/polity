@@ -57,6 +57,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => {
     'features.events.participants.composition.columns.share': 'Share',
     'features.events.participants.composition.remainder.unscheduled': 'Unscheduled',
     'features.events.participants.composition.remainder.notYetElected': 'Not yet elected',
+    'features.delegates.ratio.oneMember': '1 delegate per 1 member',
   };
 
   return {
@@ -74,6 +75,11 @@ vi.mock('@/features/shared/hooks/use-translation', () => {
 
 vi.mock('@/zero/events', () => ({
   useDelegateAssemblyCompositionData: () => ({
+    event: {
+      event_type: 'delegate_assembly',
+      delegate_seat_allocation_type: 'members_per_delegate',
+      main_group_delegate_allocation_mode: '1',
+    },
     allocations: [
       {
         group_id: 'group-b1',
@@ -130,6 +136,7 @@ describe('DelegateAssemblyCompositionPanel', () => {
     expect(screen.getByText('Scheduled delegates')).toBeTruthy();
     expect(screen.getByText('Elected delegates')).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByText('1 delegate per 1 member')).toBeTruthy();
     expect(screen.getAllByTestId('composition-chart')).toHaveLength(3);
     expect(screen.getAllByText('Absolute')).toHaveLength(3);
     expect(screen.getAllByText('Share')).toHaveLength(3);

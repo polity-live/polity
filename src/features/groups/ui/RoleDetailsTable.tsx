@@ -48,6 +48,7 @@ interface RoleDetailsTableProps<TRole extends RoleRow> {
   onAssignHolder?: (role: TRole) => void;
   onViewHistory?: (role: TRole) => void;
   onCreateElection?: (roleId: string) => void;
+  onOpenElectionAssignment?: (roleId: string) => void;
   addRoleButton?: React.ReactNode;
   scope?: 'group' | 'event';
 }
@@ -59,6 +60,7 @@ export function RoleDetailsTable<TRole extends RoleRow>({
   onAssignHolder,
   onViewHistory,
   onCreateElection,
+  onOpenElectionAssignment,
   addRoleButton,
   scope = 'group',
 }: RoleDetailsTableProps<TRole>) {
@@ -228,6 +230,7 @@ export function RoleDetailsTable<TRole extends RoleRow>({
         const createElectionLabel = translateText('generated.inline.0728_create_election_678ef240');
         const editLabel = translateText('generated.inline.0729_edit_5301648d');
         const deleteLabel = translateText('generated.inline.0537_delete_f6fdbe48');
+        const electionAction = scope === 'group' ? onOpenElectionAssignment : onCreateElection;
 
         return (
           <div className="flex flex-wrap justify-end gap-2">
@@ -254,12 +257,12 @@ export function RoleDetailsTable<TRole extends RoleRow>({
                   }
                 />
               ) : null
-            ) : onCreateElection ? (
+            ) : electionAction ? (
               <TableActionIconButton
                 label={createElectionLabel}
                 icon={<Vote className="h-4 w-4" />}
                 variant="outline"
-                onClick={() => onCreateElection(role.id)}
+                onClick={() => electionAction(role.id)}
               />
             ) : null}
             <TableActionIconButton

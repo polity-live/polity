@@ -32,6 +32,7 @@ export {
   createIndicativeVoterParticipationSchema,
   selectIndicativeChoiceDecisionSchema,
   createIndicativeChoiceDecisionSchema,
+  replaceIndicativeVoteSchema,
   selectFinalVoterParticipationSchema,
   createFinalVoterParticipationSchema,
   selectFinalChoiceDecisionSchema,

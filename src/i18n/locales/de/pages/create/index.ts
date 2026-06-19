@@ -557,6 +557,15 @@ export const createPageTranslations = {
     amendmentPlaceholder: 'Nach einem Antrag suchen',
     positionOptional: 'Wahlrolle (Optional)',
     positionPlaceholder: 'Nach einer Wahlrolle suchen',
+    assignmentLoading: 'Der verlinkte Auftrag wird noch geladen. Bitte versuche es gleich erneut.',
+    assignmentNotFound: 'Der verlinkte Auftrag konnte nicht gefunden werden.',
+    assignmentLookupFailed:
+      'Der verlinkte Auftrag konnte nicht geladen werden. Bitte starte den Flow erneut aus dem Aufträge-Tab.',
+    assignmentLabel: 'Auftrag',
+    roleRenewalAssignmentNotice:
+      'Diese Rollenwahl wird aus dem offenen Auftrag für {{roleTitle}} erstellt.',
+    roleRenewalRoleNotice:
+      'Die Gewinner dieser Wahl werden automatisch der Rolle {{roleTitle}} zugeordnet.',
     noAdditionalConfig: 'Keine zusätzliche Konfiguration für diesen Typ',
     reviewBadge: 'Tagesordnungspunkt',
     typeLabel: 'Typ',

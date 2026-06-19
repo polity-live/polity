@@ -64,7 +64,7 @@ export function GeoAddressMapView({
   }
 
   return (
-    <div className="bg-muted/20 overflow-hidden rounded-xl border shadow-sm">
+    <div className="bg-muted/20 overflow-hidden rounded-xl border shadow-sm" data-swipe-lock>
       <div className="relative h-72 w-full">
         <MapContainer
           center={position}

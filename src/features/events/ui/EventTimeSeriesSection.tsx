@@ -37,7 +37,9 @@ interface EventTimeSeriesSectionProps {
   schedulingWindowMessage?: string | null;
   validationMessage?: string | null;
   minDate?: string;
+  minTime?: string;
   maxDate?: string;
+  maxTime?: string;
 }
 
 function buildDateTimeLabel(date: string, time: string, fallback: string) {
@@ -66,7 +68,9 @@ export function EventTimeSeriesSection({
   schedulingWindowMessage,
   validationMessage,
   minDate,
+  minTime,
   maxDate,
+  maxTime,
 }: EventTimeSeriesSectionProps) {
   const { t } = useTranslation();
   const recurrenceRule =
@@ -148,7 +152,9 @@ export function EventTimeSeriesSection({
           endTime={endTime}
           onChange={onDateTimeChange}
           minDate={minDate}
+          minTime={minTime}
           maxDate={maxDate}
+          maxTime={maxTime}
         />
       </div>
 

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { ChartRenderer, CHART_PALETTE } from '@/features/charts/ui/ChartRenderer';
+import { getDelegateMembersPerSeatInfo } from '@/features/delegates/logic/delegateRatio';
 import {
   buildDelegateAssemblyCompositionSections,
   type DelegateAssemblyCompositionSection,
@@ -24,8 +25,9 @@ export function DelegateAssemblyCompositionPanel({
   eventId,
 }: DelegateAssemblyCompositionPanelProps) {
   const { t } = useTranslation();
-  const { allocations, delegates, scheduledElections, isLoading } =
+  const { event, allocations, delegates, scheduledElections, isLoading } =
     useDelegateAssemblyCompositionData(eventId);
+  const delegateRatioInfo = useMemo(() => getDelegateMembersPerSeatInfo(event), [event]);
   const sections = useMemo(
     () =>
       buildDelegateAssemblyCompositionSections({
@@ -47,6 +49,11 @@ export function DelegateAssemblyCompositionPanel({
         <p className="text-muted-foreground text-sm">
           {t('features.events.participants.composition.description')}
         </p>
+        {delegateRatioInfo ? (
+          <p className="text-foreground mt-1 text-sm font-medium">
+            {t(delegateRatioInfo.translationKey, { count: delegateRatioInfo.count })}
+          </p>
+        ) : null}
       </div>
 
       {isLoading ? (

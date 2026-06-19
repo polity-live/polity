@@ -9,6 +9,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 import { AssistantMessageView } from './AssistantMessageView';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
+import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
 
 interface MessageViewProps {
   conversation?: Conversation;
@@ -27,6 +28,7 @@ interface MessageViewProps {
   onSendMessage: (content: string, contextJson: string) => Promise<boolean>;
   onAcceptConversation: (conversation: Conversation) => void;
   onRejectConversation: (conversation: Conversation) => void;
+  swipeHandlers?: SwipeNavigationHandlers;
   className?: string;
 }
 
@@ -47,6 +49,7 @@ export function MessageView({
   onSendMessage,
   onAcceptConversation,
   onRejectConversation,
+  swipeHandlers,
   className,
 }: MessageViewProps) {
   const { t } = useTranslation();
@@ -67,6 +70,7 @@ export function MessageView({
         onRenameConversation={onRenameConversation}
         onAcceptConversation={onAcceptConversation}
         onRejectConversation={onRejectConversation}
+        swipeHandlers={swipeHandlers}
         className={className}
       />
     );
@@ -79,6 +83,8 @@ export function MessageView({
         !conversation && 'hidden md:flex',
         className
       )}
+      style={{ touchAction: 'pan-y' }}
+      {...swipeHandlers}
     >
       {conversation ? (
         <div className="flex h-full min-h-0 flex-col">

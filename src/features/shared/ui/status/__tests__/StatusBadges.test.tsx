@@ -3,7 +3,13 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { CountBadge, EntityBadge, StatusBadge, VisibilityBadge } from '../StatusBadges';
+import {
+  BadgeControl,
+  CountBadge,
+  EntityBadge,
+  StatusBadge,
+  VisibilityBadge,
+} from '../StatusBadges';
 import { RightBadge } from '../RightVisuals';
 
 describe('StatusBadges', () => {
@@ -30,6 +36,32 @@ describe('StatusBadges', () => {
     render(<EntityBadge entityType="blog">Blog</EntityBadge>);
 
     expect(screen.getByText('Blog').className).toContain('--entity-blog-bg');
+  });
+
+  it('keeps BadgeControl tone hovers on their token colors', () => {
+    render(
+      <div>
+        <BadgeControl tone="warning">Hybrid</BadgeControl>
+        <BadgeControl tone="election">Listenwahl</BadgeControl>
+        <BadgeControl tone="event">Target event</BadgeControl>
+      </div>
+    );
+
+    const hybridBadge = screen.getByText('Hybrid');
+    const electionBadge = screen.getByText('Listenwahl');
+    const eventBadge = screen.getByText('Target event');
+
+    expect(hybridBadge.className).toContain('hover:bg-[var(--badge-warning-bg)]');
+    expect(hybridBadge.className).toContain('hover:text-[var(--badge-warning-fg)]');
+    expect(hybridBadge.className).not.toContain('hover:bg-primary');
+
+    expect(electionBadge.className).toContain('hover:bg-[var(--badge-accent-bg)]');
+    expect(electionBadge.className).toContain('hover:text-[var(--badge-accent-fg)]');
+    expect(electionBadge.className).not.toContain('hover:bg-primary');
+
+    expect(eventBadge.className).toContain('hover:bg-[var(--entity-event-bg)]');
+    expect(eventBadge.className).toContain('hover:text-[var(--entity-event-fg)]');
+    expect(eventBadge.className).not.toContain('--badge-event');
   });
 
   it('keeps gradient right badges readable on hover like right filters', () => {

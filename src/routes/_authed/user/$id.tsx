@@ -3,6 +3,7 @@ import { EntityVisibilityGuard } from '@/features/auth/EntityVisibilityGuard';
 import { useEntityRouteAccess } from '@/features/auth/hooks/useEntityRouteAccess';
 import { useAuth } from '@/providers/auth-provider';
 import { useZeroReady } from '@/providers/zero-provider';
+import { useUserRouteFamilyPreloads } from '@/zero/preloads';
 
 export const Route = createFileRoute('/_authed/user/$id')({
   component: UserLayout,
@@ -12,6 +13,7 @@ function UserLayout() {
   const { id } = Route.useParams();
   const { user } = useAuth();
   const zeroReady = useZeroReady();
+  useUserRouteFamilyPreloads(id, user?.id === id);
   const { data, isLoading, error } = useEntityRouteAccess({
     entityType: 'user',
     entityId: id,

@@ -37,11 +37,20 @@ export interface NamedBallotResultGroup {
   offlineAggregatedCount: number;
 }
 
+export interface NamedBallotTotalOptionSummary {
+  id: string;
+  label: string;
+  namedCount: number;
+  offlineCount: number;
+  totalCount: number;
+}
+
 export interface NamedBallotResultsModel {
   phase: NamedBallotResultsPhase;
   isClosed: boolean;
   groupedBySourceGroup: boolean;
   groups: NamedBallotResultGroup[];
+  totalOptionSummaries: NamedBallotTotalOptionSummary[];
   totalEligibleCount: number;
   totalRecordedCount: number;
   totalOfflineAggregatedCount: number;
@@ -86,6 +95,12 @@ interface VoteParticipationLike {
     | null;
 }
 
+interface VoteOfflineTallyLike {
+  choice_id?: string | null;
+  phase?: string | null;
+  count?: number | null;
+}
+
 interface ElectionParticipationLike {
   elector_id?: string | null;
   elector?: {
@@ -97,6 +112,12 @@ interface ElectionParticipationLike {
         candidate?: { id: string } | null;
       }[]
     | null;
+}
+
+interface ElectionOfflineTallyLike {
+  candidate_id?: string | null;
+  phase?: string | null;
+  count?: number | null;
 }
 
 interface VoteLike {
@@ -116,6 +137,7 @@ interface VoteLike {
     | null;
   indicative_participations?: readonly VoteParticipationLike[] | null;
   final_participations?: readonly VoteParticipationLike[] | null;
+  offline_tallies?: readonly VoteOfflineTallyLike[] | null;
 }
 
 interface ElectionLike {
@@ -136,6 +158,7 @@ interface ElectionLike {
     | null;
   indicative_participations?: readonly ElectionParticipationLike[] | null;
   final_participations?: readonly ElectionParticipationLike[] | null;
+  offline_tallies?: readonly ElectionOfflineTallyLike[] | null;
 }
 
 function resolveResultsPhase(status?: string | null): {
@@ -252,6 +275,54 @@ function finalizeGroups(
     });
 }
 
+function buildTotalOptionSummaries(args: {
+  options: readonly NamedBallotOption[];
+  groups: readonly NamedBallotResultGroup[];
+  offlineCountsByOptionId: Map<string, number>;
+}): NamedBallotTotalOptionSummary[] {
+  return args.options
+    .map(option => {
+      const namedCount = args.groups.reduce((sum, group) => {
+        const groupSummary = group.optionSummaries.find(summary => summary.id === option.id);
+        return sum + (groupSummary?.count ?? 0);
+      }, 0);
+      const offlineCount = args.offlineCountsByOptionId.get(option.id) ?? 0;
+      const totalCount = namedCount + offlineCount;
+
+      return {
+        id: option.id,
+        label: option.label,
+        namedCount,
+        offlineCount,
+        totalCount,
+      };
+    })
+    .filter(summary => summary.totalCount > 0);
+}
+
+function buildOfflineCountsByOptionId<T extends { phase?: string | null; count?: number | null }>(
+  tallies: readonly T[],
+  phase: NamedBallotResultsPhase,
+  getOptionId: (tally: T) => string | null | undefined
+) {
+  const counts = new Map<string, number>();
+
+  for (const tally of tallies) {
+    if (tally.phase !== phase) {
+      continue;
+    }
+
+    const optionId = getOptionId(tally);
+    if (!optionId) {
+      continue;
+    }
+
+    counts.set(optionId, (counts.get(optionId) ?? 0) + (tally.count ?? 0));
+  }
+
+  return counts;
+}
+
 function buildResultsModel(args: {
   status?: string | null;
   options: readonly NamedBallotOption[];
@@ -259,6 +330,7 @@ function buildResultsModel(args: {
   confirmedOfflineParticipants: readonly OfflineParticipantLike[];
   groupedBySourceGroup: boolean;
   selectionsByUserId: Map<string, string[]>;
+  offlineCountsByOptionId: Map<string, number>;
 }): NamedBallotResultsModel {
   const { phase, isClosed } = resolveResultsPhase(args.status);
   const groups = new Map<string, NamedBallotResultGroup>();
@@ -339,6 +411,11 @@ function buildResultsModel(args: {
     isClosed,
     groupedBySourceGroup: args.groupedBySourceGroup,
     groups: finalizedGroups,
+    totalOptionSummaries: buildTotalOptionSummaries({
+      options: args.options,
+      groups: finalizedGroups,
+      offlineCountsByOptionId: args.offlineCountsByOptionId,
+    }),
     totalEligibleCount: finalizedGroups.reduce((sum, group) => sum + group.eligibleCount, 0),
     totalRecordedCount: finalizedGroups.reduce((sum, group) => sum + group.recordedCount, 0),
     totalOfflineAggregatedCount: finalizedGroups.reduce(
@@ -393,6 +470,11 @@ export function buildNamedVoteResultsModel(args: {
     confirmedOfflineParticipants: args.confirmedOfflineParticipants,
     groupedBySourceGroup: args.groupedBySourceGroup,
     selectionsByUserId,
+    offlineCountsByOptionId: buildOfflineCountsByOptionId(
+      args.vote.offline_tallies ?? [],
+      phase,
+      tally => tally.choice_id
+    ),
   });
 }
 
@@ -447,5 +529,10 @@ export function buildNamedElectionResultsModel(args: {
     confirmedOfflineParticipants: args.confirmedOfflineParticipants,
     groupedBySourceGroup: args.groupedBySourceGroup,
     selectionsByUserId,
+    offlineCountsByOptionId: buildOfflineCountsByOptionId(
+      args.election.offline_tallies ?? [],
+      phase,
+      tally => tally.candidate_id
+    ),
   });
 }

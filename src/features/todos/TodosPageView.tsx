@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { CheckSquare, Plus } from 'lucide-react';
+import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
 export interface TodosPageViewProps {
   t: any;
   user: any;
@@ -38,6 +39,7 @@ export interface TodosPageViewProps {
   statusCounts: any;
   handleToggleComplete: any;
   handleTodoClick: any;
+  tabSwipeHandlers: SwipeNavigationHandlers;
 }
 
 export function TodosPageView({
@@ -67,6 +69,7 @@ export function TodosPageView({
   statusCounts,
   handleToggleComplete,
   handleTodoClick,
+  tabSwipeHandlers,
 }: TodosPageViewProps) {
   if (!user) {
     return (
@@ -77,7 +80,7 @@ export function TodosPageView({
   }
 
   return (
-    <div>
+    <div style={{ touchAction: 'pan-y' }} {...tabSwipeHandlers}>
       <TodosHeader viewMode={viewMode} setViewMode={setViewMode} />
 
       <TodosFilters

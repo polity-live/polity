@@ -5,6 +5,7 @@ import { BadgeControl } from '@/features/shared/ui/status';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Video, Play, Eye, User } from 'lucide-react';
 import { Dialog, DialogHeader, DialogTitle } from '@/features/shared/ui/ui/dialog';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import {
@@ -24,7 +25,7 @@ export interface VideoTimelineCardProps {
     likes?: number;
     authorName?: string;
     authorAvatar?: string;
-    sourceType?: 'amendment' | 'user' | 'group' | 'event' | 'blog';
+    sourceType?: 'amendment' | 'user' | 'group' | 'event' | 'blog' | 'statement';
     sourceName?: string;
     sourceId?: string;
     videoUrl?: string;
@@ -72,6 +73,8 @@ const SOURCE_LABELS: Record<string, string> = {
   user: 'User Video',
   group: 'Group Video',
   event: 'Event Recording',
+  blog: 'Blog Video',
+  statement: 'Statement Video',
 };
 
 export interface VideoTimelineCardViewProps {
@@ -83,6 +86,7 @@ export interface VideoTimelineCardViewProps {
   setPlayerOpen: any;
   sourceHref: any;
   amendmentHref: any;
+  targetHref: any;
 }
 
 export function VideoTimelineCardView({
@@ -92,10 +96,10 @@ export function VideoTimelineCardView({
   t,
   playerOpen,
   setPlayerOpen,
-  amendmentHref,
+  targetHref,
 }: VideoTimelineCardViewProps) {
   return (
-    <TimelineCardBase contentType="video" className={className} href={amendmentHref}>
+    <TimelineCardBase contentType="video" className={className} href={targetHref}>
       {/* Video Thumbnail */}
       <div
         className="group bg-muted relative aspect-video shrink-0 cursor-pointer"
@@ -153,7 +157,19 @@ export function VideoTimelineCardView({
 
       <TimelineCardContent>
         {/* Title */}
-        <h3 className="mb-2 line-clamp-2 text-sm font-semibold">{video.title}</h3>
+        <h3 className="mb-2 line-clamp-2 text-sm font-semibold">
+          {targetHref ? (
+            <SmartLink
+              href={targetHref}
+              onClick={event => event.stopPropagation()}
+              className="hover:underline"
+            >
+              {video.title}
+            </SmartLink>
+          ) : (
+            video.title
+          )}
+        </h3>
 
         <div className="mt-auto space-y-3">
           {/* Author Info */}
@@ -211,7 +227,7 @@ export function VideoTimelineCardView({
         />
         <div onClick={e => e.preventDefault()}>
           <ShareButton
-            url={amendmentHref || `/video/${video.id}`}
+            url={targetHref || `/video/${video.id}`}
             title={video.title}
             description={video.sourceName || ''}
             variant="outline"

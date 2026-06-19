@@ -11,6 +11,7 @@ import { useConversationSelection } from './useConversationSelection';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { Conversation } from '../types/message.types';
 import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
+import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation';
 
 export function useMessagesPage() {
   const { t } = useTranslation();
@@ -81,6 +82,32 @@ export function useMessagesPage() {
   const selectedConversationUserOnline = selectedConversation
     ? (conversationOnlineStatus[selectedConversation.id] ?? false)
     : false;
+  const selectedConversationIndex = useMemo(
+    () =>
+      filteredConversations.findIndex(conversation => conversation.id === selectedConversationId),
+    [filteredConversations, selectedConversationId]
+  );
+
+  const selectConversationAtOffset = useCallback(
+    (offset: number) => {
+      const targetConversation = filteredConversations[selectedConversationIndex + offset];
+      if (targetConversation) {
+        setSelectedConversationId(targetConversation.id);
+      }
+    },
+    [filteredConversations, selectedConversationIndex, setSelectedConversationId]
+  );
+
+  const { handlers: conversationSwipeHandlers } = useSwipeNavigation({
+    enabled: Boolean(selectedConversationId),
+    disabled: userSearchDialogOpen || memberListDialogOpen || deleteDialogOpen,
+    canSwipePrev: selectedConversationIndex > 0,
+    canSwipeNext:
+      selectedConversationIndex >= 0 &&
+      selectedConversationIndex < filteredConversations.length - 1,
+    onSwipePrev: () => selectConversationAtOffset(-1),
+    onSwipeNext: () => selectConversationAtOffset(1),
+  });
 
   // Existing direct conversation user IDs (for new conversation dialog)
   const existingConversationUserIds = useMemo(() => {
@@ -352,6 +379,7 @@ export function useMessagesPage() {
     setSearchQuery,
     conversationFilter,
     setConversationFilter,
+    conversationSwipeHandlers,
     existingConversationUserIds,
 
     // Dialog state

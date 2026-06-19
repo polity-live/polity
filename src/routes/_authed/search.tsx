@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { SearchPage } from '@/features/search/SearchPage';
+import { useSearchPreloads } from '@/zero/preloads';
 
 const searchSchema = z.object({
   q: z.string().optional().catch(undefined),
@@ -16,5 +17,12 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute('/_authed/search')({
   validateSearch: search => searchSchema.parse(search),
-  component: SearchPage,
+  component: SearchRoute,
 });
+
+function SearchRoute() {
+  const search = Route.useSearch();
+  useSearchPreloads(search);
+
+  return <SearchPage />;
+}

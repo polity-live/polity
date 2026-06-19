@@ -19,9 +19,13 @@ interface HookProps {
   entries: Entry[];
   tallies: Tally[];
   maxTotalVotes?: number | null;
+  maxPerEntryVotes?: number | null;
 }
 
-interface SubmitArgs { password: string; counts: Record<string, number> }
+interface SubmitArgs {
+  password: string;
+  counts: Record<string, number>;
+}
 
 const getTallyEntryId = (tally: Tally) => tally.id;
 const getTallyCount = (tally: Tally) => tally.count;
@@ -32,6 +36,7 @@ function buildProps(overrides: Partial<HookProps> = {}): HookProps {
     entries: [{ id: 'accept' }, { id: 'reject' }],
     tallies: [{ id: 'accept', count: 2 }],
     maxTotalVotes: null,
+    maxPerEntryVotes: null,
     ...overrides,
   };
 }
@@ -138,6 +143,7 @@ describe('useOfflineTallyDialogController', () => {
     });
 
     expect(result.current.totalVotes).toBe(4);
+    expect(result.current.isOverTotalLimit).toBe(true);
     expect(result.current.isOverLimit).toBe(true);
 
     await act(async () => {
@@ -151,5 +157,42 @@ describe('useOfflineTallyDialogController', () => {
         reject: 0,
       },
     });
+  });
+
+  it('flags entries over the per-entry limit', () => {
+    const { result } = renderController(buildProps({ maxTotalVotes: 12, maxPerEntryVotes: 3 }));
+
+    act(() => {
+      result.current.onDraftValueChange('accept', '4');
+      result.current.onDraftValueChange('reject', '3');
+    });
+
+    expect(result.current.totalVotes).toBe(7);
+    expect(result.current.isOverTotalLimit).toBe(false);
+    expect(result.current.isOverEntryLimit).toBe(true);
+    expect(result.current.isOverLimit).toBe(true);
+    expect(result.current.overLimitEntryIds).toEqual(['accept']);
+  });
+
+  it('allows entries at the per-entry limit when the total is within the cap', () => {
+    const { result } = renderController(
+      buildProps({
+        entries: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }],
+        tallies: [
+          { id: 'a', count: 3 },
+          { id: 'b', count: 3 },
+          { id: 'c', count: 3 },
+          { id: 'd', count: 3 },
+        ],
+        maxTotalVotes: 12,
+        maxPerEntryVotes: 3,
+      })
+    );
+
+    expect(result.current.totalVotes).toBe(12);
+    expect(result.current.isOverTotalLimit).toBe(false);
+    expect(result.current.isOverEntryLimit).toBe(false);
+    expect(result.current.isOverLimit).toBe(false);
+    expect(result.current.overLimitEntryIds).toEqual([]);
   });
 });

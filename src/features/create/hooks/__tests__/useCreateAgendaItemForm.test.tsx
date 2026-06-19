@@ -1,10 +1,11 @@
 /* @vitest-environment jsdom */
 
-import { renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCreateAgendaItemForm } from '../useCreateAgendaItemForm';
 import type { CreateFormFieldDescriptor } from '../../types/create-form.types';
 
+let searchParams: Record<string, unknown> = {};
 let events: {
   id: string;
   title: string;
@@ -13,14 +14,58 @@ let events: {
 }[] = [];
 let participations: { event_id: string; status: string | null }[] = [];
 let activeGroupIds = new Set<string>();
+let sourceAllocations: unknown[] = [];
+let sourceGroupRoles: {
+  id: string;
+  title?: string | null;
+  name?: string | null;
+  description?: string | null;
+  scope?: string | null;
+  assignment_mode?: string | null;
+  elections?: unknown[];
+}[] = [];
+let userRoles: { id: string; title?: string | null }[] = [];
+let eventAgendaItems: { order_index?: number | null }[] = [];
+const hoistedMocks = vi.hoisted(() => ({
+  mutateMock: vi.fn((mutation: unknown) => mutation),
+  serverConfirmedMock: vi.fn(async (mutation: unknown) => mutation),
+}));
+const { mutateMock, serverConfirmedMock } = hoistedMocks;
 
 vi.mock('@tanstack/react-router', () => ({
-  useSearch: () => ({}),
+  useSearch: () => searchParams,
 }));
 
 vi.mock('@rocicorp/zero/react', () => ({
-  useQuery: () => [[], { type: 'complete' }],
-  useZero: () => ({ mutate: vi.fn() }),
+  useQuery: (query: { __query?: string } | undefined) => {
+    if (query?.__query === 'delegateAllocationsBySourceGroup') {
+      return [sourceAllocations, { type: 'complete' }];
+    }
+
+    if (query?.__query === 'rolesFull') {
+      return [sourceGroupRoles, { type: 'complete' }];
+    }
+
+    return [[], { type: 'complete' }];
+  },
+  useZero: () => ({ mutate: hoistedMocks.mutateMock }),
+}));
+
+vi.mock('@/zero/queries', () => ({
+  queries: {
+    events: {
+      delegateAllocationsBySourceGroup: (args: { groupId: string }) => ({
+        __query: 'delegateAllocationsBySourceGroup',
+        ...args,
+      }),
+    },
+    groups: {
+      rolesFull: (args: { groupId: string }) => ({
+        __query: 'rolesFull',
+        ...args,
+      }),
+    },
+  },
 }));
 
 vi.mock('@/providers/auth-provider', () => ({
@@ -42,8 +87,8 @@ vi.mock('@/features/shared/logic/richText', () => ({
 vi.mock('@/zero/events/useEventState', () => ({
   useAllEvents: () => ({ events }),
   useAllAmendments: () => ({ amendments: [] }),
-  useEventAgenda: () => ({ agendaItems: [] }),
-  useRolesWithGroups: () => ({ roles: [] }),
+  useEventAgenda: () => ({ agendaItems: eventAgendaItems }),
+  useRolesWithGroups: () => ({ roles: userRoles }),
   useUserEventParticipations: () => ({ participations }),
 }));
 
@@ -54,7 +99,40 @@ vi.mock('@/zero/groups/useGroupState', () => ({
 }));
 
 vi.mock('@/zero/mutate-with-server-check', () => ({
-  serverConfirmed: vi.fn(),
+  serverConfirmed: hoistedMocks.serverConfirmedMock,
+}));
+
+vi.mock('@/zero/mutators', () => ({
+  mutators: {
+    agendas: {
+      createAgendaItem: (payload: unknown) => ({
+        type: 'agendas.createAgendaItem',
+        payload,
+      }),
+    },
+    elections: {
+      createElection: (payload: unknown) => ({
+        type: 'elections.createElection',
+        payload,
+      }),
+    },
+    groups: {
+      createRole: (payload: unknown) => ({
+        type: 'groups.createRole',
+        payload,
+      }),
+    },
+    votes: {
+      createVote: (payload: unknown) => ({
+        type: 'votes.createVote',
+        payload,
+      }),
+      createVoteChoice: (payload: unknown) => ({
+        type: 'votes.createVoteChoice',
+        payload,
+      }),
+    },
+  },
 }));
 
 function findField<TKind extends CreateFormFieldDescriptor['kind']>(
@@ -71,6 +149,7 @@ function findField<TKind extends CreateFormFieldDescriptor['kind']>(
 
 describe('useCreateAgendaItemForm', () => {
   beforeEach(() => {
+    searchParams = {};
     activeGroupIds = new Set(['group-1']);
     participations = [{ event_id: 'event-participant', status: 'confirmed' }];
     events = [
@@ -78,6 +157,12 @@ describe('useCreateAgendaItemForm', () => {
       { id: 'event-participant', title: 'Participating event', group_id: 'group-2' },
       { id: 'event-unrelated', title: 'Unrelated event', group_id: 'group-2' },
     ];
+    sourceAllocations = [];
+    sourceGroupRoles = [];
+    userRoles = [];
+    eventAgendaItems = [];
+    mutateMock.mockClear();
+    serverConfirmedMock.mockClear();
   });
 
   it('orders title and description before event choice and filters selectable events', () => {
@@ -92,5 +177,63 @@ describe('useCreateAgendaItemForm', () => {
     ).items.map(item => item.id);
 
     expect(eventIds.sort()).toEqual(['event-member', 'event-participant']);
+  });
+
+  it('resolves role-renewal assignments and submits a standard role election', async () => {
+    searchParams = {
+      type: 'election',
+      eventId: 'event-member',
+      sourceGroupId: 'group-1',
+      assignmentId: 'role:chairperson',
+    };
+    sourceGroupRoles = [
+      {
+        id: 'chairperson',
+        title: 'Chairperson',
+        name: 'chairperson',
+        description: 'Leads the group.',
+        scope: 'group',
+        assignment_mode: 'elected',
+        elections: [],
+      },
+    ];
+    userRoles = [{ id: 'chairperson', title: 'Chairperson' }];
+
+    const { result } = renderHook(() => useCreateAgendaItemForm());
+
+    await waitFor(() => {
+      const titleField = findField(result.current.steps[0].fields ?? [], 'title', 'text');
+      expect(String(titleField.value)).toContain('Chairperson');
+    });
+
+    const typeField = result.current.steps[1].sections?.[0]?.fields[0];
+    expect(typeField?.kind).toBe('customComponent');
+    expect((typeField?.props as { delegateAssignment?: boolean }).delegateAssignment).toBe(true);
+
+    const additionalLinkFields = result.current.steps[3].fields ?? [];
+    expect(additionalLinkFields.some(field => field.key === 'role')).toBe(false);
+    expect(additionalLinkFields.some(field => field.key === 'role-renewal-role')).toBe(true);
+
+    await act(async () => {
+      await result.current.onSubmit?.();
+    });
+
+    const agendaMutation = mutateMock.mock.calls.find(
+      ([mutation]) => (mutation as { type?: string }).type === 'agendas.createAgendaItem'
+    )?.[0] as { payload?: { order_index?: number; event_id?: string; type?: string } };
+    const electionMutation = mutateMock.mock.calls.find(
+      ([mutation]) => (mutation as { type?: string }).type === 'elections.createElection'
+    )?.[0] as { payload?: { role_id?: string; election_mode?: string; seat_count?: number } };
+
+    expect(agendaMutation.payload).toMatchObject({
+      event_id: 'event-member',
+      type: 'election',
+      order_index: 1,
+    });
+    expect(electionMutation.payload).toMatchObject({
+      role_id: 'chairperson',
+      election_mode: 'single',
+      seat_count: 1,
+    });
   });
 });

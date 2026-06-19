@@ -77,6 +77,7 @@ export interface OpenAssignmentsPanelViewProps {
   availableEvents: any;
   isLoading: any;
   isScheduling: any;
+  focusAssignmentId?: string;
   onScheduleRoleRenewal: any;
   onScheduleDelegateElection: any;
   onScheduleProcessTask: any;
@@ -84,23 +85,23 @@ export interface OpenAssignmentsPanelViewProps {
   i18n: any;
   selectedEventIds: any;
   setSelectedEventIds: any;
-  delegateDialogAssignmentId: any;
-  setDelegateDialogAssignmentId: any;
-  delegateDialogEventId: any;
-  setDelegateDialogEventId: any;
-  delegateDialogSearchQuery: any;
-  setDelegateDialogSearchQuery: any;
-  delegateDialogCorrelationId: any;
-  setDelegateDialogCorrelationId: any;
+  eventDialogAssignmentId: any;
+  setEventDialogAssignmentId: any;
+  eventDialogEventId: any;
+  setEventDialogEventId: any;
+  eventDialogSearchQuery: any;
+  setEventDialogSearchQuery: any;
+  eventDialogCorrelationId: any;
+  setEventDialogCorrelationId: any;
   agendaPreviewAssignmentId: any;
   setAgendaPreviewAssignmentId: any;
   assignmentsWithProgress: any;
-  activeDelegateAssignment: any;
+  activeEventAssignment: any;
   activeAgendaPreviewAssignment: any;
-  filteredDelegateDialogEvents: any;
-  openDelegateDialog: any;
-  closeDelegateDialog: any;
-  handleCreateDelegateElection: any;
+  filteredEventDialogEvents: any;
+  openEventDialog: any;
+  closeEventDialog: any;
+  handleCreateAssignmentElection: any;
   isAmendmentProcessAssignment: any;
   assignmentColumns: any;
 }
@@ -110,19 +111,20 @@ export function OpenAssignmentsPanelView({
   assignments,
   isLoading,
   isScheduling,
+  focusAssignmentId,
   t,
-  delegateDialogEventId,
-  setDelegateDialogEventId,
-  delegateDialogSearchQuery,
-  setDelegateDialogSearchQuery,
-  delegateDialogCorrelationId,
+  eventDialogEventId,
+  setEventDialogEventId,
+  eventDialogSearchQuery,
+  setEventDialogSearchQuery,
+  eventDialogCorrelationId,
   setAgendaPreviewAssignmentId,
   assignmentsWithProgress,
-  activeDelegateAssignment,
+  activeEventAssignment,
   activeAgendaPreviewAssignment,
-  filteredDelegateDialogEvents,
-  closeDelegateDialog,
-  handleCreateDelegateElection,
+  filteredEventDialogEvents,
+  closeEventDialog,
+  handleCreateAssignmentElection,
   assignmentColumns,
 }: OpenAssignmentsPanelViewProps) {
   if (isLoading) {
@@ -169,123 +171,183 @@ export function OpenAssignmentsPanelView({
           columns={assignmentColumns}
           data={assignmentsWithProgress}
           getRowId={(row: any) => row.assignment.id}
+          rowTestId={(row: any) => `open-assignment-${row.assignment.id}`}
+          getRowClassName={(row: any) =>
+            row.assignment.id === focusAssignmentId
+              ? 'bg-[var(--badge-info-bg)] ring-1 ring-inset ring-[var(--badge-info-border)]'
+              : undefined
+          }
           enablePagination={false}
         />
       </section>
 
-      <Dialog open={!!activeDelegateAssignment} onOpenChange={closeDelegateDialog}>
+      <Dialog open={!!activeEventAssignment} onOpenChange={closeEventDialog}>
         <ScrollableDialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
-              {t('features.groups.memberships.openAssignments.delegateDialog.title')}
+              {activeEventAssignment?.kind === 'role_renewal'
+                ? t('features.groups.memberships.openAssignments.roleRenewalDialog.title')
+                : t('features.groups.memberships.openAssignments.delegateDialog.title')}
             </DialogTitle>
             <DialogDescription>
-              {t('features.groups.memberships.openAssignments.delegateDialog.description', {
-                groupName: groupName || t('features.groups.memberships.openAssignments.thisGroup'),
-                defaultValue:
-                  'Choose an upcoming or ongoing event for {{groupName}} where the delegate election should be created.',
-              })}
+              {activeEventAssignment?.kind === 'role_renewal'
+                ? t('features.groups.memberships.openAssignments.roleRenewalDialog.description', {
+                    groupName:
+                      groupName || t('features.groups.memberships.openAssignments.thisGroup'),
+                    defaultValue:
+                      'Choose an upcoming or ongoing event where this role election should be created.',
+                  })
+                : t('features.groups.memberships.openAssignments.delegateDialog.description', {
+                    groupName:
+                      groupName || t('features.groups.memberships.openAssignments.thisGroup'),
+                    defaultValue:
+                      'Choose an upcoming or ongoing event for {{groupName}} where the delegate election should be created.',
+                  })}
             </DialogDescription>
           </DialogHeader>
 
-          {activeDelegateAssignment ? (
+          {activeEventAssignment ? (
             <div className="space-y-4">
               <div className="bg-muted/30 rounded-xl border p-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <StatusBadge status="delegate-mode" tone="neutral">
-                    {getElectionModeLabel(
-                      normalizeDelegateElectionMode(
-                        activeDelegateAssignment.targetEvent?.delegate_election_mode
-                      )
-                    )}
-                  </StatusBadge>
-                  <StatusBadge status="open" tone="info">
-                    {t(
-                      'features.groups.memberships.openAssignments.delegateDialog.remainingSeats',
-                      {
-                        count: getRemainingSeatCount(activeDelegateAssignment),
-                        defaultValue: '{{count}} delegates to elect',
-                      }
-                    )}
-                  </StatusBadge>
+                  {activeEventAssignment.kind === 'delegate_election' ? (
+                    <>
+                      <StatusBadge status="delegate-mode" tone="neutral">
+                        {getElectionModeLabel(
+                          normalizeDelegateElectionMode(
+                            activeEventAssignment.targetEvent?.delegate_election_mode
+                          )
+                        )}
+                      </StatusBadge>
+                      <StatusBadge status="open" tone="info">
+                        {t(
+                          'features.groups.memberships.openAssignments.delegateDialog.remainingSeats',
+                          {
+                            count: getRemainingSeatCount(activeEventAssignment),
+                            defaultValue: '{{count}} delegates to elect',
+                          }
+                        )}
+                      </StatusBadge>
+                    </>
+                  ) : (
+                    <StatusBadge status="role-renewal" tone="warning">
+                      {t('features.groups.memberships.openAssignments.type.roleRenewal')}
+                    </StatusBadge>
+                  )}
                 </div>
-                <p className="text-muted-foreground mt-3 text-sm">
-                  {t('features.groups.memberships.openAssignments.delegateDialog.targetEvent')}
-                </p>
-                <div className="mt-3">
-                  {activeDelegateAssignment.targetEvent
-                    ? buildEventCard(activeDelegateAssignment.targetEvent)
-                    : null}
-                </div>
+                {activeEventAssignment.kind === 'delegate_election' ? (
+                  <>
+                    <p className="text-muted-foreground mt-3 text-sm">
+                      {t('features.groups.memberships.openAssignments.delegateDialog.targetEvent')}
+                    </p>
+                    <div className="mt-3">
+                      {activeEventAssignment.targetEvent
+                        ? buildEventCard(activeEventAssignment.targetEvent)
+                        : null}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground mt-3 text-sm">
+                    {activeEventAssignment.description}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <FormControlLabel>
-                  {t('features.groups.memberships.openAssignments.delegateDialog.searchLabel')}
+                  {activeEventAssignment.kind === 'role_renewal'
+                    ? t('features.groups.memberships.openAssignments.roleRenewalDialog.searchLabel')
+                    : t('features.groups.memberships.openAssignments.delegateDialog.searchLabel')}
                 </FormControlLabel>
                 <div className="relative">
                   <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                   <FormControlInput
-                    value={delegateDialogSearchQuery}
+                    value={eventDialogSearchQuery}
                     onChange={event => {
                       const nextValue = event.target.value;
-                      setDelegateDialogSearchQuery(nextValue);
-                      logElectionFlowClient('delegate-assignment-search', 'search-changed', {
-                        correlationId: delegateDialogCorrelationId,
-                        assignmentId: activeDelegateAssignment.id,
-                        query: nextValue,
-                      });
+                      setEventDialogSearchQuery(nextValue);
+                      logElectionFlowClient(
+                        activeEventAssignment.kind === 'role_renewal'
+                          ? 'role-renewal-assignment-search'
+                          : 'delegate-assignment-search',
+                        'search-changed',
+                        {
+                          correlationId: eventDialogCorrelationId,
+                          assignmentId: activeEventAssignment.id,
+                          assignmentKind: activeEventAssignment.kind,
+                          query: nextValue,
+                        }
+                      );
                     }}
-                    placeholder={t(
-                      'features.groups.memberships.openAssignments.delegateDialog.searchPlaceholder'
-                    )}
+                    placeholder={
+                      activeEventAssignment.kind === 'role_renewal'
+                        ? t(
+                            'features.groups.memberships.openAssignments.roleRenewalDialog.searchPlaceholder'
+                          )
+                        : t(
+                            'features.groups.memberships.openAssignments.delegateDialog.searchPlaceholder'
+                          )
+                    }
                     className="pl-9"
                   />
                 </div>
               </div>
 
-              {filteredDelegateDialogEvents.length > 0 ? (
+              {filteredEventDialogEvents.length > 0 ? (
                 <div className="grid gap-4 lg:grid-cols-2">
-                  {filteredDelegateDialogEvents.map((event: any) => (
+                  {filteredEventDialogEvents.map((event: any) => (
                     <div
                       key={event.id}
                       className={cn(
                         'rounded-2xl border transition-all',
-                        delegateDialogEventId === event.id
+                        eventDialogEventId === event.id
                           ? featureThemeClassName('groupOpenAssignmentsPanelThemedBorder')
                           : featureThemeClassName('groupOpenAssignmentsPanelThemedBorderAlpha')
                       )}
                     >
                       {buildEventCard(event, () => {
-                        setDelegateDialogEventId(event.id);
-                        logElectionFlowClient('delegate-assignment-search', 'event-selected', {
-                          correlationId: delegateDialogCorrelationId,
-                          assignmentId: activeDelegateAssignment.id,
-                          selectedEventId: event.id,
-                          selectedEventTitle: event.title ?? null,
-                        });
+                        setEventDialogEventId(event.id);
+                        logElectionFlowClient(
+                          activeEventAssignment.kind === 'role_renewal'
+                            ? 'role-renewal-assignment-search'
+                            : 'delegate-assignment-search',
+                          'event-selected',
+                          {
+                            correlationId: eventDialogCorrelationId,
+                            assignmentId: activeEventAssignment.id,
+                            assignmentKind: activeEventAssignment.kind,
+                            selectedEventId: event.id,
+                            selectedEventTitle: event.title ?? null,
+                          }
+                        );
                       })}
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-muted-foreground rounded-xl border border-dashed p-6 text-sm">
-                  {t('features.groups.memberships.openAssignments.delegateDialog.emptySearch')}
+                  {activeEventAssignment.kind === 'role_renewal'
+                    ? t('features.groups.memberships.openAssignments.roleRenewalDialog.emptySearch')
+                    : t('features.groups.memberships.openAssignments.delegateDialog.emptySearch')}
                 </div>
               )}
             </div>
           ) : null}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => closeDelegateDialog(false)}>
-              {t('features.groups.memberships.openAssignments.delegateDialog.cancel')}
+            <Button variant="outline" onClick={() => closeEventDialog(false)}>
+              {activeEventAssignment?.kind === 'role_renewal'
+                ? t('features.groups.memberships.openAssignments.roleRenewalDialog.cancel')
+                : t('features.groups.memberships.openAssignments.delegateDialog.cancel')}
             </Button>
             <Button
-              disabled={!delegateDialogEventId || isScheduling}
-              onClick={() => void handleCreateDelegateElection()}
+              disabled={!eventDialogEventId || isScheduling}
+              onClick={() => void handleCreateAssignmentElection()}
             >
               <Vote className="mr-2 h-4 w-4" />
-              {t('features.groups.memberships.openAssignments.delegateDialog.create')}
+              {activeEventAssignment?.kind === 'role_renewal'
+                ? t('features.groups.memberships.openAssignments.roleRenewalDialog.create')
+                : t('features.groups.memberships.openAssignments.delegateDialog.create')}
             </Button>
           </DialogFooter>
         </ScrollableDialogContent>

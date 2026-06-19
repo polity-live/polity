@@ -152,6 +152,7 @@ export const groupsTranslations = {
       linkedEventLabel: 'Linked',
       noEventLinked: 'No event linked yet',
       completedBanner: 'Fully scheduled or completed',
+      toScheduledElection: 'To scheduled election',
       showAgendaItems: 'Show new agenda items',
       thisGroup: 'this group',
       noEligibleEventsForGroup:
@@ -159,7 +160,21 @@ export const groupsTranslations = {
       createEvent: 'Create event',
       delegateElectionHelp:
         'Delegates must be elected at an upcoming or ongoing event for {{groupName}}.',
+      delegateElectionHelpBeforeGroup:
+        'Delegates must be elected at an upcoming or ongoing event for',
+      delegateElectionHelpAfterGroup: '',
+      delegateDescription: {
+        sourceGroupFallback: 'This subgroup',
+        targetGroupFallback: 'the target group',
+        hasCurrently: 'currently has',
+        seatSingular: 'delegate seat',
+        seatPlural: 'delegate seats',
+        for: 'for',
+      },
       searchDelegateElectionEvent: 'Find event for delegate election',
+      searchRoleRenewalEvent: 'Find event for role election',
+      roleRenewalHelp:
+        'Choose an upcoming or ongoing event where this role election should be created.',
       selectEventLabel: 'Which event should this assignment be attached to?',
       selectEventPlaceholder: 'Select event',
       eventFallback: 'Event',
@@ -183,6 +198,16 @@ export const groupsTranslations = {
           'Choose an upcoming or ongoing event for {{groupName}} where the delegate election should be created.',
         remainingSeats: '{{count}} delegates to elect',
         targetEvent: 'Target event for the delegate election:',
+        searchLabel: 'Search upcoming or ongoing events',
+        searchPlaceholder: 'Search by title',
+        emptySearch: 'No upcoming or ongoing events were found for the current search.',
+        cancel: 'Cancel',
+        create: 'Create election',
+      },
+      roleRenewalDialog: {
+        title: 'Find election event for role assignment',
+        description:
+          'Choose an upcoming or ongoing event where this role election should be created.',
         searchLabel: 'Search upcoming or ongoing events',
         searchPlaceholder: 'Search by title',
         emptySearch: 'No upcoming or ongoing events were found for the current search.',

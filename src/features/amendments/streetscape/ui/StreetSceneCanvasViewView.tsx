@@ -63,7 +63,10 @@ export function StreetSceneCanvasViewView({
         : 'Kamera';
 
   return (
-    <div className="from-background via-muted/20 to-muted/50 relative min-h-[30rem] overflow-hidden border-b bg-gradient-to-br p-3 xl:border-r xl:border-b-0">
+    <div
+      className="from-background via-muted/20 to-muted/50 relative min-h-[30rem] overflow-hidden border-b bg-gradient-to-br p-3 xl:border-r xl:border-b-0"
+      data-swipe-lock
+    >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_18%,rgba(20,184,166,0.16),transparent_22%),radial-gradient(circle_at_82%_12%,rgba(234,179,8,0.12),transparent_20%)]" />
       <div className="bg-background/40 relative overflow-hidden rounded-md border shadow-inner">
         <canvas

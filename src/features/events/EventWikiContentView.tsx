@@ -1,7 +1,7 @@
 'use client';
 
 import { BadgeControl } from '@/features/shared/ui/status';
-import { ScrollableAlertDialogContent, ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Trophy, Repeat } from 'lucide-react';
@@ -11,15 +11,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/features/shared/ui/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/features/shared/ui/ui/alert-dialog';
 import {
   Card,
   CardContent,
@@ -38,7 +29,9 @@ import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
+import { getDelegateMembersPerSeatInfo } from '@/features/delegates/logic/delegateRatio';
 import { EventDeadlinesCard } from './ui/EventDeadlinesCard';
+import { CandidacyPasswordDialog } from '@/features/elections/ui/CandidacyPasswordDialog';
 import { getEventTypeTranslationKey } from './logic/getEventTypeTranslationKey';
 import {
   getWikiParticipationName,
@@ -51,10 +44,46 @@ import {
 } from '@/features/shared/ui/wiki';
 
 const ELECTION_CARD_SURFACE = `${getEntityGradientClasses('election')} ${getMotionPreset('hoverLift')}`;
+
+function dedupeWikiParticipationRoles(roles: readonly WikiParticipationRole[]) {
+  const roleById = new Map<string, WikiParticipationRole>();
+
+  roles.forEach(role => {
+    if (!roleById.has(role.id)) {
+      roleById.set(role.id, role);
+    }
+  });
+
+  return [...roleById.values()].sort((left, right) =>
+    left.name.localeCompare(right.name, undefined, { sensitivity: 'base' })
+  );
+}
+
+function getParticipantWikiRoles(
+  participant: any,
+  participantRoleById: Map<string, WikiParticipationRole>
+) {
+  const rawRoles = [
+    ...(participant.roles?.length ? participant.roles : []),
+    participant.role,
+    ...(participant.participant_roles ?? []).map((roleLink: any) => roleLink.role),
+    participant.role_id && participantRoleById.has(participant.role_id)
+      ? participantRoleById.get(participant.role_id)
+      : null,
+  ];
+
+  const roles = rawRoles
+    .map((role: any) => normalizeWikiParticipationRole(role))
+    .filter((role: WikiParticipationRole | null): role is WikiParticipationRole => Boolean(role));
+
+  return dedupeWikiParticipationRoles(roles);
+}
+
 export interface EventWikiContentViewProps {
   agendaStats: any;
   amendmentsCount: any;
   canAccess: any;
+  candidacyPasswordError?: string | null;
   confirmDialogOpen: any;
   elections: any;
   electionsCount: any;
@@ -85,6 +114,7 @@ export interface EventWikiContentViewProps {
 
 export function EventWikiContentView({
   amendmentsCount,
+  candidacyPasswordError,
   confirmDialogOpen,
   elections,
   electionsCount,
@@ -111,28 +141,16 @@ export function EventWikiContentView({
   toggleSubscribe,
   user,
 }: EventWikiContentViewProps) {
-  const participantRoles: WikiParticipationRole[] = (event.roles ?? [])
+  const eventRoles: WikiParticipationRole[] = (event.roles ?? [])
     .map((role: any) => normalizeWikiParticipationRole(role))
     .filter((role: WikiParticipationRole | null): role is WikiParticipationRole => Boolean(role));
-  const participantRoleById = new Map(participantRoles.map(role => [role.id, role]));
+  const participantRoleById = new Map(eventRoles.map(role => [role.id, role]));
   const participantTotalCount = event.participant_count ?? participation.participantCount ?? 0;
   const participantDirectoryItems: WikiParticipationItem[] = (event.participants ?? [])
     .filter((participant: any) => isVisibleWikiParticipationStatus(participant.status))
     .filter((participant: any) => participant.user?.id)
     .map((participant: any) => {
-      const roles = (
-        participant.roles?.length
-          ? participant.roles
-          : participant.role
-            ? [participant.role]
-            : participant.role_id && participantRoleById.has(participant.role_id)
-              ? [participantRoleById.get(participant.role_id)]
-              : []
-      )
-        .map((role: any) => normalizeWikiParticipationRole(role))
-        .filter((role: WikiParticipationRole | null): role is WikiParticipationRole =>
-          Boolean(role)
-        );
+      const roles = getParticipantWikiRoles(participant, participantRoleById);
 
       return {
         id: participant.id ?? `participant-${participant.user.id}`,
@@ -145,6 +163,11 @@ export function EventWikiContentView({
         roles,
       };
     });
+  const participantRoles = dedupeWikiParticipationRoles([
+    ...eventRoles,
+    ...participantDirectoryItems.flatMap(item => item.roles ?? []),
+  ]);
+  const delegateRatioInfo = getDelegateMembersPerSeatInfo(event);
 
   return (
     <div>
@@ -162,6 +185,11 @@ export function EventWikiContentView({
               {t(`pages.create.event.eventTypes.${getEventTypeTranslationKey(event.event_type)}`)}
             </BadgeControl>
           )}
+          {delegateRatioInfo ? (
+            <BadgeControl variant="outline">
+              {t(delegateRatioInfo.translationKey, { count: delegateRatioInfo.count })}
+            </BadgeControl>
+          ) : null}
           {event.recurrence_pattern && (
             <BadgeControl variant="outline">
               <Repeat className="mr-1 h-3 w-3" />
@@ -445,76 +473,19 @@ export function EventWikiContentView({
         </ScrollableDialogContent>
       </Dialog>
 
-      {/* Confirmation Dialog */}
-      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <ScrollableAlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {translateText('generated.inline.0437_kandidatur_best_tigen_838a848e')}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {translateText(
-                'generated.inline.0438_m_chten_sie_wirklich_f_r_diese_wahl_kandidier_3343987c'
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          {selectedElection && (
-            <Card className={`overflow-hidden ${ELECTION_CARD_SURFACE}`}>
-              <CardHeader>
-                <CardTitle>{selectedElection.title}</CardTitle>
-                {selectedElection.description && (
-                  <CardDescription>{selectedElection.description}</CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                {selectedElection.role && (
-                  <div className="bg-background/50 rounded-md border p-3">
-                    <div className="text-sm font-semibold">
-                      {translateText('generated.inline.0045_role_61e4c27b')}
-                      {selectedElection.role.title}
-                    </div>
-                    {selectedElection.role.description && (
-                      <div className="text-muted-foreground mt-1 text-xs">
-                        {selectedElection.role.description}
-                      </div>
-                    )}
-                  </div>
-                )}
-                <div className="mt-3 space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      {translateText('generated.inline.0439_aktuelle_kandidaten_9b881419')}
-                    </span>
-                    <span className="font-medium">{selectedElection.candidates?.length || 0}</span>
-                  </div>
-                  {selectedElection.majority_type && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        {translateText('generated.inline.0440_wahlverfahren_e5f84d31')}
-                      </span>
-                      <BadgeControl variant="outline" size="xs">
-                        {selectedElection.majority_type}
-                      </BadgeControl>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmitting}>
-              {translateText('generated.inline.0331_abbrechen_07af7cb3')}
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmCandidacy} disabled={isSubmitting}>
-              {isSubmitting
-                ? translateText('generated.inline.0074_wird_hinzugef_gt_6064853e')
-                : translateText('generated.inline.0075_kandidatur_best_tigen_838a848e')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </ScrollableAlertDialogContent>
-      </AlertDialog>
+      <CandidacyPasswordDialog
+        open={confirmDialogOpen}
+        onOpenChange={setConfirmDialogOpen}
+        mode="become"
+        electionTitle={selectedElection?.title ?? null}
+        electionDescription={selectedElection?.description ?? null}
+        roleTitle={selectedElection?.role?.title ?? null}
+        candidatesCount={selectedElection?.candidates?.length ?? null}
+        majorityType={selectedElection?.majority_type ?? null}
+        error={candidacyPasswordError}
+        isSubmitting={isSubmitting}
+        onSubmit={handleConfirmCandidacy}
+      />
     </div>
   );
 }

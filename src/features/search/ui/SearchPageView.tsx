@@ -8,6 +8,7 @@ import {
 import { TimelineFilterPanel } from '@/features/timeline/ui/TimelineFilterPanel';
 import type { SearchViewMode } from '../hooks/useSearchURL';
 import { SearchHeader } from './SearchHeader';
+import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
 
 export interface SearchPageViewProps {
   searchQuery: string;
@@ -30,6 +31,7 @@ export interface SearchPageViewProps {
   totalResults: number;
   view: SearchViewMode;
   onViewChange: (view: SearchViewMode) => void;
+  swipeHandlers: SwipeNavigationHandlers;
   results: ReactNode;
 }
 
@@ -54,10 +56,11 @@ export function SearchPageView({
   totalResults,
   view,
   onViewChange,
+  swipeHandlers,
   results,
 }: SearchPageViewProps) {
   return (
-    <div>
+    <div style={{ touchAction: 'pan-y' }} {...swipeHandlers}>
       <SearchHeader
         searchQuery={searchQuery}
         setSearchQuery={onSearchQueryChange}

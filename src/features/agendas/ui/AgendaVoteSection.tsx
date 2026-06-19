@@ -2,9 +2,9 @@
 
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
-import { useMemo } from 'react';
+import { useMemo, type KeyboardEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Vote, CheckCircle2, Expand } from 'lucide-react';
+import { BarChart3, CheckCircle2, Expand, Users, Vote } from 'lucide-react';
 import {
   useTranslation,
   translate as translateText,
@@ -209,7 +209,11 @@ export function AgendaVoteSection({
   ]);
 
   const isInteractive = Boolean(onOpenNamedResults);
-  const ResultsWrapper = isInteractive ? 'button' : 'div';
+  const visibleTotal = isIndicationPhase ? totalIndicative : totalFinal;
+  const turnout =
+    totalEligibleVoters && totalEligibleVoters > 0
+      ? Math.round((visibleTotal / totalEligibleVoters) * 100)
+      : undefined;
   const voteOptions = useMemo<VoteBarOption[]>(() => {
     return choiceStats.map((cs, idx) => {
       const colors = CHOICE_COLORS[idx % CHOICE_COLORS.length];
@@ -226,41 +230,59 @@ export function AgendaVoteSection({
       };
     });
   }, [choiceStats]);
+  const handleResultsKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!isInteractive || !onOpenNamedResults) {
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onOpenNamedResults();
+    }
+  };
 
   return (
-    <Card className={cn(className)}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Vote className="h-5 w-5" />
-          {t('features.events.agenda.voteResults')}
-          {attendanceMode ? (
-            <BadgeControl variant="outline" textTransform="capitalize">
-              {attendanceMode}
-            </BadgeControl>
-          ) : null}
-          <VotePhaseBadge
-            phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
-            className="ml-auto"
-          />
-          {isInteractive ? (
-            <BadgeControl variant="secondary" className="gap-1">
-              <Expand className="h-3 w-3" />
-              {translateText('generated.inline.0013_namentlich_8d49da42')}
-            </BadgeControl>
-          ) : null}
-        </CardTitle>
+    <Card className={cn('overflow-hidden rounded-lg shadow-sm', className)}>
+      <CardHeader className="border-b px-5 py-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Vote className="text-brand h-5 w-5" />
+              {t('features.events.agenda.voteResults')}
+            </CardTitle>
+            <p className="text-muted-foreground mt-1 truncate text-sm">{voteTitle}</p>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {attendanceMode ? (
+              <BadgeControl variant="outline" textTransform="capitalize">
+                {attendanceMode}
+              </BadgeControl>
+            ) : null}
+            <VotePhaseBadge
+              phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
+            />
+            {isInteractive ? (
+              <BadgeControl variant="secondary" className="gap-1">
+                <Expand className="h-3 w-3" />
+                {translateText('generated.inline.0013_namentlich_8d49da42')}
+              </BadgeControl>
+            ) : null}
+          </div>
+        </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
-        <ResultsWrapper
+      <CardContent className="space-y-5 p-5">
+        <div
           {...(isInteractive
             ? {
-                type: 'button' as const,
+                role: 'button' as const,
+                tabIndex: 0,
                 onClick: onOpenNamedResults,
+                onKeyDown: handleResultsKeyDown,
                 className:
-                  'w-full space-y-6 text-left transition-opacity hover:opacity-95 focus-visible:outline-none',
+                  'block w-full space-y-5 text-left transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
               }
-            : { className: 'space-y-6' })}
+            : { className: 'space-y-5' })}
         >
           {isClosed && resolvedVoteResult && (
             <VoteResultSentence
@@ -272,13 +294,40 @@ export function AgendaVoteSection({
             />
           )}
 
-          <h3 className="font-semibold">{voteTitle}</h3>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <div className="bg-muted/20 rounded-md border px-3 py-2 text-xs">
+              <div className="text-muted-foreground flex items-center gap-1.5">
+                <BarChart3 className="h-3.5 w-3.5" />
+                {isIndicationPhase
+                  ? t('features.events.agenda.indicationVotes')
+                  : t('features.events.agenda.votes')}
+              </div>
+              <div className="mt-1 text-base font-semibold">{visibleTotal}</div>
+            </div>
+            <div className="bg-muted/20 rounded-md border px-3 py-2 text-xs">
+              <div className="text-muted-foreground flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" />
+                {t('features.events.voting.eligible')}
+              </div>
+              <div className="mt-1 text-base font-semibold">{totalEligibleVoters ?? '-'}</div>
+            </div>
+            <div className="bg-muted/20 rounded-md border px-3 py-2 text-xs">
+              <div className="text-muted-foreground flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                {t('features.events.voting.share')}
+              </div>
+              <div className="mt-1 text-base font-semibold">
+                {turnout !== undefined ? `${turnout}%` : '-'}
+              </div>
+            </div>
+          </div>
 
-          <div className="text-muted-foreground flex items-center justify-between text-sm">
+          <div className="text-muted-foreground flex items-center justify-between gap-3 text-sm">
             <span>
+              {visibleTotal}{' '}
               {isIndicationPhase
-                ? `${totalIndicative} ${t('features.events.agenda.indicationVotes')}`
-                : `${totalFinal} ${t('features.events.agenda.votes')}`}
+                ? t('features.events.agenda.indicationVotes')
+                : t('features.events.agenda.votes')}
             </span>
             <div className="flex items-center gap-2">
               {isIndicationPhase ? (
@@ -323,7 +372,7 @@ export function AgendaVoteSection({
               </span>
             </div>
           ) : null}
-        </ResultsWrapper>
+        </div>
       </CardContent>
     </Card>
   );

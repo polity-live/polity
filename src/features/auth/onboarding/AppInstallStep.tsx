@@ -31,7 +31,9 @@ export function AppInstallStep({ onNext, onBack, isLoading }: AppInstallStepProp
         </p>
       </div>
 
-      <PwaInstallPanel surface="onboarding" />
+      <div data-swipe-lock>
+        <PwaInstallPanel surface="onboarding" />
+      </div>
 
       <div className="flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:justify-between">
         <Button type="button" variant="outline" onClick={onBack} disabled={isLoading}>

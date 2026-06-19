@@ -54,6 +54,7 @@ export interface ParticipationLike<TRole extends ParticipationRoleLike = Partici
   status?: string | null;
   source?: string | null;
   roles?: readonly TRole[] | null;
+  elected_roles?: readonly TRole[] | null;
   role?: TRole | null;
   partGroup?: ParticipationProvenanceGroupLike | null;
   baseGroup?: ParticipationProvenanceGroupLike | null;

@@ -15,6 +15,7 @@ const groupMembershipsSearchSchema = z.object({
       'roles',
     ])
     .optional(),
+  assignmentId: z.string().optional(),
 });
 
 export const Route = createFileRoute('/_authed/group/$id/memberships')({
@@ -24,7 +25,9 @@ export const Route = createFileRoute('/_authed/group/$id/memberships')({
 
 function GroupMembershipsRoute() {
   const { id } = Route.useParams();
-  const { tab } = Route.useSearch();
+  const { tab, assignmentId } = Route.useSearch();
 
-  return <GroupMembershipsPageContainer groupId={id} defaultTab={tab} />;
+  return (
+    <GroupMembershipsPageContainer groupId={id} defaultTab={tab} focusAssignmentId={assignmentId} />
+  );
 }

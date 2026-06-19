@@ -11,6 +11,10 @@ interface UseCarouselFormLayoutControllerProps {
   onStepChange: (step: number) => void;
 }
 
+function canNavigateForwardToStep(steps: CreateFormStep[], targetStep: number) {
+  return steps.slice(0, targetStep).every(step => step.isValid());
+}
+
 export function useCarouselFormLayoutController({
   steps,
   currentStep,
@@ -22,14 +26,23 @@ export function useCarouselFormLayoutController({
   const [canScrollNext, setCanScrollNext] = useState(false);
 
   const currentStepValid = steps[currentStep]?.isValid() ?? false;
+  const canNavigateNext = canNavigateForwardToStep(steps, currentStep + 1);
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
     const index = emblaApi.selectedScrollSnap();
+
+    if (index > currentStep && !canNavigateForwardToStep(steps, index)) {
+      emblaApi.scrollTo(currentStep);
+      setCanScrollPrev(currentStep > 0);
+      setCanScrollNext(currentStep < steps.length - 1);
+      return;
+    }
+
     onStepChange(index);
     setCanScrollPrev(emblaApi.canScrollPrev());
     setCanScrollNext(emblaApi.canScrollNext());
-  }, [emblaApi, onStepChange]);
+  }, [currentStep, emblaApi, onStepChange, steps]);
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -54,10 +67,10 @@ export function useCarouselFormLayoutController({
   }, [emblaApi, canScrollPrev]);
 
   const scrollNext = useCallback(() => {
-    if (emblaApi && canScrollNext && currentStepValid) {
+    if (emblaApi && canScrollNext && canNavigateForwardToStep(steps, currentStep + 1)) {
       emblaApi.scrollNext();
     }
-  }, [emblaApi, canScrollNext, currentStepValid]);
+  }, [emblaApi, canScrollNext, currentStep, steps]);
 
   const handleStepClick = useCallback(
     (step: number) => {
@@ -70,7 +83,7 @@ export function useCarouselFormLayoutController({
   );
 
   return {
-    canScrollNext,
+    canScrollNext: canScrollNext && canNavigateNext,
     canScrollPrev,
     currentStepValid,
     emblaRef,

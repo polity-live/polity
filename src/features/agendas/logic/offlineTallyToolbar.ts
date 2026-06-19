@@ -6,7 +6,11 @@ export function shouldShowOfflineTallyToolbarButton(args: {
   canManageVotes: boolean;
   phase: OfflineTallyPhase | null;
 }) {
-  return args.attendanceMode === 'offline' && args.canManageVotes && Boolean(args.phase);
+  return (
+    (args.attendanceMode === 'offline' || args.attendanceMode === 'hybrid') &&
+    args.canManageVotes &&
+    Boolean(args.phase)
+  );
 }
 
 export function resolveOfflineTallyPhase(args: {

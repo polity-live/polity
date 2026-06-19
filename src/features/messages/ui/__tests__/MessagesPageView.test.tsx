@@ -59,6 +59,7 @@ const baseProps = {
   onSearchChange: vi.fn(),
   conversationFilter: 'all' as const,
   onConversationFilterChange: vi.fn(),
+  conversationSwipeHandlers: {} as any,
   existingConversationUserIds: [],
   userSearchDialogOpen: false,
   onUserSearchDialogOpenChange: vi.fn(),

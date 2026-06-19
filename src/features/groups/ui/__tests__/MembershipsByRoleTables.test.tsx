@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ActiveMembersTable } from '../ActiveMembersTable';
@@ -204,6 +204,56 @@ describe('MembershipsByRoleTables', () => {
     const removeButton = expectIconOnlyButton('components.membershipTables.remove');
 
     expect(removeButton.hasAttribute('disabled')).toBe(true);
+  });
+
+  it('shows elected role badges in role sections without allowing direct removal', () => {
+    const onRemoveRole = vi.fn();
+
+    render(
+      <MembershipsByRoleTables
+        roles={[
+          {
+            id: 'role-elected-chair',
+            name: 'Elected Chair',
+            description: 'Chosen by election.',
+            assignment_mode: 'elected',
+          },
+        ]}
+        members={[
+          {
+            id: 'membership-1',
+            user: {
+              id: 'user-1',
+              first_name: 'Ada',
+              last_name: 'Lovelace',
+              handle: 'ada',
+            },
+            roles: [],
+            role: null,
+            elected_roles: [
+              {
+                id: 'role-elected-chair',
+                name: 'Elected Chair',
+                assignment_mode: 'elected',
+              },
+            ],
+            created_at: Date.now(),
+          },
+        ]}
+        onOpenRightsDialog={vi.fn()}
+        onRemoveRole={onRemoveRole}
+      />
+    );
+
+    expect(screen.getByText('Elected Chair')).toBeTruthy();
+    expect(screen.getByText('Ada Lovelace')).toBeTruthy();
+    expect(screen.queryByText('No user role')).toBeNull();
+
+    const removeButton = expectIconOnlyButton('components.membershipTables.remove');
+
+    expect(removeButton.hasAttribute('disabled')).toBe(true);
+    fireEvent.click(removeButton);
+    expect(onRemoveRole).not.toHaveBeenCalled();
   });
 
   it('shows the part group name in the active members provenance column', () => {

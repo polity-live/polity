@@ -33,6 +33,7 @@ export function MessagesPageShellView({ mp }: MessagesPageShellViewProps) {
           onSearchChange={mp.setSearchQuery}
           conversationFilter={mp.conversationFilter}
           onConversationFilterChange={mp.setConversationFilter}
+          conversationSwipeHandlers={mp.conversationSwipeHandlers}
           existingConversationUserIds={mp.existingConversationUserIds}
           userSearchDialogOpen={mp.userSearchDialogOpen}
           onUserSearchDialogOpenChange={mp.setUserSearchDialogOpen}

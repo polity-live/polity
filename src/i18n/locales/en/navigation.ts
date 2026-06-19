@@ -112,7 +112,10 @@ export const navigationTranslations = {
   userMenu: {
     profile: 'Profile',
     settings: 'Settings',
+    events: 'Events',
+    eventFallback: 'Event',
     searchGroupsPlaceholder: 'Search groups...',
+    searchEventsPlaceholder: 'Search events...',
   },
   demo: {
     title: 'Dynamic Navigation Demo',

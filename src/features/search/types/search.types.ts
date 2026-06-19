@@ -82,6 +82,9 @@ export interface SearchContentItem {
   description?: string | null;
   imageUrl?: string | null;
   videoUrl?: string | null;
+  href?: string | null;
+  sourceType?: 'amendment' | 'blog' | 'event' | 'group' | 'statement' | 'user' | null;
+  sourceId?: string | null;
   authorId?: string | null;
   authorName?: string | null;
   authorAvatar?: string | null;

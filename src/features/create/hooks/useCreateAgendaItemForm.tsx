@@ -119,16 +119,24 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
     sourceGroupId ? queries.groups.rolesFull({ groupId: sourceGroupId }) : undefined
   );
 
-  const delegateAssignments = useMemo(
+  const openAssignments = useMemo(
     () =>
       sourceGroupId
         ? buildOpenAssignments({
             currentGroupId: sourceGroupId,
             allocations: sourceAllocations || [],
             roles: sourceGroupRoles || [],
-          }).filter(assignment => assignment.kind === 'delegate_election')
+          })
         : [],
     [sourceAllocations, sourceGroupId, sourceGroupRoles]
+  );
+  const delegateAssignments = useMemo(
+    () => openAssignments.filter(assignment => assignment.kind === 'delegate_election'),
+    [openAssignments]
+  );
+  const roleRenewalAssignments = useMemo(
+    () => openAssignments.filter(assignment => assignment.kind === 'role_renewal'),
+    [openAssignments]
   );
 
   const delegateAssignment = useMemo(
@@ -142,12 +150,27 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         : null,
     [assignmentId, delegateAssignments, targetEventId]
   );
+  const roleRenewalAssignment = useMemo(
+    () =>
+      assignmentId
+        ? (roleRenewalAssignments.find(assignment => assignment.id === assignmentId) ?? null)
+        : null,
+    [assignmentId, roleRenewalAssignments]
+  );
+  const roleRenewalRole = useMemo(
+    () =>
+      roleRenewalAssignment?.roleId
+        ? ((sourceGroupRoles || []).find(role => role.id === roleRenewalAssignment.roleId) ?? null)
+        : null,
+    [roleRenewalAssignment?.roleId, sourceGroupRoles]
+  );
+  const linkedAssignment = delegateAssignment ?? roleRenewalAssignment;
 
   const isAssignmentLoading =
     Boolean(sourceGroupId && assignmentId) &&
     (sourceAllocationsResult.type === 'unknown' || sourceGroupRolesResult.type === 'unknown');
   const assignmentLookupFailed =
-    Boolean(assignmentId) && !isAssignmentLoading && !delegateAssignment;
+    Boolean(assignmentId) && !isAssignmentLoading && !delegateAssignment && !roleRenewalAssignment;
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -268,6 +291,45 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
     targetEventId,
   ]);
 
+  useEffect(() => {
+    if (!roleRenewalAssignment?.roleId) {
+      return;
+    }
+
+    const prefillKey = `${roleRenewalAssignment.id}:${eventIdParam ?? ''}`;
+    if (appliedAssignmentPrefillKey === prefillKey) {
+      return;
+    }
+
+    const roleTitle =
+      roleRenewalRole?.title || roleRenewalRole?.name || roleRenewalAssignment.title;
+
+    setType('election');
+    setElectionMode('single');
+    setSeatCountInput('1');
+    setMajorityType('simple');
+    setRoleId(roleRenewalAssignment.roleId);
+    setTitle(
+      translateText('generated.inline.0135_wahl_roletitle_81c91130', {
+        roleTitle,
+      })
+    );
+    setDescription(roleRenewalRole?.description || roleRenewalAssignment.description || '');
+
+    if (eventIdParam) {
+      setEventId(eventIdParam);
+    }
+
+    setAppliedAssignmentPrefillKey(prefillKey);
+  }, [
+    appliedAssignmentPrefillKey,
+    eventIdParam,
+    roleRenewalAssignment,
+    roleRenewalRole?.description,
+    roleRenewalRole?.name,
+    roleRenewalRole?.title,
+  ]);
+
   const resolvedOrder = hasCustomOrder ? order : nextOrder;
   const selectableEventIds = useMemo(
     () => getCreateSelectableEventIds(userEvents, activeGroupIds, userEventParticipations),
@@ -283,6 +345,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   const isElectionType = type === 'election';
   const isVoteType = type === 'vote';
   const isDelegateAssignmentElection = isElectionType && Boolean(delegateAssignment);
+  const isRoleRenewalAssignmentElection = isElectionType && Boolean(roleRenewalAssignment);
   const delegateSeatCount = delegateAssignment
     ? Math.max(1, getRemainingSeatCount(delegateAssignment))
     : 1;
@@ -305,6 +368,12 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         normalizeDelegateElectionMode(delegateAssignment.targetEvent.delegate_election_mode)
       )
     : null;
+  const roleRenewalRoleTitle =
+    roleRenewalRole?.title ||
+    roleRenewalRole?.name ||
+    roleRenewalAssignment?.title ||
+    roleRenewalAssignment?.roleId ||
+    '';
 
   const createAgendaItemRecord = async (args: {
     agendaItemId: string;
@@ -596,20 +665,12 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
     }
 
     if (assignmentId && isAssignmentLoading) {
-      toast.error(
-        translateText(
-          'generated.inline.0302_der_delegiertenauftrag_wird_noch_geladen_bitt_da98e584'
-        )
-      );
+      toast.error(t('pages.create.agendaItem.assignmentLoading'));
       return createBlockedSubmitOutcome();
     }
 
     if (assignmentLookupFailed) {
-      toast.error(
-        translateText(
-          'generated.inline.0303_der_delegiertenauftrag_konnte_nicht_gefunden__b1fb330a'
-        )
-      );
+      toast.error(t('pages.create.agendaItem.assignmentNotFound'));
       return createBlockedSubmitOutcome();
     }
 
@@ -624,22 +685,21 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
 
     setIsSubmitting(true);
     context?.reportProgress({ key: 'create', status: 'active' });
-    const correlationId = createElectionFlowCorrelationId(
-      isDelegateAssignmentElection ? 'delegate-assignment-create' : 'agenda-item-create'
-    );
+    const creationFlow = isDelegateAssignmentElection
+      ? 'delegate-assignment-create'
+      : isRoleRenewalAssignmentElection
+        ? 'role-renewal-assignment-create'
+        : 'agenda-item-create';
+    const correlationId = createElectionFlowCorrelationId(creationFlow);
 
-    logElectionFlowClient(
-      isDelegateAssignmentElection ? 'delegate-assignment-create' : 'agenda-item-create',
-      'submit-started',
-      {
-        correlationId,
-        eventId,
-        agendaItemType: type,
-        assignmentId: assignmentId ?? null,
-        electionMode: isElectionType ? resolvedElectionMode : null,
-        seatCount: isElectionType ? resolvedSeatCount : null,
-      }
-    );
+    logElectionFlowClient(creationFlow, 'submit-started', {
+      correlationId,
+      eventId,
+      agendaItemType: type,
+      assignmentId: assignmentId ?? null,
+      electionMode: isElectionType ? resolvedElectionMode : null,
+      seatCount: isElectionType ? resolvedSeatCount : null,
+    });
 
     try {
       if (isElectionType) {
@@ -708,17 +768,13 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         }
       }
 
-      logElectionFlowClient(
-        isDelegateAssignmentElection ? 'delegate-assignment-create' : 'agenda-item-create',
-        'submit-confirmed',
-        {
-          correlationId,
-          eventId,
-          assignmentId: assignmentId ?? null,
-          electionMode: isElectionType ? resolvedElectionMode : null,
-          seatCount: isElectionType ? resolvedSeatCount : null,
-        }
-      );
+      logElectionFlowClient(creationFlow, 'submit-confirmed', {
+        correlationId,
+        eventId,
+        assignmentId: assignmentId ?? null,
+        electionMode: isElectionType ? resolvedElectionMode : null,
+        seatCount: isElectionType ? resolvedSeatCount : null,
+      });
 
       toast.success(t('pages.create.success.created'));
       context?.reportProgress({ key: 'create', status: 'complete' });
@@ -732,16 +788,12 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         })
       );
     } catch (error) {
-      logElectionFlowClientError(
-        isDelegateAssignmentElection ? 'delegate-assignment-create' : 'agenda-item-create',
-        'submit-error',
-        {
-          correlationId,
-          eventId,
-          assignmentId: assignmentId ?? null,
-          error,
-        }
-      );
+      logElectionFlowClientError(creationFlow, 'submit-error', {
+        correlationId,
+        eventId,
+        assignmentId: assignmentId ?? null,
+        error,
+      });
       toast.error(t('pages.create.error.createFailed'));
       setIsSubmitting(false);
       throw error;
@@ -806,6 +858,20 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                   },
                 ]
               : []),
+            ...(roleRenewalAssignment
+              ? [
+                  {
+                    key: 'role-renewal-assignment',
+                    kind: 'customComponent' as const,
+                    component: CreateInlineNotice,
+                    props: {
+                      text: t('pages.create.agendaItem.roleRenewalAssignmentNotice', {
+                        roleTitle: roleRenewalRoleTitle || roleRenewalAssignment.title,
+                      }),
+                    },
+                  },
+                ]
+              : []),
             ...(assignmentLookupFailed
               ? [
                   {
@@ -813,9 +879,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                     kind: 'customComponent' as const,
                     component: CreateInlineNotice,
                     props: {
-                      text: translateText(
-                        'generated.inline.0307_der_verlinkte_delegiertenauftrag_konnte_nicht_b7f62171'
-                      ),
+                      text: t('pages.create.agendaItem.assignmentLookupFailed'),
                       className:
                         'border-destructive/40 bg-destructive/5 text-destructive rounded-2xl p-4',
                     },
@@ -858,7 +922,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                   kind: 'customComponent',
                   component: AgendaTypeSelectorInput,
                   props: {
-                    delegateAssignment: Boolean(delegateAssignment),
+                    delegateAssignment: Boolean(linkedAssignment),
                     type,
                     lockedTitle: translateText('generated.inline.0308_typ_edcaf9aa'),
                     lockedDescription: translateText(
@@ -1035,7 +1099,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                   },
                 ]
               : []),
-            ...(isElectionType && !delegateAssignment
+            ...(isElectionType && !linkedAssignment
               ? [
                   {
                     key: 'role',
@@ -1048,6 +1112,20 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                       placeholder: t('pages.create.agendaItem.positionPlaceholder'),
                       groupIds: selectedEvent?.group_id ? [selectedEvent.group_id] : undefined,
                       eventId: eventId || undefined,
+                    },
+                  },
+                ]
+              : []),
+            ...(roleRenewalAssignment
+              ? [
+                  {
+                    key: 'role-renewal-role',
+                    kind: 'customComponent' as const,
+                    component: CreateInlineNotice,
+                    props: {
+                      text: t('pages.create.agendaItem.roleRenewalRoleNotice', {
+                        roleTitle: roleRenewalRoleTitle || roleRenewalAssignment.title,
+                      }),
                     },
                   },
                 ]
@@ -1167,6 +1245,14 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                             },
                           ]
                         : []),
+                      ...(roleRenewalAssignment
+                        ? [
+                            {
+                              label: t('pages.create.agendaItem.assignmentLabel'),
+                              value: roleRenewalAssignment.title,
+                            },
+                          ]
+                        : []),
                     ],
                   },
                   ...(isElectionType || isVoteType
@@ -1234,12 +1320,15 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       isElectionType,
       isSubmitting,
       isVoteType,
+      linkedAssignment,
       majorityType,
       order,
       resolvedElectionMode,
       resolvedOrder,
       resolvedSeatCount,
       roleId,
+      roleRenewalAssignment,
+      roleRenewalRoleTitle,
       seatCountInput,
       selectedEvent,
       selectableEvents,

@@ -190,9 +190,15 @@ export const eventsTranslations = {
     actualShort: 'Tats.',
     indicationOnly: 'Nur Stimmungsbild',
     indicationVotes: 'Stimmungsabgaben',
+    showIndicationResults: 'Stimmungsbild anzeigen',
+    hideIndicationResults: 'Stimmungsbild ausblenden',
     // Election section
     electionResults: 'Wahlergebnisse',
     noCandidates: 'Noch keine Kandidaten',
+    delegateParticipantsAdded:
+      'Gewählte Delegierte wurden dem Event als Teilnehmer automatisch hinzugefügt.',
+    roleWinnersAssigned: 'Die Rollen wurden an die Gewinner automatisch vergeben.',
+    eventRoleWinnersAssigned: 'Die Rollen wurden an die Gewinner automatisch vergeben.',
     candidateNominated: 'Nominiert',
     candidateAccepted: 'Bestätigt',
     candidateWithdrawn: 'Zurückgezogen',
@@ -426,6 +432,24 @@ export const eventsTranslations = {
       yearly: 'Jährlich',
       fourYearly: '4 Jährig',
     },
+  },
+  candidacy: {
+    becomeTitle: 'Kandidatur bestätigen',
+    becomeDescription: 'Geben Sie Ihre Abstimmungs-PIN ein, um für diese Wahl zu kandidieren.',
+    withdrawTitle: 'Kandidatur zurückziehen',
+    withdrawDescription:
+      'Geben Sie Ihre Abstimmungs-PIN ein, um Ihre Kandidatur für diese Wahl zurückzuziehen.',
+    loadingDescription: 'Polity bestätigt Ihre PIN und aktualisiert die Wahl.',
+    role: 'Rolle',
+    currentCandidates: 'Aktuelle Kandidaten',
+    votingMethod: 'Wahlverfahren',
+    verifyingPin: 'PIN wird geprüft...',
+    loadingStepsLabel: 'Fortschritt der Kandidaturbestätigung',
+    stepVerifyPin: 'PIN prüfen',
+    stepSubmitCandidacy: 'Kandidatur einreichen',
+    stepWithdrawCandidacy: 'Kandidatur zurückziehen',
+    stepSyncElection: 'Wahl synchronisieren',
+    cancel: 'Abbrechen',
   },
   // Toast-Nachrichten für Action-Hooks
   toasts: {

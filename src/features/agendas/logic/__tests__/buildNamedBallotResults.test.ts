@@ -119,6 +119,105 @@ describe('buildNamedBallotResults', () => {
     expect(model.groups[0]?.rows[0]?.selections).toEqual(['Alpha Candidate', 'Bravo Candidate']);
   });
 
+  it('adds total option summaries for ungrouped election results', () => {
+    const model = buildNamedElectionResultsModel({
+      election: {
+        status: 'final_vote',
+        candidates: [
+          {
+            id: 'candidate-a',
+            order_index: 0,
+            user: { id: 'candidate-a', first_name: 'Alex', last_name: 'Candidate' },
+          },
+        ],
+        electors: [{ id: 'elector-1', user_id: 'user-1' }],
+        final_participations: [
+          {
+            elector_id: 'elector-1',
+            selections: [{ candidate_id: 'candidate-a' }],
+          },
+        ],
+      },
+      eligibleParticipants: [
+        {
+          id: 'participant-1',
+          user_id: 'user-1',
+          user: { id: 'user-1', first_name: 'Dana', last_name: 'Delegate' },
+        },
+      ],
+      confirmedOfflineParticipants: [],
+      groupedBySourceGroup: false,
+    });
+
+    expect(model.totalOptionSummaries).toEqual([
+      {
+        id: 'candidate-a',
+        label: 'Alex Candidate',
+        namedCount: 1,
+        offlineCount: 0,
+        totalCount: 1,
+      },
+    ]);
+  });
+
+  it('counts final offline election tallies in total option summaries', () => {
+    const model = buildNamedElectionResultsModel({
+      election: {
+        status: 'final_vote',
+        candidates: [
+          {
+            id: 'candidate-a',
+            order_index: 0,
+            user: { id: 'candidate-a', first_name: 'Alpha', last_name: 'Candidate' },
+          },
+          {
+            id: 'candidate-b',
+            order_index: 1,
+            user: { id: 'candidate-b', first_name: 'Bravo', last_name: 'Candidate' },
+          },
+        ],
+        electors: [{ id: 'elector-1', user_id: 'user-1' }],
+        final_participations: [
+          {
+            elector_id: 'elector-1',
+            selections: [{ candidate_id: 'candidate-a' }],
+          },
+        ],
+        offline_tallies: [
+          { candidate_id: 'candidate-a', phase: 'final', count: 2 },
+          { candidate_id: 'candidate-b', phase: 'final', count: 1 },
+          { candidate_id: 'candidate-b', phase: 'indicative', count: 5 },
+        ],
+      },
+      eligibleParticipants: [
+        {
+          id: 'participant-1',
+          user_id: 'user-1',
+          user: { id: 'user-1', first_name: 'Dana', last_name: 'Delegate' },
+        },
+      ],
+      confirmedOfflineParticipants: [],
+      groupedBySourceGroup: false,
+    });
+
+    expect(model.totalOptionSummaries).toEqual([
+      {
+        id: 'candidate-a',
+        label: 'Alpha Candidate',
+        namedCount: 1,
+        offlineCount: 2,
+        totalCount: 3,
+      },
+      {
+        id: 'candidate-b',
+        label: 'Bravo Candidate',
+        namedCount: 0,
+        offlineCount: 1,
+        totalCount: 1,
+      },
+    ]);
+  });
+
   it('groups named results by source group and aggregates counts per option', () => {
     const model = buildNamedVoteResultsModel({
       vote: {
@@ -169,6 +268,86 @@ describe('buildNamedBallotResults', () => {
     });
     expect(model.groups[0]?.optionSummaries).toEqual([{ id: 'yes', label: 'Yes', count: 2 }]);
     expect(model.groups[1]?.optionSummaries).toEqual([{ id: 'no', label: 'No', count: 1 }]);
+  });
+
+  it('keeps grouped election summaries named while total summaries include offline tallies', () => {
+    const model = buildNamedElectionResultsModel({
+      election: {
+        status: 'closed',
+        candidates: [
+          {
+            id: 'candidate-a',
+            order_index: 0,
+            user: { id: 'candidate-a', first_name: 'Alpha', last_name: 'Candidate' },
+          },
+          {
+            id: 'candidate-b',
+            order_index: 1,
+            user: { id: 'candidate-b', first_name: 'Bravo', last_name: 'Candidate' },
+          },
+        ],
+        electors: [
+          { id: 'elector-1', user_id: 'user-1' },
+          { id: 'elector-2', user_id: 'user-2' },
+        ],
+        final_participations: [
+          { elector_id: 'elector-1', selections: [{ candidate_id: 'candidate-a' }] },
+          { elector_id: 'elector-2', selections: [{ candidate_id: 'candidate-b' }] },
+        ],
+        offline_tallies: [{ candidate_id: 'candidate-a', phase: 'final', count: 3 }],
+      },
+      eligibleParticipants: [
+        {
+          id: 'participant-1',
+          user_id: 'user-1',
+          user: { id: 'user-1', first_name: 'Alice', last_name: 'Able' },
+          source_group: { id: 'group-a', name: 'Alpha' },
+        },
+        {
+          id: 'participant-2',
+          user_id: 'user-2',
+          user: { id: 'user-2', first_name: 'Bea', last_name: 'Baker' },
+          source_group: { id: 'group-b', name: 'Beta' },
+        },
+      ],
+      confirmedOfflineParticipants: [
+        {
+          id: 'offline-1',
+          first_name: 'Otto',
+          last_name: 'Offline',
+          attendance_status: 'confirmed',
+          participation_channel: 'offline',
+          group_offline_member: {
+            group: { id: 'group-a', name: 'Alpha' },
+          },
+        },
+      ],
+      groupedBySourceGroup: true,
+    });
+
+    expect(model.groups[0]?.optionSummaries).toEqual([
+      { id: 'candidate-a', label: 'Alpha Candidate', count: 1 },
+    ]);
+    expect(model.groups[1]?.optionSummaries).toEqual([
+      { id: 'candidate-b', label: 'Bravo Candidate', count: 1 },
+    ]);
+    expect(model.totalOptionSummaries).toEqual([
+      {
+        id: 'candidate-a',
+        label: 'Alpha Candidate',
+        namedCount: 1,
+        offlineCount: 3,
+        totalCount: 4,
+      },
+      {
+        id: 'candidate-b',
+        label: 'Bravo Candidate',
+        namedCount: 1,
+        offlineCount: 0,
+        totalCount: 1,
+      },
+    ]);
+    expect(model.totalOfflineAggregatedCount).toBe(1);
   });
 
   it('marks confirmed offline participants without adding them to named aggregates', () => {

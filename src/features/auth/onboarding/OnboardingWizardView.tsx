@@ -16,6 +16,7 @@ import { SectionProgressTopBar } from '@/features/shared/ui/navigation';
 import { Progress } from '@/features/shared/ui/ui/progress.tsx';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { cn } from '@/features/shared/utils/utils.ts';
+import type { WizardSwipeNavigationHandlers } from '@/features/shared/hooks/useWizardSwipeNavigation';
 import { type OnboardingStep } from '../hooks/useOnboarding.ts';
 import { NameStep } from './NameStep.tsx';
 import { GroupSearchStep } from './GroupSearchStep.tsx';
@@ -95,6 +96,7 @@ export interface OnboardingWizardViewProps {
   handleGoToGroup: any;
   handleGoToTimeline: any;
   handleGoToAssistant: any;
+  swipeNavigationHandlers: WizardSwipeNavigationHandlers;
 }
 
 export function OnboardingWizardView({
@@ -125,6 +127,7 @@ export function OnboardingWizardView({
   handleGoToGroup,
   handleGoToTimeline,
   handleGoToAssistant,
+  swipeNavigationHandlers,
 }: OnboardingWizardViewProps) {
   const activeStepIndex = STEP_ORDER.indexOf(step);
   const mobileStepItems = STEP_ORDER.map((item, index) => ({
@@ -240,7 +243,11 @@ export function OnboardingWizardView({
               </div>
             )}
 
-            <div className="space-y-8">
+            <div
+              className="space-y-8"
+              style={{ touchAction: 'pan-y' }}
+              {...swipeNavigationHandlers}
+            >
               {step === 'name' && (
                 <NameStep
                   firstName={data.firstName}

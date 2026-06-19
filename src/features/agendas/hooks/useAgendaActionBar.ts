@@ -4,7 +4,14 @@ import { usePermissions } from '@/zero/rbac';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
+import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useVoteCasting } from '@/features/vote-cast/hooks/useVoteCasting';
+import {
+  defaultElectionBallotVisibility,
+  defaultVoteBallotVisibility,
+  isNamedBallot,
+} from '@/zero/shared';
+import type { CandidacyPasswordDialogMode } from '@/features/elections/ui/CandidacyPasswordDialog';
 import {
   createElectionFlowCorrelationId,
   logElectionFlowClient,
@@ -33,11 +40,16 @@ interface ElectionCandidateLike {
 
 interface ElectionLike {
   id: string;
+  title?: string | null;
+  description?: string | null;
   status?: string | null;
   visibility?: string | null;
   ballot_visibility?: string | null;
+  majority_type?: string | null;
   closing_duration_seconds?: number | null;
+  role?: { title?: string | null; name?: string | null; description?: string | null } | null;
   candidates?: readonly ElectionCandidateLike[] | null;
+  indicative_participations?: readonly { elector_id?: string | null }[] | null;
 }
 
 interface VoteLike {
@@ -46,6 +58,7 @@ interface VoteLike {
   visibility?: string | null;
   ballot_visibility?: string | null;
   closing_duration_seconds?: number | null;
+  indicative_participations?: readonly { voter_id?: string | null }[] | null;
 }
 
 interface UseAgendaActionBarOptions {
@@ -76,11 +89,16 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   const { addSpeaker, removeSpeaker, updateAgendaItem } = useAgendaActions();
   const electionActions = useElectionActions();
   const voteActionsHook = useVoteActions();
+  const { verifyVotingPassword } = useVotingPasswordActions();
 
   const [speakerLoading, setSpeakerLoading] = useState(false);
   const [candidateLoading, setCandidateLoading] = useState(false);
   const [voteDialogOpen, setVoteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [candidacyDialogOpen, setCandidacyDialogOpen] = useState(false);
+  const [candidacyDialogMode, setCandidacyDialogMode] =
+    useState<CandidacyPasswordDialogMode>('become');
+  const [candidacyPasswordError, setCandidacyPasswordError] = useState<string | null>(null);
 
   // Vote casting hook
   const voteCasting = useVoteCasting({
@@ -102,14 +120,119 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     );
   }, [user?.id, currentAgendaItem?.speaker_list]);
 
-  // Candidate status
-  const isUserCandidate = useMemo(() => {
-    if (!user?.id || !election?.candidates) return false;
-    return election.candidates.some(
-      (c: { user_id?: string | null; user?: { id: string } | null }) =>
-        c.user?.id === user.id || c.user_id === user.id
+  const userCandidate = useMemo(() => {
+    if (!user?.id || !election?.candidates) return null;
+    return (
+      election.candidates.find(
+        (c: { user_id?: string | null; user?: { id: string } | null }) =>
+          c.user?.id === user.id || c.user_id === user.id
+      ) ?? null
     );
   }, [user?.id, election?.candidates]);
+
+  // Candidate status
+  const isUserCandidate = useMemo(() => Boolean(userCandidate), [userCandidate]);
+  const hasUserIndicativeParticipation = useMemo(() => {
+    if (election?.id && electorId) {
+      return (
+        election.indicative_participations?.some(
+          participation => participation.elector_id === electorId
+        ) ?? false
+      );
+    }
+
+    if (vote?.id && voterId) {
+      return (
+        vote.indicative_participations?.some(participation => participation.voter_id === voterId) ??
+        false
+      );
+    }
+
+    return false;
+  }, [
+    election?.id,
+    election?.indicative_participations,
+    electorId,
+    vote?.id,
+    vote?.indicative_participations,
+    voterId,
+  ]);
+  const isSecretBallot = election?.id
+    ? !isNamedBallot(election.ballot_visibility ?? defaultElectionBallotVisibility)
+    : vote?.id
+      ? !isNamedBallot(vote.ballot_visibility ?? defaultVoteBallotVisibility)
+      : false;
+  const disableSecretIndicativeVoteButton =
+    voteCasting.isIndicationPhase && isSecretBallot && hasUserIndicativeParticipation;
+  const secretIndicativeVoteTooltip = disableSecretIndicativeVoteButton
+    ? 'Du hast deine geheime indikative Stimme bereits abgegeben. Geheime indikative Stimmen können nicht geändert werden.'
+    : null;
+
+  const performBecomeCandidate = useCallback(async () => {
+    if (!user?.id || !election?.id || !hasCandidateRight) return;
+
+    const candidateOrder = (election.candidates?.length ?? 0) + 1;
+    await electionActions.addCandidate({
+      id: crypto.randomUUID(),
+      name: user.email || 'Candidate',
+      description: '',
+      image_url: '',
+      order_index: candidateOrder,
+      status: 'nominated',
+      user_id: user.id,
+      election_id: election.id,
+    });
+  }, [
+    user?.id,
+    user?.email,
+    election?.id,
+    election?.candidates?.length,
+    hasCandidateRight,
+    electionActions,
+  ]);
+
+  const performWithdrawCandidacy = useCallback(async () => {
+    if (!user?.id || !userCandidate) return;
+    await electionActions.deleteCandidate(userCandidate.id);
+  }, [user?.id, userCandidate, electionActions]);
+
+  const handleCandidacyDialogOpenChange = useCallback((open: boolean) => {
+    setCandidacyDialogOpen(open);
+    if (!open) {
+      setCandidacyPasswordError(null);
+    }
+  }, []);
+
+  const handleCandidacyPasswordSubmit = useCallback(
+    async (password: string) => {
+      setCandidateLoading(true);
+      setCandidacyPasswordError(null);
+
+      try {
+        await verifyVotingPassword(password);
+
+        if (candidacyDialogMode === 'withdraw') {
+          await performWithdrawCandidacy();
+        } else {
+          await performBecomeCandidate();
+        }
+
+        setCandidacyDialogOpen(false);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to confirm candidacy.';
+        setCandidacyPasswordError(message);
+      } finally {
+        setCandidateLoading(false);
+      }
+    },
+    [candidacyDialogMode, performBecomeCandidate, performWithdrawCandidacy, verifyVotingPassword]
+  );
+
+  const openCandidacyDialog = useCallback((mode: CandidacyPasswordDialogMode) => {
+    setCandidacyDialogMode(mode);
+    setCandidacyPasswordError(null);
+    setCandidacyDialogOpen(true);
+  }, []);
 
   // Handlers
   const handleJoinSpeakerList = useCallback(async () => {
@@ -158,51 +281,13 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
 
   const handleBecomeCandidate = useCallback(async () => {
     if (!user?.id || !election?.id || !hasCandidateRight) return;
-    setCandidateLoading(true);
-    try {
-      const candidateOrder = (election.candidates?.length ?? 0) + 1;
-      await electionActions.addCandidate({
-        id: crypto.randomUUID(),
-        name: user.email || 'Candidate',
-        description: '',
-        image_url: '',
-        order_index: candidateOrder,
-        status: 'nominated',
-        user_id: user.id,
-        election_id: election.id,
-      });
-    } catch {
-      // toast handled in useElectionActions
-    } finally {
-      setCandidateLoading(false);
-    }
-  }, [
-    user?.id,
-    user?.email,
-    election?.id,
-    election?.candidates?.length,
-    hasCandidateRight,
-    eventTitle,
-    eventId,
-    electionActions,
-  ]);
+    openCandidacyDialog('become');
+  }, [user?.id, election?.id, hasCandidateRight, openCandidacyDialog]);
 
   const handleWithdrawCandidacy = useCallback(async () => {
-    if (!user?.id || !election?.candidates) return;
-    const userCandidate = election.candidates.find(
-      (c: { user_id?: string | null; user?: { id: string } | null }) =>
-        c.user?.id === user.id || c.user_id === user.id
-    );
-    if (!userCandidate) return;
-    setCandidateLoading(true);
-    try {
-      await electionActions.deleteCandidate(userCandidate.id);
-    } catch {
-      // toast handled in useElectionActions
-    } finally {
-      setCandidateLoading(false);
-    }
-  }, [user?.id, election?.candidates, electionActions]);
+    if (!user?.id || !userCandidate) return;
+    openCandidacyDialog('withdraw');
+  }, [user?.id, userCandidate, openCandidacyDialog]);
 
   const handleStartVote = useCallback(async () => {
     if (!canManageAgenda) return;
@@ -355,9 +440,24 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     setVoteDialogOpen,
     editDialogOpen,
     setEditDialogOpen,
+    candidacyDialogProps: {
+      open: candidacyDialogOpen,
+      mode: candidacyDialogMode,
+      electionTitle: election?.title ?? eventTitle ?? null,
+      electionDescription: election?.description ?? null,
+      roleTitle: election?.role?.title ?? election?.role?.name ?? null,
+      candidatesCount: election?.candidates?.length ?? null,
+      majorityType: election?.majority_type ?? null,
+      error: candidacyPasswordError,
+      isSubmitting: candidateLoading,
+      onOpenChange: handleCandidacyDialogOpenChange,
+      onSubmit: handleCandidacyPasswordSubmit,
+    },
 
     // Vote casting (for dialog)
     voteCasting,
+    disableSecretIndicativeVoteButton,
+    secretIndicativeVoteTooltip,
 
     // Handlers
     handleJoinSpeakerList,

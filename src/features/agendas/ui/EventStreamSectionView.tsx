@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { AgendaNavigationControls } from './AgendaNavigationControls';
-import { AgendaElectionSection } from './AgendaElectionSection';
+import { AgendaElectionSection, isAutoAssignedRoleElection } from './AgendaElectionSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
 import { AccreditationSection } from './AccreditationSection';
 import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
@@ -251,6 +251,11 @@ export function EventStreamSectionView({
                 indicativeSelections={indicativeSelections}
                 finalSelections={finalSelections}
                 offlineTallies={election.offline_tallies ?? []}
+                delegateTargetEventId={
+                  (election as { delegate_assignment_meta?: { targetEventId?: string } | null })
+                    .delegate_assignment_meta?.targetEventId
+                }
+                showRoleAssignedMessage={isAutoAssignedRoleElection(election)}
                 userHasVoted={userHasVotedElection}
                 userSelectedCandidateIds={userSelectedCandidateIds}
                 electionStatus={electionStatus}

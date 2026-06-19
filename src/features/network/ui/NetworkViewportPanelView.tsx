@@ -20,6 +20,7 @@ export function NetworkViewportPanelView({
       ref={containerRef}
       className={cn('min-h-[24rem] min-w-0', className)}
       style={height ? { height: `${height}px` } : undefined}
+      data-swipe-lock
     >
       {children}
     </div>

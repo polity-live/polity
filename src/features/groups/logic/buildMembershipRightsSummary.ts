@@ -7,8 +7,11 @@ import type { ActionRightOption } from '@/features/groups/types/group.types';
 import { getMembershipDisplayRoles, sortGroupRoles } from './membershipDisplayRoles';
 
 export {
+  augmentMembershipsWithCurrentRoleHolders,
+  getMembershipAssignedRoles,
   getMembershipDisplayRoles,
   getMembershipRoleSummary,
+  hasElectedDisplayRole,
   sortGroupRoles,
 } from './membershipDisplayRoles';
 

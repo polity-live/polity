@@ -22,20 +22,23 @@ export interface BlogTimelineCardProps {
     hashtags?: { id: string; tag: string }[];
   };
   onShare?: () => void;
+  href?: string;
   className?: string;
 }
 import { BlogTimelineCardView } from './BlogTimelineCardView';
-export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
+export function BlogTimelineCard({ blog, href, className }: BlogTimelineCardProps) {
   const { t } = useTranslation();
   const gradient = getContentTypeGradient('blog');
   const subscription = useSubscribeBlog(blog.id);
   const blogStyle = CONTENT_TYPE_CONFIG.blog;
 
-  const blogUrl = blog.groupId
-    ? `/group/${blog.groupId}/blog/${blog.id}`
-    : blog.authorId
-      ? `/user/${blog.authorId}/blog/${blog.id}`
-      : `/blog/${blog.id}`;
+  const blogUrl =
+    href ??
+    (blog.groupId
+      ? `/group/${blog.groupId}/blog/${blog.id}`
+      : blog.authorId
+        ? `/user/${blog.authorId}/blog/${blog.id}`
+        : `/blog/${blog.id}`);
 
   const stats = [
     {

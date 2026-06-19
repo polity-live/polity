@@ -50,6 +50,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
     setConfirmDialogOpen,
     selectedElection,
     isSubmitting,
+    candidacyPasswordError,
     getUserCandidacy,
     handleElectionClick,
     handleConfirmCandidacy,
@@ -106,6 +107,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
       participation={participation}
       participationDisabledReason={participationDisabledReason}
       selectedElection={selectedElection}
+      candidacyPasswordError={candidacyPasswordError}
       setConfirmDialogOpen={setConfirmDialogOpen}
       setElectionsDialogOpen={setElectionsDialogOpen}
       shouldDisableParticipationRequest={shouldDisableParticipationRequest}

@@ -1,7 +1,7 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import { CheckCircle2, Crown } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { BarChart3, CheckCircle2, Crown, Users } from 'lucide-react';
 
 import {
   Tooltip,
@@ -9,6 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/features/shared/ui/ui/tooltip';
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { VotingPhaseBadge, type VotingPhaseValue } from './VotingControls';
@@ -52,6 +53,10 @@ function normalizePercent(percent: number) {
   return Math.max(0, Math.min(100, percent));
 }
 
+function formatCountPercent(count: number, percent: number) {
+  return `${Math.round(count)} · ${normalizePercent(percent).toFixed(0)}%`;
+}
+
 function ResultBar({
   percent,
   count,
@@ -76,7 +81,7 @@ function ResultBar({
       <TooltipTrigger asChild>
         <div className="flex items-center gap-2" data-slot="vote-result-bar">
           <div
-            className={cn('bg-muted/70 h-2 flex-1 overflow-hidden rounded-full', subtle && 'h-1.5')}
+            className={cn('bg-muted/40 h-2 flex-1 overflow-hidden rounded-full', subtle && 'h-1.5')}
           >
             <div
               className={cn(
@@ -88,8 +93,8 @@ function ResultBar({
               style={{ width: `${width}%` }}
             />
           </div>
-          <span className="text-muted-foreground min-w-[4.5rem] text-right text-xs tabular-nums">
-            {count} ({width.toFixed(0)}%)
+          <span className="text-muted-foreground min-w-[4.75rem] text-right text-xs tabular-nums">
+            {formatCountPercent(count, width)}
           </span>
         </div>
       </TooltipTrigger>
@@ -119,8 +124,10 @@ export function VoteResultsDisplay({
   animate = true,
 }: VoteResultsDisplayProps) {
   const { t } = useTranslation();
-  const showBoth = phase !== 'indication' && totalIndication > 0;
+  const [showIndicationResults, setShowIndicationResults] = useState(false);
   const isIndicationPhase = phase === 'indication';
+  const canToggleIndicationResults = !isIndicationPhase && totalFinal > 0 && totalIndication > 0;
+  const showIndicationRows = canToggleIndicationResults && showIndicationResults;
   const visibleTotal = isIndicationPhase ? totalIndication : totalFinal;
   const selectedOptionIdSet = new Set(selectedOptionIds);
   const winnerOptionIdSet = new Set([
@@ -131,6 +138,10 @@ export function VoteResultsDisplay({
   const phaseVoteLabel = isIndicationPhase
     ? t('features.events.agenda.indicationVotes', 'indications')
     : t('features.events.agenda.votes', 'votes');
+  const turnout =
+    totalEligible !== undefined && totalEligible > 0
+      ? Math.round((visibleTotal / totalEligible) * 100)
+      : undefined;
 
   return (
     <TooltipProvider>
@@ -138,21 +149,43 @@ export function VoteResultsDisplay({
         className={cn('space-y-3', compact ? 'text-sm' : 'space-y-4', className)}
         data-slot="vote-results-display"
       >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+        <div className="bg-card flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2">
             <VotingPhaseBadge phase={phase} />
-            <span className="text-muted-foreground text-xs">
+            <BadgeControl variant="outline" size="xs" className="gap-1">
+              <BarChart3 className="h-3 w-3" />
               {visibleTotal} {phaseVoteLabel}
-            </span>
+            </BadgeControl>
+            {turnout !== undefined ? (
+              <BadgeControl variant="outline" size="xs" className="gap-1">
+                <Users className="h-3 w-3" />
+                {turnout}%
+              </BadgeControl>
+            ) : null}
           </div>
-          {showBoth ? (
-            <span className="text-muted-foreground text-xs">
-              {totalIndication} {t('features.events.agenda.indicationVotes', 'indications')}
-            </span>
+          {canToggleIndicationResults ? (
+            <BadgeControl
+              asChild
+              variant={showIndicationResults ? 'secondary' : 'outline'}
+              size="xs"
+            >
+              <button
+                type="button"
+                onClick={event => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setShowIndicationResults(current => !current);
+                }}
+              >
+                {showIndicationResults
+                  ? t('features.events.agenda.hideIndicationResults', 'Hide indication results')
+                  : t('features.events.agenda.showIndicationResults', 'Show indication results')}
+              </button>
+            </BadgeControl>
           ) : null}
         </div>
 
-        <div className="bg-card/70 border-border/70 divide-border/70 overflow-hidden rounded-md border">
+        <div className="space-y-2">
           {options.map(option => {
             const isSelected = selectedOptionIdSet.has(option.key);
             const isWinner = showWinner && winnerOptionIdSet.has(option.key);
@@ -166,9 +199,9 @@ export function VoteResultsDisplay({
               <div
                 key={option.key}
                 className={cn(
-                  'space-y-2 border-b px-3 py-2.5 last:border-b-0',
-                  isSelected && 'bg-primary/5',
-                  isWinner && 'bg-[var(--badge-warning-bg)]'
+                  'bg-card space-y-2 rounded-lg border px-3 py-3 shadow-sm transition-[background-color,border-color,box-shadow]',
+                  isSelected && 'border-primary/30 bg-primary/5',
+                  isWinner && 'border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)]'
                 )}
                 data-selected={isSelected ? 'true' : undefined}
                 data-winner={isWinner ? 'true' : undefined}
@@ -184,16 +217,16 @@ export function VoteResultsDisplay({
                         <span className="truncate font-medium">{option.label}</span>
                         {option.badge}
                         {isSelected ? (
-                          <span className="text-primary inline-flex items-center gap-1 text-xs font-medium">
+                          <BadgeControl variant="secondary" size="tiny" className="gap-1">
                             <CheckCircle2 className="h-3.5 w-3.5" />
                             {t('features.events.agenda.selected', 'Selected')}
-                          </span>
+                          </BadgeControl>
                         ) : null}
                         {isWinner ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--badge-warning-fg)]">
+                          <BadgeControl tone="warning" size="tiny" className="gap-1">
                             <Crown className="h-3.5 w-3.5" />
                             {t('features.events.agenda.winner', 'Winner')}
-                          </span>
+                          </BadgeControl>
                         ) : null}
                       </div>
                       {option.description ? (
@@ -204,7 +237,7 @@ export function VoteResultsDisplay({
                     </div>
                   </div>
                   <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
-                    {primaryCount} ({normalizePercent(primaryPercent).toFixed(0)}%)
+                    {formatCountPercent(primaryCount, primaryPercent)}
                   </span>
                 </div>
 
@@ -221,7 +254,7 @@ export function VoteResultsDisplay({
                     }
                     animate={animate}
                   />
-                  {showBoth ? (
+                  {showIndicationRows ? (
                     <div className="grid grid-cols-[2.25rem_1fr] items-center gap-2">
                       <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
                         {t('features.events.agenda.indicationShort')}
@@ -250,14 +283,14 @@ export function VoteResultsDisplay({
         ) : null}
 
         {totalEligible !== undefined && totalEligible > 0 ? (
-          <div className="text-muted-foreground flex justify-between border-t pt-2 text-xs">
-            <span>
+          <div className="grid gap-2 border-t pt-2 text-xs sm:grid-cols-3">
+            <span className="bg-muted/20 rounded-md border px-3 py-2">
               {t('features.events.voting.eligible')}: {totalEligible}
             </span>
-            <span>
+            <span className="bg-muted/20 rounded-md border px-3 py-2">
               {t('features.events.voting.voted')}: {visibleTotal}
             </span>
-            <span>
+            <span className="bg-muted/20 rounded-md border px-3 py-2">
               {t('features.events.voting.share')}:{' '}
               {Math.round((visibleTotal / totalEligible) * 100)}%
             </span>

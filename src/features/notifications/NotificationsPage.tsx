@@ -8,6 +8,9 @@ export function NotificationsPage() {
     <NotificationsPageView
       searchQuery={np.searchQuery}
       onSearchQueryChange={np.setSearchQuery}
+      selectedTab={np.selectedTab}
+      onSelectedTabChange={np.setSelectedTab}
+      tabSwipeHandlers={np.tabSwipeHandlers}
       unreadCount={np.filteredNotifications.unread.length}
       searchFilteredNotifications={np.searchFilteredNotifications}
       paginatedNotifications={np.paginatedNotifications}

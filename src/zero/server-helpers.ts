@@ -50,6 +50,25 @@ export async function requireRecentVotingPasswordVerification(
   }
 }
 
+/**
+ * Throws unless the user has configured a voting PIN and verified it recently.
+ * Use this for sensitive non-vote actions that must always require a PIN.
+ */
+export async function requireConfiguredRecentVotingPasswordVerification(
+  tx: ZeroTransaction,
+  userId: string,
+  maxAgeMs = 120_000
+): Promise<void> {
+  const record = await tx.run(zql.voting_password.where('user_id', userId).one());
+  if (!record) {
+    throw new Error('Please set your voting PIN before changing your candidacy.');
+  }
+  const verifiedAt = record.last_verified_at;
+  if (!verifiedAt || Date.now() - verifiedAt > maxAgeMs) {
+    throw new Error('Please verify your voting PIN before changing your candidacy.');
+  }
+}
+
 /** Read group name by id. */
 export async function groupName(tx: Transaction<Schema>, groupId: string): Promise<string> {
   const g = await tx.run(zql.group.where('id', groupId).one());

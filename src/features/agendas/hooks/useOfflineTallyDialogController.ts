@@ -9,6 +9,7 @@ interface UseOfflineTallyDialogControllerOptions<TValue> {
   entries: readonly OfflineTallyEntry[];
   tallies: readonly TValue[];
   maxTotalVotes?: number | null;
+  maxPerEntryVotes?: number | null;
   getTallyEntryId: (tally: TValue) => string | null | undefined;
   getTallyCount: (tally: TValue) => number | null | undefined;
   onSubmit: (args: { password: string; counts: Record<string, number> }) => Promise<void>;
@@ -56,6 +57,7 @@ export function useOfflineTallyDialogController<TValue>({
   entries,
   tallies,
   maxTotalVotes,
+  maxPerEntryVotes,
   getTallyEntryId,
   getTallyCount,
   onSubmit,
@@ -92,7 +94,18 @@ export function useOfflineTallyDialogController<TValue>({
     [normalizedCounts]
   );
 
-  const isOverLimit = maxTotalVotes != null && totalVotes > maxTotalVotes;
+  const isOverTotalLimit = maxTotalVotes != null && totalVotes > maxTotalVotes;
+  const overLimitEntryIds = useMemo(
+    () =>
+      maxPerEntryVotes == null
+        ? []
+        : Object.entries(normalizedCounts)
+            .filter(([, value]) => value > maxPerEntryVotes)
+            .map(([id]) => id),
+    [maxPerEntryVotes, normalizedCounts]
+  );
+  const isOverEntryLimit = overLimitEntryIds.length > 0;
+  const isOverLimit = isOverTotalLimit || isOverEntryLimit;
 
   const setDraftValue = useCallback((id: string, value: string) => {
     setDraft(current => {
@@ -115,7 +128,10 @@ export function useOfflineTallyDialogController<TValue>({
   return {
     draft,
     totalVotes,
+    isOverTotalLimit,
+    isOverEntryLimit,
     isOverLimit,
+    overLimitEntryIds,
     onDraftValueChange: setDraftValue,
     onPasswordSubmit: handlePasswordSubmit,
   };

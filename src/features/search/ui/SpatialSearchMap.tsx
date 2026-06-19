@@ -351,6 +351,7 @@ export function SpatialSearchMap({
     <div
       className="bg-background overflow-hidden rounded-lg border shadow-sm"
       data-testid="spatial-search-map"
+      data-swipe-lock
     >
       <MapContainer
         center={center}

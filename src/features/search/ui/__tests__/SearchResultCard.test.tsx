@@ -3,6 +3,14 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ to, children, ...props }: { to: string; children: React.ReactNode }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 import { SearchResultCard } from '../SearchResultCard';
 import type { SearchDocument } from '../../types/search-document.types';
 
@@ -26,40 +34,53 @@ afterEach(() => {
   cleanup();
 });
 
+function makeSearchDocument(overrides: Partial<SearchDocument> = {}): SearchDocument {
+  return {
+    id: 'search-doc-1',
+    entity_id: 'group-1',
+    entity_type: 'group',
+    title: 'Civic Assembly',
+    subtitle: null,
+    summary: 'A group for civic work.',
+    search_text: '',
+    visibility: 'public',
+    image_url: null,
+    location_latitude: null,
+    location_longitude: null,
+    location_label: null,
+    location_source: null,
+    created_at: Date.now(),
+    updated_at: Date.now(),
+    owner_user_id: null,
+    group_id: null,
+    card_payload: { type: 'group' },
+    engagement_score: 0,
+    trending_score: 0,
+    topics: [],
+    group: null,
+    ...overrides,
+  } as SearchDocument;
+}
+
+function readDynamicCardProps() {
+  const card = screen.getByTestId('dynamic-card');
+  return {
+    card,
+    props: JSON.parse(card.textContent || '{}') as Record<string, unknown>,
+  };
+}
+
 describe('SearchResultCard', () => {
   it('passes compact search card classes without stretching cards to the virtual row height', () => {
     render(
       <SearchResultCard
-        document={
-          {
-            id: 'search-doc-1',
-            entity_id: 'group-1',
-            entity_type: 'group',
-            title: 'Civic Assembly',
-            subtitle: null,
-            summary: 'A group for civic work.',
-            search_text: '',
-            visibility: 'public',
-            image_url: null,
-            location_latitude: null,
-            location_longitude: null,
-            location_label: null,
-            location_source: null,
-            created_at: Date.now(),
-            updated_at: Date.now(),
-            owner_user_id: null,
-            group_id: null,
-            card_payload: {
-              type: 'group',
-              stats: { members: 12 },
-              tags: ['planning'],
-            },
-            engagement_score: 0,
-            trending_score: 0,
-            topics: [],
-            group: null,
-          } as SearchDocument
-        }
+        document={makeSearchDocument({
+          card_payload: {
+            type: 'group',
+            stats: { members: 12 },
+            tags: ['planning'],
+          },
+        })}
       />
     );
 
@@ -87,51 +108,141 @@ describe('SearchResultCard', () => {
     );
   });
 
-  it('passes election agenda navigation context from indexed search payloads', () => {
+  it.each([
+    {
+      name: 'group',
+      expectedCardType: 'group',
+      expectedHref: '/group/group-1',
+      document: makeSearchDocument(),
+    },
+    {
+      name: 'blog',
+      expectedCardType: 'blog',
+      expectedHref: '/group/group-1/blog/blog-1',
+      document: makeSearchDocument({
+        id: 'blog:blog-1',
+        entity_id: 'blog-1',
+        entity_type: 'blog',
+        group_id: 'group-1',
+        owner_user_id: 'user-1',
+        title: 'Budget Notes',
+        card_payload: { type: 'blog' },
+      }),
+    },
+    {
+      name: 'todo',
+      expectedCardType: 'todo',
+      expectedHref: '/todos/todo-1',
+      document: makeSearchDocument({
+        id: 'todo:todo-1',
+        entity_id: 'todo-1',
+        entity_type: 'todo',
+        title: 'Prepare agenda',
+        card_payload: { type: 'todo' },
+      }),
+    },
+    {
+      name: 'video source entity',
+      expectedCardType: 'video',
+      expectedHref: '/statement/statement-1',
+      expectedNestedProps: {
+        video: {
+          sourceId: 'statement-1',
+          sourceType: 'statement',
+        },
+      },
+      document: makeSearchDocument({
+        id: 'timeline-event:video-1',
+        entity_id: 'video-1',
+        entity_type: 'video',
+        title: 'Statement clip',
+        image_url: 'https://example.com/thumb.jpg',
+        card_payload: {
+          type: 'video',
+          entity_type: 'statement',
+          entity_id: 'statement-1',
+        },
+      }),
+    },
+    {
+      name: 'image permalink fallback',
+      expectedCardType: 'image',
+      expectedHref: '/search?result=timeline-event%3Aimage-1',
+      document: makeSearchDocument({
+        id: 'timeline-event:image-1',
+        entity_id: 'image-1',
+        entity_type: 'image',
+        title: 'Photo',
+        image_url: 'https://example.com/photo.jpg',
+        card_payload: { type: 'image' },
+      }),
+    },
+  ])('passes a canonical native href for $name search cards', testCase => {
+    const view = render(<SearchResultCard document={testCase.document} />);
+
+    const { card, props } = readDynamicCardProps();
+
+    expect(card.getAttribute('data-card-type')).toBe(testCase.expectedCardType);
+    expect(props.href).toBe(testCase.expectedHref);
+    if ('expectedNestedProps' in testCase && testCase.expectedNestedProps) {
+      expect(props).toMatchObject(testCase.expectedNestedProps);
+    }
+
+    view.unmount();
+  });
+
+  it('links unsupported fallback cards to their search result permalink', () => {
     render(
       <SearchResultCard
-        document={
-          {
-            id: 'election:election-1',
-            entity_id: 'election-1',
-            entity_type: 'election',
-            title: 'Board election',
-            subtitle: 'open',
-            summary: 'Elect a board member.',
-            search_text: '',
-            visibility: 'public',
-            image_url: null,
-            location_latitude: null,
-            location_longitude: null,
-            location_label: null,
-            location_source: null,
-            created_at: Date.now(),
-            updated_at: Date.now(),
-            owner_user_id: null,
-            group_id: 'group-1',
-            card_payload: {
-              type: 'election',
-              status: 'open',
-              metadata: {
-                event_id: 'event-1',
-                agenda_item_id: 'agenda-1',
-              },
-            },
-            engagement_score: 0,
-            trending_score: 0,
-            topics: [],
-            group: { id: 'group-1', name: 'Civic Assembly' },
-          } as SearchDocument
-        }
+        document={makeSearchDocument({
+          id: 'unknown:result-1',
+          entity_id: 'result-1',
+          entity_type: 'unknown',
+          title: 'Loose result',
+          card_payload: { type: 'unknown' },
+        })}
       />
     );
 
-    const card = screen.getByTestId('dynamic-card');
-    const props = JSON.parse(card.textContent || '{}') as {
-      election?: { agendaEventId?: string; agendaItemId?: string; groupId?: string };
+    const hrefs = screen.getAllByRole('link').map(link => link.getAttribute('href'));
+
+    expect(hrefs).toContain('/search?result=unknown%3Aresult-1');
+  });
+
+  it('passes election agenda navigation context from indexed search payloads', () => {
+    render(
+      <SearchResultCard
+        document={makeSearchDocument({
+          id: 'election:election-1',
+          entity_id: 'election-1',
+          entity_type: 'election',
+          title: 'Board election',
+          subtitle: 'open',
+          summary: 'Elect a board member.',
+          group_id: 'group-1',
+          card_payload: {
+            type: 'election',
+            status: 'open',
+            metadata: {
+              event_id: 'event-1',
+              agenda_item_id: 'agenda-1',
+            },
+          },
+          group: { id: 'group-1', name: 'Civic Assembly' },
+        })}
+      />
+    );
+
+    const { card, props } = readDynamicCardProps() as {
+      card: HTMLElement;
+      props: {
+        href?: string;
+        election?: { agendaEventId?: string; agendaItemId?: string; groupId?: string };
+      };
     };
 
     expect(card.getAttribute('data-card-type')).toBe('election');
+    expect(props.href).toBe('/event/event-1/agenda/agenda-1');
     expect(props.election).toMatchObject({
       agendaEventId: 'event-1',
       agendaItemId: 'agenda-1',

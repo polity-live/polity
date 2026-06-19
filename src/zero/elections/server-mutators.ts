@@ -14,6 +14,7 @@ import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
 import {
   eventTitle,
+  requireConfiguredRecentVotingPasswordVerification,
   recomputeEventCounters,
   requireRecentVotingPasswordVerification,
   syncUserWithEventConversation,
@@ -28,7 +29,9 @@ import {
   createElectionSchema,
   updateElectionSchema,
   createElectionCandidateSchema,
+  deleteElectionCandidateSchema,
   createIndicativeElectorParticipationSchema,
+  replaceIndicativeElectionVoteSchema,
   createFinalElectorParticipationSchema,
   upsertElectionOfflineTallySchema,
 } from './schema';
@@ -122,6 +125,12 @@ async function assertOfflineElectionTallyWithinCap(
   }
 
   const confirmedOfflineAttendeeCount = await getConfirmedOfflineAttendeeCount(tx, eventId);
+  if (args.nextCount > confirmedOfflineAttendeeCount) {
+    throw new Error(
+      `Each candidate can receive at most ${confirmedOfflineAttendeeCount} offline selections.`
+    );
+  }
+
   const existingTallies = await tx.run(
     zql.election_offline_tally.where('election_id', args.electionId)
   );
@@ -907,6 +916,10 @@ export const electionServerMutators = {
   }),
 
   addCandidate: defineMutator(createElectionCandidateSchema, async ({ tx, ctx, args }) => {
+    if (args.user_id === ctx.userID) {
+      await requireConfiguredRecentVotingPasswordVerification(tx, ctx.userID);
+    }
+
     await mutators.elections.addCandidate.fn({ tx, ctx, args });
 
     const election = await tx.run(zql.election.where('id', args.election_id).one());
@@ -930,6 +943,15 @@ export const electionServerMutators = {
       eventTitle: eTitle,
       candidateName: args.name ?? fallbackCandidateName,
     });
+  }),
+
+  deleteCandidate: defineMutator(deleteElectionCandidateSchema, async ({ tx, ctx, args }) => {
+    const candidate = await tx.run(zql.election_candidate.where('id', args.id).one());
+    if (candidate?.user_id === ctx.userID) {
+      await requireConfiguredRecentVotingPasswordVerification(tx, ctx.userID);
+    }
+
+    await mutators.elections.deleteCandidate.fn({ tx, ctx, args });
   }),
 
   updateElection: defineMutator(updateElectionSchema, async ({ tx, ctx, args }) => {
@@ -1013,6 +1035,18 @@ export const electionServerMutators = {
         userId: ctx.userID,
       });
       await mutators.elections.castIndicativeElectionVote.fn({ tx, ctx, args });
+    }
+  ),
+
+  replaceIndicativeElectionVote: defineMutator(
+    replaceIndicativeElectionVoteSchema,
+    async ({ tx, ctx, args }) => {
+      await requireRecentVotingPasswordVerification(tx, ctx.userID);
+      await assertOnlineElectionVoteAllowed(tx, {
+        electionId: args.participation.election_id,
+        userId: ctx.userID,
+      });
+      await mutators.elections.replaceIndicativeElectionVote.fn({ tx, ctx, args });
     }
   ),
 

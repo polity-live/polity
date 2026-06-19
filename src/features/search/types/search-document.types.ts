@@ -13,6 +13,10 @@ export interface SearchDocumentCardPayload {
   agenda_event_id?: string | null;
   agenda_item_id?: string | null;
   event_id?: string | null;
+  sourceType?: string | null;
+  sourceId?: string | null;
+  source_type?: string | null;
+  source_id?: string | null;
   starts_at?: number | null;
   ends_at?: number | null;
   due_at?: number | null;

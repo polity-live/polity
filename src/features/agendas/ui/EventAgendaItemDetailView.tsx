@@ -10,11 +10,12 @@ import { AgendaItemContextCard } from './AgendaItemContextCard';
 import { EventSearchCard } from '@/features/search/ui/EventSearchCard';
 import { AgendaSpeakerListSection } from './AgendaSpeakerListSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
-import { AgendaElectionSection } from './AgendaElectionSection';
+import { AgendaElectionSection, isAutoAssignedRoleElection } from './AgendaElectionSection';
 import { OfflineTallyDialog } from './OfflineTallyDialog';
 import { AgendaActionBar } from './AgendaActionBar';
 import { EditElectionVoteDialog } from './EditElectionVoteDialog';
 import { VoteCastDialog } from '@/features/vote-cast/ui/VoteCastDialog';
+import { CandidacyPasswordDialog } from '@/features/elections/ui/CandidacyPasswordDialog';
 import { ChangeRequestCardsList } from './ChangeRequestCardsList';
 import { MergeVariantComparisonPanel } from './MergeVariantComparisonPanel';
 import { AccreditationSection } from './AccreditationSection';
@@ -193,6 +194,7 @@ export function EventAgendaItemDetailView({
   estimatedStartTime,
   handleDelete,
   handleAddToSpeakerList,
+  delegateAssignmentMeta,
   delegateTargetEvent,
   canManageAgenda,
   canJoinSpeakerList,
@@ -282,6 +284,11 @@ export function EventAgendaItemDetailView({
   handleSubmitOfflineTally,
 }: EventAgendaItemDetailViewProps) {
   const [activeContextPane, setActiveContextPane] = useState<'details' | 'speakers'>('details');
+  const voteButtonDisabled =
+    !isCRToolbarActive && (disableVoteButton || actionBarHook.disableSecretIndicativeVoteButton);
+  const disabledVoteTooltip =
+    actionBarHook.secretIndicativeVoteTooltip ??
+    translateText('generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792');
 
   if (isLoading) {
     return (
@@ -423,6 +430,9 @@ export function EventAgendaItemDetailView({
       finalSelections={finalSelections}
       offlineTallies={election.offline_tallies ?? []}
       attendanceMode={attendanceMode}
+      delegateTargetEventId={delegateTargetEvent?.id ?? delegateAssignmentMeta?.targetEventId}
+      delegateTargetEventTitle={delegateTargetEvent?.title ?? null}
+      showRoleAssignedMessage={isAutoAssignedRoleElection(election)}
       userHasVoted={userHasElectionVoted}
       userSelectedCandidateIds={userSelectedCandidateIds}
       electionStatus={election.status}
@@ -557,10 +567,8 @@ export function EventAgendaItemDetailView({
               : undefined
             : actionBarHook.handleVoteClick
         }
-        disableVoteButton={!isCRToolbarActive && disableVoteButton}
-        disabledVoteTooltip={translateText(
-          'generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792'
-        )}
+        disableVoteButton={voteButtonDisabled}
+        disabledVoteTooltip={disabledVoteTooltip}
         showOfflineTallyButton={!isCRToolbarActive && showOfflineTallyButton}
         onOfflineTallyClick={
           !isCRToolbarActive && showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined
@@ -588,6 +596,10 @@ export function EventAgendaItemDetailView({
         choices={offlineTallyEntity?.choices ?? []}
         tallies={offlineTallyEntity?.tallies ?? []}
         maxTotalVotes={offlineTallyEntity?.maxTotalVotes ?? null}
+        maxPerEntryVotes={offlineTallyEntity?.maxPerEntryVotes ?? null}
+        maxPerEntryLimitLabel={offlineTallyEntity?.kind === 'election' ? 'candidate' : undefined}
+        participantCount={offlineTallyEntity?.participantCount ?? null}
+        votesPerParticipant={offlineTallyEntity?.votesPerParticipant ?? null}
         isSubmitting={isOfflineTallySubmitting}
         passwordError={offlineTallyPasswordError}
         submitError={offlineTallySubmitError}
@@ -605,6 +617,8 @@ export function EventAgendaItemDetailView({
         description={namedResultsDialogConfig?.description ?? ''}
         model={namedResultsDialogConfig?.model ?? null}
       />
+
+      <CandidacyPasswordDialog {...actionBarHook.candidacyDialogProps} />
 
       {/* Vote Cast Dialog (with password support) */}
       <VoteCastDialog

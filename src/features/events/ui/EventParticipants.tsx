@@ -27,7 +27,6 @@ import { EventRoles } from '@/features/roles/ui/EventRoles';
 import {
   OfflineRosterCard,
   type OfflineRosterCandidateUser,
-  type OfflineRosterRow,
 } from '@/features/offline-roster/ui/OfflineRosterCard';
 import { useMembershipSearch } from '@/features/groups/hooks/useMembershipSearch';
 import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
@@ -44,6 +43,7 @@ import { useEventActions } from '@/zero/events/useEventActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { buildEventParticipantCompositionBuckets } from '../logic/eventParticipantComposition';
+import { buildOfflineRosterRowsForEvent } from '../logic/offlineParticipantRows';
 
 type EventParticipantRow = ReturnType<typeof useEventParticipantsData>['participants'][number];
 
@@ -409,42 +409,18 @@ export function EventParticipants({
     [event?.group?.group_type, event?.group?.id, event?.group?.name]
   );
 
-  const offlineRosterRows = useMemo(
+  const offlineRosterRowModel = useMemo(
     () =>
-      offlineParticipants.map<OfflineRosterRow>(offlineParticipant => {
-        const offlineMemberGroup = offlineParticipant.group_offline_member?.group ?? null;
-        const provenanceGroup = offlineMemberGroup
-          ? {
-              id: offlineMemberGroup.id,
-              name: offlineMemberGroup.name ?? null,
-            }
-          : eventBaseGroupReference;
-
-        return {
-          id: offlineParticipant.id,
-          kind: 'offline',
-          firstName: offlineParticipant.first_name,
-          lastName: offlineParticipant.last_name,
-          isActiveUser: false,
-          reasonNotSignedUp: offlineParticipant.reason_not_signed_up,
-          connectedUser: offlineParticipant.connected_user ?? null,
-          partGroup: showParticipantComposition || showBaseGroupColumn ? provenanceGroup : null,
-          baseGroup: showBaseGroupColumn ? provenanceGroup : null,
-          readOnlyIdentity: offlineParticipant.source_type === 'group_member',
-          canConnect: offlineParticipant.source_type === 'event_extra',
-          canEdit: offlineParticipant.source_type === 'event_extra',
-          canDelete: offlineParticipant.source_type === 'event_extra',
-          canConfirmParticipation: offlineParticipant.attendance_status !== 'confirmed',
-          canWithdrawParticipation: offlineParticipant.attendance_status === 'confirmed',
-          canToggleChannel:
-            attendanceMode === 'hybrid' && Boolean(offlineParticipant.connected_user_id),
-          attendanceStatus:
-            offlineParticipant.attendance_status === 'confirmed' ? 'confirmed' : 'listed',
-          participationChannel:
-            offlineParticipant.participation_channel === 'online' ? 'online' : 'offline',
-        };
+      buildOfflineRosterRowsForEvent({
+        attendanceMode,
+        activeParticipants: activeParticipantsWithDelegateRepresentation,
+        offlineParticipants,
+        eventBaseGroupReference,
+        showParticipantComposition,
+        showBaseGroupColumn,
       }),
     [
+      activeParticipantsWithDelegateRepresentation,
       attendanceMode,
       eventBaseGroupReference,
       offlineParticipants,
@@ -452,6 +428,8 @@ export function EventParticipants({
       showParticipantComposition,
     ]
   );
+  const activeRosterRows = offlineRosterRowModel.activeRows;
+  const offlineRosterRows = offlineRosterRowModel.offlineRows;
 
   const filteredOfflineRows = useMemo(
     () =>
@@ -478,54 +456,8 @@ export function EventParticipants({
   );
 
   const allParticipantRows = useMemo(
-    () => [
-      ...activeParticipantsWithDelegateRepresentation.map<OfflineRosterRow>(participant => ({
-        id: `active:${participant.id}`,
-        kind: 'active',
-        firstName: participant.user?.first_name || '',
-        lastName: participant.user?.last_name || '',
-        isActiveUser: true,
-        connectedUser: null,
-        reasonNotSignedUp: null,
-        partGroup:
-          showParticipantComposition &&
-          'partGroup' in participant &&
-          participant.partGroup &&
-          typeof participant.partGroup === 'object' &&
-          'id' in participant.partGroup &&
-          typeof participant.partGroup.id === 'string'
-            ? {
-                id: participant.partGroup.id,
-                name:
-                  'name' in participant.partGroup && typeof participant.partGroup.name === 'string'
-                    ? participant.partGroup.name
-                    : null,
-              }
-            : null,
-        baseGroup:
-          showBaseGroupColumn &&
-          'baseGroup' in participant &&
-          participant.baseGroup &&
-          typeof participant.baseGroup === 'object' &&
-          'id' in participant.baseGroup &&
-          typeof participant.baseGroup.id === 'string'
-            ? {
-                id: participant.baseGroup.id,
-                name:
-                  'name' in participant.baseGroup && typeof participant.baseGroup.name === 'string'
-                    ? participant.baseGroup.name
-                    : null,
-              }
-            : null,
-      })),
-      ...filteredOfflineRows,
-    ],
-    [
-      activeParticipantsWithDelegateRepresentation,
-      filteredOfflineRows,
-      showBaseGroupColumn,
-      showParticipantComposition,
-    ]
+    () => [...activeRosterRows, ...filteredOfflineRows],
+    [activeRosterRows, filteredOfflineRows]
   );
 
   const participantRowsForComposition = useMemo(
@@ -799,24 +731,46 @@ export function EventParticipants({
                 onDelete={(row, correlationId) =>
                   serverConfirmed(
                     deleteOfflineParticipant({
-                      id: row.id,
+                      id: row.attendanceParticipantId ?? row.id,
                       debug_correlation_id: correlationId,
                     })
                   )
                 }
-                onSetParticipationStatus={(row, nextStatus, correlationId) =>
-                  serverConfirmed(
-                    updateOfflineParticipant({
-                      id: row.id,
-                      attendance_status: nextStatus,
+                onSetParticipationStatus={async (row, nextStatus, correlationId) => {
+                  if (row.attendanceParticipantId) {
+                    return serverConfirmed(
+                      updateOfflineParticipant({
+                        id: row.attendanceParticipantId,
+                        attendance_status: nextStatus,
+                        debug_correlation_id: correlationId,
+                      })
+                    );
+                  }
+
+                  if (row.kind !== 'active' || !row.user?.id || nextStatus !== 'confirmed') {
+                    return undefined;
+                  }
+
+                  return serverConfirmed(
+                    createOfflineParticipant({
+                      id: crypto.randomUUID(),
+                      event_id: eventId,
+                      group_offline_member_id: null,
+                      source_type: 'event_extra',
+                      first_name: row.firstName || row.user.email || 'Participant',
+                      last_name: row.lastName || '-',
+                      reason_not_signed_up: null,
+                      connected_user_id: row.user.id,
+                      attendance_status: 'confirmed',
+                      participation_channel: 'offline',
                       debug_correlation_id: correlationId,
                     })
-                  )
-                }
+                  );
+                }}
                 onToggleChannel={(row, nextChannel, correlationId) =>
                   serverConfirmed(
                     updateOfflineParticipant({
-                      id: row.id,
+                      id: row.attendanceParticipantId ?? row.id,
                       participation_channel: nextChannel,
                       debug_correlation_id: correlationId,
                     })

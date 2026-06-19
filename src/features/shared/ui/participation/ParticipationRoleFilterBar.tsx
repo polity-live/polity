@@ -18,11 +18,20 @@ export interface ParticipationRoleFilterBarProps<TRole extends ParticipationRole
 export function getParticipationDisplayRoles<TRole extends ParticipationRoleLike>(
   participation: ParticipationLike<TRole>
 ) {
-  return participation.roles?.length
+  const roles = participation.roles?.length
     ? participation.roles
     : participation.role
       ? [participation.role]
       : [];
+  const roleById = new Map<string, TRole>();
+
+  for (const role of [...roles, ...(participation.elected_roles ?? [])]) {
+    if (!roleById.has(role.id)) {
+      roleById.set(role.id, role);
+    }
+  }
+
+  return [...roleById.values()];
 }
 
 export function filterParticipationsByRole<TParticipation extends ParticipationLike>(

@@ -3,10 +3,11 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { ThumbsUp, ThumbsDown, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
+import { useState } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { Progress } from '@/features/shared/ui/ui/progress';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import {
   TimelineCardBase,
@@ -45,6 +46,7 @@ export interface VoteTimelineCardProps {
   onVoteSupport?: () => void;
   onVoteOppose?: () => void;
   onDiscuss?: () => void;
+  href?: string;
   className?: string;
 }
 
@@ -72,6 +74,18 @@ function formatTimeRemaining(endTime: Date): string {
   }
 
   return `${diffMinutes}:${diffSeconds.toString().padStart(2, '0')}`;
+}
+
+function normalizePercent(percent: number | null | undefined) {
+  if (!Number.isFinite(percent ?? 0)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, percent ?? 0));
+}
+
+function formatCountPercent(count: number | null | undefined, percent: number | null | undefined) {
+  return `${Math.round(count ?? 0)} · ${normalizePercent(percent).toFixed(0)}%`;
 }
 
 /**
@@ -121,8 +135,9 @@ const STATUS_CONFIG: Record<string, { color: string; bgColor: string; pulse?: bo
  * - Trend indicator
  * - Actions: Vote Support, Vote Oppose, Discuss
  */
-export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
+export function VoteTimelineCard({ vote, href, className }: VoteTimelineCardProps) {
   const { t } = useTranslation();
+  const [showIndicationResults, setShowIndicationResults] = useState(false);
 
   const statusConfig = STATUS_CONFIG[vote.status] || STATUS_CONFIG.open;
   const isActive = ['open', 'closing_soon', 'last_hour', 'final_minutes'].includes(vote.status);
@@ -139,10 +154,15 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
       ? `/event/${vote.agendaEventId}/agenda/${vote.agendaItemId}`
       : undefined;
   const fallbackHref = `/amendment/${vote.amendmentId}`;
+  const voteHref = href ?? agendaHref ?? fallbackHref;
+
+  const actualTotal = vote.supportCount + vote.opposeCount + (vote.abstainCount ?? 0);
 
   // Indication display logic
   const hasIndication = vote.indicationSupportPercentage !== undefined;
-  const showBothResults = !vote.isIndicationPhase && hasIndication;
+  const canToggleIndicationResults = !vote.isIndicationPhase && hasIndication && actualTotal > 0;
+  const showIndicationRows =
+    vote.isIndicationPhase || (canToggleIndicationResults && showIndicationResults);
 
   return (
     <TimelineCardBase
@@ -151,12 +171,12 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
         statusConfig.pulse && featureThemeClassName('timelineVoteTimelineCardDangerRing'),
         className
       )}
-      href={agendaHref || fallbackHref}
+      href={voteHref}
     >
       <TimelineCardHeader
         contentType="vote"
         title={t('features.timeline.contentTypes.vote')}
-        href={agendaHref || fallbackHref}
+        href={voteHref}
         badge={
           <BadgeControl
             variant="outline"
@@ -204,13 +224,9 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
       <TimelineCardContent>
         {/* Amendment Title (card click handles navigation) */}
         <p className="mb-2 line-clamp-2 text-sm font-medium">
-          <Link
-            to={agendaHref || fallbackHref}
-            onClick={e => e.stopPropagation()}
-            className="hover:underline"
-          >
+          <SmartLink href={voteHref} onClick={e => e.stopPropagation()} className="hover:underline">
             {vote.amendmentTitle}
-          </Link>
+          </SmartLink>
         </p>
 
         <div className="mt-auto space-y-3">
@@ -220,14 +236,45 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
 
           {/* Vote Progress Bar */}
           <div className="space-y-2">
-            {/* Indication results (show only if in indication phase OR if showing both) */}
-            {(vote.isIndicationPhase || showBothResults) && hasIndication && (
-              <div>
+            {canToggleIndicationResults ? (
+              <div className="flex justify-end">
+                <BadgeControl
+                  asChild
+                  variant={showIndicationResults ? 'secondary' : 'outline'}
+                  size="xs"
+                >
+                  <button
+                    type="button"
+                    onClick={event => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setShowIndicationResults(current => !current);
+                    }}
+                  >
+                    {showIndicationResults
+                      ? t('features.events.agenda.hideIndicationResults', 'Hide indication results')
+                      : t(
+                          'features.events.agenda.showIndicationResults',
+                          'Show indication results'
+                        )}
+                  </button>
+                </BadgeControl>
+              </div>
+            ) : null}
+
+            {/* Indication results (only current phase, or expanded under final results) */}
+            {showIndicationRows && hasIndication && (
+              <div className="bg-card rounded-lg border px-3 py-2 shadow-sm">
                 <div className="mb-1 flex items-center justify-between text-xs">
                   <span className="text-muted-foreground flex items-center gap-1">
                     {t('features.timeline.cards.indication', { defaultValue: 'Indication' })} *
                   </span>
-                  <span className="text-muted-foreground">{vote.indicationSupportPercentage}%</span>
+                  <span className="text-muted-foreground tabular-nums">
+                    {formatCountPercent(
+                      vote.indicationSupportCount,
+                      vote.indicationSupportPercentage
+                    )}
+                  </span>
                 </div>
                 <Progress
                   value={vote.indicationSupportPercentage}
@@ -238,11 +285,11 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
 
             {/* Actual results (hide if in indication phase only) */}
             {!vote.isIndicationPhase && (
-              <div>
+              <div className="bg-card rounded-lg border px-3 py-2 shadow-sm">
                 <div className="mb-1 flex items-center justify-between text-xs">
                   <span className="flex items-center gap-1">
                     <span className="text-muted-foreground">
-                      {showBothResults
+                      {canToggleIndicationResults
                         ? t('features.timeline.cards.actual', { defaultValue: 'Actual' })
                         : t('features.timeline.cards.support')}
                     </span>
@@ -271,7 +318,7 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
                         : featureThemeClassName('timelineUseTodoTimelineCardDangerText')
                     )}
                   >
-                    {vote.supportPercentage}%
+                    {formatCountPercent(vote.supportCount, vote.supportPercentage)}
                   </span>
                 </div>
                 <Progress
@@ -289,11 +336,11 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
           </div>
 
           {/* Vote Stats */}
-          <div className="text-muted-foreground flex items-center justify-between text-xs">
-            <div className="flex items-center gap-3">
+          <div className="grid gap-2 text-xs sm:grid-cols-3">
+            <div className="bg-muted/20 rounded-md border px-2 py-1.5">
               {/* Show indication counts if in indication phase */}
               {vote.isIndicationPhase && hasIndication ? (
-                <>
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="flex items-center gap-1">
                     <ThumbsUp
                       className={featureThemeClassName('timelineVoteTimelineCardInfoIcon')}
@@ -314,9 +361,9 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
                       {vote.indicationAbstainCount} *
                     </span>
                   )}
-                </>
+                </div>
               ) : (
-                <>
+                <div className="flex flex-wrap items-center gap-3">
                   <span className="flex items-center gap-1">
                     <ThumbsUp
                       className={featureThemeClassName('timelineVoteTimelineCardSuccessIcon')}
@@ -335,11 +382,15 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
                       {vote.abstainCount}
                     </span>
                   )}
-                </>
+                </div>
               )}
             </div>
+            <div className="bg-muted/20 rounded-md border px-2 py-1.5">
+              {vote.votedCount ?? vote.supportCount + vote.opposeCount + (vote.abstainCount ?? 0)}{' '}
+              {t('features.events.voting.voted', { defaultValue: 'voted' })}
+            </div>
             {turnout !== undefined && (
-              <span>
+              <span className="bg-muted/20 rounded-md border px-2 py-1.5">
                 {turnout}% {t('features.timeline.cards.turnout')}
               </span>
             )}
@@ -355,7 +406,7 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
         )}
         <div onClick={e => e.preventDefault()}>
           <ShareButton
-            url={agendaHref || fallbackHref}
+            url={voteHref}
             title={vote.amendmentTitle}
             description={vote.question || ''}
             variant="outline"

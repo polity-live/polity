@@ -8,7 +8,7 @@ import { zql } from '../schema';
 import { can } from '../rbac/can';
 import { requireOwner } from '../rbac/authorize';
 import { PermissionError, isPermissionError } from '../rbac/errors';
-import { defaultElectionBallotVisibility } from '../shared';
+import { defaultElectionBallotVisibility, isNamedBallot } from '../shared';
 import {
   createElectionSchema,
   updateElectionSchema,
@@ -20,6 +20,7 @@ import {
   deleteElectorSchema,
   createIndicativeElectorParticipationSchema,
   createIndicativeCandidateSelectionSchema,
+  replaceIndicativeElectionVoteSchema,
   createFinalElectorParticipationSchema,
   createFinalCandidateSelectionSchema,
   upsertElectionOfflineTallySchema,
@@ -310,7 +311,11 @@ export const electionSharedMutators = {
     if (tx.location !== 'client') {
       const candidate = await tx.run(zql.election_candidate.where('id', args.id).one());
       if (!candidate) throw new Error('Election candidate not found');
-      await assertElectionManager(tx, ctx, candidate.election_id);
+      await assertSelfElectionEventRightOrManager(tx, ctx, {
+        electionId: candidate.election_id,
+        userId: candidate.user_id,
+        action: 'passive_voting',
+      });
     }
     await tx.mutate.election_candidate.delete({ id: args.id });
   }),
@@ -367,6 +372,74 @@ export const electionSharedMutators = {
         ...args,
         created_at: now,
       });
+    }
+  ),
+
+  replaceIndicativeElectionVote: defineMutator(
+    replaceIndicativeElectionVoteSchema,
+    async ({ tx, ctx, args }) => {
+      const { participation, selections } = args;
+      await assertElectorOwner(tx, ctx, participation.elector_id, participation.election_id);
+
+      const election = await loadElection(tx, participation.election_id);
+      const isNamed = isNamedBallot(election.ballot_visibility ?? defaultElectionBallotVisibility);
+
+      for (const selection of selections) {
+        if (selection.election_id !== participation.election_id) {
+          throw new Error('Indicative election selection does not belong to this election.');
+        }
+        await assertCandidateBelongsToElection(
+          tx,
+          participation.election_id,
+          selection.candidate_id
+        );
+      }
+
+      const existingParticipation = await tx.run(
+        zql.indicative_elector_participation
+          .where('election_id', participation.election_id)
+          .where('elector_id', participation.elector_id)
+          .one()
+      );
+
+      if (existingParticipation && !isNamed) {
+        throw new Error(
+          'You have already voted in this secret indicative election. Secret indicative votes cannot be changed.'
+        );
+      }
+
+      if (isNamed && selections.some(selection => !selection.elector_participation_id)) {
+        throw new Error('Named indicative elections require linked participation selections.');
+      }
+
+      const now = Date.now();
+      const resolvedParticipation = existingParticipation ?? participation;
+
+      if (!existingParticipation) {
+        await tx.mutate.indicative_elector_participation.insert({
+          ...participation,
+          created_at: now,
+        });
+      } else {
+        const previousSelections = await tx.run(
+          zql.indicative_candidate_selection.where(
+            'elector_participation_id',
+            existingParticipation.id
+          )
+        );
+
+        for (const previousSelection of previousSelections) {
+          await tx.mutate.indicative_candidate_selection.delete({ id: previousSelection.id });
+        }
+      }
+
+      for (const selection of selections) {
+        await tx.mutate.indicative_candidate_selection.insert({
+          ...selection,
+          elector_participation_id: isNamed ? resolvedParticipation.id : null,
+          created_at: now,
+        });
+      }
     }
   ),
 

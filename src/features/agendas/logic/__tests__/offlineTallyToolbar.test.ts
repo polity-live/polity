@@ -28,10 +28,11 @@ describe('shouldShowOfflineTallyToolbarButton', () => {
     expect(shouldShowOfflineTallyToolbarButton(buildArgs({ canManageVotes: false }))).toBe(false);
   });
 
-  it('returns false for hybrid and online attendance modes', () => {
-    expect(shouldShowOfflineTallyToolbarButton(buildArgs({ attendanceMode: 'hybrid' }))).toBe(
-      false
-    );
+  it('returns true for hybrid attendance mode', () => {
+    expect(shouldShowOfflineTallyToolbarButton(buildArgs({ attendanceMode: 'hybrid' }))).toBe(true);
+  });
+
+  it('returns false for online attendance mode', () => {
     expect(shouldShowOfflineTallyToolbarButton(buildArgs({ attendanceMode: 'online' }))).toBe(
       false
     );

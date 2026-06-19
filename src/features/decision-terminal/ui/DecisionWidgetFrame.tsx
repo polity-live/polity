@@ -39,6 +39,7 @@ export function DecisionWidgetFrame({
               title={translateText('generated.inline.0352_move_widget_bfba359d')}
               className="decision-widget-drag-handle text-muted-foreground hover:text-foreground h-7 w-7 shrink-0 cursor-grab touch-none active:cursor-grabbing"
               data-testid="decision-widget-drag-handle"
+              data-swipe-lock
             >
               <GripHorizontal className="h-4 w-4" />
             </Button>

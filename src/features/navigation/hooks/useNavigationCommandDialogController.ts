@@ -10,6 +10,8 @@ import { useNavigationStore } from '@/features/navigation/state/navigation.store
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { useAuth } from '@/providers/auth-provider.tsx';
+import { useCurrentUserNavigationEntities } from './useCurrentUserNavigationEntities';
+import type { UserMenuEvent, UserMenuGroup } from '../logic/userMenuItems';
 
 interface UseNavigationCommandDialogControllerProps {
   primaryNavItems: NavigationItem[];
@@ -25,6 +27,7 @@ export function useNavigationCommandDialogController({
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
   const { setNavigationType } = useNavigationStore();
+  const { groups: groupItems, events: eventItems } = useCurrentUserNavigationEntities(user?.id);
 
   useCommandDialogShortcut(setOpen, open);
 
@@ -40,6 +43,16 @@ export function useNavigationCommandDialogController({
       navigate({ to: route });
     }
 
+    setOpen(false);
+  };
+
+  const selectGroupItem = (group: UserMenuGroup) => {
+    navigate({ to: '/group/$id', params: { id: group.id } });
+    setOpen(false);
+  };
+
+  const selectEventItem = (event: UserMenuEvent) => {
+    navigate({ to: '/event/$id', params: { id: event.id } });
     setOpen(false);
   };
 
@@ -76,11 +89,18 @@ export function useNavigationCommandDialogController({
       noResults: t('navigation.commandDialog.noResults'),
       primaryNavigation: t('navigation.commandDialog.groups.primaryNavigation'),
       userNavigation: t('navigation.commandDialog.groups.userNavigation'),
+      groups: t('common.labels.groups'),
+      events: t('navigation.userMenu.events'),
+      eventFallback: t('navigation.userMenu.eventFallback'),
     },
+    groupItems,
+    eventItems,
     userNavItems: user?.id
       ? navItemsAuthenticated(navigate).getUserSecondaryNavItems(user.id, true)
       : [],
     onSelectPrimaryItem: selectNavigationItem,
     onSelectUserItem: selectNavigationItem,
+    onSelectGroupItem: selectGroupItem,
+    onSelectEventItem: selectEventItem,
   };
 }

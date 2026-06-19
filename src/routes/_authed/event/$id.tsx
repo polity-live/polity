@@ -2,6 +2,7 @@ import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { EntityVisibilityGuard } from '@/features/auth/EntityVisibilityGuard';
 import { useEntityRouteAccess } from '@/features/auth/hooks/useEntityRouteAccess';
 import { useZeroReady } from '@/providers/zero-provider';
+import { useEventRouteFamilyPreloads } from '@/zero/preloads';
 
 export const Route = createFileRoute('/_authed/event/$id')({
   component: EventLayout,
@@ -10,6 +11,7 @@ export const Route = createFileRoute('/_authed/event/$id')({
 function EventLayout() {
   const { id } = Route.useParams();
   const zeroReady = useZeroReady();
+  useEventRouteFamilyPreloads(id);
   const { data, isLoading, error } = useEntityRouteAccess({
     entityType: 'event',
     entityId: id,

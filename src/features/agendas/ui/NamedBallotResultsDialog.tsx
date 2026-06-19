@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { BarChart3, Users } from 'lucide-react';
 import type { NamedBallotResultsModel } from '@/features/agendas/logic/buildNamedBallotResults';
 import { cn } from '@/features/shared/utils/utils';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -56,6 +57,63 @@ function getInitials(name: string) {
   return initials || 'U';
 }
 
+function getOfflineShareLabel(count: number) {
+  return translateText(
+    'features.events.agenda.namedResults.offlineShare',
+    { count },
+    `davon ${count} offline`
+  );
+}
+
+function OptionSummaryStrip({
+  title,
+  summaries,
+}: {
+  title: string;
+  summaries: NamedBallotResultsModel['totalOptionSummaries'];
+}) {
+  if (summaries.length === 0) {
+    return null;
+  }
+
+  const total = summaries.reduce((sum, summary) => sum + summary.totalCount, 0);
+
+  return (
+    <div className="bg-card space-y-3 rounded-lg border p-4 shadow-sm">
+      <h3 className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
+        <BarChart3 className="h-4 w-4" />
+        {title}
+      </h3>
+      <div className="space-y-2">
+        {summaries.map(summary => {
+          const percent = total > 0 ? Math.round((summary.totalCount / total) * 100) : 0;
+
+          return (
+            <div key={summary.id} className="bg-muted/20 space-y-2 rounded-md border px-3 py-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <StatusBadge status={summary.label} tone={getDecisionBadgeTone(summary.label)}>
+                  <span>
+                    {summary.label}: {summary.totalCount}
+                  </span>
+                  {summary.offlineCount > 0 ? (
+                    <span className="text-current/70">
+                      ({getOfflineShareLabel(summary.offlineCount)})
+                    </span>
+                  ) : null}
+                </StatusBadge>
+                <span className="text-muted-foreground text-xs tabular-nums">{percent}%</span>
+              </div>
+              <div className="bg-muted/40 h-2 overflow-hidden rounded-full">
+                <div className="bg-primary h-full rounded-full" style={{ width: `${percent}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function NamedBallotResultsDialog({
   open,
   onOpenChange,
@@ -66,7 +124,7 @@ export function NamedBallotResultsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <ScrollableDialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none border-0 p-0 sm:h-screen sm:max-w-none">
-        <DialogHeader separator className="px-6 py-5">
+        <DialogHeader separator className="px-6 py-5 pr-14 sm:pr-16">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-2">
               <DialogTitle>{title}</DialogTitle>
@@ -76,7 +134,8 @@ export function NamedBallotResultsDialog({
             {model ? (
               <div className="flex flex-wrap items-center justify-end gap-2">
                 <BadgeControl variant="secondary">{getPhaseLabel(model.phase)}</BadgeControl>
-                <BadgeControl variant="outline">
+                <BadgeControl variant="outline" className="gap-1">
+                  <Users className="h-3.5 w-3.5" />
                   {model.totalRecordedCount}/{model.totalEligibleCount}
                   {translateText('generated.inline.0012_erfasst_27314b65')}
                 </BadgeControl>
@@ -100,6 +159,14 @@ export function NamedBallotResultsDialog({
             </div>
           ) : (
             <div className="space-y-6">
+              <OptionSummaryStrip
+                title={translateText(
+                  'features.events.agenda.namedResults.totalResult',
+                  'Gesamtergebnis'
+                )}
+                summaries={model.totalOptionSummaries}
+              />
+
               {model.groups.map(group => (
                 <section key={group.key} className="space-y-4 rounded-3xl border p-5">
                   {model.groupedBySourceGroup ? (
@@ -131,7 +198,7 @@ export function NamedBallotResultsDialog({
                     {group.rows.map(row => (
                       <div
                         key={row.id}
-                        className="bg-muted/20 flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3"
+                        className="bg-card flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3 shadow-sm"
                       >
                         {row.userId ? (
                           <Link

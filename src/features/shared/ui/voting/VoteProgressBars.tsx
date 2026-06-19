@@ -74,7 +74,7 @@ function CompactStackedBar({
   const total = segments.reduce((sum, segment) => sum + segment.value, 0);
 
   return (
-    <div className={cn('bg-muted flex h-2 overflow-hidden rounded-full', className)}>
+    <div className={cn('bg-muted/40 flex h-2 overflow-hidden rounded-full', className)}>
       {total > 0
         ? segments
             .filter(segment => segment.value > 0)
@@ -127,7 +127,10 @@ export function VoteProgressBar({
   return (
     <div className={cn('space-y-1', className)}>
       <div
-        className={cn('bg-muted flex w-full overflow-hidden rounded-full', compact ? 'h-2' : 'h-3')}
+        className={cn(
+          'bg-muted/40 flex w-full overflow-hidden rounded-full',
+          compact ? 'h-2' : 'h-3'
+        )}
         role="progressbar"
         aria-valuenow={percentages.support}
         aria-valuemin={0}
@@ -258,7 +261,7 @@ function BarRow({
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="flex items-center gap-2">
-          <div className="bg-muted h-2.5 flex-1 overflow-hidden rounded-full">
+          <div className="bg-muted/40 h-2.5 flex-1 overflow-hidden rounded-full">
             <div
               className={cn('h-full transition-all', barClass)}
               style={{ width: `${percent}%` }}
@@ -290,9 +293,9 @@ export function GroupedVoteResultBar({
 
   return (
     <TooltipProvider>
-      <div className={cn('space-y-4', className)}>
+      <div className={cn('space-y-3', className)}>
         {options.map(option => (
-          <div key={option.key} className="space-y-1.5">
+          <div key={option.key} className="bg-card space-y-2 rounded-lg border px-3 py-3 shadow-sm">
             <div className="flex items-center gap-1.5 text-sm font-medium">
               {option.icon}
               <span>{option.label}</span>

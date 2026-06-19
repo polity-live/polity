@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useQuery, useZero } from '@rocicorp/zero/react';
+import { useQuery } from '@rocicorp/zero/react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/features/shared/ui/ui/sonner';
@@ -13,16 +13,18 @@ import {
   isEventWithinSchedulingWindow,
 } from '@/features/amendments/logic/processTaskEventScheduling';
 import {
+  buildCreateEventSearchFromDelegateElectionAssignment,
+  isEventWithinDelegateElectionSchedulingWindow,
+} from '@/features/groups/logic/delegateElectionScheduling';
+import {
   buildOpenAssignments,
   getRemainingSeatCount,
   type GroupOpenAssignment,
 } from '@/features/groups/logic/openAssignments';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { queries } from '@/zero/queries';
 import { useGroupEventsForCalendar } from '@/zero/events/useEventState';
 import { useGroupById, useGroupRoles } from '@/zero/groups/useGroupState';
-import { mutators } from '@/zero/mutators';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type DelegateElectionMode = 'single' | 'list';
@@ -215,7 +217,6 @@ function isFutureOrOngoingEvent(event: AvailableGroupEvent, referenceTime: numbe
 export function useGroupOpenAssignments(groupId: string) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const zero = useZero();
   const { group } = useGroupById(groupId);
   const { roles, isLoading: rolesLoading } = useGroupRoles(groupId);
   const { events: groupEvents } = useGroupEventsForCalendar(groupId);
@@ -309,71 +310,17 @@ export function useGroupOpenAssignments(groupId: string) {
         return;
       }
 
-      setIsScheduling(true);
-      try {
-        const agendaItemId = crypto.randomUUID();
-        const electionId = crypto.randomUUID();
-        const roleTitle = role.title || role.name || 'Rolle';
-        const orderIndex = Date.now();
-
-        await serverConfirmed(
-          zero.mutate(
-            mutators.agendas.createAgendaItem({
-              id: agendaItemId,
-              title: translateText('generated.inline.0135_wahl_roletitle_81c91130', {
-                roleTitle: roleTitle,
-              }),
-              description: role.description ?? '',
-              type: 'election',
-              status: 'pending',
-              forwarding_status: '',
-              order_index: orderIndex,
-              duration: 0,
-              scheduled_time: '',
-              start_time: 0,
-              end_time: 0,
-              activated_at: 0,
-              completed_at: 0,
-              event_id: event.id,
-              amendment_id: null,
-              majority_type: null,
-              time_limit: null,
-              voting_phase: null,
-            })
-          )
-        );
-
-        await serverConfirmed(
-          zero.mutate(
-            mutators.elections.createElection({
-              id: electionId,
-              agenda_item_id: agendaItemId,
-              role_id: role.id,
-              title: translateText('generated.inline.0136_wahl_fuer_roletitle_084baa2e', {
-                roleTitle: roleTitle,
-              }),
-              description: role.description ?? `Wahl fuer ${roleTitle}`,
-              status: 'pending',
-              majority_type: 'simple',
-              closing_type: null,
-              closing_duration_seconds: null,
-              closing_end_time: null,
-              visibility: 'public',
-              max_votes: 1,
-            })
-          )
-        );
-
-        toast.success(
-          translateText(
-            'generated.inline.0576_der_auftrag_wurde_an_die_veranstaltung_angeha_c4f0ffe1'
-          )
-        );
-      } finally {
-        setIsScheduling(false);
-      }
+      navigate({
+        to: '/create/agenda-item',
+        search: {
+          type: 'election',
+          eventId: event.id,
+          sourceGroupId: groupId,
+          assignmentId: assignment.id,
+        },
+      });
     },
-    [availableEvents, roles, zero]
+    [availableEvents, groupId, navigate, roles]
   );
 
   const scheduleDelegateElection = useCallback(
@@ -389,6 +336,21 @@ export function useGroupOpenAssignments(groupId: string) {
       }
       if (!event) {
         throw new Error('Bitte zuerst eine gueltige Veranstaltung auswaehlen.');
+      }
+      if (!isEventWithinDelegateElectionSchedulingWindow(event, assignment)) {
+        const createEventSearch = buildCreateEventSearchFromDelegateElectionAssignment({
+          assignment,
+          groupId,
+        });
+
+        throw new Error(
+          getSchedulingWindowDisplayLabel({
+            minStartDate: createEventSearch.minStartDate ?? null,
+            minStartTime: createEventSearch.minStartTime ?? null,
+            maxStartDate: createEventSearch.maxStartDate ?? null,
+            maxStartTime: createEventSearch.maxStartTime ?? null,
+          }) ?? 'Dieses Event liegt ausserhalb des erlaubten Zeitfensters fuer den Auftrag.'
+        );
       }
       if (remainingSeatCount <= 0 || (assignment.seatCount ?? 0) <= 0) {
         toast.info(

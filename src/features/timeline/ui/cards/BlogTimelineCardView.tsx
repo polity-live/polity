@@ -6,7 +6,6 @@ import {
   getHashtagToneClasses,
 } from '@/features/shared/theme';
 import { BookOpen, Clock, User, Bell } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
 import { cn } from '@/features/shared/utils/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Progress } from '@/features/shared/ui/ui/progress';
@@ -14,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { Button } from '@/features/shared/ui/ui/button';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
 import {
   TimelineCardBase,
   TimelineCardContent,
@@ -38,6 +38,7 @@ export interface BlogTimelineCardProps {
     hashtags?: { id: string; tag: string }[];
   };
   onShare?: () => void;
+  href?: string;
   className?: string;
 }
 
@@ -88,9 +89,13 @@ export function BlogTimelineCardView({
           {/* Title Overlay */}
           <div className="absolute right-0 bottom-0 left-0 p-4">
             <h3 className="text-background line-clamp-2 text-base leading-tight font-bold">
-              <Link to={blogUrl} onClick={e => e.stopPropagation()} className="hover:underline">
+              <SmartLink
+                href={blogUrl}
+                onClick={e => e.stopPropagation()}
+                className="hover:underline"
+              >
                 {blog.title}
-              </Link>
+              </SmartLink>
             </h3>
           </div>
         </div>
@@ -101,9 +106,13 @@ export function BlogTimelineCardView({
             <TimelineCardBadge label={t('features.timeline.contentTypes.blog')} icon={BookOpen} />
           </div>
           <h3 className="line-clamp-2 text-lg leading-tight font-bold">
-            <Link to={blogUrl} onClick={e => e.stopPropagation()} className="hover:underline">
+            <SmartLink
+              href={blogUrl}
+              onClick={e => e.stopPropagation()}
+              className="hover:underline"
+            >
               {blog.title}
-            </Link>
+            </SmartLink>
           </h3>
         </div>
       )}
@@ -112,9 +121,13 @@ export function BlogTimelineCardView({
         {/* Title (if there's a cover image, it's in the overlay) */}
         {blog.coverImageUrl && (
           <h3 className="mb-2 line-clamp-2 text-base leading-tight font-bold">
-            <Link to={blogUrl} onClick={e => e.stopPropagation()} className="hover:underline">
+            <SmartLink
+              href={blogUrl}
+              onClick={e => e.stopPropagation()}
+              className="hover:underline"
+            >
               {blog.title}
-            </Link>
+            </SmartLink>
           </h3>
         )}
 

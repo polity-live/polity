@@ -3,7 +3,7 @@ import { zql } from '../schema';
 import { can } from '../rbac/can';
 import { requireOwner } from '../rbac/authorize';
 import { PermissionError, isPermissionError } from '../rbac/errors';
-import { defaultVoteBallotVisibility } from '../shared';
+import { defaultVoteBallotVisibility, isNamedBallot } from '../shared';
 import {
   createVoteSchema,
   updateVoteSchema,
@@ -15,6 +15,7 @@ import {
   deleteVoterSchema,
   createIndicativeVoterParticipationSchema,
   createIndicativeChoiceDecisionSchema,
+  replaceIndicativeVoteSchema,
   createFinalVoterParticipationSchema,
   createFinalChoiceDecisionSchema,
   upsertVoteOfflineTallySchema,
@@ -328,6 +329,64 @@ export const voteSharedMutators = {
       });
     }
   ),
+
+  replaceIndicativeVote: defineMutator(replaceIndicativeVoteSchema, async ({ tx, ctx, args }) => {
+    const { participation, decisions } = args;
+    await assertVoterOwner(tx, ctx, participation.voter_id, participation.vote_id);
+
+    const vote = await loadVote(tx, participation.vote_id);
+    const isNamed = isNamedBallot(vote.ballot_visibility ?? defaultVoteBallotVisibility);
+
+    for (const decision of decisions) {
+      if (decision.vote_id !== participation.vote_id) {
+        throw new Error('Indicative vote decision does not belong to this vote.');
+      }
+      await assertChoiceBelongsToVote(tx, participation.vote_id, decision.choice_id);
+    }
+
+    const existingParticipation = await tx.run(
+      zql.indicative_voter_participation
+        .where('vote_id', participation.vote_id)
+        .where('voter_id', participation.voter_id)
+        .one()
+    );
+
+    if (existingParticipation && !isNamed) {
+      throw new Error(
+        'You have already voted in this secret indicative vote. Secret indicative votes cannot be changed.'
+      );
+    }
+
+    if (isNamed && decisions.some(decision => !decision.voter_participation_id)) {
+      throw new Error('Named indicative votes require linked participation decisions.');
+    }
+
+    const now = Date.now();
+    const resolvedParticipation = existingParticipation ?? participation;
+
+    if (!existingParticipation) {
+      await tx.mutate.indicative_voter_participation.insert({
+        ...participation,
+        created_at: now,
+      });
+    } else {
+      const previousDecisions = await tx.run(
+        zql.indicative_choice_decision.where('voter_participation_id', existingParticipation.id)
+      );
+
+      for (const previousDecision of previousDecisions) {
+        await tx.mutate.indicative_choice_decision.delete({ id: previousDecision.id });
+      }
+    }
+
+    for (const decision of decisions) {
+      await tx.mutate.indicative_choice_decision.insert({
+        ...decision,
+        voter_participation_id: isNamed ? resolvedParticipation.id : null,
+        created_at: now,
+      });
+    }
+  }),
 
   // Cast final vote (creates participation)
   castFinalVote: defineMutator(createFinalVoterParticipationSchema, async ({ tx, ctx, args }) => {

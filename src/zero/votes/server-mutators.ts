@@ -23,6 +23,7 @@ import {
   createVoteSchema,
   updateVoteSchema,
   createIndicativeVoterParticipationSchema,
+  replaceIndicativeVoteSchema,
   createFinalVoterParticipationSchema,
   upsertVoteOfflineTallySchema,
 } from './schema';
@@ -349,6 +350,15 @@ export const voteServerMutators = {
       await mutators.votes.castIndicativeVote.fn({ tx, ctx, args });
     }
   ),
+
+  replaceIndicativeVote: defineMutator(replaceIndicativeVoteSchema, async ({ tx, ctx, args }) => {
+    await requireRecentVotingPasswordVerification(tx, ctx.userID);
+    await assertOnlineVoteAllowed(tx, {
+      voteId: args.participation.vote_id,
+      userId: ctx.userID,
+    });
+    await mutators.votes.replaceIndicativeVote.fn({ tx, ctx, args });
+  }),
 
   castFinalVote: defineMutator(createFinalVoterParticipationSchema, async ({ tx, ctx, args }) => {
     await requireRecentVotingPasswordVerification(tx, ctx.userID);

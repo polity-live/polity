@@ -81,6 +81,7 @@ export interface AmendmentTimelineCardProps {
   isSubscriptionLoading?: boolean;
   onSupport?: () => void;
   onOppose?: () => void;
+  href?: string;
   className?: string;
 }
 export interface AmendmentTimelineCardViewProps {
@@ -92,6 +93,7 @@ export interface AmendmentTimelineCardViewProps {
   onToggleSubscription: any;
   isCollaborationLoading: any;
   isSubscriptionLoading: any;
+  href: any;
   className: any;
   t: any;
   collaborationOpen: any;
@@ -125,6 +127,7 @@ export function AmendmentTimelineCardView({
   onToggleSubscription,
   isCollaborationLoading,
   isSubscriptionLoading,
+  href,
   className,
   t,
   collaborationOpen,
@@ -148,17 +151,14 @@ export function AmendmentTimelineCardView({
   const hashtagTone = getHashtagToneClasses();
   const successTone = getSemanticToneClasses('success');
   const dangerTone = getSemanticToneClasses('danger');
+  const amendmentHref = href ?? `/amendment/${amendment.id}`;
 
   return (
-    <TimelineCardBase
-      contentType="amendment"
-      className={className}
-      href={`/amendment/${amendment.id}`}
-    >
+    <TimelineCardBase contentType="amendment" className={className} href={amendmentHref}>
       <TimelineCardHeader
         contentType="amendment"
         title={amendment.title}
-        href={`/amendment/${amendment.id}`}
+        href={amendmentHref}
         subtitle={amendment.groupName}
         subtitleHref={amendment.groupId ? `/group/${amendment.groupId}` : undefined}
         badge={
@@ -398,7 +398,7 @@ export function AmendmentTimelineCardView({
         {/* Share Button */}
         <div onClick={e => e.stopPropagation()}>
           <ShareButton
-            url={`/amendment/${amendment.id}`}
+            url={amendmentHref}
             title={amendment.title}
             description={amendmentDescription || ''}
             variant="outline"

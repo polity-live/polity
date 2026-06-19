@@ -3,6 +3,10 @@
 import { useTodosPage } from '@/features/todos/hooks/useTodosPage';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { TodosPageView } from './TodosPageView';
+import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation';
+
+const TODO_TAB_ORDER = ['all', 'pending', 'in_progress', 'completed', 'cancelled'] as const;
+
 export function TodosPage() {
   const { t } = useTranslation();
 
@@ -33,6 +37,25 @@ export function TodosPage() {
     handleToggleComplete,
     handleTodoClick,
   } = useTodosPage();
+  const selectedTabIndex = TODO_TAB_ORDER.indexOf(selectedTab);
+  const { handlers: tabSwipeHandlers } = useSwipeNavigation({
+    disabled: isDetailDialogOpen,
+    canSwipePrev: selectedTabIndex > 0,
+    canSwipeNext: selectedTabIndex >= 0 && selectedTabIndex < TODO_TAB_ORDER.length - 1,
+    onSwipePrev: () => {
+      const previousTab = TODO_TAB_ORDER[selectedTabIndex - 1];
+      if (previousTab) {
+        setSelectedTab(previousTab);
+      }
+    },
+    onSwipeNext: () => {
+      const nextTab = TODO_TAB_ORDER[selectedTabIndex + 1];
+      if (nextTab) {
+        setSelectedTab(nextTab);
+      }
+    },
+  });
+
   return (
     <TodosPageView
       t={t}
@@ -61,6 +84,7 @@ export function TodosPage() {
       statusCounts={statusCounts}
       handleToggleComplete={handleToggleComplete}
       handleTodoClick={handleTodoClick}
+      tabSwipeHandlers={tabSwipeHandlers}
     />
   );
 }

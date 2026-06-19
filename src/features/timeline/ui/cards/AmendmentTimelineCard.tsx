@@ -66,6 +66,7 @@ export interface AmendmentTimelineCardProps {
   isSubscriptionLoading?: boolean;
   onSupport?: () => void;
   onOppose?: () => void;
+  href?: string;
   className?: string;
 }
 
@@ -120,6 +121,7 @@ export function AmendmentTimelineCard({
   onToggleSubscription,
   isCollaborationLoading,
   isSubscriptionLoading,
+  href,
   className,
 }: AmendmentTimelineCardProps) {
   const { t } = useTranslation();
@@ -224,6 +226,7 @@ export function AmendmentTimelineCard({
       onToggleSubscription={onToggleSubscription}
       isCollaborationLoading={isCollaborationLoading}
       isSubscriptionLoading={isSubscriptionLoading}
+      href={href}
       className={className}
       t={t}
       collaborationOpen={collaborationOpen}

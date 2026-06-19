@@ -14,6 +14,7 @@ import { CivicTimelineRail } from './CivicTimelineRail';
 import { TimelineFilterPanel } from './TimelineFilterPanel';
 import { TimelineHeader } from './TimelineHeader';
 import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
+import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation';
 
 export interface ModernTimelineViewProps extends UseTimelinePageReturn {
   className?: string;
@@ -46,6 +47,12 @@ export function ModernTimelineView({
   handleRailItemSelect,
 }: ModernTimelineViewProps) {
   const { t } = useTranslation();
+  const { handlers: timelineModeSwipeHandlers } = useSwipeNavigation({
+    canSwipePrev: mode === 'decisions',
+    canSwipeNext: mode === 'timeline',
+    onSwipePrev: () => setMode('timeline'),
+    onSwipeNext: () => setMode('decisions'),
+  });
 
   if (!userId) {
     return null;
@@ -53,7 +60,11 @@ export function ModernTimelineView({
 
   if (mode === 'decisions') {
     return (
-      <div className={cn('space-y-4', className)}>
+      <div
+        className={cn('space-y-4', className)}
+        style={{ touchAction: 'pan-y' }}
+        {...timelineModeSwipeHandlers}
+      >
         <TimelineHeader
           mode={mode}
           onModeChange={setMode}
@@ -73,7 +84,11 @@ export function ModernTimelineView({
   }
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div
+      className={cn('space-y-4', className)}
+      style={{ touchAction: 'pan-y' }}
+      {...timelineModeSwipeHandlers}
+    >
       <TimelineHeader
         mode={mode}
         onModeChange={setMode}
@@ -131,7 +146,7 @@ export function ModernTimelineView({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]">
-        <div className="lg:sticky lg:top-4 lg:self-start">
+        <div className="lg:sticky lg:top-4 lg:self-start" data-swipe-lock>
           <CivicTimelineMap
             items={civicTimeline.mapItems}
             activeItemId={activeItemId}

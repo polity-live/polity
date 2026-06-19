@@ -114,6 +114,7 @@ export function SharedWeekViewView({
           ref={containerRef}
           className="max-h-[75vh] min-h-[640px] overflow-auto rounded-xl select-none"
           style={{ touchAction: 'pan-x pan-y' }}
+          data-swipe-lock
         >
           <div
             className="grid"

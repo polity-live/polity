@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { VoteResultsDisplay, type VoteBarOption } from '../VoteResultsDisplay';
@@ -13,8 +13,10 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'features.events.agenda.indication': 'Indication',
         'features.events.agenda.indicationShort': 'Ind',
         'features.events.agenda.indicationVotes': 'indication votes',
+        'features.events.agenda.hideIndicationResults': 'Hide indication results',
         'features.events.agenda.noVotesYet': 'No votes yet',
         'features.events.agenda.selected': 'Selected',
+        'features.events.agenda.showIndicationResults': 'Show indication results',
         'features.events.agenda.votes': 'votes',
         'features.events.agenda.winner': 'Winner',
         'features.events.voting.eligible': 'Eligible',
@@ -72,8 +74,23 @@ describe('VoteResultsDisplay', () => {
     expect(container.querySelectorAll('[data-slot="vote-result-option"]')).toHaveLength(2);
     expect(screen.getByText('yes')).toBeTruthy();
     expect(screen.getByText('no')).toBeTruthy();
+    expect(screen.getAllByText('3 · 75%').length).toBeGreaterThan(0);
     expect(screen.getByText('Selected')).toBeTruthy();
     expect(screen.getByText('Winner')).toBeTruthy();
+  });
+
+  it('keeps indication rows collapsed for final results until toggled', () => {
+    render(
+      <VoteResultsDisplay options={options} phase="closed" totalFinal={4} totalIndication={4} />
+    );
+
+    expect(screen.getByRole('button', { name: 'Show indication results' })).toBeTruthy();
+    expect(screen.queryByText('Ind')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show indication results' }));
+
+    expect(screen.getByRole('button', { name: 'Hide indication results' })).toBeTruthy();
+    expect(screen.getAllByText('Ind')).toHaveLength(2);
   });
 
   it('shows the empty state only once for zero totals', () => {

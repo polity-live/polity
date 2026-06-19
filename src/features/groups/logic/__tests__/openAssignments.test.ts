@@ -12,18 +12,25 @@ function eventSummary(
   id: string,
   overrides: Partial<{
     title: string;
+    event_type: string;
     start_date: number;
     end_date: number;
     status: string;
+    delegate_seat_allocation_type: string;
+    main_group_delegate_allocation_mode: string;
     group: { id: string; name: string };
   }> = {}
 ) {
   return {
     id,
     title: overrides.title ?? id,
+    event_type: overrides.event_type ?? 'delegate_assembly',
     start_date: overrides.start_date ?? REFERENCE_TIME + 1000 * 60 * 60,
     end_date: overrides.end_date ?? REFERENCE_TIME + 1000 * 60 * 120,
     status: overrides.status ?? 'planned',
+    delegate_seat_allocation_type:
+      overrides.delegate_seat_allocation_type ?? 'members_per_delegate',
+    main_group_delegate_allocation_mode: overrides.main_group_delegate_allocation_mode ?? '50',
     group: overrides.group ?? { id: 'target-group', name: 'Target Group' },
   };
 }
@@ -117,6 +124,32 @@ describe('open assignments', () => {
     ]);
   });
 
+  it('keeps delegate ratio metadata on delegate-election target events', () => {
+    const [assignment] = buildDelegateElectionAssignments({
+      currentGroupId: 'local-group',
+      allocations: [
+        allocation('allocation-1', {
+          group: { id: 'source-group', name: 'B1' },
+          event: eventSummary('delegate-assembly', {
+            delegate_seat_allocation_type: 'members_per_delegate',
+            main_group_delegate_allocation_mode: '1',
+            group: { id: 'target-group', name: 'H2' },
+          }),
+        }),
+      ],
+      roles: [],
+      referenceTime: REFERENCE_TIME,
+    });
+
+    expect(assignment.targetEvent).toMatchObject({
+      event_type: 'delegate_assembly',
+      delegate_seat_allocation_type: 'members_per_delegate',
+      main_group_delegate_allocation_mode: '1',
+    });
+    expect(assignment.sourceGroup).toMatchObject({ id: 'source-group', name: 'B1' });
+    expect(assignment.targetGroup).toMatchObject({ id: 'target-group', name: 'H2' });
+  });
+
   it('marks delegate allocations as scheduled when a future subgroup election is linked', () => {
     const targetEvent = eventSummary('delegate-assembly');
     const subgroupEvent = eventSummary('local-assembly', {
@@ -181,6 +214,60 @@ describe('open assignments', () => {
 
     expect(assignment.status).toBe('scheduled');
     expect(assignment.linkedEvent?.id).toBe('renewal-event');
+  });
+
+  it('exposes elected group roles without recurrence as open role-renewal assignments', () => {
+    const [assignment] = buildRoleRenewalAssignments({
+      roles: [
+        role('chairperson', {
+          title: 'Chairperson',
+          is_recurring: false,
+          scheduled_revote_date: null,
+        }),
+      ],
+      referenceTime: REFERENCE_TIME,
+    });
+
+    expect(assignment).toMatchObject({
+      id: 'role:chairperson',
+      kind: 'role_renewal',
+      status: 'open',
+      roleId: 'chairperson',
+      linkedEvent: null,
+    });
+  });
+
+  it('does not create separate role-renewal assignments for delegate seat roles', () => {
+    const assignments = buildRoleRenewalAssignments({
+      roles: [
+        role('seat-role-1', {
+          title: 'Delegate seat 1',
+          elections: [
+            {
+              id: 'delegate-election',
+              status: 'pending',
+              description: buildDelegateElectionDescription({
+                meta: {
+                  kind: 'delegate_election',
+                  targetEventId: 'delegate-assembly',
+                  targetGroupId: 'target-group',
+                  sourceGroupId: 'local-group',
+                  seatRoleIds: ['seat-role-1'],
+                  allSeatRoleIds: ['seat-role-1', 'seat-role-2'],
+                  mode: 'single',
+                },
+              }),
+              agenda_item: { event: eventSummary('local-assembly') },
+            },
+          ],
+        }),
+        role('seat-role-2', { title: 'Delegate seat 2' }),
+        role('chairperson', { title: 'Chairperson' }),
+      ],
+      referenceTime: REFERENCE_TIME,
+    });
+
+    expect(assignments.map(assignment => assignment.id)).toEqual(['role:chairperson']);
   });
 
   it('combines delegate and role-renewal assignments into one sorted list', () => {

@@ -49,6 +49,7 @@ function DecisionResizeHandle(axis: ResizeHandleAxis, ref: Ref<HTMLElement>) {
       )}
       data-resize-axis={axis}
       data-testid="decision-widget-resize-handle"
+      data-swipe-lock
     />
   );
 }

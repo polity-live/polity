@@ -5,6 +5,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { useEventWikiData } from '@/zero/events/useEventState';
 import { useUserState } from '@/zero/users';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
+import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useSubscribeEvent } from './useSubscribeEvent';
 import { useEventParticipation } from './useEventParticipation';
 import { computeAgendaStats } from '@/features/agendas/logic/computeAgendaStats';
@@ -17,9 +18,11 @@ export function useEventWikiPage(eventId: string) {
   const [electionsDialogOpen, setElectionsDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [candidacyPasswordError, setCandidacyPasswordError] = useState<string | null>(null);
   const [participantsDialogOpen, setParticipantsDialogOpen] = useState(false);
 
   const { addCandidate } = useElectionActions();
+  const { verifyVotingPassword } = useVotingPasswordActions();
 
   const subscribeData = useSubscribeEvent(eventId);
   const participationData = useEventParticipation(eventId);
@@ -51,70 +54,85 @@ export function useEventWikiPage(eventId: string) {
 
   const handleElectionClick = useCallback((election: ElectionItem) => {
     setSelectedElection(election);
+    setCandidacyPasswordError(null);
     setElectionsDialogOpen(false);
     setConfirmDialogOpen(true);
   }, []);
 
-  const handleConfirmCandidacy = useCallback(async () => {
-    if (!user || !selectedElection) return;
+  const handleConfirmCandidacy = useCallback(
+    async (password: string) => {
+      if (!user || !selectedElection) return;
 
-    setIsSubmitting(true);
-    try {
-      const existingCandidacy = getUserCandidacy(selectedElection);
-      if (existingCandidacy) {
-        toast.error(
-          translateText('generated.inline.0479_sie_sind_bereits_kandidat_f_r_diese_wahl_48adad8d')
+      setIsSubmitting(true);
+      setCandidacyPasswordError(null);
+      try {
+        await verifyVotingPassword(password);
+
+        const existingCandidacy = getUserCandidacy(selectedElection);
+        if (existingCandidacy) {
+          toast.error(
+            translateText('generated.inline.0479_sie_sind_bereits_kandidat_f_r_diese_wahl_48adad8d')
+          );
+          setConfirmDialogOpen(false);
+          setIsSubmitting(false);
+          return;
+        }
+
+        const candidateId = crypto.randomUUID();
+        const maxOrder = Math.max(
+          0,
+          ...(selectedElection.candidates || []).map(c => c.order_index || 0)
+        );
+
+        const candidateName = currentUserProfile?.first_name || user.email || 'Unbenannt';
+
+        await addCandidate({
+          id: candidateId,
+          name: candidateName,
+          description: '',
+          image_url: currentUserProfile?.avatar || '',
+          order_index: maxOrder + 1,
+          election_id: selectedElection.id as string,
+          user_id: user.id,
+          status: 'nominated',
+        });
+
+        toast.success(
+          translateText(
+            'generated.inline.0480_sie_wurden_erfolgreich_als_kandidat_hinzugef__d99fe7a6'
+          )
         );
         setConfirmDialogOpen(false);
+        setSelectedElection(null);
+      } catch (error) {
+        console.error('Failed to add candidate:', error);
+        setCandidacyPasswordError(
+          error instanceof Error
+            ? error.message
+            : translateText(
+                'generated.inline.0481_fehler_beim_hinzuf_gen_des_kandidaten_bitte_v_14c00c58'
+              )
+        );
+        toast.error(
+          translateText(
+            'generated.inline.0481_fehler_beim_hinzuf_gen_des_kandidaten_bitte_v_14c00c58'
+          )
+        );
+      } finally {
         setIsSubmitting(false);
-        return;
       }
-
-      const candidateId = crypto.randomUUID();
-      const maxOrder = Math.max(
-        0,
-        ...(selectedElection.candidates || []).map(c => c.order_index || 0)
-      );
-
-      const candidateName = currentUserProfile?.first_name || user.email || 'Unbenannt';
-
-      await addCandidate({
-        id: candidateId,
-        name: candidateName,
-        description: '',
-        image_url: currentUserProfile?.avatar || '',
-        order_index: maxOrder + 1,
-        election_id: selectedElection.id as string,
-        user_id: user.id,
-        status: 'nominated',
-      });
-
-      toast.success(
-        translateText(
-          'generated.inline.0480_sie_wurden_erfolgreich_als_kandidat_hinzugef__d99fe7a6'
-        )
-      );
-      setConfirmDialogOpen(false);
-      setSelectedElection(null);
-    } catch (error) {
-      console.error('Failed to add candidate:', error);
-      toast.error(
-        translateText(
-          'generated.inline.0481_fehler_beim_hinzuf_gen_des_kandidaten_bitte_v_14c00c58'
-        )
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [
-    user,
-    selectedElection,
-    currentUserProfile,
-    getUserCandidacy,
-    addCandidate,
-    eventId,
-    event?.title,
-  ]);
+    },
+    [
+      user,
+      selectedElection,
+      currentUserProfile,
+      getUserCandidacy,
+      addCandidate,
+      verifyVotingPassword,
+      eventId,
+      event?.title,
+    ]
+  );
 
   // Visibility access check
   const canAccess = checkEntityAccess(event?.visibility, !!user, participationData.isParticipant);
@@ -145,6 +163,7 @@ export function useEventWikiPage(eventId: string) {
     setConfirmDialogOpen,
     selectedElection,
     isSubmitting,
+    candidacyPasswordError,
     participantsDialogOpen,
     setParticipantsDialogOpen,
 

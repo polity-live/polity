@@ -4,6 +4,7 @@ import { useId, type ReactNode } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   AlertTriangle,
+  Calculator,
   Check,
   GitBranch,
   Link2,
@@ -18,7 +19,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { getContentTypeToneClasses, getSemanticToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 
-export type ActionSubmissionKind = 'workflow' | 'link' | 'invite' | 'accept' | 'process';
+export type ActionSubmissionKind = 'workflow' | 'link' | 'invite' | 'accept' | 'process' | 'tally';
 export type ActionSubmissionStepKey = 'prepare' | 'commit' | 'sync';
 export type ActionSubmissionProgressStatus = 'pending' | 'active' | 'complete' | 'error';
 export type ActionSubmissionStatus = 'idle' | 'submitting' | 'ready' | 'success' | 'error';
@@ -78,6 +79,12 @@ const KIND_COPY: Record<
     success: 'Prozesslauf bereit',
     description: 'Ziel, Pfad und beteiligte Kontexte werden geprüft und synchronisiert.',
   },
+  tally: {
+    headline: 'POLITY zählt.',
+    active: 'Tally wird gespeichert',
+    success: 'Tally gespeichert',
+    description: 'PIN, Offline-Stimmen und Ergebnisansicht werden geprüft und synchronisiert.',
+  },
   link: {
     headline: 'POLITY verbindet.',
     active: 'Link wird aktiviert',
@@ -99,6 +106,7 @@ const KIND_COPY: Record<
 };
 
 function getIcon(kind: ActionSubmissionKind) {
+  if (kind === 'tally') return Calculator;
   if (kind === 'process') return Target;
   if (kind === 'workflow') return GitBranch;
   if (kind === 'link') return Link2;
@@ -107,6 +115,7 @@ function getIcon(kind: ActionSubmissionKind) {
 }
 
 function getTone(kind: ActionSubmissionKind) {
+  if (kind === 'tally') return getContentTypeToneClasses('election');
   if (kind === 'process') return getContentTypeToneClasses('amendment');
   if (kind === 'workflow') return getContentTypeToneClasses('workflow');
   if (kind === 'link') return getSemanticToneClasses('info');

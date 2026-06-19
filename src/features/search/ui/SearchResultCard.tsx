@@ -8,6 +8,12 @@ import {
   TimelineCardBadge,
 } from '@/features/timeline/ui/cards/TimelineCardBase';
 import { buildTimelineCardProps } from '../logic/buildTimelineCardProps';
+import {
+  getSearchContentItemHref,
+  getSearchDocumentHref,
+  getSearchResultPermalink,
+  normalizeSearchMediaSourceType,
+} from '../logic/searchResultHref';
 import type { SearchContentItem } from '../types/search.types';
 import type { SearchDocument, SearchDocumentCardPayload } from '../types/search-document.types';
 
@@ -148,6 +154,22 @@ function toContentItem(document: SearchDocument): SearchContentItem | null {
     'event_id'
   );
   const agendaItemId = getFirstString([payloadRecord, metadata], 'agendaItemId', 'agenda_item_id');
+  const sourceType = normalizeSearchMediaSourceType(
+    getFirstString(
+      [payloadRecord, metadata],
+      'sourceType',
+      'source_type',
+      'entityType',
+      'entity_type'
+    )
+  );
+  const sourceId = getFirstString(
+    [payloadRecord, metadata],
+    'sourceId',
+    'source_id',
+    'entityId',
+    'entity_id'
+  );
 
   const item: SearchContentItem = {
     id: document.entity_id,
@@ -155,6 +177,8 @@ function toContentItem(document: SearchDocument): SearchContentItem | null {
     title: document.title,
     description: document.summary || document.search_text || undefined,
     imageUrl: document.image_url,
+    sourceType,
+    sourceId,
     createdAt,
     updatedAt,
     tags,
@@ -217,6 +241,8 @@ function toContentItem(document: SearchDocument): SearchContentItem | null {
     item.groupName = groupName;
   }
 
+  item.href = getSearchContentItemHref(item, getSearchResultPermalink(document));
+
   return item;
 }
 
@@ -229,12 +255,12 @@ function SearchFallbackCard({ document }: { document: SearchDocument }) {
     <TimelineCardBase
       contentType="action"
       className={SEARCH_TIMELINE_CARD_CLASS}
-      href={`/search?result=${encodeURIComponent(document.id)}`}
+      href={getSearchDocumentHref(document)}
     >
       <TimelineCardHeader
         contentType="action"
         title={document.title || 'Result'}
-        href={`/search?result=${encodeURIComponent(document.id)}`}
+        href={getSearchDocumentHref(document)}
         subtitle={document.subtitle || document.group?.name || undefined}
         badge={<TimelineCardBadge label={document.entity_type || 'Result'} icon={Search} />}
       />

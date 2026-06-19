@@ -3,6 +3,7 @@
 import type { Conversation, Message } from '../types/message.types';
 import { useAssistantChat } from '../hooks/useAssistantChat';
 import { AssistantMessageContentView } from './AssistantMessageContentView';
+import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
 
 interface AssistantMessageViewProps {
   conversation: Conversation;
@@ -18,6 +19,7 @@ interface AssistantMessageViewProps {
   onRenameConversation: (id: string, name: string | null) => Promise<boolean>;
   onAcceptConversation: (conversation: Conversation) => void;
   onRejectConversation: (conversation: Conversation) => void;
+  swipeHandlers?: SwipeNavigationHandlers;
   className?: string;
 }
 
@@ -35,6 +37,7 @@ export function AssistantMessageView({
   onRenameConversation,
   onAcceptConversation,
   onRejectConversation,
+  swipeHandlers,
   className,
 }: AssistantMessageViewProps) {
   const assistantChat = useAssistantChat(conversation, currentUserId);
@@ -69,6 +72,7 @@ export function AssistantMessageView({
       onRenameConversation={onRenameConversation}
       onAcceptConversation={onAcceptConversation}
       onRejectConversation={onRejectConversation}
+      swipeHandlers={swipeHandlers}
       className={className}
       assistantChat={assistantChat}
       streamingAssistantMessage={streamingAssistantMessage}

@@ -916,6 +916,9 @@ export function EventAgendaItemDetail({
             id: tally.candidate_id ?? '',
             count: tally.count ?? 0,
           })),
+        participantCount: confirmedOfflineParticipantCount,
+        votesPerParticipant: Math.max(1, election.max_votes ?? 1),
+        maxPerEntryVotes: confirmedOfflineParticipantCount,
         maxTotalVotes: confirmedOfflineParticipantCount * Math.max(1, election.max_votes ?? 1),
       };
     }
@@ -935,6 +938,9 @@ export function EventAgendaItemDetail({
             id: tally.choice_id ?? '',
             count: tally.count ?? 0,
           })),
+        participantCount: confirmedOfflineParticipantCount,
+        votesPerParticipant: 1,
+        maxPerEntryVotes: null,
         maxTotalVotes: confirmedOfflineParticipantCount,
       };
     }

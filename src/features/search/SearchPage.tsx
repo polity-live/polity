@@ -2,9 +2,16 @@ import { useSearchPage } from './hooks/useSearchPage';
 import { SearchPageView } from './ui/SearchPageView';
 import { SpatialSearchView } from './ui/SpatialSearchView';
 import { VirtualSearchGrid } from './ui/VirtualSearchGrid';
+import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation';
 
 export function SearchPage() {
   const sp = useSearchPage();
+  const { handlers: viewSwipeHandlers } = useSwipeNavigation({
+    canSwipePrev: sp.view === 'spatial',
+    canSwipeNext: sp.view === 'list',
+    onSwipePrev: () => sp.setView('list'),
+    onSwipeNext: () => sp.setView('spatial'),
+  });
   const results =
     sp.view === 'spatial' ? (
       <SpatialSearchView
@@ -42,6 +49,7 @@ export function SearchPage() {
       totalResults={sp.totalResults}
       view={sp.view}
       onViewChange={sp.setView}
+      swipeHandlers={viewSwipeHandlers}
       results={results}
     />
   );

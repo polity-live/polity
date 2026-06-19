@@ -2,7 +2,8 @@
 
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
-import { useMemo } from 'react';
+import { Link } from '@tanstack/react-router';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
@@ -22,8 +23,6 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
-import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/VoteResultsDisplay';
-import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
 import { VotingPhaseBadge as VotePhaseBadge } from '@/features/shared/ui/voting';
 import {
   getElectionModeSummaryLabel,
@@ -43,6 +42,13 @@ interface ElectionOfflineTallyLike {
   candidate_id?: string | null;
   phase?: string | null;
   count?: number | null;
+}
+
+interface AutoAssignedRoleElectionLike {
+  role?: {
+    scope?: string | null;
+    event_id?: string | null;
+  } | null;
 }
 
 interface AgendaElectionSectionProps {
@@ -66,31 +72,22 @@ interface AgendaElectionSectionProps {
   winnerVoteSharePercent?: number;
   attendanceMode?: 'online' | 'hybrid' | 'offline' | null;
   offlineTallies?: readonly ElectionOfflineTallyLike[];
+  delegateTargetEventId?: string | null;
+  delegateTargetEventTitle?: string | null;
+  showRoleAssignedMessage?: boolean;
+  showEventRoleAssignedMessage?: boolean;
   onOpenNamedResults?: () => void;
   className?: string;
 }
 
-/**
- * Build VoteBarOption for a candidate
- */
-function buildCandidateOption(
-  candidateId: string,
-  candidateName: string,
-  indicativeCount: number,
-  indicativePercent: number,
-  finalCount: number,
-  finalPercent: number
-): VoteBarOption {
-  return {
-    key: candidateId,
-    label: candidateName,
-    color: 'bg-primary',
-    lightColor: featureThemeClassName('agendaAgendaElectionSectionInfoBackground'),
-    finalCount,
-    finalPercent,
-    indicationCount: indicativeCount,
-    indicationPercent: indicativePercent,
-  };
+export function isEventRoleElection(election: AutoAssignedRoleElectionLike | null | undefined) {
+  return election?.role?.scope === 'event' && Boolean(election.role.event_id);
+}
+
+export function isAutoAssignedRoleElection(
+  election: AutoAssignedRoleElectionLike | null | undefined
+) {
+  return election?.role?.scope === 'event' || election?.role?.scope === 'group';
 }
 
 function getCandidateDisplayName(candidate: CandidatesByElectionRow): string {
@@ -98,6 +95,18 @@ function getCandidateDisplayName(candidate: CandidatesByElectionRow): string {
   if (!user) return candidate.name || 'Unknown';
   const full = `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim();
   return full || user.email || candidate.name || 'Unknown';
+}
+
+function normalizePercent(percent: number) {
+  if (!Number.isFinite(percent)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, percent));
+}
+
+function formatCountPercent(count: number, percent: number) {
+  return `${Math.round(count)} · ${normalizePercent(percent).toFixed(0)}%`;
 }
 
 function getWinningCandidateIds(args: {
@@ -179,14 +188,17 @@ export function AgendaElectionSection({
   isCandidateLoading,
   onBecomeCandidate,
   onWithdrawCandidacy,
-  winnerName,
-  winnerVoteSharePercent,
   attendanceMode = 'online',
   offlineTallies = [],
+  delegateTargetEventId,
+  delegateTargetEventTitle,
+  showRoleAssignedMessage,
+  showEventRoleAssignedMessage,
   onOpenNamedResults,
   className,
 }: AgendaElectionSectionProps) {
   const { t } = useTranslation();
+  const [showIndicationResults, setShowIndicationResults] = useState(false);
 
   const phase = getVotingPhase(electionStatus);
   const isIndicationPhase = phase === 'indicative';
@@ -222,21 +234,24 @@ export function AgendaElectionSection({
     });
   }, [candidateStats, electionMode, isClosed, seatCount]);
 
-  const candidateOptions = useMemo<VoteBarOption[]>(() => {
-    return candidateStats.map(stats =>
-      buildCandidateOption(
-        stats.candidate.id,
-        getCandidateDisplayName(stats.candidate),
-        stats.indicativeCount,
-        stats.indicativePercentage,
-        stats.finalCount,
-        stats.finalPercentage
-      )
-    );
-  }, [candidateStats]);
-
   const isInteractive = Boolean(onOpenNamedResults);
-  const ResultsWrapper = isInteractive ? 'button' : 'div';
+  const openNamedResultsLabel = translateText(
+    'generated.inline.0015_klick_fuer_einzelansicht_9d7ff135',
+    'Klick fuer Einzelansicht'
+  );
+  const noCandidatesLabel = t('features.events.agenda.noCandidates');
+  const showDelegateParticipantsAddedMessage =
+    isClosed && Boolean(delegateTargetEventId) && winningCandidateIds.length > 0;
+  const showRoleWinnersAssignedMessage =
+    isClosed &&
+    Boolean(showRoleAssignedMessage || showEventRoleAssignedMessage) &&
+    !showDelegateParticipantsAddedMessage &&
+    winningCandidateIds.length > 0;
+  const assignmentSuccessMessage = showDelegateParticipantsAddedMessage
+    ? t('features.events.agenda.delegateParticipantsAdded')
+    : showRoleWinnersAssignedMessage
+      ? t('features.events.agenda.roleWinnersAssigned')
+      : null;
   const isCandidateActionBlocked = !canBeCandidate;
   const candidateActionTooltip = isCandidateActionBlocked
     ? t(
@@ -244,41 +259,72 @@ export function AgendaElectionSection({
         'Passive Voting Rights are required to become a candidate in this event.'
       )
     : t('features.events.agenda.becomeCandidate');
+  const visibleTotal = isIndicationPhase ? totalIndicative : totalFinal;
+  const visibleTotalLabel = isIndicationPhase
+    ? t('features.events.agenda.indicationVotes')
+    : t('features.events.agenda.votes');
+  const canToggleIndicationResults = !isIndicationPhase && totalFinal > 0 && totalIndicative > 0;
 
   return (
-    <Card className={cn(className)}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Vote className="h-5 w-5" />
-            {t('features.events.agenda.electionResults')}
+    <Card className={cn('overflow-hidden rounded-lg shadow-sm', className)}>
+      <CardHeader className="border-b px-5 py-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Vote className="text-brand h-5 w-5" />
+              {t('features.events.agenda.electionResults')}
+            </CardTitle>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <BadgeControl variant="outline" className="gap-1">
+              {visibleTotal} {visibleTotalLabel}
+            </BadgeControl>
             <VotePhaseBadge
               phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
             />
-          </CardTitle>
-          <div className="flex flex-wrap items-center justify-end gap-2">
             {attendanceMode ? (
-              <BadgeControl variant="outline" textTransform="capitalize">
+              <BadgeControl
+                tone={
+                  attendanceMode === 'online'
+                    ? 'info'
+                    : attendanceMode === 'hybrid'
+                      ? 'warning'
+                      : 'neutral'
+                }
+                textTransform="capitalize"
+              >
                 {attendanceMode}
               </BadgeControl>
             ) : null}
             {electionMode ? (
-              <BadgeControl variant="secondary">
+              <BadgeControl tone="election">
                 {getElectionModeSummaryLabel(electionMode, seatCount)}
               </BadgeControl>
             ) : null}
             {isInteractive ? (
-              <BadgeControl variant="secondary" className="gap-1">
+              <BadgeControl tone="info" className="gap-1">
                 <Expand className="h-3 w-3" />
                 {translateText('generated.inline.0013_namentlich_8d49da42')}
               </BadgeControl>
             ) : null}
-            <BadgeControl variant="outline">{roleName}</BadgeControl>
+            {delegateTargetEventId ? (
+              <BadgeControl asChild tone="event" className="hover:opacity-90">
+                <Link
+                  to="/event/$id"
+                  params={{ id: delegateTargetEventId }}
+                  title={delegateTargetEventTitle ?? undefined}
+                >
+                  {roleName}
+                </Link>
+              </BadgeControl>
+            ) : (
+              <BadgeControl variant="outline">{roleName}</BadgeControl>
+            )}
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-5 p-5">
         {electionStatus === 'runoff_required' ? (
           <div className={featureThemeClassName('agendaAgendaElectionSectionWarningBadge')}>
             {translateText(
@@ -287,127 +333,177 @@ export function AgendaElectionSection({
           </div>
         ) : null}
 
-        <ResultsWrapper
-          {...(isInteractive
-            ? {
-                type: 'button' as const,
-                onClick: onOpenNamedResults,
-                className:
-                  'w-full space-y-6 text-left transition-opacity hover:opacity-95 focus-visible:outline-none',
-              }
-            : { className: 'space-y-6' })}
-        >
-          {isClosed && winnerName ? (
-            <VoteResultSentence
-              type="election"
-              result={winnerName ? 'passed' : 'tie'}
-              winnerName={winnerName}
-              roleName={roleName}
-              voteSharePercent={winnerVoteSharePercent}
-              isFinal
-            />
-          ) : null}
-
-          <div className="text-muted-foreground flex items-center justify-between text-sm">
-            <span>
-              {isIndicationPhase
-                ? `${totalIndicative} ${t('features.events.agenda.indicationVotes')}`
-                : `${totalFinal} ${t('features.events.agenda.votes')}`}
-            </span>
+        <div className="space-y-5">
+          <div className="flex items-center justify-end gap-3">
             <div className="flex items-center gap-2">
               {isIndicationPhase ? (
                 <BadgeControl variant="secondary" size="xs">
                   * {t('features.events.agenda.indicationOnly')}
                 </BadgeControl>
               ) : null}
-              {isInteractive ? (
-                <BadgeControl variant="outline" size="xs">
-                  {translateText('generated.inline.0015_klick_fuer_einzelansicht_9d7ff135')}
+              {canToggleIndicationResults ? (
+                <BadgeControl
+                  asChild
+                  variant={showIndicationResults ? 'secondary' : 'outline'}
+                  size="xs"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setShowIndicationResults(current => !current)}
+                  >
+                    {showIndicationResults
+                      ? t('features.events.agenda.hideIndicationResults', 'Hide indication results')
+                      : t(
+                          'features.events.agenda.showIndicationResults',
+                          'Show indication results'
+                        )}
+                  </button>
+                </BadgeControl>
+              ) : null}
+              {isInteractive && onOpenNamedResults ? (
+                <BadgeControl asChild tone="accent" size="xs" className="cursor-pointer gap-1">
+                  <button type="button" onClick={onOpenNamedResults}>
+                    <Expand className="h-3 w-3" />
+                    {openNamedResultsLabel}
+                  </button>
                 </BadgeControl>
               ) : null}
             </div>
           </div>
 
           {visibleCandidates.length === 0 ? (
-            <div className="rounded-lg border border-dashed p-6 text-center">
-              <User className="text-muted-foreground mx-auto mb-2 h-8 w-8" />
-              <p className="text-muted-foreground">{t('features.events.agenda.noCandidates')}</p>
-            </div>
+            isInteractive && onOpenNamedResults ? (
+              <button
+                type="button"
+                onClick={onOpenNamedResults}
+                className="group focus-visible:ring-ring w-full rounded-lg border border-dashed border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] p-6 text-center text-[var(--badge-info-fg)] transition-[color,background-color,border-color,box-shadow] hover:border-[var(--badge-info-border)] hover:bg-[var(--badge-info-bg)] hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              >
+                <User className="mx-auto mb-2 h-8 w-8 text-current/70 transition-colors group-hover:text-current" />
+                <p className="font-medium">{noCandidatesLabel}</p>
+                <BadgeControl tone="accent" size="xs" className="mt-3 inline-flex gap-1">
+                  <Expand className="h-3 w-3" />
+                  {openNamedResultsLabel}
+                </BadgeControl>
+              </button>
+            ) : (
+              <div className="rounded-lg border border-dashed border-[var(--badge-neutral-border)] bg-[var(--badge-neutral-bg)] p-6 text-center text-[var(--badge-neutral-fg)]">
+                <User className="mx-auto mb-2 h-8 w-8 text-current/70" />
+                <p>{noCandidatesLabel}</p>
+              </div>
+            )
           ) : (
-            <div className="space-y-4">
-              <div className="bg-card/70 border-border/70 divide-border/70 overflow-hidden rounded-md border">
-                {visibleCandidates.map(candidate => {
-                  const stats = candidateStats.find(s => s.candidate.id === candidate.id);
-                  const isLeading = winningCandidateIds.includes(candidate.id);
-                  const isSelected = userSelectedCandidateIds.includes(candidate.id);
-                  const displayName = getCandidateDisplayName(candidate);
+            <div className="space-y-3">
+              {visibleCandidates.map(candidate => {
+                const stats = candidateStats.find(s => s.candidate.id === candidate.id);
+                const isLeading = winningCandidateIds.includes(candidate.id);
+                const isSelected = userSelectedCandidateIds.includes(candidate.id);
+                const displayName = getCandidateDisplayName(candidate);
+                const visibleCount = isIndicationPhase
+                  ? (stats?.indicativeCount ?? 0)
+                  : (stats?.finalCount ?? 0);
+                const visiblePercent = isIndicationPhase
+                  ? (stats?.indicativePercentage ?? 0)
+                  : (stats?.finalPercentage ?? 0);
+                const indicationCount = stats?.indicativeCount ?? 0;
+                const indicationPercent = stats?.indicativePercentage ?? 0;
 
-                  return (
-                    <div
-                      key={candidate.id}
-                      className={cn(
-                        'px-3 py-2.5 transition-colors',
-                        isSelected && 'bg-primary/5',
-                        isLeading &&
-                          isClosed &&
-                          featureThemeClassName('agendaAgendaElectionSectionWarningSurface')
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage
-                            src={candidate.user?.avatar ?? undefined}
-                            alt={displayName}
-                          />
-                          <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex min-w-0 flex-wrap items-center gap-2">
-                            <span className="font-medium">{displayName}</span>
-                            <BadgeControl
-                              variant={candidate.status === 'accepted' ? 'default' : 'secondary'}
-                              className="text-xs"
-                            >
-                              {candidate.status === 'accepted'
-                                ? t('features.events.agenda.candidateAccepted')
-                                : t('features.events.agenda.candidateNominated')}
+                return (
+                  <div
+                    key={candidate.id}
+                    className={cn(
+                      'bg-card space-y-2 rounded-lg border px-3 py-3 shadow-sm transition-[background-color,border-color,box-shadow]',
+                      isSelected && 'border-primary/30 bg-primary/5',
+                      isLeading &&
+                        isClosed &&
+                        featureThemeClassName('agendaAgendaElectionSectionWarningSurface')
+                    )}
+                    data-election-candidate-row="true"
+                    data-winner={isLeading && isClosed ? 'true' : undefined}
+                    data-selected={isSelected ? 'true' : undefined}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-11 w-11 rounded-md">
+                        <AvatarImage src={candidate.user?.avatar ?? undefined} alt={displayName} />
+                        <AvatarFallback className="rounded-md text-sm font-semibold">
+                          {displayName
+                            .split(' ')
+                            .map(part => part[0])
+                            .join('')
+                            .slice(0, 2)
+                            .toUpperCase() || '??'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <span className="truncate font-medium">{displayName}</span>
+                          <BadgeControl
+                            tone={candidate.status === 'accepted' ? 'success' : 'warning'}
+                            size="xs"
+                          >
+                            {candidate.status === 'accepted'
+                              ? t('features.events.agenda.candidateAccepted')
+                              : t('features.events.agenda.candidateNominated')}
+                          </BadgeControl>
+                          {isLeading && isClosed ? (
+                            <BadgeControl tone="warning" size="xs" className="gap-1">
+                              <Crown className="h-3.5 w-3.5" />
+                              {t('features.events.agenda.winner', 'Winner')}
                             </BadgeControl>
-                            {isLeading && isClosed ? (
-                              <Crown
-                                className={featureThemeClassName(
-                                  'agendaAgendaElectionSectionWarningIcon'
-                                )}
-                              />
-                            ) : null}
-                            {isSelected ? <CheckCircle2 className="text-primary h-4 w-4" /> : null}
-                          </div>
-                          {candidate.user?.email && displayName !== candidate.user.email ? (
-                            <span className="text-muted-foreground block truncate text-sm">
-                              {candidate.user.email}
-                            </span>
+                          ) : null}
+                          {isSelected ? (
+                            <BadgeControl variant="secondary" size="xs" className="gap-1">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              {t('features.events.agenda.selected', 'Selected')}
+                            </BadgeControl>
                           ) : null}
                         </div>
-                        {stats ? (
-                          <span className="text-muted-foreground text-xs tabular-nums">
-                            {isIndicationPhase ? stats.indicativeCount : stats.finalCount}
+                        {candidate.user?.email && displayName !== candidate.user.email ? (
+                          <span className="text-muted-foreground block truncate text-sm">
+                            {candidate.user.email}
                           </span>
                         ) : null}
                       </div>
+                      <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
+                        {formatCountPercent(visibleCount, visiblePercent)}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-              <VoteResultsDisplay
-                options={candidateOptions}
-                phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
-                totalFinal={totalFinal}
-                totalIndication={totalIndicative}
-                selectedOptionIds={userSelectedCandidateIds}
-                winnerOptionIds={winningCandidateIds}
-                showWinner={isClosed}
-              />
+                    <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
+                      <div
+                        className={cn(
+                          'h-full rounded-full',
+                          isLeading && isClosed ? 'bg-brand' : 'bg-brand/70'
+                        )}
+                        style={{ width: `${Math.max(0, Math.min(100, visiblePercent))}%` }}
+                      />
+                    </div>
+                    {canToggleIndicationResults && showIndicationResults ? (
+                      <div className="grid grid-cols-[2.25rem_1fr_auto] items-center gap-2">
+                        <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
+                          {t('features.events.agenda.indicationShort')}
+                        </span>
+                        <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
+                          <div
+                            className="bg-brand/35 h-full rounded-full"
+                            style={{ width: `${normalizePercent(indicationPercent)}%` }}
+                          />
+                        </div>
+                        <span className="text-muted-foreground text-xs tabular-nums">
+                          {formatCountPercent(indicationCount, indicationPercent)}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           )}
+
+          {assignmentSuccessMessage ? (
+            <div className="flex items-start gap-2 rounded-md border border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] px-3 py-2 text-sm text-[var(--badge-success-fg)]">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{assignmentSuccessMessage}</span>
+            </div>
+          ) : null}
 
           {userHasVoted ? (
             <div className="flex items-center justify-center gap-2 text-sm">
@@ -421,7 +517,7 @@ export function AgendaElectionSection({
               </span>
             </div>
           ) : null}
-        </ResultsWrapper>
+        </div>
 
         {/* Become Candidate Button */}
         {!isClosed && !isUserCandidate && onBecomeCandidate && (

@@ -96,6 +96,18 @@ export const homePageTranslations = {
           'Teilnehmende mit einer chronologischen Timeline über Änderungen und nächste Schritte orientieren.',
         ],
       },
+      votesElections: {
+        eyebrow: 'Abstimmungen und Wahlen',
+        title:
+          'Führe Abstimmungen, Kandidaturen und Ergebnisse in einem gemeinsamen Entscheidungsraum.',
+        description:
+          'Polity bündelt laufende Abstimmungen und Wahlen mit Fristen, Stimmstatus, Wahlmodi und Ergebnisübersicht, damit Mitglieder wissen, wann sie handeln müssen und was beschlossen wurde.',
+        points: [
+          'Abstimmungen mit klaren Fristen, Quoren und Stimmoptionen sichtbar machen.',
+          'Kandidaturen, Rollen und Wahlgänge neben dem passenden Gruppen- oder Event-Kontext führen.',
+          'Ergebnisse mit Beteiligung, Mehrheiten und Nachvollziehbarkeit direkt nach der Entscheidung bereitstellen.',
+        ],
+      },
       social: {
         eyebrow: 'Sozialer Arbeitsraum und KI',
         title: 'Diskussion, Koordination und unterstütztes Schreiben in denselben Flow holen.',
@@ -143,6 +155,28 @@ export const homePageTranslations = {
           meta: '74% Zustimmung',
         },
       },
+    },
+    voteElectionPreview: {
+      title: 'Entscheidungsübersicht',
+      subtitle: 'Laufende Abstimmungen und Wahlen mit Status.',
+      badge: 'Live',
+      voteTitle: 'Klima-Budget final beschließen',
+      voteMeta: 'Schließt heute um 18:00',
+      voteChoices: ['Ja|138|62', 'Nein|54|24', 'Enthaltung|31|14'],
+      electionTitle: 'Sprecherwahl Ausschuss',
+      electionMeta: '3 Kandidaturen bestätigt',
+      electionCandidates: [
+        'Maya Schneider|Sprecherin|84|44',
+        'Jonas Weber|Stellvertretung|61|32',
+        'Aylin Kaya|Beisitz|45|24',
+      ],
+      statusTitle: 'Entscheidungsstatus',
+      metrics: ['223 Stimmen erfasst', '71% Beteiligung', 'Quorum erreicht'],
+      checklist: [
+        'Stimmfenster offen',
+        'Namentliche Ergebnisse vorbereitet',
+        'Wahlprotokoll wird automatisch erstellt',
+      ],
     },
     amendmentText: {
       title: 'Beispiel-Antragstext',

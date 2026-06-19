@@ -13,7 +13,9 @@ interface DateTimeRangeInputProps {
   onChange: (field: 'startDate' | 'startTime' | 'endDate' | 'endTime', value: string) => void;
   showEnd?: boolean;
   minDate?: string;
+  minTime?: string;
   maxDate?: string;
+  maxTime?: string;
 }
 
 export function DateTimeRangeInput({
@@ -24,7 +26,9 @@ export function DateTimeRangeInput({
   onChange,
   showEnd = true,
   minDate = '',
+  minTime = '',
   maxDate = '',
+  maxTime = '',
 }: DateTimeRangeInputProps) {
   const { t } = useTranslation();
   const selectedStartDate = parseLocalDateInput(startDate);
@@ -41,6 +45,12 @@ export function DateTimeRangeInput({
     }
     return false;
   };
+  const getTimeBoundaryProps = (dateValue: string) => ({
+    min: minTime && dateValue === minDate ? minTime : undefined,
+    max: maxTime && dateValue === maxDate ? maxTime : undefined,
+  });
+  const startTimeBoundaryProps = getTimeBoundaryProps(startDate);
+  const endTimeBoundaryProps = getTimeBoundaryProps(endDate);
 
   return (
     <div className="space-y-5">
@@ -78,6 +88,8 @@ export function DateTimeRangeInput({
             type="time"
             value={startTime}
             onValueChange={value => onChange('startTime', value)}
+            min={startTimeBoundaryProps.min}
+            max={startTimeBoundaryProps.max}
           />
         </div>
         {showEnd ? (
@@ -113,6 +125,8 @@ export function DateTimeRangeInput({
               type="time"
               value={endTime}
               onValueChange={value => onChange('endTime', value)}
+              min={endTimeBoundaryProps.min}
+              max={endTimeBoundaryProps.max}
             />
           </div>
         ) : null}

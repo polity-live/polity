@@ -10,7 +10,7 @@ export interface VideoTimelineCardProps {
     likes?: number;
     authorName?: string;
     authorAvatar?: string;
-    sourceType?: 'amendment' | 'user' | 'group' | 'event' | 'blog';
+    sourceType?: 'amendment' | 'user' | 'group' | 'event' | 'blog' | 'statement';
     sourceName?: string;
     sourceId?: string;
     videoUrl?: string;
@@ -20,13 +20,14 @@ export interface VideoTimelineCardProps {
   onPlay?: () => void;
   onLike?: () => void;
   onShare?: () => void;
+  href?: string;
   className?: string;
 }
 import { useVideoTimelineCardController } from './useVideoTimelineCardController';
 import { VideoTimelineCardView } from './VideoTimelineCardView';
 
-export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCardProps) {
-  const viewProps = useVideoTimelineCardController({ video, onPlay, className });
+export function VideoTimelineCard({ video, onPlay, href, className }: VideoTimelineCardProps) {
+  const viewProps = useVideoTimelineCardController({ video, onPlay, href, className });
 
   return <VideoTimelineCardView {...viewProps} />;
 }

@@ -78,7 +78,11 @@ export function VoteResultSentence({
 
     return (
       <div
-        className={cn(featureThemeClassName('votecastVoteResultSentenceWarningPanel'), className)}
+        className={cn(
+          'rounded-lg border px-4 py-3 shadow-sm',
+          featureThemeClassName('votecastVoteResultSentenceWarningPanel'),
+          className
+        )}
       >
         <Crown className={featureThemeClassName('votecastVoteResultSentenceWarningIcon')} />
         <p>
@@ -118,7 +122,7 @@ export function VoteResultSentence({
   return (
     <div
       className={cn(
-        'rounded-lg px-4 py-3 text-sm',
+        'rounded-lg border px-4 py-3 text-sm shadow-sm',
         isSuccess
           ? featureThemeClassName('votecastVoteResultSentenceSuccessBackground')
           : result === 'rejected'

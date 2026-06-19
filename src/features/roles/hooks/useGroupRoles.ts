@@ -97,52 +97,13 @@ export function useGroupRoles(groupId: string) {
         sort_order: roles.length,
       });
 
-      // If createElection is true, create election + agenda item
       if (createElection) {
-        const electionId = crypto.randomUUID();
-        const agendaItemId = crypto.randomUUID();
-
-        await createElectionAction({
-          id: electionId,
-          title: translateText('generated.inline.0477_election_for_roletitle_d3112083', {
-            roleTitle: roleTitle,
-          }),
-          description: translateText('generated.inline.0478_vote_for_the_roletitle_role_94eaf56d', {
-            roleTitle: roleTitle,
-          }),
-          majority_type: 'simple',
-          status: 'pending',
-          visibility: 'public',
-          max_votes: 1,
-          role_id: roleId,
-          agenda_item_id: agendaItemId,
-          closing_type: null,
-          closing_duration_seconds: null,
-          closing_end_time: null,
-        });
-
-        await createAgendaItemAction({
-          id: agendaItemId,
-          title: translateText('generated.inline.0479_election_roletitle_1a9feb2f', {
-            roleTitle: roleTitle,
-          }),
-          description: '',
-          type: 'election',
-          status: 'pending',
-          forwarding_status: '',
-          order_index: 0,
-          duration: 0,
-          scheduled_time: '',
-          start_time: 0,
-          end_time: 0,
-          activated_at: 0,
-          completed_at: 0,
-          event_id: null,
-          amendment_id: null,
-          majority_type: null,
-          time_limit: null,
-          voting_phase: null,
-        });
+        toast.info(
+          translateText(
+            'generated.inline.0143_group_role_election_created_as_assignment_4c3da2db',
+            'Fuer diese gewaehlte Rolle wurde ein Auftrag vorbereitet. Waehle dort ein Event aus, um die Wahl zu starten.'
+          )
+        );
       }
 
       return { success: true, roleId };
@@ -322,8 +283,41 @@ export function useGroupRoles(groupId: string) {
         return { success: false };
       }
 
+      if (!eventId) {
+        toast.info(
+          translateText(
+            'generated.inline.0142_select_event_before_group_role_election_7a82c4e8',
+            'Bitte waehle zuerst ein Event fuer diese Rollenwahl aus.'
+          )
+        );
+        return { success: false, reason: 'event_required' };
+      }
+
       const electionId = crypto.randomUUID();
       const agendaItemId = crypto.randomUUID();
+
+      await createAgendaItemAction({
+        id: agendaItemId,
+        title: translateText('generated.inline.0482_election_title_7bdbc8e7', {
+          title: role.title,
+        }),
+        description: '',
+        type: 'election',
+        status: 'pending',
+        forwarding_status: '',
+        order_index: 0,
+        duration: 0,
+        scheduled_time: '',
+        start_time: 0,
+        end_time: 0,
+        activated_at: 0,
+        completed_at: 0,
+        event_id: eventId,
+        amendment_id: null,
+        majority_type: null,
+        time_limit: null,
+        voting_phase: null,
+      });
 
       await createElectionAction({
         id: electionId,
@@ -342,29 +336,6 @@ export function useGroupRoles(groupId: string) {
         closing_type: null,
         closing_duration_seconds: null,
         closing_end_time: null,
-      });
-
-      await createAgendaItemAction({
-        id: agendaItemId,
-        title: translateText('generated.inline.0482_election_title_7bdbc8e7', {
-          title: role.title,
-        }),
-        description: '',
-        type: 'election',
-        status: 'pending',
-        forwarding_status: '',
-        order_index: 0,
-        duration: 0,
-        scheduled_time: '',
-        start_time: 0,
-        end_time: 0,
-        activated_at: 0,
-        completed_at: 0,
-        event_id: eventId || null,
-        amendment_id: null,
-        majority_type: null,
-        time_limit: null,
-        voting_phase: null,
       });
 
       toast.success(translateText('generated.inline.1032_election_created_successfully_72d95954'));

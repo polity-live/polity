@@ -811,6 +811,21 @@ export const amendmentQueries = {
         .where('user_id', userID)
         .related('amendment', q => q.related('created_by'))
   ),
+
+  currentUserActiveCollaborationsWithAmendments: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    zql.amendment_collaborator
+      .where('user_id', userID)
+      .where('status', 'IN', WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+      .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
+      .related('amendment', q =>
+        q
+          .related('created_by')
+          .related('group')
+          .related('event')
+          .related('amendment_hashtags', hq => hq.related('hashtag'))
+      )
+      .related('role', q => q.related('action_rights'))
+  ),
 };
 
 // ── Query Row Types ─────────────────────────────────────────────────

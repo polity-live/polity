@@ -13,6 +13,7 @@ export interface TodoTimelineCardProps {
   canManageTodos?: boolean;
   showStatusAction?: boolean;
   linkToDetail?: boolean;
+  href?: string;
   onCardClick?: () => void;
 }
 
@@ -23,6 +24,7 @@ export function TodoTimelineCard({
   canManageTodos = true,
   showStatusAction = true,
   linkToDetail = true,
+  href,
   onCardClick,
 }: TodoTimelineCardProps) {
   const controller = useTodoTimelineCardController({ todo, linkToDetail });
@@ -33,7 +35,7 @@ export function TodoTimelineCard({
       className={className}
       canManageTodos={canManageTodos}
       showStatusAction={showStatusAction}
-      detailHref={controller.detailHref}
+      detailHref={href ?? controller.detailHref}
       onCardClick={onCardClick}
       onToggle={onToggle}
       urgency={controller.urgency}

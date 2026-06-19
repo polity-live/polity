@@ -23,7 +23,11 @@ import { useRoleManagement } from '@/features/groups/hooks/useRoleManagement';
 import { useGroupRoles } from '@/features/roles/hooks/useGroupRoles';
 import { useAuth } from '@/providers/auth-provider';
 import { emptyRoleEditorForm, roleToEditorForm } from '@/features/groups/logic/roleFormHelpers';
-import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
+import {
+  augmentMembershipsWithCurrentRoleHolders,
+  getMembershipAssignedRoles,
+  getMembershipDisplayRoles,
+} from '@/features/groups/logic/buildMembershipRightsSummary';
 import { resolveChildBaseGroups } from '@/features/groups/logic/hierarchy';
 import { buildMembershipRightsAlignmentRowsFromRelationships } from '@/features/groups/logic/membershipRightsAlignment';
 import { resolveOfflineRosterProvenance } from '@/features/groups/logic/offlineRosterProvenance';
@@ -161,11 +165,13 @@ export function GroupMembershipsContentContainer({
   canManageMembers,
   canManageAssignments,
   defaultTab,
+  focusAssignmentId,
 }: {
   groupId: string;
   canManageMembers: boolean;
   canManageAssignments: boolean;
   defaultTab?: MembershipTab;
+  focusAssignmentId?: string;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -217,6 +223,7 @@ export function GroupMembershipsContentContainer({
 
   const { activeMemberships, invitedMemberships, requestedMemberships } =
     useGroupMemberships(groupId);
+  const groupRoleHook = useGroupRoles(groupId);
   const compositionGroupIds = useMemo(() => {
     if (!compositionGroup) {
       return [groupId];
@@ -276,9 +283,17 @@ export function GroupMembershipsContentContainer({
 
     return [...expandedGroupIds];
   }, [compositionGroup, group, groupId, hierarchyRelationships]);
+  const activeMembershipsWithElectedRoles = useMemo(
+    () =>
+      augmentMembershipsWithCurrentRoleHolders(
+        activeMemberships as GroupMembershipWithUser[],
+        groupRoleHook.roles
+      ),
+    [activeMemberships, groupRoleHook.roles]
+  );
   const effectiveActiveMemberships = useMemo(
-    () => activeMemberships as GroupMembershipWithUser[],
-    [activeMemberships]
+    () => activeMembershipsWithElectedRoles as GroupMembershipWithUser[],
+    [activeMembershipsWithElectedRoles]
   );
   const { activeGuestAccesses, requestedGuestAccesses, invitedGuestAccesses } =
     useGroupGuestAccesses(groupId);
@@ -321,7 +336,7 @@ export function GroupMembershipsContentContainer({
 
   const existingMemberIds = Array.from(
     new Set(
-      [...activeMemberships, ...requestedMemberships, ...invitedMemberships]
+      [...activeMembershipsWithElectedRoles, ...requestedMemberships, ...invitedMemberships]
         .map(membership => membership.user?.id)
         .filter((id): id is string => Boolean(id))
     )
@@ -504,7 +519,7 @@ export function GroupMembershipsContentContainer({
       return;
     }
 
-    const nextRoleIds = getMembershipDisplayRoles(membership)
+    const nextRoleIds = getMembershipAssignedRoles(membership)
       .filter(role => role.id !== roleId)
       .map(role => role.id);
 
@@ -531,8 +546,6 @@ export function GroupMembershipsContentContainer({
       groupName
     );
   };
-
-  const groupRoleHook = useGroupRoles(groupId);
 
   const [offlineMembersData, offlineMembersResult] = useQuery(
     compositionGroupIds.length > 0
@@ -905,6 +918,7 @@ export function GroupMembershipsContentContainer({
       newRoleForm={newRoleForm}
       offlineMembershipsById={offlineMembershipsById}
       openAssignments={openAssignments}
+      focusAssignmentId={focusAssignmentId}
       pendingInvitations={pendingInvitations}
       pendingRequests={pendingRequests}
       rejectMembership={rejectMembership}

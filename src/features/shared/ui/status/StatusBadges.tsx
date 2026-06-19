@@ -448,6 +448,41 @@ const badgeControlToneClasses: Record<BadgeControlTone, string> = {
   gradientInfo: getBadgeToneClasses('info'),
 };
 
+const badgeControlToneHoverClasses: Record<BadgeControlTone, string> = {
+  neutral: 'hover:bg-[var(--badge-neutral-bg)] hover:text-[var(--badge-neutral-fg)]',
+  info: 'hover:bg-[var(--badge-info-bg)] hover:text-[var(--badge-info-fg)]',
+  success: 'hover:bg-[var(--badge-success-bg)] hover:text-[var(--badge-success-fg)]',
+  warning: 'hover:bg-[var(--badge-warning-bg)] hover:text-[var(--badge-warning-fg)]',
+  danger: 'hover:bg-[var(--badge-danger-bg)] hover:text-[var(--badge-danger-fg)]',
+  destructive: 'hover:bg-[var(--badge-danger-bg)] hover:text-[var(--badge-danger-fg)]',
+  accent: 'hover:bg-[var(--badge-accent-bg)] hover:text-[var(--badge-accent-fg)]',
+  outline: 'hover:bg-accent/60 hover:text-accent-foreground',
+  user: 'hover:bg-[var(--entity-user-bg)] hover:text-[var(--entity-user-fg)]',
+  group: 'hover:bg-[var(--entity-group-bg)] hover:text-[var(--entity-group-fg)]',
+  event: 'hover:bg-[var(--entity-event-bg)] hover:text-[var(--entity-event-fg)]',
+  amendment: 'hover:bg-[var(--entity-amendment-bg)] hover:text-[var(--entity-amendment-fg)]',
+  blog: 'hover:bg-[var(--entity-blog-bg)] hover:text-[var(--entity-blog-fg)]',
+  agenda_item: 'hover:bg-[var(--badge-info-bg)] hover:text-[var(--badge-info-fg)]',
+  vote: 'hover:bg-[var(--badge-danger-bg)] hover:text-[var(--badge-danger-fg)]',
+  election: 'hover:bg-[var(--badge-accent-bg)] hover:text-[var(--badge-accent-fg)]',
+  todo: 'hover:bg-[var(--badge-success-bg)] hover:text-[var(--badge-success-fg)]',
+  role: 'hover:bg-[var(--badge-neutral-bg)] hover:text-[var(--badge-neutral-fg)]',
+  primary: 'hover:bg-primary/90 hover:text-primary-foreground',
+  infoStrong: 'hover:bg-[var(--badge-info-bg)] hover:text-[var(--badge-info-fg)]',
+  successStrong: 'hover:bg-success hover:text-success-foreground',
+  successSoft: 'hover:bg-[var(--badge-success-bg)] hover:text-[var(--badge-success-fg)]',
+  successTint: 'hover:bg-[var(--badge-success-bg)] hover:text-[var(--badge-success-fg)]',
+  mutedContrast: 'hover:bg-muted/50 hover:text-foreground hover:opacity-100',
+  successPale: 'hover:bg-[var(--badge-success-bg)] hover:text-[var(--badge-success-fg)]',
+  dangerPale: 'hover:bg-[var(--badge-danger-bg)] hover:text-[var(--badge-danger-fg)]',
+  warningPale: 'hover:bg-[var(--badge-warning-bg)] hover:text-[var(--badge-warning-fg)]',
+  skyTint: 'hover:bg-[var(--badge-info-bg)] hover:text-[var(--badge-info-fg)]',
+  emeraldTint: 'hover:bg-[var(--badge-success-bg)] hover:text-[var(--badge-success-fg)]',
+  gradientSuccess: 'hover:bg-[var(--badge-success-bg)] hover:text-[var(--badge-success-fg)]',
+  gradientNeutral: 'hover:bg-[var(--badge-neutral-bg)] hover:text-[var(--badge-neutral-fg)]',
+  gradientInfo: 'hover:bg-[var(--badge-info-bg)] hover:text-[var(--badge-info-fg)]',
+};
+
 interface BadgeControlProps extends ComponentProps<typeof Badge> {
   tone?: BadgeControlTone;
   size?: 'default' | 'tiny' | 'xs' | 'sm' | 'md' | 'dot';
@@ -474,6 +509,7 @@ export function BadgeControl({
       data-slot="badge-control"
       className={cn(
         tone && badgeControlToneClasses[tone],
+        tone && badgeControlToneHoverClasses[tone],
         size === 'tiny' && 'text-[10px]',
         size === 'xs' && 'text-xs',
         size === 'sm' && 'text-sm',

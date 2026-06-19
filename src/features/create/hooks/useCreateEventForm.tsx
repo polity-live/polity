@@ -662,7 +662,9 @@ export function useCreateEventForm(): CreateFormConfig {
                 schedulingWindowMessage: processSchedulingWindowMessage,
                 validationMessage: combinedTimeSeriesValidationMessage,
                 minDate: searchParams.minStartDate,
+                minTime: searchParams.minStartTime,
                 maxDate: searchParams.maxStartDate,
+                maxTime: searchParams.maxStartTime,
                 deadlines: [
                   ...(eventType === 'delegate_assembly'
                     ? [

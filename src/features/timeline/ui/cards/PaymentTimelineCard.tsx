@@ -26,6 +26,7 @@ export interface PaymentTimelineCardProps {
     groupName?: string | null;
     counterpartyLabel?: string | null;
   };
+  href?: string;
   className?: string;
 }
 
@@ -65,13 +66,13 @@ function formatPaymentType(value?: string | null): string | null {
   return normalized.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 }
 
-export function PaymentTimelineCard({ payment, className }: PaymentTimelineCardProps) {
+export function PaymentTimelineCard({ payment, href, className }: PaymentTimelineCardProps) {
   const { t } = useTranslation();
   const amountLabel = formatPaymentAmount(payment.amount);
   const createdAtLabel = formatPaymentDate(payment.createdAt);
   const paymentTypeLabel = formatPaymentType(payment.type);
   const description = normalizeTimelineText(payment.description);
-  const paymentHref = payment.groupId ? `/group/${payment.groupId}` : undefined;
+  const paymentHref = href ?? (payment.groupId ? `/group/${payment.groupId}` : undefined);
   const isIncome = payment.direction === 'income';
   const isExpense = payment.direction === 'expense';
 

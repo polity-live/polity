@@ -18,6 +18,7 @@ export interface OfflineRosterRow {
   id: string;
   kind: 'active' | 'offline';
   effectiveMembershipId?: string | null;
+  attendanceParticipantId?: string | null;
   user?: ParticipationUserLike | null;
   firstName: string;
   lastName: string;

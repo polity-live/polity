@@ -11,7 +11,7 @@ import { cn } from '@/features/shared/utils/utils';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { AgendaCountdownPill, AgendaStatusBadge, AgendaTypeBadge } from './AgendaBadges';
 import type { AgendaItemStatus } from './AgendaCard';
-import { AgendaElectionSection } from './AgendaElectionSection';
+import { AgendaElectionSection, isAutoAssignedRoleElection } from './AgendaElectionSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
 import { getAgendaDisplayType, getYouTubeVideoId } from '../logic/agendaUiHelpers';
 import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
@@ -64,11 +64,13 @@ interface EventLiveFocusDialogProps {
   hasUserVoted?: boolean;
   voteLoading?: boolean;
   disableVoteButton?: boolean;
+  disabledVoteTooltip?: string | null;
   onVoteClick?: () => void;
   attendanceMode?: 'online' | 'hybrid' | 'offline' | null;
   confirmedOfflineParticipantCount?: number;
   streamElection?: any;
   streamVote?: any;
+  streamDelegateTargetEvent?: any;
   indicativeSelections: readonly any[];
   finalSelections: readonly any[];
   userHasElectionVoted: boolean;
@@ -331,11 +333,13 @@ export function EventLiveFocusDialog({
   hasUserVoted,
   voteLoading,
   disableVoteButton,
+  disabledVoteTooltip,
   onVoteClick,
   attendanceMode,
   confirmedOfflineParticipantCount = 0,
   streamElection,
   streamVote,
+  streamDelegateTargetEvent,
   indicativeSelections,
   finalSelections,
   userHasElectionVoted,
@@ -364,10 +368,11 @@ export function EventLiveFocusDialog({
         'features.events.agenda.actions.voteRequiresActiveVotingRight',
         'Active Voting Rights are required to vote in this event.'
       )
-    : t(
+    : (disabledVoteTooltip ??
+      t(
         'generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792',
         'Offline votes are entered via tallies.'
-      );
+      ));
   const videoId = isEventStarted && streamUrl ? getYouTubeVideoId(streamUrl) : null;
   const visualStatus = getAgendaVisualStatus(streamRuntimeStatus, streamIsLive);
   const activeSpeakersCount = speakerList.filter(speaker => !speaker.completed).length;
@@ -497,6 +502,16 @@ export function EventLiveFocusDialog({
                       finalSelections={finalSelections}
                       offlineTallies={streamElection.offline_tallies ?? []}
                       attendanceMode={attendanceMode}
+                      delegateTargetEventId={
+                        streamDelegateTargetEvent?.id ??
+                        (
+                          streamElection as {
+                            delegate_assignment_meta?: { targetEventId?: string } | null;
+                          }
+                        ).delegate_assignment_meta?.targetEventId
+                      }
+                      delegateTargetEventTitle={streamDelegateTargetEvent?.title ?? null}
+                      showRoleAssignedMessage={isAutoAssignedRoleElection(streamElection)}
                       userHasVoted={userHasElectionVoted}
                       userSelectedCandidateIds={userSelectedCandidateIds}
                       electionStatus={streamElection.status}

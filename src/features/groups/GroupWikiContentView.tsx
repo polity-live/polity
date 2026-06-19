@@ -74,6 +74,79 @@ export interface GroupWikiContentViewProps {
   parliamentSourceGroups: any[];
 }
 
+interface GroupRoleHolderHistoryLike {
+  user_id?: string | null;
+  end_date?: number | null;
+}
+
+function dedupeWikiParticipationRoles(roles: readonly WikiParticipationRole[]) {
+  const roleById = new Map<string, WikiParticipationRole>();
+
+  for (const role of roles) {
+    if (!roleById.has(role.id)) {
+      roleById.set(role.id, role);
+    }
+  }
+
+  return [...roleById.values()].sort((left, right) =>
+    left.name.localeCompare(right.name, undefined, { sensitivity: 'base' })
+  );
+}
+
+function getCurrentElectedWikiRolesByUserId(rawRoles: readonly any[]) {
+  const rolesByUserId = new Map<string, WikiParticipationRole[]>();
+
+  for (const rawRole of rawRoles) {
+    if (rawRole?.assignment_mode !== 'elected' || rawRole?.scope !== 'group') {
+      continue;
+    }
+
+    const role = normalizeWikiParticipationRole(rawRole);
+    if (!role) {
+      continue;
+    }
+
+    const holderHistory: readonly GroupRoleHolderHistoryLike[] =
+      rawRole.holder_history ?? rawRole.holders ?? [];
+    for (const holder of holderHistory) {
+      if (!holder.user_id || holder.end_date != null) {
+        continue;
+      }
+
+      const userRoles = rolesByUserId.get(holder.user_id) ?? [];
+      userRoles.push(role);
+      rolesByUserId.set(holder.user_id, userRoles);
+    }
+  }
+
+  return new Map(
+    [...rolesByUserId.entries()].map(([userId, roles]) => [
+      userId,
+      dedupeWikiParticipationRoles(roles),
+    ])
+  );
+}
+
+function getMembershipWikiRoles(
+  membership: any,
+  electedRolesByUserId: ReadonlyMap<string, readonly WikiParticipationRole[]>
+) {
+  const directRoleSources = [
+    ...(membership.roles?.length ? membership.roles : []),
+    ...(membership.role ? [membership.role] : []),
+    ...((membership.membership_roles ?? [])
+      .map((membershipRole: any) => membershipRole?.role)
+      .filter(Boolean) as any[]),
+  ];
+  const directRoles = directRoleSources
+    .map((role: any) => normalizeWikiParticipationRole(role))
+    .filter((role: WikiParticipationRole | null): role is WikiParticipationRole => Boolean(role));
+  const userId = membership.user?.id ?? membership.user_id;
+  const electedRoles = userId ? (electedRolesByUserId.get(userId) ?? []) : [];
+
+  return dedupeWikiParticipationRoles([...directRoles, ...electedRoles]);
+}
+
 export function GroupWikiContentView({
   groupId,
   group,
@@ -116,20 +189,16 @@ export function GroupWikiContentView({
     return text || undefined;
   };
 
-  const memberRoles: WikiParticipationRole[] = (group.roles ?? [])
+  const rawGroupRoles = group.roles ?? [];
+  const memberRoles: WikiParticipationRole[] = rawGroupRoles
     .map((role: any) => normalizeWikiParticipationRole(role))
     .filter((role: WikiParticipationRole | null): role is WikiParticipationRole => Boolean(role));
+  const electedRolesByUserId = getCurrentElectedWikiRolesByUserId(rawGroupRoles);
   const memberDirectoryItems: WikiParticipationItem[] = (group.memberships ?? [])
     .filter((membership: any) => isVisibleWikiParticipationStatus(membership.status))
     .filter((membership: any) => membership.user?.id)
     .map((membership: any) => {
-      const roles = (
-        membership.roles?.length ? membership.roles : membership.role ? [membership.role] : []
-      )
-        .map((role: any) => normalizeWikiParticipationRole(role))
-        .filter((role: WikiParticipationRole | null): role is WikiParticipationRole =>
-          Boolean(role)
-        );
+      const roles = getMembershipWikiRoles(membership, electedRolesByUserId);
 
       return {
         id: membership.id ?? `member-${membership.user.id}`,
@@ -142,6 +211,10 @@ export function GroupWikiContentView({
         roles,
       };
     });
+  const directoryRoles = dedupeWikiParticipationRoles([
+    ...memberRoles,
+    ...memberDirectoryItems.flatMap(item => item.roles ?? []),
+  ]);
 
   return (
     <div>
@@ -308,7 +381,7 @@ export function GroupWikiContentView({
             'Active members visible in this group.'
           )}
           items={memberDirectoryItems}
-          roles={memberRoles}
+          roles={directoryRoles}
           entityType="group"
           searchPlaceholder={translateText('features.groups.wiki.membersSearch', 'Search members')}
           emptyLabel={translateText('features.groups.wiki.noMembers', 'No active members yet.')}

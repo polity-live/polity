@@ -3,12 +3,14 @@
 import { PageWrapper } from '@/layout/page-wrapper';
 import { AuthGuard } from '@/features/auth/AuthGuard.tsx';
 import { CalendarPageView as CalendarPageContentView } from './ui/CalendarPageView';
+import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
 
 export interface CalendarPageShellViewProps {
   cp: any;
+  swipeHandlers: SwipeNavigationHandlers;
 }
 
-export function CalendarPageShellView({ cp }: CalendarPageShellViewProps) {
+export function CalendarPageShellView({ cp, swipeHandlers }: CalendarPageShellViewProps) {
   return (
     <AuthGuard requireAuth={true}>
       <PageWrapper>
@@ -37,6 +39,7 @@ export function CalendarPageShellView({ cp }: CalendarPageShellViewProps) {
           filteredEvents={cp.filteredEvents}
           onEventSelect={cp.onEventSelect}
           onCreateEventRange={cp.onCreateEventRange}
+          swipeHandlers={swipeHandlers}
         />
       </PageWrapper>
     </AuthGuard>

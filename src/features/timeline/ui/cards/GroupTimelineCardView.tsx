@@ -46,6 +46,7 @@ export interface GroupTimelineCardProps {
   isMembershipLoading?: boolean;
   /** Loading state for subscription action */
   isSubscriptionLoading?: boolean;
+  href?: string;
   className?: string;
 }
 export interface GroupTimelineCardViewProps {
@@ -57,6 +58,7 @@ export interface GroupTimelineCardViewProps {
   onToggleSubscription: any;
   isMembershipLoading: any;
   isSubscriptionLoading: any;
+  href: any;
   className: any;
   t: any;
   membershipOpen: any;
@@ -87,6 +89,7 @@ export function GroupTimelineCardView({
   onToggleSubscription,
   isMembershipLoading,
   isSubscriptionLoading,
+  href,
   className,
   t,
   membershipOpen,
@@ -106,13 +109,14 @@ export function GroupTimelineCardView({
 }: GroupTimelineCardViewProps) {
   const groupTone = getEntityToneClasses('group');
   const hashtagTone = getHashtagToneClasses();
+  const groupHref = href ?? `/group/${group.id}`;
 
   return (
-    <TimelineCardBase contentType="group" className={className} href={`/group/${group.id}`}>
+    <TimelineCardBase contentType="group" className={className} href={groupHref}>
       <TimelineCardHeader
         contentType="group"
         title={group.name}
-        href={`/group/${group.id}`}
+        href={groupHref}
         badge={<TimelineCardBadge label={t('features.timeline.contentTypes.group')} icon={Users} />}
       />
 
@@ -272,7 +276,7 @@ export function GroupTimelineCardView({
         {/* Share Button */}
         <div onClick={e => e.stopPropagation()}>
           <ShareButton
-            url={`/group/${group.id}`}
+            url={groupHref}
             title={group.name}
             description={groupDescription || ''}
             variant="outline"

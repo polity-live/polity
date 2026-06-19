@@ -31,6 +31,9 @@ import { useNotificationDispatch } from '@/features/notifications/hooks/useNotif
 import { useBrowserNotifications } from '@/features/notifications/hooks/useBrowserNotifications.ts';
 import { useToastSettingsSync } from '@/features/notifications/hooks/useToastSettingsSync.ts';
 import { MotionPage } from '@/features/shared/motion';
+import { useGlobalZeroPreloads } from '@/zero/preloads';
+import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation.ts';
+import { isItemActive } from '@/features/navigation/nav-items/nav-helpers.ts';
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -150,11 +153,48 @@ function isUncontainedAuthenticatedPage(pathname: string): boolean {
   return UNCONTAINED_AUTHENTICATED_PAGE_PATTERNS.some(pattern => pattern.test(pathname));
 }
 
+function isEntitySecondarySwipeRoute(pathname: string): boolean {
+  return /^\/(?:group|user|amendment|event|blog)\/[^/]+/.test(pathname);
+}
+
+function findActiveNavigationItemIndex(
+  navigationItems: NavigationItem[],
+  currentRoute: string,
+  isPrimary: boolean
+): number {
+  const activeIndex = navigationItems.findIndex(item =>
+    isItemActive(item, currentRoute, isPrimary)
+  );
+
+  if (activeIndex !== -1) {
+    return activeIndex;
+  }
+
+  let bestIndex = -1;
+  let bestLength = -1;
+
+  navigationItems.forEach((item, index) => {
+    if (!item.href) {
+      return;
+    }
+
+    const isNestedMatch = currentRoute === item.href || currentRoute.startsWith(`${item.href}/`);
+    if (isNestedMatch && item.href.length > bestLength) {
+      bestIndex = index;
+      bestLength = item.href.length;
+    }
+  });
+
+  return bestIndex;
+}
+
 function AuthenticatedShell({ children }: { children: ReactNode }) {
   usePreferenceSync();
   useNotificationDispatch();
   useBrowserNotifications();
   useToastSettingsSync();
+  useGlobalZeroPreloads();
+  const navigate = useNavigate();
   const { screenType, isMobileScreen } = useScreenStore();
   const { navigationType, navigationView } = useNavigationStore();
   const { primaryNavItems, secondaryNavItems } = useNavigation();
@@ -172,6 +212,35 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
     isSecondaryNavVisible,
   });
   const mainStyle = getMainStyleWithShellOffsets(shellOffsets);
+  const secondaryItems = secondaryNavItems ?? [];
+  const activeSecondaryIndex = findActiveNavigationItemIndex(secondaryItems, pathname, false);
+  const isSecondarySwipeEnabled =
+    isSecondaryNavVisible &&
+    isEntitySecondarySwipeRoute(pathname) &&
+    secondaryItems.length > 1 &&
+    activeSecondaryIndex !== -1;
+  const goToSecondaryItem = (offset: number) => {
+    const target = secondaryItems[activeSecondaryIndex + offset];
+    if (!target) {
+      return;
+    }
+
+    if (target.onClick) {
+      target.onClick();
+      return;
+    }
+
+    if (target.href) {
+      navigate({ to: target.href } as never);
+    }
+  };
+  const { handlers: secondarySwipeHandlers } = useSwipeNavigation({
+    enabled: isSecondarySwipeEnabled,
+    canSwipePrev: activeSecondaryIndex > 0,
+    canSwipeNext: activeSecondaryIndex >= 0 && activeSecondaryIndex < secondaryItems.length - 1,
+    onSwipePrev: () => goToSecondaryItem(-1),
+    onSwipeNext: () => goToSecondaryItem(1),
+  });
 
   if (isFullscreenOnboarding) {
     return (
@@ -217,6 +286,7 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
               secondaryNavItems,
             }
           )}`}
+          {...secondarySwipeHandlers}
         >
           {isUncontainedPage ? (
             <div className="p-2">

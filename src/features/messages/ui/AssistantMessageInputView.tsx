@@ -204,7 +204,7 @@ export function AssistantMessageInputView({
   handleSubmit,
 }: AssistantMessageInputViewProps) {
   return (
-    <CardContent separator className="flex-shrink-0 p-4">
+    <CardContent separator className="flex-shrink-0 p-4" data-swipe-lock>
       <div className="space-y-3">
         {assistantChat.selectedTools.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">

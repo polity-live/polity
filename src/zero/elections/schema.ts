@@ -139,6 +139,10 @@ export const selectIndicativeCandidateSelectionSchema = baseIndicativeCandidateS
 export const createIndicativeCandidateSelectionSchema = baseIndicativeCandidateSelectionSchema
   .omit({ id: true, created_at: true })
   .extend({ id: z.string() });
+export const replaceIndicativeElectionVoteSchema = z.object({
+  participation: createIndicativeElectorParticipationSchema,
+  selections: z.array(createIndicativeCandidateSelectionSchema).min(1),
+});
 
 // ============================================
 // Final Elector Participation

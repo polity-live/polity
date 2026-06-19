@@ -4,6 +4,7 @@ import type { Conversation, Message } from '../types/message.types';
 import { ConversationHeader } from './ConversationHeader';
 import { MessageList } from './MessageList';
 import { AssistantMessageInput } from './AssistantMessageInput';
+import type { SwipeNavigationHandlers } from '@/features/shared/hooks/useSwipeNavigation';
 
 interface AssistantMessageContentViewProps {
   conversation: Conversation;
@@ -20,6 +21,7 @@ interface AssistantMessageContentViewProps {
   onAcceptConversation: (conversation: Conversation) => void;
   onRejectConversation: (conversation: Conversation) => void;
   className?: string;
+  swipeHandlers?: SwipeNavigationHandlers;
   assistantChat: any;
   streamingAssistantMessage: any;
 }
@@ -39,11 +41,16 @@ export function AssistantMessageContentView({
   onAcceptConversation,
   onRejectConversation,
   className,
+  swipeHandlers,
   assistantChat,
   streamingAssistantMessage,
 }: AssistantMessageContentViewProps) {
   return (
-    <Card className={cn('flex h-full min-h-0 flex-col overflow-hidden md:col-span-2', className)}>
+    <Card
+      className={cn('flex h-full min-h-0 flex-col overflow-hidden md:col-span-2', className)}
+      style={{ touchAction: 'pan-y' }}
+      {...swipeHandlers}
+    >
       <div className="flex h-full min-h-0 flex-col">
         <ConversationHeader
           conversation={conversation}

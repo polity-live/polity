@@ -43,6 +43,7 @@ export interface UserTimelineCardProps {
   onFollow?: () => void;
   onMessage?: () => void;
   actions?: React.ReactNode;
+  href?: string;
   className?: string;
 }
 export interface UserTimelineCardViewProps {
@@ -50,6 +51,7 @@ export interface UserTimelineCardViewProps {
   onFollow: any;
   onMessage: any;
   actions: any;
+  href: any;
   className: any;
   t: any;
   subscription: any;
@@ -63,6 +65,7 @@ export function UserTimelineCardView({
   onFollow,
   onMessage,
   actions,
+  href,
   className,
   t,
   subscription,
@@ -71,13 +74,14 @@ export function UserTimelineCardView({
 }: UserTimelineCardViewProps) {
   const userTone = getEntityToneClasses('user');
   const hashtagTone = getHashtagToneClasses();
+  const userHref = href ?? `/user/${user.id}`;
 
   return (
-    <TimelineCardBase contentType="user" className={className} href={`/user/${user.id}`}>
+    <TimelineCardBase contentType="user" className={className} href={userHref}>
       <TimelineCardHeader
         contentType="user"
         title={user.name}
-        href={`/user/${user.id}`}
+        href={userHref}
         badge={<TimelineCardBadge label={t('features.timeline.contentTypes.user')} icon={User} />}
       />
 
@@ -214,7 +218,7 @@ export function UserTimelineCardView({
             </Button>
             <div onClick={e => e.preventDefault()}>
               <ShareButton
-                url={`/user/${user.id}`}
+                url={userHref}
                 title={user.name}
                 description={user.bio || ''}
                 variant="outline"

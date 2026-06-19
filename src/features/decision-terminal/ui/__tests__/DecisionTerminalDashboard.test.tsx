@@ -25,6 +25,28 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
     typeof options === 'string' ? options : (options?.defaultValue ?? _key),
 }));
 
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({
+    children,
+    to,
+    params,
+    ...props
+  }: {
+    children: ReactNode;
+    to?: string;
+    params?: Record<string, string>;
+    [key: string]: unknown;
+  }) => {
+    const href = to && params?.id ? to.replace('$id', params.id) : to;
+
+    return (
+      <a href={href} {...props}>
+        {children}
+      </a>
+    );
+  },
+}));
+
 vi.mock('@/zero/preferences', async importOriginal => {
   const actual = await importOriginal<typeof import('@/zero/preferences')>();
   return {
@@ -327,7 +349,7 @@ describe('DecisionTerminal dashboard', () => {
       ],
     });
 
-    render(<DecisionTerminal decisions={[decision(), closed, election]} />);
+    const { container } = render(<DecisionTerminal decisions={[decision(), closed, election]} />);
 
     expect(
       screen.getAllByText('Move reserve funds into field operations before the evening session.')
@@ -338,6 +360,9 @@ describe('DecisionTerminal dashboard', () => {
     expect(screen.getAllByText('Session chair election').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Mina Bauer').length).toBeGreaterThan(0);
     expect(screen.getAllByText('3/5 · 60%').length).toBeGreaterThan(0);
+    expect(
+      container.querySelectorAll('[data-election-candidate-row="true"]').length
+    ).toBeGreaterThan(0);
   });
 
   it('uses a real Vote button and opens the vote dialog instead of dragging content', () => {

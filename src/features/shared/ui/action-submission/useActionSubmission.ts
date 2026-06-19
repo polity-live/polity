@@ -42,6 +42,11 @@ const DEFAULT_STEPS: Record<ActionSubmissionKind, ActionSubmissionStep[]> = {
     { key: 'commit', label: 'Prozesslauf starten', status: 'pending' },
     { key: 'sync', label: 'Ansicht synchronisieren', status: 'pending' },
   ],
+  tally: [
+    { key: 'prepare', label: 'PIN prüfen', status: 'pending' },
+    { key: 'commit', label: 'Tally speichern', status: 'pending' },
+    { key: 'sync', label: 'Ansicht synchronisieren', status: 'pending' },
+  ],
   link: [
     { key: 'prepare', label: 'Verbindung prüfen', status: 'pending' },
     { key: 'commit', label: 'Link aktivieren', status: 'pending' },

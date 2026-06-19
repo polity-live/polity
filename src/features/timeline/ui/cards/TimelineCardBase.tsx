@@ -3,10 +3,10 @@
 import { getContentTypeToneClasses, getMotionPreset } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { ReactNode } from 'react';
-import { Link } from '@tanstack/react-router';
 import { cn } from '@/features/shared/utils/utils';
 import { Button } from '@/features/shared/ui/ui/button';
 import { LinkSurface } from '@/features/shared/ui/navigation/LinkSurface.tsx';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
 import { CARD_RADIUS, getCardShadowClasses } from '../../logic/gradient-assignment';
 import {
   ContentType,
@@ -125,22 +125,26 @@ export function TimelineCardHeader({
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-base leading-tight font-semibold">
               {href ? (
-                <Link to={href} onClick={e => e.stopPropagation()} className="hover:underline">
+                <SmartLink
+                  href={href}
+                  onClick={e => e.stopPropagation()}
+                  className="hover:underline"
+                >
                   {title}
-                </Link>
+                </SmartLink>
               ) : (
                 title
               )}
             </h3>
             {subtitle &&
               (subtitleHref ? (
-                <Link
-                  to={subtitleHref}
+                <SmartLink
+                  href={subtitleHref}
                   onClick={e => e.stopPropagation()}
                   className="text-muted-foreground hover:text-foreground mt-0.5 block truncate text-xs hover:underline"
                 >
                   {subtitle}
-                </Link>
+                </SmartLink>
               ) : (
                 <p className="text-muted-foreground mt-0.5 truncate text-xs">{subtitle}</p>
               ))}

@@ -13,7 +13,7 @@ export interface VideoTimelineCardProps {
     likes?: number;
     authorName?: string;
     authorAvatar?: string;
-    sourceType?: 'amendment' | 'user' | 'group' | 'event' | 'blog';
+    sourceType?: 'amendment' | 'user' | 'group' | 'event' | 'blog' | 'statement';
     sourceName?: string;
     sourceId?: string;
     videoUrl?: string;
@@ -23,11 +23,13 @@ export interface VideoTimelineCardProps {
   onPlay?: () => void;
   onLike?: () => void;
   onShare?: () => void;
+  href?: string;
   className?: string;
 }
 export function useVideoTimelineCardController({
   video,
   onPlay,
+  href,
   className,
 }: VideoTimelineCardProps) {
   const { t } = useTranslation();
@@ -42,6 +44,7 @@ export function useVideoTimelineCardController({
     : video.sourceType === 'amendment' && video.sourceId
       ? `/amendment/${video.sourceId}`
       : sourceHref;
+  const targetHref = href ?? amendmentHref;
 
   return {
     video,
@@ -52,5 +55,6 @@ export function useVideoTimelineCardController({
     setPlayerOpen,
     sourceHref,
     amendmentHref,
+    targetHref,
   };
 }

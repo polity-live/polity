@@ -265,12 +265,14 @@ export function GroupSearchStepView({
             </div>
           </div>
 
-          <OnboardingGroupMap
-            groups={mappableGroups}
-            activeGroupId={activeGroupId}
-            selectedGroupIds={selectedGroupIds}
-            onActiveGroupChange={handleActivateGroup}
-          />
+          <div data-swipe-lock>
+            <OnboardingGroupMap
+              groups={mappableGroups}
+              activeGroupId={activeGroupId}
+              selectedGroupIds={selectedGroupIds}
+              onActiveGroupChange={handleActivateGroup}
+            />
+          </div>
 
           <div className="bg-card rounded-lg border p-4 shadow-sm">
             <p className="text-sm font-semibold">{t('onboarding.groupStep.activeTitle')}</p>

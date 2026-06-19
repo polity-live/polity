@@ -34,6 +34,25 @@ describe('ParticipationRoleFilterBar', () => {
     ).toEqual(['one', 'two']);
   });
 
+  it('filters participations by elected display roles', () => {
+    const electedRole = { id: 'chair', name: 'Chair' };
+
+    expect(
+      filterParticipationsByRole(
+        [
+          ...participations,
+          {
+            id: 'four',
+            roles: [],
+            elected_roles: [electedRole],
+            user: { first_name: 'Katherine' },
+          },
+        ],
+        ['chair']
+      ).map(item => item.id)
+    ).toEqual(['four']);
+  });
+
   it('toggles neutral role filter chips', () => {
     const onSelectedRoleIdsChange = vi.fn();
 

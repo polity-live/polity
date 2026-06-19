@@ -4,8 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import type { UserProfile } from '@/features/users/types/user.types.ts';
 import { useAuth } from '@/providers/auth-provider.tsx';
-import { useGroupState } from '@/zero/groups/useGroupState.ts';
-import type { UserMenuGroup } from '../UserMenuView';
+import { useCurrentUserNavigationEntities } from './useCurrentUserNavigationEntities';
 
 interface UseUserMenuControllerOptions {
   user?: UserProfile | null;
@@ -17,36 +16,14 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
   const { user: authUser, signOut } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [groupSearchQuery, setGroupSearchQuery] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [eventSearchQuery, setEventSearchQuery] = useState('');
+  const groupSearchInputRef = useRef<HTMLInputElement>(null);
+  const eventSearchInputRef = useRef<HTMLInputElement>(null);
+  const { groups: activeGroups, events: activeEvents } = useCurrentUserNavigationEntities(
+    authUser?.id
+  );
 
-  const { currentUserMembershipsWithGroups } = useGroupState({
-    includeCurrentUserMembershipsWithGroups: true,
-  });
-  const membershipsData = { groupMemberships: currentUserMembershipsWithGroups };
-
-  const activeGroups = useMemo<UserMenuGroup[]>(() => {
-    const memberships = membershipsData?.groupMemberships || [];
-    return memberships
-      .flatMap(m => {
-        if (
-          !m.group ||
-          !(m.status === 'active' || m.status === 'admin' || m.role?.name === 'admin')
-        ) {
-          return [];
-        }
-
-        return [
-          {
-            id: m.group.id,
-            name: m.group.name,
-            image_url: m.group.image_url,
-          },
-        ];
-      })
-      .sort((a, b) => (a?.name || '').localeCompare(b?.name || ''));
-  }, [membershipsData]);
-
-  const filteredGroups = useMemo<UserMenuGroup[]>(() => {
+  const filteredGroups = useMemo(() => {
     const normalizedQuery = groupSearchQuery.trim().toLowerCase();
     if (!normalizedQuery) {
       return activeGroups;
@@ -54,6 +31,15 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
 
     return activeGroups.filter(group => group.name?.toLowerCase().includes(normalizedQuery));
   }, [activeGroups, groupSearchQuery]);
+
+  const filteredEvents = useMemo(() => {
+    const normalizedQuery = eventSearchQuery.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return activeEvents;
+    }
+
+    return activeEvents.filter(event => event.title?.toLowerCase().includes(normalizedQuery));
+  }, [activeEvents, eventSearchQuery]);
 
   if (!authUser) return null;
 
@@ -94,14 +80,21 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
     profileHref,
     settingsHref,
     groups: filteredGroups,
+    events: filteredEvents,
     showGroupSearch: activeGroups.length > 5,
+    showEventSearch: activeEvents.length > 5,
     groupSearchQuery,
-    groupSearchInputRef: inputRef,
+    eventSearchQuery,
+    groupSearchInputRef,
+    eventSearchInputRef,
     labels: {
       profile: t('navigation.userMenu.profile'),
       settings: t('navigation.userMenu.settings'),
       groups: t('common.labels.groups'),
+      events: t('navigation.userMenu.events'),
+      eventFallback: t('navigation.userMenu.eventFallback'),
       searchGroupsPlaceholder: t('navigation.userMenu.searchGroupsPlaceholder'),
+      searchEventsPlaceholder: t('navigation.userMenu.searchEventsPlaceholder'),
       clear: t('common.actions.clear'),
       logout: t('auth.logout.button'),
       logoutConfirm: t('auth.logout.confirm'),
@@ -110,9 +103,14 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
     logoutDialogOpen: showLogoutDialog,
     onLogoutDialogOpenChange: setShowLogoutDialog,
     onGroupSearchChange: setGroupSearchQuery,
+    onEventSearchChange: setEventSearchQuery,
     onClearGroupSearch: () => {
       setGroupSearchQuery('');
-      inputRef.current?.focus();
+      groupSearchInputRef.current?.focus();
+    },
+    onClearEventSearch: () => {
+      setEventSearchQuery('');
+      eventSearchInputRef.current?.focus();
     },
     onLogout: handleLogout,
   };

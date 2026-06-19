@@ -157,6 +157,10 @@ export const selectIndicativeChoiceDecisionSchema = baseIndicativeChoiceDecision
 export const createIndicativeChoiceDecisionSchema = baseIndicativeChoiceDecisionSchema
   .omit({ id: true, created_at: true })
   .extend({ id: z.string() });
+export const replaceIndicativeVoteSchema = z.object({
+  participation: createIndicativeVoterParticipationSchema,
+  decisions: z.array(createIndicativeChoiceDecisionSchema).min(1),
+});
 
 // ============================================
 // Final Voter Participation

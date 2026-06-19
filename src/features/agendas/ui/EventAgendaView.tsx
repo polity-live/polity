@@ -53,7 +53,7 @@ import { AgendaItemContextCard } from './AgendaItemContextCard';
 import { AgendaRelatedRoleCard } from './AgendaRelatedEntityCard';
 import { EventSearchCard } from '@/features/search/ui/EventSearchCard';
 import { AgendaSpeakerListSection } from './AgendaSpeakerListSection';
-import { AgendaElectionSection } from './AgendaElectionSection';
+import { AgendaElectionSection, isAutoAssignedRoleElection } from './AgendaElectionSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
 import { OfflineTallyDialog } from './OfflineTallyDialog';
 import { AgendaCard, type AgendaItemStatus } from '@/features/agendas/ui/AgendaCard.tsx';
@@ -66,6 +66,7 @@ import {
 import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 import { AgendaActionBar } from './AgendaActionBar';
 import { VoteCastDialog } from '@/features/vote-cast/ui/VoteCastDialog';
+import { CandidacyPasswordDialog } from '@/features/elections/ui/CandidacyPasswordDialog';
 import { EventLiveFocusDialog } from './EventLiveFocusDialog';
 import { getAgendaDisplayTimes } from '../logic/getAgendaDisplayTimes';
 import { getAgendaRuntimeStatus } from '../logic/getAgendaRuntimeStatus';
@@ -341,6 +342,11 @@ export function EventAgendaView({
   scheduledButUnconfirmedAgendaItems,
   formatTime,
 }: EventAgendaViewProps) {
+  const voteButtonDisabled =
+    !isCRToolbarActive && (disableVoteButton || actionBarHook.disableSecretIndicativeVoteButton);
+  const disabledVoteTooltip =
+    actionBarHook.secretIndicativeVoteTooltip ??
+    translateText('generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792');
   const liveFocusVoteClick = isCRToolbarActive
     ? selectedCRPhase !== 'closed'
       ? actionBarHook.handleVoteClick
@@ -747,10 +753,8 @@ export function EventAgendaView({
               : undefined
         }
         onVoteClick={liveFocusVoteClick}
-        disableVoteButton={!isCRToolbarActive && disableVoteButton}
-        disabledVoteTooltip={translateText(
-          'generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792'
-        )}
+        disableVoteButton={voteButtonDisabled}
+        disabledVoteTooltip={disabledVoteTooltip}
         showOfflineTallyButton={!isCRToolbarActive && showOfflineTallyButton}
         onOfflineTallyClick={
           !isCRToolbarActive && showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined
@@ -778,11 +782,19 @@ export function EventAgendaView({
         choices={toolbarOfflineTallyEntity?.choices ?? []}
         tallies={toolbarOfflineTallyEntity?.tallies ?? []}
         maxTotalVotes={toolbarOfflineTallyEntity?.maxTotalVotes ?? null}
+        maxPerEntryVotes={toolbarOfflineTallyEntity?.maxPerEntryVotes ?? null}
+        maxPerEntryLimitLabel={
+          toolbarOfflineTallyEntity?.kind === 'election' ? 'candidate' : undefined
+        }
+        participantCount={toolbarOfflineTallyEntity?.participantCount ?? null}
+        votesPerParticipant={toolbarOfflineTallyEntity?.votesPerParticipant ?? null}
         isSubmitting={isOfflineTallySubmitting}
         passwordError={offlineTallyPasswordError}
         submitError={offlineTallySubmitError}
         onSubmit={handleSubmitOfflineTally}
       />
+
+      <CandidacyPasswordDialog {...actionBarHook.candidacyDialogProps} />
 
       <EventLiveFocusDialog
         open={liveFocusOpen}
@@ -818,12 +830,14 @@ export function EventAgendaView({
         canVote={actionBarHook.hasVotingRight}
         hasUserVoted={liveFocusHasUserVoted}
         voteLoading={actionBarHook.voteCasting.isLoading}
-        disableVoteButton={!isCRToolbarActive && disableVoteButton}
+        disableVoteButton={voteButtonDisabled}
+        disabledVoteTooltip={disabledVoteTooltip}
         onVoteClick={liveFocusVoteClick}
         attendanceMode={attendanceMode}
         confirmedOfflineParticipantCount={confirmedOfflineParticipantCount}
         streamElection={streamElection}
         streamVote={streamVote}
+        streamDelegateTargetEvent={streamDelegateTargetEvent}
         indicativeSelections={indicativeSelections}
         finalSelections={finalSelections}
         userHasElectionVoted={userHasElectionVoted}
@@ -1041,6 +1055,16 @@ export function EventAgendaView({
                             finalSelections={finalSelections}
                             offlineTallies={streamElection.offline_tallies ?? []}
                             attendanceMode={attendanceMode}
+                            delegateTargetEventId={
+                              streamDelegateTargetEvent?.id ??
+                              (
+                                streamElection as {
+                                  delegate_assignment_meta?: { targetEventId?: string } | null;
+                                }
+                              ).delegate_assignment_meta?.targetEventId
+                            }
+                            delegateTargetEventTitle={streamDelegateTargetEvent?.title ?? null}
+                            showRoleAssignedMessage={isAutoAssignedRoleElection(streamElection)}
                             userHasVoted={userHasElectionVoted}
                             userSelectedCandidateIds={userSelectedCandidateIds}
                             electionStatus={streamElection.status}

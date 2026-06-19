@@ -6,13 +6,22 @@ export interface AssignmentEventSummary {
   id: string;
   title?: string | null;
   status?: string | null;
+  event_type?: string | null;
   start_date?: number | null;
   end_date?: number | null;
+  delegate_seat_allocation_type?: string | null;
+  main_group_delegate_allocation_mode?: string | null;
+  total_delegate_seats?: number | null;
   delegate_election_mode?: string | null;
   group?: {
     id?: string | null;
     name?: string | null;
   } | null;
+}
+
+export interface AssignmentGroupSummary {
+  id?: string | null;
+  name?: string | null;
 }
 
 export interface DelegateAllocationAssignmentLike {
@@ -30,10 +39,7 @@ export interface DelegateAllocationAssignmentLike {
           | null;
       })
     | null;
-  group?: {
-    id?: string | null;
-    name?: string | null;
-  } | null;
+  group?: AssignmentGroupSummary | null;
 }
 
 export interface GroupRoleAssignmentLike {
@@ -110,6 +116,8 @@ export interface GroupOpenAssignment {
   completedSeatCount?: number;
   remainingSeatCount?: number;
   roleId?: string;
+  sourceGroup?: AssignmentGroupSummary | null;
+  targetGroup?: AssignmentGroupSummary | null;
   linkedEvent?: AssignmentEventSummary | null;
   targetEvent?: AssignmentEventSummary | null;
   processTaskId?: string;
@@ -245,6 +253,8 @@ export function buildDelegateElectionAssignments(args: {
         scheduledSeatCount,
         completedSeatCount,
         remainingSeatCount,
+        sourceGroup: allocation.group ?? null,
+        targetGroup: targetEvent?.group ?? null,
         linkedEvent: linkedEventByTargetEventId.get(targetEvent?.id || '') ?? null,
         targetEvent,
       };
@@ -262,13 +272,30 @@ export function buildRoleRenewalAssignments(args: {
   referenceTime?: number;
 }) {
   const referenceTime = args.referenceTime ?? Date.now();
+  const delegateSeatRoleIds = new Set<string>();
+
+  for (const role of args.roles) {
+    for (const election of role.elections || []) {
+      const metadata = parseDelegateElectionMetadata(election.description);
+      if (!metadata) {
+        continue;
+      }
+
+      for (const seatRoleId of metadata.allSeatRoleIds) {
+        delegateSeatRoleIds.add(seatRoleId);
+      }
+      for (const seatRoleId of metadata.seatRoleIds) {
+        delegateSeatRoleIds.add(seatRoleId);
+      }
+    }
+  }
 
   return args.roles
     .filter(
       role =>
         role.scope === 'group' &&
         role.assignment_mode === 'elected' &&
-        Boolean(role.is_recurring || role.scheduled_revote_date)
+        !delegateSeatRoleIds.has(role.id)
     )
     .map<GroupOpenAssignment>(role => {
       const linkedEvent = getNextRoleElectionEvent(role, referenceTime);

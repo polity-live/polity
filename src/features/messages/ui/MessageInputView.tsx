@@ -58,7 +58,7 @@ export function MessageInputView({
   isConversationRequester,
 }: MessageInputViewProps) {
   return (
-    <CardContent separator className="flex-shrink-0 p-4">
+    <CardContent separator className="flex-shrink-0 p-4" data-swipe-lock>
       {isPendingDirectConversation && isConversationRequester ? (
         <div className="text-muted-foreground text-center text-sm">
           {t('features.messages.conversation.waitingForAccept', { name: otherParticipantName })}

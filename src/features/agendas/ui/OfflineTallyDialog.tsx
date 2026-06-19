@@ -1,8 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import type { OfflineTallyPhase } from '@/features/agendas/logic/offlineTallyToolbar';
 
 import { useOfflineTallyDialogController } from '@/features/agendas/hooks/useOfflineTallyDialogController';
+import { useOfflineTallySubmissionProgress } from '@/features/agendas/hooks/useOfflineTallySubmissionProgress';
+import { ActionSubmissionOverlay } from '@/features/shared/ui/action-submission';
 
 import { OfflineTallyDialogView } from './OfflineTallyDialogView';
 
@@ -25,6 +29,10 @@ interface OfflineTallyDialogProps {
   choices: readonly OfflineTallyChoice[];
   tallies: readonly OfflineTallyValue[];
   maxTotalVotes?: number | null;
+  maxPerEntryVotes?: number | null;
+  maxPerEntryLimitLabel?: string;
+  participantCount?: number | null;
+  votesPerParticipant?: number | null;
   isSubmitting?: boolean;
   passwordError?: string | null;
   submitError?: string | null;
@@ -48,34 +56,88 @@ export function OfflineTallyDialog({
   choices,
   tallies,
   maxTotalVotes,
+  maxPerEntryVotes,
+  maxPerEntryLimitLabel,
+  participantCount,
+  votesPerParticipant,
   isSubmitting = false,
   passwordError,
   submitError,
   onSubmit,
 }: OfflineTallyDialogProps) {
+  const [step, setStep] = useState<'counts' | 'password'>('counts');
+
+  useEffect(() => {
+    if (!open) {
+      setStep('counts');
+    }
+  }, [open]);
+
   const controller = useOfflineTallyDialogController({
     open,
     entries: choices,
     tallies,
     maxTotalVotes,
+    maxPerEntryVotes,
     getTallyEntryId: getOfflineTallyEntryId,
     getTallyCount: getOfflineTallyCount,
     onSubmit,
   });
+  const submissionSteps = useOfflineTallySubmissionProgress(isSubmitting);
+  const tallyLimitFormula =
+    participantCount != null && votesPerParticipant != null && maxTotalVotes != null
+      ? `${participantCount} Participants x ${votesPerParticipant} Stimmen = ${maxTotalVotes}`
+      : null;
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setStep('counts');
+    }
+
+    onOpenChange(nextOpen);
+  };
 
   return (
-    <OfflineTallyDialogView
-      open={open}
-      onOpenChange={onOpenChange}
-      title={title}
-      description={description}
-      phase={phase}
-      choices={choices}
-      maxTotalVotes={maxTotalVotes}
-      isSubmitting={isSubmitting}
-      passwordError={passwordError}
-      submitError={submitError}
-      {...controller}
-    />
+    <>
+      <OfflineTallyDialogView
+        open={open}
+        onOpenChange={handleOpenChange}
+        title={title}
+        description={description}
+        phase={phase}
+        choices={choices}
+        maxTotalVotes={maxTotalVotes}
+        maxPerEntryVotes={maxPerEntryVotes}
+        maxPerEntryLimitLabel={maxPerEntryLimitLabel}
+        participantCount={participantCount}
+        votesPerParticipant={votesPerParticipant}
+        isSubmitting={isSubmitting}
+        passwordError={passwordError}
+        submitError={submitError}
+        step={step}
+        onConfirmCounts={() => {
+          if (!controller.isOverLimit) {
+            setStep('password');
+          }
+        }}
+        onBackToCounts={() => setStep('counts')}
+        {...controller}
+      />
+      <ActionSubmissionOverlay
+        kind="tally"
+        status={isSubmitting ? 'submitting' : 'idle'}
+        steps={submissionSteps}
+        preview={{
+          title,
+          description,
+          entityLabel: phase === 'final' ? 'Final offline tally' : 'Indicative offline tally',
+          badges: [`${controller.totalVotes} offline selections`, tallyLimitFormula].filter(
+            (badge): badge is string => Boolean(badge)
+          ),
+        }}
+        onBack={() => undefined}
+        onRetry={() => undefined}
+      />
+    </>
   );
 }

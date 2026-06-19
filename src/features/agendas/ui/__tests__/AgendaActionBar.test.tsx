@@ -121,6 +121,26 @@ describe('AgendaActionBar', () => {
     expect(voteButton?.className).toContain('text-muted-foreground');
   });
 
+  it('renders the disabled Vote button with the provided info tooltip', () => {
+    const { container } = render(
+      <AgendaActionBar
+        {...baseProps}
+        canVote
+        disableVoteButton
+        disabledVoteTooltip="Geheime indikative Stimmen können nicht geändert werden."
+        onVoteClick={() => undefined}
+      />
+    );
+
+    const voteButton = container.querySelector('.civic-ballot-submit');
+
+    expect(voteButton?.getAttribute('aria-disabled')).toBe('true');
+    expect(voteButton?.getAttribute('title')).toBe(
+      'Geheime indikative Stimmen können nicht geändert werden.'
+    );
+    expect(voteButton?.className).toContain('text-muted-foreground');
+  });
+
   it('renders the candidate button as blocked with help when passive voting rights are missing', () => {
     render(
       <AgendaActionBar

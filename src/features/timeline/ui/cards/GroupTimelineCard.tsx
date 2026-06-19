@@ -38,6 +38,7 @@ export interface GroupTimelineCardProps {
   isMembershipLoading?: boolean;
   /** Loading state for subscription action */
   isSubscriptionLoading?: boolean;
+  href?: string;
   className?: string;
 }
 import { GroupTimelineCardView } from './GroupTimelineCardView';
@@ -50,6 +51,7 @@ export function GroupTimelineCard({
   onToggleSubscription,
   isMembershipLoading,
   isSubscriptionLoading,
+  href,
   className,
 }: GroupTimelineCardProps) {
   const { t } = useTranslation();
@@ -133,6 +135,7 @@ export function GroupTimelineCard({
       onToggleSubscription={onToggleSubscription}
       isMembershipLoading={isMembershipLoading}
       isSubscriptionLoading={isSubscriptionLoading}
+      href={href}
       className={className}
       t={t}
       membershipOpen={membershipOpen}
