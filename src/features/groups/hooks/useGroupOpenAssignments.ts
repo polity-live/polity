@@ -224,7 +224,7 @@ export function useGroupOpenAssignments(groupId: string) {
     queries.events.delegateAllocationsBySourceGroup({ groupId })
   );
   const [processTasks, processTasksResult] = useQuery(
-    queries.amendments.openProcessTasksByGroup({ group_id: groupId })
+    queries.amendments.processTasksByGroupForAssignments({ group_id: groupId })
   );
   const [isScheduling, setIsScheduling] = useState(false);
   const { completeProcessTaskWithEvent } = useAmendmentActions();

@@ -181,6 +181,17 @@ export const groupsTranslations = {
       scheduleImplementationReview: 'Schedule review',
       scheduleConfirmation: 'Schedule confirmation',
       attachToEvent: 'Attach to event',
+      filters: {
+        status: 'Status',
+        assignmentKind: 'Type',
+        all: 'All',
+        allStatuses: 'All statuses',
+        allKinds: 'All types',
+        votes: 'Votes',
+        elections: 'Elections',
+        emptyTitle: 'No matching assignments',
+        emptyDescription: 'Adjust the filters to show more assignments.',
+      },
       generated: {
         amendmentFallback: 'Amendment',
         implementationEvaluationTitle: 'Review implementation: {{amendmentTitle}}',

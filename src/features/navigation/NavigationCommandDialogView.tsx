@@ -1,6 +1,10 @@
-import { Calendar, Users } from 'lucide-react';
+import { Calendar, FileText, Users } from 'lucide-react';
 
-import type { UserMenuEvent, UserMenuGroup } from '@/features/navigation/logic/userMenuItems';
+import type {
+  UserMenuAmendment,
+  UserMenuEvent,
+  UserMenuGroup,
+} from '@/features/navigation/logic/userMenuItems';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
 import {
@@ -27,16 +31,20 @@ interface NavigationCommandDialogViewProps {
     userNavigation: string;
     groups: string;
     events: string;
+    amendments: string;
     eventFallback: string;
+    amendmentFallback: string;
   };
   primaryNavItems: NavigationItem[];
   userNavItems: NavigationItem[];
   groupItems: UserMenuGroup[];
   eventItems: UserMenuEvent[];
+  amendmentItems: UserMenuAmendment[];
   onSelectPrimaryItem: (item: NavigationItem) => void;
   onSelectUserItem: (item: NavigationItem) => void;
   onSelectGroupItem: (group: UserMenuGroup) => void;
   onSelectEventItem: (event: UserMenuEvent) => void;
+  onSelectAmendmentItem: (amendment: UserMenuAmendment) => void;
 }
 
 function NavigationCommandItem({
@@ -118,6 +126,44 @@ function NavigationEventCommandItem({
   );
 }
 
+function NavigationAmendmentCommandItem({
+  amendment,
+  amendmentFallback,
+  onSelect,
+}: {
+  amendment: UserMenuAmendment;
+  amendmentFallback: string;
+  onSelect: (amendment: UserMenuAmendment) => void;
+}) {
+  const title = amendment.title || amendmentFallback;
+  const meta = formatAmendmentMeta(amendment);
+
+  return (
+    <CommandItem
+      key={amendment.id}
+      value={[
+        'amendment',
+        title,
+        amendment.code,
+        amendment.targetGroupName,
+        amendment.groupName,
+        amendment.eventTitle,
+        amendment.id,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      onSelect={() => onSelect(amendment)}
+      className="items-start"
+    >
+      <FileText className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate">{title}</span>
+        {meta ? <span className="text-muted-foreground block truncate text-xs">{meta}</span> : null}
+      </span>
+    </CommandItem>
+  );
+}
+
 export function NavigationCommandDialogView({
   open,
   onOpenChange,
@@ -126,10 +172,12 @@ export function NavigationCommandDialogView({
   userNavItems,
   groupItems,
   eventItems,
+  amendmentItems,
   onSelectPrimaryItem,
   onSelectUserItem,
   onSelectGroupItem,
   onSelectEventItem,
+  onSelectAmendmentItem,
 }: NavigationCommandDialogViewProps) {
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
@@ -183,6 +231,22 @@ export function NavigationCommandDialogView({
             </CommandGroup>
           </>
         )}
+
+        {amendmentItems.length > 0 && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading={copy.amendments}>
+              {amendmentItems.map(amendment => (
+                <NavigationAmendmentCommandItem
+                  key={amendment.id}
+                  amendment={amendment}
+                  amendmentFallback={copy.amendmentFallback}
+                  onSelect={onSelectAmendmentItem}
+                />
+              ))}
+            </CommandGroup>
+          </>
+        )}
       </CommandList>
     </CommandDialog>
   );
@@ -190,6 +254,12 @@ export function NavigationCommandDialogView({
 
 function formatEventMeta(event: UserMenuEvent) {
   return [formatEventDate(event.start_date), event.groupName, event.locationName]
+    .filter(Boolean)
+    .join(' - ');
+}
+
+function formatAmendmentMeta(amendment: UserMenuAmendment) {
+  return [...new Set([amendment.targetGroupName, amendment.groupName, amendment.eventTitle])]
     .filter(Boolean)
     .join(' - ');
 }

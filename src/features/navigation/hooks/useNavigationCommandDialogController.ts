@@ -11,7 +11,7 @@ import type { NavigationItem } from '@/features/navigation/types/navigation.type
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { useAuth } from '@/providers/auth-provider.tsx';
 import { useCurrentUserNavigationEntities } from './useCurrentUserNavigationEntities';
-import type { UserMenuEvent, UserMenuGroup } from '../logic/userMenuItems';
+import type { UserMenuAmendment, UserMenuEvent, UserMenuGroup } from '../logic/userMenuItems';
 
 interface UseNavigationCommandDialogControllerProps {
   primaryNavItems: NavigationItem[];
@@ -27,7 +27,11 @@ export function useNavigationCommandDialogController({
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
   const { setNavigationType } = useNavigationStore();
-  const { groups: groupItems, events: eventItems } = useCurrentUserNavigationEntities(user?.id);
+  const {
+    groups: groupItems,
+    events: eventItems,
+    amendments: amendmentItems,
+  } = useCurrentUserNavigationEntities(user?.id);
 
   useCommandDialogShortcut(setOpen, open);
 
@@ -53,6 +57,11 @@ export function useNavigationCommandDialogController({
 
   const selectEventItem = (event: UserMenuEvent) => {
     navigate({ to: '/event/$id', params: { id: event.id } });
+    setOpen(false);
+  };
+
+  const selectAmendmentItem = (amendment: UserMenuAmendment) => {
+    navigate({ to: '/amendment/$id', params: { id: amendment.id } });
     setOpen(false);
   };
 
@@ -91,10 +100,13 @@ export function useNavigationCommandDialogController({
       userNavigation: t('navigation.commandDialog.groups.userNavigation'),
       groups: t('common.labels.groups'),
       events: t('navigation.userMenu.events'),
+      amendments: t('navigation.userMenu.amendments'),
       eventFallback: t('navigation.userMenu.eventFallback'),
+      amendmentFallback: t('navigation.userMenu.amendmentFallback'),
     },
     groupItems,
     eventItems,
+    amendmentItems,
     userNavItems: user?.id
       ? navItemsAuthenticated(navigate).getUserSecondaryNavItems(user.id, true)
       : [],
@@ -102,5 +114,6 @@ export function useNavigationCommandDialogController({
     onSelectUserItem: selectNavigationItem,
     onSelectGroupItem: selectGroupItem,
     onSelectEventItem: selectEventItem,
+    onSelectAmendmentItem: selectAmendmentItem,
   };
 }

@@ -291,4 +291,53 @@ describe('open assignments', () => {
       'role_renewal',
     ]);
   });
+
+  it('keeps completed schedule-event process tasks visible as completed assignments', () => {
+    const assignments = buildOpenAssignments({
+      currentGroupId: 'local-group',
+      allocations: [],
+      roles: [],
+      processTasks: [
+        {
+          id: 'task-1',
+          task_type: 'schedule_event',
+          status: 'completed',
+          title: 'Schedule amendment vote',
+          description: 'Attach the vote request to an event.',
+          group_id: 'local-group',
+          process_run_id: 'run-1',
+          step_run_id: 'step-1',
+          due_at: REFERENCE_TIME,
+          event: eventSummary('vote-event', {
+            title: 'Local vote event',
+            event_type: 'general_assembly',
+          }),
+          process_run: {
+            amendment: {
+              id: 'amendment-1',
+              title: 'Street safety amendment',
+            },
+          },
+        },
+      ],
+      referenceTime: REFERENCE_TIME,
+    });
+
+    expect(assignments).toMatchObject([
+      {
+        id: 'process-task:task-1',
+        kind: 'process_task',
+        status: 'completed',
+        title: 'Schedule amendment vote',
+        linkedEvent: {
+          id: 'vote-event',
+          title: 'Local vote event',
+        },
+        amendment: {
+          id: 'amendment-1',
+          title: 'Street safety amendment',
+        },
+      },
+    ]);
+  });
 });

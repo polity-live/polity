@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildUserMenuEvents, buildUserMenuGroups } from '../userMenuItems';
+import {
+  buildUserMenuAmendments,
+  buildUserMenuEvents,
+  buildUserMenuGroups,
+} from '../userMenuItems';
 
 const NOW = new Date('2026-06-19T12:00:00Z').getTime();
 const FUTURE = NOW + 60 * 60 * 1000;
@@ -135,6 +139,90 @@ describe('user menu item builders', () => {
       id: 'event-recurring',
       start_date: FUTURE,
       end_date: FUTURE + 60 * 60 * 1000,
+    });
+  });
+
+  it('shows personal open amendments sorted by title and hides final target decisions', () => {
+    const amendments = buildUserMenuAmendments([
+      {
+        id: 'amendment-zeta',
+        title: 'Zeta Motion',
+        code: 'Z-1',
+        group_id: 'group-source',
+        group: { id: 'group-source', name: 'Source Group' },
+        event: { id: 'event-zeta', title: 'Zeta Assembly' },
+        current_process_run: {
+          status: 'scheduled',
+          selected_target_group_id: 'group-target',
+          selected_target_group: { id: 'group-target', name: 'Target Group' },
+        },
+        group_decisions: [{ group_id: 'group-target', status: 'supported' }],
+      },
+      {
+        id: 'amendment-alpha',
+        title: 'Alpha Motion',
+        code: 'A-1',
+        group_id: 'group-target',
+        group: { id: 'group-target', name: 'Target Group' },
+        current_process_run: null,
+        group_decisions: [],
+      },
+      {
+        id: 'amendment-alpha',
+        title: 'Alpha Motion Duplicate',
+        code: 'A-1',
+        group_id: 'group-target',
+        group: { id: 'group-target', name: 'Target Group' },
+        current_process_run: null,
+        group_decisions: [],
+      },
+      {
+        id: 'amendment-accepted',
+        title: 'Accepted Motion',
+        group_id: 'group-target',
+        group: { id: 'group-target', name: 'Target Group' },
+        current_process_run: {
+          status: 'scheduled',
+          selected_target_group_id: 'group-target',
+          selected_target_group: { id: 'group-target', name: 'Target Group' },
+        },
+        group_decisions: [{ group_id: 'group-target', status: 'accepted' }],
+      },
+      {
+        id: 'amendment-rejected',
+        title: 'Rejected Motion',
+        group_id: 'group-target',
+        group: { id: 'group-target', name: 'Target Group' },
+        current_process_run: {
+          status: 'scheduled',
+          selected_target_group_id: 'group-target',
+          selected_target_group: { id: 'group-target', name: 'Target Group' },
+        },
+        group_decisions: [{ group_id: 'group-target', status: 'rejected' }],
+      },
+      {
+        id: 'amendment-completed',
+        title: 'Completed Motion',
+        group_id: 'group-target',
+        group: { id: 'group-target', name: 'Target Group' },
+        current_process_run: {
+          status: 'completed',
+          selected_target_group_id: 'group-target',
+          selected_target_group: { id: 'group-target', name: 'Target Group' },
+        },
+        group_decisions: [],
+      },
+    ]);
+
+    expect(amendments.map(amendment => amendment.id)).toEqual([
+      'amendment-alpha',
+      'amendment-zeta',
+    ]);
+    expect(amendments[1]).toMatchObject({
+      code: 'Z-1',
+      groupName: 'Source Group',
+      targetGroupName: 'Target Group',
+      eventTitle: 'Zeta Assembly',
     });
   });
 });

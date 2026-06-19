@@ -13,6 +13,7 @@ import { zql } from '../schema';
 import type { NormalizedGroupRelationship } from '@/features/network/types/network.types';
 
 const WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['collaborator', 'member', 'admin'];
+const NAVIGATION_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['collaborator', 'member', 'admin'];
 
 function applyAmendmentAccess<T>(q: T, userID: string | undefined): T {
   const query = q as any;
@@ -589,6 +590,23 @@ export const amendmentQueries = {
         .orderBy('due_at', 'asc')
   ),
 
+  processTasksByGroupForAssignments: defineQuery(
+    z.object({ group_id: z.string() }),
+    ({ args: { group_id }, ctx: { userID } }) =>
+      zql.process_task
+        .where('group_id', group_id)
+        .whereExists('group', group => applyGroupQueryAccess(group, userID))
+        .where('status', 'IN', ['open', 'scheduled', 'completed'])
+        .related('process_run', q => q.related('amendment'))
+        .related('branch')
+        .related('step_run', sq => sq.related('event').related('agenda_item').related('vote'))
+        .related('target_group')
+        .related('event')
+        .related('agenda_item')
+        .related('support_confirmation', sq => sq.related('amendment'))
+        .orderBy('due_at', 'asc')
+  ),
+
   agendaItemForwardingContext: defineQuery(
     z.object({ agenda_item_id: z.string() }),
     ({ args: { agenda_item_id }, ctx: { userID } }) =>
@@ -826,6 +844,30 @@ export const amendmentQueries = {
       )
       .related('role', q => q.related('action_rights'))
   ),
+
+  currentUserOpenNavigationAmendments: defineQuery(z.object({}), ({ ctx: { userID } }) => {
+    if (!userID || userID === 'anon') {
+      return zql.amendment.where('id', '__unauthorized__');
+    }
+
+    return zql.amendment
+      .where(({ or, cmp, exists }: any) =>
+        or(
+          cmp('created_by_id', userID),
+          exists('collaborators', (collaborator: any) =>
+            collaborator
+              .where('user_id', userID)
+              .where('status', 'IN', NAVIGATION_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+          )
+        )
+      )
+      .related('group')
+      .related('event')
+      .related('current_process_run', q =>
+        q.related('selected_target_group').related('terminal_step_run')
+      )
+      .related('group_decisions', q => q.related('group'));
+  }),
 };
 
 // ── Query Row Types ─────────────────────────────────────────────────
@@ -854,6 +896,9 @@ export type AmendmentCollaboratorsByUserRow = QueryRowType<
 >;
 export type AmendmentProcessRunRow = QueryRowType<typeof amendmentQueries.processRunsByAmendment>;
 export type ProcessTaskByGroupRow = QueryRowType<typeof amendmentQueries.openProcessTasksByGroup>;
+export type ProcessTaskAssignmentByGroupRow = QueryRowType<
+  typeof amendmentQueries.processTasksByGroupForAssignments
+>;
 export type AgendaItemForwardingContextRow = QueryRowType<
   typeof amendmentQueries.agendaItemForwardingContext
 >;

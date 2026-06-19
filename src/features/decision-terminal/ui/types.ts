@@ -9,6 +9,17 @@ import type { VoteData } from './VoteProgressBar';
  */
 export type DecisionType = 'vote' | 'election';
 
+export type DecisionTemporalBucket = 'active' | 'future' | 'past';
+
+export type DecisionLiveDeltaTone = 'success' | 'danger' | 'neutral';
+
+export interface DecisionLiveDelta {
+  key: string;
+  label: string;
+  value: number;
+  tone: DecisionLiveDeltaTone;
+}
+
 /**
  * Status of a decision for display purposes
  */
@@ -46,6 +57,21 @@ export interface DecisionItem {
 
   /** When the decision starts/started (from agenda item or creation) */
   startsAt?: Date;
+
+  /** Stable start sort key used by dashboard panels */
+  sortStartsAt?: Date;
+
+  /** Stable end sort key used by dashboard panels */
+  sortEndsAt?: Date;
+
+  /** Derived temporal bucket for panel routing */
+  temporalBucket?: DecisionTemporalBucket;
+
+  /** Active decision means running phase, not closed, and not future-starting */
+  isActiveDecision?: boolean;
+
+  /** Future decision means it is visible but not active yet */
+  isFutureDecision?: boolean;
 
   /** Display status */
   status: DecisionDisplayStatus;
@@ -159,6 +185,15 @@ export interface DecisionItem {
   maxVotes?: number;
   electionMode?: ElectionMode | null;
   seatCount?: number | null;
+
+  /** Whether the event-role-only panel filter applies to this item */
+  eventRoleFilterApplies?: boolean;
+
+  /** Current user has an accepted event participation with at least one assigned role */
+  hasConfirmedEventRole?: boolean;
+
+  /** Transient per-choice/candidate vote deltas for live updates */
+  liveDeltas?: DecisionLiveDelta[];
 }
 
 /**

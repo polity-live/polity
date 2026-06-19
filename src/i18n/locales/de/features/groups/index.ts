@@ -185,6 +185,17 @@ export const groupsTranslations = {
       scheduleImplementationReview: 'Review planen',
       scheduleConfirmation: 'Bestätigung planen',
       attachToEvent: 'An Event anhängen',
+      filters: {
+        status: 'Status',
+        assignmentKind: 'Art',
+        all: 'Alle',
+        allStatuses: 'Alle Status',
+        allKinds: 'Alle Arten',
+        votes: 'Abstimmungen',
+        elections: 'Wahlen',
+        emptyTitle: 'Keine passenden Aufträge',
+        emptyDescription: 'Passe die Filter an, um weitere Aufträge anzuzeigen.',
+      },
       generated: {
         amendmentFallback: 'Änderungsantrag',
         implementationEvaluationTitle: 'Umsetzung evaluieren: {{amendmentTitle}}',

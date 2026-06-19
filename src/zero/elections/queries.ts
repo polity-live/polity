@@ -181,7 +181,13 @@ export const electionQueries = {
   electionsWithDetails: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     applyElectionQueryAccess(zql.election, userID)
       .related('candidates', q => q.related('user'))
-      .related('agenda_item', q => q.related('event'))
+      .related('agenda_item', q =>
+        q.related('event', eventQuery =>
+          eventQuery.related('participants', participantQuery =>
+            participantQuery.where('user_id', userID ?? '__anon__').related('participant_roles')
+          )
+        )
+      )
       .related('role')
       .related('offline_tallies', q =>
         q

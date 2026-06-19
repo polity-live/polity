@@ -54,13 +54,16 @@ const copy = {
   userNavigation: 'User Navigation',
   groups: 'Groups',
   events: 'Events',
+  amendments: 'Amendments',
   eventFallback: 'Event',
+  amendmentFallback: 'Amendment',
 };
 
 describe('NavigationCommandDialogView', () => {
   it('renders user groups and events as command groups', () => {
     const onSelectGroupItem = vi.fn();
     const onSelectEventItem = vi.fn();
+    const onSelectAmendmentItem = vi.fn();
 
     render(
       <NavigationCommandDialogView
@@ -80,21 +83,36 @@ describe('NavigationCommandDialogView', () => {
             locationName: 'Berlin',
           },
         ]}
+        amendmentItems={[
+          {
+            id: 'amendment-1',
+            title: 'Open Motion',
+            code: 'A-1',
+            targetGroupName: 'Policy Board',
+            groupName: 'Working Circle',
+            eventTitle: 'Future Assembly',
+          },
+        ]}
         onSelectPrimaryItem={vi.fn()}
         onSelectUserItem={vi.fn()}
         onSelectGroupItem={onSelectGroupItem}
         onSelectEventItem={onSelectEventItem}
+        onSelectAmendmentItem={onSelectAmendmentItem}
       />
     );
 
     expect(screen.getByRole('region', { name: 'Groups' })).toBeTruthy();
     expect(screen.getByRole('region', { name: 'Events' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Amendments' })).toBeTruthy();
     expect(screen.getByText('Working Circle')).toBeTruthy();
     expect(screen.getByText('Future Assembly')).toBeTruthy();
     expect(screen.getByText(/Berlin/)).toBeTruthy();
+    expect(screen.getByText('Open Motion')).toBeTruthy();
+    expect(screen.getByText(/Policy Board/)).toBeTruthy();
 
     fireEvent.click(screen.getByText('Working Circle'));
     fireEvent.click(screen.getByText('Future Assembly'));
+    fireEvent.click(screen.getByText('Open Motion'));
 
     expect(onSelectGroupItem).toHaveBeenCalledWith({
       id: 'group-1',
@@ -105,6 +123,12 @@ describe('NavigationCommandDialogView', () => {
       expect.objectContaining({
         id: 'event-1',
         title: 'Future Assembly',
+      })
+    );
+    expect(onSelectAmendmentItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'amendment-1',
+        title: 'Open Motion',
       })
     );
   });
@@ -119,14 +143,17 @@ describe('NavigationCommandDialogView', () => {
         userNavItems={[]}
         groupItems={[]}
         eventItems={[]}
+        amendmentItems={[]}
         onSelectPrimaryItem={vi.fn()}
         onSelectUserItem={vi.fn()}
         onSelectGroupItem={vi.fn()}
         onSelectEventItem={vi.fn()}
+        onSelectAmendmentItem={vi.fn()}
       />
     );
 
     expect(screen.queryByRole('region', { name: 'Groups' })).toBeNull();
     expect(screen.queryByRole('region', { name: 'Events' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Amendments' })).toBeNull();
   });
 });

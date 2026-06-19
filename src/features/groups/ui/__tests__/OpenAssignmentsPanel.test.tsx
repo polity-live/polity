@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { GroupOpenAssignment } from '@/features/groups/logic/openAssignments';
@@ -65,11 +65,14 @@ vi.mock('react-i18next', () => {
     'features.groups.memberships.openAssignments.columns.action': 'Action',
     'features.groups.memberships.openAssignments.type.delegateElection': 'Delegate election',
     'features.groups.memberships.openAssignments.type.roleRenewal': 'Role renewal',
+    'features.groups.memberships.openAssignments.type.processTask': 'Amendment process',
+    'features.groups.memberships.openAssignments.status.completed': 'Completed',
     'features.groups.memberships.openAssignments.status.open': 'Open',
     'features.groups.memberships.openAssignments.status.scheduled': 'Scheduled',
     'features.groups.memberships.openAssignments.noAmendment': 'No amendment',
     'features.groups.memberships.openAssignments.targetEventLabel': 'Target',
     'features.groups.memberships.openAssignments.linkedEventLabel': 'Linked',
+    'features.groups.memberships.openAssignments.noEventLinked': 'No event linked yet',
     'features.groups.memberships.openAssignments.createEvent': 'Create event',
     'features.groups.memberships.openAssignments.noEligibleEventsForGroup':
       'There is currently no upcoming or ongoing event for {{groupName}}.',
@@ -82,6 +85,17 @@ vi.mock('react-i18next', () => {
       'Find event for role election',
     'features.groups.memberships.openAssignments.roleRenewalHelp':
       'Choose an upcoming or ongoing event where this role election should be created.',
+    'features.groups.memberships.openAssignments.attachToEvent': 'Attach to event',
+    'features.groups.memberships.openAssignments.filters.status': 'Status',
+    'features.groups.memberships.openAssignments.filters.assignmentKind': 'Type',
+    'features.groups.memberships.openAssignments.filters.all': 'All',
+    'features.groups.memberships.openAssignments.filters.allStatuses': 'All statuses',
+    'features.groups.memberships.openAssignments.filters.allKinds': 'All types',
+    'features.groups.memberships.openAssignments.filters.votes': 'Votes',
+    'features.groups.memberships.openAssignments.filters.elections': 'Elections',
+    'features.groups.memberships.openAssignments.filters.emptyTitle': 'No matching assignments',
+    'features.groups.memberships.openAssignments.filters.emptyDescription':
+      'Adjust the filters to show more assignments.',
     'features.groups.memberships.openAssignments.seatCount': 'Seats',
     'features.groups.memberships.openAssignments.completedSeatCount': 'Elected',
     'features.groups.memberships.openAssignments.scheduledSeatCount': 'Scheduled',
@@ -192,6 +206,120 @@ describe('OpenAssignmentsPanel', () => {
     expect(screen.getByRole('link', { name: 'To scheduled election' }).getAttribute('href')).toBe(
       '/event/linked-event'
     );
+  });
+
+  it('keeps completed schedule-event process assignments visible with their linked event', () => {
+    const assignment: GroupOpenAssignment = {
+      id: 'process-task:task-1',
+      kind: 'process_task',
+      status: 'completed',
+      title: 'Schedule amendment vote',
+      description: 'Attach the vote request to an event.',
+      processTaskId: 'task-1',
+      processTaskType: 'schedule_event',
+      processRunId: 'run-1',
+      stepRunId: 'step-1',
+      linkedEvent: {
+        id: 'linked-event',
+        title: 'Local vote event',
+        status: 'planned',
+      },
+      amendment: {
+        id: 'amendment-1',
+        title: 'Street safety amendment',
+      },
+    };
+
+    render(
+      <OpenAssignmentsPanel
+        groupId="source-group"
+        groupName="B1"
+        assignments={[assignment]}
+        availableEvents={[
+          {
+            id: 'linked-event',
+            title: 'Local vote event',
+            status: 'planned',
+          },
+        ]}
+        onScheduleRoleRenewal={vi.fn()}
+        onScheduleDelegateElection={vi.fn()}
+        onScheduleProcessTask={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByText('Completed').length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole('link', { name: 'Linked: Local vote event' }).getAttribute('href')
+    ).toBe('/event/linked-event');
+    expect(screen.getByText('Fully scheduled or completed')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Attach to event' })).toBeNull();
+  });
+
+  it('filters open assignments by status and vote or election type', () => {
+    const voteAssignment: GroupOpenAssignment = {
+      id: 'process-task:vote-task',
+      kind: 'process_task',
+      status: 'open',
+      title: 'Schedule amendment vote',
+      description: 'Attach the vote request to an event.',
+      processTaskId: 'vote-task',
+      processTaskType: 'schedule_event',
+      linkedEvent: null,
+    };
+    const electionAssignment: GroupOpenAssignment = {
+      id: 'role:chairperson',
+      kind: 'role_renewal',
+      status: 'scheduled',
+      title: 'Role renewal for Chairperson',
+      description: 'This role needs a new election once a suitable event is planned.',
+      roleId: 'chairperson',
+      linkedEvent: {
+        id: 'linked-election-event',
+        title: 'Board election night',
+        status: 'planned',
+      },
+    };
+
+    render(
+      <OpenAssignmentsPanel
+        groupId="source-group"
+        groupName="B1"
+        assignments={[voteAssignment, electionAssignment]}
+        availableEvents={[]}
+        onScheduleRoleRenewal={vi.fn()}
+        onScheduleDelegateElection={vi.fn()}
+        onScheduleProcessTask={vi.fn()}
+      />
+    );
+
+    const statusFilter = screen.getByRole('group', { name: 'Status' });
+    const typeFilter = screen.getByRole('group', { name: 'Type' });
+
+    expect(screen.getByText('Schedule amendment vote')).toBeTruthy();
+    expect(screen.getByText('Role renewal for Chairperson')).toBeTruthy();
+    expect(
+      within(statusFilter).getByRole('button', { name: 'All' }).getAttribute('aria-pressed')
+    ).toBe('true');
+    expect(
+      within(typeFilter).getByRole('button', { name: 'All' }).getAttribute('aria-pressed')
+    ).toBe('true');
+
+    fireEvent.click(within(typeFilter).getByRole('button', { name: 'Votes' }));
+
+    expect(screen.getByText('Schedule amendment vote')).toBeTruthy();
+    expect(screen.queryByText('Role renewal for Chairperson')).toBeNull();
+
+    fireEvent.click(within(typeFilter).getByRole('button', { name: 'Elections' }));
+
+    expect(screen.queryByText('Schedule amendment vote')).toBeNull();
+    expect(screen.getByText('Role renewal for Chairperson')).toBeTruthy();
+
+    fireEvent.click(within(typeFilter).getByRole('button', { name: 'All' }));
+    fireEvent.click(within(statusFilter).getByRole('button', { name: 'Scheduled' }));
+
+    expect(screen.queryByText('Schedule amendment vote')).toBeNull();
+    expect(screen.getByText('Role renewal for Chairperson')).toBeTruthy();
   });
 
   it('passes the delegate scheduling window to the create-event link', () => {

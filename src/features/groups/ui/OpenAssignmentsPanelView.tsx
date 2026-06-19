@@ -95,7 +95,8 @@ export interface OpenAssignmentsPanelViewProps {
   setEventDialogCorrelationId: any;
   agendaPreviewAssignmentId: any;
   setAgendaPreviewAssignmentId: any;
-  assignmentsWithProgress: any;
+  filteredAssignmentsWithProgress: any;
+  assignmentFilters: any;
   activeEventAssignment: any;
   activeAgendaPreviewAssignment: any;
   filteredEventDialogEvents: any;
@@ -119,7 +120,8 @@ export function OpenAssignmentsPanelView({
   setEventDialogSearchQuery,
   eventDialogCorrelationId,
   setAgendaPreviewAssignmentId,
-  assignmentsWithProgress,
+  filteredAssignmentsWithProgress,
+  assignmentFilters,
   activeEventAssignment,
   activeAgendaPreviewAssignment,
   filteredEventDialogEvents,
@@ -159,7 +161,7 @@ export function OpenAssignmentsPanelView({
         <div className="space-y-1.5 px-3 sm:px-4">
           <h2 className="text-base leading-none font-semibold">
             {t('features.groups.memberships.openAssignments.titleWithCount', {
-              count: assignments.length,
+              count: filteredAssignmentsWithProgress.length,
               defaultValue: 'Open Assignments ({{count}})',
             })}
           </h2>
@@ -169,8 +171,13 @@ export function OpenAssignmentsPanelView({
         </div>
         <DataTable
           columns={assignmentColumns}
-          data={assignmentsWithProgress}
+          data={filteredAssignmentsWithProgress}
           getRowId={(row: any) => row.assignment.id}
+          toolbar={assignmentFilters}
+          emptyState={{
+            title: t('features.groups.memberships.openAssignments.filters.emptyTitle'),
+            description: t('features.groups.memberships.openAssignments.filters.emptyDescription'),
+          }}
           rowTestId={(row: any) => `open-assignment-${row.assignment.id}`}
           getRowClassName={(row: any) =>
             row.assignment.id === focusAssignmentId

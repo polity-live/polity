@@ -7,7 +7,7 @@ import {
   FormControlSelectTrigger,
   FormControlSelectValue,
 } from '@/features/shared/ui/form';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Link } from '@tanstack/react-router';
@@ -36,7 +36,7 @@ import {
   type GroupOpenAssignment,
 } from '@/features/groups/logic/openAssignments';
 import { type ColumnDef } from '@/features/shared/ui/data-table';
-import { CountBadge, EntityBadge, StatusBadge } from '@/features/shared/ui/status';
+import { BadgeControl, CountBadge, EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import type { DelegateElectionMode } from '../hooks/useGroupOpenAssignments';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -71,6 +71,52 @@ interface OpenAssignmentsPanelProps {
 interface OpenAssignmentTableRow {
   assignment: GroupOpenAssignment;
   remainingSeatCount: number;
+}
+
+type AssignmentStatusFilter = 'all' | GroupOpenAssignment['status'];
+type AssignmentDecisionFilter = 'all' | 'votes' | 'elections';
+
+interface AssignmentFilterBadgeOption<TValue extends string> {
+  value: TValue;
+  label: ReactNode;
+}
+
+function AssignmentFilterBadgeGroup<TValue extends string>({
+  label,
+  value,
+  options,
+  onValueChange,
+}: {
+  label: ReactNode;
+  value: TValue;
+  options: readonly AssignmentFilterBadgeOption<TValue>[];
+  onValueChange: (value: TValue) => void;
+}) {
+  return (
+    <div role="group" aria-label={String(label)} className="flex flex-wrap items-center gap-2">
+      <span className="text-muted-foreground text-xs font-medium">{label}</span>
+      {options.map(option => {
+        const selected = option.value === value;
+
+        return (
+          <BadgeControl
+            key={option.value}
+            asChild
+            variant={selected ? 'default' : 'outline'}
+            className={selected ? 'rounded-md shadow-sm' : 'rounded-md'}
+          >
+            <button
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onValueChange(option.value)}
+            >
+              {option.label}
+            </button>
+          </BadgeControl>
+        );
+      })}
+    </div>
+  );
 }
 
 function getStatusBadge(t: TFunction, assignment: GroupOpenAssignment) {
@@ -384,6 +430,21 @@ function getAssignmentSearchFlow(assignment: GroupOpenAssignment) {
     : 'delegate-assignment-search';
 }
 
+function matchesAssignmentDecisionFilter(
+  assignment: GroupOpenAssignment,
+  filter: AssignmentDecisionFilter
+) {
+  if (filter === 'all') {
+    return true;
+  }
+
+  if (filter === 'elections') {
+    return assignment.kind === 'delegate_election' || assignment.kind === 'role_renewal';
+  }
+
+  return assignment.kind === 'process_task' && assignment.processTaskType === 'schedule_event';
+}
+
 export function OpenAssignmentsPanel({
   groupId,
   groupName,
@@ -403,6 +464,8 @@ export function OpenAssignmentsPanel({
   const [eventDialogSearchQuery, setEventDialogSearchQuery] = useState('');
   const [eventDialogCorrelationId, setEventDialogCorrelationId] = useState<string | null>(null);
   const [agendaPreviewAssignmentId, setAgendaPreviewAssignmentId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<AssignmentStatusFilter>('all');
+  const [decisionFilter, setDecisionFilter] = useState<AssignmentDecisionFilter>('all');
 
   const assignmentsWithProgress = useMemo(
     () =>
@@ -412,6 +475,15 @@ export function OpenAssignmentsPanel({
           assignment.kind === 'delegate_election' ? getRemainingSeatCount(assignment) : 0,
       })),
     [assignments]
+  );
+
+  const filteredAssignmentsWithProgress = useMemo(
+    () =>
+      assignmentsWithProgress.filter(({ assignment }) => {
+        const matchesStatus = statusFilter === 'all' || assignment.status === statusFilter;
+        return matchesStatus && matchesAssignmentDecisionFilter(assignment, decisionFilter);
+      }),
+    [assignmentsWithProgress, decisionFilter, statusFilter]
   );
 
   const activeEventAssignment = useMemo(
@@ -518,6 +590,53 @@ export function OpenAssignmentsPanel({
     assignment.processTaskType !== 'implementation_evaluation' &&
     assignment.processTaskType !== 'support_confirmation' &&
     Boolean(assignment.amendment?.id);
+
+  const assignmentFilters = (
+    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+      <AssignmentFilterBadgeGroup<AssignmentStatusFilter>
+        label={t('features.groups.memberships.openAssignments.filters.status')}
+        value={statusFilter}
+        onValueChange={setStatusFilter}
+        options={[
+          {
+            value: 'all',
+            label: t('features.groups.memberships.openAssignments.filters.all'),
+          },
+          {
+            value: 'open',
+            label: t('features.groups.memberships.openAssignments.status.open'),
+          },
+          {
+            value: 'scheduled',
+            label: t('features.groups.memberships.openAssignments.status.scheduled'),
+          },
+          {
+            value: 'completed',
+            label: t('features.groups.memberships.openAssignments.status.completed'),
+          },
+        ]}
+      />
+      <AssignmentFilterBadgeGroup<AssignmentDecisionFilter>
+        label={t('features.groups.memberships.openAssignments.filters.assignmentKind')}
+        value={decisionFilter}
+        onValueChange={setDecisionFilter}
+        options={[
+          {
+            value: 'all',
+            label: t('features.groups.memberships.openAssignments.filters.all'),
+          },
+          {
+            value: 'votes',
+            label: t('features.groups.memberships.openAssignments.filters.votes'),
+          },
+          {
+            value: 'elections',
+            label: t('features.groups.memberships.openAssignments.filters.elections'),
+          },
+        ]}
+      />
+    </div>
+  );
 
   const assignmentColumns: ColumnDef<OpenAssignmentTableRow>[] = [
     {
@@ -853,7 +972,8 @@ export function OpenAssignmentsPanel({
       setEventDialogCorrelationId={setEventDialogCorrelationId}
       agendaPreviewAssignmentId={agendaPreviewAssignmentId}
       setAgendaPreviewAssignmentId={setAgendaPreviewAssignmentId}
-      assignmentsWithProgress={assignmentsWithProgress}
+      filteredAssignmentsWithProgress={filteredAssignmentsWithProgress}
+      assignmentFilters={assignmentFilters}
       activeEventAssignment={activeEventAssignment}
       activeAgendaPreviewAssignment={activeAgendaPreviewAssignment}
       filteredEventDialogEvents={filteredEventDialogEvents}

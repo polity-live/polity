@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -20,7 +20,7 @@ vi.mock('@tanstack/react-router', () => ({
 afterEach(cleanup);
 
 describe('UserMenuView', () => {
-  it('renders role-based groups and events in separate scrollable sections', () => {
+  it('renders role-based groups, events, and amendments in accordion sections', () => {
     render(
       <UserMenuView
         open
@@ -41,20 +41,36 @@ describe('UserMenuView', () => {
             locationName: 'Berlin',
           },
         ]}
+        amendments={[
+          {
+            id: 'amendment-1',
+            title: 'Open Motion',
+            code: 'A-1',
+            groupName: 'Working Circle',
+            targetGroupName: 'Policy Board',
+            eventTitle: 'Future Assembly',
+          },
+        ]}
         showGroupSearch={false}
         showEventSearch
+        showAmendmentSearch
         groupSearchQuery=""
         eventSearchQuery=""
+        amendmentSearchQuery=""
         groupSearchInputRef={createRef<HTMLInputElement>()}
         eventSearchInputRef={createRef<HTMLInputElement>()}
+        amendmentSearchInputRef={createRef<HTMLInputElement>()}
         labels={{
           profile: 'Profile',
           settings: 'Settings',
           groups: 'Groups',
           events: 'Events',
+          amendments: 'Amendments',
           eventFallback: 'Event',
+          amendmentFallback: 'Amendment',
           searchGroupsPlaceholder: 'Search groups...',
           searchEventsPlaceholder: 'Search events...',
+          searchAmendmentsPlaceholder: 'Search amendments...',
           clear: 'Clear',
           logout: 'Log out',
           logoutConfirm: 'Really log out?',
@@ -64,25 +80,45 @@ describe('UserMenuView', () => {
         onLogoutDialogOpenChange={vi.fn()}
         onGroupSearchChange={vi.fn()}
         onEventSearchChange={vi.fn()}
+        onAmendmentSearchChange={vi.fn()}
         onClearGroupSearch={vi.fn()}
         onClearEventSearch={vi.fn()}
+        onClearAmendmentSearch={vi.fn()}
         onLogout={vi.fn()}
       />
     );
 
-    expect(screen.getByText('Groups')).toBeTruthy();
-    expect(screen.getByText('Events')).toBeTruthy();
+    const groupsTrigger = screen.getByRole('button', { name: 'Groups' });
+    const eventsTrigger = screen.getByRole('button', { name: 'Events' });
+    const amendmentsTrigger = screen.getByRole('button', { name: 'Amendments' });
+
+    expect(groupsTrigger.getAttribute('data-state')).toBe('open');
+    expect(eventsTrigger.getAttribute('data-state')).toBe('closed');
+    expect(amendmentsTrigger.getAttribute('data-state')).toBe('closed');
+    expect(screen.getByText('Working Circle')).toBeTruthy();
+
+    fireEvent.click(eventsTrigger);
+    fireEvent.click(amendmentsTrigger);
+
     expect(screen.getByPlaceholderText('Search events...')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Search amendments...')).toBeTruthy();
+    expect(screen.getByText('Open Motion')).toBeTruthy();
+    expect(screen.getByText(/Policy Board/)).toBeTruthy();
     const hrefs = screen.getAllByRole('menuitem').map(item => item.getAttribute('href'));
 
-    expect(hrefs).toEqual(expect.arrayContaining(['/group/group-1', '/event/event-1']));
+    expect(hrefs).toEqual(
+      expect.arrayContaining(['/group/group-1', '/event/event-1', '/amendment/amendment-1'])
+    );
 
     const groupsList = screen.getByTestId('user-menu-groups-list');
     const eventsList = screen.getByTestId('user-menu-events-list');
+    const amendmentsList = screen.getByTestId('user-menu-amendments-list');
 
     expect(groupsList.className).toContain('overflow-y-auto');
     expect(groupsList.className).toContain('min-h-0');
     expect(eventsList.className).toContain('overflow-y-auto');
     expect(eventsList.className).toContain('min-h-0');
+    expect(amendmentsList.className).toContain('overflow-y-auto');
+    expect(amendmentsList.className).toContain('min-h-0');
   });
 });

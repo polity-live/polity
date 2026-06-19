@@ -63,6 +63,11 @@ export function useRelationshipEntityPreloads() {
         {},
         queries.amendments.currentUserActiveCollaborationsWithAmendments({})
       ),
+      createPreloadEntry(
+        'queries.amendments.currentUserOpenNavigationAmendments',
+        {},
+        queries.amendments.currentUserOpenNavigationAmendments({})
+      ),
     ];
   }, [userId]);
 

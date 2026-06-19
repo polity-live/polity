@@ -14,6 +14,7 @@ import type { VoteWithDetailsRow } from '@/zero/votes';
 import type { DecisionItem } from '../ui/types';
 import type { Visibility } from '@/features/auth/logic/checkEntityAccess';
 import type { TrendData } from '../ui/TrendIndicator';
+import { stripDelegateElectionMetadata } from '@/features/elections/logic/electionAssignmentMetadata';
 import {
   getDecisionStatus,
   isUrgent,
@@ -81,6 +82,61 @@ function getUserFullName(user?: ElectionCandidateRow['user'] | null): string | n
 
 function getCandidateDisplayName(candidate: ElectionCandidateRow): string {
   return getUserFullName(candidate.user) || candidate.name?.trim() || 'Candidate';
+}
+
+const CONFIRMED_EVENT_ROLE_STATUSES = new Set(['active', 'member', 'admin', 'confirmed']);
+
+function hasConfirmedEventRole(
+  event:
+    | {
+        participants?:
+          | {
+              user_id?: string | null;
+              status?: string | null;
+              participant_roles?: readonly unknown[] | null;
+            }[]
+          | null;
+      }
+    | null
+    | undefined,
+  userId?: string
+) {
+  if (!event || !userId) return false;
+
+  return (event.participants ?? []).some(
+    participant =>
+      participant.user_id === userId &&
+      CONFIRMED_EVENT_ROLE_STATUSES.has(participant.status ?? '') &&
+      (participant.participant_roles?.length ?? 0) > 0
+  );
+}
+
+function resolveDecisionTiming(args: {
+  phase: ReturnType<typeof normalizeDecisionVotingPhase>;
+  startsAt?: Date;
+  endsAt: Date;
+  hasExplicitClosingEnd: boolean;
+}) {
+  const startsInFuture = args.startsAt ? args.startsAt.getTime() > Date.now() : false;
+  const isActiveByStatus = args.phase === 'indication' || args.phase === 'final_vote';
+  const closedByStatus = args.phase === 'closed';
+  const isEnded =
+    closedByStatus ||
+    (args.hasExplicitClosingEnd && isClosed(args.endsAt)) ||
+    (!isActiveByStatus && isClosed(args.endsAt));
+  const isActiveDecision = isActiveByStatus && !isEnded && !startsInFuture;
+  const isFutureDecision = !isEnded && !isActiveDecision;
+
+  return {
+    isActiveDecision,
+    isFutureDecision,
+    isEnded,
+    temporalBucket: isEnded
+      ? ('past' as const)
+      : isActiveDecision
+        ? ('active' as const)
+        : ('future' as const),
+  };
 }
 
 // Re-export DecisionItem for use in other hooks
@@ -170,6 +226,8 @@ export function useDecisionTerminal(
               : election.created_at
                 ? new Date(election.created_at)
                 : now;
+      const hasExplicitClosingEnd =
+        typeof election.closing_end_time === 'number' && election.closing_end_time > 0;
 
       const startsAt = calculatedAgendaItem?.calculated_start_time
         ? new Date(calculatedAgendaItem.calculated_start_time)
@@ -232,9 +290,13 @@ export function useDecisionTerminal(
       });
 
       const winner = [...candidateSummaries].sort((a, b) => (b.votes || 0) - (a.votes || 0))[0];
-      const isActiveByStatus = phase === 'indication' || phase === 'final_vote';
-      const closedByStatus = phase === 'closed';
-      const isEnded = closedByStatus || (!isActiveByStatus && isClosed(endsAt));
+      const timing = resolveDecisionTiming({
+        phase,
+        startsAt,
+        endsAt,
+        hasExplicitClosingEnd,
+      });
+      const { isActiveDecision, isFutureDecision, isEnded, temporalBucket } = timing;
       const currentSelectionCount =
         isEnded || !isIndicationPhase ? totalFinalSelections : totalIndicationSelections;
       const turnout = totalElectors
@@ -250,6 +312,7 @@ export function useDecisionTerminal(
       const status = isEnded ? 'elected' : getDecisionStatus(endsAt);
       const agendaItemId = election.agenda_item?.id;
       const agendaEventId = election.agenda_item?.event?.id;
+      const confirmedEventRole = hasConfirmedEventRole(election.agenda_item?.event, user?.id);
       const electionHref =
         agendaItemId && agendaEventId ? `/event/${agendaEventId}/agenda/${agendaItemId}` : '#';
       const electorId = election.electors?.find(elector => elector.user_id === user?.id)?.id;
@@ -262,12 +325,17 @@ export function useDecisionTerminal(
         body: election.role?.name || election.agenda_item?.event?.title || 'Election',
         endsAt,
         startsAt,
+        sortStartsAt: startsAt ?? endsAt,
+        sortEndsAt: endsAt,
+        temporalBucket,
+        isActiveDecision,
+        isFutureDecision,
         status,
         isClosed: isEnded,
-        isClosingSoon: isClosingSoon(endsAt),
-        isOpeningSoon: !isEnded && startsAt ? isOpeningSoon(startsAt) : false,
+        isClosingSoon: isActiveDecision && isClosingSoon(endsAt),
+        isOpeningSoon: isFutureDecision && startsAt ? isOpeningSoon(startsAt) : false,
         isRecentlyClosed: isEnded ? isRecentlyClosed(endsAt) : false,
-        isUrgent: isUrgent(endsAt),
+        isUrgent: isActiveDecision && isUrgent(endsAt),
         visibility: (election.visibility as Visibility) ?? 'public',
         trend: { direction: 'stable', percentage: 0 },
         votedCount: currentSelectionCount,
@@ -275,14 +343,16 @@ export function useDecisionTerminal(
         turnout,
         winnerName: isEnded ? winner?.name : undefined,
         href: electionHref,
-        summary: election.description || undefined,
+        summary: stripDelegateElectionMetadata(election.description) || undefined,
         eventId: agendaEventId,
         agendaItemId,
         electionId: election.id,
         phase,
         ballotVisibility: election.ballot_visibility ?? null,
         electorId,
-        canOpenVoteDialog: Boolean(agendaEventId && agendaItemId && !isEnded),
+        canOpenVoteDialog: Boolean(agendaEventId && agendaItemId && isActiveDecision),
+        eventRoleFilterApplies: Boolean(agendaEventId),
+        hasConfirmedEventRole: confirmedEventRole,
         maxVotes: election.max_votes ?? 1,
         electionMode:
           election.election_mode === 'list' || election.election_mode === 'single'
@@ -320,6 +390,8 @@ export function useDecisionTerminal(
               : vote.created_at
                 ? new Date(vote.created_at)
                 : now;
+      const hasExplicitClosingEnd =
+        typeof vote.closing_end_time === 'number' && vote.closing_end_time > 0;
 
       const voteStartsAt = calculatedAgendaItem?.calculated_start_time
         ? new Date(calculatedAgendaItem.calculated_start_time)
@@ -331,9 +403,13 @@ export function useDecisionTerminal(
 
       const phase = normalizeDecisionVotingPhase(vote.status);
       const isIndicationPhase = phase === 'indication';
-      const isActiveByStatus = phase === 'indication' || phase === 'final_vote';
-      const closedByStatus = phase === 'closed';
-      const isEnded = closedByStatus || (!isActiveByStatus && isClosed(endsAt));
+      const timing = resolveDecisionTiming({
+        phase,
+        startsAt: voteStartsAt,
+        endsAt,
+        hasExplicitClosingEnd,
+      });
+      const { isActiveDecision, isFutureDecision, isEnded, temporalBucket } = timing;
       const finalVotes = countVoteChoices(vote, 'final');
       const indicationVotes = countVoteChoices(vote, 'indicative');
       const hasIndicationData = isIndicationPhase || (vote.indicative_decisions?.length || 0) > 0;
@@ -369,6 +445,7 @@ export function useDecisionTerminal(
         : getDecisionStatus(endsAt);
       const agendaItemId = vote.agenda_item?.id;
       const agendaEventId = vote.agenda_item?.event?.id;
+      const confirmedEventRole = hasConfirmedEventRole(vote.agenda_item?.event, user?.id);
       const voterId = vote.voters?.find(voter => voter.user_id === user?.id)?.id;
       const trend: TrendData =
         !isIndicationPhase && hasIndicationData
@@ -385,12 +462,17 @@ export function useDecisionTerminal(
         body: voteBody,
         endsAt,
         startsAt: voteStartsAt,
+        sortStartsAt: voteStartsAt ?? endsAt,
+        sortEndsAt: endsAt,
+        temporalBucket,
+        isActiveDecision,
+        isFutureDecision,
         status,
         isClosed: isEnded,
-        isClosingSoon: isClosingSoon(endsAt),
-        isOpeningSoon: !isEnded && voteStartsAt ? isOpeningSoon(voteStartsAt) : false,
+        isClosingSoon: isActiveDecision && isClosingSoon(endsAt),
+        isOpeningSoon: isFutureDecision && voteStartsAt ? isOpeningSoon(voteStartsAt) : false,
         isRecentlyClosed: isEnded ? isRecentlyClosed(endsAt) : false,
-        isUrgent: isUrgent(endsAt),
+        isUrgent: isActiveDecision && isUrgent(endsAt),
         visibility: (vote.visibility as Visibility) ?? 'public',
         trend,
         votes: currentVotes,
@@ -411,7 +493,9 @@ export function useDecisionTerminal(
         phase,
         ballotVisibility: vote.ballot_visibility ?? null,
         voterId,
-        canOpenVoteDialog: Boolean(agendaEventId && agendaItemId && !isEnded),
+        canOpenVoteDialog: Boolean(agendaEventId && agendaItemId && isActiveDecision),
+        eventRoleFilterApplies: Boolean(agendaEventId),
+        hasConfirmedEventRole: confirmedEventRole,
         choices: (vote.choices || []).map((choice, choiceIndex) => ({
           id: choice.id,
           label: choice.label || `Choice ${choiceIndex + 1}`,
@@ -439,12 +523,31 @@ export function useDecisionTerminal(
     });
 
     items.sort((a, b) => {
-      if (!a.isClosed && b.isClosed) return -1;
-      if (a.isClosed && !b.isClosed) return 1;
-      if (!a.isClosed && !b.isClosed) {
-        return new Date(a.endsAt).getTime() - new Date(b.endsAt).getTime();
+      const bucketOrder = { active: 0, future: 1, past: 2 } as const;
+      const leftBucket = a.temporalBucket ?? (a.isClosed ? 'past' : 'active');
+      const rightBucket = b.temporalBucket ?? (b.isClosed ? 'past' : 'active');
+
+      if (leftBucket !== rightBucket) {
+        return bucketOrder[leftBucket] - bucketOrder[rightBucket];
       }
-      return new Date(b.endsAt).getTime() - new Date(a.endsAt).getTime();
+
+      if (leftBucket === 'future') {
+        return (
+          new Date(a.sortStartsAt ?? a.startsAt ?? a.endsAt).getTime() -
+          new Date(b.sortStartsAt ?? b.startsAt ?? b.endsAt).getTime()
+        );
+      }
+
+      if (leftBucket === 'past') {
+        return (
+          new Date(b.sortEndsAt ?? b.endsAt).getTime() -
+          new Date(a.sortEndsAt ?? a.endsAt).getTime()
+        );
+      }
+
+      return (
+        new Date(a.sortEndsAt ?? a.endsAt).getTime() - new Date(b.sortEndsAt ?? b.endsAt).getTime()
+      );
     });
 
     return items;
@@ -458,7 +561,10 @@ export function useDecisionTerminal(
     [decisions]
   );
 
-  const activeCount = useMemo(() => decisions.filter(d => !d.isClosed).length, [decisions]);
+  const activeCount = useMemo(
+    () => decisions.filter(d => d.isActiveDecision ?? (!d.isClosed && !d.isOpeningSoon)).length,
+    [decisions]
+  );
 
   const recentlyClosedCount = useMemo(() => decisions.filter(d => d.isClosed).length, [decisions]);
 

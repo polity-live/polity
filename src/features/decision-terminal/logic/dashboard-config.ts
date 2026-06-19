@@ -9,7 +9,7 @@ import type {
 import type { DecisionItem } from '../ui/types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
-export const DECISION_TERMINAL_DASHBOARD_VERSION = 6;
+export const DECISION_TERMINAL_DASHBOARD_VERSION = 7;
 export const DECISION_TERMINAL_DESKTOP_COLUMNS = 12;
 export const DECISION_TERMINAL_TABLET_COLUMNS = 10;
 export const DECISION_TERMINAL_SMALL_COLUMNS = 6;
@@ -73,89 +73,84 @@ export const DECISION_WIDGET_TEMPLATES: Record<
   DecisionTerminalWidgetType,
   Omit<DecisionTerminalWidgetConfig, 'id'>
 > = {
-  live_decisions: {
-    type: 'live_decisions',
-    title: translateText('generated.inline.0065_live_decisions_6409f2ef'),
-    displayMode: 'table',
-    sort: 'closing_soon',
-    limit: 12,
-    filters: { status: ['live'] },
-    visibility: 'all',
-  },
-  my_vote_queue: {
-    type: 'my_vote_queue',
-    title: translateText('generated.inline.0066_my_vote_queue_7a46c525'),
+  global_decision_timeline: {
+    type: 'global_decision_timeline',
+    title: translateText(
+      'features.decisionTerminal.panels.globalDecisionTimeline',
+      'All global votes and elections'
+    ),
     displayMode: 'list',
-    sort: 'urgency',
-    limit: 8,
-    filters: { status: ['live'], onlyVotable: true },
+    sort: 'global_timeline',
     visibility: 'all',
   },
-  closing_soon: {
-    type: 'closing_soon',
-    title: translateText('generated.inline.0067_closing_soon_c287b749'),
-    displayMode: 'tape',
-    sort: 'closing_soon',
-    limit: 8,
-    filters: { status: ['live'], onlyUrgent: true },
-    visibility: 'all',
-  },
-  indicative_pulse: {
-    type: 'indicative_pulse',
-    title: translateText('generated.inline.0068_indicative_pulse_b69e59fa'),
-    displayMode: 'tape',
-    sort: 'trend',
-    limit: 8,
-    filters: { status: ['live'], onlyIndicative: true },
-    visibility: 'all',
-  },
-  turnout_monitor: {
-    type: 'turnout_monitor',
-    title: translateText('generated.inline.0069_turnout_monitor_ab0146fb'),
-    displayMode: 'metric',
-    sort: 'turnout',
-    limit: 10,
-    filters: { status: ['live'] },
-    visibility: 'all',
-  },
-  recent_results: {
-    type: 'recent_results',
-    title: translateText('generated.inline.0070_recent_results_fe95b32f'),
+  active_votes: {
+    type: 'active_votes',
+    title: translateText('features.decisionTerminal.panels.activeVotes', 'Active votes'),
     displayMode: 'list',
-    sort: 'recent',
-    limit: 8,
-    filters: { status: ['recently_closed'] },
+    sort: 'active_closing',
+    filters: { types: ['vote'] },
     visibility: 'all',
   },
-  election_leaderboard: {
-    type: 'election_leaderboard',
-    title: translateText('generated.inline.0071_election_leaderboard_0ed0cb9b'),
-    displayMode: 'leaderboard',
-    sort: 'turnout',
-    limit: 8,
-    filters: { status: ['live'], types: ['election'] },
+  active_elections: {
+    type: 'active_elections',
+    title: translateText('features.decisionTerminal.panels.activeElections', 'Active elections'),
+    displayMode: 'list',
+    sort: 'active_closing',
+    filters: { types: ['election'] },
+    visibility: 'all',
+  },
+  future_elections: {
+    type: 'future_elections',
+    title: translateText('features.decisionTerminal.panels.futureElections', 'Future elections'),
+    displayMode: 'list',
+    sort: 'future_start',
+    filters: { types: ['election'] },
+    visibility: 'all',
+  },
+  future_votes: {
+    type: 'future_votes',
+    title: translateText('features.decisionTerminal.panels.futureVotes', 'Future votes'),
+    displayMode: 'list',
+    sort: 'future_start',
+    filters: { types: ['vote'] },
+    visibility: 'all',
+  },
+  past_elections: {
+    type: 'past_elections',
+    title: translateText('features.decisionTerminal.panels.pastElections', 'Past elections'),
+    displayMode: 'list',
+    sort: 'past_end',
+    filters: { types: ['election'] },
+    visibility: 'all',
+  },
+  past_votes: {
+    type: 'past_votes',
+    title: translateText('features.decisionTerminal.panels.pastVotes', 'Past votes'),
+    displayMode: 'list',
+    sort: 'past_end',
+    filters: { types: ['vote'] },
     visibility: 'all',
   },
 };
 
 const DEFAULT_WIDGET_IDS: Record<DecisionTerminalWidgetType, string> = {
-  live_decisions: 'widget-live-decisions',
-  my_vote_queue: 'widget-my-vote-queue',
-  closing_soon: 'widget-closing-soon',
-  indicative_pulse: 'widget-indicative-pulse',
-  turnout_monitor: 'widget-turnout-monitor',
-  recent_results: 'widget-recent-results',
-  election_leaderboard: 'widget-election-leaderboard',
+  global_decision_timeline: 'widget-global-decision-timeline',
+  active_votes: 'widget-active-votes',
+  active_elections: 'widget-active-elections',
+  future_elections: 'widget-future-elections',
+  future_votes: 'widget-future-votes',
+  past_elections: 'widget-past-elections',
+  past_votes: 'widget-past-votes',
 };
 
 const DEFAULT_WIDGET_ORDER: DecisionTerminalWidgetType[] = [
-  'live_decisions',
-  'my_vote_queue',
-  'closing_soon',
-  'indicative_pulse',
-  'turnout_monitor',
-  'recent_results',
-  'election_leaderboard',
+  'global_decision_timeline',
+  'active_votes',
+  'active_elections',
+  'future_elections',
+  'future_votes',
+  'past_elections',
+  'past_votes',
 ];
 
 function makeWidget(type: DecisionTerminalWidgetType): DecisionTerminalWidgetConfig {
@@ -180,53 +175,53 @@ export function createDefaultDecisionTerminalDashboardConfig(): DecisionTerminal
   const widgets = DEFAULT_WIDGET_ORDER.map(type => makeWidget(type));
 
   const lg: DecisionTerminalGridLayoutItem[] = [
-    { i: 'widget-live-decisions', x: 0, y: 0, w: 6, h: 9, minW: 3, minH: 4 },
-    { i: 'widget-my-vote-queue', x: 6, y: 0, w: 6, h: 9, minW: 3, minH: 4 },
-    { i: 'widget-closing-soon', x: 0, y: 9, w: 4, h: 6, minW: 3, minH: 3 },
-    { i: 'widget-indicative-pulse', x: 4, y: 9, w: 4, h: 6, minW: 3, minH: 3 },
-    { i: 'widget-turnout-monitor', x: 8, y: 9, w: 4, h: 6, minW: 3, minH: 3 },
-    { i: 'widget-recent-results', x: 0, y: 15, w: 6, h: 7, minW: 3, minH: 3 },
-    { i: 'widget-election-leaderboard', x: 6, y: 15, w: 6, h: 7, minW: 3, minH: 3 },
+    { i: 'widget-global-decision-timeline', x: 0, y: 0, w: 12, h: 9, minW: 4, minH: 5 },
+    { i: 'widget-active-votes', x: 0, y: 9, w: 6, h: 7, minW: 3, minH: 4 },
+    { i: 'widget-active-elections', x: 6, y: 9, w: 6, h: 7, minW: 3, minH: 4 },
+    { i: 'widget-future-elections', x: 0, y: 16, w: 6, h: 7, minW: 3, minH: 4 },
+    { i: 'widget-future-votes', x: 6, y: 16, w: 6, h: 7, minW: 3, minH: 4 },
+    { i: 'widget-past-elections', x: 0, y: 23, w: 6, h: 7, minW: 3, minH: 4 },
+    { i: 'widget-past-votes', x: 6, y: 23, w: 6, h: 7, minW: 3, minH: 4 },
   ];
 
   const md: DecisionTerminalGridLayoutItem[] = [
-    { i: 'widget-live-decisions', x: 0, y: 0, w: 5, h: 9, minW: 3, minH: 4 },
-    { i: 'widget-my-vote-queue', x: 5, y: 0, w: 5, h: 9, minW: 3, minH: 4 },
-    { i: 'widget-closing-soon', x: 0, y: 9, w: 5, h: 6, minW: 3, minH: 3 },
-    { i: 'widget-indicative-pulse', x: 5, y: 9, w: 5, h: 6, minW: 3, minH: 3 },
-    { i: 'widget-turnout-monitor', x: 0, y: 15, w: 5, h: 6, minW: 3, minH: 3 },
-    { i: 'widget-recent-results', x: 5, y: 15, w: 5, h: 6, minW: 3, minH: 3 },
-    { i: 'widget-election-leaderboard', x: 0, y: 21, w: 10, h: 7, minW: 3, minH: 3 },
+    { i: 'widget-global-decision-timeline', x: 0, y: 0, w: 10, h: 9, minW: 4, minH: 5 },
+    { i: 'widget-active-votes', x: 0, y: 9, w: 5, h: 7, minW: 3, minH: 4 },
+    { i: 'widget-active-elections', x: 5, y: 9, w: 5, h: 7, minW: 3, minH: 4 },
+    { i: 'widget-future-elections', x: 0, y: 16, w: 5, h: 7, minW: 3, minH: 4 },
+    { i: 'widget-future-votes', x: 5, y: 16, w: 5, h: 7, minW: 3, minH: 4 },
+    { i: 'widget-past-elections', x: 0, y: 23, w: 5, h: 7, minW: 3, minH: 4 },
+    { i: 'widget-past-votes', x: 5, y: 23, w: 5, h: 7, minW: 3, minH: 4 },
   ];
 
   const sm: DecisionTerminalGridLayoutItem[] = [
-    { i: 'widget-live-decisions', x: 0, y: 0, w: 3, h: 8, minW: 2, minH: 4 },
-    { i: 'widget-my-vote-queue', x: 3, y: 0, w: 3, h: 8, minW: 2, minH: 4 },
-    { i: 'widget-closing-soon', x: 0, y: 8, w: 3, h: 6, minW: 2, minH: 3 },
-    { i: 'widget-indicative-pulse', x: 3, y: 8, w: 3, h: 6, minW: 2, minH: 3 },
-    { i: 'widget-turnout-monitor', x: 0, y: 14, w: 3, h: 6, minW: 2, minH: 3 },
-    { i: 'widget-recent-results', x: 3, y: 14, w: 3, h: 6, minW: 2, minH: 3 },
-    { i: 'widget-election-leaderboard', x: 0, y: 20, w: 6, h: 7, minW: 2, minH: 3 },
+    { i: 'widget-global-decision-timeline', x: 0, y: 0, w: 6, h: 8, minW: 2, minH: 5 },
+    { i: 'widget-active-votes', x: 0, y: 8, w: 3, h: 7, minW: 2, minH: 4 },
+    { i: 'widget-active-elections', x: 3, y: 8, w: 3, h: 7, minW: 2, minH: 4 },
+    { i: 'widget-future-elections', x: 0, y: 15, w: 3, h: 7, minW: 2, minH: 4 },
+    { i: 'widget-future-votes', x: 3, y: 15, w: 3, h: 7, minW: 2, minH: 4 },
+    { i: 'widget-past-elections', x: 0, y: 22, w: 3, h: 7, minW: 2, minH: 4 },
+    { i: 'widget-past-votes', x: 3, y: 22, w: 3, h: 7, minW: 2, minH: 4 },
   ];
 
   const xs: DecisionTerminalGridLayoutItem[] = [
-    { i: 'widget-live-decisions', x: 0, y: 0, w: 4, h: 8, minW: 1, minH: 4 },
-    { i: 'widget-my-vote-queue', x: 0, y: 8, w: 4, h: 6, minW: 1, minH: 3 },
-    { i: 'widget-closing-soon', x: 0, y: 14, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'widget-indicative-pulse', x: 2, y: 14, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'widget-turnout-monitor', x: 0, y: 19, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'widget-recent-results', x: 2, y: 19, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'widget-election-leaderboard', x: 0, y: 24, w: 4, h: 6, minW: 1, minH: 3 },
+    { i: 'widget-global-decision-timeline', x: 0, y: 0, w: 4, h: 8, minW: 1, minH: 5 },
+    { i: 'widget-active-votes', x: 0, y: 8, w: 4, h: 6, minW: 1, minH: 4 },
+    { i: 'widget-active-elections', x: 0, y: 14, w: 4, h: 6, minW: 1, minH: 4 },
+    { i: 'widget-future-elections', x: 0, y: 20, w: 4, h: 6, minW: 1, minH: 4 },
+    { i: 'widget-future-votes', x: 0, y: 26, w: 4, h: 6, minW: 1, minH: 4 },
+    { i: 'widget-past-elections', x: 0, y: 32, w: 4, h: 6, minW: 1, minH: 4 },
+    { i: 'widget-past-votes', x: 0, y: 38, w: 4, h: 6, minW: 1, minH: 4 },
   ];
 
   const xxs: DecisionTerminalGridLayoutItem[] = [
-    { i: 'widget-live-decisions', x: 0, y: 0, w: 2, h: 8, minW: 1, minH: 4 },
-    { i: 'widget-my-vote-queue', x: 0, y: 8, w: 2, h: 6, minW: 1, minH: 3 },
-    { i: 'widget-closing-soon', x: 0, y: 14, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'widget-indicative-pulse', x: 0, y: 19, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'widget-turnout-monitor', x: 0, y: 24, w: 2, h: 5, minW: 1, minH: 3 },
-    { i: 'widget-recent-results', x: 0, y: 29, w: 2, h: 6, minW: 1, minH: 3 },
-    { i: 'widget-election-leaderboard', x: 0, y: 35, w: 2, h: 6, minW: 1, minH: 3 },
+    { i: 'widget-global-decision-timeline', x: 0, y: 0, w: 2, h: 8, minW: 1, minH: 5 },
+    { i: 'widget-active-votes', x: 0, y: 8, w: 2, h: 6, minW: 1, minH: 4 },
+    { i: 'widget-active-elections', x: 0, y: 14, w: 2, h: 6, minW: 1, minH: 4 },
+    { i: 'widget-future-elections', x: 0, y: 20, w: 2, h: 6, minW: 1, minH: 4 },
+    { i: 'widget-future-votes', x: 0, y: 26, w: 2, h: 6, minW: 1, minH: 4 },
+    { i: 'widget-past-elections', x: 0, y: 32, w: 2, h: 6, minW: 1, minH: 4 },
+    { i: 'widget-past-votes', x: 0, y: 38, w: 2, h: 6, minW: 1, minH: 4 },
   ];
 
   return {
@@ -431,12 +426,34 @@ function matchesVisibility(decision: DecisionItem, visibility?: DecisionTerminal
   return decision.visibility === visibility;
 }
 
-function getDecisionTimestamp(decision: DecisionItem) {
-  const timestamp =
-    decision.endsAt instanceof Date
-      ? decision.endsAt.getTime()
-      : new Date(decision.endsAt).getTime();
+function getTimestamp(value: Date | string | number | null | undefined) {
+  if (value == null) return 0;
+  const timestamp = value instanceof Date ? value.getTime() : new Date(value).getTime();
   return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function getDecisionEndTimestamp(decision: DecisionItem) {
+  return getTimestamp(decision.sortEndsAt ?? decision.endsAt);
+}
+
+function getDecisionStartTimestamp(decision: DecisionItem) {
+  return getTimestamp(decision.sortStartsAt ?? decision.startsAt ?? decision.endsAt);
+}
+
+function getTemporalBucket(decision: DecisionItem): NonNullable<DecisionItem['temporalBucket']> {
+  if (decision.temporalBucket) return decision.temporalBucket;
+
+  if (decision.isClosed) return 'past';
+  if (decision.isFutureDecision) return 'future';
+  if (decision.phase === 'indication' || decision.phase === 'final_vote') return 'active';
+  if (decision.isOpeningSoon) return 'future';
+  return 'active';
+}
+
+function matchesRoleFilter(decision: DecisionItem, onlyConfirmedEventRole?: boolean) {
+  if (!onlyConfirmedEventRole) return true;
+  if (!decision.eventRoleFilterApplies) return true;
+  return Boolean(decision.hasConfirmedEventRole);
 }
 
 function compareDecisions(
@@ -445,8 +462,16 @@ function compareDecisions(
   sort: DecisionTerminalWidgetConfig['sort']
 ) {
   switch (sort) {
+    case 'global_timeline':
+      return compareGlobalTimeline(left, right);
+    case 'active_closing':
+      return getDecisionEndTimestamp(left) - getDecisionEndTimestamp(right);
+    case 'future_start':
+      return getDecisionStartTimestamp(left) - getDecisionStartTimestamp(right);
+    case 'past_end':
+      return getDecisionEndTimestamp(right) - getDecisionEndTimestamp(left);
     case 'recent':
-      return getDecisionTimestamp(right) - getDecisionTimestamp(left);
+      return getDecisionEndTimestamp(right) - getDecisionEndTimestamp(left);
     case 'turnout':
       return (right.turnout ?? 0) - (left.turnout ?? 0);
     case 'trend':
@@ -454,24 +479,77 @@ function compareDecisions(
     case 'urgency':
       return (
         Number(right.isUrgent) - Number(left.isUrgent) ||
-        getDecisionTimestamp(left) - getDecisionTimestamp(right)
+        getDecisionEndTimestamp(left) - getDecisionEndTimestamp(right)
       );
     case 'closing_soon':
     default:
-      return getDecisionTimestamp(left) - getDecisionTimestamp(right);
+      return getDecisionEndTimestamp(left) - getDecisionEndTimestamp(right);
   }
+}
+
+function compareGlobalTimeline(left: DecisionItem, right: DecisionItem) {
+  const bucketOrder: Record<NonNullable<DecisionItem['temporalBucket']>, number> = {
+    future: 0,
+    active: 1,
+    past: 2,
+  };
+  const leftBucket = getTemporalBucket(left);
+  const rightBucket = getTemporalBucket(right);
+
+  if (leftBucket !== rightBucket) {
+    return bucketOrder[leftBucket] - bucketOrder[rightBucket];
+  }
+
+  if (leftBucket === 'future') {
+    return getDecisionStartTimestamp(right) - getDecisionStartTimestamp(left);
+  }
+
+  if (leftBucket === 'past') {
+    return getDecisionEndTimestamp(right) - getDecisionEndTimestamp(left);
+  }
+
+  return getDecisionEndTimestamp(left) - getDecisionEndTimestamp(right);
+}
+
+function matchesWidgetPanel(decision: DecisionItem, widget: DecisionTerminalWidgetConfig) {
+  const bucket = getTemporalBucket(decision);
+
+  switch (widget.type) {
+    case 'active_votes':
+      return decision.type === 'vote' && bucket === 'active';
+    case 'active_elections':
+      return decision.type === 'election' && bucket === 'active';
+    case 'future_elections':
+      return decision.type === 'election' && bucket === 'future';
+    case 'future_votes':
+      return decision.type === 'vote' && bucket === 'future';
+    case 'past_elections':
+      return decision.type === 'election' && bucket === 'past';
+    case 'past_votes':
+      return decision.type === 'vote' && bucket === 'past';
+    case 'global_decision_timeline':
+    default:
+      return true;
+  }
+}
+
+export interface SelectWidgetDecisionsOptions {
+  onlyConfirmedEventRole?: boolean;
 }
 
 export function selectWidgetDecisions(
   decisions: DecisionItem[],
   widget: DecisionTerminalWidgetConfig,
-  searchQuery = ''
+  searchQuery = '',
+  options: SelectWidgetDecisionsOptions = {}
 ) {
   const query = searchQuery.trim().toLowerCase();
 
-  return decisions
+  const selected = decisions
     .filter(decision => {
       const filters = widget.filters;
+      if (!matchesWidgetPanel(decision, widget)) return false;
+      if (!matchesRoleFilter(decision, options.onlyConfirmedEventRole)) return false;
       if (!matchesStatus(decision, filters?.status)) return false;
       if (filters?.types?.length && !filters.types.includes(decision.type)) return false;
       if (filters?.onlyVotable && !decision.canOpenVoteDialog) return false;
@@ -490,6 +568,7 @@ export function selectWidgetDecisions(
       }
       return true;
     })
-    .sort((left, right) => compareDecisions(left, right, widget.sort))
-    .slice(0, widget.limit ?? 10);
+    .sort((left, right) => compareDecisions(left, right, widget.sort));
+
+  return typeof widget.limit === 'number' ? selected.slice(0, widget.limit) : selected;
 }

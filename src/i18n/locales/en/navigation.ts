@@ -113,9 +113,12 @@ export const navigationTranslations = {
     profile: 'Profile',
     settings: 'Settings',
     events: 'Events',
+    amendments: 'Amendments',
     eventFallback: 'Event',
+    amendmentFallback: 'Amendment',
     searchGroupsPlaceholder: 'Search groups...',
     searchEventsPlaceholder: 'Search events...',
+    searchAmendmentsPlaceholder: 'Search amendments...',
   },
   demo: {
     title: 'Dynamic Navigation Demo',

@@ -1,22 +1,25 @@
 'use client';
 
-import { featureThemeClassName } from '@/features/shared/theme';
-import { useState, type ReactNode } from 'react';
-import { Award, BarChart3, Clock3, Crown, Vote } from 'lucide-react';
-import { Skeleton } from '@/features/shared/ui/ui/skeleton';
-import { DecisionResultCompact as ResultCompact } from '@/features/shared/ui/voting';
-import { BadgeControl } from '@/features/shared/ui/status';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { Award, CalendarClock, CheckCircle2, Crown, Vote } from 'lucide-react';
+
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
+import {
+  BadgeControl,
+  DecisionStatusBadge as StatusBadge,
+  type DecisionStatus,
+} from '@/features/shared/ui/status';
+import { DecisionResultCompact as ResultCompact } from '@/features/shared/ui/voting';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 import { cn } from '@/features/shared/utils/utils';
 import type { DecisionTerminalWidgetConfig } from '@/zero/preferences';
-import { VoteBarCompact, type VoteData } from './VoteProgressBar';
+
 import { CountdownTimer, EndedAgo } from './CountdownTimer';
-import { DecisionTable } from './DecisionTable';
 import { DecisionVoteButton } from './DecisionVoteButton';
-import { TrendIndicator } from './TrendIndicator';
-import type { DecisionItem } from './types';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
+import type { DecisionItem, DecisionLiveDelta, DecisionLiveDeltaTone } from './types';
 
 interface DecisionWidgetContentProps {
   widget: DecisionTerminalWidgetConfig;
@@ -25,12 +28,15 @@ interface DecisionWidgetContentProps {
   onVoteDecision: (decision: DecisionItem) => void;
 }
 
-function formatInt(value: number | null | undefined) {
-  return Math.round(value ?? 0).toString();
+interface ResultSnapshotEntry {
+  key: string;
+  label: string;
+  value: number;
+  tone: DecisionLiveDeltaTone;
 }
 
-function formatPercent(value: number | null | undefined) {
-  return `${Math.round(value ?? 0).toFixed(0)}%`;
+function formatInt(value: number | null | undefined) {
+  return Math.round(value ?? 0).toString();
 }
 
 function normalizePercent(value: number | null | undefined) {
@@ -48,15 +54,43 @@ function formatCountPercent(count: number | null | undefined, percent: number | 
 function getInitials(name: string) {
   return (
     name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
+      .split(/\s+/)
+      .filter(Boolean)
       .slice(0, 2)
-      .toUpperCase() || '?'
+      .map(part => part[0]?.toUpperCase())
+      .join('') || '?'
   );
 }
 
-function getVoteData(decision: DecisionItem): VoteData | null {
+function normalizeContextText(value?: string | null) {
+  return value?.trim().replace(/\s+/g, ' ').toLowerCase() ?? '';
+}
+
+function hasHref(href?: string | null): href is string {
+  return Boolean(href && href !== '#');
+}
+
+function DecisionLink({
+  href,
+  children,
+  className,
+}: {
+  href?: string | null;
+  children: ReactNode;
+  className?: string;
+}) {
+  if (!hasHref(href)) {
+    return <span className={className}>{children}</span>;
+  }
+
+  return (
+    <SmartLink href={href} className={cn('hover:text-primary hover:underline', className)}>
+      {children}
+    </SmartLink>
+  );
+}
+
+function getVoteData(decision: DecisionItem) {
   if (decision.type !== 'vote') return null;
   if (decision.isIndicationPhase && decision.indicationVotes) return decision.indicationVotes;
   return decision.votes ?? null;
@@ -64,8 +98,10 @@ function getVoteData(decision: DecisionItem): VoteData | null {
 
 function getDecisionTotal(decision: DecisionItem) {
   if (typeof decision.votedCount === 'number') return Math.round(decision.votedCount);
+
   const votes = getVoteData(decision);
   if (votes) return Math.round(votes.support + votes.oppose + votes.abstain);
+
   if (decision.candidates?.length) {
     return Math.round(
       decision.candidates.reduce(
@@ -76,49 +112,293 @@ function getDecisionTotal(decision: DecisionItem) {
       )
     );
   }
+
   return 0;
 }
 
-function getDecisionBar(decision: DecisionItem) {
-  if (decision.type === 'election' && decision.candidates?.length) {
-    return <ElectionCandidateRows decision={decision} limit={2} compact />;
+function getResultSnapshot(decision: DecisionItem): ResultSnapshotEntry[] {
+  if (decision.type === 'election') {
+    return (decision.candidates ?? []).map(candidate => ({
+      key: `candidate:${candidate.id}`,
+      label: candidate.name,
+      value: decision.isIndicationPhase ? (candidate.indicationVotes ?? 0) : (candidate.votes ?? 0),
+      tone: 'success',
+    }));
   }
 
   const votes = getVoteData(decision);
-  if (votes) return <VoteBarCompact votes={votes} />;
+  if (!votes) return [];
 
-  return <div className="bg-muted/40 h-2 rounded-full" />;
+  return [
+    {
+      key: 'vote:support',
+      label: decision.choices?.[0]?.label ?? translateText('timeline.terminal.support', 'Support'),
+      value: votes.support,
+      tone: 'success',
+    },
+    {
+      key: 'vote:oppose',
+      label: decision.choices?.[1]?.label ?? translateText('timeline.terminal.oppose', 'Oppose'),
+      value: votes.oppose,
+      tone: 'danger',
+    },
+    {
+      key: 'vote:abstain',
+      label: decision.choices?.[2]?.label ?? translateText('timeline.terminal.abstain', 'Abstain'),
+      value: votes.abstain,
+      tone: 'neutral',
+    },
+  ];
 }
 
-function getElectionCandidateRows(decision: DecisionItem, limit?: number) {
-  const candidates =
-    decision.candidates?.map(candidate => {
-      const finalValue = candidate.votes ?? 0;
-      const indicationValue = candidate.indicationVotes ?? 0;
-      const value = decision.isIndicationPhase ? indicationValue : finalValue;
-      const isWinner =
-        Boolean(candidate.isWinner) ||
-        (decision.isClosed &&
-          Boolean(decision.winnerName) &&
-          decision.winnerName === candidate.name);
+function useDecisionLiveDeltas(decisions: DecisionItem[]) {
+  const previousRef = useRef<Map<string, Map<string, ResultSnapshotEntry>>>(new Map());
+  const timeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const [deltas, setDeltas] = useState<Map<string, DecisionLiveDelta[]>>(new Map());
 
-      return {
-        id: candidate.id,
-        label: candidate.name,
-        avatarUrl: candidate.avatarUrl,
-        value,
-        finalValue,
-        indicationValue,
-        finalExplicitPercent: candidate.actualPercentage,
-        indicationExplicitPercent: candidate.indicationPercentage,
-        isWinner,
-      };
-    }) ?? [];
+  useEffect(() => {
+    const nextSnapshot = new Map<string, Map<string, ResultSnapshotEntry>>();
+    const previousSnapshot = previousRef.current;
+
+    for (const decision of decisions) {
+      const entries = getResultSnapshot(decision);
+      const nextEntries = new Map(entries.map(entry => [entry.key, entry]));
+      nextSnapshot.set(decision.id, nextEntries);
+
+      const previousEntries = previousSnapshot.get(decision.id);
+      if (!previousEntries) continue;
+
+      const nextDeltas = entries
+        .map(entry => {
+          const previousValue = previousEntries.get(entry.key)?.value ?? 0;
+          const change = entry.value - previousValue;
+          if (change <= 0) return null;
+
+          return {
+            key: entry.key,
+            label: entry.label,
+            value: change,
+            tone: entry.tone,
+          } satisfies DecisionLiveDelta;
+        })
+        .filter((entry): entry is DecisionLiveDelta => entry !== null);
+
+      if (!nextDeltas.length) continue;
+
+      const timeoutKey = decision.id;
+      const existingTimeout = timeoutsRef.current.get(timeoutKey);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+
+      setDeltas(current => {
+        const next = new Map(current);
+        next.set(decision.id, nextDeltas);
+        return next;
+      });
+
+      const timeout = setTimeout(() => {
+        setDeltas(current => {
+          const next = new Map(current);
+          next.delete(decision.id);
+          return next;
+        });
+        timeoutsRef.current.delete(timeoutKey);
+      }, 1800);
+
+      timeoutsRef.current.set(timeoutKey, timeout);
+    }
+
+    previousRef.current = nextSnapshot;
+  }, [decisions]);
+
+  useEffect(
+    () => () => {
+      timeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+      timeoutsRef.current.clear();
+    },
+    []
+  );
+
+  return deltas;
+}
+
+function getDelta(deltas: DecisionLiveDelta[] | undefined, key: string) {
+  return deltas?.find(delta => delta.key === key);
+}
+
+function LiveDeltaBadge({ delta }: { delta?: DecisionLiveDelta }) {
+  if (!delta) return null;
+
+  return (
+    <span
+      className={cn(
+        'animate-in fade-in slide-in-from-bottom-1 rounded-md px-1.5 py-0.5 text-xs font-semibold tabular-nums shadow-sm',
+        delta.tone === 'success' && 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60',
+        delta.tone === 'danger' && 'bg-red-100 text-red-700 dark:bg-red-950/60',
+        delta.tone === 'neutral' && 'bg-muted text-muted-foreground'
+      )}
+      aria-live="polite"
+    >
+      +{formatInt(delta.value)}
+    </span>
+  );
+}
+
+function DecisionContextLinks({ decision }: { decision: DecisionItem }) {
+  const body = decision.body?.trim();
+  const shouldShowAgendaItem =
+    decision.agendaItem &&
+    !(
+      decision.agendaItem.href === decision.href &&
+      normalizeContextText(decision.agendaItem.name) === normalizeContextText(decision.title)
+    );
+
+  if (!body && !decision.entity && !shouldShowAgendaItem) {
+    return null;
+  }
+
+  return (
+    <div className="text-muted-foreground mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+      {body ? <span className="truncate">{body}</span> : null}
+      {decision.entity ? (
+        <DecisionLink href={decision.entity.href} className="truncate">
+          {decision.entity.name}
+        </DecisionLink>
+      ) : null}
+      {shouldShowAgendaItem ? (
+        <DecisionLink href={decision.agendaItem.href} className="truncate">
+          {decision.agendaItem.name}
+        </DecisionLink>
+      ) : null}
+    </div>
+  );
+}
+
+function DecisionSummaryLine({ decision }: { decision: DecisionItem }) {
+  if (!decision.summary) return null;
+  return <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">{decision.summary}</p>;
+}
+
+function DecisionMetricsLine({ decision }: { decision: DecisionItem }) {
+  const parts: string[] = [];
+
+  if (typeof decision.votedCount === 'number' && typeof decision.totalMembers === 'number') {
+    parts.push(`${formatInt(decision.votedCount)}/${formatInt(decision.totalMembers)}`);
+  }
+
+  if (typeof decision.turnout === 'number') {
+    parts.push(`${formatInt(decision.turnout)}%`);
+  }
+
+  if (decision.isIndicationPhase) {
+    parts.push(translateText('features.events.agenda.indicationShort', 'IND'));
+  } else if (decision.phase === 'final_vote') {
+    parts.push(translateText('features.events.voting.phases.finalVote', 'Final vote'));
+  }
+
+  if (!parts.length) return null;
+
+  return <div className="text-muted-foreground mt-2 text-xs">{parts.join(' · ')}</div>;
+}
+
+function WidgetLoading() {
+  return (
+    <div className="space-y-2 p-3">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <Skeleton key={index} className="h-24 w-full rounded-md" />
+      ))}
+    </div>
+  );
+}
+
+function WidgetEmpty() {
+  return (
+    <div className="text-muted-foreground flex h-full min-h-28 items-center justify-center p-4 text-center text-sm">
+      {translateText(
+        'features.decisionTerminal.empty.noMatchingDecisions',
+        'No matching decisions'
+      )}
+    </div>
+  );
+}
+
+function VoteChoiceRows({
+  decision,
+  deltas,
+}: {
+  decision: DecisionItem;
+  deltas?: DecisionLiveDelta[];
+}) {
+  const votes = getVoteData(decision);
+  if (!votes) return null;
+
+  const rows = getResultSnapshot(decision);
+  const total = Math.max(0, votes.support + votes.oppose + votes.abstain);
+
+  return (
+    <div className="space-y-2">
+      {rows.map(row => {
+        const percent = total > 0 ? (row.value / total) * 100 : 0;
+
+        return (
+          <div key={row.key} className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="min-w-0 flex-1 truncate text-xs font-medium">{row.label}</span>
+              <LiveDeltaBadge delta={getDelta(deltas, row.key)} />
+              <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                {formatCountPercent(row.value, percent)}
+              </span>
+            </div>
+            <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
+              <div
+                className={cn(
+                  'h-full rounded-full',
+                  row.tone === 'success' && 'bg-brand',
+                  row.tone === 'danger' && 'bg-destructive',
+                  row.tone === 'neutral' && 'bg-muted-foreground/45'
+                )}
+                style={{ width: `${normalizePercent(percent)}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function getElectionCandidateRows(decision: DecisionItem) {
+  if (decision.type !== 'election' || !decision.candidates?.length) {
+    return [];
+  }
+
+  const candidates = decision.candidates.map(candidate => {
+    const finalValue = candidate.votes ?? 0;
+    const indicationValue = candidate.indicationVotes ?? 0;
+    const value = decision.isIndicationPhase ? indicationValue : finalValue;
+    const isWinner =
+      Boolean(candidate.isWinner) ||
+      (decision.isClosed && Boolean(decision.winnerName) && decision.winnerName === candidate.name);
+
+    return {
+      id: candidate.id,
+      label: candidate.name,
+      avatarUrl: candidate.avatarUrl,
+      value,
+      finalValue,
+      indicationValue,
+      finalExplicitPercent: candidate.actualPercentage,
+      indicationExplicitPercent: candidate.indicationPercentage,
+      isWinner,
+    };
+  });
 
   const total = candidates.reduce((sum, candidate) => sum + candidate.value, 0);
   const finalTotal = candidates.reduce((sum, candidate) => sum + candidate.finalValue, 0);
   const indicationTotal = candidates.reduce((sum, candidate) => sum + candidate.indicationValue, 0);
-  const rows = candidates
+
+  return candidates
     .map(candidate => ({
       ...candidate,
       percent:
@@ -151,64 +431,27 @@ function getElectionCandidateRows(decision: DecisionItem, limit?: number) {
         Number(right.isWinner) - Number(left.isWinner) ||
         right.value - left.value ||
         left.label.localeCompare(right.label)
-    );
-
-  return limit ? rows.slice(0, limit) : rows;
+    )
+    .slice(0, 3);
 }
 
 function ElectionCandidateRows({
   decision,
-  limit,
-  compact,
+  deltas,
 }: {
   decision: DecisionItem;
-  limit?: number;
-  compact?: boolean;
+  deltas?: DecisionLiveDelta[];
 }) {
-  const [showIndicationResults, setShowIndicationResults] = useState(false);
-  const rows = getElectionCandidateRows(decision, limit);
+  const rows = getElectionCandidateRows(decision);
   if (!rows.length) return null;
 
-  const canToggleIndicationResults =
-    !decision.isIndicationPhase &&
-    Boolean(decision.candidates?.some(candidate => (candidate.votes ?? 0) > 0)) &&
-    Boolean(
-      decision.candidates?.some(
-        candidate =>
-          (candidate.indicationVotes ?? 0) > 0 || candidate.indicationPercentage !== undefined
-      )
-    );
-
   return (
-    <div className={cn('space-y-2', compact && 'space-y-1.5')}>
-      {canToggleIndicationResults ? (
-        <div className="flex justify-end">
-          <BadgeControl asChild variant={showIndicationResults ? 'secondary' : 'outline'} size="xs">
-            <button
-              type="button"
-              onClick={event => {
-                event.stopPropagation();
-                setShowIndicationResults(current => !current);
-              }}
-            >
-              {showIndicationResults
-                ? translateText(
-                    'features.events.agenda.hideIndicationResults',
-                    'Hide indication results'
-                  )
-                : translateText(
-                    'features.events.agenda.showIndicationResults',
-                    'Show indication results'
-                  )}
-            </button>
-          </BadgeControl>
-        </div>
-      ) : null}
+    <div className="space-y-2">
       {rows.map(candidate => (
         <div
           key={candidate.id}
           className={cn(
-            'bg-card space-y-1.5 rounded-lg border px-2.5 py-2 shadow-sm',
+            'bg-background/60 space-y-1.5 rounded-md border px-2.5 py-2',
             candidate.isWinner &&
               'border-[var(--badge-warning-border)] bg-[var(--badge-warning-bg)]'
           )}
@@ -216,7 +459,7 @@ function ElectionCandidateRows({
           data-winner={candidate.isWinner ? 'true' : undefined}
         >
           <div className="flex items-center gap-2">
-            <Avatar className={cn('shrink-0 rounded-md', compact ? 'h-8 w-8' : 'h-9 w-9')}>
+            <Avatar className="h-8 w-8 shrink-0 rounded-md">
               <AvatarImage src={candidate.avatarUrl} alt={candidate.label} />
               <AvatarFallback className="rounded-md text-xs font-semibold">
                 {getInitials(candidate.label)}
@@ -233,6 +476,7 @@ function ElectionCandidateRows({
                 ) : null}
               </div>
             </div>
+            <LiveDeltaBadge delta={getDelta(deltas, `candidate:${candidate.id}`)} />
             <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
               {formatCountPercent(candidate.value, candidate.percent)}
             </span>
@@ -240,340 +484,207 @@ function ElectionCandidateRows({
           <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
             <div
               className={cn('h-full rounded-full', candidate.isWinner ? 'bg-brand' : 'bg-brand/70')}
-              style={{ width: `${Math.max(0, Math.min(100, candidate.percent))}%` }}
+              style={{ width: `${normalizePercent(candidate.percent)}%` }}
             />
           </div>
-          {canToggleIndicationResults && showIndicationResults ? (
-            <div className="grid grid-cols-[2.25rem_1fr_auto] items-center gap-2">
-              <span className="text-muted-foreground text-[10px] tracking-wide uppercase">
-                {translateText('features.events.agenda.indicationShort', 'IND')}
-              </span>
-              <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
-                <div
-                  className="bg-brand/35 h-full rounded-full"
-                  style={{ width: `${normalizePercent(candidate.indicationPercent)}%` }}
-                />
-              </div>
-              <span className="text-muted-foreground text-xs tabular-nums">
-                {formatCountPercent(candidate.indicationValue, candidate.indicationPercent)}
-              </span>
-            </div>
-          ) : null}
         </div>
       ))}
     </div>
   );
 }
 
-function hasHref(href?: string | null): href is string {
-  return Boolean(href && href !== '#');
-}
+function DecisionTime({ decision }: { decision: DecisionItem }) {
+  if (decision.isClosed) {
+    return <EndedAgo endedAt={decision.endsAt} />;
+  }
 
-function DecisionLink({
-  href,
-  children,
-  className,
-}: {
-  href?: string | null;
-  children: ReactNode;
-  className?: string;
-}) {
-  if (!hasHref(href)) {
-    return <span className={className}>{children}</span>;
+  if (decision.isFutureDecision && decision.startsAt) {
+    return (
+      <CountdownTimer
+        endsAt={decision.startsAt}
+        compact
+        compactLabel={translateText('timeline.terminal.startsIn', 'Starts in')}
+      />
+    );
   }
 
   return (
-    <SmartLink href={href} className={cn('hover:text-primary hover:underline', className)}>
-      {children}
-    </SmartLink>
+    <CountdownTimer
+      endsAt={decision.endsAt}
+      compact
+      compactLabel={translateText('timeline.terminal.closesIn', 'Closes in')}
+    />
   );
 }
 
-function DecisionContextLinks({ decision }: { decision: DecisionItem }) {
-  return (
-    <div className={featureThemeClassName('decisionterminalDecisionWidgetContentThemedText')}>
-      <DecisionLink href={decision.href} className="shrink-0 font-semibold">
-        {decision.id}
-      </DecisionLink>
-      <span className="truncate">{decision.body}</span>
-      {decision.entity ? (
-        <DecisionLink href={decision.entity.href} className="truncate">
-          {decision.entity.name}
-        </DecisionLink>
-      ) : null}
-      {decision.agendaItem ? (
-        <DecisionLink href={decision.agendaItem.href} className="truncate">
-          {decision.agendaItem.name}
-        </DecisionLink>
-      ) : null}
-      {decision.isIndicationPhase ? (
-        <span className="text-primary shrink-0 font-semibold">
-          {translateText('generated.inline.0047_ind_caba0e5d')}
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
-function DecisionSummaryLine({ decision }: { decision: DecisionItem }) {
-  if (!decision.summary) return null;
-
-  return <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">{decision.summary}</p>;
-}
-
-function DecisionMetricsLine({ decision }: { decision: DecisionItem }) {
-  const parts: string[] = [];
-  if (typeof decision.votedCount === 'number' && typeof decision.totalMembers === 'number') {
-    parts.push(`${decision.votedCount}/${decision.totalMembers}`);
-  }
-  if (typeof decision.turnout === 'number') {
-    parts.push(formatPercent(decision.turnout));
-  }
-  if (decision.type === 'vote') {
-    const votes = getVoteData(decision);
-    if (votes) {
-      parts.push(`${votes.support}/${votes.oppose}/${votes.abstain}`);
-    }
+function DecisionStateBadge({ decision }: { decision: DecisionItem }) {
+  if (decision.isClosed) {
+    return (
+      <ResultCompact
+        result={decision.status as 'passed' | 'failed' | 'tied' | 'elected'}
+        winnerName={decision.type === 'election' ? undefined : decision.winnerName}
+      />
+    );
   }
 
-  if (!parts.length) return null;
+  if (decision.isFutureDecision) {
+    return (
+      <BadgeControl variant="outline" size="xs" className="gap-1">
+        <CalendarClock className="h-3 w-3" />
+        {translateText('features.decisionTerminal.status.future', 'Upcoming')}
+      </BadgeControl>
+    );
+  }
 
-  return (
-    <div className={featureThemeClassName('decisionterminalDecisionWidgetContentThemedTextAlpha')}>
-      {parts.join(' · ')}
-    </div>
-  );
+  return <StatusBadge status={decision.status as DecisionStatus} />;
 }
 
-function WidgetLoading() {
-  return (
-    <div className="space-y-2 p-3">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <Skeleton key={index} className="h-10 w-full rounded-md" />
-      ))}
-    </div>
-  );
-}
-
-function WidgetEmpty() {
-  return (
-    <div className="text-muted-foreground flex h-full min-h-28 items-center justify-center p-4 text-center text-sm">
-      {translateText('generated.inline.0349_no_matching_decisions_04f8c20a')}
-    </div>
-  );
-}
-
-function CompactDecisionLine({
+function DecisionPanelRow({
   decision,
+  deltas,
   onVoteDecision,
-  showVote = false,
 }: {
   decision: DecisionItem;
+  deltas?: DecisionLiveDelta[];
   onVoteDecision: (decision: DecisionItem) => void;
-  showVote?: boolean;
 }) {
   const Icon = decision.type === 'vote' ? Vote : Award;
-  const hasElectionCandidates =
-    decision.type === 'election' && Boolean(decision.candidates?.length);
+  const total = getDecisionTotal(decision);
+
+  return (
+    <article
+      className={cn(
+        'bg-card hover:bg-muted/20 rounded-md border p-3 shadow-sm transition-colors',
+        decision.isUrgent && !decision.isClosed && 'border-destructive/40 bg-destructive/5'
+      )}
+      data-testid={decision.type === 'vote' ? 'vote-row' : 'election-row'}
+      data-vote-id={decision.type === 'vote' ? decision.sourceId : undefined}
+      data-election-id={decision.type === 'election' ? decision.sourceId : undefined}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="bg-muted text-muted-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-md border">
+              <Icon className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <DecisionLink href={decision.href} className="block truncate text-sm font-semibold">
+                {decision.title}
+              </DecisionLink>
+              <DecisionContextLinks decision={decision} />
+            </div>
+          </div>
+          <DecisionSummaryLine decision={decision} />
+        </div>
+
+        <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+          <DecisionStateBadge decision={decision} />
+          <DecisionTime decision={decision} />
+        </div>
+      </div>
+
+      <div className="mt-3">
+        {decision.type === 'election' ? (
+          <ElectionCandidateRows decision={decision} deltas={deltas} />
+        ) : (
+          <VoteChoiceRows decision={decision} deltas={deltas} />
+        )}
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <div className="text-muted-foreground flex min-w-0 items-center gap-2 text-xs">
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">
+            {formatInt(total)} {translateText('timeline.terminal.votes', 'votes')}
+          </span>
+        </div>
+        {decision.canOpenVoteDialog ? (
+          <DecisionVoteButton decision={decision} compact onVote={onVoteDecision} />
+        ) : null}
+      </div>
+
+      <DecisionMetricsLine decision={decision} />
+    </article>
+  );
+}
+
+function getGlobalInitialIndex(decisions: DecisionItem[]) {
+  const activeIndex = decisions.findIndex(decision => decision.temporalBucket === 'active');
+  if (activeIndex >= 0) return activeIndex;
+
+  const firstPastIndex = decisions.findIndex(decision => decision.temporalBucket === 'past');
+  return firstPastIndex >= 0 ? firstPastIndex : 0;
+}
+
+function VirtualDecisionList({
+  widget,
+  decisions,
+  deltasByDecisionId,
+  onVoteDecision,
+}: {
+  widget: DecisionTerminalWidgetConfig;
+  decisions: DecisionItem[];
+  deltasByDecisionId: Map<string, DecisionLiveDelta[]>;
+  onVoteDecision: (decision: DecisionItem) => void;
+}) {
+  const parentRef = useRef<HTMLDivElement>(null);
+  const didInitialScrollRef = useRef(false);
+  const rowVirtualizer = useVirtualizer({
+    count: decisions.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 168,
+    initialRect: { width: 640, height: 720 },
+    overscan: 6,
+  });
+  const measuredVirtualItems = rowVirtualizer.getVirtualItems();
+  const virtualItems =
+    measuredVirtualItems.length > 0
+      ? measuredVirtualItems
+      : decisions.slice(0, Math.min(decisions.length, 12)).map((decision, index) => ({
+          key: decision.id,
+          index,
+          start: index * 168,
+        }));
+  const totalSize = Math.max(rowVirtualizer.getTotalSize(), decisions.length * 168);
+
+  useEffect(() => {
+    if (widget.type !== 'global_decision_timeline' || didInitialScrollRef.current) {
+      return;
+    }
+
+    if (!decisions.length) return;
+
+    didInitialScrollRef.current = true;
+    rowVirtualizer.scrollToIndex(getGlobalInitialIndex(decisions), { align: 'center' });
+  }, [decisions, rowVirtualizer, widget.type]);
 
   return (
     <div
-      className={cn(
-        'bg-card hover:bg-muted/30 grid grid-cols-[minmax(0,1fr)_96px] gap-3 rounded-lg border px-3 py-2.5 shadow-sm transition-colors',
-        decision.isUrgent && !decision.isClosed && 'bg-destructive/5'
-      )}
+      ref={parentRef}
+      className="h-full overflow-auto p-2"
+      data-testid="decision-widget-virtual-list"
     >
-      <div className="min-w-0">
-        <div className="flex min-w-0 items-center gap-2">
-          <Icon className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
-          <DecisionLink href={decision.href} className="truncate text-sm font-medium">
-            {decision.title}
-          </DecisionLink>
-        </div>
-        <DecisionContextLinks decision={decision} />
-        <DecisionSummaryLine decision={decision} />
-        {hasElectionCandidates ? (
-          <div className="mt-2">
-            <ElectionCandidateRows decision={decision} limit={2} compact />
-          </div>
-        ) : (
-          <div className="mt-2 flex items-center gap-2">
-            <div className="min-w-0 flex-1">{getDecisionBar(decision)}</div>
-            <span
-              className={featureThemeClassName(
-                'decisionterminalDecisionWidgetContentThemedTextBeta'
-              )}
+      <div className="relative w-full" style={{ height: `${totalSize}px` }}>
+        {virtualItems.map(virtualItem => {
+          const decision = decisions[virtualItem.index];
+          if (!decision) return null;
+
+          return (
+            <div
+              key={virtualItem.key}
+              data-index={virtualItem.index}
+              ref={rowVirtualizer.measureElement}
+              className="absolute top-0 left-0 w-full pb-2"
+              style={{ transform: `translateY(${virtualItem.start}px)` }}
             >
-              {formatInt(getDecisionTotal(decision))}
-            </span>
-          </div>
-        )}
-        <DecisionMetricsLine decision={decision} />
-      </div>
-      <div className="flex min-w-0 flex-col items-end justify-between gap-1 overflow-hidden">
-        {decision.isClosed ? (
-          <EndedAgo endedAt={decision.endsAt} />
-        ) : decision.isOpeningSoon && decision.startsAt ? (
-          <CountdownTimer
-            endsAt={decision.startsAt}
-            compact
-            compactLabel={translateText('generated.inline.0072_starts_fc612a2f')}
-          />
-        ) : (
-          <CountdownTimer
-            endsAt={decision.endsAt}
-            compact
-            compactLabel={translateText('generated.inline.0073_closes_ab16b985')}
-          />
-        )}
-        {showVote ? (
-          <DecisionVoteButton decision={decision} compact onVote={onVoteDecision} />
-        ) : decision.isClosed ? (
-          <ResultCompact
-            result={decision.status as 'passed' | 'failed' | 'tied' | 'elected'}
-            winnerName={decision.type === 'election' ? undefined : decision.winnerName}
-          />
-        ) : (
-          <TrendIndicator trend={decision.trend} compact />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function TurnoutMonitor({ decisions }: { decisions: DecisionItem[] }) {
-  if (!decisions.length) return <WidgetEmpty />;
-
-  return (
-    <div className="space-y-2 p-2">
-      {decisions.map(decision => {
-        const turnout = Math.round(decision.turnout ?? 0);
-        return (
-          <div
-            key={decision.id}
-            className="bg-card grid grid-cols-[minmax(0,1fr)_64px] gap-3 rounded-lg border px-3 py-2 shadow-sm"
-          >
-            <div className="min-w-0">
-              <DecisionLink href={decision.href} className="block truncate text-sm font-medium">
-                {decision.title}
-              </DecisionLink>
-              <div
-                className={featureThemeClassName(
-                  'decisionterminalDecisionWidgetContentThemedTextGamma'
-                )}
-              >
-                <DecisionLink href={decision.href}>{decision.id}</DecisionLink> ·{' '}
-                {formatInt(decision.votedCount)} / {formatInt(decision.totalMembers)}
-              </div>
-              <DecisionContextLinks decision={decision} />
-              <div className="bg-muted/40 mt-2 h-2 overflow-hidden rounded-full">
-                <div
-                  className={cn(
-                    'h-full rounded-full',
-                    turnout >= 50
-                      ? featureThemeClassName(
-                          'decisionterminalDecisionWidgetContentSuccessBackground'
-                        )
-                      : featureThemeClassName(
-                          'decisionterminalDecisionWidgetContentWarningBackground'
-                        )
-                  )}
-                  style={{ width: `${Math.min(100, Math.max(0, turnout))}%` }}
-                />
-              </div>
+              <DecisionPanelRow
+                decision={decision}
+                deltas={deltasByDecisionId.get(decision.id)}
+                onVoteDecision={onVoteDecision}
+              />
             </div>
-            <div className="flex items-center justify-end font-mono text-sm font-semibold">
-              {formatPercent(turnout)}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function ElectionLeaderboard({ decisions }: { decisions: DecisionItem[] }) {
-  if (!decisions.length) return <WidgetEmpty />;
-
-  return (
-    <div className="space-y-2 p-2">
-      {decisions.map(decision => {
-        const leaders = getElectionCandidateRows(decision, 3);
-        const top = leaders[0];
-
-        return (
-          <div
-            key={decision.id}
-            className="bg-card space-y-2 rounded-lg border px-3 py-2.5 shadow-sm"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <DecisionLink href={decision.href} className="block truncate text-sm font-medium">
-                  {decision.title}
-                </DecisionLink>
-                <div
-                  className={featureThemeClassName(
-                    'decisionterminalDecisionWidgetContentThemedTextDelta'
-                  )}
-                >
-                  <DecisionLink href={decision.href}>{decision.id}</DecisionLink>
-                  {decision.isIndicationPhase ? (
-                    <span className="text-primary font-semibold">
-                      {translateText('generated.inline.0047_ind_caba0e5d')}
-                    </span>
-                  ) : null}
-                </div>
-                <DecisionContextLinks decision={decision} />
-              </div>
-              <div className="text-right">
-                <div className="font-mono text-sm font-semibold">
-                  {formatCountPercent(top?.value, top?.percent)}
-                </div>
-                <div
-                  className={featureThemeClassName(
-                    'decisionterminalDecisionWidgetContentThemedTextEpsilon'
-                  )}
-                >
-                  {top?.label ?? translateText('generated.inline.0055_no_votes_e32c7ba3')}
-                </div>
-              </div>
-            </div>
-            <ElectionCandidateRows decision={decision} limit={3} compact />
-            <DecisionMetricsLine decision={decision} />
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function MetricWidget({ decisions }: { decisions: DecisionItem[] }) {
-  const averageTurnout = decisions.length
-    ? Math.round(
-        decisions.reduce((sum, decision) => sum + (decision.turnout ?? 0), 0) / decisions.length
-      )
-    : 0;
-  const urgent = decisions.filter(decision => decision.isUrgent || decision.isClosingSoon).length;
-
-  return (
-    <div className="grid h-full min-h-36 grid-cols-2">
-      <div className="border-r p-4">
-        <div className="text-muted-foreground flex items-center gap-2 text-xs">
-          <BarChart3 className="h-4 w-4" />
-          {translateText('generated.inline.0350_average_turnout_99582121')}
-        </div>
-        <div className="mt-2 font-mono text-3xl font-semibold">{formatPercent(averageTurnout)}</div>
-      </div>
-      <div className="p-4">
-        <div className="text-muted-foreground flex items-center gap-2 text-xs">
-          <Clock3 className="h-4 w-4" />
-          {translateText('generated.inline.0351_needs_attention_a126722e')}
-        </div>
-        <div
-          className={cn('mt-2 font-mono text-3xl font-semibold', urgent > 0 && 'text-destructive')}
-        >
-          {formatInt(urgent)}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -585,35 +696,18 @@ export function DecisionWidgetContent({
   isLoading = false,
   onVoteDecision,
 }: DecisionWidgetContentProps) {
+  const stableDecisions = useMemo(() => decisions, [decisions]);
+  const deltasByDecisionId = useDecisionLiveDeltas(stableDecisions);
+
   if (isLoading) return <WidgetLoading />;
   if (decisions.length === 0) return <WidgetEmpty />;
 
-  if (widget.displayMode === 'table') {
-    return <DecisionTable decisions={decisions} />;
-  }
-
-  if (widget.type === 'turnout_monitor') {
-    return <TurnoutMonitor decisions={decisions} />;
-  }
-
-  if (widget.type === 'election_leaderboard') {
-    return <ElectionLeaderboard decisions={decisions} />;
-  }
-
-  if (widget.displayMode === 'metric') {
-    return <MetricWidget decisions={decisions} />;
-  }
-
   return (
-    <div className="min-h-0 space-y-2 p-2">
-      {decisions.map(decision => (
-        <CompactDecisionLine
-          key={decision.id}
-          decision={decision}
-          onVoteDecision={onVoteDecision}
-          showVote={widget.type === 'my_vote_queue'}
-        />
-      ))}
-    </div>
+    <VirtualDecisionList
+      widget={widget}
+      decisions={decisions}
+      deltasByDecisionId={deltasByDecisionId}
+      onVoteDecision={onVoteDecision}
+    />
   );
 }

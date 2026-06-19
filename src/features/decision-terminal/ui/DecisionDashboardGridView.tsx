@@ -1,6 +1,6 @@
 'use client';
 
-import type { Ref } from 'react';
+import { useState, type Ref } from 'react';
 import {
   Responsive,
   WidthProvider,
@@ -10,6 +10,7 @@ import {
 } from 'react-grid-layout/legacy';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
+import { UserCheck } from 'lucide-react';
 
 import type { DecisionTerminalDashboardConfig } from '@/zero/preferences';
 import {
@@ -19,6 +20,7 @@ import {
   type DecisionTerminalGridBreakpoint,
 } from '../logic/dashboard-config';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
 import { DecisionWidgetContent } from './DecisionWidgetContent';
 import { DecisionWidgetFrame } from './DecisionWidgetFrame';
@@ -54,6 +56,59 @@ function DecisionResizeHandle(axis: ResizeHandleAxis, ref: Ref<HTMLElement>) {
   );
 }
 
+function DecisionWidgetPanel({
+  widget,
+  decisions,
+  isLoading,
+  searchQuery,
+  onVoteDecision,
+}: {
+  widget: DecisionTerminalDashboardConfig['widgets'][number];
+  decisions: DecisionItem[];
+  isLoading: boolean;
+  searchQuery: string;
+  onVoteDecision: (decision: DecisionItem) => void;
+}) {
+  const [onlyConfirmedEventRole, setOnlyConfirmedEventRole] = useState(false);
+  const widgetDecisions = selectWidgetDecisions(decisions, widget, searchQuery, {
+    onlyConfirmedEventRole,
+  });
+
+  const roleToggleLabel = translateText(
+    'features.decisionTerminal.filters.onlyMyEventRoles',
+    'My event roles'
+  );
+
+  return (
+    <DecisionWidgetFrame
+      title={widget.title}
+      count={widgetDecisions.length}
+      actions={
+        <Button
+          type="button"
+          variant={onlyConfirmedEventRole ? 'default' : 'outline'}
+          size="sm"
+          className="h-7 shrink-0 gap-1.5 rounded-md px-2 text-xs"
+          aria-pressed={onlyConfirmedEventRole}
+          title={roleToggleLabel}
+          onClick={() => setOnlyConfirmedEventRole(current => !current)}
+          data-swipe-lock
+        >
+          <UserCheck className="h-3.5 w-3.5" />
+          <span className="hidden max-w-24 truncate lg:inline">{roleToggleLabel}</span>
+        </Button>
+      }
+    >
+      <DecisionWidgetContent
+        widget={widget}
+        decisions={widgetDecisions}
+        isLoading={isLoading}
+        onVoteDecision={onVoteDecision}
+      />
+    </DecisionWidgetFrame>
+  );
+}
+
 export function DecisionDashboardGridView({
   config,
   decisions,
@@ -64,23 +119,6 @@ export function DecisionDashboardGridView({
   onLayoutPersist,
   onVoteDecision,
 }: DecisionDashboardGridViewProps) {
-  const renderWidget = (widget: DecisionTerminalDashboardConfig['widgets'][number]) => {
-    const widgetDecisions = selectWidgetDecisions(decisions, widget, searchQuery);
-
-    return (
-      <div key={widget.id}>
-        <DecisionWidgetFrame title={widget.title} count={widgetDecisions.length}>
-          <DecisionWidgetContent
-            widget={widget}
-            decisions={widgetDecisions}
-            isLoading={isLoading}
-            onVoteDecision={onVoteDecision}
-          />
-        </DecisionWidgetFrame>
-      </div>
-    );
-  };
-
   return (
     <div className="decision-terminal-grid-shell min-h-full">
       <ResponsiveDecisionGrid
@@ -105,7 +143,17 @@ export function DecisionDashboardGridView({
         onDragStop={onLayoutPersist}
         onResizeStop={onLayoutPersist}
       >
-        {config.widgets.map(renderWidget)}
+        {config.widgets.map(widget => (
+          <div key={widget.id}>
+            <DecisionWidgetPanel
+              widget={widget}
+              decisions={decisions}
+              isLoading={isLoading}
+              searchQuery={searchQuery}
+              onVoteDecision={onVoteDecision}
+            />
+          </div>
+        ))}
       </ResponsiveDecisionGrid>
     </div>
   );

@@ -12,6 +12,7 @@ interface DecisionWidgetFrameProps {
   title: string;
   count?: number;
   children: ReactNode;
+  actions?: ReactNode;
   className?: string;
 }
 
@@ -19,6 +20,7 @@ export function DecisionWidgetFrame({
   title,
   count,
   children,
+  actions,
   className,
 }: DecisionWidgetFrameProps) {
   return (
@@ -49,13 +51,14 @@ export function DecisionWidgetFrame({
           </TooltipContent>
         </Tooltip>
         <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">{title}</h3>
+        {actions}
         {typeof count === 'number' ? (
-          <BadgeControl variant="secondary" size="tiny" shape="rounded" textStyle="mono">
+          <BadgeControl variant="secondary" size="tiny" shape="rounded">
             {Math.round(count)}
           </BadgeControl>
         ) : null}
       </div>
-      <div className="decision-widget-content min-h-0 flex-1 overflow-auto">{children}</div>
+      <div className="decision-widget-content min-h-0 flex-1 overflow-hidden">{children}</div>
     </section>
   );
 }

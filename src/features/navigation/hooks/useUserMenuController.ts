@@ -17,11 +17,15 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [groupSearchQuery, setGroupSearchQuery] = useState('');
   const [eventSearchQuery, setEventSearchQuery] = useState('');
+  const [amendmentSearchQuery, setAmendmentSearchQuery] = useState('');
   const groupSearchInputRef = useRef<HTMLInputElement>(null);
   const eventSearchInputRef = useRef<HTMLInputElement>(null);
-  const { groups: activeGroups, events: activeEvents } = useCurrentUserNavigationEntities(
-    authUser?.id
-  );
+  const amendmentSearchInputRef = useRef<HTMLInputElement>(null);
+  const {
+    groups: activeGroups,
+    events: activeEvents,
+    amendments: openAmendments,
+  } = useCurrentUserNavigationEntities(authUser?.id);
 
   const filteredGroups = useMemo(() => {
     const normalizedQuery = groupSearchQuery.trim().toLowerCase();
@@ -40,6 +44,25 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
 
     return activeEvents.filter(event => event.title?.toLowerCase().includes(normalizedQuery));
   }, [activeEvents, eventSearchQuery]);
+
+  const filteredAmendments = useMemo(() => {
+    const normalizedQuery = amendmentSearchQuery.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return openAmendments;
+    }
+
+    return openAmendments.filter(amendment =>
+      [
+        amendment.title,
+        amendment.code,
+        amendment.targetGroupName,
+        amendment.groupName,
+        amendment.eventTitle,
+      ]
+        .filter(Boolean)
+        .some(value => value?.toLowerCase().includes(normalizedQuery))
+    );
+  }, [openAmendments, amendmentSearchQuery]);
 
   if (!authUser) return null;
 
@@ -81,20 +104,27 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
     settingsHref,
     groups: filteredGroups,
     events: filteredEvents,
+    amendments: filteredAmendments,
     showGroupSearch: activeGroups.length > 5,
     showEventSearch: activeEvents.length > 5,
+    showAmendmentSearch: openAmendments.length > 0,
     groupSearchQuery,
     eventSearchQuery,
+    amendmentSearchQuery,
     groupSearchInputRef,
     eventSearchInputRef,
+    amendmentSearchInputRef,
     labels: {
       profile: t('navigation.userMenu.profile'),
       settings: t('navigation.userMenu.settings'),
       groups: t('common.labels.groups'),
       events: t('navigation.userMenu.events'),
+      amendments: t('navigation.userMenu.amendments'),
       eventFallback: t('navigation.userMenu.eventFallback'),
+      amendmentFallback: t('navigation.userMenu.amendmentFallback'),
       searchGroupsPlaceholder: t('navigation.userMenu.searchGroupsPlaceholder'),
       searchEventsPlaceholder: t('navigation.userMenu.searchEventsPlaceholder'),
+      searchAmendmentsPlaceholder: t('navigation.userMenu.searchAmendmentsPlaceholder'),
       clear: t('common.actions.clear'),
       logout: t('auth.logout.button'),
       logoutConfirm: t('auth.logout.confirm'),
@@ -104,6 +134,7 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
     onLogoutDialogOpenChange: setShowLogoutDialog,
     onGroupSearchChange: setGroupSearchQuery,
     onEventSearchChange: setEventSearchQuery,
+    onAmendmentSearchChange: setAmendmentSearchQuery,
     onClearGroupSearch: () => {
       setGroupSearchQuery('');
       groupSearchInputRef.current?.focus();
@@ -111,6 +142,10 @@ export function useUserMenuController({ user: userData }: UseUserMenuControllerO
     onClearEventSearch: () => {
       setEventSearchQuery('');
       eventSearchInputRef.current?.focus();
+    },
+    onClearAmendmentSearch: () => {
+      setAmendmentSearchQuery('');
+      amendmentSearchInputRef.current?.focus();
     },
     onLogout: handleLogout,
   };

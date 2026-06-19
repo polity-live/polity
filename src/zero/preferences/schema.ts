@@ -10,13 +10,13 @@ export const languageEnum = z.enum(['en', 'de']);
 export const navigationViewEnum = z.enum(['asButton', 'asButtonList', 'asLabeledButtonList']);
 
 export const decisionTerminalWidgetTypeEnum = z.enum([
-  'live_decisions',
-  'my_vote_queue',
-  'closing_soon',
-  'indicative_pulse',
-  'turnout_monitor',
-  'recent_results',
-  'election_leaderboard',
+  'global_decision_timeline',
+  'active_votes',
+  'active_elections',
+  'future_elections',
+  'future_votes',
+  'past_elections',
+  'past_votes',
 ]);
 
 export const decisionTerminalWidgetDisplayModeEnum = z.enum([
@@ -29,6 +29,10 @@ export const decisionTerminalWidgetDisplayModeEnum = z.enum([
 
 export const decisionTerminalWidgetSortEnum = z.enum([
   'closing_soon',
+  'active_closing',
+  'future_start',
+  'past_end',
+  'global_timeline',
   'recent',
   'turnout',
   'urgency',

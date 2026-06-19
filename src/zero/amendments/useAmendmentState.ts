@@ -390,3 +390,14 @@ export function useAgendaItemForwardingContext(agendaItemId?: string) {
     isLoading: agendaItemId != null && result.type === 'unknown',
   };
 }
+
+export function useCurrentUserOpenNavigationAmendments(userId?: string) {
+  const [amendments, result] = useQuery(
+    userId ? queries.amendments.currentUserOpenNavigationAmendments({}) : undefined
+  );
+
+  return {
+    amendments: amendments ?? [],
+    isLoading: Boolean(userId) && result.type === 'unknown',
+  };
+}

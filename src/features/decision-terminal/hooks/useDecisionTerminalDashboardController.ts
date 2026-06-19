@@ -40,7 +40,10 @@ export function useDecisionTerminalDashboardController({
   );
 
   const activeCount = useMemo(
-    () => decisions.filter(decision => !decision.isClosed && !decision.isOpeningSoon).length,
+    () =>
+      decisions.filter(
+        decision => decision.isActiveDecision ?? (!decision.isClosed && !decision.isOpeningSoon)
+      ).length,
     [decisions]
   );
 

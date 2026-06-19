@@ -90,22 +90,22 @@ vi.mock('@/features/vote-cast/ui/VoteCastDialog', () => ({
 
 vi.mock('react-grid-layout/legacy', () => {
   const dragStopLayout = [
-    { i: 'widget-live-decisions', x: 1, y: 0, w: 5, h: 9 },
-    { i: 'widget-my-vote-queue', x: 6, y: 0, w: 6, h: 9 },
-    { i: 'widget-closing-soon', x: 0, y: 9, w: 4, h: 6 },
-    { i: 'widget-indicative-pulse', x: 4, y: 9, w: 4, h: 6 },
-    { i: 'widget-turnout-monitor', x: 8, y: 9, w: 4, h: 6 },
-    { i: 'widget-recent-results', x: 0, y: 15, w: 6, h: 7 },
-    { i: 'widget-election-leaderboard', x: 6, y: 15, w: 6, h: 7 },
+    { i: 'widget-global-decision-timeline', x: 1, y: 0, w: 11, h: 9 },
+    { i: 'widget-active-votes', x: 0, y: 9, w: 6, h: 7 },
+    { i: 'widget-active-elections', x: 6, y: 9, w: 6, h: 7 },
+    { i: 'widget-future-elections', x: 0, y: 16, w: 6, h: 7 },
+    { i: 'widget-future-votes', x: 6, y: 16, w: 6, h: 7 },
+    { i: 'widget-past-elections', x: 0, y: 23, w: 6, h: 7 },
+    { i: 'widget-past-votes', x: 6, y: 23, w: 6, h: 7 },
   ];
   const resizeStopLayout = [
-    { i: 'widget-live-decisions', x: 0, y: 0, w: 7, h: 10 },
-    { i: 'widget-my-vote-queue', x: 7, y: 0, w: 5, h: 9 },
-    { i: 'widget-closing-soon', x: 0, y: 10, w: 4, h: 6 },
-    { i: 'widget-indicative-pulse', x: 4, y: 10, w: 4, h: 6 },
-    { i: 'widget-turnout-monitor', x: 8, y: 10, w: 4, h: 6 },
-    { i: 'widget-recent-results', x: 0, y: 16, w: 6, h: 7 },
-    { i: 'widget-election-leaderboard', x: 6, y: 16, w: 6, h: 7 },
+    { i: 'widget-global-decision-timeline', x: 0, y: 0, w: 12, h: 10 },
+    { i: 'widget-active-votes', x: 0, y: 10, w: 7, h: 8 },
+    { i: 'widget-active-elections', x: 7, y: 10, w: 5, h: 7 },
+    { i: 'widget-future-elections', x: 0, y: 18, w: 6, h: 7 },
+    { i: 'widget-future-votes', x: 6, y: 18, w: 6, h: 7 },
+    { i: 'widget-past-elections', x: 0, y: 25, w: 6, h: 7 },
+    { i: 'widget-past-votes', x: 6, y: 25, w: 6, h: 7 },
   ];
 
   const Responsive = ({
@@ -255,7 +255,7 @@ describe('DecisionTerminal dashboard', () => {
         version: DECISION_TERMINAL_DASHBOARD_VERSION,
         layouts: expect.objectContaining({
           lg: expect.arrayContaining([
-            expect.objectContaining({ i: 'widget-live-decisions', x: 1, y: 0 }),
+            expect.objectContaining({ i: 'widget-global-decision-timeline', x: 1, y: 0 }),
           ]),
         }),
       })
@@ -268,7 +268,8 @@ describe('DecisionTerminal dashboard', () => {
       expect.objectContaining({
         layouts: expect.objectContaining({
           lg: expect.arrayContaining([
-            expect.objectContaining({ i: 'widget-live-decisions', w: 7, h: 10 }),
+            expect.objectContaining({ i: 'widget-global-decision-timeline', w: 12, h: 10 }),
+            expect.objectContaining({ i: 'widget-active-votes', w: 7, h: 8 }),
           ]),
         }),
       })
@@ -355,11 +356,11 @@ describe('DecisionTerminal dashboard', () => {
       screen.getAllByText('Move reserve funds into field operations before the evening session.')
         .length
     ).toBeGreaterThan(0);
-    expect(screen.getAllByText('4/8 · 50% · 3/1/0').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('4/8 · 50% · IND').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Closed charter vote').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Session chair election').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Mina Bauer').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('3/5 · 60%').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('3/5 · 60% · IND').length).toBeGreaterThan(0);
     expect(
       container.querySelectorAll('[data-election-candidate-row="true"]').length
     ).toBeGreaterThan(0);
@@ -374,5 +375,59 @@ describe('DecisionTerminal dashboard', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /^Vote$/ })[0]);
 
     expect(screen.getByTestId('vote-dialog').textContent).toContain('Indicative budget vote');
+  });
+
+  it('filters event decisions without confirmed roles when each panel toggle is enabled', () => {
+    render(
+      <DecisionTerminal
+        decisions={[
+          decision({
+            id: 'V-public',
+            title: 'Global policy vote',
+            eventRoleFilterApplies: false,
+            hasConfirmedEventRole: false,
+          }),
+          decision({
+            id: 'V-role',
+            title: 'Confirmed role vote',
+            eventRoleFilterApplies: true,
+            hasConfirmedEventRole: true,
+          }),
+          decision({
+            id: 'V-invited',
+            title: 'Invited only vote',
+            eventRoleFilterApplies: true,
+            hasConfirmedEventRole: false,
+          }),
+        ]}
+      />
+    );
+
+    expect(screen.getAllByText('Invited only vote').length).toBeGreaterThan(0);
+
+    for (const toggle of screen.getAllByRole('button', { name: 'My event roles' })) {
+      fireEvent.click(toggle);
+    }
+
+    expect(screen.queryByText('Invited only vote')).toBeNull();
+    expect(screen.getAllByText('Confirmed role vote').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Global policy vote').length).toBeGreaterThan(0);
+  });
+
+  it('shows a transient positive delta when a support vote arrives live', async () => {
+    const { rerender } = render(<DecisionTerminal decisions={[decision()]} />);
+
+    rerender(
+      <DecisionTerminal
+        decisions={[
+          decision({
+            indicationVotes: { support: 4, oppose: 1, abstain: 0 },
+            votedCount: 5,
+          }),
+        ]}
+      />
+    );
+
+    expect((await screen.findAllByText('+1')).length).toBeGreaterThan(0);
   });
 });

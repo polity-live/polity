@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   setNavigationType: vi.fn(),
   currentUserMembershipsWithGroups: [] as unknown[],
   userEventParticipations: [] as unknown[],
+  openNavigationAmendments: [] as unknown[],
 }));
 
 vi.mock('@tanstack/react-router', () => ({
@@ -55,6 +56,13 @@ vi.mock('@/zero/events/useEventState.ts', () => ({
   }),
 }));
 
+vi.mock('@/zero/amendments/useAmendmentState.ts', () => ({
+  useCurrentUserOpenNavigationAmendments: () => ({
+    amendments: mocks.openNavigationAmendments,
+    isLoading: false,
+  }),
+}));
+
 const primaryNavItems: NavigationItem[] = [
   {
     id: 'home',
@@ -69,6 +77,7 @@ beforeEach(() => {
   mocks.setNavigationType.mockReset();
   mocks.currentUserMembershipsWithGroups = [];
   mocks.userEventParticipations = [];
+  mocks.openNavigationAmendments = [];
 });
 
 describe('useNavigationCommandDialogController', () => {
@@ -112,6 +121,38 @@ describe('useNavigationCommandDialogController', () => {
 
     expect(result.current.groupItems.map(group => group.id)).toEqual(['group-active']);
     expect(result.current.eventItems.map(event => event.id)).toEqual(['event-future']);
+  });
+
+  it('exposes personal open amendments from the shared navigation entities hook', () => {
+    mocks.openNavigationAmendments = [
+      {
+        id: 'amendment-open',
+        title: 'Open Motion',
+        group_id: 'group-active',
+        group: { id: 'group-active', name: 'Working Circle' },
+        current_process_run: null,
+        group_decisions: [],
+      },
+      {
+        id: 'amendment-accepted',
+        title: 'Accepted Motion',
+        group_id: 'group-active',
+        group: { id: 'group-active', name: 'Working Circle' },
+        current_process_run: null,
+        group_decisions: [{ group_id: 'group-active', status: 'accepted' }],
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useNavigationCommandDialogController({
+        primaryNavItems,
+        secondaryNavItems: null,
+      })
+    );
+
+    expect(result.current.amendmentItems.map(amendment => amendment.id)).toEqual([
+      'amendment-open',
+    ]);
   });
 
   it('navigates to a selected group and closes the dialog', () => {
@@ -160,6 +201,35 @@ describe('useNavigationCommandDialogController', () => {
     expect(mocks.navigate).toHaveBeenCalledWith({
       to: '/event/$id',
       params: { id: 'event-future' },
+    });
+    expect(result.current.open).toBe(false);
+  });
+
+  it('navigates to a selected amendment and closes the dialog', () => {
+    mocks.openNavigationAmendments = [
+      {
+        id: 'amendment-open',
+        title: 'Open Motion',
+        group_id: 'group-active',
+        group: { id: 'group-active', name: 'Working Circle' },
+        current_process_run: null,
+        group_decisions: [],
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useNavigationCommandDialogController({
+        primaryNavItems,
+        secondaryNavItems: null,
+      })
+    );
+
+    act(() => result.current.setOpen(true));
+    act(() => result.current.onSelectAmendmentItem(result.current.amendmentItems[0]));
+
+    expect(mocks.navigate).toHaveBeenCalledWith({
+      to: '/amendment/$id',
+      params: { id: 'amendment-open' },
     });
     expect(result.current.open).toBe(false);
   });
