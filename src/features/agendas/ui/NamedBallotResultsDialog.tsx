@@ -14,6 +14,7 @@ import { BarChart3, Users } from 'lucide-react';
 import type { NamedBallotResultsModel } from '@/features/agendas/logic/buildNamedBallotResults';
 import { cn } from '@/features/shared/utils/utils';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { getLocalizedVoteChoiceLabel } from '@/features/shared/ui/voting/voteChoiceLabels';
 
 interface NamedBallotResultsDialogProps {
   open: boolean;
@@ -24,7 +25,9 @@ interface NamedBallotResultsDialogProps {
 }
 
 function getPhaseLabel(phase: NamedBallotResultsModel['phase']) {
-  return phase === 'indicative' ? 'Indicative' : 'Final';
+  return phase === 'indicative'
+    ? translateText('features.events.voting.phases.indication', 'Indication')
+    : translateText('features.events.voting.phases.finalVote', 'Final Vote');
 }
 
 function getDecisionBadgeTone(label: string): BadgeTone {
@@ -65,6 +68,17 @@ function getOfflineShareLabel(count: number) {
   );
 }
 
+function getRecordedLabel() {
+  return translateText('features.events.agenda.namedResults.recorded', 'recorded');
+}
+
+function getOfflineAggregatedLabel() {
+  return translateText(
+    'features.events.agenda.namedResults.offlineAggregated',
+    'offline aggregated'
+  );
+}
+
 function OptionSummaryStrip({
   title,
   summaries,
@@ -87,13 +101,14 @@ function OptionSummaryStrip({
       <div className="space-y-2">
         {summaries.map(summary => {
           const percent = total > 0 ? Math.round((summary.totalCount / total) * 100) : 0;
+          const label = getLocalizedVoteChoiceLabel(summary.label, translateText);
 
           return (
             <div key={summary.id} className="bg-muted/20 space-y-2 rounded-md border px-3 py-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <StatusBadge status={summary.label} tone={getDecisionBadgeTone(summary.label)}>
+                <StatusBadge status={label} tone={getDecisionBadgeTone(summary.label)}>
                   <span>
-                    {summary.label}: {summary.totalCount}
+                    {label}: {summary.totalCount}
                   </span>
                   {summary.offlineCount > 0 ? (
                     <span className="text-current/70">
@@ -137,12 +152,12 @@ export function NamedBallotResultsDialog({
                 <BadgeControl variant="outline" className="gap-1">
                   <Users className="h-3.5 w-3.5" />
                   {model.totalRecordedCount}/{model.totalEligibleCount}
-                  {translateText('generated.inline.0012_erfasst_27314b65')}
+                  {getRecordedLabel()}
                 </BadgeControl>
                 {model.totalOfflineAggregatedCount > 0 ? (
                   <BadgeControl variant="outline">
                     {model.totalOfflineAggregatedCount}
-                    {translateText('generated.inline.0061_offline_aggregiert_f49dc01b')}
+                    {getOfflineAggregatedLabel()}
                   </BadgeControl>
                 ) : null}
               </div>
@@ -153,9 +168,7 @@ export function NamedBallotResultsDialog({
         <div className="flex-1 overflow-y-auto px-6 py-6">
           {!model || model.groups.length === 0 ? (
             <div className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center">
-              {translateText(
-                'generated.inline.0062_keine_namentlichen_ergebnisse_verfuegbar_36c4a21f'
-              )}
+              {translateText('features.events.agenda.namedResults.unavailable')}
             </div>
           ) : (
             <div className="space-y-6">
@@ -174,23 +187,27 @@ export function NamedBallotResultsDialog({
                       <h3 className="text-lg font-semibold">{group.label}</h3>
                       <BadgeControl variant="outline">
                         {group.recordedCount}/{group.eligibleCount}
-                        {translateText('generated.inline.0012_erfasst_27314b65')}
+                        {getRecordedLabel()}
                       </BadgeControl>
                       {group.offlineAggregatedCount > 0 ? (
                         <BadgeControl variant="outline">
                           {group.offlineAggregatedCount}
-                          {translateText('generated.inline.0061_offline_aggregiert_f49dc01b')}
+                          {getOfflineAggregatedLabel()}
                         </BadgeControl>
                       ) : null}
-                      {group.optionSummaries.map(summary => (
-                        <StatusBadge
-                          key={summary.id}
-                          status={summary.label}
-                          tone={getDecisionBadgeTone(summary.label)}
-                        >
-                          {summary.label}: {summary.count}
-                        </StatusBadge>
-                      ))}
+                      {group.optionSummaries.map(summary => {
+                        const label = getLocalizedVoteChoiceLabel(summary.label, translateText);
+
+                        return (
+                          <StatusBadge
+                            key={summary.id}
+                            status={label}
+                            tone={getDecisionBadgeTone(summary.label)}
+                          >
+                            {label}: {summary.count}
+                          </StatusBadge>
+                        );
+                      })}
                     </div>
                   ) : null}
 
@@ -251,15 +268,19 @@ export function NamedBallotResultsDialog({
                         )}
 
                         <div className="flex flex-wrap items-center justify-end gap-2">
-                          {row.selections.map(selection => (
-                            <StatusBadge
-                              key={`${row.id}:${selection}`}
-                              status={selection}
-                              tone={getDecisionBadgeTone(selection)}
-                            >
-                              {selection}
-                            </StatusBadge>
-                          ))}
+                          {row.selections.map(selection => {
+                            const label = getLocalizedVoteChoiceLabel(selection, translateText);
+
+                            return (
+                              <StatusBadge
+                                key={`${row.id}:${selection}`}
+                                status={label}
+                                tone={getDecisionBadgeTone(selection)}
+                              >
+                                {label}
+                              </StatusBadge>
+                            );
+                          })}
                           {row.selections.length === 0 ? (
                             <BadgeControl
                               variant={

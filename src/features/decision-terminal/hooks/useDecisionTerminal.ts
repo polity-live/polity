@@ -19,12 +19,16 @@ import {
   getDecisionStatus,
   isUrgent,
   isClosingSoon,
-  isClosed,
   isOpeningSoon,
   isRecentlyClosed,
   generateDecisionId,
 } from '../logic/decision-status';
 import { normalizeDecisionVotingPhase } from '../logic/decision-phase';
+import {
+  getDecisionAgendaRuntimeTimes,
+  resolveDecisionTiming,
+  type DecisionAgendaTimingSource,
+} from '../logic/decision-timing';
 import {
   calculateSupportPercentage,
   calculateTrend,
@@ -90,10 +94,10 @@ function hasConfirmedEventRole(
   event:
     | {
         participants?:
-          | {
-              user_id?: string | null;
-              status?: string | null;
-              participant_roles?: readonly unknown[] | null;
+          | readonly {
+              readonly user_id?: string | null;
+              readonly status?: string | null;
+              readonly participant_roles?: readonly unknown[] | null;
             }[]
           | null;
       }
@@ -111,31 +115,23 @@ function hasConfirmedEventRole(
   );
 }
 
-function resolveDecisionTiming(args: {
-  phase: ReturnType<typeof normalizeDecisionVotingPhase>;
-  startsAt?: Date;
-  endsAt: Date;
-  hasExplicitClosingEnd: boolean;
-}) {
-  const startsInFuture = args.startsAt ? args.startsAt.getTime() > Date.now() : false;
-  const isActiveByStatus = args.phase === 'indication' || args.phase === 'final_vote';
-  const closedByStatus = args.phase === 'closed';
-  const isEnded =
-    closedByStatus ||
-    (args.hasExplicitClosingEnd && isClosed(args.endsAt)) ||
-    (!isActiveByStatus && isClosed(args.endsAt));
-  const isActiveDecision = isActiveByStatus && !isEnded && !startsInFuture;
-  const isFutureDecision = !isEnded && !isActiveDecision;
+function mergeDecisionAgendaTimingSource(
+  agendaItem: DecisionAgendaTimingSource | null | undefined,
+  calculatedAgendaItem: DecisionAgendaTimingSource | null | undefined
+): DecisionAgendaTimingSource | null {
+  if (!agendaItem && !calculatedAgendaItem) {
+    return null;
+  }
 
   return {
-    isActiveDecision,
-    isFutureDecision,
-    isEnded,
-    temporalBucket: isEnded
-      ? ('past' as const)
-      : isActiveDecision
-        ? ('active' as const)
-        : ('future' as const),
+    status: calculatedAgendaItem?.status ?? agendaItem?.status,
+    duration: calculatedAgendaItem?.duration ?? agendaItem?.duration,
+    activated_at: calculatedAgendaItem?.activated_at ?? agendaItem?.activated_at,
+    completed_at: calculatedAgendaItem?.completed_at ?? agendaItem?.completed_at,
+    start_time: calculatedAgendaItem?.start_time ?? agendaItem?.start_time,
+    end_time: calculatedAgendaItem?.end_time ?? agendaItem?.end_time,
+    calculated_start_time: calculatedAgendaItem?.calculated_start_time,
+    calculated_end_time: calculatedAgendaItem?.calculated_end_time,
   };
 }
 
@@ -215,27 +211,18 @@ export function useDecisionTerminal(
         ? agendaItemsById.get(election.agenda_item.id)
         : undefined;
 
-      const endsAt = election.closing_end_time
-        ? new Date(election.closing_end_time)
-        : election.agenda_item?.end_time
-          ? new Date(election.agenda_item.end_time)
-          : calculatedAgendaItem?.calculated_end_time
-            ? new Date(calculatedAgendaItem.calculated_end_time)
-            : election.updated_at
-              ? new Date(election.updated_at)
-              : election.created_at
-                ? new Date(election.created_at)
-                : now;
-      const hasExplicitClosingEnd =
-        typeof election.closing_end_time === 'number' && election.closing_end_time > 0;
-
-      const startsAt = calculatedAgendaItem?.calculated_start_time
-        ? new Date(calculatedAgendaItem.calculated_start_time)
-        : election.agenda_item?.start_time
-          ? new Date(election.agenda_item.start_time)
-          : election.created_at
-            ? new Date(election.created_at)
-            : undefined;
+      const agendaTimingSource = mergeDecisionAgendaTimingSource(
+        election.agenda_item,
+        calculatedAgendaItem
+      );
+      const decisionTimes = getDecisionAgendaRuntimeTimes({
+        agendaItem: agendaTimingSource,
+        closingEndTime: election.closing_end_time,
+        createdAt: election.created_at,
+        updatedAt: election.updated_at,
+        fallbackNow: now,
+      });
+      const { startsAt, endsAt, sortStartsAt, sortEndsAt, hasExplicitClosingEnd } = decisionTimes;
 
       const candidates = election.candidates || [];
       const indicativeSelections = election.indicative_selections || [];
@@ -325,8 +312,8 @@ export function useDecisionTerminal(
         body: election.role?.name || election.agenda_item?.event?.title || 'Election',
         endsAt,
         startsAt,
-        sortStartsAt: startsAt ?? endsAt,
-        sortEndsAt: endsAt,
+        sortStartsAt,
+        sortEndsAt,
         temporalBucket,
         isActiveDecision,
         isFutureDecision,
@@ -379,27 +366,24 @@ export function useDecisionTerminal(
         ? agendaItemsById.get(vote.agenda_item.id)
         : undefined;
 
-      const endsAt = vote.closing_end_time
-        ? new Date(vote.closing_end_time)
-        : vote.agenda_item?.end_time
-          ? new Date(vote.agenda_item.end_time)
-          : calculatedAgendaItem?.calculated_end_time
-            ? new Date(calculatedAgendaItem.calculated_end_time)
-            : vote.updated_at
-              ? new Date(vote.updated_at)
-              : vote.created_at
-                ? new Date(vote.created_at)
-                : now;
-      const hasExplicitClosingEnd =
-        typeof vote.closing_end_time === 'number' && vote.closing_end_time > 0;
-
-      const voteStartsAt = calculatedAgendaItem?.calculated_start_time
-        ? new Date(calculatedAgendaItem.calculated_start_time)
-        : vote.agenda_item?.start_time
-          ? new Date(vote.agenda_item.start_time)
-          : vote.created_at
-            ? new Date(vote.created_at)
-            : undefined;
+      const agendaTimingSource = mergeDecisionAgendaTimingSource(
+        vote.agenda_item,
+        calculatedAgendaItem
+      );
+      const decisionTimes = getDecisionAgendaRuntimeTimes({
+        agendaItem: agendaTimingSource,
+        closingEndTime: vote.closing_end_time,
+        createdAt: vote.created_at,
+        updatedAt: vote.updated_at,
+        fallbackNow: now,
+      });
+      const {
+        startsAt: voteStartsAt,
+        endsAt,
+        sortStartsAt,
+        sortEndsAt,
+        hasExplicitClosingEnd,
+      } = decisionTimes;
 
       const phase = normalizeDecisionVotingPhase(vote.status);
       const isIndicationPhase = phase === 'indication';
@@ -462,8 +446,8 @@ export function useDecisionTerminal(
         body: voteBody,
         endsAt,
         startsAt: voteStartsAt,
-        sortStartsAt: voteStartsAt ?? endsAt,
-        sortEndsAt: endsAt,
+        sortStartsAt,
+        sortEndsAt,
         temporalBucket,
         isActiveDecision,
         isFutureDecision,

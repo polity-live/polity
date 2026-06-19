@@ -202,11 +202,18 @@ describe('AgendaElectionSection', () => {
         avatar: null,
       },
     } as unknown as CandidatesByElectionRow;
+    const otherCandidate = {
+      id: 'candidate-2',
+      name: 'Other Candidate',
+      status: 'accepted',
+      order_index: 1,
+      user: null,
+    } as unknown as CandidatesByElectionRow;
 
     const { container } = render(
       <AgendaElectionSection
         roleName="Board"
-        candidates={[electedCandidate]}
+        candidates={[electedCandidate, otherCandidate]}
         indicativeSelections={[{ candidate_id: 'candidate-1' }]}
         finalSelections={[{ candidate_id: 'candidate-1' }]}
         userHasVoted
@@ -218,13 +225,16 @@ describe('AgendaElectionSection', () => {
         winnerName="Polity Tester"
         winnerVoteSharePercent={100}
         onBecomeCandidate={() => undefined}
+        onOpenNamedResults={vi.fn()}
       />
     );
 
     const rows = container.querySelectorAll('[data-election-candidate-row="true"]');
-    expect(rows).toHaveLength(1);
+    expect(rows).toHaveLength(2);
     expect(rows[0]?.getAttribute('data-winner')).toBe('true');
     expect(rows[0]?.getAttribute('data-selected')).toBe('true');
+    expect(rows[0]?.getAttribute('data-framed')).toBe('true');
+    expect(rows[1]?.getAttribute('data-framed')).toBeNull();
     expect(screen.getByText('Polity Tester')).toBeTruthy();
     expect(screen.getByText('test48@gmail.com')).toBeTruthy();
     expect(screen.getByText('Nominated')).toBeTruthy();
@@ -234,7 +244,7 @@ describe('AgendaElectionSection', () => {
     expect(screen.queryByText('IND')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Show indication results' }));
     expect(screen.getByRole('button', { name: 'Hide indication results' })).toBeTruthy();
-    expect(screen.getByText('IND')).toBeTruthy();
+    expect(screen.getAllByText('IND')).toHaveLength(2);
     expect(screen.queryByText('features.events.agenda.candidates')).toBeNull();
     expect(screen.queryByText(/won/i)).toBeNull();
     expect(container.querySelector('[data-slot="vote-results-display"]')).toBeNull();

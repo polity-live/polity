@@ -7,6 +7,8 @@ import { useUserState } from '@/zero/users/useUserState';
 import { useCommonState } from '@/zero/common';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { useAgendaState, type AgendaStateItem } from '@/zero/agendas/useAgendaState';
+import { getAgendaDisplayTimes } from '@/features/agendas/logic/getAgendaDisplayTimes';
+import { getAgendaRuntimeStatus } from '@/features/agendas/logic/getAgendaRuntimeStatus';
 import { useSubscribedTimeline, type TimelineItem } from './useSubscribedTimeline';
 import { useSubscriptionTimeline } from './useSubscriptionTimeline';
 import type { TimelineFilters } from './useTimelineFilters';
@@ -361,16 +363,30 @@ function mapTimelineEvent(
   };
 }
 
-function mapAgendaItem(item: AgendaStateItem): CivicTimelineItem | null {
+export function mapAgendaItemToCivicTimelineItem(item: AgendaStateItem): CivicTimelineItem | null {
   const event = item.event;
   if (!event?.id) return null;
 
-  const timestamp =
-    asDate(item.calculated_start_time) ??
-    asDate(item.start_time) ??
-    asDate(item.created_at) ??
-    new Date();
-  const endDate = asDate(item.calculated_end_time) ?? asDate(item.end_time);
+  const runtimeStatus = getAgendaRuntimeStatus({
+    id: item.id,
+    status: item.status,
+    start_time: item.start_time,
+    end_time: item.end_time,
+    activated_at: item.activated_at,
+    completed_at: item.completed_at,
+  });
+  const displayTimes = getAgendaDisplayTimes({
+    status: runtimeStatus,
+    duration: item.duration,
+    activated_at: item.activated_at,
+    completed_at: item.completed_at,
+    start_time: item.start_time,
+    end_time: item.end_time,
+    calculated_start_time: item.calculated_start_time,
+    calculated_end_time: item.calculated_end_time,
+  });
+  const timestamp = asDate(displayTimes.displayStartTime) ?? asDate(item.created_at) ?? new Date();
+  const endDate = asDate(displayTimes.displayEndTime);
   const coordinates = deriveCivicCoordinates(event);
   const locationLabel = formatNamedLocation(event.location_name, event);
   const href = `/event/${event.id}/agenda/${item.id}`;
@@ -386,7 +402,7 @@ function mapAgendaItem(item: AgendaStateItem): CivicTimelineItem | null {
     timestamp,
     startDate: timestamp,
     endDate,
-    status: item.status,
+    status: runtimeStatus,
     locationLabel,
     coordinates,
     tags: [],
@@ -398,7 +414,7 @@ function mapAgendaItem(item: AgendaStateItem): CivicTimelineItem | null {
           : undefined,
     },
     relationshipStrength: 0.9,
-    reason: item.status === 'active' ? 'active_now' : 'member_context',
+    reason: runtimeStatus === 'in-progress' ? 'active_now' : 'member_context',
     primaryActionLabel: getPrimaryActionLabel('agenda_item'),
   };
 
@@ -632,7 +648,7 @@ export function useCivicTimeline({
 
     items.push(...subscribedTimeline.items.flatMap(item => mapSubscribedItem(item) ?? []));
     items.push(...subscriptionTimeline.events.flatMap(event => mapTimelineEvent(event) ?? []));
-    items.push(...agendaItems.flatMap(item => mapAgendaItem(item) ?? []));
+    items.push(...agendaItems.flatMap(item => mapAgendaItemToCivicTimelineItem(item) ?? []));
     items.push(...decisions.map(mapDecisionItem));
 
     const seen = new Set<string>();

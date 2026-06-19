@@ -14,8 +14,8 @@ const DEFAULT_WIDGET_IDS = [
   'widget-global-decision-timeline',
   'widget-active-votes',
   'widget-active-elections',
-  'widget-future-elections',
   'widget-future-votes',
+  'widget-future-elections',
   'widget-past-elections',
   'widget-past-votes',
 ] as const;
@@ -91,8 +91,8 @@ describe('decision terminal dashboard config', () => {
       'global_decision_timeline',
       'active_votes',
       'active_elections',
-      'future_elections',
       'future_votes',
+      'future_elections',
       'past_elections',
       'past_votes',
     ]);

@@ -2,16 +2,13 @@
 
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
-import { useMemo, type KeyboardEvent } from 'react';
+import { Link } from '@tanstack/react-router';
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { BarChart3, CheckCircle2, Expand, Users, Vote } from 'lucide-react';
-import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
+import { ArrowRight, CheckCircle2, Expand, Vote } from 'lucide-react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/VoteResultsDisplay';
-import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
 import { VotingPhaseBadge as VotePhaseBadge } from '@/features/shared/ui/voting';
 import {
   computeVoteResultSummary,
@@ -81,6 +78,10 @@ interface AgendaVoteSectionProps {
   offlineTallies?: readonly VoteOfflineTallyLike[];
   canManageOfflineResults?: boolean;
   offlineEligibleCount?: number;
+  forwardingPreview?: {
+    nextEventId?: string | null;
+    nextEventTitle?: string | null;
+  } | null;
   onOpenNamedResults?: () => void;
   className?: string;
 }
@@ -100,11 +101,11 @@ export function AgendaVoteSection({
   userSelectedChoiceIds,
   voteStatus,
   voteResult,
-  voteSharePercent,
   majorityType,
   totalEligibleVoters,
   attendanceMode = 'online',
   offlineTallies = [],
+  forwardingPreview = null,
   onOpenNamedResults,
   className,
 }: AgendaVoteSectionProps) {
@@ -175,45 +176,16 @@ export function AgendaVoteSection({
     return leadingChoiceId;
   }, [computedVoteSummary?.winningChoiceId, isClosed, leadingChoiceId, resolvedVoteResult]);
 
-  const winningLabel = useMemo(() => {
-    if (!winningChoiceId) return undefined;
-    const choice = choices.find(c => c.id === winningChoiceId);
-    return choice?.label || undefined;
-  }, [winningChoiceId, choices]);
-
-  const resolvedVoteSharePercent = useMemo(() => {
-    if (voteSharePercent !== undefined) {
-      return voteSharePercent;
-    }
-
-    if (!winningChoiceId) {
-      return undefined;
-    }
-
-    if (isClosed) {
-      return computedVoteSummary?.winningPercent ?? undefined;
-    }
-
-    const winningStats = choiceStats.find(choice => choice.choice.id === winningChoiceId);
-    if (!winningStats) {
-      return undefined;
-    }
-
-    return Math.round(winningStats.finalPercentage);
-  }, [
-    choiceStats,
-    computedVoteSummary?.winningPercent,
-    isClosed,
-    voteSharePercent,
-    winningChoiceId,
-  ]);
-
   const isInteractive = Boolean(onOpenNamedResults);
   const visibleTotal = isIndicationPhase ? totalIndicative : totalFinal;
-  const turnout =
-    totalEligibleVoters && totalEligibleVoters > 0
-      ? Math.round((visibleTotal / totalEligibleVoters) * 100)
-      : undefined;
+  const visibleTotalLabel = isIndicationPhase
+    ? t('features.events.agenda.indicationVotes')
+    : t('features.events.agenda.votes');
+  const openNamedResultsLabel = t('features.events.agenda.openNamedResults');
+  const namedResultsLabel = t('features.events.agenda.namedResults.label');
+  const forwardingEventId = forwardingPreview?.nextEventId ?? null;
+  const forwardingEventTitle = forwardingPreview?.nextEventTitle ?? null;
+  const shouldShowForwardingNotice = Boolean(forwardingEventId && forwardingEventTitle);
   const voteOptions = useMemo<VoteBarOption[]>(() => {
     return choiceStats.map((cs, idx) => {
       const colors = CHOICE_COLORS[idx % CHOICE_COLORS.length];
@@ -230,16 +202,6 @@ export function AgendaVoteSection({
       };
     });
   }, [choiceStats]);
-  const handleResultsKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!isInteractive || !onOpenNamedResults) {
-      return;
-    }
-
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onOpenNamedResults();
-    }
-  };
 
   return (
     <Card className={cn('overflow-hidden rounded-lg shadow-sm', className)}>
@@ -253,18 +215,36 @@ export function AgendaVoteSection({
             <p className="text-muted-foreground mt-1 truncate text-sm">{voteTitle}</p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <BadgeControl variant="outline" className="gap-1">
+              {visibleTotal} {visibleTotalLabel}
+            </BadgeControl>
             {attendanceMode ? (
-              <BadgeControl variant="outline" textTransform="capitalize">
+              <BadgeControl
+                tone={
+                  attendanceMode === 'online'
+                    ? 'info'
+                    : attendanceMode === 'hybrid'
+                      ? 'warning'
+                      : 'neutral'
+                }
+                textTransform="capitalize"
+              >
                 {attendanceMode}
               </BadgeControl>
             ) : null}
             <VotePhaseBadge
               phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
             />
-            {isInteractive ? (
-              <BadgeControl variant="secondary" className="gap-1">
-                <Expand className="h-3 w-3" />
-                {translateText('generated.inline.0013_namentlich_8d49da42')}
+            {isInteractive && onOpenNamedResults ? (
+              <BadgeControl asChild tone="info" className="cursor-pointer gap-1">
+                <button
+                  type="button"
+                  onClick={onOpenNamedResults}
+                  aria-label={openNamedResultsLabel}
+                >
+                  <Expand className="h-3 w-3" />
+                  {namedResultsLabel}
+                </button>
               </BadgeControl>
             ) : null}
           </div>
@@ -272,77 +252,14 @@ export function AgendaVoteSection({
       </CardHeader>
 
       <CardContent className="space-y-5 p-5">
-        <div
-          {...(isInteractive
-            ? {
-                role: 'button' as const,
-                tabIndex: 0,
-                onClick: onOpenNamedResults,
-                onKeyDown: handleResultsKeyDown,
-                className:
-                  'block w-full space-y-5 text-left transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-              }
-            : { className: 'space-y-5' })}
-        >
-          {isClosed && resolvedVoteResult && (
-            <VoteResultSentence
-              type="vote"
-              result={resolvedVoteResult}
-              winnerName={winningLabel}
-              voteSharePercent={resolvedVoteSharePercent}
-              isFinal
-            />
-          )}
-
-          <div className="grid gap-2 sm:grid-cols-3">
-            <div className="bg-muted/20 rounded-md border px-3 py-2 text-xs">
-              <div className="text-muted-foreground flex items-center gap-1.5">
-                <BarChart3 className="h-3.5 w-3.5" />
-                {isIndicationPhase
-                  ? t('features.events.agenda.indicationVotes')
-                  : t('features.events.agenda.votes')}
-              </div>
-              <div className="mt-1 text-base font-semibold">{visibleTotal}</div>
+        <div className="space-y-5">
+          {isIndicationPhase ? (
+            <div className="flex justify-end">
+              <BadgeControl variant="secondary" size="xs">
+                * {t('features.events.agenda.indicationOnly')}
+              </BadgeControl>
             </div>
-            <div className="bg-muted/20 rounded-md border px-3 py-2 text-xs">
-              <div className="text-muted-foreground flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />
-                {t('features.events.voting.eligible')}
-              </div>
-              <div className="mt-1 text-base font-semibold">{totalEligibleVoters ?? '-'}</div>
-            </div>
-            <div className="bg-muted/20 rounded-md border px-3 py-2 text-xs">
-              <div className="text-muted-foreground flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                {t('features.events.voting.share')}
-              </div>
-              <div className="mt-1 text-base font-semibold">
-                {turnout !== undefined ? `${turnout}%` : '-'}
-              </div>
-            </div>
-          </div>
-
-          <div className="text-muted-foreground flex items-center justify-between gap-3 text-sm">
-            <span>
-              {visibleTotal}{' '}
-              {isIndicationPhase
-                ? t('features.events.agenda.indicationVotes')
-                : t('features.events.agenda.votes')}
-            </span>
-            <div className="flex items-center gap-2">
-              {isIndicationPhase ? (
-                <BadgeControl variant="secondary" size="xs">
-                  * {t('features.events.agenda.indicationOnly')}
-                </BadgeControl>
-              ) : null}
-              {isInteractive ? (
-                <BadgeControl variant="outline" size="xs">
-                  {translateText('generated.inline.0015_klick_fuer_einzelansicht_9d7ff135')}
-                </BadgeControl>
-              ) : null}
-            </div>
-          </div>
-
+          ) : null}
           {choices.length === 0 ? (
             <div className="rounded-lg border border-dashed p-6 text-center">
               <p className="text-muted-foreground">{t('features.events.agenda.noChoices')}</p>
@@ -353,12 +270,44 @@ export function AgendaVoteSection({
               phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
               totalFinal={totalFinal}
               totalIndication={totalIndicative}
-              totalEligible={totalEligibleVoters}
               selectedOptionIds={userSelectedChoiceIds}
+              showSelectedOptionState={isInteractive}
               winnerOptionId={isIndicationPhase ? null : winningChoiceId}
               showWinner={!isIndicationPhase}
             />
           )}
+
+          {shouldShowForwardingNotice ? (
+            <div
+              className={cn(
+                'flex items-start gap-2 rounded-md border px-3 py-2 text-sm',
+                isClosed
+                  ? 'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]'
+                  : 'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] text-[var(--badge-info-fg)]'
+              )}
+            >
+              {isClosed ? (
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+              ) : (
+                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0" />
+              )}
+              <span>
+                {isClosed
+                  ? t('features.events.agenda.forwarding.completedPrefix')
+                  : t('features.events.agenda.forwarding.pendingPrefix')}{' '}
+                <Link
+                  to="/event/$id"
+                  params={{ id: forwardingEventId ?? '' }}
+                  className="font-medium underline underline-offset-2 hover:opacity-80"
+                >
+                  {forwardingEventTitle}
+                </Link>
+                {isClosed
+                  ? t('features.events.agenda.forwarding.completedSuffix')
+                  : t('features.events.agenda.forwarding.pendingSuffix')}
+              </span>
+            </div>
+          ) : null}
 
           {userHasVoted ? (
             <div className="flex items-center justify-center gap-2 text-sm">

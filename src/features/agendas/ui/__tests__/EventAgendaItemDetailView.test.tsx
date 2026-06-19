@@ -55,6 +55,7 @@ vi.mock('../AgendaVoteSection', () => ({
 
 vi.mock('../AgendaElectionSection', () => ({
   AgendaElectionSection: agendaElectionSectionMock,
+  isAutoAssignedRoleElection: () => false,
 }));
 
 vi.mock('../OfflineTallyDialog', () => ({

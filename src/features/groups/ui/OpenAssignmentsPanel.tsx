@@ -36,7 +36,7 @@ import {
   type GroupOpenAssignment,
 } from '@/features/groups/logic/openAssignments';
 import { type ColumnDef } from '@/features/shared/ui/data-table';
-import { BadgeControl, CountBadge, EntityBadge, StatusBadge } from '@/features/shared/ui/status';
+import { CountBadge, EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import type { DelegateElectionMode } from '../hooks/useGroupOpenAssignments';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -99,20 +99,16 @@ function AssignmentFilterBadgeGroup<TValue extends string>({
         const selected = option.value === value;
 
         return (
-          <BadgeControl
+          <Button
             key={option.value}
-            asChild
+            type="button"
             variant={selected ? 'default' : 'outline'}
-            className={selected ? 'rounded-md shadow-sm' : 'rounded-md'}
+            size="sm"
+            aria-pressed={selected}
+            onClick={() => onValueChange(option.value)}
           >
-            <button
-              type="button"
-              aria-pressed={selected}
-              onClick={() => onValueChange(option.value)}
-            >
-              {option.label}
-            </button>
-          </BadgeControl>
+            {option.label}
+          </Button>
         );
       })}
     </div>

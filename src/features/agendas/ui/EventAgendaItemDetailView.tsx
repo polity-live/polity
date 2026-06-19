@@ -368,7 +368,11 @@ export function EventAgendaItemDetailView({
         navigate({ to: '/event/$id/agenda', params: { id: targetEventId } })
       }
       election={election ?? undefined}
-      votingStartTime={agendaItem.start_time ? new Date(agendaItem.start_time) : undefined}
+      votingStartTime={
+        (agendaItem.activated_at ?? agendaItem.start_time)
+          ? new Date(agendaItem.activated_at ?? agendaItem.start_time)
+          : undefined
+      }
       votingEndTime={
         (election?.closing_end_time ?? vote?.closing_end_time)
           ? new Date(election?.closing_end_time ?? vote?.closing_end_time ?? 0)
@@ -386,7 +390,7 @@ export function EventAgendaItemDetailView({
       isAddingSpeaker={addingSpeaker}
       isRemovingSpeaker={actionBarHook.speakerLoading}
       userId={user?.id}
-      agendaStartTime={agendaItem.start_time ?? undefined}
+      agendaStartTime={agendaItem.activated_at ?? agendaItem.start_time ?? undefined}
       onAddToSpeakerList={canJoinSpeakerList ? handleAddToSpeakerList : undefined}
       onRemoveFromSpeakerList={actionBarHook.handleLeaveSpeakerList}
       onMarkCompleted={handleMarkSpeakerCompleted}
@@ -468,6 +472,7 @@ export function EventAgendaItemDetailView({
         totalEligibleVoters={(vote.voters?.length ?? 0) + confirmedOfflineParticipantCount}
         canManageOfflineResults={canManageAgenda}
         offlineEligibleCount={confirmedOfflineParticipantCount}
+        forwardingPreview={agendaForwardingPreview}
         onOpenNamedResults={
           isNamedBallot(vote.ballot_visibility) ? () => setNamedResultsTarget('vote') : undefined
         }

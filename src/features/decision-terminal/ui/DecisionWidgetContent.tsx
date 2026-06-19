@@ -5,6 +5,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { Award, CalendarClock, CheckCircle2, Crown, Vote } from 'lucide-react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { stripDelegateElectionMetadata } from '@/features/elections/logic/electionAssignmentMetadata';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import {
@@ -247,12 +248,14 @@ function LiveDeltaBadge({ delta }: { delta?: DecisionLiveDelta }) {
 
 function DecisionContextLinks({ decision }: { decision: DecisionItem }) {
   const body = decision.body?.trim();
-  const shouldShowAgendaItem =
-    decision.agendaItem &&
+  const agendaItem = decision.agendaItem;
+  const shouldShowAgendaItem = Boolean(
+    agendaItem &&
     !(
-      decision.agendaItem.href === decision.href &&
-      normalizeContextText(decision.agendaItem.name) === normalizeContextText(decision.title)
-    );
+      agendaItem.href === decision.href &&
+      normalizeContextText(agendaItem.name) === normalizeContextText(decision.title)
+    )
+  );
 
   if (!body && !decision.entity && !shouldShowAgendaItem) {
     return null;
@@ -266,9 +269,9 @@ function DecisionContextLinks({ decision }: { decision: DecisionItem }) {
           {decision.entity.name}
         </DecisionLink>
       ) : null}
-      {shouldShowAgendaItem ? (
-        <DecisionLink href={decision.agendaItem.href} className="truncate">
-          {decision.agendaItem.name}
+      {shouldShowAgendaItem && agendaItem ? (
+        <DecisionLink href={agendaItem.href} className="truncate">
+          {agendaItem.name}
         </DecisionLink>
       ) : null}
     </div>
@@ -276,8 +279,9 @@ function DecisionContextLinks({ decision }: { decision: DecisionItem }) {
 }
 
 function DecisionSummaryLine({ decision }: { decision: DecisionItem }) {
-  if (!decision.summary) return null;
-  return <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">{decision.summary}</p>;
+  const summary = stripDelegateElectionMetadata(decision.summary)?.trim();
+  if (!summary) return null;
+  return <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">{summary}</p>;
 }
 
 function DecisionMetricsLine({ decision }: { decision: DecisionItem }) {
@@ -300,6 +304,34 @@ function DecisionMetricsLine({ decision }: { decision: DecisionItem }) {
   if (!parts.length) return null;
 
   return <div className="text-muted-foreground mt-2 text-xs">{parts.join(' · ')}</div>;
+}
+
+function getVoteResultBarTone(
+  decision: DecisionItem,
+  row: ResultSnapshotEntry,
+  rows: ResultSnapshotEntry[]
+): DecisionLiveDeltaTone {
+  if (decision.type !== 'vote' || !decision.isClosed) {
+    return row.tone;
+  }
+
+  const maxValue = Math.max(...rows.map(entry => entry.value));
+  if (maxValue <= 0 || row.value !== maxValue) {
+    return row.tone;
+  }
+
+  return decision.status === 'passed' ? 'success' : 'danger';
+}
+
+function getResultBarClassName(tone: DecisionLiveDeltaTone) {
+  switch (tone) {
+    case 'success':
+      return 'bg-[var(--badge-success-fg)]';
+    case 'danger':
+      return 'bg-[var(--badge-danger-fg)]';
+    default:
+      return 'bg-muted-foreground/45';
+  }
 }
 
 function WidgetLoading() {
@@ -340,6 +372,7 @@ function VoteChoiceRows({
     <div className="space-y-2">
       {rows.map(row => {
         const percent = total > 0 ? (row.value / total) * 100 : 0;
+        const tone = getVoteResultBarTone(decision, row, rows);
 
         return (
           <div key={row.key} className="space-y-1">
@@ -352,12 +385,7 @@ function VoteChoiceRows({
             </div>
             <div className="bg-muted/40 h-1.5 overflow-hidden rounded-full">
               <div
-                className={cn(
-                  'h-full rounded-full',
-                  row.tone === 'success' && 'bg-brand',
-                  row.tone === 'danger' && 'bg-destructive',
-                  row.tone === 'neutral' && 'bg-muted-foreground/45'
-                )}
+                className={cn('h-full rounded-full', getResultBarClassName(tone))}
                 style={{ width: `${normalizePercent(percent)}%` }}
               />
             </div>

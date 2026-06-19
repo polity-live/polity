@@ -173,206 +173,227 @@ export function UserMenuView({
           </DropdownMenuItem>
 
           {hasGroups || hasEvents || hasAmendments ? (
-            <Accordion
-              type="multiple"
-              defaultValue={hasGroups ? ['groups'] : []}
-              className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+            <div
+              data-testid="user-menu-navigation-sections"
+              className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain"
             >
               {hasGroups ? (
-                <AccordionItem value="groups" className="border-0">
-                  <DropdownMenuSeparator className="shrink-0" />
-                  <AccordionTrigger className="text-muted-foreground px-2 py-1.5 text-xs font-semibold hover:no-underline">
-                    {labels.groups}
-                  </AccordionTrigger>
-                  <AccordionContent className="pb-1">
-                    {showGroupSearch ? (
-                      <div className="shrink-0 px-2 pb-1">
-                        <div className="relative">
-                          <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
-                          <FormControlInput
-                            ref={groupSearchInputRef}
-                            autoFocus
-                            value={groupSearchQuery}
-                            onChange={event => onGroupSearchChange(event.target.value)}
-                            onKeyDown={event => event.stopPropagation()}
-                            onPointerDown={event => event.stopPropagation()}
-                            placeholder={labels.searchGroupsPlaceholder}
-                            className="h-8 pr-8 pl-8 text-xs"
-                          />
-                          {groupSearchQuery.length > 0 ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={onClearGroupSearch}
-                              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2"
-                              aria-label={labels.clear}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          ) : null}
-                        </div>
-                      </div>
-                    ) : null}
-                    <div
-                      data-testid="user-menu-groups-list"
-                      className="max-h-48 min-h-0 overflow-y-auto overscroll-contain"
-                    >
-                      {groups.map(group => (
-                        <DropdownMenuItem key={group.id} asChild>
-                          <Link
-                            to="/group/$id"
-                            params={{ id: group.id }}
-                            className="flex w-full items-center gap-2"
-                          >
-                            <Avatar className="h-5 w-5">
-                              <AvatarImage
-                                src={group.image_url ?? undefined}
-                                alt={group.name ?? undefined}
-                              />
-                              <AvatarFallback
-                                className={featureThemeClassName(
-                                  'agendaAccreditationSectionThemedText'
-                                )}
+                <Accordion
+                  type="single"
+                  collapsible
+                  defaultValue="groups"
+                  data-testid="user-menu-groups-accordion"
+                  className="w-full min-w-0 overflow-x-hidden"
+                >
+                  <AccordionItem value="groups" className="border-0">
+                    <DropdownMenuSeparator className="shrink-0" />
+                    <AccordionTrigger className="text-muted-foreground min-w-0 px-2 py-1.5 text-xs font-semibold hover:no-underline">
+                      {labels.groups}
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-1">
+                      {showGroupSearch ? (
+                        <div className="shrink-0 px-2 pb-1">
+                          <div className="relative">
+                            <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
+                            <FormControlInput
+                              ref={groupSearchInputRef}
+                              autoFocus
+                              value={groupSearchQuery}
+                              onChange={event => onGroupSearchChange(event.target.value)}
+                              onKeyDown={event => event.stopPropagation()}
+                              onPointerDown={event => event.stopPropagation()}
+                              placeholder={labels.searchGroupsPlaceholder}
+                              className="h-8 w-full pr-8 pl-8 text-xs"
+                            />
+                            {groupSearchQuery.length > 0 ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={onClearGroupSearch}
+                                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2"
+                                aria-label={labels.clear}
                               >
-                                {group.name?.[0]?.toUpperCase() || 'G'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="truncate text-sm">{group.name}</span>
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+                                <X className="h-3 w-3" />
+                              </Button>
+                            ) : null}
+                          </div>
+                        </div>
+                      ) : null}
+                      <div
+                        data-testid="user-menu-groups-list"
+                        className="max-h-48 min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain"
+                      >
+                        {groups.map(group => (
+                          <DropdownMenuItem key={group.id} asChild>
+                            <Link
+                              to="/group/$id"
+                              params={{ id: group.id }}
+                              className="flex w-full min-w-0 items-center gap-2"
+                            >
+                              <Avatar className="h-5 w-5 shrink-0">
+                                <AvatarImage
+                                  src={group.image_url ?? undefined}
+                                  alt={group.name ?? undefined}
+                                />
+                                <AvatarFallback
+                                  className={featureThemeClassName(
+                                    'agendaAccreditationSectionThemedText'
+                                  )}
+                                >
+                                  {group.name?.[0]?.toUpperCase() || 'G'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="min-w-0 truncate text-sm">{group.name}</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               ) : null}
 
               {hasEvents ? (
-                <AccordionItem value="events" className="border-0">
-                  <DropdownMenuSeparator className="shrink-0" />
-                  <AccordionTrigger className="text-muted-foreground px-2 py-1.5 text-xs font-semibold hover:no-underline">
-                    {labels.events}
-                  </AccordionTrigger>
-                  <AccordionContent className="pb-1">
-                    {showEventSearch ? (
-                      <div className="shrink-0 px-2 pb-1">
-                        <div className="relative">
-                          <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
-                          <FormControlInput
-                            ref={eventSearchInputRef}
-                            value={eventSearchQuery}
-                            onChange={event => onEventSearchChange(event.target.value)}
-                            onKeyDown={event => event.stopPropagation()}
-                            onPointerDown={event => event.stopPropagation()}
-                            placeholder={labels.searchEventsPlaceholder}
-                            className="h-8 pr-8 pl-8 text-xs"
-                          />
-                          {eventSearchQuery.length > 0 ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={onClearEventSearch}
-                              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2"
-                              aria-label={labels.clear}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          ) : null}
+                <Accordion
+                  type="single"
+                  collapsible
+                  data-testid="user-menu-events-accordion"
+                  className="w-full min-w-0 overflow-x-hidden"
+                >
+                  <AccordionItem value="events" className="border-0">
+                    <DropdownMenuSeparator className="shrink-0" />
+                    <AccordionTrigger className="text-muted-foreground min-w-0 px-2 py-1.5 text-xs font-semibold hover:no-underline">
+                      {labels.events}
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-1">
+                      {showEventSearch ? (
+                        <div className="shrink-0 px-2 pb-1">
+                          <div className="relative">
+                            <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
+                            <FormControlInput
+                              ref={eventSearchInputRef}
+                              value={eventSearchQuery}
+                              onChange={event => onEventSearchChange(event.target.value)}
+                              onKeyDown={event => event.stopPropagation()}
+                              onPointerDown={event => event.stopPropagation()}
+                              placeholder={labels.searchEventsPlaceholder}
+                              className="h-8 w-full pr-8 pl-8 text-xs"
+                            />
+                            {eventSearchQuery.length > 0 ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={onClearEventSearch}
+                                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2"
+                                aria-label={labels.clear}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            ) : null}
+                          </div>
                         </div>
+                      ) : null}
+                      <div
+                        data-testid="user-menu-events-list"
+                        className="max-h-48 min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain"
+                      >
+                        {events.map(event => (
+                          <DropdownMenuItem key={event.key} asChild>
+                            <Link
+                              to="/event/$id"
+                              params={{ id: event.id }}
+                              className="flex w-full min-w-0 items-center gap-2"
+                            >
+                              <Calendar className="text-muted-foreground h-4 w-4 shrink-0" />
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm">
+                                  {event.title || labels.eventFallback}
+                                </span>
+                                <span className="text-muted-foreground block truncate text-xs">
+                                  {formatEventMeta(event)}
+                                </span>
+                              </span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ))}
                       </div>
-                    ) : null}
-                    <div
-                      data-testid="user-menu-events-list"
-                      className="max-h-48 min-h-0 overflow-y-auto overscroll-contain"
-                    >
-                      {events.map(event => (
-                        <DropdownMenuItem key={event.key} asChild>
-                          <Link
-                            to="/event/$id"
-                            params={{ id: event.id }}
-                            className="flex w-full items-center gap-2"
-                          >
-                            <Calendar className="text-muted-foreground h-4 w-4 shrink-0" />
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm">
-                                {event.title || labels.eventFallback}
-                              </span>
-                              <span className="text-muted-foreground block truncate text-xs">
-                                {formatEventMeta(event)}
-                              </span>
-                            </span>
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               ) : null}
 
               {hasAmendments ? (
-                <AccordionItem value="amendments" className="border-0">
-                  <DropdownMenuSeparator className="shrink-0" />
-                  <AccordionTrigger className="text-muted-foreground px-2 py-1.5 text-xs font-semibold hover:no-underline">
-                    {labels.amendments}
-                  </AccordionTrigger>
-                  <AccordionContent className="pb-1">
-                    {showAmendmentSearch ? (
-                      <div className="shrink-0 px-2 pb-1">
-                        <div className="relative">
-                          <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
-                          <FormControlInput
-                            ref={amendmentSearchInputRef}
-                            value={amendmentSearchQuery}
-                            onChange={event => onAmendmentSearchChange(event.target.value)}
-                            onKeyDown={event => event.stopPropagation()}
-                            onPointerDown={event => event.stopPropagation()}
-                            placeholder={labels.searchAmendmentsPlaceholder}
-                            className="h-8 pr-8 pl-8 text-xs"
-                          />
-                          {amendmentSearchQuery.length > 0 ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={onClearAmendmentSearch}
-                              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2"
-                              aria-label={labels.clear}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          ) : null}
+                <Accordion
+                  type="single"
+                  collapsible
+                  data-testid="user-menu-amendments-accordion"
+                  className="w-full min-w-0 overflow-x-hidden"
+                >
+                  <AccordionItem value="amendments" className="border-0">
+                    <DropdownMenuSeparator className="shrink-0" />
+                    <AccordionTrigger className="text-muted-foreground min-w-0 px-2 py-1.5 text-xs font-semibold hover:no-underline">
+                      {labels.amendments}
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-1">
+                      {showAmendmentSearch ? (
+                        <div className="shrink-0 px-2 pb-1">
+                          <div className="relative">
+                            <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
+                            <FormControlInput
+                              ref={amendmentSearchInputRef}
+                              value={amendmentSearchQuery}
+                              onChange={event => onAmendmentSearchChange(event.target.value)}
+                              onKeyDown={event => event.stopPropagation()}
+                              onPointerDown={event => event.stopPropagation()}
+                              placeholder={labels.searchAmendmentsPlaceholder}
+                              className="h-8 w-full pr-8 pl-8 text-xs"
+                            />
+                            {amendmentSearchQuery.length > 0 ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={onClearAmendmentSearch}
+                                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2"
+                                aria-label={labels.clear}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            ) : null}
+                          </div>
                         </div>
+                      ) : null}
+                      <div
+                        data-testid="user-menu-amendments-list"
+                        className="max-h-48 min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain"
+                      >
+                        {amendments.map(amendment => (
+                          <DropdownMenuItem key={amendment.id} asChild>
+                            <Link
+                              to="/amendment/$id"
+                              params={{ id: amendment.id }}
+                              className="flex w-full min-w-0 items-center gap-2"
+                            >
+                              <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm">
+                                  {amendment.title || labels.amendmentFallback}
+                                </span>
+                                <span className="text-muted-foreground block truncate text-xs">
+                                  {formatAmendmentMeta(amendment)}
+                                </span>
+                              </span>
+                            </Link>
+                          </DropdownMenuItem>
+                        ))}
                       </div>
-                    ) : null}
-                    <div
-                      data-testid="user-menu-amendments-list"
-                      className="max-h-48 min-h-0 overflow-y-auto overscroll-contain"
-                    >
-                      {amendments.map(amendment => (
-                        <DropdownMenuItem key={amendment.id} asChild>
-                          <Link
-                            to="/amendment/$id"
-                            params={{ id: amendment.id }}
-                            className="flex w-full items-center gap-2"
-                          >
-                            <FileText className="text-muted-foreground h-4 w-4 shrink-0" />
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm">
-                                {amendment.title || labels.amendmentFallback}
-                              </span>
-                              <span className="text-muted-foreground block truncate text-xs">
-                                {formatAmendmentMeta(amendment)}
-                              </span>
-                            </span>
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               ) : null}
-            </Accordion>
+            </div>
           ) : null}
 
           <DropdownMenuSeparator className="shrink-0" />

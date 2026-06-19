@@ -209,20 +209,23 @@ export function VotingResultBadge({
 
 export function VotingResultCompact({
   label,
+  tone = 'neutral',
   className,
 }: {
   label: ReactNode;
+  tone?: BadgeTone;
   className?: string;
 }) {
   return (
-    <span
+    <StatusBadge
+      tone={tone}
       className={cn(
-        'bg-muted/20 inline-flex max-w-full min-w-0 items-center rounded-md border px-2 py-1 font-mono text-xs font-medium',
+        'inline-flex max-w-full min-w-0 items-center rounded-md px-2 py-1 font-mono text-xs font-medium',
         className
       )}
       title={typeof label === 'string' ? label : undefined}
     >
       <span className="min-w-0 truncate">{label}</span>
-    </span>
+    </StatusBadge>
   );
 }

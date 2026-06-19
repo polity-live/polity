@@ -71,6 +71,7 @@ interface EventLiveFocusDialogProps {
   streamElection?: any;
   streamVote?: any;
   streamDelegateTargetEvent?: any;
+  streamForwardingPreview?: any;
   indicativeSelections: readonly any[];
   finalSelections: readonly any[];
   userHasElectionVoted: boolean;
@@ -340,6 +341,7 @@ export function EventLiveFocusDialog({
   streamElection,
   streamVote,
   streamDelegateTargetEvent,
+  streamForwardingPreview,
   indicativeSelections,
   finalSelections,
   userHasElectionVoted,
@@ -541,6 +543,7 @@ export function EventLiveFocusDialog({
                       }
                       canManageOfflineResults={canManageAgenda}
                       offlineEligibleCount={confirmedOfflineParticipantCount}
+                      forwardingPreview={streamForwardingPreview}
                     />
                   ) : null}
                 </>

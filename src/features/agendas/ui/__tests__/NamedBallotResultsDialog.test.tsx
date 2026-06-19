@@ -57,6 +57,9 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   ) => {
     if (key.includes('erfasst')) return 'erfasst';
     if (key.includes('offline_aggregiert')) return 'offline aggregiert';
+    if (key === 'features.events.agenda.defaultChoiceLabels.yes') return 'Yes';
+    if (key === 'features.events.agenda.defaultChoiceLabels.no') return 'No';
+    if (key === 'features.events.agenda.defaultChoiceLabels.abstain') return 'Abstain';
     if (typeof paramsOrFallback === 'string') return paramsOrFallback;
     return fallback ?? key;
   },
@@ -128,5 +131,72 @@ describe('NamedBallotResultsDialog', () => {
 
     const userLink = screen.getByRole('link', { name: /Polity Tester/ });
     expect(userLink.getAttribute('href')).toBe('/user/user-1');
+  });
+
+  it('localizes default vote choice labels in summaries and rows', () => {
+    const model: NamedBallotResultsModel = {
+      phase: 'final',
+      isClosed: true,
+      groupedBySourceGroup: true,
+      groups: [
+        {
+          key: 'all',
+          label: 'Alle Stimmberechtigten',
+          rows: [
+            {
+              id: 'participant-1',
+              displayName: 'Polity Tester',
+              userId: null,
+              userHandle: null,
+              avatar: null,
+              selectionIds: ['accept'],
+              selections: ['accept'],
+              kind: 'participant',
+              status: 'recorded',
+              statusLabel: 'Erfasst',
+              isStruckThrough: false,
+            },
+          ],
+          optionSummaries: [{ id: 'accept', label: 'accept', count: 1 }],
+          eligibleCount: 1,
+          recordedCount: 1,
+          offlineAggregatedCount: 0,
+        },
+      ],
+      totalOptionSummaries: [
+        {
+          id: 'accept',
+          label: 'accept',
+          namedCount: 1,
+          offlineCount: 0,
+          totalCount: 1,
+        },
+        {
+          id: 'reject',
+          label: 'reject',
+          namedCount: 0,
+          offlineCount: 0,
+          totalCount: 0,
+        },
+      ],
+      totalEligibleCount: 1,
+      totalRecordedCount: 1,
+      totalOfflineAggregatedCount: 0,
+    };
+
+    render(
+      <NamedBallotResultsDialog
+        open
+        onOpenChange={() => undefined}
+        title="Vote Results"
+        description="Live-Einzelansicht"
+        model={model}
+      />
+    );
+
+    expect(screen.getAllByText(/Yes/).length).toBeGreaterThan(0);
+    expect(screen.getByText('No: 0')).toBeTruthy();
+    expect(screen.queryByText(/accept/)).toBeNull();
+    expect(screen.queryByText(/reject/)).toBeNull();
   });
 });

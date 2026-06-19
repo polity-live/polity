@@ -32,25 +32,42 @@ vi.mock('@tanstack/react-router', () => ({
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string, fallback?: string) => fallback ?? key,
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => {
+    t: (key: string, valuesOrFallback?: unknown, maybeFallback?: string) => {
       const labels: Record<string, string> = {
         'features.events.agenda.actual': 'Final',
         'features.events.agenda.indication': 'Indication',
         'features.events.agenda.indicationOnly': 'Indication only',
         'features.events.agenda.indicationShort': 'Ind',
         'features.events.agenda.indicationVotes': 'indication votes',
+        'features.events.agenda.namedResults.label': 'Named',
         'features.events.agenda.noChoices': 'No choices yet',
         'features.events.agenda.noVotesYet': 'No votes yet',
+        'features.events.agenda.openNamedResults': 'Open named results',
         'features.events.agenda.selected': 'Selected',
         'features.events.agenda.voteResults': 'Vote results',
         'features.events.agenda.votes': 'votes',
         'features.events.agenda.winner': 'Winner',
+        'features.events.agenda.defaultChoiceLabels.yes': 'Yes',
+        'features.events.agenda.defaultChoiceLabels.no': 'No',
+        'features.events.agenda.defaultChoiceLabels.abstain': 'Abstain',
+        'features.events.agenda.forwarding.pendingPrefix': 'The amendment will be forwarded to',
+        'features.events.agenda.forwarding.pendingSuffix': ' after the vote.',
+        'features.events.agenda.forwarding.completedPrefix':
+          'The amendment was successfully forwarded to',
+        'features.events.agenda.forwarding.completedSuffix': '.',
         'features.events.voting.eligible': 'Eligible',
         'features.events.voting.share': 'Share',
         'features.events.voting.voted': 'Voted',
       };
 
-      return fallback ?? labels[key] ?? key;
+      const fallback =
+        typeof maybeFallback === 'string'
+          ? maybeFallback
+          : typeof valuesOrFallback === 'string'
+            ? valuesOrFallback
+            : undefined;
+
+      return labels[key] ?? fallback ?? key;
     },
   }),
 }));
@@ -70,7 +87,7 @@ afterEach(() => {
 });
 
 describe('AgendaVoteSection', () => {
-  it('renders a clickable named-results result card with winner, selection, and eligible summary', () => {
+  it('renders lean vote rows with named-results access, winner, and selection', () => {
     const onOpenNamedResults = vi.fn();
 
     const { container } = render(
@@ -92,21 +109,26 @@ describe('AgendaVoteSection', () => {
       />
     );
 
-    const resultCard = container.querySelector('button');
-    expect(resultCard).toBeTruthy();
-    fireEvent.click(resultCard as HTMLButtonElement);
+    fireEvent.click(screen.getByRole('button', { name: 'Open named results' }));
 
     expect(onOpenNamedResults).toHaveBeenCalledTimes(1);
-    expect(screen.getByText('The motion was accepted with 67% of votes.')).toBeTruthy();
     expect(container.querySelector('[data-slot="vote-results-display"]')).toBeTruthy();
-    expect(container.querySelectorAll('[data-slot="vote-result-option"]')).toHaveLength(2);
+    const rows = container.querySelectorAll('[data-slot="vote-result-option"]');
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.getAttribute('data-framed')).toBe('true');
+    expect(rows[1]?.getAttribute('data-framed')).toBeNull();
     expect(screen.getByText('Winner')).toBeTruthy();
     expect(screen.getByText('Selected')).toBeTruthy();
+    expect(screen.getByText('2 · 67%')).toBeTruthy();
+    expect(screen.getByText('1 · 33%')).toBeTruthy();
+    expect(screen.queryByText('YE')).toBeNull();
+    expect(screen.queryByText('NO')).toBeNull();
 
     const resultsDisplay = container.querySelector('[data-slot="vote-results-display"]');
     expect(resultsDisplay).toBeTruthy();
-    expect(within(resultsDisplay as HTMLElement).getByText(/Eligible:\s*5/)).toBeTruthy();
-    expect(within(resultsDisplay as HTMLElement).getByText(/Voted:\s*3/)).toBeTruthy();
+    expect(within(resultsDisplay as HTMLElement).queryByText(/Eligible:/)).toBeNull();
+    expect(within(resultsDisplay as HTMLElement).queryByText(/Voted:/)).toBeNull();
+    expect(screen.queryByText(/The motion was accepted/)).toBeNull();
   });
 
   it('keeps the empty choices state visible without opening named results', () => {
@@ -124,5 +146,67 @@ describe('AgendaVoteSection', () => {
 
     expect(screen.getByText('No choices yet')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /No choices yet/ })).toBeNull();
+  });
+
+  it('shows a linked forwarding notice below the results before and after the vote closes', () => {
+    const forwardingPreview = {
+      nextEventId: 'next-event',
+      nextEventTitle: 'Next Assembly',
+    };
+
+    const { container, rerender } = render(
+      <AgendaVoteSection
+        voteTitle="Budget motion"
+        choices={[choice({ id: 'yes', label: 'Yes', order_index: 0 })]}
+        indicativeDecisions={[{ choice_id: 'yes' }]}
+        finalDecisions={[]}
+        userHasVoted={false}
+        userSelectedChoiceIds={[]}
+        voteStatus="indicative"
+        forwardingPreview={forwardingPreview}
+      />
+    );
+
+    expect(screen.getByText(/The amendment will be forwarded to/)).toBeTruthy();
+    const pendingLink = screen.getByRole('link', { name: 'Next Assembly' });
+    expect(pendingLink.getAttribute('href')).toBe('/event/next-event');
+    expect(screen.getByText(/after the vote/)).toBeTruthy();
+    const pendingResults = container.querySelector('[data-slot="vote-results-display"]');
+    const pendingNotice = screen.getByText(/The amendment will be forwarded to/).closest('div');
+    expect(pendingResults).toBeTruthy();
+    expect(pendingNotice).toBeTruthy();
+    expect(
+      pendingResults?.compareDocumentPosition(pendingNotice as HTMLElement) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
+    rerender(
+      <AgendaVoteSection
+        voteTitle="Budget motion"
+        choices={[choice({ id: 'yes', label: 'Yes', order_index: 0 })]}
+        indicativeDecisions={[{ choice_id: 'yes' }]}
+        finalDecisions={[{ choice_id: 'yes' }]}
+        userHasVoted={false}
+        userSelectedChoiceIds={[]}
+        voteStatus="closed"
+        voteResult="passed"
+        forwardingPreview={forwardingPreview}
+      />
+    );
+
+    expect(screen.getByText(/The amendment was successfully forwarded to/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Next Assembly' }).getAttribute('href')).toBe(
+      '/event/next-event'
+    );
+    const completedResults = container.querySelector('[data-slot="vote-results-display"]');
+    const completedNotice = screen
+      .getByText(/The amendment was successfully forwarded to/)
+      .closest('div');
+    expect(completedResults).toBeTruthy();
+    expect(completedNotice).toBeTruthy();
+    expect(
+      completedResults?.compareDocumentPosition(completedNotice as HTMLElement) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 });

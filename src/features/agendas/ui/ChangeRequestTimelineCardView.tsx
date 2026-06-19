@@ -14,7 +14,10 @@ import { cn } from '@/features/shared/utils/utils';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { VotingPhaseBadge as VotePhaseBadge } from '@/features/shared/ui/voting';
 import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/VoteResultsDisplay';
-import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
+import {
+  getCanonicalVoteChoice,
+  getLocalizedVoteChoiceLabel,
+} from '@/features/shared/ui/voting/voteChoiceLabels';
 import { ChangeRequestSummaryItem } from '@/features/change-requests/ui/ChangeRequestSummaryItem';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
 import { SuggestionViewToggle } from '@/features/editor/ui/SuggestionViewToggle';
@@ -205,10 +208,7 @@ export function ChangeRequestTimelineCardView({
   totalIndicative,
   totalFinal,
   totalVoters,
-  resolvedVoteResult,
   winningChoiceId,
-  winningLabel,
-  resolvedVoteSharePercent,
   currentPhaseVoteCount,
   handleCastVote,
   isLocked,
@@ -460,17 +460,6 @@ export function ChangeRequestTimelineCardView({
                 </div>
               )}
 
-            {/* Vote result sentence when closed */}
-            {isClosed && resolvedVoteResult && (
-              <VoteResultSentence
-                type="vote"
-                result={resolvedVoteResult}
-                winnerName={winningLabel}
-                voteSharePercent={resolvedVoteSharePercent}
-                isFinal
-              />
-            )}
-
             {/* Vote results */}
             {!isLocked &&
               (choices.length === 0 ? (
@@ -516,30 +505,42 @@ export function ChangeRequestTimelineCardView({
             {/* Voting buttons for active items */}
             {isCurrent && !isLocked && !isClosed && !hasUserVoted && canVote && vote && (
               <div className="flex gap-2 pt-2">
-                {choices.map((choice: any) => (
-                  <Button
-                    key={choice.id}
-                    size="sm"
-                    variant={
-                      choice.label === 'yes'
-                        ? 'default'
-                        : choice.label === 'no'
-                          ? 'destructive'
-                          : 'secondary'
-                    }
-                    className={cn(
-                      choice.label === 'yes' &&
-                        featureThemeClassName('agendaChangeRequestTimelineCardSuccessBackground')
-                    )}
-                    disabled={votingLoading}
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleCastVote(choice.id);
-                    }}
-                  >
-                    {choice.label}
-                  </Button>
-                ))}
+                {choices.map((choice: any, choiceIndex: number) => {
+                  const choiceKind = getCanonicalVoteChoice(choice.label);
+
+                  return (
+                    <Button
+                      key={choice.id}
+                      size="sm"
+                      variant={
+                        choiceKind === 'yes'
+                          ? 'default'
+                          : choiceKind === 'no'
+                            ? 'destructive'
+                            : 'secondary'
+                      }
+                      className={cn(
+                        choiceKind === 'yes' &&
+                          featureThemeClassName('agendaChangeRequestTimelineCardSuccessBackground')
+                      )}
+                      disabled={votingLoading}
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleCastVote(choice.id);
+                      }}
+                    >
+                      {getLocalizedVoteChoiceLabel(
+                        choice.label,
+                        t,
+                        t(
+                          'features.events.agenda.defaultChoiceLabels.choiceWithNumber',
+                          { count: choiceIndex + 1 },
+                          `Choice ${choiceIndex + 1}`
+                        )
+                      )}
+                    </Button>
+                  );
+                })}
               </div>
             )}
 

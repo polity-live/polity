@@ -93,8 +93,8 @@ vi.mock('react-grid-layout/legacy', () => {
     { i: 'widget-global-decision-timeline', x: 1, y: 0, w: 11, h: 9 },
     { i: 'widget-active-votes', x: 0, y: 9, w: 6, h: 7 },
     { i: 'widget-active-elections', x: 6, y: 9, w: 6, h: 7 },
-    { i: 'widget-future-elections', x: 0, y: 16, w: 6, h: 7 },
-    { i: 'widget-future-votes', x: 6, y: 16, w: 6, h: 7 },
+    { i: 'widget-future-votes', x: 0, y: 16, w: 6, h: 7 },
+    { i: 'widget-future-elections', x: 6, y: 16, w: 6, h: 7 },
     { i: 'widget-past-elections', x: 0, y: 23, w: 6, h: 7 },
     { i: 'widget-past-votes', x: 6, y: 23, w: 6, h: 7 },
   ];
@@ -102,8 +102,8 @@ vi.mock('react-grid-layout/legacy', () => {
     { i: 'widget-global-decision-timeline', x: 0, y: 0, w: 12, h: 10 },
     { i: 'widget-active-votes', x: 0, y: 10, w: 7, h: 8 },
     { i: 'widget-active-elections', x: 7, y: 10, w: 5, h: 7 },
-    { i: 'widget-future-elections', x: 0, y: 18, w: 6, h: 7 },
-    { i: 'widget-future-votes', x: 6, y: 18, w: 6, h: 7 },
+    { i: 'widget-future-votes', x: 0, y: 18, w: 6, h: 7 },
+    { i: 'widget-future-elections', x: 6, y: 18, w: 6, h: 7 },
     { i: 'widget-past-elections', x: 0, y: 25, w: 6, h: 7 },
     { i: 'widget-past-votes', x: 6, y: 25, w: 6, h: 7 },
   ];
@@ -364,6 +364,60 @@ describe('DecisionTerminal dashboard', () => {
     expect(
       container.querySelectorAll('[data-election-candidate-row="true"]').length
     ).toBeGreaterThan(0);
+  });
+
+  it('hides delegate election metadata and technical IDs from election cards', () => {
+    const electionHref = '/event/event-1/agenda/delegate-election';
+    render(
+      <DecisionTerminal
+        decisions={[
+          decision({
+            id: 'E-002',
+            sourceId: 'election-delegate-1',
+            type: 'election',
+            title: 'Delegiertenwahl: Delegate assembly',
+            body: 'Delegierte:r fuer Delegate assembly - Sitz 1',
+            href: electionHref,
+            entity: undefined,
+            agendaItem: {
+              id: 'delegate-election',
+              name: 'Delegiertenwahl: Delegate assembly',
+              href: electionHref,
+            },
+            voteId: undefined,
+            voterId: undefined,
+            electionId: 'election-delegate-1',
+            electorId: 'elector-1',
+            summary: `@delegate-election-meta ${JSON.stringify({
+              kind: 'delegate_election',
+              targetEventId: 'target-event',
+              targetGroupId: 'target-group',
+              sourceGroupId: 'source-group',
+              seatRoleIds: ['seat-1'],
+              allSeatRoleIds: ['seat-1'],
+              mode: 'single',
+            })}\nWaehlt die Delegierten von B1 fuer Delegate assembly.`,
+            votes: undefined,
+            indicationVotes: undefined,
+            candidates: [
+              { id: 'candidate-1', name: 'Tobias Hassebrock', indicationVotes: 0, votes: 0 },
+            ],
+          }),
+        ]}
+      />
+    );
+
+    expect(screen.queryByText(/@delegate-election-meta/)).toBeNull();
+    expect(screen.queryByText(/targetEventId/)).toBeNull();
+    expect(screen.queryByText('E-002')).toBeNull();
+    expect(
+      screen.getAllByText('Waehlt die Delegierten von B1 fuer Delegate assembly.')
+    ).toHaveLength(2);
+    expect(screen.getAllByText('Tobias Hassebrock').length).toBeGreaterThan(0);
+
+    const titleLinks = screen.getAllByRole('link', { name: 'Delegiertenwahl: Delegate assembly' });
+    expect(titleLinks).toHaveLength(2);
+    expect(titleLinks[0].getAttribute('href')).toBe(electionHref);
   });
 
   it('uses a real Vote button and opens the vote dialog instead of dragging content', () => {

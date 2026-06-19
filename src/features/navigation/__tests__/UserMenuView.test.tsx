@@ -91,7 +91,12 @@ describe('UserMenuView', () => {
     const groupsTrigger = screen.getByRole('button', { name: 'Groups' });
     const eventsTrigger = screen.getByRole('button', { name: 'Events' });
     const amendmentsTrigger = screen.getByRole('button', { name: 'Amendments' });
+    const sections = screen.getByTestId('user-menu-navigation-sections');
 
+    expect(screen.getByTestId('user-menu-groups-accordion')).toBeTruthy();
+    expect(screen.getByTestId('user-menu-events-accordion')).toBeTruthy();
+    expect(screen.getByTestId('user-menu-amendments-accordion')).toBeTruthy();
+    expect(sections.className).toContain('overflow-x-hidden');
     expect(groupsTrigger.getAttribute('data-state')).toBe('open');
     expect(eventsTrigger.getAttribute('data-state')).toBe('closed');
     expect(amendmentsTrigger.getAttribute('data-state')).toBe('closed');
@@ -115,10 +120,13 @@ describe('UserMenuView', () => {
     const amendmentsList = screen.getByTestId('user-menu-amendments-list');
 
     expect(groupsList.className).toContain('overflow-y-auto');
+    expect(groupsList.className).toContain('overflow-x-hidden');
     expect(groupsList.className).toContain('min-h-0');
     expect(eventsList.className).toContain('overflow-y-auto');
+    expect(eventsList.className).toContain('overflow-x-hidden');
     expect(eventsList.className).toContain('min-h-0');
     expect(amendmentsList.className).toContain('overflow-y-auto');
+    expect(amendmentsList.className).toContain('overflow-x-hidden');
     expect(amendmentsList.className).toContain('min-h-0');
   });
 });

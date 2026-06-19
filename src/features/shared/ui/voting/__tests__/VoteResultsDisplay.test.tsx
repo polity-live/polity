@@ -7,7 +7,7 @@ import { VoteResultsDisplay, type VoteBarOption } from '../VoteResultsDisplay';
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => {
+    t: (key: string, valuesOrFallback?: unknown, maybeFallback?: string) => {
       const labels: Record<string, string> = {
         'features.events.agenda.actual': 'Final',
         'features.events.agenda.indication': 'Indication',
@@ -19,12 +19,22 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'features.events.agenda.showIndicationResults': 'Show indication results',
         'features.events.agenda.votes': 'votes',
         'features.events.agenda.winner': 'Winner',
+        'features.events.agenda.defaultChoiceLabels.yes': 'Yes',
+        'features.events.agenda.defaultChoiceLabels.no': 'No',
+        'features.events.agenda.defaultChoiceLabels.abstain': 'Abstain',
         'features.events.voting.eligible': 'Eligible',
         'features.events.voting.share': 'Share',
         'features.events.voting.voted': 'Voted',
       };
 
-      return fallback ?? labels[key] ?? key;
+      const fallback =
+        typeof maybeFallback === 'string'
+          ? maybeFallback
+          : typeof valuesOrFallback === 'string'
+            ? valuesOrFallback
+            : undefined;
+
+      return labels[key] ?? fallback ?? key;
     },
   }),
 }));
@@ -32,7 +42,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 const options: VoteBarOption[] = [
   {
     key: 'yes',
-    label: 'yes',
+    label: 'accept',
     color: 'bg-success',
     lightColor: 'bg-success/40',
     finalCount: 3,
@@ -42,7 +52,7 @@ const options: VoteBarOption[] = [
   },
   {
     key: 'no',
-    label: 'no',
+    label: 'reject',
     color: 'bg-danger',
     lightColor: 'bg-danger/40',
     finalCount: 1,
@@ -57,7 +67,7 @@ afterEach(() => {
 });
 
 describe('VoteResultsDisplay', () => {
-  it('renders all choices in one compact results surface', () => {
+  it('renders all choices as lean localized result rows', () => {
     const { container } = render(
       <VoteResultsDisplay
         options={options}
@@ -71,12 +81,19 @@ describe('VoteResultsDisplay', () => {
     );
 
     expect(container.querySelector('[data-slot="vote-results-display"]')).toBeTruthy();
-    expect(container.querySelectorAll('[data-slot="vote-result-option"]')).toHaveLength(2);
-    expect(screen.getByText('yes')).toBeTruthy();
-    expect(screen.getByText('no')).toBeTruthy();
+    const rows = container.querySelectorAll('[data-slot="vote-result-option"]');
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.getAttribute('data-framed')).toBe('true');
+    expect(rows[1]?.getAttribute('data-framed')).toBeNull();
+    expect(screen.getByText('Yes')).toBeTruthy();
+    expect(screen.getByText('No')).toBeTruthy();
+    expect(screen.queryByText('YE')).toBeNull();
+    expect(screen.queryByText('NO')).toBeNull();
     expect(screen.getAllByText('3 · 75%').length).toBeGreaterThan(0);
     expect(screen.getByText('Selected')).toBeTruthy();
     expect(screen.getByText('Winner')).toBeTruthy();
+    expect(screen.queryByText(/Eligible:/)).toBeNull();
+    expect(screen.queryByText(/Share:/)).toBeNull();
   });
 
   it('keeps indication rows collapsed for final results until toggled', () => {
@@ -91,6 +108,30 @@ describe('VoteResultsDisplay', () => {
 
     expect(screen.getByRole('button', { name: 'Hide indication results' })).toBeTruthy();
     expect(screen.getAllByText('Ind')).toHaveLength(2);
+  });
+
+  it('offers indication results in final phase even before final votes are cast', () => {
+    render(
+      <VoteResultsDisplay
+        options={options.map(option => ({
+          ...option,
+          finalCount: 0,
+          finalPercent: 0,
+        }))}
+        phase="final_vote"
+        totalFinal={0}
+        totalIndication={4}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Show indication results' })).toBeTruthy();
+    expect(screen.getAllByText('0 · 0%')).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show indication results' }));
+
+    expect(screen.getAllByText('Ind')).toHaveLength(2);
+    expect(screen.getByText('1 · 25%')).toBeTruthy();
+    expect(screen.getByText('3 · 75%')).toBeTruthy();
   });
 
   it('shows the empty state only once for zero totals', () => {
@@ -110,5 +151,15 @@ describe('VoteResultsDisplay', () => {
     );
 
     expect(screen.getAllByText('No votes yet')).toHaveLength(1);
+  });
+
+  it('shows indication phase results without an indication toggle', () => {
+    render(
+      <VoteResultsDisplay options={options} phase="indication" totalFinal={4} totalIndication={4} />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Show indication results' })).toBeNull();
+    expect(screen.getByText('1 · 25%')).toBeTruthy();
+    expect(screen.getByText('3 · 75%')).toBeTruthy();
   });
 });

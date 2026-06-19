@@ -387,9 +387,22 @@ export function EventAgendaView({
     !agendaNav.canMoveToNextItem ||
     Boolean(agendaNav.isLoading) ||
     !toolbarAgendaItem;
+  const streamAgendaDisplayTimes = streamAgendaItem
+    ? getAgendaDisplayTimes({
+        status: streamAgendaItem.status,
+        duration: streamAgendaItem.duration,
+        activated_at: streamAgendaItem.activated_at,
+        completed_at: streamAgendaItem.completed_at,
+        start_time: streamAgendaItem.start_time,
+        end_time: streamAgendaItem.end_time,
+        calculated_start_time: streamAgendaItem.calculated_start_time,
+        calculated_end_time: streamAgendaItem.calculated_end_time,
+      })
+    : null;
 
   const renderAgendaTimer = (agendaItem: {
     status?: string | null;
+    duration?: number | null;
     calculated_start_time?: number;
     calculated_end_time?: number;
     start_time?: number | null;
@@ -397,34 +410,32 @@ export function EventAgendaView({
     activated_at?: number | null;
     completed_at?: number | null;
   }) => {
-    const { displayEndTime } = getAgendaDisplayTimes(agendaItem);
+    const { displayStartTime, displayEndTime } = getAgendaDisplayTimes(agendaItem);
     const isCompleted =
-      agendaItem.status === 'completed' || typeof agendaItem.completed_at === 'number';
+      agendaItem.status === 'completed' ||
+      typeof agendaItem.completed_at === 'number' ||
+      typeof agendaItem.end_time === 'number';
     const isOngoing = agendaItem.status === 'in-progress' || agendaItem.status === 'active';
 
     if (isCompleted && displayEndTime) {
       return <AgendaEndedPill endedAt={new Date(displayEndTime)} />;
     }
 
-    if (
-      isOngoing &&
-      agendaItem.calculated_end_time &&
-      agendaItem.calculated_end_time > Date.now()
-    ) {
+    if (isOngoing && displayEndTime && displayEndTime > Date.now()) {
       return (
         <AgendaCountdownPill
           label={t('features.events.agenda.endsIn')}
-          endsAt={new Date(agendaItem.calculated_end_time)}
+          endsAt={new Date(displayEndTime)}
           tone="active"
         />
       );
     }
 
-    if (agendaItem.calculated_start_time && agendaItem.calculated_start_time > Date.now()) {
+    if (displayStartTime && displayStartTime > Date.now()) {
       return (
         <AgendaCountdownPill
           label={t('features.events.stream.startsIn')}
-          endsAt={new Date(agendaItem.calculated_start_time)}
+          endsAt={new Date(displayStartTime)}
           tone="start"
         />
       );
@@ -452,6 +463,8 @@ export function EventAgendaView({
         const isCompleted = runtimeStatus === 'completed';
         const topNumber = topNumberByAgendaItemId.get(item.id) ?? index + 1;
         const displayTimes = getAgendaDisplayTimes({
+          status: item.status,
+          duration: item.duration,
           activated_at: item.activated_at,
           completed_at: item.completed_at,
           start_time: item.start_time,
@@ -846,6 +859,7 @@ export function EventAgendaView({
         finalDecisions={finalDecisions}
         userHasVoteVoted={userHasVoteVoted}
         userSelectedChoiceIds={userSelectedChoiceIds}
+        streamForwardingPreview={streamForwardingPreview}
       />
 
       {/* Stream Section */}
@@ -934,10 +948,12 @@ export function EventAgendaView({
                             <AgendaStatusBadge
                               status={streamIsLive ? 'active' : (streamRuntimeStatus ?? 'planned')}
                             />
-                            {!streamIsLive && eventStartTimestamp != null ? (
+                            {!streamIsLive &&
+                            streamAgendaDisplayTimes?.displayStartTime != null &&
+                            streamAgendaDisplayTimes.displayStartTime > Date.now() ? (
                               <AgendaCountdownPill
                                 label={t('features.events.stream.startsIn')}
-                                endsAt={new Date(eventStartTimestamp)}
+                                endsAt={new Date(streamAgendaDisplayTimes.displayStartTime)}
                                 tone="start"
                               />
                             ) : null}
@@ -951,12 +967,13 @@ export function EventAgendaView({
                                 {translateText('generated.inline.0009_min_b6c935d4')}
                               </span>
                             )}
-                            {!isEventStarted && eventStartTimestamp != null && (
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {formatTime(eventStartTimestamp)}
-                              </span>
-                            )}
+                            {!isEventStarted &&
+                              streamAgendaDisplayTimes?.displayStartTime != null && (
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {formatTime(streamAgendaDisplayTimes.displayStartTime)}
+                                </span>
+                              )}
                           </div>
                         </div>
                         {streamDetailsOpen ? (
@@ -1000,11 +1017,9 @@ export function EventAgendaView({
                           type: streamAgendaItem.type || 'discussion',
                           status: streamRuntimeStatus ?? 'planned',
                           duration: streamAgendaItem.duration ?? undefined,
-                          scheduledTime:
-                            streamAgendaItem.scheduled_time ??
-                            (typeof streamAgendaItem.calculated_start_time === 'number'
-                              ? new Date(streamAgendaItem.calculated_start_time).toISOString()
-                              : undefined),
+                          scheduledTime: streamAgendaDisplayTimes?.displayStartTime
+                            ? new Date(streamAgendaDisplayTimes.displayStartTime).toISOString()
+                            : (streamAgendaItem.scheduled_time ?? undefined),
                           startTime: streamAgendaItem.start_time
                             ? new Date(streamAgendaItem.start_time)
                             : undefined,
@@ -1037,7 +1052,11 @@ export function EventAgendaView({
                           isAddingSpeaker={addingSpeaker}
                           isRemovingSpeaker={removingSpeaker}
                           userId={user?.id}
-                          agendaStartTime={streamAgendaItem.start_time ?? undefined}
+                          agendaStartTime={
+                            streamAgendaItem.activated_at ??
+                            streamAgendaItem.start_time ??
+                            undefined
+                          }
                           onAddToSpeakerList={
                             canJoinSpeakerList ? handleAddToSpeakerList : undefined
                           }
@@ -1098,6 +1117,7 @@ export function EventAgendaView({
                             }
                             canManageOfflineResults={canManageAgenda}
                             offlineEligibleCount={confirmedOfflineParticipantCount}
+                            forwardingPreview={streamForwardingPreview}
                           />
                         </div>
                       )}

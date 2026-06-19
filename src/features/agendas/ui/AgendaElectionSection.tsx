@@ -396,7 +396,8 @@ export function AgendaElectionSection({
               {visibleCandidates.map(candidate => {
                 const stats = candidateStats.find(s => s.candidate.id === candidate.id);
                 const isLeading = winningCandidateIds.includes(candidate.id);
-                const isSelected = userSelectedCandidateIds.includes(candidate.id);
+                const isSelected = isInteractive && userSelectedCandidateIds.includes(candidate.id);
+                const shouldFrameCandidate = isSelected || (isLeading && isClosed);
                 const displayName = getCandidateDisplayName(candidate);
                 const visibleCount = isIndicationPhase
                   ? (stats?.indicativeCount ?? 0)
@@ -411,7 +412,8 @@ export function AgendaElectionSection({
                   <div
                     key={candidate.id}
                     className={cn(
-                      'bg-card space-y-2 rounded-lg border px-3 py-3 shadow-sm transition-[background-color,border-color,box-shadow]',
+                      'space-y-2 px-3 py-2 transition-[background-color,border-color,box-shadow]',
+                      shouldFrameCandidate && 'bg-card rounded-lg border py-3 shadow-sm',
                       isSelected && 'border-primary/30 bg-primary/5',
                       isLeading &&
                         isClosed &&
@@ -420,6 +422,7 @@ export function AgendaElectionSection({
                     data-election-candidate-row="true"
                     data-winner={isLeading && isClosed ? 'true' : undefined}
                     data-selected={isSelected ? 'true' : undefined}
+                    data-framed={shouldFrameCandidate ? 'true' : undefined}
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-11 w-11 rounded-md">

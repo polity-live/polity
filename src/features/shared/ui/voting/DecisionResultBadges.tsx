@@ -83,6 +83,12 @@ export function DecisionResultCompact({
   className?: string;
 }) {
   const label = result === 'elected' && winnerName ? winnerName : result.toUpperCase();
+  const tone =
+    result === 'passed' || result === 'elected'
+      ? 'success'
+      : result === 'failed' || result === 'tied'
+        ? 'destructive'
+        : 'neutral';
 
-  return <VotingResultCompact label={label} className={className} />;
+  return <VotingResultCompact label={label} tone={tone} className={className} />;
 }
