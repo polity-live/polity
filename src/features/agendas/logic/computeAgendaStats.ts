@@ -18,15 +18,27 @@ interface AgendaStatsAmendment {
   change_requests?: readonly AgendaStatsChangeRequest[] | null;
 }
 
+interface AgendaStatsChangeRequestTimelineItem {
+  id?: string | null;
+  change_request_id?: string | null;
+  is_final_vote?: boolean | null;
+  status?: string | null;
+}
+
 interface AgendaStatsAgendaItem {
   id?: string | null;
   amendment_id?: string | null;
   amendment?: AgendaStatsAmendment | null;
   election?: readonly unknown[] | null;
+  change_request_timeline?: readonly AgendaStatsChangeRequestTimelineItem[] | null;
 }
 
 function isOpenChangeRequest(changeRequest: AgendaStatsChangeRequest) {
   return !changeRequest.status || changeRequest.status === 'open';
+}
+
+function isOpenTimelineChangeRequest(item: AgendaStatsChangeRequestTimelineItem) {
+  return !item.is_final_vote && (item.status === 'pending' || item.status === 'voting');
 }
 
 export function computeAgendaStats(agendaItems: readonly AgendaStatsAgendaItem[]): AgendaStats {
@@ -38,6 +50,20 @@ export function computeAgendaStats(agendaItems: readonly AgendaStatsAgendaItem[]
   const openChangeRequestIds = new Set<string>();
 
   agendaItems.forEach(item => {
+    const timelineItems = item.change_request_timeline ?? [];
+    if (timelineItems.length > 0) {
+      timelineItems.forEach((timelineItem, index) => {
+        if (!isOpenTimelineChangeRequest(timelineItem)) return;
+
+        openChangeRequestIds.add(
+          timelineItem.change_request_id ??
+            timelineItem.id ??
+            `${item.id ?? item.amendment_id ?? item.amendment?.id}:timeline:${index}`
+        );
+      });
+      return;
+    }
+
     item.amendment?.change_requests?.forEach((changeRequest, index) => {
       if (!isOpenChangeRequest(changeRequest)) return;
 

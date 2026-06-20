@@ -13,6 +13,12 @@ interface CREditorPreviewProps {
   amendmentId?: string;
   /** Current user ID — required for interactive mode */
   userId?: string;
+  userRecord?: {
+    id: string;
+    name?: string;
+    email?: string | null;
+    avatar?: string;
+  };
   /** Agenda item ID — optional, passed to interactive editor */
   agendaItemId?: string;
   toolbarEnd?: ReactNode;
@@ -25,6 +31,7 @@ export function CREditorPreview({
   editingMode,
   amendmentId,
   userId,
+  userRecord,
   agendaItemId,
   toolbarEnd,
 }: CREditorPreviewProps) {
@@ -42,6 +49,7 @@ export function CREditorPreview({
       editingMode={editingMode}
       amendmentId={amendmentId}
       userId={userId}
+      userRecord={userRecord}
       agendaItemId={agendaItemId}
       editor={editor}
       isInteractive={isInteractive}

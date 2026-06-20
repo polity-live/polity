@@ -44,6 +44,23 @@ function amendmentWithRole(action: string) {
           ],
         },
       },
+      {
+        id: 'collab-2',
+        status: 'member',
+        user: { id: 'user-2', first_name: 'No', last_name: 'Vote' },
+        role: {
+          id: 'role-2',
+          name: 'Viewer',
+          action_rights: [
+            {
+              id: 'right-2',
+              resource: 'amendments',
+              action: 'view',
+              amendment_id: 'amendment-1',
+            },
+          ],
+        },
+      },
     ],
     change_requests: [
       {
@@ -94,7 +111,32 @@ describe('adaptAmendmentToEntity', () => {
     expect(discussion?.votesFor).toBe(2);
     expect(discussion?.votesAgainst).toBe(1);
     expect(discussion?.votesAbstain).toBe(1);
+    expect(discussion?.eligibleVoterCount).toBe(1);
     expect(discussion?.votedCollaboratorCount).toBe(4);
     expect(discussion?.votes).toEqual([{ id: 'vote-1', vote: 'accept', voterId: 'user-1' }]);
+  });
+
+  it('includes change request authors as editor users even when they are not collaborators', () => {
+    const amendment = amendmentWithRole('view') as any;
+    amendment.change_requests[0] = {
+      ...amendment.change_requests[0],
+      user_id: 'participant-1',
+      user: {
+        id: 'participant-1',
+        first_name: 'Event',
+        last_name: 'Participant',
+        avatar: 'avatar.png',
+      },
+    };
+
+    const entity = adaptAmendmentToEntity(amendment, document, 'user-1');
+
+    expect(entity?.extraUsers).toEqual([
+      expect.objectContaining({
+        id: 'participant-1',
+        name: 'Event Participant',
+        avatarUrl: 'avatar.png',
+      }),
+    ]);
   });
 });

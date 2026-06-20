@@ -112,6 +112,8 @@ export interface ResolvedSuggestion extends TResolvedSuggestion {
   visibilityScope?: string | null;
   resolvedInMode?: string | null;
   votingStatus?: string | null;
+  confirmationStatus?: 'pending' | 'confirmed';
+  confirmedAt?: number;
 }
 
 const BLOCK_SUGGESTION = '__block__';
@@ -207,6 +209,8 @@ export function BlockSuggestionCard({
     onVoteAccept,
     onVoteReject,
     onVoteAbstain,
+    onEventSuggestionConfirm,
+    onEventSuggestionCancel,
   } = useSuggestionCallbacks();
   const { currentMode, isOwnerOrCollaborator } = useModeContext(); // Get current editing mode
   // documentId is not used, removed to fix eslint error
@@ -240,6 +244,15 @@ export function BlockSuggestionCard({
     Boolean(onFinalizeInternalVote);
   const canVoteOnSuggestion = Boolean(onVoteAccept && onVoteReject && onVoteAbstain);
   const projectedOutcome = acceptVotes > rejectVotes ? 'Accepted' : 'Rejected';
+  const isEventSuggestionMode = currentMode === 'suggest_event';
+  const isConfirmedEventSuggestion =
+    suggestion.confirmationStatus === 'confirmed' || Boolean(suggestion.changeRequestEntityId);
+  const isPendingEventSuggestion = isEventSuggestionMode && !isConfirmedEventSuggestion;
+  const isPendingEventSuggestionAuthor =
+    isPendingEventSuggestion && currentUserId === suggestion.userId;
+  const [pendingEventAction, setPendingEventAction] = React.useState<'confirm' | 'cancel' | null>(
+    null
+  );
 
   React.useEffect(() => {
     if (currentMode !== 'vote_internal' || typeof suggestion.votingDeadline !== 'number') return;
@@ -326,6 +339,28 @@ export function BlockSuggestionCard({
   };
 
   const [editingId, setEditingId] = React.useState<string | null>(null);
+
+  const handleConfirmPendingEventSuggestion = async () => {
+    if (!onEventSuggestionConfirm) return;
+    setPendingEventAction('confirm');
+    try {
+      await onEventSuggestionConfirm(suggestion);
+    } finally {
+      setPendingEventAction(null);
+    }
+  };
+
+  const handleCancelPendingEventSuggestion = async () => {
+    setPendingEventAction('cancel');
+    try {
+      await onEventSuggestionCancel?.(suggestion);
+      api.suggestion.withoutSuggestions(() => {
+        rejectSuggestion(editor, suggestion);
+      });
+    } finally {
+      setPendingEventAction(null);
+    }
+  };
 
   return (
     <div
@@ -497,6 +532,65 @@ export function BlockSuggestionCard({
           />
         ))}
 
+        {isPendingEventSuggestion && (
+          <div className={cn('mt-4 rounded-md border p-3 text-sm', getBadgeToneClasses('info'))}>
+            <p className="font-medium">
+              {translateText(
+                'features.amendments.eventSuggestions.pendingTitle',
+                'Noch nicht eingereicht'
+              )}
+            </p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              {isPendingEventSuggestionAuthor
+                ? translateText(
+                    'features.amendments.eventSuggestions.pendingOwnDescription',
+                    'Bestätige den Vorschlag, damit er als Change Request erstellt wird.'
+                  )
+                : translateText(
+                    'features.amendments.eventSuggestions.pendingOtherDescription',
+                    'Der Vorschlag ist sichtbar, wurde aber noch nicht eingereicht.'
+                  )}
+            </p>
+            {isPendingEventSuggestionAuthor && (
+              <div className="mt-3 flex gap-2">
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="flex-1"
+                  disabled={pendingEventAction !== null || !onEventSuggestionConfirm}
+                  onClick={event => {
+                    event.stopPropagation();
+                    void handleConfirmPendingEventSuggestion();
+                  }}
+                >
+                  <CheckIcon className="mr-2 h-4 w-4" />
+                  {pendingEventAction === 'confirm'
+                    ? translateText('common.saving', 'Speichern...')
+                    : translateText(
+                        'features.amendments.eventSuggestions.confirm',
+                        'Vorschlag einreichen'
+                      )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  disabled={pendingEventAction !== null}
+                  onClick={event => {
+                    event.stopPropagation();
+                    void handleCancelPendingEventSuggestion();
+                  }}
+                >
+                  <XIcon className="mr-2 h-4 w-4" />
+                  {pendingEventAction === 'cancel'
+                    ? translateText('common.discarding', 'Verwerfen...')
+                    : translateText('features.amendments.eventSuggestions.cancel', 'Verwerfen')}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         {hovering &&
           currentMode === 'suggest_internal' &&
           onSuggestionAccepted &&
@@ -550,7 +644,7 @@ export function BlockSuggestionCard({
                       },
                       `${suggestion.votedCollaboratorCount ?? totalVotes}/${
                         suggestion.eligibleVoterCount ?? totalVotes
-                      } collaborators voted`
+                      } collaborators with vote right voted`
                     )}
                   </span>
                 )}
@@ -711,6 +805,7 @@ export const useResolveSuggestion = (
   const discussions = usePluginOption(discussionPlugin, 'discussions');
   const uniquePathMap = usePluginOption(suggestionPlugin, 'uniquePathMap');
   const TYPE_TEXT_MAP = useTypeTextMap();
+  const { currentMode } = useModeContext();
 
   const { api, editor, getOption, setOption } = useEditorPlugin(suggestionPlugin);
 
@@ -876,6 +971,10 @@ export const useResolveSuggestion = (
       const visibilityScope = discussion?.visibilityScope;
       const resolvedInMode = discussion?.resolvedInMode;
       const votingStatus = discussion?.votingStatus;
+      const confirmationStatus = changeRequestEntityId
+        ? 'confirmed'
+        : discussion?.confirmationStatus;
+      const confirmedAt = discussion?.confirmedAt;
       const createdAt = new Date(nodeData.createdAt);
 
       const keyId = getSuggestionKey(id);
@@ -897,6 +996,8 @@ export const useResolveSuggestion = (
           visibilityScope,
           resolvedInMode,
           votingStatus,
+          confirmationStatus,
+          confirmedAt,
           createdAt,
           keyId,
           newProperties,
@@ -925,6 +1026,8 @@ export const useResolveSuggestion = (
           visibilityScope,
           resolvedInMode,
           votingStatus,
+          confirmationStatus,
+          confirmedAt,
           createdAt,
           keyId,
           newText,
@@ -952,6 +1055,8 @@ export const useResolveSuggestion = (
           visibilityScope,
           resolvedInMode,
           votingStatus,
+          confirmationStatus,
+          confirmedAt,
           createdAt,
           keyId,
           newText,
@@ -978,6 +1083,8 @@ export const useResolveSuggestion = (
           visibilityScope,
           resolvedInMode,
           votingStatus,
+          confirmationStatus,
+          confirmedAt,
           createdAt,
           keyId,
           suggestionId: keyId2SuggestionId(id),
@@ -1025,6 +1132,7 @@ export const useResolveSuggestion = (
               isResolved: false,
               userId: suggestion.userId,
               crId,
+              confirmationStatus: currentMode === 'suggest_event' ? 'pending' : undefined,
             };
 
             updatedDiscussions.push(newDiscussion);
@@ -1041,7 +1149,14 @@ export const useResolveSuggestion = (
 
             const index = updatedDiscussions.findIndex(d => d.id === discussionId);
             if (index !== -1) {
-              updatedDiscussions[index] = { ...updatedDiscussions[index], crId };
+              updatedDiscussions[index] = {
+                ...updatedDiscussions[index],
+                crId,
+                confirmationStatus:
+                  currentMode === 'suggest_event'
+                    ? (updatedDiscussions[index].confirmationStatus ?? 'pending')
+                    : updatedDiscussions[index].confirmationStatus,
+              };
               needsUpdate = true;
             }
           } catch (error) {
@@ -1057,7 +1172,7 @@ export const useResolveSuggestion = (
 
     // Run async assignment
     assignMissingIds();
-  }, [resolvedSuggestion, editor]);
+  }, [currentMode, resolvedSuggestion, editor]);
 
   return resolvedSuggestion;
 };

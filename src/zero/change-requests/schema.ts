@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { timestampSchema, nullableTimestampSchema } from '../shared/helpers';
+import { jsonSchema, timestampSchema, nullableTimestampSchema } from '../shared/helpers';
 
 // ============================================
 // Change Request Schemas
@@ -16,6 +16,11 @@ const baseChangeRequestSchema = z.object({
   source_type: z.string().nullable(),
   source_id: z.string().nullable(),
   source_title: z.string().nullable(),
+  change_type: z.string().nullable().optional(),
+  original_text: z.string().nullable().optional(),
+  new_text: z.string().nullable().optional(),
+  original_properties: jsonSchema.nullable().optional(),
+  new_properties: jsonSchema.nullable().optional(),
   changed_character_count: z.number(),
   votes_for: z.number(),
   votes_against: z.number(),
@@ -53,6 +58,11 @@ export const updateChangeRequestSchema = baseChangeRequestSchema
     description: true,
     status: true,
     reason: true,
+    change_type: true,
+    original_text: true,
+    new_text: true,
+    original_properties: true,
+    new_properties: true,
     voting_status: true,
     votes_for: true,
     votes_against: true,
@@ -67,6 +77,10 @@ export const finalizeInternalChangeRequestVoteSchema = z.object({
 });
 
 export const finalizeExpiredInternalChangeRequestVotesSchema = z.object({
+  amendment_id: z.string(),
+});
+
+export const repairInternalChangeRequestResolutionSchema = z.object({
   amendment_id: z.string(),
 });
 

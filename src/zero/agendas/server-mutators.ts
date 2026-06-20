@@ -6,6 +6,7 @@ import { fireNotification } from '../server-notify';
 import { eventTitle, recomputeEventCounters, recomputeEventEndDate } from '../server-helpers';
 import { resolveChangeRequestByVoteResult } from '../change-requests/server-resolution';
 import { finalizeInternalChangeRequestsForEventPhaseTransition } from '../change-requests/internal-voting';
+import { discardPendingEventSuggestions } from '../change-requests/event-suggestions';
 import {
   createAgendaItemSchema,
   deleteAgendaItemSchema,
@@ -70,12 +71,20 @@ async function syncAmendmentEditingMode(
   }
 
   const amendment = await tx.run(zql.amendment.where('id', amendmentId).one());
-  if (
-    !amendment ||
-    amendment.editing_mode === editingMode ||
-    amendment.editing_mode === 'passed' ||
-    amendment.editing_mode === 'rejected'
-  ) {
+  if (!amendment || amendment.editing_mode === 'passed' || amendment.editing_mode === 'rejected') {
+    return;
+  }
+
+  if (editingMode === 'vote_event') {
+    await discardPendingEventSuggestions({
+      tx,
+      ctx,
+      amendmentId: amendment.id,
+      now: Date.now(),
+    });
+  }
+
+  if (amendment.editing_mode === editingMode) {
     return;
   }
 

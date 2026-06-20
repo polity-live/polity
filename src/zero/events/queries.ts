@@ -541,6 +541,7 @@ export const eventQueries = {
             )
         )
         .related('amendment', q => q.related('change_requests').related('group'))
+        .related('change_request_timeline')
         .related('speaker_list', q => q.related('user'))
   ),
 
@@ -823,6 +824,7 @@ export const eventQueries = {
             applyChangeRequestVisibilityAccess(changeRequests, userID)
           )
         )
+        .related('change_request_timeline')
   ),
 
   /** Event access roles scoped to event with action_rights */

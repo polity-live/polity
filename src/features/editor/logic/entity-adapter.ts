@@ -25,7 +25,12 @@ import type { ActionRight, Amendment as PermissionAmendment } from '@/zero/rbac/
 
 type RawEntity = Record<string, any>;
 
-const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = new Set(['collaborator', 'member', 'admin']);
+const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = new Set([
+  'active',
+  'collaborator',
+  'member',
+  'admin',
+]);
 
 function getAmendmentRoleCollaborators(amendment: RawEntity): RawEntity[] {
   if (Array.isArray(amendment.amendmentRoleCollaborators)) {
@@ -65,6 +70,15 @@ function mapRoleActionRights(raw: readonly RawEntity[] | undefined): ActionRight
       } as ActionRight,
     ];
   });
+}
+
+function hasAmendmentVoteRight(collaborator: RawEntity, amendmentId: string): boolean {
+  return mapRoleActionRights(collaborator.role?.action_rights).some(
+    right =>
+      right.resource === 'amendments' &&
+      right.action === 'vote' &&
+      (!right.amendment?.id || right.amendment.id === amendmentId)
+  );
 }
 
 function buildPermissionAmendment(amendment: RawEntity): PermissionAmendment {
@@ -190,6 +204,9 @@ function enrichAmendmentDiscussionsWithChangeRequests(amendment: RawEntity): TDi
   const activeCollaborators = getAmendmentRoleCollaborators(amendment).filter(
     isActiveAmendmentCollaborator
   );
+  const activeVotingCollaborators = activeCollaborators.filter(collaborator =>
+    hasAmendmentVoteRight(collaborator, amendment.id)
+  );
   const changeRequestById = new Map<string, RawEntity>();
   const changeRequestByTitle = new Map<string, RawEntity>();
 
@@ -213,6 +230,8 @@ function enrichAmendmentDiscussionsWithChangeRequests(amendment: RawEntity): TDi
     return {
       ...discussion,
       changeRequestEntityId: changeRequest.id ?? discussion.changeRequestEntityId,
+      confirmationStatus: 'confirmed',
+      confirmedAt: discussion.confirmedAt,
       status: discussionStatus ?? discussion.status,
       votesFor: changeRequest.votes_for ?? 0,
       votesAgainst: changeRequest.votes_against ?? 0,
@@ -221,7 +240,7 @@ function enrichAmendmentDiscussionsWithChangeRequests(amendment: RawEntity): TDi
       closeTrigger: normalizeInternalCRVotingCloseTrigger(
         amendment.internal_cr_voting_close_trigger
       ),
-      eligibleVoterCount: activeCollaborators.length,
+      eligibleVoterCount: activeVotingCollaborators.length,
       votedCollaboratorCount:
         (changeRequest.votes_for ?? 0) +
         (changeRequest.votes_against ?? 0) +
@@ -254,6 +273,7 @@ export function adaptAmendmentToEntity(
     : undefined;
 
   const collaborators: EditorCollaborator[] = [];
+  const extraUsers: EditorUser[] = [];
 
   // Add document collaborators
   if (document.collaborators) {
@@ -302,6 +322,19 @@ export function adaptAmendmentToEntity(
     });
   }
 
+  if (Array.isArray(amendment.change_requests)) {
+    const knownUserIds = new Set<string>([
+      ...(owner?.id ? [owner.id] : []),
+      ...collaborators.map(collaborator => collaborator.user.id),
+    ]);
+
+    amendment.change_requests.forEach((changeRequest: RawEntity) => {
+      if (!changeRequest.user?.id || knownUserIds.has(changeRequest.user.id)) return;
+      knownUserIds.add(changeRequest.user.id);
+      extraUsers.push(buildEditorUser(changeRequest.user, 'Participant'));
+    });
+  }
+
   const metadata: EditorEntityMetadata = {
     entityType: 'amendment',
     amendmentId: amendment.id,
@@ -325,6 +358,7 @@ export function adaptAmendmentToEntity(
     updatedAt: document.updated_at || Date.now(),
     owner,
     collaborators,
+    extraUsers,
     ...permissionFlags,
     metadata,
   };

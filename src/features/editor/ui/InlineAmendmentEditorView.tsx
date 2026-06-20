@@ -35,6 +35,8 @@ export interface InlineAmendmentEditorViewProps {
   handleChangeRequestCreate: any;
   onSuggestionAccepted: any;
   onSuggestionDeclined: any;
+  onEventSuggestionConfirm: any;
+  onEventSuggestionCancel: any;
 }
 
 export function InlineAmendmentEditorView({
@@ -52,6 +54,8 @@ export function InlineAmendmentEditorView({
   editorUsers,
   onSuggestionAccepted,
   onSuggestionDeclined,
+  onEventSuggestionConfirm,
+  onEventSuggestionCancel,
 }: InlineAmendmentEditorViewProps) {
   if (isLoading) {
     return (
@@ -90,6 +94,8 @@ export function InlineAmendmentEditorView({
           onDiscussionsChange={setDiscussions}
           onSuggestionAccepted={onSuggestionAccepted}
           onSuggestionDeclined={onSuggestionDeclined}
+          onEventSuggestionConfirm={onEventSuggestionConfirm}
+          onEventSuggestionCancel={onEventSuggestionCancel}
           selectedCrIds={selectedCrIds}
           onSelectedCrIdsChange={setSelectedCrIds}
         />

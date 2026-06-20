@@ -51,6 +51,13 @@ interface ChangeRequestTimelineCardProps {
   amendmentId?: string;
   /** Current user ID — needed for interactive editor */
   userId?: string;
+  /** Current user record — passed to interactive editor for author/avatar display */
+  userRecord?: {
+    id: string;
+    name?: string;
+    email?: string | null;
+    avatar?: string;
+  };
   /** Agenda item ID — passed to interactive editor */
   agendaItemId?: string;
   /** Hide the shared document preview block when it is rendered elsewhere */
@@ -78,6 +85,7 @@ export function useChangeRequestTimelineCardController({
   editingMode,
   amendmentId,
   userId,
+  userRecord,
   agendaItemId,
   showEditorPreview = true,
   onCastVote,
@@ -271,6 +279,7 @@ export function useChangeRequestTimelineCardController({
     editingMode,
     amendmentId,
     userId,
+    userRecord,
     agendaItemId,
     showEditorPreview,
     onCastVote,

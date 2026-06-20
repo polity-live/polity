@@ -18,6 +18,7 @@ export const agendasTranslations = {
     modeInfo: 'Mode',
     internalVotingActiveInfo: 'Internal change request votes are active.',
     setToVoteEvent: 'Set the amendment to event voting mode to vote.',
+    submittedVotePending: 'Submitted - vote pending',
     deadline: 'Deadline',
   },
 } as const;

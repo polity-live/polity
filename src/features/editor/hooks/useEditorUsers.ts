@@ -63,6 +63,16 @@ export function useEditorUsers(
       }
     });
 
+    entity.extraUsers?.forEach(user => {
+      if (user.id && !users[user.id]) {
+        users[user.id] = {
+          id: user.id,
+          name: user.name || 'Participant',
+          avatarUrl: user.avatarUrl || `https://api.dicebear.com/9.x/glass/svg?seed=${user.id}`,
+        };
+      }
+    });
+
     return users;
   }, [entity, currentUser]);
 }

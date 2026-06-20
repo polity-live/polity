@@ -61,6 +61,7 @@ export interface ChangeRequestCardsListViewProps {
   discussions: any;
   amendmentId: any;
   agendaItemId: any;
+  userRecord?: any;
   hasUserVoted: any;
   getUserSelectedChoiceIds: any;
   onCastVote: any;
@@ -107,6 +108,7 @@ export function ChangeRequestCardsListView({
   discussions,
   amendmentId,
   agendaItemId,
+  userRecord,
   hasUserVoted,
   getUserSelectedChoiceIds,
   onCastVote,
@@ -204,6 +206,7 @@ export function ChangeRequestCardsListView({
               editingMode={editingMode}
               amendmentId={amendmentId}
               userId={userId}
+              userRecord={userRecord}
               agendaItemId={agendaItemId}
               toolbarEnd={
                 <>
@@ -331,6 +334,7 @@ export function ChangeRequestCardsListView({
                     editingMode={editingMode}
                     amendmentId={amendmentId}
                     userId={userId}
+                    userRecord={userRecord}
                     agendaItemId={agendaItemId}
                     showEditorPreview
                     onCastVote={isVotingActive ? onCastVote : undefined}

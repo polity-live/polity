@@ -334,6 +334,15 @@ function buildProps() {
 }
 
 describe('EventAgendaItemDetailView', () => {
+  it('renders agenda details in an accordion that is open by default', () => {
+    render(<EventAgendaItemDetailView {...buildProps()} />);
+
+    const trigger = screen.getByTestId('agenda-detail-details-accordion-trigger');
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByTestId('agenda-item-context-card')).not.toBeNull();
+  });
+
   it('uses delegate assignment metadata as election target fallback', () => {
     render(<EventAgendaItemDetailView {...buildProps()} />);
 

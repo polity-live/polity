@@ -22,6 +22,7 @@ export interface CRSummary {
   suggestionId?: string | null;
   discussionId?: string | null;
   changeRequestEntityId?: string | null;
+  logicalKey?: string | null;
   votingDeadline?: number | null;
   closeTrigger?: string | null;
   eligibleVoterCount?: number;
@@ -31,6 +32,7 @@ export interface CRSummary {
   resolvedInMode?: string | null;
   votingStatus?: string | null;
   userVote?: string | null;
+  confirmationStatus?: 'pending' | 'confirmed' | null;
 }
 
 function isAcceptedStatus(status: string) {
@@ -151,6 +153,7 @@ export function createMockCRTimelineItems(crSummaries: CRSummary[]) {
         resolution_method: cr.resolutionMethod ?? null,
         visibility_scope: cr.visibilityScope ?? null,
         resolved_in_mode: cr.resolvedInMode ?? null,
+        confirmation_status: cr.confirmationStatus ?? null,
         created_at: null,
         updated_at: null,
         user: null,

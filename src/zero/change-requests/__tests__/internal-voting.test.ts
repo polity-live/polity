@@ -14,7 +14,8 @@ const {
     discussions.find(
       (discussion: any) =>
         discussion.changeRequestEntityId === changeRequest.id ||
-        (changeRequest.title && discussion.crId === changeRequest.title)
+        (changeRequest.title &&
+          (discussion.crId === changeRequest.title || discussion.title === changeRequest.title))
     )
   ),
   getChangeRequestResolutionStatusMock: vi.fn(voteResult =>
@@ -34,6 +35,7 @@ import {
   finalizeInternalChangeRequestsForEventPhaseTransition,
   maybeFinalizeInternalChangeRequestVote,
   normalizeInternalCRVotingCloseTrigger,
+  repairInternalChangeRequestResolution,
 } from '../internal-voting';
 
 function createTx(rows: unknown[]) {
@@ -73,6 +75,22 @@ const openChangeRequest = {
   voting_status: 'open',
 };
 
+const amendmentVoteRight = {
+  resource: 'amendments',
+  action: 'vote',
+  amendment_id: 'amendment-1',
+};
+
+function votingCollaborator(userId: string, status = 'collaborator') {
+  return {
+    user_id: userId,
+    status,
+    role: {
+      action_rights: [amendmentVoteRight],
+    },
+  };
+}
+
 describe('internal change request voting close rules', () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -93,12 +111,18 @@ describe('internal change request voting close rules', () => {
         id: 'amendment-1',
         internal_cr_voting_close_trigger: 'all_collaborators_voted',
       },
-      votes,
       [
-        { user_id: 'user-1', status: 'collaborator' },
-        { user_id: 'user-2', status: 'admin' },
+        votingCollaborator('user-1'),
+        votingCollaborator('user-2', 'admin'),
+        {
+          user_id: 'user-3',
+          status: 'member',
+          role: { action_rights: [{ resource: 'amendments', action: 'view' }] },
+        },
       ],
+      votes,
       openChangeRequest,
+      [votingCollaborator('user-1'), votingCollaborator('user-2', 'admin')],
       votes,
       {
         id: 'amendment-1',
@@ -137,6 +161,7 @@ describe('internal change request voting close rules', () => {
         internal_cr_voting_close_trigger: 'after_minutes',
       },
       { ...openChangeRequest, voting_deadline: 4_000 },
+      [votingCollaborator('user-1'), votingCollaborator('user-2')],
       votes,
       {
         id: 'amendment-1',
@@ -182,6 +207,7 @@ describe('internal change request voting close rules', () => {
       ...openChangeRequest,
       id: 'cr-2',
       title: 'CR-2',
+      created_in_mode: 'internal_suggestion',
       created_at: 2_000,
     };
     const tx = createTx([
@@ -191,7 +217,7 @@ describe('internal change request voting close rules', () => {
         document_id: 'doc-1',
         discussions: [
           { id: 'suggestion-1', changeRequestEntityId: 'cr-1', crId: 'CR-1' },
-          { id: 'suggestion-2', changeRequestEntityId: 'cr-2', crId: 'CR-2' },
+          { id: 'suggestion-2', crId: 'CR-2' },
         ],
       },
       [
@@ -202,6 +228,7 @@ describe('internal change request voting close rules', () => {
         id: 'doc-1',
         content: originalContent,
       },
+      [votingCollaborator('user-1')],
       votesForFirst,
       { version_number: 4 },
       votesForSecond,
@@ -265,9 +292,167 @@ describe('internal change request voting close rules', () => {
         id: 'amendment-1',
         discussions: [
           expect.objectContaining({ id: 'suggestion-1', status: 'accepted' }),
-          expect.objectContaining({ id: 'suggestion-2', status: 'rejected' }),
+          expect.objectContaining({
+            id: 'suggestion-2',
+            changeRequestEntityId: 'cr-2',
+            status: 'rejected',
+          }),
         ],
       })
     );
+  });
+
+  it('applies duplicated logical CRs only once using the voted row as canonical', async () => {
+    const originalContent = [{ type: 'p', children: [{ text: 'original' }] }];
+    const votesForCanonical = [
+      { id: 'vote-1', user_id: 'user-1', vote: 'accept', created_at: 1_000 },
+    ];
+    const tx = createTx([
+      {
+        id: 'amendment-1',
+        document_id: 'doc-1',
+        discussions: [
+          {
+            id: 'suggestion-1',
+            crId: 'CR-1',
+            title: 'Replace dieser',
+            changeRequestEntityId: 'cr-duplicate',
+          },
+        ],
+      },
+      [
+        {
+          ...openChangeRequest,
+          id: 'cr-duplicate',
+          title: 'CR-1',
+          created_at: 1_000,
+        },
+        {
+          ...openChangeRequest,
+          id: 'cr-voted',
+          title: 'Replace dieser',
+          votes_for: 1,
+          votes_against: 0,
+          votes_abstain: 0,
+          created_at: 2_000,
+        },
+      ],
+      {
+        id: 'doc-1',
+        content: originalContent,
+      },
+      [votingCollaborator('user-1')],
+      votesForCanonical,
+      { version_number: 4 },
+    ]);
+
+    await finalizeInternalChangeRequestsForEventPhaseTransition({
+      tx: tx as never,
+      ctx: { userID: 'manager-1' },
+      amendmentId: 'amendment-1',
+      now: 5_000,
+    });
+
+    expect(applyChangeRequestVoteResultToContentMock).toHaveBeenCalledTimes(1);
+    expect(applyChangeRequestVoteResultToContentMock).toHaveBeenCalledWith(
+      originalContent,
+      'suggestion-1',
+      'passed'
+    );
+    expect(tx.mutate.change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'cr-voted',
+        status: 'accepted',
+        votes_for: 1,
+        voting_status: 'completed',
+      })
+    );
+    expect(tx.mutate.change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'cr-duplicate',
+        status: 'accepted',
+        votes_for: 1,
+        voting_status: 'completed',
+      })
+    );
+    expect(tx.mutate.amendment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'amendment-1',
+        discussions: [
+          expect.objectContaining({
+            id: 'suggestion-1',
+            changeRequestEntityId: 'cr-voted',
+            status: 'accepted',
+          }),
+        ],
+      })
+    );
+  });
+
+  it('repairs resolved internal CRs by replaying canonical results from the pre-event version', async () => {
+    const currentContent = [{ type: 'p', children: [{ text: 'broken' }] }];
+    const baseContent = [{ type: 'p', children: [{ text: 'original' }] }];
+    const repairedContent = [
+      ...baseContent,
+      { type: 'p', children: [{ text: 'suggestion-1:passed' }] },
+    ];
+    const tx = createTx([
+      {
+        id: 'amendment-1',
+        document_id: 'doc-1',
+        discussions: [{ id: 'suggestion-1', crId: 'CR-1', title: 'Replace dieser' }],
+      },
+      {
+        id: 'doc-1',
+        content: currentContent,
+      },
+      {
+        id: 'version-before-event',
+        content: baseContent,
+        version_number: 4,
+      },
+      [
+        {
+          ...openChangeRequest,
+          id: 'cr-voted',
+          title: 'Replace dieser',
+          status: 'accepted',
+          voting_status: 'completed',
+          resolution_method: 'internal_vote',
+          created_at: 1_000,
+          votes_for: 1,
+          votes_against: 0,
+          votes_abstain: 0,
+        },
+      ],
+      { version_number: 5 },
+    ]);
+
+    await repairInternalChangeRequestResolution({
+      tx: tx as never,
+      ctx: { userID: 'manager-1' },
+      amendmentId: 'amendment-1',
+      now: 6_000,
+    });
+
+    expect(applyChangeRequestVoteResultToContentMock).toHaveBeenCalledWith(
+      baseContent,
+      'suggestion-1',
+      'passed'
+    );
+    expect(tx.mutate.document_version.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        document_id: 'doc-1',
+        amendment_id: 'amendment-1',
+        content: currentContent,
+        version_number: 6,
+        change_summary: 'Repair internal change request resolution',
+      })
+    );
+    expect(tx.mutate.document.update).toHaveBeenCalledWith({
+      id: 'doc-1',
+      content: repairedContent,
+      updated_at: 6_000,
+    });
   });
 });

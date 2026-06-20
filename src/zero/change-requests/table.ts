@@ -1,4 +1,4 @@
-import { table, string, number } from '@rocicorp/zero';
+import { table, string, number, json, type ReadonlyJSONValue } from '@rocicorp/zero';
 
 export const changeRequest = table('change_request')
   .columns({
@@ -12,6 +12,11 @@ export const changeRequest = table('change_request')
     source_type: string().optional(),
     source_id: string().optional(),
     source_title: string().optional(),
+    change_type: string().optional(),
+    original_text: string().optional(),
+    new_text: string().optional(),
+    original_properties: json<ReadonlyJSONValue>().optional(),
+    new_properties: json<ReadonlyJSONValue>().optional(),
     changed_character_count: number(),
     votes_for: number(),
     votes_against: number(),

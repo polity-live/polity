@@ -15,6 +15,8 @@ export interface TDiscussion {
   title?: string;
   crId?: string; // Format: CR-x (e.g., CR-1, CR-2, etc.)
   status?: 'pending' | 'accepted' | 'rejected';
+  confirmationStatus?: 'pending' | 'confirmed';
+  confirmedAt?: number;
   changeRequestEntityId?: string; // UUID of the persisted change_request row
   votesFor?: number;
   votesAgainst?: number;

@@ -70,9 +70,9 @@ export const amendmentsTranslations = {
     internalCRVotingCloseTitle: 'Close internal change request votes',
     internalCRVotingCloseDescription:
       'Defines when open change requests in internal voting mode are decided automatically.',
-    internalCRVotingAllCollaboratorsLabel: 'When all collaborators have voted',
+    internalCRVotingAllCollaboratorsLabel: 'When all collaborators with vote right have voted',
     internalCRVotingAllCollaboratorsDescription:
-      'Default. The change request is decided once all active collaborators have voted.',
+      'Default. The change request is decided once all active collaborators with vote right have voted.',
     internalCRVotingAfterMinutesLabel: 'After a configured time',
     internalCRVotingAfterMinutesDescription:
       'The timer starts when the amendment enters internal voting mode and, for new change requests, at creation time.',
@@ -130,7 +130,7 @@ export const amendmentsTranslations = {
     yourVote: 'You voted to {{vote}} this change request',
     votingProgress: 'Voting Progress',
     voted: 'voted',
-    collaboratorsVoted: '{{voted}}/{{total}} collaborators voted',
+    collaboratorsVoted: '{{voted}}/{{total}} collaborators with vote right voted',
     closesInMinutes: 'Closes in {{minutes}} min',
     deadlineExpired: 'Deadline expired',
     votedList: 'Voted',

@@ -4,6 +4,7 @@ import { useAgendaActionBar } from '../hooks/useAgendaActionBar';
 import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
 import { type MergeVariantCandidate } from './MergeVariantComparisonPanel';
 import { usePermissions } from '@/zero/rbac';
+import { useUserState } from '@/zero/users/useUserState';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
@@ -22,7 +23,11 @@ import { extractAmendmentCRSummaries } from '../logic/extractAmendmentCRSummarie
 import { createMockCRTimelineItems } from '../logic/createMockCRTimelineItems';
 import { buildFinalVoteFromAgendaVote } from '../logic/buildFinalVoteFromAgendaVote';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
-import { extractSuggestionContent } from '@/features/change-requests/utils/suggestion-extraction';
+import {
+  extractSuggestionContent,
+  hasRenderableSuggestionContent,
+  suggestionContentFromChangeRequestSnapshot,
+} from '@/features/change-requests/utils/suggestion-extraction';
 import type { ChangeRequestDiffData } from './ChangeRequestTimelineCard';
 import { getAgendaRuntimeStatus } from '../logic/getAgendaRuntimeStatus';
 import {
@@ -89,6 +94,20 @@ export function EventAgendaItemDetail({
     handleAddToSpeakerList,
     canJoinSpeakerList,
   } = useEventAgendaItem(eventId, agendaItemId);
+  const { user: userRecord } = useUserState({ userId: user?.id });
+  const mappedUserRecord = useMemo(
+    () =>
+      userRecord
+        ? {
+            id: userRecord.id,
+            name:
+              `${userRecord.first_name ?? ''} ${userRecord.last_name ?? ''}`.trim() || undefined,
+            email: userRecord.email ?? undefined,
+            avatar: userRecord.avatar ?? undefined,
+          }
+        : undefined,
+    [userRecord]
+  );
   const delegateAssignmentMeta = (
     election as { delegate_assignment_meta?: { targetEventId?: string } | null } | null
   )?.delegate_assignment_meta;
@@ -182,6 +201,19 @@ export function EventAgendaItemDetail({
             title?: string | null;
             description?: string | null;
             status?: string | null;
+            voting_status?: string | null;
+            votes_for?: number | null;
+            votes_against?: number | null;
+            votes_abstain?: number | null;
+            voting_deadline?: number | null;
+            resolution_method?: string | null;
+            visibility_scope?: string | null;
+            resolved_in_mode?: string | null;
+            change_type?: string | null;
+            original_text?: string | null;
+            new_text?: string | null;
+            original_properties?: Record<string, string> | null;
+            new_properties?: Record<string, string> | null;
           }[]
         | null
         | undefined
@@ -205,27 +237,68 @@ export function EventAgendaItemDetail({
       comments: (d.comments as TDiscussion['comments']) ?? [],
       createdAt: new Date((d.createdAt as number) ?? 0),
       isResolved: (d.isResolved as boolean) ?? false,
+      changeRequestEntityId: (d.changeRequestEntityId as string) ?? undefined,
     }));
   }, [agendaItem?.amendment?.discussions]);
 
   // Build diffMap from document content for each discussion
   const crDiffMap = useMemo<Record<string, ChangeRequestDiffData>>(() => {
-    if (!documentContent || !amendmentDiscussions.length) return {};
     const map: Record<string, ChangeRequestDiffData> = {};
-    for (const d of amendmentDiscussions) {
-      if (!d.id) continue;
-      const content = extractSuggestionContent(d.id, documentContent);
-      if (content.type === 'unknown' && !content.text && !content.newText) continue;
-      map[d.id] = {
+    const changeRequests =
+      (agendaItem?.amendment?.change_requests as
+        | readonly {
+            id?: string | null;
+            title?: string | null;
+            change_type?: string | null;
+            original_text?: string | null;
+            new_text?: string | null;
+            original_properties?: any;
+            new_properties?: any;
+          }[]
+        | null
+        | undefined) ?? [];
+
+    const setDiff = (keys: (string | null | undefined)[], diff: ChangeRequestDiffData | null) => {
+      if (!diff) return;
+      for (const key of keys) {
+        if (key) map[key] = diff;
+      }
+    };
+
+    for (const cr of changeRequests) {
+      const content = suggestionContentFromChangeRequestSnapshot(cr);
+      if (!hasRenderableSuggestionContent(content)) continue;
+
+      const discussion = amendmentDiscussions.find(
+        d =>
+          d.changeRequestEntityId === cr.id ||
+          (cr.title && (d.crId === cr.title || d.title === cr.title))
+      );
+      setDiff([cr.id, cr.title, discussion?.id], {
         changeType: content.type,
         originalText: content.text || undefined,
         newText: content.newText || undefined,
         properties: content.properties as Record<string, string> | undefined,
         newProperties: content.newProperties as Record<string, string> | undefined,
-      };
+      });
+    }
+
+    if (!documentContent || !amendmentDiscussions.length) return map;
+
+    for (const d of amendmentDiscussions) {
+      if (!d.id) continue;
+      const content = extractSuggestionContent(d.id, documentContent);
+      if (!hasRenderableSuggestionContent(content)) continue;
+      setDiff([d.id, d.crId, d.changeRequestEntityId], {
+        changeType: content.type,
+        originalText: content.text || undefined,
+        newText: content.newText || undefined,
+        properties: content.properties as Record<string, string> | undefined,
+        newProperties: content.newProperties as Record<string, string> | undefined,
+      });
     }
     return map;
-  }, [documentContent, amendmentDiscussions]);
+  }, [agendaItem?.amendment?.change_requests, documentContent, amendmentDiscussions]);
 
   const hasAmendmentCRs = crTimeline.length > 0 || mockCRItems.length > 0;
   const crDisplayItemsBase =
@@ -1089,6 +1162,7 @@ export function EventAgendaItemDetail({
       agendaItem={agendaItem}
       event={event}
       user={user}
+      userRecord={mappedUserRecord}
       isLoading={isLoading}
       votingLoading={votingLoading}
       addingSpeaker={addingSpeaker}

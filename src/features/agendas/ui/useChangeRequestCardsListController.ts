@@ -34,6 +34,13 @@ interface ChangeRequestCardsListProps {
   amendmentId?: string;
   /** Agenda item ID — passed to interactive editor */
   agendaItemId?: string;
+  /** Current user record — passed to interactive editor for author/avatar display */
+  userRecord?: {
+    id: string;
+    name?: string;
+    email?: string | null;
+    avatar?: string;
+  };
   hasUserVoted?: (item: ChangeRequestTimelineRow) => boolean;
   getUserSelectedChoiceIds?: (item: ChangeRequestTimelineRow) => string[];
   onCastVote?: (item: ChangeRequestTimelineRow, choiceId: string) => Promise<void>;
@@ -59,6 +66,7 @@ export function useChangeRequestCardsListController({
   discussions,
   amendmentId,
   agendaItemId,
+  userRecord,
   hasUserVoted,
   getUserSelectedChoiceIds,
   onCastVote,
@@ -254,6 +262,7 @@ export function useChangeRequestCardsListController({
     discussions,
     amendmentId,
     agendaItemId,
+    userRecord,
     hasUserVoted,
     getUserSelectedChoiceIds,
     onCastVote,

@@ -34,6 +34,7 @@ import {
   createChangeRequestSchema,
   finalizeExpiredInternalChangeRequestVotesSchema,
   finalizeInternalChangeRequestVoteSchema,
+  repairInternalChangeRequestResolutionSchema,
   updateChangeRequestSchema,
 } from '../change-requests/schema';
 import {
@@ -58,6 +59,7 @@ import {
   finalizeInternalChangeRequestsForEventPhaseTransition,
   initializeInternalChangeRequestVotingForAmendment,
   maybeFinalizeInternalChangeRequestVote,
+  repairInternalChangeRequestResolution,
   resolveInternalChangeRequestVote,
 } from '../change-requests/internal-voting';
 import { getResolvedChangeRequestVisibilityScope } from '../change-requests/visibility';
@@ -1125,6 +1127,26 @@ export const amendmentServerMutators = {
       await assertCanViewAmendment(tx, ctx, args.amendment_id);
       const now = Date.now();
       await finalizeExpiredInternalChangeRequestVotesForAmendment({
+        tx,
+        ctx,
+        amendmentId: args.amendment_id,
+        now,
+      });
+
+      await recomputeAmendmentCounters(tx, args.amendment_id);
+      const amendment = await tx.run(zql.amendment.where('id', args.amendment_id).one());
+      if (amendment?.event_id) {
+        await recomputeEventCounters(tx, amendment.event_id);
+      }
+    }
+  ),
+
+  repairInternalChangeRequestResolution: defineMutator(
+    repairInternalChangeRequestResolutionSchema,
+    async ({ tx, ctx, args }) => {
+      await assertCanMutateAmendment(tx, ctx, args.amendment_id, 'update');
+      const now = Date.now();
+      await repairInternalChangeRequestResolution({
         tx,
         ctx,
         amendmentId: args.amendment_id,

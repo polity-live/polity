@@ -71,6 +71,7 @@ import { EventLiveFocusDialog } from './EventLiveFocusDialog';
 import { getAgendaDisplayTimes } from '../logic/getAgendaDisplayTimes';
 import { getAgendaRuntimeStatus } from '../logic/getAgendaRuntimeStatus';
 import { getAgendaDisplayType, getYouTubeVideoId } from '../logic/agendaUiHelpers';
+import { computeAgendaStats } from '../logic/computeAgendaStats';
 import { getOfflineTallyDialogTitle, getOfflineTallyTooltip } from '../logic/offlineTallyToolbar';
 import type { CandidatesByElectionRow } from '@/zero/elections/queries';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
@@ -342,6 +343,7 @@ export function EventAgendaView({
   scheduledButUnconfirmedAgendaItems,
   formatTime,
 }: EventAgendaViewProps) {
+  const agendaStats = computeAgendaStats(agendaItems ?? []);
   const voteButtonDisabled =
     !isCRToolbarActive && (disableVoteButton || actionBarHook.disableSecretIndicativeVoteButton);
   const disabledVoteTooltip =
@@ -1156,11 +1158,9 @@ export function EventAgendaView({
                     <Vote className={featureThemeClassName('agendaEventAgendaAccentIcon')} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-lg font-bold md:text-2xl">
-                      {agendaItems.filter((item: any) => item.election).length}
-                    </p>
+                    <p className="text-lg font-bold md:text-2xl">{agendaStats.electionsCount}</p>
                     <p className="text-muted-foreground truncate text-xs md:text-sm">
-                      {agendaItems.filter((item: any) => item.election).length === 1
+                      {agendaStats.electionsCount === 1
                         ? t('features.events.agenda.election')
                         : t('features.events.agenda.elections')}
                     </p>
@@ -1172,11 +1172,9 @@ export function EventAgendaView({
                     <Gavel className={featureThemeClassName('agendaEventAgendaWarningIcon')} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-lg font-bold md:text-2xl">
-                      {agendaItems.filter((item: any) => item.amendment).length}
-                    </p>
+                    <p className="text-lg font-bold md:text-2xl">{agendaStats.amendmentsCount}</p>
                     <p className="text-muted-foreground truncate text-xs md:text-sm">
-                      {agendaItems.filter((item: any) => item.amendment).length === 1
+                      {agendaStats.amendmentsCount === 1
                         ? t('features.events.agenda.amendment')
                         : t('features.events.agenda.amendments')}
                     </p>
@@ -1189,14 +1187,7 @@ export function EventAgendaView({
                   </div>
                   <div className="min-w-0">
                     <p className="text-lg font-bold md:text-2xl">
-                      {agendaItems.reduce(
-                        (count: number, item: any) =>
-                          count +
-                          (item.amendment?.change_requests?.filter(
-                            (cr: any) => cr.status === 'open' || !cr.status
-                          ).length || 0),
-                        0
-                      )}
+                      {agendaStats.openChangeRequestsCount}
                     </p>
                     <p className="text-muted-foreground truncate text-xs md:text-sm">
                       {t('features.events.agenda.openChangeRequests')}

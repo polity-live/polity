@@ -83,6 +83,10 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
   const changeRequestMotionScopeRef = useRef<HTMLDivElement>(null);
   const changeRequestMotionSignatureRef = useRef<string | undefined>(undefined);
   const enableChangeRequestLoadMotion = entityType === 'amendment' || entityType === 'blog';
+  const plateReadOnly =
+    readOnly || (entityType === 'amendment' && (mode === 'suggest_event' || mode === 'vote_event'));
+  const disablePlateDiscussionWrites =
+    entityType === 'amendment' && (mode === 'suggest_event' || mode === 'vote_event');
 
   useLayoutEffect(() => {
     if (!enableChangeRequestLoadMotion) {
@@ -221,7 +225,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
           )}
 
           {/* Version Control */}
-          {capabilities.versioning && userId && contentEntityId && !readOnly && (
+          {capabilities.versioning && userId && contentEntityId && !plateReadOnly && (
             <VersionControl
               entityType={entityType}
               entityId={contentEntityId}
@@ -326,8 +330,8 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
               documentTitle={title}
               currentMode={mode}
               onModeChange={setMode}
-              isOwnerOrCollaborator={!readOnly && isOwnerOrCollaborator}
-              readOnly={readOnly}
+              isOwnerOrCollaborator={!plateReadOnly && isOwnerOrCollaborator}
+              readOnly={plateReadOnly}
               currentUser={
                 currentUser
                   ? {
@@ -339,7 +343,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
               }
               users={editorUsers}
               discussions={discussions}
-              onDiscussionsChange={setDiscussions}
+              onDiscussionsChange={disablePlateDiscussionWrites ? undefined : setDiscussions}
               onSuggestionAccepted={canManageChangeRequestVotes ? onSuggestionAccepted : undefined}
               onSuggestionDeclined={canManageChangeRequestVotes ? onSuggestionDeclined : undefined}
               onVoteAccept={canVoteOnChangeRequests ? onVoteAccept : undefined}

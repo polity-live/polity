@@ -15,6 +15,7 @@ export interface CREditorPreviewViewProps {
   editingMode: any;
   amendmentId: any;
   userId: any;
+  userRecord?: any;
   agendaItemId: any;
   editor: any;
   isInteractive: any;
@@ -27,6 +28,7 @@ export function CREditorPreviewView({
   editingMode,
   amendmentId,
   userId,
+  userRecord,
   agendaItemId,
   editor,
   isInteractive,
@@ -53,6 +55,7 @@ export function CREditorPreviewView({
             <InlineAmendmentEditor
               amendmentId={amendmentId}
               userId={userId}
+              userRecord={userRecord}
               agendaItemId={agendaItemId}
               editingMode={editingMode}
             />

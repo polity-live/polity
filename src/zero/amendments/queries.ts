@@ -400,9 +400,9 @@ export const amendmentQueries = {
             .related('role', role => role.related('action_rights'))
         )
         .related('change_requests', q =>
-          applyChangeRequestVisibilityAccess(q, userID).related('votes', vote =>
-            vote.where('user_id', userID ?? '__anon__')
-          )
+          applyChangeRequestVisibilityAccess(q, userID)
+            .related('user')
+            .related('votes', vote => vote.where('user_id', userID ?? '__anon__'))
         )
         .one()
   ),
@@ -438,6 +438,7 @@ export const amendmentQueries = {
       )
         .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
         .related('user')
+        .related('role', role => role.related('action_rights'))
         .orderBy('created_at', 'desc')
   ),
 

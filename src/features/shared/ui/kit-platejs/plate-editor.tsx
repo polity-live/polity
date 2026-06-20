@@ -38,6 +38,8 @@ interface PlateEditorProps {
   onVoteReject?: (suggestion: ResolvedSuggestion) => void; // Vote reject callback
   onVoteAbstain?: (suggestion: ResolvedSuggestion) => void; // Vote abstain callback
   onFinalizeInternalVote?: (suggestion: ResolvedSuggestion) => void;
+  onEventSuggestionConfirm?: (suggestion: ResolvedSuggestion) => void | Promise<void>;
+  onEventSuggestionCancel?: (suggestion: ResolvedSuggestion) => void | Promise<void>;
   documentId?: string; // Document ID for suggestion ID generation
   documentTitle?: string; // Document title to show in discussions/suggestions
   currentMode?: EditorMode; // Current editing mode from DB
@@ -78,6 +80,8 @@ export function PlateEditor({
   onVoteReject,
   onVoteAbstain,
   onFinalizeInternalVote,
+  onEventSuggestionConfirm,
+  onEventSuggestionCancel,
   documentId,
   documentTitle,
   currentMode,
@@ -321,6 +325,8 @@ export function PlateEditor({
       onVoteReject={onVoteReject}
       onVoteAbstain={onVoteAbstain}
       onFinalizeInternalVote={onFinalizeInternalVote}
+      onEventSuggestionConfirm={onEventSuggestionConfirm}
+      onEventSuggestionCancel={onEventSuggestionCancel}
       documentId={documentId}
       documentTitle={documentTitle}
       currentMode={currentMode}

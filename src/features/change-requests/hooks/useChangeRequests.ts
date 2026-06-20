@@ -3,8 +3,12 @@ import type { Value } from 'platejs';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import {
   extractSuggestionContent,
+  hasRenderableSuggestionContent,
+  suggestionContentFromChangeRequestSnapshot,
   type SuggestionProperties,
+  type SuggestionContent,
 } from '../utils/suggestion-extraction';
+import { buildCanonicalChangeRequestRecords } from '../logic/canonicalChangeRequests';
 
 /** Shape of entries in the amendment's `discussions` JSON column */
 interface DiscussionEntry {
@@ -68,6 +72,7 @@ export interface ChangeRequest {
   discussionId: string | null;
   suggestionId: string | null;
   changeRequestEntityId?: string;
+  logicalKey?: string;
 }
 
 function isApprovedStatus(status: string | null | undefined) {
@@ -80,14 +85,98 @@ function isDeclinedStatus(status: string | null | undefined) {
 
 function isActiveCollaborator(collaborator: { status?: string | null }) {
   return (
+    collaborator.status === 'active' ||
     collaborator.status === 'collaborator' ||
     collaborator.status === 'member' ||
     collaborator.status === 'admin'
   );
 }
 
+function hasAmendmentVoteRight(
+  collaborator: {
+    role?: {
+      action_rights?:
+        | readonly {
+            resource?: string | null;
+            action?: string | null;
+            amendment_id?: string | null;
+            amendment?: { id?: string | null } | null;
+          }[]
+        | null;
+    } | null;
+  },
+  amendmentId: string
+) {
+  return (collaborator.role?.action_rights ?? []).some(
+    right =>
+      right.resource === 'amendments' &&
+      right.action === 'vote' &&
+      (!right.amendment_id || right.amendment_id === amendmentId) &&
+      (!right.amendment?.id || right.amendment.id === amendmentId)
+  );
+}
+
+function getCollaboratorUserId(collaborator: {
+  user_id?: string | null;
+  user?: { id?: string | null } | null;
+}) {
+  return collaborator.user_id ?? collaborator.user?.id ?? null;
+}
+
 function normalizeInternalCRVotingCloseTrigger(value: string | null | undefined) {
   return value === 'after_minutes' ? 'after_minutes' : 'all_collaborators_voted';
+}
+
+function getTimestamp(row: { updated_at?: number | null; updatedAt?: number | null }) {
+  return row.updated_at ?? row.updatedAt ?? null;
+}
+
+function getCreatedAt(row: { created_at?: number | null; createdAt?: number | null }) {
+  return row.created_at ?? row.createdAt ?? 0;
+}
+
+function getCreatorId(row: {
+  user_id?: string | null;
+  creator?: { id?: string | null } | null;
+  user?: { id?: string | null } | null;
+}) {
+  return row.user_id ?? row.creator?.id ?? row.user?.id ?? '';
+}
+
+function getOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function getBestSuggestionContent({
+  discussionId,
+  documentContent,
+  changeRequest,
+}: {
+  discussionId?: string | null;
+  documentContent: Value | undefined;
+  changeRequest?: {
+    change_type?: string | null;
+    original_text?: string | null;
+    new_text?: string | null;
+    original_properties?: any;
+    new_properties?: any;
+  } | null;
+}): SuggestionContent {
+  if (discussionId) {
+    const liveContent = extractSuggestionContent(discussionId, documentContent);
+    if (hasRenderableSuggestionContent(liveContent)) {
+      return liveContent;
+    }
+  }
+
+  if (changeRequest) {
+    const snapshotContent = suggestionContentFromChangeRequestSnapshot(changeRequest);
+    if (hasRenderableSuggestionContent(snapshotContent)) {
+      return snapshotContent;
+    }
+  }
+
+  return { type: 'unknown', text: '', newText: '', properties: {}, newProperties: {} };
 }
 
 export function useChangeRequests(amendmentId: string, currentUserId?: string) {
@@ -109,185 +198,82 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
 
   // Extract change requests from discussions and saved entities
   const changeRequests = useMemo<ChangeRequest[]>(() => {
-    const openRequests: ChangeRequest[] = [];
-    const closedRequests: ChangeRequest[] = [];
-    const activeCollaboratorIds = new Set(
+    const eligibleVotingCollaboratorIds = new Set(
       (collaborators ?? [])
         .filter(isActiveCollaborator)
-        .map(collaborator => collaborator.user_id)
+        .filter(collaborator => hasAmendmentVoteRight(collaborator, amendmentId))
+        .map(getCollaboratorUserId)
         .filter(Boolean)
     );
     const closeTrigger = normalizeInternalCRVotingCloseTrigger(
       amendment?.internal_cr_voting_close_trigger
     );
-    const changeRequestById = new Map<string, (typeof savedChangeRequests)[number]>();
-    const changeRequestByTitle = new Map<string, (typeof savedChangeRequests)[number]>();
-    const discussionByChangeRequestId = new Map<string, DiscussionEntry>();
-    const discussionByCrId = new Map<string, DiscussionEntry>();
-
-    for (const changeRequest of savedChangeRequests ?? []) {
-      if (changeRequest.id) {
-        changeRequestById.set(changeRequest.id, changeRequest);
-      }
-      if (changeRequest.title) {
-        changeRequestByTitle.set(changeRequest.title, changeRequest);
-      }
-    }
-
-    if (amendment?.discussions && Array.isArray(amendment.discussions)) {
-      for (const discussion of amendment.discussions as readonly DiscussionEntry[]) {
-        if (discussion.changeRequestEntityId) {
-          discussionByChangeRequestId.set(discussion.changeRequestEntityId, discussion);
-        }
-        if (discussion.crId) {
-          discussionByCrId.set(discussion.crId, discussion);
-        }
-      }
-    }
 
     const getUserVote = (changeRequest?: (typeof savedChangeRequests)[number]) =>
       changeRequest?.votes?.find(vote => vote.user_id === currentUserId)?.vote ??
       changeRequest?.votes?.[0]?.vote ??
       null;
 
-    // Process open change requests from amendment.discussions
-    if (amendment?.discussions && Array.isArray(amendment.discussions)) {
-      openRequests.push(
-        ...(amendment.discussions as readonly DiscussionEntry[])
-          .filter(discussion => !!discussion.crId)
-          .map(suggestion => {
-            const suggestionContent = extractSuggestionContent(
-              suggestion.id,
-              document?.content as Value | undefined
-            );
+    return buildCanonicalChangeRequestRecords({
+      discussions: amendment?.discussions as readonly DiscussionEntry[] | null | undefined,
+      changeRequests: savedChangeRequests,
+    }).map(record => {
+      const discussion = record.discussion;
+      const cr = record.changeRequest;
+      const snapshotChangeRequest = record.snapshotChangeRequest ?? cr;
+      const suggestionContent = getBestSuggestionContent({
+        discussionId: discussion?.id,
+        documentContent: document?.content as Value | undefined,
+        changeRequest: snapshotChangeRequest,
+      });
+      const resolvedStatus = cr?.status ?? discussion?.status;
+      const isResolved = isApprovedStatus(resolvedStatus) || isDeclinedStatus(resolvedStatus);
+      const displayCrId = record.displayCrId ?? cr?.title ?? '';
 
-            const matchingChangeRequest =
-              (suggestion.changeRequestEntityId
-                ? changeRequestById.get(suggestion.changeRequestEntityId)
-                : undefined) ??
-              (suggestion.crId ? changeRequestByTitle.get(suggestion.crId) : undefined) ??
-              (suggestion.title ? changeRequestByTitle.get(suggestion.title) : undefined);
-            const userVote = getUserVote(matchingChangeRequest);
-            const resolvedStatus = matchingChangeRequest?.status ?? suggestion.status;
-            const isResolved = isApprovedStatus(resolvedStatus) || isDeclinedStatus(resolvedStatus);
-
-            return {
-              id: suggestion.id,
-              discussionId: suggestion.id,
-              suggestionId: suggestion.id,
-              crId: suggestion.crId ?? '',
-              crNumber: parseInt(suggestion.crId?.replace('CR-', '') || '0'),
-              title: suggestion.title || suggestion.crId || '',
-              description: suggestion.description || '',
-              type: suggestionContent.type,
-              text: suggestionContent.text,
-              newText: suggestionContent.newText,
-              properties: suggestionContent.properties,
-              newProperties: suggestionContent.newProperties,
-              proposedChange: suggestionContent.newText || suggestionContent.text,
-              justification: suggestion.justification || '',
-              isResolved,
-              status: matchingChangeRequest?.status || 'open',
-              resolution: isResolved ? (resolvedStatus ?? null) : null,
-              resolvedAt: isResolved ? (matchingChangeRequest?.updated_at ?? null) : null,
-              resolvedBy: isResolved ? (matchingChangeRequest?.user_id ?? null) : null,
-              createdAt: suggestion.createdAt ?? 0,
-              userId: suggestion.userId ?? '',
-              votesFor: matchingChangeRequest?.votes_for ?? 0,
-              votesAgainst: matchingChangeRequest?.votes_against ?? 0,
-              votesAbstain: matchingChangeRequest?.votes_abstain ?? 0,
-              votingDeadline: matchingChangeRequest?.voting_deadline ?? null,
-              closeTrigger,
-              eligibleVoterCount: activeCollaboratorIds.size,
-              votedCollaboratorCount:
-                (matchingChangeRequest?.votes_for ?? 0) +
-                (matchingChangeRequest?.votes_against ?? 0) +
-                (matchingChangeRequest?.votes_abstain ?? 0),
-              resolutionMethod: matchingChangeRequest?.resolution_method ?? null,
-              visibilityScope: matchingChangeRequest?.visibility_scope ?? null,
-              resolvedInMode: matchingChangeRequest?.resolved_in_mode ?? null,
-              votingStatus: matchingChangeRequest?.voting_status ?? null,
-              userVote,
-              comments: suggestion.comments || [],
-              votes: matchingChangeRequest?.votes || [],
-              changeRequestEntityId: matchingChangeRequest?.id ?? suggestion.changeRequestEntityId,
-            } as ChangeRequest;
-          })
-      );
-    }
-
-    // Process closed change requests from savedChangeRequests entity
-    if (savedChangeRequests && Array.isArray(savedChangeRequests)) {
-      const openRequestCrIds = new Set(openRequests.map(r => r.crId));
-      const openRequestTitles = new Set(openRequests.map(r => r.title).filter(Boolean));
-      const openRequestEntityIds = new Set(
-        openRequests.map(r => r.changeRequestEntityId).filter(Boolean)
-      );
-
-      closedRequests.push(
-        ...savedChangeRequests
-          .filter(cr => {
-            if (
-              openRequestEntityIds.has(cr.id) ||
-              openRequestCrIds.has(cr.title) ||
-              openRequestTitles.has(cr.title)
-            ) {
-              return false;
-            }
-            return isApprovedStatus(cr.status) || isDeclinedStatus(cr.status);
-          })
-          .map(cr => ({
-            id: cr.id,
-            discussionId:
-              (cr.id ? discussionByChangeRequestId.get(cr.id)?.id : undefined) ??
-              (cr.title ? discussionByCrId.get(cr.title)?.id : undefined) ??
-              null,
-            suggestionId:
-              (cr.id ? discussionByChangeRequestId.get(cr.id)?.id : undefined) ??
-              (cr.title ? discussionByCrId.get(cr.title)?.id : undefined) ??
-              null,
-            crId: discussionByChangeRequestId.get(cr.id)?.crId ?? cr.title,
-            crNumber: parseInt(
-              (discussionByChangeRequestId.get(cr.id)?.crId ?? cr.title)?.replace('CR-', '') || '0'
-            ),
-            title: cr.title,
-            description: cr.description || '',
-            type: 'unknown',
-            text: cr.proposedChange || '',
-            newText: '',
-            properties: {},
-            newProperties: {},
-            proposedChange: cr.proposedChange || '',
-            justification: cr.justification || '',
-            isResolved: true,
-            status: cr.status,
-            resolution: cr.status,
-            resolvedAt: cr.updatedAt,
-            resolvedBy: cr.creator?.id,
-            createdAt: cr.createdAt,
-            userId: cr.creator?.id,
-            votesFor: cr.votes_for ?? 0,
-            votesAgainst: cr.votes_against ?? 0,
-            votesAbstain: cr.votes_abstain ?? 0,
-            votingDeadline: cr.voting_deadline ?? null,
-            closeTrigger,
-            eligibleVoterCount: activeCollaboratorIds.size,
-            votedCollaboratorCount:
-              (cr.votes_for ?? 0) + (cr.votes_against ?? 0) + (cr.votes_abstain ?? 0),
-            resolutionMethod: cr.resolution_method ?? null,
-            visibilityScope: cr.visibility_scope ?? null,
-            resolvedInMode: cr.resolved_in_mode ?? null,
-            votingStatus: cr.voting_status ?? null,
-            userVote: getUserVote(cr),
-            comments: [],
-            votes: cr.votes || [],
-            changeRequestEntityId: cr.id,
-          }))
-      );
-    }
-
-    // Combine and sort by CR number
-    return [...openRequests, ...closedRequests].sort((a, b) => a.crNumber - b.crNumber);
+      return {
+        id: cr?.id ?? discussion?.id ?? record.logicalKey,
+        logicalKey: record.logicalKey,
+        discussionId: discussion?.id ?? null,
+        suggestionId: discussion?.id ?? null,
+        crId: displayCrId,
+        crNumber: parseInt(displayCrId?.replace('CR-', '') || '0'),
+        title: record.displayTitle,
+        description: getOptionalString(discussion?.description) ?? cr?.description ?? '',
+        type: suggestionContent.type,
+        text: suggestionContent.text,
+        newText: suggestionContent.newText,
+        properties: suggestionContent.properties,
+        newProperties: suggestionContent.newProperties,
+        proposedChange: suggestionContent.newText || suggestionContent.text,
+        justification:
+          getOptionalString(discussion?.justification) ??
+          getOptionalString((cr as { justification?: unknown } | null)?.justification) ??
+          '',
+        isResolved,
+        status: cr?.status ?? discussion?.status ?? 'open',
+        resolution: isResolved ? (resolvedStatus ?? null) : null,
+        resolvedAt: isResolved && cr ? getTimestamp(cr) : null,
+        resolvedBy: isResolved && cr ? getCreatorId(cr) : null,
+        createdAt: discussion?.createdAt ?? (cr ? getCreatedAt(cr) : 0),
+        userId: discussion?.userId ?? (cr ? getCreatorId(cr) : ''),
+        votesFor: cr?.votes_for ?? 0,
+        votesAgainst: cr?.votes_against ?? 0,
+        votesAbstain: cr?.votes_abstain ?? 0,
+        votingDeadline: cr?.voting_deadline ?? null,
+        closeTrigger,
+        eligibleVoterCount: eligibleVotingCollaboratorIds.size,
+        votedCollaboratorCount:
+          (cr?.votes_for ?? 0) + (cr?.votes_against ?? 0) + (cr?.votes_abstain ?? 0),
+        resolutionMethod: cr?.resolution_method ?? null,
+        visibilityScope: cr?.visibility_scope ?? null,
+        resolvedInMode: cr?.resolved_in_mode ?? null,
+        votingStatus: cr?.voting_status ?? null,
+        userVote: getUserVote(cr ?? undefined),
+        comments: discussion?.comments || [],
+        votes: cr?.votes || [],
+        changeRequestEntityId: cr?.id ?? discussion?.changeRequestEntityId,
+      } as ChangeRequest;
+    });
   }, [
     amendment?.discussions,
     amendment?.internal_cr_voting_close_trigger,

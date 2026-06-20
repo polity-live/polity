@@ -34,6 +34,7 @@ import {
   createChangeRequestSchema,
   finalizeExpiredInternalChangeRequestVotesSchema,
   finalizeInternalChangeRequestVoteSchema,
+  repairInternalChangeRequestResolutionSchema,
   updateChangeRequestSchema,
 } from '../change-requests/schema';
 import {
@@ -373,6 +374,13 @@ export const amendmentSharedMutators = {
 
   finalizeExpiredInternalChangeRequestVotes: defineMutator(
     finalizeExpiredInternalChangeRequestVotesSchema,
+    async () => {
+      return;
+    }
+  ),
+
+  repairInternalChangeRequestResolution: defineMutator(
+    repairInternalChangeRequestResolutionSchema,
     async () => {
       return;
     }

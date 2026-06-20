@@ -17,7 +17,7 @@ function changeRequest(overrides: Partial<ChangeRequest>): ChangeRequest {
     crNumber: 1,
     title: 'CR-1',
     description: '',
-    type: 'text',
+    type: 'replace',
     text: 'Before',
     newText: 'After',
     properties: {},
@@ -53,10 +53,20 @@ function changeRequest(overrides: Partial<ChangeRequest>): ChangeRequest {
 }
 
 describe('change request view model helpers', () => {
-  it('keeps open, approved, and declined requests in display order', () => {
-    const open = changeRequest({ id: 'open', crId: 'CR-1' });
-    const approved = changeRequest({ id: 'approved', crId: 'CR-2', isResolved: true });
-    const declined = changeRequest({ id: 'declined', crId: 'CR-3', isResolved: true });
+  it('sorts all requests by CR number regardless of status grouping', () => {
+    const open = changeRequest({ id: 'open', crId: 'CR-1', crNumber: 1 });
+    const approved = changeRequest({
+      id: 'approved',
+      crId: 'CR-3',
+      crNumber: 3,
+      isResolved: true,
+    });
+    const declined = changeRequest({
+      id: 'declined',
+      crId: 'CR-2',
+      crNumber: 2,
+      isResolved: true,
+    });
 
     expect(
       getAllChangeRequests({
@@ -64,7 +74,7 @@ describe('change request view model helpers', () => {
         approvedChangeRequests: [approved],
         declinedChangeRequests: [declined],
       }).map(request => request.id)
-    ).toEqual(['open', 'approved', 'declined']);
+    ).toEqual(['open', 'declined', 'approved']);
   });
 
   it('maps summaries, diffs, and discussions without UI dependencies', () => {
@@ -74,7 +84,7 @@ describe('change request view model helpers', () => {
         crId: 'CR-7',
         title: '',
         description: 'Change summary',
-        type: 'property',
+        type: 'update',
         properties: { title: 'Old' },
         newProperties: { title: 'New' },
         justification: 'Cleaner wording',
@@ -90,13 +100,18 @@ describe('change request view model helpers', () => {
       changeRequestEntityId: 'cr-row-1',
     });
     expect(mapChangeRequestsToDiffMap(requests)['request-1']).toMatchObject({
-      changeType: 'property',
+      changeType: 'update',
       originalText: 'Before',
       newText: 'After',
       justification: 'Cleaner wording',
     });
     expect(mapChangeRequestsToDiffMap(requests)['cr-row-1']).toMatchObject({
-      changeType: 'property',
+      changeType: 'update',
+      originalText: 'Before',
+      newText: 'After',
+    });
+    expect(mapChangeRequestsToDiffMap(requests)['CR-7']).toMatchObject({
+      changeType: 'update',
       originalText: 'Before',
       newText: 'After',
     });
@@ -126,6 +141,22 @@ describe('change request view model helpers', () => {
     expect((item.change_request as { suggestion_id?: string | null })?.suggestion_id).toBe(
       'suggestion-1'
     );
+  });
+
+  it('does not expose empty unknown diffs to timeline cards', () => {
+    expect(
+      mapChangeRequestsToDiffMap([
+        changeRequest({
+          id: 'resolved-without-snapshot',
+          type: 'unknown',
+          text: '',
+          newText: '',
+          isResolved: true,
+          status: 'accepted',
+          resolution: 'accepted',
+        }),
+      ])
+    ).toEqual({});
   });
 
   it('recognizes internal and event voting modes', () => {

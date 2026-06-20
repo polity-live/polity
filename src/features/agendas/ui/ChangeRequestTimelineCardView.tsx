@@ -130,6 +130,7 @@ export interface ChangeRequestTimelineCardViewProps {
   editingMode: any;
   amendmentId: any;
   userId: any;
+  userRecord?: any;
   agendaItemId: any;
   showEditorPreview: any;
   onCastVote: any;
@@ -186,6 +187,7 @@ export function ChangeRequestTimelineCardView({
   editingMode,
   amendmentId,
   userId,
+  userRecord,
   agendaItemId,
   showEditorPreview,
   onStartIndicative,
@@ -228,6 +230,11 @@ export function ChangeRequestTimelineCardView({
   const internalTotalVotes = internalAcceptVotes + internalRejectVotes + internalAbstainVotes;
   const internalUserVote = cr?.user_vote ?? null;
   const internalChoiceIdSuffix = item.change_request_id ?? cr?.id ?? item.id;
+  const confirmationStatus = cr?.confirmation_status ?? cr?.confirmationStatus ?? null;
+  const isSubmittedChangeRequest =
+    !item.is_final_vote &&
+    confirmationStatus !== 'pending' &&
+    (confirmationStatus === 'confirmed' || Boolean(cr?.id || item.change_request_id));
   const voteOptions: VoteBarOption[] = choiceStats.map((cs: any, idx: number) => {
     const colors = CR_CHOICE_COLORS[idx % CR_CHOICE_COLORS.length];
 
@@ -282,6 +289,16 @@ export function ChangeRequestTimelineCardView({
               {!isLocked && !isInternalVotingMode && vote && (
                 <VotePhaseBadge
                   phase={isIndicative ? 'indication' : isClosed ? 'closed' : 'final_vote'}
+                  labels={
+                    isSubmittedChangeRequest
+                      ? {
+                          indication: t(
+                            'features.agendas.crTimeline.submittedVotePending',
+                            'Submitted - vote pending'
+                          ),
+                        }
+                      : undefined
+                  }
                 />
               )}
               {getStatusBadge(
@@ -445,6 +462,7 @@ export function ChangeRequestTimelineCardView({
                     editingMode={editingMode}
                     amendmentId={amendmentId}
                     userId={userId}
+                    userRecord={userRecord}
                     agendaItemId={agendaItemId}
                     toolbarEnd={
                       <>
@@ -552,7 +570,7 @@ export function ChangeRequestTimelineCardView({
                         voted: internalVotedCount,
                         total: internalEligibleCount,
                       },
-                      `${internalVotedCount}/${internalEligibleCount} collaborators voted`
+                      `${internalVotedCount}/${internalEligibleCount} collaborators with vote right voted`
                     )}
                   </span>
                 )}

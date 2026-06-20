@@ -70,9 +70,10 @@ export const amendmentsTranslations = {
     internalCRVotingCloseTitle: 'Interne Änderungsantrags-Abstimmungen schließen',
     internalCRVotingCloseDescription:
       'Legt fest, wann offene Change Requests im internen Abstimmungsmodus automatisch entschieden werden.',
-    internalCRVotingAllCollaboratorsLabel: 'Wenn alle Mitarbeiter abgestimmt haben',
+    internalCRVotingAllCollaboratorsLabel:
+      'Wenn alle Mitarbeiter mit Abstimmungsrecht abgestimmt haben',
     internalCRVotingAllCollaboratorsDescription:
-      'Default. Der Änderungsantrag wird entschieden, sobald alle aktiven Mitarbeiter abgestimmt haben.',
+      'Default. Der Änderungsantrag wird entschieden, sobald alle aktiven Mitarbeiter mit Abstimmungsrecht abgestimmt haben.',
     internalCRVotingAfterMinutesLabel: 'Nach Ablauf einer Zeit',
     internalCRVotingAfterMinutesDescription:
       'Die Frist startet beim Wechsel in den internen Abstimmungsmodus und danach für neue Änderungsanträge ab Erstellung.',
@@ -130,7 +131,7 @@ export const amendmentsTranslations = {
     yourVote: 'Du hast für {{vote}} bei diesem Änderungsantrag gestimmt',
     votingProgress: 'Abstimmungsfortschritt',
     voted: 'abgestimmt',
-    collaboratorsVoted: '{{voted}}/{{total}} Mitarbeiter haben abgestimmt',
+    collaboratorsVoted: '{{voted}}/{{total}} Mitarbeiter mit Abstimmungsrecht haben abgestimmt',
     closesInMinutes: 'Schließt in {{minutes}} min',
     deadlineExpired: 'Frist abgelaufen',
     votedList: 'Abgestimmt',

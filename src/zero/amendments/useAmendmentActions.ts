@@ -220,6 +220,17 @@ export function useAmendmentActions() {
     [zero]
   );
 
+  const repairInternalChangeRequestResolution = useCallback(
+    (args: Parameters<typeof mutators.amendments.repairInternalChangeRequestResolution>[0]) => {
+      const result = zero.mutate(mutators.amendments.repairInternalChangeRequestResolution(args));
+      onServerError(result, () =>
+        toast.error(t('features.amendments.toasts.changeRequestUpdateFailed'))
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
   // ── Support ────────────────────────────────────────────────────────
   const supportAmendment = useCallback(
     (args: Parameters<typeof mutators.amendments.supportAmendment>[0]) => {
@@ -563,6 +574,7 @@ export function useAmendmentActions() {
     voteOnChangeRequest,
     finalizeInternalChangeRequestVote,
     finalizeExpiredInternalChangeRequestVotes,
+    repairInternalChangeRequestResolution,
 
     // Support
     supportAmendment,

@@ -1,5 +1,7 @@
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { zql } from '../schema';
+import { buildCanonicalChangeRequestRecords } from '@/features/change-requests/logic/canonicalChangeRequests';
+import { createChangeRequestDiffSnapshot } from '@/features/change-requests/utils/suggestion-extraction';
 import {
   applyChangeRequestVoteResultToContent,
   findChangeRequestDiscussion,
@@ -16,6 +18,8 @@ export const INTERNAL_CR_VOTING_CLOSE_TRIGGERS = [
   'all_collaborators_voted',
   'after_minutes',
 ] as const;
+const INTERNAL_EVENT_PHASE_VERSION_SUMMARY = 'Internal change requests resolved before event phase';
+const INTERNAL_EVENT_PHASE_REPAIR_VERSION_SUMMARY = 'Repair internal change request resolution';
 
 type InternalCRVotingCloseTrigger = (typeof INTERNAL_CR_VOTING_CLOSE_TRIGGERS)[number];
 interface InternalCRVotingTx {
@@ -40,16 +44,32 @@ interface InternalChangeRequestRow {
   title?: string | null;
   status?: string | null;
   voting_status?: string | null;
+  resolved_in_mode?: string | null;
+  resolution_method?: string | null;
+  visibility_scope?: string | null;
   created_at?: number | null;
+  updated_at?: number | null;
   created_in_mode?: string | null;
+  votes_for?: number | null;
+  votes_against?: number | null;
+  votes_abstain?: number | null;
+  change_type?: string | null;
+  original_text?: string | null;
+  new_text?: string | null;
+  original_properties?: ReadonlyJSONValue | null;
+  new_properties?: ReadonlyJSONValue | null;
 }
 
-const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['collaborator', 'member', 'admin'];
+const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['active', 'collaborator', 'member', 'admin'];
 const INTERNAL_CHANGE_REQUEST_MODES = new Set([
   null,
   undefined,
   'edit',
   'view',
+  'collaborative',
+  'collaborative_editing',
+  'internal_suggestion',
+  'internal_voting',
   'suggest_internal',
   'vote_internal',
 ]);
@@ -70,7 +90,7 @@ function isOpenChangeRequest(changeRequest: {
 }
 
 function isInternalChangeRequest(changeRequest: { created_in_mode?: string | null }) {
-  return INTERNAL_CHANGE_REQUEST_MODES.has(changeRequest.created_in_mode);
+  return INTERNAL_CHANGE_REQUEST_MODES.has(changeRequest.created_in_mode?.trim() || null);
 }
 
 function stableChangeRequestOrder(left: InternalChangeRequestRow, right: InternalChangeRequestRow) {
@@ -78,7 +98,60 @@ function stableChangeRequestOrder(left: InternalChangeRequestRow, right: Interna
   return byCreatedAt !== 0 ? byCreatedAt : left.id.localeCompare(right.id);
 }
 
-function getLatestChangeRequestVotes(votes: readonly ChangeRequestVoteRow[]) {
+function changeRequestRecordOrder(
+  left: {
+    displayCrId: string | null;
+    displayTitle: string;
+    changeRequest: InternalChangeRequestRow | null;
+  },
+  right: {
+    displayCrId: string | null;
+    displayTitle: string;
+    changeRequest: InternalChangeRequestRow | null;
+  }
+) {
+  const leftNumber = parseInt(left.displayCrId?.replace('CR-', '') || '0');
+  const rightNumber = parseInt(right.displayCrId?.replace('CR-', '') || '0');
+  if (leftNumber !== rightNumber) return leftNumber - rightNumber;
+
+  const leftRow = left.changeRequest;
+  const rightRow = right.changeRequest;
+  if (leftRow && rightRow) {
+    const byCreatedAt = (leftRow.created_at ?? 0) - (rightRow.created_at ?? 0);
+    if (byCreatedAt !== 0) return byCreatedAt;
+  }
+
+  return left.displayTitle.localeCompare(right.displayTitle);
+}
+
+function hasAmendmentVoteRight(
+  collaborator: {
+    role?: {
+      action_rights?:
+        | readonly {
+            resource?: string | null;
+            action?: string | null;
+            amendment_id?: string | null;
+            amendment?: { id?: string | null } | null;
+          }[]
+        | null;
+    } | null;
+  },
+  amendmentId: string
+) {
+  return (collaborator.role?.action_rights ?? []).some(
+    right =>
+      right.resource === 'amendments' &&
+      right.action === 'vote' &&
+      (!right.amendment_id || right.amendment_id === amendmentId) &&
+      (!right.amendment?.id || right.amendment.id === amendmentId)
+  );
+}
+
+function getLatestChangeRequestVotes(
+  votes: readonly ChangeRequestVoteRow[],
+  eligibleUserIds?: ReadonlySet<string>
+) {
   const latestVoteByUser = new Map<string, ChangeRequestVoteRow>();
   const duplicateVoteIds: string[] = [];
 
@@ -86,6 +159,9 @@ function getLatestChangeRequestVotes(votes: readonly ChangeRequestVoteRow[]) {
     const byCreatedAt = (right.created_at ?? 0) - (left.created_at ?? 0);
     return byCreatedAt !== 0 ? byCreatedAt : right.id.localeCompare(left.id);
   })) {
+    if (eligibleUserIds && !eligibleUserIds.has(vote.user_id)) {
+      continue;
+    }
     if (!latestVoteByUser.has(vote.user_id)) {
       latestVoteByUser.set(vote.user_id, vote);
       continue;
@@ -114,6 +190,10 @@ function getVoteResult(counts: { votes_for: number; votes_against: number }): Vo
   return counts.votes_for > counts.votes_against ? 'passed' : 'rejected';
 }
 
+function getVoteResultFromStatus(status: string | null | undefined): VoteResult {
+  return status === 'accepted' || status === 'approved' ? 'passed' : 'rejected';
+}
+
 export function normalizeInternalCRVotingCloseTrigger(
   value: string | null | undefined
 ): InternalCRVotingCloseTrigger {
@@ -129,10 +209,14 @@ export function normalizeInternalCRVotingDurationMinutes(value: number | null | 
 export async function normalizeInternalChangeRequestVoteCounts(
   tx: InternalCRVotingTx,
   changeRequestId: string,
-  now = Date.now()
+  now = Date.now(),
+  eligibleUserIds?: ReadonlySet<string>
 ) {
   const votes = await tx.run(zql.change_request_vote.where('change_request_id', changeRequestId));
-  const { latestVoteByUser, duplicateVoteIds } = getLatestChangeRequestVotes(votes);
+  const { latestVoteByUser, duplicateVoteIds } = getLatestChangeRequestVotes(
+    votes,
+    eligibleUserIds
+  );
 
   for (const voteId of duplicateVoteIds) {
     await tx.mutate.change_request_vote.delete({ id: voteId });
@@ -148,16 +232,18 @@ export async function normalizeInternalChangeRequestVoteCounts(
   return { counts, latestVoteByUser };
 }
 
-async function activeCollaboratorUserIds(tx: InternalCRVotingTx, amendmentId: string) {
+async function activeVotingCollaboratorUserIds(tx: InternalCRVotingTx, amendmentId: string) {
   const collaborators = await tx.run(
     zql.amendment_collaborator
       .where('amendment_id', amendmentId)
       .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+      .related('role', role => role.related('action_rights'))
   );
 
   return [
     ...new Set<string>(
       collaborators
+        .filter((collaborator: any) => hasAmendmentVoteRight(collaborator, amendmentId))
         .map((collaborator: any) => collaborator.user_id)
         .filter((userId: unknown): userId is string => typeof userId === 'string')
     ),
@@ -180,7 +266,15 @@ export async function resolveInternalChangeRequestVote({
     return null;
   }
 
-  const { counts } = await normalizeInternalChangeRequestVoteCounts(tx, changeRequestId, now);
+  const eligibleUserIds = new Set(
+    await activeVotingCollaboratorUserIds(tx, changeRequest.amendment_id)
+  );
+  const { counts } = await normalizeInternalChangeRequestVoteCounts(
+    tx,
+    changeRequestId,
+    now,
+    eligibleUserIds
+  );
   const voteResult = getVoteResult(counts);
   const amendment = await tx.run(zql.amendment.where('id', changeRequest.amendment_id).one());
 
@@ -231,12 +325,16 @@ export async function maybeFinalizeInternalChangeRequestVote({
   }
 
   if (reason === 'after_vote' && trigger === 'all_collaborators_voted') {
+    const collaboratorUserIds = await activeVotingCollaboratorUserIds(
+      tx,
+      changeRequest.amendment_id
+    );
     const { latestVoteByUser } = await normalizeInternalChangeRequestVoteCounts(
       tx,
       changeRequestId,
-      now
+      now,
+      new Set(collaboratorUserIds)
     );
-    const collaboratorUserIds = await activeCollaboratorUserIds(tx, changeRequest.amendment_id);
     if (
       collaboratorUserIds.length > 0 &&
       collaboratorUserIds.every(userId => latestVoteByUser.has(userId))
@@ -323,6 +421,169 @@ export async function finalizeExpiredInternalChangeRequestVotesForAmendment({
   return results;
 }
 
+function isResolvedInternalVoteChangeRequest(changeRequest: InternalChangeRequestRow) {
+  return (
+    isFinalChangeRequestStatus(changeRequest.status) &&
+    isInternalChangeRequest(changeRequest) &&
+    (changeRequest.resolution_method === 'internal_vote' ||
+      changeRequest.resolved_in_mode === 'vote_internal')
+  );
+}
+
+export async function repairInternalChangeRequestResolution({
+  tx,
+  ctx,
+  amendmentId,
+  now = Date.now(),
+}: {
+  tx: InternalCRVotingTx;
+  ctx: InternalCRVotingCtx;
+  amendmentId: string;
+  now?: number;
+}) {
+  const amendment = await tx.run(zql.amendment.where('id', amendmentId).one());
+  if (!amendment?.document_id) {
+    throw new Error('Amendment document not found');
+  }
+
+  const document = await tx.run(zql.document.where('id', amendment.document_id).one());
+  if (!document?.content) {
+    throw new Error('Amendment document content not found');
+  }
+
+  const baseVersion = await tx.run(
+    zql.document_version
+      .where('document_id', amendment.document_id)
+      .where('amendment_id', amendmentId)
+      .where('change_summary', INTERNAL_EVENT_PHASE_VERSION_SUMMARY)
+      .orderBy('created_at', 'desc')
+      .limit(1)
+      .one()
+  );
+
+  if (!baseVersion?.content) {
+    throw new Error('No pre-event change request document version found');
+  }
+
+  const discussions: DiscussionEntry[] = Array.isArray(amendment.discussions)
+    ? (amendment.discussions as DiscussionEntry[])
+    : [];
+  const changeRequests = (await tx.run(
+    zql.change_request.where('amendment_id', amendmentId)
+  )) as InternalChangeRequestRow[];
+  const canonicalRecords = buildCanonicalChangeRequestRecords({
+    discussions,
+    changeRequests: changeRequests.filter(isResolvedInternalVoteChangeRequest),
+  })
+    .filter(record => !!record.changeRequest)
+    .sort(changeRequestRecordOrder);
+
+  if (canonicalRecords.length === 0) {
+    return [];
+  }
+
+  let repairedContent = baseVersion.content as Parameters<
+    typeof applyChangeRequestVoteResultToContent
+  >[0];
+  const nextDiscussions = [...discussions];
+  const results = [];
+
+  for (const record of canonicalRecords) {
+    const changeRequest = record.changeRequest;
+    if (!changeRequest) {
+      continue;
+    }
+
+    const voteResult = getVoteResultFromStatus(changeRequest.status);
+    const status = getChangeRequestResolutionStatus(voteResult);
+    const matchingDiscussion =
+      record.discussion ?? findChangeRequestDiscussion(nextDiscussions, changeRequest);
+    let resolutionSnapshot = {};
+
+    if (matchingDiscussion?.id) {
+      const snapshot = createChangeRequestDiffSnapshot(matchingDiscussion.id, repairedContent);
+      if (snapshot.change_type) {
+        resolutionSnapshot = snapshot;
+      }
+
+      repairedContent = applyChangeRequestVoteResultToContent(
+        repairedContent,
+        matchingDiscussion.id,
+        voteResult
+      );
+
+      const discussionIndex = nextDiscussions.findIndex(
+        discussion => discussion.id === matchingDiscussion.id
+      );
+      if (discussionIndex >= 0) {
+        nextDiscussions[discussionIndex] = {
+          ...nextDiscussions[discussionIndex],
+          changeRequestEntityId: changeRequest.id,
+          status,
+        };
+      }
+    }
+
+    const resolutionUpdate = {
+      status,
+      voting_status: 'completed',
+      resolved_in_mode: 'vote_internal',
+      resolution_method: 'internal_vote',
+      visibility_scope: changeRequest.visibility_scope ?? 'public',
+      votes_for: changeRequest.votes_for ?? 0,
+      votes_against: changeRequest.votes_against ?? 0,
+      votes_abstain: changeRequest.votes_abstain ?? 0,
+      ...resolutionSnapshot,
+      updated_at: now,
+    };
+
+    for (const groupedChangeRequest of record.duplicateChangeRequests) {
+      await tx.mutate.change_request.update({
+        id: groupedChangeRequest.id,
+        ...resolutionUpdate,
+      });
+    }
+
+    results.push({ changeRequest, status });
+  }
+
+  const latestVersion = await tx.run(
+    zql.document_version
+      .where('document_id', document.id)
+      .orderBy('version_number', 'desc')
+      .limit(1)
+      .one()
+  );
+
+  await tx.mutate.document_version.insert({
+    id: crypto.randomUUID(),
+    document_id: document.id,
+    amendment_id: amendmentId,
+    blog_id: null,
+    content: document.content as ReadonlyJSONValue,
+    version_number: (latestVersion?.version_number ?? 0) + 1,
+    change_summary: INTERNAL_EVENT_PHASE_REPAIR_VERSION_SUMMARY,
+    author_id: ctx.userID,
+    created_at: now,
+  });
+
+  await tx.mutate.document.update({
+    id: document.id,
+    content: repairedContent as unknown as ReadonlyJSONValue,
+    updated_at: now,
+  });
+
+  if (nextDiscussions.length > 0) {
+    await tx.mutate.amendment.update({
+      id: amendmentId,
+      discussions: nextDiscussions as unknown as ReadonlyJSONValue,
+      updated_at: now,
+    });
+  }
+
+  return results;
+}
+
 export async function finalizeInternalChangeRequestsForEventPhaseTransition({
   tx,
   ctx,
@@ -345,17 +606,23 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
       changeRequest => isOpenChangeRequest(changeRequest) && isInternalChangeRequest(changeRequest)
     )
     .sort(stableChangeRequestOrder);
+  const discussions: DiscussionEntry[] = Array.isArray(amendment.discussions)
+    ? (amendment.discussions as DiscussionEntry[])
+    : [];
+  const canonicalRecords = buildCanonicalChangeRequestRecords({
+    discussions,
+    changeRequests: openInternalChangeRequests,
+  })
+    .filter(record => !!record.changeRequest)
+    .sort(changeRequestRecordOrder);
 
-  if (openInternalChangeRequests.length === 0) {
+  if (canonicalRecords.length === 0) {
     return [];
   }
 
   const internalResolutionVisibility = normalizeInternalChangeRequestResolutionVisibility(
     amendment.internal_cr_resolution_visibility
   );
-  const discussions: DiscussionEntry[] = Array.isArray(amendment.discussions)
-    ? (amendment.discussions as DiscussionEntry[])
-    : [];
   const nextDiscussions = [...discussions];
   const document = amendment.document_id
     ? await tx.run(zql.document.where('id', amendment.document_id).one())
@@ -366,6 +633,7 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
     | undefined;
   let documentContentChanged = false;
   let documentVersionCreated = false;
+  const eligibleUserIds = new Set(await activeVotingCollaboratorUserIds(tx, amendmentId));
 
   const ensureDocumentVersion = async () => {
     if (!document || !document.content || documentVersionCreated) {
@@ -388,7 +656,7 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
       blog_id: null,
       content: document.content as ReadonlyJSONValue,
       version_number: nextVersionNumber,
-      change_summary: 'Internal change requests resolved before event phase',
+      change_summary: INTERNAL_EVENT_PHASE_VERSION_SUMMARY,
       author_id: ctx.userID,
       created_at: now,
     });
@@ -398,13 +666,30 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
 
   const results = [];
 
-  for (const changeRequest of openInternalChangeRequests) {
-    const { counts } = await normalizeInternalChangeRequestVoteCounts(tx, changeRequest.id, now);
+  for (const record of canonicalRecords) {
+    const changeRequest = record.changeRequest;
+    if (!changeRequest) {
+      continue;
+    }
+
+    const { counts } = await normalizeInternalChangeRequestVoteCounts(
+      tx,
+      changeRequest.id,
+      now,
+      eligibleUserIds
+    );
     const voteResult = getVoteResult(counts);
     const status = getChangeRequestResolutionStatus(voteResult);
-    const matchingDiscussion = findChangeRequestDiscussion(nextDiscussions, changeRequest);
+    const matchingDiscussion =
+      record.discussion ?? findChangeRequestDiscussion(nextDiscussions, changeRequest);
+    let resolutionSnapshot = {};
 
     if (matchingDiscussion?.id && nextDocumentContent) {
+      const snapshot = createChangeRequestDiffSnapshot(matchingDiscussion.id, nextDocumentContent);
+      if (snapshot.change_type) {
+        resolutionSnapshot = snapshot;
+      }
+
       await ensureDocumentVersion();
       nextDocumentContent = applyChangeRequestVoteResultToContent(
         nextDocumentContent,
@@ -421,20 +706,29 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
       if (discussionIndex >= 0) {
         nextDiscussions[discussionIndex] = {
           ...nextDiscussions[discussionIndex],
+          changeRequestEntityId: changeRequest.id,
           status,
         };
       }
     }
 
-    await tx.mutate.change_request.update({
-      id: changeRequest.id,
+    const resolutionUpdate = {
       status,
       voting_status: 'completed',
       resolved_in_mode: 'vote_internal',
       resolution_method: 'internal_vote',
       visibility_scope: internalResolutionVisibility,
+      ...counts,
+      ...resolutionSnapshot,
       updated_at: now,
-    });
+    };
+
+    for (const groupedChangeRequest of record.duplicateChangeRequests) {
+      await tx.mutate.change_request.update({
+        id: groupedChangeRequest.id,
+        ...resolutionUpdate,
+      });
+    }
 
     results.push({ changeRequest, status });
   }

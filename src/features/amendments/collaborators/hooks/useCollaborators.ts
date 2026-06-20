@@ -7,7 +7,7 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import type { AmendmentCollaboratorRow, AmendmentRoleRow } from '@/zero/amendments/queries';
 
 export type Collaborator = AmendmentCollaboratorRow & {
-  role?: AmendmentRoleRow | null;
+  role?: AmendmentRoleRow;
   roles?: AmendmentRoleRow[];
 };
 export type Role = AmendmentRoleRow;
@@ -54,7 +54,7 @@ export function useCollaborators(
 
   const collaborators = useMemo<Collaborator[]>(() => {
     return baseCollaborators.map(collaboration => {
-      const matchedRole = roles.find(role => role.id === collaboration.role_id) ?? null;
+      const matchedRole = roles.find(role => role.id === collaboration.role_id);
       return {
         ...collaboration,
         role: matchedRole,

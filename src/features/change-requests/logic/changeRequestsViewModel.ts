@@ -7,6 +7,7 @@ import {
 } from '@/features/agendas/logic/createMockCRTimelineItems';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import type { TDiscussion } from '@/features/editor/types';
+import { isRenderableSuggestionType } from '../utils/suggestion-extraction';
 
 import type { ChangeRequest } from '../hooks/useChangeRequests';
 
@@ -19,7 +20,29 @@ export function getAllChangeRequests({
   approvedChangeRequests: readonly ChangeRequest[];
   declinedChangeRequests: readonly ChangeRequest[];
 }) {
-  return [...openChangeRequests, ...approvedChangeRequests, ...declinedChangeRequests];
+  return sortChangeRequestsByDisplayOrder([
+    ...openChangeRequests,
+    ...approvedChangeRequests,
+    ...declinedChangeRequests,
+  ]);
+}
+
+export function sortChangeRequestsByDisplayOrder(changeRequests: readonly ChangeRequest[]) {
+  return [...changeRequests].sort((left, right) => {
+    const leftNumber = Number.isFinite(left.crNumber)
+      ? left.crNumber
+      : parseInt(left.crId?.replace('CR-', '') || '0');
+    const rightNumber = Number.isFinite(right.crNumber)
+      ? right.crNumber
+      : parseInt(right.crId?.replace('CR-', '') || '0');
+
+    if (leftNumber !== rightNumber) return leftNumber - rightNumber;
+    const byCreatedAt = (left.createdAt ?? 0) - (right.createdAt ?? 0);
+    if (byCreatedAt !== 0) return byCreatedAt;
+    return (left.title || left.crId || left.id).localeCompare(
+      right.title || right.crId || right.id
+    );
+  });
 }
 
 export function mapChangeRequestsToSummaries(
@@ -47,6 +70,7 @@ export function mapChangeRequestsToSummaries(
     suggestionId: cr.suggestionId,
     discussionId: cr.discussionId,
     changeRequestEntityId: cr.changeRequestEntityId ?? null,
+    logicalKey: cr.logicalKey ?? null,
     votingDeadline: cr.votingDeadline,
     closeTrigger: cr.closeTrigger,
     eligibleVoterCount: cr.eligibleVoterCount,
@@ -73,6 +97,14 @@ export function mapChangeRequestsToDiffMap(
   const map: Record<string, ChangeRequestDiffData> = {};
 
   for (const cr of changeRequests) {
+    const hasTextDiff = !!cr.text || !!cr.newText;
+    const hasPropertyDiff =
+      Object.keys(cr.properties ?? {}).length > 0 || Object.keys(cr.newProperties ?? {}).length > 0;
+
+    if (!isRenderableSuggestionType(cr.type) || (!hasTextDiff && !hasPropertyDiff)) {
+      continue;
+    }
+
     const diff = {
       changeType: cr.type,
       originalText: cr.text || undefined,
@@ -83,6 +115,12 @@ export function mapChangeRequestsToDiffMap(
     };
 
     map[cr.id] = diff;
+    if (cr.logicalKey) {
+      map[cr.logicalKey] = diff;
+    }
+    if (cr.crId) {
+      map[cr.crId] = diff;
+    }
     if (cr.suggestionId) {
       map[cr.suggestionId] = diff;
     }

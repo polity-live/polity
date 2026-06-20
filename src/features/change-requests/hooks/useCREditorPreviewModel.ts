@@ -21,10 +21,7 @@ export function useCREditorPreviewModel({
   suggestionIds,
 }: UseCREditorPreviewModelOptions) {
   const [isOpen, setIsOpen] = useState(false);
-  const isInteractive =
-    allowInteractiveEditor &&
-    (editingMode === 'suggest_event' || editingMode === 'vote_event') &&
-    !!amendmentId;
+  const isInteractive = allowInteractiveEditor && editingMode === 'suggest_event' && !!amendmentId;
 
   const suggestionIdsKey = useMemo(() => [...suggestionIds].sort().join(','), [suggestionIds]);
 

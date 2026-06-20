@@ -210,6 +210,94 @@ describe('filterAccessibleNotifications', () => {
 
     expect(result).toEqual([]);
   });
+
+  it('keeps a personal collaboration invite while filtering the invited user from the amendment entity copy', () => {
+    const result = filterAccessibleNotifications(
+      [
+        createNotification(
+          notificationOverrides({
+            id: 'personal-invite',
+            type: 'collaboration_invite',
+            recipient: { id: 'user-1' },
+            recipient_id: 'user-1',
+          })
+        ),
+        createNotification(
+          notificationOverrides({
+            id: 'entity-invite',
+            type: 'collaboration_invite',
+            recipient_amendment: {
+              created_by_id: 'author-user',
+              collaborators: [{ user_id: 'user-1', status: 'invited' }],
+            },
+          })
+        ),
+      ],
+      'user-1'
+    );
+
+    expect(result.map(notification => notification.id)).toEqual(['personal-invite']);
+  });
+
+  it.each(['invited', 'requested'])(
+    'filters amendment entity notifications for %s collaborators',
+    status => {
+      const result = filterAccessibleNotifications(
+        [
+          createNotification(
+            notificationOverrides({
+              recipient_amendment: {
+                created_by_id: 'author-user',
+                collaborators: [{ user_id: 'user-1', status }],
+              },
+            })
+          ),
+        ],
+        'user-1'
+      );
+
+      expect(result).toEqual([]);
+    }
+  );
+
+  it.each(['active', 'collaborator', 'member', 'admin'])(
+    'keeps amendment entity notifications for %s collaborators',
+    status => {
+      const result = filterAccessibleNotifications(
+        [
+          createNotification(
+            notificationOverrides({
+              recipient_amendment: {
+                created_by_id: 'author-user',
+                collaborators: [{ user_id: 'user-1', status }],
+              },
+            })
+          ),
+        ],
+        'user-1'
+      );
+
+      expect(result).toHaveLength(1);
+    }
+  );
+
+  it('keeps amendment entity notifications for the amendment author', () => {
+    const result = filterAccessibleNotifications(
+      [
+        createNotification(
+          notificationOverrides({
+            recipient_amendment: {
+              created_by_id: 'user-1',
+              collaborators: [],
+            },
+          })
+        ),
+      ],
+      'user-1'
+    );
+
+    expect(result).toHaveLength(1);
+  });
 });
 
 describe('collectRelationshipManagerRecipientIds', () => {

@@ -193,6 +193,7 @@ export interface EditorEntity {
   updatedAt: number;
   owner?: EditorUser;
   collaborators: EditorCollaborator[];
+  extraUsers?: EditorUser[];
   canChangeMode?: boolean;
   canVoteOnChangeRequests?: boolean;
   canManageChangeRequestVotes?: boolean;

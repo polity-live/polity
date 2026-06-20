@@ -64,6 +64,8 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 const PERSISTED_CHANGE_REQUEST_DISCUSSION_FIELDS = [
   'changeRequestEntityId',
   'status',
+  'confirmationStatus',
+  'confirmedAt',
   'votesFor',
   'votesAgainst',
   'votesAbstain',

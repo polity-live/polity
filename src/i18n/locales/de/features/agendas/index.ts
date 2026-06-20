@@ -18,6 +18,7 @@ export const agendasTranslations = {
     modeInfo: 'Modus',
     internalVotingActiveInfo: 'Interne Änderungsantrags-Abstimmungen sind aktiv.',
     setToVoteEvent: 'Setze den Antrag auf Event-Abstimmungsmodus, um abzustimmen.',
+    submittedVotePending: 'Eingereicht - Wahl anstehend',
     deadline: 'Frist',
   },
 } as const;

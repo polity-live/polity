@@ -7,6 +7,8 @@ import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-ki
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 
 interface UseSuggestionIdAssignmentProps {
+  enabled?: boolean;
+  confirmationMode?: 'none' | 'event_suggestion';
   documentId: string;
   discussions: TDiscussion[];
   onDiscussionsUpdate: (discussions: TDiscussion[]) => void;
@@ -14,7 +16,7 @@ interface UseSuggestionIdAssignmentProps {
     crId: string;
     discussionId: string;
     changeRequestEntityId: string;
-  }) => void;
+  }) => unknown | Promise<unknown>;
   suggestions?: ResolvedSuggestion[]; // Optional: resolved suggestions from PlateJS
 }
 
@@ -23,6 +25,8 @@ interface UseSuggestionIdAssignmentProps {
  * Should be called whenever discussions change in the editor
  */
 export function useSuggestionIdAssignment({
+  enabled = true,
+  confirmationMode = 'none',
   documentId,
   discussions,
   onDiscussionsUpdate,
@@ -32,10 +36,12 @@ export function useSuggestionIdAssignment({
   const processedEntities = React.useRef(new Set<string>());
 
   const assignMissingIds = React.useCallback(() => {
+    if (!enabled) return;
     if (!documentId || !discussions || discussions.length === 0) return;
 
     const updatedDiscussions = [...discussions];
     let hasChanges = false;
+    const requiresEventConfirmation = confirmationMode === 'event_suggestion';
 
     // Pass 1: Assign crId to discussions that don't have one
     const discussionsNeedingIds = discussions.filter(
@@ -62,8 +68,32 @@ export function useSuggestionIdAssignment({
           updatedDiscussions[index] = {
             ...updatedDiscussions[index],
             crId,
+            confirmationStatus: requiresEventConfirmation
+              ? updatedDiscussions[index].changeRequestEntityId
+                ? 'confirmed'
+                : (updatedDiscussions[index].confirmationStatus ?? 'pending')
+              : updatedDiscussions[index].confirmationStatus,
           };
           processedDiscussions.current.add(discussion.id);
+          hasChanges = true;
+        }
+      }
+    }
+
+    if (requiresEventConfirmation) {
+      for (const discussion of updatedDiscussions) {
+        const index = updatedDiscussions.findIndex(d => d.id === discussion.id);
+        if (index === -1) continue;
+
+        const nextConfirmationStatus = discussion.changeRequestEntityId
+          ? 'confirmed'
+          : (discussion.confirmationStatus ?? 'pending');
+
+        if (discussion.confirmationStatus !== nextConfirmationStatus) {
+          updatedDiscussions[index] = {
+            ...updatedDiscussions[index],
+            confirmationStatus: nextConfirmationStatus,
+          };
           hasChanges = true;
         }
       }
@@ -75,6 +105,7 @@ export function useSuggestionIdAssignment({
         discussion =>
           discussion.crId &&
           !discussion.changeRequestEntityId &&
+          (!requiresEventConfirmation || discussion.confirmationStatus === 'confirmed') &&
           !processedEntities.current.has(discussion.id)
       );
 
@@ -120,7 +151,14 @@ export function useSuggestionIdAssignment({
     if (hasChanges) {
       onDiscussionsUpdate(updatedDiscussions);
     }
-  }, [documentId, discussions, onDiscussionsUpdate, onChangeRequestCreate]);
+  }, [
+    confirmationMode,
+    documentId,
+    discussions,
+    enabled,
+    onDiscussionsUpdate,
+    onChangeRequestCreate,
+  ]);
 
   // Run the assignment whenever discussions change
   React.useEffect(() => {

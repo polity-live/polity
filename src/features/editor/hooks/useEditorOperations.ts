@@ -15,6 +15,7 @@ import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import type { EditorEntityType, EditorMode, TDiscussion } from '../types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { createChangeRequestDiffSnapshot } from '@/features/change-requests/utils/suggestion-extraction';
 
 interface SuggestionRef {
   id?: string;
@@ -86,6 +87,11 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       crId: string;
       amendmentId: string;
       changedCharacterCount?: number;
+      change_type?: string | null;
+      original_text?: string | null;
+      new_text?: string | null;
+      original_properties?: Record<string, string | number | boolean | null> | null;
+      new_properties?: Record<string, string | number | boolean | null> | null;
     }) => {
       console.log('[useEditorOperations] handleSuggestionCreated called:', params);
       try {
@@ -98,6 +104,11 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
           source_type: null,
           source_id: null,
           source_title: null,
+          change_type: params.change_type ?? null,
+          original_text: params.original_text ?? null,
+          new_text: params.new_text ?? null,
+          original_properties: params.original_properties ?? null,
+          new_properties: params.new_properties ?? null,
           reason: null,
           changed_character_count: params.changedCharacterCount ?? 0,
           voting_status: 'open',
@@ -106,8 +117,10 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
           quorum_required: null,
         });
         console.log('[useEditorOperations] change_request created successfully:', params.id);
+        return true;
       } catch (error) {
         console.error('[useEditorOperations] Failed to create change request entity:', error);
+        return false;
       }
     },
     [createChangeRequest]
@@ -150,11 +163,18 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         });
 
         if (entityType === 'amendment' && discussion && amendmentId) {
+          const snapshot = createChangeRequestDiffSnapshot(discussion.id, content);
           if (discussion.changeRequestEntityId) {
             await updateChangeRequest({
               id: discussion.changeRequestEntityId,
               status: 'accepted',
               voting_status: 'completed',
+              change_type: snapshot.change_type,
+              original_text: snapshot.original_text,
+              new_text: snapshot.new_text,
+              original_properties: snapshot.original_properties,
+              new_properties: snapshot.new_properties,
+              changed_character_count: snapshot.changed_character_count,
             });
           } else {
             const changeRequestId = crypto.randomUUID();
@@ -167,8 +187,13 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
               source_type: null,
               source_id: null,
               source_title: null,
+              change_type: snapshot.change_type,
+              original_text: snapshot.original_text,
+              new_text: snapshot.new_text,
+              original_properties: snapshot.original_properties,
+              new_properties: snapshot.new_properties,
               reason: null,
-              changed_character_count: 0,
+              changed_character_count: snapshot.changed_character_count,
               voting_status: 'completed',
               voting_deadline: null,
               voting_majority_type: null,
@@ -225,11 +250,18 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
           );
 
           if (discussion) {
+            const snapshot = createChangeRequestDiffSnapshot(discussion.id, content);
             if (discussion.changeRequestEntityId) {
               await updateChangeRequest({
                 id: discussion.changeRequestEntityId,
                 status: 'rejected',
                 voting_status: 'completed',
+                change_type: snapshot.change_type,
+                original_text: snapshot.original_text,
+                new_text: snapshot.new_text,
+                original_properties: snapshot.original_properties,
+                new_properties: snapshot.new_properties,
+                changed_character_count: snapshot.changed_character_count,
               });
             } else {
               const changeRequestId = crypto.randomUUID();
@@ -242,8 +274,13 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
                 source_type: null,
                 source_id: null,
                 source_title: null,
+                change_type: snapshot.change_type,
+                original_text: snapshot.original_text,
+                new_text: snapshot.new_text,
+                original_properties: snapshot.original_properties,
+                new_properties: snapshot.new_properties,
                 reason: null,
-                changed_character_count: 0,
+                changed_character_count: snapshot.changed_character_count,
                 voting_status: 'completed',
                 voting_deadline: null,
                 voting_majority_type: null,

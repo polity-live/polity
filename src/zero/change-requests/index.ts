@@ -8,5 +8,6 @@ export {
   updateChangeRequestSchema,
   finalizeInternalChangeRequestVoteSchema,
   finalizeExpiredInternalChangeRequestVotesSchema,
+  repairInternalChangeRequestResolutionSchema,
   type ChangeRequest,
 } from './schema';

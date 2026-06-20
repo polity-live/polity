@@ -8,7 +8,7 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { useSuggestionIdAssignment } from '@/features/documents/hooks/use-suggestion-id-assignment.ts';
-import { countChangedCharactersForSuggestion } from '@/features/change-requests/utils/suggestion-extraction';
+import { createChangeRequestDiffSnapshot } from '@/features/change-requests/utils/suggestion-extraction';
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 
 import type { EditorUser, EditorViewProps } from '../types';
@@ -133,11 +133,17 @@ export function useEditorViewModel({
         entityType,
       });
       if (!amendmentId) return;
+      const snapshot = createChangeRequestDiffSnapshot(discussionId, content);
       editorOps.handleSuggestionCreated({
         id: changeRequestEntityId,
         crId,
         amendmentId,
-        changedCharacterCount: countChangedCharactersForSuggestion(discussionId, content),
+        changedCharacterCount: snapshot.changed_character_count,
+        change_type: snapshot.change_type,
+        original_text: snapshot.original_text,
+        new_text: snapshot.new_text,
+        original_properties: snapshot.original_properties,
+        new_properties: snapshot.new_properties,
       });
     },
     [amendmentId, content, editorOps]
@@ -145,6 +151,7 @@ export function useEditorViewModel({
 
   // Auto-assign suggestion IDs
   useSuggestionIdAssignment({
+    enabled: !(entityType === 'amendment' && (mode === 'suggest_event' || mode === 'vote_event')),
     documentId: contentEntityId,
     discussions,
     onDiscussionsUpdate: setDiscussions,

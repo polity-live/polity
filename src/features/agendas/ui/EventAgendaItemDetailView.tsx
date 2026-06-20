@@ -1,6 +1,12 @@
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/features/shared/ui/ui/accordion';
 import { cn } from '@/features/shared/utils/utils';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -33,6 +39,7 @@ export interface EventAgendaItemDetailViewProps {
   agendaItem: any;
   event: any;
   user: any;
+  userRecord?: any;
   isLoading: any;
   votingLoading: any;
   addingSpeaker: any;
@@ -184,6 +191,7 @@ export function EventAgendaItemDetailView({
   agendaItem,
   event,
   user,
+  userRecord,
   isLoading,
   votingLoading,
   addingSpeaker,
@@ -344,41 +352,56 @@ export function EventAgendaItemDetailView({
   const hasResultsPanel = Boolean(election || hasStandaloneVoteResults || hasChangeRequestResults);
 
   const agendaDetailsPanel = (
-    <AgendaItemContextCard
-      className="h-full"
-      agendaItem={{
-        id: agendaItem.id,
-        title: agendaItem.title || '',
-        description: agendaItem.description ?? undefined,
-        type: agendaItem.type === 'amendment' ? 'vote' : agendaItem.type || '',
-        status: detailRuntimeStatus,
-        duration: agendaItem.duration ?? undefined,
-        scheduledTime: estimatedStartTime?.toISOString() ?? agendaItem.scheduled_time ?? undefined,
-        startTime: agendaItem.start_time ? new Date(agendaItem.start_time) : undefined,
-        endTime: agendaItem.end_time ? new Date(agendaItem.end_time) : undefined,
-        activatedAt: agendaItem.activated_at ? new Date(agendaItem.activated_at) : undefined,
-        completedAt: agendaItem.completed_at ? new Date(agendaItem.completed_at) : undefined,
-      }}
-      amendment={agendaItem.amendment ?? undefined}
-      amendmentForwardingPreview={agendaForwardingPreview}
-      amendmentPathVisualizationData={detailPathVisualizationData}
-      amendmentGroupTypeById={detailGroupTypeById}
-      onAmendmentGroupClick={groupId => navigate({ to: '/group/$id', params: { id: groupId } })}
-      onAmendmentEventClick={targetEventId =>
-        navigate({ to: '/event/$id/agenda', params: { id: targetEventId } })
-      }
-      election={election ?? undefined}
-      votingStartTime={
-        (agendaItem.activated_at ?? agendaItem.start_time)
-          ? new Date(agendaItem.activated_at ?? agendaItem.start_time)
-          : undefined
-      }
-      votingEndTime={
-        (election?.closing_end_time ?? vote?.closing_end_time)
-          ? new Date(election?.closing_end_time ?? vote?.closing_end_time ?? 0)
-          : undefined
-      }
-    />
+    <Accordion type="single" collapsible defaultValue="agenda-details">
+      <AccordionItem value="agenda-details" className="border-b-0">
+        <AccordionTrigger
+          className="bg-card hover:bg-muted/50 rounded-lg border px-4 py-3 text-sm font-semibold hover:no-underline"
+          data-testid="agenda-detail-details-accordion-trigger"
+        >
+          {t('features.events.agenda.details', 'Details')}
+        </AccordionTrigger>
+        <AccordionContent className="pt-3 pb-0">
+          <AgendaItemContextCard
+            className="h-full"
+            agendaItem={{
+              id: agendaItem.id,
+              title: agendaItem.title || '',
+              description: agendaItem.description ?? undefined,
+              type: agendaItem.type === 'amendment' ? 'vote' : agendaItem.type || '',
+              status: detailRuntimeStatus,
+              duration: agendaItem.duration ?? undefined,
+              scheduledTime:
+                estimatedStartTime?.toISOString() ?? agendaItem.scheduled_time ?? undefined,
+              startTime: agendaItem.start_time ? new Date(agendaItem.start_time) : undefined,
+              endTime: agendaItem.end_time ? new Date(agendaItem.end_time) : undefined,
+              activatedAt: agendaItem.activated_at ? new Date(agendaItem.activated_at) : undefined,
+              completedAt: agendaItem.completed_at ? new Date(agendaItem.completed_at) : undefined,
+            }}
+            amendment={agendaItem.amendment ?? undefined}
+            amendmentForwardingPreview={agendaForwardingPreview}
+            amendmentPathVisualizationData={detailPathVisualizationData}
+            amendmentGroupTypeById={detailGroupTypeById}
+            onAmendmentGroupClick={groupId =>
+              navigate({ to: '/group/$id', params: { id: groupId } })
+            }
+            onAmendmentEventClick={targetEventId =>
+              navigate({ to: '/event/$id/agenda', params: { id: targetEventId } })
+            }
+            election={election ?? undefined}
+            votingStartTime={
+              (agendaItem.activated_at ?? agendaItem.start_time)
+                ? new Date(agendaItem.activated_at ?? agendaItem.start_time)
+                : undefined
+            }
+            votingEndTime={
+              (election?.closing_end_time ?? vote?.closing_end_time)
+                ? new Date(election?.closing_end_time ?? vote?.closing_end_time ?? 0)
+                : undefined
+            }
+          />
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 
   const speakerListPanel = (
@@ -415,6 +438,7 @@ export function EventAgendaItemDetailView({
       discussions={amendmentDiscussions}
       amendmentId={agendaItem.amendment_id ?? undefined}
       agendaItemId={agendaItemId}
+      userRecord={userRecord}
       hasUserVoted={isCRVotingActive ? hasUserVotedOnCR : undefined}
       getUserSelectedChoiceIds={isCRVotingActive ? getUserSelectedChoiceIds : undefined}
       onCastVote={isCRVotingActive ? castCRVote : undefined}

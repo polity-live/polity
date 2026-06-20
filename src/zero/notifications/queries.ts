@@ -2,6 +2,13 @@ import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
 
+const ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES = [
+  'active',
+  'collaborator',
+  'member',
+  'admin',
+];
+
 function applyNotificationAccess<T>(q: T, userID: string | undefined): T {
   const query = q as any;
 
@@ -24,7 +31,11 @@ function applyNotificationAccess<T>(q: T, userID: string | undefined): T {
         amendment.where(({ or, cmp, exists }: any) =>
           or(
             cmp('created_by_id', userID),
-            exists('collaborators', (collaborator: any) => collaborator.where('user_id', userID))
+            exists('collaborators', (collaborator: any) =>
+              collaborator
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES)
+            )
           )
         )
       ),
@@ -98,7 +109,10 @@ export const notificationQueries = {
         )
         .related('recipient_amendment', q =>
           q.related('collaborators', q =>
-            q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
+            q
+              .where('user_id', userID)
+              .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES)
+              .related('role', rq => rq.related('action_rights'))
           )
         )
         .related('recipient_blog', q =>
@@ -146,7 +160,10 @@ export const notificationQueries = {
       )
       .related('recipient_amendment', q =>
         q.related('collaborators', q =>
-          q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
+          q
+            .where('user_id', userID)
+            .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES)
+            .related('role', rq => rq.related('action_rights'))
         )
       )
       .related('recipient_blog', q =>
@@ -194,7 +211,10 @@ export const notificationQueries = {
         )
         .related('recipient_amendment', q =>
           q.related('collaborators', q =>
-            q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
+            q
+              .where('user_id', userID)
+              .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES)
+              .related('role', rq => rq.related('action_rights'))
           )
         )
         .related('recipient_blog', q =>
@@ -243,7 +263,10 @@ export const notificationQueries = {
         )
         .related('recipient_amendment', q =>
           q.related('collaborators', q =>
-            q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
+            q
+              .where('user_id', userID)
+              .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES)
+              .related('role', rq => rq.related('action_rights'))
           )
         )
         .related('recipient_blog', q =>
@@ -295,7 +318,10 @@ export const notificationQueries = {
         )
         .related('recipient_amendment', q =>
           q.related('collaborators', q =>
-            q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
+            q
+              .where('user_id', userID)
+              .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES)
+              .related('role', rq => rq.related('action_rights'))
           )
         )
         .related('recipient_blog', q =>
@@ -344,7 +370,10 @@ export const notificationQueries = {
         )
         .related('recipient_amendment', q =>
           q.related('collaborators', q =>
-            q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
+            q
+              .where('user_id', userID)
+              .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES)
+              .related('role', rq => rq.related('action_rights'))
           )
         )
         .related('recipient_blog', q =>
@@ -377,6 +406,7 @@ export const notificationQueries = {
   userAmendmentCollaborations: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     zql.amendment_collaborator
       .where('user_id', userID)
+      .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES)
       .related('amendment')
       .related('role', q => q.related('action_rights'))
   ),

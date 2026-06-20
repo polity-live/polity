@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const { applySuggestionToContentMock } = vi.hoisted(() => ({
   applySuggestionToContentMock: vi.fn(() => [{ type: 'p', children: [{ text: 'updated' }] }]),
@@ -42,6 +42,10 @@ function createTx(rows: unknown[]) {
 }
 
 describe('resolveChangeRequestByVoteResult', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('accepts a passed change request vote and applies the linked suggestion', async () => {
     const originalContent = [{ type: 'p', children: [{ text: 'original' }] }];
     const tx = createTx([
@@ -106,5 +110,60 @@ describe('resolveChangeRequestByVoteResult', () => {
       visibility_scope: 'public',
       updated_at: 1_000,
     });
+  });
+
+  it('matches a discussion by title and backfills the persisted change request link', async () => {
+    const originalContent = [{ type: 'p', children: [{ text: 'original' }] }];
+    const tx = createTx([
+      {
+        id: 'cr-1',
+        amendment_id: 'amendment-1',
+        title: 'Replace dieser',
+      },
+      {
+        id: 'amendment-1',
+        document_id: 'doc-1',
+        discussions: [
+          {
+            id: 'suggestion-1',
+            crId: 'CR-1',
+            title: 'Replace dieser',
+          },
+        ],
+      },
+      {
+        id: 'doc-1',
+        content: originalContent,
+      },
+      {
+        version_number: 4,
+      },
+    ]);
+
+    await resolveChangeRequestByVoteResult({
+      tx: tx as never,
+      ctx: { userID: 'user-1' },
+      changeRequestId: 'cr-1',
+      voteResult: 'rejected',
+      now: 1_000,
+    });
+
+    expect(applySuggestionToContentMock).toHaveBeenCalledWith(
+      originalContent,
+      'suggestion-1',
+      'reject'
+    );
+    expect(tx.mutate.amendment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'amendment-1',
+        discussions: [
+          expect.objectContaining({
+            id: 'suggestion-1',
+            changeRequestEntityId: 'cr-1',
+            status: 'rejected',
+          }),
+        ],
+      })
+    );
   });
 });

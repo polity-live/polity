@@ -18,6 +18,7 @@ const translations: Record<string, string> = {
   'features.agendas.crTimeline.activeEventVoting': 'Event voting mode active',
   'features.agendas.crTimeline.activeInternalVoting': 'Internal voting mode active',
   'features.agendas.crTimeline.allCompleted': 'All Completed',
+  'features.agendas.crTimeline.submittedVotePending': 'Submitted - vote pending',
   'features.agendas.crTimeline.tabAccepted': 'Accepted',
   'features.agendas.crTimeline.tabAll': 'All',
   'features.agendas.crTimeline.tabOpen': 'Open',
@@ -31,7 +32,8 @@ const translations: Record<string, string> = {
   'features.amendments.workflowDescriptions.eventVoting': 'The event votes sequentially on changes',
   'features.amendments.workflowDescriptions.internalVoting':
     'Collaborators vote on change requests',
-  'features.amendments.voteControls.collaboratorsVoted': '{{voted}}/{{total}} collaborators voted',
+  'features.amendments.voteControls.collaboratorsVoted':
+    '{{voted}}/{{total}} collaborators with vote right voted',
   'features.events.agenda.noChoices': 'No choices',
 };
 
@@ -188,8 +190,8 @@ describe('ChangeRequestCardsListView mode labels', () => {
       />
     );
 
-    expect(screen.getByText('3/5 collaborators voted')).toBeTruthy();
-    expect(screen.queryByText('3/5 Collaborators voted')).toBeNull();
+    expect(screen.getByText('3/5 collaborators with vote right voted')).toBeTruthy();
+    expect(screen.queryByText('3/5 Collaborators with vote right voted')).toBeNull();
   });
 
   it('uses the preview id resolver supplied by the list controller', () => {
@@ -324,7 +326,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
     );
 
     expect(screen.getByText('Vote recorded')).toBeTruthy();
-    expect(screen.getByText('1/2 collaborators voted')).toBeTruthy();
+    expect(screen.getByText('1/2 collaborators with vote right voted')).toBeTruthy();
     expect(screen.queryByText('Indication')).toBeNull();
     expect(screen.queryByText('Ja')).toBeNull();
     expect(screen.queryByText('Nein')).toBeNull();
@@ -332,5 +334,151 @@ describe('ChangeRequestCardsListView mode labels', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reject' }));
 
     expect(handleCastVote).toHaveBeenCalledWith('mock-choice-no-cr-row-1');
+  });
+
+  it('labels submitted event suggestions as pending a vote instead of indication', () => {
+    render(
+      <ChangeRequestTimelineCardView
+        item={{
+          id: 'mock-cr-cr-row-1',
+          change_request_id: 'cr-row-1',
+          status: 'pending',
+        }}
+        index={0}
+        isCurrent={false}
+        hasUserVoted={false}
+        userSelectedChoiceIds={[]}
+        canManage={false}
+        canVote={false}
+        isFinalVoteLocked={false}
+        diff={{
+          changeType: 'insert',
+          newText: 'jfknjdfnjnfjkndfjknjkfdnk',
+        }}
+        documentContent={[]}
+        suggestionId="suggestion-1"
+        crId="CR-1"
+        discussions={[]}
+        editingMode="suggest_event"
+        amendmentId="amendment-1"
+        userId="user-1"
+        agendaItemId="agenda-1"
+        showEditorPreview={false}
+        onCastVote={undefined}
+        onStartIndicative={undefined}
+        onStartFinal={undefined}
+        onCloseVoting={undefined}
+        t={t}
+        votingLoading={false}
+        setVotingLoading={() => undefined}
+        selectedCrIds={new Set()}
+        setSelectedCrIds={() => undefined}
+        crIdToDiscussionId={new Map()}
+        selectedSuggestionIds={[]}
+        cr={{ id: 'cr-row-1', title: 'CR-1' }}
+        vote={{ id: 'mock-vote-cr-row-1' }}
+        title="CR-1"
+        phase="indicative"
+        isClosed={false}
+        isIndicative
+        isFinal={false}
+        voteResult={null}
+        choices={[]}
+        indicativeDecisions={[]}
+        finalDecisions={[]}
+        offlineTallies={[]}
+        choiceStats={[]}
+        totalIndicative={0}
+        totalFinal={0}
+        totalVoters={0}
+        computedVoteSummary={null}
+        resolvedVoteResult={null}
+        leadingChoiceId={null}
+        winningChoiceId={null}
+        winningLabel={null}
+        resolvedVoteSharePercent={0}
+        currentPhaseVoteCount={0}
+        handleCastVote={() => undefined}
+        isLocked={false}
+      />
+    );
+
+    expect(screen.getByText('Submitted - vote pending')).toBeTruthy();
+    expect(screen.queryByText('Indication')).toBeNull();
+  });
+
+  it('keeps pending unconfirmed event suggestions labelled as indication', () => {
+    render(
+      <ChangeRequestTimelineCardView
+        item={{
+          id: 'mock-cr-suggestion-1',
+          change_request_id: 'suggestion-1',
+          status: 'pending',
+        }}
+        index={0}
+        isCurrent={false}
+        hasUserVoted={false}
+        userSelectedChoiceIds={[]}
+        canManage={false}
+        canVote={false}
+        isFinalVoteLocked={false}
+        diff={{
+          changeType: 'insert',
+          newText: 'Noch nicht eingereicht',
+        }}
+        documentContent={[]}
+        suggestionId="suggestion-1"
+        crId="CR-1"
+        discussions={[]}
+        editingMode="suggest_event"
+        amendmentId="amendment-1"
+        userId="user-1"
+        agendaItemId="agenda-1"
+        showEditorPreview={false}
+        onCastVote={undefined}
+        onStartIndicative={undefined}
+        onStartFinal={undefined}
+        onCloseVoting={undefined}
+        t={t}
+        votingLoading={false}
+        setVotingLoading={() => undefined}
+        selectedCrIds={new Set()}
+        setSelectedCrIds={() => undefined}
+        crIdToDiscussionId={new Map()}
+        selectedSuggestionIds={[]}
+        cr={{
+          id: 'suggestion-1',
+          title: 'CR-1',
+          confirmation_status: 'pending',
+        }}
+        vote={{ id: 'mock-vote-suggestion-1' }}
+        title="CR-1"
+        phase="indicative"
+        isClosed={false}
+        isIndicative
+        isFinal={false}
+        voteResult={null}
+        choices={[]}
+        indicativeDecisions={[]}
+        finalDecisions={[]}
+        offlineTallies={[]}
+        choiceStats={[]}
+        totalIndicative={0}
+        totalFinal={0}
+        totalVoters={0}
+        computedVoteSummary={null}
+        resolvedVoteResult={null}
+        leadingChoiceId={null}
+        winningChoiceId={null}
+        winningLabel={null}
+        resolvedVoteSharePercent={0}
+        currentPhaseVoteCount={0}
+        handleCastVote={() => undefined}
+        isLocked={false}
+      />
+    );
+
+    expect(screen.getByText('Indication')).toBeTruthy();
+    expect(screen.queryByText('Submitted - vote pending')).toBeNull();
   });
 });

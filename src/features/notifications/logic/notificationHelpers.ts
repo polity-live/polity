@@ -14,6 +14,19 @@ export type NotificationNavigationTarget =
   | { kind: 'messages'; search: MessageNavigationSearch }
   | { kind: 'route'; to: string };
 
+const ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES = new Set([
+  'active',
+  'collaborator',
+  'member',
+  'admin',
+]);
+
+interface AmendmentNotificationCollaborator {
+  user_id?: string | null;
+  user?: { id?: string | null } | null;
+  status?: string | null;
+}
+
 function buildMessagesHref(search: MessageNavigationSearch): string {
   const params = new URLSearchParams();
 
@@ -45,6 +58,17 @@ export function getDisplayName(
 function getSearchParamValue(searchParams: URLSearchParams, key: keyof MessageNavigationSearch) {
   const value = searchParams.get(key);
   return value && value.length > 0 ? value : undefined;
+}
+
+function isActiveAmendmentCollaboratorForUser(
+  collaborator: AmendmentNotificationCollaborator,
+  userId: string
+) {
+  const collaboratorUserId = collaborator.user_id ?? collaborator.user?.id ?? null;
+  return (
+    (!collaboratorUserId || collaboratorUserId === userId) &&
+    ACTIVE_AMENDMENT_COLLABORATOR_NOTIFICATION_STATUSES.has(collaborator.status ?? '')
+  );
 }
 
 function getMessagesNavigationSearchFromActionUrl(
@@ -305,7 +329,7 @@ export function filterAccessibleNotifications(
     // Personal notifications
     if (n.recipient?.id === userId) return true;
 
-    // Entity notifications where the user currently has notification access rights
+    // Entity notifications where the user currently has entity-level notification access.
     if (n.recipient_group?.memberships && n.recipient_group.memberships.length > 0) {
       return hasNotificationRight(n.recipient_group.memberships[0], 'groupNotifications');
     }
@@ -314,8 +338,18 @@ export function filterAccessibleNotifications(
       return hasNotificationRight(n.recipient_event.participants[0], 'notifications');
     }
 
-    if (n.recipient_amendment?.collaborators && n.recipient_amendment.collaborators.length > 0) {
-      return hasNotificationRight(n.recipient_amendment.collaborators[0], 'notifications');
+    if (n.recipient_amendment) {
+      const recipientAmendment = n.recipient_amendment as {
+        created_by_id?: string | null;
+        collaborators?: readonly AmendmentNotificationCollaborator[] | null;
+      };
+
+      return (
+        recipientAmendment.created_by_id === userId ||
+        (recipientAmendment.collaborators ?? []).some(collaborator =>
+          isActiveAmendmentCollaboratorForUser(collaborator, userId)
+        )
+      );
     }
 
     if (n.recipient_blog?.bloggers && n.recipient_blog.bloggers.length > 0) {

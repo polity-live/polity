@@ -20,6 +20,7 @@ import { fireNotification } from '../server-notify';
 import { resolveAmendmentProcessVote } from '../amendments/process-engine';
 import { notifyProcessVoteResolution } from '../amendments/process-notifications';
 import { finalizeInternalChangeRequestsForEventPhaseTransition } from '../change-requests/internal-voting';
+import { discardPendingEventSuggestions } from '../change-requests/event-suggestions';
 import {
   createVoteSchema,
   updateVoteSchema,
@@ -225,12 +226,18 @@ async function syncVoteEventEditingMode(
   }
 
   const amendment = await tx.run(zql.amendment.where('id', amendmentId).one());
-  if (
-    !amendment ||
-    amendment.editing_mode === 'vote_event' ||
-    amendment.editing_mode === 'passed' ||
-    amendment.editing_mode === 'rejected'
-  ) {
+  if (!amendment || amendment.editing_mode === 'passed' || amendment.editing_mode === 'rejected') {
+    return;
+  }
+
+  await discardPendingEventSuggestions({
+    tx,
+    ctx,
+    amendmentId: amendment.id,
+    now: Date.now(),
+  });
+
+  if (amendment.editing_mode === 'vote_event') {
     return;
   }
 
@@ -315,6 +322,21 @@ export const voteServerMutators = {
       oldVote && !isFinalVoteOpenStatus(oldVote.status) && isFinalVoteOpenStatus(args.status);
     const isClosingFinalVote =
       oldVote && isFinalVoteOpenStatus(oldVote.status) && args.status === 'closed';
+
+    if (isStartingFinalVote && oldVote?.amendment_id && oldVote.agenda_item_id) {
+      const timelineLink = await tx.run(
+        zql.agenda_item_change_request.where('vote_id', oldVote.id).one()
+      );
+      if (!timelineLink) {
+        await discardPendingEventSuggestions({
+          tx,
+          ctx,
+          amendmentId: oldVote.amendment_id,
+          now: Date.now(),
+        });
+      }
+    }
+
     const voteContext =
       oldVote && !isFinalizingVoteStatus(oldVote.status) && isFinalizingVoteStatus(args.status)
         ? await assertNoOpenChangeRequestsBeforeFinalVote(tx, oldVote)

@@ -2,6 +2,7 @@ import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { applySuggestionToContent } from '@/features/change-requests/logic/applySuggestionToContent';
+import { createChangeRequestDiffSnapshot } from '@/features/change-requests/utils/suggestion-extraction';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { ChangeRequestVisibilityScope } from './visibility';
 
@@ -19,6 +20,7 @@ export interface DiscussionEntry {
   id: string;
   changeRequestEntityId?: string;
   crId?: string;
+  title?: string;
   status?: string;
   [key: string]: unknown;
 }
@@ -34,8 +36,21 @@ export function findChangeRequestDiscussion(
   return discussions.find(
     discussion =>
       discussion.changeRequestEntityId === changeRequest.id ||
-      (changeRequest.title && discussion.crId === changeRequest.title)
+      (changeRequest.title &&
+        (discussion.crId === changeRequest.title || discussion.title === changeRequest.title))
   );
+}
+
+function linkResolvedDiscussion(
+  discussion: DiscussionEntry,
+  changeRequestId: string,
+  status: string
+): DiscussionEntry {
+  return {
+    ...discussion,
+    changeRequestEntityId: discussion.changeRequestEntityId ?? changeRequestId,
+    status,
+  };
 }
 
 export function applyChangeRequestVoteResultToContent(
@@ -81,11 +96,20 @@ export async function resolveChangeRequestByVoteResult({
     : [];
   const matchingDiscussion = findChangeRequestDiscussion(discussions, cr);
   const suggestionId = matchingDiscussion?.id;
+  let resolutionSnapshot = {};
 
   if (amendmentRow?.document_id && suggestionId) {
     const doc = await tx.run(zql.document.where('id', amendmentRow.document_id).one());
 
     if (doc?.content) {
+      const snapshot = createChangeRequestDiffSnapshot(
+        suggestionId,
+        doc.content as Parameters<typeof applySuggestionToContent>[0]
+      );
+      if (snapshot.change_type) {
+        resolutionSnapshot = snapshot;
+      }
+
       const crLabel =
         matchingDiscussion?.crId ??
         cr.title ??
@@ -130,7 +154,9 @@ export async function resolveChangeRequestByVoteResult({
 
   if (matchingDiscussion && discussions.length > 0) {
     const updatedDiscussions = discussions.map(discussion =>
-      discussion.id === matchingDiscussion.id ? { ...discussion, status: crStatus } : discussion
+      discussion.id === matchingDiscussion.id
+        ? linkResolvedDiscussion(discussion, cr.id, crStatus)
+        : discussion
     );
     await tx.mutate.amendment.update({
       id: cr.amendment_id,
@@ -146,6 +172,7 @@ export async function resolveChangeRequestByVoteResult({
     resolved_in_mode: resolvedInMode,
     resolution_method: resolutionMethod,
     visibility_scope: visibilityScope,
+    ...resolutionSnapshot,
     updated_at: now,
   });
 
