@@ -21,7 +21,6 @@ import {
 import { ChangeRequestSummaryItem } from '@/features/change-requests/ui/ChangeRequestSummaryItem';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
 import { SuggestionViewToggle } from '@/features/editor/ui/SuggestionViewToggle';
-import { EditingModeSelector } from '@/features/editor/ui/EditingModeSelector';
 const CR_CHOICE_COLORS = [
   {
     color: featureThemeClassName('agendaAgendaVoteSectionSuccessBackground'),
@@ -208,6 +207,7 @@ export function ChangeRequestTimelineCardView({
   totalIndicative,
   totalFinal,
   totalVoters,
+  resolvedVoteResult,
   winningChoiceId,
   currentPhaseVoteCount,
   handleCastVote,
@@ -216,6 +216,18 @@ export function ChangeRequestTimelineCardView({
   const summaryIdentifier = item.is_final_vote
     ? t('features.agendas.crTimeline.finalVoteShort', 'Final')
     : (crId ?? cr?.crId ?? `CR-${Number(index) + 1 || 1}`);
+  const isInternalVotingMode = editingMode === 'vote_internal';
+  const isDirectInternalResolution = cr?.resolution_method === 'direct_internal';
+  const internalVotingDeadline = cr?.voting_deadline;
+  const internalCloseTrigger = cr?.close_trigger;
+  const internalVotedCount = cr?.voted_collaborator_count ?? currentPhaseVoteCount;
+  const internalEligibleCount = cr?.eligible_voter_count ?? totalVoters;
+  const internalAcceptVotes = cr?.votes_for ?? 0;
+  const internalRejectVotes = cr?.votes_against ?? 0;
+  const internalAbstainVotes = cr?.votes_abstain ?? 0;
+  const internalTotalVotes = internalAcceptVotes + internalRejectVotes + internalAbstainVotes;
+  const internalUserVote = cr?.user_vote ?? null;
+  const internalChoiceIdSuffix = item.change_request_id ?? cr?.id ?? item.id;
   const voteOptions: VoteBarOption[] = choiceStats.map((cs: any, idx: number) => {
     const colors = CR_CHOICE_COLORS[idx % CR_CHOICE_COLORS.length];
 
@@ -267,7 +279,7 @@ export function ChangeRequestTimelineCardView({
                   {t('features.agendas.crTimeline.locked', 'Locked')}
                 </BadgeControl>
               ) : null}
-              {!isLocked && vote && (
+              {!isLocked && !isInternalVotingMode && vote && (
                 <VotePhaseBadge
                   phase={isIndicative ? 'indication' : isClosed ? 'closed' : 'final_vote'}
                 />
@@ -436,14 +448,7 @@ export function ChangeRequestTimelineCardView({
                     agendaItemId={agendaItemId}
                     toolbarEnd={
                       <>
-                        {/* Mode selector — always shown when amendmentId is available */}
-                        {amendmentId && (
-                          <EditingModeSelector
-                            amendmentId={amendmentId}
-                            currentMode={editingMode}
-                          />
-                        )}
-                        {/* Suggestion filter — only for read-only preview (interactive editor has its own) */}
+                        {/* Suggestion filter for the read-only card preview. */}
                         {editingMode !== 'suggest_event' &&
                           editingMode !== 'vote_event' &&
                           discussions &&
@@ -462,6 +467,8 @@ export function ChangeRequestTimelineCardView({
 
             {/* Vote results */}
             {!isLocked &&
+              !isInternalVotingMode &&
+              !isDirectInternalResolution &&
               (choices.length === 0 ? (
                 <div className="rounded-lg border border-dashed p-6 text-center">
                   <p className="text-muted-foreground">{t('features.events.agenda.noChoices')}</p>
@@ -480,7 +487,7 @@ export function ChangeRequestTimelineCardView({
               ))}
 
             {/* Participation count */}
-            {vote && !isLocked && (
+            {vote && !isLocked && !isInternalVotingMode && !isDirectInternalResolution && (
               <div className="text-muted-foreground flex items-center gap-2 text-xs">
                 <span>
                   {currentPhaseVoteCount}/{totalVoters}{' '}
@@ -495,18 +502,113 @@ export function ChangeRequestTimelineCardView({
                   className={featureThemeClassName('agendaAgendaElectionSectionSuccessIcon')}
                 />
                 <span className="text-muted-foreground">
-                  {isIndicative
-                    ? t('features.events.agenda.yourIndication')
-                    : t('features.events.agenda.yourVote')}
+                  {isInternalVotingMode
+                    ? t('features.agendas.crTimeline.voteRecorded', 'Vote recorded')
+                    : isIndicative
+                      ? t('features.events.agenda.yourIndication')
+                      : t('features.events.agenda.yourVote')}
                 </span>
               </div>
             )}
 
+            {isInternalVotingMode && !isLocked && internalTotalVotes > 0 && (
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="rounded-md border p-2">
+                  <div className="text-muted-foreground">
+                    {translateText('generated.inline.0121_accept_bb54db51')}
+                  </div>
+                  <div className="font-semibold">{internalAcceptVotes}</div>
+                </div>
+                <div className="rounded-md border p-2">
+                  <div className="text-muted-foreground">
+                    {translateText('generated.inline.1142_reject_2b03b592')}
+                  </div>
+                  <div className="font-semibold">{internalRejectVotes}</div>
+                </div>
+                <div className="rounded-md border p-2">
+                  <div className="text-muted-foreground">
+                    {translateText('generated.inline.1144_abstain_bc39d849')}
+                  </div>
+                  <div className="font-semibold">{internalAbstainVotes}</div>
+                </div>
+              </div>
+            )}
+
+            {isInternalVotingMode && !isClosed && !isLocked && (
+              <div className="bg-background/70 rounded-md border p-3 text-xs">
+                {internalCloseTrigger === 'after_minutes' && internalVotingDeadline ? (
+                  <span>
+                    {t('features.agendas.crTimeline.deadline', 'Deadline')}:{' '}
+                    {new Date(internalVotingDeadline).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                ) : (
+                  <span>
+                    {t(
+                      'features.amendments.voteControls.collaboratorsVoted',
+                      {
+                        voted: internalVotedCount,
+                        total: internalEligibleCount,
+                      },
+                      `${internalVotedCount}/${internalEligibleCount} collaborators voted`
+                    )}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {isInternalVotingMode && !isLocked && !isClosed && canVote && cr && (
+              <div className="flex gap-2 pt-2">
+                <Button
+                  size="sm"
+                  variant="default"
+                  className={cn(
+                    featureThemeClassName('agendaChangeRequestTimelineCardSuccessBackground'),
+                    internalUserVote === 'accept' && 'ring-ring ring-2 ring-offset-1'
+                  )}
+                  disabled={votingLoading}
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleCastVote(`mock-choice-yes-${internalChoiceIdSuffix}`);
+                  }}
+                >
+                  {translateText('generated.inline.0121_accept_bb54db51')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className={cn(internalUserVote === 'reject' && 'ring-ring ring-2 ring-offset-1')}
+                  disabled={votingLoading}
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleCastVote(`mock-choice-no-${internalChoiceIdSuffix}`);
+                  }}
+                >
+                  {translateText('generated.inline.1142_reject_2b03b592')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className={cn(internalUserVote === 'abstain' && 'ring-ring ring-2 ring-offset-1')}
+                  disabled={votingLoading}
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleCastVote(`mock-choice-abstain-${internalChoiceIdSuffix}`);
+                  }}
+                >
+                  {translateText('generated.inline.1144_abstain_bc39d849')}
+                </Button>
+              </div>
+            )}
+
             {/* Voting buttons for active items */}
-            {isCurrent && !isLocked && !isClosed && !hasUserVoted && canVote && vote && (
+            {isCurrent && !isInternalVotingMode && !isLocked && !isClosed && canVote && vote && (
               <div className="flex gap-2 pt-2">
                 {choices.map((choice: any, choiceIndex: number) => {
                   const choiceKind = getCanonicalVoteChoice(choice.label);
+                  const isSelectedChoice = userSelectedChoiceIds.includes(choice.id);
 
                   return (
                     <Button
@@ -521,7 +623,8 @@ export function ChangeRequestTimelineCardView({
                       }
                       className={cn(
                         choiceKind === 'yes' &&
-                          featureThemeClassName('agendaChangeRequestTimelineCardSuccessBackground')
+                          featureThemeClassName('agendaChangeRequestTimelineCardSuccessBackground'),
+                        isSelectedChoice && 'ring-ring ring-2 ring-offset-1'
                       )}
                       disabled={votingLoading}
                       onClick={e => {
@@ -541,6 +644,12 @@ export function ChangeRequestTimelineCardView({
                     </Button>
                   );
                 })}
+              </div>
+            )}
+
+            {isDirectInternalResolution && (
+              <div className="text-muted-foreground rounded-md border p-3 text-sm">
+                Ohne Abstimmung im internen Modus zugestimmt oder abgelehnt.
               </div>
             )}
 

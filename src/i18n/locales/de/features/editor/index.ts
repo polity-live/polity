@@ -33,7 +33,6 @@ export const editor = {
   // Metadata
   metadata: {
     date: 'Datum',
-    supporters: 'Unterstützer',
     upvotes: 'Upvotes',
     collaborators: 'Mitarbeiter',
     bloggers: 'Blogger',
@@ -43,6 +42,13 @@ export const editor = {
     private: 'Privat',
     lastUpdated: 'Zuletzt aktualisiert',
     canEdit: 'Kann bearbeiten',
+  },
+
+  // Collaborators
+  collaborators: {
+    firstName: 'Vorname',
+    lastName: 'Nachname',
+    openProfile: 'Profil öffnen',
   },
 
   // Version Control

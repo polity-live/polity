@@ -79,11 +79,6 @@ export function VoteControls({
   const notVotedYet = collaborators.filter(c => !votedUserIds.has(c.user?.id));
 
   const handleVote = async (voteType: 'accept' | 'reject' | 'abstain') => {
-    if (hasVoted) {
-      toast.error(t('features.amendments.voteControls.alreadyVoted'));
-      return;
-    }
-
     setIsVoting(true);
 
     try {

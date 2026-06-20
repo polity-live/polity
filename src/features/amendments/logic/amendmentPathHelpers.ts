@@ -5,6 +5,7 @@ import type {
   NetworkEventRow,
 } from '@/zero/amendments/queries';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
+import { isAmendmentTargetEventOpen } from './amendmentTargetEventEligibility';
 
 export type AmendmentNetworkGroup = NetworkGroupRow;
 export type AmendmentNetworkRelationship = NetworkGroupRelationshipRow;
@@ -101,7 +102,7 @@ function buildUpcomingEventsByGroupId(events: NetworkEventRow[]) {
 
   for (const event of events) {
     const groupId = event.group?.id ?? event.group_id ?? null;
-    if (!groupId || (event.start_date ?? 0) <= now) {
+    if (!groupId || (event.start_date ?? 0) <= now || !isAmendmentTargetEventOpen(event, now)) {
       continue;
     }
 
@@ -423,6 +424,9 @@ function findClosestEligibleEvent(args: {
     groupEvents.find(event => {
       const startDate = event.start_date ?? null;
       const endDate = event.end_date ?? event.start_date ?? null;
+      if (!isAmendmentTargetEventOpen(event)) {
+        return false;
+      }
       if (startDate == null) {
         return false;
       }
@@ -485,13 +489,15 @@ export function getEligibleEventsForPathSegment(args: {
   segment: Pick<PathWithEventSegment, 'groupId' | 'requiredAfter' | 'requiredBefore'>;
   events: readonly AmendmentNetworkEvent[];
 }) {
+  const now = Date.now();
+
   return [...args.events]
     .filter(event => (event.group?.id ?? event.group_id) === args.segment.groupId)
     .filter(event => {
       const startDate = event.start_date ?? null;
       const endDate = event.end_date ?? event.start_date ?? null;
 
-      if (startDate == null || startDate <= Date.now()) {
+      if (startDate == null || startDate <= now || !isAmendmentTargetEventOpen(event, now)) {
         return false;
       }
       if (args.segment.requiredAfter != null && startDate < args.segment.requiredAfter) {

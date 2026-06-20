@@ -1,16 +1,17 @@
 import type { TElement } from 'platejs';
 
-import { faker } from '@faker-js/faker';
 import { CopilotPlugin } from '@platejs/ai/react';
 import { serializeMd, stripMarkdown } from '@platejs/markdown';
+import * as React from 'react';
 
 import { GhostText } from '@/features/shared/ui/ui-platejs/ghost-text.tsx';
+import { useAuth } from '@/providers/auth-provider';
 
 import { MarkdownKit } from './markdown-kit.tsx';
 
 export const CopilotKit = [
   ...MarkdownKit,
-  CopilotPlugin.configure(({ api }) => ({
+  CopilotPlugin.configure(({ api, getOption, setOption }) => ({
     options: {
       completeOptions: {
         api: '/api/ai/copilot',
@@ -27,17 +28,13 @@ export const CopilotKit = [
   - CRITICAL: Avoid starting a new block. Do not use block formatting like >, #, 1., 2., -, etc. The suggestion should continue in the same block as the context.
   - If no context is provided or you can't generate a continuation, return "0" without explanation.`,
         },
-        onError: () => {
-          // Mock the API response. Remove it when you implement the route /api/ai/copilot
-          api.copilot.setBlockSuggestion({
-            text: stripMarkdown(faker.lorem.sentence()),
-          });
-        },
         onFinish: (_, completion) => {
-          if (completion === '0') return;
+          const text = stripMarkdown(completion).trim();
+
+          if (!text || text === '0') return;
 
           api.copilot.setBlockSuggestion({
-            text: stripMarkdown(completion),
+            text,
           });
         },
       },
@@ -57,6 +54,30 @@ export const CopilotKit = [
   ${prompt}
   """`;
       },
+    },
+    useHooks: () => {
+      const { session } = useAuth();
+
+      React.useEffect(() => {
+        const completeOptions = getOption('completeOptions') ?? {};
+        const headers = new Headers(completeOptions.headers);
+
+        if (session?.access_token) {
+          headers.set('Authorization', `Bearer ${session.access_token}`);
+        } else {
+          headers.delete('Authorization');
+        }
+
+        const headerObject: Record<string, string> = {};
+        headers.forEach((value, key) => {
+          headerObject[key] = value;
+        });
+
+        setOption('completeOptions', {
+          ...completeOptions,
+          headers: headerObject,
+        });
+      }, [getOption, session?.access_token, setOption]);
     },
     shortcuts: {
       accept: {

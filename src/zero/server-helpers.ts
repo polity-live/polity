@@ -405,14 +405,14 @@ export async function recomputeEventCounters(
   tx: Transaction<Schema>,
   eventId: string
 ): Promise<void> {
-  const [participantCount, subscribers, agendaItems, amendments] = await Promise.all([
+  const [participantCount, subscribers, agendaItems] = await Promise.all([
     computeDistinctEventParticipantCount(tx, eventId),
     tx.run(zql.subscriber.where('event_id', eventId)),
     tx.run(zql.agenda_item.where('event_id', eventId)),
-    tx.run(zql.amendment.where('event_id', eventId)),
   ]);
   const agendaItemIds = agendaItems.map(item => item.id);
-  const amendmentIds = amendments.map(amendment => amendment.id);
+  const amendmentAgendaItems = agendaItems.filter(item => item.amendment_id);
+  const amendmentIds = [...new Set(amendmentAgendaItems.map(item => item.amendment_id as string))];
 
   const [elections, changeRequests] = await Promise.all([
     agendaItemIds.length > 0
@@ -432,7 +432,7 @@ export async function recomputeEventCounters(
     participant_count: participantCount,
     subscriber_count: subscribers.length,
     election_count: elections.length,
-    amendment_count: amendments.length,
+    amendment_count: amendmentAgendaItems.length,
     open_change_request_count: openChangeRequests,
   });
 }
@@ -461,7 +461,6 @@ export async function recomputeAmendmentCounters(
     subscriber_count: subscribers.length,
     clone_count: clones.length,
     change_request_count: changeRequests.length,
-    supporters: upvotes,
     upvotes,
     downvotes,
     collaborator_count: activeCollaborators,

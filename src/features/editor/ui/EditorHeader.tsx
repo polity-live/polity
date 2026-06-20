@@ -5,17 +5,12 @@ import { FormControlInput } from '@/features/shared/ui/form';
 /**
  * Editor Header Component
  *
- * Displays title editing, save status, and online users.
+ * Displays title editing and save status.
  */
 
 import { Button } from '@/features/shared/ui/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Loader2, Eye, Pencil, Users } from 'lucide-react';
-import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
-import type { EditorPresencePeer } from '../types';
+import { Loader2, Eye, Pencil } from 'lucide-react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface EditorHeaderProps {
   title: string;
@@ -26,8 +21,7 @@ interface EditorHeaderProps {
   isSavingTitle: boolean;
   saveStatus: 'saved' | 'saving' | 'error';
   hasUnsavedChanges: boolean;
-  onlinePeers?: EditorPresencePeer[];
-  showPresence?: boolean;
+  presenceSlot?: React.ReactNode;
   statusBadge?: React.ReactNode;
 }
 
@@ -40,8 +34,7 @@ export function EditorHeader({
   isSavingTitle,
   saveStatus,
   hasUnsavedChanges,
-  onlinePeers = [],
-  showPresence = true,
+  presenceSlot,
   statusBadge,
 }: EditorHeaderProps) {
   const { t } = useTranslation();
@@ -80,41 +73,7 @@ export function EditorHeader({
         )}
       </div>
 
-      {/* Online presence */}
-      {showPresence && onlinePeers.length > 0 && (
-        <div className="flex items-center gap-2">
-          <Users className="text-muted-foreground h-4 w-4" />
-          <span className="text-muted-foreground text-sm">
-            {onlinePeers.length}{' '}
-            {onlinePeers.length === 1
-              ? translateText('generated.inline.0026_user_12dea96f')
-              : translateText('generated.inline.0027_users_5b7dcd14')}
-            {translateText('generated.inline.0035_online_2dbc2fd2')}
-          </span>
-          <div className="flex -space-x-2">
-            {onlinePeers.slice(0, 5).map(peer => (
-              <Avatar
-                key={peer.peerId}
-                className="border-background h-6 w-6 border-2"
-                title={peer.name}
-              >
-                {peer.avatar ? <AvatarImage src={peer.avatar} alt={peer.name} /> : null}
-                <AvatarFallback
-                  style={{ backgroundColor: peer.color }}
-                  className={featureThemeClassName('documentPresenceIndicatorsContrastText')}
-                >
-                  {peer.name?.[0]?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            ))}
-            {onlinePeers.length > 5 && (
-              <div className="border-background bg-muted flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs">
-                +{onlinePeers.length - 5}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {presenceSlot}
 
       {/* Status badge */}
       {statusBadge}

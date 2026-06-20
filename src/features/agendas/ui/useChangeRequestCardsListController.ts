@@ -40,6 +40,7 @@ interface ChangeRequestCardsListProps {
   onStartIndicative?: (itemId: string) => Promise<void>;
   onStartFinal?: (itemId: string) => Promise<void>;
   onCloseVoting?: (itemId: string) => Promise<void> | Promise<unknown>;
+  onFinalizeInternalVote?: (changeRequestId: string) => Promise<void>;
 }
 export function useChangeRequestCardsListController({
   items,
@@ -64,6 +65,7 @@ export function useChangeRequestCardsListController({
   onStartIndicative,
   onStartFinal,
   onCloseVoting,
+  onFinalizeInternalVote,
 }: ChangeRequestCardsListProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabValue>('all');
@@ -74,8 +76,15 @@ export function useChangeRequestCardsListController({
     const map = new Map<string, string>();
     if (discussions) {
       for (const d of discussions) {
+        map.set(d.id, d.id);
         if (d.crId) {
           map.set(d.crId, d.id);
+        }
+        if (d.title) {
+          map.set(d.title, d.id);
+        }
+        if (d.changeRequestEntityId) {
+          map.set(d.changeRequestEntityId, d.id);
         }
       }
     }
@@ -96,7 +105,18 @@ export function useChangeRequestCardsListController({
   );
 
   const getPreviewCrId = (item: ChangeRequestTimelineRow): string | null => {
-    const previewCrId = item.change_request?.title;
+    const changeRequest = item.change_request as
+      | (NonNullable<ChangeRequestTimelineRow['change_request']> & {
+          cr_id?: string | null;
+          suggestion_id?: string | null;
+        })
+      | null
+      | undefined;
+    const previewCrId =
+      changeRequest?.cr_id ??
+      changeRequest?.suggestion_id ??
+      item.change_request_id ??
+      changeRequest?.title;
     return previewCrId && previewCrId.trim().length > 0 ? previewCrId : null;
   };
 
@@ -240,6 +260,7 @@ export function useChangeRequestCardsListController({
     onStartIndicative,
     onStartFinal,
     onCloseVoting,
+    onFinalizeInternalVote,
     t,
     activeTab,
     setActiveTab,

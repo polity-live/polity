@@ -1,10 +1,11 @@
 import { defineMutator } from '@rocicorp/zero';
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { can } from '../rbac/can';
 import { fireNotification } from '../server-notify';
 import { eventTitle, recomputeEventCounters, recomputeEventEndDate } from '../server-helpers';
+import { resolveChangeRequestByVoteResult } from '../change-requests/server-resolution';
+import { finalizeInternalChangeRequestsForEventPhaseTransition } from '../change-requests/internal-voting';
 import {
   createAgendaItemSchema,
   deleteAgendaItemSchema,
@@ -15,8 +16,6 @@ import {
   initializeChangeRequestVotingSchema,
   processCRVoteResultSchema,
 } from './schema';
-import { applySuggestionToContent } from '@/features/change-requests/logic/applySuggestionToContent';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 async function assertCurrentChangeRequestTimelineItem(
   tx: Parameters<typeof mutators.agendas.updateAgendaItemChangeRequest.fn>[0]['tx'],
@@ -58,6 +57,59 @@ async function assertCanManageAgendaVoteFlow(
     resource: 'events',
     eventId: agendaItem.event_id,
   });
+}
+
+async function syncAmendmentEditingMode(
+  tx: Parameters<typeof mutators.agendas.updateAgendaItemChangeRequest.fn>[0]['tx'],
+  ctx: { readonly userID: string },
+  amendmentId: string | null | undefined,
+  editingMode: 'suggest_event' | 'vote_event'
+) {
+  if (!amendmentId) {
+    return;
+  }
+
+  const amendment = await tx.run(zql.amendment.where('id', amendmentId).one());
+  if (
+    !amendment ||
+    amendment.editing_mode === editingMode ||
+    amendment.editing_mode === 'passed' ||
+    amendment.editing_mode === 'rejected'
+  ) {
+    return;
+  }
+
+  await finalizeInternalChangeRequestsForEventPhaseTransition({
+    tx,
+    ctx,
+    amendmentId: amendment.id,
+    now: Date.now(),
+  });
+
+  await tx.mutate.amendment.update({
+    id: amendment.id,
+    editing_mode: editingMode,
+    updated_at: Date.now(),
+  });
+}
+
+async function syncEventAmendmentsToSuggestEvent(
+  tx: Parameters<typeof mutators.agendas.updateAgendaItemChangeRequest.fn>[0]['tx'],
+  ctx: { readonly userID: string },
+  eventId: string
+) {
+  const agendaItems = await tx.run(zql.agenda_item.where('event_id', eventId));
+  const amendmentIds = [
+    ...new Set(
+      agendaItems
+        .map((item: any) => item.amendment_id)
+        .filter((amendmentId: unknown): amendmentId is string => typeof amendmentId === 'string')
+    ),
+  ];
+
+  for (const amendmentId of amendmentIds) {
+    await syncAmendmentEditingMode(tx, ctx, amendmentId, 'suggest_event');
+  }
 }
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
@@ -116,7 +168,15 @@ export const agendaServerMutators = {
       await recomputeEventEndDate(tx, args.event_id);
     }
 
-    if (args.status === 'in-progress' && oldItem.status !== 'in-progress' && oldItem.event_id) {
+    const isActivatingAgendaItem =
+      (args.status === 'in-progress' && oldItem.status !== 'in-progress') ||
+      (args.status === 'active' && oldItem.status !== 'active');
+
+    const activatedEventId = args.event_id ?? oldItem.event_id;
+
+    if (isActivatingAgendaItem && activatedEventId) {
+      await syncEventAmendmentsToSuggestEvent(tx, ctx, activatedEventId);
+
       if (oldItem.type === 'implementation_review') {
         const implementationTask = await tx.run(
           zql.process_task
@@ -134,10 +194,10 @@ export const agendaServerMutators = {
         }
       }
 
-      const eTitle = await eventTitle(tx, oldItem.event_id);
+      const eTitle = await eventTitle(tx, activatedEventId);
       fireNotification('notifyAgendaItemActivated', {
         senderId: ctx.userID,
-        eventId: oldItem.event_id,
+        eventId: activatedEventId,
         eventTitle: eTitle,
         agendaItemId: args.id,
         agendaItemTitle: oldItem.title,
@@ -252,6 +312,12 @@ export const agendaServerMutators = {
 
       // 2. Fetch accredited voters for this agenda item
       const agendaItem = await tx.run(zql.agenda_item.where('id', agenda_item_id).one());
+      if (agendaItem?.amendment_id && agendaItem.amendment_id !== amendment_id) {
+        throw new Error('Agenda item is linked to a different amendment.');
+      }
+
+      await syncAmendmentEditingMode(tx, ctx, amendment_id, 'vote_event');
+
       const accreditations = agendaItem?.event_id
         ? await tx.run(zql.accreditation.where('event_id', agendaItem.event_id))
         : [];
@@ -369,104 +435,13 @@ export const agendaServerMutators = {
 
     // 2. If this is a per-CR vote (not the final amendment vote), process the suggestion
     if (junction.change_request_id) {
-      const cr = await tx.run(zql.change_request.where('id', junction.change_request_id).one());
-
-      if (cr?.amendment_id) {
-        const amendmentRow = await tx.run(zql.amendment.where('id', cr.amendment_id).one());
-
-        // Find the suggestion ID from the discussions JSON on the amendment.
-        // Each discussion entry has `changeRequestEntityId` linking to the
-        // change_request row and `id` matching the plate-js suggestion UUID.
-        interface DiscussionEntry {
-          id: string;
-          changeRequestEntityId?: string;
-          crId?: string;
-          status?: string;
-          [key: string]: unknown;
-        }
-
-        const discussions: DiscussionEntry[] = Array.isArray(amendmentRow?.discussions)
-          ? (amendmentRow.discussions as DiscussionEntry[])
-          : [];
-
-        const matchingDiscussion = discussions.find(d => d.changeRequestEntityId === cr.id);
-        const suggestionId = matchingDiscussion?.id;
-
-        if (amendmentRow?.document_id) {
-          const doc = await tx.run(zql.document.where('id', amendmentRow.document_id).one());
-
-          if (doc?.content && suggestionId) {
-            const action = vote_result === 'passed' ? 'accept' : 'reject';
-            const crLabel =
-              matchingDiscussion?.crId ??
-              cr.title ??
-              translateText('generated.inline.0190_change_request_9c839351');
-            const versionSummary =
-              vote_result === 'passed'
-                ? `${crLabel} accepted by vote`
-                : `${crLabel} rejected by vote`;
-
-            // Create a version snapshot BEFORE modifying the document
-            const latestVersion = await tx.run(
-              zql.document_version
-                .where('document_id', doc.id)
-                .orderBy('version_number', 'desc')
-                .limit(1)
-                .one()
-            );
-            const nextVersionNumber = (latestVersion?.version_number ?? 0) + 1;
-
-            await tx.mutate.document_version.insert({
-              id: crypto.randomUUID(),
-              document_id: doc.id,
-              amendment_id: cr.amendment_id,
-              blog_id: null,
-              content: doc.content as ReadonlyJSONValue,
-              version_number: nextVersionNumber,
-              change_summary: versionSummary,
-              author_id: ctx.userID,
-              created_at: now,
-            });
-
-            // Apply or reject the suggestion in the document
-            const updatedContent = applySuggestionToContent(
-              doc.content as Parameters<typeof applySuggestionToContent>[0],
-              suggestionId,
-              action
-            );
-
-            await tx.mutate.document.update({
-              id: doc.id,
-              content: updatedContent as unknown as ReadonlyJSONValue,
-              updated_at: now,
-            });
-          }
-        }
-
-        // Update discussion status in the amendment.discussions JSON
-        if (matchingDiscussion && discussions.length > 0) {
-          const discussionStatus = vote_result === 'passed' ? 'accepted' : 'rejected';
-          const updatedDiscussions = discussions.map(d =>
-            d.id === matchingDiscussion.id ? { ...d, status: discussionStatus } : d
-          );
-          await tx.mutate.amendment.update({
-            id: cr.amendment_id,
-            discussions: updatedDiscussions as unknown as ReadonlyJSONValue,
-            updated_at: now,
-          });
-        }
-      }
-
-      // Update the change request status and voting_status
-      if (cr) {
-        const crStatus = vote_result === 'passed' ? 'accepted' : 'rejected';
-        await tx.mutate.change_request.update({
-          id: cr.id,
-          status: crStatus,
-          voting_status: 'completed',
-          updated_at: now,
-        });
-      }
+      await resolveChangeRequestByVoteResult({
+        tx,
+        ctx,
+        changeRequestId: junction.change_request_id,
+        voteResult: vote_result,
+        now,
+      });
     }
 
     // 3. Mark the junction record as completed

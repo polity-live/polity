@@ -14,7 +14,19 @@ export interface TDiscussion {
   documentContent?: string;
   title?: string;
   crId?: string; // Format: CR-x (e.g., CR-1, CR-2, etc.)
+  status?: 'pending' | 'accepted' | 'rejected';
   changeRequestEntityId?: string; // UUID of the persisted change_request row
+  votesFor?: number;
+  votesAgainst?: number;
+  votesAbstain?: number;
+  votingDeadline?: number | null;
+  closeTrigger?: string | null;
+  eligibleVoterCount?: number;
+  votedCollaboratorCount?: number;
+  resolutionMethod?: string | null;
+  visibilityScope?: string | null;
+  resolvedInMode?: string | null;
+  votingStatus?: string | null;
   votes?: {
     id: string;
     vote: string;

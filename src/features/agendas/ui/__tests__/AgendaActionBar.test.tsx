@@ -76,7 +76,69 @@ const baseProps = {
   isUserCandidate: false,
 };
 
+const noop = () => undefined;
+
+const lifecycleProps = {
+  hasPreviousItem: true,
+  hasNextItem: true,
+  hasStartableItem: true,
+  canMoveToNextItem: true,
+  onStartItem: noop,
+  onPreviousItem: noop,
+  onNextItem: noop,
+  onCompleteItem: noop,
+};
+
 describe('AgendaActionBar', () => {
+  it('hides agenda lifecycle controls when agenda management rights are missing', () => {
+    const { rerender } = render(
+      <AgendaActionBar {...baseProps} {...lifecycleProps} currentItemLabel="TOP-1" />
+    );
+
+    expect(screen.getByText('TOP-1')).toBeTruthy();
+    expect(screen.queryByTitle('features.events.navigation.previous')).toBeNull();
+    expect(screen.queryByTitle('features.events.navigation.complete')).toBeNull();
+    expect(screen.queryByTitle('features.events.navigation.next')).toBeNull();
+
+    rerender(
+      <AgendaActionBar
+        {...baseProps}
+        {...lifecycleProps}
+        currentAgendaItem={null}
+        currentItemLabel={null}
+      />
+    );
+
+    expect(screen.queryByTitle('features.events.navigation.start')).toBeNull();
+  });
+
+  it('renders agenda lifecycle controls when agenda management rights are present', () => {
+    const { rerender } = render(
+      <AgendaActionBar
+        {...baseProps}
+        {...lifecycleProps}
+        canManageAgenda
+        currentItemLabel="TOP-1"
+      />
+    );
+
+    expect(screen.getByTitle('features.events.navigation.previous')).toBeTruthy();
+    expect(screen.getByTitle('features.events.navigation.complete')).toBeTruthy();
+    expect(screen.getByTitle('features.events.navigation.next')).toBeTruthy();
+
+    rerender(
+      <AgendaActionBar
+        {...baseProps}
+        {...lifecycleProps}
+        canManageAgenda
+        currentAgendaItem={null}
+        currentItemLabel={null}
+      />
+    );
+
+    expect(screen.getByTitle('features.events.navigation.start')).toBeTruthy();
+  });
+
   it('renders the Enter Tally button when enabled by the container', () => {
     render(
       <AgendaActionBar

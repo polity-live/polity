@@ -1,10 +1,6 @@
 'use client';
 import { featureThemeClassName } from '@/features/shared/theme';
-import {
-  FormControlTextarea,
-  FormControlLabel,
-  FormControlSwitch,
-} from '@/features/shared/ui/form';
+import { FormControlTextarea, FormControlLabel, FormControlInput } from '@/features/shared/ui/form';
 import {
   Card,
   CardContent,
@@ -23,13 +19,9 @@ import {
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
-import { isEventPhase } from '@/zero/rbac/workflow-constants';
+import { isEventPhase, isTerminalStatus } from '@/zero/rbac/workflow-constants';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/form';
-import {
-  hasMinLength,
-  isNonNegativeInteger,
-  isOptionalMinLength,
-} from '@/features/shared/logic/inputValidation';
+import { hasMinLength, isOptionalMinLength } from '@/features/shared/logic/inputValidation';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 import { EditingModeMenuItems } from '@/features/shared/ui/status';
 export interface AmendmentEditContentViewProps {
@@ -44,8 +36,6 @@ export interface AmendmentEditContentViewProps {
   t: any;
   updateAmendment: any;
   createAmendment: any;
-  updateEditingMode: any;
-  initializeChangeRequestVoting: any;
   commonActions: any;
   amendmentHashtags: any;
   allHashtags: any;
@@ -53,6 +43,7 @@ export interface AmendmentEditContentViewProps {
   setFormData: any;
   workflowStatusOption: any;
   workflowMenuValue: any;
+  controllingEvent: any;
   isSubmitting: any;
   setIsSubmitting: any;
   showReview: any;
@@ -78,6 +69,7 @@ export function AmendmentEditContentView({
   setFormData,
   workflowStatusOption,
   workflowMenuValue,
+  controllingEvent,
   isSubmitting,
   showReview,
   setShowReview,
@@ -265,42 +257,6 @@ export function AmendmentEditContentView({
 
         <Card>
           <CardHeader>
-            <CardTitle>{t('features.amendments.editContent.statusMetadata')}</CardTitle>
-            <CardDescription>
-              {t('features.amendments.editContent.statusMetadataDescription')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ValidatedInputField
-              id="date"
-              label={t('features.amendments.editContent.dateLabel')}
-              value={formData.date}
-              onChange={value => setFormData({ ...formData, date: value })}
-              placeholder={t('features.amendments.editContent.datePlaceholder')}
-              validator={value => isOptionalMinLength(value, 4)}
-              hint={t('common.validation.dateHint')}
-            />
-            <ValidatedInputField
-              id="supporters"
-              type="number"
-              min="0"
-              label={t('features.amendments.editContent.supportersLabel')}
-              value={String(formData.supporters)}
-              onChange={value =>
-                setFormData({
-                  ...formData,
-                  supporters: Number.parseInt(value, 10) || 0,
-                })
-              }
-              placeholder={t('features.amendments.editContent.supportersPlaceholder')}
-              validator={value => isNonNegativeInteger(value)}
-              hint={t('common.validation.nonNegativeIntegerHint')}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
             <CardTitle>{t('features.amendments.editContent.workflowSettings')}</CardTitle>
             <CardDescription>
               {t('features.amendments.editContent.workflowSettingsDescription')}
@@ -316,7 +272,7 @@ export function AmendmentEditContentView({
                   <Button
                     variant="outline"
                     className="w-full justify-between"
-                    disabled={isEventPhase(formData.workflowStatus)}
+                    disabled={isTerminalStatus(formData.workflowStatus)}
                   >
                     <span className="flex items-center gap-2">
                       <div
@@ -343,41 +299,149 @@ export function AmendmentEditContentView({
               )}
             </div>
 
-            {formData.workflowStatus === 'vote_internal' && (
-              <div className="space-y-2 rounded-lg border p-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <FormControlLabel htmlFor="autoCloseVoting">
-                      {t('features.amendments.editContent.autoCloseVoting')}
-                    </FormControlLabel>
-                    <p className="text-muted-foreground text-xs">
-                      {t('features.amendments.editContent.autoCloseVotingDescription')}
-                    </p>
-                  </div>
-                  <FormControlSwitch
-                    id="autoCloseVoting"
-                    checked={formData.autoCloseVoting}
-                    onCheckedChange={(checked: boolean) =>
-                      setFormData({ ...formData, autoCloseVoting: checked })
+            <div className="space-y-3 rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormControlLabel htmlFor="internalCRVotingCloseTrigger">
+                  {t('features.amendments.editContent.internalCRVotingCloseTitle')}
+                </FormControlLabel>
+                <p className="text-muted-foreground text-xs">
+                  {t('features.amendments.editContent.internalCRVotingCloseDescription')}
+                </p>
+              </div>
+              <div className="grid gap-2">
+                {[
+                  {
+                    value: 'all_collaborators_voted',
+                    label: t(
+                      'features.amendments.editContent.internalCRVotingAllCollaboratorsLabel'
+                    ),
+                    description: t(
+                      'features.amendments.editContent.internalCRVotingAllCollaboratorsDescription'
+                    ),
+                  },
+                  {
+                    value: 'after_minutes',
+                    label: t('features.amendments.editContent.internalCRVotingAfterMinutesLabel'),
+                    description: t(
+                      'features.amendments.editContent.internalCRVotingAfterMinutesDescription'
+                    ),
+                  },
+                ].map(option => {
+                  const selected = formData.internalCRVotingCloseTrigger === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={`rounded-md border p-3 text-left transition-colors ${
+                        selected ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                      }`}
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          internalCRVotingCloseTrigger: option.value,
+                        })
+                      }
+                    >
+                      <span className="block text-sm font-medium">{option.label}</span>
+                      <span className="text-muted-foreground mt-1 block text-xs">
+                        {option.description}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {formData.internalCRVotingCloseTrigger === 'after_minutes' && (
+                <div className="max-w-xs space-y-2">
+                  <FormControlLabel htmlFor="internalCRVotingDurationMinutes">
+                    {t('features.amendments.editContent.internalCRVotingDurationMinutes')}
+                  </FormControlLabel>
+                  <FormControlInput
+                    id="internalCRVotingDurationMinutes"
+                    type="number"
+                    min="1"
+                    value={String(formData.internalCRVotingDurationMinutes)}
+                    onChange={event =>
+                      setFormData({
+                        ...formData,
+                        internalCRVotingDurationMinutes: Math.max(
+                          1,
+                          Number.parseInt(event.target.value, 10) || 1
+                        ),
+                      })
                     }
                   />
                 </div>
+              )}
+
+              <p className="text-muted-foreground bg-muted/30 rounded-md border p-3 text-xs">
+                {t('features.amendments.editContent.internalCRVotingEventFallback')}
+              </p>
+            </div>
+
+            <div className="space-y-3 rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormControlLabel htmlFor="internalCRResolutionVisibility">
+                  {t('features.amendments.editContent.internalCRResolutionVisibilityTitle')}
+                </FormControlLabel>
                 <p className="text-muted-foreground text-xs">
-                  {formData.autoCloseVoting
-                    ? t('features.amendments.editContent.autoCloseEnabled')
-                    : t('features.amendments.editContent.autoCloseDisabled')}
+                  {t('features.amendments.editContent.internalCRResolutionVisibilityDescription')}
                 </p>
               </div>
-            )}
+              <div className="grid gap-2 sm:grid-cols-2">
+                {[
+                  {
+                    value: 'public',
+                    label: t(
+                      'features.amendments.editContent.internalCRResolutionVisibilityPublicLabel'
+                    ),
+                    description: t(
+                      'features.amendments.editContent.internalCRResolutionVisibilityPublicDescription'
+                    ),
+                  },
+                  {
+                    value: 'collaborators',
+                    label: t(
+                      'features.amendments.editContent.internalCRResolutionVisibilityCollaboratorsLabel'
+                    ),
+                    description: t(
+                      'features.amendments.editContent.internalCRResolutionVisibilityCollaboratorsDescription'
+                    ),
+                  },
+                ].map(option => {
+                  const selected = formData.internalCRResolutionVisibility === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={`rounded-md border p-3 text-left transition-colors ${
+                        selected ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                      }`}
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          internalCRResolutionVisibility: option.value,
+                        })
+                      }
+                    >
+                      <span className="block text-sm font-medium">{option.label}</span>
+                      <span className="text-muted-foreground mt-1 block text-xs">
+                        {option.description}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-            {amendment?.event_id && (
+            {controllingEvent && (
               <div className={featureThemeClassName('amendmentAmendmentEditContentInfoPanel')}>
                 <p className={featureThemeClassName('amendmentAmendmentEditContentInfoText')}>
                   {t('features.amendments.editContent.eventPhase')}
                 </p>
                 <p className={featureThemeClassName('amendmentAmendmentEditContentInfoTextAlpha')}>
                   {t('features.amendments.editContent.eventPhaseDescription', {
-                    eventId: amendment.event_id,
+                    eventTitle: controllingEvent.title,
                   })}
                 </p>
               </div>

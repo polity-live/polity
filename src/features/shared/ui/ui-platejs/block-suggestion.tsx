@@ -9,7 +9,7 @@ import {
   rejectSuggestion,
 } from '@platejs/suggestion';
 import { SuggestionPlugin } from '@platejs/suggestion/react';
-import { CheckIcon, XIcon, Pencil, Check, X } from 'lucide-react';
+import { CheckCircle2, CheckIcon, Clock, XIcon, Pencil, Check, X } from 'lucide-react';
 import {
   type NodeEntry,
   type Path,
@@ -25,6 +25,17 @@ import { useEditorPlugin, usePluginOption } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/features/shared/ui/ui/alert-dialog.tsx';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
@@ -84,11 +95,23 @@ export interface ResolvedSuggestion extends TResolvedSuggestion {
   comments: TComment[];
   title?: string;
   crId?: string; // Format: CR-x (e.g., CR-1, CR-2, etc.)
+  changeRequestEntityId?: string;
   votes?: {
     id: string;
     vote: string;
     voterId: string;
   }[];
+  votesFor?: number;
+  votesAgainst?: number;
+  votesAbstain?: number;
+  votingDeadline?: number | null;
+  closeTrigger?: string | null;
+  eligibleVoterCount?: number;
+  votedCollaboratorCount?: number;
+  resolutionMethod?: string | null;
+  visibilityScope?: string | null;
+  resolvedInMode?: string | null;
+  votingStatus?: string | null;
 }
 
 const BLOCK_SUGGESTION = '__block__';
@@ -177,9 +200,15 @@ export function BlockSuggestionCard({
 }) {
   const { t } = useTranslation();
   const { api, editor } = useEditorPlugin(SuggestionPlugin);
-  const { onSuggestionAccepted, onSuggestionDeclined, onVoteAccept, onVoteReject, onVoteAbstain } =
-    useSuggestionCallbacks();
-  const { currentMode } = useModeContext(); // Get current editing mode
+  const {
+    onSuggestionAccepted,
+    onSuggestionDeclined,
+    onFinalizeInternalVote,
+    onVoteAccept,
+    onVoteReject,
+    onVoteAbstain,
+  } = useSuggestionCallbacks();
+  const { currentMode, isOwnerOrCollaborator } = useModeContext(); // Get current editing mode
   // documentId is not used, removed to fix eslint error
   const userInfo = usePluginOption(discussionPlugin, 'user', suggestion.userId);
   const currentUserId = usePluginOption(discussionPlugin, 'currentUserId');
@@ -189,6 +218,34 @@ export function BlockSuggestionCard({
     (v: { voterId?: string }) => v.voterId === currentUserId
   );
   const hasVoted = !!currentUserVote;
+  const acceptVotes =
+    suggestion.votesFor ?? suggestion.votes?.filter(vote => vote.vote === 'accept').length ?? 0;
+  const rejectVotes =
+    suggestion.votesAgainst ?? suggestion.votes?.filter(vote => vote.vote === 'reject').length ?? 0;
+  const abstainVotes =
+    suggestion.votesAbstain ??
+    suggestion.votes?.filter(vote => vote.vote === 'abstain').length ??
+    0;
+  const totalVotes = acceptVotes + rejectVotes + abstainVotes;
+  const [nowMs, setNowMs] = React.useState(() => Date.now());
+  const remainingMs =
+    typeof suggestion.votingDeadline === 'number' ? suggestion.votingDeadline - nowMs : null;
+  const remainingMinutes =
+    remainingMs !== null && remainingMs > 0 ? Math.ceil(remainingMs / 60_000) : 0;
+  const canFinalizeInternalVote =
+    currentMode === 'vote_internal' &&
+    isOwnerOrCollaborator &&
+    suggestion.votingStatus !== 'completed' &&
+    Boolean(suggestion.changeRequestEntityId) &&
+    Boolean(onFinalizeInternalVote);
+  const canVoteOnSuggestion = Boolean(onVoteAccept && onVoteReject && onVoteAbstain);
+  const projectedOutcome = acceptVotes > rejectVotes ? 'Accepted' : 'Rejected';
+
+  React.useEffect(() => {
+    if (currentMode !== 'vote_internal' || typeof suggestion.votingDeadline !== 'number') return;
+    const interval = window.setInterval(() => setNowMs(Date.now()), 30_000);
+    return () => window.clearInterval(interval);
+  }, [currentMode, suggestion.votingDeadline]);
 
   const [editingTitle, setEditingTitle] = React.useState(false);
   const [titleValue, setTitleValue] = React.useState(suggestion.title || '');
@@ -440,28 +497,65 @@ export function BlockSuggestionCard({
           />
         ))}
 
-        {hovering && currentMode !== 'vote_internal' && currentMode !== 'vote_event' && (
-          <div className="absolute top-4 right-4 flex gap-2">
-            <Button
-              variant="ghost"
-              className="text-muted-foreground size-6 p-1"
-              onClick={() => accept(suggestion)}
-            >
-              <CheckIcon className="size-4" />
-            </Button>
+        {hovering &&
+          currentMode === 'suggest_internal' &&
+          onSuggestionAccepted &&
+          onSuggestionDeclined && (
+            <div className="absolute top-4 right-4 flex gap-2">
+              <Button
+                variant="ghost"
+                className="text-muted-foreground size-6 p-1"
+                onClick={() => accept(suggestion)}
+              >
+                <CheckIcon className="size-4" />
+              </Button>
 
-            <Button
-              variant="ghost"
-              className="text-muted-foreground size-6 p-1"
-              onClick={() => reject(suggestion)}
-            >
-              <XIcon className="size-4" />
-            </Button>
-          </div>
-        )}
+              <Button
+                variant="ghost"
+                className="text-muted-foreground size-6 p-1"
+                onClick={() => reject(suggestion)}
+              >
+                <XIcon className="size-4" />
+              </Button>
+            </div>
+          )}
 
         {(currentMode === 'vote_internal' || currentMode === 'vote_event') && (
           <div className="mt-4 space-y-2">
+            {currentMode === 'vote_internal' && (
+              <div className="bg-background/70 rounded-md border p-3 text-xs">
+                {suggestion.closeTrigger === 'after_minutes' && suggestion.votingDeadline ? (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    <span>
+                      {remainingMs !== null && remainingMs > 0
+                        ? translateText(
+                            'features.amendments.voteControls.closesInMinutes',
+                            { minutes: remainingMinutes },
+                            `Closes in ${remainingMinutes} min`
+                          )
+                        : translateText(
+                            'features.amendments.voteControls.deadlineExpired',
+                            'Deadline expired'
+                          )}
+                    </span>
+                  </div>
+                ) : (
+                  <span>
+                    {translateText(
+                      'features.amendments.voteControls.collaboratorsVoted',
+                      {
+                        voted: suggestion.votedCollaboratorCount ?? totalVotes,
+                        total: suggestion.eligibleVoterCount ?? totalVotes,
+                      },
+                      `${suggestion.votedCollaboratorCount ?? totalVotes}/${
+                        suggestion.eligibleVoterCount ?? totalVotes
+                      } collaborators voted`
+                    )}
+                  </span>
+                )}
+              </div>
+            )}
             {hasVoted ? (
               <div className={cn('rounded-md border p-4', getBadgeToneClasses('info'))}>
                 <p className="mb-2 text-sm font-semibold">
@@ -495,61 +589,109 @@ export function BlockSuggestionCard({
                     {currentUserVote?.vote === 'abstain' && 'Abstain'}
                   </span>
                 </div>
+                {totalVotes > 0 && (
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                    <div className="bg-background/70 rounded-md border p-2">
+                      <div className="text-muted-foreground">
+                        {translateText('generated.inline.0121_accept_bb54db51')}
+                      </div>
+                      <div className="text-sm font-semibold">{acceptVotes}</div>
+                    </div>
+                    <div className="bg-background/70 rounded-md border p-2">
+                      <div className="text-muted-foreground">
+                        {translateText('generated.inline.1142_reject_2b03b592')}
+                      </div>
+                      <div className="text-sm font-semibold">{rejectVotes}</div>
+                    </div>
+                    <div className="bg-background/70 rounded-md border p-2">
+                      <div className="text-muted-foreground">
+                        {translateText('generated.inline.1144_abstain_bc39d849')}
+                      </div>
+                      <div className="text-sm font-semibold">{abstainVotes}</div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
-              <>
-                <div className={cn('rounded-md border p-3', getBadgeToneClasses('info'))}>
-                  <p className="mb-1 text-sm font-semibold">
-                    {t('plateJs.blockSuggestion.voteRequired')}
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    {translateText(
-                      'generated.inline.1143_cast_your_vote_for_this_change_request_25af64e8'
-                    )}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="default"
-                    presentation="success"
-                    className="flex-1"
-                    onClick={() => {
-                      if (onVoteAccept) {
-                        onVoteAccept(suggestion);
-                      }
-                    }}
-                  >
-                    <CheckIcon className="mr-2 h-4 w-4" />
-                    {translateText('generated.inline.0121_accept_bb54db51')}
+              <div className={cn('rounded-md border p-3', getBadgeToneClasses('info'))}>
+                <p className="mb-1 text-sm font-semibold">
+                  {t('plateJs.blockSuggestion.voteRequired')}
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {translateText(
+                    'generated.inline.1143_cast_your_vote_for_this_change_request_25af64e8'
+                  )}
+                </p>
+              </div>
+            )}
+            {canVoteOnSuggestion && (
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="default"
+                  presentation="success"
+                  className={cn(
+                    'flex-1',
+                    currentUserVote?.vote === 'accept' && 'ring-ring ring-2 ring-offset-1'
+                  )}
+                  onClick={() => onVoteAccept?.(suggestion)}
+                >
+                  <CheckIcon className="mr-2 h-4 w-4" />
+                  {translateText('generated.inline.0121_accept_bb54db51')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className={cn(
+                    'flex-1',
+                    currentUserVote?.vote === 'reject' && 'ring-ring ring-2 ring-offset-1'
+                  )}
+                  onClick={() => onVoteReject?.(suggestion)}
+                >
+                  <XIcon className="mr-2 h-4 w-4" />
+                  {translateText('generated.inline.1142_reject_2b03b592')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className={cn(
+                    'flex-1',
+                    currentUserVote?.vote === 'abstain' && 'ring-ring ring-2 ring-offset-1'
+                  )}
+                  onClick={() => onVoteAbstain?.(suggestion)}
+                >
+                  {translateText('generated.inline.1144_abstain_bc39d849')}
+                </Button>
+              </div>
+            )}
+            {canFinalizeInternalVote && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="w-full">
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Abstimmung beenden
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={() => {
-                      if (onVoteReject) {
-                        onVoteReject(suggestion);
-                      }
-                    }}
-                  >
-                    <XIcon className="mr-2 h-4 w-4" />
-                    {translateText('generated.inline.1142_reject_2b03b592')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => {
-                      if (onVoteAbstain) {
-                        onVoteAbstain(suggestion);
-                      }
-                    }}
-                  >
-                    {translateText('generated.inline.1144_abstain_bc39d849')}
-                  </Button>
-                </div>
-              </>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Interne Abstimmung beenden?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Ergebnis: {projectedOutcome}. Accept {acceptVotes}, Reject {rejectVotes},
+                      Abstain {abstainVotes}.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        onFinalizeInternalVote?.(suggestion);
+                      }}
+                    >
+                      Abstimmung beenden
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         )}
@@ -721,7 +863,19 @@ export const useResolveSuggestion = (
       const comments = discussion?.comments || [];
       const title = discussion?.title; // Get the title from the discussion
       const crId = discussion?.crId; // Get the CR-x ID from the discussion
+      const changeRequestEntityId = discussion?.changeRequestEntityId;
       const votes = discussion?.votes; // Get the votes from the discussion
+      const votesFor = discussion?.votesFor;
+      const votesAgainst = discussion?.votesAgainst;
+      const votesAbstain = discussion?.votesAbstain;
+      const votingDeadline = discussion?.votingDeadline;
+      const closeTrigger = discussion?.closeTrigger;
+      const eligibleVoterCount = discussion?.eligibleVoterCount;
+      const votedCollaboratorCount = discussion?.votedCollaboratorCount;
+      const resolutionMethod = discussion?.resolutionMethod;
+      const visibilityScope = discussion?.visibilityScope;
+      const resolvedInMode = discussion?.resolvedInMode;
+      const votingStatus = discussion?.votingStatus;
       const createdAt = new Date(nodeData.createdAt);
 
       const keyId = getSuggestionKey(id);
@@ -730,7 +884,19 @@ export const useResolveSuggestion = (
         return res.push({
           comments,
           crId, // Include the CR-x ID
+          changeRequestEntityId,
           votes, // Include the votes
+          votesFor,
+          votesAgainst,
+          votesAbstain,
+          votingDeadline,
+          closeTrigger,
+          eligibleVoterCount,
+          votedCollaboratorCount,
+          resolutionMethod,
+          visibilityScope,
+          resolvedInMode,
+          votingStatus,
           createdAt,
           keyId,
           newProperties,
@@ -746,7 +912,19 @@ export const useResolveSuggestion = (
         return res.push({
           comments,
           crId, // Include the CR-x ID
+          changeRequestEntityId,
           votes, // Include the votes
+          votesFor,
+          votesAgainst,
+          votesAbstain,
+          votingDeadline,
+          closeTrigger,
+          eligibleVoterCount,
+          votedCollaboratorCount,
+          resolutionMethod,
+          visibilityScope,
+          resolvedInMode,
+          votingStatus,
           createdAt,
           keyId,
           newText,
@@ -761,7 +939,19 @@ export const useResolveSuggestion = (
         return res.push({
           comments,
           crId, // Include the CR-x ID
+          changeRequestEntityId,
           votes, // Include the votes
+          votesFor,
+          votesAgainst,
+          votesAbstain,
+          votingDeadline,
+          closeTrigger,
+          eligibleVoterCount,
+          votedCollaboratorCount,
+          resolutionMethod,
+          visibilityScope,
+          resolvedInMode,
+          votingStatus,
           createdAt,
           keyId,
           newText,
@@ -775,7 +965,19 @@ export const useResolveSuggestion = (
         return res.push({
           comments,
           crId, // Include the CR-x ID
+          changeRequestEntityId,
           votes, // Include the votes
+          votesFor,
+          votesAgainst,
+          votesAbstain,
+          votingDeadline,
+          closeTrigger,
+          eligibleVoterCount,
+          votedCollaboratorCount,
+          resolutionMethod,
+          visibilityScope,
+          resolvedInMode,
+          votingStatus,
           createdAt,
           keyId,
           suggestionId: keyId2SuggestionId(id),

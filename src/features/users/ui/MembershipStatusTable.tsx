@@ -1,5 +1,6 @@
 import { Trash2, type LucideIcon } from 'lucide-react';
 
+import { getMembershipRoleNames } from '@/features/shared/logic/membershipRoleHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { GroupConflictMembershipPreflight } from '@/features/groups/logic/groupConflictPreflight';
@@ -24,6 +25,13 @@ interface DisplayEntity {
   description?: unknown;
   image_url?: string | null;
 }
+
+const FALLBACK_ROLE_LABELS: Record<EntityKey, string> = {
+  group: 'Member',
+  event: 'Participant',
+  amendment: 'Collaborator',
+  blog: 'Writer',
+};
 
 interface MembershipStatusTableProps {
   title: string;
@@ -141,9 +149,19 @@ export function MembershipStatusTable({
       id: 'role',
       header: translateText('generated.inline.0091_role_c3f104d1'),
       cell: ({ row }) => {
-        const role = (row.original as { role?: { name?: string | null } }).role?.name || 'Member';
+        const roleNames = getMembershipRoleNames(row.original);
+        const displayRoleNames =
+          roleNames.length > 0 ? roleNames : [FALLBACK_ROLE_LABELS[entityKey]];
 
-        return <EntityBadge tone="accent">{role}</EntityBadge>;
+        return (
+          <div className="flex flex-wrap gap-2">
+            {displayRoleNames.map((roleName, index) => (
+              <EntityBadge key={`${row.original.id}-${roleName}-${index}`} tone="accent">
+                {roleName}
+              </EntityBadge>
+            ))}
+          </div>
+        );
       },
     },
     {

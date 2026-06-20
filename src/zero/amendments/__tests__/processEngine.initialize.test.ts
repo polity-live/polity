@@ -11,12 +11,22 @@ import { initializeAmendmentProcessPath } from '../process-engine';
 function createTx() {
   const state: {
     branch?: Record<string, unknown>;
+    existingAgendaItems?: Record<string, unknown>[];
     vote?: Record<string, unknown>;
     agendaItem?: Record<string, unknown>;
     processRun?: Record<string, unknown>;
     stepRun?: Record<string, unknown>;
     pathSegment?: Record<string, unknown>;
-  } = {};
+  } = {
+    existingAgendaItems: [
+      { id: 'agenda-existing', order_index: 1, forwarding_status: 'forward_confirmed' },
+      {
+        id: 'agenda-outstanding',
+        order_index: 999,
+        forwarding_status: 'previous_decision_outstanding',
+      },
+    ],
+  };
 
   let runCall = 0;
 
@@ -26,17 +36,25 @@ function createTx() {
 
       switch (runCall) {
         case 1:
-          return [];
+          return null;
         case 2:
-          return [state.stepRun];
+          return [];
         case 3:
-          return state.agendaItem;
+          return null;
         case 4:
-          return state.pathSegment ? [state.pathSegment] : [];
+          return state.existingAgendaItems ?? [];
         case 5:
-          return state.vote;
+          return [state.stepRun];
         case 6:
-          return [state.branch];
+          return state.agendaItem;
+        case 7:
+          return state.pathSegment ? [state.pathSegment] : [];
+        case 8:
+          return state.vote;
+        case 9:
+          return state.stepRun ? [state.stepRun] : [];
+        case 10:
+          return state.branch ? [state.branch] : [];
         default:
           return [];
       }
@@ -226,6 +244,11 @@ describe('initializeAmendmentProcessPath', () => {
     expect(tx.mutate.amendment_process_run.update.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({
         active_branch_id: expect.any(String),
+      })
+    );
+    expect(tx.mutate.agenda_item.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        order_index: 2,
       })
     );
   });

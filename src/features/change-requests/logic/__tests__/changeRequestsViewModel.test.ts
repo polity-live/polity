@@ -7,6 +7,7 @@ import {
   mapChangeRequestsToDiffMap,
   mapChangeRequestsToDiscussions,
   mapChangeRequestsToSummaries,
+  mapChangeRequestsToTimelineItems,
 } from '../changeRequestsViewModel';
 
 function changeRequest(overrides: Partial<ChangeRequest>): ChangeRequest {
@@ -30,8 +31,23 @@ function changeRequest(overrides: Partial<ChangeRequest>): ChangeRequest {
     resolvedBy: null,
     createdAt: 1_700_000_000_000,
     userId: 'user-1',
+    votesFor: 0,
+    votesAgainst: 0,
+    votesAbstain: 0,
+    votingDeadline: null,
+    closeTrigger: null,
+    eligibleVoterCount: 0,
+    votedCollaboratorCount: 0,
+    resolutionMethod: null,
+    visibilityScope: null,
+    resolvedInMode: null,
+    votingStatus: null,
+    userVote: null,
     comments: [],
     votes: [],
+    discussionId: 'suggestion-1',
+    suggestionId: 'suggestion-1',
+    changeRequestEntityId: 'cr-row-1',
     ...overrides,
   };
 }
@@ -70,6 +86,8 @@ describe('change request view model helpers', () => {
       title: 'CR-7',
       description: 'Change summary',
       status: 'open',
+      suggestionId: 'suggestion-1',
+      changeRequestEntityId: 'cr-row-1',
     });
     expect(mapChangeRequestsToDiffMap(requests)['request-1']).toMatchObject({
       changeType: 'property',
@@ -77,12 +95,37 @@ describe('change request view model helpers', () => {
       newText: 'After',
       justification: 'Cleaner wording',
     });
+    expect(mapChangeRequestsToDiffMap(requests)['cr-row-1']).toMatchObject({
+      changeType: 'property',
+      originalText: 'Before',
+      newText: 'After',
+    });
     expect(mapChangeRequestsToDiscussions(requests)[0]).toMatchObject({
-      id: 'request-1',
+      id: 'suggestion-1',
       crId: 'CR-7',
       userId: 'user-1',
       isResolved: false,
+      changeRequestEntityId: 'cr-row-1',
     });
+  });
+
+  it('uses the persisted change request id for timeline actions and keeps the suggestion id for previews', () => {
+    const [item] = mapChangeRequestsToTimelineItems([
+      changeRequest({
+        id: 'suggestion-1',
+        crId: 'CR-1',
+        title: 'Replace dieser',
+        suggestionId: 'suggestion-1',
+        discussionId: 'suggestion-1',
+        changeRequestEntityId: 'cr-row-1',
+      }),
+    ]);
+
+    expect(item.change_request_id).toBe('cr-row-1');
+    expect(item.change_request?.id).toBe('cr-row-1');
+    expect((item.change_request as { suggestion_id?: string | null })?.suggestion_id).toBe(
+      'suggestion-1'
+    );
   });
 
   it('recognizes internal and event voting modes', () => {

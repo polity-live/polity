@@ -92,15 +92,15 @@ code {
   --scrollbar-thumb: color-mix(in oklab, var(--brand) 50%, var(--card) 50%);
   --scrollbar-thumb-hover: color-mix(in oklab, var(--highlight) 34%, var(--brand) 66%);
 
-  --badge-success-bg: #e8f2e5;
-  --badge-success-fg: #315c37;
-  --badge-success-border: #a8c99e;
+  --badge-success-bg: #dcefd8;
+  --badge-success-fg: #285f34;
+  --badge-success-border: #8fbd86;
   --badge-warning-bg: #faebcb;
   --badge-warning-fg: #755015;
   --badge-warning-border: #d9ad54;
-  --badge-danger-bg: #f7dfdc;
-  --badge-danger-fg: #8a332b;
-  --badge-danger-border: #d59088;
+  --badge-danger-bg: #f5d2ce;
+  --badge-danger-fg: #7f2f28;
+  --badge-danger-border: #c87870;
   --badge-info-bg: #e3eef2;
   --badge-info-fg: #28566c;
   --badge-info-border: #9dbfce;
@@ -218,15 +218,15 @@ code {
   --scrollbar-thumb: color-mix(in oklab, var(--highlight) 52%, var(--muted) 48%);
   --scrollbar-thumb-hover: color-mix(in oklab, var(--highlight) 68%, var(--brand) 32%);
 
-  --badge-success-bg: rgb(79 125 90 / 0.18);
-  --badge-success-fg: #d9edd4;
-  --badge-success-border: rgb(168 201 158 / 0.58);
+  --badge-success-bg: rgb(95 152 109 / 0.24);
+  --badge-success-fg: #cae3c5;
+  --badge-success-border: rgb(168 201 158 / 0.56);
   --badge-warning-bg: rgb(197 139 45 / 0.2);
   --badge-warning-fg: #f8dfaa;
   --badge-warning-border: rgb(217 173 84 / 0.62);
-  --badge-danger-bg: rgb(184 100 70 / 0.22);
-  --badge-danger-fg: #f4c8bd;
-  --badge-danger-border: rgb(213 144 136 / 0.64);
+  --badge-danger-bg: rgb(193 95 82 / 0.36);
+  --badge-danger-fg: #f0beb6;
+  --badge-danger-border: rgb(200 120 112 / 0.72);
   --badge-info-bg: rgb(47 111 143 / 0.22);
   --badge-info-fg: #c6e3ee;
   --badge-info-border: rgb(157 191 206 / 0.6);
@@ -1197,6 +1197,22 @@ code {
 
   .change-request-load-motion[data-change-request-motion-ready='true'] {
     --change-request-motion-play-state: running;
+  }
+
+  .change-request-load-motion[data-change-request-motion-complete='true']
+    button[data-suggestion-ids],
+  .change-request-load-motion[data-change-request-motion-complete='true'] :is(ins, del) {
+    animation: none !important;
+  }
+
+  .change-request-load-motion[data-change-request-motion-complete='true']
+    button[data-suggestion-ids] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .change-request-load-motion[data-change-request-motion-complete='true'] :is(ins, del) {
+    background-size: 100% 100%;
   }
 
   .landing-amendment-motion-scope .landing-amendment-request-chip,

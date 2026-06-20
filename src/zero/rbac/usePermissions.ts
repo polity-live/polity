@@ -140,6 +140,7 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
       id: m.id,
       group: m.group ? { id: m.group.id } : undefined,
       roles: mapRolesFromLinks(m.membership_roles, 'group'),
+      status: m.status ?? undefined,
     })) as Membership[];
   }, [membershipsRaw]);
 
@@ -149,6 +150,7 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
       id: p.id,
       event: p.event ? { id: p.event.id } : undefined,
       roles: mapRolesFromLinks(p.participant_roles, 'event'),
+      status: p.status ?? undefined,
     })) as Participation[];
   }, [participationsRaw]);
 
@@ -175,6 +177,7 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
       id: guestAccess.id,
       group: guestAccess.group ? { id: guestAccess.group.id } : undefined,
       roles: mapRolesFromLinks(guestAccess.guest_roles, 'group'),
+      status: guestAccess.status ?? undefined,
     })) as GuestAccess[];
   }, [guestAccessesRaw]);
 

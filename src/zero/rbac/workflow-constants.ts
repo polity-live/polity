@@ -1,4 +1,19 @@
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  AUTOMATIC_EVENT_MODES,
+  MANUALLY_SELECTABLE_MODES,
+  TERMINAL_EDITING_MODES,
+  getDefaultEditingMode as getPolicyDefaultEditingMode,
+  isAutomaticEventMode,
+  normalizeEditingMode as normalizePolicyEditingMode,
+  type EditingMode,
+} from '../amendments/editing-mode-policy';
+export {
+  AMENDMENT_EDITING_MODE_ORDER,
+  AUTOMATIC_EVENT_MODES,
+  MANUAL_INTERNAL_MODES,
+  MANUALLY_SELECTABLE_MODES,
+} from '../amendments/editing-mode-policy';
 /**
  * Amendment Editing Mode Constants
  *
@@ -10,15 +25,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
  * Editing mode for amendments — single source of truth for both
  * the amendment lifecycle and the editor behaviour.
  */
-export type EditingMode =
-  | 'edit' // Collaborators can directly edit
-  | 'view' // Read-only mode
-  | 'suggest_internal' // Collaborators create suggestions
-  | 'suggest_event' // Event participants create suggestions
-  | 'vote_internal' // Collaborators vote on suggestions
-  | 'vote_event' // Event votes on suggestions sequentially
-  | 'passed' // Final approval reached
-  | 'rejected'; // Rejected at some point in process
+export type { EditingMode } from '../amendments/editing-mode-policy';
 
 /** @deprecated Use EditingMode instead */
 export type WorkflowStatus = EditingMode;
@@ -48,12 +55,12 @@ export type ChangeRequestSource = 'collaborator' | 'event_participant';
  * Key: current mode, Value: array of allowed next modes
  */
 export const EDITING_MODE_TRANSITIONS: Record<EditingMode, EditingMode[]> = {
-  edit: ['suggest_internal', 'suggest_event', 'vote_internal', 'vote_event', 'view'],
-  view: ['edit', 'suggest_internal', 'suggest_event', 'vote_internal', 'vote_event'],
-  suggest_internal: ['edit', 'view', 'vote_internal', 'suggest_event', 'vote_event'],
-  suggest_event: ['vote_event', 'view', 'rejected'],
-  vote_internal: ['edit', 'view', 'suggest_internal', 'suggest_event', 'vote_event'],
-  vote_event: ['suggest_event', 'passed', 'rejected'],
+  edit: [...MANUALLY_SELECTABLE_MODES],
+  view: [...MANUALLY_SELECTABLE_MODES],
+  suggest_internal: [...MANUALLY_SELECTABLE_MODES],
+  suggest_event: ['view'],
+  vote_internal: [...MANUALLY_SELECTABLE_MODES],
+  vote_event: ['view'],
   passed: [], // Terminal state
   rejected: [], // Terminal state
 };
@@ -64,14 +71,7 @@ export const WORKFLOW_TRANSITIONS = EDITING_MODE_TRANSITIONS;
 /**
  * Non-terminal editing modes available for manual selection
  */
-export const SELECTABLE_MODES: EditingMode[] = [
-  'edit',
-  'view',
-  'suggest_internal',
-  'suggest_event',
-  'vote_internal',
-  'vote_event',
-];
+export const SELECTABLE_MODES: EditingMode[] = [...MANUALLY_SELECTABLE_MODES];
 
 /** @deprecated Use SELECTABLE_MODES instead */
 export const COLLABORATOR_SELECTABLE_STATUSES = SELECTABLE_MODES;
@@ -79,7 +79,7 @@ export const COLLABORATOR_SELECTABLE_STATUSES = SELECTABLE_MODES;
 /**
  * Event-phase editing modes
  */
-export const EVENT_MODES: EditingMode[] = ['suggest_event', 'vote_event'];
+export const EVENT_MODES: EditingMode[] = [...AUTOMATIC_EVENT_MODES];
 
 /** @deprecated Use EVENT_MODES instead */
 export const EVENT_CONTROLLED_STATUSES = EVENT_MODES;
@@ -87,7 +87,7 @@ export const EVENT_CONTROLLED_STATUSES = EVENT_MODES;
 /**
  * Terminal modes (cannot transition from these)
  */
-export const TERMINAL_MODES: EditingMode[] = ['passed', 'rejected'];
+export const TERMINAL_MODES: EditingMode[] = [...TERMINAL_EDITING_MODES];
 
 /** @deprecated Use TERMINAL_MODES instead */
 export const TERMINAL_STATUSES = TERMINAL_MODES;
@@ -168,29 +168,11 @@ export const EDITING_MODE_METADATA: Record<
 export const WORKFLOW_STATUS_METADATA = EDITING_MODE_METADATA;
 
 /**
- * Map of legacy editing_mode DB values to new EditingMode values.
- */
-const LEGACY_MODE_MAP: Record<string, EditingMode> = {
-  collaborative_editing: 'edit',
-  internal_suggesting: 'suggest_internal',
-  internal_voting: 'vote_internal',
-  viewing: 'view',
-  event_suggesting: 'suggest_event',
-  event_voting: 'vote_event',
-  Drafting: 'edit',
-  'Under Review': 'suggest_internal',
-  Passed: 'passed',
-  Rejected: 'rejected',
-};
-
-/**
  * Normalize a raw DB value to a valid EditingMode.
  * Maps legacy values (collaborative_editing, Drafting, etc.) to new ones.
  */
 export function normalizeEditingMode(raw: string | null | undefined): EditingMode {
-  if (!raw) return 'edit';
-  if (EDITING_MODE_METADATA[raw as EditingMode]) return raw as EditingMode;
-  return LEGACY_MODE_MAP[raw] ?? 'edit';
+  return normalizePolicyEditingMode(raw);
 }
 
 /**
@@ -205,7 +187,7 @@ export function canTransitionTo(currentMode: EditingMode, targetMode: EditingMod
  * Check if a mode is in an event phase
  */
 export function isEventPhase(mode: EditingMode): boolean {
-  return EVENT_MODES.includes(mode) || TERMINAL_MODES.includes(mode);
+  return isAutomaticEventMode(mode) || TERMINAL_MODES.includes(mode);
 }
 
 /**
@@ -240,7 +222,7 @@ export function isSelectableByCollaborator(mode: EditingMode): boolean {
  * Get the default editing mode for a new amendment
  */
 export function getDefaultEditingMode(): EditingMode {
-  return 'edit';
+  return getPolicyDefaultEditingMode();
 }
 
 /** @deprecated Use getDefaultEditingMode instead */

@@ -51,6 +51,24 @@ export {
 export type { AmendmentSupportVote, ChangeRequestVote } from '../votes/schema';
 export type { ChangeRequest } from '../change-requests/schema';
 
+// Editing-mode policy
+export {
+  AMENDMENT_EDITING_MODE_ORDER,
+  AUTOMATIC_EVENT_MODES,
+  MANUAL_INTERNAL_MODES,
+  MANUALLY_SELECTABLE_MODES,
+  getAmendmentEditingModePolicy,
+  getDefaultEditingMode,
+  normalizeEditingMode,
+  canManuallySelectEditingMode,
+  isAutomaticEventMode,
+  isManualInternalMode,
+  isTerminalEditingMode,
+  type AmendmentEditingModePolicy,
+  type AmendmentEditingModePolicyContext,
+  type EditingMode,
+} from './editing-mode-policy';
+
 // Queries & Mutators
 export { amendmentQueries } from './queries';
 export { amendmentSharedMutators } from './shared-mutators';

@@ -1,10 +1,12 @@
 // Table
-export { changeRequest } from './table'
+export { changeRequest } from './table';
 
 // Zod Schemas
 export {
   selectChangeRequestSchema,
   createChangeRequestSchema,
   updateChangeRequestSchema,
+  finalizeInternalChangeRequestVoteSchema,
+  finalizeExpiredInternalChangeRequestVotesSchema,
   type ChangeRequest,
-} from './schema'
+} from './schema';

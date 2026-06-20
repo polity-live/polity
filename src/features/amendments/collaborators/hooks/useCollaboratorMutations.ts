@@ -1,7 +1,18 @@
 import { useCallback } from 'react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { AMENDMENT_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import type { Role } from '../hooks/useCollaborators';
+
+const AMENDMENT_ACTION_RIGHT_KEYS = new Set(
+  AMENDMENT_ACTION_RIGHTS.map(right => `${right.resource}:${right.action}`)
+);
+
+function assertAmendmentActionRight(resource: string, action: string) {
+  if (!AMENDMENT_ACTION_RIGHT_KEYS.has(`${resource}:${action}`)) {
+    throw new Error(`Action right ${resource}:${action} is not valid for amendment roles.`);
+  }
+}
 
 /**
  * Orchestration hook that composes amendment + group action hooks
@@ -141,6 +152,7 @@ export function useCollaboratorMutations() {
           await removeActionRight({ id: ar.id });
         }
       } else {
+        assertAmendmentActionRight(resource, action);
         const role = roles.find(r => r.id === roleId);
         await assignActionRight({
           id: crypto.randomUUID(),

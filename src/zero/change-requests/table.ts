@@ -20,6 +20,10 @@ export const changeRequest = table('change_request')
     voting_deadline: number().optional(),
     voting_majority_type: string().optional(),
     quorum_required: number().optional(),
+    created_in_mode: string().optional(),
+    resolved_in_mode: string().optional(),
+    resolution_method: string().optional(),
+    visibility_scope: string().optional(),
     created_at: number(),
     updated_at: number(),
   })

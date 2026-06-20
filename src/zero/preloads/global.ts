@@ -3,6 +3,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { queries } from '@/zero/queries';
 import { createPreloadEntry, useZeroPreloads } from './preload-registry';
 import { HOME_DISCOVER_SEARCH_ARGS } from './search-context';
+import { useCurrentUserParticipantEventAgendaPreloads } from './entity-families';
 
 export function useCoreZeroPreloads() {
   const { user } = useAuth();
@@ -95,5 +96,6 @@ export function useLikelyFirstRoutePreloads() {
 export function useGlobalZeroPreloads() {
   useCoreZeroPreloads();
   useRelationshipEntityPreloads();
+  useCurrentUserParticipantEventAgendaPreloads();
   useLikelyFirstRoutePreloads();
 }

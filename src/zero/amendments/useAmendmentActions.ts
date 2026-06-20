@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useZero } from '@rocicorp/zero/react';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { getEditingModeOption } from '@/features/shared/ui/status';
 import { mutators } from '../mutators';
 import { onServerError, serverConfirmed } from '../mutate-with-server-check';
 
@@ -118,7 +119,8 @@ export function useAmendmentActions() {
   const updateEditingMode = useCallback(
     (id: string, editingMode: string) => {
       const result = zero.mutate(mutators.amendments.update({ id, editing_mode: editingMode }));
-      toast.success(t('features.amendments.toasts.workflowChanged', { status: editingMode }));
+      const modeLabel = getEditingModeOption(editingMode, t).label;
+      toast.success(t('features.amendments.toasts.workflowChanged', { status: modeLabel }));
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.workflowChangeFailed'))
       );
@@ -189,6 +191,31 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.voteOnChangeRequestFailed'))
       );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const finalizeInternalChangeRequestVote = useCallback(
+    (args: Parameters<typeof mutators.amendments.finalizeInternalChangeRequestVote>[0]) => {
+      const result = zero.mutate(mutators.amendments.finalizeInternalChangeRequestVote(args));
+      onServerError(result, () =>
+        toast.error(t('features.amendments.toasts.changeRequestUpdateFailed'))
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const finalizeExpiredInternalChangeRequestVotes = useCallback(
+    (args: Parameters<typeof mutators.amendments.finalizeExpiredInternalChangeRequestVotes>[0]) => {
+      const result = zero.mutate(
+        mutators.amendments.finalizeExpiredInternalChangeRequestVotes(args)
+      );
+      onServerError(result, () =>
+        toast.error(t('features.amendments.toasts.changeRequestUpdateFailed'))
+      );
+      return serverConfirmed(result);
     },
     [zero]
   );
@@ -534,6 +561,8 @@ export function useAmendmentActions() {
     createChangeRequest,
     updateChangeRequest,
     voteOnChangeRequest,
+    finalizeInternalChangeRequestVote,
+    finalizeExpiredInternalChangeRequestVotes,
 
     // Support
     supportAmendment,

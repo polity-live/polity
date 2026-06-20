@@ -6,6 +6,7 @@ import { BaseEditorKit } from '@/features/shared/ui/kit-platejs/editor-base-kit'
 import { filterDocumentToSuggestions } from '../logic/filterDocumentToSingleSuggestion';
 
 interface UseCREditorPreviewModelOptions {
+  allowInteractiveEditor?: boolean;
   amendmentId?: string;
   documentContent: Value;
   editingMode?: string | null;
@@ -13,6 +14,7 @@ interface UseCREditorPreviewModelOptions {
 }
 
 export function useCREditorPreviewModel({
+  allowInteractiveEditor = false,
   amendmentId,
   documentContent,
   editingMode,
@@ -20,7 +22,9 @@ export function useCREditorPreviewModel({
 }: UseCREditorPreviewModelOptions) {
   const [isOpen, setIsOpen] = useState(false);
   const isInteractive =
-    (editingMode === 'suggest_event' || editingMode === 'vote_event') && !!amendmentId;
+    allowInteractiveEditor &&
+    (editingMode === 'suggest_event' || editingMode === 'vote_event') &&
+    !!amendmentId;
 
   const suggestionIdsKey = useMemo(() => [...suggestionIds].sort().join(','), [suggestionIds]);
 

@@ -23,6 +23,10 @@ CREATE TABLE IF NOT EXISTS public.change_request (
   voting_deadline TIMESTAMPTZ,
   voting_majority_type TEXT,
   quorum_required INTEGER,
+  created_in_mode TEXT,
+  resolved_in_mode TEXT,
+  resolution_method TEXT,
+  visibility_scope TEXT NOT NULL DEFAULT 'public',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

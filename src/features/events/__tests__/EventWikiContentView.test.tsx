@@ -10,6 +10,7 @@ const wikiParticipationDirectoryMock = vi.hoisted(() =>
     <div data-testid="wiki-participation-directory">{leadingCard}</div>
   ))
 );
+const statsBarMock = vi.hoisted(() => vi.fn(() => <div data-testid="stats-bar" />));
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -59,7 +60,7 @@ vi.mock('@/features/shared/ui/ui/dialog', () => ({
 
 vi.mock('@/features/shared/ui/layout', () => ({
   ActionBar: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  StatsBar: () => <div data-testid="stats-bar" />,
+  StatsBar: statsBarMock,
 }));
 
 vi.mock('@/features/shared/ui/action-buttons', () => ({
@@ -172,6 +173,23 @@ function renderEventWikiContent(overrides: Partial<EventWikiContentViewProps> = 
 }
 
 describe('EventWikiContentView', () => {
+  it('uses computed agenda counters instead of stale persisted event counters', () => {
+    renderEventWikiContent({
+      amendmentsCount: 2,
+      electionsCount: 1,
+      openChangeRequestsCount: 3,
+    });
+
+    const stats = statsBarMock.mock.calls[0]?.[0]?.stats ?? [];
+    const valueByLabelKey = new Map(
+      stats.map((stat: { labelKey: string; value: number | string }) => [stat.labelKey, stat.value])
+    );
+
+    expect(valueByLabelKey.get('components.labels.amendments')).toBe(2);
+    expect(valueByLabelKey.get('components.labels.elections')).toBe(1);
+    expect(valueByLabelKey.get('components.labels.openChangeRequests')).toBe(3);
+  });
+
   it('renders the delegate members-per-seat ratio for delegate assemblies', () => {
     const t = (key: string, params?: Record<string, number>) => {
       if (key === 'features.delegates.ratio.oneMember') {

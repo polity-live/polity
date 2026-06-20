@@ -465,4 +465,72 @@ describe('TargetGroupEventSelector', () => {
       amendmentWorkflows.length = 0;
     }
   });
+
+  it('ignores target events whose amendment deadline has expired', async () => {
+    const now = Date.now();
+    amendmentEvents.push(
+      {
+        id: 'event-expired-target',
+        title: 'Expired target assembly',
+        start_date: now + 60 * 60 * 1000,
+        end_date: now + 2 * 60 * 60 * 1000,
+        amendment_deadline: now - 1,
+        location_name: 'Old Hall',
+        participant_count: 10,
+        group_id: 'group-target',
+        group: { id: 'group-target' },
+      },
+      {
+        id: 'event-open-target',
+        title: 'Open target assembly',
+        start_date: now + 3 * 60 * 60 * 1000,
+        end_date: now + 4 * 60 * 60 * 1000,
+        amendment_deadline: null,
+        location_name: 'New Hall',
+        participant_count: 20,
+        group_id: 'group-target',
+        group: { id: 'group-target' },
+      }
+    );
+
+    try {
+      const onSelect = vi.fn();
+
+      render(
+        <TargetGroupEventSelector
+          userId="user-1"
+          onSelect={onSelect}
+          allowGroupWithoutEvent
+          disablePortal
+        />
+      );
+
+      fireEvent.click(await screen.findByRole('button', { name: 'Select graph target final' }));
+
+      await waitFor(() =>
+        expect(onSelect).toHaveBeenCalledWith(
+          expect.objectContaining({
+            groupId: 'group-target',
+            eventId: 'event-open-target',
+          })
+        )
+      );
+      expect(onSelect).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventId: 'event-expired-target',
+        })
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.getAllByRole('button', { name: 'Remove Open target assembly' }).length
+        ).toBeGreaterThan(0)
+      );
+      expect(
+        screen.queryAllByRole('button', { name: 'Remove Expired target assembly' })
+      ).toHaveLength(0);
+    } finally {
+      amendmentEvents.splice(-2, 2);
+    }
+  });
 });

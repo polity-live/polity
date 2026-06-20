@@ -62,7 +62,7 @@ export function InviteDialogView({
         className={
           submissionActive
             ? 'h-dvh max-h-none w-screen max-w-none overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none sm:max-w-none'
-            : 'sm:max-w-[500px]'
+            : 'h-[min(680px,calc(100dvh-2rem))] sm:max-w-[500px]'
         }
       >
         {!submissionActive ? (

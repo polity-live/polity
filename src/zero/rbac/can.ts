@@ -23,6 +23,8 @@ import type { ResourceType, ActionType, Membership, GuestAccess, ActionRight, Ro
 
 // Build zql inside this module to avoid circular imports with schema.ts
 const zql = createBuilder(schema);
+const ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
+const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['active', 'collaborator', 'member', 'admin'];
 
 interface PermissionRoleLinkLike {
   role?: {
@@ -149,6 +151,7 @@ async function loadGroupMemberships(
     id: m.id,
     group: m.group ? { id: m.group.id } : undefined,
     roles: mapRolesFromLinks(m.membership_roles, 'group'),
+    status: m.status ?? undefined,
   }));
 }
 
@@ -170,6 +173,7 @@ async function loadGroupGuestAccesses(
     id: guestAccess.id,
     group: guestAccess.group ? { id: guestAccess.group.id } : undefined,
     roles: mapRolesFromLinks(guestAccess.guest_roles, 'group'),
+    status: guestAccess.status ?? undefined,
   }));
 }
 
@@ -187,6 +191,7 @@ async function loadEventParticipations(tx: Transaction<Schema>, userId: string, 
     zql.event_participant
       .where('user_id', userId)
       .where('event_id', eventId)
+      .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
       .related('participant_roles', q => q.related('role', rq => rq.related('action_rights')))
       .related('event')
   );
@@ -195,6 +200,7 @@ async function loadEventParticipations(tx: Transaction<Schema>, userId: string, 
     id: p.id,
     event: p.event ? { id: p.event.id } : undefined,
     roles: mapRolesFromLinks(p.participant_roles, 'event'),
+    status: p.status ?? undefined,
   }));
 }
 
@@ -228,7 +234,10 @@ async function loadAmendment(tx: Transaction<Schema>, amendmentId: string) {
       .where('id', amendmentId)
       .related('created_by')
       .related('collaborators', q =>
-        q.related('user').related('role', rq => rq.related('action_rights'))
+        q
+          .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+          .related('user')
+          .related('role', rq => rq.related('action_rights'))
       )
       .one()
   );
@@ -243,6 +252,7 @@ async function loadAmendment(tx: Transaction<Schema>, amendmentId: string) {
     amendmentRoleCollaborators: amendment.collaborators?.map(collaborator => ({
       id: collaborator.id,
       user: collaborator.user_id ? { id: collaborator.user_id } : undefined,
+      status: collaborator.status ?? undefined,
       role: collaborator.role
         ? {
             id: collaborator.role.id,

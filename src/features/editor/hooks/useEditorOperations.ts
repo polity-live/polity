@@ -44,7 +44,12 @@ function getDefaultVersionTitle(creationType: string): string {
 
 export function useEditorOperations(entityType: EditorEntityType, entityId: string) {
   const { createVersion } = useDocumentActions();
-  const { createChangeRequest, updateChangeRequest, voteOnChangeRequest } = useAmendmentActions();
+  const {
+    createChangeRequest,
+    finalizeInternalChangeRequestVote,
+    updateChangeRequest,
+    voteOnChangeRequest,
+  } = useAmendmentActions();
 
   // Query versions for computing next version number
   const isBlog = entityType === 'blog';
@@ -139,7 +144,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
 
         const updatedDiscussions = discussions.map(d => {
           if (d.id === suggestion.suggestionId || d.id === suggestion.id) {
-            return { ...d, status: 'accepted' };
+            return { ...d, status: 'accepted' as const };
           }
           return d;
         });
@@ -209,7 +214,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
 
         const updatedDiscussions = discussions.map(d => {
           if (d.id === suggestion.suggestionId || d.id === suggestion.id) {
-            return { ...d, status: 'rejected' };
+            return { ...d, status: 'rejected' as const };
           }
           return d;
         });
@@ -316,10 +321,28 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
     [createChangeRequest, voteOnChangeRequest]
   );
 
+  const handleFinalizeInternalVoteOnSuggestion = useCallback(
+    async (discussions: TDiscussion[], suggestion: SuggestionRef): Promise<void> => {
+      const discussion = discussions.find(
+        d => d.id === suggestion.suggestionId || d.id === suggestion.id
+      );
+      const changeRequestId = discussion?.changeRequestEntityId;
+
+      if (!changeRequestId) {
+        toast.error(translateText('generated.inline.0423_suggestion_not_found_26722c9c'));
+        return;
+      }
+
+      await finalizeInternalChangeRequestVote({ change_request_id: changeRequestId });
+    },
+    [finalizeInternalChangeRequestVote]
+  );
+
   return {
     handleSuggestionCreated,
     handleSuggestionAccepted,
     handleSuggestionDeclined,
     handleVoteOnSuggestion,
+    handleFinalizeInternalVoteOnSuggestion,
   };
 }

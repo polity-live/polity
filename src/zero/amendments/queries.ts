@@ -2,6 +2,7 @@ import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import {
   applyAgendaItemQueryAccess,
+  applyChangeRequestVisibilityAccess,
   applyDocumentQueryAccess,
   applyEventQueryAccess,
   applyGroupQueryAccess,
@@ -12,8 +13,9 @@ import {
 import { zql } from '../schema';
 import type { NormalizedGroupRelationship } from '@/features/network/types/network.types';
 
-const WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['collaborator', 'member', 'admin'];
-const NAVIGATION_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['collaborator', 'member', 'admin'];
+const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['active', 'collaborator', 'member', 'admin'];
+const WIKI_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ACTIVE_AMENDMENT_COLLABORATOR_STATUSES;
+const NAVIGATION_ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ACTIVE_AMENDMENT_COLLABORATOR_STATUSES;
 
 function applyAmendmentAccess<T>(q: T, userID: string | undefined): T {
   const query = q as any;
@@ -52,12 +54,28 @@ function applyAmendmentManagerAccess<T>(q: T, userID: string | undefined): T {
       exists('collaborators', (collaborator: any) =>
         collaborator
           .where('user_id', userID)
+          .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
           .whereExists('role', (role: any) =>
             role.whereExists('action_rights', (right: any) =>
               right.where('resource', 'amendments').where('action', 'manage')
             )
           )
       )
+    )
+  ) as T;
+}
+
+function applyAmendmentCollaboratorRosterAccess<T>(q: T, userID: string | undefined): T {
+  const query = q as any;
+
+  if (!userID || userID === 'anon') {
+    return query.where('id', '__unauthorized__') as T;
+  }
+
+  return query.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('user_id', userID),
+      exists('amendment', (amendment: any) => applyAmendmentManagerAccess(amendment, userID))
     )
   ) as T;
 }
@@ -148,9 +166,15 @@ export const amendmentQueries = {
       applyAmendmentAccess(zql.amendment.where('id', id), userID)
         .related('created_by')
         .related('group')
-        .related('collaborators', q => q.related('user'))
+        .related('collaborators', q =>
+          applyAmendmentCollaboratorRosterAccess(q, userID)
+            .related('user')
+            .related('role', role => role.related('action_rights'))
+        )
         .related('change_requests', q =>
-          q.related('user').related('votes', vote => vote.where('user_id', userID ?? '__anon__'))
+          applyChangeRequestVisibilityAccess(q, userID)
+            .related('user')
+            .related('votes', vote => vote.where('user_id', userID ?? '__anon__'))
         )
         .related('threads', q => q.related('user').related('comments'))
         .one()
@@ -165,7 +189,7 @@ export const amendmentQueries = {
       .related('amendment_hashtags', q => q.related('hashtag'))
       .related('support_votes', q => applyAmendmentUserPrivateAccess(q, userID).related('user'))
       .related('vote_entries', q => q.related('choices'))
-      .related('change_requests')
+      .related('change_requests', q => applyChangeRequestVisibilityAccess(q, userID))
       .related('support_confirmations', q =>
         q.related('group').related('event').related('process_task')
       )
@@ -370,7 +394,16 @@ export const amendmentQueries = {
     ({ args: { id }, ctx: { userID } }) =>
       applyAmendmentAccess(zql.amendment.where('id', id), userID)
         .related('document', q => q.related('collaborators', cq => cq.related('user')))
-        .related('collaborators', q => q.related('user'))
+        .related('collaborators', q =>
+          applyAmendmentCollaboratorRosterAccess(q, userID)
+            .related('user')
+            .related('role', role => role.related('action_rights'))
+        )
+        .related('change_requests', q =>
+          applyChangeRequestVisibilityAccess(q, userID).related('votes', vote =>
+            vote.where('user_id', userID ?? '__anon__')
+          )
+        )
         .one()
   ),
 
@@ -399,8 +432,10 @@ export const amendmentQueries = {
   collaborators: defineQuery(
     z.object({ amendment_id: z.string() }),
     ({ args: { amendment_id }, ctx: { userID } }) =>
-      zql.amendment_collaborator
-        .where('amendment_id', amendment_id)
+      applyAmendmentCollaboratorRosterAccess(
+        zql.amendment_collaborator.where('amendment_id', amendment_id),
+        userID
+      )
         .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
         .related('user')
         .orderBy('created_at', 'desc')
@@ -430,19 +465,24 @@ export const amendmentQueries = {
   changeRequests: defineQuery(
     z.object({ amendment_id: z.string() }),
     ({ args: { amendment_id }, ctx: { userID } }) =>
-      zql.change_request
-        .where('amendment_id', amendment_id)
-        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
-        .orderBy('created_at', 'desc')
+      applyChangeRequestVisibilityAccess(
+        zql.change_request
+          .where('amendment_id', amendment_id)
+          .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID)),
+        userID
+      ).orderBy('created_at', 'desc')
   ),
 
   // Change requests with votes and user for voting UI
   changeRequestsWithVotes: defineQuery(
     z.object({ amendment_id: z.string() }),
     ({ args: { amendment_id }, ctx: { userID } }) =>
-      zql.change_request
-        .where('amendment_id', amendment_id)
-        .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID))
+      applyChangeRequestVisibilityAccess(
+        zql.change_request
+          .where('amendment_id', amendment_id)
+          .whereExists('amendment', amendment => applyAmendmentAccess(amendment, userID)),
+        userID
+      )
         .related('votes', q => applyChangeRequestVotePrivateAccess(q, userID).related('user'))
         .orderBy('created_at', 'desc')
   ),
@@ -828,6 +868,7 @@ export const amendmentQueries = {
         .where('user_id', user_id)
         .where('user_id', userID)
         .related('amendment', q => q.related('created_by'))
+        .related('role')
   ),
 
   currentUserActiveCollaborationsWithAmendments: defineQuery(z.object({}), ({ ctx: { userID } }) =>

@@ -17,6 +17,7 @@ export { useEditorVersion } from './hooks/useEditorVersion';
 export { EditorView } from './ui/EditorView';
 export { EditorHeader } from './ui/EditorHeader';
 export { EditorToolbar } from './ui/EditorToolbar';
+export { OnlineCollaboratorAvatars } from './ui/OnlineCollaboratorAvatars';
 export { VersionControl } from './ui/VersionControl';
 export { ModeSelector } from './ui/ModeSelector';
 export { InviteCollaboratorDialog } from './ui/InviteCollaboratorDialog';

@@ -15,6 +15,10 @@ export interface ChangeRequestsPageContainerViewProps {
   timelineItems: any;
   diffMap: any;
   discussions: any;
+  canManageInternalVotes: any;
+  canVoteInternal: any;
+  onCastInternalVote: any;
+  onFinalizeInternalVote: any;
 }
 
 export function ChangeRequestsPageContainerView({
@@ -32,6 +36,10 @@ export function ChangeRequestsPageContainerView({
   timelineItems,
   diffMap,
   discussions,
+  canManageInternalVotes,
+  canVoteInternal,
+  onCastInternalVote,
+  onFinalizeInternalVote,
 }: ChangeRequestsPageContainerViewProps) {
   return (
     <ChangeRequestsView
@@ -50,6 +58,10 @@ export function ChangeRequestsPageContainerView({
       isLoading={isLoading}
       timelineItems={timelineItems}
       userId={userId}
+      canManageInternalVotes={canManageInternalVotes}
+      canVoteInternal={canVoteInternal}
+      onCastInternalVote={onCastInternalVote}
+      onFinalizeInternalVote={onFinalizeInternalVote}
     />
   );
 }

@@ -138,6 +138,14 @@ describe('process-engine implementation evaluation', () => {
         title: 'Housing Reform',
         reason: 'Important implementation review',
       },
+      [
+        { id: 'agenda-existing', order_index: 1, forwarding_status: 'forward_confirmed' },
+        {
+          id: 'agenda-outstanding',
+          order_index: 999,
+          forwarding_status: 'previous_decision_outstanding',
+        },
+      ],
       [{ id: 'branch-1', status: 'completed', created_at: 1 }],
     ]);
 
@@ -149,6 +157,7 @@ describe('process-engine implementation evaluation', () => {
 
     expect(tx.mutate.agenda_item.insert).toHaveBeenCalledWith(
       expect.objectContaining({
+        order_index: 2,
         type: 'implementation_review',
       })
     );
@@ -249,6 +258,78 @@ describe('process-engine implementation evaluation', () => {
           args.implementation_status === 'awaiting_evaluation'
       )
     ).toBe(true);
+  });
+
+  it('does not increment an already-appended next agenda item again', async () => {
+    const tx = createQueueTx([
+      [
+        {
+          id: 'step-current',
+          process_run_id: 'run-1',
+          branch_id: 'branch-1',
+          vote_id: 'vote-1',
+          target_group_id: null,
+          order_index: 1,
+          status: 'scheduled',
+          step_kind: 'group_vote',
+        },
+      ],
+      { id: 'agenda-current', amendment_id: 'amendment-1', title: 'Current Vote' },
+      {
+        id: 'run-1',
+        amendment_id: 'amendment-1',
+        created_by_id: 'user-creator',
+        status: 'scheduled',
+      },
+      { id: 'amendment-1', title: 'Housing Reform', reason: 'Reason' },
+      buildDecisionVote({ accept: 2, reject: 0 }),
+      { id: 'branch-1', status: 'scheduled', created_at: 1 },
+      [],
+      [
+        {
+          id: 'step-next',
+          process_run_id: 'run-1',
+          branch_id: 'branch-1',
+          vote_id: 'vote-next',
+          target_group_id: null,
+          order_index: 2,
+          status: 'scheduled',
+          step_kind: 'group_vote',
+          event_id: 'event-next',
+          agenda_item_id: 'agenda-next',
+        },
+      ],
+      [
+        { id: 'agenda-existing', order_index: 1, forwarding_status: 'forward_confirmed' },
+        { id: 'agenda-next', order_index: 2, forwarding_status: 'forward_confirmed' },
+        {
+          id: 'agenda-outstanding',
+          order_index: 999,
+          forwarding_status: 'previous_decision_outstanding',
+        },
+      ],
+      [],
+      [],
+      [],
+      [{ id: 'branch-1', status: 'scheduled', created_at: 1 }],
+      { id: 'event-next', start_date: Number.MAX_SAFE_INTEGER },
+      { id: 'amendment-1', editing_mode: 'view' },
+    ]);
+
+    await resolveAmendmentProcessVote(tx as never, { agenda_item_id: 'agenda-current' });
+
+    expect(tx.mutate.agenda_item.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'agenda-next',
+        order_index: 2,
+      })
+    );
+    expect(tx.mutate.agenda_item.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'agenda-next',
+        order_index: 3,
+      })
+    );
   });
 
   it('marks the implementation evaluation as failed immediately when the fixed due date is already in the past', async () => {

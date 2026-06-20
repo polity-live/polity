@@ -19,6 +19,7 @@ import {
 import { fireNotification } from '../server-notify';
 import { resolveAmendmentProcessVote } from '../amendments/process-engine';
 import { notifyProcessVoteResolution } from '../amendments/process-notifications';
+import { finalizeInternalChangeRequestsForEventPhaseTransition } from '../change-requests/internal-voting';
 import {
   createVoteSchema,
   updateVoteSchema,
@@ -214,6 +215,39 @@ async function loadVoteContext(
   return { isChangeRequestVote: Boolean(timelineLink) };
 }
 
+async function syncVoteEventEditingMode(
+  tx: VoteTx,
+  ctx: { readonly userID: string },
+  amendmentId: string | null | undefined
+) {
+  if (!amendmentId) {
+    return;
+  }
+
+  const amendment = await tx.run(zql.amendment.where('id', amendmentId).one());
+  if (
+    !amendment ||
+    amendment.editing_mode === 'vote_event' ||
+    amendment.editing_mode === 'passed' ||
+    amendment.editing_mode === 'rejected'
+  ) {
+    return;
+  }
+
+  await finalizeInternalChangeRequestsForEventPhaseTransition({
+    tx,
+    ctx,
+    amendmentId: amendment.id,
+    now: Date.now(),
+  });
+
+  await tx.mutate.amendment.update({
+    id: amendment.id,
+    editing_mode: 'vote_event',
+    updated_at: Date.now(),
+  });
+}
+
 async function summarizeFinalVoteResult(
   tx: VoteTx,
   vote: {
@@ -289,6 +323,10 @@ export const voteServerMutators = {
           : { isChangeRequestVote: false };
 
     await mutators.votes.updateVote.fn({ tx, ctx, args });
+
+    if (isStartingFinalVote && oldVote && !voteContext.isChangeRequestVote) {
+      await syncVoteEventEditingMode(tx, ctx, oldVote.amendment_id);
+    }
 
     if (
       !voteContext.isChangeRequestVote &&

@@ -3,6 +3,7 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 interface AmendmentEditContentProps {
   amendmentId: string;
   amendment: ReturnType<typeof useAmendmentState>['amendment'];
+  amendmentProcess?: ReturnType<typeof useAmendmentState>['amendmentProcess'];
   currentUserId: string;
   isLoading: boolean;
   mode?: 'create' | 'edit';
@@ -15,6 +16,7 @@ import { AmendmentEditContentView } from './AmendmentEditContentView';
 export function AmendmentEditContent({
   amendmentId,
   amendment,
+  amendmentProcess,
   currentUserId,
   isLoading,
   mode,
@@ -23,6 +25,7 @@ export function AmendmentEditContent({
   const viewProps = useAmendmentEditContentController({
     amendmentId,
     amendment,
+    amendmentProcess,
     currentUserId,
     isLoading,
     mode,

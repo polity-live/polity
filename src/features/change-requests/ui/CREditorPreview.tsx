@@ -5,7 +5,9 @@ import { useCREditorPreviewModel } from '../hooks/useCREditorPreviewModel';
 interface CREditorPreviewProps {
   documentContent: Value;
   suggestionIds: Set<string>;
-  /** Amendment editing mode — when 'suggest_event', renders interactive editor */
+  /** Render the inline amendment editor instead of a static preview when event modes allow it. */
+  allowInteractiveEditor?: boolean;
+  /** Amendment editing mode used when interactive rendering is explicitly enabled. */
   editingMode?: string | null;
   /** Amendment ID — required for interactive mode */
   amendmentId?: string;
@@ -19,6 +21,7 @@ import { CREditorPreviewView } from './CREditorPreviewView';
 export function CREditorPreview({
   documentContent,
   suggestionIds,
+  allowInteractiveEditor,
   editingMode,
   amendmentId,
   userId,
@@ -26,6 +29,7 @@ export function CREditorPreview({
   toolbarEnd,
 }: CREditorPreviewProps) {
   const { editor, isInteractive, isOpen, onOpenChange } = useCREditorPreviewModel({
+    allowInteractiveEditor,
     amendmentId,
     documentContent,
     editingMode,

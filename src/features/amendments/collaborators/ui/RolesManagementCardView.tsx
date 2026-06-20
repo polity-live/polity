@@ -20,6 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
+import { AMENDMENT_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import type { Role } from '../hooks/useCollaborators';
 export interface RolesManagementCardViewProps {
   amendmentId: any;
@@ -173,6 +174,9 @@ export function RolesManagementCardView({
 
       <RolesPermissionsTable
         roles={roles}
+        actionRights={AMENDMENT_ACTION_RIGHTS}
+        title="Role Permissions"
+        description="Manage amendment collaborator role permissions."
         onTogglePermission={(roleId, resource, action, currentlyHas) =>
           handleToggleActionRight(roleId, resource, action, currentlyHas)
         }

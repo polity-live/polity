@@ -1,20 +1,41 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
-import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import type { EditingMode } from '@/zero/rbac/workflow-constants';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
-import { SELECTABLE_MODES, normalizeEditingMode } from '@/zero/rbac/workflow-constants';
+import { AMENDMENT_EDITING_MODE_ORDER, normalizeEditingMode } from '@/zero/rbac/workflow-constants';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { getEditingModeOption, type SelectableEditingMode } from '@/features/shared/ui/status';
+import { deriveControllingEventForSettings } from '@/features/amendments/logic/amendmentSettingsEventPhase';
+type InternalCRVotingCloseTrigger = 'all_collaborators_voted' | 'after_minutes';
+type InternalCRResolutionVisibility = 'public' | 'collaborators';
+
+const DEFAULT_INTERNAL_CR_VOTING_CLOSE_TRIGGER: InternalCRVotingCloseTrigger =
+  'all_collaborators_voted';
+const DEFAULT_INTERNAL_CR_VOTING_DURATION_MINUTES = 5;
+const DEFAULT_INTERNAL_CR_RESOLUTION_VISIBILITY: InternalCRResolutionVisibility = 'public';
+
+function normalizeInternalCRVotingCloseTrigger(
+  value: string | null | undefined
+): InternalCRVotingCloseTrigger {
+  return value === 'after_minutes' ? 'after_minutes' : DEFAULT_INTERNAL_CR_VOTING_CLOSE_TRIGGER;
+}
+
+function normalizeInternalCRResolutionVisibility(
+  value: string | null | undefined
+): InternalCRResolutionVisibility {
+  return value === 'collaborators' ? 'collaborators' : DEFAULT_INTERNAL_CR_RESOLUTION_VISIBILITY;
+}
+
 interface AmendmentEditContentProps {
   amendmentId: string;
   amendment: ReturnType<typeof useAmendmentState>['amendment'];
+  amendmentProcess?: ReturnType<typeof useAmendmentState>['amendmentProcess'];
   currentUserId: string;
   isLoading: boolean;
   mode?: 'create' | 'edit';
@@ -24,6 +45,7 @@ interface AmendmentEditContentProps {
 export function useAmendmentEditContentController({
   amendmentId,
   amendment,
+  amendmentProcess,
   currentUserId,
   isLoading,
   mode,
@@ -35,9 +57,7 @@ export function useAmendmentEditContentController({
 
   const { t } = useTranslation();
 
-  const { updateAmendment, createAmendment, updateEditingMode } = useAmendmentActions();
-
-  const { initializeChangeRequestVoting } = useAgendaActions();
+  const { updateAmendment, createAmendment } = useAmendmentActions();
 
   const commonActions = useCommonActions();
 
@@ -54,17 +74,29 @@ export function useAmendmentEditContentController({
     videoURL: '',
     videoThumbnailURL: '',
     workflowStatus: 'edit' as EditingMode,
-    autoCloseVoting: false,
+    internalCRVotingCloseTrigger:
+      DEFAULT_INTERNAL_CR_VOTING_CLOSE_TRIGGER as InternalCRVotingCloseTrigger,
+    internalCRVotingDurationMinutes: DEFAULT_INTERNAL_CR_VOTING_DURATION_MINUTES,
+    internalCRResolutionVisibility: DEFAULT_INTERNAL_CR_RESOLUTION_VISIBILITY,
     visibility: 'public' as Visibility,
-    date: '',
-    supporters: 0,
     hashtags: [] as string[],
   });
 
   const workflowStatusOption = getEditingModeOption(formData.workflowStatus, t);
+  const controllingEvent = useMemo(() => {
+    const event = deriveControllingEventForSettings(amendmentProcess, formData.workflowStatus);
+    if (!event) return null;
+
+    return {
+      ...event,
+      title: event.title ?? t('features.amendments.editContent.eventFallback'),
+    };
+  }, [amendmentProcess, formData.workflowStatus, t]);
 
   const workflowMenuValue = (
-    SELECTABLE_MODES.includes(formData.workflowStatus) ? formData.workflowStatus : 'view'
+    (AMENDMENT_EDITING_MODE_ORDER as readonly EditingMode[]).includes(formData.workflowStatus)
+      ? formData.workflowStatus
+      : 'view'
   ) as SelectableEditingMode;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -97,10 +129,16 @@ export function useAmendmentEditContentController({
         videoURL: '',
         videoThumbnailURL: '',
         workflowStatus: normalizeEditingMode(amendment.editing_mode),
-        autoCloseVoting: false, // Will be loaded from document settings
+        internalCRVotingCloseTrigger: normalizeInternalCRVotingCloseTrigger(
+          amendment.internal_cr_voting_close_trigger
+        ),
+        internalCRVotingDurationMinutes:
+          amendment.internal_cr_voting_duration_minutes ??
+          DEFAULT_INTERNAL_CR_VOTING_DURATION_MINUTES,
+        internalCRResolutionVisibility: normalizeInternalCRResolutionVisibility(
+          amendment.internal_cr_resolution_visibility
+        ),
         visibility: (amendment.visibility as Visibility) ?? 'public',
-        date: new Date().toLocaleDateString(),
-        supporters: 0,
         hashtags: amendmentHashtags
           ? amendmentHashtags.map(j => j.hashtag?.tag).filter((t): t is string => !!t)
           : Array.isArray(amendment.tags)
@@ -137,36 +175,21 @@ export function useAmendmentEditContentController({
       }
 
       try {
-        await updateEditingMode(amendmentId, value);
+        await updateAmendment({
+          id: amendmentId,
+          editing_mode: value,
+          internal_cr_voting_close_trigger: formData.internalCRVotingCloseTrigger,
+          internal_cr_voting_duration_minutes:
+            formData.internalCRVotingCloseTrigger === 'after_minutes'
+              ? formData.internalCRVotingDurationMinutes
+              : null,
+          internal_cr_resolution_visibility: formData.internalCRResolutionVisibility,
+        });
         console.info('[AmendmentEditContent] Workflow status persisted from settings', {
           amendmentId,
           newMode: value,
           previousMode: previousWorkflowStatus,
         });
-
-        // Initialize CR voting when transitioning to vote_event
-        if (value === 'vote_event' && agendaItemId) {
-          console.info('[AmendmentEditContent] Initializing CR voting', {
-            amendmentId,
-            agendaItemId,
-          });
-          await initializeChangeRequestVoting({
-            amendment_id: amendmentId,
-            agenda_item_id: agendaItemId,
-            voting_context: 'event',
-          });
-          console.info('[AmendmentEditContent] CR voting initialized', {
-            amendmentId,
-            agendaItemId,
-          });
-        } else if (value === 'vote_event' && !agendaItemId) {
-          console.warn(
-            '[AmendmentEditContent] Cannot initialize CR voting — no agenda item linked to this amendment',
-            {
-              amendmentId,
-            }
-          );
-        }
       } catch (error) {
         setFormData(prev => ({ ...prev, workflowStatus: previousWorkflowStatus }));
         console.error('[AmendmentEditContent] Failed to persist workflow status from settings', {
@@ -180,11 +203,12 @@ export function useAmendmentEditContentController({
     [
       amendment,
       amendmentId,
-      agendaItemId,
+      formData.internalCRVotingCloseTrigger,
+      formData.internalCRVotingDurationMinutes,
+      formData.internalCRResolutionVisibility,
       formData.workflowStatus,
       isCreating,
-      updateEditingMode,
-      initializeChangeRequestVoting,
+      updateAmendment,
     ]
   );
 
@@ -218,6 +242,12 @@ export function useAmendmentEditContentController({
           document_id: null,
           tags: formData.hashtags.length > 0 ? formData.hashtags : null,
           visibility: formData.visibility,
+          internal_cr_voting_close_trigger: formData.internalCRVotingCloseTrigger,
+          internal_cr_voting_duration_minutes:
+            formData.internalCRVotingCloseTrigger === 'after_minutes'
+              ? formData.internalCRVotingDurationMinutes
+              : null,
+          internal_cr_resolution_visibility: formData.internalCRResolutionVisibility,
           discussions: null,
           image_url: formData.imageURL || null,
           x: null,
@@ -235,8 +265,13 @@ export function useAmendmentEditContentController({
           title: formData.title,
           code: formData.code,
           editing_mode: formData.workflowStatus,
+          internal_cr_voting_close_trigger: formData.internalCRVotingCloseTrigger,
+          internal_cr_voting_duration_minutes:
+            formData.internalCRVotingCloseTrigger === 'after_minutes'
+              ? formData.internalCRVotingDurationMinutes
+              : null,
+          internal_cr_resolution_visibility: formData.internalCRResolutionVisibility,
           visibility: formData.visibility,
-          supporters: formData.supporters,
           tags: formData.hashtags,
           image_url: formData.imageURL || null,
         });
@@ -318,6 +353,7 @@ export function useAmendmentEditContentController({
   return {
     amendmentId,
     amendment,
+    amendmentProcess,
     currentUserId,
     isLoading,
     mode,
@@ -327,8 +363,6 @@ export function useAmendmentEditContentController({
     t,
     updateAmendment,
     createAmendment,
-    updateEditingMode,
-    initializeChangeRequestVoting,
     commonActions,
     amendmentHashtags,
     allHashtags,
@@ -336,6 +370,7 @@ export function useAmendmentEditContentController({
     setFormData,
     workflowStatusOption,
     workflowMenuValue,
+    controllingEvent,
     isSubmitting,
     setIsSubmitting,
     showReview,

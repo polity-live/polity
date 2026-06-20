@@ -130,7 +130,9 @@ export function AgendaActionBar({
     currentAgendaItem?.status === 'in-progress' || currentAgendaItem?.status === 'active';
   const canStartCurrentItem =
     Boolean(currentAgendaItem) && !isCurrentItemActive && currentAgendaItem?.status !== 'completed';
-  const showStartButton = Boolean(onStartItem) && (canStartCurrentItem || !currentAgendaItem);
+  const showLifecycleControls = canManageAgenda;
+  const showStartButton =
+    showLifecycleControls && Boolean(onStartItem) && (canStartCurrentItem || !currentAgendaItem);
 
   const isElection = currentAgendaItem?.type === 'election' || !!currentAgendaItem?.election;
   const isVote =
@@ -227,6 +229,7 @@ export function AgendaActionBar({
       navigate={navigate}
       isCurrentItemActive={isCurrentItemActive}
       canStartCurrentItem={canStartCurrentItem}
+      showLifecycleControls={showLifecycleControls}
       showStartButton={showStartButton}
       isElection={isElection}
       isVote={isVote}

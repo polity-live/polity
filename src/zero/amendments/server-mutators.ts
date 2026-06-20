@@ -30,7 +30,12 @@ import {
   completeProcessTaskWithEventSchema,
   createProcessTaskSchema,
 } from './schema';
-import { createChangeRequestSchema, updateChangeRequestSchema } from '../change-requests/schema';
+import {
+  createChangeRequestSchema,
+  finalizeExpiredInternalChangeRequestVotesSchema,
+  finalizeInternalChangeRequestVoteSchema,
+  updateChangeRequestSchema,
+} from '../change-requests/schema';
 import {
   createAmendmentSupportVoteSchema,
   updateAmendmentSupportVoteSchema,
@@ -47,14 +52,30 @@ import { can } from '../rbac/can';
 import { assertCanViewAmendment } from '../rbac/amendment-access';
 import { canReadVisibility, requireAuthenticated, requireOwner } from '../rbac/authorize';
 import { PermissionError } from '../rbac/errors';
+import { canManuallySelectEditingMode, normalizeEditingMode } from './editing-mode-policy';
+import {
+  finalizeExpiredInternalChangeRequestVotesForAmendment,
+  finalizeInternalChangeRequestsForEventPhaseTransition,
+  initializeInternalChangeRequestVotingForAmendment,
+  maybeFinalizeInternalChangeRequestVote,
+  resolveInternalChangeRequestVote,
+} from '../change-requests/internal-voting';
+import { getResolvedChangeRequestVisibilityScope } from '../change-requests/visibility';
+import { assertAmendmentTargetEventOpen } from '@/features/amendments/logic/amendmentTargetEventEligibility';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = new Set(['collaborator', 'member', 'admin']);
 const ACTIVE_GROUP_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
+const TERMINAL_PROCESS_STEP_STATUSES = new Set([
+  'approved',
+  'rejected',
+  'merged',
+  'withdrawn',
+  'completed',
+]);
 
 type AmendmentServerTx = Parameters<typeof mutators.amendments.create.fn>[0]['tx'];
 type AmendmentServerCtx = Parameters<typeof mutators.amendments.create.fn>[0]['ctx'];
-
 function getProcessTaskNotificationTitle(
   taskType: string | null | undefined,
   title?: string | null
@@ -130,6 +151,129 @@ async function assertCanMutateAmendment(
   await can(tx, ctx, { action, resource: 'amendments', amendmentId });
 }
 
+const STARTED_AGENDA_ITEM_STATUSES = new Set([
+  'active',
+  'in-progress',
+  'completed',
+  'done',
+  'closed',
+]);
+
+function isAgendaItemStarted(item: {
+  status?: string | null;
+  activated_at?: number | null;
+  start_time?: number | null;
+  completed_at?: number | null;
+}) {
+  return (
+    Boolean(item.activated_at || item.start_time || item.completed_at) ||
+    STARTED_AGENDA_ITEM_STATUSES.has(item.status ?? '')
+  );
+}
+
+async function loadFirstProcessAgendaItemState(
+  tx: AmendmentServerTx,
+  amendment: Awaited<ReturnType<typeof loadAmendmentForMutation>>
+) {
+  if (!amendment.current_process_run_id) {
+    return {
+      hasProcess: false,
+      firstAgendaItemStarted: false,
+    };
+  }
+
+  const steps = await tx.run(
+    zql.amendment_process_step_run
+      .where('process_run_id', amendment.current_process_run_id)
+      .orderBy('order_index', 'asc')
+  );
+  const firstEventStep = steps.find(step => Boolean(step.event_id));
+  const firstEventAgendaItems = firstEventStep?.event_id
+    ? await tx.run(
+        zql.agenda_item.where('event_id', firstEventStep.event_id).orderBy('order_index', 'asc')
+      )
+    : [];
+  const linkedAgendaItem = firstEventStep?.agenda_item_id
+    ? await tx.run(zql.agenda_item.where('id', firstEventStep.agenda_item_id).one())
+    : null;
+  const firstAgendaItem = linkedAgendaItem ?? firstEventAgendaItems[0] ?? null;
+
+  return {
+    hasProcess: true,
+    firstAgendaItemStarted: firstAgendaItem ? isAgendaItemStarted(firstAgendaItem) : false,
+  };
+}
+
+async function assertManualEditingModeChangeAllowed(
+  tx: AmendmentServerTx,
+  amendment: Awaited<ReturnType<typeof loadAmendmentForMutation>>,
+  targetMode: string | null | undefined
+) {
+  const normalizedTarget = normalizeEditingMode(targetMode);
+  const processState = await loadFirstProcessAgendaItemState(tx, amendment);
+
+  if (
+    !canManuallySelectEditingMode(normalizedTarget, {
+      ...processState,
+      currentMode: amendment.editing_mode,
+      eventSuggestionOpen: amendment.editing_mode === 'suggest_event',
+      eventVotingOpen: amendment.editing_mode === 'vote_event',
+    })
+  ) {
+    throw new PermissionError('update', 'amendments', `editing_mode:${normalizedTarget}`);
+  }
+}
+
+async function findCurrentProcessEventId(
+  tx: AmendmentServerTx,
+  amendment: Awaited<ReturnType<typeof loadAmendmentForMutation>>
+) {
+  if (!amendment.current_process_run_id) {
+    return amendment.event_id ?? null;
+  }
+
+  const steps = await tx.run(
+    zql.amendment_process_step_run
+      .where('process_run_id', amendment.current_process_run_id)
+      .orderBy('order_index', 'asc')
+  );
+  const activeEventStep =
+    steps.find(step => step.event_id && !TERMINAL_PROCESS_STEP_STATUSES.has(step.status ?? '')) ??
+    steps.find(step => Boolean(step.event_id));
+
+  return activeEventStep?.event_id ?? amendment.event_id ?? null;
+}
+
+async function assertCanCreateChangeRequest(
+  tx: AmendmentServerTx,
+  ctx: AmendmentServerCtx,
+  amendmentId: string
+) {
+  const amendment = await loadAmendmentForMutation(tx, amendmentId);
+  const mode = normalizeEditingMode(amendment.editing_mode);
+
+  if (mode === 'view' || mode === 'vote_event' || mode === 'passed' || mode === 'rejected') {
+    throw new PermissionError('create', 'change_requests', `editing_mode:${mode}`);
+  }
+
+  if (mode !== 'suggest_event') {
+    await assertCanMutateAmendment(tx, ctx, amendmentId, 'update');
+    return amendment;
+  }
+
+  const eventId = await findCurrentProcessEventId(tx, amendment);
+  if (!eventId) {
+    throw new PermissionError('active_voting', 'events', `amendment:${amendmentId}`);
+  }
+
+  await can(tx, ctx, {
+    action: 'active_voting',
+    resource: 'events',
+    eventId,
+  });
+  return amendment;
+}
+
 async function assertCanResolveProcessVote(
   tx: AmendmentServerTx,
   ctx: AmendmentServerCtx,
@@ -188,6 +332,17 @@ async function assertCanCompleteProcessTaskWithEvent(
     resource: 'events',
     eventId: targetEventId,
   });
+
+  await assertAmendmentTargetEventIdOpen(tx, targetEventId);
+}
+
+async function assertAmendmentTargetEventIdOpen(tx: AmendmentServerTx, eventId: string) {
+  const event = await tx.run(zql.event.where('id', eventId).one());
+  if (!event) {
+    throw new Error('Event not found');
+  }
+
+  assertAmendmentTargetEventOpen(event);
 }
 
 async function assertCanViewOrRequestCollaboration(
@@ -229,6 +384,12 @@ async function loadChangeRequestForMutation(tx: AmendmentServerTx, changeRequest
   return changeRequest;
 }
 
+function isFinalChangeRequestStatus(status: string | null | undefined) {
+  return (
+    status === 'accepted' || status === 'approved' || status === 'rejected' || status === 'declined'
+  );
+}
+
 async function assertCanVoteOnChangeRequest(
   tx: AmendmentServerTx,
   ctx: AmendmentServerCtx,
@@ -236,6 +397,10 @@ async function assertCanVoteOnChangeRequest(
 ) {
   requireAuthenticated(tx, ctx, { action: 'vote', resource: 'amendments' });
   const changeRequest = await loadChangeRequestForMutation(tx, changeRequestId);
+  const amendment = await loadAmendmentForMutation(tx, changeRequest.amendment_id);
+  if (normalizeEditingMode(amendment.editing_mode) !== 'vote_internal') {
+    throw new PermissionError('vote', 'amendments', 'editing_mode:vote_internal');
+  }
   await can(tx, ctx, {
     action: 'vote',
     resource: 'amendments',
@@ -260,6 +425,40 @@ function changeRequestUpdateNeedsManage(
     args.votes_against !== undefined ||
     args.votes_abstain !== undefined
   );
+}
+
+function isEventEditingMode(mode: string | null | undefined) {
+  const normalizedMode = normalizeEditingMode(mode);
+  return normalizedMode === 'suggest_event' || normalizedMode === 'vote_event';
+}
+
+function getChangeRequestResolutionMetadata(
+  mode: string | null | undefined,
+  amendment?: { internal_cr_resolution_visibility?: string | null } | null
+) {
+  const normalizedMode = normalizeEditingMode(mode);
+  const visibility_scope = getResolvedChangeRequestVisibilityScope({
+    resolvedInMode: normalizedMode,
+    internalResolutionVisibility: amendment?.internal_cr_resolution_visibility,
+  });
+
+  if (
+    normalizedMode === 'edit' ||
+    normalizedMode === 'suggest_internal' ||
+    normalizedMode === 'view'
+  ) {
+    return {
+      resolved_in_mode: normalizedMode,
+      resolution_method: 'direct_internal',
+      visibility_scope,
+    };
+  }
+
+  return {
+    resolved_in_mode: normalizedMode,
+    resolution_method: null,
+    visibility_scope,
+  };
 }
 
 async function loadSupportVoteForMutation(tx: AmendmentServerTx, voteId: string) {
@@ -352,6 +551,10 @@ async function notifyAmendmentCollaboratorRoleChange(
 export const amendmentServerMutators = {
   create: defineMutator(createAmendmentSchema, async ({ tx, ctx, args }) => {
     await assertCanCreateAmendment(tx, ctx);
+
+    if (args.event_id) {
+      await assertAmendmentTargetEventIdOpen(tx, args.event_id);
+    }
 
     const sourceAmendment = args.clone_source_id
       ? await tx.run(zql.amendment.where('id', args.clone_source_id).one())
@@ -471,10 +674,59 @@ export const amendmentServerMutators = {
     await assertCanMutateAmendment(tx, ctx, args.id, 'update');
     const previousAmendment = await tx.run(zql.amendment.where('id', args.id).one());
 
+    if (
+      previousAmendment &&
+      args.editing_mode !== undefined &&
+      args.editing_mode !== previousAmendment.editing_mode
+    ) {
+      await assertManualEditingModeChangeAllowed(tx, previousAmendment, args.editing_mode);
+    }
+
+    if (
+      previousAmendment &&
+      args.event_id !== undefined &&
+      args.event_id &&
+      args.event_id !== previousAmendment.event_id
+    ) {
+      await assertAmendmentTargetEventIdOpen(tx, args.event_id);
+    }
+
+    const previousMode = normalizeEditingMode(previousAmendment?.editing_mode);
+    const nextMode =
+      args.editing_mode !== undefined ? normalizeEditingMode(args.editing_mode) : previousMode;
+    const internalVotingSettingsChanged =
+      args.internal_cr_voting_close_trigger !== undefined ||
+      args.internal_cr_voting_duration_minutes !== undefined;
+    const now = Date.now();
+
+    if (previousAmendment && previousMode === 'vote_internal' && isEventEditingMode(nextMode)) {
+      await finalizeInternalChangeRequestsForEventPhaseTransition({
+        tx,
+        ctx,
+        amendmentId: previousAmendment.id,
+        now,
+      });
+    }
+
     await mutators.amendments.update.fn({ tx, ctx, args });
 
     if (!previousAmendment) {
       return;
+    }
+
+    if (
+      nextMode === 'vote_internal' &&
+      (previousMode !== 'vote_internal' || internalVotingSettingsChanged)
+    ) {
+      await initializeInternalChangeRequestVotingForAmendment({
+        tx,
+        amendment: {
+          ...previousAmendment,
+          ...args,
+          id: previousAmendment.id,
+        },
+        now,
+      });
     }
 
     const nextTitle = args.title ?? previousAmendment.title ?? 'Amendment';
@@ -751,7 +1003,7 @@ export const amendmentServerMutators = {
   ),
 
   createChangeRequest: defineMutator(createChangeRequestSchema, async ({ tx, ctx, args }) => {
-    await assertCanMutateAmendment(tx, ctx, args.amendment_id, 'update');
+    await assertCanCreateChangeRequest(tx, ctx, args.amendment_id);
 
     await mutators.amendments.createChangeRequest.fn({ tx, ctx, args });
 
@@ -786,8 +1038,32 @@ export const amendmentServerMutators = {
 
   voteOnChangeRequest: defineMutator(createChangeRequestVoteSchema, async ({ tx, ctx, args }) => {
     const changeRequest = await assertCanVoteOnChangeRequest(tx, ctx, args.change_request_id);
+    const now = Date.now();
+
+    await maybeFinalizeInternalChangeRequestVote({
+      tx,
+      ctx,
+      changeRequestId: changeRequest.id,
+      reason: 'deadline',
+      now,
+    });
+
+    const currentChangeRequest = await loadChangeRequestForMutation(tx, changeRequest.id);
+    if (
+      isFinalChangeRequestStatus(currentChangeRequest.status) ||
+      currentChangeRequest.voting_status === 'completed'
+    ) {
+      throw new Error('Change request voting is already completed');
+    }
 
     await mutators.amendments.voteOnChangeRequest.fn({ tx, ctx, args });
+    await maybeFinalizeInternalChangeRequestVote({
+      tx,
+      ctx,
+      changeRequestId: changeRequest.id,
+      reason: 'after_vote',
+      now,
+    });
 
     if (changeRequest.user_id === ctx.userID) {
       return;
@@ -809,17 +1085,95 @@ export const amendmentServerMutators = {
     });
   }),
 
+  finalizeInternalChangeRequestVote: defineMutator(
+    finalizeInternalChangeRequestVoteSchema,
+    async ({ tx, ctx, args }) => {
+      const now = Date.now();
+      const changeRequest = await loadChangeRequestForMutation(tx, args.change_request_id);
+      const amendment = await loadAmendmentForMutation(tx, changeRequest.amendment_id);
+
+      if (normalizeEditingMode(amendment.editing_mode) !== 'vote_internal') {
+        throw new PermissionError('update', 'amendments', 'editing_mode:vote_internal');
+      }
+      if (
+        isFinalChangeRequestStatus(changeRequest.status) ||
+        changeRequest.voting_status === 'completed'
+      ) {
+        throw new Error('Change request voting is already completed');
+      }
+
+      await assertCanMutateAmendment(tx, ctx, changeRequest.amendment_id, 'update');
+
+      await resolveInternalChangeRequestVote({
+        tx,
+        ctx,
+        changeRequestId: changeRequest.id,
+        now,
+      });
+
+      await recomputeAmendmentCounters(tx, changeRequest.amendment_id);
+
+      if (amendment.event_id) {
+        await recomputeEventCounters(tx, amendment.event_id);
+      }
+    }
+  ),
+
+  finalizeExpiredInternalChangeRequestVotes: defineMutator(
+    finalizeExpiredInternalChangeRequestVotesSchema,
+    async ({ tx, ctx, args }) => {
+      await assertCanViewAmendment(tx, ctx, args.amendment_id);
+      const now = Date.now();
+      await finalizeExpiredInternalChangeRequestVotesForAmendment({
+        tx,
+        ctx,
+        amendmentId: args.amendment_id,
+        now,
+      });
+
+      await recomputeAmendmentCounters(tx, args.amendment_id);
+      const amendment = await tx.run(zql.amendment.where('id', args.amendment_id).one());
+      if (amendment?.event_id) {
+        await recomputeEventCounters(tx, amendment.event_id);
+      }
+    }
+  ),
+
   updateChangeRequest: defineMutator(updateChangeRequestSchema, async ({ tx, ctx, args }) => {
     const previous = await loadChangeRequestForMutation(tx, args.id);
+    const amendment = await loadAmendmentForMutation(tx, previous.amendment_id);
+    const amendmentMode = normalizeEditingMode(amendment.editing_mode);
+    if (
+      args.status !== undefined &&
+      isFinalChangeRequestStatus(args.status) &&
+      !isFinalChangeRequestStatus(previous.status) &&
+      (amendmentMode === 'suggest_event' ||
+        amendmentMode === 'vote_internal' ||
+        amendmentMode === 'vote_event')
+    ) {
+      throw new PermissionError('update', 'amendments', `editing_mode:${amendmentMode}`);
+    }
+
     if (previous.user_id !== ctx.userID || changeRequestUpdateNeedsManage(args)) {
       await assertCanMutateAmendment(tx, ctx, previous.amendment_id, 'update');
     }
 
     await mutators.amendments.updateChangeRequest.fn({ tx, ctx, args });
 
+    if (
+      args.status !== undefined &&
+      isFinalChangeRequestStatus(args.status) &&
+      !isFinalChangeRequestStatus(previous.status)
+    ) {
+      await tx.mutate.change_request.update({
+        id: previous.id,
+        ...getChangeRequestResolutionMetadata(amendmentMode, amendment),
+        updated_at: Date.now(),
+      });
+    }
+
     await recomputeAmendmentCounters(tx, previous.amendment_id);
 
-    const amendment = await tx.run(zql.amendment.where('id', previous.amendment_id).one());
     if (amendment?.event_id) {
       await recomputeEventCounters(tx, amendment.event_id);
     }

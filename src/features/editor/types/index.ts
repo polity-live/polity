@@ -94,6 +94,8 @@ export const DEFAULT_CAPABILITIES: Record<EditorEntityType, EditorCapabilities> 
 export interface EditorUser {
   id: string;
   name: string;
+  firstName?: string | null;
+  lastName?: string | null;
   email?: string | null;
   avatarUrl?: string;
 }
@@ -134,6 +136,17 @@ export interface EditorDiscussion {
   justification?: string;
   createdAt: Date;
   status?: 'pending' | 'accepted' | 'rejected';
+  votesFor?: number;
+  votesAgainst?: number;
+  votesAbstain?: number;
+  votingDeadline?: number | null;
+  closeTrigger?: string | null;
+  eligibleVoterCount?: number;
+  votedCollaboratorCount?: number;
+  resolutionMethod?: string | null;
+  visibilityScope?: string | null;
+  resolvedInMode?: string | null;
+  votingStatus?: string | null;
   votes?: EditorVote[];
   // Required TDiscussion fields
   comments: EditorComment[];
@@ -180,6 +193,9 @@ export interface EditorEntity {
   updatedAt: number;
   owner?: EditorUser;
   collaborators: EditorCollaborator[];
+  canChangeMode?: boolean;
+  canVoteOnChangeRequests?: boolean;
+  canManageChangeRequestVotes?: boolean;
   /** Entity-specific metadata */
   metadata: EditorEntityMetadata;
 }
@@ -191,8 +207,14 @@ export interface EditorCollaborator {
   id: string;
   user: EditorUser;
   role?: string;
+  roleActionRights?: {
+    id: string;
+    resource: string;
+    action: string;
+    amendmentId?: string | null;
+  }[];
   canEdit: boolean;
-  status?: 'owner' | 'admin' | 'collaborator' | 'viewer';
+  status?: 'owner' | 'admin' | 'collaborator' | 'member' | 'viewer';
 }
 
 /**
@@ -203,8 +225,6 @@ export interface EditorEntityMetadata {
   /** Amendment-specific */
   amendmentId?: string;
   amendmentCode?: string;
-  amendmentDate?: string;
-  amendmentSupporters?: number;
   amendmentEditingMode?: string;
   amendmentStatus?: string;
   /** Blog-specific */
@@ -250,6 +270,8 @@ export interface EditorState {
   // Access
   hasAccess: boolean;
   isOwnerOrCollaborator: boolean;
+  canVoteOnChangeRequests: boolean;
+  canManageChangeRequestVotes: boolean;
 
   // Capabilities
   capabilities: EditorCapabilities;

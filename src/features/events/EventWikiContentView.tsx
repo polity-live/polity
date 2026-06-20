@@ -275,15 +275,15 @@ export function EventWikiContentView({
           },
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
           {
-            value: event.election_count ?? electionsCount,
+            value: electionsCount ?? event.election_count ?? 0,
             labelKey: 'components.labels.elections',
           },
           {
-            value: event.amendment_count ?? amendmentsCount,
+            value: amendmentsCount ?? event.amendment_count ?? 0,
             labelKey: 'components.labels.amendments',
           },
           {
-            value: event.open_change_request_count ?? openChangeRequestsCount,
+            value: openChangeRequestsCount ?? event.open_change_request_count ?? 0,
             labelKey: 'components.labels.openChangeRequests',
           },
         ]}

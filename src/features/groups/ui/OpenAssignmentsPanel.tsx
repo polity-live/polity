@@ -22,6 +22,7 @@ import {
   getSchedulingWindowDisplayLabel,
   isEventWithinSchedulingWindow,
 } from '@/features/amendments/logic/processTaskEventScheduling';
+import { isAmendmentTargetEventOpen } from '@/features/amendments/logic/amendmentTargetEventEligibility';
 import {
   buildCreateEventSearchFromDelegateElectionAssignment,
   isEventWithinDelegateElectionSchedulingWindow,
@@ -49,6 +50,7 @@ interface AvailableEventLike {
   status?: string | null;
   start_date?: number | null;
   end_date?: number | null;
+  amendment_deadline?: number | null;
   group_id?: string | null;
 }
 
@@ -224,7 +226,10 @@ function getEligibleEventsForAssignment(
   }
 
   const schedulingWindow = getProcessTaskSchedulingWindow(task);
-  return availableEvents.filter(event => isEventWithinSchedulingWindow(event, schedulingWindow));
+  return availableEvents.filter(
+    event =>
+      isEventWithinSchedulingWindow(event, schedulingWindow) && isAmendmentTargetEventOpen(event)
+  );
 }
 
 function getAssignmentSchedulingWindowLabel(assignment: GroupOpenAssignment, groupId: string) {

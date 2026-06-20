@@ -131,9 +131,6 @@ alter table "public"."ai_tool" enable row level security;
     "clone_source_id" uuid,
     "origin_amendment_id" uuid,
     "document_id" uuid,
-    "supporters" integer not null default 0,
-    "supporters_required" integer,
-    "supporters_percentage" numeric,
     "upvotes" integer not null default 0,
     "downvotes" integer not null default 0,
     "tags" jsonb,
@@ -142,6 +139,9 @@ alter table "public"."ai_tool" enable row level security;
     "clone_count" integer not null default 0,
     "change_request_count" integer not null default 0,
     "editing_mode" text,
+    "internal_cr_voting_close_trigger" text not null default 'all_collaborators_voted'::text,
+    "internal_cr_voting_duration_minutes" integer,
+    "internal_cr_resolution_visibility" text not null default 'public'::text,
     "discussions" jsonb,
     "comment_count" integer not null default 0,
     "collaborator_count" integer not null default 0,
@@ -444,6 +444,10 @@ alter table "public"."calendar_subscription" enable row level security;
     "voting_deadline" timestamp with time zone,
     "voting_majority_type" text,
     "quorum_required" integer,
+    "created_in_mode" text,
+    "resolved_in_mode" text,
+    "resolution_method" text,
+    "visibility_scope" text not null default 'public'::text,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
       );
@@ -5117,6 +5121,28 @@ alter table "public"."voting_password" add constraint "voting_password_user_id_k
 
 set check_function_bodies = off;
 
+CREATE OR REPLACE FUNCTION public.amendment_supporting_group_count(target_amendment_id uuid)
+ RETURNS integer
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  SELECT count(*)::INTEGER
+  FROM public.amendment_group_decision decision
+  LEFT JOIN LATERAL (
+    SELECT confirmation.status
+    FROM public.support_confirmation confirmation
+    WHERE confirmation.amendment_id = decision.amendment_id
+      AND confirmation.group_id = decision.group_id
+    ORDER BY confirmation.created_at DESC, confirmation.id DESC
+    LIMIT 1
+  ) latest_confirmation ON true
+  WHERE decision.amendment_id = target_amendment_id
+    AND decision.status IN ('supported', 'accepted')
+    AND coalesce(latest_confirmation.status, '') NOT IN ('declined', 'withdrawn');
+$function$
+;
+
 CREATE OR REPLACE FUNCTION public.current_user_has_password()
  RETURNS boolean
  LANGUAGE sql
@@ -5437,6 +5463,134 @@ BEGIN
   NEW.location_longitude := NULL;
   NEW.location_label := NULL;
   NEW.location_source := NULL;
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.refresh_amendment_search_document(target_amendment_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+  amendment_row public.amendment%ROWTYPE;
+  supporting_group_count INTEGER;
+  net_user_votes INTEGER;
+BEGIN
+  SELECT *
+  INTO amendment_row
+  FROM public.amendment
+  WHERE id = target_amendment_id;
+
+  IF NOT FOUND THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('amendment', target_amendment_id);
+    RETURN;
+  END IF;
+
+  supporting_group_count := public.amendment_supporting_group_count(amendment_row.id);
+  net_user_votes := coalesce(amendment_row.upvotes, 0) - coalesce(amendment_row.downvotes, 0);
+
+  INSERT INTO public.search_document (
+    id,
+    entity_type,
+    entity_id,
+    title,
+    subtitle,
+    summary,
+    search_text,
+    visibility,
+    owner_user_id,
+    group_id,
+    image_url,
+    card_payload,
+    created_at,
+    updated_at,
+    engagement_score,
+    trending_score
+  )
+  VALUES (
+    public.search_document_id('amendment', amendment_row.id),
+    'amendment',
+    amendment_row.id,
+    coalesce(nullif(amendment_row.title, ''), nullif(amendment_row.code, ''), 'Amendment'),
+    amendment_row.code,
+    coalesce(amendment_row.reason, amendment_row.preamble),
+    concat_ws(
+      ' ',
+      amendment_row.code,
+      amendment_row.title,
+      amendment_row.reason,
+      amendment_row.preamble,
+      amendment_row.category
+    ),
+    coalesce(amendment_row.visibility, 'public'),
+    amendment_row.created_by_id,
+    amendment_row.group_id,
+    amendment_row.image_url,
+    jsonb_build_object(
+      'type', 'amendment',
+      'code', amendment_row.code,
+      'status', amendment_row.editing_mode,
+      'entity_id', amendment_row.id,
+      'metadata', jsonb_build_object('event_id', amendment_row.event_id),
+      'stats', jsonb_build_object(
+        'upvotes', amendment_row.upvotes,
+        'downvotes', amendment_row.downvotes,
+        'supporting_groups', supporting_group_count,
+        'comments', amendment_row.comment_count
+      )
+    ),
+    amendment_row.created_at,
+    amendment_row.updated_at,
+    net_user_votes + supporting_group_count + coalesce(amendment_row.comment_count, 0),
+    net_user_votes + supporting_group_count
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    subtitle = EXCLUDED.subtitle,
+    summary = EXCLUDED.summary,
+    search_text = EXCLUDED.search_text,
+    visibility = EXCLUDED.visibility,
+    owner_user_id = EXCLUDED.owner_user_id,
+    group_id = EXCLUDED.group_id,
+    image_url = EXCLUDED.image_url,
+    card_payload = EXCLUDED.card_payload,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at,
+    engagement_score = EXCLUDED.engagement_score,
+    trending_score = EXCLUDED.trending_score;
+
+  PERFORM public.sync_amendment_search_document_topics(amendment_row.id);
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.refresh_amendment_search_document_from_support()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+  target_amendment_id UUID;
+BEGIN
+  target_amendment_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.amendment_id ELSE NEW.amendment_id END;
+
+  IF TG_OP = 'UPDATE' AND OLD.amendment_id IS DISTINCT FROM NEW.amendment_id THEN
+    PERFORM public.refresh_amendment_search_document(OLD.amendment_id);
+  END IF;
+
+  IF target_amendment_id IS NOT NULL THEN
+    PERFORM public.refresh_amendment_search_document(target_amendment_id);
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
+
   RETURN NEW;
 END;
 $function$
@@ -5950,69 +6104,7 @@ BEGIN
     RETURN OLD;
   END IF;
 
-  INSERT INTO public.search_document (
-    id,
-    entity_type,
-    entity_id,
-    title,
-    subtitle,
-    summary,
-    search_text,
-    visibility,
-    owner_user_id,
-    group_id,
-    image_url,
-    card_payload,
-    created_at,
-    updated_at,
-    engagement_score,
-    trending_score
-  )
-  VALUES (
-    public.search_document_id('amendment', NEW.id),
-    'amendment',
-    NEW.id,
-    coalesce(nullif(NEW.title, ''), nullif(NEW.code, ''), 'Amendment'),
-    NEW.code,
-    coalesce(NEW.reason, NEW.preamble),
-    concat_ws(' ', NEW.code, NEW.title, NEW.reason, NEW.preamble, NEW.category),
-    coalesce(NEW.visibility, 'public'),
-    NEW.created_by_id,
-    NEW.group_id,
-    NEW.image_url,
-    jsonb_build_object(
-      'type', 'amendment',
-      'code', NEW.code,
-      'status', NEW.editing_mode,
-      'entity_id', NEW.id,
-      'metadata', jsonb_build_object('event_id', NEW.event_id),
-      'stats', jsonb_build_object(
-        'supporters', NEW.supporters,
-        'upvotes', NEW.upvotes,
-        'comments', NEW.comment_count
-      )
-    ),
-    NEW.created_at,
-    NEW.updated_at,
-    coalesce(NEW.supporters, 0) + coalesce(NEW.upvotes, 0) - coalesce(NEW.downvotes, 0) + coalesce(NEW.comment_count, 0),
-    coalesce(NEW.upvotes, 0) - coalesce(NEW.downvotes, 0)
-  )
-  ON CONFLICT (id) DO UPDATE SET
-    title = EXCLUDED.title,
-    subtitle = EXCLUDED.subtitle,
-    summary = EXCLUDED.summary,
-    search_text = EXCLUDED.search_text,
-    visibility = EXCLUDED.visibility,
-    owner_user_id = EXCLUDED.owner_user_id,
-    group_id = EXCLUDED.group_id,
-    image_url = EXCLUDED.image_url,
-    card_payload = EXCLUDED.card_payload,
-    created_at = EXCLUDED.created_at,
-    updated_at = EXCLUDED.updated_at,
-    engagement_score = EXCLUDED.engagement_score,
-    trending_score = EXCLUDED.trending_score;
-
-  PERFORM public.sync_amendment_search_document_topics(NEW.id);
+  PERFORM public.refresh_amendment_search_document(NEW.id);
   RETURN NEW;
 END;
 $function$
@@ -13337,6 +13429,8 @@ using (true);
 
 CREATE TRIGGER trg_search_document_amendment AFTER INSERT OR DELETE OR UPDATE ON public.amendment FOR EACH ROW EXECUTE FUNCTION public.upsert_amendment_search_document();
 
+CREATE TRIGGER trg_search_document_amendment_group_decision AFTER INSERT OR DELETE OR UPDATE ON public.amendment_group_decision FOR EACH ROW EXECUTE FUNCTION public.refresh_amendment_search_document_from_support();
+
 CREATE TRIGGER trg_search_document_amendment_hashtag AFTER INSERT OR DELETE OR UPDATE ON public.amendment_hashtag FOR EACH ROW EXECUTE FUNCTION public.refresh_amendment_search_document_topics_from_hashtag();
 
 CREATE TRIGGER trg_search_document_blog AFTER INSERT OR DELETE OR UPDATE ON public.blog FOR EACH ROW EXECUTE FUNCTION public.upsert_blog_search_document();
@@ -13366,6 +13460,8 @@ CREATE TRIGGER trg_search_document_populate_location BEFORE INSERT OR UPDATE ON 
 CREATE TRIGGER trg_search_document_statement AFTER INSERT OR DELETE OR UPDATE ON public.statement FOR EACH ROW EXECUTE FUNCTION public.upsert_statement_search_document();
 
 CREATE TRIGGER trg_search_document_statement_hashtag AFTER INSERT OR DELETE OR UPDATE ON public.statement_hashtag FOR EACH ROW EXECUTE FUNCTION public.refresh_statement_search_document_topics_from_hashtag();
+
+CREATE TRIGGER trg_search_document_support_confirmation AFTER INSERT OR DELETE OR UPDATE ON public.support_confirmation FOR EACH ROW EXECUTE FUNCTION public.refresh_amendment_search_document_from_support();
 
 CREATE TRIGGER trg_search_document_timeline_event AFTER INSERT OR DELETE OR UPDATE ON public.timeline_event FOR EACH ROW EXECUTE FUNCTION public.upsert_timeline_event_search_document();
 

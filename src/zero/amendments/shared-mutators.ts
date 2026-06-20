@@ -30,7 +30,12 @@ import {
   resolveAmendmentProcessVoteSchema,
   completeProcessTaskWithEventSchema,
 } from './schema';
-import { createChangeRequestSchema, updateChangeRequestSchema } from '../change-requests/schema';
+import {
+  createChangeRequestSchema,
+  finalizeExpiredInternalChangeRequestVotesSchema,
+  finalizeInternalChangeRequestVoteSchema,
+  updateChangeRequestSchema,
+} from '../change-requests/schema';
 import {
   createChangeRequestVoteSchema,
   createAmendmentSupportVoteSchema,
@@ -39,6 +44,11 @@ import {
 } from '../votes/schema';
 import { zql } from '../schema';
 import { denyPublicApiMutation } from '../rbac/authorize';
+import {
+  getOpenChangeRequestVisibilityScope,
+  getResolvedChangeRequestVisibilityScope,
+  INTERNAL_CR_RESOLUTION_DEFAULT_VISIBILITY,
+} from '../change-requests/visibility';
 
 function denyPublicAmendmentProcessMutation(
   tx: Parameters<typeof denyPublicApiMutation>[0],
@@ -46,6 +56,182 @@ function denyPublicAmendmentProcessMutation(
   scope: string
 ) {
   denyPublicApiMutation(tx, { action, resource: 'amendments', scope });
+}
+
+interface ChangeRequestVoteRow {
+  id: string;
+  change_request_id: string;
+  user_id: string;
+  vote?: string | null;
+  created_at: number;
+}
+
+const INTERNAL_CR_VOTING_DEFAULT_TRIGGER = 'all_collaborators_voted';
+const INTERNAL_CR_VOTING_DEFAULT_DURATION_MINUTES = 5;
+const INTERNAL_MODES = new Set(['edit', 'suggest_internal', 'vote_internal']);
+
+function normalizeEditingModeForChangeRequest(mode: string | null | undefined) {
+  if (mode === 'collaborative' || mode === 'collaborative_editing') return 'edit';
+  if (mode === 'internal_suggestion' || mode === 'internal_suggestions') return 'suggest_internal';
+  if (mode === 'internal_voting') return 'vote_internal';
+  if (mode === 'event_suggestion' || mode === 'event_suggestions') return 'suggest_event';
+  if (mode === 'event_voting') return 'vote_event';
+  return mode ?? 'edit';
+}
+
+function getChangeRequestVisibilityScope(mode: string | null | undefined) {
+  const normalizedMode = normalizeEditingModeForChangeRequest(mode);
+  return getOpenChangeRequestVisibilityScope(normalizedMode);
+}
+
+function getChangeRequestResolvedVisibilityScope(
+  mode: string | null | undefined,
+  internalResolutionVisibility?: string | null
+) {
+  const normalizedMode = normalizeEditingModeForChangeRequest(mode);
+  return getResolvedChangeRequestVisibilityScope({
+    resolvedInMode: normalizedMode,
+    internalResolutionVisibility,
+  });
+}
+
+function isResolvedStatus(status: string | null | undefined) {
+  return isClosedChangeRequestStatus(status);
+}
+
+function getDirectResolutionMethod(mode: string | null | undefined) {
+  const normalizedMode = normalizeEditingModeForChangeRequest(mode);
+  if (normalizedMode === 'vote_internal') return 'internal_vote';
+  if (normalizedMode === 'vote_event') return 'event_vote';
+  if (INTERNAL_MODES.has(normalizedMode)) return 'direct_internal';
+  return null;
+}
+
+function normalizeInternalCRVotingTrigger(value: string | null | undefined) {
+  return value === 'after_minutes' ? value : INTERNAL_CR_VOTING_DEFAULT_TRIGGER;
+}
+
+function normalizeInternalCRVotingDurationMinutes(value: number | null | undefined) {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? Math.max(1, Math.floor(value))
+    : INTERNAL_CR_VOTING_DEFAULT_DURATION_MINUTES;
+}
+
+function isClosedChangeRequestStatus(status: string | null | undefined) {
+  return (
+    status === 'accepted' || status === 'approved' || status === 'rejected' || status === 'declined'
+  );
+}
+
+function countLatestChangeRequestVotes(votes: Iterable<ChangeRequestVoteRow>) {
+  let votes_for = 0;
+  let votes_against = 0;
+  let votes_abstain = 0;
+
+  for (const vote of votes) {
+    if (vote.vote === 'accept') votes_for += 1;
+    if (vote.vote === 'reject') votes_against += 1;
+    if (vote.vote === 'abstain') votes_abstain += 1;
+  }
+
+  return { votes_for, votes_against, votes_abstain };
+}
+
+async function upsertChangeRequestVoteAndRecompute({
+  tx,
+  userID,
+  args,
+}: {
+  tx: Parameters<typeof denyPublicApiMutation>[0];
+  userID: string;
+  args: {
+    id: string;
+    change_request_id: string;
+    vote?: string | null;
+  };
+}) {
+  const changeRequest = await tx.run(zql.change_request.where('id', args.change_request_id).one());
+  if (!changeRequest) {
+    throw new Error('Change request not found');
+  }
+  if (
+    isClosedChangeRequestStatus(changeRequest.status) ||
+    changeRequest.voting_status === 'completed'
+  ) {
+    throw new Error('Change request voting is already completed');
+  }
+
+  const now = Date.now();
+  const existingVotes = await tx.run(
+    zql.change_request_vote.where('change_request_id', args.change_request_id)
+  );
+  const userVotes = existingVotes.filter(vote => vote.user_id === userID);
+  const currentUserKeeper = userVotes.reduce<ChangeRequestVoteRow | null>((latest, vote) => {
+    if (!latest) return vote;
+    return (vote.created_at ?? 0) > (latest.created_at ?? 0) ? vote : latest;
+  }, null);
+
+  const currentVote: ChangeRequestVoteRow = currentUserKeeper
+    ? {
+        ...currentUserKeeper,
+        vote: args.vote ?? null,
+        created_at: now,
+      }
+    : {
+        id: args.id,
+        change_request_id: args.change_request_id,
+        user_id: userID,
+        vote: args.vote ?? null,
+        created_at: now,
+      };
+
+  if (currentUserKeeper) {
+    await tx.mutate.change_request_vote.update({
+      id: currentUserKeeper.id,
+      vote: args.vote ?? null,
+      created_at: now,
+    });
+  } else {
+    await tx.mutate.change_request_vote.insert(currentVote);
+  }
+
+  const candidateVotes = [
+    ...existingVotes.filter(vote => vote.user_id !== userID),
+    currentVote,
+  ].sort((left, right) => {
+    const byCreatedAt = (right.created_at ?? 0) - (left.created_at ?? 0);
+    return byCreatedAt !== 0 ? byCreatedAt : right.id.localeCompare(left.id);
+  });
+
+  const latestVoteByUser = new Map<string, ChangeRequestVoteRow>();
+  const duplicateVoteIds = new Set<string>();
+
+  for (const vote of candidateVotes) {
+    if (!latestVoteByUser.has(vote.user_id)) {
+      latestVoteByUser.set(vote.user_id, vote);
+      continue;
+    }
+    duplicateVoteIds.add(vote.id);
+  }
+
+  for (const vote of userVotes) {
+    if (vote.id !== currentVote.id) {
+      duplicateVoteIds.add(vote.id);
+    }
+  }
+
+  for (const voteId of duplicateVoteIds) {
+    await tx.mutate.change_request_vote.delete({ id: voteId });
+  }
+
+  const counts = countLatestChangeRequestVotes(latestVoteByUser.values());
+  await tx.mutate.change_request.update({
+    id: args.change_request_id,
+    ...counts,
+    updated_at: now,
+  });
+
+  return { changeRequest, counts };
 }
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
@@ -56,14 +242,16 @@ export const amendmentSharedMutators = {
       ...args,
       origin_amendment_id: args.origin_amendment_id ?? args.clone_source_id ?? args.id,
       created_by_id: userID,
-      supporters: 0,
       subscriber_count: 0,
       clone_count: 0,
       change_request_count: 0,
-      supporters_required: 0,
-      supporters_percentage: 0,
       upvotes: 0,
       downvotes: 0,
+      internal_cr_voting_close_trigger:
+        args.internal_cr_voting_close_trigger ?? INTERNAL_CR_VOTING_DEFAULT_TRIGGER,
+      internal_cr_voting_duration_minutes: args.internal_cr_voting_duration_minutes ?? null,
+      internal_cr_resolution_visibility:
+        args.internal_cr_resolution_visibility ?? INTERNAL_CR_RESOLUTION_DEFAULT_VISIBILITY,
       comment_count: 0,
       collaborator_count: 0,
       current_process_run_id: args.current_process_run_id ?? null,
@@ -131,6 +319,17 @@ export const amendmentSharedMutators = {
     createChangeRequestSchema,
     async ({ tx, ctx: { userID }, args }) => {
       const now = Date.now();
+      const amendment = await tx.run(zql.amendment.where('id', args.amendment_id).one());
+      const createdInMode = normalizeEditingModeForChangeRequest(amendment?.editing_mode);
+      const trigger = normalizeInternalCRVotingTrigger(amendment?.internal_cr_voting_close_trigger);
+      const durationMinutes = normalizeInternalCRVotingDurationMinutes(
+        amendment?.internal_cr_voting_duration_minutes
+      );
+      const votingDeadline =
+        createdInMode === 'vote_internal' && trigger === 'after_minutes'
+          ? now + durationMinutes * 60_000
+          : (args.voting_deadline ?? null);
+      const isResolved = isResolvedStatus(args.status);
       await tx.mutate.change_request.insert({
         ...args,
         user_id: userID,
@@ -138,6 +337,16 @@ export const amendmentSharedMutators = {
         votes_for: 0,
         votes_against: 0,
         votes_abstain: 0,
+        voting_deadline: votingDeadline,
+        created_in_mode: createdInMode,
+        resolved_in_mode: isResolved ? createdInMode : null,
+        resolution_method: isResolved ? getDirectResolutionMethod(createdInMode) : null,
+        visibility_scope: isResolved
+          ? getChangeRequestResolvedVisibilityScope(
+              createdInMode,
+              amendment?.internal_cr_resolution_visibility
+            )
+          : getChangeRequestVisibilityScope(createdInMode),
         created_at: now,
         updated_at: now,
       });
@@ -147,12 +356,25 @@ export const amendmentSharedMutators = {
   voteOnChangeRequest: defineMutator(
     createChangeRequestVoteSchema,
     async ({ tx, ctx: { userID }, args }) => {
-      const now = Date.now();
-      await tx.mutate.change_request_vote.insert({
-        ...args,
-        user_id: userID,
-        created_at: now,
+      await upsertChangeRequestVoteAndRecompute({
+        tx,
+        userID,
+        args,
       });
+    }
+  ),
+
+  finalizeInternalChangeRequestVote: defineMutator(
+    finalizeInternalChangeRequestVoteSchema,
+    async () => {
+      return;
+    }
+  ),
+
+  finalizeExpiredInternalChangeRequestVotes: defineMutator(
+    finalizeExpiredInternalChangeRequestVotesSchema,
+    async () => {
+      return;
     }
   ),
 

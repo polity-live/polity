@@ -97,18 +97,21 @@ export interface Membership {
   id: string;
   group?: { id: string };
   roles?: Role[];
+  status?: string;
 }
 
 export interface GuestAccess {
   id: string;
   group?: { id: string };
   roles?: Role[];
+  status?: string;
 }
 
 export interface Participation {
   id: string;
   event?: { id: string };
   roles?: Role[];
+  status?: string;
 }
 
 export interface BloggerRelation {
@@ -128,6 +131,7 @@ export interface AmendmentRoleCollaborator {
   id: string;
   user?: { id: string };
   role?: Role;
+  status?: string;
 }
 
 export interface Amendment {

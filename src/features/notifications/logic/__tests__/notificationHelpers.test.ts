@@ -53,12 +53,18 @@ function notificationOverrides(overrides: unknown): Partial<Notification> {
 }
 
 describe('getNotificationNavigationTarget', () => {
-  it('routes event invites to memberships page', () => {
+  it.each([
+    ['group_invite', '/group/group-1/memberships'],
+    ['membership_invite', '/group/group-1/memberships'],
+    ['event_invite', '/event/event-42/participants'],
+    ['participation_invite', '/event/event-42/participants'],
+    ['collaboration_invite', '/amendment/amendment-1/collaborators'],
+  ])('routes %s notifications to the recipient memberships page', (type, actionUrl) => {
     const target = getNotificationNavigationTarget(
       createNotification({
-        type: 'event_invite',
+        type: type as Notification['type'],
         recipient_id: 'user-123',
-        action_url: '/event/event-42/participants',
+        action_url: actionUrl,
       })
     );
 

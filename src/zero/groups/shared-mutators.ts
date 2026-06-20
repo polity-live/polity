@@ -1,6 +1,7 @@
 import { defineMutator } from '@rocicorp/zero';
 import { can } from '../rbac/can';
 import { requireAuthenticated } from '../rbac/authorize';
+import { AMENDMENT_ACTION_RIGHTS } from '../rbac/constants';
 import { zql } from '../schema';
 import {
   groupCreateSchema,
@@ -46,6 +47,16 @@ const GUEST_ONLY_SIBLING_MEMBERSHIP_MODES: ReadonlySet<string> = new Set([
   'role_members',
   'selected_source_groups',
 ]);
+const AMENDMENT_ACTION_RIGHT_KEYS = new Set(
+  AMENDMENT_ACTION_RIGHTS.map(right => `${right.resource}:${right.action}`)
+);
+
+function isAllowedAmendmentActionRight(
+  resource: string | null | undefined,
+  action: string | null | undefined
+) {
+  return Boolean(resource && action && AMENDMENT_ACTION_RIGHT_KEYS.has(`${resource}:${action}`));
+}
 
 function requiresGuestAccessFlow(group: {
   group_type?: string | null;
@@ -97,6 +108,7 @@ async function authorizeScopedRoleMutation(
   scope: {
     group_id?: string | null;
     event_id?: string | null;
+    amendment_id?: string | null;
     blog_id?: string | null;
   }
 ) {
@@ -107,6 +119,15 @@ async function authorizeScopedRoleMutation(
 
   if (scope.event_id) {
     await can(tx, ctx, { action: 'manage', resource: 'events', eventId: scope.event_id });
+    return;
+  }
+
+  if (scope.amendment_id) {
+    await can(tx, ctx, {
+      action: 'manage',
+      resource: 'amendments',
+      amendmentId: scope.amendment_id,
+    });
     return;
   }
 
@@ -1333,8 +1354,16 @@ export const groupSharedMutators = {
   }),
 
   assignActionRight: defineMutator(actionRightCreateSchema, async ({ tx, ctx, args }) => {
+    if (args.amendment_id && !isAllowedAmendmentActionRight(args.resource, args.action)) {
+      throw new Error(
+        `Action right ${args.resource}:${args.action} is not valid for amendment roles.`
+      );
+    }
     await authorizeScopedRoleMutation(tx, ctx, args);
     const role = await tx.run(zql.role.where('id', args.role_id).one());
+    if (args.amendment_id && (!role || role.amendment_id !== args.amendment_id)) {
+      throw new Error('Action right scope does not match amendment role scope.');
+    }
     if (
       role?.event_id &&
       role.assignee_kind === 'guest' &&

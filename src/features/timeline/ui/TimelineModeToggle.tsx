@@ -116,6 +116,8 @@ export function TimelineModeToggle({
                 variant={m === 'decisions' ? 'destructive' : 'secondary'}
                 className={cn(
                   'ml-1 h-5 min-w-[20px] px-1.5 text-xs',
+                  m === 'decisions' &&
+                    'dark:border-transparent dark:bg-[#8a332b] dark:text-slate-50 dark:hover:bg-[#8a332b] dark:hover:text-slate-50',
                   isActive &&
                     m !== 'decisions' &&
                     'bg-primary-foreground/20 text-primary-foreground'

@@ -26,6 +26,10 @@ interface ChangeRequestsViewProps {
   openCount: number;
   timelineItems: ChangeRequestTimelineRow[];
   userId?: string;
+  canManageInternalVotes?: boolean;
+  canVoteInternal?: boolean;
+  onCastInternalVote?: (item: ChangeRequestTimelineRow, choiceId: string) => Promise<void>;
+  onFinalizeInternalVote?: (changeRequestId: string) => Promise<void>;
 }
 
 export function ChangeRequestsView({
@@ -44,7 +48,26 @@ export function ChangeRequestsView({
   openCount,
   timelineItems,
   userId,
+  canManageInternalVotes,
+  canVoteInternal,
+  onCastInternalVote,
+  onFinalizeInternalVote,
 }: ChangeRequestsViewProps) {
+  const isInternalVotingStage = editingMode === 'vote_internal';
+  const hasUserVoted = (item: ChangeRequestTimelineRow) =>
+    Boolean(
+      item.change_request && 'user_vote' in item.change_request && item.change_request.user_vote
+    );
+  const getUserSelectedChoiceIds = (item: ChangeRequestTimelineRow) => {
+    const userVote =
+      item.change_request && 'user_vote' in item.change_request
+        ? item.change_request.user_vote
+        : null;
+    if (!userVote || !item.change_request_id) return [];
+    const choiceKey = userVote === 'accept' ? 'yes' : userVote === 'reject' ? 'no' : 'abstain';
+    return [`mock-choice-${choiceKey}-${item.change_request_id}`];
+  };
+
   if (isLoading) {
     return (
       <PageWrapper>
@@ -108,13 +131,19 @@ export function ChangeRequestsView({
         <ChangeRequestCardsList
           items={timelineItems}
           editingMode={editingMode}
-          isVotingActive={false}
+          isVotingActive={isInternalVotingStage}
           userId={userId}
           diffMap={diffMap}
           documentContent={documentContent}
           discussions={discussions}
           amendmentId={amendmentId}
           agendaItemId={agendaItemId}
+          canManage={isInternalVotingStage && Boolean(canManageInternalVotes)}
+          canVote={isInternalVotingStage && Boolean(canVoteInternal)}
+          hasUserVoted={isInternalVotingStage ? hasUserVoted : undefined}
+          getUserSelectedChoiceIds={isInternalVotingStage ? getUserSelectedChoiceIds : undefined}
+          onCastVote={isInternalVotingStage ? onCastInternalVote : undefined}
+          onFinalizeInternalVote={isInternalVotingStage ? onFinalizeInternalVote : undefined}
         />
       )}
     </PageWrapper>

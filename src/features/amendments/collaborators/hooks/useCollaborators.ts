@@ -12,6 +12,17 @@ export type Collaborator = AmendmentCollaboratorRow & {
 };
 export type Role = AmendmentRoleRow;
 
+const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = new Set([
+  'active',
+  'collaborator',
+  'member',
+  'admin',
+]);
+
+function isActiveAmendmentCollaboratorStatus(status: string | null | undefined): boolean {
+  return status != null && ACTIVE_AMENDMENT_COLLABORATOR_STATUSES.has(status);
+}
+
 export interface CollaboratorsData {
   collaborators: Collaborator[];
   roles: Role[];
@@ -55,10 +66,12 @@ export function useCollaborators(
   // Check if current user is admin (has 'manage' action right for 'amendments')
   const currentUserCollaboration = collaborators.find(c => c.user?.id === currentUserId);
   const currentUserRole = roles.find(r => r.id === currentUserCollaboration?.role_id);
-  const isAdmin =
+  const isAdmin = Boolean(
+    isActiveAmendmentCollaboratorStatus(currentUserCollaboration?.status) &&
     currentUserRole?.action_rights?.some(
       right => right.resource === 'amendments' && right.action === 'manage'
-    ) || false;
+    )
+  );
 
   // Filter collaborators based on search query
   const filteredCollaborators = useMemo(() => {
@@ -92,7 +105,7 @@ export function useCollaborators(
     () =>
       filteredCollaborators.filter(c => {
         const matchedRole = roles.find(r => r.id === c.role_id);
-        return c.status === 'member' || c.status === 'admin' || matchedRole?.name === 'Author';
+        return isActiveAmendmentCollaboratorStatus(c.status) || matchedRole?.name === 'Author';
       }),
     [filteredCollaborators, roles]
   );

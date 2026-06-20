@@ -409,13 +409,13 @@ const generatedInlineTranslations: Record<string, string> = {
   '0089_no_active_collaborators_found_25e117c5': 'No active collaborators found',
   '0089_search_and_select_users_to_invite_then_choose_dd41962a':
     'Search and select users to invite, then choose which roles they should start with.',
-  '0090_event_suggesting_6e3bb22b': 'Event Suggesting',
+  '0090_event_suggesting_6e3bb22b': 'Event Suggestions',
   '0090_replace_holder_da55b9f7': 'Replace Holder',
   '0090_reuse_the_full_user_search_to_pick_one_or_mor_0bc3e1f3':
     'Reuse the full user search to pick one or more invitees.',
   '0090_user_9f8a2389': 'User',
   '0091_assign_holder_2a88e099': 'Assign Holder',
-  '0091_event_voting_4b62fa3e': 'Event Voting',
+  '0091_event_voting_4b62fa3e': 'Event Voting Mode',
   '0091_role_c3f104d1': 'Role',
   '0091_search_users_1bd6226d': 'Search users',
   '0092_election_completed_efe44735': 'Election Completed',
@@ -2285,7 +2285,7 @@ const generatedInlineTranslations: Record<string, string> = {
   '0740_bearbeiten_104f3bfd': 'Bearbeiten',
   '0740_failed_to_create_ai_conversation_5e33d409': 'Failed to create AI conversation',
   '0741_alle_collaborators_k_nnen_direkt_bearbeiten_84c06ce2':
-    'Alle Collaborators können direkt bearbeiten',
+    'All collaborators can edit directly',
   '0741_message_deleted_3271a770': 'Message deleted',
   '0742_ansicht_5c388792': 'Ansicht',
   '0742_failed_to_delete_message_4e4266ff': 'Failed to delete message',
@@ -2294,7 +2294,7 @@ const generatedInlineTranslations: Record<string, string> = {
   '0744_failed_to_accept_conversation_6e87255f': 'Failed to accept conversation',
   '0744_vorschl_ge_intern_cb3e8f05': 'Vorschläge Intern',
   '0745_collaborators_k_nnen_vorschl_ge_einreichen_7f0ea119':
-    'Collaborators können Vorschläge einreichen',
+    'Collaborators can submit suggestions',
   '0745_conversation_rejected_12876dbb': 'Conversation rejected',
   '0746_event_vorschl_ge_687919fd': 'Event Vorschläge',
   '0746_failed_to_reject_conversation_2f236793': 'Failed to reject conversation',
@@ -2304,7 +2304,7 @@ const generatedInlineTranslations: Record<string, string> = {
   '0748_failed_to_delete_conversation_61f9456d': 'Failed to delete conversation',
   '0748_interne_abstimmung_a0face84': 'Interne Abstimmung',
   '0749_abstimmung_unter_collaborators_zeitbasiert_41f561b1':
-    'Abstimmung unter Collaborators (zeitbasiert)',
+    'Collaborators vote on change requests',
   '0749_failed_to_toggle_pin_bd700a53': 'Failed to toggle pin',
   '0750_event_abstimmung_96225579': 'Event Abstimmung',
   '0750_failed_to_update_conversation_4dc375ea': 'Failed to update conversation',
@@ -3039,7 +3039,7 @@ export const generatedTranslations = {
           previous: 'Previous Change Request',
           rejected: 'Rejected',
           searchPlaceholder: 'Search change requests…',
-          setToVoteEvent: 'Set to vote_event to start voting on change requests.',
+          setToVoteEvent: 'Switch to Event Voting Mode to start voting on change requests.',
           startFinal: 'Start Change Request Final Vote',
           startIndicative: 'Start Indicative',
           startVote: 'Start Change Request Vote',

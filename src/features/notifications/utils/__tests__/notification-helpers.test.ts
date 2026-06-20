@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   notifyAdminPromoted,
   notifyAmendmentOwnerPromoted,
+  notifyCollaborationInvite,
   notifyBloggerRoleChanged,
   setNotificationDispatch,
   type CreateNotificationInput,
@@ -69,6 +70,33 @@ describe('notification helpers', () => {
       recipient_amendment_id: 'amendment-1',
       related_user_id: 'user-2',
       type: 'amendment_owner_promoted',
+    });
+  });
+
+  it('routes personal amendment collaboration invites to user memberships and entity copies to collaborator management', async () => {
+    captureNotifications();
+
+    await notifyCollaborationInvite({
+      senderId: 'manager-user',
+      recipientUserId: 'invited-user',
+      amendmentId: 'amendment-1',
+      amendmentTitle: 'Amendment One',
+    });
+
+    expect(dispatched).toHaveLength(2);
+    expect(dispatched[0]).toMatchObject({
+      recipient_id: 'invited-user',
+      recipient_amendment_id: null,
+      type: 'collaboration_invite',
+      action_url: '/user/invited-user/memberships',
+    });
+    expect(dispatched[1]).toMatchObject({
+      recipient_id: null,
+      recipient_entity_type: 'amendment',
+      recipient_amendment_id: 'amendment-1',
+      related_user_id: 'invited-user',
+      type: 'collaboration_invite',
+      action_url: '/amendment/amendment-1/collaborators',
     });
   });
 

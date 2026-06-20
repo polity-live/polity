@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PermissionError } from '../../rbac/errors';
 
 const canMock = vi.fn();
+const amendmentUpdateMock = vi.fn();
 const amendmentDeleteMock = vi.fn();
 const createProcessTaskMock = vi.fn();
 const supportAmendmentMock = vi.fn();
@@ -26,7 +27,7 @@ vi.mock('../../mutators', () => ({
   mutators: {
     amendments: {
       create: { fn: vi.fn() },
-      update: { fn: vi.fn() },
+      update: { fn: (...args: unknown[]) => amendmentUpdateMock(...args) },
       delete: { fn: (...args: unknown[]) => amendmentDeleteMock(...args) },
       addCollaborator: { fn: vi.fn() },
       removeCollaborator: { fn: vi.fn() },
@@ -211,6 +212,7 @@ function updateSupportConfirmationArgs(
 describe('amendmentServerMutators authorization', () => {
   beforeEach(() => {
     canMock.mockReset();
+    amendmentUpdateMock.mockReset();
     amendmentDeleteMock.mockReset();
     createProcessTaskMock.mockReset();
     supportAmendmentMock.mockReset();
@@ -225,7 +227,12 @@ describe('amendmentServerMutators authorization', () => {
 
   it('creates amendments without checking target group or event permissions', async () => {
     const tx = createAmendmentCreateTx('server');
-    tx.run.mockResolvedValueOnce(null);
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'event-1',
+        amendment_deadline: null,
+      })
+      .mockResolvedValueOnce(null);
 
     await expect(
       amendmentServerMutators.create.fn({
@@ -246,6 +253,35 @@ describe('amendmentServerMutators authorization', () => {
         status: 'admin',
       })
     );
+  });
+
+  it('rejects direct amendment retargeting to an event with an expired amendment deadline', async () => {
+    const tx = createTx('server');
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'amendment-1',
+        title: 'Amendment',
+        event_id: null,
+        editing_mode: 'edit',
+      })
+      .mockResolvedValueOnce({
+        id: 'event-closed',
+        amendment_deadline: Date.now() - 1,
+      });
+    canMock.mockResolvedValueOnce(undefined);
+
+    await expect(
+      amendmentServerMutators.update.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: {
+          id: 'amendment-1',
+          event_id: 'event-closed',
+        },
+      })
+    ).rejects.toThrow('Antragsfrist');
+
+    expect(amendmentUpdateMock).not.toHaveBeenCalled();
   });
 
   it('rejects amendment deletion before calling the shared mutator', async () => {
@@ -569,6 +605,39 @@ describe('amendmentServerMutators authorization', () => {
         },
       })
     ).rejects.toBe(error);
+
+    expect(processEngineMocks.completeProcessTaskWithEvent).not.toHaveBeenCalled();
+  });
+
+  it('rejects process task completion when the target event amendment deadline expired', async () => {
+    const tx = createTx('server');
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'task-1',
+        process_run_id: 'run-1',
+        event_id: null,
+      })
+      .mockResolvedValueOnce({
+        id: 'run-1',
+        amendment_id: 'amendment-1',
+      })
+      .mockResolvedValueOnce({
+        id: 'event-closed',
+        amendment_deadline: Date.now() - 1,
+      });
+    canMock.mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined);
+
+    await expect(
+      amendmentServerMutators.completeProcessTaskWithEvent.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: {
+          process_task_id: 'task-1',
+          event_id: 'event-closed',
+          description: null,
+        },
+      })
+    ).rejects.toThrow('Antragsfrist');
 
     expect(processEngineMocks.completeProcessTaskWithEvent).not.toHaveBeenCalled();
   });

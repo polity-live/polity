@@ -10,6 +10,7 @@ interface MembershipRoleLinkLike<TRole extends MembershipRoleLike = MembershipRo
 
 export interface MembershipWithRoleLinks<TRole extends MembershipRoleLike = MembershipRoleLike> {
   membership_roles?: readonly MembershipRoleLinkLike<TRole>[] | null;
+  participant_roles?: readonly MembershipRoleLinkLike<TRole>[] | null;
   roles?: readonly TRole[] | null;
   role?: TRole | null;
 }
@@ -30,7 +31,10 @@ export function getMembershipRoles<TRole extends MembershipRoleLike>(
   }
 
   const roles: TRole[] = [];
-  for (const link of membership.membership_roles ?? []) {
+  for (const link of [
+    ...(membership.membership_roles ?? []),
+    ...(membership.participant_roles ?? []),
+  ]) {
     if (link.role) {
       roles.push(link.role);
     }

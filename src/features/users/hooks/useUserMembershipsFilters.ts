@@ -78,8 +78,9 @@ export function useUserMembershipsFilters({
     const query = searchQuery.toLowerCase();
     return participations.filter(participation => {
       const eventTitle = participation.event?.title?.toLowerCase() || '';
+      const role = getMembershipRoleNames(participation).join(' ').toLowerCase();
       const status = participation.status?.toLowerCase() || '';
-      return eventTitle.includes(query) || status.includes(query);
+      return eventTitle.includes(query) || role.includes(query) || status.includes(query);
     });
   }, [participations, searchQuery]);
 
@@ -90,8 +91,9 @@ export function useUserMembershipsFilters({
     const query = searchQuery.toLowerCase();
     return collaborations.filter(collaboration => {
       const amendmentTitle = collaboration.amendment?.title?.toLowerCase() || '';
+      const role = getMembershipRoleNames(collaboration).join(' ').toLowerCase();
       const status = collaboration.status?.toLowerCase() || '';
-      return amendmentTitle.includes(query) || status.includes(query);
+      return amendmentTitle.includes(query) || role.includes(query) || status.includes(query);
     });
   }, [collaborations, searchQuery]);
 
@@ -102,7 +104,7 @@ export function useUserMembershipsFilters({
     const query = searchQuery.toLowerCase();
     return blogRelations.filter(relation => {
       const blogTitle = relation.blog?.title?.toLowerCase() || '';
-      const role = relation.role?.name?.toLowerCase() || '';
+      const role = getMembershipRoleNames(relation).join(' ').toLowerCase();
       const status = relation.status?.toLowerCase() || '';
       return blogTitle.includes(query) || role.includes(query) || status.includes(query);
     });

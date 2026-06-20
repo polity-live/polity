@@ -32,7 +32,11 @@ export function useCollaboratorsPageController({
   const [memberRightsOpen, setMemberRightsOpen] = useState(false);
   const [memberRightsMembership, setMemberRightsMembership] = useState<Collaborator | null>(null);
 
-  const { collaborators, roles } = useCollaborators(amendmentId, currentUserId, '');
+  const { collaborators, roles, isAdmin, isLoading } = useCollaborators(
+    amendmentId,
+    currentUserId,
+    ''
+  );
   const mutations = useCollaboratorMutations();
 
   const {
@@ -93,6 +97,8 @@ export function useCollaboratorsPageController({
     activeTab,
     changeRoleMembership,
     changeRoleOpen,
+    canManageCollaborators: isAdmin,
+    isLoading,
     memberRightsMembership,
     memberRightsOpen,
     membershipSort,

@@ -7,7 +7,10 @@
 
 import { useRef, useState } from 'react';
 import { ACTION_RIGHTS } from '@/zero/rbac/constants';
-import { getActionRightSections } from '@/features/groups/logic/actionRightSections';
+import {
+  getActionRightSections,
+  type ActionRightDefinition,
+} from '@/features/groups/logic/actionRightSections';
 import type { ParticipationRoleLike } from '@/features/shared/types/participation';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -20,7 +23,7 @@ interface RolesPermissionsTableProps<TRole extends ParticipationRoleLike> {
     currentlyHas: boolean
   ) => void;
   onReorderRoles?: (orderedRoleIds: string[]) => void;
-  actionRights?: readonly (typeof ACTION_RIGHTS)[number][];
+  actionRights?: readonly ActionRightDefinition[];
   title?: string;
   description?: string;
   isPermissionDisabled?: (role: TRole, resource: string, action: string) => string | null;

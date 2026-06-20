@@ -1,92 +1,30 @@
 'use client';
 
 import { useLayoutEffect, useRef } from 'react';
-import { featureThemeValue } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft, FileText, Loader2 } from 'lucide-react';
 
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { BadgeControl } from '@/features/shared/ui/status/StatusBadges';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/features/shared/ui/ui/card';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
-import { generateUserColor } from '../logic/editor-helpers';
+import {
+  applyChangeRequestMotionDelays,
+  shouldUpdateChangeRequestMotionForMutations,
+} from '../logic/changeRequestMotion';
 import type { EditorViewModel } from '../hooks/useEditorViewModel';
 
 import { EditorHeader } from './EditorHeader';
 import { InviteCollaboratorDialog } from './InviteCollaboratorDialog';
+import { OnlineCollaboratorAvatars } from './OnlineCollaboratorAvatars';
 import { SuggestionViewToggle } from './SuggestionViewToggle';
 import { VersionControl } from './VersionControl';
 
 interface EditorViewShellProps {
   model: EditorViewModel;
-}
-
-const changeRequestMotionStepMs = 1200;
-
-function assignChangeRequestMotionDelays(scope: HTMLElement) {
-  const suggestionOrder = new Map<string, number>();
-  const motionElements = Array.from(
-    scope.querySelectorAll<HTMLElement>('[data-suggestion-id], button[data-suggestion-ids]')
-  ).sort((a, b) => {
-    const position = a.compareDocumentPosition(b);
-
-    if (position & Node.DOCUMENT_POSITION_FOLLOWING) {
-      return -1;
-    }
-
-    if (position & Node.DOCUMENT_POSITION_PRECEDING) {
-      return 1;
-    }
-
-    return 0;
-  });
-
-  const registerSuggestionId = (suggestionId: string | null | undefined) => {
-    if (!suggestionId || suggestionOrder.has(suggestionId)) {
-      return;
-    }
-
-    suggestionOrder.set(suggestionId, suggestionOrder.size);
-  };
-
-  motionElements.forEach(element => {
-    registerSuggestionId(element.dataset.suggestionId);
-
-    element
-      .getAttribute('data-suggestion-ids')
-      ?.split(/\s+/)
-      .filter(Boolean)
-      .forEach(registerSuggestionId);
-  });
-
-  scope.querySelectorAll<HTMLElement>('[data-suggestion-id]').forEach(element => {
-    const order = suggestionOrder.get(element.dataset.suggestionId ?? '');
-    if (order == null) return;
-
-    element.style.setProperty(
-      '--change-request-motion-delay',
-      `${order * changeRequestMotionStepMs}ms`
-    );
-  });
-
-  scope.querySelectorAll<HTMLElement>('button[data-suggestion-ids]').forEach(element => {
-    const orders = (element.getAttribute('data-suggestion-ids') ?? '')
-      .split(/\s+/)
-      .filter(Boolean)
-      .map(suggestionId => suggestionOrder.get(suggestionId))
-      .filter((order): order is number => order != null);
-
-    if (orders.length === 0) return;
-
-    element.style.setProperty(
-      '--change-request-motion-delay',
-      `${Math.min(...orders) * changeRequestMotionStepMs}ms`
-    );
-  });
 }
 
 export function EditorViewShell({ model }: EditorViewShellProps) {
@@ -96,6 +34,8 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
     amendmentTitle,
     backLabel,
     backUrl,
+    canManageChangeRequestVotes,
+    canVoteOnChangeRequests,
     capabilities,
     content,
     contentEntityId,
@@ -118,11 +58,11 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
     mode,
     onSuggestionAccepted,
     onSuggestionDeclined,
+    onFinalizeInternalVote,
     onVoteAbstain,
     onVoteAccept,
     onVoteReject,
     onlinePeerMap,
-    onlinePeers,
     readOnly,
     restoreVersion,
     saveStatus,
@@ -141,6 +81,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
   } = model;
   const { t } = useTranslation();
   const changeRequestMotionScopeRef = useRef<HTMLDivElement>(null);
+  const changeRequestMotionSignatureRef = useRef<string | undefined>(undefined);
   const enableChangeRequestLoadMotion = entityType === 'amendment' || entityType === 'blog';
 
   useLayoutEffect(() => {
@@ -154,26 +95,63 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
       return;
     }
 
+    changeRequestMotionSignatureRef.current = undefined;
     scope.setAttribute('data-change-request-motion-ready', 'false');
-    assignChangeRequestMotionDelays(scope);
+    scope.setAttribute('data-change-request-motion-complete', 'false');
+
+    let completionTimeout: ReturnType<typeof setTimeout> | undefined;
+    const completeMotion = () => {
+      scope.setAttribute('data-change-request-motion-ready', 'true');
+      scope.setAttribute('data-change-request-motion-complete', 'true');
+      observer?.disconnect();
+    };
+    const scheduleCompletion = (durationMs: number) => {
+      if (completionTimeout) {
+        clearTimeout(completionTimeout);
+      }
+      completionTimeout = setTimeout(completeMotion, durationMs);
+    };
+
+    const observer =
+      typeof MutationObserver === 'undefined'
+        ? undefined
+        : new MutationObserver(mutations => {
+            if (!shouldUpdateChangeRequestMotionForMutations(mutations)) {
+              return;
+            }
+
+            const motion = applyChangeRequestMotionDelays(
+              scope,
+              changeRequestMotionSignatureRef.current
+            );
+
+            if (motion.didChange) {
+              changeRequestMotionSignatureRef.current = motion.signature;
+              scheduleCompletion(motion.totalDurationMs);
+            }
+          });
+
+    const initialMotion = applyChangeRequestMotionDelays(
+      scope,
+      changeRequestMotionSignatureRef.current
+    );
+    changeRequestMotionSignatureRef.current = initialMotion.signature;
     scope.setAttribute('data-change-request-motion-ready', 'true');
+    scheduleCompletion(initialMotion.totalDurationMs);
 
-    if (typeof MutationObserver === 'undefined') {
-      return;
-    }
-
-    const observer = new MutationObserver(() => {
-      assignChangeRequestMotionDelays(scope);
-    });
-
-    observer.observe(scope, {
+    observer?.observe(scope, {
       attributeFilter: ['data-suggestion-id', 'data-suggestion-ids'],
       attributes: true,
       childList: true,
       subtree: true,
     });
 
-    return () => observer.disconnect();
+    return () => {
+      if (completionTimeout) {
+        clearTimeout(completionTimeout);
+      }
+      observer?.disconnect();
+    };
   }, [contentEntityId, enableChangeRequestLoadMotion]);
 
   // Loading state
@@ -301,8 +279,15 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
               isSavingTitle={isSavingTitle}
               saveStatus={saveStatus}
               hasUnsavedChanges={hasUnsavedChanges}
-              onlinePeers={onlinePeers}
-              showPresence={capabilities.presence}
+              presenceSlot={
+                <OnlineCollaboratorAvatars
+                  collaborators={entity.collaborators}
+                  onlinePeerMap={onlinePeerMap}
+                  activeCursorUserIds={activeCursorUserIds}
+                  currentUserId={userId}
+                  enabled={capabilities.presence}
+                />
+              }
             />
           </div>
           <CardDescription>{t('features.editor.description')}</CardDescription>
@@ -314,68 +299,12 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
                 {entity.metadata.amendmentCode}
               </BadgeControl>
             )}
-            {entity.metadata?.amendmentDate && (
-              <span className="text-muted-foreground">
-                {t('features.editor.metadata.date')}: {entity.metadata.amendmentDate}
-              </span>
-            )}
-            {entity.metadata?.amendmentSupporters !== undefined && (
-              <span className="text-muted-foreground">
-                {entity.metadata.amendmentSupporters} {t('features.editor.metadata.supporters')}
-              </span>
-            )}
             {entity.metadata?.blogUpvotes !== undefined && (
               <span className="text-muted-foreground">
                 {entity.metadata.blogUpvotes} {t('features.editor.metadata.upvotes')}
               </span>
             )}
           </div>
-
-          {/* Collaborators list */}
-          {entity.collaborators.length > 0 && (
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-muted-foreground text-sm">
-                {t('features.editor.metadata.collaborators')}:
-              </span>
-              {entity.collaborators.map(collab => {
-                const isOnline =
-                  onlinePeerMap.has(collab.user.id) ||
-                  collab.user.id === userId ||
-                  activeCursorUserIds.has(collab.user.id);
-                const userColor = generateUserColor(collab.user.id);
-
-                return (
-                  <div
-                    key={collab.id}
-                    className="bg-muted relative flex items-center gap-1 rounded-full px-2 py-1"
-                    style={{ borderWidth: 2, borderStyle: 'solid', borderColor: userColor }}
-                  >
-                    <div className="relative">
-                      <Avatar className="h-5 w-5">
-                        {collab.user.avatarUrl ? (
-                          <AvatarImage src={collab.user.avatarUrl} alt={collab.user.name} />
-                        ) : null}
-                        <AvatarFallback className="text-xs">
-                          {collab.user.name?.[0]?.toUpperCase() || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      {isOnline && (
-                        <span
-                          className="ring-background absolute -right-0.5 -bottom-0.5 block h-2 w-2 animate-pulse rounded-full ring-1"
-                          style={{
-                            backgroundColor: featureThemeValue('editorEditorViewShellSuccessColor'),
-                          }}
-                        />
-                      )}
-                    </div>
-                    <span className="text-xs">
-                      {collab.user.name || t('generated.inline.0031_unknown_bc7819b3')}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </CardHeader>
         <CardContent>
           <div
@@ -385,6 +314,9 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
               enableChangeRequestLoadMotion && 'change-request-load-motion'
             )}
             data-change-request-motion-ready={enableChangeRequestLoadMotion ? 'false' : undefined}
+            data-change-request-motion-complete={
+              enableChangeRequestLoadMotion ? 'false' : undefined
+            }
           >
             <PlateEditor
               key={contentEntityId}
@@ -408,11 +340,14 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
               users={editorUsers}
               discussions={discussions}
               onDiscussionsChange={setDiscussions}
-              onSuggestionAccepted={capabilities.voting ? onSuggestionAccepted : undefined}
-              onSuggestionDeclined={capabilities.voting ? onSuggestionDeclined : undefined}
-              onVoteAccept={capabilities.voting ? onVoteAccept : undefined}
-              onVoteReject={capabilities.voting ? onVoteReject : undefined}
-              onVoteAbstain={capabilities.voting ? onVoteAbstain : undefined}
+              onSuggestionAccepted={canManageChangeRequestVotes ? onSuggestionAccepted : undefined}
+              onSuggestionDeclined={canManageChangeRequestVotes ? onSuggestionDeclined : undefined}
+              onVoteAccept={canVoteOnChangeRequests ? onVoteAccept : undefined}
+              onVoteReject={canVoteOnChangeRequests ? onVoteReject : undefined}
+              onVoteAbstain={canVoteOnChangeRequests ? onVoteAbstain : undefined}
+              onFinalizeInternalVote={
+                canManageChangeRequestVotes ? onFinalizeInternalVote : undefined
+              }
               selectedCrIds={selectedCrIds}
               onSelectedCrIdsChange={setSelectedCrIds}
               remoteCursors={{

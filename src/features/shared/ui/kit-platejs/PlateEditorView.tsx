@@ -26,6 +26,7 @@ export interface PlateEditorViewProps {
   onVoteAccept: any;
   onVoteReject: any;
   onVoteAbstain: any;
+  onFinalizeInternalVote: any;
   documentId: any;
   documentTitle: any;
   currentMode: any;
@@ -60,6 +61,7 @@ export function PlateEditorView({
   onVoteAccept,
   onVoteReject,
   onVoteAbstain,
+  onFinalizeInternalVote,
   currentMode,
   onModeChange,
   isOwnerOrCollaborator,
@@ -85,6 +87,7 @@ export function PlateEditorView({
           onVoteAccept,
           onVoteReject,
           onVoteAbstain,
+          onFinalizeInternalVote,
         }}
       >
         <Plate editor={editor} onChange={handleEditorChange} readOnly={readOnly}>

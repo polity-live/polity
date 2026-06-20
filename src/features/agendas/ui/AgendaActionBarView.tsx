@@ -94,6 +94,7 @@ export interface AgendaActionBarViewProps {
   nextDisabled: any;
   defaultVoteTooltip: any;
   voteTooltip: any;
+  showLifecycleControls: any;
   showStartFinalVoteButton: any;
 }
 
@@ -155,6 +156,7 @@ export function AgendaActionBarView({
   startDisabled,
   nextDisabled,
   voteTooltip,
+  showLifecycleControls,
   showStartFinalVoteButton,
 }: AgendaActionBarViewProps) {
   const candidateTooltip = canBeCandidate
@@ -344,7 +346,7 @@ export function AgendaActionBarView({
       </div>
 
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1 overflow-x-auto">
-        {onPreviousItem ? (
+        {showLifecycleControls && onPreviousItem ? (
           <ToolbarButton
             tooltip={t('features.events.navigation.previous')}
             onClick={onPreviousItem}
@@ -378,7 +380,7 @@ export function AgendaActionBarView({
             <Play />
           </ToolbarButton>
         ) : null}
-        {currentAgendaItem && isCurrentItemActive && onCompleteItem ? (
+        {showLifecycleControls && currentAgendaItem && isCurrentItemActive && onCompleteItem ? (
           <ToolbarButton
             tooltip={t('features.events.navigation.complete')}
             onClick={onCompleteItem}
@@ -394,7 +396,7 @@ export function AgendaActionBarView({
             <CheckCircle2 />
           </ToolbarButton>
         ) : null}
-        {onNextItem ? (
+        {showLifecycleControls && onNextItem ? (
           <ToolbarButton
             tooltip={t('features.events.navigation.next')}
             onClick={onNextItem}

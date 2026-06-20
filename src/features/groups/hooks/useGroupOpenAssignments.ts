@@ -12,6 +12,7 @@ import {
   getSchedulingWindowDisplayLabel,
   isEventWithinSchedulingWindow,
 } from '@/features/amendments/logic/processTaskEventScheduling';
+import { isAmendmentTargetEventOpen } from '@/features/amendments/logic/amendmentTargetEventEligibility';
 import {
   buildCreateEventSearchFromDelegateElectionAssignment,
   isEventWithinDelegateElectionSchedulingWindow,
@@ -35,6 +36,7 @@ interface AvailableGroupEvent {
   status?: string | null;
   start_date?: number | null;
   end_date?: number | null;
+  amendment_deadline?: number | null;
   group_id?: string | null;
 }
 
@@ -251,6 +253,7 @@ export function useGroupOpenAssignments(groupId: string) {
         status: event.status ?? null,
         start_date: event.start_date ?? null,
         end_date: event.end_date ?? null,
+        amendment_deadline: event.amendment_deadline ?? null,
         group_id: event.group_id ?? null,
       }));
   }, [groupEvents]);
@@ -270,6 +273,7 @@ export function useGroupOpenAssignments(groupId: string) {
         status: event.status ?? null,
         start_date: event.start_date ?? null,
         end_date: event.end_date ?? null,
+        amendment_deadline: event.amendment_deadline ?? null,
         group_id: event.group_id ?? null,
       })),
       availableEventCount: availableEvents.length,
@@ -279,6 +283,7 @@ export function useGroupOpenAssignments(groupId: string) {
         status: event.status ?? null,
         start_date: event.start_date ?? null,
         end_date: event.end_date ?? null,
+        amendment_deadline: event.amendment_deadline ?? null,
         group_id: event.group_id ?? null,
       })),
       now: Date.now(),
@@ -389,6 +394,9 @@ export function useGroupOpenAssignments(groupId: string) {
 
       if (!task || !event) {
         throw new Error('Bitte zuerst eine gueltige Veranstaltung auswaehlen.');
+      }
+      if (!isAmendmentTargetEventOpen(event)) {
+        throw new Error('Die Antragsfrist fuer dieses Event ist abgelaufen.');
       }
 
       const schedulingWindow = getProcessTaskSchedulingWindow({

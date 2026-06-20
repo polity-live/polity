@@ -56,37 +56,7 @@ export function VoteControlsView({
 
   return (
     <div className="space-y-4">
-      {!hasVoted ? (
-        <div className="flex gap-2">
-          <Button
-            onClick={() => handleVote('accept')}
-            disabled={isVoting}
-            variant="default"
-            className={featureThemeClassName('voteVoteControlsSuccessBackground')}
-          >
-            <Check className="mr-2 h-4 w-4" />
-            {t('features.amendments.voteControls.accept')}
-          </Button>
-          <Button
-            onClick={() => handleVote('reject')}
-            disabled={isVoting}
-            variant="destructive"
-            className="flex-1"
-          >
-            <X className="mr-2 h-4 w-4" />
-            {t('features.amendments.voteControls.reject')}
-          </Button>
-          <Button
-            onClick={() => handleVote('abstain')}
-            disabled={isVoting}
-            variant="outline"
-            className="flex-1"
-          >
-            <Minus className="mr-2 h-4 w-4" />
-            {t('features.amendments.voteControls.abstain')}
-          </Button>
-        </div>
-      ) : (
+      {hasVoted && (
         <Card surface="infoSoft">
           <CardContent className="py-3">
             <p className="text-sm">
@@ -98,6 +68,35 @@ export function VoteControlsView({
           </CardContent>
         </Card>
       )}
+      <div className="flex gap-2">
+        <Button
+          onClick={() => handleVote('accept')}
+          disabled={isVoting}
+          variant="default"
+          className={featureThemeClassName('voteVoteControlsSuccessBackground')}
+        >
+          <Check className="mr-2 h-4 w-4" />
+          {t('features.amendments.voteControls.accept')}
+        </Button>
+        <Button
+          onClick={() => handleVote('reject')}
+          disabled={isVoting}
+          variant="destructive"
+          className="flex-1"
+        >
+          <X className="mr-2 h-4 w-4" />
+          {t('features.amendments.voteControls.reject')}
+        </Button>
+        <Button
+          onClick={() => handleVote('abstain')}
+          disabled={isVoting}
+          variant="outline"
+          className="flex-1"
+        >
+          <Minus className="mr-2 h-4 w-4" />
+          {t('features.amendments.voteControls.abstain')}
+        </Button>
+      </div>
 
       <div className="bg-muted/50 rounded-lg border p-4">
         <div className="mb-3 flex items-center justify-between">

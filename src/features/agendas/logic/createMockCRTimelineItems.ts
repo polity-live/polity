@@ -16,6 +16,21 @@ export interface CRSummary {
   properties?: Record<string, string>;
   newProperties?: Record<string, string>;
   justification?: string;
+  votesFor?: number;
+  votesAgainst?: number;
+  votesAbstain?: number;
+  suggestionId?: string | null;
+  discussionId?: string | null;
+  changeRequestEntityId?: string | null;
+  votingDeadline?: number | null;
+  closeTrigger?: string | null;
+  eligibleVoterCount?: number;
+  votedCollaboratorCount?: number;
+  resolutionMethod?: string | null;
+  visibilityScope?: string | null;
+  resolvedInMode?: string | null;
+  votingStatus?: string | null;
+  userVote?: string | null;
 }
 
 function isAcceptedStatus(status: string) {
@@ -31,10 +46,15 @@ function mapCRStatusToTimelineStatus(status: string): string {
   return 'pending';
 }
 
-function createMockVote(itemId: string) {
+function createMockVote(itemId: string, cr: CRSummary) {
+  const isCompleted = isAcceptedStatus(cr.status) || isRejectedStatus(cr.status);
+  const tallyPhase = isCompleted ? 'final' : 'indicative';
+  const voteStatus = isCompleted ? 'closed' : 'indicative';
+  const totalVotes = (cr.votesFor ?? 0) + (cr.votesAgainst ?? 0) + (cr.votesAbstain ?? 0);
+
   return {
     id: `mock-vote-${itemId}`,
-    status: 'pending' as const,
+    status: voteStatus,
     majority_type: 'simple' as const,
     visibility: null,
     choices: [
@@ -57,11 +77,38 @@ function createMockVote(itemId: string) {
         order_index: 2,
       },
     ],
-    voters: [] as never[],
+    voters: Array.from({ length: totalVotes }, (_, index) => ({
+      id: `mock-voter-${itemId}-${index}`,
+      vote_id: `mock-vote-${itemId}`,
+      user_id: `mock-user-${index}`,
+    })),
     indicative_participations: [] as never[],
     indicative_decisions: [] as never[],
     final_participations: [] as never[],
     final_decisions: [] as never[],
+    offline_tallies: [
+      {
+        id: `mock-tally-yes-${itemId}`,
+        vote_id: `mock-vote-${itemId}`,
+        phase: tallyPhase,
+        choice_id: `mock-choice-yes-${itemId}`,
+        count: cr.votesFor ?? 0,
+      },
+      {
+        id: `mock-tally-no-${itemId}`,
+        vote_id: `mock-vote-${itemId}`,
+        phase: tallyPhase,
+        choice_id: `mock-choice-no-${itemId}`,
+        count: cr.votesAgainst ?? 0,
+      },
+      {
+        id: `mock-tally-abstain-${itemId}`,
+        vote_id: `mock-vote-${itemId}`,
+        phase: tallyPhase,
+        choice_id: `mock-choice-abstain-${itemId}`,
+        count: cr.votesAbstain ?? 0,
+      },
+    ],
   };
 }
 
@@ -71,34 +118,48 @@ function createMockVote(itemId: string) {
  * Appends a Final Vote item at the end.
  */
 export function createMockCRTimelineItems(crSummaries: CRSummary[]) {
-  const items = crSummaries.map((cr, index) => ({
-    id: `mock-cr-${cr.id}`,
-    agenda_item_id: 'mock-agenda',
-    change_request_id: cr.id,
-    vote_id: `mock-vote-${cr.id}`,
-    order_index: index,
-    is_final_vote: false,
-    status: mapCRStatusToTimelineStatus(cr.status),
-    change_request: {
-      id: cr.id,
-      amendment_id: null,
-      user_id: null,
-      title: cr.title || cr.crId || `CR-${index + 1}`,
-      description: cr.description || null,
-      status: cr.status || null,
-      votes_for: 0,
-      votes_against: 0,
-      votes_abstain: 0,
-      voting_status: null,
-      voting_deadline: null,
-      created_at: null,
-      updated_at: null,
-      user: null,
-    },
-    vote: createMockVote(cr.id),
-    // Store original status for tab filtering
-    _originalStatus: cr.status,
-  }));
+  const items = crSummaries.map((cr, index) => {
+    const persistedChangeRequestId = cr.changeRequestEntityId ?? cr.id;
+    const suggestionId = cr.suggestionId ?? cr.discussionId ?? cr.id;
+
+    return {
+      id: `mock-cr-${persistedChangeRequestId}`,
+      agenda_item_id: 'mock-agenda',
+      change_request_id: persistedChangeRequestId,
+      vote_id: `mock-vote-${persistedChangeRequestId}`,
+      order_index: index,
+      is_final_vote: false,
+      status: mapCRStatusToTimelineStatus(cr.status),
+      change_request: {
+        id: persistedChangeRequestId,
+        amendment_id: null,
+        user_id: null,
+        title: cr.title || cr.crId || `CR-${index + 1}`,
+        cr_id: cr.crId ?? null,
+        suggestion_id: suggestionId,
+        description: cr.description || null,
+        status: cr.status || null,
+        votes_for: cr.votesFor ?? 0,
+        votes_against: cr.votesAgainst ?? 0,
+        votes_abstain: cr.votesAbstain ?? 0,
+        voting_status: cr.votingStatus ?? null,
+        user_vote: cr.userVote ?? null,
+        voting_deadline: cr.votingDeadline ?? null,
+        close_trigger: cr.closeTrigger ?? null,
+        eligible_voter_count: cr.eligibleVoterCount ?? 0,
+        voted_collaborator_count: cr.votedCollaboratorCount ?? 0,
+        resolution_method: cr.resolutionMethod ?? null,
+        visibility_scope: cr.visibilityScope ?? null,
+        resolved_in_mode: cr.resolvedInMode ?? null,
+        created_at: null,
+        updated_at: null,
+        user: null,
+      },
+      vote: createMockVote(persistedChangeRequestId, cr),
+      // Store original status for tab filtering
+      _originalStatus: cr.status,
+    };
+  });
 
   return items;
 }

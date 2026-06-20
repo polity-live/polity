@@ -8,6 +8,7 @@ export interface SuggestionCallbacks {
   onVoteAccept?: (suggestion: ResolvedSuggestion) => void;
   onVoteReject?: (suggestion: ResolvedSuggestion) => void;
   onVoteAbstain?: (suggestion: ResolvedSuggestion) => void;
+  onFinalizeInternalVote?: (suggestion: ResolvedSuggestion) => void;
 }
 
 const SuggestionCallbacksContext = React.createContext<SuggestionCallbacks>({});

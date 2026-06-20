@@ -54,6 +54,8 @@ export function useEditorViewModel({
     isSavingTitle,
     hasAccess,
     isOwnerOrCollaborator,
+    canVoteOnChangeRequests,
+    canManageChangeRequestVotes,
     capabilities,
     setTitle,
     setContent,
@@ -233,6 +235,14 @@ export function useEditorViewModel({
     [contentEntityId, amendmentId, userId, discussions, editorOps]
   );
 
+  const onFinalizeInternalVote = useCallback(
+    async (suggestion: ResolvedSuggestion) => {
+      if (!contentEntityId || !amendmentId) return;
+      await editorOps.handleFinalizeInternalVoteOnSuggestion(discussions, suggestion);
+    },
+    [contentEntityId, amendmentId, discussions, editorOps]
+  );
+
   // Get existing collaborator IDs
   const existingCollaboratorIds = useMemo(() => {
     if (!entity) return [];
@@ -303,6 +313,8 @@ export function useEditorViewModel({
     amendmentTitle,
     backLabel,
     backUrl,
+    canManageChangeRequestVotes,
+    canVoteOnChangeRequests,
     capabilities,
     content,
     contentEntityId,
@@ -325,6 +337,7 @@ export function useEditorViewModel({
     mode,
     onSuggestionAccepted,
     onSuggestionDeclined,
+    onFinalizeInternalVote,
     onVoteAbstain,
     onVoteAccept,
     onVoteReject,

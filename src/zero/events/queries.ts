@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   applyAgendaItemQueryAccess,
   applyAmendmentQueryAccess,
+  applyChangeRequestVisibilityAccess,
   applyElectionElectorOrManagerQueryAccess,
   applyElectionManagerQueryAccess,
   applyElectionQueryAccess,
@@ -817,6 +818,11 @@ export const eventQueries = {
         .where('event_id', eventId)
         .related('event')
         .related('election', q => q.related('candidates', q => q.related('user')).related('role'))
+        .related('amendment', q =>
+          applyAmendmentQueryAccess(q, userID).related('change_requests', changeRequests =>
+            applyChangeRequestVisibilityAccess(changeRequests, userID)
+          )
+        )
   ),
 
   /** Event access roles scoped to event with action_rights */

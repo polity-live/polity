@@ -43,6 +43,23 @@ export interface PermissionScope {
   amendment?: Amendment;
 }
 
+const ACTIVE_GROUP_MEMBERSHIP_STATUSES = new Set(['active', 'member', 'admin']);
+const ACTIVE_GROUP_GUEST_ACCESS_STATUSES = new Set(['active']);
+const ACTIVE_EVENT_PARTICIPANT_STATUSES = new Set(['active', 'confirmed', 'member', 'admin']);
+const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = new Set([
+  'active',
+  'collaborator',
+  'member',
+  'admin',
+]);
+
+function hasActiveStatus(
+  status: string | null | undefined,
+  activeStatuses: ReadonlySet<string>
+): boolean {
+  return status == null || activeStatuses.has(status);
+}
+
 // ============================================================================
 // Core Check
 // ============================================================================
@@ -67,7 +84,13 @@ export function checkPermission(
   if (
     scope.groupId &&
     (hasGroupPermission(data.memberships, scope.groupId, resource, action) ||
-      hasGroupPermission(data.guestAccesses, scope.groupId, resource, action))
+      hasGroupPermission(
+        data.guestAccesses,
+        scope.groupId,
+        resource,
+        action,
+        ACTIVE_GROUP_GUEST_ACCESS_STATUSES
+      ))
   ) {
     return true;
   }
@@ -106,7 +129,9 @@ export function isSelf(targetUserId: string | undefined, authUserId: string | un
 
 export function isGroupMember(memberships: Membership[] | undefined, groupId: string): boolean {
   if (!memberships) return false;
-  return memberships.some(m => m.group?.id === groupId);
+  return memberships.some(
+    m => m.group?.id === groupId && hasActiveStatus(m.status, ACTIVE_GROUP_MEMBERSHIP_STATUSES)
+  );
 }
 
 export function isEventParticipant(
@@ -114,7 +139,9 @@ export function isEventParticipant(
   eventId: string
 ): boolean {
   if (!participations) return false;
-  return participations.some(p => p.event?.id === eventId);
+  return participations.some(
+    p => p.event?.id === eventId && hasActiveStatus(p.status, ACTIVE_EVENT_PARTICIPANT_STATUSES)
+  );
 }
 
 export function isBlogger(
@@ -127,10 +154,15 @@ export function isBlogger(
 
 export function isAmendmentCollaborator(amendment: Amendment | undefined, userId: string): boolean {
   if (amendment?.amendmentRoleCollaborators) {
-    return amendment.amendmentRoleCollaborators.some(c => c.user?.id === userId);
+    return amendment.amendmentRoleCollaborators.some(
+      c =>
+        c.user?.id === userId && hasActiveStatus(c.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+    );
   }
   if (!amendment?.collaborators) return false;
-  return amendment.collaborators.some(c => c.user?.id === userId);
+  return amendment.collaborators.some(
+    c => c.user?.id === userId && hasActiveStatus(c.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+  );
 }
 
 export function isAmendmentAuthor(amendment: Amendment | undefined, userId: string): boolean {
@@ -148,16 +180,26 @@ function checkWithInheritance(userAction: ActionType, requiredAction: ActionType
   return PERMISSION_IMPLIES[userAction]?.includes(requiredAction) ?? false;
 }
 
+function getRoleActionRights(role: any): any[] {
+  return role?.actionRights ?? role?.action_rights ?? [];
+}
+
+function getActionRightAmendmentId(right: any): string | undefined {
+  return right?.amendment?.id ?? right?.amendment_id ?? undefined;
+}
+
 function hasGroupPermission(
-  memberships: Membership[] | undefined,
+  memberships: (Membership | GuestAccess)[] | undefined,
   groupId: string,
   resource: ResourceType,
-  action: ActionType
+  action: ActionType,
+  activeStatuses: ReadonlySet<string> = ACTIVE_GROUP_MEMBERSHIP_STATUSES
 ): boolean {
   if (!memberships) return false;
   return memberships.some(
     m =>
       m.group?.id === groupId &&
+      hasActiveStatus(m.status, activeStatuses) &&
       m.roles?.some(
         role =>
           role.actionRights?.some(
@@ -180,6 +222,7 @@ function hasEventPermission(
   return participations.some(
     p =>
       p.event?.id === eventId &&
+      hasActiveStatus(p.status, ACTIVE_EVENT_PARTICIPANT_STATUSES) &&
       p.roles?.some(
         role =>
           role.actionRights?.some(
@@ -222,20 +265,42 @@ function hasAmendmentPermission(
   }
 
   if (amendment?.amendmentRoleCollaborators) {
-    const collaborator = amendment.amendmentRoleCollaborators.find(c => c.user?.id === userId);
-    if (collaborator?.role?.actionRights) {
-      return collaborator.role.actionRights.some(
-        right =>
+    const collaborator = amendment.amendmentRoleCollaborators.find(
+      c =>
+        c.user?.id === userId && hasActiveStatus(c.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+    );
+    const actionRights = getRoleActionRights(collaborator?.role);
+    if (actionRights.length > 0) {
+      return actionRights.some(
+        (right: any) =>
           right.resource === resource &&
           checkWithInheritance(right.action, action) &&
-          (!right.amendment?.id || right.amendment.id === amendment.id)
+          (!getActionRightAmendmentId(right) || getActionRightAmendmentId(right) === amendment.id)
       );
     }
   }
 
+  const rawRoleCollaborator = (amendment?.collaborators as any[] | undefined)?.find(
+    collaborator =>
+      collaborator.user?.id === userId &&
+      hasActiveStatus(collaborator.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES) &&
+      collaborator.role
+  );
+  const rawRoleActionRights = getRoleActionRights(rawRoleCollaborator?.role);
+  if (rawRoleActionRights.length > 0) {
+    return rawRoleActionRights.some(
+      (right: any) =>
+        right.resource === resource &&
+        checkWithInheritance(right.action, action) &&
+        (!getActionRightAmendmentId(right) || getActionRightAmendmentId(right) === amendment?.id)
+    );
+  }
+
   if (!amendment?.collaborators || !amendment?.roles) return false;
 
-  const collaboration = amendment.collaborators.find(c => c.user?.id === userId);
+  const collaboration = amendment.collaborators.find(
+    c => c.user?.id === userId && hasActiveStatus(c.status, ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+  );
   if (!collaboration?.roleName) return false;
 
   const role = amendment.roles.find(r => r.name === collaboration.roleName);

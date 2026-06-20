@@ -15,6 +15,8 @@ import type {
   EditorMode,
 } from '../types';
 import { DEFAULT_EDITOR_CONTENT } from '../types';
+import { checkPermission } from '@/zero/rbac/check';
+import type { ActionRight, Amendment as PermissionAmendment } from '@/zero/rbac/types';
 
 // Raw entity type for adapter function parameters.
 // These receive untyped data from various Zero query shapes.
@@ -22,6 +24,94 @@ import { DEFAULT_EDITOR_CONTENT } from '../types';
 // duplicating Zero's complex inferred return types.
 
 type RawEntity = Record<string, any>;
+
+const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = new Set(['collaborator', 'member', 'admin']);
+
+function getAmendmentRoleCollaborators(amendment: RawEntity): RawEntity[] {
+  if (Array.isArray(amendment.amendmentRoleCollaborators)) {
+    return amendment.amendmentRoleCollaborators;
+  }
+
+  return Array.isArray(amendment.collaborators) ? amendment.collaborators : [];
+}
+
+function isActiveAmendmentCollaborator(collaborator: RawEntity): boolean {
+  return ACTIVE_AMENDMENT_COLLABORATOR_STATUSES.has(collaborator.status ?? '');
+}
+
+function mapEditorCollaboratorStatus(
+  status: string | null | undefined
+): EditorCollaborator['status'] {
+  if (status === 'admin' || status === 'member' || status === 'collaborator') return status;
+  if (status === 'owner' || status === 'viewer') return status;
+  return 'collaborator';
+}
+
+function mapRoleActionRights(raw: readonly RawEntity[] | undefined): ActionRight[] {
+  if (!raw) return [];
+
+  return raw.flatMap(right => {
+    if (!right.resource || !right.action) return [];
+
+    return [
+      {
+        id: String(right.id ?? `${right.resource}:${right.action}`),
+        resource: right.resource,
+        action: right.action,
+        group: right.group_id ? { id: String(right.group_id) } : undefined,
+        event: right.event_id ? { id: String(right.event_id) } : undefined,
+        amendment: right.amendment_id ? { id: String(right.amendment_id) } : undefined,
+        blog: right.blog_id ? { id: String(right.blog_id) } : undefined,
+      } as ActionRight,
+    ];
+  });
+}
+
+function buildPermissionAmendment(amendment: RawEntity): PermissionAmendment {
+  const ownerId = amendment.created_by_id ?? amendment.created_by?.id ?? amendment.user?.id;
+
+  return {
+    id: amendment.id,
+    owner: ownerId ? { id: String(ownerId) } : undefined,
+    user: ownerId ? { id: String(ownerId) } : undefined,
+    group: amendment.group_id ? { id: String(amendment.group_id) } : undefined,
+    amendmentRoleCollaborators: getAmendmentRoleCollaborators(amendment)
+      .filter(collaborator => collaborator.user?.id && isActiveAmendmentCollaborator(collaborator))
+      .map(collaborator => ({
+        id: String(collaborator.id),
+        user: { id: String(collaborator.user.id) },
+        role: collaborator.role
+          ? {
+              id: String(collaborator.role.id),
+              name: collaborator.role.name ?? '',
+              description: collaborator.role.description ?? undefined,
+              scope: 'amendment',
+              actionRights: mapRoleActionRights(collaborator.role.action_rights),
+            }
+          : undefined,
+      })),
+  };
+}
+
+function getAmendmentPermissionFlags(amendment: RawEntity, userId?: string) {
+  if (!userId) {
+    return {
+      canChangeMode: false,
+      canVoteOnChangeRequests: false,
+      canManageChangeRequestVotes: false,
+    };
+  }
+
+  const permissionAmendment = buildPermissionAmendment(amendment);
+  const data = { userId };
+  const scope = { amendment: permissionAmendment };
+
+  return {
+    canChangeMode: checkPermission(data, scope, 'update', 'amendments'),
+    canVoteOnChangeRequests: checkPermission(data, scope, 'vote', 'amendments'),
+    canManageChangeRequestVotes: checkPermission(data, scope, 'update', 'amendments'),
+  };
+}
 
 /**
  * Ensures every element node in a Plate/Slate tree has a valid `children` array.
@@ -52,6 +142,20 @@ function buildUserName(user: RawEntity, fallback = 'Unknown'): string {
   return full || user.email || fallback;
 }
 
+function buildEditorUser(user: RawEntity, fallback = 'Unknown'): EditorUser {
+  const firstName = user.first_name?.trim() || null;
+  const lastName = user.last_name?.trim() || null;
+
+  return {
+    id: user.id,
+    name: buildUserName(user, fallback),
+    firstName,
+    lastName,
+    email: user.email,
+    avatarUrl: user.avatar ?? undefined,
+  };
+}
+
 /**
  * Maps an amendment's editing_mode value to an EditorMode.
  * Terminal states (passed/rejected) are shown as 'view' in the editor.
@@ -70,22 +174,83 @@ function mapAmendmentEditingMode(mode: string | null | undefined): EditorMode {
   return valid.includes(mode as EditorMode) ? (mode as EditorMode) : 'suggest_internal';
 }
 
+function mapChangeRequestStatusToDiscussionStatus(status: string | null | undefined) {
+  if (status === 'accepted' || status === 'approved') return 'accepted';
+  if (status === 'rejected' || status === 'declined') return 'rejected';
+  return undefined;
+}
+
+function normalizeInternalCRVotingCloseTrigger(value: string | null | undefined) {
+  return value === 'after_minutes' ? 'after_minutes' : 'all_collaborators_voted';
+}
+
+function enrichAmendmentDiscussionsWithChangeRequests(amendment: RawEntity): TDiscussion[] {
+  const discussions = (amendment.discussions || []) as TDiscussion[];
+  const changeRequests = Array.isArray(amendment.change_requests) ? amendment.change_requests : [];
+  const activeCollaborators = getAmendmentRoleCollaborators(amendment).filter(
+    isActiveAmendmentCollaborator
+  );
+  const changeRequestById = new Map<string, RawEntity>();
+  const changeRequestByTitle = new Map<string, RawEntity>();
+
+  for (const changeRequest of changeRequests) {
+    if (changeRequest.id) changeRequestById.set(changeRequest.id, changeRequest);
+    if (changeRequest.title) changeRequestByTitle.set(changeRequest.title, changeRequest);
+  }
+
+  return discussions.map(discussion => {
+    const changeRequest =
+      (discussion.changeRequestEntityId
+        ? changeRequestById.get(discussion.changeRequestEntityId)
+        : undefined) ?? (discussion.crId ? changeRequestByTitle.get(discussion.crId) : undefined);
+
+    if (!changeRequest) {
+      return discussion;
+    }
+
+    const discussionStatus = mapChangeRequestStatusToDiscussionStatus(changeRequest.status);
+
+    return {
+      ...discussion,
+      changeRequestEntityId: changeRequest.id ?? discussion.changeRequestEntityId,
+      status: discussionStatus ?? discussion.status,
+      votesFor: changeRequest.votes_for ?? 0,
+      votesAgainst: changeRequest.votes_against ?? 0,
+      votesAbstain: changeRequest.votes_abstain ?? 0,
+      votingDeadline: changeRequest.voting_deadline ?? null,
+      closeTrigger: normalizeInternalCRVotingCloseTrigger(
+        amendment.internal_cr_voting_close_trigger
+      ),
+      eligibleVoterCount: activeCollaborators.length,
+      votedCollaboratorCount:
+        (changeRequest.votes_for ?? 0) +
+        (changeRequest.votes_against ?? 0) +
+        (changeRequest.votes_abstain ?? 0),
+      resolutionMethod: changeRequest.resolution_method ?? null,
+      visibilityScope: changeRequest.visibility_scope ?? null,
+      resolvedInMode: changeRequest.resolved_in_mode ?? null,
+      votingStatus: changeRequest.voting_status ?? null,
+      votes: (changeRequest.votes ?? []).map((vote: RawEntity) => ({
+        id: vote.id,
+        vote: vote.vote ?? '',
+        voterId: vote.user_id,
+      })),
+    };
+  });
+}
+
 /**
  * Adapts an amendment with its document to EditorEntity
  */
 export function adaptAmendmentToEntity(
   amendment: RawEntity | undefined | null,
-  document: RawEntity | undefined | null
+  document: RawEntity | undefined | null,
+  userId?: string
 ): EditorEntity | null {
   if (!amendment || !document) return null;
 
   const owner: EditorUser | undefined = document.owner
-    ? {
-        id: document.owner.id,
-        name: buildUserName(document.owner, 'Owner'),
-        email: document.owner.email,
-        avatarUrl: document.owner.avatar,
-      }
+    ? buildEditorUser(document.owner, 'Owner')
     : undefined;
 
   const collaborators: EditorCollaborator[] = [];
@@ -96,12 +261,7 @@ export function adaptAmendmentToEntity(
       if (collab.user?.id) {
         collaborators.push({
           id: collab.id,
-          user: {
-            id: collab.user.id,
-            name: buildUserName(collab.user, 'Collaborator'),
-            email: collab.user.email,
-            avatarUrl: collab.user.avatar,
-          },
+          user: buildEditorUser(collab.user, 'Collaborator'),
           canEdit: collab.canEdit ?? true,
           status: 'collaborator',
         });
@@ -110,20 +270,33 @@ export function adaptAmendmentToEntity(
   }
 
   // Add amendment role collaborators
-  if (amendment.amendmentRoleCollaborators) {
-    amendment.amendmentRoleCollaborators.forEach((collab: RawEntity) => {
-      if (collab.user?.id && !collaborators.some(c => c.user.id === collab.user.id)) {
+  const amendmentRoleCollaborators = getAmendmentRoleCollaborators(amendment);
+  if (amendmentRoleCollaborators.length) {
+    amendmentRoleCollaborators.forEach((collab: RawEntity) => {
+      if (!collab.user?.id) return;
+
+      const roleActionRights = mapRoleActionRights(collab.role?.action_rights).map(right => ({
+        id: right.id,
+        resource: right.resource,
+        action: right.action,
+        amendmentId: right.amendment?.id,
+      }));
+      const status = mapEditorCollaboratorStatus(collab.status);
+      const existingCollaborator = collaborators.find(c => c.user.id === collab.user.id);
+
+      if (existingCollaborator) {
+        existingCollaborator.role = collab.role?.name ?? existingCollaborator.role;
+        existingCollaborator.roleActionRights = roleActionRights;
+        existingCollaborator.status = status;
+        existingCollaborator.canEdit = true;
+      } else {
         collaborators.push({
           id: collab.id,
-          user: {
-            id: collab.user.id,
-            name: buildUserName(collab.user, 'Collaborator'),
-            email: collab.user.email,
-            avatarUrl: collab.user.avatar,
-          },
+          user: buildEditorUser(collab.user, 'Collaborator'),
           role: collab.role?.name,
+          roleActionRights,
           canEdit: true,
-          status: collab.status === 'admin' ? 'admin' : 'collaborator',
+          status,
         });
       }
     });
@@ -133,8 +306,6 @@ export function adaptAmendmentToEntity(
     entityType: 'amendment',
     amendmentId: amendment.id,
     amendmentCode: amendment.code,
-    amendmentDate: amendment.date,
-    amendmentSupporters: amendment.supporters,
     amendmentEditingMode: amendment.editing_mode,
   };
 
@@ -142,17 +313,19 @@ export function adaptAmendmentToEntity(
     Array.isArray(document.content) && document.content.length > 0
       ? sanitizeContent(document.content)
       : DEFAULT_EDITOR_CONTENT;
+  const permissionFlags = getAmendmentPermissionFlags(amendment, userId);
 
   return {
     id: document.id,
     title: document.title || amendment.title || '',
     content,
-    discussions: (amendment.discussions || []) as TDiscussion[],
+    discussions: enrichAmendmentDiscussionsWithChangeRequests(amendment),
     editingMode: mapAmendmentEditingMode(amendment.editing_mode),
     visibility: document.visibility ?? 'public',
     updatedAt: document.updated_at || Date.now(),
     owner,
     collaborators,
+    ...permissionFlags,
     metadata,
   };
 }
@@ -171,12 +344,7 @@ export function adaptBlogToEntity(blog: RawEntity | undefined | null): EditorEnt
       if (blogger.user?.id) {
         collaborators.push({
           id: blogger.id,
-          user: {
-            id: blogger.user.id,
-            name: buildUserName(blogger.user, 'Blogger'),
-            email: blogger.user.email,
-            avatarUrl: blogger.user.avatar,
-          },
+          user: buildEditorUser(blogger.user, 'Blogger'),
           role: blogger.role?.name,
           canEdit: true,
           status:
@@ -193,12 +361,7 @@ export function adaptBlogToEntity(blog: RawEntity | undefined | null): EditorEnt
   // Find owner from bloggers
   const ownerBlogger = blog.bloggers?.find((b: RawEntity) => b.status === 'owner');
   const owner: EditorUser | undefined = ownerBlogger?.user
-    ? {
-        id: ownerBlogger.user.id,
-        name: buildUserName(ownerBlogger.user, 'Owner'),
-        email: ownerBlogger.user.email,
-        avatarUrl: ownerBlogger.user.avatar,
-      }
+    ? buildEditorUser(ownerBlogger.user, 'Owner')
     : undefined;
 
   const metadata: EditorEntityMetadata = {
@@ -233,12 +396,7 @@ export function adaptDocumentToEntity(document: RawEntity | undefined | null): E
   if (!document) return null;
 
   const owner: EditorUser | undefined = document.owner
-    ? {
-        id: document.owner.id,
-        name: buildUserName(document.owner, 'Owner'),
-        email: document.owner.email,
-        avatarUrl: document.owner.avatar,
-      }
+    ? buildEditorUser(document.owner, 'Owner')
     : undefined;
 
   const collaborators: EditorCollaborator[] = [];
@@ -248,12 +406,7 @@ export function adaptDocumentToEntity(document: RawEntity | undefined | null): E
       if (collab.user?.id) {
         collaborators.push({
           id: collab.id,
-          user: {
-            id: collab.user.id,
-            name: buildUserName(collab.user, 'Collaborator'),
-            email: collab.user.email,
-            avatarUrl: collab.user.avatar,
-          },
+          user: buildEditorUser(collab.user, 'Collaborator'),
           canEdit: collab.canEdit ?? true,
           status: 'collaborator',
         });
@@ -295,12 +448,7 @@ export function adaptGroupDocumentToEntity(
   if (!document) return null;
 
   const owner: EditorUser | undefined = document.owner
-    ? {
-        id: document.owner.id,
-        name: buildUserName(document.owner, 'Owner'),
-        email: document.owner.email,
-        avatarUrl: document.owner.avatar,
-      }
+    ? buildEditorUser(document.owner, 'Owner')
     : undefined;
 
   const collaborators: EditorCollaborator[] = [];
@@ -310,12 +458,7 @@ export function adaptGroupDocumentToEntity(
       if (collab.user?.id) {
         collaborators.push({
           id: collab.id,
-          user: {
-            id: collab.user.id,
-            name: buildUserName(collab.user, 'Collaborator'),
-            email: collab.user.email,
-            avatarUrl: collab.user.avatar,
-          },
+          user: buildEditorUser(collab.user, 'Collaborator'),
           canEdit: collab.canEdit ?? true,
           status: 'collaborator',
         });

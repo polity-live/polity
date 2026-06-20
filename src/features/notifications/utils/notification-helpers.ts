@@ -279,7 +279,12 @@ async function insertServerNotification(config: NotificationConfig, notification
 const ACTIVE_GROUP_MANAGER_STATUSES = new Set(['active', 'member', 'admin']);
 const ACTIVE_GROUP_GUEST_MANAGER_STATUSES = new Set(['active']);
 const ACTIVE_EVENT_PARTICIPANT_STATUSES = new Set(['active', 'confirmed', 'member', 'admin']);
-const ACTIVE_AMENDMENT_COLLABORATOR_MANAGER_STATUSES = new Set(['active', 'member']);
+const ACTIVE_AMENDMENT_COLLABORATOR_MANAGER_STATUSES = new Set([
+  'active',
+  'collaborator',
+  'member',
+  'admin',
+]);
 const RELATIONSHIP_APPROVAL_DEDUPE_WINDOW_MS = 60_000;
 
 function buildGroupRelationshipManageUrl(groupId: string): string {
@@ -1704,7 +1709,7 @@ export async function notifyGroupInvite(params: {
     message: translateText('generated.inline.0202_you_ve_been_invited_to_join_groupname_c44a7ef2', {
       groupName: params.groupName,
     }),
-    actionUrl: `/group/${params.groupId}/memberships`,
+    actionUrl: `/user/${params.recipientUserId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
   });
@@ -2044,7 +2049,7 @@ export async function notifyGuestAccessInvite(params: {
     message: translateText('generated.inline.0202_you_ve_been_invited_to_join_groupname_c44a7ef2', {
       groupName: params.groupName,
     }),
-    actionUrl: `/group/${params.groupId}/memberships`,
+    actionUrl: `/user/${params.recipientUserId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
   });
@@ -2503,7 +2508,7 @@ export async function notifyCollaborationInvite(params: {
       'generated.inline.0237_you_ve_been_invited_to_collaborate_on_amendme_b9f7b5f9',
       { amendmentTitle: params.amendmentTitle }
     ),
-    actionUrl: `/amendment/${params.amendmentId}/collaborators`,
+    actionUrl: `/user/${params.recipientUserId}/memberships`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
   });

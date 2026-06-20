@@ -1,43 +1,49 @@
 'use client';
 
 import { featureThemeClassName } from '@/features/shared/theme';
-import { BadgeControl } from '@/features/shared/ui/status';
+import { BadgeControl, getEditingModeOption } from '@/features/shared/ui/status';
 import { FormControlInput } from '@/features/shared/ui/form';
 import type { Value } from 'platejs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { Tabs, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/features/shared/ui/ui/alert-dialog';
 import { Vote, FileEdit, AlertTriangle, CheckCircle2, Search } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { ChangeRequestTimelineCard } from './ChangeRequestTimelineCard';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
 import { SuggestionViewToggle } from '@/features/editor/ui/SuggestionViewToggle';
-import { EditingModeSelector } from '@/features/editor/ui/EditingModeSelector';
 
 type TabValue = 'all' | 'open' | 'accepted' | 'rejected';
-function getEditingModeLabel(mode: string | null | undefined): string {
-  switch (mode) {
-    case 'edit':
-      return 'Edit Mode';
-    case 'view':
-      return 'View Mode';
-    case 'suggest_internal':
-      return 'Internal Suggestions';
-    case 'suggest_event':
-      return 'Event Suggestions';
-    case 'vote_internal':
-      return 'Internal Voting';
-    case 'vote_event':
-      return 'Event Voting';
-    case 'passed':
-      return 'Passed';
-    case 'rejected':
-      return 'Rejected';
-    default:
-      return mode || 'Unknown';
-  }
+
+function canFinalizeInternalChangeRequest(item: any) {
+  const cr = item.change_request;
+  if (!cr || item.is_final_vote) return false;
+  if (cr.voting_status === 'completed') return false;
+  return (
+    cr.status !== 'accepted' &&
+    cr.status !== 'approved' &&
+    cr.status !== 'rejected' &&
+    cr.status !== 'declined'
+  );
 }
+
+function getInternalOutcomeLabel(cr: any) {
+  return (cr?.votes_for ?? 0) > (cr?.votes_against ?? 0) ? 'Accepted' : 'Rejected';
+}
+
 export interface ChangeRequestCardsListViewProps {
   items: any[];
   editingMode: any;
@@ -61,6 +67,7 @@ export interface ChangeRequestCardsListViewProps {
   onStartIndicative: any;
   onStartFinal: any;
   onCloseVoting: any;
+  onFinalizeInternalVote: any;
   t: any;
   activeTab: any;
   setActiveTab: any;
@@ -106,6 +113,7 @@ export function ChangeRequestCardsListView({
   onStartIndicative,
   onStartFinal,
   onCloseVoting,
+  onFinalizeInternalVote,
   t,
   activeTab,
   setActiveTab,
@@ -115,6 +123,7 @@ export function ChangeRequestCardsListView({
   finalVoteItem,
   crItems,
   sharedPreviewEnabled,
+  getPreviewCrId,
   setSelectedPreviewCrIds,
   searchedItems,
   categorized,
@@ -123,6 +132,12 @@ export function ChangeRequestCardsListView({
   effectivePreviewCrIds,
   selectedPreviewSuggestionIds,
 }: ChangeRequestCardsListViewProps) {
+  const isInternalVotingMode = editingMode === 'vote_internal';
+  const editingModeLabel = getEditingModeOption(editingMode, t).label;
+  const activeVotingLabel = isInternalVotingMode
+    ? t('features.agendas.crTimeline.activeInternalVoting', 'Internal voting mode active')
+    : t('features.agendas.crTimeline.activeEventVoting', 'Event voting mode active');
+
   return (
     <Card>
       <CardHeader className="space-y-3">
@@ -135,9 +150,9 @@ export function ChangeRequestCardsListView({
             )}
           >
             <CheckCircle2 className="h-4 w-4" />
-            <span className="font-medium">{t('features.agendas.crTimeline.votingActive')}</span>
+            <span className="font-medium">{activeVotingLabel}</span>
             <BadgeControl variant="outline" size="xs" className="ml-auto">
-              vote_event
+              {editingModeLabel}
             </BadgeControl>
           </div>
         ) : (
@@ -149,9 +164,13 @@ export function ChangeRequestCardsListView({
           >
             <AlertTriangle className="h-4 w-4" />
             <span>
-              {t('features.agendas.crTimeline.modeInfo')}:{' '}
-              <strong>{getEditingModeLabel(editingMode)}</strong>.{' '}
-              {t('features.agendas.crTimeline.setToVoteEvent')}
+              {t('features.agendas.crTimeline.modeInfo')}: <strong>{editingModeLabel}</strong>.{' '}
+              {editingMode === 'vote_internal'
+                ? t(
+                    'features.agendas.crTimeline.internalVotingActiveInfo',
+                    'Internal change request votes are active.'
+                  )
+                : t('features.agendas.crTimeline.setToVoteEvent')}
             </span>
           </div>
         )}
@@ -181,15 +200,13 @@ export function ChangeRequestCardsListView({
             <CREditorPreview
               documentContent={documentContent ?? ([] as Value)}
               suggestionIds={selectedPreviewSuggestionIds}
+              allowInteractiveEditor
               editingMode={editingMode}
               amendmentId={amendmentId}
               userId={userId}
               agendaItemId={agendaItemId}
               toolbarEnd={
                 <>
-                  {amendmentId && (
-                    <EditingModeSelector amendmentId={amendmentId} currentMode={editingMode} />
-                  )}
                   {editingMode !== 'suggest_event' &&
                     editingMode !== 'vote_event' &&
                     discussions &&
@@ -268,42 +285,91 @@ export function ChangeRequestCardsListView({
           ) : (
             filteredItems.map((item: any, index: number) => {
               const crId = item.change_request_id ?? item.id;
-              const diff = diffMap?.[crId] ?? diffMap?.[item.id];
+              const previewCrId = getPreviewCrId(item as ChangeRequestTimelineRow);
+              const diff =
+                diffMap?.[crId] ??
+                (previewCrId ? diffMap?.[previewCrId] : undefined) ??
+                diffMap?.[item.id];
               const crTitle = item.change_request?.title;
-              const suggestionId = crTitle ? crIdToDiscussionId.get(crTitle) : undefined;
+              const suggestionId = previewCrId
+                ? crIdToDiscussionId.get(previewCrId)
+                : crTitle
+                  ? crIdToDiscussionId.get(crTitle)
+                  : undefined;
+              const showFinalizeInternalVote =
+                editingMode === 'vote_internal' &&
+                canManage &&
+                onFinalizeInternalVote &&
+                canFinalizeInternalChangeRequest(item);
+              const outcomeLabel = getInternalOutcomeLabel(item.change_request);
+              const votesFor = item.change_request?.votes_for ?? 0;
+              const votesAgainst = item.change_request?.votes_against ?? 0;
+              const votesAbstain = item.change_request?.votes_abstain ?? 0;
 
               return (
-                <ChangeRequestTimelineCard
-                  key={item.id}
-                  item={item as ChangeRequestTimelineRow}
-                  index={index}
-                  isCurrent={isVotingActive && currentItemId === item.id}
-                  hasUserVoted={
-                    hasUserVoted ? hasUserVoted(item as ChangeRequestTimelineRow) : false
-                  }
-                  userSelectedChoiceIds={
-                    getUserSelectedChoiceIds
-                      ? getUserSelectedChoiceIds(item as ChangeRequestTimelineRow)
-                      : []
-                  }
-                  canManage={isVotingActive ? canManage : false}
-                  canVote={isVotingActive ? canVote : false}
-                  isFinalVoteLocked={false}
-                  diff={diff}
-                  documentContent={documentContent}
-                  suggestionId={suggestionId}
-                  crId={crTitle || undefined}
-                  discussions={discussions}
-                  editingMode={editingMode}
-                  amendmentId={amendmentId}
-                  userId={userId}
-                  agendaItemId={agendaItemId}
-                  showEditorPreview
-                  onCastVote={isVotingActive ? onCastVote : undefined}
-                  onStartIndicative={isVotingActive ? onStartIndicative : undefined}
-                  onStartFinal={isVotingActive ? onStartFinal : undefined}
-                  onCloseVoting={isVotingActive ? onCloseVoting : undefined}
-                />
+                <div key={item.id} className="space-y-2">
+                  <ChangeRequestTimelineCard
+                    item={item as ChangeRequestTimelineRow}
+                    index={index}
+                    isCurrent={isVotingActive && currentItemId === item.id}
+                    hasUserVoted={
+                      hasUserVoted ? hasUserVoted(item as ChangeRequestTimelineRow) : false
+                    }
+                    userSelectedChoiceIds={
+                      getUserSelectedChoiceIds
+                        ? getUserSelectedChoiceIds(item as ChangeRequestTimelineRow)
+                        : []
+                    }
+                    canManage={isVotingActive ? canManage : false}
+                    canVote={isVotingActive ? canVote : false}
+                    isFinalVoteLocked={false}
+                    diff={diff}
+                    documentContent={documentContent}
+                    suggestionId={suggestionId}
+                    crId={crTitle || undefined}
+                    discussions={discussions}
+                    editingMode={editingMode}
+                    amendmentId={amendmentId}
+                    userId={userId}
+                    agendaItemId={agendaItemId}
+                    showEditorPreview
+                    onCastVote={isVotingActive ? onCastVote : undefined}
+                    onStartIndicative={isVotingActive ? onStartIndicative : undefined}
+                    onStartFinal={isVotingActive ? onStartFinal : undefined}
+                    onCloseVoting={isVotingActive ? onCloseVoting : undefined}
+                  />
+                  {showFinalizeInternalVote && (
+                    <div className="flex justify-end">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="outline">
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                            Abstimmung beenden
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Interne Abstimmung beenden?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Ergebnis: {outcomeLabel}. Accept {votesFor}, Reject {votesAgainst},
+                              Abstain {votesAbstain}.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => {
+                                void onFinalizeInternalVote(item.change_request_id ?? item.id);
+                              }}
+                            >
+                              Abstimmung beenden
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  )}
+                </div>
               );
             })
           )}

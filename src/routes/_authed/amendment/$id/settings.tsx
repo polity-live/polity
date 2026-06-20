@@ -38,6 +38,7 @@ function AmendmentSettingsPage() {
     <AmendmentEditContent
       amendmentId={id}
       amendment={amendment}
+      amendmentProcess={amendmentProcess}
       currentUserId={user?.id || ''}
       isLoading={isLoading}
       mode="edit"

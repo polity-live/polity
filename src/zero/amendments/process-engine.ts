@@ -4,6 +4,7 @@ import type { Schema } from '../schema';
 import { zql } from '../schema';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { fireNotification } from '../server-notify';
+import { finalizeInternalChangeRequestsForEventPhaseTransition } from '../change-requests/internal-voting';
 
 type ZeroTransaction = Transaction<Schema>;
 
@@ -395,6 +396,10 @@ async function createAgendaItemAndVote(
   const agendaDescription = args.agendaDescription ?? args.amendmentReason ?? '';
   const voteTitle = args.voteTitle ?? agendaTitle;
   const voteDescription = args.voteDescription ?? args.amendmentReason ?? null;
+  const orderIndex =
+    args.forwardingStatus === 'previous_decision_outstanding'
+      ? 999
+      : (await getConfirmedAgendaTailOrderIndex(tx, args.eventId)) + 1;
 
   await tx.mutate.agenda_item.insert({
     id: args.agendaItemId,
@@ -406,7 +411,7 @@ async function createAgendaItemAndVote(
     type: args.agendaType ?? 'amendment',
     status: 'pending',
     forwarding_status: args.forwardingStatus,
-    order_index: 999,
+    order_index: orderIndex,
     duration: 0,
     scheduled_time: '',
     start_time: 0,
@@ -705,10 +710,18 @@ async function cancelOpenTasksForStepRun(tx: ZeroTransaction, stepRunId: string)
   }
 }
 
-async function getConfirmedAgendaTailOrderIndex(tx: ZeroTransaction, eventId: string) {
+async function getConfirmedAgendaTailOrderIndex(
+  tx: ZeroTransaction,
+  eventId: string,
+  excludeAgendaItemId?: string | null
+) {
   const agendaItems = await tx.run(zql.agenda_item.where('event_id', eventId));
 
   return agendaItems.reduce((maxOrderIndex, agendaItem) => {
+    if (excludeAgendaItemId && agendaItem.id === excludeAgendaItemId) {
+      return maxOrderIndex;
+    }
+
     if (agendaItem.forwarding_status === 'previous_decision_outstanding') {
       return maxOrderIndex;
     }
@@ -721,13 +734,60 @@ async function appendAgendaItemToConfirmedAgenda(
   tx: ZeroTransaction,
   args: { agendaItemId: string; eventId: string }
 ) {
-  const nextOrderIndex = (await getConfirmedAgendaTailOrderIndex(tx, args.eventId)) + 1;
+  const nextOrderIndex =
+    (await getConfirmedAgendaTailOrderIndex(tx, args.eventId, args.agendaItemId)) + 1;
 
   await tx.mutate.agenda_item.update({
     id: args.agendaItemId,
     order_index: nextOrderIndex,
     updated_at: Date.now(),
   });
+}
+
+async function syncAmendmentEditingMode(
+  tx: ZeroTransaction,
+  amendmentId: string | null | undefined,
+  editingMode: 'view' | 'suggest_event' | 'passed' | 'rejected',
+  actorUserId?: string | null
+) {
+  if (!amendmentId) {
+    return;
+  }
+
+  const amendment = await tx.run(zql.amendment.where('id', amendmentId).one());
+  if (!amendment || amendment.editing_mode === editingMode) {
+    return;
+  }
+
+  if (editingMode === 'suggest_event' && actorUserId) {
+    await finalizeInternalChangeRequestsForEventPhaseTransition({
+      tx,
+      ctx: { userID: actorUserId },
+      amendmentId: amendment.id,
+      now: Date.now(),
+    });
+  }
+
+  await tx.mutate.amendment.update({
+    id: amendment.id,
+    editing_mode: editingMode,
+    updated_at: Date.now(),
+  });
+}
+
+async function getForwardedEventEditingMode(
+  tx: ZeroTransaction,
+  eventId: string | null | undefined,
+  now: number
+) {
+  if (!eventId) {
+    return 'view' as const;
+  }
+
+  const event = await tx.run(zql.event.where('id', eventId).one());
+  return event?.start_date && event.start_date <= now
+    ? ('suggest_event' as const)
+    : ('view' as const);
 }
 
 async function deleteVoteRuntime(tx: ZeroTransaction, voteId: string | null | undefined) {
@@ -2553,6 +2613,7 @@ export async function resolveAmendmentProcessVote(
       terminal_step_run_id: stepRun.id,
       updated_at: now,
     });
+    await syncAmendmentEditingMode(tx, amendmentId, 'rejected');
 
     return {
       handled: true as const,
@@ -2670,6 +2731,7 @@ export async function resolveAmendmentProcessVote(
       implementation_status: implementationStatus,
       updated_at: now,
     });
+    await syncAmendmentEditingMode(tx, amendmentId, 'passed');
 
     return {
       handled: true as const,
@@ -2744,6 +2806,12 @@ export async function resolveAmendmentProcessVote(
 
   const branchSync = await syncBranchSchedulingState(tx, branch.id);
   const runSync = await recomputeProcessRunState(tx, processRun.id);
+  await syncAmendmentEditingMode(
+    tx,
+    amendmentId,
+    await getForwardedEventEditingMode(tx, nextStep.event_id, now),
+    processRun.created_by_id
+  );
 
   return {
     handled: true as const,

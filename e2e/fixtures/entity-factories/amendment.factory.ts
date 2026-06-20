@@ -68,7 +68,6 @@ export class AmendmentFactory extends FactoryBase {
       code: `AMN-E2E-${this._counter}`,
       visibility: overrides.visibility ?? 'public',
       is_public: true,
-      supporters: 0,
       created_by_id: ownerId,
       group_id: overrides.groupId ?? null,
       created_at: now,

@@ -11,6 +11,11 @@ export function requireQueryUser<T>(q: T, userID: string | undefined | null, fie
   return (q as any).where(field, userID) as T;
 }
 
+const ACTIVE_GROUP_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
+const ACTIVE_GROUP_GUEST_ACCESS_STATUSES = ['active'];
+const ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
+const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['active', 'collaborator', 'member', 'admin'];
+
 export function applyUserQueryAccess<T>(q: T, userID: string | undefined | null): T {
   const query = q as any;
 
@@ -56,6 +61,7 @@ function applyGroupRoleRightAccess<T>(
       exists('memberships', (membership: any) =>
         membership
           .where('user_id', userID)
+          .where('status', 'IN', ACTIVE_GROUP_MEMBERSHIP_STATUSES)
           .whereExists('membership_roles', (membershipRole: any) =>
             membershipRole.whereExists('role', (role: any) =>
               role.whereExists('action_rights', (right: any) =>
@@ -67,6 +73,7 @@ function applyGroupRoleRightAccess<T>(
       exists('guest_accesses', (guestAccess: any) =>
         guestAccess
           .where('user_id', userID)
+          .where('status', 'IN', ACTIVE_GROUP_GUEST_ACCESS_STATUSES)
           .whereExists('guest_roles', (guestRole: any) =>
             guestRole.whereExists('role', (role: any) =>
               role.whereExists('action_rights', (right: any) =>
@@ -157,6 +164,7 @@ function applyEventRoleRightAccess<T>(
       exists('participants', (participant: any) =>
         participant
           .where('user_id', userID)
+          .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
           .whereExists('participant_roles', (participantRole: any) =>
             participantRole.whereExists('role', (role: any) =>
               role.whereExists('action_rights', (right: any) =>
@@ -216,6 +224,26 @@ export function applyAmendmentQueryAccess<T>(q: T, userID: string | undefined | 
           participant.where('user_id', userID)
         )
       )
+    )
+  ) as T;
+}
+
+export function applyChangeRequestVisibilityAccess<T>(q: T, userID: string | undefined | null): T {
+  const query = q as any;
+
+  return query.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('visibility_scope', 'IS', null),
+      cmp('visibility_scope', 'public'),
+      isAuthenticatedUserId(userID)
+        ? exists('amendment', (amendment: any) =>
+            amendment.whereExists('collaborators', (collaborator: any) =>
+              collaborator
+                .where('user_id', userID)
+                .where('status', 'IN', ACTIVE_AMENDMENT_COLLABORATOR_STATUSES)
+            )
+          )
+        : cmp('visibility_scope', '__public_only__')
     )
   ) as T;
 }

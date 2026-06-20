@@ -26,6 +26,12 @@ export function useHomePreloads() {
         { subscriber_id: userId },
         queries.common.userSubscriptionsForTimeline({ subscriber_id: userId })
       ),
+      createPreloadEntry('queries.votes.votesWithDetails', {}, queries.votes.votesWithDetails({})),
+      createPreloadEntry(
+        'queries.elections.electionsWithDetails',
+        {},
+        queries.elections.electionsWithDetails({})
+      ),
     ];
   }, [userId]);
 

@@ -137,7 +137,6 @@ export const USER = {
         'generated.inline.0558_increasing_judicial_diversity_through_appoint_f2e6f0e5'
       ),
       status: 'Under Review',
-      supporters: 1243,
       date: 'Apr 5, 2023',
       tags: ['judicial', 'diversity', 'reform', 'appointments'],
     },
@@ -149,7 +148,6 @@ export const USER = {
         'generated.inline.0560_moving_from_first_past_the_post_to_proportion_b94d2781'
       ),
       status: 'Passed',
-      supporters: 2789,
       date: 'Dec 15, 2022',
       tags: ['electoral', 'voting', 'democracy', 'representation'],
     },
@@ -161,7 +159,6 @@ export const USER = {
         'generated.inline.0562_new_transparent_process_for_selecting_constit_646ad4de'
       ),
       status: 'Drafting',
-      supporters: 342,
       date: 'May 3, 2023',
       tags: ['judiciary', 'transparency', 'selection', 'governance'],
     },
@@ -173,7 +170,6 @@ export const USER = {
         'generated.inline.0564_proposal_for_12_year_term_limits_for_supreme__34ee06ad'
       ),
       status: 'Rejected',
-      supporters: 1876,
       date: 'Jan 22, 2023',
       tags: ['term-limits', 'judiciary', 'court-reform', 'accountability'],
     },

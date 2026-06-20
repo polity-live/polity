@@ -4,8 +4,7 @@ import { BadgeControl } from '@/features/shared/ui/status';
 /**
  * Amendment Metadata Component
  *
- * Displays amendment-specific metadata including code, date, supporters,
- * and collaborators list.
+ * Displays amendment-specific metadata including code, status, and collaborators list.
  */
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
@@ -27,10 +26,6 @@ interface Collaborator {
 interface AmendmentMetadataProps {
   /** Amendment code (e.g., "A-2024-001") */
   code?: string;
-  /** Amendment date */
-  date?: string;
-  /** Number of supporters */
-  supporters?: number;
   /** Amendment status */
   status?: string;
   /** List of collaborators */
@@ -41,8 +36,6 @@ interface AmendmentMetadataProps {
 
 export function AmendmentMetadata({
   code,
-  date,
-  supporters,
   status,
   collaborators = [],
   showCollaborators = true,
@@ -62,16 +55,6 @@ export function AmendmentMetadata({
           <BadgeControl variant="outline" textTransform="capitalize">
             {status}
           </BadgeControl>
-        )}
-        {date && (
-          <span className="text-muted-foreground">
-            {t('features.editor.metadata.date')}: {date}
-          </span>
-        )}
-        {supporters !== undefined && (
-          <span className="text-muted-foreground">
-            {supporters} {t('features.editor.metadata.supporters')}
-          </span>
         )}
       </div>
 

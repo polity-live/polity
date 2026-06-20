@@ -141,11 +141,59 @@ describe('amendment query nested authorization', () => {
       'where',
       'status',
       'IN',
-      ['collaborator', 'member', 'admin'],
+      ['active', 'collaborator', 'member', 'admin'],
     ]);
     expect(
       collaboratorCalls.some(call => call[0] === 'where' && typeof call[1] === 'function')
     ).toBe(false);
+    expect(collaboratorCalls.some(call => call[0] === 'related' && call[1] === 'user')).toBe(true);
+  });
+
+  it('limits relation collaborator rosters to the caller or active amendment managers', () => {
+    amendmentQueries.byIdWithRelations.fn({ args: { id: 'amendment-1' }, ctx });
+
+    const amendmentCalls = lastQuery('amendment').calls;
+    const collaboratorCalls = relatedCalls(amendmentCalls, 'collaborators');
+    const rosterAccessCall = collaboratorCalls.find(
+      call => call[0] === 'where' && typeof call[1] === 'function'
+    );
+
+    expect(rosterAccessCall).toBeDefined();
+
+    const calls = predicateCalls(rosterAccessCall?.[1]);
+    expect(calls).toEqual(
+      expect.arrayContaining([
+        ['cmp', 'user_id', ctx.userID],
+        ['exists', 'amendment'],
+        ['where', 'collaborators', 'user_id', ctx.userID],
+        ['where', 'collaborators', 'status', 'IN', ['active', 'collaborator', 'member', 'admin']],
+        ['whereExists', 'collaborators', 'role'],
+        ['whereExists', 'collaborators.role', 'action_rights'],
+        ['where', 'collaborators.role.action_rights', 'resource', 'amendments'],
+        ['where', 'collaborators.role.action_rights', 'action', 'manage'],
+      ])
+    );
+  });
+
+  it('limits direct collaborator queries to the caller or active amendment managers', () => {
+    amendmentQueries.collaborators.fn({ args: { amendment_id: 'amendment-1' }, ctx });
+
+    const collaboratorCalls = lastQuery('amendment_collaborator').calls;
+    const rosterAccessCall = collaboratorCalls.find(
+      call => call[0] === 'where' && typeof call[1] === 'function'
+    );
+
+    expect(rosterAccessCall).toBeDefined();
+
+    const calls = predicateCalls(rosterAccessCall?.[1]);
+    expect(calls).toEqual(
+      expect.arrayContaining([
+        ['cmp', 'user_id', ctx.userID],
+        ['exists', 'amendment'],
+        ['where', 'collaborators', 'user_id', ctx.userID],
+        ['where', 'collaborators', 'status', 'IN', ['active', 'collaborator', 'member', 'admin']],
+      ])
+    );
     expect(collaboratorCalls.some(call => call[0] === 'related' && call[1] === 'user')).toBe(true);
   });
 

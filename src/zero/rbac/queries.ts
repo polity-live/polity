@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { requireQueryUser } from './query-access';
 import { zql } from '../schema';
 
+const ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
+
 export const rbacQueries = {
   /** Group memberships for a user with attached roles→action_rights and group */
   membershipPermissions: defineQuery(
@@ -39,6 +41,7 @@ export const rbacQueries = {
     ({ args: { userId }, ctx: { userID } }) =>
       requireQueryUser(zql.event_participant, userID)
         .where('user_id', userId)
+        .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
         .related('participant_roles', q => q.related('role', rq => rq.related('action_rights')))
         .related('event')
   ),

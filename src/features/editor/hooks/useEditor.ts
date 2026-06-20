@@ -38,8 +38,6 @@ import { useZero } from '@rocicorp/zero/react';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import type { Value } from 'platejs';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
-import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { mutators } from '@/zero/mutators';
@@ -62,6 +60,57 @@ import type {
 } from '../types';
 import { DEFAULT_CAPABILITIES, DEFAULT_EDITOR_CONTENT } from '../types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+
+const PERSISTED_CHANGE_REQUEST_DISCUSSION_FIELDS = [
+  'changeRequestEntityId',
+  'status',
+  'votesFor',
+  'votesAgainst',
+  'votesAbstain',
+  'votingDeadline',
+  'closeTrigger',
+  'eligibleVoterCount',
+  'votedCollaboratorCount',
+  'resolutionMethod',
+  'visibilityScope',
+  'resolvedInMode',
+  'votingStatus',
+  'votes',
+] as const;
+
+function mergePersistedChangeRequestDiscussionFields(
+  localDiscussions: TDiscussion[],
+  remoteDiscussions: TDiscussion[]
+): TDiscussion[] {
+  const remoteById = new Map(remoteDiscussions.map(discussion => [discussion.id, discussion]));
+  const localIds = new Set(localDiscussions.map(discussion => discussion.id));
+  let changed = false;
+
+  const merged = localDiscussions.map(discussion => {
+    const remoteDiscussion = remoteById.get(discussion.id);
+    if (!remoteDiscussion) return discussion;
+
+    let nextDiscussion = discussion;
+    for (const field of PERSISTED_CHANGE_REQUEST_DISCUSSION_FIELDS) {
+      if (JSON.stringify(nextDiscussion[field]) === JSON.stringify(remoteDiscussion[field])) {
+        continue;
+      }
+
+      nextDiscussion = { ...nextDiscussion, [field]: remoteDiscussion[field] };
+      changed = true;
+    }
+
+    return nextDiscussion;
+  });
+
+  for (const remoteDiscussion of remoteDiscussions) {
+    if (localIds.has(remoteDiscussion.id)) continue;
+    merged.push(remoteDiscussion);
+    changed = true;
+  }
+
+  return changed ? merged : localDiscussions;
+}
 
 /**
  * Options for the useEditor hook
@@ -90,10 +139,8 @@ interface UseEditorOptions {
  * @returns Editor state and actions
  */
 export function useEditor(options: UseEditorOptions): EditorState & EditorActions {
-  const { entityType, entityId, userId, groupId, agendaItemId, readOnly = false } = options;
+  const { entityType, entityId, userId, groupId, readOnly = false } = options;
   const zero = useZero();
-  const { updateEditingMode } = useAmendmentActions();
-  const { initializeChangeRequestVoting } = useAgendaActions();
 
   // Query data based on entity type via facade hooks
   const amId = entityType === 'amendment' ? entityId : undefined;
@@ -148,7 +195,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         if (!amendmentDocsCollabs) return null;
         const doc = amendmentDocsCollabs.document;
         if (!doc) return null;
-        return adaptAmendmentToEntity(amendmentDocsCollabs, doc);
+        return adaptAmendmentToEntity(amendmentDocsCollabs, doc, userId);
       }
       case 'blog': {
         if (!blogForEditor) return null;
@@ -165,7 +212,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       default:
         return null;
     }
-  }, [entityType, entityId, amendmentDocsCollabs, blogForEditor, documentData, groupId]);
+  }, [entityType, entityId, amendmentDocsCollabs, blogForEditor, documentData, groupId, userId]);
 
   // Get the content entity ID (document ID for amendments, blog ID for blogs, etc.)
   const contentEntityId = useMemo(() => {
@@ -202,24 +249,34 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     }
   }, [entity]);
 
+  useEffect(() => {
+    if (!entity || !isInitialized.current) return;
+    setModeState(currentMode => {
+      const remoteMode = entity.editingMode || 'edit';
+      return currentMode === remoteMode ? currentMode : remoteMode;
+    });
+  }, [entity?.editingMode]);
+
   // Sync discussions from database in real-time.
   // Only pull remote discussions when we haven't saved recently — prevents
   // overwriting local comments/votes with stale data before the poke arrives.
   useEffect(() => {
     if (!entity || !isInitialized.current) return;
-    // Skip if we saved discussions recently (wait for the poke to echo back)
-    if (Date.now() - lastDiscussionsSave.current < 5000) return;
 
     const remoteDiscussions = entity.discussions || [];
     if (!remoteDiscussions.length && !discussions.length) return;
+    const nextDiscussions =
+      Date.now() - lastDiscussionsSave.current < 5000
+        ? mergePersistedChangeRequestDiscussionFields(discussions, remoteDiscussions)
+        : remoteDiscussions;
 
-    const remoteDiscussionsStr = JSON.stringify(remoteDiscussions);
+    const remoteDiscussionsStr = JSON.stringify(nextDiscussions);
     const localDiscussionsStr = JSON.stringify(discussions);
 
     if (localDiscussionsStr !== remoteDiscussionsStr) {
-      setDiscussionsState(remoteDiscussions);
+      setDiscussionsState(nextDiscussions);
     }
-  }, [entity?.discussions]);
+  }, [discussions, entity?.discussions]);
 
   // Sync remote content updates without destroying local selection.
   // Only applies when a genuinely new remote version arrives and the user
@@ -427,37 +484,14 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       if (!contentEntityId) return;
 
       try {
-        if (entityType === 'blog') {
+        if (entityType === 'amendment') {
+          await zero.mutate(mutators.amendments.update({ id: entityId, editing_mode: newMode }));
+        } else if (entityType === 'blog') {
           await zero.mutate(mutators.blogs.update({ id: contentEntityId, editing_mode: newMode }));
         } else {
           await zero.mutate(
             mutators.documents.updateContent({ id: contentEntityId, editing_mode: newMode })
           );
-        }
-
-        // For amendments, also update the amendment record and handle CR voting
-        if (entityType === 'amendment') {
-          await updateEditingMode(entityId, newMode);
-
-          if (newMode === 'vote_event' && agendaItemId) {
-            console.info('[useEditor] Initializing CR voting', {
-              amendmentId: entityId,
-              agendaItemId,
-            });
-            await initializeChangeRequestVoting({
-              amendment_id: entityId,
-              agenda_item_id: agendaItemId,
-              voting_context: 'event',
-            });
-            console.info('[useEditor] CR voting initialized', {
-              amendmentId: entityId,
-              agendaItemId,
-            });
-          } else if (newMode === 'vote_event' && !agendaItemId) {
-            console.warn('[useEditor] Cannot initialize CR voting — no agenda item linked', {
-              amendmentId: entityId,
-            });
-          }
         }
 
         setModeState(newMode);
@@ -467,16 +501,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         toast.error(translateText('generated.inline.0416_failed_to_change_mode_324234e0'));
       }
     },
-    [
-      entityType,
-      entityId,
-      contentEntityId,
-      agendaItemId,
-      zero,
-      updateEditingMode,
-      initializeChangeRequestVoting,
-      readOnly,
-    ]
+    [entityType, entityId, contentEntityId, zero, readOnly]
   );
 
   // Restore version handler
@@ -532,17 +557,28 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
   const isOwnerOrCollaborator = useMemo(() => {
     if (!entity || !userId) return false;
+    if (entityType === 'amendment') return Boolean(entity.canChangeMode);
     if (entity.owner?.id === userId) return true;
     return entity.collaborators.some(
       c => c.user.id === userId && (c.status === 'owner' || c.status === 'admin' || c.canEdit)
     );
-  }, [entity, userId]);
+  }, [entity, entityType, userId]);
 
   // Merge capabilities
   const capabilities = useMemo(() => {
     const defaults = DEFAULT_CAPABILITIES[entityType];
     return { ...defaults, ...options.capabilities };
   }, [entityType, options.capabilities]);
+
+  const canVoteOnChangeRequests = useMemo(() => {
+    if (entityType !== 'amendment') return capabilities.voting;
+    return Boolean(entity?.canVoteOnChangeRequests);
+  }, [capabilities.voting, entity?.canVoteOnChangeRequests, entityType]);
+
+  const canManageChangeRequestVotes = useMemo(() => {
+    if (entityType !== 'amendment') return isOwnerOrCollaborator;
+    return Boolean(entity?.canManageChangeRequestVotes);
+  }, [entity?.canManageChangeRequestVotes, entityType, isOwnerOrCollaborator]);
 
   return {
     // Entity data
@@ -565,6 +601,8 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     // Access
     hasAccess,
     isOwnerOrCollaborator,
+    canVoteOnChangeRequests,
+    canManageChangeRequestVotes,
 
     // Capabilities
     capabilities,

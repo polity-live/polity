@@ -10,9 +10,11 @@ import {
 interface DiscussionEntry {
   id: string;
   crId?: string;
+  changeRequestEntityId?: string;
   title?: string;
   description?: string;
   justification?: string;
+  status?: string;
   createdAt?: number;
   userId?: string;
   comments?: readonly { text?: string; value?: string; userId?: string }[];
@@ -38,6 +40,18 @@ export interface ChangeRequest {
   resolvedBy: string | null;
   createdAt: number;
   userId: string;
+  votesFor: number;
+  votesAgainst: number;
+  votesAbstain: number;
+  votingDeadline: number | null;
+  closeTrigger: string | null;
+  eligibleVoterCount: number;
+  votedCollaboratorCount: number;
+  resolutionMethod: string | null;
+  visibilityScope: string | null;
+  resolvedInMode: string | null;
+  votingStatus: string | null;
+  userVote: string | null;
   comments: readonly { text?: string; value?: string; userId?: string }[];
   votes: readonly {
     id: string;
@@ -51,6 +65,8 @@ export interface ChangeRequest {
       avatar?: string | null;
     } | null;
   }[];
+  discussionId: string | null;
+  suggestionId: string | null;
   changeRequestEntityId?: string;
 }
 
@@ -62,7 +78,19 @@ function isDeclinedStatus(status: string | null | undefined) {
   return status === 'declined' || status === 'rejected';
 }
 
-export function useChangeRequests(amendmentId: string) {
+function isActiveCollaborator(collaborator: { status?: string | null }) {
+  return (
+    collaborator.status === 'collaborator' ||
+    collaborator.status === 'member' ||
+    collaborator.status === 'admin'
+  );
+}
+
+function normalizeInternalCRVotingCloseTrigger(value: string | null | undefined) {
+  return value === 'after_minutes' ? 'after_minutes' : 'all_collaborators_voted';
+}
+
+export function useChangeRequests(amendmentId: string, currentUserId?: string) {
   // Fetch amendment data using hook
   const {
     amendment,
@@ -83,6 +111,44 @@ export function useChangeRequests(amendmentId: string) {
   const changeRequests = useMemo<ChangeRequest[]>(() => {
     const openRequests: ChangeRequest[] = [];
     const closedRequests: ChangeRequest[] = [];
+    const activeCollaboratorIds = new Set(
+      (collaborators ?? [])
+        .filter(isActiveCollaborator)
+        .map(collaborator => collaborator.user_id)
+        .filter(Boolean)
+    );
+    const closeTrigger = normalizeInternalCRVotingCloseTrigger(
+      amendment?.internal_cr_voting_close_trigger
+    );
+    const changeRequestById = new Map<string, (typeof savedChangeRequests)[number]>();
+    const changeRequestByTitle = new Map<string, (typeof savedChangeRequests)[number]>();
+    const discussionByChangeRequestId = new Map<string, DiscussionEntry>();
+    const discussionByCrId = new Map<string, DiscussionEntry>();
+
+    for (const changeRequest of savedChangeRequests ?? []) {
+      if (changeRequest.id) {
+        changeRequestById.set(changeRequest.id, changeRequest);
+      }
+      if (changeRequest.title) {
+        changeRequestByTitle.set(changeRequest.title, changeRequest);
+      }
+    }
+
+    if (amendment?.discussions && Array.isArray(amendment.discussions)) {
+      for (const discussion of amendment.discussions as readonly DiscussionEntry[]) {
+        if (discussion.changeRequestEntityId) {
+          discussionByChangeRequestId.set(discussion.changeRequestEntityId, discussion);
+        }
+        if (discussion.crId) {
+          discussionByCrId.set(discussion.crId, discussion);
+        }
+      }
+    }
+
+    const getUserVote = (changeRequest?: (typeof savedChangeRequests)[number]) =>
+      changeRequest?.votes?.find(vote => vote.user_id === currentUserId)?.vote ??
+      changeRequest?.votes?.[0]?.vote ??
+      null;
 
     // Process open change requests from amendment.discussions
     if (amendment?.discussions && Array.isArray(amendment.discussions)) {
@@ -95,12 +161,20 @@ export function useChangeRequests(amendmentId: string) {
               document?.content as Value | undefined
             );
 
-            const matchingChangeRequest = savedChangeRequests.find(
-              cr => cr.title === suggestion.crId
-            );
+            const matchingChangeRequest =
+              (suggestion.changeRequestEntityId
+                ? changeRequestById.get(suggestion.changeRequestEntityId)
+                : undefined) ??
+              (suggestion.crId ? changeRequestByTitle.get(suggestion.crId) : undefined) ??
+              (suggestion.title ? changeRequestByTitle.get(suggestion.title) : undefined);
+            const userVote = getUserVote(matchingChangeRequest);
+            const resolvedStatus = matchingChangeRequest?.status ?? suggestion.status;
+            const isResolved = isApprovedStatus(resolvedStatus) || isDeclinedStatus(resolvedStatus);
 
             return {
               id: suggestion.id,
+              discussionId: suggestion.id,
+              suggestionId: suggestion.id,
               crId: suggestion.crId ?? '',
               crNumber: parseInt(suggestion.crId?.replace('CR-', '') || '0'),
               title: suggestion.title || suggestion.crId || '',
@@ -112,16 +186,31 @@ export function useChangeRequests(amendmentId: string) {
               newProperties: suggestionContent.newProperties,
               proposedChange: suggestionContent.newText || suggestionContent.text,
               justification: suggestion.justification || '',
-              isResolved: false,
+              isResolved,
               status: matchingChangeRequest?.status || 'open',
-              resolution: null,
-              resolvedAt: null,
-              resolvedBy: null,
+              resolution: isResolved ? (resolvedStatus ?? null) : null,
+              resolvedAt: isResolved ? (matchingChangeRequest?.updated_at ?? null) : null,
+              resolvedBy: isResolved ? (matchingChangeRequest?.user_id ?? null) : null,
               createdAt: suggestion.createdAt ?? 0,
               userId: suggestion.userId ?? '',
+              votesFor: matchingChangeRequest?.votes_for ?? 0,
+              votesAgainst: matchingChangeRequest?.votes_against ?? 0,
+              votesAbstain: matchingChangeRequest?.votes_abstain ?? 0,
+              votingDeadline: matchingChangeRequest?.voting_deadline ?? null,
+              closeTrigger,
+              eligibleVoterCount: activeCollaboratorIds.size,
+              votedCollaboratorCount:
+                (matchingChangeRequest?.votes_for ?? 0) +
+                (matchingChangeRequest?.votes_against ?? 0) +
+                (matchingChangeRequest?.votes_abstain ?? 0),
+              resolutionMethod: matchingChangeRequest?.resolution_method ?? null,
+              visibilityScope: matchingChangeRequest?.visibility_scope ?? null,
+              resolvedInMode: matchingChangeRequest?.resolved_in_mode ?? null,
+              votingStatus: matchingChangeRequest?.voting_status ?? null,
+              userVote,
               comments: suggestion.comments || [],
               votes: matchingChangeRequest?.votes || [],
-              changeRequestEntityId: matchingChangeRequest?.id,
+              changeRequestEntityId: matchingChangeRequest?.id ?? suggestion.changeRequestEntityId,
             } as ChangeRequest;
           })
       );
@@ -130,19 +219,37 @@ export function useChangeRequests(amendmentId: string) {
     // Process closed change requests from savedChangeRequests entity
     if (savedChangeRequests && Array.isArray(savedChangeRequests)) {
       const openRequestCrIds = new Set(openRequests.map(r => r.crId));
+      const openRequestTitles = new Set(openRequests.map(r => r.title).filter(Boolean));
+      const openRequestEntityIds = new Set(
+        openRequests.map(r => r.changeRequestEntityId).filter(Boolean)
+      );
 
       closedRequests.push(
         ...savedChangeRequests
           .filter(cr => {
-            if (openRequestCrIds.has(cr.title)) {
+            if (
+              openRequestEntityIds.has(cr.id) ||
+              openRequestCrIds.has(cr.title) ||
+              openRequestTitles.has(cr.title)
+            ) {
               return false;
             }
             return isApprovedStatus(cr.status) || isDeclinedStatus(cr.status);
           })
           .map(cr => ({
             id: cr.id,
-            crId: cr.title,
-            crNumber: parseInt(cr.title?.replace('CR-', '') || '0'),
+            discussionId:
+              (cr.id ? discussionByChangeRequestId.get(cr.id)?.id : undefined) ??
+              (cr.title ? discussionByCrId.get(cr.title)?.id : undefined) ??
+              null,
+            suggestionId:
+              (cr.id ? discussionByChangeRequestId.get(cr.id)?.id : undefined) ??
+              (cr.title ? discussionByCrId.get(cr.title)?.id : undefined) ??
+              null,
+            crId: discussionByChangeRequestId.get(cr.id)?.crId ?? cr.title,
+            crNumber: parseInt(
+              (discussionByChangeRequestId.get(cr.id)?.crId ?? cr.title)?.replace('CR-', '') || '0'
+            ),
             title: cr.title,
             description: cr.description || '',
             type: 'unknown',
@@ -159,15 +266,36 @@ export function useChangeRequests(amendmentId: string) {
             resolvedBy: cr.creator?.id,
             createdAt: cr.createdAt,
             userId: cr.creator?.id,
+            votesFor: cr.votes_for ?? 0,
+            votesAgainst: cr.votes_against ?? 0,
+            votesAbstain: cr.votes_abstain ?? 0,
+            votingDeadline: cr.voting_deadline ?? null,
+            closeTrigger,
+            eligibleVoterCount: activeCollaboratorIds.size,
+            votedCollaboratorCount:
+              (cr.votes_for ?? 0) + (cr.votes_against ?? 0) + (cr.votes_abstain ?? 0),
+            resolutionMethod: cr.resolution_method ?? null,
+            visibilityScope: cr.visibility_scope ?? null,
+            resolvedInMode: cr.resolved_in_mode ?? null,
+            votingStatus: cr.voting_status ?? null,
+            userVote: getUserVote(cr),
             comments: [],
             votes: cr.votes || [],
+            changeRequestEntityId: cr.id,
           }))
       );
     }
 
     // Combine and sort by CR number
     return [...openRequests, ...closedRequests].sort((a, b) => a.crNumber - b.crNumber);
-  }, [amendment?.discussions, document?.content, savedChangeRequests]);
+  }, [
+    amendment?.discussions,
+    amendment?.internal_cr_voting_close_trigger,
+    collaborators,
+    currentUserId,
+    document?.content,
+    savedChangeRequests,
+  ]);
 
   // Separate open and closed requests
   const openChangeRequests = useMemo(

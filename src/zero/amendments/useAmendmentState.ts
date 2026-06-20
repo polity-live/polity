@@ -260,8 +260,16 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
   const collaborators = useMemo(() => allCollaborators ?? [], [allCollaborators]);
 
   const collaboratorCount = useMemo(
-    () => collaborators.filter(c => c.status === 'member' || c.status === 'admin').length,
-    [collaborators]
+    () =>
+      amendment?.collaborator_count ??
+      collaborators.filter(
+        c =>
+          c.status === 'active' ||
+          c.status === 'collaborator' ||
+          c.status === 'member' ||
+          c.status === 'admin'
+      ).length,
+    [amendment?.collaborator_count, collaborators]
   );
 
   const collaboratorStats = useMemo(() => {

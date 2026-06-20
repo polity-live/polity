@@ -10,6 +10,12 @@ import {
 // Amendment Zod Schemas
 // ============================================
 
+export const internalCrVotingCloseTriggerSchema = z.enum([
+  'all_collaborators_voted',
+  'after_minutes',
+]);
+export const internalCrResolutionVisibilitySchema = z.enum(['public', 'collaborators']);
+
 const baseAmendmentSchema = z.object({
   id: z.string(),
   code: z.string().nullable(),
@@ -23,9 +29,6 @@ const baseAmendmentSchema = z.object({
   clone_source_id: z.string().nullable(),
   origin_amendment_id: z.string().nullable(),
   document_id: z.string().nullable(),
-  supporters: z.number(),
-  supporters_required: z.number().nullable(),
-  supporters_percentage: z.number().nullable(),
   upvotes: z.number(),
   downvotes: z.number(),
   tags: jsonStringArraySchema.nullable(),
@@ -34,6 +37,9 @@ const baseAmendmentSchema = z.object({
   clone_count: z.number(),
   change_request_count: z.number(),
   editing_mode: z.string().nullable(),
+  internal_cr_voting_close_trigger: z.string().nullable().optional(),
+  internal_cr_voting_duration_minutes: z.number().nullable().optional(),
+  internal_cr_resolution_visibility: internalCrResolutionVisibilitySchema.nullable().optional(),
   discussions: jsonSchema.nullable(),
   comment_count: z.number(),
   collaborator_count: z.number(),
@@ -55,9 +61,6 @@ export const createAmendmentSchema = baseAmendmentSchema
     created_at: true,
     updated_at: true,
     created_by_id: true,
-    supporters: true,
-    supporters_required: true,
-    supporters_percentage: true,
     upvotes: true,
     downvotes: true,
     subscriber_count: true,
@@ -81,6 +84,9 @@ export const updateAmendmentSchema = baseAmendmentSchema
     preamble: true,
     visibility: true,
     editing_mode: true,
+    internal_cr_voting_close_trigger: true,
+    internal_cr_voting_duration_minutes: true,
+    internal_cr_resolution_visibility: true,
     tags: true,
     event_id: true,
     group_id: true,
@@ -96,9 +102,6 @@ export const updateAmendmentSchema = baseAmendmentSchema
     origin_amendment_id: true,
     document_id: true,
     image_url: true,
-    supporters: true,
-    supporters_required: true,
-    supporters_percentage: true,
     current_process_run_id: true,
   })
   .partial()

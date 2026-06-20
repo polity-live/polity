@@ -33,6 +33,7 @@ interface ChangeRequestCardsListProps {
   onStartIndicative?: (itemId: string) => Promise<void>;
   onStartFinal?: (itemId: string) => Promise<void>;
   onCloseVoting?: (itemId: string) => Promise<void> | Promise<unknown>;
+  onFinalizeInternalVote?: (changeRequestId: string) => Promise<void>;
 }
 import { useChangeRequestCardsListController } from './useChangeRequestCardsListController';
 import { ChangeRequestCardsListView } from './ChangeRequestCardsListView';
@@ -60,6 +61,7 @@ export function ChangeRequestCardsList({
   onStartIndicative,
   onStartFinal,
   onCloseVoting,
+  onFinalizeInternalVote,
 }: ChangeRequestCardsListProps) {
   const viewProps = useChangeRequestCardsListController({
     items,
@@ -84,6 +86,7 @@ export function ChangeRequestCardsList({
     onStartIndicative,
     onStartFinal,
     onCloseVoting,
+    onFinalizeInternalVote,
   });
 
   return <ChangeRequestCardsListView {...viewProps} />;

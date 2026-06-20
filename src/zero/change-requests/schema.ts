@@ -24,6 +24,10 @@ const baseChangeRequestSchema = z.object({
   voting_deadline: nullableTimestampSchema,
   voting_majority_type: z.string().nullable(),
   quorum_required: z.number().nullable(),
+  created_in_mode: z.string().nullable().optional(),
+  resolved_in_mode: z.string().nullable().optional(),
+  resolution_method: z.string().nullable().optional(),
+  visibility_scope: z.string().nullable().optional(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
@@ -57,6 +61,14 @@ export const updateChangeRequestSchema = baseChangeRequestSchema
   })
   .partial()
   .extend({ id: z.string() });
+
+export const finalizeInternalChangeRequestVoteSchema = z.object({
+  change_request_id: z.string(),
+});
+
+export const finalizeExpiredInternalChangeRequestVotesSchema = z.object({
+  amendment_id: z.string(),
+});
 
 // ============================================
 // Inferred Types

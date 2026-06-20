@@ -112,9 +112,7 @@ export const amendmentsSeeder: EntitySeeder = {
               subtitle: faker.lorem.sentence(),
               editing_mode: editingMode,
               currentEventId,
-              supporters: randomInt(10, 500),
               supporterGroups: supportingGroups,
-              date: faker.date.past({ years: 1 }).toISOString(),
               code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
               tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
               visibility: randomVisibility(),
@@ -265,9 +263,7 @@ export const amendmentsSeeder: EntitySeeder = {
 
         // Add hashtags
         const amendmentHashtags = randomItems(AMENDMENT_HASHTAGS, randomInt(2, 4));
-        transactions.push(
-          ...createHashtagRows(amendmentId, 'amendment', amendmentHashtags)
-        );
+        transactions.push(...createHashtagRows(amendmentId, 'amendment', amendmentHashtags));
 
         // Add document
         transactions.push(
@@ -276,9 +272,7 @@ export const amendmentsSeeder: EntitySeeder = {
 
         // Add change requests (2-5 per amendment if in suggesting/voting phase)
         if (
-          ['suggest_internal', 'vote_internal', 'suggest_event', 'vote_event'].includes(
-            editingMode
-          )
+          ['suggest_internal', 'vote_internal', 'suggest_event', 'vote_event'].includes(editingMode)
         ) {
           const changeRequestCount = randomInt(2, 5);
           const isEventPhase = ['suggest_event', 'vote_event'].includes(editingMode);
@@ -605,8 +599,6 @@ export const amendmentsSeeder: EntitySeeder = {
             title: `${originalAmendment.title} (Clone)`,
             subtitle: faker.lorem.sentence(),
             editing_mode: 'edit',
-            supporters: 0,
-            date: new Date().toISOString(),
             code: `AMN-${faker.string.alphanumeric(6).toUpperCase()}`,
             tags: [randomItem(['policy', 'reform', 'legislation', 'amendment', 'proposal'])],
             visibility: randomVisibility(),

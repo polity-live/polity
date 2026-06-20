@@ -41,6 +41,21 @@ export function mapChangeRequestsToSummaries(
     properties: cr.properties as Record<string, string>,
     newProperties: cr.newProperties as Record<string, string>,
     justification: cr.justification,
+    votesFor: cr.votesFor,
+    votesAgainst: cr.votesAgainst,
+    votesAbstain: cr.votesAbstain,
+    suggestionId: cr.suggestionId,
+    discussionId: cr.discussionId,
+    changeRequestEntityId: cr.changeRequestEntityId ?? null,
+    votingDeadline: cr.votingDeadline,
+    closeTrigger: cr.closeTrigger,
+    eligibleVoterCount: cr.eligibleVoterCount,
+    votedCollaboratorCount: cr.votedCollaboratorCount,
+    resolutionMethod: cr.resolutionMethod,
+    visibilityScope: cr.visibilityScope,
+    resolvedInMode: cr.resolvedInMode,
+    votingStatus: cr.votingStatus,
+    userVote: cr.userVote,
   }));
 }
 
@@ -58,7 +73,7 @@ export function mapChangeRequestsToDiffMap(
   const map: Record<string, ChangeRequestDiffData> = {};
 
   for (const cr of changeRequests) {
-    map[cr.id] = {
+    const diff = {
       changeType: cr.type,
       originalText: cr.text || undefined,
       newText: cr.newText || undefined,
@@ -66,6 +81,14 @@ export function mapChangeRequestsToDiffMap(
       newProperties: cr.newProperties as Record<string, string> | undefined,
       justification: cr.justification || undefined,
     };
+
+    map[cr.id] = diff;
+    if (cr.suggestionId) {
+      map[cr.suggestionId] = diff;
+    }
+    if (cr.changeRequestEntityId) {
+      map[cr.changeRequestEntityId] = diff;
+    }
   }
 
   return map;
@@ -77,13 +100,25 @@ export function mapChangeRequestsToDiscussions(
   return changeRequests
     .filter(cr => !!cr.crId)
     .map(cr => ({
-      id: cr.id,
+      id: cr.discussionId ?? cr.suggestionId ?? cr.id,
       crId: cr.crId,
       title: cr.title || cr.crId,
       userId: cr.userId,
       comments: [],
       createdAt: new Date(cr.createdAt),
       isResolved: cr.isResolved,
+      votesFor: cr.votesFor,
+      votesAgainst: cr.votesAgainst,
+      votesAbstain: cr.votesAbstain,
+      votingDeadline: cr.votingDeadline,
+      closeTrigger: cr.closeTrigger,
+      eligibleVoterCount: cr.eligibleVoterCount,
+      votedCollaboratorCount: cr.votedCollaboratorCount,
+      resolutionMethod: cr.resolutionMethod,
+      visibilityScope: cr.visibilityScope,
+      resolvedInMode: cr.resolvedInMode,
+      votingStatus: cr.votingStatus,
+      changeRequestEntityId: cr.changeRequestEntityId,
     }));
 }
 

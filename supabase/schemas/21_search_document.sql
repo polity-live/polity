@@ -797,17 +797,50 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.upsert_amendment_search_document()
-RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION public.amendment_supporting_group_count(target_amendment_id UUID)
+RETURNS INTEGER
+LANGUAGE sql
+STABLE
+SECURITY DEFINER SET search_path = ''
+AS $$
+  SELECT count(*)::INTEGER
+  FROM public.amendment_group_decision decision
+  LEFT JOIN LATERAL (
+    SELECT confirmation.status
+    FROM public.support_confirmation confirmation
+    WHERE confirmation.amendment_id = decision.amendment_id
+      AND confirmation.group_id = decision.group_id
+    ORDER BY confirmation.created_at DESC, confirmation.id DESC
+    LIMIT 1
+  ) latest_confirmation ON true
+  WHERE decision.amendment_id = target_amendment_id
+    AND decision.status IN ('supported', 'accepted')
+    AND coalesce(latest_confirmation.status, '') NOT IN ('declined', 'withdrawn');
+$$;
+
+CREATE OR REPLACE FUNCTION public.refresh_amendment_search_document(target_amendment_id UUID)
+RETURNS VOID
 LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = ''
 AS $$
+DECLARE
+  amendment_row public.amendment%ROWTYPE;
+  supporting_group_count INTEGER;
+  net_user_votes INTEGER;
 BEGIN
-  IF TG_OP = 'DELETE' THEN
+  SELECT *
+  INTO amendment_row
+  FROM public.amendment
+  WHERE id = target_amendment_id;
+
+  IF NOT FOUND THEN
     DELETE FROM public.search_document
-    WHERE id = public.search_document_id('amendment', OLD.id);
-    RETURN OLD;
+    WHERE id = public.search_document_id('amendment', target_amendment_id);
+    RETURN;
   END IF;
+
+  supporting_group_count := public.amendment_supporting_group_count(amendment_row.id);
+  net_user_votes := coalesce(amendment_row.upvotes, 0) - coalesce(amendment_row.downvotes, 0);
 
   INSERT INTO public.search_document (
     id,
@@ -828,33 +861,41 @@ BEGIN
     trending_score
   )
   VALUES (
-    public.search_document_id('amendment', NEW.id),
+    public.search_document_id('amendment', amendment_row.id),
     'amendment',
-    NEW.id,
-    coalesce(nullif(NEW.title, ''), nullif(NEW.code, ''), 'Amendment'),
-    NEW.code,
-    coalesce(NEW.reason, NEW.preamble),
-    concat_ws(' ', NEW.code, NEW.title, NEW.reason, NEW.preamble, NEW.category),
-    coalesce(NEW.visibility, 'public'),
-    NEW.created_by_id,
-    NEW.group_id,
-    NEW.image_url,
+    amendment_row.id,
+    coalesce(nullif(amendment_row.title, ''), nullif(amendment_row.code, ''), 'Amendment'),
+    amendment_row.code,
+    coalesce(amendment_row.reason, amendment_row.preamble),
+    concat_ws(
+      ' ',
+      amendment_row.code,
+      amendment_row.title,
+      amendment_row.reason,
+      amendment_row.preamble,
+      amendment_row.category
+    ),
+    coalesce(amendment_row.visibility, 'public'),
+    amendment_row.created_by_id,
+    amendment_row.group_id,
+    amendment_row.image_url,
     jsonb_build_object(
       'type', 'amendment',
-      'code', NEW.code,
-      'status', NEW.editing_mode,
-      'entity_id', NEW.id,
-      'metadata', jsonb_build_object('event_id', NEW.event_id),
+      'code', amendment_row.code,
+      'status', amendment_row.editing_mode,
+      'entity_id', amendment_row.id,
+      'metadata', jsonb_build_object('event_id', amendment_row.event_id),
       'stats', jsonb_build_object(
-        'supporters', NEW.supporters,
-        'upvotes', NEW.upvotes,
-        'comments', NEW.comment_count
+        'upvotes', amendment_row.upvotes,
+        'downvotes', amendment_row.downvotes,
+        'supporting_groups', supporting_group_count,
+        'comments', amendment_row.comment_count
       )
     ),
-    NEW.created_at,
-    NEW.updated_at,
-    coalesce(NEW.supporters, 0) + coalesce(NEW.upvotes, 0) - coalesce(NEW.downvotes, 0) + coalesce(NEW.comment_count, 0),
-    coalesce(NEW.upvotes, 0) - coalesce(NEW.downvotes, 0)
+    amendment_row.created_at,
+    amendment_row.updated_at,
+    net_user_votes + supporting_group_count + coalesce(amendment_row.comment_count, 0),
+    net_user_votes + supporting_group_count
   )
   ON CONFLICT (id) DO UPDATE SET
     title = EXCLUDED.title,
@@ -871,7 +912,49 @@ BEGIN
     engagement_score = EXCLUDED.engagement_score,
     trending_score = EXCLUDED.trending_score;
 
-  PERFORM public.sync_amendment_search_document_topics(NEW.id);
+  PERFORM public.sync_amendment_search_document_topics(amendment_row.id);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.upsert_amendment_search_document()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('amendment', OLD.id);
+    RETURN OLD;
+  END IF;
+
+  PERFORM public.refresh_amendment_search_document(NEW.id);
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.refresh_amendment_search_document_from_support()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  target_amendment_id UUID;
+BEGIN
+  target_amendment_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.amendment_id ELSE NEW.amendment_id END;
+
+  IF TG_OP = 'UPDATE' AND OLD.amendment_id IS DISTINCT FROM NEW.amendment_id THEN
+    PERFORM public.refresh_amendment_search_document(OLD.amendment_id);
+  END IF;
+
+  IF target_amendment_id IS NOT NULL THEN
+    PERFORM public.refresh_amendment_search_document(target_amendment_id);
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
+
   RETURN NEW;
 END;
 $$;
@@ -1364,6 +1447,14 @@ FOR EACH ROW EXECUTE FUNCTION public.upsert_blog_search_document();
 CREATE OR REPLACE TRIGGER trg_search_document_amendment
 AFTER INSERT OR UPDATE OR DELETE ON public.amendment
 FOR EACH ROW EXECUTE FUNCTION public.upsert_amendment_search_document();
+
+CREATE OR REPLACE TRIGGER trg_search_document_amendment_group_decision
+AFTER INSERT OR UPDATE OR DELETE ON public.amendment_group_decision
+FOR EACH ROW EXECUTE FUNCTION public.refresh_amendment_search_document_from_support();
+
+CREATE OR REPLACE TRIGGER trg_search_document_support_confirmation
+AFTER INSERT OR UPDATE OR DELETE ON public.support_confirmation
+FOR EACH ROW EXECUTE FUNCTION public.refresh_amendment_search_document_from_support();
 
 CREATE OR REPLACE TRIGGER trg_search_document_event
 AFTER INSERT OR UPDATE OR DELETE ON public.event

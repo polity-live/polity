@@ -1,6 +1,6 @@
 import { cn } from '@/features/shared/utils/utils';
 import { featureThemeClassName } from '@/features/shared/theme';
-import { BadgeControl } from '@/features/shared/ui/status';
+import { BadgeControl, getEditingModeOption } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   DropdownMenu,
@@ -10,10 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu';
 import { MessageSquare, Vote, ChevronDown } from 'lucide-react';
-import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface EditingModeSelectorViewProps {
   currentMode?: string | null;
@@ -23,13 +20,11 @@ interface EditingModeSelectorViewProps {
 const modes = [
   {
     value: 'suggest_event' as const,
-    label: translateText('generated.inline.0090_event_suggesting_6e3bb22b'),
     icon: MessageSquare,
     color: featureThemeClassName('agendaAgendaVoteSectionAccentBackground'),
   },
   {
     value: 'vote_event' as const,
-    label: translateText('generated.inline.0091_event_voting_4b62fa3e'),
     icon: Vote,
     color: featureThemeClassName('agendaAgendaVoteSectionWarningBackground'),
   },
@@ -40,7 +35,11 @@ export function EditingModeSelectorView({
   onModeChange,
 }: EditingModeSelectorViewProps) {
   const { t } = useTranslation();
-  const currentModeConfig = modes.find((m: any) => m.value === currentMode) ?? modes[0];
+  const modeOptions = modes.map(mode => ({
+    ...mode,
+    label: getEditingModeOption(mode.value, t).label,
+  }));
+  const currentModeConfig = modeOptions.find((m: any) => m.value === currentMode) ?? modeOptions[0];
   const Icon = currentModeConfig.icon;
 
   return (
@@ -54,7 +53,7 @@ export function EditingModeSelectorView({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuSeparator />
-        {modes.map((mode: any) => {
+        {modeOptions.map((mode: any) => {
           const ModeIcon = mode.icon;
           const isActive = mode.value === currentMode;
 

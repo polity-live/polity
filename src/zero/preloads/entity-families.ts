@@ -4,6 +4,16 @@ import type { TTL } from '@rocicorp/zero';
 import { useAuth } from '@/providers/auth-provider';
 import { queries } from '@/zero/queries';
 import { createPreloadEntry, useZeroPreloads } from './preload-registry';
+import {
+  areEventAgendaPreloadDependenciesEqual,
+  createEventAgendaBasePreloadEntries,
+  createEventAgendaDependentPreloadEntries,
+  discoverEventAgendaPreloadDependencies,
+  EMPTY_EVENT_AGENDA_PRELOAD_DEPENDENCIES,
+  eventAgendaPreloadDependenciesKey,
+  extractCurrentUserParticipantEventIds,
+  type EventAgendaPreloadDependencies,
+} from './event-agenda';
 
 interface RunnableZero {
   run: (
@@ -39,6 +49,17 @@ function idRows(value: unknown): string[] {
 
 function shallowEqual(left: readonly string[], right: readonly string[]) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function eventAgendaDependenciesByEventKey(
+  dependenciesByEventId: Record<string, EventAgendaPreloadDependencies>
+) {
+  return Object.keys(dependenciesByEventId)
+    .sort()
+    .map(
+      eventId => `${eventId}:${eventAgendaPreloadDependenciesKey(dependenciesByEventId[eventId])}`
+    )
+    .join('|');
 }
 
 export function useGroupRouteFamilyPreloads(groupId?: string) {
@@ -198,7 +219,9 @@ export function useGroupRouteFamilyPreloads(groupId?: string) {
 export function useEventRouteFamilyPreloads(eventId?: string) {
   const { user } = useAuth();
   const zero = useZero() as RunnableZero;
-  const [agendaItemIds, setAgendaItemIds] = useState<string[]>([]);
+  const [agendaDependencies, setAgendaDependencies] = useState<EventAgendaPreloadDependencies>(
+    EMPTY_EVENT_AGENDA_PRELOAD_DEPENDENCIES
+  );
   const [groupId, setGroupId] = useState<string | null>(null);
 
   const entries = useMemo(() => {
@@ -210,16 +233,7 @@ export function useEventRouteFamilyPreloads(eventId?: string) {
         { id: eventId },
         queries.events.byIdFull({ id: eventId })
       ),
-      createPreloadEntry(
-        'queries.events.agendaWithElections',
-        { eventId },
-        queries.events.agendaWithElections({ eventId })
-      ),
-      createPreloadEntry(
-        'queries.events.agendaItemsFull',
-        { eventId },
-        queries.events.agendaItemsFull({ eventId })
-      ),
+      ...createEventAgendaBasePreloadEntries(eventId),
       createPreloadEntry(
         'queries.events.participantsWithUserAndRole',
         { eventId },
@@ -291,30 +305,17 @@ export function useEventRouteFamilyPreloads(eventId?: string) {
   }, [eventId, groupId, user?.id]);
 
   const dependentEntries = useMemo(() => {
-    if (!user?.id || agendaItemIds.length === 0) return [];
+    if (!user?.id) return [];
 
-    return [
-      ...agendaItemIds.map(agendaItemId =>
-        createPreloadEntry(
-          'queries.events.agendaItemDetail',
-          { id: agendaItemId },
-          queries.events.agendaItemDetail({ id: agendaItemId })
-        )
-      ),
-      createPreloadEntry(
-        'queries.votes.byAgendaItems',
-        { agenda_item_ids: agendaItemIds },
-        queries.votes.byAgendaItems({ agenda_item_ids: agendaItemIds })
-      ),
-    ];
-  }, [agendaItemIds, user?.id]);
+    return createEventAgendaDependentPreloadEntries(agendaDependencies);
+  }, [agendaDependencies, user?.id]);
 
   useZeroPreloads(entries);
   useZeroPreloads(dependentEntries);
 
   useEffect(() => {
     if (!user?.id || !eventId) {
-      setAgendaItemIds([]);
+      setAgendaDependencies(EMPTY_EVENT_AGENDA_PRELOAD_DEPENDENCIES);
       setGroupId(null);
       return;
     }
@@ -328,9 +329,11 @@ export function useEventRouteFamilyPreloads(eventId?: string) {
       .then(([agendaRows, eventRows]) => {
         if (!active) return;
 
-        const nextAgendaItemIds = idRows(agendaRows);
-        setAgendaItemIds(previous =>
-          shallowEqual(previous, nextAgendaItemIds) ? previous : nextAgendaItemIds
+        const nextAgendaDependencies = discoverEventAgendaPreloadDependencies(agendaRows, user.id);
+        setAgendaDependencies(previous =>
+          areEventAgendaPreloadDependenciesEqual(previous, nextAgendaDependencies)
+            ? previous
+            : nextAgendaDependencies
         );
 
         const event = firstRow(eventRows);
@@ -346,6 +349,100 @@ export function useEventRouteFamilyPreloads(eventId?: string) {
       active = false;
     };
   }, [eventId, user?.id, zero]);
+}
+
+export function useCurrentUserParticipantEventAgendaPreloads() {
+  const { user } = useAuth();
+  const zero = useZero() as RunnableZero;
+  const [eventIds, setEventIds] = useState<string[]>([]);
+  const [dependenciesByEventId, setDependenciesByEventId] = useState<
+    Record<string, EventAgendaPreloadDependencies>
+  >({});
+
+  const eventIdsKey = eventIds.join('|');
+  const dependenciesKey = eventAgendaDependenciesByEventKey(dependenciesByEventId);
+
+  const entries = useMemo(() => {
+    if (!user?.id) return [];
+
+    return eventIds.flatMap(createEventAgendaBasePreloadEntries);
+  }, [eventIds, eventIdsKey, user?.id]);
+
+  const dependentEntries = useMemo(() => {
+    if (!user?.id) return [];
+
+    return Object.keys(dependenciesByEventId)
+      .sort()
+      .flatMap(eventId => createEventAgendaDependentPreloadEntries(dependenciesByEventId[eventId]));
+  }, [dependenciesByEventId, dependenciesKey, user?.id]);
+
+  useZeroPreloads(entries);
+  useZeroPreloads(dependentEntries);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setEventIds([]);
+      setDependenciesByEventId({});
+      return;
+    }
+
+    let active = true;
+
+    zero
+      .run(queries.events.currentUserActiveParticipationsWithEvents({}), {
+        type: 'complete',
+        ttl: 'none',
+      })
+      .then(async participationRows => {
+        if (!active) return;
+
+        const nextEventIds = extractCurrentUserParticipantEventIds(participationRows);
+        setEventIds(previous => (shallowEqual(previous, nextEventIds) ? previous : nextEventIds));
+
+        const dependencyPairs = await Promise.all(
+          nextEventIds.map(async discoveredEventId => {
+            try {
+              const agendaRows = await zero.run(
+                queries.events.agendaItemsFull({ eventId: discoveredEventId }),
+                {
+                  type: 'complete',
+                  ttl: 'none',
+                }
+              );
+              return [
+                discoveredEventId,
+                discoverEventAgendaPreloadDependencies(agendaRows, user.id),
+              ] as const;
+            } catch (error) {
+              console.warn(
+                `Zero dependent preload discovery failed for participant event ${discoveredEventId}`,
+                error
+              );
+              return [discoveredEventId, EMPTY_EVENT_AGENDA_PRELOAD_DEPENDENCIES] as const;
+            }
+          })
+        );
+
+        if (!active) return;
+
+        const nextDependenciesByEventId = Object.fromEntries(dependencyPairs);
+        setDependenciesByEventId(previous =>
+          eventAgendaDependenciesByEventKey(previous) ===
+          eventAgendaDependenciesByEventKey(nextDependenciesByEventId)
+            ? previous
+            : nextDependenciesByEventId
+        );
+      })
+      .catch(error => {
+        if (active) {
+          console.warn('Zero participant event agenda preload discovery failed', error);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [user?.id, zero]);
 }
 
 export function useAmendmentRouteFamilyPreloads(amendmentId?: string) {

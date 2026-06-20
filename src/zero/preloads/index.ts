@@ -7,6 +7,7 @@ export {
 export {
   useAmendmentRouteFamilyPreloads,
   useBlogRouteFamilyPreloads,
+  useCurrentUserParticipantEventAgendaPreloads,
   useEventRouteFamilyPreloads,
   useGroupRouteFamilyPreloads,
   useUserRouteFamilyPreloads,

@@ -90,6 +90,14 @@ function isMessageNotification(notification: Notification) {
   );
 }
 
+const USER_MEMBERSHIP_INVITE_TYPES = new Set([
+  'group_invite',
+  'membership_invite',
+  'event_invite',
+  'participation_invite',
+  'collaboration_invite',
+]);
+
 export function getNotificationNavigationTarget(
   notification: Notification
 ): NotificationNavigationTarget | null {
@@ -105,7 +113,8 @@ export function getNotificationNavigationTarget(
   }
 
   if (
-    (notification.type === 'event_invite' || notification.type === 'participation_invite') &&
+    notification.type &&
+    USER_MEMBERSHIP_INVITE_TYPES.has(notification.type) &&
     notification.recipient_id
   ) {
     return {

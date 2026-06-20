@@ -256,6 +256,68 @@ describe('OpenAssignmentsPanel', () => {
     expect(screen.queryByRole('button', { name: 'Attach to event' })).toBeNull();
   });
 
+  it('filters expired amendment-deadline events from process task scheduling', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 5, 19, 10, 0, 0));
+
+    const now = Date.now();
+    const assignment: GroupOpenAssignment = {
+      id: 'process-task:task-1',
+      kind: 'process_task',
+      status: 'open',
+      title: 'Schedule amendment vote',
+      description: 'Attach the vote request to an event.',
+      processTaskId: 'task-1',
+      processTaskType: 'schedule_event',
+      processRunId: 'run-1',
+      stepRunId: 'step-1',
+      linkedEvent: null,
+      amendment: {
+        id: 'amendment-1',
+        title: 'Street safety amendment',
+      },
+    };
+
+    render(
+      <OpenAssignmentsPanel
+        groupId="source-group"
+        groupName="B1"
+        assignments={[assignment]}
+        availableEvents={[
+          {
+            id: 'event-expired',
+            title: 'Expired amendment deadline',
+            start_date: now + 60_000,
+            amendment_deadline: now - 1,
+          },
+          {
+            id: 'event-open',
+            title: 'Open amendment deadline',
+            start_date: now + 120_000,
+            amendment_deadline: now + 60_000,
+          },
+          {
+            id: 'event-no-deadline',
+            title: 'No amendment deadline',
+            start_date: now + 180_000,
+            amendment_deadline: null,
+          },
+        ]}
+        onScheduleRoleRenewal={vi.fn()}
+        onScheduleDelegateElection={vi.fn()}
+        onScheduleProcessTask={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Open amendment deadline')).toBeTruthy();
+    expect(screen.queryByText('Expired amendment deadline')).toBeNull();
+
+    fireEvent.click(screen.getByRole('combobox'));
+
+    expect(screen.getByText('No amendment deadline')).toBeTruthy();
+    expect(screen.queryByText('Expired amendment deadline')).toBeNull();
+  });
+
   it('filters open assignments by status and vote or election type', () => {
     const voteAssignment: GroupOpenAssignment = {
       id: 'process-task:vote-task',
