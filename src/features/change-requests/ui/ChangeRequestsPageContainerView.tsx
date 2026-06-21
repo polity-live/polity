@@ -15,6 +15,13 @@ export interface ChangeRequestsPageContainerViewProps {
   timelineItems: any;
   diffMap: any;
   discussions: any;
+  branchSections: any;
+  branchSelectorBranches: any;
+  selectedBranchId: any;
+  selectedBranchEditingMode: any;
+  branchDiffCandidates: any;
+  defaultBranchDiffRightCandidateId: any;
+  onBranchChange: any;
   canManageInternalVotes: any;
   canVoteInternal: any;
   onCastInternalVote: any;
@@ -36,6 +43,13 @@ export function ChangeRequestsPageContainerView({
   timelineItems,
   diffMap,
   discussions,
+  branchSections,
+  branchSelectorBranches,
+  selectedBranchId,
+  selectedBranchEditingMode,
+  branchDiffCandidates,
+  defaultBranchDiffRightCandidateId,
+  onBranchChange,
   canManageInternalVotes,
   canVoteInternal,
   onCastInternalVote,
@@ -52,11 +66,17 @@ export function ChangeRequestsPageContainerView({
       diffMap={diffMap}
       discussions={discussions}
       documentContent={coerceDocumentContent(document?.content)}
-      editingMode={amendment?.editing_mode}
+      editingMode={selectedBranchEditingMode}
       hasAmendment={Boolean(amendment)}
       isInVotingStage={isInVotingStage}
       isLoading={isLoading}
       timelineItems={timelineItems}
+      branchSections={branchSections}
+      branchSelectorBranches={branchSelectorBranches}
+      selectedBranchId={selectedBranchId}
+      branchDiffCandidates={branchDiffCandidates}
+      defaultBranchDiffRightCandidateId={defaultBranchDiffRightCandidateId}
+      onBranchChange={onBranchChange}
       userId={userId}
       canManageInternalVotes={canManageInternalVotes}
       canVoteInternal={canVoteInternal}

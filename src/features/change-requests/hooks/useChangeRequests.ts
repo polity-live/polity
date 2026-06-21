@@ -8,7 +8,10 @@ import {
   type SuggestionProperties,
   type SuggestionContent,
 } from '../utils/suggestion-extraction';
-import { buildCanonicalChangeRequestRecords } from '../logic/canonicalChangeRequests';
+import {
+  buildCanonicalChangeRequestRecords,
+  type CanonicalSavedChangeRequest,
+} from '../logic/canonicalChangeRequests';
 
 /** Shape of entries in the amendment's `discussions` JSON column */
 interface DiscussionEntry {
@@ -24,10 +27,39 @@ interface DiscussionEntry {
   comments?: readonly { text?: string; value?: string; userId?: string }[];
 }
 
+interface ChangeRequestVoteRow {
+  id: string;
+  vote?: string | null;
+  user_id?: string;
+  created_at?: number;
+  user?: {
+    id: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    avatar?: string | null;
+  } | null;
+}
+
+type ChangeRequestRowForView = Omit<CanonicalSavedChangeRequest, 'votes'> & {
+  description?: string | null;
+  user_id?: string | null;
+  creator?: { id?: string | null } | null;
+  user?: { id?: string | null } | null;
+  voting_deadline?: number | null;
+  resolution_method?: string | null;
+  visibility_scope?: string | null;
+  resolved_in_mode?: string | null;
+  votes?: readonly ChangeRequestVoteRow[] | null;
+};
+
 export interface ChangeRequest {
   id: string;
+  processBranchId: string | null;
   crId: string;
   crNumber: number;
+  displayCrId?: string;
+  branchDisplayNumber?: number;
+  branchScopedCrNumber?: number;
   title: string;
   description: string;
   type: string;
@@ -183,10 +215,11 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
   // Fetch amendment data using hook
   const {
     amendment,
-    changeRequests: savedChangeRequests,
+    changeRequests: amendmentChangeRequests,
+    changeRequestsWithVotes,
     collaborators,
     isLoading: amendmentLoading,
-  } = useAmendmentState({ amendmentId });
+  } = useAmendmentState({ amendmentId, includeChangeRequestsWithVotes: true });
 
   // Fetch document and users via facade
   const { documents: docResults, isLoading: facadeLoading } = useAmendmentState({
@@ -195,6 +228,13 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
   });
 
   const document = docResults?.[0];
+  const savedChangeRequests = useMemo<readonly ChangeRequestRowForView[]>(
+    () =>
+      (changeRequestsWithVotes.length > 0
+        ? changeRequestsWithVotes
+        : amendmentChangeRequests) as readonly ChangeRequestRowForView[],
+    [amendmentChangeRequests, changeRequestsWithVotes]
+  );
 
   // Extract change requests from discussions and saved entities
   const changeRequests = useMemo<ChangeRequest[]>(() => {
@@ -232,6 +272,7 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
 
       return {
         id: cr?.id ?? discussion?.id ?? record.logicalKey,
+        processBranchId: cr?.process_branch_id ?? null,
         logicalKey: record.logicalKey,
         discussionId: discussion?.id ?? null,
         suggestionId: discussion?.id ?? null,

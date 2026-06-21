@@ -17,10 +17,14 @@ const baseVoteSchema = z.object({
   title: z.string().nullable(),
   description: z.string().nullable(),
   status: z.string().nullable(),
+  purpose: z.string(),
   majority_type: z.string().nullable(),
   closing_type: z.string().nullable(),
   closing_duration_seconds: z.number().nullable(),
   closing_end_time: nullableTimestampSchema,
+  closed_reason: z.string().nullable(),
+  closed_at: nullableTimestampSchema,
+  closed_by_id: z.string().nullable(),
   visibility: z.string(),
   ballot_visibility: ballotVisibilitySchema,
   created_at: timestampSchema,
@@ -31,7 +35,11 @@ const defaultVoteStatusSchema = z
   .string()
   .nullable()
   .optional()
-  .transform(value => value ?? 'indicative');
+  .transform(value => value ?? 'indicative_open');
+const defaultVotePurposeSchema = z
+  .string()
+  .optional()
+  .transform(value => value ?? 'general');
 const defaultVoteMajorityTypeSchema = z
   .string()
   .nullable()
@@ -57,14 +65,19 @@ export const createVoteSchema = baseVoteSchema
     created_at: true,
     updated_at: true,
     status: true,
+    purpose: true,
     majority_type: true,
     closing_type: true,
+    closed_reason: true,
+    closed_at: true,
+    closed_by_id: true,
     visibility: true,
     ballot_visibility: true,
   })
   .extend({
     id: z.string(),
     status: defaultVoteStatusSchema,
+    purpose: defaultVotePurposeSchema,
     majority_type: defaultVoteMajorityTypeSchema,
     closing_type: defaultVoteClosingTypeSchema,
     visibility: defaultVoteVisibilitySchema,
@@ -75,16 +88,21 @@ export const updateVoteSchema = baseVoteSchema
     title: true,
     description: true,
     status: true,
+    purpose: true,
     majority_type: true,
     closing_type: true,
     closing_duration_seconds: true,
     closing_end_time: true,
+    closed_reason: true,
+    closed_at: true,
+    closed_by_id: true,
     visibility: true,
     ballot_visibility: true,
   })
   .partial()
   .extend({ id: z.string() });
 export const deleteVoteSchema = z.object({ id: z.string() });
+export const closeExpiredFinalVotesForEventSchema = z.object({ event_id: z.string() });
 
 // ============================================
 // Vote Choice
@@ -94,6 +112,8 @@ const baseVoteChoiceSchema = z.object({
   id: z.string(),
   vote_id: z.string(),
   label: z.string().nullable(),
+  semantic_key: z.string().nullable().optional(),
+  process_branch_id: z.string().nullable().optional(),
   order_index: z.number().nullable(),
   created_at: timestampSchema,
 });
@@ -103,7 +123,7 @@ export const createVoteChoiceSchema = baseVoteChoiceSchema
   .omit({ id: true, created_at: true })
   .extend({ id: z.string() });
 export const updateVoteChoiceSchema = baseVoteChoiceSchema
-  .pick({ label: true, order_index: true })
+  .pick({ label: true, semantic_key: true, process_branch_id: true, order_index: true })
   .partial()
   .extend({ id: z.string() });
 export const deleteVoteChoiceSchema = z.object({ id: z.string() });

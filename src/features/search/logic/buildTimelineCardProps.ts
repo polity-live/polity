@@ -147,6 +147,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
         href: item.href,
         statement: {
           id: item.id,
+          title: item.title,
           content: item.description || item.title,
           authorName: item.authorName || item.authorId || '',
           authorAvatar: item.authorAvatar,

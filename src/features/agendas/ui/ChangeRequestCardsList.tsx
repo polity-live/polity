@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import type { Value } from 'platejs';
 import type { TDiscussion } from '@/features/editor/types';
 import { type ChangeRequestDiffData } from './ChangeRequestTimelineCard';
@@ -11,6 +12,9 @@ interface ChangeRequestCardsListProps {
   userId?: string;
   canManage?: boolean;
   canVote?: boolean;
+  hideInlineVotingControls?: boolean;
+  /** Allow starting final votes from CR cards. Defaults off so agenda toolbar owns sequencing. */
+  allowInlineFinalVoteStart?: boolean;
   currentItemId?: string | null;
   /** Map from CR change_request_id (or mock item id) to diff data */
   diffMap?: Record<string, ChangeRequestDiffData>;
@@ -41,6 +45,7 @@ interface ChangeRequestCardsListProps {
   onStartFinal?: (itemId: string) => Promise<void>;
   onCloseVoting?: (itemId: string) => Promise<void> | Promise<unknown>;
   onFinalizeInternalVote?: (changeRequestId: string) => Promise<void>;
+  sequenceInterstitial?: ReactNode;
 }
 import { useChangeRequestCardsListController } from './useChangeRequestCardsListController';
 import { ChangeRequestCardsListView } from './ChangeRequestCardsListView';
@@ -52,6 +57,8 @@ export function ChangeRequestCardsList({
   userId,
   canManage = false,
   canVote = false,
+  hideInlineVotingControls = false,
+  allowInlineFinalVoteStart = false,
   currentItemId,
   diffMap,
   progress,
@@ -70,6 +77,7 @@ export function ChangeRequestCardsList({
   onStartFinal,
   onCloseVoting,
   onFinalizeInternalVote,
+  sequenceInterstitial,
 }: ChangeRequestCardsListProps) {
   const viewProps = useChangeRequestCardsListController({
     items,
@@ -78,6 +86,8 @@ export function ChangeRequestCardsList({
     userId,
     canManage,
     canVote,
+    hideInlineVotingControls,
+    allowInlineFinalVoteStart,
     currentItemId,
     diffMap,
     progress,
@@ -96,6 +106,7 @@ export function ChangeRequestCardsList({
     onStartFinal,
     onCloseVoting,
     onFinalizeInternalVote,
+    sequenceInterstitial,
   });
 
   return <ChangeRequestCardsListView {...viewProps} />;

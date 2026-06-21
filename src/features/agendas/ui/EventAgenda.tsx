@@ -29,15 +29,30 @@ import {
   resolveAttendanceMode,
 } from '../logic/agendaUiHelpers';
 import { canJoinEventSpeakerList } from '../logic/speakerListPermissions';
-import { buildFinalVoteFromAgendaVote } from '../logic/buildFinalVoteFromAgendaVote';
+import {
+  buildFinalVoteFromAgendaVote,
+  buildVariantVoteFromAgendaVote,
+  buildVoteSequencePlaceholder,
+} from '../logic/buildFinalVoteFromAgendaVote';
+import {
+  getVoteStepKind,
+  isChangeRequestVotesPlaceholder,
+  resolveClosingJumpTarget,
+} from '../logic/voteSequenceJump';
 import {
   getOfflineTallySuccessMessage,
   resolveOfflineTallyMode,
   resolveOfflineTallyPhase,
   shouldShowOfflineTallyToolbarButton,
 } from '../logic/offlineTallyToolbar';
+import { buildOfflineTallyEntity } from '../logic/offlineTallyEntity';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import { useEventById } from '@/zero/events';
+import {
+  VOTE_STATUS,
+  isFinalClosingVotePurpose,
+  isMergeVariantVotePurpose,
+} from '@/zero/votes/vote-workflow';
 
 interface EventAgendaProps {
   eventId: string;
@@ -52,7 +67,13 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const { event, isLoading: eventLoading } = useEventData(eventId);
   const { agendaItems, isLoading } = useAgendaItems(eventId);
   const { can } = usePermissions({ eventId });
-  const { addSpeaker, updateSpeaker, removeSpeaker, reorderAgendaItems } = useAgendaActions();
+  const {
+    addSpeaker,
+    updateSpeaker,
+    removeSpeaker,
+    reorderAgendaItems,
+    initializeChangeRequestVoting,
+  } = useAgendaActions();
   const agendaNav = useAgendaNavigation(eventId);
 
   // Track current agenda item changes for toast notifications
@@ -75,10 +96,26 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const [, setMarkingSpeakerComplete] = useState<string | null>(null);
   const { verifyVotingPassword } = useVotingPasswordActions();
   const { upsertOfflineTally: upsertElectionOfflineTally } = useElectionActions();
-  const { upsertOfflineTally: upsertVoteOfflineTally } = useVoteActions();
+  const {
+    updateVote: updateAgendaVote,
+    upsertOfflineTally: upsertVoteOfflineTally,
+    closeExpiredFinalVotesForEvent,
+  } = useVoteActions();
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const attendanceMode = resolveAttendanceMode(event);
   const disableVoteButton = attendanceMode === 'offline';
+
+  useEffect(() => {
+    const closeExpiredVotes = () => {
+      closeExpiredFinalVotesForEvent({ event_id: eventId }).catch(error => {
+        console.error('Failed to close expired final votes:', error);
+      });
+    };
+
+    closeExpiredVotes();
+    const intervalId = window.setInterval(closeExpiredVotes, 5000);
+    return () => window.clearInterval(intervalId);
+  }, [closeExpiredFinalVotesForEvent, eventId]);
   const allowsOfflineElectionTallies = attendanceMode === 'hybrid' || attendanceMode === 'offline';
   const confirmedOfflineParticipantCount =
     event?.offline_participants?.filter(
@@ -91,6 +128,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const [offlineTallyPasswordError, setOfflineTallyPasswordError] = useState<string | null>(null);
   const [offlineTallySubmitError, setOfflineTallySubmitError] = useState<string | null>(null);
   const [isOfflineTallySubmitting, setIsOfflineTallySubmitting] = useState(false);
+  const [sequenceVotingLoading, setSequenceVotingLoading] = useState<string | null>(null);
   const [dismissedOverdueAgendaItemId, setDismissedOverdueAgendaItemId] = useState<string | null>(
     null
   );
@@ -261,6 +299,11 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   }, [agendaItems, agendaNav.startableAgendaItem?.id, liveAgendaItem]);
   const spotlightAgendaItemId = spotlightAgendaItem?.id;
   const streamAgendaItem = spotlightAgendaItem as EventAgendaItemRow | null;
+  const { can: canStreamAmendment } = usePermissions({
+    eventId,
+    amendment: streamAgendaItem?.amendment ?? undefined,
+  });
+  const canManageAgendaVoteSequence = canManageVotes || canStreamAmendment('manage', 'amendments');
 
   const streamRuntimeStatus = streamAgendaItem
     ? getAgendaRuntimeStatus({
@@ -362,7 +405,23 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   }, [streamSpeakerListData, user?.id]);
 
   const streamElection = streamAgendaItem?.election?.[0] ?? null;
-  const streamVote = streamAgendaItem?.votes?.[0] ?? null;
+  const streamVotes = streamAgendaItem?.votes ?? [];
+  const streamFinalAmendmentVote =
+    streamVotes.find((candidate: { purpose?: string | null }) =>
+      isFinalClosingVotePurpose(candidate.purpose)
+    ) ?? null;
+  const streamVariantVote =
+    streamVotes.find((candidate: { purpose?: string | null }) =>
+      isMergeVariantVotePurpose(candidate.purpose)
+    ) ?? null;
+  const streamVote =
+    streamVotes.find((candidate: { purpose?: string | null }) => candidate.purpose === 'general') ??
+    streamFinalAmendmentVote ??
+    streamVotes.find(
+      (candidate: { purpose?: string | null }) => !isMergeVariantVotePurpose(candidate.purpose)
+    ) ??
+    streamVotes[0] ??
+    null;
   const streamDelegateAssignmentMeta = (
     streamElection as { delegate_assignment_meta?: { targetEventId?: string } | null } | null
   )?.delegate_assignment_meta;
@@ -396,36 +455,148 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     toolbarElection?.status ?? streamVote?.status,
     streamAgendaItem?.voting_phase ?? null
   );
+  const timelineHasVariantVote = useMemo(
+    () =>
+      crVoting.crTimeline.some(
+        item =>
+          getVoteStepKind(item) === 'variant_selection' || getVoteStepKind(item) === 'merge_variant'
+      ),
+    [crVoting.crTimeline]
+  );
+  const synthesizedVariantVoteItem = useMemo(() => {
+    if (!streamAgendaItem?.amendment_id || !streamVariantVote || timelineHasVariantVote) {
+      return null;
+    }
+    return buildVariantVoteFromAgendaVote(
+      streamVariantVote,
+      0
+    ) as unknown as ChangeRequestTimelineRow;
+  }, [streamAgendaItem?.amendment_id, streamVariantVote, timelineHasVariantVote]);
   const synthesizedFinalVoteItem = useMemo(() => {
-    if (!streamAgendaItem?.amendment_id || !streamVote) return null;
+    const voteForFinal =
+      streamFinalAmendmentVote ??
+      (!streamVariantVote && !isMergeVariantVotePurpose(streamVote?.purpose) ? streamVote : null);
+    if (!streamAgendaItem?.amendment_id || !voteForFinal) return null;
     if (crVoting.finalVoteItem) return null;
     return buildFinalVoteFromAgendaVote(
-      streamVote,
-      crVoting.crTimeline.length
+      voteForFinal,
+      crVoting.crTimeline.length + (synthesizedVariantVoteItem ? 1 : 0)
     ) as unknown as ChangeRequestTimelineRow;
   }, [
     crVoting.crTimeline.length,
     crVoting.finalVoteItem,
+    synthesizedVariantVoteItem,
     streamAgendaItem?.amendment_id,
+    streamFinalAmendmentVote,
+    streamVariantVote,
     streamVote,
   ]);
   const effectiveFinalVoteItem = useMemo(
     () => crVoting.finalVoteItem ?? synthesizedFinalVoteItem,
     [crVoting.finalVoteItem, synthesizedFinalVoteItem]
   );
+  const streamChangeRequestVotesPlaceholderItem = useMemo(() => {
+    if (!synthesizedVariantVoteItem || crVoting.crTimeline.length > 0 || !streamAgendaItem?.id) {
+      return null;
+    }
+
+    const changeRequestVotesWereSkipped =
+      effectiveFinalVoteItem?.vote?.status === VOTE_STATUS.finalOpen ||
+      effectiveFinalVoteItem?.vote?.status === 'final_vote' ||
+      effectiveFinalVoteItem?.vote?.status === 'closed';
+
+    return {
+      ...buildVoteSequencePlaceholder({
+        agendaItemId: streamAgendaItem.id,
+        orderIndex: 1,
+        kind: 'change_request_votes_placeholder',
+        title: t(
+          'features.agendas.crTimeline.changeRequestVotesPlaceholder',
+          'Change request votes'
+        ),
+        description: t(
+          changeRequestVotesWereSkipped
+            ? 'features.agendas.crTimeline.changeRequestVotesSkippedDescription'
+            : 'features.agendas.crTimeline.changeRequestVotesPlaceholderDescription',
+          changeRequestVotesWereSkipped
+            ? 'Change request votes were skipped because there were no change requests to vote on.'
+            : 'The exact change request votes will appear after the variant final vote is decided.'
+        ),
+      }),
+      status: changeRequestVotesWereSkipped ? 'completed' : 'pending',
+    } as unknown as ChangeRequestTimelineRow;
+  }, [
+    crVoting.crTimeline.length,
+    effectiveFinalVoteItem?.vote?.status,
+    streamAgendaItem?.id,
+    synthesizedVariantVoteItem,
+    t,
+  ]);
+  const streamFinalVotePlaceholderItem = useMemo(() => {
+    if (
+      !synthesizedVariantVoteItem ||
+      effectiveFinalVoteItem ||
+      crVoting.finalVoteItem ||
+      !streamAgendaItem?.id
+    ) {
+      return null;
+    }
+
+    return buildVoteSequencePlaceholder({
+      agendaItemId: streamAgendaItem.id,
+      orderIndex:
+        1 + crVoting.crTimeline.length + (streamChangeRequestVotesPlaceholderItem ? 1 : 0),
+      kind: 'final_amendment_placeholder',
+      title: t('features.agendas.crTimeline.finalVotePlaceholder', 'Final vote'),
+      description: t(
+        'features.agendas.crTimeline.finalVotePlaceholderDescription',
+        'The exact final vote will appear after the variant final vote is decided.'
+      ),
+    }) as unknown as ChangeRequestTimelineRow;
+  }, [
+    crVoting.crTimeline.length,
+    crVoting.finalVoteItem,
+    effectiveFinalVoteItem,
+    streamAgendaItem?.id,
+    streamChangeRequestVotesPlaceholderItem,
+    synthesizedVariantVoteItem,
+    t,
+  ]);
+  const streamVoteSequenceItems = useMemo(
+    () => [
+      ...(synthesizedVariantVoteItem ? [synthesizedVariantVoteItem] : []),
+      ...(streamChangeRequestVotesPlaceholderItem ? [streamChangeRequestVotesPlaceholderItem] : []),
+      ...crVoting.crTimeline,
+      ...(synthesizedFinalVoteItem ? [synthesizedFinalVoteItem] : []),
+      ...(streamFinalVotePlaceholderItem ? [streamFinalVotePlaceholderItem] : []),
+    ],
+    [
+      crVoting.crTimeline,
+      streamChangeRequestVotesPlaceholderItem,
+      streamFinalVotePlaceholderItem,
+      synthesizedFinalVoteItem,
+      synthesizedVariantVoteItem,
+    ]
+  );
   const nonFinalCRItems = useMemo(
-    () => crVoting.crTimeline.filter(item => !item.is_final_vote),
+    () =>
+      crVoting.crTimeline.filter(
+        item =>
+          !item.is_final_vote &&
+          getVoteStepKind(item) !== 'variant_selection' &&
+          getVoteStepKind(item) !== 'merge_variant'
+      ),
     [crVoting.crTimeline]
   );
-  const nextPendingCRItem = useMemo(
-    () => nonFinalCRItems.find(item => item.status !== 'completed') ?? null,
-    [nonFinalCRItems]
+  const nextPendingSequenceItem = useMemo(
+    () => streamVoteSequenceItems.find(item => item.status !== 'completed') ?? null,
+    [streamVoteSequenceItems]
   );
   const fallbackSelectedCRItemId = useMemo(() => {
     if (crVoting.currentItem?.id) return crVoting.currentItem.id;
-    if (nextPendingCRItem?.id) return nextPendingCRItem.id;
+    if (nextPendingSequenceItem?.id) return nextPendingSequenceItem.id;
     return effectiveFinalVoteItem?.id ?? null;
-  }, [crVoting.currentItem?.id, effectiveFinalVoteItem?.id, nextPendingCRItem?.id]);
+  }, [crVoting.currentItem?.id, effectiveFinalVoteItem?.id, nextPendingSequenceItem?.id]);
 
   useEffect(() => {
     if (!streamAgendaItem?.amendment_id) {
@@ -441,8 +612,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     }
 
     const selectedItemStillExists = selectedCRToolbarItemId
-      ? crVoting.crTimeline.some(item => item.id === selectedCRToolbarItemId) ||
-        effectiveFinalVoteItem?.id === selectedCRToolbarItemId
+      ? streamVoteSequenceItems.some(item => item.id === selectedCRToolbarItemId)
       : false;
 
     if (!selectedItemStillExists && fallbackSelectedCRItemId) {
@@ -454,25 +624,23 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       setSelectedCRToolbarItemId(null);
     }
   }, [
-    crVoting.crTimeline,
     crVoting.currentItem?.id,
     effectiveFinalVoteItem?.id,
     fallbackSelectedCRItemId,
     selectedCRToolbarItemId,
+    streamVoteSequenceItems,
     streamAgendaItem?.amendment_id,
   ]);
 
   const activeCRToolbarItem = useMemo(
     () =>
-      crVoting.crTimeline.find(item => item.id === selectedCRToolbarItemId) ??
-      (effectiveFinalVoteItem?.id === selectedCRToolbarItemId ? effectiveFinalVoteItem : null) ??
-      crVoting.crTimeline.find(item => item.id === fallbackSelectedCRItemId) ??
-      (effectiveFinalVoteItem?.id === fallbackSelectedCRItemId ? effectiveFinalVoteItem : null) ??
+      streamVoteSequenceItems.find(item => item.id === selectedCRToolbarItemId) ??
+      streamVoteSequenceItems.find(item => item.id === fallbackSelectedCRItemId) ??
       null,
-    [crVoting.crTimeline, effectiveFinalVoteItem, fallbackSelectedCRItemId, selectedCRToolbarItemId]
+    [fallbackSelectedCRItemId, selectedCRToolbarItemId, streamVoteSequenceItems]
   );
   const isCRToolbarActive =
-    !!streamAgendaItem?.amendment_id && crVoting.crTimeline.length > 0 && !!activeCRToolbarItem;
+    !!streamAgendaItem?.amendment_id && streamVoteSequenceItems.length > 0 && !!activeCRToolbarItem;
   const selectedCRPhase = getEffectiveCRVotingPhase(activeCRToolbarItem);
   const isSelectedCRFinalVote = !!activeCRToolbarItem?.is_final_vote;
   const hasUserVotedOnSelectedCR = useMemo(
@@ -481,14 +649,24 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   );
   const selectedCRTitle = useMemo(() => {
     if (!activeCRToolbarItem) return streamAgendaItem?.title ?? undefined;
+    const placeholderTitle = (activeCRToolbarItem as { _placeholderTitle?: string | null })
+      ._placeholderTitle;
+    if (placeholderTitle) return placeholderTitle;
+    if ((activeCRToolbarItem as { _voteStepKind?: string })._voteStepKind === 'variant_selection') {
+      return activeCRToolbarItem.vote?.title ?? 'Variant final vote';
+    }
     if (activeCRToolbarItem.is_final_vote) {
       return t('features.agendas.crTimeline.acceptAmendment');
     }
 
-    return (
-      activeCRToolbarItem.change_request?.title || t('features.agendas.crTimeline.changeRequest')
+    const changeRequestIndex = nonFinalCRItems.findIndex(
+      item => item.id === activeCRToolbarItem.id
     );
-  }, [activeCRToolbarItem, streamAgendaItem?.title, t]);
+    return (
+      activeCRToolbarItem.change_request?.title ||
+      `${t('features.agendas.crTimeline.changeRequest')} ${changeRequestIndex + 1}`
+    );
+  }, [activeCRToolbarItem, nonFinalCRItems, streamAgendaItem?.title, t]);
   const selectedCRChoices = useMemo(
     () =>
       (activeCRToolbarItem?.vote?.choices ?? []).map(choice => ({
@@ -541,84 +719,42 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     [allowsOfflineElectionTallies, canManageOfflineTallies, toolbarOfflineTallyPhaseSource]
   );
 
-  const toolbarOfflineTallyEntity = useMemo(() => {
-    if (!toolbarOfflineTallyPhase) {
-      return null;
-    }
-
-    if (toolbarElection) {
-      return {
-        kind: 'election' as const,
-        itemId: toolbarElection.id,
-        title: toolbarElection.title ?? streamAgendaItem?.title ?? 'this election',
-        choices: (toolbarElection.candidates ?? [])
-          .filter(candidate => candidate.status !== 'withdrawn')
-          .map(candidate => ({
-            id: candidate.id,
-            label: candidate.user
-              ? `${candidate.user.first_name ?? ''} ${candidate.user.last_name ?? ''}`.trim() ||
-                candidate.user.email ||
-                candidate.name ||
-                'Candidate'
-              : candidate.name || 'Candidate',
-          })),
-        tallies: (toolbarElection.offline_tallies ?? [])
-          .filter(tally => tally.phase === toolbarOfflineTallyPhase && tally.candidate_id)
-          .map(tally => ({
-            id: tally.candidate_id ?? '',
-            count: tally.count ?? 0,
-          })),
+  const toolbarOfflineTallyElection = isCRToolbarActive ? null : toolbarElection;
+  const toolbarOfflineTallyVote = isCRToolbarActive
+    ? (activeCRToolbarItem?.vote ?? null)
+    : streamVote;
+  const toolbarOfflineTallyEntity = useMemo(
+    () =>
+      buildOfflineTallyEntity({
+        phase: toolbarOfflineTallyPhase,
+        agendaTitle: streamAgendaItem?.title ?? null,
+        election: toolbarOfflineTallyElection,
+        vote: toolbarOfflineTallyVote,
         participantCount: confirmedOfflineParticipantCount,
-        votesPerParticipant: Math.max(1, toolbarElection.max_votes ?? 1),
-        maxPerEntryVotes: confirmedOfflineParticipantCount,
-        maxTotalVotes:
-          confirmedOfflineParticipantCount * Math.max(1, toolbarElection.max_votes ?? 1),
-      };
-    }
-
-    if (streamVote) {
-      return {
-        kind: 'vote' as const,
-        itemId: streamVote.id,
-        title: streamVote.title ?? streamAgendaItem?.title ?? 'this vote',
-        choices: (streamVote.choices ?? []).map((choice, index) => ({
-          id: choice.id,
-          label: choice.label || `Choice ${index + 1}`,
-        })),
-        tallies: (streamVote.offline_tallies ?? [])
-          .filter(tally => tally.phase === toolbarOfflineTallyPhase && tally.choice_id)
-          .map(tally => ({
-            id: tally.choice_id ?? '',
-            count: tally.count ?? 0,
-          })),
-        participantCount: confirmedOfflineParticipantCount,
-        votesPerParticipant: 1,
-        maxPerEntryVotes: null,
-        maxTotalVotes: confirmedOfflineParticipantCount,
-      };
-    }
-
-    return null;
-  }, [
-    confirmedOfflineParticipantCount,
-    streamAgendaItem?.title,
-    streamVote,
-    toolbarElection,
-    toolbarOfflineTallyPhase,
-  ]);
+      }),
+    [
+      confirmedOfflineParticipantCount,
+      streamAgendaItem?.title,
+      toolbarOfflineTallyElection,
+      toolbarOfflineTallyPhase,
+      toolbarOfflineTallyVote,
+    ]
+  );
   const toolbarOfflineTallyMode = resolveOfflineTallyMode(toolbarOfflineTallyEntity?.tallies ?? []);
-  const showOfflineTallyButton = shouldShowOfflineTallyToolbarButton({
-    attendanceMode,
-    canManageVotes,
-    phase: toolbarOfflineTallyPhase,
-  });
+  const showOfflineTallyButton =
+    Boolean(toolbarOfflineTallyEntity?.choices.length) &&
+    shouldShowOfflineTallyToolbarButton({
+      attendanceMode,
+      canManageVotes,
+      phase: toolbarOfflineTallyPhase,
+    });
   useEffect(() => {
     console.debug('[offline-tally-toolbar][agenda]', {
       eventId,
       attendanceMode,
       agendaItemVotingPhase: streamAgendaItem?.voting_phase ?? null,
-      electionStatus: toolbarElection?.status ?? null,
-      voteStatus: streamVote?.status ?? null,
+      electionStatus: toolbarOfflineTallyElection?.status ?? null,
+      voteStatus: toolbarOfflineTallyVote?.status ?? null,
       canManageVotes,
       canManageAgenda,
       canManageOfflineTallies,
@@ -640,20 +776,24 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     showOfflineTallyButton,
     streamAgendaItem?.voting_phase,
     streamAgendaItem?.id,
-    streamVote?.status,
+    toolbarOfflineTallyVote?.status,
     toolbarOfflineTallyPhaseSource,
-    toolbarElection?.status,
+    toolbarOfflineTallyElection?.status,
     toolbarOfflineTallyPhase,
   ]);
   const startVoteTooltip = isCRToolbarActive
-    ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.startFinalVote')
-      : t('features.agendas.crTimeline.startVote')
+    ? isChangeRequestVotesPlaceholder(activeCRToolbarItem) && nonFinalCRItems.length === 0
+      ? t('features.agendas.crTimeline.jumpToFinalVote', 'Jump to final vote')
+      : isSelectedCRFinalVote
+        ? t('features.events.agenda.actions.startFinalVote')
+        : t('features.agendas.crTimeline.startVote')
     : undefined;
   const startFinalVoteTooltip = isCRToolbarActive
-    ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.startFinalVote')
-      : t('features.agendas.crTimeline.startFinal')
+    ? isChangeRequestVotesPlaceholder(activeCRToolbarItem) && nonFinalCRItems.length === 0
+      ? t('features.agendas.crTimeline.jumpToFinalVote', 'Jump to final vote')
+      : isSelectedCRFinalVote
+        ? t('features.events.agenda.actions.startFinalVote')
+        : t('features.agendas.crTimeline.startFinal')
     : undefined;
   const closeVoteTooltip = isCRToolbarActive
     ? isSelectedCRFinalVote
@@ -687,7 +827,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const userHasElectionVoted = useMemo(() => {
     if (!userElector) return false;
     const phase = streamElection?.status;
-    if (phase === 'final' || phase === 'final_vote') {
+    if (phase === 'final' || phase === 'final_vote' || phase === VOTE_STATUS.finalOpen) {
       return (streamElection?.final_participations ?? []).some(
         (participation: { elector_id?: string | null }) =>
           participation.elector_id === userElector.id
@@ -701,7 +841,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     if (!userElector) return [];
     const phase = streamElection?.status;
     const participations =
-      phase === 'final' || phase === 'final_vote'
+      phase === 'final' || phase === 'final_vote' || phase === VOTE_STATUS.finalOpen
         ? (streamElection?.final_participations ?? [])
         : (streamElection?.indicative_participations ?? []);
     const userParticipation = participations.find(
@@ -768,7 +908,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const userHasVoteVoted = useMemo(() => {
     if (!userVoter) return false;
     const phase = streamVote?.status;
-    if (phase === 'final' || phase === 'final_vote') {
+    if (phase === 'final' || phase === 'final_vote' || phase === VOTE_STATUS.finalOpen) {
       return (streamVote?.final_participations ?? []).some(
         (participation: { voter_id?: string | null }) => participation.voter_id === userVoter.id
       );
@@ -781,7 +921,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     if (!userVoter) return [];
     const phase = streamVote?.status;
     const participations =
-      phase === 'final' || phase === 'final_vote'
+      phase === 'final' || phase === 'final_vote' || phase === VOTE_STATUS.finalOpen
         ? (streamVote?.final_participations ?? [])
         : (streamVote?.indicative_participations ?? []);
     const userParticipation = participations.find(
@@ -795,28 +935,94 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       })
       .filter(Boolean);
   }, [streamVote, userVoter]);
+  const handleStartSequenceFinalVote = useCallback(
+    async (itemId: string) => {
+      const item = streamVoteSequenceItems.find(sequenceItem => sequenceItem.id === itemId);
+      const closingJump = resolveClosingJumpTarget({
+        item,
+        nonFinalItemCount: nonFinalCRItems.length,
+        sequenceItems: streamVoteSequenceItems,
+      });
+      if (closingJump.isClosingJump) {
+        setSequenceVotingLoading(itemId);
+        try {
+          if (closingJump.shouldInitialize) {
+            if (!streamAgendaItem?.amendment_id || !streamAgendaItem?.id) {
+              throw new Error('Missing amendment agenda item context.');
+            }
+
+            await initializeChangeRequestVoting({
+              amendment_id: streamAgendaItem.amendment_id,
+              agenda_item_id: streamAgendaItem.id,
+              start_final_vote_if_no_change_requests: false,
+            });
+          }
+
+          if (closingJump.targetItemId) {
+            setSelectedCRToolbarItemId(closingJump.targetItemId);
+          }
+        } catch (error) {
+          console.error('Failed to jump to final vote:', error);
+          toast.error(
+            t(
+              'features.agendas.crTimeline.jumpToFinalVoteFailed',
+              'Could not start the final vote.'
+            )
+          );
+        } finally {
+          setSequenceVotingLoading(null);
+        }
+        return;
+      }
+
+      if (!item?.vote) return;
+
+      if (getVoteStepKind(item)) {
+        await updateAgendaVote({ id: item.vote.id, status: VOTE_STATUS.finalOpen });
+        return;
+      }
+
+      await crVoting.startFinalPhase(itemId);
+    },
+    [
+      crVoting,
+      initializeChangeRequestVoting,
+      nonFinalCRItems.length,
+      streamAgendaItem?.amendment_id,
+      streamAgendaItem?.id,
+      streamVoteSequenceItems,
+      t,
+      updateAgendaVote,
+    ]
+  );
   const handleToolbarStartVote = useCallback(() => {
     if (!activeCRToolbarItem) return;
-    void crVoting.startIndicativePhase(activeCRToolbarItem.id);
-  }, [activeCRToolbarItem, crVoting]);
+    void handleStartSequenceFinalVote(activeCRToolbarItem.id);
+  }, [activeCRToolbarItem, handleStartSequenceFinalVote]);
   const handleToolbarStartFinalVote = useCallback(() => {
     if (isCRToolbarActive) {
       if (!activeCRToolbarItem) return;
-      void crVoting.startFinalPhase(activeCRToolbarItem.id);
+      void handleStartSequenceFinalVote(activeCRToolbarItem.id);
       return;
     }
 
     void actionBarHook.handleStartFinalVote();
-  }, [actionBarHook, activeCRToolbarItem, crVoting, isCRToolbarActive]);
+  }, [actionBarHook, activeCRToolbarItem, handleStartSequenceFinalVote, isCRToolbarActive]);
   const handleToolbarCloseVote = useCallback(() => {
     if (isCRToolbarActive) {
       if (!activeCRToolbarItem) return;
+      if ((activeCRToolbarItem as { _voteStepKind?: string })._voteStepKind) {
+        if (activeCRToolbarItem.vote?.id) {
+          void updateAgendaVote({ id: activeCRToolbarItem.vote.id, status: 'closed' });
+        }
+        return;
+      }
       void crVoting.closeVoting(activeCRToolbarItem.id);
       return;
     }
 
     void actionBarHook.handleCloseFinalVote();
-  }, [actionBarHook, activeCRToolbarItem, crVoting, isCRToolbarActive]);
+  }, [actionBarHook, activeCRToolbarItem, crVoting, isCRToolbarActive, updateAgendaVote]);
   useEffect(() => {
     console.debug('[event-agenda][final-vote-props]', {
       eventId,
@@ -1185,6 +1391,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       setDismissedOverdueAgendaItemId={setDismissedOverdueAgendaItemId}
       canManageAgenda={canManageAgenda}
       canManageVotes={canManageVotes}
+      canManageVoteSequence={canManageAgendaVoteSequence}
       canJoinSpeakerList={canJoinSpeakerList}
       canManageOfflineTallies={canManageOfflineTallies}
       draggedAgendaItemId={draggedAgendaItemId}
@@ -1225,7 +1432,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       toolbarVotingPhase={toolbarVotingPhase}
       synthesizedFinalVoteItem={synthesizedFinalVoteItem}
       effectiveFinalVoteItem={effectiveFinalVoteItem}
-      nextPendingCRItem={nextPendingCRItem}
+      nextPendingCRItem={nextPendingSequenceItem}
       activeCRToolbarItem={activeCRToolbarItem}
       isCRToolbarActive={isCRToolbarActive}
       selectedCRPhase={selectedCRPhase}
@@ -1241,6 +1448,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       toolbarOfflineTallyEntity={toolbarOfflineTallyEntity}
       toolbarOfflineTallyMode={toolbarOfflineTallyMode}
       showOfflineTallyButton={showOfflineTallyButton}
+      sequenceVotingLoading={sequenceVotingLoading}
       startVoteTooltip={startVoteTooltip}
       startFinalVoteTooltip={startFinalVoteTooltip}
       closeVoteTooltip={closeVoteTooltip}

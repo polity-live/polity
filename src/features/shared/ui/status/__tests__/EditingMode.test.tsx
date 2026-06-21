@@ -38,6 +38,27 @@ function renderMenu(onValueChange = vi.fn(), value: SelectableEditingMode = 'vie
   return onValueChange;
 }
 
+function renderMenuWithDisabledReasons(
+  disabledModeReasons: Partial<Record<SelectableEditingMode, string>>,
+  onValueChange = vi.fn(),
+  value: SelectableEditingMode = 'view'
+) {
+  render(
+    <DropdownMenu open>
+      <DropdownMenuTrigger>Open</DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <EditingModeMenuItems
+          value={value}
+          disabledModeReasons={disabledModeReasons}
+          onValueChange={onValueChange}
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  return onValueChange;
+}
+
 describe('EditingModeMenuItems', () => {
   it('shows all amendment modes in canonical order by default', () => {
     renderMenu();
@@ -103,7 +124,7 @@ describe('EditingModeMenuItems', () => {
   });
 
   it('marks event voting as the current disabled mode', () => {
-    const onValueChange = renderMenu(vi.fn(), 'vote_event');
+    const onValueChange = renderMenu(vi.fn(), 'event_final_closing_vote');
 
     const currentItem = screen.getByText('Event Voting Mode').closest('[role="menuitemradio"]');
     expect(currentItem?.getAttribute('aria-checked')).toBe('true');
@@ -111,5 +132,22 @@ describe('EditingModeMenuItems', () => {
 
     fireEvent.click(screen.getByText('Internal Voting Mode'));
     expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  it('blocks modes with explicit disabled reasons and shows readable reason text', () => {
+    const onValueChange = renderMenuWithDisabledReasons({
+      vote_internal: 'internal-window-closed',
+    });
+
+    fireEvent.click(screen.getByText('Internal Voting Mode'));
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(
+        'Der interne Modus kann nach Start des ersten Prozess-Agenda-Punkts nicht mehr manuell geändert werden.'
+      )
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Collaborative Editing'));
+    expect(onValueChange).toHaveBeenCalledWith('edit');
   });
 });

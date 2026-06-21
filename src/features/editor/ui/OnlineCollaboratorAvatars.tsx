@@ -18,6 +18,7 @@ interface OnlineCollaboratorAvatarsProps {
   onlinePeerMap: Map<string, EditorPresencePeer>;
   activeCursorUserIds: Set<string>;
   currentUserId?: string;
+  presenceColorByUserId?: Map<string, string>;
   enabled?: boolean;
   className?: string;
 }
@@ -65,6 +66,7 @@ export function OnlineCollaboratorAvatars({
   onlinePeerMap,
   activeCursorUserIds,
   currentUserId,
+  presenceColorByUserId,
   enabled = true,
   className,
 }: OnlineCollaboratorAvatarsProps) {
@@ -113,7 +115,10 @@ export function OnlineCollaboratorAvatars({
         const { user } = collaborator;
         const displayName = getDisplayName(user);
         const initials = getInitials(user);
-        const userColor = generateUserColor(user.id);
+        const userColor =
+          presenceColorByUserId?.get(user.id) ??
+          onlinePeerMap.get(user.id)?.color ??
+          generateUserColor(user.id);
         const isOpen = openUserId === user.id;
 
         return (

@@ -43,7 +43,8 @@ interface PlateEditorProps {
   documentId?: string; // Document ID for suggestion ID generation
   documentTitle?: string; // Document title to show in discussions/suggestions
   currentMode?: EditorMode; // Current editing mode from DB
-  onModeChange?: (mode: EditorMode) => void; // Mode change callback
+  modeDisabledReasons?: Partial<Record<EditorMode, string>>;
+  onModeChange?: (mode: EditorMode) => void | Promise<void>; // Mode change callback
   isOwnerOrCollaborator?: boolean; // Whether user can change modes
   readOnly?: boolean;
   showFixedToolbar?: boolean;
@@ -85,6 +86,7 @@ export function PlateEditor({
   documentId,
   documentTitle,
   currentMode,
+  modeDisabledReasons,
   onModeChange,
   isOwnerOrCollaborator = true,
   readOnly = false,
@@ -330,6 +332,7 @@ export function PlateEditor({
       documentId={documentId}
       documentTitle={documentTitle}
       currentMode={currentMode}
+      modeDisabledReasons={modeDisabledReasons}
       onModeChange={onModeChange}
       isOwnerOrCollaborator={isOwnerOrCollaborator}
       readOnly={readOnly}

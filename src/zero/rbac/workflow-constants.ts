@@ -60,7 +60,7 @@ export const EDITING_MODE_TRANSITIONS: Record<EditingMode, EditingMode[]> = {
   suggest_internal: [...MANUALLY_SELECTABLE_MODES],
   suggest_event: ['view'],
   vote_internal: [...MANUALLY_SELECTABLE_MODES],
-  vote_event: ['view'],
+  event_final_closing_vote: ['view'],
   passed: [], // Terminal state
   rejected: [], // Terminal state
 };
@@ -142,7 +142,7 @@ export const EDITING_MODE_METADATA: Record<
     color: 'bg-orange-500',
     icon: 'Vote',
   },
-  vote_event: {
+  event_final_closing_vote: {
     label: translateText('generated.inline.0750_event_abstimmung_96225579'),
     description: translateText(
       'generated.inline.0751_event_stimmt_sequentiell_ber_nderungen_ab_d1aa6df6'
@@ -201,7 +201,7 @@ export function isTerminalStatus(mode: EditingMode): boolean {
  * Check if a mode is a voting mode
  */
 export function isVotingMode(mode: EditingMode): boolean {
-  return mode === 'vote_internal' || mode === 'vote_event';
+  return mode === 'vote_internal' || mode === 'event_final_closing_vote';
 }
 
 /**

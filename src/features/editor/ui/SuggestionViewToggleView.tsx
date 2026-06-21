@@ -19,7 +19,7 @@ interface SuggestionViewToggleViewProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   filterMode: FilterMode;
-  crOptions: { crId: string; title: string; userId?: string | null }[];
+  crOptions: { crId: string; displayCrId?: string; title: string; userId?: string | null }[];
   isFiltered: boolean;
   buttonLabel: string;
   allSelected: boolean;
@@ -96,8 +96,8 @@ export function SuggestionViewToggleView({
                   <CommandItem key={option.crId} onSelect={() => onSelectCr(option.crId)}>
                     <Filter className="mr-2 h-4 w-4" />
                     <div className="flex flex-col">
-                      <span className="font-mono text-sm">{option.crId}</span>
-                      {option.title !== option.crId && (
+                      <span className="font-mono text-sm">{option.displayCrId ?? option.crId}</span>
+                      {option.title !== (option.displayCrId ?? option.crId) && (
                         <span className="text-muted-foreground text-xs">{option.title}</span>
                       )}
                     </div>
@@ -123,8 +123,10 @@ export function SuggestionViewToggleView({
                     <CommandItem key={option.crId} onSelect={() => onToggleCr(option.crId)}>
                       <FormControlCheckbox checked={isChecked} className="mr-2" tabIndex={-1} />
                       <div className="flex flex-col">
-                        <span className="font-mono text-sm">{option.crId}</span>
-                        {option.title !== option.crId && (
+                        <span className="font-mono text-sm">
+                          {option.displayCrId ?? option.crId}
+                        </span>
+                        {option.title !== (option.displayCrId ?? option.crId) && (
                           <span className="text-muted-foreground text-xs">{option.title}</span>
                         )}
                       </div>

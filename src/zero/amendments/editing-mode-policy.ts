@@ -11,13 +11,13 @@ export type EditingMode =
   | 'suggest_internal'
   | 'suggest_event'
   | 'vote_internal'
-  | 'vote_event'
+  | 'event_final_closing_vote'
   | 'passed'
   | 'rejected';
 
 export type NonTerminalEditingMode = Exclude<EditingMode, 'passed' | 'rejected'>;
 export type ManualInternalEditingMode = 'edit' | 'suggest_internal' | 'vote_internal';
-export type AutomaticEventEditingMode = 'suggest_event' | 'vote_event';
+export type AutomaticEventEditingMode = 'suggest_event' | 'event_final_closing_vote';
 
 export const AMENDMENT_EDITING_MODE_ORDER = [
   'view',
@@ -25,7 +25,7 @@ export const AMENDMENT_EDITING_MODE_ORDER = [
   'suggest_internal',
   'vote_internal',
   'suggest_event',
-  'vote_event',
+  'event_final_closing_vote',
 ] as const satisfies readonly NonTerminalEditingMode[];
 
 export const MANUAL_INTERNAL_MODES = [
@@ -36,7 +36,7 @@ export const MANUAL_INTERNAL_MODES = [
 
 export const AUTOMATIC_EVENT_MODES = [
   'suggest_event',
-  'vote_event',
+  'event_final_closing_vote',
 ] as const satisfies readonly AutomaticEventEditingMode[];
 
 export const MANUALLY_SELECTABLE_MODES = [
@@ -55,7 +55,8 @@ const LEGACY_MODE_MAP: Record<string, EditingMode> = {
   internal_voting: 'vote_internal',
   viewing: 'view',
   event_suggesting: 'suggest_event',
-  event_voting: 'vote_event',
+  event_voting: 'event_final_closing_vote',
+  vote_event: 'event_final_closing_vote',
   Drafting: 'edit',
   'Under Review': 'suggest_internal',
   Passed: 'passed',
@@ -82,10 +83,32 @@ export interface AmendmentEditingModePolicy {
   internalModesAllowed: boolean;
 }
 
+const STARTED_AGENDA_ITEM_STATUSES = new Set([
+  'active',
+  'in-progress',
+  'completed',
+  'done',
+  'closed',
+]);
+
+export interface AmendmentEditingModeAgendaItemState {
+  status?: string | null;
+  activated_at?: number | null;
+  start_time?: number | null;
+  completed_at?: number | null;
+}
+
+export function isAgendaItemStarted(item: AmendmentEditingModeAgendaItemState | null | undefined) {
+  if (!item) return false;
+  return (
+    Boolean(item.activated_at || item.start_time || item.completed_at) ||
+    STARTED_AGENDA_ITEM_STATUSES.has(item.status ?? '')
+  );
+}
+
 export function normalizeEditingMode(raw: string | null | undefined): EditingMode {
   if (!raw) return 'edit';
-  if (isEditingMode(raw)) return raw;
-  return LEGACY_MODE_MAP[raw] ?? 'edit';
+  return LEGACY_MODE_MAP[raw] ?? (isEditingMode(raw) ? raw : 'edit');
 }
 
 export function isEditingMode(raw: string | null | undefined): raw is EditingMode {
@@ -95,7 +118,7 @@ export function isEditingMode(raw: string | null | undefined): raw is EditingMod
     raw === 'suggest_internal' ||
     raw === 'suggest_event' ||
     raw === 'vote_internal' ||
-    raw === 'vote_event' ||
+    raw === 'event_final_closing_vote' ||
     raw === 'passed' ||
     raw === 'rejected'
   );
@@ -110,7 +133,8 @@ export function isManualInternalMode(
 export function isAutomaticEventMode(
   mode: string | null | undefined
 ): mode is AutomaticEventEditingMode {
-  return mode === 'suggest_event' || mode === 'vote_event';
+  const normalizedMode = normalizeEditingMode(mode);
+  return normalizedMode === 'suggest_event' || normalizedMode === 'event_final_closing_vote';
 }
 
 export function isTerminalEditingMode(
@@ -135,7 +159,7 @@ export function getAutomaticEditingMode(
   context: AmendmentEditingModePolicyContext
 ): AutomaticEventEditingMode | null {
   if (context.eventVotingOpen) {
-    return 'vote_event';
+    return 'event_final_closing_vote';
   }
 
   if (context.eventSuggestionOpen) {

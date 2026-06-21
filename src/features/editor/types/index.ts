@@ -22,7 +22,7 @@ export type EditorMode =
   | 'edit'
   | 'view'
   | 'vote_internal'
-  | 'vote_event'
+  | 'event_final_closing_vote'
   | 'suggest_internal'
   | 'suggest_event';
 
@@ -153,6 +153,9 @@ export interface EditorDiscussion {
   isResolved: boolean;
   documentContent?: string;
   title?: string;
+  displayCrId?: string;
+  branchDisplayNumber?: number;
+  branchScopedCrNumber?: number;
 }
 
 /**
@@ -228,6 +231,9 @@ export interface EditorEntityMetadata {
   amendmentCode?: string;
   amendmentEditingMode?: string;
   amendmentStatus?: string;
+  processBranchId?: string;
+  processBranchStatus?: string;
+  processBranchResolution?: string;
   /** Blog-specific */
   blogId?: string;
   blogDate?: string;
@@ -261,6 +267,7 @@ export interface EditorState {
   content: Value;
   discussions: TDiscussionType[];
   mode: EditorMode;
+  modeDisabledReasons: Partial<Record<EditorMode, string>>;
   selectedCrIds: Set<string> | null;
 
   // Save status
@@ -310,8 +317,12 @@ export interface EditorViewProps {
   backUrl?: string;
   /** Back navigation label */
   backLabel?: string;
+  /** Use tighter spacing above the editor action toolbar */
+  compactToolbarSpacing?: boolean;
   /** Agenda item ID for amendment CR voting initialization */
   agendaItemId?: string;
+  /** Process branch ID for branch-specific amendment text variants */
+  processBranchId?: string | null;
 }
 
 /**

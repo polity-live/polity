@@ -600,7 +600,34 @@ export const eventQueries = {
           )
           .related('voters', v => applyVoteVoterOrManagerQueryAccess(v, userID).related('user'))
       )
-      .related('amendment', q => q.related('change_requests').related('group').related('document'))
+      .related('amendment', q =>
+        q
+          .related('change_requests', changeRequest =>
+            applyChangeRequestVisibilityAccess(changeRequest, userID)
+          )
+          .related('group')
+          .related('document')
+          .related('current_process_run', rq =>
+            rq.related('branches', bq =>
+              bq
+                .related('document')
+                .related('document_version')
+                .related('change_requests', changeRequest =>
+                  applyChangeRequestVisibilityAccess(changeRequest, userID)
+                )
+                .related('step_runs', sq =>
+                  sq
+                    .related('source_group')
+                    .related('target_group')
+                    .related('workflow_step')
+                    .related('event')
+                    .related('agenda_item')
+                    .orderBy('order_index', 'asc')
+                )
+                .orderBy('created_at', 'asc')
+            )
+          )
+      )
       .related('speaker_list', q => q.related('user'))
   ),
 

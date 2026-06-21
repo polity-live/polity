@@ -34,6 +34,7 @@ interface InlineAmendmentEditorProps {
     avatar?: string;
   };
   agendaItemId?: string;
+  processBranchId?: string | null;
   /** Editor mode to use — defaults to 'suggest_event' */
   editingMode?: string | null;
 }
@@ -67,11 +68,12 @@ export function InlineAmendmentEditor({
   userId,
   userRecord,
   agendaItemId,
+  processBranchId,
   editingMode,
 }: InlineAmendmentEditorProps) {
-  const resolvedMode = (editingMode === 'vote_event' ? 'vote_event' : 'suggest_event') as
-    | 'suggest_event'
-    | 'vote_event';
+  const resolvedMode = (
+    editingMode === 'event_final_closing_vote' ? 'event_final_closing_vote' : 'suggest_event'
+  ) as 'suggest_event' | 'event_final_closing_vote';
   const {
     entity,
     isLoading,
@@ -87,10 +89,12 @@ export function InlineAmendmentEditor({
     entityId: amendmentId,
     userId,
     agendaItemId,
+    processBranchId,
   });
 
   const contentEntityId = entity?.id ?? '';
   const amendmentIdFromEntity = entity?.metadata?.amendmentId;
+  const effectiveProcessBranchId = entity?.metadata?.processBranchId ?? processBranchId ?? null;
 
   const editorOps = useEditorOperations('amendment', contentEntityId);
 
@@ -136,6 +140,7 @@ export function InlineAmendmentEditor({
         id: changeRequestEntityId,
         crId,
         amendmentId: amendmentIdFromEntity,
+        processBranchId: effectiveProcessBranchId,
         changedCharacterCount: snapshot.changed_character_count,
         change_type: snapshot.change_type,
         original_text: snapshot.original_text,
@@ -144,7 +149,7 @@ export function InlineAmendmentEditor({
         new_properties: snapshot.new_properties,
       });
     },
-    [amendmentIdFromEntity, content, editorOps]
+    [amendmentIdFromEntity, content, effectiveProcessBranchId, editorOps]
   );
 
   useSuggestionIdAssignment({
@@ -165,7 +170,8 @@ export function InlineAmendmentEditor({
         discussions,
         suggestion,
         mode,
-        amendmentIdFromEntity
+        amendmentIdFromEntity,
+        effectiveProcessBranchId
       );
       setDiscussions(updatedDiscussions);
     },
@@ -176,6 +182,7 @@ export function InlineAmendmentEditor({
       discussions,
       mode,
       amendmentIdFromEntity,
+      effectiveProcessBranchId,
       setDiscussions,
       editorOps,
     ]
@@ -190,7 +197,8 @@ export function InlineAmendmentEditor({
         discussions,
         suggestion,
         mode,
-        amendmentIdFromEntity
+        amendmentIdFromEntity,
+        effectiveProcessBranchId
       );
       setDiscussions(updatedDiscussions);
     },
@@ -201,6 +209,7 @@ export function InlineAmendmentEditor({
       discussions,
       mode,
       amendmentIdFromEntity,
+      effectiveProcessBranchId,
       setDiscussions,
       editorOps,
     ]
@@ -250,6 +259,7 @@ export function InlineAmendmentEditor({
         id: changeRequestEntityId,
         crId,
         amendmentId: amendmentIdFromEntity,
+        processBranchId: effectiveProcessBranchId,
         changedCharacterCount: snapshot.changed_character_count,
         change_type: snapshot.change_type,
         original_text: snapshot.original_text,
@@ -285,7 +295,14 @@ export function InlineAmendmentEditor({
         translateText('features.amendments.eventSuggestions.confirmed', 'Change request submitted.')
       );
     },
-    [amendmentIdFromEntity, discussions, editorOps, resolvedMode, setDiscussions]
+    [
+      amendmentIdFromEntity,
+      discussions,
+      effectiveProcessBranchId,
+      editorOps,
+      resolvedMode,
+      setDiscussions,
+    ]
   );
 
   const onEventSuggestionCancel = useCallback(

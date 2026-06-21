@@ -29,6 +29,7 @@ import {
   initializeAmendmentProcessPathSchema,
   resolveAmendmentProcessVoteSchema,
   completeProcessTaskWithEventSchema,
+  replanProcessBranchEventsSchema,
 } from './schema';
 import {
   createChangeRequestSchema,
@@ -50,6 +51,7 @@ import {
   getResolvedChangeRequestVisibilityScope,
   INTERNAL_CR_RESOLUTION_DEFAULT_VISIBILITY,
 } from '../change-requests/visibility';
+import { normalizeEditingMode } from './editing-mode-policy';
 
 function denyPublicAmendmentProcessMutation(
   tx: Parameters<typeof denyPublicApiMutation>[0],
@@ -70,13 +72,19 @@ interface ChangeRequestVoteRow {
 const INTERNAL_CR_VOTING_DEFAULT_TRIGGER = 'all_collaborators_voted';
 const INTERNAL_CR_VOTING_DEFAULT_DURATION_MINUTES = 5;
 const INTERNAL_MODES = new Set(['edit', 'suggest_internal', 'vote_internal']);
+const CHANGE_REQUEST_READONLY_BRANCH_STATUSES = new Set(['rejected', 'withdrawn', 'completed']);
+const CHANGE_REQUEST_READONLY_BRANCH_RESOLUTIONS = new Set([
+  'merge_loser',
+  'rejected',
+  'withdrawn',
+]);
 
 function normalizeEditingModeForChangeRequest(mode: string | null | undefined) {
   if (mode === 'collaborative' || mode === 'collaborative_editing') return 'edit';
   if (mode === 'internal_suggestion' || mode === 'internal_suggestions') return 'suggest_internal';
   if (mode === 'internal_voting') return 'vote_internal';
   if (mode === 'event_suggestion' || mode === 'event_suggestions') return 'suggest_event';
-  if (mode === 'event_voting') return 'vote_event';
+  if (mode === 'event_voting' || mode === 'vote_event') return 'event_final_closing_vote';
   return mode ?? 'edit';
 }
 
@@ -103,7 +111,7 @@ function isResolvedStatus(status: string | null | undefined) {
 function getDirectResolutionMethod(mode: string | null | undefined) {
   const normalizedMode = normalizeEditingModeForChangeRequest(mode);
   if (normalizedMode === 'vote_internal') return 'internal_vote';
-  if (normalizedMode === 'vote_event') return 'event_vote';
+  if (normalizedMode === 'event_final_closing_vote') return 'event_vote';
   if (INTERNAL_MODES.has(normalizedMode)) return 'direct_internal';
   return null;
 }
@@ -122,6 +130,57 @@ function isClosedChangeRequestStatus(status: string | null | undefined) {
   return (
     status === 'accepted' || status === 'approved' || status === 'rejected' || status === 'declined'
   );
+}
+
+function getAmendmentOriginId(amendment: {
+  id: string;
+  origin_amendment_id?: string | null;
+  clone_source_id?: string | null;
+}) {
+  return amendment.origin_amendment_id ?? amendment.clone_source_id ?? amendment.id;
+}
+
+async function assertChangeRequestProcessBranch(
+  tx: Parameters<typeof denyPublicApiMutation>[0],
+  amendment: {
+    id: string;
+    origin_amendment_id?: string | null;
+    clone_source_id?: string | null;
+  } | null,
+  processBranchId?: string | null
+) {
+  if (!processBranchId) {
+    return null;
+  }
+
+  if (!amendment) {
+    throw new Error('Amendment not found');
+  }
+
+  const branch = await tx.run(zql.amendment_process_branch.where('id', processBranchId).one());
+  if (!branch) {
+    throw new Error('Process branch not found');
+  }
+
+  const processRun = await tx.run(
+    zql.amendment_process_run.where('id', branch.process_run_id).one()
+  );
+  if (!processRun || processRun.amendment_id !== getAmendmentOriginId(amendment)) {
+    throw new Error('Process branch does not belong to this amendment.');
+  }
+
+  if (!branch.document_id) {
+    throw new Error('Process branch has no document.');
+  }
+
+  if (
+    CHANGE_REQUEST_READONLY_BRANCH_STATUSES.has(branch.status ?? '') ||
+    CHANGE_REQUEST_READONLY_BRANCH_RESOLUTIONS.has(branch.resolution ?? '')
+  ) {
+    throw new Error('Process branch is read-only.');
+  }
+
+  return branch;
 }
 
 function countLatestChangeRequestVotes(votes: Iterable<ChangeRequestVoteRow>) {
@@ -321,7 +380,14 @@ export const amendmentSharedMutators = {
     async ({ tx, ctx: { userID }, args }) => {
       const now = Date.now();
       const amendment = await tx.run(zql.amendment.where('id', args.amendment_id).one());
-      const createdInMode = normalizeEditingModeForChangeRequest(amendment?.editing_mode);
+      const processBranch = await assertChangeRequestProcessBranch(
+        tx,
+        amendment ?? null,
+        args.process_branch_id ?? null
+      );
+      const createdInMode = normalizeEditingModeForChangeRequest(
+        processBranch?.editing_mode ?? 'edit'
+      );
       const trigger = normalizeInternalCRVotingTrigger(amendment?.internal_cr_voting_close_trigger);
       const durationMinutes = normalizeInternalCRVotingDurationMinutes(
         amendment?.internal_cr_voting_duration_minutes
@@ -333,6 +399,7 @@ export const amendmentSharedMutators = {
       const isResolved = isResolvedStatus(args.status);
       await tx.mutate.change_request.insert({
         ...args,
+        process_branch_id: args.process_branch_id ?? null,
         user_id: userID,
         changed_character_count: args.changed_character_count ?? 0,
         votes_for: 0,
@@ -545,14 +612,21 @@ export const amendmentSharedMutators = {
   createProcessBranch: defineMutator(createAmendmentProcessBranchSchema, async ({ tx, args }) => {
     denyPublicAmendmentProcessMutation(tx, 'create', 'amendment-process-branch');
     const now = Date.now();
+    const sourceDocument =
+      !args.editing_mode && args.document_id
+        ? await tx.run(zql.document.where('id', args.document_id).one())
+        : null;
     await tx.mutate.amendment_process_branch.insert({
       ...args,
       parent_branch_id: args.parent_branch_id ?? null,
       merged_into_branch_id: args.merged_into_branch_id ?? null,
       source_step_run_id: args.source_step_run_id ?? null,
       document_version_id: args.document_version_id ?? null,
+      document_id: args.document_id ?? null,
+      discussions: args.discussions ?? [],
       title: args.title ?? null,
       resolution: args.resolution ?? null,
+      editing_mode: args.editing_mode ?? normalizeEditingMode(sourceDocument?.editing_mode),
       created_at: now,
       updated_at: now,
     });
@@ -651,6 +725,10 @@ export const amendmentSharedMutators = {
   }),
 
   completeProcessTaskWithEvent: defineMutator(completeProcessTaskWithEventSchema, async () => {
+    return;
+  }),
+
+  replanProcessBranchEvents: defineMutator(replanProcessBranchEventsSchema, async () => {
     return;
   }),
 

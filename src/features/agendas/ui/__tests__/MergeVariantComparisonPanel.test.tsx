@@ -5,6 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import {
   MergeVariantComparisonPanel,
+  VariantDiffPanel,
   type MergeVariantCandidate,
 } from '../MergeVariantComparisonPanel';
 
@@ -167,5 +168,45 @@ describe('MergeVariantComparisonPanel', () => {
     openDiffTab();
 
     expect(screen.getByTestId('merge-variant-no-diff').textContent).toContain('Keine Unterschiede');
+  });
+});
+
+describe('VariantDiffPanel', () => {
+  it('defaults to original document versus winning branch when candidates are marked', () => {
+    render(
+      <VariantDiffPanel
+        candidates={[
+          {
+            id: 'original',
+            label: 'Ursprungsdokument',
+            content: content('Original'),
+            isOriginal: true,
+          },
+          {
+            id: 'branch-loser',
+            label: 'Branch loser',
+            content: content('Loser'),
+          },
+          {
+            id: 'branch-winner',
+            label: 'Branch winner',
+            content: content('Winner'),
+            isWinner: true,
+          },
+        ]}
+        defaultLeftCandidateId="original"
+      />
+    );
+
+    expect(screen.getByTestId('merge-variant-left-select').textContent).toContain(
+      'Ursprungsdokument'
+    );
+    expect(screen.getByTestId('merge-variant-right-select').textContent).toContain('Branch winner');
+    expect(screen.getByTestId('merge-variant-left-preview').textContent).toContain(
+      'Ursprungsdokument'
+    );
+    expect(screen.getByTestId('merge-variant-right-preview').textContent).toContain(
+      'Branch winner'
+    );
   });
 });

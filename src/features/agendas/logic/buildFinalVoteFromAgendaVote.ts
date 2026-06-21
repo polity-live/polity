@@ -12,6 +12,7 @@ interface AgendaVoteInput {
   title?: string | null;
   description?: string | null;
   status?: string | null;
+  purpose?: string | null;
   majority_type?: string | null;
   closing_type?: string | null;
   closing_duration_seconds?: number | null;
@@ -43,11 +44,53 @@ interface AgendaVoteInput {
   final_decisions?: readonly unknown[];
 }
 
+type VoteSequencePlaceholderKind =
+  | 'change_request_votes_placeholder'
+  | 'final_amendment_placeholder';
+
 function mapVoteStatusToTimelineStatus(voteStatus: string | null | undefined): string {
   if (voteStatus === 'closed') return 'completed';
-  if (voteStatus === 'indicative' || voteStatus === 'final_vote' || voteStatus === 'final')
+  if (
+    voteStatus === 'indicative' ||
+    voteStatus === 'indicative_open' ||
+    voteStatus === 'final_vote' ||
+    voteStatus === 'final_open' ||
+    voteStatus === 'final'
+  )
     return 'voting';
   return 'pending';
+}
+
+export function buildVoteSequencePlaceholder({
+  agendaItemId,
+  orderIndex,
+  kind,
+  title,
+  description,
+}: {
+  agendaItemId: string;
+  orderIndex: number;
+  kind: VoteSequencePlaceholderKind;
+  title: string;
+  description: string;
+}) {
+  return {
+    id: `agenda-vote-placeholder-${kind}-${agendaItemId}`,
+    agenda_item_id: agendaItemId,
+    change_request_id: null,
+    vote_id: null,
+    order_index: orderIndex,
+    is_final_vote: kind === 'final_amendment_placeholder',
+    _voteStepKind: kind,
+    _votePlaceholder: true,
+    _placeholderTitle: title,
+    _placeholderDescription: description,
+    status: 'pending',
+    created_at: 0,
+    updated_at: 0,
+    change_request: null,
+    vote: null,
+  };
 }
 
 export function buildFinalVoteFromAgendaVote(
@@ -63,6 +106,7 @@ export function buildFinalVoteFromAgendaVote(
     vote_id: vote.id,
     order_index: orderIndex,
     is_final_vote: true,
+    _voteStepKind: 'final_amendment',
     status: mapVoteStatusToTimelineStatus(vote.status),
     created_at: vote.created_at,
     updated_at: vote.updated_at,
@@ -74,6 +118,52 @@ export function buildFinalVoteFromAgendaVote(
       title: vote.title ?? null,
       description: vote.description ?? null,
       status: vote.status ?? null,
+      purpose: vote.purpose ?? 'final_closing',
+      majority_type: vote.majority_type ?? null,
+      closing_type: vote.closing_type ?? null,
+      closing_duration_seconds: vote.closing_duration_seconds ?? null,
+      closing_end_time: vote.closing_end_time ?? null,
+      visibility: vote.visibility,
+      ballot_visibility: vote.ballot_visibility ?? 'named',
+      created_at: vote.created_at,
+      updated_at: vote.updated_at,
+      choices: vote.choices ?? [],
+      voters: vote.voters ?? [],
+      indicative_participations: vote.indicative_participations ?? [],
+      indicative_decisions: vote.indicative_decisions ?? [],
+      offline_tallies: vote.offline_tallies ?? [],
+      final_participations: vote.final_participations ?? [],
+      final_decisions: vote.final_decisions ?? [],
+    },
+  };
+}
+
+export function buildVariantVoteFromAgendaVote(
+  vote: AgendaVoteInput | null | undefined,
+  orderIndex: number
+) {
+  if (!vote) return null;
+
+  return {
+    id: `agenda-vote-variant-${vote.id}`,
+    agenda_item_id: vote.agenda_item_id ?? '',
+    change_request_id: null,
+    vote_id: vote.id,
+    order_index: orderIndex,
+    is_final_vote: false,
+    _voteStepKind: 'variant_selection',
+    status: mapVoteStatusToTimelineStatus(vote.status),
+    created_at: vote.created_at,
+    updated_at: vote.updated_at,
+    change_request: null,
+    vote: {
+      id: vote.id,
+      agenda_item_id: vote.agenda_item_id ?? null,
+      amendment_id: vote.amendment_id ?? null,
+      title: vote.title ?? null,
+      description: vote.description ?? null,
+      status: vote.status ?? null,
+      purpose: vote.purpose ?? 'merge_variant',
       majority_type: vote.majority_type ?? null,
       closing_type: vote.closing_type ?? null,
       closing_duration_seconds: vote.closing_duration_seconds ?? null,
@@ -94,3 +184,7 @@ export function buildFinalVoteFromAgendaVote(
 }
 
 export type SynthesizedFinalVoteItem = NonNullable<ReturnType<typeof buildFinalVoteFromAgendaVote>>;
+export type SynthesizedVariantVoteItem = NonNullable<
+  ReturnType<typeof buildVariantVoteFromAgendaVote>
+>;
+export type VoteSequencePlaceholderItem = ReturnType<typeof buildVoteSequencePlaceholder>;

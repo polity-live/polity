@@ -20,6 +20,8 @@ interface UseEditorPresenceOptions {
   userName?: string;
   /** Current user avatar URL */
   userAvatar?: string;
+  /** Deterministic colors keyed by visible editor user ID */
+  userColorByUserId?: Map<string, string>;
   /** Whether presence is enabled */
   enabled?: boolean;
 }
@@ -37,13 +39,13 @@ interface UseEditorPresenceResult {
  * Hook for managing document presence and collaboration
  */
 export function useEditorPresence(options: UseEditorPresenceOptions): UseEditorPresenceResult {
-  const { entityId, userId, userName, userAvatar, enabled = true } = options;
+  const { entityId, userId, userName, userAvatar, userColorByUserId, enabled = true } = options;
 
   const userColor = useMemo(() => {
     return userId
-      ? generateUserColor(userId)
+      ? (userColorByUserId?.get(userId) ?? generateUserColor(userId))
       : featureThemeValue('editorUseEditorPresenceNeutralColor');
-  }, [userId]);
+  }, [userColorByUserId, userId]);
 
   const { peers, publishPresence: wsPublish } = usePresence(`editor:${entityId}`, {
     enabled,
@@ -61,9 +63,9 @@ export function useEditorPresence(options: UseEditorPresenceOptions): UseEditorP
         userId: peer.userId,
         name: peer.name || 'Anonymous',
         avatar: peer.avatar,
-        color: peer.color || featureThemeValue('editorUseEditorPresenceNeutralColor'),
+        color: userColorByUserId?.get(peer.userId) || peer.color || generateUserColor(peer.userId),
       })) as EditorPresencePeer[];
-  }, [peers, userId]);
+  }, [peers, userColorByUserId, userId]);
 
   const publishPresence = useMemo(() => {
     if (!enabled) return null;

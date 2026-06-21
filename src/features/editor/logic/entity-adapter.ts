@@ -17,6 +17,7 @@ import type {
 import { DEFAULT_EDITOR_CONTENT } from '../types';
 import { checkPermission } from '@/zero/rbac/check';
 import type { ActionRight, Amendment as PermissionAmendment } from '@/zero/rbac/types';
+import { decorateBranchScopedChangeRequests } from '@/features/change-requests/logic/branchScopedDisplay';
 
 // Raw entity type for adapter function parameters.
 // These receive untyped data from various Zero query shapes.
@@ -123,7 +124,7 @@ function getAmendmentPermissionFlags(amendment: RawEntity, userId?: string) {
   return {
     canChangeMode: checkPermission(data, scope, 'update', 'amendments'),
     canVoteOnChangeRequests: checkPermission(data, scope, 'vote', 'amendments'),
-    canManageChangeRequestVotes: checkPermission(data, scope, 'update', 'amendments'),
+    canManageChangeRequestVotes: checkPermission(data, scope, 'manage', 'amendments'),
   };
 }
 
@@ -183,7 +184,7 @@ function mapAmendmentEditingMode(mode: string | null | undefined): EditorMode {
     'suggest_internal',
     'suggest_event',
     'vote_internal',
-    'vote_event',
+    'event_final_closing_vote',
   ];
   return valid.includes(mode as EditorMode) ? (mode as EditorMode) : 'suggest_internal';
 }
@@ -198,7 +199,10 @@ function normalizeInternalCRVotingCloseTrigger(value: string | null | undefined)
   return value === 'after_minutes' ? 'after_minutes' : 'all_collaborators_voted';
 }
 
-function enrichAmendmentDiscussionsWithChangeRequests(amendment: RawEntity): TDiscussion[] {
+function enrichAmendmentDiscussionsWithChangeRequests(
+  amendment: RawEntity,
+  processBranches: readonly RawEntity[] = []
+): TDiscussion[] {
   const discussions = (amendment.discussions || []) as TDiscussion[];
   const changeRequests = Array.isArray(amendment.change_requests) ? amendment.change_requests : [];
   const activeCollaborators = getAmendmentRoleCollaborators(amendment).filter(
@@ -209,6 +213,17 @@ function enrichAmendmentDiscussionsWithChangeRequests(amendment: RawEntity): TDi
   );
   const changeRequestById = new Map<string, RawEntity>();
   const changeRequestByTitle = new Map<string, RawEntity>();
+  const displayChangeRequests = decorateBranchScopedChangeRequests(
+    processBranches as { id: string; created_at?: number | string | null }[],
+    changeRequests.map((changeRequest: RawEntity) => ({
+      id: changeRequest.id,
+      process_branch_id: changeRequest.process_branch_id ?? null,
+      cr_id: changeRequest.title ?? null,
+      title: changeRequest.title ?? null,
+      created_at: changeRequest.created_at ?? null,
+    }))
+  );
+  const displayChangeRequestById = new Map(displayChangeRequests.map(row => [row.id, row]));
 
   for (const changeRequest of changeRequests) {
     if (changeRequest.id) changeRequestById.set(changeRequest.id, changeRequest);
@@ -226,10 +241,16 @@ function enrichAmendmentDiscussionsWithChangeRequests(amendment: RawEntity): TDi
     }
 
     const discussionStatus = mapChangeRequestStatusToDiscussionStatus(changeRequest.status);
+    const displayChangeRequest = changeRequest.id
+      ? displayChangeRequestById.get(changeRequest.id)
+      : undefined;
 
     return {
       ...discussion,
       changeRequestEntityId: changeRequest.id ?? discussion.changeRequestEntityId,
+      displayCrId: displayChangeRequest?.displayCrId ?? discussion.displayCrId ?? discussion.crId,
+      branchDisplayNumber: displayChangeRequest?.branchDisplayNumber,
+      branchScopedCrNumber: displayChangeRequest?.branchScopedCrNumber,
       confirmationStatus: 'confirmed',
       confirmedAt: discussion.confirmedAt,
       status: discussionStatus ?? discussion.status,
@@ -258,15 +279,53 @@ function enrichAmendmentDiscussionsWithChangeRequests(amendment: RawEntity): TDi
   });
 }
 
+const READONLY_PROCESS_BRANCH_STATUSES = new Set(['rejected', 'withdrawn', 'completed']);
+const READONLY_PROCESS_BRANCH_RESOLUTIONS = new Set(['merge_loser', 'rejected', 'withdrawn']);
+
+function isReadonlyProcessBranch(branch?: RawEntity | null) {
+  if (!branch) return false;
+  return (
+    READONLY_PROCESS_BRANCH_STATUSES.has(branch.status ?? '') ||
+    READONLY_PROCESS_BRANCH_RESOLUTIONS.has(branch.resolution ?? '')
+  );
+}
+
+function withBranchChangeRequestContext(amendment: RawEntity, processBranch?: RawEntity | null) {
+  const branchId = processBranch?.id ?? null;
+  const sourceDiscussions = branchId ? processBranch?.discussions : amendment.discussions;
+  const changeRequests = Array.isArray(amendment.change_requests) ? amendment.change_requests : [];
+
+  return {
+    ...amendment,
+    discussions: Array.isArray(sourceDiscussions) ? sourceDiscussions : [],
+    change_requests: changeRequests.filter((changeRequest: RawEntity) =>
+      branchId ? changeRequest.process_branch_id === branchId : !changeRequest.process_branch_id
+    ),
+  };
+}
+
+interface AdaptAmendmentOptions {
+  processBranch?: RawEntity | null;
+  processBranches?: readonly RawEntity[];
+}
+
 /**
  * Adapts an amendment with its document to EditorEntity
  */
 export function adaptAmendmentToEntity(
   amendment: RawEntity | undefined | null,
   document: RawEntity | undefined | null,
-  userId?: string
+  userId?: string,
+  options: AdaptAmendmentOptions = {}
 ): EditorEntity | null {
   if (!amendment || !document) return null;
+  const processBranch = options.processBranch ?? null;
+  const processBranches =
+    options.processBranches ??
+    (Array.isArray(amendment.current_process_run?.branches)
+      ? amendment.current_process_run.branches
+      : []);
+  const amendmentContext = withBranchChangeRequestContext(amendment, processBranch);
 
   const owner: EditorUser | undefined = document.owner
     ? buildEditorUser(document.owner, 'Owner')
@@ -290,7 +349,7 @@ export function adaptAmendmentToEntity(
   }
 
   // Add amendment role collaborators
-  const amendmentRoleCollaborators = getAmendmentRoleCollaborators(amendment);
+  const amendmentRoleCollaborators = getAmendmentRoleCollaborators(amendmentContext);
   if (amendmentRoleCollaborators.length) {
     amendmentRoleCollaborators.forEach((collab: RawEntity) => {
       if (!collab.user?.id) return;
@@ -322,13 +381,13 @@ export function adaptAmendmentToEntity(
     });
   }
 
-  if (Array.isArray(amendment.change_requests)) {
+  if (Array.isArray(amendmentContext.change_requests)) {
     const knownUserIds = new Set<string>([
       ...(owner?.id ? [owner.id] : []),
       ...collaborators.map(collaborator => collaborator.user.id),
     ]);
 
-    amendment.change_requests.forEach((changeRequest: RawEntity) => {
+    amendmentContext.change_requests.forEach((changeRequest: RawEntity) => {
       if (!changeRequest.user?.id || knownUserIds.has(changeRequest.user.id)) return;
       knownUserIds.add(changeRequest.user.id);
       extraUsers.push(buildEditorUser(changeRequest.user, 'Participant'));
@@ -339,27 +398,34 @@ export function adaptAmendmentToEntity(
     entityType: 'amendment',
     amendmentId: amendment.id,
     amendmentCode: amendment.code,
-    amendmentEditingMode: amendment.editing_mode,
+    amendmentEditingMode: processBranch?.editing_mode ?? document.editing_mode ?? null,
+    processBranchId: processBranch?.id,
+    processBranchStatus: processBranch?.status,
+    processBranchResolution: processBranch?.resolution,
   };
 
   const content =
     Array.isArray(document.content) && document.content.length > 0
       ? sanitizeContent(document.content)
       : DEFAULT_EDITOR_CONTENT;
-  const permissionFlags = getAmendmentPermissionFlags(amendment, userId);
+  const permissionFlags = getAmendmentPermissionFlags(amendmentContext, userId);
+  const isBranchReadonly = isReadonlyProcessBranch(processBranch);
 
   return {
     id: document.id,
     title: document.title || amendment.title || '',
     content,
-    discussions: enrichAmendmentDiscussionsWithChangeRequests(amendment),
-    editingMode: mapAmendmentEditingMode(amendment.editing_mode),
+    discussions: enrichAmendmentDiscussionsWithChangeRequests(amendmentContext, processBranches),
+    editingMode: isBranchReadonly
+      ? 'view'
+      : mapAmendmentEditingMode(processBranch?.editing_mode ?? document.editing_mode),
     visibility: document.visibility ?? 'public',
     updatedAt: document.updated_at || Date.now(),
     owner,
     collaborators,
     extraUsers,
     ...permissionFlags,
+    canChangeMode: permissionFlags.canChangeMode && !isBranchReadonly,
     metadata,
   };
 }

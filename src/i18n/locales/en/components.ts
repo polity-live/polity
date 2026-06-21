@@ -57,6 +57,7 @@ export const componentsTranslations = {
     supportingGroups: 'Supporting Groups',
     supportingMembers: 'Supporting Members',
     clones: 'Clones',
+    branches: 'Branches',
     members: 'Members',
     events: 'Events',
     amendments: 'Amendments',

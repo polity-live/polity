@@ -141,7 +141,11 @@ export function SupportConfirmationPanelView({
             {selectedConfirmation === confirmation.id && (
               <VersionComparisonView
                 originalVersion={''}
-                currentVersion={(confirmation.amendment?.documents?.[0]?.content ?? '') as string}
+                currentVersion={
+                  (confirmation.amendment?.document?.content ??
+                    confirmation.amendment?.documents?.[0]?.content ??
+                    '') as string
+                }
                 changeRequest={undefined}
               />
             )}

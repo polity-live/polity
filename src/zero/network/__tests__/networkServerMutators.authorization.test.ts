@@ -32,6 +32,9 @@ const serverHelperMocks = vi.hoisted(() => ({
   recomputeUserCounters: vi.fn(),
   syncUserWithGroupConversation: vi.fn(),
 }));
+const assemblyReconcileMocks = vi.hoisted(() => ({
+  reconcileGeneralAssemblyParticipantsForGroups: vi.fn(),
+}));
 
 vi.mock('../../rbac/can', () => ({
   can: (...args: unknown[]) => canMock(...args),
@@ -64,9 +67,7 @@ vi.mock('../../events/delegate-allocation-reconcile', () => ({
   reconcileDelegateAllocationsForGroups: vi.fn(),
 }));
 
-vi.mock('../../events/assembly-reconcile', () => ({
-  reconcileGeneralAssemblyParticipantsForGroups: vi.fn(),
-}));
+vi.mock('../../events/assembly-reconcile', () => assemblyReconcileMocks);
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (key: string) => key,
@@ -133,7 +134,9 @@ beforeEach(() => {
   Object.values(conflictValidationMocks).forEach(mock => mock.mockReset());
   Object.values(serverNotifyMocks).forEach(mock => mock.mockReset());
   Object.values(serverHelperMocks).forEach(mock => mock.mockReset());
+  Object.values(assemblyReconcileMocks).forEach(mock => mock.mockReset());
   groupHelperMocks.buildGroupsById.mockResolvedValue(new Map());
+  groupHelperMocks.loadGroupWithDerivedNetworkMeta.mockResolvedValue(null);
   offlineGroupHelperMocks.reconcileOfflineHierarchyForBaseGroup.mockResolvedValue({
     affectedGroupIds: new Set(),
   });
@@ -149,6 +152,40 @@ beforeEach(() => {
 });
 
 describe('networkServerMutators authorization', () => {
+  it('reconciles general assembly invitations after creating a group connection', async () => {
+    const tx = createTx('server');
+    const ctx = createCtx();
+
+    tx.run.mockResolvedValueOnce([]);
+    groupHelperMocks.buildGroupsById.mockResolvedValue(
+      new Map([
+        ['group-a', { id: 'group-a', group_type: 'base' }],
+        ['group-b', { id: 'group-b', group_type: 'sibling' }],
+      ])
+    );
+    groupHelperMocks.recomputeSiblingGroupMemberships.mockResolvedValue(undefined);
+
+    await networkServerMutators.createGroupConnection.fn({
+      tx: tx as never,
+      ctx,
+      args: {
+        id: 'connection-1',
+        group_a_id: 'group-a',
+        group_b_id: 'group-b',
+        connection_type: 'peer',
+        parent_group_id: null,
+        child_group_id: null,
+        status: 'active',
+        grants: [],
+        membership_rule: null,
+      },
+    });
+
+    expect(
+      assemblyReconcileMocks.reconcileGeneralAssemblyParticipantsForGroups
+    ).toHaveBeenCalledWith(tx, ['group-a', 'group-b'], 'user-1');
+  });
+
   it('allows deleting a connection with manage rights in the acting group only', async () => {
     const tx = createTx('server');
     const ctx = createCtx();
@@ -313,6 +350,13 @@ describe('networkServerMutators authorization', () => {
     const tx = createTx('server');
     const ctx = createCtx();
 
+    groupHelperMocks.buildGroupsById.mockResolvedValue(
+      new Map([
+        ['group-a', { id: 'group-a', group_type: 'base' }],
+        ['group-b', { id: 'group-b', group_type: 'sibling' }],
+      ])
+    );
+    groupHelperMocks.recomputeSiblingGroupMemberships.mockResolvedValue(undefined);
     tx.run
       .mockResolvedValueOnce(connectionRequest())
       .mockResolvedValueOnce([])
@@ -353,6 +397,9 @@ describe('networkServerMutators authorization', () => {
       targetGroupId: 'group-b',
       targetGroupName: 'Group B',
     });
+    expect(
+      assemblyReconcileMocks.reconcileGeneralAssemblyParticipantsForGroups
+    ).toHaveBeenCalledWith(tx, ['group-a', 'group-b'], 'user-1');
   });
 
   it('reconciles offline hierarchy memberships after approving a hierarchy connection', async () => {
@@ -589,5 +636,9 @@ describe('networkServerMutators authorization', () => {
       })
     );
     expect(helperMocks.approveGroupConnectionRequest).not.toHaveBeenCalled();
+    expect(
+      assemblyReconcileMocks.reconcileGeneralAssemblyParticipantsForGroups
+    ).not.toHaveBeenCalled();
+    expect(serverNotifyMocks.fireNotification).not.toHaveBeenCalled();
   });
 });

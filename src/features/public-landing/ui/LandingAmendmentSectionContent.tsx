@@ -151,7 +151,7 @@ function LandingAmendmentEditorPreview({
               showFixedToolbar={false}
               documentId="landing-amendment-preview"
               documentTitle={t('pages.home.publicLanding.amendmentText.documentTitle')}
-              currentMode="vote_event"
+              currentMode="event_final_closing_vote"
               currentUser={{
                 id: LANDING_AMENDMENT_REVIEWER_ID,
                 name: 'Review delegate',

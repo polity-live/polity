@@ -41,6 +41,7 @@ export const StatementCarousel: React.FC<StatementCarouselProps> = ({
                 <StatementTimelineCard
                   statement={{
                     id: String(statement.id),
+                    title: statement.title ?? undefined,
                     content: statement.text ?? '',
                     authorName,
                     authorTitle,

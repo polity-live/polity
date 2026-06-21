@@ -6,17 +6,14 @@ import { BadgeControl } from '@/features/shared/ui/status';
  * Editor Toolbar Component
  *
  * Configurable toolbar for the unified editor with optional features:
- * - Back navigation
  * - Share button
  * - Version control
  * - Mode selector
  * - Online users indicator
  */
 
-import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { ArrowLeft, Users } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
+import { Users } from 'lucide-react';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { VersionControl } from './VersionControl';
 import { ModeSelector } from './ModeSelector';
@@ -36,10 +33,6 @@ interface EditorToolbarProps {
   entityId: string;
   /** Current user ID */
   userId?: string;
-  /** Back navigation URL */
-  backUrl?: string;
-  /** Back button label */
-  backLabel?: string;
   /** Title for sharing */
   shareTitle?: string;
   /** Description for sharing */
@@ -70,8 +63,6 @@ export function EditorToolbar({
   entityType,
   entityId,
   userId,
-  backUrl,
-  backLabel = 'Back',
   shareTitle,
   shareDescription,
   currentContent,
@@ -93,21 +84,8 @@ export function EditorToolbar({
   const showPresence = capabilities.presence !== false && onlinePeers.length > 0;
 
   return (
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-      {/* Left side - Back navigation */}
-      <div>
-        {backUrl && (
-          <Link to={backUrl}>
-            <Button variant="ghost">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {backLabel}
-            </Button>
-          </Link>
-        )}
-      </div>
-
-      {/* Right side - Tools */}
-      <div className="flex flex-wrap items-center gap-4">
+    <div className="scrollbar-hide mb-6 overflow-x-auto">
+      <div className="flex w-max min-w-full items-center justify-end gap-4">
         {/* Share Button */}
         {showSharing && (
           <ShareButton

@@ -33,6 +33,7 @@ import {
 } from '@/features/groups/logic/openAssignments';
 import { mutators } from '@/zero/mutators';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { VOTE_STATUS } from '@/zero/votes/vote-workflow';
 import {
   buildDelegateElectionAgendaItemDescription,
   buildDelegateElectionAgendaItemTitle,
@@ -738,7 +739,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                 id: voteId,
                 title: title.trim(),
                 description: description.trim() || null,
-                status: 'indicative',
+                status: VOTE_STATUS.indicativeOpen,
                 majority_type: majorityType,
                 closing_type: 'moderator',
                 closing_duration_seconds: null,

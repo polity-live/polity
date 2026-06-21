@@ -92,7 +92,6 @@ interface AmendmentPromptContextRow {
   title: string | null;
   reason: string | null;
   preamble: string | null;
-  editing_mode: string | null;
   updated_at: string | null;
   document_id: string | null;
 }
@@ -233,7 +232,7 @@ async function buildAmendmentPromptContext(
 ): Promise<string | null> {
   const { data: amendmentData, error: amendmentError } = await supabase
     .from('amendment')
-    .select('title, reason, preamble, editing_mode, updated_at, document_id')
+    .select('title, reason, preamble, updated_at, document_id')
     .eq('id', attachment.entityId)
     .maybeSingle();
 
@@ -375,7 +374,6 @@ async function buildAmendmentPromptContext(
     attachment.prompt_context,
     [
       `Amendment title: ${amendment.title || attachment.title}`,
-      amendment.editing_mode ? `Editing mode: ${amendment.editing_mode}` : '',
       amendment.updated_at ? `Updated at: ${amendment.updated_at}` : '',
       amendment.reason,
       amendment.preamble,

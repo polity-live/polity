@@ -1,4 +1,3 @@
-import { featureThemeValue } from '@/features/shared/theme';
 /**
  * Remote Cursors Hook
  *
@@ -12,6 +11,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useEditorRef } from 'platejs/react';
 import { CursorOverlayPlugin } from '@platejs/selection/react';
 import { usePresence } from '@/presence/usePresence';
+import { generateUserColor } from '../logic/editor-helpers';
 import type { TRange } from 'platejs';
 
 interface UseRemoteCursorsOptions {
@@ -67,8 +67,7 @@ export function useRemoteCursors({
       if (!senderId || senderId === userId) return;
 
       const selection = payload.selection as TRange | null;
-      const senderColor =
-        (payload.userColor as string) || featureThemeValue('editorUseEditorPresenceNeutralColor');
+      const senderColor = (payload.userColor as string) || generateUserColor(senderId);
 
       const cursorApi = editor.getApi(CursorOverlayPlugin).cursorOverlay;
 
@@ -127,7 +126,7 @@ export function useRemoteCursors({
       const payload = {
         senderId: userId,
         userName: userName || 'Anonymous',
-        userColor: userColor || featureThemeValue('editorUseEditorPresenceNeutralColor'),
+        userColor: userColor || generateUserColor(userId),
         selection,
       };
 

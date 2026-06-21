@@ -22,6 +22,7 @@ interface CommentThreadProps {
   onSortChange?: (sortBy: CommentSortBy) => void;
   emptyState?: ReactNode;
   isSubmitting?: boolean;
+  linkAuthors?: boolean;
   className?: string;
 }
 
@@ -36,6 +37,7 @@ export function CommentThread({
   onSortChange,
   emptyState,
   isSubmitting,
+  linkAuthors,
   className,
 }: CommentThreadProps) {
   return (
@@ -48,6 +50,7 @@ export function CommentThread({
       hideHeader={hideHeader}
       emptyState={emptyState}
       isSubmitting={isSubmitting}
+      linkAuthors={linkAuthors}
       className={className}
       {...useCommentThreadController({
         comments,

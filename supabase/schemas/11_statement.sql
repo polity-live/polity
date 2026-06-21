@@ -7,19 +7,33 @@ CREATE TABLE IF NOT EXISTS public.statement (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
+  title TEXT,
   text TEXT,
   image_url TEXT,
   video_url TEXT,
+  media_type TEXT NOT NULL DEFAULT 'text',
+  is_story BOOLEAN NOT NULL DEFAULT false,
+  expires_at TIMESTAMPTZ,
   visibility TEXT NOT NULL DEFAULT 'public',
   upvotes INTEGER NOT NULL DEFAULT 0,
   downvotes INTEGER NOT NULL DEFAULT 0,
   comment_count INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT statement_media_type_check CHECK (media_type IN ('text', 'image', 'video')),
+  CONSTRAINT statement_single_primary_media_check CHECK (image_url IS NULL OR video_url IS NULL),
+  CONSTRAINT statement_has_content_check CHECK (
+    NULLIF(BTRIM(COALESCE(title, '')), '') IS NOT NULL
+    OR NULLIF(BTRIM(COALESCE(text, '')), '') IS NOT NULL
+    OR NULLIF(BTRIM(COALESCE(image_url, '')), '') IS NOT NULL
+    OR NULLIF(BTRIM(COALESCE(video_url, '')), '') IS NOT NULL
+  )
 );
 
 CREATE INDEX idx_statement_user ON public.statement (user_id);
 CREATE INDEX idx_statement_group ON public.statement (group_id);
+CREATE INDEX idx_statement_expires ON public.statement (expires_at) WHERE expires_at IS NOT NULL;
+CREATE INDEX idx_statement_story_created ON public.statement (is_story, created_at DESC);
 
 ALTER TABLE public.statement ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.statement FOR ALL TO service_role USING (true);

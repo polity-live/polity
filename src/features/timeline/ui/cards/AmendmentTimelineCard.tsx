@@ -15,7 +15,7 @@ type AmendmentTimelineStatus =
   | 'vote_internal'
   | 'view'
   | 'suggest_event'
-  | 'vote_event'
+  | 'event_final_closing_vote'
   | 'passed'
   | 'rejected'
   | 'accepted'
@@ -49,6 +49,13 @@ export interface AmendmentTimelineCardProps {
     collaborationStatus?: 'member' | 'admin' | 'invited' | 'requested' | null;
     /** Whether user is subscribed to this amendment */
     isSubscribed?: boolean;
+    branchStatuses?: {
+      branchId: string;
+      label: string;
+      editingMode: AmendmentTimelineStatus;
+      processStatus?: string | null;
+      resolution?: string | null;
+    }[];
   };
   /** Called when user requests collaboration */
   onRequestCollaboration?: () => void;
@@ -82,7 +89,7 @@ const STATUS_CONFIG: Record<
   vote_internal: { variant: 'destructive' },
   view: { variant: 'outline' },
   suggest_event: { variant: 'secondary' },
-  vote_event: { variant: 'destructive' },
+  event_final_closing_vote: { variant: 'destructive' },
   passed: { variant: 'default' },
   rejected: { variant: 'destructive' },
   accepted: { variant: 'default' },
@@ -136,7 +143,8 @@ export function AmendmentTimelineCard({
   const statusLabel = statusLabelConfig
     ? t(statusLabelConfig.key, statusLabelConfig.fallback)
     : getEditingModeOption(amendment.status, t).label;
-  const isVoting = amendment.status === 'vote_internal' || amendment.status === 'vote_event';
+  const isVoting =
+    amendment.status === 'vote_internal' || amendment.status === 'event_final_closing_vote';
   const isCompleted =
     amendment.status === 'passed' ||
     amendment.status === 'accepted' ||

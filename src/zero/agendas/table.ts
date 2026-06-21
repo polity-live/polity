@@ -1,4 +1,4 @@
-import { table, string, number, boolean } from '@rocicorp/zero'
+import { table, string, number, boolean } from '@rocicorp/zero';
 
 export const agendaItem = table('agenda_item')
   .columns({
@@ -24,7 +24,7 @@ export const agendaItem = table('agenda_item')
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const speakerList = table('speaker_list')
   .columns({
@@ -39,7 +39,7 @@ export const speakerList = table('speaker_list')
     end_time: number().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const agendaItemChangeRequest = table('agenda_item_change_request')
   .columns({
@@ -48,9 +48,14 @@ export const agendaItemChangeRequest = table('agenda_item_change_request')
     change_request_id: string().optional(),
     vote_id: string().optional(),
     order_index: number(),
+    step_kind: string(),
+    process_branch_id: string().optional(),
     is_final_vote: boolean(),
     status: string(),
+    blocked_reason: string().optional(),
+    result_status: string().optional(),
+    obsolete_reason: string().optional(),
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');

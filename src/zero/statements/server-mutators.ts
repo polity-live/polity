@@ -3,6 +3,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { createStatementSchema, updateStatementSchema } from './schema';
+import { STATEMENT_STORY_DURATION_MS, cleanStatementString, getStatementHeadline } from './content';
 
 type StatementMutatorInput = Parameters<typeof mutators.statements.create.fn>[0];
 type StatementTx = StatementMutatorInput['tx'];
@@ -11,6 +12,7 @@ type StatementCtx = StatementMutatorInput['ctx'];
 interface StatementTimelineEventInput {
   eventType: 'statement_posted' | 'updated';
   groupId?: string | null;
+  expiresAt?: number | null;
   imageUrl?: string | null;
   statementId: string;
   text?: string | null;
@@ -45,7 +47,7 @@ async function createStatementTimelineEvent(
     stats: {},
     vote_status: '',
     election_status: '',
-    ends_at: 0,
+    ends_at: input.expiresAt ?? 0,
     user_id: ctx.userID,
     group_id: input.groupId ?? null,
     amendment_id: null,
@@ -65,15 +67,24 @@ export const statementServerMutators = {
     await mutators.statements.create.fn({ tx, ctx, args });
 
     if (args.visibility !== 'public') return;
+    const now = Date.now();
+    const isStory = Boolean(args.is_story);
+    const expiresAt = isStory ? (args.expires_at ?? now + STATEMENT_STORY_DURATION_MS) : null;
 
     await createStatementTimelineEvent(tx, ctx, {
       eventType: 'statement_posted',
       statementId: args.id,
       text: args.text,
       groupId: args.group_id,
+      expiresAt,
       imageUrl: args.image_url,
       videoUrl: args.video_url,
-      title: translateText('generated.inline.0529_new_statement_posted_06a106be'),
+      title:
+        cleanStatementString(args.title) ??
+        getStatementHeadline(
+          args,
+          translateText('generated.inline.0529_new_statement_posted_06a106be')
+        ),
     });
   }),
 
@@ -86,15 +97,33 @@ export const statementServerMutators = {
 
     const nextVisibility = args.visibility ?? previousStatement.visibility;
     if (nextVisibility !== 'public') return;
+    const nextIsStory = args.is_story ?? previousStatement.is_story;
+    const nextExpiresAt = nextIsStory
+      ? (args.expires_at ??
+        previousStatement.expires_at ??
+        Date.now() + STATEMENT_STORY_DURATION_MS)
+      : null;
+    const nextStatement = {
+      title: args.title !== undefined ? args.title : previousStatement.title,
+      text: args.text !== undefined ? args.text : previousStatement.text,
+      image_url: args.image_url !== undefined ? args.image_url : previousStatement.image_url,
+      video_url: args.video_url !== undefined ? args.video_url : previousStatement.video_url,
+    };
 
     await createStatementTimelineEvent(tx, ctx, {
       eventType: 'updated',
       statementId: args.id,
-      text: args.text !== undefined ? args.text : previousStatement.text,
+      text: nextStatement.text,
       groupId: args.group_id !== undefined ? args.group_id : previousStatement.group_id,
-      imageUrl: args.image_url !== undefined ? args.image_url : previousStatement.image_url,
-      videoUrl: args.video_url !== undefined ? args.video_url : previousStatement.video_url,
-      title: translateText('generated.inline.0530_statement_updated_939da7bf'),
+      expiresAt: nextExpiresAt,
+      imageUrl: nextStatement.image_url,
+      videoUrl: nextStatement.video_url,
+      title:
+        cleanStatementString(nextStatement.title) ??
+        getStatementHeadline(
+          nextStatement,
+          translateText('generated.inline.0530_statement_updated_939da7bf')
+        ),
     });
   }),
 };

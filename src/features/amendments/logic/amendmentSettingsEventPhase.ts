@@ -2,7 +2,7 @@ import { findLikelyActiveAmendmentStep } from './buildAmendmentPathVisualization
 import { normalizeEditingMode } from '@/zero/rbac/workflow-constants';
 
 interface SettingsProcessStep {
-  id?: string | null;
+  id?: string;
   event_id?: string | null;
   event?: { id?: string | null; title?: string | null } | null;
   status?: string | null;
@@ -50,7 +50,7 @@ export function deriveControllingEventForSettings(
   editingMode: string | null | undefined
 ): SettingsControllingEvent | null {
   const mode = normalizeEditingMode(editingMode);
-  if (mode !== 'suggest_event' && mode !== 'vote_event') {
+  if (mode !== 'suggest_event' && mode !== 'event_final_closing_vote') {
     return null;
   }
 

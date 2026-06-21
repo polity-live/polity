@@ -9,7 +9,7 @@ import { getEditingModeOption, type SelectableEditingMode } from '@/features/sha
 
 interface UseModeToolbarButtonControllerOptions {
   currentMode?: EditorMode;
-  onModeChange?: (mode: EditorMode) => void;
+  onModeChange?: (mode: EditorMode) => void | Promise<void>;
 }
 
 export function useModeToolbarButtonController({
@@ -34,22 +34,40 @@ export function useModeToolbarButtonController({
   }, [currentMode, isSuggesting, readOnly]);
 
   const [mode, setMode] = useState<SelectableEditingMode>(syncedMode);
+  const [pendingMode, setPendingMode] = useState<SelectableEditingMode | null>(null);
 
   useEffect(() => {
-    setMode(syncedMode);
-  }, [syncedMode]);
-
-  const currentOption = getEditingModeOption(mode, t);
-
-  const handleModeChange = (nextMode: SelectableEditingMode) => {
-    setMode(nextMode);
-
-    if (onModeChange) {
-      onModeChange(nextMode);
+    if (pendingMode) {
+      if (syncedMode === pendingMode) {
+        setPendingMode(null);
+        setMode(syncedMode);
+      }
       return;
     }
 
-    setReadOnly(nextMode === 'view' || nextMode === 'vote_internal' || nextMode === 'vote_event');
+    setMode(syncedMode);
+  }, [pendingMode, syncedMode]);
+
+  const currentOption = getEditingModeOption(mode, t);
+
+  const handleModeChange = async (nextMode: SelectableEditingMode) => {
+    if (nextMode === mode) return;
+    setMode(nextMode);
+
+    if (onModeChange) {
+      setPendingMode(nextMode);
+      try {
+        await onModeChange(nextMode);
+      } catch {
+        setPendingMode(null);
+        setMode(syncedMode);
+      }
+      return;
+    }
+
+    setReadOnly(
+      nextMode === 'view' || nextMode === 'vote_internal' || nextMode === 'event_final_closing_vote'
+    );
     editor.setOption(
       SuggestionPlugin,
       'isSuggesting',

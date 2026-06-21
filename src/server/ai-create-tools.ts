@@ -1161,7 +1161,6 @@ export function buildAiCreateTools(userId: string) {
               document_id: null,
               tags: normalizeStringList(hashtags),
               visibility,
-              editing_mode: 'edit',
               discussions: null,
               image_url: imageUrl ?? null,
               x: null,

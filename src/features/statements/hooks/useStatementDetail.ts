@@ -7,6 +7,7 @@ import { useAuth } from '@/providers/auth-provider';
 import type { VoteValue } from '@/features/shared/ui/voting/VoteButtons';
 import type { CommentData } from '@/features/shared/ui/comments/CommentItem';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
+import { canViewExpiredStatement } from '@/zero/statements/content';
 
 interface UseStatementDetailOptions {
   id: string;
@@ -47,9 +48,11 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
 
   const handleUpdate = useCallback(
     async (
-      text: string,
+      text: string | null,
       options?: {
         imageUrl?: string | null;
+        isStory?: boolean;
+        title?: string | null;
         videoUrl?: string | null;
         visibility?: 'public' | 'authenticated' | 'private';
       }
@@ -259,7 +262,9 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
   const isOwner = !!userId && statement?.user_id === userId;
 
   // Visibility access check
-  const canAccess = checkEntityAccess(statement?.visibility, !!userId, isOwner);
+  const canAccess =
+    checkEntityAccess(statement?.visibility, !!userId, isOwner) &&
+    canViewExpiredStatement(statement, userId);
 
   // ── Survey CRUD for editing ────────────────────────────────────
   const handleSaveSurvey = useCallback(

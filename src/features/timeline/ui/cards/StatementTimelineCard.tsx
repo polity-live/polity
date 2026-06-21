@@ -24,6 +24,7 @@ interface SurveyOptionPreview {
 export interface StatementTimelineCardProps {
   statement: {
     id: string;
+    title?: string;
     content: string;
     authorName: string;
     authorTitle?: string;
@@ -64,10 +65,11 @@ export function StatementTimelineCard({ statement, href, className }: StatementT
   const statementStyle = CONTENT_TYPE_CONFIG.statement;
   const statementHref = href ?? `/statement/${statement.id}`;
 
-  // Title: survey question or first 100 chars of content
+  // Title: explicit headline, survey question, or first 100 chars of content
   const displayTitle = hasSurvey
     ? (statement.surveyQuestion ?? '')
-    : statement.content?.substring(0, 100) + ((statement.content?.length ?? 0) > 100 ? '…' : '');
+    : statement.title ||
+      statement.content?.substring(0, 100) + ((statement.content?.length ?? 0) > 100 ? '...' : '');
 
   // Stats
   const stats = [

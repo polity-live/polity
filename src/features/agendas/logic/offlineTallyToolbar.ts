@@ -9,7 +9,7 @@ export function shouldShowOfflineTallyToolbarButton(args: {
   return (
     (args.attendanceMode === 'offline' || args.attendanceMode === 'hybrid') &&
     args.canManageVotes &&
-    Boolean(args.phase)
+    args.phase === 'final'
   );
 }
 
@@ -30,7 +30,11 @@ export function resolveOfflineTallyPhase(args: {
     return 'indicative' as const;
   }
 
-  if (args.votingPhase === 'final' || args.votingPhase === 'final_vote') {
+  if (
+    args.votingPhase === 'final' ||
+    args.votingPhase === 'final_vote' ||
+    args.votingPhase === 'final_open'
+  ) {
     return 'final' as const;
   }
 

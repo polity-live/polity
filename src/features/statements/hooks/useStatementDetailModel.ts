@@ -5,6 +5,11 @@ import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useStatementDetail } from './useStatementDetail';
 import { useStatementEditDialog } from './useStatementEditDialog';
+import {
+  getStatementHeadline,
+  hasStatementContent,
+  isStatementExpired,
+} from '@/zero/statements/content';
 
 interface UseStatementDetailModelOptions {
   statementId: string;
@@ -59,8 +64,10 @@ export function useStatementDetailModel({ statementId }: UseStatementDetailModel
 
   const handlePrepareEdit = () => {
     editDialog.prepareEdit({
+      title: statement.title,
       text: statement.text,
       imageUrl: statement.image_url,
+      isStory: statement.is_story,
       videoUrl: statement.video_url,
       visibility: statement.visibility,
       surveyQuestion: detail.survey?.question,
@@ -90,8 +97,10 @@ export function useStatementDetailModel({ statementId }: UseStatementDetailModel
   };
 
   const handleSaveEdit = async () => {
-    await detail.handleUpdate(editDialog.editText.trim(), {
+    await detail.handleUpdate(editDialog.editText.trim() || null, {
       imageUrl: editDialog.editImageUrl || null,
+      isStory: editDialog.editIsStory,
+      title: editDialog.editTitle.trim() || null,
       videoUrl: editDialog.editVideoUrl || null,
       visibility: editDialog.editVisibility,
     });
@@ -136,11 +145,26 @@ export function useStatementDetailModel({ statementId }: UseStatementDetailModel
       duration: t('features.statements.survey.duration'),
       edit: t('features.statements.actions.edit'),
       formText: t('features.statements.form.text'),
+      formTitle: t('features.statements.form.title', 'Headline'),
       option: t('features.statements.survey.option'),
       question: t('features.statements.survey.question'),
       removeSurvey: t('features.statements.survey.remove'),
       save: t('common.actions.save'),
+      storyDescription: t(
+        'features.statements.story.description',
+        'Publicly visible for 24 hours, then kept in your archive.'
+      ),
+      storyLabel: t('features.statements.story.label', 'Story'),
+      storyExpired: t('features.statements.story.expired', 'Story expired'),
     },
+    canSaveEdit: hasStatementContent({
+      title: editDialog.editTitle,
+      text: editDialog.editText,
+      image_url: editDialog.editImageUrl,
+      video_url: editDialog.editVideoUrl,
+    }),
+    displayTitle: getStatementHeadline(statement),
+    isExpiredStory: isStatementExpired(statement),
     statement,
     statementId,
     survey: detail.survey,
@@ -161,7 +185,9 @@ export function useStatementDetailModel({ statementId }: UseStatementDetailModel
     onSurveyRetract: detail.handleSurveyRetract,
     onSurveyVote: detail.handleSurveyVote,
     onUpdateEditImageUrl: editDialog.setEditImageUrl,
+    onUpdateEditIsStory: editDialog.setEditIsStory,
     onUpdateEditText: editDialog.setEditText,
+    onUpdateEditTitle: editDialog.setEditTitle,
     onUpdateEditVideoUrl: editDialog.setEditVideoUrl,
     onUpdateEditVisibility: editDialog.setEditVisibility,
     onVote: detail.handleVote,

@@ -30,6 +30,7 @@ interface CollaboratorsViewProps {
   activeTab: MembershipTab;
   amendmentId: string;
   amendmentTitle: string;
+  collaborators: Collaborator[];
   changeRoleMembership: Collaborator | null;
   changeRoleOpen: boolean;
   memberRightsMembership: Collaborator | null;
@@ -71,6 +72,7 @@ export function CollaboratorsView({
   activeTab,
   amendmentId,
   amendmentTitle,
+  collaborators = [],
   changeRoleMembership,
   changeRoleOpen,
   memberRightsMembership,
@@ -170,7 +172,7 @@ export function CollaboratorsView({
           activeTab !== 'roles' ? (
             <InviteDialog
               amendmentId={amendmentId}
-              existingCollaborators={activeCollaborators}
+              existingCollaborators={collaborators}
               roles={roles}
               onInviteUsers={onInviteUsers}
             />

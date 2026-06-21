@@ -169,8 +169,11 @@ function resolveResultsPhase(status?: string | null): {
     return { phase: 'final', isClosed: true };
   }
 
-  if (status === 'indicative' || status === 'indication') {
+  if (status === 'indicative' || status === 'indicative_open' || status === 'indication') {
     return { phase: 'indicative', isClosed: false };
+  }
+  if (status === 'final_open') {
+    return { phase: 'final', isClosed: false };
   }
 
   return { phase: 'final', isClosed: false };

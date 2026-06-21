@@ -10,6 +10,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { MasonryGrid } from '@/features/timeline/ui/MasonryGrid';
 import { DynamicTimelineCard } from '@/features/timeline/ui/LazyCardComponents';
 import { buildTimelineCardProps } from '@/features/search/logic/buildTimelineCardProps';
+import { StatementStoryCarousel } from '@/features/statements/ui/StatementStoryCarousel';
 import type { UserProfile, TabSearchState } from '../types/user.types';
 import {
   buildUserWikiContentItems,
@@ -102,6 +103,8 @@ export const UserWikiContentTabs: React.FC<UserWikiContentTabsProps> = ({
 
   return (
     <div className="mt-8">
+      <StatementStoryCarousel userId={user.id} className="mb-6" />
+
       <Tabs defaultValue="all">
         <ScrollableTabsList>
           <TabsTrigger value="all">{t('pages.user.all.title')}</TabsTrigger>

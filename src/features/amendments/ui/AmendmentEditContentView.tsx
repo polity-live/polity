@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronDown, GitBranch, Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { VideoUpload } from '@/features/file-upload/ui/VideoUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
@@ -24,6 +24,7 @@ import { CreateReviewCard, SummaryField } from '@/features/shared/ui/form';
 import { hasMinLength, isOptionalMinLength } from '@/features/shared/logic/inputValidation';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 import { EditingModeMenuItems } from '@/features/shared/ui/status';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/features/shared/ui/ui/select';
 export interface AmendmentEditContentViewProps {
   amendmentId: any;
   amendment: any;
@@ -43,7 +44,13 @@ export interface AmendmentEditContentViewProps {
   setFormData: any;
   workflowStatusOption: any;
   workflowMenuValue: any;
+  workflowModeDisabledReasons: any;
   controllingEvent: any;
+  workflowBranchOptions: any;
+  selectedWorkflowBranchId: any;
+  selectedWorkflowBranchLabel: any;
+  selectedWorkflowBranchEditable: any;
+  setSelectedWorkflowBranchId: any;
   isSubmitting: any;
   setIsSubmitting: any;
   showReview: any;
@@ -69,7 +76,13 @@ export function AmendmentEditContentView({
   setFormData,
   workflowStatusOption,
   workflowMenuValue,
+  workflowModeDisabledReasons,
   controllingEvent,
+  workflowBranchOptions,
+  selectedWorkflowBranchId,
+  selectedWorkflowBranchLabel,
+  selectedWorkflowBranchEditable,
+  setSelectedWorkflowBranchId,
   isSubmitting,
   showReview,
   setShowReview,
@@ -263,6 +276,38 @@ export function AmendmentEditContentView({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {!isCreating && workflowBranchOptions?.length > 0 ? (
+              <div className="space-y-2">
+                <FormControlLabel htmlFor="workflowBranch">
+                  {t('features.amendments.editContent.workflowBranchLabel', {
+                    defaultValue: 'Branch',
+                  })}
+                </FormControlLabel>
+                <Select
+                  value={selectedWorkflowBranchId ?? ''}
+                  onValueChange={setSelectedWorkflowBranchId}
+                >
+                  <SelectTrigger id="workflowBranch" className="w-full">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <GitBranch className="text-muted-foreground h-4 w-4 shrink-0" />
+                      <span className="truncate">
+                        {selectedWorkflowBranchLabel ??
+                          t('features.amendments.editContent.workflowBranchPlaceholder', {
+                            defaultValue: 'Branch wählen',
+                          })}
+                      </span>
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workflowBranchOptions.map((branch: any) => (
+                      <SelectItem key={branch.id} value={branch.id} textValue={branch.label}>
+                        <span className="truncate">{branch.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
             <div className="space-y-2">
               <FormControlLabel htmlFor="workflowStatus">
                 {t('features.amendments.editContent.workflowStatusLabel')}
@@ -272,14 +317,20 @@ export function AmendmentEditContentView({
                   <Button
                     variant="outline"
                     className="w-full justify-between"
-                    disabled={isTerminalStatus(formData.workflowStatus)}
+                    disabled={
+                      isTerminalStatus(formData.workflowStatus) || !selectedWorkflowBranchEditable
+                    }
                   >
-                    <span className="flex items-center gap-2">
-                      <div
-                        className={`h-2.5 w-2.5 rounded-full ${workflowStatusOption.colorClass}`}
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span
+                        className={`h-2.5 w-2.5 shrink-0 rounded-full ${workflowStatusOption.colorClass}`}
                       />
-                      <workflowStatusOption.Icon className="h-4 w-4" />
-                      <span>{workflowStatusOption.label}</span>
+                      <workflowStatusOption.Icon className="h-4 w-4 shrink-0" />
+                      <span className="truncate">
+                        {selectedWorkflowBranchLabel
+                          ? `${selectedWorkflowBranchLabel}: ${workflowStatusOption.label}`
+                          : workflowStatusOption.label}
+                      </span>
                     </span>
                     <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
@@ -287,6 +338,7 @@ export function AmendmentEditContentView({
                 <DropdownMenuContent align="start" className="w-80">
                   <EditingModeMenuItems
                     value={workflowMenuValue}
+                    disabledModeReasons={workflowModeDisabledReasons}
                     onValueChange={handleWorkflowStatusChange}
                   />
                 </DropdownMenuContent>

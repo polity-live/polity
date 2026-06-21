@@ -279,6 +279,27 @@ export function EventEditView({
                   value={formData.visibility}
                   onChange={v => updateField('visibility', v)}
                 />
+                <ValidatedInputField
+                  id="defaultFinalVoteDurationMinutes"
+                  label={translateText(
+                    'generated.inline.2001_default_final_vote_duration_minutes',
+                    'Default final vote duration'
+                  )}
+                  value={formData.defaultFinalVoteDurationMinutes}
+                  onChange={value => updateField('defaultFinalVoteDurationMinutes', value)}
+                  placeholder={translateText(
+                    'generated.inline.2002_no_auto_close',
+                    'No auto-close'
+                  )}
+                  validator={value => value.trim().length === 0 || isPositiveInteger(value)}
+                  hint={translateText(
+                    'generated.inline.2003_default_final_vote_duration_hint',
+                    'Minutes; leave empty for manual closing.'
+                  )}
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                />
                 {!isCreating && event?.event_type && (
                   <div className="space-y-2">
                     <FormControlLabel>{t('pages.create.event.eventType')}</FormControlLabel>

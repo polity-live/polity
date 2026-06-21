@@ -62,6 +62,50 @@ export function applyChangeRequestVoteResultToContent(
   return applySuggestionToContent(content, suggestionId, action);
 }
 
+async function loadResolutionTarget(
+  tx: ChangeRequestResolutionTx,
+  cr: {
+    amendment_id: string;
+    process_branch_id?: string | null;
+  }
+) {
+  const amendmentRow = cr.amendment_id
+    ? await tx.run(zql.amendment.where('id', cr.amendment_id).one())
+    : null;
+
+  if (!cr.process_branch_id) {
+    return {
+      amendmentRow,
+      branch: null,
+      documentId: amendmentRow?.document_id ?? null,
+      discussions: Array.isArray(amendmentRow?.discussions)
+        ? (amendmentRow.discussions as DiscussionEntry[])
+        : [],
+    };
+  }
+
+  const branch = await tx.run(zql.amendment_process_branch.where('id', cr.process_branch_id).one());
+  if (!branch) {
+    throw new Error('Process branch not found');
+  }
+
+  const processRun = await tx.run(
+    zql.amendment_process_run.where('id', branch.process_run_id).one()
+  );
+  const amendmentOriginId =
+    amendmentRow?.origin_amendment_id ?? amendmentRow?.clone_source_id ?? amendmentRow?.id;
+  if (!processRun || processRun.amendment_id !== amendmentOriginId) {
+    throw new Error('Process branch does not belong to this amendment.');
+  }
+
+  return {
+    amendmentRow,
+    branch,
+    documentId: branch.document_id ?? null,
+    discussions: Array.isArray(branch.discussions) ? (branch.discussions as DiscussionEntry[]) : [],
+  };
+}
+
 export async function resolveChangeRequestByVoteResult({
   tx,
   ctx,
@@ -69,7 +113,9 @@ export async function resolveChangeRequestByVoteResult({
   voteResult,
   now = Date.now(),
   resolutionMethod = 'event_vote',
-  resolvedInMode = resolutionMethod === 'internal_vote' ? 'vote_internal' : 'vote_event',
+  resolvedInMode = resolutionMethod === 'internal_vote'
+    ? 'vote_internal'
+    : 'event_final_closing_vote',
   visibilityScope = 'public',
 }: {
   tx: ChangeRequestResolutionTx;
@@ -87,19 +133,14 @@ export async function resolveChangeRequestByVoteResult({
   }
 
   const crStatus = getChangeRequestResolutionStatus(voteResult);
-  const amendmentRow = cr.amendment_id
-    ? await tx.run(zql.amendment.where('id', cr.amendment_id).one())
-    : null;
-
-  const discussions: DiscussionEntry[] = Array.isArray(amendmentRow?.discussions)
-    ? (amendmentRow.discussions as DiscussionEntry[])
-    : [];
+  const target = await loadResolutionTarget(tx, cr);
+  const discussions = target.discussions;
   const matchingDiscussion = findChangeRequestDiscussion(discussions, cr);
   const suggestionId = matchingDiscussion?.id;
   let resolutionSnapshot = {};
 
-  if (amendmentRow?.document_id && suggestionId) {
-    const doc = await tx.run(zql.document.where('id', amendmentRow.document_id).one());
+  if (target.documentId && suggestionId) {
+    const doc = await tx.run(zql.document.where('id', target.documentId).one());
 
     if (doc?.content) {
       const snapshot = createChangeRequestDiffSnapshot(
@@ -158,11 +199,19 @@ export async function resolveChangeRequestByVoteResult({
         ? linkResolvedDiscussion(discussion, cr.id, crStatus)
         : discussion
     );
-    await tx.mutate.amendment.update({
-      id: cr.amendment_id,
-      discussions: updatedDiscussions as unknown as ReadonlyJSONValue,
-      updated_at: now,
-    });
+    if (target.branch) {
+      await tx.mutate.amendment_process_branch.update({
+        id: target.branch.id,
+        discussions: updatedDiscussions as unknown as ReadonlyJSONValue,
+        updated_at: now,
+      });
+    } else {
+      await tx.mutate.amendment.update({
+        id: cr.amendment_id,
+        discussions: updatedDiscussions as unknown as ReadonlyJSONValue,
+        updated_at: now,
+      });
+    }
   }
 
   await tx.mutate.change_request.update({

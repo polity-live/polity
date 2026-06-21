@@ -17,7 +17,7 @@ interface UseInviteDialogControllerProps {
 
 export function useInviteDialogController({
   amendmentId,
-  existingCollaborators,
+  existingCollaborators = [],
   roles,
   onInviteUsers,
 }: UseInviteDialogControllerProps) {

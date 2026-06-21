@@ -3,6 +3,7 @@ import { useZero } from '@rocicorp/zero/react';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { getEditingModeOption } from '@/features/shared/ui/status';
+import type { EditingMode } from './editing-mode-policy';
 import { mutators } from '../mutators';
 import { onServerError, serverConfirmed } from '../mutate-with-server-check';
 
@@ -117,8 +118,13 @@ export function useAmendmentActions() {
 
   // ── Workflow ────────────────────────────────────────────────────────
   const updateEditingMode = useCallback(
-    (id: string, editingMode: string) => {
-      const result = zero.mutate(mutators.amendments.update({ id, editing_mode: editingMode }));
+    (processBranchId: string, editingMode: EditingMode) => {
+      const result = zero.mutate(
+        mutators.amendments.updateProcessBranch({
+          id: processBranchId,
+          editing_mode: editingMode,
+        })
+      );
       const modeLabel = getEditingModeOption(editingMode, t).label;
       toast.success(t('features.amendments.toasts.workflowChanged', { status: modeLabel }));
       onServerError(result, () =>
@@ -129,14 +135,14 @@ export function useAmendmentActions() {
   );
 
   const submitToEvent = useCallback(
-    (id: string, eventId: string) => {
+    (processBranchId: string, eventId: string) => {
       const result = zero.mutate(
-        mutators.amendments.update({
-          id,
+        mutators.amendments.updateProcessBranch({
+          id: processBranchId,
           editing_mode: 'suggest_event',
-          event_id: eventId,
         })
       );
+      void eventId;
       toast.success(t('features.amendments.toasts.submittedToEvent'));
       onServerError(result, () => toast.error(t('features.amendments.toasts.submitToEventFailed')));
     },
@@ -144,10 +150,10 @@ export function useAmendmentActions() {
   );
 
   const finalizeAmendment = useCallback(
-    (id: string, finalResult: 'passed' | 'rejected') => {
+    (processBranchId: string, finalResult: 'passed' | 'rejected') => {
       const mutationResult = zero.mutate(
-        mutators.amendments.update({
-          id,
+        mutators.amendments.updateProcessBranch({
+          id: processBranchId,
           editing_mode: finalResult,
         })
       );
@@ -323,6 +329,17 @@ export function useAmendmentActions() {
       const result = zero.mutate(mutators.amendments.completeProcessTaskWithEvent(args));
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processTaskUpdateFailed'))
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const replanProcessBranchEvents = useCallback(
+    (args: Parameters<typeof mutators.amendments.replanProcessBranchEvents>[0]) => {
+      const result = zero.mutate(mutators.amendments.replanProcessBranchEvents(args));
+      onServerError(result, () =>
+        toast.error(t('features.amendments.toasts.processStepUpdateFailed'))
       );
       return serverConfirmed(result);
     },
@@ -586,6 +603,7 @@ export function useAmendmentActions() {
     initializeProcessPath,
     resolveProcessVote,
     completeProcessTaskWithEvent,
+    replanProcessBranchEvents,
 
     // Subscription
     subscribe,

@@ -20,7 +20,7 @@ export function useModeSyncController({ currentMode, readOnly }: UseModeSyncCont
       readOnly ||
       currentMode === 'view' ||
       currentMode === 'vote_internal' ||
-      currentMode === 'vote_event';
+      currentMode === 'event_final_closing_vote';
     setReadOnly(shouldBeReadOnly);
 
     const shouldBeSuggesting =

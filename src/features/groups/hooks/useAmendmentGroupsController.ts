@@ -17,6 +17,21 @@ interface AmendmentItem {
   group_status?: GroupAmendmentBadgeStatus | null;
   editing_mode?: string | null;
   amendment_hashtags?: readonly { hashtag?: { id: string; tag: string } | null }[];
+  branchStatuses?: {
+    branchId: string;
+    label: string;
+    editingMode:
+      | 'edit'
+      | 'view'
+      | 'suggest_internal'
+      | 'suggest_event'
+      | 'vote_internal'
+      | 'event_final_closing_vote'
+      | 'passed'
+      | 'rejected';
+    processStatus: string | null;
+    resolution: string | null;
+  }[];
 }
 
 type AmendmentSectionKey = GroupAmendmentDisplayStatus;
@@ -79,6 +94,7 @@ export function useAmendmentGroupsController({
         groupName,
         groupId,
         hashtags: extractHashtags(amendment.amendment_hashtags),
+        branchStatuses: amendment.branchStatuses,
       },
     })),
   }));

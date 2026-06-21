@@ -19,9 +19,12 @@ function buildArgs(overrides?: {
 }
 
 describe('shouldShowOfflineTallyToolbarButton', () => {
-  it('returns true for offline events with manage_votes and a tally phase', () => {
-    expect(shouldShowOfflineTallyToolbarButton(buildArgs())).toBe(true);
+  it('returns true for offline events with manage_votes and a final tally phase', () => {
     expect(shouldShowOfflineTallyToolbarButton(buildArgs({ phase: 'final' }))).toBe(true);
+  });
+
+  it('returns false for indicative offline tally phases', () => {
+    expect(shouldShowOfflineTallyToolbarButton(buildArgs())).toBe(false);
   });
 
   it('returns false without manage_votes', () => {
@@ -29,7 +32,9 @@ describe('shouldShowOfflineTallyToolbarButton', () => {
   });
 
   it('returns true for hybrid attendance mode', () => {
-    expect(shouldShowOfflineTallyToolbarButton(buildArgs({ attendanceMode: 'hybrid' }))).toBe(true);
+    expect(
+      shouldShowOfflineTallyToolbarButton(buildArgs({ attendanceMode: 'hybrid', phase: 'final' }))
+    ).toBe(true);
   });
 
   it('returns false for online attendance mode', () => {

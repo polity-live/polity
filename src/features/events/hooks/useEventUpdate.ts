@@ -35,6 +35,7 @@ import {
   normalizeDelegateElectionMode,
   type ElectionMode,
 } from '@/features/elections/logic/electionMode';
+import { isPositiveInteger } from '@/features/shared/logic/inputValidation';
 
 type AttendanceMode = 'online' | 'hybrid' | 'offline';
 
@@ -70,6 +71,7 @@ export interface EventFormData {
   delegateTotalSeats: string;
   delegateMembersPerSeat: string;
   delegateElectionMode: ElectionMode;
+  defaultFinalVoteDurationMinutes: string;
   recurrencePattern: RecurrencePattern;
   recurrenceInterval: number;
   recurrenceWeekdays: number[];
@@ -143,6 +145,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     delegateTotalSeats: '',
     delegateMembersPerSeat: '10',
     delegateElectionMode: 'list',
+    defaultFinalVoteDurationMinutes: '',
     recurrencePattern: 'none',
     recurrenceInterval: 1,
     recurrenceWeekdays: [],
@@ -255,6 +258,9 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
             ? String(Math.max(1, Number.parseInt(event.main_group_delegate_allocation_mode, 10)))
             : '10',
         delegateElectionMode: normalizeDelegateElectionMode(event.delegate_election_mode),
+        defaultFinalVoteDurationMinutes: event.default_final_vote_duration_seconds
+          ? String(Math.max(1, Math.round(event.default_final_vote_duration_seconds / 60)))
+          : '',
         recurrencePattern,
         recurrenceInterval,
         recurrenceWeekdays,
@@ -309,6 +315,19 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         return;
       }
 
+      if (
+        formData.defaultFinalVoteDurationMinutes.trim() &&
+        !isPositiveInteger(formData.defaultFinalVoteDurationMinutes)
+      ) {
+        toast.error(
+          translateText(
+            'generated.inline.2004_default_final_vote_duration_invalid',
+            'Default final vote duration must be a positive number of minutes.'
+          )
+        );
+        return;
+      }
+
       const recurringFields = buildRecurringEventFields({
         isRecurring: formData.recurrencePattern !== 'none',
         recurrence: {
@@ -335,6 +354,9 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         candidacyDeadline: formData.candidacyDeadline,
         delegatesNominationDeadline: formData.delegatesNominationDeadline,
       });
+      const defaultFinalVoteDurationSeconds = formData.defaultFinalVoteDurationMinutes.trim()
+        ? Math.max(1, Number.parseInt(formData.defaultFinalVoteDurationMinutes, 10) || 1) * 60
+        : null;
 
       if (isCreating) {
         if (!user?.id) {
@@ -388,6 +410,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
               : null,
           delegate_election_mode:
             event?.event_type === 'delegate_assembly' ? formData.delegateElectionMode : null,
+          default_final_vote_duration_seconds: defaultFinalVoteDurationSeconds,
           ...recurringFields,
         };
 
@@ -444,6 +467,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
               : null,
           delegate_election_mode:
             event.event_type === 'delegate_assembly' ? formData.delegateElectionMode : null,
+          default_final_vote_duration_seconds: defaultFinalVoteDurationSeconds,
           ...recurringFields,
         };
 

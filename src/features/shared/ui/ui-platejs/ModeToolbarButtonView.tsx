@@ -1,5 +1,6 @@
 import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
 
+import type { EditorMode } from '@/features/editor/types';
 import { ToolbarButton } from '@/features/shared/ui/layout';
 import {
   DropdownMenu,
@@ -10,6 +11,7 @@ import { EditingModeMenuItems, type SelectableEditingMode } from '@/features/sha
 
 interface ModeToolbarButtonViewProps {
   dropdownProps: DropdownMenuProps;
+  disabledModeReasons?: Partial<Record<EditorMode, string>>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: SelectableEditingMode;
@@ -19,11 +21,12 @@ interface ModeToolbarButtonViewProps {
     viewOnly: string;
   };
   isOwnerOrCollaborator: boolean;
-  onModeChange: (mode: SelectableEditingMode) => void;
+  onModeChange: (mode: SelectableEditingMode) => void | Promise<void>;
 }
 
 export function ModeToolbarButtonView({
   dropdownProps,
+  disabledModeReasons,
   open,
   onOpenChange,
   mode,
@@ -48,6 +51,7 @@ export function ModeToolbarButtonView({
         <EditingModeMenuItems
           value={mode}
           disabled={!isOwnerOrCollaborator}
+          disabledModeReasons={disabledModeReasons}
           onValueChange={onModeChange}
         />
       </DropdownMenuContent>

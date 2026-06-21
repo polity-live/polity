@@ -6,6 +6,10 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { normalizeEditingMode } from '@/zero/rbac';
 import type { ProfileAmendmentCollaboration } from '../types/user.types';
 import { matchesSearchQuery } from '../logic/userWikiSearch';
+import {
+  getOrderedBranches,
+  mapAmendmentBranchStatusChips,
+} from '@/features/amendments/logic/amendmentBranchDisplay';
 
 interface AmendmentListTabProps {
   collaborations: readonly ProfileAmendmentCollaboration[];
@@ -38,11 +42,12 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
       const hashtagTags = (a.amendment_hashtags ?? [])
         .map(junction => junction.hashtag?.tag)
         .filter((tag): tag is string => typeof tag === 'string');
+      const firstBranch = getOrderedBranches(a.current_process_run?.branches ?? [])[0] ?? null;
 
       return matchesSearchQuery(
         searchValue,
         a.title,
-        a.editing_mode,
+        firstBranch?.editing_mode,
         a.reason,
         a.code,
         a.created_at,
@@ -92,6 +97,9 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
                 : Array.isArray(rawTags)
                   ? rawTags.filter((tag): tag is string => typeof tag === 'string')
                   : undefined;
+            const branches = a.current_process_run?.branches ?? [];
+            const firstBranch = getOrderedBranches(branches)[0] ?? null;
+            const branchStatuses = mapAmendmentBranchStatusChips(branches);
 
             return (
               <div
@@ -105,13 +113,14 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
                     title: a.title ?? '',
                     subtitle: a.reason ?? undefined,
                     description: a.reason ?? undefined,
-                    status: normalizeEditingMode(a.editing_mode),
+                    status: normalizeEditingMode(firstBranch?.editing_mode),
                     groupName: a.group?.name ?? undefined,
                     groupId: a.group?.id,
                     hashtags: tags?.map((tag, index) => ({
                       id: `${a.id}-${index}-${tag}`,
                       tag,
                     })),
+                    branchStatuses,
                   }}
                 />
               </div>

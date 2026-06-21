@@ -1,14 +1,16 @@
-import { Link } from '@tanstack/react-router';
 import type { Value } from 'platejs';
-import { Button } from '@/features/shared/ui/ui/button';
 import { PageWrapper } from '@/layout/page-wrapper';
-import { ArrowLeft, FileEdit } from 'lucide-react';
+import { FileEdit } from 'lucide-react';
 import { AgendaCRVoteTimeline } from '@/features/agendas/ui/AgendaCRVoteTimeline';
 import { ChangeRequestCardsList } from '@/features/agendas/ui/ChangeRequestCardsList';
+import type { VariantDiffCandidate } from '@/features/agendas/ui/MergeVariantComparisonPanel';
 import type { ChangeRequestDiffData } from '@/features/agendas/ui/ChangeRequestTimelineCard';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import type { TDiscussion } from '@/features/editor/types';
+import { AmendmentBranchSelectorSection } from '@/features/amendments/ui/AmendmentBranchSelectorSection';
+import type { AmendmentProcessBranchSource } from '@/features/amendments/logic/amendmentBranchDisplay';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import type { ChangeRequestBranchSection } from '../logic/changeRequestsViewModel';
 
 interface ChangeRequestsViewProps {
   agendaItemId?: string;
@@ -25,6 +27,12 @@ interface ChangeRequestsViewProps {
   isLoading: boolean;
   openCount: number;
   timelineItems: ChangeRequestTimelineRow[];
+  branchSections?: ChangeRequestBranchSection[];
+  branchSelectorBranches?: readonly AmendmentProcessBranchSource[];
+  selectedBranchId?: string | null;
+  branchDiffCandidates?: VariantDiffCandidate[];
+  defaultBranchDiffRightCandidateId?: string | null;
+  onBranchChange?: (branchId: string | null) => void;
   userId?: string;
   canManageInternalVotes?: boolean;
   canVoteInternal?: boolean;
@@ -34,10 +42,7 @@ interface ChangeRequestsViewProps {
 
 export function ChangeRequestsView({
   agendaItemId,
-  allChangeRequestsCount,
   amendmentId,
-  approvedCount,
-  declinedCount,
   diffMap,
   discussions,
   documentContent,
@@ -45,15 +50,19 @@ export function ChangeRequestsView({
   hasAmendment,
   isInVotingStage,
   isLoading,
-  openCount,
   timelineItems,
+  branchSections = [],
+  branchSelectorBranches = [],
+  selectedBranchId,
+  branchDiffCandidates = [],
+  defaultBranchDiffRightCandidateId,
+  onBranchChange,
   userId,
   canManageInternalVotes,
   canVoteInternal,
   onCastInternalVote,
   onFinalizeInternalVote,
 }: ChangeRequestsViewProps) {
-  const isInternalVotingStage = editingMode === 'vote_internal';
   const hasUserVoted = (item: ChangeRequestTimelineRow) =>
     Boolean(
       item.change_request && 'user_vote' in item.change_request && item.change_request.user_vote
@@ -67,6 +76,55 @@ export function ChangeRequestsView({
     const choiceKey = userVote === 'accept' ? 'yes' : userVote === 'reject' ? 'no' : 'abstain';
     return [`mock-choice-${choiceKey}-${item.change_request_id}`];
   };
+  const renderChangeRequestList = ({
+    items,
+    sectionDiffMap,
+    sectionDocumentContent,
+    sectionDiscussions,
+    sectionEditingMode,
+  }: {
+    items: ChangeRequestTimelineRow[];
+    sectionDiffMap: Record<string, ChangeRequestDiffData>;
+    sectionDocumentContent?: Value;
+    sectionDiscussions: TDiscussion[];
+    sectionEditingMode?: string | null;
+  }) => {
+    const resolvedEditingMode = sectionEditingMode ?? editingMode;
+    const isSectionInternalVotingStage = resolvedEditingMode === 'vote_internal';
+
+    return (
+      <ChangeRequestCardsList
+        items={items}
+        editingMode={resolvedEditingMode}
+        isVotingActive={isSectionInternalVotingStage}
+        userId={userId}
+        diffMap={sectionDiffMap}
+        documentContent={sectionDocumentContent}
+        discussions={sectionDiscussions}
+        amendmentId={amendmentId}
+        agendaItemId={agendaItemId}
+        canManage={isSectionInternalVotingStage && Boolean(canManageInternalVotes)}
+        canVote={isSectionInternalVotingStage && Boolean(canVoteInternal)}
+        hasUserVoted={isSectionInternalVotingStage ? hasUserVoted : undefined}
+        getUserSelectedChoiceIds={
+          isSectionInternalVotingStage ? getUserSelectedChoiceIds : undefined
+        }
+        onCastVote={isSectionInternalVotingStage ? onCastInternalVote : undefined}
+        onFinalizeInternalVote={isSectionInternalVotingStage ? onFinalizeInternalVote : undefined}
+      />
+    );
+  };
+  const isInternalVotingStage = editingMode === 'vote_internal';
+  const hasBranchSections = branchSections.length > 0;
+  const selectedBranchSection =
+    hasBranchSections && selectedBranchId
+      ? (branchSections.find(section => section.branchId === selectedBranchId) ?? null)
+      : null;
+  const displayedBranchSections = hasBranchSections
+    ? selectedBranchSection
+      ? [selectedBranchSection]
+      : branchSections
+    : [];
 
   if (isLoading) {
     return (
@@ -97,55 +155,77 @@ export function ChangeRequestsView({
 
   return (
     <PageWrapper>
-      <div className="mb-6">
-        <Link to="/amendment/$id" params={{ id: amendmentId }}>
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {translateText('generated.inline.0284_back_to_amendment_7273f2de')}
-          </Button>
-        </Link>
-      </div>
-
-      <div className="mb-8">
-        <div className="mb-4 flex items-center gap-3">
-          <FileEdit className="h-8 w-8" />
-          <h1 className="text-4xl font-bold">
-            {translateText('generated.inline.0285_change_requests_af9a9fa4')}
-          </h1>
+      <div className="space-y-6 pt-5">
+        <div className="container mx-auto px-8">
+          <div className="flex items-center gap-3">
+            <FileEdit className="h-8 w-8" />
+            <h1 className="text-4xl font-bold">
+              {translateText('generated.inline.0285_change_requests_af9a9fa4')}
+            </h1>
+          </div>
         </div>
-        <p className="text-muted-foreground">
-          {openCount} open, {approvedCount} approved, {declinedCount}
-          {translateText('generated.inline.0286_declined_change_request_c80f316b')}
-          {allChangeRequestsCount !== 1 ? 's' : ''}
-          {translateText('generated.inline.0287_for_this_amendment_659b8c41')}
-        </p>
-      </div>
 
-      {isInVotingStage && agendaItemId && (
-        <div className="mb-8">
-          <AgendaCRVoteTimeline agendaItemId={agendaItemId} userId={userId} />
+        {branchSelectorBranches.length > 0 && onBranchChange ? (
+          <AmendmentBranchSelectorSection
+            branches={branchSelectorBranches}
+            selectedBranchId={selectedBranchId}
+            includeAllBranchesOption
+            branchDiffCandidates={branchDiffCandidates}
+            defaultDiffRightCandidateId={defaultBranchDiffRightCandidateId ?? null}
+            onBranchChange={onBranchChange}
+          />
+        ) : null}
+
+        <div className="container mx-auto px-8">
+          {isInVotingStage && !isInternalVotingStage && agendaItemId && (
+            <div className="mb-8">
+              <AgendaCRVoteTimeline agendaItemId={agendaItemId} userId={userId} />
+            </div>
+          )}
+
+          {hasBranchSections ? (
+            <div className="space-y-8" data-testid="change-request-branch-sections">
+              {displayedBranchSections.map(section => (
+                <section
+                  key={section.id}
+                  className="space-y-3"
+                  data-testid="change-request-branch-section"
+                  data-branch-id={section.branchId ?? 'main'}
+                >
+                  {section.timelineItems.length > 0 ? (
+                    renderChangeRequestList({
+                      items: section.timelineItems,
+                      sectionDiffMap: section.diffMap,
+                      sectionDocumentContent: section.documentContent ?? documentContent,
+                      sectionDiscussions:
+                        section.discussions.length > 0 ? section.discussions : discussions,
+                      sectionEditingMode: section.editingMode,
+                    })
+                  ) : (
+                    <div className="rounded-lg border border-dashed p-6 text-center">
+                      <FileEdit className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
+                      <p className="text-muted-foreground text-sm">
+                        {translateText(
+                          'generated.inline.0290_no_change_requests_for_this_branch_4fd98d30',
+                          'No change requests for this branch.'
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </section>
+              ))}
+            </div>
+          ) : timelineItems.length > 0 ? (
+            renderChangeRequestList({
+              items: timelineItems,
+              sectionDiffMap: diffMap,
+              sectionDocumentContent: documentContent,
+              sectionDiscussions: discussions,
+              sectionEditingMode: editingMode,
+            })
+          ) : null}
         </div>
-      )}
-
-      {timelineItems.length > 0 && (
-        <ChangeRequestCardsList
-          items={timelineItems}
-          editingMode={editingMode}
-          isVotingActive={isInternalVotingStage}
-          userId={userId}
-          diffMap={diffMap}
-          documentContent={documentContent}
-          discussions={discussions}
-          amendmentId={amendmentId}
-          agendaItemId={agendaItemId}
-          canManage={isInternalVotingStage && Boolean(canManageInternalVotes)}
-          canVote={isInternalVotingStage && Boolean(canVoteInternal)}
-          hasUserVoted={isInternalVotingStage ? hasUserVoted : undefined}
-          getUserSelectedChoiceIds={isInternalVotingStage ? getUserSelectedChoiceIds : undefined}
-          onCastVote={isInternalVotingStage ? onCastInternalVote : undefined}
-          onFinalizeInternalVote={isInternalVotingStage ? onFinalizeInternalVote : undefined}
-        />
-      )}
+      </div>
     </PageWrapper>
   );
 }

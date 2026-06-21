@@ -179,6 +179,8 @@ export const amendmentsTranslations = {
     description: 'Navigate the network to select a target group and event for your amendment',
     pleaseLogin: 'Please log in to view the amendment process.',
     loading: 'Loading...',
+    flowTab: 'Flow',
+    stepsTab: 'Steps',
     currentTarget: 'Current Target',
     update: 'Update',
     remove: 'Remove',

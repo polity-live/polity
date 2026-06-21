@@ -241,10 +241,12 @@ export function AgendaActionBarView({
       </div>
 
       <div className="flex items-center justify-center gap-1">
-        {canManageAgenda && isVotable && !isClosed && isPendingVote && onStartVote ? (
+        {isVotable && !isClosed && isPendingVote && onStartVote ? (
           <ToolbarButton
             tooltip={startVoteTooltip || t('features.events.agenda.actions.startVote')}
             onClick={onStartVote}
+            disabled={voteLoading}
+            loading={voteLoading}
           >
             <Play />
           </ToolbarButton>
@@ -253,11 +255,13 @@ export function AgendaActionBarView({
           <ToolbarButton
             tooltip={startFinalVoteTooltip || t('features.events.agenda.actions.startFinalVote')}
             onClick={onStartFinalVote}
+            disabled={voteLoading}
+            loading={voteLoading}
           >
             <Gavel />
           </ToolbarButton>
         ) : null}
-        {canManageAgenda && isVotable && !isClosed && isFinalVotePhase && onCloseFinalVote ? (
+        {isVotable && !isClosed && isFinalVotePhase && onCloseFinalVote ? (
           <ToolbarButton
             tooltip={closeVoteTooltip || t('features.events.agenda.actions.closeFinalVote')}
             onClick={onCloseFinalVote}

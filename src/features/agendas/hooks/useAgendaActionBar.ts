@@ -6,6 +6,7 @@ import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useVoteCasting } from '@/features/vote-cast/hooks/useVoteCasting';
+import { VOTE_STATUS } from '@/zero/votes/vote-workflow';
 import {
   defaultElectionBallotVisibility,
   defaultVoteBallotVisibility,
@@ -300,7 +301,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     } else if (vote?.id) {
       await voteActionsHook.updateVote({
         id: vote.id,
-        status: 'indicative',
+        status: VOTE_STATUS.indicativeOpen,
         closing_end_time: null,
       });
     }
@@ -334,7 +335,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     } else if (vote?.id) {
       await voteActionsHook.updateVote({
         id: vote.id,
-        status: 'final',
+        status: VOTE_STATUS.finalOpen,
         closing_end_time: vote.closing_duration_seconds
           ? Date.now() + vote.closing_duration_seconds * 1000
           : null,

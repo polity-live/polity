@@ -1,13 +1,17 @@
-import { table, string, number } from '@rocicorp/zero'
+import { table, string, number, boolean } from '@rocicorp/zero';
 
 export const statement = table('statement')
   .columns({
     id: string(),
     user_id: string(),
     group_id: string().optional(),
+    title: string().optional(),
     text: string().optional(),
     image_url: string().optional(),
     video_url: string().optional(),
+    media_type: string(),
+    is_story: boolean(),
+    expires_at: number().optional(),
     visibility: string(),
     upvotes: number(),
     downvotes: number(),
@@ -15,7 +19,7 @@ export const statement = table('statement')
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const statementSurvey = table('statement_survey')
   .columns({
@@ -25,7 +29,7 @@ export const statementSurvey = table('statement_survey')
     ends_at: number(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const statementSurveyOption = table('statement_survey_option')
   .columns({
@@ -36,7 +40,7 @@ export const statementSurveyOption = table('statement_survey_option')
     position: number(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const statementSurveyVote = table('statement_survey_vote')
   .columns({
@@ -45,4 +49,4 @@ export const statementSurveyVote = table('statement_survey_vote')
     user_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');

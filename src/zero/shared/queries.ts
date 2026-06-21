@@ -269,10 +269,11 @@ export const searchQueries = {
     ({ args: { limit, query }, ctx: { userID } }) => {
       const normalizedQuery = query.trim();
       const statementsQuery = normalizedQuery
-        ? applyStatementQueryAccess(zql.statement, userID).where(
-            'text',
-            'ILIKE',
-            `%${normalizedQuery}%`
+        ? applyStatementQueryAccess(zql.statement, userID).where(({ or, cmp }) =>
+            or(
+              cmp('title', 'ILIKE', `%${normalizedQuery}%`),
+              cmp('text', 'ILIKE', `%${normalizedQuery}%`)
+            )
           )
         : applyStatementQueryAccess(zql.statement, userID);
 
@@ -349,6 +350,9 @@ export const searchQueries = {
           q.where('user_id', isAuthenticatedUserId(userID) ? userID : '__anon__')
         )
         .related('group')
+        .related('current_process_run', q =>
+          q.related('branches', bq => bq.orderBy('created_at', 'asc'))
+        )
         .orderBy('created_at', 'desc')
         .limit(limit);
     }

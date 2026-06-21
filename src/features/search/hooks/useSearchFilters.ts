@@ -37,7 +37,8 @@ export function useSearchFilters(data: SearchData | undefined, filters: SearchFi
     () =>
       data?.statements?.filter(statement => {
         // Search in text, hashtags, and user name
-        const matchesText = filterByQuery(statement.text || '', query);
+        const matchesText =
+          filterByQuery(statement.title || '', query) || filterByQuery(statement.text || '', query);
         const matchesHashtag = statement.statement_hashtags?.some(
           jn => jn.hashtag?.tag && filterByQuery(jn.hashtag.tag, query)
         );

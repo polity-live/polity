@@ -28,7 +28,13 @@ export const StatementListTab: React.FC<StatementListTabProps> = ({
   const filteredStatements = useMemo(() => {
     return statements.filter(statement => {
       const tags = (statement.statement_hashtags ?? []).map(junction => junction.hashtag?.tag);
-      return matchesSearchQuery(searchValue, statement.text, statement.group?.name, tags);
+      return matchesSearchQuery(
+        searchValue,
+        statement.title,
+        statement.text,
+        statement.group?.name,
+        tags
+      );
     });
   }, [searchValue, statements]);
 
@@ -62,6 +68,7 @@ export const StatementListTab: React.FC<StatementListTabProps> = ({
                 <StatementTimelineCard
                   statement={{
                     id: String(statement.id),
+                    title: statement.title ?? undefined,
                     content: statement.text ?? '',
                     authorName,
                     authorTitle,

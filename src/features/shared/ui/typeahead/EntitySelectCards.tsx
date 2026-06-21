@@ -19,6 +19,10 @@ import {
 import { cn } from '@/features/shared/utils/utils';
 import { Calendar, Users, MapPin, Scale, FileText } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  getBranchEditingMode,
+  getOrderedBranches,
+} from '@/features/amendments/logic/amendmentBranchDisplay';
 
 interface SelectableEvent {
   title?: string | null;
@@ -37,6 +41,15 @@ interface SelectableAmendment {
   title?: string | null;
   subtitle?: string | null;
   editing_mode?: string | null;
+  current_process_run?: {
+    branches?:
+      | readonly {
+          id: string;
+          created_at?: number | string | null;
+          editing_mode?: string | null;
+        }[]
+      | null;
+  } | null;
 }
 
 interface SelectableElection {
@@ -156,6 +169,8 @@ export function GroupSelectCard({ group }: { group: SelectableGroup }) {
 
 // Amendment Selection Card
 export function AmendmentSelectCard({ amendment }: { amendment: SelectableAmendment }) {
+  const firstBranch = getOrderedBranches(amendment.current_process_run?.branches ?? [])[0] ?? null;
+
   return (
     <Card className={selectCardClassName('amendment')}>
       <CardHeader className="pb-3">
@@ -170,9 +185,13 @@ export function AmendmentSelectCard({ amendment }: { amendment: SelectableAmendm
           <CardDescription className="line-clamp-1 text-xs">{amendment.subtitle}</CardDescription>
         )}
       </CardHeader>
-      {amendment.editing_mode && (
+      {firstBranch && (
         <CardContent className="pt-0">
-          <EditingModeBadge mode={amendment.editing_mode} variant="secondary" className="text-xs" />
+          <EditingModeBadge
+            mode={getBranchEditingMode(firstBranch)}
+            variant="secondary"
+            className="text-xs"
+          />
         </CardContent>
       )}
     </Card>

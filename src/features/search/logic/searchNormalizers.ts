@@ -1,13 +1,16 @@
 export function normalizeAmendmentStatus(status?: string) {
   if (!status) return 'view';
   const normalized = status.toLowerCase();
+  if (normalized === 'vote_event' || normalized === 'event_voting') {
+    return 'event_final_closing_vote';
+  }
   if (
     normalized === 'edit' ||
     normalized === 'suggest_internal' ||
     normalized === 'vote_internal' ||
     normalized === 'view' ||
     normalized === 'suggest_event' ||
-    normalized === 'vote_event' ||
+    normalized === 'event_final_closing_vote' ||
     normalized === 'passed' ||
     normalized === 'rejected'
   ) {
@@ -17,7 +20,7 @@ export function normalizeAmendmentStatus(status?: string) {
       | 'vote_internal'
       | 'view'
       | 'suggest_event'
-      | 'vote_event'
+      | 'event_final_closing_vote'
       | 'passed'
       | 'rejected';
   }

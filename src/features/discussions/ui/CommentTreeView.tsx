@@ -2,7 +2,7 @@ import { featureThemeClassName } from '@/features/shared/theme';
 import { FormControlTextarea } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { UserIdentityLink } from '@/features/shared/ui/UserIdentityLink';
 import { Reply, ArrowUp, ArrowDown, Clock } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { CommentTree } from './CommentTree';
@@ -49,6 +49,10 @@ export function CommentTreeView({
   handleVote,
   handleReply,
 }: CommentTreeViewProps) {
+  const authorName =
+    [comment.user?.first_name, comment.user?.last_name].filter(Boolean).join(' ') ||
+    translateText('generated.inline.0056_anonymous_9bed5104');
+
   return (
     <div className="space-y-3">
       <Card>
@@ -83,18 +87,16 @@ export function CommentTreeView({
             <div className="flex-1">
               <div className="mb-3 flex items-start justify-between">
                 <div className="text-muted-foreground flex items-center gap-2 text-sm">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={comment.user?.avatar ?? undefined} />
-                    <AvatarFallback>
-                      {comment.user?.first_name?.[0]?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span>
-                    {[comment.user?.first_name, comment.user?.last_name]
-                      .filter(Boolean)
-                      .join(' ') || translateText('generated.inline.0056_anonymous_9bed5104')}
-                  </span>
-                  {comment.user?.handle && <span className="text-xs">@{comment.user.handle}</span>}
+                  <UserIdentityLink
+                    userId={comment.user?.id ?? comment.user_id}
+                    avatarUrl={comment.user?.avatar}
+                    name={authorName}
+                    fallbackLabel={authorName}
+                    handle={comment.user?.handle}
+                    showHandle
+                    avatarClassName="h-6 w-6"
+                    handleClassName="ml-2 text-xs"
+                  />
                   <span>•</span>
                   <Clock className="h-4 w-4" />
                   <span>{new Date(comment.created_at).toLocaleDateString()}</span>

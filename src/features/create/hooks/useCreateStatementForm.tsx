@@ -17,12 +17,14 @@ import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import { CreateCharacterCountNotice } from '../ui/CreateInlineNotice';
 import { StatementSurveyInput } from '../ui/inputs/StatementSurveyInput';
+import { StatementStoryToggle } from '../ui/inputs/StatementStoryToggle';
 import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
 import {
   createBlockedSubmitOutcome,
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
+import { getStatementHeadline, hasStatementContent } from '@/zero/statements/content';
 
 const MAX_CHARS = 280;
 
@@ -57,7 +59,8 @@ export function useCreateStatementForm(): CreateFormConfig {
 
   const [statementId] = useState(() => crypto.randomUUID());
 
-  // Step 1: Text + group
+  // Step 1: Title, text + group
+  const [title, setTitle] = useState('');
   const [text, setText] = useState('');
   const [groupId, setGroupId] = useState<string | null>(() => groupIdParam || null);
   const [groupName, setGroupName] = useState('');
@@ -66,6 +69,7 @@ export function useCreateStatementForm(): CreateFormConfig {
   // Step 2: Media + Survey
   const [imageUrl, setImageUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
+  const [isStory, setIsStory] = useState(false);
   const [surveyQuestion, setSurveyQuestion] = useState('');
   const [surveyOptions, setSurveyOptions] = useState<string[]>(['', '']);
   const [surveyDurationHours, setSurveyDurationHours] = useState(24);
@@ -77,6 +81,12 @@ export function useCreateStatementForm(): CreateFormConfig {
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
 
   const charsRemaining = MAX_CHARS - text.length;
+  const hasContent = hasStatementContent({
+    title,
+    text,
+    image_url: imageUrl,
+    video_url: videoUrl,
+  });
 
   const hasSurvey = surveyQuestion.trim() && surveyOptions.filter(o => o.trim()).length >= 2;
   const visibilityLabel =
@@ -116,10 +126,15 @@ export function useCreateStatementForm(): CreateFormConfig {
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!user) return createBlockedSubmitOutcome();
+    if (!hasContent) {
+      throw new Error(t('pages.create.error.createFailed'));
+    }
     context?.reportProgress({ key: 'create', status: 'active' });
-    const result = await createStatement(text.trim(), {
+    const result = await createStatement(text.trim() || null, {
       groupId,
       imageUrl: imageUrl || null,
+      isStory,
+      title: title.trim() || null,
       videoUrl: videoUrl || null,
       visibility,
     });
@@ -182,14 +197,28 @@ export function useCreateStatementForm(): CreateFormConfig {
       steps: [
         {
           label: t('pages.create.statement.textLabel'),
-          isValid: () => !!text.trim() && text.length <= MAX_CHARS,
+          isValid: () => text.length <= MAX_CHARS,
           fields: [
+            {
+              key: 'title',
+              kind: 'text',
+              label: t('pages.create.statement.titleLabel', 'Headline'),
+              required: false,
+              hint: t(
+                'pages.create.statement.titleHint',
+                'Optional headline for the carousel and previews.'
+              ),
+              value: title,
+              onValueChange: value => setTitle(value.slice(0, 120)),
+              placeholder: t('pages.create.statement.titlePlaceholder', 'Short headline'),
+              maxLength: 120,
+            },
             {
               key: 'text',
               kind: 'text',
               multiline: true,
               label: t('pages.create.statement.textLabel'),
-              required: true,
+              required: false,
               hint: t('pages.create.statement.tips.text'),
               value: text,
               onValueChange: value => setText(value.slice(0, MAX_CHARS)),
@@ -241,10 +270,25 @@ export function useCreateStatementForm(): CreateFormConfig {
                 onVideoChange: (url: string) => setVideoUrl(url),
                 entityType: 'statements',
                 entityId: statementId,
+                exclusiveMedia: true,
                 imageLabel: t('pages.create.statement.imageUrl'),
                 imageDescription: t('pages.create.statement.imageDescription'),
                 videoLabel: t('pages.create.statement.videoUrl'),
                 videoDescription: t('pages.create.statement.videoDescription'),
+              },
+            },
+            {
+              key: 'story',
+              kind: 'customComponent',
+              component: StatementStoryToggle,
+              props: {
+                checked: isStory,
+                onCheckedChange: setIsStory,
+                label: t('features.statements.story.label', 'Story'),
+                description: t(
+                  'features.statements.story.description',
+                  'Publicly visible for 24 hours, then kept in your archive.'
+                ),
               },
             },
             {
@@ -299,7 +343,7 @@ export function useCreateStatementForm(): CreateFormConfig {
         },
         {
           label: t('pages.create.common.review'),
-          isValid: () => !!text.trim(),
+          isValid: () => hasContent,
           fields: [
             {
               key: 'review',
@@ -308,9 +352,16 @@ export function useCreateStatementForm(): CreateFormConfig {
               props: {
                 entityType: 'statement',
                 badge: t('pages.create.statement.reviewBadge'),
-                title: t('pages.create.statement.reviewBadge'),
+                title: getStatementHeadline({
+                  title,
+                  text,
+                  image_url: imageUrl,
+                  video_url: videoUrl,
+                }),
                 subtitle: text || undefined,
-                secondaryBadge: visibilityLabel,
+                secondaryBadge: isStory
+                  ? t('features.statements.story.badge', '24h Story')
+                  : visibilityLabel,
                 media: {
                   imageUrl: imageUrl || undefined,
                   imageAlt: t('pages.create.statement.reviewBadge'),
@@ -325,6 +376,22 @@ export function useCreateStatementForm(): CreateFormConfig {
                         ? [{ label: t('pages.create.statement.attachTo'), value: groupName }]
                         : []),
                       { label: t('pages.create.common.visibility'), value: visibilityLabel },
+                      ...(title.trim()
+                        ? [
+                            {
+                              label: t('pages.create.statement.titleLabel', 'Headline'),
+                              value: title.trim(),
+                            },
+                          ]
+                        : []),
+                      ...(isStory
+                        ? [
+                            {
+                              label: t('features.statements.story.label', 'Story'),
+                              value: t('features.statements.story.badge', '24h Story'),
+                            },
+                          ]
+                        : []),
                       ...(imageUrl
                         ? [
                             {
@@ -373,10 +440,12 @@ export function useCreateStatementForm(): CreateFormConfig {
     }),
     [
       text,
+      title,
       groupId,
       groupName,
       imageUrl,
       videoUrl,
+      isStory,
       surveyQuestion,
       surveyOptions,
       surveyDurationHours,
@@ -386,6 +455,7 @@ export function useCreateStatementForm(): CreateFormConfig {
       visibilityLabel,
       isLoading,
       charsRemaining,
+      hasContent,
       hasSurvey,
       t,
       syncGroupSearch,

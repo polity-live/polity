@@ -233,7 +233,6 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         id: amendmentId,
         title: title.trim(),
         code: subtitle || null,
-        editing_mode: 'edit',
         reason: null,
         category: null,
         preamble: null,

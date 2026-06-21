@@ -59,6 +59,7 @@ export interface TargetGroupEventSelectorViewProps {
   handleStartGraphGroupClick: (groupId: string) => void;
   handleTargetGraphGroupClick: (groupId: string) => void;
   layoutScope: string;
+  lockTargetSelection?: boolean;
   networkGroups: AmendmentNetworkGroup[];
   onHierarchyPathValueChange: (value: string) => void;
   onPathModeValueChange: (value: string) => void;
@@ -77,6 +78,11 @@ export interface TargetGroupEventSelectorViewProps {
   selectedSourceGroup: { id: string; data: AmendmentNetworkGroup } | null;
   selectedUserId: string;
   selectedWorkflowFinalGroup: AmendmentNetworkGroup | null;
+  selectedWorkflow?: {
+    id?: string;
+    name?: string | null;
+    group?: { name?: string | null } | null;
+  } | null;
   selectedWorkflowIdState: string;
   selectedWorkflowStartGroup: AmendmentNetworkGroup | null;
   targetEventItems: TypeaheadItem[];
@@ -96,6 +102,7 @@ export function TargetGroupEventSelectorView({
   handleStartGraphGroupClick,
   handleTargetGraphGroupClick,
   layoutScope,
+  lockTargetSelection = false,
   networkGroups,
   onHierarchyPathValueChange,
   onPathModeValueChange,
@@ -114,6 +121,7 @@ export function TargetGroupEventSelectorView({
   selectedSourceGroup,
   selectedUserId,
   selectedWorkflowFinalGroup,
+  selectedWorkflow,
   selectedWorkflowIdState,
   selectedWorkflowStartGroup,
   targetEventItems,
@@ -178,7 +186,24 @@ export function TargetGroupEventSelectorView({
         )}
       </div>
 
-      {allWorkflows.length > 0 ? (
+      {lockTargetSelection ? (
+        <div className="border-border bg-muted/40 rounded-md border px-3 py-2 text-sm">
+          <p className="font-medium">
+            {pathMode === 'workflow'
+              ? translateText('features.amendments.process.fixedWorkflow', 'Fixer Workflow')
+              : translateText('features.amendments.process.fixedTargetGroup', 'Fixe Zielgruppe')}
+          </p>
+          <p className="text-muted-foreground mt-1">
+            {pathMode === 'workflow'
+              ? (selectedWorkflow?.name ??
+                selectedWorkflowFinalGroup?.name ??
+                translateText('generated.inline.0028_unbekannt_d0b00a9f'))
+              : (selectedGroup?.data.name ??
+                selectedWorkflowFinalGroup?.name ??
+                translateText('generated.inline.0028_unbekannt_d0b00a9f'))}
+          </p>
+        </div>
+      ) : allWorkflows.length > 0 ? (
         <Tabs value={pathMode} onValueChange={onPathModeValueChange}>
           <TabsList className="w-full">
             <TabsTrigger value="hierarchy" className="flex-1">

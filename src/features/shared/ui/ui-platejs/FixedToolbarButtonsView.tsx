@@ -46,6 +46,7 @@ export interface FixedToolbarButtonsViewProps {
   readOnly: any;
   t: any;
   currentMode: any;
+  modeDisabledReasons: any;
   onModeChange: any;
   isOwnerOrCollaborator: any;
 }
@@ -56,6 +57,7 @@ export function FixedToolbarButtonsView({
   readOnly,
   t,
   currentMode,
+  modeDisabledReasons,
   onModeChange,
   isOwnerOrCollaborator,
 }: FixedToolbarButtonsViewProps) {
@@ -72,6 +74,7 @@ export function FixedToolbarButtonsView({
         <ToolbarGroup>
           <ModeToolbarButton
             currentMode={currentMode}
+            disabledModeReasons={modeDisabledReasons}
             onModeChange={onModeChange}
             isOwnerOrCollaborator={isOwnerOrCollaborator}
           />

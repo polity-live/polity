@@ -1,15 +1,31 @@
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
+import { isAuthenticatedUserId } from '../rbac/query-access';
 
-function applyStatementAccess<T>(q: T, userID: string | undefined): T {
+function applyStatementExpiryAccess<T>(q: T, userID: string | undefined, now = Date.now()): T {
   const query = q as any;
 
-  if (!userID || userID === 'anon') {
-    return query.where('visibility', 'public') as T;
+  if (isAuthenticatedUserId(userID)) {
+    return query.where(({ or, cmp }: any) =>
+      or(cmp('expires_at', 'IS', null), cmp('expires_at', '>', now), cmp('user_id', userID))
+    ) as T;
   }
 
-  return query.where(({ or, cmp, exists }: any) =>
+  return query.where(({ or, cmp }: any) =>
+    or(cmp('expires_at', 'IS', null), cmp('expires_at', '>', now))
+  ) as T;
+}
+
+function applyStatementAccess<T>(q: T, userID: string | undefined, now = Date.now()): T {
+  const query = q as any;
+  const visibleQuery = applyStatementExpiryAccess(query, userID, now) as any;
+
+  if (!userID || userID === 'anon') {
+    return visibleQuery.where('visibility', 'public') as T;
+  }
+
+  return visibleQuery.where(({ or, cmp, exists }: any) =>
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       cmp('user_id', userID),
@@ -45,6 +61,28 @@ export const statementQueries = {
         .related('statement_hashtags', q => q.related('hashtag'))
         .related('support_votes', q => q.where('user_id', userID ?? '__anon__'))
         .orderBy('created_at', 'desc')
+  ),
+
+  carousel: defineQuery(
+    z.object({
+      user_id: z.string().nullable().optional(),
+      now: z.number(),
+      limit: z.number().min(1).max(100).default(24),
+    }),
+    ({ args: { user_id, now, limit }, ctx: { userID } }) => {
+      let q: any = applyStatementAccess(zql.statement, userID, now);
+      if (user_id) {
+        q = q.where('user_id', user_id);
+      }
+
+      return q
+        .related('user')
+        .related('group')
+        .related('statement_hashtags', q2 => q2.related('hashtag'))
+        .related('support_votes', q2 => q2.where('user_id', userID ?? '__anon__'))
+        .orderBy('created_at', 'desc')
+        .limit(limit);
+    }
   ),
 
   // Single statement by ID

@@ -6,7 +6,7 @@ import {
   getMotionPreset,
   getSemanticToneClasses,
 } from '@/features/shared/theme';
-import { BadgeControl } from '@/features/shared/ui/status';
+import { BadgeControl, getEditingModeOption } from '@/features/shared/ui/status';
 import { Link } from '@tanstack/react-router';
 import { ScrollText, ThumbsUp, ThumbsDown, MessageSquare, Bell } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
@@ -30,7 +30,7 @@ type AmendmentTimelineStatus =
   | 'vote_internal'
   | 'view'
   | 'suggest_event'
-  | 'vote_event'
+  | 'event_final_closing_vote'
   | 'passed'
   | 'rejected'
   | 'accepted'
@@ -152,6 +152,21 @@ export function AmendmentTimelineCardView({
   const successTone = getSemanticToneClasses('success');
   const dangerTone = getSemanticToneClasses('danger');
   const amendmentHref = href ?? `/amendment/${amendment.id}`;
+  const branchStatuses = Array.isArray(amendment.branchStatuses) ? amendment.branchStatuses : [];
+  const visibleBranchStatuses = branchStatuses.slice(0, 3);
+  const hiddenBranchStatuses = branchStatuses.slice(3);
+  const getBranchChipVariant = (
+    mode: string
+  ): 'default' | 'secondary' | 'destructive' | 'outline' => {
+    if (mode === 'vote_internal' || mode === 'event_final_closing_vote' || mode === 'rejected') {
+      return 'destructive';
+    }
+    if (mode === 'passed') return 'default';
+    if (mode === 'view') return 'outline';
+    return 'secondary';
+  };
+  const getBranchChipText = (branchStatus: any) =>
+    `${branchStatus.label}: ${getEditingModeOption(branchStatus.editingMode, t).label}`;
 
   return (
     <TimelineCardBase contentType="amendment" className={className} href={amendmentHref}>
@@ -168,14 +183,48 @@ export function AmendmentTimelineCardView({
           />
         }
       >
-        {/* Status Badge */}
-        <div className="mt-2 flex justify-center">
-          <BadgeControl
-            variant={statusConfig.variant}
-            className={cn('px-3 py-1 text-xs', isVoting && getMotionPreset('attention'))}
-          >
-            {statusLabel}
-          </BadgeControl>
+        <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+          {visibleBranchStatuses.length > 0 ? (
+            <>
+              {visibleBranchStatuses.map((branchStatus: any) => (
+                <BadgeControl
+                  key={branchStatus.branchId}
+                  variant={getBranchChipVariant(branchStatus.editingMode)}
+                  className={cn(
+                    'max-w-44 px-2.5 py-1 text-xs',
+                    (branchStatus.editingMode === 'vote_internal' ||
+                      branchStatus.editingMode === 'event_final_closing_vote') &&
+                      getMotionPreset('attention')
+                  )}
+                >
+                  <span className="truncate">{getBranchChipText(branchStatus)}</span>
+                </BadgeControl>
+              ))}
+              {hiddenBranchStatuses.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <BadgeControl variant="outline" className="px-2.5 py-1 text-xs">
+                      +{hiddenBranchStatuses.length}
+                    </BadgeControl>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="space-y-1 text-xs">
+                      {hiddenBranchStatuses.map((branchStatus: any) => (
+                        <div key={branchStatus.branchId}>{getBranchChipText(branchStatus)}</div>
+                      ))}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </>
+          ) : (
+            <BadgeControl
+              variant={statusConfig.variant}
+              className={cn('px-3 py-1 text-xs', isVoting && getMotionPreset('attention'))}
+            >
+              {statusLabel}
+            </BadgeControl>
+          )}
         </div>
       </TimelineCardHeader>
 

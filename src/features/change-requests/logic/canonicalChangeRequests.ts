@@ -8,6 +8,8 @@ export interface CanonicalDiscussionEntry {
   id: string;
   crId?: string | null;
   changeRequestEntityId?: string | null;
+  processBranchId?: string | null;
+  process_branch_id?: string | null;
   title?: string | null;
   status?: string | null;
   confirmationStatus?: 'pending' | 'confirmed' | null;
@@ -15,6 +17,8 @@ export interface CanonicalDiscussionEntry {
 
 export interface CanonicalSavedChangeRequest {
   id: string;
+  process_branch_id?: string | null;
+  processBranchId?: string | null;
   title?: string | null;
   status?: string | null;
   voting_status?: string | null;
@@ -47,6 +51,24 @@ export interface CanonicalChangeRequestRecord<
 function stringKey(value: string | null | undefined) {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
+}
+
+function getDiscussionProcessBranchId(discussion: CanonicalDiscussionEntry | null | undefined) {
+  return discussion?.processBranchId ?? discussion?.process_branch_id ?? null;
+}
+
+function getChangeRequestProcessBranchId(
+  changeRequest: Pick<CanonicalSavedChangeRequest, 'process_branch_id' | 'processBranchId'>
+) {
+  return changeRequest.process_branch_id ?? changeRequest.processBranchId ?? null;
+}
+
+function branchScopeKey(processBranchId: string | null | undefined) {
+  return processBranchId ?? 'main';
+}
+
+function scopedLabelKey(processBranchId: string | null | undefined, label: string | null) {
+  return label ? `${branchScopeKey(processBranchId)}:${label}` : null;
 }
 
 function addFirst<TKey, TValue>(map: Map<TKey, TValue>, key: TKey | null, value: TValue) {
@@ -118,12 +140,18 @@ function compareCanonicalChangeRequests(
 
 export function findDiscussionForChangeRequest<TDiscussion extends CanonicalDiscussionEntry>(
   discussions: readonly TDiscussion[],
-  changeRequest: Pick<CanonicalSavedChangeRequest, 'id' | 'title'>
+  changeRequest: Pick<
+    CanonicalSavedChangeRequest,
+    'id' | 'title' | 'process_branch_id' | 'processBranchId'
+  >
 ) {
+  const processBranchId = getChangeRequestProcessBranchId(changeRequest);
+
   return (
     discussions.find(discussion => discussion.changeRequestEntityId === changeRequest.id) ??
     discussions.find(
       discussion =>
+        getDiscussionProcessBranchId(discussion) === processBranchId &&
         !!changeRequest.title &&
         (discussion.crId === changeRequest.title || discussion.title === changeRequest.title)
     ) ??
@@ -175,28 +203,48 @@ export function buildCanonicalChangeRequestRecords<
       continue;
     }
 
-    const recordKey = `discussion:${discussion.id}`;
+    const processBranchId = getDiscussionProcessBranchId(discussion);
+    const recordKey = `discussion:${branchScopeKey(processBranchId)}:${discussion.id}`;
     ensureRecord(recordKey, discussion);
     recordKeyByDiscussionId.set(discussion.id, recordKey);
     addFirst(recordKeyByEntityId, stringKey(discussion.changeRequestEntityId), recordKey);
-    addFirst(recordKeyByLabel, stringKey(discussion.crId), recordKey);
-    addFirst(recordKeyByLabel, stringKey(discussion.title), recordKey);
+    addFirst(
+      recordKeyByLabel,
+      scopedLabelKey(processBranchId, stringKey(discussion.crId)),
+      recordKey
+    );
+    addFirst(
+      recordKeyByLabel,
+      scopedLabelKey(processBranchId, stringKey(discussion.title)),
+      recordKey
+    );
   }
 
   for (const changeRequest of changeRequestList) {
+    const processBranchId = getChangeRequestProcessBranchId(changeRequest);
     const matchingDiscussion = findDiscussionForChangeRequest(discussionList, changeRequest);
     const matchingRecordKey =
       (matchingDiscussion?.id ? recordKeyByDiscussionId.get(matchingDiscussion.id) : undefined) ??
       recordKeyByEntityId.get(changeRequest.id) ??
-      (changeRequest.title ? recordKeyByLabel.get(changeRequest.title) : undefined);
+      (changeRequest.title
+        ? recordKeyByLabel.get(
+            scopedLabelKey(processBranchId, stringKey(changeRequest.title)) ?? ''
+          )
+        : undefined);
 
     const recordKey =
       matchingRecordKey ??
-      (changeRequest.title ? `row-title:${changeRequest.title}` : `row-id:${changeRequest.id}`);
+      (changeRequest.title
+        ? `row-title:${branchScopeKey(processBranchId)}:${changeRequest.title}`
+        : `row-id:${branchScopeKey(processBranchId)}:${changeRequest.id}`);
     const record = ensureRecord(recordKey, matchingDiscussion);
     record.changeRequests.push(changeRequest);
     recordKeyByEntityId.set(changeRequest.id, recordKey);
-    addFirst(recordKeyByLabel, stringKey(changeRequest.title), recordKey);
+    addFirst(
+      recordKeyByLabel,
+      scopedLabelKey(processBranchId, stringKey(changeRequest.title)),
+      recordKey
+    );
   }
 
   return [...recordByKey.values()]

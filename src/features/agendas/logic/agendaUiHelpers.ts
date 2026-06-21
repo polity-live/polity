@@ -21,9 +21,10 @@ export function getEffectiveVotingPhase(
   fallback?: string | null
 ): string | null {
   const normalizePhase = (value?: string | null) => {
-    if (value === 'final' || value === 'final_vote') return 'final_vote';
+    if (value === 'final' || value === 'final_vote' || value === 'final_open') return 'final_vote';
     if (value === 'closed') return 'closed';
-    if (value === 'indicative' || value === 'indication') return 'indication';
+    if (value === 'indicative' || value === 'indicative_open' || value === 'indication')
+      return 'indication';
     return null;
   };
 

@@ -1,12 +1,15 @@
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 /**
  * Creates mock ChangeRequestTimelineRow-compatible objects from CR summaries.
- * Used to display change requests in the timeline card style before vote_event is initialized.
+ * Used to display change requests in the timeline card style before event final voting is initialized.
  */
 
 export interface CRSummary {
   id: string;
   crId?: string;
+  displayCrId?: string;
+  branchDisplayNumber?: number;
+  branchScopedCrNumber?: number;
   title: string;
   description: string;
   status: string; // 'open' | 'approved' | 'accepted' | 'rejected' | 'declined'
@@ -22,6 +25,7 @@ export interface CRSummary {
   suggestionId?: string | null;
   discussionId?: string | null;
   changeRequestEntityId?: string | null;
+  processBranchId?: string | null;
   logicalKey?: string | null;
   votingDeadline?: number | null;
   closeTrigger?: string | null;
@@ -128,6 +132,7 @@ export function createMockCRTimelineItems(crSummaries: CRSummary[]) {
       id: `mock-cr-${persistedChangeRequestId}`,
       agenda_item_id: 'mock-agenda',
       change_request_id: persistedChangeRequestId,
+      _processBranchId: cr.processBranchId ?? null,
       vote_id: `mock-vote-${persistedChangeRequestId}`,
       order_index: index,
       is_final_vote: false,
@@ -135,9 +140,16 @@ export function createMockCRTimelineItems(crSummaries: CRSummary[]) {
       change_request: {
         id: persistedChangeRequestId,
         amendment_id: null,
+        process_branch_id: cr.processBranchId ?? null,
         user_id: null,
         title: cr.title || cr.crId || `CR-${index + 1}`,
         cr_id: cr.crId ?? null,
+        display_cr_id: cr.displayCrId ?? cr.crId ?? null,
+        displayCrId: cr.displayCrId ?? cr.crId ?? null,
+        branch_display_number: cr.branchDisplayNumber ?? null,
+        branchDisplayNumber: cr.branchDisplayNumber ?? null,
+        branch_scoped_cr_number: cr.branchScopedCrNumber ?? null,
+        branchScopedCrNumber: cr.branchScopedCrNumber ?? null,
         suggestion_id: suggestionId,
         description: cr.description || null,
         status: cr.status || null,

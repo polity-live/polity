@@ -14,6 +14,33 @@ const agendaElectionSectionMock = vi.hoisted(() =>
     />
   ))
 );
+const agendaActionBarMock = vi.hoisted(() =>
+  vi.fn((props: Record<string, unknown>) => {
+    void props;
+    return <div data-testid="agenda-action-bar" />;
+  })
+);
+const changeRequestCardsListMock = vi.hoisted(() =>
+  vi.fn((props: Record<string, unknown>) => {
+    const items = (props.items as { id?: string }[] | undefined) ?? [];
+    return (
+      <div
+        data-testid="change-request-cards-list"
+        data-item-ids={items.map(item => item.id ?? '').join('|')}
+      >
+        {props.sequenceInterstitial as ReactNode}
+      </div>
+    );
+  })
+);
+const amendmentBranchSelectorSectionMock = vi.hoisted(() =>
+  vi.fn((props: Record<string, unknown>) => (
+    <div
+      data-testid="amendment-branch-selector-section"
+      data-selected-branch-id={(props.selectedBranchId as string | null | undefined) ?? ''}
+    />
+  ))
+);
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -63,7 +90,7 @@ vi.mock('../OfflineTallyDialog', () => ({
 }));
 
 vi.mock('../AgendaActionBar', () => ({
-  AgendaActionBar: () => <div data-testid="agenda-action-bar" />,
+  AgendaActionBar: agendaActionBarMock,
 }));
 
 vi.mock('../EditElectionVoteDialog', () => ({
@@ -79,7 +106,11 @@ vi.mock('@/features/elections/ui/CandidacyPasswordDialog', () => ({
 }));
 
 vi.mock('../ChangeRequestCardsList', () => ({
-  ChangeRequestCardsList: () => <div data-testid="change-request-cards-list" />,
+  ChangeRequestCardsList: changeRequestCardsListMock,
+}));
+
+vi.mock('@/features/amendments/ui/AmendmentBranchSelectorSection', () => ({
+  AmendmentBranchSelectorSection: amendmentBranchSelectorSectionMock,
 }));
 
 vi.mock('../MergeVariantComparisonPanel', () => ({
@@ -277,6 +308,7 @@ function buildProps() {
     hasNextChangeRequest: false,
     handlePreviousChangeRequest: noop,
     handleNextChangeRequest: noop,
+    handleStartSequenceFinalVote: noop,
     handleToolbarStartVote: noop,
     handleToolbarStartFinalVote: noop,
     handleToolbarCloseVote: noop,
@@ -351,6 +383,308 @@ describe('EventAgendaItemDetailView', () => {
     ).toBe('target-event');
     expect(agendaElectionSectionMock.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({ delegateTargetEventId: 'target-event' })
+    );
+  });
+
+  it('keeps the tally action but hides the vote action for offline sequence votes', () => {
+    const props = buildProps();
+    const handleOpenOfflineTallyDialog = vi.fn();
+    const handleVoteClick = vi.fn();
+
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        attendanceMode="offline"
+        isCRToolbarActive
+        toolbarVotingPhase="indication"
+        selectedCRToolbarItem={{
+          id: 'variant-sequence-item',
+          vote: { id: 'variant-vote-1' },
+        }}
+        selectedCRChoices={[{ id: 'choice-yes', label: 'Yes' }]}
+        showOfflineTallyButton
+        handleOpenOfflineTallyDialog={handleOpenOfflineTallyDialog}
+        actionBarHook={{
+          ...props.actionBarHook,
+          handleVoteClick,
+        }}
+      />
+    );
+
+    const actionBarProps = agendaActionBarMock.mock.calls.at(-1)?.[0];
+
+    expect(actionBarProps).toEqual(
+      expect.objectContaining({
+        showOfflineTallyButton: true,
+        onOfflineTallyClick: handleOpenOfflineTallyDialog,
+        onVoteClick: undefined,
+      })
+    );
+  });
+
+  it('keeps the vote action available for hybrid sequence votes', () => {
+    const props = buildProps();
+    const handleOpenOfflineTallyDialog = vi.fn();
+    const handleVoteClick = vi.fn();
+
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        attendanceMode="hybrid"
+        isCRToolbarActive
+        toolbarVotingPhase="indication"
+        selectedCRToolbarItem={{
+          id: 'variant-sequence-item',
+          vote: { id: 'variant-vote-1' },
+        }}
+        selectedCRChoices={[{ id: 'choice-yes', label: 'Yes' }]}
+        showOfflineTallyButton
+        handleOpenOfflineTallyDialog={handleOpenOfflineTallyDialog}
+        actionBarHook={{
+          ...props.actionBarHook,
+          handleVoteClick,
+        }}
+      />
+    );
+
+    const actionBarProps = agendaActionBarMock.mock.calls.at(-1)?.[0];
+
+    expect(actionBarProps).toEqual(
+      expect.objectContaining({
+        showOfflineTallyButton: true,
+        onOfflineTallyClick: handleOpenOfflineTallyDialog,
+        onVoteClick: handleVoteClick,
+      })
+    );
+  });
+
+  it('hides the vote action for change request placeholders without choices', () => {
+    const props = buildProps();
+    const handleVoteClick = vi.fn();
+
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        attendanceMode="hybrid"
+        isCRToolbarActive
+        toolbarVotingPhase="indication"
+        selectedCRToolbarItem={{
+          id: 'agenda-vote-placeholder-change-request-votes',
+          _voteStepKind: 'change_request_votes_placeholder',
+          _votePlaceholder: true,
+          vote: null,
+        }}
+        selectedCRChoices={[]}
+        actionBarHook={{
+          ...props.actionBarHook,
+          handleVoteClick,
+        }}
+      />
+    );
+
+    const actionBarProps = agendaActionBarMock.mock.calls.at(-1)?.[0];
+
+    expect(actionBarProps).toEqual(
+      expect.objectContaining({
+        onVoteClick: undefined,
+      })
+    );
+  });
+
+  it('wires change request card final starts through the sequence-aware handler', () => {
+    const props = buildProps();
+    const handleStartSequenceFinalVote = vi.fn();
+    const startFinalPhase = vi.fn();
+
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        agendaItem={{
+          ...props.agendaItem,
+          amendment_id: 'amendment-1',
+          amendment: { editing_mode: 'vote_event' },
+        }}
+        canManageVoteSequence
+        detailRuntimeStatus="in-progress"
+        isCRVotingActive
+        crDisplayItems={[
+          {
+            id: 'agenda-vote-placeholder-change-request-votes',
+            _voteStepKind: 'change_request_votes_placeholder',
+            _votePlaceholder: true,
+            vote: null,
+          },
+        ]}
+        handleStartSequenceFinalVote={handleStartSequenceFinalVote}
+        startFinalPhase={startFinalPhase}
+      />
+    );
+
+    const listProps = changeRequestCardsListMock.mock.calls.at(-1)?.[0];
+
+    expect(listProps).toEqual(
+      expect.objectContaining({
+        hideInlineVotingControls: true,
+        onStartFinal: handleStartSequenceFinalVote,
+      })
+    );
+    expect(listProps?.onStartFinal).not.toBe(startFinalPhase);
+  });
+
+  it('withholds change request final start controls until the agenda item is active', () => {
+    const props = buildProps();
+    const handleStartSequenceFinalVote = vi.fn();
+    const handleToolbarStartFinalVote = vi.fn();
+    const selectedCRToolbarItem = {
+      id: 'branch-2-cr-1',
+      vote: { id: 'vote-cr-1' },
+    };
+    const activeProps = {
+      ...props,
+      agendaItem: {
+        ...props.agendaItem,
+        amendment_id: 'amendment-1',
+        amendment: { editing_mode: 'vote_event' },
+      },
+      canManageVoteSequence: true,
+      crDisplayItems: [selectedCRToolbarItem],
+      detailRuntimeStatus: 'pending',
+      handleStartSequenceFinalVote,
+      handleToolbarStartFinalVote,
+      isCRToolbarActive: true,
+      isCRVotingActive: true,
+      selectedCRPhase: 'indication',
+      selectedCRToolbarItem,
+      selectedCRChoices: [{ id: 'choice-yes', label: 'Yes' }],
+      toolbarVotingPhase: 'indication',
+    };
+
+    const { rerender } = render(<EventAgendaItemDetailView {...activeProps} />);
+
+    let actionBarProps = agendaActionBarMock.mock.calls.at(-1)?.[0];
+    let listProps = changeRequestCardsListMock.mock.calls.at(-1)?.[0];
+
+    expect(actionBarProps).toEqual(expect.objectContaining({ onStartFinalVote: undefined }));
+    expect(listProps).toEqual(
+      expect.objectContaining({
+        canManage: false,
+        onStartFinal: undefined,
+      })
+    );
+
+    rerender(<EventAgendaItemDetailView {...activeProps} detailRuntimeStatus="in-progress" />);
+
+    actionBarProps = agendaActionBarMock.mock.calls.at(-1)?.[0];
+    listProps = changeRequestCardsListMock.mock.calls.at(-1)?.[0];
+
+    expect(actionBarProps).toEqual(
+      expect.objectContaining({ onStartFinalVote: handleToolbarStartFinalVote })
+    );
+    expect(listProps).toEqual(
+      expect.objectContaining({
+        canManage: true,
+        onStartFinal: handleStartSequenceFinalVote,
+      })
+    );
+  });
+
+  it('does not render the branch switcher when only one branch is selectable', () => {
+    const props = buildProps();
+    const branchBItem = {
+      id: 'branch-b-cr',
+      change_request_id: 'cr-branch-b',
+      status: 'pending',
+      is_final_vote: false,
+      change_request: {
+        id: 'cr-branch-b',
+        title: 'Branch B CR',
+        process_branch_id: 'branch-b',
+      },
+    };
+
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        agendaItem={{
+          ...props.agendaItem,
+          amendment_id: 'amendment-1',
+          amendment: { id: 'amendment-1', editing_mode: 'vote_event' },
+        }}
+        branchSelectorBranches={[{ id: 'branch-b', created_at: 2, title: 'Branch B' }]}
+        selectedBranchId="branch-b"
+        onBranchChange={vi.fn()}
+        crDisplayItems={[branchBItem]}
+      />
+    );
+
+    expect(screen.queryByTestId('amendment-branch-selector-section')).toBeNull();
+    expect(screen.getByTestId('change-request-cards-list').getAttribute('data-item-ids')).toBe(
+      'branch-b-cr'
+    );
+    expect(changeRequestCardsListMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        items: [branchBItem],
+        sequenceInterstitial: null,
+      })
+    );
+  });
+
+  it('renders the branch switcher inside the change request sequence for multiple selectable branches', () => {
+    const props = buildProps();
+    const onBranchChange = vi.fn();
+    const branchBItem = {
+      id: 'branch-b-cr',
+      change_request_id: 'cr-branch-b',
+      status: 'pending',
+      is_final_vote: false,
+      change_request: {
+        id: 'cr-branch-b',
+        title: 'Branch B CR',
+        process_branch_id: 'branch-b',
+      },
+    };
+
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        agendaItem={{
+          ...props.agendaItem,
+          amendment_id: 'amendment-1',
+          amendment: { id: 'amendment-1', editing_mode: 'vote_event' },
+        }}
+        branchSelectorBranches={[
+          { id: 'branch-a', created_at: 1, title: 'Branch A' },
+          { id: 'branch-b', created_at: 2, title: 'Branch B' },
+        ]}
+        selectedBranchId="branch-b"
+        branchDiffCandidates={[]}
+        defaultBranchDiffRightCandidateId="branch-b"
+        onBranchChange={onBranchChange}
+        crDisplayItems={[branchBItem]}
+      />
+    );
+
+    expect(screen.getByTestId('amendment-branch-selector-section')).toBeTruthy();
+    expect(
+      screen
+        .getByTestId('amendment-branch-selector-section')
+        .getAttribute('data-selected-branch-id')
+    ).toBe('branch-b');
+    expect(screen.getByTestId('change-request-cards-list').getAttribute('data-item-ids')).toBe(
+      'branch-b-cr'
+    );
+    expect(changeRequestCardsListMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        items: [branchBItem],
+        sequenceInterstitial: expect.anything(),
+      })
+    );
+    expect(amendmentBranchSelectorSectionMock.mock.calls.at(-1)?.[0]).toEqual(
+      expect.objectContaining({
+        variant: 'inline',
+        selectedBranchId: 'branch-b',
+        onBranchChange,
+      })
     );
   });
 });

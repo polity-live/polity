@@ -67,6 +67,7 @@ export function useImageUploadController({
   const { t } = useTranslation();
   const [isUploading, setIsUploading] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounterRef = useRef(0);
@@ -79,7 +80,7 @@ export function useImageUploadController({
     }
   };
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = async (file: File): Promise<boolean> => {
     setIsUploading(true);
     try {
       let imageUrl = '';
@@ -109,9 +110,11 @@ export function useImageUploadController({
       }
 
       onImageChange(imageUrl);
+      return true;
     } catch (error) {
       console.error('Image upload error:', error);
       toast.error(t('common.actions.uploadImageFailed'));
+      return false;
     } finally {
       setIsUploading(false);
       setIsDragActive(false);
@@ -211,6 +214,8 @@ export function useImageUploadController({
     }
   };
 
+  const handleSaveEditedImage = async (file: File) => uploadFile(file);
+
   return {
     className,
     currentImage,
@@ -219,6 +224,7 @@ export function useImageUploadController({
     urlInputId,
     fileInputRef,
     isBusy,
+    isEditorOpen,
     isUploading,
     isDragActive,
     copy: {
@@ -229,7 +235,10 @@ export function useImageUploadController({
       uploading: t('common.actions.uploading'),
       uploadImage: t('common.actions.uploadImage'),
       orProvideUrl: t('common.labels.orProvideUrl'),
+      editImage: t('common.actions.edit', 'Edit'),
     },
+    onEditorOpenChange: setIsEditorOpen,
+    onSaveEditedImage: handleSaveEditedImage,
     onRemoveImage: () => void handleRemoveImage(),
     onFileSelect: handleFileSelect,
     onDragEnter: handleDragEnter,

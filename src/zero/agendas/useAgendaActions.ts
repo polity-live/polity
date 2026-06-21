@@ -137,6 +137,7 @@ export function useAgendaActions() {
       agenda_item_id: string;
       voting_context?: 'event' | 'internal';
       group_id?: string;
+      start_final_vote_if_no_change_requests?: boolean;
     }) => {
       const result = zero.mutate(mutators.agendas.initializeChangeRequestVoting(args));
       toast.success(t('common.agendaToasts.crVotingInitialized'));

@@ -14,7 +14,8 @@ export function FixedToolbarButtons({
 }: FixedToolbarButtonsProps = {}) {
   const readOnly = useEditorReadOnly();
   const { t } = useTranslation();
-  const { currentMode, onModeChange, isOwnerOrCollaborator } = useModeContext();
+  const { currentMode, modeDisabledReasons, onModeChange, isOwnerOrCollaborator } =
+    useModeContext();
   return (
     <FixedToolbarButtonsView
       className={className}
@@ -22,6 +23,7 @@ export function FixedToolbarButtons({
       readOnly={readOnly}
       t={t}
       currentMode={currentMode}
+      modeDisabledReasons={modeDisabledReasons}
       onModeChange={onModeChange}
       isOwnerOrCollaborator={isOwnerOrCollaborator}
     />

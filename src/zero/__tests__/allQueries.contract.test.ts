@@ -235,6 +235,31 @@ describe('Zero query contracts', () => {
     );
   });
 
+  it('loads amendment process branch step labels for agenda item details', async () => {
+    const { harness, registries } = await loadQueryRegistries();
+    const eventQueries = registries.find(([domain]) => domain === 'events')?.[1];
+    if (!eventQueries) throw new Error('event queries not loaded');
+
+    eventQueries.agendaItemDetail.fn({
+      args: { ...broadArgs, id: 'agenda-item-1' },
+      ctx,
+    });
+
+    const agendaItemCalls = harness.lastQuery('agenda_item').calls;
+    const amendmentCalls = relatedCalls(agendaItemCalls, 'amendment');
+    const processRunCalls = relatedCalls(amendmentCalls, 'current_process_run');
+    const branchCalls = relatedCalls(processRunCalls, 'branches');
+    const stepRunCalls = relatedCalls(branchCalls, 'step_runs');
+
+    expect(stepRunCalls).toEqual(
+      expect.arrayContaining([
+        ['related', 'source_group', []],
+        ['related', 'target_group', []],
+        ['related', 'workflow_step', []],
+      ])
+    );
+  });
+
   it('keeps rich user profile relations private unless they belong to the caller', async () => {
     const { harness, registries } = await loadQueryRegistries();
     const userQueries = registries.find(([domain]) => domain === 'users')?.[1];

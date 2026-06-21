@@ -8,6 +8,7 @@ import { jsonSchema, timestampSchema, nullableTimestampSchema } from '../shared/
 const baseChangeRequestSchema = z.object({
   id: z.string(),
   amendment_id: z.string(),
+  process_branch_id: z.string().nullable().optional(),
   user_id: z.string(),
   title: z.string().nullable(),
   description: z.string().nullable(),
@@ -33,6 +34,9 @@ const baseChangeRequestSchema = z.object({
   resolved_in_mode: z.string().nullable().optional(),
   resolution_method: z.string().nullable().optional(),
   visibility_scope: z.string().nullable().optional(),
+  obsolete_reason: z.string().nullable().optional(),
+  obsolete_at: nullableTimestampSchema.optional(),
+  obsolete_by_vote_id: z.string().nullable().optional(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
@@ -64,6 +68,9 @@ export const updateChangeRequestSchema = baseChangeRequestSchema
     original_properties: true,
     new_properties: true,
     voting_status: true,
+    obsolete_reason: true,
+    obsolete_at: true,
+    obsolete_by_vote_id: true,
     votes_for: true,
     votes_against: true,
     votes_abstain: true,
@@ -78,6 +85,7 @@ export const finalizeInternalChangeRequestVoteSchema = z.object({
 
 export const finalizeExpiredInternalChangeRequestVotesSchema = z.object({
   amendment_id: z.string(),
+  process_branch_id: z.string().nullable().optional(),
 });
 
 export const repairInternalChangeRequestResolutionSchema = z.object({

@@ -12,7 +12,15 @@ interface AmendmentProcessDetailsPanelProps {
     title?: string | null;
     reason?: string | null;
     preamble?: string | null;
-    editing_mode?: string | null;
+    current_process_run?: {
+      branches?:
+        | readonly {
+            id: string;
+            created_at?: number | string | null;
+            editing_mode?: string | null;
+          }[]
+        | null;
+    } | null;
     group?: { id: string; name?: string | null } | null;
   };
   forwardingPreview?: {

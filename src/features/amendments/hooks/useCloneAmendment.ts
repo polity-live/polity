@@ -22,10 +22,10 @@ interface CloneAmendmentData {
   readonly preamble: string | null;
   readonly tags: string[] | null;
   readonly visibility: string;
-  readonly editing_mode: string | null;
   readonly discussions: ReadonlyJSONValue | null;
   readonly image_url: string | null;
   readonly origin_amendment_id?: string | null;
+  readonly document?: CloneAmendmentDocument | null;
   readonly documents: readonly CloneAmendmentDocument[];
 }
 
@@ -51,11 +51,7 @@ export function useCloneAmendment(
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [isCloning, setIsCloning] = useState(false);
 
-  const {
-    createAmendment,
-    updateAmendment,
-    requestCollaboration: addAmendmentCollaborator,
-  } = useAmendmentActions();
+  const { createAmendment, updateAmendment } = useAmendmentActions();
   const { createDocument } = useDocumentActions();
   const { createAmendmentPath } = useCreateAmendmentPath();
 
@@ -92,9 +88,8 @@ export function useCloneAmendment(
     try {
       const cloneId = crypto.randomUUID();
       const cloneDocumentId = crypto.randomUUID();
-      const collaboratorId = crypto.randomUUID();
 
-      const originalDocument = amendment.documents?.[0];
+      const originalDocument = amendment.document ?? amendment.documents?.[0];
 
       // Find the closest event in the path
       const eventsWithDates = pathWithEvents.filter(seg => seg.eventStartDate != null);
@@ -141,8 +136,7 @@ export function useCloneAmendment(
         document_id: null,
         tags: amendment.tags ?? [],
         visibility: amendment.visibility ?? 'public',
-        editing_mode: 'edit',
-        discussions: amendment.discussions ?? [],
+        discussions: [],
         x: '',
         youtube: '',
         linkedin: '',
@@ -162,16 +156,6 @@ export function useCloneAmendment(
       await updateAmendment({
         id: cloneId,
         document_id: cloneDocumentId,
-      });
-
-      // Add current user as admin collaborator
-      await addAmendmentCollaborator({
-        id: collaboratorId,
-        status: 'admin',
-        visibility: 'public',
-        amendment_id: cloneId,
-        user_id: userId,
-        role_id: null,
       });
 
       if (selectedEventId && enrichedPath.length > 0) {

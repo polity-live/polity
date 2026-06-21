@@ -11,6 +11,7 @@ import { useSuggestionIdAssignment } from '@/features/documents/hooks/use-sugges
 import { createChangeRequestDiffSnapshot } from '@/features/change-requests/utils/suggestion-extraction';
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 
+import { generateDistinctUserColorMap } from '../logic/editor-helpers';
 import type { EditorUser, EditorViewProps } from '../types';
 import { useEditor } from './useEditor';
 import { useEditorOperations } from './useEditorOperations';
@@ -26,7 +27,9 @@ export function useEditorViewModel({
   capabilities: capabilitiesOverride,
   backUrl,
   backLabel,
+  compactToolbarSpacing = false,
   agendaItemId,
+  processBranchId,
 }: EditorViewProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -40,6 +43,7 @@ export function useEditorViewModel({
     readOnly,
     capabilities: capabilitiesOverride,
     agendaItemId,
+    processBranchId,
   });
 
   const {
@@ -49,6 +53,7 @@ export function useEditorViewModel({
     content,
     discussions,
     mode,
+    modeDisabledReasons,
     saveStatus,
     hasUnsavedChanges,
     isSavingTitle,
@@ -77,6 +82,29 @@ export function useEditorViewModel({
     };
   }, [userId, userRecord]);
 
+  const presenceColorByUserId = useMemo(() => {
+    const visibleUserIds = new Set<string>();
+
+    if (currentUser?.id) {
+      visibleUserIds.add(currentUser.id);
+    }
+    if (entity?.owner?.id) {
+      visibleUserIds.add(entity.owner.id);
+    }
+    for (const collaborator of entity?.collaborators ?? []) {
+      if (collaborator.user.id) {
+        visibleUserIds.add(collaborator.user.id);
+      }
+    }
+    for (const user of entity?.extraUsers ?? []) {
+      if (user.id) {
+        visibleUserIds.add(user.id);
+      }
+    }
+
+    return generateDistinctUserColorMap(visibleUserIds);
+  }, [currentUser?.id, entity]);
+
   // Get the content entity ID (document ID for amendments, blog ID for blogs)
   const contentEntityId = useMemo(() => {
     if (entityType === 'amendment') {
@@ -91,6 +119,7 @@ export function useEditorViewModel({
     userId,
     userName: userRecord?.name || userRecord?.email || 'Anonymous',
     userAvatar: userRecord?.avatar,
+    userColorByUserId: presenceColorByUserId,
     enabled: capabilities.presence,
   });
 
@@ -114,6 +143,7 @@ export function useEditorViewModel({
 
   // Get amendment-specific data
   const amendmentId = entity?.metadata?.amendmentId;
+  const effectiveProcessBranchId = entity?.metadata?.processBranchId ?? processBranchId ?? null;
 
   // Callback to persist a change_request entity when a suggestion is created
   const handleChangeRequestCreate = useCallback(
@@ -138,6 +168,7 @@ export function useEditorViewModel({
         id: changeRequestEntityId,
         crId,
         amendmentId,
+        processBranchId: effectiveProcessBranchId,
         changedCharacterCount: snapshot.changed_character_count,
         change_type: snapshot.change_type,
         original_text: snapshot.original_text,
@@ -146,12 +177,15 @@ export function useEditorViewModel({
         new_properties: snapshot.new_properties,
       });
     },
-    [amendmentId, content, editorOps]
+    [amendmentId, content, effectiveProcessBranchId, editorOps]
   );
 
   // Auto-assign suggestion IDs
   useSuggestionIdAssignment({
-    enabled: !(entityType === 'amendment' && (mode === 'suggest_event' || mode === 'vote_event')),
+    enabled: !(
+      entityType === 'amendment' &&
+      (mode === 'suggest_event' || mode === 'event_final_closing_vote')
+    ),
     documentId: contentEntityId,
     discussions,
     onDiscussionsUpdate: setDiscussions,
@@ -172,12 +206,23 @@ export function useEditorViewModel({
         discussions,
         suggestion,
         mode,
-        amendmentId
+        amendmentId,
+        effectiveProcessBranchId
       );
 
       setDiscussions(updatedDiscussions);
     },
-    [contentEntityId, userId, content, discussions, mode, amendmentId, setDiscussions, editorOps]
+    [
+      contentEntityId,
+      userId,
+      content,
+      discussions,
+      mode,
+      amendmentId,
+      effectiveProcessBranchId,
+      setDiscussions,
+      editorOps,
+    ]
   );
 
   // Handle suggestion declined
@@ -191,12 +236,23 @@ export function useEditorViewModel({
         discussions,
         suggestion,
         mode,
-        amendmentId
+        amendmentId,
+        effectiveProcessBranchId
       );
 
       setDiscussions(updatedDiscussions);
     },
-    [contentEntityId, userId, content, discussions, mode, amendmentId, setDiscussions, editorOps]
+    [
+      contentEntityId,
+      userId,
+      content,
+      discussions,
+      mode,
+      amendmentId,
+      effectiveProcessBranchId,
+      setDiscussions,
+      editorOps,
+    ]
   );
 
   // Handle voting
@@ -208,10 +264,11 @@ export function useEditorViewModel({
         userId,
         discussions,
         suggestion,
-        'accept'
+        'accept',
+        effectiveProcessBranchId
       );
     },
-    [contentEntityId, amendmentId, userId, discussions, editorOps]
+    [contentEntityId, amendmentId, userId, discussions, effectiveProcessBranchId, editorOps]
   );
 
   const onVoteReject = useCallback(
@@ -222,10 +279,11 @@ export function useEditorViewModel({
         userId,
         discussions,
         suggestion,
-        'reject'
+        'reject',
+        effectiveProcessBranchId
       );
     },
-    [contentEntityId, amendmentId, userId, discussions, editorOps]
+    [contentEntityId, amendmentId, userId, discussions, effectiveProcessBranchId, editorOps]
   );
 
   const onVoteAbstain = useCallback(
@@ -236,10 +294,11 @@ export function useEditorViewModel({
         userId,
         discussions,
         suggestion,
-        'abstain'
+        'abstain',
+        effectiveProcessBranchId
       );
     },
-    [contentEntityId, amendmentId, userId, discussions, editorOps]
+    [contentEntityId, amendmentId, userId, discussions, effectiveProcessBranchId, editorOps]
   );
 
   const onFinalizeInternalVote = useCallback(
@@ -323,6 +382,7 @@ export function useEditorViewModel({
     canManageChangeRequestVotes,
     canVoteOnChangeRequests,
     capabilities,
+    compactToolbarSpacing,
     content,
     contentEntityId,
     currentUser,
@@ -342,6 +402,7 @@ export function useEditorViewModel({
     isOwnerOrCollaborator,
     isSavingTitle,
     mode,
+    modeDisabledReasons,
     onSuggestionAccepted,
     onSuggestionDeclined,
     onFinalizeInternalVote,
@@ -350,6 +411,7 @@ export function useEditorViewModel({
     onVoteReject,
     onlinePeerMap,
     onlinePeers,
+    presenceColorByUserId,
     readOnly,
     restoreVersion,
     saveStatus,

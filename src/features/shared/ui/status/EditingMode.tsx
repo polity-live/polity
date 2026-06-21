@@ -49,10 +49,25 @@ interface EditingModeOption {
   value: EditingMode;
 }
 
-export const SYSTEM_MANAGED_EVENT_MODE_TOOLTIP =
-  'Dieser Status wird vom System verwaltet und automatisch aktiviert, sobald das Event startet bzw. die Event-Abstimmung beginnt.';
+export const SYSTEM_MANAGED_EVENT_MODE_TOOLTIP = 'System verwaltet diesen Status.';
 export const EVENT_PHASE_LOCKED_MODE_TOOLTIP =
   'Dieser Status ist während der Event-Phase gesperrt. Der Antrag wird jetzt vom Event-Ablauf gesteuert.';
+
+const DISABLED_MODE_REASON_LABELS: Record<string, { fallback: string; key: string }> = {
+  'branch-readonly': {
+    key: 'features.amendments.workflowDisabledReasons.branchReadonly',
+    fallback: 'Diese Branch ist abgeschlossen und kann nicht mehr geändert werden.',
+  },
+  'event-controlled': {
+    key: 'features.amendments.workflowDisabledReasons.eventControlled',
+    fallback: 'Dieser Status wird automatisch durch den Event-Ablauf gesetzt.',
+  },
+  'internal-window-closed': {
+    key: 'features.amendments.workflowDisabledReasons.internalWindowClosed',
+    fallback:
+      'Der interne Modus kann nach Start des ersten Prozess-Agenda-Punkts nicht mehr manuell geändert werden.',
+  },
+};
 
 const MODE_ICON_MAP: Record<EditingMode, LucideIcon> = {
   edit: PenIcon,
@@ -60,7 +75,7 @@ const MODE_ICON_MAP: Record<EditingMode, LucideIcon> = {
   suggest_internal: PencilLineIcon,
   suggest_event: CalendarIcon,
   vote_internal: Vote,
-  vote_event: GavelIcon,
+  event_final_closing_vote: GavelIcon,
   passed: CheckCircle2Icon,
   rejected: XCircleIcon,
 };
@@ -86,9 +101,9 @@ const MODE_LABEL_KEYS: Record<EditingMode, { fallback: string; key: string }> = 
     key: 'features.amendments.workflow.internalVoting',
     fallback: 'Internal Voting Mode',
   },
-  vote_event: {
+  event_final_closing_vote: {
     key: 'features.amendments.workflow.eventVoting',
-    fallback: 'Event Voting Mode',
+    fallback: 'Event Final Closing Vote',
   },
   passed: {
     key: 'features.amendments.workflow.passed',
@@ -121,9 +136,9 @@ const MODE_DESCRIPTION_KEYS: Record<EditingMode, { fallback: string; key: string
     key: 'features.amendments.workflowDescriptions.internalVoting',
     fallback: 'Collaborators vote on change requests',
   },
-  vote_event: {
+  event_final_closing_vote: {
     key: 'features.amendments.workflowDescriptions.eventVoting',
-    fallback: 'Event votes sequentially on changes',
+    fallback: 'Final event vote is active and event suggestions are locked',
   },
   passed: {
     key: 'features.amendments.workflowDescriptions.passed',
@@ -141,7 +156,7 @@ const MODE_COLOR_CLASSES: Record<EditingMode, string> = {
   suggest_internal: getSemanticToneClasses('accent').dot,
   suggest_event: getEntityToneClasses('event').dot,
   vote_internal: getEntityToneClasses('vote').dot,
-  vote_event: getEntityToneClasses('event').dot,
+  event_final_closing_vote: getEntityToneClasses('event').dot,
   passed: getSemanticToneClasses('success').dot,
   rejected: getSemanticToneClasses('danger').dot,
 };
@@ -153,6 +168,7 @@ const LEGACY_EDITING_MODE_INPUTS = new Set([
   'viewing',
   'event_suggesting',
   'event_voting',
+  'vote_event',
   'Drafting',
   'Under Review',
   'Passed',
@@ -193,6 +209,12 @@ export function getEditingModeOption(
 
 export function getSelectableEditingModeOptions(t: Translate): EditingModeOption[] {
   return MANUALLY_SELECTABLE_MODES.map(mode => getEditingModeOption(mode, t));
+}
+
+function formatDisabledModeReason(reason: string | undefined, t: Translate) {
+  if (!reason) return undefined;
+  const label = DISABLED_MODE_REASON_LABELS[reason];
+  return label ? t(label.key, label.fallback) : reason;
 }
 
 export function EditingModeBadge({
@@ -264,7 +286,7 @@ export function EditingModeMenuItems({
       {options.map(option => {
         const mode = option.value as SelectableEditingMode;
         const isSystemManaged = isAutomaticEventMode(mode);
-        const disabledReason = disabledModeReasons?.[mode];
+        const disabledReason = formatDisabledModeReason(disabledModeReasons?.[mode], t);
         const isCurrentMode = mode === value;
         const helpText = isSystemManaged
           ? SYSTEM_MANAGED_EVENT_MODE_TOOLTIP

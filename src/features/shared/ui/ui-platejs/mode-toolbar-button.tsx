@@ -6,12 +6,14 @@ import { ModeToolbarButtonView } from './ModeToolbarButtonView';
 
 interface ModeToolbarButtonProps extends DropdownMenuProps {
   currentMode?: EditorMode;
-  onModeChange?: (mode: EditorMode) => void;
+  disabledModeReasons?: Partial<Record<EditorMode, string>>;
+  onModeChange?: (mode: EditorMode) => void | Promise<void>;
   isOwnerOrCollaborator?: boolean;
 }
 
 export function ModeToolbarButton({
   currentMode,
+  disabledModeReasons,
   onModeChange,
   isOwnerOrCollaborator = true,
   ...props
@@ -19,6 +21,7 @@ export function ModeToolbarButton({
   return (
     <ModeToolbarButtonView
       dropdownProps={props}
+      disabledModeReasons={disabledModeReasons}
       isOwnerOrCollaborator={isOwnerOrCollaborator}
       {...useModeToolbarButtonController({ currentMode, onModeChange })}
     />

@@ -54,6 +54,10 @@ interface TargetGroupEventSelectorProps {
   selectedEventId?: string;
   selectedPathMode?: 'hierarchy' | 'workflow';
   selectedWorkflowId?: string;
+  excludedSourceGroupIds?: string[];
+  fixedTargetGroupId?: string | null;
+  fixedWorkflowId?: string | null;
+  lockTargetSelection?: boolean;
   disablePortal?: boolean;
   allowGroupWithoutEvent?: boolean;
   allowSourceGroupAsTarget?: boolean;
@@ -97,6 +101,10 @@ export function TargetGroupEventSelector({
   selectedEventId,
   selectedPathMode,
   selectedWorkflowId,
+  excludedSourceGroupIds = [],
+  fixedTargetGroupId = null,
+  fixedWorkflowId = null,
+  lockTargetSelection = false,
   disablePortal = false,
   allowGroupWithoutEvent = false,
   allowSourceGroupAsTarget = false,
@@ -109,10 +117,10 @@ export function TargetGroupEventSelector({
 
   const [selectedUserId, setSelectedUserId] = useState<string>(userId);
   const [pathMode, setPathMode] = useState<'hierarchy' | 'workflow'>(
-    selectedPathMode ?? 'hierarchy'
+    fixedWorkflowId ? 'workflow' : (selectedPathMode ?? 'hierarchy')
   );
   const [selectedWorkflowIdState, setSelectedWorkflowIdState] = useState<string>(
-    selectedWorkflowId ?? ''
+    fixedWorkflowId ?? selectedWorkflowId ?? ''
   );
   const [selectedSourceGroup, setSelectedSourceGroup] = useState<{
     id: string;
@@ -147,11 +155,19 @@ export function TargetGroupEventSelector({
   const networkMemberships = allGroupMemberships ?? [];
   const networkEvents = allEvents ?? [];
   const currentUserId = selectedUserId || userId;
+  const excludedSourceGroupIdSet = useMemo(
+    () => new Set(excludedSourceGroupIds),
+    [excludedSourceGroupIds]
+  );
 
   const activeSourceGroups = useMemo(() => {
     const sourceGroupIds = getActiveUserGroupIds(networkMemberships, currentUserId);
-    return dedupeGroupsById(networkGroups.filter(group => sourceGroupIds.includes(group.id)));
-  }, [currentUserId, networkGroups, networkMemberships]);
+    return dedupeGroupsById(
+      networkGroups.filter(
+        group => sourceGroupIds.includes(group.id) && !excludedSourceGroupIdSet.has(group.id)
+      )
+    );
+  }, [currentUserId, excludedSourceGroupIdSet, networkGroups, networkMemberships]);
 
   const reachableHierarchyGroups = useMemo(() => {
     if (!selectedSourceGroup?.id) {
@@ -176,6 +192,11 @@ export function TargetGroupEventSelector({
   const selectedWorkflow = useMemo(
     () => allWorkflows.find(workflow => workflow.id === selectedWorkflowIdState) ?? null,
     [allWorkflows, selectedWorkflowIdState]
+  );
+
+  const fixedTargetGroup = useMemo(
+    () => networkGroups.find(group => group.id === fixedTargetGroupId) ?? null,
+    [fixedTargetGroupId, networkGroups]
   );
 
   const selectedWorkflowStartGroup = useMemo(() => {
@@ -223,6 +244,14 @@ export function TargetGroupEventSelector({
       return [];
     }
 
+    if (lockTargetSelection && fixedTargetGroup) {
+      if (pathMode === 'workflow') {
+        return selectedWorkflowFinalGroup ? [selectedWorkflowFinalGroup] : [];
+      }
+
+      return [fixedTargetGroup];
+    }
+
     if (pathMode === 'workflow') {
       return selectedWorkflowFinalGroup ? [selectedWorkflowFinalGroup] : [];
     }
@@ -235,6 +264,8 @@ export function TargetGroupEventSelector({
     return dedupeGroupsById(groups);
   }, [
     allowSourceGroupAsTarget,
+    fixedTargetGroup,
+    lockTargetSelection,
     pathMode,
     reachableHierarchyGroups,
     selectedSourceGroup,
@@ -290,19 +321,47 @@ export function TargetGroupEventSelector({
   );
 
   useEffect(() => {
+    if (fixedWorkflowId) {
+      setPathMode('workflow');
+      return;
+    }
+
     if (selectedPathMode) {
       setPathMode(selectedPathMode);
     }
-  }, [selectedPathMode]);
+  }, [fixedWorkflowId, selectedPathMode]);
 
   useEffect(() => {
+    if (fixedWorkflowId) {
+      setSelectedWorkflowIdState(fixedWorkflowId);
+      return;
+    }
+
     if (selectedWorkflowId !== undefined) {
       setSelectedWorkflowIdState(selectedWorkflowId ?? '');
     }
-  }, [selectedWorkflowId]);
+  }, [fixedWorkflowId, selectedWorkflowId]);
 
   useEffect(() => {
-    if (!selectedWorkflowIdState || !selectedSourceGroup?.id || allWorkflows.length === 0) {
+    if (!lockTargetSelection || !fixedTargetGroup || pathMode === 'workflow') {
+      return;
+    }
+
+    if (selectedGroup?.id === fixedTargetGroup.id) {
+      return;
+    }
+
+    setSelectedGroup({ id: fixedTargetGroup.id, data: fixedTargetGroup });
+    onGroupSelectionChange?.(fixedTargetGroup.id);
+  }, [fixedTargetGroup, lockTargetSelection, onGroupSelectionChange, pathMode, selectedGroup?.id]);
+
+  useEffect(() => {
+    if (
+      fixedWorkflowId ||
+      !selectedWorkflowIdState ||
+      !selectedSourceGroup?.id ||
+      allWorkflows.length === 0
+    ) {
       return;
     }
 
@@ -320,6 +379,7 @@ export function TargetGroupEventSelector({
     onSelect(null);
   }, [
     allWorkflows.length,
+    fixedWorkflowId,
     onSelect,
     onWorkflowSelectionChange,
     reachableWorkflows,
@@ -397,6 +457,23 @@ export function TargetGroupEventSelector({
   }, [availableTargetGroups, onGroupSelectionChange, onSelect, selectedGroup, selectedGroupId]);
 
   useEffect(() => {
+    if (
+      selectedSourceGroup &&
+      activeSourceGroups.length > 0 &&
+      !activeSourceGroups.some(group => group.id === selectedSourceGroup.id)
+    ) {
+      setSelectedSourceGroup(null);
+      setSelectedGroup(null);
+      setSelectedEvent(null);
+      setPathWithEvents([]);
+      setSelectedHierarchyPathId('');
+      setPathValidationError(null);
+      onSourceGroupSelectionChange?.(null);
+      onGroupSelectionChange?.(null);
+      onSelect(null);
+      return;
+    }
+
     if (selectedSourceGroupId && selectedSourceGroupId !== sourcePrefillRef.current) {
       const nextSourceGroup = activeSourceGroups.find(group => group.id === selectedSourceGroupId);
       if (nextSourceGroup) {
@@ -414,6 +491,8 @@ export function TargetGroupEventSelector({
   }, [
     activeSourceGroups,
     onSourceGroupSelectionChange,
+    onGroupSelectionChange,
+    onSelect,
     selectedSourceGroup,
     selectedSourceGroupId,
   ]);
@@ -1034,6 +1113,7 @@ export function TargetGroupEventSelector({
       handleStartGraphGroupClick={handleStartGraphGroupClick}
       handleTargetGraphGroupClick={handleTargetGraphGroupClick}
       layoutScope={layoutScope}
+      lockTargetSelection={lockTargetSelection}
       networkGroups={networkGroups}
       onHierarchyPathValueChange={handleHierarchyPathValueChange}
       onPathModeValueChange={handlePathModeValueChange}
@@ -1052,6 +1132,7 @@ export function TargetGroupEventSelector({
       selectedSourceGroup={selectedSourceGroup}
       selectedUserId={selectedUserId}
       selectedWorkflowFinalGroup={selectedWorkflowFinalGroup}
+      selectedWorkflow={selectedWorkflow}
       selectedWorkflowIdState={selectedWorkflowIdState}
       selectedWorkflowStartGroup={selectedWorkflowStartGroup}
       targetEventItems={targetEventItems}

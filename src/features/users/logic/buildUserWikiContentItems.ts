@@ -2,6 +2,8 @@ import type { SearchContentItem } from '@/features/search/types/search.types';
 import { getMembershipRoleNames } from '@/features/shared/logic/membershipRoleHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
+import { getStatementHeadline } from '@/zero/statements/content';
+import { getOrderedBranches } from '@/features/amendments/logic/amendmentBranchDisplay';
 import type { UserProfile } from '../types/user.types';
 import { buildSearchText } from './userWikiSearch';
 
@@ -49,6 +51,8 @@ export function buildUserWikiContentItems({
       : [];
     const tags = hashtagTags.length > 0 ? hashtagTags : rawTags;
     const description = richTextToPlainText(amendment.reason ?? amendment.preamble);
+    const firstBranch =
+      getOrderedBranches(amendment.current_process_run?.branches ?? [])[0] ?? null;
 
     items.push({
       id: amendment.id,
@@ -59,7 +63,7 @@ export function buildUserWikiContentItems({
       tags,
       groupId: amendment.group?.id,
       groupName: amendment.group?.name,
-      status: amendment.editing_mode,
+      status: firstBranch?.editing_mode ?? null,
       collaboratorCount: amendment.collaborators?.length,
       changeRequestCount: amendment.change_requests?.length,
       commentCount: amendment.comment_count,
@@ -71,7 +75,7 @@ export function buildUserWikiContentItems({
         amendment.title,
         amendment.reason,
         amendment.preamble,
-        amendment.editing_mode,
+        firstBranch?.editing_mode,
         amendment.code,
         amendment.created_at,
         amendment.group?.name,
@@ -145,13 +149,14 @@ export function buildUserWikiContentItems({
   for (const statement of user.statements ?? []) {
     const tags = extractHashtagTags(statement.statement_hashtags);
     const text = richTextToPlainText(statement.text);
+    const title = getStatementHeadline(statement, text);
     const supportVotes = statement.support_votes ?? [];
     const survey = statement.surveys?.[0];
 
     items.push({
       id: statement.id,
       type: 'statement',
-      title: text,
+      title,
       description: text,
       imageUrl: statement.image_url,
       videoUrl: statement.video_url,
@@ -175,7 +180,7 @@ export function buildUserWikiContentItems({
         reactions: supportVotes.length,
         comments: statement.comment_count,
       },
-      searchText: buildSearchText(text, statement.group?.name, tags),
+      searchText: buildSearchText(title, text, statement.group?.name, tags),
     });
   }
 

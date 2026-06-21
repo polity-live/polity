@@ -4,6 +4,8 @@ import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { getUserAvatar, getUserDisplayName } from '../utils/searchUtils';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { getOrderedBranches } from '@/features/amendments/logic/amendmentBranchDisplay';
+import { getStatementHeadline } from '@/zero/statements/content';
 
 export function toTags(hashtags?: { tag?: string | null }[]): string[] {
   if (!hashtags) return [];
@@ -89,7 +91,8 @@ export function mapMosaicToContentItems(
           },
         });
         break;
-      case 'amendment':
+      case 'amendment': {
+        const firstBranch = getOrderedBranches(item.current_process_run?.branches ?? [])[0] ?? null;
         acc.push({
           id: item.id,
           type: 'amendment',
@@ -99,7 +102,7 @@ export function mapMosaicToContentItems(
           tags: extractHashtagTags(item.amendment_hashtags),
           groupId: item.group?.id,
           groupName: item.group?.name,
-          status: item.editing_mode,
+          status: firstBranch?.editing_mode ?? null,
           collaboratorCount: item.collaborators?.length,
           changeRequestCount: item.change_requests?.length,
           stats: {
@@ -108,6 +111,7 @@ export function mapMosaicToContentItems(
           },
         });
         break;
+      }
       case 'blog': {
         const blogRelations = item.bloggers ?? [];
         const blogOwnerRelation =
@@ -135,11 +139,12 @@ export function mapMosaicToContentItems(
         });
         break;
       }
-      case 'statement':
+      case 'statement': {
+        const statementTitle = getStatementHeadline(item, item.text ?? '');
         acc.push({
           id: item.id,
           type: 'statement',
-          title: item.text ?? '',
+          title: statementTitle,
           description: toDescription(item.text),
           imageUrl: item.image_url,
           videoUrl: item.video_url,
@@ -168,6 +173,7 @@ export function mapMosaicToContentItems(
           },
         });
         break;
+      }
       case 'todo':
         acc.push({
           id: item.id,

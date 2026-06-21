@@ -39,10 +39,14 @@ import { TargetSelectionDialog } from '@/features/amendments/ui/TargetSelectionD
 import { Link } from '@tanstack/react-router';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import {
+  getBranchEditingMode,
+  getOrderedBranches,
+} from '@/features/amendments/logic/amendmentBranchDisplay';
 const AMENDMENT_CARD_SURFACE = `${getEntityGradientClasses('amendment')} ${getMotionPreset('hoverLift')}`;
 
 const AMENDMENT_CREATION_MODES = new Set(['edit', 'view', 'suggest_internal', 'vote_internal']);
-const AMENDMENT_DECISION_MODES = new Set(['suggest_event', 'vote_event']);
+const AMENDMENT_DECISION_MODES = new Set(['suggest_event', 'event_final_closing_vote']);
 
 function AmendmentWorkflowPhaseRail({ mode, t }: { mode: any; t: any }) {
   const currentMode = getEditingModeOption(mode, t).value;
@@ -240,6 +244,11 @@ export function AmendmentWikiView({
         roles: role ? [role] : [],
       };
     });
+  const orderedBranches = getOrderedBranches(amendment.current_process_run?.branches ?? []);
+  const primaryBranchMode = getBranchEditingMode(orderedBranches[0] ?? null);
+  const branchCount = orderedBranches.length;
+  const changeRequestCount =
+    amendment.change_requests?.length ?? amendment.change_request_count ?? 0;
 
   return (
     <div>
@@ -247,7 +256,7 @@ export function AmendmentWikiView({
       <div className="mb-8 text-center">
         <div className="mb-2 flex items-center justify-center gap-3">
           <h1 className="text-4xl font-bold">{amendment.title}</h1>
-          <EditingModeBadge mode={amendment.editing_mode} showIcon />
+          <EditingModeBadge mode={primaryBranchMode} showIcon />
         </div>
         {amendment.preamble && (
           <p className="text-muted-foreground text-xl">{amendment.preamble}</p>
@@ -340,9 +349,10 @@ export function AmendmentWikiView({
           },
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
           { value: amendment.clone_count ?? clones.length, labelKey: 'components.labels.clones' },
+          { value: branchCount, labelKey: 'components.labels.branches' },
           { value: supportingGroupCount, labelKey: 'components.labels.supportingGroups' },
           {
-            value: amendment.change_request_count ?? (amendment.change_requests?.length || 0),
+            value: changeRequestCount,
             labelKey: 'components.labels.changeRequests',
           },
         ]}
@@ -389,7 +399,7 @@ export function AmendmentWikiView({
             title: amendment.title ?? '',
             description: amendment.preamble || amendment.code || undefined,
             createdAt: new Date(),
-            status: amendment.editing_mode,
+            status: primaryBranchMode,
             groupName: targetGroup?.name,
             collaboratorCount: collaborators.length,
             supportingGroupsCount: supportingGroupCount,
@@ -415,7 +425,7 @@ export function AmendmentWikiView({
         className="mb-8"
       />
 
-      <AmendmentWorkflowPhaseRail mode={amendment.editing_mode} t={t} />
+      <AmendmentWorkflowPhaseRail mode={primaryBranchMode} t={t} />
 
       <WikiParticipationDirectory
         title={translateText('generated.inline.0020_collaborators_6eb695e5', 'Collaborators')}
@@ -579,45 +589,49 @@ export function AmendmentWikiView({
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {clones.map((clone: any) => (
-                <Link
-                  key={clone.id}
-                  to="/amendment/$id"
-                  params={{ id: clone.id }}
-                  className="block transition-opacity hover:opacity-90"
-                >
-                  <Card className={`overflow-hidden ${AMENDMENT_CARD_SURFACE}`}>
-                    <CardHeader className="space-y-2 pb-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <CardTitle className="line-clamp-2 text-lg">{clone.title}</CardTitle>
-                          {clone.preamble && (
-                            <CardDescription className="mt-1 line-clamp-2 text-sm">
-                              {clone.preamble}
-                            </CardDescription>
+              {clones.map((clone: any) => {
+                const cloneBranch =
+                  getOrderedBranches(clone.current_process_run?.branches ?? [])[0] ?? null;
+                return (
+                  <Link
+                    key={clone.id}
+                    to="/amendment/$id"
+                    params={{ id: clone.id }}
+                    className="block transition-opacity hover:opacity-90"
+                  >
+                    <Card className={`overflow-hidden ${AMENDMENT_CARD_SURFACE}`}>
+                      <CardHeader className="space-y-2 pb-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <CardTitle className="line-clamp-2 text-lg">{clone.title}</CardTitle>
+                            {clone.preamble && (
+                              <CardDescription className="mt-1 line-clamp-2 text-sm">
+                                {clone.preamble}
+                              </CardDescription>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <EditingModeBadge mode={getBranchEditingMode(cloneBranch)} showIcon />
+                          {clone.code && (
+                            <BadgeControl variant="outline" size="xs">
+                              {clone.code}
+                            </BadgeControl>
                           )}
                         </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <EditingModeBadge mode={clone.editing_mode} showIcon />
-                        {clone.code && (
-                          <BadgeControl variant="outline" size="xs">
-                            {clone.code}
-                          </BadgeControl>
-                        )}
-                      </div>
-                    </CardHeader>
-                    {clone.created_at && (
-                      <CardContent className="pt-0">
-                        <p className="text-muted-foreground text-xs">
-                          {translateText('generated.inline.0084_created_0c78dab1')}
-                          {new Date(clone.created_at).toLocaleDateString()}
-                        </p>
-                      </CardContent>
-                    )}
-                  </Card>
-                </Link>
-              ))}
+                      </CardHeader>
+                      {clone.created_at && (
+                        <CardContent className="pt-0">
+                          <p className="text-muted-foreground text-xs">
+                            {translateText('generated.inline.0084_created_0c78dab1')}
+                            {new Date(clone.created_at).toLocaleDateString()}
+                          </p>
+                        </CardContent>
+                      )}
+                    </Card>
+                  </Link>
+                );
+              })}
             </div>
           </CardContent>
         </Card>

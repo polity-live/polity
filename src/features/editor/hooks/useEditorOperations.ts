@@ -86,6 +86,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       id: string;
       crId: string;
       amendmentId: string;
+      processBranchId?: string | null;
       changedCharacterCount?: number;
       change_type?: string | null;
       original_text?: string | null;
@@ -98,6 +99,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         await createChangeRequest({
           id: params.id,
           amendment_id: params.amendmentId,
+          process_branch_id: params.processBranchId ?? null,
           title: params.crId,
           description: '',
           status: 'open',
@@ -133,9 +135,10 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       discussions: TDiscussion[],
       suggestion: SuggestionRef,
       editingMode?: EditorMode,
-      amendmentId?: string
+      amendmentId?: string,
+      processBranchId?: string | null
     ): Promise<{ updatedDiscussions: TDiscussion[] }> => {
-      if (editingMode === 'vote_internal' || editingMode === 'vote_event') {
+      if (editingMode === 'vote_internal' || editingMode === 'event_final_closing_vote') {
         toast.error(
           translateText(
             'generated.inline.0419_this_document_is_in_voting_mode_changes_must__dc2a16a9'
@@ -181,6 +184,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
             await createChangeRequest({
               id: changeRequestId,
               amendment_id: amendmentId,
+              process_branch_id: processBranchId ?? null,
               title: discussion.crId || 'Change Request',
               description: '',
               status: 'accepted',
@@ -219,9 +223,10 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       discussions: TDiscussion[],
       suggestion: SuggestionRef,
       editingMode?: EditorMode,
-      amendmentId?: string
+      amendmentId?: string,
+      processBranchId?: string | null
     ): Promise<{ updatedDiscussions: TDiscussion[] }> => {
-      if (editingMode === 'vote_internal' || editingMode === 'vote_event') {
+      if (editingMode === 'vote_internal' || editingMode === 'event_final_closing_vote') {
         toast.error(
           translateText(
             'generated.inline.0421_this_document_is_in_voting_mode_changes_must__66a233c7'
@@ -268,6 +273,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
               await createChangeRequest({
                 id: changeRequestId,
                 amendment_id: amendmentId,
+                process_branch_id: processBranchId ?? null,
                 title: discussion.crId || 'Change Request',
                 description: '',
                 status: 'rejected',
@@ -306,7 +312,8 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       userId: string,
       discussions: TDiscussion[],
       suggestion: SuggestionRef,
-      voteType: 'accept' | 'reject' | 'abstain'
+      voteType: 'accept' | 'reject' | 'abstain',
+      processBranchId?: string | null
     ): Promise<void> => {
       try {
         const discussion = discussions.find(
@@ -326,6 +333,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
           await createChangeRequest({
             id: changeRequestId,
             amendment_id: amendmentId,
+            process_branch_id: processBranchId ?? null,
             title: discussion.crId || 'Change Request',
             description: '',
             status: 'pending',

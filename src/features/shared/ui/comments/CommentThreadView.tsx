@@ -28,6 +28,7 @@ interface CommentThreadViewProps {
   onSortChange: (sortBy: CommentSortBy) => void;
   emptyState?: ReactNode;
   isSubmitting?: boolean;
+  linkAuthors?: boolean;
   className?: string;
 }
 
@@ -44,6 +45,7 @@ export function CommentThreadView({
   onSortChange,
   emptyState,
   isSubmitting,
+  linkAuthors,
   className,
 }: CommentThreadViewProps) {
   return (
@@ -86,6 +88,7 @@ export function CommentThreadView({
                 onVote={onVote}
                 onReply={onReply}
                 onDelete={onDelete}
+                linkAuthors={linkAuthors}
               />
             ))}
       </div>

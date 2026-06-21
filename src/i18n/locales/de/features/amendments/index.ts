@@ -181,6 +181,8 @@ export const amendmentsTranslations = {
       'Navigiere durch das Netzwerk, um eine Zielgruppe und ein Event für deinen Antrag auszuwählen',
     pleaseLogin: 'Bitte melde dich an, um den Antragsprozess anzuzeigen.',
     loading: 'Laden...',
+    flowTab: 'Diagramm',
+    stepsTab: 'Schritte',
     currentTarget: 'Aktuelles Ziel',
     update: 'Aktualisieren',
     remove: 'Entfernen',

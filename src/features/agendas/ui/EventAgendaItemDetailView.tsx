@@ -30,6 +30,7 @@ import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 import { getOfflineTallyDialogTitle, getOfflineTallyTooltip } from '../logic/offlineTallyToolbar';
 import { NamedBallotResultsDialog } from './NamedBallotResultsDialog';
 import { isNamedBallot } from '@/zero/shared';
+import { AmendmentBranchSelectorSection } from '@/features/amendments/ui/AmendmentBranchSelectorSection';
 export interface EventAgendaItemDetailViewProps {
   eventId: any;
   agendaItemId: any;
@@ -37,6 +38,12 @@ export interface EventAgendaItemDetailViewProps {
   navigate: any;
   updateSpeaker: any;
   agendaItem: any;
+  agendaBranchEditingMode?: any;
+  branchSelectorBranches?: any;
+  selectedBranchId?: any;
+  branchDiffCandidates?: any;
+  defaultBranchDiffRightCandidateId?: any;
+  onBranchChange?: any;
   event: any;
   user: any;
   userRecord?: any;
@@ -60,6 +67,7 @@ export interface EventAgendaItemDetailViewProps {
   canBeCandidate: any;
   canManageAgenda: any;
   canManageVotes: any;
+  canManageVoteSequence?: any;
   canJoinSpeakerList: any;
   canManageOfflineTallies: any;
   hasVotingRight: any;
@@ -128,6 +136,7 @@ export interface EventAgendaItemDetailViewProps {
   hasNextChangeRequest: any;
   handlePreviousChangeRequest: any;
   handleNextChangeRequest: any;
+  handleStartSequenceFinalVote: any;
   handleToolbarStartVote: any;
   handleToolbarStartFinalVote: any;
   handleToolbarCloseVote: any;
@@ -189,6 +198,12 @@ export function EventAgendaItemDetailView({
   t,
   navigate,
   agendaItem,
+  agendaBranchEditingMode,
+  branchSelectorBranches,
+  selectedBranchId,
+  branchDiffCandidates,
+  defaultBranchDiffRightCandidateId,
+  onBranchChange,
   event,
   user,
   userRecord,
@@ -205,6 +220,7 @@ export function EventAgendaItemDetailView({
   delegateAssignmentMeta,
   delegateTargetEvent,
   canManageAgenda,
+  canManageVoteSequence = canManageAgenda,
   canJoinSpeakerList,
   hasVotingRight,
   hasCandidateRight,
@@ -223,7 +239,6 @@ export function EventAgendaItemDetailView({
   isOfflineTallySubmitting,
   namedResultsTarget,
   setNamedResultsTarget,
-  currentCRItem,
   completedItems,
   progress,
   isTimelineComplete,
@@ -231,16 +246,15 @@ export function EventAgendaItemDetailView({
   hasUserVotedOnCR,
   getUserSelectedChoiceIds,
   startIndicativePhase,
-  startFinalPhase,
   closeVoting,
   castCRVote,
   actionBarHook,
   documentContent,
   amendmentDiscussions,
   crDiffMap,
-  hasAmendmentCRs,
   isCRVotingActive,
   crDisplayItems,
+  effectiveFinalVoteItem,
   isVoteInCRList,
   selectedCRToolbarItem,
   isCRToolbarActive,
@@ -249,6 +263,7 @@ export function EventAgendaItemDetailView({
   hasNextChangeRequest,
   handlePreviousChangeRequest,
   handleNextChangeRequest,
+  handleStartSequenceFinalVote,
   handleToolbarStartVote,
   handleToolbarStartFinalVote,
   handleToolbarCloseVote,
@@ -292,11 +307,30 @@ export function EventAgendaItemDetailView({
   handleSubmitOfflineTally,
 }: EventAgendaItemDetailViewProps) {
   const [activeContextPane, setActiveContextPane] = useState<'details' | 'speakers'>('details');
+  const isDetailAgendaItemActive = detailRuntimeStatus === 'in-progress';
+  const canManageCurrentVote = isCRToolbarActive
+    ? isDetailAgendaItemActive && canManageVoteSequence
+    : canManageAgenda;
+  const canCompleteAgendaItem =
+    !isCRToolbarActive || effectiveFinalVoteItem?.status === 'completed';
+  const isOfflineOnlyAttendance = attendanceMode === 'offline';
+  const selectedCRIsPlaceholder = Boolean(
+    (selectedCRToolbarItem as { _votePlaceholder?: boolean } | null)?._votePlaceholder
+  );
+  const selectedCRHasVoteChoices = selectedCRChoices.length > 0;
+  const canCastSelectedCRVote = !selectedCRIsPlaceholder && selectedCRHasVoteChoices;
   const voteButtonDisabled =
     !isCRToolbarActive && (disableVoteButton || actionBarHook.disableSecretIndicativeVoteButton);
   const disabledVoteTooltip =
     actionBarHook.secretIndicativeVoteTooltip ??
     translateText('generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792');
+  const toolbarVoteClick = isOfflineOnlyAttendance
+    ? undefined
+    : isCRToolbarActive
+      ? toolbarVotingPhase !== 'closed' && !hasUserVotedOnSelectedCR && canCastSelectedCRVote
+        ? actionBarHook.handleVoteClick
+        : undefined
+      : actionBarHook.handleVoteClick;
 
   if (isLoading) {
     return (
@@ -347,9 +381,20 @@ export function EventAgendaItemDetailView({
       {contextToggleLabel}
     </Button>
   );
-  const hasChangeRequestResults = Boolean(agendaItem.amendment_id && hasAmendmentCRs);
+  const hasChangeRequestResults = Boolean(agendaItem.amendment_id && crDisplayItems.length > 0);
   const hasStandaloneVoteResults = Boolean(vote && !isVoteInCRList);
   const hasResultsPanel = Boolean(election || hasStandaloneVoteResults || hasChangeRequestResults);
+  const branchSwitcher =
+    branchSelectorBranches?.length > 1 && onBranchChange ? (
+      <AmendmentBranchSelectorSection
+        variant="inline"
+        branches={branchSelectorBranches}
+        selectedBranchId={selectedBranchId ?? null}
+        branchDiffCandidates={branchDiffCandidates ?? []}
+        defaultDiffRightCandidateId={defaultBranchDiffRightCandidateId ?? null}
+        onBranchChange={onBranchChange}
+      />
+    ) : null;
 
   const agendaDetailsPanel = (
     <Accordion type="single" collapsible defaultValue="agenda-details">
@@ -423,12 +468,13 @@ export function EventAgendaItemDetailView({
   const changeRequestResultsPanel = hasChangeRequestResults ? (
     <ChangeRequestCardsList
       items={crDisplayItems}
-      editingMode={agendaItem.amendment?.editing_mode}
+      editingMode={agendaBranchEditingMode}
       isVotingActive={isCRVotingActive}
       userId={user?.id}
-      canManage={canManageAgenda}
+      canManage={isDetailAgendaItemActive && canManageVoteSequence}
       canVote={hasVotingRight}
-      currentItemId={isCRVotingActive ? currentCRItem?.id : null}
+      hideInlineVotingControls
+      currentItemId={isCRVotingActive ? selectedCRToolbarItem?.id : null}
       progress={isCRVotingActive ? progress : undefined}
       completedCount={isCRVotingActive ? completedItems.length : undefined}
       allCRsProcessed={isCRVotingActive ? allCRsProcessed : undefined}
@@ -441,10 +487,15 @@ export function EventAgendaItemDetailView({
       userRecord={userRecord}
       hasUserVoted={isCRVotingActive ? hasUserVotedOnCR : undefined}
       getUserSelectedChoiceIds={isCRVotingActive ? getUserSelectedChoiceIds : undefined}
-      onCastVote={isCRVotingActive ? castCRVote : undefined}
-      onStartIndicative={isCRVotingActive ? startIndicativePhase : undefined}
-      onStartFinal={isCRVotingActive ? startFinalPhase : undefined}
-      onCloseVoting={isCRVotingActive ? closeVoting : undefined}
+      onCastVote={isCRVotingActive && isDetailAgendaItemActive ? castCRVote : undefined}
+      onStartIndicative={
+        isCRVotingActive && isDetailAgendaItemActive ? startIndicativePhase : undefined
+      }
+      onStartFinal={
+        isCRVotingActive && isDetailAgendaItemActive ? handleStartSequenceFinalVote : undefined
+      }
+      onCloseVoting={isCRVotingActive && isDetailAgendaItemActive ? closeVoting : undefined}
+      sequenceInterstitial={branchSwitcher}
     />
   ) : null;
 
@@ -549,7 +600,7 @@ export function EventAgendaItemDetailView({
         onStartItem={handleToolbarStartItem}
         onPreviousItem={agendaNav.moveToPreviousItem}
         onNextItem={agendaNav.moveToNextItem}
-        onCompleteItem={agendaNav.completeCurrentItem}
+        onCompleteItem={canCompleteAgendaItem ? agendaNav.completeCurrentItem : undefined}
         hasPreviousChangeRequest={isCRToolbarActive ? hasPreviousChangeRequest : undefined}
         hasNextChangeRequest={isCRToolbarActive ? hasNextChangeRequest : undefined}
         onPreviousChangeRequest={isCRToolbarActive ? handlePreviousChangeRequest : undefined}
@@ -557,6 +608,7 @@ export function EventAgendaItemDetailView({
         navigationLoading={agendaNav.isLoading}
         speakerLoading={actionBarHook.speakerLoading}
         candidateLoading={actionBarHook.candidateLoading}
+        voteLoading={actionBarHook.voteCasting.isLoading || Boolean(votingLoading)}
         onBackToAgenda={() => navigate({ to: '/event/$id/agenda', params: { id: eventId } })}
         onEditItem={actionBarHook.handleEditClick}
         onDeleteItem={handleDelete}
@@ -567,41 +619,37 @@ export function EventAgendaItemDetailView({
         onBecomeCandidate={actionBarHook.handleBecomeCandidate}
         onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
         onStartVote={
-          isCRToolbarActive
+          canManageCurrentVote && isCRToolbarActive
             ? toolbarVotingPhase === 'pending'
               ? handleToolbarStartVote
               : undefined
-            : toolbarVotingPhase === 'pending'
+            : canManageCurrentVote && toolbarVotingPhase === 'pending'
               ? actionBarHook.handleStartVote
               : undefined
         }
         onStartFinalVote={
-          isCRToolbarActive
+          canManageCurrentVote && isCRToolbarActive
             ? toolbarVotingPhase === 'indication'
               ? handleToolbarStartFinalVote
               : undefined
-            : handleToolbarStartFinalVote
+            : canManageCurrentVote
+              ? handleToolbarStartFinalVote
+              : undefined
         }
         onCloseFinalVote={
-          isCRToolbarActive
+          canManageCurrentVote && isCRToolbarActive
             ? toolbarVotingPhase === 'final_vote'
               ? handleToolbarCloseVote
               : undefined
-            : handleToolbarCloseVote
-        }
-        onVoteClick={
-          isCRToolbarActive
-            ? toolbarVotingPhase !== 'closed' && !hasUserVotedOnSelectedCR
-              ? actionBarHook.handleVoteClick
+            : canManageCurrentVote
+              ? handleToolbarCloseVote
               : undefined
-            : actionBarHook.handleVoteClick
         }
+        onVoteClick={toolbarVoteClick}
         disableVoteButton={voteButtonDisabled}
         disabledVoteTooltip={disabledVoteTooltip}
-        showOfflineTallyButton={!isCRToolbarActive && showOfflineTallyButton}
-        onOfflineTallyClick={
-          !isCRToolbarActive && showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined
-        }
+        showOfflineTallyButton={showOfflineTallyButton}
+        onOfflineTallyClick={showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined}
         offlineTallyMode={offlineTallyActionMode}
         offlineTallyTooltip={getOfflineTallyTooltip({
           phase: offlineTallyPhase,

@@ -95,6 +95,7 @@ export interface ResolvedSuggestion extends TResolvedSuggestion {
   comments: TComment[];
   title?: string;
   crId?: string; // Format: CR-x (e.g., CR-1, CR-2, etc.)
+  displayCrId?: string;
   changeRequestEntityId?: string;
   votes?: {
     id: string;
@@ -410,14 +411,14 @@ export function BlockSuggestionCard({
           ) : (
             <div className="flex flex-1 items-center gap-2 rounded-md border bg-[var(--surface)] px-3 py-2">
               {/* Display suggestion ID if available */}
-              {suggestion.crId && (
+              {(suggestion.displayCrId ?? suggestion.crId) && (
                 <span
                   className={cn(
                     'rounded px-2 py-1 font-mono text-xs',
                     getBadgeToneClasses('accent')
                   )}
                 >
-                  {suggestion.crId}
+                  {suggestion.displayCrId ?? suggestion.crId}
                 </span>
               )}
               <span className="text-sm font-semibold">
@@ -614,7 +615,7 @@ export function BlockSuggestionCard({
             </div>
           )}
 
-        {(currentMode === 'vote_internal' || currentMode === 'vote_event') && (
+        {(currentMode === 'vote_internal' || currentMode === 'event_final_closing_vote') && (
           <div className="mt-4 space-y-2">
             {currentMode === 'vote_internal' && (
               <div className="bg-background/70 rounded-md border p-3 text-xs">
@@ -763,7 +764,7 @@ export function BlockSuggestionCard({
                 <AlertDialogTrigger asChild>
                   <Button size="sm" variant="outline" className="w-full">
                     <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Abstimmung beenden
+                    Interne Abstimmung beenden
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -781,7 +782,7 @@ export function BlockSuggestionCard({
                         onFinalizeInternalVote?.(suggestion);
                       }}
                     >
-                      Abstimmung beenden
+                      Interne Abstimmung beenden
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -958,6 +959,7 @@ export const useResolveSuggestion = (
       const comments = discussion?.comments || [];
       const title = discussion?.title; // Get the title from the discussion
       const crId = discussion?.crId; // Get the CR-x ID from the discussion
+      const displayCrId = discussion?.displayCrId ?? crId;
       const changeRequestEntityId = discussion?.changeRequestEntityId;
       const votes = discussion?.votes; // Get the votes from the discussion
       const votesFor = discussion?.votesFor;
@@ -983,6 +985,7 @@ export const useResolveSuggestion = (
         return res.push({
           comments,
           crId, // Include the CR-x ID
+          displayCrId,
           changeRequestEntityId,
           votes, // Include the votes
           votesFor,
@@ -1013,6 +1016,7 @@ export const useResolveSuggestion = (
         return res.push({
           comments,
           crId, // Include the CR-x ID
+          displayCrId,
           changeRequestEntityId,
           votes, // Include the votes
           votesFor,
@@ -1042,6 +1046,7 @@ export const useResolveSuggestion = (
         return res.push({
           comments,
           crId, // Include the CR-x ID
+          displayCrId,
           changeRequestEntityId,
           votes, // Include the votes
           votesFor,
@@ -1070,6 +1075,7 @@ export const useResolveSuggestion = (
         return res.push({
           comments,
           crId, // Include the CR-x ID
+          displayCrId,
           changeRequestEntityId,
           votes, // Include the votes
           votesFor,

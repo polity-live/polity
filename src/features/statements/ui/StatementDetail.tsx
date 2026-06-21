@@ -1,16 +1,18 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
-import { MessageSquare, Pencil, Trash2, User, Users } from 'lucide-react';
+import { MessageSquare, Pencil, Trash2, Users } from 'lucide-react';
 
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
+import { StatementStoryToggle } from '@/features/create/ui/inputs/StatementStoryToggle';
 import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import type { StatementDetailModel } from '@/features/statements/hooks/useStatementDetailModel';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton';
 import { CommentThread } from '@/features/shared/ui/comments';
-import { ScrollableAlertDialogContent, ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { ScrollableAlertDialogContent } from '@/features/shared/ui/dialog';
 import { FormControlInput, FormControlLabel, FormControlTextarea } from '@/features/shared/ui/form';
 import { BadgeControl } from '@/features/shared/ui/status';
+import { UserIdentityLink } from '@/features/shared/ui/UserIdentityLink';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card } from '@/features/shared/ui/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
@@ -23,7 +25,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/features/shared/ui/ui/alert-dialog';
-import { Dialog, DialogFooter, DialogHeader, DialogTitle } from '@/features/shared/ui/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/features/shared/ui/ui/dialog';
 import { VoteButtons } from '@/features/shared/ui/voting/VoteButtons';
 import { PageWrapper } from '@/layout/page-wrapper';
 import { StatementMediaDisplay } from './StatementMediaDisplay';
@@ -80,6 +88,7 @@ export function StatementDetail({ model }: StatementDetailProps) {
     timeDisplay,
     userId,
   } = model;
+  const authorId = author?.id ?? statement.user_id;
 
   return (
     <PageWrapper>
@@ -103,12 +112,12 @@ export function StatementDetail({ model }: StatementDetailProps) {
                     params={{ id: group.id }}
                     className="text-foreground flex items-center gap-1 font-semibold hover:underline"
                   >
-                    <Avatar className="h-4 w-4 shrink-0">
-                      <AvatarImage src={group.image_url ?? undefined} />
+                    <Avatar className="h-4 w-4 shrink-0 rounded-md">
+                      <AvatarImage src={group.image_url ?? undefined} alt={group.name ?? ''} />
                       <AvatarFallback
-                        className={featureThemeClassName(
+                        className={`${featureThemeClassName(
                           'editorInviteCollaboratorDialogThemedText'
-                        )}
+                        )} rounded-md`}
                       >
                         <Users className="h-2.5 w-2.5" />
                       </AvatarFallback>
@@ -117,17 +126,17 @@ export function StatementDetail({ model }: StatementDetailProps) {
                   </Link>
                 ) : null}
                 {group ? <span>·</span> : null}
-                <span className="flex items-center gap-1">
-                  <Avatar className="h-4 w-4 shrink-0">
-                    <AvatarImage src={author?.avatar ?? undefined} />
-                    <AvatarFallback
-                      className={featureThemeClassName('editorInviteCollaboratorDialogThemedText')}
-                    >
-                      <User className="h-2.5 w-2.5" />
-                    </AvatarFallback>
-                  </Avatar>
-                  {labels.authorByline}
-                </span>
+                <UserIdentityLink
+                  userId={authorId}
+                  avatarUrl={author?.avatar}
+                  name={labels.authorByline}
+                  fallbackLabel={model.authorName}
+                  avatarClassName="h-4 w-4 shrink-0"
+                  fallbackClassName={featureThemeClassName(
+                    'editorInviteCollaboratorDialogThemedText'
+                  )}
+                  className="gap-1"
+                />
                 {timeDisplay ? (
                   <>
                     <span>·</span>
@@ -136,8 +145,24 @@ export function StatementDetail({ model }: StatementDetailProps) {
                 ) : null}
               </div>
 
-              <div className="mb-3 text-lg leading-relaxed">
-                <StatementTextRenderer text={statement.text ?? ''} />
+              <div className="mb-3 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-xl leading-tight font-semibold">{model.displayTitle}</h1>
+                  {model.isExpiredStory ? (
+                    <BadgeControl variant="secondary" className="text-xs">
+                      {labels.storyExpired}
+                    </BadgeControl>
+                  ) : statement.is_story ? (
+                    <BadgeControl variant="secondary" className="text-xs">
+                      24h
+                    </BadgeControl>
+                  ) : null}
+                </div>
+                {statement.text ? (
+                  <div className="text-lg leading-relaxed">
+                    <StatementTextRenderer text={statement.text} />
+                  </div>
+                ) : null}
               </div>
 
               <StatementMediaDisplay
@@ -191,7 +216,7 @@ export function StatementDetail({ model }: StatementDetailProps) {
 
                   <ShareButton
                     url={`${typeof window !== 'undefined' ? window.location.origin : ''}/statement/${statementId}`}
-                    title={(statement.text ?? '').substring(0, 60)}
+                    title={model.displayTitle}
                     variant="ghost"
                     size="sm"
                   />
@@ -230,6 +255,7 @@ export function StatementDetail({ model }: StatementDetailProps) {
             currentUserId={userId}
             onAddComment={model.onAddComment}
             onVote={model.onCommentVote}
+            linkAuthors
             hideHeader
           />
         </div>
@@ -256,91 +282,120 @@ export function StatementDetail({ model }: StatementDetailProps) {
           if (!open) model.onCloseEdit();
         }}
       >
-        <ScrollableDialogContent className="max-w-lg">
-          <DialogHeader>
+        <DialogContent
+          className="bg-background !fixed !inset-0 !top-0 !left-0 flex !h-dvh !max-h-dvh !w-screen !max-w-none !translate-x-0 !translate-y-0 flex-col gap-0 overflow-hidden !rounded-none !border-0 !p-0"
+          style={{
+            inset: 0,
+            width: '100vw',
+            maxWidth: 'none',
+            height: '100dvh',
+            maxHeight: '100dvh',
+            transform: 'none',
+          }}
+        >
+          <DialogHeader className="shrink-0 border-b px-4 py-4 pr-14 sm:px-6">
             <DialogTitle>{labels.edit}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <FormControlLabel>{labels.formText}</FormControlLabel>
-              <FormControlTextarea
-                value={editDialog.editText}
-                onChange={event => model.onUpdateEditText(event.target.value.slice(0, 280))}
-                rows={4}
-                maxLength={280}
-              />
-              <p className="text-muted-foreground mt-1 text-right text-xs">
-                {labels.charsRemaining}
-              </p>
-            </div>
-
-            <MediaUpload
-              currentImage={editDialog.editImageUrl || undefined}
-              onImageChange={model.onUpdateEditImageUrl}
-              currentVideo={editDialog.editVideoUrl || undefined}
-              onVideoChange={model.onUpdateEditVideoUrl}
-              entityType="statement"
-              entityId={statementId}
-            />
-
-            <VisibilityInput
-              value={editDialog.editVisibility}
-              onChange={model.onUpdateEditVisibility}
-            />
-
-            <div className="space-y-2 rounded-lg border p-4">
-              <FormControlLabel className="text-base font-semibold">
-                {labels.addSurvey}
-              </FormControlLabel>
-              <FormControlInput
-                value={editDialog.editSurveyQuestion}
-                onChange={event => model.onSurveyQuestionChange(event.target.value)}
-                placeholder={labels.question}
-              />
-              {editDialog.editSurveyOptions.map((option, index) => (
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+            <div className="mx-auto w-full max-w-3xl space-y-4">
+              <div>
+                <FormControlLabel>{labels.formTitle}</FormControlLabel>
                 <FormControlInput
-                  key={index}
-                  value={option}
-                  onChange={event => model.onSurveyOptionChange(index, event.target.value)}
-                  placeholder={`${labels.option} ${index + 1}`}
-                />
-              ))}
-              {editDialog.editSurveyOptions.length < 4 ? (
-                <Button
-                  type="button"
-                  variant="link"
-                  className="h-auto p-0"
-                  onClick={model.onAddSurveyOption}
-                >
-                  + {labels.addOption}
-                </Button>
-              ) : null}
-              <div className="space-y-2">
-                <FormControlLabel>{labels.duration}</FormControlLabel>
-                <FormControlInput
-                  type="number"
-                  min={1}
-                  max={168}
-                  value={editDialog.editSurveyDuration}
-                  onChange={event => model.onSurveyDurationChange(Number(event.target.value))}
+                  value={editDialog.editTitle}
+                  onChange={event => model.onUpdateEditTitle(event.target.value.slice(0, 120))}
+                  maxLength={120}
                 />
               </div>
-              {survey ? (
-                <Button variant="destructive" size="sm" onClick={model.onRemoveSurvey}>
-                  {labels.removeSurvey}
-                </Button>
-              ) : null}
+
+              <div>
+                <FormControlLabel>{labels.formText}</FormControlLabel>
+                <FormControlTextarea
+                  value={editDialog.editText}
+                  onChange={event => model.onUpdateEditText(event.target.value.slice(0, 280))}
+                  rows={4}
+                  maxLength={280}
+                />
+                <p className="text-muted-foreground mt-1 text-right text-xs">
+                  {labels.charsRemaining}
+                </p>
+              </div>
+
+              <MediaUpload
+                currentImage={editDialog.editImageUrl || undefined}
+                onImageChange={model.onUpdateEditImageUrl}
+                currentVideo={editDialog.editVideoUrl || undefined}
+                onVideoChange={model.onUpdateEditVideoUrl}
+                entityType="statement"
+                entityId={statementId}
+                exclusiveMedia
+              />
+
+              <StatementStoryToggle
+                checked={editDialog.editIsStory}
+                onCheckedChange={model.onUpdateEditIsStory}
+                label={labels.storyLabel}
+                description={labels.storyDescription}
+              />
+
+              <VisibilityInput
+                value={editDialog.editVisibility}
+                onChange={model.onUpdateEditVisibility}
+              />
+
+              <div className="space-y-2 rounded-lg border p-4">
+                <FormControlLabel className="text-base font-semibold">
+                  {labels.addSurvey}
+                </FormControlLabel>
+                <FormControlInput
+                  value={editDialog.editSurveyQuestion}
+                  onChange={event => model.onSurveyQuestionChange(event.target.value)}
+                  placeholder={labels.question}
+                />
+                {editDialog.editSurveyOptions.map((option, index) => (
+                  <FormControlInput
+                    key={index}
+                    value={option}
+                    onChange={event => model.onSurveyOptionChange(index, event.target.value)}
+                    placeholder={`${labels.option} ${index + 1}`}
+                  />
+                ))}
+                {editDialog.editSurveyOptions.length < 4 ? (
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0"
+                    onClick={model.onAddSurveyOption}
+                  >
+                    + {labels.addOption}
+                  </Button>
+                ) : null}
+                <div className="space-y-2">
+                  <FormControlLabel>{labels.duration}</FormControlLabel>
+                  <FormControlInput
+                    type="number"
+                    min={1}
+                    max={168}
+                    value={editDialog.editSurveyDuration}
+                    onChange={event => model.onSurveyDurationChange(Number(event.target.value))}
+                  />
+                </div>
+                {survey ? (
+                  <Button variant="destructive" size="sm" onClick={model.onRemoveSurvey}>
+                    {labels.removeSurvey}
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="bg-background shrink-0 border-t px-4 py-3 sm:px-6">
             <Button variant="outline" onClick={model.onCloseEdit}>
               {labels.cancel}
             </Button>
-            <Button disabled={!editDialog.editText.trim()} onClick={model.onSaveEdit}>
+            <Button disabled={!model.canSaveEdit} onClick={model.onSaveEdit}>
               {labels.save}
             </Button>
           </DialogFooter>
-        </ScrollableDialogContent>
+        </DialogContent>
       </Dialog>
     </PageWrapper>
   );

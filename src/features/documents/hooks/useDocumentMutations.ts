@@ -71,7 +71,6 @@ export function useDocumentMutations(_groupId: string): UseDocumentMutationsResu
         title,
         group_id: groupId,
         visibility: 'group',
-        editing_mode: 'edit',
         code: null,
         reason: null,
         category: null,

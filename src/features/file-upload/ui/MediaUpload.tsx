@@ -17,6 +17,7 @@ interface MediaUploadProps {
   imageDescription?: string;
   videoLabel?: string;
   videoDescription?: string;
+  exclusiveMedia?: boolean;
   className?: string;
 }
 
@@ -31,8 +32,23 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   imageDescription,
   videoLabel,
   videoDescription,
+  exclusiveMedia = false,
   className,
 }) => {
+  const handleImageChange = (url: string) => {
+    onImageChange(url);
+    if (exclusiveMedia && url) {
+      onVideoChange('');
+    }
+  };
+
+  const handleVideoChange = (url: string) => {
+    onVideoChange(url);
+    if (exclusiveMedia && url) {
+      onImageChange('');
+    }
+  };
+
   return (
     <Tabs defaultValue="image" className={className}>
       <TabsList className="w-full">
@@ -46,7 +62,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
       <TabsContent value="image">
         <ImageUpload
           currentImage={currentImage}
-          onImageChange={onImageChange}
+          onImageChange={handleImageChange}
           entityType={entityType}
           entityId={entityId}
           label={imageLabel}
@@ -56,7 +72,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
       <TabsContent value="video">
         <VideoUpload
           currentVideo={currentVideo}
-          onVideoChange={onVideoChange}
+          onVideoChange={handleVideoChange}
           label={videoLabel}
           description={videoDescription}
         />

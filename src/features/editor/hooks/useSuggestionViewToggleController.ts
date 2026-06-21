@@ -18,6 +18,7 @@ export function useSuggestionViewToggleController(args: {
     .filter((discussion): discussion is TDiscussion & { crId: string } => Boolean(discussion.crId))
     .map(discussion => ({
       crId: discussion.crId,
+      displayCrId: discussion.displayCrId ?? discussion.crId,
       title: discussion.title || discussion.crId,
       userId: discussion.userId,
     }));
@@ -28,7 +29,7 @@ export function useSuggestionViewToggleController(args: {
     if (!isFiltered) return t('features.editor.suggestionView.allSuggestions');
     if (selectedCrIds.size === 1) {
       const [singleCr] = selectedCrIds;
-      return singleCr;
+      return crOptions.find(option => option.crId === singleCr)?.displayCrId ?? singleCr;
     }
     return t('features.editor.suggestionView.nSelected', { count: selectedCrIds.size });
   })();

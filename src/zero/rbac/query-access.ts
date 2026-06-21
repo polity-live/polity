@@ -268,12 +268,20 @@ export function applyBlogQueryAccess<T>(q: T, userID: string | undefined | null)
 
 export function applyStatementQueryAccess<T>(q: T, userID: string | undefined | null): T {
   const query = q as any;
+  const now = Date.now();
+  const activeQuery = isAuthenticatedUserId(userID)
+    ? query.where(({ or, cmp }: any) =>
+        or(cmp('expires_at', 'IS', null), cmp('expires_at', '>', now), cmp('user_id', userID))
+      )
+    : query.where(({ or, cmp }: any) =>
+        or(cmp('expires_at', 'IS', null), cmp('expires_at', '>', now))
+      );
 
   if (!isAuthenticatedUserId(userID)) {
-    return query.where('visibility', 'public') as T;
+    return activeQuery.where('visibility', 'public') as T;
   }
 
-  return query.where(({ or, cmp, exists }: any) =>
+  return activeQuery.where(({ or, cmp, exists }: any) =>
     or(
       cmp('visibility', 'IN', ['public', 'authenticated']),
       cmp('user_id', userID),

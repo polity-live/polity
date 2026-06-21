@@ -37,7 +37,11 @@ describe('extractAmendmentCRSummaries', () => {
           original_properties: null,
           new_properties: null,
         },
-      ]
+      ],
+      {
+        branches: [{ id: 'branch-1', created_at: 1 }],
+        processBranchId: 'branch-1',
+      }
     );
 
     expect(summaries).toHaveLength(1);
@@ -46,6 +50,8 @@ describe('extractAmendmentCRSummaries', () => {
       changeRequestEntityId: 'cr-voted',
       discussionId: 'suggestion-1',
       crId: 'CR-1',
+      displayCrId: 'Branch 1 CR-1',
+      processBranchId: 'branch-1',
       title: 'Replace dieser',
       status: 'accepted',
       votesFor: 1,

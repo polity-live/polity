@@ -9,6 +9,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useEventWithVoting } from '@/zero/events/useEventState';
 import { useAgendaActions } from '@/zero/agendas';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
+import { VOTE_STATUS } from '@/zero/votes/vote-workflow';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
 import { toast } from '@/features/shared/ui/ui/sonner';
@@ -221,7 +222,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
           amendment_id: null,
           title: null,
           description: null,
-          status: 'open',
+          status: VOTE_STATUS.indicativeOpen,
           majority_type: params.majorityType || 'simple',
           closing_type: null,
           closing_duration_seconds: null,

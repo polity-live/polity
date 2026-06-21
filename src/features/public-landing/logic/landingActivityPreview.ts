@@ -40,7 +40,7 @@ export const landingActivityTimelineItems: CivicTimelineItem[] = [
     sourceName: 'Policy Committee',
     sourceHref: '/group/policy-committee',
     timestamp: new Date('2026-06-18T10:15:00.000Z'),
-    status: 'vote_event',
+    status: 'event_final_closing_vote',
     locationLabel: 'Potsdam',
     coordinates: { latitude: 52.3906, longitude: 13.0645 },
     tags: ['amendment', 'workflow'],

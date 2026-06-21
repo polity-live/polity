@@ -25,6 +25,8 @@ interface ChangeRequestTimelineCardProps {
   suggestionId?: string;
   /** Short CR identifier (e.g. "CR-1") used to default-select this card's CR */
   crId?: string;
+  /** User-facing branch-scoped CR label, e.g. "Branch 1 CR-1" */
+  displayCrId?: string;
   /** All discussions for the amendment — used by the per-card SuggestionViewToggle */
   discussions?: TDiscussion[];
   /** Amendment editing mode — determines interactive vs read-only preview */
@@ -44,6 +46,10 @@ interface ChangeRequestTimelineCardProps {
   agendaItemId?: string;
   /** Hide the shared document preview block when it is rendered elsewhere */
   showEditorPreview?: boolean;
+  /** Hide inline cast/close controls when actions are handled by the page toolbar. */
+  hideInlineVotingControls?: boolean;
+  /** Allow starting the final vote from this card instead of the agenda toolbar. */
+  allowInlineFinalVoteStart?: boolean;
   onCastVote?: (item: ChangeRequestTimelineRow, choiceId: string) => Promise<void>;
   onStartIndicative?: (itemId: string) => Promise<void>;
   onStartFinal?: (itemId: string) => Promise<void>;
@@ -66,6 +72,7 @@ export function ChangeRequestTimelineCard({
   documentContent,
   suggestionId,
   crId,
+  displayCrId,
   discussions,
   editingMode,
   amendmentId,
@@ -73,6 +80,8 @@ export function ChangeRequestTimelineCard({
   userRecord,
   agendaItemId,
   showEditorPreview = true,
+  hideInlineVotingControls = false,
+  allowInlineFinalVoteStart = false,
   onCastVote,
   onStartIndicative,
   onStartFinal,
@@ -91,6 +100,7 @@ export function ChangeRequestTimelineCard({
     documentContent,
     suggestionId,
     crId,
+    displayCrId,
     discussions,
     editingMode,
     amendmentId,
@@ -98,6 +108,8 @@ export function ChangeRequestTimelineCard({
     userRecord,
     agendaItemId,
     showEditorPreview,
+    hideInlineVotingControls,
+    allowInlineFinalVoteStart,
     onCastVote,
     onStartIndicative,
     onStartFinal,

@@ -11,6 +11,10 @@ import {
   TimelineCardStats,
 } from '@/features/timeline/ui/cards/TimelineCardBase';
 import { Building2, GitPullRequest, ScrollText, Users } from 'lucide-react';
+import {
+  getBranchEditingMode,
+  getOrderedBranches,
+} from '@/features/amendments/logic/amendmentBranchDisplay';
 
 interface AgendaRelatedAmendment {
   readonly id: string;
@@ -18,6 +22,15 @@ interface AgendaRelatedAmendment {
   reason?: string | null;
   status?: string | null;
   editing_mode?: string | null;
+  current_process_run?: {
+    branches?:
+      | readonly {
+          id: string;
+          created_at?: number | string | null;
+          editing_mode?: string | null;
+        }[]
+      | null;
+  } | null;
   image_url?: string | null;
   upvotes?: number | null;
   downvotes?: number | null;
@@ -86,6 +99,7 @@ export function AgendaRelatedAmendmentCard({
       : []),
   ];
   const groupName = amendment.group?.name?.trim() || undefined;
+  const firstBranch = getOrderedBranches(amendment.current_process_run?.branches ?? [])[0] ?? null;
 
   return (
     <TimelineCardBase
@@ -106,9 +120,9 @@ export function AgendaRelatedAmendmentCard({
           />
         }
       >
-        {amendment.editing_mode && (
+        {firstBranch && (
           <div className="mt-2 flex flex-wrap gap-2">
-            <EditingModeBadge mode={amendment.editing_mode} variant="secondary" />
+            <EditingModeBadge mode={getBranchEditingMode(firstBranch)} variant="secondary" />
           </div>
         )}
       </TimelineCardHeader>

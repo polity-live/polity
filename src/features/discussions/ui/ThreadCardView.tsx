@@ -3,7 +3,7 @@ import { BadgeControl } from '@/features/shared/ui/status';
 import { FormControlTextarea } from '@/features/shared/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { UserIdentityLink } from '@/features/shared/ui/UserIdentityLink';
 import { ArrowUp, ArrowDown, Clock, MessageSquare } from 'lucide-react';
 import { CommentTree } from './CommentTree';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -51,6 +51,10 @@ export function ThreadCardView({
   handleVote,
   handleAddComment,
 }: ThreadCardViewProps) {
+  const authorName =
+    [thread.user?.first_name, thread.user?.last_name].filter(Boolean).join(' ') ||
+    translateText('generated.inline.0056_anonymous_9bed5104');
+
   return (
     <Card>
       <CardHeader>
@@ -86,16 +90,13 @@ export function ThreadCardView({
               <CardTitle className="mb-2">{thread.content}</CardTitle>
               <div className="text-muted-foreground flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={thread.user?.avatar ?? undefined} />
-                    <AvatarFallback>
-                      {thread.user?.first_name?.[0]?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span>
-                    {[thread.user?.first_name, thread.user?.last_name].filter(Boolean).join(' ') ||
-                      translateText('generated.inline.0056_anonymous_9bed5104')}
-                  </span>
+                  <UserIdentityLink
+                    userId={thread.user?.id ?? thread.user_id}
+                    avatarUrl={thread.user?.avatar}
+                    name={authorName}
+                    fallbackLabel={authorName}
+                    avatarClassName="h-6 w-6"
+                  />
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />

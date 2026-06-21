@@ -9,7 +9,12 @@ export function normalizeInternalChangeRequestResolutionVisibility(
 }
 
 export function isEventChangeRequestMode(mode: string | null | undefined) {
-  return mode === 'suggest_event' || mode === 'vote_event';
+  return (
+    mode === 'suggest_event' ||
+    mode === 'event_final_closing_vote' ||
+    mode === 'vote_event' ||
+    mode === 'event_voting'
+  );
 }
 
 export function getOpenChangeRequestVisibilityScope(

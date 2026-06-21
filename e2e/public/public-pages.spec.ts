@@ -10,6 +10,25 @@ async function dismissAlphaWarning(page: Page) {
   }
 }
 
+function secondaryLandingNav(page: Page) {
+  return page
+    .locator('.fixed.right-0')
+    .filter({ has: page.locator('a[href="/#solutions"]') })
+    .first();
+}
+
+function secondaryLandingNavButton(page: Page, href: string) {
+  return secondaryLandingNav(page).locator(`a[href="${href}"] button`).first();
+}
+
+async function expectSecondaryLandingNavActive(page: Page, href: string) {
+  await expect(secondaryLandingNavButton(page, href)).toHaveClass(/(^|\s)bg-accent(\s|$)/);
+}
+
+async function expectSecondaryLandingNavInactive(page: Page, href: string) {
+  await expect(secondaryLandingNavButton(page, href)).not.toHaveClass(/(^|\s)bg-accent(\s|$)/);
+}
+
 test.describe('Public Pages', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
@@ -112,31 +131,46 @@ test.describe('Public Pages', () => {
     await page.waitForLoadState('networkidle');
     await dismissAlphaWarning(page);
 
+    await expectSecondaryLandingNavActive(page, '/#home');
+    await expectSecondaryLandingNavInactive(page, '/#solutions');
+
     await page.evaluate(() => {
       (window as Window & { __spaMarker?: string }).__spaMarker = 'landing-nav';
     });
 
-    await page.locator('a[href="/#features"]').last().click();
+    await secondaryLandingNavButton(page, '/#features').click();
     await expect(page).toHaveURL(/\/#features$/);
     await expect(page.locator('#features')).toBeInViewport();
+    await expectSecondaryLandingNavActive(page, '/#features');
     await expect
       .poll(() =>
         page.evaluate(() => (window as Window & { __spaMarker?: string }).__spaMarker)
       )
       .toBe('landing-nav');
 
-    await page.locator('a[href="/#solutions"]').last().click();
+    await secondaryLandingNavButton(page, '/#solutions').click();
     await expect(page).toHaveURL(/\/#solutions$/);
     await expect(page.locator('#solutions')).toBeInViewport();
+    await expectSecondaryLandingNavActive(page, '/#solutions');
+    await expectSecondaryLandingNavInactive(page, '/#features');
     await expect
       .poll(() =>
         page.evaluate(() => (window as Window & { __spaMarker?: string }).__spaMarker)
       )
       .toBe('landing-nav');
 
-    await page.locator('a[href="/#imprint"]').last().click();
+    await page.locator('#features').evaluate(section => {
+      section.scrollIntoView({ block: 'start', inline: 'nearest' });
+    });
+    await expect(page.locator('#features')).toBeInViewport();
+    await expect(page).toHaveURL(/\/#solutions$/);
+    await expectSecondaryLandingNavActive(page, '/#features');
+    await expectSecondaryLandingNavInactive(page, '/#solutions');
+
+    await secondaryLandingNavButton(page, '/#imprint').click();
     await expect(page).toHaveURL(/\/#imprint$/);
     await expect(page.locator('#imprint')).toBeInViewport();
+    await expectSecondaryLandingNavActive(page, '/#imprint');
     await expect
       .poll(() =>
         page.evaluate(() => (window as Window & { __spaMarker?: string }).__spaMarker)

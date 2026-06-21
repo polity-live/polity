@@ -14,6 +14,7 @@ import type { NavigationItem } from '@/features/navigation/types/navigation.type
 import { usePermissions } from '@/zero/rbac/usePermissions.ts';
 import type { Amendment, ActionRight } from '@/zero/rbac/types.ts';
 import { useEntityUnreadCount } from '@/zero/notifications/useEntityUnreadCount.ts';
+import { getBranchPreservingAmendmentNavTarget } from '@/features/navigation/logic/amendmentBranchNavigation';
 
 /**
  * Custom hook that manages navigation items for primary and secondary navigation
@@ -24,6 +25,10 @@ export function useNavigation() {
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
+  const currentBranchId =
+    typeof (location.search as Record<string, unknown> | undefined)?.branch === 'string'
+      ? ((location.search as Record<string, unknown>).branch as string)
+      : null;
   const [currentPrimaryRoute, setCurrentPrimaryRoute] = useState<string | null>(null);
   const { t } = useTranslation();
 
@@ -235,10 +240,34 @@ export function useNavigation() {
 
     // Secondary items are already localized in the nav item factories.
     // Rebuilding keys from item.id breaks route-style ids like "blogs-and-statements".
-    return baseSecondaryItems.map(item => ({
-      ...item,
-      ...(item.id === 'notifications' && entityUnreadCount > 0 ? { badge: entityUnreadCount } : {}),
-    }));
+    return baseSecondaryItems.map(item => {
+      const amendmentBranchTarget =
+        currentPrimaryRoute === 'amendment'
+          ? getBranchPreservingAmendmentNavTarget({
+              itemId: item.id,
+              amendmentId,
+              branchId: currentBranchId,
+            })
+          : null;
+
+      return {
+        ...item,
+        ...(amendmentBranchTarget
+          ? {
+              href: amendmentBranchTarget.href,
+              onClick: () =>
+                navigate({
+                  to: amendmentBranchTarget.to,
+                  params: amendmentBranchTarget.params,
+                  search: amendmentBranchTarget.search,
+                } as never),
+            }
+          : {}),
+        ...(item.id === 'notifications' && entityUnreadCount > 0
+          ? { badge: entityUnreadCount }
+          : {}),
+      };
+    });
   };
 
   const secondaryNavItems = getSecondaryNavItems(currentPrimaryRoute);

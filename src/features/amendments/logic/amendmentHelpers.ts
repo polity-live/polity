@@ -63,7 +63,7 @@ export const AMENDMENT_STATUS_COLORS: Record<string, string> = {
   passed: featureThemeClassName('amendmentAmendmentHelpersSuccessBadge'),
   rejected: featureThemeClassName('amendmentAmendmentHelpersDangerBadge'),
   vote_internal: featureThemeClassName('amendmentAmendmentHelpersWarningBadge'),
-  vote_event: featureThemeClassName('amendmentAmendmentHelpersWarningBadge'),
+  event_final_closing_vote: featureThemeClassName('amendmentAmendmentHelpersWarningBadge'),
   suggest_internal: featureThemeClassName('amendmentAmendmentHelpersWarningBadgeAlpha'),
   suggest_event: featureThemeClassName('amendmentAmendmentHelpersWarningBadgeAlpha'),
   edit: featureThemeClassName('amendmentAmendmentHelpersInfoBadge'),

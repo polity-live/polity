@@ -41,6 +41,7 @@ interface ChangeRequestVoteRow {
 interface InternalChangeRequestRow {
   id: string;
   amendment_id: string;
+  process_branch_id?: string | null;
   title?: string | null;
   status?: string | null;
   voting_status?: string | null;
@@ -96,6 +97,17 @@ function isInternalChangeRequest(changeRequest: { created_in_mode?: string | nul
 function stableChangeRequestOrder(left: InternalChangeRequestRow, right: InternalChangeRequestRow) {
   const byCreatedAt = (left.created_at ?? 0) - (right.created_at ?? 0);
   return byCreatedAt !== 0 ? byCreatedAt : left.id.localeCompare(right.id);
+}
+
+function matchesProcessBranch(
+  changeRequest: { process_branch_id?: string | null },
+  processBranchId: string | null | undefined
+) {
+  if (processBranchId === undefined) {
+    return true;
+  }
+
+  return (changeRequest.process_branch_id ?? null) === (processBranchId ?? null);
 }
 
 function changeRequestRecordOrder(
@@ -349,6 +361,7 @@ export async function maybeFinalizeInternalChangeRequestVote({
 export async function initializeInternalChangeRequestVotingForAmendment({
   tx,
   amendment,
+  processBranchId,
   now = Date.now(),
 }: {
   tx: InternalCRVotingTx;
@@ -358,6 +371,7 @@ export async function initializeInternalChangeRequestVotingForAmendment({
     internal_cr_voting_duration_minutes?: number | null;
     internal_cr_resolution_visibility?: string | null;
   };
+  processBranchId?: string | null;
   now?: number;
 }) {
   const trigger = normalizeInternalCRVotingCloseTrigger(amendment.internal_cr_voting_close_trigger);
@@ -369,7 +383,9 @@ export async function initializeInternalChangeRequestVotingForAmendment({
           60_000
       : null;
 
-  for (const changeRequest of openChangeRequests.filter(isOpenChangeRequest)) {
+  for (const changeRequest of openChangeRequests
+    .filter((changeRequest: any) => matchesProcessBranch(changeRequest, processBranchId))
+    .filter(isOpenChangeRequest)) {
     await tx.mutate.change_request.update({
       id: changeRequest.id,
       voting_deadline: deadline,
@@ -382,11 +398,13 @@ export async function finalizeExpiredInternalChangeRequestVotesForAmendment({
   tx,
   ctx,
   amendmentId,
+  processBranchId,
   now = Date.now(),
 }: {
   tx: InternalCRVotingTx;
   ctx: InternalCRVotingCtx;
   amendmentId: string;
+  processBranchId?: string | null;
   now?: number;
 }) {
   const amendment = await tx.run(zql.amendment.where('id', amendmentId).one());
@@ -401,6 +419,7 @@ export async function finalizeExpiredInternalChangeRequestVotesForAmendment({
   const changeRequests = await tx.run(zql.change_request.where('amendment_id', amendmentId));
   const expired = changeRequests.filter(
     (changeRequest: any) =>
+      matchesProcessBranch(changeRequest, processBranchId) &&
       isOpenChangeRequest(changeRequest) &&
       changeRequest.voting_deadline &&
       changeRequest.voting_deadline <= now
@@ -588,11 +607,13 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
   tx,
   ctx,
   amendmentId,
+  processBranchId,
   now = Date.now(),
 }: {
   tx: InternalCRVotingTx;
   ctx: InternalCRVotingCtx;
   amendmentId: string;
+  processBranchId?: string | null;
   now?: number;
 }) {
   const amendment = await tx.run(zql.amendment.where('id', amendmentId).one());
@@ -600,14 +621,22 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
     return [];
   }
 
+  const branch = processBranchId
+    ? await tx.run(zql.amendment_process_branch.where('id', processBranchId).one())
+    : null;
+
   const changeRequests = await tx.run(zql.change_request.where('amendment_id', amendmentId));
   const openInternalChangeRequests = (changeRequests as InternalChangeRequestRow[])
     .filter(
-      changeRequest => isOpenChangeRequest(changeRequest) && isInternalChangeRequest(changeRequest)
+      changeRequest =>
+        matchesProcessBranch(changeRequest, processBranchId) &&
+        isOpenChangeRequest(changeRequest) &&
+        isInternalChangeRequest(changeRequest)
     )
     .sort(stableChangeRequestOrder);
-  const discussions: DiscussionEntry[] = Array.isArray(amendment.discussions)
-    ? (amendment.discussions as DiscussionEntry[])
+  const discussionSource = branch ?? amendment;
+  const discussions: DiscussionEntry[] = Array.isArray(discussionSource.discussions)
+    ? (discussionSource.discussions as DiscussionEntry[])
     : [];
   const canonicalRecords = buildCanonicalChangeRequestRecords({
     discussions,
@@ -624,9 +653,8 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
     amendment.internal_cr_resolution_visibility
   );
   const nextDiscussions = [...discussions];
-  const document = amendment.document_id
-    ? await tx.run(zql.document.where('id', amendment.document_id).one())
-    : null;
+  const documentId = branch?.document_id ?? amendment.document_id;
+  const document = documentId ? await tx.run(zql.document.where('id', documentId).one()) : null;
   let nextDocumentContent = document?.content as
     | Parameters<typeof applyChangeRequestVoteResultToContent>[0]
     | null
@@ -741,7 +769,13 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
     });
   }
 
-  if (discussions.length > 0) {
+  if (discussions.length > 0 && branch?.id) {
+    await tx.mutate.amendment_process_branch.update({
+      id: branch.id,
+      discussions: nextDiscussions as unknown as ReadonlyJSONValue,
+      updated_at: now,
+    });
+  } else if (discussions.length > 0) {
     await tx.mutate.amendment.update({
       id: amendmentId,
       discussions: nextDiscussions as unknown as ReadonlyJSONValue,

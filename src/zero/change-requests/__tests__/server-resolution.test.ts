@@ -34,6 +34,9 @@ function createTx(rows: unknown[]) {
       amendment: {
         update: vi.fn(),
       },
+      amendment_process_branch: {
+        update: vi.fn(),
+      },
       change_request: {
         update: vi.fn(),
       },
@@ -165,5 +168,72 @@ describe('resolveChangeRequestByVoteResult', () => {
         ],
       })
     );
+  });
+
+  it('applies a branch-scoped change request only to the branch document and discussions', async () => {
+    const originalContent = [{ type: 'p', children: [{ text: 'branch original' }] }];
+    const tx = createTx([
+      {
+        id: 'cr-branch',
+        amendment_id: 'amendment-1',
+        process_branch_id: 'branch-1',
+        title: 'CR-B1',
+      },
+      {
+        id: 'amendment-1',
+        origin_amendment_id: 'amendment-1',
+        document_id: 'doc-main',
+        discussions: [],
+      },
+      {
+        id: 'branch-1',
+        process_run_id: 'run-1',
+        document_id: 'doc-branch',
+        discussions: [
+          {
+            id: 'suggestion-branch',
+            crId: 'CR-B1',
+            changeRequestEntityId: 'cr-branch',
+          },
+        ],
+      },
+      {
+        id: 'run-1',
+        amendment_id: 'amendment-1',
+      },
+      {
+        id: 'doc-branch',
+        content: originalContent,
+      },
+      {
+        version_number: 2,
+      },
+    ]);
+
+    await resolveChangeRequestByVoteResult({
+      tx: tx as never,
+      ctx: { userID: 'user-1' },
+      changeRequestId: 'cr-branch',
+      voteResult: 'passed',
+      now: 2_000,
+    });
+
+    expect(applySuggestionToContentMock).toHaveBeenCalledWith(
+      originalContent,
+      'suggestion-branch',
+      'accept'
+    );
+    expect(tx.mutate.document.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'doc-branch',
+      })
+    );
+    expect(tx.mutate.amendment_process_branch.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'branch-1',
+        discussions: [expect.objectContaining({ id: 'suggestion-branch', status: 'accepted' })],
+      })
+    );
+    expect(tx.mutate.amendment.update).not.toHaveBeenCalled();
   });
 });

@@ -36,7 +36,6 @@ const baseAmendmentSchema = z.object({
   subscriber_count: z.number(),
   clone_count: z.number(),
   change_request_count: z.number(),
-  editing_mode: z.string().nullable(),
   internal_cr_voting_close_trigger: z.string().nullable().optional(),
   internal_cr_voting_duration_minutes: z.number().nullable().optional(),
   internal_cr_resolution_visibility: internalCrResolutionVisibilitySchema.nullable().optional(),
@@ -83,7 +82,6 @@ export const updateAmendmentSchema = baseAmendmentSchema
     category: true,
     preamble: true,
     visibility: true,
-    editing_mode: true,
     internal_cr_voting_close_trigger: true,
     internal_cr_voting_duration_minutes: true,
     internal_cr_resolution_visibility: true,
@@ -338,6 +336,17 @@ export const amendmentProcessStatusSchema = z.enum([
   'completed',
 ]);
 
+export const amendmentBranchEditingModeSchema = z.enum([
+  'edit',
+  'view',
+  'suggest_internal',
+  'suggest_event',
+  'vote_internal',
+  'event_final_closing_vote',
+  'passed',
+  'rejected',
+]);
+
 export const workflowStepKindSchema = z.enum(['group_vote', 'merge_vote', 'workflow_handoff']);
 export const workflowSelectionModeSchema = z.enum(['default_target_workflow', 'explicit_workflow']);
 export const workflowMergeStrategySchema = z.enum(['winner_continues']);
@@ -385,8 +394,11 @@ const baseAmendmentProcessBranchSchema = z.object({
   merged_into_branch_id: z.string().nullable(),
   source_step_run_id: z.string().nullable(),
   document_version_id: z.string().nullable(),
+  document_id: z.string().nullable(),
+  discussions: jsonSchema.nullable(),
   title: z.string().nullable(),
   status: amendmentProcessStatusSchema,
+  editing_mode: amendmentBranchEditingModeSchema,
   resolution: z.string().nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
@@ -466,7 +478,10 @@ export const updateAmendmentProcessRunSchema = baseAmendmentProcessRunSchema
 
 export const createAmendmentProcessBranchSchema = baseAmendmentProcessBranchSchema
   .omit({ id: true, created_at: true, updated_at: true })
-  .extend({ id: z.string() });
+  .extend({
+    id: z.string(),
+    editing_mode: amendmentBranchEditingModeSchema.optional(),
+  });
 
 export const updateAmendmentProcessBranchSchema = baseAmendmentProcessBranchSchema
   .pick({
@@ -474,8 +489,11 @@ export const updateAmendmentProcessBranchSchema = baseAmendmentProcessBranchSche
     merged_into_branch_id: true,
     source_step_run_id: true,
     document_version_id: true,
+    document_id: true,
+    discussions: true,
     title: true,
     status: true,
+    editing_mode: true,
     resolution: true,
   })
   .partial()
@@ -577,6 +595,16 @@ export const completeProcessTaskWithEventSchema = z.object({
   process_task_id: z.string(),
   event_id: z.string(),
   description: z.string().nullable().optional(),
+});
+
+export const replanProcessBranchEventsSchema = z.object({
+  branch_id: z.string(),
+  event_updates: z.array(
+    z.object({
+      step_run_id: z.string(),
+      event_id: z.string().nullable(),
+    })
+  ),
 });
 
 // ============================================

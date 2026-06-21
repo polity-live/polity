@@ -4,12 +4,12 @@ import { useEditingModeSelectorController } from '../hooks/useEditingModeSelecto
 import { EditingModeSelectorView } from './EditingModeSelectorView';
 
 interface EditingModeSelectorProps {
-  amendmentId: string;
+  processBranchId: string;
   currentMode?: string | null;
 }
 
-export function EditingModeSelector({ amendmentId, currentMode }: EditingModeSelectorProps) {
-  const { handleModeChange } = useEditingModeSelectorController({ amendmentId, currentMode });
+export function EditingModeSelector({ processBranchId, currentMode }: EditingModeSelectorProps) {
+  const { handleModeChange } = useEditingModeSelectorController({ processBranchId, currentMode });
 
   return <EditingModeSelectorView currentMode={currentMode} onModeChange={handleModeChange} />;
 }

@@ -48,6 +48,15 @@ export function useVoteActions() {
     [t, zero]
   );
 
+  const closeExpiredFinalVotesForEvent = useCallback(
+    (args: Parameters<typeof mutators.votes.closeExpiredFinalVotesForEvent>[0]) => {
+      const result = zero.mutate(mutators.votes.closeExpiredFinalVotesForEvent(args));
+      onServerError(result, msg => console.error('Failed to close expired final votes:', msg));
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
   // ── Vote Choices ───────────────────────────────────────────────────
 
   const createVoteChoice = useCallback(
@@ -158,6 +167,7 @@ export function useVoteActions() {
     createVote,
     updateVote,
     deleteVote,
+    closeExpiredFinalVotesForEvent,
 
     // Choices
     createVoteChoice,

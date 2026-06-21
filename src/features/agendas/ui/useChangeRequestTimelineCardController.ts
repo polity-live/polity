@@ -43,6 +43,8 @@ interface ChangeRequestTimelineCardProps {
   suggestionId?: string;
   /** Short CR identifier (e.g. "CR-1") used to default-select this card's CR */
   crId?: string;
+  /** User-facing branch-scoped CR label, e.g. "Branch 1 CR-1" */
+  displayCrId?: string;
   /** All discussions for the amendment — used by the per-card SuggestionViewToggle */
   discussions?: TDiscussion[];
   /** Amendment editing mode — determines interactive vs read-only preview */
@@ -62,6 +64,10 @@ interface ChangeRequestTimelineCardProps {
   agendaItemId?: string;
   /** Hide the shared document preview block when it is rendered elsewhere */
   showEditorPreview?: boolean;
+  /** Hide inline cast/close controls when actions are handled by the page toolbar. */
+  hideInlineVotingControls?: boolean;
+  /** Allow starting the final vote from this card instead of the agenda toolbar. */
+  allowInlineFinalVoteStart?: boolean;
   onCastVote?: (item: ChangeRequestTimelineRow, choiceId: string) => Promise<void>;
   onStartIndicative?: (itemId: string) => Promise<void>;
   onStartFinal?: (itemId: string) => Promise<void>;
@@ -81,6 +87,7 @@ export function useChangeRequestTimelineCardController({
   documentContent,
   suggestionId,
   crId,
+  displayCrId,
   discussions,
   editingMode,
   amendmentId,
@@ -88,6 +95,8 @@ export function useChangeRequestTimelineCardController({
   userRecord,
   agendaItemId,
   showEditorPreview = true,
+  hideInlineVotingControls = false,
+  allowInlineFinalVoteStart = false,
   onCastVote,
   onStartIndicative,
   onStartFinal,
@@ -108,6 +117,7 @@ export function useChangeRequestTimelineCardController({
     if (discussions) {
       for (const d of discussions) {
         if (d.crId) map.set(d.crId, d.id);
+        if (d.displayCrId) map.set(d.displayCrId, d.id);
       }
     }
     return map;
@@ -132,10 +142,19 @@ export function useChangeRequestTimelineCardController({
   const cr = item.change_request;
 
   const vote = item.vote;
+  const voteStepKind = (item as { _voteStepKind?: string })._voteStepKind ?? null;
+  const isPlaceholder = Boolean((item as { _votePlaceholder?: boolean })._votePlaceholder);
+  const placeholderTitle = (item as { _placeholderTitle?: string | null })._placeholderTitle;
+  const placeholderDescription = (item as { _placeholderDescription?: string | null })
+    ._placeholderDescription;
 
-  const title = item.is_final_vote
-    ? t('features.agendas.crTimeline.acceptAmendment')
-    : cr?.title || `${t('features.agendas.crTimeline.changeRequest')} ${index + 1}`;
+  const title =
+    placeholderTitle ??
+    (voteStepKind === 'variant_selection'
+      ? vote?.title || 'Variant Final Vote'
+      : item.is_final_vote
+        ? vote?.title || t('features.agendas.crTimeline.acceptAmendment')
+        : cr?.title || `${t('features.agendas.crTimeline.changeRequest')} ${index + 1}`);
 
   const phase = getVotePhase(item);
 
@@ -260,7 +279,7 @@ export function useChangeRequestTimelineCardController({
     }
   };
 
-  const isLocked = item.is_final_vote && isFinalVoteLocked;
+  const isLocked = Boolean(isFinalVoteLocked);
 
   return {
     item,
@@ -275,6 +294,7 @@ export function useChangeRequestTimelineCardController({
     documentContent,
     suggestionId,
     crId,
+    displayCrId,
     discussions,
     editingMode,
     amendmentId,
@@ -282,6 +302,8 @@ export function useChangeRequestTimelineCardController({
     userRecord,
     agendaItemId,
     showEditorPreview,
+    hideInlineVotingControls,
+    allowInlineFinalVoteStart,
     onCastVote,
     onStartIndicative,
     onStartFinal,
@@ -295,6 +317,9 @@ export function useChangeRequestTimelineCardController({
     selectedSuggestionIds,
     cr,
     vote,
+    voteStepKind,
+    isPlaceholder,
+    placeholderDescription,
     title,
     phase,
     isClosed,

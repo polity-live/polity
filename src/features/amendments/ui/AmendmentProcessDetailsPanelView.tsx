@@ -12,6 +12,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
+import {
+  getBranchEditingMode,
+  getOrderedBranches,
+} from '@/features/amendments/logic/amendmentBranchDisplay';
 
 interface AmendmentProcessDetailsPanelViewProps {
   amendment: {
@@ -19,7 +23,15 @@ interface AmendmentProcessDetailsPanelViewProps {
     title?: string | null;
     reason?: string | null;
     preamble?: string | null;
-    editing_mode?: string | null;
+    current_process_run?: {
+      branches?:
+        | readonly {
+            id: string;
+            created_at?: number | string | null;
+            editing_mode?: string | null;
+          }[]
+        | null;
+    } | null;
     group?: { id: string; name?: string | null } | null;
   };
   forwardingPreview?: {
@@ -56,6 +68,8 @@ export function AmendmentProcessDetailsPanelView({
   onOpenChange,
   labels,
 }: AmendmentProcessDetailsPanelViewProps) {
+  const firstBranch = getOrderedBranches(amendment.current_process_run?.branches ?? [])[0] ?? null;
+
   return (
     <Collapsible open={open} onOpenChange={onOpenChange}>
       <div className="bg-muted/30 rounded-lg border">
@@ -63,8 +77,8 @@ export function AmendmentProcessDetailsPanelView({
           {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <ScrollText className="text-muted-foreground h-4 w-4" />
           <span>{labels.amendmentDetails}</span>
-          {amendment.editing_mode ? (
-            <EditingModeBadge mode={amendment.editing_mode} variant="secondary" />
+          {firstBranch ? (
+            <EditingModeBadge mode={getBranchEditingMode(firstBranch)} variant="secondary" />
           ) : null}
           <Link
             to="/amendment/$id"

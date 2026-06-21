@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS public.amendment (
   subscriber_count INTEGER NOT NULL DEFAULT 0,
   clone_count INTEGER NOT NULL DEFAULT 0,
   change_request_count INTEGER NOT NULL DEFAULT 0,
-  editing_mode TEXT,
   internal_cr_voting_close_trigger TEXT NOT NULL DEFAULT 'all_collaborators_voted',
   internal_cr_voting_duration_minutes INTEGER,
   internal_cr_resolution_visibility TEXT NOT NULL DEFAULT 'public',
@@ -45,7 +44,6 @@ CREATE TABLE IF NOT EXISTS public.amendment (
 CREATE INDEX idx_amendment_created_by ON public.amendment (created_by_id);
 CREATE INDEX idx_amendment_group ON public.amendment (group_id);
 CREATE INDEX idx_amendment_event ON public.amendment (event_id);
-CREATE INDEX idx_amendment_editing_mode ON public.amendment (editing_mode);
 CREATE INDEX idx_amendment_origin ON public.amendment (origin_amendment_id);
 
 ALTER TABLE public.amendment ENABLE ROW LEVEL SECURITY;
@@ -186,8 +184,11 @@ CREATE TABLE IF NOT EXISTS public.amendment_process_branch (
   merged_into_branch_id UUID REFERENCES public.amendment_process_branch (id) ON DELETE SET NULL,
   source_step_run_id UUID,
   document_version_id UUID REFERENCES public.document_version (id) ON DELETE SET NULL,
+  document_id UUID REFERENCES public.document (id) ON DELETE SET NULL,
+  discussions JSONB,
   title TEXT,
   status TEXT NOT NULL DEFAULT 'pending_event',
+  editing_mode TEXT NOT NULL DEFAULT 'edit',
   resolution TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -196,6 +197,8 @@ CREATE TABLE IF NOT EXISTS public.amendment_process_branch (
 CREATE INDEX idx_amendment_process_branch_run ON public.amendment_process_branch (process_run_id);
 CREATE INDEX idx_amendment_process_branch_parent ON public.amendment_process_branch (parent_branch_id);
 CREATE INDEX idx_amendment_process_branch_status ON public.amendment_process_branch (status);
+CREATE INDEX idx_amendment_process_branch_editing_mode ON public.amendment_process_branch (editing_mode);
+CREATE INDEX idx_amendment_process_branch_document ON public.amendment_process_branch (document_id);
 
 ALTER TABLE public.amendment_process_branch ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment_process_branch FOR ALL TO service_role USING (true);

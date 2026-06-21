@@ -1,5 +1,6 @@
 'use client';
 
+import { Fragment, type ReactNode } from 'react';
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl, getEditingModeOption } from '@/features/shared/ui/status';
 import { FormControlInput } from '@/features/shared/ui/form';
@@ -44,6 +45,14 @@ function getInternalOutcomeLabel(cr: any) {
   return (cr?.votes_for ?? 0) > (cr?.votes_against ?? 0) ? 'Accepted' : 'Rejected';
 }
 
+function isVoteSequencePlaceholder(item: any) {
+  return Boolean(item?._votePlaceholder);
+}
+
+function isChangeRequestVotesPlaceholder(item: any) {
+  return item?._voteStepKind === 'change_request_votes_placeholder';
+}
+
 export interface ChangeRequestCardsListViewProps {
   items: any[];
   editingMode: any;
@@ -51,6 +60,8 @@ export interface ChangeRequestCardsListViewProps {
   userId: any;
   canManage: any;
   canVote: any;
+  hideInlineVotingControls: any;
+  allowInlineFinalVoteStart?: any;
   currentItemId: any;
   diffMap: any;
   progress: any;
@@ -69,6 +80,7 @@ export interface ChangeRequestCardsListViewProps {
   onStartFinal: any;
   onCloseVoting: any;
   onFinalizeInternalVote: any;
+  sequenceInterstitial?: ReactNode;
   t: any;
   activeTab: any;
   setActiveTab: any;
@@ -76,7 +88,10 @@ export interface ChangeRequestCardsListViewProps {
   setSearchQuery: any;
   crIdToDiscussionId: any;
   finalVoteItem: any;
+  variantVoteItem?: any;
   crItems: any[];
+  sequenceItems?: any[];
+  hasCRCategoryItems?: boolean;
   sharedPreviewEnabled: any;
   getPreviewCrId: any;
   selectedPreviewCrIds: any;
@@ -99,6 +114,8 @@ export function ChangeRequestCardsListView({
   userId,
   canManage,
   canVote,
+  hideInlineVotingControls,
+  allowInlineFinalVoteStart = false,
   currentItemId,
   diffMap,
   completedCount,
@@ -116,6 +133,7 @@ export function ChangeRequestCardsListView({
   onStartFinal,
   onCloseVoting,
   onFinalizeInternalVote,
+  sequenceInterstitial,
   t,
   activeTab,
   setActiveTab,
@@ -123,7 +141,10 @@ export function ChangeRequestCardsListView({
   setSearchQuery,
   crIdToDiscussionId,
   finalVoteItem,
+  variantVoteItem,
   crItems,
+  sequenceItems = [],
+  hasCRCategoryItems,
   sharedPreviewEnabled,
   getPreviewCrId,
   setSelectedPreviewCrIds,
@@ -139,6 +160,26 @@ export function ChangeRequestCardsListView({
   const activeVotingLabel = isInternalVotingMode
     ? t('features.agendas.crTimeline.activeInternalVoting', 'Internal voting mode active')
     : t('features.agendas.crTimeline.activeEventVoting', 'Event voting mode active');
+  const effectiveSequenceItems = sequenceItems.length > 0 ? sequenceItems : crItems;
+  const shouldShowCRCategoryTabs = hasCRCategoryItems ?? crItems.length > 0;
+  const effectiveActiveTab = shouldShowCRCategoryTabs ? activeTab : 'all';
+  const displayItems =
+    effectiveActiveTab === 'all' && filteredItems.length === 0 && effectiveSequenceItems.length > 0
+      ? effectiveSequenceItems
+      : filteredItems;
+  const nextSequenceItemId =
+    currentItemId ??
+    effectiveSequenceItems.find((item: any) => item.status !== 'completed')?.id ??
+    null;
+  const sequenceItemCount = effectiveSequenceItems.length || crItems.length;
+  const shouldRenderSequenceInterstitial =
+    Boolean(sequenceInterstitial) && effectiveActiveTab === 'all';
+  const renderSequenceInterstitial = () =>
+    shouldRenderSequenceInterstitial ? (
+      <div data-testid="change-request-sequence-interstitial">{sequenceInterstitial}</div>
+    ) : null;
+  void finalVoteItem;
+  void allCRsProcessed;
 
   return (
     <Card>
@@ -186,7 +227,7 @@ export function ChangeRequestCardsListView({
           <div className="flex items-center gap-2">
             <BadgeControl variant="outline">
               {completedCount ?? categorized.accepted.length + categorized.rejected.length}/
-              {crItems.length}
+              {sequenceItemCount}
             </BadgeControl>
             {isTimelineComplete && (
               <BadgeControl variant="default" tone="successStrong">
@@ -211,7 +252,7 @@ export function ChangeRequestCardsListView({
               toolbarEnd={
                 <>
                   {editingMode !== 'suggest_event' &&
-                    editingMode !== 'vote_event' &&
+                    editingMode !== 'event_final_closing_vote' &&
                     discussions &&
                     discussions.length > 1 && (
                       <SuggestionViewToggle
@@ -227,35 +268,41 @@ export function ChangeRequestCardsListView({
         )}
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={value => setActiveTab(value as TabValue)}>
+        <Tabs value={effectiveActiveTab} onValueChange={value => setActiveTab(value as TabValue)}>
           <TabsList>
             <TabsTrigger value="all" className="gap-1.5">
               {t('features.agendas.crTimeline.tabAll')}
               <BadgeControl variant="secondary" size="xs" className="ml-0.5">
-                {searchedItems.length}
+                {sequenceItemCount || searchedItems.length}
               </BadgeControl>
             </TabsTrigger>
-            <TabsTrigger value="open" className="gap-1.5">
-              {t('features.agendas.crTimeline.tabOpen')}
-              <BadgeControl variant="secondary" size="xs" className="ml-0.5">
-                {categorized.open.length}
-              </BadgeControl>
-            </TabsTrigger>
-            <TabsTrigger value="accepted" className="gap-1.5">
-              {t('features.agendas.crTimeline.tabAccepted')}
-              <BadgeControl
-                variant="outline"
-                className={featureThemeClassName('agendaChangeRequestCardsListSuccessBadgeAlpha')}
-              >
-                {categorized.accepted.length}
-              </BadgeControl>
-            </TabsTrigger>
-            <TabsTrigger value="rejected" className="gap-1.5">
-              {t('features.agendas.crTimeline.tabRejected')}
-              <BadgeControl variant="secondary" size="xs" className="ml-0.5">
-                {categorized.rejected.length}
-              </BadgeControl>
-            </TabsTrigger>
+            {shouldShowCRCategoryTabs && (
+              <>
+                <TabsTrigger value="open" className="gap-1.5">
+                  {t('features.agendas.crTimeline.tabOpen')}
+                  <BadgeControl variant="secondary" size="xs" className="ml-0.5">
+                    {categorized.open.length}
+                  </BadgeControl>
+                </TabsTrigger>
+                <TabsTrigger value="accepted" className="gap-1.5">
+                  {t('features.agendas.crTimeline.tabAccepted')}
+                  <BadgeControl
+                    variant="outline"
+                    className={featureThemeClassName(
+                      'agendaChangeRequestCardsListSuccessBadgeAlpha'
+                    )}
+                  >
+                    {categorized.accepted.length}
+                  </BadgeControl>
+                </TabsTrigger>
+                <TabsTrigger value="rejected" className="gap-1.5">
+                  {t('features.agendas.crTimeline.tabRejected')}
+                  <BadgeControl variant="secondary" size="xs" className="ml-0.5">
+                    {categorized.rejected.length}
+                  </BadgeControl>
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
         </Tabs>
 
@@ -276,17 +323,20 @@ export function ChangeRequestCardsListView({
       <CardContent>
         <div className="space-y-3">
           {/* Filtered CR items */}
-          {filteredItems.length === 0 ? (
-            <div className="rounded-lg border border-dashed p-8 text-center">
-              <FileEdit className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
-              <p className="text-muted-foreground text-sm">
-                {activeTab === 'all'
-                  ? t('features.agendas.crTimeline.noCRs')
-                  : t('features.agendas.crTimeline.noItemsInTab')}
-              </p>
-            </div>
+          {displayItems.length === 0 ? (
+            <>
+              {renderSequenceInterstitial()}
+              <div className="rounded-lg border border-dashed p-8 text-center">
+                <FileEdit className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
+                <p className="text-muted-foreground text-sm">
+                  {effectiveActiveTab === 'all'
+                    ? t('features.agendas.crTimeline.noCRs')
+                    : t('features.agendas.crTimeline.noItemsInTab')}
+                </p>
+              </div>
+            </>
           ) : (
-            filteredItems.map((item: any, index: number) => {
+            displayItems.map((item: any, index: number) => {
               const crId = item.change_request_id ?? item.id;
               const previewCrId = getPreviewCrId(item as ChangeRequestTimelineRow);
               const diff =
@@ -294,114 +344,126 @@ export function ChangeRequestCardsListView({
                 (previewCrId ? diffMap?.[previewCrId] : undefined) ??
                 diffMap?.[item.id];
               const crTitle = item.change_request?.title;
+              const displayCrId =
+                item.change_request?.display_cr_id ??
+                item.change_request?.displayCrId ??
+                item.change_request?.cr_id ??
+                crTitle;
               const suggestionId = previewCrId
                 ? crIdToDiscussionId.get(previewCrId)
                 : crTitle
                   ? crIdToDiscussionId.get(crTitle)
                   : undefined;
-              const showFinalizeInternalVote =
+              const showCloseInternalVote =
                 editingMode === 'vote_internal' &&
                 canManage &&
-                onFinalizeInternalVote &&
+                Boolean(onFinalizeInternalVote) &&
                 canFinalizeInternalChangeRequest(item);
+              const canJumpToFinalVote =
+                isChangeRequestVotesPlaceholder(item) &&
+                crItems.length === 0 &&
+                Boolean(finalVoteItem);
               const outcomeLabel = getInternalOutcomeLabel(item.change_request);
               const votesFor = item.change_request?.votes_for ?? 0;
               const votesAgainst = item.change_request?.votes_against ?? 0;
               const votesAbstain = item.change_request?.votes_abstain ?? 0;
+              const closeInternalVoteLabel = t(
+                'features.agendas.crTimeline.closeInternalVote',
+                'Interne Abstimmung beenden'
+              );
+              const isCardCurrent = isInternalVotingMode
+                ? isVotingActive && item.status !== 'completed'
+                : isVotingActive && nextSequenceItemId === item.id;
+              const isLocked =
+                !isInternalVotingMode &&
+                isVotingActive &&
+                item.status !== 'completed' &&
+                (nextSequenceItemId !== item.id ||
+                  (isVoteSequencePlaceholder(item) && !canJumpToFinalVote));
+              const renderInterstitialBefore =
+                shouldRenderSequenceInterstitial && !variantVoteItem && index === 0;
+              const renderInterstitialAfter =
+                shouldRenderSequenceInterstitial && item.id === variantVoteItem?.id;
 
               return (
-                <div key={item.id} className="space-y-2">
-                  <ChangeRequestTimelineCard
-                    item={item as ChangeRequestTimelineRow}
-                    index={index}
-                    isCurrent={isVotingActive && currentItemId === item.id}
-                    hasUserVoted={
-                      hasUserVoted ? hasUserVoted(item as ChangeRequestTimelineRow) : false
-                    }
-                    userSelectedChoiceIds={
-                      getUserSelectedChoiceIds
-                        ? getUserSelectedChoiceIds(item as ChangeRequestTimelineRow)
-                        : []
-                    }
-                    canManage={isVotingActive ? canManage : false}
-                    canVote={isVotingActive ? canVote : false}
-                    isFinalVoteLocked={false}
-                    diff={diff}
-                    documentContent={documentContent}
-                    suggestionId={suggestionId}
-                    crId={crTitle || undefined}
-                    discussions={discussions}
-                    editingMode={editingMode}
-                    amendmentId={amendmentId}
-                    userId={userId}
-                    userRecord={userRecord}
-                    agendaItemId={agendaItemId}
-                    showEditorPreview
-                    onCastVote={isVotingActive ? onCastVote : undefined}
-                    onStartIndicative={isVotingActive ? onStartIndicative : undefined}
-                    onStartFinal={isVotingActive ? onStartFinal : undefined}
-                    onCloseVoting={isVotingActive ? onCloseVoting : undefined}
-                  />
-                  {showFinalizeInternalVote && (
-                    <div className="flex justify-end">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="outline">
-                            <CheckCircle2 className="mr-2 h-4 w-4" />
-                            Abstimmung beenden
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Interne Abstimmung beenden?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Ergebnis: {outcomeLabel}. Accept {votesFor}, Reject {votesAgainst},
-                              Abstain {votesAbstain}.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => {
-                                void onFinalizeInternalVote(item.change_request_id ?? item.id);
-                              }}
-                            >
-                              Abstimmung beenden
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  )}
-                </div>
+                <Fragment key={item.id}>
+                  {renderInterstitialBefore ? renderSequenceInterstitial() : null}
+                  <div className="space-y-2">
+                    <ChangeRequestTimelineCard
+                      item={item as ChangeRequestTimelineRow}
+                      index={index}
+                      isCurrent={isCardCurrent}
+                      hasUserVoted={
+                        hasUserVoted ? hasUserVoted(item as ChangeRequestTimelineRow) : false
+                      }
+                      userSelectedChoiceIds={
+                        getUserSelectedChoiceIds
+                          ? getUserSelectedChoiceIds(item as ChangeRequestTimelineRow)
+                          : []
+                      }
+                      canManage={isVotingActive ? canManage : false}
+                      canVote={isVotingActive ? canVote : false}
+                      hideInlineVotingControls={hideInlineVotingControls}
+                      allowInlineFinalVoteStart={allowInlineFinalVoteStart}
+                      isFinalVoteLocked={isLocked}
+                      diff={diff}
+                      documentContent={documentContent}
+                      suggestionId={suggestionId}
+                      crId={previewCrId || crTitle || undefined}
+                      displayCrId={displayCrId || undefined}
+                      discussions={discussions}
+                      editingMode={editingMode}
+                      amendmentId={amendmentId}
+                      userId={userId}
+                      userRecord={userRecord}
+                      agendaItemId={agendaItemId}
+                      showEditorPreview
+                      onCastVote={isVotingActive ? onCastVote : undefined}
+                      onStartIndicative={isVotingActive ? onStartIndicative : undefined}
+                      onStartFinal={isVotingActive ? onStartFinal : undefined}
+                      onCloseVoting={isVotingActive ? onCloseVoting : undefined}
+                    />
+                    {showCloseInternalVote && (
+                      <div className="flex justify-end">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                              <CheckCircle2 className="mr-2 h-4 w-4" />
+                              {closeInternalVoteLabel}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                {t(
+                                  'features.agendas.crTimeline.closeInternalVoteDialogTitle',
+                                  'Interne Abstimmung beenden?'
+                                )}
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Ergebnis: {outcomeLabel}. Accept {votesFor}, Reject {votesAgainst},
+                                Abstain {votesAbstain}.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => {
+                                  void onFinalizeInternalVote(item.change_request_id ?? item.id);
+                                }}
+                              >
+                                {closeInternalVoteLabel}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
+                  </div>
+                  {renderInterstitialAfter ? renderSequenceInterstitial() : null}
+                </Fragment>
               );
             })
-          )}
-
-          {/* Final Vote item — always shown in "All" tab */}
-          {finalVoteItem && activeTab === 'all' && (
-            <ChangeRequestTimelineCard
-              key={finalVoteItem.id}
-              item={finalVoteItem as ChangeRequestTimelineRow}
-              index={crItems.length}
-              isCurrent={isVotingActive && currentItemId === finalVoteItem.id}
-              hasUserVoted={
-                hasUserVoted ? hasUserVoted(finalVoteItem as ChangeRequestTimelineRow) : false
-              }
-              userSelectedChoiceIds={
-                getUserSelectedChoiceIds
-                  ? getUserSelectedChoiceIds(finalVoteItem as ChangeRequestTimelineRow)
-                  : []
-              }
-              canManage={isVotingActive ? canManage : false}
-              canVote={isVotingActive ? canVote : false}
-              isFinalVoteLocked={!allCRsProcessed}
-              showEditorPreview
-              onCastVote={isVotingActive ? onCastVote : undefined}
-              onStartIndicative={isVotingActive ? onStartIndicative : undefined}
-              onStartFinal={isVotingActive ? onStartFinal : undefined}
-              onCloseVoting={isVotingActive ? onCloseVoting : undefined}
-            />
           )}
         </div>
       </CardContent>

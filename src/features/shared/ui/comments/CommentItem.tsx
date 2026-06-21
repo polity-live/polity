@@ -35,6 +35,7 @@ interface CommentItemProps {
   onReply: (commentId: string, text: string) => Promise<void>;
   onDelete?: (commentId: string) => Promise<void>;
   depth?: number;
+  linkAuthors?: boolean;
 }
 
 export function CommentItem({
@@ -44,6 +45,7 @@ export function CommentItem({
   onReply,
   onDelete,
   depth = 0,
+  linkAuthors,
 }: CommentItemProps) {
   const controller = useCommentItemController({
     comment,
@@ -59,6 +61,7 @@ export function CommentItem({
       onReply={onReply}
       onDelete={onDelete}
       depth={depth}
+      linkAuthors={linkAuthors}
       renderReply={(reply, replyDepth) => (
         <CommentItem
           key={reply.id}
@@ -68,6 +71,7 @@ export function CommentItem({
           onReply={onReply}
           onDelete={onDelete}
           depth={replyDepth}
+          linkAuthors={linkAuthors}
         />
       )}
       {...controller}

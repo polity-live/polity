@@ -6,8 +6,13 @@ CREATE TABLE IF NOT EXISTS public.agenda_item_change_request (
   change_request_id UUID REFERENCES public.change_request (id) ON DELETE CASCADE,
   vote_id UUID REFERENCES public.vote (id) ON DELETE SET NULL,
   order_index INTEGER NOT NULL DEFAULT 0,
+  step_kind TEXT NOT NULL DEFAULT 'change_request',
+  process_branch_id UUID REFERENCES public.amendment_process_branch (id) ON DELETE SET NULL,
   is_final_vote BOOLEAN NOT NULL DEFAULT false,
   status TEXT NOT NULL DEFAULT 'pending',
+  blocked_reason TEXT,
+  result_status TEXT,
+  obsolete_reason TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -15,6 +20,8 @@ CREATE TABLE IF NOT EXISTS public.agenda_item_change_request (
 CREATE INDEX idx_aicr_agenda_item ON public.agenda_item_change_request (agenda_item_id);
 CREATE INDEX idx_aicr_change_request ON public.agenda_item_change_request (change_request_id);
 CREATE INDEX idx_aicr_vote ON public.agenda_item_change_request (vote_id);
+CREATE INDEX idx_aicr_step_kind ON public.agenda_item_change_request (agenda_item_id, step_kind);
+CREATE INDEX idx_aicr_process_branch ON public.agenda_item_change_request (process_branch_id);
 CREATE UNIQUE INDEX idx_aicr_unique ON public.agenda_item_change_request (agenda_item_id, change_request_id) WHERE change_request_id IS NOT NULL;
 
 ALTER TABLE public.agenda_item_change_request ENABLE ROW LEVEL SECURITY;

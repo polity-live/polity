@@ -176,6 +176,9 @@ export const amendmentQueries = {
             .related('user')
             .related('votes', vote => vote.where('user_id', userID ?? '__anon__'))
         )
+        .related('current_process_run', q =>
+          q.related('branches', bq => bq.orderBy('created_at', 'asc'))
+        )
         .related('threads', q => q.related('user').related('comments'))
         .one()
   ),
@@ -201,7 +204,22 @@ export const amendmentQueries = {
           .related('selected_source_group')
           .related('selected_target_group')
           .related('selected_target_workflow')
-          .related('active_branch')
+          .related('active_branch', bq => bq.related('document'))
+          .related('branches', bq =>
+            bq
+              .related('document')
+              .related('document_version')
+              .related('change_requests', cq => applyChangeRequestVisibilityAccess(cq, userID))
+              .related('step_runs', sq =>
+                sq
+                  .related('source_group')
+                  .related('target_group')
+                  .related('event')
+                  .related('agenda_item')
+                  .orderBy('order_index', 'asc')
+              )
+              .orderBy('created_at', 'asc')
+          )
           .related('tasks', tq =>
             tq
               .related('group')
@@ -237,7 +255,22 @@ export const amendmentQueries = {
           .related('selected_source_group')
           .related('selected_target_group')
           .related('selected_target_workflow')
-          .related('active_branch')
+          .related('active_branch', bq => bq.related('document'))
+          .related('branches', bq =>
+            bq
+              .related('document')
+              .related('document_version')
+              .related('change_requests', cq => applyChangeRequestVisibilityAccess(cq, userID))
+              .related('step_runs', sq =>
+                sq
+                  .related('source_group')
+                  .related('target_group')
+                  .related('event')
+                  .related('agenda_item')
+                  .orderBy('order_index', 'asc')
+              )
+              .orderBy('created_at', 'asc')
+          )
           .related('tasks', tq =>
             tq
               .related('group')
@@ -283,6 +316,7 @@ export const amendmentQueries = {
         .related('event')
         .related('agenda_items')
         .related('vote_entries')
+        .related('change_requests', q => applyChangeRequestVisibilityAccess(q, userID))
         .related('current_process_run', q =>
           q
             .related('root_workflow')
@@ -304,7 +338,9 @@ export const amendmentQueries = {
               bq
                 .related('parent_branch')
                 .related('merged_into_branch')
+                .related('document')
                 .related('document_version')
+                .related('change_requests', cq => applyChangeRequestVisibilityAccess(cq, userID))
                 .related('step_runs', sq =>
                   sq
                     .related('workflow')
@@ -361,6 +397,9 @@ export const amendmentQueries = {
             .related('active_branch')
             .related('branches', bq =>
               bq
+                .related('document')
+                .related('document_version')
+                .related('change_requests', cq => applyChangeRequestVisibilityAccess(cq, userID))
                 .related('step_runs', sq =>
                   sq
                     .related('event')
@@ -403,6 +442,29 @@ export const amendmentQueries = {
           applyChangeRequestVisibilityAccess(q, userID)
             .related('user')
             .related('votes', vote => vote.where('user_id', userID ?? '__anon__'))
+        )
+        .related('current_process_run', q =>
+          q
+            .related('active_branch', bq => bq.related('document'))
+            .related('branches', bq =>
+              bq
+                .related('document', dq => dq.related('collaborators', cq => cq.related('user')))
+                .related('document_version')
+                .related('change_requests', cq =>
+                  applyChangeRequestVisibilityAccess(cq, userID)
+                    .related('user')
+                    .related('votes', vote => vote.where('user_id', userID ?? '__anon__'))
+                )
+                .related('step_runs', sq =>
+                  sq
+                    .related('source_group')
+                    .related('target_group')
+                    .related('event')
+                    .related('agenda_item')
+                    .orderBy('order_index', 'asc')
+                )
+                .orderBy('created_at', 'asc')
+            )
         )
         .one()
   ),
@@ -505,7 +567,9 @@ export const amendmentQueries = {
         .where('group_id', group_id)
         .whereExists('group', group => applyGroupQueryAccess(group, userID))
         .where('status', status)
-        .related('amendment', q => q.related('documents').related('current_process_run'))
+        .related('amendment', q =>
+          q.related('document').related('documents').related('current_process_run')
+        )
         .related('process_run')
         .related('process_step_run')
         .related('process_task')
@@ -583,7 +647,9 @@ export const amendmentQueries = {
       .related('terminal_step_run')
       .related('branches', bq =>
         bq
+          .related('document')
           .related('document_version')
+          .related('change_requests', cq => applyChangeRequestVisibilityAccess(cq, userID))
           .related('step_runs', sq =>
             sq
               .related('workflow')
@@ -673,7 +739,9 @@ export const amendmentQueries = {
         )
         .related('branch', bq =>
           bq
+            .related('document')
             .related('document_version')
+            .related('change_requests', cq => applyChangeRequestVisibilityAccess(cq, userID))
             .related('step_runs', sq =>
               sq
                 .related('workflow_step')
@@ -708,7 +776,10 @@ export const amendmentQueries = {
   clonesBySource: defineQuery(
     z.object({ source_id: z.string() }),
     ({ args: { source_id }, ctx: { userID } }) =>
-      applyAmendmentAccess(zql.amendment.where('clone_source_id', source_id), userID)
+      applyAmendmentAccess(zql.amendment.where('clone_source_id', source_id), userID).related(
+        'current_process_run',
+        q => q.related('branches', bq => bq.orderBy('created_at', 'asc'))
+      )
   ),
 
   // Threads with deep relations for discussion views
@@ -868,7 +939,13 @@ export const amendmentQueries = {
       zql.amendment_collaborator
         .where('user_id', user_id)
         .where('user_id', userID)
-        .related('amendment', q => q.related('created_by'))
+        .related('amendment', q =>
+          q
+            .related('created_by')
+            .related('current_process_run', rq =>
+              rq.related('branches', bq => bq.orderBy('created_at', 'asc'))
+            )
+        )
         .related('role')
   ),
 
@@ -883,6 +960,9 @@ export const amendmentQueries = {
           .related('group')
           .related('event')
           .related('amendment_hashtags', hq => hq.related('hashtag'))
+          .related('current_process_run', rq =>
+            rq.related('branches', bq => bq.orderBy('created_at', 'asc'))
+          )
       )
       .related('role', q => q.related('action_rights'))
   ),
@@ -906,7 +986,10 @@ export const amendmentQueries = {
       .related('group')
       .related('event')
       .related('current_process_run', q =>
-        q.related('selected_target_group').related('terminal_step_run')
+        q
+          .related('selected_target_group')
+          .related('terminal_step_run')
+          .related('branches', bq => bq.orderBy('created_at', 'asc'))
       )
       .related('group_decisions', q => q.related('group'));
   }),

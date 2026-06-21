@@ -8,6 +8,7 @@ import { useAllEvents, useAllAmendments, useRolesWithGroups } from '@/zero/event
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { VOTE_STATUS } from '@/zero/votes/vote-workflow';
 
 export interface CreateAgendaItemFormData {
   title: string;
@@ -129,7 +130,7 @@ export function useCreateAgendaItemFormController() {
           id: voteId,
           title: formData.title,
           description: formData.description || null,
-          status: 'indicative',
+          status: VOTE_STATUS.indicativeOpen,
           majority_type: 'relative',
           closing_type: null,
           closing_duration_seconds: null,

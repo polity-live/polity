@@ -203,6 +203,21 @@ describe('AgendaActionBar', () => {
     expect(voteButton?.className).toContain('text-muted-foreground');
   });
 
+  it('disables the start final vote action while a vote action is loading', () => {
+    render(
+      <AgendaActionBar
+        {...baseProps}
+        canManageAgenda
+        voteLoading
+        onStartFinalVote={() => undefined}
+      />
+    );
+
+    expect(
+      screen.getByTitle('features.events.agenda.actions.startFinalVote').hasAttribute('disabled')
+    ).toBe(true);
+  });
+
   it('renders the candidate button as blocked with help when passive voting rights are missing', () => {
     render(
       <AgendaActionBar

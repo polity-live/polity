@@ -21,13 +21,27 @@ import {
 import { useAgendaItemCRVoting, getVotePhase } from '../hooks/useAgendaItemCRVoting';
 import { extractAmendmentCRSummaries } from '../logic/extractAmendmentCRSummaries';
 import { createMockCRTimelineItems } from '../logic/createMockCRTimelineItems';
-import { buildFinalVoteFromAgendaVote } from '../logic/buildFinalVoteFromAgendaVote';
+import {
+  buildFinalVoteFromAgendaVote,
+  buildVariantVoteFromAgendaVote,
+  buildVoteSequencePlaceholder,
+} from '../logic/buildFinalVoteFromAgendaVote';
+import {
+  getVoteStepKind,
+  isChangeRequestVotesPlaceholder,
+  resolveClosingJumpTarget,
+} from '../logic/voteSequenceJump';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import {
   extractSuggestionContent,
   hasRenderableSuggestionContent,
   suggestionContentFromChangeRequestSnapshot,
 } from '@/features/change-requests/utils/suggestion-extraction';
+import {
+  decorateBranchScopedChangeRequests,
+  decorateBranchScopedTimelineItems,
+  filterTimelineItemsForProcessBranch,
+} from '@/features/change-requests/logic/branchScopedDisplay';
 import type { ChangeRequestDiffData } from './ChangeRequestTimelineCard';
 import { getAgendaRuntimeStatus } from '../logic/getAgendaRuntimeStatus';
 import {
@@ -43,12 +57,27 @@ import {
   resolveOfflineTallyPhase,
   shouldShowOfflineTallyToolbarButton,
 } from '../logic/offlineTallyToolbar';
+import { buildOfflineTallyEntity } from '../logic/offlineTallyEntity';
 import {
   buildNamedElectionResultsModel,
   buildNamedVoteResultsModel,
 } from '../logic/buildNamedBallotResults';
 import { useDelegateAssemblyParticipantsComposition } from '@/features/events/hooks/useDelegateAssemblyParticipantsComposition';
 import { getEffectiveVotingPhase, resolveAttendanceMode } from '../logic/agendaUiHelpers';
+import {
+  VOTE_STATUS,
+  isFinalClosingVotePurpose,
+  isMergeVariantVotePurpose,
+} from '@/zero/votes/vote-workflow';
+import {
+  buildBranchDiffCandidates,
+  getOrderedBranches,
+  type AmendmentProcessBranchSource,
+} from '@/features/amendments/logic/amendmentBranchDisplay';
+import {
+  getSelectableAgendaBranches,
+  resolveSelectableAgendaBranchId,
+} from '../logic/selectableAgendaBranches';
 
 function getEffectiveCRVotingPhase(
   item?: {
@@ -64,6 +93,7 @@ function getEffectiveCRVotingPhase(
   if (phase === 'closed') return 'closed';
   return 'indication';
 }
+
 import { EventAgendaItemDetailView } from './EventAgendaItemDetailView';
 export function EventAgendaItemDetail({
   eventId,
@@ -74,7 +104,7 @@ export function EventAgendaItemDetail({
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { updateSpeaker } = useAgendaActions();
+  const { updateSpeaker, initializeChangeRequestVoting } = useAgendaActions();
   const {
     agendaItem,
     event,
@@ -85,6 +115,7 @@ export function EventAgendaItemDetail({
     election,
     candidates,
     vote,
+    votesByAgendaItem,
     choices,
     userElector,
     userVoter,
@@ -114,8 +145,14 @@ export function EventAgendaItemDetail({
   const { event: delegateTargetEvent } = useEventById(delegateAssignmentMeta?.targetEventId);
 
   const { can, canVote, canBeCandidate } = usePermissions({ eventId });
+  const { can: canAmendment } = usePermissions({
+    eventId,
+    amendment: agendaItem?.amendment ?? undefined,
+  });
   const canManageAgenda = can('manage', 'agendaItems');
   const canManageVotes = can('manage_votes', 'events');
+  const canManageAmendment = canAmendment('manage', 'amendments');
+  const canManageVoteSequence = canManageVotes || canManageAmendment;
   const canManageOfflineTallies = can('manage_votes', 'events') || canManageAgenda;
   const hasVotingRight = canVote();
   const hasCandidateRight = canBeCandidate();
@@ -135,7 +172,11 @@ export function EventAgendaItemDetail({
 
   const { verifyVotingPassword } = useVotingPasswordActions();
   const { upsertOfflineTally: upsertElectionOfflineTally } = useElectionActions();
-  const { upsertOfflineTally: upsertVoteOfflineTally } = useVoteActions();
+  const {
+    updateVote: updateAgendaVote,
+    upsertOfflineTally: upsertVoteOfflineTally,
+    closeExpiredFinalVotesForEvent,
+  } = useVoteActions();
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isPasswordVerifying, setIsPasswordVerifying] = useState(false);
   const [offlineTallyDialogOpen, setOfflineTallyDialogOpen] = useState(false);
@@ -143,15 +184,27 @@ export function EventAgendaItemDetail({
   const [offlineTallySubmitError, setOfflineTallySubmitError] = useState<string | null>(null);
   const [isOfflineTallySubmitting, setIsOfflineTallySubmitting] = useState(false);
   const [namedResultsTarget, setNamedResultsTarget] = useState<'election' | 'vote' | null>(null);
+  const [sequenceVotingLoading, setSequenceVotingLoading] = useState<string | null>(null);
   const effectiveVotingPhase = getEffectiveVotingPhase(
     election?.status ?? vote?.status,
     agendaItem?.voting_phase ?? null
   );
 
+  useEffect(() => {
+    const closeExpiredVotes = () => {
+      closeExpiredFinalVotesForEvent({ event_id: eventId }).catch(error => {
+        console.error('Failed to close expired final votes:', error);
+      });
+    };
+
+    closeExpiredVotes();
+    const intervalId = window.setInterval(closeExpiredVotes, 5000);
+    return () => window.clearInterval(intervalId);
+  }, [closeExpiredFinalVotesForEvent, eventId]);
+
   const {
     crTimeline,
     currentItem: currentCRItem,
-    completedItems,
     progress,
     isTimelineComplete,
     allCRsProcessed,
@@ -184,6 +237,97 @@ export function EventAgendaItemDetail({
 
   const [, setMarkingSpeakerComplete] = useState<string | null>(null);
   const [selectedCRToolbarItemId, setSelectedCRToolbarItemId] = useState<string | null>(null);
+  const [requestedAgendaBranchId, setRequestedAgendaBranchId] = useState<string | null>(null);
+
+  const agendaProcessBranches = useMemo(
+    () =>
+      getOrderedBranches(
+        (agendaItem?.amendment?.current_process_run?.branches ??
+          []) as readonly AmendmentProcessBranchSource[]
+      ),
+    [agendaItem?.amendment?.current_process_run?.branches]
+  );
+  const selectableAgendaBranchesResult = useMemo(
+    () =>
+      getSelectableAgendaBranches({
+        branches: agendaProcessBranches,
+        vote,
+        votes: votesByAgendaItem ?? [],
+        agendaStepRuns: forwardingContext.agendaStepRuns ?? [],
+        currentStepRun: forwardingContext.currentStepRun ?? null,
+      }),
+    [
+      agendaProcessBranches,
+      forwardingContext.agendaStepRuns,
+      forwardingContext.currentStepRun,
+      vote,
+      votesByAgendaItem,
+    ]
+  );
+  const selectableAgendaBranches = selectableAgendaBranchesResult.branches;
+  const selectedAgendaBranchId = useMemo(
+    () =>
+      resolveSelectableAgendaBranchId({
+        branches: selectableAgendaBranches,
+        requestedBranchId: requestedAgendaBranchId,
+        preferredBranchId: selectableAgendaBranchesResult.preferredBranchId,
+      }),
+    [
+      requestedAgendaBranchId,
+      selectableAgendaBranches,
+      selectableAgendaBranchesResult.preferredBranchId,
+    ]
+  );
+  const agendaProcessBranch = useMemo(
+    () => selectableAgendaBranches.find(branch => branch.id === selectedAgendaBranchId) ?? null,
+    [selectableAgendaBranches, selectedAgendaBranchId]
+  );
+  const handleAgendaBranchChange = useCallback((branchId: string | null) => {
+    setRequestedAgendaBranchId(branchId);
+  }, []);
+
+  const agendaBranchChangeRequests = useMemo(() => {
+    const branchChangeRequests = agendaProcessBranch?.change_requests;
+    if (Array.isArray(branchChangeRequests)) {
+      return branchChangeRequests;
+    }
+
+    const changeRequests =
+      (agendaItem?.amendment?.change_requests as
+        | readonly ({ process_branch_id?: string | null } & Record<string, unknown>)[]
+        | null
+        | undefined) ?? [];
+
+    if (agendaProcessBranch?.id) {
+      return changeRequests.filter(
+        changeRequest => changeRequest.process_branch_id === agendaProcessBranch.id
+      );
+    }
+
+    return changeRequests.filter(changeRequest => !changeRequest.process_branch_id);
+  }, [
+    agendaItem?.amendment?.change_requests,
+    agendaProcessBranch?.change_requests,
+    agendaProcessBranch?.id,
+  ]);
+
+  const agendaBranchDiscussionsRaw =
+    agendaProcessBranch?.discussions ?? agendaItem?.amendment?.discussions;
+  const agendaBranchEditingMode = agendaProcessBranch?.editing_mode ?? 'edit';
+
+  const documentContent = (agendaProcessBranch?.document?.content ??
+    agendaProcessBranch?.document_version?.content ??
+    agendaItem?.amendment?.document?.content) as Value | undefined;
+  const branchDiffCandidates = useMemo(
+    () =>
+      buildBranchDiffCandidates({
+        branches: selectableAgendaBranches,
+        originalContent: agendaItem?.amendment?.document?.content ?? null,
+        activeBranchId: selectedAgendaBranchId,
+      }),
+    [agendaItem?.amendment?.document?.content, selectableAgendaBranches, selectedAgendaBranchId]
+  );
+  const defaultBranchDiffRightCandidateId = selectedAgendaBranchId;
 
   // Build mock CR items for pre-voting display
   const mockCRItems = useMemo(() => {
@@ -194,10 +338,11 @@ export function EventAgendaItemDetail({
     if (!amendment) return [];
 
     const summaries = extractAmendmentCRSummaries(
-      amendment.discussions as readonly unknown[] | null | undefined,
-      amendment.change_requests as
+      agendaBranchDiscussionsRaw as readonly unknown[] | null | undefined,
+      agendaBranchChangeRequests as unknown as
         | readonly {
             id: string;
+            process_branch_id?: string | null;
             title?: string | null;
             description?: string | null;
             status?: string | null;
@@ -216,47 +361,83 @@ export function EventAgendaItemDetail({
             new_properties?: Record<string, string> | null;
           }[]
         | null
-        | undefined
+        | undefined,
+      {
+        branches: agendaProcessBranches,
+        processBranchId: agendaProcessBranch?.id ?? null,
+      }
     );
 
     return createMockCRTimelineItems(summaries);
-  }, [agendaItem?.amendment_id, agendaItem?.amendment, crTimeline.length]);
-
-  // Extract document content for editor preview
-  const documentContent = agendaItem?.amendment?.document?.content as Value | undefined;
+  }, [
+    agendaBranchChangeRequests,
+    agendaBranchDiscussionsRaw,
+    agendaProcessBranch?.id,
+    agendaProcessBranches,
+    agendaItem?.amendment_id,
+    agendaItem?.amendment,
+    crTimeline.length,
+  ]);
 
   // Build TDiscussion array from amendment discussions for SuggestionViewToggle mapping
   const amendmentDiscussions = useMemo<TDiscussion[]>(() => {
-    const rawDiscussions = agendaItem?.amendment?.discussions;
+    const rawDiscussions = agendaBranchDiscussionsRaw;
     if (!rawDiscussions || !Array.isArray(rawDiscussions)) return [];
+    const displayChangeRequests = decorateBranchScopedChangeRequests(
+      agendaProcessBranches,
+      (agendaBranchChangeRequests as readonly any[]).map(changeRequest => ({
+        id: changeRequest.id,
+        process_branch_id: changeRequest.process_branch_id ?? agendaProcessBranch?.id ?? null,
+        cr_id: changeRequest.title ?? null,
+        title: changeRequest.title ?? null,
+        created_at: changeRequest.created_at ?? null,
+      }))
+    );
+
     return (rawDiscussions as Record<string, unknown>[]).map(d => ({
-      id: (d.id as string) ?? '',
-      crId: (d.crId as string) ?? null,
-      title: (d.title as string) ?? '',
-      userId: (d.userId as string) ?? '',
-      comments: (d.comments as TDiscussion['comments']) ?? [],
-      createdAt: new Date((d.createdAt as number) ?? 0),
-      isResolved: (d.isResolved as boolean) ?? false,
-      changeRequestEntityId: (d.changeRequestEntityId as string) ?? undefined,
+      ...(() => {
+        const changeRequestEntityId = (d.changeRequestEntityId as string) ?? undefined;
+        const crId = (d.crId as string) ?? null;
+        const matchingRequest = displayChangeRequests.find(
+          changeRequest =>
+            changeRequest.id === changeRequestEntityId ||
+            (!!crId && (changeRequest.cr_id === crId || changeRequest.title === crId))
+        );
+
+        return {
+          id: (d.id as string) ?? '',
+          crId,
+          displayCrId: matchingRequest?.displayCrId ?? (d.displayCrId as string) ?? crId,
+          branchDisplayNumber: matchingRequest?.branchDisplayNumber,
+          branchScopedCrNumber: matchingRequest?.branchScopedCrNumber,
+          title: (d.title as string) ?? '',
+          userId: (d.userId as string) ?? '',
+          comments: (d.comments as TDiscussion['comments']) ?? [],
+          createdAt: new Date((d.createdAt as number) ?? 0),
+          isResolved: (d.isResolved as boolean) ?? false,
+          changeRequestEntityId,
+        };
+      })(),
     }));
-  }, [agendaItem?.amendment?.discussions]);
+  }, [
+    agendaBranchChangeRequests,
+    agendaBranchDiscussionsRaw,
+    agendaProcessBranch?.id,
+    agendaProcessBranches,
+  ]);
 
   // Build diffMap from document content for each discussion
   const crDiffMap = useMemo<Record<string, ChangeRequestDiffData>>(() => {
     const map: Record<string, ChangeRequestDiffData> = {};
-    const changeRequests =
-      (agendaItem?.amendment?.change_requests as
-        | readonly {
-            id?: string | null;
-            title?: string | null;
-            change_type?: string | null;
-            original_text?: string | null;
-            new_text?: string | null;
-            original_properties?: any;
-            new_properties?: any;
-          }[]
-        | null
-        | undefined) ?? [];
+    const changeRequests = agendaBranchChangeRequests as readonly {
+      id?: string | null;
+      title?: string | null;
+      change_type?: string | null;
+      original_text?: string | null;
+      new_text?: string | null;
+      original_properties?: any;
+      new_properties?: any;
+    }[];
 
     const setDiff = (keys: (string | null | undefined)[], diff: ChangeRequestDiffData | null) => {
       if (!diff) return;
@@ -298,28 +479,186 @@ export function EventAgendaItemDetail({
       });
     }
     return map;
-  }, [agendaItem?.amendment?.change_requests, documentContent, amendmentDiscussions]);
+  }, [agendaBranchChangeRequests, documentContent, amendmentDiscussions]);
 
   const hasAmendmentCRs = crTimeline.length > 0 || mockCRItems.length > 0;
+  const decoratedCRTimeline = useMemo(
+    () => decorateBranchScopedTimelineItems(agendaProcessBranches, crTimeline),
+    [agendaProcessBranches, crTimeline]
+  );
+  const branchScopedCRTimeline = useMemo(
+    () => filterTimelineItemsForProcessBranch(decoratedCRTimeline, selectedAgendaBranchId),
+    [decoratedCRTimeline, selectedAgendaBranchId]
+  );
   const crDisplayItemsBase =
-    crTimeline.length > 0 ? crTimeline : (mockCRItems as unknown as ChangeRequestTimelineRow[]);
-  const isCRVotingActive = crTimeline.length > 0;
+    branchScopedCRTimeline.length > 0
+      ? branchScopedCRTimeline
+      : (mockCRItems as unknown as ChangeRequestTimelineRow[]);
+  const crVoteIdsKey = useMemo(
+    () =>
+      crTimeline
+        .map(item => item.vote_id)
+        .filter((voteId): voteId is string => Boolean(voteId))
+        .sort()
+        .join('|'),
+    [crTimeline]
+  );
+  const crVoteIds = useMemo(
+    () => new Set(crVoteIdsKey ? crVoteIdsKey.split('|') : []),
+    [crVoteIdsKey]
+  );
+  const variantVote = useMemo(() => {
+    const votes = votesByAgendaItem ?? [];
+    return (
+      votes.find((candidate: { purpose?: string | null }) =>
+        isMergeVariantVotePurpose(candidate.purpose)
+      ) ??
+      votes.find((candidate: { id: string; title?: string | null }) => {
+        if (crVoteIds.has(candidate.id)) return false;
+        const title = candidate.title?.toLowerCase() ?? '';
+        return title.includes('merge round') || title.includes('variant');
+      }) ??
+      null
+    );
+  }, [crVoteIds, votesByAgendaItem]);
 
   // Synthesize a final vote item from the agenda item's own vote.
   // If the timeline already includes a final vote (legacy data), prefer that.
   const timelineHasFinalVote = crDisplayItemsBase.some(i => i.is_final_vote);
+  const finalAmendmentVote = useMemo(() => {
+    const votes = votesByAgendaItem ?? [];
+    return (
+      votes.find((candidate: { purpose?: string | null }) =>
+        isFinalClosingVotePurpose(candidate.purpose)
+      ) ??
+      votes.find((candidate: { id: string; title?: string | null }) => {
+        if (crVoteIds.has(candidate.id) || candidate.id === variantVote?.id) return false;
+        const title = candidate.title?.toLowerCase() ?? '';
+        return title.includes('accept amendment') || title.includes('final');
+      }) ??
+      null
+    );
+  }, [crVoteIds, variantVote?.id, votesByAgendaItem]);
+  const timelineHasVariantVote = useMemo(
+    () =>
+      crTimeline.some(
+        item =>
+          getVoteStepKind(item) === 'variant_selection' || getVoteStepKind(item) === 'merge_variant'
+      ),
+    [crTimeline]
+  );
+  const synthesizedVariantVoteItem = useMemo(() => {
+    if (!variantVote || !agendaItem?.amendment_id || timelineHasVariantVote) return null;
+    return buildVariantVoteFromAgendaVote(variantVote, 0) as unknown as ChangeRequestTimelineRow;
+  }, [agendaItem?.amendment_id, timelineHasVariantVote, variantVote]);
   const synthesizedFinalVoteItem = useMemo(() => {
     if (timelineHasFinalVote) return null;
-    if (!vote || !hasAmendmentCRs) return null;
-    const orderIndex = crDisplayItemsBase.length;
-    return buildFinalVoteFromAgendaVote(vote, orderIndex) as unknown as ChangeRequestTimelineRow;
-  }, [timelineHasFinalVote, vote, hasAmendmentCRs, crDisplayItemsBase.length]);
+    const fallbackFinalVote =
+      !variantVote && !isMergeVariantVotePurpose(vote?.purpose) ? vote : null;
+    const voteForFinal = finalAmendmentVote ?? fallbackFinalVote;
+    if (!voteForFinal || !agendaItem?.amendment_id) return null;
+    const orderIndex = crDisplayItemsBase.length + (synthesizedVariantVoteItem ? 1 : 0);
+    return buildFinalVoteFromAgendaVote(
+      voteForFinal,
+      orderIndex
+    ) as unknown as ChangeRequestTimelineRow;
+  }, [
+    agendaItem?.amendment_id,
+    crDisplayItemsBase.length,
+    finalAmendmentVote,
+    synthesizedVariantVoteItem,
+    timelineHasFinalVote,
+    variantVote,
+    vote,
+  ]);
+  const changeRequestVotesPlaceholderItem = useMemo(() => {
+    if (!synthesizedVariantVoteItem || crDisplayItemsBase.length > 0 || !agendaItem?.id) {
+      return null;
+    }
+
+    const changeRequestVotesWereSkipped =
+      finalAmendmentVote?.status === VOTE_STATUS.finalOpen ||
+      finalAmendmentVote?.status === 'final_vote' ||
+      finalAmendmentVote?.status === 'closed';
+
+    return {
+      ...buildVoteSequencePlaceholder({
+        agendaItemId: agendaItem.id,
+        orderIndex: synthesizedVariantVoteItem ? 1 : 0,
+        kind: 'change_request_votes_placeholder',
+        title: t(
+          'features.agendas.crTimeline.changeRequestVotesPlaceholder',
+          'Change request votes'
+        ),
+        description: t(
+          changeRequestVotesWereSkipped
+            ? 'features.agendas.crTimeline.changeRequestVotesSkippedDescription'
+            : 'features.agendas.crTimeline.changeRequestVotesPlaceholderDescription',
+          changeRequestVotesWereSkipped
+            ? 'Change request votes were skipped because there were no change requests to vote on.'
+            : 'The exact change request votes will appear after the variant final vote is decided.'
+        ),
+      }),
+      status: changeRequestVotesWereSkipped ? 'completed' : 'pending',
+    } as unknown as ChangeRequestTimelineRow;
+  }, [
+    agendaItem?.id,
+    crDisplayItemsBase.length,
+    finalAmendmentVote?.status,
+    synthesizedVariantVoteItem,
+    t,
+  ]);
+  const finalVotePlaceholderItem = useMemo(() => {
+    if (
+      !synthesizedVariantVoteItem ||
+      synthesizedFinalVoteItem ||
+      timelineHasFinalVote ||
+      !agendaItem?.id
+    ) {
+      return null;
+    }
+
+    const orderIndex =
+      (synthesizedVariantVoteItem ? 1 : 0) +
+      crDisplayItemsBase.length +
+      (changeRequestVotesPlaceholderItem ? 1 : 0);
+
+    return buildVoteSequencePlaceholder({
+      agendaItemId: agendaItem.id,
+      orderIndex,
+      kind: 'final_amendment_placeholder',
+      title: t('features.agendas.crTimeline.finalVotePlaceholder', 'Final vote'),
+      description: t(
+        'features.agendas.crTimeline.finalVotePlaceholderDescription',
+        'The exact final vote will appear after the variant final vote is decided.'
+      ),
+    }) as unknown as ChangeRequestTimelineRow;
+  }, [
+    agendaItem?.id,
+    changeRequestVotesPlaceholderItem,
+    crDisplayItemsBase.length,
+    synthesizedFinalVoteItem,
+    synthesizedVariantVoteItem,
+    timelineHasFinalVote,
+    t,
+  ]);
 
   // Combine CR items + synthesized final vote
   const crDisplayItems = useMemo(() => {
-    if (!synthesizedFinalVoteItem) return crDisplayItemsBase;
-    return [...crDisplayItemsBase, synthesizedFinalVoteItem];
-  }, [crDisplayItemsBase, synthesizedFinalVoteItem]);
+    return [
+      ...(synthesizedVariantVoteItem ? [synthesizedVariantVoteItem] : []),
+      ...(changeRequestVotesPlaceholderItem ? [changeRequestVotesPlaceholderItem] : []),
+      ...crDisplayItemsBase,
+      ...(synthesizedFinalVoteItem ? [synthesizedFinalVoteItem] : []),
+      ...(finalVotePlaceholderItem ? [finalVotePlaceholderItem] : []),
+    ];
+  }, [
+    changeRequestVotesPlaceholderItem,
+    crDisplayItemsBase,
+    finalVotePlaceholderItem,
+    synthesizedFinalVoteItem,
+    synthesizedVariantVoteItem,
+  ]);
 
   // Derive the effective final vote item (from timeline or synthesized)
   const effectiveFinalVoteItem = useMemo(
@@ -328,56 +667,71 @@ export function EventAgendaItemDetail({
   );
 
   // Whether the vote is embedded in the CR list (so we can hide standalone AgendaVoteSection)
-  const isVoteInCRList = hasAmendmentCRs && !!effectiveFinalVoteItem && !!vote;
+  const isVoteInCRList =
+    !!vote && crDisplayItems.some(item => item.vote_id === vote.id || item.vote?.id === vote.id);
 
   const nonFinalCRItems = useMemo(
-    () => crTimeline.filter(item => !item.is_final_vote),
-    [crTimeline]
+    () =>
+      crDisplayItemsBase.filter(
+        item =>
+          !item.is_final_vote &&
+          getVoteStepKind(item) !== 'variant_selection' &&
+          getVoteStepKind(item) !== 'merge_variant'
+      ),
+    [crDisplayItemsBase]
+  );
+  const sequenceDisplayItems = crDisplayItems;
+  const sequenceCompletedItems = useMemo(
+    () => sequenceDisplayItems.filter(item => item.status === 'completed'),
+    [sequenceDisplayItems]
+  );
+  const isVoteSequenceActive = Boolean(agendaItem?.amendment_id && sequenceDisplayItems.length > 0);
+  const currentSequenceItem = useMemo(
+    () =>
+      sequenceDisplayItems.find(item => item.vote?.status === VOTE_STATUS.finalOpen) ??
+      sequenceDisplayItems.find(item => item.vote?.status === 'final_vote') ??
+      (currentCRItem ? sequenceDisplayItems.find(item => item.id === currentCRItem.id) : null) ??
+      sequenceDisplayItems.find(item => item.status !== 'completed') ??
+      null,
+    [currentCRItem, sequenceDisplayItems]
   );
 
   const fallbackSelectedCRItemId = useMemo(() => {
-    if (currentCRItem?.id) return currentCRItem.id;
-
-    const nextPendingCR = nonFinalCRItems.find(item => item.status !== 'completed');
-    if (nextPendingCR) return nextPendingCR.id;
-
+    if (currentSequenceItem?.id) return currentSequenceItem.id;
     return effectiveFinalVoteItem?.id ?? null;
-  }, [currentCRItem?.id, nonFinalCRItems, effectiveFinalVoteItem?.id]);
+  }, [currentSequenceItem?.id, effectiveFinalVoteItem?.id]);
 
   useEffect(() => {
-    if (currentCRItem?.id && currentCRItem.id !== selectedCRToolbarItemId) {
-      setSelectedCRToolbarItemId(currentCRItem.id);
+    if (currentSequenceItem?.id && currentSequenceItem.id !== selectedCRToolbarItemId) {
+      setSelectedCRToolbarItemId(currentSequenceItem.id);
       return;
     }
 
     const selectedItemStillExists = selectedCRToolbarItemId
-      ? crTimeline.some(item => item.id === selectedCRToolbarItemId) ||
-        effectiveFinalVoteItem?.id === selectedCRToolbarItemId
+      ? sequenceDisplayItems.some(item => item.id === selectedCRToolbarItemId)
       : false;
 
     if (!selectedItemStillExists && fallbackSelectedCRItemId) {
       setSelectedCRToolbarItemId(fallbackSelectedCRItemId);
     }
   }, [
-    crTimeline,
-    currentCRItem?.id,
+    currentSequenceItem?.id,
     effectiveFinalVoteItem?.id,
     fallbackSelectedCRItemId,
     selectedCRToolbarItemId,
+    sequenceDisplayItems,
   ]);
 
   const selectedCRToolbarItem = useMemo(
     () =>
-      crTimeline.find(item => item.id === selectedCRToolbarItemId) ??
-      (effectiveFinalVoteItem?.id === selectedCRToolbarItemId ? effectiveFinalVoteItem : null) ??
-      crTimeline.find(item => item.id === fallbackSelectedCRItemId) ??
-      (effectiveFinalVoteItem?.id === fallbackSelectedCRItemId ? effectiveFinalVoteItem : null) ??
+      sequenceDisplayItems.find(item => item.id === selectedCRToolbarItemId) ??
+      sequenceDisplayItems.find(item => item.id === fallbackSelectedCRItemId) ??
       null,
-    [crTimeline, effectiveFinalVoteItem, fallbackSelectedCRItemId, selectedCRToolbarItemId]
+    [fallbackSelectedCRItemId, selectedCRToolbarItemId, sequenceDisplayItems]
   );
 
   const isCRToolbarActive =
-    !!agendaItem?.amendment_id && crTimeline.length > 0 && !!selectedCRToolbarItem;
+    !!agendaItem?.amendment_id && sequenceDisplayItems.length > 0 && !!selectedCRToolbarItem;
   const selectedCRPhase = getEffectiveCRVotingPhase(selectedCRToolbarItem);
   const isSelectedCRFinalVote = !!selectedCRToolbarItem?.is_final_vote;
   const hasUserVotedOnSelectedCR = useMemo(
@@ -387,85 +741,141 @@ export function EventAgendaItemDetail({
 
   const selectedCRToolbarIndex = useMemo(() => {
     if (!selectedCRToolbarItem) return -1;
-    if (selectedCRToolbarItem.is_final_vote) return nonFinalCRItems.length;
-    return nonFinalCRItems.findIndex(item => item.id === selectedCRToolbarItem.id);
-  }, [selectedCRToolbarItem, nonFinalCRItems]);
+    return sequenceDisplayItems.findIndex(item => item.id === selectedCRToolbarItem.id);
+  }, [selectedCRToolbarItem, sequenceDisplayItems]);
 
   const hasPreviousChangeRequest = useMemo(() => {
     if (!selectedCRToolbarItem) return false;
-    if (selectedCRToolbarItem.is_final_vote) return nonFinalCRItems.length > 0;
     return selectedCRToolbarIndex > 0;
-  }, [selectedCRToolbarItem, nonFinalCRItems.length, selectedCRToolbarIndex]);
+  }, [selectedCRToolbarItem, selectedCRToolbarIndex]);
 
   const hasNextChangeRequest = useMemo(() => {
-    if (!selectedCRToolbarItem || selectedCRToolbarItem.is_final_vote) return false;
-    if (selectedCRToolbarIndex < nonFinalCRItems.length - 1) return true;
-    return !!effectiveFinalVoteItem && allCRsProcessed;
-  }, [
-    selectedCRToolbarItem,
-    selectedCRToolbarIndex,
-    nonFinalCRItems.length,
-    effectiveFinalVoteItem,
-    allCRsProcessed,
-  ]);
+    if (!selectedCRToolbarItem) return false;
+    return selectedCRToolbarIndex >= 0 && selectedCRToolbarIndex < sequenceDisplayItems.length - 1;
+  }, [selectedCRToolbarItem, selectedCRToolbarIndex, sequenceDisplayItems.length]);
 
   const handlePreviousChangeRequest = useCallback(() => {
     if (!selectedCRToolbarItem) return;
 
-    if (selectedCRToolbarItem.is_final_vote) {
-      const lastCRItem = nonFinalCRItems[nonFinalCRItems.length - 1];
-      if (lastCRItem) setSelectedCRToolbarItemId(lastCRItem.id);
-      return;
-    }
-
-    const previousItem = nonFinalCRItems[selectedCRToolbarIndex - 1];
+    const previousItem = sequenceDisplayItems[selectedCRToolbarIndex - 1];
     if (previousItem) setSelectedCRToolbarItemId(previousItem.id);
-  }, [selectedCRToolbarItem, nonFinalCRItems, selectedCRToolbarIndex]);
+  }, [selectedCRToolbarItem, sequenceDisplayItems, selectedCRToolbarIndex]);
 
   const handleNextChangeRequest = useCallback(() => {
-    if (!selectedCRToolbarItem || selectedCRToolbarItem.is_final_vote) return;
+    if (!selectedCRToolbarItem) return;
 
-    const nextItem = nonFinalCRItems[selectedCRToolbarIndex + 1];
+    const nextItem = sequenceDisplayItems[selectedCRToolbarIndex + 1];
     if (nextItem) {
       setSelectedCRToolbarItemId(nextItem.id);
-      return;
     }
+  }, [selectedCRToolbarItem, sequenceDisplayItems, selectedCRToolbarIndex]);
 
-    if (effectiveFinalVoteItem && allCRsProcessed) {
-      setSelectedCRToolbarItemId(effectiveFinalVoteItem.id);
-    }
-  }, [
-    selectedCRToolbarItem,
-    nonFinalCRItems,
-    selectedCRToolbarIndex,
-    effectiveFinalVoteItem,
-    allCRsProcessed,
-  ]);
+  const handleStartSequenceFinalVote = useCallback(
+    async (itemId: string) => {
+      const item = sequenceDisplayItems.find(sequenceItem => sequenceItem.id === itemId);
+      const closingJump = resolveClosingJumpTarget({
+        item,
+        nonFinalItemCount: nonFinalCRItems.length,
+        sequenceItems: sequenceDisplayItems,
+      });
+      if (closingJump.isClosingJump) {
+        setSequenceVotingLoading(itemId);
+        try {
+          if (closingJump.shouldInitialize) {
+            if (!agendaItem?.amendment_id || !agendaItem?.id) {
+              throw new Error('Missing amendment agenda item context.');
+            }
+
+            await initializeChangeRequestVoting({
+              amendment_id: agendaItem.amendment_id,
+              agenda_item_id: agendaItem.id,
+              start_final_vote_if_no_change_requests: false,
+            });
+          }
+
+          if (closingJump.targetItemId) {
+            setSelectedCRToolbarItemId(closingJump.targetItemId);
+          }
+        } catch (error) {
+          console.error('Failed to jump to final vote:', error);
+          toast.error(
+            t(
+              'features.agendas.crTimeline.jumpToFinalVoteFailed',
+              'Could not start the final vote.'
+            )
+          );
+        } finally {
+          setSequenceVotingLoading(null);
+        }
+        return;
+      }
+
+      if (!item?.vote) return;
+
+      if (getVoteStepKind(item)) {
+        await updateAgendaVote({ id: item.vote.id, status: VOTE_STATUS.finalOpen });
+        return;
+      }
+
+      await startFinalPhase(itemId);
+    },
+    [
+      agendaItem?.amendment_id,
+      agendaItem?.id,
+      initializeChangeRequestVoting,
+      nonFinalCRItems.length,
+      sequenceDisplayItems,
+      startFinalPhase,
+      t,
+      updateAgendaVote,
+    ]
+  );
+
+  const handleCloseSequenceVoting = useCallback(
+    async (itemId: string) => {
+      const item = sequenceDisplayItems.find(sequenceItem => sequenceItem.id === itemId);
+      if (!item?.vote) return;
+
+      if ((item as { _voteStepKind?: string })._voteStepKind) {
+        await updateAgendaVote({
+          id: item.vote.id,
+          status: 'closed',
+          closed_reason: 'manual',
+          closed_at: Date.now(),
+          closed_by_id: user?.id ?? null,
+        });
+        return;
+      }
+
+      await closeVoting(itemId);
+    },
+    [closeVoting, sequenceDisplayItems, updateAgendaVote, user?.id]
+  );
 
   const handleToolbarStartVote = useCallback(() => {
     if (!selectedCRToolbarItem) return;
-    void startIndicativePhase(selectedCRToolbarItem.id);
-  }, [selectedCRToolbarItem, startIndicativePhase]);
+    void handleStartSequenceFinalVote(selectedCRToolbarItem.id);
+  }, [handleStartSequenceFinalVote, selectedCRToolbarItem]);
 
   const handleToolbarStartFinalVote = useCallback(() => {
     if (isCRToolbarActive) {
       if (!selectedCRToolbarItem) return;
-      void startFinalPhase(selectedCRToolbarItem.id);
+      void handleStartSequenceFinalVote(selectedCRToolbarItem.id);
       return;
     }
 
     void actionBarHook.handleStartFinalVote();
-  }, [isCRToolbarActive, selectedCRToolbarItem, startFinalPhase, actionBarHook]);
+  }, [actionBarHook, handleStartSequenceFinalVote, isCRToolbarActive, selectedCRToolbarItem]);
 
   const handleToolbarCloseVote = useCallback(() => {
     if (isCRToolbarActive) {
       if (!selectedCRToolbarItem) return;
-      void closeVoting(selectedCRToolbarItem.id);
+      void handleCloseSequenceVoting(selectedCRToolbarItem.id);
       return;
     }
 
     void actionBarHook.handleCloseFinalVote();
-  }, [isCRToolbarActive, selectedCRToolbarItem, closeVoting, actionBarHook]);
+  }, [actionBarHook, handleCloseSequenceVoting, isCRToolbarActive, selectedCRToolbarItem]);
 
   const handleCastCRVoteFromDialog = useCallback(
     async (choiceId: string) => {
@@ -477,15 +887,35 @@ export function EventAgendaItemDetail({
 
   const selectedCRTitle = useMemo(() => {
     if (!selectedCRToolbarItem) return agendaItem?.title ?? undefined;
+    const placeholderTitle = (selectedCRToolbarItem as { _placeholderTitle?: string | null })
+      ._placeholderTitle;
+    if (placeholderTitle) return placeholderTitle;
+    if (
+      (selectedCRToolbarItem as { _voteStepKind?: string })._voteStepKind === 'variant_selection'
+    ) {
+      return selectedCRToolbarItem.vote?.title ?? 'Variant final vote';
+    }
     if (selectedCRToolbarItem.is_final_vote) {
       return t('features.agendas.crTimeline.acceptAmendment');
     }
 
-    return (
-      selectedCRToolbarItem.change_request?.title ||
-      `${t('features.agendas.crTimeline.changeRequest')} ${selectedCRToolbarIndex + 1}`
+    const changeRequestIndex = nonFinalCRItems.findIndex(
+      item => item.id === selectedCRToolbarItem.id
     );
-  }, [agendaItem?.title, selectedCRToolbarItem, selectedCRToolbarIndex, t]);
+    const selectedChangeRequest = selectedCRToolbarItem.change_request as
+      | (NonNullable<typeof selectedCRToolbarItem.change_request> & {
+          display_cr_id?: string | null;
+          displayCrId?: string | null;
+        })
+      | null
+      | undefined;
+    return (
+      selectedChangeRequest?.display_cr_id ||
+      selectedChangeRequest?.displayCrId ||
+      selectedCRToolbarItem.change_request?.title ||
+      `${t('features.agendas.crTimeline.changeRequest')} ${changeRequestIndex + 1}`
+    );
+  }, [agendaItem?.title, nonFinalCRItems, selectedCRToolbarItem, t]);
 
   const selectedCRChoices = useMemo(
     () =>
@@ -703,21 +1133,19 @@ export function EventAgendaItemDetail({
   }, [agendaItem, agendaNav]);
 
   const startVoteTooltip = isCRToolbarActive
-    ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.startFinalVote')
-      : t('features.agendas.crTimeline.startVote')
+    ? isChangeRequestVotesPlaceholder(selectedCRToolbarItem) && nonFinalCRItems.length === 0
+      ? t('features.agendas.crTimeline.jumpToFinalVote', 'Jump to final vote')
+      : `Start final vote: ${selectedCRTitle ?? 'Step'}`
     : undefined;
 
   const startFinalVoteTooltip = isCRToolbarActive
-    ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.startFinalVote')
-      : t('features.agendas.crTimeline.startFinal')
+    ? isChangeRequestVotesPlaceholder(selectedCRToolbarItem) && nonFinalCRItems.length === 0
+      ? t('features.agendas.crTimeline.jumpToFinalVote', 'Jump to final vote')
+      : `Start final vote: ${selectedCRTitle ?? 'Step'}`
     : undefined;
 
   const closeVoteTooltip = isCRToolbarActive
-    ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.closeFinalVote')
-      : t('features.agendas.crTimeline.closeVoting')
+    ? `Close final vote: ${selectedCRTitle ?? 'Step'}`
     : undefined;
 
   const castIndicativeVoteTooltip = isCRToolbarActive
@@ -826,7 +1254,7 @@ export function EventAgendaItemDetail({
   const userHasElectionVoted = useMemo(() => {
     if (!userElector) return false;
     const phase = election?.status;
-    if (phase === 'final' || phase === 'final_vote') {
+    if (phase === 'final' || phase === 'final_vote' || phase === VOTE_STATUS.finalOpen) {
       return (election?.final_participations ?? []).some(
         (p: { elector_id?: string | null }) => p.elector_id === userElector.id
       );
@@ -840,7 +1268,7 @@ export function EventAgendaItemDetail({
     if (!userElector) return [];
     const phase = election?.status;
     const participations =
-      phase === 'final' || phase === 'final_vote'
+      phase === 'final' || phase === 'final_vote' || phase === VOTE_STATUS.finalOpen
         ? (election?.final_participations ?? [])
         : (election?.indicative_participations ?? []);
     const userPart = participations.find(
@@ -874,7 +1302,7 @@ export function EventAgendaItemDetail({
   const userHasVoteVoted = useMemo(() => {
     if (!userVoter) return false;
     const phase = vote?.status;
-    if (phase === 'final' || phase === 'final_vote') {
+    if (phase === 'final' || phase === 'final_vote' || phase === VOTE_STATUS.finalOpen) {
       return (vote?.final_participations ?? []).some(
         (p: { voter_id?: string | null }) => p.voter_id === userVoter.id
       );
@@ -888,7 +1316,7 @@ export function EventAgendaItemDetail({
     if (!userVoter) return [];
     const phase = vote?.status;
     const participations =
-      phase === 'final' || phase === 'final_vote'
+      phase === 'final' || phase === 'final_vote' || phase === VOTE_STATUS.finalOpen
         ? (vote?.final_participations ?? [])
         : (vote?.indicative_participations ?? []);
     const userPart = participations.find(
@@ -962,78 +1390,40 @@ export function EventAgendaItemDetail({
     vote,
   ]);
 
-  const offlineTallyEntity = useMemo(() => {
-    if (!offlineTallyPhase) {
-      return null;
-    }
-
-    if (election) {
-      return {
-        kind: 'election' as const,
-        itemId: election.id,
-        title: election.title ?? agendaItem?.title ?? 'this election',
-        choices: candidates
-          .filter(candidate => candidate.status !== 'withdrawn')
-          .map(candidate => ({
-            id: candidate.id,
-            label: candidate.user
-              ? `${candidate.user.first_name ?? ''} ${candidate.user.last_name ?? ''}`.trim() ||
-                candidate.user.email ||
-                candidate.name ||
-                'Candidate'
-              : candidate.name || 'Candidate',
-          })),
-        tallies: (election.offline_tallies ?? [])
-          .filter(tally => tally.phase === offlineTallyPhase && tally.candidate_id)
-          .map(tally => ({
-            id: tally.candidate_id ?? '',
-            count: tally.count ?? 0,
-          })),
+  const offlineTallyElection = isCRToolbarActive ? null : election;
+  const offlineTallyVote = isCRToolbarActive ? (selectedCRToolbarItem?.vote ?? null) : vote;
+  const offlineTallyVoteChoices = isCRToolbarActive
+    ? (selectedCRToolbarItem?.vote?.choices ?? [])
+    : choices;
+  const offlineTallyEntity = useMemo(
+    () =>
+      buildOfflineTallyEntity({
+        phase: offlineTallyPhase,
+        agendaTitle: agendaItem?.title ?? null,
+        election: offlineTallyElection,
+        electionCandidates: candidates,
+        vote: offlineTallyVote,
+        voteChoices: offlineTallyVoteChoices,
         participantCount: confirmedOfflineParticipantCount,
-        votesPerParticipant: Math.max(1, election.max_votes ?? 1),
-        maxPerEntryVotes: confirmedOfflineParticipantCount,
-        maxTotalVotes: confirmedOfflineParticipantCount * Math.max(1, election.max_votes ?? 1),
-      };
-    }
-
-    if (vote) {
-      return {
-        kind: 'vote' as const,
-        itemId: vote.id,
-        title: vote.title ?? agendaItem?.title ?? 'this vote',
-        choices: choices.map((choice, index) => ({
-          id: choice.id,
-          label: choice.label || `Choice ${index + 1}`,
-        })),
-        tallies: (vote.offline_tallies ?? [])
-          .filter(tally => tally.phase === offlineTallyPhase && tally.choice_id)
-          .map(tally => ({
-            id: tally.choice_id ?? '',
-            count: tally.count ?? 0,
-          })),
-        participantCount: confirmedOfflineParticipantCount,
-        votesPerParticipant: 1,
-        maxPerEntryVotes: null,
-        maxTotalVotes: confirmedOfflineParticipantCount,
-      };
-    }
-
-    return null;
-  }, [
-    agendaItem?.title,
-    candidates,
-    choices,
-    confirmedOfflineParticipantCount,
-    election,
-    offlineTallyPhase,
-    vote,
-  ]);
+      }),
+    [
+      agendaItem?.title,
+      candidates,
+      confirmedOfflineParticipantCount,
+      offlineTallyElection,
+      offlineTallyPhase,
+      offlineTallyVote,
+      offlineTallyVoteChoices,
+    ]
+  );
   const offlineTallyActionMode = resolveOfflineTallyMode(offlineTallyEntity?.tallies ?? []);
-  const showOfflineTallyButton = shouldShowOfflineTallyToolbarButton({
-    attendanceMode,
-    canManageVotes,
-    phase: offlineTallyPhase,
-  });
+  const showOfflineTallyButton =
+    Boolean(offlineTallyEntity?.choices.length) &&
+    shouldShowOfflineTallyToolbarButton({
+      attendanceMode,
+      canManageVotes,
+      phase: offlineTallyPhase,
+    });
 
   const handleOfflineTallyDialogOpenChange = useCallback((open: boolean) => {
     setOfflineTallyDialogOpen(open);
@@ -1160,11 +1550,17 @@ export function EventAgendaItemDetail({
       navigate={navigate}
       updateSpeaker={updateSpeaker}
       agendaItem={agendaItem}
+      agendaBranchEditingMode={agendaBranchEditingMode}
+      branchSelectorBranches={selectableAgendaBranches}
+      selectedBranchId={selectedAgendaBranchId}
+      branchDiffCandidates={branchDiffCandidates}
+      defaultBranchDiffRightCandidateId={defaultBranchDiffRightCandidateId}
+      onBranchChange={handleAgendaBranchChange}
       event={event}
       user={user}
       userRecord={mappedUserRecord}
       isLoading={isLoading}
-      votingLoading={votingLoading}
+      votingLoading={votingLoading ?? sequenceVotingLoading}
       addingSpeaker={addingSpeaker}
       election={election}
       candidates={candidates}
@@ -1183,6 +1579,7 @@ export function EventAgendaItemDetail({
       canBeCandidate={canBeCandidate}
       canManageAgenda={canManageAgenda}
       canManageVotes={canManageVotes}
+      canManageVoteSequence={canManageVoteSequence}
       canJoinSpeakerList={canJoinSpeakerList}
       canManageOfflineTallies={canManageOfflineTallies}
       hasVotingRight={hasVotingRight}
@@ -1213,9 +1610,17 @@ export function EventAgendaItemDetail({
       effectiveVotingPhase={effectiveVotingPhase}
       crTimeline={crTimeline}
       currentCRItem={currentCRItem}
-      completedItems={completedItems}
-      progress={progress}
-      isTimelineComplete={isTimelineComplete}
+      completedItems={sequenceCompletedItems}
+      progress={
+        sequenceDisplayItems.length > 0
+          ? sequenceCompletedItems.length / sequenceDisplayItems.length
+          : progress
+      }
+      isTimelineComplete={
+        sequenceDisplayItems.length > 0
+          ? sequenceDisplayItems.every(item => item.status === 'completed')
+          : isTimelineComplete
+      }
       allCRsProcessed={allCRsProcessed}
       hasUserVotedOnCR={hasUserVotedOnCR}
       getUserSelectedChoiceIds={getUserSelectedChoiceIds}
@@ -1233,7 +1638,7 @@ export function EventAgendaItemDetail({
       crDiffMap={crDiffMap}
       hasAmendmentCRs={hasAmendmentCRs}
       crDisplayItemsBase={crDisplayItemsBase}
-      isCRVotingActive={isCRVotingActive}
+      isCRVotingActive={isVoteSequenceActive}
       timelineHasFinalVote={timelineHasFinalVote}
       synthesizedFinalVoteItem={synthesizedFinalVoteItem}
       crDisplayItems={crDisplayItems}
@@ -1251,6 +1656,7 @@ export function EventAgendaItemDetail({
       hasNextChangeRequest={hasNextChangeRequest}
       handlePreviousChangeRequest={handlePreviousChangeRequest}
       handleNextChangeRequest={handleNextChangeRequest}
+      handleStartSequenceFinalVote={handleStartSequenceFinalVote}
       handleToolbarStartVote={handleToolbarStartVote}
       handleToolbarStartFinalVote={handleToolbarStartFinalVote}
       handleToolbarCloseVote={handleToolbarCloseVote}

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import type { Value } from 'platejs';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { TDiscussion } from '@/features/editor/types';
@@ -11,6 +12,14 @@ import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 
 type TabValue = 'all' | 'open' | 'accepted' | 'rejected';
 
+function getVoteStepKind(item: ChangeRequestTimelineRow) {
+  return (item as { _voteStepKind?: string })._voteStepKind ?? null;
+}
+
+function isSyntheticSequenceStep(item: ChangeRequestTimelineRow) {
+  return Boolean(getVoteStepKind(item));
+}
+
 interface ChangeRequestCardsListProps {
   items: ChangeRequestTimelineRow[];
   editingMode?: string | null;
@@ -18,6 +27,9 @@ interface ChangeRequestCardsListProps {
   userId?: string;
   canManage?: boolean;
   canVote?: boolean;
+  hideInlineVotingControls?: boolean;
+  /** Allow starting final votes from CR cards. Defaults off so agenda toolbar owns sequencing. */
+  allowInlineFinalVoteStart?: boolean;
   currentItemId?: string | null;
   /** Map from CR change_request_id (or mock item id) to diff data */
   diffMap?: Record<string, ChangeRequestDiffData>;
@@ -48,6 +60,7 @@ interface ChangeRequestCardsListProps {
   onStartFinal?: (itemId: string) => Promise<void>;
   onCloseVoting?: (itemId: string) => Promise<void> | Promise<unknown>;
   onFinalizeInternalVote?: (changeRequestId: string) => Promise<void>;
+  sequenceInterstitial?: ReactNode;
 }
 export function useChangeRequestCardsListController({
   items,
@@ -56,6 +69,8 @@ export function useChangeRequestCardsListController({
   userId,
   canManage = false,
   canVote = false,
+  hideInlineVotingControls = false,
+  allowInlineFinalVoteStart = false,
   currentItemId,
   diffMap,
   progress,
@@ -74,6 +89,7 @@ export function useChangeRequestCardsListController({
   onStartFinal,
   onCloseVoting,
   onFinalizeInternalVote,
+  sequenceInterstitial,
 }: ChangeRequestCardsListProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabValue>('all');
@@ -88,6 +104,9 @@ export function useChangeRequestCardsListController({
         if (d.crId) {
           map.set(d.crId, d.id);
         }
+        if (d.displayCrId) {
+          map.set(d.displayCrId, d.id);
+        }
         if (d.title) {
           map.set(d.title, d.id);
         }
@@ -99,14 +118,45 @@ export function useChangeRequestCardsListController({
     return map;
   }, [discussions]);
 
-  // Separate final vote from regular CR items for filtering
+  // Separate sequence boundary votes from regular CR items for filtering
   const finalVoteItem = useMemo(() => items.find(i => i.is_final_vote), [items]);
-  const crItems = useMemo(() => items.filter(i => !i.is_final_vote), [items]);
+  const variantVoteItem = useMemo(
+    () =>
+      items.find(i => {
+        const stepKind = getVoteStepKind(i);
+        return stepKind === 'variant_selection' || stepKind === 'merge_variant';
+      }) ?? null,
+    [items]
+  );
+  const changeRequestVotesPlaceholderItem = useMemo(
+    () => items.find(i => getVoteStepKind(i) === 'change_request_votes_placeholder') ?? null,
+    [items]
+  );
+  const crItems = useMemo(
+    () => items.filter(i => !i.is_final_vote && !isSyntheticSequenceStep(i)),
+    [items]
+  );
+  const sequenceItems = useMemo(
+    () => [
+      ...(variantVoteItem ? [variantVoteItem] : []),
+      ...(changeRequestVotesPlaceholderItem ? [changeRequestVotesPlaceholderItem] : crItems),
+      ...(finalVoteItem ? [finalVoteItem] : []),
+    ],
+    [changeRequestVotesPlaceholderItem, crItems, finalVoteItem, variantVoteItem]
+  );
+  const hasCRCategoryItems = crItems.length > 0;
+
+  useEffect(() => {
+    if (!hasCRCategoryItems && activeTab !== 'all') {
+      setActiveTab('all');
+    }
+  }, [activeTab, hasCRCategoryItems]);
 
   const sharedPreviewEnabled = useMemo(
     () =>
       Boolean(
-        ((editingMode === 'suggest_event' || editingMode === 'vote_event') && amendmentId) ||
+        ((editingMode === 'suggest_event' || editingMode === 'event_final_closing_vote') &&
+          amendmentId) ||
         (documentContent && discussions && discussions.length > 0)
       ),
     [amendmentId, discussions, documentContent, editingMode]
@@ -130,7 +180,9 @@ export function useChangeRequestCardsListController({
 
   const [selectedPreviewCrIds, setSelectedPreviewCrIds] = useState<Set<string> | null>(() => {
     const defaultItem =
-      items.find(item => item.id === currentItemId && !item.is_final_vote) ?? crItems[0];
+      items.find(
+        item => item.id === currentItemId && !item.is_final_vote && !isSyntheticSequenceStep(item)
+      ) ?? crItems[0];
     const previewCrId = defaultItem ? getPreviewCrId(defaultItem) : null;
     return previewCrId ? new Set([previewCrId]) : null;
   });
@@ -167,6 +219,10 @@ export function useChangeRequestCardsListController({
   }, [searchedItems, isVotingActive]);
 
   const getFilteredItems = (tab: TabValue): ChangeRequestTimelineRow[] => {
+    if (!hasCRCategoryItems) {
+      return sequenceItems;
+    }
+
     switch (tab) {
       case 'open':
         return categorized.open;
@@ -176,11 +232,16 @@ export function useChangeRequestCardsListController({
         return categorized.rejected;
       case 'all':
       default:
-        return searchedItems;
+        return [
+          ...(variantVoteItem ? [variantVoteItem] : []),
+          ...searchedItems,
+          ...(finalVoteItem ? [finalVoteItem] : []),
+        ];
     }
   };
 
-  const filteredItems = getFilteredItems(activeTab);
+  const effectiveActiveTab = hasCRCategoryItems ? activeTab : 'all';
+  const filteredItems = getFilteredItems(effectiveActiveTab);
   const progressPercent = progress ? Math.round(progress * 100) : 0;
 
   const availablePreviewCrIds = useMemo(
@@ -252,6 +313,8 @@ export function useChangeRequestCardsListController({
     userId,
     canManage,
     canVote,
+    hideInlineVotingControls,
+    allowInlineFinalVoteStart,
     currentItemId,
     diffMap,
     progress,
@@ -270,14 +333,18 @@ export function useChangeRequestCardsListController({
     onStartFinal,
     onCloseVoting,
     onFinalizeInternalVote,
+    sequenceInterstitial,
     t,
-    activeTab,
+    activeTab: effectiveActiveTab,
     setActiveTab,
     searchQuery,
     setSearchQuery,
     crIdToDiscussionId,
     finalVoteItem,
+    variantVoteItem,
     crItems,
+    sequenceItems,
+    hasCRCategoryItems,
     sharedPreviewEnabled,
     getPreviewCrId,
     selectedPreviewCrIds,

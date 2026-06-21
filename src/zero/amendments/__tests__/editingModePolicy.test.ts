@@ -5,6 +5,7 @@ import {
   MANUALLY_SELECTABLE_MODES,
   canManuallySelectEditingMode,
   getAmendmentEditingModePolicy,
+  isAgendaItemStarted,
   normalizeEditingMode,
 } from '../editing-mode-policy';
 
@@ -16,7 +17,7 @@ describe('amendment editing mode policy', () => {
       'suggest_internal',
       'vote_internal',
       'suggest_event',
-      'vote_event',
+      'event_final_closing_vote',
     ]);
   });
 
@@ -71,7 +72,9 @@ describe('amendment editing mode policy', () => {
     expect(policy.allowedModes).toEqual(['suggest_event']);
     expect(canManuallySelectEditingMode('view', { eventSuggestionOpen: true })).toBe(false);
     expect(canManuallySelectEditingMode('suggest_event', { hasProcess: false })).toBe(false);
-    expect(canManuallySelectEditingMode('vote_event', { hasProcess: false })).toBe(false);
+    expect(canManuallySelectEditingMode('event_final_closing_vote', { hasProcess: false })).toBe(
+      false
+    );
   });
 
   it('prefers event voting over event suggestions once voting is open', () => {
@@ -80,13 +83,22 @@ describe('amendment editing mode policy', () => {
       eventVotingOpen: true,
     });
 
-    expect(policy.automaticTargetMode).toBe('vote_event');
-    expect(policy.allowedModes).toEqual(['vote_event']);
+    expect(policy.automaticTargetMode).toBe('event_final_closing_vote');
+    expect(policy.allowedModes).toEqual(['event_final_closing_vote']);
   });
 
   it('normalizes legacy database values', () => {
     expect(normalizeEditingMode('collaborative_editing')).toBe('edit');
-    expect(normalizeEditingMode('event_voting')).toBe('vote_event');
+    expect(normalizeEditingMode('event_voting')).toBe('event_final_closing_vote');
+    expect(normalizeEditingMode('vote_event')).toBe('event_final_closing_vote');
     expect(normalizeEditingMode('Passed')).toBe('passed');
+  });
+
+  it('detects started agenda items from server-relevant status and timestamps', () => {
+    expect(isAgendaItemStarted({ status: 'planned' })).toBe(false);
+    expect(isAgendaItemStarted({ status: 'active' })).toBe(true);
+    expect(isAgendaItemStarted({ activated_at: 10 })).toBe(true);
+    expect(isAgendaItemStarted({ start_time: 20 })).toBe(true);
+    expect(isAgendaItemStarted({ completed_at: 30 })).toBe(true);
   });
 });

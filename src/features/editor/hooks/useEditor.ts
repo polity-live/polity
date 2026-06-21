@@ -41,7 +41,12 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { mutators } from '@/zero/mutators';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { toast } from '@/features/shared/ui/ui/sonner';
+import {
+  getBranchEditingModeDisabledReasons,
+  resolveSelectedBranchId,
+} from '@/features/amendments/logic/amendmentBranchDisplay';
 import {
   adaptAmendmentToEntity,
   adaptBlogToEntity,
@@ -130,6 +135,8 @@ interface UseEditorOptions {
   capabilities?: Partial<EditorCapabilities>;
   /** Agenda item ID for amendment CR voting initialization */
   agendaItemId?: string;
+  /** Branch-specific amendment text variant */
+  processBranchId?: string | null;
   /** Force the editor into a read-only UI mode */
   readOnly?: boolean;
 }
@@ -182,6 +189,12 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   const isLocalChange = useRef(false);
   const lastRemoteUpdate = useRef<number>(0);
   const lastDiscussionsSave = useRef<number>(0);
+  const initializedEntityContextKey = useRef<string | null>(null);
+  const pendingModeChange = useRef<{
+    branchId: string | null;
+    contextKey: string | null;
+    mode: EditorMode;
+  } | null>(null);
 
   // Derive loading state
   const isLoading =
@@ -191,13 +204,52 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     (entityType === 'groupDocument' && documentLoading);
 
   // Adapt raw data to EditorEntity
+  const selectedProcessBranch = useMemo(() => {
+    if (entityType !== 'amendment' || !amendmentDocsCollabs?.current_process_run) {
+      return null;
+    }
+
+    const branches = amendmentDocsCollabs.current_process_run.branches ?? [];
+    if (options.processBranchId) {
+      const requestedBranch = branches.find(branch => branch.id === options.processBranchId);
+      if (requestedBranch) {
+        return requestedBranch;
+      }
+    }
+
+    const agendaBranch = options.agendaItemId
+      ? branches.find(branch =>
+          (branch.step_runs ?? []).some(step => step.agenda_item_id === options.agendaItemId)
+        )
+      : null;
+    const selectedBranchId = resolveSelectedBranchId({
+      branches,
+      requestedBranchId: agendaBranch?.id ?? options.processBranchId,
+      activeBranchId: amendmentDocsCollabs.current_process_run.active_branch_id,
+    });
+
+    return (
+      branches.find(branch => branch.id === selectedBranchId) ??
+      amendmentDocsCollabs.current_process_run.active_branch ??
+      null
+    );
+  }, [
+    amendmentDocsCollabs?.current_process_run,
+    entityType,
+    options.agendaItemId,
+    options.processBranchId,
+  ]);
+
   const entity = useMemo<EditorEntity | null>(() => {
     switch (entityType) {
       case 'amendment': {
         if (!amendmentDocsCollabs) return null;
-        const doc = amendmentDocsCollabs.document;
+        const doc = selectedProcessBranch?.document ?? amendmentDocsCollabs.document;
         if (!doc) return null;
-        return adaptAmendmentToEntity(amendmentDocsCollabs, doc, userId);
+        return adaptAmendmentToEntity(amendmentDocsCollabs, doc, userId, {
+          processBranch: selectedProcessBranch,
+          processBranches: amendmentDocsCollabs.current_process_run?.branches ?? [],
+        });
       }
       case 'blog': {
         if (!blogForEditor) return null;
@@ -214,15 +266,58 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       default:
         return null;
     }
-  }, [entityType, entityId, amendmentDocsCollabs, blogForEditor, documentData, groupId, userId]);
+  }, [
+    entityType,
+    entityId,
+    amendmentDocsCollabs,
+    blogForEditor,
+    documentData,
+    groupId,
+    selectedProcessBranch,
+    userId,
+  ]);
 
   // Get the content entity ID (document ID for amendments, blog ID for blogs, etc.)
   const contentEntityId = useMemo(() => {
     if (entityType === 'amendment') {
-      return amendmentDocsCollabs?.document?.id ?? '';
+      return selectedProcessBranch?.document?.id ?? amendmentDocsCollabs?.document?.id ?? '';
     }
     return entityId;
-  }, [entityType, entityId, amendmentDocsCollabs]);
+  }, [entityType, entityId, amendmentDocsCollabs, selectedProcessBranch?.document?.id]);
+
+  const entityContextKey = useMemo(() => {
+    if (!entity) return null;
+    return `${entity.id}:${entity.metadata?.processBranchId ?? 'main'}`;
+  }, [entity]);
+
+  const effectiveProcessBranchId = useMemo(() => {
+    if (entityType !== 'amendment') return null;
+
+    const branches = amendmentDocsCollabs?.current_process_run?.branches ?? [];
+    return (
+      entity?.metadata?.processBranchId ??
+      selectedProcessBranch?.id ??
+      options.processBranchId ??
+      resolveSelectedBranchId({
+        branches,
+        requestedBranchId: null,
+        activeBranchId: amendmentDocsCollabs?.current_process_run?.active_branch_id,
+      })
+    );
+  }, [
+    amendmentDocsCollabs?.current_process_run?.active_branch_id,
+    amendmentDocsCollabs?.current_process_run?.branches,
+    entity?.metadata?.processBranchId,
+    entityType,
+    options.processBranchId,
+    selectedProcessBranch?.id,
+  ]);
+
+  const modeDisabledReasons = useMemo(
+    () =>
+      entityType === 'amendment' ? getBranchEditingModeDisabledReasons(selectedProcessBranch) : {},
+    [entityType, selectedProcessBranch]
+  );
 
   // Handler for remote content arriving via broadcast (does NOT persist to Zero)
   const handleRemoteContent = useCallback((remoteContent: Value) => {
@@ -242,22 +337,43 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
   // Initialize entity data
   useEffect(() => {
-    if (entity && !isInitialized.current) {
+    if (
+      entity &&
+      entityContextKey &&
+      (!isInitialized.current || initializedEntityContextKey.current !== entityContextKey)
+    ) {
       setTitleState(entity.title || '');
       setContentState(entity.content?.length ? entity.content : DEFAULT_EDITOR_CONTENT);
       setDiscussionsState(entity.discussions || []);
       setModeState(entity.editingMode || 'edit');
+      setHasUnsavedChanges(false);
+      setSaveStatus('saved');
+      setSelectedCrIds(null);
+      isLocalChange.current = false;
+      pendingModeChange.current = null;
       isInitialized.current = true;
+      initializedEntityContextKey.current = entityContextKey;
+      lastRemoteUpdate.current = entity.updatedAt || Date.now();
     }
-  }, [entity]);
+  }, [entity, entityContextKey]);
 
   useEffect(() => {
     if (!entity || !isInitialized.current) return;
+    const remoteMode = entity.editingMode || 'edit';
+    const branchId = entity.metadata?.processBranchId ?? null;
+    const pending = pendingModeChange.current;
+
+    if (pending?.contextKey === entityContextKey && pending.branchId === branchId) {
+      if (remoteMode !== pending.mode) {
+        return;
+      }
+      pendingModeChange.current = null;
+    }
+
     setModeState(currentMode => {
-      const remoteMode = entity.editingMode || 'edit';
       return currentMode === remoteMode ? currentMode : remoteMode;
     });
-  }, [entity?.editingMode]);
+  }, [entity?.editingMode, entity?.metadata?.processBranchId, entityContextKey]);
 
   // Sync discussions from database in real-time.
   // Only pull remote discussions when we haven't saved recently — prevents
@@ -461,11 +577,20 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
             mutators.blogs.update({ id: contentEntityId, discussions: serializedDiscussions })
           );
         } else if (entityType === 'amendment') {
-          // Amendments store discussions as a JSON column on the amendment row
-          // (not the document). This is where useChangeRequests reads them from.
-          await zero.mutate(
-            mutators.amendments.update({ id: entityId, discussions: serializedDiscussions })
-          );
+          const processBranchId = entity?.metadata?.processBranchId;
+          if (processBranchId) {
+            await zero.mutate(
+              mutators.amendments.updateProcessBranch({
+                id: processBranchId,
+                discussions: serializedDiscussions,
+              })
+            );
+          } else {
+            // Amendments store main-text discussions as a JSON column on the amendment row.
+            await zero.mutate(
+              mutators.amendments.update({ id: entityId, discussions: serializedDiscussions })
+            );
+          }
         }
         // Documents and groupDocuments don't have a discussions column —
         // their discussion data lives in the thread/comment tables.
@@ -473,7 +598,16 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         console.error('Failed to save discussions:', error);
       }
     },
-    [entityType, entityId, contentEntityId, userId, zero, discussions, readOnly]
+    [
+      entityType,
+      entityId,
+      contentEntityId,
+      userId,
+      zero,
+      discussions,
+      readOnly,
+      entity?.metadata?.processBranchId,
+    ]
   );
 
   // Mode change handler
@@ -485,25 +619,65 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
       if (!contentEntityId) return;
 
+      const previousMode = mode;
+      const processBranchId = entityType === 'amendment' ? effectiveProcessBranchId : null;
+      pendingModeChange.current = {
+        branchId: processBranchId,
+        contextKey: entityContextKey,
+        mode: newMode,
+      };
+      setModeState(newMode);
+
       try {
         if (entityType === 'amendment') {
-          await zero.mutate(mutators.amendments.update({ id: entityId, editing_mode: newMode }));
+          const result = processBranchId
+            ? zero.mutate(
+                mutators.amendments.updateProcessBranch({
+                  id: processBranchId,
+                  editing_mode: newMode,
+                })
+              )
+            : zero.mutate(
+                mutators.documents.updateContent({
+                  id: contentEntityId,
+                  editing_mode: newMode,
+                })
+              );
+          await serverConfirmed(result);
         } else if (entityType === 'blog') {
-          await zero.mutate(mutators.blogs.update({ id: contentEntityId, editing_mode: newMode }));
+          const result = zero.mutate(
+            mutators.blogs.update({ id: contentEntityId, editing_mode: newMode })
+          );
+          await serverConfirmed(result);
         } else {
-          await zero.mutate(
+          const result = zero.mutate(
             mutators.documents.updateContent({ id: contentEntityId, editing_mode: newMode })
           );
+          await serverConfirmed(result);
         }
 
-        setModeState(newMode);
         toast.success(`Mode changed to ${newMode}`);
       } catch (error) {
+        if (pendingModeChange.current?.contextKey === entityContextKey) {
+          pendingModeChange.current = null;
+          setModeState(entity?.editingMode || previousMode);
+        }
         console.error('Failed to change mode:', error);
         toast.error(translateText('generated.inline.0416_failed_to_change_mode_324234e0'));
+        throw error;
       }
     },
-    [entityType, entityId, contentEntityId, zero, readOnly]
+    [
+      entityType,
+      contentEntityId,
+      effectiveProcessBranchId,
+      mode,
+      zero,
+      readOnly,
+      entity?.metadata?.processBranchId,
+      entity?.editingMode,
+      entityContextKey,
+    ]
   );
 
   // Restore version handler
@@ -593,6 +767,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     content,
     discussions,
     mode,
+    modeDisabledReasons,
     selectedCrIds,
 
     // Save status

@@ -19,6 +19,13 @@ import {
   updateStatementSupportVoteSchema,
   deleteStatementSupportVoteSchema,
 } from '../votes/schema';
+import {
+  STATEMENT_STORY_DURATION_MS,
+  canViewExpiredStatement,
+  cleanStatementString,
+  deriveStatementMediaType,
+  hasStatementContent,
+} from './content';
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 async function loadStatementForSurvey(tx: Parameters<typeof can>[0], surveyId: string) {
@@ -47,6 +54,10 @@ async function assertCanViewStatement(
 
   if (statement.user_id === ctx.userID) return;
 
+  if (!canViewExpiredStatement(statement, ctx.userID)) {
+    throw new PermissionError('view', 'statements', `statement:${statementId}`);
+  }
+
   if (statement.group_id) {
     try {
       await can(tx, ctx, { action: 'view', resource: 'groups', groupId: statement.group_id });
@@ -74,6 +85,119 @@ async function assertStatementOwner(
   return statement;
 }
 
+function normalizeStatementForCreate<
+  T extends {
+    expires_at?: number | null;
+    image_url?: string | null;
+    is_story?: boolean | null;
+    media_type?: string;
+    text?: string | null;
+    title?: string | null;
+    video_url?: string | null;
+  },
+>(args: T, now: number) {
+  const title = cleanStatementString(args.title);
+  const text = cleanStatementString(args.text);
+  const imageUrl = cleanStatementString(args.image_url);
+  const videoUrl = cleanStatementString(args.video_url);
+
+  if (imageUrl && videoUrl) {
+    throw new Error('Statements can include either an image or a video, not both.');
+  }
+
+  if (!hasStatementContent({ title, text, image_url: imageUrl, video_url: videoUrl })) {
+    throw new Error('Statements require text, title, image, or video content.');
+  }
+
+  const isStory = Boolean(args.is_story);
+
+  return {
+    ...args,
+    title,
+    text,
+    image_url: imageUrl,
+    video_url: videoUrl,
+    media_type: deriveStatementMediaType(imageUrl, videoUrl),
+    is_story: isStory,
+    expires_at: isStory ? (args.expires_at ?? now + STATEMENT_STORY_DURATION_MS) : null,
+  };
+}
+
+function normalizeStatementForUpdate<
+  T extends {
+    expires_at?: number | null;
+    image_url?: string | null;
+    is_story?: boolean | null;
+    media_type?: string;
+    text?: string | null;
+    title?: string | null;
+    video_url?: string | null;
+  },
+>(
+  args: T,
+  now: number,
+  previous?: {
+    expires_at?: number | null;
+    image_url?: string | null;
+    is_story?: boolean | null;
+    text?: string | null;
+    title?: string | null;
+    video_url?: string | null;
+  } | null
+) {
+  const nextTitle =
+    args.title !== undefined
+      ? cleanStatementString(args.title)
+      : cleanStatementString(previous?.title);
+  const nextText =
+    args.text !== undefined
+      ? cleanStatementString(args.text)
+      : cleanStatementString(previous?.text);
+  const imageUrl =
+    args.image_url !== undefined
+      ? cleanStatementString(args.image_url)
+      : cleanStatementString(previous?.image_url);
+  const videoUrl =
+    args.video_url !== undefined
+      ? cleanStatementString(args.video_url)
+      : cleanStatementString(previous?.video_url);
+  const isStory =
+    args.is_story !== undefined ? Boolean(args.is_story) : Boolean(previous?.is_story);
+
+  if (imageUrl && videoUrl) {
+    throw new Error('Statements can include either an image or a video, not both.');
+  }
+
+  if (
+    previous &&
+    !hasStatementContent({
+      title: nextTitle,
+      text: nextText,
+      image_url: imageUrl,
+      video_url: videoUrl,
+    })
+  ) {
+    throw new Error('Statements require text, title, image, or video content.');
+  }
+
+  return {
+    ...args,
+    ...(args.title !== undefined && { title: cleanStatementString(args.title) }),
+    ...(args.text !== undefined && { text: cleanStatementString(args.text) }),
+    ...(args.image_url !== undefined && { image_url: imageUrl }),
+    ...(args.video_url !== undefined && { video_url: videoUrl }),
+    ...((args.image_url !== undefined || args.video_url !== undefined) && {
+      media_type: deriveStatementMediaType(imageUrl, videoUrl),
+    }),
+    ...(args.is_story !== undefined && {
+      is_story: isStory,
+      expires_at: isStory
+        ? (args.expires_at ?? previous?.expires_at ?? now + STATEMENT_STORY_DURATION_MS)
+        : null,
+    }),
+  };
+}
+
 export const statementSharedMutators = {
   // Create a statement
   create: defineMutator(createStatementSchema, async ({ tx, ctx, args }) => {
@@ -84,8 +208,9 @@ export const statementSharedMutators = {
     }
 
     const now = Date.now();
+    const normalizedArgs = normalizeStatementForCreate(args, now);
     await tx.mutate.statement.insert({
-      ...args,
+      ...normalizedArgs,
       user_id: userID,
       upvotes: 0,
       downvotes: 0,
@@ -97,13 +222,14 @@ export const statementSharedMutators = {
 
   // Update a statement
   update: defineMutator(updateStatementSchema, async ({ tx, ctx, args }) => {
-    await assertStatementOwner(tx, ctx, args.id, 'update');
+    const previousStatement = await assertStatementOwner(tx, ctx, args.id, 'update');
     if (args.group_id) {
       await can(tx, ctx, { action: 'view', resource: 'groups', groupId: args.group_id });
     }
 
+    const normalizedArgs = normalizeStatementForUpdate(args, Date.now(), previousStatement);
     await tx.mutate.statement.update({
-      ...args,
+      ...normalizedArgs,
       updated_at: Date.now(),
     });
   }),

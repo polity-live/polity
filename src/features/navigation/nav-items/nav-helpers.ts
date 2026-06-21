@@ -1,7 +1,39 @@
 import type { NavigationItem } from '../types/navigation.types.tsx';
 
+interface RouteParts {
+  path: string;
+  hash: string;
+}
+
+function getRouteParts(route?: string): RouteParts {
+  if (!route) {
+    return { path: '', hash: '' };
+  }
+
+  const [routeWithoutHash, hash = ''] = route.split('#');
+  const [path = ''] = routeWithoutHash.split('?');
+
+  return {
+    path: path || '/',
+    hash: hash ? `#${hash}` : '',
+  };
+}
+
+function getPathOnly(href?: string): string | undefined {
+  return href ? getRouteParts(href).path : undefined;
+}
+
 function checkExactPathMatch(item: NavigationItem, currentRoute: string): boolean {
-  return item.href === currentRoute;
+  if (!item.href) return false;
+
+  const itemRoute = getRouteParts(item.href);
+  const currentRouteParts = getRouteParts(currentRoute);
+
+  if (itemRoute.hash) {
+    return itemRoute.path === currentRouteParts.path && itemRoute.hash === currentRouteParts.hash;
+  }
+
+  return itemRoute.path === currentRouteParts.path;
 }
 
 function checkHierarchicalPathMatch(
@@ -9,8 +41,10 @@ function checkHierarchicalPathMatch(
   currentRoute: string,
   isPrimary?: boolean
 ): boolean {
-  if (!isPrimary || !item.href) return false;
-  return currentRoute.startsWith(item.href + '/');
+  const itemPath = getPathOnly(item.href);
+  const currentPath = getRouteParts(currentRoute).path;
+  if (!isPrimary || !itemPath) return false;
+  return currentPath.startsWith(itemPath + '/');
 }
 
 function checkOnClickRouteMatch(
@@ -27,12 +61,13 @@ function checkOnClickRouteMatch(
 
     if (routeMatch) {
       const route = routeMatch[1];
+      const currentPath = getRouteParts(currentRoute).path;
       // Exact match
-      if (route === currentRoute) {
+      if (route === currentPath) {
         return true;
       }
       // Child route match - only apply when isPrimary is true
-      if (isPrimary && currentRoute.startsWith(route + '/')) {
+      if (isPrimary && currentPath.startsWith(route + '/')) {
         return true;
       }
     }
@@ -50,11 +85,13 @@ function checkIdBasedMatch(
   isPrimary?: boolean
 ): boolean {
   // Special case for home route
-  if (item.id === 'home' && currentRoute === '/') {
+  const currentPath = getRouteParts(currentRoute).path;
+
+  if (item.id === 'home' && currentPath === '/') {
     return true;
   }
 
-  const routePath = currentRoute.startsWith('/') ? currentRoute.slice(1) : currentRoute;
+  const routePath = currentPath.startsWith('/') ? currentPath.slice(1) : currentPath;
 
   // Exact match with ID
   if (routePath === item.id) {

@@ -1207,6 +1207,11 @@ export const amendmentSupportVoteRelationships = relationships(amendmentSupportV
 
 export const changeRequestRelationships = relationships(changeRequest, ({ one, many }) => ({
   amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
+  process_branch: one({
+    sourceField: ['process_branch_id'],
+    destSchema: amendmentProcessBranch,
+    destField: ['id'],
+  }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
   votes: many({
     sourceField: ['id'],
@@ -1407,6 +1412,16 @@ export const amendmentProcessBranchRelationships = relationships(
       sourceField: ['document_version_id'],
       destSchema: documentVersion,
       destField: ['id'],
+    }),
+    document: one({
+      sourceField: ['document_id'],
+      destSchema: document,
+      destField: ['id'],
+    }),
+    change_requests: many({
+      sourceField: ['id'],
+      destSchema: changeRequest,
+      destField: ['process_branch_id'],
     }),
     child_branches: many({
       sourceField: ['id'],

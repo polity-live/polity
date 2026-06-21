@@ -141,7 +141,24 @@ export function useAgendaItemCRTimeline(agendaItemId: string | undefined) {
   console.log('[useAgendaItemCRTimeline] timelineItems?.length:', timelineItems?.length);
 
   const crTimeline = useMemo<ChangeRequestTimelineRow[]>(
-    () => timelineItems ?? [],
+    () =>
+      (timelineItems ?? []).map(item => {
+        if (item.step_kind === 'merge_variant') {
+          return {
+            ...item,
+            _voteStepKind: 'variant_selection',
+          } as ChangeRequestTimelineRow;
+        }
+
+        if (item.step_kind === 'final_closing') {
+          return {
+            ...item,
+            _voteStepKind: 'final_amendment',
+          } as ChangeRequestTimelineRow;
+        }
+
+        return item;
+      }),
     [timelineItems]
   );
 

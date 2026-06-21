@@ -15,6 +15,7 @@ import { TimelineFilterPanel } from './TimelineFilterPanel';
 import { TimelineHeader } from './TimelineHeader';
 import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation';
+import { StatementStoryCarousel } from '@/features/statements/ui/StatementStoryCarousel';
 
 export interface ModernTimelineViewProps extends UseTimelinePageReturn {
   className?: string;
@@ -125,6 +126,8 @@ export function ModernTimelineView({
           showEngagement={false}
         />
       ) : null}
+
+      <StatementStoryCarousel />
 
       <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
         <BadgeControl variant="outline" shape="rounded">

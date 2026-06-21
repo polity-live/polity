@@ -85,6 +85,42 @@ describe('canonical change request records', () => {
     expect(record.snapshotChangeRequest?.id).toBe('cr-linked');
   });
 
+  it('keeps same-numbered change requests separate across process branches', () => {
+    const records = buildCanonicalChangeRequestRecords({
+      discussions: [],
+      changeRequests: [
+        {
+          id: 'branch-1-cr-1',
+          process_branch_id: 'branch-1',
+          title: 'CR-1',
+          status: 'open',
+          votes_for: 0,
+          votes_against: 1,
+          votes_abstain: 0,
+        },
+        {
+          id: 'branch-2-cr-1',
+          process_branch_id: 'branch-2',
+          title: 'CR-1',
+          status: 'open',
+          votes_for: 1,
+          votes_against: 0,
+          votes_abstain: 0,
+        },
+      ],
+    });
+
+    expect(records).toHaveLength(2);
+    expect(records.map(record => record.changeRequest?.id).sort()).toEqual([
+      'branch-1-cr-1',
+      'branch-2-cr-1',
+    ]);
+    expect(
+      records.find(record => record.changeRequest?.process_branch_id === 'branch-2')?.changeRequest
+        ?.votes_for
+    ).toBe(1);
+  });
+
   it('ignores pending event suggestions without a persisted change request row', () => {
     const records = buildCanonicalChangeRequestRecords({
       discussions: [
@@ -98,5 +134,22 @@ describe('canonical change request records', () => {
     });
 
     expect(records).toEqual([]);
+  });
+
+  it('keeps confirmed event suggestions without a persisted change request row', () => {
+    const [record] = buildCanonicalChangeRequestRecords({
+      discussions: [
+        {
+          id: 'suggestion-confirmed',
+          crId: 'CR-2',
+          confirmationStatus: 'confirmed',
+        },
+      ],
+      changeRequests: [],
+    });
+
+    expect(record.changeRequest).toBeNull();
+    expect(record.discussion?.id).toBe('suggestion-confirmed');
+    expect(record.displayCrId).toBe('CR-2');
   });
 });

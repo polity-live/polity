@@ -138,6 +138,7 @@ export interface EventAgendaViewProps {
   setDismissedOverdueAgendaItemId: any;
   canManageAgenda: any;
   canManageVotes: any;
+  canManageVoteSequence?: any;
   canJoinSpeakerList: any;
   canManageOfflineTallies: any;
   draggedAgendaItemId: any;
@@ -194,6 +195,7 @@ export interface EventAgendaViewProps {
   toolbarOfflineTallyEntity: any;
   toolbarOfflineTallyMode: any;
   showOfflineTallyButton: any;
+  sequenceVotingLoading: any;
   startVoteTooltip: any;
   startFinalVoteTooltip: any;
   closeVoteTooltip: any;
@@ -274,6 +276,8 @@ export function EventAgendaView({
   offlineTallySubmitError,
   isOfflineTallySubmitting,
   canManageAgenda,
+  canManageVotes,
+  canManageVoteSequence = canManageVotes || canManageAgenda,
   canJoinSpeakerList,
   draggedAgendaItemId,
   dragOverAgendaItemId,
@@ -297,6 +301,7 @@ export function EventAgendaView({
   streamVote,
   streamDelegateTargetEvent,
   toolbarElection,
+  effectiveFinalVoteItem,
   activeCRToolbarItem,
   isCRToolbarActive,
   selectedCRPhase,
@@ -310,6 +315,7 @@ export function EventAgendaView({
   toolbarOfflineTallyEntity,
   toolbarOfflineTallyMode,
   showOfflineTallyButton,
+  sequenceVotingLoading,
   startVoteTooltip,
   startFinalVoteTooltip,
   closeVoteTooltip,
@@ -344,44 +350,71 @@ export function EventAgendaView({
   formatTime,
 }: EventAgendaViewProps) {
   const agendaStats = computeAgendaStats(agendaItems ?? []);
+  const isOfflineOnlyAttendance = attendanceMode === 'offline';
+  const activeCRIsPlaceholder = Boolean(
+    (activeCRToolbarItem as { _votePlaceholder?: boolean } | null)?._votePlaceholder
+  );
+  const activeCRHasVoteChoices = selectedCRChoices.length > 0;
+  const canCastActiveCRVote = !activeCRIsPlaceholder && activeCRHasVoteChoices;
   const voteButtonDisabled =
     !isCRToolbarActive && (disableVoteButton || actionBarHook.disableSecretIndicativeVoteButton);
   const disabledVoteTooltip =
     actionBarHook.secretIndicativeVoteTooltip ??
     translateText('generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792');
-  const liveFocusVoteClick = isCRToolbarActive
-    ? selectedCRPhase !== 'closed'
-      ? actionBarHook.handleVoteClick
-      : undefined
-    : actionBarHook.handleVoteClick;
+  const liveFocusVoteClick = isOfflineOnlyAttendance
+    ? undefined
+    : isCRToolbarActive
+      ? selectedCRPhase !== 'closed'
+        ? canCastActiveCRVote
+          ? actionBarHook.handleVoteClick
+          : undefined
+        : undefined
+      : actionBarHook.handleVoteClick;
+  const toolbarAgendaItemRuntimeStatus = toolbarAgendaItem
+    ? getAgendaRuntimeStatus({
+        id: toolbarAgendaItem.id,
+        status: toolbarAgendaItem.status,
+        start_time: toolbarAgendaItem.start_time,
+        end_time: toolbarAgendaItem.end_time,
+        activated_at: toolbarAgendaItem.activated_at,
+        completed_at: toolbarAgendaItem.completed_at,
+        currentAgendaItemId: liveAgendaItemId,
+      })
+    : null;
+  const isToolbarAgendaItemActive = toolbarAgendaItemRuntimeStatus === 'in-progress';
   const liveFocusStartVoteClick = isCRToolbarActive
-    ? selectedCRPhase === 'pending'
+    ? isToolbarAgendaItemActive && selectedCRPhase === 'pending'
       ? handleToolbarStartVote
       : undefined
-    : effectiveToolbarVotingPhase === 'pending'
+    : isToolbarAgendaItemActive && effectiveToolbarVotingPhase === 'pending'
       ? actionBarHook.handleStartVote
       : undefined;
   const liveFocusStartFinalVoteClick = isCRToolbarActive
-    ? selectedCRPhase === 'indication'
+    ? isToolbarAgendaItemActive && selectedCRPhase === 'indication'
       ? handleToolbarStartFinalVote
       : undefined
-    : effectiveToolbarVotingPhase === 'indication'
+    : isToolbarAgendaItemActive && effectiveToolbarVotingPhase === 'indication'
       ? handleToolbarStartFinalVote
       : undefined;
   const liveFocusCloseFinalVoteClick = isCRToolbarActive
-    ? selectedCRPhase === 'final_vote'
+    ? isToolbarAgendaItemActive && selectedCRPhase === 'final_vote'
       ? handleToolbarCloseVote
       : undefined
-    : effectiveToolbarVotingPhase === 'final_vote'
+    : isToolbarAgendaItemActive && effectiveToolbarVotingPhase === 'final_vote'
       ? handleToolbarCloseVote
       : undefined;
   const liveFocusVotingPhase = isCRToolbarActive ? selectedCRPhase : effectiveToolbarVotingPhase;
   const liveFocusIsVotingActionAvailable = isCRToolbarActive
-    ? Boolean(activeCRToolbarItem?.vote)
+    ? Boolean(activeCRToolbarItem?.vote && canCastActiveCRVote)
     : Boolean(streamElection || streamVote);
   const liveFocusHasUserVoted = isCRToolbarActive
     ? hasUserVotedOnSelectedCR
     : Boolean(streamElection ? userHasElectionVoted : streamVote ? userHasVoteVoted : false);
+  const canCompleteAgendaItem =
+    !isCRToolbarActive || effectiveFinalVoteItem?.status === 'completed';
+  const canManageCurrentVote = isCRToolbarActive
+    ? isToolbarAgendaItemActive && (canManageVoteSequence || canManageVotes || canManageAgenda)
+    : isToolbarAgendaItemActive && canManageAgenda;
   const liveFocusCompleteItemDisabled =
     !toolbarAgendaItem || Boolean(agendaNav.isCurrentItemCompleted) || Boolean(agendaNav.isLoading);
   const liveFocusNextItemDisabled =
@@ -686,15 +719,7 @@ export function EventAgendaView({
             ? {
                 id: toolbarAgendaItem.id,
                 type: toolbarAgendaItem.type,
-                status: getAgendaRuntimeStatus({
-                  id: toolbarAgendaItem.id,
-                  status: toolbarAgendaItem.status,
-                  start_time: toolbarAgendaItem.start_time,
-                  end_time: toolbarAgendaItem.end_time,
-                  activated_at: toolbarAgendaItem.activated_at,
-                  completed_at: toolbarAgendaItem.completed_at,
-                  currentAgendaItemId: liveAgendaItemId,
-                }),
+                status: toolbarAgendaItemRuntimeStatus,
                 voting_phase: effectiveToolbarVotingPhase,
                 election: toolbarElection ? { id: toolbarElection.id } : null,
                 vote: isCRToolbarActive
@@ -730,10 +755,11 @@ export function EventAgendaView({
         onStartItem={agendaNav.startFirstPendingItem}
         onPreviousItem={agendaNav.moveToPreviousItem}
         onNextItem={agendaNav.moveToNextItem}
-        onCompleteItem={agendaNav.completeCurrentItem}
+        onCompleteItem={canCompleteAgendaItem ? agendaNav.completeCurrentItem : undefined}
         navigationLoading={agendaNav.isLoading}
         speakerLoading={actionBarHook.speakerLoading}
         candidateLoading={actionBarHook.candidateLoading}
+        voteLoading={actionBarHook.voteCasting.isLoading || Boolean(sequenceVotingLoading)}
         onJoinSpeakerList={
           actionBarHook.canJoinSpeakerList ? actionBarHook.handleJoinSpeakerList : undefined
         }
@@ -741,39 +767,37 @@ export function EventAgendaView({
         onBecomeCandidate={actionBarHook.handleBecomeCandidate}
         onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
         onStartVote={
-          isCRToolbarActive
+          canManageCurrentVote && isCRToolbarActive
             ? selectedCRPhase === 'pending'
               ? handleToolbarStartVote
               : undefined
-            : effectiveToolbarVotingPhase === 'pending'
+            : canManageCurrentVote && effectiveToolbarVotingPhase === 'pending'
               ? actionBarHook.handleStartVote
               : undefined
         }
         onStartFinalVote={
-          isCRToolbarActive
+          canManageCurrentVote && isCRToolbarActive
             ? selectedCRPhase === 'indication'
               ? handleToolbarStartFinalVote
               : undefined
-            : effectiveToolbarVotingPhase === 'indication'
+            : canManageCurrentVote && effectiveToolbarVotingPhase === 'indication'
               ? handleToolbarStartFinalVote
               : undefined
         }
         onCloseFinalVote={
-          isCRToolbarActive
+          canManageCurrentVote && isCRToolbarActive
             ? selectedCRPhase === 'final_vote'
               ? handleToolbarCloseVote
               : undefined
-            : effectiveToolbarVotingPhase === 'final_vote'
+            : canManageCurrentVote && effectiveToolbarVotingPhase === 'final_vote'
               ? handleToolbarCloseVote
               : undefined
         }
         onVoteClick={liveFocusVoteClick}
         disableVoteButton={voteButtonDisabled}
         disabledVoteTooltip={disabledVoteTooltip}
-        showOfflineTallyButton={!isCRToolbarActive && showOfflineTallyButton}
-        onOfflineTallyClick={
-          !isCRToolbarActive && showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined
-        }
+        showOfflineTallyButton={showOfflineTallyButton}
+        onOfflineTallyClick={showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined}
         offlineTallyMode={toolbarOfflineTallyMode}
         offlineTallyTooltip={getOfflineTallyTooltip({
           phase: toolbarOfflineTallyPhase,
@@ -836,15 +860,15 @@ export function EventAgendaView({
         onStartVote={liveFocusStartVoteClick}
         onStartFinalVote={liveFocusStartFinalVoteClick}
         onCloseFinalVote={liveFocusCloseFinalVoteClick}
-        onCompleteItem={agendaNav.completeCurrentItem}
-        completeItemDisabled={liveFocusCompleteItemDisabled}
+        onCompleteItem={canCompleteAgendaItem ? agendaNav.completeCurrentItem : undefined}
+        completeItemDisabled={!canCompleteAgendaItem || liveFocusCompleteItemDisabled}
         onNextItem={agendaNav.moveToNextItem}
         nextItemDisabled={liveFocusNextItemDisabled}
         votingPhase={liveFocusVotingPhase}
         isVotingActionAvailable={liveFocusIsVotingActionAvailable}
         canVote={actionBarHook.hasVotingRight}
         hasUserVoted={liveFocusHasUserVoted}
-        voteLoading={actionBarHook.voteCasting.isLoading}
+        voteLoading={actionBarHook.voteCasting.isLoading || Boolean(sequenceVotingLoading)}
         disableVoteButton={voteButtonDisabled}
         disabledVoteTooltip={disabledVoteTooltip}
         onVoteClick={liveFocusVoteClick}

@@ -8,6 +8,7 @@ import {
   createVoteSchema,
   updateVoteSchema,
   deleteVoteSchema,
+  closeExpiredFinalVotesForEventSchema,
   createVoteChoiceSchema,
   updateVoteChoiceSchema,
   deleteVoteChoiceSchema,
@@ -21,6 +22,7 @@ import {
   upsertVoteOfflineTallySchema,
   deleteVoteOfflineTallySchema,
 } from './schema';
+import { normalizeVotePurpose, normalizeVoteStatus } from './vote-workflow';
 
 type VoteTx = Parameters<typeof can>[0];
 type VoteCtx = Parameters<typeof can>[1];
@@ -53,8 +55,15 @@ async function assertVoteManagerForScope(
   if (tx.location === 'client') return;
 
   if (scope.eventId) {
-    await can(tx, ctx, { action: 'manage_votes', resource: 'events', eventId: scope.eventId });
-    return;
+    try {
+      await can(tx, ctx, { action: 'manage_votes', resource: 'events', eventId: scope.eventId });
+      return;
+    } catch (error) {
+      if (!isPermissionError(error)) throw error;
+      if (!scope.amendmentId) {
+        throw error;
+      }
+    }
   }
 
   if (scope.amendmentId) {
@@ -217,7 +226,8 @@ export const voteSharedMutators = {
     const now = Date.now();
     const vote = {
       ...args,
-      status: args.status ?? 'indicative',
+      status: normalizeVoteStatus(args.status),
+      purpose: normalizeVotePurpose(args.purpose),
       majority_type: args.majority_type ?? 'relative',
       closing_type: args.closing_type ?? 'moderator',
       visibility: args.visibility ?? 'public',
@@ -234,8 +244,13 @@ export const voteSharedMutators = {
   // Update a vote
   updateVote: defineMutator(updateVoteSchema, async ({ tx, ctx, args }) => {
     await assertVoteManager(tx, ctx, args.id);
-    await tx.mutate.vote.update({
+    const normalizedArgs = {
       ...args,
+      ...(args.status !== undefined ? { status: normalizeVoteStatus(args.status) } : {}),
+      ...(args.purpose !== undefined ? { purpose: normalizeVotePurpose(args.purpose) } : {}),
+    };
+    await tx.mutate.vote.update({
+      ...normalizedArgs,
       updated_at: Date.now(),
     });
   }),
@@ -244,6 +259,10 @@ export const voteSharedMutators = {
   deleteVote: defineMutator(deleteVoteSchema, async ({ tx, ctx, args }) => {
     await assertVoteManager(tx, ctx, args.id);
     await tx.mutate.vote.delete({ id: args.id });
+  }),
+
+  closeExpiredFinalVotesForEvent: defineMutator(closeExpiredFinalVotesForEventSchema, async () => {
+    // Server-only sweep; keep client optimistic state untouched.
   }),
 
   // Create a vote choice

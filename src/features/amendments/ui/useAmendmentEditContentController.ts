@@ -4,7 +4,10 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { useDocumentActions } from '@/zero/documents/useDocumentActions';
+import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { useCommonState, useCommonActions } from '@/zero/common';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type { EditingMode } from '@/zero/rbac/workflow-constants';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 import { AMENDMENT_EDITING_MODE_ORDER, normalizeEditingMode } from '@/zero/rbac/workflow-constants';
@@ -12,6 +15,14 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { getEditingModeOption, type SelectableEditingMode } from '@/features/shared/ui/status';
 import { deriveControllingEventForSettings } from '@/features/amendments/logic/amendmentSettingsEventPhase';
+import {
+  getBranchEditingModeDisabledReasons,
+  getBranchEditingMode,
+  getBranchPathLabel,
+  getOrderedBranches,
+  isBranchEditable,
+  resolveSelectedBranchId,
+} from '@/features/amendments/logic/amendmentBranchDisplay';
 type InternalCRVotingCloseTrigger = 'all_collaborators_voted' | 'after_minutes';
 type InternalCRResolutionVisibility = 'public' | 'collaborators';
 
@@ -57,13 +68,18 @@ export function useAmendmentEditContentController({
 
   const { t } = useTranslation();
 
-  const { updateAmendment, createAmendment } = useAmendmentActions();
+  const { updateAmendment, createAmendment, updateProcessBranch } = useAmendmentActions();
+  const { updateDocument } = useDocumentActions();
 
   const commonActions = useCommonActions();
 
   const { amendmentHashtags, allHashtags } = useCommonState({
     amendment_id: amendmentId,
     loadAllHashtags: true,
+  });
+  const amendmentDocumentId = amendment?.document_id ?? null;
+  const { document: amendmentDocument } = useDocumentState({
+    documentId: amendmentDocumentId ?? undefined,
   });
 
   const [formData, setFormData] = useState({
@@ -81,6 +97,51 @@ export function useAmendmentEditContentController({
     visibility: 'public' as Visibility,
     hashtags: [] as string[],
   });
+
+  const workflowBranches = useMemo(
+    () => getOrderedBranches(amendmentProcess?.current_process_run?.branches ?? []),
+    [amendmentProcess?.current_process_run?.branches]
+  );
+  const activeWorkflowBranchId = amendmentProcess?.current_process_run?.active_branch_id ?? null;
+  const [selectedWorkflowBranchId, setSelectedWorkflowBranchId] = useState<string | null>(null);
+  const [pendingWorkflowMode, setPendingWorkflowMode] = useState<{
+    branchId: string;
+    mode: EditingMode;
+  } | null>(null);
+  const selectedWorkflowBranch = useMemo(
+    () => workflowBranches.find(branch => branch.id === selectedWorkflowBranchId) ?? null,
+    [selectedWorkflowBranchId, workflowBranches]
+  );
+  const workflowModeSourceKey = selectedWorkflowBranchId
+    ? `branch:${selectedWorkflowBranchId}`
+    : amendmentDocumentId
+      ? `document:${amendmentDocumentId}`
+      : null;
+  const workflowSourceMode = selectedWorkflowBranch
+    ? getBranchEditingMode(selectedWorkflowBranch)
+    : normalizeEditingMode(amendmentDocument?.editing_mode);
+  const selectedWorkflowBranchEditable =
+    isCreating ||
+    (selectedWorkflowBranch
+      ? isBranchEditable(selectedWorkflowBranch)
+      : Boolean(amendmentDocumentId));
+  const workflowBranchOptions = useMemo(
+    () =>
+      workflowBranches.map(branch => ({
+        id: branch.id,
+        label: getBranchPathLabel(branch),
+        editingMode: getBranchEditingMode(branch),
+      })),
+    [workflowBranches]
+  );
+  const selectedWorkflowBranchLabel = selectedWorkflowBranch
+    ? getBranchPathLabel(selectedWorkflowBranch)
+    : null;
+  const workflowModeDisabledReasons = useMemo(
+    () =>
+      selectedWorkflowBranch ? getBranchEditingModeDisabledReasons(selectedWorkflowBranch) : {},
+    [selectedWorkflowBranch]
+  );
 
   const workflowStatusOption = getEditingModeOption(formData.workflowStatus, t);
   const controllingEvent = useMemo(() => {
@@ -128,7 +189,7 @@ export function useAmendmentEditContentController({
         imageURL: amendment.image_url || '',
         videoURL: '',
         videoThumbnailURL: '',
-        workflowStatus: normalizeEditingMode(amendment.editing_mode),
+        workflowStatus: workflowSourceMode,
         internalCRVotingCloseTrigger: normalizeInternalCRVotingCloseTrigger(
           amendment.internal_cr_voting_close_trigger
         ),
@@ -146,38 +207,90 @@ export function useAmendmentEditContentController({
             : [],
       });
     }
-  }, [amendment]);
+  }, [amendment, workflowSourceMode]);
 
   useEffect(() => {
     if (!amendment || !initializedRef.current) return;
 
-    const workflowStatus = normalizeEditingMode(amendment.editing_mode);
+    if (pendingWorkflowMode?.branchId === workflowModeSourceKey) {
+      if (workflowSourceMode === pendingWorkflowMode.mode) {
+        setPendingWorkflowMode(null);
+      } else {
+        return;
+      }
+    }
 
     setFormData(prev =>
-      prev.workflowStatus === workflowStatus ? prev : { ...prev, workflowStatus }
+      prev.workflowStatus === workflowSourceMode
+        ? prev
+        : { ...prev, workflowStatus: workflowSourceMode }
     );
-  }, [amendment?.editing_mode]);
+  }, [amendment?.id, pendingWorkflowMode, workflowModeSourceKey, workflowSourceMode]);
+
+  useEffect(() => {
+    if (workflowBranches.length === 0) {
+      if (selectedWorkflowBranchId !== null) {
+        setSelectedWorkflowBranchId(null);
+      }
+      return;
+    }
+
+    const nextBranchId = resolveSelectedBranchId({
+      branches: workflowBranches,
+      requestedBranchId: selectedWorkflowBranchId,
+      activeBranchId: activeWorkflowBranchId,
+    });
+
+    if (nextBranchId !== selectedWorkflowBranchId) {
+      setSelectedWorkflowBranchId(nextBranchId);
+    }
+  }, [activeWorkflowBranchId, selectedWorkflowBranchId, workflowBranches]);
 
   const handleWorkflowStatusChange = useCallback(
     async (value: SelectableEditingMode) => {
       if (value === formData.workflowStatus) return;
 
+      const nextWorkflowStatus = value as EditingMode;
       const previousWorkflowStatus = formData.workflowStatus;
       console.info('[AmendmentEditContent] Changing workflow status from settings', {
         amendmentId,
         newMode: value,
         previousMode: previousWorkflowStatus,
       });
-      setFormData(prev => ({ ...prev, workflowStatus: value as EditingMode }));
+      setFormData(prev => ({ ...prev, workflowStatus: nextWorkflowStatus }));
 
       if (isCreating || !amendment) {
         return;
       }
+      if (!selectedWorkflowBranchId && !amendmentDocumentId) {
+        setFormData(prev => ({ ...prev, workflowStatus: previousWorkflowStatus }));
+        toast.error(t('features.amendments.editContent.updateFailed'));
+        return;
+      }
 
+      setPendingWorkflowMode({
+        branchId: workflowModeSourceKey ?? 'unknown',
+        mode: nextWorkflowStatus,
+      });
+
+      let modePersisted = false;
       try {
+        if (selectedWorkflowBranchId) {
+          await updateProcessBranch({
+            id: selectedWorkflowBranchId,
+            editing_mode: value,
+          });
+        } else {
+          await serverConfirmed(
+            updateDocument({
+              id: amendmentDocumentId as string,
+              editing_mode: value,
+            })
+          );
+        }
+        modePersisted = true;
         await updateAmendment({
           id: amendmentId,
-          editing_mode: value,
           internal_cr_voting_close_trigger: formData.internalCRVotingCloseTrigger,
           internal_cr_voting_duration_minutes:
             formData.internalCRVotingCloseTrigger === 'after_minutes'
@@ -187,11 +300,18 @@ export function useAmendmentEditContentController({
         });
         console.info('[AmendmentEditContent] Workflow status persisted from settings', {
           amendmentId,
+          processBranchId: selectedWorkflowBranchId,
+          documentId: selectedWorkflowBranchId ? undefined : amendmentDocumentId,
           newMode: value,
           previousMode: previousWorkflowStatus,
         });
       } catch (error) {
-        setFormData(prev => ({ ...prev, workflowStatus: previousWorkflowStatus }));
+        if (!modePersisted) {
+          setPendingWorkflowMode(current =>
+            current?.branchId === workflowModeSourceKey ? null : current
+          );
+          setFormData(prev => ({ ...prev, workflowStatus: previousWorkflowStatus }));
+        }
         console.error('[AmendmentEditContent] Failed to persist workflow status from settings', {
           amendmentId,
           newMode: value,
@@ -208,7 +328,12 @@ export function useAmendmentEditContentController({
       formData.internalCRResolutionVisibility,
       formData.workflowStatus,
       isCreating,
+      amendmentDocumentId,
+      selectedWorkflowBranchId,
       updateAmendment,
+      updateDocument,
+      updateProcessBranch,
+      workflowModeSourceKey,
     ]
   );
 
@@ -232,7 +357,6 @@ export function useAmendmentEditContentController({
           id: amendmentId,
           title: formData.title || null,
           code: formData.code || null,
-          editing_mode: formData.workflowStatus || null,
           reason: null,
           category: null,
           preamble: null,
@@ -264,7 +388,6 @@ export function useAmendmentEditContentController({
           id: amendmentId,
           title: formData.title,
           code: formData.code,
-          editing_mode: formData.workflowStatus,
           internal_cr_voting_close_trigger: formData.internalCRVotingCloseTrigger,
           internal_cr_voting_duration_minutes:
             formData.internalCRVotingCloseTrigger === 'after_minutes'
@@ -370,7 +493,13 @@ export function useAmendmentEditContentController({
     setFormData,
     workflowStatusOption,
     workflowMenuValue,
+    workflowModeDisabledReasons,
     controllingEvent,
+    workflowBranchOptions,
+    selectedWorkflowBranchId,
+    selectedWorkflowBranchLabel,
+    selectedWorkflowBranchEditable,
+    setSelectedWorkflowBranchId,
     isSubmitting,
     setIsSubmitting,
     showReview,

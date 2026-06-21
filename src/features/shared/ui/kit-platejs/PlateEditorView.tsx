@@ -32,6 +32,7 @@ export interface PlateEditorViewProps {
   documentId: any;
   documentTitle: any;
   currentMode: any;
+  modeDisabledReasons: any;
   onModeChange: any;
   isOwnerOrCollaborator: any;
   readOnly: any;
@@ -67,6 +68,7 @@ export function PlateEditorView({
   onEventSuggestionConfirm,
   onEventSuggestionCancel,
   currentMode,
+  modeDisabledReasons,
   onModeChange,
   isOwnerOrCollaborator,
   readOnly,
@@ -79,6 +81,7 @@ export function PlateEditorView({
   return (
     <ModeProvider
       currentMode={currentMode}
+      modeDisabledReasons={modeDisabledReasons}
       onModeChange={onModeChange}
       isOwnerOrCollaborator={isOwnerOrCollaborator}
       selectedCrIds={selectedCrIds}

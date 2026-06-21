@@ -84,6 +84,13 @@ describe('adaptAmendmentToEntity', () => {
     expect(entity?.canManageChangeRequestVotes).toBe(true);
   });
 
+  it('keeps internal change request vote management behind manage amendment rights', () => {
+    const entity = adaptAmendmentToEntity(amendmentWithRole('update'), document, 'user-1');
+
+    expect(entity?.canChangeMode).toBe(true);
+    expect(entity?.canManageChangeRequestVotes).toBe(false);
+  });
+
   it('does not allow amendment mode changes for collaborators without update/manage rights', () => {
     const entity = adaptAmendmentToEntity(amendmentWithRole('view'), document, 'user-1');
 
@@ -138,5 +145,144 @@ describe('adaptAmendmentToEntity', () => {
         avatarUrl: 'avatar.png',
       }),
     ]);
+  });
+
+  it('uses branch document, discussions, and change requests when a process branch is selected', () => {
+    const amendment = amendmentWithRole('vote') as any;
+    amendment.discussions = [
+      {
+        id: 'suggestion-main',
+        crId: 'CR-MAIN',
+        comments: [],
+        createdAt: 1,
+        isResolved: false,
+        userId: 'user-1',
+      },
+    ];
+    amendment.change_requests = [
+      {
+        id: 'change-request-main',
+        title: 'CR-MAIN',
+        status: 'open',
+        process_branch_id: null,
+        votes_for: 1,
+        votes_against: 0,
+        votes_abstain: 0,
+        votes: [],
+      },
+      {
+        id: 'change-request-branch',
+        title: 'CR-B1',
+        status: 'open',
+        process_branch_id: 'branch-1',
+        votes_for: 3,
+        votes_against: 2,
+        votes_abstain: 0,
+        votes: [],
+      },
+    ];
+
+    const branch = {
+      id: 'branch-1',
+      created_at: 2,
+      status: 'scheduled',
+      resolution: null,
+      discussions: [
+        {
+          id: 'suggestion-branch',
+          crId: 'CR-B1',
+          comments: [],
+          createdAt: 2,
+          isResolved: false,
+          userId: 'user-1',
+        },
+      ],
+    };
+    const earlierBranch = {
+      id: 'branch-earlier',
+      created_at: 1,
+    };
+    const branchDocument = {
+      ...document,
+      id: 'document-branch',
+      content: [{ type: 'p', children: [{ text: 'Branch text' }] }],
+    };
+
+    const entity = adaptAmendmentToEntity(amendment, branchDocument, 'user-1', {
+      processBranch: branch,
+      processBranches: [earlierBranch, branch],
+    });
+
+    expect(entity?.id).toBe('document-branch');
+    expect(entity?.metadata?.processBranchId).toBe('branch-1');
+    expect(entity?.discussions).toHaveLength(1);
+    expect(entity?.discussions[0]).toEqual(
+      expect.objectContaining({
+        id: 'suggestion-branch',
+        displayCrId: 'Branch 2 CR-1',
+        votesFor: 3,
+        votesAgainst: 2,
+      })
+    );
+  });
+
+  it('uses suggest_event from the selected process branch as the editor mode', () => {
+    const branch = {
+      id: 'branch-suggest-event',
+      editing_mode: 'suggest_event',
+      status: 'scheduled',
+      resolution: null,
+    };
+
+    const entity = adaptAmendmentToEntity(amendmentWithRole('vote'), document, 'user-1', {
+      processBranch: branch,
+      processBranches: [branch],
+    });
+
+    expect(entity?.editingMode).toBe('suggest_event');
+  });
+
+  it('uses vote_internal from the selected process branch as the editor mode', () => {
+    const branch = {
+      id: 'branch-vote-internal',
+      editing_mode: 'vote_internal',
+      status: 'scheduled',
+      resolution: null,
+    };
+
+    const entity = adaptAmendmentToEntity(amendmentWithRole('vote'), document, 'user-1', {
+      processBranch: branch,
+      processBranches: [branch],
+    });
+
+    expect(entity?.editingMode).toBe('vote_internal');
+  });
+
+  it('uses document editing mode when no process branch is selected', () => {
+    const entity = adaptAmendmentToEntity(
+      amendmentWithRole('vote'),
+      { ...document, editing_mode: 'vote_internal' },
+      'user-1'
+    );
+
+    expect(entity?.editingMode).toBe('vote_internal');
+    expect(entity?.metadata.amendmentEditingMode).toBe('vote_internal');
+  });
+
+  it('keeps readonly process branches in view mode', () => {
+    const branch = {
+      id: 'branch-completed',
+      editing_mode: 'suggest_event',
+      status: 'completed',
+      resolution: null,
+    };
+
+    const entity = adaptAmendmentToEntity(amendmentWithRole('vote'), document, 'user-1', {
+      processBranch: branch,
+      processBranches: [branch],
+    });
+
+    expect(entity?.editingMode).toBe('view');
+    expect(entity?.canChangeMode).toBe(false);
   });
 });

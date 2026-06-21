@@ -50,7 +50,8 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
 
   // Derive phase from election/vote status
   const phase: VotingPhase = useMemo(() => {
-    if (status === 'final' || status === 'final_vote') return 'final_vote';
+    if (status === 'final' || status === 'final_vote' || status === 'final_open')
+      return 'final_vote';
     if (status === 'closed' || status === 'completed') return 'closed';
     return 'indication';
   }, [status]);

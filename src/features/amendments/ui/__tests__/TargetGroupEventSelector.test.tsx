@@ -94,7 +94,7 @@ const amendmentRelationships = [
 ] as never[];
 
 const amendmentWorkflows: Record<string, unknown>[] = [];
-const amendmentEvents = [
+const amendmentEvents: Record<string, unknown>[] = [
   {
     id: 'event-start',
     title: 'Budget Assembly',
@@ -464,6 +464,65 @@ describe('TargetGroupEventSelector', () => {
     } finally {
       amendmentWorkflows.length = 0;
     }
+  });
+
+  it('hides start groups that already have a branch when adding another path', async () => {
+    const onSelect = vi.fn();
+    amendmentMemberships.push({
+      id: 'membership-2',
+      status: 'active',
+      user: { id: 'user-1' },
+      group: { id: 'group-mid' },
+      membership_roles: [],
+    });
+
+    try {
+      render(
+        <TargetGroupEventSelector
+          userId="user-1"
+          onSelect={onSelect}
+          allowGroupWithoutEvent
+          disablePortal
+          excludedSourceGroupIds={['group-start']}
+        />
+      );
+
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: 'Remove Regional Council' })).toBeTruthy()
+      );
+      expect(screen.queryByRole('button', { name: 'Remove Budget Circle' })).toBeNull();
+    } finally {
+      amendmentMemberships.pop();
+    }
+  });
+
+  it('locks the target to the existing process run when adding another path', async () => {
+    const onSelect = vi.fn();
+
+    render(
+      <TargetGroupEventSelector
+        userId="user-1"
+        onSelect={onSelect}
+        allowGroupWithoutEvent
+        disablePortal
+        fixedTargetGroupId="group-target"
+        lockTargetSelection
+        selectedGroupId="group-target"
+      />
+    );
+
+    await waitFor(() => expect(screen.queryByPlaceholderText('Zielgruppe suchen...')).toBeNull());
+    expect(screen.getByText('Fixe Zielgruppe')).toBeTruthy();
+    expect(screen.getAllByText('Parliament').length).toBeGreaterThan(0);
+
+    await waitFor(() =>
+      expect(onSelect).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceGroupId: 'group-start',
+          groupId: 'group-target',
+        })
+      )
+    );
   });
 
   it('ignores target events whose amendment deadline has expired', async () => {

@@ -60,11 +60,13 @@ export async function discardPendingEventSuggestions({
   tx,
   ctx,
   amendmentId,
+  processBranchId,
   now = Date.now(),
 }: {
   tx: EventSuggestionCleanupTx;
   ctx: EventSuggestionCleanupCtx;
   amendmentId: string | null | undefined;
+  processBranchId?: string | null;
   now?: number;
 }) {
   if (!amendmentId) {
@@ -72,16 +74,19 @@ export async function discardPendingEventSuggestions({
   }
 
   const amendment = await tx.run(zql.amendment.where('id', amendmentId).one());
-  const discussions: EventSuggestionDiscussionEntry[] = Array.isArray(amendment?.discussions)
-    ? (amendment.discussions as EventSuggestionDiscussionEntry[])
+  const branch = processBranchId
+    ? await tx.run(zql.amendment_process_branch.where('id', processBranchId).one())
+    : null;
+  const discussionSource = branch ?? amendment;
+  const discussions: EventSuggestionDiscussionEntry[] = Array.isArray(discussionSource?.discussions)
+    ? (discussionSource.discussions as EventSuggestionDiscussionEntry[])
     : [];
   if (!amendment || discussions.length === 0) {
     return { removedCount: 0 };
   }
 
-  const document = amendment.document_id
-    ? await tx.run(zql.document.where('id', amendment.document_id).one())
-    : null;
+  const documentId = branch?.document_id ?? amendment.document_id;
+  const document = documentId ? await tx.run(zql.document.where('id', documentId).one()) : null;
   const cleanup = discardPendingEventSuggestionsFromState({
     content: document?.content as Value | null | undefined,
     discussions,
@@ -120,11 +125,19 @@ export async function discardPendingEventSuggestions({
     });
   }
 
-  await tx.mutate.amendment.update({
-    id: amendment.id,
-    discussions: cleanup.discussions as unknown as ReadonlyJSONValue,
-    updated_at: now,
-  });
+  if (branch?.id) {
+    await tx.mutate.amendment_process_branch.update({
+      id: branch.id,
+      discussions: cleanup.discussions as unknown as ReadonlyJSONValue,
+      updated_at: now,
+    });
+  } else {
+    await tx.mutate.amendment.update({
+      id: amendment.id,
+      discussions: cleanup.discussions as unknown as ReadonlyJSONValue,
+      updated_at: now,
+    });
+  }
 
   return { removedCount: cleanup.removedCount };
 }

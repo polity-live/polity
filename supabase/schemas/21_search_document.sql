@@ -882,7 +882,27 @@ BEGIN
     jsonb_build_object(
       'type', 'amendment',
       'code', amendment_row.code,
-      'status', amendment_row.editing_mode,
+      'status', (
+        SELECT branch.editing_mode
+        FROM public.amendment_process_branch branch
+        WHERE branch.process_run_id = amendment_row.current_process_run_id
+        ORDER BY branch.created_at ASC, branch.id ASC
+        LIMIT 1
+      ),
+      'branch_statuses', coalesce((
+        SELECT jsonb_agg(
+          jsonb_build_object(
+            'branch_id', branch.id,
+            'label', coalesce(branch.title, 'Branch'),
+            'editing_mode', branch.editing_mode,
+            'process_status', branch.status,
+            'resolution', branch.resolution
+          )
+          ORDER BY branch.created_at ASC, branch.id ASC
+        )
+        FROM public.amendment_process_branch branch
+        WHERE branch.process_run_id = amendment_row.current_process_run_id
+      ), '[]'::jsonb),
       'entity_id', amendment_row.id,
       'metadata', jsonb_build_object('event_id', amendment_row.event_id),
       'stats', jsonb_build_object(

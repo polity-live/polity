@@ -4,7 +4,8 @@ import type { EditorMode } from '@/features/editor/types';
 
 interface ModeContextValue {
   currentMode?: EditorMode;
-  onModeChange?: (mode: EditorMode) => void;
+  modeDisabledReasons?: Partial<Record<EditorMode, string>>;
+  onModeChange?: (mode: EditorMode) => void | Promise<void>;
   isOwnerOrCollaborator?: boolean;
   selectedCrIds?: Set<string> | null;
   onSelectedCrIdsChange?: (crIds: Set<string> | null) => void;

@@ -10,6 +10,10 @@ import {
   type GroupAmendmentBadgeStatus,
   type GroupAmendmentDisplayStatus,
 } from '@/features/groups/logic/groupAmendmentStatus';
+import {
+  getOrderedBranches,
+  mapAmendmentBranchStatusChips,
+} from '@/features/amendments/logic/amendmentBranchDisplay';
 
 type AmendmentHashtagJunction = readonly {
   hashtag?: { id: string; tag: string } | null;
@@ -21,6 +25,18 @@ interface AmendmentSummary {
   reason?: string | null;
   code?: string | null;
   editing_mode?: string | null;
+  current_process_run?: {
+    branches?:
+      | readonly {
+          id: string;
+          title?: string | null;
+          status?: string | null;
+          editing_mode?: string | null;
+          resolution?: string | null;
+          created_at?: number | string | null;
+        }[]
+      | null;
+  } | null;
   amendment_hashtags?: AmendmentHashtagJunction | null;
 }
 
@@ -36,6 +52,7 @@ export interface GroupAmendmentListItem {
   date?: number | string | null;
   amendment_hashtags?: AmendmentHashtagJunction;
   process_step_run_id?: string | null;
+  branchStatuses?: ReturnType<typeof mapAmendmentBranchStatusChips>;
 }
 
 function isGroupAmendmentListItem(
@@ -66,6 +83,8 @@ export function useGroupAmendments(
           if (!groupStatus || !displayStatus) {
             return null;
           }
+          const branches = amendment?.current_process_run?.branches ?? [];
+          const firstBranch = getOrderedBranches(branches)[0] ?? null;
 
           return {
             id: decision.id,
@@ -75,10 +94,11 @@ export function useGroupAmendments(
             code: amendment?.code ?? null,
             decision_status: displayStatus,
             group_status: groupStatus,
-            editing_mode: amendment?.editing_mode ?? null,
+            editing_mode: firstBranch?.editing_mode ?? null,
             date: decision.decided_at ?? decision.updated_at ?? decision.created_at ?? null,
             amendment_hashtags: amendment?.amendment_hashtags ?? [],
             process_step_run_id: decision.process_step_run_id ?? null,
+            branchStatuses: mapAmendmentBranchStatusChips(branches),
           };
         })
         .filter(isGroupAmendmentListItem),
@@ -99,6 +119,8 @@ export function useGroupAmendments(
           if (!groupStatus || !displayStatus || !amendmentId) {
             return null;
           }
+          const branches = amendment?.current_process_run?.branches ?? [];
+          const firstBranch = getOrderedBranches(branches)[0] ?? null;
 
           return {
             id: `event-step:${stepRun.id}`,
@@ -108,10 +130,11 @@ export function useGroupAmendments(
             code: amendment?.code ?? null,
             decision_status: displayStatus,
             group_status: groupStatus,
-            editing_mode: amendment?.editing_mode ?? null,
+            editing_mode: firstBranch?.editing_mode ?? null,
             date: stepRun.ends_at ?? stepRun.updated_at ?? stepRun.created_at ?? null,
             amendment_hashtags: amendment?.amendment_hashtags ?? [],
             process_step_run_id: stepRun.id,
+            branchStatuses: mapAmendmentBranchStatusChips(branches),
           };
         })
         .filter(isGroupAmendmentListItem),

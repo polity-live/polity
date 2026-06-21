@@ -64,8 +64,13 @@ alter table "public"."agenda_item" enable row level security;
     "change_request_id" uuid,
     "vote_id" uuid,
     "order_index" integer not null default 0,
+    "step_kind" text not null default 'change_request'::text,
+    "process_branch_id" uuid,
     "is_final_vote" boolean not null default false,
     "status" text not null default 'pending'::text,
+    "blocked_reason" text,
+    "result_status" text,
+    "obsolete_reason" text,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
       );
@@ -138,7 +143,6 @@ alter table "public"."ai_tool" enable row level security;
     "subscriber_count" integer not null default 0,
     "clone_count" integer not null default 0,
     "change_request_count" integer not null default 0,
-    "editing_mode" text,
     "internal_cr_voting_close_trigger" text not null default 'all_collaborators_voted'::text,
     "internal_cr_voting_duration_minutes" integer,
     "internal_cr_resolution_visibility" text not null default 'public'::text,
@@ -237,8 +241,11 @@ alter table "public"."amendment_path_segment" enable row level security;
     "merged_into_branch_id" uuid,
     "source_step_run_id" uuid,
     "document_version_id" uuid,
+    "document_id" uuid,
+    "discussions" jsonb,
     "title" text,
     "status" text not null default 'pending_event'::text,
+    "editing_mode" text not null default 'edit'::text,
     "resolution" text,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
@@ -428,6 +435,7 @@ alter table "public"."calendar_subscription" enable row level security;
   create table "public"."change_request" (
     "id" uuid not null default gen_random_uuid(),
     "amendment_id" uuid not null,
+    "process_branch_id" uuid,
     "user_id" uuid not null,
     "title" text,
     "description" text,
@@ -436,6 +444,11 @@ alter table "public"."calendar_subscription" enable row level security;
     "source_type" text,
     "source_id" uuid,
     "source_title" text,
+    "change_type" text,
+    "original_text" text,
+    "new_text" text,
+    "original_properties" jsonb,
+    "new_properties" jsonb,
     "changed_character_count" integer not null default 0,
     "votes_for" integer not null default 0,
     "votes_against" integer not null default 0,
@@ -448,6 +461,9 @@ alter table "public"."calendar_subscription" enable row level security;
     "resolved_in_mode" text,
     "resolution_method" text,
     "visibility_scope" text not null default 'public'::text,
+    "obsolete_reason" text,
+    "obsolete_at" timestamp with time zone,
+    "obsolete_by_vote_id" uuid,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
       );
@@ -791,6 +807,7 @@ alter table "public"."eurostat_observation" enable row level security;
     "start_date" timestamp with time zone,
     "end_date" timestamp with time zone,
     "timezone" text,
+    "default_final_vote_duration_seconds" integer,
     "capacity" integer,
     "participant_count" integer not null default 0,
     "subscriber_count" integer not null default 0,
@@ -2168,11 +2185,15 @@ alter table "public"."user_preference" enable row level security;
     "amendment_id" uuid,
     "title" text,
     "description" text,
-    "status" text not null default 'indicative'::text,
+    "status" text not null default 'indicative_open'::text,
+    "purpose" text not null default 'general'::text,
     "majority_type" text not null default 'relative'::text,
     "closing_type" text not null default 'moderator'::text,
     "closing_duration_seconds" integer,
     "closing_end_time" timestamp with time zone,
+    "closed_reason" text,
+    "closed_at" timestamp with time zone,
+    "closed_by_id" uuid,
     "visibility" character varying not null default 'public'::character varying,
     "ballot_visibility" text not null default 'named'::text,
     "created_at" timestamp with time zone not null default now(),
@@ -2187,6 +2208,8 @@ alter table "public"."vote" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "vote_id" uuid not null,
     "label" text not null,
+    "semantic_key" text,
+    "process_branch_id" uuid,
     "order_index" integer not null default 0,
     "created_at" timestamp with time zone not null default now()
       );
@@ -2499,6 +2522,10 @@ CREATE INDEX idx_aicr_agenda_item ON public.agenda_item_change_request USING btr
 
 CREATE INDEX idx_aicr_change_request ON public.agenda_item_change_request USING btree (change_request_id);
 
+CREATE INDEX idx_aicr_process_branch ON public.agenda_item_change_request USING btree (process_branch_id);
+
+CREATE INDEX idx_aicr_step_kind ON public.agenda_item_change_request USING btree (agenda_item_id, step_kind);
+
 CREATE UNIQUE INDEX idx_aicr_unique ON public.agenda_item_change_request USING btree (agenda_item_id, change_request_id) WHERE (change_request_id IS NOT NULL);
 
 CREATE INDEX idx_aicr_vote ON public.agenda_item_change_request USING btree (vote_id);
@@ -2508,8 +2535,6 @@ CREATE INDEX idx_amendment_collaborator_amendment ON public.amendment_collaborat
 CREATE INDEX idx_amendment_collaborator_user ON public.amendment_collaborator USING btree (user_id);
 
 CREATE INDEX idx_amendment_created_by ON public.amendment USING btree (created_by_id);
-
-CREATE INDEX idx_amendment_editing_mode ON public.amendment USING btree (editing_mode);
 
 CREATE INDEX idx_amendment_event ON public.amendment USING btree (event_id);
 
@@ -2532,6 +2557,10 @@ CREATE INDEX idx_amendment_origin ON public.amendment USING btree (origin_amendm
 CREATE INDEX idx_amendment_path_amendment ON public.amendment_path USING btree (amendment_id);
 
 CREATE INDEX idx_amendment_path_segment_path ON public.amendment_path_segment USING btree (path_id);
+
+CREATE INDEX idx_amendment_process_branch_document ON public.amendment_process_branch USING btree (document_id);
+
+CREATE INDEX idx_amendment_process_branch_editing_mode ON public.amendment_process_branch USING btree (editing_mode);
 
 CREATE INDEX idx_amendment_process_branch_parent ON public.amendment_process_branch USING btree (parent_branch_id);
 
@@ -2588,6 +2617,8 @@ CREATE UNIQUE INDEX idx_calendar_sub_user_user ON public.calendar_subscription U
 CREATE INDEX idx_change_request_amendment ON public.change_request USING btree (amendment_id);
 
 CREATE INDEX idx_change_request_changed_character_count ON public.change_request USING btree (changed_character_count);
+
+CREATE INDEX idx_change_request_process_branch ON public.change_request USING btree (process_branch_id);
 
 CREATE INDEX idx_change_request_user ON public.change_request USING btree (user_id);
 
@@ -3139,7 +3170,11 @@ CREATE INDEX idx_user_preference_user ON public.user_preference USING btree (use
 
 CREATE INDEX idx_vote_agenda_item ON public.vote USING btree (agenda_item_id);
 
+CREATE INDEX idx_vote_agenda_item_purpose ON public.vote USING btree (agenda_item_id, purpose);
+
 CREATE INDEX idx_vote_amendment ON public.vote USING btree (amendment_id);
+
+CREATE INDEX idx_vote_choice_process_branch ON public.vote_choice USING btree (process_branch_id);
 
 CREATE INDEX idx_vote_choice_vote ON public.vote_choice USING btree (vote_id);
 
@@ -3573,6 +3608,10 @@ alter table "public"."agenda_item_change_request" add constraint "agenda_item_ch
 
 alter table "public"."agenda_item_change_request" validate constraint "agenda_item_change_request_change_request_id_fkey";
 
+alter table "public"."agenda_item_change_request" add constraint "agenda_item_change_request_process_branch_id_fkey" FOREIGN KEY (process_branch_id) REFERENCES public.amendment_process_branch(id) ON DELETE SET NULL not valid;
+
+alter table "public"."agenda_item_change_request" validate constraint "agenda_item_change_request_process_branch_id_fkey";
+
 alter table "public"."agenda_item_change_request" add constraint "agenda_item_change_request_vote_id_fkey" FOREIGN KEY (vote_id) REFERENCES public.vote(id) ON DELETE SET NULL not valid;
 
 alter table "public"."agenda_item_change_request" validate constraint "agenda_item_change_request_vote_id_fkey";
@@ -3670,6 +3709,10 @@ alter table "public"."amendment_path_segment" validate constraint "amendment_pat
 alter table "public"."amendment_path_segment" add constraint "amendment_path_segment_process_step_run_fk" FOREIGN KEY (process_step_run_id) REFERENCES public.amendment_process_step_run(id) ON DELETE SET NULL not valid;
 
 alter table "public"."amendment_path_segment" validate constraint "amendment_path_segment_process_step_run_fk";
+
+alter table "public"."amendment_process_branch" add constraint "amendment_process_branch_document_id_fkey" FOREIGN KEY (document_id) REFERENCES public.document(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_branch" validate constraint "amendment_process_branch_document_id_fkey";
 
 alter table "public"."amendment_process_branch" add constraint "amendment_process_branch_document_version_id_fkey" FOREIGN KEY (document_version_id) REFERENCES public.document_version(id) ON DELETE SET NULL not valid;
 
@@ -3836,6 +3879,10 @@ alter table "public"."calendar_subscription" validate constraint "chk_calendar_s
 alter table "public"."change_request" add constraint "change_request_amendment_id_fkey" FOREIGN KEY (amendment_id) REFERENCES public.amendment(id) ON DELETE CASCADE not valid;
 
 alter table "public"."change_request" validate constraint "change_request_amendment_id_fkey";
+
+alter table "public"."change_request" add constraint "change_request_process_branch_id_fkey" FOREIGN KEY (process_branch_id) REFERENCES public.amendment_process_branch(id) ON DELETE SET NULL not valid;
+
+alter table "public"."change_request" validate constraint "change_request_process_branch_id_fkey";
 
 alter table "public"."change_request" add constraint "change_request_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
@@ -5077,6 +5124,14 @@ alter table "public"."vote" add constraint "vote_ballot_visibility_check" CHECK 
 
 alter table "public"."vote" validate constraint "vote_ballot_visibility_check";
 
+alter table "public"."vote" add constraint "vote_closed_by_id_fkey" FOREIGN KEY (closed_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."vote" validate constraint "vote_closed_by_id_fkey";
+
+alter table "public"."vote_choice" add constraint "vote_choice_process_branch_id_fkey" FOREIGN KEY (process_branch_id) REFERENCES public.amendment_process_branch(id) ON DELETE SET NULL not valid;
+
+alter table "public"."vote_choice" validate constraint "vote_choice_process_branch_id_fkey";
+
 alter table "public"."vote_choice" add constraint "vote_choice_vote_id_fkey" FOREIGN KEY (vote_id) REFERENCES public.vote(id) ON DELETE CASCADE not valid;
 
 alter table "public"."vote_choice" validate constraint "vote_choice_vote_id_fkey";
@@ -5533,7 +5588,27 @@ BEGIN
     jsonb_build_object(
       'type', 'amendment',
       'code', amendment_row.code,
-      'status', amendment_row.editing_mode,
+      'status', (
+        SELECT branch.editing_mode
+        FROM public.amendment_process_branch branch
+        WHERE branch.process_run_id = amendment_row.current_process_run_id
+        ORDER BY branch.created_at ASC, branch.id ASC
+        LIMIT 1
+      ),
+      'branch_statuses', coalesce((
+        SELECT jsonb_agg(
+          jsonb_build_object(
+            'branch_id', branch.id,
+            'label', coalesce(branch.title, 'Branch'),
+            'editing_mode', branch.editing_mode,
+            'process_status', branch.status,
+            'resolution', branch.resolution
+          )
+          ORDER BY branch.created_at ASC, branch.id ASC
+        )
+        FROM public.amendment_process_branch branch
+        WHERE branch.process_run_id = amendment_row.current_process_run_id
+      ), '[]'::jsonb),
       'entity_id', amendment_row.id,
       'metadata', jsonb_build_object('event_id', amendment_row.event_id),
       'stats', jsonb_build_object(

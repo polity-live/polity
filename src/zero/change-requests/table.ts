@@ -4,6 +4,7 @@ export const changeRequest = table('change_request')
   .columns({
     id: string(),
     amendment_id: string(),
+    process_branch_id: string().optional(),
     user_id: string(),
     title: string().optional(),
     description: string().optional(),
@@ -29,6 +30,9 @@ export const changeRequest = table('change_request')
     resolved_in_mode: string().optional(),
     resolution_method: string().optional(),
     visibility_scope: string().optional(),
+    obsolete_reason: string().optional(),
+    obsolete_at: number().optional(),
+    obsolete_by_vote_id: string().optional(),
     created_at: number(),
     updated_at: number(),
   })

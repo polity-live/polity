@@ -11,11 +11,13 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { getStatementHeadline } from '@/zero/statements/content';
 
 interface StatementCardProps {
   statement: {
     id: string;
-    text: string;
+    title?: string | null;
+    text?: string | null;
     image_url?: string | null;
     video_url?: string | null;
     upvotes?: number;
@@ -45,6 +47,7 @@ export function StatementCard({ statement, className }: StatementCardProps) {
   const authorName = author
     ? `${author.first_name ?? ''} ${author.last_name ?? ''}`.trim() || author.handle || 'Unknown'
     : 'Unknown';
+  const headline = getStatementHeadline(statement);
 
   return (
     <Link
@@ -64,9 +67,13 @@ export function StatementCard({ statement, className }: StatementCardProps) {
         )}
       </div>
 
-      {/* Statement text */}
-      <div className="mb-2 line-clamp-3 text-sm">
-        <StatementTextRenderer text={statement.text} />
+      <div className="mb-2 space-y-1">
+        <p className="line-clamp-2 text-sm font-semibold">{headline}</p>
+        {statement.text ? (
+          <div className="line-clamp-3 text-sm">
+            <StatementTextRenderer text={statement.text} />
+          </div>
+        ) : null}
       </div>
 
       {/* Hashtags */}

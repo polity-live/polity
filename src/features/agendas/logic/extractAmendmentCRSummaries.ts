@@ -6,6 +6,10 @@
 import type { CRSummary } from './createMockCRTimelineItems';
 import { buildCanonicalChangeRequestRecords } from '@/features/change-requests/logic/canonicalChangeRequests';
 import {
+  decorateBranchScopedChangeRequests,
+  type BranchDisplaySource,
+} from '@/features/change-requests/logic/branchScopedDisplay';
+import {
   hasRenderableSuggestionContent,
   suggestionContentFromChangeRequestSnapshot,
 } from '@/features/change-requests/utils/suggestion-extraction';
@@ -23,6 +27,7 @@ interface DiscussionEntry {
 
 interface SavedChangeRequest {
   id: string;
+  process_branch_id?: string | null;
   title?: string | null;
   description?: string | null;
   status?: string | null;
@@ -41,15 +46,21 @@ interface SavedChangeRequest {
   new_properties?: Record<string, string> | null;
 }
 
+interface ExtractAmendmentCRSummariesOptions {
+  branches?: readonly BranchDisplaySource[];
+  processBranchId?: string | null;
+}
+
 /**
  * Merge open CRs from discussions JSON with closed CRs from saved change_request entities.
  * Returns a flat array of CRSummary objects suitable for createMockCRTimelineItems().
  */
 export function extractAmendmentCRSummaries(
   discussions: readonly unknown[] | null | undefined,
-  savedChangeRequests: readonly SavedChangeRequest[] | null | undefined
+  savedChangeRequests: readonly SavedChangeRequest[] | null | undefined,
+  options: ExtractAmendmentCRSummariesOptions = {}
 ): CRSummary[] {
-  return buildCanonicalChangeRequestRecords({
+  const summaries = buildCanonicalChangeRequestRecords({
     discussions: discussions as readonly DiscussionEntry[] | null | undefined,
     changeRequests: savedChangeRequests,
   }).map(record => {
@@ -82,6 +93,7 @@ export function extractAmendmentCRSummaries(
       suggestionId: discussion?.id ?? null,
       discussionId: discussion?.id ?? null,
       changeRequestEntityId: cr?.id ?? discussion?.changeRequestEntityId ?? null,
+      processBranchId: cr?.process_branch_id ?? options.processBranchId ?? null,
       votingDeadline: cr?.voting_deadline ?? null,
       resolutionMethod: cr?.resolution_method ?? null,
       visibilityScope: cr?.visibility_scope ?? null,
@@ -90,4 +102,8 @@ export function extractAmendmentCRSummaries(
       confirmationStatus: discussion?.confirmationStatus ?? (cr ? 'confirmed' : null),
     };
   });
+
+  return options.branches?.length
+    ? decorateBranchScopedChangeRequests(options.branches, summaries)
+    : summaries;
 }

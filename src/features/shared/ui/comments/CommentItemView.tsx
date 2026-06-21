@@ -1,5 +1,6 @@
 import type React from 'react';
 
+import { UserIdentityLink } from '@/features/shared/ui/UserIdentityLink';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
 import { ArrowUp, ArrowDown, Clock, Reply, Trash2 } from 'lucide-react';
@@ -23,6 +24,7 @@ interface CommentItemViewProps {
   isOwner: boolean;
   onToggleReplyInput: () => void;
   onCancelReply: () => void;
+  linkAuthors?: boolean;
   renderReply: (reply: CommentData, depth: number) => React.ReactNode;
 }
 
@@ -41,10 +43,13 @@ export function CommentItemView({
   isOwner,
   onToggleReplyInput,
   onCancelReply,
+  linkAuthors,
   renderReply,
 }: CommentItemViewProps) {
   void currentUserId;
   void onReply;
+  const creatorName =
+    comment.creator?.name || translateText('generated.inline.0056_anonymous_9bed5104');
 
   return (
     <div className={cn('flex gap-3', depth > 0 && 'border-l-2 pl-4')}>
@@ -77,16 +82,33 @@ export function CommentItemView({
 
       <div className="min-w-0 flex-1">
         <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          <Avatar className="h-5 w-5">
-            <AvatarImage src={comment.creator?.avatar || comment.creator?.imageURL} />
-            <AvatarFallback className="text-[10px]">
-              {comment.creator?.name?.[0]?.toUpperCase() || 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-foreground font-medium">
-            {comment.creator?.name || translateText('generated.inline.0056_anonymous_9bed5104')}
-          </span>
-          {comment.creator?.handle && <span className="text-xs">@{comment.creator.handle}</span>}
+          {linkAuthors ? (
+            <UserIdentityLink
+              userId={comment.creator?.id}
+              avatarUrl={comment.creator?.avatar || comment.creator?.imageURL}
+              name={creatorName}
+              fallbackLabel={creatorName}
+              handle={comment.creator?.handle}
+              showHandle
+              avatarClassName="h-5 w-5"
+              fallbackClassName="text-[10px]"
+              nameClassName="text-foreground font-medium"
+              handleClassName="ml-2 text-xs"
+            />
+          ) : (
+            <>
+              <Avatar className="h-5 w-5">
+                <AvatarImage src={comment.creator?.avatar || comment.creator?.imageURL} />
+                <AvatarFallback className="text-[10px]">
+                  {comment.creator?.name?.[0]?.toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-foreground font-medium">{creatorName}</span>
+              {comment.creator?.handle ? (
+                <span className="text-xs">@{comment.creator.handle}</span>
+              ) : null}
+            </>
+          )}
           <span>·</span>
           <span className="flex items-center gap-1 text-xs">
             <Clock className="h-3 w-3" />

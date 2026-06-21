@@ -14,10 +14,14 @@ export interface TDiscussion {
   documentContent?: string;
   title?: string;
   crId?: string; // Format: CR-x (e.g., CR-1, CR-2, etc.)
+  displayCrId?: string;
+  branchDisplayNumber?: number;
+  branchScopedCrNumber?: number;
   status?: 'pending' | 'accepted' | 'rejected';
   confirmationStatus?: 'pending' | 'confirmed';
   confirmedAt?: number;
   changeRequestEntityId?: string; // UUID of the persisted change_request row
+  processBranchId?: string | null;
   votesFor?: number;
   votesAgainst?: number;
   votesAbstain?: number;

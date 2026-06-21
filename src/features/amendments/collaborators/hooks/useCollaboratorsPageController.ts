@@ -95,6 +95,7 @@ export function useCollaboratorsPageController({
   return {
     activeCollaborators,
     activeTab,
+    collaborators,
     changeRoleMembership,
     changeRoleOpen,
     canManageCollaborators: isAdmin,

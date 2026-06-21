@@ -1,5 +1,4 @@
 import type { ComponentProps, RefObject } from 'react';
-import { Link } from '@tanstack/react-router';
 import {
   FormControlSelect,
   FormControlSelectContent,
@@ -10,7 +9,7 @@ import {
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { PageWrapper } from '@/layout/page-wrapper';
-import { ArrowLeft, MessageSquare, Plus, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
+import { MessageSquare, Plus, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
 import type { Thread } from '../hooks/useDiscussions';
 import { ThreadCard } from './ThreadCard';
 import { CreateThreadDialog } from './CreateThreadDialog';
@@ -96,15 +95,6 @@ export function DiscussionsView({
 
   return (
     <PageWrapper>
-      <div className="mb-6">
-        <Link to="/amendment/$id" params={{ id: amendmentId }}>
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {translateText('generated.inline.0284_back_to_amendment_7273f2de')}
-          </Button>
-        </Link>
-      </div>
-
       <div className="mb-8 flex items-center justify-between">
         <div>
           <div className="mb-2 flex items-center gap-3">

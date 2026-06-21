@@ -22,7 +22,11 @@ export interface MergeVariantCandidate {
   label: string;
   groupName?: string | null;
   content?: unknown;
+  isOriginal?: boolean;
+  isWinner?: boolean;
 }
+
+export type VariantDiffCandidate = MergeVariantCandidate;
 
 interface LineDiffRow {
   kind: 'context' | 'remove' | 'add';
@@ -141,10 +145,37 @@ function buildUnifiedLineDiff(leftLines: string[], rightLines: string[]): LineDi
 }
 
 function getFirstOtherCandidate(
-  candidates: MergeVariantCandidate[],
+  candidates: VariantDiffCandidate[],
   candidateId: string
-): MergeVariantCandidate | null {
+): VariantDiffCandidate | null {
   return candidates.find(candidate => candidate.id !== candidateId) ?? null;
+}
+
+function getDefaultLeftCandidate(
+  candidates: VariantDiffCandidate[],
+  defaultCandidateId?: string | null
+): VariantDiffCandidate | null {
+  return (
+    candidates.find(candidate => candidate.id === defaultCandidateId) ??
+    candidates.find(candidate => candidate.isOriginal) ??
+    candidates[0] ??
+    null
+  );
+}
+
+function getDefaultRightCandidate(
+  candidates: VariantDiffCandidate[],
+  leftCandidateId: string | null | undefined,
+  defaultCandidateId?: string | null
+): VariantDiffCandidate | null {
+  return (
+    candidates.find(
+      candidate => candidate.id === defaultCandidateId && candidate.id !== leftCandidateId
+    ) ??
+    candidates.find(candidate => candidate.isWinner && candidate.id !== leftCandidateId) ??
+    candidates.find(candidate => !candidate.isOriginal && candidate.id !== leftCandidateId) ??
+    (leftCandidateId ? getFirstOtherCandidate(candidates, leftCandidateId) : null)
+  );
 }
 
 function VariantPreview({
@@ -152,7 +183,7 @@ function VariantPreview({
   descriptor,
   testId,
 }: {
-  candidate: MergeVariantCandidate;
+  candidate: VariantDiffCandidate;
   descriptor?: string;
   testId?: string;
 }) {
@@ -191,9 +222,9 @@ function VariantPicker({
   onLeftCandidateChange,
   onRightCandidateChange,
 }: {
-  candidates: MergeVariantCandidate[];
-  leftCandidate: MergeVariantCandidate;
-  rightCandidate: MergeVariantCandidate;
+  candidates: VariantDiffCandidate[];
+  leftCandidate: VariantDiffCandidate;
+  rightCandidate: VariantDiffCandidate;
   onLeftCandidateChange: (value: string) => void;
   onRightCandidateChange: (value: string) => void;
 }) {
@@ -225,8 +256,8 @@ function LineDiffView({
   leftCandidate,
   rightCandidate,
 }: {
-  leftCandidate: MergeVariantCandidate;
-  rightCandidate: MergeVariantCandidate;
+  leftCandidate: VariantDiffCandidate;
+  rightCandidate: VariantDiffCandidate;
 }) {
   const rows = useMemo(
     () =>
@@ -298,7 +329,7 @@ function CandidateSelect({
 }: {
   label: string;
   value: string;
-  candidates: MergeVariantCandidate[];
+  candidates: VariantDiffCandidate[];
   testId: string;
   onValueChange: (value: string) => void;
 }) {
@@ -321,27 +352,38 @@ function CandidateSelect({
   );
 }
 
-export function MergeVariantComparisonPanel({
+export function VariantDiffPanel({
   candidates,
+  title = translateText('generated.inline.0059_variantenvergleich_eaeb6685', 'Variantenvergleich'),
+  badgeLabel = translateText('generated.inline.0060_relative_wahl_5e35f421', 'relative Wahl'),
+  defaultLeftCandidateId,
+  defaultRightCandidateId,
 }: {
-  candidates: MergeVariantCandidate[];
+  candidates: VariantDiffCandidate[];
+  title?: string;
+  badgeLabel?: string | null;
+  defaultLeftCandidateId?: string | null;
+  defaultRightCandidateId?: string | null;
 }) {
   const orderedCandidates = useMemo(
     () => candidates.filter(candidate => candidate.content),
     [candidates]
   );
   const baseCandidate = orderedCandidates[0] ?? null;
-  const [leftCandidateId, setLeftCandidateId] = useState<string | null>(null);
-  const [rightCandidateId, setRightCandidateId] = useState<string | null>(null);
+  const [leftCandidateId, setLeftCandidateId] = useState<string | null>(
+    defaultLeftCandidateId ?? null
+  );
+  const [rightCandidateId, setRightCandidateId] = useState<string | null>(
+    defaultRightCandidateId ?? null
+  );
 
   const leftCandidate =
     orderedCandidates.find(candidate => candidate.id === leftCandidateId) ??
-    orderedCandidates[0] ??
-    null;
+    getDefaultLeftCandidate(orderedCandidates, defaultLeftCandidateId);
   const rightCandidate =
     orderedCandidates.find(
       candidate => candidate.id === rightCandidateId && candidate.id !== leftCandidate?.id
-    ) ?? (leftCandidate ? getFirstOtherCandidate(orderedCandidates, leftCandidate.id) : null);
+    ) ?? getDefaultRightCandidate(orderedCandidates, leftCandidate?.id, defaultRightCandidateId);
 
   const handleLeftCandidateChange = useCallback(
     (nextCandidateId: string) => {
@@ -376,15 +418,12 @@ export function MergeVariantComparisonPanel({
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <GitCompare className="h-5 w-5" />
-          <CardTitle className="text-base">
-            {translateText(
-              'generated.inline.0059_variantenvergleich_eaeb6685',
-              'Variantenvergleich'
-            )}
-          </CardTitle>
-          <BadgeControl variant="outline" className="ml-auto">
-            {translateText('generated.inline.0060_relative_wahl_5e35f421', 'relative Wahl')}
-          </BadgeControl>
+          <CardTitle className="text-base">{title}</CardTitle>
+          {badgeLabel ? (
+            <BadgeControl variant="outline" className="ml-auto">
+              {badgeLabel}
+            </BadgeControl>
+          ) : null}
         </div>
       </CardHeader>
       <CardContent>
@@ -434,4 +473,12 @@ export function MergeVariantComparisonPanel({
       </CardContent>
     </Card>
   );
+}
+
+export function MergeVariantComparisonPanel({
+  candidates,
+}: {
+  candidates: MergeVariantCandidate[];
+}) {
+  return <VariantDiffPanel candidates={candidates} />;
 }

@@ -500,7 +500,12 @@ export const groupQueries = {
         .related('process_branch')
         .related('process_step_run')
         .related('amendment', q =>
-          q.related('amendment_hashtags', hq => hq.related('hashtag')).related('created_by')
+          q
+            .related('amendment_hashtags', hq => hq.related('hashtag'))
+            .related('created_by')
+            .related('current_process_run', rq =>
+              rq.related('branches', bq => bq.orderBy('created_at', 'asc'))
+            )
         )
         .orderBy('updated_at', 'desc')
   ),
@@ -516,7 +521,12 @@ export const groupQueries = {
         .related('target_group')
         .related('process_run', q =>
           q.related('amendment', aq =>
-            aq.related('amendment_hashtags', hq => hq.related('hashtag')).related('created_by')
+            aq
+              .related('amendment_hashtags', hq => hq.related('hashtag'))
+              .related('created_by')
+              .related('current_process_run', rq =>
+                rq.related('branches', bq => bq.orderBy('created_at', 'asc'))
+              )
           )
         )
         .orderBy('updated_at', 'desc')

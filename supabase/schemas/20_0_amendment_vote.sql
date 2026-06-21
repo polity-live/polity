@@ -10,11 +10,15 @@ CREATE TABLE IF NOT EXISTS public.vote (
   amendment_id UUID,
   title TEXT,
   description TEXT,
-  status TEXT NOT NULL DEFAULT 'indicative',
+  status TEXT NOT NULL DEFAULT 'indicative_open',
+  purpose TEXT NOT NULL DEFAULT 'general',
   majority_type TEXT NOT NULL DEFAULT 'relative',
   closing_type TEXT NOT NULL DEFAULT 'moderator',
   closing_duration_seconds INTEGER,
   closing_end_time TIMESTAMPTZ,
+  closed_reason TEXT,
+  closed_at TIMESTAMPTZ,
+  closed_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
   visibility VARCHAR NOT NULL DEFAULT 'public',
   ballot_visibility TEXT NOT NULL DEFAULT 'named' CHECK (ballot_visibility IN ('named', 'secret')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -23,6 +27,7 @@ CREATE TABLE IF NOT EXISTS public.vote (
 
 CREATE INDEX idx_vote_agenda_item ON public.vote (agenda_item_id);
 CREATE INDEX idx_vote_amendment ON public.vote (amendment_id);
+CREATE INDEX idx_vote_agenda_item_purpose ON public.vote (agenda_item_id, purpose);
 
 ALTER TABLE public.vote ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.vote FOR ALL TO service_role USING (true);
@@ -37,11 +42,14 @@ CREATE TABLE IF NOT EXISTS public.vote_choice (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vote_id UUID NOT NULL REFERENCES public.vote (id) ON DELETE CASCADE,
   label TEXT NOT NULL,
+  semantic_key TEXT,
+  process_branch_id UUID REFERENCES public.amendment_process_branch (id) ON DELETE SET NULL,
   order_index INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_vote_choice_vote ON public.vote_choice (vote_id);
+CREATE INDEX idx_vote_choice_process_branch ON public.vote_choice (process_branch_id);
 
 ALTER TABLE public.vote_choice ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.vote_choice FOR ALL TO service_role USING (true);

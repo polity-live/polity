@@ -286,6 +286,10 @@ function mapTimelineEvent(
 ): CivicTimelineItem | null {
   const type = normalizeTimelineType(event.content_type || event.entity_type || undefined);
   if (!type) return null;
+  const endDate = asDate(event.ends_at);
+  if (type === 'statement' && endDate && endDate.getTime() <= Date.now()) {
+    return null;
+  }
 
   const eventEntity = event.event;
   const group = event.group;
@@ -322,7 +326,6 @@ function mapTimelineEvent(
       getTagsFromJunctions(event.user?.user_hashtags)
     );
   const timestamp = asDate(event.created_at) ?? new Date();
-  const endDate = asDate(event.ends_at);
   const startDate = asDate(eventEntity?.start_date) ?? undefined;
   const civicItem: CivicTimelineItem = {
     id: `timeline-event:${event.id}`,

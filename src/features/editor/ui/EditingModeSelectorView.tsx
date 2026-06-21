@@ -24,7 +24,7 @@ const modes = [
     color: featureThemeClassName('agendaAgendaVoteSectionAccentBackground'),
   },
   {
-    value: 'vote_event' as const,
+    value: 'event_final_closing_vote' as const,
     icon: Vote,
     color: featureThemeClassName('agendaAgendaVoteSectionWarningBackground'),
   },

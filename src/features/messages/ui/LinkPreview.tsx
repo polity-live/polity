@@ -20,6 +20,10 @@ import { useGroupState } from '@/zero/groups/useGroupState.ts';
 import { useStatementState } from '@/zero/statements/useStatementState.ts';
 import { useTodoState } from '@/zero/todos/useTodoState.ts';
 import { useUserState } from '@/zero/users/useUserState.ts';
+import {
+  getBranchEditingMode,
+  getOrderedBranches,
+} from '@/features/amendments/logic/amendmentBranchDisplay';
 import { normalizeMessagePreviewText } from '../logic/normalizeMessagePreviewText';
 import { isPolityLink, parsePolityUrl, type PolityLinkEntityType } from '../utils/url-utils';
 import {
@@ -195,6 +199,7 @@ export function AmendmentPreviewContainer({
   if (!amendment) {
     return <LinkPreviewSkeletonView />;
   }
+  const firstBranch = getOrderedBranches(amendment.current_process_run?.branches ?? [])[0] ?? null;
 
   return (
     <LinkPreviewCardView
@@ -205,9 +210,9 @@ export function AmendmentPreviewContainer({
       title={amendment.title}
       description={normalizeMessagePreviewText(amendment.reason)}
       meta={
-        amendment.editing_mode ? (
+        firstBranch ? (
           <EditingModeBadge
-            mode={amendment.editing_mode}
+            mode={getBranchEditingMode(firstBranch)}
             variant="secondary"
             className="mt-1 text-xs"
           />

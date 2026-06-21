@@ -1,12 +1,16 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useActionSubmission } from '@/features/shared/ui/action-submission';
 import { useAuth } from '@/providers/auth-provider';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { type TargetGroupEventSelection } from '@/features/amendments/ui/TargetGroupEventSelector';
-import { enrichPathSegments } from '@/features/amendments/logic/amendmentPathHelpers';
+import {
+  enrichPathSegments,
+  getEligibleEventsForPathSegment,
+  rehydratePathSegmentsWithWindows,
+} from '@/features/amendments/logic/amendmentPathHelpers';
 import { useCreateAmendmentPath } from '@/features/amendments/hooks/useCreateAmendmentPath';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
@@ -17,8 +21,16 @@ import {
   getFirstUnresolvedAmendmentStepId,
   isLikelyActiveAmendmentStep,
 } from '@/features/amendments/logic/buildAmendmentPathVisualizationData';
+import {
+  buildBranchDiffCandidates,
+  getLatestBranchWithContent,
+  getWinnerBranch,
+  resolveSelectedBranchId,
+} from '@/features/amendments/logic/amendmentBranchDisplay';
 interface AmendmentProcessFlowProps {
   amendmentId: string;
+  requestedBranchId?: string | null;
+  onBranchChange?: (branchId: string | null, options?: { replace?: boolean }) => void;
 }
 const TERMINAL_PATH_DISPLAY_STATUSES = new Set([
   'approved',
@@ -29,8 +41,36 @@ const TERMINAL_PATH_DISPLAY_STATUSES = new Set([
   'rejected',
   'withdrawn',
 ]);
+const TERMINAL_PROCESS_STEP_STATUSES = new Set([
+  'approved',
+  'rejected',
+  'merged',
+  'withdrawn',
+  'completed',
+]);
+const TERMINAL_PROCESS_BRANCH_STATUSES = new Set(['completed', 'rejected', 'withdrawn', 'merged']);
 
-export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProcessFlowProps) {
+function isTerminalProcessStep(status?: string | null) {
+  return TERMINAL_PROCESS_STEP_STATUSES.has(status ?? '');
+}
+
+function isTerminalProcessBranch(status?: string | null) {
+  return TERMINAL_PROCESS_BRANCH_STATUSES.has(status ?? '');
+}
+
+function getBranchStartGroupId(branch: any) {
+  const firstStep = [...(branch?.step_runs ?? [])].sort(
+    (left: any, right: any) => left.order_index - right.order_index
+  )[0];
+
+  return firstStep?.target_group_id ?? firstStep?.source_group_id ?? null;
+}
+
+export function useAmendmentProcessFlowController({
+  amendmentId,
+  requestedBranchId,
+  onBranchChange,
+}: AmendmentProcessFlowProps) {
   const { t } = useTranslation();
 
   const navigate = useNavigate();
@@ -42,20 +82,29 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
   const [pendingSelection, setPendingSelection] = useState<TargetGroupEventSelection | null>(null);
 
   const [isSaving, setIsSaving] = useState(false);
+  const [eventEditorBranchId, setEventEditorBranchId] = useState<string | null>(null);
+  const [eventDraftsByStepRunId, setEventDraftsByStepRunId] = useState<
+    Record<string, string | null>
+  >({});
+  const [isReplanningBranchEvents, setIsReplanningBranchEvents] = useState(false);
 
   const processSubmission = useActionSubmission('process');
 
   const { createAmendmentPath } = useCreateAmendmentPath();
 
-  const { updateAmendment } = useAmendmentActions();
+  const { updateAmendment, replanProcessBranchEvents } = useAmendmentActions();
 
   const {
     amendmentProcess: amendment,
     collaborators,
+    documents,
+    allEvents,
     isLoading,
   } = useAmendmentState({
     amendmentId,
     includeProcessData: true,
+    includeNetworkData: true,
+    includeDocuments: true,
   });
 
   const currentRun = amendment?.current_process_run ?? null;
@@ -78,6 +127,57 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
       [...(currentRun?.branches ?? [])].sort((left, right) => left.created_at - right.created_at),
     [currentRun?.branches]
   );
+
+  const activeBranchId = currentRun?.active_branch_id ?? null;
+
+  const selectedBranchId = useMemo(
+    () =>
+      resolveSelectedBranchId({
+        branches,
+        requestedBranchId,
+        activeBranchId,
+      }),
+    [activeBranchId, branches, requestedBranchId]
+  );
+
+  useEffect(() => {
+    if (!onBranchChange) return;
+    if (branches.length === 0) return;
+    if ((requestedBranchId ?? null) === selectedBranchId) return;
+
+    onBranchChange(selectedBranchId, { replace: true });
+  }, [branches.length, onBranchChange, requestedBranchId, selectedBranchId]);
+
+  const selectedBranch = useMemo(
+    () => branches.find(branch => branch.id === selectedBranchId) ?? null,
+    [branches, selectedBranchId]
+  );
+
+  const branchDiffCandidates = useMemo(() => {
+    const originalDocument =
+      documents?.find(document => document.id === amendment?.document_id) ?? documents?.[0] ?? null;
+
+    return buildBranchDiffCandidates({
+      branches,
+      originalContent: originalDocument?.content ?? null,
+      activeBranchId,
+    });
+  }, [activeBranchId, amendment?.document_id, branches, documents]);
+
+  const defaultBranchDiffRightCandidateId =
+    (getWinnerBranch(branches, activeBranchId) ?? getLatestBranchWithContent(branches))?.id ?? null;
+
+  const existingBranchStartGroupIds = useMemo(
+    () =>
+      branches
+        .map(branch => getBranchStartGroupId(branch))
+        .filter((groupId): groupId is string => Boolean(groupId)),
+    [branches]
+  );
+
+  const currentRunPathMode: 'hierarchy' | 'workflow' = currentRun?.selected_target_workflow_id
+    ? 'workflow'
+    : 'hierarchy';
 
   const currentRunStepRuns = useMemo(
     () =>
@@ -157,11 +257,23 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
     [displayPathSegments]
   );
 
+  const displayPathSegmentByBranchAndOrder = useMemo(
+    () =>
+      new Map(
+        displayPathSegments.map(segment => [
+          `${segment.process_branch_id ?? ''}:${segment.order_index ?? ''}`,
+          segment,
+        ])
+      ),
+    [displayPathSegments]
+  );
+
   const currentRunDisplayStepRuns = useMemo(
     () =>
       currentRunStepRuns.map(step => {
         const matchingSegment =
           displayPathSegmentByStepRunId.get(step.id) ??
+          displayPathSegmentByBranchAndOrder.get(`${step.branch_id ?? ''}:${step.order_index}`) ??
           displayPathSegmentByOrder.get(step.order_index);
 
         if (!matchingSegment?.status) {
@@ -174,7 +286,12 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
           decision_status: matchingSegment.status,
         };
       }),
-    [currentRunStepRuns, displayPathSegmentByOrder, displayPathSegmentByStepRunId]
+    [
+      currentRunStepRuns,
+      displayPathSegmentByBranchAndOrder,
+      displayPathSegmentByOrder,
+      displayPathSegmentByStepRunId,
+    ]
   );
 
   const derivedActiveStepRun = useMemo(
@@ -182,18 +299,9 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
     [currentRunDisplayStepRuns]
   );
 
-  const resolvedActiveBranchId =
-    derivedActiveStepRun?.branch_id ??
-    currentRun?.active_branch_id ??
-    currentRun?.terminal_step_run?.branch_id ??
-    displayPathSegments[0]?.process_branch_id ??
-    branches[0]?.id ??
-    null;
+  const resolvedActiveBranchId = selectedBranchId;
 
-  const activeBranch = useMemo(
-    () => branches.find(branch => branch.id === resolvedActiveBranchId) ?? branches[0] ?? null,
-    [branches, resolvedActiveBranchId]
-  );
+  const activeBranch = useMemo(() => selectedBranch, [selectedBranch]);
 
   const activeBranchStepRuns = useMemo(() => {
     const directStepRuns = currentRunDisplayStepRuns.filter(
@@ -209,6 +317,7 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
       .map(step => {
         const matchingSegment =
           displayPathSegmentByStepRunId.get(step.id) ??
+          displayPathSegmentByBranchAndOrder.get(`${step.branch_id ?? ''}:${step.order_index}`) ??
           displayPathSegmentByOrder.get(step.order_index);
 
         if (!matchingSegment?.status) {
@@ -224,6 +333,7 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
   }, [
     activeBranch?.step_runs,
     currentRunDisplayStepRuns,
+    displayPathSegmentByBranchAndOrder,
     displayPathSegmentByOrder,
     displayPathSegmentByStepRunId,
     resolvedActiveBranchId,
@@ -380,6 +490,166 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
     [collaborators]
   );
 
+  const allEventsById = useMemo(
+    () => new Map((allEvents ?? []).map(event => [event.id, event] as const)),
+    [allEvents]
+  );
+
+  const eventEditorBranch = useMemo(
+    () => branches.find(branch => branch.id === eventEditorBranchId) ?? null,
+    [branches, eventEditorBranchId]
+  );
+
+  const branchEventEditorRows = useMemo(() => {
+    if (!eventEditorBranch) {
+      return [];
+    }
+
+    const stepRuns = [...(eventEditorBranch.step_runs ?? [])].sort(
+      (left: any, right: any) => left.order_index - right.order_index
+    );
+    const lastDecidedOrderIndex = stepRuns.reduce(
+      (latest: number, step: any) =>
+        isTerminalProcessStep(step.status) ? Math.max(latest, step.order_index) : latest,
+      -1
+    );
+    const pathSegments = rehydratePathSegmentsWithWindows(
+      stepRuns.map((step: any) => {
+        const draftEventId = Object.prototype.hasOwnProperty.call(eventDraftsByStepRunId, step.id)
+          ? eventDraftsByStepRunId[step.id]
+          : (step.event_id ?? null);
+        const draftEvent =
+          (draftEventId ? allEventsById.get(draftEventId) : null) ?? step.event ?? null;
+
+        return {
+          segmentKey: `branch:${eventEditorBranch.id}:${step.id}`,
+          groupId: step.target_group_id ?? step.source_group_id ?? '',
+          groupName:
+            step.target_group?.name ?? step.source_group?.name ?? step.workflow_step?.label ?? '',
+          eventId: draftEventId,
+          eventTitle: draftEvent?.title ?? 'Pending event',
+          eventStartDate:
+            draftEvent?.start_date ?? (draftEventId === step.event_id ? step.starts_at : null),
+          eventEndDate:
+            draftEvent?.end_date ??
+            draftEvent?.start_date ??
+            (draftEventId === step.event_id ? step.starts_at : null),
+          stepLabel: step.workflow_step?.label ?? null,
+          stepKind: step.step_kind ?? 'group_vote',
+          selectionMode: step.selection_mode ?? null,
+          mergeStrategy: step.merge_strategy ?? null,
+          eventRule: null,
+          autoTaskOnMissingEvent: true,
+          targetWorkflowId: step.workflow_step?.target_workflow_id ?? null,
+          requiredAfter: null,
+          requiredBefore: null,
+        };
+      })
+    );
+
+    return stepRuns.map((step: any, index: number) => {
+      const segment = pathSegments[index];
+      const editable =
+        !isTerminalProcessBranch(eventEditorBranch.status) &&
+        step.order_index > lastDecidedOrderIndex &&
+        !isTerminalProcessStep(step.status);
+      const selectedEventId = segment?.eventId ?? null;
+
+      return {
+        step,
+        segment,
+        editable,
+        isDecided: step.order_index <= lastDecidedOrderIndex || isTerminalProcessStep(step.status),
+        selectedEventId,
+        eligibleEvents: segment
+          ? getEligibleEventsForPathSegment({
+              segment,
+              events: allEvents ?? [],
+            })
+          : [],
+      };
+    });
+  }, [allEvents, allEventsById, eventDraftsByStepRunId, eventEditorBranch]);
+
+  const openBranchEventEditor = useCallback((branch: any) => {
+    const drafts: Record<string, string | null> = {};
+    for (const step of branch?.step_runs ?? []) {
+      drafts[step.id] = step.event_id ?? null;
+    }
+    setEventDraftsByStepRunId(drafts);
+    setEventEditorBranchId(branch?.id ?? null);
+  }, []);
+
+  const closeBranchEventEditor = useCallback(() => {
+    setEventEditorBranchId(null);
+    setEventDraftsByStepRunId({});
+  }, []);
+
+  const updateBranchEventDraft = useCallback((stepRunId: string, eventId: string | null) => {
+    setEventDraftsByStepRunId(previous => ({
+      ...previous,
+      [stepRunId]: eventId,
+    }));
+  }, []);
+
+  const saveBranchEventReplan = useCallback(() => {
+    if (!eventEditorBranch) {
+      return;
+    }
+
+    const eventUpdates = branchEventEditorRows
+      .filter(row => row.editable)
+      .map(row => ({
+        step_run_id: row.step.id,
+        event_id: Object.prototype.hasOwnProperty.call(eventDraftsByStepRunId, row.step.id)
+          ? eventDraftsByStepRunId[row.step.id]
+          : (row.step.event_id ?? null),
+        original_event_id: row.step.event_id ?? null,
+      }))
+      .filter(update => update.event_id !== update.original_event_id)
+      .map(({ step_run_id, event_id }) => ({ step_run_id, event_id }));
+
+    if (eventUpdates.length === 0) {
+      closeBranchEventEditor();
+      return;
+    }
+
+    void processSubmission
+      .runActionWithSubmission(
+        async () => {
+          setIsReplanningBranchEvents(true);
+          await replanProcessBranchEvents({
+            branch_id: eventEditorBranch.id,
+            event_updates: eventUpdates,
+          });
+          toast.success(t('features.amendments.process.replanSuccess', 'Events aktualisiert.'));
+        },
+        {
+          onSuccess: () => {
+            processSubmission.reset();
+            closeBranchEventEditor();
+          },
+        }
+      )
+      .catch(error => {
+        console.error('Error replanning branch events:', error);
+        toast.error(
+          t('features.amendments.process.replanFailed', 'Events konnten nicht aktualisiert werden.')
+        );
+      })
+      .finally(() => {
+        setIsReplanningBranchEvents(false);
+      });
+  }, [
+    branchEventEditorRows,
+    closeBranchEventEditor,
+    eventDraftsByStepRunId,
+    eventEditorBranch,
+    processSubmission,
+    replanProcessBranchEvents,
+    t,
+  ]);
+
   const handleConfirmSelection = () => {
     if (!pendingSelection || !amendment || !user) {
       return;
@@ -409,15 +679,17 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
             pathMode: pendingSelection.pathMode,
           });
 
-          await updateAmendment({
-            id: amendmentId,
-            group_id: pendingSelection.groupId,
-            event_id: pendingSelection.eventId ?? null,
-          });
+          if (!currentRun) {
+            await updateAmendment({
+              id: amendmentId,
+              group_id: pendingSelection.groupId,
+              event_id: pendingSelection.eventId ?? null,
+            });
+          }
 
           toast.success(
             currentRun
-              ? t('features.amendments.process.retargetSuccess')
+              ? t('features.amendments.process.additionalPathSuccess', 'Additional path added.')
               : t('features.amendments.process.targetSetSuccess')
           );
         },
@@ -462,11 +734,13 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
     currentRunStepRuns,
     displayPath,
     displayPathSegments,
+    displayPathSegmentByBranchAndOrder,
     displayPathSegmentByStepRunId,
     displayPathSegmentByOrder,
     currentRunDisplayStepRuns,
     derivedActiveStepRun,
     resolvedActiveBranchId,
+    selectedBranchId,
     activeBranch,
     activeBranchStepRuns,
     firstUnresolvedStepId,
@@ -474,7 +748,20 @@ export function useAmendmentProcessFlowController({ amendmentId }: AmendmentProc
     groupDecisions,
     groupTypeById,
     pathVisualizationData,
+    branchDiffCandidates,
+    defaultBranchDiffRightCandidateId,
+    onBranchChange,
     selectorCollaborators,
+    existingBranchStartGroupIds,
+    currentRunPathMode,
+    eventEditorBranch,
+    branchEventEditorRows,
+    eventDraftsByStepRunId,
+    isReplanningBranchEvents,
+    openBranchEventEditor,
+    closeBranchEventEditor,
+    updateBranchEventDraft,
+    saveBranchEventReplan,
     handleConfirmSelection,
   };
 }

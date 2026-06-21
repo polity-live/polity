@@ -11,8 +11,23 @@ import {
 } from '@/features/vote-cast/logic/computeVoteResults';
 import { isNamedBallot } from '@/zero/shared';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { VOTE_STATUS } from '@/zero/votes/vote-workflow';
 
 export type CRVotePhase = 'indicative' | 'final_vote' | 'closed';
+
+function getTimelineStepKind(item: unknown) {
+  return (
+    (item as { _voteStepKind?: string; step_kind?: string | null } | null | undefined)
+      ?._voteStepKind ??
+    (item as { step_kind?: string | null } | null | undefined)?.step_kind ??
+    null
+  );
+}
+
+function isChangeRequestTimelineStep(item: ChangeRequestTimelineRow) {
+  const stepKind = getTimelineStepKind(item);
+  return !item.is_final_vote && stepKind !== 'variant_selection' && stepKind !== 'merge_variant';
+}
 
 function normalizeMajorityType(value?: string | null): MajorityType {
   if (value === 'absolute' || value === 'two_thirds') {
@@ -101,7 +116,7 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
     async (itemId: string) => {
       const item = crTimeline.find(i => i.id === itemId);
       if (!item?.vote) return;
-      await updateVote({ id: item.vote.id, status: 'indicative' });
+      await updateVote({ id: item.vote.id, status: VOTE_STATUS.indicativeOpen });
       await updateAgendaItemChangeRequest({ id: itemId, status: 'voting' });
     },
     [crTimeline, updateVote, updateAgendaItemChangeRequest]
@@ -112,9 +127,12 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
     async (itemId: string) => {
       const item = crTimeline.find(i => i.id === itemId);
       if (!item?.vote) return;
-      await updateVote({ id: item.vote.id, status: 'final_vote' });
+      if (item.status === 'pending') {
+        await updateAgendaItemChangeRequest({ id: itemId, status: 'voting' });
+      }
+      await updateVote({ id: item.vote.id, status: VOTE_STATUS.finalOpen });
     },
-    [crTimeline, updateVote]
+    [crTimeline, updateAgendaItemChangeRequest, updateVote]
   );
 
   // Close voting on a CR: compute result, process suggestion, save version, advance timeline
@@ -192,7 +210,7 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
 
   // Check if all CR votes (non-final) are completed
   const allCRsProcessed = useMemo(() => {
-    const crItems = crTimeline.filter(item => !item.is_final_vote);
+    const crItems = crTimeline.filter(isChangeRequestTimelineStep);
     return crItems.every(item => item.status === 'completed');
   }, [crTimeline]);
 
@@ -225,7 +243,8 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
 /** Derive the current voting phase from a CR timeline item's vote status. */
 export function getVotePhase(item: ChangeRequestTimelineRow): CRVotePhase {
   const status = item.vote?.status;
-  if (status === 'final_vote' || status === 'final') return 'final_vote';
+  if (status === 'final_vote' || status === 'final' || status === VOTE_STATUS.finalOpen)
+    return 'final_vote';
   if (status === 'closed') return 'closed';
   return 'indicative';
 }

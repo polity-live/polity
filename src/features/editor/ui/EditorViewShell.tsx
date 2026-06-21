@@ -1,13 +1,11 @@
 'use client';
 
 import { useLayoutEffect, useRef } from 'react';
-import { Link } from '@tanstack/react-router';
-import { ArrowLeft, FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { BadgeControl } from '@/features/shared/ui/status/StatusBadges';
-import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/features/shared/ui/ui/card';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
@@ -32,23 +30,19 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
     activeCursorUserIds,
     amendmentId,
     amendmentTitle,
-    backLabel,
-    backUrl,
     canManageChangeRequestVotes,
     canVoteOnChangeRequests,
     capabilities,
+    compactToolbarSpacing,
     content,
     contentEntityId,
     currentUser,
-    defaultBackLabel,
-    defaultBackUrl,
     discussions,
     editorUsers,
     entity,
     entityId,
     entityType,
     existingCollaboratorIds,
-    goBack,
     hasAccess,
     hasUnsavedChanges,
     isEditingTitle,
@@ -56,6 +50,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
     isOwnerOrCollaborator,
     isSavingTitle,
     mode,
+    modeDisabledReasons,
     onSuggestionAccepted,
     onSuggestionDeclined,
     onFinalizeInternalVote,
@@ -63,6 +58,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
     onVoteAccept,
     onVoteReject,
     onlinePeerMap,
+    presenceColorByUserId,
     readOnly,
     restoreVersion,
     saveStatus,
@@ -84,9 +80,11 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
   const changeRequestMotionSignatureRef = useRef<string | undefined>(undefined);
   const enableChangeRequestLoadMotion = entityType === 'amendment' || entityType === 'blog';
   const plateReadOnly =
-    readOnly || (entityType === 'amendment' && (mode === 'suggest_event' || mode === 'vote_event'));
+    readOnly ||
+    (entityType === 'amendment' &&
+      (mode === 'suggest_event' || mode === 'event_final_closing_vote'));
   const disablePlateDiscussionWrites =
-    entityType === 'amendment' && (mode === 'suggest_event' || mode === 'vote_event');
+    entityType === 'amendment' && (mode === 'suggest_event' || mode === 'event_final_closing_vote');
 
   useLayoutEffect(() => {
     if (!enableChangeRequestLoadMotion) {
@@ -174,13 +172,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
     return (
       <Card>
         <CardContent align="center" className="flex flex-col items-center justify-center py-20">
-          <p className="text-muted-foreground mb-4 text-lg">
-            {t('features.editor.errors.notFound')}
-          </p>
-          <Button onClick={goBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {backLabel || defaultBackLabel}
-          </Button>
+          <p className="text-muted-foreground text-lg">{t('features.editor.errors.notFound')}</p>
         </CardContent>
       </Card>
     );
@@ -191,30 +183,17 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
     return (
       <Card>
         <CardContent align="center" className="flex flex-col items-center justify-center py-20">
-          <p className="text-muted-foreground mb-4 text-lg">
-            {t('features.editor.errors.noAccess')}
-          </p>
-          <Button onClick={goBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {backLabel || defaultBackLabel}
-          </Button>
+          <p className="text-muted-foreground text-lg">{t('features.editor.errors.noAccess')}</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="container mx-auto p-8">
+    <div className={cn('container mx-auto px-8 pb-8', compactToolbarSpacing ? 'pt-2' : 'pt-8')}>
       {/* Top toolbar */}
-      <div className="mb-6 flex items-center justify-between">
-        <Link to={backUrl || defaultBackUrl}>
-          <Button variant="ghost">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {backLabel || defaultBackLabel}
-          </Button>
-        </Link>
-
-        <div className="flex items-center gap-4">
+      <div className="scrollbar-hide -mx-8 mb-6 overflow-x-auto px-8 sm:mx-0 sm:px-0">
+        <div className="flex w-max min-w-full items-center justify-end gap-4">
           {/* Share Button */}
           {capabilities.sharing && (
             <ShareButton
@@ -241,7 +220,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
           {(mode === 'suggest_internal' ||
             mode === 'suggest_event' ||
             mode === 'vote_internal' ||
-            mode === 'vote_event') &&
+            mode === 'event_final_closing_vote') &&
             discussions.length > 0 && (
               <SuggestionViewToggle
                 discussions={discussions}
@@ -289,6 +268,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
                   onlinePeerMap={onlinePeerMap}
                   activeCursorUserIds={activeCursorUserIds}
                   currentUserId={userId}
+                  presenceColorByUserId={presenceColorByUserId}
                   enabled={capabilities.presence}
                 />
               }
@@ -329,6 +309,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
               documentId={contentEntityId}
               documentTitle={title}
               currentMode={mode}
+              modeDisabledReasons={modeDisabledReasons}
               onModeChange={setMode}
               isOwnerOrCollaborator={!plateReadOnly && isOwnerOrCollaborator}
               readOnly={plateReadOnly}

@@ -147,7 +147,7 @@ export function VotingPhaseBadge({ phase, labels, className, ...props }: VotingP
         status={phase}
         tone="success"
         className={cn(
-          'animate-pulse border-[var(--badge-success-border)] bg-[var(--badge-success-fg)] text-xs text-white',
+          'animate-pulse border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-xs font-semibold text-[var(--badge-success-fg)]',
           className
         )}
         {...props}

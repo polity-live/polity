@@ -108,6 +108,9 @@ export const userQueries = {
               .related('collaborators', q => q.where('user_id', userID ?? '__anon__'))
               .related('change_requests', q => q.where('user_id', userID ?? '__anon__'))
               .related('vote_entries', q => applyVoteQueryAccess(q, userID))
+              .related('current_process_run', q =>
+                q.related('branches', bq => bq.orderBy('created_at', 'asc'))
+              )
           )
       )
   ),

@@ -20,6 +20,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 
 interface UseAmendmentWorkflowProps {
   amendmentId: string;
+  processBranchId?: string | null;
   currentStatus: EditingMode;
   currentEventId?: string;
   agendaItemId?: string;
@@ -29,12 +30,12 @@ interface UseAmendmentWorkflowProps {
 
 export function useAmendmentWorkflow({
   amendmentId,
+  processBranchId,
   currentStatus,
-  currentEventId,
   agendaItemId,
 }: UseAmendmentWorkflowProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const { updateAmendment } = useAmendmentActions();
+  const { updateAmendment, updateProcessBranch } = useAmendmentActions();
   const { createVote } = useVoteActions();
   const { initializeChangeRequestVoting } = useAgendaActions();
 
@@ -60,13 +61,17 @@ export function useAmendmentWorkflow({
       setIsTransitioning(true);
 
       try {
-        await updateAmendment({
-          id: amendmentId,
+        if (!processBranchId) {
+          throw new Error('A process branch is required for workflow transitions.');
+        }
+
+        await updateProcessBranch({
+          id: processBranchId,
           editing_mode: targetStatus,
         });
 
-        // Auto-initialize CR voting when transitioning to vote_event
-        if (targetStatus === 'vote_event' && agendaItemId) {
+        // Auto-initialize CR voting when transitioning into the system-managed event final phase.
+        if (targetStatus === 'event_final_closing_vote' && agendaItemId) {
           console.log(
             '[useAmendmentWorkflow] Initializing CR voting — amendmentId:',
             amendmentId,
@@ -77,7 +82,7 @@ export function useAmendmentWorkflow({
             amendment_id: amendmentId,
             agenda_item_id: agendaItemId,
           });
-        } else if (targetStatus === 'vote_event' && !agendaItemId) {
+        } else if (targetStatus === 'event_final_closing_vote' && !agendaItemId) {
           console.warn(
             '[useAmendmentWorkflow] Cannot initialize CR voting — agendaItemId is missing! amendmentId:',
             amendmentId
@@ -96,7 +101,14 @@ export function useAmendmentWorkflow({
         setIsTransitioning(false);
       }
     },
-    [amendmentId, currentStatus, currentEventId]
+    [
+      amendmentId,
+      agendaItemId,
+      currentStatus,
+      initializeChangeRequestVoting,
+      processBranchId,
+      updateProcessBranch,
+    ]
   );
 
   /**
@@ -171,10 +183,17 @@ export function useAmendmentWorkflow({
       }
 
       try {
+        if (!processBranchId) {
+          throw new Error('A process branch is required for workflow transitions.');
+        }
+
         await updateAmendment({
           id: amendmentId,
-          editing_mode: 'suggest_event',
           event_id: eventId,
+        });
+        await updateProcessBranch({
+          id: processBranchId,
+          editing_mode: 'suggest_event',
         });
 
         toast.success(
@@ -189,7 +208,7 @@ export function useAmendmentWorkflow({
         return false;
       }
     },
-    [amendmentId, currentStatus]
+    [amendmentId, currentStatus, processBranchId, updateAmendment, updateProcessBranch]
   );
 
   /**
@@ -223,8 +242,12 @@ export function useAmendmentWorkflow({
       }
 
       try {
-        await updateAmendment({
-          id: amendmentId,
+        if (!processBranchId) {
+          throw new Error('A process branch is required for workflow transitions.');
+        }
+
+        await updateProcessBranch({
+          id: processBranchId,
           editing_mode: result,
         });
 
@@ -240,7 +263,7 @@ export function useAmendmentWorkflow({
         return false;
       }
     },
-    [amendmentId, currentStatus]
+    [currentStatus, processBranchId, updateProcessBranch]
   );
 
   return {

@@ -4,7 +4,8 @@ import { FileUploadTrigger, FormControlInput, FormControlLabel } from '@/feature
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
-import { Loader2, Upload, X } from 'lucide-react';
+import { Loader2, Pencil, Upload, X } from 'lucide-react';
+import { ImageEditorDialog } from './ImageEditorDialog';
 
 interface ImageUploadViewProps {
   className?: string;
@@ -14,6 +15,7 @@ interface ImageUploadViewProps {
   urlInputId: string;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   isBusy: boolean;
+  isEditorOpen: boolean;
   isUploading: boolean;
   isDragActive: boolean;
   copy: {
@@ -24,7 +26,10 @@ interface ImageUploadViewProps {
     uploading: string;
     uploadImage: string;
     orProvideUrl: string;
+    editImage: string;
   };
+  onEditorOpenChange: (open: boolean) => void;
+  onSaveEditedImage: (file: File) => Promise<boolean>;
   onRemoveImage: () => void;
   onFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void | Promise<void>;
   onDragEnter: (event: React.DragEvent<HTMLDivElement>) => void;
@@ -42,9 +47,12 @@ export function ImageUploadView({
   urlInputId,
   fileInputRef,
   isBusy,
+  isEditorOpen,
   isUploading,
   isDragActive,
   copy,
+  onEditorOpenChange,
+  onSaveEditedImage,
   onRemoveImage,
   onFileSelect,
   onDragEnter,
@@ -80,8 +88,26 @@ export function ImageUploadView({
               >
                 <X className="h-4 w-4" />
               </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="bg-background/90 absolute top-2 left-2 shadow-sm backdrop-blur"
+                onClick={() => onEditorOpenChange(true)}
+                disabled={isBusy}
+              >
+                <Pencil className="h-4 w-4" />
+                <span>{copy.editImage}</span>
+              </Button>
             </div>
           )}
+
+          <ImageEditorDialog
+            imageUrl={currentImage}
+            open={isEditorOpen}
+            onOpenChange={onEditorOpenChange}
+            onSave={onSaveEditedImage}
+          />
 
           <div
             className={cn(
