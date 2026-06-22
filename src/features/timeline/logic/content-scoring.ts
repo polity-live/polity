@@ -160,7 +160,7 @@ export function scoreAndSortContent(
 export function getTopScoredContent(
   contents: ContentItem[],
   userContext: UserContext,
-  limit: number = 20
+  limit = 20
 ): ScoredContent[] {
   const scored = scoreAndSortContent(contents, userContext);
   return scored.slice(0, limit);

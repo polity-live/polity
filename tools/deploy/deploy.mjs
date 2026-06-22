@@ -1,7 +1,8 @@
 #!/usr/bin/env node
+/* global console, fetch, setTimeout */
 
 import { execSync } from 'node:child_process';
-import { stdin as input, stdout as output } from 'node:process';
+import process, { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -42,12 +43,15 @@ for (const arg of args) {
 
 // ── Helpers ──────────────────────────────────────────────────
 function info(msg) {
+  console.log(`${CYAN}ℹ${RESET}  ${msg}`);
 }
 
 function success(msg) {
+  console.log(`${GREEN}✔${RESET}  ${msg}`);
 }
 
 function warn(msg) {
+  console.warn(`${YELLOW}⚠${RESET}  ${msg}`);
 }
 
 function error(msg) {
@@ -55,6 +59,7 @@ function error(msg) {
 }
 
 function step(label) {
+  console.log(`\n${CYAN}${BOLD}${label}${RESET}`);
 }
 
 function run(label, cmd) {

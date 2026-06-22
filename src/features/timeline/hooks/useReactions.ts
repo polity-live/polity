@@ -4,7 +4,7 @@
  * Hook for managing reactions (support, oppose, interested) on timeline entities
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 
 export type ReactionType = 'support' | 'oppose' | 'interested';
 

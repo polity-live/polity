@@ -176,15 +176,16 @@ export function useSyncedVotingTimer(
   }, [isRunning, timeRemaining]);
 
   const formattedTime = formatTimeRemaining(timeRemaining);
+  const noop = useCallback(() => undefined, []);
 
   return {
     timeRemaining,
     formattedTime,
     isExpired,
     isRunning,
-    start: () => {},
-    pause: () => {},
-    resume: () => {},
-    reset: () => {},
+    start: noop,
+    pause: noop,
+    resume: noop,
+    reset: noop,
   };
 }

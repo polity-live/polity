@@ -100,7 +100,7 @@ export function getVotePercentages(votes: Vote[]): {
 export function isQuorumReached(
   votedCount: number,
   eligibleVoters: number,
-  quorumPercentage: number = 50
+  quorumPercentage = 50
 ): boolean {
   if (eligibleVoters === 0) return false;
   return (votedCount / eligibleVoters) * 100 >= quorumPercentage;
@@ -138,8 +138,8 @@ export function formatTimeRemaining(seconds: number): string {
  * Calculate winner for an election
  */
 export function calculateElectionWinner(
-  votes: Array<{ candidate: { id: string; name?: string } }>,
-  candidates: Array<{ id: string; name?: string }>,
+  votes: { candidate: { id: string; name?: string } }[],
+  candidates: { id: string; name?: string }[],
   majorityType: MajorityType
 ): { winner: { id: string; name?: string } | null; voteCount: number; isTie: boolean } {
   // Count votes per candidate
@@ -158,7 +158,7 @@ export function calculateElectionWinner(
 
   // Find the candidate with the most votes
   let maxVotes = 0;
-  let winners: Array<{ id: string; name?: string }> = [];
+  let winners: { id: string; name?: string }[] = [];
 
   for (const candidate of candidates) {
     const count = voteCounts.get(candidate.id) || 0;

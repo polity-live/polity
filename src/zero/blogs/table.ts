@@ -1,4 +1,4 @@
-import { table, string, number, boolean, json } from '@rocicorp/zero'
+import { table, string, number, json } from '@rocicorp/zero';
 
 export const blog = table('blog')
   .columns({
@@ -21,7 +21,7 @@ export const blog = table('blog')
     updated_at: number(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const blogBlogger = table('blog_blogger')
   .columns({
@@ -33,6 +33,4 @@ export const blogBlogger = table('blog_blogger')
     visibility: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
-
-
+  .primaryKey('id');

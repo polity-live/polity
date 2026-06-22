@@ -14,7 +14,7 @@ interface PeerData {
 }
 
 interface PresenceMessage {
-  type: "join" | "leave" | "update" | "peers" | "publish";
+  type: 'join' | 'leave' | 'update' | 'peers' | 'publish';
   room: string;
   peer?: PeerData;
   peers?: PeerData[];
@@ -23,42 +23,44 @@ interface PresenceMessage {
 }
 
 // Room state: map of roomId -> map of peerId -> PeerData
-const rooms = new Map<
-  string,
-  Map<string, { ws: WebSocket; data: PeerData }>
->();
+const rooms = new Map<string, Map<string, { ws: WebSocket; data: PeerData }>>();
 
 export function handlePresenceConnection(ws: WebSocket) {
   let currentRoom: string | null = null;
   let peerId: string | null = null;
 
-  ws.addEventListener("message", (event) => {
+  ws.addEventListener('message', event => {
     const msg: PresenceMessage = JSON.parse(event.data as string);
 
     switch (msg.type) {
-      case "join": {
-        currentRoom = msg.room;
-        peerId = msg.peer?.userId ?? crypto.randomUUID();
-
-        if (!rooms.has(currentRoom)) {
-          rooms.set(currentRoom, new Map());
+      case 'join': {
+        if (!msg.peer) {
+          return;
         }
-        const room = rooms.get(currentRoom)!;
-        room.set(peerId, { ws, data: msg.peer! });
+
+        currentRoom = msg.room;
+        peerId = msg.peer.userId;
+
+        let room = rooms.get(currentRoom);
+        if (!room) {
+          room = new Map();
+          rooms.set(currentRoom, room);
+        }
+        room.set(peerId, { ws, data: msg.peer });
 
         // Send current peers to the new joiner
-        const peers = Array.from(room.values()).map((p) => p.data);
-        ws.send(JSON.stringify({ type: "peers", room: currentRoom, peers }));
+        const peers = Array.from(room.values()).map(p => p.data);
+        ws.send(JSON.stringify({ type: 'peers', room: currentRoom, peers }));
 
         // Broadcast join to others
         broadcastToRoom(currentRoom, peerId, {
-          type: "join",
+          type: 'join',
           room: currentRoom,
           peer: msg.peer,
         });
         break;
       }
-      case "update": {
+      case 'update': {
         if (currentRoom && peerId) {
           const room = rooms.get(currentRoom);
           if (room) {
@@ -66,7 +68,7 @@ export function handlePresenceConnection(ws: WebSocket) {
             if (existing && msg.peer) {
               existing.data = { ...existing.data, ...msg.peer };
               broadcastToRoom(currentRoom, peerId, {
-                type: "update",
+                type: 'update',
                 room: currentRoom,
                 peer: existing.data,
               });
@@ -75,10 +77,10 @@ export function handlePresenceConnection(ws: WebSocket) {
         }
         break;
       }
-      case "publish": {
+      case 'publish': {
         if (currentRoom && peerId && msg.topic) {
           broadcastToRoom(currentRoom, peerId, {
-            type: "publish",
+            type: 'publish',
             room: currentRoom,
             topic: msg.topic,
             data: msg.data,
@@ -90,7 +92,7 @@ export function handlePresenceConnection(ws: WebSocket) {
     }
   });
 
-  ws.addEventListener("close", () => {
+  ws.addEventListener('close', () => {
     if (currentRoom && peerId) {
       const room = rooms.get(currentRoom);
       if (room) {
@@ -100,7 +102,7 @@ export function handlePresenceConnection(ws: WebSocket) {
           rooms.delete(currentRoom);
         } else if (peerData) {
           broadcastToRoom(currentRoom, null, {
-            type: "leave",
+            type: 'leave',
             room: currentRoom,
             peer: peerData,
           });
@@ -110,11 +112,7 @@ export function handlePresenceConnection(ws: WebSocket) {
   });
 }
 
-function broadcastToRoom(
-  roomId: string,
-  excludePeerId: string | null,
-  message: PresenceMessage
-) {
+function broadcastToRoom(roomId: string, excludePeerId: string | null, message: PresenceMessage) {
   const room = rooms.get(roomId);
   if (!room) return;
   const data = JSON.stringify(message);

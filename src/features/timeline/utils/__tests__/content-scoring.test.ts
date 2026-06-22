@@ -3,7 +3,6 @@ import {
   scoreContent,
   scoreAndSortContent,
   getTopScoredContent,
-  type ScoredContent,
 } from '../../logic/content-scoring';
 import type { ContentItem, UserContext } from '../../logic/content-reasons';
 

@@ -133,7 +133,7 @@ self.addEventListener('notificationclick', (event) => {
  * Handle notification close event
  * This is triggered when the user dismisses a notification
  */
-self.addEventListener('notificationclose', (event) => {
+self.addEventListener('notificationclose', () => {
   // You can track notification dismissals here
 });
 

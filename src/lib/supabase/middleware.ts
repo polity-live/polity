@@ -1,12 +1,13 @@
 /**
  * Supabase middleware utilities for TanStack Start.
- * 
+ *
  * Note: TanStack Start does not use Next.js middleware.
  * Auth protection is handled in route beforeLoad hooks (see src/routes/_authed.tsx).
  * This file provides helper utilities for server-side auth checking.
  */
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
+import { getRequiredEnvVar } from '@/lib/env';
 
 /**
  * Verify a user session from a request's auth header.
@@ -14,15 +15,17 @@ import { createClient } from '@supabase/supabase-js'
  */
 export async function verifySession(request: Request) {
   const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!
-  )
+    getRequiredEnvVar(process.env.SUPABASE_URL, 'SUPABASE_URL'),
+    getRequiredEnvVar(process.env.SUPABASE_ANON_KEY, 'SUPABASE_ANON_KEY')
+  );
 
-  const authHeader = request.headers.get('authorization')
+  const authHeader = request.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) {
-    return null
+    return null;
   }
 
-  const { data: { user } } = await supabase.auth.getUser(authHeader.slice(7))
-  return user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser(authHeader.slice(7));
+  return user;
 }

@@ -37,7 +37,7 @@ export interface UserContext {
   userId: string;
   subscribedGroupIds: string[];
   followedTopics: string[];
-  recentInteractions: Array<{ entityId: string; type: string }>;
+  recentInteractions: { entityId: string; type: string }[];
 }
 
 /**
@@ -156,7 +156,7 @@ export function getContentReasons(
 export function filterByReasonStrength(
   contents: ContentItem[],
   userContext: UserContext,
-  minPriority: number = 30
+  minPriority = 30
 ): ContentItem[] {
   return contents.filter(content => {
     const reason = getContentReason(content, userContext);

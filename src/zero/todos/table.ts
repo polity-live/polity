@@ -1,4 +1,4 @@
-import { table, string, number, boolean, json } from '@rocicorp/zero'
+import { table, string, number, json } from '@rocicorp/zero';
 
 export const todo = table('todo')
   .columns({
@@ -18,7 +18,7 @@ export const todo = table('todo')
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const todoAssignment = table('todo_assignment')
   .columns({
@@ -28,4 +28,4 @@ export const todoAssignment = table('todo_assignment')
     role: string().optional(),
     assigned_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');

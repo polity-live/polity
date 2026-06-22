@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 /**
  * Breakpoint configuration for responsive design
@@ -106,8 +106,9 @@ export function useResponsiveValue<T>(
   // Look for value at current breakpoint or smaller
   for (let i = currentIndex; i >= 0; i--) {
     const bp = breakpointOrder[i];
-    if (values[bp] !== undefined) {
-      return values[bp]!;
+    const value = values[bp];
+    if (value !== undefined) {
+      return value;
     }
   }
 

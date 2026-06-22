@@ -90,7 +90,7 @@ export function useSubscriptionTimeline() {
 
   const agendaItemsByEventId = useMemo(() => {
     const items = agendaItemsData?.agendaItems ?? [];
-    const map = new Map<string, Array<(typeof items)[number]>>();
+    const map = new Map<string, (typeof items)[number][]>();
     for (const item of items) {
       const eventId = item.event_id;
       if (!eventId) continue;

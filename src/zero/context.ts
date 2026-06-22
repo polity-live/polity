@@ -1,10 +1,10 @@
-export type ZeroContext = {
-  userID: string
-  email: string
+export interface ZeroContext {
+  userID: string;
+  email: string;
 }
 
 declare module '@rocicorp/zero' {
   interface DefaultTypes {
-    context: ZeroContext
+    context: ZeroContext;
   }
 }

@@ -1,4 +1,5 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { getRequiredEnvVar } from '@/lib/env';
 
 /**
  * Create a Supabase server client for use in TanStack Start server functions.
@@ -6,9 +7,9 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
  */
 export function createClient() {
   return createSupabaseClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+    getRequiredEnvVar(process.env.SUPABASE_URL, 'SUPABASE_URL'),
+    getRequiredEnvVar(process.env.SUPABASE_SERVICE_ROLE_KEY, 'SUPABASE_SERVICE_ROLE_KEY')
+  );
 }
 
 /**
@@ -16,16 +17,18 @@ export function createClient() {
  */
 export async function getSession(request: Request) {
   const supabase = createSupabaseClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!
-  )
+    getRequiredEnvVar(process.env.SUPABASE_URL, 'SUPABASE_URL'),
+    getRequiredEnvVar(process.env.SUPABASE_ANON_KEY, 'SUPABASE_ANON_KEY')
+  );
 
-  const authHeader = request.headers.get('authorization')
+  const authHeader = request.headers.get('authorization');
   if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.slice(7)
-    const { data: { user } } = await supabase.auth.getUser(token)
-    return user ? { user } : null
+    const token = authHeader.slice(7);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser(token);
+    return user ? { user } : null;
   }
 
-  return null
+  return null;
 }
