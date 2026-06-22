@@ -73,6 +73,11 @@ vi.mock('react-leaflet', () => ({
   }),
 }));
 
+vi.mock('@rocicorp/zero/react', () => ({
+  useQuery: () => [[], { type: 'complete' }],
+  useZero: () => ({ mutate: {} }),
+}));
+
 const item: CivicTimelineItem = {
   id: 'event-1',
   entityId: 'event-1',
