@@ -69,7 +69,7 @@ interface BlogDetailShareContextItem {
 interface BlogDetailViewProps {
   author?: BlogDetailAuthor;
   blogId: string;
-  bloggers: any[];
+  bloggers: readonly any[];
   canAccess: boolean;
   canDelete: boolean;
   canEdit: boolean;

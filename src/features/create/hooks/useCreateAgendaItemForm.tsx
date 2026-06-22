@@ -302,8 +302,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       return;
     }
 
-    const roleTitle =
-      roleRenewalRole?.title || roleRenewalRole?.name || roleRenewalAssignment.title;
+    const roleTitle = roleRenewalRole?.name || roleRenewalAssignment.title;
 
     setType('election');
     setElectionMode('single');
@@ -328,7 +327,6 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
     roleRenewalAssignment,
     roleRenewalRole?.description,
     roleRenewalRole?.name,
-    roleRenewalRole?.title,
   ]);
 
   const resolvedOrder = hasCustomOrder ? order : nextOrder;
@@ -370,11 +368,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       )
     : null;
   const roleRenewalRoleTitle =
-    roleRenewalRole?.title ||
-    roleRenewalRole?.name ||
-    roleRenewalAssignment?.title ||
-    roleRenewalAssignment?.roleId ||
-    '';
+    roleRenewalRole?.name || roleRenewalAssignment?.title || roleRenewalAssignment?.roleId || '';
 
   const createAgendaItemRecord = async (args: {
     agendaItemId: string;

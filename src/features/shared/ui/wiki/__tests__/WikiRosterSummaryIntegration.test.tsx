@@ -119,6 +119,9 @@ function getDirectorySummary(container: HTMLElement) {
 
   const summary = directory?.querySelector('[data-slot="wiki-roster-summary-card"]');
   expect(summary).toBeTruthy();
+  if (!summary) {
+    throw new Error('Expected wiki roster summary card');
+  }
 
   const standaloneSummary = Array.from(
     container.querySelectorAll('[data-slot="wiki-roster-summary-card"]')

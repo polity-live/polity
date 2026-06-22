@@ -1,5 +1,11 @@
 import { Children } from 'react';
-import type { ComponentType, CSSProperties, HTMLAttributes, ReactNode } from 'react';
+import type {
+  ComponentPropsWithoutRef,
+  ComponentType,
+  CSSProperties,
+  HTMLAttributes,
+  ReactNode,
+} from 'react';
 import { Loader2 } from 'lucide-react';
 
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
@@ -49,7 +55,11 @@ function FeedToolbar({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   );
 }
 
-function FeedList({ className, children, ...props }: HTMLAttributes<HTMLDivElement>) {
+type FeedListProps = Omit<ComponentPropsWithoutRef<typeof MotionGroup>, 'children'> & {
+  children?: ReactNode;
+};
+
+function FeedList({ className, children, ...props }: FeedListProps) {
   return (
     <MotionGroup data-slot="feed-list" className={cn('space-y-3', className)} {...props}>
       {Children.map(children, (child, index) => (

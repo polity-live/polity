@@ -762,7 +762,7 @@ export function LandingOfficialDataPreview() {
       return;
     }
 
-    const timers: ReturnType<typeof window.setTimeout>[] = [];
+    const timers: number[] = [];
     const typeStepMs = 48;
     const typeStartDelayMs = 320;
     const typedDurationMs = typeStartDelayMs + searchQuery.length * typeStepMs;

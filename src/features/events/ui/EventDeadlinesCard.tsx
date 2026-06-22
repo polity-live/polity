@@ -90,7 +90,7 @@ export function EventDeadlinesCard({
 }: EventDeadlinesCardProps) {
   const { t } = useTranslation();
 
-  const deadlines: ActiveDeadlineItem[] = [
+  const deadlineCandidates: DeadlineItem[] = [
     {
       id: 'registration-deadline',
       icon: CalendarClock,
@@ -109,7 +109,8 @@ export function EventDeadlinesCard({
       label: t('features.events.deadlines.candidacy'),
       timestamp: candidacyDeadline,
     },
-  ].filter(hasDeadlineTimestamp);
+  ];
+  const deadlines = deadlineCandidates.filter(hasDeadlineTimestamp);
 
   const eventStartTimestamp = normalizeEventTimestamp(startDate);
   const eventEndTimestamp = normalizeEventTimestamp(endDate);

@@ -78,8 +78,8 @@ export const statementQueries = {
       return q
         .related('user')
         .related('group')
-        .related('statement_hashtags', q2 => q2.related('hashtag'))
-        .related('support_votes', q2 => q2.where('user_id', userID ?? '__anon__'))
+        .related('statement_hashtags', (q2: any) => q2.related('hashtag'))
+        .related('support_votes', (q2: any) => q2.where('user_id', userID ?? '__anon__'))
         .orderBy('created_at', 'desc')
         .limit(limit);
     }

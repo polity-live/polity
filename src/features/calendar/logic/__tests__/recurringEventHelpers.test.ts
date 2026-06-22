@@ -27,7 +27,7 @@ function createEvent(overrides: Record<string, unknown> = {}) {
     street: null,
     house_number: null,
     ...overrides,
-  } as Parameters<typeof generateRecurringInstances>[0];
+  } as unknown as Parameters<typeof generateRecurringInstances>[0];
 }
 
 describe('generateRecurringInstances', () => {

@@ -140,10 +140,14 @@ describe('EVENT_ACTION_RIGHTS', () => {
     ]);
 
     expect(
-      EVENT_ACTION_RIGHTS.some(right => right.resource === 'events' && right.action === 'view')
+      EVENT_ACTION_RIGHTS.some(
+        right => right.resource === 'events' && String(right.action) === 'view'
+      )
     ).toBe(false);
     expect(
-      EVENT_ACTION_RIGHTS.some(right => right.resource === 'agendaItems' && right.action === 'view')
+      EVENT_ACTION_RIGHTS.some(
+        right => right.resource === 'agendaItems' && String(right.action) === 'view'
+      )
     ).toBe(false);
     expect(
       EVENT_ACTION_RIGHTS.some(

@@ -388,8 +388,8 @@ export function getEntityToneClasses(
 export function getEntityToneClasses(
   entityType: EntityTone
 ): CivicEntityToneClasses | CivicToneClasses {
-  if (entityType in PRIMARY_ENTITY_CLASS_NAMES) {
-    return PRIMARY_ENTITY_CLASS_NAMES[entityType as PrimaryEntityTone];
+  if (isPrimaryEntityTone(entityType)) {
+    return PRIMARY_ENTITY_CLASS_NAMES[entityType];
   }
 
   return getSemanticToneClasses(SECONDARY_ENTITY_TO_SEMANTIC_TONE[entityType]);
@@ -406,15 +406,15 @@ export function getEntityGradientClasses(
 ): string {
   const tone = resolveToneKind(entityType);
 
-  if (tone in PRIMARY_ENTITY_CLASS_NAMES) {
-    return PRIMARY_ENTITY_CLASS_NAMES[tone as PrimaryEntityTone].gradient;
+  if (isPrimaryEntityTone(tone)) {
+    return PRIMARY_ENTITY_CLASS_NAMES[tone].gradient;
   }
 
-  if (tone in SEMANTIC_TONE_CLASS_NAMES) {
-    return SEMANTIC_SURFACE_CLASS_NAMES[tone as SemanticTone];
+  if (isSemanticTone(tone)) {
+    return SEMANTIC_SURFACE_CLASS_NAMES[tone];
   }
 
-  return SEMANTIC_SURFACE_CLASS_NAMES[SECONDARY_ENTITY_TO_SEMANTIC_TONE[tone as EntityTone]];
+  return SEMANTIC_SURFACE_CLASS_NAMES[SECONDARY_ENTITY_TO_SEMANTIC_TONE[tone]];
 }
 
 export function getRoleToneClasses(): CivicToneClasses {
@@ -467,8 +467,12 @@ export function getMotionPreset(preset: MotionPreset): string {
   return MOTION_PRESET_CLASS_NAMES[preset];
 }
 
-export function isPrimaryEntityTone(entityType: EntityTone): entityType is PrimaryEntityTone {
+export function isPrimaryEntityTone(entityType: BadgeToneKind): entityType is PrimaryEntityTone {
   return entityType in PRIMARY_ENTITY_CLASS_NAMES;
+}
+
+function isSemanticTone(tone: BadgeToneKind): tone is SemanticTone {
+  return tone in SEMANTIC_TONE_CLASS_NAMES;
 }
 
 function getToneClasses(kind: BadgeToneKind): CivicEntityToneClasses | CivicToneClasses {

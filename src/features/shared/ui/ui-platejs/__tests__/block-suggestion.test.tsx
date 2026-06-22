@@ -85,7 +85,7 @@ function internalVoteSuggestion(): ResolvedSuggestion {
   return {
     changeRequestEntityId: 'change-request-1',
     comments: [],
-    createdAt: Date.now(),
+    createdAt: new Date(),
     keyId: 'suggestion_suggestion-1',
     suggestionId: 'suggestion-1',
     text: 'BR-1: Soll entfernt werden',
@@ -105,7 +105,7 @@ function pendingEventSuggestion(): ResolvedSuggestion {
     changeRequestStatus: 'pending_submission',
     comments: [],
     confirmationStatus: 'pending',
-    createdAt: Date.now(),
+    createdAt: new Date(),
     keyId: 'suggestion_suggestion-pending-1',
     suggestionId: 'suggestion-pending-1',
     text: 'Wird',

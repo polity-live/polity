@@ -3,7 +3,6 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
 import { BadgeControl } from '@/features/shared/ui/status';
-import type { Amendment } from '@/zero/amendments/schema';
 import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
 import type {
   CorridorGeometry,
@@ -30,8 +29,10 @@ import { StreetDesignInspectorView } from './StreetDesignInspectorView';
 import { StreetDesignToolbarView } from './StreetDesignToolbarView';
 import { StreetSceneCanvasView } from './StreetSceneCanvasView';
 
+type StreetDesignAmendmentSummary = { title?: string | null } | null | undefined;
+
 interface StreetDesignPageViewProps {
-  amendment: Amendment | null | undefined;
+  amendment: StreetDesignAmendmentSummary;
   isLoading: boolean;
   readOnly: boolean;
   design: StreetDesignStateV1;

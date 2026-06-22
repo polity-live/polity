@@ -10,7 +10,11 @@ const wikiParticipationDirectoryMock = vi.hoisted(() =>
     <div data-testid="wiki-participation-directory">{leadingCard}</div>
   ))
 );
-const statsBarMock = vi.hoisted(() => vi.fn(() => <div data-testid="stats-bar" />));
+const statsBarMock = vi.hoisted(() =>
+  vi.fn((props: { items?: readonly { label: string; value: number | string }[] }) => (
+    <div data-testid="stats-bar" data-item-count={props.items?.length ?? 0} />
+  ))
+);
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({

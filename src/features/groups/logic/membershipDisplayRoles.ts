@@ -8,10 +8,14 @@ interface RoleHolderHistoryLike {
   end_date?: number | null;
 }
 
-type RoleWithHolderHistory<TRole extends ParticipationRoleLike> = TRole & {
+type RoleWithHolderHistory = ParticipationRoleLike & {
   scope?: string | null;
   holder_history?: readonly RoleHolderHistoryLike[] | null;
   holders?: readonly RoleHolderHistoryLike[] | null;
+};
+
+type MembershipWithProjectedElectedRoles<TMembership extends ParticipationLike> = TMembership & {
+  elected_roles?: readonly ParticipationRoleLike[] | null;
 };
 
 export function sortGroupRoles<TRole extends ParticipationRoleLike>(roles: readonly TRole[]) {
@@ -64,14 +68,11 @@ export function hasElectedDisplayRole<TRole extends ParticipationRoleLike>(
   return Boolean(membership.elected_roles?.some(role => role.id === roleId));
 }
 
-export function augmentMembershipsWithCurrentRoleHolders<
-  TMembership extends ParticipationLike<TRole>,
-  TRole extends ParticipationRoleLike,
->(
+export function augmentMembershipsWithCurrentRoleHolders<TMembership extends ParticipationLike>(
   memberships: readonly TMembership[],
-  roles: readonly RoleWithHolderHistory<TRole>[]
-): TMembership[] {
-  const electedRolesByUserId = new Map<string, TRole[]>();
+  roles: readonly RoleWithHolderHistory[]
+): MembershipWithProjectedElectedRoles<TMembership>[] {
+  const electedRolesByUserId = new Map<string, ParticipationRoleLike[]>();
 
   for (const role of roles) {
     if (role.assignment_mode !== 'elected' || role.scope !== 'group') {

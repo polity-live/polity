@@ -206,9 +206,12 @@ describe('useCreateAgendaItemForm', () => {
       expect(String(titleField.value)).toContain('Chairperson');
     });
 
-    const typeField = result.current.steps[1].sections?.[0]?.fields[0];
-    expect(typeField?.kind).toBe('customComponent');
-    expect((typeField?.props as { delegateAssignment?: boolean }).delegateAssignment).toBe(true);
+    const typeField = findField(
+      result.current.steps[1].sections?.[0]?.fields ?? [],
+      'type-selector',
+      'customComponent'
+    );
+    expect((typeField.props as { delegateAssignment?: boolean }).delegateAssignment).toBe(true);
 
     const additionalLinkFields = result.current.steps[3].fields ?? [];
     expect(additionalLinkFields.some(field => field.key === 'role')).toBe(false);

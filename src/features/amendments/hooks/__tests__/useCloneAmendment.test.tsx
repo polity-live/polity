@@ -11,7 +11,9 @@ const hookMocks = vi.hoisted(() => ({
   createDocument: vi.fn(() => 'create-document-result'),
   createAmendmentPath: vi.fn(async () => undefined),
   serverConfirmed: vi.fn(async (result: unknown) => result),
-  notifyAmendmentCloned: vi.fn(async () => undefined),
+  notifyAmendmentCloned: vi.fn(async (...args: unknown[]) => {
+    void args;
+  }),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));

@@ -232,7 +232,7 @@ export function VoteSubmissionOverlay({
                   ) : (
                     <Vote className="h-7 w-7" />
                   )}
-                  {status !== 'idle' && status !== 'error' ? (
+                  {status !== 'error' ? (
                     <span
                       className={cn(
                         'bg-card absolute -right-1 -bottom-1 flex h-5 w-5 items-center justify-center rounded-full border',
