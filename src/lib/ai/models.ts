@@ -9,6 +9,7 @@ export interface AiCatalogModelLike {
 }
 
 const FREE_ROUTER_MODEL_LABEL = 'free models router';
+export const OPENROUTER_FREE_MODEL_ID = 'openrouter/free';
 
 export function buildAiModelKey(model: Pick<AiCatalogModelLike, 'provider' | 'id'>): string {
   return `${model.provider}:${model.id}`;
@@ -17,8 +18,24 @@ export function buildAiModelKey(model: Pick<AiCatalogModelLike, 'provider' | 'id
 export function getPreferredDefaultAiModel<T extends AiCatalogModelLike>(
   models: readonly T[]
 ): T | null {
+  const appFreeRouterModel = models.find(
+    model =>
+      model.provider === 'openrouter' &&
+      model.id === OPENROUTER_FREE_MODEL_ID &&
+      model.source === 'app' &&
+      model.free
+  );
+
+  if (appFreeRouterModel) {
+    return appFreeRouterModel;
+  }
+
   const labeledFreeRouterModel = models.find(
-    model => model.label.trim().toLowerCase() === FREE_ROUTER_MODEL_LABEL
+    model =>
+      model.provider === 'openrouter' &&
+      model.source === 'app' &&
+      model.free &&
+      model.label.trim().toLowerCase() === FREE_ROUTER_MODEL_LABEL
   );
 
   if (labeledFreeRouterModel) {

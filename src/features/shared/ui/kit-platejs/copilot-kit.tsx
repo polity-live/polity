@@ -9,6 +9,15 @@ import { useAuth } from '@/providers/auth-provider';
 
 import { MarkdownKit } from './markdown-kit.tsx';
 
+export const COPILOT_DEBOUNCE_DELAY_MS = 1500;
+export const COPILOT_MIN_PROMPT_CHARACTERS = 24;
+
+export function shouldRequestCopilotSuggestion(prompt: string): boolean {
+  const text = stripMarkdown(prompt).replace(/\s+/g, ' ').trim();
+
+  return text.length >= COPILOT_MIN_PROMPT_CHARACTERS;
+}
+
 export const CopilotKit = [
   ...MarkdownKit,
   CopilotPlugin.configure(({ api, getOption, setOption }) => ({
@@ -38,7 +47,7 @@ export const CopilotKit = [
           });
         },
       },
-      debounceDelay: 500,
+      debounceDelay: COPILOT_DEBOUNCE_DELAY_MS,
       renderGhostText: GhostText,
       getPrompt: ({ editor }) => {
         const contextEntry = editor.api.block({ highest: true });
@@ -48,6 +57,8 @@ export const CopilotKit = [
         const prompt = serializeMd(editor, {
           value: [contextEntry[0] as TElement],
         });
+
+        if (!shouldRequestCopilotSuggestion(prompt)) return '';
 
         return `Continue the text up to the next punctuation mark:
   """

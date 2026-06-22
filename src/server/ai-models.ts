@@ -3,9 +3,12 @@ import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModelV1ProviderMetadata } from '@ai-sdk/provider';
 import type { LanguageModel } from 'ai';
 import { z } from 'zod';
+import { OPENROUTER_FREE_MODEL_ID } from '@/lib/ai/models';
 import type { AiModelDescriptor, AiProvider, AiReasoningEffort } from '@/lib/ai/schemas';
 import { getDecryptedAiCredential, listAiCredentialSummaries } from './ai-db';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+
+const OPENROUTER_FREE_MODEL_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const openRouterModelSchema = z.object({
   id: z.string(),
@@ -39,6 +42,16 @@ interface ResolveModelResult {
   providerOptions?: LanguageModelV1ProviderMetadata;
   credentialProvider: AiProvider | null;
 }
+
+let appOpenRouterFreeModelsCache: {
+  apiKey: string;
+  expiresAtMs: number;
+  models: AiModelOption[];
+} | null = null;
+let appOpenRouterFreeModelsPromise: {
+  apiKey: string;
+  promise: Promise<AiModelOption[]>;
+} | null = null;
 
 const OPENAI_MODELS: readonly AiModelOption[] = [
   {
@@ -182,6 +195,41 @@ async function fetchOpenRouterModels(
     }));
 }
 
+async function fetchAppOpenRouterFreeModels(apiKey: string): Promise<AiModelOption[]> {
+  const now = Date.now();
+
+  if (
+    appOpenRouterFreeModelsCache?.apiKey === apiKey &&
+    appOpenRouterFreeModelsCache.expiresAtMs > now
+  ) {
+    return appOpenRouterFreeModelsCache.models;
+  }
+
+  if (appOpenRouterFreeModelsPromise?.apiKey === apiKey) {
+    return appOpenRouterFreeModelsPromise.promise;
+  }
+
+  const promise = fetchOpenRouterModels(apiKey, 'app', true)
+    .then(models => {
+      appOpenRouterFreeModelsCache = {
+        apiKey,
+        expiresAtMs: Date.now() + OPENROUTER_FREE_MODEL_CACHE_TTL_MS,
+        models,
+      };
+
+      return models;
+    })
+    .finally(() => {
+      if (appOpenRouterFreeModelsPromise?.promise === promise) {
+        appOpenRouterFreeModelsPromise = null;
+      }
+    });
+
+  appOpenRouterFreeModelsPromise = { apiKey, promise };
+
+  return promise;
+}
+
 function dedupeModels(models: readonly AiModelOption[]): AiModelOption[] {
   const seen = new Set<string>();
   return models.filter(model => {
@@ -204,7 +252,7 @@ export async function getAiCatalog(userId: string): Promise<{
   const appOpenRouterKey = process.env.OPENROUTER_API_KEY;
   if (appOpenRouterKey) {
     try {
-      models.push(...(await fetchOpenRouterModels(appOpenRouterKey, 'app', true)));
+      models.push(...(await fetchAppOpenRouterFreeModels(appOpenRouterKey)));
     } catch (error) {
       console.error('Failed to load free OpenRouter models:', error);
     }
@@ -230,9 +278,19 @@ export async function getAiCatalog(userId: string): Promise<{
   const sortedModels = dedupeModels(models).sort((left, right) =>
     left.label.localeCompare(right.label)
   );
-  const defaultFreeModelIndex = sortedModels.findIndex(
-    model => model.provider === 'openrouter' && model.source === 'app' && model.free
+  const exactFreeRouterModelIndex = sortedModels.findIndex(
+    model =>
+      model.provider === 'openrouter' &&
+      model.source === 'app' &&
+      model.free &&
+      model.id === OPENROUTER_FREE_MODEL_ID
   );
+  const defaultFreeModelIndex =
+    exactFreeRouterModelIndex >= 0
+      ? exactFreeRouterModelIndex
+      : sortedModels.findIndex(
+          model => model.provider === 'openrouter' && model.source === 'app' && model.free
+        );
 
   if (defaultFreeModelIndex > 0) {
     const [defaultModel] = sortedModels.splice(defaultFreeModelIndex, 1);
@@ -252,7 +310,7 @@ async function assertAppOpenRouterFreeModel(modelId: string): Promise<void> {
     throw new Error('OPENROUTER_API_KEY is not configured');
   }
 
-  const freeModels = await fetchOpenRouterModels(appOpenRouterKey, 'app', true);
+  const freeModels = await fetchAppOpenRouterFreeModels(appOpenRouterKey);
   const isAllowed = freeModels.some(model => model.id === modelId);
 
   if (!isAllowed) {

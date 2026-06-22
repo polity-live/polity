@@ -7,6 +7,7 @@ import { touchAiCredential } from '@/server/ai-db';
 import { getAiCatalog, resolveLanguageModelForUser } from '@/server/ai-models';
 
 const COPILOT_MAX_TOKENS = 48;
+const COPILOT_PROVIDER_COOLDOWN_MS = 30_000;
 
 const DEFAULT_COPILOT_SYSTEM_PROMPT = `You are Polity's inline editor autocomplete assistant.
 
@@ -27,6 +28,64 @@ const copilotRequestSchema = z.object({
   prompt: z.string(),
   system: z.string().optional(),
 });
+
+let copilotProviderCooldownUntilMs = 0;
+
+function copilotNoSuggestionResponse(): Response {
+  return Response.json({ text: '0' });
+}
+
+function getErrorStatusCode(error: unknown): number | null {
+  if (!error || typeof error !== 'object') {
+    return null;
+  }
+
+  const candidate = error as {
+    cause?: unknown;
+    response?: { status?: unknown };
+    status?: unknown;
+    statusCode?: unknown;
+  };
+  const rawStatus = candidate.status ?? candidate.statusCode ?? candidate.response?.status;
+
+  if (typeof rawStatus === 'number' && Number.isFinite(rawStatus)) {
+    return rawStatus;
+  }
+
+  if (typeof rawStatus === 'string') {
+    const parsed = Number.parseInt(rawStatus, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return getErrorStatusCode(candidate.cause);
+}
+
+function isTransientAiProviderError(error: unknown): boolean {
+  const statusCode = getErrorStatusCode(error);
+
+  if (statusCode === 429 || statusCode === 503) {
+    return true;
+  }
+
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+
+  return /\b(?:429|503)\b|rate limit|too many requests|server unavailable/i.test(message);
+}
+
+function startCopilotProviderCooldown(nowMs = Date.now()) {
+  copilotProviderCooldownUntilMs = Math.max(
+    copilotProviderCooldownUntilMs,
+    nowMs + COPILOT_PROVIDER_COOLDOWN_MS
+  );
+}
+
+export function isCopilotProviderCooldownActive(nowMs = Date.now()): boolean {
+  return copilotProviderCooldownUntilMs > nowMs;
+}
+
+export function resetCopilotProviderCooldownForTests(): void {
+  copilotProviderCooldownUntilMs = 0;
+}
 
 export function normalizeCopilotCompletion(text: string): string {
   const trimmed = text.trim();
@@ -49,18 +108,6 @@ export function normalizeCopilotCompletion(text: string): string {
   }
 
   return normalized;
-}
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
-  }
-
-  if (typeof error === 'string' && error.trim()) {
-    return error;
-  }
-
-  return 'AI copilot completion failed.';
 }
 
 export async function handleCopilotRequest(request: Request): Promise<Response> {
@@ -87,17 +134,21 @@ export async function handleCopilotRequest(request: Request): Promise<Response> 
   const prompt = parsedBody.data.prompt.trim();
 
   if (!prompt) {
-    return Response.json({ text: '0' });
-  }
-
-  const catalog = await getAiCatalog(session.user.id);
-  const preferredModel = getPreferredDefaultAiModel(catalog.models);
-
-  if (!preferredModel) {
-    return new Response('No AI models are available for this user.', { status: 400 });
+    return copilotNoSuggestionResponse();
   }
 
   try {
+    if (isCopilotProviderCooldownActive()) {
+      return copilotNoSuggestionResponse();
+    }
+
+    const catalog = await getAiCatalog(session.user.id);
+    const preferredModel = getPreferredDefaultAiModel(catalog.models);
+
+    if (!preferredModel) {
+      return copilotNoSuggestionResponse();
+    }
+
     const { model, providerOptions, credentialProvider } = await resolveLanguageModelForUser(
       session.user.id,
       toAiModelDescriptor(preferredModel),
@@ -125,8 +176,14 @@ export async function handleCopilotRequest(request: Request): Promise<Response> 
 
     return Response.json({ text });
   } catch (error) {
-    console.error('AI copilot completion failed:', error);
-    return new Response(getErrorMessage(error), { status: 500 });
+    if (isTransientAiProviderError(error)) {
+      startCopilotProviderCooldown();
+      console.warn('AI copilot completion temporarily unavailable:', error);
+    } else {
+      console.error('AI copilot completion failed:', error);
+    }
+
+    return copilotNoSuggestionResponse();
   }
 }
 
