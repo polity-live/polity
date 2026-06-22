@@ -98,6 +98,7 @@ export interface AgendaActionBarViewProps {
   voteTooltip: any;
   showLifecycleControls: any;
   showStartFinalVoteButton: any;
+  showVoteButton: any;
 }
 
 export function AgendaActionBarView({
@@ -161,6 +162,7 @@ export function AgendaActionBarView({
   voteTooltip,
   showLifecycleControls,
   showStartFinalVoteButton,
+  showVoteButton,
 }: AgendaActionBarViewProps) {
   const candidateTooltip = canBeCandidate
     ? t('features.events.agenda.actions.becomeCandidate')
@@ -335,7 +337,7 @@ export function AgendaActionBarView({
             <UserMinus />
           </ToolbarButton>
         ) : null}
-        {isVotable && !isClosed && onVoteClick ? (
+        {showVoteButton ? (
           <ToolbarButton
             tooltip={voteTooltip}
             onClick={isVoteActionBlocked ? undefined : onVoteClick}

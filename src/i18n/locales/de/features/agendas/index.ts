@@ -19,6 +19,9 @@ export const agendasTranslations = {
     internalVotingActiveInfo: 'Interne Änderungsantrags-Abstimmungen sind aktiv.',
     setToVoteEvent: 'Setze den Antrag auf Event-Abstimmungsmodus, um abzustimmen.',
     submittedVotePending: 'Eingereicht - Wahl anstehend',
+    sortChangeRequests: 'Änderungsanträge sortieren',
+    sortByNumber: 'Nach Nummer sortieren',
+    sortLexicographically: 'Lexikografisch sortieren',
     deadline: 'Frist',
   },
 } as const;

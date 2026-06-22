@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/u
 import { Button } from '@/features/shared/ui/ui/button';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { Tabs, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { ToggleGroup } from '@/features/shared/ui/ui/toggle-group';
+import { FilterToggleGroupItem } from '@/features/shared/ui/filter-controls';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +22,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/features/shared/ui/ui/alert-dialog';
-import { Vote, FileEdit, AlertTriangle, CheckCircle2, Search } from 'lucide-react';
+import {
+  Vote,
+  FileEdit,
+  AlertTriangle,
+  CheckCircle2,
+  Search,
+  ArrowUp01,
+  ArrowUpAZ,
+} from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { ChangeRequestTimelineCard } from './ChangeRequestTimelineCard';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
@@ -31,6 +41,7 @@ import {
   isPendingSubmissionCRTimelineItem,
 } from '../logic/createMockCRTimelineItems';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
+import type { ChangeRequestSortMode } from './useChangeRequestCardsListController';
 
 type TabValue = 'all' | 'open' | 'accepted' | 'rejected';
 
@@ -95,6 +106,8 @@ export interface ChangeRequestCardsListViewProps {
   t: any;
   activeTab: any;
   setActiveTab: any;
+  sortMode?: ChangeRequestSortMode;
+  setSortMode?: (sortMode: ChangeRequestSortMode) => void;
   searchQuery: any;
   setSearchQuery: any;
   crIdToDiscussionId: any;
@@ -154,6 +167,8 @@ export function ChangeRequestCardsListView({
   t,
   activeTab,
   setActiveTab,
+  sortMode = 'number',
+  setSortMode = () => undefined,
   searchQuery,
   setSearchQuery,
   crIdToDiscussionId,
@@ -181,6 +196,7 @@ export function ChangeRequestCardsListView({
   const effectiveSequenceItems = sequenceItems.length > 0 ? sequenceItems : crItems;
   const shouldShowCRCategoryTabs = hasCRCategoryItems ?? crItems.length > 0;
   const effectiveActiveTab = shouldShowCRCategoryTabs ? activeTab : 'all';
+  const shouldShowSortToggle = shouldShowCRCategoryTabs && crItems.length > 1;
   const displayItems =
     effectiveActiveTab === 'all' && filteredItems.length === 0 && effectiveSequenceItems.length > 0
       ? effectiveSequenceItems
@@ -196,6 +212,11 @@ export function ChangeRequestCardsListView({
     shouldRenderSequenceInterstitial ? (
       <div data-testid="change-request-sequence-interstitial">{sequenceInterstitial}</div>
     ) : null;
+  const handleSortModeChange = (value: string) => {
+    if (value === 'number' || value === 'lexicographic') {
+      setSortMode(value);
+    }
+  };
   void closingVoteItem;
   void allCRsProcessed;
 
@@ -286,43 +307,85 @@ export function ChangeRequestCardsListView({
         )}
 
         {/* Tabs */}
-        <Tabs value={effectiveActiveTab} onValueChange={value => setActiveTab(value as TabValue)}>
-          <TabsList>
-            <TabsTrigger value="all" className="gap-1.5">
-              {t('features.agendas.crTimeline.tabAll')}
-              <BadgeControl variant="secondary" size="xs" className="ml-0.5">
-                {sequenceItemCount || searchedItems.length}
-              </BadgeControl>
-            </TabsTrigger>
-            {shouldShowCRCategoryTabs && (
-              <>
-                <TabsTrigger value="open" className="gap-1.5">
-                  {t('features.agendas.crTimeline.tabOpen')}
-                  <BadgeControl variant="secondary" size="xs" className="ml-0.5">
-                    {categorized.open.length}
-                  </BadgeControl>
-                </TabsTrigger>
-                <TabsTrigger value="accepted" className="gap-1.5">
-                  {t('features.agendas.crTimeline.tabAccepted')}
-                  <BadgeControl
-                    variant="outline"
-                    className={featureThemeClassName(
-                      'agendaChangeRequestCardsListSuccessBadgeAlpha'
-                    )}
-                  >
-                    {categorized.accepted.length}
-                  </BadgeControl>
-                </TabsTrigger>
-                <TabsTrigger value="rejected" className="gap-1.5">
-                  {t('features.agendas.crTimeline.tabRejected')}
-                  <BadgeControl variant="secondary" size="xs" className="ml-0.5">
-                    {categorized.rejected.length}
-                  </BadgeControl>
-                </TabsTrigger>
-              </>
-            )}
-          </TabsList>
-        </Tabs>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <Tabs value={effectiveActiveTab} onValueChange={value => setActiveTab(value as TabValue)}>
+            <TabsList>
+              <TabsTrigger value="all" className="gap-1.5">
+                {t('features.agendas.crTimeline.tabAll')}
+                <BadgeControl variant="secondary" size="xs" className="ml-0.5">
+                  {sequenceItemCount || searchedItems.length}
+                </BadgeControl>
+              </TabsTrigger>
+              {shouldShowCRCategoryTabs && (
+                <>
+                  <TabsTrigger value="open" className="gap-1.5">
+                    {t('features.agendas.crTimeline.tabOpen')}
+                    <BadgeControl variant="secondary" size="xs" className="ml-0.5">
+                      {categorized.open.length}
+                    </BadgeControl>
+                  </TabsTrigger>
+                  <TabsTrigger value="accepted" className="gap-1.5">
+                    {t('features.agendas.crTimeline.tabAccepted')}
+                    <BadgeControl
+                      variant="outline"
+                      className={featureThemeClassName(
+                        'agendaChangeRequestCardsListSuccessBadgeAlpha'
+                      )}
+                    >
+                      {categorized.accepted.length}
+                    </BadgeControl>
+                  </TabsTrigger>
+                  <TabsTrigger value="rejected" className="gap-1.5">
+                    {t('features.agendas.crTimeline.tabRejected')}
+                    <BadgeControl variant="secondary" size="xs" className="ml-0.5">
+                      {categorized.rejected.length}
+                    </BadgeControl>
+                  </TabsTrigger>
+                </>
+              )}
+            </TabsList>
+          </Tabs>
+
+          {shouldShowSortToggle ? (
+            <ToggleGroup
+              type="single"
+              value={sortMode}
+              onValueChange={handleSortModeChange}
+              className="self-end sm:ml-auto"
+              aria-label={t(
+                'features.agendas.crTimeline.sortChangeRequests',
+                'Sort change requests'
+              )}
+            >
+              <FilterToggleGroupItem
+                value="number"
+                size="sm"
+                className="h-8 px-2"
+                aria-label={t('features.agendas.crTimeline.sortByNumber', 'Sort by number')}
+                title={t('features.agendas.crTimeline.sortByNumber', 'Sort by number')}
+              >
+                <ArrowUp01 className="h-4 w-4" />
+                <span className="font-mono text-xs font-semibold">1-9</span>
+              </FilterToggleGroupItem>
+              <FilterToggleGroupItem
+                value="lexicographic"
+                size="sm"
+                className="h-8 px-2"
+                aria-label={t(
+                  'features.agendas.crTimeline.sortLexicographically',
+                  'Sort lexicographically'
+                )}
+                title={t(
+                  'features.agendas.crTimeline.sortLexicographically',
+                  'Sort lexicographically'
+                )}
+              >
+                <ArrowUpAZ className="h-4 w-4" />
+                <span className="font-mono text-xs font-semibold">A-Z</span>
+              </FilterToggleGroupItem>
+            </ToggleGroup>
+          ) : null}
+        </div>
 
         {/* Search */}
         {crItems.length > 1 && (

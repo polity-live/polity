@@ -23,6 +23,12 @@ import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 export { resolvePreviewCrIdForTimelineItem } from '../logic/changeRequestDocumentPreview';
 
 type TabValue = 'all' | 'open' | 'accepted' | 'rejected';
+export type ChangeRequestSortMode = 'number' | 'lexicographic';
+
+const changeRequestSortCollator = new Intl.Collator(undefined, {
+  numeric: false,
+  sensitivity: 'base',
+});
 
 function getVoteStepKind(item: ChangeRequestTimelineRow) {
   return getPreviewVoteStepKind(item);
@@ -30,6 +36,126 @@ function getVoteStepKind(item: ChangeRequestTimelineRow) {
 
 function isSyntheticSequenceStep(item: ChangeRequestTimelineRow) {
   return Boolean(getVoteStepKind(item));
+}
+
+function getNumberValue(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? Math.floor(value)
+    : null;
+}
+
+function getStringValue(value: unknown) {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
+function extractLastNumber(pattern: RegExp, values: unknown[]) {
+  for (const value of values) {
+    const text = getStringValue(value);
+    if (!text) continue;
+
+    let result: number | null = null;
+    let match: RegExpExecArray | null = null;
+    pattern.lastIndex = 0;
+    while ((match = pattern.exec(text)) !== null) {
+      const parsed = Number.parseInt(match[1] ?? '', 10);
+      if (Number.isFinite(parsed)) {
+        result = parsed;
+      }
+    }
+
+    if (result !== null) {
+      return result;
+    }
+  }
+
+  return null;
+}
+
+function getChangeRequestSortText(item: ChangeRequestTimelineRow) {
+  const row = item as Record<string, any>;
+  const cr = row.change_request as Record<string, any> | null | undefined;
+
+  return (
+    getStringValue(cr?.display_cr_id) ??
+    getStringValue(cr?.displayCrId) ??
+    getStringValue(cr?.cr_id) ??
+    getStringValue(cr?.crId) ??
+    getStringValue(cr?.title) ??
+    getStringValue(row.change_request_id) ??
+    getStringValue(row.id) ??
+    ''
+  );
+}
+
+function getChangeRequestSortNumber(item: ChangeRequestTimelineRow) {
+  const row = item as Record<string, any>;
+  const cr = row.change_request as Record<string, any> | null | undefined;
+
+  return (
+    getNumberValue(cr?.branch_scoped_cr_number) ??
+    getNumberValue(cr?.branchScopedCrNumber) ??
+    getNumberValue(cr?.branch_sequence_number) ??
+    getNumberValue(cr?.branchSequenceNumber) ??
+    extractLastNumber(/\bCR-(\d+)\b/gi, [
+      cr?.display_cr_id,
+      cr?.displayCrId,
+      cr?.cr_id,
+      cr?.crId,
+      cr?.title,
+      row.change_request_id,
+      row.id,
+    ])
+  );
+}
+
+function getBranchSortNumber(item: ChangeRequestTimelineRow) {
+  const row = item as Record<string, any>;
+  const cr = row.change_request as Record<string, any> | null | undefined;
+
+  return (
+    getNumberValue(cr?.branch_display_number) ??
+    getNumberValue(cr?.branchDisplayNumber) ??
+    extractLastNumber(/\bBranch\s+(\d+)\b/gi, [cr?.display_cr_id, cr?.displayCrId])
+  );
+}
+
+function compareNullableNumbers(left: number | null, right: number | null) {
+  if (left !== null && right === null) return -1;
+  if (left === null && right !== null) return 1;
+  if (left !== null && right !== null && left !== right) return left - right;
+  return 0;
+}
+
+export function sortChangeRequestTimelineItems(
+  items: readonly ChangeRequestTimelineRow[],
+  sortMode: ChangeRequestSortMode
+) {
+  return items
+    .map((item, index) => ({ item, index }))
+    .sort((left, right) => {
+      if (sortMode === 'number') {
+        const branchDiff = compareNullableNumbers(
+          getBranchSortNumber(left.item),
+          getBranchSortNumber(right.item)
+        );
+        if (branchDiff !== 0) return branchDiff;
+
+        const numberDiff = compareNullableNumbers(
+          getChangeRequestSortNumber(left.item),
+          getChangeRequestSortNumber(right.item)
+        );
+        if (numberDiff !== 0) return numberDiff;
+      }
+
+      const labelDiff = changeRequestSortCollator.compare(
+        getChangeRequestSortText(left.item),
+        getChangeRequestSortText(right.item)
+      );
+      if (labelDiff !== 0) return labelDiff;
+
+      return left.index - right.index;
+    })
+    .map(entry => entry.item);
 }
 
 interface ChangeRequestCardsListProps {
@@ -120,6 +246,7 @@ export function useChangeRequestCardsListController({
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabValue>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortMode, setSortMode] = useState<ChangeRequestSortMode>('number');
 
   // Build crId → discussion UUID map from discussions
   const crIdToDiscussionId = useMemo(() => buildCrIdToDiscussionId(discussions), [discussions]);
@@ -138,9 +265,13 @@ export function useChangeRequestCardsListController({
     () => items.find(i => getVoteStepKind(i) === 'change_request_votes_placeholder') ?? null,
     [items]
   );
-  const crItems = useMemo(
+  const unsortedCrItems = useMemo(
     () => items.filter(i => !i.is_closing_vote && !isSyntheticSequenceStep(i)),
     [items]
+  );
+  const crItems = useMemo(
+    () => sortChangeRequestTimelineItems(unsortedCrItems, sortMode),
+    [sortMode, unsortedCrItems]
   );
   const votableCrItems = useMemo(
     () => crItems.filter(item => !isPendingSubmissionCRTimelineItem(item)),
@@ -352,6 +483,8 @@ export function useChangeRequestCardsListController({
     t,
     activeTab: effectiveActiveTab,
     setActiveTab,
+    sortMode,
+    setSortMode,
     searchQuery,
     setSearchQuery,
     crIdToDiscussionId,

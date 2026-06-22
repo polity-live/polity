@@ -209,8 +209,8 @@ describe('AgendaActionBar', () => {
     ).toBe('/create/agenda-item?eventId=event-1&type=vote');
   });
 
-  it('renders the Vote button for pending votable items when voting is available', () => {
-    const { container } = render(
+  it('only renders the Vote button during the final vote phase', () => {
+    const { container, rerender } = render(
       <AgendaActionBar
         {...baseProps}
         currentAgendaItem={{
@@ -222,11 +222,38 @@ describe('AgendaActionBar', () => {
       />
     );
 
+    expect(container.querySelector('.civic-ballot-submit')).toBeNull();
+
+    rerender(<AgendaActionBar {...baseProps} canVote onVoteClick={() => undefined} />);
+
+    expect(container.querySelector('.civic-ballot-submit')).toBeNull();
+
+    rerender(
+      <AgendaActionBar
+        {...baseProps}
+        currentAgendaItem={{
+          ...baseProps.currentAgendaItem,
+          voting_phase: 'final',
+        }}
+        canVote
+        onVoteClick={() => undefined}
+      />
+    );
+
     expect(container.querySelector('.civic-ballot-submit')).toBeTruthy();
   });
 
   it('renders the Vote button as blocked with help when active voting rights are missing', () => {
-    const { container } = render(<AgendaActionBar {...baseProps} onVoteClick={() => undefined} />);
+    const { container } = render(
+      <AgendaActionBar
+        {...baseProps}
+        currentAgendaItem={{
+          ...baseProps.currentAgendaItem,
+          voting_phase: 'final',
+        }}
+        onVoteClick={() => undefined}
+      />
+    );
 
     const voteButton = container.querySelector('.civic-ballot-submit');
 
@@ -239,6 +266,10 @@ describe('AgendaActionBar', () => {
     const { container } = render(
       <AgendaActionBar
         {...baseProps}
+        currentAgendaItem={{
+          ...baseProps.currentAgendaItem,
+          voting_phase: 'final',
+        }}
         canVote
         disableVoteButton
         disabledVoteTooltip="Geheime indikative Stimmen können nicht geändert werden."

@@ -19,6 +19,7 @@ vi.mock('@/features/editor/ui/SuggestionViewToggle', () => ({
 }));
 
 import { ChangeRequestCardsListView } from '../ChangeRequestCardsListView';
+import { ChangeRequestCardsList } from '../ChangeRequestCardsList';
 import { ChangeRequestTimelineCardView } from '../ChangeRequestTimelineCardView';
 import { resolvePreviewCrIdForTimelineItem } from '../useChangeRequestCardsListController';
 
@@ -166,6 +167,17 @@ afterEach(() => {
 });
 
 describe('ChangeRequestCardsListView mode labels', () => {
+  function expectVisibleTitleOrder(labels: string[]) {
+    const elements = labels.map(label => screen.getByText(label));
+
+    for (let index = 0; index < elements.length - 1; index += 1) {
+      expect(
+        elements[index].compareDocumentPosition(elements[index + 1]) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    }
+  }
+
   it('uses localized labels instead of raw internal voting mode tags', () => {
     const { rerender } = render(
       <ChangeRequestCardsListView {...baseProps} editingMode="vote_internal" />
@@ -180,6 +192,40 @@ describe('ChangeRequestCardsListView mode labels', () => {
     expect(screen.getByText('Event voting mode active')).toBeTruthy();
     expect(screen.getByText('Event Voting Mode')).toBeTruthy();
     expect(screen.queryByText('event_final_closing_vote')).toBeNull();
+  });
+
+  it('sorts change requests by number by default and can toggle to lexicographic order', () => {
+    const createItem = (number: number) => ({
+      id: `agenda-cr-${number}`,
+      agenda_item_id: 'agenda-1',
+      change_request_id: `cr-row-${number}`,
+      vote_id: null,
+      order_index: number,
+      is_closing_vote: false,
+      status: 'pending',
+      change_request: {
+        id: `cr-row-${number}`,
+        title: `CR-${number}`,
+        cr_id: `CR-${number}`,
+        display_cr_id: `Branch 1 CR-${number}`,
+        branch_display_number: 1,
+      },
+      vote: null,
+    });
+
+    render(
+      <ChangeRequestCardsList
+        items={[createItem(13), createItem(9), createItem(11), createItem(15)] as never}
+        editingMode="vote_internal"
+        isVotingActive
+      />
+    );
+
+    expectVisibleTitleOrder(['CR-9', 'CR-11', 'CR-13', 'CR-15']);
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Sort lexicographically' }));
+
+    expectVisibleTitleOrder(['CR-11', 'CR-13', 'CR-15', 'CR-9']);
   });
 
   it('uses localized collaborator voting progress text', () => {
