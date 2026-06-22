@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public."user" (
   first_name TEXT,
   last_name TEXT,
   bio TEXT,
+  gender TEXT CHECK (gender IN ('male', 'female', 'diverse')),
   about JSONB,
   avatar TEXT,
   x TEXT,

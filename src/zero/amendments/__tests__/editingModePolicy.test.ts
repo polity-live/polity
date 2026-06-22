@@ -8,6 +8,7 @@ import {
   isAgendaItemStarted,
   normalizeEditingMode,
 } from '../editing-mode-policy';
+import { updateAmendmentProcessBranchSchema } from '../schema';
 
 describe('amendment editing mode policy', () => {
   it('uses the canonical display order', () => {
@@ -87,11 +88,20 @@ describe('amendment editing mode policy', () => {
     expect(policy.allowedModes).toEqual(['event_final_closing_vote']);
   });
 
-  it('normalizes legacy database values', () => {
+  it('keeps canonical values and falls back for unknown values', () => {
+    expect(normalizeEditingMode('vote_internal')).toBe('vote_internal');
+    expect(normalizeEditingMode('passed')).toBe('passed');
     expect(normalizeEditingMode('collaborative_editing')).toBe('edit');
-    expect(normalizeEditingMode('event_voting')).toBe('event_final_closing_vote');
-    expect(normalizeEditingMode('vote_event')).toBe('event_final_closing_vote');
-    expect(normalizeEditingMode('Passed')).toBe('passed');
+    expect(normalizeEditingMode('Passed')).toBe('edit');
+  });
+
+  it('rejects legacy editing modes at the mutator schema boundary', () => {
+    expect(
+      updateAmendmentProcessBranchSchema.safeParse({
+        id: 'branch-1',
+        editing_mode: 'internal_voting',
+      }).success
+    ).toBe(false);
   });
 
   it('detects started agenda items from server-relevant status and timestamps', () => {

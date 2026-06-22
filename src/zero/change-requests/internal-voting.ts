@@ -11,6 +11,7 @@ import {
   type VoteResult,
 } from './server-resolution';
 import { normalizeInternalChangeRequestResolutionVisibility } from './visibility';
+import { isEditingMode, type EditingMode } from '../amendments/editing-mode-policy';
 
 export const INTERNAL_CR_VOTING_DEFAULT_TRIGGER = 'all_collaborators_voted' as const;
 export const INTERNAL_CR_VOTING_DEFAULT_DURATION_MINUTES = 5;
@@ -62,15 +63,8 @@ interface InternalChangeRequestRow {
 }
 
 const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = ['active', 'collaborator', 'member', 'admin'];
-const INTERNAL_CHANGE_REQUEST_MODES = new Set([
-  null,
-  undefined,
+const INTERNAL_CHANGE_REQUEST_MODES = new Set<EditingMode>([
   'edit',
-  'view',
-  'collaborative',
-  'collaborative_editing',
-  'internal_suggestion',
-  'internal_voting',
   'suggest_internal',
   'vote_internal',
 ]);
@@ -91,7 +85,9 @@ function isOpenChangeRequest(changeRequest: {
 }
 
 function isInternalChangeRequest(changeRequest: { created_in_mode?: string | null }) {
-  return INTERNAL_CHANGE_REQUEST_MODES.has(changeRequest.created_in_mode?.trim() || null);
+  const rawMode = changeRequest.created_in_mode?.trim();
+  const mode = rawMode ? (isEditingMode(rawMode) ? rawMode : null) : 'edit';
+  return mode ? INTERNAL_CHANGE_REQUEST_MODES.has(mode) : false;
 }
 
 function stableChangeRequestOrder(left: InternalChangeRequestRow, right: InternalChangeRequestRow) {

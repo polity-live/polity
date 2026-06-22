@@ -17,7 +17,7 @@ afterEach(() => {
 
 describe('VotingPhaseBadge', () => {
   it('keeps the final vote pulse while using dark-mode-safe success tokens', () => {
-    render(<VotingPhaseBadge phase="final_vote" labels={{ final_vote: 'Final Vote' }} />);
+    render(<VotingPhaseBadge phase="final" labels={{ final: 'Final Vote' }} />);
 
     const badge = screen.getByText('Final Vote');
 

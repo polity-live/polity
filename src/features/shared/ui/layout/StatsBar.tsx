@@ -1,6 +1,5 @@
 import type { ReactNode, RefObject } from 'react';
 
-import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { cn } from '@/features/shared/utils/utils';
 
 export interface StatsBarItem {
@@ -10,16 +9,8 @@ export interface StatsBarItem {
   show?: boolean;
 }
 
-export interface LegacyStatsBarItem {
-  value: number | string;
-  labelKey: string;
-  unit?: ReactNode;
-  show?: boolean;
-}
-
 interface StatsBarProps {
   items?: StatsBarItem[];
-  stats?: LegacyStatsBarItem[];
   className?: string;
   itemClassName?: string;
   showAnimation?: boolean;
@@ -30,7 +21,6 @@ interface StatsBarProps {
 
 export function StatsBar({
   items,
-  stats,
   className,
   itemClassName,
   showAnimation,
@@ -38,16 +28,7 @@ export function StatsBar({
   animationRef,
   animationTargetLabel = 'Subscribers',
 }: StatsBarProps) {
-  const { t } = useTranslation();
-  const resolvedItems =
-    items ??
-    stats?.map(stat => ({
-      value: stat.value,
-      label: t(stat.labelKey),
-      unit: stat.unit,
-      show: stat.show,
-    })) ??
-    [];
+  const resolvedItems = items ?? [];
 
   const visibleItems = resolvedItems.filter(item => item.show !== false);
 

@@ -101,7 +101,7 @@ export function getCanonicalMembershipModeLabel(
     case 'role_members':
       return 'Members with selected role';
     case 'selected_source_groups':
-      return 'Legacy source-group membership';
+      return 'Parliament membership';
     default:
       return 'No automatic membership';
   }

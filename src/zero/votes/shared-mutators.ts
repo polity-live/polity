@@ -22,7 +22,7 @@ import {
   upsertVoteOfflineTallySchema,
   deleteVoteOfflineTallySchema,
 } from './schema';
-import { normalizeVotePurpose, normalizeVoteStatus } from './vote-workflow';
+import { VOTE_PHASE, normalizeVotePhase } from './vote-workflow';
 
 type VoteTx = Parameters<typeof can>[0];
 type VoteCtx = Parameters<typeof can>[1];
@@ -31,6 +31,22 @@ async function loadVote(tx: VoteTx, voteId: string) {
   const vote = await tx.run(zql.vote.where('id', voteId).one());
   if (!vote) throw new Error('Vote not found');
   return vote;
+}
+
+function assertVotePhase(vote: { status?: string | null }, phase: 'indicative' | 'final') {
+  const status = normalizeVotePhase(vote.status);
+  if (phase === 'indicative' && status !== VOTE_PHASE.indicative) {
+    throw new Error('Indicative votes can only be cast while the indicative vote is open.');
+  }
+  if (phase === 'final' && status !== VOTE_PHASE.final) {
+    throw new Error('Final votes can only be cast while the final vote is open.');
+  }
+}
+
+async function assertVoteOpenForPhase(tx: VoteTx, voteId: string, phase: 'indicative' | 'final') {
+  if (tx.location === 'client') return;
+  const vote = await loadVote(tx, voteId);
+  assertVotePhase(vote, phase);
 }
 
 async function loadVoteScope(tx: VoteTx, voteId: string) {
@@ -226,8 +242,7 @@ export const voteSharedMutators = {
     const now = Date.now();
     const vote = {
       ...args,
-      status: normalizeVoteStatus(args.status),
-      purpose: normalizeVotePurpose(args.purpose),
+      status: normalizeVotePhase(args.status),
       majority_type: args.majority_type ?? 'relative',
       closing_type: args.closing_type ?? 'moderator',
       visibility: args.visibility ?? 'public',
@@ -246,8 +261,7 @@ export const voteSharedMutators = {
     await assertVoteManager(tx, ctx, args.id);
     const normalizedArgs = {
       ...args,
-      ...(args.status !== undefined ? { status: normalizeVoteStatus(args.status) } : {}),
-      ...(args.purpose !== undefined ? { purpose: normalizeVotePurpose(args.purpose) } : {}),
+      ...(args.status !== undefined ? { status: normalizeVotePhase(args.status) } : {}),
     };
     await tx.mutate.vote.update({
       ...normalizedArgs,
@@ -323,6 +337,7 @@ export const voteSharedMutators = {
     createIndicativeVoterParticipationSchema,
     async ({ tx, ctx, args }) => {
       await assertVoterOwner(tx, ctx, args.voter_id, args.vote_id);
+      await assertVoteOpenForPhase(tx, args.vote_id, 'indicative');
       const now = Date.now();
       await tx.mutate.indicative_voter_participation.insert({
         ...args,
@@ -336,6 +351,7 @@ export const voteSharedMutators = {
     createIndicativeChoiceDecisionSchema,
     async ({ tx, ctx, args }) => {
       await assertChoiceBelongsToVote(tx, args.vote_id, args.choice_id);
+      await assertVoteOpenForPhase(tx, args.vote_id, 'indicative');
       if (args.voter_participation_id) {
         await assertVoterParticipationOwner(tx, ctx, args.voter_participation_id, 'indicative');
       } else {
@@ -354,6 +370,7 @@ export const voteSharedMutators = {
     await assertVoterOwner(tx, ctx, participation.voter_id, participation.vote_id);
 
     const vote = await loadVote(tx, participation.vote_id);
+    assertVotePhase(vote, 'indicative');
     const isNamed = isNamedBallot(vote.ballot_visibility ?? defaultVoteBallotVisibility);
 
     for (const decision of decisions) {
@@ -410,6 +427,7 @@ export const voteSharedMutators = {
   // Cast final vote (creates participation)
   castFinalVote: defineMutator(createFinalVoterParticipationSchema, async ({ tx, ctx, args }) => {
     await assertVoterOwner(tx, ctx, args.voter_id, args.vote_id);
+    await assertVoteOpenForPhase(tx, args.vote_id, 'final');
     const now = Date.now();
     await tx.mutate.final_voter_participation.insert({
       ...args,
@@ -422,6 +440,7 @@ export const voteSharedMutators = {
     createFinalChoiceDecisionSchema,
     async ({ tx, ctx, args }) => {
       await assertChoiceBelongsToVote(tx, args.vote_id, args.choice_id);
+      await assertVoteOpenForPhase(tx, args.vote_id, 'final');
       if (args.voter_participation_id) {
         await assertVoterParticipationOwner(tx, ctx, args.voter_participation_id, 'final');
       } else {

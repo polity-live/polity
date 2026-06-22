@@ -64,6 +64,7 @@ export interface VoteCastDialogViewProps {
   isLoading?: boolean;
   submissionActive?: boolean;
   forwardingPreviewContent?: ReactNode;
+  documentPreviewContent?: ReactNode;
   submissionOverlay?: ReactNode;
   labels: VoteCastDialogViewLabels;
   onToggleCandidate: (candidateId: string) => void;
@@ -91,6 +92,7 @@ export function VoteCastDialogView({
   isLoading,
   submissionActive = false,
   forwardingPreviewContent,
+  documentPreviewContent,
   submissionOverlay,
   labels,
   onToggleCandidate,
@@ -110,6 +112,8 @@ export function VoteCastDialogView({
   const selectedTone = getSemanticToneClasses('success');
   const voteProgressPercent =
     maxVotes > 0 ? Math.min(100, Math.max(0, (assignedVoteCount / maxVotes) * 100)) : 0;
+  const hasChoiceSidebarContent =
+    hasSelection || forwardingPreviewContent || documentPreviewContent;
   const dialogContentClassName = submissionActive
     ? '!z-[140] h-dvh max-h-none !max-h-none w-screen max-w-none overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none sm:max-w-none'
     : '!z-[140] h-dvh max-h-none !max-h-none w-screen max-w-none overflow-y-auto rounded-none border-0 bg-background p-0 shadow-none sm:max-w-none';
@@ -228,7 +232,7 @@ export function VoteCastDialogView({
                     <div
                       className={cn(
                         'mx-auto grid w-full max-w-5xl gap-4',
-                        hasSelection || forwardingPreviewContent
+                        hasChoiceSidebarContent
                           ? 'lg:grid-cols-[minmax(0,1fr)_minmax(17rem,22rem)]'
                           : 'lg:max-w-3xl'
                       )}
@@ -326,7 +330,7 @@ export function VoteCastDialogView({
                             })}
                       </motion.div>
 
-                      {hasSelection || forwardingPreviewContent ? (
+                      {hasChoiceSidebarContent ? (
                         <aside className="space-y-3">
                           <AnimatePresence initial={false}>
                             {hasSelection ? (
@@ -373,6 +377,7 @@ export function VoteCastDialogView({
                             ) : null}
                           </AnimatePresence>
                           {forwardingPreviewContent}
+                          {documentPreviewContent}
                         </aside>
                       ) : null}
                     </div>
@@ -380,19 +385,31 @@ export function VoteCastDialogView({
                 ) : null}
 
                 {step === 'password' ? (
-                  <main className="flex items-center justify-center px-4 py-6 sm:px-6 lg:px-8">
-                    <motion.div
-                      className="border-border/70 bg-card/90 w-full max-w-xl rounded-lg border p-5 shadow-[var(--shadow-panel)] sm:p-6"
-                      initial={reducedMotion ? false : { opacity: 0, y: 8, scale: 0.99 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+                  <main className="px-4 py-6 sm:px-6 lg:px-8">
+                    <div
+                      className={cn(
+                        'mx-auto grid w-full max-w-5xl gap-4',
+                        documentPreviewContent
+                          ? 'lg:grid-cols-[minmax(0,1fr)_minmax(17rem,22rem)]'
+                          : 'max-w-xl'
+                      )}
                     >
-                      <VotePasswordInput
-                        onSubmit={onPasswordSubmit}
-                        error={passwordError}
-                        isLoading={isPasswordVerifying}
-                      />
-                    </motion.div>
+                      <motion.div
+                        className="border-border/70 bg-card/90 w-full rounded-lg border p-5 shadow-[var(--shadow-panel)] sm:p-6"
+                        initial={reducedMotion ? false : { opacity: 0, y: 8, scale: 0.99 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+                      >
+                        <VotePasswordInput
+                          onSubmit={onPasswordSubmit}
+                          error={passwordError}
+                          isLoading={isPasswordVerifying}
+                        />
+                      </motion.div>
+                      {documentPreviewContent ? (
+                        <aside className="space-y-3">{documentPreviewContent}</aside>
+                      ) : null}
+                    </div>
                   </main>
                 ) : null}
 

@@ -31,6 +31,7 @@ import { getOfflineTallyDialogTitle, getOfflineTallyTooltip } from '../logic/off
 import { NamedBallotResultsDialog } from './NamedBallotResultsDialog';
 import { isNamedBallot } from '@/zero/shared';
 import { AmendmentBranchSelectorSection } from '@/features/amendments/ui/AmendmentBranchSelectorSection';
+import { isMockCRTimelineItem } from '../logic/createMockCRTimelineItems';
 export interface EventAgendaItemDetailViewProps {
   eventId: any;
   agendaItemId: any;
@@ -77,6 +78,7 @@ export interface EventAgendaItemDetailViewProps {
   disableVoteButton: any;
   allowsOfflineTallies: any;
   confirmedOfflineParticipantCount: any;
+  eligibleFinalVoterCount?: number;
   agendaNav: any;
   verifyVotingPassword: any;
   upsertElectionOfflineTally: any;
@@ -119,23 +121,26 @@ export interface EventAgendaItemDetailViewProps {
   hasAmendmentCRs: any;
   crDisplayItemsBase: any;
   isCRVotingActive: any;
-  timelineHasFinalVote: any;
-  synthesizedFinalVoteItem: any;
+  timelineHasClosingVote: any;
+  synthesizedClosingVoteItem: any;
   crDisplayItems: any;
-  effectiveFinalVoteItem: any;
+  effectiveClosingVoteItem: any;
   isVoteInCRList: any;
   nonFinalCRItems: any;
   fallbackSelectedCRItemId: any;
   selectedCRToolbarItem: any;
+  currentCRSequenceItemId?: any;
+  nextStartableSequenceItem?: any;
   isCRToolbarActive: any;
   selectedCRPhase: any;
-  isSelectedCRFinalVote: any;
+  isSelectedClosingVote: any;
   hasUserVotedOnSelectedCR: any;
   selectedCRToolbarIndex: any;
   hasPreviousChangeRequest: any;
   hasNextChangeRequest: any;
   handlePreviousChangeRequest: any;
   handleNextChangeRequest: any;
+  handleJumpToNextStartableSequenceItem?: any;
   handleStartSequenceFinalVote: any;
   handleToolbarStartVote: any;
   handleToolbarStartFinalVote: any;
@@ -144,6 +149,7 @@ export interface EventAgendaItemDetailViewProps {
   selectedCRTitle: any;
   selectedCRChoices: any;
   selectedCRDialogPhase: any;
+  voteDialogDocumentPreviewContent?: any;
   agendaForwardingPreview: any;
   voteDialogForwardingPreview: any;
   mergeVariantCandidates: any;
@@ -165,6 +171,7 @@ export interface EventAgendaItemDetailViewProps {
   castFinalVoteTooltip: any;
   handleMarkSpeakerCompleted: any;
   speakerListData: any;
+  showSpeakerGender?: any;
   isUserInSpeakerList: any;
   activeRosterParticipants: any;
   isDelegateAssembly: any;
@@ -227,6 +234,7 @@ export function EventAgendaItemDetailView({
   attendanceMode,
   disableVoteButton,
   confirmedOfflineParticipantCount,
+  eligibleFinalVoterCount,
   agendaNav,
   verifyVotingPassword,
   passwordError,
@@ -254,15 +262,19 @@ export function EventAgendaItemDetailView({
   crDiffMap,
   isCRVotingActive,
   crDisplayItems,
-  effectiveFinalVoteItem,
+  effectiveClosingVoteItem,
   isVoteInCRList,
   selectedCRToolbarItem,
+  currentCRSequenceItemId,
+  nextStartableSequenceItem,
+  setSelectedCRToolbarItemId,
   isCRToolbarActive,
   hasUserVotedOnSelectedCR,
   hasPreviousChangeRequest,
   hasNextChangeRequest,
   handlePreviousChangeRequest,
   handleNextChangeRequest,
+  handleJumpToNextStartableSequenceItem,
   handleStartSequenceFinalVote,
   handleToolbarStartVote,
   handleToolbarStartFinalVote,
@@ -271,6 +283,7 @@ export function EventAgendaItemDetailView({
   selectedCRTitle,
   selectedCRChoices,
   selectedCRDialogPhase,
+  voteDialogDocumentPreviewContent,
   agendaForwardingPreview,
   voteDialogForwardingPreview,
   mergeVariantCandidates,
@@ -288,6 +301,7 @@ export function EventAgendaItemDetailView({
   castFinalVoteTooltip,
   handleMarkSpeakerCompleted,
   speakerListData,
+  showSpeakerGender,
   isUserInSpeakerList,
   indicativeSelections,
   finalSelections,
@@ -312,18 +326,27 @@ export function EventAgendaItemDetailView({
     ? isDetailAgendaItemActive && canManageVoteSequence
     : canManageAgenda;
   const canCompleteAgendaItem =
-    !isCRToolbarActive || effectiveFinalVoteItem?.status === 'completed';
+    !isCRToolbarActive || effectiveClosingVoteItem?.status === 'completed';
   const isOfflineOnlyAttendance = attendanceMode === 'offline';
   const selectedCRIsPlaceholder = Boolean(
     (selectedCRToolbarItem as { _votePlaceholder?: boolean } | null)?._votePlaceholder
   );
+  const selectedCRIsMockTimelineItem =
+    selectedCRToolbarItem !== null && isMockCRTimelineItem(selectedCRToolbarItem);
   const selectedCRHasVoteChoices = selectedCRChoices.length > 0;
-  const canCastSelectedCRVote = !selectedCRIsPlaceholder && selectedCRHasVoteChoices;
+  const canCastSelectedCRVote =
+    !selectedCRIsPlaceholder && !selectedCRIsMockTimelineItem && selectedCRHasVoteChoices;
   const voteButtonDisabled =
     !isCRToolbarActive && (disableVoteButton || actionBarHook.disableSecretIndicativeVoteButton);
   const disabledVoteTooltip =
     actionBarHook.secretIndicativeVoteTooltip ??
     translateText('generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792');
+  const crCardVoteDisabledTooltip = isOfflineOnlyAttendance
+    ? t(
+        'features.events.agenda.actions.offlineCRVoteUnavailable',
+        'Im Offline-Modus koennen keine Online-Stimmungsabgaben abgegeben werden. Wechsle fuer Indication Votes in den Online- oder Hybrid-Modus.'
+      )
+    : undefined;
   const toolbarVoteClick = isOfflineOnlyAttendance
     ? undefined
     : isCRToolbarActive
@@ -331,6 +354,10 @@ export function EventAgendaItemDetailView({
         ? actionBarHook.handleVoteClick
         : undefined
       : actionBarHook.handleVoteClick;
+  const handleOpenCRVoteDialog = (itemId: string) => {
+    setSelectedCRToolbarItemId(itemId);
+    actionBarHook.handleVoteClick();
+  };
 
   if (isLoading) {
     return (
@@ -459,6 +486,7 @@ export function EventAgendaItemDetailView({
       isRemovingSpeaker={actionBarHook.speakerLoading}
       userId={user?.id}
       agendaStartTime={agendaItem.activated_at ?? agendaItem.start_time ?? undefined}
+      showGender={Boolean(showSpeakerGender)}
       onAddToSpeakerList={canJoinSpeakerList ? handleAddToSpeakerList : undefined}
       onRemoveFromSpeakerList={actionBarHook.handleLeaveSpeakerList}
       onMarkCompleted={handleMarkSpeakerCompleted}
@@ -472,15 +500,21 @@ export function EventAgendaItemDetailView({
       isVotingActive={isCRVotingActive}
       userId={user?.id}
       canManage={isDetailAgendaItemActive && canManageVoteSequence}
-      canVote={hasVotingRight}
+      canVote={hasVotingRight && !isOfflineOnlyAttendance}
+      voteDisabledTooltip={crCardVoteDisabledTooltip}
       hideInlineVotingControls
-      currentItemId={isCRVotingActive ? selectedCRToolbarItem?.id : null}
+      showAgendaDetailsVoteActions
+      currentItemId={
+        isCRVotingActive ? (currentCRSequenceItemId ?? selectedCRToolbarItem?.id) : null
+      }
       progress={isCRVotingActive ? progress : undefined}
+      eligibleFinalVoterCount={eligibleFinalVoterCount}
       completedCount={isCRVotingActive ? completedItems.length : undefined}
       allCRsProcessed={isCRVotingActive ? allCRsProcessed : undefined}
       isTimelineComplete={isCRVotingActive ? isTimelineComplete : undefined}
       diffMap={crDiffMap}
       documentContent={documentContent}
+      agendaTitle={agendaItem.amendment?.title ?? agendaItem.title ?? null}
       discussions={amendmentDiscussions}
       amendmentId={agendaItem.amendment_id ?? undefined}
       agendaItemId={agendaItemId}
@@ -488,6 +522,7 @@ export function EventAgendaItemDetailView({
       hasUserVoted={isCRVotingActive ? hasUserVotedOnCR : undefined}
       getUserSelectedChoiceIds={isCRVotingActive ? getUserSelectedChoiceIds : undefined}
       onCastVote={isCRVotingActive && isDetailAgendaItemActive ? castCRVote : undefined}
+      onOpenVoteDialog={isCRVotingActive ? handleOpenCRVoteDialog : undefined}
       onStartIndicative={
         isCRVotingActive && isDetailAgendaItemActive ? startIndicativePhase : undefined
       }
@@ -544,7 +579,7 @@ export function EventAgendaItemDetailView({
         userSelectedChoiceIds={userSelectedChoiceIds}
         voteStatus={vote.status}
         majorityType={vote.majority_type}
-        totalEligibleVoters={(vote.voters?.length ?? 0) + confirmedOfflineParticipantCount}
+        totalEligibleVoters={eligibleFinalVoterCount}
         canManageOfflineResults={canManageAgenda}
         offlineEligibleCount={confirmedOfflineParticipantCount}
         forwardingPreview={agendaForwardingPreview}
@@ -605,6 +640,11 @@ export function EventAgendaItemDetailView({
         hasNextChangeRequest={isCRToolbarActive ? hasNextChangeRequest : undefined}
         onPreviousChangeRequest={isCRToolbarActive ? handlePreviousChangeRequest : undefined}
         onNextChangeRequest={isCRToolbarActive ? handleNextChangeRequest : undefined}
+        onJumpToNextVoteStep={
+          canManageCurrentVote && isCRToolbarActive && nextStartableSequenceItem
+            ? handleJumpToNextStartableSequenceItem
+            : undefined
+        }
         navigationLoading={agendaNav.isLoading}
         speakerLoading={actionBarHook.speakerLoading}
         candidateLoading={actionBarHook.candidateLoading}
@@ -638,7 +678,7 @@ export function EventAgendaItemDetailView({
         }
         onCloseFinalVote={
           canManageCurrentVote && isCRToolbarActive
-            ? toolbarVotingPhase === 'final_vote'
+            ? toolbarVotingPhase === 'final'
               ? handleToolbarCloseVote
               : undefined
             : canManageCurrentVote
@@ -658,6 +698,10 @@ export function EventAgendaItemDetailView({
         startVoteTooltip={startVoteTooltip}
         startFinalVoteTooltip={startFinalVoteTooltip}
         closeVoteTooltip={closeVoteTooltip}
+        jumpToNextVoteStepTooltip={t(
+          'features.agendas.crTimeline.nextVotingStep',
+          'Next voting step'
+        )}
         castIndicativeVoteTooltip={castIndicativeVoteTooltip}
         castFinalVoteTooltip={castFinalVoteTooltip}
       />
@@ -704,6 +748,7 @@ export function EventAgendaItemDetailView({
         phase={isCRToolbarActive ? selectedCRDialogPhase : actionBarHook.voteCasting.phase}
         title={isCRToolbarActive ? selectedCRTitle : (agendaItem.title ?? undefined)}
         forwardingPreview={voteDialogForwardingPreview}
+        documentPreviewContent={voteDialogDocumentPreviewContent}
         candidates={
           isCRToolbarActive
             ? undefined
@@ -823,12 +868,10 @@ export function EventAgendaItemDetailView({
 
       {hasResultsPanel ? (
         <section data-testid="agenda-detail-results" className="scroll-mt-20">
-          <div className="max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
-            <div className="space-y-4">
-              {changeRequestResultsPanel}
-              {electionResultsPanel}
-              {voteResultsPanel}
-            </div>
+          <div className="space-y-4">
+            {changeRequestResultsPanel}
+            {electionResultsPanel}
+            {voteResultsPanel}
           </div>
         </section>
       ) : null}

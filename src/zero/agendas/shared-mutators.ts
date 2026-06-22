@@ -11,6 +11,7 @@ import {
   deleteAgendaItemChangeRequestSchema,
   reorderAgendaItemChangeRequestsSchema,
   initializeChangeRequestVotingSchema,
+  ensureEventSuggestionChangeRequestVotesSchema,
   processCRVoteResultSchema,
 } from './schema';
 import { z } from 'zod';
@@ -19,6 +20,10 @@ import { denyPublicApiMutation, requireAuthenticated } from '../rbac/authorize';
 import { PermissionError } from '../rbac/errors';
 import type { ActionType } from '../rbac/types';
 import { zql } from '../schema';
+import {
+  getGenderQuotaErrorMessage,
+  validateSpeakerGenderQuota,
+} from '@/features/agendas/logic/speakerListGenderQuota';
 
 type AgendaTx = Parameters<typeof can>[0];
 type AgendaCtx = Parameters<typeof can>[1];
@@ -181,6 +186,32 @@ async function assertCanAddSpeaker(
   });
 }
 
+async function assertSpeakerGenderQuota(
+  tx: AgendaTx,
+  agendaItem: { id: string; event_id?: string | null },
+  speakerUserId: string | null | undefined
+) {
+  if (tx.location === 'client' || !agendaItem.event_id || !speakerUserId) return;
+
+  const event = await tx.run(zql.event.where('id', agendaItem.event_id).one());
+  if (!event?.gender_quota_enabled) return;
+
+  const speakerUser = await tx.run(zql.user.where('id', speakerUserId).one());
+  const speakers = await tx.run(
+    zql.speaker_list.where('agenda_item_id', agendaItem.id).related('user')
+  );
+
+  const result = validateSpeakerGenderQuota({
+    enabled: true,
+    speakerGender: speakerUser?.gender ?? null,
+    speakers,
+  });
+
+  if (!result.allowed) {
+    throw new Error(getGenderQuotaErrorMessage(result));
+  }
+}
+
 async function assertCanRemoveSpeaker(
   tx: AgendaTx,
   ctx: AgendaCtx,
@@ -249,6 +280,7 @@ export const agendaSharedMutators = {
     if (tx.location !== 'client') {
       const agendaItem = await loadAgendaItem(tx, args.agenda_item_id);
       await assertCanAddSpeaker(tx, ctx, agendaItem, args.user_id);
+      await assertSpeakerGenderQuota(tx, agendaItem, args.user_id);
     }
 
     const now = Date.now();
@@ -371,6 +403,19 @@ export const agendaSharedMutators = {
         scope: 'server override required',
       });
       // Server-only: creates votes, choices, voters, and junction records
+    }
+  ),
+
+  // Client-side no-op — server mutator materializes event-suggestion vote cards
+  ensureEventSuggestionChangeRequestVotes: defineMutator(
+    ensureEventSuggestionChangeRequestVotesSchema,
+    async ({ tx }) => {
+      denyPublicApiMutation(tx, {
+        action: 'active_voting',
+        resource: 'events',
+        scope: 'server override required',
+      });
+      // Server-only: creates missing vote rows for confirmed event suggestions
     }
   ),
 

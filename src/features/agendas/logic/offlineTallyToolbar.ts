@@ -32,8 +32,8 @@ export function resolveOfflineTallyPhase(args: {
 
   if (
     args.votingPhase === 'final' ||
-    args.votingPhase === 'final_vote' ||
-    args.votingPhase === 'final_open'
+    args.votingPhase === 'final' ||
+    args.votingPhase === 'final'
   ) {
     return 'final' as const;
   }

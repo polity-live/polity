@@ -5,6 +5,7 @@ const {
   createVoteFn,
   castIndicativeVoteFn,
   castFinalVoteFn,
+  createFinalChoiceDecisionFn,
   upsertOfflineTallyFn,
   recomputeEventCountersMock,
   eventTitleMock,
@@ -14,11 +15,13 @@ const {
   notifyProcessVoteResolutionMock,
   discardPendingEventSuggestionsMock,
   finalizeInternalChangeRequestsForEventPhaseTransitionMock,
+  resolveChangeRequestByVoteResultMock,
 } = vi.hoisted(() => ({
   updateVoteFn: vi.fn(),
   createVoteFn: vi.fn(),
   castIndicativeVoteFn: vi.fn(),
   castFinalVoteFn: vi.fn(),
+  createFinalChoiceDecisionFn: vi.fn(),
   upsertOfflineTallyFn: vi.fn(),
   recomputeEventCountersMock: vi.fn(),
   eventTitleMock: vi.fn(),
@@ -28,6 +31,7 @@ const {
   notifyProcessVoteResolutionMock: vi.fn(),
   discardPendingEventSuggestionsMock: vi.fn(),
   finalizeInternalChangeRequestsForEventPhaseTransitionMock: vi.fn(),
+  resolveChangeRequestByVoteResultMock: vi.fn(),
 }));
 
 vi.mock('../../mutators', () => ({
@@ -37,6 +41,7 @@ vi.mock('../../mutators', () => ({
       updateVote: { fn: updateVoteFn },
       castIndicativeVote: { fn: castIndicativeVoteFn },
       castFinalVote: { fn: castFinalVoteFn },
+      createFinalChoiceDecision: { fn: createFinalChoiceDecisionFn },
       upsertOfflineTally: { fn: upsertOfflineTallyFn },
     },
   },
@@ -69,6 +74,10 @@ vi.mock('../../change-requests/internal-voting', () => ({
     finalizeInternalChangeRequestsForEventPhaseTransitionMock,
 }));
 
+vi.mock('../../change-requests/server-resolution', () => ({
+  resolveChangeRequestByVoteResult: resolveChangeRequestByVoteResultMock,
+}));
+
 import { voteServerMutators } from '../server-mutators';
 
 function createTx() {
@@ -79,6 +88,15 @@ function createTx() {
         update: vi.fn(),
       },
       amendment_process_branch: {
+        update: vi.fn(),
+      },
+      agenda_item_change_request: {
+        update: vi.fn(),
+      },
+      agenda_item: {
+        update: vi.fn(),
+      },
+      vote: {
         update: vi.fn(),
       },
     },
@@ -97,6 +115,7 @@ beforeEach(() => {
   createVoteFn.mockReset();
   castIndicativeVoteFn.mockReset();
   castFinalVoteFn.mockReset();
+  createFinalChoiceDecisionFn.mockReset();
   upsertOfflineTallyFn.mockReset();
   recomputeEventCountersMock.mockReset();
   eventTitleMock.mockReset();
@@ -106,6 +125,354 @@ beforeEach(() => {
   notifyProcessVoteResolutionMock.mockReset();
   discardPendingEventSuggestionsMock.mockReset();
   finalizeInternalChangeRequestsForEventPhaseTransitionMock.mockReset();
+  resolveChangeRequestByVoteResultMock.mockReset();
+});
+
+function activeVotingParticipant(userId: string) {
+  return {
+    id: `participant-${userId}`,
+    user_id: userId,
+    status: 'active',
+    participant_roles: [
+      {
+        role: {
+          action_rights: [
+            {
+              action: 'active_voting',
+              resource: 'events',
+              event_id: 'event-1',
+            },
+          ],
+        },
+      },
+    ],
+  };
+}
+
+function finalParticipation(voterId: string) {
+  return {
+    id: `final-participation-${voterId}`,
+    vote_id: 'vote-1',
+    voter_id: voterId,
+  };
+}
+
+function voter(id: string, userId: string) {
+  return {
+    id,
+    vote_id: 'vote-1',
+    user_id: userId,
+  };
+}
+
+describe('voteServerMutators final vote auto-close', () => {
+  it('does not close after the first final vote when more active voters are eligible', async () => {
+    const tx = createTx();
+
+    tx.run
+      .mockResolvedValueOnce({ id: 'vote-1', agenda_item_id: 'agenda-1' })
+      .mockResolvedValueOnce({ id: 'agenda-1', event_id: 'event-1' })
+      .mockResolvedValueOnce({ id: 'event-1', attendance_mode: 'hybrid' })
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({ id: 'vote-1', status: 'final', agenda_item_id: 'agenda-1' })
+      .mockResolvedValueOnce({ id: 'agenda-1', event_id: 'event-1' })
+      .mockResolvedValueOnce([
+        activeVotingParticipant('user-1'),
+        activeVotingParticipant('user-2'),
+        activeVotingParticipant('user-3'),
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([voter('voter-1', 'user-1')])
+      .mockResolvedValueOnce([finalParticipation('voter-1')])
+      .mockResolvedValueOnce([]);
+
+    await voteServerMutators.createFinalChoiceDecision.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        id: 'decision-1',
+        vote_id: 'vote-1',
+        choice_id: 'choice-1',
+        voter_participation_id: 'final-participation-voter-1',
+      },
+    });
+
+    expect(createFinalChoiceDecisionFn).toHaveBeenCalledTimes(1);
+    expect(updateVoteFn).not.toHaveBeenCalled();
+    expect(tx.mutate.agenda_item.update).not.toHaveBeenCalled();
+  });
+
+  it('closes when all active voting-right holders have cast a final vote', async () => {
+    const tx = createTx();
+    eventTitleMock.mockResolvedValueOnce('Event One');
+    resolveAmendmentProcessVoteMock.mockResolvedValueOnce({
+      handled: true,
+      amendmentId: 'amendment-1',
+      terminalDecision: 'accepted',
+    });
+
+    tx.run
+      .mockResolvedValueOnce({ id: 'vote-1', agenda_item_id: 'agenda-1' })
+      .mockResolvedValueOnce({ id: 'agenda-1', event_id: 'event-1' })
+      .mockResolvedValueOnce({ id: 'event-1', attendance_mode: 'hybrid' })
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({
+        id: 'vote-1',
+        status: 'final',
+        agenda_item_id: 'agenda-1',
+        title: 'Vote title',
+        majority_type: 'simple',
+      })
+      .mockResolvedValueOnce({ id: 'agenda-1', event_id: 'event-1' })
+      .mockResolvedValueOnce([
+        activeVotingParticipant('user-1'),
+        activeVotingParticipant('user-2'),
+        activeVotingParticipant('user-3'),
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        voter('voter-1', 'user-1'),
+        voter('voter-2', 'user-2'),
+        voter('voter-3', 'user-3'),
+      ])
+      .mockResolvedValueOnce([
+        finalParticipation('voter-1'),
+        finalParticipation('voter-2'),
+        finalParticipation('voter-3'),
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({
+        id: 'vote-1',
+        status: 'final',
+        agenda_item_id: 'agenda-1',
+        title: 'Vote title',
+        majority_type: 'simple',
+      })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce([
+        { id: 'accept', label: 'accept', order_index: 0 },
+        { id: 'reject', label: 'reject', order_index: 1 },
+      ])
+      .mockResolvedValueOnce([
+        { choice_id: 'accept' },
+        { choice_id: 'accept' },
+        { choice_id: 'reject' },
+      ])
+      .mockResolvedValueOnce([
+        voter('voter-1', 'user-1'),
+        voter('voter-2', 'user-2'),
+        voter('voter-3', 'user-3'),
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 'agenda-1',
+        event_id: 'event-1',
+        title: 'Agenda Item One',
+      });
+
+    await voteServerMutators.createFinalChoiceDecision.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        id: 'decision-1',
+        vote_id: 'vote-1',
+        choice_id: 'choice-1',
+        voter_participation_id: 'final-participation-voter-3',
+      },
+    });
+
+    expect(updateVoteFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        args: expect.objectContaining({
+          id: 'vote-1',
+          status: 'closed',
+          closed_reason: 'all_voters',
+          closed_by_id: 'user-1',
+        }),
+      })
+    );
+    expect(tx.mutate.agenda_item.update).toHaveBeenCalledWith({
+      id: 'agenda-1',
+      voting_phase: 'closed',
+      updated_at: expect.any(Number),
+    });
+  });
+
+  it('keeps a final vote open while confirmed offline attendees have no final tally', async () => {
+    const tx = createTx();
+
+    tx.run
+      .mockResolvedValueOnce({ id: 'vote-1', agenda_item_id: 'agenda-1' })
+      .mockResolvedValueOnce({ id: 'agenda-1', event_id: 'event-1' })
+      .mockResolvedValueOnce({ id: 'event-1', attendance_mode: 'hybrid' })
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({ id: 'vote-1', status: 'final', agenda_item_id: 'agenda-1' })
+      .mockResolvedValueOnce({ id: 'agenda-1', event_id: 'event-1' })
+      .mockResolvedValueOnce([activeVotingParticipant('user-1')])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'offline-1',
+          attendance_status: 'confirmed',
+          participation_channel: 'offline',
+        },
+      ])
+      .mockResolvedValueOnce([voter('voter-1', 'user-1')])
+      .mockResolvedValueOnce([finalParticipation('voter-1')])
+      .mockResolvedValueOnce([]);
+
+    await voteServerMutators.createFinalChoiceDecision.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        id: 'decision-1',
+        vote_id: 'vote-1',
+        choice_id: 'choice-1',
+        voter_participation_id: 'final-participation-voter-1',
+      },
+    });
+
+    expect(updateVoteFn).not.toHaveBeenCalled();
+    expect(tx.mutate.agenda_item.update).not.toHaveBeenCalled();
+  });
+
+  it('closes after the missing confirmed offline final tally is recorded', async () => {
+    const tx = createTx();
+    eventTitleMock.mockResolvedValueOnce('Event One');
+    resolveAmendmentProcessVoteMock.mockResolvedValueOnce({
+      handled: true,
+      amendmentId: 'amendment-1',
+      terminalDecision: 'accepted',
+    });
+    const confirmedOfflineParticipant = {
+      id: 'offline-1',
+      attendance_status: 'confirmed',
+      participation_channel: 'offline',
+    };
+    const finalTally = { phase: 'final', choice_id: 'choice-1', count: 1 };
+
+    tx.run
+      .mockResolvedValueOnce({ id: 'vote-1', agenda_item_id: 'agenda-1' })
+      .mockResolvedValueOnce({ id: 'agenda-1', event_id: 'event-1' })
+      .mockResolvedValueOnce([confirmedOfflineParticipant])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({
+        id: 'vote-1',
+        status: 'final',
+        agenda_item_id: 'agenda-1',
+        title: 'Vote title',
+        majority_type: 'simple',
+      })
+      .mockResolvedValueOnce({ id: 'agenda-1', event_id: 'event-1' })
+      .mockResolvedValueOnce([activeVotingParticipant('user-1')])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([confirmedOfflineParticipant])
+      .mockResolvedValueOnce([voter('voter-1', 'user-1')])
+      .mockResolvedValueOnce([finalParticipation('voter-1')])
+      .mockResolvedValueOnce([finalTally])
+      .mockResolvedValueOnce({
+        id: 'vote-1',
+        status: 'final',
+        agenda_item_id: 'agenda-1',
+        title: 'Vote title',
+        majority_type: 'simple',
+      })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce([
+        { id: 'accept', label: 'accept', order_index: 0 },
+        { id: 'reject', label: 'reject', order_index: 1 },
+      ])
+      .mockResolvedValueOnce([{ choice_id: 'accept' }])
+      .mockResolvedValueOnce([voter('voter-1', 'user-1')])
+      .mockResolvedValueOnce([finalTally])
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 'agenda-1',
+        event_id: 'event-1',
+        title: 'Agenda Item One',
+      });
+
+    await voteServerMutators.upsertOfflineTally.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        vote_id: 'vote-1',
+        phase: 'final',
+        choice_id: 'choice-1',
+        count: 1,
+      },
+    });
+
+    expect(upsertOfflineTallyFn).toHaveBeenCalledTimes(1);
+    expect(updateVoteFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        args: expect.objectContaining({
+          id: 'vote-1',
+          status: 'closed',
+          closed_reason: 'all_voters',
+        }),
+      })
+    );
+  });
+
+  it('still closes expired final votes by time limit', async () => {
+    const tx = createTx();
+    eventTitleMock.mockResolvedValueOnce('Event One');
+    resolveAmendmentProcessVoteMock.mockResolvedValueOnce({
+      handled: true,
+      amendmentId: 'amendment-1',
+      terminalDecision: 'accepted',
+    });
+
+    tx.run
+      .mockResolvedValueOnce([{ id: 'agenda-1' }])
+      .mockResolvedValueOnce([
+        {
+          id: 'vote-1',
+          status: 'final',
+          agenda_item_id: 'agenda-1',
+          title: 'Vote title',
+          majority_type: 'simple',
+          closing_end_time: 1,
+        },
+      ])
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce([
+        { id: 'accept', label: 'accept', order_index: 0 },
+        { id: 'reject', label: 'reject', order_index: 1 },
+      ])
+      .mockResolvedValueOnce([{ choice_id: 'accept' }])
+      .mockResolvedValueOnce([voter('voter-1', 'user-1')])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 'agenda-1',
+        event_id: 'event-1',
+        title: 'Agenda Item One',
+      });
+
+    await voteServerMutators.closeExpiredFinalVotesForEvent.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: { event_id: 'event-1' },
+    });
+
+    expect(tx.mutate.vote.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'vote-1',
+        status: 'closed',
+        closed_reason: 'time_elapsed',
+      })
+    );
+    expect(tx.mutate.agenda_item.update).toHaveBeenCalledWith({
+      id: 'agenda-1',
+      voting_phase: 'closed',
+      updated_at: expect.any(Number),
+    });
+  });
 });
 
 describe('voteServerMutators.updateVote', () => {
@@ -169,11 +536,6 @@ describe('voteServerMutators.updateVote', () => {
         majority_type: 'simple',
       })
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 'agenda-1',
-        event_id: 'event-1',
-        title: 'Agenda Item One',
-      })
       .mockResolvedValueOnce([
         { id: 'accept', label: 'accept', order_index: 0 },
         { id: 'reject', label: 'reject', order_index: 1 },
@@ -184,6 +546,13 @@ describe('voteServerMutators.updateVote', () => {
         { choice_id: 'reject' },
       ])
       .mockResolvedValueOnce([{ id: 'voter-1' }, { id: 'voter-2' }, { id: 'voter-3' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 'agenda-1',
+        event_id: 'event-1',
+        title: 'Agenda Item One',
+      })
       .mockResolvedValueOnce([]);
 
     await voteServerMutators.updateVote.fn({
@@ -218,14 +587,29 @@ describe('voteServerMutators.updateVote', () => {
     tx.run
       .mockResolvedValueOnce({
         id: 'vote-1',
-        status: 'final_vote',
+        status: 'final',
         agenda_item_id: 'agenda-1',
       })
       .mockResolvedValueOnce({
         id: 'agenda-cr-1',
         agenda_item_id: 'agenda-1',
         status: 'voting',
-        is_final_vote: false,
+        is_closing_vote: false,
+        change_request_id: 'cr-1',
+      })
+      .mockResolvedValueOnce([
+        { id: 'accept', label: 'accept', order_index: 0 },
+        { id: 'reject', label: 'reject', order_index: 1 },
+      ])
+      .mockResolvedValueOnce([{ choice_id: 'accept' }])
+      .mockResolvedValueOnce([{ id: 'voter-1' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({
+        id: 'agenda-cr-1',
+        agenda_item_id: 'agenda-1',
+        status: 'voting',
+        is_closing_vote: false,
+        change_request_id: 'cr-1',
       })
       .mockResolvedValueOnce({
         id: 'agenda-1',
@@ -242,7 +626,14 @@ describe('voteServerMutators.updateVote', () => {
     });
 
     expect(notifyProcessVoteResolutionMock).not.toHaveBeenCalled();
+    expect(resolveChangeRequestByVoteResultMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        changeRequestId: 'cr-1',
+        voteResult: 'passed',
+      })
+    );
     expect(fireNotificationMock).not.toHaveBeenCalled();
+    expect(tx.mutate.agenda_item.update).not.toHaveBeenCalled();
   });
 
   it('returns the amendment to event suggesting after a variant vote closes', async () => {
@@ -258,13 +649,21 @@ describe('voteServerMutators.updateVote', () => {
     tx.run
       .mockResolvedValueOnce({
         id: 'vote-variant-1',
-        status: 'final_vote',
+        status: 'final',
         agenda_item_id: 'agenda-1',
         amendment_id: 'amendment-1',
-        purpose: 'variant_selection',
+        purpose: 'merge_variant',
         title: 'Variant vote',
         majority_type: 'relative',
       })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce([
+        { id: 'choice-a', label: 'Variant A', order_index: 0 },
+        { id: 'choice-b', label: 'Variant B', order_index: 1 },
+      ])
+      .mockResolvedValueOnce([{ choice_id: 'choice-a' }])
+      .mockResolvedValueOnce([{ id: 'voter-1' }])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce([{ process_branch_id: 'branch-1' }])
@@ -276,14 +675,7 @@ describe('voteServerMutators.updateVote', () => {
         id: 'agenda-1',
         event_id: 'event-1',
         title: 'Agenda Item One',
-      })
-      .mockResolvedValueOnce([
-        { id: 'choice-a', label: 'Variant A', order_index: 0 },
-        { id: 'choice-b', label: 'Variant B', order_index: 1 },
-      ])
-      .mockResolvedValueOnce([{ choice_id: 'choice-a' }])
-      .mockResolvedValueOnce([{ id: 'voter-1' }])
-      .mockResolvedValueOnce([]);
+      });
 
     await voteServerMutators.updateVote.fn({
       tx: tx as never,
@@ -314,7 +706,7 @@ describe('voteServerMutators.updateVote', () => {
     tx.run
       .mockResolvedValueOnce({
         id: 'vote-cr-1',
-        status: 'final_vote',
+        status: 'final',
         agenda_item_id: 'agenda-1',
         amendment_id: 'amendment-1',
         purpose: 'change_request',
@@ -323,7 +715,21 @@ describe('voteServerMutators.updateVote', () => {
         id: 'agenda-cr-1',
         agenda_item_id: 'agenda-1',
         status: 'voting',
-        is_final_vote: false,
+        is_closing_vote: false,
+        change_request_id: 'cr-1',
+      })
+      .mockResolvedValueOnce([
+        { id: 'accept', label: 'accept', order_index: 0 },
+        { id: 'reject', label: 'reject', order_index: 1 },
+      ])
+      .mockResolvedValueOnce([{ choice_id: 'accept' }])
+      .mockResolvedValueOnce([{ id: 'voter-1' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({
+        id: 'agenda-cr-1',
+        agenda_item_id: 'agenda-1',
+        process_branch_id: 'branch-1',
+        change_request_id: 'cr-1',
       })
       .mockResolvedValueOnce({
         id: 'agenda-cr-1',
@@ -355,6 +761,12 @@ describe('voteServerMutators.updateVote', () => {
       })
     );
     expect(resolveAmendmentProcessVoteMock).not.toHaveBeenCalled();
+    expect(resolveChangeRequestByVoteResultMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        changeRequestId: 'cr-1',
+        voteResult: 'passed',
+      })
+    );
     expect(fireNotificationMock).not.toHaveBeenCalled();
   });
 
@@ -371,25 +783,27 @@ describe('voteServerMutators.updateVote', () => {
     tx.run
       .mockResolvedValueOnce({
         id: 'vote-final-1',
-        status: 'final_vote',
+        status: 'final',
         agenda_item_id: 'agenda-1',
         amendment_id: 'amendment-1',
-        purpose: 'final_amendment',
+        purpose: 'closing',
         title: 'Final amendment vote',
         majority_type: 'simple',
       })
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 'agenda-1',
-        event_id: 'event-1',
-        title: 'Agenda Item One',
-      })
       .mockResolvedValueOnce([
         { id: 'accept', label: 'accept', order_index: 0 },
         { id: 'reject', label: 'reject', order_index: 1 },
       ])
       .mockResolvedValueOnce([{ choice_id: 'accept' }])
       .mockResolvedValueOnce([{ id: 'voter-1' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 'agenda-1',
+        event_id: 'event-1',
+        title: 'Agenda Item One',
+      })
       .mockResolvedValueOnce([]);
 
     await voteServerMutators.updateVote.fn({
@@ -421,21 +835,21 @@ describe('voteServerMutators.updateVote', () => {
         id: 'agenda-cr-1',
         agenda_item_id: 'agenda-1',
         status: 'pending',
-        is_final_vote: false,
+        is_closing_vote: false,
       })
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce({
         id: 'agenda-cr-1',
         agenda_item_id: 'agenda-1',
         status: 'pending',
-        is_final_vote: false,
+        is_closing_vote: false,
       })
       .mockResolvedValueOnce([
         {
           id: 'agenda-cr-1',
           agenda_item_id: 'agenda-1',
           status: 'pending',
-          is_final_vote: false,
+          is_closing_vote: false,
           order_index: 0,
         },
       ])
@@ -453,7 +867,7 @@ describe('voteServerMutators.updateVote', () => {
       ctx: createCtx(),
       args: {
         id: 'vote-cr-1',
-        status: 'final_vote',
+        status: 'final',
       },
     });
 
@@ -498,23 +912,25 @@ describe('voteServerMutators.updateVote', () => {
     tx.run
       .mockResolvedValueOnce({
         id: 'vote-1',
-        status: 'final_open',
+        status: 'final',
         agenda_item_id: 'agenda-1',
         title: 'Vote title',
         majority_type: 'simple',
       })
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({
-        id: 'agenda-1',
-        event_id: 'event-1',
-        title: 'Agenda Item One',
-      })
       .mockResolvedValueOnce([
         { id: 'accept', label: 'accept', order_index: 0 },
         { id: 'reject', label: 'reject', order_index: 1 },
       ])
       .mockResolvedValueOnce([{ choice_id: 'accept' }])
       .mockResolvedValueOnce([{ id: 'voter-1' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 'agenda-1',
+        event_id: 'event-1',
+        title: 'Agenda Item One',
+      })
       .mockResolvedValueOnce([]);
     resolveAmendmentProcessVoteMock.mockResolvedValueOnce(resolution);
 
@@ -564,7 +980,7 @@ describe('voteServerMutators.updateVote', () => {
     tx.run
       .mockResolvedValueOnce({
         id: 'vote-1',
-        status: 'indicative_open',
+        status: 'indicative',
         agenda_item_id: 'agenda-1',
       })
       .mockResolvedValueOnce([])
@@ -575,7 +991,7 @@ describe('voteServerMutators.updateVote', () => {
           id: 'agenda-cr-1',
           agenda_item_id: 'agenda-1',
           status: 'pending',
-          is_final_vote: false,
+          is_closing_vote: false,
         },
       ]);
 
@@ -606,9 +1022,7 @@ describe('voteServerMutators.updateVote', () => {
       })
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce([
-        { id: 'vote-variant-1', status: 'final_open', purpose: 'merge_variant' },
-      ]);
+      .mockResolvedValueOnce([{ id: 'vote-variant-1', status: 'final', purpose: 'merge_variant' }]);
 
     await expect(
       voteServerMutators.updateVote.fn({
@@ -616,7 +1030,7 @@ describe('voteServerMutators.updateVote', () => {
         ctx: createCtx(),
         args: {
           id: 'vote-cr-1',
-          status: 'final_vote',
+          status: 'final',
         },
       })
     ).rejects.toThrow('Another final vote is already active for this agenda item.');
@@ -632,7 +1046,7 @@ describe('voteServerMutators.updateVote', () => {
         id: 'vote-final-1',
         status: 'indicative',
         agenda_item_id: 'agenda-1',
-        purpose: 'final_closing',
+        purpose: 'closing',
       })
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(null)
@@ -644,7 +1058,7 @@ describe('voteServerMutators.updateVote', () => {
           id: 'agenda-cr-1',
           agenda_item_id: 'agenda-1',
           status: 'pending',
-          is_final_vote: false,
+          is_closing_vote: false,
         },
       ]);
 
@@ -654,7 +1068,7 @@ describe('voteServerMutators.updateVote', () => {
         ctx: createCtx(),
         args: {
           id: 'vote-final-1',
-          status: 'final_vote',
+          status: 'final',
         },
       })
     ).rejects.toThrow('All change request votes must be completed before the final vote.');
@@ -668,7 +1082,7 @@ describe('voteServerMutators.updateVote', () => {
     tx.run
       .mockResolvedValueOnce({
         id: 'vote-2',
-        status: 'indicative_open',
+        status: 'indicative',
         agenda_item_id: 'agenda-1',
         purpose: 'change_request',
       })
@@ -677,21 +1091,21 @@ describe('voteServerMutators.updateVote', () => {
         id: 'agenda-cr-2',
         agenda_item_id: 'agenda-1',
         status: 'voting',
-        is_final_vote: false,
+        is_closing_vote: false,
       })
       .mockResolvedValueOnce([
         {
           id: 'agenda-cr-1',
           agenda_item_id: 'agenda-1',
           status: 'pending',
-          is_final_vote: false,
+          is_closing_vote: false,
           order_index: 0,
         },
         {
           id: 'agenda-cr-2',
           agenda_item_id: 'agenda-1',
           status: 'voting',
-          is_final_vote: false,
+          is_closing_vote: false,
           order_index: 1,
         },
       ]);
@@ -717,14 +1131,29 @@ describe('voteServerMutators.updateVote', () => {
     tx.run
       .mockResolvedValueOnce({
         id: 'vote-3',
-        status: 'final_open',
+        status: 'final',
         agenda_item_id: 'agenda-1',
       })
       .mockResolvedValueOnce({
         id: 'agenda-cr-1',
         agenda_item_id: 'agenda-1',
         status: 'voting',
-        is_final_vote: false,
+        is_closing_vote: false,
+        change_request_id: 'cr-1',
+      })
+      .mockResolvedValueOnce([
+        { id: 'accept', label: 'accept', order_index: 0 },
+        { id: 'reject', label: 'reject', order_index: 1 },
+      ])
+      .mockResolvedValueOnce([{ choice_id: 'accept' }])
+      .mockResolvedValueOnce([{ id: 'voter-1' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({
+        id: 'agenda-cr-1',
+        agenda_item_id: 'agenda-1',
+        status: 'voting',
+        is_closing_vote: false,
+        change_request_id: 'cr-1',
       })
       .mockResolvedValueOnce({
         id: 'agenda-1',
@@ -749,8 +1178,140 @@ describe('voteServerMutators.updateVote', () => {
       },
     });
     expect(resolveAmendmentProcessVoteMock).not.toHaveBeenCalled();
+    expect(resolveChangeRequestByVoteResultMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        changeRequestId: 'cr-1',
+        voteResult: 'passed',
+      })
+    );
+    expect(tx.mutate.agenda_item_change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'agenda-cr-1',
+        status: 'completed',
+        result_status: 'passed',
+      })
+    );
     expect(notifyProcessVoteResolutionMock).not.toHaveBeenCalled();
     expect(recomputeEventCountersMock).toHaveBeenCalledWith(tx, 'event-1');
+  });
+
+  it('rejects the linked change request when closing a rejected CR final vote', async () => {
+    const tx = createTx();
+
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'vote-cr-rejected',
+        status: 'final',
+        agenda_item_id: 'agenda-1',
+      })
+      .mockResolvedValueOnce({
+        id: 'agenda-cr-1',
+        agenda_item_id: 'agenda-1',
+        status: 'voting',
+        is_closing_vote: false,
+        change_request_id: 'cr-1',
+      })
+      .mockResolvedValueOnce([
+        { id: 'accept', label: 'accept', order_index: 0 },
+        { id: 'reject', label: 'reject', order_index: 1 },
+      ])
+      .mockResolvedValueOnce([{ choice_id: 'reject' }])
+      .mockResolvedValueOnce([{ id: 'voter-1' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({
+        id: 'agenda-cr-1',
+        agenda_item_id: 'agenda-1',
+        status: 'voting',
+        is_closing_vote: false,
+        change_request_id: 'cr-1',
+      })
+      .mockResolvedValueOnce({
+        id: 'agenda-1',
+        event_id: 'event-1',
+      });
+
+    await voteServerMutators.updateVote.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        id: 'vote-cr-rejected',
+        status: 'closed',
+      },
+    });
+
+    expect(resolveChangeRequestByVoteResultMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        changeRequestId: 'cr-1',
+        voteResult: 'rejected',
+      })
+    );
+    expect(tx.mutate.agenda_item_change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'agenda-cr-1',
+        status: 'completed',
+        result_status: 'rejected',
+      })
+    );
+    expect(resolveAmendmentProcessVoteMock).not.toHaveBeenCalled();
+  });
+
+  it('blocks tied CR final votes without resolving the change request', async () => {
+    const tx = createTx();
+
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'vote-cr-tie',
+        status: 'final',
+        agenda_item_id: 'agenda-1',
+        amendment_id: 'amendment-1',
+        purpose: 'change_request',
+      })
+      .mockResolvedValueOnce({
+        id: 'agenda-cr-1',
+        agenda_item_id: 'agenda-1',
+        status: 'voting',
+        is_closing_vote: false,
+        change_request_id: 'cr-1',
+      })
+      .mockResolvedValueOnce([
+        { id: 'accept', label: 'accept', order_index: 0 },
+        { id: 'reject', label: 'reject', order_index: 1 },
+      ])
+      .mockResolvedValueOnce([{ choice_id: 'accept' }, { choice_id: 'reject' }])
+      .mockResolvedValueOnce([{ id: 'voter-1' }, { id: 'voter-2' }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({
+        id: 'agenda-cr-1',
+        agenda_item_id: 'agenda-1',
+        status: 'voting',
+        is_closing_vote: false,
+        change_request_id: 'cr-1',
+      })
+      .mockResolvedValueOnce({
+        id: 'agenda-1',
+        event_id: 'event-1',
+      });
+
+    await voteServerMutators.updateVote.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        id: 'vote-cr-tie',
+        status: 'closed',
+      },
+    });
+
+    expect(resolveChangeRequestByVoteResultMock).not.toHaveBeenCalled();
+    expect(tx.mutate.agenda_item_change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'agenda-cr-1',
+        status: 'blocked_tie',
+        blocked_reason: 'tie',
+        result_status: 'tie',
+      })
+    );
+    expect(tx.mutate.amendment_process_branch.update).not.toHaveBeenCalled();
+    expect(resolveAmendmentProcessVoteMock).not.toHaveBeenCalled();
   });
 
   it('does not re-resolve already closed votes', async () => {

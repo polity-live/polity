@@ -1,9 +1,9 @@
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { isEditingMode } from '@/zero/amendments/editing-mode-policy';
+import type { AutomaticEventEditingMode } from '@/zero/amendments/editing-mode-policy';
 
 interface UseEditingModeSelectorControllerProps {
   processBranchId: string;
-  currentMode?: string | null;
+  currentMode?: AutomaticEventEditingMode | null;
 }
 
 export function useEditingModeSelectorController({
@@ -12,9 +12,8 @@ export function useEditingModeSelectorController({
 }: UseEditingModeSelectorControllerProps) {
   const { updateEditingMode } = useAmendmentActions();
 
-  const handleModeChange = async (newMode: string) => {
+  const handleModeChange = async (newMode: AutomaticEventEditingMode) => {
     if (newMode === currentMode) return;
-    if (!isEditingMode(newMode)) return;
     await updateEditingMode(processBranchId, newMode);
   };
 

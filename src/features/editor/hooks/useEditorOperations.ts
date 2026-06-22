@@ -47,6 +47,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
   const { createVersion } = useDocumentActions();
   const {
     createChangeRequest,
+    deleteChangeRequest,
     finalizeInternalChangeRequestVote,
     updateChangeRequest,
     voteOnChangeRequest,
@@ -85,6 +86,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
     async (params: {
       id: string;
       crId: string;
+      discussionId?: string | null;
       amendmentId: string;
       processBranchId?: string | null;
       changedCharacterCount?: number;
@@ -93,16 +95,20 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       new_text?: string | null;
       original_properties?: Record<string, string | number | boolean | null> | null;
       new_properties?: Record<string, string | number | boolean | null> | null;
+      status?: string;
+      votingStatus?: string;
     }) => {
       console.log('[useEditorOperations] handleSuggestionCreated called:', params);
+      const status = params.status ?? 'open';
       try {
         await createChangeRequest({
           id: params.id,
           amendment_id: params.amendmentId,
           process_branch_id: params.processBranchId ?? null,
+          discussion_id: params.discussionId ?? null,
           title: params.crId,
           description: '',
-          status: 'open',
+          status,
           source_type: null,
           source_id: null,
           source_title: null,
@@ -113,7 +119,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
           new_properties: params.new_properties ?? null,
           reason: null,
           changed_character_count: params.changedCharacterCount ?? 0,
-          voting_status: 'open',
+          voting_status: params.votingStatus ?? status,
           voting_deadline: null,
           voting_majority_type: null,
           quorum_required: null,
@@ -126,6 +132,50 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       }
     },
     [createChangeRequest]
+  );
+
+  const handlePendingSuggestionSubmitted = useCallback(
+    async (params: {
+      id: string;
+      changedCharacterCount?: number;
+      change_type?: string | null;
+      original_text?: string | null;
+      new_text?: string | null;
+      original_properties?: Record<string, string | number | boolean | null> | null;
+      new_properties?: Record<string, string | number | boolean | null> | null;
+    }) => {
+      try {
+        await updateChangeRequest({
+          id: params.id,
+          status: 'open',
+          voting_status: 'open',
+          change_type: params.change_type ?? null,
+          original_text: params.original_text ?? null,
+          new_text: params.new_text ?? null,
+          original_properties: params.original_properties ?? null,
+          new_properties: params.new_properties ?? null,
+          changed_character_count: params.changedCharacterCount ?? 0,
+        });
+        return true;
+      } catch (error) {
+        console.error('[useEditorOperations] Failed to submit pending change request:', error);
+        return false;
+      }
+    },
+    [updateChangeRequest]
+  );
+
+  const handlePendingSuggestionDiscarded = useCallback(
+    async (changeRequestId: string) => {
+      try {
+        await deleteChangeRequest({ id: changeRequestId });
+        return true;
+      } catch (error) {
+        console.error('[useEditorOperations] Failed to delete pending change request:', error);
+        return false;
+      }
+    },
+    [deleteChangeRequest]
   );
 
   const handleSuggestionAccepted = useCallback(
@@ -185,6 +235,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
               id: changeRequestId,
               amendment_id: amendmentId,
               process_branch_id: processBranchId ?? null,
+              discussion_id: discussion.id,
               title: discussion.crId || 'Change Request',
               description: '',
               status: 'accepted',
@@ -274,6 +325,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
                 id: changeRequestId,
                 amendment_id: amendmentId,
                 process_branch_id: processBranchId ?? null,
+                discussion_id: discussion.id,
                 title: discussion.crId || 'Change Request',
                 description: '',
                 status: 'rejected',
@@ -334,6 +386,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
             id: changeRequestId,
             amendment_id: amendmentId,
             process_branch_id: processBranchId ?? null,
+            discussion_id: discussion.id,
             title: discussion.crId || 'Change Request',
             description: '',
             status: 'pending',
@@ -385,6 +438,8 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
 
   return {
     handleSuggestionCreated,
+    handlePendingSuggestionSubmitted,
+    handlePendingSuggestionDiscarded,
     handleSuggestionAccepted,
     handleSuggestionDeclined,
     handleVoteOnSuggestion,

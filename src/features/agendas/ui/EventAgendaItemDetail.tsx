@@ -9,7 +9,7 @@ import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswo
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
-import { useEventById } from '@/zero/events';
+import { useEventById, useEventParticipantsByParticipatedEventIds } from '@/zero/events';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import type { Value } from 'platejs';
 import type { TDiscussion } from '@/features/editor/types';
@@ -18,19 +18,26 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { useAgendaItemCRVoting, getVotePhase } from '../hooks/useAgendaItemCRVoting';
+import { useAgendaItemCRVoting, getVotePhase, getVoteResult } from '../hooks/useAgendaItemCRVoting';
 import { extractAmendmentCRSummaries } from '../logic/extractAmendmentCRSummaries';
-import { createMockCRTimelineItems } from '../logic/createMockCRTimelineItems';
 import {
-  buildFinalVoteFromAgendaVote,
+  createMockCRTimelineItems,
+  isPendingSubmissionCRTimelineItem,
+} from '../logic/createMockCRTimelineItems';
+import {
+  buildClosingVoteFromAgendaVote,
   buildVariantVoteFromAgendaVote,
   buildVoteSequencePlaceholder,
-} from '../logic/buildFinalVoteFromAgendaVote';
+} from '../logic/buildClosingVoteFromAgendaVote';
 import {
   getVoteStepKind,
   isChangeRequestVotesPlaceholder,
   resolveClosingJumpTarget,
 } from '../logic/voteSequenceJump';
+import {
+  resolveNextStartableVoteSequenceItem,
+  resolveVoteSequenceSelectionUpdate,
+} from '../logic/voteSequenceSelection';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import {
   extractSuggestionContent,
@@ -49,7 +56,6 @@ import {
   buildAmendmentPathVisualizationData,
   findLikelyActiveAmendmentStep,
   getFirstUnresolvedAmendmentStepId,
-  isLikelyActiveAmendmentStep,
 } from '@/features/amendments/logic/buildAmendmentPathVisualizationData';
 import {
   getOfflineTallySuccessMessage,
@@ -64,20 +70,25 @@ import {
 } from '../logic/buildNamedBallotResults';
 import { useDelegateAssemblyParticipantsComposition } from '@/features/events/hooks/useDelegateAssemblyParticipantsComposition';
 import { getEffectiveVotingPhase, resolveAttendanceMode } from '../logic/agendaUiHelpers';
-import {
-  VOTE_STATUS,
-  isFinalClosingVotePurpose,
-  isMergeVariantVotePurpose,
-} from '@/zero/votes/vote-workflow';
+import { VOTE_PHASE, VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
 import {
   buildBranchDiffCandidates,
+  getBranchEditingMode,
   getOrderedBranches,
   type AmendmentProcessBranchSource,
 } from '@/features/amendments/logic/amendmentBranchDisplay';
+import { normalizeEditingMode } from '@/zero/amendments/editing-mode-policy';
 import {
   getSelectableAgendaBranches,
   resolveSelectableAgendaBranchId,
 } from '../logic/selectableAgendaBranches';
+import { logAgendaChangeRequestItems } from '../logic/logAgendaChangeRequestItems';
+import { getFinalVoteActionLabels } from '../logic/finalVoteActionLabels';
+import { buildVoteDialogDocumentPreviewModel } from '../logic/changeRequestDocumentPreview';
+import { resolveClosingVoteForAgendaItem } from '../logic/resolveClosingVoteForAgendaItem';
+import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
+import { computeEligibleFinalVoterCount } from '@/features/votes/logic/computeEligibleVoters';
+import { useAgendaArrowNavigation } from '../hooks/useAgendaArrowNavigation';
 
 function getEffectiveCRVotingPhase(
   item?: {
@@ -89,9 +100,101 @@ function getEffectiveCRVotingPhase(
   if (item.status === 'pending') return 'pending';
 
   const phase = getVotePhase(item as Parameters<typeof getVotePhase>[0]);
-  if (phase === 'final_vote') return 'final_vote';
+  if (phase === 'final') return 'final';
   if (phase === 'closed') return 'closed';
   return 'indication';
+}
+
+type ChangeRequestTimelineIdentitySource = Record<string, any>;
+
+function addTimelineIdentityKey(keys: Set<string>, value: unknown) {
+  if (typeof value !== 'string' && typeof value !== 'number') return;
+  const normalized = String(value).trim();
+  if (normalized.length > 0) keys.add(normalized);
+}
+
+function collectTimelineItemIdentityKeys(item: ChangeRequestTimelineIdentitySource) {
+  const keys = new Set<string>();
+  const changeRequest = item.change_request ?? {};
+  const branchId =
+    item.process_branch_id ??
+    item.processBranchId ??
+    item._processBranchId ??
+    changeRequest.process_branch_id ??
+    changeRequest.processBranchId ??
+    null;
+  const logicalKey =
+    item.logical_key ??
+    item.logicalKey ??
+    changeRequest.logical_key ??
+    changeRequest.logicalKey ??
+    null;
+
+  [
+    item.id,
+    item.change_request_id,
+    item.suggestion_id,
+    item.suggestionId,
+    item.discussion_id,
+    item.discussionId,
+    item.changeRequestEntityId,
+    logicalKey,
+    changeRequest.id,
+    changeRequest.cr_id,
+    changeRequest.crId,
+    changeRequest.display_cr_id,
+    changeRequest.displayCrId,
+    changeRequest.suggestion_id,
+    changeRequest.suggestionId,
+    changeRequest.discussion_id,
+    changeRequest.discussionId,
+    changeRequest.changeRequestEntityId,
+    changeRequest.logical_key,
+    changeRequest.logicalKey,
+  ].forEach(value => addTimelineIdentityKey(keys, value));
+
+  if (branchId && logicalKey) {
+    addTimelineIdentityKey(keys, `${branchId}:${logicalKey}`);
+  }
+
+  if (keys.size === 0) {
+    addTimelineIdentityKey(keys, changeRequest.title);
+  }
+
+  return keys;
+}
+
+function collectCRSummaryIdentityKeys(summary: {
+  id?: string | null;
+  changeRequestEntityId?: string | null;
+  suggestionId?: string | null;
+  discussionId?: string | null;
+  logicalKey?: string | null;
+  processBranchId?: string | null;
+  crId?: string | null;
+  displayCrId?: string | null;
+  title?: string | null;
+}) {
+  const keys = new Set<string>();
+  [
+    summary.id,
+    summary.changeRequestEntityId,
+    summary.suggestionId,
+    summary.discussionId,
+    summary.logicalKey,
+    summary.crId,
+    summary.displayCrId,
+  ].forEach(value => addTimelineIdentityKey(keys, value));
+
+  if (summary.processBranchId && summary.logicalKey) {
+    addTimelineIdentityKey(keys, `${summary.processBranchId}:${summary.logicalKey}`);
+  }
+
+  if (keys.size === 0) {
+    addTimelineIdentityKey(keys, summary.title);
+  }
+
+  return keys;
 }
 
 import { EventAgendaItemDetailView } from './EventAgendaItemDetailView';
@@ -104,7 +207,8 @@ export function EventAgendaItemDetail({
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { updateSpeaker, initializeChangeRequestVoting } = useAgendaActions();
+  const { updateSpeaker, initializeChangeRequestVoting, ensureEventSuggestionChangeRequestVotes } =
+    useAgendaActions();
   const {
     agendaItem,
     event,
@@ -135,6 +239,7 @@ export function EventAgendaItemDetail({
               `${userRecord.first_name ?? ''} ${userRecord.last_name ?? ''}`.trim() || undefined,
             email: userRecord.email ?? undefined,
             avatar: userRecord.avatar ?? undefined,
+            gender: userRecord.gender ?? null,
           }
         : undefined,
     [userRecord]
@@ -157,6 +262,9 @@ export function EventAgendaItemDetail({
   const hasVotingRight = canVote();
   const hasCandidateRight = canBeCandidate();
   const { event: rosterEvent } = useEventById(eventId);
+  const eventParticipantEventIds = useMemo(() => [eventId], [eventId]);
+  const { participants: activeEventParticipants } =
+    useEventParticipantsByParticipatedEventIds(eventParticipantEventIds);
   const attendanceMode = resolveAttendanceMode(rosterEvent);
   const disableVoteButton = attendanceMode === 'offline';
   const allowsOfflineTallies = attendanceMode === 'hybrid' || attendanceMode === 'offline';
@@ -233,6 +341,7 @@ export function EventAgendaItemDetail({
     vote: vote ?? undefined,
     electorId: userElector?.id,
     voterId: userVoter?.id,
+    eventGenderQuotaEnabled: Boolean(event?.gender_quota_enabled),
   });
 
   const [, setMarkingSpeakerComplete] = useState<string | null>(null);
@@ -246,6 +355,10 @@ export function EventAgendaItemDetail({
           []) as readonly AmendmentProcessBranchSource[]
       ),
     [agendaItem?.amendment?.current_process_run?.branches]
+  );
+  const agendaBranchLabelsById = useMemo(
+    () => new Map(agendaProcessBranches.map(branch => [branch.id, branch.title ?? null])),
+    [agendaProcessBranches]
   );
   const selectableAgendaBranchesResult = useMemo(
     () =>
@@ -313,7 +426,13 @@ export function EventAgendaItemDetail({
 
   const agendaBranchDiscussionsRaw =
     agendaProcessBranch?.discussions ?? agendaItem?.amendment?.discussions;
-  const agendaBranchEditingMode = agendaProcessBranch?.editing_mode ?? 'edit';
+  const agendaBranchEditingMode = getBranchEditingMode(agendaProcessBranch);
+  const agendaItemAmendmentEditingMode = normalizeEditingMode(
+    (agendaItem?.amendment as { editing_mode?: string | null } | null | undefined)?.editing_mode
+  );
+  const isEventSuggestionBranchMode =
+    agendaBranchEditingMode === 'suggest_event' ||
+    (!agendaProcessBranch && agendaItemAmendmentEditingMode === 'suggest_event');
 
   const documentContent = (agendaProcessBranch?.document?.content ??
     agendaProcessBranch?.document_version?.content ??
@@ -328,11 +447,42 @@ export function EventAgendaItemDetail({
     [agendaItem?.amendment?.document?.content, selectableAgendaBranches, selectedAgendaBranchId]
   );
   const defaultBranchDiffRightCandidateId = selectedAgendaBranchId;
+  const eventSuggestionChangeRequestSignal = useMemo(
+    () =>
+      (agendaBranchChangeRequests as readonly any[])
+        .map(
+          changeRequest =>
+            `${changeRequest.id ?? ''}:${changeRequest.status ?? ''}:${changeRequest.voting_status ?? ''}:${changeRequest.confirmation_status ?? ''}:${changeRequest.process_branch_id ?? 'main'}`
+        )
+        .sort()
+        .join('|'),
+    [agendaBranchChangeRequests]
+  );
+
+  useEffect(() => {
+    if (!agendaItem?.id || !agendaItem.amendment_id) return;
+    if (!isEventSuggestionBranchMode) return;
+    if (!hasVotingRight && !canManageVoteSequence) return;
+
+    void ensureEventSuggestionChangeRequestVotes({
+      amendment_id: agendaItem.amendment_id,
+      agenda_item_id: agendaItem.id,
+      process_branch_id: selectedAgendaBranchId ?? null,
+    });
+  }, [
+    agendaItem?.amendment_id,
+    agendaItem?.id,
+    canManageVoteSequence,
+    ensureEventSuggestionChangeRequestVotes,
+    eventSuggestionChangeRequestSignal,
+    hasVotingRight,
+    isEventSuggestionBranchMode,
+    selectedAgendaBranchId,
+  ]);
 
   // Build mock CR items for pre-voting display
   const mockCRItems = useMemo(() => {
     if (!agendaItem?.amendment_id) return [];
-    if (crTimeline.length > 0) return [];
 
     const amendment = agendaItem.amendment;
     if (!amendment) return [];
@@ -368,7 +518,26 @@ export function EventAgendaItemDetail({
       }
     );
 
-    return createMockCRTimelineItems(summaries);
+    const timelineKeys = new Set<string>();
+    for (const item of crTimeline) {
+      collectTimelineItemIdentityKeys(item).forEach(key => timelineKeys.add(key));
+    }
+
+    const pendingSummaries = summaries.filter(summary => {
+      const isPending =
+        summary.status === 'pending_submission' ||
+        summary.votingStatus === 'pending_submission' ||
+        summary.confirmationStatus === 'pending' ||
+        summary.changeRequestStatus === 'pending_submission';
+      if (!isPending) return false;
+
+      return (
+        crTimeline.length === 0 ||
+        ![...collectCRSummaryIdentityKeys(summary)].some(value => timelineKeys.has(value))
+      );
+    });
+
+    return createMockCRTimelineItems(pendingSummaries);
   }, [
     agendaBranchChangeRequests,
     agendaBranchDiscussionsRaw,
@@ -376,7 +545,7 @@ export function EventAgendaItemDetail({
     agendaProcessBranches,
     agendaItem?.amendment_id,
     agendaItem?.amendment,
-    crTimeline.length,
+    crTimeline,
   ]);
 
   // Build TDiscussion array from amendment discussions for SuggestionViewToggle mapping
@@ -390,6 +559,9 @@ export function EventAgendaItemDetail({
         process_branch_id: changeRequest.process_branch_id ?? agendaProcessBranch?.id ?? null,
         cr_id: changeRequest.title ?? null,
         title: changeRequest.title ?? null,
+        status: changeRequest.status ?? null,
+        branch_sequence_number: changeRequest.branch_sequence_number ?? null,
+        branchSequenceNumber: changeRequest.branch_sequence_number ?? null,
         created_at: changeRequest.created_at ?? null,
       }))
     );
@@ -410,11 +582,18 @@ export function EventAgendaItemDetail({
           displayCrId: matchingRequest?.displayCrId ?? (d.displayCrId as string) ?? crId,
           branchDisplayNumber: matchingRequest?.branchDisplayNumber,
           branchScopedCrNumber: matchingRequest?.branchScopedCrNumber,
+          branchSequenceNumber:
+            matchingRequest?.branchSequenceNumber ?? (d.branchSequenceNumber as number) ?? null,
           title: (d.title as string) ?? '',
           userId: (d.userId as string) ?? '',
           comments: (d.comments as TDiscussion['comments']) ?? [],
           createdAt: new Date((d.createdAt as number) ?? 0),
           isResolved: (d.isResolved as boolean) ?? false,
+          confirmationStatus:
+            matchingRequest?.status === 'pending_submission'
+              ? 'pending'
+              : ((d.confirmationStatus as TDiscussion['confirmationStatus']) ?? undefined),
+          changeRequestStatus: matchingRequest?.status ?? (d.changeRequestStatus as string) ?? null,
           changeRequestEntityId,
         };
       })(),
@@ -482,18 +661,35 @@ export function EventAgendaItemDetail({
   }, [agendaBranchChangeRequests, documentContent, amendmentDiscussions]);
 
   const hasAmendmentCRs = crTimeline.length > 0 || mockCRItems.length > 0;
-  const decoratedCRTimeline = useMemo(
-    () => decorateBranchScopedTimelineItems(agendaProcessBranches, crTimeline),
-    [agendaProcessBranches, crTimeline]
-  );
-  const branchScopedCRTimeline = useMemo(
+  const decoratedCRTimeline = useMemo(() => {
+    const maxTimelineOrderIndex = crTimeline.reduce((maxOrderIndex, item) => {
+      return typeof item.order_index === 'number'
+        ? Math.max(maxOrderIndex, item.order_index)
+        : maxOrderIndex;
+    }, -1);
+    const supplementalMockItems = (mockCRItems as unknown as ChangeRequestTimelineRow[]).map(
+      (item, index) => ({
+        ...item,
+        order_index:
+          crTimeline.length > 0 && maxTimelineOrderIndex >= 0
+            ? maxTimelineOrderIndex + index + 1
+            : item.order_index,
+      })
+    );
+
+    return decorateBranchScopedTimelineItems(agendaProcessBranches, [
+      ...crTimeline,
+      ...supplementalMockItems,
+    ]);
+  }, [agendaProcessBranches, crTimeline, mockCRItems]);
+  const crDisplayItemsBase = useMemo(
     () => filterTimelineItemsForProcessBranch(decoratedCRTimeline, selectedAgendaBranchId),
     [decoratedCRTimeline, selectedAgendaBranchId]
   );
-  const crDisplayItemsBase =
-    branchScopedCRTimeline.length > 0
-      ? branchScopedCRTimeline
-      : (mockCRItems as unknown as ChangeRequestTimelineRow[]);
+  const votableCRDisplayItemsBase = useMemo(
+    () => crDisplayItemsBase.filter(item => !isPendingSubmissionCRTimelineItem(item)),
+    [crDisplayItemsBase]
+  );
   const crVoteIdsKey = useMemo(
     () =>
       crTimeline
@@ -510,8 +706,8 @@ export function EventAgendaItemDetail({
   const variantVote = useMemo(() => {
     const votes = votesByAgendaItem ?? [];
     return (
-      votes.find((candidate: { purpose?: string | null }) =>
-        isMergeVariantVotePurpose(candidate.purpose)
+      votes.find(
+        (candidate: { purpose?: string | null }) => candidate.purpose === VOTE_PURPOSE.mergeVariant
       ) ??
       votes.find((candidate: { id: string; title?: string | null }) => {
         if (crVoteIds.has(candidate.id)) return false;
@@ -522,64 +718,43 @@ export function EventAgendaItemDetail({
     );
   }, [crVoteIds, votesByAgendaItem]);
 
-  // Synthesize a final vote item from the agenda item's own vote.
-  // If the timeline already includes a final vote (legacy data), prefer that.
-  const timelineHasFinalVote = crDisplayItemsBase.some(i => i.is_final_vote);
-  const finalAmendmentVote = useMemo(() => {
-    const votes = votesByAgendaItem ?? [];
-    return (
-      votes.find((candidate: { purpose?: string | null }) =>
-        isFinalClosingVotePurpose(candidate.purpose)
-      ) ??
-      votes.find((candidate: { id: string; title?: string | null }) => {
-        if (crVoteIds.has(candidate.id) || candidate.id === variantVote?.id) return false;
-        const title = candidate.title?.toLowerCase() ?? '';
-        return title.includes('accept amendment') || title.includes('final');
-      }) ??
-      null
-    );
-  }, [crVoteIds, variantVote?.id, votesByAgendaItem]);
+  const timelineHasClosingVote = crDisplayItemsBase.some(i => i.is_closing_vote);
+  const closingVote = useMemo(
+    () => resolveClosingVoteForAgendaItem([...(votesByAgendaItem ?? []), ...(vote ? [vote] : [])]),
+    [vote, votesByAgendaItem]
+  );
   const timelineHasVariantVote = useMemo(
-    () =>
-      crTimeline.some(
-        item =>
-          getVoteStepKind(item) === 'variant_selection' || getVoteStepKind(item) === 'merge_variant'
-      ),
+    () => crTimeline.some(item => getVoteStepKind(item) === 'merge_variant'),
     [crTimeline]
   );
   const synthesizedVariantVoteItem = useMemo(() => {
     if (!variantVote || !agendaItem?.amendment_id || timelineHasVariantVote) return null;
     return buildVariantVoteFromAgendaVote(variantVote, 0) as unknown as ChangeRequestTimelineRow;
   }, [agendaItem?.amendment_id, timelineHasVariantVote, variantVote]);
-  const synthesizedFinalVoteItem = useMemo(() => {
-    if (timelineHasFinalVote) return null;
-    const fallbackFinalVote =
-      !variantVote && !isMergeVariantVotePurpose(vote?.purpose) ? vote : null;
-    const voteForFinal = finalAmendmentVote ?? fallbackFinalVote;
-    if (!voteForFinal || !agendaItem?.amendment_id) return null;
-    const orderIndex = crDisplayItemsBase.length + (synthesizedVariantVoteItem ? 1 : 0);
-    return buildFinalVoteFromAgendaVote(
-      voteForFinal,
+  const synthesizedClosingVoteItem = useMemo(() => {
+    if (timelineHasClosingVote) return null;
+    if (!closingVote || !agendaItem?.amendment_id) return null;
+    const orderIndex = votableCRDisplayItemsBase.length + (synthesizedVariantVoteItem ? 1 : 0);
+    return buildClosingVoteFromAgendaVote(
+      closingVote,
       orderIndex
     ) as unknown as ChangeRequestTimelineRow;
   }, [
     agendaItem?.amendment_id,
-    crDisplayItemsBase.length,
-    finalAmendmentVote,
+    votableCRDisplayItemsBase.length,
+    closingVote,
     synthesizedVariantVoteItem,
-    timelineHasFinalVote,
-    variantVote,
-    vote,
+    timelineHasClosingVote,
   ]);
   const changeRequestVotesPlaceholderItem = useMemo(() => {
-    if (!synthesizedVariantVoteItem || crDisplayItemsBase.length > 0 || !agendaItem?.id) {
+    if (!synthesizedVariantVoteItem || votableCRDisplayItemsBase.length > 0 || !agendaItem?.id) {
       return null;
     }
 
     const changeRequestVotesWereSkipped =
-      finalAmendmentVote?.status === VOTE_STATUS.finalOpen ||
-      finalAmendmentVote?.status === 'final_vote' ||
-      finalAmendmentVote?.status === 'closed';
+      closingVote?.status === VOTE_PHASE.final ||
+      closingVote?.status === 'final' ||
+      closingVote?.status === 'closed';
 
     return {
       ...buildVoteSequencePlaceholder({
@@ -603,16 +778,16 @@ export function EventAgendaItemDetail({
     } as unknown as ChangeRequestTimelineRow;
   }, [
     agendaItem?.id,
-    crDisplayItemsBase.length,
-    finalAmendmentVote?.status,
+    votableCRDisplayItemsBase.length,
+    closingVote?.status,
     synthesizedVariantVoteItem,
     t,
   ]);
-  const finalVotePlaceholderItem = useMemo(() => {
+  const closingVotePlaceholderItem = useMemo(() => {
     if (
       !synthesizedVariantVoteItem ||
-      synthesizedFinalVoteItem ||
-      timelineHasFinalVote ||
+      synthesizedClosingVoteItem ||
+      timelineHasClosingVote ||
       !agendaItem?.id
     ) {
       return null;
@@ -620,13 +795,13 @@ export function EventAgendaItemDetail({
 
     const orderIndex =
       (synthesizedVariantVoteItem ? 1 : 0) +
-      crDisplayItemsBase.length +
+      votableCRDisplayItemsBase.length +
       (changeRequestVotesPlaceholderItem ? 1 : 0);
 
     return buildVoteSequencePlaceholder({
       agendaItemId: agendaItem.id,
       orderIndex,
-      kind: 'final_amendment_placeholder',
+      kind: 'closing_placeholder',
       title: t('features.agendas.crTimeline.finalVotePlaceholder', 'Final vote'),
       description: t(
         'features.agendas.crTimeline.finalVotePlaceholderDescription',
@@ -636,33 +811,32 @@ export function EventAgendaItemDetail({
   }, [
     agendaItem?.id,
     changeRequestVotesPlaceholderItem,
-    crDisplayItemsBase.length,
-    synthesizedFinalVoteItem,
+    votableCRDisplayItemsBase.length,
+    synthesizedClosingVoteItem,
     synthesizedVariantVoteItem,
-    timelineHasFinalVote,
+    timelineHasClosingVote,
     t,
   ]);
 
-  // Combine CR items + synthesized final vote
+  // Combine CR items + synthesized closing vote
   const crDisplayItems = useMemo(() => {
     return [
       ...(synthesizedVariantVoteItem ? [synthesizedVariantVoteItem] : []),
       ...(changeRequestVotesPlaceholderItem ? [changeRequestVotesPlaceholderItem] : []),
       ...crDisplayItemsBase,
-      ...(synthesizedFinalVoteItem ? [synthesizedFinalVoteItem] : []),
-      ...(finalVotePlaceholderItem ? [finalVotePlaceholderItem] : []),
+      ...(synthesizedClosingVoteItem ? [synthesizedClosingVoteItem] : []),
+      ...(closingVotePlaceholderItem ? [closingVotePlaceholderItem] : []),
     ];
   }, [
     changeRequestVotesPlaceholderItem,
+    closingVotePlaceholderItem,
     crDisplayItemsBase,
-    finalVotePlaceholderItem,
-    synthesizedFinalVoteItem,
+    synthesizedClosingVoteItem,
     synthesizedVariantVoteItem,
   ]);
 
-  // Derive the effective final vote item (from timeline or synthesized)
-  const effectiveFinalVoteItem = useMemo(
-    () => crDisplayItems.find(i => i.is_final_vote) ?? null,
+  const effectiveClosingVoteItem = useMemo(
+    () => crDisplayItems.find(i => i.is_closing_vote) ?? null,
     [crDisplayItems]
   );
 
@@ -674,13 +848,16 @@ export function EventAgendaItemDetail({
     () =>
       crDisplayItemsBase.filter(
         item =>
-          !item.is_final_vote &&
-          getVoteStepKind(item) !== 'variant_selection' &&
+          !item.is_closing_vote &&
+          !isPendingSubmissionCRTimelineItem(item) &&
           getVoteStepKind(item) !== 'merge_variant'
       ),
     [crDisplayItemsBase]
   );
-  const sequenceDisplayItems = crDisplayItems;
+  const sequenceDisplayItems = useMemo(
+    () => crDisplayItems.filter(item => !isPendingSubmissionCRTimelineItem(item)),
+    [crDisplayItems]
+  );
   const sequenceCompletedItems = useMemo(
     () => sequenceDisplayItems.filter(item => item.status === 'completed'),
     [sequenceDisplayItems]
@@ -688,8 +865,8 @@ export function EventAgendaItemDetail({
   const isVoteSequenceActive = Boolean(agendaItem?.amendment_id && sequenceDisplayItems.length > 0);
   const currentSequenceItem = useMemo(
     () =>
-      sequenceDisplayItems.find(item => item.vote?.status === VOTE_STATUS.finalOpen) ??
-      sequenceDisplayItems.find(item => item.vote?.status === 'final_vote') ??
+      sequenceDisplayItems.find(item => item.vote?.status === VOTE_PHASE.final) ??
+      sequenceDisplayItems.find(item => item.vote?.status === 'final') ??
       (currentCRItem ? sequenceDisplayItems.find(item => item.id === currentCRItem.id) : null) ??
       sequenceDisplayItems.find(item => item.status !== 'completed') ??
       null,
@@ -698,25 +875,22 @@ export function EventAgendaItemDetail({
 
   const fallbackSelectedCRItemId = useMemo(() => {
     if (currentSequenceItem?.id) return currentSequenceItem.id;
-    return effectiveFinalVoteItem?.id ?? null;
-  }, [currentSequenceItem?.id, effectiveFinalVoteItem?.id]);
+    return effectiveClosingVoteItem?.id ?? null;
+  }, [currentSequenceItem?.id, effectiveClosingVoteItem?.id]);
 
   useEffect(() => {
-    if (currentSequenceItem?.id && currentSequenceItem.id !== selectedCRToolbarItemId) {
-      setSelectedCRToolbarItemId(currentSequenceItem.id);
-      return;
-    }
+    const nextSelectedItemId = resolveVoteSequenceSelectionUpdate({
+      selectedItemId: selectedCRToolbarItemId,
+      sequenceItems: sequenceDisplayItems,
+      fallbackItemId: fallbackSelectedCRItemId,
+      currentItemId: currentSequenceItem?.id ?? null,
+    });
 
-    const selectedItemStillExists = selectedCRToolbarItemId
-      ? sequenceDisplayItems.some(item => item.id === selectedCRToolbarItemId)
-      : false;
-
-    if (!selectedItemStillExists && fallbackSelectedCRItemId) {
-      setSelectedCRToolbarItemId(fallbackSelectedCRItemId);
+    if (nextSelectedItemId !== undefined) {
+      setSelectedCRToolbarItemId(nextSelectedItemId);
     }
   }, [
     currentSequenceItem?.id,
-    effectiveFinalVoteItem?.id,
     fallbackSelectedCRItemId,
     selectedCRToolbarItemId,
     sequenceDisplayItems,
@@ -729,11 +903,19 @@ export function EventAgendaItemDetail({
       null,
     [fallbackSelectedCRItemId, selectedCRToolbarItemId, sequenceDisplayItems]
   );
+  const nextStartableSequenceItem = useMemo(
+    () =>
+      resolveNextStartableVoteSequenceItem({
+        selectedItemId: selectedCRToolbarItem?.id ?? selectedCRToolbarItemId,
+        sequenceItems: sequenceDisplayItems,
+      }),
+    [selectedCRToolbarItem?.id, selectedCRToolbarItemId, sequenceDisplayItems]
+  );
 
   const isCRToolbarActive =
     !!agendaItem?.amendment_id && sequenceDisplayItems.length > 0 && !!selectedCRToolbarItem;
   const selectedCRPhase = getEffectiveCRVotingPhase(selectedCRToolbarItem);
-  const isSelectedCRFinalVote = !!selectedCRToolbarItem?.is_final_vote;
+  const isSelectedClosingVote = !!selectedCRToolbarItem?.is_closing_vote;
   const hasUserVotedOnSelectedCR = useMemo(
     () => (selectedCRToolbarItem ? hasUserVotedOnCR(selectedCRToolbarItem) : false),
     [hasUserVotedOnCR, selectedCRToolbarItem]
@@ -769,6 +951,24 @@ export function EventAgendaItemDetail({
       setSelectedCRToolbarItemId(nextItem.id);
     }
   }, [selectedCRToolbarItem, sequenceDisplayItems, selectedCRToolbarIndex]);
+
+  const isCRArrowNavigationActive = canManageAgenda && isCRToolbarActive;
+  useAgendaArrowNavigation({
+    agendaNav,
+    changeRequestNav: {
+      enabled: isCRArrowNavigationActive,
+      hasPrevious: hasPreviousChangeRequest,
+      hasNext: hasNextChangeRequest,
+      onPrevious: handlePreviousChangeRequest,
+      onNext: handleNextChangeRequest,
+    },
+  });
+
+  const handleJumpToNextStartableSequenceItem = useCallback(() => {
+    if (nextStartableSequenceItem?.id) {
+      setSelectedCRToolbarItemId(nextStartableSequenceItem.id);
+    }
+  }, [nextStartableSequenceItem?.id]);
 
   const handleStartSequenceFinalVote = useCallback(
     async (itemId: string) => {
@@ -813,7 +1013,7 @@ export function EventAgendaItemDetail({
       if (!item?.vote) return;
 
       if (getVoteStepKind(item)) {
-        await updateAgendaVote({ id: item.vote.id, status: VOTE_STATUS.finalOpen });
+        await updateAgendaVote({ id: item.vote.id, status: VOTE_PHASE.final });
         return;
       }
 
@@ -829,6 +1029,21 @@ export function EventAgendaItemDetail({
       t,
       updateAgendaVote,
     ]
+  );
+
+  const handleStartSequenceIndicativeVote = useCallback(
+    async (itemId: string) => {
+      const item = sequenceDisplayItems.find(sequenceItem => sequenceItem.id === itemId);
+      if (!item?.vote) return;
+
+      if (getVoteStepKind(item)) {
+        await updateAgendaVote({ id: item.vote.id, status: VOTE_PHASE.indicative });
+        return;
+      }
+
+      await startIndicativePhase(itemId);
+    },
+    [sequenceDisplayItems, startIndicativePhase, updateAgendaVote]
   );
 
   const handleCloseSequenceVoting = useCallback(
@@ -890,12 +1105,10 @@ export function EventAgendaItemDetail({
     const placeholderTitle = (selectedCRToolbarItem as { _placeholderTitle?: string | null })
       ._placeholderTitle;
     if (placeholderTitle) return placeholderTitle;
-    if (
-      (selectedCRToolbarItem as { _voteStepKind?: string })._voteStepKind === 'variant_selection'
-    ) {
+    if ((selectedCRToolbarItem as { _voteStepKind?: string })._voteStepKind === 'merge_variant') {
       return selectedCRToolbarItem.vote?.title ?? 'Variant final vote';
     }
-    if (selectedCRToolbarItem.is_final_vote) {
+    if (selectedCRToolbarItem.is_closing_vote) {
       return t('features.agendas.crTimeline.acceptAmendment');
     }
 
@@ -927,10 +1140,47 @@ export function EventAgendaItemDetail({
   );
 
   const selectedCRDialogPhase = useMemo(() => {
-    if (selectedCRPhase === 'final_vote') return 'final_vote' as const;
+    if (selectedCRPhase === 'final') return 'final' as const;
     if (selectedCRPhase === 'closed') return 'closed' as const;
     return 'indication' as const;
   }, [selectedCRPhase]);
+  const voteDialogDocumentPreviewModel = useMemo(
+    () =>
+      buildVoteDialogDocumentPreviewModel({
+        activeItem: isCRToolbarActive ? selectedCRToolbarItem : null,
+        items: sequenceDisplayItems,
+        discussions: amendmentDiscussions,
+        isVotingActive: true,
+        getVoteResult,
+      }),
+    [amendmentDiscussions, isCRToolbarActive, selectedCRToolbarItem, sequenceDisplayItems]
+  );
+  const voteDialogDocumentPreviewContent = useMemo(() => {
+    if (!documentContent || !agendaItem?.amendment_id || !voteDialogDocumentPreviewModel) {
+      return null;
+    }
+
+    return (
+      <CREditorPreview
+        documentContent={documentContent}
+        suggestionIds={voteDialogDocumentPreviewModel.suggestionIds}
+        suggestionResolutions={voteDialogDocumentPreviewModel.suggestionResolutions}
+        editingMode={agendaBranchEditingMode}
+        amendmentId={agendaItem.amendment_id}
+        userId={user?.id}
+        userRecord={mappedUserRecord}
+        agendaItemId={agendaItem.id}
+      />
+    );
+  }, [
+    agendaBranchEditingMode,
+    agendaItem?.amendment_id,
+    agendaItem?.id,
+    documentContent,
+    mappedUserRecord,
+    user?.id,
+    voteDialogDocumentPreviewModel,
+  ]);
   const agendaForwardingPreview = useMemo(() => {
     const nextStepRun = forwardingContext.nextStepRun;
     if (!nextStepRun?.event) {
@@ -955,7 +1205,7 @@ export function EventAgendaItemDetail({
     }
 
     const shouldShowPreview = isCRToolbarActive
-      ? isSelectedCRFinalVote
+      ? isSelectedClosingVote
       : Boolean(agendaItem?.amendment_id && vote);
 
     return shouldShowPreview ? agendaForwardingPreview : null;
@@ -963,7 +1213,7 @@ export function EventAgendaItemDetail({
     agendaForwardingPreview,
     agendaItem?.amendment_id,
     isCRToolbarActive,
-    isSelectedCRFinalVote,
+    isSelectedClosingVote,
     vote,
   ]);
   const mergeVariantCandidates = useMemo<MergeVariantCandidate[]>(() => {
@@ -1028,80 +1278,23 @@ export function EventAgendaItemDetail({
   );
 
   useEffect(() => {
-    console.log('PROCESS LOG [event-agenda-item-detail][amendment-flow]', {
-      eventId,
+    logAgendaChangeRequestItems('agenda-details', {
       agendaItemId,
       amendmentId: agendaItem?.amendment_id ?? null,
-      processRunId: forwardingContext.processRun?.id ?? null,
-      storedActiveBranchId: forwardingContext.processRun?.active_branch_id ?? null,
-      resolvedActiveBranchId: detailResolvedActiveBranchId,
-      activeBranchId: forwardingContext.currentStepRun?.branch?.id ?? null,
-      firstUnresolvedStepId: detailFirstUnresolvedStepId,
-      derivedActiveStepRun: detailDerivedActiveStepRun
-        ? {
-            id: detailDerivedActiveStepRun.id,
-            branchId: detailDerivedActiveStepRun.branch_id ?? null,
-            order: detailDerivedActiveStepRun.order_index,
-            status: detailDerivedActiveStepRun.status ?? null,
-            decisionStatus: detailDerivedActiveStepRun.decision_status ?? null,
-          }
-        : null,
-      currentRunStepRuns: forwardingContext.processRunStepRuns.map(step => ({
-        id: step.id,
-        branchId: step.branch_id ?? null,
-        order: step.order_index,
-        groupName: step.target_group?.name ?? step.workflow_step?.label ?? null,
-        status: step.status ?? null,
-        decisionStatus: step.decision_status ?? null,
-        eventId: step.event_id ?? null,
-        isLikelyActive: isLikelyActiveAmendmentStep(step),
-      })),
-      branchStepRuns: forwardingContext.branchStepRuns.map(step => ({
-        id: step.id,
-        branchId: step.branch_id ?? null,
-        order: step.order_index,
-        groupName: step.target_group?.name ?? step.workflow_step?.label ?? null,
-        status: step.status ?? null,
-        decisionStatus: step.decision_status ?? null,
-        eventId: step.event_id ?? null,
-        hasOpenScheduleTask: Boolean(
-          step.tasks?.some(task => task.task_type === 'schedule_event' && task.status === 'open')
-        ),
-        isLikelyActive: isLikelyActiveAmendmentStep(step),
-      })),
-      stepRuns: forwardingContext.branchStepRuns.map(step => ({
-        id: step.id,
-        branchId: step.branch_id ?? null,
-        order: step.order_index,
-        groupName: step.target_group?.name ?? step.workflow_step?.label ?? null,
-        status: step.status ?? null,
-        decisionStatus: step.decision_status ?? null,
-        eventId: step.event_id ?? null,
-        isLikelyActive: isLikelyActiveAmendmentStep(step),
-      })),
-      visualization: detailPathVisualizationData.map(segment => ({
-        order: segment.order,
-        groupName: segment.groupName,
-        forwardingStatus: segment.forwardingStatus,
-        rawStatus: segment.rawStatus ?? null,
-        rawDecisionStatus: segment.rawDecisionStatus ?? null,
-        isActiveStep: segment.isActiveStep ?? false,
-      })),
+      editingMode: agendaBranchEditingMode,
+      selectedBranchId: selectedAgendaBranchId,
+      selectedItemId: selectedCRToolbarItem?.id ?? null,
+      items: crDisplayItems,
+      pendingDisplayItems: mockCRItems as unknown as ChangeRequestTimelineRow[],
     });
   }, [
+    agendaBranchEditingMode,
     agendaItem?.amendment_id,
     agendaItemId,
-    detailDerivedActiveStepRun,
-    detailFirstUnresolvedStepId,
-    detailPathVisualizationData,
-    detailResolvedActiveBranchId,
-    eventId,
-    forwardingContext.branchStepRuns,
-    forwardingContext.currentStepRun?.branch?.id,
-    forwardingContext.currentStepRun?.branch_id,
-    forwardingContext.processRun?.active_branch_id,
-    forwardingContext.processRun?.id,
-    forwardingContext.processRunStepRuns,
+    crDisplayItems,
+    mockCRItems,
+    selectedAgendaBranchId,
+    selectedCRToolbarItem?.id,
   ]);
 
   const toolbarVotingPhase = isCRToolbarActive ? selectedCRPhase : effectiveVotingPhase;
@@ -1132,30 +1325,38 @@ export function EventAgendaItemDetail({
     return agendaNav.activateAgendaItem(agendaItem.id);
   }, [agendaItem, agendaNav]);
 
+  const selectedFinalVoteActionLabels = isCRToolbarActive
+    ? getFinalVoteActionLabels({
+        item: selectedCRToolbarItem,
+        agendaTitle: agendaItem?.title ?? null,
+        amendmentTitle: agendaItem?.amendment?.title ?? null,
+        branchLabelsById: agendaBranchLabelsById,
+        fallbackTarget: selectedCRTitle ?? 'Step',
+      })
+    : null;
+
   const startVoteTooltip = isCRToolbarActive
     ? isChangeRequestVotesPlaceholder(selectedCRToolbarItem) && nonFinalCRItems.length === 0
       ? t('features.agendas.crTimeline.jumpToFinalVote', 'Jump to final vote')
-      : `Start final vote: ${selectedCRTitle ?? 'Step'}`
+      : selectedFinalVoteActionLabels?.start
     : undefined;
 
   const startFinalVoteTooltip = isCRToolbarActive
     ? isChangeRequestVotesPlaceholder(selectedCRToolbarItem) && nonFinalCRItems.length === 0
       ? t('features.agendas.crTimeline.jumpToFinalVote', 'Jump to final vote')
-      : `Start final vote: ${selectedCRTitle ?? 'Step'}`
+      : selectedFinalVoteActionLabels?.start
     : undefined;
 
-  const closeVoteTooltip = isCRToolbarActive
-    ? `Close final vote: ${selectedCRTitle ?? 'Step'}`
-    : undefined;
+  const closeVoteTooltip = isCRToolbarActive ? selectedFinalVoteActionLabels?.close : undefined;
 
   const castIndicativeVoteTooltip = isCRToolbarActive
-    ? isSelectedCRFinalVote
+    ? isSelectedClosingVote
       ? t('features.events.agenda.actions.castIndicativeVote')
       : t('features.agendas.crTimeline.castIndicative')
     : undefined;
 
   const castFinalVoteTooltip = isCRToolbarActive
-    ? isSelectedCRFinalVote
+    ? isSelectedClosingVote
       ? t('features.events.agenda.actions.castFinalVote')
       : t('features.agendas.crTimeline.castFinal')
     : undefined;
@@ -1211,6 +1412,7 @@ export function EventAgendaItemDetail({
               undefined,
             email: speaker.user.email ?? undefined,
             avatar: speaker.user.avatar ?? undefined,
+            gender: speaker.user.gender ?? null,
           }
         : undefined,
     }));
@@ -1241,6 +1443,17 @@ export function EventAgendaItemDetail({
       ),
     [rosterEvent?.offline_participants]
   );
+  const eligibleFinalVoterCount = useMemo(
+    () =>
+      computeEligibleFinalVoterCount({
+        participants:
+          activeEventParticipants.length > 0
+            ? activeEventParticipants
+            : (rosterEvent?.participants ?? []),
+        offlineParticipants: rosterEvent?.offline_participants ?? [],
+      }),
+    [activeEventParticipants, rosterEvent?.offline_participants, rosterEvent?.participants]
+  );
 
   // Derive election/vote data for section components
   const indicativeSelections = useMemo(
@@ -1254,7 +1467,7 @@ export function EventAgendaItemDetail({
   const userHasElectionVoted = useMemo(() => {
     if (!userElector) return false;
     const phase = election?.status;
-    if (phase === 'final' || phase === 'final_vote' || phase === VOTE_STATUS.finalOpen) {
+    if (phase === VOTE_PHASE.final) {
       return (election?.final_participations ?? []).some(
         (p: { elector_id?: string | null }) => p.elector_id === userElector.id
       );
@@ -1268,7 +1481,7 @@ export function EventAgendaItemDetail({
     if (!userElector) return [];
     const phase = election?.status;
     const participations =
-      phase === 'final' || phase === 'final_vote' || phase === VOTE_STATUS.finalOpen
+      phase === VOTE_PHASE.final
         ? (election?.final_participations ?? [])
         : (election?.indicative_participations ?? []);
     const userPart = participations.find(
@@ -1302,7 +1515,7 @@ export function EventAgendaItemDetail({
   const userHasVoteVoted = useMemo(() => {
     if (!userVoter) return false;
     const phase = vote?.status;
-    if (phase === 'final' || phase === 'final_vote' || phase === VOTE_STATUS.finalOpen) {
+    if (phase === VOTE_PHASE.final) {
       return (vote?.final_participations ?? []).some(
         (p: { voter_id?: string | null }) => p.voter_id === userVoter.id
       );
@@ -1316,7 +1529,7 @@ export function EventAgendaItemDetail({
     if (!userVoter) return [];
     const phase = vote?.status;
     const participations =
-      phase === 'final' || phase === 'final_vote' || phase === VOTE_STATUS.finalOpen
+      phase === VOTE_PHASE.final
         ? (vote?.final_participations ?? [])
         : (vote?.indicative_participations ?? []);
     const userPart = participations.find(
@@ -1624,7 +1837,7 @@ export function EventAgendaItemDetail({
       allCRsProcessed={allCRsProcessed}
       hasUserVotedOnCR={hasUserVotedOnCR}
       getUserSelectedChoiceIds={getUserSelectedChoiceIds}
-      startIndicativePhase={startIndicativePhase}
+      startIndicativePhase={handleStartSequenceIndicativeVote}
       startFinalPhase={startFinalPhase}
       closeVoting={closeVoting}
       castCRVote={castCRVote}
@@ -1639,23 +1852,26 @@ export function EventAgendaItemDetail({
       hasAmendmentCRs={hasAmendmentCRs}
       crDisplayItemsBase={crDisplayItemsBase}
       isCRVotingActive={isVoteSequenceActive}
-      timelineHasFinalVote={timelineHasFinalVote}
-      synthesizedFinalVoteItem={synthesizedFinalVoteItem}
+      timelineHasClosingVote={timelineHasClosingVote}
+      synthesizedClosingVoteItem={synthesizedClosingVoteItem}
       crDisplayItems={crDisplayItems}
-      effectiveFinalVoteItem={effectiveFinalVoteItem}
+      effectiveClosingVoteItem={effectiveClosingVoteItem}
       isVoteInCRList={isVoteInCRList}
       nonFinalCRItems={nonFinalCRItems}
       fallbackSelectedCRItemId={fallbackSelectedCRItemId}
       selectedCRToolbarItem={selectedCRToolbarItem}
+      currentCRSequenceItemId={currentSequenceItem?.id ?? null}
+      nextStartableSequenceItem={nextStartableSequenceItem}
       isCRToolbarActive={isCRToolbarActive}
       selectedCRPhase={selectedCRPhase}
-      isSelectedCRFinalVote={isSelectedCRFinalVote}
+      isSelectedClosingVote={isSelectedClosingVote}
       hasUserVotedOnSelectedCR={hasUserVotedOnSelectedCR}
       selectedCRToolbarIndex={selectedCRToolbarIndex}
       hasPreviousChangeRequest={hasPreviousChangeRequest}
       hasNextChangeRequest={hasNextChangeRequest}
       handlePreviousChangeRequest={handlePreviousChangeRequest}
       handleNextChangeRequest={handleNextChangeRequest}
+      handleJumpToNextStartableSequenceItem={handleJumpToNextStartableSequenceItem}
       handleStartSequenceFinalVote={handleStartSequenceFinalVote}
       handleToolbarStartVote={handleToolbarStartVote}
       handleToolbarStartFinalVote={handleToolbarStartFinalVote}
@@ -1664,6 +1880,7 @@ export function EventAgendaItemDetail({
       selectedCRTitle={selectedCRTitle}
       selectedCRChoices={selectedCRChoices}
       selectedCRDialogPhase={selectedCRDialogPhase}
+      voteDialogDocumentPreviewContent={voteDialogDocumentPreviewContent}
       agendaForwardingPreview={agendaForwardingPreview}
       voteDialogForwardingPreview={voteDialogForwardingPreview}
       mergeVariantCandidates={mergeVariantCandidates}
@@ -1685,12 +1902,14 @@ export function EventAgendaItemDetail({
       castFinalVoteTooltip={castFinalVoteTooltip}
       handleMarkSpeakerCompleted={handleMarkSpeakerCompleted}
       speakerListData={speakerListData}
+      showSpeakerGender={Boolean(event?.gender_quota_enabled)}
       isUserInSpeakerList={isUserInSpeakerList}
       activeRosterParticipants={activeRosterParticipants}
       isDelegateAssembly={isDelegateAssembly}
       participantsWithProvenance={participantsWithProvenance}
       eligibleParticipantsForNamedResults={eligibleParticipantsForNamedResults}
       confirmedOfflineParticipants={confirmedOfflineParticipants}
+      eligibleFinalVoterCount={eligibleFinalVoterCount}
       indicativeSelections={indicativeSelections}
       finalSelections={finalSelections}
       userHasElectionVoted={userHasElectionVoted}

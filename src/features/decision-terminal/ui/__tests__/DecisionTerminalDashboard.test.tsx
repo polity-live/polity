@@ -423,8 +423,8 @@ describe('DecisionTerminal dashboard', () => {
   it('uses a real Vote button and opens the vote dialog instead of dragging content', () => {
     render(<DecisionTerminal decisions={[decision()]} />);
 
-    expect(screen.queryByText('timeline.terminal.voteSupport')).toBeNull();
-    expect(screen.queryByText('timeline.terminal.voteOppose')).toBeNull();
+    expect(screen.queryByText('features.timeline.terminal.voteSupport')).toBeNull();
+    expect(screen.queryByText('features.timeline.terminal.voteOppose')).toBeNull();
 
     fireEvent.click(screen.getAllByRole('button', { name: /^Vote$/ })[0]);
 

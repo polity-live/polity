@@ -4,7 +4,6 @@ import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
-import storybook from 'eslint-plugin-storybook';
 
 export default tseslint.config(
   {
@@ -14,7 +13,6 @@ export default tseslint.config(
       'src/ui/ui/**/*',
       'src/ui/ui-platejs/**/*',
       '.github/**/*',
-      '.storybook/**/*',
       '.next/**/*',
       '.output/**/*',
       '.vinxi/**/*',
@@ -32,7 +30,6 @@ export default tseslint.config(
     plugins: {
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
-      storybook: storybook,
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
@@ -59,6 +56,5 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
     },
-  },
-  storybook.configs['flat/recommended']
+  }
 );

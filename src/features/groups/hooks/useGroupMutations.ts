@@ -15,7 +15,7 @@ export function useGroupMutations(groupId: string) {
     inviteMember,
     inviteGuest,
     revokeGuestAccess,
-    updateMemberRole,
+    updateMembership,
     syncMembershipRoles,
     acceptGuestInvitation,
     leaveGroup: leaveGroupAction,
@@ -214,7 +214,7 @@ export function useGroupMutations(groupId: string) {
         membershipUserId: userId,
       });
 
-      const result = updateMemberRole({
+      const result = updateMembership({
         id: membershipId,
         status: 'active',
       });
@@ -581,7 +581,7 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      await updateMemberRole({
+      await updateMembership({
         id: membershipId,
         status: 'admin',
       });
@@ -612,7 +612,7 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      await updateMemberRole({
+      await updateMembership({
         id: membershipId,
         status: 'active',
       });

@@ -133,19 +133,25 @@ function getResultSnapshot(decision: DecisionItem): ResultSnapshotEntry[] {
   return [
     {
       key: 'vote:support',
-      label: decision.choices?.[0]?.label ?? translateText('timeline.terminal.support', 'Support'),
+      label:
+        decision.choices?.[0]?.label ??
+        translateText('features.timeline.terminal.support', 'Support'),
       value: votes.support,
       tone: 'success',
     },
     {
       key: 'vote:oppose',
-      label: decision.choices?.[1]?.label ?? translateText('timeline.terminal.oppose', 'Oppose'),
+      label:
+        decision.choices?.[1]?.label ??
+        translateText('features.timeline.terminal.oppose', 'Oppose'),
       value: votes.oppose,
       tone: 'danger',
     },
     {
       key: 'vote:abstain',
-      label: decision.choices?.[2]?.label ?? translateText('timeline.terminal.abstain', 'Abstain'),
+      label:
+        decision.choices?.[2]?.label ??
+        translateText('features.timeline.terminal.abstain', 'Abstain'),
       value: votes.abstain,
       tone: 'neutral',
     },
@@ -297,7 +303,7 @@ function DecisionMetricsLine({ decision }: { decision: DecisionItem }) {
 
   if (decision.isIndicationPhase) {
     parts.push(translateText('features.events.agenda.indicationShort', 'IND'));
-  } else if (decision.phase === 'final_vote') {
+  } else if (decision.phase === 'final') {
     parts.push(translateText('features.events.voting.phases.finalVote', 'Final vote'));
   }
 
@@ -531,7 +537,7 @@ function DecisionTime({ decision }: { decision: DecisionItem }) {
       <CountdownTimer
         endsAt={decision.startsAt}
         compact
-        compactLabel={translateText('timeline.terminal.startsIn', 'Starts in')}
+        compactLabel={translateText('features.timeline.terminal.startsIn', 'Starts in')}
       />
     );
   }
@@ -540,7 +546,7 @@ function DecisionTime({ decision }: { decision: DecisionItem }) {
     <CountdownTimer
       endsAt={decision.endsAt}
       compact
-      compactLabel={translateText('timeline.terminal.closesIn', 'Closes in')}
+      compactLabel={translateText('features.timeline.terminal.closesIn', 'Closes in')}
     />
   );
 }
@@ -623,7 +629,7 @@ function DecisionPanelRow({
         <div className="text-muted-foreground flex min-w-0 items-center gap-2 text-xs">
           <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate">
-            {formatInt(total)} {translateText('timeline.terminal.votes', 'votes')}
+            {formatInt(total)} {translateText('features.timeline.terminal.votes', 'votes')}
           </span>
         </div>
         {decision.canOpenVoteDialog ? (

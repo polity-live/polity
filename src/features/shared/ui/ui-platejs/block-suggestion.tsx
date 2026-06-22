@@ -115,6 +115,7 @@ export interface ResolvedSuggestion extends TResolvedSuggestion {
   votingStatus?: string | null;
   confirmationStatus?: 'pending' | 'confirmed';
   confirmedAt?: number;
+  changeRequestStatus?: string | null;
 }
 
 const BLOCK_SUGGESTION = '__block__';
@@ -247,7 +248,7 @@ export function BlockSuggestionCard({
   const projectedOutcome = acceptVotes > rejectVotes ? 'Accepted' : 'Rejected';
   const isEventSuggestionMode = currentMode === 'suggest_event';
   const isConfirmedEventSuggestion =
-    suggestion.confirmationStatus === 'confirmed' || Boolean(suggestion.changeRequestEntityId);
+    suggestion.confirmationStatus === 'confirmed' || suggestion.changeRequestStatus === 'open';
   const isPendingEventSuggestion = isEventSuggestionMode && !isConfirmedEventSuggestion;
   const isPendingEventSuggestionAuthor =
     isPendingEventSuggestion && currentUserId === suggestion.userId;
@@ -358,6 +359,8 @@ export function BlockSuggestionCard({
       api.suggestion.withoutSuggestions(() => {
         rejectSuggestion(editor, suggestion);
       });
+    } catch {
+      return;
     } finally {
       setPendingEventAction(null);
     }
@@ -538,14 +541,14 @@ export function BlockSuggestionCard({
             <p className="font-medium">
               {translateText(
                 'features.amendments.eventSuggestions.pendingTitle',
-                'Noch nicht eingereicht'
+                'Soll diese Änderung eingereicht werden?'
               )}
             </p>
             <p className="text-muted-foreground mt-1 text-xs">
               {isPendingEventSuggestionAuthor
                 ? translateText(
                     'features.amendments.eventSuggestions.pendingOwnDescription',
-                    'Bestätige den Vorschlag, damit er als Change Request erstellt wird.'
+                    'Bis zur Einreichung erscheint die Änderung als ausstehend und ist nicht abstimmbar.'
                   )
                 : translateText(
                     'features.amendments.eventSuggestions.pendingOtherDescription',
@@ -567,10 +570,7 @@ export function BlockSuggestionCard({
                   <CheckIcon className="mr-2 h-4 w-4" />
                   {pendingEventAction === 'confirm'
                     ? translateText('common.saving', 'Speichern...')
-                    : translateText(
-                        'features.amendments.eventSuggestions.confirm',
-                        'Vorschlag einreichen'
-                      )}
+                    : translateText('features.amendments.eventSuggestions.confirm', 'Einreichen')}
                 </Button>
                 <Button
                   size="sm"
@@ -973,9 +973,8 @@ export const useResolveSuggestion = (
       const visibilityScope = discussion?.visibilityScope;
       const resolvedInMode = discussion?.resolvedInMode;
       const votingStatus = discussion?.votingStatus;
-      const confirmationStatus = changeRequestEntityId
-        ? 'confirmed'
-        : discussion?.confirmationStatus;
+      const changeRequestStatus = discussion?.changeRequestStatus ?? null;
+      const confirmationStatus = discussion?.confirmationStatus;
       const confirmedAt = discussion?.confirmedAt;
       const createdAt = new Date(nodeData.createdAt);
 
@@ -1001,6 +1000,7 @@ export const useResolveSuggestion = (
           votingStatus,
           confirmationStatus,
           confirmedAt,
+          changeRequestStatus,
           createdAt,
           keyId,
           newProperties,
@@ -1032,6 +1032,7 @@ export const useResolveSuggestion = (
           votingStatus,
           confirmationStatus,
           confirmedAt,
+          changeRequestStatus,
           createdAt,
           keyId,
           newText,
@@ -1062,6 +1063,7 @@ export const useResolveSuggestion = (
           votingStatus,
           confirmationStatus,
           confirmedAt,
+          changeRequestStatus,
           createdAt,
           keyId,
           newText,
@@ -1091,6 +1093,7 @@ export const useResolveSuggestion = (
           votingStatus,
           confirmationStatus,
           confirmedAt,
+          changeRequestStatus,
           createdAt,
           keyId,
           suggestionId: keyId2SuggestionId(id),

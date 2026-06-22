@@ -177,6 +177,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.changeRequestCreateFailed'))
       );
+      return serverConfirmed(result);
     },
     [zero]
   );
@@ -187,6 +188,18 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.changeRequestUpdateFailed'))
       );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const deleteChangeRequest = useCallback(
+    (args: Parameters<typeof mutators.amendments.deleteChangeRequest>[0]) => {
+      const result = zero.mutate(mutators.amendments.deleteChangeRequest(args));
+      onServerError(result, () =>
+        toast.error(t('features.amendments.toasts.changeRequestUpdateFailed'))
+      );
+      return serverConfirmed(result);
     },
     [zero]
   );
@@ -587,6 +600,7 @@ export function useAmendmentActions() {
 
     // Change requests
     createChangeRequest,
+    deleteChangeRequest,
     updateChangeRequest,
     voteOnChangeRequest,
     finalizeInternalChangeRequestVote,

@@ -143,21 +143,21 @@ export function VoteProgressBar({
               animated && 'transition-all duration-500'
             )}
             style={{ width: `${Math.round(percentages.support)}%` }}
-            title={t('timeline.terminal.support', { count: votes.support })}
+            title={t('features.timeline.terminal.support', { count: votes.support })}
           />
         ) : null}
         {percentages.oppose > 0 ? (
           <div
             className={cn('bg-[var(--badge-danger-fg)]', animated && 'transition-all duration-500')}
             style={{ width: `${Math.round(percentages.oppose)}%` }}
-            title={t('timeline.terminal.oppose', { count: votes.oppose })}
+            title={t('features.timeline.terminal.oppose', { count: votes.oppose })}
           />
         ) : null}
         {percentages.abstain > 0 ? (
           <div
             className={cn('bg-muted-foreground/45', animated && 'transition-all duration-500')}
             style={{ width: `${Math.round(percentages.abstain)}%` }}
-            title={t('timeline.terminal.abstain', { count: votes.abstain })}
+            title={t('features.timeline.terminal.abstain', { count: votes.abstain })}
           />
         ) : null}
       </div>
@@ -167,7 +167,9 @@ export function VoteProgressBar({
           <div className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-[var(--badge-success-fg)]" />
             {showLabels ? (
-              <span className="text-muted-foreground">{t('timeline.terminal.support')}</span>
+              <span className="text-muted-foreground">
+                {t('features.timeline.terminal.support')}
+              </span>
             ) : null}
             {showPercentages ? (
               <span className="font-mono font-medium text-[var(--badge-success-fg)]">
@@ -178,7 +180,9 @@ export function VoteProgressBar({
           <div className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-[var(--badge-danger-fg)]" />
             {showLabels ? (
-              <span className="text-muted-foreground">{t('timeline.terminal.oppose')}</span>
+              <span className="text-muted-foreground">
+                {t('features.timeline.terminal.oppose')}
+              </span>
             ) : null}
             {showPercentages ? (
               <span className="font-mono font-medium text-[var(--badge-danger-fg)]">
@@ -190,7 +194,9 @@ export function VoteProgressBar({
             <div className="flex items-center gap-1">
               <span className="bg-muted-foreground/45 h-2 w-2 rounded-full" />
               {showLabels ? (
-                <span className="text-muted-foreground">{t('timeline.terminal.abstain')}</span>
+                <span className="text-muted-foreground">
+                  {t('features.timeline.terminal.abstain')}
+                </span>
               ) : null}
               {showPercentages ? (
                 <span className="text-muted-foreground font-mono font-medium">

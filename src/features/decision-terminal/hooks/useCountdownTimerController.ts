@@ -98,7 +98,7 @@ export function useCountdownTimerController(args: {
     formattedTime: formatTime(timeRemaining.hours, timeRemaining.minutes, timeRemaining.seconds),
     urgency: getUrgencyLevel(timeRemaining.totalSeconds),
     labels: {
-      ended: t('timeline.terminal.ended'),
+      ended: t('features.timeline.terminal.ended'),
     },
   };
 }
@@ -115,6 +115,6 @@ export function useEndedAgoController(endedAt: Date | string) {
 
   return {
     timeString,
-    label: timeString ? t('timeline.terminal.endedAgo', { time: timeString }) : null,
+    label: timeString ? t('features.timeline.terminal.endedAgo', { time: timeString }) : null,
   };
 }

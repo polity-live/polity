@@ -22,6 +22,25 @@ interface MutationResultLike {
   }>;
 }
 
+const ZERO_CLOSED_MESSAGE = 'Zero was explicitly closed by calling zero.close()';
+
+export function isZeroClosedMutationCancellation(value: unknown): boolean {
+  if (typeof value === 'string') {
+    return value.includes(ZERO_CLOSED_MESSAGE);
+  }
+
+  if (value instanceof Error) {
+    return value.message.includes(ZERO_CLOSED_MESSAGE);
+  }
+
+  if (value && typeof value === 'object' && 'message' in value) {
+    const message = (value as { message?: unknown }).message;
+    return typeof message === 'string' && message.includes(ZERO_CLOSED_MESSAGE);
+  }
+
+  return false;
+}
+
 /**
  * Await server confirmation of a Zero mutation.
  * Throws an `Error` whose message comes from the server rejection.

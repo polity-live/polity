@@ -99,6 +99,25 @@ function internalVoteSuggestion(): ResolvedSuggestion {
   } as ResolvedSuggestion;
 }
 
+function pendingEventSuggestion(): ResolvedSuggestion {
+  return {
+    changeRequestEntityId: 'change-request-pending-1',
+    changeRequestStatus: 'pending_submission',
+    comments: [],
+    confirmationStatus: 'pending',
+    createdAt: Date.now(),
+    keyId: 'suggestion_suggestion-pending-1',
+    suggestionId: 'suggestion-pending-1',
+    text: 'Wird',
+    type: 'remove',
+    userId: 'manager-1',
+    votes: [],
+    votesAbstain: 0,
+    votesAgainst: 0,
+    votesFor: 0,
+  } as ResolvedSuggestion;
+}
+
 describe('BlockSuggestionCard internal vote actions', () => {
   beforeEach(() => {
     Object.values(suggestionCallbacksMock).forEach(mock => mock.mockReset());
@@ -118,5 +137,36 @@ describe('BlockSuggestionCard internal vote actions', () => {
     expect(screen.queryByRole('button', { name: 'Abstimmung beenden' })).toBeNull();
     expect(screen.getByText('Interne Abstimmung beenden?')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Interne Abstimmung beenden' })).toBeTruthy();
+  });
+
+  it('asks the author to submit pending event suggestions even with a persisted row', () => {
+    modeContextMock.currentMode = 'suggest_event';
+
+    render(<BlockSuggestionCard idx={0} isLast suggestion={pendingEventSuggestion()} />);
+
+    expect(screen.getByText('Soll diese Änderung eingereicht werden?')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Einreichen' }));
+
+    expect(suggestionCallbacksMock.onEventSuggestionConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        changeRequestEntityId: 'change-request-pending-1',
+        confirmationStatus: 'pending',
+      })
+    );
+  });
+
+  it('lets the author discard pending event suggestions', () => {
+    modeContextMock.currentMode = 'suggest_event';
+
+    render(<BlockSuggestionCard idx={0} isLast suggestion={pendingEventSuggestion()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Verwerfen' }));
+
+    expect(suggestionCallbacksMock.onEventSuggestionCancel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        changeRequestEntityId: 'change-request-pending-1',
+        confirmationStatus: 'pending',
+      })
+    );
   });
 });

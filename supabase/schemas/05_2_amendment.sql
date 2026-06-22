@@ -191,7 +191,18 @@ CREATE TABLE IF NOT EXISTS public.amendment_process_branch (
   editing_mode TEXT NOT NULL DEFAULT 'edit',
   resolution TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT amendment_process_branch_editing_mode_check
+    CHECK (editing_mode IN (
+      'edit',
+      'view',
+      'suggest_internal',
+      'suggest_event',
+      'vote_internal',
+      'event_final_closing_vote',
+      'passed',
+      'rejected'
+    ))
 );
 
 CREATE INDEX idx_amendment_process_branch_run ON public.amendment_process_branch (process_run_id);

@@ -107,6 +107,7 @@ export function useMessagesPage() {
       selectedConversationIndex < filteredConversations.length - 1,
     onSwipePrev: () => selectConversationAtOffset(-1),
     onSwipeNext: () => selectConversationAtOffset(1),
+    keyboardMode: 'global',
   });
 
   // Existing direct conversation user IDs (for new conversation dialog)

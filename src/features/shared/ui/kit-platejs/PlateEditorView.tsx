@@ -7,6 +7,11 @@ import { SuggestionCallbacksProvider } from '@/features/shared/ui/kit-platejs/su
 import { ModeProvider } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
 import { ModeSync } from '@/features/shared/ui/kit-platejs/mode-sync.tsx';
 import { RemoteCursorsSync } from '@/features/editor/ui/RemoteCursorsSync';
+import {
+  editorSelectionDebugLog,
+  getActiveElementDebugInfo,
+  summarizeSelection,
+} from '@/features/shared/logic/editorSelectionDebug';
 export interface PlateEditorViewProps {
   initialValue: any;
   value: any;
@@ -67,6 +72,7 @@ export function PlateEditorView({
   onFinalizeInternalVote,
   onEventSuggestionConfirm,
   onEventSuggestionCancel,
+  documentId,
   currentMode,
   modeDisabledReasons,
   onModeChange,
@@ -78,6 +84,14 @@ export function PlateEditorView({
   editor,
   handleEditorChange,
 }: PlateEditorViewProps) {
+  const handleEditorFocus = React.useCallback(() => {
+    editorSelectionDebugLog('editor-focus', {
+      activeElement: getActiveElementDebugInfo(),
+      documentId,
+      selectionAtFocus: summarizeSelection(editor?.selection),
+    });
+  }, [documentId, editor]);
+
   return (
     <ModeProvider
       currentMode={currentMode}
@@ -125,6 +139,7 @@ export function PlateEditorView({
               variant={editorVariant}
               placeholder={placeholder}
               className={editorClassName}
+              onFocus={handleEditorFocus}
             />
           </EditorContainer>
 

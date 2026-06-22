@@ -8,6 +8,7 @@ export const user = table('user')
     first_name: string().optional(),
     last_name: string().optional(),
     bio: string().optional(),
+    gender: string().optional(),
     about: json<ReadonlyJSONValue>().optional(),
     avatar: string().optional(),
     x: string().optional(),

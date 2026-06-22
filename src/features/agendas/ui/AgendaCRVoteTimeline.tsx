@@ -33,19 +33,7 @@ export function AgendaCRVoteTimeline({
     closeVoting,
   } = useAgendaItemCRVoting(agendaItemId, userId);
 
-  console.log('[AgendaCRVoteTimeline] agendaItemId:', agendaItemId);
-  console.log('[AgendaCRVoteTimeline] isLoading:', isLoading);
-  console.log('[AgendaCRVoteTimeline] crTimeline.length:', crTimeline.length);
-  console.log('[AgendaCRVoteTimeline] crTimeline:', crTimeline);
-  console.log('[AgendaCRVoteTimeline] currentItem:', currentItem);
-
   if (isLoading || crTimeline.length === 0) {
-    console.log(
-      '[AgendaCRVoteTimeline] EARLY RETURN — isLoading:',
-      isLoading,
-      'crTimeline.length:',
-      crTimeline.length
-    );
     return null;
   }
 

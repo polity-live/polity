@@ -162,6 +162,22 @@ export const eventsTranslations = {
     userSpeakerCurrentSummary: 'You are speaking now. {{time}} remaining.',
     userSpeakerQueueSummary: 'Position {{position}}. {{time}} until your speech starts.',
     userSpeakerPendingSummary: 'Your speaker entry is active.',
+    genderQuota: {
+      settingsLabel: 'Gender-quoted speaker list',
+      settingsDescription: 'When enabled, male and female speakers must alternate.',
+      missingGender:
+        'Please choose a gender in your profile settings before joining this speaker list.',
+      unsupportedGender: 'This gender-quoted speaker list currently only accepts male or female.',
+      expectedMale: 'The next speaker must be male.',
+      expectedFemale: 'The next speaker must be female.',
+      blocked: 'You cannot join this gender-quoted speaker list right now.',
+      genderLabels: {
+        male: 'male',
+        female: 'female',
+        diverse: 'diverse',
+        unspecified: 'not specified',
+      },
+    },
     // Vote section
     voteAndResults: 'Vote & Results',
     changeRequests: 'Change Requests',

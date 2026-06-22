@@ -101,9 +101,11 @@ export function UserProfileEditForm({
             <BasicInformationSection
               firstName={formData.firstName}
               lastName={formData.lastName}
+              gender={formData.gender}
               subtitle={formData.subtitle}
               onFirstNameChange={value => onFieldChange('firstName', value)}
               onLastNameChange={value => onFieldChange('lastName', value)}
+              onGenderChange={value => onFieldChange('gender', value)}
               onSubtitleChange={value => onFieldChange('subtitle', value)}
             />
 

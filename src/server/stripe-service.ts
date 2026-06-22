@@ -425,19 +425,6 @@ function invoiceCustomerId(invoice: Stripe.Invoice): string | null {
 }
 
 function invoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
-  const legacySubscription = (
-    invoice as Stripe.Invoice & {
-      subscription?: string | Stripe.Subscription | null;
-    }
-  ).subscription;
-
-  if (typeof legacySubscription === 'string') {
-    return legacySubscription;
-  }
-  if (legacySubscription?.id) {
-    return legacySubscription.id;
-  }
-
   const parentSubscription = invoice.parent?.subscription_details?.subscription;
   if (typeof parentSubscription === 'string') {
     return parentSubscription;

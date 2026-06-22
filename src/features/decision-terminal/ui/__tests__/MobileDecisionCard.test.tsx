@@ -11,8 +11,8 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({
     t: (key: string) => {
       const labels: Record<string, string> = {
-        'timeline.terminal.castVote': 'Cast vote',
-        'timeline.terminal.viewResults': 'View results',
+        'features.timeline.terminal.castVote': 'Cast vote',
+        'features.timeline.terminal.viewResults': 'View results',
       };
 
       return labels[key] ?? key;

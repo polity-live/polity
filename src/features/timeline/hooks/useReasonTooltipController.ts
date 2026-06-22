@@ -25,7 +25,7 @@ export function useReasonTooltipController({ category, context }: UseReasonToolt
     config,
     open,
     reasonText,
-    whySeeingLabel: t('timeline.explore.whySeeing'),
+    whySeeingLabel: t('features.timeline.explore.whySeeing'),
     onOpenChange: setOpen,
     onTriggerClick: () => setOpen(value => !value),
   };

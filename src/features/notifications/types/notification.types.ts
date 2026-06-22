@@ -3,14 +3,6 @@
  * Organized by entity category
  */
 export type NotificationType =
-  // Legacy types (for backwards compatibility)
-  | 'group_invite'
-  | 'event_invite'
-  | 'message'
-  | 'follow'
-  | 'mention'
-  | 'event_update'
-  | 'group_update'
   // Group Notifications (1.x)
   | 'membership_request' // 1.1: User requests to join
   | 'membership_approved' // 1.2: Request approved

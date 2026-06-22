@@ -72,6 +72,11 @@ export function VotingPhaseIndicatorView({
   config,
   PhaseIcon,
 }: VotingPhaseIndicatorViewProps) {
+  const phaseLabel =
+    phase === 'internal'
+      ? t('features.events.voting.phases.internal', 'Internal vote')
+      : t(`features.events.voting.phases.${phase}`);
+
   // Show result if voting is closed
   if (phase === 'closed' && result) {
     const resConfig = resultConfig[result as NonNullable<VotingResult>];
@@ -128,7 +133,7 @@ export function VotingPhaseIndicatorView({
           <div className={cn('rounded-full p-1', config.color)}>
             <PhaseIcon className={featureThemeClassName('authSummaryStepContrastIcon')} />
           </div>
-          <span className="font-medium">{t(`features.events.voting.phases.${phase}`)}</span>
+          <span className="font-medium">{phaseLabel}</span>
         </div>
 
         {/* Timer for voting phase */}

@@ -131,6 +131,27 @@ describe('AgendaVoteSection', () => {
     expect(screen.queryByText(/The motion was accepted/)).toBeNull();
   });
 
+  it('does not mark a winner while the final vote is still open', () => {
+    render(
+      <AgendaVoteSection
+        voteTitle="Budget motion"
+        choices={[
+          choice({ id: 'yes', label: 'Yes', order_index: 0 }),
+          choice({ id: 'no', label: 'No', order_index: 1 }),
+        ]}
+        indicativeDecisions={[{ choice_id: 'yes' }, { choice_id: 'no' }]}
+        finalDecisions={[{ choice_id: 'yes' }]}
+        userHasVoted
+        userSelectedChoiceIds={['yes']}
+        voteStatus="final"
+        totalEligibleVoters={3}
+      />
+    );
+
+    expect(screen.queryByText('Winner')).toBeNull();
+    expect(screen.getByText('1 · 100%')).toBeTruthy();
+  });
+
   it('keeps the empty choices state visible without opening named results', () => {
     render(
       <AgendaVoteSection

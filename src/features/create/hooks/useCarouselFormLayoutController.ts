@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { useHorizontalArrowNavigation } from '@/features/shared/hooks/useHorizontalArrowNavigation';
 import { useEmblaCarousel } from '@/features/shared/ui/ui/carousel';
 
 import type { CreateFormStep } from '../types/create-form.types';
@@ -71,6 +72,14 @@ export function useCarouselFormLayoutController({
       emblaApi.scrollNext();
     }
   }, [emblaApi, canScrollNext, currentStep, steps]);
+
+  useHorizontalArrowNavigation({
+    mode: 'global',
+    canGoPrev: canScrollPrev,
+    canGoNext: canScrollNext && canNavigateNext,
+    onGoPrev: scrollPrev,
+    onGoNext: scrollNext,
+  });
 
   const handleStepClick = useCallback(
     (step: number) => {

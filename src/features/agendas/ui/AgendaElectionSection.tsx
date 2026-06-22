@@ -280,7 +280,7 @@ export function AgendaElectionSection({
               {visibleTotal} {visibleTotalLabel}
             </BadgeControl>
             <VotePhaseBadge
-              phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
+              phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final'}
             />
             {attendanceMode ? (
               <BadgeControl

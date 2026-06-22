@@ -10,7 +10,7 @@ export type ChangeRequestResolutionTx = Parameters<
   typeof mutators.amendments.updateChangeRequest.fn
 >[0]['tx'];
 export type VoteResult = 'passed' | 'rejected' | 'tie';
-export type ChangeRequestResolutionMethod = 'direct_internal' | 'internal_vote' | 'event_vote';
+export type ChangeRequestResolutionMethod = 'direct_internal' | 'internal_vote';
 
 interface ChangeRequestResolutionCtx {
   readonly userID: string;
@@ -112,7 +112,7 @@ export async function resolveChangeRequestByVoteResult({
   changeRequestId,
   voteResult,
   now = Date.now(),
-  resolutionMethod = 'event_vote',
+  resolutionMethod = null,
   resolvedInMode = resolutionMethod === 'internal_vote'
     ? 'vote_internal'
     : 'event_final_closing_vote',
@@ -123,7 +123,7 @@ export async function resolveChangeRequestByVoteResult({
   changeRequestId: string;
   voteResult: VoteResult;
   now?: number;
-  resolutionMethod?: ChangeRequestResolutionMethod;
+  resolutionMethod?: ChangeRequestResolutionMethod | null;
   resolvedInMode?: string | null;
   visibilityScope?: ChangeRequestVisibilityScope;
 }) {

@@ -1,4 +1,4 @@
-import { ACTION_RIGHTS, PERMISSION_IMPLIES } from '@/zero/rbac/constants';
+import { GROUP_ACTION_RIGHTS, PERMISSION_IMPLIES } from '@/zero/rbac/constants';
 import type { ActionType, ResourceType } from '@/zero/rbac/types';
 import type { GroupRightKey } from '@/zero/network/request-types';
 import { findRightPaths, type ReachableRightPath } from '@/zero/network/rightTraversal';
@@ -65,31 +65,22 @@ export const GROUP_RIGHT_ACTION_RIGHT_MAPPING: Record<
     { resource: 'groupDocuments', action: 'view' },
     { resource: 'groupLinks', action: 'view' },
   ],
-  amendmentRight: [
-    { resource: 'amendments', action: 'view' },
-    { resource: 'amendments', action: 'create' },
-  ],
-  rightToSpeak: [
-    { resource: 'events', action: 'view' },
-    { resource: 'events', action: 'speak' },
-  ],
-  activeVotingRight: [
-    { resource: 'events', action: 'view' },
-    { resource: 'events', action: 'active_voting' },
-  ],
-  passiveVotingRight: [
-    { resource: 'events', action: 'view' },
-    { resource: 'events', action: 'passive_voting' },
-  ],
+  amendmentRight: [{ resource: 'amendments', action: 'create' }],
+  rightToSpeak: [],
+  activeVotingRight: [],
+  passiveVotingRight: [],
 };
 
 const GROUP_RIGHT_KEYS = Object.keys(GROUP_RIGHT_ACTION_RIGHT_MAPPING) as GroupRightKey[];
 
 const ACTION_RIGHT_LABELS_BY_KEY = new Map(
-  ACTION_RIGHTS.map(right => [getActionRightKey(right.resource, right.action), right.label])
+  GROUP_ACTION_RIGHTS.map(right => [getActionRightKey(right.resource, right.action), right.label])
 );
 const ACTION_RIGHT_ORDER_BY_KEY = new Map(
-  ACTION_RIGHTS.map((right, index) => [getActionRightKey(right.resource, right.action), index])
+  GROUP_ACTION_RIGHTS.map((right, index) => [
+    getActionRightKey(right.resource, right.action),
+    index,
+  ])
 );
 
 export function buildMembershipRightsAlignmentRows<

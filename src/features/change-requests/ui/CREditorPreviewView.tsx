@@ -9,10 +9,11 @@ import { EditorStatic } from '@/features/shared/ui/ui-platejs/editor-static';
 import { InlineAmendmentEditor } from '@/features/editor/ui/InlineAmendmentEditor';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { ReactNode } from 'react';
+import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 export interface CREditorPreviewViewProps {
   documentContent: any;
   suggestionIds: any;
-  editingMode: any;
+  editingMode?: EditingMode | null;
   amendmentId: any;
   userId: any;
   userRecord?: any;

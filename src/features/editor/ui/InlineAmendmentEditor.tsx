@@ -23,6 +23,7 @@ import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-s
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { EditorUser } from '../types';
+import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 
 interface InlineAmendmentEditorProps {
   amendmentId: string;
@@ -36,7 +37,7 @@ interface InlineAmendmentEditorProps {
   agendaItemId?: string;
   processBranchId?: string | null;
   /** Editor mode to use — defaults to 'suggest_event' */
-  editingMode?: string | null;
+  editingMode?: EditingMode | null;
 }
 import { InlineAmendmentEditorView } from './InlineAmendmentEditorView';
 
@@ -129,16 +130,21 @@ export function InlineAmendmentEditor({
       crId,
       discussionId,
       changeRequestEntityId,
+      status,
+      votingStatus,
     }: {
       crId: string;
       discussionId: string;
       changeRequestEntityId: string;
+      status?: string;
+      votingStatus?: string;
     }) => {
       if (!amendmentIdFromEntity) return;
       const snapshot = createChangeRequestDiffSnapshot(discussionId, content);
       editorOps.handleSuggestionCreated({
         id: changeRequestEntityId,
         crId,
+        discussionId,
         amendmentId: amendmentIdFromEntity,
         processBranchId: effectiveProcessBranchId,
         changedCharacterCount: snapshot.changed_character_count,
@@ -147,6 +153,8 @@ export function InlineAmendmentEditor({
         new_text: snapshot.new_text,
         original_properties: snapshot.original_properties,
         new_properties: snapshot.new_properties,
+        status,
+        votingStatus,
       });
     },
     [amendmentIdFromEntity, content, effectiveProcessBranchId, editorOps]
@@ -231,17 +239,6 @@ export function InlineAmendmentEditor({
         return;
       }
 
-      if (discussion.changeRequestEntityId) {
-        await setDiscussions(
-          discussions.map(d =>
-            d.id === discussion.id
-              ? { ...d, confirmationStatus: 'confirmed', confirmedAt: d.confirmedAt ?? Date.now() }
-              : d
-          )
-        );
-        return;
-      }
-
       const crId = discussion.crId || suggestion.crId;
       if (!crId) {
         toast.error(
@@ -253,22 +250,35 @@ export function InlineAmendmentEditor({
         return;
       }
 
-      const changeRequestEntityId = crypto.randomUUID();
       const snapshot = createSnapshotFromResolvedSuggestion(suggestion);
-      const created = await editorOps.handleSuggestionCreated({
-        id: changeRequestEntityId,
-        crId,
-        amendmentId: amendmentIdFromEntity,
-        processBranchId: effectiveProcessBranchId,
-        changedCharacterCount: snapshot.changed_character_count,
-        change_type: snapshot.change_type,
-        original_text: snapshot.original_text,
-        new_text: snapshot.new_text,
-        original_properties: snapshot.original_properties,
-        new_properties: snapshot.new_properties,
-      });
+      const changeRequestEntityId = discussion.changeRequestEntityId ?? crypto.randomUUID();
+      const submitted = discussion.changeRequestEntityId
+        ? await editorOps.handlePendingSuggestionSubmitted({
+            id: discussion.changeRequestEntityId,
+            changedCharacterCount: snapshot.changed_character_count,
+            change_type: snapshot.change_type,
+            original_text: snapshot.original_text,
+            new_text: snapshot.new_text,
+            original_properties: snapshot.original_properties,
+            new_properties: snapshot.new_properties,
+          })
+        : await editorOps.handleSuggestionCreated({
+            id: changeRequestEntityId,
+            crId,
+            discussionId,
+            amendmentId: amendmentIdFromEntity,
+            processBranchId: effectiveProcessBranchId,
+            changedCharacterCount: snapshot.changed_character_count,
+            change_type: snapshot.change_type,
+            original_text: snapshot.original_text,
+            new_text: snapshot.new_text,
+            original_properties: snapshot.original_properties,
+            new_properties: snapshot.new_properties,
+            status: 'open',
+            votingStatus: 'open',
+          });
 
-      if (!created) {
+      if (!submitted) {
         toast.error(
           translateText(
             'features.amendments.eventSuggestions.confirmFailed',
@@ -286,6 +296,7 @@ export function InlineAmendmentEditor({
                 crId,
                 changeRequestEntityId,
                 confirmationStatus: 'confirmed',
+                changeRequestStatus: 'open',
                 confirmedAt: Date.now(),
               }
             : d
@@ -311,14 +322,29 @@ export function InlineAmendmentEditor({
 
       const discussionId = getSuggestionDiscussionId(suggestion);
       const discussion = discussions.find(d => d.id === discussionId);
-      if (discussion?.changeRequestEntityId || discussion?.confirmationStatus === 'confirmed') {
+      if (discussion?.confirmationStatus === 'confirmed') {
         toast.error(
           translateText(
             'features.amendments.eventSuggestions.cancelConfirmed',
             'Submitted change requests cannot be withdrawn.'
           )
         );
-        return;
+        throw new Error('Submitted change requests cannot be withdrawn.');
+      }
+
+      if (discussion?.changeRequestEntityId) {
+        const deleted = await editorOps.handlePendingSuggestionDiscarded(
+          discussion.changeRequestEntityId
+        );
+        if (!deleted) {
+          toast.error(
+            translateText(
+              'features.amendments.eventSuggestions.cancelFailed',
+              'Failed to discard change request.'
+            )
+          );
+          throw new Error('Failed to discard pending change request.');
+        }
       }
 
       await setDiscussions(discussions.filter(d => d.id !== discussionId));
@@ -326,7 +352,7 @@ export function InlineAmendmentEditor({
         translateText('features.amendments.eventSuggestions.cancelled', 'Suggestion discarded.')
       );
     },
-    [discussions, resolvedMode, setDiscussions]
+    [discussions, editorOps, resolvedMode, setDiscussions]
   );
 
   return (

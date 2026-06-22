@@ -27,6 +27,38 @@ afterEach(() => {
 });
 
 describe('VoteCastDialog', () => {
+  it('shows document preview content before selection and keeps it during PIN entry', () => {
+    render(
+      <VoteCastDialog
+        open
+        onOpenChange={vi.fn()}
+        phase="indication"
+        title="CR vote"
+        choices={[
+          { id: 'yes', label: 'Yes' },
+          { id: 'no', label: 'No' },
+        ]}
+        requirePassword
+        documentPreviewContent={
+          <section data-testid="vote-dialog-document-preview">
+            <button type="button">Document Preview</button>
+          </section>
+        }
+        onPasswordSubmit={vi.fn()}
+        onCastVote={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId('vote-dialog-document-preview')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /document preview/i })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+    clickConfirmButton();
+
+    expect(screen.getByTestId('vote-dialog-document-preview')).toBeTruthy();
+    expect(document.querySelectorAll('input')).toHaveLength(4);
+  });
+
   it('renders the list election choice dialog fullscreen with spaced vote counts', () => {
     render(
       <VoteCastDialog
@@ -151,7 +183,7 @@ describe('VoteCastDialog', () => {
       <VoteCastDialog
         open
         onOpenChange={onOpenChange}
-        phase="final_vote"
+        phase="final"
         title="Final vote"
         choices={[{ id: 'support', label: 'Support' }]}
         requirePassword

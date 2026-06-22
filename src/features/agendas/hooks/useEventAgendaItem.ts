@@ -9,14 +9,21 @@ import { useVoteState } from '@/zero/votes/useVoteState';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAgendaItemDetail } from '@/zero/events/useEventState';
 import { useAgendaItemForwardingContext } from '@/zero/amendments';
+import { useUserState } from '@/zero/users/useUserState';
 import { usePermissions } from '@/zero/rbac';
 import { isNamedBallot } from '@/zero/shared';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { canJoinEventSpeakerList } from '../logic/speakerListPermissions';
+import {
+  getGenderQuotaFeedbackMessage,
+  validateSpeakerGenderQuota,
+} from '../logic/speakerListGenderQuota';
 
 export function useEventAgendaItem(eventId: string, agendaItemId: string) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { currentUser } = useUserState();
   const { can } = usePermissions({ eventId });
   const { deleteAgendaItem, addSpeaker } = useAgendaActions();
   const electionActions = useElectionActions();
@@ -75,8 +82,7 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
 
     setVotingLoading(election.id);
     try {
-      const isIndicative =
-        election.status === 'indicative' || election.status === 'indicative_open';
+      const isIndicative = election.status === 'indicative' || election.status === 'indicative';
       const participationId = crypto.randomUUID();
       const participationArgs = {
         id: participationId,
@@ -111,7 +117,7 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
 
     setVotingLoading(vote.id);
     try {
-      const isIndicative = vote.status === 'indicative' || vote.status === 'indicative_open';
+      const isIndicative = vote.status === 'indicative' || vote.status === 'indicative';
       const participationId = crypto.randomUUID();
       const participationArgs = {
         id: participationId,
@@ -162,6 +168,17 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
     setAddingSpeaker(true);
     try {
       const speakers = agendaItem?.speaker_list || [];
+      const quotaResult = validateSpeakerGenderQuota({
+        enabled: Boolean(event?.gender_quota_enabled && currentUser),
+        speakerGender: currentUser?.gender ?? null,
+        speakers,
+      });
+
+      if (!quotaResult.allowed) {
+        toast.error(getGenderQuotaFeedbackMessage(quotaResult, translateText));
+        return;
+      }
+
       const maxOrder = speakers.length > 0 ? Math.max(...speakers.map(s => s.order_index ?? 0)) : 0;
 
       const speakerId = crypto.randomUUID();

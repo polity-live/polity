@@ -255,13 +255,13 @@ export function MobileDecisionCard({ decision, onClick, className }: MobileDecis
             <CountdownTimer
               endsAt={decision.startsAt}
               compact
-              compactLabel={t('timeline.terminal.startsIn')}
+              compactLabel={t('features.timeline.terminal.startsIn')}
             />
           ) : (
             <CountdownTimer
               endsAt={decision.endsAt}
               compact
-              compactLabel={t('timeline.terminal.closesIn')}
+              compactLabel={t('features.timeline.terminal.closesIn')}
             />
           )}
         </div>
@@ -306,7 +306,9 @@ export function MobileDecisionCard({ decision, onClick, className }: MobileDecis
           onClick();
         }}
       >
-        {decision.isClosed ? t('timeline.terminal.viewResults') : t('timeline.terminal.castVote')}
+        {decision.isClosed
+          ? t('features.timeline.terminal.viewResults')
+          : t('features.timeline.terminal.castVote')}
         <ChevronRight className="h-4 w-4" />
       </Button>
     </article>

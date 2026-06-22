@@ -9,13 +9,14 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
-import type { EditingMode } from '@/zero/rbac/workflow-constants';
+import { VOTE_PHASE, VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
 import {
+  EDITING_MODE_TRANSITIONS,
   canTransitionTo,
   isEventPhase,
-  isTerminalStatus,
-  EDITING_MODE_TRANSITIONS,
-} from '@/zero/rbac/workflow-constants';
+  isTerminalEditingMode,
+  type EditingMode,
+} from '@/zero/amendments/editing-mode-policy';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface UseAmendmentWorkflowProps {
@@ -49,7 +50,7 @@ export function useAmendmentWorkflow({
         return false;
       }
 
-      if (isTerminalStatus(currentStatus)) {
+      if (isTerminalEditingMode(currentStatus)) {
         toast.error(
           translateText(
             'generated.inline.0141_amendment_ist_in_einem_finalen_status_und_kan_a6e57071'
@@ -142,7 +143,8 @@ export function useAmendmentWorkflow({
           agenda_item_id: null,
           title: translateText('generated.inline.0015_internal_vote_1abb1046'),
           description: null,
-          status: 'active',
+          status: VOTE_PHASE.indicative,
+          purpose: VOTE_PURPOSE.closing,
           majority_type: null,
           closing_type: null,
           closing_duration_seconds: intervalMinutes * 60,
@@ -272,7 +274,7 @@ export function useAmendmentWorkflow({
     canTransitionTo: (target: EditingMode) => canTransitionTo(currentStatus, target),
     possibleTransitions: EDITING_MODE_TRANSITIONS[currentStatus],
     isInEventPhase: isEventPhase(currentStatus),
-    isTerminal: isTerminalStatus(currentStatus),
+    isTerminal: isTerminalEditingMode(currentStatus),
     transitionTo,
     startInternalVoting,
     submitToEvent,

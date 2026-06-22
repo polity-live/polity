@@ -44,6 +44,11 @@ import { mutators } from '@/zero/mutators';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import {
+  editorSelectionDebugLog,
+  summarizeDiscussions,
+  summarizeRichTextValue,
+} from '@/features/shared/logic/editorSelectionDebug';
+import {
   getBranchEditingModeDisabledReasons,
   resolveSelectedBranchId,
 } from '@/features/amendments/logic/amendmentBranchDisplay';
@@ -67,10 +72,16 @@ import { DEFAULT_CAPABILITIES, DEFAULT_EDITOR_CONTENT } from '../types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const PERSISTED_CHANGE_REQUEST_DISCUSSION_FIELDS = [
+  'crId',
+  'displayCrId',
   'changeRequestEntityId',
+  'changeRequestStatus',
   'status',
   'confirmationStatus',
   'confirmedAt',
+  'branchDisplayNumber',
+  'branchScopedCrNumber',
+  'branchSequenceNumber',
   'votesFor',
   'votesAgainst',
   'votesAbstain',
@@ -320,11 +331,20 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   );
 
   // Handler for remote content arriving via broadcast (does NOT persist to Zero)
-  const handleRemoteContent = useCallback((remoteContent: Value) => {
-    if (!isInitialized.current) return;
-    lastRemoteUpdate.current = Date.now();
-    setContentState(remoteContent);
-  }, []);
+  const handleRemoteContent = useCallback(
+    (remoteContent: Value) => {
+      if (!isInitialized.current) return;
+      editorSelectionDebugLog('content-source:realtime-broadcast', {
+        contentEntityId,
+        contentSignature: summarizeRichTextValue(remoteContent),
+        entityId,
+        entityType,
+      });
+      lastRemoteUpdate.current = Date.now();
+      setContentState(remoteContent);
+    },
+    [contentEntityId, entityId, entityType]
+  );
 
   // Real-time content broadcasting via Supabase
   const { broadcastContent } = useRealtimeSync({
@@ -342,8 +362,16 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       entityContextKey &&
       (!isInitialized.current || initializedEntityContextKey.current !== entityContextKey)
     ) {
+      const initialContent = entity.content?.length ? entity.content : DEFAULT_EDITOR_CONTENT;
+      editorSelectionDebugLog('content-source:init', {
+        contentEntityId,
+        contentSignature: summarizeRichTextValue(initialContent),
+        entityContextKey,
+        entityId,
+        entityType,
+      });
       setTitleState(entity.title || '');
-      setContentState(entity.content?.length ? entity.content : DEFAULT_EDITOR_CONTENT);
+      setContentState(initialContent);
       setDiscussionsState(entity.discussions || []);
       setModeState(entity.editingMode || 'edit');
       setHasUnsavedChanges(false);
@@ -355,7 +383,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       initializedEntityContextKey.current = entityContextKey;
       lastRemoteUpdate.current = entity.updatedAt || Date.now();
     }
-  }, [entity, entityContextKey]);
+  }, [contentEntityId, entity, entityContextKey, entityId, entityType]);
 
   useEffect(() => {
     if (!entity || !isInitialized.current) return;
@@ -410,9 +438,25 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     if (remoteUpdatedAt <= lastRemoteUpdate.current) return;
 
     const remoteContent = entity.content?.length ? entity.content : DEFAULT_EDITOR_CONTENT;
+    editorSelectionDebugLog('content-source:zero-remote-update', {
+      contentEntityId,
+      contentSignature: summarizeRichTextValue(remoteContent),
+      entityId,
+      entityType,
+      lastRemoteUpdate: lastRemoteUpdate.current,
+      remoteUpdatedAt,
+    });
     setContentState(remoteContent);
     lastRemoteUpdate.current = remoteUpdatedAt;
-  }, [entity?.content, entity?.updatedAt, hasUnsavedChanges]);
+  }, [
+    contentEntityId,
+    entity,
+    entity?.content,
+    entity?.updatedAt,
+    entityId,
+    entityType,
+    hasUnsavedChanges,
+  ]);
 
   // Reset local change flag
   useEffect(() => {
@@ -554,7 +598,22 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   // Discussions change handler
   const setDiscussions = useCallback(
     async (newDiscussions: TDiscussion[]) => {
+      editorSelectionDebugLog('editor-set-discussions:start', {
+        contentEntityId,
+        entityId,
+        entityType,
+        lastDiscussionsSave: lastDiscussionsSave.current,
+        newDiscussions: summarizeDiscussions(newDiscussions),
+        oldDiscussions: summarizeDiscussions(discussions),
+        readOnly,
+      });
+
       if (readOnly) {
+        editorSelectionDebugLog('editor-set-discussions:skip-readonly', {
+          contentEntityId,
+          entityId,
+          entityType,
+        });
         return;
       }
 
@@ -563,15 +622,48 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       // which blocks the sync effect from applying remote updates.
       const newStr = JSON.stringify(newDiscussions);
       const oldStr = JSON.stringify(discussions);
-      if (newStr === oldStr) return;
+      if (newStr === oldStr) {
+        editorSelectionDebugLog('editor-set-discussions:skip-same', {
+          contentEntityId,
+          entityId,
+          entityType,
+          lastDiscussionsSave: lastDiscussionsSave.current,
+          newDiscussions: summarizeDiscussions(newDiscussions),
+        });
+        return;
+      }
 
       setDiscussionsState(newDiscussions);
       lastDiscussionsSave.current = Date.now();
 
-      if (!contentEntityId || !userId) return;
+      editorSelectionDebugLog('editor-set-discussions:state-updated', {
+        contentEntityId,
+        entityId,
+        entityType,
+        lastDiscussionsSave: lastDiscussionsSave.current,
+        newDiscussions: summarizeDiscussions(newDiscussions),
+      });
+
+      if (!contentEntityId || !userId) {
+        editorSelectionDebugLog('editor-set-discussions:skip-persist-missing-context', {
+          contentEntityId,
+          entityId,
+          entityType,
+          hasUserId: Boolean(userId),
+        });
+        return;
+      }
 
       try {
         const serializedDiscussions: ReadonlyJSONValue = JSON.parse(newStr);
+        editorSelectionDebugLog('editor-set-discussions:persist-start', {
+          contentEntityId,
+          entityId,
+          entityType,
+          processBranchId: entity?.metadata?.processBranchId ?? null,
+          serializedDiscussions: summarizeDiscussions(newDiscussions),
+        });
+
         if (entityType === 'blog') {
           await zero.mutate(
             mutators.blogs.update({ id: contentEntityId, discussions: serializedDiscussions })
@@ -594,7 +686,20 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         }
         // Documents and groupDocuments don't have a discussions column —
         // their discussion data lives in the thread/comment tables.
+        editorSelectionDebugLog('editor-set-discussions:persist-success', {
+          contentEntityId,
+          entityId,
+          entityType,
+          processBranchId: entity?.metadata?.processBranchId ?? null,
+        });
       } catch (error) {
+        editorSelectionDebugLog('editor-set-discussions:persist-error', {
+          contentEntityId,
+          entityId,
+          entityType,
+          error:
+            error instanceof Error ? { message: error.message, name: error.name } : String(error),
+        });
         console.error('Failed to save discussions:', error);
       }
     },
@@ -706,6 +811,12 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
           );
         }
         isLocalChange.current = true;
+        editorSelectionDebugLog('content-source:restore-version', {
+          contentEntityId,
+          contentSignature: summarizeRichTextValue(versionContent),
+          entityId,
+          entityType,
+        });
         setContentState(versionContent);
         lastSaveTime.current = Date.now();
         lastRemoteUpdate.current = Date.now();
@@ -717,7 +828,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         toast.error(translateText('generated.inline.0418_failed_to_restore_version_2a2ef8d8'));
       }
     },
-    [entityType, contentEntityId, userId, zero, readOnly]
+    [entityType, contentEntityId, entityId, userId, zero, readOnly]
   );
 
   // Access checks

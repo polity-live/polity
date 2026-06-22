@@ -4,10 +4,12 @@ const {
   canMock,
   discardPendingEventSuggestionsMock,
   finalizeInternalChangeRequestsForEventPhaseTransitionMock,
+  resolveChangeRequestByVoteResultMock,
 } = vi.hoisted(() => ({
   canMock: vi.fn(),
   discardPendingEventSuggestionsMock: vi.fn(),
   finalizeInternalChangeRequestsForEventPhaseTransitionMock: vi.fn(),
+  resolveChangeRequestByVoteResultMock: vi.fn(),
 }));
 
 vi.mock('../../rbac/can', () => ({
@@ -21,6 +23,10 @@ vi.mock('../../change-requests/event-suggestions', () => ({
 vi.mock('../../change-requests/internal-voting', () => ({
   finalizeInternalChangeRequestsForEventPhaseTransition:
     finalizeInternalChangeRequestsForEventPhaseTransitionMock,
+}));
+
+vi.mock('../../change-requests/server-resolution', () => ({
+  resolveChangeRequestByVoteResult: resolveChangeRequestByVoteResultMock,
 }));
 
 import { agendaServerMutators } from '../server-mutators';
@@ -99,6 +105,7 @@ beforeEach(() => {
   canMock.mockResolvedValue(undefined);
   discardPendingEventSuggestionsMock.mockReset();
   finalizeInternalChangeRequestsForEventPhaseTransitionMock.mockReset();
+  resolveChangeRequestByVoteResultMock.mockReset();
 });
 
 describe('agendaServerMutators.initializeChangeRequestVoting', () => {
@@ -121,16 +128,16 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
       expect.objectContaining({
         agenda_item_id: 'agenda-1',
         amendment_id: 'amendment-1',
-        purpose: 'final_closing',
-        status: 'indicative_open',
+        purpose: 'closing',
+        status: 'indicative',
       })
     );
     expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         agenda_item_id: 'agenda-1',
         change_request_id: null,
-        is_final_vote: true,
-        step_kind: 'final_closing',
+        is_closing_vote: true,
+        step_kind: 'closing',
       })
     );
     expect(tx.mutate.vote_choice.insert).toHaveBeenCalledTimes(3);
@@ -154,14 +161,14 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
     await initialize(tx, { start_final_vote_if_no_change_requests: true });
 
     const finalVoteInsert = tx.mutate.vote.insert.mock.calls.find(
-      ([vote]) => vote.purpose === 'final_closing'
+      ([vote]) => vote.purpose === 'closing'
     )?.[0];
 
     expect(finalVoteInsert).toBeTruthy();
     expect(tx.mutate.vote.update).toHaveBeenCalledWith(
       expect.objectContaining({
         id: finalVoteInsert.id,
-        status: 'final_open',
+        status: 'final',
       })
     );
   });
@@ -185,7 +192,7 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
       expect.objectContaining({
         agenda_item_id: 'agenda-1',
         change_request_id: 'cr-1',
-        is_final_vote: false,
+        is_closing_vote: false,
         status: 'pending',
       })
     );
@@ -217,7 +224,7 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
       expect.objectContaining({
         agenda_item_id: 'agenda-1',
         change_request_id: 'cr-branch',
-        is_final_vote: false,
+        is_closing_vote: false,
       })
     );
     expect(tx.mutate.agenda_item_change_request.insert).not.toHaveBeenCalledWith(
@@ -241,8 +248,8 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
       .mockResolvedValueOnce([
         {
           id: 'vote-final-1',
-          purpose: 'final_closing',
-          status: 'indicative_open',
+          purpose: 'closing',
+          status: 'indicative',
         },
       ])
       .mockResolvedValueOnce({ default_final_vote_duration_seconds: null });
@@ -255,7 +262,7 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
     expect(tx.mutate.vote.update).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'vote-final-1',
-        status: 'final_open',
+        status: 'final',
       })
     );
   });
@@ -311,7 +318,7 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
         amendment_id: 'amendment-1',
         title: 'A1: BR-1 vs BR-2',
         purpose: 'merge_variant',
-        status: 'indicative_open',
+        status: 'indicative',
       })
     );
     expect(tx.mutate.vote_choice.insert).toHaveBeenCalledWith(
@@ -341,15 +348,15 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
         change_request_id: null,
         order_index: 0,
         step_kind: 'merge_variant',
-        is_final_vote: false,
+        is_closing_vote: false,
       })
     );
     expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         agenda_item_id: 'agenda-1',
         order_index: 1,
-        step_kind: 'final_closing',
-        is_final_vote: true,
+        step_kind: 'closing',
+        is_closing_vote: true,
       })
     );
     expect(tx.mutate.amendment_process_step_run.update).toHaveBeenCalledTimes(2);
@@ -456,7 +463,7 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
         {
           id: 'vote-merge-1',
           purpose: 'merge_variant',
-          status: 'indicative_open',
+          status: 'indicative',
         },
       ])
       .mockResolvedValueOnce([
@@ -468,7 +475,7 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
         {
           id: 'vote-merge-1',
           purpose: 'merge_variant',
-          status: 'indicative_open',
+          status: 'indicative',
         },
       ]);
 
@@ -476,7 +483,7 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
 
     expect(tx.mutate.vote.insert).toHaveBeenCalledTimes(1);
     expect(tx.mutate.vote.insert).toHaveBeenCalledWith(
-      expect.objectContaining({ purpose: 'final_closing' })
+      expect.objectContaining({ purpose: 'closing' })
     );
     expect(tx.mutate.vote.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -485,5 +492,29 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
         purpose: 'merge_variant',
       })
     );
+  });
+
+  it('does not process an already completed CR vote result again', async () => {
+    const tx = createTx();
+    tx.run.mockResolvedValueOnce({
+      id: 'agenda-cr-1',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'cr-1',
+      status: 'completed',
+      is_closing_vote: false,
+    });
+
+    await agendaServerMutators.processCRVoteResult.fn({
+      tx: tx as never,
+      ctx: createCtx() as never,
+      args: {
+        agenda_item_change_request_id: 'agenda-cr-1',
+        vote_result: 'passed',
+      },
+    });
+
+    expect(canMock).not.toHaveBeenCalled();
+    expect(resolveChangeRequestByVoteResultMock).not.toHaveBeenCalled();
+    expect(tx.mutate.agenda_item_change_request.update).not.toHaveBeenCalled();
   });
 });

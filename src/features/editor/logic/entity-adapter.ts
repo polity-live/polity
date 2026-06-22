@@ -18,6 +18,7 @@ import { DEFAULT_EDITOR_CONTENT } from '../types';
 import { checkPermission } from '@/zero/rbac/check';
 import type { ActionRight, Amendment as PermissionAmendment } from '@/zero/rbac/types';
 import { decorateBranchScopedChangeRequests } from '@/features/change-requests/logic/branchScopedDisplay';
+import { isTerminalEditingMode, normalizeEditingMode } from '@/zero/amendments/editing-mode-policy';
 
 // Raw entity type for adapter function parameters.
 // These receive untyped data from various Zero query shapes.
@@ -175,18 +176,9 @@ function buildEditorUser(user: RawEntity, fallback = 'Unknown'): EditorUser {
  * Maps an amendment's editing_mode value to an EditorMode.
  * Terminal states (passed/rejected) are shown as 'view' in the editor.
  */
-function mapAmendmentEditingMode(mode: string | null | undefined): EditorMode {
-  if (!mode) return 'suggest_internal';
-  if (mode === 'passed' || mode === 'rejected') return 'view';
-  const valid: EditorMode[] = [
-    'edit',
-    'view',
-    'suggest_internal',
-    'suggest_event',
-    'vote_internal',
-    'event_final_closing_vote',
-  ];
-  return valid.includes(mode as EditorMode) ? (mode as EditorMode) : 'suggest_internal';
+function mapEditorMode(mode: string | null | undefined): EditorMode {
+  const normalizedMode = normalizeEditingMode(mode);
+  return isTerminalEditingMode(normalizedMode) ? 'view' : normalizedMode;
 }
 
 function mapChangeRequestStatusToDiscussionStatus(status: string | null | undefined) {
@@ -220,6 +212,7 @@ function enrichAmendmentDiscussionsWithChangeRequests(
       process_branch_id: changeRequest.process_branch_id ?? null,
       cr_id: changeRequest.title ?? null,
       title: changeRequest.title ?? null,
+      branch_sequence_number: changeRequest.branch_sequence_number ?? null,
       created_at: changeRequest.created_at ?? null,
     }))
   );
@@ -248,10 +241,15 @@ function enrichAmendmentDiscussionsWithChangeRequests(
     return {
       ...discussion,
       changeRequestEntityId: changeRequest.id ?? discussion.changeRequestEntityId,
+      changeRequestStatus: changeRequest.status ?? null,
       displayCrId: displayChangeRequest?.displayCrId ?? discussion.displayCrId ?? discussion.crId,
       branchDisplayNumber: displayChangeRequest?.branchDisplayNumber,
       branchScopedCrNumber: displayChangeRequest?.branchScopedCrNumber,
-      confirmationStatus: 'confirmed',
+      branchSequenceNumber: changeRequest.branch_sequence_number ?? null,
+      confirmationStatus:
+        changeRequest.status === 'pending_submission'
+          ? (discussion.confirmationStatus ?? 'pending')
+          : 'confirmed',
       confirmedAt: discussion.confirmedAt,
       status: discussionStatus ?? discussion.status,
       votesFor: changeRequest.votes_for ?? 0,
@@ -398,7 +396,9 @@ export function adaptAmendmentToEntity(
     entityType: 'amendment',
     amendmentId: amendment.id,
     amendmentCode: amendment.code,
-    amendmentEditingMode: processBranch?.editing_mode ?? document.editing_mode ?? null,
+    amendmentEditingMode: normalizeEditingMode(
+      processBranch?.editing_mode ?? document.editing_mode
+    ),
     processBranchId: processBranch?.id,
     processBranchStatus: processBranch?.status,
     processBranchResolution: processBranch?.resolution,
@@ -418,7 +418,7 @@ export function adaptAmendmentToEntity(
     discussions: enrichAmendmentDiscussionsWithChangeRequests(amendmentContext, processBranches),
     editingMode: isBranchReadonly
       ? 'view'
-      : mapAmendmentEditingMode(processBranch?.editing_mode ?? document.editing_mode),
+      : mapEditorMode(processBranch?.editing_mode ?? document.editing_mode),
     visibility: document.visibility ?? 'public',
     updatedAt: document.updated_at || Date.now(),
     owner,
@@ -480,7 +480,7 @@ export function adaptBlogToEntity(blog: RawEntity | undefined | null): EditorEnt
         ? sanitizeContent(blog.content)
         : DEFAULT_EDITOR_CONTENT,
     discussions: (blog.discussions || []) as TDiscussion[],
-    editingMode: (blog.editing_mode as EditorMode) || 'edit',
+    editingMode: mapEditorMode(blog.editing_mode),
     visibility: blog.visibility ?? 'public',
     updatedAt: blog.updated_at || Date.now(),
     owner,
@@ -528,7 +528,7 @@ export function adaptDocumentToEntity(document: RawEntity | undefined | null): E
     title: document.title || document.amendment?.title || '',
     content,
     discussions: (document.discussions || []) as TDiscussion[],
-    editingMode: (document.editing_mode as EditorMode) || 'edit',
+    editingMode: mapEditorMode(document.editing_mode),
     visibility: document.visibility ?? 'public',
     updatedAt: document.updated_at || Date.now(),
     owner,
@@ -582,7 +582,7 @@ export function adaptGroupDocumentToEntity(
     title: document.title || document.amendment?.title || '',
     content,
     discussions: (document.discussions || []) as TDiscussion[],
-    editingMode: (document.editing_mode as EditorMode) || 'edit',
+    editingMode: mapEditorMode(document.editing_mode),
     visibility: document.visibility ?? 'public',
     updatedAt: document.updated_at || Date.now(),
     owner,

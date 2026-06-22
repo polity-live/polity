@@ -89,7 +89,7 @@ export function resolveDecisionTiming({
   nowMs = Date.now(),
 }: DecisionTimingInput) {
   const startsInFuture = startsAt ? startsAt.getTime() > nowMs : false;
-  const isActiveByStatus = phase === 'indication' || phase === 'final_vote';
+  const isActiveByStatus = phase === 'indication' || phase === 'final';
   const closedByStatus = phase === 'closed';
   const isEnded =
     closedByStatus ||

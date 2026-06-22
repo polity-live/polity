@@ -55,13 +55,13 @@ describe('computeAgendaStats', () => {
           ...Array.from({ length: 6 }, (_, index) => ({
             id: `timeline-cr-${index + 1}`,
             change_request_id: `cr-${index + 1}`,
-            is_final_vote: false,
+            is_closing_vote: false,
             status: 'pending',
           })),
           {
             id: 'timeline-final-vote',
             change_request_id: null,
-            is_final_vote: true,
+            is_closing_vote: true,
             status: 'pending',
           },
         ],
@@ -87,13 +87,13 @@ describe('computeAgendaStats', () => {
           {
             id: 'timeline-cr-1',
             change_request_id: 'cr-open-1',
-            is_final_vote: false,
+            is_closing_vote: false,
             status: 'completed',
           },
           {
             id: 'timeline-cr-2',
             change_request_id: 'cr-open-2',
-            is_final_vote: false,
+            is_closing_vote: false,
             status: 'voting',
           },
         ],

@@ -5,7 +5,33 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Button } from '@/features/shared/ui/ui/button';
 
 vi.mock('@tanstack/react-router', () => ({
-  useNavigate: () => vi.fn(),
+  Link: ({
+    children,
+    to,
+    params,
+    search,
+    ...props
+  }: {
+    children: React.ReactNode;
+    to: string;
+    params?: Record<string, string>;
+    search?: Record<string, string>;
+    [key: string]: unknown;
+  }) => {
+    let href = to;
+
+    for (const [key, value] of Object.entries(params ?? {})) {
+      href = href.replace(`$${key}`, value);
+    }
+
+    const query = new URLSearchParams(search ?? {}).toString();
+
+    return (
+      <a href={query ? `${href}?${query}` : href} {...props}>
+        {children}
+      </a>
+    );
+  },
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
@@ -157,6 +183,32 @@ describe('AgendaActionBar', () => {
     expect(screen.queryByText('Enter Tally')).toBeNull();
   });
 
+  it('renders agenda shortcuts as links for opening in a new tab', () => {
+    render(<AgendaActionBar {...baseProps} canManageAgenda onBackToAgenda={() => undefined} />);
+
+    expect(
+      screen.getByTitle('features.events.agenda.backToAgenda').closest('a')?.getAttribute('href')
+    ).toBe('/event/event-1/agenda');
+    expect(
+      screen
+        .getByTitle('features.events.agenda.quickActions.addItem')
+        .closest('a')
+        ?.getAttribute('href')
+    ).toBe('/create/agenda-item?eventId=event-1');
+    expect(
+      screen
+        .getByTitle('features.events.agenda.quickActions.createElection')
+        .closest('a')
+        ?.getAttribute('href')
+    ).toBe('/create/agenda-item?eventId=event-1&type=election');
+    expect(
+      screen
+        .getByTitle('features.events.agenda.quickActions.createVote')
+        .closest('a')
+        ?.getAttribute('href')
+    ).toBe('/create/agenda-item?eventId=event-1&type=vote');
+  });
+
   it('renders the Vote button for pending votable items when voting is available', () => {
     const { container } = render(
       <AgendaActionBar
@@ -216,6 +268,84 @@ describe('AgendaActionBar', () => {
     expect(
       screen.getByTitle('features.events.agenda.actions.startFinalVote').hasAttribute('disabled')
     ).toBe(true);
+  });
+
+  it('uses custom final vote labels as tooltip and accessible name for start and close actions', () => {
+    const { rerender } = render(
+      <AgendaActionBar
+        {...baseProps}
+        currentAgendaItem={{
+          ...baseProps.currentAgendaItem,
+          voting_phase: 'pending',
+        }}
+        canManageAgenda
+        onStartVote={() => undefined}
+        startVoteTooltip="Start final change request vote: Branch 2 CR-2"
+      />
+    );
+
+    expect(
+      screen
+        .getByRole('button', {
+          name: 'Start final change request vote: Branch 2 CR-2',
+        })
+        .getAttribute('title')
+    ).toBe('Start final change request vote: Branch 2 CR-2');
+
+    rerender(
+      <AgendaActionBar
+        {...baseProps}
+        canManageAgenda
+        onStartFinalVote={() => undefined}
+        startFinalVoteTooltip="Start final closing vote: Amendment A"
+      />
+    );
+
+    expect(
+      screen
+        .getByRole('button', {
+          name: 'Start final closing vote: Amendment A',
+        })
+        .getAttribute('title')
+    ).toBe('Start final closing vote: Amendment A');
+
+    rerender(
+      <AgendaActionBar
+        {...baseProps}
+        currentAgendaItem={{
+          ...baseProps.currentAgendaItem,
+          voting_phase: 'final',
+        }}
+        canManageAgenda
+        onCloseFinalVote={() => undefined}
+        closeVoteTooltip="Close final merge vote Branch 1 VS Branch 2"
+      />
+    );
+
+    expect(
+      screen
+        .getByRole('button', {
+          name: 'Close final merge vote Branch 1 VS Branch 2',
+        })
+        .getAttribute('title')
+    ).toBe('Close final merge vote Branch 1 VS Branch 2');
+  });
+
+  it('renders the jump to next voting step action when provided', () => {
+    const handleJump = vi.fn();
+
+    render(
+      <AgendaActionBar
+        {...baseProps}
+        canManageAgenda
+        onJumpToNextVoteStep={handleJump}
+        jumpToNextVoteStepTooltip="Next voting step"
+      />
+    );
+
+    screen.getByTitle('Next voting step').click();
+
+    expect(handleJump).toHaveBeenCalledTimes(1);
   });
 
   it('renders the candidate button as blocked with help when passive voting rights are missing', () => {

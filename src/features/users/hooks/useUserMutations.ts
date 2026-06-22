@@ -23,6 +23,7 @@ export function useUserMutations() {
     profileData: {
       first_name?: string;
       last_name?: string;
+      gender?: 'male' | 'female' | 'diverse' | null;
       bio?: string;
       about?: ReadonlyJSONValue | null;
       avatar?: string;
@@ -116,6 +117,7 @@ export function useUserMutations() {
     profileData: {
       first_name?: string;
       last_name?: string;
+      gender?: 'male' | 'female' | 'diverse' | null;
       bio?: string;
       about?: ReadonlyJSONValue | null;
       aboutPlainText?: string;
@@ -154,6 +156,7 @@ export function useUserMutations() {
       await userActions.updateProfileConfirmed({
         first_name: profileData.first_name,
         last_name: profileData.last_name,
+        gender: profileData.gender,
         bio: profileData.bio,
         about: profileData.about,
         avatar: profileData.avatar,

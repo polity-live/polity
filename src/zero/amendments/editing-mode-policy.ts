@@ -49,18 +49,15 @@ export const TERMINAL_EDITING_MODES = [
   'rejected',
 ] as const satisfies readonly EditingMode[];
 
-const LEGACY_MODE_MAP: Record<string, EditingMode> = {
-  collaborative_editing: 'edit',
-  internal_suggesting: 'suggest_internal',
-  internal_voting: 'vote_internal',
-  viewing: 'view',
-  event_suggesting: 'suggest_event',
-  event_voting: 'event_final_closing_vote',
-  vote_event: 'event_final_closing_vote',
-  Drafting: 'edit',
-  'Under Review': 'suggest_internal',
-  Passed: 'passed',
-  Rejected: 'rejected',
+export const EDITING_MODE_TRANSITIONS: Record<EditingMode, EditingMode[]> = {
+  edit: [...MANUALLY_SELECTABLE_MODES],
+  view: [...MANUALLY_SELECTABLE_MODES],
+  suggest_internal: [...MANUALLY_SELECTABLE_MODES],
+  suggest_event: ['view'],
+  vote_internal: [...MANUALLY_SELECTABLE_MODES],
+  event_final_closing_vote: ['view'],
+  passed: [],
+  rejected: [],
 };
 
 export interface AmendmentEditingModePolicyContext {
@@ -108,7 +105,7 @@ export function isAgendaItemStarted(item: AmendmentEditingModeAgendaItemState | 
 
 export function normalizeEditingMode(raw: string | null | undefined): EditingMode {
   if (!raw) return 'edit';
-  return LEGACY_MODE_MAP[raw] ?? (isEditingMode(raw) ? raw : 'edit');
+  return isEditingMode(raw) ? raw : 'edit';
 }
 
 export function isEditingMode(raw: string | null | undefined): raw is EditingMode {
@@ -141,6 +138,26 @@ export function isTerminalEditingMode(
   mode: string | null | undefined
 ): mode is 'passed' | 'rejected' {
   return mode === 'passed' || mode === 'rejected';
+}
+
+export function canTransitionTo(currentMode: EditingMode, targetMode: EditingMode): boolean {
+  return EDITING_MODE_TRANSITIONS[currentMode].includes(targetMode);
+}
+
+export function isEventPhase(mode: EditingMode): boolean {
+  return isAutomaticEventMode(mode) || isTerminalEditingMode(mode);
+}
+
+export function isVotingMode(mode: EditingMode): boolean {
+  return mode === 'vote_internal' || mode === 'event_final_closing_vote';
+}
+
+export function isSuggestingMode(mode: EditingMode): boolean {
+  return mode === 'suggest_internal' || mode === 'suggest_event';
+}
+
+export function isSelectableByCollaborator(mode: EditingMode): boolean {
+  return (MANUALLY_SELECTABLE_MODES as readonly EditingMode[]).includes(mode);
 }
 
 export function areInternalModesAllowed(context: AmendmentEditingModePolicyContext): boolean {

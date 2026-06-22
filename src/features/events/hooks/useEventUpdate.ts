@@ -72,6 +72,7 @@ export interface EventFormData {
   delegateMembersPerSeat: string;
   delegateElectionMode: ElectionMode;
   defaultFinalVoteDurationMinutes: string;
+  genderQuotaEnabled: boolean;
   recurrencePattern: RecurrencePattern;
   recurrenceInterval: number;
   recurrenceWeekdays: number[];
@@ -146,6 +147,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     delegateMembersPerSeat: '10',
     delegateElectionMode: 'list',
     defaultFinalVoteDurationMinutes: '',
+    genderQuotaEnabled: false,
     recurrencePattern: 'none',
     recurrenceInterval: 1,
     recurrenceWeekdays: [],
@@ -261,6 +263,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         defaultFinalVoteDurationMinutes: event.default_final_vote_duration_seconds
           ? String(Math.max(1, Math.round(event.default_final_vote_duration_seconds / 60)))
           : '',
+        genderQuotaEnabled: Boolean(event.gender_quota_enabled),
         recurrencePattern,
         recurrenceInterval,
         recurrenceWeekdays,
@@ -411,6 +414,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           delegate_election_mode:
             event?.event_type === 'delegate_assembly' ? formData.delegateElectionMode : null,
           default_final_vote_duration_seconds: defaultFinalVoteDurationSeconds,
+          gender_quota_enabled: formData.genderQuotaEnabled,
           ...recurringFields,
         };
 
@@ -468,6 +472,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           delegate_election_mode:
             event.event_type === 'delegate_assembly' ? formData.delegateElectionMode : null,
           default_final_vote_duration_seconds: defaultFinalVoteDurationSeconds,
+          gender_quota_enabled: formData.genderQuotaEnabled,
           ...recurringFields,
         };
 

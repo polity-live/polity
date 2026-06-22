@@ -9,6 +9,7 @@ export default function CalendarPage() {
   const { handlers: periodSwipeHandlers } = useSwipeNavigation({
     onSwipePrev: cp.goToPrevious,
     onSwipeNext: cp.goToNext,
+    keyboardMode: 'global',
   });
 
   return <CalendarPageShellView cp={cp} swipeHandlers={periodSwipeHandlers} />;

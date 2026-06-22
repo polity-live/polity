@@ -9,8 +9,8 @@ describe('normalizeDecisionVotingPhase', () => {
   });
 
   it('normalizes final and closed statuses', () => {
-    expect(normalizeDecisionVotingPhase('final')).toBe('final_vote');
-    expect(normalizeDecisionVotingPhase('final_vote')).toBe('final_vote');
+    expect(normalizeDecisionVotingPhase('final')).toBe('final');
+    expect(normalizeDecisionVotingPhase('final')).toBe('final');
     expect(normalizeDecisionVotingPhase('closed')).toBe('closed');
     expect(normalizeDecisionVotingPhase('completed')).toBe('closed');
   });

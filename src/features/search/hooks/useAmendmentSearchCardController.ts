@@ -1,7 +1,7 @@
 import { useAuth } from '@/providers/auth-provider';
 import type { AmendmentTimelineCardProps } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
-import { normalizeEditingMode } from '@/zero/rbac/workflow-constants';
+import { normalizeEditingMode } from '@/zero/amendments/editing-mode-policy';
 import {
   getOrderedBranches,
   mapAmendmentBranchStatusChips,

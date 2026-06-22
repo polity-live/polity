@@ -187,8 +187,6 @@ export function useGroupEditFormController({
     formData.sibling_membership_mode != null &&
     formData.sibling_membership_mode !== 'none' &&
     formData.siblingMembershipDirection != null;
-  const hasLegacySelectedSourceMembership =
-    formData.sibling_membership_mode === 'selected_source_groups';
 
   const showSiblingRelationshipEditor = groupType === 'sibling' || Boolean(hasSiblingConnections);
 
@@ -234,11 +232,6 @@ export function useGroupEditFormController({
   );
 
   const onFormSubmit = (e: React.FormEvent) => {
-    if (hasLegacySelectedSourceMembership) {
-      e.preventDefault();
-      return;
-    }
-
     if (siblingConfigurationPreflight.blocking) {
       e.preventDefault();
       return;
@@ -294,7 +287,6 @@ export function useGroupEditFormController({
     siblingMembershipRule,
     pair,
     hasSiblingMembership,
-    hasLegacySelectedSourceMembership,
     siblingConfigurationPreflight,
     onFormSubmit,
     confirmCreate,

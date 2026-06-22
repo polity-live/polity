@@ -14,7 +14,7 @@ export {
 export type { EntityTopic } from '@/features/assistant/constants';
 export {
   generateRandomHandle,
-  buildUserInitializationTransactions,
+  buildUserInitializationData,
 } from './logic/user-initialization-helpers';
 
 // Export hooks

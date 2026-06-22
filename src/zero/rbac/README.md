@@ -85,7 +85,7 @@ If the server rejects with `PermissionError`, the user sees a "Permission denied
 | File                     | Purpose                                                                         |
 | ------------------------ | ------------------------------------------------------------------------------- |
 | `types.ts`               | `ResourceType`, `ActionType`, `Membership`, `Participation`, etc.               |
-| `constants.ts`           | `PERMISSION_IMPLIES` (inheritance), `DEFAULT_*_ROLES`, `ACTION_RIGHTS`          |
+| `constants.ts`           | `PERMISSION_IMPLIES` (inheritance), `DEFAULT_*_ROLES`, scoped `*_ACTION_RIGHTS` |
 | `check.ts`               | Pure permission evaluation — `checkPermission()` + identity helpers             |
 | `can.ts`                 | Server-side mutator guard — queries DB via `tx.run()`, throws `PermissionError` |
 | `errors.ts`              | `PermissionError` class + `isPermissionError()` type guard                      |

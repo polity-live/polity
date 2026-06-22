@@ -21,9 +21,7 @@ export interface BlogsCardProps {
     title: string;
     date: string;
     supporters?: number;
-    likes?: number; // Legacy support
     comments?: number;
-    commentCount?: number;
   };
   gradientClass?: string;
   href?: string;
@@ -31,6 +29,8 @@ export interface BlogsCardProps {
 
 export const BlogsCard: React.FC<BlogsCardProps> = ({ blog, gradientClass, href }) => {
   const successTone = getSemanticToneClasses('success');
+  const supporters = blog.supporters ?? 0;
+  const comments = blog.comments ?? 0;
   const cardClassName = cn(
     'flex h-full flex-col overflow-hidden',
     gradientClass ?? getEntityGradientClasses('blog'),
@@ -49,14 +49,14 @@ export const BlogsCard: React.FC<BlogsCardProps> = ({ blog, gradientClass, href 
             <span className="flex items-center">
               <span className={successTone.text}>👍</span>
               <span className="ml-1">
-                {blog.supporters}
+                {supporters}
                 {translateText('generated.inline.0180_supporters_dbb25078')}
               </span>
             </span>
             <span className="flex items-center">
               <span>💬</span>
               <span className="ml-1">
-                {blog.comments}
+                {comments}
                 {translateText('generated.inline.0181_comments_5b17a6c6')}
               </span>
             </span>
@@ -76,14 +76,14 @@ export const BlogsCard: React.FC<BlogsCardProps> = ({ blog, gradientClass, href 
         <span className="flex items-center">
           <span className={successTone.text}>👍</span>
           <span className="ml-1">
-            {blog.supporters}
+            {supporters}
             {translateText('generated.inline.0180_supporters_dbb25078')}
           </span>
         </span>
         <span className="flex items-center">
           <span>💬</span>
           <span className="ml-1">
-            {blog.comments}
+            {comments}
             {translateText('generated.inline.0181_comments_5b17a6c6')}
           </span>
         </span>

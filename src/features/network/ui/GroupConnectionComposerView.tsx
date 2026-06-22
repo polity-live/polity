@@ -229,9 +229,6 @@ export function GroupConnectionComposerView({
   setActiveMembershipDirection,
   updateRightDirection,
 }: GroupConnectionComposerViewProps) {
-  const hasLegacySelectedSourceMembership =
-    activeMembershipRule.membershipMode === 'selected_source_groups';
-
   return (
     <div className="space-y-4">
       <Tabs
@@ -373,16 +370,6 @@ export function GroupConnectionComposerView({
                 </FormControlRadioGroup>
               </div>
 
-              {hasLegacySelectedSourceMembership ? (
-                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-                  <div className="font-medium">Legacy source-group membership</div>
-                  <div className="mt-1 text-amber-800">
-                    This connection uses an old source-group rule. Choose one of the supported
-                    membership modes before saving changes.
-                  </div>
-                </div>
-              ) : null}
-
               {selectedPreset.value === 'elected' ||
               selectedPreset.value === 'role_members_to_partner' ? (
                 <div className="grid gap-2">
@@ -503,15 +490,6 @@ export function GroupConnectionComposerView({
                       }
                     >
                       <div className="grid gap-2 sm:grid-cols-2">
-                        {hasLegacySelectedSourceMembership ? (
-                          <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 sm:col-span-2">
-                            <div className="font-medium">Legacy source-group membership</div>
-                            <div className="mt-1 text-amber-800">
-                              This connection uses an old source-group rule. Select a supported
-                              membership mode before saving changes.
-                            </div>
-                          </div>
-                        ) : null}
                         {MEMBERSHIP_MODE_OPTIONS.map((option: any) => {
                           const disabled =
                             option === 'role_members' &&

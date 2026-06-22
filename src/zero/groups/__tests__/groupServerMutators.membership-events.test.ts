@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mutatorMocks = vi.hoisted(() => ({
-  updateMemberRole: vi.fn(),
+  updateMembership: vi.fn(),
 }));
 const membershipHelperMocks = vi.hoisted(() => ({
   loadGroupWithDerivedNetworkMeta: vi.fn(),
@@ -45,7 +45,7 @@ const serverNotifyMocks = vi.hoisted(() => ({
 vi.mock('../../mutators', () => ({
   mutators: {
     groups: {
-      updateMemberRole: { fn: mutatorMocks.updateMemberRole },
+      updateMembership: { fn: mutatorMocks.updateMembership },
     },
   },
 }));
@@ -72,7 +72,7 @@ vi.mock('../../rbac/constants', () => ({
 
 import { groupServerMutators } from '../server-mutators';
 
-type GroupMutatorInput = Parameters<typeof groupServerMutators.updateMemberRole.fn>[0];
+type GroupMutatorInput = Parameters<typeof groupServerMutators.updateMembership.fn>[0];
 type GroupMutatorCtx = GroupMutatorInput['ctx'];
 
 function createTx() {
@@ -140,7 +140,7 @@ describe('groupServerMutators membership-driven event reconciliation', () => {
       })
       .mockResolvedValueOnce([]);
 
-    await groupServerMutators.updateMemberRole.fn({
+    await groupServerMutators.updateMembership.fn({
       tx: tx as never,
       ctx: createCtx(),
       args: {
@@ -177,7 +177,7 @@ describe('groupServerMutators membership-driven event reconciliation', () => {
     conflictValidationMocks.assertNoBlockingGroupConflicts.mockRejectedValueOnce(conflictError);
 
     await expect(
-      groupServerMutators.updateMemberRole.fn({
+      groupServerMutators.updateMembership.fn({
         tx: tx as never,
         ctx: createCtx(),
         args: {
@@ -187,7 +187,7 @@ describe('groupServerMutators membership-driven event reconciliation', () => {
       })
     ).rejects.toBe(conflictError);
 
-    expect(mutatorMocks.updateMemberRole).not.toHaveBeenCalled();
+    expect(mutatorMocks.updateMembership).not.toHaveBeenCalled();
     expect(
       assemblyReconcileMocks.reconcileGeneralAssemblyParticipantsForGroups
     ).not.toHaveBeenCalled();

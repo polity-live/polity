@@ -20,16 +20,12 @@ import {
 import { mutators } from '@/zero/mutators';
 import { serverMutators } from '@/zero/server-mutators';
 import { zql } from '@/zero/schema';
+import { VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const visibilitySchema = z.enum(['public', 'authenticated', 'private']);
 const groupTypeSchema = z.enum(['base', 'hierarchical', 'sibling']);
-const groupMembershipModeSchema = z.enum([
-  'none',
-  'all_members',
-  'role_members',
-  'selected_source_groups',
-]);
+const groupMembershipModeSchema = z.enum(['none', 'all_members', 'role_members']);
 const membershipFlowSchema = z.enum(['current_members_to_partner', 'partner_members_to_current']);
 const relationshipDirectionSchema = z.enum([
   'none',
@@ -693,7 +689,6 @@ export function buildAiCreateTools(userId: string) {
         membershipMode: groupMembershipModeSchema.default('none'),
         membershipFlow: membershipFlowSchema.optional(),
         requiredSourceRoleId: z.string().trim().optional(),
-        eligibleOriginGroupIds: z.array(z.string().trim().min(1)).default([]),
         relationshipRights: z
           .object({
             informationRight: relationshipDirectionSchema.default('none'),
@@ -738,7 +733,6 @@ export function buildAiCreateTools(userId: string) {
         membershipMode,
         membershipFlow,
         requiredSourceRoleId,
-        eligibleOriginGroupIds,
         relationshipRights,
         visibility,
         email,
@@ -762,7 +756,6 @@ export function buildAiCreateTools(userId: string) {
         );
         let resolvedConnectedGroupId: string | null = null;
         let resolvedRequiredSourceRoleId: string | null = null;
-        let resolvedEligibleOriginGroupIds: string[] = [];
 
         await executeZeroTransaction(zeroContext, async (tx, ctx) => {
           if (groupType === 'sibling') {
@@ -786,14 +779,6 @@ export function buildAiCreateTools(userId: string) {
               resolvedRequiredSourceRoleId = (
                 await assertGroupRoleReference(tx, roleSourceGroupId, requiredSourceRoleId)
               ).id;
-            }
-
-            if (membershipMode === 'selected_source_groups') {
-              resolvedEligibleOriginGroupIds = [];
-              for (const sourceGroupReference of normalizeStringList(eligibleOriginGroupIds)) {
-                const sourceGroup = await assertGroupAccess(tx, userId, sourceGroupReference);
-                resolvedEligibleOriginGroupIds.push(sourceGroup.id);
-              }
             }
           }
 
@@ -908,7 +893,7 @@ export function buildAiCreateTools(userId: string) {
                         member_target_group_id: memberTargetGroupId,
                         membership_mode: membershipMode,
                         required_source_role_id: resolvedRequiredSourceRoleId,
-                        eligible_origin_group_ids: resolvedEligibleOriginGroupIds,
+                        eligible_origin_group_ids: [],
                       }
                     : null,
               }),
@@ -1180,7 +1165,7 @@ export function buildAiCreateTools(userId: string) {
                 { type: 'h1', children: [{ text: title }] },
                 { type: 'p', children: [{ text: '' }] },
               ],
-              editing_mode: 'collaborative',
+              editing_mode: 'edit',
             }),
             ctx
           );
@@ -1264,6 +1249,7 @@ export function buildAiCreateTools(userId: string) {
                     }),
                     description: reason?.trim() || null,
                     status: 'indicative',
+                    purpose: VOTE_PURPOSE.closing,
                     majority_type: 'relative',
                     closing_type: 'moderator',
                     closing_duration_seconds: null,
@@ -1792,7 +1778,7 @@ export function buildAiCreateTools(userId: string) {
               completed_at: null,
               majority_type: isVotable ? majorityType : null,
               time_limit: isVotable && timeLimitMinutes ? timeLimitMinutes * 60 : null,
-              voting_phase: isVotable ? 'indication' : null,
+              voting_phase: isVotable ? 'indicative' : null,
             }),
             ctx
           );
@@ -1807,6 +1793,7 @@ export function buildAiCreateTools(userId: string) {
                 title,
                 description: description?.trim() || null,
                 status: 'indicative',
+                purpose: VOTE_PURPOSE.closing,
                 majority_type: majorityType,
                 closing_type: null,
                 closing_duration_seconds: null,

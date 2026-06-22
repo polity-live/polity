@@ -7,6 +7,7 @@
 
 // Import TDiscussion for internal use and re-export for external use
 import type { TDiscussion as TDiscussionType } from '@/features/shared/ui/kit-platejs/discussion-kit';
+import type { EditingMode, NonTerminalEditingMode } from '@/zero/amendments/editing-mode-policy';
 import type { Value } from 'platejs';
 export type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit';
 
@@ -18,13 +19,7 @@ export type EditorEntityType = 'amendment' | 'blog' | 'document' | 'groupDocumen
 /**
  * Editor editing modes
  */
-export type EditorMode =
-  | 'edit'
-  | 'view'
-  | 'vote_internal'
-  | 'event_final_closing_vote'
-  | 'suggest_internal'
-  | 'suggest_event';
+export type EditorMode = NonTerminalEditingMode;
 
 /**
  * Capabilities available for an editor instance
@@ -147,6 +142,9 @@ export interface EditorDiscussion {
   visibilityScope?: string | null;
   resolvedInMode?: string | null;
   votingStatus?: string | null;
+  confirmationStatus?: 'pending' | 'confirmed' | null;
+  changeRequestStatus?: string | null;
+  changeRequestEntityId?: string | null;
   votes?: EditorVote[];
   // Required TDiscussion fields
   comments: EditorComment[];
@@ -156,6 +154,7 @@ export interface EditorDiscussion {
   displayCrId?: string;
   branchDisplayNumber?: number;
   branchScopedCrNumber?: number;
+  branchSequenceNumber?: number | null;
 }
 
 /**
@@ -229,7 +228,7 @@ export interface EditorEntityMetadata {
   /** Amendment-specific */
   amendmentId?: string;
   amendmentCode?: string;
-  amendmentEditingMode?: string;
+  amendmentEditingMode?: EditingMode | null;
   amendmentStatus?: string;
   processBranchId?: string;
   processBranchStatus?: string;
@@ -352,7 +351,7 @@ export interface VersionControlProps {
 export interface ModeSelectorProps {
   entityType: EditorEntityType;
   entityId: string;
-  currentMode: EditorMode | string;
+  currentMode: EditorMode;
   isOwnerOrCollaborator: boolean;
   onModeChange?: (mode: EditorMode) => void | Promise<void>;
 }

@@ -33,7 +33,7 @@ import {
 } from '@/features/groups/logic/openAssignments';
 import { mutators } from '@/zero/mutators';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
-import { VOTE_STATUS } from '@/zero/votes/vote-workflow';
+import { VOTE_PHASE, VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
 import {
   buildDelegateElectionAgendaItemDescription,
   buildDelegateElectionAgendaItemTitle,
@@ -402,7 +402,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           completed_at: 0,
           event_id: args.eventId,
           amendment_id: amendmentId || null,
-          voting_phase: args.isVotable ? 'indication' : null,
+          voting_phase: args.isVotable ? 'indicative' : null,
           majority_type: args.isVotable ? majorityType : null,
           time_limit: args.isVotable && timeLimit ? parseInt(timeLimit, 10) * 60 : null,
         })
@@ -739,7 +739,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                 id: voteId,
                 title: title.trim(),
                 description: description.trim() || null,
-                status: VOTE_STATUS.indicativeOpen,
+                status: VOTE_PHASE.indicative,
+                purpose: VOTE_PURPOSE.closing,
                 majority_type: majorityType,
                 closing_type: 'moderator',
                 closing_duration_seconds: null,

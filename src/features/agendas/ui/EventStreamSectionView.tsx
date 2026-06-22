@@ -32,6 +32,11 @@ import { AgendaVoteSection } from './AgendaVoteSection';
 import { AccreditationSection } from './AccreditationSection';
 import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 import { getYouTubeVideoId } from '../logic/agendaUiHelpers';
+import { getSpeakerGenderLabel } from '../logic/speakerListGenderQuota';
+import {
+  INTERACTIVE_HORIZONTAL_ARROW_NAVIGATION_LOCK_SELECTOR,
+  useHorizontalArrowNavigation,
+} from '@/features/shared/hooks/useHorizontalArrowNavigation';
 function getAgendaItemIcon(type: string) {
   switch (type) {
     case 'election':
@@ -46,12 +51,28 @@ function getAgendaItemIcon(type: string) {
       return <FileText className="h-5 w-5" />;
   }
 }
+function formatGenderBadgeLabel(t: any, gender?: string | null) {
+  const labelKey =
+    gender === 'male'
+      ? 'male'
+      : gender === 'female'
+        ? 'female'
+        : gender === 'diverse'
+          ? 'diverse'
+          : 'unspecified';
+
+  return t(
+    `features.events.agenda.genderQuota.genderLabels.${labelKey}`,
+    getSpeakerGenderLabel(gender)
+  );
+}
 
 export interface EventStreamSectionViewProps {
   eventId: any;
   streamUrl: any;
   currentAgendaItem: any;
   speakerList: any[];
+  showGender: any;
   userId: any;
   isUserCandidate: any;
   addingSpeaker: any;
@@ -99,6 +120,7 @@ export function EventStreamSectionView({
   streamUrl,
   currentAgendaItem,
   speakerList,
+  showGender,
   userId,
   isUserCandidate,
   addingSpeaker,
@@ -137,6 +159,15 @@ export function EventStreamSectionView({
   getTypeColor,
   scroll,
 }: EventStreamSectionViewProps) {
+  const { onKeyDown: onSpeakerCarouselKeyDown } = useHorizontalArrowNavigation({
+    mode: 'scoped',
+    canGoPrev: canScrollLeft,
+    canGoNext: canScrollRight,
+    onGoPrev: () => scroll('left'),
+    onGoNext: () => scroll('right'),
+    lockSelector: INTERACTIVE_HORIZONTAL_ARROW_NAVIGATION_LOCK_SELECTOR,
+  });
+
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
       <Card surface="primaryStrong">
@@ -367,6 +398,9 @@ export function EventStreamSectionView({
                       )}
                       <div
                         ref={carouselRef}
+                        tabIndex={0}
+                        onKeyDown={onSpeakerCarouselKeyDown}
+                        data-arrow-keys="local"
                         className="flex gap-4 overflow-x-auto scroll-smooth px-10 pb-3"
                         style={{ scrollbarWidth: 'thin' }}
                       >
@@ -420,6 +454,11 @@ export function EventStreamSectionView({
                                   {isCurrentUser && (
                                     <BadgeControl variant="secondary" className="mt-1">
                                       {translateText('generated.inline.0055_you_905cb326')}
+                                    </BadgeControl>
+                                  )}
+                                  {showGender && (
+                                    <BadgeControl variant="outline" className="mt-1">
+                                      {formatGenderBadgeLabel(t, speaker.user?.gender)}
                                     </BadgeControl>
                                   )}
                                 </div>

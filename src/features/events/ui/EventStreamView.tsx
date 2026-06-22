@@ -31,6 +31,11 @@ import { AgendaVoteSection } from '@/features/agendas/ui/AgendaVoteSection';
 import type { CandidatesByElectionRow } from '@/zero/elections/queries';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
 import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
+import { getSpeakerGenderLabel } from '@/features/agendas/logic/speakerListGenderQuota';
+import {
+  INTERACTIVE_HORIZONTAL_ARROW_NAVIGATION_LOCK_SELECTOR,
+  useHorizontalArrowNavigation,
+} from '@/features/shared/hooks/useHorizontalArrowNavigation';
 
 // Helper function to extract YouTube video ID from URL
 function getYouTubeVideoId(url: string): string | null {
@@ -47,6 +52,21 @@ function getYouTubeVideoId(url: string): string | null {
   }
 
   return null;
+}
+function formatGenderBadgeLabel(t: any, gender?: string | null) {
+  const labelKey =
+    gender === 'male'
+      ? 'male'
+      : gender === 'female'
+        ? 'female'
+        : gender === 'diverse'
+          ? 'diverse'
+          : 'unspecified';
+
+  return t(
+    `features.events.agenda.genderQuota.genderLabels.${labelKey}`,
+    getSpeakerGenderLabel(gender)
+  );
 }
 export interface EventStreamViewProps {
   eventId: any;
@@ -135,6 +155,16 @@ export function EventStreamView({
   getStatusColor,
   getTypeColor,
 }: EventStreamViewProps) {
+  const showSpeakerGender = Boolean(event?.gender_quota_enabled);
+  const { onKeyDown: onSpeakerCarouselKeyDown } = useHorizontalArrowNavigation({
+    mode: 'scoped',
+    canGoPrev: canScrollLeft,
+    canGoNext: canScrollRight,
+    onGoPrev: () => scroll('left'),
+    onGoNext: () => scroll('right'),
+    lockSelector: INTERACTIVE_HORIZONTAL_ARROW_NAVIGATION_LOCK_SELECTOR,
+  });
+
   if (isLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">
@@ -374,6 +404,9 @@ export function EventStreamView({
                   {/* Carousel */}
                   <div
                     ref={carouselRef}
+                    tabIndex={0}
+                    onKeyDown={onSpeakerCarouselKeyDown}
+                    data-arrow-keys="local"
                     className="flex gap-4 overflow-x-auto scroll-smooth px-12 pb-4"
                     style={{ scrollbarWidth: 'thin' }}
                   >
@@ -427,6 +460,11 @@ export function EventStreamView({
                               {isCurrentUser && (
                                 <BadgeControl variant="secondary" className="mt-1">
                                   {translateText('generated.inline.0055_you_905cb326')}
+                                </BadgeControl>
+                              )}
+                              {showSpeakerGender && (
+                                <BadgeControl variant="outline" className="mt-1">
+                                  {formatGenderBadgeLabel(t, speaker.user?.gender)}
                                 </BadgeControl>
                               )}
                             </div>

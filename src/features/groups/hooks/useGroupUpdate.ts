@@ -459,16 +459,6 @@ export function useGroupUpdate(
       return;
     }
 
-    if (
-      shouldSyncSiblingRelationships &&
-      formData.sibling_membership_mode === 'selected_source_groups'
-    ) {
-      toast.error(
-        'This group uses a legacy source-group membership rule. Choose one of the supported membership modes before saving.'
-      );
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {

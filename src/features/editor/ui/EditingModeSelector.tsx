@@ -2,10 +2,11 @@
 
 import { useEditingModeSelectorController } from '../hooks/useEditingModeSelectorController';
 import { EditingModeSelectorView } from './EditingModeSelectorView';
+import type { AutomaticEventEditingMode } from '@/zero/amendments/editing-mode-policy';
 
 interface EditingModeSelectorProps {
   processBranchId: string;
-  currentMode?: string | null;
+  currentMode?: AutomaticEventEditingMode | null;
 }
 
 export function EditingModeSelector({ processBranchId, currentMode }: EditingModeSelectorProps) {

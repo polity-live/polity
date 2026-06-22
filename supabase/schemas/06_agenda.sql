@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS public.agenda_item (
   completed_at TIMESTAMPTZ,
   majority_type TEXT,
   time_limit INTEGER,
-  voting_phase TEXT,
+  voting_phase TEXT CHECK (voting_phase IN ('internal', 'indicative', 'final', 'closed')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

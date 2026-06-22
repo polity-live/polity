@@ -445,7 +445,7 @@ function getTemporalBucket(decision: DecisionItem): NonNullable<DecisionItem['te
 
   if (decision.isClosed) return 'past';
   if (decision.isFutureDecision) return 'future';
-  if (decision.phase === 'indication' || decision.phase === 'final_vote') return 'active';
+  if (decision.phase === 'indication' || decision.phase === 'final') return 'active';
   if (decision.isOpeningSoon) return 'future';
   return 'active';
 }

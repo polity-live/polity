@@ -3,6 +3,7 @@ import { usePqlFilterActions } from '@/zero/pql/usePqlFilterActions';
 import { usePqlFilterState } from '@/zero/pql/usePqlFilterState';
 import {
   applyPqlFilter,
+  createPqlCondition,
   createPqlFieldRegistry,
   getPqlFilterExpression,
   matchesPqlFilter,
@@ -178,7 +179,7 @@ export function usePqlCollection<TItem, TFieldKey extends string>({
   }, [arePersistedFiltersLoading, createFilter, groupId, persistedFilters, storageKey]);
 
   const quickFilter = useMemo<PqlFilter<TFieldKey> | null>(() => {
-    const rules = quickFilters.flatMap(definition => {
+    const conditions = quickFilters.flatMap(definition => {
       const values = quickFilterValues[definition.fieldKey] ?? [];
       if (values.length === 0) {
         return [];
@@ -187,26 +188,34 @@ export function usePqlCollection<TItem, TFieldKey extends string>({
       const operator =
         definition.operator ?? (definition.multiple || values.length > 1 ? 'in' : 'eq');
       return [
-        {
+        createPqlCondition({
           id: `quick-${definition.fieldKey}`,
           fieldKey: definition.fieldKey,
           operator,
           value:
             definition.serializeValue?.(values) ??
             (operator === 'in' ? values : (values[0] ?? null)),
-        },
+        }),
       ];
     });
 
-    if (rules.length === 0) {
+    if (conditions.length === 0) {
       return null;
     }
+
+    const expression =
+      conditions.length === 1
+        ? conditions[0]
+        : {
+            type: 'group' as const,
+            combinator: 'and' as const,
+            children: conditions,
+          };
 
     return {
       id: 'quick-filters',
       label: translateText('generated.inline.0483_field_filters_8d9ccc52'),
-      combinator: 'and',
-      rules,
+      expression,
     };
   }, [quickFilterValues, quickFilters]);
 

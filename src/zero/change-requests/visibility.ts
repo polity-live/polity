@@ -1,3 +1,5 @@
+import type { EditingMode } from '../amendments/editing-mode-policy';
+
 export type ChangeRequestVisibilityScope = 'collaborators' | 'public';
 
 export const INTERNAL_CR_RESOLUTION_DEFAULT_VISIBILITY = 'public' as const;
@@ -8,17 +10,12 @@ export function normalizeInternalChangeRequestResolutionVisibility(
   return value === 'collaborators' ? 'collaborators' : INTERNAL_CR_RESOLUTION_DEFAULT_VISIBILITY;
 }
 
-export function isEventChangeRequestMode(mode: string | null | undefined) {
-  return (
-    mode === 'suggest_event' ||
-    mode === 'event_final_closing_vote' ||
-    mode === 'vote_event' ||
-    mode === 'event_voting'
-  );
+export function isEventChangeRequestMode(mode: EditingMode) {
+  return mode === 'suggest_event' || mode === 'event_final_closing_vote';
 }
 
 export function getOpenChangeRequestVisibilityScope(
-  createdInMode: string | null | undefined
+  createdInMode: EditingMode
 ): ChangeRequestVisibilityScope {
   return isEventChangeRequestMode(createdInMode) ? 'public' : 'collaborators';
 }
@@ -27,7 +24,7 @@ export function getResolvedChangeRequestVisibilityScope({
   resolvedInMode,
   internalResolutionVisibility,
 }: {
-  resolvedInMode: string | null | undefined;
+  resolvedInMode: EditingMode;
   internalResolutionVisibility?: string | null;
 }): ChangeRequestVisibilityScope {
   if (isEventChangeRequestMode(resolvedInMode)) {

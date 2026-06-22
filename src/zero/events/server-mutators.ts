@@ -18,7 +18,7 @@ import {
   eventCreateSchema,
   eventParticipantCreateSchema,
   eventParticipantDeleteSchema,
-  eventParticipantLegacyRoleUpdateSchema,
+  eventParticipantUpdateSchema,
   eventOfflineParticipantCreateSchema,
   eventOfflineParticipantUpdateSchema,
   eventOfflineParticipantDeleteSchema,
@@ -831,75 +831,58 @@ export const eventServerMutators = {
     }
   }),
 
-  updateParticipant: defineMutator(
-    eventParticipantLegacyRoleUpdateSchema,
-    async ({ tx, ctx, args }) => {
-      const oldPart = await tx.run(zql.event_participant.where('id', args.id).one());
-      const oldRoleLinks = await tx.run(
-        zql.event_participant_role.where('event_participant_id', args.id)
-      );
+  updateParticipant: defineMutator(eventParticipantUpdateSchema, async ({ tx, ctx, args }) => {
+    const oldPart = await tx.run(zql.event_participant.where('id', args.id).one());
 
-      if (oldPart) {
-        await assertEventStatusTransitionEligibility(tx, {
-          event_id: oldPart.event_id,
-          user_id: oldPart.user_id,
-          old_status: oldPart.status,
-          new_status: args.status,
+    if (oldPart) {
+      await assertEventStatusTransitionEligibility(tx, {
+        event_id: oldPart.event_id,
+        user_id: oldPart.user_id,
+        old_status: oldPart.status,
+        new_status: args.status,
+      });
+    }
+
+    await mutators.events.updateParticipant.fn({ tx, ctx, args });
+
+    if (!oldPart) return;
+
+    await recomputeEventCounters(tx, oldPart.event_id);
+
+    if (args.status !== undefined) {
+      await syncUserWithEventConversation(tx, {
+        eventId: oldPart.event_id,
+        userId: oldPart.user_id,
+      });
+    }
+
+    const eId = oldPart.event_id;
+    const partUserId = oldPart.user_id;
+    const oldStatus = oldPart.status;
+    const newStatus = args.status;
+    const isSelf = ctx.userID === partUserId;
+
+    const eTitle = await eventTitle(tx, eId);
+
+    if (newStatus === 'active' && (oldStatus === 'requested' || oldStatus === 'invited')) {
+      if (isSelf) {
+        const uName = await userName(tx, ctx.userID);
+        fireNotification('notifyEventInvitationAccepted', {
+          senderId: ctx.userID,
+          senderName: uName,
+          eventId: eId,
+          eventTitle: eTitle,
         });
-      }
-
-      await mutators.events.updateParticipant.fn({ tx, ctx, args });
-
-      if (!oldPart) return;
-
-      await recomputeEventCounters(tx, oldPart.event_id);
-
-      if (args.status !== undefined) {
-        await syncUserWithEventConversation(tx, {
-          eventId: oldPart.event_id,
-          userId: oldPart.user_id,
+      } else {
+        fireNotification('notifyParticipationApproved', {
+          senderId: ctx.userID,
+          recipientUserId: partUserId,
+          eventId: eId,
+          eventTitle: eTitle,
         });
-      }
-
-      const eId = oldPart.event_id;
-      const partUserId = oldPart.user_id;
-      const oldStatus = oldPart.status;
-      const newStatus = args.status;
-      const isSelf = ctx.userID === partUserId;
-
-      const eTitle = await eventTitle(tx, eId);
-
-      if (newStatus === 'active' && (oldStatus === 'requested' || oldStatus === 'invited')) {
-        if (isSelf) {
-          const uName = await userName(tx, ctx.userID);
-          fireNotification('notifyEventInvitationAccepted', {
-            senderId: ctx.userID,
-            senderName: uName,
-            eventId: eId,
-            eventTitle: eTitle,
-          });
-        } else {
-          fireNotification('notifyParticipationApproved', {
-            senderId: ctx.userID,
-            recipientUserId: partUserId,
-            eventId: eId,
-            eventTitle: eTitle,
-          });
-        }
-      }
-
-      const oldRoleIds = new Set(oldRoleLinks.map(link => link.role_id));
-      const legacyRoleChanged =
-        args.role_id !== undefined &&
-        (args.role_id
-          ? oldRoleIds.size !== 1 || !oldRoleIds.has(args.role_id)
-          : oldRoleIds.size > 0);
-
-      if (legacyRoleChanged) {
-        await notifyActiveEventParticipantRoleChange(tx, ctx.userID, oldPart, [...oldRoleIds]);
       }
     }
-  ),
+  }),
 
   addParticipantRole: defineMutator(eventParticipantRoleAssignSchema, async ({ tx, ctx, args }) => {
     const participant = await tx.run(

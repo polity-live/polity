@@ -8,11 +8,14 @@ import {
   type MajorityType,
   type VoteResult,
 } from '@/features/vote-cast/logic/computeVoteResults';
-import { getVotePhase, getVoteResult } from '../hooks/useAgendaItemCRVoting';
+import { getVoteResult } from '../hooks/useAgendaItemCRVoting';
+import { deriveChangeRequestVotePhase } from '../logic/changeRequestVotePhase';
 import { calculateVoteStats } from '../hooks/useAgendaItemVoting';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
 import type { TDiscussion } from '@/features/editor/types';
+import type { SuggestionPreviewResolutionMap } from '@/features/change-requests/logic/filterDocumentToSingleSuggestion';
+import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 function normalizeMajorityType(value?: string | null): MajorityType {
   if (value === 'absolute' || value === 'two_thirds') {
     return value;
@@ -37,10 +40,15 @@ interface ChangeRequestTimelineCardProps {
   userSelectedChoiceIds: string[];
   canManage: boolean;
   canVote: boolean;
+  /** Eligible voters expected for final votes, including confirmed offline attendees. */
+  eligibleFinalVoterCount?: number;
   isFinalVoteLocked?: boolean;
   diff?: ChangeRequestDiffData;
   documentContent?: Value;
   suggestionId?: string;
+  suggestionResolutions?: SuggestionPreviewResolutionMap;
+  /** Agenda or amendment title used for final closing vote labels. */
+  agendaTitle?: string | null;
   /** Short CR identifier (e.g. "CR-1") used to default-select this card's CR */
   crId?: string;
   /** User-facing branch-scoped CR label, e.g. "Branch 1 CR-1" */
@@ -48,7 +56,7 @@ interface ChangeRequestTimelineCardProps {
   /** All discussions for the amendment — used by the per-card SuggestionViewToggle */
   discussions?: TDiscussion[];
   /** Amendment editing mode — determines interactive vs read-only preview */
-  editingMode?: string | null;
+  editingMode: EditingMode;
   /** Amendment ID — needed for interactive editor and mode selector */
   amendmentId?: string;
   /** Current user ID — needed for interactive editor */
@@ -68,7 +76,14 @@ interface ChangeRequestTimelineCardProps {
   hideInlineVotingControls?: boolean;
   /** Allow starting the final vote from this card instead of the agenda toolbar. */
   allowInlineFinalVoteStart?: boolean;
+  /** Show agenda-details-only per-card vote phase actions. */
+  showAgendaDetailsVoteActions?: boolean;
+  /** Explanation shown when agenda-details card vote actions are visible but unavailable. */
+  voteDisabledTooltip?: string;
+  /** Whether the parent CR voting list is currently active. Used for diagnostics. */
+  isVotingActive?: boolean;
   onCastVote?: (item: ChangeRequestTimelineRow, choiceId: string) => Promise<void>;
+  onOpenVoteDialog?: (itemId: string) => void;
   onStartIndicative?: (itemId: string) => Promise<void>;
   onStartFinal?: (itemId: string) => Promise<void>;
   onCloseVoting?: (itemId: string) => Promise<void> | Promise<unknown>;
@@ -82,10 +97,13 @@ export function useChangeRequestTimelineCardController({
   userSelectedChoiceIds,
   canManage,
   canVote,
+  eligibleFinalVoterCount,
   isFinalVoteLocked,
   diff,
   documentContent,
   suggestionId,
+  suggestionResolutions,
+  agendaTitle,
   crId,
   displayCrId,
   discussions,
@@ -97,7 +115,11 @@ export function useChangeRequestTimelineCardController({
   showEditorPreview = true,
   hideInlineVotingControls = false,
   allowInlineFinalVoteStart = false,
+  showAgendaDetailsVoteActions = false,
+  voteDisabledTooltip,
+  isVotingActive = false,
   onCastVote,
+  onOpenVoteDialog,
   onStartIndicative,
   onStartFinal,
   onCloseVoting,
@@ -116,8 +138,11 @@ export function useChangeRequestTimelineCardController({
     const map = new Map<string, string>();
     if (discussions) {
       for (const d of discussions) {
+        if (d.id) map.set(d.id, d.id);
         if (d.crId) map.set(d.crId, d.id);
         if (d.displayCrId) map.set(d.displayCrId, d.id);
+        if (d.title) map.set(d.title, d.id);
+        if (d.changeRequestEntityId) map.set(d.changeRequestEntityId, d.id);
       }
     }
     return map;
@@ -150,19 +175,21 @@ export function useChangeRequestTimelineCardController({
 
   const title =
     placeholderTitle ??
-    (voteStepKind === 'variant_selection'
+    (voteStepKind === 'merge_variant'
       ? vote?.title || 'Variant Final Vote'
-      : item.is_final_vote
+      : item.is_closing_vote
         ? vote?.title || t('features.agendas.crTimeline.acceptAmendment')
         : cr?.title || `${t('features.agendas.crTimeline.changeRequest')} ${index + 1}`);
 
-  const phase = getVotePhase(item);
+  const phase = deriveChangeRequestVotePhase(item, editingMode);
+
+  const isInternal = phase === 'internal';
 
   const isClosed = phase === 'closed';
 
   const isIndicative = phase === 'indicative';
 
-  const isFinal = phase === 'final_vote';
+  const isFinal = phase === 'final';
 
   const voteResult = isClosed ? getVoteResult(item) : undefined;
 
@@ -190,7 +217,11 @@ export function useChangeRequestTimelineCardController({
     [choices, finalDecisions, indicativeDecisions, offlineTallies]
   );
 
-  const totalVoters = vote?.voters?.length ?? 0;
+  const lazyVoterCount = vote?.voters?.length ?? 0;
+  const totalVoters =
+    (isFinal || isClosed) && eligibleFinalVoterCount !== undefined
+      ? eligibleFinalVoterCount
+      : lazyVoterCount;
 
   const computedVoteSummary = useMemo(() => {
     if (!isClosed || choiceStats.length === 0) {
@@ -289,10 +320,13 @@ export function useChangeRequestTimelineCardController({
     userSelectedChoiceIds,
     canManage,
     canVote,
+    eligibleFinalVoterCount,
     isFinalVoteLocked,
     diff,
     documentContent,
     suggestionId,
+    suggestionResolutions,
+    agendaTitle,
     crId,
     displayCrId,
     discussions,
@@ -304,7 +338,11 @@ export function useChangeRequestTimelineCardController({
     showEditorPreview,
     hideInlineVotingControls,
     allowInlineFinalVoteStart,
+    showAgendaDetailsVoteActions,
+    voteDisabledTooltip,
+    isVotingActive,
     onCastVote,
+    onOpenVoteDialog,
     onStartIndicative,
     onStartFinal,
     onCloseVoting,
@@ -322,6 +360,7 @@ export function useChangeRequestTimelineCardController({
     placeholderDescription,
     title,
     phase,
+    isInternal,
     isClosed,
     isIndicative,
     isFinal,

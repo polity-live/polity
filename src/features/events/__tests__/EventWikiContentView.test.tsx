@@ -180,14 +180,14 @@ describe('EventWikiContentView', () => {
       openChangeRequestsCount: 3,
     });
 
-    const stats = statsBarMock.mock.calls[0]?.[0]?.stats ?? [];
-    const valueByLabelKey = new Map(
-      stats.map((stat: { labelKey: string; value: number | string }) => [stat.labelKey, stat.value])
+    const items = statsBarMock.mock.calls[0]?.[0]?.items ?? [];
+    const valueByLabel = new Map(
+      items.map((item: { label: string; value: number | string }) => [item.label, item.value])
     );
 
-    expect(valueByLabelKey.get('components.labels.amendments')).toBe(2);
-    expect(valueByLabelKey.get('components.labels.elections')).toBe(1);
-    expect(valueByLabelKey.get('components.labels.openChangeRequests')).toBe(3);
+    expect(valueByLabel.get('components.labels.amendments')).toBe(2);
+    expect(valueByLabel.get('components.labels.elections')).toBe(1);
+    expect(valueByLabel.get('components.labels.openChangeRequests')).toBe(3);
   });
 
   it('renders the delegate members-per-seat ratio for delegate assemblies', () => {

@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { Search } from 'lucide-react';
 import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTimelineCard';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { normalizeEditingMode } from '@/zero/rbac';
+import { normalizeEditingMode } from '@/zero/amendments/editing-mode-policy';
 import type { ProfileAmendmentCollaboration } from '../types/user.types';
 import { matchesSearchQuery } from '../logic/userWikiSearch';
 import {

@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { jsonSchema, timestampSchema } from '../shared/helpers';
 
+export const userGenderSchema = z.enum(['male', 'female', 'diverse']);
+
 // ── user ──────────────────────────────────────────────────────────────
 const userBaseSchema = z.object({
   id: z.string(),
@@ -9,6 +11,7 @@ const userBaseSchema = z.object({
   first_name: z.string().nullable(),
   last_name: z.string().nullable(),
   bio: z.string().nullable(),
+  gender: userGenderSchema.nullable(),
   about: jsonSchema.nullable(),
   avatar: z.string().nullable(),
   x: z.string().nullable(),
@@ -49,12 +52,13 @@ export const userCreateSchema = userBaseSchema
     amendment_count: true,
     group_count: true,
   })
-  .extend({ id: z.string() });
+  .extend({ id: z.string(), gender: userGenderSchema.nullable().optional() });
 export const userUpdateSchema = userBaseSchema
   .pick({
     first_name: true,
     last_name: true,
     bio: true,
+    gender: true,
     whatsapp: true,
     instagram: true,
     twitter: true,

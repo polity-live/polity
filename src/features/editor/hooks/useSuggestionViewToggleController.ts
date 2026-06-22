@@ -4,6 +4,24 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { TDiscussion } from '../types';
 
 type FilterMode = 'select' | 'choice';
+interface CrOption {
+  crId: string;
+  displayCrId: string;
+  title: string;
+  userId: string;
+  aliases: string[];
+}
+
+function addAlias(aliases: string[], value: string | null | undefined) {
+  const normalized = value?.trim();
+  if (normalized && !aliases.includes(normalized)) {
+    aliases.push(normalized);
+  }
+}
+
+function optionMatchesSelected(option: CrOption, selectedCrIds: Set<string> | null) {
+  return Boolean(selectedCrIds && option.aliases.some(alias => selectedCrIds.has(alias)));
+}
 
 export function useSuggestionViewToggleController(args: {
   discussions: TDiscussion[];
@@ -16,12 +34,25 @@ export function useSuggestionViewToggleController(args: {
 
   const crOptions = args.discussions
     .filter((discussion): discussion is TDiscussion & { crId: string } => Boolean(discussion.crId))
-    .map(discussion => ({
-      crId: discussion.crId,
-      displayCrId: discussion.displayCrId ?? discussion.crId,
-      title: discussion.title || discussion.crId,
-      userId: discussion.userId,
-    }));
+    .map(discussion => {
+      const displayCrId = discussion.displayCrId ?? discussion.crId;
+      const title = discussion.title || discussion.crId;
+      const aliases: string[] = [];
+
+      addAlias(aliases, discussion.crId);
+      addAlias(aliases, displayCrId);
+      addAlias(aliases, discussion.id);
+      addAlias(aliases, discussion.title);
+      addAlias(aliases, discussion.changeRequestEntityId);
+
+      return {
+        crId: discussion.crId,
+        displayCrId,
+        title,
+        userId: discussion.userId,
+        aliases,
+      };
+    });
 
   const selectedCrIds = args.selectedCrIds;
   const isFiltered = selectedCrIds !== null;
@@ -29,7 +60,7 @@ export function useSuggestionViewToggleController(args: {
     if (!isFiltered) return t('features.editor.suggestionView.allSuggestions');
     if (selectedCrIds.size === 1) {
       const [singleCr] = selectedCrIds;
-      return crOptions.find(option => option.crId === singleCr)?.displayCrId ?? singleCr;
+      return crOptions.find(option => option.aliases.includes(singleCr))?.displayCrId ?? singleCr;
     }
     return t('features.editor.suggestionView.nSelected', { count: selectedCrIds.size });
   })();
@@ -53,7 +84,11 @@ export function useSuggestionViewToggleController(args: {
 
   const handleToggleCr = (crId: string) => {
     const current = args.selectedCrIds ? new Set(args.selectedCrIds) : new Set<string>();
-    if (current.has(crId)) {
+    const option = crOptions.find(candidate => candidate.crId === crId);
+
+    if (option && optionMatchesSelected(option, current)) {
+      option.aliases.forEach(alias => current.delete(alias));
+    } else if (current.has(crId)) {
       current.delete(crId);
     } else {
       current.add(crId);
@@ -72,7 +107,7 @@ export function useSuggestionViewToggleController(args: {
   const allSelected =
     args.selectedCrIds !== null &&
     crOptions.length > 0 &&
-    crOptions.every(option => args.selectedCrIds?.has(option.crId));
+    crOptions.every(option => optionMatchesSelected(option, args.selectedCrIds));
 
   return {
     open,

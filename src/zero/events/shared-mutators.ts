@@ -8,7 +8,7 @@ import {
   eventUpdateSchema,
   eventCancelSchema,
   eventParticipantCreateSchema,
-  eventParticipantLegacyRoleUpdateSchema,
+  eventParticipantUpdateSchema,
   eventParticipantDeleteSchema,
   eventOfflineParticipantCreateSchema,
   eventOfflineParticipantUpdateSchema,
@@ -371,6 +371,7 @@ export const eventSharedMutators = {
       ...eventArgs,
       attendance_mode: attendanceMode,
       delegate_election_mode: delegateElectionMode,
+      gender_quota_enabled: eventArgs.gender_quota_enabled ?? false,
       creator_id: userID,
       participant_count: 1,
       subscriber_count: 0,
@@ -736,39 +737,25 @@ export const eventSharedMutators = {
     }
   ),
 
-  updateParticipant: defineMutator(
-    eventParticipantLegacyRoleUpdateSchema,
-    async ({ tx, ctx, args }) => {
-      if (tx.location !== 'client') {
-        const participant = await tx.run(zql.event_participant.where('id', args.id).one());
-        if (!participant) {
-          throw new Error('Participant not found');
-        }
-        if (participant.user_id !== ctx.userID || args.role_id !== undefined) {
-          await can(tx, ctx, {
-            action: 'manage_participants',
-            resource: 'events',
-            eventId: participant.event_id,
-          });
-        }
+  updateParticipant: defineMutator(eventParticipantUpdateSchema, async ({ tx, ctx, args }) => {
+    if (tx.location !== 'client') {
+      const participant = await tx.run(zql.event_participant.where('id', args.id).one());
+      if (!participant) {
+        throw new Error('Participant not found');
       }
-
-      const { role_id, ...participantArgs } = args;
-
-      if (Object.keys(participantArgs).length > 1) {
-        await tx.mutate.event_participant.update(participantArgs);
-      }
-
-      if (role_id !== undefined) {
-        await loadParticipantForRoleMutation(tx, ctx, args.id);
-        await syncEventParticipantRoles(tx, {
-          event_participant_id: args.id,
-          role_ids: role_id ? [role_id] : [],
-          assigned_by_id: ctx.userID,
+      if (participant.user_id !== ctx.userID) {
+        await can(tx, ctx, {
+          action: 'manage_participants',
+          resource: 'events',
+          eventId: participant.event_id,
         });
       }
     }
-  ),
+
+    if (Object.keys(args).length > 1) {
+      await tx.mutate.event_participant.update(args);
+    }
+  }),
 
   // Event role mutators
   createRole: defineMutator(createEventRoleSchema, async ({ tx, ctx, args }) => {

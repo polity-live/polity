@@ -121,7 +121,7 @@ describe('canonical change request records', () => {
     ).toBe(1);
   });
 
-  it('ignores pending event suggestions without a persisted change request row', () => {
+  it('keeps pending event suggestions without a persisted change request row', () => {
     const records = buildCanonicalChangeRequestRecords({
       discussions: [
         {
@@ -133,7 +133,10 @@ describe('canonical change request records', () => {
       changeRequests: [],
     });
 
-    expect(records).toEqual([]);
+    expect(records).toHaveLength(1);
+    expect(records[0].changeRequest).toBeNull();
+    expect(records[0].discussion?.id).toBe('suggestion-pending');
+    expect(records[0].displayCrId).toBe('CR-2');
   });
 
   it('keeps confirmed event suggestions without a persisted change request row', () => {
@@ -151,5 +154,27 @@ describe('canonical change request records', () => {
     expect(record.changeRequest).toBeNull();
     expect(record.discussion?.id).toBe('suggestion-confirmed');
     expect(record.displayCrId).toBe('CR-2');
+  });
+
+  it('prefers persisted branch sequence numbers over stale discussion labels', () => {
+    const [record] = buildCanonicalChangeRequestRecords({
+      discussions: [
+        {
+          id: 'suggestion-1',
+          crId: 'CR-1',
+          changeRequestEntityId: 'cr-1',
+        },
+      ],
+      changeRequests: [
+        {
+          id: 'cr-1',
+          title: 'CR-1',
+          branch_sequence_number: 7,
+          status: 'open',
+        },
+      ],
+    });
+
+    expect(record.displayCrId).toBe('CR-7');
   });
 });

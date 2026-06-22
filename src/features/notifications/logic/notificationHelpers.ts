@@ -115,9 +115,7 @@ function isMessageNotification(notification: Notification) {
 }
 
 const USER_MEMBERSHIP_INVITE_TYPES = new Set([
-  'group_invite',
   'membership_invite',
-  'event_invite',
   'participation_invite',
   'collaboration_invite',
 ]);

@@ -124,6 +124,7 @@ export interface EventAgendaViewProps {
   disableVoteButton: any;
   allowsOfflineElectionTallies: any;
   confirmedOfflineParticipantCount: any;
+  eligibleFinalVoterCount?: number;
   isPasswordVerifying: any;
   setIsPasswordVerifying: any;
   offlineTallyDialogOpen: any;
@@ -177,18 +178,20 @@ export interface EventAgendaViewProps {
   toolbarElection: any;
   streamVotingPhase: any;
   toolbarVotingPhase: any;
-  synthesizedFinalVoteItem: any;
-  effectiveFinalVoteItem: any;
+  synthesizedClosingVoteItem: any;
+  effectiveClosingVoteItem: any;
   nextPendingCRItem: any;
   activeCRToolbarItem: any;
+  nextStartableSequenceItem?: any;
   isCRToolbarActive: any;
   selectedCRPhase: any;
-  isSelectedCRFinalVote: any;
+  isSelectedClosingVote: any;
   hasUserVotedOnSelectedCR: any;
   selectedCRTitle: any;
   selectedCRChoices: any;
   selectedCRDialogPhase: any;
   streamForwardingPreview: any;
+  voteDialogDocumentPreviewContent?: any;
   effectiveToolbarVotingPhase: any;
   toolbarOfflineTallyPhaseSource: any;
   toolbarOfflineTallyPhase: any;
@@ -217,6 +220,7 @@ export interface EventAgendaViewProps {
   userHasVoteVoted: any;
   userSelectedChoiceIds: any;
   handleToolbarStartVote: any;
+  handleJumpToNextStartableSequenceItem?: any;
   handleToolbarStartFinalVote: any;
   handleToolbarCloseVote: any;
   handleCastCRVoteFromDialog: any;
@@ -269,6 +273,7 @@ export function EventAgendaView({
   attendanceMode,
   disableVoteButton,
   confirmedOfflineParticipantCount,
+  eligibleFinalVoterCount,
   isPasswordVerifying,
   setIsPasswordVerifying,
   offlineTallyDialogOpen,
@@ -301,8 +306,9 @@ export function EventAgendaView({
   streamVote,
   streamDelegateTargetEvent,
   toolbarElection,
-  effectiveFinalVoteItem,
+  effectiveClosingVoteItem,
   activeCRToolbarItem,
+  nextStartableSequenceItem,
   isCRToolbarActive,
   selectedCRPhase,
   hasUserVotedOnSelectedCR,
@@ -310,6 +316,7 @@ export function EventAgendaView({
   selectedCRChoices,
   selectedCRDialogPhase,
   streamForwardingPreview,
+  voteDialogDocumentPreviewContent,
   effectiveToolbarVotingPhase,
   toolbarOfflineTallyPhase,
   toolbarOfflineTallyEntity,
@@ -335,6 +342,7 @@ export function EventAgendaView({
   userHasVoteVoted,
   userSelectedChoiceIds,
   handleToolbarStartVote,
+  handleJumpToNextStartableSequenceItem,
   handleToolbarStartFinalVote,
   handleToolbarCloseVote,
   handleCastCRVoteFromDialog,
@@ -397,10 +405,10 @@ export function EventAgendaView({
       ? handleToolbarStartFinalVote
       : undefined;
   const liveFocusCloseFinalVoteClick = isCRToolbarActive
-    ? isToolbarAgendaItemActive && selectedCRPhase === 'final_vote'
+    ? isToolbarAgendaItemActive && selectedCRPhase === 'final'
       ? handleToolbarCloseVote
       : undefined
-    : isToolbarAgendaItemActive && effectiveToolbarVotingPhase === 'final_vote'
+    : isToolbarAgendaItemActive && effectiveToolbarVotingPhase === 'final'
       ? handleToolbarCloseVote
       : undefined;
   const liveFocusVotingPhase = isCRToolbarActive ? selectedCRPhase : effectiveToolbarVotingPhase;
@@ -411,7 +419,7 @@ export function EventAgendaView({
     ? hasUserVotedOnSelectedCR
     : Boolean(streamElection ? userHasElectionVoted : streamVote ? userHasVoteVoted : false);
   const canCompleteAgendaItem =
-    !isCRToolbarActive || effectiveFinalVoteItem?.status === 'completed';
+    !isCRToolbarActive || effectiveClosingVoteItem?.status === 'completed';
   const canManageCurrentVote = isCRToolbarActive
     ? isToolbarAgendaItemActive && (canManageVoteSequence || canManageVotes || canManageAgenda)
     : isToolbarAgendaItemActive && canManageAgenda;
@@ -756,6 +764,11 @@ export function EventAgendaView({
         onPreviousItem={agendaNav.moveToPreviousItem}
         onNextItem={agendaNav.moveToNextItem}
         onCompleteItem={canCompleteAgendaItem ? agendaNav.completeCurrentItem : undefined}
+        onJumpToNextVoteStep={
+          canManageCurrentVote && isCRToolbarActive && nextStartableSequenceItem
+            ? handleJumpToNextStartableSequenceItem
+            : undefined
+        }
         navigationLoading={agendaNav.isLoading}
         speakerLoading={actionBarHook.speakerLoading}
         candidateLoading={actionBarHook.candidateLoading}
@@ -786,10 +799,10 @@ export function EventAgendaView({
         }
         onCloseFinalVote={
           canManageCurrentVote && isCRToolbarActive
-            ? selectedCRPhase === 'final_vote'
+            ? selectedCRPhase === 'final'
               ? handleToolbarCloseVote
               : undefined
-            : canManageCurrentVote && effectiveToolbarVotingPhase === 'final_vote'
+            : canManageCurrentVote && effectiveToolbarVotingPhase === 'final'
               ? handleToolbarCloseVote
               : undefined
         }
@@ -806,6 +819,10 @@ export function EventAgendaView({
         startVoteTooltip={startVoteTooltip}
         startFinalVoteTooltip={startFinalVoteTooltip}
         closeVoteTooltip={closeVoteTooltip}
+        jumpToNextVoteStepTooltip={t(
+          'features.agendas.crTimeline.nextVotingStep',
+          'Next voting step'
+        )}
         castIndicativeVoteTooltip={castIndicativeVoteTooltip}
         castFinalVoteTooltip={castFinalVoteTooltip}
       />
@@ -847,6 +864,7 @@ export function EventAgendaView({
         isEventStarted={isEventStarted}
         eventStartTimestamp={eventStartTimestamp}
         speakerList={streamSpeakerListData}
+        showSpeakerGender={Boolean(event?.gender_quota_enabled)}
         userId={user?.id}
         isUserInSpeakerList={actionBarHook.isUserInSpeakerList}
         speakerLoading={actionBarHook.speakerLoading}
@@ -860,6 +878,9 @@ export function EventAgendaView({
         onStartVote={liveFocusStartVoteClick}
         onStartFinalVote={liveFocusStartFinalVoteClick}
         onCloseFinalVote={liveFocusCloseFinalVoteClick}
+        startVoteLabel={startVoteTooltip}
+        startFinalVoteLabel={startFinalVoteTooltip}
+        closeFinalVoteLabel={closeVoteTooltip}
         onCompleteItem={canCompleteAgendaItem ? agendaNav.completeCurrentItem : undefined}
         completeItemDisabled={!canCompleteAgendaItem || liveFocusCompleteItemDisabled}
         onNextItem={agendaNav.moveToNextItem}
@@ -874,6 +895,7 @@ export function EventAgendaView({
         onVoteClick={liveFocusVoteClick}
         attendanceMode={attendanceMode}
         confirmedOfflineParticipantCount={confirmedOfflineParticipantCount}
+        eligibleFinalVoterCount={eligibleFinalVoterCount}
         streamElection={streamElection}
         streamVote={streamVote}
         streamDelegateTargetEvent={streamDelegateTargetEvent}
@@ -1083,6 +1105,7 @@ export function EventAgendaView({
                             streamAgendaItem.start_time ??
                             undefined
                           }
+                          showGender={Boolean(event?.gender_quota_enabled)}
                           onAddToSpeakerList={
                             canJoinSpeakerList ? handleAddToSpeakerList : undefined
                           }
@@ -1138,9 +1161,7 @@ export function EventAgendaView({
                             userSelectedChoiceIds={userSelectedChoiceIds}
                             voteStatus={streamVote.status}
                             majorityType={streamVote.majority_type}
-                            totalEligibleVoters={
-                              (streamVote.voters?.length ?? 0) + confirmedOfflineParticipantCount
-                            }
+                            totalEligibleVoters={eligibleFinalVoterCount}
                             canManageOfflineResults={canManageAgenda}
                             offlineEligibleCount={confirmedOfflineParticipantCount}
                             forwardingPreview={streamForwardingPreview}
@@ -1362,6 +1383,7 @@ export function EventAgendaView({
         phase={isCRToolbarActive ? selectedCRDialogPhase : actionBarHook.voteCasting.phase}
         title={isCRToolbarActive ? selectedCRTitle : (streamAgendaItem?.title ?? undefined)}
         forwardingPreview={streamForwardingPreview}
+        documentPreviewContent={voteDialogDocumentPreviewContent}
         candidates={
           isCRToolbarActive
             ? undefined

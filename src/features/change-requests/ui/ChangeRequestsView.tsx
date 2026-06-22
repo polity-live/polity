@@ -1,7 +1,6 @@
 import type { Value } from 'platejs';
 import { PageWrapper } from '@/layout/page-wrapper';
 import { FileEdit } from 'lucide-react';
-import { AgendaCRVoteTimeline } from '@/features/agendas/ui/AgendaCRVoteTimeline';
 import { ChangeRequestCardsList } from '@/features/agendas/ui/ChangeRequestCardsList';
 import type { VariantDiffCandidate } from '@/features/agendas/ui/MergeVariantComparisonPanel';
 import type { ChangeRequestDiffData } from '@/features/agendas/ui/ChangeRequestTimelineCard';
@@ -11,6 +10,7 @@ import { AmendmentBranchSelectorSection } from '@/features/amendments/ui/Amendme
 import type { AmendmentProcessBranchSource } from '@/features/amendments/logic/amendmentBranchDisplay';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { ChangeRequestBranchSection } from '../logic/changeRequestsViewModel';
+import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 
 interface ChangeRequestsViewProps {
   agendaItemId?: string;
@@ -21,7 +21,7 @@ interface ChangeRequestsViewProps {
   diffMap: Record<string, ChangeRequestDiffData>;
   discussions: TDiscussion[];
   documentContent?: Value;
-  editingMode?: string | null;
+  editingMode?: EditingMode | null;
   hasAmendment: boolean;
   isInVotingStage: boolean;
   isLoading: boolean;
@@ -36,6 +36,11 @@ interface ChangeRequestsViewProps {
   userId?: string;
   canManageInternalVotes?: boolean;
   canVoteInternal?: boolean;
+  canVoteEvent?: boolean;
+  hasUserVotedOnEventCR?: (item: ChangeRequestTimelineRow) => boolean;
+  getEventCRSelectedChoiceIds?: (item: ChangeRequestTimelineRow) => string[];
+  onCastEventCRVote?: (item: ChangeRequestTimelineRow, choiceId: string) => Promise<void>;
+  onOpenEventCRVoteDialog?: (itemId: string) => void;
   onCastInternalVote?: (item: ChangeRequestTimelineRow, choiceId: string) => Promise<void>;
   onFinalizeInternalVote?: (changeRequestId: string) => Promise<void>;
 }
@@ -48,7 +53,6 @@ export function ChangeRequestsView({
   documentContent,
   editingMode,
   hasAmendment,
-  isInVotingStage,
   isLoading,
   timelineItems,
   branchSections = [],
@@ -60,6 +64,11 @@ export function ChangeRequestsView({
   userId,
   canManageInternalVotes,
   canVoteInternal,
+  canVoteEvent,
+  hasUserVotedOnEventCR,
+  getEventCRSelectedChoiceIds,
+  onCastEventCRVote,
+  onOpenEventCRVoteDialog,
   onCastInternalVote,
   onFinalizeInternalVote,
 }: ChangeRequestsViewProps) {
@@ -87,16 +96,18 @@ export function ChangeRequestsView({
     sectionDiffMap: Record<string, ChangeRequestDiffData>;
     sectionDocumentContent?: Value;
     sectionDiscussions: TDiscussion[];
-    sectionEditingMode?: string | null;
+    sectionEditingMode?: EditingMode | null;
   }) => {
-    const resolvedEditingMode = sectionEditingMode ?? editingMode;
+    const resolvedEditingMode = sectionEditingMode ?? editingMode ?? 'edit';
     const isSectionInternalVotingStage = resolvedEditingMode === 'vote_internal';
+    const isSectionEventVotingStage =
+      resolvedEditingMode === 'suggest_event' || resolvedEditingMode === 'event_final_closing_vote';
 
     return (
       <ChangeRequestCardsList
         items={items}
         editingMode={resolvedEditingMode}
-        isVotingActive={isSectionInternalVotingStage}
+        isVotingActive={isSectionInternalVotingStage || isSectionEventVotingStage}
         userId={userId}
         diffMap={sectionDiffMap}
         documentContent={sectionDocumentContent}
@@ -104,17 +115,39 @@ export function ChangeRequestsView({
         amendmentId={amendmentId}
         agendaItemId={agendaItemId}
         canManage={isSectionInternalVotingStage && Boolean(canManageInternalVotes)}
-        canVote={isSectionInternalVotingStage && Boolean(canVoteInternal)}
-        hasUserVoted={isSectionInternalVotingStage ? hasUserVoted : undefined}
-        getUserSelectedChoiceIds={
-          isSectionInternalVotingStage ? getUserSelectedChoiceIds : undefined
+        canVote={
+          isSectionInternalVotingStage
+            ? Boolean(canVoteInternal)
+            : isSectionEventVotingStage && Boolean(canVoteEvent)
         }
-        onCastVote={isSectionInternalVotingStage ? onCastInternalVote : undefined}
+        hideInlineVotingControls={isSectionEventVotingStage}
+        showAgendaDetailsVoteActions={isSectionEventVotingStage}
+        hasUserVoted={
+          isSectionInternalVotingStage
+            ? hasUserVoted
+            : isSectionEventVotingStage
+              ? hasUserVotedOnEventCR
+              : undefined
+        }
+        getUserSelectedChoiceIds={
+          isSectionInternalVotingStage
+            ? getUserSelectedChoiceIds
+            : isSectionEventVotingStage
+              ? getEventCRSelectedChoiceIds
+              : undefined
+        }
+        onCastVote={
+          isSectionInternalVotingStage
+            ? onCastInternalVote
+            : isSectionEventVotingStage
+              ? onCastEventCRVote
+              : undefined
+        }
+        onOpenVoteDialog={isSectionEventVotingStage ? onOpenEventCRVoteDialog : undefined}
         onFinalizeInternalVote={isSectionInternalVotingStage ? onFinalizeInternalVote : undefined}
       />
     );
   };
-  const isInternalVotingStage = editingMode === 'vote_internal';
   const hasBranchSections = branchSections.length > 0;
   const selectedBranchSection =
     hasBranchSections && selectedBranchId
@@ -177,12 +210,6 @@ export function ChangeRequestsView({
         ) : null}
 
         <div className="container mx-auto px-8">
-          {isInVotingStage && !isInternalVotingStage && agendaItemId && (
-            <div className="mb-8">
-              <AgendaCRVoteTimeline agendaItemId={agendaItemId} userId={userId} />
-            </div>
-          )}
-
           {hasBranchSections ? (
             <div className="space-y-8" data-testid="change-request-branch-sections">
               {displayedBranchSections.map(section => (

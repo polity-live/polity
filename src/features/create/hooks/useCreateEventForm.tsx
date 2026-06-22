@@ -117,6 +117,7 @@ export function useCreateEventForm(): CreateFormConfig {
   const [capacity, setCapacity] = useState('');
   const [imageURL, setImageURL] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('public');
+  const [genderQuotaEnabled, setGenderQuotaEnabled] = useState(false);
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [delegatesNominationDeadline, setDelegatesNominationDeadline] = useState('');
@@ -358,6 +359,7 @@ export function useCreateEventForm(): CreateFormConfig {
         start_date,
         end_date,
         visibility: effectiveVisibility,
+        gender_quota_enabled: genderQuotaEnabled,
         image_url: imageURL || null,
         capacity: isMeetingEvent ? null : capacity ? parseInt(capacity, 10) : null,
         event_type: eventType,
@@ -795,10 +797,12 @@ export function useCreateEventForm(): CreateFormConfig {
               props: {
                 showVisibility: !isMeetingEvent,
                 visibility,
+                genderQuotaEnabled,
                 hashtags,
                 hashtagPlaceholder: t('pages.create.event.hashtagPlaceholder'),
                 preferredHashtagSuggestions,
                 onVisibilityChange: setVisibility,
+                onGenderQuotaEnabledChange: setGenderQuotaEnabled,
                 onHashtagsChange: setHashtags,
               },
             },
@@ -871,6 +875,17 @@ export function useCreateEventForm(): CreateFormConfig {
                         label: t('pages.create.common.visibility'),
                         value: visibilityLabel,
                       },
+                      ...(genderQuotaEnabled
+                        ? [
+                            {
+                              label: t(
+                                'features.events.agenda.genderQuota.settingsLabel',
+                                'Genderquotierte Redeliste'
+                              ),
+                              value: t('common.enabled', 'Aktiviert'),
+                            },
+                          ]
+                        : []),
                     ],
                   },
                   {
@@ -974,6 +989,7 @@ export function useCreateEventForm(): CreateFormConfig {
       capacity,
       imageURL,
       visibility,
+      genderQuotaEnabled,
       hashtags,
       preferredHashtagSuggestions,
       eventType,

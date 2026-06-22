@@ -288,7 +288,7 @@ describe('GroupConnectionComposerView', () => {
     ).toBe(true);
   });
 
-  it('shows legacy source-group membership as a non-saveable state', () => {
+  it('keeps the supported membership choices visible for non-selectable source-group rules', () => {
     const value = {
       ...createValue(),
       relationshipType: 'sibling',
@@ -338,10 +338,10 @@ describe('GroupConnectionComposerView', () => {
       />
     );
 
-    expect(screen.getByText('Legacy source-group membership')).toBeTruthy();
     expect(screen.getByText('No automatic membership')).toBeTruthy();
     expect(screen.getByText('All active members')).toBeTruthy();
     expect(screen.getByText('Members with selected role')).toBeTruthy();
+    expect(screen.queryByText('Parliament membership')).toBeNull();
     expect(screen.queryByText(['Selected', 'source', 'groups'].join(' '))).toBeNull();
   });
 });

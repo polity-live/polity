@@ -1,33 +1,10 @@
-export function normalizeAmendmentStatus(status?: string) {
-  if (!status) return 'view';
-  const normalized = status.toLowerCase();
-  if (normalized === 'vote_event' || normalized === 'event_voting') {
-    return 'event_final_closing_vote';
-  }
-  if (
-    normalized === 'edit' ||
-    normalized === 'suggest_internal' ||
-    normalized === 'vote_internal' ||
-    normalized === 'view' ||
-    normalized === 'suggest_event' ||
-    normalized === 'event_final_closing_vote' ||
-    normalized === 'passed' ||
-    normalized === 'rejected'
-  ) {
-    return normalized as
-      | 'edit'
-      | 'suggest_internal'
-      | 'vote_internal'
-      | 'view'
-      | 'suggest_event'
-      | 'event_final_closing_vote'
-      | 'passed'
-      | 'rejected';
-  }
-  return 'view';
+import { normalizeEditingMode, type EditingMode } from '@/zero/amendments/editing-mode-policy';
+
+export function normalizeAmendmentStatus(status?: string): EditingMode {
+  return normalizeEditingMode(status?.toLowerCase());
 }
 
-export function normalizeVoteStatus(status?: string) {
+export function normalizeVotePhase(status?: string) {
   if (!status) return 'open';
   const normalized = status.toLowerCase();
   if (

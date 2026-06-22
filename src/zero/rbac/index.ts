@@ -93,14 +93,16 @@ export {
   DEFAULT_BLOG_ROLES,
   DEFAULT_AMENDMENT_ROLES,
   DEFAULT_EVENT_ROLES,
-  ACTION_RIGHTS,
+  GROUP_ACTION_RIGHTS,
+  AMENDMENT_ACTION_RIGHTS,
+  EVENT_ACTION_RIGHTS,
+  BLOG_ACTION_RIGHTS,
 } from './constants';
 
 // Workflow constants
 export type {
   EditingMode,
   WorkflowStatus,
-  AmendmentStatus,
   VotingSessionType,
   VotingSessionStatus,
   ChangeRequestSource,

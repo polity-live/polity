@@ -8,6 +8,7 @@ import {
   EditingModeMenuItems,
   EVENT_PHASE_LOCKED_MODE_TOOLTIP,
   SYSTEM_MANAGED_EVENT_MODE_TOOLTIP,
+  getEditingModeOption,
 } from '../EditingMode';
 import type { SelectableEditingMode } from '../EditingMode';
 
@@ -60,6 +61,15 @@ function renderMenuWithDisabledReasons(
 }
 
 describe('EditingModeMenuItems', () => {
+  it('returns display metadata for canonical editing modes', () => {
+    const option = getEditingModeOption('vote_internal', (_key, fallback) =>
+      typeof fallback === 'string' ? fallback : ''
+    );
+
+    expect(option.label).toBe('Internal Voting Mode');
+    expect(option.value).toBe('vote_internal');
+  });
+
   it('shows all amendment modes in canonical order by default', () => {
     renderMenu();
 

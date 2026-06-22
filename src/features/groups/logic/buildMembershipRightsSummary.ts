@@ -1,4 +1,4 @@
-import { ACTION_RIGHTS, PERMISSION_IMPLIES } from '@/zero/rbac/constants';
+import { GROUP_ACTION_RIGHTS, PERMISSION_IMPLIES } from '@/zero/rbac/constants';
 import type {
   ParticipationLike,
   ParticipationRoleLike,
@@ -34,7 +34,9 @@ interface InternalMembershipRightSource extends MembershipRightSource {
   sortOrder: number;
 }
 
-function buildRightCatalog(actionRightsCatalog: readonly ActionRightOption[] = ACTION_RIGHTS) {
+function buildRightCatalog(
+  actionRightsCatalog: readonly ActionRightOption[] = GROUP_ACTION_RIGHTS
+) {
   const rightCatalog = actionRightsCatalog.map((right, index) => ({
     ...right,
     key: getRightKey(right.resource, right.action),

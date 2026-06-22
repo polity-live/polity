@@ -82,8 +82,6 @@ export interface CreateFormStep {
   fields?: CreateFormFieldDescriptor[];
   /** Optional grouped descriptors rendered by CreateStepRenderer. */
   sections?: CreateFormSectionDescriptor[];
-  /** Legacy escape hatch while hooks migrate away from inline JSX. */
-  content?: ReactNode;
   /** Returns true if all required fields in this step are valid */
   isValid: () => boolean;
   /** Whether this step is optional (skippable) */

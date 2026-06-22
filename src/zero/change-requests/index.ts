@@ -6,6 +6,7 @@ export {
   selectChangeRequestSchema,
   createChangeRequestSchema,
   updateChangeRequestSchema,
+  deleteChangeRequestSchema,
   finalizeInternalChangeRequestVoteSchema,
   finalizeExpiredInternalChangeRequestVotesSchema,
   repairInternalChangeRequestResolutionSchema,

@@ -23,7 +23,7 @@ const baseAgendaItemSchema = z.object({
   completed_at: nullableTimestampSchema,
   majority_type: z.string().nullable(),
   time_limit: z.number().nullable(),
-  voting_phase: z.string().nullable(),
+  voting_phase: z.enum(['internal', 'indicative', 'final', 'closed']).nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
@@ -90,9 +90,9 @@ const baseAgendaItemChangeRequestSchema = z.object({
   change_request_id: z.string().nullable(),
   vote_id: z.string().nullable(),
   order_index: z.number(),
-  step_kind: z.string(),
+  step_kind: z.enum(['change_request', 'closing', 'merge_variant']),
   process_branch_id: z.string().nullable(),
-  is_final_vote: z.boolean(),
+  is_closing_vote: z.boolean(),
   status: z.string(),
   blocked_reason: z.string().nullable(),
   result_status: z.string().nullable(),
@@ -114,7 +114,7 @@ export const createAgendaItemChangeRequestSchema = baseAgendaItemChangeRequestSc
   })
   .extend({
     step_kind: z
-      .string()
+      .enum(['change_request', 'closing', 'merge_variant'])
       .optional()
       .transform(value => value ?? 'change_request'),
     process_branch_id: z
@@ -163,6 +163,13 @@ export const initializeChangeRequestVotingSchema = z.object({
   voting_context: z.enum(['event', 'internal']).optional(),
   group_id: z.string().optional(),
   start_final_vote_if_no_change_requests: z.boolean().optional(),
+});
+
+// Server-only: materialize event-suggestion CR vote cards as confirmed CRs arrive
+export const ensureEventSuggestionChangeRequestVotesSchema = z.object({
+  amendment_id: z.string(),
+  agenda_item_id: z.string(),
+  process_branch_id: z.string().nullable().optional(),
 });
 
 // Server-only: process the result of a CR vote (accept/reject suggestion + save version)

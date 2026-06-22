@@ -42,36 +42,8 @@ import {
   CommandList,
 } from '@/features/shared/ui/ui/command';
 import type { User } from '@/zero';
+import { BLOG_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-
-// Define available action rights for blogs
-const ACTION_RIGHTS = [
-  {
-    resource: 'blogs',
-    action: 'update',
-    label: translateText('generated.inline.0036_update_blog_09ea894c'),
-  },
-  {
-    resource: 'blogs',
-    action: 'delete',
-    label: translateText('generated.inline.0037_delete_blog_9c6feb0f'),
-  },
-  {
-    resource: 'blogBloggers',
-    action: 'manage',
-    label: translateText('generated.inline.0038_manage_bloggers_58827569'),
-  },
-  {
-    resource: 'notifications',
-    action: 'viewNotifications',
-    label: translateText('generated.inline.0039_view_notifications_26280ee0'),
-  },
-  {
-    resource: 'notifications',
-    action: 'manageNotifications',
-    label: translateText('generated.inline.0040_manage_notifications_32133a0a'),
-  },
-];
 
 function displayName(u: Pick<User, 'first_name' | 'last_name'> | undefined | null): string {
   if (!u) return 'Unknown';
@@ -564,7 +536,7 @@ export function BlogBloggersManagerView({
                     </MatrixTableRow>
                   </MatrixTableHeader>
                   <MatrixTableBody>
-                    {ACTION_RIGHTS.map(({ resource, action, label }) => {
+                    {BLOG_ACTION_RIGHTS.map(({ resource, action, label }) => {
                       const rightKey = `${resource}-${action}`;
                       return (
                         <MatrixTableRow key={rightKey}>

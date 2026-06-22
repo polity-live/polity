@@ -4,7 +4,7 @@
 
 import type { ActionType, ResourceType } from '@/zero/rbac/types';
 
-export type VotingPhase = 'indication' | 'final_vote' | 'closed';
+export type VotingPhase = 'internal' | 'indication' | 'final' | 'closed';
 
 interface AgendaItemLike {
   voting_phase?: string | null;
@@ -19,7 +19,8 @@ interface PermissionsLike {
  */
 export function getVotingPhase(agendaItem: AgendaItemLike): VotingPhase {
   const phase = agendaItem.voting_phase;
-  if (phase === 'final_vote' || phase === 'closed') return phase;
+  if (phase === 'internal') return 'internal';
+  if (phase === 'final' || phase === 'closed') return phase;
   return 'indication';
 }
 
@@ -82,8 +83,9 @@ export function formatVoteResultSentence(
 export function getPhaseVariant(phase: VotingPhase): 'secondary' | 'default' | 'outline' {
   switch (phase) {
     case 'indication':
+    case 'internal':
       return 'secondary';
-    case 'final_vote':
+    case 'final':
       return 'default';
     case 'closed':
       return 'outline';

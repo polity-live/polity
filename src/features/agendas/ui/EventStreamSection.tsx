@@ -13,6 +13,7 @@ interface Speaker {
     last_name?: string | null;
     email?: string | null;
     avatar?: string | null;
+    gender?: string | null;
   } | null;
 }
 
@@ -67,6 +68,7 @@ interface EventStreamSectionProps {
   streamUrl?: string | null;
   currentAgendaItem: CurrentAgendaItem | null;
   speakerList: Speaker[];
+  showGender?: boolean;
   userId?: string;
   isUserCandidate: boolean;
   addingSpeaker: boolean;
@@ -88,6 +90,7 @@ export function EventStreamSection({
   streamUrl,
   currentAgendaItem,
   speakerList,
+  showGender,
   userId,
   isUserCandidate,
   addingSpeaker,
@@ -106,6 +109,7 @@ export function EventStreamSection({
     streamUrl,
     currentAgendaItem,
     speakerList,
+    showGender,
     userId,
     isUserCandidate,
     addingSpeaker,

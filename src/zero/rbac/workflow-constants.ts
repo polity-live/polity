@@ -1,16 +1,23 @@
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import {
   AUTOMATIC_EVENT_MODES,
+  EDITING_MODE_TRANSITIONS as POLICY_EDITING_MODE_TRANSITIONS,
   MANUALLY_SELECTABLE_MODES,
   TERMINAL_EDITING_MODES,
+  canTransitionTo as canPolicyTransitionTo,
   getDefaultEditingMode as getPolicyDefaultEditingMode,
-  isAutomaticEventMode,
+  isEventPhase as isPolicyEventPhase,
+  isSelectableByCollaborator as isPolicySelectableByCollaborator,
+  isSuggestingMode as isPolicySuggestingMode,
+  isTerminalEditingMode,
+  isVotingMode as isPolicyVotingMode,
   normalizeEditingMode as normalizePolicyEditingMode,
   type EditingMode,
 } from '../amendments/editing-mode-policy';
 export {
   AMENDMENT_EDITING_MODE_ORDER,
   AUTOMATIC_EVENT_MODES,
+  EDITING_MODE_TRANSITIONS,
   MANUAL_INTERNAL_MODES,
   MANUALLY_SELECTABLE_MODES,
 } from '../amendments/editing-mode-policy';
@@ -31,11 +38,6 @@ export type { EditingMode } from '../amendments/editing-mode-policy';
 export type WorkflowStatus = EditingMode;
 
 /**
- * Amendment general status (legacy compatibility)
- */
-export type AmendmentStatus = 'draft' | 'in_progress' | 'passed' | 'rejected';
-
-/**
  * Voting session types
  */
 export type VotingSessionType = 'internal' | 'event';
@@ -50,23 +52,8 @@ export type VotingSessionStatus = 'pending' | 'active' | 'completed';
  */
 export type ChangeRequestSource = 'collaborator' | 'event_participant';
 
-/**
- * Valid editing mode transitions
- * Key: current mode, Value: array of allowed next modes
- */
-export const EDITING_MODE_TRANSITIONS: Record<EditingMode, EditingMode[]> = {
-  edit: [...MANUALLY_SELECTABLE_MODES],
-  view: [...MANUALLY_SELECTABLE_MODES],
-  suggest_internal: [...MANUALLY_SELECTABLE_MODES],
-  suggest_event: ['view'],
-  vote_internal: [...MANUALLY_SELECTABLE_MODES],
-  event_final_closing_vote: ['view'],
-  passed: [], // Terminal state
-  rejected: [], // Terminal state
-};
-
 /** @deprecated Use EDITING_MODE_TRANSITIONS instead */
-export const WORKFLOW_TRANSITIONS = EDITING_MODE_TRANSITIONS;
+export const WORKFLOW_TRANSITIONS = POLICY_EDITING_MODE_TRANSITIONS;
 
 /**
  * Non-terminal editing modes available for manual selection
@@ -168,8 +155,8 @@ export const EDITING_MODE_METADATA: Record<
 export const WORKFLOW_STATUS_METADATA = EDITING_MODE_METADATA;
 
 /**
- * Normalize a raw DB value to a valid EditingMode.
- * Maps legacy values (collaborative_editing, Drafting, etc.) to new ones.
+ * Normalize a raw value to a canonical EditingMode.
+ * Unknown or missing values fall back to the default edit mode.
  */
 export function normalizeEditingMode(raw: string | null | undefined): EditingMode {
   return normalizePolicyEditingMode(raw);
@@ -178,45 +165,34 @@ export function normalizeEditingMode(raw: string | null | undefined): EditingMod
 /**
  * Validate if an editing mode transition is allowed
  */
-export function canTransitionTo(currentMode: EditingMode, targetMode: EditingMode): boolean {
-  const allowed = EDITING_MODE_TRANSITIONS[currentMode];
-  return allowed.includes(targetMode);
-}
+export const canTransitionTo = canPolicyTransitionTo;
 
 /**
  * Check if a mode is in an event phase
  */
-export function isEventPhase(mode: EditingMode): boolean {
-  return isAutomaticEventMode(mode) || TERMINAL_MODES.includes(mode);
-}
+export const isEventPhase = isPolicyEventPhase;
 
 /**
  * Check if a mode is terminal
  */
 export function isTerminalStatus(mode: EditingMode): boolean {
-  return TERMINAL_MODES.includes(mode);
+  return isTerminalEditingMode(mode);
 }
 
 /**
  * Check if a mode is a voting mode
  */
-export function isVotingMode(mode: EditingMode): boolean {
-  return mode === 'vote_internal' || mode === 'event_final_closing_vote';
-}
+export const isVotingMode = isPolicyVotingMode;
 
 /**
  * Check if a mode is a suggesting mode
  */
-export function isSuggestingMode(mode: EditingMode): boolean {
-  return mode === 'suggest_internal' || mode === 'suggest_event';
-}
+export const isSuggestingMode = isPolicySuggestingMode;
 
 /**
  * Check if a user can manually select a mode
  */
-export function isSelectableByCollaborator(mode: EditingMode): boolean {
-  return SELECTABLE_MODES.includes(mode);
-}
+export const isSelectableByCollaborator = isPolicySelectableByCollaborator;
 
 /**
  * Get the default editing mode for a new amendment

@@ -3182,7 +3182,7 @@ export const generatedTranslations = {
             becomeCandidate: 'Become Candidate',
             candidateRequiresPassiveVotingRight:
               'Passive Voting Rights are required to become a candidate in this event.',
-            castFinalVote: 'Cast Final Vote',
+            castFinalVote: 'Cast final vote',
             castIndicativeVote: 'Cast Indication',
             closeFinalVote: 'Close Final Vote',
             joinSpeakerList: 'Join Speaker List',
@@ -3650,14 +3650,6 @@ export const generatedTranslations = {
           splitCell: 'Split cell',
         },
         url: 'Url',
-      },
-    },
-    timeline: {
-      terminal: {
-        actual: 'Act',
-        indication: 'Ind',
-        indicationComparison: 'Indication vs Actual',
-        indicationOnly: 'Indication only',
       },
     },
   },

@@ -15,10 +15,10 @@ describe('selectableAgendaBranches', () => {
   it('keeps only the current step branch for non-merge agenda items', () => {
     const result = getSelectableAgendaBranches({
       branches,
-      vote: { purpose: 'final_closing' },
+      vote: { purpose: 'closing' },
       agendaStepRuns: [
-        { id: 'step-a', branch_id: 'branch-a', step_kind: 'event_vote' },
-        { id: 'step-b', branch_id: 'branch-b', step_kind: 'event_vote' },
+        { id: 'step-a', branch_id: 'branch-a', step_kind: 'group_vote' },
+        { id: 'step-b', branch_id: 'branch-b', step_kind: 'group_vote' },
       ],
       currentStepRun: { id: 'step-b', branch_id: 'branch-b' },
     });

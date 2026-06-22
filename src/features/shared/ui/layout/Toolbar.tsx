@@ -115,6 +115,7 @@ const dropdownArrowVariants = cva(
 
 type ToolbarButtonProps = {
   isDropdown?: boolean;
+  asChild?: boolean;
   pressed?: boolean;
   loading?: boolean;
   loadingLabel?: React.ReactNode;
@@ -154,6 +155,7 @@ export const ToolbarButton = withTooltip(function ToolbarButton({
   children,
   className,
   isDropdown,
+  asChild,
   pressed,
   loading = false,
   loadingLabel,
@@ -164,12 +166,12 @@ export const ToolbarButton = withTooltip(function ToolbarButton({
   variant,
   ...props
 }: ToolbarButtonProps) {
-  const showStatus = loading || successState;
+  const showStatus = !asChild && (loading || successState);
   const content = renderToolbarButtonContent({
     children,
-    loading,
+    loading: showStatus && loading,
     loadingLabel,
-    successState,
+    successState: showStatus && successState,
     successLabel,
   });
 
@@ -219,6 +221,7 @@ export const ToolbarButton = withTooltip(function ToolbarButton({
       aria-busy={loading || undefined}
       data-loading={loading ? 'true' : undefined}
       data-success={successState ? 'true' : undefined}
+      asChild={asChild}
       {...props}
     >
       {content}

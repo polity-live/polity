@@ -2,7 +2,7 @@ import {
   getOrderedBranches,
   type AmendmentProcessBranchSource,
 } from '@/features/amendments/logic/amendmentBranchDisplay';
-import { isMergeVariantVotePurpose } from '@/zero/votes/vote-workflow';
+import { VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
 
 export interface SelectableAgendaBranchVoteChoice {
   process_branch_id?: string | null;
@@ -47,7 +47,7 @@ function getCurrentStepBranchId(currentStepRun?: SelectableAgendaBranchStepRun |
 }
 
 function isMergeStepRun(stepRun: SelectableAgendaBranchStepRun) {
-  return stepRun.step_kind === 'merge_vote' || isMergeVariantVotePurpose(stepRun.step_kind);
+  return stepRun.step_kind === 'merge_vote' || stepRun.step_kind === VOTE_PURPOSE.mergeVariant;
 }
 
 function getMergeChoiceBranchIds(vote?: SelectableAgendaBranchVote | null) {
@@ -77,8 +77,8 @@ function findMergeVote(
   votes: readonly SelectableAgendaBranchVote[]
 ) {
   return (
-    votes.find(candidate => isMergeVariantVotePurpose(candidate.purpose)) ??
-    (isMergeVariantVotePurpose(vote?.purpose) ? (vote ?? null) : null)
+    votes.find(candidate => candidate.purpose === VOTE_PURPOSE.mergeVariant) ??
+    (vote?.purpose === VOTE_PURPOSE.mergeVariant ? (vote ?? null) : null)
   );
 }
 

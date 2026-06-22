@@ -1,6 +1,6 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
-import { FormControlLabel } from '@/features/shared/ui/form';
+import { FormControlLabel, SwitchField } from '@/features/shared/ui/form';
 /**
  * Event Edit Component
  *
@@ -299,6 +299,19 @@ export function EventEditView({
                   type="number"
                   inputMode="numeric"
                   min="1"
+                />
+                <SwitchField
+                  id="genderQuotaEnabled"
+                  label={t(
+                    'features.events.agenda.genderQuota.settingsLabel',
+                    'Genderquotierte Redeliste'
+                  )}
+                  description={t(
+                    'features.events.agenda.genderQuota.settingsDescription',
+                    'Wenn aktiv, muessen sich maennliche und weibliche Redebeitraege abwechseln.'
+                  )}
+                  checked={Boolean(formData.genderQuotaEnabled)}
+                  onCheckedChange={checked => updateField('genderQuotaEnabled', checked)}
                 />
                 {!isCreating && event?.event_type && (
                   <div className="space-y-2">

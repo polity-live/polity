@@ -61,22 +61,10 @@ describe('GROUP_RIGHT_ACTION_RIGHT_MAPPING', () => {
         { resource: 'groupDocuments', action: 'view' },
         { resource: 'groupLinks', action: 'view' },
       ],
-      amendmentRight: [
-        { resource: 'amendments', action: 'view' },
-        { resource: 'amendments', action: 'create' },
-      ],
-      rightToSpeak: [
-        { resource: 'events', action: 'view' },
-        { resource: 'events', action: 'speak' },
-      ],
-      activeVotingRight: [
-        { resource: 'events', action: 'view' },
-        { resource: 'events', action: 'active_voting' },
-      ],
-      passiveVotingRight: [
-        { resource: 'events', action: 'view' },
-        { resource: 'events', action: 'passive_voting' },
-      ],
+      amendmentRight: [{ resource: 'amendments', action: 'create' }],
+      rightToSpeak: [],
+      activeVotingRight: [],
+      passiveVotingRight: [],
     });
   });
 });
@@ -88,18 +76,19 @@ describe('buildMembershipRightsAlignmentRows', () => {
       memberships: [
         membership('aligned', {
           actionRights: [
-            { resource: 'events', action: 'view' },
-            { resource: 'events', action: 'active_voting' },
+            { resource: 'groups', action: 'view' },
+            { resource: 'groupDocuments', action: 'view' },
+            { resource: 'groupLinks', action: 'view' },
           ],
         }),
       ],
-      grants: [grant('grant-b1-h1', 'activeVotingRight', 'B1', 'H1')],
+      grants: [grant('grant-b1-h1', 'informationRight', 'B1', 'H1')],
     });
 
     expect(row.status).toBe('aligned');
     expect(row.missingRights).toEqual([]);
     expect(row.extraRights).toEqual([]);
-    expect(row.connectedRights.map(right => right.rightKey)).toEqual(['activeVotingRight']);
+    expect(row.connectedRights.map(right => right.rightKey)).toEqual(['informationRight']);
   });
 
   it('walks multi-step active right paths from base group to hierarchy target', () => {
@@ -107,10 +96,7 @@ describe('buildMembershipRightsAlignmentRows', () => {
       targetGroupId: 'H2',
       memberships: [
         membership('nested', {
-          actionRights: [
-            { resource: 'amendments', action: 'view' },
-            { resource: 'amendments', action: 'create' },
-          ],
+          actionRights: [{ resource: 'amendments', action: 'create' }],
         }),
       ],
       grants: [
@@ -123,31 +109,27 @@ describe('buildMembershipRightsAlignmentRows', () => {
     expect(row.connectedRights[0]?.paths[0]?.groupPath).toEqual(['B1', 'H1', 'H2']);
   });
 
-  it('treats implied action rights as actual rights', () => {
+  it('includes implied action rights in actual rights summaries', () => {
     const [row] = buildMembershipRightsAlignmentRows({
       targetGroupId: 'H1',
       memberships: [
-        membership('speaker', {
-          actionRights: [{ resource: 'events', action: 'speak' }],
+        membership('operator', {
+          actionRights: [{ resource: 'groupLinks', action: 'manage' }],
         }),
       ],
-      grants: [grant('grant-b1-h1', 'rightToSpeak', 'B1', 'H1')],
+      grants: [],
     });
 
-    expect(row.status).toBe('aligned');
+    expect(row.status).toBe('extra');
     expect(new Set(row.actualRights.map(right => right.key))).toEqual(
-      new Set(['events:view', 'events:speak'])
+      new Set(['groupLinks:manage', 'groupLinks:view'])
     );
   });
 
   it('marks missing rights when a role does not cover expected connected rights', () => {
     const [row] = buildMembershipRightsAlignmentRows({
       targetGroupId: 'H1',
-      memberships: [
-        membership('missing', {
-          actionRights: [{ resource: 'amendments', action: 'view' }],
-        }),
-      ],
+      memberships: [membership('missing')],
       grants: [grant('grant-b1-h1', 'amendmentRight', 'B1', 'H1')],
     });
 
@@ -180,22 +162,20 @@ describe('buildMembershipRightsAlignmentRows', () => {
       memberships: [
         membership('mixed', {
           actionRights: [
-            { resource: 'events', action: 'view' },
-            { resource: 'groupLinks', action: 'manage' },
+            { resource: 'groups', action: 'view' },
+            { resource: 'messages', action: 'manage' },
           ],
         }),
       ],
-      grants: [grant('grant-b1-h1', 'activeVotingRight', 'B1', 'H1')],
+      grants: [grant('grant-b1-h1', 'informationRight', 'B1', 'H1')],
     });
 
     expect(row.status).toBe('mixed');
     expect(row.missingRights.map(right => `${right.resource}:${right.action}`)).toEqual([
-      'events:active_voting',
-    ]);
-    expect(row.extraRights.map(right => right.key)).toEqual([
-      'groupLinks:manage',
+      'groupDocuments:view',
       'groupLinks:view',
     ]);
+    expect(row.extraRights.map(right => right.key)).toEqual(['messages:manage']);
   });
 
   it('keeps no-path members aligned when they also have no role rights', () => {

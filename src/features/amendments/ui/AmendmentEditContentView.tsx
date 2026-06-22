@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
-import { isEventPhase, isTerminalStatus } from '@/zero/rbac/workflow-constants';
+import { isEventPhase, isTerminalEditingMode } from '@/zero/amendments/editing-mode-policy';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/form';
 import { hasMinLength, isOptionalMinLength } from '@/features/shared/logic/inputValidation';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
@@ -318,7 +318,8 @@ export function AmendmentEditContentView({
                     variant="outline"
                     className="w-full justify-between"
                     disabled={
-                      isTerminalStatus(formData.workflowStatus) || !selectedWorkflowBranchEditable
+                      isTerminalEditingMode(formData.workflowStatus) ||
+                      !selectedWorkflowBranchEditable
                     }
                   >
                     <span className="flex min-w-0 items-center gap-2">

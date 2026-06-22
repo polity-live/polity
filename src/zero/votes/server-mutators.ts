@@ -8,6 +8,7 @@ import { mutators } from '../mutators';
 import {
   eventAllowsOnlineVoting,
   getConfirmedOfflineAttendeeCount,
+  getHybridOfflineOverrideUserIdsForEvent,
   isUserForcedOfflineForEvent,
 } from '../offline-roster-helpers';
 import { zql } from '../schema';
@@ -32,14 +33,7 @@ import {
   createFinalChoiceDecisionSchema,
   upsertVoteOfflineTallySchema,
 } from './schema';
-import {
-  VOTE_STATUS,
-  isChangeRequestVotePurpose,
-  isFinalClosingVotePurpose,
-  isFinalOpenVoteStatus,
-  isMergeVariantVotePurpose,
-  normalizeVoteStatus,
-} from './vote-workflow';
+import { VOTE_PHASE, isFinalVotePhase, VOTE_PURPOSE, normalizeVotePhase } from './vote-workflow';
 
 async function loadVoteEventId(
   tx: Parameters<typeof mutators.votes.createVote.fn>[0]['tx'],
@@ -112,12 +106,40 @@ type VoteTx = Parameters<typeof mutators.votes.updateVote.fn>[0]['tx'];
 type VoteCtx = Parameters<typeof mutators.votes.updateVote.fn>[0]['ctx'];
 
 function isFinalizingVoteStatus(status?: string | null) {
-  return isFinalOpenVoteStatus(status) || normalizeVoteStatus(status) === VOTE_STATUS.closed;
+  return isFinalVotePhase(status) || normalizeVotePhase(status) === VOTE_PHASE.closed;
 }
 
 interface VoteContext {
   isChangeRequestVote: boolean;
   isFinalChangeRequestVote: boolean;
+}
+
+const ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
+
+function participantHasActiveVotingRight(
+  participant: {
+    participant_roles?: readonly {
+      role?: {
+        action_rights?: readonly {
+          action?: string | null;
+          resource?: string | null;
+          event_id?: string | null;
+        }[];
+      } | null;
+    }[];
+  },
+  eventId: string
+) {
+  return (
+    participant.participant_roles?.some(participantRole =>
+      participantRole.role?.action_rights?.some(
+        right =>
+          right.action === 'active_voting' &&
+          right.resource === 'events' &&
+          right.event_id === eventId
+      )
+    ) ?? false
+  );
 }
 
 function normalizeMajorityType(value?: string | null): MajorityType {
@@ -147,10 +169,10 @@ async function assertCurrentCRVoteOrder(
   agendaItemChangeRequest: {
     id: string;
     agenda_item_id: string;
-    is_final_vote: boolean;
+    is_closing_vote: boolean;
   }
 ) {
-  if (agendaItemChangeRequest.is_final_vote) {
+  if (agendaItemChangeRequest.is_closing_vote) {
     return;
   }
 
@@ -160,7 +182,9 @@ async function assertCurrentCRVoteOrder(
       .orderBy('order_index', 'asc')
   );
   const timeline = Array.isArray(timelineResult) ? timelineResult : [];
-  const firstIncomplete = timeline.find(item => !item.is_final_vote && item.status !== 'completed');
+  const firstIncomplete = timeline.find(
+    item => !item.is_closing_vote && item.status !== 'completed'
+  );
 
   if (firstIncomplete?.id && firstIncomplete.id !== agendaItemChangeRequest.id) {
     throw new Error('Change requests must be voted in their configured order.');
@@ -227,19 +251,19 @@ async function assertNoOpenChangeRequestsBeforeFinalVote(
   const agendaVotesResult = await tx.run(zql.vote.where('agenda_item_id', vote.agenda_item_id));
   const agendaVotes = Array.isArray(agendaVotesResult) ? agendaVotesResult : [];
   const activeOtherFinalVote = agendaVotes.find(
-    agendaVote => agendaVote.id !== vote.id && isFinalOpenVoteStatus(agendaVote.status)
+    agendaVote => agendaVote.id !== vote.id && isFinalVotePhase(agendaVote.status)
   );
   if (activeOtherFinalVote) {
     throw new Error('Another final vote is already active for this agenda item.');
   }
 
-  if (isChangeRequestVotePurpose(vote.purpose) || isFinalClosingVotePurpose(vote.purpose)) {
-    const variantVotes = agendaVotes.filter(variantVote =>
-      isMergeVariantVotePurpose(variantVote.purpose)
+  if (vote.purpose === VOTE_PURPOSE.changeRequest || vote.purpose === VOTE_PURPOSE.closing) {
+    const variantVotes = agendaVotes.filter(
+      variantVote => variantVote.purpose === VOTE_PURPOSE.mergeVariant
     );
     const openVariantVote = variantVotes.find(
       variantVote =>
-        variantVote.id !== vote.id && normalizeVoteStatus(variantVote.status) !== VOTE_STATUS.closed
+        variantVote.id !== vote.id && normalizeVotePhase(variantVote.status) !== VOTE_PHASE.closed
     );
     if (openVariantVote) {
       throw new Error('Variant final vote must be completed before change request voting starts.');
@@ -252,7 +276,7 @@ async function assertNoOpenChangeRequestsBeforeFinalVote(
     await assertCurrentCRVoteOrder(tx, timelineLink);
     return {
       isChangeRequestVote: true,
-      isFinalChangeRequestVote: Boolean(timelineLink.is_final_vote),
+      isFinalChangeRequestVote: Boolean(timelineLink.is_closing_vote),
     };
   }
 
@@ -261,7 +285,7 @@ async function assertNoOpenChangeRequestsBeforeFinalVote(
   );
   const stepRuns = Array.isArray(stepRunsResult) ? stepRunsResult : [];
   if (
-    !isFinalClosingVotePurpose(vote.purpose) &&
+    vote.purpose !== VOTE_PURPOSE.closing &&
     stepRuns.some(step => step.step_kind === 'merge_vote')
   ) {
     return { isChangeRequestVote: false, isFinalChangeRequestVote: false };
@@ -274,7 +298,7 @@ async function assertNoOpenChangeRequestsBeforeFinalVote(
     ? pendingTimelineItemsResult
     : [];
   const hasIncompleteTimelineItem = pendingTimelineItems.some(
-    item => !item.is_final_vote && item.status !== 'completed'
+    item => !item.is_closing_vote && item.status !== 'completed'
   );
   if (hasIncompleteTimelineItem) {
     throw new Error('All change request votes must be completed before the final vote.');
@@ -313,33 +337,114 @@ async function loadVoteContext(
   const timelineLink = await tx.run(zql.agenda_item_change_request.where('vote_id', vote.id).one());
   return {
     isChangeRequestVote: Boolean(timelineLink),
-    isFinalChangeRequestVote: Boolean(timelineLink?.is_final_vote),
+    isFinalChangeRequestVote: Boolean(timelineLink?.is_closing_vote),
   };
+}
+
+async function loadEligibleFinalVoteCounts(
+  tx: VoteTx,
+  vote: {
+    id: string;
+    agenda_item_id?: string | null;
+  }
+) {
+  if (!vote.agenda_item_id) {
+    return { eligibleFinalVoterCount: 0, recordedFinalVoteCount: 0 };
+  }
+
+  const agendaItem = await tx.run(zql.agenda_item.where('id', vote.agenda_item_id).one());
+  if (!agendaItem?.event_id) {
+    return { eligibleFinalVoterCount: 0, recordedFinalVoteCount: 0 };
+  }
+
+  const eventId = agendaItem.event_id;
+  const [
+    participants,
+    forcedOfflineUserIds,
+    confirmedOfflineAttendeeCount,
+    voters,
+    finalParticipations,
+    offlineTallies,
+  ] = await Promise.all([
+    tx.run(
+      zql.event_participant
+        .where('event_id', eventId)
+        .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
+        .related('participant_roles', q => q.related('role', rq => rq.related('action_rights')))
+    ),
+    getHybridOfflineOverrideUserIdsForEvent(tx, eventId),
+    getConfirmedOfflineAttendeeCount(tx, eventId),
+    tx.run(zql.voter.where('vote_id', vote.id)),
+    tx.run(zql.final_voter_participation.where('vote_id', vote.id)),
+    tx.run(zql.vote_offline_tally.where('vote_id', vote.id)),
+  ]);
+
+  const eligibleOnlineUserIds = new Set<string>();
+  for (const participant of participants) {
+    if (
+      participant.user_id &&
+      !forcedOfflineUserIds.has(participant.user_id) &&
+      participantHasActiveVotingRight(participant, eventId)
+    ) {
+      eligibleOnlineUserIds.add(participant.user_id);
+    }
+  }
+
+  const voterUserIdById = new Map(
+    voters
+      .filter(voter => Boolean(voter.id && voter.user_id))
+      .map(voter => [voter.id, voter.user_id] as const)
+  );
+  const recordedOnlineUserIds = new Set<string>();
+  for (const participation of finalParticipations) {
+    const userId = voterUserIdById.get(participation.voter_id);
+    if (userId && eligibleOnlineUserIds.has(userId)) {
+      recordedOnlineUserIds.add(userId);
+    }
+  }
+
+  const offlineFinalCount = offlineTallies.reduce(
+    (sum, tally) => (tally.phase === 'final' ? sum + Math.max(0, tally.count ?? 0) : sum),
+    0
+  );
+
+  return {
+    eligibleFinalVoterCount: eligibleOnlineUserIds.size + confirmedOfflineAttendeeCount,
+    recordedFinalVoteCount: recordedOnlineUserIds.size + offlineFinalCount,
+  };
+}
+
+async function syncAgendaItemClosedForAgendaVote(
+  tx: VoteTx,
+  vote: {
+    agenda_item_id?: string | null;
+  },
+  voteContext: VoteContext,
+  now: number
+) {
+  if (!vote.agenda_item_id || voteContext.isChangeRequestVote) {
+    return;
+  }
+
+  await tx.mutate.agenda_item.update({
+    id: vote.agenda_item_id,
+    voting_phase: 'closed',
+    updated_at: now,
+  });
 }
 
 async function maybeCloseVoteWhenAllFinalVotersVoted(tx: VoteTx, ctx: VoteCtx, voteId: string) {
   const vote = await tx.run(zql.vote.where('id', voteId).one());
-  if (!vote || !isFinalOpenVoteStatus(vote.status)) {
+  if (!vote || !isFinalVotePhase(vote.status)) {
     return;
   }
 
-  const [voters, finalParticipations, offlineTallies] = await Promise.all([
-    tx.run(zql.voter.where('vote_id', voteId)),
-    tx.run(zql.final_voter_participation.where('vote_id', voteId)),
-    tx.run(zql.vote_offline_tally.where('vote_id', voteId)),
-  ]);
-  const eventId = await loadVoteEventId(tx, voteId);
-  const confirmedOfflineAttendeeCount = eventId
-    ? await getConfirmedOfflineAttendeeCount(tx, eventId)
-    : 0;
-  const offlineFinalCount = offlineTallies.reduce(
-    (sum, tally) => (tally.phase === 'final' ? sum + (tally.count ?? 0) : sum),
-    0
+  const { eligibleFinalVoterCount, recordedFinalVoteCount } = await loadEligibleFinalVoteCounts(
+    tx,
+    vote
   );
-  const eligibleVoterCount = voters.length + confirmedOfflineAttendeeCount;
-  const recordedFinalVoteCount = finalParticipations.length + offlineFinalCount;
 
-  if (eligibleVoterCount > 0 && recordedFinalVoteCount >= eligibleVoterCount) {
+  if (eligibleFinalVoterCount > 0 && recordedFinalVoteCount >= eligibleFinalVoterCount) {
     await voteServerMutators.updateVote.fn({
       tx,
       ctx,
@@ -413,13 +518,13 @@ function shouldReturnEventVoteToSuggesting(
     return false;
   }
 
-  if (isFinalClosingVotePurpose(vote.purpose) || voteContext.isFinalChangeRequestVote) {
+  if (vote.purpose === VOTE_PURPOSE.closing || voteContext.isFinalChangeRequestVote) {
     return false;
   }
 
   return (
-    isMergeVariantVotePurpose(vote.purpose) ||
-    isChangeRequestVotePurpose(vote.purpose) ||
+    vote.purpose === VOTE_PURPOSE.mergeVariant ||
+    vote.purpose === VOTE_PURPOSE.changeRequest ||
     voteContext.isChangeRequestVote
   );
 }
@@ -577,7 +682,7 @@ async function closeExpiredFinalVote(
 
   await tx.mutate.vote.update({
     id: vote.id,
-    status: VOTE_STATUS.closed,
+    status: VOTE_PHASE.closed,
     closed_reason: 'time_elapsed',
     closed_at: now,
     closed_by_id: null,
@@ -585,12 +690,13 @@ async function closeExpiredFinalVote(
   });
 
   await markTimelineVoteResult(tx, ctx, vote, summary.result, now);
+  await syncAgendaItemClosedForAgendaVote(tx, vote, voteContext, now);
 
   const shouldResolveProcessVote = Boolean(
     vote.agenda_item_id &&
     (!voteContext.isChangeRequestVote ||
       voteContext.isFinalChangeRequestVote ||
-      isFinalClosingVotePurpose(vote.purpose))
+      vote.purpose === VOTE_PURPOSE.closing)
   );
 
   if (shouldResolveProcessVote && vote.agenda_item_id) {
@@ -651,23 +757,21 @@ export const voteServerMutators = {
   updateVote: defineMutator(updateVoteSchema, async ({ tx, ctx, args }) => {
     const oldVote = await tx.run(zql.vote.where('id', args.id).one());
     const normalizedArgs =
-      oldVote && isFinalOpenVoteStatus(args.status)
+      oldVote && isFinalVotePhase(args.status)
         ? await materializeFinalVoteTiming(tx, oldVote, {
             ...args,
-            status: VOTE_STATUS.finalOpen,
+            status: VOTE_PHASE.final,
           })
         : {
             ...args,
-            ...(args.status !== undefined ? { status: normalizeVoteStatus(args.status) } : {}),
+            ...(args.status !== undefined ? { status: normalizeVotePhase(args.status) } : {}),
           };
     const isStartingFinalVote =
-      oldVote &&
-      !isFinalOpenVoteStatus(oldVote.status) &&
-      isFinalOpenVoteStatus(normalizedArgs.status);
+      oldVote && !isFinalVotePhase(oldVote.status) && isFinalVotePhase(normalizedArgs.status);
     const isClosingFinalVote =
       oldVote &&
-      isFinalOpenVoteStatus(oldVote.status) &&
-      normalizeVoteStatus(normalizedArgs.status) === VOTE_STATUS.closed;
+      isFinalVotePhase(oldVote.status) &&
+      normalizeVotePhase(normalizedArgs.status) === VOTE_PHASE.closed;
     const startingTimelineLink =
       isStartingFinalVote && oldVote?.agenda_item_id
         ? await tx.run(zql.agenda_item_change_request.where('vote_id', oldVote.id).one())
@@ -675,7 +779,7 @@ export const voteServerMutators = {
     const isStartingFinalClosingVote = Boolean(
       isStartingFinalVote &&
       oldVote &&
-      (isFinalClosingVotePurpose(oldVote.purpose) || startingTimelineLink?.is_final_vote)
+      (oldVote.purpose === VOTE_PURPOSE.closing || startingTimelineLink?.is_closing_vote)
     );
     let oldVoteProcessBranchIds: string[] | null = null;
     const getOldVoteProcessBranchIds = async () => {
@@ -707,6 +811,15 @@ export const voteServerMutators = {
 
     await mutators.votes.updateVote.fn({ tx, ctx, args: normalizedArgs });
 
+    const closedFinalVoteSummary =
+      oldVote && isClosingFinalVote ? await summarizeFinalVoteResult(tx, oldVote) : null;
+
+    if (oldVote && closedFinalVoteSummary) {
+      const now = Date.now();
+      await markTimelineVoteResult(tx, ctx, oldVote, closedFinalVoteSummary.result, now);
+      await syncAgendaItemClosedForAgendaVote(tx, oldVote, voteContext, now);
+    }
+
     if (isStartingFinalClosingVote && oldVote) {
       await syncVoteEventEditingMode(
         tx,
@@ -720,9 +833,9 @@ export const voteServerMutators = {
     if (
       (!voteContext.isChangeRequestVote ||
         voteContext.isFinalChangeRequestVote ||
-        (oldVote && isFinalClosingVotePurpose(oldVote.purpose))) &&
+        (oldVote && oldVote.purpose === VOTE_PURPOSE.closing)) &&
       oldVote?.status !== 'closed' &&
-      normalizeVoteStatus(normalizedArgs.status) === VOTE_STATUS.closed &&
+      normalizeVotePhase(normalizedArgs.status) === VOTE_PHASE.closed &&
       oldVote?.agenda_item_id
     ) {
       const resolution = await resolveAmendmentProcessVote(
@@ -738,7 +851,8 @@ export const voteServerMutators = {
     if (
       oldVote &&
       oldVote?.status !== 'closed' &&
-      normalizeVoteStatus(normalizedArgs.status) === VOTE_STATUS.closed &&
+      normalizeVotePhase(normalizedArgs.status) === VOTE_PHASE.closed &&
+      closedFinalVoteSummary?.result !== 'tie' &&
       shouldReturnEventVoteToSuggesting(oldVote, voteContext)
     ) {
       await syncVoteEventEditingMode(
@@ -758,7 +872,7 @@ export const voteServerMutators = {
         const shouldNotifyFinalVote =
           !voteContext.isChangeRequestVote ||
           voteContext.isFinalChangeRequestVote ||
-          (oldVote && isFinalClosingVotePurpose(oldVote.purpose));
+          (oldVote && oldVote.purpose === VOTE_PURPOSE.closing);
 
         if (shouldNotifyFinalVote && (isStartingFinalVote || isClosingFinalVote)) {
           const eTitle = await eventTitle(tx, agendaItem.event_id);
@@ -775,15 +889,14 @@ export const voteServerMutators = {
           }
 
           if (isClosingFinalVote) {
-            const summary = await summarizeFinalVoteResult(tx, oldVote);
             fireNotification('notifyVotingCompleted', {
               senderId: ctx.userID,
               eventId: agendaItem.event_id,
               eventTitle: eTitle,
               agendaItemTitle,
-              result: summary.result,
-              acceptVotes: summary.acceptVotes,
-              rejectVotes: summary.rejectVotes,
+              result: closedFinalVoteSummary?.result ?? 'tie',
+              acceptVotes: closedFinalVoteSummary?.acceptVotes ?? 0,
+              rejectVotes: closedFinalVoteSummary?.rejectVotes ?? 0,
             });
           }
         }
@@ -800,7 +913,7 @@ export const voteServerMutators = {
       for (const agendaItem of agendaItems) {
         const votes = await tx.run(zql.vote.where('agenda_item_id', agendaItem.id));
         for (const vote of votes) {
-          if (!isFinalOpenVoteStatus(vote.status)) {
+          if (!isFinalVotePhase(vote.status)) {
             continue;
           }
           if (!vote.closing_end_time || vote.closing_end_time > now) {
@@ -850,16 +963,6 @@ export const voteServerMutators = {
   ),
 
   upsertOfflineTally: defineMutator(upsertVoteOfflineTallySchema, async ({ tx, ctx, args }) => {
-    console.info('Server validation started', {
-      flow: 'vote-offline-tally-upsert',
-      correlationId: args.debug_correlation_id ?? null,
-      actorUserId: ctx.userID,
-      voteId: args.vote_id,
-      phase: args.phase,
-      choiceId: args.choice_id,
-      count: args.count,
-    });
-
     await assertOfflineVoteTallyWithinCap(tx, {
       voteId: args.vote_id,
       phase: args.phase,
@@ -870,15 +973,5 @@ export const voteServerMutators = {
     if (args.phase === 'final') {
       await maybeCloseVoteWhenAllFinalVotersVoted(tx, ctx, args.vote_id);
     }
-
-    console.info('Server successful', {
-      flow: 'vote-offline-tally-upsert',
-      correlationId: args.debug_correlation_id ?? null,
-      actorUserId: ctx.userID,
-      voteId: args.vote_id,
-      phase: args.phase,
-      choiceId: args.choice_id,
-      count: args.count,
-    });
   }),
 };

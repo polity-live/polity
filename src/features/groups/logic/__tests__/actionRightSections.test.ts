@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACTION_RIGHTS } from '@/zero/rbac/constants';
+import { GROUP_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import { getActionRightSections } from '../actionRightSections';
 
 describe('getActionRightSections', () => {
@@ -9,8 +9,8 @@ describe('getActionRightSections', () => {
       section.rights.map(right => `${right.resource}:${right.action}`)
     );
 
-    expect(keys).toHaveLength(ACTION_RIGHTS.length);
-    expect(new Set(keys).size).toBe(ACTION_RIGHTS.length);
+    expect(keys).toHaveLength(GROUP_ACTION_RIGHTS.length);
+    expect(new Set(keys).size).toBe(GROUP_ACTION_RIGHTS.length);
   });
 
   it('groups operation rights together', () => {

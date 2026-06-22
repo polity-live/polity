@@ -23,6 +23,7 @@ interface DiscussionEntry {
   justification?: string;
   status?: string;
   confirmationStatus?: 'pending' | 'confirmed' | null;
+  changeRequestStatus?: string | null;
 }
 
 interface SavedChangeRequest {
@@ -35,6 +36,7 @@ interface SavedChangeRequest {
   votes_for?: number | null;
   votes_against?: number | null;
   votes_abstain?: number | null;
+  branch_sequence_number?: number | null;
   voting_deadline?: number | null;
   resolution_method?: string | null;
   visibility_scope?: string | null;
@@ -76,6 +78,7 @@ export function extractAmendmentCRSummaries(
       id: cr?.id ?? discussion?.id ?? record.logicalKey,
       logicalKey: record.logicalKey,
       crId: record.displayCrId ?? cr?.title ?? undefined,
+      branchSequenceNumber: cr?.branch_sequence_number ?? null,
       title: record.displayTitle,
       description: discussion?.description ?? cr?.description ?? '',
       status: cr?.status ?? discussion?.status ?? 'open',
@@ -99,7 +102,10 @@ export function extractAmendmentCRSummaries(
       visibilityScope: cr?.visibility_scope ?? null,
       resolvedInMode: cr?.resolved_in_mode ?? null,
       votingStatus: cr?.voting_status ?? null,
-      confirmationStatus: discussion?.confirmationStatus ?? (cr ? 'confirmed' : null),
+      confirmationStatus:
+        discussion?.confirmationStatus ??
+        (cr?.status === 'pending_submission' ? 'pending' : cr ? 'confirmed' : null),
+      changeRequestStatus: cr?.status ?? discussion?.changeRequestStatus ?? null,
     };
   });
 

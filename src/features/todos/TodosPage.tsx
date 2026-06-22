@@ -54,6 +54,7 @@ export function TodosPage() {
         setSelectedTab(nextTab);
       }
     },
+    keyboardMode: 'global',
   });
 
   return (

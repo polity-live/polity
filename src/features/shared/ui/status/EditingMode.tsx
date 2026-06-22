@@ -19,9 +19,8 @@ import {
   AMENDMENT_EDITING_MODE_ORDER,
   MANUALLY_SELECTABLE_MODES,
   isAutomaticEventMode,
-  isEditingMode,
-  normalizeEditingMode,
   type EditingMode,
+  type NonTerminalEditingMode,
 } from '@/zero/amendments/editing-mode-policy';
 
 import { Badge } from '@/features/shared/ui/ui/badge';
@@ -33,7 +32,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui
 
 export type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 
-export type SelectableEditingMode = Exclude<EditingMode, 'passed' | 'rejected'>;
+export type SelectableEditingMode = NonTerminalEditingMode;
 
 type Translate = (
   key: string,
@@ -161,49 +160,15 @@ const MODE_COLOR_CLASSES: Record<EditingMode, string> = {
   rejected: getSemanticToneClasses('danger').dot,
 };
 
-const LEGACY_EDITING_MODE_INPUTS = new Set([
-  'collaborative_editing',
-  'internal_suggesting',
-  'internal_voting',
-  'viewing',
-  'event_suggesting',
-  'event_voting',
-  'vote_event',
-  'Drafting',
-  'Under Review',
-  'Passed',
-  'Rejected',
-]);
-
-function isKnownEditingModeInput(mode: EditingMode | string | null | undefined): boolean {
-  if (!mode) return true;
-  return isEditingMode(mode) || LEGACY_EDITING_MODE_INPUTS.has(mode);
-}
-
-export function getEditingModeOption(
-  mode: EditingMode | string | null | undefined,
-  t: Translate
-): EditingModeOption {
-  const value = normalizeEditingMode(mode);
-
-  if (!isKnownEditingModeInput(mode)) {
-    return {
-      colorClass: getSemanticToneClasses('neutral').dot,
-      description: '',
-      Icon: EyeIcon,
-      label: t('features.amendments.workflow.unknown', 'Unknown status'),
-      value,
-    };
-  }
-
-  const labelConfig = MODE_LABEL_KEYS[value];
+export function getEditingModeOption(mode: EditingMode, t: Translate): EditingModeOption {
+  const labelConfig = MODE_LABEL_KEYS[mode];
 
   return {
-    colorClass: MODE_COLOR_CLASSES[value],
-    description: t(MODE_DESCRIPTION_KEYS[value].key, MODE_DESCRIPTION_KEYS[value].fallback),
-    Icon: MODE_ICON_MAP[value],
+    colorClass: MODE_COLOR_CLASSES[mode],
+    description: t(MODE_DESCRIPTION_KEYS[mode].key, MODE_DESCRIPTION_KEYS[mode].fallback),
+    Icon: MODE_ICON_MAP[mode],
     label: t(labelConfig.key, labelConfig.fallback),
-    value,
+    value: mode,
   };
 }
 
@@ -224,7 +189,7 @@ export function EditingModeBadge({
   variant = 'secondary',
 }: {
   className?: string;
-  mode: EditingMode | string | null | undefined;
+  mode: EditingMode;
   showIcon?: boolean;
   variant?: 'default' | 'secondary' | 'destructive' | 'outline';
 }) {

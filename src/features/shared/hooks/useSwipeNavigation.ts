@@ -1,4 +1,8 @@
-import { useCallback, useRef, type PointerEvent, type TouchEvent } from 'react';
+import { useCallback, useRef, type KeyboardEvent, type PointerEvent, type TouchEvent } from 'react';
+import {
+  useHorizontalArrowNavigation,
+  type HorizontalArrowNavigationMode,
+} from './useHorizontalArrowNavigation';
 
 const DEFAULT_SWIPE_LOCK_SELECTOR = [
   'input',
@@ -25,9 +29,12 @@ export interface UseSwipeNavigationOptions {
   activationMode?: SwipeActivationMode;
   edgeWidthPx?: number;
   lockSelector?: string;
+  keyboardMode?: HorizontalArrowNavigationMode;
+  keyboardLockSelector?: string;
 }
 
 export interface SwipeNavigationHandlers {
+  onKeyDown: (event: KeyboardEvent<HTMLElement>) => void;
   onTouchStart: (event: TouchEvent<HTMLElement>) => void;
   onTouchMove: (event: TouchEvent<HTMLElement>) => void;
   onTouchEnd: (event: TouchEvent<HTMLElement>) => void;
@@ -93,9 +100,21 @@ export function useSwipeNavigation({
   activationMode = 'content',
   edgeWidthPx = 32,
   lockSelector = DEFAULT_SWIPE_LOCK_SELECTOR,
+  keyboardMode = 'off',
+  keyboardLockSelector,
 }: UseSwipeNavigationOptions) {
   const startPositionRef = useRef<SwipeStartPosition | null>(null);
   const isActive = enabled && !disabled;
+  const { onKeyDown } = useHorizontalArrowNavigation({
+    mode: keyboardMode,
+    enabled,
+    disabled,
+    canGoPrev: canSwipePrev,
+    canGoNext: canSwipeNext,
+    onGoPrev: onSwipePrev,
+    onGoNext: onSwipeNext,
+    lockSelector: keyboardLockSelector,
+  });
 
   const reset = useCallback(() => {
     startPositionRef.current = null;
@@ -271,6 +290,7 @@ export function useSwipeNavigation({
   );
 
   const handlers: SwipeNavigationHandlers = {
+    onKeyDown,
     onTouchStart,
     onTouchMove,
     onTouchEnd,

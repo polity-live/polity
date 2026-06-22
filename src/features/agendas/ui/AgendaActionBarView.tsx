@@ -1,5 +1,6 @@
 'use client';
 
+import { Link } from '@tanstack/react-router';
 import { featureThemeClassName } from '@/features/shared/theme';
 import {
   Plus,
@@ -56,6 +57,7 @@ export interface AgendaActionBarViewProps {
   onStartVote: any;
   onStartFinalVote: any;
   onCloseFinalVote: any;
+  onJumpToNextVoteStep: any;
   onEditItem: any;
   onDeleteItem: any;
   onMoveToEvent: any;
@@ -74,10 +76,10 @@ export interface AgendaActionBarViewProps {
   startVoteTooltip: any;
   startFinalVoteTooltip: any;
   closeVoteTooltip: any;
+  jumpToNextVoteStepTooltip: any;
   castIndicativeVoteTooltip: any;
   castFinalVoteTooltip: any;
   t: any;
-  navigate: any;
   isCurrentItemActive: any;
   canStartCurrentItem: any;
   showStartButton: any;
@@ -126,6 +128,7 @@ export function AgendaActionBarView({
   onStartVote,
   onStartFinalVote,
   onCloseFinalVote,
+  onJumpToNextVoteStep,
   onEditItem,
   onDeleteItem,
   onMoveToEvent,
@@ -143,8 +146,8 @@ export function AgendaActionBarView({
   startVoteTooltip,
   startFinalVoteTooltip,
   closeVoteTooltip,
+  jumpToNextVoteStepTooltip,
   t,
-  navigate,
   isCurrentItemActive,
   showStartButton,
   isElection,
@@ -167,16 +170,20 @@ export function AgendaActionBarView({
       );
   const isCandidateActionBlocked = !canBeCandidate;
   const isVoteActionBlocked = !canVote || disableVoteButton;
+  const startVoteActionLabel = startVoteTooltip || t('features.events.agenda.actions.startVote');
+  const startFinalVoteActionLabel =
+    startFinalVoteTooltip || t('features.events.agenda.actions.startFinalVote');
+  const closeFinalVoteActionLabel =
+    closeVoteTooltip || t('features.events.agenda.actions.closeFinalVote');
 
   return (
     <FixedAgendaToolbar className="gap-3">
       <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
         {onBackToAgenda ? (
-          <ToolbarButton
-            tooltip={t('features.events.agenda.backToAgenda')}
-            onClick={onBackToAgenda}
-          >
-            <ListOrdered />
+          <ToolbarButton asChild tooltip={t('features.events.agenda.backToAgenda')}>
+            <Link to="/event/$id/agenda" params={{ id: eventId }}>
+              <ListOrdered />
+            </Link>
           </ToolbarButton>
         ) : null}
         {canManageAgenda && onMoveToEvent ? (
@@ -196,27 +203,23 @@ export function AgendaActionBarView({
         ) : null}
         {canManageAgenda ? (
           <>
-            <ToolbarButton
-              tooltip={t('features.events.agenda.quickActions.addItem')}
-              onClick={() => navigate({ to: '/create/agenda-item', search: { eventId } })}
-            >
-              <Plus />
+            <ToolbarButton asChild tooltip={t('features.events.agenda.quickActions.addItem')}>
+              <Link to="/create/agenda-item" search={{ eventId }}>
+                <Plus />
+              </Link>
             </ToolbarButton>
             <ToolbarButton
+              asChild
               tooltip={t('features.events.agenda.quickActions.createElection')}
-              onClick={() =>
-                navigate({ to: '/create/agenda-item', search: { eventId, type: 'election' } })
-              }
             >
-              <Vote />
+              <Link to="/create/agenda-item" search={{ eventId, type: 'election' }}>
+                <Vote />
+              </Link>
             </ToolbarButton>
-            <ToolbarButton
-              tooltip={t('features.events.agenda.quickActions.createVote')}
-              onClick={() =>
-                navigate({ to: '/create/agenda-item', search: { eventId, type: 'vote' } })
-              }
-            >
-              <Gavel />
+            <ToolbarButton asChild tooltip={t('features.events.agenda.quickActions.createVote')}>
+              <Link to="/create/agenda-item" search={{ eventId, type: 'vote' }}>
+                <Gavel />
+              </Link>
             </ToolbarButton>
           </>
         ) : null}
@@ -241,9 +244,23 @@ export function AgendaActionBarView({
       </div>
 
       <div className="flex items-center justify-center gap-1">
+        {isVotable && onJumpToNextVoteStep ? (
+          <ToolbarButton
+            tooltip={
+              jumpToNextVoteStepTooltip ||
+              t('features.agendas.crTimeline.nextVotingStep', 'Next voting step')
+            }
+            onClick={onJumpToNextVoteStep}
+            disabled={voteLoading}
+            loading={voteLoading}
+          >
+            <ChevronRight />
+          </ToolbarButton>
+        ) : null}
         {isVotable && !isClosed && isPendingVote && onStartVote ? (
           <ToolbarButton
-            tooltip={startVoteTooltip || t('features.events.agenda.actions.startVote')}
+            tooltip={startVoteActionLabel}
+            aria-label={startVoteActionLabel}
             onClick={onStartVote}
             disabled={voteLoading}
             loading={voteLoading}
@@ -253,7 +270,8 @@ export function AgendaActionBarView({
         ) : null}
         {showStartFinalVoteButton ? (
           <ToolbarButton
-            tooltip={startFinalVoteTooltip || t('features.events.agenda.actions.startFinalVote')}
+            tooltip={startFinalVoteActionLabel}
+            aria-label={startFinalVoteActionLabel}
             onClick={onStartFinalVote}
             disabled={voteLoading}
             loading={voteLoading}
@@ -263,7 +281,8 @@ export function AgendaActionBarView({
         ) : null}
         {isVotable && !isClosed && isFinalVotePhase && onCloseFinalVote ? (
           <ToolbarButton
-            tooltip={closeVoteTooltip || t('features.events.agenda.actions.closeFinalVote')}
+            tooltip={closeFinalVoteActionLabel}
+            aria-label={closeFinalVoteActionLabel}
             onClick={onCloseFinalVote}
           >
             <CheckCircle2 />

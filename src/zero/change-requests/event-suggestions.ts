@@ -19,7 +19,7 @@ export interface EventSuggestionDiscussionEntry {
 }
 
 export function isPendingUnconfirmedEventSuggestion(discussion: EventSuggestionDiscussionEntry) {
-  return discussion.confirmationStatus === 'pending' && !discussion.changeRequestEntityId;
+  return discussion.confirmationStatus === 'pending';
 }
 
 export function discardPendingEventSuggestionsFromState({
@@ -40,6 +40,9 @@ export function discardPendingEventSuggestionsFromState({
   }
 
   const pendingIds = new Set(pendingDiscussions.map(discussion => discussion.id));
+  const removedChangeRequestIds = pendingDiscussions
+    .map(discussion => discussion.changeRequestEntityId)
+    .filter((id): id is string => Boolean(id));
   let updatedContent = content ?? null;
 
   if (updatedContent) {
@@ -51,6 +54,7 @@ export function discardPendingEventSuggestionsFromState({
   return {
     changed: true,
     removedCount: pendingDiscussions.length,
+    removedChangeRequestIds,
     content: updatedContent,
     discussions: discussions.filter(discussion => !pendingIds.has(discussion.id)),
   };
@@ -94,6 +98,10 @@ export async function discardPendingEventSuggestions({
 
   if (!cleanup.changed) {
     return { removedCount: 0 };
+  }
+
+  for (const changeRequestId of cleanup.removedChangeRequestIds ?? []) {
+    await tx.mutate.change_request.delete({ id: changeRequestId });
   }
 
   if (document?.id && document.content && cleanup.content) {

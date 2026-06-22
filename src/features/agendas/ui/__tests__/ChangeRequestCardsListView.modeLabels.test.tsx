@@ -3,8 +3,15 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+const mockCREditorPreview = vi.hoisted(() =>
+  vi.fn((props: unknown) => {
+    void props;
+    return null;
+  })
+);
+
 vi.mock('@/features/change-requests/ui/CREditorPreview', () => ({
-  CREditorPreview: () => null,
+  CREditorPreview: (props: any) => mockCREditorPreview(props),
 }));
 
 vi.mock('@/features/editor/ui/SuggestionViewToggle', () => ({
@@ -13,6 +20,7 @@ vi.mock('@/features/editor/ui/SuggestionViewToggle', () => ({
 
 import { ChangeRequestCardsListView } from '../ChangeRequestCardsListView';
 import { ChangeRequestTimelineCardView } from '../ChangeRequestTimelineCardView';
+import { resolvePreviewCrIdForTimelineItem } from '../useChangeRequestCardsListController';
 
 const translations: Record<string, string> = {
   'features.agendas.crTimeline.activeEventVoting': 'Event voting mode active',
@@ -38,7 +46,15 @@ const translations: Record<string, string> = {
     'Collaborators vote on change requests',
   'features.amendments.voteControls.collaboratorsVoted':
     '{{voted}}/{{total}} collaborators with vote right voted',
+  'features.events.agenda.actions.castIndicativeVote': 'Cast Indication',
+  'features.events.agenda.actions.castFinalVote': 'Cast final vote',
   'features.events.agenda.noChoices': 'No choices',
+  'features.events.agenda.selected': 'Selected',
+  'features.events.agenda.winner': 'Winner',
+  'features.events.agenda.defaultChoiceLabels.yes': 'Yes',
+  'features.events.agenda.defaultChoiceLabels.no': 'No',
+  'features.events.agenda.defaultChoiceLabels.abstain': 'Abstain',
+  'features.agendas.crTimeline.votersParticipated': 'voted',
   'features.events.voting.phases.closed': 'Closed',
   'features.events.voting.phases.finalVote': 'Final Vote',
   'features.events.voting.phases.indication': 'Indication',
@@ -85,7 +101,7 @@ const baseProps = {
   documentContent: [],
   effectivePreviewCrIds: [],
   filteredItems: [],
-  finalVoteItem: null,
+  closingVoteItem: null,
   getFilteredItems: () => [],
   getPreviewCrId: () => null,
   getUserSelectedChoiceIds: () => [],
@@ -101,6 +117,7 @@ const baseProps = {
   onStartIndicative: undefined,
   progress: 0,
   progressPercent: 0,
+  previewSuggestionResolutions: new Map(),
   searchedItems: [],
   searchQuery: '',
   selectedPreviewCrIds: [],
@@ -113,8 +130,39 @@ const baseProps = {
   userId: 'user-1',
 };
 
+function createFinalVoteItem(status = 'final') {
+  return {
+    id: 'closing-vote',
+    agenda_item_id: 'agenda-1',
+    change_request_id: null,
+    vote_id: 'closing-vote-vote',
+    order_index: 1,
+    is_closing_vote: true,
+    status: status === 'closed' ? 'completed' : 'voting',
+    _voteStepKind: 'closing',
+    change_request: null,
+    vote: {
+      id: 'closing-vote-vote',
+      status,
+      purpose: 'closing',
+      title: 'Amendment Final Vote',
+      choices: [
+        { id: 'closing-vote-yes', label: 'Yes', order_index: 0 },
+        { id: 'closing-vote-no', label: 'No', order_index: 1 },
+      ],
+      voters: [{ id: 'voter-1', user_id: 'user-1' }],
+      indicative_participations: [],
+      indicative_decisions: [],
+      final_participations: [{ id: 'participation-1', voter_id: 'voter-1' }],
+      final_decisions: [{ choice_id: 'closing-vote-yes' }],
+      offline_tallies: [],
+    },
+  };
+}
+
 afterEach(() => {
   cleanup();
+  mockCREditorPreview.mockClear();
 });
 
 describe('ChangeRequestCardsListView mode labels', () => {
@@ -127,11 +175,11 @@ describe('ChangeRequestCardsListView mode labels', () => {
     expect(screen.getByText('Internal Voting Mode')).toBeTruthy();
     expect(screen.queryByText('vote_internal')).toBeNull();
 
-    rerender(<ChangeRequestCardsListView {...baseProps} editingMode="vote_event" />);
+    rerender(<ChangeRequestCardsListView {...baseProps} editingMode="event_final_closing_vote" />);
 
     expect(screen.getByText('Event voting mode active')).toBeTruthy();
     expect(screen.getByText('Event Voting Mode')).toBeTruthy();
-    expect(screen.queryByText('vote_event')).toBeNull();
+    expect(screen.queryByText('event_final_closing_vote')).toBeNull();
   });
 
   it('uses localized collaborator voting progress text', () => {
@@ -207,7 +255,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
     const item = {
       id: 'mock-cr-cr-row-1',
       change_request_id: 'cr-row-1',
-      is_final_vote: false,
+      is_closing_vote: false,
       status: 'pending',
       change_request: {
         id: 'cr-row-1',
@@ -246,13 +294,63 @@ describe('ChangeRequestCardsListView mode labels', () => {
     expect(screen.getAllByText('Replace dieser').length).toBeGreaterThan(0);
   });
 
+  it('prefers the technical suggestion id over branch-scoped display ids for previews', () => {
+    const item = {
+      id: 'timeline-branch-cr-4',
+      change_request_id: 'change-request-4',
+      is_closing_vote: false,
+      status: 'pending',
+      change_request: {
+        id: 'change-request-4',
+        cr_id: 'CR-4',
+        display_cr_id: 'Branch 1 CR-4',
+        suggestion_id: 'suggestion-4',
+        title: 'CR-4',
+      },
+    };
+
+    expect(
+      resolvePreviewCrIdForTimelineItem(item as never, new Map([['suggestion-4', 'suggestion-4']]))
+    ).toBe('suggestion-4');
+  });
+
+  it('does not render an empty document preview for final vote rows', () => {
+    const finalItem = {
+      id: 'final-row',
+      is_closing_vote: true,
+      status: 'pending',
+      vote: {
+        id: 'vote-final',
+        title: 'Final',
+        choices: [],
+      },
+    };
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        editingMode="event_final_closing_vote"
+        filteredItems={[finalItem]}
+        sequenceItems={[finalItem]}
+        crItems={[]}
+        hasCRCategoryItems={false}
+        sharedPreviewEnabled={false}
+        documentContent={[{ type: 'p', children: [{ text: 'Document' }] }]}
+        amendmentId="amendment-1"
+        getPreviewCrId={() => null}
+      />
+    );
+
+    expect(mockCREditorPreview).not.toHaveBeenCalled();
+  });
+
   it('shows an internal vote close action for managers in internal voting mode', () => {
     const handleFinalizeInternalVote = vi.fn(() => Promise.resolve());
     const item = {
       id: 'mock-cr-cr-row-1',
       agenda_item_id: 'agenda-1',
       change_request_id: 'cr-row-1',
-      is_final_vote: false,
+      is_closing_vote: false,
       status: 'pending',
       change_request: {
         id: 'cr-row-1',
@@ -299,7 +397,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       id: 'mock-cr-cr-row-1',
       agenda_item_id: 'agenda-1',
       change_request_id: 'cr-row-1',
-      is_final_vote: false,
+      is_closing_vote: false,
       status: 'pending',
       change_request: {
         id: 'cr-row-1',
@@ -336,7 +434,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
         id: 'mock-cr-completed',
         agenda_item_id: 'agenda-1',
         change_request_id: 'cr-completed',
-        is_final_vote: false,
+        is_closing_vote: false,
         status: 'pending',
         change_request: {
           id: 'cr-completed',
@@ -353,7 +451,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
         id: 'mock-cr-accepted',
         agenda_item_id: 'agenda-1',
         change_request_id: 'cr-accepted',
-        is_final_vote: false,
+        is_closing_vote: false,
         status: 'pending',
         change_request: {
           id: 'cr-accepted',
@@ -426,13 +524,13 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: 'vote-variant',
       order_index: 0,
-      is_final_vote: false,
-      _voteStepKind: 'variant_selection',
+      is_closing_vote: false,
+      _voteStepKind: 'merge_variant',
       status: 'pending',
       created_at: now,
       updated_at: now,
       change_request: null,
-      vote: createVote('vote-variant', 'Variant Final Vote', 'variant_selection'),
+      vote: createVote('vote-variant', 'Variant Final Vote', 'merge_variant'),
     };
     const finalItem = {
       id: 'agenda-vote-final-vote-final',
@@ -440,21 +538,21 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: 'vote-final',
       order_index: 1,
-      is_final_vote: true,
-      _voteStepKind: 'final_amendment',
+      is_closing_vote: true,
+      _voteStepKind: 'closing',
       status: 'pending',
       created_at: now,
       updated_at: now,
       change_request: null,
-      vote: createVote('vote-final', 'Amendment Final Vote', 'final_amendment'),
+      vote: createVote('vote-final', 'Amendment Final Vote', 'closing'),
     };
 
     render(
       <ChangeRequestCardsListView
         {...baseProps}
-        editingMode="vote_event"
+        editingMode="event_final_closing_vote"
         filteredItems={[]}
-        finalVoteItem={finalItem}
+        closingVoteItem={finalItem}
         variantVoteItem={variantItem}
         sequenceItems={[variantItem, finalItem]}
         hasCRCategoryItems={false}
@@ -503,13 +601,13 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: 'vote-variant',
       order_index: 0,
-      is_final_vote: false,
-      _voteStepKind: 'variant_selection',
+      is_closing_vote: false,
+      _voteStepKind: 'merge_variant',
       status: 'pending',
       created_at: now,
       updated_at: now,
       change_request: null,
-      vote: createVote('vote-variant', 'Merge vote', 'variant_selection'),
+      vote: createVote('vote-variant', 'Merge vote', 'merge_variant'),
     };
     const finalItem = {
       id: 'agenda-vote-final-vote-final',
@@ -517,21 +615,21 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: 'vote-final',
       order_index: 1,
-      is_final_vote: true,
-      _voteStepKind: 'final_amendment',
+      is_closing_vote: true,
+      _voteStepKind: 'closing',
       status: 'pending',
       created_at: now,
       updated_at: now,
       change_request: null,
-      vote: createVote('vote-final', 'Closing vote', 'final_amendment'),
+      vote: createVote('vote-final', 'Closing vote', 'closing'),
     };
 
     render(
       <ChangeRequestCardsListView
         {...baseProps}
-        editingMode="vote_event"
+        editingMode="event_final_closing_vote"
         filteredItems={[]}
-        finalVoteItem={finalItem}
+        closingVoteItem={finalItem}
         variantVoteItem={variantItem}
         sequenceItems={[variantItem, finalItem]}
         hasCRCategoryItems={false}
@@ -552,8 +650,8 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: 'vote-variant',
       order_index: 0,
-      is_final_vote: false,
-      _voteStepKind: 'variant_selection',
+      is_closing_vote: false,
+      _voteStepKind: 'merge_variant',
       status: 'pending',
       created_at: now,
       updated_at: now,
@@ -564,7 +662,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
         amendment_id: 'amendment-1',
         title: 'Merge round 1',
         status: 'indicative',
-        purpose: 'variant_selection',
+        purpose: 'merge_variant',
         visibility: 'public',
         ballot_visibility: 'named',
         created_at: now,
@@ -584,7 +682,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: null,
       order_index: 1,
-      is_final_vote: false,
+      is_closing_vote: false,
       _voteStepKind: 'change_request_votes_placeholder',
       _votePlaceholder: true,
       _placeholderTitle: 'Change request votes',
@@ -597,13 +695,13 @@ describe('ChangeRequestCardsListView mode labels', () => {
       vote: null,
     };
     const finalPlaceholder = {
-      id: 'agenda-vote-placeholder-final_amendment_placeholder-agenda-1',
+      id: 'agenda-vote-placeholder-closing_placeholder-agenda-1',
       agenda_item_id: 'agenda-1',
       change_request_id: null,
       vote_id: null,
       order_index: 2,
-      is_final_vote: true,
-      _voteStepKind: 'final_amendment_placeholder',
+      is_closing_vote: true,
+      _voteStepKind: 'closing_placeholder',
       _votePlaceholder: true,
       _placeholderTitle: 'Final vote',
       _placeholderDescription:
@@ -618,9 +716,9 @@ describe('ChangeRequestCardsListView mode labels', () => {
     render(
       <ChangeRequestCardsListView
         {...baseProps}
-        editingMode="vote_event"
+        editingMode="event_final_closing_vote"
         filteredItems={[]}
-        finalVoteItem={finalPlaceholder}
+        closingVoteItem={finalPlaceholder}
         variantVoteItem={variantItem}
         sequenceItems={[variantItem, changeRequestPlaceholder, finalPlaceholder]}
         hasCRCategoryItems={false}
@@ -668,13 +766,13 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: 'vote-variant',
       order_index: 0,
-      is_final_vote: false,
-      _voteStepKind: 'variant_selection',
+      is_closing_vote: false,
+      _voteStepKind: 'merge_variant',
       status: 'completed',
       created_at: now,
       updated_at: now,
       change_request: null,
-      vote: createVote('vote-variant', 'Variant Final Vote', 'variant_selection', 'closed'),
+      vote: createVote('vote-variant', 'Variant Final Vote', 'merge_variant', 'closed'),
     };
     const changeRequestPlaceholder = {
       id: 'agenda-vote-placeholder-change_request_votes_placeholder-agenda-1',
@@ -682,7 +780,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: null,
       order_index: 1,
-      is_final_vote: false,
+      is_closing_vote: false,
       _voteStepKind: 'change_request_votes_placeholder',
       _votePlaceholder: true,
       _placeholderTitle: 'Change request votes',
@@ -699,22 +797,22 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: 'vote-final',
       order_index: 2,
-      is_final_vote: true,
-      _voteStepKind: 'final_amendment',
+      is_closing_vote: true,
+      _voteStepKind: 'closing',
       status: 'pending',
       created_at: now,
       updated_at: now,
       change_request: null,
-      vote: createVote('vote-final', 'Amendment Final Vote', 'final_amendment'),
+      vote: createVote('vote-final', 'Amendment Final Vote', 'closing'),
     };
 
     render(
       <ChangeRequestCardsListView
         {...baseProps}
         canManage
-        editingMode="vote_event"
+        editingMode="event_final_closing_vote"
         filteredItems={[]}
-        finalVoteItem={finalItem}
+        closingVoteItem={finalItem}
         variantVoteItem={variantItem}
         currentItemId={changeRequestPlaceholder.id}
         onStartFinal={handleStartFinal}
@@ -737,7 +835,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: 'cr-1',
       vote_id: 'vote-cr-1',
       order_index: 0,
-      is_final_vote: false,
+      is_closing_vote: false,
       status: 'pending',
       created_at: now,
       updated_at: now,
@@ -783,7 +881,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       <ChangeRequestCardsListView
         {...baseProps}
         canManage
-        editingMode="vote_event"
+        editingMode="event_final_closing_vote"
         filteredItems={[item]}
         hideInlineVotingControls
         currentItemId={item.id}
@@ -830,13 +928,13 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: 'vote-variant',
       order_index: 0,
-      is_final_vote: false,
-      _voteStepKind: 'variant_selection',
+      is_closing_vote: false,
+      _voteStepKind: 'merge_variant',
       status: 'completed',
       created_at: now,
       updated_at: now,
       change_request: null,
-      vote: createVote('vote-variant', 'Variant Final Vote', 'variant_selection', 'closed'),
+      vote: createVote('vote-variant', 'Variant Final Vote', 'merge_variant', 'closed'),
     };
     const changeRequestPlaceholder = {
       id: 'agenda-vote-placeholder-change_request_votes_placeholder-agenda-1',
@@ -844,7 +942,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: null,
       order_index: 1,
-      is_final_vote: false,
+      is_closing_vote: false,
       _voteStepKind: 'change_request_votes_placeholder',
       _votePlaceholder: true,
       _placeholderTitle: 'Change request votes',
@@ -856,13 +954,13 @@ describe('ChangeRequestCardsListView mode labels', () => {
       vote: null,
     };
     const finalPlaceholder = {
-      id: 'agenda-vote-placeholder-final_amendment_placeholder-agenda-1',
+      id: 'agenda-vote-placeholder-closing_placeholder-agenda-1',
       agenda_item_id: 'agenda-1',
       change_request_id: null,
       vote_id: null,
       order_index: 2,
-      is_final_vote: true,
-      _voteStepKind: 'final_amendment_placeholder',
+      is_closing_vote: true,
+      _voteStepKind: 'closing_placeholder',
       _votePlaceholder: true,
       _placeholderTitle: 'Final vote',
       _placeholderDescription:
@@ -878,9 +976,9 @@ describe('ChangeRequestCardsListView mode labels', () => {
       <ChangeRequestCardsListView
         {...baseProps}
         canManage
-        editingMode="vote_event"
+        editingMode="event_final_closing_vote"
         filteredItems={[]}
-        finalVoteItem={finalPlaceholder}
+        closingVoteItem={finalPlaceholder}
         variantVoteItem={variantItem}
         currentItemId={changeRequestPlaceholder.id}
         onStartFinal={handleStartFinal}
@@ -899,7 +997,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       id: string,
       title: string,
       purpose: string,
-      status: 'indicative' | 'final_vote' | 'closed' = 'indicative'
+      status: 'indicative' | 'final' | 'closed' = 'indicative'
     ) => ({
       id,
       agenda_item_id: 'agenda-1',
@@ -930,13 +1028,13 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: 'vote-variant',
       order_index: 0,
-      is_final_vote: false,
-      _voteStepKind: 'variant_selection',
+      is_closing_vote: false,
+      _voteStepKind: 'merge_variant',
       status: 'completed',
       created_at: now,
       updated_at: now,
       change_request: null,
-      vote: createVote('vote-variant', 'Variant Final Vote', 'variant_selection', 'closed'),
+      vote: createVote('vote-variant', 'Variant Final Vote', 'merge_variant', 'closed'),
     };
     const changeRequestPlaceholder = {
       id: 'agenda-vote-placeholder-change_request_votes_placeholder-agenda-1',
@@ -944,7 +1042,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: null,
       order_index: 1,
-      is_final_vote: false,
+      is_closing_vote: false,
       _voteStepKind: 'change_request_votes_placeholder',
       _votePlaceholder: true,
       _placeholderTitle: 'Change request votes',
@@ -962,22 +1060,22 @@ describe('ChangeRequestCardsListView mode labels', () => {
       change_request_id: null,
       vote_id: 'vote-final',
       order_index: 2,
-      is_final_vote: true,
-      _voteStepKind: 'final_amendment',
+      is_closing_vote: true,
+      _voteStepKind: 'closing',
       status: 'voting',
       created_at: now,
       updated_at: now,
       change_request: null,
-      vote: createVote('vote-final', 'Amendment Final Vote', 'final_amendment', 'final_vote'),
+      vote: createVote('vote-final', 'Amendment Final Vote', 'closing', 'final'),
     };
 
     render(
       <ChangeRequestCardsListView
         {...baseProps}
         canManage
-        editingMode="vote_event"
+        editingMode="event_final_closing_vote"
         filteredItems={[]}
-        finalVoteItem={finalItem}
+        closingVoteItem={finalItem}
         variantVoteItem={variantItem}
         currentItemId={finalItem.id}
         sequenceItems={[variantItem, changeRequestPlaceholder, finalItem]}
@@ -1244,7 +1342,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
         id: 'mock-cr-cr-row-1',
         change_request_id: 'cr-row-1',
         status: 'pending',
-        is_final_vote: false,
+        is_closing_vote: false,
         change_request: {
           id: 'cr-row-1',
           title: 'Replace first',
@@ -1263,7 +1361,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
         id: 'mock-cr-cr-row-2',
         change_request_id: 'cr-row-2',
         status: 'pending',
-        is_final_vote: false,
+        is_closing_vote: false,
         change_request: {
           id: 'cr-row-2',
           title: 'Replace second',
@@ -1324,7 +1422,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
         suggestionId="suggestion-1"
         crId="CR-1"
         discussions={[]}
-        editingMode="vote_event"
+        editingMode="event_final_closing_vote"
         amendmentId="amendment-1"
         userId="user-1"
         agendaItemId="agenda-1"
@@ -1379,5 +1477,655 @@ describe('ChangeRequestCardsListView mode labels', () => {
     expect(screen.getByText('Locked')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Yes' }));
     expect(handleCastVote).toHaveBeenCalledWith('choice-yes');
+  });
+
+  it('opens the existing vote dialog from an indicative-open event-suggestion change request card', () => {
+    const handleOpenVoteDialog = vi.fn();
+    const item = {
+      id: 'agenda-cr-1',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'cr-row-1',
+      vote_id: 'vote-cr-1',
+      order_index: 0,
+      is_closing_vote: false,
+      status: 'pending',
+      change_request: {
+        id: 'cr-row-1',
+        title: 'CR-1',
+        display_cr_id: 'Branch 1 CR-1',
+      },
+      vote: {
+        id: 'vote-cr-1',
+        status: 'indicative',
+        purpose: 'change_request',
+        choices: [{ id: 'vote-cr-1-yes', label: 'Yes' }],
+        voters: [],
+        indicative_participations: [],
+        indicative_decisions: [],
+        final_participations: [],
+        final_decisions: [],
+        offline_tallies: [],
+      },
+    };
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        canVote
+        editingMode="suggest_event"
+        filteredItems={[item]}
+        searchedItems={[item]}
+        crItems={[item]}
+        sequenceItems={[item]}
+        categorized={{ open: [item], accepted: [], rejected: [] }}
+        hideInlineVotingControls
+        showAgendaDetailsVoteActions
+        onOpenVoteDialog={handleOpenVoteDialog}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cast Indication' }));
+
+    expect(handleOpenVoteDialog).toHaveBeenCalledWith(item.id);
+  });
+
+  it('opens the existing vote dialog from a final-open agenda-details change request card', () => {
+    const handleOpenVoteDialog = vi.fn();
+    const item = {
+      id: 'agenda-cr-1',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'cr-row-1',
+      vote_id: 'vote-cr-1',
+      order_index: 0,
+      is_closing_vote: false,
+      status: 'voting',
+      change_request: {
+        id: 'cr-row-1',
+        title: 'CR-1',
+        display_cr_id: 'Branch 1 CR-1',
+      },
+      vote: {
+        id: 'vote-cr-1',
+        status: 'final',
+        purpose: 'change_request',
+        choices: [{ id: 'vote-cr-1-yes', label: 'Yes' }],
+        voters: [],
+        indicative_participations: [],
+        indicative_decisions: [],
+        final_participations: [],
+        final_decisions: [],
+        offline_tallies: [],
+      },
+    };
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        canVote
+        editingMode="event_final_closing_vote"
+        filteredItems={[item]}
+        searchedItems={[item]}
+        crItems={[item]}
+        sequenceItems={[item]}
+        categorized={{ open: [item], accepted: [], rejected: [] }}
+        hideInlineVotingControls
+        showAgendaDetailsVoteActions
+        hasUserVoted={() => false}
+        onOpenVoteDialog={handleOpenVoteDialog}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cast final vote' }));
+
+    expect(handleOpenVoteDialog).toHaveBeenCalledWith(item.id);
+  });
+
+  it('keeps an open final vote undecided after the user has voted', () => {
+    const item = createFinalVoteItem('final');
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        canVote
+        editingMode="event_final_closing_vote"
+        filteredItems={[item]}
+        searchedItems={[]}
+        crItems={[]}
+        sequenceItems={[item]}
+        hasCRCategoryItems={false}
+        categorized={{ open: [], accepted: [], rejected: [] }}
+        hideInlineVotingControls
+        showAgendaDetailsVoteActions
+        eligibleFinalVoterCount={3}
+        hasUserVoted={() => true}
+        getUserSelectedChoiceIds={() => ['closing-vote-yes']}
+        onOpenVoteDialog={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Selected')).toBeTruthy();
+    expect(screen.queryByText('Winner')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cast final vote' })).toBeNull();
+    expect(screen.getByText(/1\/3/)).toBeTruthy();
+  });
+
+  it('shows the winner once a final vote is closed', () => {
+    const item = createFinalVoteItem('closed');
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        canVote
+        editingMode="event_final_closing_vote"
+        filteredItems={[item]}
+        searchedItems={[]}
+        crItems={[]}
+        sequenceItems={[item]}
+        hasCRCategoryItems={false}
+        categorized={{ open: [], accepted: [], rejected: [] }}
+        hideInlineVotingControls
+        showAgendaDetailsVoteActions
+        eligibleFinalVoterCount={3}
+        getUserSelectedChoiceIds={() => ['closing-vote-yes']}
+        onOpenVoteDialog={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Winner')).toBeTruthy();
+  });
+
+  it('uses the final change request label for inline start actions and dialog titles', () => {
+    const handleStartFinal = vi.fn(() => Promise.resolve());
+    const item = {
+      id: 'agenda-cr-2',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'cr-row-2',
+      vote_id: 'vote-cr-2',
+      order_index: 0,
+      is_closing_vote: false,
+      status: 'pending',
+      change_request: {
+        id: 'cr-row-2',
+        title: 'Fallback CR title',
+        display_cr_id: 'Branch 2 CR-2',
+        cr_id: 'CR-2',
+      },
+      vote: {
+        id: 'vote-cr-2',
+        status: 'indicative',
+        purpose: 'change_request',
+        title: 'Fallback vote title',
+        choices: [{ id: 'vote-cr-2-yes', label: 'Yes', order_index: 0 }],
+        voters: [],
+        indicative_participations: [],
+        indicative_decisions: [],
+        final_participations: [],
+        final_decisions: [],
+        offline_tallies: [],
+      },
+    };
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        canManage
+        editingMode="event_final_closing_vote"
+        filteredItems={[item]}
+        searchedItems={[item]}
+        crItems={[item]}
+        sequenceItems={[item]}
+        categorized={{ open: [item], accepted: [], rejected: [] }}
+        currentItemId={item.id}
+        allowInlineFinalVoteStart
+        onStartFinal={handleStartFinal}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Start final change request vote: Branch 2 CR-2',
+      })
+    );
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Start final change request vote: Branch 2 CR-2',
+      })
+    ).toBeTruthy();
+  });
+
+  it('uses the final change request label for inline close actions and dialog titles', () => {
+    const handleCloseVoting = vi.fn(() => Promise.resolve());
+    const item = {
+      id: 'agenda-cr-2',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'cr-row-2',
+      vote_id: 'vote-cr-2',
+      order_index: 0,
+      is_closing_vote: false,
+      status: 'voting',
+      change_request: {
+        id: 'cr-row-2',
+        title: 'Fallback CR title',
+        display_cr_id: 'Branch 2 CR-2',
+        cr_id: 'CR-2',
+      },
+      vote: {
+        id: 'vote-cr-2',
+        status: 'final',
+        purpose: 'change_request',
+        title: 'Fallback vote title',
+        choices: [{ id: 'vote-cr-2-yes', label: 'Yes', order_index: 0 }],
+        voters: [],
+        indicative_participations: [],
+        indicative_decisions: [],
+        final_participations: [],
+        final_decisions: [],
+        offline_tallies: [],
+      },
+    };
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        canManage
+        editingMode="event_final_closing_vote"
+        filteredItems={[item]}
+        searchedItems={[item]}
+        crItems={[item]}
+        sequenceItems={[item]}
+        categorized={{ open: [item], accepted: [], rejected: [] }}
+        currentItemId={item.id}
+        onCloseVoting={handleCloseVoting}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Close final change request vote: Branch 2 CR-2',
+      })
+    );
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Close final change request vote: Branch 2 CR-2',
+      })
+    ).toBeTruthy();
+  });
+
+  it('hides agenda-details vote actions for synthetic change request rows', () => {
+    const handleOpenVoteDialog = vi.fn();
+    const item = {
+      id: 'mock-cr-cr-row-1',
+      agenda_item_id: 'mock-agenda',
+      change_request_id: 'cr-row-1',
+      vote_id: 'mock-vote-cr-row-1',
+      order_index: 0,
+      is_closing_vote: false,
+      status: 'pending',
+      change_request: {
+        id: 'cr-row-1',
+        title: 'CR-1',
+      },
+      vote: {
+        id: 'mock-vote-cr-row-1',
+        status: 'indicative',
+        purpose: 'change_request',
+        choices: [{ id: 'mock-choice-yes-cr-row-1', label: 'Yes' }],
+        voters: [],
+        indicative_participations: [],
+        indicative_decisions: [],
+        final_participations: [],
+        final_decisions: [],
+        offline_tallies: [],
+      },
+    };
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        canVote
+        editingMode="event_final_closing_vote"
+        filteredItems={[item]}
+        searchedItems={[item]}
+        crItems={[item]}
+        sequenceItems={[item]}
+        categorized={{ open: [item], accepted: [], rejected: [] }}
+        hideInlineVotingControls
+        showAgendaDetailsVoteActions
+        onOpenVoteDialog={handleOpenVoteDialog}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Cast Indication' })).toBeNull();
+    expect(handleOpenVoteDialog).not.toHaveBeenCalled();
+  });
+
+  it('keeps the agenda-details vote action visible but disabled without vote rights', () => {
+    const handleOpenVoteDialog = vi.fn();
+    const item = {
+      id: 'agenda-cr-1',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'cr-row-1',
+      vote_id: 'vote-cr-1',
+      order_index: 0,
+      is_closing_vote: false,
+      status: 'voting',
+      change_request: {
+        id: 'cr-row-1',
+        title: 'CR-1',
+      },
+      vote: {
+        id: 'vote-cr-1',
+        status: 'indicative',
+        purpose: 'change_request',
+        choices: [{ id: 'vote-cr-1-yes', label: 'Yes' }],
+        voters: [],
+        indicative_participations: [],
+        indicative_decisions: [],
+        final_participations: [],
+        final_decisions: [],
+        offline_tallies: [],
+      },
+    };
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        canVote={false}
+        editingMode="event_final_closing_vote"
+        filteredItems={[item]}
+        searchedItems={[item]}
+        crItems={[item]}
+        sequenceItems={[item]}
+        categorized={{ open: [item], accepted: [], rejected: [] }}
+        hideInlineVotingControls
+        showAgendaDetailsVoteActions
+        onOpenVoteDialog={handleOpenVoteDialog}
+      />
+    );
+
+    const button = screen.getByRole('button', { name: 'Cast Indication' }) as HTMLButtonElement;
+
+    expect(button.disabled).toBe(false);
+    expect(button.getAttribute('aria-disabled')).toBe('true');
+
+    fireEvent.click(button);
+
+    expect(handleOpenVoteDialog).not.toHaveBeenCalled();
+  });
+
+  it('shows a disabled agenda-details vote action with offline guidance', () => {
+    const handleOpenVoteDialog = vi.fn();
+    const item = {
+      id: 'agenda-cr-1',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'cr-row-1',
+      vote_id: 'vote-cr-1',
+      order_index: 0,
+      is_closing_vote: false,
+      status: 'voting',
+      change_request: {
+        id: 'cr-row-1',
+        title: 'CR-1',
+      },
+      vote: {
+        id: 'vote-cr-1',
+        status: 'indicative',
+        purpose: 'change_request',
+        choices: [{ id: 'vote-cr-1-yes', label: 'Yes' }],
+        voters: [],
+        indicative_participations: [],
+        indicative_decisions: [],
+        final_participations: [],
+        final_decisions: [],
+        offline_tallies: [],
+      },
+    };
+    const offlineTooltip =
+      'Im Offline-Modus koennen keine Online-Stimmungsabgaben abgegeben werden.';
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        canVote={false}
+        voteDisabledTooltip={offlineTooltip}
+        editingMode="suggest_event"
+        filteredItems={[item]}
+        searchedItems={[item]}
+        crItems={[item]}
+        sequenceItems={[item]}
+        categorized={{ open: [item], accepted: [], rejected: [] }}
+        hideInlineVotingControls
+        showAgendaDetailsVoteActions
+        onOpenVoteDialog={handleOpenVoteDialog}
+      />
+    );
+
+    const button = screen.getByRole('button', { name: 'Cast Indication' });
+
+    expect(button.getAttribute('aria-disabled')).toBe('true');
+    expect(button.getAttribute('title')).toBe(offlineTooltip);
+
+    fireEvent.click(button);
+
+    expect(handleOpenVoteDialog).not.toHaveBeenCalled();
+  });
+
+  it('does not show agenda-details vote action on other change request lists by default', () => {
+    const handleOpenVoteDialog = vi.fn();
+    const item = {
+      id: 'agenda-cr-1',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'cr-row-1',
+      vote_id: 'vote-cr-1',
+      order_index: 0,
+      is_closing_vote: false,
+      status: 'voting',
+      change_request: {
+        id: 'cr-row-1',
+        title: 'CR-1',
+      },
+      vote: {
+        id: 'vote-cr-1',
+        status: 'indicative',
+        purpose: 'change_request',
+        choices: [{ id: 'vote-cr-1-yes', label: 'Yes' }],
+        voters: [],
+        indicative_participations: [],
+        indicative_decisions: [],
+        final_participations: [],
+        final_decisions: [],
+        offline_tallies: [],
+      },
+    };
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        canVote
+        editingMode="event_final_closing_vote"
+        filteredItems={[item]}
+        searchedItems={[item]}
+        crItems={[item]}
+        sequenceItems={[item]}
+        categorized={{ open: [item], accepted: [], rejected: [] }}
+        hideInlineVotingControls
+        onOpenVoteDialog={handleOpenVoteDialog}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Cast Indication' })).toBeNull();
+  });
+
+  it('hides agenda-details vote action when the dialog opener is missing', () => {
+    const item = {
+      id: 'agenda-cr-1',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'cr-row-1',
+      vote_id: 'vote-cr-1',
+      order_index: 0,
+      is_closing_vote: false,
+      status: 'voting',
+      change_request: {
+        id: 'cr-row-1',
+        title: 'CR-1',
+      },
+      vote: {
+        id: 'vote-cr-1',
+        status: 'indicative',
+        purpose: 'change_request',
+        choices: [{ id: 'vote-cr-1-yes', label: 'Yes' }],
+        voters: [],
+        indicative_participations: [],
+        indicative_decisions: [],
+        final_participations: [],
+        final_decisions: [],
+        offline_tallies: [],
+      },
+    };
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        canVote
+        editingMode="event_final_closing_vote"
+        filteredItems={[item]}
+        searchedItems={[item]}
+        crItems={[item]}
+        sequenceItems={[item]}
+        categorized={{ open: [item], accepted: [], rejected: [] }}
+        hideInlineVotingControls
+        showAgendaDetailsVoteActions
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Cast Indication' })).toBeNull();
+  });
+
+  it('shows agenda-details final vote actions for merge and closing vote cards', () => {
+    const handleOpenVoteDialog = vi.fn();
+    const createVoteItem = (id: string, stepKind: string, isFinalVote: boolean) => ({
+      id,
+      agenda_item_id: 'agenda-1',
+      change_request_id: null,
+      vote_id: `${id}-vote`,
+      order_index: isFinalVote ? 1 : 0,
+      is_closing_vote: isFinalVote,
+      status: 'voting',
+      _voteStepKind: stepKind,
+      change_request: null,
+      vote: {
+        id: `${id}-vote`,
+        status: 'final',
+        purpose: stepKind,
+        title: isFinalVote ? 'Amendment Final Vote' : 'Variant Final Vote',
+        choices: [{ id: `${id}-yes`, label: 'Yes' }],
+        voters: [],
+        indicative_participations: [],
+        indicative_decisions: [],
+        final_participations: [],
+        final_decisions: [],
+        offline_tallies: [],
+      },
+    });
+    const mergeItem = createVoteItem('merge-vote', 'merge_variant', false);
+    const closingItem = createVoteItem('closing-vote', 'closing', true);
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        canVote
+        editingMode="event_final_closing_vote"
+        filteredItems={[]}
+        sequenceItems={[mergeItem, closingItem]}
+        hasCRCategoryItems={false}
+        hideInlineVotingControls
+        showAgendaDetailsVoteActions
+        onOpenVoteDialog={handleOpenVoteDialog}
+      />
+    );
+
+    const buttons = screen.getAllByRole('button', { name: 'Cast final vote' });
+    expect(buttons).toHaveLength(2);
+
+    fireEvent.click(buttons[0]);
+    fireEvent.click(buttons[1]);
+
+    expect(handleOpenVoteDialog).toHaveBeenNthCalledWith(1, mergeItem.id);
+    expect(handleOpenVoteDialog).toHaveBeenNthCalledWith(2, closingItem.id);
+  });
+
+  it('hides agenda-details vote action for closed and pending-submission cards', () => {
+    const closedItem = {
+      id: 'closed-cr',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'cr-closed',
+      vote_id: 'vote-closed',
+      order_index: 0,
+      is_closing_vote: false,
+      status: 'completed',
+      change_request: {
+        id: 'cr-closed',
+        title: 'Closed CR',
+      },
+      vote: {
+        id: 'vote-closed',
+        status: 'closed',
+        purpose: 'change_request',
+        choices: [],
+        voters: [],
+        indicative_participations: [],
+        indicative_decisions: [],
+        final_participations: [],
+        final_decisions: [],
+        offline_tallies: [],
+      },
+    };
+    const pendingSubmissionItem = {
+      id: 'pending-cr',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'cr-pending',
+      vote_id: 'vote-pending',
+      order_index: 1,
+      is_closing_vote: false,
+      status: 'pending',
+      _originalStatus: 'pending_submission',
+      change_request: {
+        id: 'cr-pending',
+        title: 'Pending CR',
+        status: 'pending_submission',
+      },
+      vote: {
+        id: 'vote-pending',
+        status: 'indicative',
+        purpose: 'change_request',
+        choices: [],
+        voters: [],
+        indicative_participations: [],
+        indicative_decisions: [],
+        final_participations: [],
+        final_decisions: [],
+        offline_tallies: [],
+      },
+    };
+
+    render(
+      <ChangeRequestCardsListView
+        {...baseProps}
+        canVote
+        editingMode="event_final_closing_vote"
+        filteredItems={[closedItem, pendingSubmissionItem]}
+        searchedItems={[closedItem, pendingSubmissionItem]}
+        crItems={[closedItem, pendingSubmissionItem]}
+        sequenceItems={[closedItem, pendingSubmissionItem]}
+        categorized={{ open: [pendingSubmissionItem], accepted: [closedItem], rejected: [] }}
+        showAgendaDetailsVoteActions
+        onOpenVoteDialog={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Cast Indication' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cast final vote' })).toBeNull();
   });
 });

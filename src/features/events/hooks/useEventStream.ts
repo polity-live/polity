@@ -4,14 +4,21 @@ import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useEventStreamData } from '@/zero/events/useEventState';
+import { useUserState } from '@/zero/users/useUserState';
 import { usePermissions } from '@/zero/rbac';
 import { calculateSpeakerTime as calcSpeakerTime, formatTime } from '../logic/eventStreamHelpers';
 import { isNamedBallot } from '@/zero/shared';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { canJoinEventSpeakerList } from '@/features/agendas/logic/speakerListPermissions';
+import {
+  getGenderQuotaFeedbackMessage,
+  validateSpeakerGenderQuota,
+} from '@/features/agendas/logic/speakerListGenderQuota';
 
 export function useEventStream(eventId: string) {
   const { user } = useAuth();
+  const { currentUser } = useUserState();
   const { can } = usePermissions({ eventId });
   const { addSpeaker, removeSpeaker } = useAgendaActions();
   const electionActions = useElectionActions();
@@ -65,6 +72,17 @@ export function useEventStream(eventId: string) {
 
     setAddingSpeaker(true);
     try {
+      const quotaResult = validateSpeakerGenderQuota({
+        enabled: Boolean(event?.gender_quota_enabled && currentUser),
+        speakerGender: currentUser?.gender ?? null,
+        speakers: speakerList,
+      });
+
+      if (!quotaResult.allowed) {
+        toast.error(getGenderQuotaFeedbackMessage(quotaResult, translateText));
+        return;
+      }
+
       // Find the maximum order value
       const maxOrder =
         speakerList.length > 0 ? Math.max(...speakerList.map(s => s.order_index ?? 0)) : 0;

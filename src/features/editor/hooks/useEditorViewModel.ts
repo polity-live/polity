@@ -167,6 +167,7 @@ export function useEditorViewModel({
       editorOps.handleSuggestionCreated({
         id: changeRequestEntityId,
         crId,
+        discussionId,
         amendmentId,
         processBranchId: effectiveProcessBranchId,
         changedCharacterCount: snapshot.changed_character_count,

@@ -6,7 +6,7 @@ import { ModeSelectorView } from './ModeSelectorView';
 
 interface ModeSelectorProps {
   blogId: string;
-  currentMode: EditorMode | string;
+  currentMode: EditorMode;
   isOwnerOrCollaborator: boolean;
 }
 

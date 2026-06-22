@@ -66,7 +66,7 @@ describe('useVoteCasting submission progress', () => {
         agendaItemId: 'agenda-1',
         electionId: 'election-1',
         eventId: 'event-1',
-        status: 'final_vote',
+        status: 'final',
         electorId: 'elector-1',
       })
     );

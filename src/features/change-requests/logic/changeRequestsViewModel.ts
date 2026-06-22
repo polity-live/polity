@@ -7,6 +7,7 @@ import {
 } from '@/features/agendas/logic/createMockCRTimelineItems';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import type { TDiscussion } from '@/features/editor/types';
+import { normalizeEditingMode, type EditingMode } from '@/zero/amendments/editing-mode-policy';
 import {
   extractSuggestionContent,
   hasRenderableSuggestionContent,
@@ -46,7 +47,7 @@ export interface ChangeRequestBranchSection {
   title: string;
   description?: string | null;
   status?: string | null;
-  editingMode?: string | null;
+  editingMode?: EditingMode | null;
   resolution?: string | null;
   eventId?: string | null;
   eventTitle?: string | null;
@@ -58,7 +59,6 @@ export interface ChangeRequestBranchSection {
   diffMap: Record<string, ChangeRequestDiffData>;
   discussions: TDiscussion[];
   documentContent?: Value;
-  isLegacy?: boolean;
 }
 
 export function getAllChangeRequests({
@@ -104,6 +104,7 @@ export function mapChangeRequestsToSummaries(
     displayCrId: cr.displayCrId ?? cr.crId,
     branchDisplayNumber: cr.branchDisplayNumber,
     branchScopedCrNumber: cr.branchScopedCrNumber,
+    branchSequenceNumber: cr.branchSequenceNumber,
     title: cr.title || cr.crId,
     description: cr.description || '',
     status: cr.resolution
@@ -134,6 +135,8 @@ export function mapChangeRequestsToSummaries(
     resolvedInMode: cr.resolvedInMode,
     votingStatus: cr.votingStatus,
     userVote: cr.userVote,
+    confirmationStatus: cr.confirmationStatus,
+    changeRequestStatus: cr.changeRequestStatus,
   }));
 }
 
@@ -197,6 +200,7 @@ export function mapChangeRequestsToDiscussions(
       displayCrId: cr.displayCrId ?? cr.crId,
       branchDisplayNumber: cr.branchDisplayNumber,
       branchScopedCrNumber: cr.branchScopedCrNumber,
+      branchSequenceNumber: cr.branchSequenceNumber,
       title: cr.title || cr.crId,
       userId: cr.userId,
       comments: [],
@@ -213,6 +217,8 @@ export function mapChangeRequestsToDiscussions(
       visibilityScope: cr.visibilityScope,
       resolvedInMode: cr.resolvedInMode,
       votingStatus: cr.votingStatus,
+      confirmationStatus: cr.confirmationStatus ?? undefined,
+      changeRequestStatus: cr.changeRequestStatus ?? null,
       changeRequestEntityId: cr.changeRequestEntityId,
       processBranchId: cr.processBranchId,
     }));
@@ -331,6 +337,10 @@ export function mapRawDiscussionsToDiscussions(
         typeof discussion.branchScopedCrNumber === 'number'
           ? discussion.branchScopedCrNumber
           : undefined,
+      branchSequenceNumber:
+        typeof discussion.branchSequenceNumber === 'number'
+          ? discussion.branchSequenceNumber
+          : undefined,
       title: typeof discussion.title === 'string' ? discussion.title : undefined,
       userId: typeof discussion.userId === 'string' ? discussion.userId : '',
       comments: Array.isArray(discussion.comments) ? (discussion.comments as never[]) : [],
@@ -338,6 +348,8 @@ export function mapRawDiscussionsToDiscussions(
       isResolved: Boolean(discussion.isResolved),
       status: normalizeRawDiscussionStatus(discussion.status),
       confirmationStatus: normalizeRawConfirmationStatus(discussion.confirmationStatus),
+      changeRequestStatus:
+        typeof discussion.changeRequestStatus === 'string' ? discussion.changeRequestStatus : null,
       changeRequestEntityId:
         typeof discussion.changeRequestEntityId === 'string'
           ? discussion.changeRequestEntityId
@@ -452,6 +464,7 @@ function createDiscussionFallbackChangeRequest({
     : { type: 'unknown', text: '', newText: '', properties: {}, newProperties: {} };
   const resolvedStatus = discussion.status;
   const isResolved = isApprovedStatus(resolvedStatus) || isDeclinedStatus(resolvedStatus);
+  const isPendingSubmission = discussion.confirmationStatus === 'pending';
   const crId = displayCrId ?? discussion.crId ?? '';
   const createdAt = discussionTimestamp(discussion);
 
@@ -473,7 +486,7 @@ function createDiscussionFallbackChangeRequest({
     proposedChange: suggestionContent.newText || suggestionContent.text,
     justification: (discussion as { justification?: string | null }).justification ?? '',
     isResolved,
-    status: resolvedStatus ?? 'open',
+    status: isPendingSubmission ? 'pending_submission' : (resolvedStatus ?? 'open'),
     resolution: isResolved ? (resolvedStatus ?? null) : null,
     resolvedAt: null,
     resolvedBy: null,
@@ -489,7 +502,11 @@ function createDiscussionFallbackChangeRequest({
     resolutionMethod: discussion.resolutionMethod ?? null,
     visibilityScope: discussion.visibilityScope ?? null,
     resolvedInMode: discussion.resolvedInMode ?? null,
-    votingStatus: discussion.votingStatus ?? null,
+    votingStatus: isPendingSubmission ? 'pending_submission' : (discussion.votingStatus ?? null),
+    branchSequenceNumber: discussion.branchSequenceNumber ?? null,
+    confirmationStatus: discussion.confirmationStatus ?? null,
+    changeRequestStatus:
+      discussion.changeRequestStatus ?? (isPendingSubmission ? 'pending_submission' : null),
     userVote: null,
     comments: discussion.comments || [],
     votes: [],
@@ -533,12 +550,12 @@ function createDiscussionFallbackChangeRequests({
     .filter(Boolean) as ChangeRequest[];
 }
 
-function withDisplayFieldsFromFallbackDiscussions(
+function withDisplayFieldsFromGeneratedDiscussions(
   discussions: readonly TDiscussion[],
-  fallbackDiscussions: readonly TDiscussion[]
+  generatedDiscussions: readonly TDiscussion[]
 ): TDiscussion[] {
   return discussions.map(discussion => {
-    const fallback = fallbackDiscussions.find(candidate => {
+    const generatedDiscussion = generatedDiscussions.find(candidate => {
       return (
         candidate.id === discussion.id ||
         (!!discussion.changeRequestEntityId &&
@@ -547,15 +564,15 @@ function withDisplayFieldsFromFallbackDiscussions(
       );
     });
 
-    if (!fallback?.displayCrId) {
+    if (!generatedDiscussion?.displayCrId) {
       return discussion;
     }
 
     return {
       ...discussion,
-      displayCrId: fallback.displayCrId,
-      branchDisplayNumber: fallback.branchDisplayNumber,
-      branchScopedCrNumber: fallback.branchScopedCrNumber,
+      displayCrId: generatedDiscussion.displayCrId,
+      branchDisplayNumber: generatedDiscussion.branchDisplayNumber,
+      branchScopedCrNumber: generatedDiscussion.branchScopedCrNumber,
     };
   });
 }
@@ -563,13 +580,9 @@ function withDisplayFieldsFromFallbackDiscussions(
 export function buildChangeRequestBranchSections({
   branches,
   changeRequests,
-  fallbackDocumentContent,
-  fallbackDiscussions,
 }: {
   branches: readonly ChangeRequestBranchSource[];
   changeRequests: readonly ChangeRequest[];
-  fallbackDocumentContent?: Value;
-  fallbackDiscussions?: TDiscussion[];
 }): ChangeRequestBranchSection[] {
   const sortedBranches = [...branches].sort((left, right) => {
     const byCreatedAt = getBranchCreatedAt(left) - getBranchCreatedAt(right);
@@ -579,12 +592,10 @@ export function buildChangeRequestBranchSections({
   const sortedChangeRequests = sortChangeRequestsByDisplayOrder(changeRequests);
   const requestsByBranchId = new Map<string, ChangeRequest[]>();
   const historicalRequestsByBranchId = new Map<string, ChangeRequest[]>();
-  const unbranchedRequests: ChangeRequest[] = [];
 
   for (const changeRequest of sortedChangeRequests) {
     const branchId = changeRequest.processBranchId;
     if (!branchId) {
-      unbranchedRequests.push(changeRequest);
       continue;
     }
 
@@ -597,7 +608,7 @@ export function buildChangeRequestBranchSections({
   }
 
   const sections: ChangeRequestBranchSection[] = sortedBranches.map(branch => {
-    const branchDocumentContent = coerceDocumentContent(getBranchDocumentContent(branch));
+    const branchDocumentContent = getBranchDocumentContent(branch) as Value | undefined;
     const rawDiscussions = mapRawDiscussionsToDiscussions(branch.discussions, branch.id);
     const branchRowRequests = withBranchDiscussionContent({
       changeRequests: requestsByBranchId.get(branch.id) ?? [],
@@ -617,7 +628,7 @@ export function buildChangeRequestBranchSections({
     const fallbackBranchDiscussions = mapChangeRequestsToDiscussions(branchRequests);
     const branchDiscussions =
       rawDiscussions.length > 0
-        ? withDisplayFieldsFromFallbackDiscussions(rawDiscussions, fallbackBranchDiscussions)
+        ? withDisplayFieldsFromGeneratedDiscussions(rawDiscussions, fallbackBranchDiscussions)
         : fallbackBranchDiscussions;
     const branchEvent = getBranchDisplayEvent(branch);
     const counts = getChangeRequestCounts(branchRequests);
@@ -631,15 +642,15 @@ export function buildChangeRequestBranchSections({
       title: getChangeRequestBranchLabel(branch),
       description: branch.title ?? null,
       status: branch.status ?? null,
-      editingMode: branch.editing_mode ?? null,
+      editingMode: normalizeEditingMode(branch.editing_mode),
       resolution: branch.resolution ?? null,
       eventId: branchEvent?.event_id ?? branchEvent?.event?.id ?? null,
       eventTitle: branchEvent?.event?.title ?? null,
       ...counts,
       timelineItems: mapChangeRequestsToTimelineItems(branchRequests),
       diffMap: mapChangeRequestsToDiffMap(branchRequests),
-      discussions: branchDiscussions.length > 0 ? branchDiscussions : (fallbackDiscussions ?? []),
-      documentContent: branchDocumentContent ?? fallbackDocumentContent,
+      discussions: branchDiscussions,
+      documentContent: branchDocumentContent,
     } satisfies ChangeRequestBranchSection;
   });
 
@@ -662,36 +673,12 @@ export function buildChangeRequestBranchSections({
       timelineItems: mapChangeRequestsToTimelineItems(branchRequests),
       diffMap: mapChangeRequestsToDiffMap(branchRequests),
       discussions: mapChangeRequestsToDiscussions(branchRequests),
-      documentContent: fallbackDocumentContent,
-    });
-  }
-
-  if (unbranchedRequests.length > 0) {
-    sections.push({
-      id: 'legacy-main-document',
-      branchId: null,
-      title: 'Main document',
-      description: 'Change requests without a process branch',
-      ...getChangeRequestCounts(unbranchedRequests),
-      timelineItems: mapChangeRequestsToTimelineItems(unbranchedRequests),
-      diffMap: mapChangeRequestsToDiffMap(unbranchedRequests),
-      discussions: mapChangeRequestsToDiscussions(unbranchedRequests),
-      documentContent: fallbackDocumentContent,
-      isLegacy: true,
     });
   }
 
   return sections;
 }
 
-export function isVotingEditingMode(editingMode: string | null | undefined): boolean {
-  return (
-    editingMode === 'event_final_closing_vote' ||
-    editingMode === 'vote_event' ||
-    editingMode === 'vote_internal'
-  );
-}
-
-export function coerceDocumentContent(content: unknown): Value | undefined {
-  return content as Value | undefined;
+export function isVotingEditingMode(editingMode: EditingMode | null | undefined): boolean {
+  return editingMode === 'event_final_closing_vote' || editingMode === 'vote_internal';
 }

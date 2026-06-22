@@ -34,6 +34,7 @@ import {
 } from './schema';
 import {
   createChangeRequestSchema,
+  deleteChangeRequestSchema,
   finalizeExpiredInternalChangeRequestVotesSchema,
   finalizeInternalChangeRequestVoteSchema,
   repairInternalChangeRequestResolutionSchema,
@@ -73,13 +74,14 @@ import { getResolvedChangeRequestVisibilityScope } from '../change-requests/visi
 import { assertAmendmentTargetEventOpen } from '@/features/amendments/logic/amendmentTargetEventEligibility';
 import {
   VOTE_PURPOSE,
-  VOTE_STATUS,
-  isFinalClosingVotePurpose,
-  isFinalOpenVoteStatus,
-  normalizeVoteStatus,
+  VOTE_PHASE,
+  isFinalVotePhase,
+  normalizeVotePhase,
 } from '../votes/vote-workflow';
+import { AGENDA_VOTE_STEP_KIND } from '../agendas/vote-step-kind';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
+const PENDING_SUBMISSION_STATUS = 'pending_submission';
 const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = new Set(['collaborator', 'member', 'admin']);
 const ACTIVE_GROUP_MEMBERSHIP_STATUSES = ['active', 'member', 'admin'];
 const TERMINAL_PROCESS_STEP_STATUSES = new Set([
@@ -486,6 +488,20 @@ function changeRequestUpdateNeedsManage(
   );
 }
 
+function changeRequestUpdateTouchesVoteCounts(
+  args: Partial<{
+    votes_for: number;
+    votes_against: number;
+    votes_abstain: number;
+  }>
+) {
+  return (
+    args.votes_for !== undefined ||
+    args.votes_against !== undefined ||
+    args.votes_abstain !== undefined
+  );
+}
+
 async function appendEventChangeRequestVoteStepIfNeeded({
   tx,
   amendment,
@@ -532,16 +548,22 @@ async function appendEventChangeRequestVoteStepIfNeeded({
 
   const finalLinkCandidates = existingLinks.filter(
     link =>
-      (link.is_final_vote || link.step_kind === VOTE_PURPOSE.finalClosing) &&
+      (link.is_closing_vote || link.step_kind === AGENDA_VOTE_STEP_KIND.closing) &&
       (link.process_branch_id ?? null) === processBranchId &&
       Boolean(link.vote_id)
   );
 
   let target: {
     agendaItem: (typeof agendaItemRows)[number];
-    finalLink: (typeof existingLinks)[number];
+    finalLink: (typeof existingLinks)[number] | null;
+    finalVoteId: string;
     linksForAgendaItem: typeof existingLinks;
   } | null = null;
+
+  const canAppendBeforeFinalVote = (vote: { purpose?: string | null; status?: string | null }) =>
+    vote.purpose === VOTE_PURPOSE.closing &&
+    !isFinalVotePhase(vote.status) &&
+    normalizeVotePhase(vote.status) !== VOTE_PHASE.closed;
 
   for (const finalLink of finalLinkCandidates) {
     const agendaItem = agendaItemById.get(finalLink.agenda_item_id);
@@ -550,21 +572,67 @@ async function appendEventChangeRequestVoteStepIfNeeded({
     }
 
     const finalVote = await tx.run(zql.vote.where('id', finalLink.vote_id).one());
-    if (
-      !finalVote ||
-      !isFinalClosingVotePurpose(finalVote.purpose) ||
-      isFinalOpenVoteStatus(finalVote.status) ||
-      normalizeVoteStatus(finalVote.status) === VOTE_STATUS.closed
-    ) {
+    if (!finalVote || !canAppendBeforeFinalVote(finalVote)) {
       continue;
     }
 
     target = {
       agendaItem,
       finalLink,
+      finalVoteId: finalLink.vote_id,
       linksForAgendaItem: existingLinks.filter(link => link.agenda_item_id === agendaItem.id),
     };
     break;
+  }
+
+  if (!target) {
+    const votes = await tx.run(
+      zql.vote.where('agenda_item_id', 'IN', agendaItemIds).where('amendment_id', amendment.id)
+    );
+    const voteRows = Array.isArray(votes) ? votes : [];
+    const agendaItemOrder = new Map(agendaItemRows.map((item, index) => [item.id, index]));
+    const existingBranchLinks = new Set(
+      existingLinks
+        .filter(link => (link.process_branch_id ?? null) === processBranchId)
+        .map(link => link.agenda_item_id)
+    );
+    const finalVoteCandidates = voteRows
+      .map(vote => {
+        const agendaItemId = vote.agenda_item_id;
+        if (!agendaItemId || !agendaItemById.has(agendaItemId) || !canAppendBeforeFinalVote(vote)) {
+          return null;
+        }
+
+        return { vote, agendaItemId };
+      })
+      .filter((candidate): candidate is { vote: (typeof voteRows)[number]; agendaItemId: string } =>
+        Boolean(candidate)
+      )
+      .sort((left, right) => {
+        const leftHasBranchLinks = existingBranchLinks.has(left.agendaItemId) ? 0 : 1;
+        const rightHasBranchLinks = existingBranchLinks.has(right.agendaItemId) ? 0 : 1;
+        if (leftHasBranchLinks !== rightHasBranchLinks) {
+          return leftHasBranchLinks - rightHasBranchLinks;
+        }
+
+        return (
+          (agendaItemOrder.get(left.agendaItemId) ?? Number.MAX_SAFE_INTEGER) -
+          (agendaItemOrder.get(right.agendaItemId) ?? Number.MAX_SAFE_INTEGER)
+        );
+      });
+    const finalVoteCandidate = finalVoteCandidates[0];
+    const agendaItem = finalVoteCandidate
+      ? agendaItemById.get(finalVoteCandidate.agendaItemId)
+      : null;
+
+    if (finalVoteCandidate && agendaItem) {
+      target = {
+        agendaItem,
+        finalLink: null,
+        finalVoteId: finalVoteCandidate.vote.id,
+        linksForAgendaItem: existingLinks.filter(link => link.agenda_item_id === agendaItem.id),
+      };
+    }
   }
 
   if (!target) {
@@ -581,7 +649,7 @@ async function appendEventChangeRequestVoteStepIfNeeded({
     amendment_id: amendment.id,
     title: changeRequest.title ?? `Change Request ${target.linksForAgendaItem.length + 1}`,
     description: null,
-    status: VOTE_STATUS.indicativeOpen,
+    status: VOTE_PHASE.indicative,
     purpose: VOTE_PURPOSE.changeRequest,
     majority_type: 'relative',
     closing_type: 'moderator',
@@ -616,7 +684,12 @@ async function appendEventChangeRequestVoteStepIfNeeded({
     });
   }
 
-  const insertOrderIndex = target.finalLink.order_index ?? target.linksForAgendaItem.length;
+  const nextOrderIndex =
+    target.linksForAgendaItem.reduce(
+      (max, link, index) => Math.max(max, link.order_index ?? index),
+      -1
+    ) + 1;
+  const insertOrderIndex = target.finalLink?.order_index ?? nextOrderIndex;
   for (const link of target.linksForAgendaItem.filter(
     link => (link.order_index ?? 0) >= insertOrderIndex
   )) {
@@ -633,9 +706,9 @@ async function appendEventChangeRequestVoteStepIfNeeded({
     change_request_id: changeRequest.id,
     vote_id: voteId,
     order_index: insertOrderIndex,
-    step_kind: VOTE_PURPOSE.changeRequest,
+    step_kind: AGENDA_VOTE_STEP_KIND.changeRequest,
     process_branch_id: changeRequest.process_branch_id ?? null,
-    is_final_vote: false,
+    is_closing_vote: false,
     status: 'pending',
     blocked_reason: null,
     result_status: null,
@@ -643,6 +716,25 @@ async function appendEventChangeRequestVoteStepIfNeeded({
     created_at: now,
     updated_at: now,
   });
+
+  if (!target.finalLink) {
+    await tx.mutate.agenda_item_change_request.insert({
+      id: crypto.randomUUID(),
+      agenda_item_id: target.agendaItem.id,
+      change_request_id: null,
+      vote_id: target.finalVoteId,
+      order_index: insertOrderIndex + 1,
+      step_kind: AGENDA_VOTE_STEP_KIND.closing,
+      process_branch_id: processBranchId,
+      is_closing_vote: true,
+      status: 'pending',
+      blocked_reason: null,
+      result_status: null,
+      obsolete_reason: null,
+      created_at: now,
+      updated_at: now,
+    });
+  }
 
   return target.agendaItem.event_id ?? null;
 }
@@ -1199,6 +1291,15 @@ export const amendmentServerMutators = {
 
     await mutators.amendments.createChangeRequest.fn({ tx, ctx, args });
 
+    if (args.status === PENDING_SUBMISSION_STATUS) {
+      const amendment = await tx.run(zql.amendment.where('id', args.amendment_id).one());
+      await recomputeAmendmentCounters(tx, args.amendment_id);
+      if (amendment?.event_id) {
+        await recomputeEventCounters(tx, amendment.event_id);
+      }
+      return;
+    }
+
     const now = Date.now();
     const [aTitle, senderName, amendment] = await Promise.all([
       amendmentTitle(tx, args.amendment_id),
@@ -1389,7 +1490,17 @@ export const amendmentServerMutators = {
       throw new PermissionError('update', 'amendments', `editing_mode:${branchMode}`);
     }
 
-    if (previous.user_id !== ctx.userID || changeRequestUpdateNeedsManage(args)) {
+    const isSubmittingOwnPendingChangeRequest =
+      previous.user_id === ctx.userID &&
+      previous.status === PENDING_SUBMISSION_STATUS &&
+      args.status === 'open' &&
+      (args.voting_status === undefined || args.voting_status === 'open') &&
+      !changeRequestUpdateTouchesVoteCounts(args);
+
+    if (
+      previous.user_id !== ctx.userID ||
+      (changeRequestUpdateNeedsManage(args) && !isSubmittingOwnPendingChangeRequest)
+    ) {
       await assertCanMutateAmendment(tx, ctx, previous.amendment_id, 'update');
     }
 
@@ -1432,6 +1543,35 @@ export const amendmentServerMutators = {
     }
 
     if (
+      isSubmittingOwnPendingChangeRequest ||
+      (previous.status === PENDING_SUBMISSION_STATUS && args.status === 'open')
+    ) {
+      const [aTitle, senderName] = await Promise.all([
+        amendmentTitle(tx, previous.amendment_id),
+        userName(tx, ctx.userID),
+      ]);
+
+      fireNotification('notifyChangeRequestCreated', {
+        senderId: ctx.userID,
+        senderName,
+        amendmentId: previous.amendment_id,
+        amendmentTitle: aTitle,
+      });
+
+      const notificationEventId = appendedEventId ?? amendment?.event_id ?? null;
+      if (notificationEventId) {
+        fireNotification('notifyEventChangeRequestCreated', {
+          senderId: ctx.userID,
+          senderName,
+          eventId: notificationEventId,
+          eventTitle: await eventTitle(tx, notificationEventId),
+          amendmentId: previous.amendment_id,
+          amendmentTitle: aTitle,
+        });
+      }
+    }
+
+    if (
       args.status === 'approved' &&
       previous.status !== 'approved' &&
       previous.user_id !== ctx.userID
@@ -1457,6 +1597,25 @@ export const amendmentServerMutators = {
         amendmentId: previous.amendment_id,
         amendmentTitle: aTitle,
       });
+    }
+  }),
+
+  deleteChangeRequest: defineMutator(deleteChangeRequestSchema, async ({ tx, ctx, args }) => {
+    const previous = await loadChangeRequestForMutation(tx, args.id);
+    if (previous.status !== PENDING_SUBMISSION_STATUS) {
+      throw new Error('Only pending change request submissions can be deleted');
+    }
+
+    if (previous.user_id !== ctx.userID) {
+      await assertCanMutateAmendment(tx, ctx, previous.amendment_id, 'manage');
+    }
+
+    await mutators.amendments.deleteChangeRequest.fn({ tx, ctx, args });
+    await recomputeAmendmentCounters(tx, previous.amendment_id);
+
+    const amendment = await tx.run(zql.amendment.where('id', previous.amendment_id).one());
+    if (amendment?.event_id) {
+      await recomputeEventCounters(tx, amendment.event_id);
     }
   }),
 

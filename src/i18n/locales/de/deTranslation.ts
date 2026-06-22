@@ -103,10 +103,6 @@ const baseDeTranslation = {
     user: userTranslations,
     votes: votesTranslations,
   },
-
-  // Legacy compatibility - map old keys to new structure
-  home: pagesTranslations.home,
-  timeline: timelineTranslations,
 } as const;
 
 const deTranslation: I18nLocale = mergeTranslations(baseDeTranslation, generatedTranslations);

@@ -1,7 +1,7 @@
 import {
   normalizeAmendmentStatus,
   normalizeElectionStatus,
-  normalizeVoteStatus,
+  normalizeVotePhase,
 } from './searchNormalizers';
 import type { SearchContentItem } from '../types/search.types';
 import type { CardType } from '@/features/timeline/ui/LazyCardComponents';
@@ -227,7 +227,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
           amendmentId: item.id,
           amendmentTitle: item.title,
           question: item.description,
-          status: normalizeVoteStatus(item.status ?? undefined),
+          status: normalizeVotePhase(item.status ?? undefined),
           endTime: item.endDate ?? item.updatedAt ?? item.createdAt,
           supportPercentage,
           supportCount,

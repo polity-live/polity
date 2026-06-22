@@ -43,12 +43,21 @@ import {
   getBranchEditingMode,
   getOrderedBranches,
 } from '@/features/amendments/logic/amendmentBranchDisplay';
+import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 const AMENDMENT_CARD_SURFACE = `${getEntityGradientClasses('amendment')} ${getMotionPreset('hoverLift')}`;
 
-const AMENDMENT_CREATION_MODES = new Set(['edit', 'view', 'suggest_internal', 'vote_internal']);
-const AMENDMENT_DECISION_MODES = new Set(['suggest_event', 'event_final_closing_vote']);
+const AMENDMENT_CREATION_MODES = new Set<EditingMode>([
+  'edit',
+  'view',
+  'suggest_internal',
+  'vote_internal',
+]);
+const AMENDMENT_DECISION_MODES = new Set<EditingMode>([
+  'suggest_event',
+  'event_final_closing_vote',
+]);
 
-function AmendmentWorkflowPhaseRail({ mode, t }: { mode: any; t: any }) {
+function AmendmentWorkflowPhaseRail({ mode, t }: { mode: EditingMode; t: any }) {
   const currentMode = getEditingModeOption(mode, t).value;
   const isCreationPhase = AMENDMENT_CREATION_MODES.has(currentMode);
   const isDecisionPhase = AMENDMENT_DECISION_MODES.has(currentMode);
@@ -342,18 +351,18 @@ export function AmendmentWikiView({
 
       {/* Stats Bar */}
       <StatsBar
-        stats={[
+        items={[
           {
             value: amendment.collaborator_count ?? collaboration.collaboratorCount,
-            labelKey: 'components.labels.collaborators',
+            label: t('components.labels.collaborators'),
           },
-          { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-          { value: amendment.clone_count ?? clones.length, labelKey: 'components.labels.clones' },
-          { value: branchCount, labelKey: 'components.labels.branches' },
-          { value: supportingGroupCount, labelKey: 'components.labels.supportingGroups' },
+          { value: subscriberCount, label: t('components.labels.subscribers') },
+          { value: amendment.clone_count ?? clones.length, label: t('components.labels.clones') },
+          { value: branchCount, label: t('components.labels.branches') },
+          { value: supportingGroupCount, label: t('components.labels.supportingGroups') },
           {
             value: changeRequestCount,
-            labelKey: 'components.labels.changeRequests',
+            label: t('components.labels.changeRequests'),
           },
         ]}
       />

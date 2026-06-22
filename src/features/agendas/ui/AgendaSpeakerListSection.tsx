@@ -13,6 +13,7 @@ interface Speaker {
     name?: string;
     email?: string;
     avatar?: string;
+    gender?: string | null;
   };
 }
 
@@ -24,6 +25,7 @@ interface AgendaSpeakerListSectionProps {
   isRemovingSpeaker?: boolean;
   userId?: string;
   agendaStartTime?: number;
+  showGender?: boolean;
   onAddToSpeakerList?: () => void;
   onRemoveFromSpeakerList?: () => void;
   onMarkCompleted?: (speakerId: string) => void;
@@ -40,6 +42,7 @@ export function AgendaSpeakerListSection({
   isRemovingSpeaker,
   userId,
   agendaStartTime,
+  showGender,
   onAddToSpeakerList,
   onRemoveFromSpeakerList,
   onMarkCompleted,
@@ -53,6 +56,7 @@ export function AgendaSpeakerListSection({
     isRemovingSpeaker,
     userId,
     agendaStartTime,
+    showGender,
     onAddToSpeakerList,
     onRemoveFromSpeakerList,
     onMarkCompleted,

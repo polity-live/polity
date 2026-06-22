@@ -237,7 +237,7 @@ function createOfflineTallyTx({
 }
 
 describe('electionServerMutators.updateElection notifications', () => {
-  it.each(['final', 'final_vote'])(
+  it.each(['final', 'final'])(
     'notifies event participants when the final vote starts with status %s',
     async status => {
       const tx = createTx();

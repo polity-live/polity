@@ -53,6 +53,7 @@ export function ModernTimelineView({
     canSwipeNext: mode === 'timeline',
     onSwipePrev: () => setMode('timeline'),
     onSwipeNext: () => setMode('decisions'),
+    keyboardMode: 'global',
   });
 
   if (!userId) {

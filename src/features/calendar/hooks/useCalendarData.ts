@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
+import { addYears } from 'date-fns';
 import { useAuth } from '@/providers/auth-provider';
 import { useEventsForCalendarWithExceptions } from '@/zero/events/useEventState';
-import { addYears, generateRecurringInstances } from '../logic/recurringEventHelpers';
+import { generateRecurringInstances } from '../logic/recurringEventHelpers';
 import {
   isCalendarEventOwnedByUser,
   isCalendarEventVisibleToUser,

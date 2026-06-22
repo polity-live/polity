@@ -11,6 +11,7 @@ export function SearchPage() {
     canSwipeNext: sp.view === 'list',
     onSwipePrev: () => sp.setView('list'),
     onSwipeNext: () => sp.setView('spatial'),
+    keyboardMode: 'global',
   });
   const results =
     sp.view === 'spatial' ? (

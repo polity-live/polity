@@ -229,10 +229,10 @@ export function BlogDetailView({
       </div>
 
       <StatsBar
-        stats={[
-          { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-          { value: supporterCount, labelKey: 'components.labels.supporters' },
-          { value: commentCount, labelKey: 'components.labels.comments' },
+        items={[
+          { value: subscriberCount, label: t('components.labels.subscribers') },
+          { value: supporterCount, label: t('components.labels.supporters') },
+          { value: commentCount, label: t('components.labels.comments') },
         ]}
       />
 

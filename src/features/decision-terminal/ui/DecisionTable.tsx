@@ -25,25 +25,25 @@ export function DecisionTable({ decisions, className }: DecisionTableProps) {
       <div className="bg-muted/95 sticky top-0 z-10 min-w-[860px] backdrop-blur">
         <div className={cn('grid gap-2 border-b px-2 py-1.5', gridColumnsClass)}>
           <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
-            {t('timeline.terminal.columns.id')}
+            {t('features.timeline.terminal.columns.id')}
           </div>
           <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
-            {t('timeline.terminal.columns.title')}
+            {t('features.timeline.terminal.columns.title')}
           </div>
           <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
-            {t('timeline.terminal.columns.body')}
+            {t('features.timeline.terminal.columns.body')}
           </div>
           <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
-            {t('timeline.terminal.columns.time')}
+            {t('features.timeline.terminal.columns.time')}
           </div>
           <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
-            {t('timeline.terminal.columns.status')}
+            {t('features.timeline.terminal.columns.status')}
           </div>
           <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
-            {t('timeline.terminal.columns.votes')}
+            {t('features.timeline.terminal.columns.votes')}
           </div>
           <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
-            {t('timeline.terminal.columns.trend')}
+            {t('features.timeline.terminal.columns.trend')}
           </div>
         </div>
       </div>

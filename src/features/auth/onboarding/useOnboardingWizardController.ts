@@ -201,6 +201,7 @@ export function useOnboardingWizardController({
     canSwipePrev: step !== 'name',
     onSwipeNext: handleSwipeNext,
     onSwipePrev: handleSwipePrev,
+    keyboardMode: 'global',
   });
 
   return {

@@ -6,14 +6,26 @@ import type { Value } from 'platejs';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { TDiscussion } from '@/features/editor/types';
 import { type ChangeRequestDiffData } from './ChangeRequestTimelineCard';
-import { getCRFilterStatus } from '../logic/createMockCRTimelineItems';
+import {
+  getCRFilterStatus,
+  isPendingSubmissionCRTimelineItem,
+} from '../logic/createMockCRTimelineItems';
 import { getVoteResult } from '../hooks/useAgendaItemCRVoting';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
+import {
+  buildCrIdToDiscussionId,
+  buildSuggestionPreviewResolutions,
+  getPreviewVoteStepKind,
+  resolvePreviewCrIdForTimelineItem,
+} from '../logic/changeRequestDocumentPreview';
+import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
+
+export { resolvePreviewCrIdForTimelineItem } from '../logic/changeRequestDocumentPreview';
 
 type TabValue = 'all' | 'open' | 'accepted' | 'rejected';
 
 function getVoteStepKind(item: ChangeRequestTimelineRow) {
-  return (item as { _voteStepKind?: string })._voteStepKind ?? null;
+  return getPreviewVoteStepKind(item);
 }
 
 function isSyntheticSequenceStep(item: ChangeRequestTimelineRow) {
@@ -22,7 +34,7 @@ function isSyntheticSequenceStep(item: ChangeRequestTimelineRow) {
 
 interface ChangeRequestCardsListProps {
   items: ChangeRequestTimelineRow[];
-  editingMode?: string | null;
+  editingMode: EditingMode;
   isVotingActive: boolean;
   userId?: string;
   canManage?: boolean;
@@ -30,16 +42,24 @@ interface ChangeRequestCardsListProps {
   hideInlineVotingControls?: boolean;
   /** Allow starting final votes from CR cards. Defaults off so agenda toolbar owns sequencing. */
   allowInlineFinalVoteStart?: boolean;
+  /** Show agenda-details-only per-card vote phase actions. */
+  showAgendaDetailsVoteActions?: boolean;
+  /** Explanation shown when agenda-details card vote actions are visible but unavailable. */
+  voteDisabledTooltip?: string;
   currentItemId?: string | null;
   /** Map from CR change_request_id (or mock item id) to diff data */
   diffMap?: Record<string, ChangeRequestDiffData>;
   /** Progress through the voting timeline (0-1) */
   progress?: number;
+  /** Eligible voters expected for final votes, including confirmed offline attendees. */
+  eligibleFinalVoterCount?: number;
   completedCount?: number;
   allCRsProcessed?: boolean;
   isTimelineComplete?: boolean;
   /** Document content for editor preview */
   documentContent?: Value;
+  /** Agenda or amendment title used for final closing vote labels. */
+  agendaTitle?: string | null;
   /** Discussion entries from amendment for CR ID mapping */
   discussions?: TDiscussion[];
   /** Amendment ID — needed for interactive editor and mode selector */
@@ -56,6 +76,7 @@ interface ChangeRequestCardsListProps {
   hasUserVoted?: (item: ChangeRequestTimelineRow) => boolean;
   getUserSelectedChoiceIds?: (item: ChangeRequestTimelineRow) => string[];
   onCastVote?: (item: ChangeRequestTimelineRow, choiceId: string) => Promise<void>;
+  onOpenVoteDialog?: (itemId: string) => void;
   onStartIndicative?: (itemId: string) => Promise<void>;
   onStartFinal?: (itemId: string) => Promise<void>;
   onCloseVoting?: (itemId: string) => Promise<void> | Promise<unknown>;
@@ -71,13 +92,17 @@ export function useChangeRequestCardsListController({
   canVote = false,
   hideInlineVotingControls = false,
   allowInlineFinalVoteStart = false,
+  showAgendaDetailsVoteActions = false,
+  voteDisabledTooltip,
   currentItemId,
   diffMap,
   progress,
+  eligibleFinalVoterCount,
   completedCount,
   allCRsProcessed,
   isTimelineComplete,
   documentContent,
+  agendaTitle,
   discussions,
   amendmentId,
   agendaItemId,
@@ -85,6 +110,7 @@ export function useChangeRequestCardsListController({
   hasUserVoted,
   getUserSelectedChoiceIds,
   onCastVote,
+  onOpenVoteDialog,
   onStartIndicative,
   onStartFinal,
   onCloseVoting,
@@ -96,35 +122,15 @@ export function useChangeRequestCardsListController({
   const [searchQuery, setSearchQuery] = useState('');
 
   // Build crId → discussion UUID map from discussions
-  const crIdToDiscussionId = useMemo(() => {
-    const map = new Map<string, string>();
-    if (discussions) {
-      for (const d of discussions) {
-        map.set(d.id, d.id);
-        if (d.crId) {
-          map.set(d.crId, d.id);
-        }
-        if (d.displayCrId) {
-          map.set(d.displayCrId, d.id);
-        }
-        if (d.title) {
-          map.set(d.title, d.id);
-        }
-        if (d.changeRequestEntityId) {
-          map.set(d.changeRequestEntityId, d.id);
-        }
-      }
-    }
-    return map;
-  }, [discussions]);
+  const crIdToDiscussionId = useMemo(() => buildCrIdToDiscussionId(discussions), [discussions]);
 
   // Separate sequence boundary votes from regular CR items for filtering
-  const finalVoteItem = useMemo(() => items.find(i => i.is_final_vote), [items]);
+  const closingVoteItem = useMemo(() => items.find(i => i.is_closing_vote), [items]);
   const variantVoteItem = useMemo(
     () =>
       items.find(i => {
         const stepKind = getVoteStepKind(i);
-        return stepKind === 'variant_selection' || stepKind === 'merge_variant';
+        return stepKind === 'merge_variant';
       }) ?? null,
     [items]
   );
@@ -133,16 +139,20 @@ export function useChangeRequestCardsListController({
     [items]
   );
   const crItems = useMemo(
-    () => items.filter(i => !i.is_final_vote && !isSyntheticSequenceStep(i)),
+    () => items.filter(i => !i.is_closing_vote && !isSyntheticSequenceStep(i)),
     [items]
+  );
+  const votableCrItems = useMemo(
+    () => crItems.filter(item => !isPendingSubmissionCRTimelineItem(item)),
+    [crItems]
   );
   const sequenceItems = useMemo(
     () => [
       ...(variantVoteItem ? [variantVoteItem] : []),
-      ...(changeRequestVotesPlaceholderItem ? [changeRequestVotesPlaceholderItem] : crItems),
-      ...(finalVoteItem ? [finalVoteItem] : []),
+      ...(changeRequestVotesPlaceholderItem ? [changeRequestVotesPlaceholderItem] : votableCrItems),
+      ...(closingVoteItem ? [closingVoteItem] : []),
     ],
-    [changeRequestVotesPlaceholderItem, crItems, finalVoteItem, variantVoteItem]
+    [changeRequestVotesPlaceholderItem, closingVoteItem, variantVoteItem, votableCrItems]
   );
   const hasCRCategoryItems = crItems.length > 0;
 
@@ -163,25 +173,13 @@ export function useChangeRequestCardsListController({
   );
 
   const getPreviewCrId = (item: ChangeRequestTimelineRow): string | null => {
-    const changeRequest = item.change_request as
-      | (NonNullable<ChangeRequestTimelineRow['change_request']> & {
-          cr_id?: string | null;
-          suggestion_id?: string | null;
-        })
-      | null
-      | undefined;
-    const previewCrId =
-      changeRequest?.cr_id ??
-      changeRequest?.suggestion_id ??
-      item.change_request_id ??
-      changeRequest?.title;
-    return previewCrId && previewCrId.trim().length > 0 ? previewCrId : null;
+    return resolvePreviewCrIdForTimelineItem(item, crIdToDiscussionId);
   };
 
   const [selectedPreviewCrIds, setSelectedPreviewCrIds] = useState<Set<string> | null>(() => {
     const defaultItem =
       items.find(
-        item => item.id === currentItemId && !item.is_final_vote && !isSyntheticSequenceStep(item)
+        item => item.id === currentItemId && !item.is_closing_vote && !isSyntheticSequenceStep(item)
       ) ?? crItems[0];
     const previewCrId = defaultItem ? getPreviewCrId(defaultItem) : null;
     return previewCrId ? new Set([previewCrId]) : null;
@@ -235,7 +233,7 @@ export function useChangeRequestCardsListController({
         return [
           ...(variantVoteItem ? [variantVoteItem] : []),
           ...searchedItems,
-          ...(finalVoteItem ? [finalVoteItem] : []),
+          ...(closingVoteItem ? [closingVoteItem] : []),
         ];
     }
   };
@@ -249,7 +247,7 @@ export function useChangeRequestCardsListController({
       new Set(
         crItems.map(item => getPreviewCrId(item)).filter((value): value is string => Boolean(value))
       ),
-    [crItems]
+    [crIdToDiscussionId, crItems]
   );
 
   const defaultPreviewCrId = useMemo(() => {
@@ -273,7 +271,7 @@ export function useChangeRequestCardsListController({
       crItems.map(item => getPreviewCrId(item)).find((value): value is string => Boolean(value)) ??
       null
     );
-  }, [crItems, currentItemId, filteredItems]);
+  }, [crIdToDiscussionId, crItems, currentItemId, filteredItems]);
 
   const normalizedPreviewCrIds = useMemo(() => {
     if (!selectedPreviewCrIds || selectedPreviewCrIds.size === 0) {
@@ -306,6 +304,18 @@ export function useChangeRequestCardsListController({
 
     return ids;
   }, [crIdToDiscussionId, discussions, effectivePreviewCrIds]);
+
+  const previewSuggestionResolutions = useMemo(
+    () =>
+      buildSuggestionPreviewResolutions({
+        items: crItems,
+        crIdToDiscussionId,
+        isVotingActive,
+        getVoteResult,
+      }),
+    [crIdToDiscussionId, crItems, isVotingActive]
+  );
+
   return {
     items,
     editingMode,
@@ -315,13 +325,17 @@ export function useChangeRequestCardsListController({
     canVote,
     hideInlineVotingControls,
     allowInlineFinalVoteStart,
+    showAgendaDetailsVoteActions,
+    voteDisabledTooltip,
     currentItemId,
     diffMap,
     progress,
+    eligibleFinalVoterCount,
     completedCount,
     allCRsProcessed,
     isTimelineComplete,
     documentContent,
+    agendaTitle,
     discussions,
     amendmentId,
     agendaItemId,
@@ -329,6 +343,7 @@ export function useChangeRequestCardsListController({
     hasUserVoted,
     getUserSelectedChoiceIds,
     onCastVote,
+    onOpenVoteDialog,
     onStartIndicative,
     onStartFinal,
     onCloseVoting,
@@ -340,7 +355,7 @@ export function useChangeRequestCardsListController({
     searchQuery,
     setSearchQuery,
     crIdToDiscussionId,
-    finalVoteItem,
+    closingVoteItem,
     variantVoteItem,
     crItems,
     sequenceItems,
@@ -359,5 +374,6 @@ export function useChangeRequestCardsListController({
     normalizedPreviewCrIds,
     effectivePreviewCrIds,
     selectedPreviewSuggestionIds,
+    previewSuggestionResolutions,
   };
 }

@@ -118,7 +118,7 @@ describe('VoteResultsDisplay', () => {
           finalCount: 0,
           finalPercent: 0,
         }))}
-        phase="final_vote"
+        phase="final"
         totalFinal={0}
         totalIndication={4}
       />

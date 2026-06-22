@@ -103,6 +103,7 @@ export function useNotificationsPage() {
         setSelectedTab(nextTab);
       }
     },
+    keyboardMode: 'global',
   });
 
   return {

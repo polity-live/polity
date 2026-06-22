@@ -5,10 +5,10 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { TerminalFilter, VisibilityFilter } from '../ui/TerminalHeader';
 
 const FILTERS: { value: TerminalFilter; labelKey: string }[] = [
-  { value: 'live', labelKey: 'timeline.terminal.filters.live' },
-  { value: 'opening_soon', labelKey: 'timeline.terminal.filters.openingSoon' },
-  { value: 'recently_closed', labelKey: 'timeline.terminal.filters.recentlyClosed' },
-  { value: 'all', labelKey: 'timeline.terminal.filters.all' },
+  { value: 'live', labelKey: 'features.timeline.terminal.filters.live' },
+  { value: 'opening_soon', labelKey: 'features.timeline.terminal.filters.openingSoon' },
+  { value: 'recently_closed', labelKey: 'features.timeline.terminal.filters.recentlyClosed' },
+  { value: 'all', labelKey: 'features.timeline.terminal.filters.all' },
 ];
 
 export function useTerminalHeaderController(args: {
@@ -20,12 +20,12 @@ export function useTerminalHeaderController(args: {
 
   const visibilityLabel =
     args.visibilityFilter === 'all'
-      ? t('timeline.terminal.visibility.all')
+      ? t('features.timeline.terminal.visibility.all')
       : args.visibilityFilter === 'public'
-        ? t('timeline.terminal.visibility.public')
+        ? t('features.timeline.terminal.visibility.public')
         : args.visibilityFilter === 'authenticated'
-          ? t('timeline.terminal.visibility.authenticated')
-          : t('timeline.terminal.visibility.private');
+          ? t('features.timeline.terminal.visibility.authenticated')
+          : t('features.timeline.terminal.visibility.private');
 
   const handleSearchBlur = () => {
     if (!args.searchQuery) {
@@ -41,17 +41,17 @@ export function useTerminalHeaderController(args: {
     })),
     visibilityLabel,
     labels: {
-      title: t('timeline.terminal.title'),
-      urgent: t('timeline.terminal.urgent'),
-      active: t('timeline.terminal.active'),
-      all: t('timeline.terminal.visibility.all'),
-      public: t('timeline.terminal.visibility.public'),
-      authenticated: t('timeline.terminal.visibility.authenticated'),
-      private: t('timeline.terminal.visibility.private'),
-      searchPlaceholder: t('timeline.terminal.searchPlaceholder'),
-      density: t('timeline.terminal.settings.density'),
-      refreshRate: t('timeline.terminal.settings.refreshRate'),
-      soundAlerts: t('timeline.terminal.settings.soundAlerts'),
+      title: t('features.timeline.terminal.title'),
+      urgent: t('features.timeline.terminal.urgent'),
+      active: t('features.timeline.terminal.active'),
+      all: t('features.timeline.terminal.visibility.all'),
+      public: t('features.timeline.terminal.visibility.public'),
+      authenticated: t('features.timeline.terminal.visibility.authenticated'),
+      private: t('features.timeline.terminal.visibility.private'),
+      searchPlaceholder: t('features.timeline.terminal.searchPlaceholder'),
+      density: t('features.timeline.terminal.settings.density'),
+      refreshRate: t('features.timeline.terminal.settings.refreshRate'),
+      soundAlerts: t('features.timeline.terminal.settings.soundAlerts'),
     },
     onShowSearch: () => setShowSearch(true),
     onSearchBlur: handleSearchBlur,

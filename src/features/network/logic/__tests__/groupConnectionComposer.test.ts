@@ -227,7 +227,7 @@ describe('groupConnectionComposer presets', () => {
     ).toBe(false);
   });
 
-  it('requires dependent membership details for role mode and legacy source-group compatibility', () => {
+  it('requires dependent membership details for role mode and source-group compatibility', () => {
     expect(
       hasIncompleteMembershipRule({
         membershipDirection: 'partner_members_to_current',

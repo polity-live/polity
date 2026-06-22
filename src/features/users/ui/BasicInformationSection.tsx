@@ -6,24 +6,30 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { hasMinLength, isOptionalMinLength } from '@/features/shared/logic/inputValidation';
+import { SelectField } from '@/features/shared/ui/form/SelectField';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import type { UserGenderFormValue } from '../hooks/useUserProfileForm';
 
 interface BasicInformationSectionProps {
   firstName: string;
   lastName: string;
+  gender: UserGenderFormValue;
   subtitle: string;
   onFirstNameChange: (value: string) => void;
   onLastNameChange: (value: string) => void;
+  onGenderChange: (value: UserGenderFormValue) => void;
   onSubtitleChange: (value: string) => void;
 }
 
 export function BasicInformationSection({
   firstName,
   lastName,
+  gender,
   subtitle,
   onFirstNameChange,
   onLastNameChange,
+  onGenderChange,
   onSubtitleChange,
 }: BasicInformationSectionProps) {
   const { t } = useTranslation();
@@ -58,6 +64,33 @@ export function BasicInformationSection({
             autoComplete="family-name"
           />
         </div>
+        <SelectField
+          label={t('pages.user.settingsForm.basicInfo.genderLabel', 'Gender')}
+          description={t(
+            'pages.user.settingsForm.basicInfo.genderDescription',
+            'Wird fuer genderquotierte Redelisten verwendet.'
+          )}
+          value={gender}
+          onValueChange={value => onGenderChange(value as UserGenderFormValue)}
+          options={[
+            {
+              value: 'unspecified',
+              label: t('pages.user.settingsForm.basicInfo.genderUnspecified', 'Keine Angabe'),
+            },
+            {
+              value: 'female',
+              label: t('pages.user.settingsForm.basicInfo.genderFemale', 'Weiblich'),
+            },
+            {
+              value: 'male',
+              label: t('pages.user.settingsForm.basicInfo.genderMale', 'Maennlich'),
+            },
+            {
+              value: 'diverse',
+              label: t('pages.user.settingsForm.basicInfo.genderDiverse', 'Divers'),
+            },
+          ]}
+        />
         <ValidatedInputField
           id="subtitle"
           label={t('pages.user.settingsForm.basicInfo.subtitleLabel')}

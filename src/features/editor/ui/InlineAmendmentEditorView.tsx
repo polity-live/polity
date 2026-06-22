@@ -11,12 +11,13 @@
 import { Loader2 } from 'lucide-react';
 import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { SuggestionViewToggle } from './SuggestionViewToggle';
+import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 export interface InlineAmendmentEditorViewProps {
   amendmentId: any;
   userId: any;
   userRecord: any;
   agendaItemId: any;
-  editingMode: any;
+  editingMode?: EditingMode | null;
   resolvedMode: any;
   entity: any;
   isLoading: any;

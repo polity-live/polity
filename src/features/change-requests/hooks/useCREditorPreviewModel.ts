@@ -3,14 +3,19 @@ import type { Value } from 'platejs';
 import { createSlateEditor } from 'platejs';
 
 import { BaseEditorKit } from '@/features/shared/ui/kit-platejs/editor-base-kit';
-import { filterDocumentToSuggestions } from '../logic/filterDocumentToSingleSuggestion';
+import {
+  filterDocumentToSuggestions,
+  type SuggestionPreviewResolutionMap,
+} from '../logic/filterDocumentToSingleSuggestion';
+import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 
 interface UseCREditorPreviewModelOptions {
   allowInteractiveEditor?: boolean;
   amendmentId?: string;
   documentContent: Value;
-  editingMode?: string | null;
+  editingMode?: EditingMode | null;
   suggestionIds: Set<string>;
+  suggestionResolutions?: SuggestionPreviewResolutionMap;
 }
 
 export function useCREditorPreviewModel({
@@ -19,22 +24,45 @@ export function useCREditorPreviewModel({
   documentContent,
   editingMode,
   suggestionIds,
+  suggestionResolutions,
 }: UseCREditorPreviewModelOptions) {
   const [isOpen, setIsOpen] = useState(false);
   const isInteractive = allowInteractiveEditor && editingMode === 'suggest_event' && !!amendmentId;
 
   const suggestionIdsKey = useMemo(() => [...suggestionIds].sort().join(','), [suggestionIds]);
+  const suggestionResolutionsKey = useMemo(
+    () =>
+      suggestionResolutions
+        ? [...suggestionResolutions.entries()]
+            .sort(([left], [right]) => left.localeCompare(right))
+            .map(([id, resolution]) => `${id}:${resolution}`)
+            .join(',')
+        : '',
+    [suggestionResolutions]
+  );
 
   const editor = useMemo(() => {
     if (!isOpen || isInteractive) return null;
 
-    const filteredContent = filterDocumentToSuggestions(documentContent, suggestionIds);
+    const filteredContent = filterDocumentToSuggestions(
+      documentContent,
+      suggestionIds,
+      suggestionResolutions
+    );
 
     return createSlateEditor({
       plugins: BaseEditorKit,
       value: filteredContent,
     });
-  }, [documentContent, isInteractive, isOpen, suggestionIds, suggestionIdsKey]);
+  }, [
+    documentContent,
+    isInteractive,
+    isOpen,
+    suggestionIds,
+    suggestionIdsKey,
+    suggestionResolutions,
+    suggestionResolutionsKey,
+  ]);
 
   return {
     editor,

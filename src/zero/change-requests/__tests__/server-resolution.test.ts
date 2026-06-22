@@ -108,8 +108,8 @@ describe('resolveChangeRequestByVoteResult', () => {
       id: 'cr-1',
       status: 'accepted',
       voting_status: 'completed',
-      resolved_in_mode: 'vote_event',
-      resolution_method: 'event_vote',
+      resolved_in_mode: 'event_final_closing_vote',
+      resolution_method: null,
       visibility_scope: 'public',
       updated_at: 1_000,
     });

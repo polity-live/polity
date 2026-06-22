@@ -20,6 +20,11 @@ const agendaActionBarMock = vi.hoisted(() =>
     return <div data-testid="agenda-action-bar" />;
   })
 );
+const voteCastDialogMock = vi.hoisted(() =>
+  vi.fn((props: Record<string, unknown>) => (
+    <div data-testid="vote-cast-dialog">{props.documentPreviewContent as ReactNode}</div>
+  ))
+);
 const changeRequestCardsListMock = vi.hoisted(() =>
   vi.fn((props: Record<string, unknown>) => {
     const items = (props.items as { id?: string }[] | undefined) ?? [];
@@ -98,7 +103,7 @@ vi.mock('../EditElectionVoteDialog', () => ({
 }));
 
 vi.mock('@/features/vote-cast/ui/VoteCastDialog', () => ({
-  VoteCastDialog: () => <div data-testid="vote-cast-dialog" />,
+  VoteCastDialog: voteCastDialogMock,
 }));
 
 vi.mock('@/features/elections/ui/CandidacyPasswordDialog', () => ({
@@ -291,23 +296,26 @@ function buildProps() {
     hasAmendmentCRs: false,
     crDisplayItemsBase: [],
     isCRVotingActive: false,
-    timelineHasFinalVote: false,
-    synthesizedFinalVoteItem: null,
+    timelineHasClosingVote: false,
+    synthesizedClosingVoteItem: null,
     crDisplayItems: [],
-    effectiveFinalVoteItem: null,
+    effectiveClosingVoteItem: null,
     isVoteInCRList: false,
     nonFinalCRItems: [],
     fallbackSelectedCRItemId: null,
     selectedCRToolbarItem: null,
+    currentCRSequenceItemId: null,
+    nextStartableSequenceItem: null,
     isCRToolbarActive: false,
     selectedCRPhase: null,
-    isSelectedCRFinalVote: false,
+    isSelectedClosingVote: false,
     hasUserVotedOnSelectedCR: false,
     selectedCRToolbarIndex: -1,
     hasPreviousChangeRequest: false,
     hasNextChangeRequest: false,
     handlePreviousChangeRequest: noop,
     handleNextChangeRequest: noop,
+    handleJumpToNextStartableSequenceItem: noop,
     handleStartSequenceFinalVote: noop,
     handleToolbarStartVote: noop,
     handleToolbarStartFinalVote: noop,
@@ -386,6 +394,20 @@ describe('EventAgendaItemDetailView', () => {
     );
   });
 
+  it('passes the vote dialog document preview content to the vote dialog', () => {
+    render(
+      <EventAgendaItemDetailView
+        {...buildProps()}
+        voteDialogDocumentPreviewContent={<div data-testid="dialog-document-preview" />}
+      />
+    );
+
+    expect(screen.getByTestId('dialog-document-preview')).toBeTruthy();
+    expect(voteCastDialogMock.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({ documentPreviewContent: expect.anything() })
+    );
+  });
+
   it('keeps the tally action but hides the vote action for offline sequence votes', () => {
     const props = buildProps();
     const handleOpenOfflineTallyDialog = vi.fn();
@@ -420,6 +442,47 @@ describe('EventAgendaItemDetailView', () => {
         onVoteClick: undefined,
       })
     );
+  });
+
+  it('keeps change request card vote actions visible but unavailable for offline event-suggestion votes', () => {
+    const props = buildProps();
+    const handleVoteClick = vi.fn();
+    const crItem = {
+      id: 'branch-1-cr-1',
+      vote: { id: 'vote-cr-1' },
+    };
+
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        attendanceMode="offline"
+        agendaItem={{
+          ...props.agendaItem,
+          amendment_id: 'amendment-1',
+          amendment: { editing_mode: 'suggest_event' },
+        }}
+        actionBarHook={{
+          ...props.actionBarHook,
+          handleVoteClick,
+        }}
+        crDisplayItems={[crItem]}
+        isCRVotingActive
+      />
+    );
+
+    const actionBarProps = agendaActionBarMock.mock.calls.at(-1)?.[0];
+    const listProps = changeRequestCardsListMock.mock.calls.at(-1)?.[0];
+
+    expect(actionBarProps).toEqual(expect.objectContaining({ onVoteClick: undefined }));
+    expect(listProps).toEqual(
+      expect.objectContaining({
+        canVote: false,
+        voteDisabledTooltip:
+          'Im Offline-Modus koennen keine Online-Stimmungsabgaben abgegeben werden. Wechsle fuer Indication Votes in den Online- oder Hybrid-Modus.',
+      })
+    );
+    expect(typeof listProps?.onOpenVoteDialog).toBe('function');
+    expect(handleVoteClick).not.toHaveBeenCalled();
   });
 
   it('keeps the vote action available for hybrid sequence votes', () => {
@@ -502,7 +565,7 @@ describe('EventAgendaItemDetailView', () => {
         agendaItem={{
           ...props.agendaItem,
           amendment_id: 'amendment-1',
-          amendment: { editing_mode: 'vote_event' },
+          amendment: { editing_mode: 'event_final_closing_vote' },
         }}
         canManageVoteSequence
         detailRuntimeStatus="in-progress"
@@ -531,6 +594,79 @@ describe('EventAgendaItemDetailView', () => {
     expect(listProps?.onStartFinal).not.toBe(startFinalPhase);
   });
 
+  it('keeps the change request card vote dialog opener available before the agenda item is active', () => {
+    const props = buildProps();
+    const handleVoteClick = vi.fn();
+    const setSelectedCRToolbarItemId = vi.fn();
+    const crItem = {
+      id: 'branch-2-cr-1',
+      vote: { id: 'vote-cr-1' },
+    };
+
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        agendaItem={{
+          ...props.agendaItem,
+          amendment_id: 'amendment-1',
+          amendment: { editing_mode: 'event_final_closing_vote' },
+        }}
+        actionBarHook={{
+          ...props.actionBarHook,
+          handleVoteClick,
+        }}
+        crDisplayItems={[crItem]}
+        detailRuntimeStatus="pending"
+        isCRVotingActive
+        setSelectedCRToolbarItemId={setSelectedCRToolbarItemId}
+      />
+    );
+
+    const listProps = changeRequestCardsListMock.mock.calls.at(-1)?.[0];
+
+    expect(typeof listProps?.onOpenVoteDialog).toBe('function');
+
+    (listProps?.onOpenVoteDialog as (itemId: string) => void)(crItem.id);
+
+    expect(setSelectedCRToolbarItemId).toHaveBeenCalledWith(crItem.id);
+    expect(handleVoteClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not expose the toolbar vote click for synthetic change request rows', () => {
+    const props = buildProps();
+    const handleVoteClick = vi.fn();
+    const selectedCRToolbarItem = {
+      id: 'mock-cr-cr-row-1',
+      vote: {
+        id: 'mock-vote-cr-row-1',
+      },
+    };
+
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        agendaItem={{
+          ...props.agendaItem,
+          amendment_id: 'amendment-1',
+          amendment: { editing_mode: 'event_final_closing_vote' },
+        }}
+        actionBarHook={{
+          ...props.actionBarHook,
+          handleVoteClick,
+        }}
+        isCRToolbarActive
+        isCRVotingActive
+        selectedCRToolbarItem={selectedCRToolbarItem}
+        selectedCRChoices={[{ id: 'mock-choice-yes-cr-row-1', label: 'Yes' }]}
+        toolbarVotingPhase="indication"
+      />
+    );
+
+    const actionBarProps = agendaActionBarMock.mock.calls.at(-1)?.[0];
+
+    expect(actionBarProps).toEqual(expect.objectContaining({ onVoteClick: undefined }));
+  });
+
   it('withholds change request final start controls until the agenda item is active', () => {
     const props = buildProps();
     const handleStartSequenceFinalVote = vi.fn();
@@ -544,7 +680,7 @@ describe('EventAgendaItemDetailView', () => {
       agendaItem: {
         ...props.agendaItem,
         amendment_id: 'amendment-1',
-        amendment: { editing_mode: 'vote_event' },
+        amendment: { editing_mode: 'event_final_closing_vote' },
       },
       canManageVoteSequence: true,
       crDisplayItems: [selectedCRToolbarItem],
@@ -588,13 +724,98 @@ describe('EventAgendaItemDetailView', () => {
     );
   });
 
+  it('wires the top bar jump action to the next startable voting step', () => {
+    const props = buildProps();
+    const handleJumpToNextStartableSequenceItem = vi.fn();
+    const selectedCRToolbarItem = {
+      id: 'closed-cr',
+      status: 'completed',
+      vote: { id: 'vote-closed', status: 'closed' },
+    };
+    const nextStartableSequenceItem = {
+      id: 'next-cr',
+      status: 'voting',
+      vote: { id: 'vote-next', status: 'indicative' },
+    };
+
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        agendaItem={{
+          ...props.agendaItem,
+          amendment_id: 'amendment-1',
+          amendment: { editing_mode: 'event_final_closing_vote' },
+        }}
+        canManageVoteSequence
+        detailRuntimeStatus="in-progress"
+        isCRToolbarActive
+        isCRVotingActive
+        selectedCRToolbarItem={selectedCRToolbarItem}
+        nextStartableSequenceItem={nextStartableSequenceItem}
+        toolbarVotingPhase="closed"
+        handleJumpToNextStartableSequenceItem={handleJumpToNextStartableSequenceItem}
+      />
+    );
+
+    const actionBarProps = agendaActionBarMock.mock.calls.at(-1)?.[0];
+
+    expect(actionBarProps).toEqual(
+      expect.objectContaining({
+        onJumpToNextVoteStep: handleJumpToNextStartableSequenceItem,
+        jumpToNextVoteStepTooltip: 'Next voting step',
+      })
+    );
+
+    (actionBarProps?.onJumpToNextVoteStep as () => void)();
+
+    expect(handleJumpToNextStartableSequenceItem).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not expose the top bar jump action when the selected step is startable', () => {
+    const props = buildProps();
+    const handleJumpToNextStartableSequenceItem = vi.fn();
+    const selectedCRToolbarItem = {
+      id: 'selected-cr',
+      status: 'voting',
+      vote: { id: 'vote-selected', status: 'indicative' },
+    };
+
+    render(
+      <EventAgendaItemDetailView
+        {...props}
+        agendaItem={{
+          ...props.agendaItem,
+          amendment_id: 'amendment-1',
+          amendment: { editing_mode: 'event_final_closing_vote' },
+        }}
+        canManageVoteSequence
+        detailRuntimeStatus="in-progress"
+        isCRToolbarActive
+        isCRVotingActive
+        selectedCRToolbarItem={selectedCRToolbarItem}
+        nextStartableSequenceItem={null}
+        toolbarVotingPhase="indication"
+        handleJumpToNextStartableSequenceItem={handleJumpToNextStartableSequenceItem}
+      />
+    );
+
+    const actionBarProps = agendaActionBarMock.mock.calls.at(-1)?.[0];
+
+    expect(actionBarProps).toEqual(
+      expect.objectContaining({
+        onJumpToNextVoteStep: undefined,
+      })
+    );
+    expect(handleJumpToNextStartableSequenceItem).not.toHaveBeenCalled();
+  });
+
   it('does not render the branch switcher when only one branch is selectable', () => {
     const props = buildProps();
     const branchBItem = {
       id: 'branch-b-cr',
       change_request_id: 'cr-branch-b',
       status: 'pending',
-      is_final_vote: false,
+      is_closing_vote: false,
       change_request: {
         id: 'cr-branch-b',
         title: 'Branch B CR',
@@ -608,7 +829,7 @@ describe('EventAgendaItemDetailView', () => {
         agendaItem={{
           ...props.agendaItem,
           amendment_id: 'amendment-1',
-          amendment: { id: 'amendment-1', editing_mode: 'vote_event' },
+          amendment: { id: 'amendment-1', editing_mode: 'event_final_closing_vote' },
         }}
         branchSelectorBranches={[{ id: 'branch-b', created_at: 2, title: 'Branch B' }]}
         selectedBranchId="branch-b"
@@ -636,7 +857,7 @@ describe('EventAgendaItemDetailView', () => {
       id: 'branch-b-cr',
       change_request_id: 'cr-branch-b',
       status: 'pending',
-      is_final_vote: false,
+      is_closing_vote: false,
       change_request: {
         id: 'cr-branch-b',
         title: 'Branch B CR',
@@ -650,7 +871,7 @@ describe('EventAgendaItemDetailView', () => {
         agendaItem={{
           ...props.agendaItem,
           amendment_id: 'amendment-1',
-          amendment: { id: 'amendment-1', editing_mode: 'vote_event' },
+          amendment: { id: 'amendment-1', editing_mode: 'event_final_closing_vote' },
         }}
         branchSelectorBranches={[
           { id: 'branch-a', created_at: 1, title: 'Branch A' },

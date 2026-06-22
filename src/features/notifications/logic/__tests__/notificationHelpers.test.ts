@@ -21,7 +21,7 @@ function createNotification(overrides: Partial<Notification> = {}): Notification
     sender_id: 'user-sender',
     title: 'Test notification',
     message: 'Test message',
-    type: 'event_invite',
+    type: 'participation_invite',
     action_url: null,
     is_read: false,
     related_entity_type: null,
@@ -54,9 +54,7 @@ function notificationOverrides(overrides: unknown): Partial<Notification> {
 
 describe('getNotificationNavigationTarget', () => {
   it.each([
-    ['group_invite', '/group/group-1/memberships'],
     ['membership_invite', '/group/group-1/memberships'],
-    ['event_invite', '/event/event-42/participants'],
     ['participation_invite', '/event/event-42/participants'],
     ['collaboration_invite', '/amendment/amendment-1/collaborators'],
   ])('routes %s notifications to the recipient memberships page', (type, actionUrl) => {

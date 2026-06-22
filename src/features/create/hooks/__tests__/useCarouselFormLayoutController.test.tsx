@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CreateFormStep } from '../../types/create-form.types';
@@ -141,6 +141,49 @@ describe('useCarouselFormLayoutController', () => {
       result.current.onScrollNext();
     });
 
+    expect(carouselMocks.emblaApi?.scrollNext).not.toHaveBeenCalled();
+  });
+
+  it('maps arrow keys to carousel navigation while respecting step validity and focused inputs', async () => {
+    const onStepChange = vi.fn();
+    const steps = [createStep(true), createStep(true), createStep(true)];
+
+    const { result } = renderHook(() =>
+      useCarouselFormLayoutController({
+        steps,
+        currentStep: 0,
+        onStepChange,
+      })
+    );
+
+    await waitFor(() => expect(result.current.canScrollNext).toBe(true));
+
+    fireEvent.keyDown(document, { key: 'ArrowRight' });
+    expect(carouselMocks.emblaApi?.scrollNext).toHaveBeenCalledTimes(1);
+
+    const input = document.createElement('input');
+    document.body.appendChild(input);
+    fireEvent.keyDown(input, { key: 'ArrowRight' });
+    input.remove();
+
+    expect(carouselMocks.emblaApi?.scrollNext).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not advance from an invalid step via arrow keys', async () => {
+    const onStepChange = vi.fn();
+    const steps = [createStep(false), createStep(true), createStep(true)];
+
+    const { result } = renderHook(() =>
+      useCarouselFormLayoutController({
+        steps,
+        currentStep: 0,
+        onStepChange,
+      })
+    );
+
+    await waitFor(() => expect(result.current.canScrollNext).toBe(false));
+
+    fireEvent.keyDown(document, { key: 'ArrowRight' });
     expect(carouselMocks.emblaApi?.scrollNext).not.toHaveBeenCalled();
   });
 });

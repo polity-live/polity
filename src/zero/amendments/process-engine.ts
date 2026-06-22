@@ -6,7 +6,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { fireNotification } from '../server-notify';
 import { finalizeInternalChangeRequestsForEventPhaseTransition } from '../change-requests/internal-voting';
 import { isAmendmentTargetEventOpen } from '@/features/amendments/logic/amendmentTargetEventEligibility';
-import { VOTE_PURPOSE, VOTE_STATUS } from '../votes/vote-workflow';
+import { type CanonicalVotePurpose, VOTE_PURPOSE, VOTE_PHASE } from '../votes/vote-workflow';
 import {
   buildMergeVoteTitle,
   getMergeVoteBranchLabel,
@@ -515,7 +515,7 @@ async function createAgendaItemAndVote(
     voteDescription?: string | null;
     choiceLabels?: readonly ChoiceLabelSpec[];
     majorityType?: string | null;
-    votePurpose?: string;
+    votePurpose: CanonicalVotePurpose;
   }
 ) {
   const now = Date.now();
@@ -558,8 +558,8 @@ async function createAgendaItemAndVote(
     amendment_id: args.amendmentId,
     title: voteTitle,
     description: voteDescription,
-    status: VOTE_STATUS.indicativeOpen,
-    purpose: args.votePurpose ?? 'general',
+    status: VOTE_PHASE.indicative,
+    purpose: args.votePurpose,
     majority_type: args.majorityType ?? 'relative',
     closing_type: 'moderator',
     closing_duration_seconds: null,
@@ -1660,7 +1660,10 @@ async function maybeScheduleAutomaticMergeAtCrossing(
 
   type BranchRow = (typeof branchRows)[number];
   type StepRunRow = (typeof stepRunRows)[number];
-  interface CrossingCandidate { branch: BranchRow; stepRun: StepRunRow }
+  interface CrossingCandidate {
+    branch: BranchRow;
+    stepRun: StepRunRow;
+  }
 
   const branchById = new Map(
     branchRows
@@ -1863,6 +1866,7 @@ async function createRoundTwoMergeApprovalStep(
       creatorId: args.creatorId,
       agendaTitle: `Merge confirmation: ${args.amendmentTitle}`,
       voteTitle: `Merge round 2: ${args.amendmentTitle}`,
+      votePurpose: VOTE_PURPOSE.closing,
     });
   }
 
@@ -2077,6 +2081,7 @@ async function insertWorkflowRuntimeStep(
       amendmentReason: args.amendmentReason,
       forwardingStatus: 'forward_confirmed',
       creatorId: args.creatorId,
+      votePurpose: VOTE_PURPOSE.closing,
     });
   }
 
@@ -2251,6 +2256,7 @@ async function createInitialStepRunFromPathSegment(
       amendmentReason: args.amendmentReason,
       forwardingStatus: args.segment.forwardingStatus,
       creatorId: args.creatorId,
+      votePurpose: VOTE_PURPOSE.closing,
     });
   }
 
@@ -2671,6 +2677,7 @@ export async function replanProcessBranchEvents(
         amendmentReason: amendment.reason ?? null,
         forwardingStatus,
         creatorId: processRun.created_by_id,
+        votePurpose: VOTE_PURPOSE.closing,
       });
     }
 
@@ -2835,6 +2842,7 @@ export async function completeProcessTaskWithEvent(
           ? [buildChoiceLabel('yes'), buildChoiceLabel('no')]
           : undefined,
       majorityType: task.task_type === 'implementation_evaluation' ? 'simple' : undefined,
+      votePurpose: VOTE_PURPOSE.closing,
     });
   }
 
@@ -3361,6 +3369,7 @@ export async function resolveAmendmentProcessVote(
       amendmentReason: amendment?.reason ?? null,
       forwardingStatus: 'forward_confirmed',
       creatorId: processRun.created_by_id,
+      votePurpose: VOTE_PURPOSE.closing,
     });
     await tx.mutate.amendment_process_step_run.update({
       id: nextStep.id,

@@ -66,7 +66,7 @@ describe('deriveControllingEventForSettings', () => {
       },
     };
 
-    expect(deriveControllingEventForSettings(process, 'vote_event')).toEqual({
+    expect(deriveControllingEventForSettings(process, 'event_final_closing_vote')).toEqual({
       id: '082e8fa5-2cd4-4e82-bedf-ac77844e3d99',
       title: null,
     });

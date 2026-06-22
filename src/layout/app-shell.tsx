@@ -157,6 +157,10 @@ function isEntitySecondarySwipeRoute(pathname: string): boolean {
   return /^\/(?:group|user|amendment|event|blog)\/[^/]+/.test(pathname);
 }
 
+function isAgendaKeyboardNavigationRoute(pathname: string): boolean {
+  return /^\/event\/[^/]+\/agenda(?:\/|$)/.test(pathname);
+}
+
 function findActiveNavigationItemIndex(
   navigationItems: NavigationItem[],
   currentRoute: string,
@@ -240,6 +244,7 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
     canSwipeNext: activeSecondaryIndex >= 0 && activeSecondaryIndex < secondaryItems.length - 1,
     onSwipePrev: () => goToSecondaryItem(-1),
     onSwipeNext: () => goToSecondaryItem(1),
+    keyboardMode: isAgendaKeyboardNavigationRoute(pathname) ? 'off' : 'global',
   });
 
   if (isFullscreenOnboarding) {

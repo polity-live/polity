@@ -72,7 +72,7 @@ function timelineItem(id: string) {
     agenda_item_id: 'agenda-1',
     change_request_id: id,
     status: 'pending',
-    is_final_vote: false,
+    is_closing_vote: false,
     change_request: {
       id,
       title: id,
@@ -94,7 +94,7 @@ function baseProps() {
     diffMap: {},
     discussions: [],
     documentContent: flatDocumentContent as never,
-    editingMode: 'vote_internal',
+    editingMode: 'vote_internal' as const,
     hasAmendment: true,
     isInVotingStage: false,
     isLoading: false,
@@ -165,20 +165,6 @@ describe('ChangeRequestsView branch sections', () => {
         discussions: [],
         documentContent: branchTwoDocument as never,
       },
-      {
-        id: 'legacy-main-document',
-        branchId: null,
-        title: 'Main document',
-        description: 'Change requests without a process branch',
-        totalCount: 1,
-        openCount: 1,
-        approvedCount: 0,
-        declinedCount: 0,
-        timelineItems: [timelineItem('legacy-cr')],
-        diffMap: {},
-        discussions: [],
-        isLegacy: true,
-      },
     ];
 
     const { rerender } = render(
@@ -220,7 +206,9 @@ describe('ChangeRequestsView branch sections', () => {
       expect.objectContaining({
         items: branchSections[1].timelineItems,
         editingMode: 'suggest_event',
-        isVotingActive: false,
+        isVotingActive: true,
+        hideInlineVotingControls: true,
+        showAgendaDetailsVoteActions: true,
         documentContent: branchTwoDocument,
       })
     );
@@ -271,7 +259,9 @@ describe('ChangeRequestsView branch sections', () => {
       expect.objectContaining({
         items: branchSections[1].timelineItems,
         editingMode: 'suggest_event',
-        isVotingActive: false,
+        isVotingActive: true,
+        hideInlineVotingControls: true,
+        showAgendaDetailsVoteActions: true,
       })
     );
   });

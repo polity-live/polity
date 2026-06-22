@@ -913,6 +913,9 @@ export const eventQueries = {
         .where('status', 'IN', ['active', 'admin', 'member', 'confirmed'])
         .whereExists('event', event => applyEventParticipantEventAccess(event, userID))
         .related('user')
+        .related('participant_roles', roleLinkQuery =>
+          roleLinkQuery.related('role', roleQuery => roleQuery.related('action_rights'))
+        )
   ),
 
   /** Event with group relation (simple) */

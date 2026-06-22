@@ -172,22 +172,13 @@ function StatementStoryViewerContent({
     canSwipeNext: canGoNext,
     onSwipePrev: goPrev,
     onSwipeNext: goNext,
+    keyboardMode: 'scoped',
   });
 
   return (
     <div
       className="bg-background text-foreground grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)]"
       style={{ touchAction: 'pan-y' }}
-      onKeyDown={event => {
-        if (event.key === 'ArrowLeft') {
-          event.preventDefault();
-          goPrev();
-        }
-        if (event.key === 'ArrowRight') {
-          event.preventDefault();
-          goNext();
-        }
-      }}
       tabIndex={-1}
       {...handlers}
     >

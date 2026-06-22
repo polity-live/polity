@@ -14,6 +14,7 @@ import type { AgendaItemStatus } from './AgendaCard';
 import { AgendaElectionSection, isAutoAssignedRoleElection } from './AgendaElectionSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
 import { getAgendaDisplayType, getYouTubeVideoId } from '../logic/agendaUiHelpers';
+import { getSpeakerGenderLabel } from '../logic/speakerListGenderQuota';
 import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 import {
   CheckCircle2,
@@ -43,6 +44,7 @@ interface EventLiveFocusDialogProps {
   isEventStarted: boolean;
   eventStartTimestamp?: number | null;
   speakerList: any[];
+  showSpeakerGender?: boolean;
   userId?: string;
   isUserInSpeakerList: boolean;
   speakerLoading?: boolean;
@@ -54,6 +56,9 @@ interface EventLiveFocusDialogProps {
   onStartVote?: () => void;
   onStartFinalVote?: () => void;
   onCloseFinalVote?: () => void;
+  startVoteLabel?: string | null;
+  startFinalVoteLabel?: string | null;
+  closeFinalVoteLabel?: string | null;
   onCompleteItem?: () => void;
   completeItemDisabled?: boolean;
   onNextItem?: () => void;
@@ -68,6 +73,7 @@ interface EventLiveFocusDialogProps {
   onVoteClick?: () => void;
   attendanceMode?: 'online' | 'hybrid' | 'offline' | null;
   confirmedOfflineParticipantCount?: number;
+  eligibleFinalVoterCount?: number;
   streamElection?: any;
   streamVote?: any;
   streamDelegateTargetEvent?: any;
@@ -88,6 +94,7 @@ interface SpeakerFocusPanelProps {
   className?: string;
   t: (key: string, fallback?: string | Record<string, unknown>) => string;
   speakerList: any[];
+  showGender?: boolean;
   userId?: string;
   canManageAgenda: boolean;
   onMarkSpeakerCompleted?: (speakerId: string) => void;
@@ -110,6 +117,25 @@ function getInitials(name?: string | null) {
 
 function getSpeakerName(speaker: any, fallback: string) {
   return speaker.user?.name || speaker.user?.email || speaker.title || fallback;
+}
+
+function formatGenderBadgeLabel(
+  t: (key: string, fallback?: string | Record<string, unknown>) => string,
+  gender?: string | null
+) {
+  const labelKey =
+    gender === 'male'
+      ? 'male'
+      : gender === 'female'
+        ? 'female'
+        : gender === 'diverse'
+          ? 'diverse'
+          : 'unspecified';
+
+  return t(
+    `features.events.agenda.genderQuota.genderLabels.${labelKey}`,
+    getSpeakerGenderLabel(gender)
+  );
 }
 
 function canShowVotingAction(phase?: string | null) {
@@ -135,6 +161,7 @@ function SpeakerFocusPanel({
   className,
   t,
   speakerList,
+  showGender,
   userId,
   canManageAgenda,
   onMarkSpeakerCompleted,
@@ -193,6 +220,11 @@ function SpeakerFocusPanel({
                 <BadgeControl variant="default" size="xs">
                   {t('features.events.agenda.currentSpeaker', 'Current speaker')}
                 </BadgeControl>
+                {showGender ? (
+                  <BadgeControl variant="outline" size="xs" className="ml-2">
+                    {formatGenderBadgeLabel(t, currentSpeaker.user?.gender)}
+                  </BadgeControl>
+                ) : null}
                 <p className="mt-2 truncate text-lg font-semibold">
                   {getSpeakerName(currentSpeaker, t('common.unspecified'))}
                 </p>
@@ -251,6 +283,11 @@ function SpeakerFocusPanel({
                   {isCurrentUser ? (
                     <BadgeControl variant="secondary">
                       {translateText('generated.inline.0055_you_905cb326')}
+                    </BadgeControl>
+                  ) : null}
+                  {showGender ? (
+                    <BadgeControl variant="outline">
+                      {formatGenderBadgeLabel(t, speaker.user?.gender)}
                     </BadgeControl>
                   ) : null}
                 </div>
@@ -313,6 +350,7 @@ export function EventLiveFocusDialog({
   isEventStarted,
   eventStartTimestamp,
   speakerList,
+  showSpeakerGender,
   userId,
   isUserInSpeakerList,
   speakerLoading,
@@ -324,6 +362,9 @@ export function EventLiveFocusDialog({
   onStartVote,
   onStartFinalVote,
   onCloseFinalVote,
+  startVoteLabel,
+  startFinalVoteLabel,
+  closeFinalVoteLabel,
   onCompleteItem,
   completeItemDisabled,
   onNextItem,
@@ -338,6 +379,7 @@ export function EventLiveFocusDialog({
   onVoteClick,
   attendanceMode,
   confirmedOfflineParticipantCount = 0,
+  eligibleFinalVoterCount,
   streamElection,
   streamVote,
   streamDelegateTargetEvent,
@@ -470,6 +512,7 @@ export function EventLiveFocusDialog({
                     className="lg:hidden"
                     t={t}
                     speakerList={speakerList}
+                    showGender={showSpeakerGender}
                     userId={userId}
                     canManageAgenda={canManageAgenda}
                     onMarkSpeakerCompleted={onMarkSpeakerCompleted}
@@ -538,9 +581,7 @@ export function EventLiveFocusDialog({
                       userSelectedChoiceIds={userSelectedChoiceIds}
                       voteStatus={streamVote.status}
                       majorityType={streamVote.majority_type}
-                      totalEligibleVoters={
-                        (streamVote.voters?.length ?? 0) + confirmedOfflineParticipantCount
-                      }
+                      totalEligibleVoters={eligibleFinalVoterCount}
                       canManageOfflineResults={canManageAgenda}
                       offlineEligibleCount={confirmedOfflineParticipantCount}
                       forwardingPreview={streamForwardingPreview}
@@ -557,6 +598,7 @@ export function EventLiveFocusDialog({
               )}
               t={t}
               speakerList={speakerList}
+              showGender={showSpeakerGender}
               userId={userId}
               canManageAgenda={canManageAgenda}
               onMarkSpeakerCompleted={onMarkSpeakerCompleted}
@@ -641,19 +683,19 @@ export function EventLiveFocusDialog({
                 {onStartVote ? (
                   <Button type="button" variant="outline" onClick={onStartVote}>
                     <Play className="h-4 w-4" />
-                    {t('features.events.agenda.actions.startVote')}
+                    {startVoteLabel ?? t('features.events.agenda.actions.startVote')}
                   </Button>
                 ) : null}
                 {onStartFinalVote ? (
                   <Button type="button" variant="outline" onClick={onStartFinalVote}>
                     <Gavel className="h-4 w-4" />
-                    {t('features.events.agenda.actions.startFinalVote')}
+                    {startFinalVoteLabel ?? t('features.events.agenda.actions.startFinalVote')}
                   </Button>
                 ) : null}
                 {onCloseFinalVote ? (
                   <Button type="button" variant="outline" onClick={onCloseFinalVote}>
                     <CheckCircle2 className="h-4 w-4" />
-                    {t('features.events.agenda.actions.closeFinalVote')}
+                    {closeFinalVoteLabel ?? t('features.events.agenda.actions.closeFinalVote')}
                   </Button>
                 ) : null}
                 {onCompleteItem ? (

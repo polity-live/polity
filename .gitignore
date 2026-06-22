@@ -81,11 +81,6 @@ jspm_packages/
 # Fly.io
 .fly
 
-# Storybook
-storybook-static/
-*storybook.log
-.storybook/public
-
 # TanStack Router
 .tanstack/
 

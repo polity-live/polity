@@ -26,12 +26,18 @@ import { ChangeRequestTimelineCard } from './ChangeRequestTimelineCard';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
 import { SuggestionViewToggle } from '@/features/editor/ui/SuggestionViewToggle';
+import {
+  isMockCRTimelineItem,
+  isPendingSubmissionCRTimelineItem,
+} from '../logic/createMockCRTimelineItems';
+import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 
 type TabValue = 'all' | 'open' | 'accepted' | 'rejected';
 
 function canFinalizeInternalChangeRequest(item: any) {
   const cr = item.change_request;
-  if (!cr || item.is_final_vote) return false;
+  if (!cr || item.is_closing_vote) return false;
+  if (isPendingSubmissionCRTimelineItem(item)) return false;
   if (cr.voting_status === 'completed') return false;
   return (
     cr.status !== 'accepted' &&
@@ -55,20 +61,24 @@ function isChangeRequestVotesPlaceholder(item: any) {
 
 export interface ChangeRequestCardsListViewProps {
   items: any[];
-  editingMode: any;
+  editingMode: EditingMode;
   isVotingActive: any;
   userId: any;
   canManage: any;
   canVote: any;
   hideInlineVotingControls: any;
   allowInlineFinalVoteStart?: any;
+  showAgendaDetailsVoteActions?: any;
+  voteDisabledTooltip?: any;
   currentItemId: any;
   diffMap: any;
   progress: any;
+  eligibleFinalVoterCount?: number;
   completedCount: any;
   allCRsProcessed: any;
   isTimelineComplete: any;
   documentContent: any;
+  agendaTitle?: any;
   discussions: any;
   amendmentId: any;
   agendaItemId: any;
@@ -76,6 +86,7 @@ export interface ChangeRequestCardsListViewProps {
   hasUserVoted: any;
   getUserSelectedChoiceIds: any;
   onCastVote: any;
+  onOpenVoteDialog?: any;
   onStartIndicative: any;
   onStartFinal: any;
   onCloseVoting: any;
@@ -87,7 +98,7 @@ export interface ChangeRequestCardsListViewProps {
   searchQuery: any;
   setSearchQuery: any;
   crIdToDiscussionId: any;
-  finalVoteItem: any;
+  closingVoteItem: any;
   variantVoteItem?: any;
   crItems: any[];
   sequenceItems?: any[];
@@ -106,6 +117,7 @@ export interface ChangeRequestCardsListViewProps {
   normalizedPreviewCrIds: any;
   effectivePreviewCrIds: any;
   selectedPreviewSuggestionIds: any;
+  previewSuggestionResolutions: any;
 }
 
 export function ChangeRequestCardsListView({
@@ -116,12 +128,16 @@ export function ChangeRequestCardsListView({
   canVote,
   hideInlineVotingControls,
   allowInlineFinalVoteStart = false,
+  showAgendaDetailsVoteActions = false,
+  voteDisabledTooltip,
   currentItemId,
   diffMap,
   completedCount,
+  eligibleFinalVoterCount,
   allCRsProcessed,
   isTimelineComplete,
   documentContent,
+  agendaTitle,
   discussions,
   amendmentId,
   agendaItemId,
@@ -129,6 +145,7 @@ export function ChangeRequestCardsListView({
   hasUserVoted,
   getUserSelectedChoiceIds,
   onCastVote,
+  onOpenVoteDialog,
   onStartIndicative,
   onStartFinal,
   onCloseVoting,
@@ -140,7 +157,7 @@ export function ChangeRequestCardsListView({
   searchQuery,
   setSearchQuery,
   crIdToDiscussionId,
-  finalVoteItem,
+  closingVoteItem,
   variantVoteItem,
   crItems,
   sequenceItems = [],
@@ -154,6 +171,7 @@ export function ChangeRequestCardsListView({
   progressPercent,
   effectivePreviewCrIds,
   selectedPreviewSuggestionIds,
+  previewSuggestionResolutions,
 }: ChangeRequestCardsListViewProps) {
   const isInternalVotingMode = editingMode === 'vote_internal';
   const editingModeLabel = getEditingModeOption(editingMode, t).label;
@@ -178,7 +196,7 @@ export function ChangeRequestCardsListView({
     shouldRenderSequenceInterstitial ? (
       <div data-testid="change-request-sequence-interstitial">{sequenceInterstitial}</div>
     ) : null;
-  void finalVoteItem;
+  void closingVoteItem;
   void allCRsProcessed;
 
   return (
@@ -362,7 +380,7 @@ export function ChangeRequestCardsListView({
               const canJumpToFinalVote =
                 isChangeRequestVotesPlaceholder(item) &&
                 crItems.length === 0 &&
-                Boolean(finalVoteItem);
+                Boolean(closingVoteItem);
               const outcomeLabel = getInternalOutcomeLabel(item.change_request);
               const votesFor = item.change_request?.votes_for ?? 0;
               const votesAgainst = item.change_request?.votes_against ?? 0;
@@ -384,6 +402,10 @@ export function ChangeRequestCardsListView({
                 shouldRenderSequenceInterstitial && !variantVoteItem && index === 0;
               const renderInterstitialAfter =
                 shouldRenderSequenceInterstitial && item.id === variantVoteItem?.id;
+              const isSyntheticEventVoteRow = !isInternalVotingMode && isMockCRTimelineItem(item);
+              const itemCanVote = isVotingActive && !isSyntheticEventVoteRow ? canVote : false;
+              const itemOpenVoteDialog =
+                isVotingActive && !isSyntheticEventVoteRow ? onOpenVoteDialog : undefined;
 
               return (
                 <Fragment key={item.id}>
@@ -402,14 +424,20 @@ export function ChangeRequestCardsListView({
                           : []
                       }
                       canManage={isVotingActive ? canManage : false}
-                      canVote={isVotingActive ? canVote : false}
+                      canVote={itemCanVote}
+                      eligibleFinalVoterCount={eligibleFinalVoterCount}
                       hideInlineVotingControls={hideInlineVotingControls}
                       allowInlineFinalVoteStart={allowInlineFinalVoteStart}
+                      showAgendaDetailsVoteActions={showAgendaDetailsVoteActions}
+                      voteDisabledTooltip={voteDisabledTooltip}
+                      isVotingActive={isVotingActive}
                       isFinalVoteLocked={isLocked}
                       diff={diff}
                       documentContent={documentContent}
                       suggestionId={suggestionId}
-                      crId={previewCrId || crTitle || undefined}
+                      suggestionResolutions={previewSuggestionResolutions}
+                      agendaTitle={agendaTitle}
+                      crId={displayCrId || crTitle || previewCrId || undefined}
                       displayCrId={displayCrId || undefined}
                       discussions={discussions}
                       editingMode={editingMode}
@@ -419,6 +447,7 @@ export function ChangeRequestCardsListView({
                       agendaItemId={agendaItemId}
                       showEditorPreview
                       onCastVote={isVotingActive ? onCastVote : undefined}
+                      onOpenVoteDialog={itemOpenVoteDialog}
                       onStartIndicative={isVotingActive ? onStartIndicative : undefined}
                       onStartFinal={isVotingActive ? onStartFinal : undefined}
                       onCloseVoting={isVotingActive ? onCloseVoting : undefined}

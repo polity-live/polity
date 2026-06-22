@@ -191,6 +191,31 @@ describe('internal change request voting close rules', () => {
     );
   });
 
+  it('does not treat legacy created_in_mode values as internal change requests', async () => {
+    const tx = createTx([
+      {
+        id: 'amendment-1',
+        discussions: [],
+      },
+      [
+        {
+          ...openChangeRequest,
+          created_in_mode: 'internal_suggestion',
+        },
+      ],
+    ]);
+
+    const result = await finalizeInternalChangeRequestsForEventPhaseTransition({
+      tx: tx as never,
+      ctx: { userID: 'manager-1' },
+      amendmentId: 'amendment-1',
+      now: 100_000,
+    });
+
+    expect(result).toEqual([]);
+    expect(tx.mutate.change_request.update).not.toHaveBeenCalled();
+  });
+
   it('finalizes open internal CRs on event transition with one shared document state', async () => {
     const originalContent = [{ type: 'p', children: [{ text: 'original' }] }];
     const firstAppliedContent = [
@@ -207,7 +232,7 @@ describe('internal change request voting close rules', () => {
       ...openChangeRequest,
       id: 'cr-2',
       title: 'CR-2',
-      created_in_mode: 'internal_suggestion',
+      created_in_mode: 'suggest_internal',
       created_at: 2_000,
     };
     const tx = createTx([

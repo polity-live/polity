@@ -19,7 +19,13 @@ interface SuggestionViewToggleViewProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   filterMode: FilterMode;
-  crOptions: { crId: string; displayCrId?: string; title: string; userId?: string | null }[];
+  crOptions: {
+    crId: string;
+    displayCrId: string;
+    title: string;
+    userId: string;
+    aliases: string[];
+  }[];
   isFiltered: boolean;
   buttonLabel: string;
   allSelected: boolean;
@@ -37,6 +43,13 @@ interface SuggestionViewToggleViewProps {
   onToggleCr: (crId: string) => void;
   onSelectAll: () => void;
   onDeselectAll: () => void;
+}
+
+function isOptionSelected(
+  selectedCrIds: Set<string> | null,
+  option: SuggestionViewToggleViewProps['crOptions'][number]
+) {
+  return Boolean(selectedCrIds && option.aliases.some(alias => selectedCrIds.has(alias)));
 }
 
 export function SuggestionViewToggleView({
@@ -92,7 +105,7 @@ export function SuggestionViewToggleView({
                   {labels.allSuggestions}
                   {selectedCrIds === null && <Check className="ml-auto h-4 w-4" />}
                 </CommandItem>
-                {crOptions.map((option: any) => (
+                {crOptions.map(option => (
                   <CommandItem key={option.crId} onSelect={() => onSelectCr(option.crId)}>
                     <Filter className="mr-2 h-4 w-4" />
                     <div className="flex flex-col">
@@ -101,7 +114,9 @@ export function SuggestionViewToggleView({
                         <span className="text-muted-foreground text-xs">{option.title}</span>
                       )}
                     </div>
-                    {selectedCrIds?.has(option.crId) && <Check className="ml-auto h-4 w-4" />}
+                    {isOptionSelected(selectedCrIds, option) && (
+                      <Check className="ml-auto h-4 w-4" />
+                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -117,8 +132,8 @@ export function SuggestionViewToggleView({
                   <FormControlCheckbox checked={allSelected} className="mr-2" tabIndex={-1} />
                   {allSelected ? labels.deselectAll : labels.selectAll}
                 </CommandItem>
-                {crOptions.map((option: any) => {
-                  const isChecked = selectedCrIds?.has(option.crId) ?? false;
+                {crOptions.map(option => {
+                  const isChecked = isOptionSelected(selectedCrIds, option);
                   return (
                     <CommandItem key={option.crId} onSelect={() => onToggleCr(option.crId)}>
                       <FormControlCheckbox checked={isChecked} className="mr-2" tabIndex={-1} />

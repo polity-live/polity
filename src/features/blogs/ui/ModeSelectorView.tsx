@@ -3,7 +3,7 @@ import type { EditorMode } from '@/features/editor/types';
 
 interface ModeSelectorViewProps {
   blogId: string;
-  currentMode: EditorMode | string;
+  currentMode: EditorMode;
   isOwnerOrCollaborator: boolean;
   onModeChange: (newMode: EditorMode) => Promise<void>;
 }

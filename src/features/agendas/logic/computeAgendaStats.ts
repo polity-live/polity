@@ -21,7 +21,7 @@ interface AgendaStatsAmendment {
 interface AgendaStatsChangeRequestTimelineItem {
   id?: string | null;
   change_request_id?: string | null;
-  is_final_vote?: boolean | null;
+  is_closing_vote?: boolean | null;
   status?: string | null;
 }
 
@@ -38,7 +38,7 @@ function isOpenChangeRequest(changeRequest: AgendaStatsChangeRequest) {
 }
 
 function isOpenTimelineChangeRequest(item: AgendaStatsChangeRequestTimelineItem) {
-  return !item.is_final_vote && (item.status === 'pending' || item.status === 'voting');
+  return !item.is_closing_vote && (item.status === 'pending' || item.status === 'voting');
 }
 
 export function computeAgendaStats(agendaItems: readonly AgendaStatsAgendaItem[]): AgendaStats {

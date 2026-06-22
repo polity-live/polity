@@ -11,6 +11,7 @@ import { BadgeControl } from '@/features/shared/ui/status';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { Button } from '@/features/shared/ui/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/features/shared/ui/ui/hover-card';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
 import type { UserWikiPageState } from '../hooks/useUserWikiPage';
 import { SocialBar } from './SocialBar';
@@ -87,10 +88,13 @@ export function UserWikiView({ page }: UserWikiViewProps) {
       ) : null}
 
       <StatsBar
-        stats={[
-          { value: page.subscriberCount, labelKey: 'components.labels.subscribers' },
-          { value: page.groupCount, labelKey: 'components.labels.groups' },
-          { value: page.amendmentCount, labelKey: 'components.labels.amendments' },
+        items={[
+          {
+            value: page.subscriberCount,
+            label: translateText('components.labels.subscribers'),
+          },
+          { value: page.groupCount, label: translateText('components.labels.groups') },
+          { value: page.amendmentCount, label: translateText('components.labels.amendments') },
         ]}
       />
 

@@ -121,7 +121,7 @@ export function VoteResultsDisplay({
 }: VoteResultsDisplayProps) {
   const { t } = useTranslation();
   const [showIndicationResults, setShowIndicationResults] = useState(false);
-  const isIndicationPhase = phase === 'indication';
+  const isIndicationPhase = phase === 'indication' || phase === 'internal';
   const canToggleIndicationResults = !isIndicationPhase && totalIndication > 0;
   const showIndicationRows = canToggleIndicationResults && showIndicationResults;
   const selectedOptionIdSet = new Set(selectedOptionIds);

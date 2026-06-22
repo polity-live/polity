@@ -9,11 +9,10 @@ import { resolveChangeRequestByVoteResult } from '../change-requests/server-reso
 import { finalizeInternalChangeRequestsForEventPhaseTransition } from '../change-requests/internal-voting';
 import { discardPendingEventSuggestions } from '../change-requests/event-suggestions';
 import {
+  type CanonicalVotePurpose,
   VOTE_PURPOSE,
-  VOTE_STATUS,
-  isFinalClosingVotePurpose,
-  isMergeVariantVotePurpose,
-  normalizeVoteStatus,
+  VOTE_PHASE,
+  normalizeVotePhase,
 } from '../votes/vote-workflow';
 import {
   buildMergeVoteTitle,
@@ -29,8 +28,20 @@ import {
   createSpeakerListSchema,
   updateAgendaItemChangeRequestSchema,
   initializeChangeRequestVotingSchema,
+  ensureEventSuggestionChangeRequestVotesSchema,
   processCRVoteResultSchema,
 } from './schema';
+import { AGENDA_VOTE_STEP_KIND } from './vote-step-kind';
+
+type AgendaMutatorTx = Parameters<
+  typeof mutators.agendas.updateAgendaItemChangeRequest.fn
+>[0]['tx'];
+
+const DEFAULT_CHANGE_REQUEST_CHOICE_SPECS = (['yes', 'no', 'abstain'] as const).map(label => ({
+  label,
+  semanticKey: label,
+  processBranchId: null as string | null,
+}));
 
 function buildMergeVoteChoiceSpecs<TBranch extends MergeVoteBranchTitleSource>(
   branches: readonly TBranch[]
@@ -56,7 +67,7 @@ async function assertCurrentChangeRequestTimelineItem(
   const junction = await tx.run(
     zql.agenda_item_change_request.where('id', agendaItemChangeRequestId).one()
   );
-  if (!junction || junction.is_final_vote) {
+  if (!junction || junction.is_closing_vote) {
     return junction;
   }
 
@@ -65,7 +76,9 @@ async function assertCurrentChangeRequestTimelineItem(
       .where('agenda_item_id', junction.agenda_item_id)
       .orderBy('order_index', 'asc')
   );
-  const firstIncomplete = timeline.find(item => !item.is_final_vote && item.status !== 'completed');
+  const firstIncomplete = timeline.find(
+    item => !item.is_closing_vote && item.status !== 'completed'
+  );
 
   if (firstIncomplete?.id && firstIncomplete.id !== junction.id) {
     throw new Error('Change requests must be voted in their configured order.');
@@ -75,7 +88,7 @@ async function assertCurrentChangeRequestTimelineItem(
 }
 
 async function assertCanManageAgendaVoteFlow(
-  tx: Parameters<typeof mutators.agendas.updateAgendaItemChangeRequest.fn>[0]['tx'],
+  tx: AgendaMutatorTx,
   ctx: { readonly userID: string },
   agendaItemId: string
 ) {
@@ -111,6 +124,59 @@ async function assertCanManageAgendaVoteFlow(
   }
 
   throw eventPermissionError;
+}
+
+async function assertCanEnsureEventSuggestionChangeRequestVotes(
+  tx: AgendaMutatorTx,
+  ctx: { readonly userID: string },
+  args: { agenda_item_id: string; amendment_id: string }
+) {
+  const agendaItem = await tx.run(zql.agenda_item.where('id', args.agenda_item_id).one());
+  if (!agendaItem?.event_id) {
+    throw new Error('Agenda item is not linked to an event.');
+  }
+  if (agendaItem.amendment_id && agendaItem.amendment_id !== args.amendment_id) {
+    throw new Error('Agenda item is linked to a different amendment.');
+  }
+
+  let activeVotingError: unknown = null;
+  try {
+    await can(tx, ctx, {
+      action: 'active_voting',
+      resource: 'events',
+      eventId: agendaItem.event_id,
+    });
+    return agendaItem;
+  } catch (error) {
+    if (!isPermissionError(error)) throw error;
+    activeVotingError = error;
+  }
+
+  try {
+    await can(tx, ctx, {
+      action: 'manage_votes',
+      resource: 'events',
+      eventId: agendaItem.event_id,
+    });
+    return agendaItem;
+  } catch (error) {
+    if (!isPermissionError(error)) throw error;
+  }
+
+  if (agendaItem.amendment_id) {
+    try {
+      await can(tx, ctx, {
+        action: 'manage',
+        resource: 'amendments',
+        amendmentId: agendaItem.amendment_id,
+      });
+      return agendaItem;
+    } catch (error) {
+      if (!isPermissionError(error)) throw error;
+    }
+  }
+
+  throw activeVotingError;
 }
 
 async function resolveFallbackProcessBranchId(
@@ -484,7 +550,7 @@ export const agendaServerMutators = {
       // Helper: create a vote with 3 choices and voters
       async function createVoteWithChoicesAndVoters(
         voteTitle: string,
-        purpose: string,
+        purpose: CanonicalVotePurpose,
         choiceSpecs: readonly {
           label: string;
           semanticKey?: string | null;
@@ -498,7 +564,7 @@ export const agendaServerMutators = {
           amendment_id,
           title: voteTitle,
           description: null,
-          status: VOTE_STATUS.indicativeOpen,
+          status: VOTE_PHASE.indicative,
           purpose,
           majority_type: 'relative',
           closing_type: 'moderator',
@@ -547,7 +613,9 @@ export const agendaServerMutators = {
         zql.vote.where('agenda_item_id', agenda_item_id).where('amendment_id', amendment_id)
       );
       const existingVotes = Array.isArray(existingVotesResult) ? existingVotesResult : [];
-      const existingMergeVote = existingVotes.find(vote => isMergeVariantVotePurpose(vote.purpose));
+      const existingMergeVote = existingVotes.find(
+        vote => vote.purpose === VOTE_PURPOSE.mergeVariant
+      );
       let insertedMergeSequenceStep = false;
 
       if (mergeStepRuns.length > 1) {
@@ -613,9 +681,7 @@ export const agendaServerMutators = {
 
         const existingMergeLink = existingLinks.find(
           link =>
-            link.vote_id === mergeVoteId ||
-            link.step_kind === VOTE_PURPOSE.mergeVariant ||
-            isMergeVariantVotePurpose(link.step_kind)
+            link.vote_id === mergeVoteId || link.step_kind === AGENDA_VOTE_STEP_KIND.mergeVariant
         );
         if (!existingMergeLink) {
           for (const link of existingLinks) {
@@ -632,9 +698,9 @@ export const agendaServerMutators = {
             change_request_id: null,
             vote_id: mergeVoteId,
             order_index: 0,
-            step_kind: VOTE_PURPOSE.mergeVariant,
+            step_kind: AGENDA_VOTE_STEP_KIND.mergeVariant,
             process_branch_id: null,
-            is_final_vote: false,
+            is_closing_vote: false,
             status: 'pending',
             blocked_reason: null,
             result_status: null,
@@ -661,7 +727,7 @@ export const agendaServerMutators = {
       }
 
       let hasChangeRequestVoteSteps =
-        insertedMergeSequenceStep || existingLinks.some(link => !link.is_final_vote);
+        insertedMergeSequenceStep || existingLinks.some(link => !link.is_closing_vote);
 
       // 3. Create one vote per change request + junction records
       for (const cr of changeRequests) {
@@ -681,9 +747,9 @@ export const agendaServerMutators = {
           change_request_id: cr.id,
           vote_id: voteId,
           order_index: nextOrderIndex,
-          step_kind: VOTE_PURPOSE.changeRequest,
+          step_kind: AGENDA_VOTE_STEP_KIND.changeRequest,
           process_branch_id: cr.process_branch_id ?? processBranchId ?? null,
-          is_final_vote: false,
+          is_closing_vote: false,
           status: 'pending',
           blocked_reason: null,
           result_status: null,
@@ -700,19 +766,17 @@ export const agendaServerMutators = {
               zql.vote.where('agenda_item_id', agenda_item_id).where('amendment_id', amendment_id)
             )
           : existingVotes;
-      const existingFinalVote = refreshedVotes.find(vote =>
-        isFinalClosingVotePurpose(vote.purpose)
-      );
+      const existingFinalVote = refreshedVotes.find(vote => vote.purpose === VOTE_PURPOSE.closing);
 
       const finalVoteId =
         existingFinalVote?.id ??
         (await createVoteWithChoicesAndVoters(
           'Accept amendment as modified',
-          VOTE_PURPOSE.finalClosing
+          VOTE_PURPOSE.closing
         ));
 
       const existingFinalLink = existingLinks.find(
-        link => link.is_final_vote || link.step_kind === VOTE_PURPOSE.finalClosing
+        link => link.is_closing_vote || link.step_kind === AGENDA_VOTE_STEP_KIND.closing
       );
       if (!existingFinalLink) {
         await tx.mutate.agenda_item_change_request.insert({
@@ -721,9 +785,9 @@ export const agendaServerMutators = {
           change_request_id: null,
           vote_id: finalVoteId,
           order_index: nextOrderIndex,
-          step_kind: VOTE_PURPOSE.finalClosing,
+          step_kind: AGENDA_VOTE_STEP_KIND.closing,
           process_branch_id: processBranchId ?? null,
-          is_final_vote: true,
+          is_closing_vote: true,
           status: 'pending',
           blocked_reason: null,
           result_status: null,
@@ -737,7 +801,7 @@ export const agendaServerMutators = {
       if (
         args.start_final_vote_if_no_change_requests &&
         !hasChangeRequestVoteSteps &&
-        normalizeVoteStatus(existingFinalVote?.status) !== VOTE_STATUS.closed
+        normalizeVotePhase(existingFinalVote?.status) !== VOTE_PHASE.closed
       ) {
         let closingDurationSeconds: number | null = null;
         if (agendaItem?.event_id) {
@@ -747,7 +811,7 @@ export const agendaServerMutators = {
 
         await tx.mutate.vote.update({
           id: finalVoteId,
-          status: VOTE_STATUS.finalOpen,
+          status: VOTE_PHASE.final,
           closing_duration_seconds: closingDurationSeconds,
           closing_end_time:
             closingDurationSeconds && closingDurationSeconds > 0
@@ -758,6 +822,136 @@ export const agendaServerMutators = {
         for (const branchId of branchIdsForModeSync) {
           await syncBranchEditingMode(tx, ctx, amendment_id, branchId, 'event_final_closing_vote');
         }
+      }
+    }
+  ),
+
+  /**
+   * Materialize missing vote-card rows for confirmed event-suggestion CRs.
+   * This is intentionally narrower than initializeChangeRequestVoting: it never
+   * creates a final closing vote and only appends unlinked open CRs.
+   */
+  ensureEventSuggestionChangeRequestVotes: defineMutator(
+    ensureEventSuggestionChangeRequestVotesSchema,
+    async ({ tx, ctx, args }) => {
+      const { amendment_id, agenda_item_id } = args;
+      const now = Date.now();
+      const agendaItem = await assertCanEnsureEventSuggestionChangeRequestVotes(tx, ctx, args);
+
+      let processBranchId = args.process_branch_id;
+      if (processBranchId === undefined) {
+        const agendaStepRunsResult = await tx.run(
+          zql.amendment_process_step_run
+            .where('agenda_item_id', agenda_item_id)
+            .orderBy('branch_id', 'asc')
+            .orderBy('order_index', 'asc')
+        );
+        const agendaStepRuns = Array.isArray(agendaStepRunsResult) ? agendaStepRunsResult : [];
+        processBranchId =
+          agendaStepRuns.length === 1
+            ? (agendaStepRuns[0]?.branch_id ?? null)
+            : (agendaStepRuns.find(stepRun => stepRun.step_kind !== 'merge_vote')?.branch_id ??
+              null);
+      }
+
+      const openChangeRequestsResult = await tx.run(
+        zql.change_request
+          .where('amendment_id', amendment_id)
+          .where('status', 'open')
+          .orderBy('changed_character_count', 'asc')
+          .orderBy('created_at', 'asc')
+      );
+      const openChangeRequests = Array.isArray(openChangeRequestsResult)
+        ? openChangeRequestsResult
+        : [];
+      const existingLinksResult = await tx.run(
+        zql.agenda_item_change_request
+          .where('agenda_item_id', agenda_item_id)
+          .orderBy('order_index', 'asc')
+      );
+      const existingLinks = Array.isArray(existingLinksResult) ? existingLinksResult : [];
+      const existingChangeRequestIds = new Set(
+        existingLinks.map(link => link.change_request_id).filter((id): id is string => Boolean(id))
+      );
+      const changeRequests = openChangeRequests.filter(changeRequest => {
+        if (existingChangeRequestIds.has(changeRequest.id)) return false;
+        if (changeRequest.status !== 'open') return false;
+        if (changeRequest.voting_status === 'pending_submission') return false;
+        if (changeRequest.obsolete_at || changeRequest.obsolete_reason) return false;
+        if (processBranchId) return changeRequest.process_branch_id === processBranchId;
+        return !changeRequest.process_branch_id;
+      });
+
+      if (changeRequests.length === 0) {
+        return;
+      }
+
+      const accreditationsResult = agendaItem.event_id
+        ? await tx.run(zql.accreditation.where('event_id', agendaItem.event_id))
+        : [];
+      const accreditations = Array.isArray(accreditationsResult) ? accreditationsResult : [];
+      let nextOrderIndex =
+        existingLinks.reduce((max, link) => Math.max(max, link.order_index ?? 0), -1) + 1;
+
+      for (const cr of changeRequests) {
+        const voteId = crypto.randomUUID();
+        await tx.mutate.vote.insert({
+          id: voteId,
+          agenda_item_id,
+          amendment_id,
+          title: cr.title ?? `Change Request ${nextOrderIndex + 1}`,
+          description: null,
+          status: VOTE_PHASE.indicative,
+          purpose: VOTE_PURPOSE.changeRequest,
+          majority_type: 'relative',
+          closing_type: 'moderator',
+          closing_duration_seconds: null,
+          closing_end_time: null,
+          visibility: 'public',
+          ballot_visibility: 'named',
+          created_at: now,
+          updated_at: now,
+        });
+
+        for (let index = 0; index < DEFAULT_CHANGE_REQUEST_CHOICE_SPECS.length; index++) {
+          const choice = DEFAULT_CHANGE_REQUEST_CHOICE_SPECS[index];
+          await tx.mutate.vote_choice.insert({
+            id: crypto.randomUUID(),
+            vote_id: voteId,
+            label: choice.label,
+            semantic_key: choice.semanticKey,
+            process_branch_id: choice.processBranchId,
+            order_index: index,
+            created_at: now,
+          });
+        }
+
+        for (const accreditation of accreditations) {
+          await tx.mutate.voter.insert({
+            id: crypto.randomUUID(),
+            vote_id: voteId,
+            user_id: accreditation.user_id,
+            created_at: now,
+          });
+        }
+
+        await tx.mutate.agenda_item_change_request.insert({
+          id: crypto.randomUUID(),
+          agenda_item_id,
+          change_request_id: cr.id,
+          vote_id: voteId,
+          order_index: nextOrderIndex,
+          step_kind: AGENDA_VOTE_STEP_KIND.changeRequest,
+          process_branch_id: cr.process_branch_id ?? processBranchId ?? null,
+          is_closing_vote: false,
+          status: 'pending',
+          blocked_reason: null,
+          result_status: null,
+          obsolete_reason: null,
+          created_at: now,
+          updated_at: now,
+        });
+        nextOrderIndex += 1;
       }
     }
   ),
@@ -780,7 +974,6 @@ export const agendaServerMutators = {
   processCRVoteResult: defineMutator(processCRVoteResultSchema, async ({ tx, ctx, args }) => {
     const { agenda_item_change_request_id, vote_result } = args;
     const now = Date.now();
-    await assertCurrentChangeRequestTimelineItem(tx, agenda_item_change_request_id);
 
     // 1. Fetch the junction record
     const junction = await tx.run(
@@ -788,6 +981,11 @@ export const agendaServerMutators = {
     );
     if (!junction) return;
 
+    if (junction.status === 'completed' || junction.status === 'blocked_tie') {
+      return;
+    }
+
+    await assertCurrentChangeRequestTimelineItem(tx, agenda_item_change_request_id);
     await assertCanManageAgendaVoteFlow(tx, ctx, junction.agenda_item_id);
 
     if (vote_result === 'tie') {

@@ -233,7 +233,7 @@ export function AgendaVoteSection({
               </BadgeControl>
             ) : null}
             <VotePhaseBadge
-              phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
+              phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final'}
             />
             {isInteractive && onOpenNamedResults ? (
               <BadgeControl asChild tone="info" className="cursor-pointer gap-1">
@@ -267,13 +267,13 @@ export function AgendaVoteSection({
           ) : (
             <VoteResultsDisplay
               options={voteOptions}
-              phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
+              phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final'}
               totalFinal={totalFinal}
               totalIndication={totalIndicative}
               selectedOptionIds={userSelectedChoiceIds}
               showSelectedOptionState={isInteractive}
-              winnerOptionId={isIndicationPhase ? null : winningChoiceId}
-              showWinner={!isIndicationPhase}
+              winnerOptionId={isClosed ? winningChoiceId : null}
+              showWinner={isClosed}
             />
           )}
 

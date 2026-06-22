@@ -112,7 +112,7 @@ export function useChangeRequestVoting({
 
       await updateAgendaItem({
         id: votingSessionId,
-        voting_phase: 'voting',
+        voting_phase: 'indicative',
       });
 
       await createTimelineEvent({
@@ -166,14 +166,14 @@ export function useChangeRequestVoting({
 
       await updateAgendaItem({
         id: votingSessionId,
-        voting_phase: 'voting',
+        voting_phase: 'indicative',
       });
       return { hasNext: true, nextId: nextChangeRequest.id };
     } else {
       // No more change requests, complete the session
       await updateAgendaItem({
         id: votingSessionId,
-        voting_phase: 'completed',
+        voting_phase: 'closed',
         completed_at: Date.now(),
       });
       return { hasNext: false, nextId: null };

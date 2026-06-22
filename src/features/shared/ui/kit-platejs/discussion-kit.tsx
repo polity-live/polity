@@ -17,10 +17,12 @@ export interface TDiscussion {
   displayCrId?: string;
   branchDisplayNumber?: number;
   branchScopedCrNumber?: number;
+  branchSequenceNumber?: number | null;
   status?: 'pending' | 'accepted' | 'rejected';
   confirmationStatus?: 'pending' | 'confirmed';
   confirmedAt?: number;
   changeRequestEntityId?: string; // UUID of the persisted change_request row
+  changeRequestStatus?: string | null;
   processBranchId?: string | null;
   votesFor?: number;
   votesAgainst?: number;

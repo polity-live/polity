@@ -6,7 +6,7 @@ vi.mock('../../server-notify', () => ({
   fireNotification: (...args: unknown[]) => fireNotificationMock(...args),
 }));
 
-import { replanProcessBranchEvents } from '../process-engine';
+import { completeProcessTaskWithEvent, replanProcessBranchEvents } from '../process-engine';
 
 const future = Date.now() + 60 * 60 * 1000;
 
@@ -299,7 +299,7 @@ describe('replanProcessBranchEvents', () => {
       [],
       { id: 'agenda-a', title: 'A1', forwarding_status: 'previous_decision_outstanding' },
       [],
-      { id: 'vote-current-a', status: 'indicative_open' },
+      { id: 'vote-current-a', status: 'indicative' },
       [branchA, branchB],
       [currentStepA, futureStepA, currentStepB, futureStepB],
       [],
@@ -313,7 +313,7 @@ describe('replanProcessBranchEvents', () => {
       [],
       [],
       { id: 'agenda-a', title: 'A1' },
-      { id: 'vote-a', status: 'indicative_open' },
+      { id: 'vote-a', status: 'indicative' },
       [{ id: 'choice-old' }],
       [],
       [],
@@ -365,6 +365,53 @@ describe('replanProcessBranchEvents', () => {
         agenda_item_id: 'agenda-a',
         vote_id: 'vote-a',
         status: 'scheduled',
+      })
+    );
+  });
+
+  it('creates a closing vote when completing a process task with an event', async () => {
+    const task = {
+      id: 'task-1',
+      process_run_id: 'run-1',
+      branch_id: null,
+      step_run_id: 'step-1',
+      task_type: 'schedule_event',
+      description: 'Schedule this amendment',
+      support_confirmation_id: null,
+    };
+    const step = stepRun({
+      id: 'step-1',
+      event_id: null,
+      agenda_item_id: null,
+      vote_id: null,
+      status: 'pending_event',
+    });
+    const tx = createMinimalTx([
+      task,
+      eventRow({ id: 'event-new', group_id: 'group-target' }),
+      baseProcessRun(),
+      baseAmendment({ title: 'A1' }),
+      step,
+      [],
+      [],
+      [],
+    ]);
+
+    await expect(
+      completeProcessTaskWithEvent(tx as never, 'user-1', {
+        process_task_id: 'task-1',
+        event_id: 'event-new',
+      })
+    ).resolves.toMatchObject({
+      handled: true,
+      processRunId: 'run-1',
+    });
+
+    expect(tx.mutate.vote.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agenda_item_id: expect.any(String),
+        amendment_id: 'amendment-1',
+        purpose: 'closing',
       })
     );
   });

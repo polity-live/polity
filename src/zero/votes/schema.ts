@@ -16,8 +16,8 @@ const baseVoteSchema = z.object({
   amendment_id: z.string().nullable(),
   title: z.string().nullable(),
   description: z.string().nullable(),
-  status: z.string().nullable(),
-  purpose: z.string(),
+  status: z.enum(['internal', 'indicative', 'final', 'closed']).nullable(),
+  purpose: z.enum(['change_request', 'closing', 'merge_variant']),
   majority_type: z.string().nullable(),
   closing_type: z.string().nullable(),
   closing_duration_seconds: z.number().nullable(),
@@ -32,14 +32,10 @@ const baseVoteSchema = z.object({
 });
 
 const defaultVoteStatusSchema = z
-  .string()
+  .enum(['internal', 'indicative', 'final', 'closed'])
   .nullable()
   .optional()
-  .transform(value => value ?? 'indicative_open');
-const defaultVotePurposeSchema = z
-  .string()
-  .optional()
-  .transform(value => value ?? 'general');
+  .transform(value => value ?? 'indicative');
 const defaultVoteMajorityTypeSchema = z
   .string()
   .nullable()
@@ -65,7 +61,6 @@ export const createVoteSchema = baseVoteSchema
     created_at: true,
     updated_at: true,
     status: true,
-    purpose: true,
     majority_type: true,
     closing_type: true,
     closed_reason: true,
@@ -77,7 +72,6 @@ export const createVoteSchema = baseVoteSchema
   .extend({
     id: z.string(),
     status: defaultVoteStatusSchema,
-    purpose: defaultVotePurposeSchema,
     majority_type: defaultVoteMajorityTypeSchema,
     closing_type: defaultVoteClosingTypeSchema,
     visibility: defaultVoteVisibilitySchema,

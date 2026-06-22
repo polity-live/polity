@@ -20,7 +20,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
-import { ChevronDown, CheckCircle2, Flag, Lock } from 'lucide-react';
+import { ChevronDown, CheckCircle2, CircleHelp, Flag, Lock, Vote } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { cn } from '@/features/shared/utils/utils';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { VotingPhaseBadge as VotePhaseBadge } from '@/features/shared/ui/voting';
@@ -32,6 +33,12 @@ import {
 import { ChangeRequestSummaryItem } from '@/features/change-requests/ui/ChangeRequestSummaryItem';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
 import { SuggestionViewToggle } from '@/features/editor/ui/SuggestionViewToggle';
+import {
+  isMockCRTimelineItem,
+  isPendingSubmissionCRTimelineItem,
+} from '../logic/createMockCRTimelineItems';
+import { getFinalVoteActionLabels } from '../logic/finalVoteActionLabels';
+import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 const CR_CHOICE_COLORS = [
   {
     color: featureThemeClassName('agendaAgendaVoteSectionSuccessBackground'),
@@ -136,10 +143,12 @@ export interface ChangeRequestTimelineCardViewProps {
   diff: any;
   documentContent: any;
   suggestionId: any;
+  suggestionResolutions?: any;
+  agendaTitle?: any;
   crId: any;
   displayCrId?: any;
   discussions: any;
-  editingMode: any;
+  editingMode: EditingMode;
   amendmentId: any;
   userId: any;
   userRecord?: any;
@@ -147,7 +156,11 @@ export interface ChangeRequestTimelineCardViewProps {
   showEditorPreview: any;
   hideInlineVotingControls?: any;
   allowInlineFinalVoteStart?: any;
+  showAgendaDetailsVoteActions?: any;
+  voteDisabledTooltip?: any;
+  isVotingActive?: any;
   onCastVote: any;
+  onOpenVoteDialog?: any;
   onStartIndicative: any;
   onStartFinal: any;
   onCloseVoting: any;
@@ -165,6 +178,7 @@ export interface ChangeRequestTimelineCardViewProps {
   placeholderDescription?: any;
   title: any;
   phase: any;
+  isInternal?: any;
   isClosed: any;
   isIndicative: any;
   isFinal: any;
@@ -199,6 +213,8 @@ export function ChangeRequestTimelineCardView({
   diff,
   documentContent,
   suggestionId,
+  suggestionResolutions,
+  agendaTitle,
   crId,
   displayCrId,
   discussions,
@@ -210,6 +226,10 @@ export function ChangeRequestTimelineCardView({
   showEditorPreview,
   hideInlineVotingControls = false,
   allowInlineFinalVoteStart = false,
+  showAgendaDetailsVoteActions = false,
+  voteDisabledTooltip,
+  isVotingActive = true,
+  onOpenVoteDialog,
   onStartFinal,
   onCloseVoting,
   t,
@@ -224,6 +244,7 @@ export function ChangeRequestTimelineCardView({
   isPlaceholder = false,
   placeholderDescription,
   title,
+  isInternal = false,
   isClosed,
   isIndicative,
   isFinal,
@@ -241,11 +262,11 @@ export function ChangeRequestTimelineCardView({
   isLocked,
 }: ChangeRequestTimelineCardViewProps) {
   const summaryIdentifier =
-    voteStepKind === 'variant_selection'
+    voteStepKind === 'merge_variant'
       ? t('features.agendas.crTimeline.variantVoteShort', 'Variant')
       : voteStepKind === 'change_request_votes_placeholder'
         ? t('features.agendas.crTimeline.changeRequestVotesShort', 'CR votes')
-        : item.is_final_vote
+        : item.is_closing_vote
           ? t('features.agendas.crTimeline.finalVoteShort', 'Final')
           : (displayCrId ??
             cr?.display_cr_id ??
@@ -256,12 +277,21 @@ export function ChangeRequestTimelineCardView({
             `CR-${Number(index) + 1 || 1}`);
   const isInternalVotingMode = editingMode === 'vote_internal';
   const isJumpToFinalVoteStep = voteStepKind === 'change_request_votes_placeholder';
+  const finalVoteActionLabels = getFinalVoteActionLabels({
+    item,
+    agendaTitle,
+    fallbackTarget: displayCrId ?? crId ?? title,
+  });
   const startFinalActionLabel = isJumpToFinalVoteStep
     ? t('features.agendas.crTimeline.jumpToFinalVote', 'Jump to final vote')
-    : t('features.agendas.crTimeline.startFinal', 'Start final vote');
+    : finalVoteActionLabels.start;
+  const closeFinalActionLabel = finalVoteActionLabels.close;
+  const startIndicativeActionLabel = isFinal
+    ? t('features.events.agenda.actions.castFinalVote', 'Cast final vote')
+    : t('features.events.agenda.actions.castIndicativeVote', 'Cast Indication');
   const startFinalDialogTitle = isJumpToFinalVoteStep
     ? t('features.agendas.crTimeline.jumpToFinalVoteDialogTitle', 'Jump to final vote')
-    : `Start final vote: ${title}`;
+    : startFinalActionLabel;
   const startFinalDescription = isJumpToFinalVoteStep
     ? t(
         'features.agendas.crTimeline.jumpToFinalVoteDescription',
@@ -283,8 +313,13 @@ export function ChangeRequestTimelineCardView({
   const internalUserVote = cr?.user_vote ?? null;
   const internalChoiceIdSuffix = item.change_request_id ?? cr?.id ?? item.id;
   const confirmationStatus = cr?.confirmation_status ?? cr?.confirmationStatus ?? null;
+  const isPendingSubmission = isPendingSubmissionCRTimelineItem(item);
+  const isMockTimelineItem = isMockCRTimelineItem(item);
+  const isSyntheticEventVoteRow = isMockTimelineItem && !isInternalVotingMode;
+  const effectiveCanVote = canVote && !isSyntheticEventVoteRow;
   const isSubmittedChangeRequest =
-    !item.is_final_vote &&
+    !item.is_closing_vote &&
+    !isPendingSubmission &&
     confirmationStatus !== 'pending' &&
     (confirmationStatus === 'confirmed' || Boolean(cr?.id || item.change_request_id));
   const voteOptions: VoteBarOption[] = choiceStats.map((cs: any, idx: number) => {
@@ -305,18 +340,59 @@ export function ChangeRequestTimelineCardView({
   const canCastVoteFromCard =
     !hideInlineVotingControls &&
     !isInternalVotingMode &&
-    canVote &&
+    !isPendingSubmission &&
+    effectiveCanVote &&
+    !hasUserVoted &&
     vote &&
-    (isIndicative || isClosed || (isFinal && isCurrent && !isLocked));
+    (isIndicative || (isFinal && isCurrent && !isLocked));
   const canStartFinalVoteFromCard =
     allowInlineFinalVoteStart &&
     !isInternalVotingMode &&
+    !isPendingSubmission &&
     isCurrent &&
     !hideInlineVotingControls &&
     !isLocked &&
     canManage &&
     !isClosed &&
     (item.status === 'pending' || isIndicative);
+  const voteButtonHiddenReasons = [
+    !showAgendaDetailsVoteActions ? 'notAgendaDetailsContext' : null,
+    !isVotingActive ? 'listVotingInactive' : null,
+    isInternalVotingMode ? 'internalVotingMode' : null,
+    isPendingSubmission ? 'pendingSubmission' : null,
+    isPlaceholder ? 'placeholder' : null,
+    isSyntheticEventVoteRow ? 'syntheticVoteRow' : null,
+    isClosed ? 'closed' : null,
+    hasUserVoted ? 'alreadyVoted' : null,
+    !vote ? 'missingVote' : null,
+    choices.length === 0 ? 'missingChoices' : null,
+    !onOpenVoteDialog ? 'missingOpenDialog' : null,
+  ].filter(Boolean);
+  const voteButtonDisabledReasons = [
+    !effectiveCanVote ? 'cannotVote' : null,
+    votingLoading ? 'votingLoading' : null,
+  ].filter(Boolean);
+  const canOpenVoteDialogFromAgendaDetails = voteButtonHiddenReasons.length === 0;
+  const isVoteActionBlocked = voteButtonDisabledReasons.length > 0;
+  const resolvedVoteDisabledTooltip =
+    !effectiveCanVote && voteDisabledTooltip
+      ? voteDisabledTooltip
+      : !effectiveCanVote
+        ? t(
+            'features.events.agenda.actions.voteUnavailable',
+            'You cannot cast a vote for this item.'
+          )
+        : startIndicativeActionLabel;
+  const handleOpenVoteDialog = () => {
+    if (
+      !canOpenVoteDialogFromAgendaDetails ||
+      voteButtonDisabledReasons.length > 0 ||
+      !onOpenVoteDialog
+    ) {
+      return;
+    }
+    onOpenVoteDialog(item.id);
+  };
   const handleStartFinalVote = async () => {
     if (!onStartFinal || votingLoading) return;
     setVotingLoading(true);
@@ -334,7 +410,7 @@ export function ChangeRequestTimelineCardView({
   return (
     <Collapsible
       defaultOpen={
-        isCurrent || item.is_final_vote || voteStepKind === 'variant_selection' || isPlaceholder
+        isCurrent || item.is_closing_vote || voteStepKind === 'merge_variant' || isPlaceholder
       }
     >
       <Card
@@ -354,9 +430,9 @@ export function ChangeRequestTimelineCardView({
                 title={title}
                 status={item.status}
                 changeType={
-                  item.is_final_vote
+                  item.is_closing_vote
                     ? 'final'
-                    : voteStepKind === 'variant_selection'
+                    : voteStepKind === 'merge_variant'
                       ? 'variant'
                       : diff?.changeType
                 }
@@ -365,7 +441,7 @@ export function ChangeRequestTimelineCardView({
               />
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              {hasUserVoted && (
+              {hasUserVoted && !isPendingSubmission && (
                 <BadgeControl variant="outline" size="xs">
                   {t('features.agendas.crTimeline.voted')}
                 </BadgeControl>
@@ -376,9 +452,22 @@ export function ChangeRequestTimelineCardView({
                   {t('features.agendas.crTimeline.locked', 'Locked')}
                 </BadgeControl>
               ) : null}
-              {!isInternalVotingMode && vote && (
+              {isPendingSubmission ? (
+                <BadgeControl variant="outline" size="xs">
+                  {t('features.agendas.crTimeline.pendingSubmission', 'Einreichung ausstehend')}
+                </BadgeControl>
+              ) : null}
+              {!isPendingSubmission && isInternal && (
                 <VotePhaseBadge
-                  phase={isIndicative ? 'indication' : isClosed ? 'closed' : 'final_vote'}
+                  phase="internal"
+                  labels={{
+                    internal: t('features.agendas.crTimeline.internalVote', 'Internal vote'),
+                  }}
+                />
+              )}
+              {!isPendingSubmission && !isInternal && !isInternalVotingMode && vote && (
+                <VotePhaseBadge
+                  phase={isIndicative ? 'indication' : isClosed ? 'closed' : 'final'}
                   labels={
                     isSubmittedChangeRequest
                       ? {
@@ -425,7 +514,7 @@ export function ChangeRequestTimelineCardView({
 
             {/* Suggestion text changes (Add / Delete) */}
             {diff &&
-              !item.is_final_vote &&
+              !item.is_closing_vote &&
               (diff.originalText ||
                 diff.newText ||
                 diff.justification ||
@@ -550,42 +639,41 @@ export function ChangeRequestTimelineCardView({
               )}
 
             {/* Editor preview with per-card suggestion filter */}
-            {showEditorPreview &&
-              (((editingMode === 'suggest_event' || editingMode === 'event_final_closing_vote') &&
-                amendmentId) ||
-                (documentContent && suggestionId)) && (
-                <div className="space-y-2">
-                  <CREditorPreview
-                    documentContent={documentContent ?? ([] as Value)}
-                    suggestionIds={selectedSuggestionIds}
-                    editingMode={editingMode}
-                    amendmentId={amendmentId}
-                    userId={userId}
-                    userRecord={userRecord}
-                    agendaItemId={agendaItemId}
-                    toolbarEnd={
-                      <>
-                        {/* Suggestion filter for the read-only card preview. */}
-                        {editingMode !== 'suggest_event' &&
-                          editingMode !== 'event_final_closing_vote' &&
-                          discussions &&
-                          discussions.length > 1 && (
-                            <SuggestionViewToggle
-                              discussions={discussions}
-                              selectedCrIds={selectedCrIds}
-                              onSelectedCrIdsChange={setSelectedCrIds}
-                            />
-                          )}
-                      </>
-                    }
-                  />
-                </div>
-              )}
+            {showEditorPreview && documentContent && suggestionId && (
+              <div className="space-y-2">
+                <CREditorPreview
+                  documentContent={documentContent ?? ([] as Value)}
+                  suggestionIds={selectedSuggestionIds}
+                  suggestionResolutions={suggestionResolutions}
+                  editingMode={editingMode}
+                  amendmentId={amendmentId}
+                  userId={userId}
+                  userRecord={userRecord}
+                  agendaItemId={agendaItemId}
+                  toolbarEnd={
+                    <>
+                      {/* Suggestion filter for the read-only card preview. */}
+                      {editingMode !== 'suggest_event' &&
+                        editingMode !== 'event_final_closing_vote' &&
+                        discussions &&
+                        discussions.length > 1 && (
+                          <SuggestionViewToggle
+                            discussions={discussions}
+                            selectedCrIds={selectedCrIds}
+                            onSelectedCrIdsChange={setSelectedCrIds}
+                          />
+                        )}
+                    </>
+                  }
+                />
+              </div>
+            )}
 
             {/* Vote results */}
             {!isInternalVotingMode &&
               !isPlaceholder &&
               !isDirectInternalResolution &&
+              !isPendingSubmission &&
               (choices.length === 0 ? (
                 <div className="rounded-lg border border-dashed p-6 text-center">
                   <p className="text-muted-foreground">{t('features.events.agenda.noChoices')}</p>
@@ -593,27 +681,30 @@ export function ChangeRequestTimelineCardView({
               ) : (
                 <VoteResultsDisplay
                   options={voteOptions}
-                  phase={isIndicative ? 'indication' : isClosed ? 'closed' : 'final_vote'}
+                  phase={isIndicative ? 'indication' : isClosed ? 'closed' : 'final'}
                   totalFinal={totalFinal}
                   totalIndication={totalIndicative}
                   totalEligible={totalVoters}
                   selectedOptionIds={userSelectedChoiceIds}
-                  winnerOptionId={isIndicative ? null : winningChoiceId}
-                  showWinner={!isIndicative}
+                  winnerOptionId={isClosed ? winningChoiceId : null}
+                  showWinner={isClosed}
                 />
               ))}
 
             {/* Participation count */}
-            {vote && !isInternalVotingMode && !isDirectInternalResolution && (
-              <div className="text-muted-foreground flex items-center gap-2 text-xs">
-                <span>
-                  {currentPhaseVoteCount}/{totalVoters}{' '}
-                  {t('features.agendas.crTimeline.votersParticipated')}
-                </span>
-              </div>
-            )}
+            {vote &&
+              !isInternalVotingMode &&
+              !isDirectInternalResolution &&
+              !isPendingSubmission && (
+                <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                  <span>
+                    {currentPhaseVoteCount}/{totalVoters}{' '}
+                    {t('features.agendas.crTimeline.votersParticipated')}
+                  </span>
+                </div>
+              )}
 
-            {hasUserVoted && (
+            {hasUserVoted && !isPendingSubmission && (
               <div className="flex items-center justify-center gap-2 text-sm">
                 <CheckCircle2
                   className={featureThemeClassName('agendaAgendaElectionSectionSuccessIcon')}
@@ -628,30 +719,33 @@ export function ChangeRequestTimelineCardView({
               </div>
             )}
 
-            {isInternalVotingMode && !isLocked && internalTotalVotes > 0 && (
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <div className="rounded-md border p-2">
-                  <div className="text-muted-foreground">
-                    {translateText('generated.inline.0121_accept_bb54db51')}
+            {isInternalVotingMode &&
+              !isPendingSubmission &&
+              !isLocked &&
+              internalTotalVotes > 0 && (
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="rounded-md border p-2">
+                    <div className="text-muted-foreground">
+                      {translateText('generated.inline.0121_accept_bb54db51')}
+                    </div>
+                    <div className="font-semibold">{internalAcceptVotes}</div>
                   </div>
-                  <div className="font-semibold">{internalAcceptVotes}</div>
-                </div>
-                <div className="rounded-md border p-2">
-                  <div className="text-muted-foreground">
-                    {translateText('generated.inline.1142_reject_2b03b592')}
+                  <div className="rounded-md border p-2">
+                    <div className="text-muted-foreground">
+                      {translateText('generated.inline.1142_reject_2b03b592')}
+                    </div>
+                    <div className="font-semibold">{internalRejectVotes}</div>
                   </div>
-                  <div className="font-semibold">{internalRejectVotes}</div>
-                </div>
-                <div className="rounded-md border p-2">
-                  <div className="text-muted-foreground">
-                    {translateText('generated.inline.1144_abstain_bc39d849')}
+                  <div className="rounded-md border p-2">
+                    <div className="text-muted-foreground">
+                      {translateText('generated.inline.1144_abstain_bc39d849')}
+                    </div>
+                    <div className="font-semibold">{internalAbstainVotes}</div>
                   </div>
-                  <div className="font-semibold">{internalAbstainVotes}</div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {isInternalVotingMode && !isClosed && !isLocked && (
+            {isInternalVotingMode && !isPendingSubmission && !isClosed && !isLocked && (
               <div className="bg-background/70 rounded-md border p-3 text-xs">
                 {internalCloseTrigger === 'after_minutes' && internalVotingDeadline ? (
                   <span>
@@ -677,10 +771,11 @@ export function ChangeRequestTimelineCardView({
             )}
 
             {isInternalVotingMode &&
+              !isPendingSubmission &&
               !hideInlineVotingControls &&
               !isLocked &&
               !isClosed &&
-              canVote &&
+              effectiveCanVote &&
               cr && (
                 <div className="flex gap-2 pt-2">
                   <Button
@@ -780,7 +875,8 @@ export function ChangeRequestTimelineCardView({
             )}
 
             {/* Moderator controls for active items */}
-            {(canStartFinalVoteFromCard ||
+            {(canOpenVoteDialogFromAgendaDetails ||
+              canStartFinalVoteFromCard ||
               (isCurrent &&
                 !hideInlineVotingControls &&
                 !isLocked &&
@@ -788,6 +884,38 @@ export function ChangeRequestTimelineCardView({
                 !isClosed &&
                 isFinal)) && (
               <div className="flex gap-2 border-t pt-3">
+                {canOpenVoteDialogFromAgendaDetails && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={cn(
+                          'civic-ballot-submit bg-background border px-3 font-semibold shadow-sm transition-all',
+                          effectiveCanVote
+                            ? featureThemeClassName('agendaAgendaActionBarAccentBadge')
+                            : 'border-muted-foreground/30 text-muted-foreground opacity-70'
+                        )}
+                        disabled={votingLoading}
+                        aria-disabled={isVoteActionBlocked || undefined}
+                        title={!effectiveCanVote ? resolvedVoteDisabledTooltip : undefined}
+                        onClick={e => {
+                          e.stopPropagation();
+                          if (!isVoteActionBlocked) {
+                            handleOpenVoteDialog();
+                          }
+                        }}
+                      >
+                        <Vote className="mr-1 h-3 w-3" />
+                        {startIndicativeActionLabel}
+                        {!effectiveCanVote ? <CircleHelp className="ml-1 h-3 w-3" /> : null}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-64">
+                      {resolvedVoteDisabledTooltip}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
                 {canStartFinalVoteFromCard && (
                   <>
                     {isJumpToFinalVoteStep ? (
@@ -846,12 +974,12 @@ export function ChangeRequestTimelineCardView({
                     <AlertDialogTrigger asChild>
                       <Button size="sm" variant="default" onClick={e => e.stopPropagation()}>
                         <CheckCircle2 className="mr-1 h-3 w-3" />
-                        {t('features.agendas.crTimeline.closeVoting', 'Close final vote')}
+                        {closeFinalActionLabel}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent onClick={e => e.stopPropagation()}>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>{`Close final vote: ${title}`}</AlertDialogTitle>
+                        <AlertDialogTitle>{closeFinalActionLabel}</AlertDialogTitle>
                         <AlertDialogDescription>
                           {currentPhaseVoteCount}/{totalVoters}{' '}
                           {t('features.agendas.crTimeline.votersParticipated')}.{' '}
@@ -864,7 +992,7 @@ export function ChangeRequestTimelineCardView({
                           {t('common.actions.cancel', 'Cancel')}
                         </AlertDialogCancel>
                         <AlertDialogAction onClick={() => onCloseVoting?.(item.id)}>
-                          {t('features.agendas.crTimeline.closeVoting', 'Close final vote')}
+                          {closeFinalActionLabel}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>

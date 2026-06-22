@@ -24,6 +24,7 @@ import {
   groupCreateSchema,
   groupMembershipCreateSchema,
   groupMembershipDeleteSchema,
+  groupMembershipUpdateSchema,
   groupOfflineMemberCreateSchema,
   groupOfflineMemberUpdateSchema,
   groupOfflineMemberDeleteSchema,
@@ -31,7 +32,6 @@ import {
   groupOfflineMembershipRoleAssignSchema,
   groupOfflineMembershipRoleUnassignSchema,
   groupOfflineMembershipRolesSyncSchema,
-  groupMembershipLegacyRoleUpdateSchema,
   groupMembershipRoleAssignSchema,
   groupMembershipRoleUnassignSchema,
   groupMembershipRolesSyncSchema,
@@ -1208,169 +1208,136 @@ export const groupServerMutators = {
     });
   }),
 
-  updateMemberRole: defineMutator(
-    groupMembershipLegacyRoleUpdateSchema,
-    async ({ tx, ctx, args }) => {
-      const oldMembership = await tx.run(zql.group_membership.where('id', args.id).one());
-      const oldRoleLinks = await tx.run(
-        zql.group_membership_role.where('group_membership_id', args.id)
-      );
-      const affectedMembershipGroupIds = new Set<string>();
-      const isActivationTrace =
-        oldMembership != null &&
-        args.status !== undefined &&
-        isActiveGroupStatus(args.status) &&
-        !isActiveGroupStatus(oldMembership.status);
+  updateMembership: defineMutator(groupMembershipUpdateSchema, async ({ tx, ctx, args }) => {
+    const oldMembership = await tx.run(zql.group_membership.where('id', args.id).one());
+    const affectedMembershipGroupIds = new Set<string>();
+    const isActivationTrace =
+      oldMembership != null &&
+      args.status !== undefined &&
+      isActiveGroupStatus(args.status) &&
+      !isActiveGroupStatus(oldMembership.status);
 
-      if (isActivationTrace) {
-        console.info('Server validation started', {
-          flow: 'group-membership-request-approve',
-          membershipId: args.id,
-          actorUserId: ctx.userID,
-          membershipUserId: oldMembership.user_id,
-          groupId: oldMembership.group_id,
-          oldStatus: oldMembership.status,
-          newStatus: args.status,
-          source: oldMembership.source,
-        });
-      }
+    if (isActivationTrace) {
+      console.info('Server validation started', {
+        flow: 'group-membership-request-approve',
+        membershipId: args.id,
+        actorUserId: ctx.userID,
+        membershipUserId: oldMembership.user_id,
+        groupId: oldMembership.group_id,
+        oldStatus: oldMembership.status,
+        newStatus: args.status,
+        source: oldMembership.source,
+      });
+    }
 
-      if (
-        oldMembership &&
-        args.status !== undefined &&
-        isActiveGroupStatus(args.status) &&
-        !isActiveGroupStatus(oldMembership.status)
-      ) {
-        await assertNoBlockingGroupConflicts(tx, ctx, {
-          kind: 'membership_activation',
-          membership_id: args.id,
-        });
-      }
+    if (
+      oldMembership &&
+      args.status !== undefined &&
+      isActiveGroupStatus(args.status) &&
+      !isActiveGroupStatus(oldMembership.status)
+    ) {
+      await assertNoBlockingGroupConflicts(tx, ctx, {
+        kind: 'membership_activation',
+        membership_id: args.id,
+      });
+    }
 
-      await mutators.groups.updateMemberRole.fn({ tx, ctx, args });
+    await mutators.groups.updateMembership.fn({ tx, ctx, args });
 
-      if (!oldMembership) return;
-      affectedMembershipGroupIds.add(oldMembership.group_id);
+    if (!oldMembership) return;
+    affectedMembershipGroupIds.add(oldMembership.group_id);
 
-      await recomputeGroupCounters(tx, oldMembership.group_id);
-      await recomputeUserCounters(tx, oldMembership.user_id);
+    await recomputeGroupCounters(tx, oldMembership.group_id);
+    await recomputeUserCounters(tx, oldMembership.user_id);
 
-      const gId = oldMembership.group_id;
-      const membUserId = oldMembership.user_id;
-      const oldStatus = oldMembership.status;
-      const newStatus = args.status;
-      const isSelf = ctx.userID === membUserId;
-      const becameActive =
-        newStatus !== undefined &&
-        isActiveGroupStatus(newStatus) &&
-        !isActiveGroupStatus(oldStatus);
-      const lostActiveAccess =
-        newStatus !== undefined &&
-        !isActiveGroupStatus(newStatus) &&
-        isActiveGroupStatus(oldStatus);
+    const gId = oldMembership.group_id;
+    const membUserId = oldMembership.user_id;
+    const oldStatus = oldMembership.status;
+    const newStatus = args.status;
+    const isSelf = ctx.userID === membUserId;
+    const becameActive =
+      newStatus !== undefined && isActiveGroupStatus(newStatus) && !isActiveGroupStatus(oldStatus);
+    const lostActiveAccess =
+      newStatus !== undefined && !isActiveGroupStatus(newStatus) && isActiveGroupStatus(oldStatus);
 
-      const gName = await groupName(tx, gId);
+    const gName = await groupName(tx, gId);
 
-      if (newStatus === 'active' && (oldStatus === 'requested' || oldStatus === 'invited')) {
-        if (isSelf) {
-          const uName = await userName(tx, ctx.userID);
-          fireNotification('notifyGroupInvitationAccepted', {
-            senderId: ctx.userID,
-            senderName: uName,
-            groupId: gId,
-            groupName: gName,
-          });
-        } else {
-          fireNotification('notifyMembershipApproved', {
-            senderId: ctx.userID,
-            recipientUserId: membUserId,
-            groupId: gId,
-            groupName: gName,
-          });
-        }
-      } else if (newStatus === 'admin') {
-        fireNotification('notifyAdminPromoted', {
+    if (newStatus === 'active' && (oldStatus === 'requested' || oldStatus === 'invited')) {
+      if (isSelf) {
+        const uName = await userName(tx, ctx.userID);
+        fireNotification('notifyGroupInvitationAccepted', {
           senderId: ctx.userID,
-          recipientUserId: membUserId,
+          senderName: uName,
           groupId: gId,
           groupName: gName,
         });
-      } else if (newStatus === 'active' && oldStatus === 'admin') {
-        fireNotification('notifyAdminDemoted', {
+      } else {
+        fireNotification('notifyMembershipApproved', {
           senderId: ctx.userID,
           recipientUserId: membUserId,
           groupId: gId,
           groupName: gName,
         });
       }
+    } else if (newStatus === 'admin') {
+      fireNotification('notifyAdminPromoted', {
+        senderId: ctx.userID,
+        recipientUserId: membUserId,
+        groupId: gId,
+        groupName: gName,
+      });
+    } else if (newStatus === 'active' && oldStatus === 'admin') {
+      fireNotification('notifyAdminDemoted', {
+        senderId: ctx.userID,
+        recipientUserId: membUserId,
+        groupId: gId,
+        groupName: gName,
+      });
+    }
 
-      const oldRoleIds = new Set(oldRoleLinks.map(link => link.role_id));
-      const legacyRoleChanged =
-        args.role_id !== undefined &&
-        (args.role_id
-          ? oldRoleIds.size !== 1 || !oldRoleIds.has(args.role_id)
-          : oldRoleIds.size > 0);
-
-      if (legacyRoleChanged && !newStatus) {
-        const rInfo = args.role_id
-          ? await roleName(tx, args.role_id)
-          : { name: 'Default', groupId: null };
-        fireNotification('notifyMembershipRoleChanged', {
-          senderId: ctx.userID,
-          recipientUserId: membUserId,
-          groupId: gId,
-          groupName: gName,
-          newRole: rInfo.name,
-        });
-      }
-
-      // Keep derived memberships and linked conversations aligned with active base memberships.
-      if (becameActive || lostActiveAccess) {
-        const group = await loadGroupWithDerivedNetworkMeta(tx, gId);
-        if (group?.group_type === 'base') {
-          const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
-            tx,
-            [gId],
-            ctx.userID
-          );
-          for (const affectedGroupId of reconciledGroupIds) {
-            affectedMembershipGroupIds.add(affectedGroupId);
-          }
-        }
-      }
-
-      if (args.status !== undefined) {
-        await syncUserWithGroupConversation(tx, {
-          groupId: gId,
-          userId: membUserId,
-        });
-      }
-
-      const shouldReconcileMembershipDrivenEvents =
-        becameActive || lostActiveAccess || legacyRoleChanged;
-
-      if (shouldReconcileMembershipDrivenEvents) {
-        const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+    // Keep derived memberships and linked conversations aligned with active base memberships.
+    if (becameActive || lostActiveAccess) {
+      const group = await loadGroupWithDerivedNetworkMeta(tx, gId);
+      if (group?.group_type === 'base') {
+        const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
           tx,
-          affectedMembershipGroupIds,
+          [gId],
           ctx.userID
         );
-        await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
-        await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
-      }
-
-      if (isActivationTrace) {
-        console.info('Server successful', {
-          flow: 'group-membership-request-approve',
-          membershipId: args.id,
-          actorUserId: ctx.userID,
-          membershipUserId: oldMembership.user_id,
-          groupId: oldMembership.group_id,
-          affectedMembershipGroupIds: [...affectedMembershipGroupIds],
-        });
+        for (const affectedGroupId of reconciledGroupIds) {
+          affectedMembershipGroupIds.add(affectedGroupId);
+        }
       }
     }
-  ),
+
+    if (args.status !== undefined) {
+      await syncUserWithGroupConversation(tx, {
+        groupId: gId,
+        userId: membUserId,
+      });
+    }
+
+    if (becameActive || lostActiveAccess) {
+      const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+        tx,
+        affectedMembershipGroupIds,
+        ctx.userID
+      );
+      await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
+      await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
+    }
+
+    if (isActivationTrace) {
+      console.info('Server successful', {
+        flow: 'group-membership-request-approve',
+        membershipId: args.id,
+        actorUserId: ctx.userID,
+        membershipUserId: oldMembership.user_id,
+        groupId: oldMembership.group_id,
+        affectedMembershipGroupIds: [...affectedMembershipGroupIds],
+      });
+    }
+  }),
 
   update: defineMutator(groupUpdateSchema, async ({ tx, ctx, args }) => {
     await mutators.groups.update.fn({ tx, ctx, args });

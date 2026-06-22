@@ -123,13 +123,13 @@ export function DecisionRowView({
           <CountdownTimer
             endsAt={decision.startsAt}
             compact
-            compactLabel={t('timeline.terminal.startsIn')}
+            compactLabel={t('features.timeline.terminal.startsIn')}
           />
         ) : (
           <CountdownTimer
             endsAt={decision.endsAt}
             compact
-            compactLabel={t('timeline.terminal.closesIn')}
+            compactLabel={t('features.timeline.terminal.closesIn')}
           />
         )}
       </div>
@@ -155,7 +155,7 @@ export function DecisionRowView({
           <div className="flex w-full items-center gap-2 overflow-hidden">
             {decision.isIndicationPhase && (
               <span className="text-primary shrink-0 font-mono text-[9px] font-semibold uppercase">
-                {t('timeline.terminal.indication')}
+                {t('features.timeline.terminal.indicationShort')}
               </span>
             )}
             {!decision.isIndicationPhase &&
@@ -163,7 +163,7 @@ export function DecisionRowView({
                 <span
                   className={featureThemeClassName('decisionterminalDecisionRowThemedTextGamma')}
                 >
-                  {t('timeline.terminal.indication')} →
+                  {t('features.timeline.terminal.indicationShort')} →
                 </span>
               )}
             <CandidateBarCompact
@@ -178,11 +178,11 @@ export function DecisionRowView({
           <div className="flex w-full items-center gap-2 overflow-hidden">
             {decision.isIndicationPhase && decision.indicationVotes ? (
               <span className="text-primary shrink-0 font-mono text-[9px] font-semibold uppercase">
-                {t('timeline.terminal.indication')}
+                {t('features.timeline.terminal.indicationShort')}
               </span>
             ) : decision.indicationVotes && !decision.isIndicationPhase ? (
               <span className={featureThemeClassName('decisionterminalDecisionRowThemedTextGamma')}>
-                {t('timeline.terminal.indication')} →
+                {t('features.timeline.terminal.indicationShort')} →
               </span>
             ) : null}
             <VoteBarCompact

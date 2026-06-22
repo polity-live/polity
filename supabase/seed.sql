@@ -503,7 +503,7 @@ BEGIN
       NULL,
       'simple',
       4200,
-      'final_vote',
+      'final',
       seed_now - INTERVAL '65 minutes',
       seed_now
     ),
@@ -650,7 +650,7 @@ BEGIN
       agenda_transport_id,
       'Transport coalition mandate',
       'Authorize the negotiating team to finalize the local transport coalition mandate.',
-      'final_vote',
+      'final',
       'simple',
       'scheduled',
       4200,
@@ -1862,11 +1862,7 @@ BEGIN
 
   INSERT INTO bhk_group_permission_plan VALUES
     (1, 'groups', 'view'),
-    (2, 'groupMemberships', 'view'),
-    (3, 'events', 'view'),
-    (4, 'amendments', 'view'),
     (5, 'amendments', 'create'),
-    (6, 'amendments', 'vote'),
     (7, 'messages', 'manage');
 
   INSERT INTO public.action_right (
@@ -2349,7 +2345,6 @@ BEGIN
     (8, 'events', 'speak'),
     (9, 'events', 'active_voting'),
     (10, 'events', 'passive_voting'),
-    (11, 'agendaItems', 'view'),
     (12, 'agendaItems', 'create'),
     (13, 'agendaItems', 'update'),
     (14, 'agendaItems', 'delete'),
@@ -2622,19 +2617,13 @@ BEGIN
   INSERT INTO bhk_amendment_permission_plan VALUES
     (1, 'amendments', 'manage'),
     (2, 'amendments', 'view'),
-    (3, 'amendments', 'create'),
     (4, 'amendments', 'update'),
     (5, 'amendments', 'delete'),
     (6, 'amendments', 'vote'),
-    (7, 'amendments', 'moderate'),
-    (8, 'documents', 'view'),
     (9, 'documents', 'update'),
     (10, 'threads', 'create'),
     (11, 'threads', 'update'),
     (12, 'threads', 'delete'),
-    (13, 'comments', 'create'),
-    (14, 'comments', 'update'),
-    (15, 'comments', 'delete'),
     (16, 'notifications', 'manageNotifications'),
     (17, 'notifications', 'viewNotifications');
 

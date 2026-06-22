@@ -6,6 +6,7 @@ import type {
   AgendaItemByEventRow,
   ChangeRequestTimelineRow,
 } from './queries';
+import { AGENDA_VOTE_STEP_KIND } from './vote-step-kind';
 
 const DEFAULT_AGENDA_DURATION_MINUTES = 30;
 
@@ -135,25 +136,16 @@ export function useAgendaItemCRTimeline(agendaItemId: string | undefined) {
       : undefined
   );
 
-  console.log('[useAgendaItemCRTimeline] agendaItemId:', agendaItemId);
-  console.log('[useAgendaItemCRTimeline] timelineResult.type:', timelineResult.type);
-  console.log('[useAgendaItemCRTimeline] timelineItems:', timelineItems);
-  console.log('[useAgendaItemCRTimeline] timelineItems?.length:', timelineItems?.length);
-
   const crTimeline = useMemo<ChangeRequestTimelineRow[]>(
     () =>
       (timelineItems ?? []).map(item => {
-        if (item.step_kind === 'merge_variant') {
+        if (
+          item.step_kind === AGENDA_VOTE_STEP_KIND.mergeVariant ||
+          item.step_kind === AGENDA_VOTE_STEP_KIND.closing
+        ) {
           return {
             ...item,
-            _voteStepKind: 'variant_selection',
-          } as ChangeRequestTimelineRow;
-        }
-
-        if (item.step_kind === 'final_closing') {
-          return {
-            ...item,
-            _voteStepKind: 'final_amendment',
+            _voteStepKind: item.step_kind,
           } as ChangeRequestTimelineRow;
         }
 
@@ -177,8 +169,8 @@ export function useAgendaItemCRTimeline(agendaItemId: string | undefined) {
     [crTimeline]
   );
 
-  const finalVoteItem = useMemo(
-    () => crTimeline.find(item => item.is_final_vote) ?? null,
+  const closingVoteItem = useMemo(
+    () => crTimeline.find(item => item.is_closing_vote) ?? null,
     [crTimeline]
   );
 
@@ -189,7 +181,7 @@ export function useAgendaItemCRTimeline(agendaItemId: string | undefined) {
     currentItem,
     pendingItems,
     completedItems,
-    finalVoteItem,
+    closingVoteItem,
     progress,
     isLoading: timelineResult.type === 'unknown',
   };

@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS public.event (
   end_date TIMESTAMPTZ,
   timezone TEXT,
   default_final_vote_duration_seconds INTEGER,
+  gender_quota_enabled BOOLEAN NOT NULL DEFAULT false,
   capacity INTEGER,
   participant_count INTEGER NOT NULL DEFAULT 0,
   subscriber_count INTEGER NOT NULL DEFAULT 0,

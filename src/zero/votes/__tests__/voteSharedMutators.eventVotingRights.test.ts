@@ -43,13 +43,19 @@ function createTx(rows: unknown[]) {
       final_voter_participation: {
         insert: vi.fn(),
       },
+      final_choice_decision: {
+        insert: vi.fn(),
+      },
     },
   };
 }
 
 const vote = { id: 'vote-1', agenda_item_id: 'agenda-1', amendment_id: null };
-const namedVote = { ...vote, ballot_visibility: 'named' };
-const secretVote = { ...vote, ballot_visibility: 'secret' };
+const indicativeVote = { ...vote, status: 'indicative' };
+const finalOpenVote = { ...vote, status: 'final' };
+const closedVote = { ...vote, status: 'closed' };
+const namedVote = { ...vote, status: 'indicative', ballot_visibility: 'named' };
+const secretVote = { ...vote, status: 'indicative', ballot_visibility: 'secret' };
 const agendaItem = { id: 'agenda-1', event_id: 'event-1', amendment_id: null };
 const choice = { id: 'choice-1', vote_id: 'vote-1' };
 const voter = { id: 'voter-1', vote_id: 'vote-1', user_id: 'user-1' };
@@ -94,7 +100,17 @@ describe('voteSharedMutators event voting rights', () => {
 
   it('allows secret-ballot choice decisions after the active voter participation exists', async () => {
     allowActions(['active_voting']);
-    const tx = createTx([choice, vote, agendaItem, voter, voter, vote, agendaItem, participation]);
+    const tx = createTx([
+      choice,
+      indicativeVote,
+      vote,
+      agendaItem,
+      voter,
+      voter,
+      vote,
+      agendaItem,
+      participation,
+    ]);
 
     await voteSharedMutators.createIndicativeChoiceDecision.fn({
       tx: tx as never,
@@ -121,6 +137,7 @@ describe('voteSharedMutators event voting rights', () => {
     allowActions([]);
     const tx = createTx([
       choice,
+      indicativeVote,
       vote,
       agendaItem,
       voter,
@@ -260,9 +277,111 @@ describe('voteSharedMutators event voting rights', () => {
     expect(tx.mutate.indicative_choice_decision.insert).not.toHaveBeenCalled();
   });
 
+  it('rejects indicative replacement submissions outside the indicative phase', async () => {
+    allowActions(['active_voting']);
+
+    for (const blockedVote of [finalOpenVote, closedVote]) {
+      const tx = createTx([
+        voter,
+        vote,
+        agendaItem,
+        { ...blockedVote, ballot_visibility: 'named' },
+      ]);
+
+      await expect(
+        voteSharedMutators.replaceIndicativeVote.fn({
+          tx: tx as never,
+          ctx: { userID: 'user-1' } as never,
+          args: {
+            participation,
+            decisions: [
+              {
+                id: 'decision-1',
+                vote_id: 'vote-1',
+                choice_id: 'choice-1',
+                voter_participation_id: 'participation-1',
+              },
+            ],
+          },
+        })
+      ).rejects.toThrow(/indicative vote is open/i);
+
+      expect(tx.mutate.indicative_voter_participation.insert).not.toHaveBeenCalled();
+      expect(tx.mutate.indicative_choice_decision.insert).not.toHaveBeenCalled();
+    }
+  });
+
+  it('rejects indicative decision creation outside the indicative phase', async () => {
+    allowActions(['active_voting']);
+
+    for (const blockedVote of [finalOpenVote, closedVote]) {
+      const tx = createTx([choice, blockedVote]);
+
+      await expect(
+        voteSharedMutators.createIndicativeChoiceDecision.fn({
+          tx: tx as never,
+          ctx: { userID: 'user-1' } as never,
+          args: {
+            id: 'decision-1',
+            vote_id: 'vote-1',
+            choice_id: 'choice-1',
+            voter_participation_id: null,
+          },
+        })
+      ).rejects.toThrow(/indicative vote is open/i);
+
+      expect(tx.mutate.indicative_choice_decision.insert).not.toHaveBeenCalled();
+    }
+  });
+
+  it('rejects final participation submissions outside the final phase', async () => {
+    allowActions(['active_voting']);
+
+    for (const blockedVote of [indicativeVote, closedVote]) {
+      const tx = createTx([voter, vote, agendaItem, blockedVote]);
+
+      await expect(
+        voteSharedMutators.castFinalVote.fn({
+          tx: tx as never,
+          ctx: { userID: 'user-1' } as never,
+          args: {
+            id: 'final-participation-1',
+            vote_id: 'vote-1',
+            voter_id: 'voter-1',
+          },
+        })
+      ).rejects.toThrow(/final vote is open/i);
+
+      expect(tx.mutate.final_voter_participation.insert).not.toHaveBeenCalled();
+    }
+  });
+
+  it('rejects final decision creation outside the final phase', async () => {
+    allowActions(['active_voting']);
+
+    for (const blockedVote of [indicativeVote, closedVote]) {
+      const tx = createTx([choice, blockedVote]);
+
+      await expect(
+        voteSharedMutators.createFinalChoiceDecision.fn({
+          tx: tx as never,
+          ctx: { userID: 'user-1' } as never,
+          args: {
+            id: 'decision-1',
+            vote_id: 'vote-1',
+            choice_id: 'choice-1',
+            voter_participation_id: null,
+          },
+        })
+      ).rejects.toThrow(/final vote is open/i);
+
+      expect(tx.mutate.final_choice_decision.insert).not.toHaveBeenCalled();
+    }
+  });
+
   it('leaves final votes insert-only so duplicate submissions are rejected by persistence', async () => {
     allowActions(['active_voting']);
-    const tx = createTx([voter, vote, agendaItem]);
+    const tx = createTx([voter, vote, agendaItem, finalOpenVote]);
     tx.mutate.final_voter_participation.insert.mockRejectedValueOnce(
       new Error(
         'duplicate key value violates unique constraint "final_voter_participation_vote_id_voter_id_key"'

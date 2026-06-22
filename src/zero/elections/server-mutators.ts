@@ -71,7 +71,7 @@ interface ElectionAssignmentResult {
 }
 
 function isFinalElectionVoteStatus(status?: string | null) {
-  return status === 'final' || status === 'final_vote';
+  return status === 'final' || status === 'final';
 }
 
 async function loadElectionEventId(tx: ElectionServerTx, electionId: string) {

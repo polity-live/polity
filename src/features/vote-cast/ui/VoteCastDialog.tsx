@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 
 import { AmendmentForwardingPreview } from '@/features/amendments/ui/AmendmentForwardingPreview';
 import {
@@ -42,6 +43,7 @@ interface VoteCastDialogProps {
     nextEventTitle: string;
     nextEventStartDate?: number | null;
   } | null;
+  documentPreviewContent?: ReactNode;
   requirePassword?: boolean;
   passwordError?: string | null;
   isPasswordVerifying?: boolean;
@@ -84,6 +86,7 @@ export function VoteCastDialog({
   choices,
   title,
   forwardingPreview,
+  documentPreviewContent,
   requirePassword,
   passwordError,
   isPasswordVerifying,
@@ -282,6 +285,7 @@ export function VoteCastDialog({
       isLoading={isLoading || submissionStatus !== 'idle'}
       submissionActive={submissionStatus !== 'idle'}
       forwardingPreviewContent={forwardingPreviewContent}
+      documentPreviewContent={documentPreviewContent}
       submissionOverlay={
         <VoteSubmissionOverlay
           status={submissionStatus}

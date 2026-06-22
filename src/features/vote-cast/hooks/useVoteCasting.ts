@@ -50,14 +50,14 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
 
   // Derive phase from election/vote status
   const phase: VotingPhase = useMemo(() => {
-    if (status === 'final' || status === 'final_vote' || status === 'final_open')
-      return 'final_vote';
+    if (status === 'internal') return 'internal';
+    if (status === 'final') return 'final';
     if (status === 'closed' || status === 'completed') return 'closed';
     return 'indication';
   }, [status]);
 
-  const isIndicationPhase = phase === 'indication';
-  const isFinalVotePhase = phase === 'final_vote';
+  const isIndicationPhase = phase === 'indication' || phase === 'internal';
+  const isFinalVotePhase = phase === 'final';
   const isClosed = phase === 'closed';
 
   // Permissions
@@ -239,7 +239,7 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
   );
 
   const advanceVotePhase = useCallback(
-    async (newStatus: string) => {
+    async (newStatus: 'internal' | 'indicative' | 'final' | 'closed') => {
       if (!canManageVoting || !voteId) return;
       await voteActions.updateVote({ id: voteId, status: newStatus });
     },

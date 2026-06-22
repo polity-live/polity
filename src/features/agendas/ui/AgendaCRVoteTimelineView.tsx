@@ -77,7 +77,8 @@ export function AgendaCRVoteTimelineView({
               userSelectedChoiceIds={getUserSelectedChoiceIds(item)}
               canManage={canManage}
               canVote={canVote}
-              isFinalVoteLocked={item.is_final_vote && !allCRsProcessed}
+              editingMode="event_final_closing_vote"
+              isFinalVoteLocked={item.is_closing_vote && !allCRsProcessed}
               onCastVote={castCRVote}
               onStartIndicative={startIndicativePhase}
               onStartFinal={startFinalPhase}

@@ -62,11 +62,9 @@ describe('amendmentBranchDisplay', () => {
     ]);
   });
 
-  it('normalizes missing and legacy branch workflow modes', () => {
+  it('normalizes missing and unknown branch workflow modes at the data boundary', () => {
     expect(getBranchEditingMode(null)).toBe('edit');
-    expect(getBranchEditingMode({ id: 'branch-1', editing_mode: 'internal_voting' })).toBe(
-      'vote_internal'
-    );
+    expect(getBranchEditingMode({ id: 'branch-1', editing_mode: 'internal_voting' })).toBe('edit');
   });
 
   it('allows manual internal mode changes before the first agenda item starts', () => {

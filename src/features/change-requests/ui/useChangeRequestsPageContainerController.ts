@@ -1,8 +1,16 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useAgendaItemByAmendment } from '@/zero/agendas/useAgendaState';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { usePermissions } from '@/zero/rbac';
+import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
+import {
+  getVotePhase,
+  useAgendaItemCRVoting,
+} from '@/features/agendas/hooks/useAgendaItemCRVoting';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import {
   buildBranchDiffCandidates,
   getBranchEditingMode,
@@ -20,6 +28,7 @@ import {
   mapChangeRequestsToDiscussions,
   mapChangeRequestsToTimelineItems,
 } from '../logic/changeRequestsViewModel';
+import { normalizeEditingMode, type EditingMode } from '@/zero/amendments/editing-mode-policy';
 
 interface ChangeRequestsPageContainerProps {
   amendmentId: string;
@@ -55,6 +64,48 @@ function getAllProcessBranches(
   }
 
   return getOrderedBranches([...branchesById.values()]);
+}
+
+function isEventVoteCardsMode(editingMode: EditingMode | null | undefined) {
+  return editingMode === 'suggest_event' || editingMode === 'event_final_closing_vote';
+}
+
+function getTimelineItemBranchId(item: ChangeRequestTimelineRow): string | null {
+  const rawItem = item as ChangeRequestTimelineRow & {
+    processBranchId?: string | null;
+    _processBranchId?: string | null;
+  };
+  const rawChangeRequest = item.change_request as
+    | { process_branch_id?: string | null; processBranchId?: string | null }
+    | null
+    | undefined;
+
+  return (
+    item.process_branch_id ??
+    rawItem.processBranchId ??
+    rawItem._processBranchId ??
+    rawChangeRequest?.process_branch_id ??
+    rawChangeRequest?.processBranchId ??
+    null
+  );
+}
+
+function filterTimelineItemsForBranch(
+  items: readonly ChangeRequestTimelineRow[],
+  branchId: string | null
+) {
+  return items.filter(item => {
+    const itemBranchId = getTimelineItemBranchId(item);
+    return branchId ? itemBranchId === branchId : !itemBranchId;
+  });
+}
+
+function getDialogPhaseForItem(item: ChangeRequestTimelineRow | null) {
+  if (!item) return 'indication' as const;
+  const phase = getVotePhase(item);
+  if (phase === 'final') return 'final' as const;
+  if (phase === 'closed') return 'closed' as const;
+  return 'indication' as const;
 }
 
 export function useChangeRequestsPageContainerController({
@@ -110,18 +161,34 @@ export function useChangeRequestsPageContainerController({
     [branches, selectedBranchId]
   );
   const selectedBranchEditingMode = getBranchEditingMode(selectedBranch);
+  const amendmentEditingMode = normalizeEditingMode(
+    (amendment as { editing_mode?: string | null } | null | undefined)?.editing_mode
+  );
 
-  const { agendaItemId } = useAgendaItemByAmendment(amendmentId);
+  const { agendaItem, agendaItemId } = useAgendaItemByAmendment(amendmentId);
   const {
     finalizeExpiredInternalChangeRequestVotes,
     finalizeInternalChangeRequestVote,
     voteOnChangeRequest,
   } = useAmendmentActions();
-  const permissions = usePermissions({ amendment: amendment as never });
+  const { ensureEventSuggestionChangeRequestVotes } = useAgendaActions();
+  const agendaCrVoting = useAgendaItemCRVoting(agendaItemId, userId);
+  const { verifyVotingPassword } = useVotingPasswordActions();
+  const amendmentPermissions = usePermissions({ amendment: amendment as never });
+  const eventId = agendaItem?.event_id ?? agendaItem?.event?.id ?? undefined;
+  const eventPermissions = usePermissions({ eventId });
+  const [eventVoteDialogOpen, setEventVoteDialogOpen] = useState(false);
+  const [selectedEventVoteItemId, setSelectedEventVoteItemId] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isPasswordVerifying, setIsPasswordVerifying] = useState(false);
 
-  const isInVotingStage = isVotingEditingMode(selectedBranchEditingMode);
-  const canManageInternalVotes = Boolean(amendment) && permissions.canManage('amendments');
-  const canVoteInternal = Boolean(amendment) && permissions.can('vote', 'amendments');
+  const isInVotingStage =
+    isVotingEditingMode(selectedBranchEditingMode) ||
+    isEventVoteCardsMode(selectedBranchEditingMode) ||
+    isEventVoteCardsMode(amendmentEditingMode);
+  const canManageInternalVotes = Boolean(amendment) && amendmentPermissions.canManage('amendments');
+  const canVoteInternal = Boolean(amendment) && amendmentPermissions.can('vote', 'amendments');
+  const canVoteEvent = Boolean(eventId) && eventPermissions.canVote();
   const internalVotingBranchIds = useMemo(
     () =>
       currentBranches
@@ -129,6 +196,50 @@ export function useChangeRequestsPageContainerController({
         .map(branch => branch.id),
     [currentBranches]
   );
+  const eventSuggestionBranchIds = useMemo<(string | null)[]>(() => {
+    if (selectedBranchId) {
+      return selectedBranchEditingMode === 'suggest_event' ? [selectedBranchId] : [];
+    }
+
+    const branchIds = branches
+      .filter(branch => getBranchEditingMode(branch) === 'suggest_event')
+      .map(branch => branch.id);
+    if (branchIds.length > 0) {
+      return branchIds;
+    }
+
+    return branches.length === 0 && amendmentEditingMode === 'suggest_event' ? [null] : [];
+  }, [amendmentEditingMode, branches, selectedBranchEditingMode, selectedBranchId]);
+  const eventSuggestionBranchIdsKey = eventSuggestionBranchIds.map(id => id ?? 'main').join('|');
+  const eventSuggestionChangeRequestSignal = useMemo(
+    () =>
+      allChangeRequests
+        .map(
+          changeRequest =>
+            `${changeRequest.id}:${changeRequest.status}:${changeRequest.processBranchId ?? 'main'}:${changeRequest.confirmationStatus ?? ''}:${changeRequest.changeRequestStatus ?? ''}`
+        )
+        .join('|'),
+    [allChangeRequests]
+  );
+
+  useEffect(() => {
+    if (!agendaItemId || eventSuggestionBranchIds.length === 0) return;
+
+    for (const branchId of eventSuggestionBranchIds) {
+      void ensureEventSuggestionChangeRequestVotes({
+        amendment_id: amendmentId,
+        agenda_item_id: agendaItemId,
+        process_branch_id: branchId,
+      });
+    }
+  }, [
+    agendaItemId,
+    amendmentId,
+    ensureEventSuggestionChangeRequestVotes,
+    eventSuggestionChangeRequestSignal,
+    eventSuggestionBranchIds,
+    eventSuggestionBranchIdsKey,
+  ]);
 
   useEffect(() => {
     const selectedBranchIsCurrent = currentBranches.some(branch => branch.id === selectedBranchId);
@@ -195,9 +306,82 @@ export function useChangeRequestsPageContainerController({
     [voteOnChangeRequest]
   );
 
-  const timelineItems = useMemo(
+  const mockTimelineItems = useMemo(
     () => mapChangeRequestsToTimelineItems(allChangeRequests),
     [allChangeRequests]
+  );
+  const realAgendaTimelineItems = agendaCrVoting.crTimeline;
+  const timelineItems = useMemo(() => {
+    const branchFilteredItems = selectedBranchId
+      ? filterTimelineItemsForBranch(realAgendaTimelineItems, selectedBranchId)
+      : realAgendaTimelineItems;
+
+    return branchFilteredItems.length > 0 ? branchFilteredItems : mockTimelineItems;
+  }, [mockTimelineItems, realAgendaTimelineItems, selectedBranchId]);
+  const selectedEventVoteItem = useMemo(
+    () =>
+      realAgendaTimelineItems.find(item => item.id === selectedEventVoteItemId) ??
+      timelineItems.find(item => item.id === selectedEventVoteItemId) ??
+      null,
+    [realAgendaTimelineItems, selectedEventVoteItemId, timelineItems]
+  );
+  const selectedEventVoteChoices = useMemo(
+    () =>
+      (selectedEventVoteItem?.vote?.choices ?? []).map(choice => ({
+        id: choice.id,
+        label: choice.label || 'Choice',
+      })),
+    [selectedEventVoteItem?.vote?.choices]
+  );
+  const selectedEventVoteTitle = useMemo(() => {
+    if (!selectedEventVoteItem) return amendment?.title ?? undefined;
+    if (selectedEventVoteItem.vote?.title) return selectedEventVoteItem.vote.title;
+    if (selectedEventVoteItem.change_request?.title) {
+      return selectedEventVoteItem.change_request.title;
+    }
+    return amendment?.title ?? undefined;
+  }, [amendment?.title, selectedEventVoteItem]);
+  const selectedEventVotePhase = getDialogPhaseForItem(selectedEventVoteItem);
+
+  const handleOpenEventVoteDialog = useCallback((itemId: string) => {
+    setSelectedEventVoteItemId(itemId);
+    setPasswordError(null);
+    setEventVoteDialogOpen(true);
+  }, []);
+
+  const handleCastEventVote = useCallback(
+    async (item: ChangeRequestTimelineRow, choiceId: string) => {
+      await agendaCrVoting.castCRVote(item, choiceId);
+    },
+    [agendaCrVoting]
+  );
+
+  const handleCastEventVoteFromDialog = useCallback(
+    async (choiceId: string) => {
+      if (!selectedEventVoteItem) return;
+      await agendaCrVoting.castCRVote(selectedEventVoteItem, choiceId);
+    },
+    [agendaCrVoting, selectedEventVoteItem]
+  );
+
+  const handleSubmitVotingPassword = useCallback(
+    async (password: string) => {
+      setPasswordError(null);
+      setIsPasswordVerifying(true);
+      try {
+        await verifyVotingPassword(password);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : translateText('generated.inline.0010_verification_failed_e10d7e51');
+        setPasswordError(message);
+        throw error;
+      } finally {
+        setIsPasswordVerifying(false);
+      }
+    },
+    [verifyVotingPassword]
   );
 
   const diffMap = useMemo(() => mapChangeRequestsToDiffMap(allChangeRequests), [allChangeRequests]);
@@ -207,16 +391,32 @@ export function useChangeRequestsPageContainerController({
     [allChangeRequests]
   );
 
-  const branchSections = useMemo(
-    () =>
-      buildChangeRequestBranchSections({
-        branches,
-        changeRequests: allChangeRequests,
-        fallbackDocumentContent: document?.content as never,
-        fallbackDiscussions: discussions,
-      }),
-    [allChangeRequests, branches, discussions, document]
-  );
+  const branchSections = useMemo(() => {
+    const sections = buildChangeRequestBranchSections({
+      branches,
+      changeRequests: allChangeRequests,
+    });
+
+    return sections.map(section => {
+      if (!isEventVoteCardsMode(section.editingMode)) {
+        return section;
+      }
+
+      const realItems = filterTimelineItemsForBranch(realAgendaTimelineItems, section.branchId);
+      if (realItems.length === 0) {
+        return section;
+      }
+
+      return {
+        ...section,
+        totalCount: realItems.length,
+        openCount: realItems.filter(item => item.status !== 'completed').length,
+        approvedCount: section.approvedCount,
+        declinedCount: section.declinedCount,
+        timelineItems: realItems,
+      };
+    });
+  }, [allChangeRequests, branches, realAgendaTimelineItems]);
 
   const branchDiffCandidates = useMemo(
     () =>
@@ -254,6 +454,20 @@ export function useChangeRequestsPageContainerController({
     onBranchChange,
     canManageInternalVotes,
     canVoteInternal,
+    canVoteEvent,
+    hasUserVotedOnEventCR: agendaCrVoting.hasUserVoted,
+    getEventCRSelectedChoiceIds: agendaCrVoting.getUserSelectedChoiceIds,
+    onCastEventCRVote: handleCastEventVote,
+    onOpenEventCRVoteDialog: handleOpenEventVoteDialog,
+    eventVoteDialogOpen,
+    setEventVoteDialogOpen,
+    selectedEventVoteTitle,
+    selectedEventVoteChoices,
+    selectedEventVotePhase,
+    onCastEventVoteFromDialog: handleCastEventVoteFromDialog,
+    onSubmitVotingPassword: handleSubmitVotingPassword,
+    passwordError,
+    isPasswordVerifying,
     onCastInternalVote: handleCastInternalVote,
     onFinalizeInternalVote: handleFinalizeInternalVote,
   };

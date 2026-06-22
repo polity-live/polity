@@ -84,7 +84,7 @@ describe('buildNamedBallotResults', () => {
   it('keeps election list selections in ballot order', () => {
     const model = buildNamedElectionResultsModel({
       election: {
-        status: 'final_vote',
+        status: 'final',
         candidates: [
           {
             id: 'candidate-b',
@@ -122,7 +122,7 @@ describe('buildNamedBallotResults', () => {
   it('adds total option summaries for ungrouped election results', () => {
     const model = buildNamedElectionResultsModel({
       election: {
-        status: 'final_vote',
+        status: 'final',
         candidates: [
           {
             id: 'candidate-a',
@@ -163,7 +163,7 @@ describe('buildNamedBallotResults', () => {
   it('counts final offline election tallies in total option summaries', () => {
     const model = buildNamedElectionResultsModel({
       election: {
-        status: 'final_vote',
+        status: 'final',
         candidates: [
           {
             id: 'candidate-a',
@@ -221,7 +221,7 @@ describe('buildNamedBallotResults', () => {
   it('groups named results by source group and aggregates counts per option', () => {
     const model = buildNamedVoteResultsModel({
       vote: {
-        status: 'final_vote',
+        status: 'final',
         choices: [
           { id: 'yes', label: 'Yes', order_index: 0 },
           { id: 'no', label: 'No', order_index: 1 },

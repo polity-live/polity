@@ -35,6 +35,7 @@ const eventBaseSchema = z.object({
   end_date: nullableEventScheduleTimestampSchema,
   timezone: z.string().nullable(),
   default_final_vote_duration_seconds: z.number().nullable(),
+  gender_quota_enabled: z.boolean(),
   capacity: z.number().nullable(),
   participant_count: z.number(),
   subscriber_count: z.number(),
@@ -135,6 +136,7 @@ export const eventUpdateSchema = eventBaseSchema
     end_date: true,
     timezone: true,
     default_final_vote_duration_seconds: true,
+    gender_quota_enabled: true,
     capacity: true,
     agenda_management: true,
     meeting_type: true,
@@ -214,9 +216,6 @@ export const eventParticipantUpdateSchema = eventParticipantBaseSchema
   .pick({ status: true, visibility: true })
   .partial()
   .extend({ id: z.string() });
-export const eventParticipantLegacyRoleUpdateSchema = eventParticipantUpdateSchema.extend({
-  role_id: z.string().nullable().optional(),
-});
 export const eventParticipantDeleteSchema = z.object({ id: z.string() });
 export type EventParticipant = z.infer<typeof eventParticipantSelectSchema>;
 

@@ -19,13 +19,7 @@ export {
   type EntityPageShellStat,
 } from './EntityPageShell';
 export { ActionToolbar, PageHeader, PageShell, PanelGrid, Section } from './PageShell';
-export {
-  StatsBar,
-  StatsStrip,
-  type LegacyStatsBarItem,
-  type StatsBarItem,
-  type StatsBarProps,
-} from './StatsBar';
+export { StatsBar, StatsStrip, type StatsBarItem, type StatsBarProps } from './StatsBar';
 export { SubscriberStatsBar } from './SubscriberStatsBar';
 export {
   Toolbar,

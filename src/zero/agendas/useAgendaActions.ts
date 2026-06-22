@@ -147,6 +147,15 @@ export function useAgendaActions() {
     [t, zero]
   );
 
+  const ensureEventSuggestionChangeRequestVotes = useCallback(
+    (args: { amendment_id: string; agenda_item_id: string; process_branch_id?: string | null }) => {
+      const result = zero.mutate(mutators.agendas.ensureEventSuggestionChangeRequestVotes(args));
+      onServerError(result, () => toast.error(t('common.agendaToasts.crVotingInitFailed')));
+      return serverConfirmed(result);
+    },
+    [t, zero]
+  );
+
   const processCRVoteResult = useCallback(
     (args: {
       agenda_item_change_request_id: string;
@@ -178,6 +187,7 @@ export function useAgendaActions() {
     reorderAgendaItemChangeRequests,
     deleteAgendaItemChangeRequest,
     initializeChangeRequestVoting,
+    ensureEventSuggestionChangeRequestVotes,
     processCRVoteResult,
   };
 }

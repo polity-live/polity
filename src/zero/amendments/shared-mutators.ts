@@ -33,6 +33,7 @@ import {
 } from './schema';
 import {
   createChangeRequestSchema,
+  deleteChangeRequestSchema,
   finalizeExpiredInternalChangeRequestVotesSchema,
   finalizeInternalChangeRequestVoteSchema,
   repairInternalChangeRequestResolutionSchema,
@@ -51,7 +52,11 @@ import {
   getResolvedChangeRequestVisibilityScope,
   INTERNAL_CR_RESOLUTION_DEFAULT_VISIBILITY,
 } from '../change-requests/visibility';
-import { normalizeEditingMode } from './editing-mode-policy';
+import { normalizeEditingMode, type EditingMode } from './editing-mode-policy';
+import {
+  formatChangeRequestCrId,
+  parseChangeRequestCrId,
+} from '@/features/change-requests/logic/changeRequestNumbering';
 
 function denyPublicAmendmentProcessMutation(
   tx: Parameters<typeof denyPublicApiMutation>[0],
@@ -71,7 +76,7 @@ interface ChangeRequestVoteRow {
 
 const INTERNAL_CR_VOTING_DEFAULT_TRIGGER = 'all_collaborators_voted';
 const INTERNAL_CR_VOTING_DEFAULT_DURATION_MINUTES = 5;
-const INTERNAL_MODES = new Set(['edit', 'suggest_internal', 'vote_internal']);
+const INTERNAL_MODES = new Set<EditingMode>(['edit', 'suggest_internal', 'vote_internal']);
 const CHANGE_REQUEST_READONLY_BRANCH_STATUSES = new Set(['rejected', 'withdrawn', 'completed']);
 const CHANGE_REQUEST_READONLY_BRANCH_RESOLUTIONS = new Set([
   'merge_loser',
@@ -79,27 +84,16 @@ const CHANGE_REQUEST_READONLY_BRANCH_RESOLUTIONS = new Set([
   'withdrawn',
 ]);
 
-function normalizeEditingModeForChangeRequest(mode: string | null | undefined) {
-  if (mode === 'collaborative' || mode === 'collaborative_editing') return 'edit';
-  if (mode === 'internal_suggestion' || mode === 'internal_suggestions') return 'suggest_internal';
-  if (mode === 'internal_voting') return 'vote_internal';
-  if (mode === 'event_suggestion' || mode === 'event_suggestions') return 'suggest_event';
-  if (mode === 'event_voting' || mode === 'vote_event') return 'event_final_closing_vote';
-  return mode ?? 'edit';
-}
-
-function getChangeRequestVisibilityScope(mode: string | null | undefined) {
-  const normalizedMode = normalizeEditingModeForChangeRequest(mode);
-  return getOpenChangeRequestVisibilityScope(normalizedMode);
+function getChangeRequestVisibilityScope(mode: EditingMode) {
+  return getOpenChangeRequestVisibilityScope(mode);
 }
 
 function getChangeRequestResolvedVisibilityScope(
-  mode: string | null | undefined,
+  mode: EditingMode,
   internalResolutionVisibility?: string | null
 ) {
-  const normalizedMode = normalizeEditingModeForChangeRequest(mode);
   return getResolvedChangeRequestVisibilityScope({
-    resolvedInMode: normalizedMode,
+    resolvedInMode: mode,
     internalResolutionVisibility,
   });
 }
@@ -108,11 +102,9 @@ function isResolvedStatus(status: string | null | undefined) {
   return isClosedChangeRequestStatus(status);
 }
 
-function getDirectResolutionMethod(mode: string | null | undefined) {
-  const normalizedMode = normalizeEditingModeForChangeRequest(mode);
-  if (normalizedMode === 'vote_internal') return 'internal_vote';
-  if (normalizedMode === 'event_final_closing_vote') return 'event_vote';
-  if (INTERNAL_MODES.has(normalizedMode)) return 'direct_internal';
+function getDirectResolutionMethod(mode: EditingMode) {
+  if (mode === 'vote_internal') return 'internal_vote';
+  if (INTERNAL_MODES.has(mode)) return 'direct_internal';
   return null;
 }
 
@@ -130,6 +122,133 @@ function isClosedChangeRequestStatus(status: string | null | undefined) {
   return (
     status === 'accepted' || status === 'approved' || status === 'rejected' || status === 'declined'
   );
+}
+
+function isRecord(value: unknown): value is Record<string, any> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function normalizeDiscussions(value: unknown): Record<string, any>[] {
+  return Array.isArray(value) ? value.filter(isRecord) : [];
+}
+
+function getScopedChangeRequestNumber(row: {
+  branch_sequence_number?: number | null;
+  title?: string | null;
+}) {
+  const persisted = row.branch_sequence_number;
+  if (typeof persisted === 'number' && Number.isFinite(persisted) && persisted > 0) {
+    return Math.floor(persisted);
+  }
+
+  return parseChangeRequestCrId(row.title) ?? 0;
+}
+
+function getDiscussionCrNumber(discussion: Record<string, any>) {
+  return (
+    parseChangeRequestCrId(
+      typeof discussion.crId === 'string'
+        ? discussion.crId
+        : typeof discussion.title === 'string'
+          ? discussion.title
+          : null
+    ) ?? 0
+  );
+}
+
+function sameBranch(
+  row: { process_branch_id?: string | null },
+  processBranchId: string | null | undefined
+) {
+  return (row.process_branch_id ?? null) === (processBranchId ?? null);
+}
+
+async function resolveNextChangeRequestBranchSequence({
+  tx,
+  amendmentId,
+  processBranchId,
+  discussions,
+  requestedCrId,
+}: {
+  tx: Parameters<typeof denyPublicApiMutation>[0];
+  amendmentId: string;
+  processBranchId?: string | null;
+  discussions: readonly Record<string, any>[];
+  requestedCrId?: string | null;
+}) {
+  const existingChangeRequests = await tx.run(
+    zql.change_request.where('amendment_id', amendmentId)
+  );
+  const maxFromRows = (Array.isArray(existingChangeRequests) ? existingChangeRequests : [])
+    .filter((row: { process_branch_id?: string | null }) => sameBranch(row, processBranchId))
+    .reduce(
+      (max: number, row: { branch_sequence_number?: number | null; title?: string | null }) =>
+        Math.max(max, getScopedChangeRequestNumber(row)),
+      0
+    );
+  const maxFromDiscussions = discussions.reduce(
+    (max, discussion) => Math.max(max, getDiscussionCrNumber(discussion)),
+    0
+  );
+  const requestedNumber = parseChangeRequestCrId(requestedCrId);
+  const nextNumber = Math.max(maxFromRows, maxFromDiscussions) + 1;
+
+  return requestedNumber && requestedNumber >= nextNumber ? requestedNumber : nextNumber;
+}
+
+function updateDiscussionForCreatedChangeRequest({
+  discussions,
+  discussionId,
+  requestedCrId,
+  changeRequestId,
+  crId,
+  branchSequenceNumber,
+  status,
+  votingStatus,
+  now,
+}: {
+  discussions: readonly Record<string, any>[];
+  discussionId?: string | null;
+  requestedCrId?: string | null;
+  changeRequestId: string;
+  crId: string;
+  branchSequenceNumber: number;
+  status?: string | null;
+  votingStatus?: string | null;
+  now: number;
+}) {
+  const targetIndex = discussions.findIndex(discussion => {
+    return (
+      (discussionId && discussion.id === discussionId) ||
+      discussion.changeRequestEntityId === changeRequestId ||
+      (requestedCrId && discussion.crId === requestedCrId)
+    );
+  });
+
+  if (targetIndex < 0) {
+    return null;
+  }
+
+  const nextDiscussions = [...discussions];
+  const isPendingSubmission =
+    status === 'pending_submission' || votingStatus === 'pending_submission';
+  nextDiscussions[targetIndex] = {
+    ...nextDiscussions[targetIndex],
+    crId,
+    changeRequestEntityId: changeRequestId,
+    changeRequestStatus: status ?? nextDiscussions[targetIndex].changeRequestStatus ?? 'open',
+    votingStatus: votingStatus ?? nextDiscussions[targetIndex].votingStatus ?? null,
+    confirmationStatus: isPendingSubmission
+      ? 'pending'
+      : (nextDiscussions[targetIndex].confirmationStatus ?? 'confirmed'),
+    confirmedAt: isPendingSubmission
+      ? nextDiscussions[targetIndex].confirmedAt
+      : (nextDiscussions[targetIndex].confirmedAt ?? now),
+    branchScopedCrNumber: branchSequenceNumber,
+    branchSequenceNumber,
+  };
+
+  return nextDiscussions;
 }
 
 function getAmendmentOriginId(amendment: {
@@ -380,14 +499,28 @@ export const amendmentSharedMutators = {
     async ({ tx, ctx: { userID }, args }) => {
       const now = Date.now();
       const amendment = await tx.run(zql.amendment.where('id', args.amendment_id).one());
+      if (!amendment) {
+        throw new Error('Amendment not found');
+      }
+
       const processBranch = await assertChangeRequestProcessBranch(
         tx,
-        amendment ?? null,
+        amendment,
         args.process_branch_id ?? null
       );
-      const createdInMode = normalizeEditingModeForChangeRequest(
-        processBranch?.editing_mode ?? 'edit'
+      const discussionId = args.discussion_id ?? null;
+      const targetDiscussions = normalizeDiscussions(
+        processBranch ? processBranch.discussions : amendment.discussions
       );
+      const branchSequenceNumber = await resolveNextChangeRequestBranchSequence({
+        tx,
+        amendmentId: args.amendment_id,
+        processBranchId: args.process_branch_id ?? null,
+        discussions: targetDiscussions,
+        requestedCrId: args.title,
+      });
+      const crId = formatChangeRequestCrId(branchSequenceNumber) ?? `CR-${branchSequenceNumber}`;
+      const createdInMode = normalizeEditingMode(processBranch?.editing_mode ?? 'edit');
       const trigger = normalizeInternalCRVotingTrigger(amendment?.internal_cr_voting_close_trigger);
       const durationMinutes = normalizeInternalCRVotingDurationMinutes(
         amendment?.internal_cr_voting_duration_minutes
@@ -397,9 +530,13 @@ export const amendmentSharedMutators = {
           ? now + durationMinutes * 60_000
           : (args.voting_deadline ?? null);
       const isResolved = isResolvedStatus(args.status);
+      const changeRequestArgs = { ...args };
+      delete (changeRequestArgs as { discussion_id?: unknown }).discussion_id;
       await tx.mutate.change_request.insert({
-        ...args,
+        ...changeRequestArgs,
         process_branch_id: args.process_branch_id ?? null,
+        title: crId,
+        branch_sequence_number: branchSequenceNumber,
         user_id: userID,
         changed_character_count: args.changed_character_count ?? 0,
         votes_for: 0,
@@ -418,6 +555,34 @@ export const amendmentSharedMutators = {
         created_at: now,
         updated_at: now,
       });
+
+      const nextDiscussions = updateDiscussionForCreatedChangeRequest({
+        discussions: targetDiscussions,
+        discussionId,
+        requestedCrId: args.title,
+        changeRequestId: args.id,
+        crId,
+        branchSequenceNumber,
+        status: args.status,
+        votingStatus: args.voting_status,
+        now,
+      });
+
+      if (nextDiscussions) {
+        if (processBranch) {
+          await tx.mutate.amendment_process_branch.update({
+            id: processBranch.id,
+            discussions: nextDiscussions,
+            updated_at: now,
+          });
+        } else {
+          await tx.mutate.amendment.update({
+            id: amendment.id,
+            discussions: nextDiscussions,
+            updated_at: now,
+          });
+        }
+      }
     }
   ),
 
@@ -743,5 +908,9 @@ export const amendmentSharedMutators = {
       ...args,
       updated_at: Date.now(),
     });
+  }),
+
+  deleteChangeRequest: defineMutator(deleteChangeRequestSchema, async ({ tx, args }) => {
+    await tx.mutate.change_request.delete({ id: args.id });
   }),
 };

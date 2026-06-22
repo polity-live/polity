@@ -258,11 +258,11 @@ export function GroupWikiContentView({
 
       {/* Stats Bar with Events and Amendments */}
       <StatsBar
-        stats={[
-          { value: memberCount, labelKey: 'components.labels.members' },
-          { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-          { value: eventsCount, labelKey: 'components.labels.events' },
-          { value: amendmentsCount, labelKey: 'components.labels.amendments' },
+        items={[
+          { value: memberCount, label: t('components.labels.members') },
+          { value: subscriberCount, label: t('components.labels.subscribers') },
+          { value: eventsCount, label: t('components.labels.events') },
+          { value: amendmentsCount, label: t('components.labels.amendments') },
         ]}
       />
 

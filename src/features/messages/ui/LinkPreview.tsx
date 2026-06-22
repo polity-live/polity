@@ -255,7 +255,7 @@ export function BlogPreviewContainer({
       meta={
         <div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs">
           <span>
-            {blog.like_count || 0} {t('components.linkPreview.likes')}
+            {blog.supporter_count || 0} {t('components.labels.supporters')}
           </span>
           <span>•</span>
           <span>

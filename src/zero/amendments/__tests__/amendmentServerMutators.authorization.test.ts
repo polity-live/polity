@@ -9,6 +9,7 @@ const createProcessTaskMock = vi.fn();
 const supportAmendmentMock = vi.fn();
 const updateSupportVoteMock = vi.fn();
 const sharedUpdateProcessBranchMock = vi.fn();
+const changeRequestDeleteMock = vi.fn();
 const fireNotificationMock = vi.fn();
 const amendmentTitleMock = vi.fn();
 const eventTitleMock = vi.fn();
@@ -37,6 +38,7 @@ vi.mock('../../mutators', () => ({
       createChangeRequest: { fn: vi.fn() },
       voteOnChangeRequest: { fn: vi.fn() },
       updateChangeRequest: { fn: vi.fn() },
+      deleteChangeRequest: { fn: (...args: unknown[]) => changeRequestDeleteMock(...args) },
       createSupportConfirmation: { fn: vi.fn() },
       updateSupportConfirmation: { fn: vi.fn() },
       updateProcessBranch: { fn: (...args: unknown[]) => sharedUpdateProcessBranchMock(...args) },
@@ -143,6 +145,7 @@ function createEventChangeRequestTx(location: AmendmentMutatorTx['location'] = '
       },
       change_request: {
         update: vi.fn(),
+        delete: vi.fn(),
       },
       vote: {
         insert: vi.fn(),
@@ -294,6 +297,7 @@ describe('amendmentServerMutators authorization', () => {
     supportAmendmentMock.mockReset();
     updateSupportVoteMock.mockReset();
     sharedUpdateProcessBranchMock.mockReset();
+    changeRequestDeleteMock.mockReset();
     fireNotificationMock.mockReset();
     amendmentTitleMock.mockReset();
     eventTitleMock.mockReset();
@@ -628,7 +632,7 @@ describe('amendmentServerMutators authorization', () => {
           change_request_id: 'cr-existing',
           vote_id: 'vote-existing',
           order_index: 0,
-          is_final_vote: false,
+          is_closing_vote: false,
           step_kind: 'change_request',
           process_branch_id: 'branch-1',
         },
@@ -638,15 +642,15 @@ describe('amendmentServerMutators authorization', () => {
           change_request_id: null,
           vote_id: 'vote-final',
           order_index: 1,
-          is_final_vote: true,
-          step_kind: 'final_closing',
+          is_closing_vote: true,
+          step_kind: 'closing',
           process_branch_id: 'branch-1',
         },
       ])
       .mockResolvedValueOnce({
         id: 'vote-final',
-        purpose: 'final_closing',
-        status: 'indicative_open',
+        purpose: 'closing',
+        status: 'indicative',
       })
       .mockResolvedValueOnce([{ user_id: 'voter-1' }]);
     amendmentTitleMock.mockResolvedValueOnce('Amendment');
@@ -664,7 +668,7 @@ describe('amendmentServerMutators authorization', () => {
         agenda_item_id: 'agenda-target',
         amendment_id: 'amendment-1',
         purpose: 'change_request',
-        status: 'indicative_open',
+        status: 'indicative',
       })
     );
     expect(tx.mutate.agenda_item_change_request.update).toHaveBeenCalledWith(
@@ -680,7 +684,7 @@ describe('amendmentServerMutators authorization', () => {
         order_index: 1,
         step_kind: 'change_request',
         process_branch_id: 'branch-1',
-        is_final_vote: false,
+        is_closing_vote: false,
       })
     );
     expect(tx.mutate.voter.insert).toHaveBeenCalledWith(
@@ -696,13 +700,136 @@ describe('amendmentServerMutators authorization', () => {
     );
   });
 
-  it('appends event change request vote steps when a pending CR becomes open', async () => {
+  it('appends open event change requests before an existing final vote without a timeline link', async () => {
+    const tx = createEventChangeRequestTx();
+    const amendment = {
+      id: 'amendment-1',
+      title: 'Amendment',
+      event_id: null,
+      editing_mode: 'suggest_event',
+      current_process_run_id: 'run-1',
+    };
+    tx.run
+      .mockResolvedValueOnce(amendment)
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        editing_mode: 'suggest_event',
+      })
+      .mockResolvedValueOnce([{ event_id: 'event-permission', status: 'scheduled' }])
+      .mockResolvedValueOnce(amendment)
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        editing_mode: 'suggest_event',
+      })
+      .mockResolvedValueOnce([
+        { id: 'agenda-target', event_id: 'event-target', amendment_id: 'amendment-1' },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'vote-final',
+          agenda_item_id: 'agenda-target',
+          amendment_id: 'amendment-1',
+          purpose: 'closing',
+          status: 'indicative',
+        },
+      ])
+      .mockResolvedValueOnce([{ user_id: 'voter-1' }]);
+    amendmentTitleMock.mockResolvedValueOnce('Amendment');
+    userNameMock.mockResolvedValueOnce('Author');
+    eventTitleMock.mockResolvedValueOnce('Target Event');
+
+    await amendmentServerMutators.createChangeRequest.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: createChangeRequestArgs(),
+    });
+
+    expect(tx.mutate.vote.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agenda_item_id: 'agenda-target',
+        amendment_id: 'amendment-1',
+        purpose: 'change_request',
+        status: 'indicative',
+      })
+    );
+    expect(tx.mutate.vote_choice.insert).toHaveBeenCalledTimes(3);
+    expect(tx.mutate.voter.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: 'voter-1',
+      })
+    );
+    expect(tx.mutate.agenda_item_change_request.update).not.toHaveBeenCalled();
+    expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        agenda_item_id: 'agenda-target',
+        change_request_id: 'cr-new',
+        order_index: 0,
+        step_kind: 'change_request',
+        process_branch_id: 'branch-1',
+        is_closing_vote: false,
+      })
+    );
+    expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        agenda_item_id: 'agenda-target',
+        change_request_id: null,
+        vote_id: 'vote-final',
+        order_index: 1,
+        step_kind: 'closing',
+        process_branch_id: 'branch-1',
+        is_closing_vote: true,
+      })
+    );
+    expect(fireNotificationMock).toHaveBeenCalledWith(
+      'notifyEventChangeRequestCreated',
+      expect.objectContaining({
+        eventId: 'event-target',
+      })
+    );
+  });
+
+  it('does not create vote steps or notifications for pending event submissions', async () => {
+    const tx = createEventChangeRequestTx();
+    const amendment = {
+      id: 'amendment-1',
+      title: 'Amendment',
+      event_id: 'event-target',
+      editing_mode: 'suggest_event',
+      current_process_run_id: 'run-1',
+    };
+    tx.run
+      .mockResolvedValueOnce(amendment)
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        editing_mode: 'suggest_event',
+      })
+      .mockResolvedValueOnce([{ event_id: 'event-target', status: 'scheduled' }])
+      .mockResolvedValueOnce(amendment);
+
+    await amendmentServerMutators.createChangeRequest.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: createChangeRequestArgs({
+        status: 'pending_submission',
+        voting_status: 'pending_submission',
+      }),
+    });
+
+    expect(tx.mutate.vote.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.agenda_item_change_request.insert).not.toHaveBeenCalled();
+    expect(fireNotificationMock).not.toHaveBeenCalled();
+  });
+
+  it('appends event change request vote steps and notifications when a pending submission becomes open', async () => {
     const tx = createEventChangeRequestTx();
     const previousChangeRequest = {
       id: 'cr-pending',
       amendment_id: 'amendment-1',
-      user_id: 'user-2',
-      status: 'pending',
+      user_id: 'user-1',
+      status: 'pending_submission',
       title: 'Pending CR',
       process_branch_id: 'branch-1',
     };
@@ -732,17 +859,20 @@ describe('amendmentServerMutators authorization', () => {
           change_request_id: null,
           vote_id: 'vote-final',
           order_index: 0,
-          is_final_vote: true,
-          step_kind: 'final_closing',
+          is_closing_vote: true,
+          step_kind: 'closing',
           process_branch_id: 'branch-1',
         },
       ])
       .mockResolvedValueOnce({
         id: 'vote-final',
-        purpose: 'final_closing',
-        status: 'indicative_open',
+        purpose: 'closing',
+        status: 'indicative',
       })
       .mockResolvedValueOnce([]);
+    amendmentTitleMock.mockResolvedValueOnce('Amendment');
+    userNameMock.mockResolvedValueOnce('Author');
+    eventTitleMock.mockResolvedValueOnce('Target Event');
 
     await amendmentServerMutators.updateChangeRequest.fn({
       tx: tx as never,
@@ -750,6 +880,7 @@ describe('amendmentServerMutators authorization', () => {
       args: {
         id: 'cr-pending',
         status: 'open',
+        voting_status: 'open',
       },
     });
 
@@ -767,6 +898,167 @@ describe('amendmentServerMutators authorization', () => {
         process_branch_id: 'branch-1',
       })
     );
+    expect(fireNotificationMock).toHaveBeenCalledWith('notifyChangeRequestCreated', {
+      senderId: 'user-1',
+      senderName: 'Author',
+      amendmentId: 'amendment-1',
+      amendmentTitle: 'Amendment',
+    });
+    expect(fireNotificationMock).toHaveBeenCalledWith(
+      'notifyEventChangeRequestCreated',
+      expect.objectContaining({
+        senderId: 'user-1',
+        eventId: 'event-target',
+      })
+    );
+  });
+
+  it('appends submitted event change requests when the final vote exists without a timeline link', async () => {
+    const tx = createEventChangeRequestTx();
+    const previousChangeRequest = {
+      id: 'cr-pending',
+      amendment_id: 'amendment-1',
+      user_id: 'user-1',
+      status: 'pending_submission',
+      title: 'Pending CR',
+      process_branch_id: 'branch-1',
+    };
+    const amendment = {
+      id: 'amendment-1',
+      event_id: null,
+      editing_mode: 'suggest_event',
+    };
+    tx.run
+      .mockResolvedValueOnce(previousChangeRequest)
+      .mockResolvedValueOnce(amendment)
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        editing_mode: 'suggest_event',
+      })
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        editing_mode: 'suggest_event',
+      })
+      .mockResolvedValueOnce([
+        { id: 'agenda-target', event_id: 'event-target', amendment_id: 'amendment-1' },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'vote-final',
+          agenda_item_id: 'agenda-target',
+          amendment_id: 'amendment-1',
+          purpose: 'closing',
+          status: 'indicative',
+        },
+      ])
+      .mockResolvedValueOnce([{ user_id: 'voter-1' }]);
+    amendmentTitleMock.mockResolvedValueOnce('Amendment');
+    userNameMock.mockResolvedValueOnce('Author');
+    eventTitleMock.mockResolvedValueOnce('Target Event');
+
+    await amendmentServerMutators.updateChangeRequest.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        id: 'cr-pending',
+        status: 'open',
+        voting_status: 'open',
+      },
+    });
+
+    expect(tx.mutate.vote.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agenda_item_id: 'agenda-target',
+        amendment_id: 'amendment-1',
+        purpose: 'change_request',
+        status: 'indicative',
+      })
+    );
+    expect(tx.mutate.vote_choice.insert).toHaveBeenCalledTimes(3);
+    expect(tx.mutate.voter.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: 'voter-1',
+      })
+    );
+    expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        agenda_item_id: 'agenda-target',
+        change_request_id: 'cr-pending',
+        order_index: 0,
+        step_kind: 'change_request',
+        process_branch_id: 'branch-1',
+        is_closing_vote: false,
+      })
+    );
+    expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        agenda_item_id: 'agenda-target',
+        change_request_id: null,
+        vote_id: 'vote-final',
+        order_index: 1,
+        step_kind: 'closing',
+        process_branch_id: 'branch-1',
+        is_closing_vote: true,
+      })
+    );
+    expect(fireNotificationMock).toHaveBeenCalledWith(
+      'notifyEventChangeRequestCreated',
+      expect.objectContaining({
+        senderId: 'user-1',
+        eventId: 'event-target',
+      })
+    );
+  });
+
+  it('deletes pending event submissions for the author', async () => {
+    const tx = createEventChangeRequestTx();
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'cr-pending',
+        amendment_id: 'amendment-1',
+        user_id: 'user-1',
+        status: 'pending_submission',
+      })
+      .mockResolvedValueOnce({
+        id: 'amendment-1',
+        event_id: 'event-1',
+      });
+
+    await amendmentServerMutators.deleteChangeRequest.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: { id: 'cr-pending' },
+    });
+
+    expect(changeRequestDeleteMock).toHaveBeenCalledWith({
+      tx,
+      ctx: createCtx(),
+      args: { id: 'cr-pending' },
+    });
+    expect(canMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects deleting already submitted change requests', async () => {
+    const tx = createEventChangeRequestTx();
+    tx.run.mockResolvedValueOnce({
+      id: 'cr-open',
+      amendment_id: 'amendment-1',
+      user_id: 'user-1',
+      status: 'open',
+    });
+
+    await expect(
+      amendmentServerMutators.deleteChangeRequest.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: { id: 'cr-open' },
+      })
+    ).rejects.toThrow('Only pending change request submissions can be deleted');
+
+    expect(changeRequestDeleteMock).not.toHaveBeenCalled();
   });
 
   it('does not append event change requests after final closing has started', async () => {
@@ -780,8 +1072,16 @@ describe('amendmentServerMutators authorization', () => {
     };
     tx.run
       .mockResolvedValueOnce(amendment)
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        editing_mode: 'suggest_event',
+      })
       .mockResolvedValueOnce([{ event_id: 'event-permission', status: 'scheduled' }])
       .mockResolvedValueOnce(amendment)
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        editing_mode: 'suggest_event',
+      })
       .mockResolvedValueOnce([
         { id: 'agenda-target', event_id: 'event-target', amendment_id: 'amendment-1' },
       ])
@@ -792,16 +1092,117 @@ describe('amendmentServerMutators authorization', () => {
           change_request_id: null,
           vote_id: 'vote-final',
           order_index: 0,
-          is_final_vote: true,
-          step_kind: 'final_closing',
+          is_closing_vote: true,
+          step_kind: 'closing',
           process_branch_id: 'branch-1',
         },
       ])
       .mockResolvedValueOnce({
         id: 'vote-final',
-        purpose: 'final_closing',
-        status: 'final_open',
+        purpose: 'closing',
+        status: 'final',
       });
+    amendmentTitleMock.mockResolvedValueOnce('Amendment');
+    userNameMock.mockResolvedValueOnce('Author');
+
+    await amendmentServerMutators.createChangeRequest.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: createChangeRequestArgs(),
+    });
+
+    expect(tx.mutate.vote.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.agenda_item_change_request.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.agenda_item_change_request.update).not.toHaveBeenCalled();
+  });
+
+  it.each(['final', 'closed'])(
+    'does not append missing-link event change request vote steps when final vote is %s',
+    async status => {
+      const tx = createEventChangeRequestTx();
+      const amendment = {
+        id: 'amendment-1',
+        title: 'Amendment',
+        event_id: null,
+        editing_mode: 'suggest_event',
+        current_process_run_id: 'run-1',
+      };
+      tx.run
+        .mockResolvedValueOnce(amendment)
+        .mockResolvedValueOnce({
+          id: 'branch-1',
+          editing_mode: 'suggest_event',
+        })
+        .mockResolvedValueOnce([{ event_id: 'event-permission', status: 'scheduled' }])
+        .mockResolvedValueOnce(amendment)
+        .mockResolvedValueOnce({
+          id: 'branch-1',
+          editing_mode: 'suggest_event',
+        })
+        .mockResolvedValueOnce([
+          { id: 'agenda-target', event_id: 'event-target', amendment_id: 'amendment-1' },
+        ])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          {
+            id: 'vote-final',
+            agenda_item_id: 'agenda-target',
+            amendment_id: 'amendment-1',
+            purpose: 'closing',
+            status,
+          },
+        ]);
+      amendmentTitleMock.mockResolvedValueOnce('Amendment');
+      userNameMock.mockResolvedValueOnce('Author');
+
+      await amendmentServerMutators.createChangeRequest.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: createChangeRequestArgs(),
+      });
+
+      expect(tx.mutate.vote.insert).not.toHaveBeenCalled();
+      expect(tx.mutate.agenda_item_change_request.insert).not.toHaveBeenCalled();
+      expect(tx.mutate.agenda_item_change_request.update).not.toHaveBeenCalled();
+    }
+  );
+
+  it('does not duplicate event change request timeline links', async () => {
+    const tx = createEventChangeRequestTx();
+    const amendment = {
+      id: 'amendment-1',
+      title: 'Amendment',
+      event_id: null,
+      editing_mode: 'suggest_event',
+      current_process_run_id: 'run-1',
+    };
+    tx.run
+      .mockResolvedValueOnce(amendment)
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        editing_mode: 'suggest_event',
+      })
+      .mockResolvedValueOnce([{ event_id: 'event-permission', status: 'scheduled' }])
+      .mockResolvedValueOnce(amendment)
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        editing_mode: 'suggest_event',
+      })
+      .mockResolvedValueOnce([
+        { id: 'agenda-target', event_id: 'event-target', amendment_id: 'amendment-1' },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'link-existing-cr',
+          agenda_item_id: 'agenda-target',
+          change_request_id: 'cr-new',
+          vote_id: 'vote-existing',
+          order_index: 0,
+          is_closing_vote: false,
+          step_kind: 'change_request',
+          process_branch_id: 'branch-1',
+        },
+      ]);
     amendmentTitleMock.mockResolvedValueOnce('Amendment');
     userNameMock.mockResolvedValueOnce('Author');
 
@@ -987,7 +1388,7 @@ describe('amendmentServerMutators authorization', () => {
       .mockResolvedValueOnce({
         id: 'branch-1',
         process_run_id: 'run-1',
-        editing_mode: 'collaborative_editing',
+        editing_mode: 'edit',
         status: 'scheduled',
         resolution: null,
       })

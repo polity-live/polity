@@ -7,7 +7,7 @@ import { cn } from '@/features/shared/utils/utils';
 import { Check, Loader2, Minus, X } from 'lucide-react';
 
 export type VotingChoiceValue = 'accept' | 'reject' | 'abstain';
-export type VotingPhaseValue = 'indication' | 'final_vote' | 'closed';
+export type VotingPhaseValue = 'internal' | 'indication' | 'final' | 'closed';
 export type VotingResultValue = 'passed' | 'failed' | 'tied' | 'elected';
 
 export interface VotingChoiceLabels {
@@ -136,12 +136,13 @@ export interface VotingPhaseBadgeProps extends Omit<
 export function VotingPhaseBadge({ phase, labels, className, ...props }: VotingPhaseBadgeProps) {
   const { t } = useTranslation();
   const resolvedLabels = {
+    internal: labels?.internal ?? t('features.events.voting.phases.internal', 'Internal vote'),
     indication: labels?.indication ?? t('features.events.voting.phases.indication'),
-    final_vote: labels?.final_vote ?? t('features.events.voting.phases.finalVote'),
+    final: labels?.final ?? t('features.events.voting.phases.finalVote'),
     closed: labels?.closed ?? t('features.events.voting.phases.closed'),
   };
 
-  if (phase === 'final_vote') {
+  if (phase === 'final') {
     return (
       <StatusBadge
         status={phase}
@@ -152,7 +153,7 @@ export function VotingPhaseBadge({ phase, labels, className, ...props }: VotingP
         )}
         {...props}
       >
-        {resolvedLabels.final_vote}
+        {resolvedLabels.final}
       </StatusBadge>
     );
   }

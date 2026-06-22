@@ -10,9 +10,16 @@ import { featureThemeClassName } from '@/features/shared/theme';
 
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useSyncedVotingTimer } from '../hooks/useVotingTimer';
-import { CheckCircle, PlayCircle, PauseCircle, Timer } from 'lucide-react';
+import { CheckCircle, PlayCircle, PauseCircle, Timer, Vote } from 'lucide-react';
 
-type VotingPhase = 'setup' | 'introduction' | 'voting' | 'closed' | 'indication' | 'final_vote';
+type VotingPhase =
+  | 'setup'
+  | 'introduction'
+  | 'voting'
+  | 'closed'
+  | 'internal'
+  | 'indication'
+  | 'final';
 type VotingResult = 'passed' | 'rejected' | 'tie' | null;
 
 interface VotingPhaseIndicatorProps {
@@ -45,11 +52,15 @@ const phaseConfig: Record<VotingPhase, { icon: React.ElementType; color: string 
     icon: CheckCircle,
     color: featureThemeClassName('agendaAgendaVoteSectionSuccessBackground'),
   },
+  internal: {
+    icon: Vote,
+    color: featureThemeClassName('voteVotingPhaseIndicatorInfoBackground'),
+  },
   indication: {
     icon: PauseCircle,
     color: featureThemeClassName('voteVotingPhaseIndicatorInfoBackground'),
   },
-  final_vote: {
+  final: {
     icon: Timer,
     color: featureThemeClassName('decisionterminalDecisionWidgetContentWarningBackground'),
   },

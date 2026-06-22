@@ -2,11 +2,12 @@ import { useState, useCallback, useMemo } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { useUserState } from '@/zero/users/useUserState';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useVoteCasting } from '@/features/vote-cast/hooks/useVoteCasting';
-import { VOTE_STATUS } from '@/zero/votes/vote-workflow';
+import { VOTE_PHASE } from '@/zero/votes/vote-workflow';
 import {
   defaultElectionBallotVisibility,
   defaultVoteBallotVisibility,
@@ -19,6 +20,12 @@ import {
   logElectionFlowClientError,
 } from '@/features/elections/logic/electionFlowLogging';
 import { canJoinEventSpeakerList } from '../logic/speakerListPermissions';
+import {
+  getGenderQuotaFeedbackMessage,
+  validateSpeakerGenderQuota,
+} from '../logic/speakerListGenderQuota';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 
 interface AgendaItem {
   id: string;
@@ -28,7 +35,10 @@ interface AgendaItem {
   speaker_list?: readonly {
     readonly id: string;
     readonly user_id?: string | null;
-    readonly user?: { readonly id: string } | null;
+    readonly user?: { readonly id: string; readonly gender?: string | null } | null;
+    readonly order?: number | null;
+    readonly order_index?: number | null;
+    readonly created_at?: number | string | null;
     readonly completed?: boolean | null;
   }[];
 }
@@ -74,11 +84,23 @@ interface UseAgendaActionBarOptions {
   electorId?: string;
   /** User's voter record id */
   voterId?: string;
+  eventGenderQuotaEnabled?: boolean;
 }
 
 export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
-  const { eventId, currentAgendaItem, eventTitle, election, vote, electorId, voterId } = options;
+  const {
+    eventId,
+    currentAgendaItem,
+    eventTitle,
+    election,
+    vote,
+    electorId,
+    voterId,
+    eventGenderQuotaEnabled,
+  } = options;
   const { user } = useAuth();
+  const { currentUser } = useUserState();
+  const { t } = useTranslation();
   const { can, canVote, canBeCandidate } = usePermissions({ eventId });
 
   const canManageAgenda = can('manage', 'agendaItems');
@@ -238,6 +260,18 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   // Handlers
   const handleJoinSpeakerList = useCallback(async () => {
     if (!user?.id || !currentAgendaItem?.id || !canJoinSpeakerList) return;
+
+    const quotaResult = validateSpeakerGenderQuota({
+      enabled: Boolean(eventGenderQuotaEnabled && currentUser),
+      speakerGender: currentUser?.gender ?? null,
+      speakers: currentAgendaItem.speaker_list ?? [],
+    });
+
+    if (!quotaResult.allowed) {
+      toast.error(getGenderQuotaFeedbackMessage(quotaResult, t));
+      return;
+    }
+
     setSpeakerLoading(true);
     try {
       await addSpeaker({
@@ -258,10 +292,13 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     }
   }, [
     user?.id,
+    currentUser?.gender,
     currentAgendaItem?.id,
-    currentAgendaItem?.speaker_list?.length,
+    currentAgendaItem?.speaker_list,
     canJoinSpeakerList,
+    eventGenderQuotaEnabled,
     addSpeaker,
+    t,
   ]);
 
   const handleLeaveSpeakerList = useCallback(async () => {
@@ -301,7 +338,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     } else if (vote?.id) {
       await voteActionsHook.updateVote({
         id: vote.id,
-        status: VOTE_STATUS.indicativeOpen,
+        status: VOTE_PHASE.indicative,
         closing_end_time: null,
       });
     }
@@ -309,7 +346,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     if (currentAgendaItem?.id) {
       await updateAgendaItem({
         id: currentAgendaItem.id,
-        voting_phase: 'indication',
+        voting_phase: 'indicative',
       });
     }
   }, [
@@ -335,7 +372,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     } else if (vote?.id) {
       await voteActionsHook.updateVote({
         id: vote.id,
-        status: VOTE_STATUS.finalOpen,
+        status: VOTE_PHASE.final,
         closing_end_time: vote.closing_duration_seconds
           ? Date.now() + vote.closing_duration_seconds * 1000
           : null,
@@ -345,7 +382,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     if (currentAgendaItem?.id) {
       await updateAgendaItem({
         id: currentAgendaItem.id,
-        voting_phase: 'final_vote',
+        voting_phase: 'final',
       });
     }
   }, [

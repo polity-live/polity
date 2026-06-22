@@ -44,6 +44,8 @@ function changeRequest(overrides: Partial<ChangeRequest>): ChangeRequest {
     visibilityScope: null,
     resolvedInMode: null,
     votingStatus: null,
+    confirmationStatus: null,
+    changeRequestStatus: null,
     userVote: null,
     comments: [],
     votes: [],
@@ -151,7 +153,7 @@ describe('change request view model helpers', () => {
     );
   });
 
-  it('groups change requests into process branch sections with a legacy fallback', () => {
+  it('groups change requests into process branch sections and ignores unbranched rows', () => {
     const branchOneRequest = changeRequest({
       id: 'request-branch-1',
       changeRequestEntityId: 'request-branch-1',
@@ -226,7 +228,7 @@ describe('change request view model helpers', () => {
       changeRequests: [legacyRequest, branchTwoRequest, branchOneRequest],
     });
 
-    expect(sections.map(section => section.branchId)).toEqual(['branch-1', 'branch-2', null]);
+    expect(sections.map(section => section.branchId)).toEqual(['branch-1', 'branch-2']);
     expect(sections[0]).toMatchObject({
       title: 'First branch group',
       status: 'in_vote',
@@ -244,14 +246,10 @@ describe('change request view model helpers', () => {
       totalCount: 1,
       approvedCount: 1,
     });
-    expect(sections[2]).toMatchObject({
-      title: 'Main document',
-      isLegacy: true,
-      totalCount: 1,
-    });
+    expect(sections).toHaveLength(2);
   });
 
-  it('creates branch section items from confirmed branch discussions without persisted rows', () => {
+  it('creates branch section items from confirmed and pending branch discussions without persisted rows', () => {
     const branchContent = [
       {
         type: 'p',
@@ -304,11 +302,17 @@ describe('change request view model helpers', () => {
     expect(sections[0]).toMatchObject({
       branchId: 'branch-1',
       editingMode: 'suggest_event',
-      totalCount: 1,
-      openCount: 1,
+      totalCount: 2,
+      openCount: 2,
     });
-    expect(sections[0].timelineItems).toHaveLength(1);
+    expect(sections[0].timelineItems).toHaveLength(2);
     expect(sections[0].timelineItems[0]?.change_request_id).toBe('suggestion-confirmed');
+    expect(sections[0].timelineItems[1]?.change_request_id).toBe('suggestion-pending');
+    expect(sections[0].timelineItems[1]?.change_request).toMatchObject({
+      status: 'pending_submission',
+      voting_status: 'pending_submission',
+      confirmation_status: 'pending',
+    });
     expect(sections[0].diffMap['suggestion-confirmed']).toMatchObject({
       changeType: 'insert',
       newText: 'Neu',
@@ -411,7 +415,6 @@ describe('change request view model helpers', () => {
   });
 
   it('recognizes internal and event voting modes', () => {
-    expect(isVotingEditingMode('vote_event')).toBe(true);
     expect(isVotingEditingMode('event_final_closing_vote')).toBe(true);
     expect(isVotingEditingMode('vote_internal')).toBe(true);
     expect(isVotingEditingMode('suggest_event')).toBe(false);

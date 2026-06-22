@@ -96,16 +96,3 @@ export function buildUserInitializationData(
     last_seen_at: now,
   };
 }
-
-/**
- * @deprecated Use buildUserInitializationData instead
- */
-export function buildUserInitializationTransactions(
-  userId: string,
-  firstName: string,
-  lastName: string,
-  handle?: string
-): ReturnType<typeof buildUserInitializationData>[] {
-  // Legacy compatibility — returns an array with the data object
-  return [buildUserInitializationData(userId, firstName, lastName, handle)];
-}

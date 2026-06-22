@@ -14,10 +14,13 @@ import {
 } from '@/features/shared/logic/richText';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
+export type UserGenderFormValue = 'male' | 'female' | 'diverse' | 'unspecified';
+
 // Co-located types
 export interface UserProfileFormData {
   firstName: string;
   lastName: string;
+  gender: UserGenderFormValue;
   subtitle: string;
   about: string;
   aboutContent: Value;
@@ -83,6 +86,7 @@ export function useUserProfileForm({
   const [formData, setFormData] = useState<UserProfileFormData>({
     firstName: '',
     lastName: '',
+    gender: 'unspecified',
     subtitle: '',
     about: '',
     aboutContent: EMPTY_RICH_TEXT_VALUE,
@@ -121,6 +125,10 @@ export function useUserProfileForm({
       setFormData({
         firstName: user.first_name || '',
         lastName: user.last_name || '',
+        gender:
+          user.gender === 'male' || user.gender === 'female' || user.gender === 'diverse'
+            ? user.gender
+            : 'unspecified',
         subtitle: user.bio || '',
         about: richTextToPlainText(aboutContent),
         aboutContent,
@@ -186,6 +194,7 @@ export function useUserProfileForm({
       const result = await updateCompleteProfile(userId, {
         first_name: formData.firstName,
         last_name: formData.lastName,
+        gender: formData.gender === 'unspecified' ? null : formData.gender,
         bio: formData.subtitle,
         about: formData.about ? toZeroRichTextValue(formData.aboutContent) : null,
         aboutPlainText: formData.about,

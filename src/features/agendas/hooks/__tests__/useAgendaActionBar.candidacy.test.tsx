@@ -33,6 +33,12 @@ vi.mock('@/zero/agendas/useAgendaActions', () => ({
   }),
 }));
 
+vi.mock('@/zero/users/useUserState', () => ({
+  useUserState: () => ({
+    currentUser: { id: 'user-1', gender: 'female' },
+  }),
+}));
+
 vi.mock('@/zero/elections/useElectionActions', () => ({
   useElectionActions: () => ({
     addCandidate: mocks.addCandidate,

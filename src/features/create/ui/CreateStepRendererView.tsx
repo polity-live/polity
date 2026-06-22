@@ -75,5 +75,5 @@ export function CreateStepRendererView({ step }: CreateStepRendererViewProps) {
     );
   }
 
-  return <>{step.content}</>;
+  return null;
 }

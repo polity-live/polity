@@ -25,6 +25,7 @@ export const event = table('event')
     end_date: number().optional(),
     timezone: string().optional(),
     default_final_vote_duration_seconds: number().optional(),
+    gender_quota_enabled: boolean(),
     capacity: number().optional(),
     participant_count: number(),
     subscriber_count: number(),

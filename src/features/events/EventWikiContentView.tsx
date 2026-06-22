@@ -268,23 +268,23 @@ export function EventWikiContentView({
 
       {/* Stats Bar */}
       <StatsBar
-        stats={[
+        items={[
           {
             value: participantTotalCount,
-            labelKey: 'components.labels.participants',
+            label: t('components.labels.participants'),
           },
-          { value: subscriberCount, labelKey: 'components.labels.subscribers' },
+          { value: subscriberCount, label: t('components.labels.subscribers') },
           {
             value: electionsCount ?? event.election_count ?? 0,
-            labelKey: 'components.labels.elections',
+            label: t('components.labels.elections'),
           },
           {
             value: amendmentsCount ?? event.amendment_count ?? 0,
-            labelKey: 'components.labels.amendments',
+            label: t('components.labels.amendments'),
           },
           {
             value: openChangeRequestsCount ?? event.open_change_request_count ?? 0,
-            labelKey: 'components.labels.openChangeRequests',
+            label: t('components.labels.openChangeRequests'),
           },
         ]}
       />

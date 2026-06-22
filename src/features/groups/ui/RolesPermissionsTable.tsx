@@ -5,7 +5,7 @@
  * Column order represents role hierarchy: left = least rights, right = most rights.
  */
 
-import { ACTION_RIGHTS } from '@/zero/rbac/constants';
+import { GROUP_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import type { ParticipationRoleLike } from '@/features/shared/types/participation';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { ActionRightDefinition } from '@/features/groups/logic/actionRightSections';
@@ -31,7 +31,7 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
   roles,
   onTogglePermission,
   onReorderRoles,
-  actionRights = ACTION_RIGHTS,
+  actionRights = GROUP_ACTION_RIGHTS,
   title = translateText('generated.inline.0110_role_permissions_2dbfb26f'),
   description = translateText(
     'generated.inline.0111_manage_roles_and_their_action_rights_by_capab_84eb9c78'

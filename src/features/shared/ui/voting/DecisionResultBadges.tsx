@@ -17,31 +17,31 @@ export function getDecisionResultConfig(result: DecisionResultType) {
   switch (result) {
     case 'passed':
       return {
-        labelKey: 'timeline.terminal.results.passed',
+        labelKey: 'features.timeline.terminal.results.passed',
         Icon: Check,
         tone: 'success' as const,
       };
     case 'failed':
       return {
-        labelKey: 'timeline.terminal.results.failed',
+        labelKey: 'features.timeline.terminal.results.failed',
         Icon: X,
         tone: 'destructive' as const,
       };
     case 'tied':
       return {
-        labelKey: 'timeline.terminal.results.tied',
+        labelKey: 'features.timeline.terminal.results.tied',
         Icon: Minus,
         tone: 'neutral' as const,
       };
     case 'elected':
       return {
-        labelKey: 'timeline.terminal.results.elected',
+        labelKey: 'features.timeline.terminal.results.elected',
         Icon: Trophy,
         tone: 'success' as const,
       };
     default:
       return {
-        labelKey: 'timeline.terminal.results.unspecified',
+        labelKey: 'features.timeline.terminal.results.unspecified',
         Icon: Minus,
         tone: 'neutral' as const,
       };

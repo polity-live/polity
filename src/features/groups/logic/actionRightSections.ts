@@ -1,4 +1,4 @@
-import { ACTION_RIGHTS } from '@/zero/rbac/constants';
+import { GROUP_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface ActionRightDefinition {
@@ -56,7 +56,7 @@ const ACTION_RIGHT_SECTION_DEFINITIONS = [
 ] as const;
 
 export function getActionRightSections(
-  actionRights: readonly ActionRightDefinition[] = ACTION_RIGHTS
+  actionRights: readonly ActionRightDefinition[] = GROUP_ACTION_RIGHTS
 ): ActionRightSection[] {
   const categorizedResources = new Set<string>(
     ACTION_RIGHT_SECTION_DEFINITIONS.flatMap(section => section.resources)

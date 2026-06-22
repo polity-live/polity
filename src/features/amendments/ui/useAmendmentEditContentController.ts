@@ -8,9 +8,12 @@ import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
-import type { EditingMode } from '@/zero/rbac/workflow-constants';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
-import { AMENDMENT_EDITING_MODE_ORDER, normalizeEditingMode } from '@/zero/rbac/workflow-constants';
+import {
+  AMENDMENT_EDITING_MODE_ORDER,
+  normalizeEditingMode,
+  type EditingMode,
+} from '@/zero/amendments/editing-mode-policy';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { getEditingModeOption, type SelectableEditingMode } from '@/features/shared/ui/status';

@@ -1,12 +1,10 @@
 import { useCallback, useMemo } from 'react';
+import { addYears } from 'date-fns';
 import { useNavigate } from '@tanstack/react-router';
 import { useGroupEventsForCalendar } from '@/zero/events/useEventState';
 import { useCalendarView, type CalendarEvent } from '@/features/events/hooks/useCalendarView';
 import { useCalendarEventFilter } from '@/features/events/hooks/useCalendarEventFilter';
-import {
-  addYears,
-  generateRecurringInstances,
-} from '@/features/calendar/logic/recurringEventHelpers';
+import { generateRecurringInstances } from '@/features/calendar/logic/recurringEventHelpers';
 import { getCalendarEventsForView } from '@/features/calendar/logic/listViewHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';

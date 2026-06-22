@@ -163,9 +163,6 @@ export const groupMembershipUpdateSchema = groupMembershipBaseSchema
   .pick({ status: true, visibility: true, source: true, source_group_id: true })
   .partial()
   .extend({ id: z.string() });
-export const groupMembershipLegacyRoleUpdateSchema = groupMembershipUpdateSchema.extend({
-  role_id: z.string().nullable().optional(),
-});
 export const groupMembershipDeleteSchema = z.object({ id: z.string() });
 export type GroupMembership = z.infer<typeof groupMembershipSelectSchema>;
 

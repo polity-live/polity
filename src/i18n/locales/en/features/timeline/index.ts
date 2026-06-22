@@ -327,6 +327,7 @@ export const timelineTranslations = {
     support: 'Support',
     oppose: 'Oppose',
     abstain: 'Abstain',
+    indicationShort: 'Ind',
     summary: 'SUMMARY',
     problem: 'PROBLEM',
     proposal: 'PROPOSAL',

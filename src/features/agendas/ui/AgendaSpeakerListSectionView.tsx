@@ -19,8 +19,24 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Mic, Plus, Users, CheckCircle2, Clock, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
+import { getSpeakerGenderLabel } from '../logic/speakerListGenderQuota';
 function formatClockTime(ts: number) {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+function formatGenderBadgeLabel(t: any, gender?: string | null) {
+  const labelKey =
+    gender === 'male'
+      ? 'male'
+      : gender === 'female'
+        ? 'female'
+        : gender === 'diverse'
+          ? 'diverse'
+          : 'unspecified';
+
+  return t(
+    `features.events.agenda.genderQuota.genderLabels.${labelKey}`,
+    getSpeakerGenderLabel(gender)
+  );
 }
 export interface AgendaSpeakerListSectionViewProps {
   speakers: any[];
@@ -30,6 +46,7 @@ export interface AgendaSpeakerListSectionViewProps {
   isRemovingSpeaker: any;
   userId: any;
   agendaStartTime: any;
+  showGender: any;
   onAddToSpeakerList: any;
   onRemoveFromSpeakerList: any;
   onMarkCompleted: any;
@@ -58,6 +75,7 @@ export function AgendaSpeakerListSectionView({
   isAddingSpeaker,
   isRemovingSpeaker,
   userId,
+  showGender,
   onAddToSpeakerList,
   onRemoveFromSpeakerList,
   onMarkCompleted,
@@ -155,6 +173,11 @@ export function AgendaSpeakerListSectionView({
                                       {speaker.isCurrentUser && (
                                         <BadgeControl variant="secondary">
                                           {t('features.events.agenda.alreadyOnList')}
+                                        </BadgeControl>
+                                      )}
+                                      {showGender && (
+                                        <BadgeControl variant="outline">
+                                          {formatGenderBadgeLabel(t, speaker.user?.gender)}
                                         </BadgeControl>
                                       )}
                                     </div>

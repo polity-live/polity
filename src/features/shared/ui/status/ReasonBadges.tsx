@@ -11,14 +11,14 @@ export function getReasonConfig(category: ReasonCategory) {
     case 'trending':
       return {
         Icon: TrendingUp,
-        labelKey: 'timeline.explore.reasons.trending',
+        labelKey: 'features.timeline.explore.reasons.trending',
         colorClass: getSemanticToneClasses('warning').text,
         bgClass: getSemanticToneClasses('warning').surface,
       };
     case 'popular_topic':
       return {
         Icon: Star,
-        labelKey: 'timeline.explore.reasons.popularTopic',
+        labelKey: 'features.timeline.explore.reasons.popularTopic',
         colorClass: getSemanticToneClasses('warning').text,
         bgClass: getSemanticToneClasses('warning').surface,
         contextPrefix: 'in ',
@@ -26,21 +26,21 @@ export function getReasonConfig(category: ReasonCategory) {
     case 'similar_groups':
       return {
         Icon: Users,
-        labelKey: 'timeline.explore.reasons.similarGroups',
+        labelKey: 'features.timeline.explore.reasons.similarGroups',
         colorClass: getSemanticToneClasses('info').text,
         bgClass: getSemanticToneClasses('info').surface,
       };
     case 'your_content':
       return {
         Icon: User,
-        labelKey: 'timeline.explore.reasons.yourContent',
+        labelKey: 'features.timeline.explore.reasons.yourContent',
         colorClass: getSemanticToneClasses('success').text,
         bgClass: getSemanticToneClasses('success').surface,
       };
     default:
       return {
         Icon: Info,
-        labelKey: 'timeline.explore.reasons.default',
+        labelKey: 'features.timeline.explore.reasons.default',
         colorClass: getSemanticToneClasses('neutral').text,
         bgClass: getSemanticToneClasses('neutral').surface,
       };

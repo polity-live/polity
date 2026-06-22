@@ -1,6 +1,5 @@
 'use client';
 
-import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface CurrentAgendaItem {
@@ -50,6 +49,7 @@ interface AgendaActionBarProps {
   onStartVote?: () => void;
   onStartFinalVote?: () => void;
   onCloseFinalVote?: () => void;
+  onJumpToNextVoteStep?: () => void;
   onEditItem?: () => void;
   onDeleteItem?: () => void;
   onMoveToEvent?: () => void;
@@ -68,6 +68,7 @@ interface AgendaActionBarProps {
   startVoteTooltip?: string;
   startFinalVoteTooltip?: string;
   closeVoteTooltip?: string;
+  jumpToNextVoteStepTooltip?: string;
   castIndicativeVoteTooltip?: string;
   castFinalVoteTooltip?: string;
 }
@@ -103,6 +104,7 @@ export function AgendaActionBar({
   onStartVote,
   onStartFinalVote,
   onCloseFinalVote,
+  onJumpToNextVoteStep,
   onEditItem,
   onDeleteItem,
   onMoveToEvent,
@@ -121,11 +123,11 @@ export function AgendaActionBar({
   startVoteTooltip,
   startFinalVoteTooltip,
   closeVoteTooltip,
+  jumpToNextVoteStepTooltip,
   castIndicativeVoteTooltip,
   castFinalVoteTooltip,
 }: AgendaActionBarProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const isCurrentItemActive =
     currentAgendaItem?.status === 'in-progress' || currentAgendaItem?.status === 'active';
   const canStartCurrentItem =
@@ -144,7 +146,7 @@ export function AgendaActionBar({
   const votingPhase = currentAgendaItem?.voting_phase;
   const isPendingVote = votingPhase === 'pending';
   const isIndicationPhase = votingPhase === 'indication';
-  const isFinalVotePhase = votingPhase === 'final_vote';
+  const isFinalVotePhase = votingPhase === 'final';
   const isClosed = votingPhase === 'closed';
   const completeDisabled =
     !currentAgendaItem || Boolean(isCurrentItemCompleted) || Boolean(navigationLoading);
@@ -200,6 +202,7 @@ export function AgendaActionBar({
       onStartVote={onStartVote}
       onStartFinalVote={onStartFinalVote}
       onCloseFinalVote={onCloseFinalVote}
+      onJumpToNextVoteStep={onJumpToNextVoteStep}
       onEditItem={onEditItem}
       onDeleteItem={onDeleteItem}
       onMoveToEvent={onMoveToEvent}
@@ -218,10 +221,10 @@ export function AgendaActionBar({
       startVoteTooltip={startVoteTooltip}
       startFinalVoteTooltip={startFinalVoteTooltip}
       closeVoteTooltip={closeVoteTooltip}
+      jumpToNextVoteStepTooltip={jumpToNextVoteStepTooltip}
       castIndicativeVoteTooltip={castIndicativeVoteTooltip}
       castFinalVoteTooltip={castFinalVoteTooltip}
       t={t}
-      navigate={navigate}
       isCurrentItemActive={isCurrentItemActive}
       canStartCurrentItem={canStartCurrentItem}
       showLifecycleControls={showLifecycleControls}

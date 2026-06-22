@@ -260,7 +260,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           { type: 'h1', children: [{ text: title.trim() }] },
           { type: 'p', children: [{ text: '' }] },
         ],
-        editing_mode: 'collaborative',
+        editing_mode: 'edit',
       });
       await serverConfirmed(createDocumentResult);
 

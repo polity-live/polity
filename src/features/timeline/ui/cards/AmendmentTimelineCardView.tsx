@@ -23,20 +23,9 @@ import {
   TimelineCardActions,
   TimelineCardBadge,
 } from './TimelineCardBase';
+import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 
-type AmendmentTimelineStatus =
-  | 'edit'
-  | 'suggest_internal'
-  | 'vote_internal'
-  | 'view'
-  | 'suggest_event'
-  | 'event_final_closing_vote'
-  | 'passed'
-  | 'rejected'
-  | 'accepted'
-  | 'approved'
-  | 'pending'
-  | 'withdrawn';
+type AmendmentTimelineStatus = EditingMode | 'accepted' | 'approved' | 'pending' | 'withdrawn';
 
 export interface AmendmentTimelineCardProps {
   amendment: {
@@ -152,11 +141,17 @@ export function AmendmentTimelineCardView({
   const successTone = getSemanticToneClasses('success');
   const dangerTone = getSemanticToneClasses('danger');
   const amendmentHref = href ?? `/amendment/${amendment.id}`;
-  const branchStatuses = Array.isArray(amendment.branchStatuses) ? amendment.branchStatuses : [];
+  const branchStatuses = (
+    Array.isArray(amendment.branchStatuses) ? amendment.branchStatuses : []
+  ) as {
+    branchId: string;
+    editingMode: EditingMode;
+    label: string;
+  }[];
   const visibleBranchStatuses = branchStatuses.slice(0, 3);
   const hiddenBranchStatuses = branchStatuses.slice(3);
   const getBranchChipVariant = (
-    mode: string
+    mode: EditingMode
   ): 'default' | 'secondary' | 'destructive' | 'outline' => {
     if (mode === 'vote_internal' || mode === 'event_final_closing_vote' || mode === 'rejected') {
       return 'destructive';
@@ -165,7 +160,7 @@ export function AmendmentTimelineCardView({
     if (mode === 'view') return 'outline';
     return 'secondary';
   };
-  const getBranchChipText = (branchStatus: any) =>
+  const getBranchChipText = (branchStatus: { editingMode: EditingMode; label: string }) =>
     `${branchStatus.label}: ${getEditingModeOption(branchStatus.editingMode, t).label}`;
 
   return (

@@ -9,7 +9,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useEventWithVoting } from '@/zero/events/useEventState';
 import { useAgendaActions } from '@/zero/agendas';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
-import { VOTE_STATUS } from '@/zero/votes/vote-workflow';
+import { VOTE_PHASE, VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
 import { toast } from '@/features/shared/ui/ui/sonner';
@@ -222,7 +222,8 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
           amendment_id: null,
           title: null,
           description: null,
-          status: VOTE_STATUS.indicativeOpen,
+          status: VOTE_PHASE.indicative,
+          purpose: VOTE_PURPOSE.closing,
           majority_type: params.majorityType || 'simple',
           closing_type: null,
           closing_duration_seconds: null,
@@ -233,7 +234,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
 
         await updateAgendaItem({
           id: params.agendaItemId,
-          voting_phase: 'introduction',
+          voting_phase: 'indicative',
         });
 
         toast.success(translateText('generated.inline.1234_introduction_phase_started_f4f4b34e'));
@@ -266,7 +267,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
       try {
         await updateAgendaItem({
           id: sessionId,
-          voting_phase: 'voting',
+          voting_phase: 'indicative',
         });
 
         toast.success(translateText('generated.inline.1236_voting_has_begun_d509e54a'));
@@ -305,7 +306,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
 
         await updateAgendaItem({
           id: sessionId,
-          voting_phase: 'completed',
+          voting_phase: 'closed',
           end_time: Date.now(),
           completed_at: Date.now(),
         });

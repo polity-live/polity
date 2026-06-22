@@ -64,7 +64,9 @@ export function MeetingPageView(props: MeetingPageViewProps) {
         meetingType={props.meetingType}
       />
 
-      <StatsBar stats={[{ value: props.bookingCount, labelKey: 'Participants' }]} />
+      <StatsBar
+        items={[{ value: props.bookingCount, label: t('components.labels.participants') }]}
+      />
 
       <MeetingActions
         meetingId={props.meetingId}

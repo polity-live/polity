@@ -4,24 +4,13 @@ import { useState } from 'react';
 import { Users, Building, GitPullRequest, UserPlus, UserMinus, Clock, Check } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { getEditingModeOption } from '@/features/shared/ui/status';
+import { isEditingMode, type EditingMode } from '@/zero/amendments/editing-mode-policy';
 import { useAmendmentCollaboration } from '@/features/amendments/hooks/useAmendmentCollaboration';
 import { useSubscribeAmendment } from '@/features/amendments/hooks/useSubscribeAmendment';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';
 
-type AmendmentTimelineStatus =
-  | 'edit'
-  | 'suggest_internal'
-  | 'vote_internal'
-  | 'view'
-  | 'suggest_event'
-  | 'event_final_closing_vote'
-  | 'passed'
-  | 'rejected'
-  | 'accepted'
-  | 'approved'
-  | 'pending'
-  | 'withdrawn';
+type AmendmentTimelineStatus = EditingMode | 'accepted' | 'approved' | 'pending' | 'withdrawn';
 
 export interface AmendmentTimelineCardProps {
   amendment: {
@@ -52,7 +41,7 @@ export interface AmendmentTimelineCardProps {
     branchStatuses?: {
       branchId: string;
       label: string;
-      editingMode: AmendmentTimelineStatus;
+      editingMode: EditingMode;
       processStatus?: string | null;
       resolution?: string | null;
     }[];
@@ -142,7 +131,9 @@ export function AmendmentTimelineCard({
   const statusLabelConfig = STATUS_LABEL_KEYS[amendment.status];
   const statusLabel = statusLabelConfig
     ? t(statusLabelConfig.key, statusLabelConfig.fallback)
-    : getEditingModeOption(amendment.status, t).label;
+    : isEditingMode(amendment.status)
+      ? getEditingModeOption(amendment.status, t).label
+      : amendment.status;
   const isVoting =
     amendment.status === 'vote_internal' || amendment.status === 'event_final_closing_vote';
   const isCompleted =

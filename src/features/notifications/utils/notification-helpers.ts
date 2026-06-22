@@ -1704,7 +1704,7 @@ export async function notifyGroupInvite(params: {
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
-    type: 'group_invite',
+    type: 'membership_invite',
     title: translateText('generated.inline.0201_group_invitation_3afe15fe'),
     message: translateText('generated.inline.0202_you_ve_been_invited_to_join_groupname_c44a7ef2', {
       groupName: params.groupName,
@@ -1719,7 +1719,7 @@ export async function notifyGroupInvite(params: {
       senderId: params.senderId,
       recipientEntityType: 'group',
       recipientEntityId: params.groupId,
-      type: 'group_invite',
+      type: 'membership_invite',
       title: translateText('generated.inline.0201_group_invitation_3afe15fe'),
       message: translateText(
         'generated.inline.0202_you_ve_been_invited_to_join_groupname_c44a7ef2',
@@ -2044,7 +2044,7 @@ export async function notifyGuestAccessInvite(params: {
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
-    type: 'group_invite',
+    type: 'membership_invite',
     title: translateText('generated.inline.0201_group_invitation_3afe15fe'),
     message: translateText('generated.inline.0202_you_ve_been_invited_to_join_groupname_c44a7ef2', {
       groupName: params.groupName,
@@ -2059,7 +2059,7 @@ export async function notifyGuestAccessInvite(params: {
       senderId: params.senderId,
       recipientEntityType: 'group',
       recipientEntityId: params.groupId,
-      type: 'group_invite',
+      type: 'membership_invite',
       title: translateText('generated.inline.0201_group_invitation_3afe15fe'),
       message: `A guest has been invited to ${params.groupName}.`,
       actionUrl: `/group/${params.groupId}/memberships`,
@@ -2185,7 +2185,7 @@ export async function notifyEventInvite(params: {
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'event',
     onBehalfOfEntityId: params.eventId,
-    type: 'event_invite',
+    type: 'participation_invite',
     title: translateText('generated.inline.0220_event_invitation_1bdc1b8f'),
     message: translateText('generated.inline.0221_you_ve_been_invited_to_eventtitle_ab9cba01', {
       eventTitle: params.eventTitle,
@@ -2200,7 +2200,7 @@ export async function notifyEventInvite(params: {
       senderId: params.senderId,
       recipientEntityType: 'event',
       recipientEntityId: params.eventId,
-      type: 'event_invite',
+      type: 'participation_invite',
       title: translateText('generated.inline.0220_event_invitation_1bdc1b8f'),
       message: translateText('generated.inline.0221_you_ve_been_invited_to_eventtitle_ab9cba01', {
         eventTitle: params.eventTitle,

@@ -74,7 +74,7 @@ describe('resolveOfflineTallyPhase', () => {
       resolveOfflineTallyPhase({
         allowsOfflineTallies: true,
         canManageOfflineTallies: true,
-        votingPhase: 'final_vote',
+        votingPhase: 'final',
       })
     ).toBe('final');
   });

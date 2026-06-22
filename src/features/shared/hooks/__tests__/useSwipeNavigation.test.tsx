@@ -178,4 +178,37 @@ describe('useSwipeNavigation', () => {
     penSwipe(target, 1240, 1080);
     expect(onSwipeNext).toHaveBeenCalledTimes(2);
   });
+
+  it('can map global arrow keys to the same previous and next callbacks', () => {
+    const onSwipeNext = vi.fn();
+    const onSwipePrev = vi.fn();
+
+    render(
+      <SwipeTarget keyboardMode="global" onSwipeNext={onSwipeNext} onSwipePrev={onSwipePrev} />
+    );
+
+    fireEvent.keyDown(document, { key: 'ArrowRight' });
+    expect(onSwipeNext).toHaveBeenCalledTimes(1);
+    expect(onSwipePrev).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(document, { key: 'ArrowLeft' });
+    expect(onSwipePrev).toHaveBeenCalledTimes(1);
+  });
+
+  it('supports scoped arrow keys while preserving focused controls', () => {
+    const onSwipeNext = vi.fn();
+
+    render(
+      <SwipeTarget keyboardMode="scoped" onSwipeNext={onSwipeNext}>
+        <input aria-label="Local input" />
+      </SwipeTarget>
+    );
+    const target = screen.getByTestId('swipe-target');
+
+    fireEvent.keyDown(target, { key: 'ArrowRight' });
+    expect(onSwipeNext).toHaveBeenCalledTimes(1);
+
+    fireEvent.keyDown(screen.getByLabelText('Local input'), { key: 'ArrowRight' });
+    expect(onSwipeNext).toHaveBeenCalledTimes(1);
+  });
 });

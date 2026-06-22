@@ -178,13 +178,10 @@ export function LinkGroupDialogView({
                       return false;
                     }
 
-                    const selectedMembershipRule = value.membershipRule;
-                    return (
-                      hasIncompleteMembershipRule({
-                        membershipDirection: value.membershipDirection,
-                        membershipRule: value.membershipRule,
-                      }) || selectedMembershipRule.membershipMode === 'selected_source_groups'
-                    );
+                    return hasIncompleteMembershipRule({
+                      membershipDirection: value.membershipDirection,
+                      membershipRule: value.membershipRule,
+                    });
                   })()
                 }
               >

@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.change_request (
   voting_deadline TIMESTAMPTZ,
   voting_majority_type TEXT,
   quorum_required INTEGER,
+  branch_sequence_number INTEGER,
   created_in_mode TEXT,
   resolved_in_mode TEXT,
   resolution_method TEXT,
@@ -44,6 +45,12 @@ CREATE INDEX idx_change_request_amendment ON public.change_request (amendment_id
 CREATE INDEX idx_change_request_process_branch ON public.change_request (process_branch_id);
 CREATE INDEX idx_change_request_user ON public.change_request (user_id);
 CREATE INDEX idx_change_request_changed_character_count ON public.change_request (changed_character_count);
+CREATE UNIQUE INDEX idx_change_request_branch_sequence
+  ON public.change_request (amendment_id, process_branch_id, branch_sequence_number)
+  WHERE branch_sequence_number IS NOT NULL AND process_branch_id IS NOT NULL;
+CREATE UNIQUE INDEX idx_change_request_main_sequence
+  ON public.change_request (amendment_id, branch_sequence_number)
+  WHERE branch_sequence_number IS NOT NULL AND process_branch_id IS NULL;
 
 ALTER TABLE public.change_request ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.change_request FOR ALL TO service_role USING (true);

@@ -8,7 +8,7 @@ import {
   groupUpdateSchema,
   groupDeleteSchema,
   groupMembershipCreateSchema,
-  groupMembershipLegacyRoleUpdateSchema,
+  groupMembershipUpdateSchema,
   groupMembershipDeleteSchema,
   groupOfflineMemberCreateSchema,
   groupOfflineMemberUpdateSchema,
@@ -1149,26 +1149,25 @@ export const groupSharedMutators = {
     }
   ),
 
-  updateMemberRole: defineMutator(
-    groupMembershipLegacyRoleUpdateSchema,
-    async ({ tx, ctx, args }) => {
-      const { role_id, ...membershipArgs } = args;
-
-      if (Object.keys(membershipArgs).length > 1) {
-        await tx.mutate.group_membership.update(membershipArgs);
-      }
-
-      if (role_id !== undefined) {
-        const membership = await loadMembershipForRoleMutation(tx, ctx, args.id);
-        await assertRolesAssignableToMembers(tx, role_id ? [role_id] : [], membership.group_id);
-        await syncGroupMembershipRoles(tx, {
-          group_membership_id: args.id,
-          role_ids: role_id ? [role_id] : [],
-          assigned_by_id: ctx.userID,
-        });
-      }
+  updateMembership: defineMutator(groupMembershipUpdateSchema, async ({ tx, ctx, args }) => {
+    const membership = await tx.run(zql.group_membership.where('id', args.id).one());
+    if (!membership) {
+      throw new Error('Membership not found');
     }
-  ),
+    if (!isManualGroupMembershipSource(membership.source)) {
+      throw new Error('Only direct memberships can be changed manually.');
+    }
+
+    await can(tx, ctx, {
+      action: 'manage',
+      resource: 'groupMemberships',
+      groupId: membership.group_id,
+    });
+
+    if (Object.keys(args).length > 1) {
+      await tx.mutate.group_membership.update(args);
+    }
+  }),
 
   inviteGuest: defineMutator(groupGuestAccessCreateSchema, async ({ tx, ctx, args }) => {
     await can(tx, ctx, { action: 'manage', resource: 'groupMemberships', groupId: args.group_id });

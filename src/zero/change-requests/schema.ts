@@ -30,6 +30,7 @@ const baseChangeRequestSchema = z.object({
   voting_deadline: nullableTimestampSchema,
   voting_majority_type: z.string().nullable(),
   quorum_required: z.number().nullable(),
+  branch_sequence_number: z.number().nullable().optional(),
   created_in_mode: z.string().nullable().optional(),
   resolved_in_mode: z.string().nullable().optional(),
   resolution_method: z.string().nullable().optional(),
@@ -54,7 +55,11 @@ export const createChangeRequestSchema = baseChangeRequestSchema
     votes_abstain: true,
     changed_character_count: true,
   })
-  .extend({ id: z.string(), changed_character_count: z.number().optional() });
+  .extend({
+    id: z.string(),
+    changed_character_count: z.number().optional(),
+    discussion_id: z.string().nullable().optional(),
+  });
 
 export const updateChangeRequestSchema = baseChangeRequestSchema
   .pick({
@@ -78,6 +83,8 @@ export const updateChangeRequestSchema = baseChangeRequestSchema
   })
   .partial()
   .extend({ id: z.string() });
+
+export const deleteChangeRequestSchema = z.object({ id: z.string() });
 
 export const finalizeInternalChangeRequestVoteSchema = z.object({
   change_request_id: z.string(),

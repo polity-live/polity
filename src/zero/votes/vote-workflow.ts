@@ -1,62 +1,53 @@
-export const VOTE_STATUS = {
-  indicativeOpen: 'indicative_open',
-  finalOpen: 'final_open',
+export const VOTE_PHASE = {
+  internal: 'internal',
+  indicative: 'indicative',
+  final: 'final',
   closed: 'closed',
 } as const;
 
 export const VOTE_PURPOSE = {
   mergeVariant: 'merge_variant',
   changeRequest: 'change_request',
-  finalClosing: 'final_closing',
+  closing: 'closing',
 } as const;
 
-export type CanonicalVoteStatus = (typeof VOTE_STATUS)[keyof typeof VOTE_STATUS];
+export type CanonicalVotePhase = (typeof VOTE_PHASE)[keyof typeof VOTE_PHASE];
 export type CanonicalVotePurpose = (typeof VOTE_PURPOSE)[keyof typeof VOTE_PURPOSE];
 
-export function normalizeVoteStatus(status: string | null | undefined): CanonicalVoteStatus {
-  if (status === VOTE_STATUS.closed) {
-    return VOTE_STATUS.closed;
+export function normalizeVotePhase(phase: string | null | undefined): CanonicalVotePhase {
+  if (phase == null) {
+    return VOTE_PHASE.indicative;
   }
 
-  if (status === VOTE_STATUS.finalOpen || status === 'final' || status === 'final_vote') {
-    return VOTE_STATUS.finalOpen;
+  if (
+    phase === VOTE_PHASE.internal ||
+    phase === VOTE_PHASE.indicative ||
+    phase === VOTE_PHASE.final ||
+    phase === VOTE_PHASE.closed
+  ) {
+    return phase;
   }
 
-  return VOTE_STATUS.indicativeOpen;
+  throw new Error(`Unknown vote phase: ${phase}`);
 }
 
-export function isFinalOpenVoteStatus(status: string | null | undefined) {
-  return normalizeVoteStatus(status) === VOTE_STATUS.finalOpen;
+export function isInternalVotePhase(phase: string | null | undefined) {
+  return normalizeVotePhase(phase) === VOTE_PHASE.internal;
 }
 
-export function isIndicativeOpenVoteStatus(status: string | null | undefined) {
-  return normalizeVoteStatus(status) === VOTE_STATUS.indicativeOpen;
+export function isFinalVotePhase(status: string | null | undefined) {
+  return normalizeVotePhase(status) === VOTE_PHASE.final;
 }
 
-export function isClosedVoteStatus(status: string | null | undefined) {
-  return normalizeVoteStatus(status) === VOTE_STATUS.closed;
+export function isIndicativeVotePhase(status: string | null | undefined) {
+  return normalizeVotePhase(status) === VOTE_PHASE.indicative;
 }
 
-export function normalizeVotePurpose(purpose: string | null | undefined): string {
-  if (purpose === 'variant_selection') {
-    return VOTE_PURPOSE.mergeVariant;
-  }
-
-  if (purpose === 'final_amendment') {
-    return VOTE_PURPOSE.finalClosing;
-  }
-
-  return purpose ?? 'general';
+export function isClosedVotePhase(status: string | null | undefined) {
+  return normalizeVotePhase(status) === VOTE_PHASE.closed;
 }
 
-export function isMergeVariantVotePurpose(purpose: string | null | undefined) {
-  return normalizeVotePurpose(purpose) === VOTE_PURPOSE.mergeVariant;
-}
-
-export function isChangeRequestVotePurpose(purpose: string | null | undefined) {
-  return normalizeVotePurpose(purpose) === VOTE_PURPOSE.changeRequest;
-}
-
-export function isFinalClosingVotePurpose(purpose: string | null | undefined) {
-  return normalizeVotePurpose(purpose) === VOTE_PURPOSE.finalClosing;
-}
+export const VOTE_STATUS = VOTE_PHASE;
+export type CanonicalVoteStatus = CanonicalVotePhase;
+export const normalizeVoteStatus = normalizeVotePhase;
+export const isClosedVoteStatus = isClosedVotePhase;

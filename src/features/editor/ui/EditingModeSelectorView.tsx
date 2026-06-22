@@ -11,10 +11,11 @@ import {
 } from '@/features/shared/ui/ui/dropdown-menu';
 import { MessageSquare, Vote, ChevronDown } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import type { AutomaticEventEditingMode } from '@/zero/amendments/editing-mode-policy';
 
 interface EditingModeSelectorViewProps {
-  currentMode?: string | null;
-  onModeChange: (newMode: string) => Promise<void>;
+  currentMode?: AutomaticEventEditingMode | null;
+  onModeChange: (newMode: AutomaticEventEditingMode) => Promise<void>;
 }
 
 const modes = [
@@ -39,7 +40,7 @@ export function EditingModeSelectorView({
     ...mode,
     label: getEditingModeOption(mode.value, t).label,
   }));
-  const currentModeConfig = modeOptions.find((m: any) => m.value === currentMode) ?? modeOptions[0];
+  const currentModeConfig = modeOptions.find(mode => mode.value === currentMode) ?? modeOptions[0];
   const Icon = currentModeConfig.icon;
 
   return (
@@ -53,7 +54,7 @@ export function EditingModeSelectorView({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuSeparator />
-        {modeOptions.map((mode: any) => {
+        {modeOptions.map(mode => {
           const ModeIcon = mode.icon;
           const isActive = mode.value === currentMode;
 

@@ -39,7 +39,6 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   group_invitation_accepted: { category: 'groupNotifications', key: 'membershipInvitations' },
   group_invitation_declined: { category: 'groupNotifications', key: 'membershipInvitations' },
   group_request_withdrawn: { category: 'groupNotifications', key: 'membershipRequests' },
-  group_invite: { category: 'groupNotifications', key: 'membershipInvitations' },
 
   // Content
   group_new_event: { category: 'groupNotifications', key: 'newEvents' },
@@ -47,7 +46,6 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   group_new_amendment: { category: 'groupNotifications', key: 'newAmendments' },
   group_amendment_support_confirmed: { category: 'groupNotifications', key: 'newAmendments' },
   group_profile_updated: { category: 'groupNotifications', key: 'profileUpdates' },
-  group_update: { category: 'groupNotifications', key: 'profileUpdates' },
   group_new_subscriber: { category: 'groupNotifications', key: 'newSubscribers' },
   group_link_added: { category: 'groupNotifications', key: 'newDocuments' },
   group_link_removed: { category: 'groupNotifications', key: 'newDocuments' },
@@ -89,7 +87,6 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   participation_approved: { category: 'eventNotifications', key: 'participationRequests' },
   participation_rejected: { category: 'eventNotifications', key: 'participationRequests' },
   participation_invite: { category: 'eventNotifications', key: 'participationInvitations' },
-  event_invite: { category: 'eventNotifications', key: 'participationInvitations' },
   participation_role_changed: { category: 'eventNotifications', key: 'roleUpdates' },
   participation_withdrawn: { category: 'eventNotifications', key: 'participationRequests' },
   participant_removed: { category: 'eventNotifications', key: 'newParticipants' },
@@ -99,7 +96,6 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
 
   // Content
   event_profile_updated: { category: 'eventNotifications', key: 'profileUpdates' },
-  event_update: { category: 'eventNotifications', key: 'profileUpdates' },
   event_new_subscriber: { category: 'eventNotifications', key: 'newSubscribers' },
   event_organizer_promoted: { category: 'eventNotifications', key: 'roleUpdates' },
   event_organizer_demoted: { category: 'eventNotifications', key: 'roleUpdates' },
@@ -220,9 +216,6 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   direct_message: { category: 'socialNotifications', key: 'directMessages' },
   conversation_request: { category: 'socialNotifications', key: 'conversationRequests' },
   conversation_accepted: { category: 'socialNotifications', key: 'conversationRequests' },
-  follow: { category: 'socialNotifications', key: 'newFollowers' },
-  mention: { category: 'socialNotifications', key: 'mentions' },
-  message: { category: 'socialNotifications', key: 'directMessages' },
 
   // Statement types
   statement_response: { category: 'socialNotifications', key: 'mentions' },

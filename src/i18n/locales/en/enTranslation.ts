@@ -102,11 +102,6 @@ const baseEnTranslation = {
     user: userTranslations,
     votes: votesTranslations,
   },
-
-  // Legacy compatibility - map old keys to new structure
-  // These ensure backwards compatibility with existing code
-  home: pagesTranslations.home,
-  timeline: timelineTranslations,
 } as const;
 
 const enTranslation = mergeTranslations(baseEnTranslation, generatedTranslations);

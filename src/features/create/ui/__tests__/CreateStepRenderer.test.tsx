@@ -84,16 +84,4 @@ describe('CreateStepRenderer', () => {
     expect(screen.getByText('Budget Circle')).toBeTruthy();
     expect(screen.getByText('Custom review')).toBeTruthy();
   });
-
-  it('keeps legacy content as a fallback', () => {
-    const step: CreateFormStep = {
-      label: 'Legacy',
-      isValid: () => true,
-      content: <div>Legacy content</div>,
-    };
-
-    render(<CreateStepRenderer step={step} />);
-
-    expect(screen.getByText('Legacy content')).toBeTruthy();
-  });
 });

@@ -162,6 +162,24 @@ export const eventsTranslations = {
     userSpeakerCurrentSummary: 'Sie sprechen gerade. Noch {{time}}.',
     userSpeakerQueueSummary: 'Position {{position}}. Noch {{time}} bis zu Ihrem Redebeginn.',
     userSpeakerPendingSummary: 'Ihr Redebeitrag ist aktiv eingetragen.',
+    genderQuota: {
+      settingsLabel: 'Genderquotierte Redeliste',
+      settingsDescription:
+        'Wenn aktiv, müssen sich männliche und weibliche Redebeiträge abwechseln.',
+      missingGender:
+        'Bitte wähle in deinen Profileinstellungen ein Gender aus, bevor du dich auf diese Redeliste setzt.',
+      unsupportedGender:
+        'Diese genderquotierte Redeliste akzeptiert aktuell nur männlich oder weiblich.',
+      expectedMale: 'Als Nächstes muss sich ein Mann auf die Redeliste setzen.',
+      expectedFemale: 'Als Nächstes muss sich eine Frau auf die Redeliste setzen.',
+      blocked: 'Du kannst dich gerade nicht auf diese genderquotierte Redeliste setzen.',
+      genderLabels: {
+        male: 'männlich',
+        female: 'weiblich',
+        diverse: 'divers',
+        unspecified: 'keine Angabe',
+      },
+    },
     // Vote section
     voteAndResults: 'Abstimmung & Ergebnisse',
     changeRequests: 'Änderungsanträge',

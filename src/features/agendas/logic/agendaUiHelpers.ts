@@ -21,9 +21,9 @@ export function getEffectiveVotingPhase(
   fallback?: string | null
 ): string | null {
   const normalizePhase = (value?: string | null) => {
-    if (value === 'final' || value === 'final_vote' || value === 'final_open') return 'final_vote';
+    if (value === 'final' || value === 'final' || value === 'final') return 'final';
     if (value === 'closed') return 'closed';
-    if (value === 'indicative' || value === 'indicative_open' || value === 'indication')
+    if (value === 'indicative' || value === 'indicative' || value === 'indication')
       return 'indication';
     return null;
   };
@@ -32,7 +32,7 @@ export function getEffectiveVotingPhase(
   const resolvedFallback = normalizePhase(fallback);
 
   if (resolvedStatus === 'closed' || resolvedFallback === 'closed') return 'closed';
-  if (resolvedStatus === 'final_vote' || resolvedFallback === 'final_vote') return 'final_vote';
+  if (resolvedStatus === 'final' || resolvedFallback === 'final') return 'final';
 
   return 'indication';
 }
@@ -47,7 +47,7 @@ export function getEffectiveCRVotingPhase(
   if (item.status === 'pending') return 'pending';
 
   const phase = getEffectiveVotingPhase(item.vote?.status, null);
-  if (phase === 'final_vote') return 'final_vote';
+  if (phase === 'final') return 'final';
   if (phase === 'closed') return 'closed';
   return 'indication';
 }

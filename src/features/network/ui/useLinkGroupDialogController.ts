@@ -491,13 +491,6 @@ export function useLinkGroupDialogController({
       return;
     }
 
-    if (selectedMembershipRule?.membershipMode === 'selected_source_groups') {
-      toast.error(
-        'This connection uses a legacy source-group membership rule. Choose one of the supported membership modes before saving.'
-      );
-      return;
-    }
-
     if (
       !hasConfiguredGroupConnection({
         rightDirections: value.rightDirections,

@@ -11,9 +11,14 @@ import {
 } from '@/features/vote-cast/logic/computeVoteResults';
 import { isNamedBallot } from '@/zero/shared';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { VOTE_STATUS } from '@/zero/votes/vote-workflow';
+import { VOTE_PHASE } from '@/zero/votes/vote-workflow';
+import { isMockCRTimelineItem } from '../logic/createMockCRTimelineItems';
+import {
+  deriveChangeRequestVotePhase,
+  type ChangeRequestVotePhase,
+} from '../logic/changeRequestVotePhase';
 
-export type CRVotePhase = 'indicative' | 'final_vote' | 'closed';
+export type CRVotePhase = ChangeRequestVotePhase;
 
 function getTimelineStepKind(item: unknown) {
   return (
@@ -26,7 +31,7 @@ function getTimelineStepKind(item: unknown) {
 
 function isChangeRequestTimelineStep(item: ChangeRequestTimelineRow) {
   const stepKind = getTimelineStepKind(item);
-  return !item.is_final_vote && stepKind !== 'variant_selection' && stepKind !== 'merge_variant';
+  return !item.is_closing_vote && stepKind !== 'merge_variant';
 }
 
 function normalizeMajorityType(value?: string | null): MajorityType {
@@ -37,18 +42,18 @@ function normalizeMajorityType(value?: string | null): MajorityType {
   return 'simple';
 }
 
-export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
+export function useAgendaItemCRVoting(agendaItemId: string | undefined, userId?: string) {
   const {
     crTimeline,
     currentItem,
     pendingItems,
     completedItems,
-    finalVoteItem,
+    closingVoteItem,
     progress,
     isLoading,
   } = useAgendaItemCRTimeline(agendaItemId);
 
-  const { updateAgendaItemChangeRequest, processCRVoteResult } = useAgendaActions();
+  const { updateAgendaItemChangeRequest } = useAgendaActions();
   const { updateVote, castIndicativeVote, castFinalVote, createVoter } = useVoteActions();
 
   // Determine if the current user has voted on a given CR vote (for the current phase)
@@ -60,7 +65,7 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
       if (!voter) return false;
 
       const phase = getVotePhase(item);
-      if (phase === 'final_vote') {
+      if (phase === 'final') {
         return (item.vote.final_participations ?? []).some(
           (p: { voter_id: string }) => p.voter_id === voter.id
         );
@@ -91,7 +96,7 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
 
       const phase = getVotePhase(item);
       const participations =
-        phase === 'final_vote' || phase === 'closed'
+        phase === 'final' || phase === 'closed'
           ? (item.vote.final_participations ?? [])
           : (item.vote.indicative_participations ?? []);
 
@@ -116,7 +121,7 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
     async (itemId: string) => {
       const item = crTimeline.find(i => i.id === itemId);
       if (!item?.vote) return;
-      await updateVote({ id: item.vote.id, status: VOTE_STATUS.indicativeOpen });
+      await updateVote({ id: item.vote.id, status: VOTE_PHASE.indicative });
       await updateAgendaItemChangeRequest({ id: itemId, status: 'voting' });
     },
     [crTimeline, updateVote, updateAgendaItemChangeRequest]
@@ -130,47 +135,48 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
       if (item.status === 'pending') {
         await updateAgendaItemChangeRequest({ id: itemId, status: 'voting' });
       }
-      await updateVote({ id: item.vote.id, status: VOTE_STATUS.finalOpen });
+      await updateVote({ id: item.vote.id, status: VOTE_PHASE.final });
     },
     [crTimeline, updateAgendaItemChangeRequest, updateVote]
   );
 
-  // Close voting on a CR: compute result, process suggestion, save version, advance timeline
+  // Close voting on a CR. Server-side vote closing resolves the linked CR.
   const closeVoting = useCallback(
     async (itemId: string) => {
       const item = crTimeline.find(i => i.id === itemId);
       if (!item?.vote) return;
 
-      // Compute result from final decisions
       const result = getVoteResult(item);
 
-      // Close the vote
       await updateVote({ id: item.vote.id, status: 'closed' });
-
-      // Process the CR vote result server-side (accept/reject suggestion, save version, advance)
-      await processCRVoteResult({
-        agenda_item_change_request_id: itemId,
-        vote_result: result,
-      });
 
       return result;
     },
-    [crTimeline, updateVote, processCRVoteResult]
+    [crTimeline, updateVote]
   );
 
   // Cast a vote on a CR item (handles indicative vs final based on current phase)
   const castCRVote = useCallback(
     async (item: ChangeRequestTimelineRow, choiceId: string) => {
-      if (!userId || !item.vote) {
-        console.warn('[castCRVote] Missing userId or vote on item', {
-          userId,
-          voteId: item.vote?.id,
-        });
+      if (isMockCRTimelineItem(item)) {
         toast.error(
           translateText('generated.inline.0001_cannot_cast_vote_missing_user_or_vote_data_32ecb2cb')
         );
         return;
       }
+
+      if (!userId || !item.vote) {
+        toast.error(
+          translateText('generated.inline.0001_cannot_cast_vote_missing_user_or_vote_data_32ecb2cb')
+        );
+        return;
+      }
+
+      const phase = getVotePhase(item);
+      if (phase === 'closed') {
+        return;
+      }
+
       let voterId = getUserVoter(item)?.id;
       if (!voterId) {
         voterId = crypto.randomUUID();
@@ -181,7 +187,6 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
         });
       }
 
-      const phase = getVotePhase(item);
       const participationId = crypto.randomUUID();
       const participationArgs = {
         id: participationId,
@@ -199,7 +204,7 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
         },
       ];
 
-      if (phase === 'final_vote') {
+      if (phase === 'final') {
         await castFinalVote(participationArgs, decisions);
       } else {
         await castIndicativeVote(participationArgs, decisions);
@@ -225,7 +230,7 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
     currentItem,
     pendingItems,
     completedItems,
-    finalVoteItem,
+    closingVoteItem,
     progress,
     isLoading,
     hasUserVoted,
@@ -242,11 +247,7 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
 
 /** Derive the current voting phase from a CR timeline item's vote status. */
 export function getVotePhase(item: ChangeRequestTimelineRow): CRVotePhase {
-  const status = item.vote?.status;
-  if (status === 'final_vote' || status === 'final' || status === VOTE_STATUS.finalOpen)
-    return 'final_vote';
-  if (status === 'closed') return 'closed';
-  return 'indicative';
+  return deriveChangeRequestVotePhase(item);
 }
 
 /** Compute the vote result for a CR item from final decisions and configured majority rules. */

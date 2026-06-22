@@ -22,6 +22,8 @@ interface DiscussionEntry {
   description?: string;
   justification?: string;
   status?: string;
+  confirmationStatus?: 'pending' | 'confirmed' | null;
+  changeRequestStatus?: string | null;
   createdAt?: number;
   userId?: string;
   comments?: readonly { text?: string; value?: string; userId?: string }[];
@@ -49,6 +51,7 @@ type ChangeRequestRowForView = Omit<CanonicalSavedChangeRequest, 'votes'> & {
   resolution_method?: string | null;
   visibility_scope?: string | null;
   resolved_in_mode?: string | null;
+  branch_sequence_number?: number | null;
   votes?: readonly ChangeRequestVoteRow[] | null;
 };
 
@@ -60,6 +63,7 @@ export interface ChangeRequest {
   displayCrId?: string;
   branchDisplayNumber?: number;
   branchScopedCrNumber?: number;
+  branchSequenceNumber?: number | null;
   title: string;
   description: string;
   type: string;
@@ -87,6 +91,8 @@ export interface ChangeRequest {
   visibilityScope: string | null;
   resolvedInMode: string | null;
   votingStatus: string | null;
+  confirmationStatus: 'pending' | 'confirmed' | null;
+  changeRequestStatus: string | null;
   userVote: string | null;
   comments: readonly { text?: string; value?: string; userId?: string }[];
   votes: readonly {
@@ -278,6 +284,7 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
         suggestionId: discussion?.id ?? null,
         crId: displayCrId,
         crNumber: parseInt(displayCrId?.replace('CR-', '') || '0'),
+        branchSequenceNumber: cr?.branch_sequence_number ?? null,
         title: record.displayTitle,
         description: getOptionalString(discussion?.description) ?? cr?.description ?? '',
         type: suggestionContent.type,
@@ -309,6 +316,10 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
         visibilityScope: cr?.visibility_scope ?? null,
         resolvedInMode: cr?.resolved_in_mode ?? null,
         votingStatus: cr?.voting_status ?? null,
+        confirmationStatus:
+          discussion?.confirmationStatus ??
+          (cr?.status === 'pending_submission' ? 'pending' : cr ? 'confirmed' : null),
+        changeRequestStatus: cr?.status ?? discussion?.changeRequestStatus ?? null,
         userVote: getUserVote(cr ?? undefined),
         comments: discussion?.comments || [],
         votes: cr?.votes || [],

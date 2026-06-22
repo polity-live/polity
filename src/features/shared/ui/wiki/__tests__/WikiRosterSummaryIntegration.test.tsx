@@ -23,10 +23,10 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 }));
 
 vi.mock('@/features/shared/ui/layout', () => ({
-  StatsBar: ({ stats }: { stats: { value: number; labelKey: string }[] }) => (
+  StatsBar: ({ items }: { items: { value: number; label: ReactNode }[] }) => (
     <div data-testid="stats-bar">
-      {stats.map(stat => (
-        <span key={stat.labelKey}>{stat.value}</span>
+      {items.map((item, index) => (
+        <span key={index}>{item.value}</span>
       ))}
     </div>
   ),
@@ -94,6 +94,7 @@ vi.mock('@/features/shared/ui/dialog', () => ({
 vi.mock('@/features/shared/ui/ui/dialog', () => ({
   Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
+  DialogFooter: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogHeader: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
 }));

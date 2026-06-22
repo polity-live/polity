@@ -50,7 +50,7 @@ export const agendaItemChangeRequest = table('agenda_item_change_request')
     order_index: number(),
     step_kind: string(),
     process_branch_id: string().optional(),
-    is_final_vote: boolean(),
+    is_closing_vote: boolean(),
     status: string(),
     blocked_reason: string().optional(),
     result_status: string().optional(),

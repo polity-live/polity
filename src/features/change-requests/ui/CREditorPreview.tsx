@@ -1,14 +1,17 @@
 import type { Value } from 'platejs';
 import type { ReactNode } from 'react';
+import type { SuggestionPreviewResolutionMap } from '../logic/filterDocumentToSingleSuggestion';
 import { useCREditorPreviewModel } from '../hooks/useCREditorPreviewModel';
+import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 
 interface CREditorPreviewProps {
   documentContent: Value;
   suggestionIds: Set<string>;
+  suggestionResolutions?: SuggestionPreviewResolutionMap;
   /** Render the inline amendment editor instead of a static preview when event modes allow it. */
   allowInteractiveEditor?: boolean;
   /** Amendment editing mode used when interactive rendering is explicitly enabled. */
-  editingMode?: string | null;
+  editingMode?: EditingMode | null;
   /** Amendment ID — required for interactive mode */
   amendmentId?: string;
   /** Current user ID — required for interactive mode */
@@ -27,6 +30,7 @@ import { CREditorPreviewView } from './CREditorPreviewView';
 export function CREditorPreview({
   documentContent,
   suggestionIds,
+  suggestionResolutions,
   allowInteractiveEditor,
   editingMode,
   amendmentId,
@@ -41,6 +45,7 @@ export function CREditorPreview({
     documentContent,
     editingMode,
     suggestionIds,
+    suggestionResolutions,
   });
   return (
     <CREditorPreviewView

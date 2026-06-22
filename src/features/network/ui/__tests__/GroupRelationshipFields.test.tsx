@@ -146,6 +146,23 @@ describe('GroupRelationshipMembershipModeDescription', () => {
 
     expect(screen.getByText('selected role')).toBeTruthy();
   });
+
+  it('renders source-group membership through the parliament description', () => {
+    render(
+      <GroupRelationshipMembershipModeDescription
+        membershipMode="selected_source_groups"
+        direction="partner_members_to_current"
+        currentGroupName="Fraktion H66"
+        selectedGroupName="Stadtrat Rosbach"
+      />
+    );
+
+    expect(screen.getByText('Mitgliedschaft in')).toBeTruthy();
+    expect(screen.getByText('Fraktion H66')).toBeTruthy();
+    expect(screen.getByText('wird aus Gruppen abgeleitet, die passives Wahlrecht in')).toBeTruthy();
+    expect(screen.getByText('Stadtrat Rosbach')).toBeTruthy();
+    expect(screen.queryByText(/source-group rule from/i)).toBeNull();
+  });
 });
 
 describe('GroupRelationshipNameTag', () => {

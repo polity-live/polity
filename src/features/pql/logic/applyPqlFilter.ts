@@ -53,8 +53,6 @@ export interface PqlFilter<TFieldKey extends string = string> {
   label: string;
   query?: string;
   expression?: PqlExpression<TFieldKey>;
-  combinator?: PqlCombinator;
-  rules?: readonly PqlRule<TFieldKey>[];
 }
 
 export type PqlFieldRegistry<TItem, TFieldKey extends string = string> = ReadonlyMap<
@@ -210,27 +208,6 @@ function isExpressionCondition<TFieldKey extends string>(
   return expression.type === 'condition';
 }
 
-function getLegacyExpression<TFieldKey extends string>(
-  filter: Pick<PqlFilter<TFieldKey>, 'combinator' | 'rules'>
-): PqlExpression<TFieldKey> | null {
-  const rules = filter.rules ?? [];
-
-  if (rules.length === 0) {
-    return null;
-  }
-
-  const children = rules.map(rule => createPqlCondition(rule));
-  if (children.length === 1) {
-    return children[0];
-  }
-
-  return {
-    type: 'group',
-    combinator: filter.combinator ?? 'and',
-    children,
-  };
-}
-
 function getQueryOperatorToken(operator: PqlOperator): string {
   switch (operator) {
     case 'eq':
@@ -296,29 +273,10 @@ export function createPqlCondition<TFieldKey extends string>(
   };
 }
 
-export function createPqlFilterFromRules<TFieldKey extends string>(args: {
-  id: string;
-  label: string;
-  query?: string;
-  combinator: PqlCombinator;
-  rules: readonly PqlRule<TFieldKey>[];
-}): PqlFilter<TFieldKey> {
-  const expression = getLegacyExpression(args);
-
-  return {
-    id: args.id,
-    label: args.label,
-    query: args.query,
-    combinator: args.combinator,
-    rules: args.rules,
-    expression: expression ?? undefined,
-  };
-}
-
 export function getPqlFilterExpression<TFieldKey extends string>(
   filter: PqlFilter<TFieldKey>
 ): PqlExpression<TFieldKey> | null {
-  return filter.expression ?? getLegacyExpression(filter);
+  return filter.expression ?? null;
 }
 
 export function matchesPqlRule<TItem, TFieldKey extends string>(

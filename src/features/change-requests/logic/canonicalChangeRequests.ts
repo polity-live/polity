@@ -3,6 +3,7 @@ import {
   hasRenderableSuggestionContent,
   suggestionContentFromChangeRequestSnapshot,
 } from '../utils/suggestion-extraction';
+import { formatChangeRequestCrId, getChangeRequestSequenceNumber } from './changeRequestNumbering';
 
 export interface CanonicalDiscussionEntry {
   id: string;
@@ -13,6 +14,7 @@ export interface CanonicalDiscussionEntry {
   title?: string | null;
   status?: string | null;
   confirmationStatus?: 'pending' | 'confirmed' | null;
+  changeRequestStatus?: string | null;
 }
 
 export interface CanonicalSavedChangeRequest {
@@ -26,6 +28,8 @@ export interface CanonicalSavedChangeRequest {
   votes_against?: number | null;
   votes_abstain?: number | null;
   votes?: readonly unknown[] | null;
+  branch_sequence_number?: number | null;
+  branchSequenceNumber?: number | null;
   change_type?: string | null;
   original_text?: string | null;
   new_text?: string | null;
@@ -101,10 +105,6 @@ export function hasChangeRequestDiffSnapshot(changeRequest: CanonicalSavedChange
   );
 }
 
-function isPendingUnconfirmedDiscussion(discussion: CanonicalDiscussionEntry) {
-  return discussion.confirmationStatus === 'pending' && !discussion.changeRequestEntityId;
-}
-
 function rowTimestamp(changeRequest: CanonicalSavedChangeRequest) {
   return changeRequest.updated_at ?? changeRequest.created_at ?? 0;
 }
@@ -142,13 +142,25 @@ export function findDiscussionForChangeRequest<TDiscussion extends CanonicalDisc
   discussions: readonly TDiscussion[],
   changeRequest: Pick<
     CanonicalSavedChangeRequest,
-    'id' | 'title' | 'process_branch_id' | 'processBranchId'
+    | 'id'
+    | 'title'
+    | 'process_branch_id'
+    | 'processBranchId'
+    | 'branch_sequence_number'
+    | 'branchSequenceNumber'
   >
 ) {
   const processBranchId = getChangeRequestProcessBranchId(changeRequest);
+  const canonicalCrId = formatChangeRequestCrId(getChangeRequestSequenceNumber(changeRequest));
 
   return (
     discussions.find(discussion => discussion.changeRequestEntityId === changeRequest.id) ??
+    discussions.find(
+      discussion =>
+        getDiscussionProcessBranchId(discussion) === processBranchId &&
+        !!canonicalCrId &&
+        (discussion.crId === canonicalCrId || discussion.title === canonicalCrId)
+    ) ??
     discussions.find(
       discussion =>
         getDiscussionProcessBranchId(discussion) === processBranchId &&
@@ -195,10 +207,6 @@ export function buildCanonicalChangeRequestRecords<
   };
 
   for (const discussion of discussionList) {
-    if (isPendingUnconfirmedDiscussion(discussion)) {
-      continue;
-    }
-
     if (!discussion.id || (!discussion.crId && !discussion.changeRequestEntityId)) {
       continue;
     }
@@ -259,6 +267,9 @@ export function buildCanonicalChangeRequestRecords<
         sorted.find(hasChangeRequestDiffSnapshot) ??
         null;
       const displayCrId =
+        (changeRequest
+          ? formatChangeRequestCrId(getChangeRequestSequenceNumber(changeRequest))
+          : null) ??
         record.discussion?.crId ??
         (changeRequest?.title?.startsWith('CR-') ? changeRequest.title : null);
       const displayTitle =
@@ -278,8 +289,18 @@ export function buildCanonicalChangeRequestRecords<
       };
     })
     .sort((left, right) => {
-      const leftNumber = parseInt(left.displayCrId?.replace('CR-', '') || '0');
-      const rightNumber = parseInt(right.displayCrId?.replace('CR-', '') || '0');
+      const leftNumber =
+        getChangeRequestSequenceNumber({
+          branch_sequence_number: left.changeRequest?.branch_sequence_number,
+          branchSequenceNumber: left.changeRequest?.branchSequenceNumber,
+          crId: left.displayCrId,
+        }) ?? 0;
+      const rightNumber =
+        getChangeRequestSequenceNumber({
+          branch_sequence_number: right.changeRequest?.branch_sequence_number,
+          branchSequenceNumber: right.changeRequest?.branchSequenceNumber,
+          crId: right.displayCrId,
+        }) ?? 0;
       if (leftNumber !== rightNumber) return leftNumber - rightNumber;
       return left.displayTitle.localeCompare(right.displayTitle);
     });

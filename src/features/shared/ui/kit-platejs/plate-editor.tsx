@@ -10,6 +10,14 @@ import {
 import { discussionPlugin } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import { suggestionPlugin } from '@/features/shared/ui/kit-platejs/suggestion-kit.tsx';
 import { Editor, EditorContainer } from '@/features/shared/ui/ui-platejs/editor.tsx';
+import {
+  editorSelectionDebugLog,
+  getActiveElementDebugInfo,
+  isActiveElementInSlateEditor,
+  summarizeDiscussions,
+  summarizeRichTextValue,
+  summarizeSelection,
+} from '@/features/shared/logic/editorSelectionDebug';
 import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 import type { EditorMode } from '@/features/editor/types';
@@ -143,16 +151,53 @@ export function PlateEditor({
 
   const editor = usePlateEditor(editorConfig);
 
+  const hasLoggedDebugReady = React.useRef(false);
+  React.useEffect(() => {
+    if (hasLoggedDebugReady.current) return;
+
+    hasLoggedDebugReady.current = true;
+    editorSelectionDebugLog('debug-ready', {
+      component: 'PlateEditor',
+      discussionSummary: summarizeDiscussions(discussions),
+      documentId,
+      editorId: id,
+      editorVariant,
+      isControlled,
+      readOnly,
+      selection: summarizeSelection(editor.selection),
+      showFixedToolbar,
+    });
+  }, [
+    discussions,
+    documentId,
+    editor,
+    editorVariant,
+    id,
+    isControlled,
+    readOnly,
+    showFixedToolbar,
+  ]);
+
   // Load initial discussions from props on first mount
   const hasLoadedInitialDiscussions = React.useRef(false);
   React.useEffect(() => {
     if (editor && discussions && discussions.length > 0 && !hasLoadedInitialDiscussions.current) {
+      editorSelectionDebugLog('plate-discussions-sync:initial-before', {
+        documentId,
+        nextDiscussionSummary: summarizeDiscussions(discussions),
+        selectionBefore: summarizeSelection(editor.selection),
+      });
       editor.setOptions(discussionPlugin, {
         discussions: discussions,
       });
+      editorSelectionDebugLog('plate-discussions-sync:initial-after', {
+        documentId,
+        nextDiscussionSummary: summarizeDiscussions(discussions),
+        selectionAfter: summarizeSelection(editor.selection),
+      });
       hasLoadedInitialDiscussions.current = true;
     }
-  }, [editor, discussions]);
+  }, [documentId, editor, discussions]);
 
   // Track the last discussions prop value we synced into the editor so we only
   // push when props genuinely change — not when the effect re-runs due to other
@@ -166,6 +211,15 @@ export function PlateEditor({
 
       const propsDiscussionsStr = JSON.stringify(discussions || []);
       const propsChanged = propsDiscussionsStr !== lastSyncedDiscussionsRef.current;
+      const nextEditorDiscussions = propsChanged ? discussions || [] : currentEditorDiscussions;
+
+      editorSelectionDebugLog('plate-discussions-sync:props-before', {
+        currentEditorDiscussionSummary: summarizeDiscussions(currentEditorDiscussions),
+        documentId,
+        nextDiscussionSummary: summarizeDiscussions(nextEditorDiscussions),
+        propsChanged,
+        selectionBefore: summarizeSelection(editor.selection),
+      });
 
       // Update discussion plugin options
       editor.setOptions(discussionPlugin, {
@@ -176,7 +230,16 @@ export function PlateEditor({
         // changed (e.g. remote poke arrived). Otherwise keep whatever the
         // editor plugin currently holds — it may contain a comment the user
         // just added that hasn't round-tripped through Zero yet.
-        discussions: propsChanged ? discussions || [] : currentEditorDiscussions,
+        discussions: nextEditorDiscussions,
+      });
+
+      editorSelectionDebugLog('plate-discussions-sync:props-after', {
+        currentEditorDiscussionSummary: summarizeDiscussions(
+          editor.getOption(discussionPlugin, 'discussions') || []
+        ),
+        documentId,
+        propsChanged,
+        selectionAfter: summarizeSelection(editor.selection),
       });
 
       if (propsChanged) {
@@ -252,8 +315,21 @@ export function PlateEditor({
         );
 
         if (cleanedDiscussions.length !== currentDiscussions.length) {
+          editorSelectionDebugLog('plate-discussions-sync:cleanup-before', {
+            currentEditorDiscussionSummary: summarizeDiscussions(currentDiscussions),
+            documentId,
+            nextDiscussionSummary: summarizeDiscussions(cleanedDiscussions),
+            selectionBefore: summarizeSelection(editor.selection),
+          });
           editor.setOptions(discussionPlugin, {
             discussions: cleanedDiscussions,
+          });
+          editorSelectionDebugLog('plate-discussions-sync:cleanup-after', {
+            currentEditorDiscussionSummary: summarizeDiscussions(
+              editor.getOption(discussionPlugin, 'discussions') || []
+            ),
+            documentId,
+            selectionAfter: summarizeSelection(editor.selection),
           });
 
           onDiscussionsChange(cleanedDiscussions);
@@ -280,23 +356,47 @@ export function PlateEditor({
     // content state in useEditor — so the `value` prop stays stable.
     if (isControlled && value && prevValueRef.current !== value) {
       try {
+        editorSelectionDebugLog('plate-value-sync:start', {
+          activeElement: getActiveElementDebugInfo(),
+          contentSignature: summarizeRichTextValue(value),
+          documentId,
+          isControlled,
+          isEditorFocused: isActiveElementInSlateEditor(),
+          selectionBefore: summarizeSelection(editor.selection),
+          valueChanged: prevValueRef.current !== value,
+        });
+
         // Reset selection before swapping content to prevent toolbar
         // crashes from stale paths (e.g. MarkToolbarButton → getMarks).
         editor.selection = null;
         isUpdatingFromProps.current = true;
         editor.children = value as Value;
+        editorSelectionDebugLog('plate-value-sync:end', {
+          activeElement: getActiveElementDebugInfo(),
+          contentSignature: summarizeRichTextValue(editor.children),
+          documentId,
+          isControlled,
+          isEditorFocused: isActiveElementInSlateEditor(),
+          selectionAfter: summarizeSelection(editor.selection),
+          valueChanged: true,
+        });
+
         // Trigger a re-render without calling parent onChange
         if (typeof editor.onChange === 'function') {
           (editor as unknown as { onChange: () => void }).onChange();
         }
       } catch (e) {
+        editorSelectionDebugLog('plate-value-sync:error', {
+          documentId,
+          error: e instanceof Error ? { message: e.message, name: e.name } : String(e),
+        });
         console.warn('Failed to update editor value:', e);
       } finally {
         isUpdatingFromProps.current = false;
       }
       prevValueRef.current = value;
     }
-  }, [value, isControlled, editor]);
+  }, [value, isControlled, editor, documentId]);
 
   // Handle changes from the editor using ref to avoid recreating function
   const handleEditorChange = React.useCallback(({ value: newValue }: { value: Value }) => {

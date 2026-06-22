@@ -10,6 +10,7 @@ export interface CRSummary {
   displayCrId?: string;
   branchDisplayNumber?: number;
   branchScopedCrNumber?: number;
+  branchSequenceNumber?: number | null;
   title: string;
   description: string;
   status: string; // 'open' | 'approved' | 'accepted' | 'rejected' | 'declined'
@@ -37,6 +38,7 @@ export interface CRSummary {
   votingStatus?: string | null;
   userVote?: string | null;
   confirmationStatus?: 'pending' | 'confirmed' | null;
+  changeRequestStatus?: string | null;
 }
 
 function isAcceptedStatus(status: string) {
@@ -50,6 +52,41 @@ function isRejectedStatus(status: string) {
 function mapCRStatusToTimelineStatus(status: string): string {
   if (isAcceptedStatus(status) || isRejectedStatus(status)) return 'completed';
   return 'pending';
+}
+
+export function isPendingSubmissionCRTimelineItem(item: {
+  _originalStatus?: string | null;
+  change_request?: {
+    status?: string | null;
+    voting_status?: string | null;
+    confirmation_status?: string | null;
+    confirmationStatus?: string | null;
+    change_request_status?: string | null;
+    changeRequestStatus?: string | null;
+  } | null;
+}) {
+  const cr = item.change_request;
+  return (
+    item._originalStatus === 'pending_submission' ||
+    cr?.status === 'pending_submission' ||
+    cr?.voting_status === 'pending_submission' ||
+    cr?.change_request_status === 'pending_submission' ||
+    cr?.changeRequestStatus === 'pending_submission' ||
+    cr?.confirmation_status === 'pending' ||
+    cr?.confirmationStatus === 'pending'
+  );
+}
+
+export function isMockCRTimelineItem(item: {
+  id?: string | null;
+  vote_id?: string | null;
+  vote?: { id?: string | null } | null;
+}) {
+  return (
+    item.id?.startsWith('mock-cr-') ||
+    item.vote_id?.startsWith('mock-vote-') ||
+    item.vote?.id?.startsWith('mock-vote-')
+  );
 }
 
 function createMockVote(itemId: string, cr: CRSummary) {
@@ -135,7 +172,7 @@ export function createMockCRTimelineItems(crSummaries: CRSummary[]) {
       _processBranchId: cr.processBranchId ?? null,
       vote_id: `mock-vote-${persistedChangeRequestId}`,
       order_index: index,
-      is_final_vote: false,
+      is_closing_vote: false,
       status: mapCRStatusToTimelineStatus(cr.status),
       change_request: {
         id: persistedChangeRequestId,
@@ -150,6 +187,8 @@ export function createMockCRTimelineItems(crSummaries: CRSummary[]) {
         branchDisplayNumber: cr.branchDisplayNumber ?? null,
         branch_scoped_cr_number: cr.branchScopedCrNumber ?? null,
         branchScopedCrNumber: cr.branchScopedCrNumber ?? null,
+        branch_sequence_number: cr.branchSequenceNumber ?? cr.branchScopedCrNumber ?? null,
+        branchSequenceNumber: cr.branchSequenceNumber ?? cr.branchScopedCrNumber ?? null,
         suggestion_id: suggestionId,
         description: cr.description || null,
         status: cr.status || null,
@@ -166,6 +205,7 @@ export function createMockCRTimelineItems(crSummaries: CRSummary[]) {
         visibility_scope: cr.visibilityScope ?? null,
         resolved_in_mode: cr.resolvedInMode ?? null,
         confirmation_status: cr.confirmationStatus ?? null,
+        change_request_status: cr.changeRequestStatus ?? cr.status ?? null,
         created_at: null,
         updated_at: null,
         user: null,
@@ -186,7 +226,7 @@ export type MockCRTimelineItem = ReturnType<typeof createMockCRTimelineItems>[nu
  * Works for both real ChangeRequestTimelineRow and mock items.
  */
 export function getCRFilterStatus(
-  item: { status?: string | null; is_final_vote?: boolean; _originalStatus?: string },
+  item: { status?: string | null; is_closing_vote?: boolean; _originalStatus?: string },
   getVoteResultFn?: (item: never) => string
 ): 'open' | 'accepted' | 'rejected' {
   // Mock items carry the original CR status

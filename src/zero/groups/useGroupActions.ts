@@ -223,9 +223,9 @@ export function useGroupActions() {
     [zero]
   );
 
-  const updateMemberRole = useCallback(
-    (args: Parameters<typeof mutators.groups.updateMemberRole>[0]) => {
-      const result = zero.mutate(mutators.groups.updateMemberRole(args));
+  const updateMembership = useCallback(
+    (args: Parameters<typeof mutators.groups.updateMembership>[0]) => {
+      const result = zero.mutate(mutators.groups.updateMembership(args));
       toast.success(t('features.groups.toasts.memberRoleUpdated'));
       onServerError(result, msg =>
         handleMutationError(
@@ -523,7 +523,7 @@ export function useGroupActions() {
     inviteGuest,
     acceptGuestInvitation,
     revokeGuestAccess,
-    updateMemberRole,
+    updateMembership,
     addMembershipRole,
     removeMembershipRole,
     syncMembershipRoles,

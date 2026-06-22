@@ -121,7 +121,6 @@ npm run zero:dev
 | `npm run dev`             | Start the dev server on port 3000              |
 | `npm run build`           | Production build                               |
 | `npm run start`           | Start production server                        |
-| `npm run seed`            | Seed the database with test data               |
 | `npm run zero:dev`        | Start zero-cache-dev with env vars (local dev) |
 | `npm run zero:cache`      | Start zero-cache-dev (no env vars)             |
 | `npm run supabase:start`  | Start local Supabase                           |
@@ -134,7 +133,6 @@ npm run zero:dev
 | `npm run lint:fix`        | Lint and auto-fix                              |
 | `npm run format`          | Format code with Prettier                      |
 | `npm run format:check`    | Check formatting                               |
-| `npm run storybook`       | Start Storybook on port 6006                   |
 
 ## Deployment
 
@@ -251,7 +249,7 @@ src/
   zero/           # Zero schema & sync setup
   utils/          # Utility functions
 supabase/         # Supabase config & schema SQL
-scripts/          # Database seeding scripts
+tools/deploy/     # Deployment helpers
 e2e/              # Playwright E2E tests
 ```
 

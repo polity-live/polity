@@ -1,7 +1,7 @@
 /**
  * Extract the base event ID from a potentially compound instance ID.
  *
- * Recurring events generate instance IDs like: eventId_instance_timestamp
+ * Recurring events generate instance IDs like: eventId_rrule_index
  * This function extracts the original event UUID for navigation.
  *
  * @param instanceId - The event ID which might be an instance ID
@@ -11,11 +11,6 @@ export function getBaseEventId(instanceId: string): string {
   // RRule-backed recurring instances append an index marker to the base event ID.
   if (instanceId.includes('_rrule_')) {
     return instanceId.split('_rrule_')[0];
-  }
-
-  // If the ID contains '_instance_', extract the base UUID
-  if (instanceId.includes('_instance_')) {
-    return instanceId.split('_instance_')[0];
   }
 
   // Otherwise return the ID as-is

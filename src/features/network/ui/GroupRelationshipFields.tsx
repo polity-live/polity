@@ -499,14 +499,25 @@ export function GroupRelationshipMembershipModeDescription({
   }
 
   if (membershipMode === 'selected_source_groups') {
+    const targetGroupName =
+      direction === 'partner_members_to_current' ? safeCurrentGroupName : safeSelectedGroupName;
+    const sourceGroupName =
+      direction === 'partner_members_to_current' ? safeSelectedGroupName : safeCurrentGroupName;
+    const targetGroupId =
+      direction === 'partner_members_to_current' ? currentGroupId : selectedGroupId;
+    const sourceGroupId =
+      direction === 'partner_members_to_current' ? selectedGroupId : currentGroupId;
+
     return (
-      <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
-        <span>This connection uses a legacy source-group rule from</span>
-        {sourceTag}
-        <span>to</span>
-        {targetTag}
-        <span>.</span>
-      </div>
+      <SiblingMembershipModeDescription
+        siblingMembershipMode="parliament"
+        currentGroupName={targetGroupName}
+        selectedGroupName={sourceGroupName}
+        currentGroupId={targetGroupId}
+        selectedGroupId={sourceGroupId}
+        className={className}
+        linkGroups={linkGroups}
+      />
     );
   }
 

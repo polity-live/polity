@@ -6,7 +6,11 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
-import { onServerError, serverConfirmed } from '../mutate-with-server-check';
+import {
+  isZeroClosedMutationCancellation,
+  onServerError,
+  serverConfirmed,
+} from '../mutate-with-server-check';
 
 /**
  * Action hook for vote mutations.
@@ -51,8 +55,18 @@ export function useVoteActions() {
   const closeExpiredFinalVotesForEvent = useCallback(
     (args: Parameters<typeof mutators.votes.closeExpiredFinalVotesForEvent>[0]) => {
       const result = zero.mutate(mutators.votes.closeExpiredFinalVotesForEvent(args));
-      onServerError(result, msg => console.error('Failed to close expired final votes:', msg));
-      return serverConfirmed(result);
+      onServerError(result, msg => {
+        if (!isZeroClosedMutationCancellation(msg)) {
+          console.error('Failed to close expired final votes:', msg);
+        }
+      });
+      return serverConfirmed(result).catch(error => {
+        if (isZeroClosedMutationCancellation(error)) {
+          return;
+        }
+
+        throw error;
+      });
     },
     [zero]
   );

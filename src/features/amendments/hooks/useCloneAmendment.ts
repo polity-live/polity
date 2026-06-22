@@ -149,7 +149,7 @@ export function useCloneAmendment(
         id: cloneDocumentId,
         amendment_id: cloneId,
         content: originalDocument?.content ?? { type: 'doc', content: [] },
-        editing_mode: 'collaborative',
+        editing_mode: 'edit',
       });
       await serverConfirmed(createDocumentResult);
 

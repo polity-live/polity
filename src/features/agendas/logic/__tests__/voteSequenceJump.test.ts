@@ -19,9 +19,9 @@ describe('resolveClosingJumpTarget', () => {
         },
         {
           id: 'final-vote-item',
-          is_final_vote: true,
+          is_closing_vote: true,
           vote: { id: 'vote-final' },
-          _voteStepKind: 'final_amendment',
+          _voteStepKind: 'closing',
         },
       ],
     });
@@ -50,7 +50,7 @@ describe('resolveClosingJumpTarget', () => {
         {
           id: 'placeholder-final',
           _votePlaceholder: true,
-          _voteStepKind: 'final_amendment_placeholder',
+          _voteStepKind: 'closing_placeholder',
         },
       ],
     });

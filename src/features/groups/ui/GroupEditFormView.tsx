@@ -66,7 +66,6 @@ export interface GroupEditFormViewProps {
   siblingMembershipRule: any;
   pair: any;
   hasSiblingMembership: any;
-  hasLegacySelectedSourceMembership: any;
   siblingConfigurationPreflight: any;
   onFormSubmit: any;
   confirmCreate: any;
@@ -94,7 +93,6 @@ export function GroupEditFormView({
   selectableConnectedRoles,
   relationshipDirectionOptions,
   membershipDirectionOptions,
-  hasLegacySelectedSourceMembership,
   siblingConfigurationPreflight,
   onFormSubmit,
   confirmCreate,
@@ -268,16 +266,6 @@ export function GroupEditFormView({
             </FormControlSelect>
           </div>
 
-          {hasLegacySelectedSourceMembership ? (
-            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-              <div className="font-medium">Legacy source-group membership</div>
-              <div className="mt-1 text-amber-800">
-                This group uses an old source-group membership rule. Choose one of the supported
-                membership modes before saving changes.
-              </div>
-            </div>
-          ) : null}
-
           {formData.sibling_membership_mode === 'role_members' ? (
             <div className="space-y-2">
               <FormControlLabel>
@@ -408,11 +396,7 @@ export function GroupEditFormView({
         )}
         <Button
           type="submit"
-          disabled={
-            isSubmitting ||
-            siblingConfigurationPreflight.blocking ||
-            hasLegacySelectedSourceMembership
-          }
+          disabled={isSubmitting || siblingConfigurationPreflight.blocking}
           className="flex-1"
         >
           {isSubmitting ? (

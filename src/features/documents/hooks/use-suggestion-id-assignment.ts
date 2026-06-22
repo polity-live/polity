@@ -5,6 +5,11 @@ import React from 'react';
 import { getNextSuggestionIdFromDiscussions } from '@/features/shared/utils/suggestion-utils.ts';
 import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
+import {
+  editorSelectionDebugLog,
+  summarizeDiscussion,
+  summarizeDiscussions,
+} from '@/features/shared/logic/editorSelectionDebug';
 
 interface UseSuggestionIdAssignmentProps {
   enabled?: boolean;
@@ -16,6 +21,8 @@ interface UseSuggestionIdAssignmentProps {
     crId: string;
     discussionId: string;
     changeRequestEntityId: string;
+    status?: string;
+    votingStatus?: string;
   }) => unknown | Promise<unknown>;
   suggestions?: ResolvedSuggestion[]; // Optional: resolved suggestions from PlateJS
 }
@@ -35,7 +42,7 @@ export function useSuggestionIdAssignment({
   const processedDiscussions = React.useRef(new Set<string>());
   const processedEntities = React.useRef(new Set<string>());
 
-  const assignMissingIds = React.useCallback(() => {
+  const assignMissingIds = React.useCallback(async () => {
     if (!enabled) return;
     if (!documentId || !discussions || discussions.length === 0) return;
 
@@ -69,10 +76,11 @@ export function useSuggestionIdAssignment({
             ...updatedDiscussions[index],
             crId,
             confirmationStatus: requiresEventConfirmation
-              ? updatedDiscussions[index].changeRequestEntityId
-                ? 'confirmed'
-                : (updatedDiscussions[index].confirmationStatus ?? 'pending')
+              ? (updatedDiscussions[index].confirmationStatus ?? 'pending')
               : updatedDiscussions[index].confirmationStatus,
+            changeRequestStatus: requiresEventConfirmation
+              ? (updatedDiscussions[index].changeRequestStatus ?? 'pending_submission')
+              : updatedDiscussions[index].changeRequestStatus,
           };
           processedDiscussions.current.add(discussion.id);
           hasChanges = true;
@@ -85,14 +93,14 @@ export function useSuggestionIdAssignment({
         const index = updatedDiscussions.findIndex(d => d.id === discussion.id);
         if (index === -1) continue;
 
-        const nextConfirmationStatus = discussion.changeRequestEntityId
-          ? 'confirmed'
-          : (discussion.confirmationStatus ?? 'pending');
+        const nextConfirmationStatus = discussion.confirmationStatus ?? 'pending';
 
         if (discussion.confirmationStatus !== nextConfirmationStatus) {
           updatedDiscussions[index] = {
             ...updatedDiscussions[index],
             confirmationStatus: nextConfirmationStatus,
+            changeRequestStatus:
+              updatedDiscussions[index].changeRequestStatus ?? 'pending_submission',
           };
           hasChanges = true;
         }
@@ -105,16 +113,31 @@ export function useSuggestionIdAssignment({
         discussion =>
           discussion.crId &&
           !discussion.changeRequestEntityId &&
-          (!requiresEventConfirmation || discussion.confirmationStatus === 'confirmed') &&
           !processedEntities.current.has(discussion.id)
       );
 
       if (discussionsNeedingEntity.length > 0) {
+        editorSelectionDebugLog('suggestion-assignment:pass2:start', {
+          count: discussionsNeedingEntity.length,
+          discussions: summarizeDiscussions(discussionsNeedingEntity),
+          documentId,
+          requiresEventConfirmation,
+          updatedDiscussions: summarizeDiscussions(updatedDiscussions),
+        });
+
         console.log(
           '[useSuggestionIdAssignment] Pass 2: Found',
           discussionsNeedingEntity.length,
           'discussions needing change_request entity'
         );
+
+        const createRequests: {
+          crId: string;
+          discussionId: string;
+          changeRequestEntityId: string;
+          status: string;
+          votingStatus: string;
+        }[] = [];
 
         for (const discussion of discussionsNeedingEntity) {
           const crId = discussion.crId;
@@ -126,29 +149,65 @@ export function useSuggestionIdAssignment({
           const index = updatedDiscussions.findIndex(d => d.id === discussion.id);
 
           if (index !== -1) {
+            editorSelectionDebugLog('suggestion-assignment:pass2:before-update', {
+              changeRequestEntityId,
+              crId,
+              discussion: summarizeDiscussion(updatedDiscussions[index]),
+              discussionId: discussion.id,
+              documentId,
+            });
+
             updatedDiscussions[index] = {
               ...updatedDiscussions[index],
               changeRequestEntityId,
+              changeRequestStatus: requiresEventConfirmation ? 'pending_submission' : 'open',
             };
             processedEntities.current.add(discussion.id);
             hasChanges = true;
+
+            editorSelectionDebugLog('suggestion-assignment:pass2:after-update', {
+              changeRequestEntityId,
+              crId,
+              discussion: summarizeDiscussion(updatedDiscussions[index]),
+              discussionId: discussion.id,
+              documentId,
+            });
 
             console.log('[useSuggestionIdAssignment] Creating change_request entity:', {
               crId: discussion.crId,
               discussionId: discussion.id,
               changeRequestEntityId,
             });
-            onChangeRequestCreate({
+            createRequests.push({
               crId,
               discussionId: discussion.id,
               changeRequestEntityId,
+              status: requiresEventConfirmation ? 'pending_submission' : 'open',
+              votingStatus: requiresEventConfirmation ? 'pending_submission' : 'open',
             });
           }
+        }
+
+        if (createRequests.length > 0 && hasChanges) {
+          editorSelectionDebugLog('suggestion-assignment:on-discussions-update:before-create', {
+            documentId,
+            updatedDiscussions: summarizeDiscussions(updatedDiscussions),
+          });
+          onDiscussionsUpdate(updatedDiscussions);
+          hasChanges = false;
+        }
+
+        for (const request of createRequests) {
+          await onChangeRequestCreate(request);
         }
       }
     }
 
     if (hasChanges) {
+      editorSelectionDebugLog('suggestion-assignment:on-discussions-update', {
+        documentId,
+        updatedDiscussions: summarizeDiscussions(updatedDiscussions),
+      });
       onDiscussionsUpdate(updatedDiscussions);
     }
   }, [
@@ -162,7 +221,7 @@ export function useSuggestionIdAssignment({
 
   // Run the assignment whenever discussions change
   React.useEffect(() => {
-    assignMissingIds();
+    void assignMissingIds();
   }, [assignMissingIds]);
 
   // Clean up processed discussions when component unmounts or documentId changes
