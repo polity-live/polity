@@ -139,59 +139,67 @@ export async function resolveChangeRequestByVoteResult({
   const suggestionId = matchingDiscussion?.id;
   let resolutionSnapshot = {};
 
-  if (target.documentId && suggestionId) {
-    const doc = await tx.run(zql.document.where('id', target.documentId).one());
+  const crLabel =
+    matchingDiscussion?.crId ??
+    cr.title ??
+    translateText('generated.inline.0190_change_request_9c839351');
 
-    if (doc?.content) {
-      const snapshot = createChangeRequestDiffSnapshot(
-        suggestionId,
-        doc.content as Parameters<typeof applySuggestionToContent>[0]
-      );
-      if (snapshot.change_type) {
-        resolutionSnapshot = snapshot;
-      }
-
-      const crLabel =
-        matchingDiscussion?.crId ??
-        cr.title ??
-        translateText('generated.inline.0190_change_request_9c839351');
-      const versionSummary =
-        voteResult === 'passed' ? `${crLabel} accepted by vote` : `${crLabel} rejected by vote`;
-
-      const latestVersion = await tx.run(
-        zql.document_version
-          .where('document_id', doc.id)
-          .orderBy('version_number', 'desc')
-          .limit(1)
-          .one()
-      );
-      const nextVersionNumber = (latestVersion?.version_number ?? 0) + 1;
-
-      await tx.mutate.document_version.insert({
-        id: crypto.randomUUID(),
-        document_id: doc.id,
-        amendment_id: cr.amendment_id,
-        blog_id: null,
-        content: doc.content as ReadonlyJSONValue,
-        version_number: nextVersionNumber,
-        change_summary: versionSummary,
-        author_id: ctx.userID,
-        created_at: now,
-      });
-
-      const updatedContent = applyChangeRequestVoteResultToContent(
-        doc.content as Parameters<typeof applySuggestionToContent>[0],
-        suggestionId,
-        voteResult
-      );
-
-      await tx.mutate.document.update({
-        id: doc.id,
-        content: updatedContent as unknown as ReadonlyJSONValue,
-        updated_at: now,
-      });
-    }
+  if (!target.documentId) {
+    throw new Error(`Cannot resolve ${crLabel}: document not found.`);
   }
+  if (!suggestionId) {
+    throw new Error(`Cannot resolve ${crLabel}: linked document suggestion not found.`);
+  }
+
+  const doc = await tx.run(zql.document.where('id', target.documentId).one());
+  if (!doc?.content) {
+    throw new Error(`Cannot resolve ${crLabel}: document content not found.`);
+  }
+
+  const snapshot = createChangeRequestDiffSnapshot(
+    suggestionId,
+    doc.content as Parameters<typeof applySuggestionToContent>[0]
+  );
+  if (!snapshot.change_type) {
+    throw new Error(`Cannot resolve ${crLabel}: linked suggestion is not present in the document.`);
+  }
+  resolutionSnapshot = snapshot;
+
+  const versionSummary =
+    voteResult === 'passed' ? `${crLabel} accepted by vote` : `${crLabel} rejected by vote`;
+
+  const latestVersion = await tx.run(
+    zql.document_version
+      .where('document_id', doc.id)
+      .orderBy('version_number', 'desc')
+      .limit(1)
+      .one()
+  );
+  const nextVersionNumber = (latestVersion?.version_number ?? 0) + 1;
+
+  await tx.mutate.document_version.insert({
+    id: crypto.randomUUID(),
+    document_id: doc.id,
+    amendment_id: cr.amendment_id,
+    blog_id: null,
+    content: doc.content as ReadonlyJSONValue,
+    version_number: nextVersionNumber,
+    change_summary: versionSummary,
+    author_id: ctx.userID,
+    created_at: now,
+  });
+
+  const updatedContent = applyChangeRequestVoteResultToContent(
+    doc.content as Parameters<typeof applySuggestionToContent>[0],
+    suggestionId,
+    voteResult
+  );
+
+  await tx.mutate.document.update({
+    id: doc.id,
+    content: updatedContent as unknown as ReadonlyJSONValue,
+    updated_at: now,
+  });
 
   if (matchingDiscussion && discussions.length > 0) {
     const updatedDiscussions = discussions.map(discussion =>

@@ -309,9 +309,13 @@ export function ChangeRequestCardsListView({
         )}
 
         {/* Tabs */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <Tabs value={effectiveActiveTab} onValueChange={value => setActiveTab(value as TabValue)}>
-            <TabsList>
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <Tabs
+            value={effectiveActiveTab}
+            onValueChange={value => setActiveTab(value as TabValue)}
+            className="max-w-full overflow-x-auto"
+          >
+            <TabsList className="w-max">
               <TabsTrigger value="all" className="gap-1.5">
                 {t('features.agendas.crTimeline.tabAll')}
                 <BadgeControl variant="secondary" size="xs" className="ml-0.5">
@@ -353,7 +357,7 @@ export function ChangeRequestCardsListView({
               type="single"
               value={sortMode}
               onValueChange={handleSortModeChange}
-              className="self-end sm:ml-auto"
+              className="w-fit self-start lg:ml-auto lg:self-auto"
               aria-label={t(
                 'features.agendas.crTimeline.sortChangeRequests',
                 'Sort change requests'

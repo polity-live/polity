@@ -657,7 +657,7 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
     | undefined;
   let documentContentChanged = false;
   let documentVersionCreated = false;
-  const eligibleUserIds = new Set(await activeVotingCollaboratorUserIds(tx, amendmentId));
+  let eligibleUserIds: Set<string> | null = null;
 
   const ensureDocumentVersion = async () => {
     if (!document || !document.content || documentVersionCreated) {
@@ -690,12 +690,35 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
 
   const results = [];
 
+  if (!document?.id || !nextDocumentContent) {
+    throw new Error('Cannot finalize internal change requests: document content not found.');
+  }
+
   for (const record of canonicalRecords) {
     const changeRequest = record.changeRequest;
     if (!changeRequest) {
       continue;
     }
 
+    const matchingDiscussion =
+      record.discussion ?? findChangeRequestDiscussion(nextDiscussions, changeRequest);
+
+    if (!matchingDiscussion?.id) {
+      throw new Error(
+        `Cannot finalize internal change request ${changeRequest.id}: linked document suggestion not found.`
+      );
+    }
+
+    const snapshot = createChangeRequestDiffSnapshot(matchingDiscussion.id, nextDocumentContent);
+    if (!snapshot.change_type) {
+      throw new Error(
+        `Cannot finalize internal change request ${changeRequest.id}: linked suggestion is not present in the document.`
+      );
+    }
+
+    if (!eligibleUserIds) {
+      eligibleUserIds = new Set(await activeVotingCollaboratorUserIds(tx, amendmentId));
+    }
     const { counts } = await normalizeInternalChangeRequestVoteCounts(
       tx,
       changeRequest.id,
@@ -704,24 +727,15 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
     );
     const voteResult = getVoteResult(counts);
     const status = getChangeRequestResolutionStatus(voteResult);
-    const matchingDiscussion =
-      record.discussion ?? findChangeRequestDiscussion(nextDiscussions, changeRequest);
-    let resolutionSnapshot = {};
+    const resolutionSnapshot = snapshot;
 
-    if (matchingDiscussion?.id && nextDocumentContent) {
-      const snapshot = createChangeRequestDiffSnapshot(matchingDiscussion.id, nextDocumentContent);
-      if (snapshot.change_type) {
-        resolutionSnapshot = snapshot;
-      }
-
-      await ensureDocumentVersion();
-      nextDocumentContent = applyChangeRequestVoteResultToContent(
-        nextDocumentContent,
-        matchingDiscussion.id,
-        voteResult
-      );
-      documentContentChanged = true;
-    }
+    await ensureDocumentVersion();
+    nextDocumentContent = applyChangeRequestVoteResultToContent(
+      nextDocumentContent,
+      matchingDiscussion.id,
+      voteResult
+    );
+    documentContentChanged = true;
 
     if (matchingDiscussion && nextDiscussions.length > 0) {
       const discussionIndex = nextDiscussions.findIndex(

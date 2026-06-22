@@ -217,7 +217,15 @@ describe('internal change request voting close rules', () => {
   });
 
   it('finalizes open internal CRs on event transition with one shared document state', async () => {
-    const originalContent = [{ type: 'p', children: [{ text: 'original' }] }];
+    const originalContent = [
+      {
+        type: 'p',
+        children: [
+          { text: 'first', suggestion_insert: { id: 'suggestion-1', type: 'insert' } },
+          { text: 'second', suggestion_remove: { id: 'suggestion-2', type: 'remove' } },
+        ],
+      },
+    ];
     const firstAppliedContent = [
       ...originalContent,
       { type: 'p', children: [{ text: 'suggestion-1:passed' }] },
@@ -328,7 +336,15 @@ describe('internal change request voting close rules', () => {
   });
 
   it('applies duplicated logical CRs only once using the voted row as canonical', async () => {
-    const originalContent = [{ type: 'p', children: [{ text: 'original' }] }];
+    const originalContent = [
+      {
+        type: 'p',
+        children: [
+          { text: 'original ' },
+          { text: 'insert', suggestion_insert: { id: 'suggestion-1', type: 'insert' } },
+        ],
+      },
+    ];
     const votesForCanonical = [
       { id: 'vote-1', user_id: 'user-1', vote: 'accept', created_at: 1_000 },
     ];
@@ -416,7 +432,15 @@ describe('internal change request voting close rules', () => {
 
   it('repairs resolved internal CRs by replaying canonical results from the pre-event version', async () => {
     const currentContent = [{ type: 'p', children: [{ text: 'broken' }] }];
-    const baseContent = [{ type: 'p', children: [{ text: 'original' }] }];
+    const baseContent = [
+      {
+        type: 'p',
+        children: [
+          { text: 'original ' },
+          { text: 'insert', suggestion_insert: { id: 'suggestion-1', type: 'insert' } },
+        ],
+      },
+    ];
     const repairedContent = [
       ...baseContent,
       { type: 'p', children: [{ text: 'suggestion-1:passed' }] },
@@ -479,5 +503,40 @@ describe('internal change request voting close rules', () => {
       content: repairedContent,
       updated_at: 6_000,
     });
+  });
+
+  it('does not close internal CRs on event transition when the document marker is missing', async () => {
+    const tx = createTx([
+      {
+        id: 'amendment-1',
+        document_id: 'doc-1',
+        discussions: [{ id: 'suggestion-1', changeRequestEntityId: 'cr-1', crId: 'CR-1' }],
+      },
+      [
+        {
+          ...openChangeRequest,
+          title: 'CR-1',
+          created_in_mode: 'suggest_internal',
+          created_at: 1_000,
+        },
+      ],
+      {
+        id: 'doc-1',
+        content: [{ type: 'p', children: [{ text: 'plain content' }] }],
+      },
+    ]);
+
+    await expect(
+      finalizeInternalChangeRequestsForEventPhaseTransition({
+        tx: tx as never,
+        ctx: { userID: 'manager-1' },
+        amendmentId: 'amendment-1',
+        now: 5_000,
+      })
+    ).rejects.toThrow('linked suggestion is not present');
+
+    expect(tx.mutate.document_version.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.document.update).not.toHaveBeenCalled();
+    expect(tx.mutate.change_request.update).not.toHaveBeenCalled();
   });
 });
