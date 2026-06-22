@@ -17,6 +17,7 @@ function changeRequest(overrides: Partial<ChangeRequest>): ChangeRequest {
     processBranchId: null,
     crId: 'CR-1',
     crNumber: 1,
+    changedCharacterCount: 11,
     title: 'CR-1',
     description: '',
     type: 'replace',
@@ -144,6 +145,9 @@ describe('change request view model helpers', () => {
 
     expect(item.change_request_id).toBe('cr-row-1');
     expect(item.change_request?.id).toBe('cr-row-1');
+    expect(
+      (item.change_request as { changed_character_count?: number | null }).changed_character_count
+    ).toBe(11);
     expect((item as { _processBranchId?: string | null })._processBranchId).toBe('branch-1');
     expect((item.change_request as { process_branch_id?: string | null })?.process_branch_id).toBe(
       'branch-1'

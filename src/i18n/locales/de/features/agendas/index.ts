@@ -21,6 +21,8 @@ export const agendasTranslations = {
     submittedVotePending: 'Eingereicht - Wahl anstehend',
     sortChangeRequests: 'Änderungsanträge sortieren',
     sortByNumber: 'Nach Nummer sortieren',
+    sortByChangedCharacters: 'Nach Änderungsumfang sortieren',
+    sortByTextPosition: 'Nach Textposition sortieren',
     sortLexicographically: 'Lexikografisch sortieren',
     deadline: 'Frist',
   },

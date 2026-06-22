@@ -20,16 +20,18 @@ import {
   resolvePreviewSuggestionIdForTimelineItem,
 } from '../logic/changeRequestDocumentPreview';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
+import {
+  buildSuggestionDocumentOrder,
+  DEFAULT_CHANGE_REQUEST_VOTE_ORDER,
+  normalizeChangeRequestVoteOrder,
+  sortChangeRequestsByVoteOrder,
+  type ChangeRequestVoteOrder,
+} from '@/features/change-requests/logic/changeRequestVoteOrder';
 
 export { resolvePreviewCrIdForTimelineItem } from '../logic/changeRequestDocumentPreview';
 
 type TabValue = 'all' | 'open' | 'accepted' | 'rejected';
-export type ChangeRequestSortMode = 'number' | 'lexicographic';
-
-const changeRequestSortCollator = new Intl.Collator(undefined, {
-  numeric: false,
-  sensitivity: 'base',
-});
+export type ChangeRequestSortMode = ChangeRequestVoteOrder;
 
 function getVoteStepKind(item: ChangeRequestTimelineRow) {
   return getPreviewVoteStepKind(item);
@@ -37,143 +39,6 @@ function getVoteStepKind(item: ChangeRequestTimelineRow) {
 
 function isSyntheticSequenceStep(item: ChangeRequestTimelineRow) {
   return Boolean(getVoteStepKind(item));
-}
-
-function getNumberValue(value: unknown) {
-  return typeof value === 'number' && Number.isFinite(value) && value > 0
-    ? Math.floor(value)
-    : null;
-}
-
-function getStringValue(value: unknown) {
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
-}
-
-function extractLastNumber(pattern: RegExp, values: unknown[]) {
-  for (const value of values) {
-    const text = getStringValue(value);
-    if (!text) continue;
-
-    let result: number | null = null;
-    let match: RegExpExecArray | null = null;
-    pattern.lastIndex = 0;
-    while ((match = pattern.exec(text)) !== null) {
-      const parsed = Number.parseInt(match[1] ?? '', 10);
-      if (Number.isFinite(parsed)) {
-        result = parsed;
-      }
-    }
-
-    if (result !== null) {
-      return result;
-    }
-  }
-
-  return null;
-}
-
-function getChangeRequestSortText(item: ChangeRequestTimelineRow) {
-  const row = item as Record<string, any>;
-  const cr = row.change_request as Record<string, any> | null | undefined;
-
-  return (
-    getStringValue(cr?.display_cr_id) ??
-    getStringValue(cr?.displayCrId) ??
-    getStringValue(cr?.cr_id) ??
-    getStringValue(cr?.crId) ??
-    getStringValue(cr?.title) ??
-    getStringValue(row.change_request_id) ??
-    getStringValue(row.id) ??
-    ''
-  );
-}
-
-function getChangeRequestSortNumber(item: ChangeRequestTimelineRow) {
-  const row = item as Record<string, any>;
-  const cr = row.change_request as Record<string, any> | null | undefined;
-
-  return (
-    getNumberValue(cr?.branch_scoped_cr_number) ??
-    getNumberValue(cr?.branchScopedCrNumber) ??
-    getNumberValue(cr?.branch_sequence_number) ??
-    getNumberValue(cr?.branchSequenceNumber) ??
-    extractLastNumber(/\bCR-(\d+)\b/gi, [
-      cr?.display_cr_id,
-      cr?.displayCrId,
-      cr?.cr_id,
-      cr?.crId,
-      cr?.title,
-      row.change_request_id,
-      row.id,
-    ])
-  );
-}
-
-function getBranchSortNumber(item: ChangeRequestTimelineRow) {
-  const row = item as Record<string, any>;
-  const cr = row.change_request as Record<string, any> | null | undefined;
-
-  return (
-    getNumberValue(cr?.branch_display_number) ??
-    getNumberValue(cr?.branchDisplayNumber) ??
-    extractLastNumber(/\bBranch\s+(\d+)\b/gi, [cr?.display_cr_id, cr?.displayCrId])
-  );
-}
-
-function compareNullableNumbers(left: number | null, right: number | null) {
-  if (left !== null && right === null) return -1;
-  if (left === null && right !== null) return 1;
-  if (left !== null && right !== null && left !== right) return left - right;
-  return 0;
-}
-
-function buildSuggestionDocumentOrder(documentContent: Value | undefined) {
-  const suggestionOrder = new Map<string, number>();
-  if (!Array.isArray(documentContent)) return suggestionOrder;
-
-  let nodeIndex = 0;
-
-  const visitNodes = (nodes: readonly unknown[]): void => {
-    for (const node of nodes) {
-      const currentIndex = nodeIndex;
-      nodeIndex += 1;
-
-      if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
-
-      for (const key of Object.keys(node)) {
-        if (!key.startsWith('suggestion_')) continue;
-
-        const suggestionData = (node as Record<string, unknown>)[key];
-        if (!suggestionData || typeof suggestionData !== 'object') continue;
-
-        const suggestionId = getStringValue((suggestionData as Record<string, unknown>).id);
-        if (suggestionId && !suggestionOrder.has(suggestionId)) {
-          suggestionOrder.set(suggestionId, currentIndex);
-        }
-      }
-
-      const children = (node as { children?: unknown }).children;
-      if (Array.isArray(children)) {
-        visitNodes(children);
-      }
-    }
-  };
-
-  visitNodes(documentContent);
-  return suggestionOrder;
-}
-
-function getChangeRequestDocumentSortOrder(
-  item: ChangeRequestTimelineRow,
-  crIdToDiscussionId: ReadonlyMap<string, string> | undefined,
-  suggestionDocumentOrder: ReadonlyMap<string, number> | undefined
-) {
-  if (!crIdToDiscussionId || !suggestionDocumentOrder) return null;
-
-  const suggestionId = resolvePreviewSuggestionIdForTimelineItem(item, crIdToDiscussionId);
-  if (!suggestionId) return null;
-
-  return suggestionDocumentOrder.get(suggestionId) ?? null;
 }
 
 export function sortChangeRequestTimelineItems(
@@ -184,46 +49,14 @@ export function sortChangeRequestTimelineItems(
     suggestionDocumentOrder?: ReadonlyMap<string, number>;
   } = {}
 ) {
-  return items
-    .map((item, index) => ({ item, index }))
-    .sort((left, right) => {
-      if (sortMode === 'number') {
-        const branchDiff = compareNullableNumbers(
-          getBranchSortNumber(left.item),
-          getBranchSortNumber(right.item)
-        );
-        if (branchDiff !== 0) return branchDiff;
-
-        const numberDiff = compareNullableNumbers(
-          getChangeRequestSortNumber(left.item),
-          getChangeRequestSortNumber(right.item)
-        );
-        if (numberDiff !== 0) return numberDiff;
-      } else {
-        const documentOrderDiff = compareNullableNumbers(
-          getChangeRequestDocumentSortOrder(
-            left.item,
-            options.crIdToDiscussionId,
-            options.suggestionDocumentOrder
-          ),
-          getChangeRequestDocumentSortOrder(
-            right.item,
-            options.crIdToDiscussionId,
-            options.suggestionDocumentOrder
-          )
-        );
-        if (documentOrderDiff !== 0) return documentOrderDiff;
-      }
-
-      const labelDiff = changeRequestSortCollator.compare(
-        getChangeRequestSortText(left.item),
-        getChangeRequestSortText(right.item)
-      );
-      if (labelDiff !== 0) return labelDiff;
-
-      return left.index - right.index;
-    })
-    .map(entry => entry.item);
+  return sortChangeRequestsByVoteOrder(items, sortMode, {
+    getChangeRequest: item => item.change_request ?? item,
+    getSuggestionId: item =>
+      options.crIdToDiscussionId
+        ? resolvePreviewSuggestionIdForTimelineItem(item, options.crIdToDiscussionId)
+        : null,
+    suggestionDocumentOrder: options.suggestionDocumentOrder,
+  });
 }
 
 interface ChangeRequestCardsListProps {
@@ -254,6 +87,8 @@ interface ChangeRequestCardsListProps {
   documentContent?: Value;
   /** Agenda or amendment title used for final closing vote labels. */
   agendaTitle?: string | null;
+  /** Initial and externally controlled sort mode for CR cards. */
+  defaultSortMode?: ChangeRequestVoteOrder | null;
   /** Discussion entries from amendment for CR ID mapping */
   discussions?: TDiscussion[];
   /** Amendment ID — needed for interactive editor and mode selector */
@@ -297,6 +132,7 @@ export function useChangeRequestCardsListController({
   isTimelineComplete,
   documentContent,
   agendaTitle,
+  defaultSortMode,
   discussions,
   amendmentId,
   agendaItemId,
@@ -314,7 +150,14 @@ export function useChangeRequestCardsListController({
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabValue>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortMode, setSortMode] = useState<ChangeRequestSortMode>('lexicographic');
+  const normalizedDefaultSortMode = normalizeChangeRequestVoteOrder(defaultSortMode);
+  const [sortMode, setSortMode] = useState<ChangeRequestSortMode>(
+    normalizedDefaultSortMode ?? DEFAULT_CHANGE_REQUEST_VOTE_ORDER
+  );
+
+  useEffect(() => {
+    setSortMode(normalizedDefaultSortMode);
+  }, [normalizedDefaultSortMode]);
 
   // Build crId → discussion UUID map from discussions
   const crIdToDiscussionId = useMemo(() => buildCrIdToDiscussionId(discussions), [discussions]);

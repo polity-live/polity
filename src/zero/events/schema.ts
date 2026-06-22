@@ -9,6 +9,11 @@ import {
 
 const nullableEventScheduleTimestampSchema = z.number().nullable();
 const attendanceModeSchema = z.enum(['online', 'hybrid', 'offline']);
+const changeRequestVoteOrderSchema = z.enum([
+  'text_position',
+  'changed_character_count',
+  'cr_number',
+]);
 
 // ── event ─────────────────────────────────────────────────────────────
 const eventBaseSchema = z.object({
@@ -35,6 +40,7 @@ const eventBaseSchema = z.object({
   end_date: nullableEventScheduleTimestampSchema,
   timezone: z.string().nullable(),
   default_final_vote_duration_seconds: z.number().nullable(),
+  change_request_vote_order: changeRequestVoteOrderSchema,
   gender_quota_enabled: z.boolean(),
   capacity: z.number().nullable(),
   participant_count: z.number(),
@@ -136,6 +142,7 @@ export const eventUpdateSchema = eventBaseSchema
     end_date: true,
     timezone: true,
     default_final_vote_duration_seconds: true,
+    change_request_vote_order: true,
     gender_quota_enabled: true,
     capacity: true,
     agenda_management: true,

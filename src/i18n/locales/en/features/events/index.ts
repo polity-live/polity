@@ -178,6 +178,15 @@ export const eventsTranslations = {
         unspecified: 'not specified',
       },
     },
+    changeRequestVoteOrder: {
+      settingsLabel: 'Change request voting order',
+      textPosition: 'Text position',
+      changedCharacters: 'Changed characters',
+      crNumber: 'CR number',
+      text_position: 'Text position',
+      changed_character_count: 'Changed characters',
+      cr_number: 'CR number',
+    },
     // Vote section
     voteAndResults: 'Vote & Results',
     changeRequests: 'Change Requests',

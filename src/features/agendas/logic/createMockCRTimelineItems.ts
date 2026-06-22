@@ -11,6 +11,7 @@ export interface CRSummary {
   branchDisplayNumber?: number;
   branchScopedCrNumber?: number;
   branchSequenceNumber?: number | null;
+  changedCharacterCount?: number | null;
   title: string;
   description: string;
   status: string; // 'open' | 'approved' | 'accepted' | 'rejected' | 'declined'
@@ -189,6 +190,13 @@ export function createMockCRTimelineItems(crSummaries: CRSummary[]) {
         branchScopedCrNumber: cr.branchScopedCrNumber ?? null,
         branch_sequence_number: cr.branchSequenceNumber ?? cr.branchScopedCrNumber ?? null,
         branchSequenceNumber: cr.branchSequenceNumber ?? cr.branchScopedCrNumber ?? null,
+        changed_character_count: cr.changedCharacterCount ?? null,
+        changedCharacterCount: cr.changedCharacterCount ?? null,
+        change_type: cr.type ?? null,
+        original_text: cr.text ?? null,
+        new_text: cr.newText ?? null,
+        original_properties: cr.properties ?? null,
+        new_properties: cr.newProperties ?? null,
         suggestion_id: suggestionId,
         description: cr.description || null,
         status: cr.status || null,

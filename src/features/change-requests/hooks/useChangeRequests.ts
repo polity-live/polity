@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Value } from 'platejs';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import {
+  countChangedCharacters,
   extractSuggestionContent,
   hasRenderableSuggestionContent,
   suggestionContentFromChangeRequestSnapshot,
@@ -52,6 +53,8 @@ type ChangeRequestRowForView = Omit<CanonicalSavedChangeRequest, 'votes'> & {
   visibility_scope?: string | null;
   resolved_in_mode?: string | null;
   branch_sequence_number?: number | null;
+  changed_character_count?: number | null;
+  changedCharacterCount?: number | null;
   votes?: readonly ChangeRequestVoteRow[] | null;
 };
 
@@ -64,6 +67,7 @@ export interface ChangeRequest {
   branchDisplayNumber?: number;
   branchScopedCrNumber?: number;
   branchSequenceNumber?: number | null;
+  changedCharacterCount: number;
   title: string;
   description: string;
   type: string;
@@ -217,6 +221,33 @@ function getBestSuggestionContent({
   return { type: 'unknown', text: '', newText: '', properties: {}, newProperties: {} };
 }
 
+function getPersistedChangedCharacterCount(
+  changeRequest?: {
+    changed_character_count?: number | null;
+    changedCharacterCount?: number | null;
+  } | null
+) {
+  const value = changeRequest?.changed_character_count ?? changeRequest?.changedCharacterCount;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function resolveChangedCharacterCount(
+  changeRequest:
+    | {
+        changed_character_count?: number | null;
+        changedCharacterCount?: number | null;
+      }
+    | null
+    | undefined,
+  suggestionContent: SuggestionContent
+) {
+  const persistedCount = getPersistedChangedCharacterCount(changeRequest);
+  const computedCount = countChangedCharacters(suggestionContent);
+  if (persistedCount !== null && persistedCount > 0) return persistedCount;
+  if (computedCount > 0) return computedCount;
+  return persistedCount ?? computedCount;
+}
+
 export function useChangeRequests(amendmentId: string, currentUserId?: string) {
   // Fetch amendment data using hook
   const {
@@ -272,6 +303,7 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
         documentContent: document?.content as Value | undefined,
         changeRequest: snapshotChangeRequest,
       });
+      const changedCharacterCount = resolveChangedCharacterCount(cr, suggestionContent);
       const resolvedStatus = cr?.status ?? discussion?.status;
       const isResolved = isApprovedStatus(resolvedStatus) || isDeclinedStatus(resolvedStatus);
       const displayCrId = record.displayCrId ?? cr?.title ?? '';
@@ -285,6 +317,7 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
         crId: displayCrId,
         crNumber: parseInt(displayCrId?.replace('CR-', '') || '0'),
         branchSequenceNumber: cr?.branch_sequence_number ?? null,
+        changedCharacterCount,
         title: record.displayTitle,
         description: getOptionalString(discussion?.description) ?? cr?.description ?? '',
         type: suggestionContent.type,

@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   syncUserWithEventConversationMock: vi.fn(),
   reconcileGeneralAssemblyParticipantsForEventMock: vi.fn(),
   reconcileDelegateAllocationsForEventMock: vi.fn(),
+  reorderOpenChangeRequestVoteStepsForEventMock: vi.fn(),
 }));
 
 vi.mock('../../mutators', () => ({
@@ -80,6 +81,10 @@ vi.mock('../../groups/membership-helpers', () => ({
 vi.mock('@/features/events/logic/delegateAssemblyEligibility', () => ({
   canCreateDelegateAssemblyForGroup: vi.fn(() => true),
   DELEGATE_ASSEMBLY_GROUP_ELIGIBILITY_MESSAGE: 'Delegate assembly unavailable.',
+}));
+
+vi.mock('../../agendas/change-request-vote-ordering', () => ({
+  reorderOpenChangeRequestVoteStepsForEvent: mocks.reorderOpenChangeRequestVoteStepsForEventMock,
 }));
 
 import { eventServerMutators } from '../server-mutators';
@@ -174,5 +179,34 @@ describe('eventServerMutators group assignment notifications', () => {
       eventId: 'event-1',
       eventTitle: 'Planning Event',
     });
+  });
+
+  it('reorders open change request vote steps when the event vote order setting changes', async () => {
+    const tx = createTx();
+    tx.run.mockResolvedValueOnce({
+      id: 'event-1',
+      title: 'Old title',
+      group_id: null,
+      event_type: null,
+      attendance_mode: null,
+      location_type: null,
+      change_request_vote_order: 'text_position',
+    });
+    mocks.eventTitleMock.mockResolvedValueOnce('Planning Event');
+
+    await eventServerMutators.update.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        id: 'event-1',
+        change_request_vote_order: 'changed_character_count',
+      },
+    });
+
+    expect(mocks.reorderOpenChangeRequestVoteStepsForEventMock).toHaveBeenCalledWith(
+      tx,
+      'event-1',
+      'changed_character_count'
+    );
   });
 });

@@ -18,6 +18,7 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { DelegateAllocationInput } from '@/features/create/ui/inputs/DelegateAllocationInput';
+import { ChangeRequestVoteOrderInput } from '@/features/create/ui/inputs/ChangeRequestVoteOrderInput';
 import { ElectionModeInput } from '@/features/elections/ui/ElectionModeInput';
 import { Loader2, XCircle } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
@@ -312,6 +313,10 @@ export function EventEditView({
                   )}
                   checked={Boolean(formData.genderQuotaEnabled)}
                   onCheckedChange={checked => updateField('genderQuotaEnabled', checked)}
+                />
+                <ChangeRequestVoteOrderInput
+                  value={formData.changeRequestVoteOrder}
+                  onChange={value => updateField('changeRequestVoteOrder', value)}
                 />
                 {!isCreating && event?.event_type && (
                   <div className="space-y-2">

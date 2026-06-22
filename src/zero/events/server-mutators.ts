@@ -41,6 +41,8 @@ import {
   canCreateDelegateAssemblyForGroup,
   DELEGATE_ASSEMBLY_GROUP_ELIGIBILITY_MESSAGE,
 } from '@/features/events/logic/delegateAssemblyEligibility';
+import { normalizeChangeRequestVoteOrder } from '@/features/change-requests/logic/changeRequestVoteOrder';
+import { reorderOpenChangeRequestVoteStepsForEvent } from '../agendas/change-request-vote-ordering';
 
 async function addEventParticipantRoleLink(
   tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
@@ -951,12 +953,25 @@ export const eventServerMutators = {
         attendance_mode: previousEvent?.attendance_mode,
         location_type: previousEvent?.location_type,
       });
+    const previousChangeRequestVoteOrder = normalizeChangeRequestVoteOrder(
+      previousEvent?.change_request_vote_order
+    );
+    const nextChangeRequestVoteOrder = normalizeChangeRequestVoteOrder(
+      args.change_request_vote_order ?? previousEvent?.change_request_vote_order
+    );
+    const changeRequestVoteOrderChanged =
+      args.change_request_vote_order !== undefined &&
+      nextChangeRequestVoteOrder !== previousChangeRequestVoteOrder;
 
     if (nextEventType === 'delegate_assembly') {
       await assertDelegateAssemblyGroupEligibility(tx, nextGroupId);
     }
 
     await mutators.events.update.fn({ tx, ctx, args });
+
+    if (changeRequestVoteOrderChanged) {
+      await reorderOpenChangeRequestVoteStepsForEvent(tx, args.id, nextChangeRequestVoteOrder);
+    }
 
     if (args.title !== undefined && previousEvent?.title !== args.title) {
       const eventConversation = await tx.run(

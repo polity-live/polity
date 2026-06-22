@@ -29,6 +29,10 @@ import { EventDelegateAllocationSettingsInput } from '../ui/inputs/EventDelegate
 import { EventLocationInput } from '../ui/inputs/EventLocationInput';
 import { EventSettingsInput } from '../ui/inputs/EventSettingsInput';
 import {
+  DEFAULT_CHANGE_REQUEST_VOTE_ORDER,
+  type ChangeRequestVoteOrder,
+} from '@/features/change-requests/logic/changeRequestVoteOrder';
+import {
   EMPTY_RICH_TEXT_VALUE,
   richTextToPlainText,
   toZeroRichTextValue,
@@ -118,6 +122,9 @@ export function useCreateEventForm(): CreateFormConfig {
   const [imageURL, setImageURL] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('public');
   const [genderQuotaEnabled, setGenderQuotaEnabled] = useState(false);
+  const [changeRequestVoteOrder, setChangeRequestVoteOrder] = useState<ChangeRequestVoteOrder>(
+    DEFAULT_CHANGE_REQUEST_VOTE_ORDER
+  );
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [delegatesNominationDeadline, setDelegatesNominationDeadline] = useState('');
@@ -360,6 +367,7 @@ export function useCreateEventForm(): CreateFormConfig {
         end_date,
         visibility: effectiveVisibility,
         gender_quota_enabled: genderQuotaEnabled,
+        change_request_vote_order: changeRequestVoteOrder,
         image_url: imageURL || null,
         capacity: isMeetingEvent ? null : capacity ? parseInt(capacity, 10) : null,
         event_type: eventType,
@@ -798,11 +806,13 @@ export function useCreateEventForm(): CreateFormConfig {
                 showVisibility: !isMeetingEvent,
                 visibility,
                 genderQuotaEnabled,
+                changeRequestVoteOrder,
                 hashtags,
                 hashtagPlaceholder: t('pages.create.event.hashtagPlaceholder'),
                 preferredHashtagSuggestions,
                 onVisibilityChange: setVisibility,
                 onGenderQuotaEnabledChange: setGenderQuotaEnabled,
+                onChangeRequestVoteOrderChange: setChangeRequestVoteOrder,
                 onHashtagsChange: setHashtags,
               },
             },
@@ -886,6 +896,16 @@ export function useCreateEventForm(): CreateFormConfig {
                             },
                           ]
                         : []),
+                      {
+                        label: t(
+                          'features.events.agenda.changeRequestVoteOrder.settingsLabel',
+                          'Change request voting order'
+                        ),
+                        value: t(
+                          `features.events.agenda.changeRequestVoteOrder.${changeRequestVoteOrder}`,
+                          changeRequestVoteOrder
+                        ),
+                      },
                     ],
                   },
                   {
@@ -990,6 +1010,7 @@ export function useCreateEventForm(): CreateFormConfig {
       imageURL,
       visibility,
       genderQuotaEnabled,
+      changeRequestVoteOrder,
       hashtags,
       preferredHashtagSuggestions,
       eventType,

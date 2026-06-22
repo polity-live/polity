@@ -809,6 +809,7 @@ alter table "public"."eurostat_observation" enable row level security;
     "end_date" timestamp with time zone,
     "timezone" text,
     "default_final_vote_duration_seconds" integer,
+    "change_request_vote_order" text not null default 'text_position',
     "gender_quota_enabled" boolean not null default false,
     "capacity" integer,
     "participant_count" integer not null default 0,
@@ -13680,6 +13681,5 @@ using ((bucket_id = 'uploads'::text));
   for select
   to public
 using ((bucket_id = 'uploads'::text));
-
 
 

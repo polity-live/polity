@@ -235,6 +235,123 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
     );
   });
 
+  it('orders materialized change request votes by the event setting', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce(agendaItem())
+      .mockResolvedValueOnce(agendaItem())
+      .mockResolvedValueOnce([
+        { id: 'step-branch', branch_id: 'branch-1', step_kind: 'group_vote', status: 'scheduled' },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'cr-13',
+          title: 'CR-13',
+          process_branch_id: 'branch-1',
+          changed_character_count: 1,
+        },
+        {
+          id: 'cr-15',
+          title: 'CR-15',
+          process_branch_id: 'branch-1',
+          changed_character_count: 2,
+        },
+      ])
+      .mockResolvedValueOnce({ id: 'event-1', change_request_vote_order: 'text_position' })
+      .mockResolvedValueOnce({ id: 'amendment-1', document_id: null, discussions: [] })
+      .mockResolvedValueOnce([
+        {
+          id: 'branch-1',
+          document_id: 'document-branch-1',
+          document_version_id: null,
+          discussions: [
+            { id: 'suggestion-13', changeRequestEntityId: 'cr-13' },
+            { id: 'suggestion-15', changeRequestEntityId: 'cr-15' },
+          ],
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'document-branch-1',
+          content: [
+            { type: 'p', children: [{ text: 'early', suggestion_15: { id: 'suggestion-15' } }] },
+            { type: 'p', children: [{ text: 'later', suggestion_13: { id: 'suggestion-13' } }] },
+          ],
+        },
+      ])
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        editing_mode: 'event_final_closing_vote',
+      })
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+
+    await initialize(tx);
+
+    const changeRequestLinks = tx.mutate.agenda_item_change_request.insert.mock.calls
+      .map(([link]) => link)
+      .filter(link => link.step_kind === 'change_request');
+    expect(changeRequestLinks).toEqual([
+      expect.objectContaining({ change_request_id: 'cr-15', order_index: 0 }),
+      expect.objectContaining({ change_request_id: 'cr-13', order_index: 1 }),
+    ]);
+  });
+
+  it('orders materialized change request votes by largest changed character count first', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce(agendaItem())
+      .mockResolvedValueOnce(agendaItem())
+      .mockResolvedValueOnce([
+        { id: 'step-branch', branch_id: 'branch-1', step_kind: 'group_vote', status: 'scheduled' },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'cr-13',
+          title: 'CR-13',
+          process_branch_id: 'branch-1',
+          changed_character_count: 1,
+        },
+        {
+          id: 'cr-15',
+          title: 'CR-15',
+          process_branch_id: 'branch-1',
+          changed_character_count: 20,
+        },
+        {
+          id: 'cr-11',
+          title: 'CR-11',
+          process_branch_id: 'branch-1',
+          changed_character_count: 10,
+        },
+      ])
+      .mockResolvedValueOnce({
+        id: 'event-1',
+        change_request_vote_order: 'changed_character_count',
+      })
+      .mockResolvedValueOnce({ id: 'amendment-1', document_id: null, discussions: [] })
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        editing_mode: 'event_final_closing_vote',
+      })
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+
+    await initialize(tx);
+
+    const changeRequestLinks = tx.mutate.agenda_item_change_request.insert.mock.calls
+      .map(([link]) => link)
+      .filter(link => link.step_kind === 'change_request');
+    expect(changeRequestLinks).toEqual([
+      expect.objectContaining({ change_request_id: 'cr-15', order_index: 0 }),
+      expect.objectContaining({ change_request_id: 'cr-11', order_index: 1 }),
+      expect.objectContaining({ change_request_id: 'cr-13', order_index: 2 }),
+    ]);
+  });
+
   it('reuses an existing final vote instead of creating a duplicate', async () => {
     const tx = createTx();
     tx.run

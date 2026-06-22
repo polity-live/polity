@@ -32,6 +32,8 @@ import {
   processCRVoteResultSchema,
 } from './schema';
 import { AGENDA_VOTE_STEP_KIND } from './vote-step-kind';
+import { normalizeChangeRequestVoteOrder } from '@/features/change-requests/logic/changeRequestVoteOrder';
+import { orderChangeRequestsForVoting } from './change-request-vote-ordering';
 
 type AgendaMutatorTx = Parameters<
   typeof mutators.agendas.updateAgendaItemChangeRequest.fn
@@ -527,6 +529,31 @@ export const agendaServerMutators = {
             ? changeRequest.process_branch_id === processBranchId
             : !changeRequest.process_branch_id
       );
+      let eventForAgenda: Record<string, any> | null | undefined;
+      const loadEventForAgenda = async () => {
+        if (eventForAgenda !== undefined) {
+          return eventForAgenda;
+        }
+
+        eventForAgenda = agendaItem?.event_id
+          ? ((await tx.run(zql.event.where('id', agendaItem.event_id).one())) as
+              | Record<string, any>
+              | null
+              | undefined)
+          : null;
+        return eventForAgenda;
+      };
+      const orderedChangeRequests =
+        changeRequests.length > 1
+          ? await orderChangeRequestsForVoting(
+              tx,
+              amendment_id,
+              changeRequests,
+              normalizeChangeRequestVoteOrder(
+                (await loadEventForAgenda())?.change_request_vote_order
+              )
+            )
+          : changeRequests;
 
       const branchIdsForModeSync =
         mergeBranchIds.length > 1 ? mergeBranchIds : [processBranchId ?? null];
@@ -730,7 +757,7 @@ export const agendaServerMutators = {
         insertedMergeSequenceStep || existingLinks.some(link => !link.is_closing_vote);
 
       // 3. Create one vote per change request + junction records
-      for (const cr of changeRequests) {
+      for (const cr of orderedChangeRequests) {
         if (existingChangeRequestIds.has(cr.id)) {
           continue;
         }
@@ -805,7 +832,7 @@ export const agendaServerMutators = {
       ) {
         let closingDurationSeconds: number | null = null;
         if (agendaItem?.event_id) {
-          const event = await tx.run(zql.event.where('id', agendaItem.event_id).one());
+          const event = await loadEventForAgenda();
           closingDurationSeconds = event?.default_final_vote_duration_seconds ?? null;
         }
 
@@ -885,6 +912,22 @@ export const agendaServerMutators = {
       if (changeRequests.length === 0) {
         return;
       }
+      const eventForAgenda =
+        agendaItem.event_id && changeRequests.length > 1
+          ? await tx.run(zql.event.where('id', agendaItem.event_id).one())
+          : null;
+      const orderedChangeRequests =
+        changeRequests.length > 1
+          ? await orderChangeRequestsForVoting(
+              tx,
+              amendment_id,
+              changeRequests,
+              normalizeChangeRequestVoteOrder(
+                (eventForAgenda as Record<string, any> | null | undefined)
+                  ?.change_request_vote_order
+              )
+            )
+          : changeRequests;
 
       const accreditationsResult = agendaItem.event_id
         ? await tx.run(zql.accreditation.where('event_id', agendaItem.event_id))
@@ -893,7 +936,7 @@ export const agendaServerMutators = {
       let nextOrderIndex =
         existingLinks.reduce((max, link) => Math.max(max, link.order_index ?? 0), -1) + 1;
 
-      for (const cr of changeRequests) {
+      for (const cr of orderedChangeRequests) {
         const voteId = crypto.randomUUID();
         await tx.mutate.vote.insert({
           id: voteId,

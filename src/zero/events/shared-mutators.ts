@@ -1,6 +1,7 @@
 import { defineMutator } from '@rocicorp/zero';
 import { z } from 'zod';
 import { normalizeDelegateElectionMode } from '@/features/elections/logic/electionMode';
+import { DEFAULT_CHANGE_REQUEST_VOTE_ORDER } from '@/features/change-requests/logic/changeRequestVoteOrder';
 import { getDefaultOfflineParticipationChannel } from '../offline-roster-helpers';
 import { zql } from '../schema';
 import {
@@ -371,6 +372,8 @@ export const eventSharedMutators = {
       ...eventArgs,
       attendance_mode: attendanceMode,
       delegate_election_mode: delegateElectionMode,
+      change_request_vote_order:
+        eventArgs.change_request_vote_order ?? DEFAULT_CHANGE_REQUEST_VOTE_ORDER,
       gender_quota_enabled: eventArgs.gender_quota_enabled ?? false,
       creator_id: userID,
       participant_count: 1,

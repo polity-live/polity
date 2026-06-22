@@ -167,6 +167,50 @@ describe('agendaServerMutators.ensureEventSuggestionChangeRequestVotes', () => {
     expect(tx.mutate.agenda_item_change_request.insert).not.toHaveBeenCalled();
   });
 
+  it('appends missing vote rows in the configured event order', async () => {
+    const tx = createTx([
+      agendaItem(),
+      [
+        changeRequest('cr-13', { title: 'CR-13', changed_character_count: 1 }),
+        changeRequest('cr-15', { title: 'CR-15', changed_character_count: 2 }),
+      ],
+      [{ id: 'existing-final', change_request_id: null, is_closing_vote: true, order_index: 5 }],
+      { id: 'event-1', change_request_vote_order: 'text_position' },
+      { id: 'amendment-1', document_id: null, discussions: [] },
+      [
+        {
+          id: 'branch-1',
+          document_id: 'document-branch-1',
+          document_version_id: null,
+          discussions: [
+            { id: 'suggestion-13', changeRequestEntityId: 'cr-13' },
+            { id: 'suggestion-15', changeRequestEntityId: 'cr-15' },
+          ],
+        },
+      ],
+      [
+        {
+          id: 'document-branch-1',
+          content: [
+            { type: 'p', children: [{ text: 'early', suggestion_15: { id: 'suggestion-15' } }] },
+            { type: 'p', children: [{ text: 'later', suggestion_13: { id: 'suggestion-13' } }] },
+          ],
+        },
+      ],
+      [],
+    ]);
+
+    await ensure(tx);
+
+    const insertedLinks = tx.mutate.agenda_item_change_request.insert.mock.calls.map(
+      ([link]) => link
+    );
+    expect(insertedLinks).toEqual([
+      expect.objectContaining({ change_request_id: 'cr-15', order_index: 6 }),
+      expect.objectContaining({ change_request_id: 'cr-13', order_index: 7 }),
+    ]);
+  });
+
   it('ignores pending, resolved, obsolete, and other-branch change requests', async () => {
     const tx = createTx([
       agendaItem(),

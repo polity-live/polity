@@ -6,6 +6,7 @@ import type { TDiscussion } from '@/features/editor/types';
 import { type ChangeRequestDiffData } from './ChangeRequestTimelineCard';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
+import type { ChangeRequestVoteOrder } from '@/features/change-requests/logic/changeRequestVoteOrder';
 interface ChangeRequestCardsListProps {
   items: ChangeRequestTimelineRow[];
   editingMode: EditingMode;
@@ -34,6 +35,8 @@ interface ChangeRequestCardsListProps {
   documentContent?: Value;
   /** Agenda or amendment title used for final closing vote labels. */
   agendaTitle?: string | null;
+  /** Initial and externally controlled sort mode for CR cards. */
+  defaultSortMode?: ChangeRequestVoteOrder | null;
   /** Discussion entries from amendment for CR ID mapping */
   discussions?: TDiscussion[];
   /** Amendment ID — needed for interactive editor and mode selector */
@@ -80,6 +83,7 @@ export function ChangeRequestCardsList({
   isTimelineComplete,
   documentContent,
   agendaTitle,
+  defaultSortMode,
   discussions,
   amendmentId,
   agendaItemId,
@@ -114,6 +118,7 @@ export function ChangeRequestCardsList({
     isTimelineComplete,
     documentContent,
     agendaTitle,
+    defaultSortMode,
     discussions,
     amendmentId,
     agendaItemId,

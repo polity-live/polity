@@ -30,6 +30,7 @@ import {
   Search,
   ArrowUp01,
   ArrowUpAZ,
+  Hash,
 } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { ChangeRequestTimelineCard } from './ChangeRequestTimelineCard';
@@ -42,6 +43,7 @@ import {
 } from '../logic/createMockCRTimelineItems';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 import type { ChangeRequestSortMode } from './useChangeRequestCardsListController';
+import { DEFAULT_CHANGE_REQUEST_VOTE_ORDER } from '@/features/change-requests/logic/changeRequestVoteOrder';
 
 type TabValue = 'all' | 'open' | 'accepted' | 'rejected';
 
@@ -167,7 +169,7 @@ export function ChangeRequestCardsListView({
   t,
   activeTab,
   setActiveTab,
-  sortMode = 'lexicographic',
+  sortMode = DEFAULT_CHANGE_REQUEST_VOTE_ORDER,
   setSortMode = () => undefined,
   searchQuery,
   setSearchQuery,
@@ -213,7 +215,7 @@ export function ChangeRequestCardsListView({
       <div data-testid="change-request-sequence-interstitial">{sequenceInterstitial}</div>
     ) : null;
   const handleSortModeChange = (value: string) => {
-    if (value === 'number' || value === 'lexicographic') {
+    if (value === 'text_position' || value === 'changed_character_count' || value === 'cr_number') {
       setSortMode(value);
     }
   };
@@ -358,7 +360,36 @@ export function ChangeRequestCardsListView({
               )}
             >
               <FilterToggleGroupItem
-                value="number"
+                value="text_position"
+                size="sm"
+                className="h-8 px-2"
+                aria-label={t(
+                  'features.agendas.crTimeline.sortByTextPosition',
+                  'Sort by text position'
+                )}
+                title={t('features.agendas.crTimeline.sortByTextPosition', 'Sort by text position')}
+              >
+                <ArrowUpAZ className="h-4 w-4" />
+                <span className="font-mono text-xs font-semibold">A-Z</span>
+              </FilterToggleGroupItem>
+              <FilterToggleGroupItem
+                value="changed_character_count"
+                size="sm"
+                className="h-8 px-2"
+                aria-label={t(
+                  'features.agendas.crTimeline.sortByChangedCharacters',
+                  'Sort by changed characters'
+                )}
+                title={t(
+                  'features.agendas.crTimeline.sortByChangedCharacters',
+                  'Sort by changed characters'
+                )}
+              >
+                <Hash className="h-4 w-4" />
+                <span className="font-mono text-xs font-semibold">Chars</span>
+              </FilterToggleGroupItem>
+              <FilterToggleGroupItem
+                value="cr_number"
                 size="sm"
                 className="h-8 px-2"
                 aria-label={t('features.agendas.crTimeline.sortByNumber', 'Sort by number')}
@@ -366,22 +397,6 @@ export function ChangeRequestCardsListView({
               >
                 <ArrowUp01 className="h-4 w-4" />
                 <span className="font-mono text-xs font-semibold">1-9</span>
-              </FilterToggleGroupItem>
-              <FilterToggleGroupItem
-                value="lexicographic"
-                size="sm"
-                className="h-8 px-2"
-                aria-label={t(
-                  'features.agendas.crTimeline.sortLexicographically',
-                  'Sort lexicographically'
-                )}
-                title={t(
-                  'features.agendas.crTimeline.sortLexicographically',
-                  'Sort lexicographically'
-                )}
-              >
-                <ArrowUpAZ className="h-4 w-4" />
-                <span className="font-mono text-xs font-semibold">A-Z</span>
               </FilterToggleGroupItem>
             </ToggleGroup>
           ) : null}

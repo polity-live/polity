@@ -9,6 +9,7 @@ import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import type { TDiscussion } from '@/features/editor/types';
 import { normalizeEditingMode, type EditingMode } from '@/zero/amendments/editing-mode-policy';
 import {
+  countChangedCharacters,
   extractSuggestionContent,
   hasRenderableSuggestionContent,
   isRenderableSuggestionType,
@@ -105,6 +106,7 @@ export function mapChangeRequestsToSummaries(
     branchDisplayNumber: cr.branchDisplayNumber,
     branchScopedCrNumber: cr.branchScopedCrNumber,
     branchSequenceNumber: cr.branchSequenceNumber,
+    changedCharacterCount: cr.changedCharacterCount,
     title: cr.title || cr.crId,
     description: cr.description || '',
     status: cr.resolution
@@ -462,6 +464,20 @@ function createDiscussionFallbackChangeRequest({
   const suggestionContent = discussion.id
     ? extractSuggestionContent(discussion.id, documentContent)
     : { type: 'unknown', text: '', newText: '', properties: {}, newProperties: {} };
+  const persistedChangedCharacterCount =
+    (
+      discussion as {
+        changed_character_count?: number | null;
+        changedCharacterCount?: number | null;
+      }
+    ).changed_character_count ??
+    (
+      discussion as {
+        changed_character_count?: number | null;
+        changedCharacterCount?: number | null;
+      }
+    ).changedCharacterCount;
+  const computedChangedCharacterCount = countChangedCharacters(suggestionContent);
   const resolvedStatus = discussion.status;
   const isResolved = isApprovedStatus(resolvedStatus) || isDeclinedStatus(resolvedStatus);
   const isPendingSubmission = discussion.confirmationStatus === 'pending';
@@ -504,6 +520,12 @@ function createDiscussionFallbackChangeRequest({
     resolvedInMode: discussion.resolvedInMode ?? null,
     votingStatus: isPendingSubmission ? 'pending_submission' : (discussion.votingStatus ?? null),
     branchSequenceNumber: discussion.branchSequenceNumber ?? null,
+    changedCharacterCount:
+      typeof persistedChangedCharacterCount === 'number' &&
+      Number.isFinite(persistedChangedCharacterCount) &&
+      persistedChangedCharacterCount > 0
+        ? persistedChangedCharacterCount
+        : computedChangedCharacterCount,
     confirmationStatus: discussion.confirmationStatus ?? null,
     changeRequestStatus:
       discussion.changeRequestStatus ?? (isPendingSubmission ? 'pending_submission' : null),

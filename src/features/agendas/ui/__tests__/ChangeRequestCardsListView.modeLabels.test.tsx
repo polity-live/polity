@@ -194,7 +194,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
     expect(screen.queryByText('event_final_closing_vote')).toBeNull();
   });
 
-  it('sorts change requests lexicographically by default and can toggle to numeric order', () => {
+  it('sorts change requests by text position by default and can toggle to numeric order', () => {
     const createItem = (number: number) => ({
       id: `agenda-cr-${number}`,
       agenda_item_id: 'agenda-1',
@@ -226,6 +226,40 @@ describe('ChangeRequestCardsListView mode labels', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Sort by number' }));
 
     expectVisibleTitleOrder(['CR-9', 'CR-11', 'CR-13', 'CR-15']);
+  });
+
+  it('can toggle change requests to changed character count order', () => {
+    const createItem = (number: number, changedCharacterCount: number) => ({
+      id: `agenda-cr-${number}`,
+      agenda_item_id: 'agenda-1',
+      change_request_id: `cr-row-${number}`,
+      vote_id: null,
+      order_index: number,
+      is_closing_vote: false,
+      status: 'pending',
+      change_request: {
+        id: `cr-row-${number}`,
+        title: `CR-${number}`,
+        cr_id: `CR-${number}`,
+        display_cr_id: `Branch 1 CR-${number}`,
+        branch_display_number: 1,
+        changed_character_count: changedCharacterCount,
+      },
+      vote: null,
+    });
+
+    render(
+      <ChangeRequestCardsList
+        items={[createItem(13, 20), createItem(9, 2), createItem(11, 10)] as never}
+        editingMode="vote_internal"
+        isVotingActive
+      />
+    );
+
+    expect(screen.getByRole('radio', { name: 'Sort by text position' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: 'Sort by changed characters' }));
+
+    expectVisibleTitleOrder(['CR-13', 'CR-11', 'CR-9']);
   });
 
   it('uses the document suggestion order for default change request sorting when available', () => {

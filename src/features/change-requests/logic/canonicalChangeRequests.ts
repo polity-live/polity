@@ -30,6 +30,8 @@ export interface CanonicalSavedChangeRequest {
   votes?: readonly unknown[] | null;
   branch_sequence_number?: number | null;
   branchSequenceNumber?: number | null;
+  changed_character_count?: number | null;
+  changedCharacterCount?: number | null;
   change_type?: string | null;
   original_text?: string | null;
   new_text?: string | null;

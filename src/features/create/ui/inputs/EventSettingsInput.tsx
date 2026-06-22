@@ -3,16 +3,20 @@ import type { Visibility } from '@/features/auth/logic/checkEntityAccess';
 import { SwitchField } from '@/features/shared/ui/form';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { VisibilityInput } from './VisibilityInput';
+import { ChangeRequestVoteOrderInput } from './ChangeRequestVoteOrderInput';
+import type { ChangeRequestVoteOrder } from '@/features/change-requests/logic/changeRequestVoteOrder';
 
 interface EventSettingsInputProps {
   showVisibility: boolean;
   visibility: Visibility;
   genderQuotaEnabled?: boolean;
+  changeRequestVoteOrder?: ChangeRequestVoteOrder | null;
   hashtags: string[];
   hashtagPlaceholder: string;
   preferredHashtagSuggestions?: string[];
   onVisibilityChange: (value: Visibility) => void;
   onGenderQuotaEnabledChange?: (checked: boolean) => void;
+  onChangeRequestVoteOrderChange?: (value: ChangeRequestVoteOrder) => void;
   onHashtagsChange: (value: string[]) => void;
 }
 
@@ -20,11 +24,13 @@ export function EventSettingsInput({
   showVisibility,
   visibility,
   genderQuotaEnabled = false,
+  changeRequestVoteOrder,
   hashtags,
   hashtagPlaceholder,
   preferredHashtagSuggestions,
   onVisibilityChange,
   onGenderQuotaEnabledChange,
+  onChangeRequestVoteOrderChange,
   onHashtagsChange,
 }: EventSettingsInputProps) {
   const { t } = useTranslation();
@@ -42,6 +48,12 @@ export function EventSettingsInput({
           )}
           checked={genderQuotaEnabled}
           onCheckedChange={onGenderQuotaEnabledChange}
+        />
+      ) : null}
+      {onChangeRequestVoteOrderChange ? (
+        <ChangeRequestVoteOrderInput
+          value={changeRequestVoteOrder}
+          onChange={onChangeRequestVoteOrderChange}
         />
       ) : null}
       <HashtagEditor

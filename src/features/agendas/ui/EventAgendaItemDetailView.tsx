@@ -518,6 +518,7 @@ export function EventAgendaItemDetailView({
       diffMap={crDiffMap}
       documentContent={documentContent}
       agendaTitle={agendaItem.amendment?.title ?? agendaItem.title ?? null}
+      defaultSortMode={event?.change_request_vote_order ?? null}
       discussions={amendmentDiscussions}
       amendmentId={agendaItem.amendment_id ?? undefined}
       agendaItemId={agendaItemId}

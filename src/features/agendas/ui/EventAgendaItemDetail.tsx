@@ -18,7 +18,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { useAgendaItemCRVoting, getVotePhase, getVoteResult } from '../hooks/useAgendaItemCRVoting';
+import { useAgendaItemCRVoting, getVoteResult } from '../hooks/useAgendaItemCRVoting';
 import { extractAmendmentCRSummaries } from '../logic/extractAmendmentCRSummaries';
 import {
   createMockCRTimelineItems,
@@ -70,7 +70,11 @@ import {
   buildNamedVoteResultsModel,
 } from '../logic/buildNamedBallotResults';
 import { useDelegateAssemblyParticipantsComposition } from '@/features/events/hooks/useDelegateAssemblyParticipantsComposition';
-import { getEffectiveVotingPhase, resolveAttendanceMode } from '../logic/agendaUiHelpers';
+import {
+  getEffectiveCRVotingPhase,
+  getEffectiveVotingPhase,
+  resolveAttendanceMode,
+} from '../logic/agendaUiHelpers';
 import { VOTE_PHASE, VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
 import {
   buildBranchDiffCandidates,
@@ -90,21 +94,6 @@ import { resolveClosingVoteForAgendaItem } from '../logic/resolveClosingVoteForA
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
 import { computeEligibleFinalVoterCount } from '@/features/votes/logic/computeEligibleVoters';
 import { useAgendaArrowNavigation } from '../hooks/useAgendaArrowNavigation';
-
-function getEffectiveCRVotingPhase(
-  item?: {
-    status?: string | null;
-    vote?: { status?: string | null } | null;
-  } | null
-): string | null {
-  if (!item) return null;
-  if (item.status === 'pending') return 'pending';
-
-  const phase = getVotePhase(item as Parameters<typeof getVotePhase>[0]);
-  if (phase === 'final') return 'final';
-  if (phase === 'closed') return 'closed';
-  return 'indication';
-}
 
 type ChangeRequestTimelineIdentitySource = Record<string, any>;
 

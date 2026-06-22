@@ -36,6 +36,11 @@ import {
   type ElectionMode,
 } from '@/features/elections/logic/electionMode';
 import { isPositiveInteger } from '@/features/shared/logic/inputValidation';
+import {
+  DEFAULT_CHANGE_REQUEST_VOTE_ORDER,
+  normalizeChangeRequestVoteOrder,
+  type ChangeRequestVoteOrder,
+} from '@/features/change-requests/logic/changeRequestVoteOrder';
 
 type AttendanceMode = 'online' | 'hybrid' | 'offline';
 
@@ -73,6 +78,7 @@ export interface EventFormData {
   delegateElectionMode: ElectionMode;
   defaultFinalVoteDurationMinutes: string;
   genderQuotaEnabled: boolean;
+  changeRequestVoteOrder: ChangeRequestVoteOrder;
   recurrencePattern: RecurrencePattern;
   recurrenceInterval: number;
   recurrenceWeekdays: number[];
@@ -148,6 +154,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     delegateElectionMode: 'list',
     defaultFinalVoteDurationMinutes: '',
     genderQuotaEnabled: false,
+    changeRequestVoteOrder: DEFAULT_CHANGE_REQUEST_VOTE_ORDER,
     recurrencePattern: 'none',
     recurrenceInterval: 1,
     recurrenceWeekdays: [],
@@ -264,6 +271,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           ? String(Math.max(1, Math.round(event.default_final_vote_duration_seconds / 60)))
           : '',
         genderQuotaEnabled: Boolean(event.gender_quota_enabled),
+        changeRequestVoteOrder: normalizeChangeRequestVoteOrder(event.change_request_vote_order),
         recurrencePattern,
         recurrenceInterval,
         recurrenceWeekdays,
@@ -415,6 +423,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
             event?.event_type === 'delegate_assembly' ? formData.delegateElectionMode : null,
           default_final_vote_duration_seconds: defaultFinalVoteDurationSeconds,
           gender_quota_enabled: formData.genderQuotaEnabled,
+          change_request_vote_order: formData.changeRequestVoteOrder,
           ...recurringFields,
         };
 
@@ -473,6 +482,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
             event.event_type === 'delegate_assembly' ? formData.delegateElectionMode : null,
           default_final_vote_duration_seconds: defaultFinalVoteDurationSeconds,
           gender_quota_enabled: formData.genderQuotaEnabled,
+          change_request_vote_order: formData.changeRequestVoteOrder,
           ...recurringFields,
         };
 
