@@ -157,8 +157,7 @@ function Gutter({ children, className, ...props }: React.ComponentProps<'div'>) 
         isNodeType(KEYS.p) && 'pt-1 pb-0',
         isNodeType(KEYS.blockquote) && 'pb-0',
         isNodeType(KEYS.codeBlock) && 'pt-6 pb-0',
-        isNodeType([KEYS.img, KEYS.mediaEmbed, KEYS.excalidraw, KEYS.toggle, KEYS.column]) &&
-          'py-0',
+        isNodeType([KEYS.img, KEYS.mediaEmbed, KEYS.toggle, KEYS.column]) && 'py-0',
         isNodeType([KEYS.placeholder, KEYS.table]) && 'pt-3 pb-0',
         isInColumn && 'mt-2 h-4 pt-0',
         className
