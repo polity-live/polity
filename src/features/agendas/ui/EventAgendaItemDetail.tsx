@@ -35,6 +35,7 @@ import {
   resolveClosingJumpTarget,
 } from '../logic/voteSequenceJump';
 import {
+  resolveCurrentVoteSequenceItem,
   resolveNextStartableVoteSequenceItem,
   resolveVoteSequenceSelectionUpdate,
 } from '../logic/voteSequenceSelection';
@@ -865,11 +866,10 @@ export function EventAgendaItemDetail({
   const isVoteSequenceActive = Boolean(agendaItem?.amendment_id && sequenceDisplayItems.length > 0);
   const currentSequenceItem = useMemo(
     () =>
-      sequenceDisplayItems.find(item => item.vote?.status === VOTE_PHASE.final) ??
-      sequenceDisplayItems.find(item => item.vote?.status === 'final') ??
-      (currentCRItem ? sequenceDisplayItems.find(item => item.id === currentCRItem.id) : null) ??
-      sequenceDisplayItems.find(item => item.status !== 'completed') ??
-      null,
+      resolveCurrentVoteSequenceItem({
+        currentItemId: currentCRItem?.id ?? null,
+        sequenceItems: sequenceDisplayItems,
+      }),
     [currentCRItem, sequenceDisplayItems]
   );
 
@@ -1356,9 +1356,10 @@ export function EventAgendaItemDetail({
     : undefined;
 
   const castFinalVoteTooltip = isCRToolbarActive
-    ? isSelectedClosingVote
-      ? t('features.events.agenda.actions.castFinalVote')
-      : t('features.agendas.crTimeline.castFinal')
+    ? (selectedFinalVoteActionLabels?.castFinal ??
+      (isSelectedClosingVote
+        ? t('features.events.agenda.actions.castFinalVote')
+        : t('features.agendas.crTimeline.castFinal')))
     : undefined;
 
   // Handler: Mark speaker as completed

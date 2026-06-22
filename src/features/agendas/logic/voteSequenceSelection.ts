@@ -18,6 +18,24 @@ export interface VoteSequenceStartableItem extends VoteSequenceSelectionItem {
   } | null;
 }
 
+export function resolveCurrentVoteSequenceItem<T extends VoteSequenceStartableItem>({
+  currentItemId,
+  sequenceItems,
+}: {
+  currentItemId?: string | null;
+  sequenceItems: readonly T[];
+}): T | null {
+  const finalOpenItem = sequenceItems.find(item => item.vote?.status === 'final');
+  if (finalOpenItem) return finalOpenItem;
+
+  const currentItem = currentItemId
+    ? sequenceItems.find(item => item.id === currentItemId)
+    : undefined;
+  if (currentItem) return currentItem;
+
+  return sequenceItems.find(item => item.status !== 'completed') ?? null;
+}
+
 function isPendingSubmissionItem(item: VoteSequenceStartableItem) {
   const cr = item.change_request;
   return (

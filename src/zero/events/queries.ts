@@ -540,7 +540,25 @@ export const eventQueries = {
                 .related('decisions', d => d.related('choice'))
             )
         )
-        .related('amendment', q => q.related('change_requests').related('group'))
+        .related('amendment', q =>
+          q
+            .related('change_requests', changeRequest =>
+              applyChangeRequestVisibilityAccess(changeRequest, userID)
+            )
+            .related('group')
+            .related('document')
+            .related('current_process_run', rq =>
+              rq.related('branches', bq =>
+                bq
+                  .related('document')
+                  .related('document_version')
+                  .related('change_requests', changeRequest =>
+                    applyChangeRequestVisibilityAccess(changeRequest, userID)
+                  )
+                  .orderBy('created_at', 'asc')
+              )
+            )
+        )
         .related('change_request_timeline')
         .related('speaker_list', q => q.related('user'))
   ),

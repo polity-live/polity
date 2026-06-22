@@ -260,6 +260,30 @@ describe('Zero query contracts', () => {
     );
   });
 
+  it('loads amendment document data for full agenda toolbar previews', async () => {
+    const { harness, registries } = await loadQueryRegistries();
+    const eventQueries = registries.find(([domain]) => domain === 'events')?.[1];
+    if (!eventQueries) throw new Error('event queries not loaded');
+
+    eventQueries.agendaItemsFull.fn({
+      args: { ...broadArgs, eventId: 'event-1' },
+      ctx,
+    });
+
+    const agendaItemCalls = harness.lastQuery('agenda_item').calls;
+    const amendmentCalls = relatedCalls(agendaItemCalls, 'amendment');
+    const processRunCalls = relatedCalls(amendmentCalls, 'current_process_run');
+    const branchCalls = relatedCalls(processRunCalls, 'branches');
+
+    expect(amendmentCalls).toEqual(expect.arrayContaining([['related', 'document', []]]));
+    expect(branchCalls).toEqual(
+      expect.arrayContaining([
+        ['related', 'document', []],
+        ['related', 'document_version', []],
+      ])
+    );
+  });
+
   it('keeps rich user profile relations private unless they belong to the caller', async () => {
     const { harness, registries } = await loadQueryRegistries();
     const userQueries = registries.find(([domain]) => domain === 'users')?.[1];

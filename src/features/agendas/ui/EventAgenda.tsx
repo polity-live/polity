@@ -45,6 +45,7 @@ import {
   resolveClosingJumpTarget,
 } from '../logic/voteSequenceJump';
 import {
+  resolveCurrentVoteSequenceItem,
   resolveNextStartableVoteSequenceItem,
   resolveVoteSequenceSelectionUpdate,
 } from '../logic/voteSequenceSelection';
@@ -620,15 +621,18 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       ),
     [crVoting.crTimeline]
   );
-  const nextPendingSequenceItem = useMemo(
-    () => streamVoteSequenceItems.find(item => item.status !== 'completed') ?? null,
-    [streamVoteSequenceItems]
+  const currentSequenceItem = useMemo(
+    () =>
+      resolveCurrentVoteSequenceItem({
+        currentItemId: crVoting.currentItem?.id ?? null,
+        sequenceItems: streamVoteSequenceItems,
+      }),
+    [crVoting.currentItem?.id, streamVoteSequenceItems]
   );
   const fallbackSelectedCRItemId = useMemo(() => {
-    if (crVoting.currentItem?.id) return crVoting.currentItem.id;
-    if (nextPendingSequenceItem?.id) return nextPendingSequenceItem.id;
+    if (currentSequenceItem?.id) return currentSequenceItem.id;
     return effectiveClosingVoteItem?.id ?? null;
-  }, [crVoting.currentItem?.id, effectiveClosingVoteItem?.id, nextPendingSequenceItem?.id]);
+  }, [currentSequenceItem?.id, effectiveClosingVoteItem?.id]);
 
   useEffect(() => {
     if (!streamAgendaItem?.amendment_id) {
@@ -642,14 +646,14 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       selectedItemId: selectedCRToolbarItemId,
       sequenceItems: streamVoteSequenceItems,
       fallbackItemId: fallbackSelectedCRItemId,
-      currentItemId: crVoting.currentItem?.id ?? null,
+      currentItemId: currentSequenceItem?.id ?? null,
     });
 
     if (nextSelectedItemId !== undefined) {
       setSelectedCRToolbarItemId(nextSelectedItemId);
     }
   }, [
-    crVoting.currentItem?.id,
+    currentSequenceItem?.id,
     fallbackSelectedCRItemId,
     selectedCRToolbarItemId,
     streamVoteSequenceItems,
@@ -901,9 +905,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       : t('features.agendas.crTimeline.castIndicative')
     : undefined;
   const castFinalVoteTooltip = isCRToolbarActive
-    ? isSelectedClosingVote
-      ? t('features.events.agenda.actions.castFinalVote')
-      : t('features.agendas.crTimeline.castFinal')
+    ? (selectedFinalVoteActionLabels?.castFinal ??
+      (isSelectedClosingVote
+        ? t('features.events.agenda.actions.castFinalVote')
+        : t('features.agendas.crTimeline.castFinal')))
     : undefined;
 
   const indicativeSelections = useMemo(
@@ -1517,7 +1522,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       toolbarVotingPhase={toolbarVotingPhase}
       synthesizedClosingVoteItem={synthesizedClosingVoteItem}
       effectiveClosingVoteItem={effectiveClosingVoteItem}
-      nextPendingCRItem={nextPendingSequenceItem}
+      nextPendingCRItem={currentSequenceItem}
       activeCRToolbarItem={activeCRToolbarItem}
       nextStartableSequenceItem={nextStartableSequenceItem}
       isCRToolbarActive={isCRToolbarActive}

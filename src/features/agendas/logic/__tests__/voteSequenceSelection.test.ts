@@ -1,9 +1,54 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  resolveCurrentVoteSequenceItem,
   resolveNextStartableVoteSequenceItem,
   resolveVoteSequenceSelectionUpdate,
 } from '../voteSequenceSelection';
+
+describe('resolveCurrentVoteSequenceItem', () => {
+  it('prioritizes the final-open vote step over the timeline current item', () => {
+    const result = resolveCurrentVoteSequenceItem({
+      currentItemId: 'cr-current',
+      sequenceItems: [
+        { id: 'cr-current', status: 'voting', vote: { id: 'vote-current', status: 'closed' } },
+        { id: 'final-open', status: 'pending', vote: { id: 'vote-final', status: 'final' } },
+      ],
+    });
+
+    expect(result?.id).toBe('final-open');
+  });
+
+  it('falls back to the current item and then the first unfinished item', () => {
+    expect(
+      resolveCurrentVoteSequenceItem({
+        currentItemId: 'cr-current',
+        sequenceItems: [
+          {
+            id: 'cr-current',
+            status: 'voting',
+            vote: { id: 'vote-current', status: 'indicative' },
+          },
+          { id: 'next', status: 'pending', vote: { id: 'vote-next', status: null } },
+        ],
+      })?.id
+    ).toBe('cr-current');
+
+    expect(
+      resolveCurrentVoteSequenceItem({
+        currentItemId: null,
+        sequenceItems: [
+          {
+            id: 'completed',
+            status: 'completed',
+            vote: { id: 'vote-completed', status: 'closed' },
+          },
+          { id: 'next', status: 'pending', vote: { id: 'vote-next', status: null } },
+        ],
+      })?.id
+    ).toBe('next');
+  });
+});
 
 describe('resolveVoteSequenceSelectionUpdate', () => {
   const sequenceItems = [

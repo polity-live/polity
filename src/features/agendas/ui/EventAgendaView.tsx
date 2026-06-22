@@ -372,7 +372,7 @@ export function EventAgendaView({
   const liveFocusVoteClick = isOfflineOnlyAttendance
     ? undefined
     : isCRToolbarActive
-      ? selectedCRPhase !== 'closed'
+      ? selectedCRPhase !== 'closed' && !hasUserVotedOnSelectedCR
         ? canCastActiveCRVote
           ? actionBarHook.handleVoteClick
           : undefined

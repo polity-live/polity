@@ -1,4 +1,4 @@
-export type FinalVoteAction = 'start' | 'close';
+export type FinalVoteAction = 'start' | 'close' | 'cast';
 export type FinalVoteKind = 'change_request' | 'closing' | 'merge';
 
 export interface FinalVoteActionChoice {
@@ -179,7 +179,7 @@ export function getFinalVoteActionLabel(
 ) {
   const kind = getFinalVoteKind(options.item);
   const target = getFinalVoteActionTarget(options);
-  const verb = action === 'start' ? 'Start' : 'Close';
+  const verb = action === 'start' ? 'Start' : action === 'close' ? 'Close' : 'Cast';
 
   if (kind === 'merge') {
     return `${verb} final merge vote ${target}`;
@@ -197,5 +197,6 @@ export function getFinalVoteActionLabels(options: FinalVoteActionLabelOptions) {
     kind: getFinalVoteKind(options.item),
     start: getFinalVoteActionLabel('start', options),
     close: getFinalVoteActionLabel('close', options),
+    castFinal: getFinalVoteActionLabel('cast', options),
   };
 }

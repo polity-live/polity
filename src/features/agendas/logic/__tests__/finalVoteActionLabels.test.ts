@@ -18,6 +18,7 @@ describe('final vote action labels', () => {
     expect(labels.kind).toBe('change_request');
     expect(labels.start).toBe('Start final change request vote: Branch 2 CR-2');
     expect(labels.close).toBe('Close final change request vote: Branch 2 CR-2');
+    expect(labels.castFinal).toBe('Cast final change request vote: Branch 2 CR-2');
   });
 
   it('labels final closing vote actions with the amendment title', () => {
@@ -36,6 +37,7 @@ describe('final vote action labels', () => {
     expect(labels.kind).toBe('closing');
     expect(labels.start).toBe('Start final closing vote: Amendment Motion A');
     expect(labels.close).toBe('Close final closing vote: Amendment Motion A');
+    expect(labels.castFinal).toBe('Cast final closing vote: Amendment Motion A');
   });
 
   it('labels merge vote actions with ordered non-abstain branch labels joined by VS', () => {
@@ -56,6 +58,7 @@ describe('final vote action labels', () => {
     expect(labels.kind).toBe('merge');
     expect(labels.start).toBe('Start final merge vote Branch 1 VS Branch 2');
     expect(labels.close).toBe('Close final merge vote Branch 1 VS Branch 2');
+    expect(labels.castFinal).toBe('Cast final merge vote Branch 1 VS Branch 2');
   });
 
   it('uses merge_variant purpose as a merge vote', () => {
