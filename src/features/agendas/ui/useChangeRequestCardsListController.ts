@@ -17,6 +17,7 @@ import {
   buildSuggestionPreviewResolutions,
   getPreviewVoteStepKind,
   resolvePreviewCrIdForTimelineItem,
+  resolvePreviewSuggestionIdForTimelineItem,
 } from '../logic/changeRequestDocumentPreview';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 
@@ -126,9 +127,62 @@ function compareNullableNumbers(left: number | null, right: number | null) {
   return 0;
 }
 
+function buildSuggestionDocumentOrder(documentContent: Value | undefined) {
+  const suggestionOrder = new Map<string, number>();
+  if (!Array.isArray(documentContent)) return suggestionOrder;
+
+  let nodeIndex = 0;
+
+  const visitNodes = (nodes: readonly unknown[]): void => {
+    for (const node of nodes) {
+      const currentIndex = nodeIndex;
+      nodeIndex += 1;
+
+      if (!node || typeof node !== 'object' || Array.isArray(node)) continue;
+
+      for (const key of Object.keys(node)) {
+        if (!key.startsWith('suggestion_')) continue;
+
+        const suggestionData = (node as Record<string, unknown>)[key];
+        if (!suggestionData || typeof suggestionData !== 'object') continue;
+
+        const suggestionId = getStringValue((suggestionData as Record<string, unknown>).id);
+        if (suggestionId && !suggestionOrder.has(suggestionId)) {
+          suggestionOrder.set(suggestionId, currentIndex);
+        }
+      }
+
+      const children = (node as { children?: unknown }).children;
+      if (Array.isArray(children)) {
+        visitNodes(children);
+      }
+    }
+  };
+
+  visitNodes(documentContent);
+  return suggestionOrder;
+}
+
+function getChangeRequestDocumentSortOrder(
+  item: ChangeRequestTimelineRow,
+  crIdToDiscussionId: ReadonlyMap<string, string> | undefined,
+  suggestionDocumentOrder: ReadonlyMap<string, number> | undefined
+) {
+  if (!crIdToDiscussionId || !suggestionDocumentOrder) return null;
+
+  const suggestionId = resolvePreviewSuggestionIdForTimelineItem(item, crIdToDiscussionId);
+  if (!suggestionId) return null;
+
+  return suggestionDocumentOrder.get(suggestionId) ?? null;
+}
+
 export function sortChangeRequestTimelineItems(
   items: readonly ChangeRequestTimelineRow[],
-  sortMode: ChangeRequestSortMode
+  sortMode: ChangeRequestSortMode,
+  options: {
+    crIdToDiscussionId?: ReadonlyMap<string, string>;
+    suggestionDocumentOrder?: ReadonlyMap<string, number>;
+  } = {}
 ) {
   return items
     .map((item, index) => ({ item, index }))
@@ -145,6 +199,20 @@ export function sortChangeRequestTimelineItems(
           getChangeRequestSortNumber(right.item)
         );
         if (numberDiff !== 0) return numberDiff;
+      } else {
+        const documentOrderDiff = compareNullableNumbers(
+          getChangeRequestDocumentSortOrder(
+            left.item,
+            options.crIdToDiscussionId,
+            options.suggestionDocumentOrder
+          ),
+          getChangeRequestDocumentSortOrder(
+            right.item,
+            options.crIdToDiscussionId,
+            options.suggestionDocumentOrder
+          )
+        );
+        if (documentOrderDiff !== 0) return documentOrderDiff;
       }
 
       const labelDiff = changeRequestSortCollator.compare(
@@ -269,9 +337,17 @@ export function useChangeRequestCardsListController({
     () => items.filter(i => !i.is_closing_vote && !isSyntheticSequenceStep(i)),
     [items]
   );
+  const suggestionDocumentOrder = useMemo(
+    () => buildSuggestionDocumentOrder(documentContent),
+    [documentContent]
+  );
   const crItems = useMemo(
-    () => sortChangeRequestTimelineItems(unsortedCrItems, sortMode),
-    [sortMode, unsortedCrItems]
+    () =>
+      sortChangeRequestTimelineItems(unsortedCrItems, sortMode, {
+        crIdToDiscussionId,
+        suggestionDocumentOrder,
+      }),
+    [crIdToDiscussionId, sortMode, suggestionDocumentOrder, unsortedCrItems]
   );
   const votableCrItems = useMemo(
     () => crItems.filter(item => !isPendingSubmissionCRTimelineItem(item)),

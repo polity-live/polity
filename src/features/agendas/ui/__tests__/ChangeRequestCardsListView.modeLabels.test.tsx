@@ -228,6 +228,73 @@ describe('ChangeRequestCardsListView mode labels', () => {
     expectVisibleTitleOrder(['CR-11', 'CR-13', 'CR-15', 'CR-9']);
   });
 
+  it('uses the document suggestion order for lexicographic change request sorting when available', () => {
+    const createItem = (number: number) => ({
+      id: `agenda-cr-${number}`,
+      agenda_item_id: 'agenda-1',
+      change_request_id: `cr-row-${number}`,
+      vote_id: null,
+      order_index: number,
+      is_closing_vote: false,
+      status: 'pending',
+      change_request: {
+        id: `cr-row-${number}`,
+        title: `CR-${number}`,
+        cr_id: `CR-${number}`,
+        display_cr_id: `Branch 2 CR-${number}`,
+        branch_display_number: 2,
+        suggestion_id: `suggestion-${number}`,
+      },
+      vote: null,
+    });
+    const createDiscussion = (number: number) => ({
+      id: `suggestion-${number}`,
+      crId: `CR-${number}`,
+      displayCrId: `Branch 2 CR-${number}`,
+      title: `CR-${number}`,
+      comments: [],
+      createdAt: new Date(0),
+      isResolved: false,
+      userId: 'user-1',
+    });
+    const documentContent = [
+      {
+        type: 'p',
+        children: [
+          {
+            text: 'Soll CR-2 nicht entfernt werden',
+            suggestion_15: { id: 'suggestion-15', type: 'remove' },
+          },
+        ],
+      },
+      {
+        type: 'p',
+        children: [
+          {
+            text: 'Wird hinzugefügt',
+            suggestion_13: { id: 'suggestion-13', type: 'remove' },
+          },
+        ],
+      },
+    ];
+
+    render(
+      <ChangeRequestCardsList
+        items={[createItem(13), createItem(15)] as never}
+        editingMode="event_final_closing_vote"
+        isVotingActive
+        documentContent={documentContent as never}
+        discussions={[createDiscussion(13), createDiscussion(15)] as never}
+      />
+    );
+
+    expectVisibleTitleOrder(['CR-13', 'CR-15']);
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Sort lexicographically' }));
+
+    expectVisibleTitleOrder(['CR-15', 'CR-13']);
+  });
+
   it('uses localized collaborator voting progress text', () => {
     render(
       <ChangeRequestTimelineCardView
