@@ -195,7 +195,7 @@ describe('useCreateAgendaItemForm', () => {
       {
         id: 'chairperson',
         title: 'Chairperson',
-        name: 'chairperson',
+        name: 'Chairperson',
         description: 'Leads the group.',
         scope: 'group',
         assignment_mode: 'elected',

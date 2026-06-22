@@ -11,5 +11,10 @@ export default defineConfig({
   test: {
     include: ['src/**/__tests__/**/*.test.ts', 'src/**/__tests__/**/*.test.tsx'],
     setupFiles: ['./src/test/vitest.setup.ts'],
+    server: {
+      deps: {
+        inline: ['@platejs/math', 'katex'],
+      },
+    },
   },
 });

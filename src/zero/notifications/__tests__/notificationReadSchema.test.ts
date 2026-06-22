@@ -11,6 +11,6 @@ describe('notification_read schema', () => {
 
     expect(schema).toContain('CONSTRAINT notification_read_per_user_key UNIQUE');
     expect(schema).toContain('read_by_user_id');
-    expect(schema).toContain('notification_id, entity_type, entity_id, read_by_user_id');
+    expect(schema).toMatch(/notification_id,\s*entity_type,\s*entity_id,\s*read_by_user_id/);
   });
 });
