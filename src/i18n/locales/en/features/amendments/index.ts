@@ -137,6 +137,9 @@ export const amendmentsTranslations = {
     waitingFor: 'Waiting for',
     unspecified: 'not specified',
   },
+  eventSuggestions: {
+    submittedVotePending: 'Submitted - vote pending',
+  },
   changeRequests: {
     title: 'Change Requests',
     create: 'Create Change Request',

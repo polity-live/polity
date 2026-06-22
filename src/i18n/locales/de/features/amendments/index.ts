@@ -138,6 +138,9 @@ export const amendmentsTranslations = {
     waitingFor: 'Warten auf',
     unspecified: 'nicht angegeben',
   },
+  eventSuggestions: {
+    submittedVotePending: 'Eingereicht - Wahl anstehend',
+  },
   changeRequests: {
     title: 'Änderungsanträge',
     create: 'Änderungsantrag erstellen',

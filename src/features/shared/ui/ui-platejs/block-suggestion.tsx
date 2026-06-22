@@ -412,30 +412,45 @@ export function BlockSuggestionCard({
               </Button>
             </div>
           ) : (
-            <div className="flex flex-1 items-center gap-2 rounded-md border bg-[var(--surface)] px-3 py-2">
-              {/* Display suggestion ID if available */}
-              {(suggestion.displayCrId ?? suggestion.crId) && (
+            <div className="flex flex-1 flex-col gap-2 rounded-md border bg-[var(--surface)] px-3 py-2">
+              <div className="flex items-center gap-2">
+                {/* Display suggestion ID if available */}
+                {(suggestion.displayCrId ?? suggestion.crId) && (
+                  <span
+                    className={cn(
+                      'rounded px-2 py-1 font-mono text-xs whitespace-nowrap',
+                      getBadgeToneClasses('accent')
+                    )}
+                  >
+                    {suggestion.displayCrId ?? suggestion.crId}
+                  </span>
+                )}
+                <span className="min-w-0 flex-1 text-sm font-semibold">
+                  {suggestion.title ||
+                    translateText('generated.inline.0142_untitled_suggestion_5d70b979')}
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 w-6 shrink-0 p-0"
+                  onClick={() => setEditingTitle(true)}
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+              </div>
+              {isEventSuggestionMode && isConfirmedEventSuggestion ? (
                 <span
                   className={cn(
-                    'rounded px-2 py-1 font-mono text-xs',
-                    getBadgeToneClasses('accent')
+                    'w-fit rounded px-2 py-1 text-xs font-semibold whitespace-nowrap',
+                    getBadgeToneClasses('success')
                   )}
                 >
-                  {suggestion.displayCrId ?? suggestion.crId}
+                  {translateText(
+                    'features.amendments.eventSuggestions.submittedVotePending',
+                    'Submitted - vote pending'
+                  )}
                 </span>
-              )}
-              <span className="text-sm font-semibold">
-                {suggestion.title ||
-                  translateText('generated.inline.0142_untitled_suggestion_5d70b979')}
-              </span>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="ml-auto h-6 w-6 p-0"
-                onClick={() => setEditingTitle(true)}
-              >
-                <Pencil className="h-3 w-3" />
-              </Button>
+              ) : null}
             </div>
           )}
         </div>

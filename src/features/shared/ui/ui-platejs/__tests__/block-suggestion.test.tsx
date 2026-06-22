@@ -118,6 +118,15 @@ function pendingEventSuggestion(): ResolvedSuggestion {
   } as ResolvedSuggestion;
 }
 
+function submittedEventSuggestion(): ResolvedSuggestion {
+  return {
+    ...pendingEventSuggestion(),
+    changeRequestStatus: 'open',
+    confirmationStatus: 'confirmed',
+    votingStatus: 'open',
+  } as ResolvedSuggestion;
+}
+
 describe('BlockSuggestionCard internal vote actions', () => {
   beforeEach(() => {
     Object.values(suggestionCallbacksMock).forEach(mock => mock.mockReset());
@@ -168,5 +177,15 @@ describe('BlockSuggestionCard internal vote actions', () => {
         confirmationStatus: 'pending',
       })
     );
+  });
+
+  it('shows submitted vote pending status instead of the submit prompt for confirmed event suggestions', () => {
+    modeContextMock.currentMode = 'suggest_event';
+
+    render(<BlockSuggestionCard idx={0} isLast suggestion={submittedEventSuggestion()} />);
+
+    expect(screen.getByText('Submitted - vote pending')).toBeTruthy();
+    expect(screen.queryByText('Soll diese Änderung eingereicht werden?')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Einreichen' })).toBeNull();
   });
 });
