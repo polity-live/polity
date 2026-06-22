@@ -167,7 +167,7 @@ export function ChangeRequestCardsListView({
   t,
   activeTab,
   setActiveTab,
-  sortMode = 'number',
+  sortMode = 'lexicographic',
   setSortMode = () => undefined,
   searchQuery,
   setSearchQuery,

@@ -314,7 +314,7 @@ export function useChangeRequestCardsListController({
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabValue>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortMode, setSortMode] = useState<ChangeRequestSortMode>('number');
+  const [sortMode, setSortMode] = useState<ChangeRequestSortMode>('lexicographic');
 
   // Build crId → discussion UUID map from discussions
   const crIdToDiscussionId = useMemo(() => buildCrIdToDiscussionId(discussions), [discussions]);

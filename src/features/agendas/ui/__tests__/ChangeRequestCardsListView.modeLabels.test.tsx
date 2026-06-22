@@ -194,7 +194,7 @@ describe('ChangeRequestCardsListView mode labels', () => {
     expect(screen.queryByText('event_final_closing_vote')).toBeNull();
   });
 
-  it('sorts change requests by number by default and can toggle to lexicographic order', () => {
+  it('sorts change requests lexicographically by default and can toggle to numeric order', () => {
     const createItem = (number: number) => ({
       id: `agenda-cr-${number}`,
       agenda_item_id: 'agenda-1',
@@ -221,14 +221,14 @@ describe('ChangeRequestCardsListView mode labels', () => {
       />
     );
 
-    expectVisibleTitleOrder(['CR-9', 'CR-11', 'CR-13', 'CR-15']);
-
-    fireEvent.click(screen.getByRole('radio', { name: 'Sort lexicographically' }));
-
     expectVisibleTitleOrder(['CR-11', 'CR-13', 'CR-15', 'CR-9']);
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Sort by number' }));
+
+    expectVisibleTitleOrder(['CR-9', 'CR-11', 'CR-13', 'CR-15']);
   });
 
-  it('uses the document suggestion order for lexicographic change request sorting when available', () => {
+  it('uses the document suggestion order for default change request sorting when available', () => {
     const createItem = (number: number) => ({
       id: `agenda-cr-${number}`,
       agenda_item_id: 'agenda-1',
@@ -288,11 +288,11 @@ describe('ChangeRequestCardsListView mode labels', () => {
       />
     );
 
-    expectVisibleTitleOrder(['CR-13', 'CR-15']);
-
-    fireEvent.click(screen.getByRole('radio', { name: 'Sort lexicographically' }));
-
     expectVisibleTitleOrder(['CR-15', 'CR-13']);
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Sort by number' }));
+
+    expectVisibleTitleOrder(['CR-13', 'CR-15']);
   });
 
   it('uses localized collaborator voting progress text', () => {
