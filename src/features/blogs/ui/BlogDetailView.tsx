@@ -168,7 +168,7 @@ export function BlogDetailView({
     .map(blogger => {
       const fallbackRole: WikiParticipationRole =
         blogger.status === 'owner'
-          ? { id: 'owner', name: translateText('generated.inline.0029_owner_4e45963f', 'Owner') }
+          ? { id: 'owner', name: translateText('features.blogs.bloggers.ownerRole') }
           : {
               id: 'blogger',
               name: translateText('generated.inline.0032_blogger_9b156370', 'Blogger'),
@@ -267,10 +267,7 @@ export function BlogDetailView({
 
       <WikiParticipationDirectory
         title={translateText('generated.inline.0250_bloggers_4e649307', 'Bloggers')}
-        description={translateText(
-          'features.blogs.wiki.bloggersDescription',
-          'People who can write or manage this blog.'
-        )}
+        description={translateText('features.blogs.wiki.bloggersDescription')}
         items={bloggerDirectoryItems}
         roles={bloggerRoles}
         entityType="blog"

@@ -7,7 +7,7 @@ import { RelatedGroupsTabs } from '../RelatedGroupsTabs';
 
 vi.mock('@/features/shared/hooks/use-translation', () => {
   const translations: Record<string, string> = {
-    'common.all': 'Alle',
+    'common.labels.all': 'Alle',
     'pages.group.childGroups.title': 'Untergeordnete Gruppen',
     'pages.group.parentGroups.title': 'Übergeordnete Gruppen',
     'pages.group.relatedGroups.searchPlaceholder': 'Verwandte Gruppen suchen',

@@ -21,7 +21,9 @@ export function GroupMembershipsTab({
   return (
     <div className="space-y-6">
       <MembershipStatusTable
-        title={`Pending Invitations (${membershipsByStatus.invited.length})`}
+        title={translateText('pages.user.memberships.sections.pendingInvitations', {
+          count: membershipsByStatus.invited.length,
+        })}
         description={translateText(
           'generated.inline.1192_group_invitations_you_ve_received_39d8159e'
         )}
@@ -39,7 +41,9 @@ export function GroupMembershipsTab({
       />
 
       <MembershipStatusTable
-        title={`Active Memberships (${membershipsByStatus.active.length})`}
+        title={translateText('pages.user.memberships.sections.activeMemberships', {
+          count: membershipsByStatus.active.length,
+        })}
         description={translateText(
           'generated.inline.1193_groups_you_re_currently_a_member_of_6c478da9'
         )}
@@ -52,7 +56,9 @@ export function GroupMembershipsTab({
       />
 
       <MembershipStatusTable
-        title={`Pending Requests (${membershipsByStatus.requested.length})`}
+        title={translateText('pages.user.memberships.sections.pendingRequests', {
+          count: membershipsByStatus.requested.length,
+        })}
         description={translateText(
           'generated.inline.1194_your_pending_requests_to_join_groups_8c9f7a5b'
         )}

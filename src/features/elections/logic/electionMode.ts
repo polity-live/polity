@@ -1,3 +1,5 @@
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
+
 export type ElectionMode = 'single' | 'list';
 
 const VALID_ELECTION_MODES = new Set<ElectionMode>(['single', 'list']);
@@ -73,17 +75,28 @@ export function deriveElectionMaxVotes(mode: ElectionMode, seatCount?: number | 
 }
 
 export function getElectionModeLabel(mode: ElectionMode) {
-  return mode === 'list' ? 'Listenwahl' : 'Einzelwahl';
+  return translateText(`features.elections.mode.${mode}`);
 }
 
 export function getSeatCountLabel(seatCount: number) {
-  return `${seatCount} ${seatCount === 1 ? 'Position' : 'Positionen'}`;
+  const seatLabel = translateText(
+    seatCount === 1 ? 'features.elections.mode.position' : 'features.elections.mode.positions'
+  );
+  return `${seatCount} ${seatLabel}`;
 }
 
 export function getElectionModeSummaryLabel(mode: ElectionMode, seatCount?: number | null) {
   if (mode === 'list') {
     const resolvedSeatCount = normalizePositiveInteger(seatCount) ?? 1;
-    return `${getElectionModeLabel(mode)} · ${getSeatCountLabel(resolvedSeatCount)}`;
+    return translateText('features.elections.mode.summary', {
+      mode: getElectionModeLabel(mode),
+      seatCount: resolvedSeatCount,
+      seatLabel: translateText(
+        resolvedSeatCount === 1
+          ? 'features.elections.mode.position'
+          : 'features.elections.mode.positions'
+      ),
+    });
   }
 
   return getElectionModeLabel(mode);

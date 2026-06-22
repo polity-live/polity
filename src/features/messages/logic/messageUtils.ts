@@ -1,5 +1,6 @@
 import { ConversationDisplay } from '../types/message.types';
 import { ARIA_KAI_USER_ID } from '@/features/assistant/constants';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface UnreadMessageLike {
   is_read: boolean;
@@ -69,7 +70,10 @@ export const getConversationDisplay = (
 ): ConversationDisplay => {
   if (conversation.type === 'group') {
     return {
-      name: conversation.group?.name || conversation.name || 'Group Chat',
+      name:
+        conversation.group?.name ||
+        conversation.name ||
+        translateText('features.messages.fallbacks.groupChat'),
       avatar: conversation.group?.image_url || null,
       handle: null,
       isGroup: true,
@@ -81,7 +85,10 @@ export const getConversationDisplay = (
 
   if (conversation.type === 'event') {
     return {
-      name: conversation.event?.title || conversation.name || 'Event Chat',
+      name:
+        conversation.event?.title ||
+        conversation.name ||
+        translateText('features.messages.fallbacks.eventChat'),
       avatar: conversation.event?.image_url || null,
       handle: null,
       isGroup: false,
@@ -111,7 +118,7 @@ export const getConversationDisplay = (
     name:
       [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') ||
       conversation.name ||
-      'Unknown User',
+      translateText('common.unknownUser'),
     avatar: otherUser?.avatar,
     handle: otherUser?.handle,
     isGroup: false,

@@ -3,8 +3,8 @@
 import { useMemo } from 'react';
 import { getEntityIcon } from '@/features/shared/logic/entityCardHelpers';
 import {
+  getTypeaheadEntityGroupLabel,
   groupResultsByType,
-  TYPEAHEAD_ENTITY_GROUP_LABELS,
   TYPEAHEAD_ENTITY_ORDER,
   type TypeaheadItem,
 } from '@/features/shared/logic/typeaheadHelpers';
@@ -81,7 +81,7 @@ export function TypeaheadDropdown({
             <div className="sticky top-0 z-10 flex items-center gap-2 border-b bg-[var(--surface-overlay)] px-3 py-1.5 backdrop-blur">
               <Icon className="text-muted-foreground h-3.5 w-3.5" />
               <span className="text-muted-foreground text-xs font-semibold uppercase">
-                {TYPEAHEAD_ENTITY_GROUP_LABELS[entityType]}
+                {getTypeaheadEntityGroupLabel(entityType)}
               </span>
             </div>
             <div className="p-1">

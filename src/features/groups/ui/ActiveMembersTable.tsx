@@ -68,7 +68,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
   const joinedColumnLabel = t('components.membershipTables.joined');
   const actionsColumnLabel = t('components.membershipTables.actions');
   const rightsLabel = t('components.membershipTables.rights');
-  const notAvailableLabel = t('components.membershipTables.notAvailable', 'N/A');
+  const notAvailableLabel = t('components.membershipTables.notAvailable');
   const noDelegateRepresentationLabel = t(
     'components.membershipTables.noDelegateRepresentation',
     '-'

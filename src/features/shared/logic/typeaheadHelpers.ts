@@ -1,6 +1,7 @@
 /**
  * Pure functions and shared constants for reusable typeahead search.
  */
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export const ALL_TYPEAHEAD_ENTITY_TYPES = [
   'event',
@@ -31,30 +32,38 @@ export const TYPEAHEAD_ENTITY_ORDER: readonly EntityType[] = [
 ] as const;
 
 export const TYPEAHEAD_ENTITY_LABELS: Record<EntityType, string> = {
-  user: 'User',
-  group: 'Group',
-  event: 'Event',
-  agenda_item: 'Agenda Point',
-  amendment: 'Amendment',
-  vote: 'Vote',
-  election: 'Election',
-  todo: 'Task',
-  blog: 'Blog',
-  role: 'Role',
+  user: 'features.search.entityLabels.user',
+  group: 'features.search.entityLabels.group',
+  event: 'features.search.entityLabels.event',
+  agenda_item: 'features.search.entityLabels.agenda_item',
+  amendment: 'features.search.entityLabels.amendment',
+  vote: 'features.search.entityLabels.vote',
+  election: 'features.search.entityLabels.election',
+  todo: 'features.search.entityLabels.todo',
+  blog: 'features.search.entityLabels.blog',
+  role: 'features.search.entityLabels.role',
 };
 
 export const TYPEAHEAD_ENTITY_GROUP_LABELS: Record<EntityType, string> = {
-  user: 'Users',
-  group: 'Groups',
-  event: 'Events',
-  agenda_item: 'Agenda Points',
-  amendment: 'Amendments',
-  vote: 'Votes',
-  election: 'Elections',
-  todo: 'Tasks',
-  blog: 'Blogs',
-  role: 'Roles',
+  user: 'features.search.entityGroupLabels.user',
+  group: 'features.search.entityGroupLabels.group',
+  event: 'features.search.entityGroupLabels.event',
+  agenda_item: 'features.search.entityGroupLabels.agenda_item',
+  amendment: 'features.search.entityGroupLabels.amendment',
+  vote: 'features.search.entityGroupLabels.vote',
+  election: 'features.search.entityGroupLabels.election',
+  todo: 'features.search.entityGroupLabels.todo',
+  blog: 'features.search.entityGroupLabels.blog',
+  role: 'features.search.entityGroupLabels.role',
 };
+
+export function getTypeaheadEntityLabel(entityType: EntityType) {
+  return translateText(TYPEAHEAD_ENTITY_LABELS[entityType]);
+}
+
+export function getTypeaheadEntityGroupLabel(entityType: EntityType) {
+  return translateText(TYPEAHEAD_ENTITY_GROUP_LABELS[entityType]);
+}
 
 export interface TypeaheadItem {
   id: string;

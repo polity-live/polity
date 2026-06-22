@@ -252,7 +252,7 @@ export function RoleDetailsTable<TRole extends RoleRow>({
                   onClick={() => onAssignHolder(role)}
                   tooltip={
                     holderManagedFromMembership
-                      ? 'This incumbent is currently derived from membership roles.'
+                      ? translateText('features.groups.roleDetails.derivedIncumbentTooltip')
                       : assignLabel
                   }
                 />

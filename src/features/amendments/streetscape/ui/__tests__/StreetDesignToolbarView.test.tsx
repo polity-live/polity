@@ -45,57 +45,57 @@ describe('StreetDesignToolbarView', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /platzieren/i }));
+    fireEvent.click(screen.getByRole('button', { name: /place/i }));
     expect(onInteractionModeChange).toHaveBeenCalledWith('place');
 
-    fireEvent.click(screen.getByRole('button', { name: /selektieren/i }));
+    fireEvent.click(screen.getByRole('button', { name: /select/i }));
     expect(onInteractionModeChange).toHaveBeenCalledWith('select');
 
-    expect(screen.getByText('OSM Bestand')).toBeTruthy();
-    expect(screen.getByText('Neue Elemente')).toBeTruthy();
-    expect(screen.getByText('Hinzugefügt')).toBeTruthy();
+    expect(screen.getByText('OSM Existing')).toBeTruthy();
+    expect(screen.getByText('New elements')).toBeTruthy();
+    expect(screen.getByText('Added')).toBeTruthy();
 
-    const buildingButtons = screen.getAllByRole('button', { name: /gebaeude/i });
+    const buildingButtons = screen.getAllByRole('button', { name: /buildings?/i });
     expect(buildingButtons.length).toBeGreaterThanOrEqual(2);
     fireEvent.click(buildingButtons[buildingButtons.length - 1]);
     expect(onToolChange).toHaveBeenCalledWith('building');
 
-    const waterButtons = screen.getAllByRole('button', { name: /wasser/i });
+    const waterButtons = screen.getAllByRole('button', { name: /water/i });
     fireEvent.click(waterButtons[waterButtons.length - 1]);
     expect(onToolChange).toHaveBeenCalledWith('water_area');
 
-    fireEvent.click(screen.getByRole('button', { name: /kamera/i }));
+    fireEvent.click(screen.getByRole('button', { name: /camera/i }));
     expect(onInteractionModeChange).toHaveBeenCalledWith('camera');
 
     fireEvent.click(buildingButtons[0]);
     expect(onOsmLayerVisibilityChange).toHaveBeenCalledWith('building', false);
 
-    fireEvent.click(screen.getByRole('button', { name: /markierungen/i }));
+    fireEvent.click(screen.getByRole('button', { name: /markings/i }));
     expect(onShowStreetMarkingsChange).toHaveBeenCalledWith(false);
 
-    fireEvent.click(screen.getByRole('button', { name: /bestand einklappen/i }));
-    expect(screen.getByRole('button', { name: /bestand ausklappen/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /collapse osm existing/i }));
+    expect(screen.getByRole('button', { name: /expand osm existing/i })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /neue elemente einklappen/i }));
-    expect(screen.getByRole('button', { name: /neue elemente ausklappen/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /collapse new elements/i }));
+    expect(screen.getByRole('button', { name: /expand new elements/i })).toBeTruthy();
 
-    expect(screen.getByTitle('Gruen ausklappen')).toBeTruthy();
-    fireEvent.click(screen.getByTitle('Gruen ausklappen'));
-    expect(screen.getByTitle('Gruen einklappen')).toBeTruthy();
+    expect(screen.getByTitle('Expand Greenery')).toBeTruthy();
+    fireEvent.click(screen.getByTitle('Expand Greenery'));
+    expect(screen.getByTitle('Collapse Greenery')).toBeTruthy();
 
-    fireEvent.click(screen.getByTitle('Baum auswählen'));
+    fireEvent.click(screen.getByTitle('Select Tree'));
     expect(onObjectSelect).toHaveBeenCalledWith('tree-1');
 
-    fireEvent.click(screen.getByTitle('Baum ausblenden'));
+    fireEvent.click(screen.getByTitle('Hide Tree'));
     expect(onObjectVisibilityChange).toHaveBeenCalledWith('tree-1', false);
 
-    fireEvent.click(screen.getByTitle('Gruen ausblenden'));
+    fireEvent.click(screen.getByTitle('Hide Greenery'));
     expect(onObjectCategoryVisibilityChange).toHaveBeenCalledWith('greenery', false);
 
-    fireEvent.click(screen.getByTitle('Baum entfernen'));
+    fireEvent.click(screen.getByTitle('Remove Tree'));
     expect(onObjectDelete).toHaveBeenCalledWith('tree-1');
 
-    fireEvent.click(screen.getByTitle('Gruen entfernen'));
+    fireEvent.click(screen.getByTitle('Remove Greenery'));
     expect(onObjectCategoryDelete).toHaveBeenCalledWith('greenery');
   });
 });

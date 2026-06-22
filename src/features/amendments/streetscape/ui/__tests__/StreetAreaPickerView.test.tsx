@@ -38,7 +38,7 @@ describe('StreetAreaPickerView', () => {
       />
     );
 
-    expect(screen.getByText('Karte konnte nicht geladen werden.').className).toContain('h-64');
+    expect(screen.getByText('Map could not be loaded.').className).toContain('h-64');
   });
 
   it('keeps the viewport stable while the selection changes', () => {
@@ -189,10 +189,10 @@ function createReactLeafletFixture() {
     TileLayer: () => null,
     Polygon: () => null,
     Marker: ({ title, eventHandlers }: { title?: string; eventHandlers: any }) => {
-      if (title === 'Ausschnitt drehen') {
+      if (title === 'Rotate section') {
         markerEventHandlers.rotate = eventHandlers;
-      } else if (title?.startsWith('Ausschnitt ')) {
-        const handle = title.split(' ')[1];
+      } else if (title?.startsWith('Drag section ')) {
+        const handle = title.split(' ')[2];
         markerEventHandlers.resize[handle] = eventHandlers;
       } else {
         markerEventHandlers.center = eventHandlers;

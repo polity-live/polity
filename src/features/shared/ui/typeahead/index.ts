@@ -17,6 +17,8 @@ export {
   ALL_TYPEAHEAD_ENTITY_TYPES,
   TYPEAHEAD_ENTITY_LABELS,
   TYPEAHEAD_ENTITY_GROUP_LABELS,
+  getTypeaheadEntityLabel,
+  getTypeaheadEntityGroupLabel,
 } from '@/features/shared/logic/typeaheadHelpers';
 export type {
   TypeaheadSearchProps,

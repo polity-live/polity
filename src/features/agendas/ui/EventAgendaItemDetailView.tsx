@@ -722,7 +722,11 @@ export function EventAgendaItemDetailView({
         tallies={offlineTallyEntity?.tallies ?? []}
         maxTotalVotes={offlineTallyEntity?.maxTotalVotes ?? null}
         maxPerEntryVotes={offlineTallyEntity?.maxPerEntryVotes ?? null}
-        maxPerEntryLimitLabel={offlineTallyEntity?.kind === 'election' ? 'candidate' : undefined}
+        maxPerEntryLimitLabel={
+          offlineTallyEntity?.kind === 'election'
+            ? translateText('features.events.agenda.candidate')
+            : undefined
+        }
         participantCount={offlineTallyEntity?.participantCount ?? null}
         votesPerParticipant={offlineTallyEntity?.votesPerParticipant ?? null}
         isSubmitting={isOfflineTallySubmitting}
@@ -739,7 +743,10 @@ export function EventAgendaItemDetailView({
             setNamedResultsTarget(null);
           }
         }}
-        title={namedResultsDialogConfig?.title ?? 'Namentliche Ergebnisse'}
+        title={
+          namedResultsDialogConfig?.title ??
+          translateText('features.events.agenda.namedResults.title')
+        }
         description={namedResultsDialogConfig?.description ?? ''}
         model={namedResultsDialogConfig?.model ?? null}
       />
@@ -766,8 +773,8 @@ export function EventAgendaItemDetailView({
                   name: c.user
                     ? `${c.user.first_name ?? ''} ${c.user.last_name ?? ''}`.trim() ||
                       c.user.email ||
-                      'Candidate'
-                    : c.name || 'Candidate',
+                      translateText('features.events.agenda.candidate')
+                    : c.name || translateText('features.events.agenda.candidate'),
                   avatar: c.user?.avatar ?? undefined,
                 }))
               : undefined

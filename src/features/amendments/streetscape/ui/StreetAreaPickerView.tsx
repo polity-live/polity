@@ -3,6 +3,7 @@ import { MapPinned } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { StreetDesignGeoPoint } from '../types';
 import type { StreetDesignBboxResizeHandle } from '../logic/streetDesignBbox';
 import {
@@ -67,6 +68,7 @@ export function StreetAreaPickerView({
   onRotationDegreesChange,
   mapUnavailable,
 }: StreetAreaPickerViewProps) {
+  const { t } = useTranslation();
   const updateWidth = (value: number) => {
     if (Number.isFinite(value)) onWidthMetersChange(value);
   };
@@ -94,7 +96,9 @@ export function StreetAreaPickerView({
             <MapPinned className="text-muted-foreground size-4" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold">Kartenausschnitt</h2>
+            <h2 className="text-sm font-semibold">
+              {t('features.amendments.streetscape.areaPicker.title')}
+            </h2>
             <p className="text-muted-foreground text-xs">
               {center.lat.toFixed(5)}, {center.lon.toFixed(5)}
             </p>
@@ -102,7 +106,9 @@ export function StreetAreaPickerView({
         </div>
         <div className="flex flex-wrap items-end gap-2">
           <div className="w-24 space-y-1">
-            <Label className="text-muted-foreground text-[11px]">Breite m</Label>
+            <Label className="text-muted-foreground text-[11px]">
+              {t('features.amendments.streetscape.areaPicker.widthMeters')}
+            </Label>
             <Input
               type="number"
               min={20}
@@ -113,7 +119,9 @@ export function StreetAreaPickerView({
             />
           </div>
           <div className="w-24 space-y-1">
-            <Label className="text-muted-foreground text-[11px]">Hoehe m</Label>
+            <Label className="text-muted-foreground text-[11px]">
+              {t('features.amendments.streetscape.areaPicker.heightMeters')}
+            </Label>
             <Input
               type="number"
               min={20}
@@ -124,7 +132,9 @@ export function StreetAreaPickerView({
             />
           </div>
           <div className="w-24 space-y-1">
-            <Label className="text-muted-foreground text-[11px]">Drehung °</Label>
+            <Label className="text-muted-foreground text-[11px]">
+              {t('features.amendments.streetscape.areaPicker.rotationDegrees')}
+            </Label>
             <Input
               type="number"
               step={5}
@@ -134,10 +144,12 @@ export function StreetAreaPickerView({
             />
           </div>
           <Button size="sm" variant="outline" onClick={onLoadSample} disabled={readOnly}>
-            Demo laden
+            {t('features.amendments.streetscape.areaPicker.loadDemo')}
           </Button>
           <Button size="sm" onClick={onLoadOsm} disabled={readOnly || isLoadingOsm}>
-            {isLoadingOsm ? 'Laedt...' : 'OSM laden'}
+            {isLoadingOsm
+              ? t('features.amendments.streetscape.areaPicker.loadingOsm')
+              : t('features.amendments.streetscape.areaPicker.loadOsm')}
           </Button>
         </div>
       </div>
@@ -145,7 +157,7 @@ export function StreetAreaPickerView({
       <div className="p-3">
         {!mapReady ? (
           <div className="bg-muted/20 text-muted-foreground flex h-64 items-center justify-center rounded-md border border-dashed text-sm">
-            Karte konnte nicht geladen werden.
+            {t('features.amendments.streetscape.areaPicker.mapUnavailable')}
           </div>
         ) : (
           <div className="h-64 overflow-hidden rounded-md border md:h-72">

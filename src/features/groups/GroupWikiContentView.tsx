@@ -375,20 +375,14 @@ export function GroupWikiContentView({
       <div className="mb-8">
         <WikiParticipationDirectory
           className="mb-0"
-          title={translateText('generated.inline.0554_members_5d2292cf', 'Members')}
-          description={translateText(
-            'features.groups.wiki.membersDescription',
-            'Active members visible in this group.'
-          )}
+          title={translateText('features.groups.wiki.membersTitle')}
+          description={translateText('features.groups.wiki.membersDescription')}
           items={memberDirectoryItems}
           roles={directoryRoles}
           entityType="group"
-          searchPlaceholder={translateText('features.groups.wiki.membersSearch', 'Search members')}
-          emptyLabel={translateText('features.groups.wiki.noMembers', 'No active members yet.')}
-          noResultsLabel={translateText(
-            'features.groups.wiki.noMembersMatch',
-            'No members match your filters.'
-          )}
+          searchPlaceholder={translateText('features.groups.wiki.membersSearch')}
+          emptyLabel={translateText('features.groups.wiki.noMembers')}
+          noResultsLabel={translateText('features.groups.wiki.noMembersMatch')}
           leadingCard={
             <WikiRosterSummaryCard totalCount={memberCount} items={memberDirectoryItems} />
           }

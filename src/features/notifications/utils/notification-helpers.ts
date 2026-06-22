@@ -1677,13 +1677,12 @@ async function sendPushNotification(
 ): Promise<void> {
   try {
     const { pushSendFn } = await import('@/server/push-send');
-    const result = await pushSendFn({
+    await pushSendFn({
       data: {
         userId,
         notification,
       },
     });
-    console.log('[Notification] Push notification sent:', result);
   } catch (error) {
     console.error('[Notification] Error sending push notification:', error);
     throw error;
@@ -1812,7 +1811,9 @@ export async function notifyGuestAccessApproved(params: {
       recipientEntityId: params.groupId,
       type: 'membership_approved',
       title: translateText('generated.inline.0203_membership_approved_a127fbbf'),
-      message: `A guest access request in ${params.groupName} has been approved.`,
+      message: translateText('features.notifications.generated.messages.guestAccessApproved', {
+        groupName: params.groupName,
+      }),
       actionUrl: `/group/${params.groupId}/memberships`,
       relatedEntityType: 'group',
       relatedGroupId: params.groupId,
@@ -2025,7 +2026,10 @@ export async function notifyGuestAccessRequest(params: {
     recipientEntityId: params.groupId,
     type: 'membership_request',
     title: translateText('generated.inline.0218_membership_request_bbfcdecb'),
-    message: `${params.senderName} has requested guest access to ${params.groupName}.`,
+    message: translateText('features.notifications.generated.messages.guestAccessRequested', {
+      senderName: params.senderName,
+      groupName: params.groupName,
+    }),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -2061,7 +2065,9 @@ export async function notifyGuestAccessInvite(params: {
       recipientEntityId: params.groupId,
       type: 'membership_invite',
       title: translateText('generated.inline.0201_group_invitation_3afe15fe'),
-      message: `A guest has been invited to ${params.groupName}.`,
+      message: translateText('features.notifications.generated.messages.guestInvited', {
+        groupName: params.groupName,
+      }),
       actionUrl: `/group/${params.groupId}/memberships`,
       relatedEntityType: 'group',
       relatedGroupId: params.groupId,
@@ -2104,7 +2110,9 @@ export async function notifyGuestAccessRoleChanged(params: {
       recipientEntityId: params.groupId,
       type: 'membership_role_changed',
       title: translateText('generated.inline.0209_role_changed_08011f35'),
-      message: `A guest role in ${params.groupName} has been changed.`,
+      message: translateText('features.notifications.generated.messages.guestRoleChanged', {
+        groupName: params.groupName,
+      }),
       actionUrl: `/group/${params.groupId}/memberships`,
       relatedEntityType: 'group',
       relatedGroupId: params.groupId,
@@ -2141,7 +2149,9 @@ export async function notifyGuestAccessRemoved(params: {
       recipientEntityId: params.groupId,
       type: 'member_removed',
       title: translateText('generated.inline.0214_member_removed_f9078b1f'),
-      message: `A guest has been removed from ${params.groupName}.`,
+      message: translateText('features.notifications.generated.messages.guestRemoved', {
+        groupName: params.groupName,
+      }),
       actionUrl: `/group/${params.groupId}/memberships`,
       relatedEntityType: 'group',
       relatedGroupId: params.groupId,
@@ -2163,7 +2173,10 @@ export async function notifyGuestAccessWithdrawn(params: {
     recipientEntityId: params.groupId,
     type: 'membership_withdrawn',
     title: translateText('generated.inline.0216_member_left_group_1978def2'),
-    message: `${params.senderName} has left guest access to ${params.groupName}.`,
+    message: translateText('features.notifications.generated.messages.guestLeft', {
+      senderName: params.senderName,
+      groupName: params.groupName,
+    }),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -2246,7 +2259,9 @@ export async function notifyParticipationApproved(params: {
       recipientEntityId: params.eventId,
       type: 'participation_approved',
       title: translateText('generated.inline.0222_participation_approved_a6a048de'),
-      message: `A participation request in ${params.eventTitle} has been approved.`,
+      message: translateText('features.notifications.generated.messages.participationApproved', {
+        eventTitle: params.eventTitle,
+      }),
       actionUrl: `/event/${params.eventId}/participants`,
       relatedEntityType: 'event',
       relatedEventId: params.eventId,
@@ -2287,7 +2302,9 @@ export async function notifyParticipationRejected(params: {
       recipientEntityId: params.eventId,
       type: 'participation_rejected',
       title: translateText('generated.inline.0224_participation_request_rejected_7db189bc'),
-      message: `A participation request in ${params.eventTitle} has been rejected.`,
+      message: translateText('features.notifications.generated.messages.participationRejected', {
+        eventTitle: params.eventTitle,
+      }),
       actionUrl: `/event/${params.eventId}/participants`,
       relatedEntityType: 'event',
       relatedEventId: params.eventId,
@@ -2373,7 +2390,9 @@ export async function notifyParticipationRemoved(params: {
       recipientEntityId: params.eventId,
       type: 'participant_removed',
       title: translateText('generated.inline.0228_removed_from_event_3aa364a1'),
-      message: `A participant has been removed from ${params.eventTitle}.`,
+      message: translateText('features.notifications.generated.messages.participantRemoved', {
+        eventTitle: params.eventTitle,
+      }),
       actionUrl: `/event/${params.eventId}/participants`,
       relatedEntityType: 'event',
       relatedEventId: params.eventId,
@@ -2479,8 +2498,11 @@ export async function notifyGroupEventAssigned(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_event_assigned',
-    title: 'Event assigned to group',
-    message: `${params.eventTitle} has been assigned to ${params.groupName}.`,
+    title: translateText('features.notifications.generated.titles.eventAssignedToGroup'),
+    message: translateText('features.notifications.generated.messages.eventAssignedToGroup', {
+      eventTitle: params.eventTitle,
+      groupName: params.groupName,
+    }),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -2520,7 +2542,10 @@ export async function notifyCollaborationInvite(params: {
       recipientEntityId: params.amendmentId,
       type: 'collaboration_invite',
       title: translateText('generated.inline.0236_collaboration_invitation_de4beb09'),
-      message: `A collaborator has been invited to ${params.amendmentTitle}.`,
+      message: translateText(
+        'features.notifications.generated.messages.amendmentCollaboratorInvited',
+        { amendmentTitle: params.amendmentTitle }
+      ),
       actionUrl: `/amendment/${params.amendmentId}/collaborators`,
       relatedEntityType: 'amendment',
       relatedAmendmentId: params.amendmentId,
@@ -2562,7 +2587,10 @@ export async function notifyCollaborationApproved(params: {
       recipientEntityId: params.amendmentId,
       type: 'collaboration_approved',
       title: translateText('generated.inline.0238_collaboration_approved_d0f11ac2'),
-      message: `A collaboration request for ${params.amendmentTitle} has been approved.`,
+      message: translateText(
+        'features.notifications.generated.messages.amendmentCollaborationApproved',
+        { amendmentTitle: params.amendmentTitle }
+      ),
       actionUrl: `/amendment/${params.amendmentId}/collaborators`,
       relatedEntityType: 'amendment',
       relatedAmendmentId: params.amendmentId,
@@ -2603,7 +2631,10 @@ export async function notifyCollaborationRejected(params: {
       recipientEntityId: params.amendmentId,
       type: 'collaboration_rejected',
       title: translateText('generated.inline.0240_collaboration_request_rejected_82754325'),
-      message: `A collaboration request for ${params.amendmentTitle} has been rejected.`,
+      message: translateText(
+        'features.notifications.generated.messages.amendmentCollaborationRejected',
+        { amendmentTitle: params.amendmentTitle }
+      ),
       actionUrl: `/amendment/${params.amendmentId}/collaborators`,
       relatedEntityType: 'amendment',
       relatedAmendmentId: params.amendmentId,
@@ -2780,7 +2811,10 @@ export async function notifyCollaborationRemoved(params: {
       recipientEntityId: params.amendmentId,
       type: 'collaborator_removed',
       title: translateText('generated.inline.0252_removed_from_amendment_7a038fd7'),
-      message: `A collaborator has been removed from ${params.amendmentTitle}.`,
+      message: translateText(
+        'features.notifications.generated.messages.amendmentCollaboratorRemoved',
+        { amendmentTitle: params.amendmentTitle }
+      ),
       actionUrl: `/amendment/${params.amendmentId}/collaborators`,
       relatedEntityType: 'amendment',
       relatedAmendmentId: params.amendmentId,
@@ -2857,7 +2891,10 @@ export async function notifyAmendmentRoleUpdated(params: {
     recipientEntityId: params.amendmentId,
     type: 'amendment_role_updated',
     title: translateText('generated.inline.0418_role_updated_ede48dff'),
-    message: `The permissions for ${params.roleName} have been updated in ${params.amendmentTitle}.`,
+    message: translateText(
+      'features.notifications.generated.messages.amendmentRolePermissionsUpdated',
+      { roleName: params.roleName, amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}/collaborators`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -3989,7 +4026,13 @@ export async function notifyEventRoleUpdated(params: {
     recipientEntityId: params.eventId,
     type: 'event_role_updated',
     title: translateText('generated.inline.0418_role_updated_ede48dff'),
-    message: `The permissions for ${params.roleTitle} have been updated in ${params.eventTitle}.`,
+    message: translateText(
+      'features.notifications.generated.messages.eventRolePermissionsUpdated',
+      {
+        roleTitle: params.roleTitle,
+        eventTitle: params.eventTitle,
+      }
+    ),
     actionUrl: `/event/${params.eventId}/participants`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -4569,15 +4612,22 @@ export async function notifyGroupAmendmentSupportConfirmed(params: {
   eventTitle?: string;
 }) {
   const message = params.eventTitle
-    ? `${params.eventTitle} confirmed that ${params.groupName} supports ${params.amendmentTitle}.`
-    : `${params.groupName} confirmed support for ${params.amendmentTitle}.`;
+    ? translateText('features.notifications.generated.messages.amendmentSupportConfirmedByEvent', {
+        eventTitle: params.eventTitle,
+        groupName: params.groupName,
+        amendmentTitle: params.amendmentTitle,
+      })
+    : translateText('features.notifications.generated.messages.amendmentSupportConfirmed', {
+        groupName: params.groupName,
+        amendmentTitle: params.amendmentTitle,
+      });
 
   return notifyGroupMemberAudience({
     senderId: params.senderId,
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_amendment_support_confirmed',
-    title: 'Amendment support confirmed',
+    title: translateText('features.notifications.generated.titles.amendmentSupportConfirmed'),
     message,
     actionUrl: params.eventId
       ? `/event/${params.eventId}/agenda`
@@ -4980,7 +5030,10 @@ export async function notifyAmendmentVoted(params: {
     onBehalfOfEntityType: 'amendment',
     onBehalfOfEntityId: params.amendmentId,
     type: 'amendment_vote_cast',
-    title: params.voteType === 'upvote' ? 'Amendment Upvoted' : 'Amendment Downvoted',
+    title:
+      params.voteType === 'upvote'
+        ? translateText('features.notifications.generated.titles.amendmentUpvoted')
+        : translateText('features.notifications.generated.titles.amendmentDownvoted'),
     message: translateText(
       'generated.inline.0396_sendername_has_votetype_d_amendmenttitle_8190a4fe',
       {
@@ -5079,7 +5132,10 @@ export async function notifyBlogVoted(params: {
       onBehalfOfEntityType: 'blog',
       onBehalfOfEntityId: params.blogId,
       type: 'blog_vote_cast',
-      title: params.voteType === 'upvote' ? 'Blog Upvoted' : 'Blog Downvoted',
+      title:
+        params.voteType === 'upvote'
+          ? translateText('features.notifications.generated.titles.blogUpvoted')
+          : translateText('features.notifications.generated.titles.blogDownvoted'),
       message: translateText('generated.inline.0399_sendername_has_votetype_d_blogtitle_ebc5ed35', {
         senderName: params.senderName,
         voteType: params.voteType,
@@ -5096,7 +5152,10 @@ export async function notifyBlogVoted(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_vote_cast',
-    title: params.voteType === 'upvote' ? 'Blog Upvoted' : 'Blog Downvoted',
+    title:
+      params.voteType === 'upvote'
+        ? translateText('features.notifications.generated.titles.blogUpvoted')
+        : translateText('features.notifications.generated.titles.blogDownvoted'),
     message: translateText('generated.inline.0399_sendername_has_votetype_d_blogtitle_ebc5ed35', {
       senderName: params.senderName,
       voteType: params.voteType,
@@ -5145,8 +5204,13 @@ export async function notifyBloggerJoined(params: {
     type: 'blog_writer_joined',
     title: translateText('generated.inline.0402_writer_joined_5b6593ed'),
     message: params.senderName
-      ? `${params.senderName} has joined ${params.blogTitle} as a writer`
-      : `A new writer has joined ${params.blogTitle}`,
+      ? translateText('features.notifications.generated.messages.writerJoinedNamed', {
+          senderName: params.senderName,
+          blogTitle: params.blogTitle,
+        })
+      : translateText('features.notifications.generated.messages.writerJoined', {
+          blogTitle: params.blogTitle,
+        }),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,

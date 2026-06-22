@@ -7,6 +7,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
+
 // Initialize the Supabase client for server-side operations
 const getAdminDb = () => {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -91,7 +93,8 @@ export async function recalculateAmendmentPaths(
 
           results.push({
             amendmentId: amendment.id,
-            amendmentTitle: amendment.title || 'Untitled Amendment',
+            amendmentTitle:
+              amendment.title || translateText('features.amendments.editContent.untitled'),
             success: true,
             newPath: newPathSegments,
           });
@@ -107,7 +110,8 @@ export async function recalculateAmendmentPaths(
 
           results.push({
             amendmentId: amendment.id,
-            amendmentTitle: amendment.title || 'Untitled Amendment',
+            amendmentTitle:
+              amendment.title || translateText('features.amendments.editContent.untitled'),
             success: false,
             error: 'No valid reassignment target available',
           });
@@ -115,7 +119,8 @@ export async function recalculateAmendmentPaths(
       } catch (err) {
         results.push({
           amendmentId: amendment.id,
-          amendmentTitle: amendment.title || 'Untitled Amendment',
+          amendmentTitle:
+            amendment.title || translateText('features.amendments.editContent.untitled'),
           success: false,
           error: err instanceof Error ? err.message : 'Unknown error',
         });
@@ -163,7 +168,7 @@ export async function findAffectedAmendments(
       if (isAffected) {
         affected.push({
           id: amendment.id,
-          title: amendment.title || 'Untitled Amendment',
+          title: amendment.title || translateText('features.amendments.editContent.untitled'),
         });
       }
     }

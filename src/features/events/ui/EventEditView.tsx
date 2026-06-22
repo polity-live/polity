@@ -145,7 +145,7 @@ export function EventEditView({
             entityType="event"
             badge={t('pages.create.event.reviewBadge')}
             secondaryBadge={visibilityLabel}
-            title={formData.title || 'Untitled Event'}
+            title={formData.title || t('features.events.editPage.untitled')}
             subtitle={formData.description || undefined}
             hashtags={formData.tags}
             media={
@@ -282,21 +282,14 @@ export function EventEditView({
                 />
                 <ValidatedInputField
                   id="defaultFinalVoteDurationMinutes"
-                  label={translateText(
-                    'generated.inline.2001_default_final_vote_duration_minutes',
-                    'Default final vote duration'
-                  )}
+                  label={translateText('features.events.editPage.finalVoteDurationLabel')}
                   value={formData.defaultFinalVoteDurationMinutes}
                   onChange={value => updateField('defaultFinalVoteDurationMinutes', value)}
                   placeholder={translateText(
-                    'generated.inline.2002_no_auto_close',
-                    'No auto-close'
+                    'features.events.editPage.finalVoteDurationNoAutoClose'
                   )}
                   validator={value => value.trim().length === 0 || isPositiveInteger(value)}
-                  hint={translateText(
-                    'generated.inline.2003_default_final_vote_duration_hint',
-                    'Minutes; leave empty for manual closing.'
-                  )}
+                  hint={translateText('features.events.editPage.finalVoteDurationHint')}
                   type="number"
                   inputMode="numeric"
                   min="1"

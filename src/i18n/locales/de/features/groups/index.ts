@@ -20,12 +20,15 @@ export const groupsTranslations = {
     notFoundDescription: 'Für diese ID existieren keine Gruppendaten',
     saveChanges: 'Änderungen speichern',
     saving: 'Speichern...',
+    groupImageAlt: 'Gruppenbild',
     groupType: {
       title: 'Gruppentyp',
       description: 'Dieser Abschnitt zeigt, wie die Gruppe aktuell strukturiert ist.',
       label: 'Aktuelle Struktur',
       hierarchicalDescription: 'Diese Gruppe besteht aus untergeordneten Gruppen.',
       baseDescription: 'Diese Gruppe ist eine Basisgruppe mit direkten Mitgliedern.',
+      mixedDescription:
+        'Diese Gruppe hat aktive Untergruppen und ist zusätzlich mit mindestens einer Geschwistergruppe verbunden.',
     },
   },
   location: {
@@ -94,6 +97,10 @@ export const groupsTranslations = {
     inviteGuestsRoleDescription:
       'Gast-Einladungen muessen immer mindestens eine Gastrolle enthalten.',
     inviteGuestsEmptyRoles: 'Erstelle zuerst eine Gastrolle, bevor du Gaeste einlaedst.',
+    inviteSuccess: '{{count}} Nutzer erfolgreich eingeladen.',
+    inviteGuestsSuccess: '{{count}} Gäste erfolgreich eingeladen.',
+    selectedUserTitle: '{{count}} Nutzer',
+    selectedUsersTitle: '{{count}} Nutzer',
     guestOnlyInviteDescription:
       'Diese Geschwistergruppe erlaubt nur Gast-Einladungen. Offizielle Mitgliedsrollen sind hier nicht verfuegbar.',
     guestOnlyRoleDescription:
@@ -367,6 +374,19 @@ export const groupsTranslations = {
         },
       },
     },
+  },
+  wiki: {
+    membersTitle: 'Mitglieder',
+    membersDescription: 'Aktive Mitglieder, die in dieser Gruppe sichtbar sind.',
+    membersSearch: 'Mitglieder suchen',
+    noMembers: 'Noch keine aktiven Mitglieder.',
+    noMembersMatch: 'Keine Mitglieder entsprechen deinen Filtern.',
+  },
+  roleDetails: {
+    editRoleTitle: 'Rolle bearbeiten',
+    editRoleWithName: '{{roleName}} bearbeiten',
+    derivedIncumbentTooltip:
+      'Diese Amtsinhaberin oder dieser Amtsinhaber wird derzeit aus Mitgliedschaftsrollen abgeleitet.',
   },
   events: {
     title: 'Veranstaltungen',

@@ -104,7 +104,11 @@ export function AgendaCard({
               )}
               {election?.role?.group && (
                 <AgendaEntityBadge
-                  label={election.role.title ?? election.role.group.name ?? 'Role'}
+                  label={
+                    election.role.title ??
+                    election.role.group.name ??
+                    t('features.events.agenda.role')
+                  }
                   href={`/group/${election.role.group.id}`}
                   variant="role"
                 />

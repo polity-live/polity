@@ -7,8 +7,15 @@ import { OfflineElectionTallyDialog } from '../OfflineElectionTallyDialog';
 import { OfflineTallyDialog } from '../OfflineTallyDialog';
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, fallback?: string) => {
-    if (fallback) return fallback;
+  translate: (key: string, fallbackOrParams?: string | Record<string, string | number>) => {
+    if (typeof fallbackOrParams === 'string') return fallbackOrParams;
+    if (key === 'features.agendas.offlineTally.totalLimitFormula') {
+      return `${fallbackOrParams?.participants} Participants x ${fallbackOrParams?.votes} Stimmen = ${fallbackOrParams?.total}`;
+    }
+    if (key === 'features.agendas.offlineTally.maxSelectionsPerEntry') {
+      return `Each ${fallbackOrParams?.entry} can receive at most ${fallbackOrParams?.count} offline selections.`;
+    }
+    if (key === 'features.events.agenda.candidate') return 'candidate';
     if (key.includes('cancel')) return 'Cancel';
     if (key.includes('total_offline_selections')) return 'Total offline selections: ';
     if (key.includes('confirm')) return 'Confirm';

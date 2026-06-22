@@ -108,7 +108,7 @@ export function RelatedGroupsTabs({ parentGroups, childGroups }: RelatedGroupsTa
     if (items.length === 0) {
       return (
         <p className="text-muted-foreground py-8 text-center">
-          {t('pages.group.relatedGroups.noResults', 'No related groups match your search.')}
+          {t('pages.group.relatedGroups.noResults')}
         </p>
       );
     }
@@ -149,7 +149,7 @@ export function RelatedGroupsTabs({ parentGroups, childGroups }: RelatedGroupsTa
     <section className="mb-8 space-y-4" data-slot="related-groups-tabs">
       <Tabs value={activeTab} onValueChange={value => setActiveTab(value as RelatedGroupsTab)}>
         <ScrollableTabsList>
-          <TabsTrigger value="all">{t('common.all', 'All')}</TabsTrigger>
+          <TabsTrigger value="all">{t('common.labels.all')}</TabsTrigger>
           <TabsTrigger value="childGroups">{t('pages.group.childGroups.title')}</TabsTrigger>
           <TabsTrigger value="parentGroups">{t('pages.group.parentGroups.title')}</TabsTrigger>
         </ScrollableTabsList>
@@ -157,7 +157,7 @@ export function RelatedGroupsTabs({ parentGroups, childGroups }: RelatedGroupsTa
         <div className="relative mt-4">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <FormControlInput
-            placeholder={t('pages.group.relatedGroups.searchPlaceholder', 'Search related groups')}
+            placeholder={t('pages.group.relatedGroups.searchPlaceholder')}
             className="pl-10"
             value={searchValue}
             onChange={event => setSearchValue(event.target.value)}

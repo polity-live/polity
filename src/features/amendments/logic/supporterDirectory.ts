@@ -1,4 +1,5 @@
 import { formatLocation, type LocationParts } from '@/features/shared/logic/locationHelpers';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type GroupDecisionStatus = 'supported' | 'accepted';
 type SupportConfirmationStatus = 'pending' | 'confirmed' | 'declined' | 'withdrawn';
@@ -100,7 +101,7 @@ function formatSupporterLocation(group?: SupporterGroupLike | null) {
     return `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
   }
 
-  return 'Location not set';
+  return translateText('features.amendments.wiki.locationNotSet');
 }
 
 export function deriveSupporterDirectoryItems(args: {
@@ -159,7 +160,7 @@ export function deriveSupporterDirectoryItems(args: {
 
     items.push({
       groupId,
-      name: group?.name?.trim() || 'Unnamed group',
+      name: group?.name?.trim() || translateText('features.amendments.wiki.unnamedGroup'),
       href: `/group/${groupId}`,
       memberCount: Math.max(0, group?.member_count ?? 0),
       supportStatus: latestConfirmationStatus === 'pending' ? 'pending' : 'active',

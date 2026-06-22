@@ -23,7 +23,9 @@ export function BlogRelationsTab({
   return (
     <div className="space-y-6">
       <MembershipStatusTable
-        title={`Pending Invitations (${blogRelationsByStatus.invited.length})`}
+        title={translateText('pages.user.memberships.sections.pendingInvitations', {
+          count: blogRelationsByStatus.invited.length,
+        })}
         description={translateText(
           'generated.inline.1186_blog_invitations_you_ve_received_6a4d03e8'
         )}
@@ -38,7 +40,9 @@ export function BlogRelationsTab({
       />
 
       <MembershipStatusTable
-        title={`Active Blogs (${blogRelationsByStatus.active.length})`}
+        title={translateText('pages.user.memberships.sections.activeBlogs', {
+          count: blogRelationsByStatus.active.length,
+        })}
         description={translateText(
           'generated.inline.1187_blogs_you_re_currently_writing_for_69a83bab'
         )}
@@ -52,7 +56,9 @@ export function BlogRelationsTab({
       />
 
       <MembershipStatusTable
-        title={`Pending Requests (${blogRelationsByStatus.requested.length})`}
+        title={translateText('pages.user.memberships.sections.pendingRequests', {
+          count: blogRelationsByStatus.requested.length,
+        })}
         description={translateText(
           'generated.inline.1188_your_pending_requests_to_write_for_blogs_b0f2d976'
         )}

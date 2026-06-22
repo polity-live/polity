@@ -28,6 +28,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import type {
   StreetDesignInteractionMode,
@@ -83,15 +84,6 @@ const objectIcons = {
   building: Building2,
 } satisfies Record<StreetDesignObjectType, ComponentType<{ className?: string }>>;
 
-const categoryLabels = {
-  greenery: 'Gruen',
-  mobility: 'Mobilitaet',
-  street: 'Strasse',
-  furniture: 'Moeblierung',
-  building: 'Gebaeude',
-  water: 'Wasser',
-} satisfies Record<StreetDesignObjectCategory, string>;
-
 const categoryIcons = {
   greenery: Sprout,
   mobility: Bike,
@@ -121,18 +113,35 @@ export function StreetDesignToolbarView({
   onOsmLayerVisibilityChange,
   onShowStreetMarkingsChange,
 }: StreetDesignToolbarViewProps) {
+  const { t } = useTranslation();
   const [isExistingOpen, setIsExistingOpen] = useState(true);
   const [isElementsOpen, setIsElementsOpen] = useState(true);
   const [isAddedOpen, setIsAddedOpen] = useState(true);
   const [openAddedCategories, setOpenAddedCategories] = useState<StreetDesignObjectCategory[]>([]);
   const layerToggles = [
-    { layer: 'building', label: 'Gebaeude', icon: Building2 },
-    { layer: 'road', label: 'Strassen', icon: Route },
-    { layer: 'green', label: 'Gruen', icon: Sprout },
-    { layer: 'water', label: 'Wasser', icon: Waves },
+    {
+      layer: 'building',
+      labelKey: 'features.amendments.streetscape.osmLayers.building',
+      icon: Building2,
+    },
+    {
+      layer: 'road',
+      labelKey: 'features.amendments.streetscape.osmLayers.road',
+      icon: Route,
+    },
+    {
+      layer: 'green',
+      labelKey: 'features.amendments.streetscape.osmLayers.green',
+      icon: Sprout,
+    },
+    {
+      layer: 'water',
+      labelKey: 'features.amendments.streetscape.osmLayers.water',
+      icon: Waves,
+    },
   ] satisfies {
     layer: keyof StreetDesignOsmLayerVisibility;
-    label: string;
+    labelKey: string;
     icon: ComponentType<{ className?: string }>;
   }[];
   const hiddenObjectIdSet = useMemo(() => new Set(hiddenObjectIds), [hiddenObjectIds]);
@@ -163,13 +172,19 @@ export function StreetDesignToolbarView({
       open ? Array.from(new Set([...current, category])) : current.filter(item => item !== category)
     );
   };
+  const getCategoryLabel = (category: StreetDesignObjectCategory) =>
+    t(`features.amendments.streetscape.categories.${category}`);
+  const getActionLabel = (
+    action: 'collapse' | 'expand' | 'hide' | 'show' | 'remove' | 'select',
+    label: string
+  ) => t(`features.amendments.streetscape.actions.${action}`, { label });
 
   return (
     <aside className="bg-background/95 flex h-full min-w-0 flex-col gap-5 border-b p-4 shadow-sm xl:border-r xl:border-b-0">
       <div>
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
           <Camera className="text-muted-foreground size-4" />
-          Modus
+          {t('features.amendments.streetscape.toolbar.mode')}
         </div>
         <div className="grid grid-cols-3 gap-2">
           <Button
@@ -184,7 +199,7 @@ export function StreetDesignToolbarView({
             onClick={() => onInteractionModeChange('place')}
           >
             <Plus className="size-4" />
-            Platzieren
+            {t('features.amendments.streetscape.modes.place')}
           </Button>
           <Button
             type="button"
@@ -197,7 +212,7 @@ export function StreetDesignToolbarView({
             onClick={() => onInteractionModeChange('select')}
           >
             <MousePointer2 className="size-4" />
-            Selektieren
+            {t('features.amendments.streetscape.modes.select')}
           </Button>
           <Button
             type="button"
@@ -210,7 +225,7 @@ export function StreetDesignToolbarView({
             onClick={() => onInteractionModeChange('camera')}
           >
             <Camera className="size-4" />
-            Kamera
+            {t('features.amendments.streetscape.modes.camera')}
           </Button>
         </div>
       </div>
@@ -224,10 +239,10 @@ export function StreetDesignToolbarView({
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <Layers className="text-muted-foreground size-4" />
-              OSM Bestand
+              {t('features.amendments.streetscape.toolbar.existing.title')}
             </div>
             <p className="text-muted-foreground mt-0.5 text-[11px] leading-tight">
-              Kartendaten und Markierungen
+              {t('features.amendments.streetscape.toolbar.existing.description')}
             </p>
           </div>
           <CollapsibleTrigger asChild>
@@ -236,8 +251,14 @@ export function StreetDesignToolbarView({
               variant="ghost"
               size="icon"
               className="size-7 flex-none"
-              aria-label={isExistingOpen ? 'OSM Bestand einklappen' : 'OSM Bestand ausklappen'}
-              title={isExistingOpen ? 'OSM Bestand einklappen' : 'OSM Bestand ausklappen'}
+              aria-label={getActionLabel(
+                isExistingOpen ? 'collapse' : 'expand',
+                t('features.amendments.streetscape.toolbar.existing.title')
+              )}
+              title={getActionLabel(
+                isExistingOpen ? 'collapse' : 'expand',
+                t('features.amendments.streetscape.toolbar.existing.title')
+              )}
             >
               <ChevronDown
                 className={cn(
@@ -253,6 +274,7 @@ export function StreetDesignToolbarView({
             {layerToggles.map(item => {
               const Icon = item.icon;
               const isVisible = osmLayerVisibility[item.layer];
+              const layerLabel = t(item.labelKey);
 
               return (
                 <Button
@@ -264,12 +286,12 @@ export function StreetDesignToolbarView({
                     'bg-background/80 h-10 w-full justify-between gap-2 rounded-md px-3 text-xs',
                     isVisible && 'border-brand/40 bg-brand/10 text-brand'
                   )}
-                  title={`${item.label} ${isVisible ? 'ausblenden' : 'einblenden'}`}
+                  title={getActionLabel(isVisible ? 'hide' : 'show', layerLabel)}
                   onClick={() => onOsmLayerVisibilityChange(item.layer, !isVisible)}
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <Icon className="size-4 flex-none" />
-                    <span className="truncate">{item.label}</span>
+                    <span className="truncate">{layerLabel}</span>
                   </span>
                   <span
                     className={cn(
@@ -288,12 +310,17 @@ export function StreetDesignToolbarView({
                 'bg-background/80 h-10 w-full justify-between gap-2 rounded-md px-3 text-xs',
                 showStreetMarkings && 'border-brand/40 bg-brand/10 text-brand'
               )}
-              title={showStreetMarkings ? 'Markierungen ausblenden' : 'Markierungen einblenden'}
+              title={getActionLabel(
+                showStreetMarkings ? 'hide' : 'show',
+                t('features.amendments.streetscape.osmLayers.streetMarkings')
+              )}
               onClick={() => onShowStreetMarkingsChange(!showStreetMarkings)}
             >
               <span className="flex min-w-0 items-center gap-2">
                 <Highlighter className="size-4 flex-none" />
-                <span className="truncate">Markierungen</span>
+                <span className="truncate">
+                  {t('features.amendments.streetscape.osmLayers.streetMarkings')}
+                </span>
               </span>
               <span
                 className={cn(
@@ -315,10 +342,10 @@ export function StreetDesignToolbarView({
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <Plus className="text-muted-foreground size-4" />
-              Neue Elemente
+              {t('features.amendments.streetscape.toolbar.elements.title')}
             </div>
             <p className="text-muted-foreground mt-0.5 text-[11px] leading-tight">
-              Werkzeug auswaehlen und platzieren
+              {t('features.amendments.streetscape.toolbar.elements.description')}
             </p>
           </div>
           <CollapsibleTrigger asChild>
@@ -327,8 +354,14 @@ export function StreetDesignToolbarView({
               variant="ghost"
               size="icon"
               className="size-7 flex-none"
-              aria-label={isElementsOpen ? 'Neue Elemente einklappen' : 'Neue Elemente ausklappen'}
-              title={isElementsOpen ? 'Neue Elemente einklappen' : 'Neue Elemente ausklappen'}
+              aria-label={getActionLabel(
+                isElementsOpen ? 'collapse' : 'expand',
+                t('features.amendments.streetscape.toolbar.elements.title')
+              )}
+              title={getActionLabel(
+                isElementsOpen ? 'collapse' : 'expand',
+                t('features.amendments.streetscape.toolbar.elements.title')
+              )}
             >
               <ChevronDown
                 className={cn(
@@ -345,6 +378,7 @@ export function StreetDesignToolbarView({
               const definition = streetDesignObjectRegistry[type];
               const Icon = objectIcons[type];
               const isSelected = selectedTool === type;
+              const objectLabel = t(definition.labelKey);
 
               return (
                 <Button
@@ -357,11 +391,11 @@ export function StreetDesignToolbarView({
                     isSelected && 'border-brand/40 bg-brand/10 text-brand'
                   )}
                   disabled={readOnly}
-                  title={definition.label}
+                  title={objectLabel}
                   onClick={() => onToolChange(type)}
                 >
                   <Icon className="size-4" />
-                  <span className="max-w-full truncate">{definition.label}</span>
+                  <span className="max-w-full truncate">{objectLabel}</span>
                 </Button>
               );
             })}
@@ -378,10 +412,10 @@ export function StreetDesignToolbarView({
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <Layers className="text-muted-foreground size-4" />
-              Hinzugefügt
+              {t('features.amendments.streetscape.toolbar.added.title')}
             </div>
             <p className="text-muted-foreground mt-0.5 text-[11px] leading-tight">
-              Gruppen und Elemente verwalten
+              {t('features.amendments.streetscape.toolbar.added.description')}
             </p>
           </div>
           <CollapsibleTrigger asChild>
@@ -390,8 +424,14 @@ export function StreetDesignToolbarView({
               variant="ghost"
               size="icon"
               className="size-7 flex-none"
-              aria-label={isAddedOpen ? 'Hinzugefügt einklappen' : 'Hinzugefügt ausklappen'}
-              title={isAddedOpen ? 'Hinzugefügt einklappen' : 'Hinzugefügt ausklappen'}
+              aria-label={getActionLabel(
+                isAddedOpen ? 'collapse' : 'expand',
+                t('features.amendments.streetscape.toolbar.added.title')
+              )}
+              title={getActionLabel(
+                isAddedOpen ? 'collapse' : 'expand',
+                t('features.amendments.streetscape.toolbar.added.title')
+              )}
             >
               <ChevronDown
                 className={cn(
@@ -406,12 +446,12 @@ export function StreetDesignToolbarView({
           <div className="mt-3 space-y-3">
             {addedObjectGroups.length === 0 ? (
               <div className="bg-background/80 text-muted-foreground rounded-md border px-3 py-3 text-xs">
-                Noch keine Elemente.
+                {t('features.amendments.streetscape.toolbar.added.empty')}
               </div>
             ) : (
               addedObjectGroups.map(group => {
                 const CategoryIcon = categoryIcons[group.category];
-                const categoryLabel = categoryLabels[group.category];
+                const categoryLabel = getCategoryLabel(group.category);
                 const isCategoryHidden = hiddenCategorySet.has(group.category);
                 const isCategoryOpen = openAddedCategories.includes(group.category);
                 const firstObject = group.objects[0] ?? null;
@@ -437,16 +477,14 @@ export function StreetDesignToolbarView({
                           variant="ghost"
                           size="icon"
                           className="-ml-1 size-7 flex-none"
-                          aria-label={
-                            isCategoryOpen
-                              ? `${categoryLabel} einklappen`
-                              : `${categoryLabel} ausklappen`
-                          }
-                          title={
-                            isCategoryOpen
-                              ? `${categoryLabel} einklappen`
-                              : `${categoryLabel} ausklappen`
-                          }
+                          aria-label={getActionLabel(
+                            isCategoryOpen ? 'collapse' : 'expand',
+                            categoryLabel
+                          )}
+                          title={getActionLabel(
+                            isCategoryOpen ? 'collapse' : 'expand',
+                            categoryLabel
+                          )}
                         >
                           <ChevronDown
                             className={cn(
@@ -459,7 +497,7 @@ export function StreetDesignToolbarView({
                       <button
                         type="button"
                         className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
-                        title={`${categoryLabel} auswählen`}
+                        title={getActionLabel('select', categoryLabel)}
                         onClick={() => onObjectSelect(firstObject?.id ?? null)}
                       >
                         <span className="flex min-w-0 items-center gap-2">
@@ -482,9 +520,7 @@ export function StreetDesignToolbarView({
                           variant="ghost"
                           size="icon"
                           className="size-7"
-                          title={`${categoryLabel} ${
-                            isCategoryHidden ? 'einblenden' : 'ausblenden'
-                          }`}
+                          title={getActionLabel(isCategoryHidden ? 'show' : 'hide', categoryLabel)}
                           onClick={() =>
                             onObjectCategoryVisibilityChange(group.category, isCategoryHidden)
                           }
@@ -500,7 +536,7 @@ export function StreetDesignToolbarView({
                           variant="ghost"
                           size="icon"
                           className="text-destructive size-7"
-                          title={`${categoryLabel} entfernen`}
+                          title={getActionLabel('remove', categoryLabel)}
                           disabled={readOnly}
                           onClick={() => onObjectCategoryDelete(group.category)}
                         >
@@ -517,6 +553,7 @@ export function StreetDesignToolbarView({
                           const isObjectHidden = hiddenObjectIdSet.has(object.id);
                           const isEffectivelyVisible = !isCategoryHidden && !isObjectHidden;
                           const isSelected = selectedObjectId === object.id;
+                          const objectLabel = t(definition.labelKey);
 
                           return (
                             <div
@@ -530,12 +567,12 @@ export function StreetDesignToolbarView({
                               <button
                                 type="button"
                                 className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
-                                title={`${definition.label} auswählen`}
+                                title={getActionLabel('select', objectLabel)}
                                 onClick={() => onObjectSelect(object.id)}
                               >
                                 <span className="flex min-w-0 items-center gap-2">
                                   <Icon className="text-muted-foreground size-3.5 flex-none" />
-                                  <span className="truncate text-xs">{definition.label}</span>
+                                  <span className="truncate text-xs">{objectLabel}</span>
                                 </span>
                                 <span
                                   className={cn(
@@ -549,9 +586,10 @@ export function StreetDesignToolbarView({
                                 variant="ghost"
                                 size="icon"
                                 className="size-6 flex-none"
-                                title={`${definition.label} ${
-                                  isObjectHidden ? 'einblenden' : 'ausblenden'
-                                }`}
+                                title={getActionLabel(
+                                  isObjectHidden ? 'show' : 'hide',
+                                  objectLabel
+                                )}
                                 onClick={() => onObjectVisibilityChange(object.id, isObjectHidden)}
                               >
                                 {isObjectHidden ? (
@@ -565,7 +603,7 @@ export function StreetDesignToolbarView({
                                 variant="ghost"
                                 size="icon"
                                 className="text-destructive size-6 flex-none"
-                                title={`${definition.label} entfernen`}
+                                title={getActionLabel('remove', objectLabel)}
                                 disabled={readOnly}
                                 onClick={() => onObjectDelete(object.id)}
                               >

@@ -39,7 +39,7 @@ describe('StreetSceneCanvasViewView', () => {
     const onDeleteObject = vi.fn();
     renderCanvasView({ onDeleteObject });
 
-    fireEvent.click(screen.getByRole('button', { name: /entfernen/i }));
+    fireEvent.click(screen.getByRole('button', { name: /remove/i }));
 
     expect(onDeleteObject).toHaveBeenCalledWith('tree-123456');
   });
@@ -56,8 +56,8 @@ describe('StreetSceneCanvasViewView', () => {
       onCancelPlacement,
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /fertig/i }));
-    fireEvent.click(screen.getByRole('button', { name: /abbrechen/i }));
+    fireEvent.click(screen.getByRole('button', { name: /done/i }));
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
 
     expect(onFinishPathPlacement).toHaveBeenCalled();
     expect(onCancelPlacement).toHaveBeenCalled();

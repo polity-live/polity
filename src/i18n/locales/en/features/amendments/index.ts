@@ -32,6 +32,17 @@ export const amendmentsTranslations = {
     passed: 'Amendment was accepted',
     rejected: 'Amendment was rejected',
   },
+  workflowDisabledReasons: {
+    branchReadonly: 'This branch is complete and can no longer be changed.',
+    eventControlled: 'The event flow controls this status.',
+    internalWindowClosed:
+      'The internal phase can no longer be changed manually after the first process agenda item starts.',
+  },
+  workflowTooltips: {
+    systemManagedEventMode: 'The system manages this status.',
+    eventPhaseLockedMode:
+      'This status is locked during the event phase. The amendment is now controlled by the event flow.',
+  },
   workflowPhases: {
     ariaLabel: 'Amendment workflow',
     creation: 'Creation',
@@ -43,6 +54,7 @@ export const amendmentsTranslations = {
     rejected: 'Rejected',
   },
   editContent: {
+    untitled: 'Untitled Amendment',
     loading: 'Loading amendment data...',
     notFound: 'Amendment not found',
     noDataExists: 'No amendment data exists for this ID',
@@ -67,6 +79,8 @@ export const amendmentsTranslations = {
     workflowSettingsDescription: 'Configure the workflow status and voting settings',
     workflowStatusLabel: 'Workflow Status',
     selectWorkflowStatus: 'Select workflow status',
+    workflowBranchLabel: 'Text variant',
+    workflowBranchPlaceholder: 'Select text variant',
     internalCRVotingCloseTitle: 'Close internal change request votes',
     internalCRVotingCloseDescription:
       'Defines when open change requests in internal voting mode are decided automatically.',
@@ -171,6 +185,9 @@ export const amendmentsTranslations = {
     invite: 'Invite Collaborator',
     noCollaborators: 'No collaborators found',
     searchPlaceholder: 'Search collaborators...',
+    roleFallback: 'Role',
+    rolePermissionsTitle: 'Role Permissions',
+    rolePermissionsDescription: 'Manage amendment collaborator role permissions.',
   },
   discussions: {
     title: 'Discussions',
@@ -270,6 +287,47 @@ export const amendmentsTranslations = {
     eventUpdateFailed: 'Failed to update event',
     groupNotFound: 'Group not found in path',
     tryAgain: 'Please try again',
+    activeRunDescription: 'Current workflow run and its branch progress',
+    addAdditionalPath: 'Add additional path',
+    addAdditionalPathDialogTitle: 'Add additional path',
+    additionalPathSelectorDescription:
+      'Choose another target group and event that should process this amendment in parallel.',
+    additionalPathSuccess: 'Additional path added.',
+    branchCount: '{{count}} branch(es)',
+    branchDocumentMissing: 'No text variant yet',
+    branchDocumentReady: 'Text variant ready',
+    clearEvent: 'Clear event',
+    confirmAdditionalPath: 'Add path',
+    createPath: 'Create path',
+    decidedStep: 'Decided',
+    editBranchEventsDescription: 'Adjust the events assigned to this branch of the process.',
+    editBranchEventsTitle: 'Edit branch events',
+    editEvents: 'Edit events',
+    fixedTargetGroup: 'Fixed target group',
+    fixedWorkflow: 'Fixed workflow',
+    forwardingPreviewDescription:
+      'Preview the next event that will receive this amendment after the current decision.',
+    forwardingPreviewTitle: 'Forwarding preview',
+    groupDecisions: 'Group decisions',
+    groupDecisionsDescription: 'Completed and pending group decisions for this amendment path.',
+    noEligibleEventForStep: 'No eligible event for this step',
+    noEventSelected: 'No event selected',
+    noGroupDecisions: 'No group decisions yet',
+    notAfter: 'not after {{date}}',
+    notBefore: 'not before {{date}}',
+    openChangeRequests: '{{count}} open change request(s)',
+    openTasks: '{{count}} open task(s)',
+    openTextVariant: 'Open text variant',
+    pathVisualization: 'Process flow',
+    pendingEvent: 'Event pending',
+    replanFailed: 'Events could not be updated.',
+    replanSuccess: 'Events updated.',
+    saveEventChanges: 'Save event changes',
+    selectEventForStep: 'Select event for step {{step}}',
+    sharedEvent: 'Shared event',
+    startFailed: 'Failed to start amendment process',
+    step: 'Step',
+    tasksNeedAttention: '{{count}} task(s) need attention',
   },
   targetSelection: {
     defaultTitle: 'Select Target Group and Event',
@@ -292,6 +350,21 @@ export const amendmentsTranslations = {
   text: {
     title: 'Full Text',
     modeSelector: 'Mode Selector',
+    rejectedInFavorOf: 'Rejected in favor of {{branch}}',
+    readonlyFinalVariant:
+      'This text variant is read-only because the amendment was rejected in favor of another branch.',
+    branchSelector: {
+      allBranches: 'All text variants',
+      allBranchesDescription: 'Show the main document and all branch variants together.',
+      branchDiff: 'Branch diff',
+      closeDiff: 'Close diff',
+      label: 'Text variant',
+      mainDocument: 'Main document',
+      openChangeRequests: '{{count}} open change request(s)',
+      openDiff: 'Open diff',
+      sameEvent: 'Same event',
+      selectAria: 'Select text variant',
+    },
   },
   pathVisualization: {
     title: 'Amendment Process Path',
@@ -305,6 +378,272 @@ export const amendmentsTranslations = {
   wiki: {
     loading: 'Loading amendment...',
     notFound: 'Amendment not found',
+    noCollaborators: 'No collaborators yet',
+    noCollaboratorsMatch: 'No collaborators match your search.',
+    locationNotSet: 'Location not set',
+    unnamedGroup: 'Unnamed group',
+  },
+  streetscape: {
+    badge: 'Streetscape',
+    amendmentLabel: 'Amendment',
+    defaultTitle: 'Street design',
+    savedTitleWithAmendment: '{{title}} - street design',
+    save: 'Save',
+    saving: 'Saving...',
+    workspaceTitle: 'Street-space design',
+    workspaceDescription: 'Tools, 3D model, inspector, and costs in one workspace.',
+    status: {
+      readOnly: 'Read only',
+      saved: 'Saved',
+      unsaved: 'Unsaved',
+    },
+    metrics: {
+      cost: '{{cost}}',
+      elements: '{{count}} elements',
+      existing: '{{count}} existing',
+    },
+    categories: {
+      building: 'Buildings',
+      furniture: 'Furniture',
+      greenery: 'Greenery',
+      mobility: 'Mobility',
+      street: 'Street',
+      water: 'Water',
+    },
+    actions: {
+      collapse: 'Collapse {{label}}',
+      expand: 'Expand {{label}}',
+      hide: 'Hide {{label}}',
+      remove: 'Remove {{label}}',
+      removeShort: 'Remove',
+      select: 'Select {{label}}',
+      show: 'Show {{label}}',
+    },
+    modes: {
+      camera: 'Camera',
+      place: 'Place',
+      select: 'Select',
+    },
+    comparison: {
+      newDesign: 'New design',
+      original: 'Original',
+      overlay: 'Overlay',
+      split: 'Split',
+    },
+    toolbar: {
+      added: {
+        description: 'Manage groups and elements',
+        empty: 'No elements yet.',
+        title: 'Added',
+      },
+      elements: {
+        description: 'Choose a tool and place it',
+        title: 'New elements',
+      },
+      existing: {
+        description: 'Map data and markings',
+        title: 'OSM Existing',
+      },
+      mode: 'Mode',
+    },
+    osmLayers: {
+      building: 'Buildings',
+      green: 'Green',
+      road: 'Streets',
+      streetMarkings: 'Markings',
+      water: 'Water',
+    },
+    inspector: {
+      activeDraft: 'Active draft',
+      area: 'Area',
+      existing: 'Existing',
+      fieldWithUnit: '{{label}} ({{unit}})',
+      height: 'Height',
+      length: 'Length',
+      nextElementSettings: 'Settings for the next element',
+      noSelection: 'No element selected',
+      noSelectionDescription: 'Select a placed element or an existing object in the 3D model.',
+      osmFallback: 'OSM existing object',
+      place: 'Place',
+      points: 'Points',
+      price: 'Price',
+      removeFromMap: 'Remove from map',
+      rotation: 'Rotation',
+      suggestedCost: 'Suggestion: {{cost}}',
+      title: 'Inspector',
+      total: 'Total',
+      width: 'Width',
+    },
+    cost: {
+      breakdown: 'Cost breakdown',
+      breakdownDescription: 'Review groups and item costs',
+      comparison: 'Comparison',
+      emptyCategories: 'No cost categories yet.',
+      emptyLines: 'No elements yet.',
+      estimate: 'Estimate',
+      title: 'Costs',
+    },
+    areaPicker: {
+      heightMeters: 'Height m',
+      loadDemo: 'Load demo',
+      loadOsm: 'Load OSM',
+      loadingOsm: 'Loading...',
+      mapUnavailable: 'Map could not be loaded.',
+      rotationDegrees: 'Rotation deg',
+      title: 'Map section',
+      widthMeters: 'Width m',
+    },
+    map: {
+      resizeHandleTitle: 'Drag section {{handle}}',
+      rotateHandleTitle: 'Rotate section',
+    },
+    canvas: {
+      drawPath: 'Draw curve',
+      loadFailed: 'Three.js could not be loaded.',
+      pointsSet: '{{count}} points set',
+    },
+    sample: {
+      existingBuilding: 'Existing building',
+      greenSpace: 'Green space',
+      mainRoad: 'Sample street',
+      residentialBuilding: 'Residential building',
+      selectedStreetSpace: 'Selected street space',
+      sideRoad: 'Cross street',
+    },
+    errors: {
+      loadOsmFailed: 'OSM data could not be loaded.',
+      saveFailed: 'Design could not be saved.',
+    },
+    objects: {
+      bank: {
+        label: 'Bench',
+        properties: {
+          seats: 'Seats',
+        },
+      },
+      bikeLane: {
+        label: 'Bike lane',
+        properties: {
+          protection: 'Protection',
+        },
+      },
+      building: {
+        label: 'Building',
+        properties: {
+          color: {
+            label: 'Color',
+            options: {
+              blue: 'Blue',
+              brick: 'Brick',
+              green: 'Green',
+              sand: 'Sand',
+              slate: 'Slate',
+            },
+          },
+          floors: 'Floors',
+          use: {
+            label: 'Use',
+            options: {
+              civic: 'Civic',
+              commercial: 'Commercial',
+              mixed: 'Mixed',
+              residential: 'Residential',
+            },
+          },
+        },
+      },
+      bush: {
+        label: 'Bush',
+        properties: {
+          diameter: 'Diameter',
+          species: 'Species',
+        },
+      },
+      carLane: {
+        label: 'Car lane',
+        properties: {
+          direction: {
+            label: 'Direction',
+            options: {
+              oneWay: 'One way',
+              twoWay: 'Two way',
+            },
+          },
+        },
+      },
+      common: {
+        properties: {
+          height: 'Height',
+          maintenance: 'Maintenance',
+          material: 'Material',
+          spacing: 'Row spacing',
+          surface: 'Surface',
+        },
+      },
+      flowerBed: {
+        label: 'Flower bed',
+        properties: {
+          planting: 'Planting',
+        },
+      },
+      grassStrip: {
+        label: 'Grass strip',
+      },
+      parkingArea: {
+        label: 'Parking area',
+        properties: {
+          orientation: {
+            label: 'Orientation',
+            options: {
+              angled: 'Angled',
+              parallel: 'Parallel',
+              perpendicular: 'Perpendicular',
+            },
+          },
+          parkingSpaces: 'Parking spaces',
+        },
+      },
+      sidewalk: {
+        label: 'Sidewalk',
+        properties: {
+          accessibility: 'Low barrier',
+        },
+      },
+      street: {
+        label: 'Street',
+        properties: {
+          lanes: 'Lanes',
+        },
+      },
+      tree: {
+        label: 'Tree',
+        properties: {
+          canopyDiameter: 'Canopy diameter',
+          species: 'Species',
+        },
+      },
+      waterArea: {
+        label: 'Water',
+        properties: {
+          edge: {
+            label: 'Edge',
+            options: {
+              framed: 'Framed',
+              natural: 'Natural',
+              seatingEdge: 'Seating edge',
+            },
+          },
+          waterType: {
+            label: 'Water type',
+            options: {
+              pond: 'Pond',
+              retention: 'Retention',
+              stream: 'Stream',
+            },
+          },
+        },
+      },
+    },
   },
   versionControl: {
     createVersion: 'Create Version',

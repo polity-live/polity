@@ -1,4 +1,5 @@
 import { parseDelegateElectionMetadata } from '@/features/elections/logic/electionAssignmentMetadata';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type DelegateAssemblyCompositionChartId = 'planned' | 'scheduled' | 'elected';
 export type DelegateAssemblyCompositionMetric = DelegateAssemblyCompositionChartId;
@@ -278,7 +279,7 @@ export function buildDelegateAssemblyCompositionSections(
       plannedTotal > 0 || scheduledTotal > 0
         ? {
             key: 'unscheduled',
-            label: 'Unscheduled',
+            label: translateText('features.events.participants.composition.remainder.unscheduled'),
             value: Math.max(0, plannedTotal - scheduledTotal),
             kind: 'remainder' as const,
           }
@@ -290,7 +291,9 @@ export function buildDelegateAssemblyCompositionSections(
       plannedTotal > 0 || electedTotal > 0
         ? {
             key: 'not-yet-elected',
-            label: 'Not yet elected',
+            label: translateText(
+              'features.events.participants.composition.remainder.notYetElected'
+            ),
             value: Math.max(0, plannedTotal - electedTotal),
             kind: 'remainder' as const,
           }

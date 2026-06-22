@@ -156,12 +156,6 @@ export function useEditorViewModel({
       discussionId: string;
       changeRequestEntityId: string;
     }) => {
-      console.log('[EditorView] handleChangeRequestCreate called:', {
-        crId,
-        changeRequestEntityId,
-        amendmentId,
-        entityType,
-      });
       if (!amendmentId) return;
       const snapshot = createChangeRequestDiffSnapshot(discussionId, content);
       editorOps.handleSuggestionCreated({

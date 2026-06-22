@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { DivIcon, LatLngBounds, LeafletEventHandlerFnMap } from 'leaflet';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { StreetDesignGeoPoint } from '../types';
 import type { StreetDesignBboxResizeHandle } from '../logic/streetDesignBbox';
 
@@ -88,6 +89,7 @@ export function StreetAreaPickerSelectionOverlay({
   onBboxResize: (handle: StreetDesignBboxResizeHandle, point: StreetDesignGeoPoint) => void;
   onSelectionRotate: (point: StreetDesignGeoPoint) => void;
 }) {
+  const { t } = useTranslation();
   const map = reactLeafletModule.useMap() as MapWithSelectionGestures;
   const restoreMapGesturesRef = useRef<(() => void) | null>(null);
 
@@ -144,7 +146,9 @@ export function StreetAreaPickerSelectionOverlay({
           position={item.position}
           icon={resizeMarkerIcon}
           draggable={!readOnly}
-          title={`Ausschnitt ${item.handle} ziehen`}
+          title={t('features.amendments.streetscape.map.resizeHandleTitle', {
+            handle: item.handle,
+          })}
           eventHandlers={createMarkerEventHandlers(event => {
             const latLng = event.target.getLatLng();
             onBboxResize(item.handle, { lat: latLng.lat, lon: latLng.lng });
@@ -155,7 +159,7 @@ export function StreetAreaPickerSelectionOverlay({
         position={rotateHandlePosition}
         icon={rotateMarkerIcon}
         draggable={!readOnly}
-        title="Ausschnitt drehen"
+        title={t('features.amendments.streetscape.map.rotateHandleTitle')}
         eventHandlers={createMarkerEventHandlers(event => {
           const latLng = event.target.getLatLng();
           onSelectionRotate({ lat: latLng.lat, lon: latLng.lng });

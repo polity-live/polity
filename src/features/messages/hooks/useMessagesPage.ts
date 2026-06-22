@@ -32,7 +32,8 @@ export function useMessagesPage() {
   // Current user name for notifications
   const { currentUser: currentUserData } = useUserState();
   const currentUserName =
-    `${currentUserData?.first_name ?? ''} ${currentUserData?.last_name ?? ''}`.trim() || 'Someone';
+    `${currentUserData?.first_name ?? ''} ${currentUserData?.last_name ?? ''}`.trim() ||
+    t('features.messages.fallbacks.someone');
 
   // Data hooks
   const { conversations, isLoading } = useConversationData(user?.id);

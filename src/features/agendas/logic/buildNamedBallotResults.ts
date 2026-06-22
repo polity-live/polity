@@ -221,7 +221,7 @@ function resolveGroup(args: {
   if (group?.id) {
     return {
       key: `group:${group.id}`,
-      label: group.name || 'Unbenannte Herkunftsgruppe',
+      label: group.name || translateText('features.events.agenda.namedResults.unnamedSourceGroup'),
       isFallback: false,
     };
   }
@@ -370,10 +370,10 @@ function buildResultsModel(args: {
       status: rowStatus,
       statusLabel:
         rowStatus === 'recorded'
-          ? 'Erfasst'
+          ? translateText('features.events.agenda.namedResults.recorded')
           : rowStatus === 'not_participated'
-            ? 'Nicht teilgenommen'
-            : 'Noch offen',
+            ? translateText('features.events.agenda.namedResults.notParticipated')
+            : translateText('features.events.agenda.namedResults.pending'),
       isStruckThrough: rowStatus === 'not_participated',
     });
     group.eligibleCount += 1;
@@ -400,7 +400,7 @@ function buildResultsModel(args: {
       selections: [],
       kind: 'offline',
       status: 'offline_aggregated',
-      statusLabel: 'Offline / aggregiert',
+      statusLabel: translateText('features.events.agenda.namedResults.offlineAggregated'),
       isStruckThrough: false,
     });
     group.offlineAggregatedCount += 1;
@@ -437,7 +437,11 @@ export function buildNamedVoteResultsModel(args: {
   const options = (args.vote.choices ?? [])
     .map((choice, index) => ({
       id: choice.id,
-      label: choice.label || `Choice ${index + 1}`,
+      label:
+        choice.label ||
+        translateText('features.events.agenda.defaultChoiceLabels.choiceWithNumber', {
+          count: index + 1,
+        }),
       order: choice.order_index ?? index,
     }))
     .sort((left, right) => left.order - right.order);
@@ -490,7 +494,13 @@ export function buildNamedElectionResultsModel(args: {
   const options = (args.election.candidates ?? [])
     .map((candidate, index) => ({
       id: candidate.id,
-      label: buildDisplayName(candidate.user, candidate.name || `Candidate ${index + 1}`),
+      label: buildDisplayName(
+        candidate.user,
+        candidate.name ||
+          translateText('features.events.agenda.defaultCandidateWithNumber', {
+            count: index + 1,
+          })
+      ),
       order: candidate.order_index ?? index,
     }))
     .sort((left, right) => left.order - right.order);

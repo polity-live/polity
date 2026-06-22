@@ -13,6 +13,10 @@ export const groupPageTranslations = {
     title: 'Parent Groups',
     description: 'Groups that are superordinate to this group',
   },
+  relatedGroups: {
+    noResults: 'No related groups match your search.',
+    searchPlaceholder: 'Search related groups',
+  },
   memberships: {
     title: 'Members',
     searchPlaceholder: 'Search members by name, role, or status...',

@@ -11,9 +11,9 @@ import {
 describe('create submit progress', () => {
   it('creates civic default steps for an entity', () => {
     expect(getDefaultCreateSubmitProgressSteps('amendment')).toEqual([
-      { key: 'create', label: 'Erstellt Antrag', status: 'pending' },
-      { key: 'sync', label: 'Synchronisiert Inhalte', status: 'pending' },
-      { key: 'ready', label: 'Bereitet Zielseite vor', status: 'pending' },
+      { key: 'create', label: 'Creating amendment', status: 'pending' },
+      { key: 'sync', label: 'Syncing content', status: 'pending' },
+      { key: 'ready', label: 'Preparing destination', status: 'pending' },
     ]);
   });
 

@@ -836,14 +836,19 @@ export function EventAgendaView({
         open={offlineTallyDialogOpen}
         onOpenChange={handleOfflineTallyDialogOpenChange}
         title={getOfflineTallyDialogTitle(toolbarOfflineTallyPhase ?? 'indicative')}
-        description={`Enter aggregated offline or hybrid selections for ${toolbarOfflineTallyEntity?.title ?? 'this item'} and confirm with your voting PIN.`}
+        description={translateText('features.events.agenda.offlineTallyDescription', {
+          item:
+            toolbarOfflineTallyEntity?.title ?? translateText('features.events.agenda.thisItem'),
+        })}
         phase={toolbarOfflineTallyPhase ?? 'indicative'}
         choices={toolbarOfflineTallyEntity?.choices ?? []}
         tallies={toolbarOfflineTallyEntity?.tallies ?? []}
         maxTotalVotes={toolbarOfflineTallyEntity?.maxTotalVotes ?? null}
         maxPerEntryVotes={toolbarOfflineTallyEntity?.maxPerEntryVotes ?? null}
         maxPerEntryLimitLabel={
-          toolbarOfflineTallyEntity?.kind === 'election' ? 'candidate' : undefined
+          toolbarOfflineTallyEntity?.kind === 'election'
+            ? translateText('features.events.agenda.candidate')
+            : undefined
         }
         participantCount={toolbarOfflineTallyEntity?.participantCount ?? null}
         votesPerParticipant={toolbarOfflineTallyEntity?.votesPerParticipant ?? null}
@@ -1400,8 +1405,8 @@ export function EventAgendaView({
                   name: candidate.user
                     ? `${candidate.user.first_name ?? ''} ${candidate.user.last_name ?? ''}`.trim() ||
                       candidate.user.email ||
-                      'Candidate'
-                    : candidate.name || 'Candidate',
+                      translateText('features.events.agenda.candidate')
+                    : candidate.name || translateText('features.events.agenda.candidate'),
                   avatar: candidate.user?.avatar ?? undefined,
                 }))
               : undefined
@@ -1417,7 +1422,9 @@ export function EventAgendaView({
             : streamVote
               ? (streamVote.choices as ChoicesByVoteRow[]).map((choice: any) => ({
                   id: choice.id,
-                  label: choice.label || 'Choice',
+                  label:
+                    choice.label ||
+                    translateText('features.events.agenda.defaultChoiceLabels.choice'),
                 }))
               : undefined
         }

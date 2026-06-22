@@ -75,14 +75,18 @@ export function OfflineElectionTallyDialogView({
 }: OfflineElectionTallyDialogViewProps) {
   const tallyLimitFormula =
     participantCount != null && votesPerParticipant != null && maxTotalVotes != null
-      ? `${participantCount} Participants x ${votesPerParticipant} Stimmen = ${maxTotalVotes}`
+      ? translateText('features.agendas.offlineTally.totalLimitFormula', {
+          participants: participantCount,
+          votes: votesPerParticipant,
+          total: maxTotalVotes,
+        })
       : null;
   const perCandidateLimitMessage =
     isOverEntryLimit && maxPerEntryVotes != null
-      ? translateText(
-          'generated.inline.1281_each_candidate_can_receive_at_most_offline_selections',
-          `Each candidate can receive at most ${maxPerEntryVotes} offline selections.`
-        )
+      ? translateText('features.agendas.offlineTally.maxSelectionsPerEntry', {
+          entry: translateText('features.events.agenda.candidate'),
+          count: maxPerEntryVotes,
+        })
       : null;
 
   return (

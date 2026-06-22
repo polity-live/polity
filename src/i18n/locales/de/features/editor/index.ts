@@ -5,6 +5,7 @@
 export const editor = {
   // General
   description: 'Bearbeite den Inhalt. Änderungen werden automatisch gespeichert.',
+  changeRequest: 'Änderungsantrag',
 
   // Header
   header: {

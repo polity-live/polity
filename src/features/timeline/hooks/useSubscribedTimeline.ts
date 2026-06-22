@@ -9,6 +9,7 @@ import { useMemo, useCallback, useState } from 'react';
 import { useUserGroupSubscriptions } from '@/zero/groups/useGroupState';
 import { useUserEventSubscriptions } from '@/zero/events/useEventState';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface TimelineItem {
   id: string;
@@ -159,11 +160,11 @@ export function useSubscribedTimeline(
         {
           id: g.id,
           type: 'group' as const,
-          title: g.name || 'Unnamed Group',
+          title: g.name || translateText('features.timeline.fallbacks.unnamedGroup'),
           description: normalizeTimelineText(g.description),
           imageUrl: g.image_url ?? undefined,
           groupId: g.id,
-          groupName: g.name || 'Unnamed Group',
+          groupName: g.name || translateText('features.timeline.fallbacks.unnamedGroup'),
           latitude: g.latitude ?? undefined,
           longitude: g.longitude ?? undefined,
           memberCount: g.member_count,
@@ -190,11 +191,11 @@ export function useSubscribedTimeline(
         {
           id: e.id,
           type: 'event' as const,
-          title: e.title || 'Unnamed Event',
+          title: e.title || translateText('features.timeline.fallbacks.unnamedEvent'),
           description: normalizeTimelineText(e.description),
           imageUrl: e.image_url ?? undefined,
           eventId: e.id,
-          eventName: e.title || 'Unnamed Event',
+          eventName: e.title || translateText('features.timeline.fallbacks.unnamedEvent'),
           groupId: e.group_id ?? undefined,
           startDate: e.start_date ? new Date(e.start_date) : undefined,
           endDate: e.end_date ? new Date(e.end_date) : undefined,

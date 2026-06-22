@@ -64,24 +64,15 @@ function UserMembershipsPage() {
     filteredBlogRelations.length;
 
   const handleLeaveGroup = (membershipId: string) => {
-    const membership = memberships.find(item => item.id === membershipId);
-    if (membership) {
-      leaveGroup(membershipId, membership.group?.id || '');
-    }
+    leaveGroup(membershipId);
   };
 
   const handleLeaveEvent = (participationId: string) => {
-    const participation = participations.find(item => item.id === participationId);
-    if (participation) {
-      withdrawFromEvent(participationId, participation.event?.id || '');
-    }
+    withdrawFromEvent(participationId);
   };
 
   const handleLeaveCollaboration = (collaborationId: string) => {
-    const collaboration = collaborations.find(item => item.id === collaborationId);
-    if (collaboration) {
-      leaveCollaboration(collaborationId, collaboration.amendment?.id || '');
-    }
+    leaveCollaboration(collaborationId);
   };
 
   const renderGroupMembershipsTab = () => (

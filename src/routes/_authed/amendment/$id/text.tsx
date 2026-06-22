@@ -17,6 +17,7 @@ import {
   resolveSelectedBranchId,
 } from '@/features/amendments/logic/amendmentBranchDisplay';
 import { MessageSquareWarning } from 'lucide-react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 const amendmentTextSearchSchema = z.object({
   branch: z.string().optional().catch(undefined),
@@ -31,6 +32,7 @@ function AmendmentTextPage() {
   const { id } = Route.useParams();
   const search = Route.useSearch();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { user: userRecord } = useUserState({ userId: user?.id });
   const { amendment, amendmentProcess, documents } = useAmendmentState({
@@ -127,10 +129,12 @@ function AmendmentTextPage() {
           <MessageSquareWarning className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
           <div className="min-w-0">
             <p className="font-medium">
-              Rejected in favor of {getBranchPathLabel(selectedBranchMergeTarget)}
+              {t('features.amendments.text.rejectedInFavorOf', {
+                branch: getBranchPathLabel(selectedBranchMergeTarget),
+              })}
             </p>
             <p className="text-muted-foreground">
-              Diese Textvariante ist abgeschlossen und bleibt im Editor schreibgeschützt.
+              {t('features.amendments.text.readonlyFinalVariant')}
             </p>
           </div>
         </div>

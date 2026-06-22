@@ -3,6 +3,7 @@
  */
 
 import { ENTITY_COLORS, type EntityType } from '@/features/shared/utils/entity-colors';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import {
   Award,
   BookOpen,
@@ -73,14 +74,21 @@ export function formatEntityLabel(
       if (entity.first_name || entity.last_name) {
         return [entity.first_name, entity.last_name].filter(Boolean).join(' ');
       }
-      return entity.handle || entity.name || 'Unknown User';
+      return entity.handle || entity.name || translateText('common.unknownUser');
     case 'agenda_item':
-      return entity.title || entity.name || 'Agenda Point';
+      return (
+        entity.title || entity.name || translateText('features.search.entityLabels.agenda_item')
+      );
     case 'amendment':
-      return entity.code || entity.title || entity.name || 'Amendment';
+      return (
+        entity.code ||
+        entity.title ||
+        entity.name ||
+        translateText('features.search.entityLabels.amendment')
+      );
     case 'todo':
-      return entity.title || entity.name || 'Task';
+      return entity.title || entity.name || translateText('features.search.entityLabels.todo');
     default:
-      return entity.name || entity.title || 'Unknown';
+      return entity.name || entity.title || translateText('common.unknown');
   }
 }

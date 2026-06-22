@@ -11,7 +11,6 @@ export type Language = 'en' | 'de';
 function detectBrowserLanguage(): Language {
   if (typeof navigator === 'undefined') return 'en';
   const browserLang = navigator.language || '';
-  console.log('Detected browser language:', browserLang);
   return browserLang.startsWith('de') ? 'de' : 'en';
 }
 

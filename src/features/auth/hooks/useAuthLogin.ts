@@ -51,21 +51,17 @@ export function useAuthLogin(options: UseAuthLoginOptions = {}): UseAuthLoginRet
   const sendMagicLink = useCallback(
     async (email: string): Promise<LoginResult> => {
       setIsSending(true);
-      console.log('📧 Starting magic link send flow for:', email);
 
       try {
         // Execute pre-send hook if provided
         if (beforeSend) {
-          console.log('⚡ Executing beforeSend hook');
           await beforeSend(email);
         }
 
         // Send the magic link
-        console.log('📤 Requesting magic code');
         const success = await requestMagicCode(email);
 
         if (!success) {
-          console.log('❌ Failed to send magic link');
           const errorMsg = t('features.auth.errors.magicLinkFailed');
           const error = new Error(errorMsg);
           if (onError) {
@@ -74,11 +70,8 @@ export function useAuthLogin(options: UseAuthLoginOptions = {}): UseAuthLoginRet
           return { success: false, error: errorMsg };
         }
 
-        console.log('✅ Magic link sent successfully');
-
         // Execute post-send hook if provided
         if (afterSend) {
-          console.log('⚡ Executing afterSend hook');
           await afterSend(email);
         }
 

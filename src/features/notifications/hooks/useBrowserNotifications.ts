@@ -23,7 +23,6 @@ export function useBrowserNotifications() {
   useEffect(() => {
     if (seenIdsRef.current !== null) return; // already seeded
     if (isLoading) {
-      console.log('[BrowserNotif] Still loading, waiting for Zero sync...');
       return;
     }
 
@@ -32,29 +31,20 @@ export function useBrowserNotifications() {
       ids.add(n.id);
     }
     seenIdsRef.current = ids;
-    console.log(
-      `[BrowserNotif] Seeded ${ids.size} existing unread IDs. Ready for new notifications.`
-    );
   }, [unread, isLoading]);
 
   // ── Watch for new unread notifications ─────────────────────────────
   useEffect(() => {
     if (seenIdsRef.current === null) {
-      console.log('[BrowserNotif] Watch skipped: not yet seeded');
       return;
     }
     if (!unread || unread.length === 0) {
-      console.log('[BrowserNotif] Watch skipped: no unread notifications');
       return;
     }
     if (typeof window === 'undefined' || !('Notification' in window)) {
-      console.log('[BrowserNotif] Watch skipped: Notification API not available');
       return;
     }
     if (Notification.permission !== 'granted') {
-      console.log(
-        `[BrowserNotif] Watch skipped: permission is "${Notification.permission}" (needs "granted")`
-      );
       return;
     }
 
@@ -64,21 +54,12 @@ export function useBrowserNotifications() {
       ? (deliverySettings as Record<string, boolean>).inAppNotifications !== false
       : true;
     if (!enabled) {
-      console.log(
-        '[BrowserNotif] Watch skipped: inAppNotifications is disabled in delivery settings'
-      );
       return;
     }
-
-    console.log(
-      `[BrowserNotif] Checking ${unread.length} unread, seenIds has ${seenIdsRef.current.size} entries`
-    );
 
     for (const n of unread) {
       if (seenIdsRef.current.has(n.id)) continue;
       seenIdsRef.current.add(n.id);
-
-      console.log(`[BrowserNotif] 🔔 Showing browser notification: "${n.title}" (id: ${n.id})`);
 
       // Use ServiceWorkerRegistration.showNotification when a SW is active,
       // because browsers suppress page-level `new Notification()` when a
@@ -95,11 +76,7 @@ export function useBrowserNotifications() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready
           .then(reg => {
-            console.log(`[BrowserNotif] Using SW showNotification`, notifOptions);
             return reg.showNotification(n.title || 'Polity', notifOptions);
-          })
-          .then(() => {
-            console.log(`[BrowserNotif] showNotification promise resolved`);
           })
           .catch(err => {
             console.error(

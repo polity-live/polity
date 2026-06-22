@@ -58,7 +58,7 @@ export function SubscribersTable({ subscribers, onRemove }: SubscribersTableProp
           const { subscriber } = row.original;
           const name =
             [subscriber.first_name, subscriber.last_name].filter(Boolean).join(' ') ||
-            'Unknown User';
+            translateText('features.payments.subscriptions.unknown.user');
 
           return (
             <SmartLink
@@ -85,7 +85,7 @@ export function SubscribersTable({ subscribers, onRemove }: SubscribersTableProp
           <span className="text-muted-foreground">
             {row.original.subscription.created_at
               ? new Date(row.original.subscription.created_at).toLocaleDateString()
-              : 'N/A'}
+              : translateText('features.payments.subscriptions.notAvailable')}
           </span>
         ),
       },

@@ -701,7 +701,7 @@ export function GroupMembershipsContentView({
           changeRoleMembership
             ? [changeRoleMembership.user?.first_name, changeRoleMembership.user?.last_name]
                 .filter(Boolean)
-                .join(' ') || 'Unknown User'
+                .join(' ') || translateText('components.memberRightsDialog.unknownUser')
             : ''
         }
         currentRoles={
@@ -723,7 +723,13 @@ export function GroupMembershipsContentView({
         form={editRoleForm}
         onFormChange={patch => setEditRoleForm((current: any) => ({ ...current, ...patch }))}
         onSubmit={handleSaveEditedRole}
-        title={editingRole?.name ? `Edit ${editingRole.name}` : 'Edit Role'}
+        title={
+          editingRole?.name
+            ? translateText('features.groups.roleDetails.editRoleWithName', {
+                roleName: editingRole.name,
+              })
+            : translateText('features.groups.roleDetails.editRoleTitle')
+        }
         description={translateText(
           'generated.inline.1267_adjust_how_this_role_is_assigned_who_can_see__d7945376'
         )}

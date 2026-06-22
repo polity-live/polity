@@ -58,7 +58,7 @@ export function OfflineTallyDialogView({
   choices,
   maxTotalVotes,
   maxPerEntryVotes,
-  maxPerEntryLimitLabel = 'entry',
+  maxPerEntryLimitLabel,
   participantCount,
   votesPerParticipant,
   isSubmitting,
@@ -77,16 +77,22 @@ export function OfflineTallyDialogView({
   onBackToCounts,
   onPasswordSubmit,
 }: OfflineTallyDialogViewProps) {
+  const resolvedMaxPerEntryLimitLabel =
+    maxPerEntryLimitLabel ?? translateText('features.agendas.offlineTally.entry');
   const tallyLimitFormula =
     participantCount != null && votesPerParticipant != null && maxTotalVotes != null
-      ? `${participantCount} Participants x ${votesPerParticipant} Stimmen = ${maxTotalVotes}`
+      ? translateText('features.agendas.offlineTally.totalLimitFormula', {
+          participants: participantCount,
+          votes: votesPerParticipant,
+          total: maxTotalVotes,
+        })
       : null;
   const perEntryLimitMessage =
     isOverEntryLimit && maxPerEntryVotes != null
-      ? translateText(
-          'generated.inline.1280_each_entry_can_receive_at_most_offline_selections',
-          `Each ${maxPerEntryLimitLabel} can receive at most ${maxPerEntryVotes} offline selections.`
-        )
+      ? translateText('features.agendas.offlineTally.maxSelectionsPerEntry', {
+          entry: resolvedMaxPerEntryLimitLabel,
+          count: maxPerEntryVotes,
+        })
       : null;
 
   return (

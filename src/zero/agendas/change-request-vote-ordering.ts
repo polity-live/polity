@@ -214,50 +214,58 @@ export async function reorderOpenChangeRequestVoteStepsForEvent(
   voteOrder: ChangeRequestVoteOrder
 ) {
   const agendaItems = asArray(await tx.run(zql.agenda_item.where('event_id', eventId)));
-  const now = Date.now();
 
   for (const agendaItem of agendaItems) {
     if (!agendaItem.id || !agendaItem.amendment_id) continue;
 
-    const links = asArray(
-      await tx.run(
-        zql.agenda_item_change_request
-          .where('agenda_item_id', agendaItem.id)
-          .orderBy('order_index', 'asc')
-          .related('change_request')
-          .related('vote')
-      )
-    );
-    const sortableLinks = links.filter(isSortableChangeRequestVoteStep);
-    if (sortableLinks.length < 2) continue;
+    await reorderOpenChangeRequestVoteStepsForAgendaItem(tx, agendaItem, voteOrder);
+  }
+}
 
-    const orderedChangeRequests = await orderChangeRequestsForVoting(
-      tx,
-      agendaItem.amendment_id,
-      sortableLinks.map(link => link.change_request).filter(Boolean),
-      voteOrder
-    );
-    const linksByChangeRequestId = new Map(
-      sortableLinks.map(link => [link.change_request_id, link])
-    );
-    const sortedLinks = orderedChangeRequests
-      .map(changeRequest => linksByChangeRequestId.get(changeRequest.id))
-      .filter((link): link is AnyRecord => Boolean(link));
-    const targetOrderIndices = sortableLinks
-      .map(link => link.order_index)
-      .filter((orderIndex): orderIndex is number => typeof orderIndex === 'number')
-      .sort((left, right) => left - right);
+export async function reorderOpenChangeRequestVoteStepsForAgendaItem(
+  tx: VoteOrderingTx,
+  agendaItem: { id?: string | null; amendment_id?: string | null },
+  voteOrder: ChangeRequestVoteOrder
+) {
+  if (!agendaItem.id || !agendaItem.amendment_id) return;
 
-    for (let index = 0; index < sortedLinks.length; index++) {
-      const link = sortedLinks[index];
-      const nextOrderIndex = targetOrderIndices[index];
-      if (typeof nextOrderIndex !== 'number' || link.order_index === nextOrderIndex) continue;
+  const links = asArray(
+    await tx.run(
+      zql.agenda_item_change_request
+        .where('agenda_item_id', agendaItem.id)
+        .orderBy('order_index', 'asc')
+        .related('change_request')
+        .related('vote')
+    )
+  );
+  const sortableLinks = links.filter(isSortableChangeRequestVoteStep);
+  if (sortableLinks.length < 2) return;
 
-      await tx.mutate?.agenda_item_change_request?.update({
-        id: link.id,
-        order_index: nextOrderIndex,
-        updated_at: now,
-      });
-    }
+  const orderedChangeRequests = await orderChangeRequestsForVoting(
+    tx,
+    agendaItem.amendment_id,
+    sortableLinks.map(link => link.change_request).filter(Boolean),
+    voteOrder
+  );
+  const linksByChangeRequestId = new Map(sortableLinks.map(link => [link.change_request_id, link]));
+  const sortedLinks = orderedChangeRequests
+    .map(changeRequest => linksByChangeRequestId.get(changeRequest.id))
+    .filter((link): link is AnyRecord => Boolean(link));
+  const targetOrderIndices = sortableLinks
+    .map(link => link.order_index)
+    .filter((orderIndex): orderIndex is number => typeof orderIndex === 'number')
+    .sort((left, right) => left - right);
+  const now = Date.now();
+
+  for (let index = 0; index < sortedLinks.length; index++) {
+    const link = sortedLinks[index];
+    const nextOrderIndex = targetOrderIndices[index];
+    if (typeof nextOrderIndex !== 'number' || link.order_index === nextOrderIndex) continue;
+
+    await tx.mutate?.agenda_item_change_request?.update({
+      id: link.id,
+      order_index: nextOrderIndex,
+      updated_at: now,
+    });
   }
 }

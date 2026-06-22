@@ -303,7 +303,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   type BloggerRow = (typeof bloggers)[number];
 
   const getCreatedAt = (blogger: BloggerRow) =>
-    blogger.created_at ? new Date(blogger.created_at).toLocaleDateString() : 'N/A';
+    blogger.created_at
+      ? new Date(blogger.created_at).toLocaleDateString()
+      : translateText('components.membershipTables.notAvailable');
 
   const invitedColumns: ColumnDef<BloggerRow>[] = [
     {

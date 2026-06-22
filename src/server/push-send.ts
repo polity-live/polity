@@ -76,15 +76,12 @@ export const pushSendFn = createServerFn({ method: 'POST' })
         .eq('user_id', userId);
 
       if (!subscriptions || subscriptions.length === 0) {
-        console.log(`[Push API] No subscriptions found for user ${userId}`);
         return {
           message: translateText('generated.inline.0680_no_subscriptions_found_6f645f78'),
           sent: 0,
           failed: 0,
         };
       }
-
-      console.log(`[Push API] Found ${subscriptions.length} subscription(s) for user ${userId}`);
 
       // Prepare notification payload
       const payload = JSON.stringify({
@@ -115,10 +112,6 @@ export const pushSendFn = createServerFn({ method: 'POST' })
 
             await webpush.sendNotification(pushSubscription, payload);
 
-            console.log(
-              `[Push API] Successfully sent notification to ${subscription.endpoint.substring(0, 50)}...`
-            );
-
             return { success: true, subscriptionId: subscription.id };
           } catch (error: unknown) {
             const err = error as { statusCode?: number; message?: string };
@@ -126,13 +119,8 @@ export const pushSendFn = createServerFn({ method: 'POST' })
 
             // Handle expired or invalid subscriptions
             if (err.statusCode === 410 || err.statusCode === 404) {
-              console.log(
-                `[Push API] Subscription ${subscription.id} is no longer valid, removing...`
-              );
-
               try {
                 await supabase.from('push_subscription').delete().eq('id', subscription.id);
-                console.log(`[Push API] Deleted invalid subscription ${subscription.id}`);
               } catch (deleteError) {
                 console.error(
                   `[Push API] Failed to delete subscription ${subscription.id}:`,
@@ -154,8 +142,6 @@ export const pushSendFn = createServerFn({ method: 'POST' })
       const failed = results.filter(
         r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)
       ).length;
-
-      console.log(`[Push API] Sent ${sent} notification(s), ${failed} failed for user ${userId}`);
 
       return {
         message: translateText('generated.inline.0681_push_notifications_sent_adb2827e'),

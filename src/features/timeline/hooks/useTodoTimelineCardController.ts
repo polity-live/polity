@@ -101,7 +101,7 @@ export function useTodoTimelineCardController({
       { status: newStatus },
       {
         senderId: user?.id,
-        senderName: user?.email?.split('@')[0] || 'Someone',
+        senderName: user?.email?.split('@')[0] || t('features.messages.fallbacks.someone'),
         creatorId: todo.creatorId,
         todoTitle: todo.title,
         visibility: todo.visibility,
@@ -136,7 +136,7 @@ export function useTodoTimelineCardController({
           senderId: user.id,
           recipientUserId: todo.creatorId,
           todoId: todo.id,
-          todoTitle: todo.title || 'Todo',
+          todoTitle: todo.title || t('features.search.entityLabels.todo'),
         });
       }
 

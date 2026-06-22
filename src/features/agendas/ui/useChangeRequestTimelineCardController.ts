@@ -231,7 +231,9 @@ export function useChangeRequestTimelineCardController({
     return computeVoteResultSummary(
       choices.map((choice, idx) => ({
         id: choice.id,
-        label: choice.label || `Choice ${idx + 1}`,
+        label:
+          choice.label ||
+          t('features.events.agenda.defaultChoiceLabels.choiceWithNumber', { count: idx + 1 }),
         order_index: choice.order_index ?? idx,
       })),
       finalDecisions,
@@ -245,6 +247,7 @@ export function useChangeRequestTimelineCardController({
     finalDecisions,
     isClosed,
     offlineTallies,
+    t,
     totalFinal,
     totalVoters,
     vote?.majority_type,

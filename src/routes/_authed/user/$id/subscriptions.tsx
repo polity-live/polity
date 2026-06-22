@@ -53,7 +53,9 @@ function UserSubscriptionsPage() {
           }
           return null;
         }}
-        emptyMessage={hasActiveFilters ? 'No subscriptions match the current filters.' : undefined}
+        emptyMessage={
+          hasActiveFilters ? translateText('pages.user.subscriptions.noFilterResults') : undefined
+        }
       />
     </div>
   );

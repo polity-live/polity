@@ -186,9 +186,9 @@ export function useCreatePaymentForm(): CreateFormConfig {
       isSubmitting,
       onSubmit: handleSubmit,
       submissionSteps: [
-        { key: 'create', label: 'Erstellt Zahlung' },
-        { key: 'sync', label: 'Synchronisiert Buchung' },
-        { key: 'ready', label: 'Bereitet Zielseite vor' },
+        { key: 'create', label: t('pages.create.progress.submission.steps.payment.create') },
+        { key: 'sync', label: t('pages.create.progress.submission.steps.payment.sync') },
+        { key: 'ready', label: t('pages.create.progress.submission.steps.payment.ready') },
       ],
       steps: [
         {
@@ -286,7 +286,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
                 entityType: 'payment',
                 badge: t('pages.create.payment.reviewBadge'),
                 secondaryBadge: directionLabel,
-                title: label || 'Untitled Payment',
+                title: label || t('pages.create.payment.untitled'),
                 subtitle: formattedAmount,
                 sections: [
                   {

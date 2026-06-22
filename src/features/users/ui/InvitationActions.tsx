@@ -27,44 +27,45 @@ function getInvitationPreview(item: FilterableRecord): ActionSubmissionPreview {
 
   if (group) {
     return {
-      entityLabel: 'Group',
-      title: group.name || 'Group',
-      description: 'Die Gruppenrolle wird aktiviert.',
-      badges: ['Mitgliedschaft'],
+      entityLabel: translateText('pages.user.invitations.preview.labels.group'),
+      title: group.name || translateText('pages.user.invitations.preview.fallbackTitles.group'),
+      description: translateText('pages.user.invitations.preview.descriptions.group'),
+      badges: [translateText('pages.user.invitations.preview.badges.group')],
     };
   }
 
   if (event) {
     return {
-      entityLabel: 'Event',
-      title: event.title || 'Event',
-      description: 'Deine Teilnahme wird bestätigt.',
-      badges: ['Teilnahme'],
+      entityLabel: translateText('pages.user.invitations.preview.labels.event'),
+      title: event.title || translateText('pages.user.invitations.preview.fallbackTitles.event'),
+      description: translateText('pages.user.invitations.preview.descriptions.event'),
+      badges: [translateText('pages.user.invitations.preview.badges.event')],
     };
   }
 
   if (amendment) {
     return {
-      entityLabel: 'Amendment',
-      title: amendment.title || 'Amendment',
-      description: 'Deine Mitarbeit wird aktiviert.',
-      badges: ['Collaborator'],
+      entityLabel: translateText('pages.user.invitations.preview.labels.amendment'),
+      title:
+        amendment.title || translateText('pages.user.invitations.preview.fallbackTitles.amendment'),
+      description: translateText('pages.user.invitations.preview.descriptions.amendment'),
+      badges: [translateText('pages.user.invitations.preview.badges.amendment')],
     };
   }
 
   if (blog) {
     return {
-      entityLabel: 'Blog',
-      title: blog.title || 'Blog',
-      description: 'Dein Schreibzugang wird aktiviert.',
-      badges: ['Writer'],
+      entityLabel: translateText('pages.user.invitations.preview.labels.blog'),
+      title: blog.title || translateText('pages.user.invitations.preview.fallbackTitles.blog'),
+      description: translateText('pages.user.invitations.preview.descriptions.blog'),
+      badges: [translateText('pages.user.invitations.preview.badges.blog')],
     };
   }
 
   return {
-    entityLabel: 'Einladung',
-    title: 'Einladung annehmen',
-    description: 'Die Einladung wird geprüft und bestätigt.',
+    entityLabel: translateText('pages.user.invitations.preview.invitationLabel'),
+    title: translateText('pages.user.invitations.preview.invitationTitle'),
+    description: translateText('pages.user.invitations.preview.invitationDescription'),
   };
 }
 
@@ -114,7 +115,7 @@ export function InvitationActions({
         steps={actionSubmission.progressSteps}
         error={actionSubmission.error}
         preview={preview}
-        target={{ label: translateText('common.done', 'Fertig'), onClick: actionSubmission.reset }}
+        target={{ label: translateText('common.actions.done'), onClick: actionSubmission.reset }}
         onBack={actionSubmission.reset}
         onRetry={() => void actionSubmission.retry()}
       />

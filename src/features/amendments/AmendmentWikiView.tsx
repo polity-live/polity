@@ -448,14 +448,8 @@ export function AmendmentWikiView({
           'generated.inline.0099_search_collaborators_by_name_role_or_status_c0a4b06d',
           'Search collaborators'
         )}
-        emptyLabel={translateText(
-          'features.amendments.wiki.noCollaborators',
-          'No active collaborators yet.'
-        )}
-        noResultsLabel={translateText(
-          'features.amendments.wiki.noCollaboratorsMatch',
-          'No collaborators match your filters.'
-        )}
+        emptyLabel={translateText('features.amendments.wiki.noCollaborators')}
+        noResultsLabel={translateText('features.amendments.wiki.noCollaboratorsMatch')}
       />
 
       {/* Supported By Section */}
@@ -481,7 +475,8 @@ export function AmendmentWikiView({
                       id: supporter.groupId,
                       name: supporter.name || t('common.unspecified'),
                       description:
-                        supporter.locationLabel !== 'Location not set'
+                        supporter.locationLabel !==
+                        translateText('features.amendments.wiki.locationNotSet')
                           ? supporter.locationLabel
                           : undefined,
                       memberCount: supporter.memberCount,

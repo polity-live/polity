@@ -25,7 +25,7 @@ describe('streetDesignObjectRegistry', () => {
     for (const type of streetDesignObjectTypes) {
       const definition = getStreetDesignObjectDefinition(type);
       expect(definition.type).toBe(type);
-      expect(definition.label).toBeTruthy();
+      expect(definition.labelKey).toBeTruthy();
       expect(definition.icon).toBeTruthy();
       expect(definition.renderKind).toBeTruthy();
       expect(definition.toolMode).toBeTruthy();

@@ -32,23 +32,18 @@ export function useAuthVerification(): UseAuthVerificationReturn {
   const verifyAndInitialize = useCallback(
     async (email: string, code: string): Promise<VerificationResult> => {
       setIsVerifying(true);
-      console.log('🔐 Starting verification and initialization flow');
 
       try {
         // Step 1: Verify the magic code via Supabase
-        console.log('📧 Verifying magic code for:', email);
         const verifySuccess = await verifyMagicCode(email, code);
 
         if (!verifySuccess) {
-          console.log('❌ Verification failed');
           return {
             success: false,
             isNewUser: false,
             error: t('features.auth.errors.invalidOrExpiredCode'),
           };
         }
-
-        console.log('✅ Magic code verified successfully');
 
         // Step 2: Get the authenticated user from Supabase session
         const supabase = createClient();
@@ -64,8 +59,6 @@ export function useAuthVerification(): UseAuthVerificationReturn {
             error: t('features.auth.errors.authenticationFailed'),
           };
         }
-
-        console.log('✅ User verified:', user.id);
 
         // Detect new user: created_at within the last 60 seconds means first-time signup
         const createdAt = new Date(user.created_at).getTime();

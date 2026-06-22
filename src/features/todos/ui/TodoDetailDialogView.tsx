@@ -87,13 +87,17 @@ function formatDate(timestamp: number | string): string {
   const diffMs = date.getTime() - now.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Tomorrow';
-  if (diffDays === -1) return 'Yesterday';
-  if (diffDays > 0 && diffDays <= 7) return `In ${diffDays} days`;
-  if (diffDays < 0 && diffDays >= -7) return `${Math.abs(diffDays)} days ago`;
+  if (diffDays === 0) return translateText('features.todos.dueDate.today');
+  if (diffDays === 1) return translateText('features.todos.dueDate.tomorrow');
+  if (diffDays === -1) return translateText('features.todos.dueDate.yesterday');
+  if (diffDays > 0 && diffDays <= 7) {
+    return translateText('features.todos.dueDate.inDays', { count: diffDays });
+  }
+  if (diffDays < 0 && diffDays >= -7) {
+    return translateText('features.todos.dueDate.daysAgo', { count: Math.abs(diffDays) });
+  }
 
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

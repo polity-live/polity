@@ -11,8 +11,6 @@ import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
-const LOG_PREFIX = '[UserMemberships]';
-
 /**
  * Hook to query and manage user memberships, participations, and collaborations
  * @param userId - The user ID to query memberships for
@@ -48,25 +46,9 @@ export function useUserMemberships(userId?: string, userName?: string) {
   /**
    * Leave a group (remove membership)
    */
-  const leaveGroup = async (membershipId: string, groupId: string) => {
+  const leaveGroup = async (membershipId: string) => {
     try {
-      // Snapshot group data before mutation (Zero reactivity may invalidate after delete)
-      const membership = memberships.find(m => m.id === membershipId);
-      const groupSnapshot = membership?.group
-        ? { id: membership.group.id, name: membership.group.name }
-        : null;
-
-      console.log(LOG_PREFIX, 'leaveGroup — snapshot:', {
-        membershipId,
-        groupId,
-        groupSnapshot,
-        userId,
-        safeSenderName,
-      });
-
       await groupActions.leaveGroup({ id: membershipId });
-
-      // Use groupId param as primary source, snapshot as fallback for name
 
       return { success: true };
     } catch (error) {
@@ -78,21 +60,8 @@ export function useUserMemberships(userId?: string, userName?: string) {
   /**
    * Withdraw from an event (remove participation)
    */
-  const withdrawFromEvent = async (participationId: string, eventId: string) => {
+  const withdrawFromEvent = async (participationId: string) => {
     try {
-      const participation = participations.find(p => p.id === participationId);
-      const eventSnapshot = participation?.event
-        ? { id: participation.event.id, title: participation.event.title }
-        : null;
-
-      console.log(LOG_PREFIX, 'withdrawFromEvent — snapshot:', {
-        participationId,
-        eventId,
-        eventSnapshot,
-        userId,
-        safeSenderName,
-      });
-
       await eventActions.leaveEvent({ id: participationId });
 
       return { success: true };
@@ -105,21 +74,8 @@ export function useUserMemberships(userId?: string, userName?: string) {
   /**
    * Leave an amendment collaboration
    */
-  const leaveCollaboration = async (collaborationId: string, amendmentId: string) => {
+  const leaveCollaboration = async (collaborationId: string) => {
     try {
-      const collaboration = collaborations.find(c => c.id === collaborationId);
-      const amendmentSnapshot = collaboration?.amendment
-        ? { id: collaboration.amendment.id, title: collaboration.amendment.title }
-        : null;
-
-      console.log(LOG_PREFIX, 'leaveCollaboration — snapshot:', {
-        collaborationId,
-        amendmentId,
-        amendmentSnapshot,
-        userId,
-        safeSenderName,
-      });
-
       await amendmentActions.leaveCollaboration(collaborationId);
 
       return { success: true };
@@ -134,18 +90,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const leaveBlog = async (relationId: string) => {
     try {
-      const blogRelation = blogRelations.find(r => r.id === relationId);
-      const blogSnapshot = blogRelation?.blog
-        ? { id: blogRelation.blog.id, title: blogRelation.blog.title }
-        : null;
-
-      console.log(LOG_PREFIX, 'leaveBlog — snapshot:', {
-        relationId,
-        blogSnapshot,
-        userId,
-        safeSenderName,
-      });
-
       await blogActions.deleteEntry(relationId);
 
       return { success: true };
@@ -198,18 +142,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineGroupInvitation = async (membershipId: string) => {
     try {
-      const membership = memberships.find(m => m.id === membershipId);
-      const groupSnapshot = membership?.group
-        ? { id: membership.group.id, name: membership.group.name }
-        : null;
-
-      console.log(LOG_PREFIX, 'declineGroupInvitation — snapshot:', {
-        membershipId,
-        groupSnapshot,
-        userId,
-        safeSenderName,
-      });
-
       await groupActions.leaveGroup({ id: membershipId });
 
       return { success: true };
@@ -224,18 +156,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawGroupRequest = async (membershipId: string) => {
     try {
-      const membership = memberships.find(m => m.id === membershipId);
-      const groupSnapshot = membership?.group
-        ? { id: membership.group.id, name: membership.group.name }
-        : null;
-
-      console.log(LOG_PREFIX, 'withdrawGroupRequest — snapshot:', {
-        membershipId,
-        groupSnapshot,
-        userId,
-        safeSenderName,
-      });
-
       await groupActions.leaveGroup({ id: membershipId });
 
       return { success: true };
@@ -267,18 +187,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineEventInvitation = async (participationId: string) => {
     try {
-      const participation = participations.find(p => p.id === participationId);
-      const eventSnapshot = participation?.event
-        ? { id: participation.event.id, title: participation.event.title }
-        : null;
-
-      console.log(LOG_PREFIX, 'declineEventInvitation — snapshot:', {
-        participationId,
-        eventSnapshot,
-        userId,
-        safeSenderName,
-      });
-
       await eventActions.leaveEvent({ id: participationId });
 
       return { success: true };
@@ -293,18 +201,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawEventRequest = async (participationId: string) => {
     try {
-      const participation = participations.find(p => p.id === participationId);
-      const eventSnapshot = participation?.event
-        ? { id: participation.event.id, title: participation.event.title }
-        : null;
-
-      console.log(LOG_PREFIX, 'withdrawEventRequest — snapshot:', {
-        participationId,
-        eventSnapshot,
-        userId,
-        safeSenderName,
-      });
-
       await eventActions.leaveEvent({ id: participationId });
 
       return { success: true };
@@ -360,18 +256,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineCollaborationInvitation = async (collaborationId: string) => {
     try {
-      const collaboration = collaborations.find(c => c.id === collaborationId);
-      const amendmentSnapshot = collaboration?.amendment
-        ? { id: collaboration.amendment.id, title: collaboration.amendment.title }
-        : null;
-
-      console.log(LOG_PREFIX, 'declineCollaborationInvitation — snapshot:', {
-        collaborationId,
-        amendmentSnapshot,
-        userId,
-        safeSenderName,
-      });
-
       await amendmentActions.leaveCollaboration(collaborationId);
 
       return { success: true };
@@ -386,18 +270,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawCollaborationRequest = async (collaborationId: string) => {
     try {
-      const collaboration = collaborations.find(c => c.id === collaborationId);
-      const amendmentSnapshot = collaboration?.amendment
-        ? { id: collaboration.amendment.id, title: collaboration.amendment.title }
-        : null;
-
-      console.log(LOG_PREFIX, 'withdrawCollaborationRequest — snapshot:', {
-        collaborationId,
-        amendmentSnapshot,
-        userId,
-        safeSenderName,
-      });
-
       await amendmentActions.leaveCollaboration(collaborationId);
 
       return { success: true };
@@ -429,18 +301,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineBlogInvitation = async (blogRelationId: string) => {
     try {
-      const blogRelation = blogRelations.find(r => r.id === blogRelationId);
-      const blogSnapshot = blogRelation?.blog
-        ? { id: blogRelation.blog.id, title: blogRelation.blog.title }
-        : null;
-
-      console.log(LOG_PREFIX, 'declineBlogInvitation — snapshot:', {
-        blogRelationId,
-        blogSnapshot,
-        userId,
-        safeSenderName,
-      });
-
       await blogActions.deleteEntry(blogRelationId);
 
       return { success: true };
@@ -455,18 +315,6 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawBlogRequest = async (blogRelationId: string) => {
     try {
-      const blogRelation = blogRelations.find(r => r.id === blogRelationId);
-      const blogSnapshot = blogRelation?.blog
-        ? { id: blogRelation.blog.id, title: blogRelation.blog.title }
-        : null;
-
-      console.log(LOG_PREFIX, 'withdrawBlogRequest — snapshot:', {
-        blogRelationId,
-        blogSnapshot,
-        userId,
-        safeSenderName,
-      });
-
       await blogActions.deleteEntry(blogRelationId);
 
       return { success: true };

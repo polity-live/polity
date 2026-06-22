@@ -23,7 +23,8 @@ export const notificationsTranslations = {
     noPersonal: 'Keine persönlichen Benachrichtigungen',
     personalAppear: 'Benachrichtigungen, die direkt an dich gesendet wurden, werden hier angezeigt',
     noEntity: 'Keine Entitäts-Benachrichtigungen',
-    entityAppear: 'Benachrichtigungen für Gruppen, Veranstaltungen und Anträge, bei denen du dabei bist, werden hier angezeigt',
+    entityAppear:
+      'Benachrichtigungen für Gruppen, Veranstaltungen und Anträge, bei denen du dabei bist, werden hier angezeigt',
   },
   // Toast-Nachrichten für Action-Hooks
   toasts: {
@@ -88,6 +89,44 @@ export const notificationsTranslations = {
       never: 'Nie',
       daily: 'Täglich',
       weekly: 'Wöchentlich',
+    },
+  },
+  generated: {
+    titles: {
+      eventAssignedToGroup: 'Event einer Gruppe zugeordnet',
+      amendmentSupportConfirmed: 'Antragsunterstützung bestätigt',
+      amendmentUpvoted: 'Antrag positiv bewertet',
+      amendmentDownvoted: 'Antrag negativ bewertet',
+      blogUpvoted: 'Blog positiv bewertet',
+      blogDownvoted: 'Blog negativ bewertet',
+    },
+    messages: {
+      guestAccessApproved: 'Eine Gastzugangsanfrage in {{groupName}} wurde genehmigt.',
+      guestAccessRequested: '{{senderName}} hat Gastzugang zu {{groupName}} angefragt.',
+      guestInvited: 'Ein Gast wurde zu {{groupName}} eingeladen.',
+      guestRoleChanged: 'Eine Gastrolle in {{groupName}} wurde geändert.',
+      guestRemoved: 'Ein Gast wurde aus {{groupName}} entfernt.',
+      guestLeft: '{{senderName}} hat den Gastzugang zu {{groupName}} verlassen.',
+      participationApproved: 'Eine Teilnahmeanfrage für {{eventTitle}} wurde genehmigt.',
+      participationRejected: 'Eine Teilnahmeanfrage für {{eventTitle}} wurde abgelehnt.',
+      participantRemoved: 'Ein Teilnehmer wurde aus {{eventTitle}} entfernt.',
+      eventAssignedToGroup: '{{eventTitle}} wurde {{groupName}} zugeordnet.',
+      amendmentCollaboratorInvited: 'Ein Mitarbeiter wurde zu {{amendmentTitle}} eingeladen.',
+      amendmentCollaborationApproved:
+        'Eine Mitarbeit-Anfrage für {{amendmentTitle}} wurde genehmigt.',
+      amendmentCollaborationRejected:
+        'Eine Mitarbeit-Anfrage für {{amendmentTitle}} wurde abgelehnt.',
+      amendmentCollaboratorRemoved: 'Ein Mitarbeiter wurde aus {{amendmentTitle}} entfernt.',
+      amendmentRolePermissionsUpdated:
+        'Die Berechtigungen für {{roleName}} wurden in {{amendmentTitle}} aktualisiert.',
+      eventRolePermissionsUpdated:
+        'Die Berechtigungen für {{roleTitle}} wurden in {{eventTitle}} aktualisiert.',
+      amendmentSupportConfirmedByEvent:
+        '{{eventTitle}} hat bestätigt, dass {{groupName}} {{amendmentTitle}} unterstützt.',
+      amendmentSupportConfirmed:
+        '{{groupName}} hat die Unterstützung für {{amendmentTitle}} bestätigt.',
+      writerJoinedNamed: '{{senderName}} ist {{blogTitle}} als Autor beigetreten.',
+      writerJoined: 'Ein neuer Autor ist {{blogTitle}} beigetreten.',
     },
   },
   time: {

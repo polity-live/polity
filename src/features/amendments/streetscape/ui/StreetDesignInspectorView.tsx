@@ -2,6 +2,7 @@ import { EyeOff, MousePointer2, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
   Select,
   SelectContent,
@@ -110,8 +111,18 @@ export function StreetDesignInspectorView({
   onDeleteObject,
   onHideOsmWay,
 }: StreetDesignInspectorViewProps) {
+  const { t } = useTranslation();
+  const fieldLabel = (labelKey: string, unit?: string) =>
+    unit
+      ? t('features.amendments.streetscape.inspector.fieldWithUnit', {
+          label: t(labelKey),
+          unit,
+        })
+      : t(labelKey);
+
   if (interactionMode === 'place') {
     const definition = getStreetDesignObjectDefinition(selectedTool);
+    const objectLabel = t(definition.labelKey);
     const hasWidth = definition.toolMode !== 'point' || definition.defaultWidth != null;
     const unitCostEuro =
       (placementSettings.customUnitCostMinor ?? definition.suggestedUnitCostMinor) / 100;
@@ -123,11 +134,13 @@ export function StreetDesignInspectorView({
         <div className="mb-4">
           <p className="text-muted-foreground mb-1 flex items-center gap-2 text-xs font-medium uppercase">
             <SlidersHorizontal className="size-3.5" />
-            Platzieren
+            {t('features.amendments.streetscape.inspector.place')}
           </p>
-          <h2 className="text-base font-semibold">{definition.label}</h2>
+          <h2 className="text-base font-semibold">{objectLabel}</h2>
           <p className="text-muted-foreground text-xs">
-            {placementMode ? 'Aktiver Entwurf' : 'Einstellungen fuer das naechste Element'}
+            {placementMode
+              ? t('features.amendments.streetscape.inspector.activeDraft')
+              : t('features.amendments.streetscape.inspector.nextElementSettings')}
           </p>
         </div>
 
@@ -135,7 +148,9 @@ export function StreetDesignInspectorView({
           <div className="bg-muted/20 grid grid-cols-2 gap-2 rounded-md border p-2">
             {hasWidth ? (
               <div className="space-y-1">
-                <Label className="text-xs">Breite</Label>
+                <Label className="text-xs">
+                  {t('features.amendments.streetscape.inspector.width')}
+                </Label>
                 <Input
                   type="number"
                   min={0.1}
@@ -147,7 +162,9 @@ export function StreetDesignInspectorView({
               </div>
             ) : null}
             <div className="space-y-1">
-              <Label className="text-xs">Rotation</Label>
+              <Label className="text-xs">
+                {t('features.amendments.streetscape.inspector.rotation')}
+              </Label>
               <Input
                 type="number"
                 step={1}
@@ -159,11 +176,15 @@ export function StreetDesignInspectorView({
             {placementPreview ? (
               <>
                 <div className="space-y-1">
-                  <Label className="text-xs">Laenge</Label>
+                  <Label className="text-xs">
+                    {t('features.amendments.streetscape.inspector.length')}
+                  </Label>
                   <Input value={placementPreview.length.toFixed(1)} disabled />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Flaeche</Label>
+                  <Label className="text-xs">
+                    {t('features.amendments.streetscape.inspector.area')}
+                  </Label>
                   <Input value={placementPreview.area.toFixed(1)} disabled />
                 </div>
               </>
@@ -182,7 +203,7 @@ export function StreetDesignInspectorView({
                     disabled={readOnly}
                     onChange={event => onPlacementPropertyChange(field.key, event.target.checked)}
                   />
-                  {field.label}
+                  {t(field.labelKey)}
                 </label>
               );
             }
@@ -190,7 +211,7 @@ export function StreetDesignInspectorView({
             if (field.fieldType === 'select') {
               return (
                 <div key={field.key} className="space-y-1">
-                  <Label className="text-xs">{field.label}</Label>
+                  <Label className="text-xs">{t(field.labelKey)}</Label>
                   <Select
                     value={asInputValue(value)}
                     disabled={readOnly}
@@ -202,7 +223,7 @@ export function StreetDesignInspectorView({
                     <SelectContent>
                       {(field.options ?? []).map(option => (
                         <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                          {t(option.labelKey)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -213,10 +234,7 @@ export function StreetDesignInspectorView({
 
             return (
               <div key={field.key} className="space-y-1">
-                <Label className="text-xs">
-                  {field.label}
-                  {field.unit ? ` (${field.unit})` : ''}
-                </Label>
+                <Label className="text-xs">{fieldLabel(field.labelKey, field.unit)}</Label>
                 <Input
                   type={field.fieldType === 'number' ? 'number' : 'text'}
                   min={field.min}
@@ -238,7 +256,9 @@ export function StreetDesignInspectorView({
           <div className="border-border bg-muted/20 mt-4 rounded-md border p-3">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs">Preis</Label>
+                <Label className="text-xs">
+                  {t('features.amendments.streetscape.inspector.price')}
+                </Label>
                 <Input
                   type="number"
                   min={0}
@@ -251,12 +271,16 @@ export function StreetDesignInspectorView({
                 />
               </div>
               <div>
-                <Label className="text-xs">Summe</Label>
+                <Label className="text-xs">
+                  {t('features.amendments.streetscape.inspector.total')}
+                </Label>
                 <Input value={formatMinorCurrency(totalMinor)} disabled />
               </div>
             </div>
             <p className="text-muted-foreground mt-2 text-xs">
-              Vorschlag: {formatMinorCurrency(definition.suggestedUnitCostMinor)}
+              {t('features.amendments.streetscape.inspector.suggestedCost', {
+                cost: formatMinorCurrency(definition.suggestedUnitCostMinor),
+              })}
             </p>
           </div>
         </div>
@@ -272,10 +296,10 @@ export function StreetDesignInspectorView({
             <div>
               <p className="text-muted-foreground mb-1 flex items-center gap-2 text-xs font-medium uppercase">
                 <MousePointer2 className="size-3.5" />
-                Bestand
+                {t('features.amendments.streetscape.inspector.existing')}
               </p>
               <h2 className="text-base font-semibold">
-                {selectedOsmWay.label ?? 'OSM-Bestandsobjekt'}
+                {selectedOsmWay.label ?? t('features.amendments.streetscape.inspector.osmFallback')}
               </h2>
               <p className="text-muted-foreground text-xs">
                 {selectedOsmWay.kind} · {selectedOsmWay.id}
@@ -285,7 +309,7 @@ export function StreetDesignInspectorView({
               type="button"
               size="icon"
               variant="outline"
-              title="Aus Karte entfernen"
+              title={t('features.amendments.streetscape.inspector.removeFromMap')}
               disabled={readOnly}
               onClick={() => onHideOsmWay(selectedOsmWay.id)}
             >
@@ -294,12 +318,16 @@ export function StreetDesignInspectorView({
           </div>
           <div className="grid gap-2 text-sm">
             <div className="bg-muted/20 rounded-md border px-3 py-2">
-              <p className="text-muted-foreground text-xs">Punkte</p>
+              <p className="text-muted-foreground text-xs">
+                {t('features.amendments.streetscape.inspector.points')}
+              </p>
               <p className="font-semibold">{selectedOsmWay.points.length}</p>
             </div>
             {selectedOsmWay.height ? (
               <div className="bg-muted/20 rounded-md border px-3 py-2">
-                <p className="text-muted-foreground text-xs">Hoehe</p>
+                <p className="text-muted-foreground text-xs">
+                  {t('features.amendments.streetscape.inspector.height')}
+                </p>
                 <p className="font-semibold">{selectedOsmWay.height.toFixed(1)} m</p>
               </div>
             ) : null}
@@ -313,11 +341,13 @@ export function StreetDesignInspectorView({
         <div className="bg-muted/20 rounded-md border border-dashed p-4">
           <p className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium uppercase">
             <SlidersHorizontal className="size-3.5" />
-            Inspector
+            {t('features.amendments.streetscape.inspector.title')}
           </p>
-          <h2 className="text-base font-semibold">Kein Element ausgewaehlt</h2>
+          <h2 className="text-base font-semibold">
+            {t('features.amendments.streetscape.inspector.noSelection')}
+          </h2>
           <p className="text-muted-foreground mt-2 text-sm">
-            Waehle ein platziertes Element oder ein Bestandsobjekt im 3D-Modell aus.
+            {t('features.amendments.streetscape.inspector.noSelectionDescription')}
           </p>
         </div>
       </aside>
@@ -325,6 +355,7 @@ export function StreetDesignInspectorView({
   }
 
   const definition = getStreetDesignObjectDefinition(selectedObject.type);
+  const objectLabel = t(definition.labelKey);
   const unitCostEuro =
     (selectedObject.cost.customUnitCostMinor ?? selectedObject.cost.suggestedUnitCostMinor) / 100;
 
@@ -334,16 +365,16 @@ export function StreetDesignInspectorView({
         <div>
           <p className="text-muted-foreground mb-1 flex items-center gap-2 text-xs font-medium uppercase">
             <SlidersHorizontal className="size-3.5" />
-            Inspector
+            {t('features.amendments.streetscape.inspector.title')}
           </p>
-          <h2 className="text-base font-semibold">{definition.label}</h2>
+          <h2 className="text-base font-semibold">{objectLabel}</h2>
           <p className="text-muted-foreground text-xs">{selectedObject.id.slice(0, 8)}</p>
         </div>
         <Button
           type="button"
           size="icon"
           variant="outline"
-          title="Loeschen"
+          title={t('features.amendments.streetscape.actions.remove', { label: objectLabel })}
           disabled={readOnly}
           onClick={() => onDeleteObject(selectedObject.id)}
         >
@@ -356,7 +387,9 @@ export function StreetDesignInspectorView({
         selectedObject.geometry.kind === 'path_corridor' ? (
           <div className="bg-muted/20 grid grid-cols-2 gap-2 rounded-md border p-2">
             <div className="space-y-1">
-              <Label className="text-xs">Breite</Label>
+              <Label className="text-xs">
+                {t('features.amendments.streetscape.inspector.width')}
+              </Label>
               <Input
                 type="number"
                 min={0.1}
@@ -367,15 +400,21 @@ export function StreetDesignInspectorView({
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Laenge</Label>
+              <Label className="text-xs">
+                {t('features.amendments.streetscape.inspector.length')}
+              </Label>
               <Input value={selectedObject.geometry.length.toFixed(1)} disabled />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Flaeche</Label>
+              <Label className="text-xs">
+                {t('features.amendments.streetscape.inspector.area')}
+              </Label>
               <Input value={selectedObject.geometry.area.toFixed(1)} disabled />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Rotation</Label>
+              <Label className="text-xs">
+                {t('features.amendments.streetscape.inspector.rotation')}
+              </Label>
               <Input
                 type="number"
                 step={1}
@@ -392,7 +431,9 @@ export function StreetDesignInspectorView({
         {selectedObject.geometry.kind === 'point' ? (
           <div className="bg-muted/20 rounded-md border p-2">
             <div className="space-y-1">
-              <Label className="text-xs">Rotation</Label>
+              <Label className="text-xs">
+                {t('features.amendments.streetscape.inspector.rotation')}
+              </Label>
               <Input
                 type="number"
                 step={1}
@@ -420,7 +461,7 @@ export function StreetDesignInspectorView({
                     onPropertyChange(selectedObject.id, field.key, event.target.checked)
                   }
                 />
-                {field.label}
+                {t(field.labelKey)}
               </label>
             );
           }
@@ -428,7 +469,7 @@ export function StreetDesignInspectorView({
           if (field.fieldType === 'select') {
             return (
               <div key={field.key} className="space-y-1">
-                <Label className="text-xs">{field.label}</Label>
+                <Label className="text-xs">{t(field.labelKey)}</Label>
                 <Select
                   value={asInputValue(value)}
                   disabled={readOnly}
@@ -442,7 +483,7 @@ export function StreetDesignInspectorView({
                   <SelectContent>
                     {(field.options ?? []).map(option => (
                       <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                        {t(option.labelKey)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -461,14 +502,9 @@ export function StreetDesignInspectorView({
           const fieldMin = fieldMeta.min;
           const fieldMax = fieldMeta.max;
           const fieldStep = fieldMeta.step;
-          const fieldLabel = String(field.label);
-
           return (
             <div key={field.key} className="space-y-1">
-              <Label className="text-xs">
-                {fieldLabel}
-                {fieldUnit ? ` (${fieldUnit})` : ''}
-              </Label>
+              <Label className="text-xs">{fieldLabel(field.labelKey, fieldUnit)}</Label>
               <Input
                 type={field.fieldType === 'number' ? 'number' : 'text'}
                 min={fieldMin}
@@ -491,7 +527,9 @@ export function StreetDesignInspectorView({
         <div className="border-border bg-muted/20 mt-4 rounded-md border p-3">
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label className="text-xs">Preis</Label>
+              <Label className="text-xs">
+                {t('features.amendments.streetscape.inspector.price')}
+              </Label>
               <Input
                 type="number"
                 min={0}
@@ -504,7 +542,9 @@ export function StreetDesignInspectorView({
               />
             </div>
             <div>
-              <Label className="text-xs">Summe</Label>
+              <Label className="text-xs">
+                {t('features.amendments.streetscape.inspector.total')}
+              </Label>
               <Input
                 value={formatMinorCurrency(selectedObjectCostLine?.totalCostMinor ?? 0)}
                 disabled
@@ -512,7 +552,9 @@ export function StreetDesignInspectorView({
             </div>
           </div>
           <p className="text-muted-foreground mt-2 text-xs">
-            Vorschlag: {formatMinorCurrency(selectedObject.cost.suggestedUnitCostMinor)}
+            {t('features.amendments.streetscape.inspector.suggestedCost', {
+              cost: formatMinorCurrency(selectedObject.cost.suggestedUnitCostMinor),
+            })}
           </p>
         </div>
       </div>

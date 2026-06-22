@@ -236,9 +236,9 @@ export function useCreateTodoForm(): CreateFormConfig {
       isSubmitting: isLoading,
       onSubmit: handleSubmit,
       submissionSteps: [
-        { key: 'create', label: 'Erstellt Aufgabe' },
-        { key: 'sync', label: 'Synchronisiert Zuweisung' },
-        { key: 'ready', label: 'Bereitet Aufgabenliste vor' },
+        { key: 'create', label: t('pages.create.progress.submission.steps.todo.create') },
+        { key: 'sync', label: t('pages.create.progress.submission.steps.todo.sync') },
+        { key: 'ready', label: t('pages.create.progress.submission.steps.todo.ready') },
       ],
       steps: [
         {

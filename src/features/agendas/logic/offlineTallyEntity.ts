@@ -1,4 +1,5 @@
 import type { OfflineTallyPhase } from './offlineTallyToolbar';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface CandidateLike {
   id: string;
@@ -69,14 +70,14 @@ export type OfflineTallyEntity =
 
 function getCandidateLabel(candidate: CandidateLike) {
   if (!candidate.user) {
-    return candidate.name || 'Candidate';
+    return candidate.name || translateText('features.events.agenda.candidate');
   }
 
   return (
     `${candidate.user.first_name ?? ''} ${candidate.user.last_name ?? ''}`.trim() ||
     candidate.user.email ||
     candidate.name ||
-    'Candidate'
+    translateText('features.events.agenda.candidate')
   );
 }
 
@@ -107,7 +108,7 @@ export function buildOfflineTallyEntity({
     return {
       kind: 'election',
       itemId: election.id,
-      title: election.title ?? agendaTitle ?? 'this election',
+      title: election.title ?? agendaTitle ?? translateText('features.events.agenda.thisElection'),
       choices: (electionCandidates ?? election.candidates ?? [])
         .filter(candidate => candidate.status !== 'withdrawn')
         .map(candidate => ({
@@ -131,10 +132,14 @@ export function buildOfflineTallyEntity({
     return {
       kind: 'vote',
       itemId: vote.id,
-      title: vote.title ?? agendaTitle ?? 'this vote',
+      title: vote.title ?? agendaTitle ?? translateText('features.events.agenda.thisVote'),
       choices: (voteChoices ?? vote.choices ?? []).map((choice, index) => ({
         id: choice.id,
-        label: choice.label || `Choice ${index + 1}`,
+        label:
+          choice.label ||
+          translateText('features.events.agenda.defaultChoiceLabels.choiceWithNumber', {
+            count: index + 1,
+          }),
       })),
       tallies: (vote.offline_tallies ?? [])
         .filter(tally => tally.phase === phase && tally.choice_id)

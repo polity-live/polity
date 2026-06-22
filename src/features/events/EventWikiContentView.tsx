@@ -397,10 +397,7 @@ export function EventWikiContentView({
             'Search participants'
           )}
           emptyLabel={translateText('generated.inline.0447_no_participants_yet_aa90337a')}
-          noResultsLabel={translateText(
-            'features.events.wiki.noParticipantsMatch',
-            'No participants match your filters.'
-          )}
+          noResultsLabel={translateText('features.events.wiki.noParticipantsMatch')}
           leadingCard={
             <WikiRosterSummaryCard
               totalCount={participantTotalCount}

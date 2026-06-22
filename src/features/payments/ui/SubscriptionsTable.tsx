@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { BookOpen, Calendar, Scale, Trash2, User, Users } from 'lucide-react';
+import { BookOpen, Calendar, CircleHelp, Scale, Trash2, User, Users } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 
 import {
@@ -69,8 +69,10 @@ function getEntityInfo(subscription: SubscriptionRow): SubscriptionEntityInfo | 
     const user = subscription.user;
 
     return {
-      name: [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Unknown User',
-      type: 'User',
+      name:
+        [user.first_name, user.last_name].filter(Boolean).join(' ') ||
+        translateText('features.payments.subscriptions.unknown.user'),
+      type: translateText('features.payments.subscriptions.types.user'),
       icon: User,
       avatar: user.avatar,
       entityType: 'user',
@@ -79,8 +81,9 @@ function getEntityInfo(subscription: SubscriptionRow): SubscriptionEntityInfo | 
 
   if (subscription.group) {
     return {
-      name: subscription.group.name || 'Unknown Group',
-      type: 'Group',
+      name:
+        subscription.group.name || translateText('features.payments.subscriptions.unknown.group'),
+      type: translateText('features.payments.subscriptions.types.group'),
       icon: Users,
       avatar: subscription.group.image_url,
       entityType: 'group',
@@ -89,8 +92,10 @@ function getEntityInfo(subscription: SubscriptionRow): SubscriptionEntityInfo | 
 
   if (subscription.amendment) {
     return {
-      name: subscription.amendment.title || 'Unknown Amendment',
-      type: 'Amendment',
+      name:
+        subscription.amendment.title ||
+        translateText('features.payments.subscriptions.unknown.amendment'),
+      type: translateText('features.payments.subscriptions.types.amendment'),
       icon: Scale,
       avatar: subscription.amendment.image_url,
       entityType: 'amendment',
@@ -99,8 +104,9 @@ function getEntityInfo(subscription: SubscriptionRow): SubscriptionEntityInfo | 
 
   if (subscription.event) {
     return {
-      name: subscription.event.title || 'Unknown Event',
-      type: 'Event',
+      name:
+        subscription.event.title || translateText('features.payments.subscriptions.unknown.event'),
+      type: translateText('features.payments.subscriptions.types.event'),
       icon: Calendar,
       avatar: subscription.event.image_url,
       entityType: 'event',
@@ -109,15 +115,21 @@ function getEntityInfo(subscription: SubscriptionRow): SubscriptionEntityInfo | 
 
   if (subscription.blog) {
     return {
-      name: subscription.blog.title || 'Unknown Blog',
-      type: 'Blog',
+      name:
+        subscription.blog.title || translateText('features.payments.subscriptions.unknown.blog'),
+      type: translateText('features.payments.subscriptions.types.blog'),
       icon: BookOpen,
       avatar: subscription.blog.image_url,
       entityType: 'blog',
     };
   }
 
-  return null;
+  return {
+    name: translateText('features.payments.subscriptions.unknown.entity'),
+    type: translateText('features.payments.subscriptions.types.unknown'),
+    icon: CircleHelp,
+    entityType: 'user',
+  };
 }
 
 export function SubscriptionsTable({
@@ -198,7 +210,7 @@ export function SubscriptionsTable({
           <span className="text-muted-foreground">
             {row.original.subscription.created_at
               ? new Date(row.original.subscription.created_at).toLocaleDateString()
-              : 'N/A'}
+              : translateText('features.payments.subscriptions.notAvailable')}
           </span>
         ),
       },

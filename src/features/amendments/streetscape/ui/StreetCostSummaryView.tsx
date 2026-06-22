@@ -25,6 +25,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import type {
   StreetDesignComparisonMode,
@@ -45,23 +46,14 @@ interface StreetCostSummaryViewProps {
   onDeleteObjectCategory?: (category: StreetDesignObjectCategory) => void;
 }
 
-const categoryLabels: Record<StreetDesignObjectCategory, string> = {
-  greenery: 'Gruen',
-  mobility: 'Mobilitaet',
-  street: 'Strasse',
-  furniture: 'Moeblierung',
-  building: 'Gebaeude',
-  water: 'Wasser',
-};
-
 const comparisonModes: {
   mode: StreetDesignComparisonMode;
-  label: string;
+  labelKey: string;
 }[] = [
-  { mode: 'original', label: 'Original' },
-  { mode: 'new_design', label: 'Neu' },
-  { mode: 'overlay', label: 'Overlay' },
-  { mode: 'split', label: 'Split' },
+  { mode: 'original', labelKey: 'features.amendments.streetscape.comparison.original' },
+  { mode: 'new_design', labelKey: 'features.amendments.streetscape.comparison.newDesign' },
+  { mode: 'overlay', labelKey: 'features.amendments.streetscape.comparison.overlay' },
+  { mode: 'split', labelKey: 'features.amendments.streetscape.comparison.split' },
 ];
 
 const objectIcons = {
@@ -98,6 +90,7 @@ export function StreetCostSummaryView({
   onDeleteObject,
   onDeleteObjectCategory,
 }: StreetCostSummaryViewProps) {
+  const { t } = useTranslation();
   const [openCategories, setOpenCategories] = useState<StreetDesignObjectCategory[]>([]);
   const lineGroups = useMemo(() => {
     const groups = new Map<
@@ -130,6 +123,10 @@ export function StreetCostSummaryView({
       open ? Array.from(new Set([...current, category])) : current.filter(item => item !== category)
     );
   };
+  const getCategoryLabel = (category: StreetDesignObjectCategory) =>
+    t(`features.amendments.streetscape.categories.${category}`);
+  const getActionLabel = (action: 'collapse' | 'expand' | 'remove' | 'select', label: string) =>
+    t(`features.amendments.streetscape.actions.${action}`, { label });
 
   return (
     <section className="bg-background/95 border-t p-4">
@@ -138,25 +135,29 @@ export function StreetCostSummaryView({
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Calculator className="text-muted-foreground size-4" />
-              <h2 className="text-sm font-semibold">Kosten</h2>
+              <h2 className="text-sm font-semibold">
+                {t('features.amendments.streetscape.cost.title')}
+              </h2>
             </div>
             <div className="text-right">
               <p className="text-xl font-semibold">
                 {formatMinorCurrency(summary.totalCostMinor, summary.currency)}
               </p>
-              <p className="text-muted-foreground text-xs">Schaetzung</p>
+              <p className="text-muted-foreground text-xs">
+                {t('features.amendments.streetscape.cost.estimate')}
+              </p>
             </div>
           </div>
 
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {summary.categories.length === 0 ? (
               <div className="bg-muted/20 text-muted-foreground rounded-md border px-3 py-3 text-sm">
-                Noch keine Kostenkategorien.
+                {t('features.amendments.streetscape.cost.emptyCategories')}
               </div>
             ) : (
               summary.categories.map((category: StreetDesignCostSummary['categories'][number]) => (
                 <div key={category.category} className="bg-muted/20 rounded-md border px-3 py-2">
-                  <p className="text-xs font-medium">{categoryLabels[category.category]}</p>
+                  <p className="text-xs font-medium">{getCategoryLabel(category.category)}</p>
                   <p className="text-sm font-semibold">
                     {formatMinorCurrency(category.totalCostMinor, summary.currency)}
                   </p>
@@ -169,7 +170,9 @@ export function StreetCostSummaryView({
         <div className="bg-card rounded-md border p-4">
           <div className="mb-3 flex items-center gap-2">
             <GitCompareArrows className="text-muted-foreground size-4" />
-            <h2 className="text-sm font-semibold">Vergleich</h2>
+            <h2 className="text-sm font-semibold">
+              {t('features.amendments.streetscape.cost.comparison')}
+            </h2>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {comparisonModes.map(item => (
@@ -184,7 +187,7 @@ export function StreetCostSummaryView({
                 )}
                 onClick={() => onComparisonModeChange(item.mode)}
               >
-                {item.label}
+                {t(item.labelKey)}
               </Button>
             ))}
           </div>
@@ -196,10 +199,10 @@ export function StreetCostSummaryView({
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <Layers className="text-muted-foreground size-4" />
-              Kosten Aufschlüsselung
+              {t('features.amendments.streetscape.cost.breakdown')}
             </div>
             <p className="text-muted-foreground mt-0.5 text-[11px] leading-tight">
-              Gruppen und Einzelkosten prüfen
+              {t('features.amendments.streetscape.cost.breakdownDescription')}
             </p>
           </div>
           <span className="text-muted-foreground text-xs font-medium">{summary.lines.length}</span>
@@ -208,12 +211,12 @@ export function StreetCostSummaryView({
         <div className="max-h-56 space-y-2 overflow-auto">
           {summary.lines.length === 0 ? (
             <div className="bg-background/80 text-muted-foreground rounded-md border px-3 py-3 text-sm">
-              Noch keine Elemente.
+              {t('features.amendments.streetscape.cost.emptyLines')}
             </div>
           ) : (
             lineGroups.map(group => {
               const CategoryIcon = categoryIcons[group.category];
-              const categoryLabel = categoryLabels[group.category];
+              const categoryLabel = getCategoryLabel(group.category);
               const isCategoryOpen = openCategories.includes(group.category);
               const firstLine = group.lines[0] ?? null;
 
@@ -237,16 +240,14 @@ export function StreetCostSummaryView({
                         variant="ghost"
                         size="icon"
                         className="-ml-1 size-7 flex-none"
-                        aria-label={
-                          isCategoryOpen
-                            ? `${categoryLabel} einklappen`
-                            : `${categoryLabel} ausklappen`
-                        }
-                        title={
-                          isCategoryOpen
-                            ? `${categoryLabel} einklappen`
-                            : `${categoryLabel} ausklappen`
-                        }
+                        aria-label={getActionLabel(
+                          isCategoryOpen ? 'collapse' : 'expand',
+                          categoryLabel
+                        )}
+                        title={getActionLabel(
+                          isCategoryOpen ? 'collapse' : 'expand',
+                          categoryLabel
+                        )}
                       >
                         <ChevronDown
                           className={cn(
@@ -259,7 +260,7 @@ export function StreetCostSummaryView({
                     <button
                       type="button"
                       className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
-                      title={`${categoryLabel} auswählen`}
+                      title={getActionLabel('select', categoryLabel)}
                       onClick={() => onObjectSelect?.(firstLine?.objectId ?? null)}
                     >
                       <span className="flex min-w-0 items-center gap-2">
@@ -287,7 +288,7 @@ export function StreetCostSummaryView({
                         size="icon"
                         variant="ghost"
                         className="text-destructive size-7"
-                        title={`${categoryLabel} entfernen`}
+                        title={getActionLabel('remove', categoryLabel)}
                         disabled={readOnly || !onDeleteObjectCategory}
                         onClick={() => onDeleteObjectCategory?.(group.category)}
                       >
@@ -300,6 +301,7 @@ export function StreetCostSummaryView({
                       {group.lines.map(line => {
                         const Icon = objectIcons[line.type];
                         const isSelected = selectedObjectId === line.objectId;
+                        const lineLabel = t(line.labelKey);
 
                         return (
                           <div
@@ -312,13 +314,13 @@ export function StreetCostSummaryView({
                             <button
                               type="button"
                               className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left"
-                              title={`${line.label} auswählen`}
+                              title={getActionLabel('select', lineLabel)}
                               onClick={() => onObjectSelect?.(line.objectId)}
                             >
                               <span className="flex min-w-0 items-center gap-2">
                                 <Icon className="text-muted-foreground size-3.5 flex-none" />
                                 <span className="min-w-0 truncate">
-                                  <span className="block truncate text-xs">{line.label}</span>
+                                  <span className="block truncate text-xs">{lineLabel}</span>
                                   <span className="text-muted-foreground block truncate text-[11px]">
                                     {line.quantity.toFixed(line.quantity % 1 ? 1 : 0)} x{' '}
                                     {formatMinorCurrency(line.unitCostMinor, summary.currency)}
@@ -342,7 +344,7 @@ export function StreetCostSummaryView({
                               size="icon"
                               variant="ghost"
                               className="text-destructive size-6 flex-none"
-                              title={`${line.label} loeschen`}
+                              title={getActionLabel('remove', lineLabel)}
                               disabled={readOnly || !onDeleteObject}
                               onClick={() => onDeleteObject?.(line.objectId)}
                             >

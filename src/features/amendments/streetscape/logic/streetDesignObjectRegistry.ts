@@ -6,7 +6,7 @@ export const STREET_DESIGN_COST_CATALOG_VERSION = '2026-06-mvp';
 export const streetDesignObjectRegistry = {
   tree: {
     type: 'tree',
-    label: 'Baum',
+    labelKey: 'features.amendments.streetscape.objects.tree.label',
     icon: 'TreePine',
     category: 'greenery',
     geometryKind: 'point',
@@ -17,11 +17,22 @@ export const streetDesignObjectRegistry = {
       spacing: 6,
     },
     propertySchema: [
-      { key: 'species', label: 'Art', fieldType: 'text' },
-      { key: 'height', label: 'Hoehe', fieldType: 'number', unit: 'm', min: 1, step: 0.5 },
+      {
+        key: 'species',
+        labelKey: 'features.amendments.streetscape.objects.tree.properties.species',
+        fieldType: 'text',
+      },
+      {
+        key: 'height',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.height',
+        fieldType: 'number',
+        unit: 'm',
+        min: 1,
+        step: 0.5,
+      },
       {
         key: 'canopyDiameter',
-        label: 'Kronendurchmesser',
+        labelKey: 'features.amendments.streetscape.objects.tree.properties.canopyDiameter',
         fieldType: 'number',
         unit: 'm',
         min: 0.5,
@@ -29,7 +40,7 @@ export const streetDesignObjectRegistry = {
       },
       {
         key: 'spacing',
-        label: 'Reihenabstand',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.spacing',
         fieldType: 'number',
         unit: 'm',
         min: 2,
@@ -45,7 +56,7 @@ export const streetDesignObjectRegistry = {
   },
   bush: {
     type: 'bush',
-    label: 'Busch',
+    labelKey: 'features.amendments.streetscape.objects.bush.label',
     icon: 'Shrub',
     category: 'greenery',
     geometryKind: 'point',
@@ -56,19 +67,30 @@ export const streetDesignObjectRegistry = {
       spacing: 1.5,
     },
     propertySchema: [
-      { key: 'species', label: 'Art', fieldType: 'text' },
+      {
+        key: 'species',
+        labelKey: 'features.amendments.streetscape.objects.bush.properties.species',
+        fieldType: 'text',
+      },
       {
         key: 'diameter',
-        label: 'Durchmesser',
+        labelKey: 'features.amendments.streetscape.objects.bush.properties.diameter',
         fieldType: 'number',
         unit: 'm',
         min: 0.3,
         step: 0.1,
       },
-      { key: 'height', label: 'Hoehe', fieldType: 'number', unit: 'm', min: 0.2, step: 0.1 },
+      {
+        key: 'height',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.height',
+        fieldType: 'number',
+        unit: 'm',
+        min: 0.2,
+        step: 0.1,
+      },
       {
         key: 'spacing',
-        label: 'Reihenabstand',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.spacing',
         fieldType: 'number',
         unit: 'm',
         min: 0.4,
@@ -84,7 +106,7 @@ export const streetDesignObjectRegistry = {
   },
   bank: {
     type: 'bank',
-    label: 'Bank',
+    labelKey: 'features.amendments.streetscape.objects.bank.label',
     icon: 'Armchair',
     category: 'furniture',
     geometryKind: 'point',
@@ -93,8 +115,18 @@ export const streetDesignObjectRegistry = {
       seats: 3,
     },
     propertySchema: [
-      { key: 'material', label: 'Material', fieldType: 'text' },
-      { key: 'seats', label: 'Sitzplaetze', fieldType: 'number', min: 1, step: 1 },
+      {
+        key: 'material',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.material',
+        fieldType: 'text',
+      },
+      {
+        key: 'seats',
+        labelKey: 'features.amendments.streetscape.objects.bank.properties.seats',
+        fieldType: 'number',
+        min: 1,
+        step: 1,
+      },
     ],
     costRule: 'per_item',
     suggestedUnitCostMinor: 120000,
@@ -104,7 +136,7 @@ export const streetDesignObjectRegistry = {
   },
   grass_strip: {
     type: 'grass_strip',
-    label: 'Rasen',
+    labelKey: 'features.amendments.streetscape.objects.grassStrip.label',
     icon: 'Sprout',
     category: 'greenery',
     geometryKind: 'corridor',
@@ -113,8 +145,16 @@ export const streetDesignObjectRegistry = {
       maintenance: 'standard',
     },
     propertySchema: [
-      { key: 'material', label: 'Material', fieldType: 'text' },
-      { key: 'maintenance', label: 'Pflege', fieldType: 'text' },
+      {
+        key: 'material',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.material',
+        fieldType: 'text',
+      },
+      {
+        key: 'maintenance',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.maintenance',
+        fieldType: 'text',
+      },
     ],
     costRule: 'per_square_meter',
     suggestedUnitCostMinor: 1200,
@@ -125,7 +165,7 @@ export const streetDesignObjectRegistry = {
   },
   flower_bed: {
     type: 'flower_bed',
-    label: 'Blumenbeet',
+    labelKey: 'features.amendments.streetscape.objects.flowerBed.label',
     icon: 'Flower2',
     category: 'greenery',
     geometryKind: 'corridor',
@@ -134,8 +174,16 @@ export const streetDesignObjectRegistry = {
       maintenance: 'intensiv',
     },
     propertySchema: [
-      { key: 'planting', label: 'Bepflanzung', fieldType: 'text' },
-      { key: 'maintenance', label: 'Pflege', fieldType: 'text' },
+      {
+        key: 'planting',
+        labelKey: 'features.amendments.streetscape.objects.flowerBed.properties.planting',
+        fieldType: 'text',
+      },
+      {
+        key: 'maintenance',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.maintenance',
+        fieldType: 'text',
+      },
     ],
     costRule: 'per_square_meter',
     suggestedUnitCostMinor: 8000,
@@ -146,7 +194,7 @@ export const streetDesignObjectRegistry = {
   },
   water_area: {
     type: 'water_area',
-    label: 'Wasser',
+    labelKey: 'features.amendments.streetscape.objects.waterArea.label',
     icon: 'Waves',
     category: 'water',
     geometryKind: 'corridor',
@@ -157,22 +205,46 @@ export const streetDesignObjectRegistry = {
     propertySchema: [
       {
         key: 'waterType',
-        label: 'Wassertyp',
+        labelKey: 'features.amendments.streetscape.objects.waterArea.properties.waterType.label',
         fieldType: 'select',
         options: [
-          { label: 'Retention', value: 'retention' },
-          { label: 'Teich', value: 'pond' },
-          { label: 'Wasserlauf', value: 'stream' },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.waterArea.properties.waterType.options.retention',
+            value: 'retention',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.waterArea.properties.waterType.options.pond',
+            value: 'pond',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.waterArea.properties.waterType.options.stream',
+            value: 'stream',
+          },
         ],
       },
       {
         key: 'edge',
-        label: 'Ufer',
+        labelKey: 'features.amendments.streetscape.objects.waterArea.properties.edge.label',
         fieldType: 'select',
         options: [
-          { label: 'Naturnah', value: 'naturnah' },
-          { label: 'Gefasst', value: 'gefasst' },
-          { label: 'Sitzkante', value: 'sitzkante' },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.waterArea.properties.edge.options.natural',
+            value: 'naturnah',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.waterArea.properties.edge.options.framed',
+            value: 'gefasst',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.waterArea.properties.edge.options.seatingEdge',
+            value: 'sitzkante',
+          },
         ],
       },
     ],
@@ -185,7 +257,7 @@ export const streetDesignObjectRegistry = {
   },
   parking_area: {
     type: 'parking_area',
-    label: 'Parkplatzflaeche',
+    labelKey: 'features.amendments.streetscape.objects.parkingArea.label',
     icon: 'ParkingSquare',
     category: 'mobility',
     geometryKind: 'corridor',
@@ -194,15 +266,34 @@ export const streetDesignObjectRegistry = {
       orientation: 'parallel',
     },
     propertySchema: [
-      { key: 'parkingSpaces', label: 'Stellplaetze', fieldType: 'number', min: 1, step: 1 },
+      {
+        key: 'parkingSpaces',
+        labelKey: 'features.amendments.streetscape.objects.parkingArea.properties.parkingSpaces',
+        fieldType: 'number',
+        min: 1,
+        step: 1,
+      },
       {
         key: 'orientation',
-        label: 'Ausrichtung',
+        labelKey:
+          'features.amendments.streetscape.objects.parkingArea.properties.orientation.label',
         fieldType: 'select',
         options: [
-          { label: 'Parallel', value: 'parallel' },
-          { label: 'Schraeg', value: 'angled' },
-          { label: 'Senkrecht', value: 'perpendicular' },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.parkingArea.properties.orientation.options.parallel',
+            value: 'parallel',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.parkingArea.properties.orientation.options.angled',
+            value: 'angled',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.parkingArea.properties.orientation.options.perpendicular',
+            value: 'perpendicular',
+          },
         ],
       },
     ],
@@ -215,7 +306,7 @@ export const streetDesignObjectRegistry = {
   },
   street: {
     type: 'street',
-    label: 'Strasse',
+    labelKey: 'features.amendments.streetscape.objects.street.label',
     icon: 'Route',
     category: 'street',
     geometryKind: 'corridor',
@@ -224,8 +315,18 @@ export const streetDesignObjectRegistry = {
       lanes: 2,
     },
     propertySchema: [
-      { key: 'surface', label: 'Belag', fieldType: 'text' },
-      { key: 'lanes', label: 'Spuren', fieldType: 'number', min: 1, step: 1 },
+      {
+        key: 'surface',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.surface',
+        fieldType: 'text',
+      },
+      {
+        key: 'lanes',
+        labelKey: 'features.amendments.streetscape.objects.street.properties.lanes',
+        fieldType: 'number',
+        min: 1,
+        step: 1,
+      },
     ],
     costRule: 'per_square_meter',
     suggestedUnitCostMinor: 18000,
@@ -236,7 +337,7 @@ export const streetDesignObjectRegistry = {
   },
   car_lane: {
     type: 'car_lane',
-    label: 'Fahrspur',
+    labelKey: 'features.amendments.streetscape.objects.carLane.label',
     icon: 'CarFront',
     category: 'street',
     geometryKind: 'corridor',
@@ -247,14 +348,26 @@ export const streetDesignObjectRegistry = {
     propertySchema: [
       {
         key: 'direction',
-        label: 'Richtung',
+        labelKey: 'features.amendments.streetscape.objects.carLane.properties.direction.label',
         fieldType: 'select',
         options: [
-          { label: 'Eine Richtung', value: 'one_way' },
-          { label: 'Beide Richtungen', value: 'two_way' },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.carLane.properties.direction.options.oneWay',
+            value: 'one_way',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.carLane.properties.direction.options.twoWay',
+            value: 'two_way',
+          },
         ],
       },
-      { key: 'surface', label: 'Belag', fieldType: 'text' },
+      {
+        key: 'surface',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.surface',
+        fieldType: 'text',
+      },
     ],
     costRule: 'per_square_meter',
     suggestedUnitCostMinor: 13000,
@@ -265,7 +378,7 @@ export const streetDesignObjectRegistry = {
   },
   bike_lane: {
     type: 'bike_lane',
-    label: 'Radweg',
+    labelKey: 'features.amendments.streetscape.objects.bikeLane.label',
     icon: 'Bike',
     category: 'mobility',
     geometryKind: 'corridor',
@@ -274,8 +387,16 @@ export const streetDesignObjectRegistry = {
       surface: 'asphalt',
     },
     propertySchema: [
-      { key: 'protection', label: 'Schutz', fieldType: 'text' },
-      { key: 'surface', label: 'Belag', fieldType: 'text' },
+      {
+        key: 'protection',
+        labelKey: 'features.amendments.streetscape.objects.bikeLane.properties.protection',
+        fieldType: 'text',
+      },
+      {
+        key: 'surface',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.surface',
+        fieldType: 'text',
+      },
     ],
     costRule: 'per_square_meter',
     suggestedUnitCostMinor: 9000,
@@ -286,7 +407,7 @@ export const streetDesignObjectRegistry = {
   },
   sidewalk: {
     type: 'sidewalk',
-    label: 'Gehweg',
+    labelKey: 'features.amendments.streetscape.objects.sidewalk.label',
     icon: 'Footprints',
     category: 'mobility',
     geometryKind: 'corridor',
@@ -295,8 +416,16 @@ export const streetDesignObjectRegistry = {
       accessibility: true,
     },
     propertySchema: [
-      { key: 'surface', label: 'Belag', fieldType: 'text' },
-      { key: 'accessibility', label: 'Barrierearm', fieldType: 'boolean' },
+      {
+        key: 'surface',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.surface',
+        fieldType: 'text',
+      },
+      {
+        key: 'accessibility',
+        labelKey: 'features.amendments.streetscape.objects.sidewalk.properties.accessibility',
+        fieldType: 'boolean',
+      },
     ],
     costRule: 'per_square_meter',
     suggestedUnitCostMinor: 11000,
@@ -307,7 +436,7 @@ export const streetDesignObjectRegistry = {
   },
   building: {
     type: 'building',
-    label: 'Gebaeude',
+    labelKey: 'features.amendments.streetscape.objects.building.label',
     icon: 'Building2',
     category: 'building',
     geometryKind: 'corridor',
@@ -318,29 +447,78 @@ export const streetDesignObjectRegistry = {
       use: 'mixed',
     },
     propertySchema: [
-      { key: 'height', label: 'Hoehe', fieldType: 'number', unit: 'm', min: 1, step: 0.5 },
-      { key: 'floors', label: 'Geschosse', fieldType: 'number', min: 1, step: 1 },
+      {
+        key: 'height',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.height',
+        fieldType: 'number',
+        unit: 'm',
+        min: 1,
+        step: 0.5,
+      },
+      {
+        key: 'floors',
+        labelKey: 'features.amendments.streetscape.objects.building.properties.floors',
+        fieldType: 'number',
+        min: 1,
+        step: 1,
+      },
       {
         key: 'color',
-        label: 'Farbe',
+        labelKey: 'features.amendments.streetscape.objects.building.properties.color.label',
         fieldType: 'select',
         options: [
-          { label: 'Sand', value: '#b6aa9b' },
-          { label: 'Ziegel', value: '#b46b55' },
-          { label: 'Schiefer', value: '#6f7a82' },
-          { label: 'Blau', value: '#7aa0bd' },
-          { label: 'Gruen', value: '#8ba77f' },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.building.properties.color.options.sand',
+            value: '#b6aa9b',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.building.properties.color.options.brick',
+            value: '#b46b55',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.building.properties.color.options.slate',
+            value: '#6f7a82',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.building.properties.color.options.blue',
+            value: '#7aa0bd',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.building.properties.color.options.green',
+            value: '#8ba77f',
+          },
         ],
       },
       {
         key: 'use',
-        label: 'Nutzung',
+        labelKey: 'features.amendments.streetscape.objects.building.properties.use.label',
         fieldType: 'select',
         options: [
-          { label: 'Gemischt', value: 'mixed' },
-          { label: 'Wohnen', value: 'residential' },
-          { label: 'Gewerbe', value: 'commercial' },
-          { label: 'Oeffentlich', value: 'civic' },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.building.properties.use.options.mixed',
+            value: 'mixed',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.building.properties.use.options.residential',
+            value: 'residential',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.building.properties.use.options.commercial',
+            value: 'commercial',
+          },
+          {
+            labelKey:
+              'features.amendments.streetscape.objects.building.properties.use.options.civic',
+            value: 'civic',
+          },
         ],
       },
     ],

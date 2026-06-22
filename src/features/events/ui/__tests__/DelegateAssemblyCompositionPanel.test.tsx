@@ -61,6 +61,13 @@ vi.mock('@/features/shared/hooks/use-translation', () => {
   };
 
   return {
+    translate: (key: string, params?: Record<string, string | number>) => {
+      if (key === 'features.events.participants.composition.total') {
+        return `${params?.count ?? 0} total seats`;
+      }
+
+      return translations[key] ?? key;
+    },
     useTranslation: () => ({
       t: (key: string, params?: Record<string, string | number>) => {
         if (key === 'features.events.participants.composition.total') {

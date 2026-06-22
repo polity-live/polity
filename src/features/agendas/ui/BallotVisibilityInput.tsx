@@ -14,7 +14,7 @@ interface BallotVisibilityInputProps {
 export function BallotVisibilityInput({
   value,
   onChange,
-  label = 'Stimmabgabe',
+  label = translateText('features.agendas.ballotVisibility.label'),
   hint = translateText(
     'generated.inline.0005_geheime_abstimmungen_bleiben_aggregiert_namen_d12f972e'
   ),

@@ -60,10 +60,6 @@ function canFinalizeInternalChangeRequest(item: any) {
   );
 }
 
-function getInternalOutcomeLabel(cr: any) {
-  return (cr?.votes_for ?? 0) > (cr?.votes_against ?? 0) ? 'Accepted' : 'Rejected';
-}
-
 function isVoteSequencePlaceholder(item: any) {
   return Boolean(item?._votePlaceholder);
 }
@@ -390,7 +386,9 @@ export function ChangeRequestCardsListView({
                 )}
               >
                 <Hash className="h-4 w-4" />
-                <span className="font-mono text-xs font-semibold">Chars</span>
+                <span className="font-mono text-xs font-semibold">
+                  {t('features.agendas.crTimeline.sortByChangedCharactersShort')}
+                </span>
               </FilterToggleGroupItem>
               <FilterToggleGroupItem
                 value="cr_number"
@@ -463,7 +461,10 @@ export function ChangeRequestCardsListView({
                 isChangeRequestVotesPlaceholder(item) &&
                 crItems.length === 0 &&
                 Boolean(closingVoteItem);
-              const outcomeLabel = getInternalOutcomeLabel(item.change_request);
+              const outcomeLabel =
+                (item.change_request?.votes_for ?? 0) > (item.change_request?.votes_against ?? 0)
+                  ? t('features.amendments.voteControls.accept')
+                  : t('features.amendments.voteControls.reject');
               const votesFor = item.change_request?.votes_for ?? 0;
               const votesAgainst = item.change_request?.votes_against ?? 0;
               const votesAbstain = item.change_request?.votes_abstain ?? 0;
@@ -552,12 +553,16 @@ export function ChangeRequestCardsListView({
                                 )}
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Ergebnis: {outcomeLabel}. Accept {votesFor}, Reject {votesAgainst},
-                                Abstain {votesAbstain}.
+                                {t('features.agendas.crTimeline.closeInternalVoteDescription', {
+                                  outcome: outcomeLabel,
+                                  accept: votesFor,
+                                  reject: votesAgainst,
+                                  abstain: votesAbstain,
+                                })}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                              <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
                               <AlertDialogAction
                                 onClick={() => {
                                   void onFinalizeInternalVote(item.change_request_id ?? item.id);

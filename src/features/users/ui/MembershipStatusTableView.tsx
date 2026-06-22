@@ -33,6 +33,11 @@ export function MembershipStatusTableView({
     return null;
   }
 
+  const statusLabel = translateText(
+    `pages.user.memberships.sections.status.${statusType}`,
+    String(statusType)
+  );
+
   return (
     <section className="space-y-3">
       <div className="space-y-1.5 px-3 sm:px-4">
@@ -47,9 +52,9 @@ export function MembershipStatusTableView({
         data={items}
         getRowId={(item: any) => item.id}
         enablePagination={false}
-        emptyTitle={`${translateText('generated.inline.0609_no_816c52fd')}${statusType}${translateText(
-          'generated.inline.1196_items_found_b7242dc8'
-        )}`}
+        emptyTitle={translateText('pages.user.memberships.sections.emptyTitle', {
+          statusType: statusLabel,
+        })}
       />
     </section>
   );

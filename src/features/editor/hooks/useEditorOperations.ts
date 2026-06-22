@@ -98,7 +98,6 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       status?: string;
       votingStatus?: string;
     }) => {
-      console.log('[useEditorOperations] handleSuggestionCreated called:', params);
       const status = params.status ?? 'open';
       try {
         await createChangeRequest({
@@ -124,7 +123,6 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
           voting_majority_type: null,
           quorum_required: null,
         });
-        console.log('[useEditorOperations] change_request created successfully:', params.id);
         return true;
       } catch (error) {
         console.error('[useEditorOperations] Failed to create change request entity:', error);
@@ -236,7 +234,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
               amendment_id: amendmentId,
               process_branch_id: processBranchId ?? null,
               discussion_id: discussion.id,
-              title: discussion.crId || 'Change Request',
+              title: discussion.crId || translateText('features.editor.changeRequest'),
               description: '',
               status: 'accepted',
               source_type: null,
@@ -326,7 +324,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
                 amendment_id: amendmentId,
                 process_branch_id: processBranchId ?? null,
                 discussion_id: discussion.id,
-                title: discussion.crId || 'Change Request',
+                title: discussion.crId || translateText('features.editor.changeRequest'),
                 description: '',
                 status: 'rejected',
                 source_type: null,
@@ -387,7 +385,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
             amendment_id: amendmentId,
             process_branch_id: processBranchId ?? null,
             discussion_id: discussion.id,
-            title: discussion.crId || 'Change Request',
+            title: discussion.crId || translateText('features.editor.changeRequest'),
             description: '',
             status: 'pending',
             source_type: null,

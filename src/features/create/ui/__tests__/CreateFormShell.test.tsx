@@ -33,6 +33,21 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'pages.create.preferences.carousel': 'Karussell',
         'pages.create.preferences.onePage': 'Eine Seite',
         'pages.create.group.title': 'Neue Gruppe erstellen',
+        'pages.create.common.review': 'Review',
+        'pages.create.progress.submission.overlay.title': 'POLITY is working.',
+        'pages.create.progress.submission.overlay.ready': 'Ready',
+        'pages.create.progress.submission.overlay.interrupted': 'Interrupted',
+        'pages.create.progress.submission.overlay.creating': 'Creating',
+        'pages.create.progress.submission.overlay.defaultError': 'Creation could not be completed.',
+        'pages.create.progress.submission.overlay.readyDescription':
+          'Alpha Group Review is created and ready to open.',
+        'pages.create.progress.submission.overlay.progressLabel': 'Creation progress',
+        'pages.create.progress.submission.overlay.reviewNeeded': 'Review needed',
+        'pages.create.progress.submission.overlay.completed': 'Completed',
+        'pages.create.progress.submission.overlay.running': 'Running',
+        'pages.create.progress.submission.overlay.waiting': 'Waiting',
+        'pages.create.progress.submission.overlay.backToForm': 'Back to form',
+        'pages.create.progress.submission.overlay.retry': 'Try again',
       })[key] ?? key,
   }),
 }));
@@ -169,7 +184,7 @@ describe('CreateFormShell', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
     expect(await screen.findByRole('dialog')).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'POLITY arbeitet.' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'POLITY is working.' })).toBeTruthy();
     expect(screen.getByText('Alpha Group Review')).toBeTruthy();
     expect(screen.getByText('Alpha Group')).toBeTruthy();
     expect(screen.getByRole<HTMLButtonElement>('button', { name: /zur gruppe/i }).disabled).toBe(
@@ -222,14 +237,14 @@ describe('CreateFormShell', () => {
     });
 
     expect(screen.getByText('Synchronisiert Testdaten')).toBeTruthy();
-    expect(screen.getByText('Läuft')).toBeTruthy();
+    expect(screen.getByText('Running')).toBeTruthy();
 
     await act(async () => {
       resolveSubmit(groupSuccessOutcome);
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Bereit')).toBeTruthy();
+      expect(screen.getByText('Ready')).toBeTruthy();
     });
   });
 
@@ -254,7 +269,7 @@ describe('CreateFormShell', () => {
     expect(await screen.findByRole('dialog')).toBeTruthy();
     expect(screen.getByText('Create failed')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /zurück zum formular/i }));
+    fireEvent.click(screen.getByRole('button', { name: /back to form/i }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();

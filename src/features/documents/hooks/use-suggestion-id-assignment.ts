@@ -56,12 +56,6 @@ export function useSuggestionIdAssignment({
     );
 
     if (discussionsNeedingIds.length > 0) {
-      console.log(
-        '[useSuggestionIdAssignment] Pass 1: Found',
-        discussionsNeedingIds.length,
-        'discussions needing crId'
-      );
-
       // Sort by creation date to maintain chronological order for ID assignment
       discussionsNeedingIds.sort(
         (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -125,12 +119,6 @@ export function useSuggestionIdAssignment({
           updatedDiscussions: summarizeDiscussions(updatedDiscussions),
         });
 
-        console.log(
-          '[useSuggestionIdAssignment] Pass 2: Found',
-          discussionsNeedingEntity.length,
-          'discussions needing change_request entity'
-        );
-
         const createRequests: {
           crId: string;
           discussionId: string;
@@ -173,11 +161,6 @@ export function useSuggestionIdAssignment({
               documentId,
             });
 
-            console.log('[useSuggestionIdAssignment] Creating change_request entity:', {
-              crId: discussion.crId,
-              discussionId: discussion.id,
-              changeRequestEntityId,
-            });
             createRequests.push({
               crId,
               discussionId: discussion.id,

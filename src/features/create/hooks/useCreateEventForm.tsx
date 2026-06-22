@@ -452,7 +452,7 @@ export function useCreateEventForm(): CreateFormConfig {
               event: createdEvent,
               description:
                 task.description?.trim() ||
-                `Automatisch mit dem neuen Event "${title.trim()}" verknuepft.`,
+                t('pages.create.event.autoLinkedToNewEvent', { title: title.trim() }),
               completeProcessTaskWithEvent,
             })
           )
@@ -463,7 +463,9 @@ export function useCreateEventForm(): CreateFormConfig {
 
       if (searchParams.returnTo) {
         setIsSubmitting(false);
-        return createSuccessSubmitOutcome(createReturnToSubmitTarget(searchParams.returnTo));
+        return createSuccessSubmitOutcome(
+          createReturnToSubmitTarget(searchParams.returnTo, t('pages.create.event.targetLabel'))
+        );
       }
 
       setIsSubmitting(false);
@@ -486,9 +488,9 @@ export function useCreateEventForm(): CreateFormConfig {
       isSubmitting,
       onSubmit: handleSubmit,
       submissionSteps: [
-        { key: 'create', label: 'Erstellt Event' },
-        { key: 'sync', label: 'Verknüpft Kontext und Aufgaben' },
-        { key: 'ready', label: 'Bereitet Eventseite vor' },
+        { key: 'create', label: t('pages.create.progress.submission.steps.event.create') },
+        { key: 'sync', label: t('pages.create.progress.submission.steps.event.sync') },
+        { key: 'ready', label: t('pages.create.progress.submission.steps.event.ready') },
       ],
       steps: [
         // 1. Basic Info first — title, description, image
@@ -622,15 +624,13 @@ export function useCreateEventForm(): CreateFormConfig {
                     props: {
                       delegateConfig,
                       delegateElectionMode,
-                      electionModeLabel: translateText(
-                        'generated.inline.0325_delegiertenwahl_f860c1a3'
-                      ),
+                      electionModeLabel: t('features.elections.mode.typeLabel'),
                       electionModeHint: translateText(
                         'generated.inline.0326_dieser_modus_wird_als_default_fuer_untergrupp_c5a2f055'
                       ),
                       electionModeDescriptions: {
-                        list: 'Untergruppen vergeben mehrere Stimmen in einer Listenwahl.',
-                        single: 'Untergruppen legen pro Delegiertensitz eine eigene Wahl an.',
+                        list: t('pages.create.event.delegateElectionModeDescriptions.list'),
+                        single: t('pages.create.event.delegateElectionModeDescriptions.single'),
                       },
                       onDelegateConfigChange: setDelegateConfig,
                       onDelegateElectionModeChange: setDelegateElectionMode,
@@ -838,7 +838,7 @@ export function useCreateEventForm(): CreateFormConfig {
                 title: title || t('pages.create.event.titlePlaceholder'),
                 subtitle: description || undefined,
                 media: imageURL
-                  ? { imageUrl: imageURL, imageAlt: title || 'Event cover image' }
+                  ? { imageUrl: imageURL, imageAlt: title || t('pages.create.event.coverImageAlt') }
                   : undefined,
                 hashtags: hashtags.length > 0 ? hashtags : undefined,
                 sections: [
@@ -892,7 +892,7 @@ export function useCreateEventForm(): CreateFormConfig {
                                 'features.events.agenda.genderQuota.settingsLabel',
                                 'Genderquotierte Redeliste'
                               ),
-                              value: t('common.enabled', 'Aktiviert'),
+                              value: t('common.enabled'),
                             },
                           ]
                         : []),
@@ -1056,19 +1056,19 @@ export function useCreateEventForm(): CreateFormConfig {
   return config;
 }
 
-function createReturnToSubmitTarget(returnTo: string) {
+function createReturnToSubmitTarget(returnTo: string, label: string) {
   const routeTarget = parseInternalReturnTo(returnTo);
 
   if (routeTarget) {
     return createRouteSubmitTarget('event', {
       ...routeTarget,
-      label: 'Zur Zielseite',
+      label,
     });
   }
 
   return createExternalSubmitTarget('event', {
     href: returnTo,
-    label: 'Zur Zielseite',
+    label,
   });
 }
 

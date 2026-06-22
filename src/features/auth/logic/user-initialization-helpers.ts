@@ -57,7 +57,6 @@ export function generateRandomHandle(): string {
   const number = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
 
   const handle = `${adjective}${noun}${number}`;
-  console.log('🎲 Generated random handle:', handle);
 
   return handle;
 }
@@ -81,12 +80,6 @@ export function buildUserInitializationData(
   const fullName = `${firstName.trim()} ${lastName.trim()}`;
   const userHandle = handle || generateRandomHandle();
   const now = Date.now();
-
-  console.log('👤 Building user initialization data:', {
-    userId,
-    fullName,
-    handle: userHandle,
-  });
 
   return {
     id: userId,

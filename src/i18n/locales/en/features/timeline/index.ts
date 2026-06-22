@@ -10,6 +10,11 @@ export const timelineTranslations = {
   emptyTimelineHint: 'Your timeline is empty. Start following content to see updates.',
   discoverContent: 'Discover Content',
   noUpdates: 'No updates to show',
+  fallbacks: {
+    timelineUpdate: 'Timeline update',
+    unnamedGroup: 'Unnamed Group',
+    unnamedEvent: 'Unnamed Event',
+  },
   empty: {
     title: 'No activity yet',
     description: 'Activity will appear here as events occur.',

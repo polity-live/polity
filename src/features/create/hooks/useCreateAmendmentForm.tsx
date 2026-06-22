@@ -348,9 +348,9 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       isSubmitting,
       onSubmit: handleSubmit,
       submissionSteps: [
-        { key: 'create', label: 'Erstellt Antrag' },
-        { key: 'sync', label: 'Verknüpft Dokument und Kontext' },
-        { key: 'ready', label: 'Bereitet Antragseite vor' },
+        { key: 'create', label: t('pages.create.progress.submission.steps.amendment.create') },
+        { key: 'sync', label: t('pages.create.progress.submission.steps.amendment.sync') },
+        { key: 'ready', label: t('pages.create.progress.submission.steps.amendment.ready') },
       ],
       steps: [
         {
@@ -440,9 +440,15 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                   props: {
                     label: translateText('generated.inline.0320_evaluierungsmodus_37f2926b'),
                     options: [
-                      { value: 'none', label: 'Keine Evaluierung' },
-                      { value: 'fixed_date', label: 'Fixes Datum' },
-                      { value: 'relative_to_vote', label: 'Relativ zur Annahme' },
+                      { value: 'none', label: t('pages.create.amendment.evaluationModes.none') },
+                      {
+                        value: 'fixed_date',
+                        label: t('pages.create.amendment.evaluationModes.fixedDate'),
+                      },
+                      {
+                        value: 'relative_to_vote',
+                        label: t('pages.create.amendment.evaluationModes.relativeAcceptance'),
+                      },
                     ],
                     value: evaluationMode,
                     onChange: (mode: CreateAmendmentEvaluationMode) => {
@@ -552,7 +558,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                 title: title || t('pages.create.amendment.titlePlaceholder'),
                 subtitle: subtitle || undefined,
                 media: imageURL
-                  ? { imageUrl: imageURL, imageAlt: title || 'Amendment image' }
+                  ? { imageUrl: imageURL, imageAlt: title || t('pages.create.amendment.imageAlt') }
                   : undefined,
                 hashtags: hashtags.length > 0 ? hashtags : undefined,
                 sections: [
@@ -621,7 +627,12 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                         value: visibilityLabel,
                       },
                       ...(imageURL
-                        ? [{ label: t('pages.create.amendment.imageLabel'), value: 'Attached' }]
+                        ? [
+                            {
+                              label: t('pages.create.amendment.imageLabel'),
+                              value: t('common.attached'),
+                            },
+                          ]
                         : []),
                     ],
                   },

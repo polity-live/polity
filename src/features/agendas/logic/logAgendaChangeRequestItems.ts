@@ -64,7 +64,7 @@ export function logAgendaChangeRequestItems(
     choiceCount: item.vote?.choices?.length ?? 0,
   });
 
-  console.debug(`[agenda-cr-items][${scope}]`, {
+  console.debug(`[AgendaChangeRequests:${scope}]`, {
     agendaItemId: payload.agendaItemId ?? null,
     amendmentId: payload.amendmentId ?? null,
     editingMode: payload.editingMode ?? null,

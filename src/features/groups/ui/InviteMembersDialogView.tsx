@@ -226,16 +226,17 @@ export function InviteMembersDialogView({
           error={actionSubmission.error}
           preview={{
             entityLabel: inviteLabel,
-            title: `${selectedUsers.length} ${
+            title: translateText(
               selectedUsers.length === 1
-                ? translateText('generated.inline.0026_user_12dea96f')
-                : translateText('generated.inline.0027_users_5b7dcd14')
-            }`,
+                ? 'features.groups.memberships.selectedUserTitle'
+                : 'features.groups.memberships.selectedUsersTitle',
+              { count: selectedUsers.length }
+            ),
             description: dialogTitle,
             badges: selectedRoleNames.length ? selectedRoleNames : [roleSectionTitle],
           }}
           target={{
-            label: translateText('common.done', 'Fertig'),
+            label: translateText('common.actions.done'),
             onClick: actionSubmission.reset,
           }}
           onBack={actionSubmission.reset}

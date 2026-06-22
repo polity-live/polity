@@ -33,7 +33,10 @@ import {
 } from './schema';
 import { AGENDA_VOTE_STEP_KIND } from './vote-step-kind';
 import { normalizeChangeRequestVoteOrder } from '@/features/change-requests/logic/changeRequestVoteOrder';
-import { orderChangeRequestsForVoting } from './change-request-vote-ordering';
+import {
+  orderChangeRequestsForVoting,
+  reorderOpenChangeRequestVoteStepsForAgendaItem,
+} from './change-request-vote-ordering';
 
 type AgendaMutatorTx = Parameters<
   typeof mutators.agendas.updateAgendaItemChangeRequest.fn
@@ -912,21 +915,22 @@ export const agendaServerMutators = {
       if (changeRequests.length === 0) {
         return;
       }
+      const hasExistingOpenChangeRequestVoteSteps = existingLinks.some(
+        link =>
+          Boolean(link.change_request_id) && !link.is_closing_vote && link.status !== 'completed'
+      );
+      const needsEventVoteOrder =
+        changeRequests.length > 1 || hasExistingOpenChangeRequestVoteSteps;
       const eventForAgenda =
-        agendaItem.event_id && changeRequests.length > 1
+        agendaItem.event_id && needsEventVoteOrder
           ? await tx.run(zql.event.where('id', agendaItem.event_id).one())
           : null;
+      const voteOrder = normalizeChangeRequestVoteOrder(
+        (eventForAgenda as Record<string, any> | null | undefined)?.change_request_vote_order
+      );
       const orderedChangeRequests =
         changeRequests.length > 1
-          ? await orderChangeRequestsForVoting(
-              tx,
-              amendment_id,
-              changeRequests,
-              normalizeChangeRequestVoteOrder(
-                (eventForAgenda as Record<string, any> | null | undefined)
-                  ?.change_request_vote_order
-              )
-            )
+          ? await orderChangeRequestsForVoting(tx, amendment_id, changeRequests, voteOrder)
           : changeRequests;
 
       const accreditationsResult = agendaItem.event_id
@@ -995,6 +999,10 @@ export const agendaServerMutators = {
           updated_at: now,
         });
         nextOrderIndex += 1;
+      }
+
+      if (hasExistingOpenChangeRequestVoteSteps) {
+        await reorderOpenChangeRequestVoteStepsForAgendaItem(tx, agendaItem, voteOrder);
       }
     }
   ),

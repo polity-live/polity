@@ -188,7 +188,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   const disableSecretIndicativeVoteButton =
     voteCasting.isIndicationPhase && isSecretBallot && hasUserIndicativeParticipation;
   const secretIndicativeVoteTooltip = disableSecretIndicativeVoteButton
-    ? 'Du hast deine geheime indikative Stimme bereits abgegeben. Geheime indikative Stimmen können nicht geändert werden.'
+    ? t('features.events.agenda.actions.secretIndicativeVoteAlreadyCast')
     : null;
 
   const performBecomeCandidate = useCallback(async () => {
@@ -197,7 +197,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     const candidateOrder = (election.candidates?.length ?? 0) + 1;
     await electionActions.addCandidate({
       id: crypto.randomUUID(),
-      name: user.email || 'Candidate',
+      name: user.email || t('features.events.agenda.candidate'),
       description: '',
       image_url: '',
       order_index: candidateOrder,
@@ -212,6 +212,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     election?.candidates?.length,
     hasCandidateRight,
     electionActions,
+    t,
   ]);
 
   const performWithdrawCandidacy = useCallback(async () => {

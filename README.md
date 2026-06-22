@@ -11,33 +11,68 @@
 
 - **Node.js 22+** (recommended via [nvm](https://github.com/nvm-sh/nvm))
 - **npm**
-- **Docker Desktop** (for Supabase & Zero Cache)
+- **Docker Desktop** (for local Supabase and Zero development)
 - **Supabase CLI** (`npm i -g supabase` or use `npx supabase`)
 
 ---
 
 ## Running the Project
 
-## Environment Modes
+### Environment Modes
 
-This project now separates local development from production values via mode-specific env files:
+Use `.env.example` as the source of truth and copy its values into the mode-specific file you are running. Vinxi/Vite loads these files automatically by mode:
 
-- `.env.development.local` for `npm run dev` and local Supabase CLI
-- `.env.production.local` for `npm run build` and local production previews against cloud services
-- `.env` should stay empty or contain only shared non-sensitive defaults
+| File                     | Used for                                             | Notes                                     |
+| ------------------------ | ---------------------------------------------------- | ----------------------------------------- |
+| `.env.development.local` | `npm run dev`, local Supabase, local Zero Cache      | Local URLs and development credentials    |
+| `.env.production.local`  | `npm run build`, `npm run start` production previews | Cloud service URLs and production secrets |
+| `.env`                   | All modes                                            | Keep empty or shared non-sensitive values |
 
-AI-specific env vars:
+### External APIs and Credentials
 
-- `OPENROUTER_API_KEY` enables shared free OpenRouter models for all users.
-- `AI_ENCRYPTION_SECRET` encrypts per-user BYOK provider keys on the server. Use a long random secret and keep it identical across app instances that need to decrypt existing keys.
+#### Core platform
 
-### Implemented external APIs
+| Service        | Used for                                     | Environment variables                                                                                           | Required |
+| -------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | -------- |
+| **Supabase**   | Postgres, Auth, Storage, server-side jobs    | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Yes      |
+| **Zero Cache** | Realtime sync and custom query/mutate bridge | `VITE_ZERO_CACHE_URL`, `ZERO_UPSTREAM_DB`, `ZERO_CVR_DB`, `ZERO_CHANGE_DB`, `ZERO_ADMIN_PASSWORD`               | Yes      |
 
-The following third-party APIs are already implemented in this codebase:
+#### AI
 
-- **OpenRouter / OpenAI / Anthropic** for the built-in AI assistant flows. OpenRouter supports shared app-level free models and optional BYOK usage, while OpenAI and Anthropic are available through per-user BYOK credentials.
-- **Stripe** for subscription checkout, billing portal access, subscription status, cancellation, and webhook handling.
-- **Geoapify** for address autocomplete and reverse geocoding used by location and address inputs.
+| Service                | Used for                                                                 | Environment variables                        | Required |
+| ---------------------- | ------------------------------------------------------------------------ | -------------------------------------------- | -------- |
+| **OpenRouter**         | Shared app-level free models and optional per-user BYOK OpenRouter usage | `OPENROUTER_API_KEY`, `AI_ENCRYPTION_SECRET` | Optional |
+| **OpenAI / Anthropic** | Per-user BYOK assistant providers                                        | `AI_ENCRYPTION_SECRET`                       | Optional |
+
+`OPENROUTER_API_KEY` enables shared free OpenRouter models for all users. User-provided OpenRouter, OpenAI, and Anthropic keys are stored encrypted; keep `AI_ENCRYPTION_SECRET` long, random, and stable across app instances that need to decrypt existing keys.
+
+#### Payments
+
+| Service    | Used for                                                              | Environment variables                                                                                                      | Required              |
+| ---------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| **Stripe** | Checkout, billing portal, subscription status, cancellation, webhooks | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `VITE_STRIPE_PRICE_RUNNING`, `VITE_STRIPE_PRICE_DEVELOPMENT`, `VITE_APP_URL` | Required for payments |
+
+Configure the Stripe webhook endpoint as `/api/stripe/webhook` on the deployed app domain.
+
+#### Maps and location
+
+| Service                      | Used for                                               | Environment variables                         | Required                    |
+| ---------------------------- | ------------------------------------------------------ | --------------------------------------------- | --------------------------- |
+| **Geoapify**                 | Address autocomplete and reverse geocoding             | `GEOAPIFY_API_KEY` or `VITE_GEOAPIFY_API_KEY` | Required for address lookup |
+| **Overpass / OpenStreetMap** | Street-scene snapshots for streetscape design features | None                                          | No project API key required |
+
+#### Open data
+
+| Service        | Used for                                                     | Environment variables                    | Required                    |
+| -------------- | ------------------------------------------------------------ | ---------------------------------------- | --------------------------- |
+| **Eurostat**   | Dataset catalogue, metadata, async import, chart projections | `ZERO_UPSTREAM_DB` for persisted imports | No project API key required |
+| **GovData.de** | CKAN catalogue search and public CSV snapshot imports        | None                                     | No project API key required |
+
+#### Notifications
+
+| Service      | Used for                                | Environment variables                                                           | Required                        |
+| ------------ | --------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------- |
+| **Web Push** | Browser push subscriptions and delivery | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_EMAIL`, `VITE_VAPID_PUBLIC_KEY` | Required for push notifications |
 
 ### Local development mode
 
@@ -52,7 +87,8 @@ The following third-party APIs are already implemented in this codebase:
 - Preview built app locally: `npm run start`
 - Supabase: cloud project
 - Zero: deployed zero-cache URL
-- Env source: `.env.production.local` locally, or platform env vars on Vercel/Railway
+- Env source: `.env.production.local` locally, or platform env vars on Vercel/Fly.io
+- Fly.io Zero deployments also set `ZERO_QUERY_URL` and `ZERO_MUTATE_URL` to the deployed app's `/api/query` and `/api/mutate` handlers.
 
 ### 1. Install dependencies
 
@@ -76,7 +112,7 @@ supabase migration up
 
 This creates all tables, indexes, RLS policies, storage policies, and functions from `supabase/schemas/`.
 
-### 3b. Create storage buckets
+### 4. Create storage buckets
 
 ```bash
 npx supabase seed buckets
@@ -85,17 +121,15 @@ npx supabase seed buckets
 This provisions the `avatars` and `uploads` storage buckets defined in `supabase/config.toml`.
 Buckets are **not** auto-created by `supabase start` — this step is required for image uploads to work.
 
-### 4. Start the dev server
+### 5. Start the app and Zero Cache
 
-In a **separate terminal**:
+In one terminal:
 
 ```bash
 npm run dev
 ```
 
-### 5. Start Zero Cache
-
-In a **separate terminal**:
+In a second terminal:
 
 ```bash
 npm run zero:dev
@@ -116,23 +150,28 @@ npm run zero:dev
 
 ## All npm Scripts
 
-| Command                   | Description                                    |
-| ------------------------- | ---------------------------------------------- |
-| `npm run dev`             | Start the dev server on port 3000              |
-| `npm run build`           | Production build                               |
-| `npm run start`           | Start production server                        |
-| `npm run zero:dev`        | Start zero-cache-dev with env vars (local dev) |
-| `npm run zero:cache`      | Start zero-cache-dev (no env vars)             |
-| `npm run supabase:start`  | Start local Supabase                           |
-| `npm run supabase:stop`   | Stop local Supabase                            |
-| `npm run test`            | Run unit tests (Vitest)                        |
-| `npm run test:e2e`        | Run E2E tests (Playwright)                     |
-| `npm run test:e2e:ui`     | Run E2E tests with Playwright UI               |
-| `npm run test:e2e:headed` | Run E2E tests in headed browser                |
-| `npm run lint`            | Lint with ESLint                               |
-| `npm run lint:fix`        | Lint and auto-fix                              |
-| `npm run format`          | Format code with Prettier                      |
-| `npm run format:check`    | Check formatting                               |
+| Command                   | Description                                  |
+| ------------------------- | -------------------------------------------- |
+| `npm run dev`             | Start the dev server on port 3000            |
+| `npm run build`           | Production build                             |
+| `npm run start`           | Start the production server                  |
+| `npm run lint`            | Lint with ESLint                             |
+| `npm run lint:check`      | Lint with ESLint via `npx`                   |
+| `npm run lint:fix`        | Lint and auto-fix                            |
+| `npm run test`            | Run unit tests with Vitest                   |
+| `npm run test:e2e`        | Run E2E tests with Playwright                |
+| `npm run test:e2e:ui`     | Run E2E tests with Playwright UI             |
+| `npm run test:e2e:headed` | Run E2E tests in headed browser              |
+| `npm run test:e2e:debug`  | Debug E2E tests with Playwright              |
+| `npm run format`          | Format code with Prettier                    |
+| `npm run format:check`    | Check formatting with Prettier               |
+| `npm run supabase:start`  | Start local Supabase                         |
+| `npm run supabase:stop`   | Stop local Supabase                          |
+| `npm run zero:cache`      | Start zero-cache-dev without preset env vars |
+| `npm run zero:dev`        | Start zero-cache-dev with local dev env vars |
+| `npm run deploy`          | Run the interactive deploy script            |
+| `npm run deploy:dry`      | Run the deploy script in dry-run mode        |
+| `npm run prepare`         | Install Husky git hooks                      |
 
 ## Deployment
 
@@ -240,17 +279,18 @@ fly certs setup zero.your-domain.example   # Shows required DNS records
 
 ```
 app/              # TanStack Start entry points (client, ssr, router)
-src/
-  routes/         # File-based route pages
-  components/     # Reusable UI components (shadcn/ui)
-  features/       # Feature modules (amendments, groups, events, etc.)
-  hooks/          # Custom React hooks
-  i18n/           # Internationalization (DE & EN)
-  zero/           # Zero schema & sync setup
-  utils/          # Utility functions
+public/           # Static assets, icons, manifest, service worker
+src/routes/       # File-based route pages
+src/features/     # Feature modules and colocated UI, hooks, logic, tests
+src/layout/       # App shell and layout wrappers
+src/lib/          # Shared client/server library helpers
+src/presence/     # Supabase realtime presence helpers
+src/providers/    # App-level React providers
+src/server/       # Server functions and external API integrations
+src/styles/       # Shared CSS modules and animation styles
+src/zero/         # Zero schema & sync setup
 supabase/         # Supabase config & schema SQL
 tools/deploy/     # Deployment helpers
-e2e/              # Playwright E2E tests
 ```
 
 ## Tech Stack
@@ -259,7 +299,7 @@ e2e/              # Playwright E2E tests
 - **Database**: [Supabase](https://supabase.com/) (Postgres) + [Zero](https://zero.rocicorp.dev/) (realtime sync)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/)
 - **Editor**: [Plate.js](https://platejs.org/) — Rich text collaborative editor
-- **AI**: Custom AI assistants (Aria & Kai)
+- **AI**: Custom AI assistants (Aria & Kai) powered by OpenRouter, with bring-your-own-key support for OpenRouter, OpenAI, and Anthropic
 - **Auth**: Supabase Auth (email OTP)
 - **Testing**: Vitest + Playwright
 - **i18n**: i18next (German & English)

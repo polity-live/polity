@@ -81,6 +81,21 @@ export function isStartableVoteSequenceItem(item: VoteSequenceStartableItem) {
   return phase === 'pending' || phase === 'indication';
 }
 
+export function resolvePreferredReorderedVoteSequenceItem<T extends VoteSequenceStartableItem>({
+  sequenceItems,
+}: {
+  sequenceItems: readonly T[];
+}): T | null {
+  const finalOpenItem = sequenceItems.find(item => item.vote?.status === 'final');
+  if (finalOpenItem) return finalOpenItem;
+
+  return (
+    sequenceItems.find(isStartableVoteSequenceItem) ??
+    sequenceItems.find(item => item.status !== 'completed') ??
+    null
+  );
+}
+
 export function resolveNextStartableVoteSequenceItem({
   selectedItemId,
   sequenceItems,
@@ -109,22 +124,37 @@ export function resolveVoteSequenceSelectionUpdate({
   sequenceItems,
   fallbackItemId,
   currentItemId,
+  preferredItemId,
+  preferSequenceItem = false,
 }: {
   selectedItemId: string | null;
   sequenceItems: readonly VoteSequenceSelectionItem[];
   fallbackItemId: string | null;
   currentItemId?: string | null;
+  preferredItemId?: string | null;
+  preferSequenceItem?: boolean;
 }): string | null | undefined {
   const selectedItem = selectedItemId
     ? sequenceItems.find(item => item.id === selectedItemId)
+    : null;
+  const currentItem = currentItemId ? sequenceItems.find(item => item.id === currentItemId) : null;
+  const preferredItem = preferredItemId
+    ? sequenceItems.find(item => item.id === preferredItemId)
     : null;
 
   if (!selectedItem) {
     return fallbackItemId ?? (selectedItemId ? null : undefined);
   }
 
-  if (selectedItem.status === 'completed' && currentItemId && currentItemId !== selectedItem.id) {
-    return currentItemId;
+  if (preferSequenceItem) {
+    const itemToPrefer = preferredItem ?? currentItem;
+    if (itemToPrefer && itemToPrefer.id !== selectedItem.id) {
+      return itemToPrefer.id;
+    }
+  }
+
+  if (selectedItem.status === 'completed' && currentItem && currentItem.id !== selectedItem.id) {
+    return currentItem.id;
   }
 
   return undefined;

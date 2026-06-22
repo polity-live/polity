@@ -88,12 +88,13 @@ export function PendingRequestsTable<TParticipation extends ParticipationLike>({
         header: translateText('generated.inline.0090_user_9f8a2389'),
         accessorFn: membership =>
           [membership.user?.first_name, membership.user?.last_name].filter(Boolean).join(' ') ||
-          'Unknown User',
+          translateText('components.memberRightsDialog.unknownUser'),
         cell: ({ row }) => {
           const membership = row.original;
           const user = membership.user;
           const userName =
-            [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Unknown User';
+            [user?.first_name, user?.last_name].filter(Boolean).join(' ') ||
+            translateText('components.memberRightsDialog.unknownUser');
           const userAvatar = user?.avatar || '';
           const userHandle = user?.handle || '';
           const avatar = (
@@ -157,7 +158,7 @@ export function PendingRequestsTable<TParticipation extends ParticipationLike>({
         cell: ({ row }) => {
           const createdAt = row.original.created_at
             ? new Date(row.original.created_at).toLocaleDateString()
-            : 'N/A';
+            : translateText('components.membershipTables.notAvailable');
 
           return <span className="text-muted-foreground">{createdAt}</span>;
         },

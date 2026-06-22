@@ -96,9 +96,15 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
       isSubmitting,
       onSubmit: handleSubmit,
       submissionSteps: [
-        { key: 'create', label: 'Erstellt Kandidatur' },
-        { key: 'sync', label: 'Synchronisiert Wahlkontext' },
-        { key: 'ready', label: 'Bereitet Zielseite vor' },
+        {
+          key: 'create',
+          label: t('pages.create.progress.submission.steps.electionCandidate.create'),
+        },
+        { key: 'sync', label: t('pages.create.progress.submission.steps.electionCandidate.sync') },
+        {
+          key: 'ready',
+          label: t('pages.create.progress.submission.steps.electionCandidate.ready'),
+        },
       ],
       steps: [
         {
@@ -162,7 +168,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
               props: {
                 entityType: 'election',
                 badge: t('pages.create.electionCandidate.reviewBadge'),
-                title: selectedElection?.title || 'Election Candidate',
+                title: selectedElection?.title || t('pages.create.electionCandidate.reviewTitle'),
                 subtitle: statement || undefined,
                 media: imageURL
                   ? { imageUrl: imageURL, imageAlt: selectedElectionTitle }
@@ -188,7 +194,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
                         ? [
                             {
                               label: t('pages.create.electionCandidate.image'),
-                              value: 'Attached',
+                              value: t('common.attached'),
                             },
                           ]
                         : []),

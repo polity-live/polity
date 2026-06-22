@@ -195,7 +195,7 @@ export function CreateAgendaItemFormView({ controller }: CreateAgendaItemFormVie
                         items={toTypeaheadItems(
                           userRoles,
                           'role',
-                          role => role.title || 'Role',
+                          role => role.title || translateText('features.events.agenda.role'),
                           role => role.description?.substring(0, 60)
                         )}
                         value={formData.roleId}

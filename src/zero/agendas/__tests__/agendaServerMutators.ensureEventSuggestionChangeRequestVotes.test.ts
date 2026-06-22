@@ -211,6 +211,83 @@ describe('agendaServerMutators.ensureEventSuggestionChangeRequestVotes', () => {
     ]);
   });
 
+  it('reorders existing open vote rows when a newly submitted change request belongs before them', async () => {
+    const tx = createTx([
+      agendaItem(),
+      [
+        changeRequest('cr-15', { title: 'CR-15', changed_character_count: 10 }),
+        changeRequest('cr-17', { title: 'CR-17', changed_character_count: 80 }),
+      ],
+      [{ id: 'link-cr-15', change_request_id: 'cr-15', is_closing_vote: false, order_index: 0 }],
+      { id: 'event-1', change_request_vote_order: 'text_position' },
+      [],
+      [
+        {
+          id: 'link-cr-15',
+          change_request_id: 'cr-15',
+          order_index: 0,
+          step_kind: 'change_request',
+          is_closing_vote: false,
+          status: 'pending',
+          change_request: changeRequest('cr-15', { title: 'CR-15' }),
+          vote: { status: 'indicative' },
+        },
+        {
+          id: 'link-cr-17',
+          change_request_id: 'cr-17',
+          order_index: 1,
+          step_kind: 'change_request',
+          is_closing_vote: false,
+          status: 'pending',
+          change_request: changeRequest('cr-17', { title: 'CR-17' }),
+          vote: { status: 'indicative' },
+        },
+      ],
+      { id: 'amendment-1', document_id: null, discussions: [] },
+      [
+        {
+          id: 'branch-1',
+          document_id: 'document-branch-1',
+          document_version_id: null,
+          discussions: [
+            { id: 'suggestion-15', changeRequestEntityId: 'cr-15' },
+            { id: 'suggestion-17', changeRequestEntityId: 'cr-17' },
+          ],
+        },
+      ],
+      [
+        {
+          id: 'document-branch-1',
+          content: [
+            { type: 'p', children: [{ text: 'early', suggestion_17: { id: 'suggestion-17' } }] },
+            { type: 'p', children: [{ text: 'later', suggestion_15: { id: 'suggestion-15' } }] },
+          ],
+        },
+      ],
+    ]);
+
+    await ensure(tx);
+
+    expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        change_request_id: 'cr-17',
+        order_index: 1,
+      })
+    );
+    expect(tx.mutate.agenda_item_change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'link-cr-17',
+        order_index: 0,
+      })
+    );
+    expect(tx.mutate.agenda_item_change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'link-cr-15',
+        order_index: 1,
+      })
+    );
+  });
+
   it('ignores pending, resolved, obsolete, and other-branch change requests', async () => {
     const tx = createTx([
       agendaItem(),

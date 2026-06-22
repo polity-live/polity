@@ -131,7 +131,9 @@ export function AgendaVoteSection({
     return computeVoteResultSummary(
       choices.map((choice, idx) => ({
         id: choice.id,
-        label: choice.label || `Choice ${idx + 1}`,
+        label:
+          choice.label ||
+          t('features.events.agenda.defaultChoiceLabels.choiceWithNumber', { count: idx + 1 }),
         order_index: choice.order_index ?? idx,
       })),
       finalDecisions,
@@ -146,6 +148,7 @@ export function AgendaVoteSection({
     isClosed,
     majorityType,
     offlineTallies,
+    t,
     totalEligibleVoters,
     totalFinal,
   ]);
@@ -192,7 +195,9 @@ export function AgendaVoteSection({
 
       return {
         key: cs.choice.id,
-        label: cs.choice.label || `Choice ${idx + 1}`,
+        label:
+          cs.choice.label ||
+          t('features.events.agenda.defaultChoiceLabels.choiceWithNumber', { count: idx + 1 }),
         color: colors.color,
         lightColor: colors.light,
         finalCount: cs.finalCount,
@@ -201,7 +206,7 @@ export function AgendaVoteSection({
         indicationPercent: cs.indicativePercentage,
       };
     });
-  }, [choiceStats]);
+  }, [choiceStats, t]);
 
   return (
     <Card className={cn('overflow-hidden rounded-lg shadow-sm', className)}>

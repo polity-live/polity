@@ -803,9 +803,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       isSubmitting,
       onSubmit: handleSubmit,
       submissionSteps: [
-        { key: 'create', label: 'Erstellt Agendapunkt' },
-        { key: 'sync', label: 'Synchronisiert Abstimmung und Rollen' },
-        { key: 'ready', label: 'Bereitet Agenda vor' },
+        { key: 'create', label: t('pages.create.progress.submission.steps.agendaItem.create') },
+        { key: 'sync', label: t('pages.create.progress.submission.steps.agendaItem.sync') },
+        { key: 'ready', label: t('pages.create.progress.submission.steps.agendaItem.ready') },
       ],
       steps: [
         {
@@ -891,7 +891,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                 items: toTypeaheadItems(
                   selectableEvents,
                   'event',
-                  event => event.title || 'Event',
+                  event => event.title || t('pages.create.agendaItem.eventLabel'),
                   event => {
                     const text = richTextToPlainText(event.description);
                     return text ? text.substring(0, 60) : undefined;
@@ -976,13 +976,13 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                           props: {
                             value: resolvedElectionMode,
                             onChange: (mode: ElectionMode) => setElectionMode(mode),
-                            label: translateText('generated.inline.0310_wahltyp_05ffc3a6'),
+                            label: t('features.elections.mode.typeLabel'),
                             hint: delegateAssignment
-                              ? 'Der Auftrag setzt die Zahl der zu vergebenden Sitze. Der Modus kann fuer diese Wahl noch angepasst werden.'
-                              : 'Waehle, ob Kandidierende einzeln oder als Listenwahl gewaehlt werden.',
+                              ? t('pages.create.agendaItem.electionMode.assignmentHint')
+                              : t('pages.create.agendaItem.electionMode.defaultHint'),
                             descriptions: {
-                              list: 'Eine Wahl mit mehreren Stimmen und mehreren zu vergebenden Positionen.',
-                              single: 'Eine Wahl pro Position mit genau einer Stimme pro Waehler.',
+                              list: t('pages.create.agendaItem.electionMode.listDescription'),
+                              single: t('pages.create.agendaItem.electionMode.singleDescription'),
                             },
                           },
                         },
@@ -1001,8 +1001,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                           onValueChange: setSeatCountInput,
                           disabled: Boolean(delegateAssignment),
                           hint: delegateAssignment
-                            ? 'Die Anzahl kommt direkt aus dem Delegiertenauftrag.'
-                            : 'So viele Positionen koennen in dieser Listenwahl vergeben werden.',
+                            ? t('pages.create.agendaItem.seatCount.assignmentHint')
+                            : t('pages.create.agendaItem.seatCount.defaultHint'),
                         },
                       ]
                     : delegateAssignment
@@ -1060,8 +1060,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                       value: ballotVisibility,
                       onChange: setBallotVisibility,
                       hint: isElectionType
-                        ? 'Delegierten- und Personenwahlen sind standardmaessig geheim.'
-                        : 'Abstimmungen sind standardmaessig namentlich.',
+                        ? t('pages.create.agendaItem.ballotVisibility.electionHint')
+                        : t('pages.create.agendaItem.ballotVisibility.voteHint'),
                     },
                   },
                 ],
@@ -1083,7 +1083,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                       items: toTypeaheadItems(
                         userAmendments,
                         'amendment',
-                        amendment => amendment.title || 'Amendment',
+                        amendment => amendment.title || t('pages.create.agendaItem.amendmentLabel'),
                         undefined,
                         undefined,
                         amendment => `/amendment/${amendment.id}`
@@ -1259,7 +1259,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                             ...(isElectionType
                               ? [
                                   {
-                                    label: translateText('generated.inline.0048_wahltyp_05ffc3a6'),
+                                    label: t('features.elections.mode.typeLabel'),
                                     value: getElectionModeSummaryLabel(
                                       resolvedElectionMode,
                                       resolvedSeatCount
@@ -1271,10 +1271,10 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                               label: t('pages.create.agendaItem.majorityType'),
                               value:
                                 majorityType === 'two_thirds'
-                                  ? '2/3 Majority'
+                                  ? t('pages.create.agendaItem.majorityTwoThirds')
                                   : majorityType === 'absolute'
-                                    ? 'Absolute'
-                                    : 'Simple',
+                                    ? t('pages.create.agendaItem.majorityAbsolute')
+                                    : t('pages.create.agendaItem.majoritySimple'),
                             },
                             ...(timeLimit
                               ? [
@@ -1285,8 +1285,11 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                                 ]
                               : []),
                             {
-                              label: translateText('generated.inline.0049_stimmabgabe_65b7d215'),
-                              value: ballotVisibility === 'secret' ? 'Geheim' : 'Namentlich',
+                              label: t('features.agendas.ballotVisibility.label'),
+                              value:
+                                ballotVisibility === 'secret'
+                                  ? t('pages.create.agendaItem.ballotVisibility.secret')
+                                  : t('pages.create.agendaItem.ballotVisibility.named'),
                             },
                           ],
                         },

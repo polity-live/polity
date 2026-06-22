@@ -1,4 +1,9 @@
 export const commonTranslations = {
+  done: 'Done',
+  enabled: 'Enabled',
+  attached: 'Attached',
+  unknown: 'Unknown',
+  unknownUser: 'Unknown User',
   days: {
     monday: 'Monday',
     tuesday: 'Tuesday',
@@ -67,6 +72,7 @@ export const commonTranslations = {
     continue: 'Continue',
     delete: 'Delete',
     deleting: 'Deleting...',
+    done: 'Done',
     save: 'Save',
     confirm: 'Confirm',
     close: 'Close',
@@ -129,6 +135,7 @@ export const commonTranslations = {
     },
   },
   labels: {
+    all: 'All',
     groups: 'Groups',
     unspecifiedUser: 'not specified',
     groupChat: 'Group Chat',
@@ -350,6 +357,9 @@ export const commonTranslations = {
     rightActiveVotingDesc: 'Right to participate in votes',
     rightPassiveVoting: 'Passive Voting Right',
     rightPassiveVotingDesc: 'Right to be elected',
+    currentGroupGrantsRightToPartnerLabel: 'This group gives the right to the partner group',
+    currentGroupHasRightInPartnerLabel: 'This group has the right in the partner group',
+    groupsMutuallyGrantRightLabel: 'Both groups grant each other the right',
     propagatingMemberships: 'Propagating memberships...',
     linkPossible: 'Link possible',
     linkPossibleDescription: 'No overlapping members — this hierarchy link can be accepted.',

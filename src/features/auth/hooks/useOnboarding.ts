@@ -337,6 +337,10 @@ export function useOnboarding(): UseOnboardingReturn {
 
   const completeOnboarding = useCallback(
     async (userId: string) => {
+      if (!userId) {
+        throw new Error('Missing user ID for onboarding completion');
+      }
+
       setIsLoading(true);
       setError(null);
 
@@ -344,12 +348,6 @@ export function useOnboarding(): UseOnboardingReturn {
         await updateProfileConfirmed({
           first_name: data.firstName.trim(),
           last_name: data.lastName.trim(),
-        });
-
-        console.log('✅ Onboarding completed:', {
-          userId,
-          firstName: data.firstName,
-          lastName: data.lastName,
         });
       } catch (err) {
         console.error('Failed to complete onboarding:', err);

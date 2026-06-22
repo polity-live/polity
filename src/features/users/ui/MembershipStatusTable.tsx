@@ -68,6 +68,17 @@ export function MembershipStatusTable({
   getEntityHref,
   getAcceptPreflightInput,
 }: MembershipStatusTableProps) {
+  const getEntityTypeLabel = (entityKey: MembershipStatusTableProps['entityKey']): string => {
+    const translationKeys = {
+      group: 'components.linkPreview.group',
+      event: 'components.linkPreview.event',
+      amendment: 'components.linkPreview.amendment',
+      blog: 'components.linkPreview.blog',
+    } as const;
+
+    return translateText(translationKeys[entityKey]);
+  };
+
   const getEntityData = (item: FilterableRecord): DisplayEntity | null => {
     switch (entityKey) {
       case 'group':
@@ -82,8 +93,11 @@ export function MembershipStatusTable({
   };
 
   const getEntityName = (entity: DisplayEntity | null): string => {
-    if (!entity) return `Unknown ${entityKey}`;
-    return entity.name || entity.title || `Unknown ${entityKey}`;
+    const fallbackName = translateText('pages.user.memberships.sections.unknownEntity', {
+      entityType: getEntityTypeLabel(entityKey),
+    });
+    if (!entity) return fallbackName;
+    return entity.name || entity.title || fallbackName;
   };
 
   const getEntityImage = (entity: DisplayEntity | null): string | undefined => {
@@ -174,7 +188,9 @@ export function MembershipStatusTable({
             : translateText('generated.inline.0148_joined_43a1c626'),
       cell: ({ row }) => (
         <span className="text-muted-foreground">
-          {row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : 'N/A'}
+          {row.original.created_at
+            ? new Date(row.original.created_at).toLocaleDateString()
+            : translateText('components.membershipTables.notAvailable')}
         </span>
       ),
     },

@@ -330,12 +330,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         formData.defaultFinalVoteDurationMinutes.trim() &&
         !isPositiveInteger(formData.defaultFinalVoteDurationMinutes)
       ) {
-        toast.error(
-          translateText(
-            'generated.inline.2004_default_final_vote_duration_invalid',
-            'Default final vote duration must be a positive number of minutes.'
-          )
-        );
+        toast.error(translateText('features.events.editPage.finalVoteDurationInvalid'));
         return;
       }
 

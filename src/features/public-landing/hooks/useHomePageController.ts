@@ -27,7 +27,6 @@ export function useHomePageController(): HomePageViewState {
     }
 
     const value = sessionStorage.getItem(ONBOARDING_KEY) === 'true';
-    console.log('[HomePage] Initial showOnboarding from sessionStorage:', value);
 
     return value;
   });
@@ -52,15 +51,6 @@ export function useHomePageController(): HomePageViewState {
     return () => window.cancelAnimationFrame(frame);
   }, [hash]);
 
-  console.log(
-    '[HomePage] Render - user:',
-    !!user,
-    'zeroReady:',
-    zeroReady,
-    'showOnboarding:',
-    showOnboarding
-  );
-
   if (!user || !zeroReady) {
     return { kind: 'public' };
   }
@@ -78,19 +68,15 @@ export function useHomePageController(): HomePageViewState {
   }
 
   if (onboardingActiveRef.current) {
-    console.log('[HomePage] Showing OnboardingWizard');
-
     return {
       kind: 'onboarding',
       userId: user.id,
       userEmail: user.email,
       onComplete: () => {
-        console.log('[HomePage] Onboarding complete - clearing sessionStorage flag');
         sessionStorage.removeItem(ONBOARDING_KEY);
       },
     };
   }
 
-  console.log('[HomePage] User ready, no onboarding - redirecting to /home');
   return { kind: 'redirect' };
 }

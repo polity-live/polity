@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useAuth } from '@/providers/auth-provider';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { overpassStreetSceneFn } from '@/server/overpass-street-scene';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
@@ -29,7 +30,7 @@ import { useStreetDesignEditorState } from './useStreetDesignEditorState';
 function originFromCenter(center: StreetDesignGeoPoint): StreetDesignOrigin {
   return {
     ...center,
-    label: 'Gewaehlter Strassenraum',
+    label: translateText('features.amendments.streetscape.sample.selectedStreetSpace'),
   };
 }
 
@@ -51,7 +52,7 @@ function createSampleOsmSnapshot(
       {
         id: 'sample-road-main',
         kind: 'road',
-        label: 'Musterstrasse',
+        label: translateText('features.amendments.streetscape.sample.mainRoad'),
         points: [
           { lat: center.lat - latStep, lon: center.lon - lonStep },
           { lat: center.lat + latStep, lon: center.lon + lonStep },
@@ -60,7 +61,7 @@ function createSampleOsmSnapshot(
       {
         id: 'sample-road-side',
         kind: 'road',
-        label: 'Querstrasse',
+        label: translateText('features.amendments.streetscape.sample.sideRoad'),
         points: [
           { lat: center.lat + latStep * 0.2, lon: center.lon - lonStep },
           { lat: center.lat - latStep * 0.15, lon: center.lon + lonStep },
@@ -69,7 +70,7 @@ function createSampleOsmSnapshot(
       {
         id: 'sample-building-left',
         kind: 'building',
-        label: 'Bestandsgebaeude',
+        label: translateText('features.amendments.streetscape.sample.existingBuilding'),
         height: 15,
         points: [
           { lat: center.lat - 0.00035, lon: center.lon - 0.0005 },
@@ -82,7 +83,7 @@ function createSampleOsmSnapshot(
       {
         id: 'sample-building-right',
         kind: 'building',
-        label: 'Wohnhaus',
+        label: translateText('features.amendments.streetscape.sample.residentialBuilding'),
         height: 12,
         points: [
           { lat: center.lat + 0.00012, lon: center.lon + 0.00028 },
@@ -95,7 +96,7 @@ function createSampleOsmSnapshot(
       {
         id: 'sample-green',
         kind: 'green',
-        label: 'Gruenflaeche',
+        label: translateText('features.amendments.streetscape.sample.greenSpace'),
         points: [
           { lat: center.lat + 0.00018, lon: center.lon - 0.00055 },
           { lat: center.lat + 0.00036, lon: center.lon - 0.00036 },
@@ -197,7 +198,9 @@ export function useStreetDesignPageController(amendmentId: string) {
       );
     } catch (error) {
       setOsmError(
-        error instanceof Error ? error.message : 'OSM-Daten konnten nicht geladen werden.'
+        error instanceof Error
+          ? error.message
+          : translateText('features.amendments.streetscape.errors.loadOsmFailed')
       );
     } finally {
       setIsLoadingOsm(false);
@@ -232,7 +235,11 @@ export function useStreetDesignPageController(amendmentId: string) {
 
     const payload = {
       amendment_id: amendmentId,
-      title: amendment?.title ? `${amendment.title} - Strassenentwurf` : 'Strassenentwurf',
+      title: amendment?.title
+        ? translateText('features.amendments.streetscape.savedTitleWithAmendment', {
+            title: amendment.title,
+          })
+        : translateText('features.amendments.streetscape.defaultTitle'),
       bbox: asReadonlyJsonValue(editor.design.osmSnapshot?.bbox ?? selectedBbox),
       center_lat: editor.design.origin.lat,
       center_lon: editor.design.origin.lon,
@@ -269,7 +276,9 @@ export function useStreetDesignPageController(amendmentId: string) {
       editor.replaceDesign(editor.design, false);
     } catch (error) {
       setSaveError(
-        error instanceof Error ? error.message : 'Entwurf konnte nicht gespeichert werden.'
+        error instanceof Error
+          ? error.message
+          : translateText('features.amendments.streetscape.errors.saveFailed')
       );
     } finally {
       setIsSaving(false);

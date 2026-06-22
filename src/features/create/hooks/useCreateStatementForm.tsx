@@ -190,9 +190,9 @@ export function useCreateStatementForm(): CreateFormConfig {
       isSubmitting: isLoading,
       onSubmit: handleSubmit,
       submissionSteps: [
-        { key: 'create', label: 'Erstellt Aussage' },
-        { key: 'sync', label: 'Synchronisiert Hashtags und Umfrage' },
-        { key: 'ready', label: 'Bereitet Aussage vor' },
+        { key: 'create', label: t('pages.create.progress.submission.steps.statement.create') },
+        { key: 'sync', label: t('pages.create.progress.submission.steps.statement.sync') },
+        { key: 'ready', label: t('pages.create.progress.submission.steps.statement.ready') },
       ],
       steps: [
         {
@@ -202,15 +202,12 @@ export function useCreateStatementForm(): CreateFormConfig {
             {
               key: 'title',
               kind: 'text',
-              label: t('pages.create.statement.titleLabel', 'Headline'),
+              label: t('pages.create.statement.titleLabel'),
               required: false,
-              hint: t(
-                'pages.create.statement.titleHint',
-                'Optional headline for the carousel and previews.'
-              ),
+              hint: t('pages.create.statement.titleHint'),
               value: title,
               onValueChange: value => setTitle(value.slice(0, 120)),
-              placeholder: t('pages.create.statement.titlePlaceholder', 'Short headline'),
+              placeholder: t('pages.create.statement.titlePlaceholder'),
               maxLength: 120,
             },
             {
@@ -284,11 +281,8 @@ export function useCreateStatementForm(): CreateFormConfig {
               props: {
                 checked: isStory,
                 onCheckedChange: setIsStory,
-                label: t('features.statements.story.label', 'Story'),
-                description: t(
-                  'features.statements.story.description',
-                  'Publicly visible for 24 hours, then kept in your archive.'
-                ),
+                label: t('features.statements.story.label'),
+                description: t('features.statements.story.description'),
               },
             },
             {
@@ -359,9 +353,7 @@ export function useCreateStatementForm(): CreateFormConfig {
                   video_url: videoUrl,
                 }),
                 subtitle: text || undefined,
-                secondaryBadge: isStory
-                  ? t('features.statements.story.badge', '24h Story')
-                  : visibilityLabel,
+                secondaryBadge: isStory ? t('features.statements.story.badge') : visibilityLabel,
                 media: {
                   imageUrl: imageUrl || undefined,
                   imageAlt: t('pages.create.statement.reviewBadge'),
@@ -379,7 +371,7 @@ export function useCreateStatementForm(): CreateFormConfig {
                       ...(title.trim()
                         ? [
                             {
-                              label: t('pages.create.statement.titleLabel', 'Headline'),
+                              label: t('pages.create.statement.titleLabel'),
                               value: title.trim(),
                             },
                           ]
@@ -387,8 +379,8 @@ export function useCreateStatementForm(): CreateFormConfig {
                       ...(isStory
                         ? [
                             {
-                              label: t('features.statements.story.label', 'Story'),
-                              value: t('features.statements.story.badge', '24h Story'),
+                              label: t('features.statements.story.label'),
+                              value: t('features.statements.story.badge'),
                             },
                           ]
                         : []),
@@ -396,7 +388,7 @@ export function useCreateStatementForm(): CreateFormConfig {
                         ? [
                             {
                               label: t('pages.create.statement.imageUrl'),
-                              value: 'Attached',
+                              value: t('common.attached'),
                             },
                           ]
                         : []),
@@ -404,7 +396,7 @@ export function useCreateStatementForm(): CreateFormConfig {
                         ? [
                             {
                               label: t('pages.create.statement.videoUrl'),
-                              value: 'Attached',
+                              value: t('common.attached'),
                             },
                           ]
                         : []),

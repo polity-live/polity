@@ -107,6 +107,12 @@ export const statementsTranslations = {
     option: 'Option',
     duration: 'Duration',
   },
+  story: {
+    label: 'Story',
+    description: 'Publicly visible for 24 hours, then kept in your archive.',
+    badge: '24h Story',
+    expired: 'Story expired',
+  },
   voting: {
     upvote: 'Upvote',
     downvote: 'Downvote',

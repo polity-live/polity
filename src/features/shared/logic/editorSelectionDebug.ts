@@ -85,11 +85,7 @@ export function isEditorSelectionDebugEnabled() {
 export function editorSelectionDebugLog(event: string, data: DebugData = {}) {
   if (!isEditorSelectionDebugEnabled()) return;
 
-  console.log(`${DEBUG_PREFIX} ${event}`, {
-    ...data,
-    event,
-    timestamp: new Date().toISOString(),
-  });
+  console.debug(DEBUG_PREFIX, event, data);
 }
 
 function summarizeDiscussionValue(value: unknown) {

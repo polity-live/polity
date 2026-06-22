@@ -32,6 +32,17 @@ export const amendmentsTranslations = {
     passed: 'Antrag wurde angenommen',
     rejected: 'Antrag wurde abgelehnt',
   },
+  workflowDisabledReasons: {
+    branchReadonly: 'Dieser Branch ist abgeschlossen und kann nicht mehr geändert werden.',
+    eventControlled: 'Der Event-Ablauf steuert diesen Status.',
+    internalWindowClosed:
+      'Die interne Phase kann nach Start des ersten Prozess-Agenda-Items nicht mehr manuell geändert werden.',
+  },
+  workflowTooltips: {
+    systemManagedEventMode: 'System verwaltet diesen Status.',
+    eventPhaseLockedMode:
+      'Dieser Status ist während der Event-Phase gesperrt. Der Antrag wird jetzt vom Event-Ablauf gesteuert.',
+  },
   workflowPhases: {
     ariaLabel: 'Antrags-Workflow',
     creation: 'Erarbeitung',
@@ -43,6 +54,7 @@ export const amendmentsTranslations = {
     rejected: 'Abgelehnt',
   },
   editContent: {
+    untitled: 'Unbenannter Antrag',
     loading: 'Antragsdaten werden geladen...',
     notFound: 'Antrag nicht gefunden',
     noDataExists: 'Für diese ID existieren keine Antragsdaten',
@@ -67,6 +79,8 @@ export const amendmentsTranslations = {
     workflowSettingsDescription: 'Konfiguriere den Workflow-Status und Abstimmungseinstellungen',
     workflowStatusLabel: 'Workflow-Status',
     selectWorkflowStatus: 'Workflow-Status wählen',
+    workflowBranchLabel: 'Textvariante',
+    workflowBranchPlaceholder: 'Textvariante auswählen',
     internalCRVotingCloseTitle: 'Interne Änderungsantrags-Abstimmungen schließen',
     internalCRVotingCloseDescription:
       'Legt fest, wann offene Change Requests im internen Abstimmungsmodus automatisch entschieden werden.',
@@ -172,6 +186,9 @@ export const amendmentsTranslations = {
     invite: 'Mitarbeiter einladen',
     noCollaborators: 'Keine Mitarbeiter gefunden',
     searchPlaceholder: 'Mitarbeiter suchen...',
+    roleFallback: 'Rolle',
+    rolePermissionsTitle: 'Rollen-Berechtigungen',
+    rolePermissionsDescription: 'Verwalte Rollenberechtigungen für Antrags-Mitarbeiter.',
   },
   discussions: {
     title: 'Diskussionen',
@@ -273,6 +290,48 @@ export const amendmentsTranslations = {
     eventUpdateFailed: 'Fehler beim Aktualisieren des Events',
     groupNotFound: 'Gruppe nicht im Pfad gefunden',
     tryAgain: 'Bitte versuche es erneut',
+    activeRunDescription: 'Aktueller Workflow-Lauf und Fortschritt seiner Branches',
+    addAdditionalPath: 'Zusätzlichen Pfad hinzufügen',
+    addAdditionalPathDialogTitle: 'Zusätzlichen Pfad hinzufügen',
+    additionalPathSelectorDescription:
+      'Wähle eine weitere Zielgruppe und ein Event, die diesen Antrag parallel bearbeiten sollen.',
+    additionalPathSuccess: 'Zusätzlicher Pfad hinzugefügt.',
+    branchCount: '{{count}} Branch(es)',
+    branchDocumentMissing: 'Noch keine Textvariante',
+    branchDocumentReady: 'Textvariante bereit',
+    clearEvent: 'Event entfernen',
+    confirmAdditionalPath: 'Pfad hinzufügen',
+    createPath: 'Pfad erstellen',
+    decidedStep: 'Entschieden',
+    editBranchEventsDescription: 'Passe die Events an, die diesem Prozess-Branch zugeordnet sind.',
+    editBranchEventsTitle: 'Branch-Events bearbeiten',
+    editEvents: 'Events bearbeiten',
+    fixedTargetGroup: 'Fixe Zielgruppe',
+    fixedWorkflow: 'Fixer Workflow',
+    forwardingPreviewDescription:
+      'Vorschau auf das nächste Event, an das dieser Antrag nach der aktuellen Entscheidung weitergeleitet wird.',
+    forwardingPreviewTitle: 'Weiterleitungs-Vorschau',
+    groupDecisions: 'Gruppenentscheidungen',
+    groupDecisionsDescription:
+      'Abgeschlossene und ausstehende Gruppenentscheidungen für diesen Antragspfad.',
+    noEligibleEventForStep: 'Kein geeignetes Event für diesen Schritt',
+    noEventSelected: 'Kein Event ausgewählt',
+    noGroupDecisions: 'Noch keine Gruppenentscheidungen',
+    notAfter: 'nicht nach {{date}}',
+    notBefore: 'nicht vor {{date}}',
+    openChangeRequests: '{{count}} offene Änderungsanträge',
+    openTasks: '{{count}} offene Aufgabe(n)',
+    openTextVariant: 'Textvariante öffnen',
+    pathVisualization: 'Prozessdiagramm',
+    pendingEvent: 'Event ausstehend',
+    replanFailed: 'Events konnten nicht aktualisiert werden.',
+    replanSuccess: 'Events aktualisiert.',
+    saveEventChanges: 'Event-Änderungen speichern',
+    selectEventForStep: 'Event für Schritt {{step}} auswählen',
+    sharedEvent: 'Gemeinsames Event',
+    startFailed: 'Antragsprozess konnte nicht gestartet werden',
+    step: 'Schritt',
+    tasksNeedAttention: '{{count}} Aufgabe(n) brauchen Aufmerksamkeit',
   },
   targetSelection: {
     defaultTitle: 'Zielgruppe und Event auswählen',
@@ -295,6 +354,21 @@ export const amendmentsTranslations = {
   text: {
     title: 'Volltext',
     modeSelector: 'Modus-Auswahl',
+    rejectedInFavorOf: 'Abgelehnt zugunsten von {{branch}}',
+    readonlyFinalVariant:
+      'Diese Textvariante ist schreibgeschützt, weil der Antrag zugunsten eines anderen Branches abgelehnt wurde.',
+    branchSelector: {
+      allBranches: 'Alle Textvarianten',
+      allBranchesDescription: 'Hauptdokument und alle Branch-Varianten gemeinsam anzeigen.',
+      branchDiff: 'Branch-Diff',
+      closeDiff: 'Diff schließen',
+      label: 'Textvariante',
+      mainDocument: 'Hauptdokument',
+      openChangeRequests: '{{count}} offene Änderungsanträge',
+      openDiff: 'Diff öffnen',
+      sameEvent: 'Gleiches Event',
+      selectAria: 'Textvariante auswählen',
+    },
   },
   pathVisualization: {
     title: 'Antragsprozess-Pfad',
@@ -309,6 +383,273 @@ export const amendmentsTranslations = {
   wiki: {
     loading: 'Antrag wird geladen...',
     notFound: 'Antrag nicht gefunden',
+    noCollaborators: 'Noch keine Mitarbeiter',
+    noCollaboratorsMatch: 'Keine Mitarbeiter passen zu deiner Suche.',
+    locationNotSet: 'Ort nicht angegeben',
+    unnamedGroup: 'Unbenannte Gruppe',
+  },
+  streetscape: {
+    badge: 'Straßenraum',
+    amendmentLabel: 'Antrag',
+    defaultTitle: 'Straßenentwurf',
+    savedTitleWithAmendment: '{{title}} - Straßenentwurf',
+    save: 'Speichern',
+    saving: 'Speichern...',
+    workspaceTitle: 'Straßenraum-Entwurf',
+    workspaceDescription: 'Werkzeuge, 3D-Modell, Inspector und Kosten in einem Arbeitsbereich.',
+    status: {
+      readOnly: 'Nur Lesen',
+      saved: 'Gespeichert',
+      unsaved: 'Ungespeichert',
+    },
+    metrics: {
+      cost: '{{cost}}',
+      elements: '{{count}} Elemente',
+      existing: '{{count}} Bestand',
+    },
+    categories: {
+      building: 'Gebäude',
+      furniture: 'Möblierung',
+      greenery: 'Grün',
+      mobility: 'Mobilität',
+      street: 'Straße',
+      water: 'Wasser',
+    },
+    actions: {
+      collapse: '{{label}} einklappen',
+      expand: '{{label}} ausklappen',
+      hide: '{{label}} ausblenden',
+      remove: '{{label}} entfernen',
+      removeShort: 'Entfernen',
+      select: '{{label}} auswählen',
+      show: '{{label}} anzeigen',
+    },
+    modes: {
+      camera: 'Kamera',
+      place: 'Platzieren',
+      select: 'Auswählen',
+    },
+    comparison: {
+      newDesign: 'Neuer Entwurf',
+      original: 'Bestand',
+      overlay: 'Überlagerung',
+      split: 'Split',
+    },
+    toolbar: {
+      added: {
+        description: 'Gruppen und Elemente verwalten',
+        empty: 'Noch keine Elemente.',
+        title: 'Hinzugefügt',
+      },
+      elements: {
+        description: 'Werkzeug wählen und platzieren',
+        title: 'Neue Elemente',
+      },
+      existing: {
+        description: 'Kartendaten und Markierungen',
+        title: 'OSM-Bestand',
+      },
+      mode: 'Modus',
+    },
+    osmLayers: {
+      building: 'Gebäude',
+      green: 'Grün',
+      road: 'Straßen',
+      streetMarkings: 'Markierungen',
+      water: 'Wasser',
+    },
+    inspector: {
+      activeDraft: 'Aktiver Entwurf',
+      area: 'Fläche',
+      existing: 'Bestand',
+      fieldWithUnit: '{{label}} ({{unit}})',
+      height: 'Höhe',
+      length: 'Länge',
+      nextElementSettings: 'Einstellungen für das nächste Element',
+      noSelection: 'Kein Element ausgewählt',
+      noSelectionDescription:
+        'Wähle ein platziertes Element oder ein Bestandsobjekt im 3D-Modell aus.',
+      osmFallback: 'OSM-Bestandsobjekt',
+      place: 'Platzieren',
+      points: 'Punkte',
+      price: 'Preis',
+      removeFromMap: 'Aus Karte entfernen',
+      rotation: 'Rotation',
+      suggestedCost: 'Vorschlag: {{cost}}',
+      title: 'Inspector',
+      total: 'Summe',
+      width: 'Breite',
+    },
+    cost: {
+      breakdown: 'Kostenaufschlüsselung',
+      breakdownDescription: 'Gruppen und Einzelkosten prüfen',
+      comparison: 'Vergleich',
+      emptyCategories: 'Noch keine Kostenkategorien.',
+      emptyLines: 'Noch keine Elemente.',
+      estimate: 'Schätzung',
+      title: 'Kosten',
+    },
+    areaPicker: {
+      heightMeters: 'Höhe m',
+      loadDemo: 'Demo laden',
+      loadOsm: 'OSM laden',
+      loadingOsm: 'Lädt...',
+      mapUnavailable: 'Karte konnte nicht geladen werden.',
+      rotationDegrees: 'Rotation Grad',
+      title: 'Kartenausschnitt',
+      widthMeters: 'Breite m',
+    },
+    map: {
+      resizeHandleTitle: 'Ausschnitt {{handle}} ziehen',
+      rotateHandleTitle: 'Ausschnitt drehen',
+    },
+    canvas: {
+      drawPath: 'Kurve zeichnen',
+      loadFailed: 'Three.js konnte nicht geladen werden.',
+      pointsSet: '{{count}} Punkte gesetzt',
+    },
+    sample: {
+      existingBuilding: 'Bestandsgebäude',
+      greenSpace: 'Grünfläche',
+      mainRoad: 'Beispielstraße',
+      residentialBuilding: 'Wohngebäude',
+      selectedStreetSpace: 'Ausgewählter Straßenraum',
+      sideRoad: 'Querstraße',
+    },
+    errors: {
+      loadOsmFailed: 'OSM-Daten konnten nicht geladen werden.',
+      saveFailed: 'Entwurf konnte nicht gespeichert werden.',
+    },
+    objects: {
+      bank: {
+        label: 'Bank',
+        properties: {
+          seats: 'Sitzplätze',
+        },
+      },
+      bikeLane: {
+        label: 'Radspur',
+        properties: {
+          protection: 'Schutz',
+        },
+      },
+      building: {
+        label: 'Gebäude',
+        properties: {
+          color: {
+            label: 'Farbe',
+            options: {
+              blue: 'Blau',
+              brick: 'Ziegel',
+              green: 'Grün',
+              sand: 'Sand',
+              slate: 'Schiefer',
+            },
+          },
+          floors: 'Etagen',
+          use: {
+            label: 'Nutzung',
+            options: {
+              civic: 'Öffentlich',
+              commercial: 'Gewerbe',
+              mixed: 'Gemischt',
+              residential: 'Wohnen',
+            },
+          },
+        },
+      },
+      bush: {
+        label: 'Busch',
+        properties: {
+          diameter: 'Durchmesser',
+          species: 'Art',
+        },
+      },
+      carLane: {
+        label: 'Fahrspur',
+        properties: {
+          direction: {
+            label: 'Richtung',
+            options: {
+              oneWay: 'Einbahn',
+              twoWay: 'Zweirichtung',
+            },
+          },
+        },
+      },
+      common: {
+        properties: {
+          height: 'Höhe',
+          maintenance: 'Pflege',
+          material: 'Material',
+          spacing: 'Reihenabstand',
+          surface: 'Oberfläche',
+        },
+      },
+      flowerBed: {
+        label: 'Blumenbeet',
+        properties: {
+          planting: 'Bepflanzung',
+        },
+      },
+      grassStrip: {
+        label: 'Grünstreifen',
+      },
+      parkingArea: {
+        label: 'Parkfläche',
+        properties: {
+          orientation: {
+            label: 'Ausrichtung',
+            options: {
+              angled: 'Schräg',
+              parallel: 'Parallel',
+              perpendicular: 'Senkrecht',
+            },
+          },
+          parkingSpaces: 'Stellplätze',
+        },
+      },
+      sidewalk: {
+        label: 'Gehweg',
+        properties: {
+          accessibility: 'Barrierearm',
+        },
+      },
+      street: {
+        label: 'Straße',
+        properties: {
+          lanes: 'Spuren',
+        },
+      },
+      tree: {
+        label: 'Baum',
+        properties: {
+          canopyDiameter: 'Kronendurchmesser',
+          species: 'Art',
+        },
+      },
+      waterArea: {
+        label: 'Wasser',
+        properties: {
+          edge: {
+            label: 'Rand',
+            options: {
+              framed: 'Gefasst',
+              natural: 'Natürlich',
+              seatingEdge: 'Sitzkante',
+            },
+          },
+          waterType: {
+            label: 'Wassertyp',
+            options: {
+              pond: 'Teich',
+              retention: 'Retention',
+              stream: 'Bachlauf',
+            },
+          },
+        },
+      },
+    },
   },
   versionControl: {
     createVersion: 'Version erstellen',

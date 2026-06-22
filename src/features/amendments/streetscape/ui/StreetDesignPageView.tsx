@@ -3,6 +3,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
 import { BadgeControl } from '@/features/shared/ui/status';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
 import type {
   CorridorGeometry,
@@ -164,6 +165,8 @@ export function StreetDesignPageView({
   onDeleteObject,
   onDeleteObjectCategory,
 }: StreetDesignPageViewProps) {
+  const { t } = useTranslation();
+
   if (isLoading) {
     return <GlobalLoadingAnimation connectionStatus="connecting" />;
   }
@@ -174,10 +177,17 @@ export function StreetDesignPageView({
 
   const osmWayCount = design.osmSnapshot?.ways.length ?? 0;
   const metricLabels = [
-    `${design.objects.length} Elemente`,
-    `${osmWayCount} Bestand`,
-    formatMinorCurrency(costSummary.totalCostMinor, costSummary.currency),
+    t('features.amendments.streetscape.metrics.elements', { count: design.objects.length }),
+    t('features.amendments.streetscape.metrics.existing', { count: osmWayCount }),
+    t('features.amendments.streetscape.metrics.cost', {
+      cost: formatMinorCurrency(costSummary.totalCostMinor, costSummary.currency),
+    }),
   ];
+  const comparisonLabel = t(
+    `features.amendments.streetscape.comparison.${
+      design.comparisonMode === 'new_design' ? 'newDesign' : design.comparisonMode
+    }`
+  );
 
   return (
     <main className="flex w-full flex-col gap-4 p-3 sm:p-4 lg:p-6">
@@ -185,15 +195,23 @@ export function StreetDesignPageView({
         <div className="flex flex-wrap items-start justify-between gap-4 border-b px-4 py-4 sm:px-5">
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <BadgeControl variant="outline">Streetscape</BadgeControl>
+              <BadgeControl variant="outline">
+                {t('features.amendments.streetscape.badge')}
+              </BadgeControl>
               <BadgeControl variant={readOnly ? 'secondary' : isDirty ? 'outline' : 'secondary'}>
-                {readOnly ? 'Nur Ansicht' : isDirty ? 'Ungespeichert' : 'Gespeichert'}
+                {readOnly
+                  ? t('features.amendments.streetscape.status.readOnly')
+                  : isDirty
+                    ? t('features.amendments.streetscape.status.unsaved')
+                    : t('features.amendments.streetscape.status.saved')}
               </BadgeControl>
             </div>
             <div>
-              <p className="text-muted-foreground text-xs font-medium uppercase">Amendment</p>
+              <p className="text-muted-foreground text-xs font-medium uppercase">
+                {t('features.amendments.streetscape.amendmentLabel')}
+              </p>
               <h1 className="text-2xl leading-tight font-semibold tracking-tight">
-                {amendment.title ?? 'Strassenentwurf'}
+                {amendment.title ?? t('features.amendments.streetscape.defaultTitle')}
               </h1>
             </div>
           </div>
@@ -201,7 +219,9 @@ export function StreetDesignPageView({
             {saveError ? <span className="text-destructive text-xs">{saveError}</span> : null}
             <Button type="button" onClick={onSave} disabled={readOnly || isSaving || !isDirty}>
               <Save className="size-4" />
-              {isSaving ? 'Speichert...' : 'Speichern'}
+              {isSaving
+                ? t('features.amendments.streetscape.saving')
+                : t('features.amendments.streetscape.save')}
             </Button>
           </div>
         </div>
@@ -229,20 +249,14 @@ export function StreetDesignPageView({
       <section className="bg-card overflow-hidden rounded-lg border shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold">Strassenraum-Entwurf</h2>
+            <h2 className="text-sm font-semibold">
+              {t('features.amendments.streetscape.workspaceTitle')}
+            </h2>
             <p className="text-muted-foreground text-sm">
-              Werkzeug, 3D-Modell, Inspector und Kosten in einer Arbeitsflaeche.
+              {t('features.amendments.streetscape.workspaceDescription')}
             </p>
           </div>
-          <BadgeControl variant="outline">
-            {design.comparisonMode === 'new_design'
-              ? 'Neu'
-              : design.comparisonMode === 'original'
-                ? 'Original'
-                : design.comparisonMode === 'split'
-                  ? 'Split'
-                  : 'Overlay'}
-          </BadgeControl>
+          <BadgeControl variant="outline">{comparisonLabel}</BadgeControl>
         </div>
 
         <div className="grid gap-0 xl:grid-cols-[240px_minmax(0,1fr)_320px]">

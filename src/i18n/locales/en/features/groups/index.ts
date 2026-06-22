@@ -20,12 +20,15 @@ export const groupsTranslations = {
     notFoundDescription: 'No group data exists for this ID',
     saveChanges: 'Save Changes',
     saving: 'Saving...',
+    groupImageAlt: 'Group image',
     groupType: {
       title: 'Group Type',
       description: 'This section shows how the group is currently structured.',
       label: 'Current structure',
       hierarchicalDescription: 'This group is composed of subordinate groups.',
       baseDescription: 'This group is a base group with direct members.',
+      mixedDescription:
+        'This group has active subgroups and is also connected to at least one sibling group.',
     },
   },
   location: {
@@ -92,6 +95,10 @@ export const groupsTranslations = {
       'Invite users as guests with guest roles. Guests get access rights but are not official members.',
     inviteGuestsRoleDescription: 'Guest invitations must always include at least one guest role.',
     inviteGuestsEmptyRoles: 'Create a guest role first before inviting guests.',
+    inviteSuccess: '{{count}} user(s) invited successfully.',
+    inviteGuestsSuccess: '{{count}} guest(s) invited successfully.',
+    selectedUserTitle: '{{count}} user',
+    selectedUsersTitle: '{{count}} users',
     guestOnlyInviteDescription:
       'This sibling group only allows guest access invitations. Official member roles are not available here.',
     guestOnlyRoleDescription: 'Only guest roles can be used as invite defaults for this group.',
@@ -357,6 +364,18 @@ export const groupsTranslations = {
         },
       },
     },
+  },
+  wiki: {
+    membersTitle: 'Members',
+    membersDescription: 'Active members visible in this group.',
+    membersSearch: 'Search members',
+    noMembers: 'No active members yet.',
+    noMembersMatch: 'No members match your filters.',
+  },
+  roleDetails: {
+    editRoleTitle: 'Edit Role',
+    editRoleWithName: 'Edit {{roleName}}',
+    derivedIncumbentTooltip: 'This incumbent is currently derived from membership roles.',
   },
   events: {
     title: 'Events',

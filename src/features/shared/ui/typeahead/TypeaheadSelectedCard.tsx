@@ -4,9 +4,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { getEntityIcon } from '@/features/shared/logic/entityCardHelpers';
 import {
-  TYPEAHEAD_ENTITY_LABELS,
+  getTypeaheadEntityLabel,
   type TypeaheadItem,
 } from '@/features/shared/logic/typeaheadHelpers';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import {
   getEntityToneClasses,
   isPrimaryEntityTone,
@@ -82,7 +83,7 @@ export function TypeaheadSelectedCard({
                 data-slot="typeahead-entity-badge"
                 className={cn('text-[10px]', toneClasses.badge)}
               >
-                {TYPEAHEAD_ENTITY_LABELS[item.entityType]}
+                {getTypeaheadEntityLabel(item.entityType)}
               </Badge>
             </div>
             {item.secondaryLabel ? (
@@ -98,7 +99,7 @@ export function TypeaheadSelectedCard({
                 onRemove();
               }}
               className="hover:bg-destructive/10 hover:text-destructive relative z-10 rounded-full p-1.5 transition-colors"
-              aria-label={`Remove ${item.label}`}
+              aria-label={translateText('features.search.removeItem', { label: item.label })}
             >
               <X className="h-4 w-4" />
             </button>

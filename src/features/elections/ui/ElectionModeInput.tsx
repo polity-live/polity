@@ -16,7 +16,7 @@ interface ElectionModeInputProps {
 export function ElectionModeInput({
   value,
   onChange,
-  label = 'Wahltyp',
+  label = translateText('features.elections.mode.typeLabel'),
   hint,
   className,
   descriptions,

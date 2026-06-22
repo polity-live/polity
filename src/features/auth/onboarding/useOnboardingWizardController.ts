@@ -18,8 +18,6 @@ export function useOnboardingWizardController({
   userEmail,
   onComplete,
 }: OnboardingWizardProps) {
-  console.log('🎯 OnboardingWizard RENDERING:', { userId, userEmail, onComplete: !!onComplete });
-
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -48,8 +46,6 @@ export function useOnboardingWizardController({
     completeOnboarding,
     allInterestSuggestions,
   } = useOnboarding();
-
-  console.log('🎯 OnboardingWizard state:', { step, isLoading, data });
 
   const handleNameNext = async () => {
     // Save name to database immediately after name step
@@ -102,7 +98,6 @@ export function useOnboardingWizardController({
   };
 
   const handleGoToProfile = () => {
-    console.log('🏠 handleGoToProfile called — navigating to /user/' + userId);
     navigate({ to: `/user/${userId}` });
     onComplete();
   };
@@ -117,19 +112,16 @@ export function useOnboardingWizardController({
       console.warn('⚠️ No selected group');
       return;
     }
-    console.log('👥 handleGoToGroup called — navigating to group:', targetGroup.id);
     navigate({ to: `/group/${targetGroup.id}` });
     onComplete();
   };
 
   const handleGoToTimeline = () => {
-    console.log('handleGoToTimeline called — navigating to /home');
     navigate({ to: '/home' });
     onComplete();
   };
 
   const handleGoToAssistant = () => {
-    console.log('💬 handleGoToAssistant called — navigating to /messages?openAriaKai=true');
     navigate({ to: '/messages', search: { openAriaKai: 'true' } });
     onComplete();
   };

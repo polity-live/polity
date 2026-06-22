@@ -1,4 +1,5 @@
 import { richTextToPlainText } from '@/features/shared/logic/richText';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import {
   buildTimelineCardProps,
   type TimelineCardItem,
@@ -59,7 +60,10 @@ function buildAgendaItemCardData(agendaItem: AgendaItemCardDataSource): string |
   const searchItem: TimelineCardItem = {
     id: agendaItem.id,
     type: 'agenda_item',
-    title: agendaItem.title || agendaItem.type || 'Agenda Item',
+    title:
+      agendaItem.title ||
+      agendaItem.type ||
+      translateText('features.messages.fallbacks.agendaItem'),
     description: toDescription(agendaItem.description),
     createdAt,
     updatedAt,

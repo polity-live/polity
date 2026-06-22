@@ -4,8 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { getEntityIcon } from '@/features/shared/logic/entityCardHelpers';
 import {
+  getTypeaheadEntityLabel,
   highlightMatch,
-  TYPEAHEAD_ENTITY_LABELS,
   type TypeaheadItem,
 } from '@/features/shared/logic/typeaheadHelpers';
 import {
@@ -98,7 +98,7 @@ export function TypeaheadResultCard({
             data-slot="typeahead-entity-badge"
             className={cn('shrink-0 text-[10px]', toneClasses.badge)}
           >
-            {TYPEAHEAD_ENTITY_LABELS[item.entityType]}
+            {getTypeaheadEntityLabel(item.entityType)}
           </Badge>
         </div>
 

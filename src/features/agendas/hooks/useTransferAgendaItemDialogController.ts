@@ -56,7 +56,7 @@ export function useTransferAgendaItemDialogController({
 
       events.push({
         id: participation.event.id,
-        title: participation.event.title || 'Untitled Event',
+        title: participation.event.title || t('features.events.editPage.untitled'),
         start_date: participation.event.start_date,
         location_name: participation.event.location_name,
         group: participation.event.group,
@@ -64,7 +64,7 @@ export function useTransferAgendaItemDialogController({
     });
 
     return events.filter((event, index, self) => self.findIndex(e => e.id === event.id) === index);
-  }, [participationsData, currentEventId]);
+  }, [participationsData, currentEventId, t]);
 
   const selectedEvent = eventsWithPermission.find(e => e.id === selectedEventId);
 

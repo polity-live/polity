@@ -113,7 +113,11 @@ export function useGroupMutations(groupId: string) {
           }
         })
       );
-      toast.success(`Successfully invited ${userIds.length} user(s)`);
+      toast.success(
+        translateText('features.groups.memberships.inviteSuccess', {
+          count: userIds.length,
+        })
+      );
       return { success: true };
     } catch (error) {
       console.error('Failed to invite users:', error);
@@ -146,7 +150,11 @@ export function useGroupMutations(groupId: string) {
         )
       );
 
-      toast.success(`Successfully invited ${userIds.length} guest(s)`);
+      toast.success(
+        translateText('features.groups.memberships.inviteGuestsSuccess', {
+          count: userIds.length,
+        })
+      );
       return { success: true };
     } catch (error) {
       console.error('Failed to invite guests:', error);

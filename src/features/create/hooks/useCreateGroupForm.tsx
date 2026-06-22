@@ -397,8 +397,7 @@ export function useCreateGroupForm(): CreateFormConfig {
 
     if (activeLinkConflictPreflight.blocking) {
       toast.error(
-        activeLinkConflictPreflight.response.summary ??
-          'Diese Verknuepfung ist aktuell durch Konflikte blockiert.'
+        activeLinkConflictPreflight.response.summary ?? t('pages.create.group.linkConflictBlocked')
       );
       return;
     }
@@ -768,9 +767,9 @@ export function useCreateGroupForm(): CreateFormConfig {
       isSubmitting,
       onSubmit: handleSubmit,
       submissionSteps: [
-        { key: 'create', label: 'Erstellt Gruppe' },
-        { key: 'sync', label: 'Lädt Einladungen und Verknüpfungen' },
-        { key: 'ready', label: 'Bereitet Gruppenseite vor' },
+        { key: 'create', label: t('pages.create.progress.submission.steps.group.create') },
+        { key: 'sync', label: t('pages.create.progress.submission.steps.group.sync') },
+        { key: 'ready', label: t('pages.create.progress.submission.steps.group.ready') },
       ],
       steps: [
         {
@@ -997,7 +996,9 @@ export function useCreateGroupForm(): CreateFormConfig {
         },
         // Step 4: Invite People
         {
-          label: allowGuestInvites ? 'Gaeste einladen' : t('pages.create.group.inviteMembers'),
+          label: allowGuestInvites
+            ? t('pages.create.group.guestInvite')
+            : t('pages.create.group.inviteMembers'),
           isValid: () => true,
           optional: true,
           fields: [
@@ -1012,10 +1013,10 @@ export function useCreateGroupForm(): CreateFormConfig {
                     )
                   : t('pages.create.group.tips.inviteMembers'),
                 searchLabel: allowGuestInvites
-                  ? 'Gaeste suchen'
+                  ? t('pages.create.group.searchGuests')
                   : t('pages.create.group.searchUsers'),
                 searchPlaceholder: allowGuestInvites
-                  ? 'Gaeste nach Name oder Handle suchen'
+                  ? t('pages.create.group.searchGuestsPlaceholder')
                   : t('pages.create.group.searchUsers'),
                 excludeUserId: user?.id,
                 invitedUserIds,
@@ -1140,7 +1141,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                 title: name || t('pages.create.group.namePlaceholder'),
                 subtitle: description || undefined,
                 media: imageURL
-                  ? { imageUrl: imageURL, imageAlt: name || 'Group image' }
+                  ? { imageUrl: imageURL, imageAlt: name || t('pages.create.group.imageAlt') }
                   : undefined,
                 hashtags: hashtags.length > 0 ? hashtags : undefined,
                 groupLinksTitle: t('pages.create.group.groupLinksLabel'),
@@ -1176,20 +1177,25 @@ export function useCreateGroupForm(): CreateFormConfig {
                           ]
                         : []),
                       ...(imageURL
-                        ? [{ label: t('pages.create.group.imageLabel'), value: 'Attached' }]
+                        ? [
+                            {
+                              label: t('pages.create.group.imageLabel'),
+                              value: t('common.attached'),
+                            },
+                          ]
                         : []),
                     ],
                   },
                   {
                     title: allowGuestInvites
-                      ? 'Gaeste einladen'
+                      ? t('pages.create.group.guestInvite')
                       : t('pages.create.group.inviteMembers'),
                     fields: [
                       ...(invitedUserNames.length > 0
                         ? [
                             {
                               label: allowGuestInvites
-                                ? 'Eingeladene Gaeste'
+                                ? t('pages.create.group.invitedGuests')
                                 : t('pages.create.group.invitedMembersLabel'),
                               value: invitedUserNames.join(', '),
                             },

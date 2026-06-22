@@ -119,13 +119,13 @@ export type StreetDesignPropertyValue = string | number | boolean | null;
 
 export interface StreetDesignPropertySchemaField {
   key: string;
-  label: string;
+  labelKey: string;
   fieldType: 'text' | 'number' | 'select' | 'boolean';
   unit?: string;
   min?: number;
   max?: number;
   step?: number;
-  options?: { label: string; value: string }[];
+  options?: { labelKey: string; value: string }[];
 }
 
 export interface StreetDesignObjectCost {
@@ -154,7 +154,7 @@ export interface StreetDesignPlacementSettings {
 
 export interface StreetDesignObjectDefinition {
   type: StreetDesignObjectType;
-  label: string;
+  labelKey: string;
   icon: string;
   category: 'greenery' | 'mobility' | 'street' | 'furniture' | 'building' | 'water';
   geometryKind: StreetDesignGeometryKind;
@@ -173,7 +173,7 @@ export type StreetDesignObjectCategory = StreetDesignObjectDefinition['category'
 export interface StreetDesignCostLine {
   objectId: string;
   type: StreetDesignObjectType;
-  label: string;
+  labelKey: string;
   category: StreetDesignObjectDefinition['category'];
   rule: StreetDesignCostRule;
   quantity: number;

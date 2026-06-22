@@ -56,7 +56,12 @@ export function RolesManagementCardView({
       id: 'role',
       header: translateText('generated.inline.0091_role_c3f104d1'),
       cell: ({ row }) => (
-        <RoleTag roleId={row.original.id} roleName={row.original.name || 'Role'} />
+        <RoleTag
+          roleId={row.original.id}
+          roleName={
+            row.original.name || translateText('features.amendments.collaborators.roleFallback')
+          }
+        />
       ),
     },
     {
@@ -175,8 +180,8 @@ export function RolesManagementCardView({
       <RolesPermissionsTable
         roles={roles}
         actionRights={AMENDMENT_ACTION_RIGHTS}
-        title="Role Permissions"
-        description="Manage amendment collaborator role permissions."
+        title={translateText('features.amendments.collaborators.rolePermissionsTitle')}
+        description={translateText('features.amendments.collaborators.rolePermissionsDescription')}
         onTogglePermission={(roleId, resource, action, currentlyHas) =>
           handleToggleActionRight(roleId, resource, action, currentlyHas)
         }

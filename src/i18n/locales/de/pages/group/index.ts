@@ -13,6 +13,10 @@ export const groupPageTranslations = {
     title: 'Übergeordnete Gruppen',
     description: 'Gruppen, die dieser Gruppe übergeordnet sind',
   },
+  relatedGroups: {
+    noResults: 'Keine verbundenen Gruppen entsprechen deiner Suche.',
+    searchPlaceholder: 'Verbundene Gruppen suchen',
+  },
   memberships: {
     title: 'Mitglieder',
     searchPlaceholder: 'Mitglieder nach Name, Rolle oder Status suchen...',

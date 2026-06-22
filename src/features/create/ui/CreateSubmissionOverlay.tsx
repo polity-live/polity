@@ -12,6 +12,7 @@ import {
   type ContentType,
 } from '@/features/timeline/constants/content-type-config';
 import { getContentTypeToneClasses } from '@/features/shared/theme';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -30,12 +31,12 @@ interface CreateSubmissionOverlayProps {
   onRetry: () => void;
 }
 
-function getErrorMessage(error: unknown) {
+function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message) {
     return error.message;
   }
 
-  return 'Die Erstellung konnte nicht abgeschlossen werden.';
+  return fallback;
 }
 
 export function CreateSubmissionOverlay({
@@ -50,6 +51,7 @@ export function CreateSubmissionOverlay({
   onBack,
   onRetry,
 }: CreateSubmissionOverlayProps) {
+  const { t } = useTranslation();
   const reducedMotion = useReducedMotion();
   const titleId = useId();
   const descriptionId = useId();
@@ -91,19 +93,22 @@ export function CreateSubmissionOverlay({
             <div className="w-full text-center">
               <p className="text-muted-foreground text-xs font-semibold tracking-[0.18em] uppercase">
                 {status === 'ready'
-                  ? 'Bereit'
+                  ? t('pages.create.progress.submission.overlay.ready')
                   : status === 'error'
-                    ? 'Unterbrochen'
-                    : 'Wird erstellt'}
+                    ? t('pages.create.progress.submission.overlay.interrupted')
+                    : t('pages.create.progress.submission.overlay.creating')}
               </p>
               <h2 id={titleId} className="mt-2 text-2xl leading-tight font-semibold sm:text-3xl">
-                POLITY arbeitet.
+                {t('pages.create.progress.submission.overlay.title')}
               </h2>
               <p id={descriptionId} className="text-muted-foreground mt-2 text-sm leading-relaxed">
                 {status === 'error'
-                  ? getErrorMessage(error)
+                  ? getErrorMessage(
+                      error,
+                      t('pages.create.progress.submission.overlay.defaultError')
+                    )
                   : status === 'ready'
-                    ? `${title} ist erstellt und bereit zum Öffnen.`
+                    ? t('pages.create.progress.submission.overlay.readyDescription', { title })
                     : title}
               </p>
             </div>
@@ -122,7 +127,7 @@ export function CreateSubmissionOverlay({
                       <Icon className="h-6 w-6" />
                     </div>
                     <p className="text-muted-foreground text-xs font-semibold tracking-[0.18em] uppercase">
-                      Review
+                      {t('pages.create.common.review')}
                     </p>
                     <h3 className="mt-2 text-xl font-semibold tracking-normal">{title}</h3>
                   </div>
@@ -134,7 +139,7 @@ export function CreateSubmissionOverlay({
               <div
                 className="grid gap-2 sm:grid-cols-3"
                 data-slot="create-submit-steps"
-                aria-label="Erstellfortschritt"
+                aria-label={t('pages.create.progress.submission.overlay.progressLabel')}
               >
                 {progressSteps.map((step, index) => {
                   const stepStatus = status === 'ready' ? 'complete' : (step.status ?? 'pending');
@@ -189,12 +194,12 @@ export function CreateSubmissionOverlay({
                           <p className="truncate text-sm font-medium">{step.label}</p>
                           <p className="text-muted-foreground text-xs">
                             {isError
-                              ? 'Prüfung nötig'
+                              ? t('pages.create.progress.submission.overlay.reviewNeeded')
                               : isComplete
-                                ? 'Abgeschlossen'
+                                ? t('pages.create.progress.submission.overlay.completed')
                                 : isActive
-                                  ? 'Läuft'
-                                  : 'Wartet'}
+                                  ? t('pages.create.progress.submission.overlay.running')
+                                  : t('pages.create.progress.submission.overlay.waiting')}
                           </p>
                         </div>
                       </div>
@@ -233,10 +238,10 @@ export function CreateSubmissionOverlay({
               ) : status === 'error' ? (
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Button type="button" variant="outline" onClick={onBack}>
-                    Zurück zum Formular
+                    {t('pages.create.progress.submission.overlay.backToForm')}
                   </Button>
                   <Button type="button" onClick={onRetry}>
-                    Erneut versuchen
+                    {t('pages.create.progress.submission.overlay.retry')}
                   </Button>
                 </div>
               ) : (

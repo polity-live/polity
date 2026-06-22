@@ -108,7 +108,7 @@ export function MembershipsByRoleTables<
   const actionsColumnLabel = t('components.membershipTables.actions');
   const rightsLabel = t('components.membershipTables.rights');
   const secondaryActionDefaultLabel = t('components.membershipTables.manage');
-  const notAvailableLabel = t('components.membershipTables.notAvailable', 'N/A');
+  const notAvailableLabel = t('components.membershipTables.notAvailable');
   const noDelegateRepresentationLabel = t(
     'components.membershipTables.noDelegateRepresentation',
     '-'

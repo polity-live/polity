@@ -45,10 +45,14 @@ export const blogsTranslations = {
   bloggers: {
     title: 'Blogger',
     description: 'Personen, die zu diesem Blog beitragen können',
+    ownerRole: 'Inhaber',
     invite: 'Blogger einladen',
     remove: 'Entfernen',
     noResults: 'Keine Blogger gefunden',
     searchPlaceholder: 'Blogger suchen...',
+  },
+  wiki: {
+    bloggersDescription: 'Personen, die diesen Blog schreiben oder verwalten können.',
   },
   editor: {
     title: 'Blog-Editor',

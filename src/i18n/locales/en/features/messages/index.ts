@@ -8,6 +8,13 @@ export const messagesTranslations = {
   noConversationsFound: 'No conversations found',
   newMessage: 'New Message',
   loading: 'Loading conversations...',
+  syncingConversations: 'Conversations are syncing',
+  fallbacks: {
+    someone: 'Someone',
+    agendaItem: 'Agenda Item',
+    groupChat: 'Group Chat',
+    eventChat: 'Event Chat',
+  },
   filters: {
     all: 'All',
     direct: 'Direct',

@@ -728,10 +728,7 @@ export function AmendmentProcessFlowView({
                             search={{ branch: branch.id }}
                           >
                             <FileText className="h-4 w-4" />
-                            {t(
-                              'features.amendments.process.openTextVariant',
-                              'Textvariante öffnen'
-                            )}
+                            {t('features.amendments.process.openTextVariant')}
                           </Link>
                         </Button>
                         <Button

@@ -73,12 +73,6 @@ export function useAmendmentWorkflow({
 
         // Auto-initialize CR voting when transitioning into the system-managed event final phase.
         if (targetStatus === 'event_final_closing_vote' && agendaItemId) {
-          console.log(
-            '[useAmendmentWorkflow] Initializing CR voting — amendmentId:',
-            amendmentId,
-            'agendaItemId:',
-            agendaItemId
-          );
           await initializeChangeRequestVoting({
             amendment_id: amendmentId,
             agenda_item_id: agendaItemId,

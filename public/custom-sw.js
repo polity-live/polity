@@ -32,7 +32,6 @@ if (workboxReady) {
  * This is triggered when the server sends a push notification
  */
 self.addEventListener('push', (event) => {
-  console.log('[Service Worker] Push notification received', event);
 
   // Default notification options
   let notificationData = {
@@ -85,7 +84,6 @@ self.addEventListener('push', (event) => {
  * This is triggered when the user clicks on a notification
  */
 self.addEventListener('notificationclick', (event) => {
-  console.log('[Service Worker] Notification click received', event);
 
   // Close the notification
   event.notification.close();
@@ -95,7 +93,6 @@ self.addEventListener('notificationclick', (event) => {
 
   // Handle notification actions (if any)
   if (event.action) {
-    console.log('[Service Worker] Action clicked:', event.action);
     // You can add custom action handlers here
   }
 
@@ -137,7 +134,6 @@ self.addEventListener('notificationclick', (event) => {
  * This is triggered when the user dismisses a notification
  */
 self.addEventListener('notificationclose', (event) => {
-  console.log('[Service Worker] Notification closed', event);
   // You can track notification dismissals here
 });
 
@@ -150,7 +146,6 @@ self.addEventListener('notificationclose', (event) => {
  * This can be used to retry failed push subscription updates
  */
 self.addEventListener('sync', (event) => {
-  console.log('[Service Worker] Background sync triggered', event.tag);
 
   if (event.tag === 'sync-push-subscription') {
     event.waitUntil(syncPushSubscription());
@@ -160,7 +155,6 @@ self.addEventListener('sync', (event) => {
 async function syncPushSubscription() {
   try {
     // Implement logic to sync push subscription with server
-    console.log('[Service Worker] Syncing push subscription');
     // This would typically retry storing the subscription in your database
   } catch (error) {
     console.error('[Service Worker] Error syncing push subscription:', error);
@@ -266,15 +260,11 @@ async function handleNavigationRequest(request) {
 // ============================================================================
 
 self.addEventListener('install', () => {
-  console.log('[Service Worker] Installing...');
   // Force the waiting service worker to become the active service worker
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activating...');
   // Claim all clients immediately
   event.waitUntil(clients.claim());
 });
-
-console.log('[Service Worker] Custom SW with Push Notifications loaded');

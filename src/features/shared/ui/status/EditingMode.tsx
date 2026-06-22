@@ -48,24 +48,15 @@ interface EditingModeOption {
   value: EditingMode;
 }
 
-export const SYSTEM_MANAGED_EVENT_MODE_TOOLTIP = 'System verwaltet diesen Status.';
-export const EVENT_PHASE_LOCKED_MODE_TOOLTIP =
-  'Dieser Status ist während der Event-Phase gesperrt. Der Antrag wird jetzt vom Event-Ablauf gesteuert.';
+export const SYSTEM_MANAGED_EVENT_MODE_TOOLTIP_KEY =
+  'features.amendments.workflowTooltips.systemManagedEventMode';
+export const EVENT_PHASE_LOCKED_MODE_TOOLTIP_KEY =
+  'features.amendments.workflowTooltips.eventPhaseLockedMode';
 
-const DISABLED_MODE_REASON_LABELS: Record<string, { fallback: string; key: string }> = {
-  'branch-readonly': {
-    key: 'features.amendments.workflowDisabledReasons.branchReadonly',
-    fallback: 'Diese Branch ist abgeschlossen und kann nicht mehr geändert werden.',
-  },
-  'event-controlled': {
-    key: 'features.amendments.workflowDisabledReasons.eventControlled',
-    fallback: 'Dieser Status wird automatisch durch den Event-Ablauf gesetzt.',
-  },
-  'internal-window-closed': {
-    key: 'features.amendments.workflowDisabledReasons.internalWindowClosed',
-    fallback:
-      'Der interne Modus kann nach Start des ersten Prozess-Agenda-Punkts nicht mehr manuell geändert werden.',
-  },
+const DISABLED_MODE_REASON_KEYS: Record<string, string> = {
+  'branch-readonly': 'features.amendments.workflowDisabledReasons.branchReadonly',
+  'event-controlled': 'features.amendments.workflowDisabledReasons.eventControlled',
+  'internal-window-closed': 'features.amendments.workflowDisabledReasons.internalWindowClosed',
 };
 
 const MODE_ICON_MAP: Record<EditingMode, LucideIcon> = {
@@ -178,8 +169,8 @@ export function getSelectableEditingModeOptions(t: Translate): EditingModeOption
 
 function formatDisabledModeReason(reason: string | undefined, t: Translate) {
   if (!reason) return undefined;
-  const label = DISABLED_MODE_REASON_LABELS[reason];
-  return label ? t(label.key, label.fallback) : reason;
+  const key = DISABLED_MODE_REASON_KEYS[reason];
+  return key ? t(key) : reason;
 }
 
 export function EditingModeBadge({
@@ -254,9 +245,9 @@ export function EditingModeMenuItems({
         const disabledReason = formatDisabledModeReason(disabledModeReasons?.[mode], t);
         const isCurrentMode = mode === value;
         const helpText = isSystemManaged
-          ? SYSTEM_MANAGED_EVENT_MODE_TOOLTIP
+          ? t(SYSTEM_MANAGED_EVENT_MODE_TOOLTIP_KEY)
           : isEventPhaseActive
-            ? EVENT_PHASE_LOCKED_MODE_TOOLTIP
+            ? t(EVENT_PHASE_LOCKED_MODE_TOOLTIP_KEY)
             : disabledReason;
         const isItemDisabled =
           disabled || isEventPhaseActive || isSystemManaged || Boolean(disabledReason);

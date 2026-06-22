@@ -6,11 +6,15 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '../../ui/dropdown-menu';
 import {
   EditingModeMenuItems,
-  EVENT_PHASE_LOCKED_MODE_TOOLTIP,
-  SYSTEM_MANAGED_EVENT_MODE_TOOLTIP,
+  EVENT_PHASE_LOCKED_MODE_TOOLTIP_KEY,
+  SYSTEM_MANAGED_EVENT_MODE_TOOLTIP_KEY,
   getEditingModeOption,
 } from '../EditingMode';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { SelectableEditingMode } from '../EditingMode';
+
+const SYSTEM_MANAGED_EVENT_MODE_TOOLTIP = translateText(SYSTEM_MANAGED_EVENT_MODE_TOOLTIP_KEY);
+const EVENT_PHASE_LOCKED_MODE_TOOLTIP = translateText(EVENT_PHASE_LOCKED_MODE_TOOLTIP_KEY);
 
 beforeAll(() => {
   class ResizeObserverMock {
@@ -153,7 +157,7 @@ describe('EditingModeMenuItems', () => {
     expect(onValueChange).not.toHaveBeenCalled();
     expect(
       screen.getByText(
-        'Der interne Modus kann nach Start des ersten Prozess-Agenda-Punkts nicht mehr manuell geändert werden.'
+        translateText('features.amendments.workflowDisabledReasons.internalWindowClosed')
       )
     ).toBeTruthy();
 

@@ -9,6 +9,7 @@ import {
 } from '../logic/buildMembershipRightsSummary';
 import type { ParticipationLike } from '@/features/shared/types/participation';
 import type { MembershipSort } from '../types/group.types';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface UseMembershipSearchOptions {
   activeStatuses?: string[];
@@ -132,5 +133,9 @@ function getMembershipUserName(membership: ParticipationLike) {
   const fullName = [membership.user?.first_name, membership.user?.last_name]
     .filter(Boolean)
     .join(' ');
-  return fullName || membership.user?.handle || 'Unknown User';
+  return (
+    fullName ||
+    membership.user?.handle ||
+    translateText('components.memberRightsDialog.unknownUser')
+  );
 }

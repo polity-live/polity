@@ -21,7 +21,9 @@ export function AmendmentCollaborationsTab({
   return (
     <div className="space-y-6">
       <MembershipStatusTable
-        title={`Pending Invitations (${collaborationsByStatus.invited.length})`}
+        title={translateText('pages.user.memberships.sections.pendingInvitations', {
+          count: collaborationsByStatus.invited.length,
+        })}
         description={translateText(
           'generated.inline.1183_amendment_collaboration_invitations_you_ve_re_733278ff'
         )}
@@ -35,7 +37,9 @@ export function AmendmentCollaborationsTab({
       />
 
       <MembershipStatusTable
-        title={`Active Collaborations (${collaborationsByStatus.active.length})`}
+        title={translateText('pages.user.memberships.sections.activeCollaborations', {
+          count: collaborationsByStatus.active.length,
+        })}
         description={translateText(
           'generated.inline.1184_amendments_you_re_currently_collaborating_on_94c9c05b'
         )}
@@ -48,7 +52,9 @@ export function AmendmentCollaborationsTab({
       />
 
       <MembershipStatusTable
-        title={`Pending Requests (${collaborationsByStatus.requested.length})`}
+        title={translateText('pages.user.memberships.sections.pendingRequests', {
+          count: collaborationsByStatus.requested.length,
+        })}
         description={translateText(
           'generated.inline.1185_your_pending_requests_to_collaborate_on_amend_55663da4'
         )}

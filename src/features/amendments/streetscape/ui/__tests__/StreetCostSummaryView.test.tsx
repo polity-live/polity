@@ -14,7 +14,7 @@ function summary(): StreetDesignCostSummary {
       {
         objectId: 'tree-1',
         type: 'tree',
-        label: 'Baum',
+        labelKey: 'features.amendments.streetscape.objects.tree.label',
         category: 'greenery',
         rule: 'per_item',
         quantity: 1,
@@ -42,8 +42,8 @@ describe('StreetCostSummaryView', () => {
         onDeleteObject={onDeleteObject}
       />
     );
-    fireEvent.click(screen.getByTitle('Gruen ausklappen'));
-    fireEvent.click(screen.getByTitle('Baum loeschen'));
+    fireEvent.click(screen.getByTitle('Expand Greenery'));
+    fireEvent.click(screen.getByTitle('Remove Tree'));
 
     expect(onDeleteObject).toHaveBeenCalledWith('tree-1');
   });
@@ -62,10 +62,10 @@ describe('StreetCostSummaryView', () => {
       />
     );
 
-    expect(screen.getByText('Kosten Aufschlüsselung')).toBeTruthy();
-    expect(screen.getByTitle('Gruen ausklappen')).toBeTruthy();
-    fireEvent.click(screen.getByTitle('Gruen ausklappen'));
-    fireEvent.click(screen.getByTitle('Baum auswählen'));
+    expect(screen.getByText('Cost breakdown')).toBeTruthy();
+    expect(screen.getByTitle('Expand Greenery')).toBeTruthy();
+    fireEvent.click(screen.getByTitle('Expand Greenery'));
+    fireEvent.click(screen.getByTitle('Select Tree'));
 
     expect(onObjectSelect).toHaveBeenCalledWith('tree-1');
   });
@@ -83,7 +83,7 @@ describe('StreetCostSummaryView', () => {
       />
     );
 
-    fireEvent.click(screen.getByTitle('Gruen entfernen'));
+    fireEvent.click(screen.getByTitle('Remove Greenery'));
 
     expect(onDeleteObjectCategory).toHaveBeenCalledWith('greenery');
   });
@@ -100,7 +100,7 @@ describe('StreetCostSummaryView', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /neu/i }));
+    fireEvent.click(screen.getByRole('button', { name: /new design/i }));
 
     expect(onComparisonModeChange).toHaveBeenCalledWith('new_design');
   });

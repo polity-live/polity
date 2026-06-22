@@ -188,7 +188,11 @@ function SpeakerFocusPanel({
         </div>
         <div className="flex items-center gap-2">
           {userSpeakerPosition ? (
-            <BadgeControl variant="secondary">Du: #{userSpeakerPosition}</BadgeControl>
+            <BadgeControl variant="secondary">
+              {t('features.events.agenda.youSpeakerPosition', {
+                position: userSpeakerPosition,
+              })}
+            </BadgeControl>
           ) : null}
           {onCollapse ? (
             <Button
@@ -254,7 +258,9 @@ function SpeakerFocusPanel({
 
         {nextSpeakers.length > 0 ? (
           <div className="space-y-2">
-            <p className="text-muted-foreground text-xs font-medium uppercase">Als Nächstes</p>
+            <p className="text-muted-foreground text-xs font-medium uppercase">
+              {t('features.events.agenda.upNext')}
+            </p>
             {nextSpeakers.map((speaker, index) => {
               const speakerName = getSpeakerName(speaker, t('common.unspecified'));
               const isCurrentUser = speaker.user?.id === userId;
@@ -427,14 +433,9 @@ export function EventLiveFocusDialog({
         showCloseButton={false}
         className="bg-background !fixed !top-0 !left-0 !z-[100] flex !h-[100dvh] !max-h-[100dvh] !w-[100dvw] !max-w-[100dvw] !translate-x-0 !translate-y-0 flex-col !overflow-hidden !rounded-none !border-0 !p-0"
       >
-        <DialogTitle className="sr-only">
-          {t('features.events.stream.liveFocus', 'Live-Fokus')}
-        </DialogTitle>
+        <DialogTitle className="sr-only">{t('features.events.stream.liveFocus')}</DialogTitle>
         <DialogDescription className="sr-only">
-          {t(
-            'features.events.stream.liveFocusDescription',
-            'Current agenda item, speaker list, voting actions and event controls.'
-          )}
+          {t('features.events.stream.liveFocusDescription')}
         </DialogDescription>
 
         <Button
@@ -571,7 +572,11 @@ export function EventLiveFocusDialog({
                     <AgendaVoteSection
                       className="shadow-sm"
                       voteId={streamVote.id}
-                      voteTitle={streamVote.title || currentAgendaItem.title || 'Vote'}
+                      voteTitle={
+                        streamVote.title ||
+                        currentAgendaItem.title ||
+                        t('features.events.agenda.vote')
+                      }
                       choices={streamVote.choices ?? []}
                       indicativeDecisions={indicativeDecisions}
                       finalDecisions={finalDecisions}
@@ -641,7 +646,7 @@ export function EventLiveFocusDialog({
               ) : showVotedState ? (
                 <BadgeControl variant="secondary" className="justify-center px-4 py-2">
                   <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Stimme abgegeben
+                  {t('features.events.agenda.voteSubmitted')}
                 </BadgeControl>
               ) : null}
 
@@ -707,7 +712,7 @@ export function EventLiveFocusDialog({
                     loading={navigationLoading}
                   >
                     <CheckCircle2 className="h-4 w-4" />
-                    TOP schließen
+                    {t('features.events.agenda.completeCurrentItem')}
                   </Button>
                 ) : null}
                 {onNextItem ? (
@@ -719,7 +724,7 @@ export function EventLiveFocusDialog({
                     loading={navigationLoading}
                   >
                     <ChevronRight className="h-4 w-4" />
-                    Nächster TOP
+                    {t('features.events.agenda.nextAgendaItem')}
                   </Button>
                 ) : null}
               </div>

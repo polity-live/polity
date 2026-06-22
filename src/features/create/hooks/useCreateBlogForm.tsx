@@ -182,9 +182,9 @@ export function useCreateBlogForm(): CreateFormConfig {
       isSubmitting,
       onSubmit: handleSubmit,
       submissionSteps: [
-        { key: 'create', label: 'Erstellt Blog' },
-        { key: 'sync', label: 'Synchronisiert Rollen und Timeline' },
-        { key: 'ready', label: 'Bereitet Blogseite vor' },
+        { key: 'create', label: t('pages.create.progress.submission.steps.blog.create') },
+        { key: 'sync', label: t('pages.create.progress.submission.steps.blog.sync') },
+        { key: 'ready', label: t('pages.create.progress.submission.steps.blog.ready') },
       ],
       steps: [
         {
@@ -281,7 +281,7 @@ export function useCreateBlogForm(): CreateFormConfig {
                 secondaryBadge: visibilityLabel,
                 title: title || t('pages.create.blog.titlePlaceholder'),
                 media: imageURL
-                  ? { imageUrl: imageURL, imageAlt: title || 'Blog cover image' }
+                  ? { imageUrl: imageURL, imageAlt: title || t('pages.create.blog.coverImageAlt') }
                   : undefined,
                 hashtags: hashtags.length > 0 ? hashtags : undefined,
                 sections: [
@@ -307,7 +307,12 @@ export function useCreateBlogForm(): CreateFormConfig {
                         value: visibilityLabel,
                       },
                       ...(imageURL
-                        ? [{ label: t('pages.create.blog.coverImage'), value: 'Attached' }]
+                        ? [
+                            {
+                              label: t('pages.create.blog.coverImage'),
+                              value: t('common.attached'),
+                            },
+                          ]
                         : []),
                     ],
                   },

@@ -21,7 +21,9 @@ export function EventParticipationsTab({
   return (
     <div className="space-y-6">
       <MembershipStatusTable
-        title={`Pending Invitations (${participationsByStatus.invited.length})`}
+        title={translateText('pages.user.memberships.sections.pendingInvitations', {
+          count: participationsByStatus.invited.length,
+        })}
         description={translateText(
           'generated.inline.1189_event_invitations_you_ve_received_984bbca0'
         )}
@@ -35,7 +37,9 @@ export function EventParticipationsTab({
       />
 
       <MembershipStatusTable
-        title={`Active Participations (${participationsByStatus.active.length})`}
+        title={translateText('pages.user.memberships.sections.activeParticipations', {
+          count: participationsByStatus.active.length,
+        })}
         description={translateText(
           'generated.inline.1190_events_you_re_currently_participating_in_709d8ac2'
         )}
@@ -48,7 +52,9 @@ export function EventParticipationsTab({
       />
 
       <MembershipStatusTable
-        title={`Pending Requests (${participationsByStatus.requested.length})`}
+        title={translateText('pages.user.memberships.sections.pendingRequests', {
+          count: participationsByStatus.requested.length,
+        })}
         description={translateText(
           'generated.inline.1191_your_pending_requests_to_join_events_935cc392'
         )}

@@ -271,7 +271,11 @@ export function getVoteResult(item: ChangeRequestTimelineRow): VoteResult {
   return computeVoteResultSummary(
     choices.map((choice, idx) => ({
       id: choice.id,
-      label: choice.label || `Choice ${idx + 1}`,
+      label:
+        choice.label ||
+        translateText('features.events.agenda.defaultChoiceLabels.choiceWithNumber', {
+          count: idx + 1,
+        }),
       order_index: choice.order_index ?? idx,
     })),
     finalDecisions

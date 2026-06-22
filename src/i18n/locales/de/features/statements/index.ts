@@ -107,6 +107,12 @@ export const statementsTranslations = {
     option: 'Option',
     duration: 'Dauer',
   },
+  story: {
+    label: 'Story',
+    description: '24 Stunden öffentlich sichtbar, danach bleibt sie in deinem Archiv.',
+    badge: '24h Story',
+    expired: 'Story abgelaufen',
+  },
   voting: {
     upvote: 'Zustimmen',
     downvote: 'Ablehnen',
@@ -120,7 +126,8 @@ export const statementsTranslations = {
   },
   delete: {
     title: 'Stellungnahme löschen',
-    message: 'Bist du sicher, dass du diese Stellungnahme löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.',
+    message:
+      'Bist du sicher, dass du diese Stellungnahme löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.',
     confirm: 'Löschen',
     cancel: 'Abbrechen',
   },

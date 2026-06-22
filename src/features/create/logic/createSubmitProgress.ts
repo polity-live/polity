@@ -1,23 +1,26 @@
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type {
   CreateSubmitProgressStep,
   CreateSubmitProgressUpdate,
 } from '../types/create-form.types';
 
-const ENTITY_NOUNS: Partial<Record<ContentType, string>> = {
-  agenda_item: 'Agenda',
-  amendment: 'Antrag',
-  blog: 'Blog',
-  event: 'Event',
-  group: 'Gruppe',
-  payment: 'Zahlung',
-  statement: 'Aussage',
-  todo: 'Aufgabe',
-  user: 'Profil',
+const ENTITY_NOUN_KEYS: Partial<Record<ContentType, string>> = {
+  agenda_item: 'pages.create.progress.submission.entityNouns.agenda_item',
+  amendment: 'pages.create.progress.submission.entityNouns.amendment',
+  blog: 'pages.create.progress.submission.entityNouns.blog',
+  event: 'pages.create.progress.submission.entityNouns.event',
+  group: 'pages.create.progress.submission.entityNouns.group',
+  payment: 'pages.create.progress.submission.entityNouns.payment',
+  statement: 'pages.create.progress.submission.entityNouns.statement',
+  todo: 'pages.create.progress.submission.entityNouns.todo',
+  user: 'pages.create.progress.submission.entityNouns.user',
 };
 
 function getEntityNoun(entityType: ContentType) {
-  return ENTITY_NOUNS[entityType] ?? 'Eintrag';
+  return translateText(
+    ENTITY_NOUN_KEYS[entityType] ?? 'pages.create.progress.submission.entityNouns.fallback'
+  );
 }
 
 export function getDefaultCreateSubmitProgressSteps(
@@ -28,17 +31,17 @@ export function getDefaultCreateSubmitProgressSteps(
   return [
     {
       key: 'create',
-      label: `Erstellt ${noun}`,
+      label: translateText('pages.create.progress.submission.defaultCreate', { noun }),
       status: 'pending',
     },
     {
       key: 'sync',
-      label: 'Synchronisiert Inhalte',
+      label: translateText('pages.create.progress.submission.defaultSync'),
       status: 'pending',
     },
     {
       key: 'ready',
-      label: 'Bereitet Zielseite vor',
+      label: translateText('pages.create.progress.submission.defaultReady'),
       status: 'pending',
     },
   ];

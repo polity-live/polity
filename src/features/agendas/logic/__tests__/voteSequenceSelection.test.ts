@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   resolveCurrentVoteSequenceItem,
   resolveNextStartableVoteSequenceItem,
+  resolvePreferredReorderedVoteSequenceItem,
   resolveVoteSequenceSelectionUpdate,
 } from '../voteSequenceSelection';
 
@@ -78,6 +79,37 @@ describe('resolveVoteSequenceSelectionUpdate', () => {
     ).toBeUndefined();
   });
 
+  it('realigns to the current item when the sequence was reordered under the active selection', () => {
+    expect(
+      resolveVoteSequenceSelectionUpdate({
+        selectedItemId: 'cr-15',
+        sequenceItems: [
+          { id: 'cr-17', status: 'pending' },
+          { id: 'cr-15', status: 'pending' },
+        ],
+        fallbackItemId: 'cr-17',
+        currentItemId: 'cr-17',
+        preferSequenceItem: true,
+      })
+    ).toBe('cr-17');
+  });
+
+  it('realigns to the preferred reordered item even when another item is currently indicative', () => {
+    expect(
+      resolveVoteSequenceSelectionUpdate({
+        selectedItemId: 'cr-15',
+        sequenceItems: [
+          { id: 'cr-17', status: 'pending' },
+          { id: 'cr-15', status: 'voting' },
+        ],
+        fallbackItemId: 'cr-15',
+        currentItemId: 'cr-15',
+        preferredItemId: 'cr-17',
+        preferSequenceItem: true,
+      })
+    ).toBe('cr-17');
+  });
+
   it('advances from a completed selected item to the current item', () => {
     expect(
       resolveVoteSequenceSelectionUpdate({
@@ -101,6 +133,30 @@ describe('resolveVoteSequenceSelectionUpdate', () => {
         currentItemId: 'cr-3',
       })
     ).toBe('cr-3');
+  });
+});
+
+describe('resolvePreferredReorderedVoteSequenceItem', () => {
+  it('prefers the first startable item in the reordered sequence before an indicative current item', () => {
+    expect(
+      resolvePreferredReorderedVoteSequenceItem({
+        sequenceItems: [
+          { id: 'cr-17', status: 'pending', vote: { id: 'vote-17', status: 'indicative' } },
+          { id: 'cr-15', status: 'voting', vote: { id: 'vote-15', status: 'indicative' } },
+        ],
+      })?.id
+    ).toBe('cr-17');
+  });
+
+  it('keeps an already final vote ahead of reordered pending items', () => {
+    expect(
+      resolvePreferredReorderedVoteSequenceItem({
+        sequenceItems: [
+          { id: 'cr-17', status: 'pending', vote: { id: 'vote-17', status: 'indicative' } },
+          { id: 'cr-15', status: 'voting', vote: { id: 'vote-15', status: 'final' } },
+        ],
+      })?.id
+    ).toBe('cr-15');
   });
 });
 

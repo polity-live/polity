@@ -19,7 +19,6 @@ import {
   buildAmendmentPathVisualizationData,
   findLikelyActiveAmendmentStep,
   getFirstUnresolvedAmendmentStepId,
-  isLikelyActiveAmendmentStep,
 } from '@/features/amendments/logic/buildAmendmentPathVisualizationData';
 import {
   buildBranchDiffCandidates,
@@ -388,91 +387,6 @@ export function useAmendmentProcessFlowController({
       }),
     [activeBranchStepRuns, firstUnresolvedStepId, openTasks]
   );
-
-  useEffect(() => {
-    console.log('PROCESS LOG [amendment-process-flow][path-debug]', {
-      amendmentId,
-      processRunId: currentRun?.id ?? null,
-      displayPathId: displayPath?.id ?? null,
-      displayPathProcessRunId: displayPath?.process_run_id ?? null,
-      storedActiveBranchId: currentRun?.active_branch_id ?? null,
-      resolvedActiveBranchId,
-      activeBranchId: activeBranch?.id ?? null,
-      firstUnresolvedStepId,
-      derivedActiveStepRun: derivedActiveStepRun
-        ? {
-            id: derivedActiveStepRun.id,
-            branchId: derivedActiveStepRun.branch_id ?? null,
-            order: derivedActiveStepRun.order_index,
-            status: derivedActiveStepRun.status ?? null,
-            decisionStatus: derivedActiveStepRun.decision_status ?? null,
-          }
-        : null,
-      currentRunStepRuns: currentRunStepRuns.map(step => ({
-        id: step.id,
-        branchId: step.branch_id ?? null,
-        order: step.order_index,
-        groupName: step.target_group?.name ?? step.workflow_step?.label ?? null,
-        status: step.status ?? null,
-        decisionStatus: step.decision_status ?? null,
-        eventId: step.event_id ?? null,
-        isLikelyActive: isLikelyActiveAmendmentStep(step),
-      })),
-      currentRunDisplayStepRuns: currentRunDisplayStepRuns.map(step => ({
-        id: step.id,
-        branchId: step.branch_id ?? null,
-        order: step.order_index,
-        groupName: step.target_group?.name ?? step.workflow_step?.label ?? null,
-        status: step.status ?? null,
-        decisionStatus: step.decision_status ?? null,
-        eventId: step.event_id ?? null,
-        isLikelyActive: isLikelyActiveAmendmentStep(step),
-      })),
-      displayPathSegments: displayPathSegments.map(segment => ({
-        id: segment.id,
-        processStepRunId: segment.process_step_run_id ?? null,
-        processBranchId: segment.process_branch_id ?? null,
-        order: segment.order_index,
-        status: segment.status ?? null,
-        groupName: segment.group?.name ?? null,
-        eventTitle: segment.event?.title ?? null,
-      })),
-      stepRuns: activeBranchStepRuns.map(step => ({
-        id: step.id,
-        branchId: step.branch_id ?? null,
-        order: step.order_index,
-        groupName: step.target_group?.name ?? step.workflow_step?.label ?? null,
-        status: step.status ?? null,
-        decisionStatus: step.decision_status ?? null,
-        eventId: step.event_id ?? null,
-        isLikelyActive: isLikelyActiveAmendmentStep(step),
-      })),
-      visualization: pathVisualizationData.map(segment => ({
-        order: segment.order,
-        groupName: segment.groupName,
-        forwardingStatus: segment.forwardingStatus,
-        rawStatus: segment.rawStatus ?? null,
-        rawDecisionStatus: segment.rawDecisionStatus ?? null,
-        isActiveStep: segment.isActiveStep ?? false,
-      })),
-    });
-  }, [
-    activeBranch?.id,
-    activeBranchStepRuns,
-    amendmentId,
-    currentRun?.id,
-    currentRun?.active_branch_id,
-    currentRun?.terminal_step_run?.branch_id,
-    currentRunDisplayStepRuns,
-    currentRunStepRuns,
-    displayPath?.id,
-    displayPath?.process_run_id,
-    displayPathSegments,
-    derivedActiveStepRun,
-    firstUnresolvedStepId,
-    pathVisualizationData,
-    resolvedActiveBranchId,
-  ]);
 
   const selectorCollaborators = useMemo(
     () =>

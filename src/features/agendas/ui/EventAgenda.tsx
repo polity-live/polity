@@ -47,6 +47,7 @@ import {
 import {
   resolveCurrentVoteSequenceItem,
   resolveNextStartableVoteSequenceItem,
+  resolvePreferredReorderedVoteSequenceItem,
   resolveVoteSequenceSelectionUpdate,
 } from '../logic/voteSequenceSelection';
 import {
@@ -73,6 +74,7 @@ import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
 import { computeEligibleFinalVoterCount } from '@/features/votes/logic/computeEligibleVoters';
 import { useAgendaArrowNavigation } from '../hooks/useAgendaArrowNavigation';
 import { resolveClosingVoteForAgendaItem } from '../logic/resolveClosingVoteForAgendaItem';
+import { buildOfflineTallyErrorToast, isOfflineTallyPasswordError } from './offlineTallyErrorToast';
 
 interface EventAgendaProps {
   eventId: string;
@@ -614,6 +616,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       synthesizedVariantVoteItem,
     ]
   );
+  const streamVoteSequenceOrderKey = useMemo(
+    () => streamVoteSequenceItems.map(item => item.id).join('|'),
+    [streamVoteSequenceItems]
+  );
   const nonFinalCRItems = useMemo(
     () =>
       crVoting.crTimeline.filter(
@@ -629,24 +635,51 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       }),
     [crVoting.currentItem?.id, streamVoteSequenceItems]
   );
+  const preferredReorderedSequenceItem = useMemo(
+    () =>
+      resolvePreferredReorderedVoteSequenceItem({
+        sequenceItems: streamVoteSequenceItems,
+      }),
+    [streamVoteSequenceItems]
+  );
   const fallbackSelectedCRItemId = useMemo(() => {
     if (currentSequenceItem?.id) return currentSequenceItem.id;
     return effectiveClosingVoteItem?.id ?? null;
   }, [currentSequenceItem?.id, effectiveClosingVoteItem?.id]);
 
+  const previousStreamSequenceStateRef = useRef<{
+    orderKey: string;
+    currentItemId: string | null;
+  } | null>(null);
   useEffect(() => {
     if (!streamAgendaItem?.amendment_id) {
       if (selectedCRToolbarItemId) {
         setSelectedCRToolbarItemId(null);
       }
+      previousStreamSequenceStateRef.current = null;
       return;
     }
+
+    const previousSequenceState = previousStreamSequenceStateRef.current;
+    const currentItemId = currentSequenceItem?.id ?? null;
+    const sequenceOrderChanged =
+      previousSequenceState !== null &&
+      previousSequenceState.orderKey !== streamVoteSequenceOrderKey;
+    const selectedWasPreviousCurrent =
+      selectedCRToolbarItemId !== null &&
+      previousSequenceState?.currentItemId === selectedCRToolbarItemId;
+    previousStreamSequenceStateRef.current = {
+      orderKey: streamVoteSequenceOrderKey,
+      currentItemId,
+    };
 
     const nextSelectedItemId = resolveVoteSequenceSelectionUpdate({
       selectedItemId: selectedCRToolbarItemId,
       sequenceItems: streamVoteSequenceItems,
       fallbackItemId: fallbackSelectedCRItemId,
-      currentItemId: currentSequenceItem?.id ?? null,
+      currentItemId,
+      preferredItemId: preferredReorderedSequenceItem?.id ?? null,
+      preferSequenceItem: sequenceOrderChanged && selectedWasPreviousCurrent,
     });
 
     if (nextSelectedItemId !== undefined) {
@@ -655,7 +688,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   }, [
     currentSequenceItem?.id,
     fallbackSelectedCRItemId,
+    preferredReorderedSequenceItem?.id,
     selectedCRToolbarItemId,
+    streamVoteSequenceOrderKey,
     streamVoteSequenceItems,
     streamAgendaItem?.amendment_id,
   ]);
@@ -1231,9 +1266,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           error instanceof Error
             ? error.message
             : translateText('generated.inline.0007_failed_to_save_offline_tally_82b59509');
-        const isPasswordError =
-          message === 'Invalid voting password.' ||
-          message === 'No voting password set. Please set your voting PIN first.';
+        const isPasswordError = isOfflineTallyPasswordError(message);
 
         if (isPasswordError) {
           setOfflineTallyPasswordError(message);
@@ -1241,19 +1274,23 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           setOfflineTallySubmitError(message);
         }
 
-        toast.error(translateText('generated.inline.0049_failed_to_save_offline_tally_82b59509'), {
-          description: message,
-          action: message.includes('Offline election totals exceed the current cap')
-            ? {
-                label: translateText('generated.inline.0004_open_participants_22616da9'),
-                onClick: () =>
-                  navigate({
-                    to: '/event/$id/participants',
-                    params: { id: eventId },
-                  }),
-              }
-            : undefined,
-        });
+        toast.error(
+          translateText('generated.inline.0049_failed_to_save_offline_tally_82b59509'),
+          buildOfflineTallyErrorToast({
+            message,
+            userId: user?.id,
+            action: message.includes('Offline election totals exceed the current cap')
+              ? {
+                  label: translateText('generated.inline.0004_open_participants_22616da9'),
+                  onClick: () =>
+                    navigate({
+                      to: '/event/$id/participants',
+                      params: { id: eventId },
+                    }),
+                }
+              : undefined,
+          })
+        );
       } finally {
         setIsOfflineTallySubmitting(false);
       }
@@ -1266,6 +1303,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       toolbarOfflineTallyPhase,
       upsertElectionOfflineTally,
       upsertVoteOfflineTally,
+      user?.id,
       verifyVotingPassword,
     ]
   );

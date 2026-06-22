@@ -43,10 +43,7 @@ export function GroupTypeSection({
             <p className="text-sm font-medium">{t('features.groups.editPage.groupType.label')}</p>
             <p className="text-muted-foreground text-sm">
               {isMixed
-                ? translateText(
-                    'features.groups.editPage.groupType.mixedDescription',
-                    'Diese Gruppe hat aktive Untergruppen und ist zusaetzlich mit mindestens einer Geschwistergruppe verbunden.'
-                  )
+                ? translateText('features.groups.editPage.groupType.mixedDescription')
                 : isSibling
                   ? translateText(
                       'generated.inline.0098_diese_gruppe_ist_als_geschwistergruppe_mit_ei_1101075e'

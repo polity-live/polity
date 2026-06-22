@@ -1,6 +1,7 @@
 import type { RefObject } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type {
   StreetDesignInteractionMode,
   StreetDesignObject,
@@ -39,28 +40,22 @@ export function StreetSceneCanvasViewView({
   canvasRef,
   loadFailed,
 }: StreetSceneCanvasViewViewProps) {
+  const { t } = useTranslation();
+
   if (loadFailed) {
     return (
       <div className="bg-muted/20 text-muted-foreground flex min-h-[28rem] items-center justify-center border-b p-4 text-sm xl:border-r xl:border-b-0">
-        Three.js konnte nicht geladen werden.
+        {t('features.amendments.streetscape.canvas.loadFailed')}
       </div>
     );
   }
 
-  const comparisonLabel =
-    design.comparisonMode === 'split'
-      ? 'Split'
-      : design.comparisonMode === 'original'
-        ? 'Original'
-        : design.comparisonMode === 'new_design'
-          ? 'Neues Design'
-          : 'Overlay';
-  const modeLabel =
-    interactionMode === 'place'
-      ? 'Platzieren'
-      : interactionMode === 'select'
-        ? 'Selektieren'
-        : 'Kamera';
+  const comparisonLabel = t(
+    `features.amendments.streetscape.comparison.${
+      design.comparisonMode === 'new_design' ? 'newDesign' : design.comparisonMode
+    }`
+  );
+  const modeLabel = t(`features.amendments.streetscape.modes.${interactionMode}`);
 
   return (
     <div
@@ -98,8 +93,12 @@ export function StreetSceneCanvasViewView({
       {placementMode === 'path' ? (
         <div className="border-border bg-background/95 absolute bottom-6 left-6 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 text-xs shadow-lg backdrop-blur">
           <div>
-            <p className="font-semibold">Kurve zeichnen</p>
-            <p className="text-muted-foreground">{placementPointCount} Punkte gesetzt</p>
+            <p className="font-semibold">{t('features.amendments.streetscape.canvas.drawPath')}</p>
+            <p className="text-muted-foreground">
+              {t('features.amendments.streetscape.canvas.pointsSet', {
+                count: placementPointCount,
+              })}
+            </p>
           </div>
           <Button
             type="button"
@@ -108,7 +107,7 @@ export function StreetSceneCanvasViewView({
             disabled={readOnly || !canFinishPathPlacement}
             onClick={onFinishPathPlacement}
           >
-            Fertig
+            {t('common.done')}
           </Button>
           <Button
             type="button"
@@ -118,7 +117,7 @@ export function StreetSceneCanvasViewView({
             disabled={readOnly}
             onClick={onCancelPlacement}
           >
-            Abbrechen
+            {t('common.actions.cancel')}
           </Button>
         </div>
       ) : null}
@@ -126,7 +125,7 @@ export function StreetSceneCanvasViewView({
         <div className="border-border bg-background/95 absolute right-6 bottom-6 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 text-xs shadow-lg backdrop-blur">
           <div>
             <p className="font-semibold">
-              {getStreetDesignObjectDefinition(selectedObject.type).label}
+              {t(getStreetDesignObjectDefinition(selectedObject.type).labelKey)}
             </p>
             <p className="text-muted-foreground">{selectedObject.id.slice(0, 8)}</p>
           </div>
@@ -139,7 +138,7 @@ export function StreetSceneCanvasViewView({
             onClick={() => onDeleteObject(selectedObject.id)}
           >
             <Trash2 className="size-3.5" />
-            Entfernen
+            {t('features.amendments.streetscape.actions.removeShort')}
           </Button>
         </div>
       ) : null}

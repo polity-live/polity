@@ -48,11 +48,13 @@ interface GuestsTableProps<TGuestAccess extends GuestAccessLike> {
 
 function getGuestDisplayName(user: GuestAccessUserLike | null | undefined) {
   if (!user) {
-    return 'Unknown user';
+    return translateText('components.memberRightsDialog.unknownUser');
   }
 
   return (
-    [user.first_name, user.last_name].filter(Boolean).join(' ') || user.email || 'Unknown user'
+    [user.first_name, user.last_name].filter(Boolean).join(' ') ||
+    user.email ||
+    translateText('components.memberRightsDialog.unknownUser')
   );
 }
 

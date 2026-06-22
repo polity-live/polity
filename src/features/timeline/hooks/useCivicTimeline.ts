@@ -15,6 +15,7 @@ import type { TimelineFilters } from './useTimelineFilters';
 import type { TimelineRadiusFilter } from '../ui/TimelineFilterPanel';
 import type { DecisionItem } from '@/features/decision-terminal/ui/types';
 import { formatLocation, formatNamedLocation } from '@/features/shared/logic/locationHelpers';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import {
   buildCivicTimelineItems,
   CIVIC_TIMELINE_CONTENT_TYPES,
@@ -331,7 +332,12 @@ function mapTimelineEvent(
     id: `timeline-event:${event.id}`,
     entityId,
     type,
-    title: event.title || eventEntity?.title || group?.name || user?.handle || 'Timeline update',
+    title:
+      event.title ||
+      eventEntity?.title ||
+      group?.name ||
+      user?.handle ||
+      translateText('features.timeline.fallbacks.timelineUpdate'),
     description: event.description,
     href,
     sourceName: group?.name ?? eventEntity?.title ?? user?.handle,

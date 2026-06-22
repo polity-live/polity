@@ -173,8 +173,11 @@ export function UserMeetingSchedulerView({
         onToday={goToToday}
         title={
           isOwner
-            ? 'Manage your meeting offers'
-            : `Book a meeting with ${owner?.first_name || 'User'}`
+            ? translateText('pages.user.meet.ownerTitle')
+            : translateText('pages.user.meet.visitorTitle', {
+                name:
+                  owner?.first_name || translateText('pages.user.invitations.preview.userFallback'),
+              })
         }
         actions={
           isOwner ? (

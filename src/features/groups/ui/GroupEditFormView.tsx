@@ -107,12 +107,15 @@ export function GroupEditFormView({
           <CreateReviewCard
             entityType="group"
             badge={t('pages.create.group.reviewBadge')}
-            title={formData.name || 'Untitled Group'}
+            title={formData.name || t('pages.create.group.untitledGroup')}
             subtitle={formData.description || undefined}
             hashtags={formData.hashtags}
             media={
               formData.imageURL
-                ? { imageUrl: formData.imageURL, imageAlt: formData.name || 'Group image' }
+                ? {
+                    imageUrl: formData.imageURL,
+                    imageAlt: formData.name || t('features.groups.editPage.groupImageAlt'),
+                  }
                 : undefined
             }
           >

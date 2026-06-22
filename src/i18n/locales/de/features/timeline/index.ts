@@ -10,6 +10,11 @@ export const timelineTranslations = {
   emptyTimelineHint: 'Dein Zeitstrahl ist leer. Beginne Inhalten zu folgen, um Updates zu sehen.',
   discoverContent: 'Inhalte entdecken',
   noUpdates: 'Keine Updates anzuzeigen',
+  fallbacks: {
+    timelineUpdate: 'Zeitstrahl-Update',
+    unnamedGroup: 'Unbenannte Gruppe',
+    unnamedEvent: 'Unbenanntes Event',
+  },
   empty: {
     title: 'Noch keine Aktivitäten',
     description: 'Aktivitäten werden hier angezeigt, sobald Ereignisse auftreten.',

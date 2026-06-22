@@ -90,24 +90,15 @@ export function useGroupEditFormController({
     { value: 'none', label: translateText('generated.inline.0159_keine_3ce60e74') },
     {
       value: 'current_grants_right_to_partner',
-      label: t(
-        'common.network.currentGroupGrantsRightToPartnerLabel',
-        'Diese Gruppe gibt das Recht an die Partnergruppe'
-      ),
+      label: t('common.network.currentGroupGrantsRightToPartnerLabel'),
     },
     {
       value: 'partner_grants_right_to_current',
-      label: t(
-        'common.network.currentGroupHasRightInPartnerLabel',
-        'Diese Gruppe hat das Recht in der Partnergruppe'
-      ),
+      label: t('common.network.currentGroupHasRightInPartnerLabel'),
     },
     {
       value: 'mutual',
-      label: t(
-        'common.network.groupsMutuallyGrantRightLabel',
-        'Beide Gruppen gewähren sich das Recht gegenseitig'
-      ),
+      label: t('common.network.groupsMutuallyGrantRightLabel'),
     },
   ];
 

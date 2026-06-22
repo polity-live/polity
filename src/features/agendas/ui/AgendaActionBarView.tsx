@@ -359,7 +359,7 @@ export function AgendaActionBarView({
         ) : null}
         {!isClosed && !isPendingVote && (showOfflineTallyButton || onOfflineTallyClick) ? (
           <ToolbarButton
-            tooltip={offlineTallyTooltip || 'Manage offline tally'}
+            tooltip={offlineTallyTooltip || t('features.events.agenda.manageOfflineTally')}
             onClick={onOfflineTallyClick}
             disabled={!onOfflineTallyClick}
             className={featureThemeClassName('agendaAgendaActionBarInfoBorder')}

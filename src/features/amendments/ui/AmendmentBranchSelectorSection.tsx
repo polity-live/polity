@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from '@/features/sha
 import { BadgeControl } from '@/features/shared/ui/status';
 import { EditingModeBadge } from '@/features/shared/ui/status';
 import { cn } from '@/features/shared/utils/utils';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
   countOpenChangeRequests,
   getBranchEditingMode,
@@ -44,12 +45,15 @@ export function AmendmentBranchSelectorSection({
   selectedBranchId,
   variant = 'page',
   includeAllBranchesOption = false,
-  allBranchesLabel = 'Alle Textvarianten',
+  allBranchesLabel,
   branchDiffCandidates = [],
   defaultDiffRightCandidateId,
   onBranchChange,
 }: AmendmentBranchSelectorSectionProps) {
+  const { t } = useTranslation();
   const [branchDiffOpen, setBranchDiffOpen] = useState(false);
+  const resolvedAllBranchesLabel =
+    allBranchesLabel ?? t('features.amendments.text.branchSelector.allBranches');
   const selectedBranch = useMemo(
     () => branches.find(branch => branch.id === selectedBranchId) ?? null,
     [branches, selectedBranchId]
@@ -66,8 +70,8 @@ export function AmendmentBranchSelectorSection({
   const selectedLabel = selectedBranch
     ? getBranchPathLabel(selectedBranch)
     : includeAllBranchesOption
-      ? allBranchesLabel
-      : 'Hauptdokument';
+      ? resolvedAllBranchesLabel
+      : t('features.amendments.text.branchSelector.mainDocument');
   const isInline = variant === 'inline';
 
   if (branches.length === 0) return null;
@@ -83,7 +87,9 @@ export function AmendmentBranchSelectorSection({
         <div className="flex min-w-0 items-center gap-2">
           <GitBranch className="text-muted-foreground h-4 w-4 shrink-0" />
           <div className="min-w-0">
-            <p className="text-sm font-medium">Textvariante</p>
+            <p className="text-sm font-medium">
+              {t('features.amendments.text.branchSelector.label')}
+            </p>
             <p className="text-muted-foreground truncate text-xs">{selectedLabel}</p>
             {selectedBranch ? (
               <div className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -102,16 +108,19 @@ export function AmendmentBranchSelectorSection({
               onBranchChange(branchId === 'main' || branchId === 'all' ? null : branchId)
             }
           >
-            <SelectTrigger className="w-full sm:w-48" aria-label="Textvariante auswählen">
+            <SelectTrigger
+              className="w-full sm:w-48"
+              aria-label={t('features.amendments.text.branchSelector.selectAria')}
+            >
               <span className="min-w-0 truncate">{selectedLabel}</span>
             </SelectTrigger>
             <SelectContent className="w-[min(48rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)]">
               {includeAllBranchesOption ? (
-                <SelectItem value="all" textValue={allBranchesLabel}>
+                <SelectItem value="all" textValue={resolvedAllBranchesLabel}>
                   <div className="flex min-w-0 flex-col gap-1">
-                    <span className="truncate">{allBranchesLabel}</span>
+                    <span className="truncate">{resolvedAllBranchesLabel}</span>
                     <span className="text-muted-foreground text-xs">
-                      Alle Branches mit Änderungsanträgen
+                      {t('features.amendments.text.branchSelector.allBranchesDescription')}
                     </span>
                   </div>
                 </SelectItem>
@@ -137,11 +146,15 @@ export function AmendmentBranchSelectorSection({
                             {eventStep.event.title}
                           </span>
                         ) : null}
-                        <span>{openChangeRequests} offene Änderungsanträge</span>
+                        <span>
+                          {t('features.amendments.text.branchSelector.openChangeRequests', {
+                            count: openChangeRequests,
+                          })}
+                        </span>
                         {eventCount > 1 ? (
                           <span className="inline-flex items-center gap-1">
                             <MessageSquareWarning className="h-3 w-3" />
-                            gleicher Event
+                            {t('features.amendments.text.branchSelector.sameEvent')}
                           </span>
                         ) : null}
                       </span>
@@ -157,11 +170,15 @@ export function AmendmentBranchSelectorSection({
                 variant="outline"
                 size="sm"
                 className="w-full justify-between sm:w-auto"
-                aria-label={branchDiffOpen ? 'Branch-Diff schließen' : 'Branch-Diff öffnen'}
+                aria-label={
+                  branchDiffOpen
+                    ? t('features.amendments.text.branchSelector.closeDiff')
+                    : t('features.amendments.text.branchSelector.openDiff')
+                }
               >
                 <span className="inline-flex items-center gap-2">
                   <GitCompare className="h-4 w-4" />
-                  Branch-Diff
+                  {t('features.amendments.text.branchSelector.branchDiff')}
                 </span>
                 <ChevronDown
                   className={`h-4 w-4 transition-transform ${branchDiffOpen ? 'rotate-180' : ''}`}
@@ -175,7 +192,7 @@ export function AmendmentBranchSelectorSection({
         <CollapsibleContent className={cn('pt-3', isInline ? '' : 'container mx-auto px-8')}>
           <VariantDiffPanel
             candidates={branchDiffCandidates}
-            title="Branch-Diff"
+            title={t('features.amendments.text.branchSelector.branchDiff')}
             badgeLabel={null}
             defaultLeftCandidateId="original-document"
             defaultRightCandidateId={defaultDiffRightCandidateId ?? null}

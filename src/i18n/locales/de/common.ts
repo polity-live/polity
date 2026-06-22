@@ -1,4 +1,9 @@
 export const commonTranslations = {
+  done: 'Fertig',
+  enabled: 'Aktiviert',
+  attached: 'Angehängt',
+  unknown: 'Unbekannt',
+  unknownUser: 'Unbekannter Nutzer',
   days: {
     monday: 'Montag',
     tuesday: 'Dienstag',
@@ -68,6 +73,7 @@ export const commonTranslations = {
     continue: 'Weiter',
     delete: 'Löschen',
     deleting: 'Wird gelöscht...',
+    done: 'Fertig',
     save: 'Speichern',
     confirm: 'Bestätigen',
     close: 'Schließen',
@@ -138,6 +144,7 @@ export const commonTranslations = {
     },
   },
   labels: {
+    all: 'Alle',
     groups: 'Gruppen',
     unspecifiedUser: 'nicht angegeben',
     groupChat: 'Gruppenchat',
@@ -364,6 +371,9 @@ export const commonTranslations = {
     rightActiveVotingDesc: 'Recht, an Abstimmungen teilzunehmen',
     rightPassiveVoting: 'Passives Wahlrecht',
     rightPassiveVotingDesc: 'Recht, gewählt zu werden',
+    currentGroupGrantsRightToPartnerLabel: 'Diese Gruppe gibt das Recht an die Partnergruppe',
+    currentGroupHasRightInPartnerLabel: 'Diese Gruppe hat das Recht in der Partnergruppe',
+    groupsMutuallyGrantRightLabel: 'Beide Gruppen gewähren sich das Recht gegenseitig',
     propagatingMemberships: 'Mitgliedschaften werden weitergeleitet...',
     linkPossible: 'Verknüpfung möglich',
     linkPossibleDescription:

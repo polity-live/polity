@@ -183,7 +183,7 @@ export function useEventRoleManagement(eventId: string) {
     await createAgendaItem({
       id: agendaItemId,
       title: translateText('generated.inline.0109_election_value6a1b_d06db811', {
-        value6a1b: role.title || role.name || 'Role',
+        value6a1b: role.title || role.name || translateText('features.events.agenda.role'),
       }),
       description: '',
       type: 'election',
@@ -206,10 +206,10 @@ export function useEventRoleManagement(eventId: string) {
     await createElection({
       id: electionId,
       title: translateText('generated.inline.0110_election_for_value6a1b_f7382ef9', {
-        value6a1b: role.title || role.name || 'Role',
+        value6a1b: role.title || role.name || translateText('features.events.agenda.role'),
       }),
       description: translateText('generated.inline.0111_vote_for_the_value8446_1262ec2b', {
-        value8446: role.title || role.name || 'role',
+        value8446: role.title || role.name || translateText('features.events.agenda.roleLowercase'),
       }),
       majority_type: 'simple',
       status: 'pending',
@@ -233,7 +233,7 @@ export function useEventRoleManagement(eventId: string) {
       resource === 'events' &&
       (action === 'active_voting' || action === 'passive_voting')
     ) {
-      return 'Guest roles cannot receive voting rights.';
+      return translateText('features.events.roles.guestVotingRightsDisabled');
     }
 
     return null;

@@ -42,15 +42,12 @@ for (const arg of args) {
 
 // ── Helpers ──────────────────────────────────────────────────
 function info(msg) {
-  console.log(`${CYAN}ℹ${RESET}  ${msg}`);
 }
 
 function success(msg) {
-  console.log(`${GREEN}✔${RESET}  ${msg}`);
 }
 
 function warn(msg) {
-  console.log(`${YELLOW}⚠${RESET}  ${msg}`);
 }
 
 function error(msg) {
@@ -58,7 +55,6 @@ function error(msg) {
 }
 
 function step(label) {
-  console.log(`\n${BOLD}${CYAN}── ${label} ──${RESET}\n`);
 }
 
 function run(label, cmd) {
@@ -277,4 +273,3 @@ if (!skipVercel) {
 }
 
 // ── Done ─────────────────────────────────────────────────────
-console.log(`\n${BOLD}${GREEN}Deploy finished.${RESET}\n`);

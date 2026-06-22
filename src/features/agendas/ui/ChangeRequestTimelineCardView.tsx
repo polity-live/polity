@@ -327,7 +327,11 @@ export function ChangeRequestTimelineCardView({
 
     return {
       key: cs.choice.id,
-      label: cs.choice.label || `Choice ${idx + 1}`,
+      label:
+        cs.choice.label ||
+        t('features.events.agenda.defaultChoiceLabels.choiceWithNumber', {
+          count: idx + 1,
+        }),
       color: colors.color,
       lightColor: colors.light,
       finalCount: cs.finalCount,
@@ -856,11 +860,9 @@ export function ChangeRequestTimelineCardView({
                       {getLocalizedVoteChoiceLabel(
                         choice.label,
                         t,
-                        t(
-                          'features.events.agenda.defaultChoiceLabels.choiceWithNumber',
-                          { count: choiceIndex + 1 },
-                          `Choice ${choiceIndex + 1}`
-                        )
+                        t('features.events.agenda.defaultChoiceLabels.choiceWithNumber', {
+                          count: choiceIndex + 1,
+                        })
                       )}
                     </Button>
                   );
@@ -870,7 +872,7 @@ export function ChangeRequestTimelineCardView({
 
             {isDirectInternalResolution && (
               <div className="text-muted-foreground rounded-md border p-3 text-sm">
-                Ohne Abstimmung im internen Modus zugestimmt oder abgelehnt.
+                {t('features.agendas.crTimeline.directInternalResolution')}
               </div>
             )}
 

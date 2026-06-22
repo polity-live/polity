@@ -112,18 +112,6 @@ export function useMessageMutations() {
     try {
       const conversationId = crypto.randomUUID();
 
-      // Determine the requester (creator of the conversation request)
-      const requesterId = creatorId || participantIds[0];
-
-      console.log('[createConversation] Creating conversation:', {
-        conversationId,
-        type,
-        creatorId,
-        participantIds,
-        requesterId,
-        status: 'pending',
-      });
-
       // Create conversation
       await actions.createConversation({
         id: conversationId,
@@ -135,8 +123,6 @@ export function useMessageMutations() {
         last_message_at: 0,
         assistant_for_user_id: null,
       });
-
-      console.log('[createConversation] Will link requestedBy to:', requesterId);
 
       // Add participants
       for (const participantId of participantIds) {

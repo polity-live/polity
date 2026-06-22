@@ -131,7 +131,7 @@ export function AmendmentEditContentView({
             entityType="amendment"
             badge={t('pages.create.amendment.reviewBadge')}
             secondaryBadge={workflowStatusOption.label}
-            title={formData.title || 'Untitled Amendment'}
+            title={formData.title || t('features.amendments.editContent.untitled')}
             subtitle={formData.subtitle || undefined}
             hashtags={formData.hashtags}
             media={{

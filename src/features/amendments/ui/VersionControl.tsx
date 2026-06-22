@@ -2,6 +2,7 @@
 
 import { VersionControl as EditorVersionControl } from '@/features/editor/ui/VersionControl';
 import { notifyVersionCreated } from '@/features/notifications/utils/notification-helpers.ts';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { Value } from 'platejs';
 
 interface VersionControlProps {
@@ -29,7 +30,7 @@ export function VersionControl({
     await notifyVersionCreated({
       senderId: currentUserId,
       amendmentId,
-      amendmentTitle: amendmentTitle || 'Untitled Amendment',
+      amendmentTitle: amendmentTitle || translateText('features.amendments.editContent.untitled'),
       version: `v.${versionNumber}`,
     });
   };

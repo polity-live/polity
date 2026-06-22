@@ -67,7 +67,7 @@ export function getStreetDesignCostLine(object: StreetDesignObject): StreetDesig
   return {
     objectId: object.id,
     type: object.type,
-    label: definition.label,
+    labelKey: definition.labelKey,
     category: definition.category,
     rule,
     quantity,

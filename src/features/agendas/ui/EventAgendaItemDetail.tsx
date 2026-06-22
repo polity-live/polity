@@ -13,7 +13,7 @@ import { useEventById, useEventParticipantsByParticipatedEventIds } from '@/zero
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import type { Value } from 'platejs';
 import type { TDiscussion } from '@/features/editor/types';
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   useTranslation,
   translate as translateText,
@@ -37,6 +37,7 @@ import {
 import {
   resolveCurrentVoteSequenceItem,
   resolveNextStartableVoteSequenceItem,
+  resolvePreferredReorderedVoteSequenceItem,
   resolveVoteSequenceSelectionUpdate,
 } from '../logic/voteSequenceSelection';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
@@ -94,6 +95,7 @@ import { resolveClosingVoteForAgendaItem } from '../logic/resolveClosingVoteForA
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
 import { computeEligibleFinalVoterCount } from '@/features/votes/logic/computeEligibleVoters';
 import { useAgendaArrowNavigation } from '../hooks/useAgendaArrowNavigation';
+import { buildOfflineTallyErrorToast, isOfflineTallyPasswordError } from './offlineTallyErrorToast';
 
 type ChangeRequestTimelineIdentitySource = Record<string, any>;
 
@@ -848,6 +850,10 @@ export function EventAgendaItemDetail({
     () => crDisplayItems.filter(item => !isPendingSubmissionCRTimelineItem(item)),
     [crDisplayItems]
   );
+  const sequenceDisplayOrderKey = useMemo(
+    () => sequenceDisplayItems.map(item => item.id).join('|'),
+    [sequenceDisplayItems]
+  );
   const sequenceCompletedItems = useMemo(
     () => sequenceDisplayItems.filter(item => item.status === 'completed'),
     [sequenceDisplayItems]
@@ -861,18 +867,43 @@ export function EventAgendaItemDetail({
       }),
     [currentCRItem, sequenceDisplayItems]
   );
+  const preferredReorderedSequenceItem = useMemo(
+    () =>
+      resolvePreferredReorderedVoteSequenceItem({
+        sequenceItems: sequenceDisplayItems,
+      }),
+    [sequenceDisplayItems]
+  );
 
   const fallbackSelectedCRItemId = useMemo(() => {
     if (currentSequenceItem?.id) return currentSequenceItem.id;
     return effectiveClosingVoteItem?.id ?? null;
   }, [currentSequenceItem?.id, effectiveClosingVoteItem?.id]);
 
+  const previousSequenceStateRef = useRef<{
+    orderKey: string;
+    currentItemId: string | null;
+  } | null>(null);
   useEffect(() => {
+    const previousSequenceState = previousSequenceStateRef.current;
+    const currentItemId = currentSequenceItem?.id ?? null;
+    const sequenceOrderChanged =
+      previousSequenceState !== null && previousSequenceState.orderKey !== sequenceDisplayOrderKey;
+    const selectedWasPreviousCurrent =
+      selectedCRToolbarItemId !== null &&
+      previousSequenceState?.currentItemId === selectedCRToolbarItemId;
+    previousSequenceStateRef.current = {
+      orderKey: sequenceDisplayOrderKey,
+      currentItemId,
+    };
+
     const nextSelectedItemId = resolveVoteSequenceSelectionUpdate({
       selectedItemId: selectedCRToolbarItemId,
       sequenceItems: sequenceDisplayItems,
       fallbackItemId: fallbackSelectedCRItemId,
-      currentItemId: currentSequenceItem?.id ?? null,
+      currentItemId,
+      preferredItemId: preferredReorderedSequenceItem?.id ?? null,
+      preferSequenceItem: sequenceOrderChanged && selectedWasPreviousCurrent,
     });
 
     if (nextSelectedItemId !== undefined) {
@@ -881,7 +912,9 @@ export function EventAgendaItemDetail({
   }, [
     currentSequenceItem?.id,
     fallbackSelectedCRItemId,
+    preferredReorderedSequenceItem?.id,
     selectedCRToolbarItemId,
+    sequenceDisplayOrderKey,
     sequenceDisplayItems,
   ]);
 
@@ -1705,9 +1738,7 @@ export function EventAgendaItemDetail({
           error instanceof Error
             ? error.message
             : translateText('generated.inline.0007_failed_to_save_offline_tally_82b59509');
-        const isPasswordError =
-          message === 'Invalid voting password.' ||
-          message === 'No voting password set. Please set your voting PIN first.';
+        const isPasswordError = isOfflineTallyPasswordError(message);
 
         if (isPasswordError) {
           setOfflineTallyPasswordError(message);
@@ -1715,21 +1746,25 @@ export function EventAgendaItemDetail({
           setOfflineTallySubmitError(message);
         }
 
-        toast.error(translateText('generated.inline.0049_failed_to_save_offline_tally_82b59509'), {
-          description: message,
-          action:
-            message.includes('Offline election totals exceed the current cap') ||
-            message.includes('Offline vote totals cannot exceed')
-              ? {
-                  label: translateText('generated.inline.0004_open_participants_22616da9'),
-                  onClick: () =>
-                    navigate({
-                      to: '/event/$id/participants',
-                      params: { id: eventId },
-                    }),
-                }
-              : undefined,
-        });
+        toast.error(
+          translateText('generated.inline.0049_failed_to_save_offline_tally_82b59509'),
+          buildOfflineTallyErrorToast({
+            message,
+            userId: user?.id,
+            action:
+              message.includes('Offline election totals exceed the current cap') ||
+              message.includes('Offline vote totals cannot exceed')
+                ? {
+                    label: translateText('generated.inline.0004_open_participants_22616da9'),
+                    onClick: () =>
+                      navigate({
+                        to: '/event/$id/participants',
+                        params: { id: eventId },
+                      }),
+                  }
+                : undefined,
+          })
+        );
       } finally {
         setIsOfflineTallySubmitting(false);
       }
@@ -1742,6 +1777,7 @@ export function EventAgendaItemDetail({
       offlineTallyPhase,
       upsertElectionOfflineTally,
       upsertVoteOfflineTally,
+      user?.id,
       verifyVotingPassword,
     ]
   );

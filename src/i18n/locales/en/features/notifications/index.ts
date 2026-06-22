@@ -23,7 +23,8 @@ export const notificationsTranslations = {
     noPersonal: 'No personal notifications',
     personalAppear: 'Notifications sent directly to you will appear here',
     noEntity: 'No entity notifications',
-    entityAppear: "Notifications for groups, events, and amendments you're part of will appear here",
+    entityAppear:
+      "Notifications for groups, events, and amendments you're part of will appear here",
   },
   // Toast messages for action hooks
   toasts: {
@@ -88,6 +89,43 @@ export const notificationsTranslations = {
       never: 'Never',
       daily: 'Daily',
       weekly: 'Weekly',
+    },
+  },
+  generated: {
+    titles: {
+      eventAssignedToGroup: 'Event assigned to group',
+      amendmentSupportConfirmed: 'Amendment support confirmed',
+      amendmentUpvoted: 'Amendment upvoted',
+      amendmentDownvoted: 'Amendment downvoted',
+      blogUpvoted: 'Blog upvoted',
+      blogDownvoted: 'Blog downvoted',
+    },
+    messages: {
+      guestAccessApproved: 'A guest access request in {{groupName}} has been approved.',
+      guestAccessRequested: '{{senderName}} has requested guest access to {{groupName}}.',
+      guestInvited: 'A guest has been invited to {{groupName}}.',
+      guestRoleChanged: 'A guest role in {{groupName}} has been changed.',
+      guestRemoved: 'A guest has been removed from {{groupName}}.',
+      guestLeft: '{{senderName}} has left guest access to {{groupName}}.',
+      participationApproved: 'A participation request in {{eventTitle}} has been approved.',
+      participationRejected: 'A participation request in {{eventTitle}} has been rejected.',
+      participantRemoved: 'A participant has been removed from {{eventTitle}}.',
+      eventAssignedToGroup: '{{eventTitle}} has been assigned to {{groupName}}.',
+      amendmentCollaboratorInvited: 'A collaborator has been invited to {{amendmentTitle}}.',
+      amendmentCollaborationApproved:
+        'A collaboration request for {{amendmentTitle}} has been approved.',
+      amendmentCollaborationRejected:
+        'A collaboration request for {{amendmentTitle}} has been rejected.',
+      amendmentCollaboratorRemoved: 'A collaborator has been removed from {{amendmentTitle}}.',
+      amendmentRolePermissionsUpdated:
+        'The permissions for {{roleName}} have been updated in {{amendmentTitle}}.',
+      eventRolePermissionsUpdated:
+        'The permissions for {{roleTitle}} have been updated in {{eventTitle}}.',
+      amendmentSupportConfirmedByEvent:
+        '{{eventTitle}} confirmed that {{groupName}} supports {{amendmentTitle}}.',
+      amendmentSupportConfirmed: '{{groupName}} confirmed support for {{amendmentTitle}}.',
+      writerJoinedNamed: '{{senderName}} has joined {{blogTitle}} as a writer.',
+      writerJoined: 'A new writer has joined {{blogTitle}} as a writer.',
     },
   },
   time: {

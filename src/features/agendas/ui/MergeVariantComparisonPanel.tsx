@@ -231,7 +231,7 @@ function VariantPicker({
   return (
     <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-end">
       <CandidateSelect
-        label={translateText('generated.inline.0063_ausgangsvariante_258f7e56', 'Ausgangsvariante')}
+        label={translateText('features.agendas.mergeComparison.baseVariant')}
         value={leftCandidate.id}
         candidates={candidates}
         testId="merge-variant-left-select"
@@ -239,10 +239,7 @@ function VariantPicker({
       />
       <ArrowRight className="text-muted-foreground hidden h-4 w-4 lg:block" />
       <CandidateSelect
-        label={translateText(
-          'generated.inline.0064_vergleichsvariante_553b54a9',
-          'Vergleichsvariante'
-        )}
+        label={translateText('features.agendas.mergeComparison.comparisonVariant')}
         value={rightCandidate.id}
         candidates={candidates}
         testId="merge-variant-right-select"
@@ -275,8 +272,8 @@ function LineDiffView({
       data-testid="merge-variant-line-diff"
     >
       <div className="bg-muted/40 text-muted-foreground grid grid-cols-[4rem_4rem_2rem_minmax(0,1fr)] border-b px-3 py-2 font-mono text-xs">
-        <span>{translateText('generated.inline.0066_alt_f2cd1711', 'alt')}</span>
-        <span>{translateText('generated.inline.0067_neu_25cfb35f', 'neu')}</span>
+        <span>{translateText('features.agendas.mergeComparison.old')}</span>
+        <span>{translateText('features.agendas.mergeComparison.new')}</span>
         <span />
         <span>
           {leftCandidate.label}
@@ -290,7 +287,7 @@ function LineDiffView({
           className="text-muted-foreground px-3 py-4 text-sm"
           data-testid="merge-variant-no-diff"
         >
-          {translateText('generated.inline.0068_keine_unterschiede_60b6557a', 'Keine Unterschiede')}
+          {translateText('features.agendas.mergeComparison.noDifferences')}
         </div>
       ) : (
         <div className="max-h-96 overflow-auto">
@@ -354,8 +351,8 @@ function CandidateSelect({
 
 export function VariantDiffPanel({
   candidates,
-  title = translateText('generated.inline.0059_variantenvergleich_eaeb6685', 'Variantenvergleich'),
-  badgeLabel = translateText('generated.inline.0060_relative_wahl_5e35f421', 'relative Wahl'),
+  title = translateText('features.agendas.mergeComparison.title'),
+  badgeLabel = translateText('features.agendas.mergeComparison.badgeLabel'),
   defaultLeftCandidateId,
   defaultRightCandidateId,
 }: {
@@ -430,10 +427,10 @@ export function VariantDiffPanel({
         <Tabs defaultValue="variants" className="space-y-3">
           <TabsList>
             <TabsTrigger value="variants">
-              {translateText('generated.inline.0061_varianten_cab97314', 'Varianten')}
+              {translateText('features.agendas.mergeComparison.variants')}
             </TabsTrigger>
             <TabsTrigger value="diff">
-              {translateText('generated.inline.0062_diff_066987c3', 'Diff')}
+              {translateText('features.agendas.mergeComparison.diff')}
             </TabsTrigger>
           </TabsList>
 
@@ -449,18 +446,12 @@ export function VariantDiffPanel({
             <div className="grid gap-3 lg:grid-cols-2" data-testid="merge-variant-grid">
               <VariantPreview
                 candidate={leftCandidate}
-                descriptor={translateText(
-                  'generated.inline.0063_ausgangsvariante_258f7e56',
-                  'Ausgangsvariante'
-                )}
+                descriptor={translateText('features.agendas.mergeComparison.baseVariant')}
                 testId="merge-variant-left-preview"
               />
               <VariantPreview
                 candidate={rightCandidate}
-                descriptor={translateText(
-                  'generated.inline.0064_vergleichsvariante_553b54a9',
-                  'Vergleichsvariante'
-                )}
+                descriptor={translateText('features.agendas.mergeComparison.comparisonVariant')}
                 testId="merge-variant-right-preview"
               />
             </div>
