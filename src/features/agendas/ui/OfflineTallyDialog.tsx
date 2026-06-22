@@ -35,6 +35,7 @@ interface OfflineTallyDialogProps {
   votesPerParticipant?: number | null;
   isSubmitting?: boolean;
   passwordError?: string | null;
+  noVotingPasswordSettingsHref?: string;
   submitError?: string | null;
   onSubmit: (args: { password: string; counts: Record<string, number> }) => Promise<void>;
 }
@@ -62,6 +63,7 @@ export function OfflineTallyDialog({
   votesPerParticipant,
   isSubmitting = false,
   passwordError,
+  noVotingPasswordSettingsHref,
   submitError,
   onSubmit,
 }: OfflineTallyDialogProps) {
@@ -113,6 +115,7 @@ export function OfflineTallyDialog({
         votesPerParticipant={votesPerParticipant}
         isSubmitting={isSubmitting}
         passwordError={passwordError}
+        noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
         submitError={submitError}
         step={step}
         onConfirmCounts={() => {

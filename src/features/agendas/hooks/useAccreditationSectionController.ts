@@ -43,8 +43,10 @@ export function useAccreditationSectionController({
         password,
       });
       setShowPasswordInput(false);
-    } catch {
-      setPasswordError(t('common.accreditation.wrongPassword'));
+    } catch (error) {
+      setPasswordError(
+        error instanceof Error ? error.message : t('common.accreditation.wrongPassword')
+      );
     } finally {
       setIsConfirming(false);
     }
@@ -58,6 +60,7 @@ export function useAccreditationSectionController({
     showPasswordInput,
     isConfirming,
     passwordError,
+    noVotingPasswordSettingsHref: userId ? `/user/${userId}/settings?tab=passwords` : undefined,
     handleConfirmClick,
     handlePasswordSubmit,
   };

@@ -126,6 +126,7 @@ export function ChangeRequestsPageContainerView({
         choices={selectedEventVoteChoices}
         requirePassword
         passwordError={passwordError}
+        noVotingPasswordSettingsHref={userId ? `/user/${userId}/settings?tab=passwords` : undefined}
         isPasswordVerifying={isPasswordVerifying}
         onPasswordSubmit={onSubmitVotingPassword}
         onCastVote={onCastEventVoteFromDialog}

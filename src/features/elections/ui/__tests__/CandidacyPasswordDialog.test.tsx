@@ -34,6 +34,14 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
   }),
 }));
 
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ children, to, ...props }: { children: ReactNode; to: string }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock('@/features/shared/ui/dialog', () => ({
   ScrollableDialogContent: ({
     children,
@@ -129,6 +137,25 @@ describe('CandidacyPasswordDialog', () => {
       screen.getByText('Enter your voting PIN to withdraw your candidacy from this election.')
     ).toBeTruthy();
     expect(screen.getByText('Invalid voting password.')).toBeTruthy();
+  });
+
+  it('links missing voting PIN errors to password settings', () => {
+    render(
+      <CandidacyPasswordDialog
+        open
+        mode="become"
+        electionTitle="Board election"
+        error="No voting password set. Please set your voting PIN first."
+        noVotingPasswordSettingsHref="/user/user-1/settings?tab=passwords"
+        onOpenChange={vi.fn()}
+        onSubmit={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/No voting password set/)).toBeTruthy();
+    expect(screen.getByText(/Set one in your/)).toBeTruthy();
+    const link = screen.getByRole('link', { name: 'password settings' });
+    expect(link.getAttribute('href')).toBe('/user/user-1/settings?tab=passwords');
   });
 
   it('shows three animated loading steps after confirmation starts', () => {

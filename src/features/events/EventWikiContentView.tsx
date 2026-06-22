@@ -141,6 +141,9 @@ export function EventWikiContentView({
   toggleSubscribe,
   user,
 }: EventWikiContentViewProps) {
+  const noVotingPasswordSettingsHref = user?.id
+    ? `/user/${user.id}/settings?tab=passwords`
+    : undefined;
   const eventRoles: WikiParticipationRole[] = (event.roles ?? [])
     .map((role: any) => normalizeWikiParticipationRole(role))
     .filter((role: WikiParticipationRole | null): role is WikiParticipationRole => Boolean(role));
@@ -483,6 +486,7 @@ export function EventWikiContentView({
         candidatesCount={selectedElection?.candidates?.length ?? null}
         majorityType={selectedElection?.majority_type ?? null}
         error={candidacyPasswordError}
+        noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
         isSubmitting={isSubmitting}
         onSubmit={handleConfirmCandidacy}
       />

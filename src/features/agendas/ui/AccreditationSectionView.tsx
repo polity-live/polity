@@ -22,6 +22,7 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
     showPasswordInput,
     isConfirming,
     passwordError,
+    noVotingPasswordSettingsHref,
     handleConfirmClick,
     handlePasswordSubmit,
   } = controller;
@@ -75,6 +76,7 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
                 <VotePasswordInput
                   onSubmit={handlePasswordSubmit}
                   error={passwordError}
+                  noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
                   isLoading={isConfirming}
                 />
               </div>

@@ -60,6 +60,7 @@ export interface VoteCastDialogViewProps {
   isListElection?: boolean;
   requirePassword?: boolean;
   passwordError?: string | null;
+  noVotingPasswordSettingsHref?: string;
   isPasswordVerifying?: boolean;
   isLoading?: boolean;
   submissionActive?: boolean;
@@ -88,6 +89,7 @@ export function VoteCastDialogView({
   isMultiSelect = false,
   isListElection = false,
   passwordError,
+  noVotingPasswordSettingsHref,
   isPasswordVerifying,
   isLoading,
   submissionActive = false,
@@ -403,6 +405,7 @@ export function VoteCastDialogView({
                         <VotePasswordInput
                           onSubmit={onPasswordSubmit}
                           error={passwordError}
+                          noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
                           isLoading={isPasswordVerifying}
                         />
                       </motion.div>

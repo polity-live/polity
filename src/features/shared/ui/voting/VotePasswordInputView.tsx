@@ -1,8 +1,11 @@
 import type { ClipboardEvent, KeyboardEvent, RefObject } from 'react';
 
+import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { FormControlInput } from '@/features/shared/ui/form';
 import { cn } from '@/features/shared/utils/utils';
+
+const NO_VOTING_PASSWORD_ERROR = 'No voting password set. Please set your voting PIN first.';
 
 interface VotePasswordInputViewProps {
   digits: string[];
@@ -11,6 +14,7 @@ interface VotePasswordInputViewProps {
   onKeyDown: (index: number, event: KeyboardEvent<HTMLInputElement>) => void;
   onPaste: (event: ClipboardEvent) => void;
   error?: string | null;
+  noVotingPasswordSettingsHref?: string;
   isLoading?: boolean;
   className?: string;
 }
@@ -22,10 +26,13 @@ export function VotePasswordInputView({
   onKeyDown,
   onPaste,
   error,
+  noVotingPasswordSettingsHref,
   isLoading,
   className,
 }: VotePasswordInputViewProps) {
   const { t } = useTranslation();
+  const showNoVotingPasswordLink =
+    error === NO_VOTING_PASSWORD_ERROR && Boolean(noVotingPasswordSettingsHref);
 
   return (
     <div className={cn('space-y-3', className)}>
@@ -51,7 +58,24 @@ export function VotePasswordInputView({
           />
         ))}
       </div>
-      {error ? <p className="text-destructive text-center text-sm">{error}</p> : null}
+      {error ? (
+        <p className="text-destructive text-center text-sm">
+          {error}
+          {showNoVotingPasswordLink ? (
+            <>
+              {' '}
+              Set one in your{' '}
+              <Link
+                to={noVotingPasswordSettingsHref}
+                className="font-medium underline underline-offset-4"
+              >
+                password settings
+              </Link>{' '}
+              to continue.
+            </>
+          ) : null}
+        </p>
+      ) : null}
     </div>
   );
 }

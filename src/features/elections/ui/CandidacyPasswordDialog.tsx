@@ -26,6 +26,7 @@ export interface CandidacyPasswordDialogProps {
   candidatesCount?: number | null;
   majorityType?: string | null;
   error?: string | null;
+  noVotingPasswordSettingsHref?: string;
   isSubmitting?: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (password: string) => void | Promise<void>;
@@ -40,6 +41,7 @@ export function CandidacyPasswordDialog({
   candidatesCount,
   majorityType,
   error,
+  noVotingPasswordSettingsHref,
   isSubmitting = false,
   onOpenChange,
   onSubmit,
@@ -163,7 +165,12 @@ export function CandidacyPasswordDialog({
                 </div>
               ) : (
                 <div className="rounded-lg border border-dashed p-4">
-                  <VotePasswordInput onSubmit={onSubmit} error={error} isLoading={isSubmitting} />
+                  <VotePasswordInput
+                    onSubmit={onSubmit}
+                    error={error}
+                    noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
+                    isLoading={isSubmitting}
+                  />
                 </div>
               )}
             </div>

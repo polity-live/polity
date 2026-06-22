@@ -46,6 +46,7 @@ interface VoteCastDialogProps {
   documentPreviewContent?: ReactNode;
   requirePassword?: boolean;
   passwordError?: string | null;
+  noVotingPasswordSettingsHref?: string;
   isPasswordVerifying?: boolean;
   onCastVote?: (choiceId: string, context?: VoteSubmissionContext) => Promise<void>;
   onCastElectionVote?: (candidateIds: string[], context?: VoteSubmissionContext) => Promise<void>;
@@ -89,6 +90,7 @@ export function VoteCastDialog({
   documentPreviewContent,
   requirePassword,
   passwordError,
+  noVotingPasswordSettingsHref,
   isPasswordVerifying,
   onCastVote,
   onCastElectionVote,
@@ -281,6 +283,7 @@ export function VoteCastDialog({
       isListElection={isListElection}
       requirePassword={requirePassword}
       passwordError={passwordError}
+      noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
       isPasswordVerifying={isPasswordVerifying || submissionStatus === 'verifying'}
       isLoading={isLoading || submissionStatus !== 'idle'}
       submissionActive={submissionStatus !== 'idle'}

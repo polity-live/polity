@@ -7,6 +7,7 @@ import { useZero } from '@rocicorp/zero/react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { useVoteCasting } from '@/features/vote-cast/hooks/useVoteCasting';
 import type { VoteCastDialog } from '@/features/vote-cast/ui/VoteCastDialog';
+import { useAuth } from '@/providers/auth-provider';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { mutators } from '@/zero/mutators';
 
@@ -26,6 +27,7 @@ export function useDecisionVoteDialogController({
   onOpenChange,
 }: UseDecisionVoteDialogControllerProps) {
   const zero = useZero();
+  const { user } = useAuth();
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isPasswordVerifying, setIsPasswordVerifying] = useState(false);
 
@@ -66,6 +68,7 @@ export function useDecisionVoteDialogController({
     choices: decision.type === 'vote' ? decision.choices : undefined,
     requirePassword: true,
     passwordError,
+    noVotingPasswordSettingsHref: user?.id ? `/user/${user.id}/settings?tab=passwords` : undefined,
     isPasswordVerifying,
     onPasswordSubmit: async password => {
       setPasswordError(null);

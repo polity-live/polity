@@ -31,6 +31,7 @@ interface OfflineElectionTallyDialogViewProps {
   votesPerParticipant?: number | null;
   isSubmitting: boolean;
   passwordError?: string | null;
+  noVotingPasswordSettingsHref?: string;
   submitError?: string | null;
   step: 'counts' | 'password';
   draft: Record<string, string>;
@@ -58,6 +59,7 @@ export function OfflineElectionTallyDialogView({
   votesPerParticipant,
   isSubmitting,
   passwordError,
+  noVotingPasswordSettingsHref,
   submitError,
   step,
   draft,
@@ -166,6 +168,7 @@ export function OfflineElectionTallyDialogView({
                   <VotePasswordInput
                     onSubmit={onPasswordSubmit}
                     error={passwordError}
+                    noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
                     isLoading={isSubmitting}
                   />
                 </div>

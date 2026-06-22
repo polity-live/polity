@@ -364,6 +364,9 @@ export function EventAgendaView({
   );
   const activeCRHasVoteChoices = selectedCRChoices.length > 0;
   const canCastActiveCRVote = !activeCRIsPlaceholder && activeCRHasVoteChoices;
+  const noVotingPasswordSettingsHref = user?.id
+    ? `/user/${user.id}/settings?tab=passwords`
+    : undefined;
   const voteButtonDisabled =
     !isCRToolbarActive && (disableVoteButton || actionBarHook.disableSecretIndicativeVoteButton);
   const disabledVoteTooltip =
@@ -846,11 +849,15 @@ export function EventAgendaView({
         votesPerParticipant={toolbarOfflineTallyEntity?.votesPerParticipant ?? null}
         isSubmitting={isOfflineTallySubmitting}
         passwordError={offlineTallyPasswordError}
+        noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
         submitError={offlineTallySubmitError}
         onSubmit={handleSubmitOfflineTally}
       />
 
-      <CandidacyPasswordDialog {...actionBarHook.candidacyDialogProps} />
+      <CandidacyPasswordDialog
+        {...actionBarHook.candidacyDialogProps}
+        noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
+      />
 
       <EventLiveFocusDialog
         open={liveFocusOpen}
@@ -1416,6 +1423,7 @@ export function EventAgendaView({
         }
         requirePassword
         passwordError={passwordError}
+        noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
         isPasswordVerifying={isPasswordVerifying}
         onPasswordSubmit={async password => {
           setPasswordError(null);

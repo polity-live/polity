@@ -321,6 +321,9 @@ export function EventAgendaItemDetailView({
   handleSubmitOfflineTally,
 }: EventAgendaItemDetailViewProps) {
   const [activeContextPane, setActiveContextPane] = useState<'details' | 'speakers'>('details');
+  const noVotingPasswordSettingsHref = user?.id
+    ? `/user/${user.id}/settings?tab=passwords`
+    : undefined;
   const isDetailAgendaItemActive = detailRuntimeStatus === 'in-progress';
   const canManageCurrentVote = isCRToolbarActive
     ? isDetailAgendaItemActive && canManageVoteSequence
@@ -723,6 +726,7 @@ export function EventAgendaItemDetailView({
         votesPerParticipant={offlineTallyEntity?.votesPerParticipant ?? null}
         isSubmitting={isOfflineTallySubmitting}
         passwordError={offlineTallyPasswordError}
+        noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
         submitError={offlineTallySubmitError}
         onSubmit={handleSubmitOfflineTally}
       />
@@ -739,7 +743,10 @@ export function EventAgendaItemDetailView({
         model={namedResultsDialogConfig?.model ?? null}
       />
 
-      <CandidacyPasswordDialog {...actionBarHook.candidacyDialogProps} />
+      <CandidacyPasswordDialog
+        {...actionBarHook.candidacyDialogProps}
+        noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
+      />
 
       {/* Vote Cast Dialog (with password support) */}
       <VoteCastDialog
@@ -781,6 +788,7 @@ export function EventAgendaItemDetailView({
         }
         requirePassword
         passwordError={passwordError}
+        noVotingPasswordSettingsHref={noVotingPasswordSettingsHref}
         isPasswordVerifying={isPasswordVerifying}
         onPasswordSubmit={async (password: string) => {
           setPasswordError(null);
