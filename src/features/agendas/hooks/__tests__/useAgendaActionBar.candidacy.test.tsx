@@ -17,6 +17,15 @@ vi.mock('@/providers/auth-provider', () => ({
   useAuth: () => ({ user: { id: 'user-1', email: 'ada@example.com' } }),
 }));
 
+vi.mock('@/features/shared/hooks/use-translation', () => ({
+  useTranslation: () => ({
+    t: (key: string) =>
+      key === 'features.events.agenda.actions.secretIndicativeVoteAlreadyCast'
+        ? 'Geheime indikative Stimmen können nicht geändert werden'
+        : key,
+  }),
+}));
+
 vi.mock('@/zero/rbac', () => ({
   usePermissions: () => ({
     can: () => false,

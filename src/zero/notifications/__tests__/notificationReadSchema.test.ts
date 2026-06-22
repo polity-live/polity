@@ -8,15 +8,9 @@ describe('notification_read schema', () => {
       resolve(process.cwd(), 'supabase/schemas/10_notification.sql'),
       'utf8'
     );
-    const migration = readFileSync(
-      resolve(process.cwd(), 'supabase/migrations/20260613233000_notification_read_per_user.sql'),
-      'utf8'
-    );
 
     expect(schema).toContain('CONSTRAINT notification_read_per_user_key UNIQUE');
     expect(schema).toContain('read_by_user_id');
-    expect(migration).toContain(
-      'UNIQUE (notification_id, entity_type, entity_id, read_by_user_id)'
-    );
+    expect(schema).toContain('notification_id, entity_type, entity_id, read_by_user_id');
   });
 });

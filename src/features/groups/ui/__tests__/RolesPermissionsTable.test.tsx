@@ -26,10 +26,10 @@ describe('RolesPermissionsTable', () => {
     const contentSection = screen.getByTestId('action-right-section-content-moderation');
 
     expect(within(operationsSection).getByText('Manage Documents')).toBeTruthy();
-    expect(within(operationsSection).queryByText('View Members')).toBeNull();
+    expect(within(operationsSection).queryByText('Manage Members')).toBeNull();
 
-    expect(within(groupManagementSection).getByText('View Members')).toBeTruthy();
-    expect(within(groupManagementSection).getByText('View Messages')).toBeTruthy();
+    expect(within(groupManagementSection).getByText('Manage Members')).toBeTruthy();
+    expect(within(groupManagementSection).getByText('Manage Messages')).toBeTruthy();
 
     expect(within(eventAgendaSection).getByText('Manage Events')).toBeTruthy();
     expect(within(eventAgendaSection).getByText('Manage Agenda Items')).toBeTruthy();

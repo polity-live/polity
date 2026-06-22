@@ -73,8 +73,13 @@ vi.mock('@/providers/auth-provider', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, values?: Record<string, unknown>) =>
-    values ? `${key}:${JSON.stringify(values)}` : key,
+  translate: (key: string, values?: Record<string, unknown>) => {
+    if (typeof values?.roleTitle === 'string') {
+      return values.roleTitle;
+    }
+
+    return values ? `${key}:${JSON.stringify(values)}` : key;
+  },
   useTranslation: () => ({
     t: (key: string) => key,
   }),

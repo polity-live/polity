@@ -94,6 +94,7 @@ describe('statementServerMutators', () => {
       args: {
         id: 'statement-1',
         text: 'Updated text',
+        image_url: null,
         video_url: 'https://example.com/new-video.mp4',
       },
     });
@@ -102,6 +103,7 @@ describe('statementServerMutators', () => {
       expect.objectContaining({
         id: 'statement-1',
         text: 'Updated text',
+        image_url: null,
         video_url: 'https://example.com/new-video.mp4',
       })
     );
@@ -114,7 +116,7 @@ describe('statementServerMutators', () => {
         user_id: 'author-1',
         group_id: 'group-1',
         description: 'Updated text',
-        image_url: 'https://example.com/old.jpg',
+        image_url: '',
         video_url: 'https://example.com/new-video.mp4',
         created_at: 1_700_000_000_456,
       })

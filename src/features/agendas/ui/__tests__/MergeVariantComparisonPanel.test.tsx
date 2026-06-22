@@ -46,10 +46,24 @@ vi.mock('@/features/shared/ui/ui-platejs/editor-static', () => ({
   ),
 }));
 
-vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (_key: string, paramsOrFallback?: string | Record<string, unknown>) =>
-    typeof paramsOrFallback === 'string' ? paramsOrFallback : _key,
-}));
+vi.mock('@/features/shared/hooks/use-translation', () => {
+  const labels: Record<string, string> = {
+    'features.agendas.mergeComparison.baseVariant': 'Basisvariante',
+    'features.agendas.mergeComparison.badgeLabel': 'Vergleich',
+    'features.agendas.mergeComparison.comparisonVariant': 'Vergleichsvariante',
+    'features.agendas.mergeComparison.diff': 'Diff',
+    'features.agendas.mergeComparison.new': 'Neu',
+    'features.agendas.mergeComparison.noDifferences': 'Keine Unterschiede',
+    'features.agendas.mergeComparison.old': 'Alt',
+    'features.agendas.mergeComparison.title': 'Variantenvergleich',
+    'features.agendas.mergeComparison.variants': 'Varianten',
+  };
+
+  return {
+    translate: (key: string, paramsOrFallback?: string | Record<string, unknown>) =>
+      typeof paramsOrFallback === 'string' ? paramsOrFallback : (labels[key] ?? key),
+  };
+});
 
 beforeAll(() => {
   HTMLElement.prototype.hasPointerCapture ??= () => false;

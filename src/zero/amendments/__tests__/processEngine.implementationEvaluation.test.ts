@@ -314,6 +314,8 @@ describe('process-engine implementation evaluation', () => {
       [{ id: 'branch-1', status: 'scheduled', created_at: 1 }],
       { id: 'event-next', start_date: Number.MAX_SAFE_INTEGER },
       { id: 'amendment-1', editing_mode: 'view' },
+      null,
+      [],
     ]);
 
     await resolveAmendmentProcessVote(tx as never, { agenda_item_id: 'agenda-current' });

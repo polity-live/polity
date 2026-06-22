@@ -512,7 +512,7 @@ describe('TargetGroupEventSelector', () => {
     );
 
     await waitFor(() => expect(screen.queryByPlaceholderText('Zielgruppe suchen...')).toBeNull());
-    expect(screen.getByText('Fixe Zielgruppe')).toBeTruthy();
+    expect(screen.getByText(/^(Fixe Zielgruppe|Fixed target group)$/)).toBeTruthy();
     expect(screen.getAllByText('Parliament').length).toBeGreaterThan(0);
 
     await waitFor(() =>

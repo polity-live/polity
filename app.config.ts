@@ -1,5 +1,5 @@
 import { defineConfig } from '@tanstack/react-start/config';
-import tsConfigPaths from 'vite-tsconfig-paths';
+import { fileURLToPath, URL } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import { loadEnv } from 'vite';
 
@@ -12,7 +12,12 @@ export default defineConfig({
     generatedRouteTree: './src/routeTree.gen.ts',
   },
   vite: {
-    plugins: [tsConfigPaths(), tailwindcss()],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+      },
+    },
+    plugins: [tailwindcss()],
     ssr: {
       noExternal: ['zustand', '@platejs/math', '@platejs/math/react', 'katex', 'react-tweet'],
     },

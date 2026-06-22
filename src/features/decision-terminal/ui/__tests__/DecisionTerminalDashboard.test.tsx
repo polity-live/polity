@@ -25,6 +25,10 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
     typeof options === 'string' ? options : (options?.defaultValue ?? _key),
 }));
 
+vi.mock('@/providers/auth-provider', () => ({
+  useAuth: () => ({ user: { id: 'user-1', email: 'ada@example.com' } }),
+}));
+
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
     children,
