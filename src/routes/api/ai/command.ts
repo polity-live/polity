@@ -1,4 +1,4 @@
-import { convertToCoreMessages, streamText } from 'ai';
+import { streamText } from 'ai';
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { getPreferredDefaultAiModel, toAiModelDescriptor } from '@/lib/ai/models';
@@ -53,7 +53,8 @@ export const Route = createFileRoute('/api/ai/command')({
 
         const result = streamText({
           model,
-          messages: convertToCoreMessages(body.messages),
+          messages: body.messages,
+          allowSystemInMessages: true,
           providerOptions,
           onFinish: async ({ text }) => {
             if (!text.trim() || !credentialProvider) {
@@ -68,7 +69,7 @@ export const Route = createFileRoute('/api/ai/command')({
           },
         });
 
-        return result.toDataStreamResponse({
+        return result.toUIMessageStreamResponse({
           getErrorMessage: getStreamErrorMessage,
         });
       },

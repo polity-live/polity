@@ -8,7 +8,7 @@ import { MotionProvider } from '@/features/shared/motion';
 import stylesAssetHref from '../styles.css?url';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
-const stylesHref = import.meta.env.DEV ? '/_build/src/styles.css' : stylesAssetHref;
+const stylesHref = import.meta.env.DEV ? '/src/styles.css?direct' : stylesAssetHref;
 export const earlyPwaInstallPromptCaptureScript = `(function(){try{if(window.__polityPwaInstallPromptCaptureReady)return;window.__polityPwaInstallPromptCaptureReady=true;window.addEventListener('beforeinstallprompt',function(event){event.preventDefault();window.__polityPwaInstallPromptEvent=event;window.__polityPwaInstallPromptCapturedAt=Date.now();window.dispatchEvent(new CustomEvent('polity:pwa-install-prompt-captured',{detail:{promptEvent:event,capturedAt:window.__polityPwaInstallPromptCapturedAt}}));});}catch(error){console.warn('Failed to initialize PWA install prompt capture:',error);}})()`;
 
 export const Route = createRootRoute({
