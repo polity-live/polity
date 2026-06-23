@@ -128,6 +128,7 @@
     "lowlight": "^3.3.0",
     "lucide-react": "^1.21.0",
     "motion": "^12.40.0",
+    "nitro": "^3.0.260610-beta",
     "pdf-lib": "^1.17.1",
     "platejs": "^53.2.1",
     "postgres": "^3.4.9",

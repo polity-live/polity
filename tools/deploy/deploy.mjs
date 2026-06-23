@@ -271,7 +271,7 @@ if (!skipFly) {
 // ── 6. Vercel: deploy app ────────────────────────────────────
 if (!skipVercel) {
   step('Vercel — deploy app');
-  run('Deploying to production', 'vercel --prod');
+  run('Deploying to production', 'vercel --prod --archive=tgz');
   success('Vercel deploy complete');
 } else {
   info('Vercel step skipped');
