@@ -193,6 +193,7 @@ export const plateJsTranslations = {
     exportAsPDF: 'Als PDF exportieren',
     exportAsImage: 'Als Bild exportieren',
     exportAsMarkdown: 'Als Markdown exportieren',
+    exportAsWord: 'Als Word exportieren',
     searchLanguage: 'Sprache suchen...',
     noLanguageFound: 'Keine Sprache gefunden.',
     pasteLink: 'Link einfügen',

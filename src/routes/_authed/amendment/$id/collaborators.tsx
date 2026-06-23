@@ -10,7 +10,7 @@ export const Route = createFileRoute('/_authed/amendment/$id/collaborators')({
   component: AmendmentCollaboratorsPage,
 });
 
-export function AmendmentCollaboratorsPage() {
+function AmendmentCollaboratorsPage() {
   const { id } = Route.useParams();
   const { user } = useAuth();
   const { amendment, isLoading: amendmentLoading } = useAmendmentState({ amendmentId: id });

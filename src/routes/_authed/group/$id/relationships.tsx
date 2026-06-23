@@ -9,7 +9,7 @@ export const Route = createFileRoute('/_authed/group/$id/relationships')({
   component: GroupRelationshipsPage,
 });
 
-export function GroupRelationshipsPage() {
+function GroupRelationshipsPage() {
   const { id: groupId } = Route.useParams();
   const np = useNetworkPage(groupId);
   const { canManage, canView, isLoading, isMember } = usePermissions({ groupId });

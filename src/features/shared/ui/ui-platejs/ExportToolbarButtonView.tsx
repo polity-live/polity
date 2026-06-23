@@ -19,11 +19,13 @@ interface ExportToolbarButtonViewProps extends DropdownMenuProps {
     pdf: string;
     image: string;
     markdown: string;
+    word: string;
   };
   exportToHtml: () => Promise<void>;
   exportToPdf: () => Promise<void>;
   exportToImage: () => Promise<void>;
   exportToMarkdown: () => Promise<void>;
+  exportToWord: () => Promise<void>;
 }
 
 export function ExportToolbarButtonView({
@@ -34,6 +36,7 @@ export function ExportToolbarButtonView({
   exportToPdf,
   exportToImage,
   exportToMarkdown,
+  exportToWord,
   ...props
 }: ExportToolbarButtonViewProps) {
   return (
@@ -50,6 +53,7 @@ export function ExportToolbarButtonView({
           <DropdownMenuItem onSelect={exportToPdf}>{labels.pdf}</DropdownMenuItem>
           <DropdownMenuItem onSelect={exportToImage}>{labels.image}</DropdownMenuItem>
           <DropdownMenuItem onSelect={exportToMarkdown}>{labels.markdown}</DropdownMenuItem>
+          <DropdownMenuItem onSelect={exportToWord}>{labels.word}</DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

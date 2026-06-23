@@ -6,7 +6,7 @@ export const Route = createFileRoute('/_authed/group/$id/operation')({
   component: GroupOperationPage,
 });
 
-export function GroupOperationPage() {
+function GroupOperationPage() {
   const { id } = Route.useParams();
   const { hash } = useLocation();
 

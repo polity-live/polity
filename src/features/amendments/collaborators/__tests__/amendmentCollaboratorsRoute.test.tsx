@@ -42,10 +42,13 @@ vi.mock('@/features/shared/ui/ui/global-loading-animation', () => ({
   GlobalLoadingAnimation: () => <div data-testid="global-loading-animation" />,
 }));
 
-import {
-  AmendmentCollaboratorsPage,
-  Route,
-} from '../../../../routes/_authed/amendment/$id/collaborators';
+import { Route } from '../../../../routes/_authed/amendment/$id/collaborators';
+
+const AmendmentCollaboratorsPage =
+  Route.options.component ??
+  (() => {
+    throw new Error('Amendment collaborators route component is missing.');
+  });
 
 function mockRouteState({
   userId = 'user-1',

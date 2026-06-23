@@ -87,22 +87,25 @@ vi.mock('@/features/shared/ui/feedback', () => ({
   GlobalLoadingAnimation: () => <div data-testid="global-loading-animation" />,
 }));
 
-import {
-  GroupEditorLayout,
-  Route as EditorLayoutRoute,
-} from '../../../routes/_authed/group/$id/editor';
-import {
-  GroupEditorIndexPage,
-  Route as EditorIndexRoute,
-} from '../../../routes/_authed/group/$id/editor/index';
-import {
-  GroupEditorDocPage,
-  Route as EditorDocRoute,
-} from '../../../routes/_authed/group/$id/editor/$docId';
-import {
-  GroupOperationPage,
-  Route as OperationRoute,
-} from '../../../routes/_authed/group/$id/operation';
+import { Route as EditorLayoutRoute } from '../../../routes/_authed/group/$id/editor';
+import { Route as EditorIndexRoute } from '../../../routes/_authed/group/$id/editor/index';
+import { Route as EditorDocRoute } from '../../../routes/_authed/group/$id/editor/$docId';
+import { Route as OperationRoute } from '../../../routes/_authed/group/$id/operation';
+
+function missingRouteComponent(routeName: string) {
+  return () => {
+    throw new Error(`${routeName} route component is missing.`);
+  };
+}
+
+const GroupEditorLayout =
+  EditorLayoutRoute.options.component ?? missingRouteComponent('Group editor layout');
+const GroupEditorIndexPage =
+  EditorIndexRoute.options.component ?? missingRouteComponent('Group editor index');
+const GroupEditorDocPage =
+  EditorDocRoute.options.component ?? missingRouteComponent('Group editor document');
+const GroupOperationPage =
+  OperationRoute.options.component ?? missingRouteComponent('Group operation');
 
 function createPermissions(options?: {
   views?: Partial<

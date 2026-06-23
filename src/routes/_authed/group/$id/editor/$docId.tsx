@@ -8,7 +8,7 @@ export const Route = createFileRoute('/_authed/group/$id/editor/$docId')({
   component: GroupEditorDocPage,
 });
 
-export function GroupEditorDocPage() {
+function GroupEditorDocPage() {
   const { id, docId } = Route.useParams();
   const { user } = useAuth();
   const { currentUser } = useUserState();

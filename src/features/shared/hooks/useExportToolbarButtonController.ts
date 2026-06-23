@@ -1,12 +1,15 @@
 import * as React from 'react';
 
+import { exportToDocx } from '@platejs/docx-io';
 import { MarkdownPlugin } from '@platejs/markdown';
+import type { SlatePlugin } from 'platejs';
 import { createSlateEditor } from 'platejs';
 import { serializeHtml } from 'platejs/static';
 import { useEditorRef } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
 
 import { BaseEditorKit } from '@/features/shared/ui/kit-platejs/editor-base-kit.tsx';
+import { DocxExportKit } from '@/features/shared/ui/kit-platejs/docx-export-kit.tsx';
 import { EditorStatic } from '@/features/shared/ui/ui-platejs/editor-static.tsx';
 
 const siteUrl = 'https://platejs.org';
@@ -137,6 +140,21 @@ export function useExportToolbarButtonController() {
     await downloadFile(url, 'plate.md');
   };
 
+  const exportToWord = async () => {
+    const blob = await exportToDocx(editor.children, {
+      editorPlugins: [...BaseEditorKit, ...DocxExportKit] as SlatePlugin[],
+    });
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'plate.docx';
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
   return {
     open,
     setOpen,
@@ -146,10 +164,12 @@ export function useExportToolbarButtonController() {
       pdf: t('plateJs.toolbar.exportAsPDF'),
       image: t('plateJs.toolbar.exportAsImage'),
       markdown: t('plateJs.toolbar.exportAsMarkdown'),
+      word: t('plateJs.toolbar.exportAsWord'),
     },
     exportToHtml,
     exportToPdf,
     exportToImage,
     exportToMarkdown,
+    exportToWord,
   };
 }

@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_authed/group/$id/editor')({
   component: GroupEditorLayout,
 });
 
-export function GroupEditorLayout() {
+function GroupEditorLayout() {
   const { id: groupId } = Route.useParams();
   const { canView, isLoading, isMember } = usePermissions({ groupId });
 

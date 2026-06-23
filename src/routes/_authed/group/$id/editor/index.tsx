@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_authed/group/$id/editor/')({
   component: GroupEditorIndexPage,
 });
 
-export function GroupEditorIndexPage() {
+function GroupEditorIndexPage() {
   const { id } = Route.useParams();
   const { user } = useAuth();
   const { canManage } = usePermissions({ groupId: id });

@@ -17,7 +17,7 @@ export const Route = createFileRoute('/_authed/group/$id/network')({
   component: GroupNetworkPage,
 });
 
-export function GroupNetworkPage() {
+function GroupNetworkPage() {
   const { id: groupId } = Route.useParams();
   const { tab } = Route.useSearch();
   const np = useNetworkPage(groupId, tab);

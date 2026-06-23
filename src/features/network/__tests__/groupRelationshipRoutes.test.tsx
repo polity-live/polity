@@ -4,11 +4,18 @@ import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GroupNetworkPage, Route as NetworkRoute } from '../../../routes/_authed/group/$id/network';
-import {
-  GroupRelationshipsPage,
-  Route as RelationshipsRoute,
-} from '../../../routes/_authed/group/$id/relationships';
+import { Route as NetworkRoute } from '../../../routes/_authed/group/$id/network';
+import { Route as RelationshipsRoute } from '../../../routes/_authed/group/$id/relationships';
+
+function missingRouteComponent(routeName: string) {
+  return () => {
+    throw new Error(`${routeName} route component is missing.`);
+  };
+}
+
+const GroupNetworkPage = NetworkRoute.options.component ?? missingRouteComponent('Group network');
+const GroupRelationshipsPage =
+  RelationshipsRoute.options.component ?? missingRouteComponent('Group relationships');
 
 const useNetworkPageMock = vi.fn();
 const usePermissionsMock = vi.fn();
