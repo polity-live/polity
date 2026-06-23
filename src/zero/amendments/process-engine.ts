@@ -1283,23 +1283,20 @@ async function syncBranchSchedulingState(tx: ZeroTransaction, branchId: string) 
   const firstUnresolvedStep = stepRuns.find(step => !isTerminalStepStatus(step.status));
 
   for (const stepRun of stepRuns) {
-    let decisionStatus = stepRun.decision_status ?? null;
-
-    if (stepRun.status === 'approved' || stepRun.status === 'completed') {
-      decisionStatus = 'approved';
-    } else if (stepRun.status === 'rejected') {
-      decisionStatus = 'rejected';
-    } else if (stepRun.status === 'merged') {
-      decisionStatus = 'merged';
-    } else if (stepRun.status === 'withdrawn') {
-      decisionStatus = 'withdrawn';
-    } else if (stepRun.decision_status === 'tie') {
-      decisionStatus = 'tie';
-    } else if (firstUnresolvedStep?.id === stepRun.id) {
-      decisionStatus = 'forward_confirmed';
-    } else {
-      decisionStatus = 'previous_decision_outstanding';
-    }
+    const decisionStatus =
+      stepRun.status === 'approved' || stepRun.status === 'completed'
+        ? 'approved'
+        : stepRun.status === 'rejected'
+          ? 'rejected'
+          : stepRun.status === 'merged'
+            ? 'merged'
+            : stepRun.status === 'withdrawn'
+              ? 'withdrawn'
+              : stepRun.decision_status === 'tie'
+                ? 'tie'
+                : firstUnresolvedStep?.id === stepRun.id
+                  ? 'forward_confirmed'
+                  : 'previous_decision_outstanding';
 
     if (stepRun.decision_status !== decisionStatus) {
       await tx.mutate.amendment_process_step_run.update({

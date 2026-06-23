@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@tanstack/react-start/api', () => ({
-  createAPIFileRoute: () => (handlers: unknown) => handlers,
+vi.mock('@tanstack/react-router', () => ({
+  createFileRoute: () => (options: unknown) => options,
 }));
 
 vi.mock('ai', () => ({

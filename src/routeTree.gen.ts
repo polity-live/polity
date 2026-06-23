@@ -8,1470 +8,2306 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
+import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-conditions'
+import { Route as SupportRouteImport } from './routes/support'
+import { Route as SolutionsRouteImport } from './routes/solutions'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as ImprintRouteImport } from './routes/imprint'
+import { Route as FeaturesRouteImport } from './routes/features'
+import { Route as DocsRouteImport } from './routes/docs'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthedRouteImport } from './routes/_authed'
+import { Route as SplatRouteImport } from './routes/$'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as DocsIndexRouteImport } from './routes/docs/index'
+import { Route as AuthIndexRouteImport } from './routes/auth/index'
+import { Route as DocsTopicRouteImport } from './routes/docs/$topic'
+import { Route as AuthVerifyRouteImport } from './routes/auth/verify'
+import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
+import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as ApiQueryRouteImport } from './routes/api/query'
+import { Route as ApiMutateRouteImport } from './routes/api/mutate'
+import { Route as AuthedTodosRouteImport } from './routes/_authed/todos'
+import { Route as AuthedSearchRouteImport } from './routes/_authed/search'
+import { Route as AuthedNotificationsRouteImport } from './routes/_authed/notifications'
+import { Route as AuthedMessagesRouteImport } from './routes/_authed/messages'
+import { Route as AuthedHomeRouteImport } from './routes/_authed/home'
+import { Route as AuthedCalendarRouteImport } from './routes/_authed/calendar'
+import { Route as AuthedCreateIndexRouteImport } from './routes/_authed/create/index'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
+import { Route as ApiGovdataImportRouteImport } from './routes/api/govdata/import'
+import { Route as ApiGovdataCatalogueRouteImport } from './routes/api/govdata/catalogue'
+import { Route as ApiEurostatProjectionRouteImport } from './routes/api/eurostat/projection'
+import { Route as ApiEurostatImportStepRouteImport } from './routes/api/eurostat/import-step'
+import { Route as ApiEurostatImportRouteImport } from './routes/api/eurostat/import'
+import { Route as ApiEurostatDetailsRouteImport } from './routes/api/eurostat/details'
+import { Route as ApiEurostatCatalogueRouteImport } from './routes/api/eurostat/catalogue'
+import { Route as ApiDebugGroupGeneralAssembliesRouteImport } from './routes/api/debug/group-general-assemblies'
+import { Route as ApiAiCredentialsRouteImport } from './routes/api/ai/credentials'
+import { Route as ApiAiCopilotRouteImport } from './routes/api/ai/copilot'
+import { Route as ApiAiCommandRouteImport } from './routes/api/ai/command'
+import { Route as ApiAiChatRouteImport } from './routes/api/ai/chat'
+import { Route as ApiAiCatalogRouteImport } from './routes/api/ai/catalog'
+import { Route as AuthedUserIdRouteImport } from './routes/_authed/user/$id'
+import { Route as AuthedTodosIdRouteImport } from './routes/_authed/todos/$id'
+import { Route as AuthedStatementIdRouteImport } from './routes/_authed/statement/$id'
+import { Route as AuthedGroupIdRouteImport } from './routes/_authed/group/$id'
+import { Route as AuthedEventIdRouteImport } from './routes/_authed/event/$id'
+import { Route as AuthedCreateTodoRouteImport } from './routes/_authed/create/todo'
+import { Route as AuthedCreateStatementRouteImport } from './routes/_authed/create/statement'
+import { Route as AuthedCreatePaymentRouteImport } from './routes/_authed/create/payment'
+import { Route as AuthedCreateGroupRouteImport } from './routes/_authed/create/group'
+import { Route as AuthedCreateEventRouteImport } from './routes/_authed/create/event'
+import { Route as AuthedCreateElectionCandidateRouteImport } from './routes/_authed/create/election-candidate'
+import { Route as AuthedCreateBlogEntryRouteImport } from './routes/_authed/create/blog-entry'
+import { Route as AuthedCreateAmendmentRouteImport } from './routes/_authed/create/amendment'
+import { Route as AuthedCreateAgendaItemRouteImport } from './routes/_authed/create/agenda-item'
+import { Route as AuthedBlogIdRouteImport } from './routes/_authed/blog/$id'
+import { Route as AuthedAmendmentIdRouteImport } from './routes/_authed/amendment/$id'
+import { Route as AuthedUserIdIndexRouteImport } from './routes/_authed/user/$id/index'
+import { Route as AuthedGroupIdIndexRouteImport } from './routes/_authed/group/$id/index'
+import { Route as AuthedEventIdIndexRouteImport } from './routes/_authed/event/$id/index'
+import { Route as AuthedBlogIdIndexRouteImport } from './routes/_authed/blog/$id/index'
+import { Route as AuthedAmendmentIdIndexRouteImport } from './routes/_authed/amendment/$id/index'
+import { Route as AuthedUserIdSubscriptionsRouteImport } from './routes/_authed/user/$id/subscriptions'
+import { Route as AuthedUserIdSettingsRouteImport } from './routes/_authed/user/$id/settings'
+import { Route as AuthedUserIdNotificationsRouteImport } from './routes/_authed/user/$id/notifications'
+import { Route as AuthedUserIdNotificationSettingsRouteImport } from './routes/_authed/user/$id/notification-settings'
+import { Route as AuthedUserIdNetworkRouteImport } from './routes/_authed/user/$id/network'
+import { Route as AuthedUserIdMembershipsRouteImport } from './routes/_authed/user/$id/memberships'
+import { Route as AuthedUserIdMeetRouteImport } from './routes/_authed/user/$id/meet'
+import { Route as AuthedUserIdEditorRouteImport } from './routes/_authed/user/$id/editor'
+import { Route as AuthedUserIdBlogRouteImport } from './routes/_authed/user/$id/blog'
+import { Route as AuthedGroupIdSettingsRouteImport } from './routes/_authed/group/$id/settings'
+import { Route as AuthedGroupIdRelationshipsRouteImport } from './routes/_authed/group/$id/relationships'
+import { Route as AuthedGroupIdOperationRouteImport } from './routes/_authed/group/$id/operation'
+import { Route as AuthedGroupIdNotificationsRouteImport } from './routes/_authed/group/$id/notifications'
+import { Route as AuthedGroupIdNetworkRouteImport } from './routes/_authed/group/$id/network'
+import { Route as AuthedGroupIdMembershipsRouteImport } from './routes/_authed/group/$id/memberships'
+import { Route as AuthedGroupIdEventsRouteImport } from './routes/_authed/group/$id/events'
+import { Route as AuthedGroupIdEditorRouteImport } from './routes/_authed/group/$id/editor'
+import { Route as AuthedGroupIdBlogsAndStatementsRouteImport } from './routes/_authed/group/$id/blogs-and-statements'
+import { Route as AuthedGroupIdBlogRouteImport } from './routes/_authed/group/$id/blog'
+import { Route as AuthedGroupIdAmendmentsRouteImport } from './routes/_authed/group/$id/amendments'
+import { Route as AuthedEventIdStreamRouteImport } from './routes/_authed/event/$id/stream'
+import { Route as AuthedEventIdSettingsRouteImport } from './routes/_authed/event/$id/settings'
+import { Route as AuthedEventIdRolesRouteImport } from './routes/_authed/event/$id/roles'
+import { Route as AuthedEventIdParticipantsRouteImport } from './routes/_authed/event/$id/participants'
+import { Route as AuthedEventIdNotificationsRouteImport } from './routes/_authed/event/$id/notifications'
+import { Route as AuthedEventIdNetworkRouteImport } from './routes/_authed/event/$id/network'
+import { Route as AuthedEventIdAgendaRouteImport } from './routes/_authed/event/$id/agenda'
+import { Route as AuthedBlogIdNotificationsRouteImport } from './routes/_authed/blog/$id/notifications'
+import { Route as AuthedBlogIdEditRouteImport } from './routes/_authed/blog/$id/edit'
+import { Route as AuthedAmendmentIdTextRouteImport } from './routes/_authed/amendment/$id/text'
+import { Route as AuthedAmendmentIdStreetscapeRouteImport } from './routes/_authed/amendment/$id/streetscape'
+import { Route as AuthedAmendmentIdSettingsRouteImport } from './routes/_authed/amendment/$id/settings'
+import { Route as AuthedAmendmentIdProcessRouteImport } from './routes/_authed/amendment/$id/process'
+import { Route as AuthedAmendmentIdNotificationsRouteImport } from './routes/_authed/amendment/$id/notifications'
+import { Route as AuthedAmendmentIdDiscussionsRouteImport } from './routes/_authed/amendment/$id/discussions'
+import { Route as AuthedAmendmentIdCollaboratorsRouteImport } from './routes/_authed/amendment/$id/collaborators'
+import { Route as AuthedAmendmentIdChangeRequestsRouteImport } from './routes/_authed/amendment/$id/change-requests'
+import { Route as AuthedGroupIdEditorIndexRouteImport } from './routes/_authed/group/$id/editor/index'
+import { Route as AuthedGroupIdBlogIndexRouteImport } from './routes/_authed/group/$id/blog/index'
+import { Route as AuthedEventIdAgendaIndexRouteImport } from './routes/_authed/event/$id/agenda/index'
+import { Route as AuthedUserIdEditorDocIdRouteImport } from './routes/_authed/user/$id/editor/$docId'
+import { Route as AuthedUserIdBlogEntryIdRouteImport } from './routes/_authed/user/$id/blog/$entryId'
+import { Route as AuthedGroupIdEditorDocIdRouteImport } from './routes/_authed/group/$id/editor/$docId'
+import { Route as AuthedGroupIdBlogEntryIdRouteImport } from './routes/_authed/group/$id/blog/$entryId'
+import { Route as AuthedEventIdAgendaAgendaItemIdRouteImport } from './routes/_authed/event/$id/agenda/$agendaItemId'
+import { Route as AuthedUserIdBlogEntryIdIndexRouteImport } from './routes/_authed/user/$id/blog/$entryId/index'
+import { Route as AuthedGroupIdBlogEntryIdIndexRouteImport } from './routes/_authed/group/$id/blog/$entryId/index'
+import { Route as AuthedUserIdBlogEntryIdNotificationsRouteImport } from './routes/_authed/user/$id/blog/$entryId/notifications'
+import { Route as AuthedUserIdBlogEntryIdEditorRouteImport } from './routes/_authed/user/$id/blog/$entryId/editor'
+import { Route as AuthedUserIdBlogEntryIdEditRouteImport } from './routes/_authed/user/$id/blog/$entryId/edit'
+import { Route as AuthedGroupIdBlogEntryIdNotificationsRouteImport } from './routes/_authed/group/$id/blog/$entryId/notifications'
+import { Route as AuthedGroupIdBlogEntryIdEditorRouteImport } from './routes/_authed/group/$id/blog/$entryId/editor'
+import { Route as AuthedGroupIdBlogEntryIdEditRouteImport } from './routes/_authed/group/$id/blog/$entryId/edit'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as UnauthorizedImport } from './routes/unauthorized'
-import { Route as TermsAndConditionsImport } from './routes/terms-and-conditions'
-import { Route as SupportImport } from './routes/support'
-import { Route as SolutionsImport } from './routes/solutions'
-import { Route as PrivacyPolicyImport } from './routes/privacy-policy'
-import { Route as PricingImport } from './routes/pricing'
-import { Route as ImprintImport } from './routes/imprint'
-import { Route as FeaturesImport } from './routes/features'
-import { Route as DocsImport } from './routes/docs'
-import { Route as AuthImport } from './routes/auth'
-import { Route as AuthedImport } from './routes/_authed'
-import { Route as SplatImport } from './routes/$'
-import { Route as IndexImport } from './routes/index'
-import { Route as DocsIndexImport } from './routes/docs/index'
-import { Route as AuthIndexImport } from './routes/auth/index'
-import { Route as DocsTopicImport } from './routes/docs/$topic'
-import { Route as AuthVerifyImport } from './routes/auth/verify'
-import { Route as AuthSignUpImport } from './routes/auth/sign-up'
-import { Route as AuthSignInImport } from './routes/auth/sign-in'
-import { Route as AuthForgotPasswordImport } from './routes/auth/forgot-password'
-import { Route as AuthCallbackImport } from './routes/auth/callback'
-import { Route as AuthedTodosImport } from './routes/_authed/todos'
-import { Route as AuthedSearchImport } from './routes/_authed/search'
-import { Route as AuthedNotificationsImport } from './routes/_authed/notifications'
-import { Route as AuthedMessagesImport } from './routes/_authed/messages'
-import { Route as AuthedHomeImport } from './routes/_authed/home'
-import { Route as AuthedCalendarImport } from './routes/_authed/calendar'
-import { Route as AuthedCreateIndexImport } from './routes/_authed/create/index'
-import { Route as AuthedUserIdImport } from './routes/_authed/user/$id'
-import { Route as AuthedTodosIdImport } from './routes/_authed/todos/$id'
-import { Route as AuthedStatementIdImport } from './routes/_authed/statement/$id'
-import { Route as AuthedGroupIdImport } from './routes/_authed/group/$id'
-import { Route as AuthedEventIdImport } from './routes/_authed/event/$id'
-import { Route as AuthedCreateTodoImport } from './routes/_authed/create/todo'
-import { Route as AuthedCreateStatementImport } from './routes/_authed/create/statement'
-import { Route as AuthedCreatePaymentImport } from './routes/_authed/create/payment'
-import { Route as AuthedCreateGroupImport } from './routes/_authed/create/group'
-import { Route as AuthedCreateEventImport } from './routes/_authed/create/event'
-import { Route as AuthedCreateElectionCandidateImport } from './routes/_authed/create/election-candidate'
-import { Route as AuthedCreateBlogEntryImport } from './routes/_authed/create/blog-entry'
-import { Route as AuthedCreateAmendmentImport } from './routes/_authed/create/amendment'
-import { Route as AuthedCreateAgendaItemImport } from './routes/_authed/create/agenda-item'
-import { Route as AuthedBlogIdImport } from './routes/_authed/blog/$id'
-import { Route as AuthedAmendmentIdImport } from './routes/_authed/amendment/$id'
-import { Route as AuthedUserIdIndexImport } from './routes/_authed/user/$id/index'
-import { Route as AuthedGroupIdIndexImport } from './routes/_authed/group/$id/index'
-import { Route as AuthedEventIdIndexImport } from './routes/_authed/event/$id/index'
-import { Route as AuthedBlogIdIndexImport } from './routes/_authed/blog/$id/index'
-import { Route as AuthedAmendmentIdIndexImport } from './routes/_authed/amendment/$id/index'
-import { Route as AuthedUserIdSubscriptionsImport } from './routes/_authed/user/$id/subscriptions'
-import { Route as AuthedUserIdSettingsImport } from './routes/_authed/user/$id/settings'
-import { Route as AuthedUserIdNotificationsImport } from './routes/_authed/user/$id/notifications'
-import { Route as AuthedUserIdNotificationSettingsImport } from './routes/_authed/user/$id/notification-settings'
-import { Route as AuthedUserIdNetworkImport } from './routes/_authed/user/$id/network'
-import { Route as AuthedUserIdMembershipsImport } from './routes/_authed/user/$id/memberships'
-import { Route as AuthedUserIdMeetImport } from './routes/_authed/user/$id/meet'
-import { Route as AuthedUserIdEditorImport } from './routes/_authed/user/$id/editor'
-import { Route as AuthedUserIdBlogImport } from './routes/_authed/user/$id/blog'
-import { Route as AuthedGroupIdSettingsImport } from './routes/_authed/group/$id/settings'
-import { Route as AuthedGroupIdRelationshipsImport } from './routes/_authed/group/$id/relationships'
-import { Route as AuthedGroupIdOperationImport } from './routes/_authed/group/$id/operation'
-import { Route as AuthedGroupIdNotificationsImport } from './routes/_authed/group/$id/notifications'
-import { Route as AuthedGroupIdNetworkImport } from './routes/_authed/group/$id/network'
-import { Route as AuthedGroupIdMembershipsImport } from './routes/_authed/group/$id/memberships'
-import { Route as AuthedGroupIdEventsImport } from './routes/_authed/group/$id/events'
-import { Route as AuthedGroupIdEditorImport } from './routes/_authed/group/$id/editor'
-import { Route as AuthedGroupIdBlogsAndStatementsImport } from './routes/_authed/group/$id/blogs-and-statements'
-import { Route as AuthedGroupIdBlogImport } from './routes/_authed/group/$id/blog'
-import { Route as AuthedGroupIdAmendmentsImport } from './routes/_authed/group/$id/amendments'
-import { Route as AuthedEventIdStreamImport } from './routes/_authed/event/$id/stream'
-import { Route as AuthedEventIdSettingsImport } from './routes/_authed/event/$id/settings'
-import { Route as AuthedEventIdRolesImport } from './routes/_authed/event/$id/roles'
-import { Route as AuthedEventIdParticipantsImport } from './routes/_authed/event/$id/participants'
-import { Route as AuthedEventIdNotificationsImport } from './routes/_authed/event/$id/notifications'
-import { Route as AuthedEventIdNetworkImport } from './routes/_authed/event/$id/network'
-import { Route as AuthedEventIdAgendaImport } from './routes/_authed/event/$id/agenda'
-import { Route as AuthedBlogIdNotificationsImport } from './routes/_authed/blog/$id/notifications'
-import { Route as AuthedBlogIdEditImport } from './routes/_authed/blog/$id/edit'
-import { Route as AuthedAmendmentIdTextImport } from './routes/_authed/amendment/$id/text'
-import { Route as AuthedAmendmentIdStreetscapeImport } from './routes/_authed/amendment/$id/streetscape'
-import { Route as AuthedAmendmentIdSettingsImport } from './routes/_authed/amendment/$id/settings'
-import { Route as AuthedAmendmentIdProcessImport } from './routes/_authed/amendment/$id/process'
-import { Route as AuthedAmendmentIdNotificationsImport } from './routes/_authed/amendment/$id/notifications'
-import { Route as AuthedAmendmentIdDiscussionsImport } from './routes/_authed/amendment/$id/discussions'
-import { Route as AuthedAmendmentIdCollaboratorsImport } from './routes/_authed/amendment/$id/collaborators'
-import { Route as AuthedAmendmentIdChangeRequestsImport } from './routes/_authed/amendment/$id/change-requests'
-import { Route as AuthedGroupIdEditorIndexImport } from './routes/_authed/group/$id/editor/index'
-import { Route as AuthedGroupIdBlogIndexImport } from './routes/_authed/group/$id/blog/index'
-import { Route as AuthedEventIdAgendaIndexImport } from './routes/_authed/event/$id/agenda/index'
-import { Route as AuthedUserIdEditorDocIdImport } from './routes/_authed/user/$id/editor/$docId'
-import { Route as AuthedUserIdBlogEntryIdImport } from './routes/_authed/user/$id/blog/$entryId'
-import { Route as AuthedGroupIdEditorDocIdImport } from './routes/_authed/group/$id/editor/$docId'
-import { Route as AuthedGroupIdBlogEntryIdImport } from './routes/_authed/group/$id/blog/$entryId'
-import { Route as AuthedEventIdAgendaAgendaItemIdImport } from './routes/_authed/event/$id/agenda/$agendaItemId'
-import { Route as AuthedUserIdBlogEntryIdIndexImport } from './routes/_authed/user/$id/blog/$entryId/index'
-import { Route as AuthedGroupIdBlogEntryIdIndexImport } from './routes/_authed/group/$id/blog/$entryId/index'
-import { Route as AuthedUserIdBlogEntryIdNotificationsImport } from './routes/_authed/user/$id/blog/$entryId/notifications'
-import { Route as AuthedUserIdBlogEntryIdEditorImport } from './routes/_authed/user/$id/blog/$entryId/editor'
-import { Route as AuthedUserIdBlogEntryIdEditImport } from './routes/_authed/user/$id/blog/$entryId/edit'
-import { Route as AuthedGroupIdBlogEntryIdNotificationsImport } from './routes/_authed/group/$id/blog/$entryId/notifications'
-import { Route as AuthedGroupIdBlogEntryIdEditorImport } from './routes/_authed/group/$id/blog/$entryId/editor'
-import { Route as AuthedGroupIdBlogEntryIdEditImport } from './routes/_authed/group/$id/blog/$entryId/edit'
-
-// Create/Update Routes
-
-const UnauthorizedRoute = UnauthorizedImport.update({
+const UnauthorizedRoute = UnauthorizedRouteImport.update({
   id: '/unauthorized',
   path: '/unauthorized',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const TermsAndConditionsRoute = TermsAndConditionsImport.update({
+const TermsAndConditionsRoute = TermsAndConditionsRouteImport.update({
   id: '/terms-and-conditions',
   path: '/terms-and-conditions',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const SupportRoute = SupportImport.update({
+const SupportRoute = SupportRouteImport.update({
   id: '/support',
   path: '/support',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const SolutionsRoute = SolutionsImport.update({
+const SolutionsRoute = SolutionsRouteImport.update({
   id: '/solutions',
   path: '/solutions',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const PrivacyPolicyRoute = PrivacyPolicyImport.update({
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
   id: '/privacy-policy',
   path: '/privacy-policy',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const PricingRoute = PricingImport.update({
+const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const ImprintRoute = ImprintImport.update({
+const ImprintRoute = ImprintRouteImport.update({
   id: '/imprint',
   path: '/imprint',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const FeaturesRoute = FeaturesImport.update({
+const FeaturesRoute = FeaturesRouteImport.update({
   id: '/features',
   path: '/features',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const DocsRoute = DocsImport.update({
+const DocsRoute = DocsRouteImport.update({
   id: '/docs',
   path: '/docs',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const AuthRoute = AuthImport.update({
+const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const AuthedRoute = AuthedImport.update({
+const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const SplatRoute = SplatImport.update({
+const SplatRoute = SplatRouteImport.update({
   id: '/$',
   path: '/$',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const DocsIndexRoute = DocsIndexImport.update({
+const DocsIndexRoute = DocsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DocsRoute,
 } as any)
-
-const AuthIndexRoute = AuthIndexImport.update({
+const AuthIndexRoute = AuthIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const DocsTopicRoute = DocsTopicImport.update({
+const DocsTopicRoute = DocsTopicRouteImport.update({
   id: '/$topic',
   path: '/$topic',
   getParentRoute: () => DocsRoute,
 } as any)
-
-const AuthVerifyRoute = AuthVerifyImport.update({
+const AuthVerifyRoute = AuthVerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthSignUpRoute = AuthSignUpImport.update({
+const AuthSignUpRoute = AuthSignUpRouteImport.update({
   id: '/sign-up',
   path: '/sign-up',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthSignInRoute = AuthSignInImport.update({
+const AuthSignInRoute = AuthSignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthForgotPasswordRoute = AuthForgotPasswordImport.update({
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthCallbackRoute = AuthCallbackImport.update({
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthedTodosRoute = AuthedTodosImport.update({
+const ApiQueryRoute = ApiQueryRouteImport.update({
+  id: '/api/query',
+  path: '/api/query',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMutateRoute = ApiMutateRouteImport.update({
+  id: '/api/mutate',
+  path: '/api/mutate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedTodosRoute = AuthedTodosRouteImport.update({
   id: '/todos',
   path: '/todos',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedSearchRoute = AuthedSearchImport.update({
+const AuthedSearchRoute = AuthedSearchRouteImport.update({
   id: '/search',
   path: '/search',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedNotificationsRoute = AuthedNotificationsImport.update({
+const AuthedNotificationsRoute = AuthedNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedMessagesRoute = AuthedMessagesImport.update({
+const AuthedMessagesRoute = AuthedMessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedHomeRoute = AuthedHomeImport.update({
+const AuthedHomeRoute = AuthedHomeRouteImport.update({
   id: '/home',
   path: '/home',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedCalendarRoute = AuthedCalendarImport.update({
+const AuthedCalendarRoute = AuthedCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedCreateIndexRoute = AuthedCreateIndexImport.update({
+const AuthedCreateIndexRoute = AuthedCreateIndexRouteImport.update({
   id: '/create/',
   path: '/create/',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedUserIdRoute = AuthedUserIdImport.update({
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe/webhook',
+  path: '/api/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGovdataImportRoute = ApiGovdataImportRouteImport.update({
+  id: '/api/govdata/import',
+  path: '/api/govdata/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGovdataCatalogueRoute = ApiGovdataCatalogueRouteImport.update({
+  id: '/api/govdata/catalogue',
+  path: '/api/govdata/catalogue',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEurostatProjectionRoute = ApiEurostatProjectionRouteImport.update({
+  id: '/api/eurostat/projection',
+  path: '/api/eurostat/projection',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEurostatImportStepRoute = ApiEurostatImportStepRouteImport.update({
+  id: '/api/eurostat/import-step',
+  path: '/api/eurostat/import-step',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEurostatImportRoute = ApiEurostatImportRouteImport.update({
+  id: '/api/eurostat/import',
+  path: '/api/eurostat/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEurostatDetailsRoute = ApiEurostatDetailsRouteImport.update({
+  id: '/api/eurostat/details',
+  path: '/api/eurostat/details',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEurostatCatalogueRoute = ApiEurostatCatalogueRouteImport.update({
+  id: '/api/eurostat/catalogue',
+  path: '/api/eurostat/catalogue',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDebugGroupGeneralAssembliesRoute =
+  ApiDebugGroupGeneralAssembliesRouteImport.update({
+    id: '/api/debug/group-general-assemblies',
+    path: '/api/debug/group-general-assemblies',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAiCredentialsRoute = ApiAiCredentialsRouteImport.update({
+  id: '/api/ai/credentials',
+  path: '/api/ai/credentials',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiCopilotRoute = ApiAiCopilotRouteImport.update({
+  id: '/api/ai/copilot',
+  path: '/api/ai/copilot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiCommandRoute = ApiAiCommandRouteImport.update({
+  id: '/api/ai/command',
+  path: '/api/ai/command',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiChatRoute = ApiAiChatRouteImport.update({
+  id: '/api/ai/chat',
+  path: '/api/ai/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAiCatalogRoute = ApiAiCatalogRouteImport.update({
+  id: '/api/ai/catalog',
+  path: '/api/ai/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedUserIdRoute = AuthedUserIdRouteImport.update({
   id: '/user/$id',
   path: '/user/$id',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedTodosIdRoute = AuthedTodosIdImport.update({
+const AuthedTodosIdRoute = AuthedTodosIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => AuthedTodosRoute,
 } as any)
-
-const AuthedStatementIdRoute = AuthedStatementIdImport.update({
+const AuthedStatementIdRoute = AuthedStatementIdRouteImport.update({
   id: '/statement/$id',
   path: '/statement/$id',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedGroupIdRoute = AuthedGroupIdImport.update({
+const AuthedGroupIdRoute = AuthedGroupIdRouteImport.update({
   id: '/group/$id',
   path: '/group/$id',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedEventIdRoute = AuthedEventIdImport.update({
+const AuthedEventIdRoute = AuthedEventIdRouteImport.update({
   id: '/event/$id',
   path: '/event/$id',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedCreateTodoRoute = AuthedCreateTodoImport.update({
+const AuthedCreateTodoRoute = AuthedCreateTodoRouteImport.update({
   id: '/create/todo',
   path: '/create/todo',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedCreateStatementRoute = AuthedCreateStatementImport.update({
+const AuthedCreateStatementRoute = AuthedCreateStatementRouteImport.update({
   id: '/create/statement',
   path: '/create/statement',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedCreatePaymentRoute = AuthedCreatePaymentImport.update({
+const AuthedCreatePaymentRoute = AuthedCreatePaymentRouteImport.update({
   id: '/create/payment',
   path: '/create/payment',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedCreateGroupRoute = AuthedCreateGroupImport.update({
+const AuthedCreateGroupRoute = AuthedCreateGroupRouteImport.update({
   id: '/create/group',
   path: '/create/group',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedCreateEventRoute = AuthedCreateEventImport.update({
+const AuthedCreateEventRoute = AuthedCreateEventRouteImport.update({
   id: '/create/event',
   path: '/create/event',
   getParentRoute: () => AuthedRoute,
 } as any)
-
 const AuthedCreateElectionCandidateRoute =
-  AuthedCreateElectionCandidateImport.update({
+  AuthedCreateElectionCandidateRouteImport.update({
     id: '/create/election-candidate',
     path: '/create/election-candidate',
     getParentRoute: () => AuthedRoute,
   } as any)
-
-const AuthedCreateBlogEntryRoute = AuthedCreateBlogEntryImport.update({
+const AuthedCreateBlogEntryRoute = AuthedCreateBlogEntryRouteImport.update({
   id: '/create/blog-entry',
   path: '/create/blog-entry',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedCreateAmendmentRoute = AuthedCreateAmendmentImport.update({
+const AuthedCreateAmendmentRoute = AuthedCreateAmendmentRouteImport.update({
   id: '/create/amendment',
   path: '/create/amendment',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedCreateAgendaItemRoute = AuthedCreateAgendaItemImport.update({
+const AuthedCreateAgendaItemRoute = AuthedCreateAgendaItemRouteImport.update({
   id: '/create/agenda-item',
   path: '/create/agenda-item',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedBlogIdRoute = AuthedBlogIdImport.update({
+const AuthedBlogIdRoute = AuthedBlogIdRouteImport.update({
   id: '/blog/$id',
   path: '/blog/$id',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedAmendmentIdRoute = AuthedAmendmentIdImport.update({
+const AuthedAmendmentIdRoute = AuthedAmendmentIdRouteImport.update({
   id: '/amendment/$id',
   path: '/amendment/$id',
   getParentRoute: () => AuthedRoute,
 } as any)
-
-const AuthedUserIdIndexRoute = AuthedUserIdIndexImport.update({
+const AuthedUserIdIndexRoute = AuthedUserIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthedUserIdRoute,
 } as any)
-
-const AuthedGroupIdIndexRoute = AuthedGroupIdIndexImport.update({
+const AuthedGroupIdIndexRoute = AuthedGroupIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthedGroupIdRoute,
 } as any)
-
-const AuthedEventIdIndexRoute = AuthedEventIdIndexImport.update({
+const AuthedEventIdIndexRoute = AuthedEventIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthedEventIdRoute,
 } as any)
-
-const AuthedBlogIdIndexRoute = AuthedBlogIdIndexImport.update({
+const AuthedBlogIdIndexRoute = AuthedBlogIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthedBlogIdRoute,
 } as any)
-
-const AuthedAmendmentIdIndexRoute = AuthedAmendmentIdIndexImport.update({
+const AuthedAmendmentIdIndexRoute = AuthedAmendmentIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthedAmendmentIdRoute,
 } as any)
-
-const AuthedUserIdSubscriptionsRoute = AuthedUserIdSubscriptionsImport.update({
-  id: '/subscriptions',
-  path: '/subscriptions',
-  getParentRoute: () => AuthedUserIdRoute,
-} as any)
-
-const AuthedUserIdSettingsRoute = AuthedUserIdSettingsImport.update({
+const AuthedUserIdSubscriptionsRoute =
+  AuthedUserIdSubscriptionsRouteImport.update({
+    id: '/subscriptions',
+    path: '/subscriptions',
+    getParentRoute: () => AuthedUserIdRoute,
+  } as any)
+const AuthedUserIdSettingsRoute = AuthedUserIdSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AuthedUserIdRoute,
 } as any)
-
-const AuthedUserIdNotificationsRoute = AuthedUserIdNotificationsImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => AuthedUserIdRoute,
-} as any)
-
+const AuthedUserIdNotificationsRoute =
+  AuthedUserIdNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthedUserIdRoute,
+  } as any)
 const AuthedUserIdNotificationSettingsRoute =
-  AuthedUserIdNotificationSettingsImport.update({
+  AuthedUserIdNotificationSettingsRouteImport.update({
     id: '/notification-settings',
     path: '/notification-settings',
     getParentRoute: () => AuthedUserIdRoute,
   } as any)
-
-const AuthedUserIdNetworkRoute = AuthedUserIdNetworkImport.update({
+const AuthedUserIdNetworkRoute = AuthedUserIdNetworkRouteImport.update({
   id: '/network',
   path: '/network',
   getParentRoute: () => AuthedUserIdRoute,
 } as any)
-
-const AuthedUserIdMembershipsRoute = AuthedUserIdMembershipsImport.update({
+const AuthedUserIdMembershipsRoute = AuthedUserIdMembershipsRouteImport.update({
   id: '/memberships',
   path: '/memberships',
   getParentRoute: () => AuthedUserIdRoute,
 } as any)
-
-const AuthedUserIdMeetRoute = AuthedUserIdMeetImport.update({
+const AuthedUserIdMeetRoute = AuthedUserIdMeetRouteImport.update({
   id: '/meet',
   path: '/meet',
   getParentRoute: () => AuthedUserIdRoute,
 } as any)
-
-const AuthedUserIdEditorRoute = AuthedUserIdEditorImport.update({
+const AuthedUserIdEditorRoute = AuthedUserIdEditorRouteImport.update({
   id: '/editor',
   path: '/editor',
   getParentRoute: () => AuthedUserIdRoute,
 } as any)
-
-const AuthedUserIdBlogRoute = AuthedUserIdBlogImport.update({
+const AuthedUserIdBlogRoute = AuthedUserIdBlogRouteImport.update({
   id: '/blog',
   path: '/blog',
   getParentRoute: () => AuthedUserIdRoute,
 } as any)
-
-const AuthedGroupIdSettingsRoute = AuthedGroupIdSettingsImport.update({
+const AuthedGroupIdSettingsRoute = AuthedGroupIdSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AuthedGroupIdRoute,
 } as any)
-
-const AuthedGroupIdRelationshipsRoute = AuthedGroupIdRelationshipsImport.update(
-  {
+const AuthedGroupIdRelationshipsRoute =
+  AuthedGroupIdRelationshipsRouteImport.update({
     id: '/relationships',
     path: '/relationships',
     getParentRoute: () => AuthedGroupIdRoute,
-  } as any,
-)
-
-const AuthedGroupIdOperationRoute = AuthedGroupIdOperationImport.update({
+  } as any)
+const AuthedGroupIdOperationRoute = AuthedGroupIdOperationRouteImport.update({
   id: '/operation',
   path: '/operation',
   getParentRoute: () => AuthedGroupIdRoute,
 } as any)
-
-const AuthedGroupIdNotificationsRoute = AuthedGroupIdNotificationsImport.update(
-  {
+const AuthedGroupIdNotificationsRoute =
+  AuthedGroupIdNotificationsRouteImport.update({
     id: '/notifications',
     path: '/notifications',
     getParentRoute: () => AuthedGroupIdRoute,
-  } as any,
-)
-
-const AuthedGroupIdNetworkRoute = AuthedGroupIdNetworkImport.update({
+  } as any)
+const AuthedGroupIdNetworkRoute = AuthedGroupIdNetworkRouteImport.update({
   id: '/network',
   path: '/network',
   getParentRoute: () => AuthedGroupIdRoute,
 } as any)
-
-const AuthedGroupIdMembershipsRoute = AuthedGroupIdMembershipsImport.update({
-  id: '/memberships',
-  path: '/memberships',
-  getParentRoute: () => AuthedGroupIdRoute,
-} as any)
-
-const AuthedGroupIdEventsRoute = AuthedGroupIdEventsImport.update({
+const AuthedGroupIdMembershipsRoute =
+  AuthedGroupIdMembershipsRouteImport.update({
+    id: '/memberships',
+    path: '/memberships',
+    getParentRoute: () => AuthedGroupIdRoute,
+  } as any)
+const AuthedGroupIdEventsRoute = AuthedGroupIdEventsRouteImport.update({
   id: '/events',
   path: '/events',
   getParentRoute: () => AuthedGroupIdRoute,
 } as any)
-
-const AuthedGroupIdEditorRoute = AuthedGroupIdEditorImport.update({
+const AuthedGroupIdEditorRoute = AuthedGroupIdEditorRouteImport.update({
   id: '/editor',
   path: '/editor',
   getParentRoute: () => AuthedGroupIdRoute,
 } as any)
-
 const AuthedGroupIdBlogsAndStatementsRoute =
-  AuthedGroupIdBlogsAndStatementsImport.update({
+  AuthedGroupIdBlogsAndStatementsRouteImport.update({
     id: '/blogs-and-statements',
     path: '/blogs-and-statements',
     getParentRoute: () => AuthedGroupIdRoute,
   } as any)
-
-const AuthedGroupIdBlogRoute = AuthedGroupIdBlogImport.update({
+const AuthedGroupIdBlogRoute = AuthedGroupIdBlogRouteImport.update({
   id: '/blog',
   path: '/blog',
   getParentRoute: () => AuthedGroupIdRoute,
 } as any)
-
-const AuthedGroupIdAmendmentsRoute = AuthedGroupIdAmendmentsImport.update({
+const AuthedGroupIdAmendmentsRoute = AuthedGroupIdAmendmentsRouteImport.update({
   id: '/amendments',
   path: '/amendments',
   getParentRoute: () => AuthedGroupIdRoute,
 } as any)
-
-const AuthedEventIdStreamRoute = AuthedEventIdStreamImport.update({
+const AuthedEventIdStreamRoute = AuthedEventIdStreamRouteImport.update({
   id: '/stream',
   path: '/stream',
   getParentRoute: () => AuthedEventIdRoute,
 } as any)
-
-const AuthedEventIdSettingsRoute = AuthedEventIdSettingsImport.update({
+const AuthedEventIdSettingsRoute = AuthedEventIdSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AuthedEventIdRoute,
 } as any)
-
-const AuthedEventIdRolesRoute = AuthedEventIdRolesImport.update({
+const AuthedEventIdRolesRoute = AuthedEventIdRolesRouteImport.update({
   id: '/roles',
   path: '/roles',
   getParentRoute: () => AuthedEventIdRoute,
 } as any)
-
-const AuthedEventIdParticipantsRoute = AuthedEventIdParticipantsImport.update({
-  id: '/participants',
-  path: '/participants',
-  getParentRoute: () => AuthedEventIdRoute,
-} as any)
-
-const AuthedEventIdNotificationsRoute = AuthedEventIdNotificationsImport.update(
-  {
+const AuthedEventIdParticipantsRoute =
+  AuthedEventIdParticipantsRouteImport.update({
+    id: '/participants',
+    path: '/participants',
+    getParentRoute: () => AuthedEventIdRoute,
+  } as any)
+const AuthedEventIdNotificationsRoute =
+  AuthedEventIdNotificationsRouteImport.update({
     id: '/notifications',
     path: '/notifications',
     getParentRoute: () => AuthedEventIdRoute,
-  } as any,
-)
-
-const AuthedEventIdNetworkRoute = AuthedEventIdNetworkImport.update({
+  } as any)
+const AuthedEventIdNetworkRoute = AuthedEventIdNetworkRouteImport.update({
   id: '/network',
   path: '/network',
   getParentRoute: () => AuthedEventIdRoute,
 } as any)
-
-const AuthedEventIdAgendaRoute = AuthedEventIdAgendaImport.update({
+const AuthedEventIdAgendaRoute = AuthedEventIdAgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
   getParentRoute: () => AuthedEventIdRoute,
 } as any)
-
-const AuthedBlogIdNotificationsRoute = AuthedBlogIdNotificationsImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => AuthedBlogIdRoute,
-} as any)
-
-const AuthedBlogIdEditRoute = AuthedBlogIdEditImport.update({
+const AuthedBlogIdNotificationsRoute =
+  AuthedBlogIdNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthedBlogIdRoute,
+  } as any)
+const AuthedBlogIdEditRoute = AuthedBlogIdEditRouteImport.update({
   id: '/edit',
   path: '/edit',
   getParentRoute: () => AuthedBlogIdRoute,
 } as any)
-
-const AuthedAmendmentIdTextRoute = AuthedAmendmentIdTextImport.update({
+const AuthedAmendmentIdTextRoute = AuthedAmendmentIdTextRouteImport.update({
   id: '/text',
   path: '/text',
   getParentRoute: () => AuthedAmendmentIdRoute,
 } as any)
-
 const AuthedAmendmentIdStreetscapeRoute =
-  AuthedAmendmentIdStreetscapeImport.update({
+  AuthedAmendmentIdStreetscapeRouteImport.update({
     id: '/streetscape',
     path: '/streetscape',
     getParentRoute: () => AuthedAmendmentIdRoute,
   } as any)
-
-const AuthedAmendmentIdSettingsRoute = AuthedAmendmentIdSettingsImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthedAmendmentIdRoute,
-} as any)
-
-const AuthedAmendmentIdProcessRoute = AuthedAmendmentIdProcessImport.update({
-  id: '/process',
-  path: '/process',
-  getParentRoute: () => AuthedAmendmentIdRoute,
-} as any)
-
+const AuthedAmendmentIdSettingsRoute =
+  AuthedAmendmentIdSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthedAmendmentIdRoute,
+  } as any)
+const AuthedAmendmentIdProcessRoute =
+  AuthedAmendmentIdProcessRouteImport.update({
+    id: '/process',
+    path: '/process',
+    getParentRoute: () => AuthedAmendmentIdRoute,
+  } as any)
 const AuthedAmendmentIdNotificationsRoute =
-  AuthedAmendmentIdNotificationsImport.update({
+  AuthedAmendmentIdNotificationsRouteImport.update({
     id: '/notifications',
     path: '/notifications',
     getParentRoute: () => AuthedAmendmentIdRoute,
   } as any)
-
 const AuthedAmendmentIdDiscussionsRoute =
-  AuthedAmendmentIdDiscussionsImport.update({
+  AuthedAmendmentIdDiscussionsRouteImport.update({
     id: '/discussions',
     path: '/discussions',
     getParentRoute: () => AuthedAmendmentIdRoute,
   } as any)
-
 const AuthedAmendmentIdCollaboratorsRoute =
-  AuthedAmendmentIdCollaboratorsImport.update({
+  AuthedAmendmentIdCollaboratorsRouteImport.update({
     id: '/collaborators',
     path: '/collaborators',
     getParentRoute: () => AuthedAmendmentIdRoute,
   } as any)
-
 const AuthedAmendmentIdChangeRequestsRoute =
-  AuthedAmendmentIdChangeRequestsImport.update({
+  AuthedAmendmentIdChangeRequestsRouteImport.update({
     id: '/change-requests',
     path: '/change-requests',
     getParentRoute: () => AuthedAmendmentIdRoute,
   } as any)
-
-const AuthedGroupIdEditorIndexRoute = AuthedGroupIdEditorIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthedGroupIdEditorRoute,
-} as any)
-
-const AuthedGroupIdBlogIndexRoute = AuthedGroupIdBlogIndexImport.update({
+const AuthedGroupIdEditorIndexRoute =
+  AuthedGroupIdEditorIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthedGroupIdEditorRoute,
+  } as any)
+const AuthedGroupIdBlogIndexRoute = AuthedGroupIdBlogIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthedGroupIdBlogRoute,
 } as any)
-
-const AuthedEventIdAgendaIndexRoute = AuthedEventIdAgendaIndexImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthedEventIdAgendaRoute,
-} as any)
-
-const AuthedUserIdEditorDocIdRoute = AuthedUserIdEditorDocIdImport.update({
+const AuthedEventIdAgendaIndexRoute =
+  AuthedEventIdAgendaIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthedEventIdAgendaRoute,
+  } as any)
+const AuthedUserIdEditorDocIdRoute = AuthedUserIdEditorDocIdRouteImport.update({
   id: '/$docId',
   path: '/$docId',
   getParentRoute: () => AuthedUserIdEditorRoute,
 } as any)
-
-const AuthedUserIdBlogEntryIdRoute = AuthedUserIdBlogEntryIdImport.update({
+const AuthedUserIdBlogEntryIdRoute = AuthedUserIdBlogEntryIdRouteImport.update({
   id: '/$entryId',
   path: '/$entryId',
   getParentRoute: () => AuthedUserIdBlogRoute,
 } as any)
-
-const AuthedGroupIdEditorDocIdRoute = AuthedGroupIdEditorDocIdImport.update({
-  id: '/$docId',
-  path: '/$docId',
-  getParentRoute: () => AuthedGroupIdEditorRoute,
-} as any)
-
-const AuthedGroupIdBlogEntryIdRoute = AuthedGroupIdBlogEntryIdImport.update({
-  id: '/$entryId',
-  path: '/$entryId',
-  getParentRoute: () => AuthedGroupIdBlogRoute,
-} as any)
-
+const AuthedGroupIdEditorDocIdRoute =
+  AuthedGroupIdEditorDocIdRouteImport.update({
+    id: '/$docId',
+    path: '/$docId',
+    getParentRoute: () => AuthedGroupIdEditorRoute,
+  } as any)
+const AuthedGroupIdBlogEntryIdRoute =
+  AuthedGroupIdBlogEntryIdRouteImport.update({
+    id: '/$entryId',
+    path: '/$entryId',
+    getParentRoute: () => AuthedGroupIdBlogRoute,
+  } as any)
 const AuthedEventIdAgendaAgendaItemIdRoute =
-  AuthedEventIdAgendaAgendaItemIdImport.update({
+  AuthedEventIdAgendaAgendaItemIdRouteImport.update({
     id: '/$agendaItemId',
     path: '/$agendaItemId',
     getParentRoute: () => AuthedEventIdAgendaRoute,
   } as any)
-
 const AuthedUserIdBlogEntryIdIndexRoute =
-  AuthedUserIdBlogEntryIdIndexImport.update({
+  AuthedUserIdBlogEntryIdIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthedUserIdBlogEntryIdRoute,
   } as any)
-
 const AuthedGroupIdBlogEntryIdIndexRoute =
-  AuthedGroupIdBlogEntryIdIndexImport.update({
+  AuthedGroupIdBlogEntryIdIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthedGroupIdBlogEntryIdRoute,
   } as any)
-
 const AuthedUserIdBlogEntryIdNotificationsRoute =
-  AuthedUserIdBlogEntryIdNotificationsImport.update({
+  AuthedUserIdBlogEntryIdNotificationsRouteImport.update({
     id: '/notifications',
     path: '/notifications',
     getParentRoute: () => AuthedUserIdBlogEntryIdRoute,
   } as any)
-
 const AuthedUserIdBlogEntryIdEditorRoute =
-  AuthedUserIdBlogEntryIdEditorImport.update({
+  AuthedUserIdBlogEntryIdEditorRouteImport.update({
     id: '/editor',
     path: '/editor',
     getParentRoute: () => AuthedUserIdBlogEntryIdRoute,
   } as any)
-
 const AuthedUserIdBlogEntryIdEditRoute =
-  AuthedUserIdBlogEntryIdEditImport.update({
+  AuthedUserIdBlogEntryIdEditRouteImport.update({
     id: '/edit',
     path: '/edit',
     getParentRoute: () => AuthedUserIdBlogEntryIdRoute,
   } as any)
-
 const AuthedGroupIdBlogEntryIdNotificationsRoute =
-  AuthedGroupIdBlogEntryIdNotificationsImport.update({
+  AuthedGroupIdBlogEntryIdNotificationsRouteImport.update({
     id: '/notifications',
     path: '/notifications',
     getParentRoute: () => AuthedGroupIdBlogEntryIdRoute,
   } as any)
-
 const AuthedGroupIdBlogEntryIdEditorRoute =
-  AuthedGroupIdBlogEntryIdEditorImport.update({
+  AuthedGroupIdBlogEntryIdEditorRouteImport.update({
     id: '/editor',
     path: '/editor',
     getParentRoute: () => AuthedGroupIdBlogEntryIdRoute,
   } as any)
-
 const AuthedGroupIdBlogEntryIdEditRoute =
-  AuthedGroupIdBlogEntryIdEditImport.update({
+  AuthedGroupIdBlogEntryIdEditRouteImport.update({
     id: '/edit',
     path: '/edit',
     getParentRoute: () => AuthedGroupIdBlogEntryIdRoute,
   } as any)
 
-// Populate the FileRoutesByPath interface
+export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
+  '/$': typeof SplatRoute
+  '/auth': typeof AuthRouteWithChildren
+  '/docs': typeof DocsRouteWithChildren
+  '/features': typeof FeaturesRoute
+  '/imprint': typeof ImprintRoute
+  '/pricing': typeof PricingRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/solutions': typeof SolutionsRoute
+  '/support': typeof SupportRoute
+  '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/unauthorized': typeof UnauthorizedRoute
+  '/calendar': typeof AuthedCalendarRoute
+  '/home': typeof AuthedHomeRoute
+  '/messages': typeof AuthedMessagesRoute
+  '/notifications': typeof AuthedNotificationsRoute
+  '/search': typeof AuthedSearchRoute
+  '/todos': typeof AuthedTodosRouteWithChildren
+  '/api/mutate': typeof ApiMutateRoute
+  '/api/query': typeof ApiQueryRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/sign-in': typeof AuthSignInRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
+  '/auth/verify': typeof AuthVerifyRoute
+  '/docs/$topic': typeof DocsTopicRoute
+  '/auth/': typeof AuthIndexRoute
+  '/docs/': typeof DocsIndexRoute
+  '/amendment/$id': typeof AuthedAmendmentIdRouteWithChildren
+  '/blog/$id': typeof AuthedBlogIdRouteWithChildren
+  '/create/agenda-item': typeof AuthedCreateAgendaItemRoute
+  '/create/amendment': typeof AuthedCreateAmendmentRoute
+  '/create/blog-entry': typeof AuthedCreateBlogEntryRoute
+  '/create/election-candidate': typeof AuthedCreateElectionCandidateRoute
+  '/create/event': typeof AuthedCreateEventRoute
+  '/create/group': typeof AuthedCreateGroupRoute
+  '/create/payment': typeof AuthedCreatePaymentRoute
+  '/create/statement': typeof AuthedCreateStatementRoute
+  '/create/todo': typeof AuthedCreateTodoRoute
+  '/event/$id': typeof AuthedEventIdRouteWithChildren
+  '/group/$id': typeof AuthedGroupIdRouteWithChildren
+  '/statement/$id': typeof AuthedStatementIdRoute
+  '/todos/$id': typeof AuthedTodosIdRoute
+  '/user/$id': typeof AuthedUserIdRouteWithChildren
+  '/api/ai/catalog': typeof ApiAiCatalogRoute
+  '/api/ai/chat': typeof ApiAiChatRoute
+  '/api/ai/command': typeof ApiAiCommandRoute
+  '/api/ai/copilot': typeof ApiAiCopilotRoute
+  '/api/ai/credentials': typeof ApiAiCredentialsRoute
+  '/api/debug/group-general-assemblies': typeof ApiDebugGroupGeneralAssembliesRoute
+  '/api/eurostat/catalogue': typeof ApiEurostatCatalogueRoute
+  '/api/eurostat/details': typeof ApiEurostatDetailsRoute
+  '/api/eurostat/import': typeof ApiEurostatImportRoute
+  '/api/eurostat/import-step': typeof ApiEurostatImportStepRoute
+  '/api/eurostat/projection': typeof ApiEurostatProjectionRoute
+  '/api/govdata/catalogue': typeof ApiGovdataCatalogueRoute
+  '/api/govdata/import': typeof ApiGovdataImportRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/create/': typeof AuthedCreateIndexRoute
+  '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
+  '/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
+  '/amendment/$id/discussions': typeof AuthedAmendmentIdDiscussionsRoute
+  '/amendment/$id/notifications': typeof AuthedAmendmentIdNotificationsRoute
+  '/amendment/$id/process': typeof AuthedAmendmentIdProcessRoute
+  '/amendment/$id/settings': typeof AuthedAmendmentIdSettingsRoute
+  '/amendment/$id/streetscape': typeof AuthedAmendmentIdStreetscapeRoute
+  '/amendment/$id/text': typeof AuthedAmendmentIdTextRoute
+  '/blog/$id/edit': typeof AuthedBlogIdEditRoute
+  '/blog/$id/notifications': typeof AuthedBlogIdNotificationsRoute
+  '/event/$id/agenda': typeof AuthedEventIdAgendaRouteWithChildren
+  '/event/$id/network': typeof AuthedEventIdNetworkRoute
+  '/event/$id/notifications': typeof AuthedEventIdNotificationsRoute
+  '/event/$id/participants': typeof AuthedEventIdParticipantsRoute
+  '/event/$id/roles': typeof AuthedEventIdRolesRoute
+  '/event/$id/settings': typeof AuthedEventIdSettingsRoute
+  '/event/$id/stream': typeof AuthedEventIdStreamRoute
+  '/group/$id/amendments': typeof AuthedGroupIdAmendmentsRoute
+  '/group/$id/blog': typeof AuthedGroupIdBlogRouteWithChildren
+  '/group/$id/blogs-and-statements': typeof AuthedGroupIdBlogsAndStatementsRoute
+  '/group/$id/editor': typeof AuthedGroupIdEditorRouteWithChildren
+  '/group/$id/events': typeof AuthedGroupIdEventsRoute
+  '/group/$id/memberships': typeof AuthedGroupIdMembershipsRoute
+  '/group/$id/network': typeof AuthedGroupIdNetworkRoute
+  '/group/$id/notifications': typeof AuthedGroupIdNotificationsRoute
+  '/group/$id/operation': typeof AuthedGroupIdOperationRoute
+  '/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
+  '/group/$id/settings': typeof AuthedGroupIdSettingsRoute
+  '/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
+  '/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
+  '/user/$id/meet': typeof AuthedUserIdMeetRoute
+  '/user/$id/memberships': typeof AuthedUserIdMembershipsRoute
+  '/user/$id/network': typeof AuthedUserIdNetworkRoute
+  '/user/$id/notification-settings': typeof AuthedUserIdNotificationSettingsRoute
+  '/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
+  '/user/$id/settings': typeof AuthedUserIdSettingsRoute
+  '/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
+  '/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
+  '/blog/$id/': typeof AuthedBlogIdIndexRoute
+  '/event/$id/': typeof AuthedEventIdIndexRoute
+  '/group/$id/': typeof AuthedGroupIdIndexRoute
+  '/user/$id/': typeof AuthedUserIdIndexRoute
+  '/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
+  '/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRouteWithChildren
+  '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
+  '/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRouteWithChildren
+  '/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
+  '/event/$id/agenda/': typeof AuthedEventIdAgendaIndexRoute
+  '/group/$id/blog/': typeof AuthedGroupIdBlogIndexRoute
+  '/group/$id/editor/': typeof AuthedGroupIdEditorIndexRoute
+  '/group/$id/blog/$entryId/edit': typeof AuthedGroupIdBlogEntryIdEditRoute
+  '/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
+  '/group/$id/blog/$entryId/notifications': typeof AuthedGroupIdBlogEntryIdNotificationsRoute
+  '/user/$id/blog/$entryId/edit': typeof AuthedUserIdBlogEntryIdEditRoute
+  '/user/$id/blog/$entryId/editor': typeof AuthedUserIdBlogEntryIdEditorRoute
+  '/user/$id/blog/$entryId/notifications': typeof AuthedUserIdBlogEntryIdNotificationsRoute
+  '/group/$id/blog/$entryId/': typeof AuthedGroupIdBlogEntryIdIndexRoute
+  '/user/$id/blog/$entryId/': typeof AuthedUserIdBlogEntryIdIndexRoute
+}
+export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/$': typeof SplatRoute
+  '/features': typeof FeaturesRoute
+  '/imprint': typeof ImprintRoute
+  '/pricing': typeof PricingRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/solutions': typeof SolutionsRoute
+  '/support': typeof SupportRoute
+  '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/unauthorized': typeof UnauthorizedRoute
+  '/calendar': typeof AuthedCalendarRoute
+  '/home': typeof AuthedHomeRoute
+  '/messages': typeof AuthedMessagesRoute
+  '/notifications': typeof AuthedNotificationsRoute
+  '/search': typeof AuthedSearchRoute
+  '/todos': typeof AuthedTodosRouteWithChildren
+  '/api/mutate': typeof ApiMutateRoute
+  '/api/query': typeof ApiQueryRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/sign-in': typeof AuthSignInRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
+  '/auth/verify': typeof AuthVerifyRoute
+  '/docs/$topic': typeof DocsTopicRoute
+  '/auth': typeof AuthIndexRoute
+  '/docs': typeof DocsIndexRoute
+  '/create/agenda-item': typeof AuthedCreateAgendaItemRoute
+  '/create/amendment': typeof AuthedCreateAmendmentRoute
+  '/create/blog-entry': typeof AuthedCreateBlogEntryRoute
+  '/create/election-candidate': typeof AuthedCreateElectionCandidateRoute
+  '/create/event': typeof AuthedCreateEventRoute
+  '/create/group': typeof AuthedCreateGroupRoute
+  '/create/payment': typeof AuthedCreatePaymentRoute
+  '/create/statement': typeof AuthedCreateStatementRoute
+  '/create/todo': typeof AuthedCreateTodoRoute
+  '/statement/$id': typeof AuthedStatementIdRoute
+  '/todos/$id': typeof AuthedTodosIdRoute
+  '/api/ai/catalog': typeof ApiAiCatalogRoute
+  '/api/ai/chat': typeof ApiAiChatRoute
+  '/api/ai/command': typeof ApiAiCommandRoute
+  '/api/ai/copilot': typeof ApiAiCopilotRoute
+  '/api/ai/credentials': typeof ApiAiCredentialsRoute
+  '/api/debug/group-general-assemblies': typeof ApiDebugGroupGeneralAssembliesRoute
+  '/api/eurostat/catalogue': typeof ApiEurostatCatalogueRoute
+  '/api/eurostat/details': typeof ApiEurostatDetailsRoute
+  '/api/eurostat/import': typeof ApiEurostatImportRoute
+  '/api/eurostat/import-step': typeof ApiEurostatImportStepRoute
+  '/api/eurostat/projection': typeof ApiEurostatProjectionRoute
+  '/api/govdata/catalogue': typeof ApiGovdataCatalogueRoute
+  '/api/govdata/import': typeof ApiGovdataImportRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/create': typeof AuthedCreateIndexRoute
+  '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
+  '/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
+  '/amendment/$id/discussions': typeof AuthedAmendmentIdDiscussionsRoute
+  '/amendment/$id/notifications': typeof AuthedAmendmentIdNotificationsRoute
+  '/amendment/$id/process': typeof AuthedAmendmentIdProcessRoute
+  '/amendment/$id/settings': typeof AuthedAmendmentIdSettingsRoute
+  '/amendment/$id/streetscape': typeof AuthedAmendmentIdStreetscapeRoute
+  '/amendment/$id/text': typeof AuthedAmendmentIdTextRoute
+  '/blog/$id/edit': typeof AuthedBlogIdEditRoute
+  '/blog/$id/notifications': typeof AuthedBlogIdNotificationsRoute
+  '/event/$id/network': typeof AuthedEventIdNetworkRoute
+  '/event/$id/notifications': typeof AuthedEventIdNotificationsRoute
+  '/event/$id/participants': typeof AuthedEventIdParticipantsRoute
+  '/event/$id/roles': typeof AuthedEventIdRolesRoute
+  '/event/$id/settings': typeof AuthedEventIdSettingsRoute
+  '/event/$id/stream': typeof AuthedEventIdStreamRoute
+  '/group/$id/amendments': typeof AuthedGroupIdAmendmentsRoute
+  '/group/$id/blogs-and-statements': typeof AuthedGroupIdBlogsAndStatementsRoute
+  '/group/$id/events': typeof AuthedGroupIdEventsRoute
+  '/group/$id/memberships': typeof AuthedGroupIdMembershipsRoute
+  '/group/$id/network': typeof AuthedGroupIdNetworkRoute
+  '/group/$id/notifications': typeof AuthedGroupIdNotificationsRoute
+  '/group/$id/operation': typeof AuthedGroupIdOperationRoute
+  '/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
+  '/group/$id/settings': typeof AuthedGroupIdSettingsRoute
+  '/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
+  '/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
+  '/user/$id/meet': typeof AuthedUserIdMeetRoute
+  '/user/$id/memberships': typeof AuthedUserIdMembershipsRoute
+  '/user/$id/network': typeof AuthedUserIdNetworkRoute
+  '/user/$id/notification-settings': typeof AuthedUserIdNotificationSettingsRoute
+  '/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
+  '/user/$id/settings': typeof AuthedUserIdSettingsRoute
+  '/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
+  '/amendment/$id': typeof AuthedAmendmentIdIndexRoute
+  '/blog/$id': typeof AuthedBlogIdIndexRoute
+  '/event/$id': typeof AuthedEventIdIndexRoute
+  '/group/$id': typeof AuthedGroupIdIndexRoute
+  '/user/$id': typeof AuthedUserIdIndexRoute
+  '/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
+  '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
+  '/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
+  '/event/$id/agenda': typeof AuthedEventIdAgendaIndexRoute
+  '/group/$id/blog': typeof AuthedGroupIdBlogIndexRoute
+  '/group/$id/editor': typeof AuthedGroupIdEditorIndexRoute
+  '/group/$id/blog/$entryId/edit': typeof AuthedGroupIdBlogEntryIdEditRoute
+  '/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
+  '/group/$id/blog/$entryId/notifications': typeof AuthedGroupIdBlogEntryIdNotificationsRoute
+  '/user/$id/blog/$entryId/edit': typeof AuthedUserIdBlogEntryIdEditRoute
+  '/user/$id/blog/$entryId/editor': typeof AuthedUserIdBlogEntryIdEditorRoute
+  '/user/$id/blog/$entryId/notifications': typeof AuthedUserIdBlogEntryIdNotificationsRoute
+  '/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdIndexRoute
+  '/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdIndexRoute
+}
+export interface FileRoutesById {
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/$': typeof SplatRoute
+  '/_authed': typeof AuthedRouteWithChildren
+  '/auth': typeof AuthRouteWithChildren
+  '/docs': typeof DocsRouteWithChildren
+  '/features': typeof FeaturesRoute
+  '/imprint': typeof ImprintRoute
+  '/pricing': typeof PricingRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/solutions': typeof SolutionsRoute
+  '/support': typeof SupportRoute
+  '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/unauthorized': typeof UnauthorizedRoute
+  '/_authed/calendar': typeof AuthedCalendarRoute
+  '/_authed/home': typeof AuthedHomeRoute
+  '/_authed/messages': typeof AuthedMessagesRoute
+  '/_authed/notifications': typeof AuthedNotificationsRoute
+  '/_authed/search': typeof AuthedSearchRoute
+  '/_authed/todos': typeof AuthedTodosRouteWithChildren
+  '/api/mutate': typeof ApiMutateRoute
+  '/api/query': typeof ApiQueryRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/sign-in': typeof AuthSignInRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
+  '/auth/verify': typeof AuthVerifyRoute
+  '/docs/$topic': typeof DocsTopicRoute
+  '/auth/': typeof AuthIndexRoute
+  '/docs/': typeof DocsIndexRoute
+  '/_authed/amendment/$id': typeof AuthedAmendmentIdRouteWithChildren
+  '/_authed/blog/$id': typeof AuthedBlogIdRouteWithChildren
+  '/_authed/create/agenda-item': typeof AuthedCreateAgendaItemRoute
+  '/_authed/create/amendment': typeof AuthedCreateAmendmentRoute
+  '/_authed/create/blog-entry': typeof AuthedCreateBlogEntryRoute
+  '/_authed/create/election-candidate': typeof AuthedCreateElectionCandidateRoute
+  '/_authed/create/event': typeof AuthedCreateEventRoute
+  '/_authed/create/group': typeof AuthedCreateGroupRoute
+  '/_authed/create/payment': typeof AuthedCreatePaymentRoute
+  '/_authed/create/statement': typeof AuthedCreateStatementRoute
+  '/_authed/create/todo': typeof AuthedCreateTodoRoute
+  '/_authed/event/$id': typeof AuthedEventIdRouteWithChildren
+  '/_authed/group/$id': typeof AuthedGroupIdRouteWithChildren
+  '/_authed/statement/$id': typeof AuthedStatementIdRoute
+  '/_authed/todos/$id': typeof AuthedTodosIdRoute
+  '/_authed/user/$id': typeof AuthedUserIdRouteWithChildren
+  '/api/ai/catalog': typeof ApiAiCatalogRoute
+  '/api/ai/chat': typeof ApiAiChatRoute
+  '/api/ai/command': typeof ApiAiCommandRoute
+  '/api/ai/copilot': typeof ApiAiCopilotRoute
+  '/api/ai/credentials': typeof ApiAiCredentialsRoute
+  '/api/debug/group-general-assemblies': typeof ApiDebugGroupGeneralAssembliesRoute
+  '/api/eurostat/catalogue': typeof ApiEurostatCatalogueRoute
+  '/api/eurostat/details': typeof ApiEurostatDetailsRoute
+  '/api/eurostat/import': typeof ApiEurostatImportRoute
+  '/api/eurostat/import-step': typeof ApiEurostatImportStepRoute
+  '/api/eurostat/projection': typeof ApiEurostatProjectionRoute
+  '/api/govdata/catalogue': typeof ApiGovdataCatalogueRoute
+  '/api/govdata/import': typeof ApiGovdataImportRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/_authed/create/': typeof AuthedCreateIndexRoute
+  '/_authed/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
+  '/_authed/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
+  '/_authed/amendment/$id/discussions': typeof AuthedAmendmentIdDiscussionsRoute
+  '/_authed/amendment/$id/notifications': typeof AuthedAmendmentIdNotificationsRoute
+  '/_authed/amendment/$id/process': typeof AuthedAmendmentIdProcessRoute
+  '/_authed/amendment/$id/settings': typeof AuthedAmendmentIdSettingsRoute
+  '/_authed/amendment/$id/streetscape': typeof AuthedAmendmentIdStreetscapeRoute
+  '/_authed/amendment/$id/text': typeof AuthedAmendmentIdTextRoute
+  '/_authed/blog/$id/edit': typeof AuthedBlogIdEditRoute
+  '/_authed/blog/$id/notifications': typeof AuthedBlogIdNotificationsRoute
+  '/_authed/event/$id/agenda': typeof AuthedEventIdAgendaRouteWithChildren
+  '/_authed/event/$id/network': typeof AuthedEventIdNetworkRoute
+  '/_authed/event/$id/notifications': typeof AuthedEventIdNotificationsRoute
+  '/_authed/event/$id/participants': typeof AuthedEventIdParticipantsRoute
+  '/_authed/event/$id/roles': typeof AuthedEventIdRolesRoute
+  '/_authed/event/$id/settings': typeof AuthedEventIdSettingsRoute
+  '/_authed/event/$id/stream': typeof AuthedEventIdStreamRoute
+  '/_authed/group/$id/amendments': typeof AuthedGroupIdAmendmentsRoute
+  '/_authed/group/$id/blog': typeof AuthedGroupIdBlogRouteWithChildren
+  '/_authed/group/$id/blogs-and-statements': typeof AuthedGroupIdBlogsAndStatementsRoute
+  '/_authed/group/$id/editor': typeof AuthedGroupIdEditorRouteWithChildren
+  '/_authed/group/$id/events': typeof AuthedGroupIdEventsRoute
+  '/_authed/group/$id/memberships': typeof AuthedGroupIdMembershipsRoute
+  '/_authed/group/$id/network': typeof AuthedGroupIdNetworkRoute
+  '/_authed/group/$id/notifications': typeof AuthedGroupIdNotificationsRoute
+  '/_authed/group/$id/operation': typeof AuthedGroupIdOperationRoute
+  '/_authed/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
+  '/_authed/group/$id/settings': typeof AuthedGroupIdSettingsRoute
+  '/_authed/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
+  '/_authed/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
+  '/_authed/user/$id/meet': typeof AuthedUserIdMeetRoute
+  '/_authed/user/$id/memberships': typeof AuthedUserIdMembershipsRoute
+  '/_authed/user/$id/network': typeof AuthedUserIdNetworkRoute
+  '/_authed/user/$id/notification-settings': typeof AuthedUserIdNotificationSettingsRoute
+  '/_authed/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
+  '/_authed/user/$id/settings': typeof AuthedUserIdSettingsRoute
+  '/_authed/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
+  '/_authed/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
+  '/_authed/blog/$id/': typeof AuthedBlogIdIndexRoute
+  '/_authed/event/$id/': typeof AuthedEventIdIndexRoute
+  '/_authed/group/$id/': typeof AuthedGroupIdIndexRoute
+  '/_authed/user/$id/': typeof AuthedUserIdIndexRoute
+  '/_authed/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
+  '/_authed/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRouteWithChildren
+  '/_authed/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
+  '/_authed/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRouteWithChildren
+  '/_authed/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
+  '/_authed/event/$id/agenda/': typeof AuthedEventIdAgendaIndexRoute
+  '/_authed/group/$id/blog/': typeof AuthedGroupIdBlogIndexRoute
+  '/_authed/group/$id/editor/': typeof AuthedGroupIdEditorIndexRoute
+  '/_authed/group/$id/blog/$entryId/edit': typeof AuthedGroupIdBlogEntryIdEditRoute
+  '/_authed/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
+  '/_authed/group/$id/blog/$entryId/notifications': typeof AuthedGroupIdBlogEntryIdNotificationsRoute
+  '/_authed/user/$id/blog/$entryId/edit': typeof AuthedUserIdBlogEntryIdEditRoute
+  '/_authed/user/$id/blog/$entryId/editor': typeof AuthedUserIdBlogEntryIdEditorRoute
+  '/_authed/user/$id/blog/$entryId/notifications': typeof AuthedUserIdBlogEntryIdNotificationsRoute
+  '/_authed/group/$id/blog/$entryId/': typeof AuthedGroupIdBlogEntryIdIndexRoute
+  '/_authed/user/$id/blog/$entryId/': typeof AuthedUserIdBlogEntryIdIndexRoute
+}
+export interface FileRouteTypes {
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/$'
+    | '/auth'
+    | '/docs'
+    | '/features'
+    | '/imprint'
+    | '/pricing'
+    | '/privacy-policy'
+    | '/solutions'
+    | '/support'
+    | '/terms-and-conditions'
+    | '/unauthorized'
+    | '/calendar'
+    | '/home'
+    | '/messages'
+    | '/notifications'
+    | '/search'
+    | '/todos'
+    | '/api/mutate'
+    | '/api/query'
+    | '/auth/callback'
+    | '/auth/forgot-password'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
+    | '/auth/verify'
+    | '/docs/$topic'
+    | '/auth/'
+    | '/docs/'
+    | '/amendment/$id'
+    | '/blog/$id'
+    | '/create/agenda-item'
+    | '/create/amendment'
+    | '/create/blog-entry'
+    | '/create/election-candidate'
+    | '/create/event'
+    | '/create/group'
+    | '/create/payment'
+    | '/create/statement'
+    | '/create/todo'
+    | '/event/$id'
+    | '/group/$id'
+    | '/statement/$id'
+    | '/todos/$id'
+    | '/user/$id'
+    | '/api/ai/catalog'
+    | '/api/ai/chat'
+    | '/api/ai/command'
+    | '/api/ai/copilot'
+    | '/api/ai/credentials'
+    | '/api/debug/group-general-assemblies'
+    | '/api/eurostat/catalogue'
+    | '/api/eurostat/details'
+    | '/api/eurostat/import'
+    | '/api/eurostat/import-step'
+    | '/api/eurostat/projection'
+    | '/api/govdata/catalogue'
+    | '/api/govdata/import'
+    | '/api/stripe/webhook'
+    | '/create/'
+    | '/amendment/$id/change-requests'
+    | '/amendment/$id/collaborators'
+    | '/amendment/$id/discussions'
+    | '/amendment/$id/notifications'
+    | '/amendment/$id/process'
+    | '/amendment/$id/settings'
+    | '/amendment/$id/streetscape'
+    | '/amendment/$id/text'
+    | '/blog/$id/edit'
+    | '/blog/$id/notifications'
+    | '/event/$id/agenda'
+    | '/event/$id/network'
+    | '/event/$id/notifications'
+    | '/event/$id/participants'
+    | '/event/$id/roles'
+    | '/event/$id/settings'
+    | '/event/$id/stream'
+    | '/group/$id/amendments'
+    | '/group/$id/blog'
+    | '/group/$id/blogs-and-statements'
+    | '/group/$id/editor'
+    | '/group/$id/events'
+    | '/group/$id/memberships'
+    | '/group/$id/network'
+    | '/group/$id/notifications'
+    | '/group/$id/operation'
+    | '/group/$id/relationships'
+    | '/group/$id/settings'
+    | '/user/$id/blog'
+    | '/user/$id/editor'
+    | '/user/$id/meet'
+    | '/user/$id/memberships'
+    | '/user/$id/network'
+    | '/user/$id/notification-settings'
+    | '/user/$id/notifications'
+    | '/user/$id/settings'
+    | '/user/$id/subscriptions'
+    | '/amendment/$id/'
+    | '/blog/$id/'
+    | '/event/$id/'
+    | '/group/$id/'
+    | '/user/$id/'
+    | '/event/$id/agenda/$agendaItemId'
+    | '/group/$id/blog/$entryId'
+    | '/group/$id/editor/$docId'
+    | '/user/$id/blog/$entryId'
+    | '/user/$id/editor/$docId'
+    | '/event/$id/agenda/'
+    | '/group/$id/blog/'
+    | '/group/$id/editor/'
+    | '/group/$id/blog/$entryId/edit'
+    | '/group/$id/blog/$entryId/editor'
+    | '/group/$id/blog/$entryId/notifications'
+    | '/user/$id/blog/$entryId/edit'
+    | '/user/$id/blog/$entryId/editor'
+    | '/user/$id/blog/$entryId/notifications'
+    | '/group/$id/blog/$entryId/'
+    | '/user/$id/blog/$entryId/'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/$'
+    | '/features'
+    | '/imprint'
+    | '/pricing'
+    | '/privacy-policy'
+    | '/solutions'
+    | '/support'
+    | '/terms-and-conditions'
+    | '/unauthorized'
+    | '/calendar'
+    | '/home'
+    | '/messages'
+    | '/notifications'
+    | '/search'
+    | '/todos'
+    | '/api/mutate'
+    | '/api/query'
+    | '/auth/callback'
+    | '/auth/forgot-password'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
+    | '/auth/verify'
+    | '/docs/$topic'
+    | '/auth'
+    | '/docs'
+    | '/create/agenda-item'
+    | '/create/amendment'
+    | '/create/blog-entry'
+    | '/create/election-candidate'
+    | '/create/event'
+    | '/create/group'
+    | '/create/payment'
+    | '/create/statement'
+    | '/create/todo'
+    | '/statement/$id'
+    | '/todos/$id'
+    | '/api/ai/catalog'
+    | '/api/ai/chat'
+    | '/api/ai/command'
+    | '/api/ai/copilot'
+    | '/api/ai/credentials'
+    | '/api/debug/group-general-assemblies'
+    | '/api/eurostat/catalogue'
+    | '/api/eurostat/details'
+    | '/api/eurostat/import'
+    | '/api/eurostat/import-step'
+    | '/api/eurostat/projection'
+    | '/api/govdata/catalogue'
+    | '/api/govdata/import'
+    | '/api/stripe/webhook'
+    | '/create'
+    | '/amendment/$id/change-requests'
+    | '/amendment/$id/collaborators'
+    | '/amendment/$id/discussions'
+    | '/amendment/$id/notifications'
+    | '/amendment/$id/process'
+    | '/amendment/$id/settings'
+    | '/amendment/$id/streetscape'
+    | '/amendment/$id/text'
+    | '/blog/$id/edit'
+    | '/blog/$id/notifications'
+    | '/event/$id/network'
+    | '/event/$id/notifications'
+    | '/event/$id/participants'
+    | '/event/$id/roles'
+    | '/event/$id/settings'
+    | '/event/$id/stream'
+    | '/group/$id/amendments'
+    | '/group/$id/blogs-and-statements'
+    | '/group/$id/events'
+    | '/group/$id/memberships'
+    | '/group/$id/network'
+    | '/group/$id/notifications'
+    | '/group/$id/operation'
+    | '/group/$id/relationships'
+    | '/group/$id/settings'
+    | '/user/$id/blog'
+    | '/user/$id/editor'
+    | '/user/$id/meet'
+    | '/user/$id/memberships'
+    | '/user/$id/network'
+    | '/user/$id/notification-settings'
+    | '/user/$id/notifications'
+    | '/user/$id/settings'
+    | '/user/$id/subscriptions'
+    | '/amendment/$id'
+    | '/blog/$id'
+    | '/event/$id'
+    | '/group/$id'
+    | '/user/$id'
+    | '/event/$id/agenda/$agendaItemId'
+    | '/group/$id/editor/$docId'
+    | '/user/$id/editor/$docId'
+    | '/event/$id/agenda'
+    | '/group/$id/blog'
+    | '/group/$id/editor'
+    | '/group/$id/blog/$entryId/edit'
+    | '/group/$id/blog/$entryId/editor'
+    | '/group/$id/blog/$entryId/notifications'
+    | '/user/$id/blog/$entryId/edit'
+    | '/user/$id/blog/$entryId/editor'
+    | '/user/$id/blog/$entryId/notifications'
+    | '/group/$id/blog/$entryId'
+    | '/user/$id/blog/$entryId'
+  id:
+    | '__root__'
+    | '/'
+    | '/$'
+    | '/_authed'
+    | '/auth'
+    | '/docs'
+    | '/features'
+    | '/imprint'
+    | '/pricing'
+    | '/privacy-policy'
+    | '/solutions'
+    | '/support'
+    | '/terms-and-conditions'
+    | '/unauthorized'
+    | '/_authed/calendar'
+    | '/_authed/home'
+    | '/_authed/messages'
+    | '/_authed/notifications'
+    | '/_authed/search'
+    | '/_authed/todos'
+    | '/api/mutate'
+    | '/api/query'
+    | '/auth/callback'
+    | '/auth/forgot-password'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
+    | '/auth/verify'
+    | '/docs/$topic'
+    | '/auth/'
+    | '/docs/'
+    | '/_authed/amendment/$id'
+    | '/_authed/blog/$id'
+    | '/_authed/create/agenda-item'
+    | '/_authed/create/amendment'
+    | '/_authed/create/blog-entry'
+    | '/_authed/create/election-candidate'
+    | '/_authed/create/event'
+    | '/_authed/create/group'
+    | '/_authed/create/payment'
+    | '/_authed/create/statement'
+    | '/_authed/create/todo'
+    | '/_authed/event/$id'
+    | '/_authed/group/$id'
+    | '/_authed/statement/$id'
+    | '/_authed/todos/$id'
+    | '/_authed/user/$id'
+    | '/api/ai/catalog'
+    | '/api/ai/chat'
+    | '/api/ai/command'
+    | '/api/ai/copilot'
+    | '/api/ai/credentials'
+    | '/api/debug/group-general-assemblies'
+    | '/api/eurostat/catalogue'
+    | '/api/eurostat/details'
+    | '/api/eurostat/import'
+    | '/api/eurostat/import-step'
+    | '/api/eurostat/projection'
+    | '/api/govdata/catalogue'
+    | '/api/govdata/import'
+    | '/api/stripe/webhook'
+    | '/_authed/create/'
+    | '/_authed/amendment/$id/change-requests'
+    | '/_authed/amendment/$id/collaborators'
+    | '/_authed/amendment/$id/discussions'
+    | '/_authed/amendment/$id/notifications'
+    | '/_authed/amendment/$id/process'
+    | '/_authed/amendment/$id/settings'
+    | '/_authed/amendment/$id/streetscape'
+    | '/_authed/amendment/$id/text'
+    | '/_authed/blog/$id/edit'
+    | '/_authed/blog/$id/notifications'
+    | '/_authed/event/$id/agenda'
+    | '/_authed/event/$id/network'
+    | '/_authed/event/$id/notifications'
+    | '/_authed/event/$id/participants'
+    | '/_authed/event/$id/roles'
+    | '/_authed/event/$id/settings'
+    | '/_authed/event/$id/stream'
+    | '/_authed/group/$id/amendments'
+    | '/_authed/group/$id/blog'
+    | '/_authed/group/$id/blogs-and-statements'
+    | '/_authed/group/$id/editor'
+    | '/_authed/group/$id/events'
+    | '/_authed/group/$id/memberships'
+    | '/_authed/group/$id/network'
+    | '/_authed/group/$id/notifications'
+    | '/_authed/group/$id/operation'
+    | '/_authed/group/$id/relationships'
+    | '/_authed/group/$id/settings'
+    | '/_authed/user/$id/blog'
+    | '/_authed/user/$id/editor'
+    | '/_authed/user/$id/meet'
+    | '/_authed/user/$id/memberships'
+    | '/_authed/user/$id/network'
+    | '/_authed/user/$id/notification-settings'
+    | '/_authed/user/$id/notifications'
+    | '/_authed/user/$id/settings'
+    | '/_authed/user/$id/subscriptions'
+    | '/_authed/amendment/$id/'
+    | '/_authed/blog/$id/'
+    | '/_authed/event/$id/'
+    | '/_authed/group/$id/'
+    | '/_authed/user/$id/'
+    | '/_authed/event/$id/agenda/$agendaItemId'
+    | '/_authed/group/$id/blog/$entryId'
+    | '/_authed/group/$id/editor/$docId'
+    | '/_authed/user/$id/blog/$entryId'
+    | '/_authed/user/$id/editor/$docId'
+    | '/_authed/event/$id/agenda/'
+    | '/_authed/group/$id/blog/'
+    | '/_authed/group/$id/editor/'
+    | '/_authed/group/$id/blog/$entryId/edit'
+    | '/_authed/group/$id/blog/$entryId/editor'
+    | '/_authed/group/$id/blog/$entryId/notifications'
+    | '/_authed/user/$id/blog/$entryId/edit'
+    | '/_authed/user/$id/blog/$entryId/editor'
+    | '/_authed/user/$id/blog/$entryId/notifications'
+    | '/_authed/group/$id/blog/$entryId/'
+    | '/_authed/user/$id/blog/$entryId/'
+  fileRoutesById: FileRoutesById
+}
+export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
+  SplatRoute: typeof SplatRoute
+  AuthedRoute: typeof AuthedRouteWithChildren
+  AuthRoute: typeof AuthRouteWithChildren
+  DocsRoute: typeof DocsRouteWithChildren
+  FeaturesRoute: typeof FeaturesRoute
+  ImprintRoute: typeof ImprintRoute
+  PricingRoute: typeof PricingRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  SolutionsRoute: typeof SolutionsRoute
+  SupportRoute: typeof SupportRoute
+  TermsAndConditionsRoute: typeof TermsAndConditionsRoute
+  UnauthorizedRoute: typeof UnauthorizedRoute
+  ApiMutateRoute: typeof ApiMutateRoute
+  ApiQueryRoute: typeof ApiQueryRoute
+  ApiAiCatalogRoute: typeof ApiAiCatalogRoute
+  ApiAiChatRoute: typeof ApiAiChatRoute
+  ApiAiCommandRoute: typeof ApiAiCommandRoute
+  ApiAiCopilotRoute: typeof ApiAiCopilotRoute
+  ApiAiCredentialsRoute: typeof ApiAiCredentialsRoute
+  ApiDebugGroupGeneralAssembliesRoute: typeof ApiDebugGroupGeneralAssembliesRoute
+  ApiEurostatCatalogueRoute: typeof ApiEurostatCatalogueRoute
+  ApiEurostatDetailsRoute: typeof ApiEurostatDetailsRoute
+  ApiEurostatImportRoute: typeof ApiEurostatImportRoute
+  ApiEurostatImportStepRoute: typeof ApiEurostatImportStepRoute
+  ApiEurostatProjectionRoute: typeof ApiEurostatProjectionRoute
+  ApiGovdataCatalogueRoute: typeof ApiGovdataCatalogueRoute
+  ApiGovdataImportRoute: typeof ApiGovdataImportRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+}
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/$': {
-      id: '/$'
-      path: '/$'
-      fullPath: '/$'
-      preLoaderRoute: typeof SplatImport
-      parentRoute: typeof rootRoute
-    }
-    '/_authed': {
-      id: '/_authed'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthedImport
-      parentRoute: typeof rootRoute
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthImport
-      parentRoute: typeof rootRoute
-    }
-    '/docs': {
-      id: '/docs'
-      path: '/docs'
-      fullPath: '/docs'
-      preLoaderRoute: typeof DocsImport
-      parentRoute: typeof rootRoute
-    }
-    '/features': {
-      id: '/features'
-      path: '/features'
-      fullPath: '/features'
-      preLoaderRoute: typeof FeaturesImport
-      parentRoute: typeof rootRoute
-    }
-    '/imprint': {
-      id: '/imprint'
-      path: '/imprint'
-      fullPath: '/imprint'
-      preLoaderRoute: typeof ImprintImport
-      parentRoute: typeof rootRoute
-    }
-    '/pricing': {
-      id: '/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof PricingImport
-      parentRoute: typeof rootRoute
-    }
-    '/privacy-policy': {
-      id: '/privacy-policy'
-      path: '/privacy-policy'
-      fullPath: '/privacy-policy'
-      preLoaderRoute: typeof PrivacyPolicyImport
-      parentRoute: typeof rootRoute
-    }
-    '/solutions': {
-      id: '/solutions'
-      path: '/solutions'
-      fullPath: '/solutions'
-      preLoaderRoute: typeof SolutionsImport
-      parentRoute: typeof rootRoute
-    }
-    '/support': {
-      id: '/support'
-      path: '/support'
-      fullPath: '/support'
-      preLoaderRoute: typeof SupportImport
-      parentRoute: typeof rootRoute
+    '/unauthorized': {
+      id: '/unauthorized'
+      path: '/unauthorized'
+      fullPath: '/unauthorized'
+      preLoaderRoute: typeof UnauthorizedRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/terms-and-conditions': {
       id: '/terms-and-conditions'
       path: '/terms-and-conditions'
       fullPath: '/terms-and-conditions'
-      preLoaderRoute: typeof TermsAndConditionsImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof TermsAndConditionsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/unauthorized': {
-      id: '/unauthorized'
-      path: '/unauthorized'
-      fullPath: '/unauthorized'
-      preLoaderRoute: typeof UnauthorizedImport
-      parentRoute: typeof rootRoute
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authed/calendar': {
-      id: '/_authed/calendar'
-      path: '/calendar'
-      fullPath: '/calendar'
-      preLoaderRoute: typeof AuthedCalendarImport
-      parentRoute: typeof AuthedImport
+    '/solutions': {
+      id: '/solutions'
+      path: '/solutions'
+      fullPath: '/solutions'
+      preLoaderRoute: typeof SolutionsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authed/home': {
-      id: '/_authed/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof AuthedHomeImport
-      parentRoute: typeof AuthedImport
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authed/messages': {
-      id: '/_authed/messages'
-      path: '/messages'
-      fullPath: '/messages'
-      preLoaderRoute: typeof AuthedMessagesImport
-      parentRoute: typeof AuthedImport
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authed/notifications': {
-      id: '/_authed/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof AuthedNotificationsImport
-      parentRoute: typeof AuthedImport
+    '/imprint': {
+      id: '/imprint'
+      path: '/imprint'
+      fullPath: '/imprint'
+      preLoaderRoute: typeof ImprintRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authed/search': {
-      id: '/_authed/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof AuthedSearchImport
-      parentRoute: typeof AuthedImport
+    '/features': {
+      id: '/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof FeaturesRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authed/todos': {
-      id: '/_authed/todos'
-      path: '/todos'
-      fullPath: '/todos'
-      preLoaderRoute: typeof AuthedTodosImport
-      parentRoute: typeof AuthedImport
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackImport
-      parentRoute: typeof AuthImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/auth/forgot-password': {
-      id: '/auth/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/auth/forgot-password'
-      preLoaderRoute: typeof AuthForgotPasswordImport
-      parentRoute: typeof AuthImport
+    '/_authed': {
+      id: '/_authed'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthedRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/auth/sign-in': {
-      id: '/auth/sign-in'
-      path: '/sign-in'
-      fullPath: '/auth/sign-in'
-      preLoaderRoute: typeof AuthSignInImport
-      parentRoute: typeof AuthImport
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/auth/sign-up': {
-      id: '/auth/sign-up'
-      path: '/sign-up'
-      fullPath: '/auth/sign-up'
-      preLoaderRoute: typeof AuthSignUpImport
-      parentRoute: typeof AuthImport
-    }
-    '/auth/verify': {
-      id: '/auth/verify'
-      path: '/verify'
-      fullPath: '/auth/verify'
-      preLoaderRoute: typeof AuthVerifyImport
-      parentRoute: typeof AuthImport
-    }
-    '/docs/$topic': {
-      id: '/docs/$topic'
-      path: '/$topic'
-      fullPath: '/docs/$topic'
-      preLoaderRoute: typeof DocsTopicImport
-      parentRoute: typeof DocsImport
-    }
-    '/auth/': {
-      id: '/auth/'
+    '/': {
+      id: '/'
       path: '/'
-      fullPath: '/auth/'
-      preLoaderRoute: typeof AuthIndexImport
-      parentRoute: typeof AuthImport
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/docs/': {
       id: '/docs/'
       path: '/'
       fullPath: '/docs/'
-      preLoaderRoute: typeof DocsIndexImport
-      parentRoute: typeof DocsImport
+      preLoaderRoute: typeof DocsIndexRouteImport
+      parentRoute: typeof DocsRoute
     }
-    '/_authed/amendment/$id': {
-      id: '/_authed/amendment/$id'
-      path: '/amendment/$id'
-      fullPath: '/amendment/$id'
-      preLoaderRoute: typeof AuthedAmendmentIdImport
-      parentRoute: typeof AuthedImport
+    '/auth/': {
+      id: '/auth/'
+      path: '/'
+      fullPath: '/auth/'
+      preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof AuthRoute
     }
-    '/_authed/blog/$id': {
-      id: '/_authed/blog/$id'
-      path: '/blog/$id'
-      fullPath: '/blog/$id'
-      preLoaderRoute: typeof AuthedBlogIdImport
-      parentRoute: typeof AuthedImport
+    '/docs/$topic': {
+      id: '/docs/$topic'
+      path: '/$topic'
+      fullPath: '/docs/$topic'
+      preLoaderRoute: typeof DocsTopicRouteImport
+      parentRoute: typeof DocsRoute
     }
-    '/_authed/create/agenda-item': {
-      id: '/_authed/create/agenda-item'
-      path: '/create/agenda-item'
-      fullPath: '/create/agenda-item'
-      preLoaderRoute: typeof AuthedCreateAgendaItemImport
-      parentRoute: typeof AuthedImport
+    '/auth/verify': {
+      id: '/auth/verify'
+      path: '/verify'
+      fullPath: '/auth/verify'
+      preLoaderRoute: typeof AuthVerifyRouteImport
+      parentRoute: typeof AuthRoute
     }
-    '/_authed/create/amendment': {
-      id: '/_authed/create/amendment'
-      path: '/create/amendment'
-      fullPath: '/create/amendment'
-      preLoaderRoute: typeof AuthedCreateAmendmentImport
-      parentRoute: typeof AuthedImport
+    '/auth/sign-up': {
+      id: '/auth/sign-up'
+      path: '/sign-up'
+      fullPath: '/auth/sign-up'
+      preLoaderRoute: typeof AuthSignUpRouteImport
+      parentRoute: typeof AuthRoute
     }
-    '/_authed/create/blog-entry': {
-      id: '/_authed/create/blog-entry'
-      path: '/create/blog-entry'
-      fullPath: '/create/blog-entry'
-      preLoaderRoute: typeof AuthedCreateBlogEntryImport
-      parentRoute: typeof AuthedImport
+    '/auth/sign-in': {
+      id: '/auth/sign-in'
+      path: '/sign-in'
+      fullPath: '/auth/sign-in'
+      preLoaderRoute: typeof AuthSignInRouteImport
+      parentRoute: typeof AuthRoute
     }
-    '/_authed/create/election-candidate': {
-      id: '/_authed/create/election-candidate'
-      path: '/create/election-candidate'
-      fullPath: '/create/election-candidate'
-      preLoaderRoute: typeof AuthedCreateElectionCandidateImport
-      parentRoute: typeof AuthedImport
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof AuthRoute
     }
-    '/_authed/create/event': {
-      id: '/_authed/create/event'
-      path: '/create/event'
-      fullPath: '/create/event'
-      preLoaderRoute: typeof AuthedCreateEventImport
-      parentRoute: typeof AuthedImport
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
     }
-    '/_authed/create/group': {
-      id: '/_authed/create/group'
-      path: '/create/group'
-      fullPath: '/create/group'
-      preLoaderRoute: typeof AuthedCreateGroupImport
-      parentRoute: typeof AuthedImport
+    '/api/query': {
+      id: '/api/query'
+      path: '/api/query'
+      fullPath: '/api/query'
+      preLoaderRoute: typeof ApiQueryRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authed/create/payment': {
-      id: '/_authed/create/payment'
-      path: '/create/payment'
-      fullPath: '/create/payment'
-      preLoaderRoute: typeof AuthedCreatePaymentImport
-      parentRoute: typeof AuthedImport
+    '/api/mutate': {
+      id: '/api/mutate'
+      path: '/api/mutate'
+      fullPath: '/api/mutate'
+      preLoaderRoute: typeof ApiMutateRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authed/create/statement': {
-      id: '/_authed/create/statement'
-      path: '/create/statement'
-      fullPath: '/create/statement'
-      preLoaderRoute: typeof AuthedCreateStatementImport
-      parentRoute: typeof AuthedImport
+    '/_authed/todos': {
+      id: '/_authed/todos'
+      path: '/todos'
+      fullPath: '/todos'
+      preLoaderRoute: typeof AuthedTodosRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/create/todo': {
-      id: '/_authed/create/todo'
-      path: '/create/todo'
-      fullPath: '/create/todo'
-      preLoaderRoute: typeof AuthedCreateTodoImport
-      parentRoute: typeof AuthedImport
+    '/_authed/search': {
+      id: '/_authed/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof AuthedSearchRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/event/$id': {
-      id: '/_authed/event/$id'
-      path: '/event/$id'
-      fullPath: '/event/$id'
-      preLoaderRoute: typeof AuthedEventIdImport
-      parentRoute: typeof AuthedImport
+    '/_authed/notifications': {
+      id: '/_authed/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthedNotificationsRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/group/$id': {
-      id: '/_authed/group/$id'
-      path: '/group/$id'
-      fullPath: '/group/$id'
-      preLoaderRoute: typeof AuthedGroupIdImport
-      parentRoute: typeof AuthedImport
+    '/_authed/messages': {
+      id: '/_authed/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof AuthedMessagesRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/statement/$id': {
-      id: '/_authed/statement/$id'
-      path: '/statement/$id'
-      fullPath: '/statement/$id'
-      preLoaderRoute: typeof AuthedStatementIdImport
-      parentRoute: typeof AuthedImport
+    '/_authed/home': {
+      id: '/_authed/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthedHomeRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/todos/$id': {
-      id: '/_authed/todos/$id'
-      path: '/$id'
-      fullPath: '/todos/$id'
-      preLoaderRoute: typeof AuthedTodosIdImport
-      parentRoute: typeof AuthedTodosImport
+    '/_authed/calendar': {
+      id: '/_authed/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AuthedCalendarRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/create/': {
+      id: '/_authed/create/'
+      path: '/create'
+      fullPath: '/create/'
+      preLoaderRoute: typeof AuthedCreateIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/api/stripe/webhook': {
+      id: '/api/stripe/webhook'
+      path: '/api/stripe/webhook'
+      fullPath: '/api/stripe/webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/govdata/import': {
+      id: '/api/govdata/import'
+      path: '/api/govdata/import'
+      fullPath: '/api/govdata/import'
+      preLoaderRoute: typeof ApiGovdataImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/govdata/catalogue': {
+      id: '/api/govdata/catalogue'
+      path: '/api/govdata/catalogue'
+      fullPath: '/api/govdata/catalogue'
+      preLoaderRoute: typeof ApiGovdataCatalogueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/eurostat/projection': {
+      id: '/api/eurostat/projection'
+      path: '/api/eurostat/projection'
+      fullPath: '/api/eurostat/projection'
+      preLoaderRoute: typeof ApiEurostatProjectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/eurostat/import-step': {
+      id: '/api/eurostat/import-step'
+      path: '/api/eurostat/import-step'
+      fullPath: '/api/eurostat/import-step'
+      preLoaderRoute: typeof ApiEurostatImportStepRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/eurostat/import': {
+      id: '/api/eurostat/import'
+      path: '/api/eurostat/import'
+      fullPath: '/api/eurostat/import'
+      preLoaderRoute: typeof ApiEurostatImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/eurostat/details': {
+      id: '/api/eurostat/details'
+      path: '/api/eurostat/details'
+      fullPath: '/api/eurostat/details'
+      preLoaderRoute: typeof ApiEurostatDetailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/eurostat/catalogue': {
+      id: '/api/eurostat/catalogue'
+      path: '/api/eurostat/catalogue'
+      fullPath: '/api/eurostat/catalogue'
+      preLoaderRoute: typeof ApiEurostatCatalogueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/debug/group-general-assemblies': {
+      id: '/api/debug/group-general-assemblies'
+      path: '/api/debug/group-general-assemblies'
+      fullPath: '/api/debug/group-general-assemblies'
+      preLoaderRoute: typeof ApiDebugGroupGeneralAssembliesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai/credentials': {
+      id: '/api/ai/credentials'
+      path: '/api/ai/credentials'
+      fullPath: '/api/ai/credentials'
+      preLoaderRoute: typeof ApiAiCredentialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai/copilot': {
+      id: '/api/ai/copilot'
+      path: '/api/ai/copilot'
+      fullPath: '/api/ai/copilot'
+      preLoaderRoute: typeof ApiAiCopilotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai/command': {
+      id: '/api/ai/command'
+      path: '/api/ai/command'
+      fullPath: '/api/ai/command'
+      preLoaderRoute: typeof ApiAiCommandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai/chat': {
+      id: '/api/ai/chat'
+      path: '/api/ai/chat'
+      fullPath: '/api/ai/chat'
+      preLoaderRoute: typeof ApiAiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai/catalog': {
+      id: '/api/ai/catalog'
+      path: '/api/ai/catalog'
+      fullPath: '/api/ai/catalog'
+      preLoaderRoute: typeof ApiAiCatalogRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authed/user/$id': {
       id: '/_authed/user/$id'
       path: '/user/$id'
       fullPath: '/user/$id'
-      preLoaderRoute: typeof AuthedUserIdImport
-      parentRoute: typeof AuthedImport
+      preLoaderRoute: typeof AuthedUserIdRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/create/': {
-      id: '/_authed/create/'
-      path: '/create'
-      fullPath: '/create'
-      preLoaderRoute: typeof AuthedCreateIndexImport
-      parentRoute: typeof AuthedImport
+    '/_authed/todos/$id': {
+      id: '/_authed/todos/$id'
+      path: '/$id'
+      fullPath: '/todos/$id'
+      preLoaderRoute: typeof AuthedTodosIdRouteImport
+      parentRoute: typeof AuthedTodosRoute
     }
-    '/_authed/amendment/$id/change-requests': {
-      id: '/_authed/amendment/$id/change-requests'
-      path: '/change-requests'
-      fullPath: '/amendment/$id/change-requests'
-      preLoaderRoute: typeof AuthedAmendmentIdChangeRequestsImport
-      parentRoute: typeof AuthedAmendmentIdImport
+    '/_authed/statement/$id': {
+      id: '/_authed/statement/$id'
+      path: '/statement/$id'
+      fullPath: '/statement/$id'
+      preLoaderRoute: typeof AuthedStatementIdRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/amendment/$id/collaborators': {
-      id: '/_authed/amendment/$id/collaborators'
-      path: '/collaborators'
-      fullPath: '/amendment/$id/collaborators'
-      preLoaderRoute: typeof AuthedAmendmentIdCollaboratorsImport
-      parentRoute: typeof AuthedAmendmentIdImport
+    '/_authed/group/$id': {
+      id: '/_authed/group/$id'
+      path: '/group/$id'
+      fullPath: '/group/$id'
+      preLoaderRoute: typeof AuthedGroupIdRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/amendment/$id/discussions': {
-      id: '/_authed/amendment/$id/discussions'
-      path: '/discussions'
-      fullPath: '/amendment/$id/discussions'
-      preLoaderRoute: typeof AuthedAmendmentIdDiscussionsImport
-      parentRoute: typeof AuthedAmendmentIdImport
+    '/_authed/event/$id': {
+      id: '/_authed/event/$id'
+      path: '/event/$id'
+      fullPath: '/event/$id'
+      preLoaderRoute: typeof AuthedEventIdRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/amendment/$id/notifications': {
-      id: '/_authed/amendment/$id/notifications'
-      path: '/notifications'
-      fullPath: '/amendment/$id/notifications'
-      preLoaderRoute: typeof AuthedAmendmentIdNotificationsImport
-      parentRoute: typeof AuthedAmendmentIdImport
+    '/_authed/create/todo': {
+      id: '/_authed/create/todo'
+      path: '/create/todo'
+      fullPath: '/create/todo'
+      preLoaderRoute: typeof AuthedCreateTodoRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/amendment/$id/process': {
-      id: '/_authed/amendment/$id/process'
-      path: '/process'
-      fullPath: '/amendment/$id/process'
-      preLoaderRoute: typeof AuthedAmendmentIdProcessImport
-      parentRoute: typeof AuthedAmendmentIdImport
+    '/_authed/create/statement': {
+      id: '/_authed/create/statement'
+      path: '/create/statement'
+      fullPath: '/create/statement'
+      preLoaderRoute: typeof AuthedCreateStatementRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/amendment/$id/settings': {
-      id: '/_authed/amendment/$id/settings'
-      path: '/settings'
-      fullPath: '/amendment/$id/settings'
-      preLoaderRoute: typeof AuthedAmendmentIdSettingsImport
-      parentRoute: typeof AuthedAmendmentIdImport
+    '/_authed/create/payment': {
+      id: '/_authed/create/payment'
+      path: '/create/payment'
+      fullPath: '/create/payment'
+      preLoaderRoute: typeof AuthedCreatePaymentRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/amendment/$id/streetscape': {
-      id: '/_authed/amendment/$id/streetscape'
-      path: '/streetscape'
-      fullPath: '/amendment/$id/streetscape'
-      preLoaderRoute: typeof AuthedAmendmentIdStreetscapeImport
-      parentRoute: typeof AuthedAmendmentIdImport
+    '/_authed/create/group': {
+      id: '/_authed/create/group'
+      path: '/create/group'
+      fullPath: '/create/group'
+      preLoaderRoute: typeof AuthedCreateGroupRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/amendment/$id/text': {
-      id: '/_authed/amendment/$id/text'
-      path: '/text'
-      fullPath: '/amendment/$id/text'
-      preLoaderRoute: typeof AuthedAmendmentIdTextImport
-      parentRoute: typeof AuthedAmendmentIdImport
+    '/_authed/create/event': {
+      id: '/_authed/create/event'
+      path: '/create/event'
+      fullPath: '/create/event'
+      preLoaderRoute: typeof AuthedCreateEventRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/blog/$id/edit': {
-      id: '/_authed/blog/$id/edit'
-      path: '/edit'
-      fullPath: '/blog/$id/edit'
-      preLoaderRoute: typeof AuthedBlogIdEditImport
-      parentRoute: typeof AuthedBlogIdImport
+    '/_authed/create/election-candidate': {
+      id: '/_authed/create/election-candidate'
+      path: '/create/election-candidate'
+      fullPath: '/create/election-candidate'
+      preLoaderRoute: typeof AuthedCreateElectionCandidateRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/blog/$id/notifications': {
-      id: '/_authed/blog/$id/notifications'
-      path: '/notifications'
-      fullPath: '/blog/$id/notifications'
-      preLoaderRoute: typeof AuthedBlogIdNotificationsImport
-      parentRoute: typeof AuthedBlogIdImport
+    '/_authed/create/blog-entry': {
+      id: '/_authed/create/blog-entry'
+      path: '/create/blog-entry'
+      fullPath: '/create/blog-entry'
+      preLoaderRoute: typeof AuthedCreateBlogEntryRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/event/$id/agenda': {
-      id: '/_authed/event/$id/agenda'
-      path: '/agenda'
-      fullPath: '/event/$id/agenda'
-      preLoaderRoute: typeof AuthedEventIdAgendaImport
-      parentRoute: typeof AuthedEventIdImport
+    '/_authed/create/amendment': {
+      id: '/_authed/create/amendment'
+      path: '/create/amendment'
+      fullPath: '/create/amendment'
+      preLoaderRoute: typeof AuthedCreateAmendmentRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/event/$id/network': {
-      id: '/_authed/event/$id/network'
-      path: '/network'
-      fullPath: '/event/$id/network'
-      preLoaderRoute: typeof AuthedEventIdNetworkImport
-      parentRoute: typeof AuthedEventIdImport
+    '/_authed/create/agenda-item': {
+      id: '/_authed/create/agenda-item'
+      path: '/create/agenda-item'
+      fullPath: '/create/agenda-item'
+      preLoaderRoute: typeof AuthedCreateAgendaItemRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/event/$id/notifications': {
-      id: '/_authed/event/$id/notifications'
-      path: '/notifications'
-      fullPath: '/event/$id/notifications'
-      preLoaderRoute: typeof AuthedEventIdNotificationsImport
-      parentRoute: typeof AuthedEventIdImport
+    '/_authed/blog/$id': {
+      id: '/_authed/blog/$id'
+      path: '/blog/$id'
+      fullPath: '/blog/$id'
+      preLoaderRoute: typeof AuthedBlogIdRouteImport
+      parentRoute: typeof AuthedRoute
     }
-    '/_authed/event/$id/participants': {
-      id: '/_authed/event/$id/participants'
-      path: '/participants'
-      fullPath: '/event/$id/participants'
-      preLoaderRoute: typeof AuthedEventIdParticipantsImport
-      parentRoute: typeof AuthedEventIdImport
-    }
-    '/_authed/event/$id/roles': {
-      id: '/_authed/event/$id/roles'
-      path: '/roles'
-      fullPath: '/event/$id/roles'
-      preLoaderRoute: typeof AuthedEventIdRolesImport
-      parentRoute: typeof AuthedEventIdImport
-    }
-    '/_authed/event/$id/settings': {
-      id: '/_authed/event/$id/settings'
-      path: '/settings'
-      fullPath: '/event/$id/settings'
-      preLoaderRoute: typeof AuthedEventIdSettingsImport
-      parentRoute: typeof AuthedEventIdImport
-    }
-    '/_authed/event/$id/stream': {
-      id: '/_authed/event/$id/stream'
-      path: '/stream'
-      fullPath: '/event/$id/stream'
-      preLoaderRoute: typeof AuthedEventIdStreamImport
-      parentRoute: typeof AuthedEventIdImport
-    }
-    '/_authed/group/$id/amendments': {
-      id: '/_authed/group/$id/amendments'
-      path: '/amendments'
-      fullPath: '/group/$id/amendments'
-      preLoaderRoute: typeof AuthedGroupIdAmendmentsImport
-      parentRoute: typeof AuthedGroupIdImport
-    }
-    '/_authed/group/$id/blog': {
-      id: '/_authed/group/$id/blog'
-      path: '/blog'
-      fullPath: '/group/$id/blog'
-      preLoaderRoute: typeof AuthedGroupIdBlogImport
-      parentRoute: typeof AuthedGroupIdImport
-    }
-    '/_authed/group/$id/blogs-and-statements': {
-      id: '/_authed/group/$id/blogs-and-statements'
-      path: '/blogs-and-statements'
-      fullPath: '/group/$id/blogs-and-statements'
-      preLoaderRoute: typeof AuthedGroupIdBlogsAndStatementsImport
-      parentRoute: typeof AuthedGroupIdImport
-    }
-    '/_authed/group/$id/editor': {
-      id: '/_authed/group/$id/editor'
-      path: '/editor'
-      fullPath: '/group/$id/editor'
-      preLoaderRoute: typeof AuthedGroupIdEditorImport
-      parentRoute: typeof AuthedGroupIdImport
-    }
-    '/_authed/group/$id/events': {
-      id: '/_authed/group/$id/events'
-      path: '/events'
-      fullPath: '/group/$id/events'
-      preLoaderRoute: typeof AuthedGroupIdEventsImport
-      parentRoute: typeof AuthedGroupIdImport
-    }
-    '/_authed/group/$id/memberships': {
-      id: '/_authed/group/$id/memberships'
-      path: '/memberships'
-      fullPath: '/group/$id/memberships'
-      preLoaderRoute: typeof AuthedGroupIdMembershipsImport
-      parentRoute: typeof AuthedGroupIdImport
-    }
-    '/_authed/group/$id/network': {
-      id: '/_authed/group/$id/network'
-      path: '/network'
-      fullPath: '/group/$id/network'
-      preLoaderRoute: typeof AuthedGroupIdNetworkImport
-      parentRoute: typeof AuthedGroupIdImport
-    }
-    '/_authed/group/$id/notifications': {
-      id: '/_authed/group/$id/notifications'
-      path: '/notifications'
-      fullPath: '/group/$id/notifications'
-      preLoaderRoute: typeof AuthedGroupIdNotificationsImport
-      parentRoute: typeof AuthedGroupIdImport
-    }
-    '/_authed/group/$id/operation': {
-      id: '/_authed/group/$id/operation'
-      path: '/operation'
-      fullPath: '/group/$id/operation'
-      preLoaderRoute: typeof AuthedGroupIdOperationImport
-      parentRoute: typeof AuthedGroupIdImport
-    }
-    '/_authed/group/$id/relationships': {
-      id: '/_authed/group/$id/relationships'
-      path: '/relationships'
-      fullPath: '/group/$id/relationships'
-      preLoaderRoute: typeof AuthedGroupIdRelationshipsImport
-      parentRoute: typeof AuthedGroupIdImport
-    }
-    '/_authed/group/$id/settings': {
-      id: '/_authed/group/$id/settings'
-      path: '/settings'
-      fullPath: '/group/$id/settings'
-      preLoaderRoute: typeof AuthedGroupIdSettingsImport
-      parentRoute: typeof AuthedGroupIdImport
-    }
-    '/_authed/user/$id/blog': {
-      id: '/_authed/user/$id/blog'
-      path: '/blog'
-      fullPath: '/user/$id/blog'
-      preLoaderRoute: typeof AuthedUserIdBlogImport
-      parentRoute: typeof AuthedUserIdImport
-    }
-    '/_authed/user/$id/editor': {
-      id: '/_authed/user/$id/editor'
-      path: '/editor'
-      fullPath: '/user/$id/editor'
-      preLoaderRoute: typeof AuthedUserIdEditorImport
-      parentRoute: typeof AuthedUserIdImport
-    }
-    '/_authed/user/$id/meet': {
-      id: '/_authed/user/$id/meet'
-      path: '/meet'
-      fullPath: '/user/$id/meet'
-      preLoaderRoute: typeof AuthedUserIdMeetImport
-      parentRoute: typeof AuthedUserIdImport
-    }
-    '/_authed/user/$id/memberships': {
-      id: '/_authed/user/$id/memberships'
-      path: '/memberships'
-      fullPath: '/user/$id/memberships'
-      preLoaderRoute: typeof AuthedUserIdMembershipsImport
-      parentRoute: typeof AuthedUserIdImport
-    }
-    '/_authed/user/$id/network': {
-      id: '/_authed/user/$id/network'
-      path: '/network'
-      fullPath: '/user/$id/network'
-      preLoaderRoute: typeof AuthedUserIdNetworkImport
-      parentRoute: typeof AuthedUserIdImport
-    }
-    '/_authed/user/$id/notification-settings': {
-      id: '/_authed/user/$id/notification-settings'
-      path: '/notification-settings'
-      fullPath: '/user/$id/notification-settings'
-      preLoaderRoute: typeof AuthedUserIdNotificationSettingsImport
-      parentRoute: typeof AuthedUserIdImport
-    }
-    '/_authed/user/$id/notifications': {
-      id: '/_authed/user/$id/notifications'
-      path: '/notifications'
-      fullPath: '/user/$id/notifications'
-      preLoaderRoute: typeof AuthedUserIdNotificationsImport
-      parentRoute: typeof AuthedUserIdImport
-    }
-    '/_authed/user/$id/settings': {
-      id: '/_authed/user/$id/settings'
-      path: '/settings'
-      fullPath: '/user/$id/settings'
-      preLoaderRoute: typeof AuthedUserIdSettingsImport
-      parentRoute: typeof AuthedUserIdImport
-    }
-    '/_authed/user/$id/subscriptions': {
-      id: '/_authed/user/$id/subscriptions'
-      path: '/subscriptions'
-      fullPath: '/user/$id/subscriptions'
-      preLoaderRoute: typeof AuthedUserIdSubscriptionsImport
-      parentRoute: typeof AuthedUserIdImport
-    }
-    '/_authed/amendment/$id/': {
-      id: '/_authed/amendment/$id/'
-      path: '/'
-      fullPath: '/amendment/$id/'
-      preLoaderRoute: typeof AuthedAmendmentIdIndexImport
-      parentRoute: typeof AuthedAmendmentIdImport
-    }
-    '/_authed/blog/$id/': {
-      id: '/_authed/blog/$id/'
-      path: '/'
-      fullPath: '/blog/$id/'
-      preLoaderRoute: typeof AuthedBlogIdIndexImport
-      parentRoute: typeof AuthedBlogIdImport
-    }
-    '/_authed/event/$id/': {
-      id: '/_authed/event/$id/'
-      path: '/'
-      fullPath: '/event/$id/'
-      preLoaderRoute: typeof AuthedEventIdIndexImport
-      parentRoute: typeof AuthedEventIdImport
-    }
-    '/_authed/group/$id/': {
-      id: '/_authed/group/$id/'
-      path: '/'
-      fullPath: '/group/$id/'
-      preLoaderRoute: typeof AuthedGroupIdIndexImport
-      parentRoute: typeof AuthedGroupIdImport
+    '/_authed/amendment/$id': {
+      id: '/_authed/amendment/$id'
+      path: '/amendment/$id'
+      fullPath: '/amendment/$id'
+      preLoaderRoute: typeof AuthedAmendmentIdRouteImport
+      parentRoute: typeof AuthedRoute
     }
     '/_authed/user/$id/': {
       id: '/_authed/user/$id/'
       path: '/'
       fullPath: '/user/$id/'
-      preLoaderRoute: typeof AuthedUserIdIndexImport
-      parentRoute: typeof AuthedUserIdImport
+      preLoaderRoute: typeof AuthedUserIdIndexRouteImport
+      parentRoute: typeof AuthedUserIdRoute
     }
-    '/_authed/event/$id/agenda/$agendaItemId': {
-      id: '/_authed/event/$id/agenda/$agendaItemId'
-      path: '/$agendaItemId'
-      fullPath: '/event/$id/agenda/$agendaItemId'
-      preLoaderRoute: typeof AuthedEventIdAgendaAgendaItemIdImport
-      parentRoute: typeof AuthedEventIdAgendaImport
-    }
-    '/_authed/group/$id/blog/$entryId': {
-      id: '/_authed/group/$id/blog/$entryId'
-      path: '/$entryId'
-      fullPath: '/group/$id/blog/$entryId'
-      preLoaderRoute: typeof AuthedGroupIdBlogEntryIdImport
-      parentRoute: typeof AuthedGroupIdBlogImport
-    }
-    '/_authed/group/$id/editor/$docId': {
-      id: '/_authed/group/$id/editor/$docId'
-      path: '/$docId'
-      fullPath: '/group/$id/editor/$docId'
-      preLoaderRoute: typeof AuthedGroupIdEditorDocIdImport
-      parentRoute: typeof AuthedGroupIdEditorImport
-    }
-    '/_authed/user/$id/blog/$entryId': {
-      id: '/_authed/user/$id/blog/$entryId'
-      path: '/$entryId'
-      fullPath: '/user/$id/blog/$entryId'
-      preLoaderRoute: typeof AuthedUserIdBlogEntryIdImport
-      parentRoute: typeof AuthedUserIdBlogImport
-    }
-    '/_authed/user/$id/editor/$docId': {
-      id: '/_authed/user/$id/editor/$docId'
-      path: '/$docId'
-      fullPath: '/user/$id/editor/$docId'
-      preLoaderRoute: typeof AuthedUserIdEditorDocIdImport
-      parentRoute: typeof AuthedUserIdEditorImport
-    }
-    '/_authed/event/$id/agenda/': {
-      id: '/_authed/event/$id/agenda/'
+    '/_authed/group/$id/': {
+      id: '/_authed/group/$id/'
       path: '/'
-      fullPath: '/event/$id/agenda/'
-      preLoaderRoute: typeof AuthedEventIdAgendaIndexImport
-      parentRoute: typeof AuthedEventIdAgendaImport
+      fullPath: '/group/$id/'
+      preLoaderRoute: typeof AuthedGroupIdIndexRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
     }
-    '/_authed/group/$id/blog/': {
-      id: '/_authed/group/$id/blog/'
+    '/_authed/event/$id/': {
+      id: '/_authed/event/$id/'
       path: '/'
-      fullPath: '/group/$id/blog/'
-      preLoaderRoute: typeof AuthedGroupIdBlogIndexImport
-      parentRoute: typeof AuthedGroupIdBlogImport
+      fullPath: '/event/$id/'
+      preLoaderRoute: typeof AuthedEventIdIndexRouteImport
+      parentRoute: typeof AuthedEventIdRoute
+    }
+    '/_authed/blog/$id/': {
+      id: '/_authed/blog/$id/'
+      path: '/'
+      fullPath: '/blog/$id/'
+      preLoaderRoute: typeof AuthedBlogIdIndexRouteImport
+      parentRoute: typeof AuthedBlogIdRoute
+    }
+    '/_authed/amendment/$id/': {
+      id: '/_authed/amendment/$id/'
+      path: '/'
+      fullPath: '/amendment/$id/'
+      preLoaderRoute: typeof AuthedAmendmentIdIndexRouteImport
+      parentRoute: typeof AuthedAmendmentIdRoute
+    }
+    '/_authed/user/$id/subscriptions': {
+      id: '/_authed/user/$id/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/user/$id/subscriptions'
+      preLoaderRoute: typeof AuthedUserIdSubscriptionsRouteImport
+      parentRoute: typeof AuthedUserIdRoute
+    }
+    '/_authed/user/$id/settings': {
+      id: '/_authed/user/$id/settings'
+      path: '/settings'
+      fullPath: '/user/$id/settings'
+      preLoaderRoute: typeof AuthedUserIdSettingsRouteImport
+      parentRoute: typeof AuthedUserIdRoute
+    }
+    '/_authed/user/$id/notifications': {
+      id: '/_authed/user/$id/notifications'
+      path: '/notifications'
+      fullPath: '/user/$id/notifications'
+      preLoaderRoute: typeof AuthedUserIdNotificationsRouteImport
+      parentRoute: typeof AuthedUserIdRoute
+    }
+    '/_authed/user/$id/notification-settings': {
+      id: '/_authed/user/$id/notification-settings'
+      path: '/notification-settings'
+      fullPath: '/user/$id/notification-settings'
+      preLoaderRoute: typeof AuthedUserIdNotificationSettingsRouteImport
+      parentRoute: typeof AuthedUserIdRoute
+    }
+    '/_authed/user/$id/network': {
+      id: '/_authed/user/$id/network'
+      path: '/network'
+      fullPath: '/user/$id/network'
+      preLoaderRoute: typeof AuthedUserIdNetworkRouteImport
+      parentRoute: typeof AuthedUserIdRoute
+    }
+    '/_authed/user/$id/memberships': {
+      id: '/_authed/user/$id/memberships'
+      path: '/memberships'
+      fullPath: '/user/$id/memberships'
+      preLoaderRoute: typeof AuthedUserIdMembershipsRouteImport
+      parentRoute: typeof AuthedUserIdRoute
+    }
+    '/_authed/user/$id/meet': {
+      id: '/_authed/user/$id/meet'
+      path: '/meet'
+      fullPath: '/user/$id/meet'
+      preLoaderRoute: typeof AuthedUserIdMeetRouteImport
+      parentRoute: typeof AuthedUserIdRoute
+    }
+    '/_authed/user/$id/editor': {
+      id: '/_authed/user/$id/editor'
+      path: '/editor'
+      fullPath: '/user/$id/editor'
+      preLoaderRoute: typeof AuthedUserIdEditorRouteImport
+      parentRoute: typeof AuthedUserIdRoute
+    }
+    '/_authed/user/$id/blog': {
+      id: '/_authed/user/$id/blog'
+      path: '/blog'
+      fullPath: '/user/$id/blog'
+      preLoaderRoute: typeof AuthedUserIdBlogRouteImport
+      parentRoute: typeof AuthedUserIdRoute
+    }
+    '/_authed/group/$id/settings': {
+      id: '/_authed/group/$id/settings'
+      path: '/settings'
+      fullPath: '/group/$id/settings'
+      preLoaderRoute: typeof AuthedGroupIdSettingsRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
+    }
+    '/_authed/group/$id/relationships': {
+      id: '/_authed/group/$id/relationships'
+      path: '/relationships'
+      fullPath: '/group/$id/relationships'
+      preLoaderRoute: typeof AuthedGroupIdRelationshipsRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
+    }
+    '/_authed/group/$id/operation': {
+      id: '/_authed/group/$id/operation'
+      path: '/operation'
+      fullPath: '/group/$id/operation'
+      preLoaderRoute: typeof AuthedGroupIdOperationRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
+    }
+    '/_authed/group/$id/notifications': {
+      id: '/_authed/group/$id/notifications'
+      path: '/notifications'
+      fullPath: '/group/$id/notifications'
+      preLoaderRoute: typeof AuthedGroupIdNotificationsRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
+    }
+    '/_authed/group/$id/network': {
+      id: '/_authed/group/$id/network'
+      path: '/network'
+      fullPath: '/group/$id/network'
+      preLoaderRoute: typeof AuthedGroupIdNetworkRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
+    }
+    '/_authed/group/$id/memberships': {
+      id: '/_authed/group/$id/memberships'
+      path: '/memberships'
+      fullPath: '/group/$id/memberships'
+      preLoaderRoute: typeof AuthedGroupIdMembershipsRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
+    }
+    '/_authed/group/$id/events': {
+      id: '/_authed/group/$id/events'
+      path: '/events'
+      fullPath: '/group/$id/events'
+      preLoaderRoute: typeof AuthedGroupIdEventsRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
+    }
+    '/_authed/group/$id/editor': {
+      id: '/_authed/group/$id/editor'
+      path: '/editor'
+      fullPath: '/group/$id/editor'
+      preLoaderRoute: typeof AuthedGroupIdEditorRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
+    }
+    '/_authed/group/$id/blogs-and-statements': {
+      id: '/_authed/group/$id/blogs-and-statements'
+      path: '/blogs-and-statements'
+      fullPath: '/group/$id/blogs-and-statements'
+      preLoaderRoute: typeof AuthedGroupIdBlogsAndStatementsRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
+    }
+    '/_authed/group/$id/blog': {
+      id: '/_authed/group/$id/blog'
+      path: '/blog'
+      fullPath: '/group/$id/blog'
+      preLoaderRoute: typeof AuthedGroupIdBlogRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
+    }
+    '/_authed/group/$id/amendments': {
+      id: '/_authed/group/$id/amendments'
+      path: '/amendments'
+      fullPath: '/group/$id/amendments'
+      preLoaderRoute: typeof AuthedGroupIdAmendmentsRouteImport
+      parentRoute: typeof AuthedGroupIdRoute
+    }
+    '/_authed/event/$id/stream': {
+      id: '/_authed/event/$id/stream'
+      path: '/stream'
+      fullPath: '/event/$id/stream'
+      preLoaderRoute: typeof AuthedEventIdStreamRouteImport
+      parentRoute: typeof AuthedEventIdRoute
+    }
+    '/_authed/event/$id/settings': {
+      id: '/_authed/event/$id/settings'
+      path: '/settings'
+      fullPath: '/event/$id/settings'
+      preLoaderRoute: typeof AuthedEventIdSettingsRouteImport
+      parentRoute: typeof AuthedEventIdRoute
+    }
+    '/_authed/event/$id/roles': {
+      id: '/_authed/event/$id/roles'
+      path: '/roles'
+      fullPath: '/event/$id/roles'
+      preLoaderRoute: typeof AuthedEventIdRolesRouteImport
+      parentRoute: typeof AuthedEventIdRoute
+    }
+    '/_authed/event/$id/participants': {
+      id: '/_authed/event/$id/participants'
+      path: '/participants'
+      fullPath: '/event/$id/participants'
+      preLoaderRoute: typeof AuthedEventIdParticipantsRouteImport
+      parentRoute: typeof AuthedEventIdRoute
+    }
+    '/_authed/event/$id/notifications': {
+      id: '/_authed/event/$id/notifications'
+      path: '/notifications'
+      fullPath: '/event/$id/notifications'
+      preLoaderRoute: typeof AuthedEventIdNotificationsRouteImport
+      parentRoute: typeof AuthedEventIdRoute
+    }
+    '/_authed/event/$id/network': {
+      id: '/_authed/event/$id/network'
+      path: '/network'
+      fullPath: '/event/$id/network'
+      preLoaderRoute: typeof AuthedEventIdNetworkRouteImport
+      parentRoute: typeof AuthedEventIdRoute
+    }
+    '/_authed/event/$id/agenda': {
+      id: '/_authed/event/$id/agenda'
+      path: '/agenda'
+      fullPath: '/event/$id/agenda'
+      preLoaderRoute: typeof AuthedEventIdAgendaRouteImport
+      parentRoute: typeof AuthedEventIdRoute
+    }
+    '/_authed/blog/$id/notifications': {
+      id: '/_authed/blog/$id/notifications'
+      path: '/notifications'
+      fullPath: '/blog/$id/notifications'
+      preLoaderRoute: typeof AuthedBlogIdNotificationsRouteImport
+      parentRoute: typeof AuthedBlogIdRoute
+    }
+    '/_authed/blog/$id/edit': {
+      id: '/_authed/blog/$id/edit'
+      path: '/edit'
+      fullPath: '/blog/$id/edit'
+      preLoaderRoute: typeof AuthedBlogIdEditRouteImport
+      parentRoute: typeof AuthedBlogIdRoute
+    }
+    '/_authed/amendment/$id/text': {
+      id: '/_authed/amendment/$id/text'
+      path: '/text'
+      fullPath: '/amendment/$id/text'
+      preLoaderRoute: typeof AuthedAmendmentIdTextRouteImport
+      parentRoute: typeof AuthedAmendmentIdRoute
+    }
+    '/_authed/amendment/$id/streetscape': {
+      id: '/_authed/amendment/$id/streetscape'
+      path: '/streetscape'
+      fullPath: '/amendment/$id/streetscape'
+      preLoaderRoute: typeof AuthedAmendmentIdStreetscapeRouteImport
+      parentRoute: typeof AuthedAmendmentIdRoute
+    }
+    '/_authed/amendment/$id/settings': {
+      id: '/_authed/amendment/$id/settings'
+      path: '/settings'
+      fullPath: '/amendment/$id/settings'
+      preLoaderRoute: typeof AuthedAmendmentIdSettingsRouteImport
+      parentRoute: typeof AuthedAmendmentIdRoute
+    }
+    '/_authed/amendment/$id/process': {
+      id: '/_authed/amendment/$id/process'
+      path: '/process'
+      fullPath: '/amendment/$id/process'
+      preLoaderRoute: typeof AuthedAmendmentIdProcessRouteImport
+      parentRoute: typeof AuthedAmendmentIdRoute
+    }
+    '/_authed/amendment/$id/notifications': {
+      id: '/_authed/amendment/$id/notifications'
+      path: '/notifications'
+      fullPath: '/amendment/$id/notifications'
+      preLoaderRoute: typeof AuthedAmendmentIdNotificationsRouteImport
+      parentRoute: typeof AuthedAmendmentIdRoute
+    }
+    '/_authed/amendment/$id/discussions': {
+      id: '/_authed/amendment/$id/discussions'
+      path: '/discussions'
+      fullPath: '/amendment/$id/discussions'
+      preLoaderRoute: typeof AuthedAmendmentIdDiscussionsRouteImport
+      parentRoute: typeof AuthedAmendmentIdRoute
+    }
+    '/_authed/amendment/$id/collaborators': {
+      id: '/_authed/amendment/$id/collaborators'
+      path: '/collaborators'
+      fullPath: '/amendment/$id/collaborators'
+      preLoaderRoute: typeof AuthedAmendmentIdCollaboratorsRouteImport
+      parentRoute: typeof AuthedAmendmentIdRoute
+    }
+    '/_authed/amendment/$id/change-requests': {
+      id: '/_authed/amendment/$id/change-requests'
+      path: '/change-requests'
+      fullPath: '/amendment/$id/change-requests'
+      preLoaderRoute: typeof AuthedAmendmentIdChangeRequestsRouteImport
+      parentRoute: typeof AuthedAmendmentIdRoute
     }
     '/_authed/group/$id/editor/': {
       id: '/_authed/group/$id/editor/'
       path: '/'
       fullPath: '/group/$id/editor/'
-      preLoaderRoute: typeof AuthedGroupIdEditorIndexImport
-      parentRoute: typeof AuthedGroupIdEditorImport
+      preLoaderRoute: typeof AuthedGroupIdEditorIndexRouteImport
+      parentRoute: typeof AuthedGroupIdEditorRoute
     }
-    '/_authed/group/$id/blog/$entryId/edit': {
-      id: '/_authed/group/$id/blog/$entryId/edit'
-      path: '/edit'
-      fullPath: '/group/$id/blog/$entryId/edit'
-      preLoaderRoute: typeof AuthedGroupIdBlogEntryIdEditImport
-      parentRoute: typeof AuthedGroupIdBlogEntryIdImport
-    }
-    '/_authed/group/$id/blog/$entryId/editor': {
-      id: '/_authed/group/$id/blog/$entryId/editor'
-      path: '/editor'
-      fullPath: '/group/$id/blog/$entryId/editor'
-      preLoaderRoute: typeof AuthedGroupIdBlogEntryIdEditorImport
-      parentRoute: typeof AuthedGroupIdBlogEntryIdImport
-    }
-    '/_authed/group/$id/blog/$entryId/notifications': {
-      id: '/_authed/group/$id/blog/$entryId/notifications'
-      path: '/notifications'
-      fullPath: '/group/$id/blog/$entryId/notifications'
-      preLoaderRoute: typeof AuthedGroupIdBlogEntryIdNotificationsImport
-      parentRoute: typeof AuthedGroupIdBlogEntryIdImport
-    }
-    '/_authed/user/$id/blog/$entryId/edit': {
-      id: '/_authed/user/$id/blog/$entryId/edit'
-      path: '/edit'
-      fullPath: '/user/$id/blog/$entryId/edit'
-      preLoaderRoute: typeof AuthedUserIdBlogEntryIdEditImport
-      parentRoute: typeof AuthedUserIdBlogEntryIdImport
-    }
-    '/_authed/user/$id/blog/$entryId/editor': {
-      id: '/_authed/user/$id/blog/$entryId/editor'
-      path: '/editor'
-      fullPath: '/user/$id/blog/$entryId/editor'
-      preLoaderRoute: typeof AuthedUserIdBlogEntryIdEditorImport
-      parentRoute: typeof AuthedUserIdBlogEntryIdImport
-    }
-    '/_authed/user/$id/blog/$entryId/notifications': {
-      id: '/_authed/user/$id/blog/$entryId/notifications'
-      path: '/notifications'
-      fullPath: '/user/$id/blog/$entryId/notifications'
-      preLoaderRoute: typeof AuthedUserIdBlogEntryIdNotificationsImport
-      parentRoute: typeof AuthedUserIdBlogEntryIdImport
-    }
-    '/_authed/group/$id/blog/$entryId/': {
-      id: '/_authed/group/$id/blog/$entryId/'
+    '/_authed/group/$id/blog/': {
+      id: '/_authed/group/$id/blog/'
       path: '/'
-      fullPath: '/group/$id/blog/$entryId/'
-      preLoaderRoute: typeof AuthedGroupIdBlogEntryIdIndexImport
-      parentRoute: typeof AuthedGroupIdBlogEntryIdImport
+      fullPath: '/group/$id/blog/'
+      preLoaderRoute: typeof AuthedGroupIdBlogIndexRouteImport
+      parentRoute: typeof AuthedGroupIdBlogRoute
+    }
+    '/_authed/event/$id/agenda/': {
+      id: '/_authed/event/$id/agenda/'
+      path: '/'
+      fullPath: '/event/$id/agenda/'
+      preLoaderRoute: typeof AuthedEventIdAgendaIndexRouteImport
+      parentRoute: typeof AuthedEventIdAgendaRoute
+    }
+    '/_authed/user/$id/editor/$docId': {
+      id: '/_authed/user/$id/editor/$docId'
+      path: '/$docId'
+      fullPath: '/user/$id/editor/$docId'
+      preLoaderRoute: typeof AuthedUserIdEditorDocIdRouteImport
+      parentRoute: typeof AuthedUserIdEditorRoute
+    }
+    '/_authed/user/$id/blog/$entryId': {
+      id: '/_authed/user/$id/blog/$entryId'
+      path: '/$entryId'
+      fullPath: '/user/$id/blog/$entryId'
+      preLoaderRoute: typeof AuthedUserIdBlogEntryIdRouteImport
+      parentRoute: typeof AuthedUserIdBlogRoute
+    }
+    '/_authed/group/$id/editor/$docId': {
+      id: '/_authed/group/$id/editor/$docId'
+      path: '/$docId'
+      fullPath: '/group/$id/editor/$docId'
+      preLoaderRoute: typeof AuthedGroupIdEditorDocIdRouteImport
+      parentRoute: typeof AuthedGroupIdEditorRoute
+    }
+    '/_authed/group/$id/blog/$entryId': {
+      id: '/_authed/group/$id/blog/$entryId'
+      path: '/$entryId'
+      fullPath: '/group/$id/blog/$entryId'
+      preLoaderRoute: typeof AuthedGroupIdBlogEntryIdRouteImport
+      parentRoute: typeof AuthedGroupIdBlogRoute
+    }
+    '/_authed/event/$id/agenda/$agendaItemId': {
+      id: '/_authed/event/$id/agenda/$agendaItemId'
+      path: '/$agendaItemId'
+      fullPath: '/event/$id/agenda/$agendaItemId'
+      preLoaderRoute: typeof AuthedEventIdAgendaAgendaItemIdRouteImport
+      parentRoute: typeof AuthedEventIdAgendaRoute
     }
     '/_authed/user/$id/blog/$entryId/': {
       id: '/_authed/user/$id/blog/$entryId/'
       path: '/'
       fullPath: '/user/$id/blog/$entryId/'
-      preLoaderRoute: typeof AuthedUserIdBlogEntryIdIndexImport
-      parentRoute: typeof AuthedUserIdBlogEntryIdImport
+      preLoaderRoute: typeof AuthedUserIdBlogEntryIdIndexRouteImport
+      parentRoute: typeof AuthedUserIdBlogEntryIdRoute
+    }
+    '/_authed/group/$id/blog/$entryId/': {
+      id: '/_authed/group/$id/blog/$entryId/'
+      path: '/'
+      fullPath: '/group/$id/blog/$entryId/'
+      preLoaderRoute: typeof AuthedGroupIdBlogEntryIdIndexRouteImport
+      parentRoute: typeof AuthedGroupIdBlogEntryIdRoute
+    }
+    '/_authed/user/$id/blog/$entryId/notifications': {
+      id: '/_authed/user/$id/blog/$entryId/notifications'
+      path: '/notifications'
+      fullPath: '/user/$id/blog/$entryId/notifications'
+      preLoaderRoute: typeof AuthedUserIdBlogEntryIdNotificationsRouteImport
+      parentRoute: typeof AuthedUserIdBlogEntryIdRoute
+    }
+    '/_authed/user/$id/blog/$entryId/editor': {
+      id: '/_authed/user/$id/blog/$entryId/editor'
+      path: '/editor'
+      fullPath: '/user/$id/blog/$entryId/editor'
+      preLoaderRoute: typeof AuthedUserIdBlogEntryIdEditorRouteImport
+      parentRoute: typeof AuthedUserIdBlogEntryIdRoute
+    }
+    '/_authed/user/$id/blog/$entryId/edit': {
+      id: '/_authed/user/$id/blog/$entryId/edit'
+      path: '/edit'
+      fullPath: '/user/$id/blog/$entryId/edit'
+      preLoaderRoute: typeof AuthedUserIdBlogEntryIdEditRouteImport
+      parentRoute: typeof AuthedUserIdBlogEntryIdRoute
+    }
+    '/_authed/group/$id/blog/$entryId/notifications': {
+      id: '/_authed/group/$id/blog/$entryId/notifications'
+      path: '/notifications'
+      fullPath: '/group/$id/blog/$entryId/notifications'
+      preLoaderRoute: typeof AuthedGroupIdBlogEntryIdNotificationsRouteImport
+      parentRoute: typeof AuthedGroupIdBlogEntryIdRoute
+    }
+    '/_authed/group/$id/blog/$entryId/editor': {
+      id: '/_authed/group/$id/blog/$entryId/editor'
+      path: '/editor'
+      fullPath: '/group/$id/blog/$entryId/editor'
+      preLoaderRoute: typeof AuthedGroupIdBlogEntryIdEditorRouteImport
+      parentRoute: typeof AuthedGroupIdBlogEntryIdRoute
+    }
+    '/_authed/group/$id/blog/$entryId/edit': {
+      id: '/_authed/group/$id/blog/$entryId/edit'
+      path: '/edit'
+      fullPath: '/group/$id/blog/$entryId/edit'
+      preLoaderRoute: typeof AuthedGroupIdBlogEntryIdEditRouteImport
+      parentRoute: typeof AuthedGroupIdBlogEntryIdRoute
     }
   }
 }
-
-// Create and export the route tree
 
 interface AuthedTodosRouteChildren {
   AuthedTodosIdRoute: typeof AuthedTodosIdRoute
@@ -1806,630 +2642,6 @@ const DocsRouteChildren: DocsRouteChildren = {
 
 const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
 
-export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/$': typeof SplatRoute
-  '': typeof AuthedRouteWithChildren
-  '/auth': typeof AuthRouteWithChildren
-  '/docs': typeof DocsRouteWithChildren
-  '/features': typeof FeaturesRoute
-  '/imprint': typeof ImprintRoute
-  '/pricing': typeof PricingRoute
-  '/privacy-policy': typeof PrivacyPolicyRoute
-  '/solutions': typeof SolutionsRoute
-  '/support': typeof SupportRoute
-  '/terms-and-conditions': typeof TermsAndConditionsRoute
-  '/unauthorized': typeof UnauthorizedRoute
-  '/calendar': typeof AuthedCalendarRoute
-  '/home': typeof AuthedHomeRoute
-  '/messages': typeof AuthedMessagesRoute
-  '/notifications': typeof AuthedNotificationsRoute
-  '/search': typeof AuthedSearchRoute
-  '/todos': typeof AuthedTodosRouteWithChildren
-  '/auth/callback': typeof AuthCallbackRoute
-  '/auth/forgot-password': typeof AuthForgotPasswordRoute
-  '/auth/sign-in': typeof AuthSignInRoute
-  '/auth/sign-up': typeof AuthSignUpRoute
-  '/auth/verify': typeof AuthVerifyRoute
-  '/docs/$topic': typeof DocsTopicRoute
-  '/auth/': typeof AuthIndexRoute
-  '/docs/': typeof DocsIndexRoute
-  '/amendment/$id': typeof AuthedAmendmentIdRouteWithChildren
-  '/blog/$id': typeof AuthedBlogIdRouteWithChildren
-  '/create/agenda-item': typeof AuthedCreateAgendaItemRoute
-  '/create/amendment': typeof AuthedCreateAmendmentRoute
-  '/create/blog-entry': typeof AuthedCreateBlogEntryRoute
-  '/create/election-candidate': typeof AuthedCreateElectionCandidateRoute
-  '/create/event': typeof AuthedCreateEventRoute
-  '/create/group': typeof AuthedCreateGroupRoute
-  '/create/payment': typeof AuthedCreatePaymentRoute
-  '/create/statement': typeof AuthedCreateStatementRoute
-  '/create/todo': typeof AuthedCreateTodoRoute
-  '/event/$id': typeof AuthedEventIdRouteWithChildren
-  '/group/$id': typeof AuthedGroupIdRouteWithChildren
-  '/statement/$id': typeof AuthedStatementIdRoute
-  '/todos/$id': typeof AuthedTodosIdRoute
-  '/user/$id': typeof AuthedUserIdRouteWithChildren
-  '/create': typeof AuthedCreateIndexRoute
-  '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
-  '/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
-  '/amendment/$id/discussions': typeof AuthedAmendmentIdDiscussionsRoute
-  '/amendment/$id/notifications': typeof AuthedAmendmentIdNotificationsRoute
-  '/amendment/$id/process': typeof AuthedAmendmentIdProcessRoute
-  '/amendment/$id/settings': typeof AuthedAmendmentIdSettingsRoute
-  '/amendment/$id/streetscape': typeof AuthedAmendmentIdStreetscapeRoute
-  '/amendment/$id/text': typeof AuthedAmendmentIdTextRoute
-  '/blog/$id/edit': typeof AuthedBlogIdEditRoute
-  '/blog/$id/notifications': typeof AuthedBlogIdNotificationsRoute
-  '/event/$id/agenda': typeof AuthedEventIdAgendaRouteWithChildren
-  '/event/$id/network': typeof AuthedEventIdNetworkRoute
-  '/event/$id/notifications': typeof AuthedEventIdNotificationsRoute
-  '/event/$id/participants': typeof AuthedEventIdParticipantsRoute
-  '/event/$id/roles': typeof AuthedEventIdRolesRoute
-  '/event/$id/settings': typeof AuthedEventIdSettingsRoute
-  '/event/$id/stream': typeof AuthedEventIdStreamRoute
-  '/group/$id/amendments': typeof AuthedGroupIdAmendmentsRoute
-  '/group/$id/blog': typeof AuthedGroupIdBlogRouteWithChildren
-  '/group/$id/blogs-and-statements': typeof AuthedGroupIdBlogsAndStatementsRoute
-  '/group/$id/editor': typeof AuthedGroupIdEditorRouteWithChildren
-  '/group/$id/events': typeof AuthedGroupIdEventsRoute
-  '/group/$id/memberships': typeof AuthedGroupIdMembershipsRoute
-  '/group/$id/network': typeof AuthedGroupIdNetworkRoute
-  '/group/$id/notifications': typeof AuthedGroupIdNotificationsRoute
-  '/group/$id/operation': typeof AuthedGroupIdOperationRoute
-  '/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
-  '/group/$id/settings': typeof AuthedGroupIdSettingsRoute
-  '/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
-  '/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
-  '/user/$id/meet': typeof AuthedUserIdMeetRoute
-  '/user/$id/memberships': typeof AuthedUserIdMembershipsRoute
-  '/user/$id/network': typeof AuthedUserIdNetworkRoute
-  '/user/$id/notification-settings': typeof AuthedUserIdNotificationSettingsRoute
-  '/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
-  '/user/$id/settings': typeof AuthedUserIdSettingsRoute
-  '/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
-  '/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
-  '/blog/$id/': typeof AuthedBlogIdIndexRoute
-  '/event/$id/': typeof AuthedEventIdIndexRoute
-  '/group/$id/': typeof AuthedGroupIdIndexRoute
-  '/user/$id/': typeof AuthedUserIdIndexRoute
-  '/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
-  '/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRouteWithChildren
-  '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
-  '/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRouteWithChildren
-  '/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
-  '/event/$id/agenda/': typeof AuthedEventIdAgendaIndexRoute
-  '/group/$id/blog/': typeof AuthedGroupIdBlogIndexRoute
-  '/group/$id/editor/': typeof AuthedGroupIdEditorIndexRoute
-  '/group/$id/blog/$entryId/edit': typeof AuthedGroupIdBlogEntryIdEditRoute
-  '/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
-  '/group/$id/blog/$entryId/notifications': typeof AuthedGroupIdBlogEntryIdNotificationsRoute
-  '/user/$id/blog/$entryId/edit': typeof AuthedUserIdBlogEntryIdEditRoute
-  '/user/$id/blog/$entryId/editor': typeof AuthedUserIdBlogEntryIdEditorRoute
-  '/user/$id/blog/$entryId/notifications': typeof AuthedUserIdBlogEntryIdNotificationsRoute
-  '/group/$id/blog/$entryId/': typeof AuthedGroupIdBlogEntryIdIndexRoute
-  '/user/$id/blog/$entryId/': typeof AuthedUserIdBlogEntryIdIndexRoute
-}
-
-export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/$': typeof SplatRoute
-  '': typeof AuthedRouteWithChildren
-  '/features': typeof FeaturesRoute
-  '/imprint': typeof ImprintRoute
-  '/pricing': typeof PricingRoute
-  '/privacy-policy': typeof PrivacyPolicyRoute
-  '/solutions': typeof SolutionsRoute
-  '/support': typeof SupportRoute
-  '/terms-and-conditions': typeof TermsAndConditionsRoute
-  '/unauthorized': typeof UnauthorizedRoute
-  '/calendar': typeof AuthedCalendarRoute
-  '/home': typeof AuthedHomeRoute
-  '/messages': typeof AuthedMessagesRoute
-  '/notifications': typeof AuthedNotificationsRoute
-  '/search': typeof AuthedSearchRoute
-  '/todos': typeof AuthedTodosRouteWithChildren
-  '/auth/callback': typeof AuthCallbackRoute
-  '/auth/forgot-password': typeof AuthForgotPasswordRoute
-  '/auth/sign-in': typeof AuthSignInRoute
-  '/auth/sign-up': typeof AuthSignUpRoute
-  '/auth/verify': typeof AuthVerifyRoute
-  '/docs/$topic': typeof DocsTopicRoute
-  '/auth': typeof AuthIndexRoute
-  '/docs': typeof DocsIndexRoute
-  '/create/agenda-item': typeof AuthedCreateAgendaItemRoute
-  '/create/amendment': typeof AuthedCreateAmendmentRoute
-  '/create/blog-entry': typeof AuthedCreateBlogEntryRoute
-  '/create/election-candidate': typeof AuthedCreateElectionCandidateRoute
-  '/create/event': typeof AuthedCreateEventRoute
-  '/create/group': typeof AuthedCreateGroupRoute
-  '/create/payment': typeof AuthedCreatePaymentRoute
-  '/create/statement': typeof AuthedCreateStatementRoute
-  '/create/todo': typeof AuthedCreateTodoRoute
-  '/statement/$id': typeof AuthedStatementIdRoute
-  '/todos/$id': typeof AuthedTodosIdRoute
-  '/create': typeof AuthedCreateIndexRoute
-  '/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
-  '/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
-  '/amendment/$id/discussions': typeof AuthedAmendmentIdDiscussionsRoute
-  '/amendment/$id/notifications': typeof AuthedAmendmentIdNotificationsRoute
-  '/amendment/$id/process': typeof AuthedAmendmentIdProcessRoute
-  '/amendment/$id/settings': typeof AuthedAmendmentIdSettingsRoute
-  '/amendment/$id/streetscape': typeof AuthedAmendmentIdStreetscapeRoute
-  '/amendment/$id/text': typeof AuthedAmendmentIdTextRoute
-  '/blog/$id/edit': typeof AuthedBlogIdEditRoute
-  '/blog/$id/notifications': typeof AuthedBlogIdNotificationsRoute
-  '/event/$id/network': typeof AuthedEventIdNetworkRoute
-  '/event/$id/notifications': typeof AuthedEventIdNotificationsRoute
-  '/event/$id/participants': typeof AuthedEventIdParticipantsRoute
-  '/event/$id/roles': typeof AuthedEventIdRolesRoute
-  '/event/$id/settings': typeof AuthedEventIdSettingsRoute
-  '/event/$id/stream': typeof AuthedEventIdStreamRoute
-  '/group/$id/amendments': typeof AuthedGroupIdAmendmentsRoute
-  '/group/$id/blogs-and-statements': typeof AuthedGroupIdBlogsAndStatementsRoute
-  '/group/$id/events': typeof AuthedGroupIdEventsRoute
-  '/group/$id/memberships': typeof AuthedGroupIdMembershipsRoute
-  '/group/$id/network': typeof AuthedGroupIdNetworkRoute
-  '/group/$id/notifications': typeof AuthedGroupIdNotificationsRoute
-  '/group/$id/operation': typeof AuthedGroupIdOperationRoute
-  '/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
-  '/group/$id/settings': typeof AuthedGroupIdSettingsRoute
-  '/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
-  '/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
-  '/user/$id/meet': typeof AuthedUserIdMeetRoute
-  '/user/$id/memberships': typeof AuthedUserIdMembershipsRoute
-  '/user/$id/network': typeof AuthedUserIdNetworkRoute
-  '/user/$id/notification-settings': typeof AuthedUserIdNotificationSettingsRoute
-  '/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
-  '/user/$id/settings': typeof AuthedUserIdSettingsRoute
-  '/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
-  '/amendment/$id': typeof AuthedAmendmentIdIndexRoute
-  '/blog/$id': typeof AuthedBlogIdIndexRoute
-  '/event/$id': typeof AuthedEventIdIndexRoute
-  '/group/$id': typeof AuthedGroupIdIndexRoute
-  '/user/$id': typeof AuthedUserIdIndexRoute
-  '/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
-  '/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
-  '/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
-  '/event/$id/agenda': typeof AuthedEventIdAgendaIndexRoute
-  '/group/$id/blog': typeof AuthedGroupIdBlogIndexRoute
-  '/group/$id/editor': typeof AuthedGroupIdEditorIndexRoute
-  '/group/$id/blog/$entryId/edit': typeof AuthedGroupIdBlogEntryIdEditRoute
-  '/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
-  '/group/$id/blog/$entryId/notifications': typeof AuthedGroupIdBlogEntryIdNotificationsRoute
-  '/user/$id/blog/$entryId/edit': typeof AuthedUserIdBlogEntryIdEditRoute
-  '/user/$id/blog/$entryId/editor': typeof AuthedUserIdBlogEntryIdEditorRoute
-  '/user/$id/blog/$entryId/notifications': typeof AuthedUserIdBlogEntryIdNotificationsRoute
-  '/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdIndexRoute
-  '/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdIndexRoute
-}
-
-export interface FileRoutesById {
-  __root__: typeof rootRoute
-  '/': typeof IndexRoute
-  '/$': typeof SplatRoute
-  '/_authed': typeof AuthedRouteWithChildren
-  '/auth': typeof AuthRouteWithChildren
-  '/docs': typeof DocsRouteWithChildren
-  '/features': typeof FeaturesRoute
-  '/imprint': typeof ImprintRoute
-  '/pricing': typeof PricingRoute
-  '/privacy-policy': typeof PrivacyPolicyRoute
-  '/solutions': typeof SolutionsRoute
-  '/support': typeof SupportRoute
-  '/terms-and-conditions': typeof TermsAndConditionsRoute
-  '/unauthorized': typeof UnauthorizedRoute
-  '/_authed/calendar': typeof AuthedCalendarRoute
-  '/_authed/home': typeof AuthedHomeRoute
-  '/_authed/messages': typeof AuthedMessagesRoute
-  '/_authed/notifications': typeof AuthedNotificationsRoute
-  '/_authed/search': typeof AuthedSearchRoute
-  '/_authed/todos': typeof AuthedTodosRouteWithChildren
-  '/auth/callback': typeof AuthCallbackRoute
-  '/auth/forgot-password': typeof AuthForgotPasswordRoute
-  '/auth/sign-in': typeof AuthSignInRoute
-  '/auth/sign-up': typeof AuthSignUpRoute
-  '/auth/verify': typeof AuthVerifyRoute
-  '/docs/$topic': typeof DocsTopicRoute
-  '/auth/': typeof AuthIndexRoute
-  '/docs/': typeof DocsIndexRoute
-  '/_authed/amendment/$id': typeof AuthedAmendmentIdRouteWithChildren
-  '/_authed/blog/$id': typeof AuthedBlogIdRouteWithChildren
-  '/_authed/create/agenda-item': typeof AuthedCreateAgendaItemRoute
-  '/_authed/create/amendment': typeof AuthedCreateAmendmentRoute
-  '/_authed/create/blog-entry': typeof AuthedCreateBlogEntryRoute
-  '/_authed/create/election-candidate': typeof AuthedCreateElectionCandidateRoute
-  '/_authed/create/event': typeof AuthedCreateEventRoute
-  '/_authed/create/group': typeof AuthedCreateGroupRoute
-  '/_authed/create/payment': typeof AuthedCreatePaymentRoute
-  '/_authed/create/statement': typeof AuthedCreateStatementRoute
-  '/_authed/create/todo': typeof AuthedCreateTodoRoute
-  '/_authed/event/$id': typeof AuthedEventIdRouteWithChildren
-  '/_authed/group/$id': typeof AuthedGroupIdRouteWithChildren
-  '/_authed/statement/$id': typeof AuthedStatementIdRoute
-  '/_authed/todos/$id': typeof AuthedTodosIdRoute
-  '/_authed/user/$id': typeof AuthedUserIdRouteWithChildren
-  '/_authed/create/': typeof AuthedCreateIndexRoute
-  '/_authed/amendment/$id/change-requests': typeof AuthedAmendmentIdChangeRequestsRoute
-  '/_authed/amendment/$id/collaborators': typeof AuthedAmendmentIdCollaboratorsRoute
-  '/_authed/amendment/$id/discussions': typeof AuthedAmendmentIdDiscussionsRoute
-  '/_authed/amendment/$id/notifications': typeof AuthedAmendmentIdNotificationsRoute
-  '/_authed/amendment/$id/process': typeof AuthedAmendmentIdProcessRoute
-  '/_authed/amendment/$id/settings': typeof AuthedAmendmentIdSettingsRoute
-  '/_authed/amendment/$id/streetscape': typeof AuthedAmendmentIdStreetscapeRoute
-  '/_authed/amendment/$id/text': typeof AuthedAmendmentIdTextRoute
-  '/_authed/blog/$id/edit': typeof AuthedBlogIdEditRoute
-  '/_authed/blog/$id/notifications': typeof AuthedBlogIdNotificationsRoute
-  '/_authed/event/$id/agenda': typeof AuthedEventIdAgendaRouteWithChildren
-  '/_authed/event/$id/network': typeof AuthedEventIdNetworkRoute
-  '/_authed/event/$id/notifications': typeof AuthedEventIdNotificationsRoute
-  '/_authed/event/$id/participants': typeof AuthedEventIdParticipantsRoute
-  '/_authed/event/$id/roles': typeof AuthedEventIdRolesRoute
-  '/_authed/event/$id/settings': typeof AuthedEventIdSettingsRoute
-  '/_authed/event/$id/stream': typeof AuthedEventIdStreamRoute
-  '/_authed/group/$id/amendments': typeof AuthedGroupIdAmendmentsRoute
-  '/_authed/group/$id/blog': typeof AuthedGroupIdBlogRouteWithChildren
-  '/_authed/group/$id/blogs-and-statements': typeof AuthedGroupIdBlogsAndStatementsRoute
-  '/_authed/group/$id/editor': typeof AuthedGroupIdEditorRouteWithChildren
-  '/_authed/group/$id/events': typeof AuthedGroupIdEventsRoute
-  '/_authed/group/$id/memberships': typeof AuthedGroupIdMembershipsRoute
-  '/_authed/group/$id/network': typeof AuthedGroupIdNetworkRoute
-  '/_authed/group/$id/notifications': typeof AuthedGroupIdNotificationsRoute
-  '/_authed/group/$id/operation': typeof AuthedGroupIdOperationRoute
-  '/_authed/group/$id/relationships': typeof AuthedGroupIdRelationshipsRoute
-  '/_authed/group/$id/settings': typeof AuthedGroupIdSettingsRoute
-  '/_authed/user/$id/blog': typeof AuthedUserIdBlogRouteWithChildren
-  '/_authed/user/$id/editor': typeof AuthedUserIdEditorRouteWithChildren
-  '/_authed/user/$id/meet': typeof AuthedUserIdMeetRoute
-  '/_authed/user/$id/memberships': typeof AuthedUserIdMembershipsRoute
-  '/_authed/user/$id/network': typeof AuthedUserIdNetworkRoute
-  '/_authed/user/$id/notification-settings': typeof AuthedUserIdNotificationSettingsRoute
-  '/_authed/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
-  '/_authed/user/$id/settings': typeof AuthedUserIdSettingsRoute
-  '/_authed/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
-  '/_authed/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
-  '/_authed/blog/$id/': typeof AuthedBlogIdIndexRoute
-  '/_authed/event/$id/': typeof AuthedEventIdIndexRoute
-  '/_authed/group/$id/': typeof AuthedGroupIdIndexRoute
-  '/_authed/user/$id/': typeof AuthedUserIdIndexRoute
-  '/_authed/event/$id/agenda/$agendaItemId': typeof AuthedEventIdAgendaAgendaItemIdRoute
-  '/_authed/group/$id/blog/$entryId': typeof AuthedGroupIdBlogEntryIdRouteWithChildren
-  '/_authed/group/$id/editor/$docId': typeof AuthedGroupIdEditorDocIdRoute
-  '/_authed/user/$id/blog/$entryId': typeof AuthedUserIdBlogEntryIdRouteWithChildren
-  '/_authed/user/$id/editor/$docId': typeof AuthedUserIdEditorDocIdRoute
-  '/_authed/event/$id/agenda/': typeof AuthedEventIdAgendaIndexRoute
-  '/_authed/group/$id/blog/': typeof AuthedGroupIdBlogIndexRoute
-  '/_authed/group/$id/editor/': typeof AuthedGroupIdEditorIndexRoute
-  '/_authed/group/$id/blog/$entryId/edit': typeof AuthedGroupIdBlogEntryIdEditRoute
-  '/_authed/group/$id/blog/$entryId/editor': typeof AuthedGroupIdBlogEntryIdEditorRoute
-  '/_authed/group/$id/blog/$entryId/notifications': typeof AuthedGroupIdBlogEntryIdNotificationsRoute
-  '/_authed/user/$id/blog/$entryId/edit': typeof AuthedUserIdBlogEntryIdEditRoute
-  '/_authed/user/$id/blog/$entryId/editor': typeof AuthedUserIdBlogEntryIdEditorRoute
-  '/_authed/user/$id/blog/$entryId/notifications': typeof AuthedUserIdBlogEntryIdNotificationsRoute
-  '/_authed/group/$id/blog/$entryId/': typeof AuthedGroupIdBlogEntryIdIndexRoute
-  '/_authed/user/$id/blog/$entryId/': typeof AuthedUserIdBlogEntryIdIndexRoute
-}
-
-export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/$'
-    | ''
-    | '/auth'
-    | '/docs'
-    | '/features'
-    | '/imprint'
-    | '/pricing'
-    | '/privacy-policy'
-    | '/solutions'
-    | '/support'
-    | '/terms-and-conditions'
-    | '/unauthorized'
-    | '/calendar'
-    | '/home'
-    | '/messages'
-    | '/notifications'
-    | '/search'
-    | '/todos'
-    | '/auth/callback'
-    | '/auth/forgot-password'
-    | '/auth/sign-in'
-    | '/auth/sign-up'
-    | '/auth/verify'
-    | '/docs/$topic'
-    | '/auth/'
-    | '/docs/'
-    | '/amendment/$id'
-    | '/blog/$id'
-    | '/create/agenda-item'
-    | '/create/amendment'
-    | '/create/blog-entry'
-    | '/create/election-candidate'
-    | '/create/event'
-    | '/create/group'
-    | '/create/payment'
-    | '/create/statement'
-    | '/create/todo'
-    | '/event/$id'
-    | '/group/$id'
-    | '/statement/$id'
-    | '/todos/$id'
-    | '/user/$id'
-    | '/create'
-    | '/amendment/$id/change-requests'
-    | '/amendment/$id/collaborators'
-    | '/amendment/$id/discussions'
-    | '/amendment/$id/notifications'
-    | '/amendment/$id/process'
-    | '/amendment/$id/settings'
-    | '/amendment/$id/streetscape'
-    | '/amendment/$id/text'
-    | '/blog/$id/edit'
-    | '/blog/$id/notifications'
-    | '/event/$id/agenda'
-    | '/event/$id/network'
-    | '/event/$id/notifications'
-    | '/event/$id/participants'
-    | '/event/$id/roles'
-    | '/event/$id/settings'
-    | '/event/$id/stream'
-    | '/group/$id/amendments'
-    | '/group/$id/blog'
-    | '/group/$id/blogs-and-statements'
-    | '/group/$id/editor'
-    | '/group/$id/events'
-    | '/group/$id/memberships'
-    | '/group/$id/network'
-    | '/group/$id/notifications'
-    | '/group/$id/operation'
-    | '/group/$id/relationships'
-    | '/group/$id/settings'
-    | '/user/$id/blog'
-    | '/user/$id/editor'
-    | '/user/$id/meet'
-    | '/user/$id/memberships'
-    | '/user/$id/network'
-    | '/user/$id/notification-settings'
-    | '/user/$id/notifications'
-    | '/user/$id/settings'
-    | '/user/$id/subscriptions'
-    | '/amendment/$id/'
-    | '/blog/$id/'
-    | '/event/$id/'
-    | '/group/$id/'
-    | '/user/$id/'
-    | '/event/$id/agenda/$agendaItemId'
-    | '/group/$id/blog/$entryId'
-    | '/group/$id/editor/$docId'
-    | '/user/$id/blog/$entryId'
-    | '/user/$id/editor/$docId'
-    | '/event/$id/agenda/'
-    | '/group/$id/blog/'
-    | '/group/$id/editor/'
-    | '/group/$id/blog/$entryId/edit'
-    | '/group/$id/blog/$entryId/editor'
-    | '/group/$id/blog/$entryId/notifications'
-    | '/user/$id/blog/$entryId/edit'
-    | '/user/$id/blog/$entryId/editor'
-    | '/user/$id/blog/$entryId/notifications'
-    | '/group/$id/blog/$entryId/'
-    | '/user/$id/blog/$entryId/'
-  fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/$'
-    | ''
-    | '/features'
-    | '/imprint'
-    | '/pricing'
-    | '/privacy-policy'
-    | '/solutions'
-    | '/support'
-    | '/terms-and-conditions'
-    | '/unauthorized'
-    | '/calendar'
-    | '/home'
-    | '/messages'
-    | '/notifications'
-    | '/search'
-    | '/todos'
-    | '/auth/callback'
-    | '/auth/forgot-password'
-    | '/auth/sign-in'
-    | '/auth/sign-up'
-    | '/auth/verify'
-    | '/docs/$topic'
-    | '/auth'
-    | '/docs'
-    | '/create/agenda-item'
-    | '/create/amendment'
-    | '/create/blog-entry'
-    | '/create/election-candidate'
-    | '/create/event'
-    | '/create/group'
-    | '/create/payment'
-    | '/create/statement'
-    | '/create/todo'
-    | '/statement/$id'
-    | '/todos/$id'
-    | '/create'
-    | '/amendment/$id/change-requests'
-    | '/amendment/$id/collaborators'
-    | '/amendment/$id/discussions'
-    | '/amendment/$id/notifications'
-    | '/amendment/$id/process'
-    | '/amendment/$id/settings'
-    | '/amendment/$id/streetscape'
-    | '/amendment/$id/text'
-    | '/blog/$id/edit'
-    | '/blog/$id/notifications'
-    | '/event/$id/network'
-    | '/event/$id/notifications'
-    | '/event/$id/participants'
-    | '/event/$id/roles'
-    | '/event/$id/settings'
-    | '/event/$id/stream'
-    | '/group/$id/amendments'
-    | '/group/$id/blogs-and-statements'
-    | '/group/$id/events'
-    | '/group/$id/memberships'
-    | '/group/$id/network'
-    | '/group/$id/notifications'
-    | '/group/$id/operation'
-    | '/group/$id/relationships'
-    | '/group/$id/settings'
-    | '/user/$id/blog'
-    | '/user/$id/editor'
-    | '/user/$id/meet'
-    | '/user/$id/memberships'
-    | '/user/$id/network'
-    | '/user/$id/notification-settings'
-    | '/user/$id/notifications'
-    | '/user/$id/settings'
-    | '/user/$id/subscriptions'
-    | '/amendment/$id'
-    | '/blog/$id'
-    | '/event/$id'
-    | '/group/$id'
-    | '/user/$id'
-    | '/event/$id/agenda/$agendaItemId'
-    | '/group/$id/editor/$docId'
-    | '/user/$id/editor/$docId'
-    | '/event/$id/agenda'
-    | '/group/$id/blog'
-    | '/group/$id/editor'
-    | '/group/$id/blog/$entryId/edit'
-    | '/group/$id/blog/$entryId/editor'
-    | '/group/$id/blog/$entryId/notifications'
-    | '/user/$id/blog/$entryId/edit'
-    | '/user/$id/blog/$entryId/editor'
-    | '/user/$id/blog/$entryId/notifications'
-    | '/group/$id/blog/$entryId'
-    | '/user/$id/blog/$entryId'
-  id:
-    | '__root__'
-    | '/'
-    | '/$'
-    | '/_authed'
-    | '/auth'
-    | '/docs'
-    | '/features'
-    | '/imprint'
-    | '/pricing'
-    | '/privacy-policy'
-    | '/solutions'
-    | '/support'
-    | '/terms-and-conditions'
-    | '/unauthorized'
-    | '/_authed/calendar'
-    | '/_authed/home'
-    | '/_authed/messages'
-    | '/_authed/notifications'
-    | '/_authed/search'
-    | '/_authed/todos'
-    | '/auth/callback'
-    | '/auth/forgot-password'
-    | '/auth/sign-in'
-    | '/auth/sign-up'
-    | '/auth/verify'
-    | '/docs/$topic'
-    | '/auth/'
-    | '/docs/'
-    | '/_authed/amendment/$id'
-    | '/_authed/blog/$id'
-    | '/_authed/create/agenda-item'
-    | '/_authed/create/amendment'
-    | '/_authed/create/blog-entry'
-    | '/_authed/create/election-candidate'
-    | '/_authed/create/event'
-    | '/_authed/create/group'
-    | '/_authed/create/payment'
-    | '/_authed/create/statement'
-    | '/_authed/create/todo'
-    | '/_authed/event/$id'
-    | '/_authed/group/$id'
-    | '/_authed/statement/$id'
-    | '/_authed/todos/$id'
-    | '/_authed/user/$id'
-    | '/_authed/create/'
-    | '/_authed/amendment/$id/change-requests'
-    | '/_authed/amendment/$id/collaborators'
-    | '/_authed/amendment/$id/discussions'
-    | '/_authed/amendment/$id/notifications'
-    | '/_authed/amendment/$id/process'
-    | '/_authed/amendment/$id/settings'
-    | '/_authed/amendment/$id/streetscape'
-    | '/_authed/amendment/$id/text'
-    | '/_authed/blog/$id/edit'
-    | '/_authed/blog/$id/notifications'
-    | '/_authed/event/$id/agenda'
-    | '/_authed/event/$id/network'
-    | '/_authed/event/$id/notifications'
-    | '/_authed/event/$id/participants'
-    | '/_authed/event/$id/roles'
-    | '/_authed/event/$id/settings'
-    | '/_authed/event/$id/stream'
-    | '/_authed/group/$id/amendments'
-    | '/_authed/group/$id/blog'
-    | '/_authed/group/$id/blogs-and-statements'
-    | '/_authed/group/$id/editor'
-    | '/_authed/group/$id/events'
-    | '/_authed/group/$id/memberships'
-    | '/_authed/group/$id/network'
-    | '/_authed/group/$id/notifications'
-    | '/_authed/group/$id/operation'
-    | '/_authed/group/$id/relationships'
-    | '/_authed/group/$id/settings'
-    | '/_authed/user/$id/blog'
-    | '/_authed/user/$id/editor'
-    | '/_authed/user/$id/meet'
-    | '/_authed/user/$id/memberships'
-    | '/_authed/user/$id/network'
-    | '/_authed/user/$id/notification-settings'
-    | '/_authed/user/$id/notifications'
-    | '/_authed/user/$id/settings'
-    | '/_authed/user/$id/subscriptions'
-    | '/_authed/amendment/$id/'
-    | '/_authed/blog/$id/'
-    | '/_authed/event/$id/'
-    | '/_authed/group/$id/'
-    | '/_authed/user/$id/'
-    | '/_authed/event/$id/agenda/$agendaItemId'
-    | '/_authed/group/$id/blog/$entryId'
-    | '/_authed/group/$id/editor/$docId'
-    | '/_authed/user/$id/blog/$entryId'
-    | '/_authed/user/$id/editor/$docId'
-    | '/_authed/event/$id/agenda/'
-    | '/_authed/group/$id/blog/'
-    | '/_authed/group/$id/editor/'
-    | '/_authed/group/$id/blog/$entryId/edit'
-    | '/_authed/group/$id/blog/$entryId/editor'
-    | '/_authed/group/$id/blog/$entryId/notifications'
-    | '/_authed/user/$id/blog/$entryId/edit'
-    | '/_authed/user/$id/blog/$entryId/editor'
-    | '/_authed/user/$id/blog/$entryId/notifications'
-    | '/_authed/group/$id/blog/$entryId/'
-    | '/_authed/user/$id/blog/$entryId/'
-  fileRoutesById: FileRoutesById
-}
-
-export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  SplatRoute: typeof SplatRoute
-  AuthedRoute: typeof AuthedRouteWithChildren
-  AuthRoute: typeof AuthRouteWithChildren
-  DocsRoute: typeof DocsRouteWithChildren
-  FeaturesRoute: typeof FeaturesRoute
-  ImprintRoute: typeof ImprintRoute
-  PricingRoute: typeof PricingRoute
-  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
-  SolutionsRoute: typeof SolutionsRoute
-  SupportRoute: typeof SupportRoute
-  TermsAndConditionsRoute: typeof TermsAndConditionsRoute
-  UnauthorizedRoute: typeof UnauthorizedRoute
-}
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
@@ -2444,549 +2656,32 @@ const rootRouteChildren: RootRouteChildren = {
   SupportRoute: SupportRoute,
   TermsAndConditionsRoute: TermsAndConditionsRoute,
   UnauthorizedRoute: UnauthorizedRoute,
+  ApiMutateRoute: ApiMutateRoute,
+  ApiQueryRoute: ApiQueryRoute,
+  ApiAiCatalogRoute: ApiAiCatalogRoute,
+  ApiAiChatRoute: ApiAiChatRoute,
+  ApiAiCommandRoute: ApiAiCommandRoute,
+  ApiAiCopilotRoute: ApiAiCopilotRoute,
+  ApiAiCredentialsRoute: ApiAiCredentialsRoute,
+  ApiDebugGroupGeneralAssembliesRoute: ApiDebugGroupGeneralAssembliesRoute,
+  ApiEurostatCatalogueRoute: ApiEurostatCatalogueRoute,
+  ApiEurostatDetailsRoute: ApiEurostatDetailsRoute,
+  ApiEurostatImportRoute: ApiEurostatImportRoute,
+  ApiEurostatImportStepRoute: ApiEurostatImportStepRoute,
+  ApiEurostatProjectionRoute: ApiEurostatProjectionRoute,
+  ApiGovdataCatalogueRoute: ApiGovdataCatalogueRoute,
+  ApiGovdataImportRoute: ApiGovdataImportRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/$",
-        "/_authed",
-        "/auth",
-        "/docs",
-        "/features",
-        "/imprint",
-        "/pricing",
-        "/privacy-policy",
-        "/solutions",
-        "/support",
-        "/terms-and-conditions",
-        "/unauthorized"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/$": {
-      "filePath": "$.tsx"
-    },
-    "/_authed": {
-      "filePath": "_authed.tsx",
-      "children": [
-        "/_authed/calendar",
-        "/_authed/home",
-        "/_authed/messages",
-        "/_authed/notifications",
-        "/_authed/search",
-        "/_authed/todos",
-        "/_authed/amendment/$id",
-        "/_authed/blog/$id",
-        "/_authed/create/agenda-item",
-        "/_authed/create/amendment",
-        "/_authed/create/blog-entry",
-        "/_authed/create/election-candidate",
-        "/_authed/create/event",
-        "/_authed/create/group",
-        "/_authed/create/payment",
-        "/_authed/create/statement",
-        "/_authed/create/todo",
-        "/_authed/event/$id",
-        "/_authed/group/$id",
-        "/_authed/statement/$id",
-        "/_authed/user/$id",
-        "/_authed/create/"
-      ]
-    },
-    "/auth": {
-      "filePath": "auth.tsx",
-      "children": [
-        "/auth/callback",
-        "/auth/forgot-password",
-        "/auth/sign-in",
-        "/auth/sign-up",
-        "/auth/verify",
-        "/auth/"
-      ]
-    },
-    "/docs": {
-      "filePath": "docs.tsx",
-      "children": [
-        "/docs/$topic",
-        "/docs/"
-      ]
-    },
-    "/features": {
-      "filePath": "features.tsx"
-    },
-    "/imprint": {
-      "filePath": "imprint.tsx"
-    },
-    "/pricing": {
-      "filePath": "pricing.tsx"
-    },
-    "/privacy-policy": {
-      "filePath": "privacy-policy.tsx"
-    },
-    "/solutions": {
-      "filePath": "solutions.tsx"
-    },
-    "/support": {
-      "filePath": "support.tsx"
-    },
-    "/terms-and-conditions": {
-      "filePath": "terms-and-conditions.tsx"
-    },
-    "/unauthorized": {
-      "filePath": "unauthorized.tsx"
-    },
-    "/_authed/calendar": {
-      "filePath": "_authed/calendar.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/home": {
-      "filePath": "_authed/home.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/messages": {
-      "filePath": "_authed/messages.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/notifications": {
-      "filePath": "_authed/notifications.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/search": {
-      "filePath": "_authed/search.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/todos": {
-      "filePath": "_authed/todos.tsx",
-      "parent": "/_authed",
-      "children": [
-        "/_authed/todos/$id"
-      ]
-    },
-    "/auth/callback": {
-      "filePath": "auth/callback.tsx",
-      "parent": "/auth"
-    },
-    "/auth/forgot-password": {
-      "filePath": "auth/forgot-password.tsx",
-      "parent": "/auth"
-    },
-    "/auth/sign-in": {
-      "filePath": "auth/sign-in.tsx",
-      "parent": "/auth"
-    },
-    "/auth/sign-up": {
-      "filePath": "auth/sign-up.tsx",
-      "parent": "/auth"
-    },
-    "/auth/verify": {
-      "filePath": "auth/verify.tsx",
-      "parent": "/auth"
-    },
-    "/docs/$topic": {
-      "filePath": "docs/$topic.tsx",
-      "parent": "/docs"
-    },
-    "/auth/": {
-      "filePath": "auth/index.tsx",
-      "parent": "/auth"
-    },
-    "/docs/": {
-      "filePath": "docs/index.tsx",
-      "parent": "/docs"
-    },
-    "/_authed/amendment/$id": {
-      "filePath": "_authed/amendment/$id.tsx",
-      "parent": "/_authed",
-      "children": [
-        "/_authed/amendment/$id/change-requests",
-        "/_authed/amendment/$id/collaborators",
-        "/_authed/amendment/$id/discussions",
-        "/_authed/amendment/$id/notifications",
-        "/_authed/amendment/$id/process",
-        "/_authed/amendment/$id/settings",
-        "/_authed/amendment/$id/streetscape",
-        "/_authed/amendment/$id/text",
-        "/_authed/amendment/$id/"
-      ]
-    },
-    "/_authed/blog/$id": {
-      "filePath": "_authed/blog/$id.tsx",
-      "parent": "/_authed",
-      "children": [
-        "/_authed/blog/$id/edit",
-        "/_authed/blog/$id/notifications",
-        "/_authed/blog/$id/"
-      ]
-    },
-    "/_authed/create/agenda-item": {
-      "filePath": "_authed/create/agenda-item.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/create/amendment": {
-      "filePath": "_authed/create/amendment.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/create/blog-entry": {
-      "filePath": "_authed/create/blog-entry.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/create/election-candidate": {
-      "filePath": "_authed/create/election-candidate.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/create/event": {
-      "filePath": "_authed/create/event.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/create/group": {
-      "filePath": "_authed/create/group.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/create/payment": {
-      "filePath": "_authed/create/payment.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/create/statement": {
-      "filePath": "_authed/create/statement.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/create/todo": {
-      "filePath": "_authed/create/todo.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/event/$id": {
-      "filePath": "_authed/event/$id.tsx",
-      "parent": "/_authed",
-      "children": [
-        "/_authed/event/$id/agenda",
-        "/_authed/event/$id/network",
-        "/_authed/event/$id/notifications",
-        "/_authed/event/$id/participants",
-        "/_authed/event/$id/roles",
-        "/_authed/event/$id/settings",
-        "/_authed/event/$id/stream",
-        "/_authed/event/$id/"
-      ]
-    },
-    "/_authed/group/$id": {
-      "filePath": "_authed/group/$id.tsx",
-      "parent": "/_authed",
-      "children": [
-        "/_authed/group/$id/amendments",
-        "/_authed/group/$id/blog",
-        "/_authed/group/$id/blogs-and-statements",
-        "/_authed/group/$id/editor",
-        "/_authed/group/$id/events",
-        "/_authed/group/$id/memberships",
-        "/_authed/group/$id/network",
-        "/_authed/group/$id/notifications",
-        "/_authed/group/$id/operation",
-        "/_authed/group/$id/relationships",
-        "/_authed/group/$id/settings",
-        "/_authed/group/$id/"
-      ]
-    },
-    "/_authed/statement/$id": {
-      "filePath": "_authed/statement/$id.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/todos/$id": {
-      "filePath": "_authed/todos/$id.tsx",
-      "parent": "/_authed/todos"
-    },
-    "/_authed/user/$id": {
-      "filePath": "_authed/user/$id.tsx",
-      "parent": "/_authed",
-      "children": [
-        "/_authed/user/$id/blog",
-        "/_authed/user/$id/editor",
-        "/_authed/user/$id/meet",
-        "/_authed/user/$id/memberships",
-        "/_authed/user/$id/network",
-        "/_authed/user/$id/notification-settings",
-        "/_authed/user/$id/notifications",
-        "/_authed/user/$id/settings",
-        "/_authed/user/$id/subscriptions",
-        "/_authed/user/$id/"
-      ]
-    },
-    "/_authed/create/": {
-      "filePath": "_authed/create/index.tsx",
-      "parent": "/_authed"
-    },
-    "/_authed/amendment/$id/change-requests": {
-      "filePath": "_authed/amendment/$id/change-requests.tsx",
-      "parent": "/_authed/amendment/$id"
-    },
-    "/_authed/amendment/$id/collaborators": {
-      "filePath": "_authed/amendment/$id/collaborators.tsx",
-      "parent": "/_authed/amendment/$id"
-    },
-    "/_authed/amendment/$id/discussions": {
-      "filePath": "_authed/amendment/$id/discussions.tsx",
-      "parent": "/_authed/amendment/$id"
-    },
-    "/_authed/amendment/$id/notifications": {
-      "filePath": "_authed/amendment/$id/notifications.tsx",
-      "parent": "/_authed/amendment/$id"
-    },
-    "/_authed/amendment/$id/process": {
-      "filePath": "_authed/amendment/$id/process.tsx",
-      "parent": "/_authed/amendment/$id"
-    },
-    "/_authed/amendment/$id/settings": {
-      "filePath": "_authed/amendment/$id/settings.tsx",
-      "parent": "/_authed/amendment/$id"
-    },
-    "/_authed/amendment/$id/streetscape": {
-      "filePath": "_authed/amendment/$id/streetscape.tsx",
-      "parent": "/_authed/amendment/$id"
-    },
-    "/_authed/amendment/$id/text": {
-      "filePath": "_authed/amendment/$id/text.tsx",
-      "parent": "/_authed/amendment/$id"
-    },
-    "/_authed/blog/$id/edit": {
-      "filePath": "_authed/blog/$id/edit.tsx",
-      "parent": "/_authed/blog/$id"
-    },
-    "/_authed/blog/$id/notifications": {
-      "filePath": "_authed/blog/$id/notifications.tsx",
-      "parent": "/_authed/blog/$id"
-    },
-    "/_authed/event/$id/agenda": {
-      "filePath": "_authed/event/$id/agenda.tsx",
-      "parent": "/_authed/event/$id",
-      "children": [
-        "/_authed/event/$id/agenda/$agendaItemId",
-        "/_authed/event/$id/agenda/"
-      ]
-    },
-    "/_authed/event/$id/network": {
-      "filePath": "_authed/event/$id/network.tsx",
-      "parent": "/_authed/event/$id"
-    },
-    "/_authed/event/$id/notifications": {
-      "filePath": "_authed/event/$id/notifications.tsx",
-      "parent": "/_authed/event/$id"
-    },
-    "/_authed/event/$id/participants": {
-      "filePath": "_authed/event/$id/participants.tsx",
-      "parent": "/_authed/event/$id"
-    },
-    "/_authed/event/$id/roles": {
-      "filePath": "_authed/event/$id/roles.tsx",
-      "parent": "/_authed/event/$id"
-    },
-    "/_authed/event/$id/settings": {
-      "filePath": "_authed/event/$id/settings.tsx",
-      "parent": "/_authed/event/$id"
-    },
-    "/_authed/event/$id/stream": {
-      "filePath": "_authed/event/$id/stream.tsx",
-      "parent": "/_authed/event/$id"
-    },
-    "/_authed/group/$id/amendments": {
-      "filePath": "_authed/group/$id/amendments.tsx",
-      "parent": "/_authed/group/$id"
-    },
-    "/_authed/group/$id/blog": {
-      "filePath": "_authed/group/$id/blog.tsx",
-      "parent": "/_authed/group/$id",
-      "children": [
-        "/_authed/group/$id/blog/$entryId",
-        "/_authed/group/$id/blog/"
-      ]
-    },
-    "/_authed/group/$id/blogs-and-statements": {
-      "filePath": "_authed/group/$id/blogs-and-statements.tsx",
-      "parent": "/_authed/group/$id"
-    },
-    "/_authed/group/$id/editor": {
-      "filePath": "_authed/group/$id/editor.tsx",
-      "parent": "/_authed/group/$id",
-      "children": [
-        "/_authed/group/$id/editor/$docId",
-        "/_authed/group/$id/editor/"
-      ]
-    },
-    "/_authed/group/$id/events": {
-      "filePath": "_authed/group/$id/events.tsx",
-      "parent": "/_authed/group/$id"
-    },
-    "/_authed/group/$id/memberships": {
-      "filePath": "_authed/group/$id/memberships.tsx",
-      "parent": "/_authed/group/$id"
-    },
-    "/_authed/group/$id/network": {
-      "filePath": "_authed/group/$id/network.tsx",
-      "parent": "/_authed/group/$id"
-    },
-    "/_authed/group/$id/notifications": {
-      "filePath": "_authed/group/$id/notifications.tsx",
-      "parent": "/_authed/group/$id"
-    },
-    "/_authed/group/$id/operation": {
-      "filePath": "_authed/group/$id/operation.tsx",
-      "parent": "/_authed/group/$id"
-    },
-    "/_authed/group/$id/relationships": {
-      "filePath": "_authed/group/$id/relationships.tsx",
-      "parent": "/_authed/group/$id"
-    },
-    "/_authed/group/$id/settings": {
-      "filePath": "_authed/group/$id/settings.tsx",
-      "parent": "/_authed/group/$id"
-    },
-    "/_authed/user/$id/blog": {
-      "filePath": "_authed/user/$id/blog.tsx",
-      "parent": "/_authed/user/$id",
-      "children": [
-        "/_authed/user/$id/blog/$entryId"
-      ]
-    },
-    "/_authed/user/$id/editor": {
-      "filePath": "_authed/user/$id/editor.tsx",
-      "parent": "/_authed/user/$id",
-      "children": [
-        "/_authed/user/$id/editor/$docId"
-      ]
-    },
-    "/_authed/user/$id/meet": {
-      "filePath": "_authed/user/$id/meet.tsx",
-      "parent": "/_authed/user/$id"
-    },
-    "/_authed/user/$id/memberships": {
-      "filePath": "_authed/user/$id/memberships.tsx",
-      "parent": "/_authed/user/$id"
-    },
-    "/_authed/user/$id/network": {
-      "filePath": "_authed/user/$id/network.tsx",
-      "parent": "/_authed/user/$id"
-    },
-    "/_authed/user/$id/notification-settings": {
-      "filePath": "_authed/user/$id/notification-settings.tsx",
-      "parent": "/_authed/user/$id"
-    },
-    "/_authed/user/$id/notifications": {
-      "filePath": "_authed/user/$id/notifications.tsx",
-      "parent": "/_authed/user/$id"
-    },
-    "/_authed/user/$id/settings": {
-      "filePath": "_authed/user/$id/settings.tsx",
-      "parent": "/_authed/user/$id"
-    },
-    "/_authed/user/$id/subscriptions": {
-      "filePath": "_authed/user/$id/subscriptions.tsx",
-      "parent": "/_authed/user/$id"
-    },
-    "/_authed/amendment/$id/": {
-      "filePath": "_authed/amendment/$id/index.tsx",
-      "parent": "/_authed/amendment/$id"
-    },
-    "/_authed/blog/$id/": {
-      "filePath": "_authed/blog/$id/index.tsx",
-      "parent": "/_authed/blog/$id"
-    },
-    "/_authed/event/$id/": {
-      "filePath": "_authed/event/$id/index.tsx",
-      "parent": "/_authed/event/$id"
-    },
-    "/_authed/group/$id/": {
-      "filePath": "_authed/group/$id/index.tsx",
-      "parent": "/_authed/group/$id"
-    },
-    "/_authed/user/$id/": {
-      "filePath": "_authed/user/$id/index.tsx",
-      "parent": "/_authed/user/$id"
-    },
-    "/_authed/event/$id/agenda/$agendaItemId": {
-      "filePath": "_authed/event/$id/agenda/$agendaItemId.tsx",
-      "parent": "/_authed/event/$id/agenda"
-    },
-    "/_authed/group/$id/blog/$entryId": {
-      "filePath": "_authed/group/$id/blog/$entryId.tsx",
-      "parent": "/_authed/group/$id/blog",
-      "children": [
-        "/_authed/group/$id/blog/$entryId/edit",
-        "/_authed/group/$id/blog/$entryId/editor",
-        "/_authed/group/$id/blog/$entryId/notifications",
-        "/_authed/group/$id/blog/$entryId/"
-      ]
-    },
-    "/_authed/group/$id/editor/$docId": {
-      "filePath": "_authed/group/$id/editor/$docId.tsx",
-      "parent": "/_authed/group/$id/editor"
-    },
-    "/_authed/user/$id/blog/$entryId": {
-      "filePath": "_authed/user/$id/blog/$entryId.tsx",
-      "parent": "/_authed/user/$id/blog",
-      "children": [
-        "/_authed/user/$id/blog/$entryId/edit",
-        "/_authed/user/$id/blog/$entryId/editor",
-        "/_authed/user/$id/blog/$entryId/notifications",
-        "/_authed/user/$id/blog/$entryId/"
-      ]
-    },
-    "/_authed/user/$id/editor/$docId": {
-      "filePath": "_authed/user/$id/editor/$docId.tsx",
-      "parent": "/_authed/user/$id/editor"
-    },
-    "/_authed/event/$id/agenda/": {
-      "filePath": "_authed/event/$id/agenda/index.tsx",
-      "parent": "/_authed/event/$id/agenda"
-    },
-    "/_authed/group/$id/blog/": {
-      "filePath": "_authed/group/$id/blog/index.tsx",
-      "parent": "/_authed/group/$id/blog"
-    },
-    "/_authed/group/$id/editor/": {
-      "filePath": "_authed/group/$id/editor/index.tsx",
-      "parent": "/_authed/group/$id/editor"
-    },
-    "/_authed/group/$id/blog/$entryId/edit": {
-      "filePath": "_authed/group/$id/blog/$entryId/edit.tsx",
-      "parent": "/_authed/group/$id/blog/$entryId"
-    },
-    "/_authed/group/$id/blog/$entryId/editor": {
-      "filePath": "_authed/group/$id/blog/$entryId/editor.tsx",
-      "parent": "/_authed/group/$id/blog/$entryId"
-    },
-    "/_authed/group/$id/blog/$entryId/notifications": {
-      "filePath": "_authed/group/$id/blog/$entryId/notifications.tsx",
-      "parent": "/_authed/group/$id/blog/$entryId"
-    },
-    "/_authed/user/$id/blog/$entryId/edit": {
-      "filePath": "_authed/user/$id/blog/$entryId/edit.tsx",
-      "parent": "/_authed/user/$id/blog/$entryId"
-    },
-    "/_authed/user/$id/blog/$entryId/editor": {
-      "filePath": "_authed/user/$id/blog/$entryId/editor.tsx",
-      "parent": "/_authed/user/$id/blog/$entryId"
-    },
-    "/_authed/user/$id/blog/$entryId/notifications": {
-      "filePath": "_authed/user/$id/blog/$entryId/notifications.tsx",
-      "parent": "/_authed/user/$id/blog/$entryId"
-    },
-    "/_authed/group/$id/blog/$entryId/": {
-      "filePath": "_authed/group/$id/blog/$entryId/index.tsx",
-      "parent": "/_authed/group/$id/blog/$entryId"
-    },
-    "/_authed/user/$id/blog/$entryId/": {
-      "filePath": "_authed/user/$id/blog/$entryId/index.tsx",
-      "parent": "/_authed/user/$id/blog/$entryId"
-    }
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
   }
 }
-ROUTE_MANIFEST_END */

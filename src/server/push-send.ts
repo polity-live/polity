@@ -151,7 +151,7 @@ export const pushSendFn = createServerFn({ method: 'POST' })
       };
     } catch (error) {
       console.error('[Push API] Error sending push notifications:', error);
-      throw new Error('Failed to send push notifications');
+      throw new Error('Failed to send push notifications', { cause: error });
     }
   });
 

@@ -38,7 +38,8 @@ export function parseChartCsv(text: string): ParsedChartTable {
       skip_empty_lines: true,
     }) as string[][];
   } catch (error) {
-    throw new Error(error instanceof Error ? error.message : 'CSV_PARSE_FAILED');
+    const message = error instanceof Error ? error.message : 'CSV_PARSE_FAILED';
+    throw new Error(message, { cause: error });
   }
 
   const [headerRow = [], ...dataRows] = parsedRows;

@@ -50,9 +50,8 @@ function extractLastNumber(pattern: RegExp, values: unknown[]) {
     if (!text) continue;
 
     let result: number | null = null;
-    let match: RegExpExecArray | null = null;
     pattern.lastIndex = 0;
-    while ((match = pattern.exec(text)) !== null) {
+    for (let match = pattern.exec(text); match !== null; match = pattern.exec(text)) {
       const parsed = Number.parseInt(match[1] ?? '', 10);
       if (Number.isFinite(parsed)) {
         result = parsed;

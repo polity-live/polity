@@ -1,5 +1,5 @@
 import { generateText } from 'ai';
-import { createAPIFileRoute } from '@tanstack/react-start/api';
+import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { getPreferredDefaultAiModel, toAiModelDescriptor } from '@/lib/ai/models';
 import { getSession } from '@/lib/supabase/server';
@@ -187,6 +187,10 @@ export async function handleCopilotRequest(request: Request): Promise<Response> 
   }
 }
 
-export const APIRoute = createAPIFileRoute('/api/ai/copilot')({
-  POST: async ({ request }) => handleCopilotRequest(request),
+export const Route = createFileRoute('/api/ai/copilot')({
+  server: {
+    handlers: {
+      POST: async ({ request }) => handleCopilotRequest(request),
+    },
+  },
 });

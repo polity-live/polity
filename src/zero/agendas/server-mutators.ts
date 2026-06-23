@@ -102,7 +102,6 @@ async function assertCanManageAgendaVoteFlow(
     throw new Error('Agenda item is not linked to an event.');
   }
 
-  let eventPermissionError: unknown = null;
   try {
     await can(tx, ctx, {
       action: 'manage_votes',
@@ -110,25 +109,24 @@ async function assertCanManageAgendaVoteFlow(
       eventId: agendaItem.event_id,
     });
     return;
-  } catch (error) {
-    if (!isPermissionError(error)) throw error;
-    eventPermissionError = error;
-  }
+  } catch (eventPermissionError) {
+    if (!isPermissionError(eventPermissionError)) throw eventPermissionError;
 
-  if (agendaItem.amendment_id) {
-    try {
-      await can(tx, ctx, {
-        action: 'manage',
-        resource: 'amendments',
-        amendmentId: agendaItem.amendment_id,
-      });
-      return;
-    } catch (error) {
-      if (!isPermissionError(error)) throw error;
+    if (agendaItem.amendment_id) {
+      try {
+        await can(tx, ctx, {
+          action: 'manage',
+          resource: 'amendments',
+          amendmentId: agendaItem.amendment_id,
+        });
+        return;
+      } catch (error) {
+        if (!isPermissionError(error)) throw error;
+      }
     }
-  }
 
-  throw eventPermissionError;
+    throw eventPermissionError;
+  }
 }
 
 async function assertCanEnsureEventSuggestionChangeRequestVotes(
@@ -144,7 +142,6 @@ async function assertCanEnsureEventSuggestionChangeRequestVotes(
     throw new Error('Agenda item is linked to a different amendment.');
   }
 
-  let activeVotingError: unknown = null;
   try {
     await can(tx, ctx, {
       action: 'active_voting',
@@ -152,36 +149,35 @@ async function assertCanEnsureEventSuggestionChangeRequestVotes(
       eventId: agendaItem.event_id,
     });
     return agendaItem;
-  } catch (error) {
-    if (!isPermissionError(error)) throw error;
-    activeVotingError = error;
-  }
+  } catch (activeVotingError) {
+    if (!isPermissionError(activeVotingError)) throw activeVotingError;
 
-  try {
-    await can(tx, ctx, {
-      action: 'manage_votes',
-      resource: 'events',
-      eventId: agendaItem.event_id,
-    });
-    return agendaItem;
-  } catch (error) {
-    if (!isPermissionError(error)) throw error;
-  }
-
-  if (agendaItem.amendment_id) {
     try {
       await can(tx, ctx, {
-        action: 'manage',
-        resource: 'amendments',
-        amendmentId: agendaItem.amendment_id,
+        action: 'manage_votes',
+        resource: 'events',
+        eventId: agendaItem.event_id,
       });
       return agendaItem;
     } catch (error) {
       if (!isPermissionError(error)) throw error;
     }
-  }
 
-  throw activeVotingError;
+    if (agendaItem.amendment_id) {
+      try {
+        await can(tx, ctx, {
+          action: 'manage',
+          resource: 'amendments',
+          amendmentId: agendaItem.amendment_id,
+        });
+        return agendaItem;
+      } catch (error) {
+        if (!isPermissionError(error)) throw error;
+      }
+    }
+
+    throw activeVotingError;
+  }
 }
 
 async function resolveFallbackProcessBranchId(
@@ -825,7 +821,6 @@ export const agendaServerMutators = {
           created_at: now,
           updated_at: now,
         });
-        nextOrderIndex += 1;
       }
 
       if (

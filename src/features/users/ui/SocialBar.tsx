@@ -1,20 +1,17 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import React from 'react';
 import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
-import {
-  MessageSquare,
-  Instagram,
-  Facebook,
-  Ghost,
-  Globe,
-  Linkedin,
-  Music2,
-  Twitter,
-  Youtube,
-} from 'lucide-react';
+import { MessageSquare, Ghost, Globe, Music2 } from 'lucide-react';
 import { buildContactLinkHref } from '@/features/shared/logic/contactLinkHelpers';
 import { SocialItem } from './SocialItem';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  FacebookIcon as Facebook,
+  InstagramIcon as Instagram,
+  LinkedinIcon as Linkedin,
+  TwitterIcon as Twitter,
+  YoutubeIcon as Youtube,
+} from '@/features/shared/ui/icons';
 
 export interface SocialMediaLinks {
   website?: string;

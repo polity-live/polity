@@ -56,6 +56,10 @@ interface CartesianRow {
 
 type HoverTooltipSetter = (state: HoverTooltipState | null) => void;
 
+const STATIC_CHART_WIDTH = 700;
+const STATIC_CHART_HEIGHT = 380;
+const STATIC_CHART_MARGIN = { top: 24, right: 24, bottom: 44, left: 56 };
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object';
 }
@@ -179,6 +183,269 @@ function createPieHoverTooltipState(
     ],
   };
 }
+
+function getStaticYDomain(rows: readonly CartesianRow[], series: readonly string[]) {
+  const values = rows.flatMap(row =>
+    series.map(name => getPointValue(row[name])).filter((value): value is number => value !== null)
+  );
+
+  if (values.length === 0) return { min: 0, max: 1 };
+
+  const min = Math.min(0, ...values);
+  const max = Math.max(0, ...values);
+  if (min === max) return { min: min - 1, max: max + 1 };
+  return { min, max };
+}
+
+function getStaticPlotFrame() {
+  const left = STATIC_CHART_MARGIN.left;
+  const top = STATIC_CHART_MARGIN.top;
+  const right = STATIC_CHART_WIDTH - STATIC_CHART_MARGIN.right;
+  const bottom = STATIC_CHART_HEIGHT - STATIC_CHART_MARGIN.bottom;
+  return {
+    left,
+    top,
+    right,
+    bottom,
+    width: right - left,
+    height: bottom - top,
+  };
+}
+
+function StaticCartesianChartSvg({
+  chartType,
+  rows,
+  series,
+  presentation,
+}: {
+  chartType: Exclude<ChartType, 'pie'>;
+  rows: readonly CartesianRow[];
+  series: readonly string[];
+  presentation: ChartPresentation;
+}) {
+  const frame = getStaticPlotFrame();
+  const domain = getStaticYDomain(rows, series);
+  const scaleY = (value: number) =>
+    frame.bottom - ((value - domain.min) / (domain.max - domain.min)) * frame.height;
+  const scaleX = (index: number) =>
+    rows.length <= 1
+      ? frame.left + frame.width / 2
+      : frame.left + (index / (rows.length - 1)) * frame.width;
+  const zeroY = scaleY(0);
+  const ticks = Array.from({ length: 5 }, (_, index) => {
+    const value = domain.min + ((domain.max - domain.min) / 4) * index;
+    return { value, y: scaleY(value) };
+  });
+
+  return (
+    <svg
+      viewBox={`0 0 ${STATIC_CHART_WIDTH} ${STATIC_CHART_HEIGHT}`}
+      width={STATIC_CHART_WIDTH}
+      height={STATIC_CHART_HEIGHT}
+      role="img"
+    >
+      <line x1={frame.left} x2={frame.left} y1={frame.top} y2={frame.bottom} stroke="#d4d4d8" />
+      <line x1={frame.left} x2={frame.right} y1={frame.bottom} y2={frame.bottom} stroke="#d4d4d8" />
+      {presentation.showGrid !== false
+        ? ticks.map(tick => (
+            <line
+              key={tick.value}
+              x1={frame.left}
+              x2={frame.right}
+              y1={tick.y}
+              y2={tick.y}
+              stroke="#e4e4e7"
+              strokeDasharray="4 4"
+            />
+          ))
+        : null}
+      {ticks.map(tick => (
+        <text
+          key={`label-${tick.value}`}
+          x={frame.left - 10}
+          y={tick.y + 4}
+          textAnchor="end"
+          fontSize="11"
+          fill="#71717a"
+        >
+          {Number.isInteger(tick.value) ? tick.value : tick.value.toFixed(1)}
+        </text>
+      ))}
+      {rows.map((row, index) => (
+        <text
+          key={row.x}
+          x={scaleX(index)}
+          y={frame.bottom + 22}
+          textAnchor="middle"
+          fontSize="11"
+          fill="#71717a"
+        >
+          {row.x}
+        </text>
+      ))}
+      {chartType === 'bar'
+        ? rows.flatMap((row, rowIndex) => {
+            const groupWidth = frame.width / Math.max(rows.length, 1);
+            const barWidth = groupWidth / (series.length + 0.6);
+            return series.map((name, seriesIndex) => {
+              const value = getPointValue(row[name]);
+              if (value === null) return null;
+              const y = scaleY(value);
+              return (
+                <rect
+                  key={`${row.x}-${name}`}
+                  x={frame.left + rowIndex * groupWidth + (seriesIndex + 0.3) * barWidth}
+                  y={Math.min(y, zeroY)}
+                  width={Math.max(2, barWidth * 0.72)}
+                  height={Math.max(1, Math.abs(zeroY - y))}
+                  rx="3"
+                  fill={CHART_PALETTE[seriesIndex % CHART_PALETTE.length]}
+                />
+              );
+            });
+          })
+        : series.map((name, seriesIndex) => {
+            const points = rows
+              .map((row, rowIndex) => {
+                const value = getPointValue(row[name]);
+                return value === null ? null : { x: scaleX(rowIndex), y: scaleY(value) };
+              })
+              .filter((point): point is { x: number; y: number } => point !== null);
+            const linePoints = points.map(point => `${point.x},${point.y}`).join(' ');
+            const color = CHART_PALETTE[seriesIndex % CHART_PALETTE.length];
+
+            if (chartType === 'area' && points.length > 0) {
+              const areaPoints = [
+                `${points[0].x},${zeroY}`,
+                linePoints,
+                `${points[points.length - 1].x},${zeroY}`,
+              ].join(' ');
+              return (
+                <g key={name}>
+                  <polygon points={areaPoints} fill={color} opacity="0.18" />
+                  <polyline points={linePoints} fill="none" stroke={color} strokeWidth="2" />
+                </g>
+              );
+            }
+
+            return (
+              <polyline key={name} points={linePoints} fill="none" stroke={color} strokeWidth="2" />
+            );
+          })}
+    </svg>
+  );
+}
+
+function getArcPoint(cx: number, cy: number, radius: number, angle: number) {
+  return {
+    x: cx + radius * Math.cos(angle),
+    y: cy + radius * Math.sin(angle),
+  };
+}
+
+function getPieSlicePath(
+  cx: number,
+  cy: number,
+  radius: number,
+  innerRadius: number,
+  startAngle: number,
+  endAngle: number
+) {
+  const outerStart = getArcPoint(cx, cy, radius, startAngle);
+  const outerEnd = getArcPoint(cx, cy, radius, endAngle);
+  const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
+
+  if (innerRadius <= 0) {
+    return [
+      `M ${cx} ${cy}`,
+      `L ${outerStart.x} ${outerStart.y}`,
+      `A ${radius} ${radius} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y}`,
+      'Z',
+    ].join(' ');
+  }
+
+  const innerStart = getArcPoint(cx, cy, innerRadius, startAngle);
+  const innerEnd = getArcPoint(cx, cy, innerRadius, endAngle);
+  return [
+    `M ${outerStart.x} ${outerStart.y}`,
+    `A ${radius} ${radius} 0 ${largeArc} 1 ${outerEnd.x} ${outerEnd.y}`,
+    `L ${innerEnd.x} ${innerEnd.y}`,
+    `A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${innerStart.x} ${innerStart.y}`,
+    'Z',
+  ].join(' ');
+}
+
+function StaticPieChartSvg({
+  points,
+  presentation,
+}: {
+  points: readonly ChartPoint[];
+  presentation: ChartPresentation;
+}) {
+  const data = points
+    .map((point, index) => ({ point, index, value: Math.max(0, point.value) }))
+    .filter(item => item.value > 0);
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const cx = STATIC_CHART_WIDTH / 2;
+  const cy = STATIC_CHART_HEIGHT / 2;
+  const radius = Math.min(STATIC_CHART_WIDTH, STATIC_CHART_HEIGHT) * 0.36;
+  const innerRadius = presentation.donut === false ? 0 : radius * 0.52;
+  let cursor = -Math.PI / 2;
+
+  return (
+    <svg
+      viewBox={`0 0 ${STATIC_CHART_WIDTH} ${STATIC_CHART_HEIGHT}`}
+      width={STATIC_CHART_WIDTH}
+      height={STATIC_CHART_HEIGHT}
+      role="img"
+    >
+      {total > 0 ? (
+        data.map(item => {
+          const angle = (item.value / total) * Math.PI * 2;
+          const path = getPieSlicePath(cx, cy, radius, innerRadius, cursor, cursor + angle);
+          cursor += angle;
+          return (
+            <path
+              key={`${item.point.x}-${item.point.series ?? ''}-${item.index}`}
+              d={path}
+              fill={CHART_PALETTE[item.index % CHART_PALETTE.length]}
+              stroke="#ffffff"
+              strokeWidth="2"
+            />
+          );
+        })
+      ) : (
+        <circle cx={cx} cy={cy} r={radius} fill="#e4e4e7" />
+      )}
+    </svg>
+  );
+}
+
+function StaticChartSvg({
+  chartType,
+  points,
+  rows,
+  series,
+  presentation,
+}: {
+  chartType: ChartType;
+  points: readonly ChartPoint[];
+  rows: readonly CartesianRow[];
+  series: readonly string[];
+  presentation: ChartPresentation;
+}) {
+  return chartType === 'pie' ? (
+    <StaticPieChartSvg points={points} presentation={presentation} />
+  ) : (
+    <StaticCartesianChartSvg
+      chartType={chartType}
+      rows={rows}
+      series={series}
+      presentation={presentation}
+    />
+  );
+}
+
 function CartesianChartContent({
   chartType,
   rows,
@@ -415,30 +682,33 @@ export function ChartRenderer({
   const rows = React.useMemo(() => toCartesianRows(points), [points]);
   const config = React.useMemo(() => getChartConfig(series), [series]);
   const { hoverTooltip, onHoverChange } = useChartRendererController(staticMode);
-  const chart =
-    chartType === 'pie' ? (
-      <PieChartContent
-        points={points}
-        presentation={presentation}
-        staticMode={staticMode}
-        onHoverChange={onHoverChange}
-        valueFormatter={valueFormatter}
-        width={staticMode ? 700 : undefined}
-        height={staticMode ? 380 : undefined}
-      />
-    ) : (
-      <CartesianChartContent
-        chartType={chartType}
-        rows={rows}
-        series={series}
-        presentation={presentation}
-        staticMode={staticMode}
-        onHoverChange={onHoverChange}
-        valueFormatter={valueFormatter}
-        width={staticMode ? 700 : undefined}
-        height={staticMode ? 380 : undefined}
-      />
-    );
+  const chart = staticMode ? (
+    <StaticChartSvg
+      chartType={chartType}
+      points={points}
+      rows={rows}
+      series={series}
+      presentation={presentation}
+    />
+  ) : chartType === 'pie' ? (
+    <PieChartContent
+      points={points}
+      presentation={presentation}
+      staticMode={staticMode}
+      onHoverChange={onHoverChange}
+      valueFormatter={valueFormatter}
+    />
+  ) : (
+    <CartesianChartContent
+      chartType={chartType}
+      rows={rows}
+      series={series}
+      presentation={presentation}
+      staticMode={staticMode}
+      onHoverChange={onHoverChange}
+      valueFormatter={valueFormatter}
+    />
+  );
   return (
     <ChartRendererView
       chartType={chartType}

@@ -144,26 +144,18 @@ export function getVideoEmbedUrl(url: string): string | null {
 export function getVideoMetadata(url: string): VideoMetadata {
   const { provider, videoId } = parseVideoUrl(url);
 
-  let thumbnailUrl = '';
-
-  switch (provider) {
-    case 'youtube':
-      thumbnailUrl = videoId ? getYouTubeThumbnail(videoId) : '';
-      break;
-    case 'vimeo':
-      thumbnailUrl = videoId ? getVimeoThumbnailUrl(videoId) : '';
-      break;
-    case 'dailymotion':
-      thumbnailUrl = videoId ? getDailymotionThumbnail(videoId) : '';
-      break;
-    case 'direct':
-      // Direct videos don't have thumbnails by default
-      // Would need to extract a frame from the video
-      thumbnailUrl = '';
-      break;
-    default:
-      thumbnailUrl = '';
-  }
+  const thumbnailUrl =
+    provider === 'youtube'
+      ? videoId
+        ? getYouTubeThumbnail(videoId)
+        : ''
+      : provider === 'vimeo'
+        ? videoId
+          ? getVimeoThumbnailUrl(videoId)
+          : ''
+        : provider === 'dailymotion' && videoId
+          ? getDailymotionThumbnail(videoId)
+          : '';
 
   return {
     thumbnailUrl,

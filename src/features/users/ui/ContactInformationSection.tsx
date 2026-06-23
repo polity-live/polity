@@ -1,15 +1,4 @@
-import {
-  Facebook,
-  Globe,
-  Ghost,
-  Instagram,
-  Linkedin,
-  Mail,
-  MessageSquare,
-  Music2,
-  Twitter,
-  Youtube,
-} from 'lucide-react';
+import { Globe, Ghost, Mail, MessageSquare, Music2 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
   isValidOptionalEmailAddress,
@@ -17,6 +6,13 @@ import {
   isValidOptionalUrlLike,
 } from '@/features/shared/logic/inputValidation';
 import { ContactLinksSection } from '@/features/shared/ui/contact/ContactLinksSection';
+import {
+  FacebookIcon as Facebook,
+  InstagramIcon as Instagram,
+  LinkedinIcon as Linkedin,
+  TwitterIcon as Twitter,
+  YoutubeIcon as Youtube,
+} from '@/features/shared/ui/icons';
 
 interface ContactInformationSectionProps {
   email: string;

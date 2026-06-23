@@ -192,6 +192,7 @@ export const finalizeDelegatesFn = createServerFn({ method: 'POST' })
       };
     } catch (error) {
       console.error('Error finalizing delegates:', error);
-      throw new Error(error instanceof Error ? error.message : 'Failed to finalize delegates');
+      const message = error instanceof Error ? error.message : 'Failed to finalize delegates';
+      throw new Error(message, { cause: error });
     }
   });

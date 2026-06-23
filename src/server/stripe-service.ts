@@ -1,4 +1,4 @@
-import { getWebRequest } from '@tanstack/start-server-core';
+import { getRequest } from '@tanstack/react-start/server';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
@@ -116,7 +116,7 @@ async function requireAuthenticatedUser(
 }
 
 async function readRequestUser(requestOverride?: Request): Promise<StripeUser | null> {
-  const request = requestOverride ?? getWebRequest();
+  const request = requestOverride ?? getRequest();
   if (!request) {
     throw new Error('Request context unavailable.');
   }

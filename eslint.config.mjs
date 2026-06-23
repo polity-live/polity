@@ -2,7 +2,6 @@
 
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
-import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 
 export default tseslint.config(
@@ -16,6 +15,8 @@ export default tseslint.config(
       '.next/**/*',
       '.output/**/*',
       '.vinxi/**/*',
+      '*.timestamp_*.js',
+      'dist/**/*',
       '.tanstack/**/*',
       '.tmp/**/*',
       '.vercel/**/*',
@@ -28,7 +29,6 @@ export default tseslint.config(
   tseslint.configs.stylistic,
   {
     plugins: {
-      react: reactPlugin,
       'react-hooks': reactHooksPlugin,
     },
     rules: {

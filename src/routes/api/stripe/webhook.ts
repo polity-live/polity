@@ -1,7 +1,11 @@
-import { createAPIFileRoute } from '@tanstack/react-start/api';
+import { createFileRoute } from '@tanstack/react-router';
 
 import { handleStripeWebhookRequest } from '@/server/stripe-webhook-route';
 
-export const APIRoute = createAPIFileRoute('/api/stripe/webhook')({
-  POST: async ({ request }) => handleStripeWebhookRequest(request),
+export const Route = createFileRoute('/api/stripe/webhook')({
+  server: {
+    handlers: {
+      POST: async ({ request }) => handleStripeWebhookRequest(request),
+    },
+  },
 });

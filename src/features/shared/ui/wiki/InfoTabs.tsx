@@ -5,26 +5,20 @@ import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs.tsx
 import { ScrollableTabsList } from '@/features/shared/ui/navigation/ScrollableTabs';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
-import {
-  Calendar,
-  Facebook,
-  Globe,
-  Ghost,
-  Instagram,
-  Linkedin,
-  Mail,
-  MapPin,
-  MessageSquare,
-  Music2,
-  Twitter,
-  Youtube,
-} from 'lucide-react';
+import { Calendar, Globe, Ghost, Mail, MapPin, MessageSquare, Music2 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { hasGeoCoordinates } from '@/features/shared/logic/geoCoordinates';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { buildContactLinkHref } from '@/features/shared/logic/contactLinkHelpers';
 import { RichTextPreview } from '@/features/shared/ui/rich-text';
 import { GeoAddressMap } from '@/features/shared/ui/form/GeoAddressMap';
+import {
+  FacebookIcon as Facebook,
+  InstagramIcon as Instagram,
+  LinkedinIcon as Linkedin,
+  TwitterIcon as Twitter,
+  YoutubeIcon as Youtube,
+} from '@/features/shared/ui/icons';
 
 interface ContactInfo {
   email?: string;

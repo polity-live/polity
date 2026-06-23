@@ -1,22 +1,19 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import {
-  MessageSquare,
-  Instagram,
-  Facebook,
-  Ghost,
-  Linkedin,
-  Music2,
-  Twitter,
-  type LucideIcon,
-  Youtube,
-} from 'lucide-react';
+import { MessageSquare, Ghost, Music2, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
+import {
+  FacebookIcon as Facebook,
+  InstagramIcon as Instagram,
+  LinkedinIcon as Linkedin,
+  TwitterIcon as Twitter,
+  YoutubeIcon as Youtube,
+} from '@/features/shared/ui/icons';
 
 type SharePlatform =
   | {

@@ -1,5 +1,5 @@
 import { convertToCoreMessages, streamText } from 'ai';
-import { createAPIFileRoute } from '@tanstack/react-start/api';
+import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { getPreferredDefaultAiModel, toAiModelDescriptor } from '@/lib/ai/models';
 import { getSession } from '@/lib/supabase/server';
@@ -27,47 +27,51 @@ function getStreamErrorMessage(error: unknown): string {
   return 'AI editor command failed.';
 }
 
-export const APIRoute = createAPIFileRoute('/api/ai/command')({
-  POST: async ({ request }) => {
-    const session = await getSession(request);
+export const Route = createFileRoute('/api/ai/command')({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const session = await getSession(request);
 
-    if (!session?.user) {
-      return new Response('Unauthorized', { status: 401 });
-    }
-
-    const body = aiCommandRequestSchema.parse(await request.json());
-    const catalog = await getAiCatalog(session.user.id);
-    const preferredModel = getPreferredDefaultAiModel(catalog.models);
-
-    if (!preferredModel) {
-      return new Response('No AI models are available for this user.', { status: 400 });
-    }
-
-    const { model, providerOptions, credentialProvider } = await resolveLanguageModelForUser(
-      session.user.id,
-      toAiModelDescriptor(preferredModel),
-      'medium'
-    );
-
-    const result = streamText({
-      model,
-      messages: convertToCoreMessages(body.messages),
-      providerOptions,
-      onFinish: async ({ text }) => {
-        if (!text.trim() || !credentialProvider) {
-          return;
+        if (!session?.user) {
+          return new Response('Unauthorized', { status: 401 });
         }
 
-        try {
-          await touchAiCredential(session.user.id, credentialProvider);
-        } catch (error) {
-          console.error('Failed to update AI credential usage after editor command:', error);
+        const body = aiCommandRequestSchema.parse(await request.json());
+        const catalog = await getAiCatalog(session.user.id);
+        const preferredModel = getPreferredDefaultAiModel(catalog.models);
+
+        if (!preferredModel) {
+          return new Response('No AI models are available for this user.', { status: 400 });
         }
+
+        const { model, providerOptions, credentialProvider } = await resolveLanguageModelForUser(
+          session.user.id,
+          toAiModelDescriptor(preferredModel),
+          'medium'
+        );
+
+        const result = streamText({
+          model,
+          messages: convertToCoreMessages(body.messages),
+          providerOptions,
+          onFinish: async ({ text }) => {
+            if (!text.trim() || !credentialProvider) {
+              return;
+            }
+
+            try {
+              await touchAiCredential(session.user.id, credentialProvider);
+            } catch (error) {
+              console.error('Failed to update AI credential usage after editor command:', error);
+            }
+          },
+        });
+
+        return result.toDataStreamResponse({
+          getErrorMessage: getStreamErrorMessage,
+        });
       },
-    });
-
-    return result.toDataStreamResponse({
-      getErrorMessage: getStreamErrorMessage,
-    });
+    },
   },
 });

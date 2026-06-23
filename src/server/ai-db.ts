@@ -245,21 +245,21 @@ async function buildAmendmentPromptContext(
     return attachment.prompt_context ?? null;
   }
 
-  let document: DocumentPromptContextRow | null = null;
+  const document = await (async () => {
+    if (amendment.document_id) {
+      const { data: documentData, error: documentError } = await supabase
+        .from('document')
+        .select('content, updated_at')
+        .eq('id', amendment.document_id)
+        .maybeSingle();
 
-  if (amendment.document_id) {
-    const { data: documentData, error: documentError } = await supabase
-      .from('document')
-      .select('content, updated_at')
-      .eq('id', amendment.document_id)
-      .maybeSingle();
+      if (documentError) {
+        throw new Error(`Failed to load amendment document AI context: ${documentError.message}`);
+      }
 
-    if (documentError) {
-      throw new Error(`Failed to load amendment document AI context: ${documentError.message}`);
+      return (documentData as DocumentPromptContextRow | null) ?? null;
     }
 
-    document = (documentData as DocumentPromptContextRow | null) ?? null;
-  } else {
     const { data: documentData, error: documentError } = await supabase
       .from('document')
       .select('content, updated_at')
@@ -274,8 +274,8 @@ async function buildAmendmentPromptContext(
       );
     }
 
-    document = (documentData as DocumentPromptContextRow | null) ?? null;
-  }
+    return (documentData as DocumentPromptContextRow | null) ?? null;
+  })();
 
   const { data: changeRequestData, error: changeRequestError } = await supabase
     .from('change_request')

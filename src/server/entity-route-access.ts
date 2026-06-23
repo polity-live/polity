@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
-import { getWebRequest } from '@tanstack/start-server-core';
+import { getRequest } from '@tanstack/react-start/server';
 import { z } from 'zod';
 import {
   hasPrivateAmendmentRouteAccess,
@@ -42,7 +42,7 @@ export interface EntityRouteAccessResult {
 export const entityRouteAccessFn = createServerFn({ method: 'POST' })
   .validator(entityRouteAccessSchema.parse)
   .handler(async ({ data }): Promise<EntityRouteAccessResult> => {
-    const request = getWebRequest();
+    const request = getRequest();
     if (!request) {
       throw new Error('Request context unavailable.');
     }

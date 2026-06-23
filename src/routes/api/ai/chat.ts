@@ -1,5 +1,5 @@
 import { streamText } from 'ai';
-import { createAPIFileRoute } from '@tanstack/react-start/api';
+import { createFileRoute } from '@tanstack/react-router';
 import { DEFAULT_AI_SKILLS_BY_SLUG } from '@/features/assistant/logic/defaultAiSkills';
 import {
   dedupeAiChatAttachments,
@@ -35,247 +35,255 @@ function getStreamErrorMessage(error: unknown): string {
   return 'AI chat streaming failed.';
 }
 
-export const APIRoute = createAPIFileRoute('/api/ai/chat')({
-  POST: async ({ request }) => {
-    const session = await getSession(request);
+export const Route = createFileRoute('/api/ai/chat')({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const session = await getSession(request);
 
-    if (!session?.user) {
-      return new Response('Unauthorized', { status: 401 });
-    }
-
-    const body = aiChatRequestSchema.parse(await request.json());
-    const conversation = await getAssistantConversationForUser(
-      session.user.id,
-      body.conversationId
-    );
-
-    if (!conversation) {
-      return new Response('Forbidden', { status: 403 });
-    }
-
-    const catalog = await getAiCatalog(session.user.id);
-    const isAllowedModel = catalog.models.some(
-      model => model.provider === body.model.provider && model.id === body.model.id
-    );
-
-    if (!isAllowedModel) {
-      return new Response('Selected model is not available for this user.', { status: 400 });
-    }
-
-    const customSkills = await getAiSkillsBySlugs(session.user.id, body.skillSlugs);
-    const toolOverrides = await getAiToolsByNames(session.user.id, body.toolNames);
-    const customSkillMap = new Map(customSkills.map(skill => [skill.slug, skill]));
-    const toolOverrideMap = new Map(toolOverrides.map(tool => [tool.tool_name, tool]));
-    const selectedSkills = body.skillSlugs
-      .map(skillSlug => {
-        const customSkill = customSkillMap.get(skillSlug);
-        if (customSkill?.enabled === false) {
-          return null;
+        if (!session?.user) {
+          return new Response('Unauthorized', { status: 401 });
         }
 
-        if (customSkill) {
-          return {
-            slug: customSkill.slug,
-            name: customSkill.name,
-            systemPrompt: customSkill.system_prompt,
-          };
+        const body = aiChatRequestSchema.parse(await request.json());
+        const conversation = await getAssistantConversationForUser(
+          session.user.id,
+          body.conversationId
+        );
+
+        if (!conversation) {
+          return new Response('Forbidden', { status: 403 });
         }
 
-        const builtInSkill = DEFAULT_AI_SKILLS_BY_SLUG[skillSlug];
-        if (!builtInSkill) {
-          return null;
+        const catalog = await getAiCatalog(session.user.id);
+        const isAllowedModel = catalog.models.some(
+          model => model.provider === body.model.provider && model.id === body.model.id
+        );
+
+        if (!isAllowedModel) {
+          return new Response('Selected model is not available for this user.', { status: 400 });
         }
 
-        return {
-          slug: builtInSkill.slug,
-          name: builtInSkill.name,
-          systemPrompt: builtInSkill.systemPrompt,
-        };
-      })
-      .filter((skill): skill is NonNullable<typeof skill> => skill !== null);
-    const selectedToolNames = body.toolNames.filter(
-      toolName => toolOverrideMap.get(toolName)?.enabled !== false
-    );
-    const selectedCatalogModel = catalog.models.find(
-      model => model.provider === body.model.provider && model.id === body.model.id
-    );
+        const customSkills = await getAiSkillsBySlugs(session.user.id, body.skillSlugs);
+        const toolOverrides = await getAiToolsByNames(session.user.id, body.toolNames);
+        const customSkillMap = new Map(customSkills.map(skill => [skill.slug, skill]));
+        const toolOverrideMap = new Map(toolOverrides.map(tool => [tool.tool_name, tool]));
+        const selectedSkills = body.skillSlugs
+          .map(skillSlug => {
+            const customSkill = customSkillMap.get(skillSlug);
+            if (customSkill?.enabled === false) {
+              return null;
+            }
 
-    const { model, providerOptions, credentialProvider } = await resolveLanguageModelForUser(
-      session.user.id,
-      body.model,
-      body.reasoningEffort
-    );
+            if (customSkill) {
+              return {
+                slug: customSkill.slug,
+                name: customSkill.name,
+                systemPrompt: customSkill.system_prompt,
+              };
+            }
 
-    const history = await getConversationMessagesForAi(body.conversationId);
-    const historyMessages = await Promise.all(
-      history.map(async message => ({
-        role: isAssistantSender(message.sender_id) ? ('assistant' as const) : ('user' as const),
-        content: isAssistantSender(message.sender_id)
-          ? (message.content ?? '')
-          : buildCurrentTurnUserContent(
-              message.content ?? '',
-              await enrichAiAttachmentsFromContextJson(message.context_json)
-            ),
-      }))
-    );
+            const builtInSkill = DEFAULT_AI_SKILLS_BY_SLUG[skillSlug];
+            if (!builtInSkill) {
+              return null;
+            }
 
-    const enrichedAttachments = await enrichAiAttachmentsForPrompt(body.attachments);
-    const currentTurnContent = buildCurrentTurnUserContent(body.content, enrichedAttachments);
-    const shouldAppendCurrentTurn = (() => {
-      const lastMessage = historyMessages.at(-1);
-      if (!lastMessage) {
-        return true;
-      }
+            return {
+              slug: builtInSkill.slug,
+              name: builtInSkill.name,
+              systemPrompt: builtInSkill.systemPrompt,
+            };
+          })
+          .filter((skill): skill is NonNullable<typeof skill> => skill !== null);
+        const selectedToolNames = body.toolNames.filter(
+          toolName => toolOverrideMap.get(toolName)?.enabled !== false
+        );
+        const selectedCatalogModel = catalog.models.find(
+          model => model.provider === body.model.provider && model.id === body.model.id
+        );
 
-      return !(lastMessage.role === 'user' && lastMessage.content === currentTurnContent);
-    })();
+        const { model, providerOptions, credentialProvider } = await resolveLanguageModelForUser(
+          session.user.id,
+          body.model,
+          body.reasoningEffort
+        );
 
-    const messages = shouldAppendCurrentTurn
-      ? [...historyMessages, { role: 'user' as const, content: currentTurnContent }]
-      : historyMessages;
+        const history = await getConversationMessagesForAi(body.conversationId);
+        const historyMessages = await Promise.all(
+          history.map(async message => ({
+            role: isAssistantSender(message.sender_id) ? ('assistant' as const) : ('user' as const),
+            content: isAssistantSender(message.sender_id)
+              ? (message.content ?? '')
+              : buildCurrentTurnUserContent(
+                  message.content ?? '',
+                  await enrichAiAttachmentsFromContextJson(message.context_json)
+                ),
+          }))
+        );
 
-    const tools = selectedToolNames.length > 0 ? buildAiTools(session.user.id) : undefined;
-    const activeToolNames = tools
-      ? selectedToolNames.filter((toolName): toolName is keyof typeof tools => toolName in tools)
-      : [];
-    const toolAttachments: ReturnType<typeof dedupeAiChatAttachments> = [];
-    const currentUserContext = await buildCurrentUserScopePrompt(session.user.id);
-    const systemPrompt = buildSystemPrompt(selectedSkills, currentUserContext);
-    const compressedHistory = compressConversationHistory({
-      systemPrompt,
-      messages,
-      contextWindow: selectedCatalogModel?.context_window ?? null,
-    });
-
-    const result = streamText({
-      model,
-      system: systemPrompt,
-      messages: compressedHistory.messages,
-      tools,
-      maxSteps: tools ? 4 : 1,
-      providerOptions,
-      experimental_activeTools: tools ? activeToolNames : undefined,
-      onStepFinish: async stepResult => {
-        try {
-          toolAttachments.push(...extractAiChatAttachmentsFromToolResults(stepResult.toolResults));
-        } catch (error) {
-          console.error('Failed to collect AI tool attachments:', error);
-        }
-      },
-      onFinish: async ({ text, toolResults }) => {
-        try {
-          const trimmed = text.trim();
-
-          if (!trimmed) {
-            return;
+        const enrichedAttachments = await enrichAiAttachmentsForPrompt(body.attachments);
+        const currentTurnContent = buildCurrentTurnUserContent(body.content, enrichedAttachments);
+        const shouldAppendCurrentTurn = (() => {
+          const lastMessage = historyMessages.at(-1);
+          if (!lastMessage) {
+            return true;
           }
 
-          const attachments = dedupeAiChatAttachments([
-            ...toolAttachments,
-            ...extractAiChatAttachmentsFromToolResults(toolResults),
-          ]);
+          return !(lastMessage.role === 'user' && lastMessage.content === currentTurnContent);
+        })();
 
-          await persistAssistantMessage(body.conversationId, trimmed, attachments);
+        const messages = shouldAppendCurrentTurn
+          ? [...historyMessages, { role: 'user' as const, content: currentTurnContent }]
+          : historyMessages;
 
-          if (credentialProvider) {
-            await touchAiCredential(session.user.id, credentialProvider);
-          }
-        } catch (error) {
-          console.error('Failed to persist AI chat response:', error);
-        }
-      },
-    });
+        const tools = selectedToolNames.length > 0 ? buildAiTools(session.user.id) : undefined;
+        const activeToolNames = tools
+          ? selectedToolNames.filter(
+              (toolName): toolName is keyof typeof tools => toolName in tools
+            )
+          : [];
+        const toolAttachments: ReturnType<typeof dedupeAiChatAttachments> = [];
+        const currentUserContext = await buildCurrentUserScopePrompt(session.user.id);
+        const systemPrompt = buildSystemPrompt(selectedSkills, currentUserContext);
+        const compressedHistory = compressConversationHistory({
+          systemPrompt,
+          messages,
+          contextWindow: selectedCatalogModel?.context_window ?? null,
+        });
 
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream<Uint8Array>({
-      async start(controller) {
-        try {
-          if (compressedHistory.wasCompressed) {
-            controller.enqueue(
-              encoder.encode(
-                `${JSON.stringify({
-                  type: 'compression-start',
-                  compressedMessageCount: compressedHistory.compressedMessageCount,
-                })}\n`
-              )
-            );
-          }
+        const result = streamText({
+          model,
+          system: systemPrompt,
+          messages: compressedHistory.messages,
+          tools,
+          maxSteps: tools ? 4 : 1,
+          providerOptions,
+          experimental_activeTools: tools ? activeToolNames : undefined,
+          onStepFinish: async stepResult => {
+            try {
+              toolAttachments.push(
+                ...extractAiChatAttachmentsFromToolResults(stepResult.toolResults)
+              );
+            } catch (error) {
+              console.error('Failed to collect AI tool attachments:', error);
+            }
+          },
+          onFinish: async ({ text, toolResults }) => {
+            try {
+              const trimmed = text.trim();
 
-          for await (const part of result.fullStream) {
-            switch (part.type) {
-              case 'text-delta': {
-                controller.enqueue(
-                  encoder.encode(
-                    `${JSON.stringify({ type: 'text-delta', text: part.textDelta })}\n`
-                  )
-                );
-                break;
-              }
-              case 'tool-call-delta': {
-                controller.enqueue(
-                  encoder.encode(`${JSON.stringify({ type: 'tool-call-delta' })}\n`)
-                );
-                break;
-              }
-              case 'tool-call': {
-                controller.enqueue(
-                  encoder.encode(
-                    `${JSON.stringify({
-                      type: 'tool-call',
-                      toolName: String(part.toolName),
-                      args: 'args' in part ? part.args : null,
-                    })}\n`
-                  )
-                );
-                break;
-              }
-              case 'tool-result': {
-                controller.enqueue(
-                  encoder.encode(
-                    `${JSON.stringify({ type: 'tool-result', toolName: String(part.toolName) })}\n`
-                  )
-                );
-                break;
-              }
-              case 'error': {
-                controller.enqueue(
-                  encoder.encode(
-                    `${JSON.stringify({
-                      type: 'error',
-                      message: getStreamErrorMessage(part.error),
-                    })}\n`
-                  )
-                );
-                controller.close();
+              if (!trimmed) {
                 return;
               }
-              default:
-                break;
+
+              const attachments = dedupeAiChatAttachments([
+                ...toolAttachments,
+                ...extractAiChatAttachmentsFromToolResults(toolResults),
+              ]);
+
+              await persistAssistantMessage(body.conversationId, trimmed, attachments);
+
+              if (credentialProvider) {
+                await touchAiCredential(session.user.id, credentialProvider);
+              }
+            } catch (error) {
+              console.error('Failed to persist AI chat response:', error);
             }
-          }
+          },
+        });
 
-          controller.close();
-        } catch (error) {
-          console.error('AI chat stream failed after response started:', error);
-          controller.enqueue(
-            encoder.encode(
-              `${JSON.stringify({
-                type: 'error',
-                message: getStreamErrorMessage(error),
-              })}\n`
-            )
-          );
-          controller.close();
-        }
-      },
-    });
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream<Uint8Array>({
+          async start(controller) {
+            try {
+              if (compressedHistory.wasCompressed) {
+                controller.enqueue(
+                  encoder.encode(
+                    `${JSON.stringify({
+                      type: 'compression-start',
+                      compressedMessageCount: compressedHistory.compressedMessageCount,
+                    })}\n`
+                  )
+                );
+              }
 
-    return new Response(stream, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/x-ndjson; charset=utf-8',
-        'Cache-Control': 'no-cache',
+              for await (const part of result.fullStream) {
+                switch (part.type) {
+                  case 'text-delta': {
+                    controller.enqueue(
+                      encoder.encode(
+                        `${JSON.stringify({ type: 'text-delta', text: part.textDelta })}\n`
+                      )
+                    );
+                    break;
+                  }
+                  case 'tool-call-delta': {
+                    controller.enqueue(
+                      encoder.encode(`${JSON.stringify({ type: 'tool-call-delta' })}\n`)
+                    );
+                    break;
+                  }
+                  case 'tool-call': {
+                    controller.enqueue(
+                      encoder.encode(
+                        `${JSON.stringify({
+                          type: 'tool-call',
+                          toolName: String(part.toolName),
+                          args: 'args' in part ? part.args : null,
+                        })}\n`
+                      )
+                    );
+                    break;
+                  }
+                  case 'tool-result': {
+                    controller.enqueue(
+                      encoder.encode(
+                        `${JSON.stringify({ type: 'tool-result', toolName: String(part.toolName) })}\n`
+                      )
+                    );
+                    break;
+                  }
+                  case 'error': {
+                    controller.enqueue(
+                      encoder.encode(
+                        `${JSON.stringify({
+                          type: 'error',
+                          message: getStreamErrorMessage(part.error),
+                        })}\n`
+                      )
+                    );
+                    controller.close();
+                    return;
+                  }
+                  default:
+                    break;
+                }
+              }
+
+              controller.close();
+            } catch (error) {
+              console.error('AI chat stream failed after response started:', error);
+              controller.enqueue(
+                encoder.encode(
+                  `${JSON.stringify({
+                    type: 'error',
+                    message: getStreamErrorMessage(error),
+                  })}\n`
+                )
+              );
+              controller.close();
+            }
+          },
+        });
+
+        return new Response(stream, {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/x-ndjson; charset=utf-8',
+            'Cache-Control': 'no-cache',
+          },
+        });
       },
-    });
+    },
   },
 });

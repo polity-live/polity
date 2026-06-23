@@ -737,8 +737,6 @@ export function GroupMembershipsContentContainer({
       })
       .map<OfflineRosterRow>(offlineMember => {
         const effectiveMembership = effectiveMembershipByOfflineMemberId.get(offlineMember.id);
-        let partGroup: OfflineRosterGroupReference | null | undefined;
-        let baseGroup: OfflineRosterGroupReference | null | undefined;
 
         return {
           id: offlineMember.id,
@@ -750,8 +748,8 @@ export function GroupMembershipsContentContainer({
           isActiveUser: false,
           reasonNotSignedUp: offlineMember.reason_not_signed_up,
           connectedUser: offlineMember.connected_user ?? null,
-          partGroup,
-          baseGroup,
+          partGroup: null,
+          baseGroup: null,
           roles: effectiveMembership?.roles ?? [],
           canViewRights: Boolean(effectiveMembership),
           canManageRoles: canManageMembers && Boolean(effectiveMembership),

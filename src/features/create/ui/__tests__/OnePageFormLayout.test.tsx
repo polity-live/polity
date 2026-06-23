@@ -24,14 +24,13 @@ describe('OnePageFormLayout', () => {
 
   beforeEach(() => {
     Element.prototype.scrollIntoView = vi.fn();
-    vi.stubGlobal(
-      'IntersectionObserver',
-      vi.fn(() => ({
-        disconnect: vi.fn(),
-        observe: vi.fn(),
-        unobserve: vi.fn(),
-      }))
-    );
+    class MockIntersectionObserver {
+      disconnect = vi.fn();
+      observe = vi.fn();
+      takeRecords = vi.fn(() => []);
+      unobserve = vi.fn();
+    }
+    vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
   });
 
   it('disables create when a required step is invalid', () => {

@@ -1,12 +1,12 @@
 /* @vitest-environment jsdom */
 
 import { cleanup, render, screen } from '@testing-library/react';
+import type { ComponentProps, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ActionSubmissionOverlay, type ActionSubmissionStep } from '../ActionSubmissionOverlay';
 
 vi.mock('motion/react', async () => {
-  const React = await import('react');
   const cleanMotionProps = ({
     initial,
     animate,
@@ -22,12 +22,12 @@ vi.mock('motion/react', async () => {
   };
 
   return {
-    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
     motion: {
-      div: ({ children, ...props }: React.ComponentProps<'div'>) => (
+      div: ({ children, ...props }: ComponentProps<'div'>) => (
         <div {...cleanMotionProps(props)}>{children}</div>
       ),
-      span: ({ children, ...props }: React.ComponentProps<'span'>) => (
+      span: ({ children, ...props }: ComponentProps<'span'>) => (
         <span {...cleanMotionProps(props)}>{children}</span>
       ),
     },

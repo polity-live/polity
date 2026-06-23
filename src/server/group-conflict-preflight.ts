@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
-import { getWebRequest } from '@tanstack/start-server-core';
+import { getRequest } from '@tanstack/react-start/server';
 import { getSession } from '@/lib/supabase/server';
 import { createZeroContext, executeZeroRead } from '@/server/zero-mutate';
 import {
@@ -16,7 +16,7 @@ export const groupConflictPreflightFn = createServerFn({ method: 'POST' })
   );
 
 async function executeGroupConflictPreflight(data: GroupConflictPreflightInput) {
-  const request = getWebRequest();
+  const request = getRequest();
   if (!request) {
     throw new Error('Request context unavailable.');
   }

@@ -137,7 +137,6 @@ export async function resolveChangeRequestByVoteResult({
   const discussions = target.discussions;
   const matchingDiscussion = findChangeRequestDiscussion(discussions, cr);
   const suggestionId = matchingDiscussion?.id;
-  let resolutionSnapshot = {};
 
   const crLabel =
     matchingDiscussion?.crId ??
@@ -163,7 +162,7 @@ export async function resolveChangeRequestByVoteResult({
   if (!snapshot.change_type) {
     throw new Error(`Cannot resolve ${crLabel}: linked suggestion is not present in the document.`);
   }
-  resolutionSnapshot = snapshot;
+  const resolutionSnapshot = snapshot;
 
   const versionSummary =
     voteResult === 'passed' ? `${crLabel} accepted by vote` : `${crLabel} rejected by vote`;
