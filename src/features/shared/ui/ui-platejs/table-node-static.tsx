@@ -3,7 +3,7 @@ import * as React from 'react';
 import type { SlateElementProps, TTableCellElement, TTableElement } from 'platejs';
 
 import { BaseTablePlugin } from '@platejs/table';
-import { SlateElement } from 'platejs';
+import { SlateElement } from 'platejs/static';
 
 import { cn } from '@/features/shared/utils/utils.ts';
 

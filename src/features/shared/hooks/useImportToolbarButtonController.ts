@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { MarkdownPlugin } from '@platejs/markdown';
-import { getEditorDOMFromHtmlString } from 'platejs';
+import { getEditorDOMFromHtmlString } from 'platejs/static';
 import { useEditorRef } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
 import { useFilePicker } from 'use-file-picker';

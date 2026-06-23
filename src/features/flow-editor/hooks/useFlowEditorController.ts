@@ -2,7 +2,7 @@
 
 import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import { useCallback, useMemo, useState } from 'react';
-import { addEdge, useEdgesState, useNodesState } from 'reactflow';
+import { addEdge, useEdgesState, useNodesState } from '@xyflow/react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 

@@ -1,7 +1,7 @@
 import type { Heading } from '@platejs/toc';
 import { cva } from 'class-variance-authority';
 import type { SlateElementProps } from 'platejs';
-import { SlateElement } from 'platejs';
+import { SlateElement } from 'platejs/static';
 
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 

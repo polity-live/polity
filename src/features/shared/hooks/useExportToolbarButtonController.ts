@@ -1,7 +1,8 @@
 import * as React from 'react';
 
 import { MarkdownPlugin } from '@platejs/markdown';
-import { createSlateEditor, serializeHtml } from 'platejs';
+import { createSlateEditor } from 'platejs';
+import { serializeHtml } from 'platejs/static';
 import { useEditorRef } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
 

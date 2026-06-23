@@ -1,5 +1,5 @@
 import type { SlateElementProps } from 'platejs';
-import { SlateElement } from 'platejs';
+import { SlateElement } from 'platejs/static';
 import type { TChartElement } from '@/features/charts/types';
 import { ChartRenderer } from '@/features/charts/ui/ChartRenderer';
 

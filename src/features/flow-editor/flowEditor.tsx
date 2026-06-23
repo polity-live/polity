@@ -1,8 +1,8 @@
 import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
-import ReactFlow, { Background, Controls, MiniMap, Panel } from 'reactflow';
-import type { NodeTypes } from 'reactflow';
-import 'reactflow/dist/style.css';
+import { Background, Controls, MiniMap, Panel, ReactFlow } from '@xyflow/react';
+import type { NodeTypes } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';

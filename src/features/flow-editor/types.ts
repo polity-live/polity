@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import type { Connection, Edge, Node } from 'reactflow';
+import type { Connection, Edge, Node } from '@xyflow/react';
 
 export type FlowEditorConnection = Connection;
 

@@ -1,7 +1,7 @@
 import type { SlateElementProps, TFileElement } from 'platejs';
 
 import { FileUp } from 'lucide-react';
-import { SlateElement } from 'platejs';
+import { SlateElement } from 'platejs/static';
 
 export function FileElementStatic(props: SlateElementProps<TFileElement>) {
   const { name, url } = props.element;

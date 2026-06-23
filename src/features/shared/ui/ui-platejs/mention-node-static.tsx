@@ -2,7 +2,8 @@ import * as React from 'react';
 
 import type { SlateElementProps, TMentionElement } from 'platejs';
 
-import { IS_APPLE, KEYS, SlateElement } from 'platejs';
+import { IS_APPLE, KEYS } from 'platejs';
+import { SlateElement } from 'platejs/static';
 
 import { cn } from '@/features/shared/utils/utils.ts';
 

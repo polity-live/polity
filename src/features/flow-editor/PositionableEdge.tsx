@@ -1,6 +1,6 @@
-import { getBezierPath, getSmoothStepPath, getStraightPath, useReactFlow } from 'reactflow';
+import { getBezierPath, getSmoothStepPath, getStraightPath, useReactFlow } from '@xyflow/react';
 
-import type { EdgeProps } from 'reactflow';
+import type { EdgeProps } from '@xyflow/react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 interface PositionHandler {

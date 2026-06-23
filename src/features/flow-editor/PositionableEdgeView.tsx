@@ -1,4 +1,4 @@
-import { EdgeLabelRenderer } from 'reactflow';
+import { EdgeLabelRenderer } from '@xyflow/react';
 
 import ClickableBaseEdge from './ClickableBaseEdge.tsx';
 import {

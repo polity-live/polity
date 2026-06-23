@@ -1,6 +1,6 @@
 import type { SlateElementProps } from 'platejs';
 
-import { SlateElement } from 'platejs';
+import { SlateElement } from 'platejs/static';
 
 import { cn } from '@/features/shared/utils/utils.ts';
 

@@ -1,6 +1,7 @@
 import type { SlateElementProps, TCaptionProps, TImageElement, TResizableProps } from 'platejs';
 
-import { NodeApi, SlateElement } from 'platejs';
+import { NodeApi } from 'platejs';
+import { SlateElement } from 'platejs/static';
 
 import { cn } from '@/features/shared/utils/utils.ts';
 

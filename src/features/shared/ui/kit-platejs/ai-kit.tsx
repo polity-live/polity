@@ -1,8 +1,8 @@
 import type { AIChatPluginConfig } from '@platejs/ai/react';
 import type { PlateEditorChatOptions } from './use-chat.ts';
 
-import { streamInsertChunk, withAIBatch } from '@platejs/ai';
-import { AIChatPlugin, AIPlugin, useChatChunk } from '@platejs/ai/react';
+import { withAIBatch } from '@platejs/ai';
+import { AIChatPlugin, AIPlugin, streamInsertChunk, useChatChunk } from '@platejs/ai/react';
 import { KEYS, PathApi } from 'platejs';
 import { usePluginOption } from 'platejs/react';
 

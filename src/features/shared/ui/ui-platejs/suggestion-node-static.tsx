@@ -1,7 +1,7 @@
 import type { SlateLeafProps, TSuggestionText } from 'platejs';
 
 import { BaseSuggestionPlugin } from '@platejs/suggestion';
-import { SlateLeaf } from 'platejs';
+import { SlateLeaf } from 'platejs/static';
 
 import { getMotionPreset, getSemanticToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils.ts';
