@@ -1,6 +1,5 @@
 'use client';
 
-import { Link } from '@tanstack/react-router';
 import { ArrowRight, Check, Hash, Mail, MessageCircle, Sparkles, User, Users } from 'lucide-react';
 import type { MouseEvent } from 'react';
 
@@ -51,6 +50,10 @@ export function SummaryStep({
           ? 'timeline'
           : 'assistant';
   const destinationLinkClassName = isLoading ? 'pointer-events-none opacity-50' : undefined;
+  const profileHref = `/user/${encodeURIComponent(userId)}`;
+  const groupHref = primarySelectedGroup
+    ? `/group/${encodeURIComponent(primarySelectedGroup.id)}`
+    : undefined;
 
   const handleDestinationClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (isLoading) {
@@ -221,16 +224,15 @@ export function SummaryStep({
           variant={recommendedAction === 'assistant' ? 'default' : 'outline'}
           size="lg"
         >
-          <Link
-            to="/messages"
-            search={{ openAriaKai: 'true' }}
+          <a
+            href="/messages?openAriaKai=true"
             onClick={handleDestinationClick}
             aria-disabled={isLoading || undefined}
             tabIndex={isLoading ? -1 : undefined}
           >
             <MessageCircle className="h-4 w-4" />
             {t('onboarding.summaryStep.showAssistant')}
-          </Link>
+          </a>
         </Button>
 
         <Button
@@ -239,8 +241,8 @@ export function SummaryStep({
           variant={recommendedAction === 'timeline' ? 'default' : 'outline'}
           size="lg"
         >
-          <Link
-            to="/home"
+          <a
+            href="/home"
             onClick={handleDestinationClick}
             aria-disabled={isLoading || undefined}
             tabIndex={isLoading ? -1 : undefined}
@@ -248,7 +250,7 @@ export function SummaryStep({
             <Hash className="h-4 w-4" />
             {t('onboarding.summaryStep.goToTimeline')}
             <ArrowRight className="h-4 w-4" />
-          </Link>
+          </a>
         </Button>
 
         <Button
@@ -257,9 +259,8 @@ export function SummaryStep({
           variant={recommendedAction === 'profile' ? 'default' : 'outline'}
           size="lg"
         >
-          <Link
-            to="/user/$id"
-            params={{ id: userId }}
+          <a
+            href={profileHref}
             onClick={handleDestinationClick}
             aria-disabled={isLoading || undefined}
             tabIndex={isLoading ? -1 : undefined}
@@ -267,19 +268,18 @@ export function SummaryStep({
             <User className="h-4 w-4" />
             {t('onboarding.summaryStep.goToProfile')}
             <ArrowRight className="h-4 w-4" />
-          </Link>
+          </a>
         </Button>
 
-        {primarySelectedGroup && (
+        {primarySelectedGroup && groupHref && (
           <Button
             asChild
             className={destinationLinkClassName}
             variant={recommendedAction === 'group' ? 'default' : 'outline'}
             size="lg"
           >
-            <Link
-              to="/group/$id"
-              params={{ id: primarySelectedGroup.id }}
+            <a
+              href={groupHref}
               onClick={handleDestinationClick}
               aria-disabled={isLoading || undefined}
               tabIndex={isLoading ? -1 : undefined}
@@ -287,7 +287,7 @@ export function SummaryStep({
               <Users className="h-4 w-4" />
               {t('onboarding.summaryStep.goToGroup')}
               <ArrowRight className="h-4 w-4" />
-            </Link>
+            </a>
           </Button>
         )}
       </div>

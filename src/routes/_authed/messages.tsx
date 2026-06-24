@@ -3,14 +3,19 @@ import { z } from 'zod';
 import MessagesPage from '@/features/messages/MessagesPage';
 import { useMessagesPreloads } from '@/zero/preloads';
 
+const optionalSearchString = z.preprocess(
+  value => (typeof value === 'boolean' || typeof value === 'number' ? String(value) : value),
+  z.string().optional()
+);
+
 const messagesSearchSchema = z.object({
-  conversationId: z.string().optional(),
-  name: z.string().optional(),
-  new: z.string().optional(),
-  openAriaKai: z.string().optional(),
-  search: z.string().optional(),
-  userId: z.string().optional(),
-  userSearch: z.string().optional(),
+  conversationId: optionalSearchString,
+  name: optionalSearchString,
+  new: optionalSearchString,
+  openAriaKai: optionalSearchString,
+  search: optionalSearchString,
+  userId: optionalSearchString,
+  userSearch: optionalSearchString,
 });
 
 export const Route = createFileRoute('/_authed/messages')({

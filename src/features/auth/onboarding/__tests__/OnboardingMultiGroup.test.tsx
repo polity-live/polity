@@ -1,7 +1,6 @@
 /* @vitest-environment jsdom */
 
 import { act, cleanup, fireEvent, render, renderHook, screen } from '@testing-library/react';
-import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -127,47 +126,6 @@ const hookMocks = vi.hoisted(() => ({
 vi.mock('@/features/shared/hooks/use-translation.ts', () => ({
   translate: i18n.t,
   useTranslation: () => ({ t: i18n.t }),
-}));
-
-type MockLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
-  to: string;
-  params?: Record<string, string>;
-  search?: Record<string, string | undefined>;
-  children?: ReactNode;
-};
-
-vi.mock('@tanstack/react-router', () => ({
-  Link: ({ to, params, search, children, onClick, ...props }: MockLinkProps) => {
-    let href = to;
-
-    for (const [key, value] of Object.entries(params ?? {})) {
-      href = href.replace(`$${key}`, value);
-    }
-
-    const searchParams = new URLSearchParams();
-    for (const [key, value] of Object.entries(search ?? {})) {
-      if (value !== undefined) {
-        searchParams.set(key, value);
-      }
-    }
-
-    const searchString = searchParams.toString();
-
-    return (
-      <a
-        href={searchString ? `${href}?${searchString}` : href}
-        onClick={event => {
-          onClick?.(event);
-          if (!event.defaultPrevented) {
-            event.preventDefault();
-          }
-        }}
-        {...props}
-      >
-        {children}
-      </a>
-    );
-  },
 }));
 
 vi.mock('@/features/shared/ui/ui/sonner', () => ({
@@ -480,10 +438,15 @@ describe('onboarding multi-group flow', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('link', { name: 'Go to my profile' }));
+    const profileLink = screen.getByRole('link', { name: 'Go to my profile' });
+    const assistantLink = screen.getByRole('link', { name: 'Open assistant' });
+    profileLink.addEventListener('click', event => event.preventDefault());
+    assistantLink.addEventListener('click', event => event.preventDefault());
+
+    fireEvent.click(profileLink);
     expect(onComplete).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByRole('link', { name: 'Open assistant' }), { ctrlKey: true });
+    fireEvent.click(assistantLink, { ctrlKey: true });
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
