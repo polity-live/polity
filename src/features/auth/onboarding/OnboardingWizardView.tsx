@@ -61,7 +61,6 @@ export interface OnboardingWizardViewProps {
   userEmail: any;
   onComplete: any;
   t: any;
-  navigate: any;
   user: any;
   updateProfileConfirmed: any;
   step: OnboardingStep;
@@ -92,14 +91,12 @@ export interface OnboardingWizardViewProps {
   handleMembershipDecline: any;
   handleAriaKaiNext: any;
   handleAppInstallNext: any;
-  handleGoToProfile: any;
-  handleGoToGroup: any;
-  handleGoToTimeline: any;
-  handleGoToAssistant: any;
   swipeNavigationHandlers: WizardSwipeNavigationHandlers;
 }
 
 export function OnboardingWizardView({
+  userId,
+  onComplete,
   t,
   step,
   error,
@@ -123,10 +120,6 @@ export function OnboardingWizardView({
   handleMembershipDecline,
   handleAriaKaiNext,
   handleAppInstallNext,
-  handleGoToProfile,
-  handleGoToGroup,
-  handleGoToTimeline,
-  handleGoToAssistant,
   swipeNavigationHandlers,
 }: OnboardingWizardViewProps) {
   const activeStepIndex = STEP_ORDER.indexOf(step);
@@ -321,10 +314,8 @@ export function OnboardingWizardView({
                   selectedInterestTags={data.selectedInterestTags}
                   activeGroupId={data.activeGroupId}
                   membershipRequestSentGroupIds={data.membershipRequestSentGroupIds}
-                  onGoToProfile={handleGoToProfile}
-                  onGoToGroup={handleGoToGroup}
-                  onGoToTimeline={handleGoToTimeline}
-                  onGoToAssistant={handleGoToAssistant}
+                  userId={userId}
+                  onComplete={onComplete}
                   isLoading={isLoading}
                 />
               )}

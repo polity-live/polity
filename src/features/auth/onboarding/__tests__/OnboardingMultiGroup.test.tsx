@@ -1,6 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { act, cleanup, fireEvent, render, renderHook, screen } from '@testing-library/react';
+import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -126,6 +127,47 @@ const hookMocks = vi.hoisted(() => ({
 vi.mock('@/features/shared/hooks/use-translation.ts', () => ({
   translate: i18n.t,
   useTranslation: () => ({ t: i18n.t }),
+}));
+
+type MockLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
+  to: string;
+  params?: Record<string, string>;
+  search?: Record<string, string | undefined>;
+  children?: ReactNode;
+};
+
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ to, params, search, children, onClick, ...props }: MockLinkProps) => {
+    let href = to;
+
+    for (const [key, value] of Object.entries(params ?? {})) {
+      href = href.replace(`$${key}`, value);
+    }
+
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(search ?? {})) {
+      if (value !== undefined) {
+        searchParams.set(key, value);
+      }
+    }
+
+    const searchString = searchParams.toString();
+
+    return (
+      <a
+        href={searchString ? `${href}?${searchString}` : href}
+        onClick={event => {
+          onClick?.(event);
+          if (!event.defaultPrevented) {
+            event.preventDefault();
+          }
+        }}
+        {...props}
+      >
+        {children}
+      </a>
+    );
+  },
 }));
 
 vi.mock('@/features/shared/ui/ui/sonner', () => ({
@@ -399,10 +441,8 @@ describe('onboarding multi-group flow', () => {
         selectedInterestTags={['climate', 'housing']}
         activeGroupId="group-beta"
         membershipRequestSentGroupIds={['group-alpha', 'group-beta']}
-        onGoToProfile={() => undefined}
-        onGoToGroup={() => undefined}
-        onGoToTimeline={() => undefined}
-        onGoToAssistant={() => undefined}
+        userId="user-1"
+        onComplete={() => undefined}
       />
     );
 
@@ -412,7 +452,39 @@ describe('onboarding multi-group flow', () => {
     expect(screen.getByText('Interests selected')).toBeTruthy();
     expect(screen.getByText('#climate')).toBeTruthy();
     expect(screen.getByText('Beta Offline Group')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Open assistant' }).getAttribute('href')).toBe(
+      '/messages?openAriaKai=true'
+    );
+    expect(screen.getByRole('link', { name: 'Open timeline' }).getAttribute('href')).toBe('/home');
+    expect(screen.getByRole('link', { name: 'Go to my profile' }).getAttribute('href')).toBe(
+      '/user/user-1'
+    );
+    expect(screen.getByRole('link', { name: 'Go to group' }).getAttribute('href')).toBe(
+      '/group/group-beta'
+    );
     expect(screen.queryByText('Want to use Polity like an app?')).toBeNull();
+  });
+
+  it('completes onboarding only for direct summary link clicks', () => {
+    const onComplete = vi.fn();
+    render(
+      <SummaryStep
+        firstName="Ada"
+        lastName="Lovelace"
+        selectedGroups={[]}
+        selectedInterestTags={[]}
+        activeGroupId={null}
+        membershipRequestSentGroupIds={[]}
+        userId="user-1"
+        onComplete={onComplete}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('link', { name: 'Go to my profile' }));
+    expect(onComplete).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('link', { name: 'Open assistant' }), { ctrlKey: true });
+    expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
   it('moves from the assistant step to app install before summary', () => {

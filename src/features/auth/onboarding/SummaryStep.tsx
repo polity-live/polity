@@ -1,6 +1,8 @@
 'use client';
 
+import { Link } from '@tanstack/react-router';
 import { ArrowRight, Check, Hash, Mail, MessageCircle, Sparkles, User, Users } from 'lucide-react';
+import type { MouseEvent } from 'react';
 
 import { featureThemeClassName } from '@/features/shared/theme';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
@@ -16,10 +18,8 @@ interface SummaryStepProps {
   selectedInterestTags: string[];
   activeGroupId: string | null;
   membershipRequestSentGroupIds: string[];
-  onGoToProfile: () => void;
-  onGoToGroup: () => void;
-  onGoToTimeline: () => void;
-  onGoToAssistant: () => void;
+  userId: string;
+  onComplete: () => void;
   isLoading?: boolean;
 }
 
@@ -30,10 +30,8 @@ export function SummaryStep({
   selectedInterestTags,
   activeGroupId,
   membershipRequestSentGroupIds,
-  onGoToProfile,
-  onGoToGroup,
-  onGoToTimeline,
-  onGoToAssistant,
+  userId,
+  onComplete,
   isLoading,
 }: SummaryStepProps) {
   const { t } = useTranslation();
@@ -52,6 +50,24 @@ export function SummaryStep({
         : selectedInterestTags.length > 0
           ? 'timeline'
           : 'assistant';
+  const destinationLinkClassName = isLoading ? 'pointer-events-none opacity-50' : undefined;
+
+  const handleDestinationClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (isLoading) {
+      event.preventDefault();
+      return;
+    }
+
+    if (
+      event.button === 0 &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      !event.altKey
+    ) {
+      onComplete();
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -200,47 +216,78 @@ export function SummaryStep({
 
       <div className="grid gap-2 border-t pt-5 sm:grid-cols-2 lg:grid-cols-4">
         <Button
-          onClick={onGoToAssistant}
-          disabled={isLoading}
+          asChild
+          className={destinationLinkClassName}
           variant={recommendedAction === 'assistant' ? 'default' : 'outline'}
           size="lg"
         >
-          <MessageCircle className="h-4 w-4" />
-          {t('onboarding.summaryStep.showAssistant')}
+          <Link
+            to="/messages"
+            search={{ openAriaKai: 'true' }}
+            onClick={handleDestinationClick}
+            aria-disabled={isLoading || undefined}
+            tabIndex={isLoading ? -1 : undefined}
+          >
+            <MessageCircle className="h-4 w-4" />
+            {t('onboarding.summaryStep.showAssistant')}
+          </Link>
         </Button>
 
         <Button
-          onClick={onGoToTimeline}
-          disabled={isLoading}
+          asChild
+          className={destinationLinkClassName}
           variant={recommendedAction === 'timeline' ? 'default' : 'outline'}
           size="lg"
         >
-          <Hash className="h-4 w-4" />
-          {t('onboarding.summaryStep.goToTimeline')}
-          <ArrowRight className="h-4 w-4" />
+          <Link
+            to="/home"
+            onClick={handleDestinationClick}
+            aria-disabled={isLoading || undefined}
+            tabIndex={isLoading ? -1 : undefined}
+          >
+            <Hash className="h-4 w-4" />
+            {t('onboarding.summaryStep.goToTimeline')}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </Button>
 
         <Button
-          onClick={onGoToProfile}
-          disabled={isLoading}
+          asChild
+          className={destinationLinkClassName}
           variant={recommendedAction === 'profile' ? 'default' : 'outline'}
           size="lg"
         >
-          <User className="h-4 w-4" />
-          {t('onboarding.summaryStep.goToProfile')}
-          <ArrowRight className="h-4 w-4" />
+          <Link
+            to="/user/$id"
+            params={{ id: userId }}
+            onClick={handleDestinationClick}
+            aria-disabled={isLoading || undefined}
+            tabIndex={isLoading ? -1 : undefined}
+          >
+            <User className="h-4 w-4" />
+            {t('onboarding.summaryStep.goToProfile')}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </Button>
 
         {primarySelectedGroup && (
           <Button
+            asChild
+            className={destinationLinkClassName}
             variant={recommendedAction === 'group' ? 'default' : 'outline'}
-            onClick={onGoToGroup}
-            disabled={isLoading}
             size="lg"
           >
-            <Users className="h-4 w-4" />
-            {t('onboarding.summaryStep.goToGroup')}
-            <ArrowRight className="h-4 w-4" />
+            <Link
+              to="/group/$id"
+              params={{ id: primarySelectedGroup.id }}
+              onClick={handleDestinationClick}
+              aria-disabled={isLoading || undefined}
+              tabIndex={isLoading ? -1 : undefined}
+            >
+              <Users className="h-4 w-4" />
+              {t('onboarding.summaryStep.goToGroup')}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </Button>
         )}
       </div>

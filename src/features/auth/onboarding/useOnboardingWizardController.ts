@@ -1,6 +1,5 @@
 'use client';
 
-import { useNavigate } from '@tanstack/react-router';
 import { useCallback } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { useWizardSwipeNavigation } from '@/features/shared/hooks/useWizardSwipeNavigation';
@@ -19,7 +18,6 @@ export function useOnboardingWizardController({
   onComplete,
 }: OnboardingWizardProps) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { updateProfileConfirmed } = useUserActions();
 
@@ -97,35 +95,6 @@ export function useOnboardingWizardController({
     goToStep('summary');
   };
 
-  const handleGoToProfile = () => {
-    navigate({ to: `/user/${userId}` });
-    onComplete();
-  };
-
-  const handleGoToGroup = () => {
-    const targetGroup =
-      data.selectedGroups.find(group => group.id === data.activeGroupId) ??
-      data.selectedGroups[0] ??
-      null;
-
-    if (!targetGroup) {
-      console.warn('⚠️ No selected group');
-      return;
-    }
-    navigate({ to: `/group/${targetGroup.id}` });
-    onComplete();
-  };
-
-  const handleGoToTimeline = () => {
-    navigate({ to: '/home' });
-    onComplete();
-  };
-
-  const handleGoToAssistant = () => {
-    navigate({ to: '/messages', search: { openAriaKai: 'true' } });
-    onComplete();
-  };
-
   const canSwipeForwardFromName =
     data.firstName.trim().length >= 2 &&
     data.firstName.trim().length <= 50 &&
@@ -201,7 +170,6 @@ export function useOnboardingWizardController({
     userEmail,
     onComplete,
     t,
-    navigate,
     user,
     updateProfileConfirmed,
     step,
@@ -232,10 +200,6 @@ export function useOnboardingWizardController({
     handleMembershipDecline,
     handleAriaKaiNext,
     handleAppInstallNext,
-    handleGoToProfile,
-    handleGoToGroup,
-    handleGoToTimeline,
-    handleGoToAssistant,
     swipeNavigationHandlers,
   };
 }
