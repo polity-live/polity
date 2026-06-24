@@ -87,7 +87,7 @@ const featureCards = [
 ] as const;
 
 const solutionKeys = ['humans', 'parties', 'ngos', 'corporations', 'government'] as const;
-const imprintSectionKeys = ['overview', 'operator', 'responsibility', 'legalNotice'] as const;
+const imprintSectionKeys = ['overview', 'operator', 'responsibility'] as const;
 const landingPreviewUserId = 'landing-preview-user';
 const landingDecisionFlowIcons = [FileText, Workflow, Vote] as const;
 const landingDecisionFlowFallbackSteps = ['Proposal', 'Amendment', 'Vote'] as const;
@@ -595,9 +595,6 @@ function LandingNetworkFlowPreviewView({
               {t('pages.home.publicLanding.network.description')}
             </p>
           </div>
-          <BadgeControl variant="secondary">
-            {t('pages.home.publicLanding.network.badge')}
-          </BadgeControl>
         </div>
       </div>
       <NetworkFlowBase

@@ -39,7 +39,7 @@ export const featuresPageTranslations = {
     groups: {
       title: 'Groups',
       description:
-        'Form communities, organize teams, and collaborate on shared goals with powerful group management tools.',
+        'Form communities, organize teams, and work in real time on shared goals, documents, and to-dos.',
       overview:
         'Groups enable collective action and collaboration. Whether forming a political party, community organization, or advocacy coalition, groups provide the structure for democratic decision-making.',
       capabilities: [
@@ -125,7 +125,7 @@ export const featuresPageTranslations = {
     search: {
       title: 'Advanced Search',
       description:
-        'Find people, groups, events, and documents quickly with powerful semantic search capabilities.',
+        'Find people, groups, events, and documents quickly with powerful semantic and AI search capabilities.',
       overview:
         'Powerful search helps you discover relevant content across the entire platform. Find people with specific expertise, policies on particular topics, or events in your area.',
       capabilities: [

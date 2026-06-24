@@ -1,32 +1,25 @@
 export const imprintPageTranslations = {
   title: 'Imprint',
   subtitle: 'Legal and contact information for the current public preview of Polity.',
-  lastUpdated: 'Last updated: April 18, 2026',
+  lastUpdated: 'Last updated: June 24, 2026',
   sections: {
     overview: {
       title: 'Overview',
       paragraphs: [
-        'Polity is an open-source platform for collaborative democratic processes. This page summarizes contact and responsibility information for the current preview release.',
+        'Polity is an open-source social network for collaborative democratic processes. This page summarizes contact and responsibility information for the current preview release.',
       ],
     },
     operator: {
       title: 'Project status',
       paragraphs: [
-        'The version presented here is a preview environment for the Polity project and its ongoing development.',
-        'If another organization deploys Polity on its own infrastructure, that organization is responsible for publishing the legally required provider details for its own deployment.',
+        'The version presented here is an alpha version of the Polity project and is under active development. The purpose of alpha operation is to test user experience and technical functionality under real-world conditions. Data loss and security vulnerabilities cannot be ruled out.',
+        'If another organization operates Polity on its own infrastructure, that organization is responsible for publishing the legally required provider details for operating the app.',
       ],
     },
     responsibility: {
       title: 'Content responsibility',
       paragraphs: [
-        'We create and review the content of this preview with care. External links are checked when they are added, but responsibility for third-party content remains with the respective operators of those external sites.',
-      ],
-    },
-    legalNotice: {
-      title: 'Legal notice',
-      paragraphs: [
-        'This imprint page is intended to make the project contact channels transparent during the preview stage.',
-        'Any production rollout should complete this page with the operator\'s full legally required identification details before going live.',
+        'We create and review the content of this preview with care. External links are checked when they are added, but responsibility for third-party content remains with the respective operators of those external sites. Content created by users of the platform remains the responsibility of those users.',
       ],
     },
   },
@@ -38,7 +31,7 @@ export const imprintPageTranslations = {
       description: 'Use this address for general questions about the Polity project.',
     },
     repository: {
-      title: 'Source code',
+      title: 'Source code & bug tracker',
       description: 'The public repository documents ongoing development and issue tracking.',
     },
     support: {
@@ -46,4 +39,4 @@ export const imprintPageTranslations = {
       description: 'See other ways to contact or support the project.',
     },
   },
-} as const
+} as const;

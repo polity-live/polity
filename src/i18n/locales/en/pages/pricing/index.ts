@@ -1,6 +1,7 @@
 export const pricingPageTranslations = {
   title: 'Pricing',
-  subtitle: 'Free forever. With your choice & responsibility to sustain the project.',
+  subtitle:
+    'Free forever. By choosing financial support, you help ensure the project continues and develops further.',
   customContribution: {
     label: 'Your monthly contribution',
     perMonth: '€{{amount}}/month',
@@ -73,35 +74,42 @@ export const pricingPageTranslations = {
   },
   philosophy: {
     title: 'Our Transparent Pricing Philosophy',
-    intro: 'Polity is built on transparency and community support. We believe democratic tools should be accessible to everyone, so',
+    intro:
+      'Polity is built on transparency and community support. We believe democratic tools should be accessible to everyone, so',
     allFeaturesFreeBold: 'all features are free',
     afterBold: '. Our paid tiers simply help us keep the platform running and growing:',
     tiers: {
       free: {
         label: 'Free tier:',
-        description: 'Full access to everything - no restrictions, no paywalls. Democracy shouldn\'t have a price tag.',
+        description:
+          "Full access to everything - no restrictions, no paywalls. Democracy shouldn't have a price tag.",
       },
       runningCosts: {
         label: 'Running Costs (€2/month):',
-        description: 'Helps us cover server infrastructure, database hosting, bandwidth, and basic operational expenses. This keeps the platform fast and reliable for everyone.',
+        description:
+          'Helps us cover server infrastructure, database hosting, bandwidth, and basic operational expenses. This keeps the platform fast and reliable for everyone.',
       },
       development: {
         label: 'Development (€10/month):',
-        description: 'Funds new features, platform improvements, security updates, and dedicated support. This helps us develop the product further and faster.',
+        description:
+          'Funds new features, platform improvements, security updates, and dedicated support. This helps us develop the product further and faster.',
       },
       custom: {
         label: 'Your Choice (custom amount):',
-        description: 'Choose your own monthly contribution - whether it\'s €1, €5, €15, or any amount that works for you. Every contribution, big or small, helps us achieve our mission. You get access to exclusive features and help us grow at your own pace.',
+        description:
+          "Choose your own monthly contribution - whether it's €1, €5, €15, or any amount that works for you. Every contribution, big or small, helps us achieve our mission. You get access to exclusive features and help us grow at your own pace.",
       },
     },
     solidarity: {
       label: 'Pay what you can:',
-      description: 'We rely on those who can afford to contribute to subsidize free access for everyone else. It\'s a solidarity model that makes democratic participation truly universal.',
+      description:
+        "We rely on those who can afford to contribute to subsidize free access for everyone else. It's a solidarity model that makes democratic participation truly universal.",
     },
   },
   enterprise: {
     title: 'Enterprise & Custom Solutions',
-    description: 'Need custom features, dedicated hosting, or on-premise deployment? We offer tailored solutions for larger organizations.',
+    description:
+      'Need custom features, dedicated hosting, or on-premise deployment? We offer tailored solutions for larger organizations.',
     cta: 'Contact Sales',
   },
 } as const;

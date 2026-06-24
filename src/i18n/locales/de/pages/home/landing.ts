@@ -10,7 +10,7 @@ export const landingSectionTranslations = {
     groups: {
       title: 'Gruppen',
       description:
-        'Bilden Sie Gemeinschaften, organisieren Sie Teams und arbeiten Sie an gemeinsamen Zielen mit leistungsstarken Gruppenverwaltungstools.',
+        'Bilden Sie Gemeinschaften, organisieren Sie Teams und arbeiten Sie in Echtzeit an gemeinsamen Zielen, Dokumenten & ToDos.',
     },
     events: {
       title: 'Veranstaltungen',
@@ -30,7 +30,7 @@ export const landingSectionTranslations = {
     search: {
       title: 'Erweiterte Suche',
       description:
-        'Finden Sie Personen, Gruppen, Veranstaltungen und Dokumente schnell mit leistungsstarken semantischen Suchfunktionen.',
+        'Finden Sie Personen, Gruppen, Veranstaltungen und Dokumente schnell mit leistungsstarken semantischen & AI-Suchfunktionen.',
     },
     calendar: {
       title: 'Kalender',

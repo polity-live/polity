@@ -5,15 +5,7 @@ import {
 } from '@/features/public-pages/ui/LegalInfoPageView';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
-const sectionKeys = [
-  'overview',
-  'dataCollection',
-  'usage',
-  'sharing',
-  'retention',
-  'rights',
-  'security',
-] as const;
+const sectionKeys = ['overview', 'dataCollection', 'usage', 'sharing', 'security'] as const;
 
 export function PrivacyPolicyPageContainer() {
   const { t, tArray } = useTranslation();

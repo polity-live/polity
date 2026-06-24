@@ -1,6 +1,7 @@
 export const pricingPageTranslations = {
   title: 'Preise',
-  subtitle: 'Für immer kostenlos. Mit deiner Wahl & Verantwortung das Fortbestehen des Projektes zu stützen.',
+  subtitle:
+    'Für immer kostenlos. Mit deiner Wahl für eine finanzielle Unterstützung gewährleistest du das Fortbestehen und die Weiterentwicklung des Projektes.',
   customContribution: {
     label: 'Dein monatlicher Beitrag',
     perMonth: '€{{amount}}/Monat',
@@ -9,7 +10,8 @@ export const pricingPageTranslations = {
     free: {
       name: 'Kostenlos',
       price: '€0',
-      description: 'Voller Zugang zu allen Funktionen - demokratische Werkzeuge sollten für alle kostenlos sein',
+      description:
+        'Voller Zugang zu allen Funktionen - demokratische Werkzeuge sollten für alle kostenlos sein',
       features: [
         'Vollständiges Benutzerprofil',
         'Unbegrenzt Gruppen erstellen',
@@ -24,7 +26,8 @@ export const pricingPageTranslations = {
         'Community-Support',
       ],
       cta: 'Jetzt starten',
-      helpText: 'Alle Funktionen sind kostenlos. Bezahlte Stufen helfen uns, die Plattform am Laufen zu halten und weiterzuentwickeln.',
+      helpText:
+        'Alle Funktionen sind kostenlos. Bezahlte Stufen helfen uns, die Plattform am Laufen zu halten und weiterzuentwickeln.',
     },
     runningCosts: {
       name: 'Betriebskosten',
@@ -39,7 +42,8 @@ export const pricingPageTranslations = {
         'Unsere ewige Dankbarkeit ❤️',
       ],
       cta: 'Betriebskosten decken',
-      helpText: 'Hilf uns, die Server am Laufen zu halten und die Plattform für alle zugänglich zu machen.',
+      helpText:
+        'Hilf uns, die Server am Laufen zu halten und die Plattform für alle zugänglich zu machen.',
     },
     development: {
       name: 'Entwicklung',
@@ -73,35 +77,43 @@ export const pricingPageTranslations = {
   },
   philosophy: {
     title: 'Unsere transparente Preisphilosophie',
-    intro: 'Polity basiert auf Transparenz und Community-Unterstützung. Wir glauben, dass demokratische Werkzeuge für alle zugänglich sein sollten, daher sind',
+    intro:
+      'Polity basiert auf Transparenz und Community-Unterstützung. Wir glauben, dass demokratische Werkzeuge für alle zugänglich sein sollten, daher sind',
     allFeaturesFreeBold: 'alle Funktionen kostenlos',
-    afterBold: '. Unsere bezahlten Stufen helfen uns einfach, die Plattform am Laufen zu halten und weiterzuentwickeln:',
+    afterBold:
+      '. Unsere bezahlten Stufen helfen uns einfach, die Plattform am Laufen zu halten und weiterzuentwickeln:',
     tiers: {
       free: {
         label: 'Kostenlose Stufe:',
-        description: 'Voller Zugang zu allem - keine Einschränkungen, keine Paywalls. Demokratie sollte keinen Preis haben.',
+        description:
+          'Voller Zugang zu allem - keine Einschränkungen, keine Paywalls. Demokratie sollte keinen Preis haben.',
       },
       runningCosts: {
         label: 'Betriebskosten (€2/Monat):',
-        description: 'Hilft uns, Serverinfrastruktur, Datenbank-Hosting, Bandbreite und grundlegende Betriebskosten zu decken. Das hält die Plattform schnell und zuverlässig für alle.',
+        description:
+          'Hilft uns, Serverinfrastruktur, Datenbank-Hosting, Bandbreite und grundlegende Betriebskosten zu decken. Das hält die Plattform schnell und zuverlässig für alle.',
       },
       development: {
         label: 'Entwicklung (€10/Monat):',
-        description: 'Finanziert neue Funktionen, Plattformverbesserungen, Sicherheitsupdates und dedizierten Support. Das hilft uns, das Produkt schneller und besser weiterzuentwickeln.',
+        description:
+          'Finanziert neue Funktionen, Plattformverbesserungen, Sicherheitsupdates und dedizierten Support. Das hilft uns, das Produkt schneller und besser weiterzuentwickeln.',
       },
       custom: {
         label: 'Deine Wahl (individueller Betrag):',
-        description: 'Wähle deinen eigenen monatlichen Beitrag - ob €1, €5, €15 oder ein anderer Betrag, der für dich passt. Jeder Beitrag, groß oder klein, hilft uns, unsere Mission zu erreichen. Du bekommst Zugang zu exklusiven Funktionen und hilfst uns, in deinem eigenen Tempo zu wachsen.',
+        description:
+          'Wähle deinen eigenen monatlichen Beitrag - ob €1, €5, €15 oder ein anderer Betrag, der für dich passt. Jeder Beitrag, groß oder klein, hilft uns, unsere Mission zu erreichen. Du bekommst Zugang zu exklusiven Funktionen und hilfst uns, in deinem eigenen Tempo zu wachsen.',
       },
     },
     solidarity: {
       label: 'Zahle, was du kannst:',
-      description: 'Wir verlassen uns darauf, dass diejenigen, die es sich leisten können, den kostenlosen Zugang für alle anderen subventionieren. Es ist ein Solidaritätsmodell, das demokratische Teilhabe wirklich universell macht.',
+      description:
+        'Wir verlassen uns darauf, dass diejenigen, die es sich leisten können, den kostenlosen Zugang für alle anderen subventionieren. Es ist ein Solidaritätsmodell, das demokratische Teilhabe wirklich universell macht.',
     },
   },
   enterprise: {
     title: 'Enterprise & maßgeschneiderte Lösungen',
-    description: 'Benötigen Sie benutzerdefinierte Funktionen, dediziertes Hosting oder On-Premise-Bereitstellung? Wir bieten maßgeschneiderte Lösungen für größere Organisationen.',
+    description:
+      'Benötigen Sie benutzerdefinierte Funktionen, dediziertes Hosting oder On-Premise-Bereitstellung? Wir bieten maßgeschneiderte Lösungen für größere Organisationen.',
     cta: 'Vertrieb kontaktieren',
   },
 } as const;

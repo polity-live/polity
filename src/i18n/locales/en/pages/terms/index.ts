@@ -2,7 +2,7 @@ export const termsPageTranslations = {
   title: 'Terms & Conditions',
   subtitle:
     'These terms govern access to and use of the public preview of Polity. By using the service, you agree to follow these conditions.',
-  lastUpdated: 'Last updated: April 18, 2026',
+  lastUpdated: 'Last updated: June 26, 2026',
   sections: {
     scope: {
       title: 'Scope',
@@ -74,4 +74,4 @@ export const termsPageTranslations = {
       description: 'Return to sign-in or sign-up when you are ready.',
     },
   },
-} as const
+} as const;

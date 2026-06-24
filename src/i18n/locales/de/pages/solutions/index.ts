@@ -43,10 +43,10 @@ export const solutionsPageTranslations = {
     },
     government: {
       id: 'government',
-      title: 'Für Regierungen',
-      tagline: 'Transparente Regierungsführung in Aktion',
+      title: 'Für Exekutiven & Legislativen',
+      tagline: 'Transparente Entscheidungsfindung in Aktion',
       description:
-        'Verbessern Sie Transparenz und Bürgerbeteiligung mit Tools für öffentliche Konsultation, Gesetzgebungsverfolgung und Gemeinschaftsengagement. Bauen Sie Vertrauen durch offene, zugängliche demokratische Prozesse auf.',
+        'Erhöhen Sie die Qualität, Geschwindigkeit & Transparenz von Entscheidungen. Machen Sie Gesetzgebungsprozesse nachvollziehbar, binden Sie Stakeholder ein und erhöhen Sie das Engagement Ihrer Wählerschaft. Bauen Sie Vertrauen und Respekt in Ihre Arbeit durch offene, zugängliche demokratische Prozesse auf.',
       features: [
         'Öffentliche Konsultationsplattformen',
         'Gesetzgebungsverfolgung',
@@ -88,7 +88,7 @@ export const solutionsPageTranslations = {
       features: [
         'Mitarbeiterbeteiligungsprogramme',
         'Stakeholder-Konsultation',
-        'Transparenz der Unternehmensführung',
+        'Mehrstufige Entscheidungsprozesse',
         'Team-Zusammenarbeit und Entscheidungsfindung',
       ],
       useCases: [

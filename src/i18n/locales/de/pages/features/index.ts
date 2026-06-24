@@ -40,7 +40,7 @@ export const featuresPageTranslations = {
     groups: {
       title: 'Gruppen',
       description:
-        'Bilden Sie Gemeinschaften, organisieren Sie Teams und arbeiten Sie an gemeinsamen Zielen mit leistungsstarken Gruppenverwaltungstools.',
+        'Bilden Sie Gemeinschaften, organisieren Sie Teams und arbeiten Sie in Echtzeit an gemeinsamen Zielen, Dokumenten & ToDos.',
       overview:
         'Gruppen ermöglichen kollektives Handeln und Zusammenarbeit. Ob politische Partei, Bürgerinitiative oder Interessenverband – Gruppen bieten die Struktur für demokratische Entscheidungsfindung.',
       capabilities: [
@@ -126,7 +126,7 @@ export const featuresPageTranslations = {
     search: {
       title: 'Erweiterte Suche',
       description:
-        'Finden Sie Personen, Gruppen, Veranstaltungen und Dokumente schnell mit leistungsstarken semantischen Suchfunktionen.',
+        'Finden Sie Personen, Gruppen, Veranstaltungen und Dokumente schnell mit leistungsstarken semantischen & AI-Suchfunktionen.',
       overview:
         'Die leistungsstarke Suche hilft Ihnen, relevante Inhalte auf der gesamten Plattform zu entdecken. Finden Sie Personen mit spezifischer Expertise, Richtlinien zu bestimmten Themen oder Veranstaltungen in Ihrer Nähe.',
       capabilities: [

@@ -5,7 +5,7 @@ export const homePageTranslations = {
   hero: {
     title: 'Democracy Reimagined for the Digital Age',
     subtitle:
-      'Empowering communities, organizations, and governments with collaborative decision-making tools',
+      'Empowering parties, NGOs, executives, and legislatures with collaborative decision-making tools',
     getStarted: 'Get Started',
     exploreFeatures: 'Explore Features',
   },
@@ -17,11 +17,11 @@ export const homePageTranslations = {
       imprint: 'Imprint',
     },
     hero: {
-      productLine: 'Collaborative civic software',
+      productLine: 'Platform for democratic collaboration',
       eyebrow: 'From proposal to decision',
       title: 'Understand your organization, decisions, and amendment flows in one place.',
       subtitle:
-        'Polity gives civic groups a shared workspace for networks, events, amendments, change requests, votes, and public documentation.',
+        'Polity is the global real-time social network for political groups, civil society, and people interested in politics, with events, motions, elections, data, and AI support.',
       decisionFlow: ['Proposal', 'Amendment', 'Vote'],
       primaryCta: 'Start with Polity',
       secondaryCta: 'Explore the product',
@@ -29,7 +29,6 @@ export const homePageTranslations = {
     network: {
       title: 'Example network flow',
       description: 'Groups, events, rights, and decision paths shown as a navigable graph.',
-      badge: 'Live-style preview',
       panelTitle: 'Amendment route',
     },
     sections: {
@@ -37,13 +36,13 @@ export const homePageTranslations = {
         eyebrow: 'Product flows',
         title: 'See how daily democratic work feels inside the app.',
         description:
-          'The public page now shows the actual shape of the product: a network graph, event timeline, amendment text, and change request workflow.',
+          'A quick tour of the core workspaces: groups, events, amendments, agendas, search, and messages.',
       },
       network: {
         eyebrow: 'Network and workflow building',
         title: 'Model parties, parliaments, committees, and mandates as living workflows.',
         description:
-          'Polity turns organizational structure into a working map. Users can understand who may propose, who reviews, where decisions happen, and how a mandate moves from a party branch into parliamentary work.',
+          'Polity makes complex organizational structures visible and manageable. Users can understand who may propose, who reviews, where decisions happen, and how a mandate moves from a party branch into parliamentary work.',
         points: [
           'Map local branches, policy committees, party congresses, parliamentary groups, and public hearings as connected spaces.',
           'Show rights, responsibilities, and handoffs directly on the graph so workflows stay understandable.',
@@ -54,9 +53,9 @@ export const homePageTranslations = {
         eyebrow: 'Amendments and change requests',
         title: 'Write policy text and review changes without losing the decision trail.',
         description:
-          'Amendment pages combine readable text, tags, status, and structured change requests. Members can see exactly which words changed and how much support a proposal has before it moves to a vote.',
+          'Amendments connect text, tags, and innovative elements such as graphics and media files. Members can see exactly which sections change and how much support a proposal has before it moves to a vote.',
         points: [
-          'Keep the amendment page readable for members while preserving version history and status.',
+          'Amendments stay clear for members. Next steps and version management show what comes next and what came before.',
           'Collect change requests with clear additions, removals, comments, and support levels.',
           'Move accepted changes into agendas, event decisions, or final votes with context intact.',
         ],
@@ -76,7 +75,7 @@ export const homePageTranslations = {
         eyebrow: '3D street design',
         title: 'Design streets in 3D before an amendment is decided.',
         description:
-          'Street design lets users choose a real area, load mapped surroundings, and discuss a new streetscape as a clear 3D model directly on the amendment.',
+          'Street design lets users choose a real road segment, load mapped surroundings, and design new street spaces as a clear 3D model directly on the amendment.',
         points: [
           'Mark an area on the map and show imported roads, buildings, greenery, and water as the existing context.',
           'Place streets, bike lanes, sidewalks, trees, benches, and green strips so alternatives become spatially understandable.',
@@ -89,8 +88,8 @@ export const homePageTranslations = {
         description:
           'Events are not isolated calendar entries. They carry agenda work, amendment reviews, participant activity, and decision moments into a timeline everyone can follow.',
         points: [
-          'Schedule assemblies, hearings, committees, and town halls with shared context.',
-          'Track voting readiness, support levels, and open decision points before the event.',
+          'Plan assemblies, hearings, committees, and town halls in an organization-wide context.',
+          'Embedded in workflows, events enable the automation of complex decision-making processes.',
           'Keep participants oriented with a chronological timeline of what changed and what comes next.',
         ],
       },
@@ -100,22 +99,22 @@ export const homePageTranslations = {
         description:
           'Polity brings active votes and elections together with deadlines, voting status, election modes, and result summaries so members know when to act and what was decided.',
         points: [
-          'Make votes visible with clear deadlines, quorums, and ballot options.',
-          'Keep candidacies, roles, and election rounds beside the right group or event context.',
+          'Make decisions in votes and elections visible in real time, from anywhere in the world.',
+          'Organize deadlines, quorums, ballot options, candidacies, roles, and election rounds in the group or event context.',
           'Publish results with turnout, majorities, and traceability right after the decision.',
         ],
       },
       social: {
         eyebrow: 'Social workspace and AI',
-        title: 'Bring discussion, coordination, and assisted drafting into the same flow.',
+        title: 'Bring discussion, coordination, and AI-assisted drafting into the same flow.',
         description:
-          'Members can chat in context, coordinate with groups, and use AI assistance with tools and skills to summarize debate or prepare clearer amendment wording without leaving the workspace.',
+          'Members can coordinate with groups, chat in the event context, and use AI assistance with tools and skills to understand debates or develop motions further.',
       },
       timeline: {
         eyebrow: 'Activity timeline',
-        title: 'Show the pulse of democratic work as it happens.',
+        title: 'Show the pulse of democratic work as and where it happens.',
         description:
-          'A compact timeline gives people a fast way to catch up: new arguments, updated requests, upcoming votes, and decision outcomes stay visible across the product.',
+          'A compact, geo-localized timeline helps people quickly find what is happening near them. New arguments, updated change requests, upcoming votes, and results have time and place context.',
       },
       search: {
         eyebrow: 'Search and discovery',
@@ -185,7 +184,7 @@ export const homePageTranslations = {
     },
     amendmentWorkspace: {
       title: 'Amendment page example',
-      description: 'Document text and change requests shown together in one review surface.',
+      description: 'Review amendment text and change requests side by side.',
       badge: 'Review plate',
     },
     changeRequest: {

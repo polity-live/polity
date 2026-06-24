@@ -43,10 +43,10 @@ export const solutionsPageTranslations = {
     },
     government: {
       id: 'government',
-      title: 'For Government',
-      tagline: 'Transparent governance in action',
+      title: 'For Executives & Legislatures',
+      tagline: 'Transparent decision-making in action',
       description:
-        'Enhance transparency and citizen participation with tools for public consultation, legislative tracking, and community engagement. Build trust through open, accessible democratic processes.',
+        'Increase the quality, speed, and transparency of decisions. Make legislative processes traceable, involve stakeholders, and increase engagement with your electorate. Build trust and respect for your work through open, accessible democratic processes.',
       features: [
         'Public consultation platforms',
         'Legislative amendment tracking',
@@ -88,7 +88,7 @@ export const solutionsPageTranslations = {
       features: [
         'Employee participation programs',
         'Stakeholder consultation',
-        'Corporate governance transparency',
+        'Multi-stage decision-making processes',
         'Team collaboration and decision-making',
       ],
       useCases: [

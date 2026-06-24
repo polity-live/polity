@@ -56,6 +56,7 @@ interface PlateEditorProps {
   isOwnerOrCollaborator?: boolean; // Whether user can change modes
   readOnly?: boolean;
   showFixedToolbar?: boolean;
+  showSettingsDialog?: boolean;
   selectedCrIds?: Set<string> | null; // Filter suggestions to selected CRs
   onSelectedCrIdsChange?: (crIds: Set<string> | null) => void;
   /** Remote cursor sync props */
@@ -99,6 +100,7 @@ export function PlateEditor({
   isOwnerOrCollaborator = true,
   readOnly = false,
   showFixedToolbar = true,
+  showSettingsDialog = true,
   selectedCrIds,
   onSelectedCrIdsChange,
   remoteCursors,
@@ -437,6 +439,7 @@ export function PlateEditor({
       isOwnerOrCollaborator={isOwnerOrCollaborator}
       readOnly={readOnly}
       showFixedToolbar={showFixedToolbar}
+      showSettingsDialog={showSettingsDialog}
       selectedCrIds={selectedCrIds}
       onSelectedCrIdsChange={onSelectedCrIdsChange}
       remoteCursors={remoteCursors}

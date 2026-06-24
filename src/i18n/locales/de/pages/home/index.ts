@@ -5,7 +5,7 @@ export const homePageTranslations = {
   hero: {
     title: 'Demokratie neu gedacht für das digitale Zeitalter',
     subtitle:
-      'Gemeinschaften, Organisationen und Regierungen mit Werkzeugen für kollaborative Entscheidungsfindung stärken',
+      'Parteien, NGOs, Exekutiven und Legislativen mit Werkzeugen für kollaborative Entscheidungsfindung stärken',
     getStarted: 'Jetzt starten',
     exploreFeatures: 'Funktionen erkunden',
   },
@@ -17,11 +17,11 @@ export const homePageTranslations = {
       imprint: 'Impressum',
     },
     hero: {
-      productLine: 'Software für demokratische Zusammenarbeit',
+      productLine: 'Plattform für demokratische Zusammenarbeit',
       eyebrow: 'Vom Vorschlag zur Entscheidung',
       title: 'Verstehe Organisation, Entscheidungen und Antragsflüsse an einem Ort.',
       subtitle:
-        'Polity gibt zivilgesellschaftlichen Gruppen einen gemeinsamen Arbeitsbereich für Netzwerke, Veranstaltungen, Anträge, Änderungsanträge, Abstimmungen und öffentliche Dokumentation.',
+        'Polity ist das globale Echtzeit-Social-Network für politische Gruppen, Zivilgesellschaft und politisch Interessierte – mit Veranstaltungen, Anträgen, Wahlen, Daten und KI-Unterstützung.',
       decisionFlow: ['Vorschlag', 'Änderung', 'Abstimmung'],
       primaryCta: 'Mit Polity starten',
       secondaryCta: 'Produkt ansehen',
@@ -30,7 +30,6 @@ export const homePageTranslations = {
       title: 'Beispiel-Netzwerkfluss',
       description:
         'Gruppen, Veranstaltungen, Rechte und Entscheidungswege als navigierbarer Graph.',
-      badge: 'App-Vorschau',
       panelTitle: 'Antragsweg',
     },
     sections: {
@@ -38,13 +37,13 @@ export const homePageTranslations = {
         eyebrow: 'Produkt-Flows',
         title: 'So fühlt sich demokratische Arbeit in der App an.',
         description:
-          'Die öffentliche Seite zeigt jetzt die konkrete Form des Produkts: Netzwerkgraph, Event-Timeline, Antragstext und Änderungsantrags-Workflow.',
+          'Ein kurzer Einstieg in die zentralen Arbeitsräume: Gruppen, Veranstaltungen, Anträge, Tagesordnungen, Suche und Nachrichten.',
       },
       network: {
         eyebrow: 'Netzwerk- und Workflow-Aufbau',
         title: 'Modelliere Parteien, Parlamente, Ausschüsse und Mandate als lebendige Workflows.',
         description:
-          'Polity macht Organisationsstruktur zu einer nutzbaren Karte. Nutzer sehen, wer vorschlagen darf, wer prüft, wo Entscheidungen passieren und wie ein Mandat vom Ortsverband in die Parlamentsarbeit wandert.',
+          'Polity macht komplexe Organisationsstrukturen sichtbar und handhabbar. Nutzer sehen, wer vorschlagen darf, wer prüft, wo Entscheidungen passieren und wie ein Mandat vom Ortsverband in die Parlamentsarbeit wandert.',
         points: [
           'Ortsverbände, Fachausschüsse, Parteitage, Fraktionen und öffentliche Anhörungen als verbundene Räume abbilden.',
           'Rechte, Verantwortlichkeiten und Übergaben direkt im Graphen zeigen, damit Workflows verständlich bleiben.',
@@ -53,12 +52,11 @@ export const homePageTranslations = {
       },
       amendments: {
         eyebrow: 'Anträge und Änderungsanträge',
-        title:
-          'Schreibe Politiktexte und prüfe Änderungen, ohne die Entscheidungsspur zu verlieren.',
+        title: 'Schreibe Anträge und prüfe Änderungen, ohne die Entscheidungsspur zu verlieren.',
         description:
-          'Antragsseiten verbinden lesbaren Text, Tags, Status und strukturierte Änderungsanträge. Mitglieder sehen genau, welche Wörter sich ändern und wie viel Unterstützung ein Vorschlag hat, bevor er in die Abstimmung geht.',
+          'Anträge verbinden Text, Tags, innovative Elemente wie Grafiken und Mediadateien. Mitglieder sehen genau, welche Abschnitte sich ändern und wie viel Unterstützung ein Vorschlag hat, bevor er in die Abstimmung geht.',
         points: [
-          'Die Antragsseite für Mitglieder lesbar halten und zugleich Versionen und Status bewahren.',
+          'Anträge bleiben für Mitglieder übersichtlich. Nächste Schritte und Versionsverwaltung zeigen, was kommt und was war.',
           'Änderungsanträge mit klaren Ergänzungen, Streichungen, Kommentaren und Zustimmungswerten sammeln.',
           'Angenommene Änderungen mit Kontext in Tagesordnungen, Event-Entscheidungen oder finale Abstimmungen übernehmen.',
         ],
@@ -78,7 +76,7 @@ export const homePageTranslations = {
         eyebrow: '3D-Straßenentwurf',
         title: 'Straßen in 3D entwerfen, bevor ein Antrag entschieden wird.',
         description:
-          'Mit dem Straßenentwurf können Nutzer einen realen Ausschnitt auswählen, Bestand aus Karten laden und neue Straßenräume als verständliches 3D-Modell direkt am Antrag diskutieren.',
+          'Mit dem Straßenentwurf können Nutzer einen realen Straßenausschnitt auswählen, Bestand aus Karten laden und neue Straßenräume als verständliches 3D-Modell direkt am Antrag entwerfen.',
         points: [
           'Ein Gebiet auf der Karte markieren und importierte Straßen, Gebäude, Grünflächen und Wasserflächen als Bestand sichtbar machen.',
           'Straßen, Radspuren, Gehwege, Bäume, Sitzbänke und Grünflächen platzieren, um Varianten im Raum greifbar zu machen.',
@@ -91,8 +89,8 @@ export const homePageTranslations = {
         description:
           'Events sind keine isolierten Kalendereinträge. Sie tragen Tagesordnungen, Antragsprüfungen, Aktivität von Teilnehmenden und Entscheidungszeitpunkte in eine Timeline, der alle folgen können.',
         points: [
-          'Versammlungen, Anhörungen, Ausschüsse und Town Halls mit gemeinsamem Kontext planen.',
-          'Abstimmungsreife, Zustimmung und offene Entscheidungspunkte vor dem Event verfolgen.',
+          'Versammlungen, Anhörungen, Ausschüsse und Town Halls in organisationsweitem Kontext planen.',
+          'Eingebunden in Workflows ermöglichen Events die Automatisierung komplexer Entscheidungsprozesse.',
           'Teilnehmende mit einer chronologischen Timeline über Änderungen und nächste Schritte orientieren.',
         ],
       },
@@ -103,22 +101,22 @@ export const homePageTranslations = {
         description:
           'Polity bündelt laufende Abstimmungen und Wahlen mit Fristen, Stimmstatus, Wahlmodi und Ergebnisübersicht, damit Mitglieder wissen, wann sie handeln müssen und was beschlossen wurde.',
         points: [
-          'Abstimmungen mit klaren Fristen, Quoren und Stimmoptionen sichtbar machen.',
-          'Kandidaturen, Rollen und Wahlgänge neben dem passenden Gruppen- oder Event-Kontext führen.',
+          'Entscheidungen in Abstimmungen & Wahlen in Echtzeit sichtbar machen - egal wo, global auf der ganzen Welt.',
+          'Fristen, Quoren und Stimmoptionen, Kandidaturen, Rollen und Wahlgänge im Gruppen- oder Event-Kontext organisieren.',
           'Ergebnisse mit Beteiligung, Mehrheiten und Nachvollziehbarkeit direkt nach der Entscheidung bereitstellen.',
         ],
       },
       social: {
         eyebrow: 'Sozialer Arbeitsraum und KI',
-        title: 'Diskussion, Koordination und unterstütztes Schreiben in denselben Flow holen.',
+        title: 'Diskussion, Koordination und AI-gestütztes Schreiben in denselben Flow holen.',
         description:
-          'Mitglieder können im Kontext chatten, sich mit Gruppen koordinieren und KI-Unterstützung mit Tools und Skills nutzen, um Debatten zusammenzufassen oder klarere Antragssprache vorzubereiten.',
+          'Mitglieder können sich mit Gruppen koordinieren, im Event-Kontext chatten und KI-Unterstützung mit Tools und Skills nutzen, um Debatten zu verstehen oder Anträge weiterzuentwickeln.',
       },
       timeline: {
         eyebrow: 'Aktivitäts-Timeline',
-        title: 'Zeige den Puls demokratischer Arbeit, während sie passiert.',
+        title: 'Zeige den Puls demokratischer Arbeit, während und wo sie passiert.',
         description:
-          'Eine kompakte Timeline hilft beim schnellen Aufholen: neue Argumente, aktualisierte Änderungsanträge, kommende Abstimmungen und Ergebnisse bleiben im Produkt sichtbar.',
+          'Eine kompakte & geo-lokalisierte Timeline hilft beim schnellen Finden: Was passiert wo in deiner Nähe? Neue Argumente, aktualisierte Änderungsanträge, kommende Abstimmungen und Ergebnisse haben Zeit- & Ortskontext.',
       },
       search: {
         eyebrow: 'Suche und Entdeckung',
@@ -190,7 +188,7 @@ export const homePageTranslations = {
     },
     amendmentWorkspace: {
       title: 'Beispiel-Antragsseite',
-      description: 'Dokumenttext und Änderungsanträge gemeinsam in einer Prüfoberfläche.',
+      description: 'Antragstext und Änderungsanträge gemeinsam prüfen.',
       badge: 'Review-Fläche',
     },
     changeRequest: {

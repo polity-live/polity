@@ -10,7 +10,7 @@ export const landingSectionTranslations = {
     groups: {
       title: 'Groups',
       description:
-        'Form communities, organize teams, and collaborate on shared goals with powerful group management tools.',
+        'Form communities, organize teams, and work in real time on shared goals, documents, and to-dos.',
     },
     events: {
       title: 'Events',
@@ -30,7 +30,7 @@ export const landingSectionTranslations = {
     search: {
       title: 'Advanced Search',
       description:
-        'Find people, groups, events, and documents quickly with powerful semantic search capabilities.',
+        'Find people, groups, events, and documents quickly with powerful semantic and AI search capabilities.',
     },
     calendar: {
       title: 'Calendar',
@@ -44,8 +44,7 @@ export const landingSectionTranslations = {
     },
     messages: {
       title: 'Messages',
-      description:
-        'Communicate directly with individuals and groups through real-time messaging.',
+      description: 'Communicate directly with individuals and groups through real-time messaging.',
     },
     notifications: {
       title: 'Notifications',

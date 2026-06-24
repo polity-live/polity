@@ -149,6 +149,7 @@ function LandingAmendmentEditorPreview({
               initialValue={previewData.documentValue}
               readOnly
               showFixedToolbar={false}
+              showSettingsDialog={false}
               documentId="landing-amendment-preview"
               documentTitle={t('pages.home.publicLanding.amendmentText.documentTitle')}
               currentMode="event_final_closing_vote"

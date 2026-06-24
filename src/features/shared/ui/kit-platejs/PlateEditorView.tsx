@@ -42,6 +42,7 @@ export interface PlateEditorViewProps {
   isOwnerOrCollaborator: any;
   readOnly: any;
   showFixedToolbar: any;
+  showSettingsDialog: boolean;
   selectedCrIds: any;
   onSelectedCrIdsChange: any;
   remoteCursors: any;
@@ -78,6 +79,7 @@ export function PlateEditorView({
   onModeChange,
   isOwnerOrCollaborator,
   readOnly,
+  showSettingsDialog,
   selectedCrIds,
   onSelectedCrIdsChange,
   remoteCursors,
@@ -143,7 +145,7 @@ export function PlateEditorView({
             />
           </EditorContainer>
 
-          <SettingsDialog />
+          {showSettingsDialog && <SettingsDialog />}
         </Plate>
       </SuggestionCallbacksProvider>
     </ModeProvider>

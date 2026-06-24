@@ -1,49 +1,45 @@
 export const imprintPageTranslations = {
   title: 'Impressum',
-  subtitle: 'Rechtliche Hinweise und Kontaktinformationen fuer die aktuelle oeffentliche Vorschau von Polity.',
-  lastUpdated: 'Zuletzt aktualisiert: 18. April 2026',
+  subtitle:
+    'Rechtliche Hinweise und Kontaktinformationen für die aktuelle öffentliche Vorschau von Polity.',
+  lastUpdated: 'Zuletzt aktualisiert: 24. Juni 2026',
   sections: {
     overview: {
-      title: 'Ueberblick',
+      title: 'Überblick',
       paragraphs: [
-        'Polity ist eine Open-Source-Plattform fuer kollaborative demokratische Prozesse. Diese Seite fasst Kontakt- und Verantwortlichkeitsinformationen fuer die aktuelle Vorschau zusammen.',
+        'Polity ist ein Open-Source-Social-Network für kollaborative demokratische Prozesse. Diese Seite fasst Kontakt- und Verantwortlichkeitsinformationen für die aktuelle Vorschau zusammen.',
       ],
     },
     operator: {
       title: 'Projektstatus',
       paragraphs: [
-        'Die hier dargestellte Version ist eine Vorschauumgebung fuer das Polity-Projekt und dessen laufende Entwicklung.',
-        'Wenn eine andere Organisation Polity auf eigener Infrastruktur betreibt, ist diese Organisation selbst dafuer verantwortlich, die fuer ihre Bereitstellung gesetzlich erforderlichen Anbieterangaben zu veroeffentlichen.',
+        'Die hier dargestellte Version ist eine Alpha-Version des Polity-Projekts und in laufender Entwicklung. Ziel des Alpha-Betriebs ist das Testen von User Experience und technischer Funktionalität unter realen Bedingungen. Datenverluste und Sicherheitslücken sind nicht ausgeschlossen.',
+        'Wenn eine andere Organisation Polity auf eigener Infrastruktur betreibt, ist diese Organisation selbst dafür verantwortlich, die für den Betrieb der App gesetzlich erforderlichen Anbieterangaben zu veröffentlichen.',
       ],
     },
     responsibility: {
-      title: 'Verantwortung fuer Inhalte',
+      title: 'Verantwortung für Inhalte',
       paragraphs: [
-        'Wir erstellen und pruefen die Inhalte dieser Vorschau mit Sorgfalt. Externe Links werden beim Einbinden geprueft, die Verantwortung fuer Inhalte fremder Seiten liegt jedoch bei den jeweiligen Betreiber:innen dieser Angebote.',
-      ],
-    },
-    legalNotice: {
-      title: 'Rechtlicher Hinweis',
-      paragraphs: [
-        'Diese Impressumsseite soll die Kontaktkanaele des Projekts waehrend der Vorschauphase transparent machen.',
-        'Vor einem Produktivbetrieb sollte diese Seite um die vollstaendigen gesetzlich erforderlichen Anbieterangaben des jeweiligen Betreibers ergaenzt werden.',
+        'Wir erstellen und prüfen die Inhalte dieser Vorschau mit Sorgfalt. Externe Links werden beim Einbinden geprüft, die Verantwortung für Inhalte fremder Seiten liegt jedoch bei den jeweiligen Betreiber:innen dieser Angebote. Inhalte, die von Nutzern der Plattform erstellt werden, liegen im Verantwortungsbereich dieser Nutzer.',
       ],
     },
   },
   contact: {
     title: 'Kontakt und Quellcode',
-    description: 'Nutze die folgenden Kanaele fuer Projekt-, Rechts- oder Datenschutzfragen.',
+    description: 'Nutze die folgenden Kanäle für Projekt-, Rechts- oder Datenschutzfragen.',
     email: {
       title: 'E-Mail',
-      description: 'Verwende diese Adresse fuer allgemeine Fragen zum Polity-Projekt.',
+      description: 'Verwende diese Adresse für allgemeine Fragen zum Polity-Projekt.',
     },
     repository: {
-      title: 'Quellcode',
-      description: 'Das oeffentliche Repository dokumentiert die laufende Entwicklung und das Issue-Tracking.',
+      title: 'Quellcode & Bug-Tracker',
+      description:
+        'Das öffentliche Repository dokumentiert die laufende Entwicklung und das Issue-Tracking.',
     },
     support: {
       title: 'Support-Seite',
-      description: 'Hier findest du weitere Moeglichkeiten, das Projekt zu kontaktieren oder zu unterstuetzen.',
+      description:
+        'Hier findest du weitere Möglichkeiten, das Projekt zu kontaktieren oder zu unterstützen.',
     },
   },
-} as const
+} as const;
