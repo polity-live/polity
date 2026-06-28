@@ -267,18 +267,33 @@ describe('useCreateAgendaItemForm', () => {
     expect(additionalLinkFields.some(field => field.key === 'role')).toBe(false);
     expect(additionalLinkFields.some(field => field.key === 'role-renewal-role')).toBe(true);
 
+    let outcome: Awaited<ReturnType<typeof result.current.onSubmit>> | undefined;
     await act(async () => {
-      await result.current.onSubmit?.();
+      outcome = await result.current.onSubmit?.();
     });
 
-    const createFullMutation = mutateMock.mock.calls.find(
-      ([mutation]) => (mutation as { type?: string }).type === 'agendas.createFull'
-    )?.[0] as {
-      payload?: {
-        agenda_items?: { order_index?: number; event_id?: string; type?: string }[];
-        elections?: { role_id?: string; election_mode?: string; seat_count?: number }[];
-      };
-    };
+    const mutateCalls = mutateMock.mock.calls as unknown as [
+      {
+        type?: string;
+        payload?: {
+          agenda_items?: {
+            id?: string;
+            order_index?: number;
+            event_id?: string;
+            type?: string;
+          }[];
+          elections?: { role_id?: string; election_mode?: string; seat_count?: number }[];
+        };
+      },
+    ][];
+    const createFullMutation = mutateCalls
+      .map(([mutation]) => mutation)
+      .find(mutation => mutation.type === 'agendas.createFull');
+    expect(createFullMutation).toBeTruthy();
+    if (!createFullMutation) {
+      throw new Error('Expected agendas.createFull mutation to be submitted');
+    }
+    const agendaItemId = createFullMutation.payload?.agenda_items?.[0]?.id;
 
     expect(createFullMutation.payload?.agenda_items?.[0]).toMatchObject({
       event_id: 'event-member',
@@ -289,6 +304,14 @@ describe('useCreateAgendaItemForm', () => {
       role_id: 'chairperson',
       election_mode: 'single',
       seat_count: 1,
+    });
+    expect(agendaItemId).toBeTruthy();
+    expect(outcome).toMatchObject({
+      status: 'success',
+      target: {
+        to: '/event/$id/agenda/$agendaItemId',
+        params: { id: 'event-member', agendaItemId },
+      },
     });
     expect(mutateMock).toHaveBeenCalledTimes(1);
   });

@@ -61,6 +61,7 @@ export function SegmentedChoiceField<TValue extends string = string>({
                 variant={selected ? 'default' : 'outline'}
                 size={size === 'icon' ? 'icon' : 'default'}
                 disabled={option.disabled}
+                data-create-option={option.value}
                 className={cn(
                   'gap-2',
                   size === 'icon' && 'h-9 w-9 rounded-full text-xs',

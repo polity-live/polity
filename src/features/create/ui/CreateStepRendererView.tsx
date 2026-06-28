@@ -9,23 +9,43 @@ import { CreateTextDescriptorField } from './CreateTextDescriptorField';
 import { CreateTypeaheadDescriptorField } from './CreateTypeaheadDescriptorField';
 function CreateFieldRenderer({ field }: { field: CreateFormFieldDescriptor }) {
   if (field.kind === 'custom') {
-    return <div className={field.className}>{field.node}</div>;
+    return (
+      <div
+        className={field.className}
+        data-create-field={field.key}
+        data-create-field-kind={field.kind}
+      >
+        {field.node}
+      </div>
+    );
   }
 
   if (field.kind === 'customComponent') {
     const Component = field.component;
     return (
-      <div className={field.className}>
+      <div
+        className={field.className}
+        data-create-field={field.key}
+        data-create-field-kind={field.kind}
+      >
         <Component {...(field.props ?? {})} />
       </div>
     );
   }
 
   if (field.kind === 'typeahead') {
-    return <CreateTypeaheadDescriptorField field={field} />;
+    return (
+      <div data-create-field={field.key} data-create-field-kind={field.kind}>
+        <CreateTypeaheadDescriptorField field={field} />
+      </div>
+    );
   }
 
-  return <CreateTextDescriptorField field={field} />;
+  return (
+    <div data-create-field={field.key} data-create-field-kind={field.kind}>
+      <CreateTextDescriptorField field={field} />
+    </div>
+  );
 }
 
 function CreateSectionRenderer({ section }: { section: CreateFormSectionDescriptor }) {

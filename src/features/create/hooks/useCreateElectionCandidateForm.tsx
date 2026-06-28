@@ -73,6 +73,9 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
   );
   const selectedElection = eligibleElections.find(election => election.id === electionId);
   const selectedElectionTitle = selectedElection?.title || t('pages.create.common.notSelected');
+  const selectedAgendaItemId =
+    selectedElection?.agenda_item?.id ?? selectedElection?.agenda_item_id;
+  const selectedEventId = selectedElection?.agenda_item?.event?.id;
   const electionInvalidReason = selectedElection
     ? null
     : t('pages.create.electionCandidate.validation.electionRequired');
@@ -98,9 +101,15 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
       context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
-      const candidateTarget = createRouteSubmitTarget('election', {
-        to: '/create',
-      });
+      const candidateTarget =
+        selectedEventId && selectedAgendaItemId
+          ? createRouteSubmitTarget('election', {
+              to: '/event/$id/agenda/$agendaItemId',
+              params: { id: selectedEventId, agendaItemId: selectedAgendaItemId },
+            })
+          : createRouteSubmitTarget('election', {
+              to: '/create',
+            });
       context?.setRecoveryTarget(candidateTarget);
       trackCreateFinalization({
         result: candidateResult,
@@ -272,8 +281,10 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
       eligibleElectionIds,
       imageURL,
       isSubmitting,
+      selectedAgendaItemId,
       selectedElection,
       selectedElectionTitle,
+      selectedEventId,
       electionInvalidReason,
       statement,
       t,

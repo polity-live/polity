@@ -110,6 +110,10 @@ export function GroupTimelineCardView({
   const groupTone = getEntityToneClasses('group');
   const hashtagTone = getHashtagToneClasses();
   const groupHref = href ?? `/group/${group.id}`;
+  const membershipLoading = Boolean(isMembershipLoading || membership.isLoading);
+  const subscriptionLoading = Boolean(isSubscriptionLoading || subscription.isLoading);
+  const requestMembershipDisabledReason = membership.requestJoinDisabledReason;
+  const subscriptionLoadingLabel = t('common.checks.subscription');
 
   return (
     <TimelineCardBase contentType="group" className={className} href={groupHref}>
@@ -164,7 +168,14 @@ export function GroupTimelineCardView({
             <Button
               variant={getMembershipVariant()}
               size="sm"
-              disabled={isMembershipLoading || membership.isLoading || requestMembershipDisabled}
+              disabled={requestMembershipDisabled && !membershipLoading}
+              loading={membershipLoading}
+              loadingLabel={getMembershipLabel()}
+              title={
+                requestMembershipDisabled && !membershipLoading
+                  ? requestMembershipDisabledReason
+                  : undefined
+              }
               className="flex items-center gap-1.5"
             >
               <MembershipIcon className="h-3.5 w-3.5" />
@@ -182,7 +193,8 @@ export function GroupTimelineCardView({
                     (onLeave || membership.leaveGroup)?.();
                     setMembershipOpen(false);
                   }}
-                  disabled={isMembershipLoading || membership.isLoading}
+                  loading={membershipLoading}
+                  loadingLabel={t('features.timeline.cards.group.leaveGroup')}
                   className="justify-start"
                 >
                   {t('features.timeline.cards.group.leaveGroup')}
@@ -198,7 +210,8 @@ export function GroupTimelineCardView({
                       (onAcceptInvitation || membership.acceptInvitation)?.();
                       setMembershipOpen(false);
                     }}
-                    disabled={isMembershipLoading || membership.isLoading}
+                    loading={membershipLoading}
+                    loadingLabel={t('features.timeline.cards.group.acceptInvitation')}
                     className="justify-start"
                   >
                     {t('features.timeline.cards.group.acceptInvitation')}
@@ -211,7 +224,8 @@ export function GroupTimelineCardView({
                       (onLeave || membership.leaveGroup)?.();
                       setMembershipOpen(false);
                     }}
-                    disabled={isMembershipLoading || membership.isLoading}
+                    loading={membershipLoading}
+                    loadingLabel={t('features.timeline.cards.group.declineInvitation')}
                     className="text-destructive justify-start"
                   >
                     {t('features.timeline.cards.group.declineInvitation')}
@@ -227,7 +241,8 @@ export function GroupTimelineCardView({
                     (onWithdrawRequest || membership.leaveGroup)?.();
                     setMembershipOpen(false);
                   }}
-                  disabled={isMembershipLoading || membership.isLoading}
+                  loading={membershipLoading}
+                  loadingLabel={t('features.timeline.cards.group.withdrawRequest')}
                   className="text-destructive justify-start"
                 >
                   {t('features.timeline.cards.group.withdrawRequest')}
@@ -242,8 +257,13 @@ export function GroupTimelineCardView({
                     (onRequestMembership || membership.requestJoin)?.();
                     setMembershipOpen(false);
                   }}
-                  disabled={
-                    isMembershipLoading || membership.isLoading || requestMembershipDisabled
+                  disabled={requestMembershipDisabled && !membershipLoading}
+                  loading={membershipLoading}
+                  loadingLabel={t('features.timeline.cards.group.requestMembership')}
+                  title={
+                    requestMembershipDisabled && !membershipLoading
+                      ? requestMembershipDisabledReason
+                      : undefined
                   }
                   className="justify-start"
                 >
@@ -262,7 +282,8 @@ export function GroupTimelineCardView({
             e.stopPropagation();
             (onToggleSubscription || subscription.toggleSubscribe)?.();
           }}
-          disabled={isSubscriptionLoading || subscription.isLoading}
+          loading={subscriptionLoading}
+          loadingLabel={<span className="sr-only">{subscriptionLoadingLabel}</span>}
           className="flex items-center gap-1.5"
         >
           <Bell

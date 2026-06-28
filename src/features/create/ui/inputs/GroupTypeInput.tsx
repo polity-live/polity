@@ -29,6 +29,7 @@ export function GroupTypeInput({ value, label, options, onChange }: GroupTypeInp
             <FormControlLabel
               key={optionValue}
               htmlFor={`group-type-${optionValue}`}
+              data-create-option={optionValue}
               className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
                 value === optionValue ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
               }`}
@@ -36,6 +37,7 @@ export function GroupTypeInput({ value, label, options, onChange }: GroupTypeInp
               <FormControlRadioGroupItem
                 value={optionValue}
                 id={`group-type-${optionValue}`}
+                data-create-option={optionValue}
                 className="mt-0.5"
               />
               <div>

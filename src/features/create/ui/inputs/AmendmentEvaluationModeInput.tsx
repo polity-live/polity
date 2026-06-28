@@ -23,6 +23,7 @@ export function AmendmentEvaluationModeInput({
             type="button"
             variant={value === option.value ? 'default' : 'outline'}
             onClick={() => onChange(option.value)}
+            data-create-option={option.value}
           >
             {option.label}
           </Button>

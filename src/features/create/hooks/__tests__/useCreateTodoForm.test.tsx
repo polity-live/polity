@@ -224,8 +224,9 @@ describe('useCreateTodoForm', () => {
       titleField.onValueChange('Prepare agenda');
     });
 
+    let outcome: Awaited<ReturnType<typeof result.current.onSubmit>> | undefined;
     await act(async () => {
-      await result.current.onSubmit();
+      outcome = await result.current.onSubmit();
     });
 
     expect(createTodo).toHaveBeenCalledWith(
@@ -234,5 +235,12 @@ describe('useCreateTodoForm', () => {
         assigneeId: 'user-current',
       })
     );
+    expect(outcome).toMatchObject({
+      status: 'success',
+      target: {
+        to: '/todos/$id',
+        params: { id: 'todo-1' },
+      },
+    });
   });
 });

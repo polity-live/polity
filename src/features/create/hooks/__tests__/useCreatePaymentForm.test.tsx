@@ -210,6 +210,13 @@ describe('useCreatePaymentForm', () => {
     });
 
     expect(outcome).toMatchObject({ status: 'success' });
+    expect(outcome).toMatchObject({
+      target: {
+        to: '/group/$id/operation',
+        params: { id: 'group-1' },
+        hash: 'payments',
+      },
+    });
     expect(createPayment).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'payment-1',

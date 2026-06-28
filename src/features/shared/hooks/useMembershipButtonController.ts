@@ -15,6 +15,7 @@ export function useMembershipButtonController(args: {
   onLeave: () => void;
   onAcceptInvitation: () => void;
   disabledReason?: string;
+  loadingLabel?: string;
 }) {
   const { t } = useTranslation();
   const [showDisabledReason, setShowDisabledReason] = useState(false);
@@ -45,6 +46,19 @@ export function useMembershipButtonController(args: {
         };
     }
   })();
+
+  const loadingLabel =
+    args.loadingLabel ??
+    (() => {
+      switch (args.actionType) {
+        case 'join':
+          return t('common.checks.membership');
+        case 'participate':
+          return t('common.checks.participation');
+        case 'collaborate':
+          return t('common.checks.collaboration');
+      }
+    })();
 
   const buttonConfig: {
     label: string;
@@ -110,6 +124,7 @@ export function useMembershipButtonController(args: {
 
   return {
     labels,
+    loadingLabel,
     buttonConfig,
     showDisabledReason,
     disabledAriaLabel: args.disabledReason

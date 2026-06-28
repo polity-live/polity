@@ -184,17 +184,22 @@ export function TableActionIconButton({
   className,
   destructive = false,
   disabled,
+  loading,
+  loadingLabel,
   type = 'button',
   variant = 'ghost',
   ...props
 }: TableActionIconButtonProps) {
+  const actionLabel = loading && typeof loadingLabel === 'string' ? loadingLabel : label;
+  const tooltipContent = loading ? (loadingLabel ?? tooltip ?? label) : (tooltip ?? label);
   const button = (
     <Button
       type={type}
       variant={variant}
       size="icon"
-      aria-label={label}
+      aria-label={actionLabel}
       disabled={disabled}
+      loading={loading}
       className={cn(
         'size-8',
         destructive && 'text-destructive hover:text-destructive focus-visible:ring-destructive/20',
@@ -209,9 +214,13 @@ export function TableActionIconButton({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        {disabled ? <span className="inline-flex cursor-not-allowed">{button}</span> : button}
+        {disabled || loading ? (
+          <span className="inline-flex cursor-not-allowed">{button}</span>
+        ) : (
+          button
+        )}
       </TooltipTrigger>
-      <TooltipContent sideOffset={6}>{tooltip ?? label}</TooltipContent>
+      <TooltipContent sideOffset={6}>{tooltipContent}</TooltipContent>
     </Tooltip>
   );
 }

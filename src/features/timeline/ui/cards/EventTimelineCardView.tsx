@@ -143,6 +143,10 @@ export function EventTimelineCardView({
 }: EventTimelineCardViewProps) {
   const eventTone = getEntityToneClasses('event');
   const hashtagTone = getHashtagToneClasses();
+  const participationLoading = Boolean(isParticipationLoading || participation.isLoading);
+  const subscriptionLoading = Boolean(isSubscriptionLoading || subscription.isLoading);
+  const eventPastDisabled = eventTimeStatus === 'past' && !hasParticipationRelationship;
+  const subscriptionLoadingLabel = t('common.checks.subscription');
 
   return (
     <TimelineCardBase contentType="event" className={className} onClick={onSelect} href={eventHref}>
@@ -243,11 +247,9 @@ export function EventTimelineCardView({
             <Button
               variant={getRsvpVariant()}
               size="sm"
-              disabled={
-                isParticipationLoading ||
-                participation.isLoading ||
-                (eventTimeStatus === 'past' && !hasParticipationRelationship)
-              }
+              disabled={eventPastDisabled && !participationLoading}
+              loading={participationLoading}
+              loadingLabel={getRsvpLabel()}
               className="flex items-center gap-1.5"
             >
               <span className="text-xs">{getRsvpLabel()}</span>
@@ -264,7 +266,8 @@ export function EventTimelineCardView({
                     (onLeave || participation.leaveEvent)?.();
                     setRsvpOpen(false);
                   }}
-                  disabled={isParticipationLoading || participation.isLoading}
+                  loading={participationLoading}
+                  loadingLabel={t('features.timeline.cards.event.leaveEvent')}
                   className="justify-start"
                 >
                   {t('features.timeline.cards.event.leaveEvent')}
@@ -280,7 +283,8 @@ export function EventTimelineCardView({
                       (onAcceptInvitation || participation.acceptInvitation)?.();
                       setRsvpOpen(false);
                     }}
-                    disabled={isParticipationLoading || participation.isLoading}
+                    loading={participationLoading}
+                    loadingLabel={t('features.timeline.cards.event.acceptInvitation')}
                     className="justify-start"
                   >
                     {t('features.timeline.cards.event.acceptInvitation')}
@@ -293,7 +297,8 @@ export function EventTimelineCardView({
                       (onLeave || participation.leaveEvent)?.();
                       setRsvpOpen(false);
                     }}
-                    disabled={isParticipationLoading || participation.isLoading}
+                    loading={participationLoading}
+                    loadingLabel={t('features.timeline.cards.event.declineInvitation')}
                     className="text-destructive justify-start"
                   >
                     {t('features.timeline.cards.event.declineInvitation')}
@@ -309,7 +314,8 @@ export function EventTimelineCardView({
                     (onWithdrawRequest || participation.leaveEvent)?.();
                     setRsvpOpen(false);
                   }}
-                  disabled={isParticipationLoading || participation.isLoading}
+                  loading={participationLoading}
+                  loadingLabel={t('features.timeline.cards.event.withdrawRequest')}
                   className="text-destructive justify-start"
                 >
                   {t('features.timeline.cards.event.withdrawRequest')}
@@ -324,7 +330,8 @@ export function EventTimelineCardView({
                     (onRequestParticipation || participation.requestParticipation)?.();
                     setRsvpOpen(false);
                   }}
-                  disabled={isParticipationLoading || participation.isLoading}
+                  loading={participationLoading}
+                  loadingLabel={t('features.timeline.cards.event.requestParticipation')}
                   className="justify-start"
                 >
                   {t('features.timeline.cards.event.requestParticipation')}
@@ -342,7 +349,8 @@ export function EventTimelineCardView({
             e.preventDefault();
             (onToggleSubscription || subscription.toggleSubscribe)?.();
           }}
-          disabled={isSubscriptionLoading || subscription.isLoading}
+          loading={subscriptionLoading}
+          loadingLabel={<span className="sr-only">{subscriptionLoadingLabel}</span>}
           className="flex items-center gap-1.5"
         >
           <Bell

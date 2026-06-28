@@ -35,6 +35,8 @@ export function FormStyleSelectorView({
           )}
           onClick={() => onStyleChange(value)}
           title={t(labelKey)}
+          data-create-action="set-form-style"
+          data-create-option={value}
         >
           <Icon className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">{t(labelKey)}</span>

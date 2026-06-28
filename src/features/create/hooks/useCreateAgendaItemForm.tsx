@@ -833,9 +833,10 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         ...(elections.length > 0 ? { elections } : {}),
         ...(votes.length > 0 ? { votes } : {}),
       };
+      const primaryAgendaItemId = agendaItems[0]?.id ?? correlationId;
       const agendaTarget = createRouteSubmitTarget('agenda_item', {
-        to: '/event/$id/agenda',
-        params: { id: eventId },
+        to: '/event/$id/agenda/$agendaItemId',
+        params: { id: eventId, agendaItemId: primaryAgendaItemId },
       });
       const createAgendaResult = createFullAgendaItem(createAgendaPayload);
       await waitForOptimisticCreate(createAgendaResult);
@@ -856,9 +857,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       trackCreateFinalization({
         result: createAgendaResult,
         draft: {
-          id: `agenda_item:${agendaItems[0]?.id ?? correlationId}`,
+          id: `agenda_item:${primaryAgendaItemId}`,
           entityType: 'agenda_item',
-          entityId: agendaItems[0]?.id ?? correlationId,
+          entityId: primaryAgendaItemId,
           createPath: '/create/agenda-item',
           formState: {
             eventId,
@@ -887,9 +888,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           trackCreateFinalization({
             result: retryResult,
             draft: {
-              id: `agenda_item:${agendaItems[0]?.id ?? correlationId}`,
+              id: `agenda_item:${primaryAgendaItemId}`,
               entityType: 'agenda_item',
-              entityId: agendaItems[0]?.id ?? correlationId,
+              entityId: primaryAgendaItemId,
               createPath: '/create/agenda-item',
               formState: {
                 eventId,

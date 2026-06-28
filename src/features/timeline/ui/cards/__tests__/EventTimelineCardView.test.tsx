@@ -83,4 +83,64 @@ describe('EventTimelineCardView', () => {
       '--entity-event-bg'
     );
   });
+
+  it('shows participation loading feedback on the RSVP action', () => {
+    const { container } = render(
+      <EventTimelineCardView
+        event={{ id: 'event-1', title: 'Assembly', startDate: new Date() }}
+        href={undefined}
+        onSelect={undefined}
+        onRequestParticipation={undefined}
+        onLeave={undefined}
+        onAcceptInvitation={undefined}
+        onWithdrawRequest={undefined}
+        onToggleSubscription={undefined}
+        isParticipationLoading
+        isSubscriptionLoading={false}
+        className=""
+        t={(key: string) =>
+          key === 'features.timeline.contentTypes.event'
+            ? 'Event'
+            : key === 'features.timeline.cards.rsvp'
+              ? 'RSVP'
+              : key
+        }
+        rsvpOpen={false}
+        setRsvpOpen={vi.fn()}
+        participation={{
+          isLoading: false,
+          isParticipant: false,
+          isInvited: false,
+          hasRequested: false,
+          participantCount: 0,
+        }}
+        subscription={{ isLoading: false, isSubscribed: false }}
+        startDate={new Date()}
+        day="15"
+        month="JUN"
+        time="2:00 PM"
+        eventTimeStatus="upcoming"
+        dateLabel={null}
+        locationDisplay={null}
+        eventStyle={null}
+        eventHref={undefined}
+        eventDescription=""
+        eventSubtitle={undefined}
+        eventSubtitleHref={undefined}
+        resolvedParticipationStatus={null}
+        isParticipant={false}
+        isInvited={false}
+        hasRequested={false}
+        hasParticipationRelationship={false}
+        getRsvpLabel={() => 'RSVP'}
+        getRsvpVariant={() => 'default'}
+        stats={[]}
+      />
+    );
+
+    const loadingButton = container.querySelector('[data-loading="true"]');
+
+    expect(loadingButton).not.toBeNull();
+    expect(loadingButton?.textContent).toContain('RSVP');
+  });
 });

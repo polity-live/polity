@@ -37,9 +37,15 @@ export function AgendaMajorityTypeInput({
           <FormControlSelectValue />
         </FormControlSelectTrigger>
         <FormControlSelectContent>
-          <FormControlSelectItem value="simple">{options.simple}</FormControlSelectItem>
-          <FormControlSelectItem value="absolute">{options.absolute}</FormControlSelectItem>
-          <FormControlSelectItem value="two_thirds">{options.twoThirds}</FormControlSelectItem>
+          <FormControlSelectItem value="simple" data-create-option="simple">
+            {options.simple}
+          </FormControlSelectItem>
+          <FormControlSelectItem value="absolute" data-create-option="absolute">
+            {options.absolute}
+          </FormControlSelectItem>
+          <FormControlSelectItem value="two_thirds" data-create-option="two_thirds">
+            {options.twoThirds}
+          </FormControlSelectItem>
         </FormControlSelectContent>
       </FormControlSelect>
     </div>

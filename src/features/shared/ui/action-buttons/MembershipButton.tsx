@@ -19,6 +19,7 @@ interface MembershipButtonProps {
   onLeave: () => void;
   onAcceptInvitation: () => void;
   isLoading: boolean;
+  loadingLabel?: string;
   className?: string;
   disabled?: boolean;
   disabledReason?: string;
@@ -36,6 +37,7 @@ export function MembershipButton({
   onLeave,
   onAcceptInvitation,
   isLoading,
+  loadingLabel,
   className,
   disabled,
   disabledReason,
@@ -54,6 +56,7 @@ export function MembershipButton({
     onLeave,
     onAcceptInvitation,
     disabledReason,
+    loadingLabel,
   });
 
   return (

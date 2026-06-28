@@ -25,7 +25,7 @@ export function PendingRequestActionCell<TParticipation extends ParticipationLik
 }: PendingRequestActionCellProps<TParticipation>) {
   const userId = membership.user?.id ?? null;
   const preflightInput = getApprovePreflightInput?.(membership) ?? null;
-  const { response, blocking } = useGroupConflictPreflight(preflightInput, {
+  const { response, blocking, isLoading } = useGroupConflictPreflight(preflightInput, {
     enabled: Boolean(preflightInput),
   });
 
@@ -38,9 +38,11 @@ export function PendingRequestActionCell<TParticipation extends ParticipationLik
       primaryActionLabel={primaryActionLabel}
       secondaryActionLabel={secondaryActionLabel}
       blocking={blocking}
+      checking={isLoading}
       response={response}
       labels={{
         why: translateText('generated.inline.0693_warum_194dad5c'),
+        checking: translateText('common.checks.approval'),
         blockedTitle: translateText(
           'generated.inline.0709_warum_ist_diese_freigabe_blockiert_29129791'
         ),

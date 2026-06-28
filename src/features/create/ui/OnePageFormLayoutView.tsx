@@ -80,6 +80,7 @@ export function OnePageFormLayoutView({
         <Button
           onClick={onSubmit}
           disabled={isSubmitting || !allStepsValid}
+          data-create-action="submit"
           className="w-full"
           size="lg"
         >

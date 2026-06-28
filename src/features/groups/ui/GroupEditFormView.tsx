@@ -15,7 +15,6 @@ import {
  */
 
 import { Button } from '@/features/shared/ui/ui/button';
-import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
@@ -97,6 +96,16 @@ export function GroupEditFormView({
   onFormSubmit,
   confirmCreate,
 }: GroupEditFormViewProps) {
+  const siblingConfigurationChecking = Boolean(siblingConfigurationPreflight.isLoading);
+  const siblingConfigurationCheckingLabel = t('common.checks.siblingConfiguration');
+  const submitLoadingLabel = isSubmitting
+    ? isCreating
+      ? t('pages.create.common.creating')
+      : translateText('generated.inline.0096_saving_ae7e8875')
+    : siblingConfigurationChecking
+      ? siblingConfigurationCheckingLabel
+      : undefined;
+
   if (isCreating && showReview) {
     return (
       <div>
@@ -132,17 +141,12 @@ export function GroupEditFormView({
             </Button>
             <Button
               onClick={confirmCreate}
-              disabled={isSubmitting || siblingConfigurationPreflight.blocking}
+              disabled={siblingConfigurationPreflight.blocking}
+              loading={isSubmitting || siblingConfigurationChecking}
+              loadingLabel={submitLoadingLabel}
               className="flex-1"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('pages.create.common.creating')}
-                </>
-              ) : (
-                t('pages.create.group.createButton')
-              )}
+              {t('pages.create.group.createButton')}
             </Button>
           </div>
         </div>
@@ -366,6 +370,10 @@ export function GroupEditFormView({
               </div>
               <GroupConflictPanel response={siblingConfigurationPreflight.response} />
             </div>
+          ) : siblingConfigurationChecking ? (
+            <div className="text-muted-foreground text-sm" aria-live="polite">
+              {siblingConfigurationCheckingLabel}
+            </div>
           ) : null}
         </div>
       ) : null}
@@ -399,21 +407,14 @@ export function GroupEditFormView({
         )}
         <Button
           type="submit"
-          disabled={isSubmitting || siblingConfigurationPreflight.blocking}
+          disabled={siblingConfigurationPreflight.blocking}
+          loading={isSubmitting || siblingConfigurationChecking}
+          loadingLabel={submitLoadingLabel}
           className="flex-1"
         >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isCreating
-                ? t('pages.create.common.creating')
-                : translateText('generated.inline.0096_saving_ae7e8875')}
-            </>
-          ) : isCreating ? (
-            t('pages.create.next')
-          ) : (
-            translateText('generated.inline.0097_save_changes_fa2984b3')
-          )}
+          {isCreating
+            ? t('pages.create.next')
+            : translateText('generated.inline.0097_save_changes_fa2984b3')}
         </Button>
       </div>
     </form>

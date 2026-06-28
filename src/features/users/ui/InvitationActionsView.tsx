@@ -8,12 +8,14 @@ interface InvitationActionsViewProps {
   onAccept?: (id: string) => void;
   onDecline?: (id: string) => void;
   blocking: boolean;
+  checking?: boolean;
   acceptDisabled?: boolean;
   response: any;
   labels: {
     accept: string;
     decline: string;
     why: string;
+    checking: string;
     blockedTitle: string;
   };
 }
@@ -23,6 +25,7 @@ export function InvitationActionsView({
   onAccept,
   onDecline,
   blocking,
+  checking = false,
   acceptDisabled = false,
   response,
   labels,
@@ -33,6 +36,8 @@ export function InvitationActionsView({
         variant="default"
         size="sm"
         disabled={blocking || acceptDisabled}
+        loading={checking}
+        loadingLabel={labels.checking}
         onClick={() => onAccept?.(item.id)}
       >
         <Check className="mr-1 h-4 w-4" />

@@ -85,6 +85,7 @@ export function TypeSelector({
             type="button"
             variant={value === option.value ? 'default' : 'outline'}
             onClick={() => onChange(option.value)}
+            data-create-option={option.value}
             className="flex items-center gap-2"
           >
             {value === option.value ? <Check className="h-4 w-4" /> : option.icon}

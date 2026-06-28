@@ -61,6 +61,15 @@ export const commonTranslations = {
       syncing: 'Syncing data locally...',
     },
   },
+  checks: {
+    membership: 'Checking membership...',
+    participation: 'Checking participation...',
+    collaboration: 'Checking collaboration...',
+    subscription: 'Checking subscription...',
+    approval: 'Checking approval...',
+    acceptance: 'Checking acceptance...',
+    siblingConfiguration: 'Checking sibling configuration...',
+  },
   errors: {
     pageNotFound: {
       title: 'Page Not Found',

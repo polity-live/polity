@@ -77,12 +77,12 @@ export function InvitationActions({
 }: InvitationActionsProps) {
   const actionSubmission = useActionSubmission('accept');
   const preflightInput = getAcceptPreflightInput?.(item) ?? null;
-  const { response, blocking } = useGroupConflictPreflight(preflightInput, {
+  const { response, blocking, isLoading } = useGroupConflictPreflight(preflightInput, {
     enabled: Boolean(preflightInput),
   });
   const preview = getInvitationPreview(item);
   const handleAccept = () => {
-    if (!onAccept || blocking) return;
+    if (!onAccept || blocking || isLoading) return;
 
     void actionSubmission
       .runActionWithSubmission(async () => onAccept(item.id), {
@@ -98,12 +98,14 @@ export function InvitationActions({
         onAccept={handleAccept}
         onDecline={onDecline}
         blocking={blocking}
+        checking={isLoading}
         acceptDisabled={actionSubmission.isActive}
         response={response}
         labels={{
           accept: translateText('generated.inline.0121_accept_bb54db51'),
           decline: translateText('generated.inline.0122_decline_b59cf9ed'),
           why: translateText('generated.inline.0693_warum_194dad5c'),
+          checking: translateText('common.checks.acceptance'),
           blockedTitle: translateText(
             'generated.inline.1195_warum_ist_diese_annahme_blockiert_1fd1c7d1'
           ),

@@ -52,6 +52,7 @@ export function ChangeRequestVoteOrderInput({
           size="sm"
           className="h-8 px-2"
           title={t('features.events.agenda.changeRequestVoteOrder.textPosition', 'Text position')}
+          data-create-option="text_position"
           aria-label={t(
             'features.events.agenda.changeRequestVoteOrder.textPosition',
             'Text position'
@@ -68,6 +69,7 @@ export function ChangeRequestVoteOrderInput({
             'features.events.agenda.changeRequestVoteOrder.changedCharacters',
             'Changed characters'
           )}
+          data-create-option="changed_character_count"
           aria-label={t(
             'features.events.agenda.changeRequestVoteOrder.changedCharacters',
             'Changed characters'
@@ -81,6 +83,7 @@ export function ChangeRequestVoteOrderInput({
           size="sm"
           className="h-8 px-2"
           title={t('features.events.agenda.changeRequestVoteOrder.crNumber', 'CR number')}
+          data-create-option="cr_number"
           aria-label={t('features.events.agenda.changeRequestVoteOrder.crNumber', 'CR number')}
         >
           <ArrowUp01 className="h-4 w-4" />

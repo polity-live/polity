@@ -246,7 +246,8 @@ export function useCreateTodoForm(): CreateFormConfig {
               hash: returnSection,
             })
           : createRouteSubmitTarget('todo', {
-              to: '/todos',
+              to: '/todos/$id',
+              params: { id: createResult.todoId },
             });
 
       trackCreateFinalization({

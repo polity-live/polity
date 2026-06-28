@@ -11,9 +11,11 @@ interface PendingRequestActionCellViewProps {
   primaryActionLabel: string;
   secondaryActionLabel: string;
   blocking: boolean;
+  checking?: boolean;
   response: any;
   labels: {
     why: string;
+    checking: string;
     blockedTitle: string;
   };
 }
@@ -26,6 +28,7 @@ export function PendingRequestActionCellView({
   primaryActionLabel,
   secondaryActionLabel,
   blocking,
+  checking = false,
   response,
   labels,
 }: PendingRequestActionCellViewProps) {
@@ -34,9 +37,11 @@ export function PendingRequestActionCellView({
       <TableActionIconButton
         label={primaryActionLabel}
         icon={<Check className="h-4 w-4" />}
+        loading={checking}
+        loadingLabel={labels.checking}
         variant="default"
         disabled={!userId || blocking}
-        onClick={() => userId && onApprove(membership.id, userId)}
+        onClick={() => userId && !checking && onApprove(membership.id, userId)}
       />
       {blocking ? (
         <GroupConflictDialog

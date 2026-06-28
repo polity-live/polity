@@ -77,6 +77,7 @@ export function ChoiceCardField<TValue extends string = string>({
               <label
                 key={option.value}
                 htmlFor={optionId}
+                data-create-option={option.value}
                 className={cn(
                   'border-input flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition-colors',
                   selected ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-muted/50',
@@ -87,6 +88,7 @@ export function ChoiceCardField<TValue extends string = string>({
                   id={optionId}
                   value={option.value}
                   disabled={option.disabled}
+                  data-create-option={option.value}
                   className="mt-0.5"
                 />
                 {Icon ? <Icon className="mt-0.5 h-4 w-4 shrink-0" /> : null}

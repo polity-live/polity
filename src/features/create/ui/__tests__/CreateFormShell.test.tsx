@@ -199,12 +199,10 @@ describe('CreateFormShell', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole<HTMLButtonElement>('button', { name: /zur gruppe/i }).disabled).toBe(
-        false
-      );
+      expect(screen.getByRole<HTMLAnchorElement>('link', { name: /zur gruppe/i })).toBeTruthy();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /zur gruppe/i }));
+    fireEvent.click(screen.getByRole('link', { name: /zur gruppe/i }));
 
     expect(navigate).toHaveBeenCalledWith({
       to: '/group/$id',
@@ -291,11 +289,11 @@ describe('CreateFormShell', () => {
 
     expect(await screen.findByRole('dialog')).toBeTruthy();
     expect(screen.getByText('Link failed')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /zur gruppe/i })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /zur gruppe/i })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /zurück zum formular/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /erneut versuchen/i })).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: /zur gruppe/i }));
+    fireEvent.click(screen.getByRole('link', { name: /zur gruppe/i }));
 
     expect(navigate).toHaveBeenCalledWith({
       to: '/group/$id',

@@ -37,7 +37,7 @@ export function PaymentTypeInput({ value, onChange }: PaymentTypeInputProps) {
         </FormControlSelectTrigger>
         <FormControlSelectContent>
           {PAYMENT_TYPES.map(type => (
-            <FormControlSelectItem key={type} value={type}>
+            <FormControlSelectItem key={type} value={type} data-create-option={type}>
               {t(`pages.create.payment.types.${type}`)}
             </FormControlSelectItem>
           ))}

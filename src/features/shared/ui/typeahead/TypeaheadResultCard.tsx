@@ -80,6 +80,9 @@ export function TypeaheadResultCard({
       onMouseDown={handleMouseDown}
       onClick={onClick}
       onMouseEnter={onMouseEnter}
+      data-typeahead-result={item.label}
+      data-typeahead-entity-type={item.entityType}
+      data-typeahead-entity-id={item.id}
     >
       <Avatar className="mt-0.5 h-8 w-8 shrink-0">
         <AvatarImage src={item.avatar ?? undefined} />

@@ -37,6 +37,7 @@ export function EventMeetingSettingsInput({
             type="button"
             variant={meetingType === 'one-on-one' ? 'default' : 'outline'}
             onClick={() => onMeetingTypeChange('one-on-one')}
+            data-create-option="one-on-one"
           >
             {labels.oneOnOne}
           </Button>
@@ -44,6 +45,7 @@ export function EventMeetingSettingsInput({
             type="button"
             variant={meetingType === 'public-meeting' ? 'default' : 'outline'}
             onClick={() => onMeetingTypeChange('public-meeting')}
+            data-create-option="public-meeting"
           >
             {labels.publicMeeting}
           </Button>

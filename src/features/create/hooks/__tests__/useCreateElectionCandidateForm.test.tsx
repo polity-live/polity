@@ -10,7 +10,9 @@ let electionsForSearch: {
   id: string;
   title: string;
   description?: string | null;
+  agenda_item_id?: string | null;
   agenda_item?: {
+    id?: string | null;
     event?: {
       id: string;
       group_id: string | null;
@@ -92,17 +94,26 @@ describe('useCreateElectionCandidateForm', () => {
       {
         id: 'election-member',
         title: 'Member event election',
-        agenda_item: { event: { id: 'event-member', group_id: 'group-1' } },
+        agenda_item_id: 'agenda-member',
+        agenda_item: { id: 'agenda-member', event: { id: 'event-member', group_id: 'group-1' } },
       },
       {
         id: 'election-participant',
         title: 'Participating event election',
-        agenda_item: { event: { id: 'event-participant', group_id: 'group-2' } },
+        agenda_item_id: 'agenda-participant',
+        agenda_item: {
+          id: 'agenda-participant',
+          event: { id: 'event-participant', group_id: 'group-2' },
+        },
       },
       {
         id: 'election-unrelated',
         title: 'Unrelated election',
-        agenda_item: { event: { id: 'event-unrelated', group_id: 'group-2' } },
+        agenda_item_id: 'agenda-unrelated',
+        agenda_item: {
+          id: 'agenda-unrelated',
+          event: { id: 'event-unrelated', group_id: 'group-2' },
+        },
       },
     ];
   });
@@ -152,8 +163,9 @@ describe('useCreateElectionCandidateForm', () => {
       );
     });
 
+    let outcome: Awaited<ReturnType<typeof result.current.onSubmit>> | undefined;
     await act(async () => {
-      await result.current.onSubmit?.();
+      outcome = await result.current.onSubmit?.();
     });
 
     const rawDraft = window.sessionStorage.getItem('polity:create:recovery:election:candidate-1');
@@ -163,6 +175,17 @@ describe('useCreateElectionCandidateForm', () => {
       entityType: 'election',
       entityId: 'candidate-1',
       createPath: '/create/election-candidate',
+      target: {
+        to: '/event/$id/agenda/$agendaItemId',
+        params: { id: 'event-member', agendaItemId: 'agenda-member' },
+      },
+    });
+    expect(outcome).toMatchObject({
+      status: 'success',
+      target: {
+        to: '/event/$id/agenda/$agendaItemId',
+        params: { id: 'event-member', agendaItemId: 'agenda-member' },
+      },
     });
   });
 });

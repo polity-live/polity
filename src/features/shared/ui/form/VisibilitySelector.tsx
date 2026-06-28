@@ -67,6 +67,7 @@ export function VisibilitySelector({
               type="button"
               variant={value === option.value ? 'default' : 'outline'}
               onClick={() => onChange(option.value)}
+              data-create-option={option.value}
               className={
                 showTooltip
                   ? 'flex w-full items-center gap-2 pr-9'

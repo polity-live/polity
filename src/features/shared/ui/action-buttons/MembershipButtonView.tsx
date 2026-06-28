@@ -19,6 +19,7 @@ interface MembershipButtonViewProps {
     pending: string;
     accept: string;
   };
+  loadingLabel: string;
   buttonConfig: {
     label: string;
     icon: LucideIcon;
@@ -45,6 +46,7 @@ export function MembershipButtonView({
   disabledReason,
   conflictDetails,
   labels,
+  loadingLabel,
   buttonConfig,
   showDisabledReason,
   disabledAriaLabel,
@@ -55,7 +57,9 @@ export function MembershipButtonView({
   onDisabledPointerLeave,
   onDisabledBlur,
 }: MembershipButtonViewProps) {
-  if (disabled) {
+  const showDisabledReasonState = Boolean(disabled && (!isLoading || disabledReason));
+
+  if (showDisabledReasonState) {
     const Icon = buttonConfig.icon;
     const disabledButton = (
       <Button disabled variant={buttonConfig.variant} className={className}>
@@ -108,7 +112,8 @@ export function MembershipButtonView({
     return (
       <Button
         onClick={buttonConfig.onClick}
-        disabled={isLoading}
+        loading={isLoading}
+        loadingLabel={loadingLabel}
         variant="outline"
         className={className}
       >
@@ -122,7 +127,8 @@ export function MembershipButtonView({
     return (
       <Button
         onClick={buttonConfig.onClick}
-        disabled={isLoading}
+        loading={isLoading}
+        loadingLabel={loadingLabel}
         variant="outline"
         className={className}
       >
@@ -136,7 +142,8 @@ export function MembershipButtonView({
     return (
       <Button
         onClick={buttonConfig.onClick}
-        disabled={isLoading}
+        loading={isLoading}
+        loadingLabel={loadingLabel}
         variant="default"
         className={className}
       >
@@ -147,7 +154,12 @@ export function MembershipButtonView({
   }
 
   return (
-    <Button onClick={buttonConfig.onClick} disabled={isLoading} className={className}>
+    <Button
+      onClick={buttonConfig.onClick}
+      loading={isLoading}
+      loadingLabel={loadingLabel}
+      className={className}
+    >
       <UserPlus className="mr-2 h-4 w-4" />
       {labels.request}
     </Button>

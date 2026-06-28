@@ -72,6 +72,7 @@ export function BlogTimelineCardView({
   const blogTone = getEntityToneClasses('blog');
   const hashtagTone = getHashtagToneClasses();
   const headerGradient = gradient || getEntityGradientClasses('blog');
+  const subscriptionLoadingLabel = t('common.checks.subscription');
 
   return (
     <TimelineCardBase contentType="blog" className={className} href={blogUrl}>
@@ -212,7 +213,8 @@ export function BlogTimelineCardView({
             e.preventDefault();
             subscription.toggleSubscribe();
           }}
-          disabled={subscription.isLoading}
+          loading={subscription.isLoading}
+          loadingLabel={<span className="sr-only">{subscriptionLoadingLabel}</span>}
           className="flex items-center gap-1.5"
         >
           <Bell className={cn('h-3.5 w-3.5', subscription.isSubscribed && blogTone.text)} />

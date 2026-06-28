@@ -33,7 +33,7 @@ interface CreateFormShellViewProps {
     target: CreateSubmitTarget | null;
     error: unknown;
     progressSteps: CreateSubmitProgressStep[];
-    onNavigate: () => void;
+    onNavigate: (target: CreateSubmitTarget) => void;
     onBack: () => void;
     onRetry: () => void;
   };
@@ -59,6 +59,8 @@ export function CreateFormShellView({
   return (
     <LayoutGroup id={`create-${entityType}`}>
       <div
+        data-create-flow={entityType}
+        data-create-layout={isCarouselLayout ? 'carousel' : 'one_page'}
         aria-hidden={overlayOpen || undefined}
         className={cn(
           isCarouselLayout

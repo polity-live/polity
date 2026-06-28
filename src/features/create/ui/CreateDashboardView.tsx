@@ -44,7 +44,11 @@ export function CreateDashboardView({ title, subtitle, sections }: CreateDashboa
 
                 return (
                   <SmartLink key={item.href} href={item.href} className="block">
-                    <Panel className="hover:bg-accent/60 focus-within:ring-ring h-full transition-colors focus-within:ring-2">
+                    <Panel
+                      className="hover:bg-accent/60 focus-within:ring-ring h-full transition-colors focus-within:ring-2"
+                      data-create-action="open-create-flow"
+                      data-create-option={item.href}
+                    >
                       <PanelHeader>
                         <Icon className="text-primary size-7" />
                         <PanelTitle>{item.title}</PanelTitle>

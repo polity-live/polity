@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, type ReactNode } from 'react';
+import { useEffect, useId, type MouseEvent, type ReactNode } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { AlertTriangle, Check, type LucideIcon } from 'lucide-react';
 
@@ -27,7 +27,7 @@ interface CreateSubmissionOverlayProps {
   error?: unknown;
   progressSteps: CreateSubmitProgressStep[];
   reviewPreview?: ReactNode;
-  onNavigate: () => void;
+  onNavigate: (target: CreateSubmitTarget) => void;
   onBack: () => void;
   onRetry: () => void;
 }
@@ -38,6 +38,35 @@ function getErrorMessage(error: unknown, fallback: string) {
   }
 
   return fallback;
+}
+
+function serializeRouteParams(target: CreateSubmitTarget | null | undefined) {
+  if (!target || target.kind !== 'route') return undefined;
+  return JSON.stringify(target.params ?? {});
+}
+
+function routeHref(target: Extract<CreateSubmitTarget, { kind: 'route' }>) {
+  const concretePath = Object.entries(target.params ?? {}).reduce(
+    (path, [key, value]) =>
+      path
+        .replaceAll(`$${key}`, encodeURIComponent(value))
+        .replaceAll(`{${key}}`, encodeURIComponent(value)),
+    target.to
+  );
+  const params = new URLSearchParams();
+  if (target.search && typeof target.search === 'object') {
+    for (const [key, value] of Object.entries(target.search as Record<string, unknown>)) {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    }
+  }
+  const query = params.toString();
+  const hash = target.hash ? `#${encodeURIComponent(target.hash)}` : '';
+  return `${concretePath}${query ? `?${query}` : ''}${hash}`;
+}
+
+function targetHref(target: CreateSubmitTarget | null | undefined) {
+  if (!target) return undefined;
+  return target.kind === 'route' ? routeHref(target) : target.href;
 }
 
 export function CreateSubmissionOverlay({
@@ -62,7 +91,22 @@ export function CreateSubmissionOverlay({
   const open = status !== 'idle';
   const targetLabel =
     target?.label ?? t(target?.labelKey ?? getCreateSubmitTargetLabelKey(entityType));
-  const canNavigateToTarget = status === 'ready' || (status === 'error' && Boolean(target));
+  const canNavigateToTarget = Boolean(target) && (status === 'ready' || status === 'error');
+  const href = targetHref(target);
+  const targetButtonContent =
+    status === 'ready' && canNavigateToTarget ? (
+      <>
+        <Check className="h-4 w-4" />
+        <span>{targetLabel}</span>
+      </>
+    ) : (
+      targetLabel
+    );
+  const handleTargetButtonClick = (event: MouseEvent) => {
+    if (!target) return;
+    event.preventDefault();
+    onNavigate(target);
+  };
   const displayProgressSteps = progressSteps.map(step => ({
     ...step,
     status:
@@ -227,18 +271,28 @@ export function CreateSubmissionOverlay({
                 <Button
                   type="button"
                   size="lg"
-                  onClick={onNavigate}
+                  asChild={Boolean(href)}
+                  onClick={handleTargetButtonClick}
                   data-create-submit-target="true"
+                  data-create-action="navigate-created-target"
+                  data-create-target-kind={target?.kind}
+                  data-create-target-to={target?.kind === 'route' ? target.to : target?.href}
+                  data-create-target-params={serializeRouteParams(target)}
                   className="mx-auto flex w-full max-w-xs"
                 >
-                  {targetLabel}
+                  {href ? <a href={href}>{targetButtonContent}</a> : targetButtonContent}
                 </Button>
               ) : status === 'error' ? (
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <Button type="button" variant="outline" onClick={onBack}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onBack}
+                    data-create-action="back-to-form"
+                  >
                     {t('pages.create.progress.submission.overlay.backToForm')}
                   </Button>
-                  <Button type="button" onClick={onRetry}>
+                  <Button type="button" onClick={onRetry} data-create-action="retry-submit">
                     {t('pages.create.progress.submission.overlay.retry')}
                   </Button>
                 </div>
@@ -247,13 +301,22 @@ export function CreateSubmissionOverlay({
                   type="button"
                   size="lg"
                   disabled={!canNavigateToTarget}
-                  onClick={onNavigate}
+                  asChild={canNavigateToTarget && Boolean(href)}
+                  onClick={handleTargetButtonClick}
                   data-create-submit-target="true"
+                  data-create-action="navigate-created-target"
+                  data-create-target-kind={target?.kind}
+                  data-create-target-to={target?.kind === 'route' ? target.to : target?.href}
+                  data-create-target-params={serializeRouteParams(target)}
                   className="mx-auto flex w-full max-w-xs"
                   successState={status === 'ready'}
                   successLabel={targetLabel}
                 >
-                  {targetLabel}
+                  {canNavigateToTarget && href ? (
+                    <a href={href}>{targetButtonContent}</a>
+                  ) : (
+                    targetButtonContent
+                  )}
                 </Button>
               )}
             </div>

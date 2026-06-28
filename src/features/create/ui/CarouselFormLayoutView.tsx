@@ -82,6 +82,7 @@ export function CarouselFormLayoutView({
           size="sm"
           onClick={onScrollPrev}
           disabled={!canScrollPrev}
+          data-create-action="previous-step"
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
           {labels.previous}
@@ -101,6 +102,7 @@ export function CarouselFormLayoutView({
               size="sm"
               onClick={onSubmit}
               disabled={isSubmitting || !currentStepValid}
+              data-create-action="submit"
             >
               {isSubmitting ? labels.creating : labels.createButton}
             </Button>
@@ -110,6 +112,7 @@ export function CarouselFormLayoutView({
               size="sm"
               onClick={onScrollNext}
               disabled={!canScrollNext || !currentStepValid}
+              data-create-action="next-step"
             >
               {labels.next}
               <ArrowRight className="ml-1 h-4 w-4" />

@@ -175,17 +175,11 @@ export function useCreatePaymentForm(): CreateFormConfig {
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
 
-      const paymentTarget =
-        returnSection === 'payments' && groupId
-          ? createRouteSubmitTarget('payment', {
-              to: '/group/$id/operation',
-              params: { id: groupId },
-              hash: returnSection,
-            })
-          : createRouteSubmitTarget('payment', {
-              to: '/group/$id',
-              params: { id: groupId },
-            });
+      const paymentTarget = createRouteSubmitTarget('payment', {
+        to: '/group/$id/operation',
+        params: { id: groupId },
+        hash: returnSection ?? 'payments',
+      });
       context?.setRecoveryTarget(paymentTarget);
       trackCreateFinalization({
         result: paymentResult,

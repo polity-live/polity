@@ -79,7 +79,12 @@ export function SelectField({
           </SelectTrigger>
           <SelectContent>
             {options.map(option => (
-              <SelectItem key={option.value} value={option.value} disabled={option.disabled}>
+              <SelectItem
+                key={option.value}
+                value={option.value}
+                disabled={option.disabled}
+                data-create-option={option.value}
+              >
                 {option.label}
               </SelectItem>
             ))}

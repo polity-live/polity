@@ -66,6 +66,7 @@ export function EventLocationInput({
               type="button"
               variant={attendanceMode === mode ? 'default' : 'outline'}
               onClick={() => onAttendanceModeChange(mode)}
+              data-create-option={mode}
             >
               {mode === 'online'
                 ? labels.online

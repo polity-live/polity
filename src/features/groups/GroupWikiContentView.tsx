@@ -285,6 +285,7 @@ export function GroupWikiContentView({
           onLeave={leaveGroup}
           onAcceptInvitation={acceptInvitation}
           isLoading={membershipLoading}
+          loadingLabel={t('common.checks.membership')}
           disabled={requestJoinActionDisabled || acceptInvitationDisabled}
           disabledReason={
             acceptInvitationDisabled

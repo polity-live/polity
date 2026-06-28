@@ -32,6 +32,29 @@ interface CreateSubmissionState {
   progressSteps: CreateSubmitProgressStep[];
 }
 
+function routeHref(target: Extract<CreateSubmitTarget, { kind: 'route' }>) {
+  const concretePath = Object.entries(target.params ?? {}).reduce(
+    (path, [key, value]) =>
+      path
+        .replaceAll(`$${key}`, encodeURIComponent(value))
+        .replaceAll(`{${key}}`, encodeURIComponent(value)),
+    target.to
+  );
+  const params = new URLSearchParams();
+  if (target.search && typeof target.search === 'object') {
+    for (const [key, value] of Object.entries(target.search as Record<string, unknown>)) {
+      if (value !== undefined && value !== null) params.set(key, String(value));
+    }
+  }
+  const query = params.toString();
+  const hash = target.hash ? `#${encodeURIComponent(target.hash)}` : '';
+  return `${concretePath}${query ? `?${query}` : ''}${hash}`;
+}
+
+function shouldSkipBrowserNavigationFallback() {
+  return typeof navigator !== 'undefined' && navigator.userAgent.includes('jsdom');
+}
+
 export function useCreateFormShellController({ config }: UseCreateFormShellControllerOptions) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -175,24 +198,38 @@ export function useCreateFormShellController({ config }: UseCreateFormShellContr
     });
   }, [config.entityType, config.submissionSteps]);
 
-  const handleNavigateToTarget = useCallback(() => {
-    const target = submissionState.target;
-    if (!target) {
-      return;
-    }
+  const handleNavigateToTarget = useCallback(
+    (renderedTarget?: CreateSubmitTarget) => {
+      const target = renderedTarget ?? submissionState.target;
+      if (!target) {
+        return;
+      }
 
-    if (target.kind === 'external') {
-      window.location.assign(target.href);
-      return;
-    }
+      if (target.kind === 'external') {
+        window.location.assign(target.href);
+        return;
+      }
 
-    navigate({
-      to: target.to,
-      params: target.params,
-      search: target.search,
-      hash: target.hash,
-    } as never);
-  }, [navigate, submissionState.target]);
+      const href = routeHref(target);
+      const expectedHref = new URL(href, window.location.origin).href;
+      navigate({
+        to: target.to,
+        params: target.params,
+        search: target.search,
+        hash: target.hash,
+      } as never);
+
+      if (!shouldSkipBrowserNavigationFallback()) {
+        window.setTimeout(() => {
+          if (window.location.href !== expectedHref) {
+            window.history.pushState(null, '', href);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }
+        }, 50);
+      }
+    },
+    [navigate, submissionState.target]
+  );
 
   return {
     title: t(config.title),

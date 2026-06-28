@@ -223,7 +223,7 @@ export function useGroupEditFormController({
   );
 
   const onFormSubmit = (e: React.FormEvent) => {
-    if (siblingConfigurationPreflight.blocking) {
+    if (siblingConfigurationPreflight.blocking || siblingConfigurationPreflight.isLoading) {
       e.preventDefault();
       return;
     }

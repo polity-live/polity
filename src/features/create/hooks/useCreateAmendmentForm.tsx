@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
   useTranslation,
@@ -97,6 +97,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     String(searchParams.evaluationOffsetYears)
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const suppressSearchSyncRef = useRef(false);
   useEffect(() => {
     const restoreDraft = consumeCreateRestoreDraft<
       Partial<{
@@ -151,6 +152,10 @@ export function useCreateAmendmentForm(): CreateFormConfig {
 
   const syncSearch = useCallback(
     (updates: Partial<CreateAmendmentSearch>) => {
+      if (suppressSearchSyncRef.current) {
+        return;
+      }
+
       navigate({
         to: '/create/amendment',
         search: previousSearch =>
@@ -265,6 +270,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!title.trim() || !user?.id) return createBlockedSubmitOutcome();
     if (evaluationInvalidReason) return createBlockedSubmitOutcome();
+    suppressSearchSyncRef.current = true;
     setIsSubmitting(true);
     try {
       context?.reportProgress({ key: 'create', status: 'active' });
@@ -414,6 +420,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       setIsSubmitting(false);
       return createSuccessSubmitOutcome(amendmentTarget);
     } catch (error) {
+      suppressSearchSyncRef.current = false;
       setIsSubmitting(false);
       throw error;
     }

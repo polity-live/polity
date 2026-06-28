@@ -61,6 +61,15 @@ export const commonTranslations = {
       syncing: 'Daten werden lokal synchronisiert...',
     },
   },
+  checks: {
+    membership: 'Prüfe Mitgliedschaft...',
+    participation: 'Prüfe Teilnahme...',
+    collaboration: 'Prüfe Zusammenarbeit...',
+    subscription: 'Prüfe Abonnement...',
+    approval: 'Prüfe Freigabe...',
+    acceptance: 'Prüfe Annahme...',
+    siblingConfiguration: 'Prüfe Geschwister-Konfiguration...',
+  },
   errors: {
     pageNotFound: {
       title: 'Seite nicht gefunden',

@@ -29,6 +29,7 @@ export function StatusInput({ value, onChange }: StatusInputProps) {
             variant={value === opt.value ? 'default' : 'outline'}
             className="flex-1"
             onClick={() => onChange(opt.value)}
+            data-create-option={opt.value}
           >
             {opt.label}
           </Button>

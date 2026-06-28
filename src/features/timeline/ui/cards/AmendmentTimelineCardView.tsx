@@ -141,6 +141,9 @@ export function AmendmentTimelineCardView({
   const successTone = getSemanticToneClasses('success');
   const dangerTone = getSemanticToneClasses('danger');
   const amendmentHref = href ?? `/amendment/${amendment.id}`;
+  const collaborationLoading = Boolean(isCollaborationLoading || collaboration.isLoading);
+  const subscriptionLoading = Boolean(isSubscriptionLoading || subscription.isLoading);
+  const subscriptionLoadingLabel = t('common.checks.subscription');
   const branchStatuses = (
     Array.isArray(amendment.branchStatuses) ? amendment.branchStatuses : []
   ) as {
@@ -320,7 +323,8 @@ export function AmendmentTimelineCardView({
             <Button
               variant={getCollaborationVariant()}
               size="sm"
-              disabled={isCollaborationLoading || collaboration.isLoading}
+              loading={collaborationLoading}
+              loadingLabel={getCollaborationLabel()}
               className="flex items-center gap-1.5"
             >
               <CollaborationIcon className="h-3.5 w-3.5" />
@@ -338,7 +342,8 @@ export function AmendmentTimelineCardView({
                     (onLeaveCollaboration || collaboration.leaveCollaboration)?.();
                     setCollaborationOpen(false);
                   }}
-                  disabled={isCollaborationLoading || collaboration.isLoading}
+                  loading={collaborationLoading}
+                  loadingLabel={t('features.timeline.cards.amendment.leaveCollaboration')}
                   className="justify-start"
                 >
                   {t('features.timeline.cards.amendment.leaveCollaboration')}
@@ -354,7 +359,8 @@ export function AmendmentTimelineCardView({
                       (onAcceptInvitation || collaboration.acceptInvitation)?.();
                       setCollaborationOpen(false);
                     }}
-                    disabled={isCollaborationLoading || collaboration.isLoading}
+                    loading={collaborationLoading}
+                    loadingLabel={t('features.timeline.cards.amendment.acceptInvitation')}
                     className="justify-start"
                   >
                     {t('features.timeline.cards.amendment.acceptInvitation')}
@@ -367,7 +373,8 @@ export function AmendmentTimelineCardView({
                       (onLeaveCollaboration || collaboration.leaveCollaboration)?.();
                       setCollaborationOpen(false);
                     }}
-                    disabled={isCollaborationLoading || collaboration.isLoading}
+                    loading={collaborationLoading}
+                    loadingLabel={t('features.timeline.cards.amendment.declineInvitation')}
                     className="text-destructive justify-start"
                   >
                     {t('features.timeline.cards.amendment.declineInvitation')}
@@ -383,7 +390,8 @@ export function AmendmentTimelineCardView({
                     (onWithdrawRequest || collaboration.leaveCollaboration)?.();
                     setCollaborationOpen(false);
                   }}
-                  disabled={isCollaborationLoading || collaboration.isLoading}
+                  loading={collaborationLoading}
+                  loadingLabel={t('features.timeline.cards.amendment.withdrawRequest')}
                   className="text-destructive justify-start"
                 >
                   {t('features.timeline.cards.amendment.withdrawRequest')}
@@ -398,7 +406,8 @@ export function AmendmentTimelineCardView({
                     (onRequestCollaboration || collaboration.requestCollaboration)?.();
                     setCollaborationOpen(false);
                   }}
-                  disabled={isCollaborationLoading || collaboration.isLoading}
+                  loading={collaborationLoading}
+                  loadingLabel={t('features.timeline.cards.amendment.requestCollaboration')}
                   className="justify-start"
                 >
                   {t('features.timeline.cards.amendment.requestCollaboration')}
@@ -428,7 +437,8 @@ export function AmendmentTimelineCardView({
             e.stopPropagation();
             (onToggleSubscription || subscription.toggleSubscribe)?.();
           }}
-          disabled={isSubscriptionLoading || subscription.isLoading}
+          loading={subscriptionLoading}
+          loadingLabel={<span className="sr-only">{subscriptionLoadingLabel}</span>}
           className="flex items-center gap-1.5"
         >
           <Bell

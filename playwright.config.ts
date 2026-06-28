@@ -5,6 +5,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  timeout: 60 * 1000,
   /* Global setup to prepare test users */
   globalSetup: './e2e/global-setup.ts',
   /* Global teardown to clean up orphaned test entities */
@@ -15,8 +16,6 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -31,16 +30,10 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'setup',
-      testMatch: /auth\.setup\.ts/,
-    },
-    {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: './e2e/.auth/user.json',
       },
-      dependencies: ['setup'],
     },
 
     // Uncomment to test on Firefox (requires: npx playwright install firefox)
@@ -67,10 +60,18 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  webServer: [
+    {
+      command: 'npm run dev',
+      url: 'http://localhost:3000',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+    {
+      command: 'npm run zero:dev',
+      url: 'http://localhost:4848',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+  ],
 });
