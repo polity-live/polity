@@ -26,6 +26,7 @@ import {
   getWinnerBranch,
   resolveSelectedBranchId,
 } from '@/features/amendments/logic/amendmentBranchDisplay';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 interface AmendmentProcessFlowProps {
   amendmentId: string;
   requestedBranchId?: string | null;
@@ -594,11 +595,13 @@ export function useAmendmentProcessFlowController({
           });
 
           if (!currentRun) {
-            await updateAmendment({
-              id: amendmentId,
-              group_id: pendingSelection.groupId,
-              event_id: pendingSelection.eventId ?? null,
-            });
+            await waitForClientApply(
+              updateAmendment({
+                id: amendmentId,
+                group_id: pendingSelection.groupId,
+                event_id: pendingSelection.eventId ?? null,
+              })
+            );
           }
 
           toast.success(

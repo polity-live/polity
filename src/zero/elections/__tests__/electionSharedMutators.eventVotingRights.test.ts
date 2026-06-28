@@ -47,6 +47,9 @@ function createTx(rows: unknown[]) {
       final_elector_participation: {
         insert: vi.fn(),
       },
+      final_candidate_selection: {
+        insert: vi.fn(),
+      },
     },
   };
 }
@@ -177,7 +180,7 @@ describe('electionSharedMutators event voting rights', () => {
 
   it('allows a participant with active voting rights to create their own elector record', async () => {
     allowActions(['active_voting']);
-    const tx = createTx([election, agendaItem]);
+    const tx = createTx([election, agendaItem, null, null]);
 
     await electionSharedMutators.createElector.fn({
       tx: tx as never,
@@ -301,6 +304,63 @@ describe('electionSharedMutators event voting rights', () => {
     );
   });
 
+  it('creates a missing elector inside the indicative election vote transaction', async () => {
+    allowActions(['active_voting']);
+    const tx = createTx([
+      election,
+      agendaItem,
+      null,
+      null,
+      elector,
+      election,
+      agendaItem,
+      namedElection,
+      candidate,
+      null,
+    ]);
+
+    await electionSharedMutators.replaceIndicativeElectionVote.fn({
+      tx: tx as never,
+      ctx: { userID: 'user-1' } as never,
+      args: {
+        elector,
+        participation: {
+          id: 'participation-1',
+          election_id: 'election-1',
+          elector_id: 'elector-1',
+        },
+        selections: [
+          {
+            id: 'selection-1',
+            election_id: 'election-1',
+            candidate_id: 'candidate-1',
+            elector_participation_id: 'participation-1',
+          },
+        ],
+      },
+    });
+
+    expect(tx.mutate.elector.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'elector-1',
+        election_id: 'election-1',
+        user_id: 'user-1',
+      })
+    );
+    expect(tx.mutate.indicative_elector_participation.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'participation-1',
+        elector_id: 'elector-1',
+      })
+    );
+    expect(tx.mutate.indicative_candidate_selection.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'selection-1',
+        elector_participation_id: 'participation-1',
+      })
+    );
+  });
+
   it('replaces linked named indicative election selections on repeat submission', async () => {
     allowActions(['active_voting']);
     const tx = createTx([
@@ -406,5 +466,61 @@ describe('electionSharedMutators event voting rights', () => {
         },
       })
     ).rejects.toThrow(/duplicate key/i);
+  });
+
+  it('creates a missing elector inside the final full election vote transaction', async () => {
+    allowActions(['active_voting']);
+    const tx = createTx([
+      election,
+      agendaItem,
+      null,
+      null,
+      elector,
+      election,
+      agendaItem,
+      namedElection,
+      candidate,
+    ]);
+
+    await electionSharedMutators.castFinalElectionVoteFull.fn({
+      tx: tx as never,
+      ctx: { userID: 'user-1' } as never,
+      args: {
+        elector,
+        participation: {
+          id: 'final-participation-1',
+          election_id: 'election-1',
+          elector_id: 'elector-1',
+        },
+        selections: [
+          {
+            id: 'final-selection-1',
+            election_id: 'election-1',
+            candidate_id: 'candidate-1',
+            elector_participation_id: 'final-participation-1',
+          },
+        ],
+      },
+    });
+
+    expect(tx.mutate.elector.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'elector-1',
+        election_id: 'election-1',
+        user_id: 'user-1',
+      })
+    );
+    expect(tx.mutate.final_elector_participation.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'final-participation-1',
+        elector_id: 'elector-1',
+      })
+    );
+    expect(tx.mutate.final_candidate_selection.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'final-selection-1',
+        elector_participation_id: 'final-participation-1',
+      })
+    );
   });
 });

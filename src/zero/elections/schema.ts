@@ -140,6 +140,7 @@ export const createIndicativeCandidateSelectionSchema = baseIndicativeCandidateS
   .omit({ id: true, created_at: true })
   .extend({ id: z.string() });
 export const replaceIndicativeElectionVoteSchema = z.object({
+  elector: createElectorSchema.optional(),
   participation: createIndicativeElectorParticipationSchema,
   selections: z.array(createIndicativeCandidateSelectionSchema).min(1),
 });
@@ -175,6 +176,7 @@ export const createFinalCandidateSelectionSchema = baseFinalCandidateSelectionSc
   .omit({ id: true, created_at: true })
   .extend({ id: z.string() });
 export const castFinalElectionVoteFullSchema = z.object({
+  elector: createElectorSchema.optional(),
   participation: createFinalElectorParticipationSchema,
   selections: z.array(createFinalCandidateSelectionSchema).min(1),
 });

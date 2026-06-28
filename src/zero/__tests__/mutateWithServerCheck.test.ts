@@ -186,6 +186,27 @@ describe('mutate-with-server-check', () => {
 
     expect(violations).toEqual([]);
   });
+
+  it('does not directly await locally aliased Zero action hook functions', () => {
+    const repoRoot = process.cwd();
+    const sourceRoot = join(repoRoot, 'src');
+    const violations: string[] = [];
+
+    for (const filePath of walkTypeScriptFiles(sourceRoot)) {
+      const relativePath = relative(sourceRoot, filePath).replaceAll('\\', '/');
+      if (relativePath.includes('/__tests__/')) continue;
+
+      const source = readFileSync(filePath, 'utf8');
+      for (const actionName of collectKnownActionHookAliases(source)) {
+        const directAwaitPattern = new RegExp(`\\bawait\\s+${escapeRegExp(actionName)}\\s*\\(`);
+        if (directAwaitPattern.test(source)) {
+          violations.push(`${relativePath}: ${actionName}`);
+        }
+      }
+    }
+
+    expect(violations).toEqual([]);
+  });
 });
 
 function walkTypeScriptFiles(root: string): string[] {
@@ -207,4 +228,34 @@ function walkTypeScriptFiles(root: string): string[] {
   }
 
   return files;
+}
+
+function collectKnownActionHookAliases(source: string): string[] {
+  const hookPattern =
+    /\bconst\s*\{([\s\S]*?)\}\s*=\s*(useVoteActions|useElectionActions|useWorkflowActions|useGroupConnectionActions)\s*\(/g;
+  const aliases: string[] = [];
+
+  for (const match of source.matchAll(hookPattern)) {
+    const bindings = match[1]
+      .split(',')
+      .map(binding => binding.trim())
+      .filter(Boolean);
+
+    for (const binding of bindings) {
+      const cleaned = binding.replace(/\s*=.*$/, '').trim();
+      const localName = cleaned.includes(':')
+        ? cleaned.split(':').at(-1)?.trim()
+        : cleaned.split(/\s+/)[0]?.trim();
+
+      if (localName && /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(localName)) {
+        aliases.push(localName);
+      }
+    }
+  }
+
+  return aliases;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

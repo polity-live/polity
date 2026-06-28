@@ -11,9 +11,10 @@
 import { useCallback, useMemo } from 'react';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { trackServerFinalization, waitForClientApply } from '@/zero/mutate-with-server-check';
 import { usePermissions } from '@/zero/rbac';
 import { useAuth } from '@/providers/auth-provider';
+import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { canUserVote, canUserBeCandidate, type VotingPhase } from '../logic/votePhaseHelpers';
 import {
   createElectionFlowCorrelationId,
@@ -82,17 +83,16 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
       try {
         context?.reportProgress('cast', 'active');
 
-        let resolvedElectorId = electorId;
-        if (!resolvedElectorId) {
-          resolvedElectorId = crypto.randomUUID();
-          await waitForClientApply(
-            electionActions.createElector({
-              id: resolvedElectorId,
-              election_id: electionId,
-              user_id: userId,
-            })
-          );
-        }
+        const elector =
+          electorId == null
+            ? {
+                id: crypto.randomUUID(),
+                election_id: electionId,
+                user_id: userId,
+              }
+            : undefined;
+        const resolvedElectorId = electorId ?? elector?.id;
+        if (!resolvedElectorId) return;
 
         const participationId = crypto.randomUUID();
         const participationArgs = {
@@ -112,9 +112,22 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
         context?.reportProgress('sync', 'active');
 
         const result = isIndicationPhase
-          ? electionActions.castIndicativeVote(participationArgs, selections)
-          : electionActions.castFinalVote(participationArgs, selections);
+          ? electionActions.castIndicativeVote(participationArgs, selections, {
+              elector,
+              silent: true,
+            })
+          : electionActions.castFinalVote(participationArgs, selections, {
+              elector,
+              silent: true,
+            });
         await waitForClientApply(result);
+        if (context?.trackServerResult) {
+          context.trackServerResult(result);
+        } else {
+          trackServerFinalization(result, {
+            onError: error => toast.error(error.message),
+          });
+        }
 
         context?.reportProgress('sync', 'complete');
 
@@ -164,17 +177,16 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
       try {
         context?.reportProgress('cast', 'active');
 
-        let resolvedVoterId = voterId;
-        if (!resolvedVoterId) {
-          resolvedVoterId = crypto.randomUUID();
-          await waitForClientApply(
-            voteActions.createVoter({
-              id: resolvedVoterId,
-              vote_id: voteId,
-              user_id: userId,
-            })
-          );
-        }
+        const voter =
+          voterId == null
+            ? {
+                id: crypto.randomUUID(),
+                vote_id: voteId,
+                user_id: userId,
+              }
+            : undefined;
+        const resolvedVoterId = voterId ?? voter?.id;
+        if (!resolvedVoterId) return;
 
         const participationId = crypto.randomUUID();
         const participationArgs = {
@@ -196,9 +208,22 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
         context?.reportProgress('sync', 'active');
 
         const result = isIndicationPhase
-          ? voteActions.castIndicativeVote(participationArgs, decisions)
-          : voteActions.castFinalVote(participationArgs, decisions);
+          ? voteActions.castIndicativeVote(participationArgs, decisions, {
+              voter,
+              silent: true,
+            })
+          : voteActions.castFinalVote(participationArgs, decisions, {
+              voter,
+              silent: true,
+            });
         await waitForClientApply(result);
+        if (context?.trackServerResult) {
+          context.trackServerResult(result);
+        } else {
+          trackServerFinalization(result, {
+            onError: error => toast.error(error.message),
+          });
+        }
 
         context?.reportProgress('sync', 'complete');
 

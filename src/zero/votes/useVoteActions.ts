@@ -17,6 +17,11 @@ export function useVoteActions() {
   const zero = useZero();
   const { t } = useTranslation();
 
+  interface CastVoteOptions {
+    voter?: Parameters<typeof mutators.votes.createVoter>[0];
+    silent?: boolean;
+  }
+
   // ── Votes ──────────────────────────────────────────────────────────
 
   const createVote = useCallback(
@@ -115,16 +120,20 @@ export function useVoteActions() {
   const castIndicativeVote = useCallback(
     (
       participationArgs: Parameters<typeof mutators.votes.castIndicativeVote>[0],
-      decisions: Parameters<typeof mutators.votes.createIndicativeChoiceDecision>[0][]
+      decisions: Parameters<typeof mutators.votes.createIndicativeChoiceDecision>[0][],
+      options?: CastVoteOptions
     ) => {
       const result = zero.mutate(
         mutators.votes.replaceIndicativeVote({
+          voter: options?.voter,
           participation: participationArgs,
           decisions,
         })
       );
-      onServerError(result, () => toast.error(t('common.agendaToasts.voteCastFailed')));
-      toast.success(t('common.agendaToasts.voteCast'));
+      if (!options?.silent) {
+        onServerError(result, () => toast.error(t('common.agendaToasts.voteCastFailed')));
+        toast.success(t('common.agendaToasts.voteCast'));
+      }
       return result;
     },
     [t, zero]
@@ -135,16 +144,20 @@ export function useVoteActions() {
   const castFinalVote = useCallback(
     (
       participationArgs: Parameters<typeof mutators.votes.castFinalVote>[0],
-      decisions: Parameters<typeof mutators.votes.createFinalChoiceDecision>[0][]
+      decisions: Parameters<typeof mutators.votes.createFinalChoiceDecision>[0][],
+      options?: CastVoteOptions
     ) => {
       const result = zero.mutate(
         mutators.votes.castFinalVoteFull({
+          voter: options?.voter,
           participation: participationArgs,
           decisions,
         })
       );
-      onServerError(result, () => toast.error(t('common.agendaToasts.voteCastFailed')));
-      toast.success(t('common.agendaToasts.voteCast'));
+      if (!options?.silent) {
+        onServerError(result, () => toast.error(t('common.agendaToasts.voteCastFailed')));
+        toast.success(t('common.agendaToasts.voteCast'));
+      }
       return result;
     },
     [t, zero]

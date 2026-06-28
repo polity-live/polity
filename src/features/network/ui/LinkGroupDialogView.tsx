@@ -14,12 +14,138 @@ import {
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import {
+  hasConfiguredGroupConnection,
   getSelectedMembershipDirection,
   hasIncompleteMembershipRule,
 } from '../logic/groupConnectionComposer';
 import { GroupConnectionComposer } from './GroupConnectionComposer';
+
+interface LinkGroupSubmitState {
+  disabled: boolean;
+  label: string;
+  reason?: string;
+  isChecking: boolean;
+}
+
+function getLinkGroupSubmitState({
+  t,
+  value,
+  isEditMode,
+  isSubmitting,
+  groupStateLoading,
+  pairConnectionsLoading,
+  pairConnectionRequestsLoading,
+  preflight,
+}: {
+  t: (key: string, paramsOrFallback?: unknown) => string;
+  value: any;
+  isEditMode: boolean;
+  isSubmitting: boolean;
+  groupStateLoading: boolean;
+  pairConnectionsLoading: boolean;
+  pairConnectionRequestsLoading: boolean;
+  preflight: { isLoading: boolean; blocking: boolean };
+}): LinkGroupSubmitState {
+  const defaultLabel = isEditMode ? t('common.network.saveChanges') : t('common.actions.create');
+  const checkingLabel = t('common.network.linkGroupCheckingConnection');
+
+  if (isSubmitting) {
+    return {
+      disabled: true,
+      label: t('common.network.saving'),
+      reason: t('common.network.linkGroupSavingStatus'),
+      isChecking: false,
+    };
+  }
+
+  if (!value.selectedGroupId) {
+    return {
+      disabled: true,
+      label: defaultLabel,
+      reason: t('common.network.linkGroupSelectTarget'),
+      isChecking: false,
+    };
+  }
+
+  if (groupStateLoading) {
+    return {
+      disabled: true,
+      label: checkingLabel,
+      reason: t('common.network.linkGroupLoadingGroups'),
+      isChecking: true,
+    };
+  }
+
+  if (pairConnectionsLoading || pairConnectionRequestsLoading) {
+    return {
+      disabled: true,
+      label: checkingLabel,
+      reason: t('common.network.linkGroupCheckingExistingLinks'),
+      isChecking: true,
+    };
+  }
+
+  if (preflight.isLoading) {
+    return {
+      disabled: true,
+      label: checkingLabel,
+      reason: t('common.network.linkGroupCheckingConflicts'),
+      isChecking: true,
+    };
+  }
+
+  if (preflight.blocking) {
+    return {
+      disabled: true,
+      label: defaultLabel,
+      reason: t('common.network.linkGroupConflictBlocked'),
+      isChecking: false,
+    };
+  }
+
+  const selectedMembershipDirection = getSelectedMembershipDirection({
+    membershipDirection: value.membershipDirection,
+    membershipRule: value.membershipRule,
+  });
+  const incompleteMembershipRule = selectedMembershipDirection
+    ? hasIncompleteMembershipRule({
+        membershipDirection: value.membershipDirection,
+        membershipRule: value.membershipRule,
+      })
+    : false;
+
+  if (incompleteMembershipRule) {
+    return {
+      disabled: true,
+      label: defaultLabel,
+      reason: t('common.network.linkGroupSelectRole'),
+      isChecking: false,
+    };
+  }
+
+  if (
+    !hasConfiguredGroupConnection({
+      rightDirections: value.rightDirections,
+      membershipDirection: value.membershipDirection,
+      membershipRule: value.membershipRule,
+    })
+  ) {
+    return {
+      disabled: true,
+      label: defaultLabel,
+      reason: t('common.network.linkGroupSelectRightsOrMembership'),
+      isChecking: false,
+    };
+  }
+
+  return {
+    disabled: false,
+    label: defaultLabel,
+    isChecking: false,
+  };
+}
+
 export interface LinkGroupDialogViewProps {
   currentGroupId: any;
   currentGroupName: any;
@@ -98,6 +224,16 @@ export function LinkGroupDialogView({
   const relationshipLabel = isEditMode
     ? t('common.network.editRelationship')
     : t('common.network.linkGroupTitle');
+  const submitState = getLinkGroupSubmitState({
+    t,
+    value,
+    isEditMode,
+    isSubmitting,
+    groupStateLoading,
+    pairConnectionsLoading,
+    pairConnectionRequestsLoading,
+    preflight,
+  });
 
   return (
     <Dialog open={open} onOpenChange={submissionActive ? undefined : setOpen}>
@@ -150,9 +286,9 @@ export function LinkGroupDialogView({
             </div>
 
             <DialogFooter separator className="px-6 py-4">
-              {preflight.isLoading ? (
-                <div className="text-muted-foreground mr-auto text-sm">
-                  {translateText('generated.inline.0798_pr_fe_konflikte_f9c644cd')}
+              {submitState.reason ? (
+                <div className="text-muted-foreground mr-auto min-w-0 text-sm" aria-live="polite">
+                  {submitState.reason}
                 </div>
               ) : null}
               <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
@@ -160,36 +296,11 @@ export function LinkGroupDialogView({
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={
-                  !value.selectedGroupId ||
-                  isSubmitting ||
-                  groupStateLoading ||
-                  pairConnectionsLoading ||
-                  pairConnectionRequestsLoading ||
-                  preflight.isLoading ||
-                  preflight.blocking ||
-                  (() => {
-                    const selectedMembershipDirection = getSelectedMembershipDirection({
-                      membershipDirection: value.membershipDirection,
-                      membershipRule: value.membershipRule,
-                    });
-
-                    if (!selectedMembershipDirection) {
-                      return false;
-                    }
-
-                    return hasIncompleteMembershipRule({
-                      membershipDirection: value.membershipDirection,
-                      membershipRule: value.membershipRule,
-                    });
-                  })()
-                }
+                disabled={submitState.disabled}
+                loading={submitState.isChecking}
+                loadingLabel={submitState.label}
               >
-                {isSubmitting
-                  ? t('common.network.saving')
-                  : isEditMode
-                    ? t('common.network.saveChanges')
-                    : t('common.actions.create')}
+                {submitState.label}
               </Button>
             </DialogFooter>
           </>

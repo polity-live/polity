@@ -387,23 +387,33 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
 
         const participationId = crypto.randomUUID();
         const decisionId = crypto.randomUUID();
+        const voterId = crypto.randomUUID();
 
-        await doCastFinalVote(
-          {
-            id: participationId,
-            vote_id: voteRecord.id,
-            voter_id: user.id,
-          },
-          [
+        await waitForClientApply(
+          doCastFinalVote(
             {
-              id: decisionId,
+              id: participationId,
               vote_id: voteRecord.id,
-              choice_id: choice.id,
-              voter_participation_id: isNamedBallot(voteRecord.ballot_visibility)
-                ? participationId
-                : null,
+              voter_id: voterId,
             },
-          ]
+            [
+              {
+                id: decisionId,
+                vote_id: voteRecord.id,
+                choice_id: choice.id,
+                voter_participation_id: isNamedBallot(voteRecord.ballot_visibility)
+                  ? participationId
+                  : null,
+              },
+            ],
+            {
+              voter: {
+                id: voterId,
+                vote_id: voteRecord.id,
+                user_id: user.id,
+              },
+            }
+          )
         );
 
         toast.success(translateText('generated.inline.1244_vote_cast_successfully_2d80d997'));

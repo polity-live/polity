@@ -172,6 +172,7 @@ export const createIndicativeChoiceDecisionSchema = baseIndicativeChoiceDecision
   .omit({ id: true, created_at: true })
   .extend({ id: z.string() });
 export const replaceIndicativeVoteSchema = z.object({
+  voter: createVoterSchema.optional(),
   participation: createIndicativeVoterParticipationSchema,
   decisions: z.array(createIndicativeChoiceDecisionSchema).min(1),
 });
@@ -209,6 +210,7 @@ export const createFinalChoiceDecisionSchema = baseFinalChoiceDecisionSchema
   .omit({ id: true, created_at: true })
   .extend({ id: z.string() });
 export const castFinalVoteFullSchema = z.object({
+  voter: createVoterSchema.optional(),
   participation: createFinalVoterParticipationSchema,
   decisions: z.array(createFinalChoiceDecisionSchema).min(1),
 });

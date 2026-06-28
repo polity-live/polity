@@ -9,6 +9,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { VOTE_PHASE, VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 export interface CreateAgendaItemFormData {
   title: string;
@@ -85,70 +86,78 @@ export function useCreateAgendaItemFormController() {
 
       const agendaItemId = crypto.randomUUID();
 
-      await createAgendaItem({
-        id: agendaItemId,
-        title: formData.title,
-        description: formData.description || '',
-        type: formData.type,
-        order_index: formData.order,
-        duration: formData.duration ? parseInt(formData.duration) : 0,
-        status: 'pending',
-        forwarding_status: '',
-        scheduled_time: '',
-        start_time: 0,
-        end_time: 0,
-        activated_at: 0,
-        completed_at: 0,
-        event_id: formData.eventId,
-        amendment_id: formData.amendmentId || '',
-        majority_type: null,
-        time_limit: null,
-        voting_phase: null,
-      });
+      await waitForClientApply(
+        createAgendaItem({
+          id: agendaItemId,
+          title: formData.title,
+          description: formData.description || '',
+          type: formData.type,
+          order_index: formData.order,
+          duration: formData.duration ? parseInt(formData.duration) : 0,
+          status: 'pending',
+          forwarding_status: '',
+          scheduled_time: '',
+          start_time: 0,
+          end_time: 0,
+          activated_at: 0,
+          completed_at: 0,
+          event_id: formData.eventId,
+          amendment_id: formData.amendmentId || '',
+          majority_type: null,
+          time_limit: null,
+          voting_phase: null,
+        })
+      );
 
       if (formData.type === 'election') {
         const electionId = crypto.randomUUID();
-        await createElection({
-          id: electionId,
-          title: formData.title,
-          description: formData.description || null,
-          status: 'indicative',
-          majority_type: 'relative',
-          closing_type: null,
-          closing_duration_seconds: null,
-          closing_end_time: null,
-          visibility: 'public',
-          max_votes: 1,
-          agenda_item_id: agendaItemId,
-          role_id: formData.roleId || null,
-        });
+        await waitForClientApply(
+          createElection({
+            id: electionId,
+            title: formData.title,
+            description: formData.description || null,
+            status: 'indicative',
+            majority_type: 'relative',
+            closing_type: null,
+            closing_duration_seconds: null,
+            closing_end_time: null,
+            visibility: 'public',
+            max_votes: 1,
+            agenda_item_id: agendaItemId,
+            role_id: formData.roleId || null,
+          })
+        );
       }
 
       if (formData.type === 'vote') {
         const voteId = crypto.randomUUID();
-        await createVote({
-          id: voteId,
-          title: formData.title,
-          description: formData.description || null,
-          status: VOTE_PHASE.indicative,
-          purpose: VOTE_PURPOSE.closing,
-          majority_type: 'relative',
-          closing_type: null,
-          closing_duration_seconds: null,
-          closing_end_time: null,
-          visibility: 'public',
-          agenda_item_id: agendaItemId,
-          amendment_id: formData.amendmentId || null,
-        });
+        await waitForClientApply(
+          createVote({
+            id: voteId,
+            title: formData.title,
+            description: formData.description || null,
+            status: VOTE_PHASE.indicative,
+            purpose: VOTE_PURPOSE.closing,
+            majority_type: 'relative',
+            closing_type: null,
+            closing_duration_seconds: null,
+            closing_end_time: null,
+            visibility: 'public',
+            agenda_item_id: agendaItemId,
+            amendment_id: formData.amendmentId || null,
+          })
+        );
 
         const defaultChoices = ['Yes', 'No', 'Abstain'];
         for (let i = 0; i < defaultChoices.length; i++) {
-          await createVoteChoice({
-            id: crypto.randomUUID(),
-            vote_id: voteId,
-            label: defaultChoices[i],
-            order_index: i + 1,
-          });
+          await waitForClientApply(
+            createVoteChoice({
+              id: crypto.randomUUID(),
+              vote_id: voteId,
+              label: defaultChoices[i],
+              order_index: i + 1,
+            })
+          );
         }
       }
 

@@ -96,6 +96,7 @@ import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
 import { computeEligibleFinalVoterCount } from '@/features/votes/logic/computeEligibleVoters';
 import { useAgendaArrowNavigation } from '../hooks/useAgendaArrowNavigation';
 import { buildOfflineTallyErrorToast, isOfflineTallyPasswordError } from './offlineTallyErrorToast';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 type ChangeRequestTimelineIdentitySource = Record<string, any>;
 
@@ -1006,11 +1007,13 @@ export function EventAgendaItemDetail({
               throw new Error('Missing amendment agenda item context.');
             }
 
-            await initializeChangeRequestVoting({
-              amendment_id: agendaItem.amendment_id,
-              agenda_item_id: agendaItem.id,
-              start_final_vote_if_no_change_requests: false,
-            });
+            await waitForClientApply(
+              initializeChangeRequestVoting({
+                amendment_id: agendaItem.amendment_id,
+                agenda_item_id: agendaItem.id,
+                start_final_vote_if_no_change_requests: false,
+              })
+            );
           }
 
           if (closingJump.targetItemId) {
@@ -1033,7 +1036,7 @@ export function EventAgendaItemDetail({
       if (!item?.vote) return;
 
       if (getVoteStepKind(item)) {
-        await updateAgendaVote({ id: item.vote.id, status: VOTE_PHASE.final });
+        await waitForClientApply(updateAgendaVote({ id: item.vote.id, status: VOTE_PHASE.final }));
         return;
       }
 
@@ -1057,7 +1060,9 @@ export function EventAgendaItemDetail({
       if (!item?.vote) return;
 
       if (getVoteStepKind(item)) {
-        await updateAgendaVote({ id: item.vote.id, status: VOTE_PHASE.indicative });
+        await waitForClientApply(
+          updateAgendaVote({ id: item.vote.id, status: VOTE_PHASE.indicative })
+        );
         return;
       }
 
@@ -1072,13 +1077,15 @@ export function EventAgendaItemDetail({
       if (!item?.vote) return;
 
       if ((item as { _voteStepKind?: string })._voteStepKind) {
-        await updateAgendaVote({
-          id: item.vote.id,
-          status: 'closed',
-          closed_reason: 'manual',
-          closed_at: Date.now(),
-          closed_by_id: user?.id ?? null,
-        });
+        await waitForClientApply(
+          updateAgendaVote({
+            id: item.vote.id,
+            status: 'closed',
+            closed_reason: 'manual',
+            closed_at: Date.now(),
+            closed_by_id: user?.id ?? null,
+          })
+        );
         return;
       }
 
@@ -1711,21 +1718,25 @@ export function EventAgendaItemDetail({
 
         for (const update of updates) {
           if (offlineTallyEntity.kind === 'election') {
-            await upsertElectionOfflineTally({
-              election_id: offlineTallyEntity.itemId,
-              phase: offlineTallyPhase,
-              candidate_id: update.choiceId,
-              count: update.count,
-              debug_correlation_id: correlationId,
-            });
+            await waitForClientApply(
+              upsertElectionOfflineTally({
+                election_id: offlineTallyEntity.itemId,
+                phase: offlineTallyPhase,
+                candidate_id: update.choiceId,
+                count: update.count,
+                debug_correlation_id: correlationId,
+              })
+            );
           } else {
-            await upsertVoteOfflineTally({
-              vote_id: offlineTallyEntity.itemId,
-              phase: offlineTallyPhase,
-              choice_id: update.choiceId,
-              count: update.count,
-              debug_correlation_id: correlationId,
-            });
+            await waitForClientApply(
+              upsertVoteOfflineTally({
+                vote_id: offlineTallyEntity.itemId,
+                phase: offlineTallyPhase,
+                choice_id: update.choiceId,
+                count: update.count,
+                debug_correlation_id: correlationId,
+              })
+            );
           }
         }
 

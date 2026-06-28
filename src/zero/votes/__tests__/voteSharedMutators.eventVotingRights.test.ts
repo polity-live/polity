@@ -72,7 +72,7 @@ describe('voteSharedMutators event voting rights', () => {
 
   it('allows a participant with active voting rights to create their own voter record', async () => {
     allowActions(['active_voting']);
-    const tx = createTx([vote, agendaItem]);
+    const tx = createTx([vote, agendaItem, null, null]);
 
     await voteSharedMutators.createVoter.fn({
       tx: tx as never,
@@ -198,6 +198,63 @@ describe('voteSharedMutators event voting rights', () => {
         id: 'decision-1',
         vote_id: 'vote-1',
         choice_id: 'choice-1',
+        voter_participation_id: 'participation-1',
+      })
+    );
+  });
+
+  it('creates a missing voter inside the indicative replacement transaction', async () => {
+    allowActions(['active_voting']);
+    const tx = createTx([
+      vote,
+      agendaItem,
+      null,
+      null,
+      voter,
+      vote,
+      agendaItem,
+      namedVote,
+      choice,
+      null,
+    ]);
+
+    await voteSharedMutators.replaceIndicativeVote.fn({
+      tx: tx as never,
+      ctx: { userID: 'user-1' } as never,
+      args: {
+        voter,
+        participation: {
+          id: 'participation-1',
+          vote_id: 'vote-1',
+          voter_id: 'voter-1',
+        },
+        decisions: [
+          {
+            id: 'decision-1',
+            vote_id: 'vote-1',
+            choice_id: 'choice-1',
+            voter_participation_id: 'participation-1',
+          },
+        ],
+      },
+    });
+
+    expect(tx.mutate.voter.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'voter-1',
+        vote_id: 'vote-1',
+        user_id: 'user-1',
+      })
+    );
+    expect(tx.mutate.indicative_voter_participation.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'participation-1',
+        voter_id: 'voter-1',
+      })
+    );
+    expect(tx.mutate.indicative_choice_decision.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'decision-1',
         voter_participation_id: 'participation-1',
       })
     );
@@ -399,5 +456,61 @@ describe('voteSharedMutators event voting rights', () => {
         },
       })
     ).rejects.toThrow(/duplicate key/i);
+  });
+
+  it('creates a missing voter inside the final full vote transaction', async () => {
+    allowActions(['active_voting']);
+    const tx = createTx([
+      vote,
+      agendaItem,
+      null,
+      null,
+      voter,
+      vote,
+      agendaItem,
+      { ...finalOpenVote, ballot_visibility: 'named' },
+      choice,
+    ]);
+
+    await voteSharedMutators.castFinalVoteFull.fn({
+      tx: tx as never,
+      ctx: { userID: 'user-1' } as never,
+      args: {
+        voter,
+        participation: {
+          id: 'final-participation-1',
+          vote_id: 'vote-1',
+          voter_id: 'voter-1',
+        },
+        decisions: [
+          {
+            id: 'final-decision-1',
+            vote_id: 'vote-1',
+            choice_id: 'choice-1',
+            voter_participation_id: 'final-participation-1',
+          },
+        ],
+      },
+    });
+
+    expect(tx.mutate.voter.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'voter-1',
+        vote_id: 'vote-1',
+        user_id: 'user-1',
+      })
+    );
+    expect(tx.mutate.final_voter_participation.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'final-participation-1',
+        voter_id: 'voter-1',
+      })
+    );
+    expect(tx.mutate.final_choice_decision.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'final-decision-1',
+        voter_participation_id: 'final-participation-1',
+      })
+    );
   });
 });

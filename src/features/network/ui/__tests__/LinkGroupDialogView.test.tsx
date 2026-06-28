@@ -34,7 +34,17 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-function renderDialog(roleId = '') {
+function renderDialog({
+  roleId = '',
+  pairConnectionsLoading = false,
+  pairConnectionRequestsLoading = false,
+  preflight = { blocking: false, isLoading: false, response: { blocking: false } },
+}: {
+  roleId?: string;
+  pairConnectionsLoading?: boolean;
+  pairConnectionRequestsLoading?: boolean;
+  preflight?: { blocking: boolean; isLoading: boolean; response: { blocking: boolean } };
+} = {}) {
   const value = {
     selectedGroupId: 'partner',
     relationshipType: 'sibling',
@@ -66,6 +76,18 @@ function renderDialog(roleId = '') {
             'common.actions.create': 'Create',
             'common.network.linkGroupDescription': 'Link group description',
             'common.network.linkGroupTitle': 'Link group',
+            'common.network.linkGroupCheckingConnection': 'Checking connection...',
+            'common.network.linkGroupCheckingConflicts': 'Possible conflicts are being checked.',
+            'common.network.linkGroupCheckingExistingLinks':
+              'Existing links and open requests are being checked.',
+            'common.network.linkGroupConflictBlocked':
+              'Resolve the conflict before creating this link.',
+            'common.network.linkGroupLoadingGroups': 'Groups are still loading.',
+            'common.network.linkGroupSavingStatus': 'Saving the link request.',
+            'common.network.linkGroupSelectRightsOrMembership':
+              'Select at least one right or configure membership.',
+            'common.network.linkGroupSelectRole': 'Select a role to continue.',
+            'common.network.linkGroupSelectTarget': 'Select a group to continue.',
             'common.network.selectGroup': 'Select group',
             'components.actionBar.linkGroup': 'Link group',
           })[key] ?? (typeof paramsOrFallback === 'string' ? paramsOrFallback : key),
@@ -87,11 +109,11 @@ function renderDialog(roleId = '') {
         activeTab: 'preset',
         setActiveTab: vi.fn(),
         isSubmitting: false,
-        pairConnectionsLoading: false,
-        pairConnectionRequestsLoading: false,
+        pairConnectionsLoading,
+        pairConnectionRequestsLoading,
         existingRightStatuses: new Map(),
         selectableRolesByDirection: {},
-        preflight: { blocking: false, isLoading: false, response: { blocking: false } },
+        preflight,
         handleSubmit: vi.fn(),
       } as any)}
     />
@@ -100,14 +122,36 @@ function renderDialog(roleId = '') {
 
 describe('LinkGroupDialogView', () => {
   it('disables submit for role-members links without a selected role', () => {
-    renderDialog('');
+    renderDialog();
 
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Create' }).disabled).toBe(true);
+    expect(screen.getByText('Select a role to continue.')).not.toBeNull();
   });
 
   it('enables submit for role-members links with a selected role', () => {
-    renderDialog('role-1');
+    renderDialog({ roleId: 'role-1' });
 
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Create' }).disabled).toBe(false);
+  });
+
+  it('explains pair loading after a group is selected', () => {
+    renderDialog({ roleId: 'role-1', pairConnectionsLoading: true });
+
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', { name: /Checking connection/ }).disabled
+    ).toBe(true);
+    expect(screen.getByText('Existing links and open requests are being checked.')).not.toBeNull();
+  });
+
+  it('explains preflight conflict checks', () => {
+    renderDialog({
+      roleId: 'role-1',
+      preflight: { blocking: false, isLoading: true, response: { blocking: false } },
+    });
+
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', { name: /Checking connection/ }).disabled
+    ).toBe(true);
+    expect(screen.getByText('Possible conflicts are being checked.')).not.toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { AmendmentForwardingPreview } from '@/features/amendments/ui/AmendmentForwardingPreview';
@@ -25,6 +25,8 @@ import {
   type VoteSubmissionStatus,
   type VoteSubmissionStepKey,
 } from '@/features/shared/ui/voting';
+import { toast } from '@/features/shared/ui/ui/sonner';
+import { trackServerFinalization } from '@/zero/mutate-with-server-check';
 import type { VotingPhase } from '../logic/votePhaseHelpers';
 
 interface VoteCastDialogProps {
@@ -106,7 +108,7 @@ export function VoteCastDialog({
   const [submissionSteps, setSubmissionSteps] = useState<VoteSubmissionProgressStep[]>(
     createInitialProgressSteps
   );
-  const [lastSubmittedPassword, setLastSubmittedPassword] = useState<string | null>(null);
+  const serverRejectedRef = useRef(false);
 
   const isElection = Boolean(candidates?.length);
   const isMultiSelect = isElection && maxVotes > 1;
@@ -121,7 +123,15 @@ export function VoteCastDialog({
     setSubmissionStatus('idle');
     setSubmissionError(null);
     setSubmissionSteps(createInitialProgressSteps());
-    setLastSubmittedPassword(null);
+    serverRejectedRef.current = false;
+  }, []);
+
+  const resetSubmissionOnly = useCallback(() => {
+    setStep('choice');
+    setSubmissionStatus('idle');
+    setSubmissionError(null);
+    setSubmissionSteps(createInitialProgressSteps());
+    serverRejectedRef.current = false;
   }, []);
 
   const handleOpenChange = (value: boolean) => {
@@ -152,11 +162,51 @@ export function VoteCastDialog({
     [reportProgress]
   );
 
+  const handleServerRejection = useCallback(
+    (error: Error) => {
+      serverRejectedRef.current = true;
+      setSubmissionError(error);
+      setSubmissionStatus('error');
+      setSubmissionSteps(prev =>
+        prev.map(stepItem =>
+          stepItem.key === 'sync'
+            ? { ...stepItem, status: 'error' }
+            : { ...stepItem, status: 'complete' }
+        )
+      );
+      onOpenChange(true);
+      toast.error(error.message, {
+        action: {
+          label: requirePassword ? 'PIN erneut eingeben' : 'Auswahl öffnen',
+          onClick: () => {
+            setSubmissionStatus('idle');
+            setSubmissionError(null);
+            setSubmissionSteps(createInitialProgressSteps());
+            serverRejectedRef.current = false;
+            setStep(requirePassword ? 'password' : 'choice');
+            onOpenChange(true);
+          },
+        },
+      });
+    },
+    [onOpenChange, requirePassword]
+  );
+
+  const trackServerResult = useCallback(
+    (result: Parameters<NonNullable<VoteSubmissionContext['trackServerResult']>>[0]) => {
+      trackServerFinalization(result, {
+        onError: handleServerRejection,
+      });
+    },
+    [handleServerRejection]
+  );
+
   const submissionContext = useMemo<VoteSubmissionContext>(
     () => ({
       reportProgress,
+      trackServerResult,
     }),
-    [reportProgress]
+    [reportProgress, trackServerResult]
   );
 
   const submitVote = useCallback(
@@ -181,6 +231,7 @@ export function VoteCastDialog({
       setSubmissionError(null);
       setSubmissionSteps(createInitialProgressSteps());
       setSubmissionStatus('verifying');
+      serverRejectedRef.current = false;
       markStep('verify', 'active');
 
       try {
@@ -190,8 +241,10 @@ export function VoteCastDialog({
         markStep('verify', 'complete');
 
         await submitVote(submissionContext);
-        setSubmissionSteps(prev => prev.map(stepItem => ({ ...stepItem, status: 'complete' })));
-        setSubmissionStatus('success');
+        if (!serverRejectedRef.current) {
+          setSubmissionSteps(prev => prev.map(stepItem => ({ ...stepItem, status: 'complete' })));
+          setSubmissionStatus('success');
+        }
       } catch (error) {
         setSubmissionError(error);
         setSubmissionStatus('error');
@@ -214,7 +267,6 @@ export function VoteCastDialog({
   };
 
   const handlePasswordSubmit = async (password: string) => {
-    setLastSubmittedPassword(password);
     await performSubmission(password);
   };
 
@@ -222,11 +274,21 @@ export function VoteCastDialog({
     setSubmissionStatus('idle');
     setSubmissionError(null);
     setSubmissionSteps(createInitialProgressSteps());
+    serverRejectedRef.current = false;
     setStep(requirePassword ? 'password' : 'choice');
   };
 
   const handleSubmissionRetry = () => {
-    void performSubmission(lastSubmittedPassword);
+    if (requirePassword) {
+      setSubmissionStatus('idle');
+      setSubmissionError(null);
+      setSubmissionSteps(createInitialProgressSteps());
+      serverRejectedRef.current = false;
+      setStep('password');
+      return;
+    }
+
+    void performSubmission(null);
   };
 
   const toggleCandidate = (candidateId: string) => {
@@ -260,12 +322,12 @@ export function VoteCastDialog({
     if (submissionStatus !== 'success') return;
 
     const timeoutId = window.setTimeout(() => {
-      handleReset();
+      resetSubmissionOnly();
       onOpenChange(false);
     }, SUBMISSION_SUCCESS_CLOSE_DELAY_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [handleReset, onOpenChange, submissionStatus]);
+  }, [onOpenChange, resetSubmissionOnly, submissionStatus]);
 
   return (
     <VoteCastDialogView

@@ -202,7 +202,6 @@ export function WorkflowEditorContentView({
   const handleSaveWithSubmission = () => {
     void actionSubmission
       .runActionWithSubmission(async context => onSave(context), {
-        deferSyncCompletion: true,
         onSuccess: () => {
           actionSubmission.reset();
           onClose();

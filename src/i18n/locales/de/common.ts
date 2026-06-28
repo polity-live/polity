@@ -311,6 +311,16 @@ export const commonTranslations = {
     linkGroupDescription: 'Verknüpfen Sie "{{groupName}}" mit einer anderen Gruppe.',
     linkPreviewDescription:
       'Verbindung zwischen {{groupName}} und {{otherGroupName}} ({{rights}}).',
+    linkGroupCheckingConnection: 'Prüfe Verbindung...',
+    linkGroupSavingStatus: 'Link-Anfrage wird gespeichert.',
+    linkGroupSelectTarget: 'Wähle eine Gruppe aus, um fortzufahren.',
+    linkGroupLoadingGroups: 'Gruppen werden noch geladen.',
+    linkGroupCheckingExistingLinks: 'Bestehende Links und offene Anfragen werden geprüft.',
+    linkGroupCheckingConflicts: 'Mögliche Konflikte werden geprüft.',
+    linkGroupConflictBlocked: 'Löse den Konflikt, bevor du diesen Link erstellst.',
+    linkGroupSelectRole: 'Wähle eine Rolle aus, um fortzufahren.',
+    linkGroupSelectRightsOrMembership:
+      'Wähle mindestens ein Recht aus oder konfiguriere eine Mitgliedschaft.',
     asParentGroup: 'Als übergeordnete Gruppe',
     asChildGroup: 'Als untergeordnete Gruppe',
     asSiblingGroup: 'Als Geschwistergruppe',

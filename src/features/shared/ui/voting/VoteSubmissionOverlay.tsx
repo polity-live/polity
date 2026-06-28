@@ -9,6 +9,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { LoadingProgressBar } from '@/features/shared/ui/feedback';
 import { getContentTypeToneClasses, getSemanticToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
+import type { MutationResultLike } from '@/zero/mutate-with-server-check';
 import type { VotingPhaseValue } from './VotingControls';
 
 export type VoteSubmissionStepKey = 'verify' | 'cast' | 'sync';
@@ -29,6 +30,7 @@ export interface VoteSubmissionProgressStep {
 
 export interface VoteSubmissionContext {
   reportProgress: (stepKey: VoteSubmissionStepKey, status: VoteSubmissionProgressStatus) => void;
+  trackServerResult?: (result: MutationResultLike) => void;
 }
 
 export interface VoteSubmissionCandidate {

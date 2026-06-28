@@ -455,6 +455,8 @@ export function useLinkGroupDialogController({
     if (!value.selectedGroupId) {
       return;
     }
+    const composerSnapshot = value;
+    const activeTabSnapshot = activeTab;
 
     const selectedMembershipDirection = getSelectedMembershipDirection({
       membershipDirection: value.membershipDirection,
@@ -604,12 +606,21 @@ export function useLinkGroupDialogController({
           context.reportProgress({ key: 'commit', status: 'complete' });
           context.reportProgress({ key: 'sync', status: 'active' });
           trackServerFinalization(result, {
-            onSuccess: () => context.completeSuccess?.(),
-            onError: error => context.failSubmission?.(error),
+            onError: error =>
+              toast.error(error.message || t('common.network.relationshipSaveError'), {
+                action: {
+                  label: t('common.actions.restore', 'Wiederherstellen'),
+                  onClick: () => {
+                    resetComposer(composerSnapshot);
+                    setActiveTab(activeTabSnapshot);
+                    actionSubmission.reset();
+                    setOpen(true);
+                  },
+                },
+              }),
           });
         },
         {
-          deferSyncCompletion: true,
           onSuccess: () => {
             actionSubmission.reset();
             setOpen(false);

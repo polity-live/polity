@@ -133,6 +133,23 @@ export function useWorkflowEditor(groupId: string) {
       }
 
       try {
+        const draftSnapshot = {
+          editingWorkflow,
+          draftStartGroupId,
+          draftName,
+          draftDescription,
+          draftIsDefaultEntry,
+          draftSteps,
+        };
+        const restoreDraft = () => {
+          setEditingWorkflow(draftSnapshot.editingWorkflow);
+          setDraftStartGroupId(draftSnapshot.draftStartGroupId);
+          setDraftName(draftSnapshot.draftName);
+          setDraftDescription(draftSnapshot.draftDescription);
+          setDraftIsDefaultEntry(draftSnapshot.draftIsDefaultEntry);
+          setDraftSteps(draftSnapshot.draftSteps);
+          setIsEditorOpen(true);
+        };
         const result = actions.saveWorkflowDefinition({
           id: editingWorkflow?.id ?? crypto.randomUUID(),
           editing_group_id: groupId,
@@ -160,12 +177,23 @@ export function useWorkflowEditor(groupId: string) {
         submissionContext?.reportProgress({ key: 'sync', status: 'active' });
         if (submissionContext) {
           trackServerFinalization(result, {
-            onSuccess: () => submissionContext.completeSuccess?.(),
-            onError: error => submissionContext.failSubmission?.(error),
+            onError: error =>
+              toast.error(error.message, {
+                action: {
+                  label: t('common.actions.restore', 'Wiederherstellen'),
+                  onClick: restoreDraft,
+                },
+              }),
           });
         } else {
           trackServerFinalization(result, {
-            onError: error => toast.error(error.message),
+            onError: error =>
+              toast.error(error.message, {
+                action: {
+                  label: t('common.actions.restore', 'Wiederherstellen'),
+                  onClick: restoreDraft,
+                },
+              }),
           });
         }
         toast.success(t('features.network.toasts.workflowSaved'));

@@ -130,6 +130,43 @@ async function assertElectorOwner(
   }
 }
 
+async function ensureElectorRow(
+  tx: ElectionTx,
+  ctx: ElectionCtx,
+  elector: { id: string; election_id: string; user_id: string }
+) {
+  await assertSelfElectionEventRightOrManager(tx, ctx, {
+    electionId: elector.election_id,
+    userId: elector.user_id,
+    action: 'active_voting',
+  });
+
+  if (tx.location !== 'client') {
+    const existingById = await tx.run(zql.elector.where('id', elector.id).one());
+    if (existingById) {
+      if (
+        existingById.election_id !== elector.election_id ||
+        existingById.user_id !== elector.user_id
+      ) {
+        throw new Error('Elector id is already used for a different election or user.');
+      }
+      return existingById.id;
+    }
+
+    const existingForUser = await tx.run(
+      zql.elector.where('election_id', elector.election_id).where('user_id', elector.user_id).one()
+    );
+    if (existingForUser) return existingForUser.id;
+  }
+
+  const now = Date.now();
+  await tx.mutate.elector.insert({
+    ...elector,
+    created_at: now,
+  });
+  return elector.id;
+}
+
 async function assertElectorParticipationOwner(
   tx: ElectionTx,
   ctx: ElectionCtx,
@@ -323,16 +360,7 @@ export const electionSharedMutators = {
 
   // Add an elector
   createElector: defineMutator(createElectorSchema, async ({ tx, ctx, args }) => {
-    await assertSelfElectionEventRightOrManager(tx, ctx, {
-      electionId: args.election_id,
-      userId: args.user_id,
-      action: 'active_voting',
-    });
-    const now = Date.now();
-    await tx.mutate.elector.insert({
-      ...args,
-      created_at: now,
-    });
+    await ensureElectorRow(tx, ctx, args);
   }),
 
   // Remove an elector
@@ -379,27 +407,45 @@ export const electionSharedMutators = {
   replaceIndicativeElectionVote: defineMutator(
     replaceIndicativeElectionVoteSchema,
     async ({ tx, ctx, args }) => {
-      const { participation, selections } = args;
-      await assertElectorOwner(tx, ctx, participation.elector_id, participation.election_id);
+      const { elector, participation, selections } = args;
+      let resolvedParticipation = participation;
+      if (elector) {
+        if (
+          elector.id !== participation.elector_id ||
+          elector.election_id !== participation.election_id
+        ) {
+          throw new Error('Elector does not match indicative election participation.');
+        }
+        resolvedParticipation = {
+          ...participation,
+          elector_id: await ensureElectorRow(tx, ctx, elector),
+        };
+      }
+      await assertElectorOwner(
+        tx,
+        ctx,
+        resolvedParticipation.elector_id,
+        resolvedParticipation.election_id
+      );
 
-      const election = await loadElection(tx, participation.election_id);
+      const election = await loadElection(tx, resolvedParticipation.election_id);
       const isNamed = isNamedBallot(election.ballot_visibility ?? defaultElectionBallotVisibility);
 
       for (const selection of selections) {
-        if (selection.election_id !== participation.election_id) {
+        if (selection.election_id !== resolvedParticipation.election_id) {
           throw new Error('Indicative election selection does not belong to this election.');
         }
         await assertCandidateBelongsToElection(
           tx,
-          participation.election_id,
+          resolvedParticipation.election_id,
           selection.candidate_id
         );
       }
 
       const existingParticipation = await tx.run(
         zql.indicative_elector_participation
-          .where('election_id', participation.election_id)
-          .where('elector_id', participation.elector_id)
+          .where('election_id', resolvedParticipation.election_id)
+          .where('elector_id', resolvedParticipation.elector_id)
           .one()
       );
 
@@ -414,11 +460,11 @@ export const electionSharedMutators = {
       }
 
       const now = Date.now();
-      const resolvedParticipation = existingParticipation ?? participation;
+      const targetParticipation = existingParticipation ?? resolvedParticipation;
 
       if (!existingParticipation) {
         await tx.mutate.indicative_elector_participation.insert({
-          ...participation,
+          ...resolvedParticipation,
           created_at: now,
         });
       } else {
@@ -437,7 +483,7 @@ export const electionSharedMutators = {
       for (const selection of selections) {
         await tx.mutate.indicative_candidate_selection.insert({
           ...selection,
-          elector_participation_id: isNamed ? resolvedParticipation.id : null,
+          elector_participation_id: isNamed ? targetParticipation.id : null,
           created_at: now,
         });
       }
@@ -478,33 +524,51 @@ export const electionSharedMutators = {
   castFinalElectionVoteFull: defineMutator(
     castFinalElectionVoteFullSchema,
     async ({ tx, ctx, args }) => {
-      const { participation, selections } = args;
-      await assertElectorOwner(tx, ctx, participation.elector_id, participation.election_id);
+      const { elector, participation, selections } = args;
+      let resolvedParticipation = participation;
+      if (elector) {
+        if (
+          elector.id !== participation.elector_id ||
+          elector.election_id !== participation.election_id
+        ) {
+          throw new Error('Elector does not match final election participation.');
+        }
+        resolvedParticipation = {
+          ...participation,
+          elector_id: await ensureElectorRow(tx, ctx, elector),
+        };
+      }
+      await assertElectorOwner(
+        tx,
+        ctx,
+        resolvedParticipation.elector_id,
+        resolvedParticipation.election_id
+      );
 
-      const election = await loadElection(tx, participation.election_id);
+      const election = await loadElection(tx, resolvedParticipation.election_id);
       const isNamed = isNamedBallot(election.ballot_visibility ?? defaultElectionBallotVisibility);
 
       for (const selection of selections) {
-        if (selection.election_id !== participation.election_id) {
+        if (selection.election_id !== resolvedParticipation.election_id) {
           throw new Error('Final election selection does not belong to this election.');
         }
         await assertCandidateBelongsToElection(
           tx,
-          participation.election_id,
+          resolvedParticipation.election_id,
           selection.candidate_id
         );
       }
 
       const now = Date.now();
       await tx.mutate.final_elector_participation.insert({
-        ...participation,
+        ...resolvedParticipation,
         created_at: now,
       });
 
       for (const selection of selections) {
         await tx.mutate.final_candidate_selection.insert({
           ...selection,
-          elector_participation_id: isNamed ? participation.id : null,
+          elector_participation_id: isNamed ? resolvedParticipation.id : null,
           created_at: now,
         });
       }

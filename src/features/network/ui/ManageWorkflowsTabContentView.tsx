@@ -445,7 +445,6 @@ export function ManageWorkflowsTabContentView({
 
     void approvalSubmission
       .runActionWithSubmission(async context => onApproveWorkflowApproval(approval.id, context), {
-        deferSyncCompletion: true,
         onSuccess: approvalSubmission.reset,
       })
       .catch(() => undefined);
@@ -468,7 +467,6 @@ export function ManageWorkflowsTabContentView({
 
     void approvalSubmission
       .runActionWithSubmission(async context => onRejectWorkflowApproval(approval.id, context), {
-        deferSyncCompletion: true,
         onSuccess: approvalSubmission.reset,
       })
       .catch(() => undefined);

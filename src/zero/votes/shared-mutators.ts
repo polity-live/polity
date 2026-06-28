@@ -163,6 +163,39 @@ async function assertVoterOwner(tx: VoteTx, ctx: VoteCtx, voterId: string, voteI
   }
 }
 
+async function ensureVoterRow(
+  tx: VoteTx,
+  ctx: VoteCtx,
+  voter: { id: string; vote_id: string; user_id: string }
+) {
+  await assertSelfActiveVotingRightOrVoteManager(tx, ctx, {
+    voteId: voter.vote_id,
+    userId: voter.user_id,
+  });
+
+  if (tx.location !== 'client') {
+    const existingById = await tx.run(zql.voter.where('id', voter.id).one());
+    if (existingById) {
+      if (existingById.vote_id !== voter.vote_id || existingById.user_id !== voter.user_id) {
+        throw new Error('Voter id is already used for a different vote or user.');
+      }
+      return existingById.id;
+    }
+
+    const existingForUser = await tx.run(
+      zql.voter.where('vote_id', voter.vote_id).where('user_id', voter.user_id).one()
+    );
+    if (existingForUser) return existingForUser.id;
+  }
+
+  const now = Date.now();
+  await tx.mutate.voter.insert({
+    ...voter,
+    created_at: now,
+  });
+  return voter.id;
+}
+
 async function assertVoterParticipationOwner(
   tx: VoteTx,
   ctx: VoteCtx,
@@ -312,15 +345,7 @@ export const voteSharedMutators = {
 
   // Add a voter
   createVoter: defineMutator(createVoterSchema, async ({ tx, ctx, args }) => {
-    await assertSelfActiveVotingRightOrVoteManager(tx, ctx, {
-      voteId: args.vote_id,
-      userId: args.user_id,
-    });
-    const now = Date.now();
-    await tx.mutate.voter.insert({
-      ...args,
-      created_at: now,
-    });
+    await ensureVoterRow(tx, ctx, args);
   }),
 
   // Remove a voter
@@ -367,24 +392,34 @@ export const voteSharedMutators = {
   ),
 
   replaceIndicativeVote: defineMutator(replaceIndicativeVoteSchema, async ({ tx, ctx, args }) => {
-    const { participation, decisions } = args;
-    await assertVoterOwner(tx, ctx, participation.voter_id, participation.vote_id);
+    const { voter, participation, decisions } = args;
+    let resolvedParticipation = participation;
+    if (voter) {
+      if (voter.id !== participation.voter_id || voter.vote_id !== participation.vote_id) {
+        throw new Error('Voter does not match indicative vote participation.');
+      }
+      resolvedParticipation = {
+        ...participation,
+        voter_id: await ensureVoterRow(tx, ctx, voter),
+      };
+    }
+    await assertVoterOwner(tx, ctx, resolvedParticipation.voter_id, resolvedParticipation.vote_id);
 
-    const vote = await loadVote(tx, participation.vote_id);
+    const vote = await loadVote(tx, resolvedParticipation.vote_id);
     assertVotePhase(vote, 'indicative');
     const isNamed = isNamedBallot(vote.ballot_visibility ?? defaultVoteBallotVisibility);
 
     for (const decision of decisions) {
-      if (decision.vote_id !== participation.vote_id) {
+      if (decision.vote_id !== resolvedParticipation.vote_id) {
         throw new Error('Indicative vote decision does not belong to this vote.');
       }
-      await assertChoiceBelongsToVote(tx, participation.vote_id, decision.choice_id);
+      await assertChoiceBelongsToVote(tx, resolvedParticipation.vote_id, decision.choice_id);
     }
 
     const existingParticipation = await tx.run(
       zql.indicative_voter_participation
-        .where('vote_id', participation.vote_id)
-        .where('voter_id', participation.voter_id)
+        .where('vote_id', resolvedParticipation.vote_id)
+        .where('voter_id', resolvedParticipation.voter_id)
         .one()
     );
 
@@ -399,11 +434,11 @@ export const voteSharedMutators = {
     }
 
     const now = Date.now();
-    const resolvedParticipation = existingParticipation ?? participation;
+    const targetParticipation = existingParticipation ?? resolvedParticipation;
 
     if (!existingParticipation) {
       await tx.mutate.indicative_voter_participation.insert({
-        ...participation,
+        ...resolvedParticipation,
         created_at: now,
       });
     } else {
@@ -419,7 +454,7 @@ export const voteSharedMutators = {
     for (const decision of decisions) {
       await tx.mutate.indicative_choice_decision.insert({
         ...decision,
-        voter_participation_id: isNamed ? resolvedParticipation.id : null,
+        voter_participation_id: isNamed ? targetParticipation.id : null,
         created_at: now,
       });
     }
@@ -456,30 +491,40 @@ export const voteSharedMutators = {
   ),
 
   castFinalVoteFull: defineMutator(castFinalVoteFullSchema, async ({ tx, ctx, args }) => {
-    const { participation, decisions } = args;
-    await assertVoterOwner(tx, ctx, participation.voter_id, participation.vote_id);
+    const { voter, participation, decisions } = args;
+    let resolvedParticipation = participation;
+    if (voter) {
+      if (voter.id !== participation.voter_id || voter.vote_id !== participation.vote_id) {
+        throw new Error('Voter does not match final vote participation.');
+      }
+      resolvedParticipation = {
+        ...participation,
+        voter_id: await ensureVoterRow(tx, ctx, voter),
+      };
+    }
+    await assertVoterOwner(tx, ctx, resolvedParticipation.voter_id, resolvedParticipation.vote_id);
 
-    const vote = await loadVote(tx, participation.vote_id);
+    const vote = await loadVote(tx, resolvedParticipation.vote_id);
     assertVotePhase(vote, 'final');
     const isNamed = isNamedBallot(vote.ballot_visibility ?? defaultVoteBallotVisibility);
 
     for (const decision of decisions) {
-      if (decision.vote_id !== participation.vote_id) {
+      if (decision.vote_id !== resolvedParticipation.vote_id) {
         throw new Error('Final vote decision does not belong to this vote.');
       }
-      await assertChoiceBelongsToVote(tx, participation.vote_id, decision.choice_id);
+      await assertChoiceBelongsToVote(tx, resolvedParticipation.vote_id, decision.choice_id);
     }
 
     const now = Date.now();
     await tx.mutate.final_voter_participation.insert({
-      ...participation,
+      ...resolvedParticipation,
       created_at: now,
     });
 
     for (const decision of decisions) {
       await tx.mutate.final_choice_decision.insert({
         ...decision,
-        voter_participation_id: isNamed ? participation.id : null,
+        voter_participation_id: isNamed ? resolvedParticipation.id : null,
         created_at: now,
       });
     }

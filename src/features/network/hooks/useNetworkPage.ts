@@ -132,9 +132,9 @@ function toServerFinalizationError(error: unknown) {
 
 function trackSubmissionServerFinalization(
   results: MutationResultLike[],
-  submissionContext?: ActionSubmissionContext
+  onError: (error: Error) => void
 ) {
-  if (!submissionContext || results.length === 0) {
+  if (results.length === 0) {
     return;
   }
 
@@ -142,18 +142,16 @@ function trackSubmissionServerFinalization(
     .then(serverResults => {
       const failed = serverResults.find(serverResult => serverResult.type === 'error');
       if (failed?.type === 'error') {
-        submissionContext.failSubmission?.(
+        onError(
           new Error(
             failed.error?.message ?? 'Die Synchronisierung konnte nicht abgeschlossen werden.'
           )
         );
         return;
       }
-
-      submissionContext.completeSuccess?.();
     })
     .catch(error => {
-      submissionContext.failSubmission?.(toServerFinalizationError(error));
+      onError(toServerFinalizationError(error));
     });
 }
 
@@ -321,7 +319,9 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
         status: 'active',
         label: 'Netzwerkfolgen synchronisieren',
       });
-      trackSubmissionServerFinalization(results, submissionContext);
+      trackSubmissionServerFinalization(results, error => {
+        toast.error(error.message);
+      });
     },
     [approveGroupConnectionRequest, canActivateLink, t]
   );
@@ -394,8 +394,7 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
       submissionContext?.reportProgress({ key: 'sync', status: 'active' });
       if (submissionContext) {
         trackServerFinalization(result, {
-          onSuccess: () => submissionContext.completeSuccess?.(),
-          onError: error => submissionContext.failSubmission?.(error),
+          onError: error => toast.error(error.message),
         });
       }
     },
@@ -410,8 +409,7 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
       submissionContext?.reportProgress({ key: 'sync', status: 'active' });
       if (submissionContext) {
         trackServerFinalization(result, {
-          onSuccess: () => submissionContext.completeSuccess?.(),
-          onError: error => submissionContext.failSubmission?.(error),
+          onError: error => toast.error(error.message),
         });
       }
     },

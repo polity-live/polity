@@ -18,6 +18,7 @@ import {
   type EditingMode,
 } from '@/zero/amendments/editing-mode-policy';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 interface UseAmendmentWorkflowProps {
   amendmentId: string;
@@ -66,17 +67,21 @@ export function useAmendmentWorkflow({
           throw new Error('A process branch is required for workflow transitions.');
         }
 
-        await updateProcessBranch({
-          id: processBranchId,
-          editing_mode: targetStatus,
-        });
+        await waitForClientApply(
+          updateProcessBranch({
+            id: processBranchId,
+            editing_mode: targetStatus,
+          })
+        );
 
         // Auto-initialize CR voting when transitioning into the system-managed event final phase.
         if (targetStatus === 'event_final_closing_vote' && agendaItemId) {
-          await initializeChangeRequestVoting({
-            amendment_id: amendmentId,
-            agenda_item_id: agendaItemId,
-          });
+          await waitForClientApply(
+            initializeChangeRequestVoting({
+              amendment_id: amendmentId,
+              agenda_item_id: agendaItemId,
+            })
+          );
         } else if (targetStatus === 'event_final_closing_vote' && !agendaItemId) {
           console.warn(
             '[useAmendmentWorkflow] Cannot initialize CR voting — agendaItemId is missing! amendmentId:',
@@ -131,20 +136,22 @@ export function useAmendmentWorkflow({
         const now = Date.now();
         const endTime = now + intervalMinutes * 60 * 1000;
 
-        await createVote({
-          id: sessionId,
-          amendment_id: amendmentId,
-          agenda_item_id: null,
-          title: translateText('generated.inline.0015_internal_vote_1abb1046'),
-          description: null,
-          status: VOTE_PHASE.indicative,
-          purpose: VOTE_PURPOSE.closing,
-          majority_type: null,
-          closing_type: null,
-          closing_duration_seconds: intervalMinutes * 60,
-          closing_end_time: endTime,
-          visibility: 'private',
-        });
+        await waitForClientApply(
+          createVote({
+            id: sessionId,
+            amendment_id: amendmentId,
+            agenda_item_id: null,
+            title: translateText('generated.inline.0015_internal_vote_1abb1046'),
+            description: null,
+            status: VOTE_PHASE.indicative,
+            purpose: VOTE_PURPOSE.closing,
+            majority_type: null,
+            closing_type: null,
+            closing_duration_seconds: intervalMinutes * 60,
+            closing_end_time: endTime,
+            visibility: 'private',
+          })
+        );
 
         toast.success(`Interne Abstimmung gestartet (${intervalMinutes} Minuten)`);
         return sessionId;
@@ -183,14 +190,18 @@ export function useAmendmentWorkflow({
           throw new Error('A process branch is required for workflow transitions.');
         }
 
-        await updateAmendment({
-          id: amendmentId,
-          event_id: eventId,
-        });
-        await updateProcessBranch({
-          id: processBranchId,
-          editing_mode: 'suggest_event',
-        });
+        await waitForClientApply(
+          updateAmendment({
+            id: amendmentId,
+            event_id: eventId,
+          })
+        );
+        await waitForClientApply(
+          updateProcessBranch({
+            id: processBranchId,
+            editing_mode: 'suggest_event',
+          })
+        );
 
         toast.success(
           translateText('generated.inline.0146_amendment_wurde_an_event_weitergeleitet_847cbe4b')
@@ -242,10 +253,12 @@ export function useAmendmentWorkflow({
           throw new Error('A process branch is required for workflow transitions.');
         }
 
-        await updateProcessBranch({
-          id: processBranchId,
-          editing_mode: result,
-        });
+        await waitForClientApply(
+          updateProcessBranch({
+            id: processBranchId,
+            editing_mode: result,
+          })
+        );
 
         toast.success(
           result === 'passed' ? '🎉 Amendment wurde angenommen!' : 'Amendment wurde abgelehnt'

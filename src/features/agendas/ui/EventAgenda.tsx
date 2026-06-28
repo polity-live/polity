@@ -1086,11 +1086,13 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
               throw new Error('Missing amendment agenda item context.');
             }
 
-            await initializeChangeRequestVoting({
-              amendment_id: streamAgendaItem.amendment_id,
-              agenda_item_id: streamAgendaItem.id,
-              start_final_vote_if_no_change_requests: false,
-            });
+            await waitForClientApply(
+              initializeChangeRequestVoting({
+                amendment_id: streamAgendaItem.amendment_id,
+                agenda_item_id: streamAgendaItem.id,
+                start_final_vote_if_no_change_requests: false,
+              })
+            );
           }
 
           if (closingJump.targetItemId) {
@@ -1113,7 +1115,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       if (!item?.vote) return;
 
       if (getVoteStepKind(item)) {
-        await updateAgendaVote({ id: item.vote.id, status: VOTE_PHASE.final });
+        await waitForClientApply(updateAgendaVote({ id: item.vote.id, status: VOTE_PHASE.final }));
         return;
       }
 
@@ -1240,21 +1242,25 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
         for (const update of updates) {
           if (toolbarOfflineTallyEntity.kind === 'election') {
-            await upsertElectionOfflineTally({
-              election_id: toolbarOfflineTallyEntity.itemId,
-              phase: toolbarOfflineTallyPhase,
-              candidate_id: update.choiceId,
-              count: update.count,
-              debug_correlation_id: correlationId,
-            });
+            await waitForClientApply(
+              upsertElectionOfflineTally({
+                election_id: toolbarOfflineTallyEntity.itemId,
+                phase: toolbarOfflineTallyPhase,
+                candidate_id: update.choiceId,
+                count: update.count,
+                debug_correlation_id: correlationId,
+              })
+            );
           } else {
-            await upsertVoteOfflineTally({
-              vote_id: toolbarOfflineTallyEntity.itemId,
-              phase: toolbarOfflineTallyPhase,
-              choice_id: update.choiceId,
-              count: update.count,
-              debug_correlation_id: correlationId,
-            });
+            await waitForClientApply(
+              upsertVoteOfflineTally({
+                vote_id: toolbarOfflineTallyEntity.itemId,
+                phase: toolbarOfflineTallyPhase,
+                choice_id: update.choiceId,
+                count: update.count,
+                debug_correlation_id: correlationId,
+              })
+            );
           }
         }
 

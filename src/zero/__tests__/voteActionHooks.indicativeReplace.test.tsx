@@ -109,6 +109,7 @@ describe('vote action hooks route indicative replacement', () => {
     });
 
     expect(mocks.voteMutators.replaceIndicativeVote).toHaveBeenCalledWith({
+      voter: undefined,
       participation,
       decisions,
     });
@@ -133,6 +134,7 @@ describe('vote action hooks route indicative replacement', () => {
     });
 
     expect(mocks.voteMutators.castFinalVoteFull).toHaveBeenCalledWith({
+      voter: undefined,
       participation,
       decisions,
     });
@@ -162,6 +164,7 @@ describe('vote action hooks route indicative replacement', () => {
     });
 
     expect(mocks.electionMutators.replaceIndicativeElectionVote).toHaveBeenCalledWith({
+      elector: undefined,
       participation,
       selections,
     });
@@ -186,6 +189,7 @@ describe('vote action hooks route indicative replacement', () => {
     });
 
     expect(mocks.electionMutators.castFinalElectionVoteFull).toHaveBeenCalledWith({
+      elector: undefined,
       participation,
       selections,
     });

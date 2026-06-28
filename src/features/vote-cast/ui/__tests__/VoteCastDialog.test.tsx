@@ -207,6 +207,58 @@ describe('VoteCastDialog', () => {
     expect(onCastVote).not.toHaveBeenCalled();
   });
 
+  it('does not reuse the previous PIN when background server finalization rejects', async () => {
+    const onPasswordSubmit = vi.fn().mockResolvedValue(undefined);
+    let rejectServer: (result: {
+      type: 'error';
+      error: { type: 'server'; message: string };
+    }) => void = () => undefined;
+    const server = new Promise<{
+      type: 'error';
+      error: { type: 'server'; message: string };
+    }>(resolve => {
+      rejectServer = resolve;
+    });
+    const onCastVote = vi.fn(async (_choiceId, context) => {
+      context?.trackServerResult?.({
+        client: Promise.resolve(),
+        server,
+      });
+    });
+
+    render(
+      <VoteCastDialog
+        open
+        onOpenChange={vi.fn()}
+        phase="final"
+        title="Final vote"
+        choices={[{ id: 'support', label: 'Support' }]}
+        requirePassword
+        onPasswordSubmit={onPasswordSubmit}
+        onCastVote={onCastVote}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /support/i }));
+    clickConfirmButton();
+    await enterPin();
+
+    expect(await screen.findByText('Stimme abgegeben')).toBeTruthy();
+    rejectServer({
+      type: 'error',
+      error: { type: 'server', message: 'Server rejected vote' },
+    });
+
+    expect(await screen.findByText('Prüfung unterbrochen')).toBeTruthy();
+    expect(screen.getByText(/Server rejected vote/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /erneut versuchen/i }));
+
+    await waitFor(() => expect(document.querySelectorAll('input')).toHaveLength(4));
+    expect(onPasswordSubmit).toHaveBeenCalledTimes(1);
+    expect(onCastVote).toHaveBeenCalledTimes(1);
+  });
+
   it('explains duplicate submissions without exposing the raw constraint as the main error', async () => {
     const onPasswordSubmit = vi.fn().mockResolvedValue(undefined);
     const onCastVote = vi
