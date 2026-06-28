@@ -29,7 +29,9 @@ function sanitizeTitle(title: string) {
 
 export const test = base.extend<TestFixtures, WorkerFixtures>({
   _createSmokeTimeout: [
-    async (_args, use, testInfo) => {
+    // Playwright requires fixture callbacks to destructure the first argument, even when no fixtures are used.
+    // eslint-disable-next-line no-empty-pattern
+    async ({}, use, testInfo) => {
       if (testInfo.title.includes('@smoke')) {
         testInfo.setTimeout(Math.max(testInfo.timeout, createSmokeTestTimeoutMs()));
       }
@@ -60,7 +62,9 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     await use(workerStorageState);
   },
 
-  e2eRun: async (_args, use, testInfo) => {
+  // Playwright requires fixture callbacks to destructure the first argument, even when no fixtures are used.
+  // eslint-disable-next-line no-empty-pattern
+  e2eRun: async ({}, use, testInfo) => {
     const prefix = `E2E-${testInfo.workerIndex}-${Date.now()}-${sanitizeTitle(testInfo.title)}`;
     await use({ prefix });
     await cleanupE2ERows({ prefix });
