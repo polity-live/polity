@@ -104,6 +104,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!user) return createBlockedSubmitOutcome();
+    if (!label.trim()) return createBlockedSubmitOutcome();
     if (!groupId || !entityId) return createBlockedSubmitOutcome();
     const parsedAmount = parseCreatePaymentAmount(amount);
     if (parsedAmount == null) return createBlockedSubmitOutcome();
@@ -128,7 +129,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
 
       await createPayment({
         id: paymentId,
-        label,
+        label: label.trim(),
         type,
         amount: parsedAmount,
         payer_user_id,
@@ -168,6 +169,19 @@ export function useCreatePaymentForm(): CreateFormConfig {
   const hasEntity = !!entityId;
   const parsedAmount = parseCreatePaymentAmount(amount);
   const hasValidAmount = parsedAmount != null;
+  const detailsInvalidReason = !label.trim()
+    ? t('pages.create.payment.validation.labelRequired')
+    : !amount.trim()
+      ? t('pages.create.payment.validation.amountRequired')
+      : !hasValidAmount
+        ? t('pages.create.payment.validation.amountInvalid')
+        : null;
+  const counterpartInvalidReason = !groupId
+    ? t('pages.create.payment.validation.groupRequired')
+    : !hasEntity
+      ? t('pages.create.payment.validation.counterpartyRequired')
+      : null;
+  const paymentInvalidReason = detailsInvalidReason ?? counterpartInvalidReason;
   const formattedAmount = `${(parsedAmount ?? 0).toFixed(2)} €`;
   const groupDisplayName = group?.name ?? groupId;
   const selectedUser = allUsers.find(currentUser => currentUser.id === entityId);
@@ -194,6 +208,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
         {
           label: t('pages.create.payment.direction'),
           isValid: () => !!label.trim() && hasValidAmount,
+          getInvalidReason: () => detailsInvalidReason,
           fields: [
             {
               key: 'label',
@@ -238,6 +253,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
         {
           label: counterpartLabel,
           isValid: () => !!groupId && hasEntity,
+          getInvalidReason: () => counterpartInvalidReason,
           fields: [
             {
               key: 'group',
@@ -277,6 +293,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
         {
           label: t('pages.create.common.review'),
           isValid: () => !!groupId && !!label.trim() && hasValidAmount && hasEntity,
+          getInvalidReason: () => paymentInvalidReason,
           fields: [
             {
               key: 'review',
@@ -332,6 +349,9 @@ export function useCreatePaymentForm(): CreateFormConfig {
       type,
       amount,
       hasValidAmount,
+      detailsInvalidReason,
+      counterpartInvalidReason,
+      paymentInvalidReason,
       formattedAmount,
       entityId,
       isSubmitting,

@@ -56,6 +56,9 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
   );
   const selectedElection = eligibleElections.find(election => election.id === electionId);
   const selectedElectionTitle = selectedElection?.title || t('pages.create.common.notSelected');
+  const electionInvalidReason = selectedElection
+    ? null
+    : t('pages.create.electionCandidate.validation.electionRequired');
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!user || !selectedElection) return createBlockedSubmitOutcome();
@@ -110,6 +113,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
         {
           label: t('pages.create.electionCandidate.electionLabel'),
           isValid: () => Boolean(selectedElection),
+          getInvalidReason: () => electionInvalidReason,
           fields: [
             {
               key: 'election',
@@ -160,6 +164,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
         {
           label: t('pages.create.common.review'),
           isValid: () => Boolean(selectedElection),
+          getInvalidReason: () => electionInvalidReason,
           fields: [
             {
               key: 'review',
@@ -215,6 +220,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
       isSubmitting,
       selectedElection,
       selectedElectionTitle,
+      electionInvalidReason,
       statement,
       t,
     ]

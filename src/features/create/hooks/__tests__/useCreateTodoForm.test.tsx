@@ -134,6 +134,9 @@ describe('useCreateTodoForm', () => {
   it('orders title and description first, then assignment', () => {
     const { result } = renderHook(() => useCreateTodoForm());
 
+    expect(result.current.steps[0].getInvalidReason?.()).toBe(
+      'pages.create.validation.titleRequired'
+    );
     expect(result.current.steps[0].fields?.map(field => field.key)).toEqual([
       'title',
       'description',

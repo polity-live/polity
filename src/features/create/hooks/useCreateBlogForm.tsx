@@ -3,7 +3,8 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
-import { useGroupById, useGroupState } from '@/zero/groups/useGroupState';
+import { useGroupById } from '@/zero/groups/useGroupState';
+import { useCreatableGroupIds } from '@/zero/rbac';
 import {
   useTranslation,
   translate as translateText,
@@ -44,14 +45,8 @@ export function useCreateBlogForm(): CreateFormConfig {
     () => extractHashtagTags(userHashtags),
     [userHashtags]
   );
-  const { currentUserMembershipsWithGroups } = useGroupState({
-    includeCurrentUserMembershipsWithGroups: true,
-  });
-
-  const memberGroupIds = useMemo(
-    () => new Set(currentUserMembershipsWithGroups.map(m => m.group_id)),
-    [currentUserMembershipsWithGroups]
-  );
+  const { creatableGroupIds: blogCreatableGroupIds, isLoading: groupPermissionLoading } =
+    useCreatableGroupIds('blogs');
 
   const [blogId] = useState(() => crypto.randomUUID());
   const [title, setTitle] = useState('');
@@ -63,6 +58,17 @@ export function useCreateBlogForm(): CreateFormConfig {
   const [groupName, setGroupName] = useState<string>('');
   const { group } = useGroupById(groupId ?? undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const selectedGroupPermissionPending = Boolean(groupId && groupPermissionLoading);
+  const selectedGroupPermissionDenied = Boolean(
+    groupId && !groupPermissionLoading && !blogCreatableGroupIds.has(groupId)
+  );
+  const selectedGroupIsValid =
+    !groupId || (!selectedGroupPermissionPending && !selectedGroupPermissionDenied);
+  const groupPermissionInvalidReason = selectedGroupPermissionPending
+    ? t('pages.create.blog.validation.groupPermissionPending')
+    : selectedGroupPermissionDenied
+      ? t('pages.create.blog.validation.groupPermissionDenied')
+      : null;
   const visibilityLabel =
     visibility === translateText('generated.inline.0030_public_61c9b2b1')
       ? t('pages.create.common.public')
@@ -100,6 +106,10 @@ export function useCreateBlogForm(): CreateFormConfig {
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!user?.id || !title.trim()) return createBlockedSubmitOutcome();
+    if (!selectedGroupIsValid) {
+      toast.error(groupPermissionInvalidReason ?? t('pages.create.error.createFailed'));
+      return createBlockedSubmitOutcome();
+    }
     setIsSubmitting(true);
 
     try {
@@ -189,7 +199,11 @@ export function useCreateBlogForm(): CreateFormConfig {
       steps: [
         {
           label: t('pages.create.blog.basicInfo'),
-          isValid: () => !!title.trim(),
+          isValid: () => !!title.trim() && selectedGroupIsValid,
+          getInvalidReason: () =>
+            !title.trim()
+              ? t('pages.create.validation.titleRequired')
+              : groupPermissionInvalidReason,
           fields: [
             {
               key: 'title',
@@ -228,6 +242,8 @@ export function useCreateBlogForm(): CreateFormConfig {
               key: 'group',
               kind: 'typeahead',
               label: t('pages.create.blog.attachTo'),
+              invalid: selectedGroupPermissionDenied,
+              error: selectedGroupPermissionDenied ? groupPermissionInvalidReason : undefined,
               props: {
                 entityTypes: ['group'],
                 value: groupId ?? undefined,
@@ -238,7 +254,7 @@ export function useCreateBlogForm(): CreateFormConfig {
                   syncGroupSearch(nextGroupId);
                 },
                 placeholder: t('pages.create.blog.groupPlaceholder'),
-                filterFn: item => memberGroupIds.has(item.id),
+                filterFn: item => blogCreatableGroupIds.has(item.id),
               },
             },
           ],
@@ -269,7 +285,11 @@ export function useCreateBlogForm(): CreateFormConfig {
         },
         {
           label: t('pages.create.common.review'),
-          isValid: () => !!title.trim(),
+          isValid: () => !!title.trim() && selectedGroupIsValid,
+          getInvalidReason: () =>
+            !title.trim()
+              ? t('pages.create.validation.titleRequired')
+              : groupPermissionInvalidReason,
           fields: [
             {
               key: 'review',
@@ -335,8 +355,11 @@ export function useCreateBlogForm(): CreateFormConfig {
       blogId,
       groupId,
       groupName,
+      groupPermissionInvalidReason,
       t,
-      memberGroupIds,
+      blogCreatableGroupIds,
+      selectedGroupIsValid,
+      selectedGroupPermissionDenied,
       syncGroupSearch,
     ]
   );

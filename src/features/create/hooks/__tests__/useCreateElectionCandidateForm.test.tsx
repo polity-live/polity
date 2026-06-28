@@ -104,6 +104,9 @@ describe('useCreateElectionCandidateForm', () => {
       onChange: (electionId: string) => void;
     };
 
+    expect(result.current.steps[0].getInvalidReason?.()).toBe(
+      'pages.create.electionCandidate.validation.electionRequired'
+    );
     expect([...props.allowedElectionIds].sort()).toEqual([
       'election-member',
       'election-participant',

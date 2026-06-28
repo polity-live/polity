@@ -5,6 +5,7 @@ import { AMENDMENT_ACTION_RIGHTS } from '../rbac/constants';
 import { zql } from '../schema';
 import {
   groupCreateSchema,
+  groupFullCreateMutatorSchema,
   groupUpdateSchema,
   groupDeleteSchema,
   groupMembershipCreateSchema,
@@ -779,6 +780,10 @@ export const groupSharedMutators = {
       created_at: now,
       updated_at: now,
     });
+  }),
+
+  createFull: defineMutator(groupFullCreateMutatorSchema, async ({ tx, ctx, args }) => {
+    await groupSharedMutators.create.fn({ tx, ctx, args: args.group });
   }),
 
   update: defineMutator(groupUpdateSchema, async ({ tx, ctx, args }) => {

@@ -55,6 +55,20 @@ export const createPageTranslations = {
     loginRequired: 'Du musst eingeloggt sein',
     groupRequired: 'Bitte wähle eine Gruppe',
     titleRequired: 'Bitte gib einen Titel ein',
+    completeRequiredFields:
+      'Fülle die erforderlichen Felder aus, bevor du dieses Element erstellst.',
+    blockedTitle: 'Prüfe das vor dem Erstellen',
+  },
+  targets: {
+    group: 'Zur Gruppe',
+    event: 'Zum Event',
+    amendment: 'Zum Antrag',
+    blog: 'Zum Blog',
+    agendaItem: 'Zur Agenda',
+    todo: 'Zu Aufgaben',
+    statement: 'Zur Aussage',
+    payment: 'Zur Gruppe',
+    creation: 'Zur Erstellung',
   },
   preferences: {
     formStyle: 'Formular-Stil',
@@ -149,16 +163,18 @@ export const createPageTranslations = {
       passiveVotingRight: 'Passives Stimmrecht',
     },
     createConstitutionalEvent: 'Gründungsversammlung erstellen',
-    optionalGeneralAssembly: 'Optional eine Mitgliederversammlung für deine neue Gruppe erstellen',
+    optionalGeneralAssembly: 'Eine Gründungs-Mitgliederversammlung für deine neue Gruppe erstellen',
     eventName: 'Event-Name',
     eventNamePlaceholder: 'z.B. Gründungsversammlung',
+    foundingAssemblyDefaultName: 'Gründungsversammlung von {{groupName}}',
+    foundingAssemblyDefaultNameFallback: 'Gründungsversammlung',
     eventLocation: 'Ort',
     eventLocationPlaceholder: 'Ort eingeben',
     eventStartDate: 'Startdatum',
     eventStartTime: 'Startzeit',
     eventTypeGeneralAssembly: 'Event-Typ: Mitgliederversammlung',
     eventTypeDescription:
-      'Alle eingeladenen Mitglieder werden zu diesem Event eingeladen. Du wirst der Event-Organisator sein.',
+      'Erstellt ein Mitgliederversammlungs-Event und lädt die Personen aus dem Einladungsschritt ein.',
     untitledGroup: 'Unbenannte Gruppe',
     emailLabel: 'E-Mail',
     emailPlaceholder: 'gruppe@beispiel.de',
@@ -184,6 +200,9 @@ export const createPageTranslations = {
     linkConflictBlocked: 'Diese Verknüpfung ist aktuell durch Konflikte blockiert.',
     guestInvite: 'Gäste einladen',
     invitedGuests: 'Eingeladene Gäste',
+    validation: {
+      nameRequired: 'Bitte gib einen Gruppennamen ein.',
+    },
     notifications: {
       groupInviteTitle: 'Gruppeneinladung',
       groupInviteMessage: '{{sender}} hat dich eingeladen, {{group}} beizutreten',
@@ -202,7 +221,7 @@ export const createPageTranslations = {
       linkGroups:
         'Lege Über- und Untergruppenbeziehungen zu anderen Gruppen fest und weise Rechte zu',
       constitutionalEvent:
-        'Erstelle eine Gründungsversammlung, um die Gruppe offiziell zu etablieren',
+        'Wenn aktiviert, erstellt die Gruppeneinrichtung zusätzlich ein Mitgliederversammlungs-Event für das Gründungstreffen',
       visibility:
         'Öffentliche Gruppen sind für alle sichtbar; private Gruppen erfordern eine Einladung',
     },
@@ -364,6 +383,13 @@ export const createPageTranslations = {
     unspecifiedGroup: 'nicht angegeben',
     targetLabel: 'Zur Zielseite',
     autoLinkedToNewEvent: 'Automatisch mit dem neuen Event "{{title}}" verknüpft.',
+    validation: {
+      groupRequiredForAssembly:
+        'Wähle eine zugeordnete Gruppe, bevor du eine Versammlung erstellst.',
+      groupPermissionPending: 'Prüfe, ob du Events für diese Gruppe erstellen darfst...',
+      groupPermissionDenied:
+        'Du hast keine Berechtigung, Events für die ausgewählte Gruppe zu erstellen.',
+    },
     delegateNomination: 'Delegiertennominierung',
     proposalSubmission: 'Antragseingabe',
     amendmentCutoff: 'Änderungsanträge',
@@ -427,6 +453,9 @@ export const createPageTranslations = {
     agendaItemsWillBeCreated: '{{count}} Tagesordnungspunkte werden erstellt',
     pathWillBeSetUp: 'Antragspfad wird für die Bearbeitung eingerichtet',
     createButton: 'Antrag erstellen',
+    validation: {
+      evaluationDateRequired: 'Wähle ein Evaluierungsdatum oder deaktiviere die Evaluierung.',
+    },
     tips: {
       title: 'Ein prägnanter Titel für deinen vorgeschlagenen Antrag',
       subtitle: 'Eine kurze Zusammenfassung dessen, was der Antrag ändert',
@@ -517,6 +546,11 @@ export const createPageTranslations = {
     reviewBadge: 'Statement',
     noTextProvided: 'Kein Statement-Text angegeben',
     createButton: 'Statement erstellen',
+    validation: {
+      contentRequired:
+        'Füge eine Überschrift, Text, ein Bild oder ein Video hinzu, bevor du das Statement erstellst.',
+      textTooLong: 'Halte den Statement-Text innerhalb von {{count}} Zeichen.',
+    },
     tips: {
       text: 'Formuliere dein Statement klar und prägnant',
       tag: 'Kategorisiere dein Statement, z.B. Politik, Meinung oder Ankündigung',
@@ -630,11 +664,20 @@ export const createPageTranslations = {
       secret: 'Geheim',
       named: 'Namentlich',
     },
+    validation: {
+      eventRequired: 'Bitte wähle eine Veranstaltung für diesen Tagesordnungspunkt.',
+      seatCountRequired: 'Gib mindestens eine zu vergebende Position für diese Listenwahl ein.',
+    },
   },
   blog: {
     title: 'Blog erstellen',
     pageTitle: 'Blog erstellen',
     description: 'Einen neuen Blogbeitrag erstellen',
+    validation: {
+      groupPermissionPending: 'Prüfe, ob du Blogs für diese Gruppe erstellen darfst...',
+      groupPermissionDenied:
+        'Du hast keine Berechtigung, Blogs für die ausgewählte Gruppe zu erstellen.',
+    },
     basicInfo: 'Grundlegende Informationen',
     titleLabel: 'Titel',
     titlePlaceholder: 'Gib einen Titel ein',
@@ -679,7 +722,11 @@ export const createPageTranslations = {
     reviewBadge: 'Zahlung',
     untitled: 'Unbenannte Zahlung',
     validation: {
+      labelRequired: 'Bitte gib eine Zahlungsbezeichnung ein.',
+      amountRequired: 'Bitte gib einen Zahlungsbetrag ein.',
       amountInvalid: 'Gib einen gültigen nicht-negativen Betrag ein.',
+      groupRequired: 'Bitte wähle die Gruppe für diese Zahlung.',
+      counterpartyRequired: 'Bitte wähle Zahler oder Empfänger aus.',
     },
     types: {
       membership_fee: 'Mitgliedsbeitrag',

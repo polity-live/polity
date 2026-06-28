@@ -174,7 +174,18 @@ describe('useCreateAgendaItemForm', () => {
     const { result } = renderHook(() => useCreateAgendaItemForm());
     const fields = result.current.steps[0].fields ?? [];
 
+    expect(result.current.steps[0].getInvalidReason?.()).toBe(
+      'pages.create.validation.titleRequired'
+    );
     expect(fields.slice(0, 3).map(field => field.key)).toEqual(['title', 'description', 'event']);
+
+    const titleField = findField(fields, 'title', 'text');
+    act(() => {
+      titleField.onValueChange('Budget review');
+    });
+    expect(result.current.steps[0].getInvalidReason?.()).toBe(
+      'pages.create.agendaItem.validation.eventRequired'
+    );
 
     const eventField = findField(fields, 'event', 'typeahead');
     const eventIds = (
@@ -182,6 +193,33 @@ describe('useCreateAgendaItemForm', () => {
     ).items.map(item => item.id);
 
     expect(eventIds.sort()).toEqual(['event-member', 'event-participant']);
+  });
+
+  it('reports a missing list-election seat count', () => {
+    searchParams = {
+      type: 'election',
+      eventId: 'event-member',
+      electionMode: 'list',
+    };
+    const { result } = renderHook(() => useCreateAgendaItemForm());
+    const titleField = findField(result.current.steps[0].fields ?? [], 'title', 'text');
+
+    act(() => {
+      titleField.onValueChange('Board election');
+    });
+
+    const seatCountField = findField(result.current.steps[2].fields ?? [], 'seat-count', 'text');
+    act(() => {
+      seatCountField.onValueChange('');
+    });
+
+    expect(result.current.steps[2].isValid()).toBe(false);
+    expect(result.current.steps[2].getInvalidReason?.()).toBe(
+      'pages.create.agendaItem.validation.seatCountRequired'
+    );
+    expect(result.current.steps.at(-1)?.getInvalidReason?.()).toBe(
+      'pages.create.agendaItem.validation.seatCountRequired'
+    );
   });
 
   it('resolves role-renewal assignments and submits a standard role election', async () => {

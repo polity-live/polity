@@ -1,16 +1,18 @@
-import type { RefObject } from 'react';
+import type { ReactNode, RefObject } from 'react';
 
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 
 import type { CreateFormStep } from '../types/create-form.types';
 import { CreateProgressIndicator } from './CreateProgressIndicator';
+import { CreateSubmitInvalidNotice } from './CreateSubmitInvalidNotice';
 import { CreateStepRenderer } from './CreateStepRenderer';
 
 interface OnePageFormLayoutViewProps {
   steps: CreateFormStep[];
   activeSection: number;
   allStepsValid: boolean;
+  invalidReason?: ReactNode;
   sectionRefs: RefObject<(HTMLDivElement | null)[]>;
   stepLabels: string[];
   onStepClick: (step: number) => void;
@@ -24,6 +26,7 @@ export function OnePageFormLayoutView({
   steps,
   activeSection,
   allStepsValid,
+  invalidReason,
   sectionRefs,
   stepLabels,
   onStepClick,
@@ -71,6 +74,9 @@ export function OnePageFormLayoutView({
       </div>
 
       <div className="border-t pt-5">
+        {invalidReason ? (
+          <CreateSubmitInvalidNotice reason={invalidReason} className="mb-3" />
+        ) : null}
         <Button
           onClick={onSubmit}
           disabled={isSubmitting || !allStepsValid}

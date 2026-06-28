@@ -27,6 +27,9 @@ export function useCarouselFormLayoutController({
   const [canScrollNext, setCanScrollNext] = useState(false);
 
   const currentStepValid = steps[currentStep]?.isValid() ?? false;
+  const currentStepInvalidReason = currentStepValid
+    ? null
+    : (steps[currentStep]?.getInvalidReason?.() ?? null);
   const canNavigateNext = canNavigateForwardToStep(steps, currentStep + 1);
 
   const onSelect = useCallback(() => {
@@ -95,6 +98,7 @@ export function useCarouselFormLayoutController({
     canScrollNext: canScrollNext && canNavigateNext,
     canScrollPrev,
     currentStepValid,
+    currentStepInvalidReason,
     emblaRef,
     isLastStep: currentStep === steps.length - 1,
     labels: {

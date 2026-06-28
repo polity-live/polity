@@ -3,19 +3,19 @@ import { describe, expect, it } from 'vitest';
 import {
   createExternalSubmitTarget,
   createRouteSubmitTarget,
-  getCreateSubmitTargetLabel,
+  getCreateSubmitTargetLabelKey,
 } from '../createSubmitTargets';
 
 describe('create submit targets', () => {
-  it('uses civic entity labels for common create destinations', () => {
-    expect(getCreateSubmitTargetLabel('group')).toBe('Zur Gruppe');
-    expect(getCreateSubmitTargetLabel('event')).toBe('Zum Event');
-    expect(getCreateSubmitTargetLabel('amendment')).toBe('Zum Antrag');
-    expect(getCreateSubmitTargetLabel('blog')).toBe('Zum Blog');
-    expect(getCreateSubmitTargetLabel('agenda_item')).toBe('Zur Agenda');
+  it('uses translation keys for common create destinations', () => {
+    expect(getCreateSubmitTargetLabelKey('group')).toBe('pages.create.targets.group');
+    expect(getCreateSubmitTargetLabelKey('event')).toBe('pages.create.targets.event');
+    expect(getCreateSubmitTargetLabelKey('amendment')).toBe('pages.create.targets.amendment');
+    expect(getCreateSubmitTargetLabelKey('blog')).toBe('pages.create.targets.blog');
+    expect(getCreateSubmitTargetLabelKey('agenda_item')).toBe('pages.create.targets.agendaItem');
   });
 
-  it('creates route and external targets with default labels', () => {
+  it('creates route and external targets with default label keys', () => {
     expect(
       createRouteSubmitTarget('group', {
         to: '/group/$id',
@@ -24,7 +24,8 @@ describe('create submit targets', () => {
     ).toEqual({
       kind: 'route',
       entityType: 'group',
-      label: 'Zur Gruppe',
+      label: undefined,
+      labelKey: 'pages.create.targets.group',
       to: '/group/$id',
       params: { id: 'group-1' },
       search: undefined,
@@ -34,8 +35,22 @@ describe('create submit targets', () => {
     expect(createExternalSubmitTarget('event', { href: 'https://example.test' })).toEqual({
       kind: 'external',
       entityType: 'event',
-      label: 'Zum Event',
+      label: undefined,
+      labelKey: 'pages.create.targets.event',
       href: 'https://example.test',
+    });
+  });
+
+  it('keeps custom labels for custom return targets', () => {
+    expect(
+      createRouteSubmitTarget('group', {
+        label: 'Back to workspace',
+        to: '/group/$id',
+        params: { id: 'group-1' },
+      })
+    ).toMatchObject({
+      label: 'Back to workspace',
+      labelKey: undefined,
     });
   });
 });

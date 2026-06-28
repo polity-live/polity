@@ -186,6 +186,7 @@ export function useCreateTodoForm(): CreateFormConfig {
       : visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
         ? t('pages.create.common.authenticated')
         : t('pages.create.common.private');
+  const titleInvalidReason = !title.trim() ? t('pages.create.validation.titleRequired') : null;
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!title.trim() || !user?.id) return createBlockedSubmitOutcome();
@@ -244,6 +245,7 @@ export function useCreateTodoForm(): CreateFormConfig {
         {
           label: t('pages.create.todo.titleLabel'),
           isValid: () => !!title.trim(),
+          getInvalidReason: () => titleInvalidReason,
           fields: [
             {
               key: 'title',
@@ -360,6 +362,7 @@ export function useCreateTodoForm(): CreateFormConfig {
         {
           label: t('pages.create.common.review'),
           isValid: () => !!title.trim(),
+          getInvalidReason: () => titleInvalidReason,
           fields: [
             {
               key: 'review',
@@ -426,6 +429,7 @@ export function useCreateTodoForm(): CreateFormConfig {
       dueDate,
       visibility,
       visibilityLabel,
+      titleInvalidReason,
       tags,
       preferredHashtagSuggestions,
       assigneeName,

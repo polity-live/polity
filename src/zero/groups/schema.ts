@@ -1,10 +1,13 @@
 import { z } from 'zod';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import {
   jsonNumberArraySchema,
   jsonSchema,
   nullableTimestampSchema,
   timestampSchema,
 } from '../shared/helpers';
+import { eventCreateSchema } from '../events/schema';
+import { proposeGroupConnectionChangeSchema } from '../network/schema';
 const roleAssigneeKindSchema = z.enum(['member', 'guest']);
 const groupGuestStatusSchema = z.enum(['requested', 'invited', 'active', 'revoked']);
 export const groupTypeSchema = z.enum([
@@ -81,6 +84,19 @@ export const groupCreateSchema = groupBaseSchema
     id: z.string(),
     group_type: groupTypeSchema.default('base'),
   });
+export const groupFullCreateSchema = z.object({
+  group: groupCreateSchema,
+  hashtags: z.array(z.string()).optional(),
+  official_invite_user_ids: z.array(z.string()).optional(),
+  guest_invite_user_ids: z.array(z.string()).optional(),
+  connection_requests: z.array(proposeGroupConnectionChangeSchema).optional(),
+  founding_event: eventCreateSchema.nullable().optional(),
+});
+export type GroupFullCreateInput = z.infer<typeof groupFullCreateSchema>;
+export const groupFullCreateMutatorSchema = groupFullCreateSchema as StandardSchemaV1<
+  GroupFullCreateInput,
+  GroupFullCreateInput
+>;
 export const groupUpdateSchema = groupBaseSchema
   .pick({
     name: true,

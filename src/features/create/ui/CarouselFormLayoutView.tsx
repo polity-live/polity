@@ -1,9 +1,11 @@
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 import { Button } from '@/features/shared/ui/ui/button';
 
 import type { CreateFormStep } from '../types/create-form.types';
 import { CreateProgressIndicator } from './CreateProgressIndicator';
+import { CreateSubmitInvalidNotice } from './CreateSubmitInvalidNotice';
 import { CreateStepRenderer } from './CreateStepRenderer';
 
 interface CarouselFormLayoutViewProps {
@@ -14,6 +16,7 @@ interface CarouselFormLayoutViewProps {
   canScrollNext: boolean;
   canScrollPrev: boolean;
   currentStepValid: boolean;
+  currentStepInvalidReason?: ReactNode;
   emblaRef: (node: HTMLDivElement | null) => void;
   isLastStep: boolean;
   labels: {
@@ -37,6 +40,7 @@ export function CarouselFormLayoutView({
   canScrollNext,
   canScrollPrev,
   currentStepValid,
+  currentStepInvalidReason,
   emblaRef,
   isLastStep,
   labels,
@@ -83,26 +87,35 @@ export function CarouselFormLayoutView({
           {labels.previous}
         </Button>
 
-        {isLastStep ? (
-          <Button
-            type="button"
-            size="sm"
-            onClick={onSubmit}
-            disabled={isSubmitting || !currentStepValid}
-          >
-            {isSubmitting ? labels.creating : labels.createButton}
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            size="sm"
-            onClick={onScrollNext}
-            disabled={!canScrollNext || !currentStepValid}
-          >
-            {labels.next}
-            <ArrowRight className="ml-1 h-4 w-4" />
-          </Button>
-        )}
+        <div className="flex flex-col items-end gap-2">
+          {currentStepInvalidReason ? (
+            <CreateSubmitInvalidNotice
+              reason={currentStepInvalidReason}
+              className="max-w-sm py-3 text-sm"
+            />
+          ) : null}
+
+          {isLastStep ? (
+            <Button
+              type="button"
+              size="sm"
+              onClick={onSubmit}
+              disabled={isSubmitting || !currentStepValid}
+            >
+              {isSubmitting ? labels.creating : labels.createButton}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              onClick={onScrollNext}
+              disabled={!canScrollNext || !currentStepValid}
+            >
+              {labels.next}
+              <ArrowRight className="ml-1 h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

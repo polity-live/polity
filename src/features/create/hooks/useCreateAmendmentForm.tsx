@@ -175,6 +175,13 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     offsetMonths: Number.parseInt(evaluationOffsetMonths, 10) || 0,
     offsetYears: Number.parseInt(evaluationOffsetYears, 10) || 0,
   });
+  const evaluationInvalidReason =
+    evaluationMode === 'fixed_date' && !evaluationDate
+      ? t('pages.create.amendment.validation.evaluationDateRequired')
+      : null;
+  const amendmentInvalidReason = !title.trim()
+    ? t('pages.create.validation.titleRequired')
+    : evaluationInvalidReason;
 
   const handleTargetSelection = useCallback((selection: TargetGroupEventSelection | null) => {
     if (!selection) {
@@ -222,6 +229,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!title.trim() || !user?.id) return createBlockedSubmitOutcome();
+    if (evaluationInvalidReason) return createBlockedSubmitOutcome();
     setIsSubmitting(true);
     try {
       context?.reportProgress({ key: 'create', status: 'active' });
@@ -356,6 +364,8 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         {
           label: t('pages.create.amendment.basicInfo'),
           isValid: () => !!title.trim(),
+          getInvalidReason: () =>
+            !title.trim() ? t('pages.create.validation.titleRequired') : null,
           fields: [
             {
               key: 'title',
@@ -428,6 +438,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         {
           label: translateText('generated.inline.0050_evaluierung_581efef4'),
           isValid: () => evaluationMode !== 'fixed_date' || Boolean(evaluationDate),
+          getInvalidReason: () => evaluationInvalidReason,
           optional: true,
           sections: [
             {
@@ -546,7 +557,8 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         },
         {
           label: t('pages.create.common.review'),
-          isValid: () => !!title.trim(),
+          isValid: () => !!title.trim() && !evaluationInvalidReason,
+          getInvalidReason: () => amendmentInvalidReason,
           fields: [
             {
               key: 'review',
@@ -661,6 +673,8 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       evaluationOffsetMonths,
       evaluationOffsetYears,
       evaluationSummary,
+      evaluationInvalidReason,
+      amendmentInvalidReason,
       isSubmitting,
       amendmentId,
       handleSourceGroupSelectionChange,

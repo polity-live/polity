@@ -348,12 +348,13 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   const delegateSeatCount = delegateAssignment
     ? Math.max(1, getRemainingSeatCount(delegateAssignment))
     : 1;
+  const parsedSeatCount = parsePositiveInteger(seatCountInput);
   const resolvedSeatCount = isElectionType
     ? isDelegateAssignmentElection
       ? delegateSeatCount
       : resolveElectionSeatCount({
           electionMode,
-          seatCount: parsePositiveInteger(seatCountInput),
+          seatCount: parsedSeatCount,
         })
     : 1;
   const resolvedElectionMode = isElectionType
@@ -362,6 +363,23 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       : normalizeElectionMode(electionMode, 'single')
     : 'single';
   const showSeatCountInput = isElectionType && resolvedElectionMode === 'list';
+  const listSeatCountInvalid =
+    showSeatCountInput && !isDelegateAssignmentElection && parsedSeatCount == null;
+  const basicInfoInvalidReason = isAssignmentLoading
+    ? t('pages.create.agendaItem.assignmentLoading')
+    : assignmentLookupFailed
+      ? t('pages.create.agendaItem.assignmentLookupFailed')
+      : !title.trim()
+        ? t('pages.create.validation.titleRequired')
+        : !hasSelectableEvent
+          ? t('pages.create.agendaItem.validation.eventRequired')
+          : null;
+  const votingSettingsInvalidReason = assignmentLookupFailed
+    ? t('pages.create.agendaItem.assignmentLookupFailed')
+    : listSeatCountInvalid
+      ? t('pages.create.agendaItem.validation.seatCountRequired')
+      : null;
+  const agendaItemInvalidReason = basicInfoInvalidReason ?? votingSettingsInvalidReason;
   const assignmentModeLabel = delegateAssignment?.targetEvent?.delegate_election_mode
     ? getElectionModeLabel(
         normalizeDelegateElectionMode(delegateAssignment.targetEvent.delegate_election_mode)
@@ -669,12 +687,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       return createBlockedSubmitOutcome();
     }
 
-    if (isElectionType && resolvedElectionMode === 'list' && resolvedSeatCount < 1) {
-      toast.error(
-        translateText(
-          'generated.inline.0304_bitte_gib_mindestens_eine_zu_vergebende_posit_d79ad3b6'
-        )
-      );
+    if (listSeatCountInvalid) {
+      toast.error(t('pages.create.agendaItem.validation.seatCountRequired'));
       return createBlockedSubmitOutcome();
     }
 
@@ -810,7 +824,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       steps: [
         {
           label: t('pages.create.agendaItem.basicInfo'),
-          isValid: () => hasSelectableEvent && !!title.trim() && !assignmentLookupFailed,
+          isValid: () =>
+            hasSelectableEvent && !!title.trim() && !isAssignmentLoading && !assignmentLookupFailed,
+          getInvalidReason: () => basicInfoInvalidReason,
           fields: [
             {
               key: 'title',
@@ -963,9 +979,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           ? [
               {
                 label: t('pages.create.agendaItem.votingSettings'),
-                isValid: () =>
-                  !assignmentLookupFailed &&
-                  (!isElectionType || resolvedElectionMode !== 'list' || resolvedSeatCount >= 1),
+                isValid: () => !assignmentLookupFailed && !listSeatCountInvalid,
+                getInvalidReason: () => votingSettingsInvalidReason,
                 fields: [
                   ...(isElectionType
                     ? [
@@ -1173,8 +1188,10 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           isValid: () =>
             hasSelectableEvent &&
             !!title.trim() &&
+            !isAssignmentLoading &&
             !assignmentLookupFailed &&
-            (!isElectionType || resolvedElectionMode !== 'list' || resolvedSeatCount >= 1),
+            !listSeatCountInvalid,
+          getInvalidReason: () => agendaItemInvalidReason,
           fields: [
             {
               key: 'review',
@@ -1316,10 +1333,15 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       eventIdParam,
       handleSubmit,
       hasSelectableEvent,
+      isAssignmentLoading,
       isElectionType,
       isSubmitting,
       isVoteType,
+      basicInfoInvalidReason,
+      votingSettingsInvalidReason,
+      agendaItemInvalidReason,
       linkedAssignment,
+      listSeatCountInvalid,
       majorityType,
       order,
       resolvedElectionMode,

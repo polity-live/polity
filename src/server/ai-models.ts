@@ -344,7 +344,7 @@ export async function resolveLanguageModelForUser(
       });
 
       return {
-        model: provider(modelDescriptor.id, { reasoningEffort }),
+        model: provider.chat(modelDescriptor.id),
         credentialProvider: null,
       };
     }
@@ -359,7 +359,7 @@ export async function resolveLanguageModelForUser(
     });
 
     return {
-      model: provider(modelDescriptor.id, { reasoningEffort }),
+      model: provider.chat(modelDescriptor.id),
       credentialProvider: 'openrouter',
     };
   }

@@ -87,6 +87,14 @@ export function useCreateStatementForm(): CreateFormConfig {
     image_url: imageUrl,
     video_url: videoUrl,
   });
+  const textInvalidReason =
+    text.length > MAX_CHARS
+      ? t('pages.create.statement.validation.textTooLong', { count: MAX_CHARS })
+      : null;
+  const statementContentInvalidReason = !hasContent
+    ? t('pages.create.statement.validation.contentRequired')
+    : null;
+  const statementInvalidReason = textInvalidReason ?? statementContentInvalidReason;
 
   const hasSurvey = surveyQuestion.trim() && surveyOptions.filter(o => o.trim()).length >= 2;
   const visibilityLabel =
@@ -126,9 +134,7 @@ export function useCreateStatementForm(): CreateFormConfig {
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!user) return createBlockedSubmitOutcome();
-    if (!hasContent) {
-      throw new Error(t('pages.create.error.createFailed'));
-    }
+    if (!hasContent || textInvalidReason) return createBlockedSubmitOutcome();
     context?.reportProgress({ key: 'create', status: 'active' });
     const result = await createStatement(text.trim() || null, {
       groupId,
@@ -198,6 +204,7 @@ export function useCreateStatementForm(): CreateFormConfig {
         {
           label: t('pages.create.statement.textLabel'),
           isValid: () => text.length <= MAX_CHARS,
+          getInvalidReason: () => textInvalidReason,
           fields: [
             {
               key: 'title',
@@ -337,7 +344,8 @@ export function useCreateStatementForm(): CreateFormConfig {
         },
         {
           label: t('pages.create.common.review'),
-          isValid: () => hasContent,
+          isValid: () => hasContent && !textInvalidReason,
+          getInvalidReason: () => statementInvalidReason,
           fields: [
             {
               key: 'review',
@@ -449,6 +457,8 @@ export function useCreateStatementForm(): CreateFormConfig {
       charsRemaining,
       hasContent,
       hasSurvey,
+      textInvalidReason,
+      statementInvalidReason,
       t,
       syncGroupSearch,
     ]

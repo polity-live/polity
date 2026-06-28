@@ -15,7 +15,8 @@ import { EventTypeInput } from '../ui/inputs/EventTypeInput';
 import { type DelegateConfig } from '../ui/inputs/DelegateAllocationInput';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
-import { useCurrentUserActiveGroupIds, useGroupById } from '@/zero/groups/useGroupState';
+import { useGroupById } from '@/zero/groups/useGroupState';
+import { useCreatableGroupIds } from '@/zero/rbac';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
@@ -153,12 +154,28 @@ export function useCreateEventForm(): CreateFormConfig {
     () => extractHashtagTags(userHashtags),
     [userHashtags]
   );
-  const { activeGroupIds } = useCurrentUserActiveGroupIds();
+  const { creatableGroupIds: eventCreatableGroupIds, isLoading: groupPermissionLoading } =
+    useCreatableGroupIds('events');
   const [openProcessTasks] = useQuery(
     groupId ? queries.amendments.openProcessTasksByGroup({ group_id: groupId }) : undefined
   );
   const isMeetingEvent = eventType === 'meeting';
   const groupRequired = eventType === 'general_assembly' || eventType === 'delegate_assembly';
+  const selectedGroupPermissionPending = Boolean(groupId && groupPermissionLoading);
+  const selectedGroupPermissionDenied = Boolean(
+    groupId && !groupPermissionLoading && !eventCreatableGroupIds.has(groupId)
+  );
+  const selectedGroupIsValid =
+    (!groupRequired || Boolean(groupId)) &&
+    (!groupId || (!selectedGroupPermissionPending && !selectedGroupPermissionDenied));
+  const groupInvalidReason =
+    !groupId && groupRequired
+      ? t('pages.create.event.validation.groupRequiredForAssembly')
+      : selectedGroupPermissionPending
+        ? t('pages.create.event.validation.groupPermissionPending')
+        : selectedGroupPermissionDenied
+          ? t('pages.create.event.validation.groupPermissionDenied')
+          : null;
   const normalizedMeetingBookings =
     meetingType === 'one-on-one' ? 1 : Math.max(1, Number.parseInt(meetingMaxBookings, 10) || 1);
   const effectiveVisibility = isMeetingEvent
@@ -300,6 +317,10 @@ export function useCreateEventForm(): CreateFormConfig {
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!title.trim()) return createBlockedSubmitOutcome();
+    if (!selectedGroupIsValid) {
+      toast.error(groupInvalidReason ?? t('pages.create.error.createFailed'));
+      return createBlockedSubmitOutcome();
+    }
     if (eventType === 'delegate_assembly' && !canCreateDelegateAssemblyForGroup(group)) {
       toast.error(DELEGATE_ASSEMBLY_GROUP_ELIGIBILITY_MESSAGE);
       return createBlockedSubmitOutcome();
@@ -497,6 +518,7 @@ export function useCreateEventForm(): CreateFormConfig {
         {
           label: t('pages.create.event.basicInfo'),
           isValid: () => !!title.trim(),
+          getInvalidReason: () => t('pages.create.validation.titleRequired'),
           fields: [
             {
               key: 'title',
@@ -586,7 +608,8 @@ export function useCreateEventForm(): CreateFormConfig {
         // 3. Associated Group
         {
           label: t('pages.create.event.associatedGroup'),
-          isValid: () => (groupRequired ? !!groupId : true),
+          isValid: () => selectedGroupIsValid,
+          getInvalidReason: () => groupInvalidReason,
           optional: !groupRequired,
           fields: [
             {
@@ -594,6 +617,8 @@ export function useCreateEventForm(): CreateFormConfig {
               kind: 'typeahead',
               label: t('pages.create.event.associatedGroupLabel'),
               hint: t('pages.create.event.tips.group'),
+              invalid: Boolean(groupInvalidReason),
+              error: groupInvalidReason ?? undefined,
               required: groupRequired,
               props: {
                 entityTypes: ['group'],
@@ -604,7 +629,7 @@ export function useCreateEventForm(): CreateFormConfig {
                   setGroupName(item?.label ?? '');
                   syncGroupSearch(nextGroupId);
                 },
-                filterFn: item => activeGroupIds.has(item.id),
+                filterFn: item => eventCreatableGroupIds.has(item.id),
                 placeholder: t('pages.create.event.associatedGroupPlaceholder'),
               },
             },
@@ -645,6 +670,7 @@ export function useCreateEventForm(): CreateFormConfig {
           label: t('pages.create.event.timeSeries.tabLabel'),
           isValid: () =>
             timeSeriesValidationError === null && processSchedulingValidationMessage === null,
+          getInvalidReason: () => combinedTimeSeriesValidationMessage,
           fields: [
             {
               key: 'time-series',
@@ -822,10 +848,18 @@ export function useCreateEventForm(): CreateFormConfig {
         {
           label: t('pages.create.common.review'),
           isValid: () =>
+            selectedGroupIsValid &&
             !!title.trim() &&
             hasRequiredDateTimeRange &&
             timeSeriesValidationError === null &&
             processSchedulingValidationMessage === null,
+          getInvalidReason: () =>
+            !title.trim()
+              ? t('pages.create.validation.titleRequired')
+              : (groupInvalidReason ??
+                timeSeriesValidationMessage ??
+                processSchedulingValidationMessage ??
+                null),
           fields: [
             {
               key: 'review',
@@ -1046,8 +1080,10 @@ export function useCreateEventForm(): CreateFormConfig {
       eventId,
       openProcessTasks,
       groupRequired,
+      groupInvalidReason,
+      selectedGroupIsValid,
       handleDescriptionContentChange,
-      activeGroupIds,
+      eventCreatableGroupIds,
       syncGroupSearch,
       t,
     ]

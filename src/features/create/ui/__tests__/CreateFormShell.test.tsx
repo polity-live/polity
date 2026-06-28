@@ -48,6 +48,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'pages.create.progress.submission.overlay.waiting': 'Waiting',
         'pages.create.progress.submission.overlay.backToForm': 'Back to form',
         'pages.create.progress.submission.overlay.retry': 'Try again',
+        'pages.create.targets.group': 'Zur Gruppe',
       })[key] ?? key,
   }),
 }));

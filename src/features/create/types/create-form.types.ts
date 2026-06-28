@@ -84,6 +84,8 @@ export interface CreateFormStep {
   sections?: CreateFormSectionDescriptor[];
   /** Returns true if all required fields in this step are valid */
   isValid: () => boolean;
+  /** Optional human-readable reason shown when this step blocks submit or navigation. */
+  getInvalidReason?: () => ReactNode | null;
   /** Whether this step is optional (skippable) */
   optional?: boolean;
 }
@@ -128,7 +130,8 @@ export interface CreateFormConfig {
 export interface CreateRouteSubmitTarget {
   kind: 'route';
   entityType: ContentType;
-  label: string;
+  label?: string;
+  labelKey?: string;
   to: string;
   params?: Record<string, string>;
   search?: unknown;
@@ -138,7 +141,8 @@ export interface CreateRouteSubmitTarget {
 export interface CreateExternalSubmitTarget {
   kind: 'external';
   entityType: ContentType;
-  label: string;
+  label?: string;
+  labelKey?: string;
   href: string;
 }
 

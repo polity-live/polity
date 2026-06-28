@@ -6,8 +6,7 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { DateTimeRangeInput } from '../ui/inputs/DateTimeRangeInput';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
-import { useEventActions } from '@/zero/events/useEventActions';
-import { useCommonState, useCommonActions } from '@/zero/common';
+import { useCommonState } from '@/zero/common';
 import { useAllGroups, useGroupRoles } from '@/zero/groups/useGroupState';
 import { useUserState } from '@/zero/users/useUserState';
 import { useAuth } from '@/providers/auth-provider';
@@ -15,7 +14,6 @@ import {
   getCurrentGroupRelationshipLabel,
   type GroupRelationshipRight,
 } from '@/features/network/ui/GroupRelationshipFields';
-import { useGroupConnectionActions } from '@/zero/network';
 import type { ColumnDef } from '@/features/shared/ui/data-table';
 import { isValidOptionalEmailAddress } from '@/features/shared/logic/inputValidation';
 import { matchInviteCsvUsers, type InviteCsvMatchResult } from '../logic/groupInviteCsv';
@@ -181,10 +179,7 @@ function buildCanonicalGroupConnection(args: {
 export function useCreateGroupForm(): CreateFormConfig {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { createGroup, createRole, inviteGuest, inviteMember } = useGroupActions();
-  const { createEvent } = useEventActions();
-  const commonActions = useCommonActions();
-  const { proposeGroupConnectionChange } = useGroupConnectionActions();
+  const { createFullGroup } = useGroupActions();
   const { groups: allGroups } = useAllGroups();
   const availableGroups = useMemo(
     () =>
@@ -246,9 +241,27 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [eventStartDate, setEventStartDate] = useState('');
   const [eventStartTime, setEventStartTime] = useState('');
 
-  const { allHashtags, userHashtags } = useCommonState({
+  const getDefaultFoundingAssemblyName = useCallback(() => {
+    const trimmedName = name.trim();
+    return trimmedName
+      ? t('pages.create.group.foundingAssemblyDefaultName', { groupName: trimmedName })
+      : t('pages.create.group.foundingAssemblyDefaultNameFallback');
+  }, [name, t]);
+
+  const handleConstitutionalEventToggle = useCallback(
+    (checked: boolean) => {
+      setCreateConstitutionalEvent(checked);
+      if (checked) {
+        setEventName(currentName =>
+          currentName.trim() ? currentName : getDefaultFoundingAssemblyName()
+        );
+      }
+    },
+    [getDefaultFoundingAssemblyName]
+  );
+
+  const { userHashtags } = useCommonState({
     user_id: user?.id,
-    loadAllHashtags: true,
   });
   const preferredHashtagSuggestions = useMemo(
     () => extractHashtagTags(userHashtags),
@@ -256,6 +269,11 @@ export function useCreateGroupForm(): CreateFormConfig {
   );
   const emailValidationMessage = t('common.validation.emailHint');
   const emailIsValid = isValidOptionalEmailAddress(email);
+  const basicInfoInvalidReason = !name.trim()
+    ? t('pages.create.group.validation.nameRequired')
+    : !emailIsValid
+      ? emailValidationMessage
+      : null;
   const radioGroupType = groupType === 'sibling' ? 'hierarchical' : groupType;
   const siblingLinks = linkedGroups.filter(link => link.type === 'sibling');
   const siblingMembershipModes = siblingLinks.map(link => link.membershipMode);
@@ -479,161 +497,109 @@ export function useCreateGroupForm(): CreateFormConfig {
     setIsSubmitting(true);
     try {
       context?.reportProgress({ key: 'create', status: 'active' });
-      const createGroupResult = createGroup({
-        id: groupId,
-        name: name.trim(),
-        description: description ? toZeroRichTextValue(descriptionContent) : null,
-        email: email || null,
-        country: country || null,
-        region: region || null,
-        post_code: post_code || null,
-        city: city || null,
-        street: street || null,
-        house_number: house_number || null,
-        latitude,
-        longitude,
-        image_url: imageURL || null,
-        x: null,
-        youtube: null,
-        linkedin: null,
-        website: null,
-        whatsapp: null,
-        instagram: null,
-        twitter: null,
-        facebook: null,
-        snapchat: null,
-        tiktok: null,
-        visibility,
-        group_type: groupType,
-        owner_id: null,
-      });
-      await serverConfirmed(createGroupResult);
       const groupSubmitTarget = createRouteSubmitTarget('group', {
         to: '/group/$id',
         params: { id: groupId },
       });
-      context?.setRecoveryTarget(groupSubmitTarget);
-      context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'active' });
 
-      if (hashtags.length > 0) {
-        await commonActions.syncEntityHashtags('group', groupId, hashtags, [], allHashtags ?? []);
-      }
-
-      if (allowOfficialMemberInvites) {
-        await Promise.all(
-          invitedUserIds.map(userId =>
-            inviteMember({
-              id: crypto.randomUUID(),
-              user_id: userId,
-              group_id: groupId,
-              visibility: '',
-              status: 'invited',
-            })
-          )
-        );
-      } else if (allowGuestInvites) {
-        const guestRoleId = crypto.randomUUID();
-        const guestRoleResult = createRole({
-          id: guestRoleId,
-          name: 'Guest',
-          description: translateText(
-            'generated.inline.0058_initial_guest_access_created_during_group_set_254a0aed'
-          ),
-          scope: 'group',
-          group_id: groupId,
-          event_id: null,
-          amendment_id: null,
-          blog_id: null,
-          visibility: 'private',
-          assignee_kind: 'guest',
-          assignment_mode: 'assigned',
-          default_request_role: false,
-          default_invite_role: false,
-          is_recurring: false,
-          sort_order: -1,
+      const connectionRequests = linkedGroups.map(link => {
+        const payload = buildCanonicalGroupConnection({
+          currentGroupId: groupId,
+          otherGroupId: link.groupId,
+          connectionType: link.type,
+          rightDirections: link.rightDirections,
+          membershipDirection: link.membershipDirection,
+          membershipRule: link.membershipRule,
         });
-        await serverConfirmed(guestRoleResult);
 
-        await Promise.all(
-          invitedUserIds.map(userId =>
-            inviteGuest({
-              id: crypto.randomUUID(),
-              group_id: groupId,
-              user_id: userId,
-              status: 'invited',
-              role_ids: [guestRoleId],
-              invited_by_id: user?.id ?? null,
-            })
-          )
-        );
-      }
-
-      // Create group relationships
-      await Promise.all(
-        linkedGroups.map(link =>
-          serverConfirmed(
-            proposeGroupConnectionChange({
-              id: crypto.randomUUID(),
-              active_connection_id: null,
-              ...(() => {
-                const payload = buildCanonicalGroupConnection({
-                  currentGroupId: groupId,
-                  otherGroupId: link.groupId,
-                  connectionType: link.type,
-                  rightDirections: link.rightDirections,
-                  membershipDirection: link.membershipDirection,
-                  membershipRule: link.membershipRule,
-                });
-                return {
-                  proposed_connection_id: payload.id,
-                  group_a_id: payload.group_a_id,
-                  group_b_id: payload.group_b_id,
-                  desired_connection_type: payload.connection_type,
-                  desired_parent_group_id: payload.parent_group_id,
-                  desired_child_group_id: payload.child_group_id,
-                  initiator_group_id: groupId,
-                  grants: payload.grants.map(right => ({
-                    id: crypto.randomUUID(),
-                    existing_grant_id: null,
-                    operation: 'upsert' as const,
-                    right_key: right.right_key,
-                    holder_group_id: right.holder_group_id,
-                    scope_group_id: right.scope_group_id,
-                  })),
-                  membership_rule: payload.membership_rule
-                    ? {
-                        ...payload.membership_rule,
-                        id: crypto.randomUUID(),
-                        existing_membership_rule_id: null,
-                        operation: 'upsert' as const,
-                      }
-                    : null,
-                };
-              })(),
-            })
-          )
-        )
-      );
-
-      // Create constitutional event
-      if (createConstitutionalEvent && eventName.trim() && user?.id) {
-        const startTimestamp = eventStartDate
-          ? new Date(`${eventStartDate}T${eventStartTime || '00:00'}`).getTime()
-          : null;
-        await createEvent({
+        return {
           id: crypto.randomUUID(),
-          title: eventName.trim(),
-          event_type: 'general_assembly',
-          group_id: groupId,
-          creator_id: user.id,
-          visibility,
-          location_name: eventLocation || null,
-          start_date: startTimestamp,
-          invited_user_ids: invitedUserIds,
-        });
-      }
+          active_connection_id: null,
+          proposed_connection_id: payload.id,
+          group_a_id: payload.group_a_id,
+          group_b_id: payload.group_b_id,
+          desired_connection_type: payload.connection_type,
+          desired_parent_group_id: payload.parent_group_id,
+          desired_child_group_id: payload.child_group_id,
+          initiator_group_id: groupId,
+          grants: payload.grants.map(right => ({
+            id: crypto.randomUUID(),
+            existing_grant_id: null,
+            operation: 'upsert' as const,
+            right_key: right.right_key,
+            holder_group_id: right.holder_group_id,
+            scope_group_id: right.scope_group_id,
+          })),
+          membership_rule: payload.membership_rule
+            ? {
+                ...payload.membership_rule,
+                id: crypto.randomUUID(),
+                existing_membership_rule_id: null,
+                operation: 'upsert' as const,
+              }
+            : null,
+        };
+      });
 
+      const startTimestamp = eventStartDate
+        ? new Date(`${eventStartDate}T${eventStartTime || '00:00'}`).getTime()
+        : null;
+      const foundingEventTitle = eventName.trim();
+      const foundingEvent =
+        createConstitutionalEvent && foundingEventTitle && user?.id
+          ? {
+              id: crypto.randomUUID(),
+              title: foundingEventTitle,
+              event_type: 'general_assembly',
+              group_id: groupId,
+              creator_id: user.id,
+              visibility,
+              location_name: eventLocation || null,
+              start_date: startTimestamp,
+              invited_user_ids: invitedUserIds,
+            }
+          : null;
+
+      const createGroupResult = createFullGroup({
+        group: {
+          id: groupId,
+          name: name.trim(),
+          description: description ? toZeroRichTextValue(descriptionContent) : null,
+          email: email || null,
+          country: country || null,
+          region: region || null,
+          post_code: post_code || null,
+          city: city || null,
+          street: street || null,
+          house_number: house_number || null,
+          latitude,
+          longitude,
+          image_url: imageURL || null,
+          x: null,
+          youtube: null,
+          linkedin: null,
+          website: null,
+          whatsapp: null,
+          instagram: null,
+          twitter: null,
+          facebook: null,
+          snapchat: null,
+          tiktok: null,
+          visibility,
+          group_type: groupType,
+          owner_id: null,
+        },
+        hashtags,
+        official_invite_user_ids: allowOfficialMemberInvites ? invitedUserIds : [],
+        guest_invite_user_ids: allowGuestInvites ? invitedUserIds : [],
+        connection_requests: connectionRequests,
+        founding_event: foundingEvent,
+      });
+      await serverConfirmed(createGroupResult);
+
+      context?.setRecoveryTarget(groupSubmitTarget);
+      context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
       setIsSubmitting(false);
@@ -775,6 +741,7 @@ export function useCreateGroupForm(): CreateFormConfig {
         {
           label: t('pages.create.group.basicInfo'),
           isValid: () => !!name.trim() && emailIsValid,
+          getInvalidReason: () => basicInfoInvalidReason,
           fields: [
             {
               key: 'name',
@@ -1086,7 +1053,7 @@ export function useCreateGroupForm(): CreateFormConfig {
               props: {
                 hint: t('pages.create.group.tips.constitutionalEvent'),
                 checked: createConstitutionalEvent,
-                onCheckedChange: setCreateConstitutionalEvent,
+                onCheckedChange: handleConstitutionalEventToggle,
                 label: t('pages.create.group.optionalGeneralAssembly'),
                 description: t('pages.create.group.eventTypeDescription'),
               },
@@ -1130,6 +1097,7 @@ export function useCreateGroupForm(): CreateFormConfig {
         {
           label: t('pages.create.common.review'),
           isValid: () => !!name.trim() && emailIsValid,
+          getInvalidReason: () => basicInfoInvalidReason,
           fields: [
             {
               key: 'review',
@@ -1288,8 +1256,11 @@ export function useCreateGroupForm(): CreateFormConfig {
       handleDescriptionContentChange,
       handleAddLinkedGroup,
       handleRemoveLinkedGroup,
+      handleConstitutionalEventToggle,
+      createFullGroup,
       emailIsValid,
       emailValidationMessage,
+      basicInfoInvalidReason,
       user,
     ]
   );

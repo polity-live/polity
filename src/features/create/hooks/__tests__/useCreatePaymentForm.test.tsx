@@ -141,6 +141,46 @@ describe('useCreatePaymentForm', () => {
     });
   });
 
+  it('reports missing payment requirements in submit order', () => {
+    const { result } = renderHook(() => useCreatePaymentForm());
+
+    expect(result.current.steps[0].getInvalidReason?.()).toBe(
+      'pages.create.payment.validation.labelRequired'
+    );
+    expect(result.current.steps[1].getInvalidReason?.()).toBe(
+      'pages.create.payment.validation.groupRequired'
+    );
+
+    const labelField = findField(result.current.steps[0].fields ?? [], 'label', 'text');
+    act(() => {
+      labelField.onValueChange('Membership fee');
+    });
+
+    expect(result.current.steps[0].getInvalidReason?.()).toBe(
+      'pages.create.payment.validation.amountRequired'
+    );
+
+    const amountField = findField(result.current.steps[0].fields ?? [], 'amount', 'text');
+    act(() => {
+      amountField.onValueChange('12abc');
+    });
+
+    expect(result.current.steps[0].getInvalidReason?.()).toBe(
+      'pages.create.payment.validation.amountInvalid'
+    );
+
+    const groupField = findField(result.current.steps[1].fields ?? [], 'group', 'typeahead');
+    act(() => {
+      (groupField.props as { onChange: (item: { id: string } | null) => void }).onChange({
+        id: 'group-1',
+      });
+    });
+
+    expect(result.current.steps[1].getInvalidReason?.()).toBe(
+      'pages.create.payment.validation.counterpartyRequired'
+    );
+  });
+
   it('blocks submit without calling createPayment when amount is invalid', async () => {
     const { result } = renderHook(() => useCreatePaymentForm());
     fillRequiredPaymentFields(result, '12abc');

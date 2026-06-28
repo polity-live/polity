@@ -297,3 +297,56 @@ export function usePermissions(context: PermissionContext) {
     isLoading,
   ]);
 }
+
+export function useCreatableGroupIds(resource: ResourceType) {
+  const userId = useAuthUserId();
+  const { memberships, guestAccesses, participations, bloggerRelations, ownedGroupIds, isLoading } =
+    usePermissionsData(userId);
+
+  return useMemo(() => {
+    const creatableGroupIds = new Set<string>();
+
+    if (!userId) {
+      return { creatableGroupIds, isLoading };
+    }
+
+    const candidateGroupIds = new Set<string>();
+    for (const membership of memberships ?? []) {
+      if (membership.group?.id) {
+        candidateGroupIds.add(membership.group.id);
+      }
+    }
+    for (const guestAccess of guestAccesses ?? []) {
+      if (guestAccess.group?.id) {
+        candidateGroupIds.add(guestAccess.group.id);
+      }
+    }
+    for (const groupId of ownedGroupIds ?? []) {
+      candidateGroupIds.add(groupId);
+    }
+
+    for (const groupId of candidateGroupIds) {
+      if (
+        checkPermission(
+          { userId, memberships, guestAccesses, participations, bloggerRelations, ownedGroupIds },
+          { groupId },
+          'create',
+          resource
+        )
+      ) {
+        creatableGroupIds.add(groupId);
+      }
+    }
+
+    return { creatableGroupIds, isLoading };
+  }, [
+    bloggerRelations,
+    guestAccesses,
+    isLoading,
+    memberships,
+    ownedGroupIds,
+    participations,
+    resource,
+    userId,
+  ]);
+}

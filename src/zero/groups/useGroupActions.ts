@@ -32,6 +32,17 @@ export function useGroupActions() {
     [zero]
   );
 
+  const createFullGroup = useCallback(
+    (args: Parameters<typeof mutators.groups.createFull>[0]) => {
+      const result = zero.mutate(mutators.groups.createFull(args));
+      onServerError(result, msg =>
+        handleMutationError(toMutationError(msg), t('features.groups.toasts.createFailed'), t)
+      );
+      return result;
+    },
+    [zero]
+  );
+
   const updateGroup = useCallback(
     (
       args: Parameters<typeof mutators.groups.update>[0],
@@ -507,6 +518,7 @@ export function useGroupActions() {
   return {
     // CRUD
     createGroup,
+    createFullGroup,
     updateGroup,
     deleteGroup,
     createOfflineMember,

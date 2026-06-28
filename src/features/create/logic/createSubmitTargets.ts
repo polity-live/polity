@@ -6,19 +6,19 @@ import type {
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
 
 const CREATE_TARGET_LABELS: Partial<Record<ContentType, string>> = {
-  group: 'Zur Gruppe',
-  event: 'Zum Event',
-  amendment: 'Zum Antrag',
-  blog: 'Zum Blog',
-  agenda_item: 'Zur Agenda',
-  todo: 'Zu Aufgaben',
-  statement: 'Zur Aussage',
-  payment: 'Zur Gruppe',
-  election: 'Zur Erstellung',
+  group: 'pages.create.targets.group',
+  event: 'pages.create.targets.event',
+  amendment: 'pages.create.targets.amendment',
+  blog: 'pages.create.targets.blog',
+  agenda_item: 'pages.create.targets.agendaItem',
+  todo: 'pages.create.targets.todo',
+  statement: 'pages.create.targets.statement',
+  payment: 'pages.create.targets.payment',
+  election: 'pages.create.targets.creation',
 };
 
-export function getCreateSubmitTargetLabel(entityType: ContentType): string {
-  return CREATE_TARGET_LABELS[entityType] ?? 'Zur Erstellung';
+export function getCreateSubmitTargetLabelKey(entityType: ContentType): string {
+  return CREATE_TARGET_LABELS[entityType] ?? 'pages.create.targets.creation';
 }
 
 export function createRouteSubmitTarget(
@@ -30,7 +30,8 @@ export function createRouteSubmitTarget(
   return {
     kind: 'route',
     entityType,
-    label: target.label ?? getCreateSubmitTargetLabel(entityType),
+    label: target.label,
+    labelKey: target.label ? undefined : getCreateSubmitTargetLabelKey(entityType),
     to: target.to,
     params: target.params,
     search: target.search,
@@ -47,7 +48,8 @@ export function createExternalSubmitTarget(
   return {
     kind: 'external',
     entityType,
-    label: target.label ?? getCreateSubmitTargetLabel(entityType),
+    label: target.label,
+    labelKey: target.label ? undefined : getCreateSubmitTargetLabelKey(entityType),
     href: target.href,
   };
 }

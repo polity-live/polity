@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
+import { eventServerMutators } from '../events/server-mutators';
+import { networkServerMutators } from '../network/server-mutators';
 import {
   amendmentTitle,
   blogTitle,
@@ -22,6 +24,7 @@ import { reconcileDelegateAllocationsForGroups } from '../events/delegate-alloca
 import { reconcileGroupGraph } from '../network/group-graph-reconcile';
 import {
   groupCreateSchema,
+  groupFullCreateMutatorSchema,
   groupMembershipCreateSchema,
   groupMembershipDeleteSchema,
   groupMembershipUpdateSchema,
@@ -58,6 +61,10 @@ import {
   recomputeOfflineSiblingMembershipsForGroup,
 } from './offline-membership-helpers';
 import { assertNoBlockingGroupConflicts } from '@/server/group-conflict-validation';
+
+const normalizeHashtagTags = (tags: readonly string[] | undefined) => [
+  ...new Set((tags ?? []).map(tag => tag.trim()).filter(Boolean)),
+];
 
 async function addGroupMembershipRoleLink(
   tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
@@ -340,6 +347,45 @@ async function reconcileMembershipDrivenEventsForGroups(
   });
 }
 
+async function syncGroupHashtagsForCreate(
+  tx: GroupServerTx,
+  ctx: Parameters<typeof mutators.groups.create.fn>[0]['ctx'],
+  groupId: string,
+  hashtags: readonly string[] | undefined
+) {
+  for (const tag of normalizeHashtagTags(hashtags)) {
+    const existingHashtag = await tx.run(zql.hashtag.where('tag', tag).one());
+    const hashtagId = existingHashtag?.id ?? crypto.randomUUID();
+
+    if (!existingHashtag) {
+      await mutators.common.addHashtag.fn({
+        tx,
+        ctx,
+        args: {
+          id: hashtagId,
+          tag,
+        },
+      });
+    }
+
+    const existingLink = await tx.run(
+      zql.group_hashtag.where('group_id', groupId).where('hashtag_id', hashtagId).one()
+    );
+
+    if (!existingLink) {
+      await mutators.common.linkGroupHashtag.fn({
+        tx,
+        ctx,
+        args: {
+          id: crypto.randomUUID(),
+          group_id: groupId,
+          hashtag_id: hashtagId,
+        },
+      });
+    }
+  }
+}
+
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const groupServerMutators = {
   create: defineMutator(groupCreateSchema, async ({ tx, ctx, args }) => {
@@ -444,6 +490,83 @@ export const groupServerMutators = {
       assignedById: ctx.userID,
       reason: 'group-create',
     });
+  }),
+
+  createFull: defineMutator(groupFullCreateMutatorSchema, async ({ tx, ctx, args }) => {
+    await groupServerMutators.create.fn({ tx, ctx, args: args.group });
+
+    await syncGroupHashtagsForCreate(tx, ctx, args.group.id, args.hashtags);
+
+    for (const userId of args.official_invite_user_ids ?? []) {
+      await groupServerMutators.inviteMember.fn({
+        tx,
+        ctx,
+        args: {
+          id: crypto.randomUUID(),
+          user_id: userId,
+          group_id: args.group.id,
+          visibility: '',
+          status: 'invited',
+        },
+      });
+    }
+
+    const guestInviteUserIds = args.guest_invite_user_ids ?? [];
+    if (guestInviteUserIds.length > 0) {
+      const guestRoleId = crypto.randomUUID();
+      await groupServerMutators.createRole.fn({
+        tx,
+        ctx,
+        args: {
+          id: guestRoleId,
+          name: 'Guest',
+          description: 'Initial guest access role created during group setup.',
+          scope: 'group',
+          group_id: args.group.id,
+          event_id: null,
+          amendment_id: null,
+          blog_id: null,
+          visibility: 'private',
+          assignee_kind: 'guest',
+          assignment_mode: 'assigned',
+          default_request_role: false,
+          default_invite_role: false,
+          is_recurring: false,
+          sort_order: -1,
+        },
+      });
+
+      for (const userId of guestInviteUserIds) {
+        await groupServerMutators.inviteGuest.fn({
+          tx,
+          ctx,
+          args: {
+            id: crypto.randomUUID(),
+            group_id: args.group.id,
+            user_id: userId,
+            status: 'invited',
+            role_ids: [guestRoleId],
+            invited_by_id: ctx.userID,
+          },
+        });
+      }
+    }
+
+    for (const connectionRequest of args.connection_requests ?? []) {
+      await networkServerMutators.proposeGroupConnectionChange.fn({
+        tx,
+        ctx,
+        args: connectionRequest,
+      });
+    }
+
+    if (args.founding_event) {
+      await eventServerMutators.create.fn({
+        tx,
+        ctx,
+        args: args.founding_event,
+      });
+    }
   }),
 
   createOfflineMember: defineMutator(groupOfflineMemberCreateSchema, async ({ tx, ctx, args }) => {

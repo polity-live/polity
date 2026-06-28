@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { AlertTriangle, Check, type LucideIcon } from 'lucide-react';
 
 import { CREATE_REVIEW_CARD_LAYOUT_ID } from '../logic/createReviewPreview';
-import { getCreateSubmitTargetLabel } from '../logic/createSubmitTargets';
+import { getCreateSubmitTargetLabelKey } from '../logic/createSubmitTargets';
 import type { CreateSubmitProgressStep, CreateSubmitTarget } from '../types/create-form.types';
 import {
   CONTENT_TYPE_CONFIG,
@@ -59,7 +59,8 @@ export function CreateSubmissionOverlay({
   const config = CONTENT_TYPE_CONFIG[entityType];
   const Icon = config.icon as LucideIcon;
   const open = status !== 'idle';
-  const targetLabel = target?.label ?? getCreateSubmitTargetLabel(entityType);
+  const targetLabel =
+    target?.label ?? t(target?.labelKey ?? getCreateSubmitTargetLabelKey(entityType));
   const canNavigateToTarget = status === 'ready' || (status === 'error' && Boolean(target));
 
   useEffect(() => {

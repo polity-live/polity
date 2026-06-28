@@ -60,12 +60,12 @@ describe('OnePageFormLayout', () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it('allows create when only optional steps are invalid', () => {
+  it('allows create when optional steps are valid', () => {
     const onSubmit = vi.fn();
     const steps: CreateFormStep[] = [
       {
         label: 'Optional',
-        isValid: () => false,
+        isValid: () => true,
         optional: true,
         fields: [],
       },
@@ -86,5 +86,35 @@ describe('OnePageFormLayout', () => {
 
     fireEvent.click(createButton);
     expect(onSubmit).toHaveBeenCalledOnce();
+  });
+
+  it('blocks create when an optional step reports a conditional invalid state', () => {
+    const onSubmit = vi.fn();
+    const steps: CreateFormStep[] = [
+      {
+        label: 'Optional',
+        isValid: () => false,
+        getInvalidReason: () => 'Pick the conditional date',
+        optional: true,
+        fields: [],
+      },
+    ];
+
+    render(
+      <OnePageFormLayout
+        steps={steps}
+        currentStep={0}
+        onStepChange={vi.fn()}
+        onSubmit={onSubmit}
+        isSubmitting={false}
+      />
+    );
+
+    expect(screen.getByRole('alert').textContent).toContain('Pick the conditional date');
+    const createButton = screen.getByRole<HTMLButtonElement>('button', { name: 'Create' });
+    expect(createButton.disabled).toBe(true);
+
+    fireEvent.click(createButton);
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

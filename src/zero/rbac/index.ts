@@ -17,6 +17,7 @@ export type {
   ActionRight,
   Role,
   Membership,
+  GuestAccess,
   Participation,
   BloggerRelation,
   Amendment,
@@ -139,4 +140,4 @@ export {
 export { rbacQueries } from './queries';
 
 // Hooks
-export { usePermissions } from './usePermissions';
+export { useCreatableGroupIds, usePermissions } from './usePermissions';
