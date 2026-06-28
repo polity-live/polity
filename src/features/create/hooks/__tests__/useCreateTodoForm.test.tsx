@@ -127,7 +127,15 @@ describe('useCreateTodoForm', () => {
   beforeEach(() => {
     searchParams = {};
     createTodo.mockReset();
-    createTodo.mockResolvedValue(undefined);
+    createTodo.mockResolvedValue({
+      success: true,
+      todoId: 'todo-1',
+      mutationResult: {
+        client: Promise.resolve(),
+        server: Promise.resolve({ type: 'success' }),
+      },
+      payload: { todo: { id: 'todo-1' } },
+    });
     navigate.mockClear();
   });
 

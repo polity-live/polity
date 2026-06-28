@@ -12,7 +12,7 @@ function EventLayout() {
   const { id } = Route.useParams();
   const zeroReady = useZeroReady();
   useEventRouteFamilyPreloads(id);
-  const { data, isLoading, error } = useEntityRouteAccess({
+  const { data, isLoading, error, recoveryDraft } = useEntityRouteAccess({
     entityType: 'event',
     entityId: id,
   });
@@ -24,6 +24,7 @@ function EventLayout() {
       isLoading={isLoading || (data?.exists === true && !zeroReady)}
       visibilities={data?.visibilities ?? []}
       canAccessPrivate={data?.canAccessPrivate ?? false}
+      recoveryDraft={recoveryDraft}
     >
       <Outlet />
     </EntityVisibilityGuard>

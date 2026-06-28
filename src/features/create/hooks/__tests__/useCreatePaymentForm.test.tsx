@@ -97,7 +97,10 @@ function fillRequiredPaymentFields(
 describe('useCreatePaymentForm', () => {
   beforeEach(() => {
     createPayment.mockReset();
-    createPayment.mockResolvedValue(undefined);
+    createPayment.mockReturnValue({
+      client: Promise.resolve(),
+      server: Promise.resolve({ type: 'success' }),
+    });
     navigate.mockClear();
     vi.stubGlobal('crypto', { randomUUID: () => 'payment-1' });
   });

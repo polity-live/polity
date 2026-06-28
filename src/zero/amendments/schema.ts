@@ -1,10 +1,12 @@
 import { z } from 'zod';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import {
   timestampSchema,
   nullableTimestampSchema,
   jsonSchema,
   jsonStringArraySchema,
 } from '../shared/helpers';
+import { createDocumentCollaboratorSchema, createDocumentSchema } from '../documents/schema';
 
 // ============================================
 // Amendment Zod Schemas
@@ -587,6 +589,14 @@ export const initializeAmendmentProcessPathSchema = z.object({
   evaluation_offset_years: z.number().nullable().optional(),
 });
 
+export const createAmendmentFullSchema = z.object({
+  amendment: createAmendmentSchema,
+  document: createDocumentSchema,
+  document_collaborator: createDocumentCollaboratorSchema.nullable().optional(),
+  hashtags: z.array(z.string()).optional(),
+  process_path: initializeAmendmentProcessPathSchema.nullable().optional(),
+});
+
 export const resolveAmendmentProcessVoteSchema = z.object({
   agenda_item_id: z.string(),
 });
@@ -612,6 +622,11 @@ export const replanProcessBranchEventsSchema = z.object({
 // ============================================
 
 export type Amendment = z.infer<typeof selectAmendmentSchema>;
+export type AmendmentFullCreateInput = z.infer<typeof createAmendmentFullSchema>;
+export const createAmendmentFullMutatorSchema = createAmendmentFullSchema as StandardSchemaV1<
+  AmendmentFullCreateInput,
+  AmendmentFullCreateInput
+>;
 export type AmendmentCollaborator = z.infer<typeof selectAmendmentCollaboratorSchema>;
 export type AmendmentStreetDesign = z.infer<typeof selectAmendmentStreetDesignSchema>;
 export type AmendmentPath = z.infer<typeof selectAmendmentPathSchema>;

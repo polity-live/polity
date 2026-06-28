@@ -12,7 +12,7 @@ function AmendmentLayout() {
   const { id } = Route.useParams();
   const zeroReady = useZeroReady();
   useAmendmentRouteFamilyPreloads(id);
-  const { data, isLoading, error } = useEntityRouteAccess({
+  const { data, isLoading, error, recoveryDraft } = useEntityRouteAccess({
     entityType: 'amendment',
     entityId: id,
   });
@@ -24,6 +24,7 @@ function AmendmentLayout() {
       isLoading={isLoading || (data?.exists === true && !zeroReady)}
       visibilities={data?.visibilities ?? []}
       canAccessPrivate={data?.canAccessPrivate ?? false}
+      recoveryDraft={recoveryDraft}
     >
       <Outlet />
     </EntityVisibilityGuard>

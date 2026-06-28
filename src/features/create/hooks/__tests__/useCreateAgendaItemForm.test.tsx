@@ -27,7 +27,10 @@ let sourceGroupRoles: {
 let userRoles: { id: string; title?: string | null }[] = [];
 let eventAgendaItems: { order_index?: number | null }[] = [];
 const hoistedMocks = vi.hoisted(() => ({
-  mutateMock: vi.fn((mutation: unknown) => mutation),
+  mutateMock: vi.fn(() => ({
+    client: Promise.resolve(),
+    server: Promise.resolve({ type: 'success' }),
+  })),
   serverConfirmedMock: vi.fn(async (mutation: unknown) => mutation),
 }));
 const { mutateMock, serverConfirmedMock } = hoistedMocks;
@@ -104,6 +107,7 @@ vi.mock('@/zero/groups/useGroupState', () => ({
 }));
 
 vi.mock('@/zero/mutate-with-server-check', () => ({
+  onServerError: vi.fn(),
   serverConfirmed: hoistedMocks.serverConfirmedMock,
 }));
 
@@ -112,6 +116,10 @@ vi.mock('@/zero/mutators', () => ({
     agendas: {
       createAgendaItem: (payload: unknown) => ({
         type: 'agendas.createAgendaItem',
+        payload,
+      }),
+      createFull: (payload: unknown) => ({
+        type: 'agendas.createFull',
         payload,
       }),
     },
@@ -264,22 +272,25 @@ describe('useCreateAgendaItemForm', () => {
       await result.current.onSubmit?.();
     });
 
-    const agendaMutation = mutateMock.mock.calls.find(
-      ([mutation]) => (mutation as { type?: string }).type === 'agendas.createAgendaItem'
-    )?.[0] as { payload?: { order_index?: number; event_id?: string; type?: string } };
-    const electionMutation = mutateMock.mock.calls.find(
-      ([mutation]) => (mutation as { type?: string }).type === 'elections.createElection'
-    )?.[0] as { payload?: { role_id?: string; election_mode?: string; seat_count?: number } };
+    const createFullMutation = mutateMock.mock.calls.find(
+      ([mutation]) => (mutation as { type?: string }).type === 'agendas.createFull'
+    )?.[0] as {
+      payload?: {
+        agenda_items?: { order_index?: number; event_id?: string; type?: string }[];
+        elections?: { role_id?: string; election_mode?: string; seat_count?: number }[];
+      };
+    };
 
-    expect(agendaMutation.payload).toMatchObject({
+    expect(createFullMutation.payload?.agenda_items?.[0]).toMatchObject({
       event_id: 'event-member',
       type: 'election',
       order_index: 1,
     });
-    expect(electionMutation.payload).toMatchObject({
+    expect(createFullMutation.payload?.elections?.[0]).toMatchObject({
       role_id: 'chairperson',
       election_mode: 'single',
       seat_count: 1,
     });
+    expect(mutateMock).toHaveBeenCalledTimes(1);
   });
 });

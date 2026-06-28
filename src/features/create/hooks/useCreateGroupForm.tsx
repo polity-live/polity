@@ -24,7 +24,6 @@ import {
   toZeroRichTextValue,
 } from '@/features/shared/logic/richText';
 import { toast } from '@/features/shared/ui/ui/sonner';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
 import type {
@@ -59,6 +58,7 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
+import { trackCreateFinalization, waitForOptimisticCreate } from '../logic/createFinalization';
 
 type GroupType = 'base' | 'hierarchical' | 'sibling';
 type RelationshipDirection = GroupRelationshipDirection;
@@ -561,7 +561,7 @@ export function useCreateGroupForm(): CreateFormConfig {
             }
           : null;
 
-      const createGroupResult = createFullGroup({
+      const createGroupPayload = {
         group: {
           id: groupId,
           name: name.trim(),
@@ -595,13 +595,90 @@ export function useCreateGroupForm(): CreateFormConfig {
         guest_invite_user_ids: allowGuestInvites ? invitedUserIds : [],
         connection_requests: connectionRequests,
         founding_event: foundingEvent,
-      });
-      await serverConfirmed(createGroupResult);
+      };
+      const createGroupResult = createFullGroup(createGroupPayload);
+
+      await waitForOptimisticCreate(createGroupResult);
 
       context?.setRecoveryTarget(groupSubmitTarget);
       context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
+      trackCreateFinalization({
+        result: createGroupResult,
+        draft: {
+          id: `group:${groupId}`,
+          entityType: 'group',
+          entityId: groupId,
+          createPath: '/create/group',
+          formState: {
+            groupType,
+            name,
+            description,
+            descriptionContent,
+            email,
+            country,
+            region,
+            post_code,
+            city,
+            street,
+            house_number,
+            latitude,
+            longitude,
+            imageURL,
+            hashtags,
+            visibility,
+            invitedUserIds,
+            linkedGroups,
+            createConstitutionalEvent,
+            eventName,
+            eventLocation,
+            eventStartDate,
+            eventStartTime,
+          },
+          mutationPayload: createGroupPayload,
+          target: groupSubmitTarget,
+        },
+        retry: () => {
+          const retryResult = createFullGroup(createGroupPayload);
+          trackCreateFinalization({
+            result: retryResult,
+            draft: {
+              id: `group:${groupId}`,
+              entityType: 'group',
+              entityId: groupId,
+              createPath: '/create/group',
+              formState: {
+                groupType,
+                name,
+                description,
+                descriptionContent,
+                email,
+                country,
+                region,
+                post_code,
+                city,
+                street,
+                house_number,
+                latitude,
+                longitude,
+                imageURL,
+                hashtags,
+                visibility,
+                invitedUserIds,
+                linkedGroups,
+                createConstitutionalEvent,
+                eventName,
+                eventLocation,
+                eventStartDate,
+                eventStartTime,
+              },
+              mutationPayload: createGroupPayload,
+              target: groupSubmitTarget,
+            },
+          });
+        },
+      });
       setIsSubmitting(false);
       return createSuccessSubmitOutcome(groupSubmitTarget);
     } catch (error) {

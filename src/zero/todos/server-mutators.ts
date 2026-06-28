@@ -5,6 +5,7 @@ import { fireNotification } from '../server-notify';
 import { groupName, userName } from '../server-helpers';
 import {
   createTodoSchema,
+  createTodoFullMutatorSchema,
   updateTodoSchema,
   deleteTodoSchema,
   toggleCompleteTodoSchema,
@@ -15,6 +16,21 @@ import {
 export const todoServerMutators = {
   create: defineMutator(createTodoSchema, async ({ tx, ctx, args }) => {
     await mutators.todos.create.fn({ tx, ctx, args });
+  }),
+
+  createFull: defineMutator(createTodoFullMutatorSchema, async ({ tx, ctx, args }) => {
+    await todoServerMutators.create.fn({ tx, ctx, args: args.todo });
+
+    if (args.assignment) {
+      await todoServerMutators.assign.fn({ tx, ctx, args: args.assignment });
+    }
+
+    if (args.timeline_event) {
+      await tx.mutate.timeline_event.insert({
+        ...args.timeline_event,
+        created_at: Date.now(),
+      });
+    }
   }),
 
   update: defineMutator(updateTodoSchema, async ({ tx, ctx, args }) => {

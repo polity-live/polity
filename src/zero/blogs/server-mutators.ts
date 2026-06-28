@@ -3,8 +3,10 @@ import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
 import { userName, recomputeBlogCounters } from '../server-helpers';
+import { syncEntityHashtagsForCreate } from '../common/server-hashtags';
 import {
   createBlogSchema,
+  createBlogFullMutatorSchema,
   createBlogBloggerSchema,
   updateBlogBloggerSchema,
   deleteBlogBloggerSchema,
@@ -103,6 +105,18 @@ export const blogServerMutators = {
       visibility: args.visibility ?? 'public',
       created_at: now,
     });
+  }),
+
+  createFull: defineMutator(createBlogFullMutatorSchema, async ({ tx, ctx, args }) => {
+    await blogServerMutators.create.fn({ tx, ctx, args: args.blog });
+    await syncEntityHashtagsForCreate(tx, ctx, 'blog', args.blog.id, args.hashtags);
+
+    if (args.timeline_event) {
+      await tx.mutate.timeline_event.insert({
+        ...args.timeline_event,
+        created_at: Date.now(),
+      });
+    }
   }),
 
   createEntry: defineMutator(createBlogBloggerSchema, async ({ tx, ctx, args }) => {

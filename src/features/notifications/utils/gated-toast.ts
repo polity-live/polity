@@ -26,6 +26,10 @@ export const gatedToast = {
     return sonnerToast.success(message, data);
   },
 
+  /** Always shows because it completes an already-visible finalization toast */
+  finalizationSuccess: (message: string | React.ReactNode, data?: ExternalToast) =>
+    sonnerToast.success(message, data),
+
   /** Gated by inAppNotifications preference */
   info: (message: string | React.ReactNode, data?: ExternalToast) => {
     if (!inAppEnabled) return;

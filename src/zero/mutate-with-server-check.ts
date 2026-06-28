@@ -12,7 +12,8 @@ import {
  * must be explicitly awaited to detect server-side rejections.
  */
 
-interface MutationResultLike {
+export interface MutationResultLike {
+  client?: Promise<unknown>;
   server: Promise<{
     readonly type: 'success' | 'error';
     readonly error?: {

@@ -26,6 +26,7 @@ import {
   eventExceptionDeleteSchema,
   bookMeetingSchema,
   cancelMeetingBookingSchema,
+  eventFullCreateMutatorSchema,
 } from './schema';
 import { can } from '../rbac/can';
 import { requireAuthenticated } from '../rbac/authorize';
@@ -400,6 +401,10 @@ export const eventSharedMutators = {
       instance_date: null,
       created_at: now,
     });
+  }),
+
+  createFull: defineMutator(eventFullCreateMutatorSchema, async ({ tx, ctx, args }) => {
+    await eventSharedMutators.create.fn({ tx, ctx, args: args.event });
   }),
 
   update: defineMutator(eventUpdateSchema, async ({ tx, ctx, args }) => {

@@ -40,6 +40,7 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
+import { trackCreateFinalization } from '../logic/createFinalization';
 
 interface CreateTodoSearch {
   groupId?: string;
@@ -192,7 +193,7 @@ export function useCreateTodoForm(): CreateFormConfig {
     if (!title.trim() || !user?.id) return createBlockedSubmitOutcome();
     try {
       context?.reportProgress({ key: 'create', status: 'active' });
-      await createTodo({
+      const createResult = await createTodo({
         title: title.trim(),
         description: description.trim() || undefined,
         ownerId: user.id,
@@ -204,26 +205,55 @@ export function useCreateTodoForm(): CreateFormConfig {
         groupId: groupId || undefined,
         visibility: groupId ? 'group' : visibility,
       });
-      toast.success(t('pages.create.success.created'));
+      if (!createResult.success || !createResult.todoId || !createResult.mutationResult) {
+        throw createResult.error ?? new Error(t('pages.create.error.createFailed'));
+      }
+
       context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
 
+      const target =
+        returnSection === 'todos' && groupId
+          ? createRouteSubmitTarget('todo', {
+              to: '/group/$id/operation',
+              params: { id: groupId },
+              hash: returnSection,
+            })
+          : createRouteSubmitTarget('todo', {
+              to: '/todos',
+            });
+
+      trackCreateFinalization({
+        result: createResult.mutationResult,
+        draft: {
+          id: `todo:${createResult.todoId}`,
+          entityType: 'todo',
+          entityId: createResult.todoId,
+          createPath: '/create/todo',
+          formState: {
+            title,
+            description,
+            assigneeId,
+            priority,
+            status,
+            dueDate,
+            tags,
+            groupId,
+            visibility,
+          },
+          mutationPayload: createResult.payload,
+          target,
+        },
+      });
+
+      toast.success(t('pages.create.success.created'));
+
       if (returnSection === 'todos' && groupId) {
-        return createSuccessSubmitOutcome(
-          createRouteSubmitTarget('todo', {
-            to: '/group/$id/operation',
-            params: { id: groupId },
-            hash: returnSection,
-          })
-        );
+        return createSuccessSubmitOutcome(target);
       }
 
-      return createSuccessSubmitOutcome(
-        createRouteSubmitTarget('todo', {
-          to: '/todos',
-        })
-      );
+      return createSuccessSubmitOutcome(target);
     } catch (error) {
       toast.error(t('pages.create.error.createFailed'));
       throw error;

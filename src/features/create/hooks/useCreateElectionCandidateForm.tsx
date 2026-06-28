@@ -18,6 +18,7 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
+import { trackCreateFinalization, waitForOptimisticCreate } from '../logic/createFinalization';
 import {
   getCreateSelectableEventIds,
   isCreateSelectableElection,
@@ -26,7 +27,7 @@ import {
 export function useCreateElectionCandidateForm(): CreateFormConfig {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { addCandidate } = useElectionActions();
+  const { addCandidateOptimistic } = useElectionActions();
   const { electionsForSearch } = useElectionState({ includeElectionsForSearch: true });
   const { activeGroupIds } = useCurrentUserActiveGroupIds();
   const { participations: userEventParticipations } = useUserEventParticipations(user?.id);
@@ -65,7 +66,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
     setIsSubmitting(true);
     try {
       context?.reportProgress({ key: 'create', status: 'active' });
-      await addCandidate({
+      const candidatePayload = {
         id: candidateId,
         name: '',
         description: statement.trim(),
@@ -74,16 +75,53 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
         status: 'pending',
         order_index: 0,
         image_url: imageURL,
-      });
+      };
+      const candidateResult = addCandidateOptimistic(candidatePayload);
+      await waitForOptimisticCreate(candidateResult);
       toast.success(t('pages.create.success.created'));
       context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
-      return createSuccessSubmitOutcome(
-        createRouteSubmitTarget('election', {
-          to: '/create',
-        })
-      );
+      const candidateTarget = createRouteSubmitTarget('election', {
+        to: '/create',
+      });
+      context?.setRecoveryTarget(candidateTarget);
+      trackCreateFinalization({
+        result: candidateResult,
+        draft: {
+          id: `election-candidate:${candidateId}`,
+          entityType: 'election',
+          entityId: candidateId,
+          createPath: '/create/election-candidate',
+          formState: {
+            electionId,
+            statement,
+            imageURL,
+          },
+          mutationPayload: candidatePayload,
+          target: candidateTarget,
+        },
+        retry: () => {
+          const retryResult = addCandidateOptimistic(candidatePayload);
+          trackCreateFinalization({
+            result: retryResult,
+            draft: {
+              id: `election-candidate:${candidateId}`,
+              entityType: 'election',
+              entityId: candidateId,
+              createPath: '/create/election-candidate',
+              formState: {
+                electionId,
+                statement,
+                imageURL,
+              },
+              mutationPayload: candidatePayload,
+              target: candidateTarget,
+            },
+          });
+        },
+      });
+      return createSuccessSubmitOutcome(candidateTarget);
     } catch (error) {
       toast.error(t('pages.create.error.createFailed'));
       throw error;

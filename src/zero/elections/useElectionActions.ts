@@ -57,6 +57,15 @@ export function useElectionActions() {
     [t, zero]
   );
 
+  const addCandidateOptimistic = useCallback(
+    (args: Parameters<typeof mutators.elections.addCandidate>[0]) => {
+      const result = zero.mutate(mutators.elections.addCandidate(args));
+      onServerError(result, () => toast.error(t('common.agendaToasts.candidateAddFailed')));
+      return result;
+    },
+    [t, zero]
+  );
+
   const updateCandidate = useCallback(
     (args: Parameters<typeof mutators.elections.updateCandidate>[0]) => {
       const result = zero.mutate(mutators.elections.updateCandidate(args));
@@ -161,6 +170,7 @@ export function useElectionActions() {
 
     // Candidates
     addCandidate,
+    addCandidateOptimistic,
     updateCandidate,
     deleteCandidate,
 

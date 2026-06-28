@@ -13,14 +13,11 @@ import type { TargetGroupEventSelection } from '@/features/amendments/ui/TargetG
 import { AmendmentEvaluationModeInput } from '../ui/inputs/AmendmentEvaluationModeInput';
 import { AmendmentTargetSelectionField } from '../ui/inputs/AmendmentTargetSelectionField';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { useDocumentActions } from '@/zero/documents/useDocumentActions';
-import { useCommonState, useCommonActions } from '@/zero/common';
+import { useCommonState } from '@/zero/common';
 import {
   enrichPathSegments,
   type PathWithEventSegment,
 } from '@/features/amendments/logic/amendmentPathHelpers';
-import { useCreateAmendmentPath } from '@/features/amendments/hooks/useCreateAmendmentPath';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import {
@@ -35,6 +32,7 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
+import { trackCreateFinalization, waitForOptimisticCreate } from '../logic/createFinalization';
 
 interface CreateTargetGroupData {
   id: string;
@@ -63,10 +61,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   const sourceGroupIdParam = searchParams.sourceGroupId ?? '';
   const targetGroupIdParam = searchParams.targetGroupId ?? '';
   const { user } = useAuth();
-  const { createAmendment, updateAmendment } = useAmendmentActions();
-  const { createDocument, addCollaborator } = useDocumentActions();
-  const commonActions = useCommonActions();
-  const { createAmendmentPath } = useCreateAmendmentPath();
+  const { createFullAmendment } = useAmendmentActions();
 
   const [amendmentId] = useState(() => crypto.randomUUID());
   const [title, setTitle] = useState('');
@@ -105,9 +100,8 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         ? t('pages.create.common.authenticated')
         : t('pages.create.common.private');
 
-  const { allHashtags, userHashtags } = useCommonState({
+  const { userHashtags } = useCommonState({
     user_id: user?.id,
-    loadAllHashtags: true,
   });
   const preferredHashtagSuggestions = useMemo(
     () => extractHashtagTags(userHashtags),
@@ -236,113 +230,148 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       const normalizedGroupId = targetSelection?.groupId ? targetSelection.groupId : null;
       const normalizedEventId = targetSelection?.eventId ? targetSelection.eventId : null;
       const documentId = crypto.randomUUID();
-
-      const createAmendmentResult = createAmendment({
-        id: amendmentId,
-        title: title.trim(),
-        code: subtitle || null,
-        reason: null,
-        category: null,
-        preamble: null,
-        group_id: normalizedGroupId,
-        event_id: normalizedEventId,
-        clone_source_id: null,
-        document_id: null,
-        tags: hashtags.length > 0 ? hashtags : null,
-        visibility,
-        discussions: null,
-        image_url: imageURL || null,
-        x: null,
-        youtube: null,
-        linkedin: null,
-        website: null,
-      });
-      await serverConfirmed(createAmendmentResult);
-      context?.reportProgress({ key: 'create', status: 'complete' });
-      context?.reportProgress({ key: 'sync', status: 'active' });
-
-      const createDocumentResult = createDocument({
-        id: documentId,
-        amendment_id: amendmentId,
-        content: [
-          { type: 'h1', children: [{ text: title.trim() }] },
-          { type: 'p', children: [{ text: '' }] },
-        ],
-        editing_mode: 'edit',
-      });
-      await serverConfirmed(createDocumentResult);
-
-      // Add creator as document collaborator
-      const addCollaboratorResult = addCollaborator({
-        id: crypto.randomUUID(),
-        document_id: documentId,
-        user_id: user.id,
-        role_id: null,
-        status: 'active',
-        visibility: 'public',
-      });
-      await Promise.all([
-        updateAmendment({
+      const enrichedPath = targetSelection?.pathWithEvents.length
+        ? enrichPathSegments(
+            targetSelection.pathWithEvents,
+            targetSelection.groupId,
+            targetSelection.eventId ?? '',
+            targetSelection.eventData?.title ?? null,
+            targetSelection.eventData?.start_date ?? null,
+            targetSelection.eventData?.end_date ?? null
+          )
+        : [];
+      const processPath =
+        targetSelection && enrichedPath.length > 0
+          ? {
+              amendment_id: amendmentId,
+              amendment_title: title.trim(),
+              amendment_reason: null,
+              enriched_path: enrichedPath,
+              source_group_id: targetSelection.sourceGroupId,
+              workflow_id: targetSelection.workflowId,
+              path_mode: targetSelection.pathMode,
+              evaluation_mode: evaluationMode,
+              evaluation_date:
+                evaluationMode === 'fixed_date' && evaluationDate
+                  ? new Date(`${evaluationDate}T00:00:00`).getTime()
+                  : null,
+              evaluation_offset_months:
+                evaluationMode === 'relative_to_vote'
+                  ? Number.parseInt(evaluationOffsetMonths, 10) || 0
+                  : null,
+              evaluation_offset_years:
+                evaluationMode === 'relative_to_vote'
+                  ? Number.parseInt(evaluationOffsetYears, 10) || 0
+                  : null,
+            }
+          : null;
+      const createAmendmentPayload = {
+        amendment: {
           id: amendmentId,
+          title: title.trim(),
+          code: subtitle || null,
+          reason: null,
+          category: null,
+          preamble: null,
+          group_id: normalizedGroupId,
+          event_id: normalizedEventId,
+          clone_source_id: null,
+          document_id: null,
+          tags: hashtags.length > 0 ? hashtags : null,
+          visibility,
+          discussions: null,
+          image_url: imageURL || null,
+          x: null,
+          youtube: null,
+          linkedin: null,
+          website: null,
+        },
+        document: {
+          id: documentId,
+          amendment_id: amendmentId,
+          content: [
+            { type: 'h1', children: [{ text: title.trim() }] },
+            { type: 'p', children: [{ text: '' }] },
+          ],
+          editing_mode: 'edit',
+        },
+        document_collaborator: {
+          id: crypto.randomUUID(),
           document_id: documentId,
-        }),
-        serverConfirmed(addCollaboratorResult),
-      ]);
+          user_id: user.id,
+          role_id: null,
+          status: 'active',
+          visibility: 'public',
+        },
+        hashtags,
+        process_path: processPath,
+      };
+      const amendmentTarget = createRouteSubmitTarget('amendment', {
+        to: '/amendment/$id',
+        params: { id: amendmentId },
+      });
+      const createAmendmentResult = createFullAmendment(createAmendmentPayload);
+      await waitForOptimisticCreate(createAmendmentResult);
 
-      if (hashtags.length > 0) {
-        await commonActions.syncEntityHashtags(
-          'amendment',
-          amendmentId,
-          hashtags,
-          [],
-          allHashtags ?? []
-        );
-      }
-
-      // Create amendment path with agenda items and votes if target was selected
-      if (targetSelection?.pathWithEvents.length) {
-        const enrichedPath = enrichPathSegments(
-          targetSelection.pathWithEvents,
-          targetSelection.groupId,
-          targetSelection.eventId ?? '',
-          targetSelection.eventData?.title ?? null,
-          targetSelection.eventData?.start_date ?? null,
-          targetSelection.eventData?.end_date ?? null
-        );
-
-        await createAmendmentPath({
-          amendmentId,
-          amendmentTitle: title.trim(),
-          amendmentReason: null,
-          enrichedPath,
-          sourceGroupId: targetSelection.sourceGroupId,
-          workflowId: targetSelection.workflowId,
-          pathMode: targetSelection.pathMode,
-          evaluationMode,
-          evaluationDate:
-            evaluationMode === 'fixed_date' && evaluationDate
-              ? new Date(`${evaluationDate}T00:00:00`).getTime()
-              : null,
-          evaluationOffsetMonths:
-            evaluationMode === 'relative_to_vote'
-              ? Number.parseInt(evaluationOffsetMonths, 10) || 0
-              : null,
-          evaluationOffsetYears:
-            evaluationMode === 'relative_to_vote'
-              ? Number.parseInt(evaluationOffsetYears, 10) || 0
-              : null,
-        });
-      }
-
+      context?.setRecoveryTarget(amendmentTarget);
+      context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
+      trackCreateFinalization({
+        result: createAmendmentResult,
+        draft: {
+          id: `amendment:${amendmentId}`,
+          entityType: 'amendment',
+          entityId: amendmentId,
+          createPath: '/create/amendment',
+          formState: {
+            title,
+            subtitle,
+            imageURL,
+            visibility,
+            hashtags,
+            targetSelection,
+            pathMode,
+            workflowId,
+            evaluationMode,
+            evaluationDate,
+            evaluationOffsetMonths,
+            evaluationOffsetYears,
+          },
+          mutationPayload: createAmendmentPayload,
+          target: amendmentTarget,
+        },
+        retry: () => {
+          const retryResult = createFullAmendment(createAmendmentPayload);
+          trackCreateFinalization({
+            result: retryResult,
+            draft: {
+              id: `amendment:${amendmentId}`,
+              entityType: 'amendment',
+              entityId: amendmentId,
+              createPath: '/create/amendment',
+              formState: {
+                title,
+                subtitle,
+                imageURL,
+                visibility,
+                hashtags,
+                targetSelection,
+                pathMode,
+                workflowId,
+                evaluationMode,
+                evaluationDate,
+                evaluationOffsetMonths,
+                evaluationOffsetYears,
+              },
+              mutationPayload: createAmendmentPayload,
+              target: amendmentTarget,
+            },
+          });
+        },
+      });
       setIsSubmitting(false);
-      return createSuccessSubmitOutcome(
-        createRouteSubmitTarget('amendment', {
-          to: '/amendment/$id',
-          params: { id: amendmentId },
-        })
-      );
+      return createSuccessSubmitOutcome(amendmentTarget);
     } catch (error) {
       setIsSubmitting(false);
       throw error;

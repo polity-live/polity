@@ -27,6 +27,13 @@ export function useAmendmentActions() {
     [zero]
   );
 
+  const createFullAmendment = useCallback(
+    (args: Parameters<typeof mutators.amendments.createFull>[0]) => {
+      return zero.mutate(mutators.amendments.createFull(args));
+    },
+    [zero]
+  );
+
   const updateAmendment = useCallback(
     (args: Parameters<typeof mutators.amendments.update>[0]) => {
       const result = zero.mutate(mutators.amendments.update(args));
@@ -563,6 +570,7 @@ export function useAmendmentActions() {
   return {
     // CRUD
     createAmendment,
+    createFullAmendment,
     updateAmendment,
     deleteAmendment,
 

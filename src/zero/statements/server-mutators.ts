@@ -2,7 +2,12 @@ import { defineMutator } from '@rocicorp/zero';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
-import { createStatementSchema, updateStatementSchema } from './schema';
+import { syncEntityHashtagsForCreate } from '../common/server-hashtags';
+import {
+  createStatementFullMutatorSchema,
+  createStatementSchema,
+  updateStatementSchema,
+} from './schema';
 import { STATEMENT_STORY_DURATION_MS, cleanStatementString, getStatementHeadline } from './content';
 
 type StatementMutatorInput = Parameters<typeof mutators.statements.create.fn>[0];
@@ -86,6 +91,27 @@ export const statementServerMutators = {
           translateText('generated.inline.0529_new_statement_posted_06a106be')
         ),
     });
+  }),
+
+  createFull: defineMutator(createStatementFullMutatorSchema, async ({ tx, ctx, args }) => {
+    await statementServerMutators.create.fn({ tx, ctx, args: args.statement });
+    await syncEntityHashtagsForCreate(tx, ctx, 'statement', args.statement.id, args.hashtags);
+
+    if (args.survey) {
+      await mutators.statements.createSurvey.fn({
+        tx,
+        ctx,
+        args: args.survey.record,
+      });
+
+      for (const option of args.survey.options) {
+        await mutators.statements.createSurveyOption.fn({
+          tx,
+          ctx,
+          args: option,
+        });
+      }
+    }
   }),
 
   update: defineMutator(updateStatementSchema, async ({ tx, ctx, args }) => {

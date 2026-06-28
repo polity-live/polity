@@ -2,6 +2,8 @@ import { defineMutator } from '@rocicorp/zero';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
+import { documentServerMutators } from '../documents/server-mutators';
+import { syncEntityHashtagsForCreate } from '../common/server-hashtags';
 import {
   amendmentTitle,
   eventTitle,
@@ -31,6 +33,7 @@ import {
   replanProcessBranchEventsSchema,
   createProcessTaskSchema,
   updateAmendmentProcessBranchSchema,
+  createAmendmentFullMutatorSchema,
 } from './schema';
 import {
   createChangeRequestSchema,
@@ -974,6 +977,43 @@ export const amendmentServerMutators = {
 
     if (args.event_id) {
       await recomputeEventCounters(tx, args.event_id);
+    }
+  }),
+
+  createFull: defineMutator(createAmendmentFullMutatorSchema, async ({ tx, ctx, args }) => {
+    await amendmentServerMutators.create.fn({ tx, ctx, args: args.amendment });
+
+    await documentServerMutators.create.fn({
+      tx,
+      ctx,
+      args: args.document,
+    });
+
+    if (args.document_collaborator) {
+      await mutators.documents.addCollaborator.fn({
+        tx,
+        ctx,
+        args: args.document_collaborator,
+      });
+    }
+
+    await amendmentServerMutators.update.fn({
+      tx,
+      ctx,
+      args: {
+        id: args.amendment.id,
+        document_id: args.document.id,
+      },
+    });
+
+    await syncEntityHashtagsForCreate(tx, ctx, 'amendment', args.amendment.id, args.hashtags);
+
+    if (args.process_path) {
+      await amendmentServerMutators.initializeProcessPath.fn({
+        tx,
+        ctx,
+        args: args.process_path,
+      });
     }
   }),
 

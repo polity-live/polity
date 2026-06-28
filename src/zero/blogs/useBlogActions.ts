@@ -7,9 +7,7 @@ import { onServerError } from '../mutate-with-server-check';
 
 type ZeroMutationResult = ReturnType<ReturnType<typeof useZero>['mutate']>;
 
-interface BlogFullMutationArgs {
-  blog: Parameters<typeof mutators.blogs.create>[0];
-}
+type BlogFullMutationArgs = Parameters<typeof mutators.blogs.createFull>[0];
 
 interface BlogFullMutationResult {
   blogResult: ZeroMutationResult;
@@ -119,8 +117,7 @@ export function useBlogActions() {
   /** Full blog creation. The server-side create mutator bootstraps roles, rights, and owner entry. */
   const createBlogFull = useCallback(
     (args: BlogFullMutationArgs) => {
-      const blogResult = zero.mutate(mutators.blogs.create(args.blog));
-      onServerError(blogResult, msg => console.error('Failed to create blog:', msg));
+      const blogResult = zero.mutate(mutators.blogs.createFull(args));
 
       return {
         blogResult,

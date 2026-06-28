@@ -14,11 +14,9 @@ import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { EventTypeInput } from '../ui/inputs/EventTypeInput';
 import { type DelegateConfig } from '../ui/inputs/DelegateAllocationInput';
 import { useEventActions } from '@/zero/events/useEventActions';
-import { useCommonState, useCommonActions } from '@/zero/common';
+import { useCommonState } from '@/zero/common';
 import { useGroupById } from '@/zero/groups/useGroupState';
 import { useCreatableGroupIds } from '@/zero/rbac';
-import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { queries } from '@/zero/queries';
 import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
@@ -58,7 +56,6 @@ import {
 import { buildRRule, getRecurrenceDescription } from '@/features/events/logic/rruleHelpers';
 import { EventTimeSeriesSection } from '@/features/events/ui/EventTimeSeriesSection';
 import { type ElectionMode } from '@/features/elections/logic/electionMode';
-import { attachProcessTaskToEvent } from '@/features/amendments/logic/attachProcessTaskToEvent';
 import {
   getSchedulingWindowValidationMessage,
   getSchedulingWindowDisplayLabel,
@@ -71,6 +68,7 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
+import { trackCreateFinalization } from '../logic/createFinalization';
 
 type EventType = CreateEventType;
 type MeetingType = 'one-on-one' | 'public-meeting';
@@ -81,9 +79,7 @@ export function useCreateEventForm(): CreateFormConfig {
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as CreateEventSearch;
   const { user } = useAuth();
-  const { createEvent } = useEventActions();
-  const { completeProcessTaskWithEvent } = useAmendmentActions();
-  const commonActions = useCommonActions();
+  const { createFullEvent } = useEventActions();
   const prefilledSearch = useMemo(() => getCreateEventSearchDefaults(searchParams), [searchParams]);
   const groupIdParam = searchParams.groupId ?? '';
   const directProcessTaskId = searchParams.processTaskId ?? null;
@@ -146,9 +142,8 @@ export function useCreateEventForm(): CreateFormConfig {
     house_number: houseNumber,
   });
 
-  const { allHashtags, userHashtags } = useCommonState({
+  const { userHashtags } = useCommonState({
     user_id: user?.id,
-    loadAllHashtags: true,
   });
   const preferredHashtagSuggestions = useMemo(
     () => extractHashtagTags(userHashtags),
@@ -368,7 +363,7 @@ export function useCreateEventForm(): CreateFormConfig {
           delegatesNominationDeadline,
         });
 
-      const createEventResult = createEvent({
+      const eventPayload = {
         id: eventId,
         title: title.trim(),
         description: description ? toZeroRichTextValue(descriptionContent) : null,
@@ -418,14 +413,7 @@ export function useCreateEventForm(): CreateFormConfig {
                 delegateConfig.allocationMode === 'total' ? delegateConfig.totalDelegates : null,
             }
           : {}),
-      });
-      await serverConfirmed(createEventResult);
-      context?.reportProgress({ key: 'create', status: 'complete' });
-      context?.reportProgress({ key: 'sync', status: 'active' });
-
-      if (hashtags.length > 0) {
-        await commonActions.syncEntityHashtags('event', eventId, hashtags, [], allHashtags ?? []);
-      }
+      };
 
       const createdEvent = {
         id: eventId,
@@ -457,45 +445,96 @@ export function useCreateEventForm(): CreateFormConfig {
       });
 
       const attachedTaskIds = new Set<string>();
-      await Promise.all(
-        matchingProcessTasks
-          .filter(task => {
-            if (attachedTaskIds.has(task.id)) {
-              return false;
-            }
+      const processTaskCompletions = matchingProcessTasks
+        .filter(task => {
+          if (attachedTaskIds.has(task.id)) {
+            return false;
+          }
 
-            attachedTaskIds.add(task.id);
-            return true;
-          })
-          .map(task =>
-            attachProcessTaskToEvent({
-              task,
-              event: createdEvent,
-              description:
-                task.description?.trim() ||
-                t('pages.create.event.autoLinkedToNewEvent', { title: title.trim() }),
-              completeProcessTaskWithEvent,
-            })
-          )
-      );
+          attachedTaskIds.add(task.id);
+          return true;
+        })
+        .map(task => ({
+          process_task_id: task.id,
+          event_id: createdEvent.id,
+          description:
+            task.description?.trim() ||
+            t('pages.create.event.autoLinkedToNewEvent', { title: title.trim() }),
+        }));
+
+      const createEventPayload = {
+        event: eventPayload,
+        hashtags,
+        process_task_completions: processTaskCompletions,
+      };
+      const createEventResult = createFullEvent(createEventPayload);
+      await createEventResult.client;
+
+      context?.reportProgress({ key: 'create', status: 'complete' });
+      context?.reportProgress({ key: 'sync', status: 'active' });
 
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
 
       if (searchParams.returnTo) {
-        setIsSubmitting(false);
-        return createSuccessSubmitOutcome(
-          createReturnToSubmitTarget(searchParams.returnTo, t('pages.create.event.targetLabel'))
+        const target = createReturnToSubmitTarget(
+          searchParams.returnTo,
+          t('pages.create.event.targetLabel')
         );
+        trackCreateFinalization({
+          result: createEventResult,
+          draft: {
+            id: `event:${eventId}`,
+            entityType: 'event',
+            entityId: eventId,
+            createPath: '/create/event',
+            formState: {
+              title,
+              groupId,
+              eventType,
+              hashtags,
+              startDate,
+              startTime,
+              endDate,
+              endTime,
+              visibility: effectiveVisibility,
+            },
+            mutationPayload: createEventPayload,
+            target,
+          },
+        });
+        setIsSubmitting(false);
+        return createSuccessSubmitOutcome(target);
       }
 
+      const target = createRouteSubmitTarget('event', {
+        to: '/event/$id',
+        params: { id: eventId },
+      });
+      trackCreateFinalization({
+        result: createEventResult,
+        draft: {
+          id: `event:${eventId}`,
+          entityType: 'event',
+          entityId: eventId,
+          createPath: '/create/event',
+          formState: {
+            title,
+            groupId,
+            eventType,
+            hashtags,
+            startDate,
+            startTime,
+            endDate,
+            endTime,
+            visibility: effectiveVisibility,
+          },
+          mutationPayload: createEventPayload,
+          target,
+        },
+      });
       setIsSubmitting(false);
-      return createSuccessSubmitOutcome(
-        createRouteSubmitTarget('event', {
-          to: '/event/$id',
-          params: { id: eventId },
-        })
-      );
+      return createSuccessSubmitOutcome(target);
     } catch (error) {
       setIsSubmitting(false);
       throw error;

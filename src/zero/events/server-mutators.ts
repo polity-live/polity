@@ -2,6 +2,8 @@ import { defineMutator } from '@rocicorp/zero';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
+import { amendmentServerMutators } from '../amendments/server-mutators';
+import { syncEntityHashtagsForCreate } from '../common/server-hashtags';
 import {
   eventTitle,
   groupName,
@@ -28,6 +30,7 @@ import {
   eventParticipantRolesSyncSchema,
   eventUpdateSchema,
   eventCancelSchema,
+  eventFullCreateMutatorSchema,
   createEventRoleSchema,
   deleteEventRoleSchema,
   bookMeetingSchema,
@@ -593,6 +596,19 @@ export const eventServerMutators = {
         groupName: await groupName(tx, args.group_id),
         eventId: args.id,
         eventTitle: args.title,
+      });
+    }
+  }),
+
+  createFull: defineMutator(eventFullCreateMutatorSchema, async ({ tx, ctx, args }) => {
+    await eventServerMutators.create.fn({ tx, ctx, args: args.event });
+    await syncEntityHashtagsForCreate(tx, ctx, 'event', args.event.id, args.hashtags);
+
+    for (const completion of args.process_task_completions ?? []) {
+      await amendmentServerMutators.completeProcessTaskWithEvent.fn({
+        tx,
+        ctx,
+        args: completion,
       });
     }
   }),

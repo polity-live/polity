@@ -36,7 +36,7 @@ export function useGroupWikiPage(groupId: string) {
   } = useGroupMembership(groupId);
 
   // Fetch group data
-  const { group } = useGroupWikiData(groupId);
+  const { group, isLoading: groupLoading } = useGroupWikiData(groupId);
   const groupTypeFlags = getGroupTypeFlags(group);
 
   // ── Derived counts ────────────────────────────────────────────────
@@ -51,6 +51,7 @@ export function useGroupWikiPage(groupId: string) {
   return {
     // Group data
     group,
+    isLoading: groupLoading,
     canAccess,
     isAuthenticated: !!user,
 

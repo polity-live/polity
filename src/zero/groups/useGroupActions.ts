@@ -29,16 +29,12 @@ export function useGroupActions() {
       );
       return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const createFullGroup = useCallback(
     (args: Parameters<typeof mutators.groups.createFull>[0]) => {
-      const result = zero.mutate(mutators.groups.createFull(args));
-      onServerError(result, msg =>
-        handleMutationError(toMutationError(msg), t('features.groups.toasts.createFailed'), t)
-      );
-      return result;
+      return zero.mutate(mutators.groups.createFull(args));
     },
     [zero]
   );

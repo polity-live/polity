@@ -1,8 +1,13 @@
 import { useBlogState } from '@/zero/blogs/useBlogState';
+import {
+  useCreateRecoveryDraft,
+  type CreateRecoveryDraft,
+} from '@/features/create/logic/createFinalization';
 
 type ResolvedBlogRedirectTarget = 'detail' | 'notifications' | 'edit';
 type ResolvedBlogRedirectState =
   | { status: 'loading' }
+  | { status: 'recovery'; draft: CreateRecoveryDraft }
   | {
       status: 'group';
       to:
@@ -30,16 +35,21 @@ export function useResolvedBlogRedirectController({
   blogId,
   target = 'detail',
 }: UseResolvedBlogRedirectControllerProps): ResolvedBlogRedirectState {
+  const recoveryDraft = useCreateRecoveryDraft('blog', blogId);
   const { blogWithBloggers, isLoading } = useBlogState({
     blogId,
     includeBloggers: true,
   });
 
+  const blog = blogWithBloggers;
+  if (!blog && recoveryDraft) {
+    return { status: 'recovery', draft: recoveryDraft };
+  }
+
   if (isLoading) {
     return { status: 'loading' };
   }
 
-  const blog = blogWithBloggers;
   const ownerId =
     blog?.bloggers?.find(blogger => blogger.status === 'owner')?.user?.id ??
     blog?.bloggers?.[0]?.user?.id;

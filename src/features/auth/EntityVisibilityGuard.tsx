@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { RouteVisibilityInput } from '@/features/auth/logic/routeVisibilityAccess';
+import type { CreateRecoveryDraft } from '@/features/create/logic/createFinalization';
 import { useEntityVisibilityGuardController } from './hooks/useEntityVisibilityGuardController';
 import { EntityVisibilityGuardView } from './EntityVisibilityGuardView';
 
@@ -10,6 +11,7 @@ interface EntityVisibilityGuardProps {
   isLoading: boolean;
   visibilities: RouteVisibilityInput[];
   canAccessPrivate?: boolean;
+  recoveryDraft?: CreateRecoveryDraft | null;
 }
 
 export function EntityVisibilityGuard({
@@ -19,6 +21,7 @@ export function EntityVisibilityGuard({
   isLoading,
   visibilities,
   canAccessPrivate = false,
+  recoveryDraft = null,
 }: EntityVisibilityGuardProps) {
   return (
     <EntityVisibilityGuardView
@@ -28,6 +31,7 @@ export function EntityVisibilityGuard({
         isLoading,
         visibilities,
         canAccessPrivate,
+        recoveryDraft,
       })}
     >
       {children}

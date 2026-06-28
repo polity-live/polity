@@ -1,5 +1,7 @@
 import { z } from 'zod';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { timestampSchema, jsonSchema } from '../shared/helpers';
+import { createTimelineEventSchema } from '../common/schema';
 
 // ============================================
 // Blog Zod Schemas
@@ -37,6 +39,12 @@ export const createBlogSchema = baseBlogSchema
     supporter_count: true,
   })
   .extend({ id: z.string() });
+
+export const createBlogFullSchema = z.object({
+  blog: createBlogSchema,
+  hashtags: z.array(z.string()).optional(),
+  timeline_event: createTimelineEventSchema.nullable().optional(),
+});
 
 export const updateBlogSchema = baseBlogSchema
   .pick({
@@ -88,4 +96,9 @@ export const deleteBlogBloggerSchema = z.object({ id: z.string() });
 // ============================================
 
 export type Blog = z.infer<typeof selectBlogSchema>;
+export type BlogFullCreateInput = z.infer<typeof createBlogFullSchema>;
+export const createBlogFullMutatorSchema = createBlogFullSchema as StandardSchemaV1<
+  BlogFullCreateInput,
+  BlogFullCreateInput
+>;
 export type BlogBlogger = z.infer<typeof selectBlogBloggerSchema>;

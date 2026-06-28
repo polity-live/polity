@@ -1,9 +1,12 @@
 import { Navigate } from '@tanstack/react-router';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import type { CreateRecoveryDraft } from '@/features/create/logic/createFinalization';
+import { CreateRecoveryState } from '@/features/create/ui/CreateRecoveryState';
 import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
 
 type ResolvedBlogRedirectViewProps =
   | { status: 'loading' }
+  | { status: 'recovery'; draft: CreateRecoveryDraft }
   | {
       status: 'group';
       to:
@@ -25,6 +28,10 @@ type ResolvedBlogRedirectViewProps =
 export function ResolvedBlogRedirectView(props: ResolvedBlogRedirectViewProps) {
   if (props.status === 'loading') {
     return <GlobalLoadingAnimation connectionStatus="connecting" />;
+  }
+
+  if (props.status === 'recovery') {
+    return <CreateRecoveryState draft={props.draft} />;
   }
 
   if (props.status === 'group' || props.status === 'user') {

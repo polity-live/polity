@@ -8,6 +8,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
+import { useCreateRecoveryDraft } from '@/features/create/logic/createFinalization';
 import type { CommentData } from '@/features/shared/ui/comments';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import type { VoteValue } from '@/features/shared/ui/voting';
@@ -73,6 +74,7 @@ export function useBlogDetailController({ blogId }: UseBlogDetailControllerOptio
   const { user } = useAuth();
   const { t } = useTranslation();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const recoveryDraft = useCreateRecoveryDraft('blog', blogId);
 
   const { canEdit: blogCanEdit, canDelete: blogCanDelete, isBlogger } = useBlogPermissions(blogId);
   const blogActions = useBlogActions();
@@ -242,6 +244,7 @@ export function useBlogDetailController({ blogId }: UseBlogDetailControllerOptio
         }
       : undefined,
     blogId,
+    recoveryDraft: blog ? null : recoveryDraft,
     bloggers: blog?.bloggers ?? [],
     canAccess: blog ? checkEntityAccess(blog.visibility, !!user, isBlogger) : true,
     canDelete,

@@ -25,6 +25,15 @@ export function useStatementActions() {
     [zero]
   );
 
+  const createFullStatement = useCallback(
+    (args: Parameters<typeof mutators.statements.createFull>[0]) => {
+      const result = zero.mutate(mutators.statements.createFull(args));
+      onServerError(result, () => toast.error(t('features.statements.toasts.createFailed')));
+      return result;
+    },
+    [zero, t]
+  );
+
   const updateStatement = useCallback(
     (args: Parameters<typeof mutators.statements.update>[0]) => {
       const result = zero.mutate(mutators.statements.update(args));
@@ -134,6 +143,7 @@ export function useStatementActions() {
   return {
     // CRUD
     createStatement,
+    createFullStatement,
     updateStatement,
     deleteStatement,
 

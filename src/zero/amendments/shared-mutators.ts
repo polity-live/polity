@@ -1,6 +1,7 @@
 import { defineMutator } from '@rocicorp/zero';
 import {
   createAmendmentSchema,
+  createAmendmentFullMutatorSchema,
   updateAmendmentSchema,
   deleteAmendmentSchema,
   createAmendmentCollaboratorSchema,
@@ -437,6 +438,10 @@ export const amendmentSharedMutators = {
       created_at: now,
       updated_at: now,
     });
+  }),
+
+  createFull: defineMutator(createAmendmentFullMutatorSchema, async ({ tx, ctx, args }) => {
+    await amendmentSharedMutators.create.fn({ tx, ctx, args: args.amendment });
   }),
 
   update: defineMutator(updateAmendmentSchema, async ({ tx, args }) => {

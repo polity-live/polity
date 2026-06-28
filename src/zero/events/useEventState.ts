@@ -633,15 +633,16 @@ export function useEventSubscribers(eventId?: string) {
 }
 
 export function useEventWikiData(eventId: string) {
-  const [events] = useQuery(queries.events.wikiData({ id: eventId }));
+  const [events, eventsResult] = useQuery(queries.events.wikiData({ id: eventId }));
 
-  const [agendaItemRows] = useQuery(queries.events.wikiAgendaItems({ eventId }));
+  const [agendaItemRows, agendaItemsResult] = useQuery(queries.events.wikiAgendaItems({ eventId }));
 
   return {
     event: events?.[0] ? mapEventRoles<EventWikiDataRow>(events[0]) : null,
     agendaItems: (agendaItemRows || []).map(item =>
       mapAgendaItemRoles<EventWikiAgendaItemRow>(item)
     ),
+    isLoading: eventsResult.type === 'unknown' || agendaItemsResult.type === 'unknown',
   };
 }
 

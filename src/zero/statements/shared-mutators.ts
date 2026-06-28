@@ -5,6 +5,7 @@ import { canReadVisibility, requireAuthenticated, requireOwner } from '../rbac/a
 import { PermissionError, isPermissionError } from '../rbac/errors';
 import {
   createStatementSchema,
+  createStatementFullMutatorSchema,
   updateStatementSchema,
   deleteStatementSchema,
   createStatementSurveySchema,
@@ -218,6 +219,10 @@ export const statementSharedMutators = {
       updated_at: now,
       created_at: now,
     });
+  }),
+
+  createFull: defineMutator(createStatementFullMutatorSchema, async ({ tx, ctx, args }) => {
+    await statementSharedMutators.create.fn({ tx, ctx, args: args.statement });
   }),
 
   // Update a statement

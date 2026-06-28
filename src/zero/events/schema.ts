@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import {
   timestampSchema,
   nullableTimestampSchema,
@@ -6,6 +7,7 @@ import {
   jsonSchema,
   jsonStringStringRecordSchema,
 } from '../shared/helpers';
+import { completeProcessTaskWithEventSchema } from '../amendments/schema';
 
 const nullableEventScheduleTimestampSchema = z.number().nullable();
 const attendanceModeSchema = z.enum(['online', 'hybrid', 'offline']);
@@ -118,6 +120,11 @@ export const eventCreateSchema = eventBaseSchema
     invited_user_ids: z.array(z.string()).optional(),
     debug_correlation_id: z.string().optional(),
   });
+export const eventFullCreateSchema = z.object({
+  event: eventCreateSchema,
+  hashtags: z.array(z.string()).optional(),
+  process_task_completions: z.array(completeProcessTaskWithEventSchema).optional(),
+});
 export const eventUpdateSchema = eventBaseSchema
   .pick({
     title: true,
@@ -177,6 +184,11 @@ export const eventCancelSchema = z.object({
   cancel_reason: z.string(),
 });
 export type Event = z.infer<typeof eventSelectSchema>;
+export type EventFullCreateInput = z.infer<typeof eventFullCreateSchema>;
+export const eventFullCreateMutatorSchema = eventFullCreateSchema as StandardSchemaV1<
+  EventFullCreateInput,
+  EventFullCreateInput
+>;
 export type EventUpdateInput = z.infer<typeof eventUpdateSchema>;
 
 // ── event_assembly_scope ─────────────────────────────────────────────

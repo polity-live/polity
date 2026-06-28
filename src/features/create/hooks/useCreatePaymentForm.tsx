@@ -20,6 +20,7 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
+import { trackCreateFinalization, waitForOptimisticCreate } from '../logic/createFinalization';
 
 interface CreatePaymentSearch {
   groupId?: string;
@@ -127,7 +128,7 @@ export function useCreatePaymentForm(): CreateFormConfig {
         receiver_user_id = entityId;
       }
 
-      await createPayment({
+      const paymentPayload = {
         id: paymentId,
         label: label.trim(),
         type,
@@ -136,28 +137,71 @@ export function useCreatePaymentForm(): CreateFormConfig {
         payer_group_id,
         receiver_user_id,
         receiver_group_id,
-      });
+      };
+      const paymentResult = createPayment(paymentPayload);
+      await waitForOptimisticCreate(paymentResult);
       toast.success(t('pages.create.success.created'));
       context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
 
-      if (returnSection === 'payments' && groupId) {
-        return createSuccessSubmitOutcome(
-          createRouteSubmitTarget('payment', {
-            to: '/group/$id/operation',
-            params: { id: groupId },
-            hash: returnSection,
-          })
-        );
-      }
+      const paymentTarget =
+        returnSection === 'payments' && groupId
+          ? createRouteSubmitTarget('payment', {
+              to: '/group/$id/operation',
+              params: { id: groupId },
+              hash: returnSection,
+            })
+          : createRouteSubmitTarget('payment', {
+              to: '/group/$id',
+              params: { id: groupId },
+            });
+      context?.setRecoveryTarget(paymentTarget);
+      trackCreateFinalization({
+        result: paymentResult,
+        draft: {
+          id: `payment:${paymentId}`,
+          entityType: 'payment',
+          entityId: paymentId,
+          createPath: '/create/payment',
+          formState: {
+            groupId,
+            direction,
+            label,
+            type,
+            amount,
+            entityId,
+            returnSection,
+          },
+          mutationPayload: paymentPayload,
+          target: paymentTarget,
+        },
+        retry: () => {
+          const retryResult = createPayment(paymentPayload);
+          trackCreateFinalization({
+            result: retryResult,
+            draft: {
+              id: `payment:${paymentId}`,
+              entityType: 'payment',
+              entityId: paymentId,
+              createPath: '/create/payment',
+              formState: {
+                groupId,
+                direction,
+                label,
+                type,
+                amount,
+                entityId,
+                returnSection,
+              },
+              mutationPayload: paymentPayload,
+              target: paymentTarget,
+            },
+          });
+        },
+      });
 
-      return createSuccessSubmitOutcome(
-        createRouteSubmitTarget('payment', {
-          to: '/group/$id',
-          params: { id: groupId },
-        })
-      );
+      return createSuccessSubmitOutcome(paymentTarget);
     } catch (error) {
       toast.error(t('pages.create.error.createFailed'));
       throw error;

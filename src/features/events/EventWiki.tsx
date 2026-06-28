@@ -6,6 +6,9 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { useEventWikiPage } from './hooks/useEventWikiPage';
 import { AccessDenied as AccessDeniedView } from '@/features/auth/ui/AccessDenied';
+import { useCreateRecoveryDraft } from '@/features/create/logic/createFinalization';
+import { CreateRecoveryState } from '@/features/create/ui/CreateRecoveryState';
+import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
 import { MeetingPage as MeetingPageView } from '@/features/meet/MeetingPage';
 import { EventWikiContentView } from './EventWikiContentView';
@@ -33,6 +36,7 @@ function EventWikiNotFoundView() {
 
 export function EventWiki({ eventId }: EventWikiProps) {
   const { t } = useTranslation();
+  const recoveryDraft = useCreateRecoveryDraft('event', eventId);
   const {
     user,
     canAccess,
@@ -42,6 +46,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
     isLoading: subscribeLoading,
     participation,
     event,
+    isLoading,
     agendaStats,
     elections,
     electionsDialogOpen,
@@ -57,6 +62,14 @@ export function EventWiki({ eventId }: EventWikiProps) {
   } = useEventWikiPage(eventId);
 
   if (!event) {
+    if (recoveryDraft) {
+      return <CreateRecoveryState draft={recoveryDraft} />;
+    }
+
+    if (isLoading) {
+      return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    }
+
     return <EventWikiNotFoundView />;
   }
 

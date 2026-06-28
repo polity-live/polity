@@ -1,5 +1,9 @@
 import { z } from 'zod';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { timestampSchema, nullableTimestampSchema } from '../shared/helpers';
+import { createElectionSchema } from '../elections/schema';
+import { roleCreateSchema } from '../groups/schema';
+import { createVoteChoiceSchema, createVoteSchema } from '../votes/schema';
 
 // ============================================
 // Agenda Item
@@ -32,6 +36,19 @@ export const selectAgendaItemSchema = baseAgendaItemSchema;
 export const createAgendaItemSchema = baseAgendaItemSchema
   .omit({ id: true, created_at: true, updated_at: true, creator_id: true })
   .extend({ id: z.string() });
+export const createAgendaItemFullSchema = z.object({
+  roles: z.array(roleCreateSchema).optional(),
+  agenda_items: z.array(createAgendaItemSchema).min(1),
+  elections: z.array(createElectionSchema).optional(),
+  votes: z
+    .array(
+      z.object({
+        vote: createVoteSchema,
+        choices: z.array(createVoteChoiceSchema).optional(),
+      })
+    )
+    .optional(),
+});
 export const updateAgendaItemSchema = baseAgendaItemSchema
   .pick({
     title: true,
@@ -182,5 +199,10 @@ export const processCRVoteResultSchema = z.object({
 // Inferred Types
 // ============================================
 export type AgendaItem = z.infer<typeof selectAgendaItemSchema>;
+export type AgendaItemFullCreateInput = z.infer<typeof createAgendaItemFullSchema>;
+export const createAgendaItemFullMutatorSchema = createAgendaItemFullSchema as StandardSchemaV1<
+  AgendaItemFullCreateInput,
+  AgendaItemFullCreateInput
+>;
 export type SpeakerList = z.infer<typeof selectSpeakerListSchema>;
 export type AgendaItemChangeRequest = z.infer<typeof selectAgendaItemChangeRequestSchema>;

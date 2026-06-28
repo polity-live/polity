@@ -12,7 +12,7 @@ function UserBlogLayout() {
   const { entryId, id } = Route.useParams();
   const zeroReady = useZeroReady();
   useBlogRouteFamilyPreloads(entryId);
-  const { data, isLoading, error } = useEntityRouteAccess({
+  const { data, isLoading, error, recoveryDraft } = useEntityRouteAccess({
     entityType: 'blog',
     entityId: entryId,
     parentType: 'user',
@@ -26,6 +26,7 @@ function UserBlogLayout() {
       isLoading={isLoading || (data?.exists === true && !zeroReady)}
       visibilities={data?.visibilities ?? []}
       canAccessPrivate={data?.canAccessPrivate ?? false}
+      recoveryDraft={recoveryDraft}
     >
       <Outlet />
     </EntityVisibilityGuard>

@@ -25,6 +25,15 @@ export function useAgendaActions() {
     [t, zero]
   );
 
+  const createFullAgendaItem = useCallback(
+    (args: Parameters<typeof mutators.agendas.createFull>[0]) => {
+      const result = zero.mutate(mutators.agendas.createFull(args));
+      onServerError(result, () => toast.error(t('common.agendaToasts.itemCreateFailed')));
+      return result;
+    },
+    [t, zero]
+  );
+
   const updateAgendaItem = useCallback(
     (args: Parameters<typeof mutators.agendas.updateAgendaItem>[0]) => {
       const result = zero.mutate(mutators.agendas.updateAgendaItem(args));
@@ -172,6 +181,7 @@ export function useAgendaActions() {
   return {
     // Agenda items
     createAgendaItem,
+    createFullAgendaItem,
     updateAgendaItem,
     deleteAgendaItem,
     reorderAgendaItems,

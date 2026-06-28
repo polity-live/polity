@@ -4,6 +4,7 @@ import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
+import type { TodoUpdateInput } from './schema';
 
 /**
  * Action hook for todo mutations.
@@ -20,12 +21,22 @@ export function useTodoActions() {
       const result = zero.mutate(mutators.todos.create(args));
       toast.success(t('features.todos.toasts.created'));
       onServerError(result, () => toast.error(t('features.todos.toasts.createFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
+  );
+
+  const createFullTodo = useCallback(
+    (args: Parameters<typeof mutators.todos.createFull>[0]) => {
+      const result = zero.mutate(mutators.todos.createFull(args));
+      onServerError(result, () => toast.error(t('features.todos.toasts.createFailed')));
+      return result;
+    },
+    [zero, t]
   );
 
   const updateTodo = useCallback(
-    (args: Parameters<typeof mutators.todos.update>[0]) => {
+    (args: TodoUpdateInput) => {
       const result = zero.mutate(mutators.todos.update(args));
       onServerError(result, () => toast.error(t('features.todos.toasts.updateFailed')));
     },
@@ -71,6 +82,7 @@ export function useTodoActions() {
 
   return {
     createTodo,
+    createFullTodo,
     updateTodo,
     deleteTodo,
     toggleComplete,

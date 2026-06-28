@@ -1,6 +1,7 @@
 import { defineMutator } from '@rocicorp/zero';
 import {
   createAgendaItemSchema,
+  createAgendaItemFullMutatorSchema,
   updateAgendaItemSchema,
   deleteAgendaItemSchema,
   reorderAgendaItemsSchema,
@@ -250,6 +251,12 @@ export const agendaSharedMutators = {
       created_at: now,
       updated_at: now,
     });
+  }),
+
+  createFull: defineMutator(createAgendaItemFullMutatorSchema, async ({ tx, ctx, args }) => {
+    for (const agendaItem of args.agenda_items) {
+      await agendaSharedMutators.createAgendaItem.fn({ tx, ctx, args: agendaItem });
+    }
   }),
 
   // Update an agenda item

@@ -1,5 +1,7 @@
 import { z } from 'zod';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { timestampSchema, nullableTimestampSchema, jsonStringArraySchema } from '../shared/helpers';
+import { createTimelineEventSchema } from '../common/schema';
 
 // ============================================
 // Todo
@@ -59,8 +61,22 @@ export const createTodoAssignmentSchema = baseTodoAssignmentSchema
   .extend({ id: z.string() });
 export const deleteTodoAssignmentSchema = z.object({ id: z.string() });
 
+export const createTodoFullSchema = z.object({
+  todo: createTodoSchema,
+  assignment: createTodoAssignmentSchema.nullable().optional(),
+  timeline_event: createTimelineEventSchema.nullable().optional(),
+});
+
 // ============================================
 // Inferred Types
 // ============================================
 export type Todo = z.infer<typeof selectTodoSchema>;
+export type TodoUpdateInput = Omit<z.input<typeof updateTodoSchema>, 'tags'> & {
+  tags?: string[] | null;
+};
 export type TodoAssignment = z.infer<typeof selectTodoAssignmentSchema>;
+export type TodoFullCreateInput = z.infer<typeof createTodoFullSchema>;
+export const createTodoFullMutatorSchema = createTodoFullSchema as StandardSchemaV1<
+  TodoFullCreateInput,
+  TodoFullCreateInput
+>;

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearch } from '@tanstack/react-router';
-import { useQuery, useZero } from '@rocicorp/zero/react';
+import { useQuery } from '@rocicorp/zero/react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAuth } from '@/providers/auth-provider';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
@@ -31,8 +31,6 @@ import {
   buildOpenAssignments,
   getRemainingSeatCount,
 } from '@/features/groups/logic/openAssignments';
-import { mutators } from '@/zero/mutators';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { VOTE_PHASE, VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
 import {
   buildDelegateElectionAgendaItemDescription,
@@ -63,15 +61,21 @@ import {
   defaultVoteBallotVisibility,
   type BallotVisibility,
 } from '@/zero/shared';
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import type { AgendaItemFullCreateInput } from '@/zero/agendas/schema';
 import {
   createBlockedSubmitOutcome,
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
 import { getCreateSelectableEventIds } from '../logic/createEligibility';
+import { trackCreateFinalization, waitForOptimisticCreate } from '../logic/createFinalization';
 
 type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion' | 'accreditation';
 type MajorityType = 'simple' | 'absolute' | 'two_thirds';
+type AgendaItemCreateInput = AgendaItemFullCreateInput['agenda_items'][number];
+type AgendaElectionCreateInput = NonNullable<AgendaItemFullCreateInput['elections']>[number];
+type AgendaRoleCreateInput = NonNullable<AgendaItemFullCreateInput['roles']>[number];
 
 interface CreateAgendaItemSearch {
   eventId?: string;
@@ -93,7 +97,7 @@ function parsePositiveInteger(value: string) {
 
 export function useCreateAgendaItemForm(): CreateFormConfig {
   const { t } = useTranslation();
-  const zero = useZero();
+  const { createFullAgendaItem } = useAgendaActions();
   const { user } = useAuth();
   const searchParams = useSearch({ strict: false }) as CreateAgendaItemSearch;
 
@@ -388,41 +392,40 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   const roleRenewalRoleTitle =
     roleRenewalRole?.name || roleRenewalAssignment?.title || roleRenewalAssignment?.roleId || '';
 
-  const createAgendaItemRecord = async (args: {
+  const createAgendaItemRecord = (args: {
     agendaItemId: string;
     title: string;
     description: string;
     orderIndex: number;
     eventId: string;
     isVotable: boolean;
-  }) => {
-    await serverConfirmed(
-      zero.mutate(
-        mutators.agendas.createAgendaItem({
-          id: args.agendaItemId,
-          title: args.title,
-          description: args.description,
-          type,
-          order_index: args.orderIndex,
-          duration: duration ? parseInt(duration, 10) : 0,
-          status: 'pending',
-          forwarding_status: '',
-          scheduled_time: '',
-          start_time: 0,
-          end_time: 0,
-          activated_at: 0,
-          completed_at: 0,
-          event_id: args.eventId,
-          amendment_id: amendmentId || null,
-          voting_phase: args.isVotable ? 'indicative' : null,
-          majority_type: args.isVotable ? majorityType : null,
-          time_limit: args.isVotable && timeLimit ? parseInt(timeLimit, 10) * 60 : null,
-        })
-      )
-    );
+  }): AgendaItemCreateInput => {
+    return {
+      id: args.agendaItemId,
+      title: args.title,
+      description: args.description,
+      type,
+      order_index: args.orderIndex,
+      duration: duration ? parseInt(duration, 10) : 0,
+      status: 'pending',
+      forwarding_status: '',
+      scheduled_time: '',
+      start_time: 0,
+      end_time: 0,
+      activated_at: 0,
+      completed_at: 0,
+      event_id: args.eventId,
+      amendment_id: amendmentId || null,
+      voting_phase: args.isVotable ? 'indicative' : null,
+      majority_type: args.isVotable ? majorityType : null,
+      time_limit: args.isVotable && timeLimit ? parseInt(timeLimit, 10) * 60 : null,
+    };
   };
 
-  const createStandardElection = async (agendaItemId: string, correlationId: string) => {
+  const createStandardElection = (
+    agendaItemId: string,
+    correlationId: string
+  ): AgendaElectionCreateInput => {
     const electionId = crypto.randomUUID();
 
     logElectionFlowClient('agenda-election-create', 'create-election-mutation-started', {
@@ -433,38 +436,29 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       seatCount: resolvedSeatCount,
     });
 
-    const createElectionResult = zero.mutate(
-      mutators.elections.createElection({
-        id: electionId,
-        title: title.trim(),
-        description: description.trim() || null,
-        status: 'indicative',
-        majority_type: majorityType,
-        closing_type: null,
-        closing_duration_seconds: null,
-        closing_end_time: null,
-        visibility: 'public',
-        ballot_visibility: ballotVisibility,
-        agenda_item_id: agendaItemId,
-        role_id: roleId || null,
-        election_mode: resolvedElectionMode,
-        seat_count: resolvedSeatCount,
-        max_votes: deriveElectionMaxVotes(resolvedElectionMode, resolvedSeatCount),
-        debug_correlation_id: correlationId,
-      })
-    );
-    await serverConfirmed(createElectionResult);
-
-    logElectionFlowClient('agenda-election-create', 'create-election-mutation-confirmed', {
-      correlationId,
-      agendaItemId,
-      electionId,
-      electionMode: resolvedElectionMode,
-      seatCount: resolvedSeatCount,
-    });
+    return {
+      id: electionId,
+      title: title.trim(),
+      description: description.trim() || null,
+      status: 'indicative',
+      majority_type: majorityType,
+      closing_type: null,
+      closing_duration_seconds: null,
+      closing_end_time: 0,
+      visibility: 'public',
+      ballot_visibility: ballotVisibility,
+      agenda_item_id: agendaItemId,
+      role_id: roleId || null,
+      election_mode: resolvedElectionMode,
+      seat_count: resolvedSeatCount,
+      max_votes: deriveElectionMaxVotes(resolvedElectionMode, resolvedSeatCount),
+      debug_correlation_id: correlationId,
+    };
   };
 
-  const createDelegateAssignmentElection = async (correlationId: string) => {
+  const createDelegateAssignmentElection = (
+    correlationId: string
+  ): Pick<AgendaItemFullCreateInput, 'roles' | 'agenda_items' | 'elections'> => {
     if (
       !delegateAssignment?.targetEvent?.id ||
       !delegateAssignment.targetEvent.group?.id ||
@@ -496,6 +490,8 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       mode: resolvedElectionMode,
     });
 
+    const roles: AgendaRoleCreateInput[] = [];
+
     for (let index = 0; index < seatRoleIds.length; index++) {
       const seatRoleId = seatRoleIds[index];
       const seatNumber = existingSeatCount + index + 1;
@@ -507,34 +503,30 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         totalSeats: totalSeatCount,
       });
 
-      await serverConfirmed(
-        zero.mutate(
-          mutators.groups.createRole({
-            id: seatRoleId,
-            name: seatRoleInput.name,
-            description: seatRoleInput.description,
-            scope: 'group',
-            group_id: sourceGroupId,
-            event_id: null,
-            amendment_id: null,
-            blog_id: null,
-            assignment_mode: 'elected',
-            visibility: 'public',
-            term_start_date: null,
-            is_recurring: false,
-            recurrence_pattern: null,
-            recurrence_rule: null,
-            recurrence_interval: null,
-            recurrence_days: null,
-            recurrence_end_date: null,
-            scheduled_revote_date: null,
-            default_request_role: false,
-            default_invite_role: false,
-            assignee_kind: 'member',
-            sort_order: baseSortOrder + index,
-          })
-        )
-      );
+      roles.push({
+        id: seatRoleId,
+        name: seatRoleInput.name,
+        description: seatRoleInput.description,
+        scope: 'group',
+        group_id: sourceGroupId,
+        event_id: null,
+        amendment_id: null,
+        blog_id: null,
+        assignment_mode: 'elected',
+        visibility: 'public',
+        term_start_date: 0,
+        is_recurring: false,
+        recurrence_pattern: null,
+        recurrence_rule: null,
+        recurrence_interval: null,
+        recurrence_days: null,
+        recurrence_end_date: 0,
+        scheduled_revote_date: 0,
+        default_request_role: false,
+        default_invite_role: false,
+        assignee_kind: 'member',
+        sort_order: baseSortOrder + index,
+      });
     }
 
     logElectionFlowClient('delegate-assignment-create', 'seat-role-fanout-confirmed', {
@@ -547,129 +539,133 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       const agendaItemId = crypto.randomUUID();
       const electionId = crypto.randomUUID();
 
-      await createAgendaItemRecord({
-        agendaItemId,
-        title:
-          title.trim() ||
-          buildDelegateElectionAgendaItemTitle({
-            mode: 'list',
-            targetEventTitle: delegateAssignment.targetEvent.title,
+      return {
+        roles,
+        agenda_items: [
+          createAgendaItemRecord({
+            agendaItemId,
+            title:
+              title.trim() ||
+              buildDelegateElectionAgendaItemTitle({
+                mode: 'list',
+                targetEventTitle: delegateAssignment.targetEvent.title,
+              }),
+            description:
+              description.trim() ||
+              buildDelegateElectionAgendaItemDescription({
+                mode: 'list',
+                seatCount: delegateSeatCount,
+                totalSeatCount,
+              }),
+            orderIndex: resolvedOrder,
+            eventId,
+            isVotable: true,
           }),
-        description:
-          description.trim() ||
-          buildDelegateElectionAgendaItemDescription({
-            mode: 'list',
-            seatCount: delegateSeatCount,
-            totalSeatCount,
-          }),
-        orderIndex: resolvedOrder,
-        eventId,
-        isVotable: true,
-      });
-
-      const createElectionResult = zero.mutate(
-        mutators.elections.createElection({
-          id: electionId,
-          agenda_item_id: agendaItemId,
-          role_id: seatRoleIds[0] ?? null,
-          title:
-            title.trim() ||
-            buildDelegateElectionRecordTitle({
-              mode: 'list',
-              targetEventTitle: delegateAssignment.targetEvent.title,
-            }),
-          description: buildDelegateElectionRecordDescription({
-            sourceGroupId,
-            sourceGroupName: sourceGroup?.name,
-            targetGroupId: delegateAssignment.targetEvent.group.id,
-            targetEventId: delegateAssignment.targetEvent.id,
-            targetEventTitle: delegateAssignment.targetEvent.title,
-            seatRoleIds,
-            allSeatRoleIds,
-            mode: 'list',
-          }),
-          status: 'indicative',
-          majority_type: majorityType,
-          closing_type: null,
-          closing_duration_seconds: null,
-          closing_end_time: null,
-          visibility: 'public',
-          ballot_visibility: ballotVisibility,
-          election_mode: 'list',
-          seat_count: delegateSeatCount,
-          max_votes: deriveElectionMaxVotes('list', delegateSeatCount),
-          debug_correlation_id: correlationId,
-        })
-      );
-      await serverConfirmed(createElectionResult);
-    } else {
-      for (let index = 0; index < seatRoleIds.length; index++) {
-        const seatRoleId = seatRoleIds[index];
-        const seatNumber = existingSeatCount + index + 1;
-        const agendaItemId = crypto.randomUUID();
-        const electionId = crypto.randomUUID();
-
-        await createAgendaItemRecord({
-          agendaItemId,
-          title: buildDelegateElectionAgendaItemTitle({
-            mode: 'single',
-            targetEventTitle: delegateAssignment.targetEvent.title,
-            seatNumber,
-          }),
-          description: buildDelegateElectionAgendaItemDescription({
-            mode: 'single',
-            seatCount: 1,
-            totalSeatCount,
-            seatNumber,
-          }),
-          orderIndex: resolvedOrder + index,
-          eventId,
-          isVotable: true,
-        });
-
-        const createElectionResult = zero.mutate(
-          mutators.elections.createElection({
+        ],
+        elections: [
+          {
             id: electionId,
             agenda_item_id: agendaItemId,
-            role_id: seatRoleId,
-            title: buildDelegateElectionRecordTitle({
-              mode: 'single',
-              targetEventTitle: delegateAssignment.targetEvent.title,
-              seatNumber,
-            }),
+            role_id: seatRoleIds[0] ?? null,
+            title:
+              title.trim() ||
+              buildDelegateElectionRecordTitle({
+                mode: 'list',
+                targetEventTitle: delegateAssignment.targetEvent.title,
+              }),
             description: buildDelegateElectionRecordDescription({
               sourceGroupId,
               sourceGroupName: sourceGroup?.name,
               targetGroupId: delegateAssignment.targetEvent.group.id,
               targetEventId: delegateAssignment.targetEvent.id,
               targetEventTitle: delegateAssignment.targetEvent.title,
-              seatRoleIds: [seatRoleId],
+              seatRoleIds,
               allSeatRoleIds,
-              mode: 'single',
+              mode: 'list',
             }),
             status: 'indicative',
             majority_type: majorityType,
             closing_type: null,
             closing_duration_seconds: null,
-            closing_end_time: null,
+            closing_end_time: 0,
             visibility: 'public',
             ballot_visibility: ballotVisibility,
-            election_mode: 'single',
-            seat_count: 1,
-            max_votes: 1,
+            election_mode: 'list',
+            seat_count: delegateSeatCount,
+            max_votes: deriveElectionMaxVotes('list', delegateSeatCount),
             debug_correlation_id: correlationId,
+          },
+        ],
+      };
+    } else {
+      const agendaItems: AgendaItemCreateInput[] = [];
+      const elections: AgendaElectionCreateInput[] = [];
+
+      for (let index = 0; index < seatRoleIds.length; index++) {
+        const seatRoleId = seatRoleIds[index];
+        const seatNumber = existingSeatCount + index + 1;
+        const agendaItemId = crypto.randomUUID();
+        const electionId = crypto.randomUUID();
+
+        agendaItems.push(
+          createAgendaItemRecord({
+            agendaItemId,
+            title: buildDelegateElectionAgendaItemTitle({
+              mode: 'single',
+              targetEventTitle: delegateAssignment.targetEvent.title,
+              seatNumber,
+            }),
+            description: buildDelegateElectionAgendaItemDescription({
+              mode: 'single',
+              seatCount: 1,
+              totalSeatCount,
+              seatNumber,
+            }),
+            orderIndex: resolvedOrder + index,
+            eventId,
+            isVotable: true,
           })
         );
-        await serverConfirmed(createElectionResult);
-      }
-    }
 
-    logElectionFlowClient('delegate-assignment-create', 'delegate-election-fanout-confirmed', {
-      correlationId,
-      createdSeatRoleIds: seatRoleIds,
-      mode: resolvedElectionMode,
-      createdAgendaItems: resolvedElectionMode === 'list' ? 1 : seatRoleIds.length,
-    });
+        elections.push({
+          id: electionId,
+          agenda_item_id: agendaItemId,
+          role_id: seatRoleId,
+          title: buildDelegateElectionRecordTitle({
+            mode: 'single',
+            targetEventTitle: delegateAssignment.targetEvent.title,
+            seatNumber,
+          }),
+          description: buildDelegateElectionRecordDescription({
+            sourceGroupId,
+            sourceGroupName: sourceGroup?.name,
+            targetGroupId: delegateAssignment.targetEvent.group.id,
+            targetEventId: delegateAssignment.targetEvent.id,
+            targetEventTitle: delegateAssignment.targetEvent.title,
+            seatRoleIds: [seatRoleId],
+            allSeatRoleIds,
+            mode: 'single',
+          }),
+          status: 'indicative',
+          majority_type: majorityType,
+          closing_type: null,
+          closing_duration_seconds: null,
+          closing_end_time: 0,
+          visibility: 'public',
+          ballot_visibility: ballotVisibility,
+          election_mode: 'single',
+          seat_count: 1,
+          max_votes: 1,
+          debug_correlation_id: correlationId,
+        });
+      }
+
+      return {
+        roles,
+        agenda_items: agendaItems,
+        elections,
+      };
+    }
   };
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
@@ -711,72 +707,86 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
     });
 
     try {
+      const agendaItems: AgendaItemCreateInput[] = [];
+      const elections: AgendaElectionCreateInput[] = [];
+      const roles: AgendaRoleCreateInput[] = [];
+      const votes: NonNullable<AgendaItemFullCreateInput['votes']> = [];
+
       if (isElectionType) {
         if (isDelegateAssignmentElection) {
-          await createDelegateAssignmentElection(correlationId);
+          const delegatePayload = createDelegateAssignmentElection(correlationId);
+          roles.push(...(delegatePayload.roles ?? []));
+          agendaItems.push(...delegatePayload.agenda_items);
+          elections.push(...(delegatePayload.elections ?? []));
         } else {
           const agendaItemId = crypto.randomUUID();
 
-          await createAgendaItemRecord({
+          agendaItems.push(
+            createAgendaItemRecord({
+              agendaItemId,
+              title: title.trim(),
+              description: description.trim() || '',
+              orderIndex: resolvedOrder,
+              eventId,
+              isVotable: true,
+            })
+          );
+          elections.push(createStandardElection(agendaItemId, correlationId));
+        }
+      } else {
+        const agendaItemId = crypto.randomUUID();
+
+        agendaItems.push(
+          createAgendaItemRecord({
             agendaItemId,
             title: title.trim(),
             description: description.trim() || '',
             orderIndex: resolvedOrder,
             eventId,
-            isVotable: true,
-          });
-          await createStandardElection(agendaItemId, correlationId);
-        }
-      } else {
-        const agendaItemId = crypto.randomUUID();
-
-        await createAgendaItemRecord({
-          agendaItemId,
-          title: title.trim(),
-          description: description.trim() || '',
-          orderIndex: resolvedOrder,
-          eventId,
-          isVotable: isVoteType,
-        });
+            isVotable: isVoteType,
+          })
+        );
 
         if (isVoteType) {
           const voteId = crypto.randomUUID();
-          await serverConfirmed(
-            zero.mutate(
-              mutators.votes.createVote({
-                id: voteId,
-                title: title.trim(),
-                description: description.trim() || null,
-                status: VOTE_PHASE.indicative,
-                purpose: VOTE_PURPOSE.closing,
-                majority_type: majorityType,
-                closing_type: 'moderator',
-                closing_duration_seconds: null,
-                closing_end_time: null,
-                visibility: 'public',
-                ballot_visibility: ballotVisibility,
-                agenda_item_id: agendaItemId,
-                amendment_id: amendmentId || null,
-              })
-            )
-          );
-
-          await Promise.all(
-            ['Yes', 'No', 'Abstain'].map((label, index) =>
-              serverConfirmed(
-                zero.mutate(
-                  mutators.votes.createVoteChoice({
-                    id: crypto.randomUUID(),
-                    vote_id: voteId,
-                    label,
-                    order_index: index + 1,
-                  })
-                )
-              )
-            )
-          );
+          votes.push({
+            vote: {
+              id: voteId,
+              title: title.trim(),
+              description: description.trim() || null,
+              status: VOTE_PHASE.indicative,
+              purpose: VOTE_PURPOSE.closing,
+              majority_type: majorityType,
+              closing_type: 'moderator',
+              closing_duration_seconds: null,
+              closing_end_time: 0,
+              visibility: 'public',
+              ballot_visibility: ballotVisibility,
+              agenda_item_id: agendaItemId,
+              amendment_id: amendmentId || null,
+            },
+            choices: ['Yes', 'No', 'Abstain'].map((label, index) => ({
+              id: crypto.randomUUID(),
+              vote_id: voteId,
+              label,
+              order_index: index + 1,
+            })),
+          });
         }
       }
+
+      const createAgendaPayload: AgendaItemFullCreateInput = {
+        agenda_items: agendaItems,
+        ...(roles.length > 0 ? { roles } : {}),
+        ...(elections.length > 0 ? { elections } : {}),
+        ...(votes.length > 0 ? { votes } : {}),
+      };
+      const agendaTarget = createRouteSubmitTarget('agenda_item', {
+        to: '/event/$id/agenda',
+        params: { id: eventId },
+      });
+      const createAgendaResult = createFullAgendaItem(createAgendaPayload);
+      await waitForOptimisticCreate(createAgendaResult);
 
       logElectionFlowClient(creationFlow, 'submit-confirmed', {
         correlationId,
@@ -790,13 +800,72 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       context?.reportProgress({ key: 'create', status: 'complete' });
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
+      context?.setRecoveryTarget(agendaTarget);
+      trackCreateFinalization({
+        result: createAgendaResult,
+        draft: {
+          id: `agenda_item:${agendaItems[0]?.id ?? correlationId}`,
+          entityType: 'agenda_item',
+          entityId: agendaItems[0]?.id ?? correlationId,
+          createPath: '/create/agenda-item',
+          formState: {
+            eventId,
+            type,
+            title,
+            description,
+            order,
+            hasCustomOrder,
+            duration,
+            amendmentId,
+            roleId,
+            majorityType,
+            timeLimit,
+            ballotVisibility,
+            electionMode,
+            seatCountInput,
+            assignmentId,
+            sourceGroupId,
+            targetEventId,
+          },
+          mutationPayload: createAgendaPayload,
+          target: agendaTarget,
+        },
+        retry: () => {
+          const retryResult = createFullAgendaItem(createAgendaPayload);
+          trackCreateFinalization({
+            result: retryResult,
+            draft: {
+              id: `agenda_item:${agendaItems[0]?.id ?? correlationId}`,
+              entityType: 'agenda_item',
+              entityId: agendaItems[0]?.id ?? correlationId,
+              createPath: '/create/agenda-item',
+              formState: {
+                eventId,
+                type,
+                title,
+                description,
+                order,
+                hasCustomOrder,
+                duration,
+                amendmentId,
+                roleId,
+                majorityType,
+                timeLimit,
+                ballotVisibility,
+                electionMode,
+                seatCountInput,
+                assignmentId,
+                sourceGroupId,
+                targetEventId,
+              },
+              mutationPayload: createAgendaPayload,
+              target: agendaTarget,
+            },
+          });
+        },
+      });
       setIsSubmitting(false);
-      return createSuccessSubmitOutcome(
-        createRouteSubmitTarget('agenda_item', {
-          to: '/event/$id/agenda',
-          params: { id: eventId },
-        })
-      );
+      return createSuccessSubmitOutcome(agendaTarget);
     } catch (error) {
       logElectionFlowClientError(creationFlow, 'submit-error', {
         correlationId,

@@ -1,6 +1,9 @@
 'use client';
 import { type VoteValue } from '@/features/shared/ui/voting';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { useCreateRecoveryDraft } from '@/features/create/logic/createFinalization';
+import { CreateRecoveryState } from '@/features/create/ui/CreateRecoveryState';
+import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
 import { useAmendmentWikiPage } from './hooks/useAmendmentWikiPage';
 import { SupporterDirectorySection } from './ui/SupporterDirectorySection';
 
@@ -10,6 +13,7 @@ interface AmendmentWikiProps {
 import { AmendmentWikiView } from './AmendmentWikiView';
 export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   const { t } = useTranslation();
+  const recoveryDraft = useCreateRecoveryDraft('amendment', amendmentId);
   const {
     user,
     canAccess,
@@ -19,6 +23,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     isLoading: subscribeLoading,
     collaboration,
     amendment,
+    isLoading,
     roles,
     collaborators,
     supporterDirectoryItems,
@@ -49,6 +54,15 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     handleConfirmClone,
     usersData,
   } = useAmendmentWikiPage(amendmentId);
+
+  if (!amendment && recoveryDraft) {
+    return <CreateRecoveryState draft={recoveryDraft} />;
+  }
+
+  if (!amendment && isLoading) {
+    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+  }
+
   const normalizedVoteValue: VoteValue =
     currentVoteValue === -1 ? -1 : currentVoteValue === 1 ? 1 : 0;
   const supporterDirectorySection = (

@@ -22,6 +22,7 @@ import { DEFAULT_GROUP_ROLES } from '../rbac/constants';
 import { reconcileGeneralAssemblyParticipantsForGroups } from '../events/assembly-reconcile';
 import { reconcileDelegateAllocationsForGroups } from '../events/delegate-allocation-reconcile';
 import { reconcileGroupGraph } from '../network/group-graph-reconcile';
+import { syncEntityHashtagsForCreate } from '../common/server-hashtags';
 import {
   groupCreateSchema,
   groupFullCreateMutatorSchema,
@@ -61,10 +62,6 @@ import {
   recomputeOfflineSiblingMembershipsForGroup,
 } from './offline-membership-helpers';
 import { assertNoBlockingGroupConflicts } from '@/server/group-conflict-validation';
-
-const normalizeHashtagTags = (tags: readonly string[] | undefined) => [
-  ...new Set((tags ?? []).map(tag => tag.trim()).filter(Boolean)),
-];
 
 async function addGroupMembershipRoleLink(
   tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
@@ -347,45 +344,6 @@ async function reconcileMembershipDrivenEventsForGroups(
   });
 }
 
-async function syncGroupHashtagsForCreate(
-  tx: GroupServerTx,
-  ctx: Parameters<typeof mutators.groups.create.fn>[0]['ctx'],
-  groupId: string,
-  hashtags: readonly string[] | undefined
-) {
-  for (const tag of normalizeHashtagTags(hashtags)) {
-    const existingHashtag = await tx.run(zql.hashtag.where('tag', tag).one());
-    const hashtagId = existingHashtag?.id ?? crypto.randomUUID();
-
-    if (!existingHashtag) {
-      await mutators.common.addHashtag.fn({
-        tx,
-        ctx,
-        args: {
-          id: hashtagId,
-          tag,
-        },
-      });
-    }
-
-    const existingLink = await tx.run(
-      zql.group_hashtag.where('group_id', groupId).where('hashtag_id', hashtagId).one()
-    );
-
-    if (!existingLink) {
-      await mutators.common.linkGroupHashtag.fn({
-        tx,
-        ctx,
-        args: {
-          id: crypto.randomUUID(),
-          group_id: groupId,
-          hashtag_id: hashtagId,
-        },
-      });
-    }
-  }
-}
-
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const groupServerMutators = {
   create: defineMutator(groupCreateSchema, async ({ tx, ctx, args }) => {
@@ -495,7 +453,7 @@ export const groupServerMutators = {
   createFull: defineMutator(groupFullCreateMutatorSchema, async ({ tx, ctx, args }) => {
     await groupServerMutators.create.fn({ tx, ctx, args: args.group });
 
-    await syncGroupHashtagsForCreate(tx, ctx, args.group.id, args.hashtags);
+    await syncEntityHashtagsForCreate(tx, ctx, 'group', args.group.id, args.hashtags);
 
     for (const userId of args.official_invite_user_ids ?? []) {
       await groupServerMutators.inviteMember.fn({

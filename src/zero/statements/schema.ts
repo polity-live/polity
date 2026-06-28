@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { timestampSchema } from '../shared/helpers';
 import {
   cleanStatementString,
@@ -135,6 +136,18 @@ export const createStatementSurveyOptionSchema = baseSurveyOptionSchema.omit({
 
 export const deleteStatementSurveyOptionSchema = z.object({ id: z.string() });
 
+export const createStatementFullSchema = z.object({
+  statement: createStatementSchema,
+  hashtags: z.array(z.string()).optional(),
+  survey: z
+    .object({
+      record: createStatementSurveySchema,
+      options: z.array(createStatementSurveyOptionSchema),
+    })
+    .nullable()
+    .optional(),
+});
+
 const baseSurveyVoteSchema = z.object({
   id: z.string(),
   option_id: z.string(),
@@ -156,6 +169,11 @@ export const deleteStatementSurveyVoteSchema = z.object({ id: z.string() });
 // ============================================
 
 export type Statement = z.infer<typeof selectStatementSchema>;
+export type StatementFullCreateInput = z.infer<typeof createStatementFullSchema>;
+export const createStatementFullMutatorSchema = createStatementFullSchema as StandardSchemaV1<
+  StatementFullCreateInput,
+  StatementFullCreateInput
+>;
 export type StatementSurvey = z.infer<typeof selectStatementSurveySchema>;
 export type StatementSurveyOption = z.infer<typeof selectStatementSurveyOptionSchema>;
 export type StatementSurveyVote = z.infer<typeof selectStatementSurveyVoteSchema>;

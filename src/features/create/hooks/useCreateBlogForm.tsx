@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
-import { useCommonState, useCommonActions } from '@/zero/common';
+import { useCommonState } from '@/zero/common';
 import { useGroupById } from '@/zero/groups/useGroupState';
 import { useCreatableGroupIds } from '@/zero/rbac';
 import {
@@ -15,8 +15,6 @@ import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
-import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import type { CreateFormConfig, CreateSubmitContext } from '../types/create-form.types';
 import {
@@ -24,6 +22,7 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
+import { trackCreateFinalization } from '../logic/createFinalization';
 
 interface CreateBlogSearch {
   groupId?: string;
@@ -36,10 +35,8 @@ export function useCreateBlogForm(): CreateFormConfig {
   const groupIdParam = searchParams.groupId ?? '';
   const { user } = useAuth();
   const { createBlogFull } = useBlogActions();
-  const commonActions = useCommonActions();
-  const { allHashtags, userHashtags } = useCommonState({
+  const { userHashtags } = useCommonState({
     user_id: user?.id,
-    loadAllHashtags: true,
   });
   const preferredHashtagSuggestions = useMemo(
     () => extractHashtagTags(userHashtags),
@@ -115,7 +112,7 @@ export function useCreateBlogForm(): CreateFormConfig {
     try {
       context?.reportProgress({ key: 'create', status: 'active' });
 
-      const createBlogResults = createBlogFull({
+      const createBlogPayload = {
         blog: {
           id: blogId,
           title: title.trim(),
@@ -132,52 +129,90 @@ export function useCreateBlogForm(): CreateFormConfig {
           discussions: null,
           group_id: groupId,
         },
-      });
-      await serverConfirmed(createBlogResults.blogResult);
-      context?.reportProgress({ key: 'create', status: 'complete' });
-      context?.reportProgress({ key: 'sync', status: 'active' });
-
-      await Promise.all([
-        hashtags.length > 0
-          ? commonActions.syncEntityHashtags('blog', blogId, hashtags, [], allHashtags ?? [])
-          : Promise.resolve(),
-        visibility === 'public'
-          ? createTimelineEvent({
-              data: {
-                eventType: 'created',
-                entityType: 'blog',
-                entityId: blogId,
-                actorId: user.id,
+        hashtags,
+        timeline_event:
+          visibility === 'public'
+            ? {
+                id: crypto.randomUUID(),
+                event_type: 'created',
+                entity_type: 'blog',
+                entity_id: blogId,
+                actor_id: user.id,
                 title: translateText('generated.inline.0055_new_blog_post_value2775_8f2fb838', {
                   value2775: title.trim(),
                 }),
                 description: translateText(
                   'generated.inline.0044_a_new_blog_post_has_been_published_055ff55e'
                 ),
-              },
-            })
-          : Promise.resolve(),
-      ]);
+                metadata: null,
+                image_url: imageURL || '',
+                video_url: '',
+                video_thumbnail_url: '',
+                content_type: 'blog',
+                tags: null,
+                stats: null,
+                vote_status: '',
+                election_status: '',
+                ends_at: 0,
+                user_id: null,
+                group_id: groupId || null,
+                amendment_id: null,
+                event_id: null,
+                todo_id: null,
+                blog_id: blogId,
+                statement_id: null,
+                election_id: null,
+                amendment_vote_id: null,
+              }
+            : null,
+      };
+      const createBlogResults = createBlogFull(createBlogPayload);
+      await createBlogResults.blogResult.client;
+      context?.reportProgress({ key: 'create', status: 'complete' });
+      context?.reportProgress({ key: 'sync', status: 'active' });
 
       toast.success(t('pages.create.success.created'));
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
       setIsSubmitting(false);
+
       if (groupId) {
-        return createSuccessSubmitOutcome(
-          createRouteSubmitTarget('blog', {
-            to: '/group/$id/blog/$entryId',
-            params: { id: groupId, entryId: blogId },
-          })
-        );
+        const target = createRouteSubmitTarget('blog', {
+          to: '/group/$id/blog/$entryId',
+          params: { id: groupId, entryId: blogId },
+        });
+        trackCreateFinalization({
+          result: createBlogResults.blogResult,
+          draft: {
+            id: `blog:${blogId}`,
+            entityType: 'blog',
+            entityId: blogId,
+            createPath: '/create/blog-entry',
+            formState: { title, date, imageURL, visibility, groupId, hashtags },
+            mutationPayload: createBlogPayload,
+            target,
+          },
+        });
+        return createSuccessSubmitOutcome(target);
       }
 
-      return createSuccessSubmitOutcome(
-        createRouteSubmitTarget('blog', {
-          to: '/user/$id/blog/$entryId',
-          params: { id: user.id, entryId: blogId },
-        })
-      );
+      const target = createRouteSubmitTarget('blog', {
+        to: '/user/$id/blog/$entryId',
+        params: { id: user.id, entryId: blogId },
+      });
+      trackCreateFinalization({
+        result: createBlogResults.blogResult,
+        draft: {
+          id: `blog:${blogId}`,
+          entityType: 'blog',
+          entityId: blogId,
+          createPath: '/create/blog-entry',
+          formState: { title, date, imageURL, visibility, groupId, hashtags },
+          mutationPayload: createBlogPayload,
+          target,
+        },
+      });
+      return createSuccessSubmitOutcome(target);
     } catch (error) {
       toast.error(t('pages.create.error.createFailed'));
       setIsSubmitting(false);

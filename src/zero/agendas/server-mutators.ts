@@ -4,6 +4,9 @@ import { zql } from '../schema';
 import { can } from '../rbac/can';
 import { isPermissionError } from '../rbac/errors';
 import { fireNotification } from '../server-notify';
+import { electionServerMutators } from '../elections/server-mutators';
+import { groupServerMutators } from '../groups/server-mutators';
+import { voteServerMutators } from '../votes/server-mutators';
 import { eventTitle, recomputeEventCounters, recomputeEventEndDate } from '../server-helpers';
 import { resolveChangeRequestByVoteResult } from '../change-requests/server-resolution';
 import { finalizeInternalChangeRequestsForEventPhaseTransition } from '../change-requests/internal-voting';
@@ -22,6 +25,7 @@ import {
 } from '../amendments/merge-vote-title';
 import {
   createAgendaItemSchema,
+  createAgendaItemFullMutatorSchema,
   deleteAgendaItemSchema,
   reorderAgendaItemsSchema,
   updateAgendaItemSchema,
@@ -312,6 +316,28 @@ export const agendaServerMutators = {
       eventTitle: eTitle,
       agendaItemTitle: args.title ?? 'Agenda Item',
     });
+  }),
+
+  createFull: defineMutator(createAgendaItemFullMutatorSchema, async ({ tx, ctx, args }) => {
+    for (const role of args.roles ?? []) {
+      await groupServerMutators.createRole.fn({ tx, ctx, args: role });
+    }
+
+    for (const agendaItem of args.agenda_items) {
+      await agendaServerMutators.createAgendaItem.fn({ tx, ctx, args: agendaItem });
+    }
+
+    for (const election of args.elections ?? []) {
+      await electionServerMutators.createElection.fn({ tx, ctx, args: election });
+    }
+
+    for (const voteWithChoices of args.votes ?? []) {
+      await voteServerMutators.createVote.fn({ tx, ctx, args: voteWithChoices.vote });
+
+      for (const choice of voteWithChoices.choices ?? []) {
+        await mutators.votes.createVoteChoice.fn({ tx, ctx, args: choice });
+      }
+    }
   }),
 
   deleteAgendaItem: defineMutator(deleteAgendaItemSchema, async ({ tx, ctx, args }) => {

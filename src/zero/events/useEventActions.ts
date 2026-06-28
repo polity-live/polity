@@ -28,6 +28,13 @@ export function useEventActions() {
     [zero]
   );
 
+  const createFullEvent = useCallback(
+    (args: Parameters<typeof mutators.events.createFull>[0]) => {
+      return zero.mutate(mutators.events.createFull(args));
+    },
+    [zero]
+  );
+
   const updateEvent = useCallback(
     (args: Parameters<typeof mutators.events.update>[0]) => {
       const result = zero.mutate(mutators.events.update(args));
@@ -228,6 +235,7 @@ export function useEventActions() {
   return {
     // CRUD
     createEvent,
+    createFullEvent,
     updateEvent,
     cancelEvent,
     createOfflineParticipant,

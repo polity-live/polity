@@ -27,7 +27,7 @@ export function useEventWikiPage(eventId: string) {
   const subscribeData = useSubscribeEvent(eventId);
   const participationData = useEventParticipation(eventId);
 
-  const { event, agendaItems: agendaItemRows } = useEventWikiData(eventId);
+  const { event, agendaItems: agendaItemRows, isLoading: eventLoading } = useEventWikiData(eventId);
   const { allUsers } = useUserState({ includeAllUsers: true });
 
   const currentUserProfile = user ? (allUsers || []).find(u => u.id === user.id) : null;
@@ -152,6 +152,7 @@ export function useEventWikiPage(eventId: string) {
 
     // Event data
     event,
+    isLoading: eventLoading,
     agendaItems,
     agendaStats,
     elections,

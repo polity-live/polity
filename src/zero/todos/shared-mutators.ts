@@ -5,6 +5,7 @@ import { PermissionError } from '../rbac/errors';
 import { zql } from '../schema';
 import {
   createTodoSchema,
+  createTodoFullMutatorSchema,
   updateTodoSchema,
   deleteTodoSchema,
   toggleCompleteTodoSchema,
@@ -96,6 +97,10 @@ export const todoSharedMutators = {
       created_at: now,
       updated_at: now,
     });
+  }),
+
+  createFull: defineMutator(createTodoFullMutatorSchema, async ({ tx, ctx, args }) => {
+    await todoSharedMutators.create.fn({ tx, ctx, args: args.todo });
   }),
 
   // Update a todo

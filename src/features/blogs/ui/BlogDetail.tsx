@@ -1,6 +1,8 @@
 'use client';
 
 import { useBlogDetailController } from '../hooks/useBlogDetailController';
+import { CreateRecoveryState } from '@/features/create/ui/CreateRecoveryState';
+import { PageWrapper } from '@/layout/page-wrapper';
 import { BlogDetailView } from './BlogDetailView';
 
 interface BlogDetailProps {
@@ -8,5 +10,15 @@ interface BlogDetailProps {
 }
 
 export function BlogDetail({ blogId }: BlogDetailProps) {
-  return <BlogDetailView {...useBlogDetailController({ blogId })} />;
+  const controller = useBlogDetailController({ blogId });
+
+  if (!controller.isLoaded && controller.recoveryDraft) {
+    return (
+      <PageWrapper>
+        <CreateRecoveryState draft={controller.recoveryDraft} />
+      </PageWrapper>
+    );
+  }
+
+  return <BlogDetailView {...controller} />;
 }

@@ -1,4 +1,5 @@
 import { useAuth } from '@/providers/auth-provider';
+import type { CreateRecoveryDraft } from '@/features/create/logic/createFinalization';
 import {
   resolveRouteVisibilityAccess,
   type RouteVisibilityInput,
@@ -10,6 +11,7 @@ interface UseEntityVisibilityGuardControllerOptions {
   isLoading: boolean;
   visibilities: RouteVisibilityInput[];
   canAccessPrivate: boolean;
+  recoveryDraft?: CreateRecoveryDraft | null;
 }
 
 export function useEntityVisibilityGuardController({
@@ -18,8 +20,13 @@ export function useEntityVisibilityGuardController({
   isLoading,
   visibilities,
   canAccessPrivate,
+  recoveryDraft,
 }: UseEntityVisibilityGuardControllerOptions) {
   const { user } = useAuth();
+
+  if (recoveryDraft?.status === 'failed' && !entityExists) {
+    return { state: 'recovery' as const, draft: recoveryDraft };
+  }
 
   if (isLoading) {
     return { state: 'loading' as const };

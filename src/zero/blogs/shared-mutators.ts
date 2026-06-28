@@ -10,6 +10,7 @@ import { PermissionError } from '../rbac/errors';
 import { zql } from '../schema';
 import {
   createBlogSchema,
+  createBlogFullMutatorSchema,
   updateBlogSchema,
   deleteBlogSchema,
   createBlogBloggerSchema,
@@ -84,6 +85,10 @@ export const blogSharedMutators = {
       updated_at: now,
       created_at: now,
     });
+  }),
+
+  createFull: defineMutator(createBlogFullMutatorSchema, async ({ tx, ctx, args }) => {
+    await blogSharedMutators.create.fn({ tx, ctx, args: args.blog });
   }),
 
   // Update a blog

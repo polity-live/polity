@@ -1,8 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
-import { useStatementMutations } from '@/features/statements/hooks/useStatementMutations';
-import { useCommonActions } from '@/zero/common/useCommonActions';
+import { useStatementActions } from '@/zero/statements/useStatementActions';
 import { useCommonState } from '@/zero/common/useCommonState';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { useGroupById, useGroupState } from '@/zero/groups/useGroupState';
@@ -24,7 +23,12 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
-import { getStatementHeadline, hasStatementContent } from '@/zero/statements/content';
+import {
+  deriveStatementMediaType,
+  getStatementHeadline,
+  hasStatementContent,
+} from '@/zero/statements/content';
+import { trackCreateFinalization, waitForOptimisticCreate } from '../logic/createFinalization';
 
 const MAX_CHARS = 280;
 
@@ -38,11 +42,9 @@ export function useCreateStatementForm(): CreateFormConfig {
   const searchParams = useSearch({ strict: false }) as CreateStatementSearch;
   const groupIdParam = searchParams.groupId ?? '';
   const { user } = useAuth();
-  const { createStatement, createSurvey, createSurveyOption, isLoading } = useStatementMutations();
-  const { syncEntityHashtags } = useCommonActions();
-  const { allHashtags, userHashtags } = useCommonState({
+  const { createFullStatement } = useStatementActions();
+  const { userHashtags } = useCommonState({
     user_id: user?.id,
-    loadAllHashtags: true,
   });
   const preferredHashtagSuggestions = useMemo(
     () => extractHashtagTags(userHashtags),
@@ -58,6 +60,7 @@ export function useCreateStatementForm(): CreateFormConfig {
   );
 
   const [statementId] = useState(() => crypto.randomUUID());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Step 1: Title, text + group
   const [title, setTitle] = useState('');
@@ -135,65 +138,116 @@ export function useCreateStatementForm(): CreateFormConfig {
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!user) return createBlockedSubmitOutcome();
     if (!hasContent || textInvalidReason) return createBlockedSubmitOutcome();
-    context?.reportProgress({ key: 'create', status: 'active' });
-    const result = await createStatement(text.trim() || null, {
-      groupId,
-      imageUrl: imageUrl || null,
-      isStory,
-      title: title.trim() || null,
-      videoUrl: videoUrl || null,
-      visibility,
-    });
+    setIsSubmitting(true);
+    try {
+      context?.reportProgress({ key: 'create', status: 'active' });
+      const surveyId = hasSurvey ? crypto.randomUUID() : null;
+      const validSurveyOptions = surveyOptions.filter(option => option.trim());
+      const statementPayload = {
+        statement: {
+          id: statementId,
+          group_id: groupId,
+          title: title.trim() || null,
+          text: text.trim() || null,
+          image_url: imageUrl || null,
+          video_url: videoUrl || null,
+          media_type: deriveStatementMediaType(imageUrl || null, videoUrl || null),
+          is_story: isStory,
+          expires_at: null,
+          visibility,
+        },
+        hashtags,
+        survey:
+          hasSurvey && surveyId
+            ? {
+                record: {
+                  id: surveyId,
+                  statement_id: statementId,
+                  question: surveyQuestion.trim(),
+                  ends_at: Date.now() + surveyDurationHours * 60 * 60 * 1000,
+                },
+                options: validSurveyOptions.map((option, index) => ({
+                  id: crypto.randomUUID(),
+                  survey_id: surveyId,
+                  label: option.trim(),
+                  position: index,
+                })),
+              }
+            : null,
+      };
+      const statementTarget = createRouteSubmitTarget('statement', {
+        to: '/statement/$id',
+        params: { id: statementId },
+      });
+      const statementResult = createFullStatement(statementPayload);
 
-    if (result.success && result.statementId) {
+      await waitForOptimisticCreate(statementResult);
       context?.reportProgress({ key: 'create', status: 'complete' });
-      context?.reportProgress({ key: 'sync', status: 'active' });
-      // Sync hashtags
-      if (hashtags.length > 0) {
-        await syncEntityHashtags('statement', result.statementId, hashtags, [], allHashtags ?? []);
-      }
-
-      // Create survey if present
-      if (hasSurvey) {
-        const surveyId = crypto.randomUUID();
-        const endsAt = Date.now() + surveyDurationHours * 60 * 60 * 1000;
-        await createSurvey({
-          id: surveyId,
-          statement_id: result.statementId,
-          question: surveyQuestion.trim(),
-          ends_at: endsAt,
-        });
-        const validOptions = surveyOptions.filter(o => o.trim());
-        await Promise.all(
-          validOptions.map((option, index) =>
-            createSurveyOption({
-              id: crypto.randomUUID(),
-              survey_id: surveyId,
-              label: option.trim(),
-              position: index,
-            })
-          )
-        );
-      }
-
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
-      return createSuccessSubmitOutcome(
-        createRouteSubmitTarget('statement', {
-          to: '/statement/$id',
-          params: { id: result.statementId },
-        })
-      );
-    }
+      trackCreateFinalization({
+        result: statementResult,
+        draft: {
+          id: `statement:${statementId}`,
+          entityType: 'statement',
+          entityId: statementId,
+          createPath: '/create/statement',
+          formState: {
+            title,
+            text,
+            groupId,
+            imageUrl,
+            videoUrl,
+            isStory,
+            surveyQuestion,
+            surveyOptions,
+            surveyDurationHours,
+            hashtags,
+            visibility,
+          },
+          mutationPayload: statementPayload,
+          target: statementTarget,
+        },
+        retry: () => {
+          const retryResult = createFullStatement(statementPayload);
+          trackCreateFinalization({
+            result: retryResult,
+            draft: {
+              id: `statement:${statementId}`,
+              entityType: 'statement',
+              entityId: statementId,
+              createPath: '/create/statement',
+              formState: {
+                title,
+                text,
+                groupId,
+                imageUrl,
+                videoUrl,
+                isStory,
+                surveyQuestion,
+                surveyOptions,
+                surveyDurationHours,
+                hashtags,
+                visibility,
+              },
+              mutationPayload: statementPayload,
+              target: statementTarget,
+            },
+          });
+        },
+      });
 
-    throw new Error(t('pages.create.error.createFailed'));
+      return createSuccessSubmitOutcome(statementTarget);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const config = useMemo(
     (): CreateFormConfig => ({
       entityType: 'statement',
       title: 'pages.create.statement.title',
-      isSubmitting: isLoading,
+      isSubmitting,
       onSubmit: handleSubmit,
       submissionSteps: [
         { key: 'create', label: t('pages.create.progress.submission.steps.statement.create') },
@@ -453,7 +507,7 @@ export function useCreateStatementForm(): CreateFormConfig {
       preferredHashtagSuggestions,
       visibility,
       visibilityLabel,
-      isLoading,
+      isSubmitting,
       charsRemaining,
       hasContent,
       hasSurvey,
