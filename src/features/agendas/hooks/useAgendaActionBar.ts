@@ -26,6 +26,7 @@ import {
 } from '../logic/speakerListGenderQuota';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 interface AgendaItem {
   id: string;
@@ -195,16 +196,18 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     if (!user?.id || !election?.id || !hasCandidateRight) return;
 
     const candidateOrder = (election.candidates?.length ?? 0) + 1;
-    await electionActions.addCandidate({
-      id: crypto.randomUUID(),
-      name: user.email || t('features.events.agenda.candidate'),
-      description: '',
-      image_url: '',
-      order_index: candidateOrder,
-      status: 'nominated',
-      user_id: user.id,
-      election_id: election.id,
-    });
+    await waitForClientApply(
+      electionActions.addCandidate({
+        id: crypto.randomUUID(),
+        name: user.email || t('features.events.agenda.candidate'),
+        description: '',
+        image_url: '',
+        order_index: candidateOrder,
+        status: 'nominated',
+        user_id: user.id,
+        election_id: election.id,
+      })
+    );
   }, [
     user?.id,
     user?.email,
@@ -217,7 +220,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
 
   const performWithdrawCandidacy = useCallback(async () => {
     if (!user?.id || !userCandidate) return;
-    await electionActions.deleteCandidate(userCandidate.id);
+    await waitForClientApply(electionActions.deleteCandidate(userCandidate.id));
   }, [user?.id, userCandidate, electionActions]);
 
   const handleCandidacyDialogOpenChange = useCallback((open: boolean) => {
@@ -275,17 +278,19 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
 
     setSpeakerLoading(true);
     try {
-      await addSpeaker({
-        id: crypto.randomUUID(),
-        agenda_item_id: currentAgendaItem.id,
-        user_id: user.id,
-        title: null,
-        order_index: (currentAgendaItem.speaker_list?.length ?? 0) + 1,
-        time: 3,
-        completed: false,
-        start_time: null,
-        end_time: null,
-      });
+      await waitForClientApply(
+        addSpeaker({
+          id: crypto.randomUUID(),
+          agenda_item_id: currentAgendaItem.id,
+          user_id: user.id,
+          title: null,
+          order_index: (currentAgendaItem.speaker_list?.length ?? 0) + 1,
+          time: 3,
+          completed: false,
+          start_time: null,
+          end_time: null,
+        })
+      );
     } catch {
       // toast handled in useAgendaActions
     } finally {
@@ -310,7 +315,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     if (!userSpeaker) return;
     setSpeakerLoading(true);
     try {
-      await removeSpeaker(userSpeaker.id);
+      await waitForClientApply(removeSpeaker(userSpeaker.id));
     } catch {
       // toast handled in useAgendaActions
     } finally {
@@ -331,24 +336,30 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   const handleStartVote = useCallback(async () => {
     if (!canManageAgenda) return;
     if (election?.id) {
-      await electionActions.updateElection({
-        id: election.id,
-        status: 'indicative',
-        closing_end_time: null,
-      });
+      await waitForClientApply(
+        electionActions.updateElection({
+          id: election.id,
+          status: 'indicative',
+          closing_end_time: null,
+        })
+      );
     } else if (vote?.id) {
-      await voteActionsHook.updateVote({
-        id: vote.id,
-        status: VOTE_PHASE.indicative,
-        closing_end_time: null,
-      });
+      await waitForClientApply(
+        voteActionsHook.updateVote({
+          id: vote.id,
+          status: VOTE_PHASE.indicative,
+          closing_end_time: null,
+        })
+      );
     }
 
     if (currentAgendaItem?.id) {
-      await updateAgendaItem({
-        id: currentAgendaItem.id,
-        voting_phase: 'indicative',
-      });
+      await waitForClientApply(
+        updateAgendaItem({
+          id: currentAgendaItem.id,
+          voting_phase: 'indicative',
+        })
+      );
     }
   }, [
     canManageAgenda,
@@ -363,28 +374,34 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   const handleStartFinalVote = useCallback(async () => {
     if (!canManageAgenda) return;
     if (election?.id) {
-      await electionActions.updateElection({
-        id: election.id,
-        status: 'final',
-        closing_end_time: election.closing_duration_seconds
-          ? Date.now() + election.closing_duration_seconds * 1000
-          : null,
-      });
+      await waitForClientApply(
+        electionActions.updateElection({
+          id: election.id,
+          status: 'final',
+          closing_end_time: election.closing_duration_seconds
+            ? Date.now() + election.closing_duration_seconds * 1000
+            : null,
+        })
+      );
     } else if (vote?.id) {
-      await voteActionsHook.updateVote({
-        id: vote.id,
-        status: VOTE_PHASE.final,
-        closing_end_time: vote.closing_duration_seconds
-          ? Date.now() + vote.closing_duration_seconds * 1000
-          : null,
-      });
+      await waitForClientApply(
+        voteActionsHook.updateVote({
+          id: vote.id,
+          status: VOTE_PHASE.final,
+          closing_end_time: vote.closing_duration_seconds
+            ? Date.now() + vote.closing_duration_seconds * 1000
+            : null,
+        })
+      );
     }
 
     if (currentAgendaItem?.id) {
-      await updateAgendaItem({
-        id: currentAgendaItem.id,
-        voting_phase: 'final',
-      });
+      await waitForClientApply(
+        updateAgendaItem({
+          id: currentAgendaItem.id,
+          voting_phase: 'final',
+        })
+      );
     }
   }, [
     canManageAgenda,
@@ -411,20 +428,24 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
 
     try {
       if (election?.id) {
-        await electionActions.updateElection({
-          id: election.id,
-          status: 'closed',
-          debug_correlation_id: correlationId,
-        });
+        await waitForClientApply(
+          electionActions.updateElection({
+            id: election.id,
+            status: 'closed',
+            debug_correlation_id: correlationId,
+          })
+        );
       } else if (vote?.id) {
-        await voteActionsHook.updateVote({ id: vote.id, status: 'closed' });
+        await waitForClientApply(voteActionsHook.updateVote({ id: vote.id, status: 'closed' }));
       }
 
       if (currentAgendaItem?.id) {
-        await updateAgendaItem({
-          id: currentAgendaItem.id,
-          voting_phase: 'closed',
-        });
+        await waitForClientApply(
+          updateAgendaItem({
+            id: currentAgendaItem.id,
+            voting_phase: 'closed',
+          })
+        );
       }
 
       logElectionFlowClient(flow, 'submit-confirmed', {

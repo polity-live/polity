@@ -14,7 +14,7 @@ interface EnsureUserProps {
 /**
  * EnsureUser component ensures that every authenticated user has a user record.
  * Queries Zero for the user record and shows a loading state until ready.
- * Times out after ZERO_SYNC_TIMEOUT_MS to avoid infinite loading when Zero can't sync.
+ * Long waits surface retry/sign-out actions through the shared app boot loader.
  */
 export function EnsureUser({ children }: EnsureUserProps) {
   return <EnsureUserView {...useEnsureUserController()}>{children}</EnsureUserView>;

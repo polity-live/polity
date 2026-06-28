@@ -7,6 +7,7 @@ import { TodosTabs } from '@/features/todos/ui/TodosTabs';
 import { KanbanBoard } from '@/features/todos/ui/kanban-board.tsx';
 import { TodoList } from '@/features/todos/ui/todo-list.tsx';
 import { TodoDetailDialog } from '@/features/todos/ui/todo-detail-dialog.tsx';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
@@ -72,11 +73,7 @@ export function TodosPageView({
   tabSwipeHandlers,
 }: TodosPageViewProps) {
   if (!user) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">{t('features.todos.loading')}</p>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   return (

@@ -3,7 +3,7 @@ import { useZero } from '@rocicorp/zero/react';
 import { useQuery } from '@rocicorp/zero/react';
 import { useGroupState, useUserMembershipInGroup } from '@/zero/groups/useGroupState';
 import { mutators } from '@/zero/mutators';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { trackServerFinalization, waitForClientApply } from '@/zero/mutate-with-server-check';
 import { useAuth } from '@/providers/auth-provider';
 import {
   useTranslation,
@@ -212,7 +212,13 @@ export function useGroupMembership(groupId: string) {
             })
           );
 
-      await serverConfirmed(result);
+      trackServerFinalization(result, {
+        onError: error =>
+          toast.error(t('features.groups.toasts.joinFailed'), {
+            description: error.message,
+          }),
+      });
+      await waitForClientApply(result);
       toast.success(t('features.auth.success.membershipRequestSent'));
     } catch (error) {
       toast.error(t('features.groups.toasts.joinFailed'), {
@@ -247,7 +253,13 @@ export function useGroupMembership(groupId: string) {
         return;
       }
 
-      await serverConfirmed(result);
+      trackServerFinalization(result, {
+        onError: error =>
+          toast.error(t('features.groups.toasts.leaveFailed'), {
+            description: error.message,
+          }),
+      });
+      await waitForClientApply(result);
 
       if (effectiveStatus === 'requested') {
         toast.success(
@@ -304,21 +316,35 @@ export function useGroupMembership(groupId: string) {
         return;
       }
 
-      console.info('Server validation started', {
+      console.info('Server finalization started', {
         flow: 'group-membership-invitation-accept',
         membershipId: membership?.id ?? guestAccess?.id,
         groupId,
         actorUserId: user.id,
       });
 
-      await serverConfirmed(result);
-
-      console.info('Server successful', {
-        flow: 'group-membership-invitation-accept',
-        membershipId: membership?.id ?? guestAccess?.id,
-        groupId,
-        actorUserId: user.id,
+      trackServerFinalization(result, {
+        onSuccess: () =>
+          console.info('Server successful', {
+            flow: 'group-membership-invitation-accept',
+            membershipId: membership?.id ?? guestAccess?.id,
+            groupId,
+            actorUserId: user.id,
+          }),
+        onError: error => {
+          console.error('Server error', {
+            flow: 'group-membership-invitation-accept',
+            membershipId: membership?.id ?? guestAccess?.id,
+            groupId,
+            actorUserId: user.id,
+            error,
+          });
+          toast.error(t('features.groups.toasts.acceptInvitationFailed'), {
+            description: error.message,
+          });
+        },
       });
+      await waitForClientApply(result);
 
       console.info('Client successful', {
         flow: 'group-membership-invitation-accept',

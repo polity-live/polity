@@ -11,6 +11,7 @@
 import { useCallback, useMemo } from 'react';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { usePermissions } from '@/zero/rbac';
 import { useAuth } from '@/providers/auth-provider';
 import { canUserVote, canUserBeCandidate, type VotingPhase } from '../logic/votePhaseHelpers';
@@ -84,11 +85,13 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
         let resolvedElectorId = electorId;
         if (!resolvedElectorId) {
           resolvedElectorId = crypto.randomUUID();
-          await electionActions.createElector({
-            id: resolvedElectorId,
-            election_id: electionId,
-            user_id: userId,
-          });
+          await waitForClientApply(
+            electionActions.createElector({
+              id: resolvedElectorId,
+              election_id: electionId,
+              user_id: userId,
+            })
+          );
         }
 
         const participationId = crypto.randomUUID();
@@ -108,11 +111,10 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
         context?.reportProgress('cast', 'complete');
         context?.reportProgress('sync', 'active');
 
-        if (isIndicationPhase) {
-          await electionActions.castIndicativeVote(participationArgs, selections);
-        } else {
-          await electionActions.castFinalVote(participationArgs, selections);
-        }
+        const result = isIndicationPhase
+          ? electionActions.castIndicativeVote(participationArgs, selections)
+          : electionActions.castFinalVote(participationArgs, selections);
+        await waitForClientApply(result);
 
         context?.reportProgress('sync', 'complete');
 
@@ -165,11 +167,13 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
         let resolvedVoterId = voterId;
         if (!resolvedVoterId) {
           resolvedVoterId = crypto.randomUUID();
-          await voteActions.createVoter({
-            id: resolvedVoterId,
-            vote_id: voteId,
-            user_id: userId,
-          });
+          await waitForClientApply(
+            voteActions.createVoter({
+              id: resolvedVoterId,
+              vote_id: voteId,
+              user_id: userId,
+            })
+          );
         }
 
         const participationId = crypto.randomUUID();
@@ -191,11 +195,10 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
         context?.reportProgress('cast', 'complete');
         context?.reportProgress('sync', 'active');
 
-        if (isIndicationPhase) {
-          await voteActions.castIndicativeVote(participationArgs, decisions);
-        } else {
-          await voteActions.castFinalVote(participationArgs, decisions);
-        }
+        const result = isIndicationPhase
+          ? voteActions.castIndicativeVote(participationArgs, decisions)
+          : voteActions.castFinalVote(participationArgs, decisions);
+        await waitForClientApply(result);
 
         context?.reportProgress('sync', 'complete');
 
@@ -233,7 +236,9 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
   const advanceElectionPhase = useCallback(
     async (newStatus: string) => {
       if (!canManageVoting || !electionId) return;
-      await electionActions.updateElection({ id: electionId, status: newStatus });
+      await waitForClientApply(
+        electionActions.updateElection({ id: electionId, status: newStatus })
+      );
     },
     [canManageVoting, electionId, electionActions]
   );
@@ -241,7 +246,7 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
   const advanceVotePhase = useCallback(
     async (newStatus: 'internal' | 'indicative' | 'final' | 'closed') => {
       if (!canManageVoting || !voteId) return;
-      await voteActions.updateVote({ id: voteId, status: newStatus });
+      await waitForClientApply(voteActions.updateVote({ id: voteId, status: newStatus }));
     },
     [canManageVoting, voteId, voteActions]
   );

@@ -19,6 +19,7 @@ import {
   replaceIndicativeVoteSchema,
   createFinalVoterParticipationSchema,
   createFinalChoiceDecisionSchema,
+  castFinalVoteFullSchema,
   upsertVoteOfflineTallySchema,
   deleteVoteOfflineTallySchema,
 } from './schema';
@@ -453,6 +454,36 @@ export const voteSharedMutators = {
       });
     }
   ),
+
+  castFinalVoteFull: defineMutator(castFinalVoteFullSchema, async ({ tx, ctx, args }) => {
+    const { participation, decisions } = args;
+    await assertVoterOwner(tx, ctx, participation.voter_id, participation.vote_id);
+
+    const vote = await loadVote(tx, participation.vote_id);
+    assertVotePhase(vote, 'final');
+    const isNamed = isNamedBallot(vote.ballot_visibility ?? defaultVoteBallotVisibility);
+
+    for (const decision of decisions) {
+      if (decision.vote_id !== participation.vote_id) {
+        throw new Error('Final vote decision does not belong to this vote.');
+      }
+      await assertChoiceBelongsToVote(tx, participation.vote_id, decision.choice_id);
+    }
+
+    const now = Date.now();
+    await tx.mutate.final_voter_participation.insert({
+      ...participation,
+      created_at: now,
+    });
+
+    for (const decision of decisions) {
+      await tx.mutate.final_choice_decision.insert({
+        ...decision,
+        voter_participation_id: isNamed ? participation.id : null,
+        created_at: now,
+      });
+    }
+  }),
 
   upsertOfflineTally: defineMutator(upsertVoteOfflineTallySchema, async ({ tx, ctx, args }) => {
     await assertVoteManager(tx, ctx, args.vote_id);

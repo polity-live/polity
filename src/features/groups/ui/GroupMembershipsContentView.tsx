@@ -23,7 +23,7 @@ import {
   filterParticipationsByRole,
   getParticipationDisplayRoles,
 } from '@/features/shared/ui/participation';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface GroupMembershipsContentViewProps {
@@ -530,7 +530,7 @@ export function GroupMembershipsContentView({
                   'features.groups.memberships.offlineRoster.manageDialogDescription'
                 )}
                 onCreate={(entry, correlationId) =>
-                  serverConfirmed(
+                  waitForClientApply(
                     createOfflineMember({
                       id: crypto.randomUUID(),
                       group_id: groupId,
@@ -543,7 +543,7 @@ export function GroupMembershipsContentView({
                   )
                 }
                 onImport={(entries, correlationId) =>
-                  serverConfirmed(
+                  waitForClientApply(
                     importOfflineMembers({
                       group_id: groupId,
                       entries: entries.map(entry => ({
@@ -556,7 +556,7 @@ export function GroupMembershipsContentView({
                   )
                 }
                 onConnect={(row, userId, correlationId) =>
-                  serverConfirmed(
+                  waitForClientApply(
                     updateOfflineMember({
                       id: row.id,
                       connected_user_id: userId,
@@ -565,7 +565,7 @@ export function GroupMembershipsContentView({
                   )
                 }
                 onEdit={(row, entry, correlationId) =>
-                  serverConfirmed(
+                  waitForClientApply(
                     updateOfflineMember({
                       id: row.id,
                       first_name: entry.firstName,
@@ -576,7 +576,7 @@ export function GroupMembershipsContentView({
                   )
                 }
                 onDelete={(row, correlationId) =>
-                  serverConfirmed(
+                  waitForClientApply(
                     deleteOfflineMember({
                       id: row.id,
                       debug_correlation_id: correlationId,

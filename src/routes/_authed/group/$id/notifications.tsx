@@ -3,7 +3,7 @@ import { EntityNotifications } from '@/features/notifications/ui/EntityNotificat
 import { useGroupById } from '@/zero/groups/useGroupState';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 
 export const Route = createFileRoute('/_authed/group/$id/notifications')({
   component: GroupNotificationsPage,
@@ -14,7 +14,7 @@ function GroupNotificationsPage() {
   const { can, isMember, isLoading } = usePermissions({ groupId });
 
   if (isLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton />;
   }
 
   if (!isMember() || !can('viewNotifications', 'groupNotifications')) {

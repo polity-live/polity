@@ -12,7 +12,8 @@ const useAuthMock = vi.fn();
 const useWorkflowEditorMock = vi.fn();
 const useHierarchyLinkConflictsMock = vi.fn();
 const useTranslationMock = vi.fn();
-const serverConfirmedMock = vi.fn();
+const waitForClientApplyMock = vi.fn();
+const trackServerFinalizationMock = vi.fn();
 
 vi.mock('../useGroupNetwork', () => ({
   useGroupNetwork: (...args: unknown[]) => useGroupNetworkMock(...args),
@@ -48,7 +49,8 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 }));
 
 vi.mock('@/zero/mutate-with-server-check', () => ({
-  serverConfirmed: (...args: unknown[]) => serverConfirmedMock(...args),
+  waitForClientApply: (...args: unknown[]) => waitForClientApplyMock(...args),
+  trackServerFinalization: (...args: unknown[]) => trackServerFinalizationMock(...args),
 }));
 
 import { useNetworkPage } from '../useNetworkPage';
@@ -106,7 +108,8 @@ beforeEach(() => {
   useWorkflowEditorMock.mockReset();
   useHierarchyLinkConflictsMock.mockReset();
   useTranslationMock.mockReset();
-  serverConfirmedMock.mockReset();
+  waitForClientApplyMock.mockReset();
+  trackServerFinalizationMock.mockReset();
 
   useGroupNetworkMock.mockReturnValue({
     networkData: { parents: [], children: [], siblings: [] },
@@ -166,7 +169,7 @@ beforeEach(() => {
   useTranslationMock.mockReturnValue({
     t: (key: string) => key,
   });
-  serverConfirmedMock.mockResolvedValue(undefined);
+  waitForClientApplyMock.mockResolvedValue(undefined);
 });
 
 describe('useNetworkPage request actions', () => {
@@ -257,7 +260,7 @@ describe('useNetworkPage request actions', () => {
       grant_request_ids: ['right-1', 'right-2'],
       approve_membership: false,
     });
-    expect(serverConfirmedMock).toHaveBeenCalledWith('approve-result');
+    expect(waitForClientApplyMock).toHaveBeenCalledWith('approve-result');
   });
 
   it('approves membership rows without selecting rights', async () => {
@@ -290,7 +293,7 @@ describe('useNetworkPage request actions', () => {
       grant_request_ids: [],
       approve_membership: true,
     });
-    expect(serverConfirmedMock).toHaveBeenCalledWith('approve-membership-result');
+    expect(waitForClientApplyMock).toHaveBeenCalledWith('approve-membership-result');
   });
 
   it('keeps membership pending when a single right row is approved', async () => {
@@ -350,7 +353,7 @@ describe('useNetworkPage request actions', () => {
       reject_membership: false,
       reject_structure: false,
     });
-    expect(serverConfirmedMock).toHaveBeenCalledWith('reject-result');
+    expect(waitForClientApplyMock).toHaveBeenCalledWith('reject-result');
   });
 
   it('rejects membership rows without rejecting rights or structure', async () => {
@@ -384,7 +387,7 @@ describe('useNetworkPage request actions', () => {
       reject_membership: true,
       reject_structure: false,
     });
-    expect(serverConfirmedMock).toHaveBeenCalledWith('reject-membership-result');
+    expect(waitForClientApplyMock).toHaveBeenCalledWith('reject-membership-result');
   });
 
   it('deletes matching relationships from the current page group as acting group', async () => {
@@ -430,8 +433,8 @@ describe('useNetworkPage request actions', () => {
       id: 'connection-2',
       acting_group_id: 'group-1',
     });
-    expect(serverConfirmedMock).toHaveBeenNthCalledWith(1, 'delete-result-1');
-    expect(serverConfirmedMock).toHaveBeenNthCalledWith(2, 'delete-result-2');
+    expect(waitForClientApplyMock).toHaveBeenNthCalledWith(1, 'delete-result-1');
+    expect(waitForClientApplyMock).toHaveBeenNthCalledWith(2, 'delete-result-2');
   });
 
   it('groups structure, membership, and right request rows under one outgoing request', () => {

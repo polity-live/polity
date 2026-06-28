@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { BlogNotifications } from '@/features/blogs/ui/BlogNotifications';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 
 export const Route = createFileRoute('/_authed/group/$id/blog/$entryId/notifications')({
   component: GroupBlogNotificationsPage,
@@ -13,7 +13,7 @@ function GroupBlogNotificationsPage() {
   const { can, isABlogger, isLoading } = usePermissions({ blogId: entryId });
 
   if (isLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton />;
   }
 
   if (!isABlogger() || !can('viewNotifications', 'notifications')) {

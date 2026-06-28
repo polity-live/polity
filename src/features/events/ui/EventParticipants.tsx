@@ -9,6 +9,7 @@ import {
 import { useEventMutations } from '../hooks/useEventMutations';
 import { useEventAccessRoles, useEventOfflineParticipants } from '@/zero/events/useEventState';
 import { Button } from '@/features/shared/ui/ui/button';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { EntitySearchBar } from '@/features/shared/ui/typeahead';
 import { MembershipTabs } from '@/features/groups/ui/MembershipTabs';
 import {
@@ -40,7 +41,7 @@ import { useEventParticipantsComposition } from '../hooks/useDelegateAssemblyPar
 import { DelegateAssemblyCompositionPanel } from './DelegateAssemblyCompositionPanel';
 import { MembershipCompositionPanel } from '@/features/groups/ui/MembershipCompositionPanel';
 import { useEventActions } from '@/zero/events/useEventActions';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { buildEventParticipantCompositionBuckets } from '../logic/eventParticipantComposition';
 import { buildOfflineRosterRowsForEvent } from '../logic/offlineParticipantRows';
@@ -510,7 +511,7 @@ export function EventParticipants({
   );
 
   if (isLoading) {
-    return <div>{translateText('generated.inline.0491_loading_event_participants_4216bb13')}</div>;
+    return <PageSkeleton label={translateText('common.loading.pageSkeleton.entity')} />;
   }
 
   if (error || !event) {
@@ -679,7 +680,7 @@ export function EventParticipants({
                   'generated.inline.0114_no_offline_or_hybrid_participants_have_been_a_3fda5da7'
                 )}
                 onCreate={(entry, correlationId) =>
-                  serverConfirmed(
+                  waitForClientApply(
                     createOfflineParticipant({
                       id: crypto.randomUUID(),
                       event_id: eventId,
@@ -696,7 +697,7 @@ export function EventParticipants({
                   )
                 }
                 onImport={(entries, correlationId) =>
-                  serverConfirmed(
+                  waitForClientApply(
                     importOfflineParticipants({
                       event_id: eventId,
                       entries: entries.map(entry => ({
@@ -709,7 +710,7 @@ export function EventParticipants({
                   )
                 }
                 onConnect={(row, userId, correlationId) =>
-                  serverConfirmed(
+                  waitForClientApply(
                     updateOfflineParticipant({
                       id: row.id,
                       connected_user_id: userId,
@@ -718,7 +719,7 @@ export function EventParticipants({
                   )
                 }
                 onEdit={(row, entry, correlationId) =>
-                  serverConfirmed(
+                  waitForClientApply(
                     updateOfflineParticipant({
                       id: row.id,
                       first_name: entry.firstName,
@@ -729,7 +730,7 @@ export function EventParticipants({
                   )
                 }
                 onDelete={(row, correlationId) =>
-                  serverConfirmed(
+                  waitForClientApply(
                     deleteOfflineParticipant({
                       id: row.attendanceParticipantId ?? row.id,
                       debug_correlation_id: correlationId,
@@ -738,7 +739,7 @@ export function EventParticipants({
                 }
                 onSetParticipationStatus={async (row, nextStatus, correlationId) => {
                   if (row.attendanceParticipantId) {
-                    return serverConfirmed(
+                    return waitForClientApply(
                       updateOfflineParticipant({
                         id: row.attendanceParticipantId,
                         attendance_status: nextStatus,
@@ -751,7 +752,7 @@ export function EventParticipants({
                     return undefined;
                   }
 
-                  return serverConfirmed(
+                  return waitForClientApply(
                     createOfflineParticipant({
                       id: crypto.randomUUID(),
                       event_id: eventId,
@@ -768,7 +769,7 @@ export function EventParticipants({
                   );
                 }}
                 onToggleChannel={(row, nextChannel, correlationId) =>
-                  serverConfirmed(
+                  waitForClientApply(
                     updateOfflineParticipant({
                       id: row.attendanceParticipantId ?? row.id,
                       participation_channel: nextChannel,

@@ -58,7 +58,11 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
-import { trackCreateFinalization, waitForOptimisticCreate } from '../logic/createFinalization';
+import {
+  consumeCreateRestoreDraft,
+  trackCreateFinalization,
+  waitForOptimisticCreate,
+} from '../logic/createFinalization';
 
 type GroupType = 'base' | 'hierarchical' | 'sibling';
 type RelationshipDirection = GroupRelationshipDirection;
@@ -91,6 +95,32 @@ const RELATIONSHIP_RIGHTS = Object.keys(
 interface CsvInviteSummary extends InviteCsvMatchResult {
   matchedNames: string[];
 }
+
+type CreateGroupRestoreState = Partial<{
+  groupType: GroupType;
+  name: string;
+  description: string;
+  descriptionContent: Value;
+  email: string;
+  country: string;
+  region: string;
+  post_code: string;
+  city: string;
+  street: string;
+  house_number: string;
+  latitude: number | null;
+  longitude: number | null;
+  imageURL: string;
+  hashtags: string[];
+  visibility: 'public' | 'authenticated' | 'private';
+  invitedUserIds: string[];
+  linkedGroups: LinkedGroup[];
+  createConstitutionalEvent: boolean;
+  eventName: string;
+  eventLocation: string;
+  eventStartDate: string;
+  eventStartTime: string;
+}>;
 
 function createInitialRelationshipDirections(): Record<
   GroupRelationshipRight,
@@ -240,6 +270,36 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [eventLocation, setEventLocation] = useState('');
   const [eventStartDate, setEventStartDate] = useState('');
   const [eventStartTime, setEventStartTime] = useState('');
+
+  useEffect(() => {
+    const restoreDraft = consumeCreateRestoreDraft<CreateGroupRestoreState>('group');
+    if (!restoreDraft) return;
+    const state = restoreDraft.formState;
+
+    setGroupType(state.groupType ?? 'base');
+    setName(state.name ?? '');
+    setDescription(state.description ?? '');
+    setDescriptionContent(state.descriptionContent ?? EMPTY_RICH_TEXT_VALUE);
+    setEmail(state.email ?? '');
+    setCountry(state.country ?? '');
+    setRegion(state.region ?? '');
+    setPostCode(state.post_code ?? '');
+    setCity(state.city ?? '');
+    setStreet(state.street ?? '');
+    setHouseNumber(state.house_number ?? '');
+    setLatitude(state.latitude ?? null);
+    setLongitude(state.longitude ?? null);
+    setImageURL(state.imageURL ?? '');
+    setHashtags(state.hashtags ?? []);
+    setVisibility(state.visibility ?? 'public');
+    setInvitedUserIds(state.invitedUserIds ?? []);
+    setLinkedGroups(state.linkedGroups ?? []);
+    setCreateConstitutionalEvent(state.createConstitutionalEvent ?? false);
+    setEventName(state.eventName ?? '');
+    setEventLocation(state.eventLocation ?? '');
+    setEventStartDate(state.eventStartDate ?? '');
+    setEventStartTime(state.eventStartTime ?? '');
+  }, []);
 
   const getDefaultFoundingAssemblyName = useCallback(() => {
     const trimmedName = name.trim();

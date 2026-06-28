@@ -96,7 +96,7 @@ function uniqueTags(tags: string[]) {
 export function useOnboarding(): UseOnboardingReturn {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { updateProfileConfirmed } = useUserActions();
+  const { updateProfileClientApplied } = useUserActions();
   const { joinGroup } = useGroupActions();
   const { syncEntityHashtags } = useCommonActions();
   const { allHashtags, userHashtags } = useCommonState({
@@ -345,7 +345,7 @@ export function useOnboarding(): UseOnboardingReturn {
       setError(null);
 
       try {
-        await updateProfileConfirmed({
+        await updateProfileClientApplied({
           first_name: data.firstName.trim(),
           last_name: data.lastName.trim(),
         });
@@ -358,7 +358,7 @@ export function useOnboarding(): UseOnboardingReturn {
         setIsLoading(false);
       }
     },
-    [data.firstName, data.lastName, t, updateProfileConfirmed]
+    [data.firstName, data.lastName, t, updateProfileClientApplied]
   );
 
   return {

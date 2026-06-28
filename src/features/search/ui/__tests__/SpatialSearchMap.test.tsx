@@ -99,6 +99,21 @@ function createSpatialItem(overrides?: Partial<SearchSpatialItem>): SearchSpatia
 }
 
 describe('SpatialSearchMap', () => {
+  it('renders a map skeleton while map modules load', () => {
+    render(
+      <SpatialSearchMap
+        items={[createSpatialItem()]}
+        activeItem={null}
+        center={[51.1657, 10.4515]}
+        onBoundsChange={vi.fn()}
+        onItemSelect={vi.fn()}
+      />
+    );
+
+    expect(document.querySelector('[data-slot="map-panel-skeleton"]')).toBeTruthy();
+    expect(screen.queryByText('generated.inline.1166_map_is_loading_5299ec7c')).toBeNull();
+  });
+
   it('renders search markers through MarkerClusterGroup and forwards marker clicks', async () => {
     const onItemSelect = vi.fn();
     const onActiveDocumentChange = vi.fn();

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearch } from '@tanstack/react-router';
 import { useQuery } from '@rocicorp/zero/react';
 import { toast } from '@/features/shared/ui/ui/sonner';
@@ -69,7 +69,11 @@ import {
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
 import { getCreateSelectableEventIds } from '../logic/createEligibility';
-import { trackCreateFinalization, waitForOptimisticCreate } from '../logic/createFinalization';
+import {
+  consumeCreateRestoreDraft,
+  trackCreateFinalization,
+  waitForOptimisticCreate,
+} from '../logic/createFinalization';
 
 type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion' | 'accreditation';
 type MajorityType = 'simple' | 'absolute' | 'two_thirds';
@@ -199,6 +203,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   const [appliedAssignmentPrefillKey, setAppliedAssignmentPrefillKey] = useState<string | null>(
     null
   );
+  const isApplyingRestoreRef = useRef(false);
 
   const { agendaItems: eventAgendaItems } = useEventAgenda(eventId || undefined);
 
@@ -246,6 +251,10 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   }, [assignmentId, electionModeParam]);
 
   useEffect(() => {
+    if (isApplyingRestoreRef.current) {
+      isApplyingRestoreRef.current = false;
+      return;
+    }
     setHasCustomOrder(false);
   }, [eventId]);
 
@@ -332,6 +341,49 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
     roleRenewalRole?.description,
     roleRenewalRole?.name,
   ]);
+
+  useEffect(() => {
+    const restoreDraft = consumeCreateRestoreDraft<
+      Partial<{
+        eventId: string;
+        type: AgendaItemType;
+        title: string;
+        description: string;
+        order: number;
+        hasCustomOrder: boolean;
+        duration: string;
+        amendmentId: string;
+        roleId: string;
+        majorityType: MajorityType;
+        timeLimit: string;
+        ballotVisibility: BallotVisibility;
+        electionMode: ElectionMode;
+        seatCountInput: string;
+      }>
+    >('agenda_item');
+    if (!restoreDraft) return;
+    const state = restoreDraft.formState;
+
+    isApplyingRestoreRef.current = true;
+    setEventId(state.eventId ?? '');
+    setType(state.type ?? 'discussion');
+    setTitle(state.title ?? '');
+    setDescription(state.description ?? '');
+    setOrder(state.order ?? 1);
+    setHasCustomOrder(state.hasCustomOrder ?? false);
+    setDuration(state.duration ?? '');
+    setAmendmentId(state.amendmentId ?? '');
+    setRoleId(state.roleId ?? '');
+    setMajorityType(state.majorityType ?? 'simple');
+    setTimeLimit(state.timeLimit ?? '');
+    setBallotVisibility(state.ballotVisibility ?? defaultVoteBallotVisibility);
+    setElectionMode(state.electionMode ?? 'single');
+    setSeatCountInput(state.seatCountInput ?? '1');
+    setAppliedAssignmentPrefillKey(null);
+    if ((state.eventId ?? '') === eventId) {
+      isApplyingRestoreRef.current = false;
+    }
+  }, [eventId]);
 
   const resolvedOrder = hasCustomOrder ? order : nextOrder;
   const selectableEventIds = useMemo(

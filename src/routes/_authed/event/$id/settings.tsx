@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { EventEdit } from '@/features/events/ui/EventEdit';
 import { usePermissions } from '@/zero/rbac';
 
@@ -21,7 +21,7 @@ function EventSettingsPage() {
   const { can, isLoading } = usePermissions({ eventId: id });
 
   if (isLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton />;
   }
 
   if (!can('manage', 'events')) {

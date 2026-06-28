@@ -15,7 +15,7 @@ const wizardMocks = vi.hoisted(() => ({
   saveInterests: vi.fn(),
   sendMembershipRequests: vi.fn(),
   skipMembership: vi.fn(),
-  updateProfileConfirmed: vi.fn(),
+  updateProfileClientApplied: vi.fn(),
   useOnboarding: vi.fn(),
 }));
 
@@ -33,7 +33,7 @@ vi.mock('@/providers/auth-provider.tsx', () => ({
 
 vi.mock('@/zero/users/useUserActions.ts', () => ({
   useUserActions: () => ({
-    updateProfileConfirmed: wizardMocks.updateProfileConfirmed,
+    updateProfileClientApplied: wizardMocks.updateProfileClientApplied,
   }),
 }));
 

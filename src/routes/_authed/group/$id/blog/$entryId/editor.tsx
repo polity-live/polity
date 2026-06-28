@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { useBlogPermissions } from '@/features/blogs/hooks/useBlogPermissions';
 import { EditorView } from '@/features/editor/ui/EditorView';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { useAuth } from '@/providers/auth-provider';
 import { useUserState } from '@/zero/users/useUserState';
 import { usePermissions } from '@/zero/rbac/usePermissions';
@@ -21,7 +21,7 @@ function GroupBlogEditorPage() {
   });
 
   if (isBlogPermissionLoading || isGroupPermissionLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton />;
   }
 
   if (!user || (!canEdit && !can('manage', 'groups'))) {

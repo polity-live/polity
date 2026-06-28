@@ -4,6 +4,7 @@ import { RolesPermissionsTable } from '@/features/groups/ui/RolesPermissionsTabl
 import { emptyRoleEditorForm } from '@/features/groups/logic/roleFormHelpers';
 import { EVENT_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 export interface EventRolesViewProps {
   eventId: any;
   event: any;
@@ -53,7 +54,7 @@ export function EventRolesView({
   getPermissionDisabledReason,
 }: EventRolesViewProps) {
   if (isLoading) {
-    return null;
+    return <SectionSkeleton rows={4} />;
   }
 
   return (

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import type { ActionSubmissionContext } from '@/features/shared/ui/action-submission';
 import type { DraftWorkflowStep } from './useWorkflowEditor';
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
 import type { NormalizedGroupRelationship, NetworkGroupEntity } from '../types/network.types';
@@ -54,7 +55,7 @@ export interface WorkflowEditorProps {
   onUpdateStep: (index: number, patch: Partial<DraftWorkflowStep>) => void;
   onRemoveStep: (index: number) => void;
   onMoveStep: (fromIndex: number, toIndex: number) => void;
-  onSave: () => void;
+  onSave: (submissionContext?: ActionSubmissionContext) => void;
 }
 
 interface WorkflowTransition {

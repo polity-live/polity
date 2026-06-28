@@ -5,7 +5,7 @@ import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import type { UnauthorizedReason } from '@/features/auth/logic/routeVisibilityAccess';
 import type { CreateRecoveryDraft } from '@/features/create/logic/createFinalization';
 import { CreateRecoveryState } from '@/features/create/ui/CreateRecoveryState';
-import { GlobalLoadingAnimation, NotFound } from '@/features/shared/ui/feedback';
+import { NotFound, PageSkeleton } from '@/features/shared/ui/feedback';
 
 type EntityVisibilityGuardState =
   | { state: 'loading' }
@@ -22,7 +22,7 @@ interface EntityVisibilityGuardViewProps {
 
 export function EntityVisibilityGuardView({ children, guard }: EntityVisibilityGuardViewProps) {
   if (guard.state === 'loading') {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton />;
   }
 
   if (guard.state === 'error') {

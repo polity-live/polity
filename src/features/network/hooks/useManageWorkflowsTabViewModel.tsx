@@ -1,4 +1,5 @@
 import type { DraftWorkflowStep } from './useWorkflowEditor';
+import type { ActionSubmissionContext } from '@/features/shared/ui/action-submission';
 import type { NormalizedGroupRelationship, NetworkGroupEntity } from '../types/network.types';
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
 
@@ -47,10 +48,16 @@ export interface ManageWorkflowsTabProps {
   onUpdateWorkflowStep: (index: number, patch: Partial<DraftWorkflowStep>) => void;
   onRemoveWorkflowStep: (index: number) => void;
   onMoveWorkflowStep: (fromIndex: number, toIndex: number) => void;
-  onSaveWorkflow: () => void;
+  onSaveWorkflow: (submissionContext?: ActionSubmissionContext) => void;
   onDeleteWorkflow: (workflowId: string) => void;
-  onApproveWorkflowApproval: (approvalId: string) => void;
-  onRejectWorkflowApproval: (approvalId: string) => void;
+  onApproveWorkflowApproval: (
+    approvalId: string,
+    submissionContext?: ActionSubmissionContext
+  ) => void;
+  onRejectWorkflowApproval: (
+    approvalId: string,
+    submissionContext?: ActionSubmissionContext
+  ) => void;
 }
 
 export function useManageWorkflowsTabViewModel(props: ManageWorkflowsTabProps) {

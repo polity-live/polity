@@ -21,6 +21,7 @@ import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 export interface BlogEditViewProps {
   blogId: any;
   navigate: any;
@@ -52,12 +53,7 @@ export function BlogEditView({
 }: BlogEditViewProps) {
   // Loading state
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-4 py-12">
-        <Loader2 className="text-primary h-8 w-8 animate-spin" />
-        <p className="text-muted-foreground">{t('features.blogs.editPage.loading')}</p>
-      </div>
-    );
+    return <PageSkeleton variant="settings" label={t('features.blogs.editPage.loading')} />;
   }
 
   // Not found state

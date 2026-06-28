@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { GroupEdit } from '@/features/groups/ui/GroupEdit';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 
@@ -14,7 +14,7 @@ function GroupSettingsPage() {
   const { can, isMember, isLoading } = usePermissions({ groupId: id });
 
   if (isLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton />;
   }
 
   if (!isMember() || !can('manage', 'groups')) {

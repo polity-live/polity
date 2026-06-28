@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
 import { BadgeControl } from '@/features/shared/ui/status/StatusBadges';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -136,9 +137,7 @@ export function VersionControlView({ model }: VersionControlViewProps) {
 
           <ScrollArea className="h-[400px]">
             {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-              </div>
+              <SectionSkeleton rows={4} density="compact" className="pr-4" />
             ) : filteredVersions.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <GitBranch className="text-muted-foreground mb-2 h-8 w-8" />

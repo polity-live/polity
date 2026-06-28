@@ -5,7 +5,7 @@ import { CircleHelp, Mail } from 'lucide-react';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { SubscribeButton } from '@/features/shared/ui/action-buttons';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
-import { EmptyState, ErrorState, LoadingState } from '@/features/shared/ui/feedback';
+import { EmptyState, ErrorState, ProfilePageSkeleton } from '@/features/shared/ui/feedback';
 import { ActionBar, StatsBar } from '@/features/shared/ui/layout';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
@@ -23,7 +23,7 @@ interface UserWikiViewProps {
 
 export function UserWikiView({ page }: UserWikiViewProps) {
   if (page.status === 'loading') {
-    return <LoadingState label={page.copy.loading} className="py-12" />;
+    return <ProfilePageSkeleton label={page.copy.loading} />;
   }
 
   if (page.status === 'error') {

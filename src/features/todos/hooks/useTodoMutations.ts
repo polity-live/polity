@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { useCommonActions } from '@/zero/common';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import type { TodoUpdateInput } from '@/zero/todos/schema';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -115,41 +116,43 @@ export function useTodoMutations() {
   ) => {
     setIsLoading(true);
     try {
-      await todoActions.updateTodo({ id: todoId, ...updates });
+      await waitForClientApply(todoActions.updateTodo({ id: todoId, ...updates }));
 
       if (updates.status === 'completed' && options?.visibility === 'public' && options?.senderId) {
-        await commonActions.createTimelineEvent({
-          id: crypto.randomUUID(),
-          event_type: 'status_changed',
-          entity_type: 'todo',
-          entity_id: todoId,
-          actor_id: options.senderId,
-          title: translateText('generated.inline.0543_task_completed_value1131_41e5a93d', {
-            value1131: options.todoTitle || 'Task',
-          }),
-          description: translateText(
-            'generated.inline.0544_a_task_has_been_marked_as_completed_89df782a'
-          ),
-          metadata: null,
-          image_url: '',
-          video_url: '',
-          video_thumbnail_url: '',
-          content_type: 'todo',
-          tags: null,
-          stats: null,
-          vote_status: '',
-          election_status: '',
-          ends_at: 0,
-          user_id: null,
-          group_id: null,
-          amendment_id: null,
-          event_id: null,
-          todo_id: todoId,
-          blog_id: null,
-          statement_id: null,
-          election_id: null,
-          amendment_vote_id: null,
-        });
+        await waitForClientApply(
+          commonActions.createTimelineEvent({
+            id: crypto.randomUUID(),
+            event_type: 'status_changed',
+            entity_type: 'todo',
+            entity_id: todoId,
+            actor_id: options.senderId,
+            title: translateText('generated.inline.0543_task_completed_value1131_41e5a93d', {
+              value1131: options.todoTitle || 'Task',
+            }),
+            description: translateText(
+              'generated.inline.0544_a_task_has_been_marked_as_completed_89df782a'
+            ),
+            metadata: null,
+            image_url: '',
+            video_url: '',
+            video_thumbnail_url: '',
+            content_type: 'todo',
+            tags: null,
+            stats: null,
+            vote_status: '',
+            election_status: '',
+            ends_at: 0,
+            user_id: null,
+            group_id: null,
+            amendment_id: null,
+            event_id: null,
+            todo_id: todoId,
+            blog_id: null,
+            statement_id: null,
+            election_id: null,
+            amendment_vote_id: null,
+          })
+        );
       }
 
       return { success: true };
@@ -174,7 +177,7 @@ export function useTodoMutations() {
 
     setIsLoading(true);
     try {
-      await todoActions.deleteTodo(todoId);
+      await waitForClientApply(todoActions.deleteTodo(todoId));
 
       return { success: true };
     } catch (error) {

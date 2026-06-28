@@ -22,8 +22,6 @@ export interface CreateBlogFormViewProps {
   navigate: any;
   user: any;
   createBlogFull: any;
-  commonActions: any;
-  allHashtags: any;
   blogId: any;
   formData: any;
   setFormData: any;

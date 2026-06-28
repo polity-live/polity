@@ -17,6 +17,7 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Separator } from '@/features/shared/ui/ui/separator';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import {
   Users,
   Calendar,
@@ -69,11 +70,7 @@ export function NotificationSettingsContentView({
   handleReset,
 }: NotificationSettingsContentViewProps) {
   if (isLoading) {
-    return (
-      <div className="flex h-[400px] items-center justify-center">
-        <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <PageSkeleton variant="settings" label={t('common.loading.pageSkeleton.settings')} />;
   }
 
   return (

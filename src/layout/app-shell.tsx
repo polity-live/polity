@@ -34,6 +34,13 @@ import { MotionPage } from '@/features/shared/motion';
 import { useGlobalZeroPreloads } from '@/zero/preloads';
 import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation.ts';
 import { isItemActive } from '@/features/navigation/nav-items/nav-helpers.ts';
+import {
+  APP_SHELL_PAGE_FRAME_CLASS,
+  getAuthenticatedPageFrame,
+  getUnauthenticatedPageFrame,
+  isLandingPath,
+  type AppShellPageFrame,
+} from './app-shell-layout';
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -86,6 +93,7 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
     isSecondaryNavVisible,
   });
   const mainStyle = getMainStyleWithShellOffsets(shellOffsets);
+  const pageFrame = getUnauthenticatedPageFrame(pathname);
 
   return (
     <I18nSyncProvider>
@@ -117,7 +125,9 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
             }
           )}`}
         >
-          <MotionPage>{children}</MotionPage>
+          <PageFrame frame={pageFrame}>
+            <MotionPage>{children}</MotionPage>
+          </PageFrame>
         </main>
 
         <NavigationCommandDialog
@@ -130,27 +140,6 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
       </div>
     </I18nSyncProvider>
   );
-}
-
-function isLandingPath(pathname: string): boolean {
-  return (
-    pathname === '/' ||
-    pathname === '/features' ||
-    pathname === '/solutions' ||
-    pathname === '/imprint'
-  );
-}
-
-const UNCONTAINED_AUTHENTICATED_PAGE_PATTERNS = [
-  /^\/group\/[^/]+\/network$/,
-  /^\/user\/[^/]+\/network$/,
-  /^\/event\/[^/]+\/network$/,
-  /^\/amendment\/[^/]+\/process$/,
-  /^\/amendment\/[^/]+\/streetscape$/,
-];
-
-function isUncontainedAuthenticatedPage(pathname: string): boolean {
-  return UNCONTAINED_AUTHENTICATED_PAGE_PATTERNS.some(pattern => pattern.test(pathname));
 }
 
 function isEntitySecondarySwipeRoute(pathname: string): boolean {
@@ -206,8 +195,7 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
 
   const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen);
   const isFullscreenOnboarding = pathname === '/';
-  const isFullWidth = pathname === '/home' || pathname === '/search';
-  const isUncontainedPage = isUncontainedAuthenticatedPage(pathname);
+  const pageFrame = getAuthenticatedPageFrame(pathname);
   const isSecondaryNavVisible =
     Boolean(secondaryNavItems) && ['secondary', 'combined'].includes(navigationType);
   const shellOffsets = getMobileShellOffsets({
@@ -293,15 +281,9 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
           )}`}
           {...secondarySwipeHandlers}
         >
-          {isUncontainedPage ? (
-            <div className="p-2">
-              <MotionPage>{children}</MotionPage>
-            </div>
-          ) : (
-            <div className={`mx-auto px-4 py-6 ${isFullWidth ? '' : 'max-w-7xl'}`}>
-              <MotionPage>{children}</MotionPage>
-            </div>
-          )}
+          <PageFrame frame={pageFrame}>
+            <MotionPage>{children}</MotionPage>
+          </PageFrame>
         </main>
 
         <NavigationCommandDialog
@@ -314,6 +296,14 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
       </div>
     </I18nSyncProvider>
   );
+}
+
+function PageFrame({ children, frame }: { children: ReactNode; frame: AppShellPageFrame }) {
+  if (frame === 'bare') {
+    return <>{children}</>;
+  }
+
+  return <div className={APP_SHELL_PAGE_FRAME_CLASS[frame]}>{children}</div>;
 }
 
 function getMarginClasses({

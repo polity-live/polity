@@ -3,6 +3,7 @@ import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useEventSubscribers } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**
@@ -75,14 +76,16 @@ export function useSubscribeEvent(targetEventId?: string) {
       const subscriptionId = crypto.randomUUID();
       createdSubscriptionIdRef.current = subscriptionId;
 
-      await doSubscribe({
-        id: subscriptionId,
-        user_id: null,
-        group_id: null,
-        amendment_id: null,
-        event_id: targetEventId,
-        blog_id: null,
-      });
+      await waitForClientApply(
+        doSubscribe({
+          id: subscriptionId,
+          user_id: null,
+          group_id: null,
+          amendment_id: null,
+          event_id: targetEventId,
+          blog_id: null,
+        })
+      );
 
       toast.success(
         translateText('generated.inline.0482_successfully_subscribed_to_event_00520c61')
@@ -128,7 +131,7 @@ export function useSubscribeEvent(targetEventId?: string) {
     setSubscriberCount(prev => Math.max(0, prev - subsToDelete.length));
     setIsLoading(true);
     try {
-      await Promise.all(subsToDelete.map(sub => doUnsubscribe({ id: sub.id })));
+      await Promise.all(subsToDelete.map(sub => waitForClientApply(doUnsubscribe({ id: sub.id }))));
       createdSubscriptionIdRef.current = null;
       toast.success(
         translateText('generated.inline.0484_successfully_unsubscribed_from_event_719548db')

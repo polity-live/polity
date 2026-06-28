@@ -198,7 +198,8 @@ export const authTranslations = {
       mapDescription:
         'Klicke auf eine Markierung, um sie zu fokussieren. Wähle Gruppen aus der Liste.',
       mapNoGroups: 'Keine Gruppen mit Kartenposition in diesen Treffern.',
-      mapUnavailable: 'Karte wird geladen...',
+      mapLoading: 'Karte wird geladen...',
+      mapUnavailable: 'Karte konnte nicht geladen werden.',
       mappableCount: '{{count}} auf der Karte',
       unmappedCount: '{{count}} ohne Standort',
       activeTitle: 'Fokussierte Gruppe',

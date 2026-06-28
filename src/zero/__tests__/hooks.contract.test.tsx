@@ -14,7 +14,7 @@ const hookMocks = vi.hoisted(() => {
     toastSuccess: vi.fn(),
     toastError: vi.fn(),
     onServerError: vi.fn(),
-    serverConfirmed: vi.fn<(...args: unknown[]) => Promise<void>>(async () => undefined),
+    waitForClientApply: vi.fn<(...args: unknown[]) => Promise<void>>(async () => undefined),
     t: vi.fn((key: string) => key),
     userMutators: {
       updateProfile: vi.fn((args: unknown) => token('mutators.users.updateProfile', args)),
@@ -56,7 +56,7 @@ vi.mock('../mutators', () => ({
 
 vi.mock('../mutate-with-server-check', () => ({
   onServerError: (...args: unknown[]) => hookMocks.onServerError(...args),
-  serverConfirmed: (...args: unknown[]) => hookMocks.serverConfirmed(...args),
+  waitForClientApply: (...args: unknown[]) => hookMocks.waitForClientApply(...args),
 }));
 
 vi.mock('@/features/notifications/utils/gated-toast', () => ({
@@ -177,17 +177,17 @@ describe('Zero React hook contracts', () => {
     expect(hookMocks.onServerError).toHaveBeenCalledWith(mutationResult, expect.any(Function));
   });
 
-  it('awaits server confirmation for confirmed user actions', async () => {
+  it('awaits client apply for client-applied user actions', async () => {
     const mutationResult = { server: Promise.resolve({ type: 'success' }) };
     hookMocks.zeroMutate.mockReturnValueOnce(mutationResult);
 
     const { result } = renderHook(() => useUserActions());
 
     await act(async () => {
-      await result.current.updateProfileConfirmed({ last_name: 'Lovelace' });
+      await result.current.updateProfileClientApplied({ last_name: 'Lovelace' });
     });
 
     expect(hookMocks.userMutators.updateProfile).toHaveBeenCalledWith({ last_name: 'Lovelace' });
-    expect(hookMocks.serverConfirmed).toHaveBeenCalledWith(mutationResult);
+    expect(hookMocks.waitForClientApply).toHaveBeenCalledWith(mutationResult);
   });
 });

@@ -6,6 +6,7 @@ import { AlertTriangle, Check, ShieldCheck, Vote } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
+import { LoadingProgressBar } from '@/features/shared/ui/feedback';
 import { getContentTypeToneClasses, getSemanticToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 import type { VotingPhaseValue } from './VotingControls';
@@ -170,6 +171,15 @@ export function VoteSubmissionOverlay({
       ? getSemanticToneClasses(errorDetails.tone)
       : getContentTypeToneClasses('vote');
   const selectedCandidates = selection.candidates ?? [];
+  const displayProgressSteps = progressSteps.map(step => ({
+    ...step,
+    status:
+      status === 'success'
+        ? 'complete'
+        : status === 'error' && step.status === 'active'
+          ? 'error'
+          : step.status,
+  }));
 
   return (
     <AnimatePresence>
@@ -292,10 +302,10 @@ export function VoteSubmissionOverlay({
               data-slot="vote-submit-steps"
               aria-label="Stimmabgabefortschritt"
             >
-              {progressSteps.map((step, index) => {
-                const isComplete = step.status === 'complete' || status === 'success';
+              {displayProgressSteps.map((step, index) => {
+                const isComplete = step.status === 'complete';
                 const isActive = step.status === 'active';
-                const isError = step.status === 'error' || (status === 'error' && isActive);
+                const isError = step.status === 'error';
 
                 return (
                   <div
@@ -351,27 +361,15 @@ export function VoteSubmissionOverlay({
                         </p>
                       </div>
                     </div>
-
-                    {isActive ? (
-                      <div className="bg-muted mt-3 h-1 overflow-hidden rounded-full">
-                        <motion.div
-                          className={cn('h-full rounded-full', tone.text, 'bg-current')}
-                          initial={reducedMotion ? false : { width: '18%' }}
-                          animate={
-                            reducedMotion ? { width: '52%' } : { width: ['18%', '68%', '38%'] }
-                          }
-                          transition={
-                            reducedMotion
-                              ? { duration: 0 }
-                              : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }
-                          }
-                        />
-                      </div>
-                    ) : null}
                   </div>
                 );
               })}
             </div>
+            <LoadingProgressBar
+              ariaLabel="Stimmabgabefortschritt"
+              steps={displayProgressSteps}
+              indicatorClassName={cn(tone.text, 'bg-current')}
+            />
 
             {status === 'error' ? (
               <div className="w-full space-y-3">

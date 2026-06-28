@@ -17,6 +17,7 @@ import { filterParticipationsByRole } from '@/features/shared/ui/participation';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import type { User } from '@/zero';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 function displayName(u: Pick<User, 'first_name' | 'last_name'> | undefined | null): string {
   if (!u) return 'Unknown';
@@ -139,19 +140,17 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
 
           await Promise.all(
             selectedUsers.map(userId =>
-              blogActions.createEntry({
-                id: crypto.randomUUID(),
-                status: 'invited',
-                user_id: userId,
-                blog_id: blogId,
-                role_id: writerRole.id,
-                visibility: '',
-              })
+              waitForClientApply(
+                blogActions.createEntry({
+                  id: crypto.randomUUID(),
+                  status: 'invited',
+                  user_id: userId,
+                  blog_id: blogId,
+                  role_id: writerRole.id,
+                  visibility: '',
+                })
+              )
             )
-          );
-
-          toast.success(
-            `Invited ${selectedUsers.length} ${selectedUsers.length === 1 ? 'blogger' : 'bloggers'}`
           );
         },
         {
@@ -176,10 +175,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   // Handle role updates
   const handleUpdateRole = async (bloggerId: string, newRoleId: string) => {
     try {
-      await blogActions.updateEntry({ id: bloggerId, role_id: newRoleId });
-      toast.success(
-        translateText('generated.inline.0228_blogger_role_updated_successfully_e8d4a3f6')
-      );
+      await waitForClientApply(blogActions.updateEntry({ id: bloggerId, role_id: newRoleId }));
     } catch (err) {
       console.error('Error updating role:', err);
       toast.error(translateText('generated.inline.0229_failed_to_update_blogger_role_fd1c311d'));
@@ -189,8 +185,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   // Handle removing blogger
   const handleRemoveBlogger = async (bloggerId: string) => {
     try {
-      await blogActions.deleteEntry(bloggerId);
-      toast.success(translateText('generated.inline.0230_blogger_removed_successfully_09b87897'));
+      await waitForClientApply(blogActions.deleteEntry(bloggerId));
     } catch (err) {
       console.error('Error removing blogger:', err);
       toast.error(translateText('generated.inline.0231_failed_to_remove_blogger_5c712772'));
@@ -212,21 +207,23 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
           ar => ar.resource === resource && ar.action === action
         );
         if (actionRightToRemove) {
-          await groupActions.removeActionRight({ id: actionRightToRemove.id });
+          await waitForClientApply(groupActions.removeActionRight({ id: actionRightToRemove.id }));
         }
       } else {
         // Add the action right
         const actionRightId = crypto.randomUUID();
-        await groupActions.assignActionRight({
-          id: actionRightId,
-          resource,
-          action,
-          role_id: roleId,
-          blog_id: blogId,
-          group_id: null,
-          event_id: null,
-          amendment_id: null,
-        });
+        await waitForClientApply(
+          groupActions.assignActionRight({
+            id: actionRightId,
+            resource,
+            action,
+            role_id: roleId,
+            blog_id: blogId,
+            group_id: null,
+            event_id: null,
+            amendment_id: null,
+          })
+        );
       }
       toast.success(
         translateText('generated.inline.0232_permission_updated_successfully_b593d649')
@@ -246,17 +243,19 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
 
     try {
       const roleId = crypto.randomUUID();
-      await groupActions.createRole({
-        id: roleId,
-        name: newRoleName,
-        description: newRoleDescription,
-        scope: 'blog',
-        blog_id: blogId,
-        group_id: null,
-        event_id: null,
-        amendment_id: null,
-        sort_order: 0,
-      });
+      await waitForClientApply(
+        groupActions.createRole({
+          id: roleId,
+          name: newRoleName,
+          description: newRoleDescription,
+          scope: 'blog',
+          blog_id: blogId,
+          group_id: null,
+          event_id: null,
+          amendment_id: null,
+          sort_order: 0,
+        })
+      );
 
       toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
 
@@ -274,7 +273,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   // Handle deleting a role
   const handleDeleteRole = async (roleId: string) => {
     try {
-      await groupActions.deleteRole({ id: roleId });
+      await waitForClientApply(groupActions.deleteRole({ id: roleId }));
       toast.success(translateText('generated.inline.0237_role_deleted_successfully_b714d57c'));
     } catch (error) {
       console.error('Failed to delete role:', error);
@@ -439,10 +438,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
               variant="default"
               size="sm"
               onClick={() => {
-                blogActions.updateEntry({
-                  id: row.original.id,
-                  status: 'member',
-                });
+                void waitForClientApply(
+                  blogActions.updateEntry({
+                    id: row.original.id,
+                    status: 'member',
+                  })
+                );
               }}
             >
               <Check className="mr-1 h-4 w-4" />

@@ -1,9 +1,12 @@
 import type { Marker as LeafletMarker } from 'leaflet';
+import { MapPanelSkeleton } from '@/features/shared/ui/feedback';
+
 export interface GeoAddressMapViewProps {
   coordinates: any;
   onCoordinatesChange: any;
   isBusy: any;
   loadingLabel: any;
+  unavailableLabel: any;
   busyLabel: any;
   emptyMessage: any;
   moveHint: any;
@@ -31,6 +34,7 @@ export function GeoAddressMapView({
   onCoordinatesChange,
   isBusy,
   loadingLabel,
+  unavailableLabel,
   busyLabel,
   emptyMessage,
   moveHint,
@@ -50,17 +54,13 @@ export function GeoAddressMapView({
   if (loadFailed) {
     return (
       <div className="bg-muted/20 text-muted-foreground flex h-72 items-center justify-center rounded-xl border border-dashed px-4 text-center text-sm">
-        {loadingLabel}
+        {unavailableLabel}
       </div>
     );
   }
 
   if (!reactLeafletModule || !leafletModule || !markerIcon) {
-    return (
-      <div className="bg-muted/20 text-muted-foreground flex h-72 items-center justify-center rounded-xl border border-dashed px-4 text-center text-sm">
-        {loadingLabel}
-      </div>
-    );
+    return <MapPanelSkeleton label={loadingLabel} className="rounded-xl" />;
   }
 
   return (

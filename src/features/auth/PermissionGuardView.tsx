@@ -1,5 +1,5 @@
 'use client';
-import { Loader2 } from 'lucide-react';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 export interface PermissionGuardViewProps {
   children: any;
   action: any;
@@ -21,13 +21,7 @@ export function PermissionGuardView({
   isLoading,
 }: PermissionGuardViewProps) {
   if (isLoading) {
-    return (
-      loadingComponent || (
-        <div className="flex min-h-[200px] items-center justify-center">
-          <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
-        </div>
-      )
-    );
+    return loadingComponent || <SectionSkeleton className="min-h-[200px] py-4" rows={2} />;
   }
 
   if (!can(action, resource)) {

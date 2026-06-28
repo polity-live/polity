@@ -1,9 +1,9 @@
-import { useCallback } from 'react'
-import { useZero } from '@rocicorp/zero/react'
-import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
-import { useTranslation } from '@/features/shared/hooks/use-translation'
-import { mutators } from '../mutators'
-import { onServerError } from '../mutate-with-server-check'
+import { useCallback } from 'react';
+import { useZero } from '@rocicorp/zero/react';
+import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { mutators } from '../mutators';
+import { onServerError } from '../mutate-with-server-check';
 
 /**
  * Action hook for meeting bookings (meetings as events).
@@ -11,32 +11,38 @@ import { onServerError } from '../mutate-with-server-check'
  * Mutations are optimistic — toasts show instantly, server errors appear in the background.
  */
 export function useMeetingActions() {
-  const zero = useZero()
-  const { t } = useTranslation()
+  const zero = useZero();
+  const { t } = useTranslation();
 
   const bookMeeting = useCallback(
     (eventId: string, instanceDate?: number | null) => {
-      const result = zero.mutate(mutators.events.bookMeeting({
-        event_id: eventId,
-        instance_date: instanceDate ?? null,
-      }))
-      toast.success(t('features.meet.toasts.booked'))
-      onServerError(result, () => toast.error(t('features.meet.toasts.bookFailed')))
+      const result = zero.mutate(
+        mutators.events.bookMeeting({
+          event_id: eventId,
+          instance_date: instanceDate ?? null,
+        })
+      );
+      toast.success(t('features.meet.toasts.booked'));
+      onServerError(result, () => toast.error(t('features.meet.toasts.bookFailed')));
+      return result;
     },
-    [zero],
-  )
+    [zero, t]
+  );
 
   const cancelMeetingBooking = useCallback(
     (eventId: string, instanceDate?: number | null) => {
-      const result = zero.mutate(mutators.events.cancelMeetingBooking({
-        event_id: eventId,
-        instance_date: instanceDate ?? null,
-      }))
-      toast.success(t('features.meet.toasts.bookingCancelled'))
-      onServerError(result, () => toast.error(t('features.meet.toasts.cancelFailed')))
+      const result = zero.mutate(
+        mutators.events.cancelMeetingBooking({
+          event_id: eventId,
+          instance_date: instanceDate ?? null,
+        })
+      );
+      toast.success(t('features.meet.toasts.bookingCancelled'));
+      onServerError(result, () => toast.error(t('features.meet.toasts.cancelFailed')));
+      return result;
     },
-    [zero],
-  )
+    [zero, t]
+  );
 
-  return { bookMeeting, cancelMeetingBooking }
+  return { bookMeeting, cancelMeetingBooking };
 }

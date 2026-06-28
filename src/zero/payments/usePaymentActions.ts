@@ -19,8 +19,9 @@ export function usePaymentActions() {
       const result = zero.mutate(mutators.payments.createCustomer(args));
       toast.success(t('common.paymentToasts.customerCreated'));
       onServerError(result, () => toast.error(t('common.paymentToasts.customerCreateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const updateSubscription = useCallback(
@@ -28,8 +29,9 @@ export function usePaymentActions() {
       const result = zero.mutate(mutators.payments.updateSubscription(args));
       toast.success(t('common.paymentToasts.subscriptionUpdated'));
       onServerError(result, () => toast.error(t('common.paymentToasts.subscriptionUpdateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const recordPayment = useCallback(
@@ -37,8 +39,9 @@ export function usePaymentActions() {
       const result = zero.mutate(mutators.payments.recordPayment(args));
       toast.success(t('common.paymentToasts.paymentRecorded'));
       onServerError(result, () => toast.error(t('common.paymentToasts.paymentRecordFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const createPayment = useCallback(
@@ -48,7 +51,7 @@ export function usePaymentActions() {
       onServerError(result, () => toast.error(t('common.paymentToasts.paymentCreateFailed')));
       return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deletePayment = useCallback(
@@ -56,8 +59,9 @@ export function usePaymentActions() {
       const result = zero.mutate(mutators.payments.deletePayment(args));
       toast.success(t('common.paymentToasts.paymentDeleted'));
       onServerError(result, () => toast.error(t('common.paymentToasts.paymentDeleteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   return {

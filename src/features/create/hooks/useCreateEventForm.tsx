@@ -68,11 +68,51 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
-import { trackCreateFinalization } from '../logic/createFinalization';
+import { consumeCreateRestoreDraft, trackCreateFinalization } from '../logic/createFinalization';
 
 type EventType = CreateEventType;
 type MeetingType = 'one-on-one' | 'public-meeting';
 type AttendanceMode = 'online' | 'hybrid' | 'offline';
+
+type CreateEventRestoreState = Partial<{
+  eventType: EventType;
+  meetingType: MeetingType;
+  meetingMaxBookings: string;
+  groupId: string;
+  groupName: string;
+  delegateConfig: DelegateConfig;
+  delegateElectionMode: ElectionMode;
+  title: string;
+  description: string;
+  descriptionContent: Value;
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+  attendanceMode: AttendanceMode;
+  locationName: string;
+  onlineLink: string;
+  country: string;
+  region: string;
+  postCode: string;
+  city: string;
+  street: string;
+  houseNumber: string;
+  latitude: number | null;
+  longitude: number | null;
+  capacity: string;
+  imageURL: string;
+  visibility: Visibility;
+  genderQuotaEnabled: boolean;
+  changeRequestVoteOrder: ChangeRequestVoteOrder;
+  hashtags: string[];
+  delegatesNominationDeadline: string;
+  amendmentDeadline: string;
+  recurrencePattern: RecurrencePattern;
+  recurrenceInterval: number;
+  recurrenceWeekdays: number[];
+  recurrenceEndDate: string;
+}>;
 
 export function useCreateEventForm(): CreateFormConfig {
   const { t } = useTranslation();
@@ -132,6 +172,55 @@ export function useCreateEventForm(): CreateFormConfig {
   const [recurrenceInterval, setRecurrenceInterval] = useState(1);
   const [recurrenceWeekdays, setRecurrenceWeekdays] = useState<number[]>([]);
   const [recurrenceEndDate, setRecurrenceEndDate] = useState('');
+  useEffect(() => {
+    const restoreDraft = consumeCreateRestoreDraft<CreateEventRestoreState>('event');
+    if (!restoreDraft) return;
+    const state = restoreDraft.formState;
+
+    setEventType(state.eventType ?? prefilledSearch.eventType);
+    setMeetingType(state.meetingType ?? 'one-on-one');
+    setMeetingMaxBookings(state.meetingMaxBookings ?? '10');
+    setGroupId(state.groupId ?? groupIdParam);
+    setGroupName(state.groupName ?? '');
+    setDelegateConfig(
+      state.delegateConfig ?? {
+        allocationMode: 'ratio',
+        totalDelegates: 10,
+        delegateRatio: 10,
+      }
+    );
+    setDelegateElectionMode(state.delegateElectionMode ?? 'list');
+    setTitle(state.title ?? '');
+    setDescription(state.description ?? '');
+    setDescriptionContent(state.descriptionContent ?? EMPTY_RICH_TEXT_VALUE);
+    setStartDate(state.startDate ?? prefilledSearch.startDate);
+    setStartTime(state.startTime ?? prefilledSearch.startTime);
+    setEndDate(state.endDate ?? prefilledSearch.endDate);
+    setEndTime(state.endTime ?? prefilledSearch.endTime);
+    setAttendanceMode(state.attendanceMode ?? 'offline');
+    setLocationName(state.locationName ?? '');
+    setOnlineLink(state.onlineLink ?? '');
+    setCountry(state.country ?? '');
+    setRegion(state.region ?? '');
+    setPostCode(state.postCode ?? '');
+    setCity(state.city ?? '');
+    setStreet(state.street ?? '');
+    setHouseNumber(state.houseNumber ?? '');
+    setLatitude(state.latitude ?? null);
+    setLongitude(state.longitude ?? null);
+    setCapacity(state.capacity ?? '');
+    setImageURL(state.imageURL ?? '');
+    setVisibility(state.visibility ?? 'public');
+    setGenderQuotaEnabled(state.genderQuotaEnabled ?? false);
+    setChangeRequestVoteOrder(state.changeRequestVoteOrder ?? DEFAULT_CHANGE_REQUEST_VOTE_ORDER);
+    setHashtags(state.hashtags ?? []);
+    setDelegatesNominationDeadline(state.delegatesNominationDeadline ?? '');
+    setAmendmentDeadline(state.amendmentDeadline ?? '');
+    setRecurrencePattern(state.recurrencePattern ?? 'none');
+    setRecurrenceInterval(state.recurrenceInterval ?? 1);
+    setRecurrenceWeekdays(state.recurrenceWeekdays ?? []);
+    setRecurrenceEndDate(state.recurrenceEndDate ?? '');
+  }, [groupIdParam, prefilledSearch]);
   const isRecurring = recurrencePattern !== 'none';
   const locationSummary = formatNamedLocation(locationName, {
     country,
@@ -475,6 +564,45 @@ export function useCreateEventForm(): CreateFormConfig {
 
       context?.reportProgress({ key: 'sync', status: 'complete' });
       context?.reportProgress({ key: 'ready', status: 'active' });
+      const recoveryFormState: CreateEventRestoreState = {
+        eventType,
+        meetingType,
+        meetingMaxBookings,
+        groupId,
+        groupName,
+        delegateConfig,
+        delegateElectionMode,
+        title,
+        description,
+        descriptionContent,
+        startDate,
+        startTime,
+        endDate,
+        endTime,
+        attendanceMode,
+        locationName,
+        onlineLink,
+        country,
+        region,
+        postCode,
+        city,
+        street,
+        houseNumber,
+        latitude,
+        longitude,
+        capacity,
+        imageURL,
+        visibility: effectiveVisibility,
+        genderQuotaEnabled,
+        changeRequestVoteOrder,
+        hashtags,
+        delegatesNominationDeadline,
+        amendmentDeadline,
+        recurrencePattern,
+        recurrenceInterval,
+        recurrenceWeekdays,
+        recurrenceEndDate,
+      };
 
       if (searchParams.returnTo) {
         const target = createReturnToSubmitTarget(
@@ -488,17 +616,7 @@ export function useCreateEventForm(): CreateFormConfig {
             entityType: 'event',
             entityId: eventId,
             createPath: '/create/event',
-            formState: {
-              title,
-              groupId,
-              eventType,
-              hashtags,
-              startDate,
-              startTime,
-              endDate,
-              endTime,
-              visibility: effectiveVisibility,
-            },
+            formState: recoveryFormState,
             mutationPayload: createEventPayload,
             target,
           },
@@ -518,17 +636,7 @@ export function useCreateEventForm(): CreateFormConfig {
           entityType: 'event',
           entityId: eventId,
           createPath: '/create/event',
-          formState: {
-            title,
-            groupId,
-            eventType,
-            hashtags,
-            startDate,
-            startTime,
-            endDate,
-            endTime,
-            visibility: effectiveVisibility,
-          },
+          formState: recoveryFormState,
           mutationPayload: createEventPayload,
           target,
         },

@@ -20,7 +20,11 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
-import { trackCreateFinalization, waitForOptimisticCreate } from '../logic/createFinalization';
+import {
+  consumeCreateRestoreDraft,
+  trackCreateFinalization,
+  waitForOptimisticCreate,
+} from '../logic/createFinalization';
 
 interface CreatePaymentSearch {
   groupId?: string;
@@ -70,6 +74,32 @@ export function useCreatePaymentForm(): CreateFormConfig {
       setDirection(directionParam);
     }
   }, [directionParam]);
+
+  useEffect(() => {
+    const restoreDraft = consumeCreateRestoreDraft<{
+      groupId?: string;
+      direction?: 'income' | 'expense';
+      label?: string;
+      type?:
+        | 'membership_fee'
+        | 'donation'
+        | 'subsidies'
+        | 'campaign'
+        | 'material'
+        | 'events'
+        | 'others';
+      amount?: string;
+      entityId?: string;
+    }>('payment');
+    if (!restoreDraft) return;
+
+    setGroupId(restoreDraft.formState.groupId ?? '');
+    setDirection(restoreDraft.formState.direction ?? 'income');
+    setLabel(restoreDraft.formState.label ?? '');
+    setType(restoreDraft.formState.type ?? 'donation');
+    setAmount(restoreDraft.formState.amount ?? '');
+    setEntityId(restoreDraft.formState.entityId ?? '');
+  }, []);
 
   const syncGroupSearch = useCallback(
     (nextGroupId: string) => {

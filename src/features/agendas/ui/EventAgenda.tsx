@@ -75,6 +75,7 @@ import { computeEligibleFinalVoterCount } from '@/features/votes/logic/computeEl
 import { useAgendaArrowNavigation } from '../hooks/useAgendaArrowNavigation';
 import { resolveClosingVoteForAgendaItem } from '../logic/resolveClosingVoteForAgendaItem';
 import { buildOfflineTallyErrorToast, isOfflineTallyPasswordError } from './offlineTallyErrorToast';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 interface EventAgendaProps {
   eventId: string;
@@ -133,9 +134,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
   useEffect(() => {
     const closeExpiredVotes = () => {
-      closeExpiredFinalVotesForEvent({ event_id: eventId }).catch(error => {
-        console.error('Failed to close expired final votes:', error);
-      });
+      closeExpiredFinalVotesForEvent({ event_id: eventId });
     };
 
     closeExpiredVotes();
@@ -1329,17 +1328,19 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           ? Math.max(...streamSpeakerListData.map(speaker => speaker.order || 0))
           : 0;
 
-      await addSpeaker({
-        id: crypto.randomUUID(),
-        title: translateText('generated.inline.0001_speaker_7c23b0d9'),
-        time: 3,
-        completed: false,
-        order_index: maxOrder + 1,
-        user_id: user.id,
-        agenda_item_id: streamAgendaItem.id,
-        start_time: null,
-        end_time: null,
-      });
+      await waitForClientApply(
+        addSpeaker({
+          id: crypto.randomUUID(),
+          title: translateText('generated.inline.0001_speaker_7c23b0d9'),
+          time: 3,
+          completed: false,
+          order_index: maxOrder + 1,
+          user_id: user.id,
+          agenda_item_id: streamAgendaItem.id,
+          start_time: null,
+          end_time: null,
+        })
+      );
     } catch (error) {
       console.error('Error adding to speaker list:', error);
     } finally {
@@ -1353,19 +1354,23 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     setMarkingSpeakerComplete(speakerId);
     try {
       const now = Date.now();
-      await updateSpeaker({
-        id: speakerId,
-        completed: true,
-        end_time: now,
-      });
+      await waitForClientApply(
+        updateSpeaker({
+          id: speakerId,
+          completed: true,
+          end_time: now,
+        })
+      );
 
       const sorted = [...streamSpeakerListData].sort((a, b) => a.order - b.order);
       const activeAfter = sorted.filter(speaker => !speaker.completed && speaker.id !== speakerId);
       if (activeAfter.length > 0) {
-        await updateSpeaker({
-          id: activeAfter[0].id,
-          start_time: now,
-        });
+        await waitForClientApply(
+          updateSpeaker({
+            id: activeAfter[0].id,
+            start_time: now,
+          })
+        );
       }
 
       toast.success(t('features.events.agenda.markCompleted'));
@@ -1388,7 +1393,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
     setRemovingSpeaker(true);
     try {
-      await removeSpeaker(userSpeaker.id);
+      await waitForClientApply(removeSpeaker(userSpeaker.id));
     } catch (error) {
       console.error('Error removing from speaker list:', error);
     } finally {

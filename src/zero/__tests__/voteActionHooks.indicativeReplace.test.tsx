@@ -10,7 +10,6 @@ const mocks = vi.hoisted(() => {
     token,
     zeroMutate: vi.fn(),
     onServerError: vi.fn(),
-    serverConfirmed: vi.fn<(...args: unknown[]) => Promise<void>>(async () => undefined),
     toastSuccess: vi.fn(),
     toastError: vi.fn(),
     t: vi.fn((key: string) => key),
@@ -25,6 +24,7 @@ const mocks = vi.hoisted(() => {
         token('mutators.votes.createIndicativeChoiceDecision', args)
       ),
       castFinalVote: vi.fn((args: unknown) => token('mutators.votes.castFinalVote', args)),
+      castFinalVoteFull: vi.fn((args: unknown) => token('mutators.votes.castFinalVoteFull', args)),
       createFinalChoiceDecision: vi.fn((args: unknown) =>
         token('mutators.votes.createFinalChoiceDecision', args)
       ),
@@ -41,6 +41,9 @@ const mocks = vi.hoisted(() => {
       ),
       castFinalElectionVote: vi.fn((args: unknown) =>
         token('mutators.elections.castFinalElectionVote', args)
+      ),
+      castFinalElectionVoteFull: vi.fn((args: unknown) =>
+        token('mutators.elections.castFinalElectionVoteFull', args)
       ),
       createFinalCandidateSelection: vi.fn((args: unknown) =>
         token('mutators.elections.createFinalCandidateSelection', args)
@@ -64,7 +67,6 @@ vi.mock('../mutators', () => ({
 
 vi.mock('../mutate-with-server-check', () => ({
   onServerError: (...args: unknown[]) => mocks.onServerError(...args),
-  serverConfirmed: (...args: unknown[]) => mocks.serverConfirmed(...args),
 }));
 
 vi.mock('@/features/notifications/utils/gated-toast', () => ({
@@ -114,7 +116,7 @@ describe('vote action hooks route indicative replacement', () => {
     expect(mocks.voteMutators.createIndicativeChoiceDecision).not.toHaveBeenCalled();
   });
 
-  it('keeps final vote submissions on the insert-only final mutators', async () => {
+  it('routes final vote submissions through the composite final mutator', async () => {
     const participation = { id: 'final-1', vote_id: 'vote-1', voter_id: 'voter-1' };
     const decisions = [
       {
@@ -130,8 +132,12 @@ describe('vote action hooks route indicative replacement', () => {
       await result.current.castFinalVote(participation, decisions);
     });
 
-    expect(mocks.voteMutators.castFinalVote).toHaveBeenCalledWith(participation);
-    expect(mocks.voteMutators.createFinalChoiceDecision).toHaveBeenCalledWith(decisions[0]);
+    expect(mocks.voteMutators.castFinalVoteFull).toHaveBeenCalledWith({
+      participation,
+      decisions,
+    });
+    expect(mocks.voteMutators.castFinalVote).not.toHaveBeenCalled();
+    expect(mocks.voteMutators.createFinalChoiceDecision).not.toHaveBeenCalled();
     expect(mocks.voteMutators.replaceIndicativeVote).not.toHaveBeenCalled();
   });
 
@@ -163,7 +169,7 @@ describe('vote action hooks route indicative replacement', () => {
     expect(mocks.electionMutators.createIndicativeCandidateSelection).not.toHaveBeenCalled();
   });
 
-  it('keeps final election submissions on the insert-only final mutators', async () => {
+  it('routes final election submissions through the composite final mutator', async () => {
     const participation = { id: 'final-1', election_id: 'election-1', elector_id: 'elector-1' };
     const selections = [
       {
@@ -179,10 +185,12 @@ describe('vote action hooks route indicative replacement', () => {
       await result.current.castFinalVote(participation, selections);
     });
 
-    expect(mocks.electionMutators.castFinalElectionVote).toHaveBeenCalledWith(participation);
-    expect(mocks.electionMutators.createFinalCandidateSelection).toHaveBeenCalledWith(
-      selections[0]
-    );
+    expect(mocks.electionMutators.castFinalElectionVoteFull).toHaveBeenCalledWith({
+      participation,
+      selections,
+    });
+    expect(mocks.electionMutators.castFinalElectionVote).not.toHaveBeenCalled();
+    expect(mocks.electionMutators.createFinalCandidateSelection).not.toHaveBeenCalled();
     expect(mocks.electionMutators.replaceIndicativeElectionVote).not.toHaveBeenCalled();
   });
 });

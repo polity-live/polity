@@ -4,6 +4,7 @@ import { requireAuthenticated, requireOwner } from '../rbac/authorize';
 import { zql } from '../schema';
 import {
   createConversationSchema,
+  createConversationFullSchema,
   updateConversationSchema,
   createConversationParticipantSchema,
   updateConversationParticipantSchema,
@@ -13,6 +14,7 @@ import {
   updateMessageSchema,
   deleteMessageSchema,
   deleteConversationSchema,
+  deleteConversationFullSchema,
 } from './schema';
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
@@ -131,6 +133,30 @@ export const messageSharedMutators = {
     });
   }),
 
+  createConversationFull: defineMutator(createConversationFullSchema, async ({ tx, ctx, args }) => {
+    await messageSharedMutators.createConversation.fn({
+      tx,
+      ctx,
+      args: args.conversation,
+    });
+
+    for (const participant of args.participants) {
+      await messageSharedMutators.addParticipant.fn({
+        tx,
+        ctx,
+        args: participant,
+      });
+    }
+
+    if (args.assistantMessage) {
+      await messageSharedMutators.sendAssistantMessage.fn({
+        tx,
+        ctx,
+        args: args.assistantMessage,
+      });
+    }
+  }),
+
   // Send a message
   sendMessage: defineMutator(createMessageSchema, async ({ tx, ctx, args }) => {
     const { userID } = ctx;
@@ -195,6 +221,30 @@ export const messageSharedMutators = {
   deleteConversation: defineMutator(deleteConversationSchema, async ({ tx, ctx, args }) => {
     await assertCanManageConversation(tx, ctx, args.id);
     await tx.mutate.conversation.delete({ id: args.id });
+  }),
+
+  deleteConversationFull: defineMutator(deleteConversationFullSchema, async ({ tx, ctx, args }) => {
+    for (const messageId of args.messageIds ?? []) {
+      await messageSharedMutators.deleteMessage.fn({
+        tx,
+        ctx,
+        args: { id: messageId },
+      });
+    }
+
+    for (const participantId of args.participantIds ?? []) {
+      await messageSharedMutators.removeParticipant.fn({
+        tx,
+        ctx,
+        args: { id: participantId },
+      });
+    }
+
+    await messageSharedMutators.deleteConversation.fn({
+      tx,
+      ctx,
+      args: { id: args.id },
+    });
   }),
 
   // Update a message

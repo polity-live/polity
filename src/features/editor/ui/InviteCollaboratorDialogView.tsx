@@ -4,6 +4,7 @@ import { featureThemeClassName } from '@/features/shared/theme';
 import { Check, Loader2, UserPlus, X } from 'lucide-react';
 
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { BadgeControl } from '@/features/shared/ui/status/StatusBadges';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -121,9 +122,7 @@ export function InviteCollaboratorDialogView({ model }: InviteCollaboratorDialog
             />
             <CommandList>
               {isLoading ? (
-                <div className="flex items-center justify-center py-6">
-                  <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-                </div>
+                <SectionSkeleton rows={3} density="compact" className="p-2" />
               ) : (
                 <>
                   <CommandEmpty>{t('features.editor.inviteDialog.noUsers')}</CommandEmpty>

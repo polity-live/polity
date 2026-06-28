@@ -40,6 +40,7 @@ export function useAiActions() {
 
       onServerError(result, msg => console.error('AI skill create failed:', msg));
       toast.success(t('pages.user.ai.skills.created'));
+      return result;
     },
     [t, zero]
   );
@@ -59,6 +60,7 @@ export function useAiActions() {
 
       onServerError(result, msg => console.error('AI skill update failed:', msg));
       toast.success(t('pages.user.ai.skills.updated'));
+      return result;
     },
     [t, zero]
   );
@@ -68,6 +70,7 @@ export function useAiActions() {
       const result = zero.mutate(mutators.ai.deleteSkill({ id }));
       onServerError(result, msg => console.error('AI skill delete failed:', msg));
       toast.success(t('pages.user.ai.skills.deleted'));
+      return result;
     },
     [t, zero]
   );
@@ -84,6 +87,7 @@ export function useAiActions() {
 
       onServerError(result, msg => console.error('AI tool create failed:', msg));
       toast.success(t('pages.user.ai.tools.created'));
+      return result;
     },
     [t, zero]
   );
@@ -100,6 +104,7 @@ export function useAiActions() {
 
       onServerError(result, msg => console.error('AI tool update failed:', msg));
       toast.success(t('pages.user.ai.tools.updated'));
+      return result;
     },
     [t, zero]
   );

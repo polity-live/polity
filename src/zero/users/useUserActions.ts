@@ -3,7 +3,7 @@ import { useZero } from '@rocicorp/zero/react';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
-import { onServerError, serverConfirmed } from '../mutate-with-server-check';
+import { onServerError, waitForClientApply } from '../mutate-with-server-check';
 
 /**
  * Action hook for user mutations.
@@ -19,15 +19,18 @@ export function useUserActions() {
       const result = zero.mutate(mutators.users.updateProfile(args));
       toast.success(t('features.user.toasts.profileUpdated'));
       onServerError(result, () => toast.error(t('features.user.toasts.profileUpdateFailed')));
+      return result;
     },
     [zero, t]
   );
 
-  const updateProfileConfirmed = useCallback(
+  const updateProfileClientApplied = useCallback(
     async (args: Parameters<typeof mutators.users.updateProfile>[0]) => {
       const result = zero.mutate(mutators.users.updateProfile(args));
       toast.success(t('features.user.toasts.profileUpdated'));
-      await serverConfirmed(result);
+      onServerError(result, () => toast.error(t('features.user.toasts.profileUpdateFailed')));
+      await waitForClientApply(result);
+      return result;
     },
     [zero, t]
   );
@@ -37,6 +40,7 @@ export function useUserActions() {
       const result = zero.mutate(mutators.users.follow(args));
       toast.success(t('features.user.toasts.followed'));
       onServerError(result, () => toast.error(t('features.user.toasts.followFailed')));
+      return result;
     },
     [zero, t]
   );
@@ -46,13 +50,14 @@ export function useUserActions() {
       const result = zero.mutate(mutators.users.unfollow({ id }));
       toast.success(t('features.user.toasts.unfollowed'));
       onServerError(result, () => toast.error(t('features.user.toasts.unfollowFailed')));
+      return result;
     },
     [zero, t]
   );
 
   return {
     updateProfile,
-    updateProfileConfirmed,
+    updateProfileClientApplied,
     follow,
     unfollow,
   };

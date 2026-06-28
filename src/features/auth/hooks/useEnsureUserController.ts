@@ -1,31 +1,25 @@
 import { useConnectionState } from '@rocicorp/zero/react';
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
 import { useAuth } from '@/providers/auth-provider';
 import { useUserState } from '@/zero/users/useUserState';
 
-const ZERO_SYNC_TIMEOUT_MS = 8000;
-
 export function useEnsureUserController() {
-  const { user, loading } = useAuth();
+  const { user, loading, refreshAuthState, signOut } = useAuth();
   const { isLoading: userStateLoading } = useUserState();
   const connectionState = useConnectionState();
-  const [timedOut, setTimedOut] = useState(false);
 
-  useEffect(() => {
-    if (!userStateLoading) {
-      setTimedOut(false);
-      return;
-    }
-    const timer = setTimeout(() => setTimedOut(true), ZERO_SYNC_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [userStateLoading]);
+  const retry = useCallback(async () => {
+    await refreshAuthState();
+  }, [refreshAuthState]);
 
-  const isLoading = loading || (user?.id ? userStateLoading && !timedOut : false);
+  const isLoading = loading || Boolean(user?.id && userStateLoading);
 
   return {
     isLoading,
     hasUser: Boolean(user),
+    retry,
+    signOut,
     connectionStatus:
       connectionState.name === 'connected'
         ? ('syncing' as const)

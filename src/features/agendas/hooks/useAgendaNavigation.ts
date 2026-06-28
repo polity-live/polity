@@ -13,6 +13,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 interface AgendaItem {
   id: string;
@@ -136,23 +137,29 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
       try {
         // Deactivate current item if exists
         if (currentAgendaItem) {
-          await updateAgendaItem({
-            id: currentAgendaItem.id,
-            status: currentAgendaItem.completedAt ? 'completed' : 'pending',
-          });
+          await waitForClientApply(
+            updateAgendaItem({
+              id: currentAgendaItem.id,
+              status: currentAgendaItem.completedAt ? 'completed' : 'pending',
+            })
+          );
         }
 
         // Activate the new item
-        await updateAgendaItem({
-          id: itemId,
-          status: 'in-progress',
-          start_time: Date.now(),
-          activated_at: Date.now(),
-        });
-        await updateEvent({
-          id: eventId,
-          current_agenda_item_id: itemId,
-        });
+        await waitForClientApply(
+          updateAgendaItem({
+            id: itemId,
+            status: 'in-progress',
+            start_time: Date.now(),
+            activated_at: Date.now(),
+          })
+        );
+        await waitForClientApply(
+          updateEvent({
+            id: eventId,
+            current_agenda_item_id: itemId,
+          })
+        );
 
         toast.success(`Activated: ${item.title}`);
       } catch (error) {
@@ -211,17 +218,21 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
     setIsLoading(true);
     try {
       // Complete current item
-      await updateAgendaItem({
-        id: currentAgendaItem.id,
-        status: 'completed',
-        start_time: currentAgendaItem.activatedAt ?? Date.now(),
-        end_time: Date.now(),
-        completed_at: Date.now(),
-      });
-      await updateEvent({
-        id: eventId,
-        current_agenda_item_id: null,
-      });
+      await waitForClientApply(
+        updateAgendaItem({
+          id: currentAgendaItem.id,
+          status: 'completed',
+          start_time: currentAgendaItem.activatedAt ?? Date.now(),
+          end_time: Date.now(),
+          completed_at: Date.now(),
+        })
+      );
+      await waitForClientApply(
+        updateEvent({
+          id: eventId,
+          current_agenda_item_id: null,
+        })
+      );
 
       toast.success(`Completed: ${currentAgendaItem.title}`);
     } catch (error) {

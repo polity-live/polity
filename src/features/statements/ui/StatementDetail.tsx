@@ -10,6 +10,7 @@ import type { StatementDetailModel } from '@/features/statements/hooks/useStatem
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton';
 import { CommentThread } from '@/features/shared/ui/comments';
 import { ScrollableAlertDialogContent } from '@/features/shared/ui/dialog';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { FormControlInput, FormControlLabel, FormControlTextarea } from '@/features/shared/ui/form';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { UserIdentityLink } from '@/features/shared/ui/UserIdentityLink';
@@ -46,9 +47,7 @@ export function StatementDetail({ model }: StatementDetailProps) {
   if (model.status === 'loading') {
     return (
       <PageWrapper>
-        <div className="py-12 text-center">
-          <p className="text-muted-foreground">{model.labels.loading}</p>
-        </div>
+        <PageSkeleton />
       </PageWrapper>
     );
   }

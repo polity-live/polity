@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useStatementActions } from '@/zero/statements/useStatementActions';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { deriveStatementMediaType } from '@/zero/statements/content';
 
 /**
@@ -53,7 +53,7 @@ export function useStatementMutations() {
         video_url: videoUrl ?? null,
         visibility,
       });
-      await serverConfirmed(createResult);
+      await waitForClientApply(createResult);
 
       return { success: true, statementId };
     } catch (error) {
@@ -90,7 +90,7 @@ export function useStatementMutations() {
         ...(isStory !== undefined && { is_story: isStory, expires_at: null }),
         ...(visibility !== undefined && { visibility }),
       });
-      await serverConfirmed(updateResult);
+      await waitForClientApply(updateResult);
 
       return { success: true };
     } catch (error) {
@@ -104,7 +104,7 @@ export function useStatementMutations() {
   const deleteStatement = async (statementId: string) => {
     setIsLoading(true);
     try {
-      await remove(statementId);
+      await waitForClientApply(remove(statementId));
       return { success: true };
     } catch (error) {
       console.error('Failed to delete statement:', error);

@@ -6,7 +6,7 @@ import { AddLinkDialog } from '@/features/network/ui/AddLinkDialog';
 import { LinksSection } from '@/features/network/ui/LinksSection';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { Panel, PanelContent, PanelHeader, PanelTitle } from '@/features/shared/ui/layout';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { AuthorizedGroupOperationPage } from './AuthorizedGroupOperationPage';
 export interface GroupOperationPageContainerViewProps {
   groupId: any;
@@ -35,7 +35,7 @@ export function GroupOperationPageContainerView({
   canAccessOperation,
 }: GroupOperationPageContainerViewProps) {
   if (isLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton variant="settings" />;
   }
 
   if (!isMember() || !canAccessOperation) {

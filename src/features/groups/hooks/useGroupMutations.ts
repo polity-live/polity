@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAuth } from '@/providers/auth-provider';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -92,24 +92,22 @@ export function useGroupMutations(groupId: string) {
       await Promise.all(
         userIds.map(async userId => {
           const membershipId = crypto.randomUUID();
-          await serverConfirmed(
-            inviteMember({
-              id: membershipId,
-              user_id: userId,
-              group_id: groupId,
-              initial_role_id: dedupedRoleIds[0] ?? null,
-              visibility: '',
-              status: 'invited',
-            })
-          );
+          const inviteResult = inviteMember({
+            id: membershipId,
+            user_id: userId,
+            group_id: groupId,
+            initial_role_id: dedupedRoleIds[0] ?? null,
+            visibility: '',
+            status: 'invited',
+          });
+          await waitForClientApply(inviteResult);
           if (dedupedRoleIds.length > 0) {
-            await serverConfirmed(
-              syncMembershipRoles({
-                group_membership_id: membershipId,
-                role_ids: dedupedRoleIds,
-                assigned_by_id: senderId ?? null,
-              })
-            );
+            const roleResult = syncMembershipRoles({
+              group_membership_id: membershipId,
+              role_ids: dedupedRoleIds,
+              assigned_by_id: senderId ?? null,
+            });
+            await waitForClientApply(roleResult);
           }
         })
       );
@@ -136,18 +134,17 @@ export function useGroupMutations(groupId: string) {
     setIsLoading(true);
     try {
       await Promise.all(
-        userIds.map(userId =>
-          serverConfirmed(
-            inviteGuest({
-              id: crypto.randomUUID(),
-              group_id: groupId,
-              user_id: userId,
-              status: 'invited',
-              role_ids: roleIds,
-              invited_by_id: senderId ?? null,
-            })
-          )
-        )
+        userIds.map(async userId => {
+          const result = inviteGuest({
+            id: crypto.randomUUID(),
+            group_id: groupId,
+            user_id: userId,
+            status: 'invited',
+            role_ids: roleIds,
+            invited_by_id: senderId ?? null,
+          });
+          await waitForClientApply(result);
+        })
       );
 
       toast.success(
@@ -168,7 +165,7 @@ export function useGroupMutations(groupId: string) {
   const approveGuestAccess = async (guestAccessId: string) => {
     setIsLoading(true);
     try {
-      await serverConfirmed(acceptGuestInvitation({ id: guestAccessId }));
+      await waitForClientApply(acceptGuestInvitation({ id: guestAccessId }));
       toast.success(translateText('generated.inline.0557_guest_request_approved_4163dbb6'));
       return { success: true };
     } catch (error) {
@@ -183,7 +180,7 @@ export function useGroupMutations(groupId: string) {
   const revokeGuest = async (guestAccessId: string) => {
     setIsLoading(true);
     try {
-      await serverConfirmed(revokeGuestAccess({ id: guestAccessId }));
+      await waitForClientApply(revokeGuestAccess({ id: guestAccessId }));
       toast.success(translateText('generated.inline.0559_guest_access_revoked_3c6108ee'));
       return { success: true };
     } catch (error) {
@@ -227,7 +224,7 @@ export function useGroupMutations(groupId: string) {
         status: 'active',
       });
 
-      console.info('Server validation started', {
+      console.info('Client apply started', {
         flow: 'group-membership-request-approve',
         membershipId,
         groupId,
@@ -235,15 +232,7 @@ export function useGroupMutations(groupId: string) {
         membershipUserId: userId,
       });
 
-      await serverConfirmed(result);
-
-      console.info('Server successful', {
-        flow: 'group-membership-request-approve',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-      });
+      await waitForClientApply(result);
 
       await logGeneralAssemblyEventSearchResults(membershipId, userId);
 
@@ -299,7 +288,7 @@ export function useGroupMutations(groupId: string) {
 
       const result = leaveGroupAction({ id: membershipId });
 
-      console.info('Server validation started', {
+      console.info('Client apply started', {
         flow: 'group-membership-request-reject',
         membershipId,
         groupId,
@@ -307,15 +296,7 @@ export function useGroupMutations(groupId: string) {
         membershipUserId: userId,
       });
 
-      await serverConfirmed(result);
-
-      console.info('Server successful', {
-        flow: 'group-membership-request-reject',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-      });
+      await waitForClientApply(result);
 
       console.info('Client successful', {
         flow: 'group-membership-request-reject',
@@ -371,7 +352,7 @@ export function useGroupMutations(groupId: string) {
 
       const result = leaveGroupAction({ id: membershipId });
 
-      console.info('Server validation started', {
+      console.info('Client apply started', {
         flow: 'group-member-remove',
         membershipId,
         groupId,
@@ -379,15 +360,7 @@ export function useGroupMutations(groupId: string) {
         membershipUserId: userId,
       });
 
-      await serverConfirmed(result);
-
-      console.info('Server successful', {
-        flow: 'group-member-remove',
-        membershipId,
-        groupId,
-        actorUserId: senderId ?? null,
-        membershipUserId: userId,
-      });
+      await waitForClientApply(result);
 
       console.info('Client successful', {
         flow: 'group-member-remove',
@@ -456,7 +429,7 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      await serverConfirmed(
+      await waitForClientApply(
         syncMembershipRoles({
           group_membership_id: membershipId,
           role_ids: roleIds,
@@ -494,43 +467,47 @@ export function useGroupMutations(groupId: string) {
     setIsLoading(true);
     try {
       const roleId = crypto.randomUUID();
-      await createRoleAction({
-        id: roleId,
-        name,
-        description,
-        scope: 'group',
-        group_id: groupId,
-        event_id: null,
-        amendment_id: null,
-        blog_id: null,
-        assignment_mode: 'assigned',
-        visibility: 'public',
-        term_start_date: null,
-        is_recurring: false,
-        recurrence_pattern: null,
-        recurrence_rule: null,
-        recurrence_interval: null,
-        recurrence_days: null,
-        recurrence_end_date: null,
-        scheduled_revote_date: null,
-        default_request_role: false,
-        default_invite_role: false,
-        sort_order: sortOrder,
-      });
-
-      // Add action rights
-      for (const right of actionRights) {
-        const actionRightId = crypto.randomUUID();
-        await assignActionRight({
-          id: actionRightId,
-          resource: right.resource,
-          action: right.action,
-          role_id: roleId,
+      await waitForClientApply(
+        createRoleAction({
+          id: roleId,
+          name,
+          description,
+          scope: 'group',
           group_id: groupId,
           event_id: null,
           amendment_id: null,
           blog_id: null,
-        });
+          assignment_mode: 'assigned',
+          visibility: 'public',
+          term_start_date: null,
+          is_recurring: false,
+          recurrence_pattern: null,
+          recurrence_rule: null,
+          recurrence_interval: null,
+          recurrence_days: null,
+          recurrence_end_date: null,
+          scheduled_revote_date: null,
+          default_request_role: false,
+          default_invite_role: false,
+          sort_order: sortOrder,
+        })
+      );
+
+      // Add action rights
+      for (const right of actionRights) {
+        const actionRightId = crypto.randomUUID();
+        await waitForClientApply(
+          assignActionRight({
+            id: actionRightId,
+            resource: right.resource,
+            action: right.action,
+            role_id: roleId,
+            group_id: groupId,
+            event_id: null,
+            amendment_id: null,
+            blog_id: null,
+          })
+        );
       }
 
       toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
@@ -561,7 +538,7 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      await deleteRoleAction({ id: roleId });
+      await waitForClientApply(deleteRoleAction({ id: roleId }));
 
       toast.success(translateText('generated.inline.0237_role_deleted_successfully_b714d57c'));
       return { success: true };
@@ -589,10 +566,12 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      await updateMembership({
-        id: membershipId,
-        status: 'admin',
-      });
+      await waitForClientApply(
+        updateMembership({
+          id: membershipId,
+          status: 'admin',
+        })
+      );
 
       toast.success(translateText('generated.inline.0571_member_promoted_to_admin_fd9ef697'));
       return { success: true };
@@ -620,10 +599,12 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      await updateMembership({
-        id: membershipId,
-        status: 'active',
-      });
+      await waitForClientApply(
+        updateMembership({
+          id: membershipId,
+          status: 'active',
+        })
+      );
 
       toast.success(translateText('generated.inline.0573_admin_demoted_to_member_a4381148'));
       return { success: true };

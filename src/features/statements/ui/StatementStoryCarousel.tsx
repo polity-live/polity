@@ -26,6 +26,7 @@ import { UserIdentityLink } from '@/features/shared/ui/UserIdentityLink';
 import { Button } from '@/features/shared/ui/ui/button';
 import { CommentThread } from '@/features/shared/ui/comments';
 import { Dialog, DialogContent, DialogTitle } from '@/features/shared/ui/ui/dialog';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { VoteButtons } from '@/features/shared/ui/voting/VoteButtons';
 import { cn } from '@/features/shared/utils/utils';
 import { StatementMediaDisplay } from './StatementMediaDisplay';
@@ -228,9 +229,7 @@ function StatementStoryViewerContent({
       <div className="grid min-h-0 lg:grid-cols-[minmax(0,1fr)_26rem]">
         <div className="flex min-h-0 items-center justify-center overflow-y-auto p-4 lg:p-8">
           {detail.isLoading ? (
-            <p className="text-muted-foreground text-sm">
-              {t('features.statements.detail.loading')}
-            </p>
+            <StatementStoryDetailSkeleton label={t('features.statements.detail.loading')} />
           ) : !detail.statement || !detail.canAccess ? (
             <p className="text-muted-foreground text-sm">
               {t('features.statements.detail.notFound')}
@@ -288,6 +287,30 @@ function StatementStoryViewerContent({
             </div>
           ) : null}
         </aside>
+      </div>
+    </div>
+  );
+}
+
+function StatementStoryDetailSkeleton({ label }: { label: string }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      className="w-full max-w-3xl space-y-5"
+      data-slot="statement-story-detail-skeleton"
+    >
+      <span className="sr-only">{label}</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <Skeleton className="h-8 w-64 max-w-full" />
+        <Skeleton className="h-6 w-14 rounded-full" />
+      </div>
+      <Skeleton className="mx-auto aspect-[4/3] max-h-[62vh] w-full rounded-lg" />
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+        <Skeleton className="h-4 w-2/3" />
       </div>
     </div>
   );

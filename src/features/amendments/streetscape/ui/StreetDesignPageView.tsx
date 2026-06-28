@@ -1,6 +1,6 @@
 import { Save } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -168,7 +168,7 @@ export function StreetDesignPageView({
   const { t } = useTranslation();
 
   if (isLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton variant="settings" />;
   }
 
   if (!amendment) {

@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { Notification } from '../types/notification.types';
 import { getNotificationNavigationTarget } from '../logic/notificationHelpers';
 import { useNotificationActions as useZeroNotificationActions } from '@/zero/notifications/useNotificationActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 export function useNotificationActions() {
   const navigate = useNavigate();
@@ -13,14 +14,16 @@ export function useNotificationActions() {
       // Mark as read if not already
       if (!notification.is_read) {
         if (notification.recipient_entity_id && notification.recipient_entity_type) {
-          await markEntityNotificationRead({
-            id: crypto.randomUUID(),
-            notification_id: notification.id,
-            entity_id: notification.recipient_entity_id,
-            entity_type: notification.recipient_entity_type,
-          });
+          await waitForClientApply(
+            markEntityNotificationRead({
+              id: crypto.randomUUID(),
+              notification_id: notification.id,
+              entity_id: notification.recipient_entity_id,
+              entity_type: notification.recipient_entity_type,
+            })
+          );
         } else {
-          await markRead({ id: notification.id });
+          await waitForClientApply(markRead({ id: notification.id }));
         }
       }
 
@@ -88,7 +91,7 @@ export function useNotificationActions() {
   const handleDeleteNotification = useCallback(
     async (notificationId: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      await deleteNotification({ id: notificationId });
+      await waitForClientApply(deleteNotification({ id: notificationId }));
     },
     [deleteNotification]
   );

@@ -1,6 +1,7 @@
-import { Loader2, UserPlus } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import {
   ActionSubmissionOverlay,
@@ -80,9 +81,7 @@ export function InviteDialogView({
 
             <div className="py-4">
               {isLoading ? (
-                <div className="flex items-center justify-center py-6">
-                  <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-                </div>
+                <SectionSkeleton rows={3} density="compact" />
               ) : (
                 <TypeaheadSearch
                   items={typeaheadItems}

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useGroupLinks as useFacadeGroupLinks } from '@/zero/groups/useGroupState';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useCommonActions } from '@/zero/common/useCommonActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useGroupLinks(groupId: string) {
@@ -17,14 +18,16 @@ export function useGroupLinks(groupId: string) {
     setIsLoading(true);
     try {
       const linkId = crypto.randomUUID();
-      await createLinkAction({
-        id: linkId,
-        label,
-        url,
-        group_id: groupId,
-        user_id: senderId || null,
-        event_id: null,
-      });
+      await waitForClientApply(
+        createLinkAction({
+          id: linkId,
+          label,
+          url,
+          group_id: groupId,
+          user_id: senderId || null,
+          event_id: null,
+        })
+      );
 
       toast.success(translateText('generated.inline.0757_link_added_successfully_d2837d5b'));
       return { success: true, linkId };
@@ -40,7 +43,7 @@ export function useGroupLinks(groupId: string) {
   const deleteLink = async (linkId: string) => {
     setIsLoading(true);
     try {
-      await deleteLinkAction({ id: linkId });
+      await waitForClientApply(deleteLinkAction({ id: linkId }));
 
       toast.success(translateText('generated.inline.0759_link_deleted_successfully_6135a6f8'));
       return { success: true };

@@ -2,10 +2,11 @@
 
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DelegateAssemblyCompositionPanel } from '../DelegateAssemblyCompositionPanel';
 
 const REFERENCE_TIME = vi.hoisted(() => new Date('2026-06-17T10:00:00Z').getTime());
+const useDelegateAssemblyCompositionDataMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({
@@ -81,7 +82,12 @@ vi.mock('@/features/shared/hooks/use-translation', () => {
 });
 
 vi.mock('@/zero/events', () => ({
-  useDelegateAssemblyCompositionData: () => ({
+  useDelegateAssemblyCompositionData: (...args: unknown[]) =>
+    useDelegateAssemblyCompositionDataMock(...args),
+}));
+
+function createDelegateCompositionData({ isLoading = false } = {}) {
+  return {
     event: {
       event_type: 'delegate_assembly',
       delegate_seat_allocation_type: 'members_per_delegate',
@@ -127,15 +133,30 @@ vi.mock('@/zero/events', () => ({
         },
       },
     ],
-    isLoading: false,
-  }),
-}));
+    isLoading,
+  };
+}
+
+beforeEach(() => {
+  useDelegateAssemblyCompositionDataMock.mockReturnValue(createDelegateCompositionData());
+});
 
 afterEach(() => {
   cleanup();
+  useDelegateAssemblyCompositionDataMock.mockReset();
 });
 
 describe('DelegateAssemblyCompositionPanel', () => {
+  it('renders a section skeleton while delegate composition loads', () => {
+    useDelegateAssemblyCompositionDataMock.mockReturnValue(
+      createDelegateCompositionData({ isLoading: true })
+    );
+
+    render(<DelegateAssemblyCompositionPanel eventId="target-event" />);
+
+    expect(document.querySelector('[data-slot="section-skeleton"]')).toBeTruthy();
+  });
+
   it('renders three composition charts with compact tables and linked group labels', () => {
     render(<DelegateAssemblyCompositionPanel eventId="target-event" />);
 

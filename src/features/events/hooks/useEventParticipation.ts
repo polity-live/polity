@@ -3,6 +3,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventById, useEventParticipantsQuery } from '@/zero/events/useEventState';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type ParticipationStatus =
@@ -98,13 +99,15 @@ export function useEventParticipation(eventId: string) {
     try {
       const newParticipationId = crypto.randomUUID();
 
-      await joinEvent({
-        id: newParticipationId,
-        status: 'requested',
-        event_id: eventId,
-        group_id: event?.group?.id ?? null,
-        visibility: event?.visibility ?? 'public',
-      });
+      await waitForClientApply(
+        joinEvent({
+          id: newParticipationId,
+          status: 'requested',
+          event_id: eventId,
+          group_id: event?.group?.id ?? null,
+          visibility: event?.visibility ?? 'public',
+        })
+      );
 
       toast.success(
         translateText('generated.inline.0469_participation_request_sent_successfully_239ea238')
@@ -129,7 +132,7 @@ export function useEventParticipation(eventId: string) {
 
     setIsLoading(true);
     try {
-      await doLeaveEvent({ id: participation.id });
+      await waitForClientApply(doLeaveEvent({ id: participation.id }));
       toast.success(translateText('generated.inline.0471_successfully_left_the_event_a2c899b8'));
     } catch (error) {
       console.error('Failed to leave event:', error);
@@ -147,10 +150,12 @@ export function useEventParticipation(eventId: string) {
 
     setIsLoading(true);
     try {
-      await updateParticipant({
-        id: participation.id,
-        status: 'active',
-      });
+      await waitForClientApply(
+        updateParticipant({
+          id: participation.id,
+          status: 'active',
+        })
+      );
       toast.success(translateText('generated.inline.0473_successfully_joined_the_event_f7687c9c'));
     } catch (error) {
       console.error('Failed to accept invitation:', error);

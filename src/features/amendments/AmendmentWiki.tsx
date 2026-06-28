@@ -3,7 +3,7 @@ import { type VoteValue } from '@/features/shared/ui/voting';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useCreateRecoveryDraft } from '@/features/create/logic/createFinalization';
 import { CreateRecoveryState } from '@/features/create/ui/CreateRecoveryState';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { useAmendmentWikiPage } from './hooks/useAmendmentWikiPage';
 import { SupporterDirectorySection } from './ui/SupporterDirectorySection';
 
@@ -60,7 +60,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   }
 
   if (!amendment && isLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton />;
   }
 
   const normalizedVoteValue: VoteValue =

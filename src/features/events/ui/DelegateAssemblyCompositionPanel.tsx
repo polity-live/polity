@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { useDelegateAssemblyCompositionData } from '@/zero/events';
 
 interface DelegateAssemblyCompositionPanelProps {
@@ -59,9 +60,11 @@ export function DelegateAssemblyCompositionPanel({
       {isLoading ? (
         <Card>
           <CardContent>
-            <p className="text-muted-foreground py-12 text-center text-sm">
-              {t('features.events.participants.composition.loading')}
-            </p>
+            <SectionSkeleton
+              rows={3}
+              label={t('features.events.participants.composition.loading')}
+              className="py-4"
+            />
           </CardContent>
         </Card>
       ) : !hasRows ? (

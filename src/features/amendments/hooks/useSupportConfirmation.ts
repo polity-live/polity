@@ -10,6 +10,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import type { SupportConfirmationRow } from '@/zero/amendments/queries';
 import { mutators } from '@/zero/mutators';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -53,11 +54,13 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
 
       setIsLoading(true);
       try {
-        await updateSupportAction({
-          id: confirmationId,
-          status: 'confirmed',
-          confirmed_at: Date.now(),
-        });
+        await waitForClientApply(
+          updateSupportAction({
+            id: confirmationId,
+            status: 'confirmed',
+            confirmed_at: Date.now(),
+          })
+        );
 
         toast.success(translateText('generated.inline.0161_support_confirmed_9a48851e'));
       } catch (error) {
@@ -86,11 +89,13 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
 
       setIsLoading(true);
       try {
-        await updateSupportAction({
-          id: confirmationId,
-          status: 'declined',
-          confirmed_at: Date.now(),
-        });
+        await waitForClientApply(
+          updateSupportAction({
+            id: confirmationId,
+            status: 'declined',
+            confirmed_at: Date.now(),
+          })
+        );
 
         // Known limitation: Zero has no unlink operation. Supporter removal requires direct record deletion.
         toast.success(translateText('generated.inline.0163_support_declined_10a02268'));

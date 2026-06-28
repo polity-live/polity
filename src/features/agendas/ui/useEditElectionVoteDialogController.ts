@@ -11,6 +11,7 @@ import {
   resolveVoteBallotVisibility,
   type BallotVisibility,
 } from '@/zero/shared';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -166,35 +167,41 @@ export function useEditElectionVoteDialogController({
       const normalizedDuration = Number.isFinite(duration) ? Math.max(1, duration) : 30;
 
       if (agendaItemId) {
-        await agendaActions.updateAgendaItem({
-          id: agendaItemId,
-          title: normalizedTitle,
-          description: normalizedDescription,
-          duration: normalizedDuration,
-        });
+        await waitForClientApply(
+          agendaActions.updateAgendaItem({
+            id: agendaItemId,
+            title: normalizedTitle,
+            description: normalizedDescription,
+            duration: normalizedDuration,
+          })
+        );
       }
 
       if (isElection && election) {
-        await electionActions.updateElection({
-          id: election.id,
-          description: normalizedDescription,
-          majority_type: majorityType,
-          closing_type: closingType,
-          closing_duration_seconds: durationSeconds,
-          visibility,
-          ballot_visibility: ballotVisibility,
-          max_votes: maxVotes,
-        });
+        await waitForClientApply(
+          electionActions.updateElection({
+            id: election.id,
+            description: normalizedDescription,
+            majority_type: majorityType,
+            closing_type: closingType,
+            closing_duration_seconds: durationSeconds,
+            visibility,
+            ballot_visibility: ballotVisibility,
+            max_votes: maxVotes,
+          })
+        );
       } else if (vote) {
-        await voteActionsHook.updateVote({
-          id: vote.id,
-          description: normalizedDescription,
-          majority_type: majorityType,
-          closing_type: closingType,
-          closing_duration_seconds: durationSeconds,
-          visibility,
-          ballot_visibility: ballotVisibility,
-        });
+        await waitForClientApply(
+          voteActionsHook.updateVote({
+            id: vote.id,
+            description: normalizedDescription,
+            majority_type: majorityType,
+            closing_type: closingType,
+            closing_duration_seconds: durationSeconds,
+            visibility,
+            ballot_visibility: ballotVisibility,
+          })
+        );
 
         // Sync choices — add new, remove deleted
         const existingIds = new Set(choices.map(c => c.id));
@@ -203,19 +210,21 @@ export function useEditElectionVoteDialogController({
         // Add new choices
         for (const lc of localChoices) {
           if (!existingIds.has(lc.id)) {
-            await voteActionsHook.createVoteChoice({
-              id: lc.id,
-              vote_id: vote.id,
-              label: lc.label,
-              order_index: lc.order_index,
-            });
+            await waitForClientApply(
+              voteActionsHook.createVoteChoice({
+                id: lc.id,
+                vote_id: vote.id,
+                label: lc.label,
+                order_index: lc.order_index,
+              })
+            );
           }
         }
 
         // Remove deleted choices
         for (const ec of choices) {
           if (!localIds.has(ec.id)) {
-            await voteActionsHook.deleteVoteChoice(ec.id);
+            await waitForClientApply(voteActionsHook.deleteVoteChoice(ec.id));
           }
         }
       }

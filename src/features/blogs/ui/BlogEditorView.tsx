@@ -1,6 +1,7 @@
 import { Loader2, Save } from 'lucide-react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { FormControlLabel, FormControlTextarea } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
@@ -24,12 +25,10 @@ export function BlogEditorView({
 }: BlogEditorViewProps) {
   if (!isLoaded) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-12">
-        <Loader2 className="text-primary h-8 w-8 animate-spin" />
-        <p className="text-muted-foreground">
-          {translateText('generated.inline.0266_loading_blog_editor_00ccfa0b')}
-        </p>
-      </div>
+      <PageSkeleton
+        variant="settings"
+        label={translateText('generated.inline.0266_loading_blog_editor_00ccfa0b')}
+      />
     );
   }
 

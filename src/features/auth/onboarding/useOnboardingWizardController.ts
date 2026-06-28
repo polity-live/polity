@@ -19,7 +19,7 @@ export function useOnboardingWizardController({
 }: OnboardingWizardProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { updateProfileConfirmed } = useUserActions();
+  const { updateProfileClientApplied } = useUserActions();
 
   const {
     step,
@@ -80,7 +80,7 @@ export function useOnboardingWizardController({
     // Save the "don't show again" preference if user checked it
     if (data.dontShowAriaKaiAgain && user?.id) {
       try {
-        await updateProfileConfirmed({
+        await updateProfileClientApplied({
           assistant_introduction: false,
         });
       } catch (error) {
@@ -171,7 +171,7 @@ export function useOnboardingWizardController({
     onComplete,
     t,
     user,
-    updateProfileConfirmed,
+    updateProfileClientApplied,
     step,
     error,
     data,

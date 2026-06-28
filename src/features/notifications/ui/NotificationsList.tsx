@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 
 import { FeedStatePanel } from '@/features/shared/ui/feed';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import type { Notification } from '../types/notification.types';
 import { NotificationItem } from './NotificationItem';
 
@@ -30,7 +31,7 @@ export function NotificationsList({
   showRecipientBadge = true,
 }: NotificationsListProps) {
   if (isLoading) {
-    return <FeedStatePanel isLoading />;
+    return <SectionSkeleton rows={5} />;
   }
 
   if (notifications.length === 0) {

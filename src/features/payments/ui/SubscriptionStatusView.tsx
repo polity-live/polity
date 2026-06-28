@@ -2,7 +2,7 @@ import { featureThemeClassName } from '@/features/shared/theme';
 import { CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
-import { InlineNotice, LoadingState } from '@/features/shared/ui/feedback';
+import { InlineNotice, SectionSkeleton } from '@/features/shared/ui/feedback';
 import { SettingsPanel } from '@/features/shared/ui/form';
 import { StatusBadge, type BadgeTone } from '@/features/shared/ui/status';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -100,13 +100,8 @@ function formatCurrency(amount: number, currency: string) {
 export function SubscriptionStatusView({ data, isLoading, error }: SubscriptionStatusViewProps) {
   if (isLoading) {
     return (
-      <SettingsPanel
-        title={translateText('generated.inline.1001_subscription_status_aa5794ad')}
-        description={translateText(
-          'generated.inline.1002_loading_subscription_information_0dde4df6'
-        )}
-      >
-        <LoadingState />
+      <SettingsPanel title={translateText('generated.inline.1001_subscription_status_aa5794ad')}>
+        <SectionSkeleton rows={2} />
       </SettingsPanel>
     );
   }

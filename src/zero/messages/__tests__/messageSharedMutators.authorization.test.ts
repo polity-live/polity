@@ -17,9 +17,16 @@ function createTx(location: MessageMutatorTx['location'] = 'server') {
     mutate: {
       message: {
         insert: vi.fn(),
+        delete: vi.fn(),
       },
       conversation: {
+        insert: vi.fn(),
         update: vi.fn(),
+        delete: vi.fn(),
+      },
+      conversation_participant: {
+        insert: vi.fn(),
+        delete: vi.fn(),
       },
     },
   };
@@ -74,5 +81,84 @@ describe('messageSharedMutators authorization', () => {
         conversation_id: 'conversation-1',
       })
     );
+  });
+
+  it('creates a full conversation graph in one optimistic mutator', async () => {
+    const tx = createTx('client');
+
+    await expect(
+      messageSharedMutators.createConversationFull.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: {
+          conversation: {
+            id: 'conversation-1',
+            type: 'direct',
+            status: 'accepted',
+            group_id: null,
+            event_id: null,
+            name: 'Chat',
+            pinned: false,
+            last_message_at: 123,
+            assistant_for_user_id: 'user-1',
+          },
+          participants: [
+            {
+              id: 'participant-1',
+              conversation_id: 'conversation-1',
+              user_id: 'user-1',
+              joined_at: 123,
+              last_read_at: 0,
+              left_at: 0,
+            },
+            {
+              id: 'participant-2',
+              conversation_id: 'conversation-1',
+              user_id: 'assistant-1',
+              joined_at: 123,
+              last_read_at: 123,
+              left_at: 0,
+            },
+          ],
+          assistantMessage: {
+            id: 'message-1',
+            conversation_id: 'conversation-1',
+            content: 'Welcome',
+            context_json: '[]',
+            deleted_at: 0,
+          },
+        },
+      })
+    ).resolves.toBeUndefined();
+
+    expect(tx.mutate.conversation.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'conversation-1' })
+    );
+    expect(tx.mutate.conversation_participant.insert).toHaveBeenCalledTimes(2);
+    expect(tx.mutate.message.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'message-1', conversation_id: 'conversation-1' })
+    );
+  });
+
+  it('deletes a full conversation graph in one optimistic mutator', async () => {
+    const tx = createTx('client');
+
+    await expect(
+      messageSharedMutators.deleteConversationFull.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: {
+          id: 'conversation-1',
+          messageIds: ['message-1', 'message-2'],
+          participantIds: ['participant-1'],
+        },
+      })
+    ).resolves.toBeUndefined();
+
+    expect(tx.mutate.message.delete).toHaveBeenCalledTimes(2);
+    expect(tx.mutate.conversation_participant.delete).toHaveBeenCalledWith({
+      id: 'participant-1',
+    });
+    expect(tx.mutate.conversation.delete).toHaveBeenCalledWith({ id: 'conversation-1' });
   });
 });

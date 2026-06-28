@@ -6,7 +6,7 @@
  */
 
 import { Button } from '@/features/shared/ui/ui/button';
-import { Loader2 } from 'lucide-react';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { GroupEditForm } from './GroupEditForm';
 import type { GroupType } from '../hooks/useGroupUpdate';
 export interface GroupEditViewProps {
@@ -36,12 +36,7 @@ export function GroupEditView({
 }: GroupEditViewProps) {
   // Loading state
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-4 py-12">
-        <Loader2 className="text-primary h-8 w-8 animate-spin" />
-        <p className="text-muted-foreground">{t('features.groups.editPage.loading')}</p>
-      </div>
-    );
+    return <PageSkeleton variant="settings" label={t('features.groups.editPage.loading')} />;
   }
 
   // Not found state

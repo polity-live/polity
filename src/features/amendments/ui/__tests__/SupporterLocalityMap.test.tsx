@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SupporterMapItem } from '@/features/amendments/logic/supporterDirectory';
 import { SupporterLocalityMap } from '@/features/amendments/ui/SupporterLocalityMap';
+import { SupporterLocalityMapView } from '@/features/amendments/ui/SupporterLocalityMapView';
 import { Button } from '@/features/shared/ui/ui/button';
 
 vi.mock('leaflet', () => ({
@@ -62,6 +63,42 @@ function createMapItem(overrides?: Partial<SupporterMapItem>): SupporterMapItem 
 }
 
 describe('SupporterLocalityMap', () => {
+  it('renders a map skeleton while map modules load', () => {
+    render(
+      <SupporterLocalityMapView
+        items={[createMapItem()]}
+        activeMarkerIcon={null}
+        center={[52.52, 13.405]}
+        loadFailed={false}
+        markerIcon={null}
+        reactLeafletModule={null}
+        zoom={10}
+      />
+    );
+
+    expect(document.querySelector('[data-slot="map-panel-skeleton"]')).toBeTruthy();
+    expect(
+      screen.queryByText('generated.inline.0175_supporter_map_is_loading_3dbf4547')
+    ).toBeNull();
+  });
+
+  it('renders an unavailable message when map modules fail', () => {
+    render(
+      <SupporterLocalityMapView
+        items={[createMapItem()]}
+        activeMarkerIcon={null}
+        center={[52.52, 13.405]}
+        loadFailed
+        markerIcon={null}
+        reactLeafletModule={null}
+        zoom={10}
+      />
+    );
+
+    expect(screen.getByText('Map could not be loaded.')).toBeTruthy();
+    expect(document.querySelector('[data-slot="map-panel-skeleton"]')).toBeNull();
+  });
+
   it('shows supporter details for the active marker', async () => {
     render(<SupporterLocalityMap items={[createMapItem()]} activeGroupId="group-a" />);
 

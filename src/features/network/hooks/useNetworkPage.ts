@@ -11,7 +11,11 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { getRelationshipTypeForGroup } from '../logic/groupRelationshipOrientation';
 import { buildActiveRelationshipSummaries } from '../logic/relationshipSummaryHelpers';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import {
+  trackServerFinalization,
+  waitForClientApply,
+  type MutationResultLike,
+} from '@/zero/mutate-with-server-check';
 import type { ActionSubmissionContext } from '@/features/shared/ui/action-submission';
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
 import type {
@@ -118,6 +122,39 @@ function countGroupedRequestHeaders(entries: readonly GroupedRelationshipRequest
     ids.add(entry.requestId ?? `${entry.group.id}:${index}`);
   });
   return ids.size;
+}
+
+function toServerFinalizationError(error: unknown) {
+  if (error instanceof Error) return error;
+  if (typeof error === 'string' && error.trim()) return new Error(error);
+  return new Error('Die Synchronisierung konnte nicht abgeschlossen werden.');
+}
+
+function trackSubmissionServerFinalization(
+  results: MutationResultLike[],
+  submissionContext?: ActionSubmissionContext
+) {
+  if (!submissionContext || results.length === 0) {
+    return;
+  }
+
+  void Promise.all(results.map(result => result.server))
+    .then(serverResults => {
+      const failed = serverResults.find(serverResult => serverResult.type === 'error');
+      if (failed?.type === 'error') {
+        submissionContext.failSubmission?.(
+          new Error(
+            failed.error?.message ?? 'Die Synchronisierung konnte nicht abgeschlossen werden.'
+          )
+        );
+        return;
+      }
+
+      submissionContext.completeSuccess?.();
+    })
+    .catch(error => {
+      submissionContext.failSubmission?.(toServerFinalizationError(error));
+    });
 }
 
 export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
@@ -265,6 +302,7 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
         rightIdsByRequestId.set(rel.connection_request_id, rightIds);
       }
 
+      const results: MutationResultLike[] = [];
       for (const [requestId, rightIds] of rightIdsByRequestId.entries()) {
         const result = approveGroupConnectionRequest({
           id: requestId,
@@ -273,14 +311,17 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
             rel => rel.connection_request_id === requestId && isRequestMembershipRelationship(rel)
           ),
         });
-        submissionContext?.reportProgress({ key: 'commit', status: 'complete' });
-        submissionContext?.reportProgress({
-          key: 'sync',
-          status: 'active',
-          label: 'Netzwerkfolgen synchronisieren',
-        });
-        await serverConfirmed(result);
+        results.push(result);
+        await waitForClientApply(result);
       }
+
+      submissionContext?.reportProgress({ key: 'commit', status: 'complete' });
+      submissionContext?.reportProgress({
+        key: 'sync',
+        status: 'active',
+        label: 'Netzwerkfolgen synchronisieren',
+      });
+      trackSubmissionServerFinalization(results, submissionContext);
     },
     [approveGroupConnectionRequest, canActivateLink, t]
   );
@@ -311,7 +352,7 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
             rel => rel.connection_request_id === requestId && isRequestStructureRelationship(rel)
           ),
         });
-        await serverConfirmed(result);
+        await waitForClientApply(result);
       }
     },
     [rejectGroupConnectionRequest]
@@ -327,7 +368,7 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
 
       for (const connection of connectionsToDelete) {
         const result = deleteGroupConnection({ id: connection.id, acting_group_id: groupId });
-        await serverConfirmed(result);
+        await waitForClientApply(result);
       }
     },
     [deleteGroupConnection, groupId, groupConnections]
@@ -337,23 +378,42 @@ export function useNetworkPage(groupId: string, initialTab?: NetworkTab) {
   const workflowEditor = useWorkflowEditor(groupId);
   const workflowActions = useWorkflowActions();
 
-  const handleSaveWorkflow = useCallback(async () => {
-    if (!authUser?.id) return;
-    await workflowEditor.saveWorkflow(authUser.id);
-  }, [authUser?.id, workflowEditor]);
+  const handleSaveWorkflow = useCallback(
+    async (submissionContext?: ActionSubmissionContext) => {
+      if (!authUser?.id) return;
+      await workflowEditor.saveWorkflow(authUser.id, submissionContext);
+    },
+    [authUser?.id, workflowEditor]
+  );
 
   const handleApproveWorkflowApproval = useCallback(
-    async (approvalId: string) => {
+    async (approvalId: string, submissionContext?: ActionSubmissionContext) => {
       const result = workflowActions.approveWorkflowApproval(approvalId);
-      await serverConfirmed(result);
+      await waitForClientApply(result);
+      submissionContext?.reportProgress({ key: 'commit', status: 'complete' });
+      submissionContext?.reportProgress({ key: 'sync', status: 'active' });
+      if (submissionContext) {
+        trackServerFinalization(result, {
+          onSuccess: () => submissionContext.completeSuccess?.(),
+          onError: error => submissionContext.failSubmission?.(error),
+        });
+      }
     },
     [workflowActions]
   );
 
   const handleRejectWorkflowApproval = useCallback(
-    async (approvalId: string) => {
+    async (approvalId: string, submissionContext?: ActionSubmissionContext) => {
       const result = workflowActions.rejectWorkflowApproval(approvalId);
-      await serverConfirmed(result);
+      await waitForClientApply(result);
+      submissionContext?.reportProgress({ key: 'commit', status: 'complete' });
+      submissionContext?.reportProgress({ key: 'sync', status: 'active' });
+      if (submissionContext) {
+        trackServerFinalization(result, {
+          onSuccess: () => submissionContext.completeSuccess?.(),
+          onError: error => submissionContext.failSubmission?.(error),
+        });
+      }
     },
     [workflowActions]
   );

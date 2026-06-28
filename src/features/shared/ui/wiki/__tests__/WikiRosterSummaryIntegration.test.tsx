@@ -31,6 +31,7 @@ vi.mock('@/features/shared/ui/layout', () => ({
     </div>
   ),
   ActionBar: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  EntityPageFrame: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('@/features/shared/ui/action-buttons', () => ({

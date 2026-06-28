@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useCommonState } from '@/zero/common/useCommonState';
 import { useCommonActions } from '@/zero/common/useCommonActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 /**
  * Hook to query and manage user subscriptions
@@ -21,7 +22,7 @@ export function useUserSubscriptions(userId?: string) {
 
   const unsubscribe = async (subscriptionId: string) => {
     try {
-      await commonUnsubscribe({ id: subscriptionId });
+      await waitForClientApply(commonUnsubscribe({ id: subscriptionId }));
       return { success: true };
     } catch (error) {
       console.error('Failed to unsubscribe:', error);
@@ -31,7 +32,7 @@ export function useUserSubscriptions(userId?: string) {
 
   const removeSubscriber = async (subscriptionId: string) => {
     try {
-      await commonUnsubscribe({ id: subscriptionId });
+      await waitForClientApply(commonUnsubscribe({ id: subscriptionId }));
       return { success: true };
     } catch (error) {
       console.error('Failed to remove subscriber:', error);

@@ -15,6 +15,7 @@ import {
   getGenderQuotaFeedbackMessage,
   validateSpeakerGenderQuota,
 } from '@/features/agendas/logic/speakerListGenderQuota';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 export function useEventStream(eventId: string) {
   const { user } = useAuth();
@@ -88,17 +89,19 @@ export function useEventStream(eventId: string) {
         speakerList.length > 0 ? Math.max(...speakerList.map(s => s.order_index ?? 0)) : 0;
 
       const speakerId = crypto.randomUUID();
-      await addSpeaker({
-        id: speakerId,
-        title: translateText('generated.inline.0001_speaker_7c23b0d9'),
-        time: 3,
-        completed: false,
-        order_index: maxOrder + 1,
-        user_id: user.id,
-        agenda_item_id: currentAgendaItem.id,
-        start_time: null,
-        end_time: null,
-      });
+      await waitForClientApply(
+        addSpeaker({
+          id: speakerId,
+          title: translateText('generated.inline.0001_speaker_7c23b0d9'),
+          time: 3,
+          completed: false,
+          order_index: maxOrder + 1,
+          user_id: user.id,
+          agenda_item_id: currentAgendaItem.id,
+          start_time: null,
+          end_time: null,
+        })
+      );
     } catch (error) {
       console.error('Error adding to speaker list:', error);
     } finally {
@@ -112,7 +115,7 @@ export function useEventStream(eventId: string) {
 
     setRemovingSpeaker(speakerId);
     try {
-      await removeSpeaker(speakerId);
+      await waitForClientApply(removeSpeaker(speakerId));
     } catch (error) {
       console.error('Error removing from speaker list:', error);
     } finally {
@@ -142,11 +145,13 @@ export function useEventStream(eventId: string) {
       let electorId = existingElector?.id;
       if (!electorId) {
         electorId = crypto.randomUUID();
-        await electionActions.createElector({
-          id: electorId,
-          election_id: electionId,
-          user_id: user.id,
-        });
+        await waitForClientApply(
+          electionActions.createElector({
+            id: electorId,
+            election_id: electionId,
+            user_id: user.id,
+          })
+        );
       }
 
       // Determine phase based on election status
@@ -155,32 +160,36 @@ export function useEventStream(eventId: string) {
       const selectionId = crypto.randomUUID();
 
       if (isIndicative) {
-        await electionActions.castIndicativeVote(
-          { id: participationId, election_id: electionId, elector_id: electorId },
-          [
-            {
-              id: selectionId,
-              election_id: electionId,
-              candidate_id: candidateId,
-              elector_participation_id: isNamedBallot(election.ballot_visibility)
-                ? participationId
-                : null,
-            },
-          ]
+        await waitForClientApply(
+          electionActions.castIndicativeVote(
+            { id: participationId, election_id: electionId, elector_id: electorId },
+            [
+              {
+                id: selectionId,
+                election_id: electionId,
+                candidate_id: candidateId,
+                elector_participation_id: isNamedBallot(election.ballot_visibility)
+                  ? participationId
+                  : null,
+              },
+            ]
+          )
         );
       } else {
-        await electionActions.castFinalVote(
-          { id: participationId, election_id: electionId, elector_id: electorId },
-          [
-            {
-              id: selectionId,
-              election_id: electionId,
-              candidate_id: candidateId,
-              elector_participation_id: isNamedBallot(election.ballot_visibility)
-                ? participationId
-                : null,
-            },
-          ]
+        await waitForClientApply(
+          electionActions.castFinalVote(
+            { id: participationId, election_id: electionId, elector_id: electorId },
+            [
+              {
+                id: selectionId,
+                election_id: electionId,
+                candidate_id: candidateId,
+                elector_participation_id: isNamedBallot(election.ballot_visibility)
+                  ? participationId
+                  : null,
+              },
+            ]
+          )
         );
       }
     } catch (error) {
@@ -207,11 +216,13 @@ export function useEventStream(eventId: string) {
       let voterId = existingVoter?.id;
       if (!voterId) {
         voterId = crypto.randomUUID();
-        await voteActionsHook.createVoter({
-          id: voterId,
-          vote_id: voteId,
-          user_id: user.id,
-        });
+        await waitForClientApply(
+          voteActionsHook.createVoter({
+            id: voterId,
+            vote_id: voteId,
+            user_id: user.id,
+          })
+        );
       }
 
       // Determine phase based on vote status
@@ -220,32 +231,36 @@ export function useEventStream(eventId: string) {
       const decisionId = crypto.randomUUID();
 
       if (isIndicative) {
-        await voteActionsHook.castIndicativeVote(
-          { id: participationId, vote_id: voteId, voter_id: voterId },
-          [
-            {
-              id: decisionId,
-              vote_id: voteId,
-              choice_id: choiceId,
-              voter_participation_id: isNamedBallot(voteEntity.ballot_visibility)
-                ? participationId
-                : null,
-            },
-          ]
+        await waitForClientApply(
+          voteActionsHook.castIndicativeVote(
+            { id: participationId, vote_id: voteId, voter_id: voterId },
+            [
+              {
+                id: decisionId,
+                vote_id: voteId,
+                choice_id: choiceId,
+                voter_participation_id: isNamedBallot(voteEntity.ballot_visibility)
+                  ? participationId
+                  : null,
+              },
+            ]
+          )
         );
       } else {
-        await voteActionsHook.castFinalVote(
-          { id: participationId, vote_id: voteId, voter_id: voterId },
-          [
-            {
-              id: decisionId,
-              vote_id: voteId,
-              choice_id: choiceId,
-              voter_participation_id: isNamedBallot(voteEntity.ballot_visibility)
-                ? participationId
-                : null,
-            },
-          ]
+        await waitForClientApply(
+          voteActionsHook.castFinalVote(
+            { id: participationId, vote_id: voteId, voter_id: voterId },
+            [
+              {
+                id: decisionId,
+                vote_id: voteId,
+                choice_id: choiceId,
+                voter_participation_id: isNamedBallot(voteEntity.ballot_visibility)
+                  ? participationId
+                  : null,
+              },
+            ]
+          )
         );
       }
     } catch (error) {

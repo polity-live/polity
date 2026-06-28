@@ -37,6 +37,7 @@ export {
   createFinalVoterParticipationSchema,
   selectFinalChoiceDecisionSchema,
   createFinalChoiceDecisionSchema,
+  castFinalVoteFullSchema,
   selectVoteOfflineTallySchema,
   upsertVoteOfflineTallySchema,
   deleteVoteOfflineTallySchema,

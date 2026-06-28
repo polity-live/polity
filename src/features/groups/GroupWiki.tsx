@@ -5,7 +5,7 @@ import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
 import { AccessDenied as AccessDeniedView } from '@/features/auth/ui/AccessDenied';
 import { useCreateRecoveryDraft } from '@/features/create/logic/createFinalization';
 import { CreateRecoveryState } from '@/features/create/ui/CreateRecoveryState';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { groupWikiRelatedGroupsByOrientation } from '@/features/groups/logic/groupWikiHelpers';
@@ -74,7 +74,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
     }
 
     if (isLoading) {
-      return <GlobalLoadingAnimation connectionStatus="connecting" />;
+      return <PageSkeleton />;
     }
 
     return <GroupWikiNotFoundView />;

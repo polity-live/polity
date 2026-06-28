@@ -99,10 +99,6 @@ vi.mock('@/zero/queries', () => ({
   },
 }));
 
-vi.mock('@/zero/mutate-with-server-check', () => ({
-  serverConfirmed: vi.fn(async (value: unknown) => value),
-}));
-
 vi.mock('@/zero/common/hashtagHelpers', () => ({
   extractHashtagTags: () => [],
 }));

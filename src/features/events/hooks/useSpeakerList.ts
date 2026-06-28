@@ -4,6 +4,7 @@ import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { usePermissions } from '@/zero/rbac';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { canJoinEventSpeakerList } from '@/features/agendas/logic/speakerListPermissions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 export function useSpeakerList(agendaItemId?: string, eventId?: string) {
   const { user } = useAuth();
@@ -21,17 +22,19 @@ export function useSpeakerList(agendaItemId?: string, eventId?: string) {
       const maxOrder = speakerList.length > 0 ? Math.max(...speakerList.map(s => s.order || 0)) : 0;
 
       const speakerId = crypto.randomUUID();
-      await addSpeaker({
-        id: speakerId,
-        title: translateText('generated.inline.0001_speaker_7c23b0d9'),
-        time: 3,
-        completed: false,
-        order_index: maxOrder + 1,
-        user_id: user.id,
-        agenda_item_id: agendaItemId,
-        start_time: null,
-        end_time: null,
-      });
+      await waitForClientApply(
+        addSpeaker({
+          id: speakerId,
+          title: translateText('generated.inline.0001_speaker_7c23b0d9'),
+          time: 3,
+          completed: false,
+          order_index: maxOrder + 1,
+          user_id: user.id,
+          agenda_item_id: agendaItemId,
+          start_time: null,
+          end_time: null,
+        })
+      );
     } catch (error) {
       console.error('Error adding to speaker list:', error);
       throw error;
@@ -45,7 +48,7 @@ export function useSpeakerList(agendaItemId?: string, eventId?: string) {
 
     setRemovingSpeaker(speakerId);
     try {
-      await removeSpeaker(speakerId);
+      await waitForClientApply(removeSpeaker(speakerId));
     } catch (error) {
       console.error('Error removing from speaker list:', error);
       throw error;

@@ -16,6 +16,7 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
+import { LoadingProgressBar } from '@/features/shared/ui/feedback';
 import { getContentTypeToneClasses, getSemanticToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -214,6 +215,10 @@ export function ActionSubmissionOverlay({
   const errorDetails = getErrorDetails(error);
   const Icon = getIcon(kind);
   const canUseTarget = status === 'success' || status === 'ready';
+  const displaySteps = steps.map(step => ({
+    ...step,
+    status: canUseTarget ? ('complete' as const) : step.status,
+  }));
 
   return (
     <AnimatePresence>
@@ -361,8 +366,8 @@ export function ActionSubmissionOverlay({
               data-slot="action-submission-steps"
               aria-label="Aktionsfortschritt"
             >
-              {steps.map((step, index) => {
-                const isComplete = step.status === 'complete' || canUseTarget;
+              {displaySteps.map((step, index) => {
+                const isComplete = step.status === 'complete';
                 const isActive = step.status === 'active';
                 const isError = step.status === 'error';
 
@@ -419,26 +424,15 @@ export function ActionSubmissionOverlay({
                         </p>
                       </div>
                     </div>
-                    {isActive ? (
-                      <div className="bg-muted mt-3 h-1 overflow-hidden rounded-full">
-                        <motion.div
-                          className={cn('h-full rounded-full', tone.text, 'bg-current')}
-                          initial={reducedMotion ? false : { width: '18%' }}
-                          animate={
-                            reducedMotion ? { width: '52%' } : { width: ['18%', '68%', '38%'] }
-                          }
-                          transition={
-                            reducedMotion
-                              ? { duration: 0 }
-                              : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }
-                          }
-                        />
-                      </div>
-                    ) : null}
                   </div>
                 );
               })}
             </div>
+            <LoadingProgressBar
+              ariaLabel="Aktionsfortschritt"
+              steps={displaySteps}
+              indicatorClassName={cn(tone.text, 'bg-current')}
+            />
 
             {status === 'error' ? (
               <div className="w-full space-y-3">

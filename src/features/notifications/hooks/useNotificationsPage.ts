@@ -7,6 +7,7 @@ import { useNotificationActions as useZeroNotificationActions } from '@/zero/not
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { Notification } from '../types/notification.types';
 import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 const EMPTY_NOTIFICATIONS: Notification[] = [];
 const PAGE_SIZE = 30;
@@ -33,14 +34,16 @@ export function useNotificationsPage() {
   const handleMarkAllAsRead = useCallback(async () => {
     for (const notification of filteredNotifications.unread) {
       if (notification.recipient_entity_id && notification.recipient_entity_type) {
-        await markEntityNotificationRead({
-          id: crypto.randomUUID(),
-          notification_id: notification.id,
-          entity_id: notification.recipient_entity_id,
-          entity_type: notification.recipient_entity_type,
-        });
+        await waitForClientApply(
+          markEntityNotificationRead({
+            id: crypto.randomUUID(),
+            notification_id: notification.id,
+            entity_id: notification.recipient_entity_id,
+            entity_type: notification.recipient_entity_type,
+          })
+        );
       } else {
-        await markRead({ id: notification.id });
+        await waitForClientApply(markRead({ id: notification.id }));
       }
     }
   }, [filteredNotifications.unread, markEntityNotificationRead, markRead]);

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
   useTranslation,
@@ -32,7 +32,11 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
-import { trackCreateFinalization, waitForOptimisticCreate } from '../logic/createFinalization';
+import {
+  consumeCreateRestoreDraft,
+  trackCreateFinalization,
+  waitForOptimisticCreate,
+} from '../logic/createFinalization';
 
 interface CreateTargetGroupData {
   id: string;
@@ -93,6 +97,43 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     String(searchParams.evaluationOffsetYears)
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  useEffect(() => {
+    const restoreDraft = consumeCreateRestoreDraft<
+      Partial<{
+        title: string;
+        subtitle: string;
+        imageURL: string;
+        visibility: 'public' | 'authenticated' | 'private';
+        hashtags: string[];
+        targetSelection: typeof targetSelection;
+        pathMode: 'hierarchy' | 'workflow';
+        workflowId: string;
+        evaluationMode: CreateAmendmentEvaluationMode;
+        evaluationDate: string;
+        evaluationOffsetMonths: string;
+        evaluationOffsetYears: string;
+      }>
+    >('amendment');
+    if (!restoreDraft) return;
+    const state = restoreDraft.formState;
+
+    setTitle(state.title ?? '');
+    setSubtitle(state.subtitle ?? '');
+    setImageURL(state.imageURL ?? '');
+    setVisibility(state.visibility ?? 'public');
+    setHashtags(state.hashtags ?? []);
+    setTargetSelection(state.targetSelection ?? null);
+    setPathMode(state.pathMode ?? searchParams.pathMode);
+    setWorkflowId(state.workflowId ?? searchParams.workflowId ?? '');
+    setEvaluationMode(state.evaluationMode ?? searchParams.evaluationMode);
+    setEvaluationDate(state.evaluationDate ?? searchParams.evaluationDate ?? '');
+    setEvaluationOffsetMonths(
+      state.evaluationOffsetMonths ?? String(searchParams.evaluationOffsetMonths)
+    );
+    setEvaluationOffsetYears(
+      state.evaluationOffsetYears ?? String(searchParams.evaluationOffsetYears)
+    );
+  }, [searchParams]);
   const visibilityLabel =
     visibility === translateText('generated.inline.0030_public_61c9b2b1')
       ? t('pages.create.common.public')

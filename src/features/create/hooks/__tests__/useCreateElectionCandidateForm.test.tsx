@@ -25,7 +25,7 @@ vi.mock('@/providers/auth-provider', () => ({
 }));
 
 vi.mock('@/zero/elections/useElectionActions', () => ({
-  useElectionActions: () => ({ addCandidate }),
+  useElectionActions: () => ({ addCandidateOptimistic: addCandidate }),
 }));
 
 vi.mock('@/zero/elections/useElectionState', () => ({
@@ -56,6 +56,15 @@ vi.mock('@/features/shared/ui/ui/sonner', () => ({
   },
 }));
 
+vi.mock('@/features/notifications/utils/gated-toast', () => ({
+  gatedToast: {
+    dismiss: vi.fn(),
+    error: vi.fn(),
+    finalizationSuccess: vi.fn(),
+    loading: vi.fn(),
+  },
+}));
+
 function findField<TKind extends CreateFormFieldDescriptor['kind']>(
   fields: CreateFormFieldDescriptor[],
   key: string,
@@ -71,6 +80,12 @@ function findField<TKind extends CreateFormFieldDescriptor['kind']>(
 describe('useCreateElectionCandidateForm', () => {
   beforeEach(() => {
     addCandidate.mockReset();
+    addCandidate.mockReturnValue({
+      client: Promise.resolve(),
+      server: new Promise(() => undefined),
+    });
+    window.sessionStorage.clear();
+    vi.stubGlobal('crypto', { randomUUID: () => 'candidate-1' });
     activeGroupIds = new Set(['group-1']);
     participations = [{ event_id: 'event-participant', status: 'active' }];
     electionsForSearch = [
@@ -121,5 +136,33 @@ describe('useCreateElectionCandidateForm', () => {
       props.onChange('election-member');
     });
     expect(result.current.steps[0].isValid()).toBe(true);
+  });
+
+  it('stores election-candidate recovery drafts under the matching entity key', async () => {
+    const { result } = renderHook(() => useCreateElectionCandidateForm());
+    const electionField = findField(
+      result.current.steps[0].fields ?? [],
+      'election',
+      'customComponent'
+    );
+
+    act(() => {
+      (electionField.props as { onChange: (electionId: string) => void }).onChange(
+        'election-member'
+      );
+    });
+
+    await act(async () => {
+      await result.current.onSubmit?.();
+    });
+
+    const rawDraft = window.sessionStorage.getItem('polity:create:recovery:election:candidate-1');
+    expect(rawDraft).not.toBeNull();
+    expect(JSON.parse(rawDraft ?? '{}')).toMatchObject({
+      id: 'election:candidate-1',
+      entityType: 'election',
+      entityId: 'candidate-1',
+      createPath: '/create/election-candidate',
+    });
   });
 });

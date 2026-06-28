@@ -508,6 +508,7 @@ export function ManageNetworkTabContentView({
     });
 
     return linkSubmission.runActionWithSubmission(async context => onAcceptRequest(rels, context), {
+      deferSyncCompletion: true,
       onSuccess: () => {
         linkSubmission.reset();
         setManageDialog(null);

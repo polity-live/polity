@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { roleEditorFormToMutationWithOptions } from '../logic/roleFormHelpers';
 import type { RoleEditorFormState } from '../types/group.types';
@@ -36,32 +37,32 @@ export function useRoleManagement(
         allowGuestInviteDefault: Boolean(options?.guestOnlyMembershipFlow),
       });
 
-      await createRoleAction({
-        id: roleId,
-        name: roleFields.name,
-        description: roleFields.description,
-        scope: 'group',
-        group_id: groupId,
-        event_id: null,
-        amendment_id: null,
-        blog_id: null,
-        assignee_kind: roleFields.assignee_kind,
-        assignment_mode: roleFields.assignment_mode,
-        visibility: roleFields.visibility,
-        term_start_date: roleFields.term_start_date,
-        is_recurring: roleFields.is_recurring,
-        recurrence_pattern: roleFields.recurrence_pattern,
-        recurrence_rule: roleFields.recurrence_rule,
-        recurrence_interval: roleFields.recurrence_interval,
-        recurrence_days: roleFields.recurrence_days,
-        recurrence_end_date: roleFields.recurrence_end_date,
-        scheduled_revote_date: roleFields.scheduled_revote_date,
-        default_request_role: roleFields.default_request_role,
-        default_invite_role: roleFields.default_invite_role,
-        sort_order: nextSortOrder,
-      });
-
-      toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
+      await waitForClientApply(
+        createRoleAction({
+          id: roleId,
+          name: roleFields.name,
+          description: roleFields.description,
+          scope: 'group',
+          group_id: groupId,
+          event_id: null,
+          amendment_id: null,
+          blog_id: null,
+          assignee_kind: roleFields.assignee_kind,
+          assignment_mode: roleFields.assignment_mode,
+          visibility: roleFields.visibility,
+          term_start_date: roleFields.term_start_date,
+          is_recurring: roleFields.is_recurring,
+          recurrence_pattern: roleFields.recurrence_pattern,
+          recurrence_rule: roleFields.recurrence_rule,
+          recurrence_interval: roleFields.recurrence_interval,
+          recurrence_days: roleFields.recurrence_days,
+          recurrence_end_date: roleFields.recurrence_end_date,
+          scheduled_revote_date: roleFields.scheduled_revote_date,
+          default_request_role: roleFields.default_request_role,
+          default_invite_role: roleFields.default_invite_role,
+          sort_order: nextSortOrder,
+        })
+      );
 
       return { success: true, roleId };
     } catch (error) {
@@ -88,24 +89,26 @@ export function useRoleManagement(
         allowGuestInviteDefault: Boolean(options?.guestOnlyMembershipFlow),
       });
 
-      await updateRoleAction({
-        id: roleId,
-        name: roleFields.name,
-        description: roleFields.description,
-        assignee_kind: roleFields.assignee_kind,
-        assignment_mode: roleFields.assignment_mode,
-        visibility: roleFields.visibility,
-        term_start_date: roleFields.term_start_date,
-        is_recurring: roleFields.is_recurring,
-        recurrence_pattern: roleFields.recurrence_pattern,
-        recurrence_rule: roleFields.recurrence_rule,
-        recurrence_interval: roleFields.recurrence_interval,
-        recurrence_days: roleFields.recurrence_days,
-        recurrence_end_date: roleFields.recurrence_end_date,
-        scheduled_revote_date: roleFields.scheduled_revote_date,
-        default_request_role: roleFields.default_request_role,
-        default_invite_role: roleFields.default_invite_role,
-      });
+      await waitForClientApply(
+        updateRoleAction({
+          id: roleId,
+          name: roleFields.name,
+          description: roleFields.description,
+          assignee_kind: roleFields.assignee_kind,
+          assignment_mode: roleFields.assignment_mode,
+          visibility: roleFields.visibility,
+          term_start_date: roleFields.term_start_date,
+          is_recurring: roleFields.is_recurring,
+          recurrence_pattern: roleFields.recurrence_pattern,
+          recurrence_rule: roleFields.recurrence_rule,
+          recurrence_interval: roleFields.recurrence_interval,
+          recurrence_days: roleFields.recurrence_days,
+          recurrence_end_date: roleFields.recurrence_end_date,
+          scheduled_revote_date: roleFields.scheduled_revote_date,
+          default_request_role: roleFields.default_request_role,
+          default_invite_role: roleFields.default_invite_role,
+        })
+      );
 
       toast.success(translateText('generated.inline.0588_role_updated_successfully_87ea8999'));
       return { success: true };
@@ -124,7 +127,7 @@ export function useRoleManagement(
     setIsLoading(true);
     try {
       for (let i = 0; i < orderedRoleIds.length; i++) {
-        await updateRoleAction({ id: orderedRoleIds[i], sort_order: i });
+        await waitForClientApply(updateRoleAction({ id: orderedRoleIds[i], sort_order: i }));
       }
       toast.success(translateText('generated.inline.0475_role_order_updated_4d399d91'));
       return { success: true };
@@ -140,8 +143,7 @@ export function useRoleManagement(
   const removeRole = async (roleId: string) => {
     setIsLoading(true);
     try {
-      await deleteRoleAction({ id: roleId });
-      toast.success(translateText('generated.inline.0463_role_removed_successfully_2812ce44'));
+      await waitForClientApply(deleteRoleAction({ id: roleId }));
       return { success: true };
     } catch (error) {
       console.error('Failed to remove role:', error);
@@ -169,21 +171,23 @@ export function useRoleManagement(
           ar => ar.resource === resource && ar.action === action
         );
         if (actionRightToRemove) {
-          await removeActionRight({ id: actionRightToRemove.id });
+          await waitForClientApply(removeActionRight({ id: actionRightToRemove.id }));
         }
       } else {
         // Add the action right
         const actionRightId = crypto.randomUUID();
-        await assignActionRight({
-          id: actionRightId,
-          resource,
-          action,
-          group_id: groupId,
-          event_id: null,
-          amendment_id: null,
-          blog_id: null,
-          role_id: roleId,
-        });
+        await waitForClientApply(
+          assignActionRight({
+            id: actionRightId,
+            resource,
+            action,
+            group_id: groupId,
+            event_id: null,
+            amendment_id: null,
+            blog_id: null,
+            role_id: roleId,
+          })
+        );
       }
 
       return { success: true };

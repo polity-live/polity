@@ -7,6 +7,7 @@ import { useEventAccessRoles } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { useEventData } from './useEventData';
 import { useEventMutations } from './useEventMutations';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useEventParticipants(eventId: string) {
@@ -147,17 +148,19 @@ export function useEventParticipants(eventId: string) {
 
     try {
       const roleId = crypto.randomUUID();
-      await createRole({
-        id: roleId,
-        name: newRoleName,
-        description: newRoleDescription,
-        scope: 'event',
-        sort_order: 0,
-        event_id: eventId,
-        group_id: null,
-        amendment_id: null,
-        blog_id: null,
-      });
+      await waitForClientApply(
+        createRole({
+          id: roleId,
+          name: newRoleName,
+          description: newRoleDescription,
+          scope: 'event',
+          sort_order: 0,
+          event_id: eventId,
+          group_id: null,
+          amendment_id: null,
+          blog_id: null,
+        })
+      );
 
       toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
 
@@ -174,7 +177,7 @@ export function useEventParticipants(eventId: string) {
 
   const handleRemoveRole = async (roleId: string) => {
     try {
-      await deleteRole({ id: roleId });
+      await waitForClientApply(deleteRole({ id: roleId }));
       toast.success(translateText('generated.inline.0463_role_removed_successfully_2812ce44'));
     } catch (error) {
       console.error('Failed to remove role:', error);
@@ -197,20 +200,22 @@ export function useEventParticipants(eventId: string) {
           ar => ar.resource === resource && ar.action === action
         );
         if (actionRightToRemove) {
-          await removeActionRight({ id: actionRightToRemove.id });
+          await waitForClientApply(removeActionRight({ id: actionRightToRemove.id }));
         }
       } else {
         const actionRightId = crypto.randomUUID();
-        await assignActionRight({
-          id: actionRightId,
-          resource,
-          action,
-          role_id: roleId,
-          event_id: eventId,
-          group_id: null,
-          amendment_id: null,
-          blog_id: null,
-        });
+        await waitForClientApply(
+          assignActionRight({
+            id: actionRightId,
+            resource,
+            action,
+            role_id: roleId,
+            event_id: eventId,
+            group_id: null,
+            amendment_id: null,
+            blog_id: null,
+          })
+        );
       }
     } catch (error) {
       console.error('Failed to toggle action right:', error);

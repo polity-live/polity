@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { AnchorHTMLAttributes, ComponentProps, ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CivicTimelineItem, CivicTimelineSection } from '../../logic/civicTimeline';
@@ -256,6 +256,13 @@ describe('CivicTimelineRail', () => {
 });
 
 describe('CivicTimelineMap', () => {
+  it('renders a map skeleton while map modules load', () => {
+    render(<CivicTimelineMap items={[item]} activeItemId="event-1" />);
+
+    expect(document.querySelector('[data-slot="map-panel-skeleton"]')).toBeTruthy();
+    expect(screen.queryByText('generated.inline.1166_map_is_loading_5299ec7c')).toBeNull();
+  });
+
   it('syncs marker hover and click with the timeline rail', async () => {
     const onActiveItemChange = vi.fn();
     const onItemSelect = vi.fn();
@@ -285,9 +292,11 @@ describe('CivicTimelineMap', () => {
 
     await screen.findByTestId('mock-marker');
 
-    expect(mockFlyTo).toHaveBeenCalledWith([52.52, 13.405], 9, {
-      animate: true,
-      duration: 0.35,
+    await waitFor(() => {
+      expect(mockFlyTo).toHaveBeenCalledWith([52.52, 13.405], 9, {
+        animate: true,
+        duration: 0.35,
+      });
     });
   });
 });

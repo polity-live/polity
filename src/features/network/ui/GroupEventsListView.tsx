@@ -1,4 +1,5 @@
 import { EventSearchCard } from '@/features/search/ui/EventSearchCard';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import type { EventByGroupRow } from '../hooks/useGroupEventsListController';
 
 interface GroupEventsListViewProps {
@@ -22,9 +23,7 @@ export function GroupEventsListView({
   onEventClick,
 }: GroupEventsListViewProps) {
   if (eventsLoading) {
-    return (
-      <div className="text-muted-foreground py-4 text-center text-sm">{labels.loadingEvents}</div>
-    );
+    return <SectionSkeleton rows={3} density="compact" label={labels.loadingEvents} />;
   }
 
   if (futureEvents.length === 0) {

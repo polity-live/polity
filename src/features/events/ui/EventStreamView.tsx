@@ -3,6 +3,7 @@ import { BadgeControl } from '@/features/shared/ui/status';
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
   Collapsible,
@@ -167,8 +168,8 @@ export function EventStreamView({
 
   if (isLoading) {
     return (
-      <div className="flex h-[400px] items-center justify-center">
-        <p className="text-muted-foreground">{t('common.loading.general')}</p>
+      <div className="min-h-[400px] py-6">
+        <SectionSkeleton rows={4} label={t('common.loading.sectionSkeleton.label')} />
       </div>
     );
   }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
-import { Loader2 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 
 interface GroupDisplay {
   id: string;
@@ -22,12 +22,7 @@ export const GroupsList: React.FC<GroupsListProps> = ({ groups, isLoading }) => 
   const { t } = useTranslation();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="text-primary h-8 w-8 animate-spin" />
-        <span className="text-muted-foreground ml-2">{t('features.groups.list.loading')}</span>
-      </div>
-    );
+    return <SectionSkeleton rows={6} label={t('features.groups.list.loading')} />;
   }
 
   if (groups.length === 0) {

@@ -13,6 +13,7 @@ export {
   type SurfaceMode,
 } from './SurfaceDepthContext';
 export { ActionBar } from './ActionBar';
+export { EntityPageFrame } from './EntityPageFrame';
 export {
   EntityPageShell,
   type EntityPageShellProps,

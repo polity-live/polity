@@ -40,7 +40,7 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
-import { trackCreateFinalization } from '../logic/createFinalization';
+import { consumeCreateRestoreDraft, trackCreateFinalization } from '../logic/createFinalization';
 
 interface CreateTodoSearch {
   groupId?: string;
@@ -134,6 +134,31 @@ export function useCreateTodoForm(): CreateFormConfig {
   useEffect(() => {
     setGroupId(groupIdParam);
   }, [groupIdParam]);
+
+  useEffect(() => {
+    const restoreDraft = consumeCreateRestoreDraft<{
+      title?: string;
+      description?: string;
+      assigneeId?: string;
+      priority?: 'low' | 'medium' | 'high';
+      status?: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+      dueDate?: string;
+      tags?: string[];
+      groupId?: string;
+      visibility?: 'public' | 'authenticated' | 'private';
+    }>('todo');
+    if (!restoreDraft) return;
+
+    setTitle(restoreDraft.formState.title ?? '');
+    setDescription(restoreDraft.formState.description ?? '');
+    setAssigneeId(restoreDraft.formState.assigneeId ?? '');
+    setPriority(restoreDraft.formState.priority ?? 'medium');
+    setStatus(restoreDraft.formState.status ?? 'pending');
+    setDueDate(restoreDraft.formState.dueDate ?? '');
+    setTags(restoreDraft.formState.tags ?? []);
+    setGroupId(restoreDraft.formState.groupId ?? '');
+    setVisibility(restoreDraft.formState.visibility ?? 'private');
+  }, []);
 
   useEffect(() => {
     if (!groupId) {

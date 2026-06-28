@@ -19,6 +19,7 @@ import {
   type VoteValue,
 } from '@/features/shared/utils/voting-utils';
 import { triggerSupporterConfirmation } from '@/features/amendments/hooks/useSupportConfirmation';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 interface UseChangeRequestVotingOptions {
   eventId: string;
@@ -105,44 +106,50 @@ export function useChangeRequestVoting({
       }
 
       // Mark the change request as actively being voted on
-      await updateChangeRequest({
-        id: changeRequestId,
-        voting_status: 'voting',
-      });
+      await waitForClientApply(
+        updateChangeRequest({
+          id: changeRequestId,
+          voting_status: 'voting',
+        })
+      );
 
-      await updateAgendaItem({
-        id: votingSessionId,
-        voting_phase: 'indicative',
-      });
+      await waitForClientApply(
+        updateAgendaItem({
+          id: votingSessionId,
+          voting_phase: 'indicative',
+        })
+      );
 
-      await createTimelineEvent({
-        id: crypto.randomUUID(),
-        event_type: 'change_request_voting_started',
-        entity_id: changeRequestId,
-        entity_type: 'change_request',
-        metadata: { votingSessionId, changeRequestId, amendmentId: amendmentId ?? '' },
-        title: '',
-        description: '',
-        image_url: '',
-        video_url: '',
-        video_thumbnail_url: '',
-        content_type: '',
-        tags: null,
-        stats: null,
-        vote_status: '',
-        election_status: '',
-        ends_at: 0,
-        user_id: userId,
-        group_id: null,
-        amendment_id: amendmentId ?? '',
-        event_id: eventId,
-        todo_id: null,
-        blog_id: null,
-        statement_id: null,
-        actor_id: userId,
-        election_id: null,
-        amendment_vote_id: null,
-      });
+      await waitForClientApply(
+        createTimelineEvent({
+          id: crypto.randomUUID(),
+          event_type: 'change_request_voting_started',
+          entity_id: changeRequestId,
+          entity_type: 'change_request',
+          metadata: { votingSessionId, changeRequestId, amendmentId: amendmentId ?? '' },
+          title: '',
+          description: '',
+          image_url: '',
+          video_url: '',
+          video_thumbnail_url: '',
+          content_type: '',
+          tags: null,
+          stats: null,
+          vote_status: '',
+          election_status: '',
+          ends_at: 0,
+          user_id: userId,
+          group_id: null,
+          amendment_id: amendmentId ?? '',
+          event_id: eventId,
+          todo_id: null,
+          blog_id: null,
+          statement_id: null,
+          actor_id: userId,
+          election_id: null,
+          amendment_vote_id: null,
+        })
+      );
     },
     [votingSessionId, can, amendmentId, userId]
   );
@@ -159,23 +166,29 @@ export function useChangeRequestVoting({
 
     if (nextChangeRequest) {
       // Move to next change request
-      await updateChangeRequest({
-        id: nextChangeRequest.id,
-        voting_status: 'voting',
-      });
+      await waitForClientApply(
+        updateChangeRequest({
+          id: nextChangeRequest.id,
+          voting_status: 'voting',
+        })
+      );
 
-      await updateAgendaItem({
-        id: votingSessionId,
-        voting_phase: 'indicative',
-      });
+      await waitForClientApply(
+        updateAgendaItem({
+          id: votingSessionId,
+          voting_phase: 'indicative',
+        })
+      );
       return { hasNext: true, nextId: nextChangeRequest.id };
     } else {
       // No more change requests, complete the session
-      await updateAgendaItem({
-        id: votingSessionId,
-        voting_phase: 'closed',
-        completed_at: Date.now(),
-      });
+      await waitForClientApply(
+        updateAgendaItem({
+          id: votingSessionId,
+          voting_phase: 'closed',
+          completed_at: Date.now(),
+        })
+      );
       return { hasNext: false, nextId: null };
     }
   }, [votingSessionId, pendingChangeRequests, currentChangeRequest, can]);
@@ -227,44 +240,48 @@ export function useChangeRequestVoting({
       const newStatus = passed ? 'approved' : 'rejected';
 
       // Update change request status
-      await updateChangeRequest({
-        id: currentChangeRequest.id,
-        status: newStatus,
-        voting_status: newStatus,
-      });
-
-      await createTimelineEvent({
-        id: crypto.randomUUID(),
-        event_type: 'change_request_resolved',
-        entity_id: currentChangeRequest.id,
-        entity_type: 'change_request',
-        metadata: {
-          changeRequestId: currentChangeRequest.id,
+      await waitForClientApply(
+        updateChangeRequest({
+          id: currentChangeRequest.id,
           status: newStatus,
-          amendmentId: amendmentId ?? '',
-        },
-        title: '',
-        description: '',
-        image_url: '',
-        video_url: '',
-        video_thumbnail_url: '',
-        content_type: '',
-        tags: null,
-        stats: null,
-        vote_status: '',
-        election_status: '',
-        ends_at: 0,
-        user_id: userId,
-        group_id: null,
-        amendment_id: amendmentId ?? '',
-        event_id: eventId,
-        todo_id: null,
-        blog_id: null,
-        statement_id: null,
-        actor_id: userId,
-        election_id: null,
-        amendment_vote_id: null,
-      });
+          voting_status: newStatus,
+        })
+      );
+
+      await waitForClientApply(
+        createTimelineEvent({
+          id: crypto.randomUUID(),
+          event_type: 'change_request_resolved',
+          entity_id: currentChangeRequest.id,
+          entity_type: 'change_request',
+          metadata: {
+            changeRequestId: currentChangeRequest.id,
+            status: newStatus,
+            amendmentId: amendmentId ?? '',
+          },
+          title: '',
+          description: '',
+          image_url: '',
+          video_url: '',
+          video_thumbnail_url: '',
+          content_type: '',
+          tags: null,
+          stats: null,
+          vote_status: '',
+          election_status: '',
+          ends_at: 0,
+          user_id: userId,
+          group_id: null,
+          amendment_id: amendmentId ?? '',
+          event_id: eventId,
+          todo_id: null,
+          blog_id: null,
+          statement_id: null,
+          actor_id: userId,
+          election_id: null,
+          amendment_vote_id: null,
+        })
+      );
 
       if (passed && amendmentId) {
         // Trigger supporter confirmation for groups that support this amendment.
@@ -299,10 +316,12 @@ export function useChangeRequestVoting({
     }
 
     if (currentChangeRequest) {
-      await updateChangeRequest({
-        id: currentChangeRequest.id,
-        status: 'skipped',
-      });
+      await waitForClientApply(
+        updateChangeRequest({
+          id: currentChangeRequest.id,
+          status: 'skipped',
+        })
+      );
     }
 
     return moveToNextChangeRequest();

@@ -71,6 +71,8 @@ describe('ActionSubmissionOverlay', () => {
     expect(overlay.className).toContain('inset-0');
     expect(screen.getByText('3 Nutzer')).toBeTruthy();
     expect(screen.getByText('Einladungen senden')).toBeTruthy();
+    expect(screen.getByRole('progressbar', { name: 'Aktionsfortschritt' })).toBeTruthy();
+    expect(document.querySelector('[data-slot="loading-progress-bar"]')).toBeTruthy();
     expect((screen.getByRole('button', { name: 'Fertig' }) as HTMLButtonElement).disabled).toBe(
       true
     );

@@ -18,12 +18,15 @@ export interface ActionSubmissionProgressUpdate {
 
 export interface ActionSubmissionContext {
   reportProgress: (update: ActionSubmissionProgressUpdate) => void;
+  completeSuccess?: () => void;
+  failSubmission?: (error: unknown) => void;
 }
 
 export interface ActionSubmissionRunConfig {
   steps?: ActionSubmissionStep[];
   onSuccess?: () => void;
   successDelayMs?: number;
+  deferSyncCompletion?: boolean;
 }
 
 interface ActionResultLike {
@@ -146,6 +149,11 @@ export function useActionSubmission(kind: ActionSubmissionKind, steps?: ActionSu
   const [error, setError] = useState<unknown>(null);
   const retryRef = useRef<(() => Promise<void>) | null>(null);
   const timeoutRef = useRef<number | null>(null);
+  const successConfigRef = useRef<Pick<
+    ActionSubmissionRunConfig,
+    'onSuccess' | 'successDelayMs'
+  > | null>(null);
+  const finalizedRef = useRef(false);
 
   const reset = useCallback(() => {
     if (timeoutRef.current != null) {
@@ -156,6 +164,8 @@ export function useActionSubmission(kind: ActionSubmissionKind, steps?: ActionSu
     setError(null);
     setProgressSteps(getInitialSteps(kind, steps));
     retryRef.current = null;
+    successConfigRef.current = null;
+    finalizedRef.current = false;
   }, [kind, steps]);
 
   const reportProgress = useCallback((update: ActionSubmissionProgressUpdate) => {
@@ -168,7 +178,32 @@ export function useActionSubmission(kind: ActionSubmissionKind, steps?: ActionSu
     }
   }, []);
 
-  const context = useMemo<ActionSubmissionContext>(() => ({ reportProgress }), [reportProgress]);
+  const completeSuccess = useCallback(() => {
+    finalizedRef.current = true;
+    setProgressSteps(prev => completeAll(prev));
+    setStatus('success');
+
+    if (timeoutRef.current != null) {
+      window.clearTimeout(timeoutRef.current);
+    }
+
+    const config = successConfigRef.current;
+    timeoutRef.current = window.setTimeout(() => {
+      config?.onSuccess?.();
+    }, config?.successDelayMs ?? 720);
+  }, []);
+
+  const failSubmission = useCallback((caughtError: unknown) => {
+    finalizedRef.current = true;
+    setError(caughtError);
+    setProgressSteps(prev => failActive(prev));
+    setStatus('error');
+  }, []);
+
+  const context = useMemo<ActionSubmissionContext>(
+    () => ({ reportProgress, completeSuccess, failSubmission }),
+    [completeSuccess, failSubmission, reportProgress]
+  );
 
   const runActionWithSubmission = useCallback(
     async <T>(
@@ -184,6 +219,11 @@ export function useActionSubmission(kind: ActionSubmissionKind, steps?: ActionSu
       setProgressSteps(activateStep(sourceSteps, 'prepare'));
       setStatus('submitting');
       setError(null);
+      successConfigRef.current = {
+        onSuccess: config.onSuccess,
+        successDelayMs: config.successDelayMs,
+      };
+      finalizedRef.current = false;
 
       const retry = async () => {
         await runActionWithSubmission(action, config);
@@ -200,25 +240,23 @@ export function useActionSubmission(kind: ActionSubmissionKind, steps?: ActionSu
           throw toError(result.error);
         }
 
-        setProgressSteps(prev => completeStep(prev, 'commit'));
-        setProgressSteps(prev => activateStep(prev, 'sync'));
-        setProgressSteps(prev => completeStep(prev, 'sync'));
-        setProgressSteps(prev => completeAll(prev));
-        setStatus('success');
+        if (!finalizedRef.current) {
+          setProgressSteps(prev => completeStep(prev, 'commit'));
+          setProgressSteps(prev => activateStep(prev, 'sync'));
+        }
 
-        timeoutRef.current = window.setTimeout(() => {
-          config.onSuccess?.();
-        }, config.successDelayMs ?? 720);
+        if (config.deferSyncCompletion) {
+          return result;
+        }
 
+        completeSuccess();
         return result;
       } catch (caughtError) {
-        setError(caughtError);
-        setProgressSteps(prev => failActive(prev));
-        setStatus('error');
+        failSubmission(caughtError);
         throw caughtError;
       }
     },
-    [context, kind, steps]
+    [completeSuccess, context, failSubmission, kind, steps]
   );
 
   const retry = useCallback(async () => {
@@ -244,6 +282,8 @@ export function useActionSubmission(kind: ActionSubmissionKind, steps?: ActionSu
     runActionWithSubmission,
     reset,
     retry,
+    completeSuccess,
+    failSubmission,
   };
 }
 

@@ -494,6 +494,7 @@ export const amendmentsTranslations = {
       loadDemo: 'Demo laden',
       loadOsm: 'OSM laden',
       loadingOsm: 'Lädt...',
+      loadingMap: 'Karte wird geladen...',
       mapUnavailable: 'Karte konnte nicht geladen werden.',
       rotationDegrees: 'Rotation Grad',
       title: 'Kartenausschnitt',

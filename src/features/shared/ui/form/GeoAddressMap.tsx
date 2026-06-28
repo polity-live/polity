@@ -4,6 +4,7 @@ interface GeoAddressMapProps {
   onCoordinatesChange: (coordinates: GeoCoordinates) => void;
   isBusy?: boolean;
   loadingLabel: string;
+  unavailableLabel: string;
   busyLabel: string;
   emptyMessage: string;
   moveHint: string;
@@ -17,6 +18,7 @@ export function GeoAddressMap({
   onCoordinatesChange,
   isBusy = false,
   loadingLabel,
+  unavailableLabel,
   busyLabel,
   emptyMessage,
   moveHint,
@@ -27,6 +29,7 @@ export function GeoAddressMap({
     onCoordinatesChange,
     isBusy,
     loadingLabel,
+    unavailableLabel,
     busyLabel,
     emptyMessage,
     moveHint,

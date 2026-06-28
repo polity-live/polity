@@ -3,6 +3,7 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAgendaItemCRTimeline } from '@/zero/agendas/useAgendaState';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import {
   computeVoteResultSummary,
@@ -121,8 +122,8 @@ export function useAgendaItemCRVoting(agendaItemId: string | undefined, userId?:
     async (itemId: string) => {
       const item = crTimeline.find(i => i.id === itemId);
       if (!item?.vote) return;
-      await updateVote({ id: item.vote.id, status: VOTE_PHASE.indicative });
-      await updateAgendaItemChangeRequest({ id: itemId, status: 'voting' });
+      await waitForClientApply(updateVote({ id: item.vote.id, status: VOTE_PHASE.indicative }));
+      await waitForClientApply(updateAgendaItemChangeRequest({ id: itemId, status: 'voting' }));
     },
     [crTimeline, updateVote, updateAgendaItemChangeRequest]
   );
@@ -133,9 +134,9 @@ export function useAgendaItemCRVoting(agendaItemId: string | undefined, userId?:
       const item = crTimeline.find(i => i.id === itemId);
       if (!item?.vote) return;
       if (item.status === 'pending') {
-        await updateAgendaItemChangeRequest({ id: itemId, status: 'voting' });
+        await waitForClientApply(updateAgendaItemChangeRequest({ id: itemId, status: 'voting' }));
       }
-      await updateVote({ id: item.vote.id, status: VOTE_PHASE.final });
+      await waitForClientApply(updateVote({ id: item.vote.id, status: VOTE_PHASE.final }));
     },
     [crTimeline, updateAgendaItemChangeRequest, updateVote]
   );
@@ -148,7 +149,7 @@ export function useAgendaItemCRVoting(agendaItemId: string | undefined, userId?:
 
       const result = getVoteResult(item);
 
-      await updateVote({ id: item.vote.id, status: 'closed' });
+      await waitForClientApply(updateVote({ id: item.vote.id, status: 'closed' }));
 
       return result;
     },
@@ -180,11 +181,13 @@ export function useAgendaItemCRVoting(agendaItemId: string | undefined, userId?:
       let voterId = getUserVoter(item)?.id;
       if (!voterId) {
         voterId = crypto.randomUUID();
-        await createVoter({
-          id: voterId,
-          vote_id: item.vote.id,
-          user_id: userId,
-        });
+        await waitForClientApply(
+          createVoter({
+            id: voterId,
+            vote_id: item.vote.id,
+            user_id: userId,
+          })
+        );
       }
 
       const participationId = crypto.randomUUID();
@@ -205,9 +208,9 @@ export function useAgendaItemCRVoting(agendaItemId: string | undefined, userId?:
       ];
 
       if (phase === 'final') {
-        await castFinalVote(participationArgs, decisions);
+        await waitForClientApply(castFinalVote(participationArgs, decisions));
       } else {
-        await castIndicativeVote(participationArgs, decisions);
+        await waitForClientApply(castIndicativeVote(participationArgs, decisions));
       }
     },
     [userId, getUserVoter, castIndicativeVote, castFinalVote, createVoter]

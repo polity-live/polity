@@ -84,7 +84,7 @@ vi.mock('@/features/auth/ui/AccessDenied', () => ({
 }));
 
 vi.mock('@/features/shared/ui/feedback', () => ({
-  GlobalLoadingAnimation: () => <div data-testid="global-loading-animation" />,
+  PageSkeleton: () => <div data-testid="page-skeleton" />,
 }));
 
 import { Route as EditorLayoutRoute } from '../../../routes/_authed/group/$id/editor';

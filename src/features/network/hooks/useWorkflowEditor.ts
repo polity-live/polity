@@ -3,7 +3,8 @@ import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useWorkflowState } from '@/zero/network/useWorkflowState';
 import { useWorkflowActions } from '@/zero/network/useWorkflowActions';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { trackServerFinalization, waitForClientApply } from '@/zero/mutate-with-server-check';
+import type { ActionSubmissionContext } from '@/features/shared/ui/action-submission';
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
 
 export interface DraftWorkflowStep {
@@ -126,7 +127,7 @@ export function useWorkflowEditor(groupId: string) {
   }, []);
 
   const saveWorkflow = useCallback(
-    async (createdById: string) => {
+    async (createdById: string, submissionContext?: ActionSubmissionContext) => {
       if (!draftStartGroupId || draftSteps.length === 0) {
         return;
       }
@@ -154,7 +155,19 @@ export function useWorkflowEditor(groupId: string) {
           })),
         });
 
-        await serverConfirmed(result);
+        await waitForClientApply(result);
+        submissionContext?.reportProgress({ key: 'commit', status: 'complete' });
+        submissionContext?.reportProgress({ key: 'sync', status: 'active' });
+        if (submissionContext) {
+          trackServerFinalization(result, {
+            onSuccess: () => submissionContext.completeSuccess?.(),
+            onError: error => submissionContext.failSubmission?.(error),
+          });
+        } else {
+          trackServerFinalization(result, {
+            onError: error => toast.error(error.message),
+          });
+        }
         toast.success(t('features.network.toasts.workflowSaved'));
       } catch (error) {
         toast.error(
@@ -177,7 +190,7 @@ export function useWorkflowEditor(groupId: string) {
 
   const deleteWorkflow = useCallback(
     async (workflowId: string) => {
-      await actions.deleteWorkflow(workflowId);
+      await waitForClientApply(actions.deleteWorkflow(workflowId));
     },
     [actions]
   );

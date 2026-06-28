@@ -4,7 +4,7 @@ import { useAmendmentCollaboration } from '@/features/amendments/hooks/useAmendm
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAuth } from '@/providers/auth-provider';
 import { AmendmentEditContent } from '@/features/amendments/ui/AmendmentEditContent';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
 
 export const Route = createFileRoute('/_authed/amendment/$id/settings')({
@@ -21,7 +21,7 @@ function AmendmentSettingsPage() {
   });
 
   if (collaboration.isLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton />;
   }
 
   if (!user || (!collaboration.isCollaborator && !collaboration.isAdmin)) {

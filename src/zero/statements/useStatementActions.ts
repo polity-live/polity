@@ -48,8 +48,9 @@ export function useStatementActions() {
       const result = zero.mutate(mutators.statements.delete({ id }));
       toast.success(t('features.statements.toasts.deleted'));
       onServerError(result, () => toast.error(t('features.statements.toasts.deleteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Support Votes ──────────────────────────────────────────────────
@@ -57,24 +58,27 @@ export function useStatementActions() {
     (args: Parameters<typeof mutators.statements.createSupportVote>[0]) => {
       const result = zero.mutate(mutators.statements.createSupportVote(args));
       onServerError(result, () => toast.error(t('features.statements.toasts.voteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const updateSupportVote = useCallback(
     (args: Parameters<typeof mutators.statements.updateSupportVote>[0]) => {
       const result = zero.mutate(mutators.statements.updateSupportVote(args));
       onServerError(result, () => toast.error(t('features.statements.toasts.voteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteSupportVote = useCallback(
     (id: string) => {
       const result = zero.mutate(mutators.statements.deleteSupportVote({ id }));
       onServerError(result, () => toast.error(t('features.statements.toasts.voteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Surveys ────────────────────────────────────────────────────────
@@ -83,8 +87,9 @@ export function useStatementActions() {
       const result = zero.mutate(mutators.statements.createSurvey(args));
       toast.success(t('features.statements.toasts.surveyCreated'));
       onServerError(result, () => toast.error(t('features.statements.toasts.surveyCreateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteSurvey = useCallback(
@@ -92,24 +97,27 @@ export function useStatementActions() {
       const result = zero.mutate(mutators.statements.deleteSurvey({ id }));
       toast.success(t('features.statements.toasts.surveyDeleted'));
       onServerError(result, () => toast.error(t('features.statements.toasts.surveyDeleteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const createSurveyOption = useCallback(
     (args: Parameters<typeof mutators.statements.createSurveyOption>[0]) => {
       const result = zero.mutate(mutators.statements.createSurveyOption(args));
       onServerError(result, msg => console.error('Failed to create survey option:', msg));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteSurveyOption = useCallback(
     (id: string) => {
       const result = zero.mutate(mutators.statements.deleteSurveyOption({ id }));
       onServerError(result, msg => console.error('Failed to delete survey option:', msg));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const createSurveyVote = useCallback(
@@ -117,14 +125,16 @@ export function useStatementActions() {
       const result = zero.mutate(mutators.statements.createSurveyVote(args));
       toast.success(t('features.statements.toasts.surveyVoteCast'));
       onServerError(result, () => toast.error(t('features.statements.toasts.surveyVoteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteSurveyVote = useCallback(
     (id: string) => {
       const result = zero.mutate(mutators.statements.deleteSurveyVote({ id }));
       onServerError(result, msg => console.error('Failed to remove survey vote:', msg));
+      return result;
     },
     [zero]
   );
@@ -136,6 +146,7 @@ export function useStatementActions() {
     (args: Parameters<typeof mutators.statements.update>[0]) => {
       const result = zero.mutate(mutators.statements.update(args));
       onServerError(result, msg => console.error('Silent statement update failed:', msg));
+      return result;
     },
     [zero]
   );

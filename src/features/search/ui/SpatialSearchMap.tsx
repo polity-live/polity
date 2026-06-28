@@ -12,6 +12,7 @@ import {
 
 import { featureThemeMarkup, featureThemeValue } from '@/features/shared/theme';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { MapPanelSkeleton } from '@/features/shared/ui/feedback';
 import { type SearchBounds, type SearchSpatialItem } from '../logic/searchSpatial';
 
 type ReactLeafletModule = typeof import('react-leaflet');
@@ -337,10 +338,20 @@ export function SpatialSearchMap({
     });
   }, [leafletModule]);
 
-  if (loadFailed || !reactLeafletModule || !leafletModule || !MarkerClusterGroup || !activeIcon) {
+  if (loadFailed) {
     return (
       <SpatialSearchMapMessageView
-        message={translateText('generated.inline.1166_map_is_loading_5299ec7c')}
+        message={translateText('common.locationPicker.unavailable', 'Map could not be loaded.')}
+      />
+    );
+  }
+
+  if (!reactLeafletModule || !leafletModule || !MarkerClusterGroup || !activeIcon) {
+    return (
+      <MapPanelSkeleton
+        label={translateText('common.locationPicker.loading', 'Loading map...')}
+        className="rounded-lg"
+        heightClassName="h-72 lg:h-[calc(100dvh-15rem)] lg:min-h-[520px]"
       />
     );
   }

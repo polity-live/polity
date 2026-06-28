@@ -7,6 +7,7 @@ import { useCommonState, useCommonActions } from '@/zero/common';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 export interface BlogFormData {
   title: string;
@@ -124,19 +125,21 @@ export function useBlogEditPage(
         return;
       }
 
-      await updateBlog({
-        id: blogId,
-        title: formData.title,
-        date: formData.date,
-        image_url: formData.imageURL,
-        visibility: formData.visibility,
-      });
+      await waitForClientApply(
+        updateBlog({
+          id: blogId,
+          title: formData.title,
+          date: formData.date,
+          image_url: formData.imageURL,
+          visibility: formData.visibility,
+        })
+      );
 
       // Timeline remains best-effort on the client; notifications are server-driven.
       try {
         if (formData.visibility === 'public' && actorId) {
           if (formData.imageURL && formData.imageURL !== blog.image_url) {
-            await createTimelineEvent({
+            void createTimelineEvent({
               data: {
                 eventType: 'image_uploaded',
                 entityType: 'blog',

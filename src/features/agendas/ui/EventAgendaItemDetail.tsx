@@ -292,9 +292,7 @@ export function EventAgendaItemDetail({
 
   useEffect(() => {
     const closeExpiredVotes = () => {
-      closeExpiredFinalVotesForEvent({ event_id: eventId }).catch(error => {
-        console.error('Failed to close expired final votes:', error);
-      });
+      closeExpiredFinalVotesForEvent({ event_id: eventId });
     };
 
     closeExpiredVotes();

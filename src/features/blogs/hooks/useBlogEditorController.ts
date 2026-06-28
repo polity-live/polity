@@ -4,6 +4,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useBlogState } from '@/zero/blogs/useBlogState';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 interface UseBlogEditorControllerOptions {
   blogId: string;
@@ -24,10 +25,12 @@ export function useBlogEditorController({ blogId }: UseBlogEditorControllerOptio
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await updateBlog({
-        id: blogId,
-        content,
-      });
+      await waitForClientApply(
+        updateBlog({
+          id: blogId,
+          content,
+        })
+      );
       toast.success(
         translateText('generated.inline.0265_blog_content_saved_successfully_53103bde')
       );

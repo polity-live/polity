@@ -9,6 +9,7 @@ import {
   featureThemeMarkup,
   featureThemeValue,
 } from '@/features/shared/theme';
+import { MapPanelSkeleton } from '@/features/shared/ui/feedback';
 import type { Group } from '../hooks/useOnboarding.ts';
 
 type ReactLeafletModule = typeof import('react-leaflet');
@@ -230,15 +231,18 @@ export function OnboardingGroupMap({
     return <OnboardingGroupMapMessage message={t('onboarding.groupStep.mapNoGroups')} />;
   }
 
-  if (
-    loadFailed ||
-    !reactLeafletModule ||
-    !leafletModule ||
-    !defaultIcon ||
-    !selectedIcon ||
-    !activeIcon
-  ) {
+  if (loadFailed) {
     return <OnboardingGroupMapMessage message={t('onboarding.groupStep.mapUnavailable')} />;
+  }
+
+  if (!reactLeafletModule || !leafletModule || !defaultIcon || !selectedIcon || !activeIcon) {
+    return (
+      <MapPanelSkeleton
+        label={t('onboarding.groupStep.mapLoading')}
+        heightClassName="h-64 sm:h-72 lg:h-[24rem]"
+        className="rounded-lg"
+      />
+    );
   }
 
   return (

@@ -26,6 +26,31 @@ export const commonTranslations = {
     general: 'Wird geladen...',
     compiling: 'Seite wird kompiliert...',
     conversations: 'Konversationen werden geladen...',
+    appBoot: {
+      label: 'Fortschritt beim Einrichten des Arbeitsbereichs',
+      title: 'Dein Arbeitsbereich wird vorbereitet...',
+      description: 'Polity verbindet dein Konto und lädt lokale Daten.',
+      recoveryTitle: 'Verbindung dauert länger',
+      recoveryDescription:
+        'Das dauert länger als erwartet. Du kannst die Verbindung erneut versuchen oder dich abmelden.',
+      retry: 'Erneut versuchen',
+      signOut: 'Abmelden',
+      details: 'Details',
+      steps: {
+        connecting: 'Verbindung herstellen',
+        localData: 'Lokale Daten laden',
+        profile: 'Profil prüfen',
+      },
+    },
+    pageSkeleton: {
+      calendar: 'Kalender wird geladen...',
+      entity: 'Inhalt wird geladen...',
+      profile: 'Profil wird geladen...',
+      settings: 'Einstellungen werden geladen...',
+    },
+    sectionSkeleton: {
+      label: 'Bereich wird geladen...',
+    },
     sync: {
       headline: 'Daten werden lokal geladen...',
       coffeeMessage:
@@ -128,6 +153,7 @@ export const commonTranslations = {
     description:
       'Wähle eine verifizierte Adresse oder ziehe den Marker, damit Adresse und Karte synchron bleiben.',
     loading: 'Karte wird geladen...',
+    unavailable: 'Karte konnte nicht geladen werden.',
     syncing: 'Adresse wird aus der Karte aktualisiert...',
     empty: 'Wähle eine Adresse oder klicke in die Karte, um den Marker zu setzen.',
     moveHint: 'Ziehe den Marker oder klicke auf die Karte, um die Adresse zu aktualisieren.',

@@ -5,11 +5,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { gatedToast } from '@/features/notifications/utils/gated-toast';
 import {
   clearCreateRecoveryDraft,
+  consumeCreateRestoreDraft,
   getCreateRecoveryDraft,
   getCreateRecoveryDraftForEntity,
   markCreateRecoveryDraftFailed,
   pruneExpiredCreateRecoveryDrafts,
   saveCreateRecoveryDraft,
+  setCreateRestoreDraft,
   trackCreateFinalization,
   useCreateRecoveryDraft,
   type CreateRecoveryDraft,
@@ -78,6 +80,29 @@ describe('create recovery drafts', () => {
     clearCreateRecoveryDraft(draft.id);
 
     expect(getCreateRecoveryDraft(draft.id)).toBeNull();
+  });
+
+  it('consumes restore drafts once for the matching entity type', () => {
+    const draft = createDraft();
+
+    setCreateRestoreDraft(draft);
+
+    expect(consumeCreateRestoreDraft<{ name: string }>('group')).toMatchObject({
+      entityType: 'group',
+      formState: { name: 'Alpha' },
+    });
+    expect(consumeCreateRestoreDraft('group')).toBeNull();
+  });
+
+  it('keeps restore drafts available when another create form asks first', () => {
+    const draft = createDraft();
+
+    setCreateRestoreDraft(draft);
+
+    expect(consumeCreateRestoreDraft('event')).toBeNull();
+    expect(consumeCreateRestoreDraft<{ name: string }>('group')).toMatchObject({
+      formState: { name: 'Alpha' },
+    });
   });
 
   it('prunes expired drafts', () => {
@@ -172,7 +197,7 @@ describe('create finalization tracking', () => {
   });
 
   it('does not throw when the loading toast has no id', async () => {
-    vi.mocked(gatedToast.loading).mockReturnValue(undefined);
+    vi.mocked(gatedToast.loading).mockImplementation(() => undefined as unknown as string);
     const draft = createDraft();
 
     trackCreateFinalization({

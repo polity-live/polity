@@ -277,13 +277,12 @@ export function AgendaSpeakerListSectionView({
                   {onRemoveFromSpeakerList && (
                     <Button
                       onClick={onRemoveFromSpeakerList}
-                      disabled={isRemovingSpeaker}
+                      loading={isRemovingSpeaker}
+                      loadingLabel={t('features.events.agenda.leavingSpeakerList')}
                       variant="outline"
                     >
                       <X className="mr-2 h-4 w-4" />
-                      {isRemovingSpeaker
-                        ? t('common.loading.default')
-                        : t('features.events.agenda.leaveSpeakerList')}
+                      {t('features.events.agenda.leaveSpeakerList')}
                     </Button>
                   )}
                 </div>
@@ -291,13 +290,13 @@ export function AgendaSpeakerListSectionView({
             ) : onAddToSpeakerList ? (
               <Button
                 onClick={onAddToSpeakerList}
-                disabled={!userId || isAddingSpeaker}
+                disabled={!userId}
+                loading={isAddingSpeaker}
+                loadingLabel={t('features.events.agenda.joiningSpeakerList')}
                 className="w-full"
               >
                 <Plus className="mr-2 h-4 w-4" />
-                {isAddingSpeaker
-                  ? t('common.loading.default')
-                  : t('features.events.agenda.joinSpeakerList')}
+                {t('features.events.agenda.joinSpeakerList')}
               </Button>
             ) : null}
           </CardContent>

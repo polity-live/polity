@@ -17,6 +17,7 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { VersionComparisonView } from './VersionComparisonView.tsx';
 import { CheckCircle, XCircle, GitCompare, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -53,11 +54,7 @@ export function SupportConfirmationPanelView({
   handleDecline,
 }: SupportConfirmationPanelViewProps) {
   if (status === 'loading') {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-      </div>
-    );
+    return <SectionSkeleton rows={2} />;
   }
 
   if (status === 'empty') {

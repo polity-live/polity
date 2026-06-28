@@ -9,6 +9,7 @@ import { useGroupRoles as useFacadeGroupRoles } from '@/zero/groups/useGroupStat
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useGroupRoles(groupId: string) {
@@ -75,27 +76,29 @@ export function useGroupRoles(groupId: string) {
     try {
       const roleId = crypto.randomUUID();
 
-      await createRoleAction({
-        id: roleId,
-        name: roleTitle,
-        description: description.trim() || '',
-        scope: 'group',
-        group_id: groupId,
-        event_id: null,
-        amendment_id: null,
-        blog_id: null,
-        assignment_mode: createElection ? 'elected' : 'assigned',
-        visibility: 'public',
-        term_start_date: new Date(firstTermStart).getTime(),
-        is_recurring: hasRecurringTerm,
-        recurrence_pattern: hasRecurringTerm ? 'yearly' : null,
-        recurrence_rule: hasRecurringTerm ? `FREQ=YEARLY;INTERVAL=${termNum}` : null,
-        recurrence_interval: hasRecurringTerm ? termNum : null,
-        recurrence_days: null,
-        recurrence_end_date: null,
-        scheduled_revote_date: null,
-        sort_order: roles.length,
-      });
+      await waitForClientApply(
+        createRoleAction({
+          id: roleId,
+          name: roleTitle,
+          description: description.trim() || '',
+          scope: 'group',
+          group_id: groupId,
+          event_id: null,
+          amendment_id: null,
+          blog_id: null,
+          assignment_mode: createElection ? 'elected' : 'assigned',
+          visibility: 'public',
+          term_start_date: new Date(firstTermStart).getTime(),
+          is_recurring: hasRecurringTerm,
+          recurrence_pattern: hasRecurringTerm ? 'yearly' : null,
+          recurrence_rule: hasRecurringTerm ? `FREQ=YEARLY;INTERVAL=${termNum}` : null,
+          recurrence_interval: hasRecurringTerm ? termNum : null,
+          recurrence_days: null,
+          recurrence_end_date: null,
+          scheduled_revote_date: null,
+          sort_order: roles.length,
+        })
+      );
 
       if (createElection) {
         toast.info(
@@ -142,18 +145,20 @@ export function useGroupRoles(groupId: string) {
     toast.success(translateText('generated.inline.0588_role_updated_successfully_87ea8999'));
 
     try {
-      await updateRoleAction({
-        id: editingRole.id,
-        name: title.trim(),
-        description: description.trim() || '',
-        term_start_date: new Date(firstTermStart).getTime(),
-        is_recurring: hasRecurringTerm,
-        recurrence_pattern: hasRecurringTerm ? 'yearly' : null,
-        recurrence_rule: hasRecurringTerm ? `FREQ=YEARLY;INTERVAL=${termNum}` : null,
-        recurrence_interval: hasRecurringTerm ? termNum : null,
-        recurrence_days: null,
-        recurrence_end_date: null,
-      });
+      await waitForClientApply(
+        updateRoleAction({
+          id: editingRole.id,
+          name: title.trim(),
+          description: description.trim() || '',
+          term_start_date: new Date(firstTermStart).getTime(),
+          is_recurring: hasRecurringTerm,
+          recurrence_pattern: hasRecurringTerm ? 'yearly' : null,
+          recurrence_rule: hasRecurringTerm ? `FREQ=YEARLY;INTERVAL=${termNum}` : null,
+          recurrence_interval: hasRecurringTerm ? termNum : null,
+          recurrence_days: null,
+          recurrence_end_date: null,
+        })
+      );
       return { success: true };
     } catch (error) {
       console.error('Failed to update role:', error);
@@ -168,7 +173,7 @@ export function useGroupRoles(groupId: string) {
     toast.success(translateText('generated.inline.0237_role_deleted_successfully_b714d57c'));
 
     try {
-      await deleteRoleAction({ id: roleId });
+      await waitForClientApply(deleteRoleAction({ id: roleId }));
 
       return { success: true };
     } catch (error) {
@@ -199,22 +204,26 @@ export function useGroupRoles(groupId: string) {
       // End the current active history entry (if exists)
       const currentHistoryEntry = role?.holder_history?.find(h => !h.end_date);
       if (currentHistoryEntry) {
-        await updateHistoryAction({
-          id: currentHistoryEntry.id,
-          end_date: now,
-        });
+        await waitForClientApply(
+          updateHistoryAction({
+            id: currentHistoryEntry.id,
+            end_date: now,
+          })
+        );
       }
 
       // Create new history entry for the new holder
       const historyId = crypto.randomUUID();
-      await createHistoryAction({
-        id: historyId,
-        start_date: now,
-        reason: reason,
-        role_id: roleId,
-        user_id: userId,
-        end_date: null,
-      });
+      await waitForClientApply(
+        createHistoryAction({
+          id: historyId,
+          start_date: now,
+          reason: reason,
+          role_id: roleId,
+          user_id: userId,
+          end_date: null,
+        })
+      );
 
       // Update the role's current holder
       // Note: current_holder_id is tracked via holder_history (active entry = no end_date)
@@ -255,11 +264,13 @@ export function useGroupRoles(groupId: string) {
       toast.success(translateText('generated.inline.1030_holder_removed_successfully_07da569a'));
 
       if (currentHistoryEntry) {
-        await updateHistoryAction({
-          id: currentHistoryEntry.id,
-          end_date: now,
-          reason: reason,
-        });
+        await waitForClientApply(
+          updateHistoryAction({
+            id: currentHistoryEntry.id,
+            end_date: now,
+            reason: reason,
+          })
+        );
       }
 
       return { success: true };
@@ -296,47 +307,51 @@ export function useGroupRoles(groupId: string) {
       const electionId = crypto.randomUUID();
       const agendaItemId = crypto.randomUUID();
 
-      await createAgendaItemAction({
-        id: agendaItemId,
-        title: translateText('generated.inline.0482_election_title_7bdbc8e7', {
-          title: role.title,
-        }),
-        description: '',
-        type: 'election',
-        status: 'pending',
-        forwarding_status: '',
-        order_index: 0,
-        duration: 0,
-        scheduled_time: '',
-        start_time: 0,
-        end_time: 0,
-        activated_at: 0,
-        completed_at: 0,
-        event_id: eventId,
-        amendment_id: null,
-        majority_type: null,
-        time_limit: null,
-        voting_phase: null,
-      });
+      await waitForClientApply(
+        createAgendaItemAction({
+          id: agendaItemId,
+          title: translateText('generated.inline.0482_election_title_7bdbc8e7', {
+            title: role.title,
+          }),
+          description: '',
+          type: 'election',
+          status: 'pending',
+          forwarding_status: '',
+          order_index: 0,
+          duration: 0,
+          scheduled_time: '',
+          start_time: 0,
+          end_time: 0,
+          activated_at: 0,
+          completed_at: 0,
+          event_id: eventId,
+          amendment_id: null,
+          majority_type: null,
+          time_limit: null,
+          voting_phase: null,
+        })
+      );
 
-      await createElectionAction({
-        id: electionId,
-        title: translateText('generated.inline.0480_election_for_title_b235e013', {
-          title: role.title,
-        }),
-        description: translateText('generated.inline.0481_vote_for_the_title_role_e737ad4a', {
-          title: role.title,
-        }),
-        majority_type: 'simple',
-        status: 'pending',
-        visibility: 'public',
-        max_votes: 1,
-        role_id: roleId,
-        agenda_item_id: agendaItemId,
-        closing_type: null,
-        closing_duration_seconds: null,
-        closing_end_time: null,
-      });
+      await waitForClientApply(
+        createElectionAction({
+          id: electionId,
+          title: translateText('generated.inline.0480_election_for_title_b235e013', {
+            title: role.title,
+          }),
+          description: translateText('generated.inline.0481_vote_for_the_title_role_e737ad4a', {
+            title: role.title,
+          }),
+          majority_type: 'simple',
+          status: 'pending',
+          visibility: 'public',
+          max_votes: 1,
+          role_id: roleId,
+          agenda_item_id: agendaItemId,
+          closing_type: null,
+          closing_duration_seconds: null,
+          closing_end_time: null,
+        })
+      );
 
       toast.success(translateText('generated.inline.1032_election_created_successfully_72d95954'));
       return { success: true, electionId };

@@ -11,6 +11,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/features/shared/ui/ui/button';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import {
   FileUploadTrigger,
   FormControlLabel,
@@ -893,10 +894,7 @@ function OfficialDataSourcePanel({ model }: ChartDialogViewProps) {
       ) : null}
 
       {loadingDetails ? (
-        <div className="text-muted-foreground flex min-h-32 items-center justify-center gap-2 text-sm">
-          <Loader2Icon className="size-4 animate-spin" />
-          {t('plateJs.chart.loadingMetadata')}
-        </div>
+        <SectionSkeleton rows={2} density="compact" label={t('plateJs.chart.loadingMetadata')} />
       ) : null}
 
       {govDataSelectedEntry ? <GovDataDatasetDetails model={model} /> : null}

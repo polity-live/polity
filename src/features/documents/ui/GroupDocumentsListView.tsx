@@ -1,6 +1,7 @@
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText } from 'lucide-react';
 
 import { PqlToolbar } from '@/features/pql/ui/PqlToolbar';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -71,13 +72,7 @@ export function GroupDocumentsListView({
   pql,
 }: GroupDocumentsListModel) {
   if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-20">
-          <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
-        </CardContent>
-      </Card>
-    );
+    return <SectionSkeleton rows={4} />;
   }
 
   if (documents.length === 0) {

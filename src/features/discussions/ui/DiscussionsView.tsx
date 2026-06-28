@@ -14,6 +14,7 @@ import type { Thread } from '../hooks/useDiscussions';
 import { ThreadCard } from './ThreadCard';
 import { CreateThreadDialog } from './CreateThreadDialog';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 
 export type DiscussionSortMode = 'votes' | 'time';
 type ThreadCardCallbacks = Pick<
@@ -69,9 +70,7 @@ export function DiscussionsView({
   if (isLoading) {
     return (
       <PageWrapper>
-        <div className="py-12 text-center">
-          {translateText('generated.inline.0386_loading_discussions_8b32b1c7')}
-        </div>
+        <PageSkeleton label={translateText('common.loading.pageSkeleton.entity')} />
       </PageWrapper>
     );
   }

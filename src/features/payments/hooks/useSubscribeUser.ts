@@ -3,6 +3,7 @@ import { useUserState } from '@/zero/users/useUserState';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useCommonState } from '@/zero/common/useCommonState';
 import { useAuth } from '@/providers/auth-provider';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { notifyNewFollower } from '@/features/notifications/utils/notification-helpers.ts';
 
 /**
@@ -73,14 +74,16 @@ export function useSubscribeUser(targetUserId?: string) {
       const subscriptionId = crypto.randomUUID();
       createdSubscriptionIdRef.current = subscriptionId;
 
-      await commonActions.subscribe({
-        id: subscriptionId,
-        user_id: targetUserId,
-        group_id: null,
-        amendment_id: null,
-        event_id: null,
-        blog_id: null,
-      });
+      await waitForClientApply(
+        commonActions.subscribe({
+          id: subscriptionId,
+          user_id: targetUserId,
+          group_id: null,
+          amendment_id: null,
+          event_id: null,
+          blog_id: null,
+        })
+      );
 
       // Notification is server-only — send separately
       try {
@@ -129,7 +132,7 @@ export function useSubscribeUser(targetUserId?: string) {
     setIsLoading(true);
     try {
       for (const sub of subsToDelete) {
-        await commonActions.unsubscribe({ id: sub.id });
+        await waitForClientApply(commonActions.unsubscribe({ id: sub.id }));
       }
       createdSubscriptionIdRef.current = null;
     } catch (error) {

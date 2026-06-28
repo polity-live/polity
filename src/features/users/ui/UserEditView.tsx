@@ -1,5 +1,6 @@
-import { Loader2 } from 'lucide-react';
 import { UserProfileEditForm } from './UserProfileEditForm';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 export interface UserEditViewProps {
   userId: any;
   defaultTab: any;
@@ -43,9 +44,10 @@ export function UserEditView({
 }: UserEditViewProps) {
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="text-primary h-8 w-8 animate-spin" />
-      </div>
+      <PageSkeleton
+        variant="settings"
+        label={translateText('common.loading.pageSkeleton.profile')}
+      />
     );
   }
 

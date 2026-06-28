@@ -212,13 +212,14 @@ export function useStreetAreaPickerController({
     onMapSelectionChange(rotateStreetDesignMapSelectionToPoint({ selection: mapSelection, point }));
   };
 
-  const mapUnavailable =
-    loadFailed ||
-    !reactLeafletModule ||
-    !leafletModule ||
-    !markerIcon ||
-    !resizeMarkerIcon ||
-    !rotateMarkerIcon;
+  const mapLoading =
+    !loadFailed &&
+    (!reactLeafletModule ||
+      !leafletModule ||
+      !markerIcon ||
+      !resizeMarkerIcon ||
+      !rotateMarkerIcon);
+  const mapUnavailable = loadFailed;
 
   return {
     center,
@@ -245,6 +246,7 @@ export function useStreetAreaPickerController({
     onWidthMetersChange: handleWidthMetersChange,
     onHeightMetersChange: handleHeightMetersChange,
     onRotationDegreesChange: handleRotationDegreesChange,
+    mapLoading,
     mapUnavailable,
   };
 }

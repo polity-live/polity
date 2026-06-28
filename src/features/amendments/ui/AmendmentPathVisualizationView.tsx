@@ -3,6 +3,7 @@ import { BadgeControl } from '@/features/shared/ui/status';
 import { useState } from 'react';
 import { CivicNetworkFlow } from '@/features/network/ui/CivicNetworkFlow';
 import { createGroupNodeLegendItem } from '@/features/network/ui/networkVisualHelpers';
+import { NetworkFlowSkeleton } from '@/features/network/ui/NetworkFlowSkeleton';
 import {
   Card,
   CardContent,
@@ -35,21 +36,7 @@ export function AmendmentPathVisualizationView({
   const [legendCollapsed, setLegendCollapsed] = useState(false);
 
   if (!amendment) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            {t('features.amendments.pathVisualization.title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-sm">
-            {t('features.amendments.process.loading')}
-          </p>
-        </CardContent>
-      </Card>
-    );
+    return <NetworkFlowSkeleton label={t('common.network.loadingNetwork')} />;
   }
 
   if (!hasTarget) {

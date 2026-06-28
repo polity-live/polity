@@ -19,6 +19,7 @@ import {
   getGenderQuotaFeedbackMessage,
   validateSpeakerGenderQuota,
 } from '../logic/speakerListGenderQuota';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 export function useEventAgendaItem(eventId: string, agendaItemId: string) {
   const navigate = useNavigate();
@@ -100,9 +101,9 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
       }));
 
       if (isIndicative) {
-        await electionActions.castIndicativeVote(participationArgs, selections);
+        await waitForClientApply(electionActions.castIndicativeVote(participationArgs, selections));
       } else {
-        await electionActions.castFinalVote(participationArgs, selections);
+        await waitForClientApply(electionActions.castFinalVote(participationArgs, selections));
       }
     } catch (error) {
       console.error('Error voting:', error);
@@ -135,9 +136,9 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
       ];
 
       if (isIndicative) {
-        await voteActionsHook.castIndicativeVote(participationArgs, decisions);
+        await waitForClientApply(voteActionsHook.castIndicativeVote(participationArgs, decisions));
       } else {
-        await voteActionsHook.castFinalVote(participationArgs, decisions);
+        await waitForClientApply(voteActionsHook.castFinalVote(participationArgs, decisions));
       }
     } catch (error) {
       console.error('Error voting:', error);
@@ -152,7 +153,7 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
 
     setDeleteLoading(true);
     try {
-      await deleteAgendaItem(agendaItemId);
+      await waitForClientApply(deleteAgendaItem(agendaItemId));
       navigate({ to: `/event/${eventId}/agenda` });
     } catch (error) {
       console.error('Error deleting agenda item:', error);
@@ -182,17 +183,19 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
       const maxOrder = speakers.length > 0 ? Math.max(...speakers.map(s => s.order_index ?? 0)) : 0;
 
       const speakerId = crypto.randomUUID();
-      await addSpeaker({
-        id: speakerId,
-        title: translateText('generated.inline.0001_speaker_7c23b0d9'),
-        time: 3,
-        completed: false,
-        order_index: maxOrder + 1,
-        user_id: user.id,
-        agenda_item_id: agendaItemId,
-        start_time: null,
-        end_time: null,
-      });
+      await waitForClientApply(
+        addSpeaker({
+          id: speakerId,
+          title: translateText('generated.inline.0001_speaker_7c23b0d9'),
+          time: 3,
+          completed: false,
+          order_index: maxOrder + 1,
+          user_id: user.id,
+          agenda_item_id: agendaItemId,
+          start_time: null,
+          end_time: null,
+        })
+      );
     } catch (error) {
       console.error('Error adding to speaker list:', error);
     } finally {

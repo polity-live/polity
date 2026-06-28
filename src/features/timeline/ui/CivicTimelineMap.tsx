@@ -4,6 +4,7 @@ import { featureThemeMarkup, featureThemeValue } from '@/features/shared/theme';
 import { useEffect, useMemo, useState } from 'react';
 import type { CivicTimelineItem } from '../logic/civicTimeline';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { MapPanelSkeleton } from '@/features/shared/ui/feedback';
 import { CivicTimelineMapView } from './CivicTimelineMapView';
 
 type ReactLeafletModule = typeof import('react-leaflet');
@@ -139,10 +140,20 @@ export function CivicTimelineMap({
     );
   }
 
-  if (loadFailed || !reactLeafletModule || !leafletModule || !activeIcon) {
+  if (loadFailed) {
     return (
       <CivicTimelineMapMessageView
-        message={translateText('generated.inline.1166_map_is_loading_5299ec7c')}
+        message={translateText('common.locationPicker.unavailable', 'Map could not be loaded.')}
+      />
+    );
+  }
+
+  if (!reactLeafletModule || !leafletModule || !activeIcon) {
+    return (
+      <MapPanelSkeleton
+        label={translateText('common.locationPicker.loading', 'Loading map...')}
+        className="rounded-lg"
+        heightClassName="h-72 lg:h-[calc(100dvh-12rem)]"
       />
     );
   }

@@ -2,6 +2,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { useCallback } from 'react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useDocumentActions } from '@/zero/documents';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 /**
  * Orchestration hook that replaces the Supabase-based voteOnThread / voteOnComment
@@ -32,35 +33,45 @@ export function useVotingMutations() {
         if (currentVote) {
           if (currentVote.vote === voteValue) {
             // Same vote → remove
-            await actions.deleteThreadVote(currentVote.id);
-            await actions.updateThread({
-              id: threadId,
-              upvotes: voteValue === 1 ? Math.max(0, currentUpvotes - 1) : currentUpvotes,
-              downvotes: voteValue === -1 ? Math.max(0, currentDownvotes - 1) : currentDownvotes,
-            });
+            await waitForClientApply(actions.deleteThreadVote(currentVote.id));
+            await waitForClientApply(
+              actions.updateThread({
+                id: threadId,
+                upvotes: voteValue === 1 ? Math.max(0, currentUpvotes - 1) : currentUpvotes,
+                downvotes: voteValue === -1 ? Math.max(0, currentDownvotes - 1) : currentDownvotes,
+              })
+            );
           } else {
             // Different vote → change
-            await actions.updateThreadVote({ id: currentVote.id, vote: voteValue });
-            await actions.updateThread({
-              id: threadId,
-              upvotes: voteValue === 1 ? currentUpvotes + 1 : Math.max(0, currentUpvotes - 1),
-              downvotes:
-                voteValue === -1 ? currentDownvotes + 1 : Math.max(0, currentDownvotes - 1),
-            });
+            await waitForClientApply(
+              actions.updateThreadVote({ id: currentVote.id, vote: voteValue })
+            );
+            await waitForClientApply(
+              actions.updateThread({
+                id: threadId,
+                upvotes: voteValue === 1 ? currentUpvotes + 1 : Math.max(0, currentUpvotes - 1),
+                downvotes:
+                  voteValue === -1 ? currentDownvotes + 1 : Math.max(0, currentDownvotes - 1),
+              })
+            );
           }
         } else {
           // New vote → insert
-          await actions.voteThread({
-            id: crypto.randomUUID(),
-            vote: voteValue,
-            thread_id: threadId,
-            user_id: userId,
-          });
-          await actions.updateThread({
-            id: threadId,
-            upvotes: voteValue === 1 ? currentUpvotes + 1 : currentUpvotes,
-            downvotes: voteValue === -1 ? currentDownvotes + 1 : currentDownvotes,
-          });
+          await waitForClientApply(
+            actions.voteThread({
+              id: crypto.randomUUID(),
+              vote: voteValue,
+              thread_id: threadId,
+              user_id: userId,
+            })
+          );
+          await waitForClientApply(
+            actions.updateThread({
+              id: threadId,
+              upvotes: voteValue === 1 ? currentUpvotes + 1 : currentUpvotes,
+              downvotes: voteValue === -1 ? currentDownvotes + 1 : currentDownvotes,
+            })
+          );
         }
       } catch (error) {
         console.error('Error voting on thread:', error);
@@ -88,35 +99,45 @@ export function useVotingMutations() {
         if (currentVote) {
           if (currentVote.vote === voteValue) {
             // Same vote → remove
-            await actions.deleteCommentVote(currentVote.id);
-            await actions.updateComment({
-              id: commentId,
-              upvotes: voteValue === 1 ? Math.max(0, currentUpvotes - 1) : currentUpvotes,
-              downvotes: voteValue === -1 ? Math.max(0, currentDownvotes - 1) : currentDownvotes,
-            });
+            await waitForClientApply(actions.deleteCommentVote(currentVote.id));
+            await waitForClientApply(
+              actions.updateComment({
+                id: commentId,
+                upvotes: voteValue === 1 ? Math.max(0, currentUpvotes - 1) : currentUpvotes,
+                downvotes: voteValue === -1 ? Math.max(0, currentDownvotes - 1) : currentDownvotes,
+              })
+            );
           } else {
             // Different vote → change
-            await actions.updateCommentVote({ id: currentVote.id, vote: voteValue });
-            await actions.updateComment({
-              id: commentId,
-              upvotes: voteValue === 1 ? currentUpvotes + 1 : Math.max(0, currentUpvotes - 1),
-              downvotes:
-                voteValue === -1 ? currentDownvotes + 1 : Math.max(0, currentDownvotes - 1),
-            });
+            await waitForClientApply(
+              actions.updateCommentVote({ id: currentVote.id, vote: voteValue })
+            );
+            await waitForClientApply(
+              actions.updateComment({
+                id: commentId,
+                upvotes: voteValue === 1 ? currentUpvotes + 1 : Math.max(0, currentUpvotes - 1),
+                downvotes:
+                  voteValue === -1 ? currentDownvotes + 1 : Math.max(0, currentDownvotes - 1),
+              })
+            );
           }
         } else {
           // New vote → insert
-          await actions.voteComment({
-            id: crypto.randomUUID(),
-            vote: voteValue,
-            comment_id: commentId,
-            user_id: userId,
-          });
-          await actions.updateComment({
-            id: commentId,
-            upvotes: voteValue === 1 ? currentUpvotes + 1 : currentUpvotes,
-            downvotes: voteValue === -1 ? currentDownvotes + 1 : currentDownvotes,
-          });
+          await waitForClientApply(
+            actions.voteComment({
+              id: crypto.randomUUID(),
+              vote: voteValue,
+              comment_id: commentId,
+              user_id: userId,
+            })
+          );
+          await waitForClientApply(
+            actions.updateComment({
+              id: commentId,
+              upvotes: voteValue === 1 ? currentUpvotes + 1 : currentUpvotes,
+              downvotes: voteValue === -1 ? currentDownvotes + 1 : currentDownvotes,
+            })
+          );
         }
       } catch (error) {
         console.error('Error voting on comment:', error);

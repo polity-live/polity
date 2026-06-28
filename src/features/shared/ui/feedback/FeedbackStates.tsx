@@ -9,7 +9,6 @@ import {
   EmptyIcon,
   EmptyTitle,
 } from '@/features/shared/ui/ui/empty';
-import { Spinner } from '@/features/shared/ui/ui/spinner';
 import { getBadgeToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -31,26 +30,6 @@ export function EmptyState({ title, description, action, icon, className }: Empt
       </EmptyHeader>
       {action ? <EmptyContent>{action}</EmptyContent> : null}
     </Empty>
-  );
-}
-
-interface LoadingStateProps {
-  label?: ReactNode;
-  className?: string;
-}
-
-export function LoadingState({ label = 'Loading...', className }: LoadingStateProps) {
-  return (
-    <div
-      role="status"
-      className={cn(
-        'text-muted-foreground flex min-h-32 items-center justify-center gap-2 text-sm',
-        className
-      )}
-    >
-      <Spinner />
-      <span>{label}</span>
-    </div>
   );
 }
 

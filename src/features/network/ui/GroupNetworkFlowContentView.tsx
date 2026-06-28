@@ -16,6 +16,7 @@ import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import { WorkflowFlowVisualization } from '@/features/network/ui/WorkflowFlowVisualization';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
+import { NetworkFlowSkeleton } from '@/features/network/ui/NetworkFlowSkeleton';
 import type { NetworkGroupEntity } from '@/features/network/types/network.types';
 export interface GroupNetworkFlowProps {
   groupId: string;
@@ -116,11 +117,7 @@ export function GroupNetworkFlowContentView({
   viewMode,
 }: GroupNetworkFlowContentViewProps) {
   if (!group) {
-    return (
-      <div className="bg-background flex h-[32rem] min-h-[24rem] w-full items-center justify-center rounded-lg border">
-        <p className="text-muted-foreground">{t('common.network.loadingGroupNetwork')}</p>
-      </div>
-    );
+    return <NetworkFlowSkeleton label={t('common.network.loadingGroupNetwork')} />;
   }
 
   // View mode toggle + workflow visualization

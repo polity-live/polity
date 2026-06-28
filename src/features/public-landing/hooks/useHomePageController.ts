@@ -10,13 +10,13 @@ const ONBOARDING_KEY = 'polity_onboarding';
 
 type HomePageViewState =
   | { kind: 'public' }
-  | { kind: 'loading' }
+  | { kind: 'loading'; onRetry: () => Promise<void>; onSignOut: () => Promise<void> }
   | { kind: 'onboarding'; userId: string; userEmail: string; onComplete: () => void }
   | { kind: 'redirect' };
 
 export function useHomePageController(): HomePageViewState {
   const { hash } = useLocation();
-  const { user } = useAuth();
+  const { user, refreshAuthState, signOut } = useAuth();
   const zeroReady = useZeroReady();
   const { currentUser } = useUserState();
   const onboardingActiveRef = useRef(false);
@@ -56,7 +56,7 @@ export function useHomePageController(): HomePageViewState {
   }
 
   if (currentUser == null && !showOnboarding) {
-    return { kind: 'loading' };
+    return { kind: 'loading', onRetry: refreshAuthState, onSignOut: signOut };
   }
 
   const hasCompletedOnboarding = currentUser != null && !!currentUser.first_name;

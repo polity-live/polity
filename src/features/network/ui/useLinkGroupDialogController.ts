@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useGroupRoles, useGroupState } from '@/zero/groups/useGroupState';
 import { useGroupConnectionActions, useGroupConnectionState } from '@/zero/network';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { trackServerFinalization, waitForClientApply } from '@/zero/mutate-with-server-check';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useActionSubmission } from '@/features/shared/ui/action-submission';
 import type {
@@ -508,7 +508,7 @@ export function useLinkGroupDialogController({
 
     void actionSubmission
       .runActionWithSubmission(
-        async () => {
+        async context => {
           setIsSubmitting(true);
 
           const payload = buildCanonicalGroupConnectionPayload({
@@ -600,15 +600,16 @@ export function useLinkGroupDialogController({
             grants,
             membership_rule: membershipRule,
           });
-          await serverConfirmed(result);
-
-          toast.success(
-            isEditMode
-              ? t('common.network.relationshipsUpdated')
-              : t('common.network.relationshipsCreated')
-          );
+          await waitForClientApply(result);
+          context.reportProgress({ key: 'commit', status: 'complete' });
+          context.reportProgress({ key: 'sync', status: 'active' });
+          trackServerFinalization(result, {
+            onSuccess: () => context.completeSuccess?.(),
+            onError: error => context.failSubmission?.(error),
+          });
         },
         {
+          deferSyncCompletion: true,
           onSuccess: () => {
             actionSubmission.reset();
             setOpen(false);

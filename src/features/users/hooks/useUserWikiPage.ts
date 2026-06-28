@@ -76,7 +76,7 @@ export type UserWikiPageState =
 
 function buildCopy(t: ReturnType<typeof useTranslation>['t']): UserWikiCopy {
   return {
-    loading: t('generated.inline.1227_loading_user_b8bf4d1c'),
+    loading: t('common.loading.pageSkeleton.profile'),
     error: t('generated.inline.1228_error_loading_user_e23bf06c'),
     notFoundTitle: t('generated.inline.1229_user_not_found_9acd6234'),
     notFoundDescription: t('generated.inline.1230_this_user_hasn_t_been_created_yet_b3697b01'),

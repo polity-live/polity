@@ -17,6 +17,7 @@ import { computeVoteResult, type MajorityType, type VoteResult } from '../logic/
 import { computeEligibleVoters, type EligibleVoter } from '../logic/computeEligibleVoters';
 import { isNamedBallot } from '@/zero/shared';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 export type VotingPhase = 'introduction' | 'voting' | 'completed';
 export type VotingType = 'amendment' | 'election' | 'change_request';
@@ -216,26 +217,30 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
       try {
         const voteId = crypto.randomUUID();
 
-        await createVote({
-          id: voteId,
-          agenda_item_id: params.agendaItemId,
-          amendment_id: null,
-          title: null,
-          description: null,
-          status: VOTE_PHASE.indicative,
-          purpose: VOTE_PURPOSE.closing,
-          majority_type: params.majorityType || 'simple',
-          closing_type: null,
-          closing_duration_seconds: null,
-          closing_end_time: null,
-          visibility: 'public',
-          ballot_visibility: 'named',
-        });
+        await waitForClientApply(
+          createVote({
+            id: voteId,
+            agenda_item_id: params.agendaItemId,
+            amendment_id: null,
+            title: null,
+            description: null,
+            status: VOTE_PHASE.indicative,
+            purpose: VOTE_PURPOSE.closing,
+            majority_type: params.majorityType || 'simple',
+            closing_type: null,
+            closing_duration_seconds: null,
+            closing_end_time: null,
+            visibility: 'public',
+            ballot_visibility: 'named',
+          })
+        );
 
-        await updateAgendaItem({
-          id: params.agendaItemId,
-          voting_phase: 'indicative',
-        });
+        await waitForClientApply(
+          updateAgendaItem({
+            id: params.agendaItemId,
+            voting_phase: 'indicative',
+          })
+        );
 
         toast.success(translateText('generated.inline.1234_introduction_phase_started_f4f4b34e'));
         return voteId;
@@ -265,10 +270,12 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
 
       setIsLoading(true);
       try {
-        await updateAgendaItem({
-          id: sessionId,
-          voting_phase: 'indicative',
-        });
+        await waitForClientApply(
+          updateAgendaItem({
+            id: sessionId,
+            voting_phase: 'indicative',
+          })
+        );
 
         toast.success(translateText('generated.inline.1236_voting_has_begun_d509e54a'));
       } catch (error) {
@@ -298,18 +305,22 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
         const voteRecord = agendaItem?.votes?.[0];
 
         if (voteRecord) {
-          await updateVote({
-            id: voteRecord.id,
-            status: 'closed',
-          });
+          await waitForClientApply(
+            updateVote({
+              id: voteRecord.id,
+              status: 'closed',
+            })
+          );
         }
 
-        await updateAgendaItem({
-          id: sessionId,
-          voting_phase: 'closed',
-          end_time: Date.now(),
-          completed_at: Date.now(),
-        });
+        await waitForClientApply(
+          updateAgendaItem({
+            id: sessionId,
+            voting_phase: 'closed',
+            end_time: Date.now(),
+            completed_at: Date.now(),
+          })
+        );
 
         toast.success(`Voting completed: ${result}`);
       } catch (error) {

@@ -1,3 +1,5 @@
+import { EntityPageFrame } from '@/features/shared/ui/layout';
+
 import { useMeetingDetailPage } from './hooks/useMeetingDetailPage';
 import { MeetingPageView } from './ui/MeetingPageView';
 
@@ -8,5 +10,9 @@ interface MeetingPageProps {
 export function MeetingPage({ meetingId }: MeetingPageProps) {
   const page = useMeetingDetailPage(meetingId);
 
-  return <MeetingPageView {...page} />;
+  return (
+    <EntityPageFrame>
+      <MeetingPageView {...page} />
+    </EntityPageFrame>
+  );
 }

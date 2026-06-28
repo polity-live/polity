@@ -8,6 +8,7 @@ import type { VoteValue } from '@/features/shared/ui/voting/VoteButtons';
 import type { CommentData } from '@/features/shared/ui/comments/CommentItem';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { canViewExpiredStatement } from '@/zero/statements/content';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 interface UseStatementDetailOptions {
   id: string;
@@ -87,15 +88,17 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
     async (value: VoteValue) => {
       if (!userId) return;
       if (value === 0 && currentVote) {
-        await deleteSupportVote(currentVote.id);
+        await waitForClientApply(deleteSupportVote(currentVote.id));
       } else if (currentVote) {
-        await updateSupportVote({ id: currentVote.id, vote: value });
+        await waitForClientApply(updateSupportVote({ id: currentVote.id, vote: value }));
       } else {
-        await createSupportVote({
-          id: crypto.randomUUID(),
-          statement_id: id,
-          vote: value,
-        });
+        await waitForClientApply(
+          createSupportVote({
+            id: crypto.randomUUID(),
+            statement_id: id,
+            vote: value,
+          })
+        );
       }
     },
     [userId, id, currentVote, createSupportVote, updateSupportVote, deleteSupportVote]
@@ -112,16 +115,16 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
       if (!userId) return;
       // If changing vote, delete the old one first
       if (existingVoteId) {
-        await deleteSurveyVote(existingVoteId);
+        await waitForClientApply(deleteSurveyVote(existingVoteId));
       }
-      await createSurveyVote({ id: crypto.randomUUID(), option_id: optionId });
+      await waitForClientApply(createSurveyVote({ id: crypto.randomUUID(), option_id: optionId }));
     },
     [userId, createSurveyVote, deleteSurveyVote]
   );
 
   const handleSurveyRetract = useCallback(
     async (voteId: string) => {
-      await deleteSurveyVote(voteId);
+      await waitForClientApply(deleteSurveyVote(voteId));
     },
     [deleteSurveyVote]
   );
@@ -198,34 +201,38 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
       // Create thread on first comment
       if (!threadId) {
         threadId = crypto.randomUUID();
-        await createThread({
-          id: threadId,
-          statement_id: id,
-          document_id: null,
-          amendment_id: null,
-          blog_id: null,
-          content: null,
-          status: 'open',
-          resolved_at: null,
-          upvotes: 0,
-          downvotes: 0,
-          position: null,
-          user_id: userId,
-        });
+        await waitForClientApply(
+          createThread({
+            id: threadId,
+            statement_id: id,
+            document_id: null,
+            amendment_id: null,
+            blog_id: null,
+            content: null,
+            status: 'open',
+            resolved_at: null,
+            upvotes: 0,
+            downvotes: 0,
+            position: null,
+            user_id: userId,
+          })
+        );
       }
 
-      await addComment({
-        id: crypto.randomUUID(),
-        thread_id: threadId,
-        parent_id: parentId ?? null,
-        content: text,
-        user_id: userId,
-        upvotes: 0,
-        downvotes: 0,
-      });
+      await waitForClientApply(
+        addComment({
+          id: crypto.randomUUID(),
+          thread_id: threadId,
+          parent_id: parentId ?? null,
+          content: text,
+          user_id: userId,
+          upvotes: 0,
+          downvotes: 0,
+        })
+      );
 
       // Increment denormalized comment_count on the statement
-      await updateStatementRaw({ id, comment_count: computedCommentCount + 1 });
+      await waitForClientApply(updateStatementRaw({ id, comment_count: computedCommentCount + 1 }));
     },
     [
       userId,
@@ -243,17 +250,19 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
       if (!userId) return;
       if (existingVote) {
         if (existingVote.vote === voteValue) {
-          await deleteCommentVote(existingVote.id);
+          await waitForClientApply(deleteCommentVote(existingVote.id));
         } else {
-          await updateCommentVote({ id: existingVote.id, vote: voteValue });
+          await waitForClientApply(updateCommentVote({ id: existingVote.id, vote: voteValue }));
         }
       } else {
-        await voteComment({
-          id: crypto.randomUUID(),
-          comment_id: commentId,
-          vote: voteValue,
-          user_id: userId,
-        });
+        await waitForClientApply(
+          voteComment({
+            id: crypto.randomUUID(),
+            comment_id: commentId,
+            vote: voteValue,
+            user_id: userId,
+          })
+        );
       }
     },
     [userId, voteComment, updateCommentVote, deleteCommentVote]
@@ -271,26 +280,30 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
     async (question: string, options: string[], durationHours: number) => {
       // Delete existing survey if present
       if (survey) {
-        await deleteSurvey(survey.id);
+        await waitForClientApply(deleteSurvey(survey.id));
       }
 
       const surveyId = crypto.randomUUID();
       const endsAt = Date.now() + durationHours * 60 * 60 * 1000;
-      await createSurvey({
-        id: surveyId,
-        statement_id: id,
-        question: question.trim(),
-        ends_at: endsAt,
-      });
+      await waitForClientApply(
+        createSurvey({
+          id: surveyId,
+          statement_id: id,
+          question: question.trim(),
+          ends_at: endsAt,
+        })
+      );
 
       const validOptions = options.filter(o => o.trim());
       for (let i = 0; i < validOptions.length; i++) {
-        await createSurveyOption({
-          id: crypto.randomUUID(),
-          survey_id: surveyId,
-          label: validOptions[i].trim(),
-          position: i,
-        });
+        await waitForClientApply(
+          createSurveyOption({
+            id: crypto.randomUUID(),
+            survey_id: surveyId,
+            label: validOptions[i].trim(),
+            position: i,
+          })
+        );
       }
     },
     [id, survey, createSurvey, createSurveyOption, deleteSurvey]
@@ -298,7 +311,7 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
 
   const handleDeleteSurvey = useCallback(async () => {
     if (survey) {
-      await deleteSurvey(survey.id);
+      await waitForClientApply(deleteSurvey(survey.id));
     }
   }, [survey, deleteSurvey]);
 

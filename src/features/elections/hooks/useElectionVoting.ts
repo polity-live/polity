@@ -10,6 +10,7 @@ import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useElectionWithVotes } from '@/zero/events/useEventState';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { usePermissions } from '@/zero/rbac';
 import { calculateElectionWinner, type MajorityType } from '@/features/shared/utils/voting-utils';
 import {
@@ -117,14 +118,16 @@ export function useElectionVoting({
       }
 
       const participationId = crypto.randomUUID();
-      await castFinalVote({ id: participationId, election_id: electionId, elector_id: userId }, [
-        {
-          id: crypto.randomUUID(),
-          election_id: electionId,
-          candidate_id: candidateId,
-          elector_participation_id: participationId,
-        },
-      ]);
+      await waitForClientApply(
+        castFinalVote({ id: participationId, election_id: electionId, elector_id: userId }, [
+          {
+            id: crypto.randomUUID(),
+            election_id: electionId,
+            candidate_id: candidateId,
+            elector_participation_id: participationId,
+          },
+        ])
+      );
 
       return participationId;
     },
@@ -156,10 +159,12 @@ export function useElectionVoting({
 
       if (result.isTie) {
         // Mark election as requiring runoff
-        await updateElection({
-          id: electionId,
-          status: 'runoff_required',
-        });
+        await waitForClientApply(
+          updateElection({
+            id: electionId,
+            status: 'runoff_required',
+          })
+        );
 
         return {
           success: false,
@@ -171,10 +176,12 @@ export function useElectionVoting({
 
       if (!result.winner) {
         // No winner (e.g., majority threshold not met)
-        await updateElection({
-          id: electionId,
-          status: 'no_winner',
-        });
+        await waitForClientApply(
+          updateElection({
+            id: electionId,
+            status: 'no_winner',
+          })
+        );
 
         return {
           success: false,
@@ -185,42 +192,46 @@ export function useElectionVoting({
       }
 
       // Update election with winner
-      await updateElection({
-        id: electionId,
-        status: 'completed',
-        description: `winner:${result.winner.id}`,
-      });
+      await waitForClientApply(
+        updateElection({
+          id: electionId,
+          status: 'completed',
+          description: `winner:${result.winner.id}`,
+        })
+      );
 
-      await createTimelineEvent({
-        id: crypto.randomUUID(),
-        event_type: 'election_completed',
-        entity_id: electionId,
-        entity_type: 'election',
-        metadata: { electionId, winnerId: result.winner.id },
-        tags: [],
-        stats: {},
-        title: translateText('generated.inline.0092_election_completed_efe44735'),
-        description: translateText('generated.inline.0093_winner_id_99630916', {
-          id: result.winner.name || result.winner.id,
-        }),
-        image_url: '',
-        video_url: '',
-        video_thumbnail_url: '',
-        content_type: '',
-        vote_status: '',
-        election_status: 'completed',
-        ends_at: 0,
-        user_id: userId,
-        group_id: groupId || null,
-        amendment_id: null,
-        event_id: eventId,
-        todo_id: null,
-        blog_id: null,
-        statement_id: null,
-        actor_id: userId,
-        election_id: electionId,
-        amendment_vote_id: null,
-      });
+      await waitForClientApply(
+        createTimelineEvent({
+          id: crypto.randomUUID(),
+          event_type: 'election_completed',
+          entity_id: electionId,
+          entity_type: 'election',
+          metadata: { electionId, winnerId: result.winner.id },
+          tags: [],
+          stats: {},
+          title: translateText('generated.inline.0092_election_completed_efe44735'),
+          description: translateText('generated.inline.0093_winner_id_99630916', {
+            id: result.winner.name || result.winner.id,
+          }),
+          image_url: '',
+          video_url: '',
+          video_thumbnail_url: '',
+          content_type: '',
+          vote_status: '',
+          election_status: 'completed',
+          ends_at: 0,
+          user_id: userId,
+          group_id: groupId || null,
+          amendment_id: null,
+          event_id: eventId,
+          todo_id: null,
+          blog_id: null,
+          statement_id: null,
+          actor_id: userId,
+          election_id: electionId,
+          amendment_vote_id: null,
+        })
+      );
 
       return {
         success: true,
@@ -256,14 +267,16 @@ export function useElectionVoting({
       const historyId = crypto.randomUUID();
 
       // Create incumbent history record
-      await createRoleHolderHistory({
-        id: historyId,
-        start_date: now,
-        end_date: null,
-        reason: 'elected',
-        role_id: role.id,
-        user_id: winningCandidate.user_id,
-      });
+      await waitForClientApply(
+        createRoleHolderHistory({
+          id: historyId,
+          start_date: now,
+          end_date: null,
+          reason: 'elected',
+          role_id: role.id,
+          user_id: winningCandidate.user_id,
+        })
+      );
 
       const scheduledRevoteDate =
         computeRoleScheduledRevoteDate({
@@ -282,11 +295,13 @@ export function useElectionVoting({
           : null);
 
       if (Boolean(role.is_recurring) || scheduledRevoteDate) {
-        await updateRole({
-          id: role.id,
-          term_start_date: now,
-          scheduled_revote_date: scheduledRevoteDate,
-        });
+        await waitForClientApply(
+          updateRole({
+            id: role.id,
+            term_start_date: now,
+            scheduled_revote_date: scheduledRevoteDate,
+          })
+        );
       }
 
       return historyId;
@@ -313,16 +328,18 @@ export function useElectionVoting({
       }
 
       const candidateId = crypto.randomUUID();
-      await addCandidate({
-        id: candidateId,
-        status: 'nominated',
-        election_id: electionId,
-        user_id: candidateUserId,
-        name: '',
-        description: '',
-        image_url: '',
-        order_index: 0,
-      });
+      await waitForClientApply(
+        addCandidate({
+          id: candidateId,
+          status: 'nominated',
+          election_id: electionId,
+          user_id: candidateUserId,
+          name: '',
+          description: '',
+          image_url: '',
+          order_index: 0,
+        })
+      );
 
       return candidateId;
     },
@@ -338,10 +355,12 @@ export function useElectionVoting({
         throw new Error('Cannot accept nomination for another user');
       }
 
-      await updateCandidate({
-        id: candidateId,
-        status: 'accepted',
-      });
+      await waitForClientApply(
+        updateCandidate({
+          id: candidateId,
+          status: 'accepted',
+        })
+      );
     },
     [candidates, userId]
   );
@@ -355,10 +374,12 @@ export function useElectionVoting({
         throw new Error('Cannot decline nomination for another user');
       }
 
-      await updateCandidate({
-        id: candidateId,
-        status: 'declined',
-      });
+      await waitForClientApply(
+        updateCandidate({
+          id: candidateId,
+          status: 'declined',
+        })
+      );
     },
     [candidates, userId]
   );

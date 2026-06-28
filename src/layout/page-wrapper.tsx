@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import { LoadingSpinner } from '@/features/shared/ui/ui/loading-spinner.tsx';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 
 interface PageWrapperProps {
@@ -15,17 +15,7 @@ interface PageWrapperProps {
 function PageLoadingFallback({ className = '' }: { className?: string }) {
   const { t } = useTranslation();
 
-  return (
-    <div className={`flex min-h-[400px] items-center justify-center ${className}`}>
-      <div className="flex flex-col items-center gap-4">
-        <LoadingSpinner size="lg" />
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">{t('loading.page')}</p>
-          <p className="mt-1 text-xs text-muted-foreground/70">{t('loading.compiling')}</p>
-        </div>
-      </div>
-    </div>
-  );
+  return <PageSkeleton label={t('loading.page')} className={className} />;
 }
 
 /**

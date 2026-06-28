@@ -3,6 +3,7 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventAccessRoles, useEventRolesData } from '@/zero/events/useEventState';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useEventRoles(eventId: string) {
@@ -51,16 +52,18 @@ export function useEventRoles(eventId: string) {
       const roleId = crypto.randomUUID();
       const roleTitle = title.trim();
 
-      await createRole({
-        id: roleId,
-        name: roleTitle,
-        description: description.trim(),
-        event_id: eventId,
-        assignment_mode: 'assigned',
-        visibility: 'public',
-        is_recurring: false,
-        sort_order: roles.length,
-      });
+      await waitForClientApply(
+        createRole({
+          id: roleId,
+          name: roleTitle,
+          description: description.trim(),
+          event_id: eventId,
+          assignment_mode: 'assigned',
+          visibility: 'public',
+          is_recurring: false,
+          sort_order: roles.length,
+        })
+      );
     } catch (error) {
       console.error('Failed to create role:', error);
       toast.error(
@@ -88,11 +91,13 @@ export function useEventRoles(eventId: string) {
     toast.success(translateText('generated.inline.0588_role_updated_successfully_87ea8999'));
 
     try {
-      await updateRole({
-        id: editingRole.id,
-        name: title.trim(),
-        description: description.trim(),
-      });
+      await waitForClientApply(
+        updateRole({
+          id: editingRole.id,
+          name: title.trim(),
+          description: description.trim(),
+        })
+      );
     } catch (error) {
       console.error('Failed to update role:', error);
       toast.error(
@@ -106,7 +111,7 @@ export function useEventRoles(eventId: string) {
     toast.success(translateText('generated.inline.0237_role_deleted_successfully_b714d57c'));
 
     try {
-      await deleteRole({ id: roleId });
+      await waitForClientApply(deleteRole({ id: roleId }));
     } catch (error) {
       console.error('Failed to delete role:', error);
       toast.error(
@@ -129,19 +134,21 @@ export function useEventRoles(eventId: string) {
         );
 
         if (actionRightToRemove?.id) {
-          await removeActionRight({ id: actionRightToRemove.id });
+          await waitForClientApply(removeActionRight({ id: actionRightToRemove.id }));
         }
       } else {
-        await assignActionRight({
-          id: crypto.randomUUID(),
-          resource,
-          action,
-          role_id: roleId,
-          group_id: null,
-          event_id: eventId,
-          amendment_id: null,
-          blog_id: null,
-        });
+        await waitForClientApply(
+          assignActionRight({
+            id: crypto.randomUUID(),
+            resource,
+            action,
+            role_id: roleId,
+            group_id: null,
+            event_id: eventId,
+            amendment_id: null,
+            blog_id: null,
+          })
+        );
       }
     } catch (error) {
       console.error('Failed to update permission:', error);
@@ -154,7 +161,7 @@ export function useEventRoles(eventId: string) {
   const handleReorderRoles = async (orderedRoleIds: string[]) => {
     try {
       for (let index = 0; index < orderedRoleIds.length; index++) {
-        await updateRole({ id: orderedRoleIds[index], sort_order: index });
+        await waitForClientApply(updateRole({ id: orderedRoleIds[index], sort_order: index }));
       }
 
       toast.success(translateText('generated.inline.0475_role_order_updated_4d399d91'));

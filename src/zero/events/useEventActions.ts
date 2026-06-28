@@ -25,7 +25,7 @@ export function useEventActions() {
       onServerError(result, () => toast.error(t('features.events.toasts.createFailed')));
       return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const createFullEvent = useCallback(
@@ -39,8 +39,9 @@ export function useEventActions() {
     (args: Parameters<typeof mutators.events.update>[0]) => {
       const result = zero.mutate(mutators.events.update(args));
       onServerError(result, () => toast.error(t('features.events.toasts.updateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const cancelEvent = useCallback(
@@ -48,8 +49,9 @@ export function useEventActions() {
       const result = zero.mutate(mutators.events.cancel(args));
       toast.success(t('features.events.toasts.cancelled'));
       onServerError(result, () => toast.error(t('features.events.toasts.cancelFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const createOfflineParticipant = useCallback(
@@ -113,8 +115,9 @@ export function useEventActions() {
       const result = zero.mutate(mutators.events.joinEvent(args));
       toast.success(t('features.events.toasts.joined'));
       onServerError(result, () => toast.error(t('features.events.toasts.joinFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const inviteParticipant = useCallback(
@@ -122,8 +125,9 @@ export function useEventActions() {
       const result = zero.mutate(mutators.events.inviteParticipant(args));
       toast.success(t('features.events.toasts.participantInvited'));
       onServerError(result, () => toast.error(t('features.events.toasts.inviteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const leaveEvent = useCallback(
@@ -131,40 +135,45 @@ export function useEventActions() {
       const result = zero.mutate(mutators.events.leaveEvent(args));
       toast.success(t('features.events.toasts.left'));
       onServerError(result, () => toast.error(t('features.events.toasts.leaveFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const updateParticipant = useCallback(
     (args: Parameters<typeof mutators.events.updateParticipant>[0]) => {
       const result = zero.mutate(mutators.events.updateParticipant(args));
       onServerError(result, () => toast.error(t('features.events.toasts.updateParticipantFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const addParticipantRole = useCallback(
     (args: Parameters<typeof mutators.events.addParticipantRole>[0]) => {
       const result = zero.mutate(mutators.events.addParticipantRole(args));
       onServerError(result, () => toast.error(t('features.events.toasts.updateParticipantFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const removeParticipantRole = useCallback(
     (args: Parameters<typeof mutators.events.removeParticipantRole>[0]) => {
       const result = zero.mutate(mutators.events.removeParticipantRole(args));
       onServerError(result, () => toast.error(t('features.events.toasts.updateParticipantFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const syncParticipantRoles = useCallback(
     (args: Parameters<typeof mutators.events.syncParticipantRoles>[0]) => {
       const result = zero.mutate(mutators.events.syncParticipantRoles(args));
       onServerError(result, () => toast.error(t('features.events.toasts.updateParticipantFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Delegates ──────────────────────────────────────────────────────
@@ -173,8 +182,9 @@ export function useEventActions() {
       const result = zero.mutate(mutators.events.finalizeDelegates(args));
       toast.success(t('features.events.toasts.delegatesFinalized'));
       onServerError(result, () => toast.error(t('features.events.toasts.delegatesFinalizeFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Roles ──────────────────────────────────────────────────────────
@@ -183,16 +193,18 @@ export function useEventActions() {
       const result = zero.mutate(mutators.events.createRole(args));
       toast.success(t('features.events.toasts.roleCreated'));
       onServerError(result, () => toast.error(t('features.events.toasts.roleCreateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const updateRole = useCallback(
     (args: Parameters<typeof mutators.events.updateRole>[0]) => {
       const result = zero.mutate(mutators.events.updateRole(args));
       onServerError(result, () => toast.error(t('features.events.toasts.roleUpdateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteRole = useCallback(
@@ -200,8 +212,9 @@ export function useEventActions() {
       const result = zero.mutate(mutators.events.deleteRole(args));
       toast.success(t('features.events.toasts.roleDeleted'));
       onServerError(result, () => toast.error(t('features.events.toasts.roleDeleteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Event Exceptions ───────────────────────────────────────────────
@@ -210,8 +223,9 @@ export function useEventActions() {
       const result = zero.mutate(mutators.events.createException(args));
       toast.success(t('features.events.toasts.exceptionCreated'));
       onServerError(result, () => toast.error(t('features.events.toasts.exceptionCreateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const updateException = useCallback(
@@ -219,8 +233,9 @@ export function useEventActions() {
       const result = zero.mutate(mutators.events.updateException(args));
       toast.success(t('features.events.toasts.exceptionUpdated'));
       onServerError(result, () => toast.error(t('features.events.toasts.exceptionUpdateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteException = useCallback(
@@ -228,8 +243,9 @@ export function useEventActions() {
       const result = zero.mutate(mutators.events.deleteException(args));
       toast.success(t('features.events.toasts.exceptionDeleted'));
       onServerError(result, () => toast.error(t('features.events.toasts.exceptionDeleteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   return {

@@ -32,6 +32,22 @@ const labels = {
 };
 
 describe('MembershipCompositionPanelView', () => {
+  it('renders chart-shaped skeletons while composition data loads', () => {
+    render(
+      <MembershipCompositionPanelView
+        isLoading
+        displayMode="percent"
+        memberRows={[]}
+        leadershipRows={[]}
+        labels={labels}
+        onDisplayModeChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByText('Loading')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-slot="composition-pie-skeleton"]')).toHaveLength(2);
+  });
+
   it('allows event-specific participant labels to override member copy', () => {
     render(
       <MembershipCompositionPanel

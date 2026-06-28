@@ -10,6 +10,7 @@ import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx
 import { SubscribeButton } from '@/features/shared/ui/action-buttons';
 import { ActionBar } from '@/features/shared/ui/layout';
 import { StatsBar } from '@/features/shared/ui/layout';
+import { EntityPageFrame } from '@/features/shared/ui/layout';
 import {
   Card,
   CardContent,
@@ -24,6 +25,7 @@ import { VoteButtons, type VoteValue } from '@/features/shared/ui/voting';
 import { CommentThread, type CommentData } from '@/features/shared/ui/comments';
 import { RichTextPreview } from '@/features/shared/ui/rich-text';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import {
   getWikiParticipationName,
   isVisibleWikiParticipationStatus,
@@ -138,7 +140,7 @@ export function BlogDetailView({
   if (!isLoaded) {
     return (
       <PageWrapper>
-        <div className="py-12 text-center">{t('features.blogs.detail.loading')}</div>
+        <PageSkeleton />
       </PageWrapper>
     );
   }
@@ -194,166 +196,168 @@ export function BlogDetailView({
 
   return (
     <PageWrapper>
-      <div className="mb-8 text-center">
-        <div className="mb-2 flex items-center justify-center gap-3">
-          <BookOpen className="h-8 w-8" />
-          <h1 className="text-4xl font-bold">{title}</h1>
-        </div>
+      <EntityPageFrame>
+        <div className="mb-8 text-center">
+          <div className="mb-2 flex items-center justify-center gap-3">
+            <BookOpen className="h-8 w-8" />
+            <h1 className="text-4xl font-bold">{title}</h1>
+          </div>
 
-        {author ? (
-          <div className="mt-4 flex items-center justify-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={author.avatar ?? undefined} />
-              <AvatarFallback>{author.firstName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-            </Avatar>
-            <div className="text-left">
-              <p className="text-sm font-medium">
-                {t
-                  ? t('components.labels.createdBy')
-                  : translateText('generated.inline.0037_created_by_5d73cc30')}{' '}
-                {author.name || translateText('generated.inline.0031_unknown_bc7819b3')}
-              </p>
-              {author.handle ? (
-                <p className="text-muted-foreground text-xs">@{author.handle}</p>
-              ) : null}
+          {author ? (
+            <div className="mt-4 flex items-center justify-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={author.avatar ?? undefined} />
+                <AvatarFallback>{author.firstName?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+              </Avatar>
+              <div className="text-left">
+                <p className="text-sm font-medium">
+                  {t
+                    ? t('components.labels.createdBy')
+                    : translateText('generated.inline.0037_created_by_5d73cc30')}{' '}
+                  {author.name || translateText('generated.inline.0031_unknown_bc7819b3')}
+                </p>
+                {author.handle ? (
+                  <p className="text-muted-foreground text-xs">@{author.handle}</p>
+                ) : null}
+              </div>
             </div>
-          </div>
-        ) : null}
+          ) : null}
 
-        {date ? (
-          <div className="text-muted-foreground mt-2 flex items-center justify-center gap-2 text-sm">
-            <Calendar className="h-4 w-4" />
-            <span>{date}</span>
-          </div>
-        ) : null}
-      </div>
-
-      <StatsBar
-        items={[
-          { value: subscriberCount, label: t('components.labels.subscribers') },
-          { value: supporterCount, label: t('components.labels.supporters') },
-          { value: commentCount, label: t('components.labels.comments') },
-        ]}
-      />
-
-      <ActionBar>
-        <SubscribeButton
-          entityType="blog"
-          entityId={blogId}
-          isSubscribed={isSubscribed}
-          onToggleSubscribe={onSubscribeToggle}
-          isLoading={subscribeLoading}
-        />
-        <VoteButtons
-          upvotes={upvotes}
-          downvotes={downvotes}
-          userVote={currentVoteValue}
-          onVote={onVote}
-          orientation="horizontal"
-        />
-        <ShareButton
-          url={viewUrl}
-          title={title}
-          description=""
-          shareContextItem={shareContextItem}
-        />
-      </ActionBar>
-
-      {hashtags.length > 0 ? (
-        <div className="mb-6">
-          <HashtagDisplay hashtags={hashtags} centered />
+          {date ? (
+            <div className="text-muted-foreground mt-2 flex items-center justify-center gap-2 text-sm">
+              <Calendar className="h-4 w-4" />
+              <span>{date}</span>
+            </div>
+          ) : null}
         </div>
-      ) : null}
 
-      <WikiParticipationDirectory
-        title={translateText('generated.inline.0250_bloggers_4e649307', 'Bloggers')}
-        description={translateText('features.blogs.wiki.bloggersDescription')}
-        items={bloggerDirectoryItems}
-        roles={bloggerRoles}
-        entityType="blog"
-        searchPlaceholder={translateText('generated.inline.0244_search_bloggers_98b779c5')}
-        emptyLabel={translateText('generated.inline.0035_no_active_bloggers_yet_f9a61b2d')}
-        noResultsLabel={translateText(
-          'generated.inline.0036_no_active_bloggers_match_your_search_eae577bf'
-        )}
-      />
+        <StatsBar
+          items={[
+            { value: subscriberCount, label: t('components.labels.subscribers') },
+            { value: supporterCount, label: t('components.labels.supporters') },
+            { value: commentCount, label: t('components.labels.comments') },
+          ]}
+        />
 
-      <Card className="mb-6">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>{t('features.blogs.detail.blogContent')}</CardTitle>
-            <CardDescription>
-              {content
-                ? t('features.blogs.detail.latestVersion')
-                : t('features.blogs.detail.noContentYet')}
-            </CardDescription>
+        <ActionBar>
+          <SubscribeButton
+            entityType="blog"
+            entityId={blogId}
+            isSubscribed={isSubscribed}
+            onToggleSubscribe={onSubscribeToggle}
+            isLoading={subscribeLoading}
+          />
+          <VoteButtons
+            upvotes={upvotes}
+            downvotes={downvotes}
+            userVote={currentVoteValue}
+            onVote={onVote}
+            orientation="horizontal"
+          />
+          <ShareButton
+            url={viewUrl}
+            title={title}
+            description=""
+            shareContextItem={shareContextItem}
+          />
+        </ActionBar>
+
+        {hashtags.length > 0 ? (
+          <div className="mb-6">
+            <HashtagDisplay hashtags={hashtags} centered />
           </div>
-          <div className="flex gap-2">
-            {canEdit ? (
-              <Link to={editorUrl}>
-                <Button variant="outline" size="sm">
-                  <Edit className="mr-2 h-4 w-4" />
-                  {t('features.blogs.detail.editContent')}
-                </Button>
-              </Link>
-            ) : null}
-            {canDelete ? (
-              <Button variant="destructive" size="sm" onClick={() => onDeleteOpenChange(true)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t('features.blogs.delete')}
-              </Button>
-            ) : null}
-          </div>
-        </CardHeader>
-        <CardContent prose className="max-w-none">
-          {content && Array.isArray(content) && content.length > 0 ? (
-            <RichTextPreview content={content} />
-          ) : (
-            <div className="text-muted-foreground py-8 text-center">
-              <p>{t('features.blogs.detail.noContentAvailable')}</p>
+        ) : null}
+
+        <WikiParticipationDirectory
+          title={translateText('generated.inline.0250_bloggers_4e649307', 'Bloggers')}
+          description={translateText('features.blogs.wiki.bloggersDescription')}
+          items={bloggerDirectoryItems}
+          roles={bloggerRoles}
+          entityType="blog"
+          searchPlaceholder={translateText('generated.inline.0244_search_bloggers_98b779c5')}
+          emptyLabel={translateText('generated.inline.0035_no_active_bloggers_yet_f9a61b2d')}
+          noResultsLabel={translateText(
+            'generated.inline.0036_no_active_bloggers_match_your_search_eae577bf'
+          )}
+        />
+
+        <Card className="mb-6">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>{t('features.blogs.detail.blogContent')}</CardTitle>
+              <CardDescription>
+                {content
+                  ? t('features.blogs.detail.latestVersion')
+                  : t('features.blogs.detail.noContentYet')}
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
               {canEdit ? (
                 <Link to={editorUrl}>
-                  <Button variant="outline" className="mt-4">
+                  <Button variant="outline" size="sm">
                     <Edit className="mr-2 h-4 w-4" />
-                    {t('features.blogs.detail.startWriting')}
+                    {t('features.blogs.detail.editContent')}
                   </Button>
                 </Link>
               ) : null}
+              {canDelete ? (
+                <Button variant="destructive" size="sm" onClick={() => onDeleteOpenChange(true)}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  {t('features.blogs.delete')}
+                </Button>
+              ) : null}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent prose className="max-w-none">
+            {content && Array.isArray(content) && content.length > 0 ? (
+              <RichTextPreview content={content} />
+            ) : (
+              <div className="text-muted-foreground py-8 text-center">
+                <p>{t('features.blogs.detail.noContentAvailable')}</p>
+                {canEdit ? (
+                  <Link to={editorUrl}>
+                    <Button variant="outline" className="mt-4">
+                      <Edit className="mr-2 h-4 w-4" />
+                      {t('features.blogs.detail.startWriting')}
+                    </Button>
+                  </Link>
+                ) : null}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      <CommentThread
-        comments={comments}
-        currentUserId={currentUserId}
-        onAddComment={onAddComment}
-        onVote={onCommentVote}
-        className="mt-6"
-      />
+        <CommentThread
+          comments={comments}
+          currentUserId={currentUserId}
+          onAddComment={onAddComment}
+          onVote={onCommentVote}
+          className="mt-6"
+        />
 
-      <AlertDialog open={deleteOpen} onOpenChange={onDeleteOpenChange}>
-        <ScrollableAlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('features.blogs.detail.confirmDeleteTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('features.blogs.detail.confirmDelete')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={async () => {
-                onDeleteOpenChange(false);
-                await onConfirmDelete();
-              }}
-            >
-              {t('common.actions.delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </ScrollableAlertDialogContent>
-      </AlertDialog>
+        <AlertDialog open={deleteOpen} onOpenChange={onDeleteOpenChange}>
+          <ScrollableAlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('features.blogs.detail.confirmDeleteTitle')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('features.blogs.detail.confirmDelete')}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={async () => {
+                  onDeleteOpenChange(false);
+                  await onConfirmDelete();
+                }}
+              >
+                {t('common.actions.delete')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </ScrollableAlertDialogContent>
+        </AlertDialog>
+      </EntityPageFrame>
     </PageWrapper>
   );
 }

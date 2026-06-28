@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { useNetworkPage } from '@/features/network/hooks/useNetworkPage';
 import { ManageNetworkTab } from '@/features/network/ui/ManageNetworkTab';
 import { usePermissions } from '@/zero/rbac/usePermissions';
@@ -15,7 +15,7 @@ function GroupRelationshipsPage() {
   const { canManage, canView, isLoading, isMember } = usePermissions({ groupId });
 
   if (isLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton />;
   }
 
   if (!isMember() || !canView('groupRelationships')) {

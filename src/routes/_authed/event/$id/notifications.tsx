@@ -3,7 +3,7 @@ import { EntityNotifications } from '@/features/notifications/ui/EntityNotificat
 import { useEventById } from '@/zero/events/useEventState';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 
 export const Route = createFileRoute('/_authed/event/$id/notifications')({
   component: EventNotificationsPage,
@@ -14,7 +14,7 @@ function EventNotificationsPage() {
   const { can, isParticipant, isLoading } = usePermissions({ eventId: id });
 
   if (isLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton />;
   }
 
   if (!isParticipant() || !can('viewNotifications', 'notifications')) {

@@ -26,6 +26,31 @@ export const commonTranslations = {
     general: 'Loading...',
     compiling: 'Compiling page...',
     conversations: 'Loading conversations...',
+    appBoot: {
+      label: 'Workspace setup progress',
+      title: 'Setting up your workspace...',
+      description: 'Polity is connecting to your account and loading local data.',
+      recoveryTitle: 'Still connecting',
+      recoveryDescription:
+        'This is taking longer than expected. You can retry the connection or sign out.',
+      retry: 'Retry',
+      signOut: 'Sign out',
+      details: 'Details',
+      steps: {
+        connecting: 'Connecting',
+        localData: 'Loading local data',
+        profile: 'Checking profile',
+      },
+    },
+    pageSkeleton: {
+      calendar: 'Loading calendar...',
+      entity: 'Loading content...',
+      profile: 'Loading profile...',
+      settings: 'Loading settings...',
+    },
+    sectionSkeleton: {
+      label: 'Loading section...',
+    },
     sync: {
       headline: 'Loading data locally...',
       coffeeMessage:
@@ -119,6 +144,7 @@ export const commonTranslations = {
     description:
       'Choose a verified address or drag the marker to keep the address and map in sync.',
     loading: 'Loading map...',
+    unavailable: 'Map could not be loaded.',
     syncing: 'Updating address from map...',
     empty: 'Select an address or click on the map to place the marker.',
     moveHint: 'Drag the marker or click somewhere on the map to update the address.',

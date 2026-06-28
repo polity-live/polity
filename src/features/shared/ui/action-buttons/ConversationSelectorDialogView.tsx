@@ -4,6 +4,7 @@ import { MessageSquare, Search } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/features/shared/ui/ui/dialog';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { Input } from '@/features/shared/ui/ui/input';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -81,9 +82,11 @@ export function ConversationSelectorDialogView({
           </div>
           <div className="max-h-[400px] space-y-2 overflow-y-auto">
             {isLoading ? (
-              <div className="text-muted-foreground py-8 text-center">
-                {loadingLabel ?? t('common.loading.conversations')}
-              </div>
+              <SectionSkeleton
+                rows={4}
+                density="compact"
+                label={loadingLabel ?? t('common.loading.conversations')}
+              />
             ) : filteredConversations.length === 0 ? (
               <div className="py-8 text-center">
                 <MessageSquare className="text-muted-foreground mx-auto mb-2 h-12 w-12" />

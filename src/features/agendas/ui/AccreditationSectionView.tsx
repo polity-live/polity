@@ -3,8 +3,9 @@ import { BadgeControl } from '@/features/shared/ui/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback } from '@/features/shared/ui/ui/avatar';
-import { ShieldCheck, CheckCircle2, Loader2, Users } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, Users } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { VotePasswordInput } from '@/features/vote-cast/ui/VotePasswordInput';
 import type { AccreditationSectionController } from '../hooks/useAccreditationSectionController';
 
@@ -30,8 +31,8 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center p-8">
-          <Loader2 className="h-6 w-6 animate-spin" />
+        <CardContent className="p-4">
+          <SectionSkeleton rows={2} density="compact" />
         </CardContent>
       </Card>
     );

@@ -50,6 +50,7 @@ export function usePreferenceActions() {
           })
         );
         onServerError(result, msg => console.error('Preference update failed:', msg));
+        return result;
       } else {
         const result = zero.mutate(
           mutators.preferences.create({
@@ -63,6 +64,7 @@ export function usePreferenceActions() {
           })
         );
         onServerError(result, msg => console.error('Preference create failed:', msg));
+        return result;
       }
     },
     [zero, preference, isLoading]
@@ -70,36 +72,37 @@ export function usePreferenceActions() {
 
   const updateFormStyle = useCallback(
     (style: CreateFormStyle) => {
-      upsertPreference({ create_form_style: style });
+      const result = upsertPreference({ create_form_style: style });
       toast.success(t('pages.create.preferences.formStyleUpdated'));
+      return result;
     },
     [upsertPreference, t]
   );
 
   const updateTheme = useCallback(
     (theme: Theme) => {
-      upsertPreference({ theme });
+      return upsertPreference({ theme });
     },
     [upsertPreference]
   );
 
   const updateLanguage = useCallback(
     (language: PreferenceLanguage) => {
-      upsertPreference({ language });
+      return upsertPreference({ language });
     },
     [upsertPreference]
   );
 
   const updateNavigationView = useCallback(
     (navigationView: PreferenceNavigationView) => {
-      upsertPreference({ navigation_view: navigationView });
+      return upsertPreference({ navigation_view: navigationView });
     },
     [upsertPreference]
   );
 
   const saveNetworkLayout = useCallback(
     (scopeKey: string, layout: GroupNetworkLayout) => {
-      upsertPreference({
+      const result = upsertPreference({
         group_network_layouts: savePersistedNetworkLayouts({
           layouts: groupNetworkLayouts,
           scopeKey,
@@ -107,6 +110,7 @@ export function usePreferenceActions() {
         }),
       });
       toast.success(t('common.network.layoutSaved'));
+      return result;
     },
     [groupNetworkLayouts, t, upsertPreference]
   );
@@ -117,29 +121,30 @@ export function usePreferenceActions() {
         layouts: groupNetworkLayouts,
         scopeKey,
       });
-      upsertPreference({ group_network_layouts: nextLayouts });
+      const result = upsertPreference({ group_network_layouts: nextLayouts });
       toast.success(t('common.network.layoutReset'));
+      return result;
     },
     [groupNetworkLayouts, t, upsertPreference]
   );
 
   const saveGroupNetworkLayout = useCallback(
     (groupId: string, layout: GroupNetworkLayout) => {
-      saveNetworkLayout(`group:${groupId}`, layout);
+      return saveNetworkLayout(`group:${groupId}`, layout);
     },
     [saveNetworkLayout]
   );
 
   const resetGroupNetworkLayout = useCallback(
     (groupId: string) => {
-      resetNetworkLayout(`group:${groupId}`);
+      return resetNetworkLayout(`group:${groupId}`);
     },
     [resetNetworkLayout]
   );
 
   const saveDecisionTerminalDashboard = useCallback(
     (dashboard: DecisionTerminalDashboardConfig) => {
-      upsertPreference({ decision_terminal_dashboard: dashboard });
+      return upsertPreference({ decision_terminal_dashboard: dashboard });
     },
     [upsertPreference]
   );

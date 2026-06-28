@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { usePermissions } from '@/zero/rbac';
 
 export const Route = createFileRoute('/_authed/group/$id/editor')({
@@ -12,7 +12,7 @@ function GroupEditorLayout() {
   const { canView, isLoading, isMember } = usePermissions({ groupId });
 
   if (isLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton />;
   }
 
   if (!isMember() || !canView('groupDocuments')) {

@@ -13,6 +13,7 @@ import {
 } from '@/features/timeline/constants/content-type-config';
 import { getContentTypeToneClasses } from '@/features/shared/theme';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { LoadingProgressBar } from '@/features/shared/ui/feedback';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -62,6 +63,15 @@ export function CreateSubmissionOverlay({
   const targetLabel =
     target?.label ?? t(target?.labelKey ?? getCreateSubmitTargetLabelKey(entityType));
   const canNavigateToTarget = status === 'ready' || (status === 'error' && Boolean(target));
+  const displayProgressSteps = progressSteps.map(step => ({
+    ...step,
+    status:
+      status === 'ready'
+        ? 'complete'
+        : status === 'error' && step.status === 'active'
+          ? 'error'
+          : (step.status ?? 'pending'),
+  }));
 
   useEffect(() => {
     if (canNavigateToTarget) {
@@ -142,11 +152,10 @@ export function CreateSubmissionOverlay({
                 data-slot="create-submit-steps"
                 aria-label={t('pages.create.progress.submission.overlay.progressLabel')}
               >
-                {progressSteps.map((step, index) => {
-                  const stepStatus = status === 'ready' ? 'complete' : (step.status ?? 'pending');
-                  const isComplete = stepStatus === 'complete';
-                  const isActive = stepStatus === 'active';
-                  const isError = stepStatus === 'error' || (status === 'error' && isActive);
+                {displayProgressSteps.map((step, index) => {
+                  const isComplete = step.status === 'complete';
+                  const isActive = step.status === 'active';
+                  const isError = step.status === 'error';
 
                   return (
                     <div
@@ -204,27 +213,15 @@ export function CreateSubmissionOverlay({
                           </p>
                         </div>
                       </div>
-
-                      {isActive ? (
-                        <div className="bg-muted mt-3 h-1 overflow-hidden rounded-full">
-                          <motion.div
-                            className={cn('h-full rounded-full', tone.text, 'bg-current')}
-                            initial={reducedMotion ? false : { width: '18%' }}
-                            animate={
-                              reducedMotion ? { width: '52%' } : { width: ['18%', '68%', '38%'] }
-                            }
-                            transition={
-                              reducedMotion
-                                ? { duration: 0 }
-                                : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }
-                            }
-                          />
-                        </div>
-                      ) : null}
                     </div>
                   );
                 })}
               </div>
+              <LoadingProgressBar
+                ariaLabel={t('pages.create.progress.submission.overlay.progressLabel')}
+                steps={displayProgressSteps}
+                indicatorClassName={cn(tone.text, 'bg-current')}
+              />
 
               {status === 'error' && target ? (
                 <Button

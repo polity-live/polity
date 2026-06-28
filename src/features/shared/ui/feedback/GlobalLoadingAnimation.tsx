@@ -9,6 +9,10 @@ interface GlobalLoadingAnimationProps {
   connectionStatus?: ConnectionStatus;
 }
 
+/**
+ * Legacy full-screen sync animation reserved for create recovery.
+ * Use AppBootLoadingState, PageSkeleton, or SectionSkeleton for new loading states.
+ */
 export function GlobalLoadingAnimation({
   connectionStatus = 'syncing',
 }: GlobalLoadingAnimationProps) {

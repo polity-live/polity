@@ -3,7 +3,11 @@ import { useZero } from '@rocicorp/zero/react';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
-import { onServerError } from '../mutate-with-server-check';
+import {
+  onServerError,
+  waitForClientApply,
+  type MutationResultLike,
+} from '../mutate-with-server-check';
 
 type EntityType = 'user' | 'group' | 'amendment' | 'event' | 'blog' | 'statement';
 
@@ -22,8 +26,9 @@ export function useCommonActions() {
       const result = zero.mutate(mutators.common.subscribe(args));
       toast.success(t('common.toasts.subscribed'));
       onServerError(result, () => toast.error(t('common.toasts.subscribeFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const unsubscribe = useCallback(
@@ -31,8 +36,9 @@ export function useCommonActions() {
       const result = zero.mutate(mutators.common.unsubscribe(args));
       toast.success(t('common.toasts.unsubscribed'));
       onServerError(result, () => toast.error(t('common.toasts.unsubscribeFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Hashtags ───────────────────────────────────────────────────────
@@ -40,6 +46,7 @@ export function useCommonActions() {
     (args: Parameters<typeof mutators.common.addHashtag>[0]) => {
       const result = zero.mutate(mutators.common.addHashtag(args));
       onServerError(result, msg => console.error('Failed to add hashtag:', msg));
+      return result;
     },
     [zero]
   );
@@ -48,6 +55,7 @@ export function useCommonActions() {
     (args: Parameters<typeof mutators.common.deleteHashtag>[0]) => {
       const result = zero.mutate(mutators.common.deleteHashtag(args));
       onServerError(result, msg => console.error('Failed to delete hashtag:', msg));
+      return result;
     },
     [zero]
   );
@@ -72,6 +80,7 @@ export function useCommonActions() {
       ) => ReturnType<(typeof mutatorMap)[EntityType]>;
       const result = zero.mutate(mutator(args));
       onServerError(result, msg => console.error(`Failed to link ${entityType} hashtag:`, msg));
+      return result;
     },
     [zero]
   );
@@ -88,6 +97,7 @@ export function useCommonActions() {
       } as const;
       const result = zero.mutate(mutatorMap[entityType](args));
       onServerError(result, msg => console.error(`Failed to unlink ${entityType} hashtag:`, msg));
+      return result;
     },
     [zero]
   );
@@ -103,7 +113,7 @@ export function useCommonActions() {
    * @param allHashtags - All canonical hashtags (for reuse lookup)
    */
   const syncEntityHashtags = useCallback(
-    (
+    async (
       entityType: EntityType,
       entityId: string,
       desiredTags: string[],
@@ -124,11 +134,12 @@ export function useCommonActions() {
       const desiredSet = new Set(desiredTags);
       const existingTagLookup = new Map(allHashtags.map(h => [h.tag, h.id]));
       const entityField = `${entityType}_id`;
+      const results: MutationResultLike[] = [];
 
       // Remove junctions for tags no longer desired
       for (const [tag, junctionId] of currentTagMap) {
         if (!desiredSet.has(tag)) {
-          unlinkHashtag(entityType, { id: junctionId });
+          results.push(unlinkHashtag(entityType, { id: junctionId }));
         }
       }
 
@@ -140,17 +151,20 @@ export function useCommonActions() {
         let hashtagId = existingTagLookup.get(tag);
         if (!hashtagId) {
           hashtagId = crypto.randomUUID();
-          addHashtag({ id: hashtagId, tag });
+          results.push(addHashtag({ id: hashtagId, tag }));
         }
 
         // Create junction
-        linkHashtag(entityType, {
-          id: crypto.randomUUID(),
-          hashtag_id: hashtagId,
-          [entityField]: entityId,
-        });
+        results.push(
+          linkHashtag(entityType, {
+            id: crypto.randomUUID(),
+            hashtag_id: hashtagId,
+            [entityField]: entityId,
+          })
+        );
       }
 
+      await Promise.all(results.map(result => waitForClientApply(result)));
       toast.success(t('common.toasts.hashtagsSynced'));
     },
     [addHashtag, unlinkHashtag, linkHashtag, t]
@@ -162,8 +176,9 @@ export function useCommonActions() {
       const result = zero.mutate(mutators.common.createLink(args));
       toast.success(t('common.toasts.linkCreated'));
       onServerError(result, () => toast.error(t('common.toasts.linkCreateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteLink = useCallback(
@@ -171,8 +186,9 @@ export function useCommonActions() {
       const result = zero.mutate(mutators.common.deleteLink(args));
       toast.success(t('common.toasts.linkDeleted'));
       onServerError(result, () => toast.error(t('common.toasts.linkDeleteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Reactions ──────────────────────────────────────────────────────
@@ -181,8 +197,9 @@ export function useCommonActions() {
       const result = zero.mutate(mutators.common.createReaction(args));
       toast.success(t('common.toasts.reactionAdded'));
       onServerError(result, () => toast.error(t('common.toasts.reactionAddFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteReaction = useCallback(
@@ -190,8 +207,9 @@ export function useCommonActions() {
       const result = zero.mutate(mutators.common.deleteReaction(args));
       toast.success(t('common.toasts.reactionRemoved'));
       onServerError(result, () => toast.error(t('common.toasts.reactionRemoveFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Timeline ───────────────────────────────────────────────────────
@@ -200,8 +218,9 @@ export function useCommonActions() {
       const result = zero.mutate(mutators.common.createTimelineEvent(args));
       toast.success(t('common.toasts.timelineEventCreated'));
       onServerError(result, () => toast.error(t('common.toasts.timelineEventCreateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   return {

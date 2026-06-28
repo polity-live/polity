@@ -3,6 +3,7 @@ import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**
@@ -69,14 +70,16 @@ export function useSubscribeBlog(targetBlogId?: string) {
       const subscriptionId = crypto.randomUUID();
       createdSubscriptionIdRef.current = subscriptionId;
 
-      await subscribeToBlog({
-        id: subscriptionId,
-        user_id: null,
-        group_id: null,
-        amendment_id: null,
-        event_id: null,
-        blog_id: targetBlogId,
-      });
+      await waitForClientApply(
+        subscribeToBlog({
+          id: subscriptionId,
+          user_id: null,
+          group_id: null,
+          amendment_id: null,
+          event_id: null,
+          blog_id: targetBlogId,
+        })
+      );
       toast.success(
         translateText('generated.inline.0223_successfully_subscribed_to_blog_4377e4d5')
       );
@@ -119,7 +122,7 @@ export function useSubscribeBlog(targetBlogId?: string) {
     setSubscriberCount(prev => Math.max(0, prev - subsToDelete.length));
     setIsLoading(true);
     try {
-      await Promise.all(subsToDelete.map(sub => unsubscribeFromBlog(sub.id)));
+      await Promise.all(subsToDelete.map(sub => waitForClientApply(unsubscribeFromBlog(sub.id))));
       createdSubscriptionIdRef.current = null;
       toast.success(
         translateText('generated.inline.0225_successfully_unsubscribed_from_blog_6bcfcb00')

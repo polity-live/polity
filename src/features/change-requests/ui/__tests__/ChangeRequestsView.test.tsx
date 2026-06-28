@@ -43,6 +43,9 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (_key: string, fallback?: string) => fallback ?? _key,
+  useTranslation: () => ({
+    t: (_key: string, fallback?: string) => fallback ?? _key,
+  }),
 }));
 
 vi.mock('@/layout/page-wrapper', () => ({
@@ -109,6 +112,13 @@ function baseProps() {
 }
 
 describe('ChangeRequestsView branch sections', () => {
+  it('renders a page skeleton while change requests load', () => {
+    render(<ChangeRequestsView {...baseProps()} isLoading />);
+
+    expect(document.querySelector('[data-slot="entity-page-skeleton"]')).toBeTruthy();
+    expect(screen.queryByText('generated.inline.0283_loading_change_requests_83649539')).toBeNull();
+  });
+
   it('renders the selected process branch and passes branch-specific data when switching', () => {
     const branchOneDocument = [{ type: 'p', children: [{ text: 'Branch one document' }] }];
     const branchTwoDocument = [{ type: 'p', children: [{ text: 'Branch two document' }] }];

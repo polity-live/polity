@@ -1,4 +1,5 @@
 import { SummaryPillList } from '@/features/shared/ui/form';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import {
   TargetGroupEventDisplay,
   TargetGroupEventSelector,
@@ -86,7 +87,7 @@ export function AmendmentTargetSelectionField({
           selectedWorkflowId={workflowId || undefined}
         />
       ) : (
-        <p className="text-muted-foreground text-sm">{loadingLabel}</p>
+        <SectionSkeleton rows={2} density="compact" label={loadingLabel} />
       )}
 
       {targetSelection ? (

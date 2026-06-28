@@ -5,6 +5,7 @@ import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventAccessRoles, useEventRolesData } from '@/zero/events/useEventState';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import {
   emptyRoleEditorForm,
   roleEditorFormToMutationWithOptions,
@@ -66,30 +67,32 @@ export function useEventRoleManagement(eventId: string) {
     }
 
     const roleFields = buildRoleMutation(newRoleForm);
-    await createRole({
-      id: crypto.randomUUID(),
-      name: roleFields.name,
-      description: roleFields.description,
-      scope: 'event',
-      group_id: null,
-      event_id: eventId,
-      amendment_id: null,
-      blog_id: null,
-      assignee_kind: roleFields.assignee_kind,
-      assignment_mode: roleFields.assignment_mode,
-      visibility: roleFields.visibility,
-      term_start_date: null,
-      is_recurring: false,
-      recurrence_pattern: null,
-      recurrence_rule: null,
-      recurrence_interval: null,
-      recurrence_days: null,
-      recurrence_end_date: null,
-      scheduled_revote_date: null,
-      default_request_role: roleFields.default_request_role,
-      default_invite_role: roleFields.default_invite_role,
-      sort_order: rolesWithRights.length,
-    });
+    await waitForClientApply(
+      createRole({
+        id: crypto.randomUUID(),
+        name: roleFields.name,
+        description: roleFields.description,
+        scope: 'event',
+        group_id: null,
+        event_id: eventId,
+        amendment_id: null,
+        blog_id: null,
+        assignee_kind: roleFields.assignee_kind,
+        assignment_mode: roleFields.assignment_mode,
+        visibility: roleFields.visibility,
+        term_start_date: null,
+        is_recurring: false,
+        recurrence_pattern: null,
+        recurrence_rule: null,
+        recurrence_interval: null,
+        recurrence_days: null,
+        recurrence_end_date: null,
+        scheduled_revote_date: null,
+        default_request_role: roleFields.default_request_role,
+        default_invite_role: roleFields.default_invite_role,
+        sort_order: rolesWithRights.length,
+      })
+    );
 
     setNewRoleForm(emptyRoleEditorForm());
     setAddRoleOpen(false);
@@ -109,24 +112,26 @@ export function useEventRoleManagement(eventId: string) {
     }
 
     const roleFields = buildRoleMutation(editRoleForm);
-    await updateRole({
-      id: editingRoleId,
-      name: roleFields.name,
-      description: roleFields.description,
-      assignee_kind: roleFields.assignee_kind,
-      assignment_mode: roleFields.assignment_mode,
-      visibility: roleFields.visibility,
-      term_start_date: null,
-      is_recurring: false,
-      recurrence_pattern: null,
-      recurrence_rule: null,
-      recurrence_interval: null,
-      recurrence_days: null,
-      recurrence_end_date: null,
-      scheduled_revote_date: null,
-      default_request_role: roleFields.default_request_role,
-      default_invite_role: roleFields.default_invite_role,
-    });
+    await waitForClientApply(
+      updateRole({
+        id: editingRoleId,
+        name: roleFields.name,
+        description: roleFields.description,
+        assignee_kind: roleFields.assignee_kind,
+        assignment_mode: roleFields.assignment_mode,
+        visibility: roleFields.visibility,
+        term_start_date: null,
+        is_recurring: false,
+        recurrence_pattern: null,
+        recurrence_rule: null,
+        recurrence_interval: null,
+        recurrence_days: null,
+        recurrence_end_date: null,
+        scheduled_revote_date: null,
+        default_request_role: roleFields.default_request_role,
+        default_invite_role: roleFields.default_invite_role,
+      })
+    );
 
     setEditRoleOpen(false);
     setEditingRoleId(null);
@@ -146,26 +151,28 @@ export function useEventRoleManagement(eventId: string) {
       );
 
       if (existingRight?.id) {
-        await removeActionRight({ id: existingRight.id });
+        await waitForClientApply(removeActionRight({ id: existingRight.id }));
       }
       return;
     }
 
-    await assignActionRight({
-      id: crypto.randomUUID(),
-      resource,
-      action,
-      role_id: roleId,
-      group_id: null,
-      event_id: eventId,
-      amendment_id: null,
-      blog_id: null,
-    });
+    await waitForClientApply(
+      assignActionRight({
+        id: crypto.randomUUID(),
+        resource,
+        action,
+        role_id: roleId,
+        group_id: null,
+        event_id: eventId,
+        amendment_id: null,
+        blog_id: null,
+      })
+    );
   };
 
   const reorderRoles = async (orderedRoleIds: string[]) => {
     for (let index = 0; index < orderedRoleIds.length; index++) {
-      await updateRole({ id: orderedRoleIds[index], sort_order: index });
+      await waitForClientApply(updateRole({ id: orderedRoleIds[index], sort_order: index }));
     }
     toast.success(translateText('generated.inline.0475_role_order_updated_4d399d91'));
   };
@@ -180,47 +187,56 @@ export function useEventRoleManagement(eventId: string) {
     const agendaItemId = crypto.randomUUID();
     const electionId = crypto.randomUUID();
 
-    await createAgendaItem({
-      id: agendaItemId,
-      title: translateText('generated.inline.0109_election_value6a1b_d06db811', {
-        value6a1b: role.title || role.name || translateText('features.events.agenda.role'),
-      }),
-      description: '',
-      type: 'election',
-      status: 'pending',
-      forwarding_status: '',
-      order_index: 0,
-      duration: 0,
-      scheduled_time: '',
-      start_time: 0,
-      end_time: 0,
-      activated_at: 0,
-      completed_at: 0,
-      event_id: eventId,
-      amendment_id: null,
-      majority_type: null,
-      time_limit: null,
-      voting_phase: null,
-    });
+    await waitForClientApply(
+      createAgendaItem({
+        id: agendaItemId,
+        title: translateText('generated.inline.0109_election_value6a1b_d06db811', {
+          value6a1b: role.title || role.name || translateText('features.events.agenda.role'),
+        }),
+        description: '',
+        type: 'election',
+        status: 'pending',
+        forwarding_status: '',
+        order_index: 0,
+        duration: 0,
+        scheduled_time: '',
+        start_time: 0,
+        end_time: 0,
+        activated_at: 0,
+        completed_at: 0,
+        event_id: eventId,
+        amendment_id: null,
+        majority_type: null,
+        time_limit: null,
+        voting_phase: null,
+      })
+    );
 
-    await createElection({
-      id: electionId,
-      title: translateText('generated.inline.0110_election_for_value6a1b_f7382ef9', {
-        value6a1b: role.title || role.name || translateText('features.events.agenda.role'),
-      }),
-      description: translateText('generated.inline.0111_vote_for_the_value8446_1262ec2b', {
-        value8446: role.title || role.name || translateText('features.events.agenda.roleLowercase'),
-      }),
-      majority_type: 'simple',
-      status: 'pending',
-      visibility: 'public',
-      max_votes: 1,
-      role_id: roleId,
-      agenda_item_id: agendaItemId,
-      closing_type: null,
-      closing_duration_seconds: null,
-      closing_end_time: null,
-    });
+    await waitForClientApply(
+      createElection({
+        id: electionId,
+        title: translateText('generated.inline.0110_election_for_value6a1b_f7382ef9', {
+          value6a1b: role.title || role.name || translateText('features.events.agenda.role'),
+        }),
+        description: translateText('generated.inline.0111_vote_for_the_value8446_1262ec2b', {
+          value8446:
+            role.title || role.name || translateText('features.events.agenda.roleLowercase'),
+        }),
+        majority_type: 'simple',
+        status: 'pending',
+        visibility: 'public',
+        max_votes: 1,
+        role_id: roleId,
+        agenda_item_id: agendaItemId,
+        closing_type: null,
+        closing_duration_seconds: null,
+        closing_end_time: null,
+      })
+    );
+  };
+
+  const removeRole = async (args: Parameters<typeof deleteRole>[0]) => {
+    await waitForClientApply(deleteRole(args));
   };
 
   const getPermissionDisabledReason = (
@@ -256,7 +272,7 @@ export function useEventRoleManagement(eventId: string) {
     addRole,
     openEditRole,
     saveEditedRole,
-    removeRole: deleteRole,
+    removeRole,
     togglePermission,
     reorderRoles,
     createElectionForRole,

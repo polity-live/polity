@@ -11,6 +11,7 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { useTodoState } from '@/zero/todos/useTodoState';
 import { notifyStandaloneTodoAssigned } from '@/features/notifications/utils/notification-helpers.ts';
 import type { TodoTimelineCardTodo, TodoTimelineUrgency } from '../types/todoTimelineCard.types';
@@ -124,12 +125,14 @@ export function useTodoTimelineCardController({
     setAssigning(true);
     try {
       const assignmentId = crypto.randomUUID();
-      await assignUser({
-        id: assignmentId,
-        todo_id: todo.id,
-        user_id: user.id,
-        role: 'assignee',
-      });
+      await waitForClientApply(
+        assignUser({
+          id: assignmentId,
+          todo_id: todo.id,
+          user_id: user.id,
+          role: 'assignee',
+        })
+      );
 
       if (todo.creatorId && todo.creatorId !== user.id) {
         await notifyStandaloneTodoAssigned({

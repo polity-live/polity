@@ -1,5 +1,5 @@
-import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
+import { AppBootLoadingState } from '@/features/shared/ui/feedback';
 
 export function AuthCallbackPageView() {
-  return <GlobalLoadingAnimation connectionStatus="connecting" />;
+  return <AppBootLoadingState details="/auth/callback" onRetry={() => window.location.reload()} />;
 }

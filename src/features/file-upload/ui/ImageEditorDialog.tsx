@@ -6,6 +6,7 @@ import type { FilerobotImageEditorConfig } from 'react-filerobot-image-editor';
 import { StyleSheetManager } from 'styled-components';
 
 import { Dialog, DialogContent, DialogTitle } from '@/features/shared/ui/ui/dialog';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
@@ -146,6 +147,63 @@ async function savedImageDataToFile(imageData: SavedImageData) {
   return new File([blob], fileName, { type: mimeType });
 }
 
+function ImageEditorLoadingSkeleton({ label }: { label: string }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      className="bg-background flex h-full min-h-dvh flex-col"
+      data-slot="image-editor-loading-skeleton"
+    >
+      <span className="sr-only">{label}</span>
+      <div className="flex h-14 shrink-0 items-center justify-between border-b px-4">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-8 rounded-md" />
+          <Skeleton className="h-5 w-32" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-20 rounded-md" />
+          <Skeleton className="h-9 w-24 rounded-md" />
+        </div>
+      </div>
+      <div className="grid min-h-0 flex-1 grid-cols-[64px_minmax(0,1fr)] md:grid-cols-[76px_minmax(0,1fr)_260px]">
+        <div className="flex flex-col gap-3 border-r p-3">
+          {Array.from({ length: 7 }, (_, index) => (
+            <Skeleton key={index} className="aspect-square rounded-md" />
+          ))}
+        </div>
+        <div className="bg-muted/20 flex min-w-0 flex-col p-4">
+          <div className="mb-3 flex items-center justify-center gap-2">
+            <Skeleton className="h-8 w-28 rounded-md" />
+            <Skeleton className="h-8 w-28 rounded-md" />
+            <Skeleton className="h-8 w-20 rounded-md" />
+          </div>
+          <div className="flex min-h-0 flex-1 items-center justify-center">
+            <Skeleton className="h-full max-h-[70dvh] w-full max-w-4xl rounded-lg" />
+          </div>
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <Skeleton className="h-2 w-36 rounded-full" />
+            <Skeleton className="h-8 w-16 rounded-md" />
+          </div>
+        </div>
+        <div className="hidden border-l p-4 md:block">
+          <div className="space-y-4">
+            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-10 rounded-md" />
+            <Skeleton className="h-10 rounded-md" />
+            <Skeleton className="h-24 rounded-md" />
+            <div className="grid grid-cols-2 gap-2">
+              <Skeleton className="h-9 rounded-md" />
+              <Skeleton className="h-9 rounded-md" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ImageEditorDialog({
   imageUrl,
   open,
@@ -177,11 +235,7 @@ export function ImageEditorDialog({
       >
         <DialogTitle className="sr-only">{t('common.actions.edit', 'Edit image')}</DialogTitle>
         <Suspense
-          fallback={
-            <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
-              {t('common.status.loading', 'Loading...')}
-            </div>
-          }
+          fallback={<ImageEditorLoadingSkeleton label={t('common.status.loading', 'Loading...')} />}
         >
           <StyleSheetManager shouldForwardProp={shouldForwardEditorProp}>
             <FilerobotImageEditor

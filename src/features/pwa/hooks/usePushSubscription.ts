@@ -5,6 +5,7 @@ import { useNotificationState } from '@/zero/notifications/useNotificationState.
 import { useNotificationActions } from '@/zero/notifications/useNotificationActions.ts';
 import { useAuth } from '@/providers/auth-provider.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 interface UsePushSubscriptionReturn {
   isSupported: boolean;
@@ -197,13 +198,15 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
         throw new Error(tRef.current('components.pushNotifications.errors.invalidKeys'));
       }
 
-      await registerPushSubscription({
-        id: crypto.randomUUID(),
-        endpoint: subscription.endpoint,
-        auth: keys.auth,
-        p256dh: keys.p256dh,
-        user_agent: navigator.userAgent,
-      });
+      await waitForClientApply(
+        registerPushSubscription({
+          id: crypto.randomUUID(),
+          endpoint: subscription.endpoint,
+          auth: keys.auth,
+          p256dh: keys.p256dh,
+          user_agent: navigator.userAgent,
+        })
+      );
 
       setIsSubscribed(true);
       setError(null);
@@ -252,7 +255,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
         const matchingSubs = (pushSubscriptionsData || []).filter(sub => sub.endpoint === endpoint);
 
         for (const sub of matchingSubs) {
-          await unregisterPushSubscription({ id: sub.id });
+          await waitForClientApply(unregisterPushSubscription({ id: sub.id }));
         }
       }
 

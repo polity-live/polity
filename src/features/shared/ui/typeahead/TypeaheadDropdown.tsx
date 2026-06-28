@@ -11,6 +11,7 @@ import {
 import { cn } from '@/features/shared/utils/utils';
 import { TypeaheadResultCard } from './TypeaheadResultCard';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 
 interface TypeaheadDropdownProps {
   results: readonly TypeaheadItem[];
@@ -37,11 +38,15 @@ export function TypeaheadDropdown({
     return (
       <div
         className={cn(
-          'bg-popover text-muted-foreground civic-motion-popover rounded-md border p-4 text-center text-sm shadow-[var(--shadow-floating)]',
+          'bg-popover civic-motion-popover rounded-md border p-2 shadow-[var(--shadow-floating)]',
           className
         )}
       >
-        {translateText('generated.inline.0219_loading_b04ba49f')}
+        <SectionSkeleton
+          rows={3}
+          density="compact"
+          label={translateText('common.loading.sectionSkeleton.label')}
+        />
       </div>
     );
   }

@@ -7,7 +7,7 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { useCommonState, useCommonActions } from '@/zero/common';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 import {
   AMENDMENT_EDITING_MODE_ORDER,
@@ -279,12 +279,14 @@ export function useAmendmentEditContentController({
       let modePersisted = false;
       try {
         if (selectedWorkflowBranchId) {
-          await updateProcessBranch({
-            id: selectedWorkflowBranchId,
-            editing_mode: value,
-          });
+          await waitForClientApply(
+            updateProcessBranch({
+              id: selectedWorkflowBranchId,
+              editing_mode: value,
+            })
+          );
         } else {
-          await serverConfirmed(
+          await waitForClientApply(
             updateDocument({
               id: amendmentDocumentId as string,
               editing_mode: value,
@@ -292,15 +294,17 @@ export function useAmendmentEditContentController({
           );
         }
         modePersisted = true;
-        await updateAmendment({
-          id: amendmentId,
-          internal_cr_voting_close_trigger: formData.internalCRVotingCloseTrigger,
-          internal_cr_voting_duration_minutes:
-            formData.internalCRVotingCloseTrigger === 'after_minutes'
-              ? formData.internalCRVotingDurationMinutes
-              : null,
-          internal_cr_resolution_visibility: formData.internalCRResolutionVisibility,
-        });
+        await waitForClientApply(
+          updateAmendment({
+            id: amendmentId,
+            internal_cr_voting_close_trigger: formData.internalCRVotingCloseTrigger,
+            internal_cr_voting_duration_minutes:
+              formData.internalCRVotingCloseTrigger === 'after_minutes'
+                ? formData.internalCRVotingDurationMinutes
+                : null,
+            internal_cr_resolution_visibility: formData.internalCRResolutionVisibility,
+          })
+        );
         console.info('[AmendmentEditContent] Workflow status persisted from settings', {
           amendmentId,
           processBranchId: selectedWorkflowBranchId,
@@ -356,51 +360,55 @@ export function useAmendmentEditContentController({
     setIsSubmitting(true);
     try {
       if (isCreating) {
-        await createAmendment({
-          id: amendmentId,
-          title: formData.title || null,
-          code: formData.code || null,
-          reason: null,
-          category: null,
-          preamble: null,
-          group_id: null,
-          event_id: null,
-          clone_source_id: null,
-          document_id: null,
-          tags: formData.hashtags.length > 0 ? formData.hashtags : null,
-          visibility: formData.visibility,
-          internal_cr_voting_close_trigger: formData.internalCRVotingCloseTrigger,
-          internal_cr_voting_duration_minutes:
-            formData.internalCRVotingCloseTrigger === 'after_minutes'
-              ? formData.internalCRVotingDurationMinutes
-              : null,
-          internal_cr_resolution_visibility: formData.internalCRResolutionVisibility,
-          discussions: null,
-          image_url: formData.imageURL || null,
-          x: null,
-          youtube: null,
-          linkedin: null,
-          website: null,
-        });
+        await waitForClientApply(
+          createAmendment({
+            id: amendmentId,
+            title: formData.title || null,
+            code: formData.code || null,
+            reason: null,
+            category: null,
+            preamble: null,
+            group_id: null,
+            event_id: null,
+            clone_source_id: null,
+            document_id: null,
+            tags: formData.hashtags.length > 0 ? formData.hashtags : null,
+            visibility: formData.visibility,
+            internal_cr_voting_close_trigger: formData.internalCRVotingCloseTrigger,
+            internal_cr_voting_duration_minutes:
+              formData.internalCRVotingCloseTrigger === 'after_minutes'
+                ? formData.internalCRVotingDurationMinutes
+                : null,
+            internal_cr_resolution_visibility: formData.internalCRResolutionVisibility,
+            discussions: null,
+            image_url: formData.imageURL || null,
+            x: null,
+            youtube: null,
+            linkedin: null,
+            website: null,
+          })
+        );
       } else {
         if (!amendment) {
           toast.error(t('features.amendments.editContent.updateFailed'));
           return;
         }
-        await updateAmendment({
-          id: amendmentId,
-          title: formData.title,
-          code: formData.code,
-          internal_cr_voting_close_trigger: formData.internalCRVotingCloseTrigger,
-          internal_cr_voting_duration_minutes:
-            formData.internalCRVotingCloseTrigger === 'after_minutes'
-              ? formData.internalCRVotingDurationMinutes
-              : null,
-          internal_cr_resolution_visibility: formData.internalCRResolutionVisibility,
-          visibility: formData.visibility,
-          tags: formData.hashtags,
-          image_url: formData.imageURL || null,
-        });
+        await waitForClientApply(
+          updateAmendment({
+            id: amendmentId,
+            title: formData.title,
+            code: formData.code,
+            internal_cr_voting_close_trigger: formData.internalCRVotingCloseTrigger,
+            internal_cr_voting_duration_minutes:
+              formData.internalCRVotingCloseTrigger === 'after_minutes'
+                ? formData.internalCRVotingDurationMinutes
+                : null,
+            internal_cr_resolution_visibility: formData.internalCRResolutionVisibility,
+            visibility: formData.visibility,
+            tags: formData.hashtags,
+            image_url: formData.imageURL || null,
+          })
+        );
       }
 
       // Sync hashtags via junction tables

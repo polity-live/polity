@@ -41,7 +41,7 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { mutators } from '@/zero/mutators';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { trackServerFinalization, waitForClientApply } from '@/zero/mutate-with-server-check';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import {
   editorSelectionDebugLog,
@@ -478,21 +478,27 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
       setSaveStatus('saving');
       try {
-        if (entityType === 'blog') {
-          await zero.mutate(
-            mutators.blogs.update({
-              id: contentEntityId,
-              content: newContent as ReadonlyJSONValue[],
-            })
-          );
-        } else {
-          await zero.mutate(
-            mutators.documents.updateContent({
-              id: contentEntityId,
-              content: newContent as ReadonlyJSONValue[],
-            })
-          );
-        }
+        const result =
+          entityType === 'blog'
+            ? zero.mutate(
+                mutators.blogs.update({
+                  id: contentEntityId,
+                  content: newContent as ReadonlyJSONValue[],
+                })
+              )
+            : zero.mutate(
+                mutators.documents.updateContent({
+                  id: contentEntityId,
+                  content: newContent as ReadonlyJSONValue[],
+                })
+              );
+        trackServerFinalization(result, {
+          onError: error => {
+            console.error('Content save failed on server:', error);
+            setSaveStatus('error');
+          },
+        });
+        await waitForClientApply(result);
         lastSaveTime.current = Date.now();
         lastRemoteUpdate.current = Date.now();
         setSaveStatus('saved');
@@ -564,18 +570,19 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
         setIsSavingTitle(true);
         try {
+          let result: ReturnType<typeof zero.mutate> | undefined;
           if (entityType === 'amendment') {
-            await zero.mutate(mutators.amendments.update({ id: entityId, title: newTitle }));
+            result = zero.mutate(mutators.amendments.update({ id: entityId, title: newTitle }));
           } else if (entityType === 'blog') {
-            await zero.mutate(mutators.blogs.update({ id: contentEntityId, title: newTitle }));
+            result = zero.mutate(mutators.blogs.update({ id: contentEntityId, title: newTitle }));
           } else if (entityType === 'document') {
             const amendmentId = documentData?.amendment_id;
             if (!amendmentId) {
               throw new Error('Cannot save document title: missing parent amendment id');
             }
-            await zero.mutate(mutators.amendments.update({ id: amendmentId, title: newTitle }));
+            result = zero.mutate(mutators.amendments.update({ id: amendmentId, title: newTitle }));
           } else if (entityType === 'groupDocument') {
-            await zero.mutate(
+            result = zero.mutate(
               mutators.documents.updateGroupDocumentTitle({
                 document_id: contentEntityId,
                 title: newTitle,
@@ -583,6 +590,15 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
             );
           } else {
             // Documents don't have a title field — title lives on the parent entity
+          }
+          if (result) {
+            trackServerFinalization(result, {
+              onError: error => {
+                console.error('Title save failed on server:', error);
+                toast.error(translateText('generated.inline.0415_failed_to_save_title_8dd73295'));
+              },
+            });
+            await waitForClientApply(result);
           }
         } catch (error) {
           console.error('Failed to save title:', error);
@@ -656,6 +672,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
 
       try {
         const serializedDiscussions: ReadonlyJSONValue = JSON.parse(newStr);
+        let result: ReturnType<typeof zero.mutate> | undefined;
         editorSelectionDebugLog('editor-set-discussions:persist-start', {
           contentEntityId,
           entityId,
@@ -665,13 +682,13 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         });
 
         if (entityType === 'blog') {
-          await zero.mutate(
+          result = zero.mutate(
             mutators.blogs.update({ id: contentEntityId, discussions: serializedDiscussions })
           );
         } else if (entityType === 'amendment') {
           const processBranchId = entity?.metadata?.processBranchId;
           if (processBranchId) {
-            await zero.mutate(
+            result = zero.mutate(
               mutators.amendments.updateProcessBranch({
                 id: processBranchId,
                 discussions: serializedDiscussions,
@@ -679,10 +696,26 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
             );
           } else {
             // Amendments store main-text discussions as a JSON column on the amendment row.
-            await zero.mutate(
+            result = zero.mutate(
               mutators.amendments.update({ id: entityId, discussions: serializedDiscussions })
             );
           }
+        }
+        if (result) {
+          trackServerFinalization(result, {
+            onError: error => {
+              editorSelectionDebugLog('editor-set-discussions:persist-server-error', {
+                contentEntityId,
+                entityId,
+                entityType,
+                error,
+              });
+              toast.error(
+                translateText('generated.inline.0417_failed_to_save_discussions_d97b7d18')
+              );
+            },
+          });
+          await waitForClientApply(result);
         }
         // Documents and groupDocuments don't have a discussions column —
         // their discussion data lives in the thread/comment tables.
@@ -733,9 +766,17 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       };
       setModeState(newMode);
 
+      const rollbackModeChange = () => {
+        if (pendingModeChange.current?.contextKey === entityContextKey) {
+          pendingModeChange.current = null;
+          setModeState(entity?.editingMode || previousMode);
+        }
+      };
+
       try {
+        let result;
         if (entityType === 'amendment') {
-          const result = processBranchId
+          result = processBranchId
             ? zero.mutate(
                 mutators.amendments.updateProcessBranch({
                   id: processBranchId,
@@ -748,25 +789,32 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
                   editing_mode: newMode,
                 })
               );
-          await serverConfirmed(result);
         } else if (entityType === 'blog') {
-          const result = zero.mutate(
+          result = zero.mutate(
             mutators.blogs.update({ id: contentEntityId, editing_mode: newMode })
           );
-          await serverConfirmed(result);
         } else {
-          const result = zero.mutate(
+          result = zero.mutate(
             mutators.documents.updateContent({ id: contentEntityId, editing_mode: newMode })
           );
-          await serverConfirmed(result);
         }
 
+        trackServerFinalization(result, {
+          onSuccess: () => {
+            if (pendingModeChange.current?.contextKey === entityContextKey) {
+              pendingModeChange.current = null;
+            }
+          },
+          onError: error => {
+            rollbackModeChange();
+            console.error('Failed to finalize mode change:', error);
+            toast.error(translateText('generated.inline.0416_failed_to_change_mode_324234e0'));
+          },
+        });
+        await waitForClientApply(result);
         toast.success(`Mode changed to ${newMode}`);
       } catch (error) {
-        if (pendingModeChange.current?.contextKey === entityContextKey) {
-          pendingModeChange.current = null;
-          setModeState(entity?.editingMode || previousMode);
-        }
+        rollbackModeChange();
         console.error('Failed to change mode:', error);
         toast.error(translateText('generated.inline.0416_failed_to_change_mode_324234e0'));
         throw error;
@@ -795,21 +843,27 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       if (!contentEntityId || !userId) return;
 
       try {
-        if (entityType === 'blog') {
-          await zero.mutate(
-            mutators.blogs.update({
-              id: contentEntityId,
-              content: versionContent as ReadonlyJSONValue[],
-            })
-          );
-        } else {
-          await zero.mutate(
-            mutators.documents.updateContent({
-              id: contentEntityId,
-              content: versionContent as ReadonlyJSONValue[],
-            })
-          );
-        }
+        const result =
+          entityType === 'blog'
+            ? zero.mutate(
+                mutators.blogs.update({
+                  id: contentEntityId,
+                  content: versionContent as ReadonlyJSONValue[],
+                })
+              )
+            : zero.mutate(
+                mutators.documents.updateContent({
+                  id: contentEntityId,
+                  content: versionContent as ReadonlyJSONValue[],
+                })
+              );
+        trackServerFinalization(result, {
+          onError: error => {
+            console.error('Version restore failed on server:', error);
+            toast.error(translateText('generated.inline.0418_failed_to_restore_version_2a2ef8d8'));
+          },
+        });
+        await waitForClientApply(result);
         isLocalChange.current = true;
         editorSelectionDebugLog('content-source:restore-version', {
           contentEntityId,

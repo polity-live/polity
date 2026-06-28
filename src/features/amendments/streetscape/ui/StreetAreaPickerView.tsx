@@ -1,6 +1,7 @@
 import type { DivIcon, LatLngBounds } from 'leaflet';
 import { MapPinned } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
+import { MapPanelSkeleton } from '@/features/shared/ui/feedback';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -38,6 +39,7 @@ export interface StreetAreaPickerViewProps {
   onWidthMetersChange: (widthMeters: number) => void;
   onHeightMetersChange: (heightMeters: number) => void;
   onRotationDegreesChange: (rotationDeg: number) => void;
+  mapLoading: boolean;
   mapUnavailable: boolean;
 }
 
@@ -66,6 +68,7 @@ export function StreetAreaPickerView({
   onWidthMetersChange,
   onHeightMetersChange,
   onRotationDegreesChange,
+  mapLoading,
   mapUnavailable,
 }: StreetAreaPickerViewProps) {
   const { t } = useTranslation();
@@ -155,7 +158,12 @@ export function StreetAreaPickerView({
       </div>
 
       <div className="p-3">
-        {!mapReady ? (
+        {mapLoading ? (
+          <MapPanelSkeleton
+            label={t('features.amendments.streetscape.areaPicker.loadingMap')}
+            heightClassName="h-64 md:h-72"
+          />
+        ) : !mapReady ? (
           <div className="bg-muted/20 text-muted-foreground flex h-64 items-center justify-center rounded-md border border-dashed text-sm">
             {t('features.amendments.streetscape.areaPicker.mapUnavailable')}
           </div>

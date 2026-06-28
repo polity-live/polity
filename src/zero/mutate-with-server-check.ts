@@ -23,6 +23,12 @@ export interface MutationResultLike {
   }>;
 }
 
+interface TrackServerFinalizationOptions {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+  ignoreZeroClosed?: boolean;
+}
+
 const ZERO_CLOSED_MESSAGE = 'Zero was explicitly closed by calling zero.close()';
 
 export function isZeroClosedMutationCancellation(value: unknown): boolean {
@@ -42,9 +48,17 @@ export function isZeroClosedMutationCancellation(value: unknown): boolean {
   return false;
 }
 
+export async function waitForClientApply(result: MutationResultLike): Promise<void> {
+  await (result.client ?? Promise.resolve());
+}
+
 /**
- * Await server confirmation of a Zero mutation.
+ * Await authoritative server confirmation of a Zero mutation.
  * Throws an `Error` whose message comes from the server rejection.
+ *
+ * Use this only when the next step depends on server acceptance, such as
+ * password verification or a true authorization gate. For normal reactive UI,
+ * await `waitForClientApply(result)` and monitor the server in the background.
  *
  * @example
  * ```ts
@@ -58,6 +72,28 @@ export async function serverConfirmed(result: MutationResultLike): Promise<void>
   if (serverResult.type === 'error') {
     throw toMutationError(serverResult.error?.message);
   }
+}
+
+export function trackServerFinalization(
+  result: MutationResultLike,
+  options: TrackServerFinalizationOptions = {}
+): void {
+  result.server
+    .then(serverResult => {
+      if (serverResult.type === 'success') {
+        options.onSuccess?.();
+        return;
+      }
+
+      options.onError?.(toMutationError(serverResult.error?.message));
+    })
+    .catch((err: unknown) => {
+      if (options.ignoreZeroClosed && isZeroClosedMutationCancellation(err)) {
+        return;
+      }
+
+      options.onError?.(err instanceof Error ? err : toMutationError(null));
+    });
 }
 
 /**

@@ -80,8 +80,25 @@ export const updateMessageSchema = baseMessageSchema
 export const deleteMessageSchema = z.object({ id: z.string() });
 
 // ============================================
+// Composite workflows
+// ============================================
+export const createConversationFullSchema = z.object({
+  conversation: createConversationSchema,
+  participants: z.array(createConversationParticipantSchema),
+  assistantMessage: createAssistantMessageSchema.nullable().optional(),
+});
+
+export const deleteConversationFullSchema = z.object({
+  id: z.string(),
+  messageIds: z.array(z.string()).optional(),
+  participantIds: z.array(z.string()).optional(),
+});
+
+// ============================================
 // Inferred Types
 // ============================================
 export type Conversation = z.infer<typeof selectConversationSchema>;
 export type ConversationParticipant = z.infer<typeof selectConversationParticipantSchema>;
 export type Message = z.infer<typeof selectMessageSchema>;
+export type CreateConversationFullInput = z.infer<typeof createConversationFullSchema>;
+export type DeleteConversationFullInput = z.infer<typeof deleteConversationFullSchema>;

@@ -58,6 +58,7 @@ export function GeoAddressPickerView({
           onCoordinatesChange={handleMapCoordinatesChange}
           isBusy={isReverseGeocoding}
           loadingLabel={t('common.locationPicker.loading')}
+          unavailableLabel={t('common.locationPicker.unavailable')}
           busyLabel={t('common.locationPicker.syncing')}
           emptyMessage={t('common.locationPicker.empty')}
           moveHint={t('common.locationPicker.moveHint')}

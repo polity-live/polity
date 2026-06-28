@@ -2,6 +2,7 @@ import { featureThemeClassName } from '@/features/shared/theme';
 import type { ReactNode } from 'react';
 
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { FormControlLabel } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
@@ -88,9 +89,7 @@ export function TransferAgendaItemDialogView({
           <div className="space-y-2">
             <FormControlLabel>{t('features.events.agenda.destinationEvent')}</FormControlLabel>
             {participationsLoading ? (
-              <div className="flex items-center justify-center p-8">
-                <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-              </div>
+              <SectionSkeleton rows={3} density="compact" />
             ) : eventsWithPermission.length === 0 ? (
               <Card surface="muted">
                 <CardContent tone="muted" align="center" className="p-6">

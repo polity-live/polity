@@ -32,6 +32,9 @@ vi.mock('@/features/network/ui/LinkGroupDialog', () => ({
 
 vi.mock('@/features/shared/ui/layout', () => ({
   ActionBar: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  EntityPageFrame: ({ children }: { children: ReactNode }) => (
+    <div className="mx-auto max-w-7xl px-4 py-6">{children}</div>
+  ),
   StatsBar: () => <div data-testid="stats-bar" />,
 }));
 
@@ -162,6 +165,13 @@ function renderGroupWikiContent(overrides: Partial<GroupWikiContentViewProps> = 
 }
 
 describe('GroupWikiContentView', () => {
+  it('owns the entity page frame so public routes keep a gutter without shell wrapping', () => {
+    const { container } = renderGroupWikiContent();
+
+    expect(container.firstElementChild?.className).toContain('max-w-7xl');
+    expect(container.firstElementChild?.className).toContain('px-4');
+  });
+
   it('passes current elected group-role holders as member roles and filter roles', () => {
     renderGroupWikiContent({
       memberCount: 2,

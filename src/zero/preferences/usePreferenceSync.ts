@@ -5,6 +5,7 @@ import { mutators } from '../mutators';
 import { useThemeStore } from '@/features/shared/global-state/theme.store';
 import { useLanguageStore } from '@/features/shared/global-state/language.store';
 import { useNavigationStore } from '@/features/navigation/state/navigation.store';
+import { onServerError } from '../mutate-with-server-check';
 import type { ThemeType } from '@/features/shared/global-state/theme.store';
 import type { Language } from '@/features/shared/global-state/language.store';
 import type { NavigationView } from '@/features/navigation/types/navigation.types';
@@ -48,7 +49,7 @@ export function usePreferenceSync() {
 
       const pref = preferenceRef.current;
       if (!pref) {
-        zero.mutate(
+        const result = zero.mutate(
           mutators.preferences.create({
             id: crypto.randomUUID(),
             create_form_style: 'carousel',
@@ -59,13 +60,15 @@ export function usePreferenceSync() {
             ...fields,
           })
         );
+        onServerError(result, msg => console.error('Preference create failed:', msg));
       } else {
-        zero.mutate(
+        const result = zero.mutate(
           mutators.preferences.update({
             id: pref.id,
             ...fields,
           })
         );
+        onServerError(result, msg => console.error('Preference update failed:', msg));
       }
     },
     [zero]

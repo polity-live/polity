@@ -174,6 +174,10 @@ export const selectFinalCandidateSelectionSchema = baseFinalCandidateSelectionSc
 export const createFinalCandidateSelectionSchema = baseFinalCandidateSelectionSchema
   .omit({ id: true, created_at: true })
   .extend({ id: z.string() });
+export const castFinalElectionVoteFullSchema = z.object({
+  participation: createFinalElectorParticipationSchema,
+  selections: z.array(createFinalCandidateSelectionSchema).min(1),
+});
 
 // ============================================
 // Election Offline Tally

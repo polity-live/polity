@@ -7,6 +7,7 @@ import { generateRecurringInstances } from '@/features/calendar/logic/recurringE
 import type { RecurrenceFormState } from '@/features/events/logic/rruleHelpers';
 import type { CalendarViewMode } from '@/features/events/hooks/useCalendarView';
 import { buildRecurringEventFields } from '@/features/events/logic/buildRecurringEventFields';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { addHours } from 'date-fns';
 import {
   isSameDay,
@@ -208,7 +209,9 @@ export function useMeetPage(userId: string) {
   // Handlers
   const handleBookMeeting = useCallback(
     async (instance: MeetingInstance) => {
-      await meetingActions.bookMeeting(instance.parentEventId, instance.instanceDate);
+      await waitForClientApply(
+        meetingActions.bookMeeting(instance.parentEventId, instance.instanceDate)
+      );
       setIsBookingDialogOpen(false);
       setSelectedInstance(null);
     },
@@ -217,7 +220,9 @@ export function useMeetPage(userId: string) {
 
   const handleCancelBooking = useCallback(
     async (instance: MeetingInstance) => {
-      await meetingActions.cancelMeetingBooking(instance.parentEventId, instance.instanceDate);
+      await waitForClientApply(
+        meetingActions.cancelMeetingBooking(instance.parentEventId, instance.instanceDate)
+      );
     },
     [meetingActions]
   );
@@ -234,24 +239,26 @@ export function useMeetPage(userId: string) {
         recurrence: args.recurrence ?? null,
       });
 
-      await eventActions.createEvent({
-        id,
-        title: args.title.trim(),
-        group_id: null,
-        description: args.description.trim() || null,
-        status: 'published',
-        event_type: 'meeting',
-        visibility: args.meetingType === 'public-meeting' ? 'public' : 'private',
-        meeting_type: args.meetingType,
-        is_bookable: true,
-        max_bookings: args.maxBookings,
-        start_date: args.startDate.getTime(),
-        end_date: endDate.getTime(),
-        ...recurringFields,
-        location_name: args.location?.trim() || null,
-        location_url: args.locationUrl?.trim() || null,
-        creator_id: creatorId,
-      });
+      await waitForClientApply(
+        eventActions.createEvent({
+          id,
+          title: args.title.trim(),
+          group_id: null,
+          description: args.description.trim() || null,
+          status: 'published',
+          event_type: 'meeting',
+          visibility: args.meetingType === 'public-meeting' ? 'public' : 'private',
+          meeting_type: args.meetingType,
+          is_bookable: true,
+          max_bookings: args.maxBookings,
+          start_date: args.startDate.getTime(),
+          end_date: endDate.getTime(),
+          ...recurringFields,
+          location_name: args.location?.trim() || null,
+          location_url: args.locationUrl?.trim() || null,
+          creator_id: creatorId,
+        })
+      );
 
       setIsCreateDialogOpen(false);
     },
@@ -260,7 +267,9 @@ export function useMeetPage(userId: string) {
 
   const handleDeleteMeeting = useCallback(
     async (eventId: string) => {
-      await eventActions.cancelEvent({ id: eventId, cancel_reason: 'Deleted by owner' });
+      await waitForClientApply(
+        eventActions.cancelEvent({ id: eventId, cancel_reason: 'Deleted by owner' })
+      );
     },
     [eventActions]
   );
@@ -269,18 +278,20 @@ export function useMeetPage(userId: string) {
     async (args: UpdateMeetingArgs) => {
       const endDate = addHours(args.startDate, args.durationMinutes / 60);
 
-      await eventActions.updateEvent({
-        id: args.id,
-        title: args.title.trim(),
-        description: args.description.trim() || null,
-        visibility: args.meetingType === 'public-meeting' ? 'public' : 'private',
-        meeting_type: args.meetingType,
-        max_bookings: args.maxBookings,
-        start_date: args.startDate.getTime(),
-        end_date: endDate.getTime(),
-        location_name: args.location?.trim() || null,
-        location_url: args.locationUrl?.trim() || null,
-      });
+      await waitForClientApply(
+        eventActions.updateEvent({
+          id: args.id,
+          title: args.title.trim(),
+          description: args.description.trim() || null,
+          visibility: args.meetingType === 'public-meeting' ? 'public' : 'private',
+          meeting_type: args.meetingType,
+          max_bookings: args.maxBookings,
+          start_date: args.startDate.getTime(),
+          end_date: endDate.getTime(),
+          location_name: args.location?.trim() || null,
+          location_url: args.locationUrl?.trim() || null,
+        })
+      );
     },
     [eventActions]
   );

@@ -52,9 +52,56 @@ function createRetryMutation(
           draft.mutationPayload as Parameters<typeof mutators.blogs.createFull>[0]
         )
       );
+    case 'statement':
+      return zero.mutate(
+        mutators.statements.createFull(
+          draft.mutationPayload as Parameters<typeof mutators.statements.createFull>[0]
+        )
+      );
+    case 'todo':
+      return zero.mutate(
+        mutators.todos.createFull(
+          draft.mutationPayload as Parameters<typeof mutators.todos.createFull>[0]
+        )
+      );
+    case 'agenda_item':
+      return zero.mutate(
+        mutators.agendas.createFull(
+          draft.mutationPayload as Parameters<typeof mutators.agendas.createFull>[0]
+        )
+      );
+    case 'payment':
+      return zero.mutate(
+        mutators.payments.createPayment(
+          draft.mutationPayload as Parameters<typeof mutators.payments.createPayment>[0]
+        )
+      );
+    case 'election':
+      if (!draft.createPath.includes('election-candidate')) return null;
+      return zero.mutate(
+        mutators.elections.addCandidate(
+          draft.mutationPayload as Parameters<typeof mutators.elections.addCandidate>[0]
+        )
+      );
     default:
       return null;
   }
+}
+
+function canRetryCreateDraft(draft: CreateRecoveryDraft | null) {
+  if (!draft) return false;
+  if (draft.entityType === 'election') return draft.createPath.includes('election-candidate');
+
+  return (
+    draft.entityType === 'group' ||
+    draft.entityType === 'event' ||
+    draft.entityType === 'amendment' ||
+    draft.entityType === 'blog' ||
+    draft.entityType === 'statement' ||
+    draft.entityType === 'todo' ||
+    draft.entityType === 'agenda_item' ||
+    draft.entityType === 'payment'
+  );
 }
 
 export function useCreateRecoveryActions(draft: CreateRecoveryDraft | null) {
@@ -98,10 +145,6 @@ export function useCreateRecoveryActions(draft: CreateRecoveryDraft | null) {
     restore,
     discard,
     isRetrying,
-    canRetry:
-      draft?.entityType === 'group' ||
-      draft?.entityType === 'event' ||
-      draft?.entityType === 'amendment' ||
-      draft?.entityType === 'blog',
+    canRetry: canRetryCreateDraft(draft),
   };
 }

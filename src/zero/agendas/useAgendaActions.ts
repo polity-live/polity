@@ -3,7 +3,7 @@ import { useZero } from '@rocicorp/zero/react';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
-import { onServerError, serverConfirmed } from '../mutate-with-server-check';
+import { onServerError } from '../mutate-with-server-check';
 
 /**
  * Action hook for agenda mutations.
@@ -20,7 +20,7 @@ export function useAgendaActions() {
       const result = zero.mutate(mutators.agendas.createAgendaItem(args));
       toast.success(t('common.agendaToasts.itemCreated'));
       onServerError(result, () => toast.error(t('common.agendaToasts.itemCreateFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [t, zero]
   );
@@ -38,7 +38,7 @@ export function useAgendaActions() {
     (args: Parameters<typeof mutators.agendas.updateAgendaItem>[0]) => {
       const result = zero.mutate(mutators.agendas.updateAgendaItem(args));
       onServerError(result, () => toast.error(t('common.agendaToasts.itemUpdateFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [t, zero]
   );
@@ -48,7 +48,7 @@ export function useAgendaActions() {
       const result = zero.mutate(mutators.agendas.deleteAgendaItem({ id }));
       toast.success(t('common.agendaToasts.itemDeleted'));
       onServerError(result, () => toast.error(t('common.agendaToasts.itemDeleteFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [t, zero]
   );
@@ -57,7 +57,7 @@ export function useAgendaActions() {
     (args: Parameters<typeof mutators.agendas.reorderAgendaItems>[0]) => {
       const result = zero.mutate(mutators.agendas.reorderAgendaItems(args));
       onServerError(result, () => toast.error(t('common.agendaToasts.reorderFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [t, zero]
   );
@@ -66,14 +66,9 @@ export function useAgendaActions() {
   const addSpeaker = useCallback(
     (args: Parameters<typeof mutators.agendas.addSpeaker>[0]) => {
       const result = zero.mutate(mutators.agendas.addSpeaker(args));
-      return serverConfirmed(result)
-        .then(() => {
-          toast.success(t('common.agendaToasts.speakerAdded'));
-        })
-        .catch(error => {
-          toast.error(t('common.agendaToasts.speakerAddFailed'));
-          throw error;
-        });
+      toast.success(t('common.agendaToasts.speakerAdded'));
+      onServerError(result, () => toast.error(t('common.agendaToasts.speakerAddFailed')));
+      return result;
     },
     [t, zero]
   );
@@ -82,7 +77,7 @@ export function useAgendaActions() {
     (args: Parameters<typeof mutators.agendas.updateSpeaker>[0]) => {
       const result = zero.mutate(mutators.agendas.updateSpeaker(args));
       onServerError(result, () => toast.error(t('common.agendaToasts.speakerUpdateFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [t, zero]
   );
@@ -90,14 +85,9 @@ export function useAgendaActions() {
   const removeSpeaker = useCallback(
     (id: string) => {
       const result = zero.mutate(mutators.agendas.removeSpeaker({ id }));
-      return serverConfirmed(result)
-        .then(() => {
-          toast.success(t('common.agendaToasts.speakerRemoved'));
-        })
-        .catch(error => {
-          toast.error(t('common.agendaToasts.speakerRemoveFailed'));
-          throw error;
-        });
+      toast.success(t('common.agendaToasts.speakerRemoved'));
+      onServerError(result, () => toast.error(t('common.agendaToasts.speakerRemoveFailed')));
+      return result;
     },
     [t, zero]
   );
@@ -108,7 +98,7 @@ export function useAgendaActions() {
     (args: Parameters<typeof mutators.agendas.createAgendaItemChangeRequest>[0]) => {
       const result = zero.mutate(mutators.agendas.createAgendaItemChangeRequest(args));
       onServerError(result, () => toast.error(t('common.agendaToasts.crCreateFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [t, zero]
   );
@@ -117,7 +107,7 @@ export function useAgendaActions() {
     (args: Parameters<typeof mutators.agendas.updateAgendaItemChangeRequest>[0]) => {
       const result = zero.mutate(mutators.agendas.updateAgendaItemChangeRequest(args));
       onServerError(result, () => toast.error(t('common.agendaToasts.crUpdateFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [t, zero]
   );
@@ -126,7 +116,7 @@ export function useAgendaActions() {
     (args: Parameters<typeof mutators.agendas.reorderAgendaItemChangeRequests>[0]) => {
       const result = zero.mutate(mutators.agendas.reorderAgendaItemChangeRequests(args));
       onServerError(result, () => toast.error(t('common.agendaToasts.crReorderFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [t, zero]
   );
@@ -135,7 +125,7 @@ export function useAgendaActions() {
     (id: string) => {
       const result = zero.mutate(mutators.agendas.deleteAgendaItemChangeRequest({ id }));
       onServerError(result, () => toast.error(t('common.agendaToasts.crDeleteFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [t, zero]
   );
@@ -151,7 +141,7 @@ export function useAgendaActions() {
       const result = zero.mutate(mutators.agendas.initializeChangeRequestVoting(args));
       toast.success(t('common.agendaToasts.crVotingInitialized'));
       onServerError(result, () => toast.error(t('common.agendaToasts.crVotingInitFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [t, zero]
   );
@@ -160,7 +150,7 @@ export function useAgendaActions() {
     (args: { amendment_id: string; agenda_item_id: string; process_branch_id?: string | null }) => {
       const result = zero.mutate(mutators.agendas.ensureEventSuggestionChangeRequestVotes(args));
       onServerError(result, () => toast.error(t('common.agendaToasts.crVotingInitFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [t, zero]
   );
@@ -173,7 +163,7 @@ export function useAgendaActions() {
       const result = zero.mutate(mutators.agendas.processCRVoteResult(args));
       toast.success(t('common.agendaToasts.crVoteProcessed'));
       onServerError(result, () => toast.error(t('common.agendaToasts.crVoteProcessFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [t, zero]
   );

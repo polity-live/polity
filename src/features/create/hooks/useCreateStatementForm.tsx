@@ -28,7 +28,11 @@ import {
   getStatementHeadline,
   hasStatementContent,
 } from '@/zero/statements/content';
-import { trackCreateFinalization, waitForOptimisticCreate } from '../logic/createFinalization';
+import {
+  consumeCreateRestoreDraft,
+  trackCreateFinalization,
+  waitForOptimisticCreate,
+} from '../logic/createFinalization';
 
 const MAX_CHARS = 280;
 
@@ -110,6 +114,35 @@ export function useCreateStatementForm(): CreateFormConfig {
   useEffect(() => {
     setGroupId(groupIdParam || null);
   }, [groupIdParam]);
+
+  useEffect(() => {
+    const restoreDraft = consumeCreateRestoreDraft<{
+      title?: string;
+      text?: string;
+      groupId?: string | null;
+      imageUrl?: string;
+      videoUrl?: string;
+      isStory?: boolean;
+      surveyQuestion?: string;
+      surveyOptions?: string[];
+      surveyDurationHours?: number;
+      hashtags?: string[];
+      visibility?: 'public' | 'authenticated' | 'private';
+    }>('statement');
+    if (!restoreDraft) return;
+
+    setTitle(restoreDraft.formState.title ?? '');
+    setText(restoreDraft.formState.text ?? '');
+    setGroupId(restoreDraft.formState.groupId ?? null);
+    setImageUrl(restoreDraft.formState.imageUrl ?? '');
+    setVideoUrl(restoreDraft.formState.videoUrl ?? '');
+    setIsStory(restoreDraft.formState.isStory ?? false);
+    setSurveyQuestion(restoreDraft.formState.surveyQuestion ?? '');
+    setSurveyOptions(restoreDraft.formState.surveyOptions ?? ['', '']);
+    setSurveyDurationHours(restoreDraft.formState.surveyDurationHours ?? 24);
+    setHashtags(restoreDraft.formState.hashtags ?? []);
+    setVisibility(restoreDraft.formState.visibility ?? 'public');
+  }, []);
 
   useEffect(() => {
     if (!groupId) {

@@ -7,7 +7,7 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -48,7 +48,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const leaveGroup = async (membershipId: string) => {
     try {
-      await groupActions.leaveGroup({ id: membershipId });
+      await waitForClientApply(groupActions.leaveGroup({ id: membershipId }));
 
       return { success: true };
     } catch (error) {
@@ -62,7 +62,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawFromEvent = async (participationId: string) => {
     try {
-      await eventActions.leaveEvent({ id: participationId });
+      await waitForClientApply(eventActions.leaveEvent({ id: participationId }));
 
       return { success: true };
     } catch (error) {
@@ -76,7 +76,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const leaveCollaboration = async (collaborationId: string) => {
     try {
-      await amendmentActions.leaveCollaboration(collaborationId);
+      await waitForClientApply(amendmentActions.leaveCollaboration(collaborationId));
 
       return { success: true };
     } catch (error) {
@@ -90,7 +90,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const leaveBlog = async (relationId: string) => {
     try {
-      await blogActions.deleteEntry(relationId);
+      await waitForClientApply(blogActions.deleteEntry(relationId));
 
       return { success: true };
     } catch (error) {
@@ -109,7 +109,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
         ? { id: membership.group.id, name: membership.group.name }
         : null;
 
-      await serverConfirmed(groupActions.acceptInvitation({ id: membershipId }));
+      await waitForClientApply(groupActions.acceptInvitation({ id: membershipId }));
 
       // Add timeline event for member joining (if group is public)
       if (groupSnapshot && userId) {
@@ -142,7 +142,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineGroupInvitation = async (membershipId: string) => {
     try {
-      await groupActions.leaveGroup({ id: membershipId });
+      await waitForClientApply(groupActions.leaveGroup({ id: membershipId }));
 
       return { success: true };
     } catch (error) {
@@ -156,7 +156,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawGroupRequest = async (membershipId: string) => {
     try {
-      await groupActions.leaveGroup({ id: membershipId });
+      await waitForClientApply(groupActions.leaveGroup({ id: membershipId }));
 
       return { success: true };
     } catch (error) {
@@ -170,10 +170,12 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptEventInvitation = async (participationId: string) => {
     try {
-      await eventActions.updateParticipant({
-        id: participationId,
-        status: 'member',
-      });
+      await waitForClientApply(
+        eventActions.updateParticipant({
+          id: participationId,
+          status: 'member',
+        })
+      );
 
       return { success: true };
     } catch (error) {
@@ -187,7 +189,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineEventInvitation = async (participationId: string) => {
     try {
-      await eventActions.leaveEvent({ id: participationId });
+      await waitForClientApply(eventActions.leaveEvent({ id: participationId }));
 
       return { success: true };
     } catch (error) {
@@ -201,7 +203,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawEventRequest = async (participationId: string) => {
     try {
-      await eventActions.leaveEvent({ id: participationId });
+      await waitForClientApply(eventActions.leaveEvent({ id: participationId }));
 
       return { success: true };
     } catch (error) {
@@ -224,10 +226,12 @@ export function useUserMemberships(userId?: string, userName?: string) {
           }
         : null;
 
-      await amendmentActions.updateCollaborator({
-        id: collaborationId,
-        status: 'member',
-      });
+      await waitForClientApply(
+        amendmentActions.updateCollaborator({
+          id: collaborationId,
+          status: 'member',
+        })
+      );
 
       // Add timeline event for public amendments
       if (amendmentSnapshot && amendmentSnapshot.visibility === 'public' && userId) {
@@ -256,7 +260,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineCollaborationInvitation = async (collaborationId: string) => {
     try {
-      await amendmentActions.leaveCollaboration(collaborationId);
+      await waitForClientApply(amendmentActions.leaveCollaboration(collaborationId));
 
       return { success: true };
     } catch (error) {
@@ -270,7 +274,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawCollaborationRequest = async (collaborationId: string) => {
     try {
-      await amendmentActions.leaveCollaboration(collaborationId);
+      await waitForClientApply(amendmentActions.leaveCollaboration(collaborationId));
 
       return { success: true };
     } catch (error) {
@@ -284,10 +288,12 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptBlogInvitation = async (blogRelationId: string) => {
     try {
-      await blogActions.updateEntry({
-        id: blogRelationId,
-        status: 'writer',
-      });
+      await waitForClientApply(
+        blogActions.updateEntry({
+          id: blogRelationId,
+          status: 'writer',
+        })
+      );
 
       return { success: true };
     } catch (error) {
@@ -301,7 +307,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineBlogInvitation = async (blogRelationId: string) => {
     try {
-      await blogActions.deleteEntry(blogRelationId);
+      await waitForClientApply(blogActions.deleteEntry(blogRelationId));
 
       return { success: true };
     } catch (error) {
@@ -315,7 +321,7 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawBlogRequest = async (blogRelationId: string) => {
     try {
-      await blogActions.deleteEntry(blogRelationId);
+      await waitForClientApply(blogActions.deleteEntry(blogRelationId));
 
       return { success: true };
     } catch (error) {

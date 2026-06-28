@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNotificationState } from '@/zero/notifications/useNotificationState';
 import { useNotificationActions } from '@/zero/notifications/useNotificationActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import {
   NotificationSettings,
   GroupNotificationSettings,
@@ -114,25 +115,29 @@ export function useNotificationSettings(_userId?: string) {
 
         if (existingId) {
           // Update existing settings — facade shows toast
-          await facadeUpdateSettings({
-            id: existingId,
-            ...dbUpdates,
-          });
+          await waitForClientApply(
+            facadeUpdateSettings({
+              id: existingId,
+              ...dbUpdates,
+            })
+          );
         } else {
           // Create new settings — facade shows toast
           const newId = crypto.randomUUID();
-          await facadeCreateSettings({
-            id: newId,
-            group_notifications: DEFAULT_NOTIFICATION_SETTINGS.groupNotifications,
-            event_notifications: DEFAULT_NOTIFICATION_SETTINGS.eventNotifications,
-            amendment_notifications: DEFAULT_NOTIFICATION_SETTINGS.amendmentNotifications,
-            blog_notifications: DEFAULT_NOTIFICATION_SETTINGS.blogNotifications,
-            todo_notifications: DEFAULT_NOTIFICATION_SETTINGS.todoNotifications,
-            social_notifications: DEFAULT_NOTIFICATION_SETTINGS.socialNotifications,
-            delivery_settings: DEFAULT_NOTIFICATION_SETTINGS.deliverySettings,
-            timeline_settings: DEFAULT_NOTIFICATION_SETTINGS.timelineSettings,
-            ...dbUpdates,
-          });
+          await waitForClientApply(
+            facadeCreateSettings({
+              id: newId,
+              group_notifications: DEFAULT_NOTIFICATION_SETTINGS.groupNotifications,
+              event_notifications: DEFAULT_NOTIFICATION_SETTINGS.eventNotifications,
+              amendment_notifications: DEFAULT_NOTIFICATION_SETTINGS.amendmentNotifications,
+              blog_notifications: DEFAULT_NOTIFICATION_SETTINGS.blogNotifications,
+              todo_notifications: DEFAULT_NOTIFICATION_SETTINGS.todoNotifications,
+              social_notifications: DEFAULT_NOTIFICATION_SETTINGS.socialNotifications,
+              delivery_settings: DEFAULT_NOTIFICATION_SETTINGS.deliverySettings,
+              timeline_settings: DEFAULT_NOTIFICATION_SETTINGS.timelineSettings,
+              ...dbUpdates,
+            })
+          );
         }
 
         return { success: true };

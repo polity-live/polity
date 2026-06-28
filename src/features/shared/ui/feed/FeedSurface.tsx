@@ -6,7 +6,6 @@ import type {
   HTMLAttributes,
   ReactNode,
 } from 'react';
-import { Loader2 } from 'lucide-react';
 
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { MotionGroup, MotionItem } from '@/features/shared/motion';
@@ -73,7 +72,6 @@ interface FeedStatePanelProps {
   icon?: IconComponent;
   title?: ReactNode;
   description?: ReactNode;
-  isLoading?: boolean;
   children?: ReactNode;
   className?: string;
   contentClassName?: string;
@@ -83,13 +81,10 @@ function FeedStatePanel({
   icon: Icon,
   title,
   description,
-  isLoading,
   children,
   className,
   contentClassName,
 }: FeedStatePanelProps) {
-  const StateIcon = isLoading ? Loader2 : Icon;
-
   return (
     <Card data-slot="feed-state-panel" className={className}>
       <CardContent
@@ -98,20 +93,7 @@ function FeedStatePanel({
           contentClassName
         )}
       >
-        {StateIcon ? (
-          <StateIcon
-            className={cn(
-              'text-muted-foreground mb-4 h-12 w-12',
-              isLoading && 'animate-civic-loading-dossier'
-            )}
-          />
-        ) : null}
-        {isLoading ? (
-          <div className="mb-4 w-full max-w-48 space-y-2">
-            <div className="civic-shimmer mx-auto h-2 w-3/4 rounded-full" />
-            <div className="civic-shimmer mx-auto h-2 w-1/2 rounded-full [animation-delay:120ms]" />
-          </div>
-        ) : null}
+        {Icon ? <Icon className="text-muted-foreground mb-4 h-12 w-12" /> : null}
         {title ? <p className="text-lg font-semibold">{title}</p> : null}
         {description ? <p className="text-muted-foreground text-sm">{description}</p> : null}
         {children}

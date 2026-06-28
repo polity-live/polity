@@ -3,6 +3,7 @@ import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**
@@ -70,10 +71,12 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
       const subscriptionId = crypto.randomUUID();
       createdSubscriptionIdRef.current = subscriptionId;
 
-      await subscribeAction({
-        id: subscriptionId,
-        amendment_id: targetAmendmentId,
-      });
+      await waitForClientApply(
+        subscribeAction({
+          id: subscriptionId,
+          amendment_id: targetAmendmentId,
+        })
+      );
       toast.success(
         translateText('generated.inline.0155_successfully_subscribed_to_amendment_a34c2ad6')
       );
@@ -119,7 +122,7 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
     setIsLoading(true);
     try {
       for (const sub of subsToDelete) {
-        await unsubscribeAction(sub.id);
+        await waitForClientApply(unsubscribeAction(sub.id));
       }
       createdSubscriptionIdRef.current = null;
       toast.success(

@@ -157,6 +157,8 @@ describe('VoteCastDialog', () => {
     expect(dialogContentClasses).not.toContain('max-h-[80vh]');
     expect(dialogContentClasses).not.toContain('sm:max-w-lg');
     expect(document.querySelector('[data-slot="vote-submission-overlay"]')).not.toBeNull();
+    expect(screen.getByRole('progressbar', { name: 'Stimmabgabefortschritt' })).toBeTruthy();
+    expect(document.querySelector('[data-slot="loading-progress-bar"]')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /support/i })).toBeNull();
     expect(screen.getByText('Stimmrecht prüfen')).toBeTruthy();
     expect(screen.getByText('Stimme versiegeln')).toBeTruthy();

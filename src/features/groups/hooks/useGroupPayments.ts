@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { useGroupPaymentsData } from '@/zero/groups/useGroupState';
 import { usePaymentActions } from '@/zero/payments/usePaymentActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 export function useGroupPayments(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -28,16 +29,18 @@ export function useGroupPayments(groupId: string) {
     try {
       const paymentId = crypto.randomUUID();
 
-      await createPayment({
-        id: paymentId,
-        label: paymentData.label,
-        type: paymentData.type,
-        amount: paymentData.amount,
-        payer_user_id: paymentData.payerUserId ?? null,
-        payer_group_id: paymentData.payerGroupId ?? null,
-        receiver_user_id: paymentData.receiverUserId ?? null,
-        receiver_group_id: paymentData.receiverGroupId ?? null,
-      });
+      await waitForClientApply(
+        createPayment({
+          id: paymentId,
+          label: paymentData.label,
+          type: paymentData.type,
+          amount: paymentData.amount,
+          payer_user_id: paymentData.payerUserId ?? null,
+          payer_group_id: paymentData.payerGroupId ?? null,
+          receiver_user_id: paymentData.receiverUserId ?? null,
+          receiver_group_id: paymentData.receiverGroupId ?? null,
+        })
+      );
 
       return { success: true, paymentId };
     } catch (error) {
@@ -62,7 +65,7 @@ export function useGroupPayments(groupId: string) {
 
     setIsLoading(true);
     try {
-      await deletePaymentAction({ id: paymentId });
+      await waitForClientApply(deletePaymentAction({ id: paymentId }));
 
       return { success: true };
     } catch (error) {

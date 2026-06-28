@@ -3,6 +3,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type CollaborationStatus = 'invited' | 'requested' | 'member' | 'admin';
@@ -44,14 +45,16 @@ export function useAmendmentCollaboration(amendmentId: string) {
     try {
       const newCollaborationId = crypto.randomUUID();
 
-      await addCollaboratorAction({
-        id: newCollaborationId,
-        status: 'requested',
-        user_id: user.id,
-        amendment_id: amendmentId,
-        role_id: null,
-        visibility: '',
-      });
+      await waitForClientApply(
+        addCollaboratorAction({
+          id: newCollaborationId,
+          status: 'requested',
+          user_id: user.id,
+          amendment_id: amendmentId,
+          role_id: null,
+          visibility: '',
+        })
+      );
 
       // Send notification to amendment admins
     } catch (error) {
@@ -74,7 +77,7 @@ export function useAmendmentCollaboration(amendmentId: string) {
 
     setIsLoading(true);
     try {
-      await removeCollaboratorAction(collaboration.id);
+      await waitForClientApply(removeCollaboratorAction(collaboration.id));
     } catch (error) {
       console.error('Failed to leave collaboration:', error);
       toast.error(
@@ -93,7 +96,7 @@ export function useAmendmentCollaboration(amendmentId: string) {
 
     setIsLoading(true);
     try {
-      await acceptInvitationAction(collaboration.id);
+      await waitForClientApply(acceptInvitationAction(collaboration.id));
     } catch (error) {
       console.error('Failed to accept invitation:', error);
       toast.error(

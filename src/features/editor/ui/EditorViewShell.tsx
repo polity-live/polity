@@ -1,9 +1,10 @@
 'use client';
 
 import { useLayoutEffect, useRef } from 'react';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText } from 'lucide-react';
 
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { BadgeControl } from '@/features/shared/ui/status/StatusBadges';
 import { Card, CardContent, CardDescription, CardHeader } from '@/features/shared/ui/ui/card';
@@ -158,13 +159,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
 
   // Loading state
   if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-20">
-          <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
-        </CardContent>
-      </Card>
-    );
+    return <PageSkeleton variant="settings" label={t('common.loading.pageSkeleton.settings')} />;
   }
 
   // Not found state

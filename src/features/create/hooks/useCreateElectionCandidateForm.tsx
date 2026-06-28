@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useElectionState } from '@/zero/elections/useElectionState';
@@ -18,7 +18,11 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
-import { trackCreateFinalization, waitForOptimisticCreate } from '../logic/createFinalization';
+import {
+  consumeCreateRestoreDraft,
+  trackCreateFinalization,
+  waitForOptimisticCreate,
+} from '../logic/createFinalization';
 import {
   getCreateSelectableEventIds,
   isCreateSelectableElection,
@@ -37,6 +41,18 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
   const [statement, setStatement] = useState('');
   const [imageURL, setImageURL] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  useEffect(() => {
+    const restoreDraft = consumeCreateRestoreDraft<{
+      electionId?: string;
+      statement?: string;
+      imageURL?: string;
+    }>('election');
+    if (!restoreDraft?.createPath.includes('election-candidate')) return;
+
+    setElectionId(restoreDraft.formState.electionId ?? '');
+    setStatement(restoreDraft.formState.statement ?? '');
+    setImageURL(restoreDraft.formState.imageURL ?? '');
+  }, []);
   const selectableEventIds = useMemo(() => {
     const electionEvents = electionsForSearch.flatMap(election =>
       election.agenda_item?.event ? [election.agenda_item.event] : []
@@ -89,7 +105,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
       trackCreateFinalization({
         result: candidateResult,
         draft: {
-          id: `election-candidate:${candidateId}`,
+          id: `election:${candidateId}`,
           entityType: 'election',
           entityId: candidateId,
           createPath: '/create/election-candidate',
@@ -106,7 +122,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
           trackCreateFinalization({
             result: retryResult,
             draft: {
-              id: `election-candidate:${candidateId}`,
+              id: `election:${candidateId}`,
               entityType: 'election',
               entityId: candidateId,
               createPath: '/create/election-candidate',

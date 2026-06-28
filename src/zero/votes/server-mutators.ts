@@ -31,6 +31,7 @@ import {
   replaceIndicativeVoteSchema,
   createFinalVoterParticipationSchema,
   createFinalChoiceDecisionSchema,
+  castFinalVoteFullSchema,
   upsertVoteOfflineTallySchema,
 } from './schema';
 import { VOTE_PHASE, isFinalVotePhase, VOTE_PURPOSE, normalizeVotePhase } from './vote-workflow';
@@ -961,6 +962,16 @@ export const voteServerMutators = {
       await maybeCloseVoteWhenAllFinalVotersVoted(tx, ctx, args.vote_id);
     }
   ),
+
+  castFinalVoteFull: defineMutator(castFinalVoteFullSchema, async ({ tx, ctx, args }) => {
+    await requireRecentVotingPasswordVerification(tx, ctx.userID);
+    await assertOnlineVoteAllowed(tx, {
+      voteId: args.participation.vote_id,
+      userId: ctx.userID,
+    });
+    await mutators.votes.castFinalVoteFull.fn({ tx, ctx, args });
+    await maybeCloseVoteWhenAllFinalVotersVoted(tx, ctx, args.participation.vote_id);
+  }),
 
   upsertOfflineTally: defineMutator(upsertVoteOfflineTallySchema, async ({ tx, ctx, args }) => {
     await assertOfflineVoteTallyWithinCap(tx, {

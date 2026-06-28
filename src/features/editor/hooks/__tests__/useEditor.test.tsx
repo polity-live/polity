@@ -21,7 +21,10 @@ const hookMocks = vi.hoisted(() => ({
     type: 'blogs.update',
     args,
   })),
-  serverConfirmed: vi.fn(async (result: unknown) => result),
+  waitForClientApply: vi.fn(async (result: unknown) => {
+    void result;
+  }),
+  trackServerFinalization: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
   broadcastContent: vi.fn(),
@@ -50,7 +53,8 @@ vi.mock('@/zero/mutators', () => ({
 }));
 
 vi.mock('@/zero/mutate-with-server-check', () => ({
-  serverConfirmed: (result: unknown) => hookMocks.serverConfirmed(result),
+  waitForClientApply: (result: unknown) => hookMocks.waitForClientApply(result),
+  trackServerFinalization: (...args: unknown[]) => hookMocks.trackServerFinalization(...args),
 }));
 
 vi.mock('@/zero/amendments/useAmendmentState', () => ({
@@ -139,7 +143,7 @@ describe('useEditor', () => {
       editing_mode: 'suggest_internal',
     });
     expect(hookMocks.updateProcessBranch).not.toHaveBeenCalled();
-    expect(hookMocks.serverConfirmed).toHaveBeenCalledWith({
+    expect(hookMocks.waitForClientApply).toHaveBeenCalledWith({
       type: 'documents.updateContent',
       args: {
         id: 'document-1',

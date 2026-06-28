@@ -5,7 +5,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { getEditingModeOption } from '@/features/shared/ui/status';
 import type { EditingMode } from './editing-mode-policy';
 import { mutators } from '../mutators';
-import { onServerError, serverConfirmed } from '../mutate-with-server-check';
+import { onServerError } from '../mutate-with-server-check';
 
 /**
  * Action hook for amendment mutations.
@@ -38,7 +38,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.update>[0]) => {
       const result = zero.mutate(mutators.amendments.update(args));
       onServerError(result, () => toast.error(t('features.amendments.toasts.updateFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -48,8 +48,9 @@ export function useAmendmentActions() {
       const result = zero.mutate(mutators.amendments.delete({ id }));
       toast.success(t('features.amendments.toasts.deleted'));
       onServerError(result, () => toast.error(t('features.amendments.toasts.deleteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Collaboration ──────────────────────────────────────────────────
@@ -60,8 +61,9 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.collaborationRequestFailed'))
       );
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const leaveCollaboration = useCallback(
@@ -71,8 +73,9 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.leaveCollaborationFailed'))
       );
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const acceptInvitation = useCallback(
@@ -82,8 +85,9 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.joinCollaborationFailed'))
       );
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const updateCollaborator = useCallback(
@@ -92,15 +96,16 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.updateCollaboratorFailed'))
       );
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const createStreetDesign = useCallback(
     (args: Parameters<typeof mutators.amendments.createStreetDesign>[0]) => {
       const result = zero.mutate(mutators.amendments.createStreetDesign(args));
       onServerError(result, () => toast.error(t('features.amendments.toasts.updateFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -109,7 +114,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.updateStreetDesign>[0]) => {
       const result = zero.mutate(mutators.amendments.updateStreetDesign(args));
       onServerError(result, () => toast.error(t('features.amendments.toasts.updateFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -118,7 +123,7 @@ export function useAmendmentActions() {
     (id: string) => {
       const result = zero.mutate(mutators.amendments.deleteStreetDesign({ id }));
       onServerError(result, () => toast.error(t('features.amendments.toasts.deleteFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -137,8 +142,9 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.workflowChangeFailed'))
       );
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const submitToEvent = useCallback(
@@ -152,8 +158,9 @@ export function useAmendmentActions() {
       void eventId;
       toast.success(t('features.amendments.toasts.submittedToEvent'));
       onServerError(result, () => toast.error(t('features.amendments.toasts.submitToEventFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const finalizeAmendment = useCallback(
@@ -172,8 +179,9 @@ export function useAmendmentActions() {
       onServerError(mutationResult, () =>
         toast.error(t('features.amendments.toasts.finalizeFailed'))
       );
+      return mutationResult;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Change Requests ────────────────────────────────────────────────
@@ -184,7 +192,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.changeRequestCreateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -195,7 +203,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.changeRequestUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -206,7 +214,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.changeRequestUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -217,7 +225,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.voteOnChangeRequestFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -228,7 +236,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.changeRequestUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -241,7 +249,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.changeRequestUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -252,7 +260,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.changeRequestUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -262,24 +270,27 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.supportAmendment>[0]) => {
       const result = zero.mutate(mutators.amendments.supportAmendment(args));
       onServerError(result, () => toast.error(t('features.amendments.toasts.supportAddFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const updateSupportVote = useCallback(
     (args: Parameters<typeof mutators.amendments.updateSupportVote>[0]) => {
       const result = zero.mutate(mutators.amendments.updateSupportVote(args));
       onServerError(result, () => toast.error(t('common.voteToasts.voteUpdateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteSupportVote = useCallback(
     (id: string) => {
       const result = zero.mutate(mutators.amendments.deleteSupportVote({ id }));
       onServerError(result, () => toast.error(t('common.voteToasts.voteDeleteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const createSupportConfirmation = useCallback(
@@ -288,8 +299,9 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.supportConfirmationFailed'))
       );
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const updateSupportConfirmation = useCallback(
@@ -306,7 +318,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.supportConfirmationUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -317,7 +329,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.supportConfirmationUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -328,7 +340,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processRunCreateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -339,7 +351,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processStepUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -350,7 +362,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processTaskUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -361,7 +373,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processStepUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -381,8 +393,9 @@ export function useAmendmentActions() {
       );
       toast.success(t('features.amendments.toasts.subscribed'));
       onServerError(result, () => toast.error(t('features.amendments.toasts.subscribeFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const unsubscribe = useCallback(
@@ -390,8 +403,9 @@ export function useAmendmentActions() {
       const result = zero.mutate(mutators.common.unsubscribe({ id }));
       toast.success(t('features.amendments.toasts.unsubscribed'));
       onServerError(result, () => toast.error(t('features.amendments.toasts.unsubscribeFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Amendment Paths ────────────────────────────────────────────────
@@ -399,7 +413,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.createPath>[0]) => {
       const result = zero.mutate(mutators.amendments.createPath(args));
       onServerError(result, () => toast.error(t('features.amendments.toasts.pathCreateFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -408,7 +422,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.deletePath>[0]) => {
       const result = zero.mutate(mutators.amendments.deletePath(args));
       onServerError(result, () => toast.error(t('features.amendments.toasts.pathDeleteFailed')));
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -419,7 +433,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.pathSegmentCreateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -430,7 +444,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.pathSegmentDeleteFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -441,7 +455,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processRunCreateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -452,7 +466,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processRunUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -463,7 +477,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processRunDeleteFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -474,7 +488,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processBranchCreateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -485,7 +499,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processBranchUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -496,7 +510,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processBranchDeleteFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -507,7 +521,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processStepCreateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -518,7 +532,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processStepUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -529,7 +543,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processStepDeleteFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -540,7 +554,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processTaskCreateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -551,7 +565,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processTaskUpdateFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );
@@ -562,7 +576,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.processTaskDeleteFailed'))
       );
-      return serverConfirmed(result);
+      return result;
     },
     [zero]
   );

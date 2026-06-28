@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useGroupState } from '@/zero/groups/useGroupState.ts';
 import { useTodoActions } from '@/zero/todos/useTodoActions.ts';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { Todo } from '../types/todo.types';
@@ -128,7 +129,7 @@ export function TodoDetailDialog({
       }
 
       // Update todo
-      await updateTodo({ id: todo.id, ...updates });
+      await waitForClientApply(updateTodo({ id: todo.id, ...updates }));
 
       // Handle assignment changes
       const currentAssignmentIds =
@@ -139,18 +140,20 @@ export function TodoDetailDialog({
 
       // Remove old assignments
       for (const assignment of removedAssignments) {
-        await unassignUser(assignment.id);
+        await waitForClientApply(unassignUser(assignment.id));
       }
 
       // Add new assignments
       for (const userId of addedUserIds) {
         const assignmentId = crypto.randomUUID();
-        await assignUser({
-          id: assignmentId,
-          todo_id: todo.id,
-          user_id: userId,
-          role: 'assignee',
-        });
+        await waitForClientApply(
+          assignUser({
+            id: assignmentId,
+            todo_id: todo.id,
+            user_id: userId,
+            role: 'assignee',
+          })
+        );
       }
 
       // Mutations already executed above

@@ -8,9 +8,9 @@ import {
   createGroupNodeLegendItem,
   getNetworkSelectionStyle,
 } from '@/features/network/ui/networkVisualHelpers';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { NetworkGroupEntity } from '../types/network.types';
 import { Button } from '@/features/shared/ui/ui/button';
+import { NetworkFlowSkeleton } from '@/features/network/ui/NetworkFlowSkeleton';
 export interface UserNetworkFlowProps {
   userId: string;
   onGroupClick?: (groupId: string, groupData: NetworkGroupEntity) => void;
@@ -90,13 +90,7 @@ export function UserNetworkFlowContentView({
   userProfile,
 }: UserNetworkFlowContentViewProps) {
   if (!userProfile) {
-    return (
-      <div className="bg-background flex h-full min-h-0 w-full items-center justify-center rounded-lg border">
-        <p className="text-muted-foreground">
-          {translateText('generated.inline.0803_loading_user_network_053d7b1c')}
-        </p>
-      </div>
-    );
+    return <NetworkFlowSkeleton label={t('common.network.loadingNetwork')} />;
   }
 
   return (

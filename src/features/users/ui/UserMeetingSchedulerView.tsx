@@ -38,6 +38,7 @@ import {
   MeetingWeekView,
 } from '@/features/meet/ui/MeetingCalendarViews';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 export interface UserMeetingSchedulerViewProps {
   allInstances: any;
   canSaveMeeting: any;
@@ -147,13 +148,7 @@ export function UserMeetingSchedulerView({
   view,
 }: UserMeetingSchedulerViewProps) {
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground text-lg">
-          {translateText('generated.inline.1205_loading_meetings_cc9cc88a')}
-        </div>
-      </div>
-    );
+    return <PageSkeleton variant="calendar" />;
   }
 
   // Booked instances (for bookings tab)

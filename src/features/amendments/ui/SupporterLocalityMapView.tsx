@@ -3,6 +3,7 @@ import type { DivIcon } from 'leaflet';
 import type { SupporterMapItem } from '@/features/amendments/logic/supporterDirectory';
 import { SupporterDirectoryDetails } from '@/features/amendments/ui/SupporterDirectoryDetails';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { MapPanelSkeleton } from '@/features/shared/ui/feedback';
 
 type ReactLeafletModule = typeof import('react-leaflet');
 
@@ -35,11 +36,21 @@ export function SupporterLocalityMapView({
     return null;
   }
 
-  if (loadFailed || !reactLeafletModule || !markerIcon || !activeMarkerIcon) {
+  if (loadFailed) {
     return (
       <div className="bg-muted/20 text-muted-foreground flex h-80 items-center justify-center rounded-xl border border-dashed px-4 text-center text-sm">
-        {translateText('generated.inline.0175_supporter_map_is_loading_3dbf4547')}
+        {translateText('common.locationPicker.unavailable', 'Map could not be loaded.')}
       </div>
+    );
+  }
+
+  if (!reactLeafletModule || !markerIcon || !activeMarkerIcon) {
+    return (
+      <MapPanelSkeleton
+        label={translateText('common.locationPicker.loading', 'Loading map...')}
+        className="rounded-xl"
+        heightClassName="h-80"
+      />
     );
   }
 

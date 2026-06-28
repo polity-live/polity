@@ -488,6 +488,7 @@ export const amendmentsTranslations = {
       loadDemo: 'Load demo',
       loadOsm: 'Load OSM',
       loadingOsm: 'Loading...',
+      loadingMap: 'Loading map...',
       mapUnavailable: 'Map could not be loaded.',
       rotationDegrees: 'Rotation deg',
       title: 'Map section',

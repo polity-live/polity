@@ -8,7 +8,7 @@
  * Renders PlateEditor in suggest_event mode with the toolbar.
  */
 
-import { Loader2 } from 'lucide-react';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { SuggestionViewToggle } from './SuggestionViewToggle';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
@@ -59,11 +59,7 @@ export function InlineAmendmentEditorView({
   onEventSuggestionCancel,
 }: InlineAmendmentEditorViewProps) {
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
-      </div>
-    );
+    return <SectionSkeleton rows={2} density="compact" />;
   }
 
   if (!entity) return null;

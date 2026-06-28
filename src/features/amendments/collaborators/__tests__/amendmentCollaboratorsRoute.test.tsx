@@ -38,10 +38,6 @@ vi.mock('@/features/auth/ui/AccessDenied', () => ({
   AccessDenied: () => <div data-testid="access-denied" />,
 }));
 
-vi.mock('@/features/shared/ui/ui/global-loading-animation', () => ({
-  GlobalLoadingAnimation: () => <div data-testid="global-loading-animation" />,
-}));
-
 import { Route } from '../../../../routes/_authed/amendment/$id/collaborators';
 
 const AmendmentCollaboratorsPage =
@@ -121,7 +117,7 @@ describe('AmendmentCollaboratorsPage', () => {
 
     render(<AmendmentCollaboratorsPage />);
 
-    expect(screen.queryByTestId('global-loading-animation')).not.toBeNull();
+    expect(document.querySelector('[data-slot="entity-page-skeleton"]')).not.toBeNull();
     expect(screen.queryByTestId('access-denied')).toBeNull();
   });
 });

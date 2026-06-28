@@ -23,6 +23,7 @@ export function usePqlFilterActions() {
       );
 
       onServerError(result, message => console.error('PQL filter create failed:', message));
+      return result;
     },
     [zero]
   );
@@ -31,6 +32,7 @@ export function usePqlFilterActions() {
     (args: { id: string; label?: string; query?: string; is_active?: boolean }) => {
       const result = zero.mutate(mutators.pql.update(args));
       onServerError(result, message => console.error('PQL filter update failed:', message));
+      return result;
     },
     [zero]
   );
@@ -39,6 +41,7 @@ export function usePqlFilterActions() {
     (id: string) => {
       const result = zero.mutate(mutators.pql.delete({ id }));
       onServerError(result, message => console.error('PQL filter delete failed:', message));
+      return result;
     },
     [zero]
   );

@@ -9,6 +9,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface UseDocumentMutationsResult {
@@ -66,53 +67,59 @@ export function useDocumentMutations(_groupId: string): UseDocumentMutationsResu
       // Documents are associated with groups through amendment.group_id, so we
       // must create a minimal amendment first, then attach the document to it.
       const amendmentId = crypto.randomUUID();
-      await createAmendment({
-        id: amendmentId,
-        title,
-        group_id: groupId,
-        visibility: 'group',
-        code: null,
-        reason: null,
-        category: null,
-        preamble: null,
-        event_id: null,
-        clone_source_id: null,
-        document_id: null,
-        tags: null,
-        discussions: null,
-        image_url: null,
-        x: null,
-        youtube: null,
-        linkedin: null,
-        website: null,
-      });
+      await waitForClientApply(
+        createAmendment({
+          id: amendmentId,
+          title,
+          group_id: groupId,
+          visibility: 'group',
+          code: null,
+          reason: null,
+          category: null,
+          preamble: null,
+          event_id: null,
+          clone_source_id: null,
+          document_id: null,
+          tags: null,
+          discussions: null,
+          image_url: null,
+          x: null,
+          youtube: null,
+          linkedin: null,
+          website: null,
+        })
+      );
 
       const docId = crypto.randomUUID();
-      await createDocAction({
-        id: docId,
-        amendment_id: amendmentId,
-        content: [
-          {
-            type: 'h1',
-            children: [{ text: title }],
-          },
-          {
-            type: 'p',
-            children: [{ text: 'Start writing your document...' }],
-          },
-        ],
-        editing_mode: 'single',
-      });
+      await waitForClientApply(
+        createDocAction({
+          id: docId,
+          amendment_id: amendmentId,
+          content: [
+            {
+              type: 'h1',
+              children: [{ text: title }],
+            },
+            {
+              type: 'p',
+              children: [{ text: 'Start writing your document...' }],
+            },
+          ],
+          editing_mode: 'single',
+        })
+      );
 
       // Add creator as collaborator so the document is user-attributed.
-      await addCollaborator({
-        id: crypto.randomUUID(),
-        document_id: docId,
-        user_id: userId,
-        role_id: null,
-        status: 'active',
-        visibility: 'group',
-      });
+      await waitForClientApply(
+        addCollaborator({
+          id: crypto.randomUUID(),
+          document_id: docId,
+          user_id: userId,
+          role_id: null,
+          status: 'active',
+          visibility: 'group',
+        })
+      );
 
       toast.success(translateText('generated.inline.0400_document_created_successfully_730aa2a8'));
 
@@ -147,7 +154,7 @@ export function useDocumentMutations(_groupId: string): UseDocumentMutationsResu
     setIsDeleting(true);
 
     try {
-      await deleteDocAction(documentId);
+      await waitForClientApply(deleteDocAction(documentId));
 
       toast.success(translateText('generated.inline.0402_document_deleted_successfully_1e20dc3e'));
       return true;

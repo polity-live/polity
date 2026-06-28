@@ -4,7 +4,7 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import type { PathWithEventSegment } from '@/features/amendments/logic/amendmentPathHelpers';
 import { notifyAmendmentCloned } from '@/features/notifications/utils/notification-helpers.ts';
 import { useCreateAmendmentPath } from './useCreateAmendmentPath';
@@ -143,7 +143,7 @@ export function useCloneAmendment(
         website: '',
         image_url: amendment.image_url ?? null,
       });
-      await serverConfirmed(createAmendmentResult);
+      await waitForClientApply(createAmendmentResult);
 
       const createDocumentResult = createDocument({
         id: cloneDocumentId,
@@ -151,12 +151,14 @@ export function useCloneAmendment(
         content: originalDocument?.content ?? { type: 'doc', content: [] },
         editing_mode: 'edit',
       });
-      await serverConfirmed(createDocumentResult);
+      await waitForClientApply(createDocumentResult);
 
-      await updateAmendment({
-        id: cloneId,
-        document_id: cloneDocumentId,
-      });
+      await waitForClientApply(
+        updateAmendment({
+          id: cloneId,
+          document_id: cloneDocumentId,
+        })
+      );
 
       if (selectedEventId && enrichedPath.length > 0) {
         await createAmendmentPath({

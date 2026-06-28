@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useCollaboratorsPageController } from '@/features/amendments/collaborators/hooks/useCollaboratorsPageController';
 import { CollaboratorsView } from '@/features/amendments/collaborators/ui/CollaboratorsView';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { useAuth } from '@/providers/auth-provider';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 
@@ -20,7 +20,7 @@ function AmendmentCollaboratorsPage() {
   });
 
   if (amendmentLoading || collaboratorsController.isLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton />;
   }
 
   const canManageCollaborators =

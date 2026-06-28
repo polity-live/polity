@@ -9,6 +9,7 @@ import type { TDiscussion } from '@/features/editor/types';
 import { AmendmentBranchSelectorSection } from '@/features/amendments/ui/AmendmentBranchSelectorSection';
 import type { AmendmentProcessBranchSource } from '@/features/amendments/logic/amendmentBranchDisplay';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import type { ChangeRequestBranchSection } from '../logic/changeRequestsViewModel';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 
@@ -162,9 +163,7 @@ export function ChangeRequestsView({
   if (isLoading) {
     return (
       <PageWrapper>
-        <div className="py-12 text-center">
-          {translateText('generated.inline.0283_loading_change_requests_83649539')}
-        </div>
+        <PageSkeleton label={translateText('common.loading.pageSkeleton.entity')} />
       </PageWrapper>
     );
   }

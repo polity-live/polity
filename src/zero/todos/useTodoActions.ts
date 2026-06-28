@@ -39,8 +39,9 @@ export function useTodoActions() {
     (args: TodoUpdateInput) => {
       const result = zero.mutate(mutators.todos.update(args));
       onServerError(result, () => toast.error(t('features.todos.toasts.updateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteTodo = useCallback(
@@ -48,8 +49,9 @@ export function useTodoActions() {
       const result = zero.mutate(mutators.todos.delete({ id }));
       toast.success(t('features.todos.toasts.deleted'));
       onServerError(result, () => toast.error(t('features.todos.toasts.deleteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Toggle Complete ────────────────────────────────────────────────
@@ -57,8 +59,9 @@ export function useTodoActions() {
     (id: string) => {
       const result = zero.mutate(mutators.todos.toggleComplete({ id }));
       onServerError(result, () => toast.error(t('features.todos.toasts.toggleFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Assignments ────────────────────────────────────────────────────
@@ -67,8 +70,9 @@ export function useTodoActions() {
       const result = zero.mutate(mutators.todos.assign(args));
       toast.success(t('features.todos.toasts.userAssigned'));
       onServerError(result, () => toast.error(t('features.todos.toasts.assignFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const unassignUser = useCallback(
@@ -76,8 +80,9 @@ export function useTodoActions() {
       const result = zero.mutate(mutators.todos.unassign({ id }));
       toast.success(t('features.todos.toasts.userUnassigned'));
       onServerError(result, () => toast.error(t('features.todos.toasts.unassignFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   return {

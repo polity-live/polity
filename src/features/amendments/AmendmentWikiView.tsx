@@ -17,8 +17,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { CheckCircle2, Copy, FileText, Users, Vote, XCircle } from 'lucide-react';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
-import { StatsBar } from '@/features/shared/ui/layout';
-import { ActionBar } from '@/features/shared/ui/layout';
+import { ActionBar, EntityPageFrame, StatsBar } from '@/features/shared/ui/layout';
 import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
 import {
   getWikiParticipationName,
@@ -260,7 +259,7 @@ export function AmendmentWikiView({
     amendment.change_requests?.length ?? amendment.change_request_count ?? 0;
 
   return (
-    <div>
+    <EntityPageFrame>
       {/* Header with centered title and subtitle */}
       <div className="mb-8 text-center">
         <div className="mb-2 flex items-center justify-center gap-3">
@@ -661,6 +660,6 @@ export function AmendmentWikiView({
         )}
         confirmButtonText={translateText('generated.inline.0009_clone_amendment_71d1877f')}
       />
-    </div>
+    </EntityPageFrame>
   );
 }

@@ -208,6 +208,10 @@ export const selectFinalChoiceDecisionSchema = baseFinalChoiceDecisionSchema;
 export const createFinalChoiceDecisionSchema = baseFinalChoiceDecisionSchema
   .omit({ id: true, created_at: true })
   .extend({ id: z.string() });
+export const castFinalVoteFullSchema = z.object({
+  participation: createFinalVoterParticipationSchema,
+  decisions: z.array(createFinalChoiceDecisionSchema).min(1),
+});
 
 // ============================================
 // Vote Offline Tally

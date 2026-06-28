@@ -1,6 +1,6 @@
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import type { MembershipTab } from '@/features/groups/types/group.types';
 import { GroupMembershipsContentContainer } from '@/features/groups/ui/GroupMembershipsContentContainer';
 
@@ -58,7 +58,7 @@ export function useGroupMembershipsPageController({
 }
 
 function GroupMembershipsLoadingView() {
-  return <GlobalLoadingAnimation connectionStatus="connecting" />;
+  return <PageSkeleton variant="settings" />;
 }
 
 function GroupMembershipsAccessDeniedView() {

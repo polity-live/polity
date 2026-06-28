@@ -1,5 +1,6 @@
 'use client';
 import { featureThemeClassName } from '@/features/shared/theme';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { FormControlTextarea, FormControlLabel, FormControlInput } from '@/features/shared/ui/form';
 import {
   Card,
@@ -94,12 +95,7 @@ export function AmendmentEditContentView({
   confirmCreate,
 }: AmendmentEditContentViewProps) {
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-4 py-12">
-        <Loader2 className="text-primary h-8 w-8 animate-spin" />
-        <p className="text-muted-foreground">{t('features.amendments.editContent.loading')}</p>
-      </div>
-    );
+    return <PageSkeleton variant="settings" label={t('features.amendments.editContent.loading')} />;
   }
 
   if (!isCreating && !amendment) {

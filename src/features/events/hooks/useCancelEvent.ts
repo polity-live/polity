@@ -12,6 +12,7 @@ import { useEventActions } from '@/zero/events/useEventActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useEventForCancel } from '@/zero/events/useEventState';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface AgendaItem {
@@ -92,21 +93,25 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
       setIsLoading(true);
       try {
         // Update event status to cancelled
-        await doCancelEvent({
-          id: params.eventId,
-          cancel_reason: params.reason,
-        });
+        await waitForClientApply(
+          doCancelEvent({
+            id: params.eventId,
+            cancel_reason: params.reason,
+          })
+        );
 
         // Reassign agenda items if specified
         if (params.reassignToEventId && params.itemsToReassign?.length) {
           // Reassign items sequentially
           let newSortOrder = 1;
           for (const itemId of params.itemsToReassign) {
-            await updateAgendaItem({
-              id: itemId,
-              event_id: params.reassignToEventId,
-              order_index: newSortOrder++,
-            });
+            await waitForClientApply(
+              updateAgendaItem({
+                id: itemId,
+                event_id: params.reassignToEventId,
+                order_index: newSortOrder++,
+              })
+            );
           }
         }
 
@@ -131,10 +136,12 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
 
       setIsLoading(true);
       try {
-        await updateRole({
-          id: roleId,
-          scheduled_revote_date: revoteDate.getTime(),
-        });
+        await waitForClientApply(
+          updateRole({
+            id: roleId,
+            scheduled_revote_date: revoteDate.getTime(),
+          })
+        );
 
         toast.success(translateText('generated.inline.0450_revote_scheduled_16d14bd2'));
       } catch (error) {

@@ -8,7 +8,7 @@ import { useEventWikiPage } from './hooks/useEventWikiPage';
 import { AccessDenied as AccessDeniedView } from '@/features/auth/ui/AccessDenied';
 import { useCreateRecoveryDraft } from '@/features/create/logic/createFinalization';
 import { CreateRecoveryState } from '@/features/create/ui/CreateRecoveryState';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
 import { MeetingPage as MeetingPageView } from '@/features/meet/MeetingPage';
 import { EventWikiContentView } from './EventWikiContentView';
@@ -67,7 +67,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
     }
 
     if (isLoading) {
-      return <GlobalLoadingAnimation connectionStatus="connecting" />;
+      return <PageSkeleton />;
     }
 
     return <EventWikiNotFoundView />;

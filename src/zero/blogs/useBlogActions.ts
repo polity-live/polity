@@ -28,16 +28,18 @@ export function useBlogActions() {
       const result = zero.mutate(mutators.blogs.create(args));
       toast.success(t('features.blogs.toasts.created'));
       onServerError(result, () => toast.error(t('features.blogs.toasts.createFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const updateBlog = useCallback(
     (args: Parameters<typeof mutators.blogs.update>[0]) => {
       const result = zero.mutate(mutators.blogs.update(args));
       onServerError(result, () => toast.error(t('features.blogs.toasts.updateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteBlog = useCallback(
@@ -45,8 +47,9 @@ export function useBlogActions() {
       const result = zero.mutate(mutators.blogs.delete({ id }));
       toast.success(t('features.blogs.toasts.deleted'));
       onServerError(result, () => toast.error(t('features.blogs.toasts.deleteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Entries ────────────────────────────────────────────────────────
@@ -55,16 +58,18 @@ export function useBlogActions() {
       const result = zero.mutate(mutators.blogs.createEntry(args));
       toast.success(t('features.blogs.toasts.entryCreated'));
       onServerError(result, () => toast.error(t('features.blogs.toasts.entryCreateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const updateEntry = useCallback(
     (args: Parameters<typeof mutators.blogs.updateEntry>[0]) => {
       const result = zero.mutate(mutators.blogs.updateEntry(args));
       onServerError(result, () => toast.error(t('features.blogs.toasts.entryUpdateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteEntry = useCallback(
@@ -72,8 +77,9 @@ export function useBlogActions() {
       const result = zero.mutate(mutators.blogs.deleteEntry({ id }));
       toast.success(t('features.blogs.toasts.entryDeleted'));
       onServerError(result, () => toast.error(t('features.blogs.toasts.entryDeleteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Support Votes ──────────────────────────────────────────────────
@@ -82,16 +88,18 @@ export function useBlogActions() {
       const result = zero.mutate(mutators.blogs.createSupportVote(args));
       toast.success(t('features.blogs.toasts.supportVoteAdded'));
       onServerError(result, () => toast.error(t('features.blogs.toasts.supportVoteAddFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const updateSupportVote = useCallback(
     (args: Parameters<typeof mutators.blogs.updateSupportVote>[0]) => {
       const result = zero.mutate(mutators.blogs.updateSupportVote(args));
       onServerError(result, () => toast.error(t('features.blogs.toasts.supportVoteUpdateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteSupportVote = useCallback(
@@ -99,8 +107,9 @@ export function useBlogActions() {
       const result = zero.mutate(mutators.blogs.deleteSupportVote({ id }));
       toast.success(t('features.blogs.toasts.supportVoteRemoved'));
       onServerError(result, () => toast.error(t('features.blogs.toasts.supportVoteRemoveFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Silent Operations (no toasts) ─────────────────────────────────
@@ -110,6 +119,7 @@ export function useBlogActions() {
     (args: Parameters<typeof mutators.blogs.update>[0]) => {
       const result = zero.mutate(mutators.blogs.update(args));
       onServerError(result, msg => console.error('Silent blog update failed:', msg));
+      return result;
     },
     [zero]
   );
@@ -131,6 +141,7 @@ export function useBlogActions() {
     (args: Parameters<typeof mutators.common.subscribe>[0]) => {
       const result = zero.mutate(mutators.common.subscribe(args));
       onServerError(result, msg => console.error('Failed to subscribe to blog:', msg));
+      return result;
     },
     [zero]
   );
@@ -140,6 +151,7 @@ export function useBlogActions() {
     (id: string) => {
       const result = zero.mutate(mutators.common.unsubscribe({ id }));
       onServerError(result, msg => console.error('Failed to unsubscribe from blog:', msg));
+      return result;
     },
     [zero]
   );

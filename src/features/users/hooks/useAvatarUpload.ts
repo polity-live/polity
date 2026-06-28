@@ -38,7 +38,7 @@ export function useAvatarUpload({
       const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
       // Update user's avatar URL
-      await userActions.updateProfileConfirmed({
+      await userActions.updateProfileClientApplied({
         avatar: avatarUrl,
       });
 

@@ -25,6 +25,7 @@ import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { CancelEventDialog } from './CancelEventDialog';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/form';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
@@ -107,12 +108,7 @@ export function EventEditView({
 }: EventEditViewProps) {
   // Loading state
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-4 py-12">
-        <Loader2 className="text-primary h-8 w-8 animate-spin" />
-        <p className="text-muted-foreground">{t('features.events.editPage.loading')}</p>
-      </div>
-    );
+    return <PageSkeleton variant="settings" label={t('features.events.editPage.loading')} />;
   }
 
   // Not found state (only in edit mode)

@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
 import type { MembershipCompositionBucket } from '../types/group.types';
 import type { CompositionDisplayMode } from '../hooks/useMembershipCompositionPanelController';
@@ -135,7 +136,7 @@ function CompositionPieCard({
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <p className="text-muted-foreground py-12 text-center text-sm">{labels.loading}</p>
+          <CompositionPieSkeleton label={labels.loading} />
         ) : rows.length === 0 ? (
           <p className="text-muted-foreground py-12 text-center text-sm">{emptyLabel}</p>
         ) : (
@@ -179,5 +180,34 @@ function CompositionPieCard({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function CompositionPieSkeleton({ label }: { label: string }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      className="grid gap-6 py-2 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center"
+      data-slot="composition-pie-skeleton"
+    >
+      <span className="sr-only">{label}</span>
+      <div className="flex justify-center">
+        <Skeleton className="size-56 rounded-full" />
+      </div>
+      <div className="space-y-3">
+        <Skeleton className="h-4 w-28" />
+        {Array.from({ length: 4 }, (_, index) => (
+          <div key={index} className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <Skeleton className="size-3 rounded-full" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <Skeleton className="h-3 w-16" />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

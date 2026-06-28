@@ -19,6 +19,7 @@ import { mutators } from '@/zero/mutators';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useBlogState } from '@/zero/blogs/useBlogState';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { useSubscribeBlog } from './useSubscribeBlog';
 import { useBlogPermissions } from './useBlogPermissions';
 
@@ -118,33 +119,49 @@ export function useBlogDetailController({ blogId }: UseBlogDetailControllerOptio
     try {
       if (userVote) {
         if (userVote.vote === voteValue) {
-          await blogActions.deleteSupportVote(userVote.id);
-          await blogActions.updateBlog({
-            id: blogId,
-            upvotes: voteValue === 1 ? (blog.upvotes || 1) - 1 : blog.upvotes,
-            downvotes: voteValue === -1 ? (blog.downvotes || 1) - 1 : blog.downvotes,
-          });
+          await Promise.all([
+            waitForClientApply(blogActions.deleteSupportVote(userVote.id)),
+            waitForClientApply(
+              blogActions.updateBlog({
+                id: blogId,
+                upvotes: voteValue === 1 ? (blog.upvotes || 1) - 1 : blog.upvotes,
+                downvotes: voteValue === -1 ? (blog.downvotes || 1) - 1 : blog.downvotes,
+              })
+            ),
+          ]);
         } else {
-          await blogActions.updateSupportVote({ id: userVote.id, vote: voteValue });
-          await blogActions.updateBlog({
-            id: blogId,
-            upvotes:
-              voteValue === 1 ? (blog.upvotes || 0) + 1 : Math.max(0, (blog.upvotes || 1) - 1),
-            downvotes:
-              voteValue === -1 ? (blog.downvotes || 0) + 1 : Math.max(0, (blog.downvotes || 1) - 1),
-          });
+          await Promise.all([
+            waitForClientApply(blogActions.updateSupportVote({ id: userVote.id, vote: voteValue })),
+            waitForClientApply(
+              blogActions.updateBlog({
+                id: blogId,
+                upvotes:
+                  voteValue === 1 ? (blog.upvotes || 0) + 1 : Math.max(0, (blog.upvotes || 1) - 1),
+                downvotes:
+                  voteValue === -1
+                    ? (blog.downvotes || 0) + 1
+                    : Math.max(0, (blog.downvotes || 1) - 1),
+              })
+            ),
+          ]);
         }
       } else {
-        await blogActions.createSupportVote({
-          id: crypto.randomUUID(),
-          vote: voteValue,
-          blog_id: blogId,
-        });
-        await blogActions.updateBlog({
-          id: blogId,
-          upvotes: voteValue === 1 ? (blog.upvotes || 0) + 1 : blog.upvotes,
-          downvotes: voteValue === -1 ? (blog.downvotes || 0) + 1 : blog.downvotes,
-        });
+        await Promise.all([
+          waitForClientApply(
+            blogActions.createSupportVote({
+              id: crypto.randomUUID(),
+              vote: voteValue,
+              blog_id: blogId,
+            })
+          ),
+          waitForClientApply(
+            blogActions.updateBlog({
+              id: blogId,
+              upvotes: voteValue === 1 ? (blog.upvotes || 0) + 1 : blog.upvotes,
+              downvotes: voteValue === -1 ? (blog.downvotes || 0) + 1 : blog.downvotes,
+            })
+          ),
+        ]);
       }
     } catch (error) {
       console.error('Error voting:', error);
@@ -156,33 +173,37 @@ export function useBlogDetailController({ blogId }: UseBlogDetailControllerOptio
     if (!text.trim() || !user?.id) return;
     try {
       if (!blogThread) {
-        await zero.mutate(
-          mutators.documents.createThread({
-            id: blogId,
-            document_id: null,
-            amendment_id: null,
-            statement_id: null,
-            blog_id: blogId,
-            content: null,
-            status: 'open',
-            resolved_at: null,
-            position: null,
-            user_id: user.id,
-            upvotes: 0,
-            downvotes: 0,
-          })
+        await waitForClientApply(
+          zero.mutate(
+            mutators.documents.createThread({
+              id: blogId,
+              document_id: null,
+              amendment_id: null,
+              statement_id: null,
+              blog_id: blogId,
+              content: null,
+              status: 'open',
+              resolved_at: null,
+              position: null,
+              user_id: user.id,
+              upvotes: 0,
+              downvotes: 0,
+            })
+          )
         );
       }
 
-      await addCommentAction({
-        id: crypto.randomUUID(),
-        thread_id: blogId,
-        parent_id: parentId || null,
-        content: text,
-        upvotes: 0,
-        downvotes: 0,
-        user_id: user.id,
-      });
+      await waitForClientApply(
+        addCommentAction({
+          id: crypto.randomUUID(),
+          thread_id: blogId,
+          parent_id: parentId || null,
+          content: text,
+          upvotes: 0,
+          downvotes: 0,
+          user_id: user.id,
+        })
+      );
       toast.success(translateText('generated.inline.0263_comment_posted_successfully_eb634c77'));
     } catch (error) {
       console.error('Error posting comment:', error);
@@ -193,12 +214,14 @@ export function useBlogDetailController({ blogId }: UseBlogDetailControllerOptio
   const handleCommentVote = async (commentId: string, voteValue: number) => {
     if (!user?.id) return;
     try {
-      await voteComment({
-        id: crypto.randomUUID(),
-        comment_id: commentId,
-        user_id: user.id,
-        vote: voteValue,
-      });
+      await waitForClientApply(
+        voteComment({
+          id: crypto.randomUUID(),
+          comment_id: commentId,
+          user_id: user.id,
+          vote: voteValue,
+        })
+      );
     } catch (error) {
       console.error('Error voting on comment:', error);
     }
@@ -206,7 +229,7 @@ export function useBlogDetailController({ blogId }: UseBlogDetailControllerOptio
 
   const handleDeleteBlog = async () => {
     try {
-      await blogActions.deleteBlog(blogId);
+      await waitForClientApply(blogActions.deleteBlog(blogId));
       toast.success(t('features.blogs.detail.blogDeleted'));
       const groupId = blog?.group_id;
       if (groupId) {

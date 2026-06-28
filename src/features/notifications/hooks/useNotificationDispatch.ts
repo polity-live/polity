@@ -5,6 +5,7 @@ import {
   setNotificationDispatch,
   type CreateNotificationInput,
 } from '@/features/notifications/utils/notification-helpers';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 /**
  * Configures the notification dispatch to use the Zero mutator.
@@ -18,7 +19,7 @@ export function useNotificationDispatch(): void {
 
   const dispatch = useCallback(
     async (args: CreateNotificationInput) => {
-      await zero.mutate(mutators.notifications.createNotification(args));
+      await waitForClientApply(zero.mutate(mutators.notifications.createNotification(args)));
     },
     [zero]
   );

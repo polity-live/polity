@@ -13,9 +13,16 @@ import {
 } from '@/features/groups/logic/openAssignments';
 import { DynamicTimelineCard } from '@/features/timeline/ui/LazyCardComponents';
 import { DataTable } from '@/features/shared/ui/data-table';
+import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { StatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import {
   Dialog,
   DialogDescription,
@@ -134,10 +141,10 @@ export function OpenAssignmentsPanelView({
       <Card>
         <CardHeader>
           <CardTitle>{t('features.groups.memberships.openAssignments.title')}</CardTitle>
-          <CardDescription>
-            {t('features.groups.memberships.openAssignments.loadingDescription')}
-          </CardDescription>
         </CardHeader>
+        <CardContent>
+          <SectionSkeleton rows={3} />
+        </CardContent>
       </Card>
     );
   }

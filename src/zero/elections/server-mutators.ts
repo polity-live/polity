@@ -33,6 +33,7 @@ import {
   createIndicativeElectorParticipationSchema,
   replaceIndicativeElectionVoteSchema,
   createFinalElectorParticipationSchema,
+  castFinalElectionVoteFullSchema,
   upsertElectionOfflineTallySchema,
 } from './schema';
 
@@ -1059,6 +1060,18 @@ export const electionServerMutators = {
         userId: ctx.userID,
       });
       await mutators.elections.castFinalElectionVote.fn({ tx, ctx, args });
+    }
+  ),
+
+  castFinalElectionVoteFull: defineMutator(
+    castFinalElectionVoteFullSchema,
+    async ({ tx, ctx, args }) => {
+      await requireRecentVotingPasswordVerification(tx, ctx.userID);
+      await assertOnlineElectionVoteAllowed(tx, {
+        electionId: args.participation.election_id,
+        userId: ctx.userID,
+      });
+      await mutators.elections.castFinalElectionVoteFull.fn({ tx, ctx, args });
     }
   ),
 

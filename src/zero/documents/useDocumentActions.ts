@@ -48,8 +48,9 @@ export function useDocumentActions() {
       const result = zero.mutate(mutators.documents.delete({ id }));
       toast.success(t('features.documents.toasts.deleted'));
       onServerError(result, () => toast.error(t('features.documents.toasts.deleteFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Versions ───────────────────────────────────────────────────────
@@ -88,16 +89,18 @@ export function useDocumentActions() {
       const result = zero.mutate(mutators.documents.createThread(args));
       toast.success(t('features.documents.toasts.threadCreated'));
       onServerError(result, () => toast.error(t('features.documents.toasts.threadCreateFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const voteThread = useCallback(
     (args: Parameters<typeof mutators.documents.voteThread>[0]) => {
       const result = zero.mutate(mutators.documents.voteThread(args));
       onServerError(result, () => toast.error(t('features.documents.toasts.voteThreadFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Comments ───────────────────────────────────────────────────────
@@ -106,16 +109,18 @@ export function useDocumentActions() {
       const result = zero.mutate(mutators.documents.addComment(args));
       toast.success(t('features.documents.toasts.commentAdded'));
       onServerError(result, () => toast.error(t('features.documents.toasts.commentAddFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const voteComment = useCallback(
     (args: Parameters<typeof mutators.documents.voteComment>[0]) => {
       const result = zero.mutate(mutators.documents.voteComment(args));
       onServerError(result, () => toast.error(t('features.documents.toasts.voteCommentFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const updateCommentVote = useCallback(
@@ -124,8 +129,9 @@ export function useDocumentActions() {
       onServerError(result, () =>
         toast.error(t('features.documents.toasts.updateCommentVoteFailed'))
       );
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteCommentVote = useCallback(
@@ -134,8 +140,9 @@ export function useDocumentActions() {
       onServerError(result, () =>
         toast.error(t('features.documents.toasts.deleteCommentVoteFailed'))
       );
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Collaboration ──────────────────────────────────────────────────
@@ -156,16 +163,18 @@ export function useDocumentActions() {
     (args: Parameters<typeof mutators.documents.updateThreadVote>[0]) => {
       const result = zero.mutate(mutators.documents.updateThreadVote(args));
       onServerError(result, () => toast.error(t('features.documents.toasts.voteThreadFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   const deleteThreadVote = useCallback(
     (id: string) => {
       const result = zero.mutate(mutators.documents.deleteThreadVote({ id }));
       onServerError(result, () => toast.error(t('features.documents.toasts.voteThreadFailed')));
+      return result;
     },
-    [zero]
+    [zero, t]
   );
 
   // ── Thread/Comment count updates ───────────────────────────────────
@@ -173,6 +182,7 @@ export function useDocumentActions() {
     (args: Parameters<typeof mutators.documents.updateThread>[0]) => {
       const result = zero.mutate(mutators.documents.updateThread(args));
       onServerError(result, msg => console.error('Failed to update thread:', msg));
+      return result;
     },
     [zero]
   );
@@ -181,6 +191,7 @@ export function useDocumentActions() {
     (args: Parameters<typeof mutators.documents.updateComment>[0]) => {
       const result = zero.mutate(mutators.documents.updateComment(args));
       onServerError(result, msg => console.error('Failed to update comment:', msg));
+      return result;
     },
     [zero]
   );

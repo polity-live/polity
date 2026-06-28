@@ -2,6 +2,7 @@ import { lazy, Suspense, createContext, useContext, useMemo } from 'react';
 import { schema } from '@/zero/schema';
 import { mutators } from '@/zero/mutators';
 import { useAuth } from './auth-provider';
+import { AppBootLoadingState } from '@/features/shared/ui/feedback';
 
 // Use React lazy to defer loading the ZeroProvider (client-side only)
 const ZeroProvider = lazy(() =>
@@ -38,7 +39,14 @@ export function ZeroAppProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <AppBootLoadingState
+          onRetry={() => window.location.reload()}
+          details="Zero provider module"
+        />
+      }
+    >
       <ZeroReadyContext.Provider value={true}>
         <ZeroProvider
           userID={zeroContext.userID}

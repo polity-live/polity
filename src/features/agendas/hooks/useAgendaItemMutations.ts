@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useNavigate } from '@tanstack/react-router';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 export function useAgendaItemMutations(agendaItemId: string, eventId: string) {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export function useAgendaItemMutations(agendaItemId: string, eventId: string) {
 
     setDeleteLoading(true);
     try {
-      await deleteAgendaItem(agendaItemId);
+      await waitForClientApply(deleteAgendaItem(agendaItemId));
 
       navigate({ to: `/event/${eventId}/agenda` });
     } catch (error) {
@@ -38,11 +39,13 @@ export function useAgendaItemMutations(agendaItemId: string, eventId: string) {
     setTransferLoading(true);
     try {
       // Update agenda item to point to new event
-      await updateAgendaItem({
-        id: agendaItemId,
-        event_id: params.targetEventId,
-        ...(params.newOrder !== undefined ? { order: params.newOrder } : {}),
-      });
+      await waitForClientApply(
+        updateAgendaItem({
+          id: agendaItemId,
+          event_id: params.targetEventId,
+          ...(params.newOrder !== undefined ? { order: params.newOrder } : {}),
+        })
+      );
 
       navigate({ to: `/event/${params.targetEventId}/agenda` });
     } catch (error) {

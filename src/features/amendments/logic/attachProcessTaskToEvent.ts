@@ -1,3 +1,5 @@
+import { waitForClientApply, type MutationResultLike } from '@/zero/mutate-with-server-check';
+
 interface TaskLike {
   id: string;
   task_type?: string | null;
@@ -29,7 +31,7 @@ interface AttachProcessTaskToEventActions {
     process_task_id: string;
     event_id: string;
     description?: string | null;
-  }) => Promise<unknown>;
+  }) => MutationResultLike;
 }
 
 interface AttachProcessTaskToEventArgs extends AttachProcessTaskToEventActions {
@@ -44,9 +46,12 @@ export async function attachProcessTaskToEvent({
   description,
   completeProcessTaskWithEvent,
 }: AttachProcessTaskToEventArgs) {
-  return completeProcessTaskWithEvent({
+  const result = completeProcessTaskWithEvent({
     process_task_id: task.id,
     event_id: event.id,
     description,
   });
+
+  await waitForClientApply(result);
+  return result;
 }

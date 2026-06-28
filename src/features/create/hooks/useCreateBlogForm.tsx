@@ -22,7 +22,7 @@ import {
   createRouteSubmitTarget,
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
-import { trackCreateFinalization } from '../logic/createFinalization';
+import { consumeCreateRestoreDraft, trackCreateFinalization } from '../logic/createFinalization';
 
 interface CreateBlogSearch {
   groupId?: string;
@@ -76,6 +76,25 @@ export function useCreateBlogForm(): CreateFormConfig {
   useEffect(() => {
     setGroupId(groupIdParam || null);
   }, [groupIdParam]);
+
+  useEffect(() => {
+    const restoreDraft = consumeCreateRestoreDraft<{
+      title?: string;
+      date?: string;
+      imageURL?: string;
+      visibility?: 'public' | 'authenticated' | 'private';
+      groupId?: string | null;
+      hashtags?: string[];
+    }>('blog');
+    if (!restoreDraft) return;
+
+    setTitle(restoreDraft.formState.title ?? '');
+    setDate(restoreDraft.formState.date ?? new Date().toISOString().split('T')[0]);
+    setImageURL(restoreDraft.formState.imageURL ?? '');
+    setVisibility(restoreDraft.formState.visibility ?? 'public');
+    setGroupId(restoreDraft.formState.groupId ?? null);
+    setHashtags(restoreDraft.formState.hashtags ?? []);
+  }, []);
 
   useEffect(() => {
     if (!groupId) {

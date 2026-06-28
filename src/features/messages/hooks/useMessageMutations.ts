@@ -10,6 +10,7 @@ import {
   notifyConversationAccepted,
 } from '@/features/notifications/utils/notification-helpers.ts';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 export function useMessageMutations() {
   const actions = useMessageActions();
@@ -37,13 +38,15 @@ export function useMessageMutations() {
     try {
       const messageId = crypto.randomUUID();
 
-      await actions.sendMessage({
-        id: messageId,
-        content,
-        conversation_id: conversationId,
-        context_json: options?.contextJson ?? '[]',
-        deleted_at: null,
-      });
+      await waitForClientApply(
+        actions.sendMessage({
+          id: messageId,
+          content,
+          conversation_id: conversationId,
+          context_json: options?.contextJson ?? '[]',
+          deleted_at: null,
+        })
+      );
 
       // Notify all other participants — best-effort
       try {
@@ -81,13 +84,15 @@ export function useMessageMutations() {
     try {
       const messageId = crypto.randomUUID();
 
-      await actions.sendAssistantMessage({
-        id: messageId,
-        content,
-        conversation_id: conversationId,
-        context_json: options?.contextJson ?? '[]',
-        deleted_at: null,
-      });
+      await waitForClientApply(
+        actions.sendAssistantMessage({
+          id: messageId,
+          content,
+          conversation_id: conversationId,
+          context_json: options?.contextJson ?? '[]',
+          deleted_at: null,
+        })
+      );
 
       return { success: true, messageId };
     } catch (error) {
@@ -111,31 +116,30 @@ export function useMessageMutations() {
     setIsLoading(true);
     try {
       const conversationId = crypto.randomUUID();
+      const now = Date.now();
 
-      // Create conversation
-      await actions.createConversation({
-        id: conversationId,
-        type,
-        status: 'pending',
-        group_id: groupId ?? null,
-        name: null,
-        pinned: false,
-        last_message_at: 0,
-        assistant_for_user_id: null,
-      });
-
-      // Add participants
-      for (const participantId of participantIds) {
-        const participantTxId = crypto.randomUUID();
-        await actions.addParticipant({
-          id: participantTxId,
-          joined_at: Date.now(),
-          conversation_id: conversationId,
-          user_id: participantId,
-          last_read_at: 0,
-          left_at: null,
-        });
-      }
+      await waitForClientApply(
+        actions.createConversationFull({
+          conversation: {
+            id: conversationId,
+            type,
+            status: 'pending',
+            group_id: groupId ?? null,
+            name: null,
+            pinned: false,
+            last_message_at: 0,
+            assistant_for_user_id: null,
+          },
+          participants: participantIds.map(participantId => ({
+            id: crypto.randomUUID(),
+            joined_at: now,
+            conversation_id: conversationId,
+            user_id: participantId,
+            last_read_at: 0,
+            left_at: null,
+          })),
+        })
+      );
 
       // Send conversation request notifications — best-effort
       try {
@@ -171,42 +175,45 @@ export function useMessageMutations() {
       const conversationId = crypto.randomUUID();
       const now = Date.now();
 
-      await actions.createConversation({
-        id: conversationId,
-        type: 'direct',
-        status: 'accepted',
-        group_id: null,
-        name,
-        pinned: false,
-        last_message_at: now,
-        assistant_for_user_id: currentUserId,
-      });
-
-      await actions.addParticipant({
-        id: crypto.randomUUID(),
-        joined_at: now,
-        conversation_id: conversationId,
-        user_id: currentUserId,
-        last_read_at: 0,
-        left_at: null,
-      });
-
-      await actions.addParticipant({
-        id: crypto.randomUUID(),
-        joined_at: now,
-        conversation_id: conversationId,
-        user_id: ARIA_KAI_USER_ID,
-        last_read_at: now,
-        left_at: null,
-      });
-
-      await actions.sendAssistantMessage({
-        id: crypto.randomUUID(),
-        content: ARIA_KAI_WELCOME_MESSAGE,
-        conversation_id: conversationId,
-        context_json: '[]',
-        deleted_at: null,
-      });
+      await waitForClientApply(
+        actions.createConversationFull({
+          conversation: {
+            id: conversationId,
+            type: 'direct',
+            status: 'accepted',
+            group_id: null,
+            name,
+            pinned: false,
+            last_message_at: now,
+            assistant_for_user_id: currentUserId,
+          },
+          participants: [
+            {
+              id: crypto.randomUUID(),
+              joined_at: now,
+              conversation_id: conversationId,
+              user_id: currentUserId,
+              last_read_at: 0,
+              left_at: null,
+            },
+            {
+              id: crypto.randomUUID(),
+              joined_at: now,
+              conversation_id: conversationId,
+              user_id: ARIA_KAI_USER_ID,
+              last_read_at: now,
+              left_at: null,
+            },
+          ],
+          assistantMessage: {
+            id: crypto.randomUUID(),
+            content: ARIA_KAI_WELCOME_MESSAGE,
+            conversation_id: conversationId,
+            context_json: '[]',
+            deleted_at: null,
+          },
+        })
+      );
 
       toast.success(translateText('generated.inline.0739_ai_conversation_created_9ea58896'));
       return { success: true, conversationId };
@@ -225,7 +232,7 @@ export function useMessageMutations() {
   const deleteMessage = async (messageId: string) => {
     setIsLoading(true);
     try {
-      await actions.deleteMessage({ id: messageId });
+      await waitForClientApply(actions.deleteMessage({ id: messageId }));
       toast.success(translateText('generated.inline.0741_message_deleted_3271a770'));
       return { success: true };
     } catch (error) {
@@ -252,17 +259,21 @@ export function useMessageMutations() {
 
     try {
       for (const msg of unreadMessages) {
-        await actions.updateMessage({
-          id: msg.id,
-          is_read: true,
-        });
+        await waitForClientApply(
+          actions.updateMessage({
+            id: msg.id,
+            is_read: true,
+          })
+        );
       }
 
       if (currentParticipant) {
-        await actions.markRead({
-          id: currentParticipant.id,
-          last_read_at: Date.now(),
-        });
+        await waitForClientApply(
+          actions.markRead({
+            id: currentParticipant.id,
+            last_read_at: Date.now(),
+          })
+        );
       }
     } catch (error) {
       console.error('Failed to mark messages as read:', error);
@@ -278,10 +289,12 @@ export function useMessageMutations() {
     }
   ) => {
     try {
-      await actions.updateConversation({
-        id: conversationId,
-        status: 'accepted',
-      });
+      await waitForClientApply(
+        actions.updateConversation({
+          id: conversationId,
+          status: 'accepted',
+        })
+      );
 
       // Send notification to the requester
       try {
@@ -307,13 +320,13 @@ export function useMessageMutations() {
 
   const rejectConversation = async (conversation: Conversation) => {
     try {
-      for (const msg of conversation.messages) {
-        await actions.deleteMessage({ id: msg.id });
-      }
-      for (const p of conversation.participants) {
-        await actions.removeParticipant({ id: p.id });
-      }
-      await actions.deleteConversation({ id: conversation.id });
+      await waitForClientApply(
+        actions.deleteConversationFull({
+          id: conversation.id,
+          messageIds: conversation.messages.map(message => message.id),
+          participantIds: conversation.participants.map(participant => participant.id),
+        })
+      );
       toast.success(translateText('generated.inline.0745_conversation_rejected_12876dbb'));
       return { success: true };
     } catch (error) {
@@ -325,13 +338,13 @@ export function useMessageMutations() {
 
   const deleteConversation = async (conversation: Conversation) => {
     try {
-      for (const msg of conversation.messages) {
-        await actions.deleteMessage({ id: msg.id });
-      }
-      for (const p of conversation.participants) {
-        await actions.removeParticipant({ id: p.id });
-      }
-      await actions.deleteConversation({ id: conversation.id });
+      await waitForClientApply(
+        actions.deleteConversationFull({
+          id: conversation.id,
+          messageIds: conversation.messages.map(message => message.id),
+          participantIds: conversation.participants.map(participant => participant.id),
+        })
+      );
       toast.success(translateText('generated.inline.0747_conversation_deleted_798eb3c2'));
       return { success: true };
     } catch (error) {
@@ -343,10 +356,12 @@ export function useMessageMutations() {
 
   const togglePin = async (conversationId: string, currentPinned: boolean) => {
     try {
-      await actions.updateConversation({
-        id: conversationId,
-        pinned: !currentPinned,
-      });
+      await waitForClientApply(
+        actions.updateConversation({
+          id: conversationId,
+          pinned: !currentPinned,
+        })
+      );
       return { success: true };
     } catch (error) {
       console.error('Failed to toggle pin:', error);
@@ -357,10 +372,12 @@ export function useMessageMutations() {
 
   const updateConversationName = async (conversationId: string, name: string | null) => {
     try {
-      await actions.updateConversation({
-        id: conversationId,
-        name,
-      });
+      await waitForClientApply(
+        actions.updateConversation({
+          id: conversationId,
+          name,
+        })
+      );
       return { success: true };
     } catch (error) {
       console.error('Failed to update conversation name:', error);

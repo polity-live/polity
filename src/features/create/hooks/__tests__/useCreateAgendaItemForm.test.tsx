@@ -31,9 +31,9 @@ const hoistedMocks = vi.hoisted(() => ({
     client: Promise.resolve(),
     server: Promise.resolve({ type: 'success' }),
   })),
-  serverConfirmedMock: vi.fn(async (mutation: unknown) => mutation),
+  onServerErrorMock: vi.fn(),
 }));
-const { mutateMock, serverConfirmedMock } = hoistedMocks;
+const { mutateMock, onServerErrorMock } = hoistedMocks;
 
 vi.mock('@tanstack/react-router', () => ({
   useSearch: () => searchParams,
@@ -107,8 +107,7 @@ vi.mock('@/zero/groups/useGroupState', () => ({
 }));
 
 vi.mock('@/zero/mutate-with-server-check', () => ({
-  onServerError: vi.fn(),
-  serverConfirmed: hoistedMocks.serverConfirmedMock,
+  onServerError: hoistedMocks.onServerErrorMock,
 }));
 
 vi.mock('@/zero/mutators', () => ({
@@ -175,7 +174,7 @@ describe('useCreateAgendaItemForm', () => {
     userRoles = [];
     eventAgendaItems = [];
     mutateMock.mockClear();
-    serverConfirmedMock.mockClear();
+    onServerErrorMock.mockClear();
   });
 
   it('orders title and description before event choice and filters selectable events', () => {

@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react';
 
 import { CalendarFilterBar, CalendarHeader } from '@/features/shared/ui/calendar';
-import { LoadingState } from '@/features/shared/ui/feedback';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { Button } from '@/features/shared/ui/ui/button';
 import { CalendarExportButton } from '@/features/events/ui/calendar/CalendarExportButton';
 import { CalendarViewContainer } from '@/features/events/ui/calendar/CalendarViewContainer';
@@ -66,7 +66,7 @@ export function CalendarPageView({
   swipeHandlers,
 }: CalendarPageViewProps) {
   if (isLoading) {
-    return <LoadingState label={loadingLabel} className="h-[400px]" />;
+    return <PageSkeleton variant="calendar" label={loadingLabel} />;
   }
 
   return (

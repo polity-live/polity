@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import type { EventUpdateInput } from '@/zero/events/schema';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -40,15 +41,17 @@ export function useEventMutations(eventId: string) {
 
       await Promise.all(
         userIds.map(userId =>
-          inviteParticipant({
-            id: crypto.randomUUID(),
-            status: 'invited',
-            user_id: userId,
-            event_id: eventId,
-            group_id: null,
-            visibility: 'public',
-            initial_role_ids: normalizedRoleIds,
-          })
+          waitForClientApply(
+            inviteParticipant({
+              id: crypto.randomUUID(),
+              status: 'invited',
+              user_id: userId,
+              event_id: eventId,
+              group_id: null,
+              visibility: 'public',
+              initial_role_ids: normalizedRoleIds,
+            })
+          )
         )
       );
 
@@ -78,10 +81,12 @@ export function useEventMutations(eventId: string) {
 
     setIsLoading(true);
     try {
-      await updateParticipant({
-        id: participationId,
-        status: 'active',
-      });
+      await waitForClientApply(
+        updateParticipant({
+          id: participationId,
+          status: 'active',
+        })
+      );
 
       toast.success(translateText('generated.inline.0453_participation_approved_2d1f7f60'));
       return { success: true };
@@ -109,9 +114,11 @@ export function useEventMutations(eventId: string) {
 
     setIsLoading(true);
     try {
-      await leaveEvent({
-        id: participationId,
-      });
+      await waitForClientApply(
+        leaveEvent({
+          id: participationId,
+        })
+      );
 
       toast.success(translateText('generated.inline.0455_participation_request_rejected_3d4d3f9f'));
       return { success: true };
@@ -139,9 +146,11 @@ export function useEventMutations(eventId: string) {
 
     setIsLoading(true);
     try {
-      await leaveEvent({
-        id: participationId,
-      });
+      await waitForClientApply(
+        leaveEvent({
+          id: participationId,
+        })
+      );
 
       toast.success(
         translateText('generated.inline.0457_participant_removed_successfully_4704450f')
@@ -194,11 +203,13 @@ export function useEventMutations(eventId: string) {
 
     setIsLoading(true);
     try {
-      await syncParticipantRoles({
-        event_participant_id: participationId,
-        role_ids: roleIds,
-        assigned_by_id: senderId ?? null,
-      });
+      await waitForClientApply(
+        syncParticipantRoles({
+          event_participant_id: participationId,
+          role_ids: roleIds,
+          assigned_by_id: senderId ?? null,
+        })
+      );
 
       toast.success(translateText('generated.inline.0459_participant_role_updated_4697982e'));
       return { success: true };
@@ -230,10 +241,12 @@ export function useEventMutations(eventId: string) {
 
     setIsLoading(true);
     try {
-      await doUpdateEvent({
-        id: eventId,
-        ...updates,
-      });
+      await waitForClientApply(
+        doUpdateEvent({
+          id: eventId,
+          ...updates,
+        })
+      );
 
       toast.success(translateText('generated.inline.0461_event_updated_successfully_bc659249'));
       return { success: true };

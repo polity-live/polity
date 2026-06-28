@@ -3,7 +3,7 @@
 import type { CSSProperties } from 'react';
 
 import { Button } from '@/features/shared/ui/ui/button';
-import { ArrowLeft, UserPlus, Loader2, Plus, Trash2, Shield } from 'lucide-react';
+import { ArrowLeft, UserPlus, Plus, Trash2, Shield } from 'lucide-react';
 import {
   DataTable,
   MatrixCheckbox,
@@ -33,6 +33,7 @@ import {
   type ActionSubmissionController,
 } from '@/features/shared/ui/action-submission';
 import { ParticipationRoleFilterBar } from '@/features/shared/ui/participation';
+import { PageSkeleton, SectionSkeleton } from '@/features/shared/ui/feedback';
 import {
   Command,
   CommandEmpty,
@@ -163,11 +164,7 @@ export function BlogBloggersManagerView({
     }));
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <PageSkeleton variant="settings" />;
   }
 
   if (error || !blog) {
@@ -270,9 +267,7 @@ export function BlogBloggersManagerView({
                           </CommandEmpty>
                           <CommandGroup>
                             {isLoadingUsers ? (
-                              <div className="p-4 text-center">
-                                <Loader2 className="mx-auto h-6 w-6 animate-spin" />
-                              </div>
+                              <SectionSkeleton rows={3} density="compact" className="p-2" />
                             ) : (
                               filteredUsers?.map((u: any) => (
                                 <CommandItem

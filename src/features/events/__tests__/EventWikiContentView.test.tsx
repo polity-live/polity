@@ -64,6 +64,7 @@ vi.mock('@/features/shared/ui/ui/dialog', () => ({
 
 vi.mock('@/features/shared/ui/layout', () => ({
   ActionBar: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  EntityPageFrame: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   StatsBar: statsBarMock,
 }));
 

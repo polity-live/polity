@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { AMENDMENT_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import type { Role } from '../hooks/useCollaborators';
 
@@ -35,14 +36,16 @@ export function useCollaboratorMutations() {
     async (userIds: string[], amendmentId: string, roleId: string) => {
       await Promise.all(
         userIds.map(userId =>
-          requestCollaboration({
-            id: crypto.randomUUID(),
-            user_id: userId,
-            amendment_id: amendmentId,
-            role_id: roleId,
-            status: 'invited',
-            visibility: null,
-          })
+          waitForClientApply(
+            requestCollaboration({
+              id: crypto.randomUUID(),
+              user_id: userId,
+              amendment_id: amendmentId,
+              role_id: roleId,
+              status: 'invited',
+              visibility: null,
+            })
+          )
         )
       );
     },
@@ -51,7 +54,7 @@ export function useCollaboratorMutations() {
 
   const changeCollaboratorRole = useCallback(
     async (collaboratorId: string, newRoleId: string) => {
-      await updateCollaborator({ id: collaboratorId, role_id: newRoleId });
+      await waitForClientApply(updateCollaborator({ id: collaboratorId, role_id: newRoleId }));
     },
     [updateCollaborator]
   );
@@ -59,35 +62,35 @@ export function useCollaboratorMutations() {
   const changeCollaboratorRoles = useCallback(
     async (collaboratorId: string, roleIds: string[], roles: Role[]) => {
       const nextRoleId = pickPrimaryRoleId(roleIds, roles);
-      await updateCollaborator({ id: collaboratorId, role_id: nextRoleId });
+      await waitForClientApply(updateCollaborator({ id: collaboratorId, role_id: nextRoleId }));
     },
     [updateCollaborator]
   );
 
   const removeCollaborator = useCallback(
     async (collaboratorId: string) => {
-      await leaveCollaboration(collaboratorId);
+      await waitForClientApply(leaveCollaboration(collaboratorId));
     },
     [leaveCollaboration]
   );
 
   const approveRequest = useCallback(
     async (collaboratorId: string) => {
-      await updateCollaborator({ id: collaboratorId, status: 'member' });
+      await waitForClientApply(updateCollaborator({ id: collaboratorId, status: 'member' }));
     },
     [updateCollaborator]
   );
 
   const rejectRequest = useCallback(
     async (collaboratorId: string) => {
-      await leaveCollaboration(collaboratorId);
+      await waitForClientApply(leaveCollaboration(collaboratorId));
     },
     [leaveCollaboration]
   );
 
   const withdrawInvitation = useCallback(
     async (collaboratorId: string) => {
-      await leaveCollaboration(collaboratorId);
+      await waitForClientApply(leaveCollaboration(collaboratorId));
     },
     [leaveCollaboration]
   );
@@ -96,7 +99,9 @@ export function useCollaboratorMutations() {
     async (collaboratorId: string, roles: Role[]) => {
       const authorRole = roles.find(r => r.name === 'Author');
       if (authorRole) {
-        await updateCollaborator({ id: collaboratorId, role_id: authorRole.id });
+        await waitForClientApply(
+          updateCollaborator({ id: collaboratorId, role_id: authorRole.id })
+        );
       }
     },
     [updateCollaborator]
@@ -106,7 +111,9 @@ export function useCollaboratorMutations() {
     async (collaboratorId: string, roles: Role[]) => {
       const collaboratorRole = roles.find(r => r.name === 'Collaborator');
       if (collaboratorRole) {
-        await updateCollaborator({ id: collaboratorId, role_id: collaboratorRole.id });
+        await waitForClientApply(
+          updateCollaborator({ id: collaboratorId, role_id: collaboratorRole.id })
+        );
       }
     },
     [updateCollaborator]
@@ -114,24 +121,26 @@ export function useCollaboratorMutations() {
 
   const createRole = useCallback(
     async (name: string, description: string, amendmentId: string) => {
-      await createGroupRole({
-        id: crypto.randomUUID(),
-        name,
-        description: description || '',
-        scope: 'amendment',
-        amendment_id: amendmentId,
-        group_id: null,
-        event_id: null,
-        blog_id: null,
-        sort_order: 0,
-      });
+      await waitForClientApply(
+        createGroupRole({
+          id: crypto.randomUUID(),
+          name,
+          description: description || '',
+          scope: 'amendment',
+          amendment_id: amendmentId,
+          group_id: null,
+          event_id: null,
+          blog_id: null,
+          sort_order: 0,
+        })
+      );
     },
     [createGroupRole]
   );
 
   const deleteRole = useCallback(
     async (roleId: string) => {
-      await deleteGroupRole({ id: roleId });
+      await waitForClientApply(deleteGroupRole({ id: roleId }));
     },
     [deleteGroupRole]
   );
@@ -149,21 +158,23 @@ export function useCollaboratorMutations() {
         const role = roles.find(r => r.id === roleId);
         const ar = role?.action_rights?.find(a => a.resource === resource && a.action === action);
         if (ar) {
-          await removeActionRight({ id: ar.id });
+          await waitForClientApply(removeActionRight({ id: ar.id }));
         }
       } else {
         assertAmendmentActionRight(resource, action);
         const role = roles.find(r => r.id === roleId);
-        await assignActionRight({
-          id: crypto.randomUUID(),
-          resource,
-          action,
-          role_id: roleId,
-          amendment_id: role?.scope === 'amendment' ? amendmentId : null,
-          group_id: null,
-          event_id: null,
-          blog_id: null,
-        });
+        await waitForClientApply(
+          assignActionRight({
+            id: crypto.randomUUID(),
+            resource,
+            action,
+            role_id: roleId,
+            amendment_id: role?.scope === 'amendment' ? amendmentId : null,
+            group_id: null,
+            event_id: null,
+            blog_id: null,
+          })
+        );
       }
     },
     [assignActionRight, removeActionRight]

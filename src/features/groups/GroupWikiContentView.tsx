@@ -13,8 +13,7 @@ import { BookOpen, Network } from 'lucide-react';
 import { HashtagDisplay } from '@/features/shared/ui/hashtags';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
-import { StatsBar } from '@/features/shared/ui/layout';
-import { ActionBar } from '@/features/shared/ui/layout';
+import { ActionBar, EntityPageFrame, StatsBar } from '@/features/shared/ui/layout';
 import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
 import { SocialBar } from '@/features/users/ui/SocialBar';
 import {
@@ -217,7 +216,7 @@ export function GroupWikiContentView({
   ]);
 
   return (
-    <div>
+    <EntityPageFrame>
       {/* Header with centered title and subtitle */}
       <div className="mb-8 text-center">
         <div className="mb-2 flex items-center justify-center gap-3">
@@ -537,6 +536,6 @@ export function GroupWikiContentView({
           </CardContent>
         </Card>
       )}
-    </div>
+    </EntityPageFrame>
   );
 }

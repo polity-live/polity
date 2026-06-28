@@ -5,7 +5,7 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import type { ActionRight, Amendment } from '@/zero/rbac/types';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 
 export const Route = createFileRoute('/_authed/amendment/$id/notifications')({
   component: AmendmentNotificationsPage,
@@ -61,7 +61,7 @@ function AmendmentNotificationsPage() {
   });
 
   if (amendmentIsLoading || isLoading || (amendment && !amendmentForPermissions)) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+    return <PageSkeleton />;
   }
 
   if (!(isCollaborator() || isAuthor()) || !can('viewNotifications', 'notifications')) {

@@ -35,6 +35,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
   ActionSubmissionOverlay,
   useActionSubmission,
+  type ActionSubmissionContext,
 } from '@/features/shared/ui/action-submission';
 import type { DraftWorkflowStep } from '../hooks/useWorkflowEditor';
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
@@ -93,7 +94,7 @@ export interface WorkflowEditorProps {
   onUpdateStep: (index: number, patch: Partial<DraftWorkflowStep>) => void;
   onRemoveStep: (index: number) => void;
   onMoveStep: (fromIndex: number, toIndex: number) => void;
-  onSave: () => void;
+  onSave: (submissionContext?: ActionSubmissionContext) => void;
 }
 function getGroupName(groupId: string, availableGroups: AvailableGroup[]) {
   return availableGroups.find(group => group.id === groupId)?.name ?? groupId;
@@ -200,7 +201,8 @@ export function WorkflowEditorContentView({
 
   const handleSaveWithSubmission = () => {
     void actionSubmission
-      .runActionWithSubmission(async () => onSave(), {
+      .runActionWithSubmission(async context => onSave(context), {
+        deferSyncCompletion: true,
         onSuccess: () => {
           actionSubmission.reset();
           onClose();

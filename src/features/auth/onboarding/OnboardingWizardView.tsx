@@ -62,7 +62,7 @@ export interface OnboardingWizardViewProps {
   onComplete: any;
   t: any;
   user: any;
-  updateProfileConfirmed: any;
+  updateProfileClientApplied: any;
   step: OnboardingStep;
   error: any;
   data: any;

@@ -9,7 +9,9 @@ const hookMocks = vi.hoisted(() => ({
   createAmendment: vi.fn(async () => undefined),
   updateProcessBranch: vi.fn(async () => undefined),
   updateDocument: vi.fn(() => 'update-document-result'),
-  serverConfirmed: vi.fn(async (result: unknown) => result),
+  waitForClientApply: vi.fn(async (result: unknown) => {
+    if (result instanceof Promise) await result;
+  }),
   syncEntityHashtags: vi.fn(async () => undefined),
   toastError: vi.fn(),
   documentEditingMode: 'edit' as string | null,
@@ -53,7 +55,7 @@ vi.mock('@/zero/common', () => ({
 }));
 
 vi.mock('@/zero/mutate-with-server-check', () => ({
-  serverConfirmed: (result: unknown) => hookMocks.serverConfirmed(result),
+  waitForClientApply: (result: unknown) => hookMocks.waitForClientApply(result),
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
@@ -224,6 +226,6 @@ describe('useAmendmentEditContentController', () => {
       id: 'document-1',
       editing_mode: 'vote_internal',
     });
-    expect(hookMocks.serverConfirmed).toHaveBeenCalledWith('update-document-result');
+    expect(hookMocks.waitForClientApply).toHaveBeenCalledWith('update-document-result');
   });
 });

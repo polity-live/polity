@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react';
 
-import { LoadingState } from '@/features/shared/ui/feedback';
+import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { StatsBar } from '@/features/shared/ui/layout';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -43,7 +43,7 @@ export function MeetingPageView(props: MeetingPageViewProps) {
   const { t } = useTranslation();
 
   if (props.state === 'loading') {
-    return <LoadingState label={t('features.meet.page.loadingMeeting')} className="py-12" />;
+    return <PageSkeleton label={t('features.meet.page.loadingMeeting')} />;
   }
 
   if (props.state === 'not-found') {

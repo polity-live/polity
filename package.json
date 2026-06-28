@@ -11,6 +11,7 @@
     "start": "node .output/server/index.mjs",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "vitest run",
+    "test:mutation-guards": "vitest run src/zero/__tests__/mutateWithServerCheck.test.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",

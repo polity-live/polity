@@ -39,7 +39,7 @@ import { selectMaterializedHierarchicalMemberships } from '@/features/groups/log
 import { queries } from '@/zero/queries';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useGroupOfflineMembershipsByGroupIds, useGroupState } from '@/zero/groups/useGroupState';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import type {
   ParticipationProvenanceGroupLike,
   ParticipationRoleLike,
@@ -378,7 +378,7 @@ export function GroupMembershipsContentContainer({
     if ((changeRoleMembership as { effectiveReadOnly?: boolean }).effectiveReadOnly) return;
 
     if (isOfflineMembershipParticipant(changeRoleMembership)) {
-      await serverConfirmed(
+      await waitForClientApply(
         syncOfflineMembershipRoles({
           group_offline_membership_id: changeRoleMembership.id,
           role_ids: newRoleIds,
@@ -524,7 +524,7 @@ export function GroupMembershipsContentContainer({
       .map(role => role.id);
 
     if (isOfflineMembershipParticipant(membership)) {
-      await serverConfirmed(
+      await waitForClientApply(
         syncOfflineMembershipRoles({
           group_offline_membership_id: membership.id,
           role_ids: nextRoleIds,

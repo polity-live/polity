@@ -16,7 +16,7 @@ import { useMessageState } from '@/zero/messages/useMessageState';
 import { useGroupConnectionActions, useGroupConnectionState } from '@/zero/network';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 import { RIGHT_TYPES, type RightType } from '@/features/shared/ui/status';
-import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import {
   EMPTY_RICH_TEXT_VALUE,
   richTextToPlainText,
@@ -319,14 +319,14 @@ export function useGroupUpdate(
       previousConnectedGroupId != null && previousConnectedGroupId !== nextConnectedGroupId;
 
     if (partnerChanged && previousConnection) {
-      await serverConfirmed(
+      await waitForClientApply(
         deleteGroupConnection({ id: previousConnection.id, acting_group_id: groupId })
       );
     }
 
     if (!nextConnectedGroupId) {
       if (!partnerChanged && previousConnection) {
-        await serverConfirmed(
+        await waitForClientApply(
           deleteGroupConnection({ id: previousConnection.id, acting_group_id: groupId })
         );
       }
@@ -443,7 +443,7 @@ export function useGroupUpdate(
       membership_rule: membershipRule,
     });
 
-    await serverConfirmed(result);
+    await waitForClientApply(result);
   };
 
   /**
@@ -500,39 +500,41 @@ export function useGroupUpdate(
           group_type: options.groupType,
           owner_id: null,
         });
-        await serverConfirmed(createGroupResult);
+        await waitForClientApply(createGroupResult);
         if (shouldSyncSiblingRelationships) {
           await syncConnectedSiblingRelationships();
         }
       } else {
-        await updateGroup({
-          id: groupId,
-          name: formData.name,
-          description: formData.description
-            ? toZeroRichTextValue(formData.descriptionContent)
-            : null,
-          email: formData.email || null,
-          country: formData.country || null,
-          region: formData.region || null,
-          post_code: formData.post_code || null,
-          city: formData.city || null,
-          street: formData.street || null,
-          house_number: formData.house_number || null,
-          latitude: formData.latitude,
-          longitude: formData.longitude,
-          image_url: formData.imageURL || null,
-          x: formData.twitter,
-          website: formData.website || null,
-          youtube: formData.youtube || null,
-          linkedin: formData.linkedin || null,
-          whatsapp: formData.whatsapp || null,
-          instagram: formData.instagram || null,
-          twitter: formData.twitter || null,
-          facebook: formData.facebook || null,
-          snapchat: formData.snapchat || null,
-          tiktok: formData.tiktok || null,
-          visibility: formData.visibility,
-        });
+        await waitForClientApply(
+          updateGroup({
+            id: groupId,
+            name: formData.name,
+            description: formData.description
+              ? toZeroRichTextValue(formData.descriptionContent)
+              : null,
+            email: formData.email || null,
+            country: formData.country || null,
+            region: formData.region || null,
+            post_code: formData.post_code || null,
+            city: formData.city || null,
+            street: formData.street || null,
+            house_number: formData.house_number || null,
+            latitude: formData.latitude,
+            longitude: formData.longitude,
+            image_url: formData.imageURL || null,
+            x: formData.twitter,
+            website: formData.website || null,
+            youtube: formData.youtube || null,
+            linkedin: formData.linkedin || null,
+            whatsapp: formData.whatsapp || null,
+            instagram: formData.instagram || null,
+            twitter: formData.twitter || null,
+            facebook: formData.facebook || null,
+            snapchat: formData.snapchat || null,
+            tiktok: formData.tiktok || null,
+            visibility: formData.visibility,
+          })
+        );
 
         if (shouldSyncSiblingRelationships) {
           await syncConnectedSiblingRelationships();
@@ -540,11 +542,13 @@ export function useGroupUpdate(
 
         // Sync name to group conversation if it changed
         if (nameChanged && groupConversation) {
-          await updateConversation({
-            id: groupConversation.id,
-            name: formData.name,
-            last_message_at: Date.now(),
-          });
+          await waitForClientApply(
+            updateConversation({
+              id: groupConversation.id,
+              name: formData.name,
+              last_message_at: Date.now(),
+            })
+          );
         }
       }
 

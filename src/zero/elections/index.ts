@@ -31,6 +31,7 @@ export {
   createFinalElectorParticipationSchema,
   selectFinalCandidateSelectionSchema,
   createFinalCandidateSelectionSchema,
+  castFinalElectionVoteFullSchema,
   selectElectionOfflineTallySchema,
   upsertElectionOfflineTallySchema,
   deleteElectionOfflineTallySchema,

@@ -23,6 +23,7 @@ import {
   replaceIndicativeElectionVoteSchema,
   createFinalElectorParticipationSchema,
   createFinalCandidateSelectionSchema,
+  castFinalElectionVoteFullSchema,
   upsertElectionOfflineTallySchema,
   deleteElectionOfflineTallySchema,
 } from './schema';
@@ -471,6 +472,42 @@ export const electionSharedMutators = {
         ...args,
         created_at: now,
       });
+    }
+  ),
+
+  castFinalElectionVoteFull: defineMutator(
+    castFinalElectionVoteFullSchema,
+    async ({ tx, ctx, args }) => {
+      const { participation, selections } = args;
+      await assertElectorOwner(tx, ctx, participation.elector_id, participation.election_id);
+
+      const election = await loadElection(tx, participation.election_id);
+      const isNamed = isNamedBallot(election.ballot_visibility ?? defaultElectionBallotVisibility);
+
+      for (const selection of selections) {
+        if (selection.election_id !== participation.election_id) {
+          throw new Error('Final election selection does not belong to this election.');
+        }
+        await assertCandidateBelongsToElection(
+          tx,
+          participation.election_id,
+          selection.candidate_id
+        );
+      }
+
+      const now = Date.now();
+      await tx.mutate.final_elector_participation.insert({
+        ...participation,
+        created_at: now,
+      });
+
+      for (const selection of selections) {
+        await tx.mutate.final_candidate_selection.insert({
+          ...selection,
+          elector_participation_id: isNamed ? participation.id : null,
+          created_at: now,
+        });
+      }
     }
   ),
 

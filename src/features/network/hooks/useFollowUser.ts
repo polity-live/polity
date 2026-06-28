@@ -3,6 +3,7 @@ import { useUserState } from '@/zero/users/useUserState';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { useAuth } from '@/providers/auth-provider';
 import { notifyNewFollower } from '@/features/notifications/utils/notification-helpers.ts';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 /**
  * Hook to handle user following functionality
@@ -39,10 +40,12 @@ export function useFollowUser(targetUserId?: string) {
     setIsLoading(true);
     try {
       const followId = crypto.randomUUID();
-      await userActions.follow({
-        id: followId,
-        followee_id: targetUserId,
-      });
+      await waitForClientApply(
+        userActions.follow({
+          id: followId,
+          followee_id: targetUserId,
+        })
+      );
 
       // Send notification to the user being followed
       notifyNewFollower({
@@ -66,7 +69,7 @@ export function useFollowUser(targetUserId?: string) {
 
     setIsLoading(true);
     try {
-      await userActions.unfollow(currentFollowRecord.id);
+      await waitForClientApply(userActions.unfollow(currentFollowRecord.id));
     } catch (error) {
       console.error('Failed to unfollow user:', error);
     } finally {

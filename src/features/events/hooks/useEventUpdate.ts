@@ -41,6 +41,7 @@ import {
   normalizeChangeRequestVoteOrder,
   type ChangeRequestVoteOrder,
 } from '@/features/change-requests/logic/changeRequestVoteOrder';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 type AttendanceMode = 'online' | 'hybrid' | 'offline';
 
@@ -422,7 +423,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           ...recurringFields,
         };
 
-        await createEvent(createData);
+        await waitForClientApply(createEvent(createData));
       } else {
         if (!event) {
           toast.error(translateText('generated.inline.0478_no_event_data_to_update_e4627a29'));

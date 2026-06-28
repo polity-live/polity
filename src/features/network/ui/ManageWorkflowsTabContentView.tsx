@@ -12,6 +12,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import {
   ActionSubmissionOverlay,
   useActionSubmission,
+  type ActionSubmissionContext,
 } from '@/features/shared/ui/action-submission';
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
 import { DangerConfirmDialog } from '@/features/shared/ui/dialog';
@@ -85,10 +86,16 @@ export interface ManageWorkflowsTabProps {
   onUpdateWorkflowStep: (index: number, patch: Partial<DraftWorkflowStep>) => void;
   onRemoveWorkflowStep: (index: number) => void;
   onMoveWorkflowStep: (fromIndex: number, toIndex: number) => void;
-  onSaveWorkflow: () => void;
+  onSaveWorkflow: (submissionContext?: ActionSubmissionContext) => void;
   onDeleteWorkflow: (workflowId: string) => void;
-  onApproveWorkflowApproval: (approvalId: string) => void;
-  onRejectWorkflowApproval: (approvalId: string) => void;
+  onApproveWorkflowApproval: (
+    approvalId: string,
+    submissionContext?: ActionSubmissionContext
+  ) => void;
+  onRejectWorkflowApproval: (
+    approvalId: string,
+    submissionContext?: ActionSubmissionContext
+  ) => void;
 }
 
 type WorkflowStatusFilter = 'all' | 'pending_approval' | 'active' | 'rejected' | 'archived';
@@ -437,7 +444,31 @@ export function ManageWorkflowsTabContentView({
     });
 
     void approvalSubmission
-      .runActionWithSubmission(async () => onApproveWorkflowApproval(approval.id), {
+      .runActionWithSubmission(async context => onApproveWorkflowApproval(approval.id, context), {
+        deferSyncCompletion: true,
+        onSuccess: approvalSubmission.reset,
+      })
+      .catch(() => undefined);
+  };
+
+  const handleRejectWorkflow = (
+    workflow: WorkflowWithStepsRow,
+    approval: WorkflowWithStepsRow['approvals'][number]
+  ) => {
+    const startGroup = getWorkflowStartGroup(workflow);
+    const path = [
+      startGroup.name,
+      ...getSortedWorkflowSteps(workflow).map(step => step.group?.name ?? step.group_id),
+    ].filter(Boolean);
+
+    setApprovalPreview({
+      title: workflow.name ?? t('common.untitled'),
+      path,
+    });
+
+    void approvalSubmission
+      .runActionWithSubmission(async context => onRejectWorkflowApproval(approval.id, context), {
+        deferSyncCompletion: true,
         onSuccess: approvalSubmission.reset,
       })
       .catch(() => undefined);
@@ -493,7 +524,8 @@ export function ManageWorkflowsTabContentView({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onRejectWorkflowApproval(row.original.approval.id)}
+            disabled={approvalSubmission.isActive}
+            onClick={() => handleRejectWorkflow(row.original.workflow, row.original.approval)}
           >
             {t('common.actions.reject')}
           </Button>

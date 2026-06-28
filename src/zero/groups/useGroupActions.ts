@@ -413,6 +413,7 @@ export function useGroupActions() {
   // ── Admin setup (silent batch — no individual toasts) ────────────
   const setupGroupAdminRoles = useCallback(
     (groupId: string) => {
+      const results: ReturnType<typeof zero.mutate>[] = [];
       let adminRoleId: string | null = null;
       const totalRoles = DEFAULT_GROUP_ROLES.length;
       for (let i = 0; i < totalRoles; i++) {
@@ -435,6 +436,7 @@ export function useGroupActions() {
             sort_order: sortOrder,
           })
         );
+        results.push(roleResult);
         onServerError(roleResult, msg => console.error('Failed to create role:', msg));
         for (const perm of roleDef.permissions) {
           const permResult = zero.mutate(
@@ -449,6 +451,7 @@ export function useGroupActions() {
               blog_id: null,
             })
           );
+          results.push(permResult);
           onServerError(permResult, msg => console.error('Failed to assign action right:', msg));
         }
       }
@@ -462,6 +465,7 @@ export function useGroupActions() {
             visibility: 'public',
           })
         );
+        results.push(joinResult);
         onServerError(joinResult, msg => console.error('Failed to join group as admin:', msg));
 
         const syncResult = zero.mutate(
@@ -471,10 +475,12 @@ export function useGroupActions() {
             assigned_by_id: null,
           })
         );
+        results.push(syncResult);
         onServerError(syncResult, msg =>
           console.error('Failed to assign admin role to creator membership:', msg)
         );
       }
+      return results;
     },
     [zero]
   );

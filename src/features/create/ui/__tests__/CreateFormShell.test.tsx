@@ -186,6 +186,8 @@ describe('CreateFormShell', () => {
 
     expect(await screen.findByRole('dialog')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'POLITY is working.' })).toBeTruthy();
+    expect(screen.getByRole('progressbar', { name: 'Creation progress' })).toBeTruthy();
+    expect(document.querySelector('[data-slot="loading-progress-bar"]')).toBeTruthy();
     expect(screen.getByText('Alpha Group Review')).toBeTruthy();
     expect(screen.getByText('Alpha Group')).toBeTruthy();
     expect(screen.getByRole<HTMLButtonElement>('button', { name: /zur gruppe/i }).disabled).toBe(

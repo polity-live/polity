@@ -27,6 +27,7 @@ import {
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import type { VoteValue } from '@/features/shared/ui/voting/VoteButtons';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 export function useAmendmentWikiPage(amendmentId: string) {
   const navigate = useNavigate();
@@ -167,16 +168,20 @@ export function useAmendmentWikiPage(amendmentId: string) {
     try {
       if (voteState.userVote) {
         if (voteState.currentVoteValue === voteValue) {
-          await deleteSupportVote(voteState.userVote.id);
+          await waitForClientApply(deleteSupportVote(voteState.userVote.id));
         } else {
-          await updateSupportVote({ id: voteState.userVote.id, vote: voteValue });
+          await waitForClientApply(
+            updateSupportVote({ id: voteState.userVote.id, vote: voteValue })
+          );
         }
       } else {
-        await supportAmendment({
-          id: crypto.randomUUID(),
-          amendment_id: amendmentId,
-          vote: voteValue,
-        });
+        await waitForClientApply(
+          supportAmendment({
+            id: crypto.randomUUID(),
+            amendment_id: amendmentId,
+            vote: voteValue,
+          })
+        );
       }
     } catch (error) {
       console.error('Error voting:', error);

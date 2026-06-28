@@ -4,6 +4,7 @@ import { featureThemeClassName } from '@/features/shared/theme';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTodoActions } from '@/zero/todos/useTodoActions.ts';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 import type { Todo, TodoStatus } from '../types/todo.types';
 import type { KanbanColumn } from '../ui/kanban-board-view';
@@ -70,7 +71,7 @@ export function useKanbanBoardController({ canManageTodos, todos }: UseKanbanBoa
         completed_at: status === 'completed' ? Date.now() : null,
       };
 
-      await updateTodo(updates);
+      await waitForClientApply(updateTodo(updates));
       toast.success(t('features.todos.kanban.statusUpdated'));
     } catch (error) {
       console.error('Failed to update todo:', error);
@@ -93,11 +94,13 @@ export function useKanbanBoardController({ canManageTodos, todos }: UseKanbanBoa
   const handleToggleComplete = async (todo: Todo) => {
     try {
       const isCompleting = todo.status !== 'completed';
-      await updateTodo({
-        id: todo.id,
-        status: isCompleting ? 'completed' : 'pending',
-        completed_at: isCompleting ? Date.now() : null,
-      });
+      await waitForClientApply(
+        updateTodo({
+          id: todo.id,
+          status: isCompleting ? 'completed' : 'pending',
+          completed_at: isCompleting ? Date.now() : null,
+        })
+      );
       toast.success(t('features.todos.kanban.statusUpdated'));
     } catch (error) {
       console.error('Failed to toggle todo completion:', error);

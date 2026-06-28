@@ -10,7 +10,9 @@ const hookMocks = vi.hoisted(() => ({
   addAmendmentCollaborator: vi.fn(),
   createDocument: vi.fn(() => 'create-document-result'),
   createAmendmentPath: vi.fn(async () => undefined),
-  serverConfirmed: vi.fn(async (result: unknown) => result),
+  waitForClientApply: vi.fn(async (result: unknown) => {
+    void result;
+  }),
   notifyAmendmentCloned: vi.fn(async (...args: unknown[]) => {
     void args;
   }),
@@ -37,7 +39,7 @@ vi.mock('@/zero/documents/useDocumentActions', () => ({
 }));
 
 vi.mock('@/zero/mutate-with-server-check', () => ({
-  serverConfirmed: (result: unknown) => hookMocks.serverConfirmed(result),
+  waitForClientApply: (result: unknown) => hookMocks.waitForClientApply(result),
 }));
 
 vi.mock('../useCreateAmendmentPath', () => ({
