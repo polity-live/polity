@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import type {
+  CreateSubmitTargetMetadata,
   CreateFlowPage,
   SubmitWaitForSavedAndNavigateOptions,
 } from '../fixtures/create-flow-page';
@@ -34,11 +35,34 @@ function uuidPattern() {
 }
 
 async function expectPageText(create: CreateFlowPage, text: string) {
-  await expect(create.page.getByText(text).first()).toBeVisible({ timeout: 60_000 });
+  const targetText = create.page.getByText(text).first();
+
+  try {
+    await expect(targetText).toBeVisible({ timeout: 60_000 });
+    return;
+  } catch (error) {
+    const loadingContent = create.page.getByText(/Loading (content|section)\.\.\./).first();
+    const stillLoading = await loadingContent.isVisible().catch(() => false);
+
+    if (!stillLoading) throw error;
+
+    await create.page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(targetText).toBeVisible({ timeout: 60_000 });
+  }
 }
 
 async function expectRow(fetchCount: () => Promise<number>) {
   await expect.poll(fetchCount, { timeout: 60_000 }).toBeGreaterThan(0);
+}
+
+function requireTargetId(kind: CreateSmokeKind, target: CreateSubmitTargetMetadata) {
+  if (!target.id) {
+    throw new Error(
+      `Smoke expectation for ${kind} requires a concrete created target id. Rendered target: kind=${target.kind ?? 'missing'}, to=${target.to ?? 'missing'}, params=${target.paramsRaw ?? 'missing'}, href=${target.href ?? 'missing'}.`
+    );
+  }
+
+  return target.id;
 }
 
 function requireSeed(kind: CreateSmokeKind, seed: SeedData | undefined): SeedData {
@@ -60,11 +84,19 @@ function buildSmokeExpectation(
       return {
         expectedUrl: new RegExp(`/group/${uuidPattern()}/?$`),
         expectTargetVisible: () => expectPageText(create, name),
-        verifyCreatedRecord: () =>
-          expectRow(async () => {
-            const rows = await sql`select id from public."group" where name = ${name} limit 1`;
+        verifyCreatedRecord: target => {
+          const targetId = requireTargetId(kind, target);
+          return expectRow(async () => {
+            const rows = await sql`
+              select id
+              from public."group"
+              where id = ${targetId}::uuid
+                and name = ${name}
+              limit 1
+            `;
             return rows.length;
-          }),
+          });
+        },
       };
     }
 

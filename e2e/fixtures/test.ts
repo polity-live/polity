@@ -1,9 +1,19 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { test as base } from '@playwright/test';
 
 import { cleanupE2ERows } from './cleanup';
-import { authenticateWorker, type E2EWorkerUser } from './auth';
+import { authenticateWorker, ensureE2EAuthUser, type E2EWorkerUser } from './auth';
 import { seedCreatePrerequisites, type SeedData } from './seed';
 import { CreateFlowPage, createSmokeTestTimeoutMs } from './create-flow-page';
+
+const LOCK_DIR = path.join(process.cwd(), 'test-results', '.locks');
+const AUTH_LOCK_PATH = path.join(LOCK_DIR, 'create-auth.lock');
+const SMOKE_LOCK_PATH = path.join(LOCK_DIR, 'create-smoke.lock');
+const DEFAULT_SMOKE_LOCK_TIMEOUT_MS = 15 * 60_000;
+const DEFAULT_SMOKE_LOCK_STALE_MS = 30 * 60_000;
+const DEFAULT_AUTH_LOCK_TIMEOUT_MS = 5 * 60_000;
+const DEFAULT_AUTH_LOCK_STALE_MS = 10 * 60_000;
 
 interface TestFixtures {
   _createSmokeTimeout: undefined;
@@ -27,25 +37,139 @@ function sanitizeTitle(title: string) {
     .slice(0, 48);
 }
 
+function configuredMs(name: string, fallback: number) {
+  const configured = Number(process.env[name]);
+  return Number.isFinite(configured) && configured > 0 ? configured : fallback;
+}
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function errorCode(error: unknown) {
+  return typeof error === 'object' && error && 'code' in error
+    ? (error as { code?: unknown }).code
+    : undefined;
+}
+
+async function removeStaleLock(lockPath: string, staleAfterMs: number, now = Date.now()) {
+  try {
+    const stat = await fs.stat(lockPath);
+    if (now - stat.mtimeMs > staleAfterMs) {
+      await fs.unlink(lockPath);
+    }
+  } catch (error) {
+    if (errorCode(error) !== 'ENOENT') throw error;
+  }
+}
+
+async function acquireLock(
+  lockPath: string,
+  options: {
+    timeoutMs: number;
+    staleAfterMs: number;
+    metadata: Record<string, unknown>;
+  }
+) {
+  await fs.mkdir(LOCK_DIR, { recursive: true });
+  const { timeoutMs, staleAfterMs, metadata } = options;
+  const deadline = Date.now() + timeoutMs;
+  const token = `${process.pid}:${Date.now()}:${Math.random()}`;
+
+  while (Date.now() < deadline) {
+    try {
+      const file = await fs.open(lockPath, 'wx');
+      await file.writeFile(
+        JSON.stringify({
+          token,
+          pid: process.pid,
+          acquiredAt: new Date().toISOString(),
+          ...metadata,
+        })
+      );
+      await file.close();
+
+      return async () => {
+        try {
+          const raw = await fs.readFile(lockPath, 'utf8');
+          if (raw.includes(token)) {
+            await fs.unlink(lockPath);
+          }
+        } catch (error) {
+          if (errorCode(error) !== 'ENOENT') throw error;
+        }
+      };
+    } catch (error) {
+      if (errorCode(error) !== 'EEXIST') throw error;
+      await removeStaleLock(lockPath, staleAfterMs);
+      await sleep(250);
+    }
+  }
+
+  throw new Error(`Timed out waiting for ${lockPath} after ${timeoutMs}ms.`);
+}
+
+async function acquireSmokeLock(testInfo: { title: string; workerIndex: number }) {
+  return acquireLock(SMOKE_LOCK_PATH, {
+    timeoutMs: configuredMs('E2E_CREATE_SMOKE_LOCK_TIMEOUT_MS', DEFAULT_SMOKE_LOCK_TIMEOUT_MS),
+    staleAfterMs: configuredMs('E2E_CREATE_SMOKE_LOCK_STALE_MS', DEFAULT_SMOKE_LOCK_STALE_MS),
+    metadata: {
+      workerIndex: testInfo.workerIndex,
+      title: testInfo.title,
+    },
+  });
+}
+
+async function acquireAuthLock(workerIndex: number) {
+  return acquireLock(AUTH_LOCK_PATH, {
+    timeoutMs: configuredMs('E2E_CREATE_AUTH_LOCK_TIMEOUT_MS', DEFAULT_AUTH_LOCK_TIMEOUT_MS),
+    staleAfterMs: configuredMs('E2E_CREATE_AUTH_LOCK_STALE_MS', DEFAULT_AUTH_LOCK_STALE_MS),
+    metadata: { workerIndex, purpose: 'authenticate worker' },
+  });
+}
+
 export const test = base.extend<TestFixtures, WorkerFixtures>({
   _createSmokeTimeout: [
     // Playwright requires fixture callbacks to destructure the first argument, even when no fixtures are used.
     // eslint-disable-next-line no-empty-pattern
     async ({}, use, testInfo) => {
+      let releaseSmokeLock: (() => Promise<void>) | undefined;
+
       if (testInfo.title.includes('@smoke')) {
-        testInfo.setTimeout(Math.max(testInfo.timeout, createSmokeTestTimeoutMs()));
+        const smokeLockTimeoutMs = configuredMs(
+          'E2E_CREATE_SMOKE_LOCK_TIMEOUT_MS',
+          DEFAULT_SMOKE_LOCK_TIMEOUT_MS
+        );
+        testInfo.setTimeout(
+          Math.max(testInfo.timeout, createSmokeTestTimeoutMs(), smokeLockTimeoutMs + 60_000)
+        );
+        releaseSmokeLock = await acquireSmokeLock(testInfo);
       }
-      await use(undefined);
+
+      try {
+        await use(undefined);
+      } finally {
+        await releaseSmokeLock?.();
+      }
     },
     { auto: true },
   ],
 
   workerStorageState: [
     async ({ browser }, use, workerInfo) => {
-      const user = await authenticateWorker(browser, workerInfo.parallelIndex);
-      await use(user.storageStatePath);
+      const releaseAuthLock = await acquireAuthLock(workerInfo.parallelIndex);
+      try {
+        const user = await authenticateWorker(browser, workerInfo.parallelIndex);
+        await use(user.storageStatePath);
+      } finally {
+        await releaseAuthLock();
+      }
     },
-    { scope: 'worker', timeout: 90_000 },
+    {
+      scope: 'worker',
+      timeout:
+        configuredMs('E2E_CREATE_AUTH_LOCK_TIMEOUT_MS', DEFAULT_AUTH_LOCK_TIMEOUT_MS) + 120_000,
+    },
   ],
 
   e2eUser: [
@@ -71,6 +195,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   },
 
   seed: async ({ e2eRun, e2eUser }, use) => {
+    await ensureE2EAuthUser(e2eUser);
     const seed = await seedCreatePrerequisites(e2eRun.prefix, e2eUser.id);
     await use(seed);
   },

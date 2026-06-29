@@ -1,4 +1,8 @@
 import { test, expect } from '../fixtures/test';
+import {
+  clearCreateRecoverySessionStateForPage,
+  waitForCreateDashboardReady,
+} from '../fixtures/create-flow-page';
 
 const createRoutes = [
   '/create/group',
@@ -13,14 +17,14 @@ const createRoutes = [
 ] as const;
 
 test.describe('create/dashboard', () => {
-  test('dashboard cards navigate to every create route @smoke', async ({ page }) => {
-    test.setTimeout(90_000);
+  test.beforeEach(async ({ page }) => {
+    await clearCreateRecoverySessionStateForPage(page);
+  });
 
+  test('dashboard cards navigate to every create route @smoke', async ({ page }) => {
     for (const route of createRoutes) {
       await page.goto('/create');
-      await expect(page.locator('[data-create-action="open-create-flow"]').first()).toBeVisible({
-        timeout: 30_000,
-      });
+      await waitForCreateDashboardReady(page);
       await page.locator(`[data-create-option="${route}"]`).click();
       await expect(page).toHaveURL(new RegExp(`${route.replace('/', '\\/')}`));
     }
