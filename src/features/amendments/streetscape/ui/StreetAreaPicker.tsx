@@ -10,6 +10,9 @@ interface StreetAreaPickerProps {
   isLoadingOsm: boolean;
   osmError: string | null;
   readOnly: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  variant?: 'card' | 'panel';
   onMapSelectionChange: (selection: StreetDesignMapSelection) => void;
   onLoadOsm: () => void;
   onLoadSample: () => void;
@@ -24,6 +27,9 @@ export function StreetAreaPicker({
   isLoadingOsm,
   osmError,
   readOnly,
+  open,
+  onOpenChange,
+  variant,
   onMapSelectionChange,
   onLoadOsm,
   onLoadSample,
@@ -40,5 +46,12 @@ export function StreetAreaPicker({
     onLoadSample,
   });
 
-  return <StreetAreaPickerView {...viewProps} />;
+  return (
+    <StreetAreaPickerView
+      {...viewProps}
+      open={open}
+      onOpenChange={onOpenChange}
+      variant={variant}
+    />
+  );
 }

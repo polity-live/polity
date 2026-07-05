@@ -25,7 +25,11 @@ describe('app shell page frame routing', () => {
     expect(getUnauthenticatedPageFrame('/user/user-1/network')).toBe('uncontained');
     expect(getUnauthenticatedPageFrame('/event/event-1/network')).toBe('uncontained');
     expect(getUnauthenticatedPageFrame('/amendment/amendment-1/process')).toBe('uncontained');
-    expect(getUnauthenticatedPageFrame('/amendment/amendment-1/streetscape')).toBe('uncontained');
+  });
+
+  it('contains the streetscape editor like the full text amendment editor', () => {
+    expect(getUnauthenticatedPageFrame('/amendment/amendment-1/streetscape')).toBe('contained');
+    expect(getAuthenticatedPageFrame('/amendment/amendment-1/streetscape')).toBe('contained');
   });
 
   it('leaves signed-out public non-entity pages bare', () => {

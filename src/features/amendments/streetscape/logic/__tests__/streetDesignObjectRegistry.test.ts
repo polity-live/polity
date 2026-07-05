@@ -205,5 +205,18 @@ describe('streetDesignObjectRegistry', () => {
     expect(streetDesignObjectRegistry.stairs.propertySchema.map(field => field.key)).toEqual(
       expect.arrayContaining(['incline', 'deckElevationMeters'])
     );
+
+    const stationPlatformSchema = streetDesignObjectRegistry.station_platform.propertySchema;
+    expect(streetDesignObjectRegistry.station_platform.defaultProperties.deckElevationMeters).toBe(
+      0
+    );
+    expect(stationPlatformSchema.map(field => field.key)).toEqual(
+      expect.arrayContaining(['platformType', 'shelter', 'deckElevationMeters'])
+    );
+    expect(
+      stationPlatformSchema
+        .find(field => field.key === 'platformType')
+        ?.options?.map(option => option.value)
+    ).toEqual(expect.arrayContaining(['bus_platform', 'tram_stop', 'rail_platform']));
   });
 });

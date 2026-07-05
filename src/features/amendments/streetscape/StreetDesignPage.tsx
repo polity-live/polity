@@ -10,9 +10,21 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
 
   return (
     <StreetDesignPageView
+      amendmentId={controller.amendmentId}
       amendment={controller.amendment}
       isLoading={controller.isLoading}
       readOnly={controller.readOnly}
+      mode={controller.mode}
+      modeDisabledReasons={controller.modeDisabledReasons}
+      canChangeMode={controller.canChangeMode}
+      currentUserId={controller.currentUserId}
+      collaborationDocumentId={controller.collaborationDocumentId}
+      editorCollaborators={controller.editorCollaborators}
+      existingCollaboratorIds={controller.existingCollaboratorIds}
+      onlinePeerMap={controller.onlinePeerMap}
+      activeCursorUserIds={controller.activeCursorUserIds}
+      presenceColorByUserId={controller.presenceColorByUserId}
+      streetChangeRequests={controller.streetChangeRequests}
       design={controller.design}
       selectedObject={controller.selectedObject}
       selectedOsmWay={controller.selectedOsmWay}
@@ -46,6 +58,7 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       onLoadOsm={controller.onLoadOsm}
       onLoadSample={controller.onLoadSample}
       onSave={controller.onSave}
+      onModeChange={controller.onModeChange}
       onToolChange={controller.setSelectedTool}
       onInteractionModeChange={controller.setInteractionMode}
       onComparisonModeChange={controller.setComparisonMode}

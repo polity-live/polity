@@ -1,10 +1,30 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useAuth } from '@/providers/auth-provider';
+import { generateDistinctUserColorMap } from '@/features/editor/logic/editor-helpers';
+import { useEditorPresence } from '@/features/editor/hooks/useEditorPresence';
+import type { EditorCollaborator } from '@/features/editor/types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { overpassStreetSceneFn } from '@/server/overpass-street-scene';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { useDocumentActions } from '@/zero/documents/useDocumentActions';
+import { useUserState } from '@/zero/users/useUserState';
+import {
+  getBranchEditingMode,
+  getBranchEditingModeDisabledReasons,
+  resolveSelectedBranchId,
+} from '@/features/amendments/logic/amendmentBranchDisplay';
+import {
+  isTerminalEditingMode,
+  normalizeEditingMode,
+  type NonTerminalEditingMode,
+} from '@/zero/amendments/editing-mode-policy';
+import {
+  getStreetDesignChangeRequests,
+  type StreetDesignChangeRequest,
+} from '../logic/streetDesignChangeRequests';
+import { getStreetDesignAccess } from '../logic/streetDesignPermissions';
 import type {
   StreetDesignBoundingBox,
   StreetDesignGeoPoint,
@@ -125,12 +145,27 @@ function createSampleOsmSnapshot(
 
 export function useStreetDesignPageController(amendmentId: string) {
   const { user } = useAuth();
-  const { amendment, primaryStreetDesign, isCollaborator, isAdmin, isLoading } = useAmendmentState({
+  const { user: userRecord } = useUserState({ userId: user?.id });
+  const {
+    amendment,
+    amendmentDocsCollabs,
+    amendmentProcess,
+    documents,
+    changeRequestsWithVotes,
+    collaborators,
+    primaryStreetDesign,
+    isLoading,
+  } = useAmendmentState({
     amendmentId,
     userId: user?.id,
+    includeDocsAndCollabs: true,
+    includeProcessData: true,
+    includeDocuments: true,
+    includeChangeRequestsWithVotes: true,
     includeStreetDesign: true,
   });
-  const { createStreetDesign, updateStreetDesign } = useAmendmentActions();
+  const { createStreetDesign, updateProcessBranch, updateStreetDesign } = useAmendmentActions();
+  const { updateDocument } = useDocumentActions();
   const amendmentLocationOrigin = useMemo(
     () => getStreetDesignOriginFromAmendmentLocation(amendment),
     [
@@ -179,8 +214,93 @@ export function useStreetDesignPageController(amendmentId: string) {
     );
   }, [editor.replaceDesign, persistedDesign]);
 
-  const canEdit = Boolean(
-    user && (isCollaborator || isAdmin || amendment?.created_by_id === user.id)
+  const amendmentModeContext = amendmentDocsCollabs ?? amendment;
+  const processBranches =
+    amendmentDocsCollabs?.current_process_run?.branches ??
+    amendmentProcess?.current_process_run?.branches ??
+    amendment?.current_process_run?.branches ??
+    [];
+  const activeBranchId =
+    amendmentDocsCollabs?.current_process_run?.active_branch_id ??
+    amendmentProcess?.current_process_run?.active_branch_id ??
+    amendment?.current_process_run?.active_branch_id ??
+    null;
+  const activeProcessBranch =
+    amendmentDocsCollabs?.current_process_run?.active_branch ??
+    amendmentProcess?.current_process_run?.active_branch ??
+    null;
+  const selectedProcessBranchId = resolveSelectedBranchId({
+    branches: processBranches,
+    requestedBranchId: null,
+    activeBranchId,
+  });
+  const selectedProcessBranch =
+    processBranches.find(branch => branch.id === selectedProcessBranchId) ?? activeProcessBranch;
+  const primaryDocument =
+    amendmentDocsCollabs?.document ??
+    documents.find(document => document.id === amendment?.document_id) ??
+    documents[0] ??
+    null;
+  const hasProcessBranch = Boolean(activeBranchId || activeProcessBranch || processBranches.length);
+  const rawEditingMode = selectedProcessBranch
+    ? getBranchEditingMode(selectedProcessBranch)
+    : normalizeEditingMode(primaryDocument?.editing_mode);
+  const mode: NonTerminalEditingMode = isTerminalEditingMode(rawEditingMode)
+    ? 'view'
+    : rawEditingMode;
+  const modeDisabledReasons = getBranchEditingModeDisabledReasons(selectedProcessBranch);
+  const { canEdit, canChangeMode, readOnly } = useMemo(
+    () =>
+      getStreetDesignAccess({
+        amendment: amendmentModeContext,
+        hasDocumentModeTarget: Boolean(primaryDocument?.id),
+        hasProcessBranch,
+        selectedProcessBranch,
+        userId: user?.id,
+      }),
+    [amendmentModeContext, hasProcessBranch, primaryDocument?.id, selectedProcessBranch, user?.id]
+  );
+  const collaborationDocumentId =
+    selectedProcessBranch?.document_id ?? primaryDocument?.id ?? amendment?.document_id ?? null;
+  const currentUserName =
+    [userRecord?.first_name, userRecord?.last_name].filter(Boolean).join(' ').trim() ||
+    userRecord?.email ||
+    user?.email ||
+    'Anonymous';
+  const editorCollaborators = useMemo(
+    () => mapStreetDesignCollaborators(collaborators, amendment?.created_by),
+    [amendment?.created_by, collaborators]
+  );
+  const existingCollaboratorIds = useMemo(
+    () => editorCollaborators.map(collaborator => collaborator.user.id),
+    [editorCollaborators]
+  );
+  const presenceColorByUserId = useMemo(() => {
+    const userIds = new Set<string>();
+    if (user?.id) userIds.add(user.id);
+    editorCollaborators.forEach(collaborator => userIds.add(collaborator.user.id));
+    return generateDistinctUserColorMap(userIds);
+  }, [editorCollaborators, user?.id]);
+  const { onlinePeers, userColor } = useEditorPresence({
+    entityId: `street-design:${primaryStreetDesign?.id ?? amendmentId}`,
+    userId: user?.id,
+    userName: currentUserName,
+    userAvatar: userRecord?.avatar ?? undefined,
+    userColorByUserId: presenceColorByUserId,
+    enabled: Boolean(user?.id),
+  });
+  const onlinePeerMap = useMemo(() => {
+    return new Map(onlinePeers.map(peer => [peer.userId, peer]));
+  }, [onlinePeers]);
+  const activeCursorUserIds = useMemo(() => new Set<string>(), []);
+  const streetChangeRequests = useMemo(
+    () =>
+      getStreetDesignChangeRequests(
+        (changeRequestsWithVotes.length > 0
+          ? changeRequestsWithVotes
+          : amendment?.change_requests) as readonly StreetDesignChangeRequest[] | null | undefined
+      ),
+    [amendment?.change_requests, changeRequestsWithVotes]
   );
 
   const selectedCenter = selectedMapSelection.center;
@@ -188,7 +308,6 @@ export function useStreetDesignPageController(amendmentId: string) {
     () => getStreetDesignMapSelectionBoundingBox(selectedMapSelection),
     [selectedMapSelection]
   );
-  const readOnly = !canEdit;
   const placementDraft = editor.state.placementDraft;
   const placementPreview = placementDraft?.preview ?? null;
   const canFinishPathPlacement =
@@ -246,6 +365,8 @@ export function useStreetDesignPageController(amendmentId: string) {
   }, [editor, selectedBbox, selectedCenter, selectedMapSelection]);
 
   const handleSave = useCallback(async () => {
+    if (readOnly) return;
+
     setIsSaving(true);
     setSaveError(null);
 
@@ -305,14 +426,59 @@ export function useStreetDesignPageController(amendmentId: string) {
     createStreetDesign,
     editor,
     primaryStreetDesign?.id,
+    readOnly,
     selectedBbox,
     updateStreetDesign,
   ]);
 
+  const handleModeChange = useCallback(
+    async (nextMode: NonTerminalEditingMode) => {
+      if (!canChangeMode) return;
+
+      if (selectedProcessBranch?.id) {
+        await Promise.resolve(
+          updateProcessBranch({
+            id: selectedProcessBranch.id,
+            editing_mode: nextMode,
+          })
+        );
+        return;
+      }
+
+      if (primaryDocument?.id) {
+        await Promise.resolve(
+          updateDocument({
+            id: primaryDocument.id,
+            editing_mode: nextMode,
+          })
+        );
+      }
+    },
+    [
+      canChangeMode,
+      primaryDocument?.id,
+      selectedProcessBranch?.id,
+      updateDocument,
+      updateProcessBranch,
+    ]
+  );
+
   return {
+    activeCursorUserIds,
     amendment,
+    amendmentId,
     isLoading,
     canEdit,
+    canChangeMode,
+    collaborationDocumentId,
+    currentUserId: user?.id,
+    editorCollaborators,
+    existingCollaboratorIds,
+    mode,
+    modeDisabledReasons,
+    onModeChange: handleModeChange,
+    onlinePeerMap,
+    presenceColorByUserId,
     readOnly,
     selectedCenter,
     selectedBbox,
@@ -334,6 +500,77 @@ export function useStreetDesignPageController(amendmentId: string) {
     saveError,
     onSave: handleSave,
     costCatalogCurrency: STREET_DESIGN_CURRENCY,
+    streetChangeRequests,
+    userColor,
     ...editor,
   };
+}
+
+function mapStreetDesignCollaborators(
+  collaborators: readonly unknown[] | undefined,
+  owner: unknown
+): EditorCollaborator[] {
+  const mapped = new Map<string, EditorCollaborator>();
+  const addCollaborator = (row: unknown, fallbackStatus?: EditorCollaborator['status']) => {
+    const record = asRecord(row);
+    const userRecord = asRecord(record?.user ?? row);
+    const id = getString(userRecord?.id);
+    if (!id) return;
+
+    const firstName = getString(userRecord?.first_name);
+    const lastName = getString(userRecord?.last_name);
+    const name =
+      getString(userRecord?.name) ??
+      [firstName, lastName].filter(Boolean).join(' ').trim() ??
+      getString(userRecord?.email) ??
+      'Unknown User';
+
+    mapped.set(id, {
+      id: getString(record?.id) ?? id,
+      user: {
+        id,
+        name,
+        firstName,
+        lastName,
+        email: getString(userRecord?.email),
+        avatarUrl: getString(userRecord?.avatar),
+      },
+      role: getString(asRecord(record?.role)?.name),
+      roleActionRights: asRecord(record?.role)
+        ?.action_rights as EditorCollaborator['roleActionRights'],
+      canEdit: true,
+      status: normalizeCollaboratorStatus(getString(record?.status), fallbackStatus),
+    });
+  };
+
+  addCollaborator(owner, 'owner');
+  (collaborators ?? []).forEach(collaborator => addCollaborator(collaborator));
+  return Array.from(mapped.values());
+}
+
+function normalizeCollaboratorStatus(
+  status: string | undefined,
+  fallback: EditorCollaborator['status'] = 'collaborator'
+): EditorCollaborator['status'] {
+  if (
+    status === 'owner' ||
+    status === 'admin' ||
+    status === 'collaborator' ||
+    status === 'member' ||
+    status === 'viewer'
+  ) {
+    return status;
+  }
+  if (status === 'active') return 'collaborator';
+  return fallback;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function getString(value: unknown) {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
 }

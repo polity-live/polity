@@ -2880,6 +2880,92 @@ function addPlaygroundDetails(args: {
   group.add(mound);
 }
 
+function addStationPlatformShelters(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry;
+  objectId?: string;
+  y: number;
+  platformType: string;
+}) {
+  const { THREE, group, geometry, objectId, y, platformType } = args;
+  if (geometry.length < 1.5) return;
+
+  const primaryColor =
+    platformType === 'rail_platform'
+      ? '#2563eb'
+      : platformType === 'bus_platform'
+        ? '#f59e0b'
+        : '#60a5fa';
+  const roofMaterial = new THREE.MeshStandardMaterial({
+    color: primaryColor,
+    roughness: 0.58,
+    metalness: 0.04,
+  });
+  const glassMaterial = new THREE.MeshStandardMaterial({
+    color: '#dbeafe',
+    transparent: true,
+    opacity: 0.52,
+    roughness: 0.24,
+  });
+  const postMaterial = new THREE.MeshStandardMaterial({
+    color: '#475569',
+    roughness: 0.72,
+    metalness: 0.08,
+  });
+  const benchMaterial = new THREE.MeshStandardMaterial({
+    color: '#8a5a2b',
+    roughness: 0.7,
+  });
+  const signMaterial = new THREE.MeshStandardMaterial({
+    color: '#f8fafc',
+    roughness: 0.5,
+  });
+
+  const margin = Math.min(5, geometry.length * 0.28);
+  const distances =
+    geometry.length < 16
+      ? [geometry.length / 2]
+      : Array.from(
+          { length: Math.min(4, Math.floor((geometry.length - margin * 2) / 14) + 1) },
+          (_, index) => margin + index * 14
+        ).filter(distance => distance <= geometry.length - margin + 0.1);
+  const centerline = getCorridorCenterline(geometry);
+
+  distances.forEach(distance => {
+    const sample = getCenterlineSample(centerline, distance);
+    const point = offsetPointFromDirection(sample.point, sample.direction, geometry.width * 0.28);
+    const root = new THREE.Group();
+    root.position.set(point.x, y, point.z);
+    root.rotation.y = Math.atan2(-sample.direction.z, sample.direction.x);
+    setIdentities({ object: root, objectId });
+
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.1, 1), roofMaterial);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.92, 0.06), glassMaterial);
+    const leftPanel = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.82, 0.72), glassMaterial);
+    const rightPanel = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.82, 0.72), glassMaterial);
+    const bench = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.12, 0.28), benchMaterial);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 1.55, 8), postMaterial);
+    const sign = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.3, 0.045), signMaterial);
+
+    roof.position.set(0, 1.54, 0.02);
+    back.position.set(0, 0.88, 0.48);
+    leftPanel.position.set(-1.08, 0.82, 0.14);
+    rightPanel.position.set(1.08, 0.82, 0.14);
+    bench.position.set(0, 0.42, 0.2);
+    pole.position.set(-1.32, 0.78, -0.45);
+    sign.position.set(-1.32, 1.45, -0.45);
+
+    [roof, back, leftPanel, rightPanel, bench, pole, sign].forEach(child => {
+      setSceneShadows(child, true, true);
+      setIdentities({ object: child, objectId });
+      root.add(child);
+    });
+
+    group.add(root);
+  });
+}
+
 function addPlacementStartMarker(args: {
   THREE: ThreeModule;
   group: Group;
@@ -2958,7 +3044,8 @@ function addDesignObject(args: {
       definition.renderKind === 'lane' ||
       definition.renderKind === 'rail' ||
       object.type === 'sidewalk' ||
-      object.type === 'stairs';
+      object.type === 'stairs' ||
+      object.type === 'station_platform';
     const objectDeckY = deckAwareObject ? getDesignObjectSurfaceY(object, y) : y;
     const surfaceY = object.type === 'stairs' ? y : objectDeckY;
     const pickY = Math.max(surfaceY, objectDeckY);
@@ -3210,18 +3297,53 @@ function addDesignObject(args: {
     }
 
     if (object.type === 'station_platform') {
+      const platformType = stringProperty(object.properties.platformType, 'tram_stop');
+      const isElevatedPlatform = surfaceY > y + 0.08;
+      if (isElevatedPlatform) {
+        addExtrudedPolygon({
+          THREE,
+          group,
+          points: object.geometry.polygon,
+          height: Math.max(surfaceY - 0.08, 0.04),
+          color: platformType === 'rail_platform' ? '#8aa0b8' : '#b6a57d',
+          opacity: 0.74,
+          objectId: object.id,
+          bevel: false,
+        });
+        addSurfaceTexture({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          objectId: object.id,
+          color: '#facc15',
+          opacity: 0.22,
+          y: surfaceY + 0.075,
+        });
+      }
       addCorridorEdgeStrips({
         THREE,
         group,
         geometry: detailGeometry,
         objectId: object.id,
         color:
-          stringProperty(object.properties.platformType, 'tram_stop') === 'rail_platform'
+          platformType === 'rail_platform'
             ? '#dbeafe'
-            : '#fef3c7',
+            : platformType === 'bus_platform'
+              ? '#fde68a'
+              : '#fef3c7',
         opacity: 0.62,
         y: surfaceY + 0.09,
       });
+      if (object.properties.shelter !== false) {
+        addStationPlatformShelters({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          objectId: object.id,
+          y: surfaceY + 0.04,
+          platformType,
+        });
+      }
     }
 
     if (definition.renderKind === 'barrier') {

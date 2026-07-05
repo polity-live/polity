@@ -9,6 +9,7 @@ interface ModeToolbarButtonProps extends DropdownMenuProps {
   disabledModeReasons?: Partial<Record<EditorMode, string>>;
   onModeChange?: (mode: EditorMode) => void | Promise<void>;
   isOwnerOrCollaborator?: boolean;
+  iconOnly?: boolean;
 }
 
 export function ModeToolbarButton({
@@ -16,12 +17,14 @@ export function ModeToolbarButton({
   disabledModeReasons,
   onModeChange,
   isOwnerOrCollaborator = true,
+  iconOnly = false,
   ...props
 }: ModeToolbarButtonProps) {
   return (
     <ModeToolbarButtonView
       dropdownProps={props}
       disabledModeReasons={disabledModeReasons}
+      iconOnly={iconOnly}
       isOwnerOrCollaborator={isOwnerOrCollaborator}
       {...useModeToolbarButtonController({ currentMode, onModeChange })}
     />

@@ -29,10 +29,20 @@ function renderCanvasView(
       placementPointCount={0}
       canFinishPathPlacement={false}
       selectedObject={tree}
+      selectedObjectCostLine={null}
+      selectedOsmWay={null}
       interactionMode="place"
       readOnly={false}
       onFinishPathPlacement={vi.fn()}
       onCancelPlacement={vi.fn()}
+      onObjectSelect={vi.fn()}
+      onOsmWaySelect={vi.fn()}
+      onObjectVisibilityChange={vi.fn()}
+      onOsmWayHide={vi.fn()}
+      onPropertyChange={vi.fn()}
+      onWidthChange={vi.fn()}
+      onRotationChange={vi.fn()}
+      onUnitCostChange={vi.fn()}
       onDeleteObject={vi.fn()}
       canvasRef={{ current: null }}
       loadFailed={false}
@@ -212,5 +222,37 @@ describe('StreetSceneCanvasViewView', () => {
     fireEvent.click(screen.getByRole('button', { name: /legend/i }));
 
     expect(screen.queryByText('Office building')).toBeNull();
+  });
+
+  it('renders selectable spatial change request overlays', () => {
+    const onChangeRequestSelect = vi.fn();
+    const tree = createPointStreetDesignObject({
+      id: 'tree-cr',
+      type: 'tree',
+      point: { x: 0, z: 0 },
+    });
+
+    renderCanvasView({
+      design: createTestDesign({ objects: [tree] }),
+      selectedObject: null,
+      showChangeRequests: true,
+      changeRequests: [
+        {
+          id: 'cr-add-tree',
+          source_type: 'street_design_object',
+          source_id: 'tree-cr',
+          title: 'Add canopy tree',
+          change_type: 'add',
+        },
+      ],
+      onChangeRequestSelect,
+    });
+
+    const marker = screen.getByRole('button', { name: 'Add canopy tree' });
+    expect(marker.getAttribute('data-change-request-tone')).toBe('add');
+
+    fireEvent.click(marker);
+
+    expect(onChangeRequestSelect).toHaveBeenCalledWith('cr-add-tree');
   });
 });

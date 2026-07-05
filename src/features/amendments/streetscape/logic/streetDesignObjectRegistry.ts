@@ -1198,7 +1198,7 @@ export const streetDesignObjectRegistry = {
     icon: 'Route',
     category: 'mobility',
     geometryKind: 'corridor',
-    defaultProperties: { platformType: 'tram_stop', shelter: true },
+    defaultProperties: { platformType: 'tram_stop', shelter: true, deckElevationMeters: 0 },
     propertySchema: [
       {
         key: 'platformType',
@@ -1210,6 +1210,13 @@ export const streetDesignObjectRegistry = {
         key: 'shelter',
         labelKey: 'features.amendments.streetscape.objects.busStop.properties.shelter',
         fieldType: 'boolean',
+      },
+      {
+        key: 'deckElevationMeters',
+        labelKey: 'features.amendments.streetscape.objects.common.properties.deckElevationMeters',
+        fieldType: 'number',
+        unit: 'm',
+        step: 0.05,
       },
     ],
     costRule: 'per_square_meter',

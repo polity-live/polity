@@ -40,6 +40,8 @@ interface StreetCostSummaryViewProps {
   comparisonMode: StreetDesignComparisonMode;
   selectedObjectId?: string | null;
   readOnly?: boolean;
+  showComparisonControls?: boolean;
+  variant?: 'section' | 'panel';
   onComparisonModeChange: (mode: StreetDesignComparisonMode) => void;
   onObjectSelect?: (objectId: string | null) => void;
   onDeleteObject?: (objectId: string) => void;
@@ -115,6 +117,8 @@ export function StreetCostSummaryView({
   comparisonMode,
   selectedObjectId = null,
   readOnly = false,
+  showComparisonControls = true,
+  variant = 'section',
   onComparisonModeChange,
   onObjectSelect,
   onDeleteObject,
@@ -159,8 +163,15 @@ export function StreetCostSummaryView({
     t(`features.amendments.streetscape.actions.${action}`, { label });
 
   return (
-    <section className="bg-background/95 border-t p-4">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]">
+    <section className={cn('bg-background/95 border-t p-4', variant === 'panel' && 'shadow-none')}>
+      <div
+        className={cn(
+          'grid gap-4',
+          showComparisonControls
+            ? 'xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]'
+            : 'xl:grid-cols-1'
+        )}
+      >
         <div className="bg-card rounded-md border p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -197,31 +208,33 @@ export function StreetCostSummaryView({
           </div>
         </div>
 
-        <div className="bg-card rounded-md border p-4">
-          <div className="mb-3 flex items-center gap-2">
-            <GitCompareArrows className="text-muted-foreground size-4" />
-            <h2 className="text-sm font-semibold">
-              {t('features.amendments.streetscape.cost.comparison')}
-            </h2>
+        {showComparisonControls ? (
+          <div className="bg-card rounded-md border p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <GitCompareArrows className="text-muted-foreground size-4" />
+              <h2 className="text-sm font-semibold">
+                {t('features.amendments.streetscape.cost.comparison')}
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {comparisonModes.map(item => (
+                <Button
+                  key={item.mode}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    'h-10 rounded-md px-2 text-xs',
+                    comparisonMode === item.mode && 'border-brand/40 bg-brand/10 text-brand'
+                  )}
+                  onClick={() => onComparisonModeChange(item.mode)}
+                >
+                  {t(item.labelKey)}
+                </Button>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {comparisonModes.map(item => (
-              <Button
-                key={item.mode}
-                type="button"
-                variant="outline"
-                size="sm"
-                className={cn(
-                  'h-10 rounded-md px-2 text-xs',
-                  comparisonMode === item.mode && 'border-brand/40 bg-brand/10 text-brand'
-                )}
-                onClick={() => onComparisonModeChange(item.mode)}
-              >
-                {t(item.labelKey)}
-              </Button>
-            ))}
-          </div>
-        </div>
+        ) : null}
       </div>
 
       <div className="bg-muted/15 mt-4 rounded-md border p-3">

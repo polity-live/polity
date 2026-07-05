@@ -11,6 +11,7 @@ import { MapPanelSkeleton } from '@/features/shared/ui/feedback';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
 import {
   GeoAddressFields,
   type GeoAddressTextMap,
@@ -36,6 +37,9 @@ export interface StreetAreaPickerViewProps {
   readOnly: boolean;
   onLoadOsm: () => void;
   onLoadSample: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  variant?: 'card' | 'panel';
   locationSearchValues: GeoAddressValues;
   locationSearchLabels: GeoAddressTextMap;
   locationSearchPlaceholders: GeoAddressTextMap;
@@ -73,6 +77,9 @@ export function StreetAreaPickerView({
   readOnly,
   onLoadOsm,
   onLoadSample,
+  open,
+  onOpenChange,
+  variant = 'card',
   locationSearchValues,
   locationSearchLabels,
   locationSearchPlaceholders,
@@ -103,7 +110,9 @@ export function StreetAreaPickerView({
   mapUnavailable,
 }: StreetAreaPickerViewProps) {
   const { t } = useTranslation();
-  const [mapSectionOpen, setMapSectionOpen] = useState(true);
+  const [internalMapSectionOpen, setInternalMapSectionOpen] = useState(true);
+  const mapSectionOpen = open ?? internalMapSectionOpen;
+  const setMapSectionOpen = onOpenChange ?? setInternalMapSectionOpen;
   const updateWidth = (value: number) => {
     if (Number.isFinite(value)) onWidthMetersChange(value);
   };
@@ -127,7 +136,15 @@ export function StreetAreaPickerView({
 
   return (
     <Collapsible open={mapSectionOpen} onOpenChange={setMapSectionOpen}>
-      <section className="bg-card overflow-hidden rounded-lg border shadow-sm" data-swipe-lock>
+      <section
+        className={cn(
+          'bg-card overflow-hidden border shadow-sm',
+          variant === 'panel'
+            ? 'bg-background rounded-none border-x-0 border-t shadow-none'
+            : 'rounded-lg'
+        )}
+        data-swipe-lock
+      >
         <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
           <CollapsibleTrigger asChild>
             <Button

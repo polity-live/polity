@@ -78,6 +78,9 @@ describe('streetDesignElementSections', () => {
       section => section.layer === 'bike_lane'
     )?.tools;
     const railTools = streetDesignElementSections.find(section => section.layer === 'rail')?.tools;
+    const transitTools = streetDesignElementSections.find(
+      section => section.layer === 'transit'
+    )?.tools;
 
     expect(roadTools).toEqual(
       expect.arrayContaining([
@@ -153,6 +156,30 @@ describe('streetDesignElementSections', () => {
         }),
       ])
     );
+    expect(transitTools).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'station_platform-elevated_sheltered_bus_stop',
+          objectType: 'station_platform',
+          propertyOverrides: expect.objectContaining({
+            deckElevationMeters: 0.32,
+            platformType: 'bus_platform',
+            shelter: true,
+          }),
+          widthOverride: 3,
+        }),
+        expect.objectContaining({
+          id: 'station_platform-elevated_sheltered_rail_stop',
+          objectType: 'station_platform',
+          propertyOverrides: expect.objectContaining({
+            deckElevationMeters: 0.48,
+            platformType: 'rail_platform',
+            shelter: true,
+          }),
+          widthOverride: 3.4,
+        }),
+      ])
+    );
 
     expect(
       getStreetDesignVariantLabelKey('street', {
@@ -163,5 +190,12 @@ describe('streetDesignElementSections', () => {
     expect(getStreetDesignVariantLabelKey('rail_track', { structureKind: 'viaduct' })).toBe(
       'features.amendments.streetscape.variantLabels.rail.viaduct'
     );
+    expect(
+      getStreetDesignVariantLabelKey('station_platform', {
+        deckElevationMeters: 0.32,
+        platformType: 'bus_platform',
+        shelter: true,
+      })
+    ).toBe('features.amendments.streetscape.variantLabels.transit.elevated_sheltered_bus_stop');
   });
 });

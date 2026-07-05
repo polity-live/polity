@@ -1,27 +1,72 @@
-import { useMemo, useState, type RefObject } from 'react';
-import { ChevronDown, Layers, Trash2 } from 'lucide-react';
+import { useMemo, useState, type ReactNode, type RefObject } from 'react';
+import {
+  ChevronDown,
+  Eye,
+  EyeOff,
+  Layers,
+  MessageSquare,
+  PencilLine,
+  Trash2,
+  Vote,
+  X,
+} from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
 import { LoadingProgressBar } from '@/features/shared/ui/feedback';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/features/shared/ui/ui/select';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import type {
+  StreetDesignCostLine,
+  StreetDesignGeoPoint,
   StreetDesignInteractionMode,
+  StreetDesignLocalPoint,
   StreetDesignObject,
   StreetDesignObjectCategory,
   StreetDesignObjectType,
+  StreetDesignOsmWay,
+  StreetDesignPropertyValue,
   StreetDesignStateV1,
 } from '../types';
 import {
   buildStreetDesignLegendSections,
   type StreetDesignLegendEntry,
 } from '../logic/streetDesignLegend';
+import type {
+  StreetDesignChangeRequest,
+  StreetDesignChangeRequestTone,
+} from '../logic/streetDesignChangeRequests';
+import {
+  formatStreetDesignChangeRequestIdentifier,
+  formatStreetDesignChangeRequestTitle,
+  getStreetDesignChangeRequestDiffRows,
+  getStreetDesignChangeRequestMarker,
+  getStreetDesignChangeRequestTone,
+} from '../logic/streetDesignChangeRequests';
+import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
 import { getStreetDesignObjectDefinition } from '../logic/streetDesignObjectRegistry';
 import { getStreetDesignObjectVariantLabelKey } from '../logic/streetDesignVariantCatalog';
+import {
+  getStreetDesignGeometryCenter,
+  getStreetDesignGeometryRotationDeg,
+} from '../logic/streetDesignPlacement';
+import {
+  getStreetDesignOsmFeatureLayer,
+  getStreetDesignOsmFeaturePoints,
+} from '../logic/streetDesignOsm';
+import { projectGeoPointToLocal } from '../logic/streetDesignProjection';
 
 export interface StreetSceneCanvasViewViewProps {
   design: StreetDesignStateV1;
@@ -31,32 +76,59 @@ export interface StreetSceneCanvasViewViewProps {
   placementPointCount: number;
   canFinishPathPlacement: boolean;
   selectedObject: StreetDesignObject | null;
+  selectedObjectCostLine: StreetDesignCostLine | null;
+  selectedOsmWay: StreetDesignOsmWay | null;
   hiddenObjectIds?: readonly string[];
   hiddenObjectCategories?: readonly StreetDesignObjectCategory[];
   interactionMode: StreetDesignInteractionMode;
   readOnly: boolean;
+  changeRequests?: readonly StreetDesignChangeRequest[];
+  selectedChangeRequestId?: string | null;
+  showChangeRequests?: boolean;
   onFinishPathPlacement: () => void;
   onCancelPlacement: () => void;
+  onObjectSelect: (objectId: string | null) => void;
+  onOsmWaySelect: (osmWayId: string | null) => void;
+  onObjectVisibilityChange: (objectId: string, visible: boolean) => void;
+  onOsmWayHide: (osmWayId: string) => void;
+  onPropertyChange: (objectId: string, key: string, value: StreetDesignPropertyValue) => void;
+  onWidthChange: (objectId: string, width: number) => void;
+  onRotationChange: (objectId: string, rotationDeg: number) => void;
+  onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
   onDeleteObject: (objectId: string) => void;
+  onChangeRequestSelect?: (changeRequestId: string | null) => void;
   canvasRef: RefObject<HTMLCanvasElement | null>;
   loadFailed: boolean;
 }
 
 export function StreetSceneCanvasViewView({
   design,
-  metricLabels = [],
   isLoadingOsm,
   placementMode,
   placementPointCount,
   canFinishPathPlacement,
   selectedObject,
+  selectedObjectCostLine,
+  selectedOsmWay,
   hiddenObjectIds = [],
   hiddenObjectCategories = [],
   interactionMode,
   readOnly,
+  changeRequests = [],
+  selectedChangeRequestId = null,
+  showChangeRequests = false,
   onFinishPathPlacement,
   onCancelPlacement,
+  onObjectSelect,
+  onOsmWaySelect,
+  onObjectVisibilityChange,
+  onOsmWayHide,
+  onPropertyChange,
+  onWidthChange,
+  onRotationChange,
+  onUnitCostChange,
   onDeleteObject,
+  onChangeRequestSelect,
   canvasRef,
   loadFailed,
 }: StreetSceneCanvasViewViewProps) {
@@ -71,29 +143,37 @@ export function StreetSceneCanvasViewView({
       }),
     [design, hiddenObjectCategories, hiddenObjectIds]
   );
+  const changeRequestMarkers = useMemo(
+    () =>
+      changeRequests.map(changeRequest =>
+        getStreetDesignChangeRequestMarker(changeRequest, design)
+      ),
+    [changeRequests, design]
+  );
+  const hiddenObjectIdSet = useMemo(() => new Set(hiddenObjectIds), [hiddenObjectIds]);
+  const selectedChangeRequest =
+    changeRequests.find(changeRequest => changeRequest.id === selectedChangeRequestId) ?? null;
+  const selectedChangeRequestMarker = selectedChangeRequest
+    ? changeRequestMarkers.find(marker => marker.id === selectedChangeRequest.id)
+    : null;
+  const selectedObjectAnchor = selectedObject
+    ? getCanvasAnchorFromLocalPoint(getStreetDesignGeometryCenter(selectedObject.geometry))
+    : null;
+  const selectedOsmAnchor = selectedOsmWay
+    ? getCanvasAnchorFromOsmWay(selectedOsmWay, design)
+    : null;
 
   if (loadFailed) {
     return (
-      <div className="bg-muted/20 text-muted-foreground flex min-h-[28rem] items-center justify-center border-b p-4 text-sm xl:border-r xl:border-b-0">
+      <div className="bg-muted/20 text-muted-foreground flex min-h-[28rem] items-center justify-center p-4 text-sm">
         {t('features.amendments.streetscape.canvas.loadFailed')}
       </div>
     );
   }
 
-  const comparisonLabel = t(
-    `features.amendments.streetscape.comparison.${
-      design.comparisonMode === 'new_design' ? 'newDesign' : design.comparisonMode
-    }`
-  );
-  const modeLabel = t(`features.amendments.streetscape.modes.${interactionMode}`);
-
   return (
-    <div
-      className="from-background via-muted/20 to-muted/50 relative min-h-[30rem] overflow-hidden border-b bg-gradient-to-br p-3 xl:border-r xl:border-b-0"
-      data-swipe-lock
-    >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_18%,rgba(20,184,166,0.16),transparent_22%),radial-gradient(circle_at_82%_12%,rgba(234,179,8,0.12),transparent_20%)]" />
-      <div className="bg-background/40 relative overflow-hidden rounded-md border shadow-inner">
+    <div className="bg-background relative min-h-[30rem] overflow-hidden" data-swipe-lock>
+      <div className="bg-muted/10 relative overflow-hidden">
         <canvas
           ref={canvasRef}
           className={
@@ -113,21 +193,81 @@ export function StreetSceneCanvasViewView({
             />
           </div>
         ) : null}
-      </div>
-      <div className="pointer-events-none absolute top-6 right-6 left-6 flex flex-wrap items-start justify-between gap-2 text-xs font-medium">
-        <span className="bg-background/90 rounded-md border px-3 py-1.5 shadow-sm backdrop-blur">
-          {comparisonLabel} · {modeLabel}
-        </span>
-        <div className="flex flex-wrap justify-end gap-2">
-          {metricLabels.map(label => (
-            <span
-              key={label}
-              className="bg-background/90 rounded-full border px-3 py-1.5 shadow-sm backdrop-blur"
-            >
-              {label}
-            </span>
-          ))}
-        </div>
+        {showChangeRequests && changeRequestMarkers.length > 0 ? (
+          <div className="pointer-events-none absolute inset-0 z-20">
+            {changeRequestMarkers.map(marker => (
+              <button
+                key={marker.id}
+                type="button"
+                className={cn(
+                  'focus-visible:ring-ring pointer-events-auto absolute flex min-h-8 max-w-40 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold shadow-lg backdrop-blur transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none',
+                  getChangeRequestMarkerClassName(marker.tone),
+                  selectedChangeRequestId === marker.id && 'ring-ring ring-2'
+                )}
+                style={{
+                  left: `${marker.leftPercent}%`,
+                  top: `${marker.topPercent}%`,
+                }}
+                data-testid={`street-design-cr-marker-${marker.id}`}
+                data-change-request-tone={marker.tone}
+                aria-label={marker.label}
+                title={marker.label}
+                onClick={() => onChangeRequestSelect?.(marker.id)}
+              >
+                <span
+                  className={cn(
+                    'size-3 flex-none rounded-full border',
+                    marker.tone === 'remove' && 'border-dashed',
+                    marker.tone === 'update' && 'ring-2 ring-current/30'
+                  )}
+                />
+                <span className="min-w-0 truncate">{marker.label}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {selectedChangeRequest ? (
+          <CanvasSelectionPopover
+            anchor={
+              selectedChangeRequestMarker
+                ? {
+                    leftPercent: selectedChangeRequestMarker.leftPercent,
+                    topPercent: selectedChangeRequestMarker.topPercent,
+                  }
+                : getCanvasAnchorFromLocalPoint({ x: 0, z: 0 })
+            }
+          >
+            <StreetDesignChangeRequestPopover
+              changeRequest={selectedChangeRequest}
+              onClose={() => onChangeRequestSelect?.(null)}
+            />
+          </CanvasSelectionPopover>
+        ) : selectedObject && selectedObjectAnchor ? (
+          <CanvasSelectionPopover anchor={selectedObjectAnchor}>
+            <StreetDesignObjectPopover
+              object={selectedObject}
+              costLine={selectedObjectCostLine}
+              isHidden={hiddenObjectIdSet.has(selectedObject.id)}
+              readOnly={readOnly}
+              onClose={() => onObjectSelect(null)}
+              onVisibilityChange={onObjectVisibilityChange}
+              onPropertyChange={onPropertyChange}
+              onWidthChange={onWidthChange}
+              onRotationChange={onRotationChange}
+              onUnitCostChange={onUnitCostChange}
+              onDeleteObject={onDeleteObject}
+            />
+          </CanvasSelectionPopover>
+        ) : selectedOsmWay && selectedOsmAnchor ? (
+          <CanvasSelectionPopover anchor={selectedOsmAnchor}>
+            <StreetDesignOsmPopover
+              osmWay={selectedOsmWay}
+              readOnly={readOnly}
+              onClose={() => onOsmWaySelect(null)}
+              onHideOsmWay={onOsmWayHide}
+            />
+          </CanvasSelectionPopover>
+        ) : null}
       </div>
       {legendSections.length > 0 ? (
         <Collapsible
@@ -232,32 +372,683 @@ export function StreetSceneCanvasViewView({
           </Button>
         </div>
       ) : null}
-      {selectedObject ? (
-        <div className="border-border bg-background/95 absolute right-6 bottom-6 flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 text-xs shadow-lg backdrop-blur">
-          <div>
-            <p className="font-semibold">
-              {t(
-                getStreetDesignObjectVariantLabelKey(selectedObject) ??
-                  getStreetDesignObjectDefinition(selectedObject.type).labelKey
-              )}
-            </p>
-            <p className="text-muted-foreground">{selectedObject.id.slice(0, 8)}</p>
+    </div>
+  );
+}
+
+interface CanvasAnchor {
+  leftPercent: number;
+  topPercent: number;
+}
+
+function CanvasSelectionPopover({
+  anchor,
+  children,
+}: {
+  anchor: CanvasAnchor;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className="bg-background/95 pointer-events-auto absolute z-30 w-[min(23rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-3 rounded-md border text-sm shadow-xl backdrop-blur"
+      style={{
+        left: `${anchor.leftPercent}%`,
+        top: `${anchor.topPercent}%`,
+      }}
+      onPointerDown={event => event.stopPropagation()}
+      onClick={event => event.stopPropagation()}
+    >
+      {children}
+    </div>
+  );
+}
+
+function StreetDesignObjectPopover({
+  object,
+  costLine,
+  isHidden,
+  readOnly,
+  onClose,
+  onVisibilityChange,
+  onPropertyChange,
+  onWidthChange,
+  onRotationChange,
+  onUnitCostChange,
+  onDeleteObject,
+}: {
+  object: StreetDesignObject;
+  costLine: StreetDesignCostLine | null;
+  isHidden: boolean;
+  readOnly: boolean;
+  onClose: () => void;
+  onVisibilityChange: (objectId: string, visible: boolean) => void;
+  onPropertyChange: (objectId: string, key: string, value: StreetDesignPropertyValue) => void;
+  onWidthChange: (objectId: string, width: number) => void;
+  onRotationChange: (objectId: string, rotationDeg: number) => void;
+  onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
+  onDeleteObject: (objectId: string) => void;
+}) {
+  const { t } = useTranslation();
+  const definition = getStreetDesignObjectDefinition(object.type);
+  const objectLabel = t(getStreetDesignObjectVariantLabelKey(object) ?? definition.labelKey);
+  const unitCostEuro =
+    (object.cost.customUnitCostMinor ?? object.cost.suggestedUnitCostMinor) / 100;
+  const fieldLabel = (labelKey: string, unit?: string) =>
+    unit
+      ? t('features.amendments.streetscape.inspector.fieldWithUnit', {
+          label: t(labelKey),
+          unit,
+        })
+      : t(labelKey);
+
+  return (
+    <div className="max-h-[min(32rem,70vh)] overflow-auto p-4">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-muted-foreground text-xs font-medium uppercase">
+            {t('features.amendments.streetscape.inspector.title')}
+          </p>
+          <h2 className="truncate text-base font-semibold">{objectLabel}</h2>
+          <p className="text-muted-foreground font-mono text-[11px]">{object.id.slice(0, 8)}</p>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8"
+          aria-label={t('features.amendments.streetscape.changeRequests.close')}
+          title={t('features.amendments.streetscape.changeRequests.close')}
+          onClick={onClose}
+        >
+          <X className="size-4" />
+        </Button>
+      </div>
+
+      <div className="space-y-4">
+        {object.geometry.kind === 'corridor' || object.geometry.kind === 'path_corridor' ? (
+          <div className="bg-muted/20 grid grid-cols-2 gap-2 rounded-md border p-2">
+            <div className="space-y-1">
+              <Label className="text-xs">
+                {t('features.amendments.streetscape.inspector.width')}
+              </Label>
+              <Input
+                type="number"
+                min={0.1}
+                step={0.1}
+                value={object.geometry.width}
+                disabled={readOnly}
+                onChange={event => onWidthChange(object.id, Number(event.target.value))}
+              />
+            </div>
+            <ReadonlyMetric
+              label={t('features.amendments.streetscape.inspector.length')}
+              value={object.geometry.length.toFixed(1)}
+            />
+            <ReadonlyMetric
+              label={t('features.amendments.streetscape.inspector.area')}
+              value={object.geometry.area.toFixed(1)}
+            />
+            <div className="space-y-1">
+              <Label className="text-xs">
+                {t('features.amendments.streetscape.inspector.rotation')}
+              </Label>
+              <Input
+                type="number"
+                step={1}
+                value={Number(getStreetDesignGeometryRotationDeg(object.geometry).toFixed(1))}
+                disabled={readOnly}
+                onChange={event => onRotationChange(object.id, Number(event.target.value))}
+              />
+            </div>
           </div>
+        ) : null}
+
+        {object.geometry.kind === 'point' ? (
+          <div className="bg-muted/20 rounded-md border p-2">
+            <div className="space-y-1">
+              <Label className="text-xs">
+                {t('features.amendments.streetscape.inspector.rotation')}
+              </Label>
+              <Input
+                type="number"
+                step={1}
+                value={Number(getStreetDesignGeometryRotationDeg(object.geometry).toFixed(1))}
+                disabled={readOnly}
+                onChange={event => onRotationChange(object.id, Number(event.target.value))}
+              />
+            </div>
+          </div>
+        ) : null}
+
+        {definition.propertySchema.map(field => {
+          const value = object.properties[field.key];
+
+          if (field.fieldType === 'boolean') {
+            return (
+              <label key={field.key} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={Boolean(value)}
+                  disabled={readOnly}
+                  onChange={event => onPropertyChange(object.id, field.key, event.target.checked)}
+                />
+                {t(field.labelKey)}
+              </label>
+            );
+          }
+
+          if (field.fieldType === 'select') {
+            return (
+              <div key={field.key} className="space-y-1">
+                <Label className="text-xs">{t(field.labelKey)}</Label>
+                <Select
+                  value={asInputValue(value)}
+                  disabled={readOnly}
+                  onValueChange={nextValue => onPropertyChange(object.id, field.key, nextValue)}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(field.options ?? []).map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {t(option.labelKey)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            );
+          }
+
+          if (field.fieldType === 'combobox') {
+            const datalistId = `street-design-object-${sanitizeDomId(object.id)}-${field.key}`;
+
+            return (
+              <div key={field.key} className="space-y-1">
+                <Label className="text-xs">{fieldLabel(field.labelKey, field.unit)}</Label>
+                <Input
+                  type="text"
+                  aria-label={fieldLabel(field.labelKey, field.unit)}
+                  list={datalistId}
+                  value={asInputValue(value)}
+                  disabled={readOnly}
+                  onChange={event => onPropertyChange(object.id, field.key, event.target.value)}
+                />
+                <datalist id={datalistId}>
+                  {(field.options ?? []).map(option => (
+                    <option key={option.value} value={option.value} label={t(option.labelKey)} />
+                  ))}
+                </datalist>
+              </div>
+            );
+          }
+
+          return (
+            <div key={field.key} className="space-y-1">
+              <Label className="text-xs">{fieldLabel(field.labelKey, field.unit)}</Label>
+              <Input
+                type={field.fieldType === 'number' ? 'number' : 'text'}
+                aria-label={fieldLabel(field.labelKey, field.unit)}
+                min={field.min}
+                max={field.max}
+                step={field.step}
+                value={asInputValue(value)}
+                disabled={readOnly}
+                onChange={event =>
+                  onPropertyChange(
+                    object.id,
+                    field.key,
+                    field.fieldType === 'number' ? Number(event.target.value) : event.target.value
+                  )
+                }
+              />
+            </div>
+          );
+        })}
+
+        <div className="bg-muted/20 rounded-md border p-3">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-xs">
+                {t('features.amendments.streetscape.inspector.price')}
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                step={1}
+                value={unitCostEuro}
+                disabled={readOnly}
+                onChange={event =>
+                  onUnitCostChange(object.id, Math.round(Number(event.target.value) * 100))
+                }
+              />
+            </div>
+            <ReadonlyMetric
+              label={t('features.amendments.streetscape.inspector.total')}
+              value={formatMinorCurrency(costLine?.totalCostMinor ?? 0)}
+            />
+          </div>
+          <p className="text-muted-foreground mt-2 text-xs">
+            {t('features.amendments.streetscape.inspector.suggestedCost', {
+              cost: formatMinorCurrency(object.cost.suggestedUnitCostMinor),
+            })}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 gap-2 text-xs"
+            disabled={readOnly}
+            onClick={() => onVisibilityChange(object.id, isHidden)}
+          >
+            {isHidden ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+            {t(`features.amendments.streetscape.actions.${isHidden ? 'show' : 'hide'}`, {
+              label: objectLabel,
+            })}
+          </Button>
           <Button
             type="button"
             size="sm"
             variant="destructive"
-            className="h-8 gap-2 px-2 text-xs"
+            className="h-8 gap-2 text-xs"
             disabled={readOnly}
-            onClick={() => onDeleteObject(selectedObject.id)}
+            onClick={() => onDeleteObject(object.id)}
           >
             <Trash2 className="size-3.5" />
             {t('features.amendments.streetscape.actions.removeShort')}
           </Button>
         </div>
-      ) : null}
+      </div>
     </div>
   );
+}
+
+function StreetDesignOsmPopover({
+  osmWay,
+  readOnly,
+  onClose,
+  onHideOsmWay,
+}: {
+  osmWay: StreetDesignOsmWay;
+  readOnly: boolean;
+  onClose: () => void;
+  onHideOsmWay: (osmWayId: string) => void;
+}) {
+  const { t } = useTranslation();
+  const osmFeaturePoints = getStreetDesignOsmFeaturePoints(osmWay);
+  const osmLayer = getStreetDesignOsmFeatureLayer(osmWay.kind);
+  const relevantTags = getRelevantOsmTags(osmWay.tags);
+
+  return (
+    <div className="max-h-[min(30rem,70vh)] overflow-auto p-4">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-muted-foreground text-xs font-medium uppercase">
+            {t('features.amendments.streetscape.inspector.existing')}
+          </p>
+          <h2 className="truncate text-base font-semibold">
+            {osmWay.label ?? t('features.amendments.streetscape.inspector.osmFallback')}
+          </h2>
+          <p className="text-muted-foreground text-xs">
+            {t(getOsmLayerLabelKey(osmLayer))}
+            {osmWay.subkind ? ` · ${osmWay.subkind}` : ''} · {osmWay.id}
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8"
+          aria-label={t('features.amendments.streetscape.changeRequests.close')}
+          title={t('features.amendments.streetscape.changeRequests.close')}
+          onClick={onClose}
+        >
+          <X className="size-4" />
+        </Button>
+      </div>
+
+      <div className="grid gap-2 text-sm">
+        <ReadonlyCard
+          label={t('features.amendments.streetscape.inspector.points')}
+          value={String(osmFeaturePoints.length)}
+        />
+        {osmWay.widthMeters ? (
+          <ReadonlyCard
+            label={t('features.amendments.streetscape.inspector.width')}
+            value={`${osmWay.widthMeters.toFixed(1)} m`}
+          />
+        ) : null}
+        {osmWay.height ? (
+          <ReadonlyCard
+            label={t('features.amendments.streetscape.inspector.height')}
+            value={`${osmWay.height.toFixed(1)} m`}
+          />
+        ) : null}
+        {isFiniteNumber(osmWay.deckElevationMeters) ? (
+          <ReadonlyCard
+            label={t('features.amendments.streetscape.inspector.deckElevation')}
+            value={formatMeters(osmWay.deckElevationMeters)}
+          />
+        ) : null}
+        {isFiniteNumber(osmWay.baseElevationMeters) && osmWay.baseElevationMeters !== 0 ? (
+          <ReadonlyCard
+            label={t('features.amendments.streetscape.inspector.baseElevation')}
+            value={formatMeters(osmWay.baseElevationMeters)}
+          />
+        ) : null}
+        {osmWay.semanticUse || osmWay.level || osmWay.access ? (
+          <ReadonlyCard
+            label={t('features.amendments.streetscape.inspector.tags')}
+            value={[osmWay.semanticUse, osmWay.level, osmWay.access].filter(Boolean).join(' · ')}
+          />
+        ) : null}
+        {relevantTags.length > 0 ? (
+          <div className="bg-muted/20 rounded-md border px-3 py-2">
+            <p className="text-muted-foreground text-xs">
+              {t('features.amendments.streetscape.inspector.tags')}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {relevantTags.map(([key, value]) => (
+                <span
+                  key={key}
+                  className="bg-background/80 rounded border px-1.5 py-0.5 text-[11px]"
+                >
+                  {key}={value}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="mt-4 flex justify-end">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8 gap-2 text-xs"
+          disabled={readOnly}
+          onClick={() => onHideOsmWay(osmWay.id)}
+        >
+          <EyeOff className="size-3.5" />
+          {t('features.amendments.streetscape.inspector.removeFromMap')}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function StreetDesignChangeRequestPopover({
+  changeRequest,
+  onClose,
+}: {
+  changeRequest: StreetDesignChangeRequest;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const diffRows = getStreetDesignChangeRequestDiffRows(changeRequest);
+  const tone = getStreetDesignChangeRequestTone(changeRequest);
+
+  return (
+    <div className="max-h-[min(32rem,70vh)] overflow-auto p-4">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <span
+            className={cn(
+              'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
+              getChangeRequestMarkerClassName(tone)
+            )}
+          >
+            {t('features.amendments.streetscape.changeRequests.badge')}
+          </span>
+          <p className="text-muted-foreground font-mono text-[11px]">
+            {formatStreetDesignChangeRequestIdentifier(changeRequest)}
+          </p>
+          <h2 className="text-base leading-tight font-semibold">
+            {formatStreetDesignChangeRequestTitle(changeRequest)}
+          </h2>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8"
+          aria-label={t('features.amendments.streetscape.changeRequests.close')}
+          title={t('features.amendments.streetscape.changeRequests.close')}
+          onClick={onClose}
+        >
+          <X className="size-4" />
+        </Button>
+      </div>
+
+      <div className="space-y-4">
+        <div className="bg-muted/15 rounded-md border p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold">
+              {t('features.amendments.streetscape.changeRequests.type')}
+            </span>
+            <span className="rounded-md border px-2 py-0.5 text-xs">
+              {t(`features.amendments.streetscape.changeRequests.tones.${tone}`)}
+            </span>
+          </div>
+          <p className="text-muted-foreground text-xs leading-5">
+            {changeRequest.description ??
+              changeRequest.source_title ??
+              t('features.amendments.streetscape.changeRequests.noDescription')}
+          </p>
+        </div>
+
+        <Button type="button" variant="outline" size="sm" className="w-full justify-start" disabled>
+          <PencilLine className="size-4" />
+          {t('features.amendments.streetscape.changeRequests.edit')}
+        </Button>
+
+        <section className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <PencilLine className="text-muted-foreground size-4" />
+            {t('features.amendments.streetscape.changeRequests.diff')}
+          </div>
+          {diffRows.length === 0 ? (
+            <div className="text-muted-foreground bg-background/80 rounded-md border px-3 py-3 text-sm">
+              {t('features.amendments.streetscape.changeRequests.emptyDiff')}
+            </div>
+          ) : (
+            <div className="max-h-44 space-y-2 overflow-auto">
+              {diffRows.map(row => (
+                <div key={row.key} className="bg-background/80 rounded-md border p-3 text-xs">
+                  <p className="font-semibold">{row.key}</p>
+                  <div className="mt-2 grid gap-2">
+                    <div>
+                      <p className="text-muted-foreground">
+                        {t('features.amendments.streetscape.changeRequests.before')}
+                      </p>
+                      <p className="break-words">{row.before}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">
+                        {t('features.amendments.streetscape.changeRequests.after')}
+                      </p>
+                      <p className="break-words">{row.after}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Vote className="text-muted-foreground size-4" />
+            {t('features.amendments.streetscape.changeRequests.votes')}
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <VoteCount
+              label={t('features.amendments.streetscape.changeRequests.votesFor')}
+              value={changeRequest.votes_for ?? 0}
+            />
+            <VoteCount
+              label={t('features.amendments.streetscape.changeRequests.votesAgainst')}
+              value={changeRequest.votes_against ?? 0}
+            />
+            <VoteCount
+              label={t('features.amendments.streetscape.changeRequests.votesAbstain')}
+              value={changeRequest.votes_abstain ?? 0}
+            />
+          </div>
+        </section>
+
+        <section className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <MessageSquare className="text-muted-foreground size-4" />
+            {t('features.amendments.streetscape.changeRequests.comments')}
+          </div>
+          <div className="text-muted-foreground bg-background/80 rounded-md border px-3 py-3 text-sm">
+            {t('features.amendments.streetscape.changeRequests.noComments')}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function ReadonlyMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <Input value={value} disabled />
+    </div>
+  );
+}
+
+function ReadonlyCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-muted/20 rounded-md border px-3 py-2">
+      <p className="text-muted-foreground text-xs">{label}</p>
+      <p className="font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function VoteCount({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="bg-background/80 rounded-md border px-3 py-2 text-center">
+      <p className="text-lg font-semibold">{value}</p>
+      <p className="text-muted-foreground text-[11px]">{label}</p>
+    </div>
+  );
+}
+
+function getCanvasAnchorFromLocalPoint(point: StreetDesignLocalPoint): CanvasAnchor {
+  return {
+    leftPercent: clamp(50 + point.x * 1.2, 18, 82),
+    topPercent: clamp(50 - point.z * 1.2, 18, 86),
+  };
+}
+
+function getCanvasAnchorFromOsmWay(
+  osmWay: StreetDesignOsmWay,
+  design: StreetDesignStateV1
+): CanvasAnchor {
+  const points = getStreetDesignOsmFeaturePoints(osmWay);
+  if (points.length === 0) return getCanvasAnchorFromLocalPoint({ x: 0, z: 0 });
+
+  const averagePoint = points.reduce<StreetDesignGeoPoint>(
+    (sum, point) => ({
+      lat: sum.lat + point.lat / points.length,
+      lon: sum.lon + point.lon / points.length,
+    }),
+    { lat: 0, lon: 0 }
+  );
+
+  return getCanvasAnchorFromLocalPoint(projectGeoPointToLocal(averagePoint, design.origin));
+}
+
+function asInputValue(value: StreetDesignPropertyValue | undefined) {
+  if (value == null) return '';
+  return String(value);
+}
+
+function sanitizeDomId(value: string) {
+  return value.replace(/[^a-zA-Z0-9_-]/g, '-');
+}
+
+function getOsmLayerLabelKey(layer: ReturnType<typeof getStreetDesignOsmFeatureLayer>) {
+  if (layer === 'bike_lane') return 'features.amendments.streetscape.osmLayers.bikeLane';
+  if (layer === 'street_furniture')
+    return 'features.amendments.streetscape.osmLayers.streetFurniture';
+  if (layer === 'landuse_context')
+    return 'features.amendments.streetscape.osmLayers.landuseContext';
+  return `features.amendments.streetscape.osmLayers.${layer}`;
+}
+
+function getRelevantOsmTags(tags: Record<string, string> | undefined) {
+  if (!tags) return [];
+
+  const relevantPrefixes = [
+    'highway',
+    'natural',
+    'amenity',
+    'parking',
+    'parking:',
+    'cycleway',
+    'cycleway:',
+    'sidewalk',
+    'sidewalk:',
+    'railway',
+    'public_transport',
+    'barrier',
+    'traffic_calming',
+    'crossing',
+    'access',
+    'bridge',
+    'bridge:',
+    'tunnel',
+    'layer',
+    'ele',
+    'incline',
+    'step_count',
+    'embankment',
+    'cutting',
+    'man_made',
+    'area:highway',
+    'maxheight',
+    'maxheight:',
+    'min_height',
+    'clearance',
+    'shop',
+    'office',
+    'tourism',
+    'leisure',
+    'landuse',
+    'building',
+    'emergency',
+    'lanes',
+    'oneway',
+    'width',
+    'height',
+    'surface',
+  ];
+
+  return Object.entries(tags)
+    .filter(([key]) => relevantPrefixes.some(prefix => key === prefix || key.startsWith(prefix)))
+    .slice(0, 8);
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function formatMeters(value: number) {
+  return `${value.toFixed(Math.abs(value) < 1 ? 2 : 1)} m`;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function StreetDesignLegendItem({ entry }: { entry: StreetDesignLegendEntry }) {
@@ -269,6 +1060,19 @@ function StreetDesignLegendItem({ entry }: { entry: StreetDesignLegendEntry }) {
       <span className="min-w-0 truncate">{t(entry.labelKey)}</span>
     </div>
   );
+}
+
+function getChangeRequestMarkerClassName(tone: StreetDesignChangeRequestTone) {
+  switch (tone) {
+    case 'add':
+      return 'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]';
+    case 'remove':
+      return 'border-dashed border-[var(--badge-danger-border)] bg-[var(--badge-danger-bg)] text-[var(--badge-danger-fg)]';
+    case 'update':
+      return 'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] text-[var(--badge-info-fg)]';
+    default:
+      return 'border-border bg-background/90 text-foreground';
+  }
 }
 
 function StreetDesignLegendPreview({ entry }: { entry: StreetDesignLegendEntry }) {

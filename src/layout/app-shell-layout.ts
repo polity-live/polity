@@ -17,7 +17,6 @@ const UNCONTAINED_ENTITY_ROUTE_PATTERNS = [
   /^\/user\/[^/]+\/network$/,
   /^\/event\/[^/]+\/network$/,
   /^\/amendment\/[^/]+\/process$/,
-  /^\/amendment\/[^/]+\/streetscape$/,
 ];
 
 export const APP_SHELL_PAGE_FRAME_CLASS: Record<Exclude<AppShellPageFrame, 'bare'>, string> = {

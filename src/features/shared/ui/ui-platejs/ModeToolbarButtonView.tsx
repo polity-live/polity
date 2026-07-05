@@ -16,6 +16,7 @@ interface ModeToolbarButtonViewProps {
   onOpenChange: (open: boolean) => void;
   mode: SelectableEditingMode;
   currentOption: ReturnType<typeof import('@/features/shared/ui/status').getEditingModeOption>;
+  iconOnly?: boolean;
   labels: {
     editingMode: string;
     viewOnly: string;
@@ -31,6 +32,7 @@ export function ModeToolbarButtonView({
   onOpenChange,
   mode,
   currentOption,
+  iconOnly = false,
   labels,
   isOwnerOrCollaborator,
   onModeChange,
@@ -38,9 +40,15 @@ export function ModeToolbarButtonView({
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange} modal={false} {...dropdownProps}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton key={mode} pressed={open} tooltip={labels.editingMode} isDropdown>
+        <ToolbarButton
+          key={mode}
+          aria-label={currentOption.label}
+          pressed={open}
+          tooltip={labels.editingMode}
+          isDropdown={!iconOnly}
+        >
           <currentOption.Icon />
-          <span className="hidden lg:inline">{currentOption.label}</span>
+          <span className={iconOnly ? 'sr-only' : 'hidden lg:inline'}>{currentOption.label}</span>
         </ToolbarButton>
       </DropdownMenuTrigger>
 

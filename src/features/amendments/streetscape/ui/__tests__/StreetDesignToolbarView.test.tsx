@@ -94,6 +94,37 @@ describe('StreetDesignToolbarView', () => {
       within(contextSection as HTMLElement).getAllByRole('button', { name: /school/i }).length
     ).toBeGreaterThan(0);
 
+    const transitSection = screen.getAllByText('Transit').at(-1)?.closest('section');
+    expect(transitSection).toBeTruthy();
+    fireEvent.click(
+      within(transitSection as HTMLElement).getByRole('button', {
+        name: /elevated sheltered bus stop/i,
+      })
+    );
+    expect(onToolChange).toHaveBeenCalledWith(
+      'station_platform',
+      expect.objectContaining({
+        deckElevationMeters: 0.32,
+        platformType: 'bus_platform',
+        shelter: true,
+      }),
+      3
+    );
+    fireEvent.click(
+      within(transitSection as HTMLElement).getByRole('button', {
+        name: /elevated sheltered rail stop/i,
+      })
+    );
+    expect(onToolChange).toHaveBeenCalledWith(
+      'station_platform',
+      expect.objectContaining({
+        deckElevationMeters: 0.48,
+        platformType: 'rail_platform',
+        shelter: true,
+      }),
+      3.4
+    );
+
     const buildingSection = screen.getAllByText('Buildings').at(-1)?.closest('section');
     expect(buildingSection).toBeTruthy();
     expect(

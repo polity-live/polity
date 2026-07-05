@@ -39,6 +39,15 @@ const stringProperty = (
   return typeof value === 'string' && value.length > 0 ? value : fallback;
 };
 
+const numberProperty = (
+  properties: Record<string, StreetDesignPropertyValue>,
+  key: string,
+  fallback: number
+) => {
+  const value = properties[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+};
+
 const createVariantTool = (args: {
   objectType: StreetDesignObjectType;
   variantGroup: string;
@@ -118,7 +127,9 @@ export const streetDesignPropertyOptions = {
   planting: ['staudenmix', 'scrub', 'heide', 'wildflowers', 'grasses', 'shrubs'].map(value =>
     variantOption('planting', value)
   ),
-  platformType: ['tram_stop', 'rail_platform'].map(value => variantOption('platformType', value)),
+  platformType: ['bus_platform', 'tram_stop', 'rail_platform'].map(value =>
+    variantOption('platformType', value)
+  ),
   protection: ['painted', 'protected', 'raised'].map(value => variantOption('protection', value)),
   railType: ['tram', 'light_rail', 'rail'].map(value => variantOption('railType', value)),
   restriction: ['loading_only', 'delivery_window', 'short_stop'].map(value =>
@@ -437,15 +448,39 @@ export const streetDesignVariantToolsBySection = {
       objectType: 'station_platform',
       variantGroup: 'transit',
       value: 'tram_platform',
-      propertyOverrides: { platformType: 'tram_stop', shelter: true },
-      selectionPropertyKeys: ['platformType'],
+      propertyOverrides: { deckElevationMeters: 0, platformType: 'tram_stop', shelter: true },
+      selectionPropertyKeys: ['platformType', 'deckElevationMeters'],
     }),
     createVariantTool({
       objectType: 'station_platform',
       variantGroup: 'transit',
       value: 'rail_platform',
-      propertyOverrides: { platformType: 'rail_platform', shelter: true },
-      selectionPropertyKeys: ['platformType'],
+      propertyOverrides: { deckElevationMeters: 0, platformType: 'rail_platform', shelter: true },
+      selectionPropertyKeys: ['platformType', 'deckElevationMeters'],
+    }),
+    createVariantTool({
+      objectType: 'station_platform',
+      variantGroup: 'transit',
+      value: 'elevated_sheltered_bus_stop',
+      propertyOverrides: {
+        deckElevationMeters: 0.32,
+        platformType: 'bus_platform',
+        shelter: true,
+      },
+      selectionPropertyKeys: ['platformType', 'deckElevationMeters', 'shelter'],
+      widthOverride: 3,
+    }),
+    createVariantTool({
+      objectType: 'station_platform',
+      variantGroup: 'transit',
+      value: 'elevated_sheltered_rail_stop',
+      propertyOverrides: {
+        deckElevationMeters: 0.48,
+        platformType: 'rail_platform',
+        shelter: true,
+      },
+      selectionPropertyKeys: ['platformType', 'deckElevationMeters', 'shelter'],
+      widthOverride: 3.4,
     }),
   ],
   traffic: [
@@ -524,7 +559,15 @@ const knownVariantValues = {
   street: ['residential', 'primary', 'living_street', 'pedestrian', 'construction', 'bridge'],
   trafficCalming: ['table', 'hump', 'chicane', 'narrowing'],
   trafficSignal: ['vehicle', 'pedestrian', 'bicycle'],
-  transit: ['bus_stop', 'sheltered_bus_stop', 'tram_platform', 'rail_platform'],
+  transit: [
+    'bus_stop',
+    'sheltered_bus_stop',
+    'bus_platform',
+    'tram_platform',
+    'rail_platform',
+    'elevated_sheltered_bus_stop',
+    'elevated_sheltered_rail_stop',
+  ],
   tree: ['deciduous', 'conifer', 'fruit', 'columnar_poplar', 'ornamental_cherry', 'flowering_plum'],
   water: ['retention', 'pond', 'stream'],
   wetland: ['reedbed', 'marsh', 'wet_meadow'],
@@ -596,9 +639,21 @@ const labelLookup: Partial<
   sports_pitch: object => propertyVariantLabelKey(object, 'sports', 'sport', 'multi'),
   station_platform: object => {
     const platformType = stringProperty(object.properties, 'platformType', 'tram_stop');
+    const isElevated = numberProperty(object.properties, 'deckElevationMeters', 0) > 0.1;
+    const isSheltered = object.properties.shelter !== false;
+    if (platformType === 'bus_platform' && isElevated && isSheltered) {
+      return knownVariantLabelKey('transit', 'elevated_sheltered_bus_stop');
+    }
+    if (platformType === 'rail_platform' && isElevated && isSheltered) {
+      return knownVariantLabelKey('transit', 'elevated_sheltered_rail_stop');
+    }
     return knownVariantLabelKey(
       'transit',
-      platformType === 'rail_platform' ? 'rail_platform' : 'tram_platform'
+      platformType === 'rail_platform'
+        ? 'rail_platform'
+        : platformType === 'bus_platform'
+          ? 'bus_platform'
+          : 'tram_platform'
     );
   },
   street: object => {
