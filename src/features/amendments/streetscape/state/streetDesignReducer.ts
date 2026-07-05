@@ -30,6 +30,12 @@ import {
   STREET_DESIGN_CURRENCY,
   getStreetDesignObjectDefinition,
 } from '../logic/streetDesignObjectRegistry';
+import {
+  DEFAULT_STREET_DESIGN_OSM_LAYER_VISIBILITY,
+  getStreetDesignOsmLayerVisibility,
+  normalizeStreetDesignOsmSnapshot,
+} from '../logic/streetDesignOsm';
+import { updateStreetDesignBuildingProperties } from '../logic/streetDesignBuildingUse';
 
 export interface StreetDesignEditorState {
   design: StreetDesignStateV1;
@@ -51,7 +57,12 @@ export type StreetDesignEditorAction =
   | { type: 'set_osm_snapshot'; osmSnapshot: StreetDesignOsmSnapshot; origin: StreetDesignOrigin }
   | { type: 'set_comparison_mode'; comparisonMode: StreetDesignComparisonMode }
   | { type: 'set_interaction_mode'; interactionMode: StreetDesignInteractionMode }
-  | { type: 'set_tool'; objectType: StreetDesignObjectType }
+  | {
+      type: 'set_tool';
+      objectType: StreetDesignObjectType;
+      propertyOverrides?: Record<string, StreetDesignPropertyValue>;
+      widthOverride?: number;
+    }
   | {
       type: 'set_osm_layer_visibility';
       layer: keyof StreetDesignOsmLayerVisibility;
@@ -97,13 +108,9 @@ export function createEmptyStreetDesignState(origin?: StreetDesignOrigin): Stree
       label: 'Berlin Mitte',
     },
     osmSnapshot: null,
-    osmLayerVisibility: {
-      road: true,
-      building: true,
-      green: true,
-      water: true,
-    },
+    osmLayerVisibility: DEFAULT_STREET_DESIGN_OSM_LAYER_VISIBILITY,
     hiddenOsmWayIds: [],
+    hiddenOsmFeatureIds: [],
     showStreetMarkings: true,
     comparisonMode: 'overlay',
     currency: STREET_DESIGN_CURRENCY,
@@ -112,11 +119,27 @@ export function createEmptyStreetDesignState(origin?: StreetDesignOrigin): Stree
   };
 }
 
+export function normalizeStreetDesignStateV1(design: StreetDesignStateV1): StreetDesignStateV1 {
+  const hiddenOsmFeatureIds = Array.from(
+    new Set([...(design.hiddenOsmWayIds ?? []), ...(design.hiddenOsmFeatureIds ?? [])])
+  );
+
+  return {
+    ...design,
+    osmSnapshot: normalizeStreetDesignOsmSnapshot(design.osmSnapshot),
+    osmLayerVisibility: getStreetDesignOsmLayerVisibility(design.osmLayerVisibility),
+    hiddenOsmWayIds: hiddenOsmFeatureIds,
+    hiddenOsmFeatureIds,
+  };
+}
+
 export function createInitialStreetDesignEditorState(
   design = createEmptyStreetDesignState()
 ): StreetDesignEditorState {
+  const normalizedDesign = normalizeStreetDesignStateV1(design);
+
   return {
-    design,
+    design: normalizedDesign,
     selectedTool: 'tree',
     interactionMode: 'select',
     selectedObjectId: null,
@@ -153,17 +176,40 @@ function getCorridorDefaultWidth(objectType: StreetDesignObjectType) {
   return definition.defaultWidth ?? 2;
 }
 
+function updateStreetDesignObjectProperties(
+  objectType: StreetDesignObjectType,
+  properties: Record<string, StreetDesignPropertyValue>,
+  key: string,
+  value: StreetDesignPropertyValue
+) {
+  if (objectType === 'building') {
+    return updateStreetDesignBuildingProperties(properties, key, value);
+  }
+
+  return {
+    ...properties,
+    [key]: value,
+  };
+}
+
 function createPlacementSettings(
-  objectType: StreetDesignObjectType
+  objectType: StreetDesignObjectType,
+  propertyOverrides?: Record<string, StreetDesignPropertyValue>,
+  widthOverride?: number
 ): StreetDesignPlacementSettings {
   const definition = getStreetDesignObjectDefinition(objectType);
+  const properties = Object.entries(propertyOverrides ?? {}).reduce(
+    (currentProperties, [key, value]) =>
+      updateStreetDesignObjectProperties(objectType, currentProperties, key, value),
+    { ...definition.defaultProperties }
+  );
 
   return {
     type: objectType,
-    width: getCorridorDefaultWidth(objectType),
+    width: widthOverride ?? getCorridorDefaultWidth(objectType),
     rotationDeg: 0,
     rotationLocked: false,
-    properties: { ...definition.defaultProperties },
+    properties,
     customUnitCostMinor: null,
   };
 }
@@ -314,7 +360,7 @@ export function streetDesignReducer(
   switch (action.type) {
     case 'replace_design':
       return {
-        ...createInitialStreetDesignEditorState(action.design),
+        ...createInitialStreetDesignEditorState(normalizeStreetDesignStateV1(action.design)),
         selectedTool: state.selectedTool,
         placementSettings: createPlacementSettings(state.selectedTool),
         isDirty: action.dirty ?? false,
@@ -326,8 +372,9 @@ export function streetDesignReducer(
         design: {
           ...state.design,
           origin: action.origin,
-          osmSnapshot: action.osmSnapshot,
+          osmSnapshot: normalizeStreetDesignOsmSnapshot(action.osmSnapshot),
           hiddenOsmWayIds: [],
+          hiddenOsmFeatureIds: [],
         },
         selectedOsmWayId: null,
         selectedObjectFocusRequestKey: 0,
@@ -362,10 +409,7 @@ export function streetDesignReducer(
         design: {
           ...state.design,
           osmLayerVisibility: {
-            road: state.design.osmLayerVisibility?.road ?? true,
-            building: state.design.osmLayerVisibility?.building ?? true,
-            green: state.design.osmLayerVisibility?.green ?? true,
-            water: state.design.osmLayerVisibility?.water ?? true,
+            ...getStreetDesignOsmLayerVisibility(state.design.osmLayerVisibility),
             [action.layer]: action.visible,
           },
         },
@@ -390,7 +434,11 @@ export function streetDesignReducer(
         selectedObjectId: null,
         selectedOsmWayId: null,
         placementDraft: null,
-        placementSettings: createPlacementSettings(action.objectType),
+        placementSettings: createPlacementSettings(
+          action.objectType,
+          action.propertyOverrides,
+          action.widthOverride
+        ),
       };
 
     case 'set_placement_property':
@@ -398,10 +446,12 @@ export function streetDesignReducer(
         ...state,
         placementSettings: {
           ...state.placementSettings,
-          properties: {
-            ...state.placementSettings.properties,
-            [action.key]: action.value,
-          },
+          properties: updateStreetDesignObjectProperties(
+            state.placementSettings.type,
+            state.placementSettings.properties,
+            action.key,
+            action.value
+          ),
         },
       };
 
@@ -690,19 +740,27 @@ export function streetDesignReducer(
       };
     }
 
-    case 'hide_osm_way':
+    case 'hide_osm_way': {
+      const hiddenOsmFeatureIds = Array.from(
+        new Set([
+          ...(state.design.hiddenOsmWayIds ?? []),
+          ...(state.design.hiddenOsmFeatureIds ?? []),
+          action.osmWayId,
+        ])
+      );
+
       return {
         ...state,
         design: {
           ...state.design,
-          hiddenOsmWayIds: Array.from(
-            new Set([...(state.design.hiddenOsmWayIds ?? []), action.osmWayId])
-          ),
+          hiddenOsmWayIds: hiddenOsmFeatureIds,
+          hiddenOsmFeatureIds,
         },
         selectedOsmWayId:
           state.selectedOsmWayId === action.osmWayId ? null : state.selectedOsmWayId,
         isDirty: true,
       };
+    }
 
     case 'update_object_property':
       return {
@@ -711,10 +769,12 @@ export function streetDesignReducer(
           ...state.design,
           objects: updateObject(state.design.objects, action.objectId, object => ({
             ...object,
-            properties: {
-              ...object.properties,
-              [action.key]: action.value,
-            },
+            properties: updateStreetDesignObjectProperties(
+              object.type,
+              object.properties,
+              action.key,
+              action.value
+            ),
           })),
         },
         isDirty: true,
@@ -805,5 +865,5 @@ export function parseStoredStreetDesignState(value: unknown): StreetDesignStateV
   if (candidate.schemaVersion !== 1) return null;
   if (!candidate.origin || !Array.isArray(candidate.objects)) return null;
 
-  return candidate as StreetDesignStateV1;
+  return normalizeStreetDesignStateV1(candidate as StreetDesignStateV1);
 }

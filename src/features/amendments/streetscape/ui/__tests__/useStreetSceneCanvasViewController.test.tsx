@@ -1,12 +1,16 @@
 /* @vitest-environment jsdom */
 
-import { fireEvent, render, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyStreetDesignState } from '../../state/streetDesignReducer';
 import { useStreetSceneCanvasViewController } from '../useStreetSceneCanvasViewController';
 
+const { mountStreetDesignSceneMock } = vi.hoisted(() => ({
+  mountStreetDesignSceneMock: vi.fn<() => Promise<() => void>>(() => Promise.resolve(vi.fn())),
+}));
+
 vi.mock('../../logic/streetDesignScene', () => ({
-  mountStreetDesignScene: vi.fn(() => Promise.resolve(vi.fn())),
+  mountStreetDesignScene: mountStreetDesignSceneMock,
 }));
 
 function ControllerHarness({
@@ -26,6 +30,7 @@ function ControllerHarness({
 }) {
   const viewProps = useStreetSceneCanvasViewController({
     design: createEmptyStreetDesignState(),
+    isLoadingOsm: false,
     placementPreview: null,
     placementPreviewType: null,
     placementStart: null,
@@ -56,6 +61,11 @@ function ControllerHarness({
 }
 
 describe('useStreetSceneCanvasViewController', () => {
+  beforeEach(() => {
+    mountStreetDesignSceneMock.mockReset();
+    mountStreetDesignSceneMock.mockResolvedValue(vi.fn());
+  });
+
   it('finishes active drag-band placement with Enter', async () => {
     const onFinishPlacement = vi.fn();
     render(<ControllerHarness placementMode="drag_band" onFinishPlacement={onFinishPlacement} />);
@@ -168,5 +178,26 @@ describe('useStreetSceneCanvasViewController', () => {
 
     expect(onFinishPlacement).not.toHaveBeenCalled();
     expect(onCancelPlacement).not.toHaveBeenCalled();
+  });
+
+  it('runs scene cleanup when unmounted before async scene mount resolves', async () => {
+    let resolveMount: ((cleanup: () => void) => void) | null = null;
+    const cleanup = vi.fn();
+    mountStreetDesignSceneMock.mockReturnValueOnce(
+      new Promise<() => void>(resolve => {
+        resolveMount = nextCleanup => resolve(nextCleanup);
+      })
+    );
+
+    const { unmount } = render(<ControllerHarness interactionMode="camera" />);
+
+    await waitFor(() => expect(mountStreetDesignSceneMock).toHaveBeenCalledTimes(1));
+    unmount();
+
+    await act(async () => {
+      resolveMount?.(cleanup);
+    });
+
+    expect(cleanup).toHaveBeenCalledTimes(1);
   });
 });

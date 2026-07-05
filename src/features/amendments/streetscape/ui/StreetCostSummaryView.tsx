@@ -63,12 +63,42 @@ const objectIcons = {
   grass_strip: Sprout,
   flower_bed: Flower2,
   water_area: Waves,
+  wetland_area: Waves,
   parking_area: ParkingSquare,
+  loading_zone: ParkingSquare,
   street: Route,
   car_lane: CarFront,
   bike_lane: Bike,
   sidewalk: Footprints,
   building: Building2,
+  street_lamp: Layers,
+  hydrant: Waves,
+  bicycle_parking: Bike,
+  bollard: Layers,
+  gate: Layers,
+  fence: Layers,
+  wall: Building2,
+  traffic_signal: Layers,
+  crossing: Footprints,
+  traffic_calming: Layers,
+  bus_stop: Route,
+  rail_track: Route,
+  playground: Sprout,
+  sports_pitch: Sprout,
+  waste_bin: Trash2,
+  recycling_container: Sprout,
+  post_box: Layers,
+  fountain: Waves,
+  stairs: Footprints,
+  hedge: Shrub,
+  scrub_area: Shrub,
+  heath_area: Sprout,
+  orchard_area: TreePine,
+  vineyard_area: Layers,
+  construction_area: Layers,
+  landuse_context_area: Layers,
+  civic_area: Building2,
+  station_platform: Route,
 } satisfies Record<StreetDesignObjectType, LucideIcon>;
 
 const categoryIcons = {
@@ -301,7 +331,7 @@ export function StreetCostSummaryView({
                       {group.lines.map(line => {
                         const Icon = objectIcons[line.type];
                         const isSelected = selectedObjectId === line.objectId;
-                        const lineLabel = t(line.labelKey);
+                        const lineLabel = t(line.displayLabelKey ?? line.labelKey);
 
                         return (
                           <div

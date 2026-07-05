@@ -467,18 +467,36 @@ export const amendmentsTranslations = {
       mode: 'Modus',
     },
     osmLayers: {
+      bikeLane: 'Radwege',
       building: 'Gebäude',
       green: 'Grün',
+      barrier: 'Barrieren',
+      construction: 'Baustellen',
+      landuseContext: 'Kontextflächen',
+      parking: 'Parken',
+      rail: 'Schiene',
       road: 'Straßen',
+      sidewalk: 'Gehwege',
       streetMarkings: 'Markierungen',
+      streetFurniture: 'Stadtmöbel',
+      sports: 'Sport & Spiel',
+      trees: 'Bäume',
+      traffic: 'Verkehr',
+      transit: 'Transit',
       water: 'Wasser',
     },
     inspector: {
       activeDraft: 'Aktiver Entwurf',
       area: 'Fläche',
+      baseElevation: 'Basisniveau',
+      clearance: 'Durchfahrtshöhe',
+      deckElevation: 'Deckhöhe',
+      elevationSource: 'Höhenquelle',
       existing: 'Bestand',
       fieldWithUnit: '{{label}} ({{unit}})',
       height: 'Höhe',
+      incline: 'Steigung',
+      layer: 'Layer',
       length: 'Länge',
       nextElementSettings: 'Einstellungen für das nächste Element',
       noSelection: 'Kein Element ausgewählt',
@@ -490,7 +508,10 @@ export const amendmentsTranslations = {
       price: 'Preis',
       removeFromMap: 'Aus Karte entfernen',
       rotation: 'Rotation',
+      stepCount: 'Stufen',
+      structure: 'Struktur',
       suggestedCost: 'Vorschlag: {{cost}}',
+      tags: 'Tags',
       title: 'Inspector',
       total: 'Summe',
       width: 'Breite',
@@ -539,7 +560,11 @@ export const amendmentsTranslations = {
     },
     canvas: {
       drawPath: 'Kurve zeichnen',
+      legend: 'Legende',
+      legendExisting: 'Bestand',
+      legendPlanned: 'Placement Optionen',
       loadFailed: 'Three.js konnte nicht geladen werden.',
+      loadingOsm: 'OSM-Daten werden geladen',
       pointsSet: '{{count}} Punkte gesetzt',
     },
     sample: {
@@ -576,6 +601,9 @@ export const amendmentsTranslations = {
               blue: 'Blau',
               brick: 'Ziegel',
               green: 'Grün',
+              hospitality: 'Gastgewerbe-Gold',
+              industrial: 'Industriegrau',
+              residential: 'Wohn-Beige',
               sand: 'Sand',
               slate: 'Schiefer',
             },
@@ -586,7 +614,11 @@ export const amendmentsTranslations = {
             options: {
               civic: 'Öffentlich',
               commercial: 'Gewerbe',
+              hospitality: 'Hotel & Gastro',
+              industrial: 'Industrie',
               mixed: 'Gemischt',
+              office: 'Büro',
+              retail: 'Einzelhandel',
               residential: 'Wohnen',
             },
           },
@@ -613,10 +645,20 @@ export const amendmentsTranslations = {
       },
       common: {
         properties: {
+          access: 'Zugang',
+          crop: 'Kultur',
+          deckElevationMeters: 'Deckhöhe',
           height: 'Höhe',
+          incline: 'Steigung',
+          layerIndex: 'Layer',
+          level: 'Ebene',
           maintenance: 'Pflege',
           material: 'Material',
+          planting: 'Bepflanzung',
+          publicAccess: 'Öffentlich zugänglich',
           spacing: 'Reihenabstand',
+          status: 'Status',
+          structureKind: 'Struktur',
           surface: 'Oberfläche',
         },
       },
@@ -628,6 +670,18 @@ export const amendmentsTranslations = {
       },
       grassStrip: {
         label: 'Grünstreifen',
+      },
+      scrubArea: {
+        label: 'Gebüschfläche',
+      },
+      heathArea: {
+        label: 'Heidefläche',
+      },
+      orchardArea: {
+        label: 'Obstwiese',
+      },
+      vineyardArea: {
+        label: 'Weinberg',
       },
       parkingArea: {
         label: 'Parkfläche',
@@ -643,16 +697,25 @@ export const amendmentsTranslations = {
           parkingSpaces: 'Stellplätze',
         },
       },
+      loadingZone: {
+        label: 'Ladezone',
+        properties: {
+          lengthMeters: 'Länge',
+          restriction: 'Beschränkung',
+        },
+      },
       sidewalk: {
         label: 'Gehweg',
         properties: {
           accessibility: 'Barrierearm',
+          pathType: 'Wegtyp',
         },
       },
       street: {
         label: 'Straße',
         properties: {
           lanes: 'Spuren',
+          roadClass: 'Straßenklasse',
         },
       },
       tree: {
@@ -660,6 +723,111 @@ export const amendmentsTranslations = {
         properties: {
           canopyDiameter: 'Kronendurchmesser',
           species: 'Art',
+        },
+      },
+      bicycleParking: {
+        label: 'Fahrradparken',
+        properties: {
+          stands: 'Bügel',
+        },
+      },
+      bollard: {
+        label: 'Poller',
+      },
+      busStop: {
+        label: 'Haltestelle',
+        properties: {
+          shelter: 'Wartehaus',
+        },
+      },
+      crossing: {
+        label: 'Querung',
+        properties: {
+          crossingType: 'Querungstyp',
+        },
+      },
+      fence: {
+        label: 'Zaun',
+      },
+      fountain: {
+        label: 'Brunnen',
+      },
+      gate: {
+        label: 'Tor',
+      },
+      hedge: {
+        label: 'Hecke',
+      },
+      hydrant: {
+        label: 'Hydrant',
+      },
+      playground: {
+        label: 'Spielplatz',
+        properties: {
+          equipment: 'Ausstattung',
+        },
+      },
+      postBox: {
+        label: 'Briefkasten',
+        properties: {
+          operator: 'Betreiber',
+        },
+      },
+      railTrack: {
+        label: 'Gleis',
+        properties: {
+          railType: 'Gleistyp',
+        },
+      },
+      stationPlatform: {
+        label: 'Bahnsteig / Plattform',
+        properties: {
+          platformType: 'Plattformtyp',
+        },
+      },
+      recyclingContainer: {
+        label: 'Recyclingcontainer',
+      },
+      sportsPitch: {
+        label: 'Sportfläche',
+        properties: {
+          sport: 'Sportart',
+        },
+      },
+      stairs: {
+        label: 'Treppe',
+        properties: {
+          steps: 'Stufen',
+        },
+      },
+      streetLamp: {
+        label: 'Straßenlaterne',
+      },
+      trafficCalming: {
+        label: 'Verkehrsberuhigung',
+        properties: {
+          calmingType: 'Typ',
+        },
+      },
+      trafficSignal: {
+        label: 'Ampel',
+        properties: {
+          signalType: 'Signaltyp',
+        },
+      },
+      wall: {
+        label: 'Mauer',
+      },
+      wasteBin: {
+        label: 'Mülleimer',
+        properties: {
+          capacity: 'Volumen',
+        },
+      },
+      wetlandArea: {
+        label: 'Feuchtgebiet',
+        properties: {
+          wetlandType: 'Feuchtgebietstyp',
         },
       },
       waterArea: {
@@ -673,6 +841,7 @@ export const amendmentsTranslations = {
               seatingEdge: 'Sitzkante',
             },
           },
+          intermittent: 'Zeitweise wasserführend',
           waterType: {
             label: 'Wassertyp',
             options: {
@@ -682,6 +851,325 @@ export const amendmentsTranslations = {
             },
           },
         },
+      },
+      constructionArea: {
+        label: 'Baustellenfläche',
+      },
+      landuseContextArea: {
+        label: 'Kontextfläche',
+        properties: {
+          influenceBuildings: 'Gebäudefarben beeinflussen',
+          landuseType: 'Nutzungstyp',
+        },
+      },
+      civicArea: {
+        label: 'Öffentliche Fläche',
+        properties: {
+          civicType: 'Einrichtungstyp',
+        },
+      },
+    },
+    variantOptions: {
+      access: {
+        destination: 'Anlieger / Zielverkehr',
+        emergency: 'Rettungszugang',
+        private: 'Privat',
+        public: 'Öffentlich',
+      },
+      calmingType: {
+        chicane: 'Verschwenkung',
+        hump: 'Schwelle',
+        narrowing: 'Einengung',
+        table: 'Aufpflasterung',
+      },
+      civicType: {
+        community_center: 'Nachbarschaftszentrum',
+        hospital: 'Krankenhaus',
+        library: 'Bibliothek',
+        school: 'Schule',
+        townhall: 'Rathaus',
+      },
+      crossingType: {
+        raised: 'Aufgepflastert',
+        refuge: 'Mittelinsel',
+        signalized: 'Signalisiert',
+        zebra: 'Zebrastreifen',
+      },
+      crop: {
+        berries: 'Beeren',
+        fruit: 'Obst',
+        grapes: 'Trauben',
+        nuts: 'Nüsse',
+      },
+      equipment: {
+        climbing: 'Klettern',
+        inclusive: 'Inklusiv',
+        mixed: 'Gemischt',
+        sand: 'Sandspiel',
+        swings: 'Schaukeln',
+      },
+      fountainWaterType: {
+        decorative: 'Dekorativ',
+        drinking: 'Trinkwasser',
+        splash: 'Wasserspiel',
+      },
+      incline: {
+        down: 'Abwärts',
+        up: 'Aufwärts',
+      },
+      landuseType: {
+        civic: 'Öffentlich',
+        commercial: 'Gewerbe',
+        green: 'Grün',
+        industrial: 'Industrie',
+        mixed: 'Gemischt',
+        residential: 'Wohnen',
+        retail: 'Einzelhandel',
+      },
+      level: {
+        bridge: 'Brücke',
+        surface: 'Ebenerdig',
+        tunnel: 'Tunnel',
+      },
+      maintenance: {
+        extensiv: 'Extensiv',
+        intensiv: 'Intensiv',
+        standard: 'Standard',
+      },
+      material: {
+        beton: 'Beton',
+        'glas/papier': 'Glas/Papier',
+        holz: 'Holz',
+        metall: 'Metall',
+        recycling: 'Recyclingmaterial',
+        stahl: 'Stahl',
+        stein: 'Stein',
+      },
+      operator: {
+        dhl: 'DHL',
+        municipal: 'Kommunal',
+        post: 'Post',
+      },
+      pathType: {
+        accessible: 'Barrierearm',
+        promenade: 'Promenade',
+        sidewalk: 'Gehweg',
+        standard: 'Standard',
+      },
+      planting: {
+        grasses: 'Gräser',
+        heide: 'Heide',
+        shrubs: 'Sträucher',
+        scrub: 'Gebüsch',
+        staudenmix: 'Staudenmix',
+        wildflowers: 'Wildblumen',
+      },
+      platformType: {
+        rail_platform: 'Bahnsteig',
+        tram_stop: 'Tramplattform',
+      },
+      protection: {
+        painted: 'Markiert',
+        protected: 'Geschützt',
+        raised: 'Auf Bordniveau',
+      },
+      railType: {
+        light_rail: 'Stadtbahn',
+        rail: 'Bahn',
+        tram: 'Tram',
+      },
+      restriction: {
+        delivery_window: 'Lieferfenster',
+        loading_only: 'Nur Laden',
+        short_stop: 'Kurzhalten',
+      },
+      roadClass: {
+        construction: 'Baustelle',
+        living_street: 'Verkehrsberuhigt',
+        pedestrian: 'Fußgängerzone',
+        primary: 'Hauptstraße',
+        residential: 'Wohnstraße',
+      },
+      signalType: {
+        bicycle: 'Radverkehr',
+        pedestrian: 'Fußverkehr',
+        vehicle: 'Kfz',
+      },
+      species: {
+        allee: 'Alleebaum',
+        columnar_poplar: 'Säulenpappel',
+        conifer: 'Nadelbaum',
+        deciduous: 'Laubbaum',
+        flowering_plum: 'Blühende Pflaume',
+        fruit: 'Obstbaum',
+        hecke: 'Hecke',
+        native: 'Heimisch',
+        ornamental_cherry: 'Zierkirsche',
+        obstbaum: 'Obstbaum',
+        stadtbaum: 'Stadtbaum',
+        strauch: 'Strauch',
+      },
+      sport: {
+        basketball: 'Basketball',
+        fitness: 'Fitness',
+        football: 'Fußball',
+        multi: 'Multifunktional',
+        skate: 'Skate',
+      },
+      status: {
+        active: 'Aktiv',
+        closed: 'Gesperrt',
+        construction: 'Baustelle',
+        open: 'Offen',
+        planned: 'Geplant',
+      },
+      surface: {
+        asphalt: 'Asphalt',
+        fallschutz: 'Fallschutz',
+        gravel: 'Kies',
+        kunststoff: 'Kunststoff',
+        paving_stones: 'Pflastersteine',
+        pflaster: 'Pflaster',
+        rasen: 'Rasen',
+        unsealed: 'Unversiegelt',
+      },
+      wetlandType: {
+        marsh: 'Sumpf',
+        reedbed: 'Schilfzone',
+        wet_meadow: 'Feuchtwiese',
+      },
+    },
+    variantLabels: {
+      bikeLane: {
+        painted: 'Markierte Radspur',
+        protected: 'Geschützte Radspur',
+        raised: 'Erhöhte Radspur',
+      },
+      building: {
+        civic: 'Öffentliches Gebäude',
+        commercial: 'Gewerbegebäude',
+        hospitality: 'Gastgewerbegebäude',
+        industrial: 'Industriegebäude',
+        mixed: 'Gemischt genutztes Gebäude',
+        office: 'Bürogebäude',
+        residential: 'Wohngebäude',
+        retail: 'Einzelhandelsgebäude',
+      },
+      carLane: {
+        one_way: 'Einbahn-Fahrspur',
+        two_way: 'Zweirichtungs-Fahrspur',
+      },
+      civic: {
+        community_center: 'Öffentliche Fläche - Nachbarschaftszentrum',
+        hospital: 'Öffentliche Fläche - Krankenhaus',
+        library: 'Öffentliche Fläche - Bibliothek',
+        school: 'Öffentliche Fläche - Schule',
+        townhall: 'Öffentliche Fläche - Rathaus',
+      },
+      construction: {
+        active: 'Aktive Baustellenfläche',
+        closed: 'Gesperrte Baustellenfläche',
+        planned: 'Geplante Baustellenfläche',
+      },
+      crossing: {
+        raised: 'Aufgepflasterte Querung',
+        refuge: 'Querung mit Mittelinsel',
+        signalized: 'Signalisierte Querung',
+        zebra: 'Zebrastreifen',
+      },
+      fountain: {
+        decorative: 'Zierbrunnen',
+        drinking: 'Trinkbrunnen',
+        splash: 'Wasserspiel',
+      },
+      landuse: {
+        civic: 'Öffentliche Kontextfläche',
+        commercial: 'Gewerbliche Kontextfläche',
+        green: 'Grüne Kontextfläche',
+        industrial: 'Industrielle Kontextfläche',
+        mixed: 'Gemischte Kontextfläche',
+        residential: 'Wohn-Kontextfläche',
+        retail: 'Einzelhandels-Kontextfläche',
+      },
+      loadingZone: {
+        delivery_window: 'Ladezone mit Lieferfenster',
+        loading_only: 'Ladezone',
+        short_stop: 'Kurzhaltezone',
+      },
+      parking: {
+        angled: 'Schrägparken',
+        parallel: 'Längsparken',
+        perpendicular: 'Querparken',
+      },
+      playground: {
+        climbing: 'Kletterspielplatz',
+        inclusive: 'Inklusiver Spielplatz',
+        mixed: 'Gemischter Spielplatz',
+        sand: 'Sandspielplatz',
+        swings: 'Schaukelspielplatz',
+      },
+      rail: {
+        light_rail: 'Stadtbahngleis',
+        rail: 'Bahngleis',
+        tram: 'Tramgleis',
+      },
+      sidewalk: {
+        accessible: 'Barrierearmer Gehweg',
+        promenade: 'Promenade',
+        sidewalk: 'Gehweg',
+        standard: 'Standard-Gehweg',
+      },
+      sports: {
+        basketball: 'Basketballfeld',
+        fitness: 'Fitnessfläche',
+        football: 'Fußballfeld',
+        multi: 'Multisportfläche',
+        skate: 'Skatefläche',
+      },
+      stairs: {
+        standard: 'Treppe',
+      },
+      street: {
+        construction: 'Baustellenstraße',
+        living_street: 'Verkehrsberuhigte Straße',
+        pedestrian: 'Fußgängerzone',
+        primary: 'Hauptstraße',
+        residential: 'Wohnstraße',
+      },
+      trafficCalming: {
+        chicane: 'Verkehrsverschwenkung',
+        hump: 'Bodenschwelle',
+        narrowing: 'Fahrbahneinengung',
+        table: 'Aufpflasterung',
+      },
+      trafficSignal: {
+        bicycle: 'Radampel',
+        pedestrian: 'Fußgängerampel',
+        vehicle: 'Ampel',
+      },
+      tree: {
+        columnar_poplar: 'Säulenpappel',
+        conifer: 'Nadelbaum',
+        deciduous: 'Laubbaum',
+        flowering_plum: 'Blühende Pflaume',
+        fruit: 'Obstbaum',
+        ornamental_cherry: 'Zierkirsche',
+      },
+      transit: {
+        bus_stop: 'Haltestelle',
+        rail_platform: 'Bahnsteig',
+        sheltered_bus_stop: 'Haltestelle mit Wartehaus',
+        tram_platform: 'Tramplattform',
+      },
+      water: {
+        pond: 'Teich',
+        retention: 'Retentionsfläche',
+        stream: 'Bachlauf',
+      },
+      wetland: {
+        marsh: 'Sumpf',
+        reedbed: 'Schilfzone',
+        wet_meadow: 'Feuchtwiese',
       },
     },
   },

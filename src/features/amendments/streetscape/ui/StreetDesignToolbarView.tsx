@@ -36,14 +36,20 @@ import type {
   StreetDesignObjectCategory,
   StreetDesignObjectType,
   StreetDesignOsmLayerVisibility,
+  StreetDesignPropertyValue,
 } from '../types';
+import { streetDesignObjectRegistry } from '../logic/streetDesignObjectRegistry';
 import {
-  streetDesignObjectRegistry,
-  streetDesignObjectTypes,
-} from '../logic/streetDesignObjectRegistry';
+  streetDesignElementSections,
+  type StreetDesignElementSection,
+  type StreetDesignElementTool,
+  type StreetDesignElementSectionIcon,
+} from '../logic/streetDesignElementSections';
+import { getStreetDesignObjectVariantLabelKey } from '../logic/streetDesignVariantCatalog';
 
 interface StreetDesignToolbarViewProps {
   selectedTool: StreetDesignObjectType;
+  selectedToolProperties: Record<string, StreetDesignPropertyValue>;
   interactionMode: StreetDesignInteractionMode;
   objects: StreetDesignObject[];
   selectedObjectId: string | null;
@@ -52,7 +58,11 @@ interface StreetDesignToolbarViewProps {
   osmLayerVisibility: StreetDesignOsmLayerVisibility;
   showStreetMarkings: boolean;
   readOnly: boolean;
-  onToolChange: (type: StreetDesignObjectType) => void;
+  onToolChange: (
+    type: StreetDesignObjectType,
+    propertyOverrides?: Record<string, StreetDesignPropertyValue>,
+    widthOverride?: number
+  ) => void;
   onInteractionModeChange: (mode: StreetDesignInteractionMode) => void;
   onObjectSelect: (objectId: string | null) => void;
   onObjectVisibilityChange: (objectId: string, visible: boolean) => void;
@@ -76,12 +86,42 @@ const objectIcons = {
   grass_strip: Sprout,
   flower_bed: Flower2,
   water_area: Waves,
+  wetland_area: Waves,
   parking_area: ParkingSquare,
+  loading_zone: ParkingSquare,
   street: Route,
   car_lane: CarFront,
   bike_lane: Bike,
   sidewalk: Footprints,
   building: Building2,
+  street_lamp: Highlighter,
+  hydrant: Waves,
+  bicycle_parking: Bike,
+  bollard: Layers,
+  gate: Layers,
+  fence: Layers,
+  wall: Building2,
+  traffic_signal: Highlighter,
+  crossing: Footprints,
+  traffic_calming: Highlighter,
+  bus_stop: Route,
+  rail_track: Route,
+  playground: Sprout,
+  sports_pitch: Sprout,
+  waste_bin: Trash2,
+  recycling_container: Sprout,
+  post_box: Layers,
+  fountain: Waves,
+  stairs: Footprints,
+  hedge: Shrub,
+  scrub_area: Shrub,
+  heath_area: Sprout,
+  orchard_area: TreePine,
+  vineyard_area: Layers,
+  construction_area: Highlighter,
+  landuse_context_area: Layers,
+  civic_area: Building2,
+  station_platform: Route,
 } satisfies Record<StreetDesignObjectType, ComponentType<{ className?: string }>>;
 
 const categoryIcons = {
@@ -93,8 +133,49 @@ const categoryIcons = {
   water: Waves,
 } satisfies Record<StreetDesignObjectCategory, ComponentType<{ className?: string }>>;
 
+const sectionIcons = {
+  Armchair,
+  Bike,
+  Building2,
+  Footprints,
+  Highlighter,
+  Layers,
+  ParkingSquare,
+  Route,
+  Shrub,
+  Sprout,
+  TreePine,
+  Waves,
+} satisfies Record<StreetDesignElementSectionIcon, ComponentType<{ className?: string }>>;
+
+function getSectionTools(section: StreetDesignElementSection): StreetDesignElementTool[] {
+  return (
+    section.tools ??
+    section.objectTypes.map(type => ({
+      id: type,
+      objectType: type,
+    }))
+  );
+}
+
+function isSectionToolSelected(args: {
+  tool: StreetDesignElementTool;
+  selectedTool: StreetDesignObjectType;
+  selectedToolProperties: Record<string, StreetDesignPropertyValue>;
+}) {
+  if (args.selectedTool !== args.tool.objectType) return false;
+
+  const selectionPropertyKeys = args.tool.selectionPropertyKeys ?? [];
+  if (selectionPropertyKeys.length === 0) return !args.tool.propertyOverrides;
+
+  return selectionPropertyKeys.every(
+    key => args.selectedToolProperties[key] === args.tool.propertyOverrides?.[key]
+  );
+}
+
 export function StreetDesignToolbarView({
   selectedTool,
+  selectedToolProperties,
   interactionMode,
   objects,
   selectedObjectId,
@@ -118,32 +199,6 @@ export function StreetDesignToolbarView({
   const [isElementsOpen, setIsElementsOpen] = useState(true);
   const [isAddedOpen, setIsAddedOpen] = useState(true);
   const [openAddedCategories, setOpenAddedCategories] = useState<StreetDesignObjectCategory[]>([]);
-  const layerToggles = [
-    {
-      layer: 'building',
-      labelKey: 'features.amendments.streetscape.osmLayers.building',
-      icon: Building2,
-    },
-    {
-      layer: 'road',
-      labelKey: 'features.amendments.streetscape.osmLayers.road',
-      icon: Route,
-    },
-    {
-      layer: 'green',
-      labelKey: 'features.amendments.streetscape.osmLayers.green',
-      icon: Sprout,
-    },
-    {
-      layer: 'water',
-      labelKey: 'features.amendments.streetscape.osmLayers.water',
-      icon: Waves,
-    },
-  ] satisfies {
-    layer: keyof StreetDesignOsmLayerVisibility;
-    labelKey: string;
-    icon: ComponentType<{ className?: string }>;
-  }[];
   const hiddenObjectIdSet = useMemo(() => new Set(hiddenObjectIds), [hiddenObjectIds]);
   const hiddenCategorySet = useMemo(
     () => new Set(hiddenObjectCategories),
@@ -271,14 +326,14 @@ export function StreetDesignToolbarView({
         </div>
         <CollapsibleContent>
           <div className="mt-3 space-y-2">
-            {layerToggles.map(item => {
-              const Icon = item.icon;
-              const isVisible = osmLayerVisibility[item.layer];
-              const layerLabel = t(item.labelKey);
+            {streetDesignElementSections.map(section => {
+              const Icon = sectionIcons[section.icon];
+              const isVisible = osmLayerVisibility[section.layer];
+              const layerLabel = t(section.labelKey);
 
               return (
                 <Button
-                  key={item.layer}
+                  key={section.layer}
                   type="button"
                   variant="outline"
                   size="sm"
@@ -287,7 +342,7 @@ export function StreetDesignToolbarView({
                     isVisible && 'border-brand/40 bg-brand/10 text-brand'
                   )}
                   title={getActionLabel(isVisible ? 'hide' : 'show', layerLabel)}
-                  onClick={() => onOsmLayerVisibilityChange(item.layer, !isVisible)}
+                  onClick={() => onOsmLayerVisibilityChange(section.layer, !isVisible)}
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <Icon className="size-4 flex-none" />
@@ -373,30 +428,57 @@ export function StreetDesignToolbarView({
           </CollapsibleTrigger>
         </div>
         <CollapsibleContent>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {streetDesignObjectTypes.map((type: StreetDesignObjectType) => {
-              const definition = streetDesignObjectRegistry[type];
-              const Icon = objectIcons[type];
-              const isSelected = selectedTool === type;
-              const objectLabel = t(definition.labelKey);
+          <div className="mt-3 space-y-4">
+            {streetDesignElementSections.map(section => {
+              const SectionIcon = sectionIcons[section.icon];
+              const sectionLabel = t(section.labelKey);
 
               return (
-                <Button
-                  key={type}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    'bg-background/80 h-16 flex-col gap-1 rounded-md px-2 text-[11px] leading-tight',
-                    isSelected && 'border-brand/40 bg-brand/10 text-brand'
-                  )}
-                  disabled={readOnly}
-                  title={objectLabel}
-                  onClick={() => onToolChange(type)}
-                >
-                  <Icon className="size-4" />
-                  <span className="max-w-full truncate">{objectLabel}</span>
-                </Button>
+                <section key={section.layer} className="space-y-2">
+                  <div className="text-muted-foreground flex items-center gap-2 text-[11px] font-semibold tracking-normal uppercase">
+                    <SectionIcon className="size-3.5 flex-none" />
+                    <span className="truncate">{sectionLabel}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {getSectionTools(section).map(tool => {
+                      const type = tool.objectType;
+                      const definition = streetDesignObjectRegistry[type];
+                      const Icon = objectIcons[type];
+                      const isSelected = isSectionToolSelected({
+                        tool,
+                        selectedTool,
+                        selectedToolProperties,
+                      });
+                      const objectLabel = t(tool.labelKey ?? definition.labelKey);
+
+                      return (
+                        <Button
+                          key={tool.id}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            'bg-background/80 h-16 flex-col gap-1 rounded-md px-2 text-[11px] leading-tight',
+                            isSelected && 'border-brand/40 bg-brand/10 text-brand'
+                          )}
+                          disabled={readOnly}
+                          title={objectLabel}
+                          onClick={() => {
+                            if (tool.propertyOverrides || typeof tool.widthOverride === 'number') {
+                              onToolChange(type, tool.propertyOverrides, tool.widthOverride);
+                              return;
+                            }
+
+                            onToolChange(type);
+                          }}
+                        >
+                          <Icon className="size-4" />
+                          <span className="max-w-full truncate">{objectLabel}</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </section>
               );
             })}
           </div>
@@ -553,7 +635,9 @@ export function StreetDesignToolbarView({
                           const isObjectHidden = hiddenObjectIdSet.has(object.id);
                           const isEffectivelyVisible = !isCategoryHidden && !isObjectHidden;
                           const isSelected = selectedObjectId === object.id;
-                          const objectLabel = t(definition.labelKey);
+                          const objectLabel = t(
+                            getStreetDesignObjectVariantLabelKey(object) ?? definition.labelKey
+                          );
 
                           return (
                             <div

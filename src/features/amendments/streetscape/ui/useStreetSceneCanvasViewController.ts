@@ -14,6 +14,7 @@ import { mountStreetDesignScene } from '../logic/streetDesignScene';
 interface StreetSceneCanvasViewProps {
   design: StreetDesignStateV1;
   metricLabels?: string[];
+  isLoadingOsm: boolean;
   placementPreview: CorridorGeometry | PathCorridorGeometry | null;
   placementPreviewType: StreetDesignObjectType | null;
   placementStart: StreetDesignLocalPoint | null;
@@ -43,6 +44,7 @@ interface StreetSceneCanvasViewProps {
 export function useStreetSceneCanvasViewController({
   design,
   metricLabels,
+  isLoadingOsm,
   placementPreview,
   placementPreviewType,
   placementStart,
@@ -190,10 +192,13 @@ export function useStreetSceneCanvasViewController({
   return {
     design,
     metricLabels,
+    isLoadingOsm,
     placementMode,
     placementPointCount,
     canFinishPathPlacement,
     selectedObject,
+    hiddenObjectIds,
+    hiddenObjectCategories,
     interactionMode,
     readOnly,
     onFinishPathPlacement,

@@ -7,17 +7,33 @@ import type {
   StreetDesignObject,
   StreetDesignObjectCategory,
   StreetDesignObjectType,
-  StreetDesignOsmLayerVisibility,
+  StreetDesignOsmFeatureKind,
   StreetDesignOsmWay,
   StreetDesignStateV1,
 } from '../types';
 import { getStreetDesignComparisonLayers } from './streetDesignDiff';
-import { getStreetDesignObjectDefinition } from './streetDesignObjectRegistry';
+import {
+  STREET_DESIGN_CURRENCY,
+  getStreetDesignObjectDefinition,
+} from './streetDesignObjectRegistry';
 import {
   createCorridorGeometry,
+  createPathCorridorGeometry,
   getStreetDesignGeometryCenter,
   getStreetDesignGeometryRotationDeg,
 } from './streetDesignPlacement';
+import {
+  getStreetDesignHiddenOsmFeatureIds,
+  getStreetDesignOsmFeatureLayer,
+  getStreetDesignOsmFeaturePoints,
+  getStreetDesignOsmFeatures,
+  getStreetDesignOsmLayerVisibility,
+} from './streetDesignOsm';
+import {
+  type StreetDesignInputAction,
+  getStreetDesignKeyboardAction,
+  getStreetDesignPointerAction,
+} from './streetDesignInputRouter';
 import { projectGeoPointToLocal } from './streetDesignProjection';
 
 export interface StreetDesignSceneMountOptions {
@@ -49,16 +65,42 @@ type Group = import('three').Group;
 type ThreeMaterial = import('three').Material;
 type RenderableCorridorGeometry = CorridorGeometry | PathCorridorGeometry;
 
-const DEFAULT_OSM_LAYER_VISIBILITY: StreetDesignOsmLayerVisibility = {
-  road: true,
-  building: true,
-  green: true,
-  water: true,
-};
+export interface StreetDesignRenderFrameApi {
+  requestAnimationFrame: (callback: FrameRequestCallback) => number;
+  cancelAnimationFrame: (handle: number) => void;
+}
 
 function seededUnit(seed: number) {
   const value = Math.sin(seed * 12.9898) * 43758.5453;
   return value - Math.floor(value);
+}
+
+export function createStreetDesignRenderScheduler(
+  renderFrame: FrameRequestCallback,
+  frameApi: StreetDesignRenderFrameApi = window
+) {
+  let animationFrame = 0;
+  let isDisposed = false;
+
+  return {
+    requestRender() {
+      if (isDisposed || animationFrame) return;
+
+      animationFrame = frameApi.requestAnimationFrame(timestamp => {
+        animationFrame = 0;
+        if (!isDisposed) {
+          renderFrame(timestamp);
+        }
+      });
+    },
+    dispose() {
+      isDisposed = true;
+      if (animationFrame) {
+        frameApi.cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
+      }
+    },
+  };
 }
 
 function seededRange(seed: number, min: number, max: number) {
@@ -110,6 +152,11 @@ function makeShape(THREE: ThreeModule, points: StreetDesignLocalPoint[]) {
 function setObjectId(object: Object3D, objectId: string) {
   object.userData.objectId = objectId;
   object.children.forEach(child => setObjectId(child, objectId));
+}
+
+function clearObjectId(object: Object3D) {
+  delete object.userData.objectId;
+  object.children.forEach(clearObjectId);
 }
 
 function setOsmWayId(object: Object3D, osmWayId: string) {
@@ -211,6 +258,9 @@ function addFlatPolygon(args: {
     metalness: 0,
     side: THREE.DoubleSide,
   });
+  if (opacity < 1) {
+    material.depthWrite = false;
+  }
   material.polygonOffset = true;
   material.polygonOffsetFactor = -0.5;
   material.polygonOffsetUnits = -0.5;
@@ -254,8 +304,9 @@ function addCorridorOutline(args: {
   color: string;
   y?: number;
   objectId?: string;
+  osmWayId?: string;
 }) {
-  const { THREE, group, geometry, color, y = 0.16, objectId } = args;
+  const { THREE, group, geometry, color, y = 0.16, objectId, osmWayId } = args;
   const vertices = geometry.polygon.map(point => toGroundVector(THREE, point, y));
   const lineGeometry = new THREE.BufferGeometry().setFromPoints(vertices);
   const line = new THREE.LineLoop(
@@ -263,9 +314,7 @@ function addCorridorOutline(args: {
     new THREE.LineBasicMaterial({ color, linewidth: 2 })
   );
 
-  if (objectId) {
-    setObjectId(line, objectId);
-  }
+  setIdentities({ object: line, objectId, osmWayId });
 
   group.add(line);
 }
@@ -354,15 +403,313 @@ function getCorridorSamples(geometry: RenderableCorridorGeometry, spacing: numbe
   return samples;
 }
 
+export function getStreetDesignOsmFeatureRenderY(feature: StreetDesignOsmWay, fallbackY = 0.05) {
+  const deckElevation = feature.deckElevationMeters;
+  if (typeof deckElevation !== 'number' || !Number.isFinite(deckElevation)) return fallbackY;
+  if (deckElevation === 0) return fallbackY;
+  if (deckElevation < 0) return Math.max(-0.18, deckElevation * 0.08);
+  return deckElevation;
+}
+
+export function getStreetDesignOsmWaterRenderY(feature: StreetDesignOsmWay) {
+  const waterElevation = feature.baseElevationMeters ?? feature.deckElevationMeters;
+  if (typeof waterElevation === 'number' && Number.isFinite(waterElevation) && waterElevation < 0) {
+    return Math.max(-0.08, waterElevation * 0.5);
+  }
+
+  return 0.006;
+}
+
+function isElevatedOsmStructure(feature: StreetDesignOsmWay) {
+  return (
+    (feature.deckElevationMeters ?? 0) > 0.8 ||
+    feature.structureKind === 'bridge' ||
+    feature.structureKind === 'viaduct' ||
+    feature.structureKind === 'embankment'
+  );
+}
+
+const ELEVATION_RAMP_SNAP_METERS = 2.5;
+const ELEVATION_RAMP_CONTINUOUS_METERS = 0.75;
+const MIN_ELEVATION_RAMP_LENGTH_METERS = 10;
+const MAX_ELEVATION_RAMP_LENGTH_METERS = 32;
+const ELEVATION_RAMP_LENGTH_PER_METER = 4.5;
+
+type ElevationRampEndpoint = 'start' | 'end';
+
+export interface StreetDesignElevationRampFeature {
+  id: string;
+  kind: StreetDesignOsmFeatureKind;
+  geometry: RenderableCorridorGeometry;
+  surfaceY: number;
+  structureKind?: string;
+}
+
+export interface StreetDesignElevationRampSegment {
+  sourceId: string;
+  endpoint: ElevationRampEndpoint;
+  kind: StreetDesignOsmFeatureKind;
+  geometry: RenderableCorridorGeometry;
+  startY: number;
+  endY: number;
+  fallback: boolean;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function distanceBetweenLocalPoints(start: StreetDesignLocalPoint, end: StreetDesignLocalPoint) {
+  return Math.hypot(end.x - start.x, end.z - start.z);
+}
+
+function createCorridorGeometryFromCenterline(points: StreetDesignLocalPoint[], width: number) {
+  const first = points[0];
+  const last = points[points.length - 1];
+  if (!first || !last) return null;
+  return points.length <= 2
+    ? createCorridorGeometry(first, last, width)
+    : createPathCorridorGeometry(points, width);
+}
+
+function getGeometryEndpointPoint(
+  geometry: RenderableCorridorGeometry,
+  endpoint: ElevationRampEndpoint
+) {
+  const centerline = getCorridorCenterline(geometry);
+  return endpoint === 'start' ? centerline[0] : centerline[centerline.length - 1];
+}
+
+function canFeatureReceiveElevationRamp(kind: StreetDesignOsmFeatureKind) {
+  return (
+    kind === 'road' ||
+    kind === 'rail' ||
+    kind === 'bike_lane' ||
+    kind === 'sidewalk' ||
+    kind === 'parking'
+  );
+}
+
+function canFeatureStartElevationRamp(feature: StreetDesignElevationRampFeature) {
+  return feature.surfaceY > 0.8 && feature.structureKind === 'bridge';
+}
+
+export function getStreetDesignElevationRampLength(deckElevationMeters: number, fallback = false) {
+  if (fallback) return MIN_ELEVATION_RAMP_LENGTH_METERS;
+  return clamp(
+    Math.abs(deckElevationMeters) * ELEVATION_RAMP_LENGTH_PER_METER,
+    MIN_ELEVATION_RAMP_LENGTH_METERS,
+    MAX_ELEVATION_RAMP_LENGTH_METERS
+  );
+}
+
+function getStreetDesignElevationRampConnections(
+  source: StreetDesignElevationRampFeature,
+  endpoint: ElevationRampEndpoint,
+  features: StreetDesignElevationRampFeature[]
+) {
+  const sourcePoint = getGeometryEndpointPoint(source.geometry, endpoint);
+  if (!sourcePoint) return [];
+
+  return features
+    .flatMap(feature =>
+      feature.id === source.id
+        ? []
+        : (['start', 'end'] as const).map(candidateEndpoint => ({
+            feature,
+            endpoint: candidateEndpoint,
+            point: getGeometryEndpointPoint(feature.geometry, candidateEndpoint),
+          }))
+    )
+    .filter(
+      (
+        connection
+      ): connection is {
+        feature: StreetDesignElevationRampFeature;
+        endpoint: ElevationRampEndpoint;
+        point: StreetDesignLocalPoint;
+      } =>
+        Boolean(connection.point) &&
+        distanceBetweenLocalPoints(sourcePoint, connection.point) <= ELEVATION_RAMP_SNAP_METERS
+    )
+    .sort((left, right) => {
+      const leftSameKind = left.feature.kind === source.kind ? 0 : 1;
+      const rightSameKind = right.feature.kind === source.kind ? 0 : 1;
+      if (leftSameKind !== rightSameKind) return leftSameKind - rightSameKind;
+      return (
+        distanceBetweenLocalPoints(sourcePoint, left.point) -
+        distanceBetweenLocalPoints(sourcePoint, right.point)
+      );
+    });
+}
+
+function sliceCenterlineByDistance(
+  centerline: StreetDesignLocalPoint[],
+  startDistance: number,
+  endDistance: number
+) {
+  if (centerline.length < 2) return [];
+
+  const distances = getCenterlineDistances(centerline);
+  const totalDistance = distances[distances.length - 1] ?? 0;
+  const safeStart = clamp(Math.min(startDistance, endDistance), 0, totalDistance);
+  const safeEnd = clamp(Math.max(startDistance, endDistance), 0, totalDistance);
+  if (safeEnd - safeStart <= 0.05) return [];
+
+  const points: StreetDesignLocalPoint[] = [getCenterlineSample(centerline, safeStart).point];
+  centerline.forEach((point, index) => {
+    const distance = distances[index] ?? 0;
+    if (distance > safeStart + 0.05 && distance < safeEnd - 0.05) {
+      points.push(point);
+    }
+  });
+  points.push(getCenterlineSample(centerline, safeEnd).point);
+
+  return points;
+}
+
+function createRampGeometryInsideSource(args: {
+  geometry: RenderableCorridorGeometry;
+  endpoint: ElevationRampEndpoint;
+  length: number;
+}) {
+  if (args.geometry.length <= 0.05) return null;
+
+  const rampLength = clamp(args.length, 0.05, args.geometry.length);
+  const startDistance = args.endpoint === 'start' ? 0 : args.geometry.length - rampLength;
+  const endDistance = args.endpoint === 'start' ? rampLength : args.geometry.length;
+  const centerline = sliceCenterlineByDistance(
+    getCorridorCenterline(args.geometry),
+    startDistance,
+    endDistance
+  );
+
+  return createCorridorGeometryFromCenterline(centerline, args.geometry.width);
+}
+
+function getInternalElevationRampLength(
+  feature: StreetDesignElevationRampFeature,
+  rampCount: number
+) {
+  const maxRampLength = feature.geometry.length / Math.max(rampCount, 1);
+  if (maxRampLength <= 0.05) return 0;
+
+  return Math.min(getStreetDesignElevationRampLength(feature.surfaceY), maxRampLength);
+}
+
+export function getStreetDesignElevationRampSegments(
+  features: StreetDesignElevationRampFeature[]
+): StreetDesignElevationRampSegment[] {
+  return features.flatMap(feature => {
+    if (!canFeatureReceiveElevationRamp(feature.kind) || !canFeatureStartElevationRamp(feature)) {
+      return [];
+    }
+
+    const candidates = (['start', 'end'] as const).flatMap(endpoint => {
+      const sourcePoint = getGeometryEndpointPoint(feature.geometry, endpoint);
+      if (!sourcePoint) return [];
+
+      const connections = getStreetDesignElevationRampConnections(feature, endpoint, features);
+      const hasContinuousConnection = connections.some(
+        connection =>
+          Math.abs(connection.feature.surfaceY - feature.surfaceY) <
+          ELEVATION_RAMP_CONTINUOUS_METERS
+      );
+      if (hasContinuousConnection) return [];
+
+      const lowerConnection = connections.find(
+        connection =>
+          connection.feature.surfaceY < feature.surfaceY - ELEVATION_RAMP_CONTINUOUS_METERS
+      );
+      const shouldCreateFallback =
+        feature.structureKind === 'bridge' && lowerConnection == null && connections.length === 0;
+
+      if (!lowerConnection && !shouldCreateFallback) return [];
+
+      return [
+        {
+          endpoint,
+          lowerY: lowerConnection?.feature.surfaceY ?? 0.05,
+          fallback: !lowerConnection,
+        },
+      ];
+    });
+
+    const rampLength = getInternalElevationRampLength(feature, candidates.length);
+    if (rampLength <= 0) return [];
+
+    return candidates.flatMap(candidate => {
+      const rampGeometry = createRampGeometryInsideSource({
+        geometry: feature.geometry,
+        endpoint: candidate.endpoint,
+        length: rampLength,
+      });
+      if (!rampGeometry) return [];
+      const isStartRamp = candidate.endpoint === 'start';
+
+      return [
+        {
+          sourceId: feature.id,
+          endpoint: candidate.endpoint,
+          kind: feature.kind,
+          geometry: rampGeometry,
+          startY: isStartRamp ? candidate.lowerY : feature.surfaceY,
+          endY: isStartRamp ? feature.surfaceY : candidate.lowerY,
+          fallback: candidate.fallback,
+        },
+      ];
+    });
+  });
+}
+
+function getStreetDesignManualElevationRampSegments(args: {
+  id: string;
+  kind: StreetDesignOsmFeatureKind;
+  geometry: RenderableCorridorGeometry;
+  surfaceY: number;
+  baseY: number;
+  structureKind: string;
+}) {
+  if (args.structureKind !== 'bridge' || args.surfaceY <= args.baseY + 0.8) return [];
+  const rampLength = Math.min(
+    getStreetDesignElevationRampLength(args.surfaceY),
+    args.geometry.length / 2
+  );
+  if (rampLength <= 0.05) return [];
+
+  return (['start', 'end'] as const).flatMap(endpoint => {
+    const rampGeometry = createRampGeometryInsideSource({
+      geometry: args.geometry,
+      endpoint,
+      length: rampLength,
+    });
+    if (!rampGeometry) return [];
+    const isStartRamp = endpoint === 'start';
+
+    return [
+      {
+        sourceId: args.id,
+        endpoint,
+        kind: args.kind,
+        geometry: rampGeometry,
+        startY: isStartRamp ? args.baseY : args.surfaceY,
+        endY: isStartRamp ? args.surfaceY : args.baseY,
+        fallback: true,
+      },
+    ];
+  });
+}
+
 function addPolygonOutline(args: {
   THREE: ThreeModule;
   group: Group;
   points: StreetDesignLocalPoint[];
   color: string;
   y?: number;
+  objectId?: string;
   osmWayId?: string;
 }) {
-  const { THREE, group, points, color, y = 0.18, osmWayId } = args;
+  const { THREE, group, points, color, y = 0.18, objectId, osmWayId } = args;
   if (points.length < 3) return;
 
   const vertices = points.map(point => toGroundVector(THREE, point, y));
@@ -372,9 +719,7 @@ function addPolygonOutline(args: {
     new THREE.LineBasicMaterial({ color, linewidth: 2 })
   );
 
-  if (osmWayId) {
-    setOsmWayId(line, osmWayId);
-  }
+  setIdentities({ object: line, objectId, osmWayId });
 
   group.add(line);
 }
@@ -415,6 +760,205 @@ function addStreetMarkings(args: {
   }
 }
 
+export type StreetDesignTreeRenderKind =
+  | 'deciduous'
+  | 'conifer'
+  | 'fruit'
+  | 'columnar_poplar'
+  | 'ornamental_cherry'
+  | 'flowering_plum';
+
+export type StreetDesignTreeCanopyShape = 'rounded_lobes' | 'stacked_cones' | 'columnar_lobes';
+
+export interface StreetDesignTreeRenderProfile {
+  canopyColors?: string[];
+  canopyShape: StreetDesignTreeCanopyShape;
+  hasFruitMarkers: boolean;
+  kind: StreetDesignTreeRenderKind;
+  trunkHeightRatio: number;
+}
+
+export function getStreetDesignTreeRenderKind(value: unknown): StreetDesignTreeRenderKind {
+  const species = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (species === 'conifer') return 'conifer';
+  if (species === 'fruit' || species === 'obstbaum') return 'fruit';
+  if (species === 'columnar_poplar') return 'columnar_poplar';
+  if (species === 'ornamental_cherry' || species === 'zierkirsche' || species === 'japanese_cherry')
+    return 'ornamental_cherry';
+  if (species === 'flowering_plum' || species === 'pflaume' || species === 'plum')
+    return 'flowering_plum';
+  return 'deciduous';
+}
+
+export function getStreetDesignTreeRenderProfile(value: unknown): StreetDesignTreeRenderProfile {
+  const kind = getStreetDesignTreeRenderKind(value);
+  if (kind === 'conifer') {
+    return {
+      canopyShape: 'stacked_cones',
+      hasFruitMarkers: false,
+      kind,
+      trunkHeightRatio: 0.28,
+    };
+  }
+
+  if (kind === 'columnar_poplar') {
+    return {
+      canopyShape: 'columnar_lobes',
+      hasFruitMarkers: false,
+      kind,
+      trunkHeightRatio: 0.32,
+    };
+  }
+
+  if (kind === 'fruit') {
+    return {
+      canopyShape: 'rounded_lobes',
+      hasFruitMarkers: true,
+      kind,
+      trunkHeightRatio: 0.34,
+    };
+  }
+
+  if (kind === 'ornamental_cherry') {
+    return {
+      canopyColors: ['#ffd6e7', '#ffc2dc', '#f5a7cb', '#fff0f6'],
+      canopyShape: 'rounded_lobes',
+      hasFruitMarkers: false,
+      kind,
+      trunkHeightRatio: 0.36,
+    };
+  }
+
+  if (kind === 'flowering_plum') {
+    return {
+      canopyColors: ['#fff7f0', '#ffe4ef', '#f3b1ca', '#f9fafb'],
+      canopyShape: 'rounded_lobes',
+      hasFruitMarkers: false,
+      kind,
+      trunkHeightRatio: 0.35,
+    };
+  }
+
+  return {
+    canopyShape: 'rounded_lobes',
+    hasFruitMarkers: false,
+    kind,
+    trunkHeightRatio: 0.38,
+  };
+}
+
+function addDeciduousTreeCanopy(args: {
+  THREE: ThreeModule;
+  root: Group;
+  canopyBaseY: number;
+  canopyRadius: number;
+  colors: string[];
+  fruit?: boolean;
+}) {
+  const { THREE, root, canopyBaseY, canopyRadius, colors, fruit = false } = args;
+  const canopyGeometry = new THREE.SphereGeometry(1, 18, 12);
+  const lobeOffsets = [
+    { x: 0, y: 0.18, z: 0, scale: fruit ? 0.94 : 1.08 },
+    { x: -0.38, y: -0.04, z: 0.12, scale: fruit ? 0.66 : 0.76 },
+    { x: 0.34, y: -0.02, z: -0.1, scale: fruit ? 0.64 : 0.72 },
+    { x: 0.06, y: 0.12, z: 0.38, scale: fruit ? 0.58 : 0.66 },
+  ];
+
+  lobeOffsets.forEach((offset, index) => {
+    const canopy = new THREE.Mesh(
+      canopyGeometry,
+      new THREE.MeshStandardMaterial({
+        color: colors[index % colors.length],
+        roughness: 0.86,
+        metalness: 0,
+      })
+    );
+    canopy.position.set(
+      offset.x * canopyRadius,
+      canopyBaseY + offset.y * canopyRadius,
+      offset.z * canopyRadius
+    );
+    canopy.scale.set(
+      canopyRadius * offset.scale,
+      canopyRadius * 0.72 * offset.scale,
+      canopyRadius * offset.scale
+    );
+    setSceneShadows(canopy, true, true);
+    root.add(canopy);
+  });
+
+  if (!fruit) return;
+
+  const fruitMaterial = new THREE.MeshStandardMaterial({
+    color: '#dc4237',
+    roughness: 0.5,
+    metalness: 0,
+  });
+  [
+    { x: -0.34, y: 0.06, z: 0.46 },
+    { x: 0.24, y: -0.08, z: 0.5 },
+    { x: 0.46, y: 0.12, z: -0.12 },
+    { x: -0.1, y: -0.16, z: -0.48 },
+  ].forEach(offset => {
+    const fruitMesh = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), fruitMaterial);
+    fruitMesh.position.set(
+      offset.x * canopyRadius,
+      canopyBaseY + offset.y * canopyRadius,
+      offset.z * canopyRadius
+    );
+    setSceneShadows(fruitMesh, true, false);
+    root.add(fruitMesh);
+  });
+}
+
+function addConiferTreeCanopy(args: {
+  THREE: ThreeModule;
+  root: Group;
+  trunkHeight: number;
+  canopyRadius: number;
+}) {
+  const { THREE, root, trunkHeight, canopyRadius } = args;
+  const colors = ['#1f5a35', '#27643a', '#2f6f38'];
+  [0, 1, 2].forEach(index => {
+    const coneHeight = canopyRadius * (1.55 - index * 0.18);
+    const coneRadius = canopyRadius * (0.98 - index * 0.18);
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(coneRadius, coneHeight, 14),
+      new THREE.MeshStandardMaterial({
+        color: colors[index % colors.length],
+        roughness: 0.9,
+        metalness: 0,
+      })
+    );
+    cone.position.y = trunkHeight + canopyRadius * 0.25 + index * canopyRadius * 0.42;
+    setSceneShadows(cone, true, true);
+    root.add(cone);
+  });
+}
+
+function addColumnarPoplarCanopy(args: {
+  THREE: ThreeModule;
+  root: Group;
+  trunkHeight: number;
+  canopyRadius: number;
+}) {
+  const { THREE, root, trunkHeight, canopyRadius } = args;
+  const poplarMaterial = new THREE.MeshStandardMaterial({
+    color: '#4f7f3f',
+    roughness: 0.88,
+    metalness: 0,
+  });
+  const canopyGeometry = new THREE.SphereGeometry(1, 16, 12);
+
+  [0, 1, 2].forEach(index => {
+    const canopy = new THREE.Mesh(canopyGeometry, poplarMaterial);
+    canopy.position.y = trunkHeight + canopyRadius * (0.55 + index * 0.48);
+    canopy.scale.set(canopyRadius * 0.52, canopyRadius * 1.05, canopyRadius * 0.48);
+    setSceneShadows(canopy, true, true);
+    root.add(canopy);
+  });
+}
+
 function addPointObject(args: {
   THREE: ThreeModule;
   group: Group;
@@ -436,7 +980,8 @@ function addPointObject(args: {
   if (definition.renderKind === 'tree') {
     const height = Math.max(numberProperty(object.properties.height, 4), 2.2);
     const canopyDiameter = Math.max(numberProperty(object.properties.canopyDiameter, 3), 1.4);
-    const trunkHeight = Math.max(height * 0.38, 1.15);
+    const treeRenderProfile = getStreetDesignTreeRenderProfile(object.properties.species);
+    const trunkHeight = Math.max(height * treeRenderProfile.trunkHeightRatio, 1.15);
     const canopyRadius = canopyDiameter * 0.5;
     const trunk = new THREE.Mesh(
       new THREE.CylinderGeometry(canopyRadius * 0.11, canopyRadius * 0.16, trunkHeight, 9),
@@ -446,37 +991,25 @@ function addPointObject(args: {
     setSceneShadows(trunk, true, true);
     root.add(trunk);
 
-    const canopyGeometry = new THREE.SphereGeometry(1, 18, 12);
-    const canopyColors = ['#2f6f38', definition.color, '#4f8f42', '#6a9b4f'];
     const canopyBaseY = trunkHeight + canopyRadius * 0.48;
-    const lobeOffsets = [
-      { x: 0, y: 0.18, z: 0, scale: 1.08 },
-      { x: -0.38, y: -0.04, z: 0.12, scale: 0.76 },
-      { x: 0.34, y: -0.02, z: -0.1, scale: 0.72 },
-      { x: 0.06, y: 0.12, z: 0.38, scale: 0.66 },
-    ];
-    lobeOffsets.forEach((offset, index) => {
-      const canopy = new THREE.Mesh(
-        canopyGeometry,
-        new THREE.MeshStandardMaterial({
-          color: canopyColors[index % canopyColors.length],
-          roughness: 0.86,
-          metalness: 0,
-        })
-      );
-      canopy.position.set(
-        offset.x * canopyRadius,
-        canopyBaseY + offset.y * canopyRadius,
-        offset.z * canopyRadius
-      );
-      canopy.scale.set(
-        canopyRadius * offset.scale,
-        canopyRadius * 0.72 * offset.scale,
-        canopyRadius * offset.scale
-      );
-      setSceneShadows(canopy, true, true);
-      root.add(canopy);
-    });
+    if (treeRenderProfile.canopyShape === 'stacked_cones') {
+      addConiferTreeCanopy({ THREE, root, trunkHeight, canopyRadius });
+    } else if (treeRenderProfile.canopyShape === 'columnar_lobes') {
+      addColumnarPoplarCanopy({ THREE, root, trunkHeight, canopyRadius });
+    } else {
+      addDeciduousTreeCanopy({
+        THREE,
+        root,
+        canopyBaseY,
+        canopyRadius,
+        colors:
+          treeRenderProfile.canopyColors ??
+          (treeRenderProfile.kind === 'fruit'
+            ? ['#5f8f43', '#77a452', '#8bb661', '#6f9b48']
+            : ['#2f6f38', definition.color, '#4f8f42', '#6a9b4f']),
+        fruit: treeRenderProfile.hasFruitMarkers,
+      });
+    }
   } else if (definition.renderKind === 'bush') {
     const bushGeometry = new THREE.SphereGeometry(1, 14, 9);
     const bushMaterial = new THREE.MeshStandardMaterial({
@@ -496,6 +1029,165 @@ function addPointObject(args: {
       bush.scale.set(scale * 1.22, scale * 0.66, scale);
       setSceneShadows(bush, true, true);
       root.add(bush);
+    }
+  } else if (
+    definition.renderKind === 'street_furniture' ||
+    definition.renderKind === 'utility' ||
+    definition.renderKind === 'barrier' ||
+    definition.renderKind === 'traffic' ||
+    definition.renderKind === 'transit'
+  ) {
+    const primaryMaterial = new THREE.MeshStandardMaterial({
+      color: definition.color,
+      roughness: 0.62,
+      metalness: 0.12,
+    });
+    const darkMaterial = new THREE.MeshStandardMaterial({
+      color: '#1f2937',
+      roughness: 0.5,
+      metalness: 0.2,
+    });
+
+    if (object.type === 'street_lamp') {
+      const height = Math.max(numberProperty(object.properties.height, 5), 2);
+      const pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.055, 0.075, height, 10),
+        darkMaterial
+      );
+      pole.position.y = height / 2;
+      const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.22, 12, 8),
+        new THREE.MeshStandardMaterial({
+          color: '#fff7cc',
+          emissive: '#facc15',
+          emissiveIntensity: 0.28,
+          roughness: 0.35,
+        })
+      );
+      head.position.y = height + 0.08;
+      setSceneShadows(pole, true, true);
+      setSceneShadows(head, true, false);
+      root.add(pole, head);
+    } else if (object.type === 'traffic_signal') {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.07, 2.4, 10), darkMaterial);
+      const box = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.7, 0.18), darkMaterial);
+      pole.position.y = 1.2;
+      box.position.set(0, 2.05, -0.08);
+      root.add(pole, box);
+      ['#ef4444', '#f59e0b', '#22c55e'].forEach((color, index) => {
+        const lamp = new THREE.Mesh(
+          new THREE.SphereGeometry(0.055, 8, 6),
+          new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.22 })
+        );
+        lamp.position.set(0, 2.25 - index * 0.18, -0.18);
+        root.add(lamp);
+      });
+      const signalType = stringProperty(object.properties.signalType, 'vehicle');
+      if (signalType !== 'vehicle') {
+        const plate = new THREE.Mesh(
+          new THREE.BoxGeometry(0.34, 0.2, 0.06),
+          new THREE.MeshStandardMaterial({
+            color: signalType === 'bicycle' ? '#2563eb' : '#f8fafc',
+            roughness: 0.45,
+          })
+        );
+        plate.position.set(0, 1.58, -0.15);
+        root.add(plate);
+      }
+    } else if (object.type === 'bus_stop') {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.06, 2.1, 10), darkMaterial);
+      const sign = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.38, 0.05), primaryMaterial);
+      pole.position.y = 1.05;
+      sign.position.y = 1.82;
+      root.add(pole, sign);
+      if (object.properties.shelter !== false) {
+        const roof = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.08, 0.72), primaryMaterial);
+        const back = new THREE.Mesh(
+          new THREE.BoxGeometry(1.1, 0.8, 0.05),
+          new THREE.MeshStandardMaterial({
+            color: '#dbeafe',
+            transparent: true,
+            opacity: 0.62,
+            roughness: 0.32,
+          })
+        );
+        roof.position.set(0, 1.55, 0.1);
+        back.position.set(0, 0.85, 0.42);
+        setSceneShadows(roof, true, true);
+        root.add(roof, back);
+      }
+    } else if (object.type === 'gate') {
+      [-0.5, 0.5].forEach(x => {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.25, 0.08), darkMaterial);
+        post.position.set(x, 0.62, 0);
+        root.add(post);
+      });
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.08, 0.08), primaryMaterial);
+      rail.position.y = 0.78;
+      root.add(rail);
+    } else if (object.type === 'fountain') {
+      const basin = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.42, 0.5, 0.18, 24),
+        primaryMaterial
+      );
+      const waterType = stringProperty(object.properties.waterType, 'drinking');
+      const water = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          waterType === 'splash' ? 0.48 : 0.34,
+          waterType === 'splash' ? 0.48 : 0.34,
+          0.035,
+          24
+        ),
+        new THREE.MeshPhysicalMaterial({
+          color: '#38bdf8',
+          transparent: true,
+          opacity: 0.72,
+          roughness: 0.12,
+          clearcoat: 0.8,
+        })
+      );
+      basin.position.y = 0.12;
+      water.position.y = 0.23;
+      root.add(basin, water);
+      if (waterType !== 'drinking') {
+        const jet = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.025, 0.04, waterType === 'splash' ? 0.38 : 0.58, 10),
+          new THREE.MeshStandardMaterial({
+            color: '#bae6fd',
+            transparent: true,
+            opacity: 0.78,
+            roughness: 0.2,
+          })
+        );
+        jet.position.y = waterType === 'splash' ? 0.42 : 0.54;
+        root.add(jet);
+      }
+    } else if (object.type === 'hydrant') {
+      const body = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.14, 0.62, 12),
+        primaryMaterial
+      );
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 8), primaryMaterial);
+      body.position.y = 0.34;
+      cap.position.y = 0.68;
+      root.add(body, cap);
+    } else if (object.type === 'bollard') {
+      const bollard = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          0.12,
+          0.14,
+          Math.max(numberProperty(object.properties.height, 0.9), 0.3),
+          12
+        ),
+        primaryMaterial
+      );
+      bollard.position.y = Math.max(numberProperty(object.properties.height, 0.9), 0.3) / 2;
+      root.add(bollard);
+    } else {
+      const base = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.62, 0.42), primaryMaterial);
+      base.position.y = 0.34;
+      setSceneShadows(base, true, true);
+      root.add(base);
     }
   } else {
     const woodMaterial = new THREE.MeshStandardMaterial({
@@ -600,6 +1292,177 @@ function stringProperty(value: unknown, fallback: string) {
   return typeof value === 'string' && value.length > 0 ? value : fallback;
 }
 
+function getDesignObjectSurfaceY(object: StreetDesignObject, fallbackY: number) {
+  const deckElevation = numberProperty(object.properties.deckElevationMeters, fallbackY);
+  if (deckElevation <= 0) return fallbackY;
+  return deckElevation;
+}
+
+function getDesignObjectStructureKind(object: StreetDesignObject) {
+  return stringProperty(object.properties.structureKind, '');
+}
+
+function getDesignObjectElevationRampKind(
+  object: StreetDesignObject,
+  definition: ReturnType<typeof getStreetDesignObjectDefinition>
+): StreetDesignOsmFeatureKind | null {
+  if (definition.renderKind === 'road' || object.type === 'car_lane') return 'road';
+  if (definition.renderKind === 'rail') return 'rail';
+  if (object.type === 'bike_lane') return 'bike_lane';
+  if (object.type === 'sidewalk') return 'sidewalk';
+  return null;
+}
+
+function colorFromMap(value: string, colorMap: Record<string, string>, fallback: string) {
+  return colorMap[value] ?? fallback;
+}
+
+function getDesignObjectSurfaceColor(
+  object: StreetDesignObject,
+  definition: ReturnType<typeof getStreetDesignObjectDefinition>
+) {
+  if (object.type === 'flower_bed') return '#4e7743';
+  if (object.type === 'grass_strip') return '#79a857';
+  if (object.type === 'scrub_area') return '#587c49';
+  if (object.type === 'heath_area') return '#8f7f55';
+  if (object.type === 'orchard_area') return '#6f8d45';
+  if (object.type === 'vineyard_area') return '#78935f';
+
+  if (object.type === 'street') {
+    const status = stringProperty(object.properties.status, 'open');
+    if (status === 'construction') return '#b7791f';
+    return colorFromMap(
+      stringProperty(object.properties.roadClass, 'residential'),
+      {
+        construction: '#b7791f',
+        living_street: '#5f6b57',
+        pedestrian: '#8f8874',
+        primary: '#343a40',
+        residential: '#3f474c',
+      },
+      '#3f474c'
+    );
+  }
+
+  if (object.type === 'car_lane') {
+    return stringProperty(object.properties.direction, 'one_way') === 'two_way'
+      ? '#46535c'
+      : '#3f474c';
+  }
+
+  if (object.type === 'bike_lane') {
+    return colorFromMap(
+      stringProperty(object.properties.protection, 'painted'),
+      { painted: '#2f8f87', protected: '#25796f', raised: '#55aaa0' },
+      '#2f8f87'
+    );
+  }
+
+  if (object.type === 'sidewalk') {
+    return colorFromMap(
+      stringProperty(object.properties.pathType, 'sidewalk'),
+      {
+        accessible: '#c8bda7',
+        promenade: '#d1c1a6',
+        sidewalk: '#b9af9f',
+        standard: '#b9af9f',
+      },
+      '#b9af9f'
+    );
+  }
+
+  if (object.type === 'parking_area') return '#697482';
+  if (object.type === 'loading_zone') return '#8a6b3e';
+
+  if (object.type === 'water_area') {
+    return colorFromMap(
+      stringProperty(object.properties.waterType, 'retention'),
+      { pond: '#247f9b', retention: '#2f9fca', stream: '#2c8fb8' },
+      '#2f9fca'
+    );
+  }
+
+  if (object.type === 'wetland_area') {
+    return colorFromMap(
+      stringProperty(object.properties.wetlandType, 'reedbed'),
+      { marsh: '#5f8b6b', reedbed: '#4f8f83', wet_meadow: '#6aa36f' },
+      '#4f8f83'
+    );
+  }
+
+  if (object.type === 'construction_area') {
+    return colorFromMap(
+      stringProperty(object.properties.status, 'planned'),
+      { active: '#b7791f', closed: '#7c2d12', planned: '#a16207' },
+      '#a16207'
+    );
+  }
+
+  if (object.type === 'landuse_context_area') {
+    return colorFromMap(
+      stringProperty(object.properties.landuseType, 'commercial'),
+      {
+        civic: '#90a887',
+        commercial: '#b8a083',
+        green: '#79a857',
+        industrial: '#8b8f97',
+        mixed: '#a78b76',
+        residential: '#c8bda7',
+        retail: '#c58b62',
+      },
+      '#b8a083'
+    );
+  }
+
+  if (object.type === 'civic_area') {
+    return colorFromMap(
+      stringProperty(object.properties.civicType, 'school'),
+      {
+        community_center: '#8fb58d',
+        hospital: '#b77b85',
+        library: '#8aa7c2',
+        school: '#d0b46a',
+        townhall: '#9aa7b8',
+      },
+      '#90a887'
+    );
+  }
+
+  if (definition.renderKind === 'playground') {
+    return colorFromMap(
+      stringProperty(object.properties.equipment, 'mixed'),
+      {
+        climbing: '#c8844f',
+        inclusive: '#74a889',
+        mixed: '#d6a23f',
+        sand: '#d2b067',
+        swings: '#c96b76',
+      },
+      '#d6a23f'
+    );
+  }
+
+  if (definition.renderKind === 'sports') {
+    return colorFromMap(
+      stringProperty(object.properties.sport, 'multi'),
+      {
+        basketball: '#b7791f',
+        fitness: '#4f8f83',
+        football: '#5f9f65',
+        multi: '#5f9f65',
+        skate: '#64748b',
+      },
+      '#5f9f65'
+    );
+  }
+
+  if (definition.renderKind === 'traffic') return '#d9d4c8';
+  if (definition.renderKind === 'rail') return '#3f474c';
+  if (definition.renderKind === 'barrier') return '#5f6b57';
+
+  return definition.color;
+}
+
 function getObjectCenter(object: StreetDesignObject) {
   return getStreetDesignGeometryCenter(object.geometry);
 }
@@ -640,8 +1503,24 @@ function isObjectVisible(
   return !hiddenObjectCategories.has(getStreetDesignObjectDefinition(object.type).category);
 }
 
+function offsetOsmLocalPoints(points: StreetDesignLocalPoint[], offsetMeters: number | undefined) {
+  if (!offsetMeters || points.length < 2) return points;
+
+  return points.map((point, index) => {
+    const previous = points[Math.max(index - 1, 0)] ?? point;
+    const next = points[Math.min(index + 1, points.length - 1)] ?? point;
+    return offsetPointFromDirection(point, normalizeDirection(previous, next), offsetMeters);
+  });
+}
+
 function getOsmWayLocalPoints(way: StreetDesignOsmWay, design: StreetDesignStateV1) {
-  return way.points.map(point => projectGeoPointToLocal(point, design.origin));
+  const localPoints = getStreetDesignOsmFeaturePoints(way).map(point =>
+    projectGeoPointToLocal(point, design.origin)
+  );
+
+  return way.geometryKind === 'point'
+    ? localPoints
+    : offsetOsmLocalPoints(localPoints, way.offsetMeters);
 }
 
 function getLocalPointsCenter(points: StreetDesignLocalPoint[]) {
@@ -667,7 +1546,7 @@ function getLocalPointsCenter(points: StreetDesignLocalPoint[]) {
 
 function getOsmWayFocusPoint(design: StreetDesignStateV1, osmWayId: string | null) {
   if (!osmWayId || !design.osmSnapshot) return null;
-  const way = design.osmSnapshot.ways.find(item => item.id === osmWayId);
+  const way = getStreetDesignOsmFeatures(design.osmSnapshot).find(item => item.id === osmWayId);
   if (!way) return null;
 
   return getLocalPointsCenter(getOsmWayLocalPoints(way, design));
@@ -1045,12 +1924,22 @@ function addWaterSurface(args: {
   THREE: ThreeModule;
   group: Group;
   geometry: RenderableCorridorGeometry | { polygon: StreetDesignLocalPoint[] };
+  color?: string;
   opacity?: number;
   y?: number;
   objectId?: string;
   osmWayId?: string;
 }) {
-  const { THREE, group, geometry, opacity = 0.72, y = 0.06, objectId, osmWayId } = args;
+  const {
+    THREE,
+    group,
+    geometry,
+    color = '#2f9fca',
+    opacity = 0.72,
+    y = 0.06,
+    objectId,
+    osmWayId,
+  } = args;
   addFlatPolygon({
     THREE,
     group,
@@ -1066,7 +1955,7 @@ function addWaterSurface(args: {
     THREE,
     group,
     points: geometry.polygon,
-    color: '#2c9ac4',
+    color,
     opacity,
     y,
     objectId,
@@ -1074,7 +1963,7 @@ function addWaterSurface(args: {
   });
   if (surface) {
     surface.material = new THREE.MeshPhysicalMaterial({
-      color: '#2f9fca',
+      color,
       transparent: true,
       opacity,
       roughness: 0.18,
@@ -1171,20 +2060,43 @@ function addParkingMarkings(args: {
   THREE: ThreeModule;
   group: Group;
   geometry: RenderableCorridorGeometry;
+  orientation?: string;
   objectId?: string;
   osmWayId?: string;
   y?: number;
 }) {
-  const { THREE, group, geometry, objectId, osmWayId, y = 0.16 } = args;
+  const { THREE, group, geometry, orientation = 'parallel', objectId, osmWayId, y = 0.16 } = args;
   const samples = getCorridorSamples(geometry, 2.6).slice(0, 80);
 
-  samples.forEach(sample => {
-    const start = offsetPointFromDirection(sample.point, sample.direction, -geometry.width * 0.42);
-    const end = offsetPointFromDirection(sample.point, sample.direction, geometry.width * 0.42);
+  samples.forEach((sample, index) => {
+    const stripeWidth = orientation === 'parallel' ? 0.06 : 0.08;
+    const startOffset =
+      orientation === 'parallel'
+        ? -geometry.width * 0.42
+        : orientation === 'angled'
+          ? -geometry.width * 0.45
+          : -geometry.width * 0.42;
+    const endOffset =
+      orientation === 'parallel'
+        ? -geometry.width * 0.12
+        : orientation === 'angled'
+          ? geometry.width * 0.22
+          : geometry.width * 0.42;
+    const angleShift = orientation === 'angled' ? (index % 2 === 0 ? 0.48 : -0.48) : 0;
+    const startBase = {
+      x: sample.point.x - sample.direction.x * angleShift,
+      z: sample.point.z - sample.direction.z * angleShift,
+    };
+    const endBase = {
+      x: sample.point.x + sample.direction.x * angleShift,
+      z: sample.point.z + sample.direction.z * angleShift,
+    };
+    const start = offsetPointFromDirection(startBase, sample.direction, startOffset);
+    const end = offsetPointFromDirection(endBase, sample.direction, endOffset);
     addCorridorMesh({
       THREE,
       group,
-      geometry: createCorridorGeometry(start, end, 0.08),
+      geometry: createCorridorGeometry(start, end, stripeWidth),
       color: '#f8fafc',
       opacity: 0.72,
       y,
@@ -1270,6 +2182,465 @@ function addCorridorEdgeStrips(args: {
   });
 }
 
+function getCenterlineDistances(centerline: StreetDesignLocalPoint[]) {
+  const distances = [0];
+  for (let index = 1; index < centerline.length; index += 1) {
+    const previous = centerline[index - 1];
+    const current = centerline[index];
+    distances.push(
+      (distances[index - 1] ?? 0) +
+        (previous && current ? distanceBetweenLocalPoints(previous, current) : 0)
+    );
+  }
+  return distances;
+}
+
+function interpolateRampY(startY: number, endY: number, distance: number, totalDistance: number) {
+  if (totalDistance <= 0) return startY;
+  const ratio = clamp(distance / totalDistance, 0, 1);
+  return startY + (endY - startY) * ratio;
+}
+
+function getCenterlineDirectionAtIndex(centerline: StreetDesignLocalPoint[], index: number) {
+  const previous = centerline[Math.max(index - 1, 0)];
+  const next = centerline[Math.min(index + 1, centerline.length - 1)];
+  if (!previous || !next || distanceBetweenLocalPoints(previous, next) <= 0.001) {
+    return { x: 0, z: 1 };
+  }
+  return normalizeDirection(previous, next);
+}
+
+function addSlopedCorridorMesh(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry;
+  color: string;
+  startY: number;
+  endY: number;
+  opacity?: number;
+  yOffset?: number;
+}) {
+  const { THREE, group, geometry, color, startY, endY, opacity = 1, yOffset = 0 } = args;
+  const centerline = getCorridorCenterline(geometry);
+  if (centerline.length < 2) return null;
+
+  const distances = getCenterlineDistances(centerline);
+  const totalDistance = distances[distances.length - 1] ?? geometry.length;
+  const positions: number[] = [];
+  const indices: number[] = [];
+
+  centerline.forEach((point, index) => {
+    const direction = getCenterlineDirectionAtIndex(centerline, index);
+    const left = offsetPointFromDirection(point, direction, -geometry.width * 0.5);
+    const right = offsetPointFromDirection(point, direction, geometry.width * 0.5);
+    const y = interpolateRampY(startY, endY, distances[index] ?? 0, totalDistance) + yOffset;
+
+    positions.push(left.x, y, left.z, right.x, y, right.z);
+  });
+
+  for (let index = 0; index < centerline.length - 1; index += 1) {
+    const left = index * 2;
+    const right = left + 1;
+    const nextLeft = left + 2;
+    const nextRight = left + 3;
+    indices.push(left, right, nextLeft, nextLeft, right, nextRight);
+  }
+
+  const bufferGeometry = new THREE.BufferGeometry();
+  bufferGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  bufferGeometry.setIndex(indices);
+  bufferGeometry.computeVertexNormals();
+
+  const material = new THREE.MeshStandardMaterial({
+    color,
+    transparent: opacity < 1,
+    opacity,
+    roughness: 0.78,
+    metalness: 0,
+    side: THREE.DoubleSide,
+  });
+  material.polygonOffset = true;
+  material.polygonOffsetFactor = -0.8;
+  material.polygonOffsetUnits = -0.8;
+  const mesh = new THREE.Mesh(bufferGeometry, material);
+  mesh.receiveShadow = true;
+  group.add(mesh);
+  return mesh;
+}
+
+function createOffsetCenterline(
+  geometry: RenderableCorridorGeometry,
+  offset: number
+): StreetDesignLocalPoint[] {
+  const centerline = getCorridorCenterline(geometry);
+  return centerline.map((point, index) =>
+    offsetPointFromDirection(point, getCenterlineDirectionAtIndex(centerline, index), offset)
+  );
+}
+
+function addSlopedCorridorEdgeStrips(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry;
+  color: string;
+  startY: number;
+  endY: number;
+  opacity?: number;
+  yOffset?: number;
+}) {
+  const { THREE, group, geometry, color, startY, endY, opacity = 0.56, yOffset = 0.045 } = args;
+  const offsets = [-geometry.width * 0.5 + 0.08, geometry.width * 0.5 - 0.08];
+
+  offsets.forEach(offset => {
+    const edgeGeometry = createCorridorGeometryFromCenterline(
+      createOffsetCenterline(geometry, offset),
+      0.08
+    );
+    if (!edgeGeometry) return;
+    addSlopedCorridorMesh({
+      THREE,
+      group,
+      geometry: edgeGeometry,
+      color,
+      opacity,
+      startY,
+      endY,
+      yOffset,
+    });
+  });
+}
+
+function addSlopedStreetMarkings(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry;
+  startY: number;
+  endY: number;
+  color?: string;
+}) {
+  const { THREE, group, geometry, startY, endY, color = '#f8fafc' } = args;
+  const centerline = getCorridorCenterline(geometry);
+  if (centerline.length < 2 || geometry.length < 2.4) return;
+
+  const dashLength = 2.4;
+  const gapLength = 3.2;
+  for (
+    let offset = gapLength / 2;
+    offset < geometry.length - 0.4;
+    offset += dashLength + gapLength
+  ) {
+    const dashEndOffset = Math.min(offset + dashLength, geometry.length);
+    const dashGeometry = createCorridorGeometry(
+      getCenterlineSample(centerline, offset).point,
+      getCenterlineSample(centerline, dashEndOffset).point,
+      0.16
+    );
+    addSlopedCorridorMesh({
+      THREE,
+      group,
+      geometry: dashGeometry,
+      color,
+      opacity: 0.92,
+      startY: interpolateRampY(startY, endY, offset, geometry.length),
+      endY: interpolateRampY(startY, endY, dashEndOffset, geometry.length),
+      yOffset: 0.08,
+    });
+  }
+}
+
+function addSlopedRailDetails(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry;
+  startY: number;
+  endY: number;
+}) {
+  const { THREE, group, geometry, startY, endY } = args;
+  [-0.42, 0.42].forEach(offset => {
+    const railGeometry = createCorridorGeometryFromCenterline(
+      createOffsetCenterline(geometry, offset),
+      0.08
+    );
+    if (!railGeometry) return;
+    addSlopedCorridorMesh({
+      THREE,
+      group,
+      geometry: railGeometry,
+      color: '#d1d5db',
+      opacity: 0.92,
+      startY,
+      endY,
+      yOffset: 0.1,
+    });
+  });
+
+  getCorridorSamples(geometry, 1.2)
+    .slice(0, 80)
+    .forEach(sample => {
+      const distance = distanceBetweenLocalPoints(
+        getGeometryEndpointPoint(geometry, 'start') ?? sample.point,
+        sample.point
+      );
+      const sleeperY = interpolateRampY(startY, endY, distance, geometry.length) + 0.08;
+      addCorridorMesh({
+        THREE,
+        group,
+        geometry: createCorridorGeometry(
+          offsetPointFromDirection(sample.point, sample.direction, -0.65),
+          offsetPointFromDirection(sample.point, sample.direction, 0.65),
+          0.07
+        ),
+        color: '#5b4636',
+        opacity: 0.7,
+        y: sleeperY,
+      });
+    });
+}
+
+function getRampSurfaceColor(kind: StreetDesignOsmFeatureKind, fallbackColor: string) {
+  if (kind === 'rail') return '#3f474c';
+  if (kind === 'bike_lane') return '#2f8f87';
+  if (kind === 'sidewalk') return '#b9af9f';
+  if (kind === 'parking') return '#697482';
+  return fallbackColor;
+}
+
+function addElevationRampSegment(args: {
+  THREE: ThreeModule;
+  group: Group;
+  segment: StreetDesignElevationRampSegment;
+  color: string;
+}) {
+  const { THREE, group, segment } = args;
+  const startY = segment.startY + 0.018;
+  const endY = segment.endY + 0.055;
+  const color = getRampSurfaceColor(segment.kind, args.color);
+
+  addSlopedCorridorMesh({
+    THREE,
+    group,
+    geometry: segment.geometry,
+    color,
+    opacity: segment.fallback ? 0.72 : 0.82,
+    startY,
+    endY,
+  });
+  addSlopedCorridorEdgeStrips({
+    THREE,
+    group,
+    geometry: segment.geometry,
+    color: segment.kind === 'bike_lane' ? '#c7fff5' : '#d7d2c3',
+    opacity: 0.5,
+    startY,
+    endY,
+  });
+
+  if (segment.kind === 'rail') {
+    addSlopedRailDetails({ THREE, group, geometry: segment.geometry, startY, endY });
+    return;
+  }
+
+  if (segment.kind === 'road') {
+    addSlopedStreetMarkings({ THREE, group, geometry: segment.geometry, startY, endY });
+  }
+}
+
+function addElevationRampSegments(args: {
+  THREE: ThreeModule;
+  group: Group;
+  segments: StreetDesignElevationRampSegment[] | undefined;
+  color: string;
+}) {
+  args.segments?.forEach(segment => {
+    addElevationRampSegment({
+      THREE: args.THREE,
+      group: args.group,
+      segment,
+      color: args.color,
+    });
+  });
+}
+
+function hasElevationRampSegments(segments: StreetDesignElevationRampSegment[] | undefined) {
+  return Boolean(segments && segments.length > 0);
+}
+
+function getElevationRampPlateauGeometry(
+  geometry: RenderableCorridorGeometry,
+  segments: StreetDesignElevationRampSegment[] | undefined
+) {
+  if (!segments || segments.length === 0) return geometry;
+
+  const startRampLength =
+    segments.find(segment => segment.endpoint === 'start')?.geometry.length ?? 0;
+  const endRampLength = segments.find(segment => segment.endpoint === 'end')?.geometry.length ?? 0;
+  const startDistance = clamp(startRampLength, 0, geometry.length);
+  const endDistance = clamp(geometry.length - endRampLength, 0, geometry.length);
+  if (endDistance - startDistance <= 0.05) return null;
+
+  return createCorridorGeometryFromCenterline(
+    sliceCenterlineByDistance(getCorridorCenterline(geometry), startDistance, endDistance),
+    geometry.width
+  );
+}
+
+function getElevatedDeckColor(structureKind: string | undefined, color?: string) {
+  return (
+    color ??
+    (structureKind === 'viaduct'
+      ? '#8b8779'
+      : structureKind === 'embankment'
+        ? '#797662'
+        : '#8f8b7d')
+  );
+}
+
+function addInternalBridgeDeck(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry;
+  deckY: number;
+  color?: string;
+  structureKind?: string;
+  objectId?: string;
+  osmWayId?: string;
+  rampSegments: StreetDesignElevationRampSegment[] | undefined;
+}) {
+  const { THREE, group, geometry, deckY, structureKind, objectId, osmWayId, rampSegments } = args;
+  if (!hasElevationRampSegments(rampSegments)) {
+    addElevatedDeck({
+      THREE,
+      group,
+      geometry,
+      deckY,
+      color: args.color,
+      structureKind,
+      objectId,
+      osmWayId,
+    });
+    return;
+  }
+
+  const deckColor = getElevatedDeckColor(structureKind, args.color);
+  rampSegments?.forEach(segment => {
+    addSlopedCorridorMesh({
+      THREE,
+      group,
+      geometry: segment.geometry,
+      color: deckColor,
+      opacity: 0.88,
+      startY: Math.max(0.08, segment.startY - 0.24),
+      endY: Math.max(0.08, segment.endY - 0.24),
+    });
+    addSlopedCorridorEdgeStrips({
+      THREE,
+      group,
+      geometry: segment.geometry,
+      color: '#d7d2c3',
+      opacity: 0.44,
+      startY: segment.startY,
+      endY: segment.endY,
+      yOffset: 0.018,
+    });
+  });
+
+  const plateauGeometry = getElevationRampPlateauGeometry(geometry, rampSegments);
+  if (!plateauGeometry) return;
+
+  addElevatedDeck({
+    THREE,
+    group,
+    geometry: plateauGeometry,
+    deckY,
+    color: args.color,
+    structureKind,
+    objectId,
+    osmWayId,
+  });
+}
+
+function addElevatedDeck(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry;
+  deckY: number;
+  color?: string;
+  structureKind?: string;
+  objectId?: string;
+  osmWayId?: string;
+}) {
+  const { THREE, group, geometry, deckY, structureKind, objectId, osmWayId } = args;
+  if (deckY <= 0.8) return;
+
+  const deckColor = getElevatedDeckColor(structureKind, args.color);
+  const undersideY = Math.max(0.12, deckY - 0.28);
+
+  addCorridorMesh({
+    THREE,
+    group,
+    geometry,
+    color: deckColor,
+    opacity: structureKind === 'embankment' ? 0.76 : 0.9,
+    y: undersideY,
+    objectId,
+    osmWayId,
+  });
+  addCorridorEdgeStrips({
+    THREE,
+    group,
+    geometry,
+    color: '#d7d2c3',
+    opacity: 0.54,
+    y: deckY + 0.018,
+    objectId,
+    osmWayId,
+  });
+
+  if (structureKind === 'embankment') {
+    addSurfaceTexture({
+      THREE,
+      group,
+      geometry,
+      color: '#5d6549',
+      opacity: 0.18,
+      y: undersideY + 0.02,
+      objectId,
+      osmWayId,
+    });
+    return;
+  }
+
+  const supportHeight = Math.max(deckY - 0.16, 0.5);
+  const supportGeometry = new THREE.CylinderGeometry(
+    structureKind === 'viaduct' ? 0.22 : 0.16,
+    structureKind === 'viaduct' ? 0.28 : 0.2,
+    supportHeight,
+    10
+  );
+  const supportMaterial = new THREE.MeshStandardMaterial({
+    color: structureKind === 'viaduct' ? '#777266' : '#827d70',
+    roughness: 0.8,
+    metalness: 0.02,
+  });
+  const supportSpacing = structureKind === 'viaduct' ? 9 : 14;
+  const samples = getCorridorSamples(geometry, supportSpacing).slice(1, 40);
+  const lateralOffsets =
+    geometry.width >= 2.4 ? [-geometry.width * 0.36, geometry.width * 0.36] : [0];
+
+  samples.forEach((sample, sampleIndex) => {
+    if (sampleIndex === samples.length - 1 && samples.length > 2) return;
+
+    lateralOffsets.forEach(offset => {
+      const point = offsetPointFromDirection(sample.point, sample.direction, offset);
+      const support = new THREE.Mesh(supportGeometry, supportMaterial);
+      support.position.set(point.x, supportHeight / 2, point.z);
+      setSceneShadows(support, true, true);
+      setIdentities({ object: support, objectId, osmWayId });
+      group.add(support);
+    });
+  });
+}
+
 function addRoadSurfaceDetails(args: {
   THREE: ThreeModule;
   group: Group;
@@ -1309,6 +2680,204 @@ function addRoadSurfaceDetails(args: {
     opacity: 0.5,
     y: y + 0.012,
   });
+}
+
+function addRailDetails(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry;
+  objectId?: string;
+  osmWayId?: string;
+  y?: number;
+}) {
+  const { THREE, group, geometry, objectId, osmWayId, y = 0.14 } = args;
+  const centerline = getCorridorCenterline(geometry);
+  if (centerline.length < 2) return;
+
+  [-0.42, 0.42].forEach(offset => {
+    for (let index = 0; index < centerline.length - 1; index += 1) {
+      const startPoint = centerline[index];
+      const endPoint = centerline[index + 1];
+      if (!startPoint || !endPoint) continue;
+      const direction = normalizeDirection(startPoint, endPoint);
+      addCorridorMesh({
+        THREE,
+        group,
+        geometry: createCorridorGeometry(
+          offsetPointFromDirection(startPoint, direction, offset),
+          offsetPointFromDirection(endPoint, direction, offset),
+          0.08
+        ),
+        color: '#d1d5db',
+        opacity: 0.92,
+        y,
+        objectId,
+        osmWayId,
+      });
+    }
+  });
+
+  getCorridorSamples(geometry, 1.2)
+    .slice(0, 80)
+    .forEach(sample => {
+      const start = offsetPointFromDirection(sample.point, sample.direction, -0.65);
+      const end = offsetPointFromDirection(sample.point, sample.direction, 0.65);
+      addCorridorMesh({
+        THREE,
+        group,
+        geometry: createCorridorGeometry(start, end, 0.07),
+        color: '#5b4636',
+        opacity: 0.75,
+        y: y - 0.01,
+        objectId,
+        osmWayId,
+      });
+    });
+}
+
+function addCrossingMarkings(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry;
+  objectId?: string;
+  osmWayId?: string;
+  y?: number;
+}) {
+  const { THREE, group, geometry, objectId, osmWayId, y = 0.16 } = args;
+  getCorridorSamples(geometry, 0.75)
+    .slice(0, 28)
+    .forEach((sample, index) => {
+      if (index % 2 === 1) return;
+      const start = offsetPointFromDirection(
+        sample.point,
+        sample.direction,
+        -geometry.width * 0.42
+      );
+      const end = offsetPointFromDirection(sample.point, sample.direction, geometry.width * 0.42);
+      addCorridorMesh({
+        THREE,
+        group,
+        geometry: createCorridorGeometry(start, end, 0.24),
+        color: '#f8fafc',
+        opacity: 0.92,
+        y,
+        objectId,
+        osmWayId,
+      });
+    });
+}
+
+function addStairTreads(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry;
+  objectId?: string;
+  osmWayId?: string;
+  y?: number;
+  endY?: number;
+  stepCount?: number;
+  incline?: string;
+}) {
+  const { THREE, group, geometry, objectId, osmWayId, y = 0.15 } = args;
+  const stepCount = Math.max(2, Math.min(args.stepCount ?? Math.round(geometry.length / 0.55), 96));
+  const endY = typeof args.endY === 'number' ? args.endY : y;
+  const samples = Array.from({ length: stepCount }, (_, index) => {
+    const distance = geometry.length * ((index + 0.5) / stepCount);
+    return getCenterlineSample(getCorridorCenterline(geometry), distance);
+  });
+  const reverse = args.incline === 'down';
+
+  samples.forEach((sample, index) => {
+    const ratio = stepCount <= 1 ? 0 : index / (stepCount - 1);
+    const adjustedRatio = reverse ? 1 - ratio : ratio;
+    const treadY = y + (endY - y) * adjustedRatio;
+    const start = offsetPointFromDirection(sample.point, sample.direction, -geometry.width * 0.48);
+    const end = offsetPointFromDirection(sample.point, sample.direction, geometry.width * 0.48);
+    addCorridorMesh({
+      THREE,
+      group,
+      geometry: createCorridorGeometry(start, end, 0.08),
+      color: '#f5f0e8',
+      opacity: 0.58,
+      y: treadY,
+      objectId,
+      osmWayId,
+    });
+  });
+}
+
+function addBarrierVolume(args: {
+  THREE: ThreeModule;
+  group: Group;
+  points: StreetDesignLocalPoint[];
+  color: string;
+  height?: number;
+  objectId?: string;
+  osmWayId?: string;
+}) {
+  const { THREE, group, points, color, height = 1.1, objectId, osmWayId } = args;
+  addExtrudedPolygon({
+    THREE,
+    group,
+    points,
+    height,
+    color,
+    opacity: 0.82,
+    objectId,
+    osmWayId,
+    bevel: false,
+  });
+}
+
+function addSportsMarkings(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry | { polygon: StreetDesignLocalPoint[] };
+  objectId?: string;
+  osmWayId?: string;
+  y?: number;
+}) {
+  const { THREE, group, geometry, objectId, osmWayId, y = 0.14 } = args;
+  const points = geometry.polygon;
+  if (points.length < 3) return;
+  addPolygonOutline({ THREE, group, points, color: '#f8fafc', y, objectId, osmWayId });
+  const center = getLocalPointsCenter(points);
+  const radius = Math.max(
+    0.5,
+    Math.min(1.8, Math.hypot(points[0]?.x ?? 0, points[0]?.z ?? 0) * 0.04)
+  );
+  const circle = new THREE.Mesh(
+    new THREE.RingGeometry(radius * 0.82, radius, 28),
+    new THREE.MeshBasicMaterial({
+      color: '#f8fafc',
+      transparent: true,
+      opacity: 0.55,
+      side: THREE.DoubleSide,
+    })
+  );
+  circle.rotation.x = -Math.PI / 2;
+  circle.position.set(center.x, y + 0.01, center.z);
+  setIdentities({ object: circle, objectId, osmWayId });
+  group.add(circle);
+}
+
+function addPlaygroundDetails(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry | { polygon: StreetDesignLocalPoint[] };
+  objectId?: string;
+  osmWayId?: string;
+  y?: number;
+}) {
+  const { THREE, group, geometry, objectId, osmWayId, y = 0.16 } = args;
+  const center = getLocalPointsCenter(geometry.polygon);
+  const material = new THREE.MeshStandardMaterial({ color: '#eab308', roughness: 0.7 });
+  const mound = new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.65, 4), material);
+  mound.position.set(center.x, y + 0.34, center.z);
+  mound.rotation.y = Math.PI / 4;
+  setSceneShadows(mound, true, true);
+  setIdentities({ object: mound, objectId, osmWayId });
+  group.add(mound);
 }
 
 function addPlacementStartMarker(args: {
@@ -1383,55 +2952,105 @@ function addDesignObject(args: {
   }
 
   if (object.geometry.kind === 'corridor' || object.geometry.kind === 'path_corridor') {
-    const surfaceColor =
-      object.type === 'flower_bed'
-        ? '#4e7743'
-        : object.type === 'water_area'
-          ? '#2f9fca'
-          : object.type === 'street' || object.type === 'car_lane'
-            ? '#3f474c'
-            : object.type === 'parking_area'
-              ? '#697482'
-              : object.type === 'sidewalk'
-                ? '#b9af9f'
-                : definition.color;
+    const surfaceColor = getDesignObjectSurfaceColor(object, definition);
+    const deckAwareObject =
+      definition.renderKind === 'road' ||
+      definition.renderKind === 'lane' ||
+      definition.renderKind === 'rail' ||
+      object.type === 'sidewalk' ||
+      object.type === 'stairs';
+    const objectDeckY = deckAwareObject ? getDesignObjectSurfaceY(object, y) : y;
+    const surfaceY = object.type === 'stairs' ? y : objectDeckY;
+    const pickY = Math.max(surfaceY, objectDeckY);
+    const structureKind = getDesignObjectStructureKind(object);
+    const rampKind = getDesignObjectElevationRampKind(object, definition);
+    const elevationRampSegments = rampKind
+      ? getStreetDesignManualElevationRampSegments({
+          id: object.id,
+          kind: rampKind,
+          geometry: object.geometry,
+          surfaceY: objectDeckY,
+          baseY: y,
+          structureKind,
+        })
+      : [];
+    const flatSurfaceGeometry = hasElevationRampSegments(elevationRampSegments)
+      ? getElevationRampPlateauGeometry(object.geometry, elevationRampSegments)
+      : object.geometry;
+
+    if (deckAwareObject && object.type !== 'stairs' && objectDeckY > y + 0.5) {
+      addInternalBridgeDeck({
+        THREE,
+        group,
+        geometry: object.geometry,
+        deckY: objectDeckY,
+        structureKind,
+        objectId: object.id,
+        rampSegments: elevationRampSegments,
+      });
+    }
 
     if (object.type === 'water_area') {
       addWaterSurface({
         THREE,
         group,
         geometry: object.geometry,
+        color: surfaceColor,
         opacity: Math.min(opacity, 0.76),
-        y,
+        y: surfaceY,
         objectId: object.id,
       });
     } else {
-      addCorridorMesh({
+      addElevationRampSegments({
         THREE,
         group,
-        geometry: object.geometry,
+        segments: elevationRampSegments,
         color: surfaceColor,
-        opacity,
-        y,
-        objectId: object.id,
       });
+      if (flatSurfaceGeometry) {
+        addCorridorMesh({
+          THREE,
+          group,
+          geometry: flatSurfaceGeometry,
+          color: surfaceColor,
+          opacity,
+          y: surfaceY,
+          objectId: object.id,
+        });
+      }
     }
     addPickPolygon({
       THREE,
       group,
       points: object.geometry.polygon,
       objectId: object.id,
-      y: y + 0.2,
+      y: pickY + 0.2,
     });
+
+    if (!flatSurfaceGeometry && hasElevationRampSegments(elevationRampSegments)) {
+      if (selected) {
+        addCorridorOutline({
+          THREE,
+          group,
+          geometry: object.geometry,
+          color: '#facc15',
+          objectId: object.id,
+          y: pickY + 0.18,
+        });
+      }
+      return;
+    }
+
+    const detailGeometry = flatSurfaceGeometry ?? object.geometry;
 
     if (object.type === 'flower_bed') {
       addFlowerBedDetails({
         THREE,
         group,
-        geometry: object.geometry,
+        geometry: detailGeometry,
         objectId: object.id,
         animatedObjects,
-        y: y + 0.03,
+        y: surfaceY + 0.03,
       });
     }
 
@@ -1439,10 +3058,10 @@ function addDesignObject(args: {
       addGrassDetails({
         THREE,
         group,
-        geometry: object.geometry,
+        geometry: detailGeometry,
         objectId: object.id,
         animatedObjects,
-        y: y + 0.02,
+        y: surfaceY + 0.02,
       });
     }
 
@@ -1450,50 +3069,245 @@ function addDesignObject(args: {
       addWaterDetails({
         THREE,
         group,
-        geometry: object.geometry,
+        geometry: detailGeometry,
         objectId: object.id,
         animatedObjects,
-        y: y + 0.08,
-      });
-    }
-
-    if (object.type === 'parking_area') {
-      addSurfaceTexture({
-        THREE,
-        group,
-        geometry: object.geometry,
-        objectId: object.id,
-        color: '#454f59',
-        opacity: 0.2,
-        y: y + 0.06,
-      });
-      addParkingMarkings({
-        THREE,
-        group,
-        geometry: object.geometry,
-        objectId: object.id,
-        y: y + 0.08,
-      });
-    }
-
-    if (object.type === 'sidewalk' || object.type === 'bike_lane') {
-      addSurfaceTexture({
-        THREE,
-        group,
-        geometry: object.geometry,
-        objectId: object.id,
-        color: object.type === 'bike_lane' ? '#9be8de' : '#e9dfcf',
-        opacity: object.type === 'bike_lane' ? 0.28 : 0.34,
-        y: y + 0.07,
+        y: surfaceY + 0.08,
       });
       addCorridorEdgeStrips({
         THREE,
         group,
-        geometry: object.geometry,
+        geometry: detailGeometry,
+        objectId: object.id,
+        color:
+          stringProperty(object.properties.edge, 'naturnah') === 'sitzkante'
+            ? '#e8dcc7'
+            : stringProperty(object.properties.edge, 'naturnah') === 'gefasst'
+              ? '#9ca3af'
+              : '#7db36f',
+        opacity: 0.46,
+        y: surfaceY + 0.075,
+      });
+    }
+
+    if (object.type === 'wetland_area') {
+      addGrassDetails({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        animatedObjects,
+        y: surfaceY + 0.04,
+      });
+      addSurfaceTexture({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        color: '#9ed9c2',
+        opacity: 0.26,
+        y: surfaceY + 0.06,
+      });
+    }
+
+    if (object.type === 'parking_area' || object.type === 'loading_zone') {
+      addSurfaceTexture({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        color: object.type === 'loading_zone' ? '#f8fafc' : '#454f59',
+        opacity: object.type === 'loading_zone' ? 0.28 : 0.2,
+        y: surfaceY + 0.06,
+      });
+      addParkingMarkings({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        orientation: stringProperty(object.properties.orientation, 'parallel'),
+        objectId: object.id,
+        y: surfaceY + 0.08,
+      });
+    }
+
+    if (object.type === 'sidewalk' || object.type === 'bike_lane') {
+      const pathType = stringProperty(object.properties.pathType, 'sidewalk');
+      const protection = stringProperty(object.properties.protection, 'painted');
+      addSurfaceTexture({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        color: object.type === 'bike_lane' ? '#9be8de' : '#e9dfcf',
+        opacity: object.type === 'bike_lane' ? 0.28 : 0.34,
+        y: surfaceY + 0.07,
+      });
+      addCorridorEdgeStrips({
+        THREE,
+        group,
+        geometry: detailGeometry,
         objectId: object.id,
         color: object.type === 'bike_lane' ? '#c7fff5' : '#d4c6b5',
         opacity: 0.42,
-        y: y + 0.08,
+        y: surfaceY + 0.08,
+      });
+      if (object.type === 'sidewalk' && pathType === 'accessible') {
+        addSurfaceTexture({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          objectId: object.id,
+          color: '#facc15',
+          opacity: 0.2,
+          y: surfaceY + 0.095,
+        });
+      }
+      if (object.type === 'sidewalk' && pathType === 'promenade') {
+        addCorridorEdgeStrips({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          objectId: object.id,
+          color: '#f5e7c7',
+          opacity: 0.58,
+          y: surfaceY + 0.1,
+        });
+      }
+      if (object.type === 'bike_lane' && (protection === 'protected' || protection === 'raised')) {
+        addCorridorEdgeStrips({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          objectId: object.id,
+          color: protection === 'raised' ? '#e2f6ef' : '#d9f99d',
+          opacity: protection === 'raised' ? 0.78 : 0.62,
+          y: surfaceY + 0.105,
+        });
+      }
+    }
+
+    if (definition.renderKind === 'rail') {
+      addRailDetails({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        y: surfaceY + 0.08,
+      });
+      if (object.type === 'rail_track') {
+        const railType = stringProperty(object.properties.railType, 'tram');
+        addSurfaceTexture({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          objectId: object.id,
+          color:
+            railType === 'rail' ? '#d1d5db' : railType === 'light_rail' ? '#a7f3d0' : '#c7d2fe',
+          opacity: 0.18,
+          y: surfaceY + 0.095,
+        });
+      }
+    }
+
+    if (object.type === 'station_platform') {
+      addCorridorEdgeStrips({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        color:
+          stringProperty(object.properties.platformType, 'tram_stop') === 'rail_platform'
+            ? '#dbeafe'
+            : '#fef3c7',
+        opacity: 0.62,
+        y: surfaceY + 0.09,
+      });
+    }
+
+    if (definition.renderKind === 'barrier') {
+      addBarrierVolume({
+        THREE,
+        group,
+        points: object.geometry.polygon,
+        color: definition.color,
+        height: Math.max(numberProperty(object.properties.height, 1.1), 0.3),
+        objectId: object.id,
+      });
+    }
+
+    if (object.type === 'crossing') {
+      const crossingType = stringProperty(object.properties.crossingType, 'zebra');
+      addCrossingMarkings({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        y: surfaceY + 0.08,
+      });
+      if (crossingType === 'raised' || crossingType === 'refuge') {
+        addCorridorEdgeStrips({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          objectId: object.id,
+          color: crossingType === 'raised' ? '#fde68a' : '#93c5fd',
+          opacity: 0.58,
+          y: surfaceY + 0.105,
+        });
+      }
+      if (crossingType === 'signalized') {
+        addSurfaceTexture({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          objectId: object.id,
+          color: '#ef4444',
+          opacity: 0.18,
+          y: surfaceY + 0.11,
+        });
+      }
+    }
+
+    if (object.type === 'stairs') {
+      addStairTreads({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        y: surfaceY + 0.08,
+        endY: objectDeckY,
+        stepCount: numberProperty(object.properties.steps, 6),
+        incline: stringProperty(object.properties.incline, 'up'),
+      });
+    }
+
+    if (definition.renderKind === 'sports') {
+      addSportsMarkings({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        y: surfaceY + 0.08,
+      });
+      if (stringProperty(object.properties.sport, 'multi') === 'basketball') {
+        addStreetMarkings({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          objectId: object.id,
+          color: '#fef3c7',
+          y: surfaceY + 0.1,
+        });
+      }
+    }
+
+    if (definition.renderKind === 'playground') {
+      addPlaygroundDetails({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        y: surfaceY + 0.08,
       });
     }
 
@@ -1501,9 +3315,85 @@ function addDesignObject(args: {
       addRoadSurfaceDetails({
         THREE,
         group,
-        geometry: object.geometry,
+        geometry: detailGeometry,
         objectId: object.id,
-        y: y + 0.055,
+        y: surfaceY + 0.055,
+      });
+      if (object.type === 'street') {
+        const roadClass = stringProperty(object.properties.roadClass, 'residential');
+        const status = stringProperty(object.properties.status, 'open');
+        if (roadClass === 'living_street' || roadClass === 'pedestrian') {
+          addSurfaceTexture({
+            THREE,
+            group,
+            geometry: detailGeometry,
+            objectId: object.id,
+            color: roadClass === 'pedestrian' ? '#f5e7c7' : '#d9f99d',
+            opacity: 0.22,
+            y: surfaceY + 0.085,
+          });
+        }
+        if (roadClass === 'construction' || status === 'construction') {
+          addSurfaceTexture({
+            THREE,
+            group,
+            geometry: detailGeometry,
+            objectId: object.id,
+            color: '#f59e0b',
+            opacity: 0.34,
+            y: surfaceY + 0.09,
+          });
+        }
+      }
+      if (
+        object.type === 'car_lane' &&
+        stringProperty(object.properties.direction, 'one_way') === 'two_way'
+      ) {
+        addStreetMarkings({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          objectId: object.id,
+          color: '#facc15',
+          y: surfaceY + 0.088,
+        });
+      }
+    }
+
+    if (definition.renderKind === 'traffic' && object.type === 'traffic_calming') {
+      const calmingType = stringProperty(object.properties.calmingType, 'table');
+      addSurfaceTexture({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        color: calmingType === 'chicane' ? '#f97316' : '#f59e0b',
+        opacity: calmingType === 'hump' ? 0.26 : 0.34,
+        y: surfaceY + 0.08,
+      });
+      if (calmingType === 'narrowing' || calmingType === 'chicane') {
+        addCorridorEdgeStrips({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          objectId: object.id,
+          color: '#fef3c7',
+          opacity: 0.62,
+          y: surfaceY + 0.095,
+        });
+      }
+    }
+
+    if (object.type === 'construction_area') {
+      addSurfaceTexture({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        color:
+          stringProperty(object.properties.status, 'planned') === 'closed' ? '#fca5a5' : '#fdba74',
+        opacity: 0.32,
+        y: surfaceY + 0.07,
       });
     }
 
@@ -1511,9 +3401,9 @@ function addDesignObject(args: {
       addStreetMarkings({
         THREE,
         group,
-        geometry: object.geometry,
+        geometry: detailGeometry,
         objectId: object.id,
-        y: y + 0.07,
+        y: surfaceY + 0.07,
       });
     }
 
@@ -1524,9 +3414,304 @@ function addDesignObject(args: {
         geometry: object.geometry,
         color: '#facc15',
         objectId: object.id,
+        y: pickY + 0.18,
       });
     }
   }
+}
+
+function createOsmCorridorGeometry(
+  points: StreetDesignLocalPoint[],
+  widthMeters: number
+): RenderableCorridorGeometry | null {
+  if (points.length < 2) return null;
+  const safeWidth = Math.max(widthMeters, 0.2);
+  const start = points[0];
+  const end = points[points.length - 1];
+  if (!start || !end) return null;
+
+  return points.length === 2
+    ? createCorridorGeometry(start, end, safeWidth)
+    : createPathCorridorGeometry(points, safeWidth);
+}
+
+function createOsmTreeObject(args: {
+  id: string;
+  point: StreetDesignLocalPoint;
+  rotation?: number;
+}): StreetDesignObject {
+  const definition = getStreetDesignObjectDefinition('tree');
+
+  return {
+    id: `osm-${args.id}`,
+    type: 'tree',
+    geometry: {
+      kind: 'point',
+      point: args.point,
+      rotation: args.rotation ?? 0,
+    },
+    properties: { ...definition.defaultProperties },
+    cost: {
+      rule: definition.costRule,
+      currency: STREET_DESIGN_CURRENCY,
+      suggestedUnitCostMinor: definition.suggestedUnitCostMinor,
+    },
+  };
+}
+
+function getOsmPointObjectType(way: StreetDesignOsmWay): StreetDesignObjectType {
+  if (way.kind === 'tree') return 'tree';
+  if (way.kind === 'water') return 'fountain';
+  if (way.kind === 'transit') return 'bus_stop';
+  if (way.kind === 'traffic') {
+    if (way.subkind === 'crossing') return 'crossing';
+    if (way.subkind === 'traffic_calming') return 'traffic_calming';
+    return 'traffic_signal';
+  }
+  if (way.kind === 'barrier') {
+    if (way.subkind === 'gate') return 'gate';
+    return 'bollard';
+  }
+  if (way.kind === 'utility') {
+    if (way.subkind === 'fire_hydrant') return 'hydrant';
+    if (way.subkind === 'post_box') return 'post_box';
+    if (way.subkind === 'recycling') return 'recycling_container';
+    if (way.subkind === 'waste_basket') return 'waste_bin';
+    return 'fountain';
+  }
+  if (way.kind === 'street_furniture') {
+    if (way.subkind === 'street_lamp') return 'street_lamp';
+    if (way.subkind === 'bicycle_parking') return 'bicycle_parking';
+    return 'bank';
+  }
+  return 'bank';
+}
+
+function createOsmPointObject(args: {
+  id: string;
+  type: StreetDesignObjectType;
+  point: StreetDesignLocalPoint;
+  rotation?: number;
+}): StreetDesignObject {
+  const definition = getStreetDesignObjectDefinition(args.type);
+
+  return {
+    id: `osm-${args.id}`,
+    type: args.type,
+    geometry: {
+      kind: 'point',
+      point: args.point,
+      rotation: args.rotation ?? 0,
+    },
+    properties: { ...definition.defaultProperties },
+    cost: {
+      rule: definition.costRule,
+      currency: STREET_DESIGN_CURRENCY,
+      suggestedUnitCostMinor: definition.suggestedUnitCostMinor,
+    },
+  };
+}
+
+function addOsmTreePoint(args: {
+  THREE: ThreeModule;
+  group: Group;
+  way: StreetDesignOsmWay;
+  point: StreetDesignLocalPoint;
+  selected: boolean;
+  animatedObjects: Object3D[];
+  rotation?: number;
+}) {
+  const { THREE, group, way, point, selected, animatedObjects, rotation } = args;
+  const tree = addPointObject({
+    THREE,
+    group,
+    object: createOsmTreeObject({ id: way.id, point, rotation }),
+    selected,
+  });
+
+  if (!tree) return;
+
+  clearObjectId(tree);
+  setOsmWayId(tree, way.id);
+  tree.userData.baseY = tree.position.y;
+  tree.userData.phase = point.x * 0.11 + point.z * 0.07;
+  tree.userData.motion = 'tree';
+  animatedObjects.push(tree);
+}
+
+function addOsmPointFeature(args: {
+  THREE: ThreeModule;
+  group: Group;
+  way: StreetDesignOsmWay;
+  point: StreetDesignLocalPoint;
+  selected: boolean;
+  animatedObjects: Object3D[];
+}) {
+  const { THREE, group, way, point, selected, animatedObjects } = args;
+  const objectType = getOsmPointObjectType(way);
+  const object = createOsmPointObject({ id: way.id, type: objectType, point });
+  const pointObject = addPointObject({ THREE, group, object, selected });
+  if (!pointObject) return;
+
+  clearObjectId(pointObject);
+  setOsmWayId(pointObject, way.id);
+
+  if (objectType === 'tree' || objectType === 'bush') {
+    pointObject.userData.baseY = pointObject.position.y;
+    pointObject.userData.phase = point.x * 0.11 + point.z * 0.07;
+    pointObject.userData.motion = objectType === 'tree' ? 'tree' : 'bush';
+    animatedObjects.push(pointObject);
+  }
+}
+
+function addOsmTreeRow(args: {
+  THREE: ThreeModule;
+  group: Group;
+  way: StreetDesignOsmWay;
+  localPoints: StreetDesignLocalPoint[];
+  selected: boolean;
+  animatedObjects: Object3D[];
+}) {
+  const { THREE, group, way, localPoints, selected, animatedObjects } = args;
+  const geometry = createOsmCorridorGeometry(localPoints, way.widthMeters ?? 1.8);
+  if (!geometry) return;
+
+  const samples = getCorridorSamples(geometry, 6).slice(0, 90);
+  samples.forEach(sample => {
+    addOsmTreePoint({
+      THREE,
+      group,
+      way,
+      point: sample.point,
+      selected: false,
+      animatedObjects,
+      rotation: Math.atan2(sample.direction.x, sample.direction.z),
+    });
+  });
+
+  addPickPolygon({
+    THREE,
+    group,
+    points: geometry.polygon,
+    osmWayId: way.id,
+    y: 0.22,
+  });
+
+  if (selected) {
+    addCorridorOutline({
+      THREE,
+      group,
+      geometry,
+      color: '#facc15',
+      y: 0.24,
+    });
+  }
+}
+
+export function getStreetDesignOsmRenderPriority(kind: StreetDesignOsmFeatureKind) {
+  switch (kind) {
+    case 'green':
+      return 0;
+    case 'water':
+      return 1;
+    case 'road':
+      return 2;
+    case 'parking':
+      return 3;
+    case 'sidewalk':
+      return 4;
+    case 'bike_lane':
+      return 5;
+    case 'building':
+      return 6;
+    case 'tree_row':
+      return 7;
+    case 'tree':
+      return 8;
+    case 'rail':
+      return 9;
+    case 'construction':
+      return 10;
+    case 'landuse_context':
+      return 11;
+    case 'civic_area':
+      return 12;
+    case 'sports':
+    case 'playground':
+      return 13;
+    case 'barrier':
+      return 14;
+    case 'traffic':
+      return 15;
+    case 'transit':
+      return 16;
+    case 'street_furniture':
+    case 'utility':
+      return 17;
+    default:
+      return 18;
+  }
+}
+
+function getOsmLineFeatureSurfaceY(way: StreetDesignOsmWay) {
+  if (way.kind === 'rail') {
+    return getStreetDesignOsmFeatureRenderY(way, way.level === 'tunnel' ? 0.035 : 0.07);
+  }
+  if (way.kind === 'road') {
+    return getStreetDesignOsmFeatureRenderY(way, way.level === 'tunnel' ? 0.035 : 0.052);
+  }
+  if (way.kind === 'parking') {
+    return getStreetDesignOsmFeatureRenderY(way, 0.06);
+  }
+  if (way.kind === 'sidewalk' || way.kind === 'bike_lane') {
+    return getStreetDesignOsmFeatureRenderY(way, 0.058);
+  }
+  return getStreetDesignOsmFeatureRenderY(way);
+}
+
+function getOsmLineFeatureWidth(way: StreetDesignOsmWay) {
+  if (way.kind === 'rail') return way.widthMeters ?? 1.6;
+  if (way.kind === 'road') return way.widthMeters ?? 4.8;
+  if (way.kind === 'parking') return way.widthMeters ?? 2.2;
+  return way.widthMeters ?? 2.2;
+}
+
+function getOsmRampSurfaceColor(way: StreetDesignOsmWay) {
+  if (way.kind === 'rail') return '#3f474c';
+  if (way.kind === 'bike_lane') return '#2f8f87';
+  if (way.kind === 'parking') return way.subkind === 'loading_zone' ? '#9a6b30' : '#697482';
+  if (way.kind === 'sidewalk') return way.subkind === 'bridleway' ? '#9b7a55' : '#b9af9f';
+  if (way.kind === 'road') {
+    if (way.subkind === 'construction') return '#b7791f';
+    if (way.subkind === 'track') return '#8a6a42';
+    return way.renderColor ?? '#4b545a';
+  }
+  return way.renderColor ?? '#4b545a';
+}
+
+function buildOsmElevationRampFeature(args: {
+  way: StreetDesignOsmWay;
+  localPoints: StreetDesignLocalPoint[];
+}): StreetDesignElevationRampFeature | null {
+  const { way, localPoints } = args;
+  if (
+    !canFeatureReceiveElevationRamp(way.kind) ||
+    way.geometryKind !== 'line' ||
+    way.subkind === 'steps'
+  ) {
+    return null;
+  }
+
+  const geometry = createOsmCorridorGeometry(localPoints, getOsmLineFeatureWidth(way));
+  if (!geometry) return null;
+
+  return {
+    id: way.id,
+    kind: way.kind,
+    geometry,
+    surfaceY: getOsmLineFeatureSurfaceY(way),
+    structureKind: way.structureKind,
+  } satisfies StreetDesignElevationRampFeature;
 }
 
 function addOsmWays(args: {
@@ -1540,76 +3725,562 @@ function addOsmWays(args: {
   const snapshot = design.osmSnapshot;
   if (!snapshot) return;
 
-  const layerVisibility = {
-    ...DEFAULT_OSM_LAYER_VISIBILITY,
-    ...(design.osmLayerVisibility ?? {}),
-  };
-  const hiddenOsmWayIds = new Set(design.hiddenOsmWayIds ?? []);
+  const layerVisibility = getStreetDesignOsmLayerVisibility(design.osmLayerVisibility);
+  const hiddenOsmWayIds = getStreetDesignHiddenOsmFeatureIds(design);
   const showStreetMarkings = design.showStreetMarkings ?? true;
 
-  snapshot.ways.forEach(way => {
-    if (!layerVisibility[way.kind] || hiddenOsmWayIds.has(way.id)) return;
+  const osmFeatures = getStreetDesignOsmFeatures(snapshot)
+    .slice()
+    .sort(
+      (left, right) =>
+        getStreetDesignOsmRenderPriority(left.kind) -
+          getStreetDesignOsmRenderPriority(right.kind) || left.id.localeCompare(right.id)
+    );
+  const visibleOsmFeatures = osmFeatures.filter(way => {
+    const layer = getStreetDesignOsmFeatureLayer(way.kind);
+    return !hiddenOsmWayIds.has(way.id) && layerVisibility[layer];
+  });
+  const elevationRampFeatures = visibleOsmFeatures
+    .map(way =>
+      buildOsmElevationRampFeature({
+        way,
+        localPoints: getOsmWayLocalPoints(way, design),
+      })
+    )
+    .filter((feature): feature is StreetDesignElevationRampFeature => Boolean(feature));
+  const elevationRampsByFeatureId = getStreetDesignElevationRampSegments(
+    elevationRampFeatures
+  ).reduce<Map<string, StreetDesignElevationRampSegment[]>>((result, segment) => {
+    const segments = result.get(segment.sourceId) ?? [];
+    segments.push(segment);
+    result.set(segment.sourceId, segments);
+    return result;
+  }, new Map());
+
+  visibleOsmFeatures.forEach(way => {
+    const layer = getStreetDesignOsmFeatureLayer(way.kind);
+    if (hiddenOsmWayIds.has(way.id)) {
+      return;
+    }
+    if (!layerVisibility[layer]) {
+      return;
+    }
 
     const localPoints = getOsmWayLocalPoints(way, design);
     const isSelected = way.id === selectedOsmWayId;
 
-    if (way.kind === 'road') {
-      for (let index = 0; index < localPoints.length - 1; index += 1) {
-        const geometry = createCorridorGeometry(localPoints[index], localPoints[index + 1], 4.8);
+    if (way.kind === 'tree') {
+      const point = localPoints[0];
+      if (point) {
+        addOsmTreePoint({
+          THREE,
+          group,
+          way,
+          point,
+          selected: isSelected,
+          animatedObjects,
+        });
+      }
+      return;
+    }
+
+    if (way.kind === 'tree_row') {
+      if (localPoints.length < 2) {
+        return;
+      }
+      addOsmTreeRow({ THREE, group, way, localPoints, selected: isSelected, animatedObjects });
+      return;
+    }
+
+    if (way.geometryKind === 'point') {
+      const point = localPoints[0];
+      if (point) {
+        addOsmPointFeature({
+          THREE,
+          group,
+          way,
+          point,
+          selected: isSelected,
+          animatedObjects,
+        });
+      }
+      return;
+    }
+
+    if (way.kind === 'rail') {
+      const geometry = createOsmCorridorGeometry(localPoints, way.widthMeters ?? 1.6);
+      if (!geometry) {
+        return;
+      }
+      const surfaceY = getStreetDesignOsmFeatureRenderY(way, way.level === 'tunnel' ? 0.035 : 0.07);
+      const elevationRampSegments = elevationRampsByFeatureId.get(way.id);
+      const flatGeometry = hasElevationRampSegments(elevationRampSegments)
+        ? getElevationRampPlateauGeometry(geometry, elevationRampSegments)
+        : geometry;
+      if (isElevatedOsmStructure(way)) {
+        addInternalBridgeDeck({
+          THREE,
+          group,
+          geometry,
+          deckY: surfaceY,
+          structureKind: way.structureKind,
+          osmWayId: way.id,
+          rampSegments: elevationRampSegments,
+        });
+      }
+      addElevationRampSegments({
+        THREE,
+        group,
+        segments: elevationRampSegments,
+        color: getOsmRampSurfaceColor(way),
+      });
+      if (flatGeometry) {
         addCorridorMesh({
           THREE,
           group,
-          geometry,
-          color: '#4b545a',
-          opacity: 0.8,
-          y: 0.01,
+          geometry: flatGeometry,
+          color: way.level === 'tunnel' ? '#64748b' : '#3f474c',
+          opacity: way.level === 'tunnel' ? 0.45 : 0.82,
+          y: surfaceY,
           osmWayId: way.id,
         });
-        addRoadSurfaceDetails({
+        addRailDetails({
+          THREE,
+          group,
+          geometry: flatGeometry,
+          osmWayId: way.id,
+          y: surfaceY + 0.08,
+        });
+      }
+      addPickPolygon({
+        THREE,
+        group,
+        points: geometry.polygon,
+        osmWayId: way.id,
+        y: surfaceY + 0.22,
+      });
+      if (isSelected) {
+        addCorridorOutline({
           THREE,
           group,
           geometry,
+          color: '#facc15',
+          y: surfaceY + 0.18,
           osmWayId: way.id,
-          y: 0.075,
+        });
+      }
+      return;
+    }
+
+    if (way.kind === 'barrier') {
+      const color = way.renderColor ?? (way.subkind === 'hedge' ? '#4d7c3f' : '#64748b');
+      const geometry =
+        way.geometryKind === 'polygon'
+          ? { polygon: localPoints, width: way.widthMeters ?? 0.7, length: 0 }
+          : createOsmCorridorGeometry(localPoints, way.widthMeters ?? 0.5);
+      if (!geometry || geometry.polygon.length < 3) {
+        return;
+      }
+      addBarrierVolume({
+        THREE,
+        group,
+        points: geometry.polygon,
+        color,
+        height: way.subkind === 'wall' ? 1.2 : way.subkind === 'hedge' ? 1.1 : 0.75,
+        osmWayId: way.id,
+      });
+      addPickPolygon({ THREE, group, points: geometry.polygon, osmWayId: way.id, y: 1.35 });
+      if (isSelected) {
+        addPolygonOutline({
+          THREE,
+          group,
+          points: geometry.polygon,
+          color: '#facc15',
+          osmWayId: way.id,
+        });
+      }
+      return;
+    }
+
+    if (
+      way.kind === 'traffic' ||
+      way.kind === 'transit' ||
+      way.kind === 'street_furniture' ||
+      way.kind === 'utility'
+    ) {
+      const corridorGeometry =
+        way.geometryKind === 'polygon'
+          ? null
+          : createOsmCorridorGeometry(localPoints, way.widthMeters ?? 1.2);
+      const polygon =
+        way.geometryKind === 'polygon' ? localPoints : (corridorGeometry?.polygon ?? []);
+      if (polygon.length < 3) {
+        return;
+      }
+      addFlatPolygon({
+        THREE,
+        group,
+        points: polygon,
+        color: way.renderColor ?? (way.kind === 'transit' ? '#2563eb' : '#d9d4c8'),
+        opacity: way.kind === 'traffic' ? 0.72 : 0.48,
+        y: 0.12,
+        osmWayId: way.id,
+      });
+      if (way.subkind === 'crossing' && corridorGeometry) {
+        addCrossingMarkings({
+          THREE,
+          group,
+          geometry: corridorGeometry,
+          osmWayId: way.id,
+          y: 0.18,
+        });
+      }
+      if (way.subkind === 'traffic_calming' && corridorGeometry) {
+        addSurfaceTexture({
+          THREE,
+          group,
+          geometry: corridorGeometry,
+          osmWayId: way.id,
+          color: '#f59e0b',
+          opacity: 0.42,
+          y: 0.18,
+        });
+      }
+      addPickPolygon({ THREE, group, points: polygon, osmWayId: way.id, y: 0.28 });
+      if (isSelected)
+        addPolygonOutline({ THREE, group, points: polygon, color: '#facc15', osmWayId: way.id });
+      return;
+    }
+
+    if (
+      way.kind === 'sports' ||
+      way.kind === 'playground' ||
+      way.kind === 'construction' ||
+      way.kind === 'landuse_context' ||
+      way.kind === 'civic_area'
+    ) {
+      if (localPoints.length < 3) {
+        return;
+      }
+      const color =
+        way.renderColor ??
+        (way.kind === 'construction'
+          ? '#a16207'
+          : way.kind === 'landuse_context'
+            ? '#8f8a7a'
+            : way.kind === 'playground'
+              ? '#d6a23f'
+              : way.kind === 'civic_area'
+                ? '#8ba77f'
+                : '#5f9f65');
+      addFlatPolygon({
+        THREE,
+        group,
+        points: localPoints,
+        color,
+        opacity: way.kind === 'landuse_context' ? 0.28 : 0.56,
+        y: 0.01,
+        osmWayId: way.id,
+      });
+      if (way.kind === 'sports') {
+        addSportsMarkings({
+          THREE,
+          group,
+          geometry: { polygon: localPoints },
+          osmWayId: way.id,
+          y: 0.09,
+        });
+      }
+      if (way.kind === 'playground') {
+        addPlaygroundDetails({
+          THREE,
+          group,
+          geometry: { polygon: localPoints },
+          osmWayId: way.id,
+          y: 0.08,
+        });
+      }
+      addPickPolygon({ THREE, group, points: localPoints, osmWayId: way.id, y: 0.18 });
+      if (isSelected)
+        addPolygonOutline({
+          THREE,
+          group,
+          points: localPoints,
+          color: '#facc15',
+          osmWayId: way.id,
+        });
+      return;
+    }
+
+    if (way.kind === 'road') {
+      const geometry = createOsmCorridorGeometry(localPoints, way.widthMeters ?? 4.8);
+      if (!geometry) {
+        return;
+      }
+      const isConstruction = way.subkind === 'construction';
+      const isTrack = way.subkind === 'track';
+      const surfaceY = getStreetDesignOsmFeatureRenderY(
+        way,
+        way.level === 'tunnel' ? 0.035 : 0.052
+      );
+      const elevationRampSegments = elevationRampsByFeatureId.get(way.id);
+      const flatGeometry = hasElevationRampSegments(elevationRampSegments)
+        ? getElevationRampPlateauGeometry(geometry, elevationRampSegments)
+        : geometry;
+
+      if (isElevatedOsmStructure(way)) {
+        addInternalBridgeDeck({
+          THREE,
+          group,
+          geometry,
+          deckY: surfaceY,
+          structureKind: way.structureKind,
+          osmWayId: way.id,
+          rampSegments: elevationRampSegments,
+        });
+      }
+
+      addElevationRampSegments({
+        THREE,
+        group,
+        segments: elevationRampSegments,
+        color: getOsmRampSurfaceColor(way),
+      });
+      if (flatGeometry) {
+        addCorridorMesh({
+          THREE,
+          group,
+          geometry: flatGeometry,
+          color: way.renderColor ?? (isConstruction ? '#b7791f' : isTrack ? '#8a6a42' : '#4b545a'),
+          opacity: way.level === 'tunnel' ? 0.42 : isConstruction ? 0.62 : 0.8,
+          y: surfaceY,
+          osmWayId: way.id,
+        });
+        if (!isConstruction) {
+          addRoadSurfaceDetails({
+            THREE,
+            group,
+            geometry: flatGeometry,
+            osmWayId: way.id,
+            y: surfaceY + 0.038,
+          });
+        } else {
+          addSurfaceTexture({
+            THREE,
+            group,
+            geometry: flatGeometry,
+            osmWayId: way.id,
+            color: '#f59e0b',
+            opacity: 0.34,
+            y: surfaceY + 0.05,
+          });
+        }
+      }
+      addPickPolygon({
+        THREE,
+        group,
+        points: geometry.polygon,
+        osmWayId: way.id,
+        y: surfaceY + 0.13,
+      });
+      if (showStreetMarkings && flatGeometry) {
+        addStreetMarkings({
+          THREE,
+          group,
+          geometry: flatGeometry,
+          y: surfaceY + 0.046,
+          osmWayId: way.id,
+        });
+      }
+      if (isSelected) {
+        addCorridorOutline({
+          THREE,
+          group,
+          geometry,
+          color: '#facc15',
+          y: surfaceY + 0.16,
+          osmWayId: way.id,
+        });
+      }
+      return;
+    }
+
+    if (way.kind === 'sidewalk' || way.kind === 'bike_lane' || way.kind === 'parking') {
+      if (way.geometryKind === 'polygon') {
+        if (localPoints.length < 3) {
+          return;
+        }
+        addFlatPolygon({
+          THREE,
+          group,
+          points: localPoints,
+          color:
+            way.kind === 'bike_lane'
+              ? '#2f8f87'
+              : way.kind === 'parking'
+                ? way.subkind === 'loading_zone'
+                  ? '#9a6b30'
+                  : '#697482'
+                : way.subkind === 'bridleway'
+                  ? '#9b7a55'
+                  : '#b9af9f',
+          opacity: way.kind === 'parking' ? 0.72 : 0.82,
+          y: 0.058,
+          osmWayId: way.id,
         });
         addPickPolygon({
           THREE,
           group,
-          points: geometry.polygon,
+          points: localPoints,
           osmWayId: way.id,
           y: 0.18,
         });
-        if (showStreetMarkings) {
-          addStreetMarkings({
+        if (isSelected) {
+          addPolygonOutline({
             THREE,
             group,
-            geometry,
-            y: 0.08,
+            points: localPoints,
+            color: '#facc15',
             osmWayId: way.id,
           });
         }
-        if (isSelected) {
-          addCorridorOutline({
-            THREE,
-            group,
-            geometry,
-            color: '#facc15',
-            y: 0.2,
-            objectId: undefined,
-          });
-        }
+        return;
+      }
+
+      const geometry = createOsmCorridorGeometry(localPoints, way.widthMeters ?? 2.2);
+      if (!geometry) {
+        return;
+      }
+      const isBikeLane = way.kind === 'bike_lane';
+      const isParking = way.kind === 'parking';
+      const isLoadingZone = way.subkind === 'loading_zone';
+      const isSteps = way.subkind === 'steps';
+      const surfaceY = isSteps
+        ? 0.058
+        : getStreetDesignOsmFeatureRenderY(way, isParking ? 0.06 : 0.058);
+      const elevationRampSegments = elevationRampsByFeatureId.get(way.id);
+      const flatGeometry =
+        !isSteps && hasElevationRampSegments(elevationRampSegments)
+          ? getElevationRampPlateauGeometry(geometry, elevationRampSegments)
+          : geometry;
+
+      if (!isSteps && isElevatedOsmStructure(way)) {
+        addInternalBridgeDeck({
+          THREE,
+          group,
+          geometry,
+          deckY: surfaceY,
+          structureKind: way.structureKind,
+          osmWayId: way.id,
+          rampSegments: elevationRampSegments,
+        });
+      }
+
+      if (!isSteps) {
+        addElevationRampSegments({
+          THREE,
+          group,
+          segments: elevationRampSegments,
+          color: getOsmRampSurfaceColor(way),
+        });
+      }
+
+      if (flatGeometry) {
+        addCorridorMesh({
+          THREE,
+          group,
+          geometry: flatGeometry,
+          color: isBikeLane
+            ? '#2f8f87'
+            : isParking
+              ? isLoadingZone
+                ? '#9a6b30'
+                : '#697482'
+              : way.subkind === 'bridleway'
+                ? '#9b7a55'
+                : '#b9af9f',
+          opacity: isParking ? 0.74 : 0.86,
+          y: surfaceY,
+          osmWayId: way.id,
+        });
+        addSurfaceTexture({
+          THREE,
+          group,
+          geometry: flatGeometry,
+          osmWayId: way.id,
+          color: isBikeLane
+            ? '#9be8de'
+            : isParking
+              ? isLoadingZone
+                ? '#f59e0b'
+                : '#454f59'
+              : '#e9dfcf',
+          opacity: isBikeLane ? 0.24 : isParking ? 0.18 : 0.3,
+          y: surfaceY + 0.044,
+        });
+        addCorridorEdgeStrips({
+          THREE,
+          group,
+          geometry: flatGeometry,
+          osmWayId: way.id,
+          color: isBikeLane ? '#c7fff5' : isParking ? '#d9e2ef' : '#d4c6b5',
+          opacity: isParking ? 0.38 : 0.45,
+          y: surfaceY + 0.052,
+        });
+      }
+      if (isParking && flatGeometry) {
+        addParkingMarkings({
+          THREE,
+          group,
+          geometry: flatGeometry,
+          osmWayId: way.id,
+          y: surfaceY + 0.058,
+        });
+      }
+      if (isSteps) {
+        addStairTreads({
+          THREE,
+          group,
+          geometry,
+          osmWayId: way.id,
+          y: surfaceY + 0.066,
+          endY: getStreetDesignOsmFeatureRenderY(way, 0.8),
+          stepCount: way.stepCount,
+          incline: way.incline,
+        });
+      }
+      addPickPolygon({
+        THREE,
+        group,
+        points: geometry.polygon,
+        osmWayId: way.id,
+        y: Math.max(surfaceY, getStreetDesignOsmFeatureRenderY(way, surfaceY)) + 0.18,
+      });
+      if (isSelected) {
+        addCorridorOutline({
+          THREE,
+          group,
+          geometry,
+          color: '#facc15',
+          y: Math.max(surfaceY, getStreetDesignOsmFeatureRenderY(way, surfaceY)) + 0.2,
+          osmWayId: way.id,
+        });
       }
       return;
     }
 
     if (way.kind === 'building') {
+      if (localPoints.length < 3) {
+        return;
+      }
       const height = Math.max(way.height ?? 8, 3);
+      const buildingColor = way.renderColor ?? '#b6aa9b';
       addExtrudedPolygon({
         THREE,
         group,
         points: localPoints,
         height,
-        color: '#b6aa9b',
+        color: buildingColor,
         osmWayId: way.id,
       });
       addBuildingFacadeDetails({
@@ -1617,7 +4288,7 @@ function addOsmWays(args: {
         group,
         points: localPoints,
         height,
-        color: '#b6aa9b',
+        color: buildingColor,
         osmWayId: way.id,
       });
       addExtrudedPickVolume({
@@ -1664,41 +4335,149 @@ function addOsmWays(args: {
       return;
     }
 
-    if (way.kind === 'water') {
+    if (way.kind === 'water' && way.geometryKind === 'line') {
+      const geometry = createOsmCorridorGeometry(localPoints, way.widthMeters ?? 4);
+      if (!geometry) {
+        return;
+      }
+      const waterY = getStreetDesignOsmWaterRenderY(way);
+
       addWaterSurface({
         THREE,
         group,
-        geometry: { polygon: localPoints },
-        opacity: 0.62,
-        y: 0.018,
+        geometry,
+        opacity: way.subkind === 'intermittent' ? 0.34 : 0.58,
+        y: waterY,
         osmWayId: way.id,
       });
+      addWaterDetails({
+        THREE,
+        group,
+        geometry,
+        osmWayId: way.id,
+        animatedObjects,
+        y: waterY + 0.05,
+      });
+      addPickPolygon({
+        THREE,
+        group,
+        points: geometry.polygon,
+        osmWayId: way.id,
+        y: waterY + 0.12,
+      });
+      if (isSelected) {
+        addCorridorOutline({
+          THREE,
+          group,
+          geometry,
+          color: '#facc15',
+          y: waterY + 0.18,
+          osmWayId: way.id,
+        });
+      }
+      return;
+    }
+
+    if (localPoints.length < 3) {
+      return;
+    }
+
+    if (way.kind === 'water') {
+      const waterY = getStreetDesignOsmWaterRenderY(way);
+      if (way.subkind === 'wetland') {
+        addFlatPolygon({
+          THREE,
+          group,
+          points: localPoints,
+          color: '#4f8f83',
+          opacity: 0.46,
+          y: waterY,
+          osmWayId: way.id,
+        });
+        if (localPoints.length >= 3) {
+          const roughGeometry = createCorridorGeometry(
+            localPoints[0] ?? { x: 0, z: 0 },
+            localPoints[1] ?? { x: 1, z: 0 },
+            1.4
+          );
+          addGrassDetails({
+            THREE,
+            group,
+            geometry: { ...roughGeometry, polygon: localPoints, width: 2.4 },
+            osmWayId: way.id,
+            animatedObjects,
+            y: waterY + 0.024,
+          });
+        }
+      } else {
+        addWaterSurface({
+          THREE,
+          group,
+          geometry: { polygon: localPoints },
+          opacity: way.subkind === 'intermittent' ? 0.36 : 0.62,
+          y: waterY,
+          osmWayId: way.id,
+        });
+        if (way.subkind === 'intermittent') {
+          addPolygonOutline({
+            THREE,
+            group,
+            points: localPoints,
+            color: '#bfdbfe',
+            y: waterY + 0.08,
+            osmWayId: way.id,
+          });
+        }
+      }
     } else {
+      const greenColor =
+        way.renderColor ??
+        (way.subkind === 'scrub'
+          ? '#5c8f46'
+          : way.subkind === 'heath'
+            ? '#8b7d57'
+            : way.subkind === 'flower_bed'
+              ? '#c95f8a'
+              : way.subkind === 'orchard' || way.subkind === 'vineyard'
+                ? '#6d8f48'
+                : '#89a96b');
       addFlatPolygon({
         THREE,
         group,
         points: localPoints,
-        color: '#89a96b',
-        opacity: 0.78,
-        y: 0.015,
+        color: greenColor,
+        opacity: 0.56,
+        y: 0.004,
         osmWayId: way.id,
       });
       if (localPoints.length >= 3) {
         const firstPoint = localPoints[0] ?? { x: 0, z: 0 };
         const secondPoint = localPoints[1] ?? firstPoint;
         const roughGeometry = createCorridorGeometry(firstPoint, secondPoint, 1);
-        addGrassDetails({
-          THREE,
-          group,
-          geometry: {
-            ...roughGeometry,
-            polygon: localPoints,
-            width: Math.max(2, roughGeometry.width),
-          },
-          osmWayId: way.id,
-          animatedObjects,
-          y: 0.04,
-        });
+        const detailGeometry = {
+          ...roughGeometry,
+          polygon: localPoints,
+          width: Math.max(2, roughGeometry.width),
+        };
+        if (way.subkind === 'flower_bed') {
+          addFlowerBedDetails({
+            THREE,
+            group,
+            geometry: detailGeometry,
+            osmWayId: way.id,
+            animatedObjects,
+            y: 0.018,
+          });
+        } else {
+          addGrassDetails({
+            THREE,
+            group,
+            geometry: detailGeometry,
+            osmWayId: way.id,
+            animatedObjects,
+            y: 0.018,
+          });
+        }
       }
     }
     addPickPolygon({
@@ -1769,6 +4548,10 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
   const THREE = await import('three');
   const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js');
   const canvas = options.canvas;
+  type ThreeMouseAction = (typeof THREE.MOUSE)[keyof typeof THREE.MOUSE];
+  type ThreeTouchAction = (typeof THREE.TOUCH)[keyof typeof THREE.TOUCH];
+  const noMouseAction = -1 as ThreeMouseAction;
+  const noTouchAction = -1 as ThreeTouchAction;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
@@ -1777,7 +4560,7 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.08;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
 
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(0x14211a, 110, 245);
@@ -1795,8 +4578,9 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
   controls.enableZoom = true;
-  controls.enableRotate = options.interactionMode === 'camera';
-  controls.enablePan = options.interactionMode === 'camera';
+  controls.enableRotate = true;
+  controls.enablePan = true;
+  controls.screenSpacePanning = true;
   controls.minDistance = 18;
   controls.maxDistance = 210;
   controls.maxPolarAngle = Math.PI * 0.48;
@@ -1814,9 +4598,13 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
     );
   }
   controls.mouseButtons = {
-    LEFT: THREE.MOUSE.ROTATE,
-    MIDDLE: THREE.MOUSE.DOLLY,
-    RIGHT: THREE.MOUSE.PAN,
+    LEFT: options.interactionMode === 'camera' ? THREE.MOUSE.PAN : noMouseAction,
+    MIDDLE: THREE.MOUSE.PAN,
+    RIGHT: THREE.MOUSE.ROTATE,
+  };
+  controls.touches = {
+    ONE: options.interactionMode === 'camera' ? THREE.TOUCH.PAN : noTouchAction,
+    TWO: THREE.TOUCH.DOLLY_PAN,
   };
   controls.update();
 
@@ -1974,15 +4762,112 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
     objectId: string;
     center: StreetDesignLocalPoint;
   } | null = null;
+  const activeTouchPointers = new Map<number, { x: number; y: number }>();
+  let pendingTouchAction: {
+    pointerId: number;
+    action: 'select' | 'place';
+    startX: number;
+    startY: number;
+    moved: boolean;
+    suppressed: boolean;
+  } | null = null;
+  let isSpacePressed = false;
+
+  function getPointerAction(
+    event: PointerEvent,
+    overrides: { isObjectRotateHandle?: boolean } = {}
+  ) {
+    return getStreetDesignPointerAction({
+      mode: options.interactionMode,
+      button: event.button,
+      pointerType: event.pointerType,
+      isSpacePressed,
+      shiftKey: event.shiftKey,
+      touchPointCount: event.pointerType === 'touch' ? activeTouchPointers.size : undefined,
+      isObjectRotateHandle: overrides.isObjectRotateHandle,
+      readOnly: options.readOnly,
+    });
+  }
+
+  function setPrimaryPointerNavigationControls(action: StreetDesignInputAction) {
+    controls.mouseButtons.LEFT =
+      action === 'move' || action === 'turn'
+        ? THREE.MOUSE.PAN
+        : options.interactionMode === 'camera'
+          ? THREE.MOUSE.PAN
+          : noMouseAction;
+  }
+
+  function isNavigationPointerMove(event: PointerEvent) {
+    if (event.pointerType === 'touch') return activeTouchPointers.size >= 2;
+    if (isSpacePressed) return true;
+    if (event.shiftKey && (event.buttons & 1) === 1) return true;
+    return (event.buttons & 2) === 2 || (event.buttons & 4) === 4;
+  }
+
+  function getHorizontalCameraAxes() {
+    const forward = controls.target.clone().sub(camera.position);
+    forward.y = 0;
+    if (forward.lengthSq() < 0.0001) {
+      forward.set(0, 0, -1);
+    } else {
+      forward.normalize();
+    }
+
+    const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+    return { forward, right };
+  }
+
+  function applyCameraPan(deltaRight: number, deltaForward: number) {
+    const { forward, right } = getHorizontalCameraAxes();
+    const move = right.multiplyScalar(deltaRight).add(forward.multiplyScalar(deltaForward));
+    camera.position.add(move);
+    controls.target.add(move);
+    controls.update();
+    requestRender();
+  }
+
+  function applyCameraZoom(direction: 'in' | 'out') {
+    const offset = camera.position.clone().sub(controls.target);
+    const distance = offset.length();
+    if (distance < 0.0001) return;
+
+    const nextDistance = Math.min(
+      controls.maxDistance,
+      Math.max(controls.minDistance, distance * (direction === 'in' ? 0.86 : 1.16))
+    );
+    camera.position.copy(controls.target).add(offset.normalize().multiplyScalar(nextDistance));
+    controls.update();
+    requestRender();
+  }
+
+  function applyCameraTurn(direction: 'left' | 'right') {
+    const offset = camera.position.clone().sub(controls.target);
+    offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), direction === 'left' ? 0.12 : -0.12);
+    camera.position.copy(controls.target).add(offset);
+    camera.lookAt(controls.target);
+    controls.update();
+    requestRender();
+  }
+
+  function getKeyboardPanStep() {
+    return Math.max(2, camera.position.distanceTo(controls.target) * 0.055);
+  }
 
   function resize() {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
-    if (canvas.width !== Math.floor(width * renderer.getPixelRatio())) {
+    const targetWidth = Math.floor(width * renderer.getPixelRatio());
+    const targetHeight = Math.floor(height * renderer.getPixelRatio());
+
+    if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
       renderer.setSize(width, height, false);
       camera.aspect = Math.max(width / Math.max(height, 1), 1);
       camera.updateProjectionMatrix();
+      return true;
     }
+
+    return false;
   }
 
   function updatePointer(event: PointerEvent) {
@@ -2014,25 +4899,40 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
     }
   }
 
-  function handleSelectPointerDown(event: PointerEvent) {
+  function getPointerHitContext(event: PointerEvent) {
     const point = updatePointer(event);
     const designIntersections = raycaster.intersectObjects(designGroup.children, true);
+    return { point, designIntersections };
+  }
+
+  function getRotateObjectIdAtPointer(event: PointerEvent) {
+    const { designIntersections } = getPointerHitContext(event);
+    return getIntersectionUserDataValue(designIntersections, 'rotateHandleObjectId');
+  }
+
+  function startObjectRotateDrag(event: PointerEvent, rotateObjectId: string) {
+    if (options.readOnly) return false;
+    const object = options.design.objects.find(item => item.id === rotateObjectId);
+    if (!object) return false;
+
+    activeRotateDrag = {
+      objectId: rotateObjectId,
+      center: getObjectCenter(object),
+    };
+    canvas.setPointerCapture(event.pointerId);
+    event.preventDefault();
+    return true;
+  }
+
+  function handleSelectPointerDown(event: PointerEvent) {
+    const { point, designIntersections } = getPointerHitContext(event);
     const rotateObjectId = getIntersectionUserDataValue(
       designIntersections,
       'rotateHandleObjectId'
     );
 
-    if (rotateObjectId && !options.readOnly) {
-      const object = options.design.objects.find(item => item.id === rotateObjectId);
-      if (object) {
-        activeRotateDrag = {
-          objectId: rotateObjectId,
-          center: getObjectCenter(object),
-        };
-        canvas.setPointerCapture(event.pointerId);
-        event.preventDefault();
-        return;
-      }
+    if (rotateObjectId && startObjectRotateDrag(event, rotateObjectId)) {
+      return;
     }
 
     const hitObjectId = getIntersectionUserDataValue(designIntersections, 'objectId');
@@ -2072,12 +4972,50 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
     options.onOsmWaySelect(null);
   }
 
+  function handlePointerDownCapture(event: PointerEvent) {
+    if (event.pointerType === 'touch') {
+      activeTouchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    }
+
+    const action = getPointerAction(event);
+    setPrimaryPointerNavigationControls(action);
+
+    if (event.pointerType === 'touch' && activeTouchPointers.size >= 2 && pendingTouchAction) {
+      pendingTouchAction.suppressed = true;
+    }
+  }
+
   function handlePointerDown(event: PointerEvent) {
-    if (options.interactionMode === 'camera') {
+    const rotateObjectId =
+      options.interactionMode === 'select' ? getRotateObjectIdAtPointer(event) : undefined;
+    const action = getPointerAction(event, {
+      isObjectRotateHandle: Boolean(rotateObjectId),
+    });
+
+    if (action === 'move' || action === 'turn' || action === 'zoom' || action === 'none') {
       return;
     }
 
-    if (options.interactionMode === 'place') {
+    if (event.pointerType === 'touch') {
+      if (action === 'objectRotate' && rotateObjectId) {
+        startObjectRotateDrag(event, rotateObjectId);
+        return;
+      }
+
+      if (action === 'select' || action === 'place') {
+        pendingTouchAction = {
+          pointerId: event.pointerId,
+          action,
+          startX: event.clientX,
+          startY: event.clientY,
+          moved: false,
+          suppressed: activeTouchPointers.size >= 2,
+        };
+      }
+      return;
+    }
+
+    if (action === 'place') {
       handlePlacePointerDown(event);
       return;
     }
@@ -2085,15 +5023,60 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
     handleSelectPointerDown(event);
   }
 
+  function updatePendingTouchMove(event: PointerEvent) {
+    if (event.pointerType !== 'touch') return;
+
+    activeTouchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (!pendingTouchAction || pendingTouchAction.pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - pendingTouchAction.startX;
+    const deltaY = event.clientY - pendingTouchAction.startY;
+    if (deltaX * deltaX + deltaY * deltaY > 64) {
+      pendingTouchAction.moved = true;
+    }
+    if (activeTouchPointers.size >= 2) {
+      pendingTouchAction.suppressed = true;
+    }
+  }
+
   function handlePointerMove(event: PointerEvent) {
-    if (!options.readOnly && options.interactionMode === 'place') {
+    updatePendingTouchMove(event);
+
+    if (
+      !options.readOnly &&
+      options.interactionMode === 'place' &&
+      !isNavigationPointerMove(event)
+    ) {
       const point = updatePointer(event);
       options.onPointerMove(toDesignPoint(point));
     }
   }
 
-  function handlePointerUp(event: PointerEvent) {
-    if (!activeRotateDrag) return;
+  function finishPendingTouchAction(event: PointerEvent) {
+    if (
+      event.pointerType !== 'touch' ||
+      !pendingTouchAction ||
+      pendingTouchAction.pointerId !== event.pointerId
+    ) {
+      return false;
+    }
+
+    const action = pendingTouchAction;
+    pendingTouchAction = null;
+    if (action.moved || action.suppressed || activeTouchPointers.size >= 2) {
+      return true;
+    }
+
+    if (action.action === 'place') {
+      handlePlacePointerDown(event);
+    } else {
+      handleSelectPointerDown(event);
+    }
+    return true;
+  }
+
+  function finishRotateDrag(event: PointerEvent) {
+    if (!activeRotateDrag) return false;
 
     const point = toDesignPoint(updatePointer(event));
     const rotationDeg =
@@ -2104,39 +5087,96 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
     if (canvas.hasPointerCapture(event.pointerId)) {
       canvas.releasePointerCapture(event.pointerId);
     }
+    return true;
+  }
+
+  function handlePointerUp(event: PointerEvent) {
+    finishRotateDrag(event);
+    finishPendingTouchAction(event);
+
+    if (event.pointerType === 'touch') {
+      activeTouchPointers.delete(event.pointerId);
+      if (activeTouchPointers.size === 0) {
+        pendingTouchAction = null;
+      }
+    }
+  }
+
+  function handlePointerCancel(event: PointerEvent) {
+    if (canvas.hasPointerCapture(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+    if (event.pointerType === 'touch') {
+      activeTouchPointers.delete(event.pointerId);
+      if (pendingTouchAction?.pointerId === event.pointerId || activeTouchPointers.size === 0) {
+        pendingTouchAction = null;
+      }
+    }
+    activeRotateDrag = null;
   }
 
   function handleContextMenu(event: MouseEvent) {
     event.preventDefault();
   }
 
-  canvas.addEventListener('pointerdown', handlePointerDown);
-  canvas.addEventListener('pointermove', handlePointerMove);
-  canvas.addEventListener('pointerup', handlePointerUp);
-  canvas.addEventListener('contextmenu', handleContextMenu);
+  function isEditableKeyboardTarget(target: EventTarget | null) {
+    if (!(target instanceof HTMLElement)) return false;
 
-  let animationFrame = 0;
-  function render() {
-    resize();
-    if (focusAnimation) {
-      const progress = Math.min(
-        (performance.now() - focusAnimation.startedAt) / focusAnimation.durationMs,
-        1
-      );
-      const easedProgress = 1 - Math.pow(1 - progress, 3);
-      controls.target.lerpVectors(
-        focusAnimation.startTarget,
-        focusAnimation.endTarget,
-        easedProgress
-      );
-      camera.position.lerpVectors(
-        focusAnimation.startPosition,
-        focusAnimation.endPosition,
-        easedProgress
-      );
+    return Boolean(
+      target.closest('input, textarea, select, button, [contenteditable="true"], [role="textbox"]')
+    );
+  }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.defaultPrevented || isEditableKeyboardTarget(event.target)) return;
+
+    if (event.code === 'Space') {
+      isSpacePressed = true;
+      event.preventDefault();
+      return;
     }
-    controls.update();
-    const elapsedSeconds = performance.now() / 1000;
+
+    const action = getStreetDesignKeyboardAction(event.key);
+    if (action === 'none') return;
+
+    event.preventDefault();
+    const panStep = getKeyboardPanStep();
+    if (action === 'move') {
+      if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') {
+        applyCameraPan(-panStep, 0);
+      } else if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') {
+        applyCameraPan(panStep, 0);
+      } else if (event.key === 'ArrowUp' || event.key.toLowerCase() === 'w') {
+        applyCameraPan(0, panStep);
+      } else if (event.key === 'ArrowDown' || event.key.toLowerCase() === 's') {
+        applyCameraPan(0, -panStep);
+      }
+      return;
+    }
+
+    if (action === 'zoom') {
+      applyCameraZoom(event.key === '-' ? 'out' : 'in');
+      return;
+    }
+
+    if (action === 'turn') {
+      applyCameraTurn(event.key.toLowerCase() === 'q' ? 'left' : 'right');
+    }
+  }
+
+  function handleKeyUp(event: KeyboardEvent) {
+    if (event.code === 'Space') {
+      isSpacePressed = false;
+      setPrimaryPointerNavigationControls(options.interactionMode === 'camera' ? 'move' : 'none');
+    }
+  }
+
+  function handleWindowBlur() {
+    isSpacePressed = false;
+    setPrimaryPointerNavigationControls(options.interactionMode === 'camera' ? 'move' : 'none');
+  }
+
+  function updateAmbientAnimations(elapsedSeconds: number) {
     animatedObjects.forEach((object, index) => {
       const baseY =
         typeof object.userData.baseY === 'number' ? object.userData.baseY : object.position.y;
@@ -2185,6 +5225,27 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
 
       object.position.y = baseY + Math.sin(elapsedSeconds * 1.4 + phase) * 0.025;
     });
+  }
+
+  function getCameraPoseSignature() {
+    return [
+      camera.position.x,
+      camera.position.y,
+      camera.position.z,
+      controls.target.x,
+      controls.target.y,
+      controls.target.z,
+    ]
+      .map(value => value.toFixed(3))
+      .join(':');
+  }
+
+  let lastCameraPoseSignature = getCameraPoseSignature();
+  function emitCameraPoseChangeIfNeeded() {
+    const signature = getCameraPoseSignature();
+    if (signature === lastCameraPoseSignature) return;
+
+    lastCameraPoseSignature = signature;
     options.onCameraPoseChange({
       position: {
         x: camera.position.x,
@@ -2197,17 +5258,80 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
         z: controls.target.z,
       },
     });
-    renderer.render(scene, camera);
-    animationFrame = window.requestAnimationFrame(render);
   }
-  render();
+
+  const renderScheduler = createStreetDesignRenderScheduler(() => {
+    const didResize = resize();
+    let isFocusAnimationActive = false;
+
+    if (focusAnimation) {
+      const progress = Math.min(
+        (performance.now() - focusAnimation.startedAt) / focusAnimation.durationMs,
+        1
+      );
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      controls.target.lerpVectors(
+        focusAnimation.startTarget,
+        focusAnimation.endTarget,
+        easedProgress
+      );
+      camera.position.lerpVectors(
+        focusAnimation.startPosition,
+        focusAnimation.endPosition,
+        easedProgress
+      );
+      isFocusAnimationActive = progress < 1;
+    }
+
+    if (isFocusAnimationActive) {
+      updateAmbientAnimations(performance.now() / 1000);
+    }
+
+    const controlsChanged = controls.update();
+    renderer.render(scene, camera);
+    if (didResize || controlsChanged || focusAnimation) {
+      emitCameraPoseChangeIfNeeded();
+    }
+
+    if (isFocusAnimationActive || controlsChanged) {
+      renderScheduler.requestRender();
+    }
+  });
+
+  const requestRender = () => renderScheduler.requestRender();
+  const handleControlsChange = () => requestRender();
+  const handleWindowResize = () => requestRender();
+  const resizeObserver =
+    typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => requestRender());
+
+  canvas.addEventListener('pointerdown', handlePointerDownCapture, true);
+  canvas.addEventListener('pointerdown', handlePointerDown);
+  canvas.addEventListener('pointermove', handlePointerMove);
+  canvas.addEventListener('pointerup', handlePointerUp);
+  canvas.addEventListener('pointercancel', handlePointerCancel);
+  canvas.addEventListener('contextmenu', handleContextMenu);
+  document.addEventListener('keydown', handleKeyDown);
+  document.addEventListener('keyup', handleKeyUp);
+  controls.addEventListener('change', handleControlsChange);
+  resizeObserver?.observe(canvas);
+  window.addEventListener('resize', handleWindowResize);
+  window.addEventListener('blur', handleWindowBlur);
+  requestRender();
 
   return () => {
-    window.cancelAnimationFrame(animationFrame);
+    renderScheduler.dispose();
+    controls.removeEventListener('change', handleControlsChange);
+    resizeObserver?.disconnect();
+    window.removeEventListener('resize', handleWindowResize);
+    window.removeEventListener('blur', handleWindowBlur);
+    canvas.removeEventListener('pointerdown', handlePointerDownCapture, true);
     canvas.removeEventListener('pointerdown', handlePointerDown);
     canvas.removeEventListener('pointermove', handlePointerMove);
     canvas.removeEventListener('pointerup', handlePointerUp);
+    canvas.removeEventListener('pointercancel', handlePointerCancel);
     canvas.removeEventListener('contextmenu', handleContextMenu);
+    document.removeEventListener('keydown', handleKeyDown);
+    document.removeEventListener('keyup', handleKeyUp);
     controls.dispose();
     renderer.dispose();
   };

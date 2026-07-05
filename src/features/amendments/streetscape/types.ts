@@ -16,6 +16,15 @@ export type StreetDesignRenderKind =
   | 'tree'
   | 'bush'
   | 'bench'
+  | 'street_furniture'
+  | 'utility'
+  | 'barrier'
+  | 'rail'
+  | 'traffic'
+  | 'transit'
+  | 'playground'
+  | 'sports'
+  | 'stairs'
   | 'surface'
   | 'lane'
   | 'road'
@@ -29,12 +38,42 @@ export type StreetDesignObjectType =
   | 'grass_strip'
   | 'flower_bed'
   | 'water_area'
+  | 'wetland_area'
   | 'parking_area'
+  | 'loading_zone'
   | 'street'
   | 'car_lane'
   | 'bike_lane'
   | 'sidewalk'
-  | 'building';
+  | 'building'
+  | 'street_lamp'
+  | 'hydrant'
+  | 'bicycle_parking'
+  | 'bollard'
+  | 'gate'
+  | 'fence'
+  | 'wall'
+  | 'traffic_signal'
+  | 'crossing'
+  | 'traffic_calming'
+  | 'bus_stop'
+  | 'rail_track'
+  | 'playground'
+  | 'sports_pitch'
+  | 'waste_bin'
+  | 'recycling_container'
+  | 'post_box'
+  | 'fountain'
+  | 'stairs'
+  | 'hedge'
+  | 'scrub_area'
+  | 'heath_area'
+  | 'orchard_area'
+  | 'vineyard_area'
+  | 'construction_area'
+  | 'landuse_context_area'
+  | 'civic_area'
+  | 'station_platform';
 
 export interface StreetDesignLocalPoint {
   x: number;
@@ -120,7 +159,7 @@ export type StreetDesignPropertyValue = string | number | boolean | null;
 export interface StreetDesignPropertySchemaField {
   key: string;
   labelKey: string;
-  fieldType: 'text' | 'number' | 'select' | 'boolean';
+  fieldType: 'text' | 'number' | 'select' | 'combobox' | 'boolean';
   unit?: string;
   min?: number;
   max?: number;
@@ -174,6 +213,7 @@ export interface StreetDesignCostLine {
   objectId: string;
   type: StreetDesignObjectType;
   labelKey: string;
+  displayLabelKey?: string;
   category: StreetDesignObjectDefinition['category'];
   rule: StreetDesignCostRule;
   quantity: number;
@@ -193,19 +233,95 @@ export interface StreetDesignCostSummary {
   }[];
 }
 
-export interface StreetDesignOsmWay {
+export type StreetDesignOsmFeatureKind =
+  | 'road'
+  | 'building'
+  | 'green'
+  | 'water'
+  | 'sidewalk'
+  | 'bike_lane'
+  | 'parking'
+  | 'tree'
+  | 'tree_row'
+  | 'rail'
+  | 'transit'
+  | 'barrier'
+  | 'street_furniture'
+  | 'traffic'
+  | 'sports'
+  | 'construction'
+  | 'landuse_context'
+  | 'playground'
+  | 'utility'
+  | 'civic_area';
+
+export type StreetDesignOsmFeatureGeometryKind = 'point' | 'line' | 'polygon';
+
+export type StreetDesignOsmStructureKind =
+  | 'bridge'
+  | 'viaduct'
+  | 'embankment'
+  | 'tunnel'
+  | 'cutting'
+  | 'steps';
+
+export type StreetDesignOsmElevationSource = 'osm' | 'heuristic' | 'surface';
+
+export type StreetDesignOsmFeatureLayer =
+  | 'road'
+  | 'building'
+  | 'green'
+  | 'water'
+  | 'sidewalk'
+  | 'bike_lane'
+  | 'parking'
+  | 'trees'
+  | 'rail'
+  | 'transit'
+  | 'barrier'
+  | 'street_furniture'
+  | 'traffic'
+  | 'sports'
+  | 'construction'
+  | 'landuse_context';
+
+export interface StreetDesignOsmFeature {
   id: string;
-  kind: 'road' | 'building' | 'green' | 'water';
+  kind: StreetDesignOsmFeatureKind;
+  geometryKind: StreetDesignOsmFeatureGeometryKind;
   label?: string;
-  points: StreetDesignGeoPoint[];
+  points?: StreetDesignGeoPoint[];
+  point?: StreetDesignGeoPoint;
+  widthMeters?: number;
+  offsetMeters?: number;
+  side?: 'left' | 'right';
   height?: number;
+  subkind?: string;
+  renderColor?: string;
+  renderVariant?: string;
+  semanticUse?: string;
+  level?: 'surface' | 'bridge' | 'tunnel';
+  access?: 'public' | 'private' | 'destination';
+  layerIndex?: number;
+  elevationMeters?: number;
+  baseElevationMeters?: number;
+  deckElevationMeters?: number;
+  clearanceMeters?: number;
+  incline?: string;
+  stepCount?: number;
+  structureKind?: StreetDesignOsmStructureKind;
+  elevationSource?: StreetDesignOsmElevationSource;
   tags?: Record<string, string>;
+  source?: 'osm' | 'derived' | 'fallback' | 'sample';
 }
+
+export type StreetDesignOsmWay = StreetDesignOsmFeature;
 
 export interface StreetDesignOsmSnapshot {
   fetchedAt: number;
   bbox: StreetDesignBoundingBox;
-  ways: StreetDesignOsmWay[];
+  features?: StreetDesignOsmFeature[];
+  ways?: StreetDesignOsmWay[];
 }
 
 export interface StreetDesignOsmLayerVisibility {
@@ -213,6 +329,18 @@ export interface StreetDesignOsmLayerVisibility {
   building: boolean;
   green: boolean;
   water: boolean;
+  sidewalk: boolean;
+  bike_lane: boolean;
+  parking: boolean;
+  trees: boolean;
+  rail: boolean;
+  transit: boolean;
+  barrier: boolean;
+  street_furniture: boolean;
+  traffic: boolean;
+  sports: boolean;
+  construction: boolean;
+  landuse_context: boolean;
 }
 
 export interface StreetDesignStateV1 {
@@ -222,6 +350,7 @@ export interface StreetDesignStateV1 {
   osmSnapshot: StreetDesignOsmSnapshot | null;
   osmLayerVisibility?: StreetDesignOsmLayerVisibility;
   hiddenOsmWayIds?: string[];
+  hiddenOsmFeatureIds?: string[];
   showStreetMarkings?: boolean;
   comparisonMode: StreetDesignComparisonMode;
   currency: string;

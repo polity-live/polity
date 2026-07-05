@@ -462,18 +462,36 @@ export const amendmentsTranslations = {
       mode: 'Mode',
     },
     osmLayers: {
+      bikeLane: 'Bike lanes',
       building: 'Buildings',
       green: 'Green',
+      barrier: 'Barriers',
+      construction: 'Construction',
+      landuseContext: 'Context areas',
+      parking: 'Parking',
+      rail: 'Rail',
       road: 'Streets',
+      sidewalk: 'Sidewalks',
       streetMarkings: 'Markings',
+      streetFurniture: 'Street furniture',
+      sports: 'Sports & play',
+      trees: 'Trees',
+      traffic: 'Traffic',
+      transit: 'Transit',
       water: 'Water',
     },
     inspector: {
       activeDraft: 'Active draft',
       area: 'Area',
+      baseElevation: 'Base elevation',
+      clearance: 'Clearance',
+      deckElevation: 'Deck elevation',
+      elevationSource: 'Elevation source',
       existing: 'Existing',
       fieldWithUnit: '{{label}} ({{unit}})',
       height: 'Height',
+      incline: 'Incline',
+      layer: 'Layer',
       length: 'Length',
       nextElementSettings: 'Settings for the next element',
       noSelection: 'No element selected',
@@ -484,7 +502,10 @@ export const amendmentsTranslations = {
       price: 'Price',
       removeFromMap: 'Remove from map',
       rotation: 'Rotation',
+      stepCount: 'Steps',
+      structure: 'Structure',
       suggestedCost: 'Suggestion: {{cost}}',
+      tags: 'Tags',
       title: 'Inspector',
       total: 'Total',
       width: 'Width',
@@ -533,7 +554,11 @@ export const amendmentsTranslations = {
     },
     canvas: {
       drawPath: 'Draw curve',
+      legend: 'Legend',
+      legendExisting: 'Existing',
+      legendPlanned: 'Placement options',
       loadFailed: 'Three.js could not be loaded.',
+      loadingOsm: 'Loading OSM data',
       pointsSet: '{{count}} points set',
     },
     sample: {
@@ -570,6 +595,9 @@ export const amendmentsTranslations = {
               blue: 'Blue',
               brick: 'Brick',
               green: 'Green',
+              hospitality: 'Hospitality gold',
+              industrial: 'Industrial gray',
+              residential: 'Residential beige',
               sand: 'Sand',
               slate: 'Slate',
             },
@@ -580,7 +608,11 @@ export const amendmentsTranslations = {
             options: {
               civic: 'Civic',
               commercial: 'Commercial',
+              hospitality: 'Hotel & food',
+              industrial: 'Industrial',
               mixed: 'Mixed',
+              office: 'Office',
+              retail: 'Retail',
               residential: 'Residential',
             },
           },
@@ -607,10 +639,20 @@ export const amendmentsTranslations = {
       },
       common: {
         properties: {
+          access: 'Access',
+          crop: 'Crop',
+          deckElevationMeters: 'Deck elevation',
           height: 'Height',
+          incline: 'Incline',
+          layerIndex: 'Layer',
+          level: 'Level',
           maintenance: 'Maintenance',
           material: 'Material',
+          planting: 'Planting',
+          publicAccess: 'Public access',
           spacing: 'Row spacing',
+          status: 'Status',
+          structureKind: 'Structure',
           surface: 'Surface',
         },
       },
@@ -622,6 +664,18 @@ export const amendmentsTranslations = {
       },
       grassStrip: {
         label: 'Grass strip',
+      },
+      scrubArea: {
+        label: 'Scrub area',
+      },
+      heathArea: {
+        label: 'Heath area',
+      },
+      orchardArea: {
+        label: 'Orchard',
+      },
+      vineyardArea: {
+        label: 'Vineyard',
       },
       parkingArea: {
         label: 'Parking area',
@@ -637,16 +691,25 @@ export const amendmentsTranslations = {
           parkingSpaces: 'Parking spaces',
         },
       },
+      loadingZone: {
+        label: 'Loading zone',
+        properties: {
+          lengthMeters: 'Length',
+          restriction: 'Restriction',
+        },
+      },
       sidewalk: {
         label: 'Sidewalk',
         properties: {
           accessibility: 'Low barrier',
+          pathType: 'Path type',
         },
       },
       street: {
         label: 'Street',
         properties: {
           lanes: 'Lanes',
+          roadClass: 'Road class',
         },
       },
       tree: {
@@ -654,6 +717,111 @@ export const amendmentsTranslations = {
         properties: {
           canopyDiameter: 'Canopy diameter',
           species: 'Species',
+        },
+      },
+      bicycleParking: {
+        label: 'Bicycle parking',
+        properties: {
+          stands: 'Stands',
+        },
+      },
+      bollard: {
+        label: 'Bollard',
+      },
+      busStop: {
+        label: 'Bus stop',
+        properties: {
+          shelter: 'Shelter',
+        },
+      },
+      crossing: {
+        label: 'Crossing',
+        properties: {
+          crossingType: 'Crossing type',
+        },
+      },
+      fence: {
+        label: 'Fence',
+      },
+      fountain: {
+        label: 'Fountain',
+      },
+      gate: {
+        label: 'Gate',
+      },
+      hedge: {
+        label: 'Hedge',
+      },
+      hydrant: {
+        label: 'Hydrant',
+      },
+      playground: {
+        label: 'Playground',
+        properties: {
+          equipment: 'Equipment',
+        },
+      },
+      postBox: {
+        label: 'Post box',
+        properties: {
+          operator: 'Operator',
+        },
+      },
+      railTrack: {
+        label: 'Rail track',
+        properties: {
+          railType: 'Rail type',
+        },
+      },
+      stationPlatform: {
+        label: 'Station platform',
+        properties: {
+          platformType: 'Platform type',
+        },
+      },
+      recyclingContainer: {
+        label: 'Recycling container',
+      },
+      sportsPitch: {
+        label: 'Sports pitch',
+        properties: {
+          sport: 'Sport',
+        },
+      },
+      stairs: {
+        label: 'Stairs',
+        properties: {
+          steps: 'Steps',
+        },
+      },
+      streetLamp: {
+        label: 'Street lamp',
+      },
+      trafficCalming: {
+        label: 'Traffic calming',
+        properties: {
+          calmingType: 'Type',
+        },
+      },
+      trafficSignal: {
+        label: 'Traffic signal',
+        properties: {
+          signalType: 'Signal type',
+        },
+      },
+      wall: {
+        label: 'Wall',
+      },
+      wasteBin: {
+        label: 'Waste bin',
+        properties: {
+          capacity: 'Capacity',
+        },
+      },
+      wetlandArea: {
+        label: 'Wetland',
+        properties: {
+          wetlandType: 'Wetland type',
         },
       },
       waterArea: {
@@ -667,6 +835,7 @@ export const amendmentsTranslations = {
               seatingEdge: 'Seating edge',
             },
           },
+          intermittent: 'Intermittent',
           waterType: {
             label: 'Water type',
             options: {
@@ -676,6 +845,325 @@ export const amendmentsTranslations = {
             },
           },
         },
+      },
+      constructionArea: {
+        label: 'Construction area',
+      },
+      landuseContextArea: {
+        label: 'Context area',
+        properties: {
+          influenceBuildings: 'Influence building colors',
+          landuseType: 'Land use type',
+        },
+      },
+      civicArea: {
+        label: 'Civic area',
+        properties: {
+          civicType: 'Facility type',
+        },
+      },
+    },
+    variantOptions: {
+      access: {
+        destination: 'Destination access',
+        emergency: 'Emergency access',
+        private: 'Private',
+        public: 'Public',
+      },
+      calmingType: {
+        chicane: 'Chicane',
+        hump: 'Speed hump',
+        narrowing: 'Narrowing',
+        table: 'Speed table',
+      },
+      civicType: {
+        community_center: 'Community center',
+        hospital: 'Hospital',
+        library: 'Library',
+        school: 'School',
+        townhall: 'Town hall',
+      },
+      crossingType: {
+        raised: 'Raised',
+        refuge: 'Refuge island',
+        signalized: 'Signalized',
+        zebra: 'Zebra',
+      },
+      crop: {
+        berries: 'Berries',
+        fruit: 'Fruit',
+        grapes: 'Grapes',
+        nuts: 'Nuts',
+      },
+      equipment: {
+        climbing: 'Climbing',
+        inclusive: 'Inclusive',
+        mixed: 'Mixed',
+        sand: 'Sand play',
+        swings: 'Swings',
+      },
+      fountainWaterType: {
+        decorative: 'Decorative',
+        drinking: 'Drinking water',
+        splash: 'Splash',
+      },
+      incline: {
+        down: 'Down',
+        up: 'Up',
+      },
+      landuseType: {
+        civic: 'Civic',
+        commercial: 'Commercial',
+        green: 'Green',
+        industrial: 'Industrial',
+        mixed: 'Mixed',
+        residential: 'Residential',
+        retail: 'Retail',
+      },
+      level: {
+        bridge: 'Bridge',
+        surface: 'Surface',
+        tunnel: 'Tunnel',
+      },
+      maintenance: {
+        extensiv: 'Extensive',
+        intensiv: 'Intensive',
+        standard: 'Standard',
+      },
+      material: {
+        beton: 'Concrete',
+        'glas/papier': 'Glass/paper',
+        holz: 'Wood',
+        metall: 'Metal',
+        recycling: 'Recycled material',
+        stahl: 'Steel',
+        stein: 'Stone',
+      },
+      operator: {
+        dhl: 'DHL',
+        municipal: 'Municipal',
+        post: 'Post',
+      },
+      pathType: {
+        accessible: 'Accessible',
+        promenade: 'Promenade',
+        sidewalk: 'Sidewalk',
+        standard: 'Standard',
+      },
+      planting: {
+        grasses: 'Grasses',
+        heide: 'Heath',
+        shrubs: 'Shrubs',
+        scrub: 'Scrub',
+        staudenmix: 'Perennial mix',
+        wildflowers: 'Wildflowers',
+      },
+      platformType: {
+        rail_platform: 'Rail platform',
+        tram_stop: 'Tram platform',
+      },
+      protection: {
+        painted: 'Painted',
+        protected: 'Protected',
+        raised: 'Raised',
+      },
+      railType: {
+        light_rail: 'Light rail',
+        rail: 'Rail',
+        tram: 'Tram',
+      },
+      restriction: {
+        delivery_window: 'Delivery window',
+        loading_only: 'Loading only',
+        short_stop: 'Short stop',
+      },
+      roadClass: {
+        construction: 'Construction',
+        living_street: 'Living street',
+        pedestrian: 'Pedestrian',
+        primary: 'Primary',
+        residential: 'Residential',
+      },
+      signalType: {
+        bicycle: 'Bicycle',
+        pedestrian: 'Pedestrian',
+        vehicle: 'Vehicle',
+      },
+      species: {
+        allee: 'Avenue tree',
+        columnar_poplar: 'Columnar poplar',
+        conifer: 'Conifer',
+        deciduous: 'Deciduous tree',
+        flowering_plum: 'Flowering plum',
+        fruit: 'Fruit tree',
+        hecke: 'Hedge',
+        native: 'Native',
+        ornamental_cherry: 'Ornamental cherry',
+        obstbaum: 'Fruit tree',
+        stadtbaum: 'Street tree',
+        strauch: 'Shrub',
+      },
+      sport: {
+        basketball: 'Basketball',
+        fitness: 'Fitness',
+        football: 'Football',
+        multi: 'Multi-use',
+        skate: 'Skate',
+      },
+      status: {
+        active: 'Active',
+        closed: 'Closed',
+        construction: 'Construction',
+        open: 'Open',
+        planned: 'Planned',
+      },
+      surface: {
+        asphalt: 'Asphalt',
+        fallschutz: 'Safety surface',
+        gravel: 'Gravel',
+        kunststoff: 'Synthetic',
+        paving_stones: 'Paving stones',
+        pflaster: 'Pavers',
+        rasen: 'Grass',
+        unsealed: 'Unsealed',
+      },
+      wetlandType: {
+        marsh: 'Marsh',
+        reedbed: 'Reedbed',
+        wet_meadow: 'Wet meadow',
+      },
+    },
+    variantLabels: {
+      bikeLane: {
+        painted: 'Painted bike lane',
+        protected: 'Protected bike lane',
+        raised: 'Raised bike lane',
+      },
+      building: {
+        civic: 'Civic building',
+        commercial: 'Commercial building',
+        hospitality: 'Hospitality building',
+        industrial: 'Industrial building',
+        mixed: 'Mixed-use building',
+        office: 'Office building',
+        residential: 'Residential building',
+        retail: 'Retail building',
+      },
+      carLane: {
+        one_way: 'One-way lane',
+        two_way: 'Two-way lane',
+      },
+      civic: {
+        community_center: 'Civic area - Community center',
+        hospital: 'Civic area - Hospital',
+        library: 'Civic area - Library',
+        school: 'Civic area - School',
+        townhall: 'Civic area - Town hall',
+      },
+      construction: {
+        active: 'Active construction area',
+        closed: 'Closed construction area',
+        planned: 'Planned construction area',
+      },
+      crossing: {
+        raised: 'Raised crossing',
+        refuge: 'Refuge crossing',
+        signalized: 'Signalized crossing',
+        zebra: 'Zebra crossing',
+      },
+      fountain: {
+        decorative: 'Decorative fountain',
+        drinking: 'Drinking fountain',
+        splash: 'Splash fountain',
+      },
+      landuse: {
+        civic: 'Civic context area',
+        commercial: 'Commercial context area',
+        green: 'Green context area',
+        industrial: 'Industrial context area',
+        mixed: 'Mixed context area',
+        residential: 'Residential context area',
+        retail: 'Retail context area',
+      },
+      loadingZone: {
+        delivery_window: 'Delivery window loading zone',
+        loading_only: 'Loading zone',
+        short_stop: 'Short-stop loading zone',
+      },
+      parking: {
+        angled: 'Angled parking',
+        parallel: 'Parallel parking',
+        perpendicular: 'Perpendicular parking',
+      },
+      playground: {
+        climbing: 'Climbing playground',
+        inclusive: 'Inclusive playground',
+        mixed: 'Mixed playground',
+        sand: 'Sand playground',
+        swings: 'Swings playground',
+      },
+      rail: {
+        light_rail: 'Light rail track',
+        rail: 'Rail track',
+        tram: 'Tram track',
+      },
+      sidewalk: {
+        accessible: 'Accessible sidewalk',
+        promenade: 'Promenade',
+        sidewalk: 'Sidewalk',
+        standard: 'Standard sidewalk',
+      },
+      sports: {
+        basketball: 'Basketball court',
+        fitness: 'Fitness area',
+        football: 'Football pitch',
+        multi: 'Multi-use sports pitch',
+        skate: 'Skate area',
+      },
+      stairs: {
+        standard: 'Stairs',
+      },
+      street: {
+        construction: 'Construction street',
+        living_street: 'Living street',
+        pedestrian: 'Pedestrian street',
+        primary: 'Primary street',
+        residential: 'Residential street',
+      },
+      trafficCalming: {
+        chicane: 'Traffic chicane',
+        hump: 'Speed hump',
+        narrowing: 'Road narrowing',
+        table: 'Speed table',
+      },
+      trafficSignal: {
+        bicycle: 'Bicycle signal',
+        pedestrian: 'Pedestrian signal',
+        vehicle: 'Traffic signal',
+      },
+      tree: {
+        columnar_poplar: 'Columnar poplar',
+        conifer: 'Conifer tree',
+        deciduous: 'Deciduous tree',
+        flowering_plum: 'Flowering plum',
+        fruit: 'Fruit tree',
+        ornamental_cherry: 'Ornamental cherry',
+      },
+      transit: {
+        bus_stop: 'Bus stop',
+        rail_platform: 'Rail platform',
+        sheltered_bus_stop: 'Sheltered bus stop',
+        tram_platform: 'Tram platform',
+      },
+      water: {
+        pond: 'Pond',
+        retention: 'Retention basin',
+        stream: 'Stream',
+      },
+      wetland: {
+        marsh: 'Marsh',
+        reedbed: 'Reedbed',
+        wet_meadow: 'Wet meadow',
       },
     },
   },

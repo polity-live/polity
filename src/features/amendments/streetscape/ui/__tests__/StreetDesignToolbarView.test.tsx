@@ -1,7 +1,8 @@
 /* @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { DEFAULT_STREET_DESIGN_OSM_LAYER_VISIBILITY } from '../../logic/streetDesignOsm';
 import { createPointStreetDesignObject } from '../../logic/streetDesignPlacement';
 import { StreetDesignToolbarView } from '../StreetDesignToolbarView';
 
@@ -25,12 +26,13 @@ describe('StreetDesignToolbarView', () => {
     render(
       <StreetDesignToolbarView
         selectedTool="tree"
+        selectedToolProperties={{}}
         interactionMode="select"
         objects={[tree]}
         selectedObjectId={null}
         hiddenObjectIds={[]}
         hiddenObjectCategories={[]}
-        osmLayerVisibility={{ road: true, building: true, green: true, water: true }}
+        osmLayerVisibility={DEFAULT_STREET_DESIGN_OSM_LAYER_VISIBILITY}
         showStreetMarkings={true}
         readOnly={false}
         onToolChange={onToolChange}
@@ -54,20 +56,81 @@ describe('StreetDesignToolbarView', () => {
     expect(screen.getByText('OSM Existing')).toBeTruthy();
     expect(screen.getByText('New elements')).toBeTruthy();
     expect(screen.getByText('Added')).toBeTruthy();
+    expect(screen.getAllByText('Parking').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText('Construction').length).toBeGreaterThanOrEqual(2);
 
-    const buildingButtons = screen.getAllByRole('button', { name: /buildings?/i });
-    expect(buildingButtons.length).toBeGreaterThanOrEqual(2);
-    fireEvent.click(buildingButtons[buildingButtons.length - 1]);
-    expect(onToolChange).toHaveBeenCalledWith('building');
+    const treesSection = screen.getAllByText('Trees').at(-1)?.closest('section');
+    expect(treesSection).toBeTruthy();
+    expect(
+      within(treesSection as HTMLElement).queryByRole('button', { name: /^tree$/i })
+    ).toBeNull();
+    expect(
+      within(treesSection as HTMLElement).getByRole('button', { name: /ornamental cherry/i })
+    ).toBeTruthy();
+    expect(
+      within(treesSection as HTMLElement).getByRole('button', { name: /flowering plum/i })
+    ).toBeTruthy();
+    fireEvent.click(within(treesSection as HTMLElement).getByRole('button', { name: /conifer/i }));
+    expect(onToolChange).toHaveBeenCalledWith(
+      'tree',
+      expect.objectContaining({
+        canopyDiameter: 2.8,
+        height: 6,
+        spacing: 6,
+        species: 'conifer',
+      }),
+      undefined
+    );
 
-    const waterButtons = screen.getAllByRole('button', { name: /water/i });
-    fireEvent.click(waterButtons[waterButtons.length - 1]);
-    expect(onToolChange).toHaveBeenCalledWith('water_area');
+    const parkingSection = screen.getAllByText('Parking').at(-1)?.closest('section');
+    expect(parkingSection).toBeTruthy();
+    expect(
+      within(parkingSection as HTMLElement).getByRole('button', { name: /loading zone/i })
+    ).toBeTruthy();
+
+    const contextSection = screen.getAllByText('Context areas').at(-1)?.closest('section');
+    expect(contextSection).toBeTruthy();
+    expect(
+      within(contextSection as HTMLElement).getAllByRole('button', { name: /school/i }).length
+    ).toBeGreaterThan(0);
+
+    const buildingSection = screen.getAllByText('Buildings').at(-1)?.closest('section');
+    expect(buildingSection).toBeTruthy();
+    expect(
+      within(buildingSection as HTMLElement).queryByRole('button', { name: /^building$/i })
+    ).toBeNull();
+    fireEvent.click(
+      within(buildingSection as HTMLElement).getByRole('button', { name: /office building/i })
+    );
+    expect(onToolChange).toHaveBeenCalledWith(
+      'building',
+      expect.objectContaining({
+        color: '#6f7a82',
+        renderColor: '#6f7a82',
+        semanticUse: 'office',
+        use: 'office',
+      }),
+      undefined
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /pond/i }));
+    expect(onToolChange).toHaveBeenCalledWith(
+      'water_area',
+      expect.objectContaining({ waterType: 'pond' }),
+      6
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /protected bike lane/i }));
+    expect(onToolChange).toHaveBeenCalledWith(
+      'bike_lane',
+      expect.objectContaining({ protection: 'protected' }),
+      2.2
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /camera/i }));
     expect(onInteractionModeChange).toHaveBeenCalledWith('camera');
 
-    fireEvent.click(buildingButtons[0]);
+    fireEvent.click(screen.getByRole('button', { name: /buildings/i }));
     expect(onOsmLayerVisibilityChange).toHaveBeenCalledWith('building', false);
 
     fireEvent.click(screen.getByRole('button', { name: /markings/i }));
@@ -83,16 +146,16 @@ describe('StreetDesignToolbarView', () => {
     fireEvent.click(screen.getByTitle('Expand Greenery'));
     expect(screen.getByTitle('Collapse Greenery')).toBeTruthy();
 
-    fireEvent.click(screen.getByTitle('Select Tree'));
+    fireEvent.click(screen.getByTitle('Select Deciduous tree'));
     expect(onObjectSelect).toHaveBeenCalledWith('tree-1');
 
-    fireEvent.click(screen.getByTitle('Hide Tree'));
+    fireEvent.click(screen.getByTitle('Hide Deciduous tree'));
     expect(onObjectVisibilityChange).toHaveBeenCalledWith('tree-1', false);
 
     fireEvent.click(screen.getByTitle('Hide Greenery'));
     expect(onObjectCategoryVisibilityChange).toHaveBeenCalledWith('greenery', false);
 
-    fireEvent.click(screen.getByTitle('Remove Tree'));
+    fireEvent.click(screen.getByTitle('Remove Deciduous tree'));
     expect(onObjectDelete).toHaveBeenCalledWith('tree-1');
 
     fireEvent.click(screen.getByTitle('Remove Greenery'));

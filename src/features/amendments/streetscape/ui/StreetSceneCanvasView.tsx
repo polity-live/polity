@@ -11,6 +11,7 @@ import type {
 interface StreetSceneCanvasViewProps {
   design: StreetDesignStateV1;
   metricLabels?: string[];
+  isLoadingOsm: boolean;
   placementPreview: CorridorGeometry | PathCorridorGeometry | null;
   placementPreviewType: StreetDesignObjectType | null;
   placementStart: StreetDesignLocalPoint | null;
@@ -43,6 +44,7 @@ import { StreetSceneCanvasViewView } from './StreetSceneCanvasViewView';
 export function StreetSceneCanvasView({
   design,
   metricLabels,
+  isLoadingOsm,
   placementPreview,
   placementPreviewType,
   placementStart,
@@ -71,6 +73,7 @@ export function StreetSceneCanvasView({
   const viewProps = useStreetSceneCanvasViewController({
     design,
     metricLabels,
+    isLoadingOsm,
     placementPreview,
     placementPreviewType,
     placementStart,

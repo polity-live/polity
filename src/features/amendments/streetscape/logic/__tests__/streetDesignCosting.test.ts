@@ -97,6 +97,43 @@ describe('streetDesignCosting', () => {
     expect(line.totalCostMinor).toBe(25_000_000);
   });
 
+  it('attaches variant display label keys to cost lines', () => {
+    const building = createCorridorStreetDesignObject({
+      id: 'building-1',
+      type: 'building',
+      start: { x: 0, z: 0 },
+      end: { x: 10, z: 0 },
+      width: 10,
+      overrides: { properties: { use: 'office' } },
+    });
+    const conifer = createPointStreetDesignObject({
+      id: 'tree-1',
+      type: 'tree',
+      point: { x: 0, z: 0 },
+      overrides: { properties: { species: 'conifer' } },
+    });
+    const floweringPlum = createPointStreetDesignObject({
+      id: 'tree-2',
+      type: 'tree',
+      point: { x: 1, z: 0 },
+      overrides: { properties: { species: 'flowering_plum' } },
+    });
+
+    const line = getStreetDesignCostLine(building);
+    const treeLine = getStreetDesignCostLine(conifer);
+    const floweringTreeLine = getStreetDesignCostLine(floweringPlum);
+
+    expect(line.displayLabelKey).toBe(
+      'features.amendments.streetscape.variantLabels.building.office'
+    );
+    expect(treeLine.displayLabelKey).toBe(
+      'features.amendments.streetscape.variantLabels.tree.conifer'
+    );
+    expect(floweringTreeLine.displayLabelKey).toBe(
+      'features.amendments.streetscape.variantLabels.tree.flowering_plum'
+    );
+  });
+
   it('uses overridden unit prices and aggregates totals', () => {
     const bank = updateObjectUnitCost(
       createPointStreetDesignObject({

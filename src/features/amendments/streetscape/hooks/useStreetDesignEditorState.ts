@@ -10,6 +10,7 @@ import type {
   StreetDesignStateV1,
 } from '../types';
 import { getStreetDesignCostLine, getStreetDesignCostSummary } from '../logic/streetDesignCosting';
+import { getStreetDesignOsmFeatures } from '../logic/streetDesignOsm';
 import {
   createInitialStreetDesignEditorState,
   streetDesignReducer,
@@ -31,8 +32,11 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
     [state.design.objects, state.selectedObjectId]
   );
   const selectedOsmWay = useMemo(
-    () => state.design.osmSnapshot?.ways.find(way => way.id === state.selectedOsmWayId) ?? null,
-    [state.design.osmSnapshot?.ways, state.selectedOsmWayId]
+    () =>
+      getStreetDesignOsmFeatures(state.design.osmSnapshot).find(
+        feature => feature.id === state.selectedOsmWayId
+      ) ?? null,
+    [state.design.osmSnapshot, state.selectedOsmWayId]
   );
 
   const costSummary = useMemo(
@@ -57,9 +61,16 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
     dispatch({ type: 'set_interaction_mode', interactionMode });
   }, []);
 
-  const setSelectedTool = useCallback((objectType: StreetDesignObjectType) => {
-    dispatch({ type: 'set_tool', objectType });
-  }, []);
+  const setSelectedTool = useCallback(
+    (
+      objectType: StreetDesignObjectType,
+      propertyOverrides?: Record<string, StreetDesignPropertyValue>,
+      widthOverride?: number
+    ) => {
+      dispatch({ type: 'set_tool', objectType, propertyOverrides, widthOverride });
+    },
+    []
+  );
 
   const setOsmLayerVisibility = useCallback(
     (layer: keyof StreetDesignOsmLayerVisibility, visible: boolean) => {

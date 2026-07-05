@@ -29,6 +29,7 @@ import { StreetCostSummaryView } from './StreetCostSummaryView';
 import { StreetDesignInspectorView } from './StreetDesignInspectorView';
 import { StreetDesignToolbarView } from './StreetDesignToolbarView';
 import { StreetSceneCanvasView } from './StreetSceneCanvasView';
+import { getStreetDesignOsmFeatures } from '../logic/streetDesignOsm';
 
 type StreetDesignAmendmentSummary = { title?: string | null } | null | undefined;
 
@@ -69,7 +70,11 @@ interface StreetDesignPageViewProps {
   onLoadOsm: () => void;
   onLoadSample: () => void;
   onSave: () => void;
-  onToolChange: (type: StreetDesignObjectType) => void;
+  onToolChange: (
+    type: StreetDesignObjectType,
+    propertyOverrides?: Record<string, StreetDesignPropertyValue>,
+    widthOverride?: number
+  ) => void;
   onInteractionModeChange: (mode: StreetDesignInteractionMode) => void;
   onComparisonModeChange: (mode: StreetDesignStateV1['comparisonMode']) => void;
   onScenePointerDown: (point: StreetDesignLocalPoint) => void;
@@ -175,7 +180,7 @@ export function StreetDesignPageView({
     return <NotFound />;
   }
 
-  const osmWayCount = design.osmSnapshot?.ways.length ?? 0;
+  const osmWayCount = getStreetDesignOsmFeatures(design.osmSnapshot).length;
   const metricLabels = [
     t('features.amendments.streetscape.metrics.elements', { count: design.objects.length }),
     t('features.amendments.streetscape.metrics.existing', { count: osmWayCount }),
@@ -262,6 +267,7 @@ export function StreetDesignPageView({
         <div className="grid gap-0 xl:grid-cols-[240px_minmax(0,1fr)_320px]">
           <StreetDesignToolbarView
             selectedTool={selectedTool}
+            selectedToolProperties={placementSettings.properties}
             interactionMode={interactionMode}
             objects={design.objects}
             selectedObjectId={selectedObjectId}
@@ -283,6 +289,7 @@ export function StreetDesignPageView({
           <StreetSceneCanvasView
             design={design}
             metricLabels={metricLabels}
+            isLoadingOsm={isLoadingOsm}
             placementPreview={placementPreview}
             placementPreviewType={placementPreviewType}
             placementStart={placementStart}

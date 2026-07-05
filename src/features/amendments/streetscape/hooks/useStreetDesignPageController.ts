@@ -26,6 +26,7 @@ import {
   parseStoredStreetDesignState,
 } from '../state/streetDesignReducer';
 import { getStreetDesignOriginFromAmendmentLocation } from '../logic/streetDesignAmendmentLocation';
+import { getStreetDesignOsmLayerVisibility } from '../logic/streetDesignOsm';
 import { useStreetDesignEditorState } from './useStreetDesignEditorState';
 
 function originFromCenter(center: StreetDesignGeoPoint): StreetDesignOrigin {
@@ -49,28 +50,35 @@ function createSampleOsmSnapshot(
   return {
     fetchedAt: Date.now(),
     bbox,
-    ways: [
+    features: [
       {
         id: 'sample-road-main',
         kind: 'road',
+        geometryKind: 'line',
         label: translateText('features.amendments.streetscape.sample.mainRoad'),
+        widthMeters: 4.8,
         points: [
           { lat: center.lat - latStep, lon: center.lon - lonStep },
           { lat: center.lat + latStep, lon: center.lon + lonStep },
         ],
+        source: 'sample',
       },
       {
         id: 'sample-road-side',
         kind: 'road',
+        geometryKind: 'line',
         label: translateText('features.amendments.streetscape.sample.sideRoad'),
+        widthMeters: 4.8,
         points: [
           { lat: center.lat + latStep * 0.2, lon: center.lon - lonStep },
           { lat: center.lat - latStep * 0.15, lon: center.lon + lonStep },
         ],
+        source: 'sample',
       },
       {
         id: 'sample-building-left',
         kind: 'building',
+        geometryKind: 'polygon',
         label: translateText('features.amendments.streetscape.sample.existingBuilding'),
         height: 15,
         points: [
@@ -80,10 +88,12 @@ function createSampleOsmSnapshot(
           { lat: center.lat - 0.00023, lon: center.lon - 0.00065 },
           { lat: center.lat - 0.00035, lon: center.lon - 0.0005 },
         ],
+        source: 'sample',
       },
       {
         id: 'sample-building-right',
         kind: 'building',
+        geometryKind: 'polygon',
         label: translateText('features.amendments.streetscape.sample.residentialBuilding'),
         height: 12,
         points: [
@@ -93,10 +103,12 @@ function createSampleOsmSnapshot(
           { lat: center.lat, lon: center.lon + 0.00042 },
           { lat: center.lat + 0.00012, lon: center.lon + 0.00028 },
         ],
+        source: 'sample',
       },
       {
         id: 'sample-green',
         kind: 'green',
+        geometryKind: 'polygon',
         label: translateText('features.amendments.streetscape.sample.greenSpace'),
         points: [
           { lat: center.lat + 0.00018, lon: center.lon - 0.00055 },
@@ -105,6 +117,7 @@ function createSampleOsmSnapshot(
           { lat: center.lat + 0.00008, lon: center.lon - 0.00035 },
           { lat: center.lat + 0.00018, lon: center.lon - 0.00055 },
         ],
+        source: 'sample',
       },
     ],
   };
@@ -180,12 +193,7 @@ export function useStreetDesignPageController(amendmentId: string) {
   const placementPreview = placementDraft?.preview ?? null;
   const canFinishPathPlacement =
     placementDraft?.mode === 'path' && placementDraft.points.length >= 2;
-  const osmLayerVisibility = editor.design.osmLayerVisibility ?? {
-    road: true,
-    building: true,
-    green: true,
-    water: true,
-  };
+  const osmLayerVisibility = getStreetDesignOsmLayerVisibility(editor.design.osmLayerVisibility);
   const showStreetMarkings = editor.design.showStreetMarkings ?? true;
 
   const handleLoadOsm = useCallback(async () => {
@@ -194,18 +202,15 @@ export function useStreetDesignPageController(amendmentId: string) {
 
     try {
       const snapshot = await overpassStreetSceneFn({ data: { bbox: selectedBbox } });
+
       editor.replaceDesign(
         {
           ...editor.design,
           origin: originFromCenter(selectedCenter),
           mapSelection: selectedMapSelection,
-          osmLayerVisibility: editor.design.osmLayerVisibility ?? {
-            road: true,
-            building: true,
-            green: true,
-            water: true,
-          },
+          osmLayerVisibility: getStreetDesignOsmLayerVisibility(editor.design.osmLayerVisibility),
           hiddenOsmWayIds: [],
+          hiddenOsmFeatureIds: [],
           osmSnapshot: snapshot,
           comparisonMode: 'overlay',
         },
@@ -229,13 +234,9 @@ export function useStreetDesignPageController(amendmentId: string) {
         ...editor.design,
         origin: originFromCenter(selectedCenter),
         mapSelection: selectedMapSelection,
-        osmLayerVisibility: editor.design.osmLayerVisibility ?? {
-          road: true,
-          building: true,
-          green: true,
-          water: true,
-        },
+        osmLayerVisibility: getStreetDesignOsmLayerVisibility(editor.design.osmLayerVisibility),
         hiddenOsmWayIds: [],
+        hiddenOsmFeatureIds: [],
         osmSnapshot: snapshot,
         comparisonMode: 'overlay',
       },

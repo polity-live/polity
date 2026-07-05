@@ -5,6 +5,7 @@ import type {
   StreetDesignObject,
 } from '../types';
 import { getStreetDesignObjectDefinition } from './streetDesignObjectRegistry';
+import { getStreetDesignObjectVariantLabelKey } from './streetDesignVariantCatalog';
 
 function numberProperty(value: unknown, fallback: number) {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
@@ -68,6 +69,7 @@ export function getStreetDesignCostLine(object: StreetDesignObject): StreetDesig
     objectId: object.id,
     type: object.type,
     labelKey: definition.labelKey,
+    displayLabelKey: getStreetDesignObjectVariantLabelKey(object) ?? undefined,
     category: definition.category,
     rule,
     quantity,

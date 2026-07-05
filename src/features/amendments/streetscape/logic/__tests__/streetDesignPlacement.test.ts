@@ -6,6 +6,7 @@ import {
   createPathCorridorGeometry,
   createPathCorridorStreetDesignObject,
   createPointStreetDesignObject,
+  isPathCorridorObjectType,
 } from '../streetDesignPlacement';
 
 describe('streetDesignPlacement', () => {
@@ -163,5 +164,15 @@ describe('streetDesignPlacement', () => {
     expect(treeRow.geometry.kind).toBe('path_corridor');
     expect(treeRow.properties.spacing).toBe(6);
     expect(treeRow.cost.rule).toBe('per_item');
+  });
+
+  it('treats OSM-compatible line and area tools as path corridor placements', () => {
+    expect(isPathCorridorObjectType('bicycle_parking')).toBe(true);
+    expect(isPathCorridorObjectType('rail_track')).toBe(true);
+    expect(isPathCorridorObjectType('station_platform')).toBe(true);
+    expect(isPathCorridorObjectType('construction_area')).toBe(true);
+    expect(isPathCorridorObjectType('landuse_context_area')).toBe(true);
+    expect(isPathCorridorObjectType('civic_area')).toBe(true);
+    expect(isPathCorridorObjectType('loading_zone')).toBe(false);
   });
 });

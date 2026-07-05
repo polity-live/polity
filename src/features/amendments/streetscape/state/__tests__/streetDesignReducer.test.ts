@@ -4,13 +4,121 @@ import {
   createPointStreetDesignObject,
   getStreetDesignGeometryRotationDeg,
 } from '../../logic/streetDesignPlacement';
-import { createInitialStreetDesignEditorState, streetDesignReducer } from '../streetDesignReducer';
+import {
+  createInitialStreetDesignEditorState,
+  parseStoredStreetDesignState,
+  streetDesignReducer,
+} from '../streetDesignReducer';
 
 describe('streetDesignReducer', () => {
   it('starts in select mode by default', () => {
     const initialState = createInitialStreetDesignEditorState();
 
     expect(initialState.interactionMode).toBe('select');
+  });
+
+  it('keeps building use and color in sync for placement and selected objects', () => {
+    const initialState = createInitialStreetDesignEditorState();
+    const withOfficeTool = streetDesignReducer(initialState, {
+      type: 'set_tool',
+      objectType: 'building',
+      propertyOverrides: { use: 'office' },
+    });
+
+    expect(withOfficeTool.placementSettings.properties).toEqual(
+      expect.objectContaining({
+        color: '#6f7a82',
+        renderColor: '#6f7a82',
+        semanticUse: 'office',
+        use: 'office',
+      })
+    );
+
+    const withResidentialUse = streetDesignReducer(withOfficeTool, {
+      type: 'set_placement_property',
+      key: 'use',
+      value: 'residential',
+    });
+
+    expect(withResidentialUse.placementSettings.properties).toEqual(
+      expect.objectContaining({
+        color: '#c8bda7',
+        renderColor: '#c8bda7',
+        semanticUse: 'residential',
+        use: 'residential',
+      })
+    );
+
+    const building = createPathCorridorStreetDesignObject({
+      id: 'building-1',
+      type: 'building',
+      points: [
+        { x: 0, z: 0 },
+        { x: 12, z: 0 },
+      ],
+    });
+    const withBuilding = {
+      ...initialState,
+      design: {
+        ...initialState.design,
+        objects: [building],
+      },
+    };
+    const updated = streetDesignReducer(withBuilding, {
+      type: 'update_object_property',
+      objectId: 'building-1',
+      key: 'use',
+      value: 'civic',
+    });
+
+    expect(updated.design.objects[0].properties).toEqual(
+      expect.objectContaining({
+        color: '#8ba77f',
+        renderColor: '#8ba77f',
+        semanticUse: 'civic',
+        use: 'civic',
+      })
+    );
+  });
+
+  it('applies preset properties and width overrides when switching tools', () => {
+    const initialState = createInitialStreetDesignEditorState();
+    const withConiferTree = streetDesignReducer(initialState, {
+      type: 'set_tool',
+      objectType: 'tree',
+      propertyOverrides: {
+        canopyDiameter: 2.8,
+        height: 6,
+        spacing: 6,
+        species: 'conifer',
+      },
+    });
+    const withProtectedBikeLane = streetDesignReducer(initialState, {
+      type: 'set_tool',
+      objectType: 'bike_lane',
+      propertyOverrides: { protection: 'protected' },
+      widthOverride: 2.2,
+    });
+
+    expect(withConiferTree.selectedTool).toBe('tree');
+    expect(withConiferTree.placementSettings.properties).toEqual(
+      expect.objectContaining({
+        canopyDiameter: 2.8,
+        height: 6,
+        spacing: 6,
+        species: 'conifer',
+      })
+    );
+
+    expect(withProtectedBikeLane.selectedTool).toBe('bike_lane');
+    expect(withProtectedBikeLane.placementSettings.type).toBe('bike_lane');
+    expect(withProtectedBikeLane.placementSettings.width).toBe(2.2);
+    expect(withProtectedBikeLane.placementSettings.properties).toEqual(
+      expect.objectContaining({
+        protection: 'protected',
+        surface: 'asphalt',
+      })
+    );
   });
 
   it('does not place objects while camera mode is active', () => {
@@ -564,10 +672,11 @@ describe('streetDesignReducer', () => {
       osmSnapshot: {
         fetchedAt: 1,
         bbox: { south: 0, west: 0, north: 1, east: 1 },
-        ways: [
+        features: [
           {
             id: 'building-1',
             kind: 'building',
+            geometryKind: 'polygon',
             points: [
               { lat: 0, lon: 0 },
               { lat: 0, lon: 1 },
@@ -587,7 +696,34 @@ describe('streetDesignReducer', () => {
     });
 
     expect(hidden.design.hiddenOsmWayIds).toContain('building-1');
+    expect(hidden.design.hiddenOsmFeatureIds).toContain('building-1');
     expect(hidden.selectedOsmWayId).toBeNull();
     expect(hidden.isDirty).toBe(true);
+  });
+
+  it('normalizes old OSM ways and layer visibility when parsing saved designs', () => {
+    const parsed = parseStoredStreetDesignState({
+      ...createInitialStreetDesignEditorState().design,
+      osmLayerVisibility: { road: true, building: true, green: true, water: true },
+      hiddenOsmWayIds: ['legacy-road-1'],
+      osmSnapshot: {
+        fetchedAt: 1,
+        bbox: { south: 0, west: 0, north: 1, east: 1 },
+        ways: [
+          {
+            id: 'legacy-road-1',
+            kind: 'road',
+            points: [
+              { lat: 0, lon: 0 },
+              { lat: 1, lon: 1 },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(parsed?.osmSnapshot?.features?.[0]?.geometryKind).toBe('line');
+    expect(parsed?.osmLayerVisibility?.sidewalk).toBe(true);
+    expect(parsed?.hiddenOsmFeatureIds).toContain('legacy-road-1');
   });
 });

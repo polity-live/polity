@@ -12,7 +12,7 @@ export function projectGeoPointToLocal(
 ): StreetDesignLocalPoint {
   const latRadians = toRadians(origin.lat);
   const x = toRadians(point.lon - origin.lon) * EARTH_RADIUS_METERS * Math.cos(latRadians);
-  const z = toRadians(point.lat - origin.lat) * EARTH_RADIUS_METERS;
+  const z = toRadians(origin.lat - point.lat) * EARTH_RADIUS_METERS;
 
   return {
     x: Math.round(x * 1000) / 1000,
@@ -24,7 +24,7 @@ export function unprojectLocalPointToGeo(
   point: StreetDesignLocalPoint,
   origin: StreetDesignOrigin
 ): StreetDesignGeoPoint {
-  const lat = origin.lat + (point.z / EARTH_RADIUS_METERS) * (180 / Math.PI);
+  const lat = origin.lat - (point.z / EARTH_RADIUS_METERS) * (180 / Math.PI);
   const lon =
     origin.lon +
     (point.x / (EARTH_RADIUS_METERS * Math.cos(toRadians(origin.lat)))) * (180 / Math.PI);

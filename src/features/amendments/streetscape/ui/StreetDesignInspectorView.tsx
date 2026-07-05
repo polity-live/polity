@@ -25,6 +25,14 @@ import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
 import { getStreetDesignCostLine } from '../logic/streetDesignCosting';
 import { getStreetDesignObjectDefinition } from '../logic/streetDesignObjectRegistry';
 import { getStreetDesignGeometryRotationDeg } from '../logic/streetDesignPlacement';
+import {
+  getStreetDesignOsmFeatureLayer,
+  getStreetDesignOsmFeaturePoints,
+} from '../logic/streetDesignOsm';
+import {
+  getStreetDesignObjectVariantLabelKey,
+  getStreetDesignVariantLabelKey,
+} from '../logic/streetDesignVariantCatalog';
 
 interface StreetDesignInspectorViewProps {
   selectedObject: StreetDesignObject | null;
@@ -90,6 +98,76 @@ function getPlacementRotationValue(
   return getStreetDesignGeometryRotationDeg(placementPreview);
 }
 
+function getOsmLayerLabelKey(layer: ReturnType<typeof getStreetDesignOsmFeatureLayer>) {
+  if (layer === 'bike_lane') return 'features.amendments.streetscape.osmLayers.bikeLane';
+  if (layer === 'street_furniture')
+    return 'features.amendments.streetscape.osmLayers.streetFurniture';
+  if (layer === 'landuse_context')
+    return 'features.amendments.streetscape.osmLayers.landuseContext';
+  return `features.amendments.streetscape.osmLayers.${layer}`;
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function formatMeters(value: number) {
+  return `${value.toFixed(Math.abs(value) < 1 ? 2 : 1)} m`;
+}
+
+function getRelevantOsmTags(tags: Record<string, string> | undefined) {
+  if (!tags) return [];
+
+  const relevantPrefixes = [
+    'highway',
+    'natural',
+    'amenity',
+    'parking',
+    'parking:',
+    'cycleway',
+    'cycleway:',
+    'sidewalk',
+    'sidewalk:',
+    'railway',
+    'public_transport',
+    'barrier',
+    'traffic_calming',
+    'crossing',
+    'access',
+    'bridge',
+    'bridge:',
+    'tunnel',
+    'layer',
+    'ele',
+    'incline',
+    'step_count',
+    'embankment',
+    'cutting',
+    'man_made',
+    'area:highway',
+    'maxheight',
+    'maxheight:',
+    'min_height',
+    'clearance',
+    'shop',
+    'office',
+    'tourism',
+    'leisure',
+    'landuse',
+    'building',
+    'emergency',
+    'lanes',
+    'oneway',
+    'width',
+    'height',
+    'surface',
+  ];
+
+  return Object.entries(tags)
+    .filter(([key]) => relevantPrefixes.some(prefix => key === prefix || key.startsWith(prefix)))
+    .slice(0, 8);
+}
+
 export function StreetDesignInspectorView({
   selectedObject,
   selectedOsmWay,
@@ -122,7 +200,10 @@ export function StreetDesignInspectorView({
 
   if (interactionMode === 'place') {
     const definition = getStreetDesignObjectDefinition(selectedTool);
-    const objectLabel = t(definition.labelKey);
+    const objectLabel = t(
+      getStreetDesignVariantLabelKey(selectedTool, placementSettings.properties) ??
+        definition.labelKey
+    );
     const hasWidth = definition.toolMode !== 'point' || definition.defaultWidth != null;
     const unitCostEuro =
       (placementSettings.customUnitCostMinor ?? definition.suggestedUnitCostMinor) / 100;
@@ -232,11 +313,35 @@ export function StreetDesignInspectorView({
               );
             }
 
+            if (field.fieldType === 'combobox') {
+              const datalistId = `street-design-placement-${field.key}`;
+
+              return (
+                <div key={field.key} className="space-y-1">
+                  <Label className="text-xs">{fieldLabel(field.labelKey, field.unit)}</Label>
+                  <Input
+                    type="text"
+                    aria-label={fieldLabel(field.labelKey, field.unit)}
+                    list={datalistId}
+                    value={asInputValue(value)}
+                    disabled={readOnly}
+                    onChange={event => onPlacementPropertyChange(field.key, event.target.value)}
+                  />
+                  <datalist id={datalistId}>
+                    {(field.options ?? []).map(option => (
+                      <option key={option.value} value={option.value} label={t(option.labelKey)} />
+                    ))}
+                  </datalist>
+                </div>
+              );
+            }
+
             return (
               <div key={field.key} className="space-y-1">
                 <Label className="text-xs">{fieldLabel(field.labelKey, field.unit)}</Label>
                 <Input
                   type={field.fieldType === 'number' ? 'number' : 'text'}
+                  aria-label={fieldLabel(field.labelKey, field.unit)}
                   min={field.min}
                   max={field.max}
                   step={field.step}
@@ -290,6 +395,36 @@ export function StreetDesignInspectorView({
 
   if (!selectedObject) {
     if (selectedOsmWay) {
+      const osmFeaturePoints = getStreetDesignOsmFeaturePoints(selectedOsmWay);
+      const osmLayer = getStreetDesignOsmFeatureLayer(selectedOsmWay.kind);
+      const osmKindLabel = t(getOsmLayerLabelKey(osmLayer));
+      const relevantTags = getRelevantOsmTags(selectedOsmWay.tags);
+      const osmElevationDetails = [
+        selectedOsmWay.structureKind
+          ? `${t('features.amendments.streetscape.inspector.structure')}: ${
+              selectedOsmWay.structureKind
+            }`
+          : null,
+        selectedOsmWay.elevationSource
+          ? `${t('features.amendments.streetscape.inspector.elevationSource')}: ${
+              selectedOsmWay.elevationSource
+            }`
+          : null,
+        selectedOsmWay.incline
+          ? `${t('features.amendments.streetscape.inspector.incline')}: ${selectedOsmWay.incline}`
+          : null,
+        isFiniteNumber(selectedOsmWay.stepCount)
+          ? `${t('features.amendments.streetscape.inspector.stepCount')}: ${
+              selectedOsmWay.stepCount
+            }`
+          : null,
+        isFiniteNumber(selectedOsmWay.clearanceMeters)
+          ? `${t('features.amendments.streetscape.inspector.clearance')}: ${formatMeters(
+              selectedOsmWay.clearanceMeters
+            )}`
+          : null,
+      ].filter((value): value is string => Boolean(value));
+
       return (
         <aside className="bg-background/95 min-w-0 border-b p-4 shadow-sm xl:border-b-0 xl:border-l">
           <div className="mb-4 flex items-start justify-between gap-3">
@@ -302,7 +437,8 @@ export function StreetDesignInspectorView({
                 {selectedOsmWay.label ?? t('features.amendments.streetscape.inspector.osmFallback')}
               </h2>
               <p className="text-muted-foreground text-xs">
-                {selectedOsmWay.kind} · {selectedOsmWay.id}
+                {osmKindLabel}
+                {selectedOsmWay.subkind ? ` · ${selectedOsmWay.subkind}` : ''} · {selectedOsmWay.id}
               </p>
             </div>
             <Button
@@ -321,14 +457,84 @@ export function StreetDesignInspectorView({
               <p className="text-muted-foreground text-xs">
                 {t('features.amendments.streetscape.inspector.points')}
               </p>
-              <p className="font-semibold">{selectedOsmWay.points.length}</p>
+              <p className="font-semibold">{osmFeaturePoints.length}</p>
             </div>
+            {selectedOsmWay.widthMeters ? (
+              <div className="bg-muted/20 rounded-md border px-3 py-2">
+                <p className="text-muted-foreground text-xs">
+                  {t('features.amendments.streetscape.inspector.width')}
+                </p>
+                <p className="font-semibold">{selectedOsmWay.widthMeters.toFixed(1)} m</p>
+              </div>
+            ) : null}
             {selectedOsmWay.height ? (
               <div className="bg-muted/20 rounded-md border px-3 py-2">
                 <p className="text-muted-foreground text-xs">
                   {t('features.amendments.streetscape.inspector.height')}
                 </p>
                 <p className="font-semibold">{selectedOsmWay.height.toFixed(1)} m</p>
+              </div>
+            ) : null}
+            {isFiniteNumber(selectedOsmWay.deckElevationMeters) ? (
+              <div className="bg-muted/20 rounded-md border px-3 py-2">
+                <p className="text-muted-foreground text-xs">
+                  {t('features.amendments.streetscape.inspector.deckElevation')}
+                </p>
+                <p className="font-semibold">{formatMeters(selectedOsmWay.deckElevationMeters)}</p>
+              </div>
+            ) : null}
+            {isFiniteNumber(selectedOsmWay.baseElevationMeters) &&
+            selectedOsmWay.baseElevationMeters !== 0 ? (
+              <div className="bg-muted/20 rounded-md border px-3 py-2">
+                <p className="text-muted-foreground text-xs">
+                  {t('features.amendments.streetscape.inspector.baseElevation')}
+                </p>
+                <p className="font-semibold">{formatMeters(selectedOsmWay.baseElevationMeters)}</p>
+              </div>
+            ) : null}
+            {isFiniteNumber(selectedOsmWay.layerIndex) && selectedOsmWay.layerIndex !== 0 ? (
+              <div className="bg-muted/20 rounded-md border px-3 py-2">
+                <p className="text-muted-foreground text-xs">
+                  {t('features.amendments.streetscape.inspector.layer')}
+                </p>
+                <p className="font-semibold">{selectedOsmWay.layerIndex}</p>
+              </div>
+            ) : null}
+            {osmElevationDetails.length > 0 ? (
+              <div className="bg-muted/20 rounded-md border px-3 py-2">
+                <p className="text-muted-foreground text-xs">
+                  {t('features.amendments.streetscape.inspector.elevationSource')}
+                </p>
+                <p className="font-semibold">{osmElevationDetails.join(' · ')}</p>
+              </div>
+            ) : null}
+            {selectedOsmWay.semanticUse || selectedOsmWay.level || selectedOsmWay.access ? (
+              <div className="bg-muted/20 rounded-md border px-3 py-2">
+                <p className="text-muted-foreground text-xs">
+                  {t('features.amendments.streetscape.inspector.tags')}
+                </p>
+                <p className="font-semibold">
+                  {[selectedOsmWay.semanticUse, selectedOsmWay.level, selectedOsmWay.access]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+              </div>
+            ) : null}
+            {relevantTags.length > 0 ? (
+              <div className="bg-muted/20 rounded-md border px-3 py-2">
+                <p className="text-muted-foreground text-xs">
+                  {t('features.amendments.streetscape.inspector.tags')}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {relevantTags.map(([key, value]) => (
+                    <span
+                      key={key}
+                      className="bg-background/80 rounded border px-1.5 py-0.5 text-[11px]"
+                    >
+                      {key}={value}
+                    </span>
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>
@@ -355,7 +561,9 @@ export function StreetDesignInspectorView({
   }
 
   const definition = getStreetDesignObjectDefinition(selectedObject.type);
-  const objectLabel = t(definition.labelKey);
+  const objectLabel = t(
+    getStreetDesignObjectVariantLabelKey(selectedObject) ?? definition.labelKey
+  );
   const unitCostEuro =
     (selectedObject.cost.customUnitCostMinor ?? selectedObject.cost.suggestedUnitCostMinor) / 100;
 
@@ -492,6 +700,31 @@ export function StreetDesignInspectorView({
             );
           }
 
+          if (field.fieldType === 'combobox') {
+            const datalistId = `street-design-object-${selectedObject.id}-${field.key}`;
+
+            return (
+              <div key={field.key} className="space-y-1">
+                <Label className="text-xs">{fieldLabel(field.labelKey, field.unit)}</Label>
+                <Input
+                  type="text"
+                  aria-label={fieldLabel(field.labelKey, field.unit)}
+                  list={datalistId}
+                  value={asInputValue(value)}
+                  disabled={readOnly}
+                  onChange={event =>
+                    onPropertyChange(selectedObject.id, field.key, event.target.value)
+                  }
+                />
+                <datalist id={datalistId}>
+                  {(field.options ?? []).map(option => (
+                    <option key={option.value} value={option.value} label={t(option.labelKey)} />
+                  ))}
+                </datalist>
+              </div>
+            );
+          }
+
           const fieldMeta = field as {
             unit?: string;
             min?: number;
@@ -507,6 +740,7 @@ export function StreetDesignInspectorView({
               <Label className="text-xs">{fieldLabel(field.labelKey, fieldUnit)}</Label>
               <Input
                 type={field.fieldType === 'number' ? 'number' : 'text'}
+                aria-label={fieldLabel(field.labelKey, fieldUnit)}
                 min={fieldMin}
                 max={fieldMax}
                 step={fieldStep}
