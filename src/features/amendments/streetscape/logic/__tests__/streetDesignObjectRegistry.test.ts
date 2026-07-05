@@ -4,6 +4,7 @@ import {
   streetDesignObjectRegistry,
   streetDesignObjectTypes,
 } from '../streetDesignObjectRegistry';
+import { streetDesignPropertyOptions } from '../streetDesignVariantCatalog';
 
 describe('streetDesignObjectRegistry', () => {
   it('defines all MVP object types with required editor metadata', () => {
@@ -179,10 +180,21 @@ describe('streetDesignObjectRegistry', () => {
     for (const type of ['street', 'car_lane', 'bike_lane', 'sidewalk', 'rail_track'] as const) {
       const definition = streetDesignObjectRegistry[type];
       const schemaKeys = definition.propertySchema.map(field => field.key);
+      const structureKindField = definition.propertySchema.find(
+        field => field.key === 'structureKind'
+      );
 
       expect(definition.defaultProperties.layerIndex).toBe(0);
       expect(definition.defaultProperties.deckElevationMeters).toBe(0);
       expect(definition.defaultProperties.structureKind).toBe('surface');
+      expect(structureKindField?.options).toBe(streetDesignPropertyOptions.structureKind);
+      expect(structureKindField?.options?.map(option => option.value)).toEqual([
+        'surface',
+        'bridge',
+        'viaduct',
+        'embankment',
+        'tunnel',
+      ]);
       expect(schemaKeys).toEqual(
         expect.arrayContaining(['layerIndex', 'deckElevationMeters', 'structureKind'])
       );

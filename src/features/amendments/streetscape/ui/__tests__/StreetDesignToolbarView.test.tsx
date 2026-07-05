@@ -126,6 +126,49 @@ describe('StreetDesignToolbarView', () => {
       expect.objectContaining({ protection: 'protected' }),
       2.2
     );
+    fireEvent.click(screen.getByRole('button', { name: /bike bridge/i }));
+    expect(onToolChange).toHaveBeenCalledWith(
+      'bike_lane',
+      expect.objectContaining({
+        deckElevationMeters: 3.2,
+        level: 'bridge',
+        structureKind: 'bridge',
+      }),
+      2.2
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /road bridge/i }));
+    expect(onToolChange).toHaveBeenCalledWith(
+      'street',
+      expect.objectContaining({
+        deckElevationMeters: 3.5,
+        layerIndex: 1,
+        level: 'bridge',
+        structureKind: 'bridge',
+      }),
+      6
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /rail bridge/i }));
+    expect(onToolChange).toHaveBeenCalledWith(
+      'rail_track',
+      expect.objectContaining({
+        deckElevationMeters: 5,
+        level: 'bridge',
+        structureKind: 'bridge',
+      }),
+      2.4
+    );
+    fireEvent.click(screen.getByRole('button', { name: /viaduct/i }));
+    expect(onToolChange).toHaveBeenCalledWith(
+      'rail_track',
+      expect.objectContaining({
+        deckElevationMeters: 7.5,
+        layerIndex: 2,
+        structureKind: 'viaduct',
+      }),
+      2.4
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /camera/i }));
     expect(onInteractionModeChange).toHaveBeenCalledWith('camera');

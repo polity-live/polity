@@ -27,7 +27,7 @@ const streetDesignElevationPropertyFields: StreetDesignPropertySchemaField[] = [
     key: 'structureKind',
     labelKey: 'features.amendments.streetscape.objects.common.properties.structureKind',
     fieldType: 'combobox',
-    options: streetDesignPropertyOptions.level,
+    options: streetDesignPropertyOptions.structureKind,
   },
 ];
 

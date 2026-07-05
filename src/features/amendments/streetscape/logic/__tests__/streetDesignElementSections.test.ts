@@ -6,6 +6,7 @@ import {
   streetDesignElementSections,
 } from '../streetDesignElementSections';
 import { streetDesignObjectRegistry, streetDesignObjectTypes } from '../streetDesignObjectRegistry';
+import { getStreetDesignVariantLabelKey } from '../streetDesignVariantCatalog';
 
 describe('streetDesignElementSections', () => {
   it('uses the OSM overlay order for addable element sections', () => {
@@ -65,6 +66,102 @@ describe('streetDesignElementSections', () => {
           propertyOverrides: expect.objectContaining({ species: 'conifer' }),
         }),
       ])
+    );
+  });
+
+  it('exposes bridge presets as add-menu variants with OSM-compatible height properties', () => {
+    const roadTools = streetDesignElementSections.find(section => section.layer === 'road')?.tools;
+    const sidewalkTools = streetDesignElementSections.find(
+      section => section.layer === 'sidewalk'
+    )?.tools;
+    const bikeLaneTools = streetDesignElementSections.find(
+      section => section.layer === 'bike_lane'
+    )?.tools;
+    const railTools = streetDesignElementSections.find(section => section.layer === 'rail')?.tools;
+
+    expect(roadTools).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'street-bridge',
+          objectType: 'street',
+          propertyOverrides: expect.objectContaining({
+            deckElevationMeters: 3.5,
+            layerIndex: 1,
+            level: 'bridge',
+            structureKind: 'bridge',
+          }),
+          widthOverride: 6,
+        }),
+        expect.objectContaining({
+          id: 'car_lane-bridge',
+          objectType: 'car_lane',
+          propertyOverrides: expect.objectContaining({
+            deckElevationMeters: 3.5,
+            direction: 'two_way',
+            level: 'bridge',
+            structureKind: 'bridge',
+          }),
+        }),
+      ])
+    );
+    expect(sidewalkTools).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'sidewalk-bridge',
+          objectType: 'sidewalk',
+          propertyOverrides: expect.objectContaining({
+            deckElevationMeters: 3.2,
+            level: 'bridge',
+            structureKind: 'bridge',
+          }),
+        }),
+      ])
+    );
+    expect(bikeLaneTools).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'bike_lane-bridge',
+          objectType: 'bike_lane',
+          propertyOverrides: expect.objectContaining({
+            deckElevationMeters: 3.2,
+            level: 'bridge',
+            structureKind: 'bridge',
+          }),
+        }),
+      ])
+    );
+    expect(railTools).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'rail_track-bridge',
+          objectType: 'rail_track',
+          propertyOverrides: expect.objectContaining({
+            deckElevationMeters: 5,
+            level: 'bridge',
+            structureKind: 'bridge',
+          }),
+        }),
+        expect.objectContaining({
+          id: 'rail_track-viaduct',
+          objectType: 'rail_track',
+          propertyOverrides: expect.objectContaining({
+            deckElevationMeters: 7.5,
+            layerIndex: 2,
+            level: 'bridge',
+            structureKind: 'viaduct',
+          }),
+        }),
+      ])
+    );
+
+    expect(
+      getStreetDesignVariantLabelKey('street', {
+        structureKind: 'bridge',
+        roadClass: 'residential',
+      })
+    ).toBe('features.amendments.streetscape.variantLabels.street.bridge');
+    expect(getStreetDesignVariantLabelKey('rail_track', { structureKind: 'viaduct' })).toBe(
+      'features.amendments.streetscape.variantLabels.rail.viaduct'
     );
   });
 });

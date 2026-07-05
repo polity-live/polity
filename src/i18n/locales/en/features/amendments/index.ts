@@ -925,6 +925,13 @@ export const amendmentsTranslations = {
         surface: 'Surface',
         tunnel: 'Tunnel',
       },
+      structureKind: {
+        bridge: 'Bridge',
+        embankment: 'Embankment',
+        surface: 'Surface',
+        tunnel: 'Tunnel',
+        viaduct: 'Viaduct',
+      },
       maintenance: {
         extensiv: 'Extensive',
         intensiv: 'Intensive',
@@ -1035,6 +1042,7 @@ export const amendmentsTranslations = {
     },
     variantLabels: {
       bikeLane: {
+        bridge: 'Bike bridge',
         painted: 'Painted bike lane',
         protected: 'Protected bike lane',
         raised: 'Raised bike lane',
@@ -1050,6 +1058,7 @@ export const amendmentsTranslations = {
         retail: 'Retail building',
       },
       carLane: {
+        bridge: 'Lane bridge',
         one_way: 'One-way lane',
         two_way: 'Two-way lane',
       },
@@ -1103,12 +1112,15 @@ export const amendmentsTranslations = {
         swings: 'Swings playground',
       },
       rail: {
+        bridge: 'Rail bridge',
         light_rail: 'Light rail track',
         rail: 'Rail track',
         tram: 'Tram track',
+        viaduct: 'Viaduct',
       },
       sidewalk: {
         accessible: 'Accessible sidewalk',
+        bridge: 'Sidewalk bridge',
         promenade: 'Promenade',
         sidewalk: 'Sidewalk',
         standard: 'Standard sidewalk',
@@ -1124,6 +1136,7 @@ export const amendmentsTranslations = {
         standard: 'Stairs',
       },
       street: {
+        bridge: 'Road bridge',
         construction: 'Construction street',
         living_street: 'Living street',
         pedestrian: 'Pedestrian street',

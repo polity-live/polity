@@ -102,6 +102,9 @@ export const streetDesignPropertyOptions = {
     value => variantOption('landuseType', value)
   ),
   level: ['surface', 'bridge', 'tunnel'].map(value => variantOption('level', value)),
+  structureKind: ['surface', 'bridge', 'viaduct', 'embankment', 'tunnel'].map(value =>
+    variantOption('structureKind', value)
+  ),
   maintenance: ['standard', 'extensiv', 'intensiv'].map(value =>
     variantOption('maintenance', value)
   ),
@@ -241,12 +244,44 @@ export const streetDesignVariantToolsBySection = {
       selectionPropertyKeys: ['status'],
       widthOverride: 6,
     }),
+    createVariantTool({
+      objectType: 'street',
+      variantGroup: 'street',
+      value: 'bridge',
+      propertyOverrides: {
+        deckElevationMeters: 3.5,
+        layerIndex: 1,
+        level: 'bridge',
+        roadClass: 'residential',
+        status: 'open',
+        structureKind: 'bridge',
+        surface: 'asphalt',
+      },
+      selectionPropertyKeys: ['structureKind'],
+      widthOverride: 6,
+    }),
     ...createPropertyVariantTools({
       objectType: 'car_lane',
       variantGroup: 'carLane',
       propertyKey: 'direction',
       values: ['one_way', 'two_way'],
       widthByValue: { one_way: 3.25, two_way: 6.5 },
+    }),
+    createVariantTool({
+      objectType: 'car_lane',
+      variantGroup: 'carLane',
+      value: 'bridge',
+      propertyOverrides: {
+        deckElevationMeters: 3.5,
+        direction: 'two_way',
+        layerIndex: 1,
+        level: 'bridge',
+        status: 'open',
+        structureKind: 'bridge',
+        surface: 'asphalt',
+      },
+      selectionPropertyKeys: ['structureKind'],
+      widthOverride: 6.5,
     }),
   ],
   sidewalk: [
@@ -269,14 +304,45 @@ export const streetDesignVariantToolsBySection = {
       propertyOverrides: { material: 'beton' },
       selectionPropertyKeys: ['material'],
     }),
+    createVariantTool({
+      objectType: 'sidewalk',
+      variantGroup: 'sidewalk',
+      value: 'bridge',
+      propertyOverrides: {
+        deckElevationMeters: 3.2,
+        layerIndex: 1,
+        level: 'bridge',
+        pathType: 'accessible',
+        structureKind: 'bridge',
+        surface: 'paving_stones',
+      },
+      selectionPropertyKeys: ['structureKind'],
+      widthOverride: 2.4,
+    }),
   ],
-  bike_lane: createPropertyVariantTools({
-    objectType: 'bike_lane',
-    variantGroup: 'bikeLane',
-    propertyKey: 'protection',
-    values: ['painted', 'protected', 'raised'],
-    widthByValue: { protected: 2.2, raised: 2.4 },
-  }),
+  bike_lane: [
+    ...createPropertyVariantTools({
+      objectType: 'bike_lane',
+      variantGroup: 'bikeLane',
+      propertyKey: 'protection',
+      values: ['painted', 'protected', 'raised'],
+      widthByValue: { protected: 2.2, raised: 2.4 },
+    }),
+    createVariantTool({
+      objectType: 'bike_lane',
+      variantGroup: 'bikeLane',
+      value: 'bridge',
+      propertyOverrides: {
+        deckElevationMeters: 3.2,
+        layerIndex: 1,
+        level: 'bridge',
+        protection: 'protected',
+        structureKind: 'bridge',
+      },
+      selectionPropertyKeys: ['structureKind'],
+      widthOverride: 2.2,
+    }),
+  ],
   parking: [
     ...createPropertyVariantTools({
       objectType: 'parking_area',
@@ -315,13 +381,43 @@ export const streetDesignVariantToolsBySection = {
       selectionPropertyKeys: ['waterType'],
     }),
   ],
-  rail: createPropertyVariantTools({
-    objectType: 'rail_track',
-    variantGroup: 'rail',
-    propertyKey: 'railType',
-    values: ['tram', 'light_rail', 'rail'],
-    widthByValue: { light_rail: 2, rail: 2.4 },
-  }),
+  rail: [
+    ...createPropertyVariantTools({
+      objectType: 'rail_track',
+      variantGroup: 'rail',
+      propertyKey: 'railType',
+      values: ['tram', 'light_rail', 'rail'],
+      widthByValue: { light_rail: 2, rail: 2.4 },
+    }),
+    createVariantTool({
+      objectType: 'rail_track',
+      variantGroup: 'rail',
+      value: 'bridge',
+      propertyOverrides: {
+        deckElevationMeters: 5,
+        layerIndex: 1,
+        level: 'bridge',
+        railType: 'rail',
+        structureKind: 'bridge',
+      },
+      selectionPropertyKeys: ['structureKind'],
+      widthOverride: 2.4,
+    }),
+    createVariantTool({
+      objectType: 'rail_track',
+      variantGroup: 'rail',
+      value: 'viaduct',
+      propertyOverrides: {
+        deckElevationMeters: 7.5,
+        layerIndex: 2,
+        level: 'bridge',
+        railType: 'rail',
+        structureKind: 'viaduct',
+      },
+      selectionPropertyKeys: ['structureKind'],
+      widthOverride: 2.4,
+    }),
+  ],
   transit: [
     createVariantTool({
       objectType: 'bus_stop',
@@ -411,9 +507,9 @@ export const streetDesignVariantToolsBySection = {
 } satisfies Partial<Record<string, StreetDesignVariantToolDefinition[]>>;
 
 const knownVariantValues = {
-  bikeLane: ['painted', 'protected', 'raised'],
+  bikeLane: ['painted', 'protected', 'raised', 'bridge'],
   building: streetDesignBuildingUses,
-  carLane: ['one_way', 'two_way'],
+  carLane: ['one_way', 'two_way', 'bridge'],
   civic: ['school', 'library', 'townhall', 'hospital', 'community_center'],
   construction: ['planned', 'active', 'closed'],
   crossing: ['zebra', 'signalized', 'raised', 'refuge'],
@@ -422,10 +518,10 @@ const knownVariantValues = {
   loadingZone: ['loading_only', 'delivery_window', 'short_stop'],
   parking: ['parallel', 'angled', 'perpendicular'],
   playground: ['mixed', 'climbing', 'swings', 'sand', 'inclusive'],
-  rail: ['tram', 'light_rail', 'rail'],
-  sidewalk: ['standard', 'accessible', 'promenade', 'sidewalk'],
+  rail: ['tram', 'light_rail', 'rail', 'bridge', 'viaduct'],
+  sidewalk: ['standard', 'accessible', 'promenade', 'sidewalk', 'bridge'],
   sports: ['multi', 'football', 'basketball', 'skate', 'fitness'],
-  street: ['residential', 'primary', 'living_street', 'pedestrian', 'construction'],
+  street: ['residential', 'primary', 'living_street', 'pedestrian', 'construction', 'bridge'],
   trafficCalming: ['table', 'hump', 'chicane', 'narrowing'],
   trafficSignal: ['vehicle', 'pedestrian', 'bicycle'],
   transit: ['bus_stop', 'sheltered_bus_stop', 'tram_platform', 'rail_platform'],
@@ -463,14 +559,20 @@ type StreetDesignVariantLabelInput = Pick<StreetDesignObject, 'type' | 'properti
 const labelLookup: Partial<
   Record<StreetDesignObjectType, (object: StreetDesignVariantLabelInput) => string | null>
 > = {
-  bike_lane: object => propertyVariantLabelKey(object, 'bikeLane', 'protection', 'painted'),
+  bike_lane: object =>
+    stringProperty(object.properties, 'structureKind', 'surface') === 'bridge'
+      ? variantLabelKey('bikeLane', 'bridge')
+      : propertyVariantLabelKey(object, 'bikeLane', 'protection', 'painted'),
   building: object => propertyVariantLabelKey(object, 'building', 'use', 'mixed'),
   bus_stop: object =>
     knownVariantLabelKey(
       'transit',
       object.properties.shelter === false ? 'bus_stop' : 'sheltered_bus_stop'
     ),
-  car_lane: object => propertyVariantLabelKey(object, 'carLane', 'direction', 'one_way'),
+  car_lane: object =>
+    stringProperty(object.properties, 'structureKind', 'surface') === 'bridge'
+      ? variantLabelKey('carLane', 'bridge')
+      : propertyVariantLabelKey(object, 'carLane', 'direction', 'one_way'),
   civic_area: object => propertyVariantLabelKey(object, 'civic', 'civicType', 'school'),
   construction_area: object => propertyVariantLabelKey(object, 'construction', 'status', 'planned'),
   crossing: object => propertyVariantLabelKey(object, 'crossing', 'crossingType', 'zebra'),
@@ -481,8 +583,16 @@ const labelLookup: Partial<
     propertyVariantLabelKey(object, 'loadingZone', 'restriction', 'loading_only'),
   parking_area: object => propertyVariantLabelKey(object, 'parking', 'orientation', 'parallel'),
   playground: object => propertyVariantLabelKey(object, 'playground', 'equipment', 'mixed'),
-  rail_track: object => propertyVariantLabelKey(object, 'rail', 'railType', 'tram'),
-  sidewalk: object => propertyVariantLabelKey(object, 'sidewalk', 'pathType', 'standard'),
+  rail_track: object => {
+    const structureKind = stringProperty(object.properties, 'structureKind', 'surface');
+    if (structureKind === 'bridge') return variantLabelKey('rail', 'bridge');
+    if (structureKind === 'viaduct') return variantLabelKey('rail', 'viaduct');
+    return propertyVariantLabelKey(object, 'rail', 'railType', 'tram');
+  },
+  sidewalk: object =>
+    stringProperty(object.properties, 'structureKind', 'surface') === 'bridge'
+      ? variantLabelKey('sidewalk', 'bridge')
+      : propertyVariantLabelKey(object, 'sidewalk', 'pathType', 'standard'),
   sports_pitch: object => propertyVariantLabelKey(object, 'sports', 'sport', 'multi'),
   station_platform: object => {
     const platformType = stringProperty(object.properties, 'platformType', 'tram_stop');
@@ -492,6 +602,9 @@ const labelLookup: Partial<
     );
   },
   street: object => {
+    if (stringProperty(object.properties, 'structureKind', 'surface') === 'bridge') {
+      return variantLabelKey('street', 'bridge');
+    }
     const status = stringProperty(object.properties, 'status', 'open');
     if (status === 'construction') return variantLabelKey('street', 'construction');
     return propertyVariantLabelKey(object, 'street', 'roadClass', 'residential');
