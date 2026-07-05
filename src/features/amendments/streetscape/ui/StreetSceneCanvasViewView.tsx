@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode, type RefObject } from 'react';
+import { useEffect, useMemo, useState, type ReactNode, type RefObject } from 'react';
 import { ChevronDown, Eye, EyeOff, Layers, Trash2, X } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
@@ -20,6 +20,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import type {
   StreetDesignCostLine,
+  StreetDesignCameraPose,
   StreetDesignGeoPoint,
   StreetDesignInteractionMode,
   StreetDesignLocalPoint,
@@ -42,6 +43,7 @@ import { getStreetDesignChangeRequestMarker } from '../logic/streetDesignChangeR
 import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
 import { getStreetDesignObjectDefinition } from '../logic/streetDesignObjectRegistry';
 import { getStreetDesignObjectVariantLabelKey } from '../logic/streetDesignVariantCatalog';
+import { getStreetDesignComparisonLayers } from '../logic/streetDesignDiff';
 import {
   getStreetDesignGeometryCenter,
   getStreetDesignGeometryRotationDeg,
@@ -76,6 +78,7 @@ export interface StreetSceneCanvasViewViewProps {
   streetDesignDiscussions?: readonly StreetDesignDiscussionLike[];
   selectedChangeRequestId?: string | null;
   showChangeRequests?: boolean;
+  cameraPose?: StreetDesignCameraPose | null;
   canVoteOnChangeRequests?: boolean;
   canFinalizeChangeRequests?: boolean;
   currentUserId?: string | null;
@@ -122,6 +125,7 @@ export function StreetSceneCanvasViewView({
   streetDesignDiscussions = [],
   selectedChangeRequestId = null,
   showChangeRequests = false,
+  cameraPose = null,
   canVoteOnChangeRequests = false,
   canFinalizeChangeRequests = false,
   currentUserId = null,
@@ -149,6 +153,13 @@ export function StreetSceneCanvasViewView({
 }: StreetSceneCanvasViewViewProps) {
   const { t } = useTranslation();
   const [legendOpen, setLegendOpen] = useState(true);
+  const canvasSize = useCanvasElementSize(canvasRef);
+  const comparisonLayers = useMemo(
+    () => getStreetDesignComparisonLayers(design.comparisonMode),
+    [design.comparisonMode]
+  );
+  const designLayerOffsetX = comparisonLayers.split ? 52 : 0;
+  const originalLayerOffsetX = comparisonLayers.split ? -52 : 0;
   const legendSections = useMemo(
     () =>
       buildStreetDesignLegendSections({
@@ -166,8 +177,22 @@ export function StreetSceneCanvasViewView({
     [changeRequests, design]
   );
   const positionedChangeRequestMarkers = useMemo(
-    () => getStackedChangeRequestMarkers(changeRequestMarkers),
-    [changeRequestMarkers]
+    () =>
+      comparisonLayers.showDesign
+        ? getStackedChangeRequestMarkers(
+            changeRequestMarkers.flatMap(marker => {
+              const anchor = getTrackedCanvasAnchorFromLocalPoint({
+                point: marker.position,
+                cameraPose,
+                canvasSize,
+                layerOffsetX: designLayerOffsetX,
+                hideWhenOutside: true,
+              });
+              return anchor ? [{ ...marker, ...anchor }] : [];
+            })
+          )
+        : [],
+    [cameraPose, canvasSize, changeRequestMarkers, comparisonLayers.showDesign, designLayerOffsetX]
   );
   const hiddenObjectIdSet = useMemo(() => new Set(hiddenObjectIds), [hiddenObjectIds]);
   const selectedChangeRequest =
@@ -176,10 +201,21 @@ export function StreetSceneCanvasViewView({
     ? positionedChangeRequestMarkers.find(marker => marker.id === selectedChangeRequest.id)
     : null;
   const selectedObjectAnchor = selectedObject
-    ? getCanvasAnchorFromLocalPoint(getStreetDesignGeometryCenter(selectedObject.geometry))
+    ? getTrackedCanvasAnchorFromLocalPoint({
+        point: getStreetDesignGeometryCenter(selectedObject.geometry),
+        cameraPose,
+        canvasSize,
+        layerOffsetX: designLayerOffsetX,
+      })
     : null;
   const selectedOsmAnchor = selectedOsmWay
-    ? getCanvasAnchorFromOsmWay(selectedOsmWay, design)
+    ? getCanvasAnchorFromOsmWay(
+        selectedOsmWay,
+        design,
+        cameraPose,
+        canvasSize,
+        originalLayerOffsetX
+      )
     : null;
 
   if (loadFailed) {
@@ -264,7 +300,12 @@ export function StreetSceneCanvasViewView({
                     leftPercent: selectedChangeRequestMarker.leftPercent,
                     topPercent: selectedChangeRequestMarker.topPercent,
                   }
-                : getCanvasAnchorFromLocalPoint({ x: 0, z: 0 })
+                : (getTrackedCanvasAnchorFromLocalPoint({
+                    point: { x: 0, z: 0 },
+                    cameraPose,
+                    canvasSize,
+                    layerOffsetX: designLayerOffsetX,
+                  }) ?? getCanvasAnchorFromLocalPoint({ x: 0, z: 0 }))
             }
           >
             <StreetDesignChangeRequestPanel
@@ -421,9 +462,14 @@ export function StreetSceneCanvasViewView({
   );
 }
 
-interface CanvasAnchor {
+export interface CanvasAnchor {
   leftPercent: number;
   topPercent: number;
+}
+
+export interface CanvasSize {
+  width: number;
+  height: number;
 }
 
 export function getBoundedCanvasPopoverPlacement(anchor: CanvasAnchor) {
@@ -861,6 +907,44 @@ function ReadonlyCard({ label, value }: { label: string; value: string }) {
   );
 }
 
+function useCanvasElementSize(canvasRef: RefObject<HTMLCanvasElement | null>) {
+  const [canvasSize, setCanvasSize] = useState<CanvasSize | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return undefined;
+
+    const updateCanvasSize = () => {
+      const nextSize = getCanvasElementSize(canvas);
+      setCanvasSize(previousSize =>
+        previousSize?.width === nextSize.width && previousSize.height === nextSize.height
+          ? previousSize
+          : nextSize
+      );
+    };
+
+    updateCanvasSize();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(updateCanvasSize);
+      resizeObserver.observe(canvas);
+      return () => resizeObserver.disconnect();
+    }
+
+    window.addEventListener('resize', updateCanvasSize);
+    return () => window.removeEventListener('resize', updateCanvasSize);
+  }, [canvasRef]);
+
+  return canvasSize;
+}
+
+function getCanvasElementSize(canvas: HTMLCanvasElement): CanvasSize {
+  return {
+    width: canvas.clientWidth || canvas.width || 1,
+    height: canvas.clientHeight || canvas.height || 1,
+  };
+}
+
 function getCanvasAnchorFromLocalPoint(point: StreetDesignLocalPoint): CanvasAnchor {
   return {
     leftPercent: clamp(50 + point.x * 1.2, 18, 82),
@@ -868,9 +952,83 @@ function getCanvasAnchorFromLocalPoint(point: StreetDesignLocalPoint): CanvasAnc
   };
 }
 
+function getTrackedCanvasAnchorFromLocalPoint({
+  point,
+  cameraPose,
+  canvasSize,
+  layerOffsetX = 0,
+  hideWhenOutside = false,
+}: {
+  point: StreetDesignLocalPoint;
+  cameraPose: StreetDesignCameraPose | null | undefined;
+  canvasSize: CanvasSize | null;
+  layerOffsetX?: number;
+  hideWhenOutside?: boolean;
+}): CanvasAnchor | null {
+  if (!cameraPose || !canvasSize) return getCanvasAnchorFromLocalPoint(point);
+
+  const projectedAnchor = projectLocalPointToCanvasAnchor(point, cameraPose, canvasSize, {
+    layerOffsetX,
+  });
+  if (!projectedAnchor) return hideWhenOutside ? null : getCanvasAnchorFromLocalPoint(point);
+  if (hideWhenOutside && isCanvasAnchorOutside(projectedAnchor, 12)) return null;
+
+  return {
+    leftPercent: clamp(projectedAnchor.leftPercent, 4, 96),
+    topPercent: clamp(projectedAnchor.topPercent, 4, 96),
+  };
+}
+
+export function projectLocalPointToCanvasAnchor(
+  point: StreetDesignLocalPoint,
+  cameraPose: StreetDesignCameraPose,
+  canvasSize: CanvasSize,
+  options: { layerOffsetX?: number; y?: number } = {}
+): CanvasAnchor | null {
+  const worldPoint = {
+    x: point.x + (options.layerOffsetX ?? 0),
+    y: options.y ?? 0,
+    z: point.z,
+  };
+  const cameraPosition = cameraPose.position;
+  const cameraTarget = cameraPose.target;
+  const forward = normalizeVector3({
+    x: cameraTarget.x - cameraPosition.x,
+    y: cameraTarget.y - cameraPosition.y,
+    z: cameraTarget.z - cameraPosition.z,
+  });
+  if (!forward) return null;
+
+  const right = normalizeVector3(crossVector3(forward, { x: 0, y: 1, z: 0 }));
+  if (!right) return null;
+  const up = normalizeVector3(crossVector3(right, forward));
+  if (!up) return null;
+
+  const cameraToPoint = {
+    x: worldPoint.x - cameraPosition.x,
+    y: worldPoint.y - cameraPosition.y,
+    z: worldPoint.z - cameraPosition.z,
+  };
+  const depth = dotVector3(cameraToPoint, forward);
+  if (depth <= 0.1) return null;
+
+  const verticalScale = Math.tan((45 * Math.PI) / 360);
+  const aspect = canvasSize.width / Math.max(canvasSize.height, 1);
+  const ndcX = dotVector3(cameraToPoint, right) / (depth * verticalScale * aspect);
+  const ndcY = dotVector3(cameraToPoint, up) / (depth * verticalScale);
+
+  return {
+    leftPercent: 50 + ndcX * 50,
+    topPercent: 50 - ndcY * 50,
+  };
+}
+
 function getCanvasAnchorFromOsmWay(
   osmWay: StreetDesignOsmWay,
-  design: StreetDesignStateV1
+  design: StreetDesignStateV1,
+  cameraPose: StreetDesignCameraPose | null | undefined,
+  canvasSize: CanvasSize | null,
+  layerOffsetX: number
 ): CanvasAnchor {
   const points = getStreetDesignOsmFeaturePoints(osmWay);
   if (points.length === 0) return getCanvasAnchorFromLocalPoint({ x: 0, z: 0 });
@@ -883,7 +1041,53 @@ function getCanvasAnchorFromOsmWay(
     { lat: 0, lon: 0 }
   );
 
-  return getCanvasAnchorFromLocalPoint(projectGeoPointToLocal(averagePoint, design.origin));
+  const localPoint = projectGeoPointToLocal(averagePoint, design.origin);
+  return (
+    getTrackedCanvasAnchorFromLocalPoint({
+      point: localPoint,
+      cameraPose,
+      canvasSize,
+      layerOffsetX,
+    }) ?? getCanvasAnchorFromLocalPoint(localPoint)
+  );
+}
+
+function isCanvasAnchorOutside(anchor: CanvasAnchor, paddingPercent: number) {
+  return (
+    anchor.leftPercent < -paddingPercent ||
+    anchor.leftPercent > 100 + paddingPercent ||
+    anchor.topPercent < -paddingPercent ||
+    anchor.topPercent > 100 + paddingPercent
+  );
+}
+
+function dotVector3(
+  first: { x: number; y: number; z: number },
+  second: { x: number; y: number; z: number }
+) {
+  return first.x * second.x + first.y * second.y + first.z * second.z;
+}
+
+function crossVector3(
+  first: { x: number; y: number; z: number },
+  second: { x: number; y: number; z: number }
+) {
+  return {
+    x: first.y * second.z - first.z * second.y,
+    y: first.z * second.x - first.x * second.z,
+    z: first.x * second.y - first.y * second.x,
+  };
+}
+
+function normalizeVector3(vector: { x: number; y: number; z: number }) {
+  const length = Math.hypot(vector.x, vector.y, vector.z);
+  if (length < 0.000001) return null;
+
+  return {
+    x: vector.x / length,
+    y: vector.y / length,
+    z: vector.z / length,
+  };
 }
 
 function asInputValue(value: StreetDesignPropertyValue | undefined) {

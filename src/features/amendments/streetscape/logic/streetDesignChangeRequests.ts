@@ -68,6 +68,7 @@ export interface StreetDesignChangeRequestMarker {
   displayId: string;
   title: string;
   tone: StreetDesignChangeRequestTone;
+  position: StreetDesignLocalPoint;
   leftPercent: number;
   topPercent: number;
 }
@@ -225,6 +226,7 @@ export function getStreetDesignChangeRequestMarker(
     displayId: formatStreetDesignChangeRequestIdentifier(changeRequest),
     title: formatStreetDesignChangeRequestTitle(changeRequest),
     tone: getStreetDesignChangeRequestTone(changeRequest),
+    position: point,
     leftPercent: clamp(50 + point.x * 1.2, 8, 92),
     topPercent: clamp(50 - point.z * 1.2, 8, 92),
   };

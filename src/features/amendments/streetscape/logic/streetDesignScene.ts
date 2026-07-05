@@ -5757,7 +5757,7 @@ export async function mountStreetDesignScene(
       .join(':');
   }
 
-  let lastCameraPoseSignature = getCameraPoseSignature();
+  let lastCameraPoseSignature: string | null = null;
   function emitCameraPoseChangeIfNeeded() {
     const signature = getCameraPoseSignature();
     if (signature === lastCameraPoseSignature) return;
@@ -5778,7 +5778,7 @@ export async function mountStreetDesignScene(
   }
 
   const renderScheduler = createStreetDesignRenderScheduler(() => {
-    const didResize = resize();
+    resize();
     let isFocusAnimationActive = false;
     const activeFocusAnimation = focusAnimation;
 
@@ -5810,9 +5810,7 @@ export async function mountStreetDesignScene(
 
     const controlsChanged = controls.update();
     renderer.render(scene, camera);
-    if (didResize || controlsChanged || activeFocusAnimation) {
-      emitCameraPoseChangeIfNeeded();
-    }
+    emitCameraPoseChangeIfNeeded();
 
     if (isFocusAnimationActive || controlsChanged) {
       renderScheduler.requestRender();

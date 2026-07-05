@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MutableRefObject } from 'react';
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import type {
   CorridorGeometry,
   PathCorridorGeometry,
@@ -26,6 +26,10 @@ import type { EditorCollaborator } from '@/features/editor/types';
 import type { StreetDesignDiscussionLike } from './StreetDesignChangeRequestPanel';
 
 const EMPTY_CHANGE_REQUESTS: readonly StreetDesignChangeRequest[] = [];
+const DEFAULT_STREET_DESIGN_CAMERA_POSE: StreetDesignCameraPose = {
+  position: { x: 0, y: 75, z: 85 },
+  target: { x: 0, y: 0, z: 0 },
+};
 
 interface StreetSceneCanvasViewProps {
   design: StreetDesignStateV1;
@@ -140,6 +144,8 @@ export function useStreetSceneCanvasViewController({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneControllerRef = useRef<StreetDesignSceneController | null>(null);
   const cameraPoseRef = useRef<StreetDesignCameraPose | null>(null);
+  const pendingCameraPoseRef = useRef<StreetDesignCameraPose | null>(null);
+  const cameraPoseFrameRef = useRef<number | null>(null);
   const lastObjectFocusRequestKeyRef = useRef(0);
   const lastOsmFocusRequestKeyRef = useRef(0);
   const latestFocusRequestRef = useRef({
@@ -156,6 +162,23 @@ export function useStreetSceneCanvasViewController({
   };
 
   const [loadFailed, setLoadFailed] = useState(false);
+  const [cameraPose, setCameraPose] = useState<StreetDesignCameraPose>(
+    DEFAULT_STREET_DESIGN_CAMERA_POSE
+  );
+  const handleCameraPoseChange = useCallback((pose: StreetDesignCameraPose) => {
+    cameraPoseRef.current = pose;
+    pendingCameraPoseRef.current = pose;
+    if (cameraPoseFrameRef.current != null) return;
+
+    cameraPoseFrameRef.current = requestStreetSceneAnimationFrame(() => {
+      cameraPoseFrameRef.current = null;
+      const nextPose = pendingCameraPoseRef.current;
+      pendingCameraPoseRef.current = null;
+      if (nextPose) {
+        setCameraPose(nextPose);
+      }
+    });
+  }, []);
   const renderedChangeRequests = showChangeRequests ? changeRequests : EMPTY_CHANGE_REQUESTS;
   const latestSceneOptionsRef = useRef<Omit<StreetDesignSceneMountOptions, 'canvas'>>({
     design,
@@ -179,9 +202,7 @@ export function useStreetSceneCanvasViewController({
     onObjectSelect,
     onOsmWaySelect,
     onObjectRotate,
-    onCameraPoseChange: pose => {
-      cameraPoseRef.current = pose;
-    },
+    onCameraPoseChange: handleCameraPoseChange,
   });
   latestSceneOptionsRef.current = {
     design,
@@ -205,10 +226,17 @@ export function useStreetSceneCanvasViewController({
     onObjectSelect,
     onOsmWaySelect,
     onObjectRotate,
-    onCameraPoseChange: pose => {
-      cameraPoseRef.current = pose;
-    },
+    onCameraPoseChange: handleCameraPoseChange,
   };
+
+  useEffect(
+    () => () => {
+      if (cameraPoseFrameRef.current != null) {
+        cancelStreetSceneAnimationFrame(cameraPoseFrameRef.current);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (readOnly || interactionMode !== 'place' || !placementMode) return undefined;
@@ -371,6 +399,7 @@ export function useStreetSceneCanvasViewController({
     streetDesignDiscussions,
     selectedChangeRequestId,
     showChangeRequests,
+    cameraPose,
     canVoteOnChangeRequests,
     canFinalizeChangeRequests,
     currentUserId,
@@ -473,6 +502,26 @@ function consumeFocusRequests({
   }
 
   return { focusObjectId, focusOsmWayId };
+}
+
+function requestStreetSceneAnimationFrame(callback: FrameRequestCallback) {
+  if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+    return window.requestAnimationFrame(callback);
+  }
+
+  return globalThis.setTimeout(
+    () => callback(globalThis.performance?.now?.() ?? Date.now()),
+    16
+  ) as unknown as number;
+}
+
+function cancelStreetSceneAnimationFrame(frameId: number) {
+  if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+    window.cancelAnimationFrame(frameId);
+    return;
+  }
+
+  globalThis.clearTimeout(frameId);
 }
 
 function isEditableKeyboardTarget(target: EventTarget | null) {

@@ -8,6 +8,7 @@ import { createEmptyStreetDesignState } from '../../state/streetDesignReducer';
 import type { StreetDesignStateV1 } from '../../types';
 import {
   getBoundedCanvasPopoverPlacement,
+  projectLocalPointToCanvasAnchor,
   StreetSceneCanvasViewView,
 } from '../StreetSceneCanvasViewView';
 
@@ -278,5 +279,24 @@ describe('StreetSceneCanvasViewView', () => {
       topPercent: 90,
       transform: 'translate(-100%, -100%)',
     });
+  });
+
+  it('projects canvas anchors from the current scene camera pose', () => {
+    const canvasSize = { width: 1000, height: 500 };
+    const defaultPose = {
+      position: { x: 0, y: 75, z: 85 },
+      target: { x: 0, y: 0, z: 0 },
+    };
+    const pannedPose = {
+      position: { x: 20, y: 75, z: 85 },
+      target: { x: 20, y: 0, z: 0 },
+    };
+
+    const centeredAnchor = projectLocalPointToCanvasAnchor({ x: 0, z: 0 }, defaultPose, canvasSize);
+    const pannedAnchor = projectLocalPointToCanvasAnchor({ x: 0, z: 0 }, pannedPose, canvasSize);
+
+    expect(centeredAnchor?.leftPercent).toBeCloseTo(50, 1);
+    expect(centeredAnchor?.topPercent).toBeCloseTo(50, 1);
+    expect(pannedAnchor?.leftPercent).toBeLessThan(50);
   });
 });
