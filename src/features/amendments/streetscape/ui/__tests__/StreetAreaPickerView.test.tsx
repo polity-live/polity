@@ -131,6 +131,20 @@ describe('StreetAreaPickerView', () => {
     expect(onLocationSearchReset).toHaveBeenCalledTimes(1);
   });
 
+  it('collapses and expands the map section body', () => {
+    const { container } = render(<StreetAreaPickerView {...createPickerProps()} />);
+
+    const trigger = within(container).getByRole('button', { name: 'Map section' });
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(within(container).getByPlaceholderText('City')).toBeInstanceOf(HTMLInputElement);
+
+    fireEvent.click(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+
+    fireEvent.click(trigger);
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+  });
+
   it('refits the viewport only when the search focus key changes', () => {
     const { map, reactLeafletModule } = createReactLeafletFixture();
     const initialBounds = createBounds('initial-bounds');

@@ -1,6 +1,12 @@
 import type { DivIcon, LatLngBounds } from 'leaflet';
-import { MapPinned, Search, X } from 'lucide-react';
+import { ChevronDown, MapPinned, Search, X } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/features/shared/ui/ui/collapsible';
 import { MapPanelSkeleton } from '@/features/shared/ui/feedback';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
@@ -97,6 +103,7 @@ export function StreetAreaPickerView({
   mapUnavailable,
 }: StreetAreaPickerViewProps) {
   const { t } = useTranslation();
+  const [mapSectionOpen, setMapSectionOpen] = useState(true);
   const updateWidth = (value: number) => {
     if (Number.isFinite(value)) onWidthMetersChange(value);
   };
@@ -116,165 +123,186 @@ export function StreetAreaPickerView({
     resizeMarkerIcon != null &&
     rotateMarkerIcon != null;
 
-  return (
-    <section className="bg-card overflow-hidden rounded-lg border shadow-sm" data-swipe-lock>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
-        <div className="flex items-center gap-2">
-          <div className="bg-muted/40 flex size-9 items-center justify-center rounded-md border">
-            <MapPinned className="text-muted-foreground size-4" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold">
-              {t('features.amendments.streetscape.areaPicker.title')}
-            </h2>
-            <p className="text-muted-foreground text-xs">
-              {center.lat.toFixed(5)}, {center.lon.toFixed(5)}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-end gap-2">
-          <div className="w-24 space-y-1">
-            <Label className="text-muted-foreground text-[11px]">
-              {t('features.amendments.streetscape.areaPicker.widthMeters')}
-            </Label>
-            <Input
-              type="number"
-              min={20}
-              step={10}
-              value={widthMeters}
-              disabled={readOnly}
-              onChange={event => updateWidth(Number(event.target.value))}
-            />
-          </div>
-          <div className="w-24 space-y-1">
-            <Label className="text-muted-foreground text-[11px]">
-              {t('features.amendments.streetscape.areaPicker.heightMeters')}
-            </Label>
-            <Input
-              type="number"
-              min={20}
-              step={10}
-              value={heightMeters}
-              disabled={readOnly}
-              onChange={event => updateHeight(Number(event.target.value))}
-            />
-          </div>
-          <div className="w-24 space-y-1">
-            <Label className="text-muted-foreground text-[11px]">
-              {t('features.amendments.streetscape.areaPicker.rotationDegrees')}
-            </Label>
-            <Input
-              type="number"
-              step={5}
-              value={rotationDeg}
-              disabled={readOnly}
-              onChange={event => updateRotation(Number(event.target.value))}
-            />
-          </div>
-          <Button size="sm" variant="outline" onClick={onLoadSample} disabled={readOnly}>
-            {t('features.amendments.streetscape.areaPicker.loadDemo')}
-          </Button>
-          <Button size="sm" onClick={onLoadOsm} disabled={readOnly || isLoadingOsm}>
-            {isLoadingOsm
-              ? t('features.amendments.streetscape.areaPicker.loadingOsm')
-              : t('features.amendments.streetscape.areaPicker.loadOsm')}
-          </Button>
-        </div>
-      </div>
+  const mapSectionTitle = t('features.amendments.streetscape.areaPicker.title');
 
-      <div className="border-b px-4 py-3">
-        <div className="bg-muted/20 space-y-3 rounded-md border p-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <Search className="text-muted-foreground size-4 shrink-0" />
-              <h3 className="truncate text-sm font-medium">
-                {t('features.amendments.streetscape.areaPicker.locationSearchTitle')}
-              </h3>
-            </div>
+  return (
+    <Collapsible open={mapSectionOpen} onOpenChange={setMapSectionOpen}>
+      <section className="bg-card overflow-hidden rounded-lg border shadow-sm" data-swipe-lock>
+        <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+          <CollapsibleTrigger asChild>
             <Button
               type="button"
-              size="icon"
               variant="ghost"
-              disabled={readOnly}
-              title={t('features.amendments.streetscape.areaPicker.clearSearch')}
-              aria-label={t('features.amendments.streetscape.areaPicker.clearSearch')}
-              onClick={onLocationSearchReset}
+              className="h-auto min-w-0 justify-start px-2 py-1"
+              aria-label={mapSectionTitle}
             >
-              <X className="size-4" />
+              <span className="bg-muted/40 flex size-9 shrink-0 items-center justify-center rounded-md border">
+                <MapPinned className="text-muted-foreground size-4" />
+              </span>
+              <span className="min-w-0 text-left">
+                <span className="block truncate text-sm font-semibold">{mapSectionTitle}</span>
+                <span className="text-muted-foreground block text-xs">
+                  {center.lat.toFixed(5)}, {center.lon.toFixed(5)}
+                </span>
+              </span>
+              <ChevronDown
+                className={`text-muted-foreground size-4 shrink-0 transition-transform ${
+                  mapSectionOpen ? 'rotate-180' : ''
+                }`}
+              />
             </Button>
-          </div>
-          <GeoAddressFields
-            idPrefix="street-design-location-search"
-            values={locationSearchValues}
-            onFieldChange={onLocationSearchFieldChange}
-            labels={locationSearchLabels}
-            placeholders={locationSearchPlaceholders}
-            onResolvedAddress={onLocationSearchResolved}
-            resetContextKey={locationSearchResetKey}
-            disabled={readOnly}
-          />
+          </CollapsibleTrigger>
         </div>
-      </div>
 
-      <div className="p-3">
-        {mapLoading ? (
-          <MapPanelSkeleton
-            label={t('features.amendments.streetscape.areaPicker.loadingMap')}
-            heightClassName="h-64 md:h-72"
-          />
-        ) : !mapReady ? (
-          <div className="bg-muted/20 text-muted-foreground flex h-64 items-center justify-center rounded-md border border-dashed text-sm">
-            {t('features.amendments.streetscape.areaPicker.mapUnavailable')}
-          </div>
-        ) : (
-          <div className="h-64 overflow-hidden rounded-md border md:h-72">
-            <reactLeafletModule.MapContainer
-              center={position}
-              zoom={17}
-              className="h-full w-full"
-              attributionControl={false}
-            >
-              <reactLeafletModule.TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution="&copy; OpenStreetMap contributors"
-              />
-              <StreetAreaPickerMapViewport
-                center={position}
-                bounds={bounds}
-                focusKey={mapViewportFocusKey}
-                reactLeafletModule={reactLeafletModule}
-              />
-              <MapClickHandler
-                disabled={readOnly}
-                reactLeafletModule={reactLeafletModule}
-                onBboxMove={onBboxMove}
-              />
-              {selectionCorners.length >= 3 ? (
-                <reactLeafletModule.Polygon
-                  positions={selectionCorners}
-                  pathOptions={{ color: '#0f766e', weight: 2, fillOpacity: 0.08 }}
+        <CollapsibleContent>
+          <div className="border-b px-4 py-3">
+            <div className="flex flex-wrap items-end justify-end gap-2">
+              <div className="w-24 space-y-1">
+                <Label className="text-muted-foreground text-[11px]">
+                  {t('features.amendments.streetscape.areaPicker.widthMeters')}
+                </Label>
+                <Input
+                  type="number"
+                  min={20}
+                  step={10}
+                  value={widthMeters}
+                  disabled={readOnly}
+                  onChange={event => updateWidth(Number(event.target.value))}
                 />
-              ) : null}
-              <StreetAreaPickerSelectionOverlay
-                readOnly={readOnly}
-                reactLeafletModule={reactLeafletModule}
-                markerIcon={markerIcon}
-                resizeMarkerIcon={resizeMarkerIcon}
-                rotateMarkerIcon={rotateMarkerIcon}
-                position={position}
-                rotateHandlePosition={rotateHandlePosition}
-                resizeHandles={resizeHandles}
-                onBboxMove={onBboxMove}
-                onBboxResize={onBboxResize}
-                onSelectionRotate={onSelectionRotate}
-              />
-            </reactLeafletModule.MapContainer>
+              </div>
+              <div className="w-24 space-y-1">
+                <Label className="text-muted-foreground text-[11px]">
+                  {t('features.amendments.streetscape.areaPicker.heightMeters')}
+                </Label>
+                <Input
+                  type="number"
+                  min={20}
+                  step={10}
+                  value={heightMeters}
+                  disabled={readOnly}
+                  onChange={event => updateHeight(Number(event.target.value))}
+                />
+              </div>
+              <div className="w-24 space-y-1">
+                <Label className="text-muted-foreground text-[11px]">
+                  {t('features.amendments.streetscape.areaPicker.rotationDegrees')}
+                </Label>
+                <Input
+                  type="number"
+                  step={5}
+                  value={rotationDeg}
+                  disabled={readOnly}
+                  onChange={event => updateRotation(Number(event.target.value))}
+                />
+              </div>
+              <Button size="sm" variant="outline" onClick={onLoadSample} disabled={readOnly}>
+                {t('features.amendments.streetscape.areaPicker.loadDemo')}
+              </Button>
+              <Button size="sm" onClick={onLoadOsm} disabled={readOnly || isLoadingOsm}>
+                {isLoadingOsm
+                  ? t('features.amendments.streetscape.areaPicker.loadingOsm')
+                  : t('features.amendments.streetscape.areaPicker.loadOsm')}
+              </Button>
+            </div>
           </div>
-        )}
-      </div>
 
-      {osmError ? <p className="text-destructive px-4 pb-3 text-xs">{osmError}</p> : null}
-    </section>
+          <div className="border-b px-4 py-3">
+            <div className="bg-muted/20 rounded-md border p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <Search className="text-muted-foreground size-4 shrink-0" />
+                  <h3 className="truncate text-sm font-medium">
+                    {t('features.amendments.streetscape.areaPicker.locationSearchTitle')}
+                  </h3>
+                </div>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  disabled={readOnly}
+                  title={t('features.amendments.streetscape.areaPicker.clearSearch')}
+                  aria-label={t('features.amendments.streetscape.areaPicker.clearSearch')}
+                  onClick={onLocationSearchReset}
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+              <div className="pt-3">
+                <GeoAddressFields
+                  idPrefix="street-design-location-search"
+                  values={locationSearchValues}
+                  onFieldChange={onLocationSearchFieldChange}
+                  labels={locationSearchLabels}
+                  placeholders={locationSearchPlaceholders}
+                  onResolvedAddress={onLocationSearchResolved}
+                  resetContextKey={locationSearchResetKey}
+                  disabled={readOnly}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3">
+            {mapLoading ? (
+              <MapPanelSkeleton
+                label={t('features.amendments.streetscape.areaPicker.loadingMap')}
+                heightClassName="h-64 md:h-72"
+              />
+            ) : !mapReady ? (
+              <div className="bg-muted/20 text-muted-foreground flex h-64 items-center justify-center rounded-md border border-dashed text-sm">
+                {t('features.amendments.streetscape.areaPicker.mapUnavailable')}
+              </div>
+            ) : (
+              <div className="h-64 overflow-hidden rounded-md border md:h-72">
+                <reactLeafletModule.MapContainer
+                  center={position}
+                  zoom={17}
+                  className="h-full w-full"
+                  attributionControl={false}
+                >
+                  <reactLeafletModule.TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution="&copy; OpenStreetMap contributors"
+                  />
+                  <StreetAreaPickerMapViewport
+                    center={position}
+                    bounds={bounds}
+                    focusKey={mapViewportFocusKey}
+                    reactLeafletModule={reactLeafletModule}
+                  />
+                  <MapClickHandler
+                    disabled={readOnly}
+                    reactLeafletModule={reactLeafletModule}
+                    onBboxMove={onBboxMove}
+                  />
+                  {selectionCorners.length >= 3 ? (
+                    <reactLeafletModule.Polygon
+                      positions={selectionCorners}
+                      pathOptions={{ color: '#0f766e', weight: 2, fillOpacity: 0.08 }}
+                    />
+                  ) : null}
+                  <StreetAreaPickerSelectionOverlay
+                    readOnly={readOnly}
+                    reactLeafletModule={reactLeafletModule}
+                    markerIcon={markerIcon as DivIcon}
+                    resizeMarkerIcon={resizeMarkerIcon as DivIcon}
+                    rotateMarkerIcon={rotateMarkerIcon as DivIcon}
+                    position={position}
+                    rotateHandlePosition={rotateHandlePosition}
+                    resizeHandles={resizeHandles}
+                    onBboxMove={onBboxMove}
+                    onBboxResize={onBboxResize}
+                    onSelectionRotate={onSelectionRotate}
+                  />
+                </reactLeafletModule.MapContainer>
+              </div>
+            )}
+
+            {osmError ? <p className="text-destructive mt-2 text-sm">{osmError}</p> : null}
+          </div>
+        </CollapsibleContent>
+      </section>
+    </Collapsible>
   );
 }
 
