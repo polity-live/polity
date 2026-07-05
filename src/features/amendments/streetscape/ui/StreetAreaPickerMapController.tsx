@@ -38,15 +38,18 @@ interface LeafletMarkerDragEvent extends LeafletGestureEvent {
 export function StreetAreaPickerMapViewport({
   center,
   bounds,
+  focusKey,
   reactLeafletModule,
 }: {
   center: LeafletPosition;
   bounds: LatLngBounds | null;
+  focusKey: number;
   reactLeafletModule: ReactLeafletModule;
 }) {
   const map = reactLeafletModule.useMap();
   const initialBoundsRef = useRef(bounds);
   const initialCenterRef = useRef(center);
+  const lastFocusKeyRef = useRef(focusKey);
 
   useEffect(() => {
     if (initialBoundsRef.current) {
@@ -60,6 +63,22 @@ export function StreetAreaPickerMapViewport({
 
     map.flyTo(initialCenterRef.current, 17, { animate: false });
   }, [map]);
+
+  useEffect(() => {
+    if (focusKey === lastFocusKeyRef.current) return;
+    lastFocusKeyRef.current = focusKey;
+
+    if (bounds) {
+      map.fitBounds(bounds, {
+        animate: true,
+        padding: [18, 18],
+        maxZoom: 18,
+      });
+      return;
+    }
+
+    map.flyTo(center, 17, { animate: true });
+  }, [bounds, center, focusKey, map]);
 
   return null;
 }

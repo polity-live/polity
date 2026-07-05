@@ -26,6 +26,7 @@ import { hasMinLength, isOptionalMinLength } from '@/features/shared/logic/input
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 import { EditingModeMenuItems } from '@/features/shared/ui/status';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/features/shared/ui/ui/select';
+import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 export interface AmendmentEditContentViewProps {
   amendmentId: any;
   amendment: any;
@@ -61,6 +62,9 @@ export interface AmendmentEditContentViewProps {
   hashtagsInitializedRef: any;
   handleWorkflowStatusChange: any;
   handleRemoveImage: any;
+  handleLocationFieldChange: any;
+  handleLocationCoordinatesChange: any;
+  locationSummary: any;
   handleSubmit: any;
   onFormSubmit: any;
   confirmCreate: any;
@@ -90,6 +94,9 @@ export function AmendmentEditContentView({
   formRef,
   handleWorkflowStatusChange,
   handleRemoveImage,
+  handleLocationFieldChange,
+  handleLocationCoordinatesChange,
+  locationSummary,
   handleSubmit,
   onFormSubmit,
   confirmCreate,
@@ -148,6 +155,12 @@ export function AmendmentEditContentView({
               label={t('features.amendments.editContent.workflowStatusLabel')}
               value={workflowStatusOption.label}
             />
+            {locationSummary ? (
+              <SummaryField
+                label={t('features.amendments.editContent.locationTitle')}
+                value={locationSummary}
+              />
+            ) : null}
           </CreateReviewCard>
           <div className="mt-6 flex gap-3">
             <Button variant="outline" onClick={() => setShowReview(false)}>
@@ -260,6 +273,51 @@ export function AmendmentEditContentView({
             <VisibilityInput
               value={formData.visibility}
               onChange={v => setFormData({ ...formData, visibility: v })}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('features.amendments.editContent.locationTitle')}</CardTitle>
+            <CardDescription>
+              {t('features.amendments.editContent.locationDescription')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <GeoAddressPicker
+              idPrefix="amendment-location"
+              values={{
+                country: formData.country,
+                region: formData.region,
+                city: formData.city,
+                post_code: formData.post_code,
+                street: formData.street,
+                house_number: formData.house_number,
+              }}
+              coordinates={
+                formData.latitude !== null && formData.longitude !== null
+                  ? { latitude: formData.latitude, longitude: formData.longitude }
+                  : null
+              }
+              onCoordinatesChange={handleLocationCoordinatesChange}
+              onFieldChange={handleLocationFieldChange}
+              labels={{
+                country: t('features.amendments.editContent.locationCountryLabel'),
+                region: t('features.amendments.editContent.locationRegionLabel'),
+                city: t('features.amendments.editContent.locationCityLabel'),
+                post_code: t('features.amendments.editContent.locationPostCodeLabel'),
+                street: t('features.amendments.editContent.locationStreetLabel'),
+                house_number: t('features.amendments.editContent.locationHouseNumberLabel'),
+              }}
+              placeholders={{
+                country: t('features.amendments.editContent.locationCountryPlaceholder'),
+                region: t('features.amendments.editContent.locationRegionPlaceholder'),
+                city: t('features.amendments.editContent.locationCityPlaceholder'),
+                post_code: t('features.amendments.editContent.locationPostCodePlaceholder'),
+                street: t('features.amendments.editContent.locationStreetPlaceholder'),
+                house_number: t('features.amendments.editContent.locationHouseNumberPlaceholder'),
+              }}
             />
           </CardContent>
         </Card>

@@ -67,6 +67,7 @@ export interface GeoAddressInputFieldViewProps {
   onChange: any;
   onResolved: any;
   autoComplete: any;
+  disabled: any;
   t: any;
   language: any;
   debouncedValue: any;
@@ -85,6 +86,7 @@ export function GeoAddressInputFieldView({
   value,
   onChange,
   autoComplete,
+  disabled,
   t,
   validationState,
   fieldSuggestions,
@@ -101,6 +103,7 @@ export function GeoAddressInputFieldView({
       invalid={validationState === 'invalid'}
       suggestions={fieldSuggestions}
       autoComplete={autoComplete}
+      disabled={disabled}
       showHint="always"
     />
   );

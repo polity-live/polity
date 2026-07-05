@@ -16,6 +16,7 @@ interface GeoAddressFieldsProps {
   placeholders: GeoAddressTextMap;
   onResolvedAddress?: (result: GeoResolvedAddress | null) => void;
   resetContextKey?: number | string;
+  disabled?: boolean;
 }
 
 const CASCADE_RESET_FIELDS: Record<GeoAddressField, GeoAddressField[]> = {
@@ -74,6 +75,7 @@ export function useGeoAddressFieldsController({
   placeholders,
   onResolvedAddress,
   resetContextKey,
+  disabled = false,
 }: GeoAddressFieldsProps) {
   const [context, setContext] = useState<GeoAddressContext>(INITIAL_CONTEXT);
   const [resolvedAddresses, setResolvedAddresses] = useState(INITIAL_RESOLVED_ADDRESSES);
@@ -176,6 +178,7 @@ export function useGeoAddressFieldsController({
     placeholders,
     onResolvedAddress,
     resetContextKey,
+    disabled,
     context,
     setContext,
     resolvedAddresses,

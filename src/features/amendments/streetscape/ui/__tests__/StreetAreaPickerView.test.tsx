@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { LatLngBounds } from 'leaflet';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -10,31 +10,16 @@ describe('StreetAreaPickerView', () => {
   it('renders the compact map fallback', () => {
     render(
       <StreetAreaPickerView
-        center={{ lat: 52.52, lon: 13.405 }}
-        isLoadingOsm={false}
-        osmError={null}
-        readOnly={false}
-        onLoadOsm={vi.fn()}
-        onLoadSample={vi.fn()}
-        reactLeafletModule={null}
-        markerIcon={null}
-        resizeMarkerIcon={null}
-        rotateMarkerIcon={null}
-        position={[52.52, 13.405]}
-        bounds={null}
-        selectionCorners={[]}
-        rotateHandlePosition={[52.52, 13.405]}
-        resizeHandles={[]}
-        widthMeters={100}
-        heightMeters={100}
-        rotationDeg={0}
-        onBboxMove={vi.fn()}
-        onBboxResize={vi.fn()}
-        onSelectionRotate={vi.fn()}
-        onWidthMetersChange={vi.fn()}
-        onHeightMetersChange={vi.fn()}
-        onRotationDegreesChange={vi.fn()}
-        mapUnavailable={true}
+        {...createPickerProps({
+          reactLeafletModule: null,
+          markerIcon: null,
+          resizeMarkerIcon: null,
+          rotateMarkerIcon: null,
+          bounds: null,
+          selectionCorners: [],
+          resizeHandles: [],
+          mapUnavailable: true,
+        })}
       />
     );
 
@@ -126,6 +111,45 @@ describe('StreetAreaPickerView', () => {
 
     expect(stopPropagation).toHaveBeenCalledTimes(1);
   });
+
+  it('renders location search fields and forwards reset actions', () => {
+    const onLocationSearchReset = vi.fn();
+
+    const { container } = render(
+      <StreetAreaPickerView
+        {...createPickerProps({
+          onLocationSearchReset,
+        })}
+      />
+    );
+
+    const cityInput = within(container).getByPlaceholderText('City');
+    expect(cityInput).toBeInstanceOf(HTMLInputElement);
+
+    fireEvent.click(within(container).getByRole('button', { name: 'Reset search' }));
+
+    expect(onLocationSearchReset).toHaveBeenCalledTimes(1);
+  });
+
+  it('refits the viewport only when the search focus key changes', () => {
+    const { map, reactLeafletModule } = createReactLeafletFixture();
+    const initialBounds = createBounds('initial-bounds');
+    const changedBounds = createBounds('changed-bounds');
+    const props = createPickerProps({ reactLeafletModule, bounds: initialBounds });
+    const { rerender } = render(<StreetAreaPickerView {...props} />);
+
+    rerender(<StreetAreaPickerView {...props} bounds={changedBounds} />);
+    expect(map.fitBounds).toHaveBeenCalledTimes(1);
+
+    rerender(<StreetAreaPickerView {...props} bounds={changedBounds} mapViewportFocusKey={1} />);
+
+    expect(map.fitBounds).toHaveBeenCalledTimes(2);
+    expect(map.fitBounds).toHaveBeenLastCalledWith(changedBounds, {
+      animate: true,
+      padding: [18, 18],
+      maxZoom: 18,
+    });
+  });
 });
 
 function createPickerProps(overrides: Record<string, unknown> = {}) {
@@ -136,6 +160,35 @@ function createPickerProps(overrides: Record<string, unknown> = {}) {
     readOnly: false,
     onLoadOsm: vi.fn(),
     onLoadSample: vi.fn(),
+    locationSearchValues: {
+      country: '',
+      region: '',
+      city: '',
+      post_code: '',
+      street: '',
+      house_number: '',
+    },
+    locationSearchLabels: {
+      country: 'Country',
+      region: 'Region',
+      city: 'City',
+      post_code: 'Post code',
+      street: 'Street',
+      house_number: 'House number',
+    },
+    locationSearchPlaceholders: {
+      country: 'Country',
+      region: 'Region',
+      city: 'City',
+      post_code: 'Post code',
+      street: 'Street',
+      house_number: 'House number',
+    },
+    locationSearchResetKey: 0,
+    mapViewportFocusKey: 0,
+    onLocationSearchFieldChange: vi.fn(),
+    onLocationSearchResolved: vi.fn(),
+    onLocationSearchReset: vi.fn(),
     reactLeafletModule: null,
     markerIcon: {},
     resizeMarkerIcon: {},
@@ -159,6 +212,7 @@ function createPickerProps(overrides: Record<string, unknown> = {}) {
     onWidthMetersChange: vi.fn(),
     onHeightMetersChange: vi.fn(),
     onRotationDegreesChange: vi.fn(),
+    mapLoading: false,
     mapUnavailable: false,
     ...overrides,
   } as any;

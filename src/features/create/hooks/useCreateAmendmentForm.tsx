@@ -8,6 +8,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
+import { AmendmentLocationInput } from '../ui/inputs/AmendmentLocationInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import type { TargetGroupEventSelection } from '@/features/amendments/ui/TargetGroupEventSelector';
 import { AmendmentEvaluationModeInput } from '../ui/inputs/AmendmentEvaluationModeInput';
@@ -37,6 +38,7 @@ import {
   trackCreateFinalization,
   waitForOptimisticCreate,
 } from '../logic/createFinalization';
+import { formatLocation } from '@/features/shared/logic/locationHelpers';
 
 interface CreateTargetGroupData {
   id: string;
@@ -73,6 +75,14 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   const [imageURL, setImageURL] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
   const [hashtags, setHashtags] = useState<string[]>([]);
+  const [country, setCountry] = useState('');
+  const [region, setRegion] = useState('');
+  const [post_code, setPostCode] = useState('');
+  const [city, setCity] = useState('');
+  const [street, setStreet] = useState('');
+  const [house_number, setHouseNumber] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [targetSelection, setTargetSelection] = useState<{
     sourceGroupId: string;
     groupId: string;
@@ -106,6 +116,14 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         imageURL: string;
         visibility: 'public' | 'authenticated' | 'private';
         hashtags: string[];
+        country: string;
+        region: string;
+        post_code: string;
+        city: string;
+        street: string;
+        house_number: string;
+        latitude: number | null;
+        longitude: number | null;
         targetSelection: typeof targetSelection;
         pathMode: 'hierarchy' | 'workflow';
         workflowId: string;
@@ -123,6 +141,14 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     setImageURL(state.imageURL ?? '');
     setVisibility(state.visibility ?? 'public');
     setHashtags(state.hashtags ?? []);
+    setCountry(state.country ?? '');
+    setRegion(state.region ?? '');
+    setPostCode(state.post_code ?? '');
+    setCity(state.city ?? '');
+    setStreet(state.street ?? '');
+    setHouseNumber(state.house_number ?? '');
+    setLatitude(state.latitude ?? null);
+    setLongitude(state.longitude ?? null);
     setTargetSelection(state.targetSelection ?? null);
     setPathMode(state.pathMode ?? searchParams.pathMode);
     setWorkflowId(state.workflowId ?? searchParams.workflowId ?? '');
@@ -141,6 +167,14 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       : visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
         ? t('pages.create.common.authenticated')
         : t('pages.create.common.private');
+  const locationSummary = formatLocation({
+    country,
+    region,
+    post_code,
+    city,
+    street,
+    house_number,
+  });
 
   const { userHashtags } = useCommonState({
     user_id: user?.id,
@@ -328,6 +362,14 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           visibility,
           discussions: null,
           image_url: imageURL || null,
+          country: country || null,
+          region: region || null,
+          post_code: post_code || null,
+          city: city || null,
+          street: street || null,
+          house_number: house_number || null,
+          latitude,
+          longitude,
           x: null,
           youtube: null,
           linkedin: null,
@@ -377,6 +419,14 @@ export function useCreateAmendmentForm(): CreateFormConfig {
             imageURL,
             visibility,
             hashtags,
+            country,
+            region,
+            post_code,
+            city,
+            street,
+            house_number,
+            latitude,
+            longitude,
             targetSelection,
             pathMode,
             workflowId,
@@ -403,6 +453,14 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                 imageURL,
                 visibility,
                 hashtags,
+                country,
+                region,
+                post_code,
+                city,
+                street,
+                house_number,
+                latitude,
+                longitude,
                 targetSelection,
                 pathMode,
                 workflowId,
@@ -508,6 +566,78 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                 onPathModeChange: handlePathModeChange,
                 onWorkflowSelectionChange: handleWorkflowSelectionChange,
                 onSelect: handleTargetSelection,
+              },
+            },
+          ],
+        },
+        {
+          label: t('pages.create.amendment.location'),
+          isValid: () => true,
+          optional: true,
+          fields: [
+            {
+              key: 'location',
+              kind: 'customComponent',
+              component: AmendmentLocationInput,
+              props: {
+                hint: t('pages.create.amendment.tips.location'),
+                values: {
+                  country,
+                  region,
+                  city,
+                  post_code,
+                  street,
+                  house_number,
+                  latitude,
+                  longitude,
+                },
+                labels: {
+                  country: t('pages.create.amendment.countryLabel'),
+                  region: t('pages.create.amendment.regionLabel'),
+                  city: t('pages.create.amendment.cityLabel'),
+                  post_code: t('pages.create.amendment.postCodeLabel'),
+                  street: t('pages.create.amendment.streetLabel'),
+                  house_number: t('pages.create.amendment.houseNumberLabel'),
+                },
+                placeholders: {
+                  country: t('pages.create.amendment.countryPlaceholder'),
+                  region: t('pages.create.amendment.regionPlaceholder'),
+                  city: t('pages.create.amendment.cityPlaceholder'),
+                  post_code: t('pages.create.amendment.postCodePlaceholder'),
+                  street: t('pages.create.amendment.streetPlaceholder'),
+                  house_number: t('pages.create.amendment.houseNumberPlaceholder'),
+                },
+                onCoordinatesChange: (
+                  coordinates: { latitude: number; longitude: number } | null
+                ) => {
+                  setLatitude(coordinates?.latitude ?? null);
+                  setLongitude(coordinates?.longitude ?? null);
+                },
+                onFieldChange: (
+                  field: 'country' | 'region' | 'city' | 'post_code' | 'street' | 'house_number',
+                  value: string
+                ) => {
+                  switch (field) {
+                    case 'country':
+                      setCountry(value);
+                      break;
+                    case 'region':
+                      setRegion(value);
+                      break;
+                    case 'city':
+                      setCity(value);
+                      break;
+                    case 'post_code':
+                      setPostCode(value);
+                      break;
+                    case 'street':
+                      setStreet(value);
+                      break;
+                    case 'house_number':
+                      setHouseNumber(value);
+                      break;
+                  }
+                },
               },
             },
           ],
@@ -699,6 +829,19 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                         : []),
                     ],
                   },
+                  ...(locationSummary
+                    ? [
+                        {
+                          title: t('pages.create.amendment.location'),
+                          fields: [
+                            {
+                              label: t('pages.create.amendment.location'),
+                              value: locationSummary,
+                            },
+                          ],
+                        },
+                      ]
+                    : []),
                   {
                     title: translateText('generated.inline.0050_evaluierung_581efef4'),
                     fields: [
@@ -739,6 +882,15 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       visibility,
       visibilityLabel,
       hashtags,
+      country,
+      region,
+      post_code,
+      city,
+      street,
+      house_number,
+      latitude,
+      longitude,
+      locationSummary,
       preferredHashtagSuggestions,
       targetSelection,
       sourceGroupIdParam,

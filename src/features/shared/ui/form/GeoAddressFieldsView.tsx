@@ -20,6 +20,7 @@ export interface GeoAddressFieldsViewProps {
   placeholders: any;
   onResolvedAddress: any;
   resetContextKey: any;
+  disabled: any;
   context: any;
   setContext: any;
   resolvedAddresses: any;
@@ -33,6 +34,7 @@ export function GeoAddressFieldsView({
   values,
   labels,
   placeholders,
+  disabled,
   context,
   handleResolved,
   handleFieldChange,
@@ -50,6 +52,7 @@ export function GeoAddressFieldsView({
         onChange={value => handleFieldChange('country', value)}
         onResolved={handleResolved}
         autoComplete={AUTO_COMPLETE_TOKENS.country}
+        disabled={disabled}
       />
       <GeoAddressInputField
         id={`${idPrefix}-region`}
@@ -62,6 +65,7 @@ export function GeoAddressFieldsView({
         onChange={value => handleFieldChange('region', value)}
         onResolved={handleResolved}
         autoComplete={AUTO_COMPLETE_TOKENS.region}
+        disabled={disabled}
       />
       <div className="grid gap-4 md:grid-cols-2">
         <GeoAddressInputField
@@ -75,6 +79,7 @@ export function GeoAddressFieldsView({
           onChange={value => handleFieldChange('city', value)}
           onResolved={handleResolved}
           autoComplete={AUTO_COMPLETE_TOKENS.city}
+          disabled={disabled}
         />
         <GeoAddressInputField
           id={`${idPrefix}-post-code`}
@@ -87,6 +92,7 @@ export function GeoAddressFieldsView({
           onChange={value => handleFieldChange('post_code', value)}
           onResolved={handleResolved}
           autoComplete={AUTO_COMPLETE_TOKENS.post_code}
+          disabled={disabled}
         />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
@@ -101,6 +107,7 @@ export function GeoAddressFieldsView({
           onChange={value => handleFieldChange('street', value)}
           onResolved={handleResolved}
           autoComplete={AUTO_COMPLETE_TOKENS.street}
+          disabled={disabled}
         />
         <GeoAddressInputField
           id={`${idPrefix}-house-number`}
@@ -113,6 +120,7 @@ export function GeoAddressFieldsView({
           onChange={value => handleFieldChange('house_number', value)}
           onResolved={handleResolved}
           autoComplete={AUTO_COMPLETE_TOKENS.house_number}
+          disabled={disabled}
         />
       </div>
     </>

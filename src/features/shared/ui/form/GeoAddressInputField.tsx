@@ -55,6 +55,7 @@ interface GeoAddressInputFieldProps {
   onChange: (value: string) => void;
   onResolved: (field: GeoAddressField, result: GeoResolvedAddress | null) => void;
   autoComplete: string;
+  disabled?: boolean;
 }
 import { useGeoAddressInputFieldController } from './useGeoAddressInputFieldController';
 import { GeoAddressInputFieldView } from './GeoAddressInputFieldView';
@@ -70,6 +71,7 @@ export function GeoAddressInputField({
   onChange,
   onResolved,
   autoComplete,
+  disabled,
 }: GeoAddressInputFieldProps) {
   const viewProps = useGeoAddressInputFieldController({
     id,
@@ -82,6 +84,7 @@ export function GeoAddressInputField({
     onChange,
     onResolved,
     autoComplete,
+    disabled,
   });
 
   return <GeoAddressInputFieldView {...viewProps} />;

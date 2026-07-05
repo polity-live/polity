@@ -300,6 +300,7 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
                   coordinates={locationCoordinates}
                   onCoordinatesChange={() => undefined}
                   loadingLabel={t('common.locationPicker.loading')}
+                  unavailableLabel={t('common.locationPicker.unavailable')}
                   busyLabel=""
                   emptyMessage={t('components.infoTabs.noLocation')}
                   moveHint={t('components.infoTabs.mapDescription')}

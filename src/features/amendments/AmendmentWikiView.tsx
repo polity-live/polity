@@ -429,7 +429,16 @@ export function AmendmentWikiView({
       {/* About and Contact Tabs */}
       <InfoTabs
         about={amendment.code || 'No description available.'}
-        contact={{}}
+        contact={{
+          country: amendment.country ?? undefined,
+          region: amendment.region ?? undefined,
+          post_code: amendment.post_code ?? undefined,
+          city: amendment.city ?? undefined,
+          street: amendment.street ?? undefined,
+          house_number: amendment.house_number ?? undefined,
+          latitude: amendment.latitude ?? null,
+          longitude: amendment.longitude ?? null,
+        }}
         className="mb-8"
       />
 

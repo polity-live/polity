@@ -25,6 +25,7 @@ import {
   createEmptyStreetDesignState,
   parseStoredStreetDesignState,
 } from '../state/streetDesignReducer';
+import { getStreetDesignOriginFromAmendmentLocation } from '../logic/streetDesignAmendmentLocation';
 import { useStreetDesignEditorState } from './useStreetDesignEditorState';
 
 function originFromCenter(center: StreetDesignGeoPoint): StreetDesignOrigin {
@@ -117,11 +118,25 @@ export function useStreetDesignPageController(amendmentId: string) {
     includeStreetDesign: true,
   });
   const { createStreetDesign, updateStreetDesign } = useAmendmentActions();
+  const amendmentLocationOrigin = useMemo(
+    () => getStreetDesignOriginFromAmendmentLocation(amendment),
+    [
+      amendment?.city,
+      amendment?.country,
+      amendment?.house_number,
+      amendment?.latitude,
+      amendment?.longitude,
+      amendment?.post_code,
+      amendment?.region,
+      amendment?.street,
+      amendment?.title,
+    ]
+  );
   const persistedDesign = useMemo(
     () =>
       parseStoredStreetDesignState(primaryStreetDesign?.design_state) ??
-      createEmptyStreetDesignState(),
-    [primaryStreetDesign?.design_state]
+      createEmptyStreetDesignState(amendmentLocationOrigin ?? undefined),
+    [amendmentLocationOrigin, primaryStreetDesign?.design_state]
   );
   const editor = useStreetDesignEditorState(persistedDesign);
   const [selectedMapSelection, setSelectedMapSelection] = useState<StreetDesignMapSelection>(

@@ -1,10 +1,19 @@
 import type { DivIcon, LatLngBounds } from 'leaflet';
-import { MapPinned } from 'lucide-react';
+import { MapPinned, Search, X } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { MapPanelSkeleton } from '@/features/shared/ui/feedback';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  GeoAddressFields,
+  type GeoAddressTextMap,
+} from '@/features/shared/ui/form/GeoAddressFields';
+import type {
+  GeoAddressField,
+  GeoAddressValues,
+  GeoResolvedAddress,
+} from '@/features/shared/ui/form/GeoAddressInputField';
 import type { StreetDesignGeoPoint } from '../types';
 import type { StreetDesignBboxResizeHandle } from '../logic/streetDesignBbox';
 import {
@@ -21,6 +30,14 @@ export interface StreetAreaPickerViewProps {
   readOnly: boolean;
   onLoadOsm: () => void;
   onLoadSample: () => void;
+  locationSearchValues: GeoAddressValues;
+  locationSearchLabels: GeoAddressTextMap;
+  locationSearchPlaceholders: GeoAddressTextMap;
+  locationSearchResetKey: number;
+  mapViewportFocusKey: number;
+  onLocationSearchFieldChange: (field: GeoAddressField, value: string) => void;
+  onLocationSearchResolved: (result: GeoResolvedAddress | null) => void;
+  onLocationSearchReset: () => void;
   reactLeafletModule: ReactLeafletModule | null;
   markerIcon: DivIcon | null;
   resizeMarkerIcon: DivIcon | null;
@@ -50,6 +67,14 @@ export function StreetAreaPickerView({
   readOnly,
   onLoadOsm,
   onLoadSample,
+  locationSearchValues,
+  locationSearchLabels,
+  locationSearchPlaceholders,
+  locationSearchResetKey,
+  mapViewportFocusKey,
+  onLocationSearchFieldChange,
+  onLocationSearchResolved,
+  onLocationSearchReset,
   reactLeafletModule,
   markerIcon,
   resizeMarkerIcon,
@@ -157,6 +182,40 @@ export function StreetAreaPickerView({
         </div>
       </div>
 
+      <div className="border-b px-4 py-3">
+        <div className="bg-muted/20 space-y-3 rounded-md border p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <Search className="text-muted-foreground size-4 shrink-0" />
+              <h3 className="truncate text-sm font-medium">
+                {t('features.amendments.streetscape.areaPicker.locationSearchTitle')}
+              </h3>
+            </div>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              disabled={readOnly}
+              title={t('features.amendments.streetscape.areaPicker.clearSearch')}
+              aria-label={t('features.amendments.streetscape.areaPicker.clearSearch')}
+              onClick={onLocationSearchReset}
+            >
+              <X className="size-4" />
+            </Button>
+          </div>
+          <GeoAddressFields
+            idPrefix="street-design-location-search"
+            values={locationSearchValues}
+            onFieldChange={onLocationSearchFieldChange}
+            labels={locationSearchLabels}
+            placeholders={locationSearchPlaceholders}
+            onResolvedAddress={onLocationSearchResolved}
+            resetContextKey={locationSearchResetKey}
+            disabled={readOnly}
+          />
+        </div>
+      </div>
+
       <div className="p-3">
         {mapLoading ? (
           <MapPanelSkeleton
@@ -182,6 +241,7 @@ export function StreetAreaPickerView({
               <StreetAreaPickerMapViewport
                 center={position}
                 bounds={bounds}
+                focusKey={mapViewportFocusKey}
                 reactLeafletModule={reactLeafletModule}
               />
               <MapClickHandler

@@ -186,6 +186,18 @@ BEGIN
     WHERE e.id = NEW.entity_id;
 
     direct_source := 'event';
+  ELSIF NEW.entity_type = 'amendment' THEN
+    SELECT
+      a.latitude,
+      a.longitude,
+      public.search_document_format_location(NULL, a.country, a.region, a.post_code, a.city, a.street, a.house_number),
+      a.group_id,
+      a.created_by_id
+    INTO direct_latitude, direct_longitude, direct_label, resolved_group_id, resolved_owner_user_id
+    FROM public.amendment AS a
+    WHERE a.id = NEW.entity_id;
+
+    direct_source := 'amendment';
   ELSIF NEW.entity_type = 'blog' AND resolved_owner_user_id IS NULL THEN
     SELECT bb.user_id
     INTO resolved_owner_user_id
@@ -873,7 +885,13 @@ BEGIN
       amendment_row.title,
       amendment_row.reason,
       amendment_row.preamble,
-      amendment_row.category
+      amendment_row.category,
+      amendment_row.country,
+      amendment_row.region,
+      amendment_row.post_code,
+      amendment_row.city,
+      amendment_row.street,
+      amendment_row.house_number
     ),
     coalesce(amendment_row.visibility, 'public'),
     amendment_row.created_by_id,
@@ -882,6 +900,15 @@ BEGIN
     jsonb_build_object(
       'type', 'amendment',
       'code', amendment_row.code,
+      'location', public.search_document_format_location(
+        NULL,
+        amendment_row.country,
+        amendment_row.region,
+        amendment_row.post_code,
+        amendment_row.city,
+        amendment_row.street,
+        amendment_row.house_number
+      ),
       'status', (
         SELECT branch.editing_mode
         FROM public.amendment_process_branch branch
@@ -930,7 +957,11 @@ BEGIN
     created_at = EXCLUDED.created_at,
     updated_at = EXCLUDED.updated_at,
     engagement_score = EXCLUDED.engagement_score,
-    trending_score = EXCLUDED.trending_score;
+    trending_score = EXCLUDED.trending_score,
+    location_latitude = EXCLUDED.location_latitude,
+    location_longitude = EXCLUDED.location_longitude,
+    location_label = EXCLUDED.location_label,
+    location_source = EXCLUDED.location_source;
 
   PERFORM public.sync_amendment_search_document_topics(amendment_row.id);
 END;

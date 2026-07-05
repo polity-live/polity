@@ -18,6 +18,9 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { getEditingModeOption, type SelectableEditingMode } from '@/features/shared/ui/status';
 import { deriveControllingEventForSettings } from '@/features/amendments/logic/amendmentSettingsEventPhase';
+import { formatLocation } from '@/features/shared/logic/locationHelpers';
+import type { GeoCoordinates } from '@/features/shared/logic/geoCoordinates';
+import type { GeoAddressField } from '@/features/shared/ui/form/GeoAddressInputField';
 import {
   getBranchEditingModeDisabledReasons,
   getBranchEditingMode,
@@ -99,6 +102,14 @@ export function useAmendmentEditContentController({
     internalCRResolutionVisibility: DEFAULT_INTERNAL_CR_RESOLUTION_VISIBILITY,
     visibility: 'public' as Visibility,
     hashtags: [] as string[],
+    country: '',
+    region: '',
+    post_code: '',
+    city: '',
+    street: '',
+    house_number: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
   });
 
   const workflowBranches = useMemo(
@@ -208,6 +219,14 @@ export function useAmendmentEditContentController({
           : Array.isArray(amendment.tags)
             ? amendment.tags
             : [],
+        country: amendment.country ?? '',
+        region: amendment.region ?? '',
+        post_code: amendment.post_code ?? '',
+        city: amendment.city ?? '',
+        street: amendment.street ?? '',
+        house_number: amendment.house_number ?? '',
+        latitude: amendment.latitude ?? null,
+        longitude: amendment.longitude ?? null,
       });
     }
   }, [amendment, workflowSourceMode]);
@@ -382,6 +401,14 @@ export function useAmendmentEditContentController({
             internal_cr_resolution_visibility: formData.internalCRResolutionVisibility,
             discussions: null,
             image_url: formData.imageURL || null,
+            country: formData.country || null,
+            region: formData.region || null,
+            post_code: formData.post_code || null,
+            city: formData.city || null,
+            street: formData.street || null,
+            house_number: formData.house_number || null,
+            latitude: formData.latitude,
+            longitude: formData.longitude,
             x: null,
             youtube: null,
             linkedin: null,
@@ -407,6 +434,14 @@ export function useAmendmentEditContentController({
             visibility: formData.visibility,
             tags: formData.hashtags,
             image_url: formData.imageURL || null,
+            country: formData.country || null,
+            region: formData.region || null,
+            post_code: formData.post_code || null,
+            city: formData.city || null,
+            street: formData.street || null,
+            house_number: formData.house_number || null,
+            latitude: formData.latitude,
+            longitude: formData.longitude,
           })
         );
       }
@@ -484,6 +519,41 @@ export function useAmendmentEditContentController({
     }
   };
 
+  const handleLocationFieldChange = useCallback((field: GeoAddressField, value: string) => {
+    setFormData(previousData => ({
+      ...previousData,
+      [field]: value,
+    }));
+  }, []);
+
+  const handleLocationCoordinatesChange = useCallback((coordinates: GeoCoordinates | null) => {
+    setFormData(previousData => ({
+      ...previousData,
+      latitude: coordinates?.latitude ?? null,
+      longitude: coordinates?.longitude ?? null,
+    }));
+  }, []);
+
+  const locationSummary = useMemo(
+    () =>
+      formatLocation({
+        country: formData.country,
+        region: formData.region,
+        post_code: formData.post_code,
+        city: formData.city,
+        street: formData.street,
+        house_number: formData.house_number,
+      }),
+    [
+      formData.city,
+      formData.country,
+      formData.house_number,
+      formData.post_code,
+      formData.region,
+      formData.street,
+    ]
+  );
+
   return {
     amendmentId,
     amendment,
@@ -520,6 +590,9 @@ export function useAmendmentEditContentController({
     hashtagsInitializedRef,
     handleWorkflowStatusChange,
     handleRemoveImage,
+    handleLocationFieldChange,
+    handleLocationCoordinatesChange,
+    locationSummary,
     handleSubmit,
     onFormSubmit,
     confirmCreate,

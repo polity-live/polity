@@ -24,6 +24,14 @@ interface CloneAmendmentData {
   readonly visibility: string;
   readonly discussions: ReadonlyJSONValue | null;
   readonly image_url: string | null;
+  readonly country?: string | null;
+  readonly region?: string | null;
+  readonly post_code?: string | null;
+  readonly city?: string | null;
+  readonly street?: string | null;
+  readonly house_number?: string | null;
+  readonly latitude?: number | null;
+  readonly longitude?: number | null;
   readonly origin_amendment_id?: string | null;
   readonly document?: CloneAmendmentDocument | null;
   readonly documents: readonly CloneAmendmentDocument[];
@@ -134,6 +142,14 @@ export function useCloneAmendment(
         clone_source_id: amendmentId,
         origin_amendment_id: amendment.origin_amendment_id ?? amendmentId,
         document_id: null,
+        country: amendment.country ?? null,
+        region: amendment.region ?? null,
+        post_code: amendment.post_code ?? null,
+        city: amendment.city ?? null,
+        street: amendment.street ?? null,
+        house_number: amendment.house_number ?? null,
+        latitude: amendment.latitude ?? null,
+        longitude: amendment.longitude ?? null,
         tags: amendment.tags ?? [],
         visibility: amendment.visibility ?? 'public',
         discussions: [],

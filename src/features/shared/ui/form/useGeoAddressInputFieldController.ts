@@ -62,6 +62,7 @@ interface GeoAddressInputFieldProps {
   onChange: (value: string) => void;
   onResolved: (field: GeoAddressField, result: GeoResolvedAddress | null) => void;
   autoComplete: string;
+  disabled?: boolean;
 }
 const FIELD_MIN_QUERY_LENGTH: Record<GeoAddressField, number> = {
   country: 2,
@@ -205,6 +206,7 @@ export function useGeoAddressInputFieldController({
   onChange,
   onResolved,
   autoComplete,
+  disabled = false,
 }: GeoAddressInputFieldProps) {
   const { t, language } = useTranslation();
   const debouncedValue = useDebounce(value.trim(), GEO_ADDRESS_DEBOUNCE_MS);
@@ -212,6 +214,13 @@ export function useGeoAddressInputFieldController({
   const [suggestions, setSuggestions] = useState<ValidatedInputSuggestion[]>([]);
 
   useEffect(() => {
+    if (disabled) {
+      setValidationState(undefined);
+      setSuggestions([]);
+      onResolved(field, null);
+      return;
+    }
+
     if (!debouncedValue) {
       setValidationState(undefined);
       setSuggestions([]);
@@ -290,6 +299,7 @@ export function useGeoAddressInputFieldController({
     context.street?.place_id,
     context.street?.street,
     debouncedValue,
+    disabled,
     field,
     language,
     onResolved,
@@ -312,6 +322,7 @@ export function useGeoAddressInputFieldController({
     onChange,
     onResolved,
     autoComplete,
+    disabled,
     t,
     language,
     debouncedValue,

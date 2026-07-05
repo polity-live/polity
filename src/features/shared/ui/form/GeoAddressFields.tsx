@@ -14,6 +14,7 @@ interface GeoAddressFieldsProps {
   placeholders: GeoAddressTextMap;
   onResolvedAddress?: (result: GeoResolvedAddress | null) => void;
   resetContextKey?: number | string;
+  disabled?: boolean;
 }
 import { useGeoAddressFieldsController } from './useGeoAddressFieldsController';
 import { GeoAddressFieldsView } from './GeoAddressFieldsView';
@@ -26,6 +27,7 @@ export function GeoAddressFields({
   placeholders,
   onResolvedAddress,
   resetContextKey,
+  disabled,
 }: GeoAddressFieldsProps) {
   const viewProps = useGeoAddressFieldsController({
     idPrefix,
@@ -35,6 +37,7 @@ export function GeoAddressFields({
     placeholders,
     onResolvedAddress,
     resetContextKey,
+    disabled,
   });
 
   return <GeoAddressFieldsView {...viewProps} />;
