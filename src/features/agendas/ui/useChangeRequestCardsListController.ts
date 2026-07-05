@@ -27,6 +27,7 @@ import {
   sortChangeRequestsByVoteOrder,
   type ChangeRequestVoteOrder,
 } from '@/features/change-requests/logic/changeRequestVoteOrder';
+import type { StreetDesignPreviewSource } from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
 
 export { resolvePreviewCrIdForTimelineItem } from '../logic/changeRequestDocumentPreview';
 
@@ -85,6 +86,7 @@ interface ChangeRequestCardsListProps {
   isTimelineComplete?: boolean;
   /** Document content for editor preview */
   documentContent?: Value;
+  streetDesigns?: readonly StreetDesignPreviewSource[];
   /** Agenda or amendment title used for final closing vote labels. */
   agendaTitle?: string | null;
   /** Initial and externally controlled sort mode for CR cards. */
@@ -131,6 +133,7 @@ export function useChangeRequestCardsListController({
   allCRsProcessed,
   isTimelineComplete,
   documentContent,
+  streetDesigns = [],
   agendaTitle,
   defaultSortMode,
   discussions,
@@ -385,6 +388,7 @@ export function useChangeRequestCardsListController({
     allCRsProcessed,
     isTimelineComplete,
     documentContent,
+    streetDesigns,
     agendaTitle,
     discussions,
     amendmentId,

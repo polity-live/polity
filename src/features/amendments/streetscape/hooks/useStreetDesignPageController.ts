@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useAuth } from '@/providers/auth-provider';
 import { generateDistinctUserColorMap } from '@/features/editor/logic/editor-helpers';
 import { useEditorPresence } from '@/features/editor/hooks/useEditorPresence';
@@ -13,16 +12,24 @@ import { useUserState } from '@/zero/users/useUserState';
 import {
   getBranchEditingMode,
   getBranchEditingModeDisabledReasons,
+  isBranchEditable,
   resolveSelectedBranchId,
 } from '@/features/amendments/logic/amendmentBranchDisplay';
 import {
+  isSuggestingMode,
   isTerminalEditingMode,
+  isVotingMode,
   normalizeEditingMode,
   type NonTerminalEditingMode,
 } from '@/zero/amendments/editing-mode-policy';
 import {
+  formatStreetDesignChangeRequestIdentifier,
+  formatStreetDesignChangeRequestTitle,
   getStreetDesignChangeRequests,
+  getStreetDesignChangeRequestDiscussionId,
+  isOpenStreetDesignChangeRequest,
   type StreetDesignChangeRequest,
+  type StreetDesignChangeRequestColorMode,
 } from '../logic/streetDesignChangeRequests';
 import { getStreetDesignAccess } from '../logic/streetDesignPermissions';
 import type {
@@ -32,10 +39,7 @@ import type {
   StreetDesignOsmSnapshot,
   StreetDesignOrigin,
 } from '../types';
-import {
-  STREET_DESIGN_COST_CATALOG_VERSION,
-  STREET_DESIGN_CURRENCY,
-} from '../logic/streetDesignObjectRegistry';
+import { STREET_DESIGN_CURRENCY } from '../logic/streetDesignObjectRegistry';
 import {
   createStreetDesignMapSelectionFromBbox,
   createStreetDesignMapSelectionFromCenterRadius,
@@ -45,6 +49,10 @@ import {
   createEmptyStreetDesignState,
   parseStoredStreetDesignState,
 } from '../state/streetDesignReducer';
+import {
+  createStreetDesignChangeRequestPayloads,
+  createStreetDesignPersistenceSnapshot,
+} from '../logic/streetDesignChangeRequestDiff';
 import { getStreetDesignOriginFromAmendmentLocation } from '../logic/streetDesignAmendmentLocation';
 import { getStreetDesignOsmLayerVisibility } from '../logic/streetDesignOsm';
 import { useStreetDesignEditorState } from './useStreetDesignEditorState';
@@ -54,10 +62,6 @@ function originFromCenter(center: StreetDesignGeoPoint): StreetDesignOrigin {
     ...center,
     label: translateText('features.amendments.streetscape.sample.selectedStreetSpace'),
   };
-}
-
-function asReadonlyJsonValue(value: unknown): ReadonlyJSONValue {
-  return value as ReadonlyJSONValue;
 }
 
 function createSampleOsmSnapshot(
@@ -164,7 +168,16 @@ export function useStreetDesignPageController(amendmentId: string) {
     includeChangeRequestsWithVotes: true,
     includeStreetDesign: true,
   });
-  const { createStreetDesign, updateProcessBranch, updateStreetDesign } = useAmendmentActions();
+  const {
+    createChangeRequest,
+    createStreetDesign,
+    finalizeInternalChangeRequestVote,
+    updateAmendment,
+    updateChangeRequest,
+    updateProcessBranch,
+    updateStreetDesign,
+    voteOnChangeRequest,
+  } = useAmendmentActions();
   const { updateDocument } = useDocumentActions();
   const amendmentLocationOrigin = useMemo(
     () => getStreetDesignOriginFromAmendmentLocation(amendment),
@@ -200,6 +213,8 @@ export function useStreetDesignPageController(amendmentId: string) {
   const [osmError, setOsmError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [changeRequestColorMode, setChangeRequestColorMode] =
+    useState<StreetDesignChangeRequestColorMode>('natural');
 
   useEffect(() => {
     editor.replaceDesign(persistedDesign, false);
@@ -249,7 +264,7 @@ export function useStreetDesignPageController(amendmentId: string) {
     ? 'view'
     : rawEditingMode;
   const modeDisabledReasons = getBranchEditingModeDisabledReasons(selectedProcessBranch);
-  const { canEdit, canChangeMode, readOnly } = useMemo(
+  const streetDesignAccess = useMemo(
     () =>
       getStreetDesignAccess({
         amendment: amendmentModeContext,
@@ -260,6 +275,18 @@ export function useStreetDesignPageController(amendmentId: string) {
       }),
     [amendmentModeContext, hasProcessBranch, primaryDocument?.id, selectedProcessBranch, user?.id]
   );
+  const branchAllowsDesignMutation =
+    !hasProcessBranch ||
+    (Boolean(selectedProcessBranch?.id) && isBranchEditable(selectedProcessBranch));
+  const canMutateDesign =
+    streetDesignAccess.canEdit &&
+    branchAllowsDesignMutation &&
+    (mode === 'edit' || isSuggestingMode(mode));
+  const readOnly = !canMutateDesign;
+  const canVoteOnStreetChangeRequests = streetDesignAccess.canEdit && isVotingMode(mode);
+  const canFinalizeStreetChangeRequests = streetDesignAccess.canEdit && mode === 'vote_internal';
+  const canEdit = streetDesignAccess.canEdit;
+  const canChangeMode = streetDesignAccess.canChangeMode;
   const collaborationDocumentId =
     selectedProcessBranch?.document_id ?? primaryDocument?.id ?? amendment?.document_id ?? null;
   const currentUserName =
@@ -302,6 +329,19 @@ export function useStreetDesignPageController(amendmentId: string) {
       ),
     [amendment?.change_requests, changeRequestsWithVotes]
   );
+  const visibleStreetChangeRequests = useMemo(
+    () => streetChangeRequests.filter(isOpenStreetDesignChangeRequest),
+    [streetChangeRequests]
+  );
+  const streetDesignDiscussions = useMemo(
+    () =>
+      getStreetDesignDiscussionArray(
+        selectedProcessBranch?.id
+          ? (selectedProcessBranch as { discussions?: unknown }).discussions
+          : (amendment as { discussions?: unknown } | null | undefined)?.discussions
+      ),
+    [amendment, selectedProcessBranch]
+  );
 
   const selectedCenter = selectedMapSelection.center;
   const selectedBbox = useMemo(
@@ -316,6 +356,8 @@ export function useStreetDesignPageController(amendmentId: string) {
   const showStreetMarkings = editor.design.showStreetMarkings ?? true;
 
   const handleLoadOsm = useCallback(async () => {
+    if (readOnly) return;
+
     setIsLoadingOsm(true);
     setOsmError(null);
 
@@ -344,9 +386,11 @@ export function useStreetDesignPageController(amendmentId: string) {
     } finally {
       setIsLoadingOsm(false);
     }
-  }, [editor, selectedBbox, selectedCenter, selectedMapSelection]);
+  }, [editor, readOnly, selectedBbox, selectedCenter, selectedMapSelection]);
 
   const handleLoadSample = useCallback(() => {
+    if (readOnly) return;
+
     const snapshot = createSampleOsmSnapshot(selectedCenter, selectedBbox);
     editor.replaceDesign(
       {
@@ -362,7 +406,7 @@ export function useStreetDesignPageController(amendmentId: string) {
       true
     );
     setOsmError(null);
-  }, [editor, selectedBbox, selectedCenter, selectedMapSelection]);
+  }, [editor, readOnly, selectedBbox, selectedCenter, selectedMapSelection]);
 
   const handleSave = useCallback(async () => {
     if (readOnly) return;
@@ -370,25 +414,47 @@ export function useStreetDesignPageController(amendmentId: string) {
     setIsSaving(true);
     setSaveError(null);
 
-    const payload = {
-      amendment_id: amendmentId,
-      title: amendment?.title
-        ? translateText('features.amendments.streetscape.savedTitleWithAmendment', {
-            title: amendment.title,
-          })
-        : translateText('features.amendments.streetscape.defaultTitle'),
-      bbox: asReadonlyJsonValue(editor.design.osmSnapshot?.bbox ?? selectedBbox),
-      center_lat: editor.design.origin.lat,
-      center_lon: editor.design.origin.lon,
-      osm_snapshot: asReadonlyJsonValue(editor.design.osmSnapshot),
-      design_state: asReadonlyJsonValue(editor.design),
-      currency: editor.costSummary.currency,
-      estimated_total_cost_minor: editor.costSummary.totalCostMinor,
-      cost_catalog_version: STREET_DESIGN_COST_CATALOG_VERSION,
-      cost_summary: asReadonlyJsonValue(editor.costSummary),
-    };
+    const title = amendment?.title
+      ? translateText('features.amendments.streetscape.savedTitleWithAmendment', {
+          title: amendment.title,
+        })
+      : translateText('features.amendments.streetscape.defaultTitle');
 
     try {
+      if (isSuggestingMode(mode)) {
+        const changeRequestPayloads = createStreetDesignChangeRequestPayloads({
+          amendmentId,
+          processBranchId: selectedProcessBranch?.id ?? null,
+          streetDesignId: primaryStreetDesign?.id ?? null,
+          baseDesign: persistedDesign,
+          draftDesign: editor.design,
+        });
+
+        for (const payload of changeRequestPayloads) {
+          await createChangeRequest(
+            payload as unknown as Parameters<typeof createChangeRequest>[0]
+          );
+        }
+
+        editor.replaceDesign(persistedDesign, false);
+        return;
+      }
+
+      const persistence = createStreetDesignPersistenceSnapshot(editor.design);
+      const payload = {
+        amendment_id: amendmentId,
+        title,
+        bbox: persistence.bbox,
+        center_lat: persistence.center_lat,
+        center_lon: persistence.center_lon,
+        osm_snapshot: persistence.osm_snapshot,
+        design_state: persistence.design_state,
+        currency: persistence.currency,
+        estimated_total_cost_minor: persistence.estimated_total_cost_minor,
+        cost_catalog_version: persistence.cost_catalog_version,
+        cost_summary: persistence.cost_summary,
+      };
+
       if (primaryStreetDesign?.id) {
         await updateStreetDesign({
           id: primaryStreetDesign.id,
@@ -423,11 +489,14 @@ export function useStreetDesignPageController(amendmentId: string) {
   }, [
     amendment?.title,
     amendmentId,
+    createChangeRequest,
     createStreetDesign,
     editor,
+    mode,
+    persistedDesign,
     primaryStreetDesign?.id,
     readOnly,
-    selectedBbox,
+    selectedProcessBranch?.id,
     updateStreetDesign,
   ]);
 
@@ -463,6 +532,122 @@ export function useStreetDesignPageController(amendmentId: string) {
     ]
   );
 
+  const handleChangeRequestVote = useCallback(
+    async (changeRequestId: string, vote: 'accept' | 'reject' | 'abstain') => {
+      if (!canVoteOnStreetChangeRequests) return;
+
+      await voteOnChangeRequest({
+        id: crypto.randomUUID(),
+        change_request_id: changeRequestId,
+        vote,
+      });
+    },
+    [canVoteOnStreetChangeRequests, voteOnChangeRequest]
+  );
+
+  const handleChangeRequestTitleChange = useCallback(
+    async (changeRequestId: string, title: string) => {
+      await Promise.resolve(
+        updateChangeRequest({
+          id: changeRequestId,
+          title: title.trim() || null,
+        })
+      );
+    },
+    [updateChangeRequest]
+  );
+
+  const handleFinalizeStreetChangeRequestVote = useCallback(
+    async (changeRequestId: string) => {
+      if (!canFinalizeStreetChangeRequests) return;
+
+      await Promise.resolve(
+        finalizeInternalChangeRequestVote({
+          change_request_id: changeRequestId,
+        })
+      );
+    },
+    [canFinalizeStreetChangeRequests, finalizeInternalChangeRequestVote]
+  );
+
+  const handleChangeRequestCommentSubmit = useCallback(
+    async (changeRequestId: string, text: string) => {
+      const trimmedText = text.trim();
+      if (!trimmedText || !user?.id) return;
+
+      const changeRequest =
+        streetChangeRequests.find(request => request.id === changeRequestId) ??
+        ({
+          id: changeRequestId,
+        } as StreetDesignChangeRequest);
+      const discussionId = getStreetDesignChangeRequestDiscussionId(changeRequest);
+      const now = new Date().toISOString();
+      const comment = {
+        id: crypto.randomUUID(),
+        contentRich: [{ type: 'p', children: [{ text: trimmedText }] }],
+        createdAt: now,
+        discussionId,
+        isEdited: false,
+        userId: user.id,
+      };
+      const discussionExists = streetDesignDiscussions.some(
+        discussion => discussion.id === discussionId
+      );
+      const nextDiscussions = discussionExists
+        ? streetDesignDiscussions.map(discussion =>
+            discussion.id === discussionId
+              ? {
+                  ...discussion,
+                  comments: [...(discussion.comments ?? []), comment],
+                }
+              : discussion
+          )
+        : [
+            ...streetDesignDiscussions,
+            {
+              id: discussionId,
+              comments: [comment],
+              createdAt: now,
+              isResolved: false,
+              userId: user.id,
+              title: formatStreetDesignChangeRequestTitle(changeRequest),
+              crId: formatStreetDesignChangeRequestIdentifier(changeRequest),
+              displayCrId: formatStreetDesignChangeRequestIdentifier(changeRequest),
+              changeRequestEntityId: changeRequest.id,
+              changeRequestStatus: changeRequest.status ?? null,
+              processBranchId: selectedProcessBranch?.id ?? null,
+            },
+          ];
+      const serializedDiscussions = JSON.parse(JSON.stringify(nextDiscussions));
+
+      if (selectedProcessBranch?.id) {
+        await Promise.resolve(
+          updateProcessBranch({
+            id: selectedProcessBranch.id,
+            discussions: serializedDiscussions,
+          })
+        );
+        return;
+      }
+
+      await Promise.resolve(
+        updateAmendment({
+          id: amendmentId,
+          discussions: serializedDiscussions,
+        })
+      );
+    },
+    [
+      amendmentId,
+      selectedProcessBranch?.id,
+      streetChangeRequests,
+      streetDesignDiscussions,
+      updateAmendment,
+      updateProcessBranch,
+      user?.id,
+    ]
+  );
+
   return {
     activeCursorUserIds,
     amendment,
@@ -470,13 +655,21 @@ export function useStreetDesignPageController(amendmentId: string) {
     isLoading,
     canEdit,
     canChangeMode,
+    canVoteOnStreetChangeRequests,
+    canFinalizeStreetChangeRequests,
     collaborationDocumentId,
     currentUserId: user?.id,
+    currentUserAvatarUrl: userRecord?.avatar,
+    currentUserDisplayName: currentUserName,
     editorCollaborators,
     existingCollaboratorIds,
     mode,
     modeDisabledReasons,
     onModeChange: handleModeChange,
+    onChangeRequestVote: handleChangeRequestVote,
+    onChangeRequestTitleChange: handleChangeRequestTitleChange,
+    onChangeRequestFinalize: handleFinalizeStreetChangeRequestVote,
+    onChangeRequestCommentSubmit: handleChangeRequestCommentSubmit,
     onlinePeerMap,
     presenceColorByUserId,
     readOnly,
@@ -498,12 +691,36 @@ export function useStreetDesignPageController(amendmentId: string) {
     onLoadSample: handleLoadSample,
     isSaving,
     saveError,
+    changeRequestColorMode,
+    onChangeRequestColorModeChange: setChangeRequestColorMode,
     onSave: handleSave,
     costCatalogCurrency: STREET_DESIGN_CURRENCY,
-    streetChangeRequests,
+    allStreetChangeRequests: streetChangeRequests,
+    streetChangeRequests: visibleStreetChangeRequests,
+    streetDesignDiscussions,
     userColor,
     ...editor,
   };
+}
+
+interface StreetDesignDiscussion {
+  id: string;
+  comments?: readonly StreetDesignCommentLike[] | null;
+  [key: string]: unknown;
+}
+
+interface StreetDesignCommentLike {
+  id?: string | null;
+  contentRich?: unknown;
+  createdAt?: string | number | Date | null;
+  discussionId?: string | null;
+  isEdited?: boolean | null;
+  userId?: string | null;
+  user_id?: string | null;
+}
+
+function getStreetDesignDiscussionArray(value: unknown): StreetDesignDiscussion[] {
+  return Array.isArray(value) ? (value as StreetDesignDiscussion[]) : [];
 }
 
 function mapStreetDesignCollaborators(

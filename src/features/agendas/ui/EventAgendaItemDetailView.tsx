@@ -116,6 +116,7 @@ export interface EventAgendaItemDetailViewProps {
   setSelectedCRToolbarItemId: any;
   mockCRItems: any;
   documentContent: any;
+  streetDesigns?: any;
   amendmentDiscussions: any;
   crDiffMap: any;
   hasAmendmentCRs: any;
@@ -258,6 +259,7 @@ export function EventAgendaItemDetailView({
   castCRVote,
   actionBarHook,
   documentContent,
+  streetDesigns,
   amendmentDiscussions,
   crDiffMap,
   isCRVotingActive,
@@ -517,6 +519,7 @@ export function EventAgendaItemDetailView({
       isTimelineComplete={isCRVotingActive ? isTimelineComplete : undefined}
       diffMap={crDiffMap}
       documentContent={documentContent}
+      streetDesigns={streetDesigns}
       agendaTitle={agendaItem.amendment?.title ?? agendaItem.title ?? null}
       defaultSortMode={event?.change_request_vote_order ?? null}
       discussions={amendmentDiscussions}

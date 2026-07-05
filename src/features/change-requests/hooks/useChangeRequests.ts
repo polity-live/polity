@@ -70,11 +70,17 @@ export interface ChangeRequest {
   changedCharacterCount: number;
   title: string;
   description: string;
+  sourceType?: string | null;
+  sourceId?: string | null;
+  sourceTitle?: string | null;
+  changeType?: string | null;
   type: string;
   text: string;
   newText: string;
   properties: SuggestionProperties;
   newProperties: SuggestionProperties;
+  originalProperties?: unknown;
+  rawNewProperties?: unknown;
   proposedChange: string;
   justification: string;
   isResolved: boolean;
@@ -255,8 +261,14 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
     changeRequests: amendmentChangeRequests,
     changeRequestsWithVotes,
     collaborators,
+    streetDesigns,
+    primaryStreetDesign,
     isLoading: amendmentLoading,
-  } = useAmendmentState({ amendmentId, includeChangeRequestsWithVotes: true });
+  } = useAmendmentState({
+    amendmentId,
+    includeChangeRequestsWithVotes: true,
+    includeStreetDesign: true,
+  });
 
   // Fetch document and users via facade
   const { documents: docResults, isLoading: facadeLoading } = useAmendmentState({
@@ -320,11 +332,17 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
         changedCharacterCount,
         title: record.displayTitle,
         description: getOptionalString(discussion?.description) ?? cr?.description ?? '',
+        sourceType: cr?.source_type ?? null,
+        sourceId: cr?.source_id ?? null,
+        sourceTitle: cr?.source_title ?? null,
+        changeType: cr?.change_type ?? null,
         type: suggestionContent.type,
         text: suggestionContent.text,
         newText: suggestionContent.newText,
         properties: suggestionContent.properties,
         newProperties: suggestionContent.newProperties,
+        originalProperties: cr?.original_properties ?? null,
+        rawNewProperties: cr?.new_properties ?? null,
         proposedChange: suggestionContent.newText || suggestionContent.text,
         justification:
           getOptionalString(discussion?.justification) ??
@@ -427,6 +445,8 @@ export function useChangeRequests(amendmentId: string, currentUserId?: string) {
   return {
     amendment,
     document,
+    streetDesigns,
+    primaryStreetDesign,
     changeRequests,
     openChangeRequests,
     closedChangeRequests,

@@ -93,10 +93,16 @@ import { getFinalVoteActionLabels } from '../logic/finalVoteActionLabels';
 import { buildVoteDialogDocumentPreviewModel } from '../logic/changeRequestDocumentPreview';
 import { resolveClosingVoteForAgendaItem } from '../logic/resolveClosingVoteForAgendaItem';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
+import { StreetDesignChangeRequestPreview } from '@/features/amendments/streetscape/ui/StreetDesignChangeRequestPreview';
+import {
+  isStreetDesignChangeRequest,
+  type StreetDesignChangeRequest,
+} from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
 import { computeEligibleFinalVoterCount } from '@/features/votes/logic/computeEligibleVoters';
 import { useAgendaArrowNavigation } from '../hooks/useAgendaArrowNavigation';
 import { buildOfflineTallyErrorToast, isOfflineTallyPasswordError } from './offlineTallyErrorToast';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 
 type ChangeRequestTimelineIdentitySource = Record<string, any>;
 
@@ -222,6 +228,10 @@ export function EventAgendaItemDetail({
     handleAddToSpeakerList,
     canJoinSpeakerList,
   } = useEventAgendaItem(eventId, agendaItemId);
+  const { streetDesigns: amendmentStreetDesigns } = useAmendmentState({
+    amendmentId: agendaItem?.amendment_id ?? undefined,
+    includeStreetDesign: true,
+  });
   const { user: userRecord } = useUserState({ userId: user?.id });
   const mappedUserRecord = useMemo(
     () =>
@@ -1183,6 +1193,27 @@ export function EventAgendaItemDetail({
     [amendmentDiscussions, isCRToolbarActive, selectedCRToolbarItem, sequenceDisplayItems]
   );
   const voteDialogDocumentPreviewContent = useMemo(() => {
+    const selectedStreetChangeRequest =
+      selectedCRToolbarItem?.change_request &&
+      isStreetDesignChangeRequest(selectedCRToolbarItem.change_request)
+        ? ({
+            ...selectedCRToolbarItem.change_request,
+            id:
+              selectedCRToolbarItem.change_request.id ??
+              selectedCRToolbarItem.change_request_id ??
+              selectedCRToolbarItem.id,
+          } as StreetDesignChangeRequest)
+        : null;
+
+    if (selectedStreetChangeRequest) {
+      return (
+        <StreetDesignChangeRequestPreview
+          changeRequest={selectedStreetChangeRequest}
+          streetDesigns={amendmentStreetDesigns}
+        />
+      );
+    }
+
     if (!documentContent || !agendaItem?.amendment_id || !voteDialogDocumentPreviewModel) {
       return null;
     }
@@ -1203,8 +1234,10 @@ export function EventAgendaItemDetail({
     agendaBranchEditingMode,
     agendaItem?.amendment_id,
     agendaItem?.id,
+    amendmentStreetDesigns,
     documentContent,
     mappedUserRecord,
+    selectedCRToolbarItem,
     user?.id,
     voteDialogDocumentPreviewModel,
   ]);
@@ -1882,6 +1915,7 @@ export function EventAgendaItemDetail({
       setSelectedCRToolbarItemId={setSelectedCRToolbarItemId}
       mockCRItems={mockCRItems}
       documentContent={documentContent}
+      streetDesigns={amendmentStreetDesigns}
       amendmentDiscussions={amendmentDiscussions}
       crDiffMap={crDiffMap}
       hasAmendmentCRs={hasAmendmentCRs}

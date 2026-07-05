@@ -3,6 +3,12 @@ import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { applySuggestionToContent } from '@/features/change-requests/logic/applySuggestionToContent';
 import { createChangeRequestDiffSnapshot } from '@/features/change-requests/utils/suggestion-extraction';
+import {
+  applyStreetDesignChangeRequestToDesign,
+  createStreetDesignPersistenceSnapshot,
+  getStreetDesignDesignContext,
+  resolveStreetDesignBaseState,
+} from '@/features/amendments/streetscape/logic/streetDesignChangeRequestDiff';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { ChangeRequestVisibilityScope } from './visibility';
 
@@ -14,6 +20,19 @@ export type ChangeRequestResolutionMethod = 'direct_internal' | 'internal_vote';
 
 interface ChangeRequestResolutionCtx {
   readonly userID: string;
+}
+
+interface ChangeRequestResolutionRow {
+  id: string;
+  amendment_id: string;
+  process_branch_id?: string | null;
+  title?: string | null;
+  source_type?: string | null;
+  source_id?: string | null;
+  source_title?: string | null;
+  change_type?: string | null;
+  original_properties?: unknown;
+  new_properties?: unknown;
 }
 
 export interface DiscussionEntry {
@@ -60,6 +79,141 @@ export function applyChangeRequestVoteResultToContent(
 ) {
   const action = voteResult === 'passed' ? 'accept' : 'reject';
   return applySuggestionToContent(content, suggestionId, action);
+}
+
+export function isStreetDesignSourceType(sourceType: string | null | undefined) {
+  const normalized = sourceType?.trim().toLowerCase();
+  return (
+    normalized === 'street_design' ||
+    normalized === 'street_design_object' ||
+    normalized === 'street_design_scene' ||
+    normalized === 'street_design_area' ||
+    normalized === 'street_design_layer' ||
+    normalized === 'streetscape' ||
+    normalized === 'streetscape_object' ||
+    normalized === 'streetscape_area' ||
+    normalized === 'streetscape_layer' ||
+    Boolean(normalized?.startsWith('street_design_'))
+  );
+}
+
+function getStreetDesignIdFromSnapshot(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const streetDesignId = (value as { streetDesignId?: unknown }).streetDesignId;
+  return typeof streetDesignId === 'string' && streetDesignId.length > 0 ? streetDesignId : null;
+}
+
+async function loadStreetDesignResolutionTarget(
+  tx: ChangeRequestResolutionTx,
+  changeRequest: {
+    amendment_id: string;
+    source_id?: string | null;
+    original_properties?: unknown;
+    new_properties?: unknown;
+  }
+) {
+  const snapshotStreetDesignId =
+    getStreetDesignIdFromSnapshot(changeRequest.new_properties) ??
+    getStreetDesignIdFromSnapshot(changeRequest.original_properties);
+
+  if (snapshotStreetDesignId) {
+    const bySnapshotId = await tx.run(
+      zql.amendment_street_design.where('id', snapshotStreetDesignId).one()
+    );
+    if (bySnapshotId) return bySnapshotId;
+  }
+
+  return tx.run(
+    zql.amendment_street_design.where('amendment_id', changeRequest.amendment_id).one()
+  );
+}
+
+async function resolveStreetDesignChangeRequestByVoteResult({
+  tx,
+  ctx,
+  cr,
+  voteResult,
+  now,
+  resolutionMethod,
+  resolvedInMode,
+  visibilityScope,
+}: {
+  tx: ChangeRequestResolutionTx;
+  ctx: ChangeRequestResolutionCtx;
+  cr: ChangeRequestResolutionRow;
+  voteResult: VoteResult;
+  now: number;
+  resolutionMethod: ChangeRequestResolutionMethod | null;
+  resolvedInMode: string | null;
+  visibilityScope: ChangeRequestVisibilityScope;
+}) {
+  const crStatus = getChangeRequestResolutionStatus(voteResult);
+  const streetDesign = await loadStreetDesignResolutionTarget(tx, cr);
+
+  if (voteResult === 'passed') {
+    const context =
+      getStreetDesignDesignContext(cr.new_properties) ??
+      getStreetDesignDesignContext(cr.original_properties) ??
+      undefined;
+    const baseDesign = resolveStreetDesignBaseState(
+      streetDesign?.design_state,
+      context
+        ? {
+            schemaVersion: 1,
+            ...context,
+            objects: [],
+          }
+        : undefined
+    );
+    const nextDesign = applyStreetDesignChangeRequestToDesign(baseDesign, cr);
+    const persistence = createStreetDesignPersistenceSnapshot(nextDesign);
+
+    if (streetDesign?.id) {
+      await tx.mutate.amendment_street_design.update({
+        id: streetDesign.id,
+        bbox: persistence.bbox,
+        center_lat: persistence.center_lat,
+        center_lon: persistence.center_lon,
+        osm_snapshot: persistence.osm_snapshot,
+        design_state: persistence.design_state,
+        currency: persistence.currency,
+        estimated_total_cost_minor: persistence.estimated_total_cost_minor,
+        cost_catalog_version: persistence.cost_catalog_version,
+        cost_summary: persistence.cost_summary,
+        updated_at: now,
+      });
+    } else {
+      await tx.mutate.amendment_street_design.insert({
+        id: crypto.randomUUID(),
+        amendment_id: cr.amendment_id,
+        created_by_id: ctx.userID,
+        title: cr.source_title ?? cr.title ?? 'Streetscape design',
+        bbox: persistence.bbox,
+        center_lat: persistence.center_lat,
+        center_lon: persistence.center_lon,
+        osm_snapshot: persistence.osm_snapshot,
+        design_state: persistence.design_state,
+        currency: persistence.currency,
+        estimated_total_cost_minor: persistence.estimated_total_cost_minor,
+        cost_catalog_version: persistence.cost_catalog_version,
+        cost_summary: persistence.cost_summary,
+        created_at: now,
+        updated_at: now,
+      });
+    }
+  }
+
+  await tx.mutate.change_request.update({
+    id: cr.id,
+    status: crStatus,
+    voting_status: 'completed',
+    resolved_in_mode: resolvedInMode,
+    resolution_method: resolutionMethod,
+    visibility_scope: visibilityScope,
+    updated_at: now,
+  });
+
+  return { changeRequest: cr, status: crStatus };
 }
 
 async function loadResolutionTarget(
@@ -127,9 +281,24 @@ export async function resolveChangeRequestByVoteResult({
   resolvedInMode?: string | null;
   visibilityScope?: ChangeRequestVisibilityScope;
 }) {
-  const cr = await tx.run(zql.change_request.where('id', changeRequestId).one());
+  const cr = (await tx.run(
+    zql.change_request.where('id', changeRequestId).one()
+  )) as ChangeRequestResolutionRow | null;
   if (!cr) {
     return null;
+  }
+
+  if (isStreetDesignSourceType(cr.source_type)) {
+    return resolveStreetDesignChangeRequestByVoteResult({
+      tx,
+      ctx,
+      cr,
+      voteResult,
+      now,
+      resolutionMethod,
+      resolvedInMode,
+      visibilityScope,
+    });
   }
 
   const crStatus = getChangeRequestResolutionStatus(voteResult);

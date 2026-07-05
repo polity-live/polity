@@ -25,7 +25,7 @@ export interface SuggestionContent {
   newProperties: SuggestionProperties;
 }
 
-const RENDERABLE_SUGGESTION_TYPES = new Set(['insert', 'remove', 'replace', 'update']);
+const RENDERABLE_SUGGESTION_TYPES = new Set(['insert', 'remove', 'delete', 'replace', 'update']);
 
 export function isRenderableSuggestionType(type: string | null | undefined): boolean {
   return !!type && RENDERABLE_SUGGESTION_TYPES.has(type);

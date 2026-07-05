@@ -12,6 +12,7 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import type { ChangeRequestBranchSection } from '../logic/changeRequestsViewModel';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
+import type { StreetDesignPreviewSource } from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
 
 interface ChangeRequestsViewProps {
   agendaItemId?: string;
@@ -22,6 +23,7 @@ interface ChangeRequestsViewProps {
   diffMap: Record<string, ChangeRequestDiffData>;
   discussions: TDiscussion[];
   documentContent?: Value;
+  streetDesigns?: readonly StreetDesignPreviewSource[];
   editingMode?: EditingMode | null;
   hasAmendment: boolean;
   isInVotingStage: boolean;
@@ -52,6 +54,7 @@ export function ChangeRequestsView({
   diffMap,
   discussions,
   documentContent,
+  streetDesigns = [],
   editingMode,
   hasAmendment,
   isLoading,
@@ -112,6 +115,7 @@ export function ChangeRequestsView({
         userId={userId}
         diffMap={sectionDiffMap}
         documentContent={sectionDocumentContent}
+        streetDesigns={streetDesigns}
         discussions={sectionDiscussions}
         amendmentId={amendmentId}
         agendaItemId={agendaItemId}

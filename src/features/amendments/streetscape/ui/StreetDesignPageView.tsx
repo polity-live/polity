@@ -1,5 +1,5 @@
 import { MapPinned } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { OnlineCollaboratorAvatars } from '@/features/editor/ui/OnlineCollaboratorAvatars';
 import type { EditorCollaborator, EditorPresencePeer } from '@/features/editor/types';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
@@ -9,7 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/u
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
 import { getStreetDesignOsmFeatures } from '../logic/streetDesignOsm';
-import type { StreetDesignChangeRequest } from '../logic/streetDesignChangeRequests';
+import type {
+  StreetDesignChangeRequest,
+  StreetDesignChangeRequestColorMode,
+} from '../logic/streetDesignChangeRequests';
 import type {
   CorridorGeometry,
   PathCorridorGeometry,
@@ -36,6 +39,7 @@ import {
   StreetDesignTopBarView,
 } from './StreetDesignTopBarView';
 import { StreetSceneCanvasView } from './StreetSceneCanvasView';
+import type { StreetDesignDiscussionLike } from './StreetDesignChangeRequestPanel';
 
 type StreetDesignAmendmentSummary =
   | {
@@ -52,7 +56,11 @@ interface StreetDesignPageViewProps {
   mode: SelectableEditingMode;
   modeDisabledReasons: Partial<Record<SelectableEditingMode, string>>;
   canChangeMode: boolean;
+  canVoteOnStreetChangeRequests: boolean;
+  canFinalizeStreetChangeRequests?: boolean;
   currentUserId?: string;
+  currentUserDisplayName?: string | null;
+  currentUserAvatarUrl?: string | null;
   collaborationDocumentId?: string | null;
   editorCollaborators: EditorCollaborator[];
   existingCollaboratorIds: string[];
@@ -60,6 +68,8 @@ interface StreetDesignPageViewProps {
   activeCursorUserIds: Set<string>;
   presenceColorByUserId: Map<string, string>;
   streetChangeRequests: readonly StreetDesignChangeRequest[];
+  streetDesignDiscussions?: readonly StreetDesignDiscussionLike[];
+  changeRequestColorMode?: StreetDesignChangeRequestColorMode;
   design: StreetDesignStateV1;
   selectedObject: StreetDesignObject | null;
   selectedOsmWay: StreetDesignOsmWay | null;
@@ -94,6 +104,14 @@ interface StreetDesignPageViewProps {
   onLoadSample: () => void;
   onSave: () => void;
   onModeChange: (mode: SelectableEditingMode) => void | Promise<void>;
+  onChangeRequestVote: (
+    changeRequestId: string,
+    vote: 'accept' | 'reject' | 'abstain'
+  ) => void | Promise<void>;
+  onChangeRequestFinalize?: (changeRequestId: string) => void | Promise<void>;
+  onChangeRequestTitleChange?: (changeRequestId: string, title: string) => void | Promise<void>;
+  onChangeRequestCommentSubmit?: (changeRequestId: string, text: string) => void | Promise<void>;
+  onChangeRequestColorModeChange?: (mode: StreetDesignChangeRequestColorMode) => void;
   onToolChange: (
     type: StreetDesignObjectType,
     propertyOverrides?: Record<string, StreetDesignPropertyValue>,
@@ -139,7 +157,11 @@ export function StreetDesignPageView({
   mode,
   modeDisabledReasons,
   canChangeMode,
+  canVoteOnStreetChangeRequests,
+  canFinalizeStreetChangeRequests = false,
   currentUserId,
+  currentUserDisplayName,
+  currentUserAvatarUrl,
   collaborationDocumentId,
   editorCollaborators,
   existingCollaboratorIds,
@@ -147,6 +169,8 @@ export function StreetDesignPageView({
   activeCursorUserIds,
   presenceColorByUserId,
   streetChangeRequests,
+  streetDesignDiscussions = [],
+  changeRequestColorMode = 'natural',
   design,
   selectedObject,
   selectedOsmWay,
@@ -181,6 +205,11 @@ export function StreetDesignPageView({
   onLoadSample,
   onSave,
   onModeChange,
+  onChangeRequestVote,
+  onChangeRequestFinalize,
+  onChangeRequestTitleChange,
+  onChangeRequestCommentSubmit,
+  onChangeRequestColorModeChange = () => undefined,
   onToolChange,
   onInteractionModeChange,
   onComparisonModeChange,
@@ -208,6 +237,110 @@ export function StreetDesignPageView({
   const [costSummaryOpen, setCostSummaryOpen] = useState(false);
   const [showChangeRequests, setShowChangeRequests] = useState(true);
   const [selectedChangeRequestId, setSelectedChangeRequestId] = useState<string | null>(null);
+  const osmWayCount = useMemo(
+    () => getStreetDesignOsmFeatures(design.osmSnapshot).length,
+    [design.osmSnapshot]
+  );
+  const title = amendment?.title ?? t('features.amendments.streetscape.defaultTitle');
+  const kpis = useMemo(
+    () => [
+      t('features.amendments.streetscape.metrics.elements', { count: design.objects.length }),
+      t('features.amendments.streetscape.metrics.cost', {
+        cost: formatMinorCurrency(costSummary.totalCostMinor, costSummary.currency),
+      }),
+      t('features.amendments.streetscape.metrics.changeRequests', {
+        count: streetChangeRequests.length,
+      }),
+    ],
+    [
+      costSummary.currency,
+      costSummary.totalCostMinor,
+      design.objects.length,
+      streetChangeRequests.length,
+      t,
+    ]
+  );
+  const selectObject = useCallback(
+    (objectId: string | null) => {
+      setSelectedChangeRequestId(null);
+      onObjectSelect(objectId);
+    },
+    [onObjectSelect]
+  );
+  const selectOsmWay = useCallback(
+    (osmWayId: string | null) => {
+      setSelectedChangeRequestId(null);
+      onOsmWaySelect(osmWayId);
+    },
+    [onOsmWaySelect]
+  );
+  const selectChangeRequest = useCallback(
+    (changeRequestId: string | null) => {
+      setSelectedChangeRequestId(changeRequestId);
+      if (changeRequestId) {
+        setShowChangeRequests(true);
+        onObjectSelect(null);
+        onOsmWaySelect(null);
+      }
+    },
+    [onObjectSelect, onOsmWaySelect]
+  );
+
+  const areaPickerContent = useMemo(
+    () => (
+      <StreetAreaPicker
+        center={selectedCenter}
+        bbox={selectedBbox}
+        mapSelection={selectedMapSelection}
+        isLoadingOsm={isLoadingOsm}
+        osmError={osmError}
+        readOnly={readOnly}
+        open
+        onOpenChange={setAreaPickerOpen}
+        variant="panel"
+        onMapSelectionChange={onSelectedMapSelectionChange}
+        onLoadOsm={onLoadOsm}
+        onLoadSample={onLoadSample}
+      />
+    ),
+    [
+      isLoadingOsm,
+      onLoadOsm,
+      onLoadSample,
+      onSelectedMapSelectionChange,
+      osmError,
+      readOnly,
+      selectedBbox,
+      selectedCenter,
+      selectedMapSelection,
+    ]
+  );
+  const costSummaryContent = useMemo(
+    () => (
+      <StreetCostSummaryView
+        summary={costSummary}
+        comparisonMode={design.comparisonMode}
+        selectedObjectId={selectedObjectId}
+        readOnly={readOnly}
+        showComparisonControls={false}
+        variant="panel"
+        onComparisonModeChange={onComparisonModeChange}
+        onObjectSelect={selectObject}
+        onDeleteObject={onDeleteObject}
+        onDeleteObjectCategory={onDeleteObjectCategory}
+      />
+    ),
+    [
+      costSummary,
+      design.comparisonMode,
+      onComparisonModeChange,
+      onDeleteObject,
+      onDeleteObjectCategory,
+      readOnly,
+      selectObject,
+      selectedObjectId,
+    ]
+  );
 
   if (isLoading) {
     return <PageSkeleton variant="settings" />;
@@ -216,65 +349,6 @@ export function StreetDesignPageView({
   if (!amendment) {
     return <NotFound />;
   }
-
-  const osmWayCount = getStreetDesignOsmFeatures(design.osmSnapshot).length;
-  const title = amendment.title ?? t('features.amendments.streetscape.defaultTitle');
-  const kpis = [
-    t('features.amendments.streetscape.metrics.elements', { count: design.objects.length }),
-    t('features.amendments.streetscape.metrics.cost', {
-      cost: formatMinorCurrency(costSummary.totalCostMinor, costSummary.currency),
-    }),
-    t('features.amendments.streetscape.metrics.changeRequests', {
-      count: streetChangeRequests.length,
-    }),
-  ];
-  const selectObject = (objectId: string | null) => {
-    setSelectedChangeRequestId(null);
-    onObjectSelect(objectId);
-  };
-  const selectOsmWay = (osmWayId: string | null) => {
-    setSelectedChangeRequestId(null);
-    onOsmWaySelect(osmWayId);
-  };
-  const selectChangeRequest = (changeRequestId: string | null) => {
-    setSelectedChangeRequestId(changeRequestId);
-    if (changeRequestId) {
-      setShowChangeRequests(true);
-      onObjectSelect(null);
-      onOsmWaySelect(null);
-    }
-  };
-
-  const areaPickerContent = (
-    <StreetAreaPicker
-      center={selectedCenter}
-      bbox={selectedBbox}
-      mapSelection={selectedMapSelection}
-      isLoadingOsm={isLoadingOsm}
-      osmError={osmError}
-      readOnly={readOnly}
-      open
-      onOpenChange={setAreaPickerOpen}
-      variant="panel"
-      onMapSelectionChange={onSelectedMapSelectionChange}
-      onLoadOsm={onLoadOsm}
-      onLoadSample={onLoadSample}
-    />
-  );
-  const costSummaryContent = (
-    <StreetCostSummaryView
-      summary={costSummary}
-      comparisonMode={design.comparisonMode}
-      selectedObjectId={selectedObjectId}
-      readOnly={readOnly}
-      showComparisonControls={false}
-      variant="panel"
-      onComparisonModeChange={onComparisonModeChange}
-      onObjectSelect={selectObject}
-      onDeleteObject={onDeleteObject}
-      onDeleteObjectCategory={onDeleteObjectCategory}
-    />
-  );
 
   return (
     <div className="space-y-2 pt-5">
@@ -334,7 +408,9 @@ export function StreetDesignPageView({
           changeRequests={streetChangeRequests}
           selectedChangeRequestId={selectedChangeRequestId}
           showChangeRequests={showChangeRequests}
+          changeRequestColorMode={changeRequestColorMode}
           onShowChangeRequestsChange={setShowChangeRequests}
+          onChangeRequestColorModeChange={onChangeRequestColorModeChange}
           onChangeRequestSelect={selectChangeRequest}
         />
 
@@ -395,8 +471,16 @@ export function StreetDesignPageView({
               interactionMode={interactionMode}
               readOnly={readOnly}
               changeRequests={streetChangeRequests}
+              streetDesignDiscussions={streetDesignDiscussions}
               selectedChangeRequestId={selectedChangeRequestId}
               showChangeRequests={showChangeRequests}
+              changeRequestColorMode={changeRequestColorMode}
+              canVoteOnChangeRequests={canVoteOnStreetChangeRequests}
+              canFinalizeChangeRequests={canFinalizeStreetChangeRequests}
+              currentUserId={currentUserId}
+              currentUserDisplayName={currentUserDisplayName}
+              currentUserAvatarUrl={currentUserAvatarUrl}
+              collaborators={editorCollaborators}
               onPointerDown={onScenePointerDown}
               onPointerMove={onScenePointerMove}
               onFinishPlacement={onFinishPlacement}
@@ -413,6 +497,10 @@ export function StreetDesignPageView({
               onUnitCostChange={onUnitCostChange}
               onDeleteObject={onDeleteObject}
               onChangeRequestSelect={selectChangeRequest}
+              onChangeRequestVote={onChangeRequestVote}
+              onChangeRequestFinalize={onChangeRequestFinalize}
+              onChangeRequestTitleChange={onChangeRequestTitleChange}
+              onChangeRequestCommentSubmit={onChangeRequestCommentSubmit}
             />
           </CardContent>
         </Card>

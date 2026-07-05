@@ -149,6 +149,36 @@ function getBranchMutationEditingMode(branch: { editing_mode?: string | null }) 
   return normalizeEditingMode(branch.editing_mode);
 }
 
+async function resolveChangeRequestMutationEditingMode({
+  tx,
+  amendmentId,
+  processBranchId,
+  amendment,
+}: {
+  tx: AmendmentServerTx;
+  amendmentId: string;
+  processBranchId?: string | null;
+  amendment?: Awaited<ReturnType<typeof loadAmendmentForMutation>>;
+}) {
+  if (processBranchId) {
+    const branch = await loadProcessBranchForMutation(tx, processBranchId);
+    return {
+      branch,
+      mode: getBranchMutationEditingMode(branch),
+    };
+  }
+
+  const amendmentRow = amendment ?? (await loadAmendmentForMutation(tx, amendmentId));
+  const document = amendmentRow.document_id
+    ? await tx.run(zql.document.where('id', amendmentRow.document_id).one())
+    : null;
+
+  return {
+    branch: null,
+    mode: normalizeEditingMode(document?.editing_mode),
+  };
+}
+
 async function assertCanCreateAmendment(tx: AmendmentServerTx, ctx: AmendmentServerCtx) {
   requireAuthenticated(tx, ctx, { action: 'create', resource: 'amendments' });
 }
@@ -306,8 +336,12 @@ async function assertCanCreateChangeRequest(
   processBranchId?: string | null
 ) {
   const amendment = await loadAmendmentForMutation(tx, amendmentId);
-  const branch = processBranchId ? await loadProcessBranchForMutation(tx, processBranchId) : null;
-  const mode = getBranchMutationEditingMode(branch ?? { editing_mode: 'edit' });
+  const { branch, mode } = await resolveChangeRequestMutationEditingMode({
+    tx,
+    amendmentId,
+    processBranchId,
+    amendment,
+  });
 
   if (
     mode === 'view' ||
@@ -459,10 +493,12 @@ async function assertCanVoteOnChangeRequest(
 ) {
   requireAuthenticated(tx, ctx, { action: 'vote', resource: 'amendments' });
   const changeRequest = await loadChangeRequestForMutation(tx, changeRequestId);
-  const branch = changeRequest.process_branch_id
-    ? await loadProcessBranchForMutation(tx, changeRequest.process_branch_id)
-    : null;
-  if (getBranchMutationEditingMode(branch ?? { editing_mode: 'edit' }) !== 'vote_internal') {
+  const { mode } = await resolveChangeRequestMutationEditingMode({
+    tx,
+    amendmentId: changeRequest.amendment_id,
+    processBranchId: changeRequest.process_branch_id,
+  });
+  if (mode !== 'vote_internal') {
     throw new PermissionError('vote', 'amendments', 'editing_mode:vote_internal');
   }
   await can(tx, ctx, {
@@ -522,8 +558,13 @@ async function appendEventChangeRequestVoteStepIfNeeded({
   now: number;
 }): Promise<string | null> {
   const processBranchId = changeRequest.process_branch_id ?? null;
-  const branch = processBranchId ? await loadProcessBranchForMutation(tx, processBranchId) : null;
-  if (getBranchMutationEditingMode(branch ?? { editing_mode: 'edit' }) !== 'suggest_event') {
+  const { mode } = await resolveChangeRequestMutationEditingMode({
+    tx,
+    amendmentId: amendment.id,
+    processBranchId,
+    amendment,
+  });
+  if (mode !== 'suggest_event') {
     return null;
   }
   if (isFinalChangeRequestStatus(changeRequest.status)) {
@@ -1440,11 +1481,14 @@ export const amendmentServerMutators = {
       const now = Date.now();
       const changeRequest = await loadChangeRequestForMutation(tx, args.change_request_id);
       const amendment = await loadAmendmentForMutation(tx, changeRequest.amendment_id);
-      const branch = changeRequest.process_branch_id
-        ? await loadProcessBranchForMutation(tx, changeRequest.process_branch_id)
-        : null;
+      const { mode } = await resolveChangeRequestMutationEditingMode({
+        tx,
+        amendmentId: changeRequest.amendment_id,
+        processBranchId: changeRequest.process_branch_id,
+        amendment,
+      });
 
-      if (getBranchMutationEditingMode(branch ?? { editing_mode: 'edit' }) !== 'vote_internal') {
+      if (mode !== 'vote_internal') {
         throw new PermissionError('manage', 'amendments', 'editing_mode:vote_internal');
       }
       if (
@@ -1515,10 +1559,12 @@ export const amendmentServerMutators = {
   updateChangeRequest: defineMutator(updateChangeRequestSchema, async ({ tx, ctx, args }) => {
     const previous = await loadChangeRequestForMutation(tx, args.id);
     const amendment = await loadAmendmentForMutation(tx, previous.amendment_id);
-    const branch = previous.process_branch_id
-      ? await loadProcessBranchForMutation(tx, previous.process_branch_id)
-      : null;
-    const branchMode = getBranchMutationEditingMode(branch ?? { editing_mode: 'edit' });
+    const { mode: branchMode } = await resolveChangeRequestMutationEditingMode({
+      tx,
+      amendmentId: previous.amendment_id,
+      processBranchId: previous.process_branch_id,
+      amendment,
+    });
     if (
       args.status !== undefined &&
       isFinalChangeRequestStatus(args.status) &&

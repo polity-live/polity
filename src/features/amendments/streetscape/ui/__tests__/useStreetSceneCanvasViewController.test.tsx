@@ -5,9 +5,24 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyStreetDesignState } from '../../state/streetDesignReducer';
 import { useStreetSceneCanvasViewController } from '../useStreetSceneCanvasViewController';
 
-const { mountStreetDesignSceneMock } = vi.hoisted(() => ({
-  mountStreetDesignSceneMock: vi.fn<() => Promise<() => void>>(() => Promise.resolve(vi.fn())),
-}));
+const { createSceneControllerMock, mountStreetDesignSceneMock } = vi.hoisted(() => {
+  const createSceneControllerMock = () => ({
+    updateDesign: vi.fn(),
+    updateSelection: vi.fn(),
+    updatePlacementPreview: vi.fn(),
+    updateChangeRequests: vi.fn(),
+    updateInteractionMode: vi.fn(),
+    updateHandlers: vi.fn(),
+    focusObject: vi.fn(),
+    focusOsmWay: vi.fn(),
+    dispose: vi.fn(),
+  });
+
+  return {
+    createSceneControllerMock,
+    mountStreetDesignSceneMock: vi.fn(() => Promise.resolve(createSceneControllerMock())),
+  };
+});
 
 vi.mock('../../logic/streetDesignScene', () => ({
   mountStreetDesignScene: mountStreetDesignSceneMock,
@@ -16,17 +31,25 @@ vi.mock('../../logic/streetDesignScene', () => ({
 function ControllerHarness({
   onFinishPlacement = vi.fn(),
   onCancelPlacement = vi.fn(),
+  onObjectSelect = vi.fn(),
   placementMode = null,
   canFinishPathPlacement = false,
   readOnly = false,
   interactionMode = 'place',
+  selectedObjectId = null,
+  selectedObjectFocusRequestKey = 0,
+  selectedChangeRequestId = null,
 }: {
   onFinishPlacement?: () => void;
   onCancelPlacement?: () => void;
+  onObjectSelect?: (objectId: string | null) => void;
   placementMode?: 'drag_band' | 'path' | null;
   canFinishPathPlacement?: boolean;
   readOnly?: boolean;
   interactionMode?: 'place' | 'select' | 'camera';
+  selectedObjectId?: string | null;
+  selectedObjectFocusRequestKey?: number;
+  selectedChangeRequestId?: string | null;
 }) {
   const viewProps = useStreetSceneCanvasViewController({
     design: createEmptyStreetDesignState(),
@@ -37,10 +60,10 @@ function ControllerHarness({
     placementMode,
     placementPointCount: 0,
     canFinishPathPlacement,
-    selectedObjectId: null,
+    selectedObjectId,
     selectedObject: null,
     selectedObjectCostLine: null,
-    selectedObjectFocusRequestKey: 0,
+    selectedObjectFocusRequestKey,
     hiddenObjectIds: [],
     hiddenObjectCategories: [],
     selectedOsmWayId: null,
@@ -48,12 +71,13 @@ function ControllerHarness({
     selectedOsmFocusRequestKey: 0,
     interactionMode,
     readOnly,
+    selectedChangeRequestId,
     onPointerDown: vi.fn(),
     onPointerMove: vi.fn(),
     onFinishPlacement,
     onFinishPathPlacement: vi.fn(),
     onCancelPlacement,
-    onObjectSelect: vi.fn(),
+    onObjectSelect,
     onOsmWaySelect: vi.fn(),
     onObjectVisibilityChange: vi.fn(),
     onOsmWayHide: vi.fn(),
@@ -71,7 +95,7 @@ function ControllerHarness({
 describe('useStreetSceneCanvasViewController', () => {
   beforeEach(() => {
     mountStreetDesignSceneMock.mockReset();
-    mountStreetDesignSceneMock.mockResolvedValue(vi.fn());
+    mountStreetDesignSceneMock.mockResolvedValue(createSceneControllerMock());
   });
 
   it('finishes active drag-band placement with Enter', async () => {
@@ -189,11 +213,12 @@ describe('useStreetSceneCanvasViewController', () => {
   });
 
   it('runs scene cleanup when unmounted before async scene mount resolves', async () => {
-    let resolveMount: ((cleanup: () => void) => void) | null = null;
-    const cleanup = vi.fn();
+    let resolveMount: ((controller: ReturnType<typeof createSceneControllerMock>) => void) | null =
+      null;
+    const controller = createSceneControllerMock();
     mountStreetDesignSceneMock.mockReturnValueOnce(
-      new Promise<() => void>(resolve => {
-        resolveMount = nextCleanup => resolve(nextCleanup);
+      new Promise<ReturnType<typeof createSceneControllerMock>>(resolve => {
+        resolveMount = nextController => resolve(nextController);
       })
     );
 
@@ -203,9 +228,43 @@ describe('useStreetSceneCanvasViewController', () => {
     unmount();
 
     await act(async () => {
-      resolveMount?.(cleanup);
+      resolveMount?.(controller);
     });
 
-    expect(cleanup).toHaveBeenCalledTimes(1);
+    expect(controller.dispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('updates scene imperatively without remounting on selection and handler changes', async () => {
+    const firstController = createSceneControllerMock();
+    mountStreetDesignSceneMock.mockResolvedValue(firstController);
+    const onObjectSelect = vi.fn();
+    const { rerender } = render(
+      <ControllerHarness interactionMode="select" onObjectSelect={onObjectSelect} />
+    );
+
+    await waitFor(() => expect(mountStreetDesignSceneMock).toHaveBeenCalledTimes(1));
+
+    const nextObjectSelect = vi.fn();
+    rerender(
+      <ControllerHarness
+        interactionMode="select"
+        onObjectSelect={nextObjectSelect}
+        selectedObjectId="object-1"
+        selectedObjectFocusRequestKey={1}
+        selectedChangeRequestId="cr-1"
+      />
+    );
+
+    await waitFor(() => {
+      expect(firstController.updateHandlers).toHaveBeenCalled();
+      expect(firstController.updateSelection).toHaveBeenCalledWith(
+        expect.objectContaining({
+          selectedObjectId: 'object-1',
+          selectedChangeRequestId: 'cr-1',
+          focusObjectId: 'object-1',
+        })
+      );
+    });
+    expect(mountStreetDesignSceneMock).toHaveBeenCalledTimes(1);
   });
 });

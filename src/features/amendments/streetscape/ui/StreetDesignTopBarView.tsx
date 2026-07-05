@@ -15,6 +15,7 @@ import {
   MapPinned,
   MessageSquare,
   MousePointer2,
+  Palette,
   ParkingSquare,
   PanelRight,
   Plus,
@@ -75,7 +76,10 @@ import {
 import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
 import { streetDesignObjectRegistry } from '../logic/streetDesignObjectRegistry';
 import { getStreetDesignObjectVariantLabelKey } from '../logic/streetDesignVariantCatalog';
-import type { StreetDesignChangeRequest } from '../logic/streetDesignChangeRequests';
+import type {
+  StreetDesignChangeRequest,
+  StreetDesignChangeRequestColorMode,
+} from '../logic/streetDesignChangeRequests';
 import {
   formatStreetDesignChangeRequestIdentifier,
   formatStreetDesignChangeRequestTitle,
@@ -147,7 +151,9 @@ interface StreetDesignSecondaryActionBarViewProps {
   changeRequests: readonly StreetDesignChangeRequest[];
   selectedChangeRequestId: string | null;
   showChangeRequests: boolean;
+  changeRequestColorMode?: StreetDesignChangeRequestColorMode;
   onShowChangeRequestsChange: (visible: boolean) => void;
+  onChangeRequestColorModeChange?: (mode: StreetDesignChangeRequestColorMode) => void;
   onChangeRequestSelect: (changeRequestId: string | null) => void;
 }
 
@@ -339,16 +345,17 @@ export function StreetDesignTopBarView({
   return (
     <FixedToolbar className="gap-0 rounded-none border-x-0 border-t-0 px-1 py-1 shadow-none">
       <ToolbarGroup>
-        <ToolbarButton
-          type="button"
-          aria-label={t('features.amendments.streetscape.modes.place')}
-          pressed={interactionMode === 'place'}
-          disabled={readOnly}
-          tooltip={t('features.amendments.streetscape.modes.place')}
-          onClick={() => onInteractionModeChange('place')}
-        >
-          <Plus className="size-4" />
-        </ToolbarButton>
+        {!readOnly ? (
+          <ToolbarButton
+            type="button"
+            aria-label={t('features.amendments.streetscape.modes.place')}
+            pressed={interactionMode === 'place'}
+            tooltip={t('features.amendments.streetscape.modes.place')}
+            onClick={() => onInteractionModeChange('place')}
+          >
+            <Plus className="size-4" />
+          </ToolbarButton>
+        ) : null}
         <ToolbarButton
           type="button"
           aria-label={t('features.amendments.streetscape.modes.select')}
@@ -427,62 +434,63 @@ export function StreetDesignTopBarView({
         </Popover>
       </ToolbarGroup>
 
-      <ToolbarGroup>
-        {streetDesignElementSections.map(section => {
-          const SectionIcon = sectionIcons[section.icon];
-          const sectionLabel = t(section.labelKey);
-          const sectionSelected = getSectionTools(section).some(tool =>
-            isSectionToolSelected({ tool, selectedTool, selectedToolProperties })
-          );
+      {!readOnly ? (
+        <ToolbarGroup>
+          {streetDesignElementSections.map(section => {
+            const SectionIcon = sectionIcons[section.icon];
+            const sectionLabel = t(section.labelKey);
+            const sectionSelected = getSectionTools(section).some(tool =>
+              isSectionToolSelected({ tool, selectedTool, selectedToolProperties })
+            );
 
-          return (
-            <DropdownMenu key={section.layer} modal={false}>
-              <DropdownMenuTrigger asChild>
-                <ToolbarButton
-                  type="button"
-                  aria-label={sectionLabel}
-                  pressed={sectionSelected}
-                  isDropdown
-                  tooltip={sectionLabel}
-                >
-                  <SectionIcon className="size-4" />
-                  <span className="sr-only">{sectionLabel}</span>
-                </ToolbarButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="max-h-[70vh] w-72">
-                <DropdownMenuLabel className="text-muted-foreground flex items-center gap-2 text-xs">
-                  <SectionIcon className="size-3.5" />
-                  {sectionLabel}
-                </DropdownMenuLabel>
-                {getSectionTools(section).map(tool => {
-                  const definition = streetDesignObjectRegistry[tool.objectType];
-                  const Icon = objectIcons[tool.objectType];
-                  const selected = isSectionToolSelected({
-                    tool,
-                    selectedTool,
-                    selectedToolProperties,
-                  });
-                  const label = t(tool.labelKey ?? definition.labelKey);
+            return (
+              <DropdownMenu key={section.layer} modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <ToolbarButton
+                    type="button"
+                    aria-label={sectionLabel}
+                    pressed={sectionSelected}
+                    isDropdown
+                    tooltip={sectionLabel}
+                  >
+                    <SectionIcon className="size-4" />
+                    <span className="sr-only">{sectionLabel}</span>
+                  </ToolbarButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="max-h-[70vh] w-72">
+                  <DropdownMenuLabel className="text-muted-foreground flex items-center gap-2 text-xs">
+                    <SectionIcon className="size-3.5" />
+                    {sectionLabel}
+                  </DropdownMenuLabel>
+                  {getSectionTools(section).map(tool => {
+                    const definition = streetDesignObjectRegistry[tool.objectType];
+                    const Icon = objectIcons[tool.objectType];
+                    const selected = isSectionToolSelected({
+                      tool,
+                      selectedTool,
+                      selectedToolProperties,
+                    });
+                    const label = t(tool.labelKey ?? definition.labelKey);
 
-                  return (
-                    <DropdownMenuItem
-                      key={tool.id}
-                      className={cn(selected && 'bg-primary/5 text-primary')}
-                      disabled={readOnly}
-                      onSelect={() =>
-                        onToolChange(tool.objectType, tool.propertyOverrides, tool.widthOverride)
-                      }
-                    >
-                      <Icon className="size-4" />
-                      <span>{label}</span>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
-        })}
-      </ToolbarGroup>
+                    return (
+                      <DropdownMenuItem
+                        key={tool.id}
+                        className={cn(selected && 'bg-primary/5 text-primary')}
+                        onSelect={() =>
+                          onToolChange(tool.objectType, tool.propertyOverrides, tool.widthOverride)
+                        }
+                      >
+                        <Icon className="size-4" />
+                        <span>{label}</span>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
+          })}
+        </ToolbarGroup>
+      ) : null}
 
       <ToolbarGroup>
         <ObjectsDropdown
@@ -505,41 +513,44 @@ export function StreetDesignTopBarView({
           onComparisonModeChange={onComparisonModeChange}
         />
 
-        <ToolbarButton
-          type="button"
-          aria-label={t('features.amendments.streetscape.areaPicker.loadDemo')}
-          tooltip={t('features.amendments.streetscape.areaPicker.loadDemo')}
-          disabled={readOnly}
-          onClick={onLoadSample}
-        >
-          <MapPinned className="size-4" />
-        </ToolbarButton>
+        {!readOnly ? (
+          <>
+            <ToolbarButton
+              type="button"
+              aria-label={t('features.amendments.streetscape.areaPicker.loadDemo')}
+              tooltip={t('features.amendments.streetscape.areaPicker.loadDemo')}
+              onClick={onLoadSample}
+            >
+              <MapPinned className="size-4" />
+            </ToolbarButton>
 
-        <ToolbarButton
-          type="button"
-          aria-label={t('features.amendments.streetscape.areaPicker.loadOsm')}
-          tooltip={osmError ?? t('features.amendments.streetscape.areaPicker.loadOsm')}
-          loading={isLoadingOsm}
-          disabled={readOnly || isLoadingOsm}
-          onClick={onLoadOsm}
-        >
-          <Layers className={cn('size-4', osmError && 'text-destructive')} />
-        </ToolbarButton>
+            <ToolbarButton
+              type="button"
+              aria-label={t('features.amendments.streetscape.areaPicker.loadOsm')}
+              tooltip={osmError ?? t('features.amendments.streetscape.areaPicker.loadOsm')}
+              loading={isLoadingOsm}
+              disabled={isLoadingOsm}
+              onClick={onLoadOsm}
+            >
+              <Layers className={cn('size-4', osmError && 'text-destructive')} />
+            </ToolbarButton>
 
-        <ToolbarButton
-          type="button"
-          aria-label={t('features.amendments.streetscape.save')}
-          tooltip={saveError ?? t('features.amendments.streetscape.save')}
-          loading={isSaving}
-          successState={!readOnly && !isDirty && !isSaving}
-          disabled={readOnly || isSaving || !isDirty}
-          onClick={onSave}
-        >
-          <Save className={cn('size-4', saveError && 'text-destructive')} />
-        </ToolbarButton>
+            <ToolbarButton
+              type="button"
+              aria-label={t('features.amendments.streetscape.save')}
+              tooltip={saveError ?? t('features.amendments.streetscape.save')}
+              loading={isSaving}
+              successState={!isDirty && !isSaving}
+              disabled={isSaving || !isDirty}
+              onClick={onSave}
+            >
+              <Save className={cn('size-4', saveError && 'text-destructive')} />
+            </ToolbarButton>
+          </>
+        ) : null}
       </ToolbarGroup>
 
-      {(selectedObject || selectedOsmWay) && (
+      {!readOnly && (selectedObject || selectedOsmWay) && (
         <ToolbarGroup>
           {selectedObject ? (
             <>
@@ -603,10 +614,13 @@ export function StreetDesignSecondaryActionBarView({
   changeRequests,
   selectedChangeRequestId,
   showChangeRequests,
+  changeRequestColorMode = 'natural',
   onShowChangeRequestsChange,
+  onChangeRequestColorModeChange = () => undefined,
   onChangeRequestSelect,
 }: StreetDesignSecondaryActionBarViewProps) {
   const { t } = useTranslation();
+  const colorModeIsTinted = changeRequestColorMode === 'tinted';
 
   return (
     <div className="scrollbar-hide -mx-8 mb-6 overflow-x-auto px-8 sm:mx-0 sm:px-0">
@@ -648,6 +662,18 @@ export function StreetDesignSecondaryActionBarView({
         >
           <Layers className="size-4" />
           {t('features.amendments.streetscape.topbar.showCrOverlay')}
+        </Button>
+
+        <Button
+          type="button"
+          variant={colorModeIsTinted ? 'default' : 'outline'}
+          size="sm"
+          className="gap-2"
+          aria-pressed={colorModeIsTinted}
+          onClick={() => onChangeRequestColorModeChange(colorModeIsTinted ? 'natural' : 'tinted')}
+        >
+          <Palette className="size-4" />
+          {t('features.amendments.streetscape.topbar.colorCrChanges', 'Color changes')}
         </Button>
       </div>
     </div>
@@ -830,14 +856,15 @@ function ObjectsDropdown({
                   {categoryHidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                   {getActionLabel(categoryHidden ? 'show' : 'hide', categoryLabel)}
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="destructive"
-                  disabled={readOnly}
-                  onSelect={() => onObjectCategoryDelete(group.category)}
-                >
-                  <Trash2 className="size-4" />
-                  {getActionLabel('remove', categoryLabel)}
-                </DropdownMenuItem>
+                {!readOnly ? (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => onObjectCategoryDelete(group.category)}
+                  >
+                    <Trash2 className="size-4" />
+                    {getActionLabel('remove', categoryLabel)}
+                  </DropdownMenuItem>
+                ) : null}
                 {group.objects.map(object => {
                   const Icon = objectIcons[object.type];
                   const hidden = hiddenObjectIdSet.has(object.id);
@@ -866,14 +893,15 @@ function ObjectsDropdown({
                         {hidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                         {getActionLabel(hidden ? 'show' : 'hide', label)}
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        variant="destructive"
-                        disabled={readOnly}
-                        onSelect={() => onObjectDelete(object.id)}
-                      >
-                        <Trash2 className="size-4" />
-                        {getActionLabel('remove', label)}
-                      </DropdownMenuItem>
+                      {!readOnly ? (
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onSelect={() => onObjectDelete(object.id)}
+                        >
+                          <Trash2 className="size-4" />
+                          {getActionLabel('remove', label)}
+                        </DropdownMenuItem>
+                      ) : null}
                     </div>
                   );
                 })}

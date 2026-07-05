@@ -4,6 +4,7 @@ const {
   applyChangeRequestVoteResultToContentMock,
   findChangeRequestDiscussionMock,
   getChangeRequestResolutionStatusMock,
+  isStreetDesignSourceTypeMock,
   resolveChangeRequestByVoteResultMock,
 } = vi.hoisted(() => ({
   applyChangeRequestVoteResultToContentMock: vi.fn((content, suggestionId, voteResult) => [
@@ -21,6 +22,7 @@ const {
   getChangeRequestResolutionStatusMock: vi.fn(voteResult =>
     voteResult === 'passed' ? 'accepted' : 'rejected'
   ),
+  isStreetDesignSourceTypeMock: vi.fn<(sourceType?: string | null) => boolean>(() => false),
   resolveChangeRequestByVoteResultMock: vi.fn(),
 }));
 
@@ -28,6 +30,7 @@ vi.mock('../server-resolution', () => ({
   applyChangeRequestVoteResultToContent: applyChangeRequestVoteResultToContentMock,
   findChangeRequestDiscussion: findChangeRequestDiscussionMock,
   getChangeRequestResolutionStatus: getChangeRequestResolutionStatusMock,
+  isStreetDesignSourceType: isStreetDesignSourceTypeMock,
   resolveChangeRequestByVoteResult: resolveChangeRequestByVoteResultMock,
 }));
 
@@ -97,6 +100,8 @@ describe('internal change request voting close rules', () => {
     applyChangeRequestVoteResultToContentMock.mockClear();
     findChangeRequestDiscussionMock.mockClear();
     getChangeRequestResolutionStatusMock.mockClear();
+    isStreetDesignSourceTypeMock.mockReset();
+    isStreetDesignSourceTypeMock.mockReturnValue(false);
     resolveChangeRequestByVoteResultMock.mockReset();
   });
 
@@ -333,6 +338,54 @@ describe('internal change request voting close rules', () => {
         ],
       })
     );
+  });
+
+  it('finalizes street design internal CRs on event transition through the generic resolver', async () => {
+    isStreetDesignSourceTypeMock.mockImplementation(
+      sourceType => sourceType === 'street_design_object'
+    );
+    resolveChangeRequestByVoteResultMock.mockResolvedValue({
+      changeRequest: { id: 'cr-street' },
+      status: 'accepted',
+    });
+    const tx = createTx([
+      {
+        id: 'amendment-1',
+        internal_cr_voting_close_trigger: 'all_collaborators_voted',
+        document_id: null,
+        discussions: [],
+      },
+      [
+        {
+          ...openChangeRequest,
+          id: 'cr-street',
+          title: 'CR-1',
+          source_type: 'street_design_object',
+          created_in_mode: 'suggest_internal',
+        },
+      ],
+      [votingCollaborator('user-1')],
+      [{ id: 'vote-1', user_id: 'user-1', vote: 'accept', created_at: 1_000 }],
+    ]);
+
+    const result = await finalizeInternalChangeRequestsForEventPhaseTransition({
+      tx: tx as never,
+      ctx: { userID: 'manager-1' },
+      amendmentId: 'amendment-1',
+      now: 5_000,
+    });
+
+    expect(result).toEqual([{ changeRequest: { id: 'cr-street' }, status: 'accepted' }]);
+    expect(resolveChangeRequestByVoteResultMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        changeRequestId: 'cr-street',
+        voteResult: 'passed',
+        resolutionMethod: 'internal_vote',
+        resolvedInMode: 'vote_internal',
+      })
+    );
+    expect(applyChangeRequestVoteResultToContentMock).not.toHaveBeenCalled();
+    expect(tx.mutate.document.update).not.toHaveBeenCalled();
   });
 
   it('applies duplicated logical CRs only once using the voted row as canonical', async () => {

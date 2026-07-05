@@ -11,7 +11,12 @@ import type {
   StreetDesignPropertyValue,
   StreetDesignStateV1,
 } from '../types';
-import type { StreetDesignChangeRequest } from '../logic/streetDesignChangeRequests';
+import type {
+  StreetDesignChangeRequest,
+  StreetDesignChangeRequestColorMode,
+} from '../logic/streetDesignChangeRequests';
+import type { StreetDesignDiscussionLike } from './StreetDesignChangeRequestPanel';
+import type { EditorCollaborator } from '@/features/editor/types';
 interface StreetSceneCanvasViewProps {
   design: StreetDesignStateV1;
   metricLabels?: string[];
@@ -34,8 +39,16 @@ interface StreetSceneCanvasViewProps {
   interactionMode: StreetDesignInteractionMode;
   readOnly: boolean;
   changeRequests?: readonly StreetDesignChangeRequest[];
+  streetDesignDiscussions?: readonly StreetDesignDiscussionLike[];
   selectedChangeRequestId?: string | null;
   showChangeRequests?: boolean;
+  changeRequestColorMode?: StreetDesignChangeRequestColorMode;
+  canVoteOnChangeRequests?: boolean;
+  canFinalizeChangeRequests?: boolean;
+  currentUserId?: string | null;
+  currentUserDisplayName?: string | null;
+  currentUserAvatarUrl?: string | null;
+  collaborators?: readonly EditorCollaborator[];
   onPointerDown: (point: StreetDesignLocalPoint) => void;
   onPointerMove: (point: StreetDesignLocalPoint) => void;
   onFinishPlacement: () => void;
@@ -52,6 +65,13 @@ interface StreetSceneCanvasViewProps {
   onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
   onDeleteObject: (objectId: string) => void;
   onChangeRequestSelect?: (changeRequestId: string | null) => void;
+  onChangeRequestVote?: (
+    changeRequestId: string,
+    vote: 'accept' | 'reject' | 'abstain'
+  ) => void | Promise<void>;
+  onChangeRequestFinalize?: (changeRequestId: string) => void | Promise<void>;
+  onChangeRequestTitleChange?: (changeRequestId: string, title: string) => void | Promise<void>;
+  onChangeRequestCommentSubmit?: (changeRequestId: string, text: string) => void | Promise<void>;
 }
 
 import { useStreetSceneCanvasViewController } from './useStreetSceneCanvasViewController';
@@ -79,8 +99,16 @@ export function StreetSceneCanvasView({
   interactionMode,
   readOnly,
   changeRequests = [],
+  streetDesignDiscussions = [],
   selectedChangeRequestId = null,
   showChangeRequests = false,
+  changeRequestColorMode = 'natural',
+  canVoteOnChangeRequests = false,
+  canFinalizeChangeRequests = false,
+  currentUserId = null,
+  currentUserDisplayName = null,
+  currentUserAvatarUrl = null,
+  collaborators = [],
   onPointerDown,
   onPointerMove,
   onFinishPlacement,
@@ -97,6 +125,10 @@ export function StreetSceneCanvasView({
   onUnitCostChange,
   onDeleteObject,
   onChangeRequestSelect,
+  onChangeRequestVote,
+  onChangeRequestFinalize,
+  onChangeRequestTitleChange,
+  onChangeRequestCommentSubmit,
 }: StreetSceneCanvasViewProps) {
   const viewProps = useStreetSceneCanvasViewController({
     design,
@@ -120,8 +152,16 @@ export function StreetSceneCanvasView({
     interactionMode,
     readOnly,
     changeRequests,
+    streetDesignDiscussions,
     selectedChangeRequestId,
     showChangeRequests,
+    changeRequestColorMode,
+    canVoteOnChangeRequests,
+    canFinalizeChangeRequests,
+    currentUserId,
+    currentUserDisplayName,
+    currentUserAvatarUrl,
+    collaborators,
     onPointerDown,
     onPointerMove,
     onFinishPlacement,
@@ -138,6 +178,10 @@ export function StreetSceneCanvasView({
     onUnitCostChange,
     onDeleteObject,
     onChangeRequestSelect,
+    onChangeRequestVote,
+    onChangeRequestFinalize,
+    onChangeRequestTitleChange,
+    onChangeRequestCommentSubmit,
   });
 
   return <StreetSceneCanvasViewView {...viewProps} />;

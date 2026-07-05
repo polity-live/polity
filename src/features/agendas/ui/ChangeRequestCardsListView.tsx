@@ -36,6 +36,12 @@ import { cn } from '@/features/shared/utils/utils';
 import { ChangeRequestTimelineCard } from './ChangeRequestTimelineCard';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
+import { StreetDesignChangeRequestPreview } from '@/features/amendments/streetscape/ui/StreetDesignChangeRequestPreview';
+import {
+  isStreetDesignChangeRequest,
+  type StreetDesignChangeRequest,
+  type StreetDesignPreviewSource,
+} from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
 import { SuggestionViewToggle } from '@/features/editor/ui/SuggestionViewToggle';
 import {
   isMockCRTimelineItem,
@@ -68,6 +74,18 @@ function isChangeRequestVotesPlaceholder(item: any) {
   return item?._voteStepKind === 'change_request_votes_placeholder';
 }
 
+function getStreetDesignChangeRequestFromTimelineItem(
+  item: ChangeRequestTimelineRow
+): StreetDesignChangeRequest | null {
+  const changeRequest = item.change_request as (StreetDesignChangeRequest & { id?: string }) | null;
+  if (!changeRequest || !isStreetDesignChangeRequest(changeRequest)) return null;
+
+  return {
+    ...changeRequest,
+    id: changeRequest.id ?? item.change_request_id ?? item.id,
+  };
+}
+
 export interface ChangeRequestCardsListViewProps {
   items: any[];
   editingMode: EditingMode;
@@ -87,6 +105,7 @@ export interface ChangeRequestCardsListViewProps {
   allCRsProcessed: any;
   isTimelineComplete: any;
   documentContent: any;
+  streetDesigns?: readonly StreetDesignPreviewSource[];
   agendaTitle?: any;
   discussions: any;
   amendmentId: any;
@@ -148,6 +167,7 @@ export function ChangeRequestCardsListView({
   allCRsProcessed,
   isTimelineComplete,
   documentContent,
+  streetDesigns = [],
   agendaTitle,
   discussions,
   amendmentId,
@@ -217,6 +237,29 @@ export function ChangeRequestCardsListView({
   };
   void closingVoteItem;
   void allCRsProcessed;
+  const effectivePreviewCrIdSet =
+    effectivePreviewCrIds && typeof effectivePreviewCrIds.has === 'function'
+      ? effectivePreviewCrIds
+      : new Set(Array.isArray(effectivePreviewCrIds) ? effectivePreviewCrIds : []);
+  const selectedSharedPreviewItems = effectivePreviewCrIds
+    ? crItems.filter((item: ChangeRequestTimelineRow) => {
+        const previewCrId = getPreviewCrId(item);
+        return previewCrId ? effectivePreviewCrIdSet.has(previewCrId) : false;
+      })
+    : crItems;
+  const selectedSharedStreetChangeRequests = selectedSharedPreviewItems
+    .map((item: ChangeRequestTimelineRow) => getStreetDesignChangeRequestFromTimelineItem(item))
+    .filter((changeRequest): changeRequest is StreetDesignChangeRequest => Boolean(changeRequest));
+  const sharedPreviewHasStreetDesign = selectedSharedStreetChangeRequests.length > 0;
+  const sharedPreviewHasText =
+    selectedSharedPreviewItems.length > selectedSharedStreetChangeRequests.length;
+  const showSharedTextPreview =
+    sharedPreviewEnabled && !sharedPreviewHasStreetDesign && Boolean(documentContent);
+  const showSharedStreetPreview =
+    sharedPreviewEnabled &&
+    sharedPreviewHasStreetDesign &&
+    !sharedPreviewHasText &&
+    Boolean(selectedSharedStreetChangeRequests[0]);
 
   return (
     <Card>
@@ -275,7 +318,7 @@ export function ChangeRequestCardsListView({
         </div>
         {isVotingActive && <Progress value={progressPercent} className="mt-1" />}
 
-        {sharedPreviewEnabled && (
+        {showSharedTextPreview && (
           <div className="bg-muted/20 space-y-2 rounded-lg border p-3">
             <CREditorPreview
               documentContent={documentContent ?? ([] as Value)}
@@ -303,6 +346,14 @@ export function ChangeRequestCardsListView({
             />
           </div>
         )}
+        {showSharedStreetPreview && selectedSharedStreetChangeRequests[0] ? (
+          <div className="bg-muted/20 space-y-2 rounded-lg border p-3">
+            <StreetDesignChangeRequestPreview
+              changeRequest={selectedSharedStreetChangeRequests[0]}
+              streetDesigns={streetDesigns}
+            />
+          </div>
+        ) : null}
 
         {/* Tabs */}
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
@@ -517,6 +568,7 @@ export function ChangeRequestCardsListView({
                       isFinalVoteLocked={isLocked}
                       diff={diff}
                       documentContent={documentContent}
+                      streetDesigns={streetDesigns}
                       suggestionId={suggestionId}
                       suggestionResolutions={previewSuggestionResolutions}
                       agendaTitle={agendaTitle}

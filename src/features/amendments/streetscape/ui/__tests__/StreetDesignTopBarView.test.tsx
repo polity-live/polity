@@ -156,15 +156,20 @@ describe('StreetDesignTopBarView', () => {
   });
 
   it('renders secondary share, invite, change request, and overlay controls', async () => {
-    const props = renderSecondaryActionBar();
+    const onChangeRequestColorModeChange = vi.fn();
+    const props = renderSecondaryActionBar({ onChangeRequestColorModeChange });
 
     expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Invite' })).toHaveProperty('disabled', true);
     expect(screen.getByRole('button', { name: '1 CRs' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Show canvas overlay' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Color changes' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Show canvas overlay' }));
     expect(props.onShowChangeRequestsChange).toHaveBeenCalledWith(false);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Color changes' }));
+    expect(onChangeRequestColorModeChange).toHaveBeenCalledWith('tinted');
 
     fireEvent.pointerDown(screen.getByRole('button', { name: '1 CRs' }));
     fireEvent.click(await screen.findByRole('menuitem', { name: /add canopy tree/i }));

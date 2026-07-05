@@ -32,6 +32,9 @@ export interface CanonicalSavedChangeRequest {
   branchSequenceNumber?: number | null;
   changed_character_count?: number | null;
   changedCharacterCount?: number | null;
+  source_type?: string | null;
+  source_id?: string | null;
+  source_title?: string | null;
   change_type?: string | null;
   original_text?: string | null;
   new_text?: string | null;

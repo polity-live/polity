@@ -14,12 +14,18 @@ export interface CRSummary {
   changedCharacterCount?: number | null;
   title: string;
   description: string;
+  sourceType?: string | null;
+  sourceId?: string | null;
+  sourceTitle?: string | null;
+  changeType?: string | null;
   status: string; // 'open' | 'approved' | 'accepted' | 'rejected' | 'declined'
   type?: string;
   text?: string;
   newText?: string;
   properties?: Record<string, string>;
   newProperties?: Record<string, string>;
+  originalProperties?: unknown;
+  rawNewProperties?: unknown;
   justification?: string;
   votesFor?: number;
   votesAgainst?: number;
@@ -192,11 +198,14 @@ export function createMockCRTimelineItems(crSummaries: CRSummary[]) {
         branchSequenceNumber: cr.branchSequenceNumber ?? cr.branchScopedCrNumber ?? null,
         changed_character_count: cr.changedCharacterCount ?? null,
         changedCharacterCount: cr.changedCharacterCount ?? null,
-        change_type: cr.type ?? null,
+        source_type: cr.sourceType ?? null,
+        source_id: cr.sourceId ?? null,
+        source_title: cr.sourceTitle ?? null,
+        change_type: cr.changeType ?? cr.type ?? null,
         original_text: cr.text ?? null,
         new_text: cr.newText ?? null,
-        original_properties: cr.properties ?? null,
-        new_properties: cr.newProperties ?? null,
+        original_properties: cr.originalProperties ?? cr.properties ?? null,
+        new_properties: cr.rawNewProperties ?? cr.newProperties ?? null,
         suggestion_id: suggestionId,
         description: cr.description || null,
         status: cr.status || null,

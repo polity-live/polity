@@ -10,6 +10,7 @@ const supportAmendmentMock = vi.fn();
 const updateSupportVoteMock = vi.fn();
 const sharedUpdateProcessBranchMock = vi.fn();
 const changeRequestDeleteMock = vi.fn();
+const voteOnChangeRequestMock = vi.fn();
 const fireNotificationMock = vi.fn();
 const amendmentTitleMock = vi.fn();
 const eventTitleMock = vi.fn();
@@ -36,7 +37,7 @@ vi.mock('../../mutators', () => ({
       removeCollaborator: { fn: vi.fn() },
       updateCollaborator: { fn: vi.fn() },
       createChangeRequest: { fn: vi.fn() },
-      voteOnChangeRequest: { fn: vi.fn() },
+      voteOnChangeRequest: { fn: (...args: unknown[]) => voteOnChangeRequestMock(...args) },
       updateChangeRequest: { fn: vi.fn() },
       deleteChangeRequest: { fn: (...args: unknown[]) => changeRequestDeleteMock(...args) },
       createSupportConfirmation: { fn: vi.fn() },
@@ -298,6 +299,7 @@ describe('amendmentServerMutators authorization', () => {
     updateSupportVoteMock.mockReset();
     sharedUpdateProcessBranchMock.mockReset();
     changeRequestDeleteMock.mockReset();
+    voteOnChangeRequestMock.mockReset();
     fireNotificationMock.mockReset();
     amendmentTitleMock.mockReset();
     eventTitleMock.mockReset();
@@ -1302,6 +1304,92 @@ describe('amendmentServerMutators authorization', () => {
     });
   });
 
+  it('allows voting on unscoped full-text change requests when the amendment document is in internal voting mode', async () => {
+    const tx = createTx('server');
+    const ctx = createCtx();
+    const args = {
+      id: 'vote-1',
+      change_request_id: 'change-request-1',
+      vote: 'accept' as const,
+    };
+    const changeRequest = {
+      id: 'change-request-1',
+      amendment_id: 'amendment-1',
+      process_branch_id: null,
+      user_id: 'user-1',
+      status: 'open',
+      voting_status: 'open',
+    };
+
+    tx.run
+      .mockResolvedValueOnce(changeRequest)
+      .mockResolvedValueOnce({
+        id: 'amendment-1',
+        document_id: 'document-1',
+      })
+      .mockResolvedValueOnce({
+        id: 'document-1',
+        editing_mode: 'vote_internal',
+      })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(changeRequest)
+      .mockResolvedValueOnce(null);
+    canMock.mockResolvedValueOnce(undefined);
+
+    await expect(
+      amendmentServerMutators.voteOnChangeRequest.fn({
+        tx: tx as never,
+        ctx,
+        args,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(canMock).toHaveBeenCalledWith(tx, ctx, {
+      action: 'vote',
+      resource: 'amendments',
+      amendmentId: 'amendment-1',
+    });
+    expect(voteOnChangeRequestMock).toHaveBeenCalledWith({ tx, ctx, args });
+  });
+
+  it('rejects voting on unscoped full-text change requests when the amendment document is not in internal voting mode', async () => {
+    const tx = createTx('server');
+    const ctx = createCtx();
+
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'change-request-1',
+        amendment_id: 'amendment-1',
+        process_branch_id: null,
+        user_id: 'user-1',
+        status: 'open',
+        voting_status: 'open',
+      })
+      .mockResolvedValueOnce({
+        id: 'amendment-1',
+        document_id: 'document-1',
+      })
+      .mockResolvedValueOnce({
+        id: 'document-1',
+        editing_mode: 'edit',
+      });
+
+    await expect(
+      amendmentServerMutators.voteOnChangeRequest.fn({
+        tx: tx as never,
+        ctx,
+        args: {
+          id: 'vote-1',
+          change_request_id: 'change-request-1',
+          vote: 'accept',
+        },
+      })
+    ).rejects.toThrow(PermissionError);
+
+    expect(canMock).not.toHaveBeenCalled();
+    expect(voteOnChangeRequestMock).not.toHaveBeenCalled();
+  });
+
   it('allows internal change request vote finalization with amendment manage rights', async () => {
     const tx = createTx('server');
     const ctx = createCtx();
@@ -1321,6 +1409,47 @@ describe('amendmentServerMutators authorization', () => {
       })
       .mockResolvedValueOnce({
         id: 'branch-1',
+        editing_mode: 'vote_internal',
+      })
+      .mockResolvedValueOnce(null);
+    canMock.mockResolvedValueOnce(undefined);
+
+    await expect(
+      amendmentServerMutators.finalizeInternalChangeRequestVote.fn({
+        tx: tx as never,
+        ctx,
+        args: { change_request_id: 'change-request-1' },
+      })
+    ).resolves.toBeUndefined();
+
+    expect(canMock).toHaveBeenCalledWith(tx, ctx, {
+      action: 'manage',
+      resource: 'amendments',
+      amendmentId: 'amendment-1',
+    });
+    expect(tx.run).toHaveBeenCalledTimes(4);
+  });
+
+  it('allows unscoped internal change request vote finalization when the amendment document is in internal voting mode', async () => {
+    const tx = createTx('server');
+    const ctx = createCtx();
+
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'change-request-1',
+        amendment_id: 'amendment-1',
+        process_branch_id: null,
+        status: 'open',
+        voting_status: 'in_progress',
+      })
+      .mockResolvedValueOnce({
+        id: 'amendment-1',
+        document_id: 'document-1',
+        event_id: null,
+        title: 'Amendment',
+      })
+      .mockResolvedValueOnce({
+        id: 'document-1',
         editing_mode: 'vote_internal',
       })
       .mockResolvedValueOnce(null);

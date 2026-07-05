@@ -1,15 +1,5 @@
 import { useMemo, useState, type ReactNode, type RefObject } from 'react';
-import {
-  ChevronDown,
-  Eye,
-  EyeOff,
-  Layers,
-  MessageSquare,
-  PencilLine,
-  Trash2,
-  Vote,
-  X,
-} from 'lucide-react';
+import { ChevronDown, Eye, EyeOff, Layers, Trash2, X } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
@@ -48,13 +38,7 @@ import type {
   StreetDesignChangeRequest,
   StreetDesignChangeRequestTone,
 } from '../logic/streetDesignChangeRequests';
-import {
-  formatStreetDesignChangeRequestIdentifier,
-  formatStreetDesignChangeRequestTitle,
-  getStreetDesignChangeRequestDiffRows,
-  getStreetDesignChangeRequestMarker,
-  getStreetDesignChangeRequestTone,
-} from '../logic/streetDesignChangeRequests';
+import { getStreetDesignChangeRequestMarker } from '../logic/streetDesignChangeRequests';
 import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
 import { getStreetDesignObjectDefinition } from '../logic/streetDesignObjectRegistry';
 import { getStreetDesignObjectVariantLabelKey } from '../logic/streetDesignVariantCatalog';
@@ -67,6 +51,12 @@ import {
   getStreetDesignOsmFeaturePoints,
 } from '../logic/streetDesignOsm';
 import { projectGeoPointToLocal } from '../logic/streetDesignProjection';
+import type { EditorCollaborator } from '@/features/editor/types';
+import {
+  StreetDesignChangeRequestCanvasList,
+  StreetDesignChangeRequestPanel,
+  type StreetDesignDiscussionLike,
+} from './StreetDesignChangeRequestPanel';
 
 export interface StreetSceneCanvasViewViewProps {
   design: StreetDesignStateV1;
@@ -83,8 +73,15 @@ export interface StreetSceneCanvasViewViewProps {
   interactionMode: StreetDesignInteractionMode;
   readOnly: boolean;
   changeRequests?: readonly StreetDesignChangeRequest[];
+  streetDesignDiscussions?: readonly StreetDesignDiscussionLike[];
   selectedChangeRequestId?: string | null;
   showChangeRequests?: boolean;
+  canVoteOnChangeRequests?: boolean;
+  canFinalizeChangeRequests?: boolean;
+  currentUserId?: string | null;
+  currentUserDisplayName?: string | null;
+  currentUserAvatarUrl?: string | null;
+  collaborators?: readonly EditorCollaborator[];
   onFinishPathPlacement: () => void;
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
@@ -97,6 +94,13 @@ export interface StreetSceneCanvasViewViewProps {
   onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
   onDeleteObject: (objectId: string) => void;
   onChangeRequestSelect?: (changeRequestId: string | null) => void;
+  onChangeRequestVote?: (
+    changeRequestId: string,
+    vote: 'accept' | 'reject' | 'abstain'
+  ) => void | Promise<void>;
+  onChangeRequestFinalize?: (changeRequestId: string) => void | Promise<void>;
+  onChangeRequestTitleChange?: (changeRequestId: string, title: string) => void | Promise<void>;
+  onChangeRequestCommentSubmit?: (changeRequestId: string, text: string) => void | Promise<void>;
   canvasRef: RefObject<HTMLCanvasElement | null>;
   loadFailed: boolean;
 }
@@ -115,8 +119,15 @@ export function StreetSceneCanvasViewView({
   interactionMode,
   readOnly,
   changeRequests = [],
+  streetDesignDiscussions = [],
   selectedChangeRequestId = null,
   showChangeRequests = false,
+  canVoteOnChangeRequests = false,
+  canFinalizeChangeRequests = false,
+  currentUserId = null,
+  currentUserDisplayName = null,
+  currentUserAvatarUrl = null,
+  collaborators = [],
   onFinishPathPlacement,
   onCancelPlacement,
   onObjectSelect,
@@ -129,6 +140,10 @@ export function StreetSceneCanvasViewView({
   onUnitCostChange,
   onDeleteObject,
   onChangeRequestSelect,
+  onChangeRequestVote,
+  onChangeRequestFinalize,
+  onChangeRequestTitleChange,
+  onChangeRequestCommentSubmit,
   canvasRef,
   loadFailed,
 }: StreetSceneCanvasViewViewProps) {
@@ -150,11 +165,15 @@ export function StreetSceneCanvasViewView({
       ),
     [changeRequests, design]
   );
+  const positionedChangeRequestMarkers = useMemo(
+    () => getStackedChangeRequestMarkers(changeRequestMarkers),
+    [changeRequestMarkers]
+  );
   const hiddenObjectIdSet = useMemo(() => new Set(hiddenObjectIds), [hiddenObjectIds]);
   const selectedChangeRequest =
     changeRequests.find(changeRequest => changeRequest.id === selectedChangeRequestId) ?? null;
   const selectedChangeRequestMarker = selectedChangeRequest
-    ? changeRequestMarkers.find(marker => marker.id === selectedChangeRequest.id)
+    ? positionedChangeRequestMarkers.find(marker => marker.id === selectedChangeRequest.id)
     : null;
   const selectedObjectAnchor = selectedObject
     ? getCanvasAnchorFromLocalPoint(getStreetDesignGeometryCenter(selectedObject.geometry))
@@ -172,16 +191,19 @@ export function StreetSceneCanvasViewView({
   }
 
   return (
-    <div className="bg-background relative min-h-[30rem] overflow-hidden" data-swipe-lock>
-      <div className="bg-muted/10 relative overflow-hidden">
+    <div
+      className="bg-background relative min-h-[42rem] overflow-hidden lg:min-h-[calc(100vh-10rem)]"
+      data-swipe-lock
+    >
+      <div className="bg-muted/10 relative min-h-[42rem] overflow-hidden lg:min-h-[calc(100vh-10rem)]">
         <canvas
           ref={canvasRef}
           className={
             interactionMode === 'camera'
-              ? 'h-[30rem] w-full cursor-grab sm:h-[34rem] 2xl:h-[38rem]'
+              ? 'h-[42rem] w-full cursor-grab lg:h-[calc(100vh-10rem)]'
               : interactionMode === 'select'
-                ? 'h-[30rem] w-full cursor-pointer sm:h-[34rem] 2xl:h-[38rem]'
-                : 'h-[30rem] w-full cursor-crosshair sm:h-[34rem] 2xl:h-[38rem]'
+                ? 'h-[42rem] w-full cursor-pointer lg:h-[calc(100vh-10rem)]'
+                : 'h-[42rem] w-full cursor-crosshair lg:h-[calc(100vh-10rem)]'
           }
         />
         {isLoadingOsm ? (
@@ -193,14 +215,14 @@ export function StreetSceneCanvasViewView({
             />
           </div>
         ) : null}
-        {showChangeRequests && changeRequestMarkers.length > 0 ? (
+        {showChangeRequests && positionedChangeRequestMarkers.length > 0 ? (
           <div className="pointer-events-none absolute inset-0 z-20">
-            {changeRequestMarkers.map(marker => (
+            {positionedChangeRequestMarkers.map(marker => (
               <button
                 key={marker.id}
                 type="button"
                 className={cn(
-                  'focus-visible:ring-ring pointer-events-auto absolute flex min-h-8 max-w-40 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold shadow-lg backdrop-blur transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none',
+                  'focus-visible:ring-ring pointer-events-auto absolute flex min-h-8 max-w-52 -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold shadow-lg backdrop-blur transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:outline-none',
                   getChangeRequestMarkerClassName(marker.tone),
                   selectedChangeRequestId === marker.id && 'ring-ring ring-2'
                 )}
@@ -214,6 +236,7 @@ export function StreetSceneCanvasViewView({
                 title={marker.label}
                 onClick={() => onChangeRequestSelect?.(marker.id)}
               >
+                <span className="font-mono text-[11px]">{marker.displayId}</span>
                 <span
                   className={cn(
                     'size-3 flex-none rounded-full border',
@@ -221,10 +244,17 @@ export function StreetSceneCanvasViewView({
                     marker.tone === 'update' && 'ring-2 ring-current/30'
                   )}
                 />
-                <span className="min-w-0 truncate">{marker.label}</span>
+                <span className="min-w-0 truncate">{marker.title}</span>
               </button>
             ))}
           </div>
+        ) : null}
+        {showChangeRequests && changeRequests.length > 0 ? (
+          <StreetDesignChangeRequestCanvasList
+            changeRequests={changeRequests}
+            selectedChangeRequestId={selectedChangeRequestId}
+            onChangeRequestSelect={changeRequestId => onChangeRequestSelect?.(changeRequestId)}
+          />
         ) : null}
         {selectedChangeRequest ? (
           <CanvasSelectionPopover
@@ -237,9 +267,21 @@ export function StreetSceneCanvasViewView({
                 : getCanvasAnchorFromLocalPoint({ x: 0, z: 0 })
             }
           >
-            <StreetDesignChangeRequestPopover
+            <StreetDesignChangeRequestPanel
               changeRequest={selectedChangeRequest}
+              discussions={streetDesignDiscussions}
+              collaborators={collaborators}
+              currentUserId={currentUserId}
+              currentUserDisplayName={currentUserDisplayName}
+              currentUserAvatarUrl={currentUserAvatarUrl}
+              canVote={canVoteOnChangeRequests}
+              canFinalize={canFinalizeChangeRequests}
+              compact
               onClose={() => onChangeRequestSelect?.(null)}
+              onVote={onChangeRequestVote}
+              onFinalize={onChangeRequestFinalize}
+              onTitleChange={onChangeRequestTitleChange}
+              onCommentSubmit={onChangeRequestCommentSubmit}
             />
           </CanvasSelectionPopover>
         ) : selectedObject && selectedObjectAnchor ? (
@@ -273,7 +315,10 @@ export function StreetSceneCanvasViewView({
         <Collapsible
           open={legendOpen}
           onOpenChange={setLegendOpen}
-          className="bg-background/95 pointer-events-auto absolute top-24 right-6 z-10 w-[min(17rem,calc(100%-3rem))] overflow-hidden rounded-md border text-xs shadow-lg backdrop-blur sm:top-20"
+          className={cn(
+            'bg-background/95 pointer-events-auto absolute right-6 z-10 w-[min(17rem,calc(100%-3rem))] overflow-hidden rounded-md border text-xs shadow-lg backdrop-blur',
+            showChangeRequests && changeRequests.length > 0 ? 'top-[23rem]' : 'top-24 sm:top-20'
+          )}
         >
           <CollapsibleTrigger asChild>
             <Button
@@ -381,6 +426,19 @@ interface CanvasAnchor {
   topPercent: number;
 }
 
+export function getBoundedCanvasPopoverPlacement(anchor: CanvasAnchor) {
+  const leftPercent = Math.min(96, Math.max(4, anchor.leftPercent));
+  const topPercent = Math.min(96, Math.max(4, anchor.topPercent));
+  const translateX = leftPercent < 35 ? '0' : leftPercent > 65 ? '-100%' : '-50%';
+  const translateY = topPercent < 35 ? '0' : topPercent > 65 ? '-100%' : '-50%';
+
+  return {
+    leftPercent,
+    topPercent,
+    transform: `translate(${translateX}, ${translateY})`,
+  };
+}
+
 function CanvasSelectionPopover({
   anchor,
   children,
@@ -388,12 +446,15 @@ function CanvasSelectionPopover({
   anchor: CanvasAnchor;
   children: ReactNode;
 }) {
+  const placement = getBoundedCanvasPopoverPlacement(anchor);
+
   return (
     <div
-      className="bg-background/95 pointer-events-auto absolute z-30 w-[min(23rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-3 rounded-md border text-sm shadow-xl backdrop-blur"
+      className="bg-background/95 pointer-events-auto absolute z-30 max-h-[calc(100%-2rem)] w-[min(23rem,calc(100%-2rem))] overflow-auto rounded-md border text-sm shadow-xl backdrop-blur"
       style={{
-        left: `${anchor.leftPercent}%`,
-        top: `${anchor.topPercent}%`,
+        left: `${placement.leftPercent}%`,
+        top: `${placement.topPercent}%`,
+        transform: placement.transform,
       }}
       onPointerDown={event => event.stopPropagation()}
       onClick={event => event.stopPropagation()}
@@ -782,140 +843,6 @@ function StreetDesignOsmPopover({
   );
 }
 
-function StreetDesignChangeRequestPopover({
-  changeRequest,
-  onClose,
-}: {
-  changeRequest: StreetDesignChangeRequest;
-  onClose: () => void;
-}) {
-  const { t } = useTranslation();
-  const diffRows = getStreetDesignChangeRequestDiffRows(changeRequest);
-  const tone = getStreetDesignChangeRequestTone(changeRequest);
-
-  return (
-    <div className="max-h-[min(32rem,70vh)] overflow-auto p-4">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <span
-            className={cn(
-              'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-              getChangeRequestMarkerClassName(tone)
-            )}
-          >
-            {t('features.amendments.streetscape.changeRequests.badge')}
-          </span>
-          <p className="text-muted-foreground font-mono text-[11px]">
-            {formatStreetDesignChangeRequestIdentifier(changeRequest)}
-          </p>
-          <h2 className="text-base leading-tight font-semibold">
-            {formatStreetDesignChangeRequestTitle(changeRequest)}
-          </h2>
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-8"
-          aria-label={t('features.amendments.streetscape.changeRequests.close')}
-          title={t('features.amendments.streetscape.changeRequests.close')}
-          onClick={onClose}
-        >
-          <X className="size-4" />
-        </Button>
-      </div>
-
-      <div className="space-y-4">
-        <div className="bg-muted/15 rounded-md border p-3">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold">
-              {t('features.amendments.streetscape.changeRequests.type')}
-            </span>
-            <span className="rounded-md border px-2 py-0.5 text-xs">
-              {t(`features.amendments.streetscape.changeRequests.tones.${tone}`)}
-            </span>
-          </div>
-          <p className="text-muted-foreground text-xs leading-5">
-            {changeRequest.description ??
-              changeRequest.source_title ??
-              t('features.amendments.streetscape.changeRequests.noDescription')}
-          </p>
-        </div>
-
-        <Button type="button" variant="outline" size="sm" className="w-full justify-start" disabled>
-          <PencilLine className="size-4" />
-          {t('features.amendments.streetscape.changeRequests.edit')}
-        </Button>
-
-        <section className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <PencilLine className="text-muted-foreground size-4" />
-            {t('features.amendments.streetscape.changeRequests.diff')}
-          </div>
-          {diffRows.length === 0 ? (
-            <div className="text-muted-foreground bg-background/80 rounded-md border px-3 py-3 text-sm">
-              {t('features.amendments.streetscape.changeRequests.emptyDiff')}
-            </div>
-          ) : (
-            <div className="max-h-44 space-y-2 overflow-auto">
-              {diffRows.map(row => (
-                <div key={row.key} className="bg-background/80 rounded-md border p-3 text-xs">
-                  <p className="font-semibold">{row.key}</p>
-                  <div className="mt-2 grid gap-2">
-                    <div>
-                      <p className="text-muted-foreground">
-                        {t('features.amendments.streetscape.changeRequests.before')}
-                      </p>
-                      <p className="break-words">{row.before}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">
-                        {t('features.amendments.streetscape.changeRequests.after')}
-                      </p>
-                      <p className="break-words">{row.after}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <Vote className="text-muted-foreground size-4" />
-            {t('features.amendments.streetscape.changeRequests.votes')}
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <VoteCount
-              label={t('features.amendments.streetscape.changeRequests.votesFor')}
-              value={changeRequest.votes_for ?? 0}
-            />
-            <VoteCount
-              label={t('features.amendments.streetscape.changeRequests.votesAgainst')}
-              value={changeRequest.votes_against ?? 0}
-            />
-            <VoteCount
-              label={t('features.amendments.streetscape.changeRequests.votesAbstain')}
-              value={changeRequest.votes_abstain ?? 0}
-            />
-          </div>
-        </section>
-
-        <section className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <MessageSquare className="text-muted-foreground size-4" />
-            {t('features.amendments.streetscape.changeRequests.comments')}
-          </div>
-          <div className="text-muted-foreground bg-background/80 rounded-md border px-3 py-3 text-sm">
-            {t('features.amendments.streetscape.changeRequests.noComments')}
-          </div>
-        </section>
-      </div>
-    </div>
-  );
-}
-
 function ReadonlyMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-1">
@@ -930,15 +857,6 @@ function ReadonlyCard({ label, value }: { label: string; value: string }) {
     <div className="bg-muted/20 rounded-md border px-3 py-2">
       <p className="text-muted-foreground text-xs">{label}</p>
       <p className="font-semibold">{value}</p>
-    </div>
-  );
-}
-
-function VoteCount({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="bg-background/80 rounded-md border px-3 py-2 text-center">
-      <p className="text-lg font-semibold">{value}</p>
-      <p className="text-muted-foreground text-[11px]">{label}</p>
     </div>
   );
 }
@@ -1060,6 +978,24 @@ function StreetDesignLegendItem({ entry }: { entry: StreetDesignLegendEntry }) {
       <span className="min-w-0 truncate">{t(entry.labelKey)}</span>
     </div>
   );
+}
+
+function getStackedChangeRequestMarkers(
+  markers: ReturnType<typeof getStreetDesignChangeRequestMarker>[]
+) {
+  const countsByBucket = new Map<string, number>();
+
+  return markers.map(marker => {
+    const bucket = `${Math.round(marker.leftPercent / 5) * 5}:${Math.round(marker.topPercent / 5) * 5}`;
+    const index = countsByBucket.get(bucket) ?? 0;
+    countsByBucket.set(bucket, index + 1);
+
+    return {
+      ...marker,
+      leftPercent: clamp(marker.leftPercent + (index % 2 === 0 ? 0 : 3), 8, 92),
+      topPercent: clamp(marker.topPercent + index * 5, 8, 92),
+    };
+  });
 }
 
 function getChangeRequestMarkerClassName(tone: StreetDesignChangeRequestTone) {

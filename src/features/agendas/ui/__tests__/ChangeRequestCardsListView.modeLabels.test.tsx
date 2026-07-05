@@ -9,9 +9,19 @@ const mockCREditorPreview = vi.hoisted(() =>
     return null;
   })
 );
+const mockStreetDesignPreview = vi.hoisted(() =>
+  vi.fn((props: unknown) => {
+    void props;
+    return <div data-testid="street-design-change-request-preview" />;
+  })
+);
 
 vi.mock('@/features/change-requests/ui/CREditorPreview', () => ({
   CREditorPreview: (props: any) => mockCREditorPreview(props),
+}));
+
+vi.mock('@/features/amendments/streetscape/ui/StreetDesignChangeRequestPreview', () => ({
+  StreetDesignChangeRequestPreview: (props: any) => mockStreetDesignPreview(props),
 }));
 
 vi.mock('@/features/editor/ui/SuggestionViewToggle', () => ({
@@ -164,6 +174,7 @@ function createFinalVoteItem(status = 'final') {
 afterEach(() => {
   cleanup();
   mockCREditorPreview.mockClear();
+  mockStreetDesignPreview.mockClear();
 });
 
 describe('ChangeRequestCardsListView mode labels', () => {
@@ -395,6 +406,92 @@ describe('ChangeRequestCardsListView mode labels', () => {
 
     expect(screen.getByText('3/5 collaborators with vote right voted')).toBeTruthy();
     expect(screen.queryByText('3/5 Collaborators with vote right voted')).toBeNull();
+  });
+
+  it('renders a street design preview instead of the document preview for street design CRs', () => {
+    const item = {
+      id: 'timeline-street-1',
+      change_request_id: 'street-cr-1',
+      status: 'pending',
+      is_closing_vote: false,
+    };
+    const cr = {
+      id: 'street-cr-1',
+      title: 'Add building',
+      source_type: 'street_design_object',
+      source_id: 'building-1',
+      change_type: 'insert',
+      original_properties: null,
+      new_properties: {
+        streetDesignId: 'street-design-1',
+        objectId: 'building-1',
+      },
+    };
+
+    render(
+      <ChangeRequestTimelineCardView
+        item={item}
+        index={0}
+        isCurrent
+        hasUserVoted={false}
+        userSelectedChoiceIds={[]}
+        canManage={false}
+        canVote={false}
+        isFinalVoteLocked={false}
+        diff={null}
+        documentContent={[{ type: 'p', children: [{ text: 'Document' }] }]}
+        streetDesigns={[{ id: 'street-design-1', design_state: null }]}
+        suggestionId="suggestion-1"
+        crId="CR-1"
+        discussions={[]}
+        editingMode="vote_internal"
+        amendmentId="amendment-1"
+        userId="user-1"
+        agendaItemId="agenda-1"
+        showEditorPreview
+        onCastVote={undefined}
+        onStartIndicative={undefined}
+        onStartFinal={undefined}
+        onCloseVoting={undefined}
+        t={t}
+        votingLoading={false}
+        setVotingLoading={() => undefined}
+        selectedCrIds={new Set()}
+        setSelectedCrIds={() => undefined}
+        crIdToDiscussionId={new Map()}
+        selectedSuggestionIds={new Set(['suggestion-1'])}
+        cr={cr}
+        vote={{ id: 'vote-1' }}
+        title="Add building"
+        phase={null}
+        isClosed={false}
+        isIndicative={false}
+        isFinal={false}
+        voteResult={null}
+        choices={[]}
+        indicativeDecisions={[]}
+        finalDecisions={[]}
+        offlineTallies={[]}
+        choiceStats={[]}
+        totalIndicative={0}
+        totalFinal={0}
+        totalVoters={0}
+        computedVoteSummary={null}
+        resolvedVoteResult={null}
+        leadingChoiceId={null}
+        winningChoiceId={null}
+        winningLabel={null}
+        resolvedVoteSharePercent={0}
+        currentPhaseVoteCount={0}
+        handleCastVote={() => undefined}
+        isLocked={false}
+      />
+    );
+
+    expect(mockStreetDesignPreview).toHaveBeenCalledWith(
+      expect.objectContaining({ changeRequest: expect.objectContaining({ id: 'street-cr-1' }) })
+    );
+    expect(mockCREditorPreview).not.toHaveBeenCalled();
   });
 
   it('uses the preview id resolver supplied by the list controller', () => {

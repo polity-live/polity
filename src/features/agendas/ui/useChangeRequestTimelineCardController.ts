@@ -16,6 +16,7 @@ import type { ChoicesByVoteRow } from '@/zero/votes/queries';
 import type { TDiscussion } from '@/features/editor/types';
 import type { SuggestionPreviewResolutionMap } from '@/features/change-requests/logic/filterDocumentToSingleSuggestion';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
+import type { StreetDesignPreviewSource } from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
 function normalizeMajorityType(value?: string | null): MajorityType {
   if (value === 'absolute' || value === 'two_thirds') {
     return value;
@@ -45,6 +46,7 @@ interface ChangeRequestTimelineCardProps {
   isFinalVoteLocked?: boolean;
   diff?: ChangeRequestDiffData;
   documentContent?: Value;
+  streetDesigns?: readonly StreetDesignPreviewSource[];
   suggestionId?: string;
   suggestionResolutions?: SuggestionPreviewResolutionMap;
   /** Agenda or amendment title used for final closing vote labels. */
@@ -101,6 +103,7 @@ export function useChangeRequestTimelineCardController({
   isFinalVoteLocked,
   diff,
   documentContent,
+  streetDesigns = [],
   suggestionId,
   suggestionResolutions,
   agendaTitle,
@@ -327,6 +330,7 @@ export function useChangeRequestTimelineCardController({
     isFinalVoteLocked,
     diff,
     documentContent,
+    streetDesigns,
     suggestionId,
     suggestionResolutions,
     agendaTitle,

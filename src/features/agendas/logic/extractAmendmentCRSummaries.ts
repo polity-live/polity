@@ -41,11 +41,14 @@ interface SavedChangeRequest {
   resolution_method?: string | null;
   visibility_scope?: string | null;
   resolved_in_mode?: string | null;
+  source_type?: string | null;
+  source_id?: string | null;
+  source_title?: string | null;
   change_type?: string | null;
   original_text?: string | null;
   new_text?: string | null;
-  original_properties?: Record<string, string> | null;
-  new_properties?: Record<string, string> | null;
+  original_properties?: unknown;
+  new_properties?: unknown;
 }
 
 interface ExtractAmendmentCRSummariesOptions {
@@ -81,6 +84,10 @@ export function extractAmendmentCRSummaries(
       branchSequenceNumber: cr?.branch_sequence_number ?? null,
       title: record.displayTitle,
       description: discussion?.description ?? cr?.description ?? '',
+      sourceType: cr?.source_type ?? null,
+      sourceId: cr?.source_id ?? null,
+      sourceTitle: cr?.source_title ?? null,
+      changeType: cr?.change_type ?? null,
       status: cr?.status ?? discussion?.status ?? 'open',
       type: hasSnapshot ? snapshotContent?.type : undefined,
       text: hasSnapshot ? snapshotContent?.text : undefined,
@@ -89,6 +96,8 @@ export function extractAmendmentCRSummaries(
       newProperties: hasSnapshot
         ? (snapshotContent?.newProperties as Record<string, string>)
         : undefined,
+      originalProperties: cr?.original_properties ?? null,
+      rawNewProperties: cr?.new_properties ?? null,
       justification: discussion?.justification,
       votesFor: cr?.votes_for ?? 0,
       votesAgainst: cr?.votes_against ?? 0,

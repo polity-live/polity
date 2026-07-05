@@ -6,7 +6,10 @@ import { createPointStreetDesignObject } from '../../logic/streetDesignPlacement
 import { DEFAULT_STREET_DESIGN_OSM_LAYER_VISIBILITY } from '../../logic/streetDesignOsm';
 import { createEmptyStreetDesignState } from '../../state/streetDesignReducer';
 import type { StreetDesignStateV1 } from '../../types';
-import { StreetSceneCanvasViewView } from '../StreetSceneCanvasViewView';
+import {
+  getBoundedCanvasPopoverPlacement,
+  StreetSceneCanvasViewView,
+} from '../StreetSceneCanvasViewView';
 
 afterEach(() => {
   cleanup();
@@ -71,6 +74,12 @@ describe('StreetSceneCanvasViewView', () => {
 
     const progressbar = screen.getByRole('progressbar', { name: 'Loading OSM data' });
     expect(progressbar.getAttribute('data-motion-style')).toBe('optimistic');
+  });
+
+  it('renders a taller scroll-friendly canvas', () => {
+    const { container } = renderCanvasView({ selectedObject: null });
+
+    expect(container.querySelector('canvas')?.className).toContain('h-[42rem]');
   });
 
   it('shows a delete action for a selected placed object', () => {
@@ -248,11 +257,26 @@ describe('StreetSceneCanvasViewView', () => {
       onChangeRequestSelect,
     });
 
-    const marker = screen.getByRole('button', { name: 'Add canopy tree' });
+    const marker = screen.getByTestId('street-design-cr-marker-cr-add-tree');
     expect(marker.getAttribute('data-change-request-tone')).toBe('add');
+    expect(marker.textContent).toContain('Add canopy tree');
+    expect(marker.textContent).toContain('CR-');
 
     fireEvent.click(marker);
 
     expect(onChangeRequestSelect).toHaveBeenCalledWith('cr-add-tree');
+  });
+
+  it('places change request popovers inward near canvas edges', () => {
+    expect(getBoundedCanvasPopoverPlacement({ leftPercent: 2, topPercent: 50 })).toMatchObject({
+      leftPercent: 4,
+      topPercent: 50,
+      transform: 'translate(0, -50%)',
+    });
+    expect(getBoundedCanvasPopoverPlacement({ leftPercent: 98, topPercent: 90 })).toMatchObject({
+      leftPercent: 96,
+      topPercent: 90,
+      transform: 'translate(-100%, -100%)',
+    });
   });
 });

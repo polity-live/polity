@@ -6,6 +6,7 @@ export interface ChangeRequestsPageContainerViewProps {
   userId: any;
   amendment: any;
   document: any;
+  streetDesigns?: any;
   openChangeRequests: any;
   approvedChangeRequests: any;
   declinedChangeRequests: any;
@@ -48,6 +49,7 @@ export function ChangeRequestsPageContainerView({
   userId,
   amendment,
   document,
+  streetDesigns = [],
   openChangeRequests,
   approvedChangeRequests,
   declinedChangeRequests,
@@ -96,6 +98,7 @@ export function ChangeRequestsPageContainerView({
         diffMap={diffMap}
         discussions={discussions}
         documentContent={document?.content}
+        streetDesigns={streetDesigns}
         editingMode={selectedBranchEditingMode}
         hasAmendment={Boolean(amendment)}
         isInVotingStage={isInVotingStage}

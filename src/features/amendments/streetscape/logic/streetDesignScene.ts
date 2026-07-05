@@ -30,6 +30,13 @@ import {
   getStreetDesignOsmLayerVisibility,
 } from './streetDesignOsm';
 import {
+  getStreetDesignChangeRequestOverlayObjects,
+  type StreetDesignChangeRequest,
+  type StreetDesignChangeRequestColorMode,
+  type StreetDesignChangeRequestOverlayObject,
+  type StreetDesignChangeRequestTone,
+} from './streetDesignChangeRequests';
+import {
   type StreetDesignInputAction,
   getStreetDesignKeyboardAction,
   getStreetDesignPointerAction,
@@ -44,8 +51,11 @@ export interface StreetDesignSceneMountOptions {
   placementStart: StreetDesignLocalPoint | null;
   selectedObjectId: string | null;
   selectedOsmWayId: string | null;
+  selectedChangeRequestId?: string | null;
   hiddenObjectIds: string[];
   hiddenObjectCategories: StreetDesignObjectCategory[];
+  changeRequests?: readonly StreetDesignChangeRequest[];
+  changeRequestColorMode?: StreetDesignChangeRequestColorMode;
   focusObjectId: string | null;
   focusOsmWayId: string | null;
   interactionMode: StreetDesignInteractionMode;
@@ -57,6 +67,56 @@ export interface StreetDesignSceneMountOptions {
   onOsmWaySelect: (osmWayId: string | null) => void;
   onObjectRotate: (objectId: string, rotationDeg: number) => void;
   onCameraPoseChange: (pose: StreetDesignCameraPose) => void;
+}
+
+export interface StreetDesignSceneController {
+  updateDesign: (
+    options: Pick<
+      StreetDesignSceneMountOptions,
+      'design' | 'hiddenObjectIds' | 'hiddenObjectCategories'
+    >
+  ) => void;
+  updateSelection: (
+    options: Pick<
+      StreetDesignSceneMountOptions,
+      | 'selectedObjectId'
+      | 'selectedOsmWayId'
+      | 'selectedChangeRequestId'
+      | 'focusObjectId'
+      | 'focusOsmWayId'
+      | 'interactionMode'
+      | 'readOnly'
+    >
+  ) => void;
+  updatePlacementPreview: (
+    options: Pick<
+      StreetDesignSceneMountOptions,
+      'placementPreview' | 'placementPreviewType' | 'placementStart'
+    >
+  ) => void;
+  updateChangeRequests: (
+    options: Pick<
+      StreetDesignSceneMountOptions,
+      'changeRequests' | 'selectedChangeRequestId' | 'changeRequestColorMode'
+    >
+  ) => void;
+  updateInteractionMode: (
+    options: Pick<StreetDesignSceneMountOptions, 'interactionMode' | 'readOnly'>
+  ) => void;
+  updateHandlers: (
+    options: Pick<
+      StreetDesignSceneMountOptions,
+      | 'onPointerDown'
+      | 'onPointerMove'
+      | 'onObjectSelect'
+      | 'onOsmWaySelect'
+      | 'onObjectRotate'
+      | 'onCameraPoseChange'
+    >
+  ) => void;
+  focusObject: (objectId: string | null) => void;
+  focusOsmWay: (osmWayId: string | null) => void;
+  dispose: () => void;
 }
 
 type ThreeModule = typeof import('three');
@@ -3542,6 +3602,167 @@ function addDesignObject(args: {
   }
 }
 
+function getChangeRequestOverlayColor(tone: Exclude<StreetDesignChangeRequestTone, 'neutral'>) {
+  return tone === 'remove' ? '#ef4444' : '#22c55e';
+}
+
+function getChangeRequestOverlayOpacity(args: {
+  selected: boolean;
+  colorMode: StreetDesignChangeRequestColorMode;
+}) {
+  if (args.colorMode === 'tinted') return args.selected ? 0.86 : 0.72;
+  return args.selected ? 0.82 : 0.58;
+}
+
+function forEachObjectMaterial(object: Object3D, visitor: (material: ThreeMaterial) => void) {
+  object.traverse(child => {
+    const material = (child as { material?: ThreeMaterial | ThreeMaterial[] }).material;
+    if (!material) return;
+    if (Array.isArray(material)) {
+      material.forEach(visitor);
+      return;
+    }
+    visitor(material);
+  });
+}
+
+function cloneObjectMaterials(object: Object3D) {
+  object.traverse(child => {
+    const target = child as { material?: ThreeMaterial | ThreeMaterial[] };
+    if (!target.material) return;
+    target.material = Array.isArray(target.material)
+      ? target.material.map(material => material.clone())
+      : target.material.clone();
+  });
+}
+
+function isInvisiblePickMaterial(material: ThreeMaterial) {
+  return material.transparent && typeof material.opacity === 'number' && material.opacity <= 0.02;
+}
+
+function applyChangeRequestOverlayMaterialStyle(args: {
+  object: Object3D;
+  color: string;
+  colorMode: StreetDesignChangeRequestColorMode;
+  opacity: number;
+}) {
+  cloneObjectMaterials(args.object);
+  forEachObjectMaterial(args.object, material => {
+    if (isInvisiblePickMaterial(material)) return;
+
+    const styledMaterial = material as ThreeMaterial & {
+      color?: { set: (color: string) => void };
+      opacity?: number;
+      transparent?: boolean;
+      depthWrite?: boolean;
+      needsUpdate?: boolean;
+    };
+    if (args.colorMode === 'tinted') {
+      styledMaterial.color?.set(args.color);
+    }
+
+    if (typeof styledMaterial.opacity === 'number') {
+      styledMaterial.opacity = Math.min(styledMaterial.opacity, args.opacity);
+    } else {
+      styledMaterial.opacity = args.opacity;
+    }
+    styledMaterial.transparent = styledMaterial.opacity < 1;
+    if (styledMaterial.transparent) {
+      styledMaterial.depthWrite = false;
+    }
+    styledMaterial.needsUpdate = true;
+  });
+}
+
+function addChangeRequestOverlayAccent(args: {
+  THREE: ThreeModule;
+  group: Group;
+  object: StreetDesignObject;
+  color: string;
+  selected: boolean;
+}) {
+  const { THREE, group, object, color, selected } = args;
+  const outlineY = selected ? 0.62 : 0.46;
+
+  if (object.geometry.kind === 'point') {
+    const marker = new THREE.Mesh(
+      new THREE.SphereGeometry(selected ? 0.86 : 0.64, 18, 12),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: selected ? 0.24 : 0.16,
+        depthWrite: false,
+      })
+    );
+    marker.position.set(object.geometry.point.x, outlineY + 0.36, object.geometry.point.z);
+    group.add(marker);
+    return;
+  }
+
+  if (object.geometry.kind === 'corridor' || object.geometry.kind === 'path_corridor') {
+    const definition = getStreetDesignObjectDefinition(object.type);
+    const y =
+      definition.renderKind === 'building'
+        ? Math.max(numberProperty(object.properties.height, 9), 1) + 0.42
+        : outlineY;
+
+    addPolygonOutline({
+      THREE,
+      group,
+      points: object.geometry.polygon,
+      color,
+      y,
+    });
+    return;
+  }
+
+  addPolygonOutline({
+    THREE,
+    group,
+    points: object.geometry.points,
+    color,
+    y: outlineY,
+  });
+}
+
+function addChangeRequestOverlayObject(args: {
+  THREE: ThreeModule;
+  group: Group;
+  overlay: StreetDesignChangeRequestOverlayObject;
+  selected: boolean;
+  colorMode: StreetDesignChangeRequestColorMode;
+}) {
+  const { THREE, group, overlay, selected, colorMode } = args;
+  const color = getChangeRequestOverlayColor(overlay.tone);
+  const opacity = getChangeRequestOverlayOpacity({ selected, colorMode });
+  const object = overlay.object;
+  const overlayGroup = new THREE.Group();
+  overlayGroup.name = `change-request-overlay:${overlay.id}`;
+  overlayGroup.userData.changeRequestId = overlay.changeRequestId;
+  overlayGroup.position.y = selected ? 0.08 : 0.05;
+
+  addDesignObject({
+    THREE,
+    group: overlayGroup,
+    object,
+    selected: false,
+    showStreetMarkings: true,
+    opacity,
+    y: selected ? 0.2 : 0.14,
+  });
+
+  clearObjectId(overlayGroup);
+  applyChangeRequestOverlayMaterialStyle({ object: overlayGroup, color, colorMode, opacity });
+  addChangeRequestOverlayAccent({
+    THREE,
+    group: overlayGroup,
+    object,
+    color,
+    selected,
+  });
+  group.add(overlayGroup);
+}
+
 function createOsmCorridorGeometry(
   points: StreetDesignLocalPoint[],
   widthMeters: number
@@ -4659,17 +4880,65 @@ function addRotateHandle(args: { THREE: ThreeModule; group: Group; object: Stree
   group.add(line, handle);
 }
 
+function disposeObjectTree(object: Object3D) {
+  object.traverse(child => {
+    const disposableChild = child as {
+      geometry?: { dispose?: () => void };
+      material?: ThreeMaterial | ThreeMaterial[];
+    };
+
+    disposableChild.geometry?.dispose?.();
+    const material = disposableChild.material;
+    if (Array.isArray(material)) {
+      material.forEach(item => item.dispose());
+    } else {
+      material?.dispose();
+    }
+  });
+}
+
+function clearSceneGroup(group: Group) {
+  group.children.slice().forEach(child => {
+    group.remove(child);
+    disposeObjectTree(child);
+  });
+}
+
 function createSceneGroups(THREE: ThreeModule, scene: import('three').Scene) {
   const originalGroup = new THREE.Group();
   const designGroup = new THREE.Group();
+  const originalLayerGroup = new THREE.Group();
+  const designObjectLayerGroup = new THREE.Group();
+  const changeRequestLayerGroup = new THREE.Group();
+  const selectionLayerGroup = new THREE.Group();
+  const placementLayerGroup = new THREE.Group();
+
+  originalGroup.add(originalLayerGroup);
+  designGroup.add(
+    designObjectLayerGroup,
+    changeRequestLayerGroup,
+    selectionLayerGroup,
+    placementLayerGroup
+  );
   scene.add(originalGroup, designGroup);
-  return { originalGroup, designGroup };
+  return {
+    originalGroup,
+    designGroup,
+    originalLayerGroup,
+    designObjectLayerGroup,
+    changeRequestLayerGroup,
+    selectionLayerGroup,
+    placementLayerGroup,
+  };
 }
 
-export async function mountStreetDesignScene(options: StreetDesignSceneMountOptions) {
+export async function mountStreetDesignScene(
+  initialOptions: StreetDesignSceneMountOptions
+): Promise<StreetDesignSceneController> {
   const THREE = await import('three');
   const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js');
-  const canvas = options.canvas;
+  let options = { ...initialOptions };
+  const canvas = initialOptions.canvas;
   type ThreeMouseAction = (typeof THREE.MOUSE)[keyof typeof THREE.MOUSE];
   type ThreeTouchAction = (typeof THREE.TOUCH)[keyof typeof THREE.TOUCH];
   const noMouseAction = -1 as ThreeMouseAction;
@@ -4770,109 +5039,235 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
   }
   scene.add(grid);
 
-  const layers = getStreetDesignComparisonLayers(options.design.comparisonMode);
-  const { originalGroup, designGroup } = createSceneGroups(THREE, scene);
+  let layers = getStreetDesignComparisonLayers(options.design.comparisonMode);
+  const {
+    originalGroup,
+    designGroup,
+    originalLayerGroup,
+    designObjectLayerGroup,
+    changeRequestLayerGroup,
+    selectionLayerGroup,
+    placementLayerGroup,
+  } = createSceneGroups(THREE, scene);
   const animatedObjects: Object3D[] = [];
-  const hiddenObjectIds = new Set(options.hiddenObjectIds);
-  const hiddenObjectCategories = new Set(options.hiddenObjectCategories);
-  const visibleObjects = options.design.objects.filter(object =>
-    isObjectVisible(object, hiddenObjectIds, hiddenObjectCategories)
-  );
+  const originalAnimatedObjects: Object3D[] = [];
+  const designAnimatedObjects: Object3D[] = [];
+  let requestRender: () => void = () => undefined;
+  let focusAnimation: {
+    startedAt: number;
+    durationMs: number;
+    startTarget: import('three').Vector3;
+    startPosition: import('three').Vector3;
+    endTarget: import('three').Vector3;
+    endPosition: import('three').Vector3;
+  } | null = null;
 
-  if (layers.split) {
-    originalGroup.position.x = -52;
-    designGroup.position.x = 52;
+  function syncAnimatedObjects() {
+    animatedObjects.length = 0;
+    animatedObjects.push(...originalAnimatedObjects, ...designAnimatedObjects);
   }
 
-  if (layers.showOriginal) {
-    addOsmWays({
-      THREE,
-      group: originalGroup,
-      design: options.design,
-      selectedOsmWayId: options.selectedOsmWayId,
-      animatedObjects,
-    });
+  function updateLayerLayout() {
+    layers = getStreetDesignComparisonLayers(options.design.comparisonMode);
+    originalGroup.visible = layers.showOriginal;
+    designGroup.visible = layers.showDesign;
+    originalGroup.position.x = layers.split ? -52 : 0;
+    designGroup.position.x = layers.split ? 52 : 0;
   }
 
-  if (layers.showDesign) {
-    const designOpacity = layers.showOverlay ? 0.72 : 1;
-    visibleObjects.forEach(object => {
-      addDesignObject({
+  function getVisibleDesignObjects() {
+    const hiddenObjectIds = new Set(options.hiddenObjectIds);
+    const hiddenObjectCategories = new Set(options.hiddenObjectCategories);
+    return options.design.objects.filter(object =>
+      isObjectVisible(object, hiddenObjectIds, hiddenObjectCategories)
+    );
+  }
+
+  function mergeSceneOptions(partialOptions: Partial<StreetDesignSceneMountOptions>) {
+    options = { ...options, ...partialOptions };
+    updateLayerLayout();
+  }
+
+  function rebuildOriginalLayer() {
+    clearSceneGroup(originalLayerGroup);
+    originalAnimatedObjects.length = 0;
+    if (layers.showOriginal) {
+      addOsmWays({
         THREE,
-        group: designGroup,
-        object,
-        selected: object.id === options.selectedObjectId,
-        showStreetMarkings: options.design.showStreetMarkings ?? true,
-        animatedObjects,
-        opacity: designOpacity,
-        y: layers.showOverlay ? 0.08 : 0.05,
+        group: originalLayerGroup,
+        design: options.design,
+        selectedOsmWayId: options.selectedOsmWayId,
+        animatedObjects: originalAnimatedObjects,
       });
-    });
-
-    const selectedObject = visibleObjects.find(object => object.id === options.selectedObjectId);
-    if (selectedObject && options.interactionMode === 'select' && !options.readOnly) {
-      addRotateHandle({ THREE, group: designGroup, object: selectedObject });
     }
+    syncAnimatedObjects();
+    requestRender();
   }
 
-  if (options.placementStart) {
-    addPlacementStartMarker({
-      THREE,
-      group: designGroup,
-      point: options.placementStart,
-    });
+  function rebuildDesignLayer() {
+    clearSceneGroup(designObjectLayerGroup);
+    designAnimatedObjects.length = 0;
+    if (layers.showDesign) {
+      const designOpacity = layers.showOverlay ? 0.72 : 1;
+      getVisibleDesignObjects().forEach(object => {
+        addDesignObject({
+          THREE,
+          group: designObjectLayerGroup,
+          object,
+          selected: object.id === options.selectedObjectId,
+          showStreetMarkings: options.design.showStreetMarkings ?? true,
+          animatedObjects: designAnimatedObjects,
+          opacity: designOpacity,
+          y: layers.showOverlay ? 0.08 : 0.05,
+        });
+      });
+    }
+    syncAnimatedObjects();
+    requestRender();
   }
 
-  if (options.placementPreview) {
-    const previewColor = options.placementPreviewType
-      ? getStreetDesignObjectDefinition(options.placementPreviewType).color
-      : '#facc15';
-
-    addCorridorMesh({
-      THREE,
-      group: designGroup,
-      geometry: options.placementPreview,
-      color: previewColor,
-      opacity: 0.45,
-      y: 0.12,
-    });
-    addCorridorOutline({
-      THREE,
-      group: designGroup,
-      geometry: options.placementPreview,
-      color: '#facc15',
-      y: 0.18,
-    });
+  function rebuildChangeRequestLayer() {
+    clearSceneGroup(changeRequestLayerGroup);
+    if (layers.showDesign) {
+      getStreetDesignChangeRequestOverlayObjects(options.changeRequests).forEach(overlay => {
+        addChangeRequestOverlayObject({
+          THREE,
+          group: changeRequestLayerGroup,
+          overlay,
+          selected: overlay.changeRequestId === options.selectedChangeRequestId,
+          colorMode: options.changeRequestColorMode ?? 'natural',
+        });
+      });
+    }
+    requestRender();
   }
 
-  const selectedObjectFocus = getObjectFocusPoint(options.design, options.focusObjectId);
-  const selectedOsmFocusPoint = getOsmWayFocusPoint(options.design, options.focusOsmWayId);
-  const focusPoint = selectedObjectFocus?.center ?? selectedOsmFocusPoint;
-  const focusGroup = selectedObjectFocus ? designGroup : originalGroup;
-  const focusDistance = selectedObjectFocus
-    ? Math.max(36, Math.min(92, selectedObjectFocus.radius * 4 + 34))
-    : 62;
-  const focusHeight = selectedObjectFocus
-    ? Math.max(camera.position.y, Math.min(74, selectedObjectFocus.radius * 2.2 + 40))
-    : Math.max(camera.position.y, 52);
-  const focusAnimation = focusPoint
-    ? {
-        startedAt: performance.now(),
-        durationMs: 350,
-        startTarget: controls.target.clone(),
-        startPosition: camera.position.clone(),
-        endTarget: new THREE.Vector3(
-          focusPoint.x + focusGroup.position.x,
-          0,
-          focusPoint.z + focusGroup.position.z
-        ),
-        endPosition: new THREE.Vector3(
-          focusPoint.x + focusGroup.position.x,
-          focusHeight,
-          focusPoint.z + focusGroup.position.z + focusDistance
-        ),
-      }
-    : null;
+  function rebuildSelectionLayer() {
+    clearSceneGroup(selectionLayerGroup);
+    if (!layers.showDesign || options.interactionMode !== 'select' || options.readOnly) {
+      requestRender();
+      return;
+    }
+
+    const selectedObject = getVisibleDesignObjects().find(
+      object => object.id === options.selectedObjectId
+    );
+    if (selectedObject) {
+      addRotateHandle({ THREE, group: selectionLayerGroup, object: selectedObject });
+    }
+    requestRender();
+  }
+
+  function rebuildPlacementLayer() {
+    clearSceneGroup(placementLayerGroup);
+    if (options.placementStart) {
+      addPlacementStartMarker({
+        THREE,
+        group: placementLayerGroup,
+        point: options.placementStart,
+      });
+    }
+
+    if (options.placementPreview) {
+      const previewColor = options.placementPreviewType
+        ? getStreetDesignObjectDefinition(options.placementPreviewType).color
+        : '#facc15';
+
+      addCorridorMesh({
+        THREE,
+        group: placementLayerGroup,
+        geometry: options.placementPreview,
+        color: previewColor,
+        opacity: 0.45,
+        y: 0.12,
+      });
+      addCorridorOutline({
+        THREE,
+        group: placementLayerGroup,
+        geometry: options.placementPreview,
+        color: '#facc15',
+        y: 0.18,
+      });
+    }
+    requestRender();
+  }
+
+  function startFocusAnimation(focusObjectId: string | null, focusOsmWayId: string | null) {
+    const selectedObjectFocus = getObjectFocusPoint(options.design, focusObjectId);
+    const selectedOsmFocusPoint = getOsmWayFocusPoint(options.design, focusOsmWayId);
+    const focusPoint = selectedObjectFocus?.center ?? selectedOsmFocusPoint;
+    const focusGroup = selectedObjectFocus ? designGroup : originalGroup;
+    if (!focusPoint) return;
+
+    const focusDistance = selectedObjectFocus
+      ? Math.max(36, Math.min(92, selectedObjectFocus.radius * 4 + 34))
+      : 62;
+    const focusHeight = selectedObjectFocus
+      ? Math.max(camera.position.y, Math.min(74, selectedObjectFocus.radius * 2.2 + 40))
+      : Math.max(camera.position.y, 52);
+
+    focusAnimation = {
+      startedAt: performance.now(),
+      durationMs: 350,
+      startTarget: controls.target.clone(),
+      startPosition: camera.position.clone(),
+      endTarget: new THREE.Vector3(
+        focusPoint.x + focusGroup.position.x,
+        0,
+        focusPoint.z + focusGroup.position.z
+      ),
+      endPosition: new THREE.Vector3(
+        focusPoint.x + focusGroup.position.x,
+        focusHeight,
+        focusPoint.z + focusGroup.position.z + focusDistance
+      ),
+    };
+    requestRender();
+  }
+
+  function hasOsmRenderInputsChanged(
+    previousOptions: StreetDesignSceneMountOptions,
+    nextOptions: StreetDesignSceneMountOptions
+  ) {
+    return (
+      previousOptions.design.osmSnapshot !== nextOptions.design.osmSnapshot ||
+      previousOptions.design.origin !== nextOptions.design.origin ||
+      previousOptions.design.osmLayerVisibility !== nextOptions.design.osmLayerVisibility ||
+      previousOptions.design.hiddenOsmWayIds !== nextOptions.design.hiddenOsmWayIds ||
+      previousOptions.design.hiddenOsmFeatureIds !== nextOptions.design.hiddenOsmFeatureIds ||
+      previousOptions.design.comparisonMode !== nextOptions.design.comparisonMode ||
+      previousOptions.design.showStreetMarkings !== nextOptions.design.showStreetMarkings ||
+      previousOptions.selectedOsmWayId !== nextOptions.selectedOsmWayId
+    );
+  }
+
+  function hasDesignRenderInputsChanged(
+    previousOptions: StreetDesignSceneMountOptions,
+    nextOptions: StreetDesignSceneMountOptions
+  ) {
+    return (
+      previousOptions.design.objects !== nextOptions.design.objects ||
+      previousOptions.design.showStreetMarkings !== nextOptions.design.showStreetMarkings ||
+      previousOptions.design.comparisonMode !== nextOptions.design.comparisonMode ||
+      previousOptions.hiddenObjectIds !== nextOptions.hiddenObjectIds ||
+      previousOptions.hiddenObjectCategories !== nextOptions.hiddenObjectCategories ||
+      previousOptions.selectedObjectId !== nextOptions.selectedObjectId
+    );
+  }
+
+  function syncControlsForInteractionMode() {
+    controls.mouseButtons.LEFT =
+      options.interactionMode === 'camera' ? THREE.MOUSE.PAN : noMouseAction;
+    controls.touches.ONE = options.interactionMode === 'camera' ? THREE.TOUCH.PAN : noTouchAction;
+  }
+
+  updateLayerLayout();
+  rebuildOriginalLayer();
+  rebuildDesignLayer();
+  rebuildChangeRequestLayer();
+  rebuildSelectionLayer();
+  rebuildPlacementLayer();
+  startFocusAnimation(options.focusObjectId, options.focusOsmWayId);
 
   const raycaster = new THREE.Raycaster();
   raycaster.params.Line = { threshold: 2 };
@@ -5385,24 +5780,28 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
   const renderScheduler = createStreetDesignRenderScheduler(() => {
     const didResize = resize();
     let isFocusAnimationActive = false;
+    const activeFocusAnimation = focusAnimation;
 
-    if (focusAnimation) {
+    if (activeFocusAnimation) {
       const progress = Math.min(
-        (performance.now() - focusAnimation.startedAt) / focusAnimation.durationMs,
+        (performance.now() - activeFocusAnimation.startedAt) / activeFocusAnimation.durationMs,
         1
       );
       const easedProgress = 1 - Math.pow(1 - progress, 3);
       controls.target.lerpVectors(
-        focusAnimation.startTarget,
-        focusAnimation.endTarget,
+        activeFocusAnimation.startTarget,
+        activeFocusAnimation.endTarget,
         easedProgress
       );
       camera.position.lerpVectors(
-        focusAnimation.startPosition,
-        focusAnimation.endPosition,
+        activeFocusAnimation.startPosition,
+        activeFocusAnimation.endPosition,
         easedProgress
       );
       isFocusAnimationActive = progress < 1;
+      if (!isFocusAnimationActive) {
+        focusAnimation = null;
+      }
     }
 
     if (isFocusAnimationActive) {
@@ -5411,7 +5810,7 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
 
     const controlsChanged = controls.update();
     renderer.render(scene, camera);
-    if (didResize || controlsChanged || focusAnimation) {
+    if (didResize || controlsChanged || activeFocusAnimation) {
       emitCameraPoseChangeIfNeeded();
     }
 
@@ -5420,7 +5819,7 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
     }
   });
 
-  const requestRender = () => renderScheduler.requestRender();
+  requestRender = () => renderScheduler.requestRender();
   const handleControlsChange = () => requestRender();
   const handleWindowResize = () => requestRender();
   const resizeObserver =
@@ -5440,7 +5839,7 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
   window.addEventListener('blur', handleWindowBlur);
   requestRender();
 
-  return () => {
+  function dispose() {
     renderScheduler.dispose();
     controls.removeEventListener('change', handleControlsChange);
     resizeObserver?.disconnect();
@@ -5454,7 +5853,71 @@ export async function mountStreetDesignScene(options: StreetDesignSceneMountOpti
     canvas.removeEventListener('contextmenu', handleContextMenu);
     document.removeEventListener('keydown', handleKeyDown);
     document.removeEventListener('keyup', handleKeyUp);
+    clearSceneGroup(originalGroup);
+    clearSceneGroup(designGroup);
     controls.dispose();
     renderer.dispose();
+  }
+
+  return {
+    updateDesign(nextOptions) {
+      const previousOptions = options;
+      mergeSceneOptions(nextOptions);
+      if (hasOsmRenderInputsChanged(previousOptions, options)) {
+        rebuildOriginalLayer();
+      }
+      if (hasDesignRenderInputsChanged(previousOptions, options)) {
+        rebuildDesignLayer();
+      }
+      if (previousOptions.design.comparisonMode !== options.design.comparisonMode) {
+        rebuildChangeRequestLayer();
+      }
+      rebuildSelectionLayer();
+      requestRender();
+    },
+    updateSelection(nextOptions) {
+      const previousOptions = options;
+      mergeSceneOptions(nextOptions);
+      if (previousOptions.selectedOsmWayId !== options.selectedOsmWayId) {
+        rebuildOriginalLayer();
+      }
+      if (previousOptions.selectedObjectId !== options.selectedObjectId) {
+        rebuildDesignLayer();
+      }
+      if (previousOptions.selectedChangeRequestId !== options.selectedChangeRequestId) {
+        rebuildChangeRequestLayer();
+      }
+      rebuildSelectionLayer();
+      if (nextOptions.focusObjectId || nextOptions.focusOsmWayId) {
+        startFocusAnimation(nextOptions.focusObjectId, nextOptions.focusOsmWayId);
+      }
+      requestRender();
+    },
+    updatePlacementPreview(nextOptions) {
+      mergeSceneOptions(nextOptions);
+      rebuildPlacementLayer();
+    },
+    updateChangeRequests(nextOptions) {
+      mergeSceneOptions(nextOptions);
+      rebuildChangeRequestLayer();
+    },
+    updateInteractionMode(nextOptions) {
+      mergeSceneOptions(nextOptions);
+      syncControlsForInteractionMode();
+      rebuildSelectionLayer();
+      requestRender();
+    },
+    updateHandlers(nextOptions) {
+      mergeSceneOptions(nextOptions);
+    },
+    focusObject(objectId) {
+      mergeSceneOptions({ focusObjectId: objectId, focusOsmWayId: null });
+      startFocusAnimation(objectId, null);
+    },
+    focusOsmWay(osmWayId) {
+      mergeSceneOptions({ focusObjectId: null, focusOsmWayId: osmWayId });
+      startFocusAnimation(null, osmWayId);
+    },
+    dispose,
   };
 }

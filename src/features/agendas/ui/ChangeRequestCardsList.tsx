@@ -7,6 +7,7 @@ import { type ChangeRequestDiffData } from './ChangeRequestTimelineCard';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 import type { ChangeRequestVoteOrder } from '@/features/change-requests/logic/changeRequestVoteOrder';
+import type { StreetDesignPreviewSource } from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
 interface ChangeRequestCardsListProps {
   items: ChangeRequestTimelineRow[];
   editingMode: EditingMode;
@@ -33,6 +34,7 @@ interface ChangeRequestCardsListProps {
   isTimelineComplete?: boolean;
   /** Document content for editor preview */
   documentContent?: Value;
+  streetDesigns?: readonly StreetDesignPreviewSource[];
   /** Agenda or amendment title used for final closing vote labels. */
   agendaTitle?: string | null;
   /** Initial and externally controlled sort mode for CR cards. */
@@ -82,6 +84,7 @@ export function ChangeRequestCardsList({
   allCRsProcessed,
   isTimelineComplete,
   documentContent,
+  streetDesigns,
   agendaTitle,
   defaultSortMode,
   discussions,
@@ -117,6 +120,7 @@ export function ChangeRequestCardsList({
     allCRsProcessed,
     isTimelineComplete,
     documentContent,
+    streetDesigns,
     agendaTitle,
     defaultSortMode,
     discussions,

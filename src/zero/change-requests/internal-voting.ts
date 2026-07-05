@@ -6,6 +6,7 @@ import {
   applyChangeRequestVoteResultToContent,
   findChangeRequestDiscussion,
   getChangeRequestResolutionStatus,
+  isStreetDesignSourceType,
   resolveChangeRequestByVoteResult,
   type DiscussionEntry,
   type VoteResult,
@@ -690,14 +691,39 @@ export async function finalizeInternalChangeRequestsForEventPhaseTransition({
 
   const results = [];
 
-  if (!document?.id || !nextDocumentContent) {
-    throw new Error('Cannot finalize internal change requests: document content not found.');
-  }
-
   for (const record of canonicalRecords) {
     const changeRequest = record.changeRequest;
     if (!changeRequest) {
       continue;
+    }
+
+    if (isStreetDesignSourceType((changeRequest as { source_type?: string | null }).source_type)) {
+      if (!eligibleUserIds) {
+        eligibleUserIds = new Set(await activeVotingCollaboratorUserIds(tx, amendmentId));
+      }
+      const { counts } = await normalizeInternalChangeRequestVoteCounts(
+        tx,
+        changeRequest.id,
+        now,
+        eligibleUserIds
+      );
+      const voteResult = getVoteResult(counts);
+      const resolved = await resolveChangeRequestByVoteResult({
+        tx: tx as any,
+        ctx,
+        changeRequestId: changeRequest.id,
+        voteResult,
+        now,
+        resolutionMethod: 'internal_vote',
+        resolvedInMode: 'vote_internal',
+        visibilityScope: internalResolutionVisibility,
+      });
+      if (resolved) results.push(resolved);
+      continue;
+    }
+
+    if (!document?.id || !nextDocumentContent) {
+      throw new Error('Cannot finalize internal change requests: document content not found.');
     }
 
     const matchingDiscussion =

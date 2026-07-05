@@ -117,6 +117,7 @@ export function useChangeRequestsPageContainerController({
   const {
     amendment,
     document,
+    streetDesigns,
     openChangeRequests,
     approvedChangeRequests,
     declinedChangeRequests,
@@ -435,6 +436,7 @@ export function useChangeRequestsPageContainerController({
     userId,
     amendment,
     document,
+    streetDesigns,
     openChangeRequests,
     approvedChangeRequests,
     declinedChangeRequests,

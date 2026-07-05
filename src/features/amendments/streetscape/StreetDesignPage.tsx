@@ -17,7 +17,11 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       mode={controller.mode}
       modeDisabledReasons={controller.modeDisabledReasons}
       canChangeMode={controller.canChangeMode}
+      canVoteOnStreetChangeRequests={controller.canVoteOnStreetChangeRequests}
+      canFinalizeStreetChangeRequests={controller.canFinalizeStreetChangeRequests}
       currentUserId={controller.currentUserId}
+      currentUserAvatarUrl={controller.currentUserAvatarUrl}
+      currentUserDisplayName={controller.currentUserDisplayName}
       collaborationDocumentId={controller.collaborationDocumentId}
       editorCollaborators={controller.editorCollaborators}
       existingCollaboratorIds={controller.existingCollaboratorIds}
@@ -25,6 +29,8 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       activeCursorUserIds={controller.activeCursorUserIds}
       presenceColorByUserId={controller.presenceColorByUserId}
       streetChangeRequests={controller.streetChangeRequests}
+      streetDesignDiscussions={controller.streetDesignDiscussions}
+      changeRequestColorMode={controller.changeRequestColorMode}
       design={controller.design}
       selectedObject={controller.selectedObject}
       selectedOsmWay={controller.selectedOsmWay}
@@ -59,6 +65,11 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       onLoadSample={controller.onLoadSample}
       onSave={controller.onSave}
       onModeChange={controller.onModeChange}
+      onChangeRequestVote={controller.onChangeRequestVote}
+      onChangeRequestTitleChange={controller.onChangeRequestTitleChange}
+      onChangeRequestFinalize={controller.onChangeRequestFinalize}
+      onChangeRequestCommentSubmit={controller.onChangeRequestCommentSubmit}
+      onChangeRequestColorModeChange={controller.onChangeRequestColorModeChange}
       onToolChange={controller.setSelectedTool}
       onInteractionModeChange={controller.setInteractionMode}
       onComparisonModeChange={controller.setComparisonMode}

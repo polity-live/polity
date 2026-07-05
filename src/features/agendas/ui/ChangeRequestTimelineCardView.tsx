@@ -32,6 +32,12 @@ import {
 } from '@/features/shared/ui/voting/voteChoiceLabels';
 import { ChangeRequestSummaryItem } from '@/features/change-requests/ui/ChangeRequestSummaryItem';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
+import { StreetDesignChangeRequestPreview } from '@/features/amendments/streetscape/ui/StreetDesignChangeRequestPreview';
+import {
+  isStreetDesignChangeRequest,
+  type StreetDesignChangeRequest,
+  type StreetDesignPreviewSource,
+} from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
 import { SuggestionViewToggle } from '@/features/editor/ui/SuggestionViewToggle';
 import {
   isMockCRTimelineItem,
@@ -142,6 +148,7 @@ export interface ChangeRequestTimelineCardViewProps {
   isFinalVoteLocked: any;
   diff: any;
   documentContent: any;
+  streetDesigns?: readonly StreetDesignPreviewSource[];
   suggestionId: any;
   suggestionResolutions?: any;
   agendaTitle?: any;
@@ -202,6 +209,17 @@ export interface ChangeRequestTimelineCardViewProps {
   isLocked: any;
 }
 
+function getStreetDesignChangeRequestFromCardItem(
+  item: any,
+  cr: any
+): StreetDesignChangeRequest | null {
+  if (!cr || !isStreetDesignChangeRequest(cr)) return null;
+  return {
+    ...cr,
+    id: cr.id ?? item.change_request_id ?? item.id,
+  };
+}
+
 export function ChangeRequestTimelineCardView({
   item,
   index,
@@ -212,6 +230,7 @@ export function ChangeRequestTimelineCardView({
   canVote,
   diff,
   documentContent,
+  streetDesigns = [],
   suggestionId,
   suggestionResolutions,
   agendaTitle,
@@ -261,6 +280,7 @@ export function ChangeRequestTimelineCardView({
   handleCastVote,
   isLocked,
 }: ChangeRequestTimelineCardViewProps) {
+  const streetDesignChangeRequest = getStreetDesignChangeRequestFromCardItem(item, cr);
   const summaryIdentifier =
     voteStepKind === 'merge_variant'
       ? t('features.agendas.crTimeline.variantVoteShort', 'Variant')
@@ -582,14 +602,16 @@ export function ChangeRequestTimelineCardView({
 
                   {/* Removed text */}
                   {diff.originalText &&
-                    (diff.changeType === 'remove' || diff.changeType === 'replace') && (
+                    (diff.changeType === 'remove' ||
+                      diff.changeType === 'delete' ||
+                      diff.changeType === 'replace') && (
                       <div>
                         <h4
                           className={featureThemeClassName(
                             'agendaChangeRequestTimelineCardDangerText'
                           )}
                         >
-                          {diff.changeType === 'remove'
+                          {diff.changeType === 'remove' || diff.changeType === 'delete'
                             ? isClosed
                               ? translateText('generated.inline.0005_deleted_4e8bafed')
                               : translateText('generated.inline.0006_delete_ed576ebf')
@@ -642,8 +664,16 @@ export function ChangeRequestTimelineCardView({
                 </div>
               )}
 
-            {/* Editor preview with per-card suggestion filter */}
-            {showEditorPreview && documentContent && suggestionId && (
+            {/* Preview with per-card suggestion filter. */}
+            {showEditorPreview && streetDesignChangeRequest ? (
+              <div className="space-y-2">
+                <StreetDesignChangeRequestPreview
+                  changeRequest={streetDesignChangeRequest}
+                  streetDesigns={streetDesigns}
+                />
+              </div>
+            ) : null}
+            {showEditorPreview && !streetDesignChangeRequest && documentContent && suggestionId && (
               <div className="space-y-2">
                 <CREditorPreview
                   documentContent={documentContent ?? ([] as Value)}
