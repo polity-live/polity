@@ -19,7 +19,7 @@ import type {
   TText,
   TTextAlignProps,
 } from 'platejs';
-import type { TChartElement } from '@/features/charts/types';
+import type { TDataViewElement } from '@/features/charts/types';
 
 export interface MyBlockElement extends TElement, TListProps {
   id?: string;
@@ -121,7 +121,7 @@ export interface RichText extends TBasicMarks, TCommentText, TFontMarks, TText {
 export type MyValue = (
   | MyBlockquoteElement
   | MyCodeBlockElement
-  | TChartElement
+  | TDataViewElement
   | MyH1Element
   | MyH2Element
   | MyH3Element

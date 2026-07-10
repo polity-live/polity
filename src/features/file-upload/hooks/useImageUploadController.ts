@@ -1,5 +1,4 @@
-import type React from 'react';
-import { useId, useRef, useState } from 'react';
+import { useId, useState } from 'react';
 import { toast } from '@/features/shared/ui/ui/sonner';
 
 import { createClient } from '@/lib/supabase/client.ts';
@@ -7,6 +6,7 @@ import {
   translate as translateText,
   useTranslation,
 } from '@/features/shared/hooks/use-translation';
+import type { FileDropzoneRejection } from '../ui/FileDropzone';
 
 const STORAGE_BUCKET = 'uploads';
 
@@ -68,16 +68,10 @@ export function useImageUploadController({
   const [isUploading, setIsUploading] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [isDragActive, setIsDragActive] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const dragCounterRef = useRef(0);
   const isBusy = isUploading || isRemoving;
 
   const clearImageSelection = () => {
     onImageChange('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
   };
 
   const uploadFile = async (file: File): Promise<boolean> => {
@@ -117,62 +111,19 @@ export function useImageUploadController({
       return false;
     } finally {
       setIsUploading(false);
-      setIsDragActive(false);
-      dragCounterRef.current = 0;
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFilesSelected = async (files: File[]) => {
+    const file = files[0];
     if (!file) return;
-
     await uploadFile(file);
   };
 
-  const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    dragCounterRef.current += 1;
-    setIsDragActive(true);
-  };
-
-  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    dragCounterRef.current = Math.max(dragCounterRef.current - 1, 0);
-
-    if (dragCounterRef.current === 0) {
-      setIsDragActive(false);
-    }
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    event.dataTransfer.dropEffect = 'copy';
-  };
-
-  const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    dragCounterRef.current = 0;
-    setIsDragActive(false);
-
-    const file = event.dataTransfer.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
+  const handleFilesRejected = (rejections: FileDropzoneRejection[]) => {
+    if (rejections.some(rejection => rejection.code === 'file-type')) {
       toast.error(t('common.actions.uploadImageTypesOnly'));
-      return;
     }
-
-    await uploadFile(file);
   };
 
   const handleRemoveImage = async () => {
@@ -222,11 +173,9 @@ export function useImageUploadController({
     label,
     description,
     urlInputId,
-    fileInputRef,
     isBusy,
     isEditorOpen,
     isUploading,
-    isDragActive,
     copy: {
       previewAlt: translateText('generated.inline.0520_preview_f1fbb2b4'),
       dropImageHere: t('common.actions.dropImageHere'),
@@ -240,11 +189,8 @@ export function useImageUploadController({
     onEditorOpenChange: setIsEditorOpen,
     onSaveEditedImage: handleSaveEditedImage,
     onRemoveImage: () => void handleRemoveImage(),
-    onFileSelect: handleFileSelect,
-    onDragEnter: handleDragEnter,
-    onDragLeave: handleDragLeave,
-    onDragOver: handleDragOver,
-    onDrop: handleDrop,
+    onFilesSelected: handleFilesSelected,
+    onFilesRejected: handleFilesRejected,
     onImageUrlChange: onImageChange,
   };
 }

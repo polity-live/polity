@@ -8,6 +8,7 @@ import {
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import type { GeoCoordinates } from '@/features/shared/logic/geoCoordinates';
+import type { GeoLocationShape } from '@/features/shared/logic/geoLocationShape';
 
 interface LocationInformationSectionProps {
   country: string;
@@ -18,6 +19,7 @@ interface LocationInformationSectionProps {
   house_number: string;
   latitude: number | null;
   longitude: number | null;
+  shape?: GeoLocationShape | null;
   onCountryChange: (value: string) => void;
   onRegionChange: (value: string) => void;
   onPostCodeChange: (value: string) => void;
@@ -25,6 +27,7 @@ interface LocationInformationSectionProps {
   onStreetChange: (value: string) => void;
   onHouseNumberChange: (value: string) => void;
   onCoordinatesChange: (coordinates: GeoCoordinates | null) => void;
+  onShapeChange?: (shape: GeoLocationShape | null) => void;
 }
 
 export function LocationInformationSection({
@@ -36,6 +39,7 @@ export function LocationInformationSection({
   house_number,
   latitude,
   longitude,
+  shape,
   onCountryChange,
   onRegionChange,
   onPostCodeChange,
@@ -43,6 +47,7 @@ export function LocationInformationSection({
   onStreetChange,
   onHouseNumberChange,
   onCoordinatesChange,
+  onShapeChange,
 }: LocationInformationSectionProps) {
   const { t } = useTranslation();
 
@@ -65,6 +70,8 @@ export function LocationInformationSection({
           }}
           coordinates={latitude !== null && longitude !== null ? { latitude, longitude } : null}
           onCoordinatesChange={onCoordinatesChange}
+          shape={shape}
+          onShapeChange={onShapeChange}
           onFieldChange={(field, value) => {
             switch (field) {
               case 'country':

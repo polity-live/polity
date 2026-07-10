@@ -4,8 +4,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import type { ComponentProps, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { TChartElement } from '@/features/charts/types';
-import { openChartDialog } from '@/features/charts/ui/ChartDialog';
+import type { TDataViewElement } from '@/features/charts/types';
+import { openDataViewDialog } from '@/features/charts/ui/ChartDialog';
 import { ChartElement } from '../chart-node';
 
 const findPath = vi.fn(() => [0]);
@@ -25,11 +25,15 @@ vi.mock('platejs/react', () => ({
 }));
 
 vi.mock('@/features/charts/ui/ChartDialog', () => ({
-  openChartDialog: vi.fn(),
+  openDataViewDialog: vi.fn(),
 }));
 
-vi.mock('@/features/charts/ui/ChartRenderer', () => ({
-  ChartRenderer: () => <div data-testid="chart-renderer" />,
+vi.mock('@/features/charts/ui/DataViewRenderer', () => ({
+  DataViewRenderer: () => <div data-testid="data-view-renderer" />,
+}));
+
+vi.mock('@/providers/auth-provider', () => ({
+  useAuth: () => ({ session: { access_token: 'token' } }),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -38,13 +42,25 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-const element: TChartElement = {
-  type: 'chart',
+const element: TDataViewElement = {
+  type: 'data_view',
+  view: 'chart',
   chartType: 'bar',
-  mapping: { xColumn: 'x', valueColumn: 'value', seriesColumn: null },
+  query: {
+    dimensionColumn: 'x',
+    measureColumn: 'value',
+    seriesColumn: null,
+    filters: {},
+    aggregation: 'sum',
+  },
   presentation: {},
-  source: { kind: 'manual', columns: ['x', 'value'], rows: [{ x: 'A', value: '1' }] },
-  points: [{ x: 'A', value: 1, series: null }],
+  source: {
+    kind: 'dataset',
+    provider: 'UPLOAD',
+    datasetId: 'dataset-id',
+    snapshotId: 'snapshot-id',
+    title: 'Example',
+  },
   children: [{ text: '' }],
 };
 
@@ -69,12 +85,12 @@ describe('ChartElement', () => {
     expect(toolbar.getAttribute('contenteditable')).toBe('false');
     expect(surface.getAttribute('contenteditable')).toBe('false');
     expect(toolbar.className).not.toContain('absolute');
-    expect(surface.contains(screen.getByTestId('chart-renderer'))).toBe(true);
+    expect(surface.contains(screen.getByTestId('data-view-renderer'))).toBe(true);
 
-    fireEvent.click(screen.getByTitle('Edit chart'));
-    expect(openChartDialog).toHaveBeenCalledWith(element);
+    fireEvent.click(screen.getByTitle('Edit data view'));
+    expect(openDataViewDialog).toHaveBeenCalledWith(element);
 
-    fireEvent.click(screen.getByTitle('Delete chart'));
+    fireEvent.click(screen.getByTitle('Delete data view'));
     expect(findPath).toHaveBeenCalledWith(element);
     expect(removeNodes).toHaveBeenCalledWith({ at: [0] });
   });

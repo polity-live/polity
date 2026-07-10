@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Plate } from 'platejs/react';
 
+import { ChartDatasetContextProvider } from '@/features/charts/context/ChartDatasetContext';
 import { SettingsDialog } from '@/features/shared/ui/kit-platejs/settings-dialog.tsx';
 import { Editor, EditorContainer } from '@/features/shared/ui/ui-platejs/editor.tsx';
 import { SuggestionCallbacksProvider } from '@/features/shared/ui/kit-platejs/suggestion-callbacks-context.tsx';
@@ -46,6 +47,7 @@ export interface PlateEditorViewProps {
   selectedCrIds: any;
   onSelectedCrIdsChange: any;
   remoteCursors: any;
+  datasetContext: any;
   onChangeRef: any;
   isControlled: any;
   prevValueRef: any;
@@ -83,6 +85,7 @@ export function PlateEditorView({
   selectedCrIds,
   onSelectedCrIdsChange,
   remoteCursors,
+  datasetContext,
   editor,
   handleEditorChange,
 }: PlateEditorViewProps) {
@@ -115,38 +118,40 @@ export function PlateEditorView({
           onEventSuggestionCancel,
         }}
       >
-        <Plate editor={editor} onChange={handleEditorChange} readOnly={readOnly}>
-          {/* Sync external mode with PlateJS internal state */}
-          <ModeSync currentMode={currentMode} readOnly={readOnly} />
+        <ChartDatasetContextProvider value={datasetContext}>
+          <Plate editor={editor} onChange={handleEditorChange} readOnly={readOnly}>
+            {/* Sync external mode with PlateJS internal state */}
+            <ModeSync currentMode={currentMode} readOnly={readOnly} />
 
-          {/* Sync remote cursors via Supabase Realtime */}
-          {remoteCursors?.enabled && (
-            <RemoteCursorsSync
-              entityId={remoteCursors.entityId}
-              userId={remoteCursors.userId}
-              userName={remoteCursors.userName}
-              userColor={remoteCursors.userColor}
-              enabled={remoteCursors.enabled}
-              onActiveCursorsChange={remoteCursors.onActiveCursorsChange}
-            />
-          )}
+            {/* Sync remote cursors via Supabase Realtime */}
+            {remoteCursors?.enabled && (
+              <RemoteCursorsSync
+                entityId={remoteCursors.entityId}
+                userId={remoteCursors.userId}
+                userName={remoteCursors.userName}
+                userColor={remoteCursors.userColor}
+                enabled={remoteCursors.enabled}
+                onActiveCursorsChange={remoteCursors.onActiveCursorsChange}
+              />
+            )}
 
-          <EditorContainer
-            variant={containerVariant}
-            className={containerClassName}
-            data-swipe-lock
-          >
-            <Editor
-              id={id}
-              variant={editorVariant}
-              placeholder={placeholder}
-              className={editorClassName}
-              onFocus={handleEditorFocus}
-            />
-          </EditorContainer>
+            <EditorContainer
+              variant={containerVariant}
+              className={containerClassName}
+              data-swipe-lock
+            >
+              <Editor
+                id={id}
+                variant={editorVariant}
+                placeholder={placeholder}
+                className={editorClassName}
+                onFocus={handleEditorFocus}
+              />
+            </EditorContainer>
 
-          {showSettingsDialog && <SettingsDialog />}
-        </Plate>
+            {showSettingsDialog && <SettingsDialog />}
+          </Plate>
+        </ChartDatasetContextProvider>
       </SuggestionCallbacksProvider>
     </ModeProvider>
   );

@@ -438,6 +438,11 @@ export function AmendmentWikiView({
           house_number: amendment.house_number ?? undefined,
           latitude: amendment.latitude ?? null,
           longitude: amendment.longitude ?? null,
+          location_kind: amendment.location_kind ?? null,
+          location_place_id: amendment.location_place_id ?? null,
+          location_boundary_source: amendment.location_boundary_source ?? null,
+          location_geometry: amendment.location_geometry ?? null,
+          location_bounds: amendment.location_bounds ?? null,
         }}
         className="mb-8"
       />

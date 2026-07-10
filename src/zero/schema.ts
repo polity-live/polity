@@ -130,12 +130,7 @@ import { calendarSubscription } from './calendar-subscriptions/table';
 import { votingPassword } from './voting-password/table';
 // Accreditation
 import { accreditation } from './accreditation/table';
-import {
-  chartProjection,
-  chartProjectionPoint,
-  eurostatDataset,
-  eurostatObservation,
-} from './eurostat/table';
+import { dataset, datasetSnapshot } from './datasets/table';
 
 // Relationship imports
 import { allRelationships } from './relationships';
@@ -293,11 +288,9 @@ const zeroTables = [
   votingPassword,
   // Accreditation
   accreditation,
-  // Eurostat and chart projections
-  eurostatDataset,
-  eurostatObservation,
-  chartProjection,
-  chartProjectionPoint,
+  // Dataset metadata
+  dataset,
+  datasetSnapshot,
 ] as const;
 
 export const schema = createSchema({
@@ -452,11 +445,9 @@ export type VotingPasswordRow = Row<Schema['tables']['voting_password']>;
 // Accreditation
 export type AccreditationRow = Row<Schema['tables']['accreditation']>;
 
-// Eurostat
-export type EurostatDataset = Row<Schema['tables']['eurostat_dataset']>;
-export type EurostatObservation = Row<Schema['tables']['eurostat_observation']>;
-export type ChartProjection = Row<Schema['tables']['chart_projection']>;
-export type ChartProjectionPoint = Row<Schema['tables']['chart_projection_point']>;
+// Datasets
+export type Dataset = Row<Schema['tables']['dataset']>;
+export type DatasetSnapshot = Row<Schema['tables']['dataset_snapshot']>;
 
 // Workflows
 export type GroupWorkflowRow = Row<Schema['tables']['group_workflow']>;

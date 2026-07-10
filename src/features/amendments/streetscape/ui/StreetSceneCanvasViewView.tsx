@@ -357,44 +357,10 @@ export function StreetSceneCanvasViewView({
           open={legendOpen}
           onOpenChange={setLegendOpen}
           className={cn(
-            'bg-background/95 pointer-events-auto absolute right-6 z-10 w-[min(17rem,calc(100%-3rem))] overflow-hidden rounded-md border text-xs shadow-lg backdrop-blur',
-            showChangeRequests && changeRequests.length > 0 ? 'top-[23rem]' : 'top-24 sm:top-20'
+            'bg-background/95 pointer-events-auto absolute right-6 bottom-6 z-10 w-[min(17rem,calc(100%-3rem))] overflow-hidden rounded-md border text-xs shadow-lg backdrop-blur'
           )}
         >
-          <CollapsibleTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-9 w-full justify-between rounded-none px-3 text-xs font-semibold"
-              aria-label={t(
-                `features.amendments.streetscape.actions.${legendOpen ? 'collapse' : 'expand'}`,
-                {
-                  label: t('features.amendments.streetscape.canvas.legend'),
-                }
-              )}
-              title={t(
-                `features.amendments.streetscape.actions.${legendOpen ? 'collapse' : 'expand'}`,
-                {
-                  label: t('features.amendments.streetscape.canvas.legend'),
-                }
-              )}
-            >
-              <span className="flex min-w-0 items-center gap-2">
-                <Layers className="text-muted-foreground size-3.5 flex-none" />
-                <span className="truncate">
-                  {t('features.amendments.streetscape.canvas.legend')}
-                </span>
-              </span>
-              <ChevronDown
-                className={cn(
-                  'size-3.5 flex-none transition-transform',
-                  legendOpen ? 'rotate-180' : 'rotate-0'
-                )}
-              />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="border-t">
+          <CollapsibleContent className="border-b">
             <div className="max-h-64 space-y-3 overflow-auto p-3 sm:max-h-80">
               {legendSections.map(section => (
                 <section key={section.id} className="space-y-1.5">
@@ -425,6 +391,39 @@ export function StreetSceneCanvasViewView({
               ))}
             </div>
           </CollapsibleContent>
+          <CollapsibleTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-9 w-full justify-between rounded-none px-3 text-xs font-semibold"
+              aria-label={t(
+                `features.amendments.streetscape.actions.${legendOpen ? 'collapse' : 'expand'}`,
+                {
+                  label: t('features.amendments.streetscape.canvas.legend'),
+                }
+              )}
+              title={t(
+                `features.amendments.streetscape.actions.${legendOpen ? 'collapse' : 'expand'}`,
+                {
+                  label: t('features.amendments.streetscape.canvas.legend'),
+                }
+              )}
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <Layers className="text-muted-foreground size-3.5 flex-none" />
+                <span className="truncate">
+                  {t('features.amendments.streetscape.canvas.legend')}
+                </span>
+              </span>
+              <ChevronDown
+                className={cn(
+                  'size-3.5 flex-none transition-transform',
+                  legendOpen ? 'rotate-0' : 'rotate-180'
+                )}
+              />
+            </Button>
+          </CollapsibleTrigger>
         </Collapsible>
       ) : null}
       {placementMode === 'path' ? (
@@ -1420,8 +1419,52 @@ function renderLegendPreviewContent(entry: StreetDesignLegendEntry, previewKind:
         </>
       );
     }
+    case 'car_lane': {
+      const direction = getLegendStringProperty(entry, 'direction', 'one_way');
+      const isTwoWay = direction === 'two_way';
+
+      return (
+        <>
+          <span
+            className="absolute top-2 left-[-4px] h-4 w-12 -rotate-12 rounded-sm"
+            style={{ backgroundColor: color }}
+          />
+          {isTwoWay ? (
+            <>
+              <span className="absolute top-[15px] left-1 h-0.5 w-9 -rotate-12 rounded-full bg-[#facc15]" />
+              <span
+                className="absolute top-[9px] left-[8px] h-2 w-5 -rotate-12 bg-[#f8fafc]"
+                style={{
+                  clipPath: 'polygon(0 38%, 58% 38%, 58% 12%, 100% 50%, 58% 88%, 58% 62%, 0 62%)',
+                }}
+              />
+              <span
+                className="absolute top-[18px] left-[15px] h-2 w-5 -rotate-12 bg-[#f8fafc]"
+                style={{
+                  clipPath: 'polygon(0 38%, 58% 38%, 58% 12%, 100% 50%, 58% 88%, 58% 62%, 0 62%)',
+                }}
+              />
+            </>
+          ) : (
+            <>
+              <span
+                className="absolute top-[11px] left-[6px] h-2.5 w-6 -rotate-12 bg-[#f8fafc]"
+                style={{
+                  clipPath: 'polygon(0 40%, 60% 40%, 60% 12%, 100% 50%, 60% 88%, 60% 60%, 0 60%)',
+                }}
+              />
+              <span
+                className="absolute top-[16px] left-[18px] h-2.5 w-6 -rotate-12 bg-[#f8fafc]"
+                style={{
+                  clipPath: 'polygon(0 40%, 60% 40%, 60% 12%, 100% 50%, 60% 88%, 60% 60%, 0 60%)',
+                }}
+              />
+            </>
+          )}
+        </>
+      );
+    }
     case 'street':
-    case 'car_lane':
     case 'road': {
       const roadClass = getLegendStringProperty(entry, 'roadClass', 'residential');
       const status = getLegendStringProperty(entry, 'status', 'open');

@@ -1,4 +1,5 @@
 import type { GovDataCatalogueEntry, GovDataResourceSummary } from '@/features/charts/types';
+import { Parser } from 'htmlparser2';
 
 export const GOVDATA_ACTION_BASE_URL = 'https://www.govdata.de/ckan/api/3/action';
 
@@ -61,6 +62,97 @@ function nullableText(value: unknown) {
   return normalized ? normalized : null;
 }
 
+const GOVDATA_BLOCK_TAGS = new Set([
+  'address',
+  'article',
+  'aside',
+  'blockquote',
+  'div',
+  'figcaption',
+  'figure',
+  'footer',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'header',
+  'li',
+  'main',
+  'nav',
+  'p',
+  'section',
+  'table',
+  'td',
+  'th',
+  'tr',
+  'ul',
+  'ol',
+]);
+
+const GOVDATA_PARAGRAPH_TAGS = new Set([
+  'article',
+  'aside',
+  'blockquote',
+  'div',
+  'figcaption',
+  'footer',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'header',
+  'li',
+  'main',
+  'nav',
+  'p',
+  'section',
+]);
+
+export function normalizeGovDataText(value: unknown) {
+  const source = text(value);
+  if (!source) return '';
+
+  let output = '';
+  const addBreak = (count = 1) => {
+    if (!output) return;
+    output = output.replace(/[^\S\n]+$/g, '');
+    const currentCount = output.match(/\n*$/)?.[0].length ?? 0;
+    if (currentCount < count) output += '\n'.repeat(count - currentCount);
+  };
+  const parser = new Parser(
+    {
+      onopentag(name) {
+        if (name === 'br' || GOVDATA_BLOCK_TAGS.has(name)) addBreak();
+      },
+      ontext(valueText) {
+        output += valueText;
+      },
+      onclosetag(name) {
+        if (GOVDATA_PARAGRAPH_TAGS.has(name)) addBreak(2);
+        else if (GOVDATA_BLOCK_TAGS.has(name)) addBreak();
+      },
+    },
+    { decodeEntities: true }
+  );
+
+  parser.end(source);
+  return output
+    .replace(/\r/g, '')
+    .replace(/[^\S\n]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function nullableGovDataText(value: unknown) {
+  const normalized = normalizeGovDataText(value);
+  return normalized || null;
+}
+
 function lastUriSegment(value: string) {
   const trimmed = value.trim();
   const withoutHash = trimmed.split('#').pop() ?? trimmed;
@@ -97,7 +189,10 @@ function normalizeResource(resource: CkanResource): GovDataResourceSummary | nul
   const sizeValue = Number(resource.size);
   return {
     id,
-    name: text(resource.name) || text(resource.description) || 'CSV resource',
+    name:
+      normalizeGovDataText(resource.name) ||
+      normalizeGovDataText(resource.description) ||
+      'CSV resource',
     format: normalizeGovDataFormat(resource.format, resource.mimetype) || 'CSV',
     mimetype: nullableText(resource.mimetype),
     size: Number.isFinite(sizeValue) ? sizeValue : null,
@@ -121,13 +216,13 @@ export function normalizeGovDataPackage(pkg: CkanPackage): GovDataCatalogueEntry
 
   if (!id || !name || resources.length === 0) return null;
 
-  const organizationTitle = nullableText(pkg.organization?.title ?? pkg.organization?.name);
+  const organizationTitle = nullableGovDataText(pkg.organization?.title ?? pkg.organization?.name);
   return {
     id,
     name,
-    title: text(pkg.title) || name,
-    notes: nullableText(pkg.notes),
-    publisher: nullableText(extraValue(pkg, 'publisher_name') ?? pkg.maintainer),
+    title: normalizeGovDataText(pkg.title) || name,
+    notes: nullableGovDataText(pkg.notes),
+    publisher: nullableGovDataText(extraValue(pkg, 'publisher_name') ?? pkg.maintainer),
     organizationTitle,
     modified: nullableText(pkg.modified ?? pkg.metadata_modified),
     resources,

@@ -338,6 +338,14 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
                 enabled: capabilities.presence,
                 onActiveCursorsChange: setActiveCursorUserIds,
               }}
+              datasetContext={{
+                defaultGroupId: entity.metadata?.groupId ?? null,
+                defaultGroupName: entity.metadata?.groupName ?? null,
+                canViewDatasets: entity.metadata?.canViewDatasets ?? false,
+                canManageDatasets: entity.metadata?.canManageDatasets ?? false,
+                canUploadDatasets:
+                  entityType === 'amendment' && !plateReadOnly && isOwnerOrCollaborator,
+              }}
             />
           </div>
         </CardContent>

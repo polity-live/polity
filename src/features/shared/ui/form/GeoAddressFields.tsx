@@ -12,7 +12,7 @@ interface GeoAddressFieldsProps {
   onFieldChange: (field: GeoAddressField, value: string) => void;
   labels: GeoAddressTextMap;
   placeholders: GeoAddressTextMap;
-  onResolvedAddress?: (result: GeoResolvedAddress | null) => void;
+  onResolvedAddress?: (result: GeoResolvedAddress | null, field: GeoAddressField | null) => void;
   resetContextKey?: number | string;
   disabled?: boolean;
 }

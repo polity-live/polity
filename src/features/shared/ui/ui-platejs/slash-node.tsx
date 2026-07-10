@@ -6,7 +6,7 @@ import { AIChatPlugin } from '@platejs/ai/react';
 import { useTranslation } from 'react-i18next';
 import {
   CalendarIcon,
-  ChartNoAxesCombinedIcon,
+  DatabaseIcon,
   ChevronRightIcon,
   Code2,
   Columns3Icon,
@@ -28,8 +28,8 @@ import { type TComboboxInputElement, KEYS } from 'platejs';
 import { PlateElement } from 'platejs/react';
 
 import { insertBlock, insertInlineElement } from '@/features/shared/ui/kit-platejs/transforms.ts';
-import { CHART_NODE_TYPE } from '@/features/charts/types';
-import { openChartDialog } from '@/features/charts/ui/ChartDialog';
+import { DATA_VIEW_NODE_TYPE } from '@/features/charts/types';
+import { openDataViewDialog } from '@/features/charts/ui/ChartDialog';
 
 import {
   InlineCombobox,
@@ -165,10 +165,10 @@ const groups: Group[] = [
       })),
       {
         focusEditor: false,
-        icon: <ChartNoAxesCombinedIcon />,
+        icon: <DatabaseIcon />,
         keywords: ['graph', 'diagram', 'csv', 'govdata', 'eurostat'],
-        value: CHART_NODE_TYPE,
-        onSelect: () => openChartDialog(),
+        value: DATA_VIEW_NODE_TYPE,
+        onSelect: () => openDataViewDialog(),
       },
     ],
   },
@@ -259,7 +259,8 @@ export function SlashInputElement(props: PlateElementProps<TComboboxInputElement
                   else if (value === KEYS.date) translatedLabel = t('plateJs.toolbar.date');
                   else if (value === KEYS.inlineEquation)
                     translatedLabel = t('plateJs.toolbar.inlineEquation');
-                  else if (value === CHART_NODE_TYPE) translatedLabel = t('plateJs.toolbar.chart');
+                  else if (value === DATA_VIEW_NODE_TYPE)
+                    translatedLabel = t('plateJs.dataView.insertTitle');
 
                   return (
                     <InlineComboboxItem

@@ -1,5 +1,6 @@
 import { FormControlLabel, CreateInputField } from '@/features/shared/ui/form';
 import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
+import type { GeoLocationShape } from '@/features/shared/logic/geoLocationShape';
 import { Button } from '@/features/shared/ui/ui/button';
 
 type AttendanceMode = 'online' | 'hybrid' | 'offline';
@@ -45,6 +46,8 @@ interface EventLocationInputProps {
   };
   onAttendanceModeChange: (mode: AttendanceMode) => void;
   onValueChange: (field: keyof EventLocationValues, value: string | number | null) => void;
+  shape?: GeoLocationShape | null;
+  onShapeChange?: (shape: GeoLocationShape | null) => void;
 }
 
 export function EventLocationInput({
@@ -54,6 +57,8 @@ export function EventLocationInput({
   labels,
   onAttendanceModeChange,
   onValueChange,
+  shape,
+  onShapeChange,
 }: EventLocationInputProps) {
   return (
     <div className="space-y-4">
@@ -105,6 +110,8 @@ export function EventLocationInput({
               onValueChange('latitude', coordinates?.latitude ?? null);
               onValueChange('longitude', coordinates?.longitude ?? null);
             }}
+            shape={shape}
+            onShapeChange={onShapeChange}
             onFieldChange={(field, value) => {
               const fieldMap = {
                 country: 'country',

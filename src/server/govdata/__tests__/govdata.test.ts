@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { normalizeGovDataPackage } from '../catalogue';
+import { normalizeGovDataPackage, normalizeGovDataText } from '../catalogue';
 import { parseGovDataCsvTable } from '../csv';
 import { createGovDataCsvSnapshot } from '../importer';
 import { assertSafePublicHttpUrl } from '../safety';
@@ -42,6 +42,49 @@ describe('GovData utilities', () => {
       format: 'CSV',
       size: 1024,
     });
+  });
+
+  it('turns CKAN HTML descriptions into readable plain text', () => {
+    const description = normalizeGovDataText(
+      '<p>Anzahl der Arbeitslosen in den statistischen Bezirken.</p>' +
+        '<p><strong>Hinweis</strong>: Die Abkürzungen stehen im ' +
+        '<a href="https://example.com"><u>Merkmalskatalog</u></a>.</p>' +
+        '<p>Werte für Darmstadt &amp; Umgebung.</p>'
+    );
+
+    expect(description).toBe(
+      'Anzahl der Arbeitslosen in den statistischen Bezirken.\n\n' +
+        'Hinweis: Die Abkürzungen stehen im Merkmalskatalog.\n\n' +
+        'Werte für Darmstadt & Umgebung.'
+    );
+    expect(description).not.toMatch(/<\/?[a-z][^>]*>/i);
+  });
+
+  it('normalizes HTML in catalogue metadata fields', () => {
+    const entry = normalizeGovDataPackage({
+      id: 'pkg-html',
+      name: 'arbeitslosigkeit',
+      title: '<strong>Arbeitslosigkeit 2025 Q2</strong>',
+      notes: '<p>Arbeitslose je statistischem Bezirk.</p>',
+      maintainer: '<span>Wissenschaftsstadt Darmstadt</span>',
+      organization: { title: '<b>GovData</b>' },
+      resources: [
+        {
+          id: 'csv-html',
+          name: '<em>Arbeitslosigkeit 2025 Q2</em>',
+          format: 'CSV',
+          url: 'https://example.com/data.csv',
+        },
+      ],
+    });
+
+    expect(entry).toMatchObject({
+      title: 'Arbeitslosigkeit 2025 Q2',
+      notes: 'Arbeitslose je statistischem Bezirk.',
+      publisher: 'Wissenschaftsstadt Darmstadt',
+      organizationTitle: 'GovData',
+    });
+    expect(entry?.resources[0]?.name).toBe('Arbeitslosigkeit 2025 Q2');
   });
 
   it('parses semicolon separated GovData CSV files', () => {

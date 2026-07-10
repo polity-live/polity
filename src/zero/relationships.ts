@@ -136,12 +136,7 @@ import { calendarSubscription } from './calendar-subscriptions/table';
 import { votingPassword } from './voting-password/table';
 // Accreditation
 import { accreditation } from './accreditation/table';
-import {
-  chartProjection,
-  chartProjectionPoint,
-  eurostatDataset,
-  eurostatObservation,
-} from './eurostat/table';
+import { dataset, datasetSnapshot } from './datasets/table';
 // Common
 import {
   hashtag,
@@ -380,6 +375,16 @@ export const userRelationships = relationships(user, ({ many }) => ({
     destField: ['user_id'],
   }),
   accreditations: many({ sourceField: ['id'], destSchema: accreditation, destField: ['user_id'] }),
+  created_datasets: many({
+    sourceField: ['id'],
+    destSchema: dataset,
+    destField: ['created_by_id'],
+  }),
+  owned_datasets: many({
+    sourceField: ['id'],
+    destSchema: dataset,
+    destField: ['owner_user_id'],
+  }),
 }));
 
 export const fileRelationships = relationships(file, () => ({}));
@@ -471,6 +476,7 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
   roles: many({ sourceField: ['id'], destSchema: role, destField: ['group_id'] }),
   events: many({ sourceField: ['id'], destSchema: event, destField: ['group_id'] }),
   amendments: many({ sourceField: ['id'], destSchema: amendment, destField: ['group_id'] }),
+  datasets: many({ sourceField: ['id'], destSchema: dataset, destField: ['group_id'] }),
   amendment_group_decisions: many({
     sourceField: ['id'],
     destSchema: amendmentGroupDecision,
@@ -2347,48 +2353,26 @@ export const accreditationRelationships = relationships(accreditation, ({ one })
 }));
 
 // ============================================
-// Eurostat relationships
+// Dataset relationships
 // ============================================
-export const eurostatDatasetRelationships = relationships(eurostatDataset, ({ many }) => ({
-  observations: many({
+export const datasetRelationships = relationships(dataset, ({ one, many }) => ({
+  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  owner: one({ sourceField: ['owner_user_id'], destSchema: user, destField: ['id'] }),
+  created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
+  snapshots: many({
     sourceField: ['id'],
-    destSchema: eurostatObservation,
+    destSchema: datasetSnapshot,
     destField: ['dataset_id'],
   }),
-  projections: many({
-    sourceField: ['id'],
-    destSchema: chartProjection,
-    destField: ['dataset_id'],
-  }),
 }));
 
-export const eurostatObservationRelationships = relationships(eurostatObservation, ({ one }) => ({
+export const datasetSnapshotRelationships = relationships(datasetSnapshot, ({ one }) => ({
   dataset: one({
     sourceField: ['dataset_id'],
-    destSchema: eurostatDataset,
+    destSchema: dataset,
     destField: ['id'],
   }),
-}));
-
-export const chartProjectionRelationships = relationships(chartProjection, ({ one, many }) => ({
-  dataset: one({
-    sourceField: ['dataset_id'],
-    destSchema: eurostatDataset,
-    destField: ['id'],
-  }),
-  points: many({
-    sourceField: ['id'],
-    destSchema: chartProjectionPoint,
-    destField: ['projection_id'],
-  }),
-}));
-
-export const chartProjectionPointRelationships = relationships(chartProjectionPoint, ({ one }) => ({
-  projection: one({
-    sourceField: ['projection_id'],
-    destSchema: chartProjection,
-    destField: ['id'],
-  }),
+  created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
 }));
 
 // ============================================
@@ -2532,11 +2516,9 @@ export const allRelationships = [
   votingPasswordRelationships,
   // Accreditation
   accreditationRelationships,
-  // Eurostat
-  eurostatDatasetRelationships,
-  eurostatObservationRelationships,
-  chartProjectionRelationships,
-  chartProjectionPointRelationships,
+  // Datasets
+  datasetRelationships,
+  datasetSnapshotRelationships,
   // Workflows
   groupWorkflowRelationships,
   groupWorkflowStepRelationships,

@@ -411,6 +411,7 @@ export const amendmentsTranslations = {
       readOnly: 'Read only',
       saved: 'Saved',
       unsaved: 'Unsaved',
+      unsavedChanges: 'Unsaved changes',
     },
     metrics: {
       changeRequests: '{{count}} CRs',
@@ -475,6 +476,43 @@ export const amendmentsTranslations = {
       objects: 'Objects',
       selectedOsmWay: 'OSM way',
       showCrOverlay: 'Show canvas overlay',
+    },
+    help: {
+      title: 'Navigation help',
+      trigger: 'Show street design navigation help',
+      description: 'Use the canvas differently depending on the active mode.',
+      tabs: {
+        touch: 'Touch',
+        mouse: 'Mouse',
+        keyboard: 'Keyboard',
+      },
+      modes: {
+        select: 'Select',
+        place: 'Place',
+        camera: 'Camera',
+      },
+      global: {
+        title: 'Global navigation',
+      },
+      touch: {
+        select: 'Tap an element or existing object to select it.',
+        place: 'Tap the canvas to place the selected element.',
+        camera: 'Drag with one finger to move the camera in Camera mode.',
+        global: 'Use two fingers to move and zoom the camera.',
+      },
+      mouse: {
+        select: 'Click an element or existing object to select it.',
+        rotate: 'Drag the rotation handle to rotate a selected element.',
+        place: 'Click to place. Move the pointer to preview the next element.',
+        camera: 'Drag with the left button to move the camera in Camera mode.',
+        global: 'Wheel zooms. Middle-drag or Space+drag moves. Right-drag or Shift+drag turns.',
+      },
+      keyboard: {
+        select: 'Keyboard navigation is always available while selecting.',
+        place: 'Keyboard navigation is available while previewing placement.',
+        camera: 'Keyboard navigation is available in Camera mode.',
+        global: 'WASD or arrow keys move, + and - zoom, Q and E turn.',
+      },
     },
     osmLayers: {
       bikeLane: 'Bike lanes',

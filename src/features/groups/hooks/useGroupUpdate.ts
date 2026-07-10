@@ -5,7 +5,8 @@
  * Handles group profile updates including basic info, location, and social media.
  */
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
@@ -59,6 +60,11 @@ export interface GroupFormData {
   house_number: string;
   latitude: number | null;
   longitude: number | null;
+  location_kind: string | null;
+  location_place_id: string | null;
+  location_boundary_source: string | null;
+  location_geometry: ReadonlyJSONValue | null;
+  location_bounds: ReadonlyJSONValue | null;
   imageURL: string;
   visibility: Visibility;
   website: string;
@@ -103,6 +109,11 @@ const initialFormState: GroupFormData = {
   house_number: '',
   latitude: null,
   longitude: null,
+  location_kind: null,
+  location_place_id: null,
+  location_boundary_source: null,
+  location_geometry: null,
+  location_bounds: null,
   imageURL: '',
   visibility: 'public' as Visibility,
   website: '',
@@ -199,6 +210,11 @@ export function useGroupUpdate(
         house_number: initialData.house_number || '',
         latitude: initialData.latitude ?? null,
         longitude: initialData.longitude ?? null,
+        location_kind: initialData.location_kind ?? null,
+        location_place_id: initialData.location_place_id ?? null,
+        location_boundary_source: initialData.location_boundary_source ?? null,
+        location_geometry: initialData.location_geometry ?? null,
+        location_bounds: initialData.location_bounds ?? null,
         imageURL: initialData.imageURL || '',
         visibility: initialData.visibility ?? 'public',
         website: initialData.website || '',
@@ -228,17 +244,26 @@ export function useGroupUpdate(
   /**
    * Update a single form field
    */
-  const updateField = <K extends keyof GroupFormData>(field: K, value: GroupFormData[K]) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const updateField = useCallback(
+    <K extends keyof GroupFormData>(field: K, value: GroupFormData[K]) => {
+      setFormData(prev => (Object.is(prev[field], value) ? prev : { ...prev, [field]: value }));
+    },
+    []
+  );
 
-  const updateDescriptionContent = (value: Value) => {
-    setFormData(prev => ({
-      ...prev,
-      description: richTextToPlainText(value),
-      descriptionContent: value,
-    }));
-  };
+  const updateDescriptionContent = useCallback((value: Value) => {
+    const description = richTextToPlainText(value);
+
+    setFormData(prev =>
+      Object.is(prev.descriptionContent, value) && prev.description === description
+        ? prev
+        : {
+            ...prev,
+            description,
+            descriptionContent: value,
+          }
+    );
+  }, []);
 
   const removeImage = () => {
     if (isCreating) {
@@ -272,6 +297,11 @@ export function useGroupUpdate(
         house_number: initialData.house_number || '',
         latitude: initialData.latitude ?? null,
         longitude: initialData.longitude ?? null,
+        location_kind: initialData.location_kind ?? null,
+        location_place_id: initialData.location_place_id ?? null,
+        location_boundary_source: initialData.location_boundary_source ?? null,
+        location_geometry: initialData.location_geometry ?? null,
+        location_bounds: initialData.location_bounds ?? null,
         imageURL: initialData.imageURL || '',
         visibility: initialData.visibility ?? 'public',
         website: initialData.website || '',
@@ -485,6 +515,11 @@ export function useGroupUpdate(
           house_number: formData.house_number || null,
           latitude: formData.latitude,
           longitude: formData.longitude,
+          location_kind: formData.location_kind,
+          location_place_id: formData.location_place_id,
+          location_boundary_source: formData.location_boundary_source,
+          location_geometry: formData.location_geometry,
+          location_bounds: formData.location_bounds,
           image_url: formData.imageURL || null,
           x: formData.twitter || null,
           website: formData.website || null,
@@ -521,6 +556,11 @@ export function useGroupUpdate(
             house_number: formData.house_number || null,
             latitude: formData.latitude,
             longitude: formData.longitude,
+            location_kind: formData.location_kind,
+            location_place_id: formData.location_place_id,
+            location_boundary_source: formData.location_boundary_source,
+            location_geometry: formData.location_geometry,
+            location_bounds: formData.location_bounds,
             image_url: formData.imageURL || null,
             x: formData.twitter,
             website: formData.website || null,

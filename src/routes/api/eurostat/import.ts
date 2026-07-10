@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { getSession } from '@/lib/supabase/server';
-import { createOrResumeEurostatImport } from '@/server/eurostat/importer';
 import { getEurostatDatasetDetails } from '@/server/eurostat/metadata';
+import { importEurostatDatasetSnapshot } from '@/server/datasets/providers';
 
 const requestSchema = z.object({
   code: z.string().trim().min(1).max(100),
@@ -21,7 +21,21 @@ export const Route = createFileRoute('/api/eurostat/import')({
         try {
           const body = requestSchema.parse(await request.json());
           const details = await getEurostatDatasetDetails(body.code, body.language);
-          return Response.json(await createOrResumeEurostatImport(details, session.user.id));
+          const result = await importEurostatDatasetSnapshot({
+            code: details.code,
+            language: details.language,
+            userId: session.user.id,
+          });
+          return Response.json({
+            datasetId: result.datasetId,
+            status: 'ready',
+            partitionCount: 1,
+            completedPartitions: 1,
+            observationCount: result.rowCount,
+            estimatedBytes: details.estimatedBytes,
+            actualBytes: result.byteSize,
+            error: null,
+          });
         } catch (error) {
           const status = error instanceof z.ZodError ? 400 : 500;
           return Response.json(

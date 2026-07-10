@@ -1389,6 +1389,10 @@ code {
   display: none;
 }
 
+.leaflet-container {
+  isolation: isolate;
+}
+
 .leaflet-container img.leaflet-tile {
   mix-blend-mode: normal;
 }

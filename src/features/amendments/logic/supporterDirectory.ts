@@ -1,5 +1,10 @@
 import { formatLocation, type LocationParts } from '@/features/shared/logic/locationHelpers';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import {
+  geoLocationShapeFromFields,
+  hasGeoLocationBounds,
+  type GeoLocationShape,
+} from '@/features/shared/logic/geoLocationShape';
 
 type GroupDecisionStatus = 'supported' | 'accepted';
 type SupportConfirmationStatus = 'pending' | 'confirmed' | 'declined' | 'withdrawn';
@@ -10,6 +15,11 @@ interface SupporterGroupLike extends LocationParts {
   member_count?: number | null;
   latitude?: number | null;
   longitude?: number | null;
+  location_kind?: string | null;
+  location_place_id?: string | null;
+  location_boundary_source?: string | null;
+  location_geometry?: unknown | null;
+  location_bounds?: unknown | null;
 }
 
 interface SupporterGroupDecisionLike {
@@ -36,6 +46,7 @@ export interface SupporterDirectoryItem {
   locationLabel: string;
   latitude: number | null;
   longitude: number | null;
+  locationShape?: GeoLocationShape | null;
 }
 
 export interface SupporterMapItem extends SupporterDirectoryItem {
@@ -86,6 +97,12 @@ function mergeGroupData(
     member_count: primary?.member_count ?? fallback?.member_count ?? null,
     latitude: primary?.latitude ?? fallback?.latitude ?? null,
     longitude: primary?.longitude ?? fallback?.longitude ?? null,
+    location_kind: primary?.location_kind ?? fallback?.location_kind ?? null,
+    location_place_id: primary?.location_place_id ?? fallback?.location_place_id ?? null,
+    location_boundary_source:
+      primary?.location_boundary_source ?? fallback?.location_boundary_source ?? null,
+    location_geometry: primary?.location_geometry ?? fallback?.location_geometry ?? null,
+    location_bounds: primary?.location_bounds ?? fallback?.location_bounds ?? null,
   };
 }
 
@@ -157,6 +174,7 @@ export function deriveSupporterDirectoryItems(args: {
     const group = mergeGroupData(latestConfirmation?.group, decision.group);
     const latitude = toFiniteCoordinate(group?.latitude);
     const longitude = toFiniteCoordinate(group?.longitude);
+    const locationShape = geoLocationShapeFromFields(group);
 
     items.push({
       groupId,
@@ -167,6 +185,7 @@ export function deriveSupporterDirectoryItems(args: {
       locationLabel: formatSupporterLocation(group),
       latitude,
       longitude,
+      locationShape,
     });
   }
 
@@ -176,9 +195,21 @@ export function deriveSupporterDirectoryItems(args: {
 export function deriveSupporterMapItems(
   items: readonly SupporterDirectoryItem[]
 ): SupporterMapItem[] {
-  return items.flatMap(item =>
-    item.latitude !== null && item.longitude !== null
-      ? [{ ...item, latitude: item.latitude, longitude: item.longitude }]
-      : []
-  );
+  return items.flatMap(item => {
+    if (item.latitude !== null && item.longitude !== null) {
+      return [{ ...item, latitude: item.latitude, longitude: item.longitude }];
+    }
+
+    if (hasGeoLocationBounds(item.locationShape)) {
+      return [
+        {
+          ...item,
+          latitude: (item.locationShape.bounds.south + item.locationShape.bounds.north) / 2,
+          longitude: (item.locationShape.bounds.west + item.locationShape.bounds.east) / 2,
+        },
+      ];
+    }
+
+    return [];
+  });
 }

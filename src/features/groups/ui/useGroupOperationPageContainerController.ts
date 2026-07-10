@@ -11,6 +11,8 @@ export function useGroupOperationPageContainerController({
 }: GroupOperationPageContainerProps) {
   const { canManage, canView, isLoading, isMember } = usePermissions({ groupId });
 
+  const canViewDatasets = canView('groupDatasets');
+
   const canViewDocuments = canView('groupDocuments');
 
   const canViewLinks = canView('groupLinks');
@@ -20,6 +22,7 @@ export function useGroupOperationPageContainerController({
   const canViewTodos = canView('groupTodos');
 
   const canAccessOperation = hasGroupOperationAccess({
+    canViewDatasets,
     canViewDocuments,
     canViewLinks,
     canViewPayments,
@@ -33,6 +36,7 @@ export function useGroupOperationPageContainerController({
     canView,
     isLoading,
     isMember,
+    canViewDatasets,
     canViewDocuments,
     canViewLinks,
     canViewPayments,

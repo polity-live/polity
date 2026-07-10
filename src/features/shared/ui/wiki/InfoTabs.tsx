@@ -12,6 +12,7 @@ import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { buildContactLinkHref } from '@/features/shared/logic/contactLinkHelpers';
 import { RichTextPreview } from '@/features/shared/ui/rich-text';
 import { GeoAddressMap } from '@/features/shared/ui/form/GeoAddressMap';
+import { geoLocationShapeFromFields } from '@/features/shared/logic/geoLocationShape';
 import {
   FacebookIcon as Facebook,
   InstagramIcon as Instagram,
@@ -40,6 +41,11 @@ interface ContactInfo {
   house_number?: string;
   latitude?: number | null;
   longitude?: number | null;
+  location_kind?: string | null;
+  location_place_id?: string | null;
+  location_boundary_source?: string | null;
+  location_geometry?: unknown | null;
+  location_bounds?: unknown | null;
 }
 
 interface EventDetails {
@@ -128,8 +134,11 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
     longitude: contact?.longitude ?? undefined,
   };
   const locationCoordinates = hasGeoCoordinates(contactCoordinates) ? contactCoordinates : null;
+  const locationShape = geoLocationShapeFromFields(contact);
 
-  const hasLocationTab = Boolean(eventDetails || locationItems.length > 0 || locationCoordinates);
+  const hasLocationTab = Boolean(
+    eventDetails || locationItems.length > 0 || locationCoordinates || locationShape
+  );
   const defaultTab = about ? 'about' : hasLocationTab ? 'location' : 'contact';
 
   if (locationItems.length === 0) {
@@ -298,6 +307,7 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
               {locationCoordinates ? (
                 <GeoAddressMap
                   coordinates={locationCoordinates}
+                  shape={locationShape}
                   onCoordinatesChange={() => undefined}
                   loadingLabel={t('common.locationPicker.loading')}
                   unavailableLabel={t('common.locationPicker.unavailable')}

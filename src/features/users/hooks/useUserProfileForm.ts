@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
@@ -42,6 +43,11 @@ export interface UserProfileFormData {
   house_number: string;
   latitude: number | null;
   longitude: number | null;
+  location_kind: string | null;
+  location_place_id: string | null;
+  location_boundary_source: string | null;
+  location_geometry: ReadonlyJSONValue | null;
+  location_bounds: ReadonlyJSONValue | null;
   avatar: string;
   visibility: Visibility;
   hashtags: string[];
@@ -108,6 +114,11 @@ export function useUserProfileForm({
     house_number: '',
     latitude: null,
     longitude: null,
+    location_kind: null,
+    location_place_id: null,
+    location_boundary_source: null,
+    location_geometry: null,
+    location_bounds: null,
     avatar: '',
     visibility: 'public' as Visibility,
     hashtags: [],
@@ -150,6 +161,11 @@ export function useUserProfileForm({
         house_number: user.house_number || '',
         latitude: user.latitude ?? null,
         longitude: user.longitude ?? null,
+        location_kind: user.location_kind ?? null,
+        location_place_id: user.location_place_id ?? null,
+        location_boundary_source: user.location_boundary_source ?? null,
+        location_geometry: user.location_geometry ?? null,
+        location_bounds: user.location_bounds ?? null,
         avatar: user.avatar || '',
         visibility: (user.visibility as Visibility) ?? 'public',
         hashtags: [],
@@ -216,6 +232,11 @@ export function useUserProfileForm({
         house_number: formData.house_number,
         latitude: formData.latitude,
         longitude: formData.longitude,
+        location_kind: formData.location_kind,
+        location_place_id: formData.location_place_id,
+        location_boundary_source: formData.location_boundary_source,
+        location_geometry: formData.location_geometry,
+        location_bounds: formData.location_bounds,
         visibility: formData.visibility,
         hashtags: formData.hashtags,
         existingJunctions: userHashtags ?? [],

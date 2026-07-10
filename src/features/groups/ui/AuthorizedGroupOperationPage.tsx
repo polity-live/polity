@@ -6,10 +6,12 @@ import type { Todo } from '@/features/todos/types/todo.types';
 import { GroupOperationPageView } from './GroupOperationPageContainerView';
 
 export interface AuthorizedGroupOperationPageProps {
+  canManageDatasets: boolean;
   canManageDocuments: boolean;
   canManageLinks: boolean;
   canManagePayments: boolean;
   canManageTodos: boolean;
+  canViewDatasets: boolean;
   canViewDocuments: boolean;
   canViewLinks: boolean;
   canViewPayments: boolean;
@@ -19,10 +21,12 @@ export interface AuthorizedGroupOperationPageProps {
 }
 
 export function AuthorizedGroupOperationPage({
+  canManageDatasets,
   canManageDocuments,
   canManageLinks,
   canManagePayments,
   canManageTodos,
+  canViewDatasets,
   canViewDocuments,
   canViewLinks,
   canViewPayments,
@@ -69,10 +73,12 @@ export function AuthorizedGroupOperationPage({
 
   return (
     <GroupOperationPageView
+      canManageDatasets={canManageDatasets}
       canManageDocuments={canManageDocuments}
       canManageLinks={canManageLinks}
       canManagePayments={canManagePayments}
       canManageTodos={canManageTodos}
+      canViewDatasets={canViewDatasets}
       canViewDocuments={canViewDocuments}
       canViewLinks={canViewLinks}
       canViewPayments={canViewPayments}

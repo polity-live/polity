@@ -18,6 +18,11 @@ CREATE TABLE IF NOT EXISTS public.search_document (
   location_longitude DOUBLE PRECISION,
   location_label TEXT,
   location_source TEXT,
+  location_kind TEXT,
+  location_place_id TEXT,
+  location_boundary_source TEXT,
+  location_geometry JSONB,
+  location_bounds JSONB,
   card_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -44,6 +49,9 @@ CREATE INDEX idx_search_document_owner
 CREATE INDEX idx_search_document_location
   ON public.search_document (location_latitude, location_longitude)
   WHERE location_latitude IS NOT NULL AND location_longitude IS NOT NULL;
+CREATE INDEX idx_search_document_location_kind
+  ON public.search_document (location_kind)
+  WHERE location_kind IS NOT NULL;
 
 ALTER TABLE public.search_document ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.search_document FOR ALL TO service_role USING (true);
@@ -139,12 +147,27 @@ DECLARE
   direct_longitude DOUBLE PRECISION;
   direct_label TEXT;
   direct_source TEXT;
+  direct_kind TEXT;
+  direct_place_id TEXT;
+  direct_boundary_source TEXT;
+  direct_geometry JSONB;
+  direct_bounds JSONB;
   group_latitude DOUBLE PRECISION;
   group_longitude DOUBLE PRECISION;
   group_label TEXT;
+  group_kind TEXT;
+  group_place_id TEXT;
+  group_boundary_source TEXT;
+  group_geometry JSONB;
+  group_bounds JSONB;
   owner_latitude DOUBLE PRECISION;
   owner_longitude DOUBLE PRECISION;
   owner_label TEXT;
+  owner_kind TEXT;
+  owner_place_id TEXT;
+  owner_boundary_source TEXT;
+  owner_geometry JSONB;
+  owner_bounds JSONB;
   resolved_group_id UUID;
   resolved_owner_user_id UUID;
 BEGIN
@@ -155,8 +178,13 @@ BEGIN
     SELECT
       u.latitude,
       u.longitude,
-      public.search_document_format_location(NULL, u.country, u.region, u.post_code, u.city, u.street, u.house_number)
-    INTO direct_latitude, direct_longitude, direct_label
+      public.search_document_format_location(NULL, u.country, u.region, u.post_code, u.city, u.street, u.house_number),
+      u.location_kind,
+      u.location_place_id,
+      u.location_boundary_source,
+      u.location_geometry,
+      u.location_bounds
+    INTO direct_latitude, direct_longitude, direct_label, direct_kind, direct_place_id, direct_boundary_source, direct_geometry, direct_bounds
     FROM public."user" AS u
     WHERE u.id = NEW.entity_id;
 
@@ -167,8 +195,13 @@ BEGIN
       g.latitude,
       g.longitude,
       public.search_document_format_location(NULL, g.country, g.region, g.post_code, g.city, g.street, g.house_number),
+      g.location_kind,
+      g.location_place_id,
+      g.location_boundary_source,
+      g.location_geometry,
+      g.location_bounds,
       g.owner_id
-    INTO direct_latitude, direct_longitude, direct_label, resolved_owner_user_id
+    INTO direct_latitude, direct_longitude, direct_label, direct_kind, direct_place_id, direct_boundary_source, direct_geometry, direct_bounds, resolved_owner_user_id
     FROM public."group" AS g
     WHERE g.id = NEW.entity_id;
 
@@ -179,9 +212,14 @@ BEGIN
       e.latitude,
       e.longitude,
       public.search_document_format_location(e.location_name, e.country, e.region, e.post_code, e.city, e.street, e.house_number),
+      e.location_kind,
+      e.location_place_id,
+      e.location_boundary_source,
+      e.location_geometry,
+      e.location_bounds,
       e.group_id,
       e.creator_id
-    INTO direct_latitude, direct_longitude, direct_label, resolved_group_id, resolved_owner_user_id
+    INTO direct_latitude, direct_longitude, direct_label, direct_kind, direct_place_id, direct_boundary_source, direct_geometry, direct_bounds, resolved_group_id, resolved_owner_user_id
     FROM public.event AS e
     WHERE e.id = NEW.entity_id;
 
@@ -191,9 +229,14 @@ BEGIN
       a.latitude,
       a.longitude,
       public.search_document_format_location(NULL, a.country, a.region, a.post_code, a.city, a.street, a.house_number),
+      a.location_kind,
+      a.location_place_id,
+      a.location_boundary_source,
+      a.location_geometry,
+      a.location_bounds,
       a.group_id,
       a.created_by_id
-    INTO direct_latitude, direct_longitude, direct_label, resolved_group_id, resolved_owner_user_id
+    INTO direct_latitude, direct_longitude, direct_label, direct_kind, direct_place_id, direct_boundary_source, direct_geometry, direct_bounds, resolved_group_id, resolved_owner_user_id
     FROM public.amendment AS a
     WHERE a.id = NEW.entity_id;
 
@@ -210,16 +253,21 @@ BEGIN
   NEW.group_id := resolved_group_id;
   NEW.owner_user_id := resolved_owner_user_id;
 
-  IF NEW.location_latitude IS NOT NULL AND NEW.location_longitude IS NOT NULL THEN
-    NEW.location_source := coalesce(NEW.location_source, direct_source, 'document');
-    RETURN NEW;
-  END IF;
-
   IF direct_latitude IS NOT NULL AND direct_longitude IS NOT NULL THEN
     NEW.location_latitude := direct_latitude;
     NEW.location_longitude := direct_longitude;
-    NEW.location_label := coalesce(nullif(NEW.location_label, ''), direct_label);
+    NEW.location_label := direct_label;
     NEW.location_source := coalesce(direct_source, 'own');
+    NEW.location_kind := direct_kind;
+    NEW.location_place_id := direct_place_id;
+    NEW.location_boundary_source := direct_boundary_source;
+    NEW.location_geometry := direct_geometry;
+    NEW.location_bounds := direct_bounds;
+    RETURN NEW;
+  END IF;
+
+  IF NEW.location_latitude IS NOT NULL AND NEW.location_longitude IS NOT NULL THEN
+    NEW.location_source := coalesce(NEW.location_source, direct_source, 'document');
     RETURN NEW;
   END IF;
 
@@ -227,16 +275,26 @@ BEGIN
     SELECT
       g.latitude,
       g.longitude,
-      public.search_document_format_location(NULL, g.country, g.region, g.post_code, g.city, g.street, g.house_number)
-    INTO group_latitude, group_longitude, group_label
+      public.search_document_format_location(NULL, g.country, g.region, g.post_code, g.city, g.street, g.house_number),
+      g.location_kind,
+      g.location_place_id,
+      g.location_boundary_source,
+      g.location_geometry,
+      g.location_bounds
+    INTO group_latitude, group_longitude, group_label, group_kind, group_place_id, group_boundary_source, group_geometry, group_bounds
     FROM public."group" AS g
     WHERE g.id = resolved_group_id;
 
     IF group_latitude IS NOT NULL AND group_longitude IS NOT NULL THEN
       NEW.location_latitude := group_latitude;
       NEW.location_longitude := group_longitude;
-      NEW.location_label := coalesce(nullif(NEW.location_label, ''), group_label);
+      NEW.location_label := group_label;
       NEW.location_source := 'group';
+      NEW.location_kind := group_kind;
+      NEW.location_place_id := group_place_id;
+      NEW.location_boundary_source := group_boundary_source;
+      NEW.location_geometry := group_geometry;
+      NEW.location_bounds := group_bounds;
       RETURN NEW;
     END IF;
   END IF;
@@ -245,16 +303,26 @@ BEGIN
     SELECT
       u.latitude,
       u.longitude,
-      public.search_document_format_location(NULL, u.country, u.region, u.post_code, u.city, u.street, u.house_number)
-    INTO owner_latitude, owner_longitude, owner_label
+      public.search_document_format_location(NULL, u.country, u.region, u.post_code, u.city, u.street, u.house_number),
+      u.location_kind,
+      u.location_place_id,
+      u.location_boundary_source,
+      u.location_geometry,
+      u.location_bounds
+    INTO owner_latitude, owner_longitude, owner_label, owner_kind, owner_place_id, owner_boundary_source, owner_geometry, owner_bounds
     FROM public."user" AS u
     WHERE u.id = resolved_owner_user_id;
 
     IF owner_latitude IS NOT NULL AND owner_longitude IS NOT NULL THEN
       NEW.location_latitude := owner_latitude;
       NEW.location_longitude := owner_longitude;
-      NEW.location_label := coalesce(nullif(NEW.location_label, ''), owner_label);
+      NEW.location_label := owner_label;
       NEW.location_source := 'owner';
+      NEW.location_kind := owner_kind;
+      NEW.location_place_id := owner_place_id;
+      NEW.location_boundary_source := owner_boundary_source;
+      NEW.location_geometry := owner_geometry;
+      NEW.location_bounds := owner_bounds;
       RETURN NEW;
     END IF;
   END IF;
@@ -263,6 +331,11 @@ BEGIN
   NEW.location_longitude := NULL;
   NEW.location_label := NULL;
   NEW.location_source := NULL;
+  NEW.location_kind := NULL;
+  NEW.location_place_id := NULL;
+  NEW.location_boundary_source := NULL;
+  NEW.location_geometry := NULL;
+  NEW.location_bounds := NULL;
   RETURN NEW;
 END;
 $$;
@@ -274,7 +347,17 @@ SECURITY DEFINER SET search_path = ''
 AS $$
 BEGIN
   UPDATE public.search_document
-  SET updated_at = updated_at
+  SET
+    location_latitude = NULL,
+    location_longitude = NULL,
+    location_label = NULL,
+    location_source = NULL,
+    location_kind = NULL,
+    location_place_id = NULL,
+    location_boundary_source = NULL,
+    location_geometry = NULL,
+    location_bounds = NULL,
+    updated_at = updated_at
   WHERE owner_user_id = NEW.id
     OR id = public.search_document_id('user', NEW.id);
 
@@ -289,7 +372,17 @@ SECURITY DEFINER SET search_path = ''
 AS $$
 BEGIN
   UPDATE public.search_document
-  SET updated_at = updated_at
+  SET
+    location_latitude = NULL,
+    location_longitude = NULL,
+    location_label = NULL,
+    location_source = NULL,
+    location_kind = NULL,
+    location_place_id = NULL,
+    location_boundary_source = NULL,
+    location_geometry = NULL,
+    location_bounds = NULL,
+    updated_at = updated_at
   WHERE group_id = NEW.id
     OR id = public.search_document_id('group', NEW.id);
 
@@ -489,6 +582,29 @@ BEGIN
   PERFORM public.sync_search_document_topics(
     public.search_document_id('event', target_event_id),
     topics
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.sync_dataset_search_document_topics(target_dataset_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  topics JSONB;
+BEGIN
+  SELECT CASE
+    WHEN jsonb_typeof(d.topics) = 'array' THEN d.topics
+    ELSE '[]'::jsonb
+  END
+  INTO topics
+  FROM public.dataset AS d
+  WHERE d.id = target_dataset_id;
+
+  PERFORM public.sync_search_document_topics(
+    public.search_document_id('dataset', target_dataset_id),
+    coalesce(topics, '[]'::jsonb)
   );
 END;
 $$;
@@ -961,7 +1077,12 @@ BEGIN
     location_latitude = EXCLUDED.location_latitude,
     location_longitude = EXCLUDED.location_longitude,
     location_label = EXCLUDED.location_label,
-    location_source = EXCLUDED.location_source;
+    location_source = EXCLUDED.location_source,
+    location_kind = EXCLUDED.location_kind,
+    location_place_id = EXCLUDED.location_place_id,
+    location_boundary_source = EXCLUDED.location_boundary_source,
+    location_geometry = EXCLUDED.location_geometry,
+    location_bounds = EXCLUDED.location_bounds;
 
   PERFORM public.sync_amendment_search_document_topics(amendment_row.id);
 END;
@@ -1006,6 +1127,130 @@ BEGIN
     RETURN OLD;
   END IF;
 
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.upsert_dataset_search_document()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  latest_snapshot RECORD;
+  provider_label TEXT;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('dataset', OLD.id);
+    RETURN OLD;
+  END IF;
+
+  SELECT
+    ds.id,
+    ds.status,
+    ds.snapshot_taken_at,
+    ds.byte_size,
+    ds.row_count,
+    ds.column_count
+  INTO latest_snapshot
+  FROM public.dataset_snapshot AS ds
+  WHERE ds.dataset_id = NEW.id
+  ORDER BY ds.snapshot_taken_at DESC
+  LIMIT 1;
+
+  provider_label := CASE NEW.provider
+    WHEN 'EUROSTAT' THEN 'Eurostat'
+    WHEN 'GENESIS_DESTATIS' THEN 'Genesis/Destatis'
+    WHEN 'GOVDATA' THEN 'GovData'
+    WHEN 'UPLOAD' THEN 'Upload'
+    ELSE NEW.provider
+  END;
+
+  INSERT INTO public.search_document (
+    id,
+    entity_type,
+    entity_id,
+    title,
+    subtitle,
+    summary,
+    search_text,
+    visibility,
+    owner_user_id,
+    group_id,
+    card_payload,
+    created_at,
+    updated_at,
+    engagement_score,
+    trending_score
+  )
+  VALUES (
+    public.search_document_id('dataset', NEW.id),
+    'dataset',
+    NEW.id,
+    coalesce(nullif(NEW.title, ''), 'Dataset'),
+    concat_ws(' · ', provider_label, nullif(NEW.publisher, ''), nullif(NEW.provider_dataset_id, '')),
+    left(coalesce(NEW.description, NEW.structure_summary, ''), 420),
+    concat_ws(
+      ' ',
+      NEW.title,
+      NEW.description,
+      NEW.structure_summary,
+      NEW.provider,
+      provider_label,
+      NEW.provider_dataset_id,
+      NEW.provider_resource_id,
+      NEW.publisher,
+      NEW.license,
+      public.search_document_json_text(NEW.columns),
+      public.search_document_json_text(NEW.column_profiles),
+      public.search_document_json_text(NEW.dimensions),
+      public.search_document_json_text(NEW.time_coverage),
+      public.search_document_json_text(NEW.spatial_coverage),
+      public.search_document_json_text(NEW.topics),
+      public.search_document_json_text(NEW.metadata)
+    ),
+    coalesce(NEW.visibility, 'public'),
+    NEW.owner_user_id,
+    NEW.group_id,
+    jsonb_build_object(
+      'type', 'dataset',
+      'provider', NEW.provider,
+      'provider_label', provider_label,
+      'provider_dataset_id', NEW.provider_dataset_id,
+      'provider_resource_id', NEW.provider_resource_id,
+      'publisher', NEW.publisher,
+      'license', NEW.license,
+      'structure_summary', NEW.structure_summary,
+      'column_profiles', coalesce(NEW.column_profiles, '[]'::jsonb),
+      'snapshot_id', latest_snapshot.id,
+      'snapshot_status', latest_snapshot.status,
+      'snapshot_taken_at', public.search_document_epoch_ms(latest_snapshot.snapshot_taken_at),
+      'byte_size', latest_snapshot.byte_size,
+      'row_count', latest_snapshot.row_count,
+      'column_count', latest_snapshot.column_count,
+      'metadata', coalesce(NEW.metadata, '{}'::jsonb)
+    ),
+    NEW.created_at,
+    NEW.updated_at,
+    CASE WHEN latest_snapshot.status = 'ready' THEN 2 ELSE 1 END,
+    CASE WHEN NEW.status = 'active' THEN 1 ELSE 0 END
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    subtitle = EXCLUDED.subtitle,
+    summary = EXCLUDED.summary,
+    search_text = EXCLUDED.search_text,
+    visibility = EXCLUDED.visibility,
+    owner_user_id = EXCLUDED.owner_user_id,
+    group_id = EXCLUDED.group_id,
+    card_payload = EXCLUDED.card_payload,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at,
+    engagement_score = EXCLUDED.engagement_score,
+    trending_score = EXCLUDED.trending_score;
+
+  PERFORM public.sync_dataset_search_document_topics(NEW.id);
   RETURN NEW;
 END;
 $$;
@@ -1528,12 +1773,12 @@ BEFORE INSERT OR UPDATE ON public.search_document
 FOR EACH ROW EXECUTE FUNCTION public.populate_search_document_location();
 
 CREATE OR REPLACE TRIGGER trg_search_document_user_location_refresh
-AFTER UPDATE OF country, region, post_code, city, street, house_number, latitude, longitude
+AFTER UPDATE OF country, region, post_code, city, street, house_number, latitude, longitude, location_kind, location_place_id, location_boundary_source, location_geometry, location_bounds
 ON public."user"
 FOR EACH ROW EXECUTE FUNCTION public.refresh_search_documents_from_user_location();
 
 CREATE OR REPLACE TRIGGER trg_search_document_group_location_refresh
-AFTER UPDATE OF country, region, post_code, city, street, house_number, latitude, longitude
+AFTER UPDATE OF country, region, post_code, city, street, house_number, latitude, longitude, location_kind, location_place_id, location_boundary_source, location_geometry, location_bounds
 ON public."group"
 FOR EACH ROW EXECUTE FUNCTION public.refresh_search_documents_from_group_location();
 

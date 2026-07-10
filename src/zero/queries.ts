@@ -24,7 +24,7 @@ import { votingPasswordQueries } from './voting-password/queries';
 import { accreditationQueries } from './accreditation/queries';
 import { networkQueries } from './network/queries';
 import { pqlQueries } from './pql/queries';
-import { eurostatQueries } from './eurostat/queries';
+import { datasetQueries } from './datasets/queries';
 
 export const queries = defineQueries({
   users: userQueries,
@@ -51,5 +51,5 @@ export const queries = defineQueries({
   accreditation: accreditationQueries,
   network: networkQueries,
   pql: pqlQueries,
-  eurostat: eurostatQueries,
+  datasets: datasetQueries,
 });

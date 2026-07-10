@@ -41,6 +41,8 @@ export const DEFAULT_GROUP_ROLES = [
       { resource: 'blogs' as ResourceType, action: 'view' as ActionType },
       { resource: 'elections' as ResourceType, action: 'manage' as ActionType },
       { resource: 'events' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'groupDatasets' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'groupDatasets' as ResourceType, action: 'view' as ActionType },
       { resource: 'groupDocuments' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupDocuments' as ResourceType, action: 'view' as ActionType },
       { resource: 'groupLinks' as ResourceType, action: 'manage' as ActionType },
@@ -339,6 +341,17 @@ export const GROUP_ACTION_RIGHTS = [
     resource: 'events',
     action: 'manage',
     label: translateText('generated.inline.0718_manage_events_90a2cf72'),
+  },
+  // groupDocuments
+  {
+    resource: 'groupDatasets',
+    action: 'manage',
+    label: translateText('features.groups.datasets.manageDatasets', 'Manage datasets'),
+  },
+  {
+    resource: 'groupDatasets',
+    action: 'view',
+    label: translateText('features.groups.datasets.viewDatasets', 'View datasets'),
   },
   // groupDocuments
   {

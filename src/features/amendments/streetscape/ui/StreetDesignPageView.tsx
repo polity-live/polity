@@ -1,11 +1,13 @@
-import { MapPinned } from 'lucide-react';
+import { AlertTriangle, CircleHelp, MapPinned } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { OnlineCollaboratorAvatars } from '@/features/editor/ui/OnlineCollaboratorAvatars';
 import type { EditorCollaborator, EditorPresencePeer } from '@/features/editor/types';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
-import { type SelectableEditingMode } from '@/features/shared/ui/status';
+import { BadgeControl, type SelectableEditingMode } from '@/features/shared/ui/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Popover, PopoverAnchor, PopoverContent } from '@/features/shared/ui/ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
 import { getStreetDesignOsmFeatures } from '../logic/streetDesignOsm';
@@ -446,6 +448,20 @@ export function StreetDesignPageView({
                   {label}
                 </span>
               ))}
+              {isDirty ? (
+                <BadgeControl
+                  tone="warning"
+                  variant="secondary"
+                  shape="rounded"
+                  role="status"
+                  aria-label={t('features.amendments.streetscape.status.unsavedChanges')}
+                  className="h-9 gap-1.5 px-3 py-2 font-medium whitespace-nowrap"
+                >
+                  <AlertTriangle className="size-3.5" aria-hidden="true" />
+                  {t('features.amendments.streetscape.status.unsavedChanges')}
+                </BadgeControl>
+              ) : null}
+              <StreetDesignNavigationHelp />
             </div>
           </CardHeader>
 
@@ -506,5 +522,150 @@ export function StreetDesignPageView({
         </Card>
       </div>
     </div>
+  );
+}
+
+function StreetDesignNavigationHelp() {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const helpTabs = [
+    {
+      key: 'touch',
+      label: t('features.amendments.streetscape.help.tabs.touch'),
+      sections: [
+        {
+          key: 'select',
+          title: t('features.amendments.streetscape.help.modes.select'),
+          items: [t('features.amendments.streetscape.help.touch.select')],
+        },
+        {
+          key: 'place',
+          title: t('features.amendments.streetscape.help.modes.place'),
+          items: [t('features.amendments.streetscape.help.touch.place')],
+        },
+        {
+          key: 'camera',
+          title: t('features.amendments.streetscape.help.modes.camera'),
+          items: [t('features.amendments.streetscape.help.touch.camera')],
+        },
+      ],
+      globalItems: [t('features.amendments.streetscape.help.touch.global')],
+    },
+    {
+      key: 'mouse',
+      label: t('features.amendments.streetscape.help.tabs.mouse'),
+      sections: [
+        {
+          key: 'select',
+          title: t('features.amendments.streetscape.help.modes.select'),
+          items: [
+            t('features.amendments.streetscape.help.mouse.select'),
+            t('features.amendments.streetscape.help.mouse.rotate'),
+          ],
+        },
+        {
+          key: 'place',
+          title: t('features.amendments.streetscape.help.modes.place'),
+          items: [t('features.amendments.streetscape.help.mouse.place')],
+        },
+        {
+          key: 'camera',
+          title: t('features.amendments.streetscape.help.modes.camera'),
+          items: [t('features.amendments.streetscape.help.mouse.camera')],
+        },
+      ],
+      globalItems: [t('features.amendments.streetscape.help.mouse.global')],
+    },
+    {
+      key: 'keyboard',
+      label: t('features.amendments.streetscape.help.tabs.keyboard'),
+      sections: [
+        {
+          key: 'select',
+          title: t('features.amendments.streetscape.help.modes.select'),
+          items: [t('features.amendments.streetscape.help.keyboard.select')],
+        },
+        {
+          key: 'place',
+          title: t('features.amendments.streetscape.help.modes.place'),
+          items: [t('features.amendments.streetscape.help.keyboard.place')],
+        },
+        {
+          key: 'camera',
+          title: t('features.amendments.streetscape.help.modes.camera'),
+          items: [t('features.amendments.streetscape.help.keyboard.camera')],
+        },
+      ],
+      globalItems: [t('features.amendments.streetscape.help.keyboard.global')],
+    },
+  ];
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverAnchor asChild>
+        <button
+          type="button"
+          aria-label={t('features.amendments.streetscape.help.trigger')}
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          className="bg-muted/20 hover:bg-muted/40 focus-visible:ring-ring text-muted-foreground hover:text-foreground flex size-9 shrink-0 items-center justify-center rounded-md border transition-colors focus-visible:ring-2 focus-visible:outline-hidden"
+          onClick={() => setOpen(current => !current)}
+          onFocus={() => setOpen(true)}
+          onMouseEnter={() => setOpen(true)}
+        >
+          <CircleHelp className="size-4" />
+        </button>
+      </PopoverAnchor>
+      <PopoverContent align="end" className="w-[min(34rem,calc(100vw-2rem))] p-0">
+        <div className="space-y-4 p-4 text-sm">
+          <div className="space-y-1">
+            <h3 className="font-semibold">{t('features.amendments.streetscape.help.title')}</h3>
+            <p className="text-muted-foreground text-xs">
+              {t('features.amendments.streetscape.help.description')}
+            </p>
+          </div>
+
+          <Tabs defaultValue="touch">
+            <TabsList className="w-full">
+              {helpTabs.map(tab => (
+                <TabsTrigger key={tab.key} value={tab.key} className="flex-1">
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {helpTabs.map(tab => (
+              <TabsContent key={tab.key} value={tab.key} className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {tab.sections.map(section => (
+                    <section key={section.key} className="space-y-2">
+                      <h4 className="text-muted-foreground text-xs font-semibold uppercase">
+                        {section.title}
+                      </h4>
+                      <ul className="space-y-1.5 text-xs leading-relaxed">
+                        {section.items.map(item => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+
+                <section className="bg-muted/20 rounded-md border p-3">
+                  <h4 className="text-muted-foreground text-xs font-semibold uppercase">
+                    {t('features.amendments.streetscape.help.global.title')}
+                  </h4>
+                  <ul className="mt-2 space-y-1.5 text-xs leading-relaxed">
+                    {tab.globalItems.map(item => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </section>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

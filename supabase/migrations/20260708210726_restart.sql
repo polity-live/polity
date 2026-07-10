@@ -136,6 +136,19 @@ alter table "public"."ai_tool" enable row level security;
     "clone_source_id" uuid,
     "origin_amendment_id" uuid,
     "document_id" uuid,
+    "country" text,
+    "region" text,
+    "post_code" text,
+    "city" text,
+    "street" text,
+    "house_number" text,
+    "latitude" double precision,
+    "longitude" double precision,
+    "location_kind" text,
+    "location_place_id" text,
+    "location_boundary_source" text,
+    "location_geometry" jsonb,
+    "location_bounds" jsonb,
     "upvotes" integer not null default 0,
     "downvotes" integer not null default 0,
     "tags" jsonb,
@@ -485,40 +498,6 @@ alter table "public"."change_request" enable row level security;
 alter table "public"."change_request_vote" enable row level security;
 
 
-  create table "public"."chart_projection" (
-    "id" text not null,
-    "dataset_id" uuid not null,
-    "config_hash" text not null,
-    "filters" jsonb not null default '{}'::jsonb,
-    "x_dimension" text not null,
-    "series_dimension" text,
-    "value_field" text not null default 'OBS_VALUE'::text,
-    "status" text not null default 'pending'::text,
-    "point_count" integer not null default 0,
-    "error" text,
-    "created_by_id" uuid,
-    "created_at" timestamp with time zone not null default now(),
-    "updated_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."chart_projection" enable row level security;
-
-
-  create table "public"."chart_projection_point" (
-    "id" text not null,
-    "projection_id" text not null,
-    "x_value" text not null,
-    "series_value" text,
-    "value" double precision not null,
-    "sort_index" integer not null,
-    "created_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."chart_projection_point" enable row level security;
-
-
   create table "public"."comment" (
     "id" uuid not null default gen_random_uuid(),
     "thread_id" uuid not null,
@@ -579,6 +558,80 @@ alter table "public"."conversation" enable row level security;
 
 
 alter table "public"."conversation_participant" enable row level security;
+
+
+  create table "public"."dataset" (
+    "id" uuid not null,
+    "provider" text not null,
+    "provider_dataset_id" text,
+    "provider_resource_id" text,
+    "title" text not null,
+    "description" text,
+    "license" text,
+    "publisher" text,
+    "language" text not null default 'en'::text,
+    "source_url" text,
+    "structure_summary" text,
+    "dimensions" jsonb not null default '[]'::jsonb,
+    "columns" jsonb not null default '[]'::jsonb,
+    "time_coverage" jsonb not null default '{}'::jsonb,
+    "spatial_coverage" jsonb not null default '{}'::jsonb,
+    "topics" jsonb not null default '[]'::jsonb,
+    "metadata" jsonb not null default '{}'::jsonb,
+    "visibility" text not null default 'public'::text,
+    "owner_user_id" uuid,
+    "group_id" uuid,
+    "status" text not null default 'active'::text,
+    "created_by_id" uuid,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."dataset" enable row level security;
+
+
+  create table "public"."dataset_import_job" (
+    "id" uuid not null,
+    "dataset_id" uuid,
+    "provider" text not null,
+    "status" text not null default 'pending'::text,
+    "requested_by_id" uuid,
+    "request_payload" jsonb not null default '{}'::jsonb,
+    "result_snapshot_id" uuid,
+    "error" text,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."dataset_import_job" enable row level security;
+
+
+  create table "public"."dataset_snapshot" (
+    "id" uuid not null,
+    "dataset_id" uuid not null,
+    "snapshot_key" text not null,
+    "storage_bucket" text not null default 'dataset-snapshots'::text,
+    "storage_path" text not null,
+    "format" text not null default 'csv'::text,
+    "content_hash" text not null,
+    "byte_size" bigint not null default 0,
+    "row_count" bigint not null default 0,
+    "column_count" integer not null default 0,
+    "columns" jsonb not null default '[]'::jsonb,
+    "dimensions" jsonb not null default '[]'::jsonb,
+    "metadata" jsonb not null default '{}'::jsonb,
+    "status" text not null default 'pending'::text,
+    "snapshot_taken_at" timestamp with time zone not null default now(),
+    "created_by_id" uuid,
+    "error" text,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."dataset_snapshot" enable row level security;
 
 
   create table "public"."delegate_election_assignment" (
@@ -721,70 +774,6 @@ alter table "public"."election_offline_tally" enable row level security;
 alter table "public"."elector" enable row level security;
 
 
-  create table "public"."eurostat_dataset" (
-    "id" uuid not null,
-    "code" text not null,
-    "title" text not null,
-    "language" text not null default 'en'::text,
-    "snapshot_key" text not null,
-    "source_last_update" text,
-    "structure_last_change" text,
-    "data_start" text,
-    "data_end" text,
-    "source_value_count" bigint not null default 0,
-    "observation_count" bigint not null default 0,
-    "estimated_bytes" bigint not null default 0,
-    "actual_bytes" bigint not null default 0,
-    "dimensions" jsonb not null default '[]'::jsonb,
-    "attributes" jsonb not null default '[]'::jsonb,
-    "status" text not null default 'pending'::text,
-    "partition_count" integer not null default 0,
-    "completed_partitions" integer not null default 0,
-    "error" text,
-    "created_by_id" uuid,
-    "created_at" timestamp with time zone not null default now(),
-    "updated_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."eurostat_dataset" enable row level security;
-
-
-  create table "public"."eurostat_import_partition" (
-    "id" text not null,
-    "dataset_id" uuid not null,
-    "partition_index" integer not null,
-    "filters" jsonb not null default '{}'::jsonb,
-    "estimated_cells" integer not null default 0,
-    "status" text not null default 'pending'::text,
-    "async_request_id" text,
-    "observation_count" integer not null default 0,
-    "attempts" integer not null default 0,
-    "error" text,
-    "created_at" timestamp with time zone not null default now(),
-    "updated_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."eurostat_import_partition" enable row level security;
-
-
-  create table "public"."eurostat_observation" (
-    "id" text not null,
-    "dataset_id" uuid not null,
-    "observation_key" text not null,
-    "time_period" text,
-    "value" double precision not null,
-    "dimensions" jsonb not null default '{}'::jsonb,
-    "attributes" jsonb not null default '{}'::jsonb,
-    "sort_key" text not null,
-    "created_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."eurostat_observation" enable row level security;
-
-
   create table "public"."event" (
     "id" uuid not null default gen_random_uuid(),
     "title" text,
@@ -802,6 +791,11 @@ alter table "public"."eurostat_observation" enable row level security;
     "house_number" text,
     "latitude" double precision,
     "longitude" double precision,
+    "location_kind" text,
+    "location_place_id" text,
+    "location_boundary_source" text,
+    "location_geometry" jsonb,
+    "location_bounds" jsonb,
     "location_url" text,
     "location_coordinates" text,
     "visibility" text not null default 'public'::text,
@@ -809,7 +803,7 @@ alter table "public"."eurostat_observation" enable row level security;
     "end_date" timestamp with time zone,
     "timezone" text,
     "default_final_vote_duration_seconds" integer,
-    "change_request_vote_order" text not null default 'text_position',
+    "change_request_vote_order" text not null default 'text_position'::text,
     "gender_quota_enabled" boolean not null default false,
     "capacity" integer,
     "participant_count" integer not null default 0,
@@ -1061,6 +1055,11 @@ alter table "public"."follow" enable row level security;
     "house_number" text,
     "latitude" double precision,
     "longitude" double precision,
+    "location_kind" text,
+    "location_place_id" text,
+    "location_boundary_source" text,
+    "location_geometry" jsonb,
+    "location_bounds" jsonb,
     "image_url" text,
     "visibility" text not null default 'public'::text,
     "member_count" integer not null default 0,
@@ -1800,6 +1799,11 @@ alter table "public"."role_holder_history" enable row level security;
     "location_longitude" double precision,
     "location_label" text,
     "location_source" text,
+    "location_kind" text,
+    "location_place_id" text,
+    "location_boundary_source" text,
+    "location_geometry" jsonb,
+    "location_bounds" jsonb,
     "card_payload" jsonb not null default '{}'::jsonb,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now(),
@@ -2145,6 +2149,11 @@ alter table "public"."todo_assignment" enable row level security;
     "house_number" text,
     "latitude" double precision,
     "longitude" double precision,
+    "location_kind" text,
+    "location_place_id" text,
+    "location_boundary_source" text,
+    "location_geometry" jsonb,
+    "location_bounds" jsonb,
     "visibility" text not null default 'public'::text,
     "subscriber_count" integer not null default 0,
     "amendment_count" integer not null default 0,
@@ -2322,14 +2331,6 @@ CREATE UNIQUE INDEX change_request_pkey ON public.change_request USING btree (id
 
 CREATE UNIQUE INDEX change_request_vote_pkey ON public.change_request_vote USING btree (id);
 
-CREATE UNIQUE INDEX chart_projection_config_hash_key ON public.chart_projection USING btree (config_hash);
-
-CREATE UNIQUE INDEX chart_projection_pkey ON public.chart_projection USING btree (id);
-
-CREATE UNIQUE INDEX chart_projection_point_pkey ON public.chart_projection_point USING btree (id);
-
-CREATE UNIQUE INDEX chart_projection_point_projection_id_x_value_series_value_key ON public.chart_projection_point USING btree (projection_id, x_value, series_value) NULLS NOT DISTINCT;
-
 CREATE UNIQUE INDEX comment_pkey ON public.comment USING btree (id);
 
 CREATE UNIQUE INDEX comment_vote_pkey ON public.comment_vote USING btree (id);
@@ -2337,6 +2338,14 @@ CREATE UNIQUE INDEX comment_vote_pkey ON public.comment_vote USING btree (id);
 CREATE UNIQUE INDEX conversation_participant_pkey ON public.conversation_participant USING btree (id);
 
 CREATE UNIQUE INDEX conversation_pkey ON public.conversation USING btree (id);
+
+CREATE UNIQUE INDEX dataset_import_job_pkey ON public.dataset_import_job USING btree (id);
+
+CREATE UNIQUE INDEX dataset_pkey ON public.dataset USING btree (id);
+
+CREATE UNIQUE INDEX dataset_snapshot_pkey ON public.dataset_snapshot USING btree (id);
+
+CREATE UNIQUE INDEX dataset_snapshot_snapshot_key_key ON public.dataset_snapshot USING btree (snapshot_key);
 
 CREATE UNIQUE INDEX delegate_election_assignment_pkey ON public.delegate_election_assignment USING btree (id);
 
@@ -2361,18 +2370,6 @@ CREATE UNIQUE INDEX election_pkey ON public.election USING btree (id);
 CREATE UNIQUE INDEX elector_election_id_user_id_key ON public.elector USING btree (election_id, user_id);
 
 CREATE UNIQUE INDEX elector_pkey ON public.elector USING btree (id);
-
-CREATE UNIQUE INDEX eurostat_dataset_pkey ON public.eurostat_dataset USING btree (id);
-
-CREATE UNIQUE INDEX eurostat_dataset_snapshot_key_key ON public.eurostat_dataset USING btree (snapshot_key);
-
-CREATE UNIQUE INDEX eurostat_import_partition_dataset_id_partition_index_key ON public.eurostat_import_partition USING btree (dataset_id, partition_index);
-
-CREATE UNIQUE INDEX eurostat_import_partition_pkey ON public.eurostat_import_partition USING btree (id);
-
-CREATE UNIQUE INDEX eurostat_observation_dataset_id_observation_key_key ON public.eurostat_observation USING btree (dataset_id, observation_key);
-
-CREATE UNIQUE INDEX eurostat_observation_pkey ON public.eurostat_observation USING btree (id);
 
 CREATE UNIQUE INDEX event_assembly_scope_event_id_source_group_id_scope_kind_pa_key ON public.event_assembly_scope USING btree (event_id, source_group_id, scope_kind, participant_mode);
 
@@ -2638,10 +2635,6 @@ CREATE INDEX idx_change_request_vote_cr ON public.change_request_vote USING btre
 
 CREATE INDEX idx_change_request_vote_user ON public.change_request_vote USING btree (user_id);
 
-CREATE INDEX idx_chart_projection_dataset ON public.chart_projection USING btree (dataset_id);
-
-CREATE INDEX idx_chart_projection_point_projection_sort ON public.chart_projection_point USING btree (projection_id, sort_index);
-
 CREATE INDEX idx_comment_parent ON public.comment USING btree (parent_id);
 
 CREATE INDEX idx_comment_thread ON public.comment USING btree (thread_id);
@@ -2669,6 +2662,32 @@ CREATE INDEX idx_conversation_participant_user ON public.conversation_participan
 CREATE INDEX idx_conversation_participant_user_left ON public.conversation_participant USING btree (user_id, left_at, conversation_id);
 
 CREATE INDEX idx_conversation_requested_by ON public.conversation USING btree (requested_by_id);
+
+CREATE INDEX idx_dataset_description_trgm ON public.dataset USING gin (description public.gin_trgm_ops);
+
+CREATE INDEX idx_dataset_group ON public.dataset USING btree (group_id, updated_at DESC);
+
+CREATE INDEX idx_dataset_import_job_dataset ON public.dataset_import_job USING btree (dataset_id, created_at DESC);
+
+CREATE INDEX idx_dataset_import_job_status ON public.dataset_import_job USING btree (status, created_at DESC);
+
+CREATE INDEX idx_dataset_metadata_gin ON public.dataset USING gin (metadata jsonb_path_ops);
+
+CREATE INDEX idx_dataset_owner ON public.dataset USING btree (owner_user_id, updated_at DESC);
+
+CREATE INDEX idx_dataset_provider_code ON public.dataset USING btree (provider, provider_dataset_id);
+
+CREATE UNIQUE INDEX idx_dataset_provider_identity ON public.dataset USING btree (provider, COALESCE(provider_dataset_id, ''::text), COALESCE(provider_resource_id, ''::text), COALESCE((group_id)::text, ''::text));
+
+CREATE INDEX idx_dataset_snapshot_dataset_created ON public.dataset_snapshot USING btree (dataset_id, snapshot_taken_at DESC);
+
+CREATE INDEX idx_dataset_snapshot_hash ON public.dataset_snapshot USING btree (content_hash);
+
+CREATE INDEX idx_dataset_snapshot_status ON public.dataset_snapshot USING btree (status);
+
+CREATE INDEX idx_dataset_status ON public.dataset USING btree (status);
+
+CREATE INDEX idx_dataset_title_trgm ON public.dataset USING gin (title public.gin_trgm_ops);
 
 CREATE INDEX idx_delegate_election_assignment_linked_event ON public.delegate_election_assignment USING btree (linked_event_id);
 
@@ -2703,18 +2722,6 @@ CREATE INDEX idx_election_role_id ON public.election USING btree (role_id);
 CREATE INDEX idx_elector_election ON public.elector USING btree (election_id);
 
 CREATE INDEX idx_elector_user ON public.elector USING btree (user_id);
-
-CREATE INDEX idx_eurostat_dataset_code_update ON public.eurostat_dataset USING btree (code, source_last_update DESC);
-
-CREATE INDEX idx_eurostat_dataset_status ON public.eurostat_dataset USING btree (status);
-
-CREATE INDEX idx_eurostat_import_partition_next ON public.eurostat_import_partition USING btree (dataset_id, status, partition_index);
-
-CREATE INDEX idx_eurostat_observation_dataset_sort ON public.eurostat_observation USING btree (dataset_id, sort_key);
-
-CREATE INDEX idx_eurostat_observation_dataset_time ON public.eurostat_observation USING btree (dataset_id, time_period);
-
-CREATE INDEX idx_eurostat_observation_dimensions_gin ON public.eurostat_observation USING gin (dimensions jsonb_path_ops);
 
 CREATE INDEX idx_event_assembly_scope_event ON public.event_assembly_scope USING btree (event_id, status);
 
@@ -3090,6 +3097,8 @@ CREATE INDEX idx_search_document_group ON public.search_document USING btree (gr
 
 CREATE INDEX idx_search_document_location ON public.search_document USING btree (location_latitude, location_longitude) WHERE ((location_latitude IS NOT NULL) AND (location_longitude IS NOT NULL));
 
+CREATE INDEX idx_search_document_location_kind ON public.search_document USING btree (location_kind) WHERE (location_kind IS NOT NULL);
+
 CREATE INDEX idx_search_document_owner ON public.search_document USING btree (owner_user_id, created_at DESC, id DESC);
 
 CREATE INDEX idx_search_document_recent ON public.search_document USING btree (created_at DESC, id DESC);
@@ -3386,10 +3395,6 @@ alter table "public"."change_request" add constraint "change_request_pkey" PRIMA
 
 alter table "public"."change_request_vote" add constraint "change_request_vote_pkey" PRIMARY KEY using index "change_request_vote_pkey";
 
-alter table "public"."chart_projection" add constraint "chart_projection_pkey" PRIMARY KEY using index "chart_projection_pkey";
-
-alter table "public"."chart_projection_point" add constraint "chart_projection_point_pkey" PRIMARY KEY using index "chart_projection_point_pkey";
-
 alter table "public"."comment" add constraint "comment_pkey" PRIMARY KEY using index "comment_pkey";
 
 alter table "public"."comment_vote" add constraint "comment_vote_pkey" PRIMARY KEY using index "comment_vote_pkey";
@@ -3397,6 +3402,12 @@ alter table "public"."comment_vote" add constraint "comment_vote_pkey" PRIMARY K
 alter table "public"."conversation" add constraint "conversation_pkey" PRIMARY KEY using index "conversation_pkey";
 
 alter table "public"."conversation_participant" add constraint "conversation_participant_pkey" PRIMARY KEY using index "conversation_participant_pkey";
+
+alter table "public"."dataset" add constraint "dataset_pkey" PRIMARY KEY using index "dataset_pkey";
+
+alter table "public"."dataset_import_job" add constraint "dataset_import_job_pkey" PRIMARY KEY using index "dataset_import_job_pkey";
+
+alter table "public"."dataset_snapshot" add constraint "dataset_snapshot_pkey" PRIMARY KEY using index "dataset_snapshot_pkey";
 
 alter table "public"."delegate_election_assignment" add constraint "delegate_election_assignment_pkey" PRIMARY KEY using index "delegate_election_assignment_pkey";
 
@@ -3415,12 +3426,6 @@ alter table "public"."election_candidate" add constraint "election_candidate_pke
 alter table "public"."election_offline_tally" add constraint "election_offline_tally_pkey" PRIMARY KEY using index "election_offline_tally_pkey";
 
 alter table "public"."elector" add constraint "elector_pkey" PRIMARY KEY using index "elector_pkey";
-
-alter table "public"."eurostat_dataset" add constraint "eurostat_dataset_pkey" PRIMARY KEY using index "eurostat_dataset_pkey";
-
-alter table "public"."eurostat_import_partition" add constraint "eurostat_import_partition_pkey" PRIMARY KEY using index "eurostat_import_partition_pkey";
-
-alter table "public"."eurostat_observation" add constraint "eurostat_observation_pkey" PRIMARY KEY using index "eurostat_observation_pkey";
 
 alter table "public"."event" add constraint "event_pkey" PRIMARY KEY using index "event_pkey";
 
@@ -3924,26 +3929,6 @@ alter table "public"."change_request_vote" add constraint "change_request_vote_u
 
 alter table "public"."change_request_vote" validate constraint "change_request_vote_user_id_fkey";
 
-alter table "public"."chart_projection" add constraint "chart_projection_config_hash_key" UNIQUE using index "chart_projection_config_hash_key";
-
-alter table "public"."chart_projection" add constraint "chart_projection_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
-
-alter table "public"."chart_projection" validate constraint "chart_projection_created_by_id_fkey";
-
-alter table "public"."chart_projection" add constraint "chart_projection_dataset_id_fkey" FOREIGN KEY (dataset_id) REFERENCES public.eurostat_dataset(id) ON DELETE CASCADE not valid;
-
-alter table "public"."chart_projection" validate constraint "chart_projection_dataset_id_fkey";
-
-alter table "public"."chart_projection" add constraint "chart_projection_status_check" CHECK ((status = ANY (ARRAY['pending'::text, 'ready'::text, 'error'::text]))) not valid;
-
-alter table "public"."chart_projection" validate constraint "chart_projection_status_check";
-
-alter table "public"."chart_projection_point" add constraint "chart_projection_point_projection_id_fkey" FOREIGN KEY (projection_id) REFERENCES public.chart_projection(id) ON DELETE CASCADE not valid;
-
-alter table "public"."chart_projection_point" validate constraint "chart_projection_point_projection_id_fkey";
-
-alter table "public"."chart_projection_point" add constraint "chart_projection_point_projection_id_x_value_series_value_key" UNIQUE using index "chart_projection_point_projection_id_x_value_series_value_key";
-
 alter table "public"."comment" add constraint "comment_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.comment(id) ON DELETE CASCADE not valid;
 
 alter table "public"."comment" validate constraint "comment_parent_id_fkey";
@@ -3983,6 +3968,64 @@ alter table "public"."conversation_participant" validate constraint "conversatio
 alter table "public"."conversation_participant" add constraint "conversation_participant_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."conversation_participant" validate constraint "conversation_participant_user_id_fkey";
+
+alter table "public"."dataset" add constraint "dataset_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."dataset" validate constraint "dataset_created_by_id_fkey";
+
+alter table "public"."dataset" add constraint "dataset_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."dataset" validate constraint "dataset_group_id_fkey";
+
+alter table "public"."dataset" add constraint "dataset_owner_user_id_fkey" FOREIGN KEY (owner_user_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."dataset" validate constraint "dataset_owner_user_id_fkey";
+
+alter table "public"."dataset" add constraint "dataset_provider_check" CHECK ((provider = ANY (ARRAY['EUROSTAT'::text, 'GENESIS_DESTATIS'::text, 'GOVDATA'::text, 'UPLOAD'::text]))) not valid;
+
+alter table "public"."dataset" validate constraint "dataset_provider_check";
+
+alter table "public"."dataset" add constraint "dataset_status_check" CHECK ((status = ANY (ARRAY['active'::text, 'archived'::text, 'error'::text]))) not valid;
+
+alter table "public"."dataset" validate constraint "dataset_status_check";
+
+alter table "public"."dataset" add constraint "dataset_visibility_check" CHECK ((visibility = ANY (ARRAY['public'::text, 'authenticated'::text, 'private'::text]))) not valid;
+
+alter table "public"."dataset" validate constraint "dataset_visibility_check";
+
+alter table "public"."dataset_import_job" add constraint "dataset_import_job_dataset_id_fkey" FOREIGN KEY (dataset_id) REFERENCES public.dataset(id) ON DELETE CASCADE not valid;
+
+alter table "public"."dataset_import_job" validate constraint "dataset_import_job_dataset_id_fkey";
+
+alter table "public"."dataset_import_job" add constraint "dataset_import_job_provider_check" CHECK ((provider = ANY (ARRAY['EUROSTAT'::text, 'GENESIS_DESTATIS'::text, 'GOVDATA'::text, 'UPLOAD'::text]))) not valid;
+
+alter table "public"."dataset_import_job" validate constraint "dataset_import_job_provider_check";
+
+alter table "public"."dataset_import_job" add constraint "dataset_import_job_requested_by_id_fkey" FOREIGN KEY (requested_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."dataset_import_job" validate constraint "dataset_import_job_requested_by_id_fkey";
+
+alter table "public"."dataset_import_job" add constraint "dataset_import_job_result_snapshot_id_fkey" FOREIGN KEY (result_snapshot_id) REFERENCES public.dataset_snapshot(id) ON DELETE SET NULL not valid;
+
+alter table "public"."dataset_import_job" validate constraint "dataset_import_job_result_snapshot_id_fkey";
+
+alter table "public"."dataset_import_job" add constraint "dataset_import_job_status_check" CHECK ((status = ANY (ARRAY['pending'::text, 'processing'::text, 'ready'::text, 'blocked'::text, 'error'::text]))) not valid;
+
+alter table "public"."dataset_import_job" validate constraint "dataset_import_job_status_check";
+
+alter table "public"."dataset_snapshot" add constraint "dataset_snapshot_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."dataset_snapshot" validate constraint "dataset_snapshot_created_by_id_fkey";
+
+alter table "public"."dataset_snapshot" add constraint "dataset_snapshot_dataset_id_fkey" FOREIGN KEY (dataset_id) REFERENCES public.dataset(id) ON DELETE CASCADE not valid;
+
+alter table "public"."dataset_snapshot" validate constraint "dataset_snapshot_dataset_id_fkey";
+
+alter table "public"."dataset_snapshot" add constraint "dataset_snapshot_snapshot_key_key" UNIQUE using index "dataset_snapshot_snapshot_key_key";
+
+alter table "public"."dataset_snapshot" add constraint "dataset_snapshot_status_check" CHECK ((status = ANY (ARRAY['pending'::text, 'ready'::text, 'blocked'::text, 'error'::text]))) not valid;
+
+alter table "public"."dataset_snapshot" validate constraint "dataset_snapshot_status_check";
 
 alter table "public"."delegate_election_assignment" add constraint "delegate_election_assignment_allocation_id_fkey" FOREIGN KEY (allocation_id) REFERENCES public.group_delegate_allocation(id) ON DELETE SET NULL not valid;
 
@@ -4077,32 +4120,6 @@ alter table "public"."elector" add constraint "elector_election_id_user_id_key" 
 alter table "public"."elector" add constraint "elector_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."elector" validate constraint "elector_user_id_fkey";
-
-alter table "public"."eurostat_dataset" add constraint "eurostat_dataset_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
-
-alter table "public"."eurostat_dataset" validate constraint "eurostat_dataset_created_by_id_fkey";
-
-alter table "public"."eurostat_dataset" add constraint "eurostat_dataset_snapshot_key_key" UNIQUE using index "eurostat_dataset_snapshot_key_key";
-
-alter table "public"."eurostat_dataset" add constraint "eurostat_dataset_status_check" CHECK ((status = ANY (ARRAY['pending'::text, 'importing'::text, 'ready'::text, 'blocked'::text, 'error'::text]))) not valid;
-
-alter table "public"."eurostat_dataset" validate constraint "eurostat_dataset_status_check";
-
-alter table "public"."eurostat_import_partition" add constraint "eurostat_import_partition_dataset_id_fkey" FOREIGN KEY (dataset_id) REFERENCES public.eurostat_dataset(id) ON DELETE CASCADE not valid;
-
-alter table "public"."eurostat_import_partition" validate constraint "eurostat_import_partition_dataset_id_fkey";
-
-alter table "public"."eurostat_import_partition" add constraint "eurostat_import_partition_dataset_id_partition_index_key" UNIQUE using index "eurostat_import_partition_dataset_id_partition_index_key";
-
-alter table "public"."eurostat_import_partition" add constraint "eurostat_import_partition_status_check" CHECK ((status = ANY (ARRAY['pending'::text, 'processing'::text, 'available'::text, 'complete'::text, 'error'::text]))) not valid;
-
-alter table "public"."eurostat_import_partition" validate constraint "eurostat_import_partition_status_check";
-
-alter table "public"."eurostat_observation" add constraint "eurostat_observation_dataset_id_fkey" FOREIGN KEY (dataset_id) REFERENCES public.eurostat_dataset(id) ON DELETE CASCADE not valid;
-
-alter table "public"."eurostat_observation" validate constraint "eurostat_observation_dataset_id_fkey";
-
-alter table "public"."eurostat_observation" add constraint "eurostat_observation_dataset_id_observation_key_key" UNIQUE using index "eurostat_observation_dataset_id_observation_key_key";
 
 alter table "public"."event" add constraint "event_attendance_mode_check" CHECK ((attendance_mode = ANY (ARRAY['online'::text, 'hybrid'::text, 'offline'::text]))) not valid;
 
@@ -5458,12 +5475,27 @@ DECLARE
   direct_longitude DOUBLE PRECISION;
   direct_label TEXT;
   direct_source TEXT;
+  direct_kind TEXT;
+  direct_place_id TEXT;
+  direct_boundary_source TEXT;
+  direct_geometry JSONB;
+  direct_bounds JSONB;
   group_latitude DOUBLE PRECISION;
   group_longitude DOUBLE PRECISION;
   group_label TEXT;
+  group_kind TEXT;
+  group_place_id TEXT;
+  group_boundary_source TEXT;
+  group_geometry JSONB;
+  group_bounds JSONB;
   owner_latitude DOUBLE PRECISION;
   owner_longitude DOUBLE PRECISION;
   owner_label TEXT;
+  owner_kind TEXT;
+  owner_place_id TEXT;
+  owner_boundary_source TEXT;
+  owner_geometry JSONB;
+  owner_bounds JSONB;
   resolved_group_id UUID;
   resolved_owner_user_id UUID;
 BEGIN
@@ -5474,8 +5506,13 @@ BEGIN
     SELECT
       u.latitude,
       u.longitude,
-      public.search_document_format_location(NULL, u.country, u.region, u.post_code, u.city, u.street, u.house_number)
-    INTO direct_latitude, direct_longitude, direct_label
+      public.search_document_format_location(NULL, u.country, u.region, u.post_code, u.city, u.street, u.house_number),
+      u.location_kind,
+      u.location_place_id,
+      u.location_boundary_source,
+      u.location_geometry,
+      u.location_bounds
+    INTO direct_latitude, direct_longitude, direct_label, direct_kind, direct_place_id, direct_boundary_source, direct_geometry, direct_bounds
     FROM public."user" AS u
     WHERE u.id = NEW.entity_id;
 
@@ -5486,8 +5523,13 @@ BEGIN
       g.latitude,
       g.longitude,
       public.search_document_format_location(NULL, g.country, g.region, g.post_code, g.city, g.street, g.house_number),
+      g.location_kind,
+      g.location_place_id,
+      g.location_boundary_source,
+      g.location_geometry,
+      g.location_bounds,
       g.owner_id
-    INTO direct_latitude, direct_longitude, direct_label, resolved_owner_user_id
+    INTO direct_latitude, direct_longitude, direct_label, direct_kind, direct_place_id, direct_boundary_source, direct_geometry, direct_bounds, resolved_owner_user_id
     FROM public."group" AS g
     WHERE g.id = NEW.entity_id;
 
@@ -5498,13 +5540,35 @@ BEGIN
       e.latitude,
       e.longitude,
       public.search_document_format_location(e.location_name, e.country, e.region, e.post_code, e.city, e.street, e.house_number),
+      e.location_kind,
+      e.location_place_id,
+      e.location_boundary_source,
+      e.location_geometry,
+      e.location_bounds,
       e.group_id,
       e.creator_id
-    INTO direct_latitude, direct_longitude, direct_label, resolved_group_id, resolved_owner_user_id
+    INTO direct_latitude, direct_longitude, direct_label, direct_kind, direct_place_id, direct_boundary_source, direct_geometry, direct_bounds, resolved_group_id, resolved_owner_user_id
     FROM public.event AS e
     WHERE e.id = NEW.entity_id;
 
     direct_source := 'event';
+  ELSIF NEW.entity_type = 'amendment' THEN
+    SELECT
+      a.latitude,
+      a.longitude,
+      public.search_document_format_location(NULL, a.country, a.region, a.post_code, a.city, a.street, a.house_number),
+      a.location_kind,
+      a.location_place_id,
+      a.location_boundary_source,
+      a.location_geometry,
+      a.location_bounds,
+      a.group_id,
+      a.created_by_id
+    INTO direct_latitude, direct_longitude, direct_label, direct_kind, direct_place_id, direct_boundary_source, direct_geometry, direct_bounds, resolved_group_id, resolved_owner_user_id
+    FROM public.amendment AS a
+    WHERE a.id = NEW.entity_id;
+
+    direct_source := 'amendment';
   ELSIF NEW.entity_type = 'blog' AND resolved_owner_user_id IS NULL THEN
     SELECT bb.user_id
     INTO resolved_owner_user_id
@@ -5517,16 +5581,21 @@ BEGIN
   NEW.group_id := resolved_group_id;
   NEW.owner_user_id := resolved_owner_user_id;
 
-  IF NEW.location_latitude IS NOT NULL AND NEW.location_longitude IS NOT NULL THEN
-    NEW.location_source := coalesce(NEW.location_source, direct_source, 'document');
-    RETURN NEW;
-  END IF;
-
   IF direct_latitude IS NOT NULL AND direct_longitude IS NOT NULL THEN
     NEW.location_latitude := direct_latitude;
     NEW.location_longitude := direct_longitude;
-    NEW.location_label := coalesce(nullif(NEW.location_label, ''), direct_label);
+    NEW.location_label := direct_label;
     NEW.location_source := coalesce(direct_source, 'own');
+    NEW.location_kind := direct_kind;
+    NEW.location_place_id := direct_place_id;
+    NEW.location_boundary_source := direct_boundary_source;
+    NEW.location_geometry := direct_geometry;
+    NEW.location_bounds := direct_bounds;
+    RETURN NEW;
+  END IF;
+
+  IF NEW.location_latitude IS NOT NULL AND NEW.location_longitude IS NOT NULL THEN
+    NEW.location_source := coalesce(NEW.location_source, direct_source, 'document');
     RETURN NEW;
   END IF;
 
@@ -5534,16 +5603,26 @@ BEGIN
     SELECT
       g.latitude,
       g.longitude,
-      public.search_document_format_location(NULL, g.country, g.region, g.post_code, g.city, g.street, g.house_number)
-    INTO group_latitude, group_longitude, group_label
+      public.search_document_format_location(NULL, g.country, g.region, g.post_code, g.city, g.street, g.house_number),
+      g.location_kind,
+      g.location_place_id,
+      g.location_boundary_source,
+      g.location_geometry,
+      g.location_bounds
+    INTO group_latitude, group_longitude, group_label, group_kind, group_place_id, group_boundary_source, group_geometry, group_bounds
     FROM public."group" AS g
     WHERE g.id = resolved_group_id;
 
     IF group_latitude IS NOT NULL AND group_longitude IS NOT NULL THEN
       NEW.location_latitude := group_latitude;
       NEW.location_longitude := group_longitude;
-      NEW.location_label := coalesce(nullif(NEW.location_label, ''), group_label);
+      NEW.location_label := group_label;
       NEW.location_source := 'group';
+      NEW.location_kind := group_kind;
+      NEW.location_place_id := group_place_id;
+      NEW.location_boundary_source := group_boundary_source;
+      NEW.location_geometry := group_geometry;
+      NEW.location_bounds := group_bounds;
       RETURN NEW;
     END IF;
   END IF;
@@ -5552,16 +5631,26 @@ BEGIN
     SELECT
       u.latitude,
       u.longitude,
-      public.search_document_format_location(NULL, u.country, u.region, u.post_code, u.city, u.street, u.house_number)
-    INTO owner_latitude, owner_longitude, owner_label
+      public.search_document_format_location(NULL, u.country, u.region, u.post_code, u.city, u.street, u.house_number),
+      u.location_kind,
+      u.location_place_id,
+      u.location_boundary_source,
+      u.location_geometry,
+      u.location_bounds
+    INTO owner_latitude, owner_longitude, owner_label, owner_kind, owner_place_id, owner_boundary_source, owner_geometry, owner_bounds
     FROM public."user" AS u
     WHERE u.id = resolved_owner_user_id;
 
     IF owner_latitude IS NOT NULL AND owner_longitude IS NOT NULL THEN
       NEW.location_latitude := owner_latitude;
       NEW.location_longitude := owner_longitude;
-      NEW.location_label := coalesce(nullif(NEW.location_label, ''), owner_label);
+      NEW.location_label := owner_label;
       NEW.location_source := 'owner';
+      NEW.location_kind := owner_kind;
+      NEW.location_place_id := owner_place_id;
+      NEW.location_boundary_source := owner_boundary_source;
+      NEW.location_geometry := owner_geometry;
+      NEW.location_bounds := owner_bounds;
       RETURN NEW;
     END IF;
   END IF;
@@ -5570,6 +5659,11 @@ BEGIN
   NEW.location_longitude := NULL;
   NEW.location_label := NULL;
   NEW.location_source := NULL;
+  NEW.location_kind := NULL;
+  NEW.location_place_id := NULL;
+  NEW.location_boundary_source := NULL;
+  NEW.location_geometry := NULL;
+  NEW.location_bounds := NULL;
   RETURN NEW;
 END;
 $function$
@@ -5631,7 +5725,13 @@ BEGIN
       amendment_row.title,
       amendment_row.reason,
       amendment_row.preamble,
-      amendment_row.category
+      amendment_row.category,
+      amendment_row.country,
+      amendment_row.region,
+      amendment_row.post_code,
+      amendment_row.city,
+      amendment_row.street,
+      amendment_row.house_number
     ),
     coalesce(amendment_row.visibility, 'public'),
     amendment_row.created_by_id,
@@ -5640,6 +5740,15 @@ BEGIN
     jsonb_build_object(
       'type', 'amendment',
       'code', amendment_row.code,
+      'location', public.search_document_format_location(
+        NULL,
+        amendment_row.country,
+        amendment_row.region,
+        amendment_row.post_code,
+        amendment_row.city,
+        amendment_row.street,
+        amendment_row.house_number
+      ),
       'status', (
         SELECT branch.editing_mode
         FROM public.amendment_process_branch branch
@@ -5688,7 +5797,16 @@ BEGIN
     created_at = EXCLUDED.created_at,
     updated_at = EXCLUDED.updated_at,
     engagement_score = EXCLUDED.engagement_score,
-    trending_score = EXCLUDED.trending_score;
+    trending_score = EXCLUDED.trending_score,
+    location_latitude = EXCLUDED.location_latitude,
+    location_longitude = EXCLUDED.location_longitude,
+    location_label = EXCLUDED.location_label,
+    location_source = EXCLUDED.location_source,
+    location_kind = EXCLUDED.location_kind,
+    location_place_id = EXCLUDED.location_place_id,
+    location_boundary_source = EXCLUDED.location_boundary_source,
+    location_geometry = EXCLUDED.location_geometry,
+    location_bounds = EXCLUDED.location_bounds;
 
   PERFORM public.sync_amendment_search_document_topics(amendment_row.id);
 END;
@@ -5920,7 +6038,17 @@ CREATE OR REPLACE FUNCTION public.refresh_search_documents_from_group_location()
 AS $function$
 BEGIN
   UPDATE public.search_document
-  SET updated_at = updated_at
+  SET
+    location_latitude = NULL,
+    location_longitude = NULL,
+    location_label = NULL,
+    location_source = NULL,
+    location_kind = NULL,
+    location_place_id = NULL,
+    location_boundary_source = NULL,
+    location_geometry = NULL,
+    location_bounds = NULL,
+    updated_at = updated_at
   WHERE group_id = NEW.id
     OR id = public.search_document_id('group', NEW.id);
 
@@ -5937,7 +6065,17 @@ CREATE OR REPLACE FUNCTION public.refresh_search_documents_from_user_location()
 AS $function$
 BEGIN
   UPDATE public.search_document
-  SET updated_at = updated_at
+  SET
+    location_latitude = NULL,
+    location_longitude = NULL,
+    location_label = NULL,
+    location_source = NULL,
+    location_kind = NULL,
+    location_place_id = NULL,
+    location_boundary_source = NULL,
+    location_geometry = NULL,
+    location_bounds = NULL,
+    updated_at = updated_at
   WHERE owner_user_id = NEW.id
     OR id = public.search_document_id('user', NEW.id);
 
@@ -6094,6 +6232,31 @@ END;
 $function$
 ;
 
+CREATE OR REPLACE FUNCTION public.sync_dataset_search_document_topics(target_dataset_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+  topics JSONB;
+BEGIN
+  SELECT CASE
+    WHEN jsonb_typeof(d.topics) = 'array' THEN d.topics
+    ELSE '[]'::jsonb
+  END
+  INTO topics
+  FROM public.dataset AS d
+  WHERE d.id = target_dataset_id;
+
+  PERFORM public.sync_search_document_topics(
+    public.search_document_id('dataset', target_dataset_id),
+    coalesce(topics, '[]'::jsonb)
+  );
+END;
+$function$
+;
+
 CREATE OR REPLACE FUNCTION public.sync_event_search_document_topics(target_event_id uuid)
  RETURNS void
  LANGUAGE plpgsql
@@ -6218,6 +6381,35 @@ END;
 $function$
 ;
 
+CREATE OR REPLACE FUNCTION public.touch_dataset_from_snapshot()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+  target_dataset_id UUID;
+BEGIN
+  target_dataset_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.dataset_id ELSE NEW.dataset_id END;
+
+  UPDATE public.dataset
+  SET
+    columns = CASE
+      WHEN TG_OP = 'DELETE' THEN columns
+      ELSE NEW.columns
+    END,
+    updated_at = now()
+  WHERE id = target_dataset_id;
+
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+;
+
 CREATE OR REPLACE FUNCTION public.upsert_amendment_search_document()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -6303,6 +6495,130 @@ BEGIN
     trending_score = EXCLUDED.trending_score;
 
   PERFORM public.sync_blog_search_document_topics(NEW.id);
+  RETURN NEW;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.upsert_dataset_search_document()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+  latest_snapshot RECORD;
+  provider_label TEXT;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('dataset', OLD.id);
+    RETURN OLD;
+  END IF;
+
+  SELECT
+    ds.id,
+    ds.status,
+    ds.snapshot_taken_at,
+    ds.byte_size,
+    ds.row_count,
+    ds.column_count
+  INTO latest_snapshot
+  FROM public.dataset_snapshot AS ds
+  WHERE ds.dataset_id = NEW.id
+  ORDER BY ds.snapshot_taken_at DESC
+  LIMIT 1;
+
+  provider_label := CASE NEW.provider
+    WHEN 'EUROSTAT' THEN 'Eurostat'
+    WHEN 'GENESIS_DESTATIS' THEN 'Genesis/Destatis'
+    WHEN 'GOVDATA' THEN 'GovData'
+    WHEN 'UPLOAD' THEN 'Upload'
+    ELSE NEW.provider
+  END;
+
+  INSERT INTO public.search_document (
+    id,
+    entity_type,
+    entity_id,
+    title,
+    subtitle,
+    summary,
+    search_text,
+    visibility,
+    owner_user_id,
+    group_id,
+    card_payload,
+    created_at,
+    updated_at,
+    engagement_score,
+    trending_score
+  )
+  VALUES (
+    public.search_document_id('dataset', NEW.id),
+    'dataset',
+    NEW.id,
+    coalesce(nullif(NEW.title, ''), 'Dataset'),
+    concat_ws(' · ', provider_label, nullif(NEW.publisher, ''), nullif(NEW.provider_dataset_id, '')),
+    left(coalesce(NEW.description, NEW.structure_summary, ''), 420),
+    concat_ws(
+      ' ',
+      NEW.title,
+      NEW.description,
+      NEW.structure_summary,
+      NEW.provider,
+      provider_label,
+      NEW.provider_dataset_id,
+      NEW.provider_resource_id,
+      NEW.publisher,
+      NEW.license,
+      public.search_document_json_text(NEW.columns),
+      public.search_document_json_text(NEW.dimensions),
+      public.search_document_json_text(NEW.time_coverage),
+      public.search_document_json_text(NEW.spatial_coverage),
+      public.search_document_json_text(NEW.topics),
+      public.search_document_json_text(NEW.metadata)
+    ),
+    coalesce(NEW.visibility, 'public'),
+    NEW.owner_user_id,
+    NEW.group_id,
+    jsonb_build_object(
+      'type', 'dataset',
+      'provider', NEW.provider,
+      'provider_label', provider_label,
+      'provider_dataset_id', NEW.provider_dataset_id,
+      'provider_resource_id', NEW.provider_resource_id,
+      'publisher', NEW.publisher,
+      'license', NEW.license,
+      'structure_summary', NEW.structure_summary,
+      'snapshot_id', latest_snapshot.id,
+      'snapshot_status', latest_snapshot.status,
+      'snapshot_taken_at', public.search_document_epoch_ms(latest_snapshot.snapshot_taken_at),
+      'byte_size', latest_snapshot.byte_size,
+      'row_count', latest_snapshot.row_count,
+      'column_count', latest_snapshot.column_count,
+      'metadata', coalesce(NEW.metadata, '{}'::jsonb)
+    ),
+    NEW.created_at,
+    NEW.updated_at,
+    CASE WHEN latest_snapshot.status = 'ready' THEN 2 ELSE 1 END,
+    CASE WHEN NEW.status = 'active' THEN 1 ELSE 0 END
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    subtitle = EXCLUDED.subtitle,
+    summary = EXCLUDED.summary,
+    search_text = EXCLUDED.search_text,
+    visibility = EXCLUDED.visibility,
+    owner_user_id = EXCLUDED.owner_user_id,
+    group_id = EXCLUDED.group_id,
+    card_payload = EXCLUDED.card_payload,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at,
+    engagement_score = EXCLUDED.engagement_score,
+    trending_score = EXCLUDED.trending_score;
+
+  PERFORM public.sync_dataset_search_document_topics(NEW.id);
   RETURN NEW;
 END;
 $function$
@@ -6924,5465 +7240,2309 @@ END;
 $function$
 ;
 
-grant delete on table "public"."accreditation" to "anon";
-
-grant insert on table "public"."accreditation" to "anon";
-
 grant references on table "public"."accreditation" to "anon";
-
-grant select on table "public"."accreditation" to "anon";
 
 grant trigger on table "public"."accreditation" to "anon";
 
 grant truncate on table "public"."accreditation" to "anon";
 
-grant update on table "public"."accreditation" to "anon";
-
-grant delete on table "public"."accreditation" to "authenticated";
-
-grant insert on table "public"."accreditation" to "authenticated";
-
 grant references on table "public"."accreditation" to "authenticated";
-
-grant select on table "public"."accreditation" to "authenticated";
 
 grant trigger on table "public"."accreditation" to "authenticated";
 
 grant truncate on table "public"."accreditation" to "authenticated";
 
-grant update on table "public"."accreditation" to "authenticated";
-
-grant delete on table "public"."accreditation" to "service_role";
-
-grant insert on table "public"."accreditation" to "service_role";
-
 grant references on table "public"."accreditation" to "service_role";
-
-grant select on table "public"."accreditation" to "service_role";
 
 grant trigger on table "public"."accreditation" to "service_role";
 
 grant truncate on table "public"."accreditation" to "service_role";
 
-grant update on table "public"."accreditation" to "service_role";
-
-grant delete on table "public"."action_right" to "anon";
-
-grant insert on table "public"."action_right" to "anon";
-
 grant references on table "public"."action_right" to "anon";
-
-grant select on table "public"."action_right" to "anon";
 
 grant trigger on table "public"."action_right" to "anon";
 
 grant truncate on table "public"."action_right" to "anon";
 
-grant update on table "public"."action_right" to "anon";
-
-grant delete on table "public"."action_right" to "authenticated";
-
-grant insert on table "public"."action_right" to "authenticated";
-
 grant references on table "public"."action_right" to "authenticated";
-
-grant select on table "public"."action_right" to "authenticated";
 
 grant trigger on table "public"."action_right" to "authenticated";
 
 grant truncate on table "public"."action_right" to "authenticated";
 
-grant update on table "public"."action_right" to "authenticated";
-
-grant delete on table "public"."action_right" to "service_role";
-
-grant insert on table "public"."action_right" to "service_role";
-
 grant references on table "public"."action_right" to "service_role";
-
-grant select on table "public"."action_right" to "service_role";
 
 grant trigger on table "public"."action_right" to "service_role";
 
 grant truncate on table "public"."action_right" to "service_role";
 
-grant update on table "public"."action_right" to "service_role";
-
-grant delete on table "public"."agenda_item" to "anon";
-
-grant insert on table "public"."agenda_item" to "anon";
-
 grant references on table "public"."agenda_item" to "anon";
-
-grant select on table "public"."agenda_item" to "anon";
 
 grant trigger on table "public"."agenda_item" to "anon";
 
 grant truncate on table "public"."agenda_item" to "anon";
 
-grant update on table "public"."agenda_item" to "anon";
-
-grant delete on table "public"."agenda_item" to "authenticated";
-
-grant insert on table "public"."agenda_item" to "authenticated";
-
 grant references on table "public"."agenda_item" to "authenticated";
-
-grant select on table "public"."agenda_item" to "authenticated";
 
 grant trigger on table "public"."agenda_item" to "authenticated";
 
 grant truncate on table "public"."agenda_item" to "authenticated";
 
-grant update on table "public"."agenda_item" to "authenticated";
-
-grant delete on table "public"."agenda_item" to "service_role";
-
-grant insert on table "public"."agenda_item" to "service_role";
-
 grant references on table "public"."agenda_item" to "service_role";
-
-grant select on table "public"."agenda_item" to "service_role";
 
 grant trigger on table "public"."agenda_item" to "service_role";
 
 grant truncate on table "public"."agenda_item" to "service_role";
 
-grant update on table "public"."agenda_item" to "service_role";
-
-grant delete on table "public"."agenda_item_change_request" to "anon";
-
-grant insert on table "public"."agenda_item_change_request" to "anon";
-
 grant references on table "public"."agenda_item_change_request" to "anon";
-
-grant select on table "public"."agenda_item_change_request" to "anon";
 
 grant trigger on table "public"."agenda_item_change_request" to "anon";
 
 grant truncate on table "public"."agenda_item_change_request" to "anon";
 
-grant update on table "public"."agenda_item_change_request" to "anon";
-
-grant delete on table "public"."agenda_item_change_request" to "authenticated";
-
-grant insert on table "public"."agenda_item_change_request" to "authenticated";
-
 grant references on table "public"."agenda_item_change_request" to "authenticated";
-
-grant select on table "public"."agenda_item_change_request" to "authenticated";
 
 grant trigger on table "public"."agenda_item_change_request" to "authenticated";
 
 grant truncate on table "public"."agenda_item_change_request" to "authenticated";
 
-grant update on table "public"."agenda_item_change_request" to "authenticated";
-
-grant delete on table "public"."agenda_item_change_request" to "service_role";
-
-grant insert on table "public"."agenda_item_change_request" to "service_role";
-
 grant references on table "public"."agenda_item_change_request" to "service_role";
-
-grant select on table "public"."agenda_item_change_request" to "service_role";
 
 grant trigger on table "public"."agenda_item_change_request" to "service_role";
 
 grant truncate on table "public"."agenda_item_change_request" to "service_role";
 
-grant update on table "public"."agenda_item_change_request" to "service_role";
-
-grant delete on table "public"."ai_provider_credential" to "anon";
-
-grant insert on table "public"."ai_provider_credential" to "anon";
-
 grant references on table "public"."ai_provider_credential" to "anon";
-
-grant select on table "public"."ai_provider_credential" to "anon";
 
 grant trigger on table "public"."ai_provider_credential" to "anon";
 
 grant truncate on table "public"."ai_provider_credential" to "anon";
 
-grant update on table "public"."ai_provider_credential" to "anon";
-
-grant delete on table "public"."ai_provider_credential" to "authenticated";
-
-grant insert on table "public"."ai_provider_credential" to "authenticated";
-
 grant references on table "public"."ai_provider_credential" to "authenticated";
-
-grant select on table "public"."ai_provider_credential" to "authenticated";
 
 grant trigger on table "public"."ai_provider_credential" to "authenticated";
 
 grant truncate on table "public"."ai_provider_credential" to "authenticated";
 
-grant update on table "public"."ai_provider_credential" to "authenticated";
-
-grant delete on table "public"."ai_provider_credential" to "service_role";
-
-grant insert on table "public"."ai_provider_credential" to "service_role";
-
 grant references on table "public"."ai_provider_credential" to "service_role";
-
-grant select on table "public"."ai_provider_credential" to "service_role";
 
 grant trigger on table "public"."ai_provider_credential" to "service_role";
 
 grant truncate on table "public"."ai_provider_credential" to "service_role";
 
-grant update on table "public"."ai_provider_credential" to "service_role";
-
-grant delete on table "public"."ai_skill" to "anon";
-
-grant insert on table "public"."ai_skill" to "anon";
-
 grant references on table "public"."ai_skill" to "anon";
-
-grant select on table "public"."ai_skill" to "anon";
 
 grant trigger on table "public"."ai_skill" to "anon";
 
 grant truncate on table "public"."ai_skill" to "anon";
 
-grant update on table "public"."ai_skill" to "anon";
-
-grant delete on table "public"."ai_skill" to "authenticated";
-
-grant insert on table "public"."ai_skill" to "authenticated";
-
 grant references on table "public"."ai_skill" to "authenticated";
-
-grant select on table "public"."ai_skill" to "authenticated";
 
 grant trigger on table "public"."ai_skill" to "authenticated";
 
 grant truncate on table "public"."ai_skill" to "authenticated";
 
-grant update on table "public"."ai_skill" to "authenticated";
-
-grant delete on table "public"."ai_skill" to "service_role";
-
-grant insert on table "public"."ai_skill" to "service_role";
-
 grant references on table "public"."ai_skill" to "service_role";
-
-grant select on table "public"."ai_skill" to "service_role";
 
 grant trigger on table "public"."ai_skill" to "service_role";
 
 grant truncate on table "public"."ai_skill" to "service_role";
 
-grant update on table "public"."ai_skill" to "service_role";
-
-grant delete on table "public"."ai_tool" to "anon";
-
-grant insert on table "public"."ai_tool" to "anon";
-
 grant references on table "public"."ai_tool" to "anon";
-
-grant select on table "public"."ai_tool" to "anon";
 
 grant trigger on table "public"."ai_tool" to "anon";
 
 grant truncate on table "public"."ai_tool" to "anon";
 
-grant update on table "public"."ai_tool" to "anon";
-
-grant delete on table "public"."ai_tool" to "authenticated";
-
-grant insert on table "public"."ai_tool" to "authenticated";
-
 grant references on table "public"."ai_tool" to "authenticated";
-
-grant select on table "public"."ai_tool" to "authenticated";
 
 grant trigger on table "public"."ai_tool" to "authenticated";
 
 grant truncate on table "public"."ai_tool" to "authenticated";
 
-grant update on table "public"."ai_tool" to "authenticated";
-
-grant delete on table "public"."ai_tool" to "service_role";
-
-grant insert on table "public"."ai_tool" to "service_role";
-
 grant references on table "public"."ai_tool" to "service_role";
-
-grant select on table "public"."ai_tool" to "service_role";
 
 grant trigger on table "public"."ai_tool" to "service_role";
 
 grant truncate on table "public"."ai_tool" to "service_role";
 
-grant update on table "public"."ai_tool" to "service_role";
-
-grant delete on table "public"."amendment" to "anon";
-
-grant insert on table "public"."amendment" to "anon";
-
 grant references on table "public"."amendment" to "anon";
-
-grant select on table "public"."amendment" to "anon";
 
 grant trigger on table "public"."amendment" to "anon";
 
 grant truncate on table "public"."amendment" to "anon";
 
-grant update on table "public"."amendment" to "anon";
-
-grant delete on table "public"."amendment" to "authenticated";
-
-grant insert on table "public"."amendment" to "authenticated";
-
 grant references on table "public"."amendment" to "authenticated";
-
-grant select on table "public"."amendment" to "authenticated";
 
 grant trigger on table "public"."amendment" to "authenticated";
 
 grant truncate on table "public"."amendment" to "authenticated";
 
-grant update on table "public"."amendment" to "authenticated";
-
-grant delete on table "public"."amendment" to "service_role";
-
-grant insert on table "public"."amendment" to "service_role";
-
 grant references on table "public"."amendment" to "service_role";
-
-grant select on table "public"."amendment" to "service_role";
 
 grant trigger on table "public"."amendment" to "service_role";
 
 grant truncate on table "public"."amendment" to "service_role";
 
-grant update on table "public"."amendment" to "service_role";
-
-grant delete on table "public"."amendment_collaborator" to "anon";
-
-grant insert on table "public"."amendment_collaborator" to "anon";
-
 grant references on table "public"."amendment_collaborator" to "anon";
-
-grant select on table "public"."amendment_collaborator" to "anon";
 
 grant trigger on table "public"."amendment_collaborator" to "anon";
 
 grant truncate on table "public"."amendment_collaborator" to "anon";
 
-grant update on table "public"."amendment_collaborator" to "anon";
-
-grant delete on table "public"."amendment_collaborator" to "authenticated";
-
-grant insert on table "public"."amendment_collaborator" to "authenticated";
-
 grant references on table "public"."amendment_collaborator" to "authenticated";
-
-grant select on table "public"."amendment_collaborator" to "authenticated";
 
 grant trigger on table "public"."amendment_collaborator" to "authenticated";
 
 grant truncate on table "public"."amendment_collaborator" to "authenticated";
 
-grant update on table "public"."amendment_collaborator" to "authenticated";
-
-grant delete on table "public"."amendment_collaborator" to "service_role";
-
-grant insert on table "public"."amendment_collaborator" to "service_role";
-
 grant references on table "public"."amendment_collaborator" to "service_role";
-
-grant select on table "public"."amendment_collaborator" to "service_role";
 
 grant trigger on table "public"."amendment_collaborator" to "service_role";
 
 grant truncate on table "public"."amendment_collaborator" to "service_role";
 
-grant update on table "public"."amendment_collaborator" to "service_role";
-
-grant delete on table "public"."amendment_group_decision" to "anon";
-
-grant insert on table "public"."amendment_group_decision" to "anon";
-
 grant references on table "public"."amendment_group_decision" to "anon";
-
-grant select on table "public"."amendment_group_decision" to "anon";
 
 grant trigger on table "public"."amendment_group_decision" to "anon";
 
 grant truncate on table "public"."amendment_group_decision" to "anon";
 
-grant update on table "public"."amendment_group_decision" to "anon";
-
-grant delete on table "public"."amendment_group_decision" to "authenticated";
-
-grant insert on table "public"."amendment_group_decision" to "authenticated";
-
 grant references on table "public"."amendment_group_decision" to "authenticated";
-
-grant select on table "public"."amendment_group_decision" to "authenticated";
 
 grant trigger on table "public"."amendment_group_decision" to "authenticated";
 
 grant truncate on table "public"."amendment_group_decision" to "authenticated";
 
-grant update on table "public"."amendment_group_decision" to "authenticated";
-
-grant delete on table "public"."amendment_group_decision" to "service_role";
-
-grant insert on table "public"."amendment_group_decision" to "service_role";
-
 grant references on table "public"."amendment_group_decision" to "service_role";
-
-grant select on table "public"."amendment_group_decision" to "service_role";
 
 grant trigger on table "public"."amendment_group_decision" to "service_role";
 
 grant truncate on table "public"."amendment_group_decision" to "service_role";
 
-grant update on table "public"."amendment_group_decision" to "service_role";
-
-grant delete on table "public"."amendment_hashtag" to "anon";
-
-grant insert on table "public"."amendment_hashtag" to "anon";
-
 grant references on table "public"."amendment_hashtag" to "anon";
-
-grant select on table "public"."amendment_hashtag" to "anon";
 
 grant trigger on table "public"."amendment_hashtag" to "anon";
 
 grant truncate on table "public"."amendment_hashtag" to "anon";
 
-grant update on table "public"."amendment_hashtag" to "anon";
-
-grant delete on table "public"."amendment_hashtag" to "authenticated";
-
-grant insert on table "public"."amendment_hashtag" to "authenticated";
-
 grant references on table "public"."amendment_hashtag" to "authenticated";
-
-grant select on table "public"."amendment_hashtag" to "authenticated";
 
 grant trigger on table "public"."amendment_hashtag" to "authenticated";
 
 grant truncate on table "public"."amendment_hashtag" to "authenticated";
 
-grant update on table "public"."amendment_hashtag" to "authenticated";
-
-grant delete on table "public"."amendment_hashtag" to "service_role";
-
-grant insert on table "public"."amendment_hashtag" to "service_role";
-
 grant references on table "public"."amendment_hashtag" to "service_role";
-
-grant select on table "public"."amendment_hashtag" to "service_role";
 
 grant trigger on table "public"."amendment_hashtag" to "service_role";
 
 grant truncate on table "public"."amendment_hashtag" to "service_role";
 
-grant update on table "public"."amendment_hashtag" to "service_role";
-
-grant delete on table "public"."amendment_path" to "anon";
-
-grant insert on table "public"."amendment_path" to "anon";
-
 grant references on table "public"."amendment_path" to "anon";
-
-grant select on table "public"."amendment_path" to "anon";
 
 grant trigger on table "public"."amendment_path" to "anon";
 
 grant truncate on table "public"."amendment_path" to "anon";
 
-grant update on table "public"."amendment_path" to "anon";
-
-grant delete on table "public"."amendment_path" to "authenticated";
-
-grant insert on table "public"."amendment_path" to "authenticated";
-
 grant references on table "public"."amendment_path" to "authenticated";
-
-grant select on table "public"."amendment_path" to "authenticated";
 
 grant trigger on table "public"."amendment_path" to "authenticated";
 
 grant truncate on table "public"."amendment_path" to "authenticated";
 
-grant update on table "public"."amendment_path" to "authenticated";
-
-grant delete on table "public"."amendment_path" to "service_role";
-
-grant insert on table "public"."amendment_path" to "service_role";
-
 grant references on table "public"."amendment_path" to "service_role";
-
-grant select on table "public"."amendment_path" to "service_role";
 
 grant trigger on table "public"."amendment_path" to "service_role";
 
 grant truncate on table "public"."amendment_path" to "service_role";
 
-grant update on table "public"."amendment_path" to "service_role";
-
-grant delete on table "public"."amendment_path_segment" to "anon";
-
-grant insert on table "public"."amendment_path_segment" to "anon";
-
 grant references on table "public"."amendment_path_segment" to "anon";
-
-grant select on table "public"."amendment_path_segment" to "anon";
 
 grant trigger on table "public"."amendment_path_segment" to "anon";
 
 grant truncate on table "public"."amendment_path_segment" to "anon";
 
-grant update on table "public"."amendment_path_segment" to "anon";
-
-grant delete on table "public"."amendment_path_segment" to "authenticated";
-
-grant insert on table "public"."amendment_path_segment" to "authenticated";
-
 grant references on table "public"."amendment_path_segment" to "authenticated";
-
-grant select on table "public"."amendment_path_segment" to "authenticated";
 
 grant trigger on table "public"."amendment_path_segment" to "authenticated";
 
 grant truncate on table "public"."amendment_path_segment" to "authenticated";
 
-grant update on table "public"."amendment_path_segment" to "authenticated";
-
-grant delete on table "public"."amendment_path_segment" to "service_role";
-
-grant insert on table "public"."amendment_path_segment" to "service_role";
-
 grant references on table "public"."amendment_path_segment" to "service_role";
-
-grant select on table "public"."amendment_path_segment" to "service_role";
 
 grant trigger on table "public"."amendment_path_segment" to "service_role";
 
 grant truncate on table "public"."amendment_path_segment" to "service_role";
 
-grant update on table "public"."amendment_path_segment" to "service_role";
-
-grant delete on table "public"."amendment_process_branch" to "anon";
-
-grant insert on table "public"."amendment_process_branch" to "anon";
-
 grant references on table "public"."amendment_process_branch" to "anon";
-
-grant select on table "public"."amendment_process_branch" to "anon";
 
 grant trigger on table "public"."amendment_process_branch" to "anon";
 
 grant truncate on table "public"."amendment_process_branch" to "anon";
 
-grant update on table "public"."amendment_process_branch" to "anon";
-
-grant delete on table "public"."amendment_process_branch" to "authenticated";
-
-grant insert on table "public"."amendment_process_branch" to "authenticated";
-
 grant references on table "public"."amendment_process_branch" to "authenticated";
-
-grant select on table "public"."amendment_process_branch" to "authenticated";
 
 grant trigger on table "public"."amendment_process_branch" to "authenticated";
 
 grant truncate on table "public"."amendment_process_branch" to "authenticated";
 
-grant update on table "public"."amendment_process_branch" to "authenticated";
-
-grant delete on table "public"."amendment_process_branch" to "service_role";
-
-grant insert on table "public"."amendment_process_branch" to "service_role";
-
 grant references on table "public"."amendment_process_branch" to "service_role";
-
-grant select on table "public"."amendment_process_branch" to "service_role";
 
 grant trigger on table "public"."amendment_process_branch" to "service_role";
 
 grant truncate on table "public"."amendment_process_branch" to "service_role";
 
-grant update on table "public"."amendment_process_branch" to "service_role";
-
-grant delete on table "public"."amendment_process_run" to "anon";
-
-grant insert on table "public"."amendment_process_run" to "anon";
-
 grant references on table "public"."amendment_process_run" to "anon";
-
-grant select on table "public"."amendment_process_run" to "anon";
 
 grant trigger on table "public"."amendment_process_run" to "anon";
 
 grant truncate on table "public"."amendment_process_run" to "anon";
 
-grant update on table "public"."amendment_process_run" to "anon";
-
-grant delete on table "public"."amendment_process_run" to "authenticated";
-
-grant insert on table "public"."amendment_process_run" to "authenticated";
-
 grant references on table "public"."amendment_process_run" to "authenticated";
-
-grant select on table "public"."amendment_process_run" to "authenticated";
 
 grant trigger on table "public"."amendment_process_run" to "authenticated";
 
 grant truncate on table "public"."amendment_process_run" to "authenticated";
 
-grant update on table "public"."amendment_process_run" to "authenticated";
-
-grant delete on table "public"."amendment_process_run" to "service_role";
-
-grant insert on table "public"."amendment_process_run" to "service_role";
-
 grant references on table "public"."amendment_process_run" to "service_role";
-
-grant select on table "public"."amendment_process_run" to "service_role";
 
 grant trigger on table "public"."amendment_process_run" to "service_role";
 
 grant truncate on table "public"."amendment_process_run" to "service_role";
 
-grant update on table "public"."amendment_process_run" to "service_role";
-
-grant delete on table "public"."amendment_process_step_run" to "anon";
-
-grant insert on table "public"."amendment_process_step_run" to "anon";
-
 grant references on table "public"."amendment_process_step_run" to "anon";
-
-grant select on table "public"."amendment_process_step_run" to "anon";
 
 grant trigger on table "public"."amendment_process_step_run" to "anon";
 
 grant truncate on table "public"."amendment_process_step_run" to "anon";
 
-grant update on table "public"."amendment_process_step_run" to "anon";
-
-grant delete on table "public"."amendment_process_step_run" to "authenticated";
-
-grant insert on table "public"."amendment_process_step_run" to "authenticated";
-
 grant references on table "public"."amendment_process_step_run" to "authenticated";
-
-grant select on table "public"."amendment_process_step_run" to "authenticated";
 
 grant trigger on table "public"."amendment_process_step_run" to "authenticated";
 
 grant truncate on table "public"."amendment_process_step_run" to "authenticated";
 
-grant update on table "public"."amendment_process_step_run" to "authenticated";
-
-grant delete on table "public"."amendment_process_step_run" to "service_role";
-
-grant insert on table "public"."amendment_process_step_run" to "service_role";
-
 grant references on table "public"."amendment_process_step_run" to "service_role";
-
-grant select on table "public"."amendment_process_step_run" to "service_role";
 
 grant trigger on table "public"."amendment_process_step_run" to "service_role";
 
 grant truncate on table "public"."amendment_process_step_run" to "service_role";
 
-grant update on table "public"."amendment_process_step_run" to "service_role";
-
-grant delete on table "public"."amendment_street_design" to "anon";
-
-grant insert on table "public"."amendment_street_design" to "anon";
-
 grant references on table "public"."amendment_street_design" to "anon";
-
-grant select on table "public"."amendment_street_design" to "anon";
 
 grant trigger on table "public"."amendment_street_design" to "anon";
 
 grant truncate on table "public"."amendment_street_design" to "anon";
 
-grant update on table "public"."amendment_street_design" to "anon";
-
-grant delete on table "public"."amendment_street_design" to "authenticated";
-
-grant insert on table "public"."amendment_street_design" to "authenticated";
-
 grant references on table "public"."amendment_street_design" to "authenticated";
-
-grant select on table "public"."amendment_street_design" to "authenticated";
 
 grant trigger on table "public"."amendment_street_design" to "authenticated";
 
 grant truncate on table "public"."amendment_street_design" to "authenticated";
 
-grant update on table "public"."amendment_street_design" to "authenticated";
-
-grant delete on table "public"."amendment_street_design" to "service_role";
-
-grant insert on table "public"."amendment_street_design" to "service_role";
-
 grant references on table "public"."amendment_street_design" to "service_role";
-
-grant select on table "public"."amendment_street_design" to "service_role";
 
 grant trigger on table "public"."amendment_street_design" to "service_role";
 
 grant truncate on table "public"."amendment_street_design" to "service_role";
 
-grant update on table "public"."amendment_street_design" to "service_role";
-
-grant delete on table "public"."amendment_support_vote" to "anon";
-
-grant insert on table "public"."amendment_support_vote" to "anon";
-
 grant references on table "public"."amendment_support_vote" to "anon";
-
-grant select on table "public"."amendment_support_vote" to "anon";
 
 grant trigger on table "public"."amendment_support_vote" to "anon";
 
 grant truncate on table "public"."amendment_support_vote" to "anon";
 
-grant update on table "public"."amendment_support_vote" to "anon";
-
-grant delete on table "public"."amendment_support_vote" to "authenticated";
-
-grant insert on table "public"."amendment_support_vote" to "authenticated";
-
 grant references on table "public"."amendment_support_vote" to "authenticated";
-
-grant select on table "public"."amendment_support_vote" to "authenticated";
 
 grant trigger on table "public"."amendment_support_vote" to "authenticated";
 
 grant truncate on table "public"."amendment_support_vote" to "authenticated";
 
-grant update on table "public"."amendment_support_vote" to "authenticated";
-
-grant delete on table "public"."amendment_support_vote" to "service_role";
-
-grant insert on table "public"."amendment_support_vote" to "service_role";
-
 grant references on table "public"."amendment_support_vote" to "service_role";
-
-grant select on table "public"."amendment_support_vote" to "service_role";
 
 grant trigger on table "public"."amendment_support_vote" to "service_role";
 
 grant truncate on table "public"."amendment_support_vote" to "service_role";
 
-grant update on table "public"."amendment_support_vote" to "service_role";
-
-grant delete on table "public"."amendment_vote_entry" to "anon";
-
-grant insert on table "public"."amendment_vote_entry" to "anon";
-
 grant references on table "public"."amendment_vote_entry" to "anon";
-
-grant select on table "public"."amendment_vote_entry" to "anon";
 
 grant trigger on table "public"."amendment_vote_entry" to "anon";
 
 grant truncate on table "public"."amendment_vote_entry" to "anon";
 
-grant update on table "public"."amendment_vote_entry" to "anon";
-
-grant delete on table "public"."amendment_vote_entry" to "authenticated";
-
-grant insert on table "public"."amendment_vote_entry" to "authenticated";
-
 grant references on table "public"."amendment_vote_entry" to "authenticated";
-
-grant select on table "public"."amendment_vote_entry" to "authenticated";
 
 grant trigger on table "public"."amendment_vote_entry" to "authenticated";
 
 grant truncate on table "public"."amendment_vote_entry" to "authenticated";
 
-grant update on table "public"."amendment_vote_entry" to "authenticated";
-
-grant delete on table "public"."amendment_vote_entry" to "service_role";
-
-grant insert on table "public"."amendment_vote_entry" to "service_role";
-
 grant references on table "public"."amendment_vote_entry" to "service_role";
-
-grant select on table "public"."amendment_vote_entry" to "service_role";
 
 grant trigger on table "public"."amendment_vote_entry" to "service_role";
 
 grant truncate on table "public"."amendment_vote_entry" to "service_role";
 
-grant update on table "public"."amendment_vote_entry" to "service_role";
-
-grant delete on table "public"."blog" to "anon";
-
-grant insert on table "public"."blog" to "anon";
-
 grant references on table "public"."blog" to "anon";
-
-grant select on table "public"."blog" to "anon";
 
 grant trigger on table "public"."blog" to "anon";
 
 grant truncate on table "public"."blog" to "anon";
 
-grant update on table "public"."blog" to "anon";
-
-grant delete on table "public"."blog" to "authenticated";
-
-grant insert on table "public"."blog" to "authenticated";
-
 grant references on table "public"."blog" to "authenticated";
-
-grant select on table "public"."blog" to "authenticated";
 
 grant trigger on table "public"."blog" to "authenticated";
 
 grant truncate on table "public"."blog" to "authenticated";
 
-grant update on table "public"."blog" to "authenticated";
-
-grant delete on table "public"."blog" to "service_role";
-
-grant insert on table "public"."blog" to "service_role";
-
 grant references on table "public"."blog" to "service_role";
-
-grant select on table "public"."blog" to "service_role";
 
 grant trigger on table "public"."blog" to "service_role";
 
 grant truncate on table "public"."blog" to "service_role";
 
-grant update on table "public"."blog" to "service_role";
-
-grant delete on table "public"."blog_blogger" to "anon";
-
-grant insert on table "public"."blog_blogger" to "anon";
-
 grant references on table "public"."blog_blogger" to "anon";
-
-grant select on table "public"."blog_blogger" to "anon";
 
 grant trigger on table "public"."blog_blogger" to "anon";
 
 grant truncate on table "public"."blog_blogger" to "anon";
 
-grant update on table "public"."blog_blogger" to "anon";
-
-grant delete on table "public"."blog_blogger" to "authenticated";
-
-grant insert on table "public"."blog_blogger" to "authenticated";
-
 grant references on table "public"."blog_blogger" to "authenticated";
-
-grant select on table "public"."blog_blogger" to "authenticated";
 
 grant trigger on table "public"."blog_blogger" to "authenticated";
 
 grant truncate on table "public"."blog_blogger" to "authenticated";
 
-grant update on table "public"."blog_blogger" to "authenticated";
-
-grant delete on table "public"."blog_blogger" to "service_role";
-
-grant insert on table "public"."blog_blogger" to "service_role";
-
 grant references on table "public"."blog_blogger" to "service_role";
-
-grant select on table "public"."blog_blogger" to "service_role";
 
 grant trigger on table "public"."blog_blogger" to "service_role";
 
 grant truncate on table "public"."blog_blogger" to "service_role";
 
-grant update on table "public"."blog_blogger" to "service_role";
-
-grant delete on table "public"."blog_hashtag" to "anon";
-
-grant insert on table "public"."blog_hashtag" to "anon";
-
 grant references on table "public"."blog_hashtag" to "anon";
-
-grant select on table "public"."blog_hashtag" to "anon";
 
 grant trigger on table "public"."blog_hashtag" to "anon";
 
 grant truncate on table "public"."blog_hashtag" to "anon";
 
-grant update on table "public"."blog_hashtag" to "anon";
-
-grant delete on table "public"."blog_hashtag" to "authenticated";
-
-grant insert on table "public"."blog_hashtag" to "authenticated";
-
 grant references on table "public"."blog_hashtag" to "authenticated";
-
-grant select on table "public"."blog_hashtag" to "authenticated";
 
 grant trigger on table "public"."blog_hashtag" to "authenticated";
 
 grant truncate on table "public"."blog_hashtag" to "authenticated";
 
-grant update on table "public"."blog_hashtag" to "authenticated";
-
-grant delete on table "public"."blog_hashtag" to "service_role";
-
-grant insert on table "public"."blog_hashtag" to "service_role";
-
 grant references on table "public"."blog_hashtag" to "service_role";
-
-grant select on table "public"."blog_hashtag" to "service_role";
 
 grant trigger on table "public"."blog_hashtag" to "service_role";
 
 grant truncate on table "public"."blog_hashtag" to "service_role";
 
-grant update on table "public"."blog_hashtag" to "service_role";
-
-grant delete on table "public"."blog_support_vote" to "anon";
-
-grant insert on table "public"."blog_support_vote" to "anon";
-
 grant references on table "public"."blog_support_vote" to "anon";
-
-grant select on table "public"."blog_support_vote" to "anon";
 
 grant trigger on table "public"."blog_support_vote" to "anon";
 
 grant truncate on table "public"."blog_support_vote" to "anon";
 
-grant update on table "public"."blog_support_vote" to "anon";
-
-grant delete on table "public"."blog_support_vote" to "authenticated";
-
-grant insert on table "public"."blog_support_vote" to "authenticated";
-
 grant references on table "public"."blog_support_vote" to "authenticated";
-
-grant select on table "public"."blog_support_vote" to "authenticated";
 
 grant trigger on table "public"."blog_support_vote" to "authenticated";
 
 grant truncate on table "public"."blog_support_vote" to "authenticated";
 
-grant update on table "public"."blog_support_vote" to "authenticated";
-
-grant delete on table "public"."blog_support_vote" to "service_role";
-
-grant insert on table "public"."blog_support_vote" to "service_role";
-
 grant references on table "public"."blog_support_vote" to "service_role";
-
-grant select on table "public"."blog_support_vote" to "service_role";
 
 grant trigger on table "public"."blog_support_vote" to "service_role";
 
 grant truncate on table "public"."blog_support_vote" to "service_role";
 
-grant update on table "public"."blog_support_vote" to "service_role";
-
-grant delete on table "public"."calendar_subscription" to "anon";
-
-grant insert on table "public"."calendar_subscription" to "anon";
-
 grant references on table "public"."calendar_subscription" to "anon";
-
-grant select on table "public"."calendar_subscription" to "anon";
 
 grant trigger on table "public"."calendar_subscription" to "anon";
 
 grant truncate on table "public"."calendar_subscription" to "anon";
 
-grant update on table "public"."calendar_subscription" to "anon";
-
-grant delete on table "public"."calendar_subscription" to "authenticated";
-
-grant insert on table "public"."calendar_subscription" to "authenticated";
-
 grant references on table "public"."calendar_subscription" to "authenticated";
-
-grant select on table "public"."calendar_subscription" to "authenticated";
 
 grant trigger on table "public"."calendar_subscription" to "authenticated";
 
 grant truncate on table "public"."calendar_subscription" to "authenticated";
 
-grant update on table "public"."calendar_subscription" to "authenticated";
-
-grant delete on table "public"."calendar_subscription" to "service_role";
-
-grant insert on table "public"."calendar_subscription" to "service_role";
-
 grant references on table "public"."calendar_subscription" to "service_role";
-
-grant select on table "public"."calendar_subscription" to "service_role";
 
 grant trigger on table "public"."calendar_subscription" to "service_role";
 
 grant truncate on table "public"."calendar_subscription" to "service_role";
 
-grant update on table "public"."calendar_subscription" to "service_role";
-
-grant delete on table "public"."change_request" to "anon";
-
-grant insert on table "public"."change_request" to "anon";
-
 grant references on table "public"."change_request" to "anon";
-
-grant select on table "public"."change_request" to "anon";
 
 grant trigger on table "public"."change_request" to "anon";
 
 grant truncate on table "public"."change_request" to "anon";
 
-grant update on table "public"."change_request" to "anon";
-
-grant delete on table "public"."change_request" to "authenticated";
-
-grant insert on table "public"."change_request" to "authenticated";
-
 grant references on table "public"."change_request" to "authenticated";
-
-grant select on table "public"."change_request" to "authenticated";
 
 grant trigger on table "public"."change_request" to "authenticated";
 
 grant truncate on table "public"."change_request" to "authenticated";
 
-grant update on table "public"."change_request" to "authenticated";
-
-grant delete on table "public"."change_request" to "service_role";
-
-grant insert on table "public"."change_request" to "service_role";
-
 grant references on table "public"."change_request" to "service_role";
-
-grant select on table "public"."change_request" to "service_role";
 
 grant trigger on table "public"."change_request" to "service_role";
 
 grant truncate on table "public"."change_request" to "service_role";
 
-grant update on table "public"."change_request" to "service_role";
-
-grant delete on table "public"."change_request_vote" to "anon";
-
-grant insert on table "public"."change_request_vote" to "anon";
-
 grant references on table "public"."change_request_vote" to "anon";
-
-grant select on table "public"."change_request_vote" to "anon";
 
 grant trigger on table "public"."change_request_vote" to "anon";
 
 grant truncate on table "public"."change_request_vote" to "anon";
 
-grant update on table "public"."change_request_vote" to "anon";
-
-grant delete on table "public"."change_request_vote" to "authenticated";
-
-grant insert on table "public"."change_request_vote" to "authenticated";
-
 grant references on table "public"."change_request_vote" to "authenticated";
-
-grant select on table "public"."change_request_vote" to "authenticated";
 
 grant trigger on table "public"."change_request_vote" to "authenticated";
 
 grant truncate on table "public"."change_request_vote" to "authenticated";
 
-grant update on table "public"."change_request_vote" to "authenticated";
-
-grant delete on table "public"."change_request_vote" to "service_role";
-
-grant insert on table "public"."change_request_vote" to "service_role";
-
 grant references on table "public"."change_request_vote" to "service_role";
-
-grant select on table "public"."change_request_vote" to "service_role";
 
 grant trigger on table "public"."change_request_vote" to "service_role";
 
 grant truncate on table "public"."change_request_vote" to "service_role";
 
-grant update on table "public"."change_request_vote" to "service_role";
-
-grant delete on table "public"."chart_projection" to "anon";
-
-grant insert on table "public"."chart_projection" to "anon";
-
-grant references on table "public"."chart_projection" to "anon";
-
-grant select on table "public"."chart_projection" to "anon";
-
-grant trigger on table "public"."chart_projection" to "anon";
-
-grant truncate on table "public"."chart_projection" to "anon";
-
-grant update on table "public"."chart_projection" to "anon";
-
-grant delete on table "public"."chart_projection" to "authenticated";
-
-grant insert on table "public"."chart_projection" to "authenticated";
-
-grant references on table "public"."chart_projection" to "authenticated";
-
-grant select on table "public"."chart_projection" to "authenticated";
-
-grant trigger on table "public"."chart_projection" to "authenticated";
-
-grant truncate on table "public"."chart_projection" to "authenticated";
-
-grant update on table "public"."chart_projection" to "authenticated";
-
-grant delete on table "public"."chart_projection" to "service_role";
-
-grant insert on table "public"."chart_projection" to "service_role";
-
-grant references on table "public"."chart_projection" to "service_role";
-
-grant select on table "public"."chart_projection" to "service_role";
-
-grant trigger on table "public"."chart_projection" to "service_role";
-
-grant truncate on table "public"."chart_projection" to "service_role";
-
-grant update on table "public"."chart_projection" to "service_role";
-
-grant delete on table "public"."chart_projection_point" to "anon";
-
-grant insert on table "public"."chart_projection_point" to "anon";
-
-grant references on table "public"."chart_projection_point" to "anon";
-
-grant select on table "public"."chart_projection_point" to "anon";
-
-grant trigger on table "public"."chart_projection_point" to "anon";
-
-grant truncate on table "public"."chart_projection_point" to "anon";
-
-grant update on table "public"."chart_projection_point" to "anon";
-
-grant delete on table "public"."chart_projection_point" to "authenticated";
-
-grant insert on table "public"."chart_projection_point" to "authenticated";
-
-grant references on table "public"."chart_projection_point" to "authenticated";
-
-grant select on table "public"."chart_projection_point" to "authenticated";
-
-grant trigger on table "public"."chart_projection_point" to "authenticated";
-
-grant truncate on table "public"."chart_projection_point" to "authenticated";
-
-grant update on table "public"."chart_projection_point" to "authenticated";
-
-grant delete on table "public"."chart_projection_point" to "service_role";
-
-grant insert on table "public"."chart_projection_point" to "service_role";
-
-grant references on table "public"."chart_projection_point" to "service_role";
-
-grant select on table "public"."chart_projection_point" to "service_role";
-
-grant trigger on table "public"."chart_projection_point" to "service_role";
-
-grant truncate on table "public"."chart_projection_point" to "service_role";
-
-grant update on table "public"."chart_projection_point" to "service_role";
-
-grant delete on table "public"."comment" to "anon";
-
-grant insert on table "public"."comment" to "anon";
-
 grant references on table "public"."comment" to "anon";
-
-grant select on table "public"."comment" to "anon";
 
 grant trigger on table "public"."comment" to "anon";
 
 grant truncate on table "public"."comment" to "anon";
 
-grant update on table "public"."comment" to "anon";
-
-grant delete on table "public"."comment" to "authenticated";
-
-grant insert on table "public"."comment" to "authenticated";
-
 grant references on table "public"."comment" to "authenticated";
-
-grant select on table "public"."comment" to "authenticated";
 
 grant trigger on table "public"."comment" to "authenticated";
 
 grant truncate on table "public"."comment" to "authenticated";
 
-grant update on table "public"."comment" to "authenticated";
-
-grant delete on table "public"."comment" to "service_role";
-
-grant insert on table "public"."comment" to "service_role";
-
 grant references on table "public"."comment" to "service_role";
-
-grant select on table "public"."comment" to "service_role";
 
 grant trigger on table "public"."comment" to "service_role";
 
 grant truncate on table "public"."comment" to "service_role";
 
-grant update on table "public"."comment" to "service_role";
-
-grant delete on table "public"."comment_vote" to "anon";
-
-grant insert on table "public"."comment_vote" to "anon";
-
 grant references on table "public"."comment_vote" to "anon";
-
-grant select on table "public"."comment_vote" to "anon";
 
 grant trigger on table "public"."comment_vote" to "anon";
 
 grant truncate on table "public"."comment_vote" to "anon";
 
-grant update on table "public"."comment_vote" to "anon";
-
-grant delete on table "public"."comment_vote" to "authenticated";
-
-grant insert on table "public"."comment_vote" to "authenticated";
-
 grant references on table "public"."comment_vote" to "authenticated";
-
-grant select on table "public"."comment_vote" to "authenticated";
 
 grant trigger on table "public"."comment_vote" to "authenticated";
 
 grant truncate on table "public"."comment_vote" to "authenticated";
 
-grant update on table "public"."comment_vote" to "authenticated";
-
-grant delete on table "public"."comment_vote" to "service_role";
-
-grant insert on table "public"."comment_vote" to "service_role";
-
 grant references on table "public"."comment_vote" to "service_role";
-
-grant select on table "public"."comment_vote" to "service_role";
 
 grant trigger on table "public"."comment_vote" to "service_role";
 
 grant truncate on table "public"."comment_vote" to "service_role";
 
-grant update on table "public"."comment_vote" to "service_role";
-
-grant delete on table "public"."conversation" to "anon";
-
-grant insert on table "public"."conversation" to "anon";
-
 grant references on table "public"."conversation" to "anon";
-
-grant select on table "public"."conversation" to "anon";
 
 grant trigger on table "public"."conversation" to "anon";
 
 grant truncate on table "public"."conversation" to "anon";
 
-grant update on table "public"."conversation" to "anon";
-
-grant delete on table "public"."conversation" to "authenticated";
-
-grant insert on table "public"."conversation" to "authenticated";
-
 grant references on table "public"."conversation" to "authenticated";
-
-grant select on table "public"."conversation" to "authenticated";
 
 grant trigger on table "public"."conversation" to "authenticated";
 
 grant truncate on table "public"."conversation" to "authenticated";
 
-grant update on table "public"."conversation" to "authenticated";
-
-grant delete on table "public"."conversation" to "service_role";
-
-grant insert on table "public"."conversation" to "service_role";
-
 grant references on table "public"."conversation" to "service_role";
-
-grant select on table "public"."conversation" to "service_role";
 
 grant trigger on table "public"."conversation" to "service_role";
 
 grant truncate on table "public"."conversation" to "service_role";
 
-grant update on table "public"."conversation" to "service_role";
-
-grant delete on table "public"."conversation_participant" to "anon";
-
-grant insert on table "public"."conversation_participant" to "anon";
-
 grant references on table "public"."conversation_participant" to "anon";
-
-grant select on table "public"."conversation_participant" to "anon";
 
 grant trigger on table "public"."conversation_participant" to "anon";
 
 grant truncate on table "public"."conversation_participant" to "anon";
 
-grant update on table "public"."conversation_participant" to "anon";
-
-grant delete on table "public"."conversation_participant" to "authenticated";
-
-grant insert on table "public"."conversation_participant" to "authenticated";
-
 grant references on table "public"."conversation_participant" to "authenticated";
-
-grant select on table "public"."conversation_participant" to "authenticated";
 
 grant trigger on table "public"."conversation_participant" to "authenticated";
 
 grant truncate on table "public"."conversation_participant" to "authenticated";
 
-grant update on table "public"."conversation_participant" to "authenticated";
-
-grant delete on table "public"."conversation_participant" to "service_role";
-
-grant insert on table "public"."conversation_participant" to "service_role";
-
 grant references on table "public"."conversation_participant" to "service_role";
-
-grant select on table "public"."conversation_participant" to "service_role";
 
 grant trigger on table "public"."conversation_participant" to "service_role";
 
 grant truncate on table "public"."conversation_participant" to "service_role";
 
-grant update on table "public"."conversation_participant" to "service_role";
+grant references on table "public"."dataset" to "anon";
 
-grant delete on table "public"."delegate_election_assignment" to "anon";
+grant trigger on table "public"."dataset" to "anon";
 
-grant insert on table "public"."delegate_election_assignment" to "anon";
+grant truncate on table "public"."dataset" to "anon";
+
+grant references on table "public"."dataset" to "authenticated";
+
+grant trigger on table "public"."dataset" to "authenticated";
+
+grant truncate on table "public"."dataset" to "authenticated";
+
+grant references on table "public"."dataset" to "service_role";
+
+grant trigger on table "public"."dataset" to "service_role";
+
+grant truncate on table "public"."dataset" to "service_role";
+
+grant references on table "public"."dataset_import_job" to "anon";
+
+grant trigger on table "public"."dataset_import_job" to "anon";
+
+grant truncate on table "public"."dataset_import_job" to "anon";
+
+grant references on table "public"."dataset_import_job" to "authenticated";
+
+grant trigger on table "public"."dataset_import_job" to "authenticated";
+
+grant truncate on table "public"."dataset_import_job" to "authenticated";
+
+grant references on table "public"."dataset_import_job" to "service_role";
+
+grant trigger on table "public"."dataset_import_job" to "service_role";
+
+grant truncate on table "public"."dataset_import_job" to "service_role";
+
+grant references on table "public"."dataset_snapshot" to "anon";
+
+grant trigger on table "public"."dataset_snapshot" to "anon";
+
+grant truncate on table "public"."dataset_snapshot" to "anon";
+
+grant references on table "public"."dataset_snapshot" to "authenticated";
+
+grant trigger on table "public"."dataset_snapshot" to "authenticated";
+
+grant truncate on table "public"."dataset_snapshot" to "authenticated";
+
+grant references on table "public"."dataset_snapshot" to "service_role";
+
+grant trigger on table "public"."dataset_snapshot" to "service_role";
+
+grant truncate on table "public"."dataset_snapshot" to "service_role";
 
 grant references on table "public"."delegate_election_assignment" to "anon";
-
-grant select on table "public"."delegate_election_assignment" to "anon";
 
 grant trigger on table "public"."delegate_election_assignment" to "anon";
 
 grant truncate on table "public"."delegate_election_assignment" to "anon";
 
-grant update on table "public"."delegate_election_assignment" to "anon";
-
-grant delete on table "public"."delegate_election_assignment" to "authenticated";
-
-grant insert on table "public"."delegate_election_assignment" to "authenticated";
-
 grant references on table "public"."delegate_election_assignment" to "authenticated";
-
-grant select on table "public"."delegate_election_assignment" to "authenticated";
 
 grant trigger on table "public"."delegate_election_assignment" to "authenticated";
 
 grant truncate on table "public"."delegate_election_assignment" to "authenticated";
 
-grant update on table "public"."delegate_election_assignment" to "authenticated";
-
-grant delete on table "public"."delegate_election_assignment" to "service_role";
-
-grant insert on table "public"."delegate_election_assignment" to "service_role";
-
 grant references on table "public"."delegate_election_assignment" to "service_role";
-
-grant select on table "public"."delegate_election_assignment" to "service_role";
 
 grant trigger on table "public"."delegate_election_assignment" to "service_role";
 
 grant truncate on table "public"."delegate_election_assignment" to "service_role";
 
-grant update on table "public"."delegate_election_assignment" to "service_role";
-
-grant delete on table "public"."document" to "anon";
-
-grant insert on table "public"."document" to "anon";
-
 grant references on table "public"."document" to "anon";
-
-grant select on table "public"."document" to "anon";
 
 grant trigger on table "public"."document" to "anon";
 
 grant truncate on table "public"."document" to "anon";
 
-grant update on table "public"."document" to "anon";
-
-grant delete on table "public"."document" to "authenticated";
-
-grant insert on table "public"."document" to "authenticated";
-
 grant references on table "public"."document" to "authenticated";
-
-grant select on table "public"."document" to "authenticated";
 
 grant trigger on table "public"."document" to "authenticated";
 
 grant truncate on table "public"."document" to "authenticated";
 
-grant update on table "public"."document" to "authenticated";
-
-grant delete on table "public"."document" to "service_role";
-
-grant insert on table "public"."document" to "service_role";
-
 grant references on table "public"."document" to "service_role";
-
-grant select on table "public"."document" to "service_role";
 
 grant trigger on table "public"."document" to "service_role";
 
 grant truncate on table "public"."document" to "service_role";
 
-grant update on table "public"."document" to "service_role";
-
-grant delete on table "public"."document_collaborator" to "anon";
-
-grant insert on table "public"."document_collaborator" to "anon";
-
 grant references on table "public"."document_collaborator" to "anon";
-
-grant select on table "public"."document_collaborator" to "anon";
 
 grant trigger on table "public"."document_collaborator" to "anon";
 
 grant truncate on table "public"."document_collaborator" to "anon";
 
-grant update on table "public"."document_collaborator" to "anon";
-
-grant delete on table "public"."document_collaborator" to "authenticated";
-
-grant insert on table "public"."document_collaborator" to "authenticated";
-
 grant references on table "public"."document_collaborator" to "authenticated";
-
-grant select on table "public"."document_collaborator" to "authenticated";
 
 grant trigger on table "public"."document_collaborator" to "authenticated";
 
 grant truncate on table "public"."document_collaborator" to "authenticated";
 
-grant update on table "public"."document_collaborator" to "authenticated";
-
-grant delete on table "public"."document_collaborator" to "service_role";
-
-grant insert on table "public"."document_collaborator" to "service_role";
-
 grant references on table "public"."document_collaborator" to "service_role";
-
-grant select on table "public"."document_collaborator" to "service_role";
 
 grant trigger on table "public"."document_collaborator" to "service_role";
 
 grant truncate on table "public"."document_collaborator" to "service_role";
 
-grant update on table "public"."document_collaborator" to "service_role";
-
-grant delete on table "public"."document_cursor" to "anon";
-
-grant insert on table "public"."document_cursor" to "anon";
-
 grant references on table "public"."document_cursor" to "anon";
-
-grant select on table "public"."document_cursor" to "anon";
 
 grant trigger on table "public"."document_cursor" to "anon";
 
 grant truncate on table "public"."document_cursor" to "anon";
 
-grant update on table "public"."document_cursor" to "anon";
-
-grant delete on table "public"."document_cursor" to "authenticated";
-
-grant insert on table "public"."document_cursor" to "authenticated";
-
 grant references on table "public"."document_cursor" to "authenticated";
-
-grant select on table "public"."document_cursor" to "authenticated";
 
 grant trigger on table "public"."document_cursor" to "authenticated";
 
 grant truncate on table "public"."document_cursor" to "authenticated";
 
-grant update on table "public"."document_cursor" to "authenticated";
-
-grant delete on table "public"."document_cursor" to "service_role";
-
-grant insert on table "public"."document_cursor" to "service_role";
-
 grant references on table "public"."document_cursor" to "service_role";
-
-grant select on table "public"."document_cursor" to "service_role";
 
 grant trigger on table "public"."document_cursor" to "service_role";
 
 grant truncate on table "public"."document_cursor" to "service_role";
 
-grant update on table "public"."document_cursor" to "service_role";
-
-grant delete on table "public"."document_version" to "anon";
-
-grant insert on table "public"."document_version" to "anon";
-
 grant references on table "public"."document_version" to "anon";
-
-grant select on table "public"."document_version" to "anon";
 
 grant trigger on table "public"."document_version" to "anon";
 
 grant truncate on table "public"."document_version" to "anon";
 
-grant update on table "public"."document_version" to "anon";
-
-grant delete on table "public"."document_version" to "authenticated";
-
-grant insert on table "public"."document_version" to "authenticated";
-
 grant references on table "public"."document_version" to "authenticated";
-
-grant select on table "public"."document_version" to "authenticated";
 
 grant trigger on table "public"."document_version" to "authenticated";
 
 grant truncate on table "public"."document_version" to "authenticated";
 
-grant update on table "public"."document_version" to "authenticated";
-
-grant delete on table "public"."document_version" to "service_role";
-
-grant insert on table "public"."document_version" to "service_role";
-
 grant references on table "public"."document_version" to "service_role";
-
-grant select on table "public"."document_version" to "service_role";
 
 grant trigger on table "public"."document_version" to "service_role";
 
 grant truncate on table "public"."document_version" to "service_role";
 
-grant update on table "public"."document_version" to "service_role";
-
-grant delete on table "public"."election" to "anon";
-
-grant insert on table "public"."election" to "anon";
-
 grant references on table "public"."election" to "anon";
-
-grant select on table "public"."election" to "anon";
 
 grant trigger on table "public"."election" to "anon";
 
 grant truncate on table "public"."election" to "anon";
 
-grant update on table "public"."election" to "anon";
-
-grant delete on table "public"."election" to "authenticated";
-
-grant insert on table "public"."election" to "authenticated";
-
 grant references on table "public"."election" to "authenticated";
-
-grant select on table "public"."election" to "authenticated";
 
 grant trigger on table "public"."election" to "authenticated";
 
 grant truncate on table "public"."election" to "authenticated";
 
-grant update on table "public"."election" to "authenticated";
-
-grant delete on table "public"."election" to "service_role";
-
-grant insert on table "public"."election" to "service_role";
-
 grant references on table "public"."election" to "service_role";
-
-grant select on table "public"."election" to "service_role";
 
 grant trigger on table "public"."election" to "service_role";
 
 grant truncate on table "public"."election" to "service_role";
 
-grant update on table "public"."election" to "service_role";
-
-grant delete on table "public"."election_candidate" to "anon";
-
-grant insert on table "public"."election_candidate" to "anon";
-
 grant references on table "public"."election_candidate" to "anon";
-
-grant select on table "public"."election_candidate" to "anon";
 
 grant trigger on table "public"."election_candidate" to "anon";
 
 grant truncate on table "public"."election_candidate" to "anon";
 
-grant update on table "public"."election_candidate" to "anon";
-
-grant delete on table "public"."election_candidate" to "authenticated";
-
-grant insert on table "public"."election_candidate" to "authenticated";
-
 grant references on table "public"."election_candidate" to "authenticated";
-
-grant select on table "public"."election_candidate" to "authenticated";
 
 grant trigger on table "public"."election_candidate" to "authenticated";
 
 grant truncate on table "public"."election_candidate" to "authenticated";
 
-grant update on table "public"."election_candidate" to "authenticated";
-
-grant delete on table "public"."election_candidate" to "service_role";
-
-grant insert on table "public"."election_candidate" to "service_role";
-
 grant references on table "public"."election_candidate" to "service_role";
-
-grant select on table "public"."election_candidate" to "service_role";
 
 grant trigger on table "public"."election_candidate" to "service_role";
 
 grant truncate on table "public"."election_candidate" to "service_role";
 
-grant update on table "public"."election_candidate" to "service_role";
-
-grant delete on table "public"."election_offline_tally" to "anon";
-
-grant insert on table "public"."election_offline_tally" to "anon";
-
 grant references on table "public"."election_offline_tally" to "anon";
-
-grant select on table "public"."election_offline_tally" to "anon";
 
 grant trigger on table "public"."election_offline_tally" to "anon";
 
 grant truncate on table "public"."election_offline_tally" to "anon";
 
-grant update on table "public"."election_offline_tally" to "anon";
-
-grant delete on table "public"."election_offline_tally" to "authenticated";
-
-grant insert on table "public"."election_offline_tally" to "authenticated";
-
 grant references on table "public"."election_offline_tally" to "authenticated";
-
-grant select on table "public"."election_offline_tally" to "authenticated";
 
 grant trigger on table "public"."election_offline_tally" to "authenticated";
 
 grant truncate on table "public"."election_offline_tally" to "authenticated";
 
-grant update on table "public"."election_offline_tally" to "authenticated";
-
-grant delete on table "public"."election_offline_tally" to "service_role";
-
-grant insert on table "public"."election_offline_tally" to "service_role";
-
 grant references on table "public"."election_offline_tally" to "service_role";
-
-grant select on table "public"."election_offline_tally" to "service_role";
 
 grant trigger on table "public"."election_offline_tally" to "service_role";
 
 grant truncate on table "public"."election_offline_tally" to "service_role";
 
-grant update on table "public"."election_offline_tally" to "service_role";
-
-grant delete on table "public"."elector" to "anon";
-
-grant insert on table "public"."elector" to "anon";
-
 grant references on table "public"."elector" to "anon";
-
-grant select on table "public"."elector" to "anon";
 
 grant trigger on table "public"."elector" to "anon";
 
 grant truncate on table "public"."elector" to "anon";
 
-grant update on table "public"."elector" to "anon";
-
-grant delete on table "public"."elector" to "authenticated";
-
-grant insert on table "public"."elector" to "authenticated";
-
 grant references on table "public"."elector" to "authenticated";
-
-grant select on table "public"."elector" to "authenticated";
 
 grant trigger on table "public"."elector" to "authenticated";
 
 grant truncate on table "public"."elector" to "authenticated";
 
-grant update on table "public"."elector" to "authenticated";
-
-grant delete on table "public"."elector" to "service_role";
-
-grant insert on table "public"."elector" to "service_role";
-
 grant references on table "public"."elector" to "service_role";
-
-grant select on table "public"."elector" to "service_role";
 
 grant trigger on table "public"."elector" to "service_role";
 
 grant truncate on table "public"."elector" to "service_role";
 
-grant update on table "public"."elector" to "service_role";
-
-grant delete on table "public"."eurostat_dataset" to "anon";
-
-grant insert on table "public"."eurostat_dataset" to "anon";
-
-grant references on table "public"."eurostat_dataset" to "anon";
-
-grant select on table "public"."eurostat_dataset" to "anon";
-
-grant trigger on table "public"."eurostat_dataset" to "anon";
-
-grant truncate on table "public"."eurostat_dataset" to "anon";
-
-grant update on table "public"."eurostat_dataset" to "anon";
-
-grant delete on table "public"."eurostat_dataset" to "authenticated";
-
-grant insert on table "public"."eurostat_dataset" to "authenticated";
-
-grant references on table "public"."eurostat_dataset" to "authenticated";
-
-grant select on table "public"."eurostat_dataset" to "authenticated";
-
-grant trigger on table "public"."eurostat_dataset" to "authenticated";
-
-grant truncate on table "public"."eurostat_dataset" to "authenticated";
-
-grant update on table "public"."eurostat_dataset" to "authenticated";
-
-grant delete on table "public"."eurostat_dataset" to "service_role";
-
-grant insert on table "public"."eurostat_dataset" to "service_role";
-
-grant references on table "public"."eurostat_dataset" to "service_role";
-
-grant select on table "public"."eurostat_dataset" to "service_role";
-
-grant trigger on table "public"."eurostat_dataset" to "service_role";
-
-grant truncate on table "public"."eurostat_dataset" to "service_role";
-
-grant update on table "public"."eurostat_dataset" to "service_role";
-
-grant delete on table "public"."eurostat_import_partition" to "anon";
-
-grant insert on table "public"."eurostat_import_partition" to "anon";
-
-grant references on table "public"."eurostat_import_partition" to "anon";
-
-grant select on table "public"."eurostat_import_partition" to "anon";
-
-grant trigger on table "public"."eurostat_import_partition" to "anon";
-
-grant truncate on table "public"."eurostat_import_partition" to "anon";
-
-grant update on table "public"."eurostat_import_partition" to "anon";
-
-grant delete on table "public"."eurostat_import_partition" to "authenticated";
-
-grant insert on table "public"."eurostat_import_partition" to "authenticated";
-
-grant references on table "public"."eurostat_import_partition" to "authenticated";
-
-grant select on table "public"."eurostat_import_partition" to "authenticated";
-
-grant trigger on table "public"."eurostat_import_partition" to "authenticated";
-
-grant truncate on table "public"."eurostat_import_partition" to "authenticated";
-
-grant update on table "public"."eurostat_import_partition" to "authenticated";
-
-grant delete on table "public"."eurostat_import_partition" to "service_role";
-
-grant insert on table "public"."eurostat_import_partition" to "service_role";
-
-grant references on table "public"."eurostat_import_partition" to "service_role";
-
-grant select on table "public"."eurostat_import_partition" to "service_role";
-
-grant trigger on table "public"."eurostat_import_partition" to "service_role";
-
-grant truncate on table "public"."eurostat_import_partition" to "service_role";
-
-grant update on table "public"."eurostat_import_partition" to "service_role";
-
-grant delete on table "public"."eurostat_observation" to "anon";
-
-grant insert on table "public"."eurostat_observation" to "anon";
-
-grant references on table "public"."eurostat_observation" to "anon";
-
-grant select on table "public"."eurostat_observation" to "anon";
-
-grant trigger on table "public"."eurostat_observation" to "anon";
-
-grant truncate on table "public"."eurostat_observation" to "anon";
-
-grant update on table "public"."eurostat_observation" to "anon";
-
-grant delete on table "public"."eurostat_observation" to "authenticated";
-
-grant insert on table "public"."eurostat_observation" to "authenticated";
-
-grant references on table "public"."eurostat_observation" to "authenticated";
-
-grant select on table "public"."eurostat_observation" to "authenticated";
-
-grant trigger on table "public"."eurostat_observation" to "authenticated";
-
-grant truncate on table "public"."eurostat_observation" to "authenticated";
-
-grant update on table "public"."eurostat_observation" to "authenticated";
-
-grant delete on table "public"."eurostat_observation" to "service_role";
-
-grant insert on table "public"."eurostat_observation" to "service_role";
-
-grant references on table "public"."eurostat_observation" to "service_role";
-
-grant select on table "public"."eurostat_observation" to "service_role";
-
-grant trigger on table "public"."eurostat_observation" to "service_role";
-
-grant truncate on table "public"."eurostat_observation" to "service_role";
-
-grant update on table "public"."eurostat_observation" to "service_role";
-
-grant delete on table "public"."event" to "anon";
-
-grant insert on table "public"."event" to "anon";
-
 grant references on table "public"."event" to "anon";
-
-grant select on table "public"."event" to "anon";
 
 grant trigger on table "public"."event" to "anon";
 
 grant truncate on table "public"."event" to "anon";
 
-grant update on table "public"."event" to "anon";
-
-grant delete on table "public"."event" to "authenticated";
-
-grant insert on table "public"."event" to "authenticated";
-
 grant references on table "public"."event" to "authenticated";
-
-grant select on table "public"."event" to "authenticated";
 
 grant trigger on table "public"."event" to "authenticated";
 
 grant truncate on table "public"."event" to "authenticated";
 
-grant update on table "public"."event" to "authenticated";
-
-grant delete on table "public"."event" to "service_role";
-
-grant insert on table "public"."event" to "service_role";
-
 grant references on table "public"."event" to "service_role";
-
-grant select on table "public"."event" to "service_role";
 
 grant trigger on table "public"."event" to "service_role";
 
 grant truncate on table "public"."event" to "service_role";
 
-grant update on table "public"."event" to "service_role";
-
-grant delete on table "public"."event_assembly_scope" to "anon";
-
-grant insert on table "public"."event_assembly_scope" to "anon";
-
 grant references on table "public"."event_assembly_scope" to "anon";
-
-grant select on table "public"."event_assembly_scope" to "anon";
 
 grant trigger on table "public"."event_assembly_scope" to "anon";
 
 grant truncate on table "public"."event_assembly_scope" to "anon";
 
-grant update on table "public"."event_assembly_scope" to "anon";
-
-grant delete on table "public"."event_assembly_scope" to "authenticated";
-
-grant insert on table "public"."event_assembly_scope" to "authenticated";
-
 grant references on table "public"."event_assembly_scope" to "authenticated";
-
-grant select on table "public"."event_assembly_scope" to "authenticated";
 
 grant trigger on table "public"."event_assembly_scope" to "authenticated";
 
 grant truncate on table "public"."event_assembly_scope" to "authenticated";
 
-grant update on table "public"."event_assembly_scope" to "authenticated";
-
-grant delete on table "public"."event_assembly_scope" to "service_role";
-
-grant insert on table "public"."event_assembly_scope" to "service_role";
-
 grant references on table "public"."event_assembly_scope" to "service_role";
-
-grant select on table "public"."event_assembly_scope" to "service_role";
 
 grant trigger on table "public"."event_assembly_scope" to "service_role";
 
 grant truncate on table "public"."event_assembly_scope" to "service_role";
 
-grant update on table "public"."event_assembly_scope" to "service_role";
-
-grant delete on table "public"."event_delegate" to "anon";
-
-grant insert on table "public"."event_delegate" to "anon";
-
 grant references on table "public"."event_delegate" to "anon";
-
-grant select on table "public"."event_delegate" to "anon";
 
 grant trigger on table "public"."event_delegate" to "anon";
 
 grant truncate on table "public"."event_delegate" to "anon";
 
-grant update on table "public"."event_delegate" to "anon";
-
-grant delete on table "public"."event_delegate" to "authenticated";
-
-grant insert on table "public"."event_delegate" to "authenticated";
-
 grant references on table "public"."event_delegate" to "authenticated";
-
-grant select on table "public"."event_delegate" to "authenticated";
 
 grant trigger on table "public"."event_delegate" to "authenticated";
 
 grant truncate on table "public"."event_delegate" to "authenticated";
 
-grant update on table "public"."event_delegate" to "authenticated";
-
-grant delete on table "public"."event_delegate" to "service_role";
-
-grant insert on table "public"."event_delegate" to "service_role";
-
 grant references on table "public"."event_delegate" to "service_role";
-
-grant select on table "public"."event_delegate" to "service_role";
 
 grant trigger on table "public"."event_delegate" to "service_role";
 
 grant truncate on table "public"."event_delegate" to "service_role";
 
-grant update on table "public"."event_delegate" to "service_role";
-
-grant delete on table "public"."event_exception" to "anon";
-
-grant insert on table "public"."event_exception" to "anon";
-
 grant references on table "public"."event_exception" to "anon";
-
-grant select on table "public"."event_exception" to "anon";
 
 grant trigger on table "public"."event_exception" to "anon";
 
 grant truncate on table "public"."event_exception" to "anon";
 
-grant update on table "public"."event_exception" to "anon";
-
-grant delete on table "public"."event_exception" to "authenticated";
-
-grant insert on table "public"."event_exception" to "authenticated";
-
 grant references on table "public"."event_exception" to "authenticated";
-
-grant select on table "public"."event_exception" to "authenticated";
 
 grant trigger on table "public"."event_exception" to "authenticated";
 
 grant truncate on table "public"."event_exception" to "authenticated";
 
-grant update on table "public"."event_exception" to "authenticated";
-
-grant delete on table "public"."event_exception" to "service_role";
-
-grant insert on table "public"."event_exception" to "service_role";
-
 grant references on table "public"."event_exception" to "service_role";
-
-grant select on table "public"."event_exception" to "service_role";
 
 grant trigger on table "public"."event_exception" to "service_role";
 
 grant truncate on table "public"."event_exception" to "service_role";
 
-grant update on table "public"."event_exception" to "service_role";
-
-grant delete on table "public"."event_hashtag" to "anon";
-
-grant insert on table "public"."event_hashtag" to "anon";
-
 grant references on table "public"."event_hashtag" to "anon";
-
-grant select on table "public"."event_hashtag" to "anon";
 
 grant trigger on table "public"."event_hashtag" to "anon";
 
 grant truncate on table "public"."event_hashtag" to "anon";
 
-grant update on table "public"."event_hashtag" to "anon";
-
-grant delete on table "public"."event_hashtag" to "authenticated";
-
-grant insert on table "public"."event_hashtag" to "authenticated";
-
 grant references on table "public"."event_hashtag" to "authenticated";
-
-grant select on table "public"."event_hashtag" to "authenticated";
 
 grant trigger on table "public"."event_hashtag" to "authenticated";
 
 grant truncate on table "public"."event_hashtag" to "authenticated";
 
-grant update on table "public"."event_hashtag" to "authenticated";
-
-grant delete on table "public"."event_hashtag" to "service_role";
-
-grant insert on table "public"."event_hashtag" to "service_role";
-
 grant references on table "public"."event_hashtag" to "service_role";
-
-grant select on table "public"."event_hashtag" to "service_role";
 
 grant trigger on table "public"."event_hashtag" to "service_role";
 
 grant truncate on table "public"."event_hashtag" to "service_role";
 
-grant update on table "public"."event_hashtag" to "service_role";
-
-grant delete on table "public"."event_offline_participant" to "anon";
-
-grant insert on table "public"."event_offline_participant" to "anon";
-
 grant references on table "public"."event_offline_participant" to "anon";
-
-grant select on table "public"."event_offline_participant" to "anon";
 
 grant trigger on table "public"."event_offline_participant" to "anon";
 
 grant truncate on table "public"."event_offline_participant" to "anon";
 
-grant update on table "public"."event_offline_participant" to "anon";
-
-grant delete on table "public"."event_offline_participant" to "authenticated";
-
-grant insert on table "public"."event_offline_participant" to "authenticated";
-
 grant references on table "public"."event_offline_participant" to "authenticated";
-
-grant select on table "public"."event_offline_participant" to "authenticated";
 
 grant trigger on table "public"."event_offline_participant" to "authenticated";
 
 grant truncate on table "public"."event_offline_participant" to "authenticated";
 
-grant update on table "public"."event_offline_participant" to "authenticated";
-
-grant delete on table "public"."event_offline_participant" to "service_role";
-
-grant insert on table "public"."event_offline_participant" to "service_role";
-
 grant references on table "public"."event_offline_participant" to "service_role";
-
-grant select on table "public"."event_offline_participant" to "service_role";
 
 grant trigger on table "public"."event_offline_participant" to "service_role";
 
 grant truncate on table "public"."event_offline_participant" to "service_role";
 
-grant update on table "public"."event_offline_participant" to "service_role";
-
-grant delete on table "public"."event_participant" to "anon";
-
-grant insert on table "public"."event_participant" to "anon";
-
 grant references on table "public"."event_participant" to "anon";
-
-grant select on table "public"."event_participant" to "anon";
 
 grant trigger on table "public"."event_participant" to "anon";
 
 grant truncate on table "public"."event_participant" to "anon";
 
-grant update on table "public"."event_participant" to "anon";
-
-grant delete on table "public"."event_participant" to "authenticated";
-
-grant insert on table "public"."event_participant" to "authenticated";
-
 grant references on table "public"."event_participant" to "authenticated";
-
-grant select on table "public"."event_participant" to "authenticated";
 
 grant trigger on table "public"."event_participant" to "authenticated";
 
 grant truncate on table "public"."event_participant" to "authenticated";
 
-grant update on table "public"."event_participant" to "authenticated";
-
-grant delete on table "public"."event_participant" to "service_role";
-
-grant insert on table "public"."event_participant" to "service_role";
-
 grant references on table "public"."event_participant" to "service_role";
-
-grant select on table "public"."event_participant" to "service_role";
 
 grant trigger on table "public"."event_participant" to "service_role";
 
 grant truncate on table "public"."event_participant" to "service_role";
 
-grant update on table "public"."event_participant" to "service_role";
-
-grant delete on table "public"."event_participant_role" to "anon";
-
-grant insert on table "public"."event_participant_role" to "anon";
-
 grant references on table "public"."event_participant_role" to "anon";
-
-grant select on table "public"."event_participant_role" to "anon";
 
 grant trigger on table "public"."event_participant_role" to "anon";
 
 grant truncate on table "public"."event_participant_role" to "anon";
 
-grant update on table "public"."event_participant_role" to "anon";
-
-grant delete on table "public"."event_participant_role" to "authenticated";
-
-grant insert on table "public"."event_participant_role" to "authenticated";
-
 grant references on table "public"."event_participant_role" to "authenticated";
-
-grant select on table "public"."event_participant_role" to "authenticated";
 
 grant trigger on table "public"."event_participant_role" to "authenticated";
 
 grant truncate on table "public"."event_participant_role" to "authenticated";
 
-grant update on table "public"."event_participant_role" to "authenticated";
-
-grant delete on table "public"."event_participant_role" to "service_role";
-
-grant insert on table "public"."event_participant_role" to "service_role";
-
 grant references on table "public"."event_participant_role" to "service_role";
-
-grant select on table "public"."event_participant_role" to "service_role";
 
 grant trigger on table "public"."event_participant_role" to "service_role";
 
 grant truncate on table "public"."event_participant_role" to "service_role";
 
-grant update on table "public"."event_participant_role" to "service_role";
-
-grant delete on table "public"."file" to "anon";
-
-grant insert on table "public"."file" to "anon";
-
 grant references on table "public"."file" to "anon";
-
-grant select on table "public"."file" to "anon";
 
 grant trigger on table "public"."file" to "anon";
 
 grant truncate on table "public"."file" to "anon";
 
-grant update on table "public"."file" to "anon";
-
-grant delete on table "public"."file" to "authenticated";
-
-grant insert on table "public"."file" to "authenticated";
-
 grant references on table "public"."file" to "authenticated";
-
-grant select on table "public"."file" to "authenticated";
 
 grant trigger on table "public"."file" to "authenticated";
 
 grant truncate on table "public"."file" to "authenticated";
 
-grant update on table "public"."file" to "authenticated";
-
-grant delete on table "public"."file" to "service_role";
-
-grant insert on table "public"."file" to "service_role";
-
 grant references on table "public"."file" to "service_role";
-
-grant select on table "public"."file" to "service_role";
 
 grant trigger on table "public"."file" to "service_role";
 
 grant truncate on table "public"."file" to "service_role";
 
-grant update on table "public"."file" to "service_role";
-
-grant delete on table "public"."final_candidate_selection" to "anon";
-
-grant insert on table "public"."final_candidate_selection" to "anon";
-
 grant references on table "public"."final_candidate_selection" to "anon";
-
-grant select on table "public"."final_candidate_selection" to "anon";
 
 grant trigger on table "public"."final_candidate_selection" to "anon";
 
 grant truncate on table "public"."final_candidate_selection" to "anon";
 
-grant update on table "public"."final_candidate_selection" to "anon";
-
-grant delete on table "public"."final_candidate_selection" to "authenticated";
-
-grant insert on table "public"."final_candidate_selection" to "authenticated";
-
 grant references on table "public"."final_candidate_selection" to "authenticated";
-
-grant select on table "public"."final_candidate_selection" to "authenticated";
 
 grant trigger on table "public"."final_candidate_selection" to "authenticated";
 
 grant truncate on table "public"."final_candidate_selection" to "authenticated";
 
-grant update on table "public"."final_candidate_selection" to "authenticated";
-
-grant delete on table "public"."final_candidate_selection" to "service_role";
-
-grant insert on table "public"."final_candidate_selection" to "service_role";
-
 grant references on table "public"."final_candidate_selection" to "service_role";
-
-grant select on table "public"."final_candidate_selection" to "service_role";
 
 grant trigger on table "public"."final_candidate_selection" to "service_role";
 
 grant truncate on table "public"."final_candidate_selection" to "service_role";
 
-grant update on table "public"."final_candidate_selection" to "service_role";
-
-grant delete on table "public"."final_choice_decision" to "anon";
-
-grant insert on table "public"."final_choice_decision" to "anon";
-
 grant references on table "public"."final_choice_decision" to "anon";
-
-grant select on table "public"."final_choice_decision" to "anon";
 
 grant trigger on table "public"."final_choice_decision" to "anon";
 
 grant truncate on table "public"."final_choice_decision" to "anon";
 
-grant update on table "public"."final_choice_decision" to "anon";
-
-grant delete on table "public"."final_choice_decision" to "authenticated";
-
-grant insert on table "public"."final_choice_decision" to "authenticated";
-
 grant references on table "public"."final_choice_decision" to "authenticated";
-
-grant select on table "public"."final_choice_decision" to "authenticated";
 
 grant trigger on table "public"."final_choice_decision" to "authenticated";
 
 grant truncate on table "public"."final_choice_decision" to "authenticated";
 
-grant update on table "public"."final_choice_decision" to "authenticated";
-
-grant delete on table "public"."final_choice_decision" to "service_role";
-
-grant insert on table "public"."final_choice_decision" to "service_role";
-
 grant references on table "public"."final_choice_decision" to "service_role";
-
-grant select on table "public"."final_choice_decision" to "service_role";
 
 grant trigger on table "public"."final_choice_decision" to "service_role";
 
 grant truncate on table "public"."final_choice_decision" to "service_role";
 
-grant update on table "public"."final_choice_decision" to "service_role";
-
-grant delete on table "public"."final_elector_participation" to "anon";
-
-grant insert on table "public"."final_elector_participation" to "anon";
-
 grant references on table "public"."final_elector_participation" to "anon";
-
-grant select on table "public"."final_elector_participation" to "anon";
 
 grant trigger on table "public"."final_elector_participation" to "anon";
 
 grant truncate on table "public"."final_elector_participation" to "anon";
 
-grant update on table "public"."final_elector_participation" to "anon";
-
-grant delete on table "public"."final_elector_participation" to "authenticated";
-
-grant insert on table "public"."final_elector_participation" to "authenticated";
-
 grant references on table "public"."final_elector_participation" to "authenticated";
-
-grant select on table "public"."final_elector_participation" to "authenticated";
 
 grant trigger on table "public"."final_elector_participation" to "authenticated";
 
 grant truncate on table "public"."final_elector_participation" to "authenticated";
 
-grant update on table "public"."final_elector_participation" to "authenticated";
-
-grant delete on table "public"."final_elector_participation" to "service_role";
-
-grant insert on table "public"."final_elector_participation" to "service_role";
-
 grant references on table "public"."final_elector_participation" to "service_role";
-
-grant select on table "public"."final_elector_participation" to "service_role";
 
 grant trigger on table "public"."final_elector_participation" to "service_role";
 
 grant truncate on table "public"."final_elector_participation" to "service_role";
 
-grant update on table "public"."final_elector_participation" to "service_role";
-
-grant delete on table "public"."final_voter_participation" to "anon";
-
-grant insert on table "public"."final_voter_participation" to "anon";
-
 grant references on table "public"."final_voter_participation" to "anon";
-
-grant select on table "public"."final_voter_participation" to "anon";
 
 grant trigger on table "public"."final_voter_participation" to "anon";
 
 grant truncate on table "public"."final_voter_participation" to "anon";
 
-grant update on table "public"."final_voter_participation" to "anon";
-
-grant delete on table "public"."final_voter_participation" to "authenticated";
-
-grant insert on table "public"."final_voter_participation" to "authenticated";
-
 grant references on table "public"."final_voter_participation" to "authenticated";
-
-grant select on table "public"."final_voter_participation" to "authenticated";
 
 grant trigger on table "public"."final_voter_participation" to "authenticated";
 
 grant truncate on table "public"."final_voter_participation" to "authenticated";
 
-grant update on table "public"."final_voter_participation" to "authenticated";
-
-grant delete on table "public"."final_voter_participation" to "service_role";
-
-grant insert on table "public"."final_voter_participation" to "service_role";
-
 grant references on table "public"."final_voter_participation" to "service_role";
-
-grant select on table "public"."final_voter_participation" to "service_role";
 
 grant trigger on table "public"."final_voter_participation" to "service_role";
 
 grant truncate on table "public"."final_voter_participation" to "service_role";
 
-grant update on table "public"."final_voter_participation" to "service_role";
-
-grant delete on table "public"."follow" to "anon";
-
-grant insert on table "public"."follow" to "anon";
-
 grant references on table "public"."follow" to "anon";
-
-grant select on table "public"."follow" to "anon";
 
 grant trigger on table "public"."follow" to "anon";
 
 grant truncate on table "public"."follow" to "anon";
 
-grant update on table "public"."follow" to "anon";
-
-grant delete on table "public"."follow" to "authenticated";
-
-grant insert on table "public"."follow" to "authenticated";
-
 grant references on table "public"."follow" to "authenticated";
-
-grant select on table "public"."follow" to "authenticated";
 
 grant trigger on table "public"."follow" to "authenticated";
 
 grant truncate on table "public"."follow" to "authenticated";
 
-grant update on table "public"."follow" to "authenticated";
-
-grant delete on table "public"."follow" to "service_role";
-
-grant insert on table "public"."follow" to "service_role";
-
 grant references on table "public"."follow" to "service_role";
-
-grant select on table "public"."follow" to "service_role";
 
 grant trigger on table "public"."follow" to "service_role";
 
 grant truncate on table "public"."follow" to "service_role";
 
-grant update on table "public"."follow" to "service_role";
-
-grant delete on table "public"."group" to "anon";
-
-grant insert on table "public"."group" to "anon";
-
 grant references on table "public"."group" to "anon";
-
-grant select on table "public"."group" to "anon";
 
 grant trigger on table "public"."group" to "anon";
 
 grant truncate on table "public"."group" to "anon";
 
-grant update on table "public"."group" to "anon";
-
-grant delete on table "public"."group" to "authenticated";
-
-grant insert on table "public"."group" to "authenticated";
-
 grant references on table "public"."group" to "authenticated";
-
-grant select on table "public"."group" to "authenticated";
 
 grant trigger on table "public"."group" to "authenticated";
 
 grant truncate on table "public"."group" to "authenticated";
 
-grant update on table "public"."group" to "authenticated";
-
-grant delete on table "public"."group" to "service_role";
-
-grant insert on table "public"."group" to "service_role";
-
 grant references on table "public"."group" to "service_role";
-
-grant select on table "public"."group" to "service_role";
 
 grant trigger on table "public"."group" to "service_role";
 
 grant truncate on table "public"."group" to "service_role";
 
-grant update on table "public"."group" to "service_role";
-
-grant delete on table "public"."group_connection" to "anon";
-
-grant insert on table "public"."group_connection" to "anon";
-
 grant references on table "public"."group_connection" to "anon";
-
-grant select on table "public"."group_connection" to "anon";
 
 grant trigger on table "public"."group_connection" to "anon";
 
 grant truncate on table "public"."group_connection" to "anon";
 
-grant update on table "public"."group_connection" to "anon";
-
-grant delete on table "public"."group_connection" to "authenticated";
-
-grant insert on table "public"."group_connection" to "authenticated";
-
 grant references on table "public"."group_connection" to "authenticated";
-
-grant select on table "public"."group_connection" to "authenticated";
 
 grant trigger on table "public"."group_connection" to "authenticated";
 
 grant truncate on table "public"."group_connection" to "authenticated";
 
-grant update on table "public"."group_connection" to "authenticated";
-
-grant delete on table "public"."group_connection" to "service_role";
-
-grant insert on table "public"."group_connection" to "service_role";
-
 grant references on table "public"."group_connection" to "service_role";
-
-grant select on table "public"."group_connection" to "service_role";
 
 grant trigger on table "public"."group_connection" to "service_role";
 
 grant truncate on table "public"."group_connection" to "service_role";
 
-grant update on table "public"."group_connection" to "service_role";
-
-grant delete on table "public"."group_connection_request" to "anon";
-
-grant insert on table "public"."group_connection_request" to "anon";
-
 grant references on table "public"."group_connection_request" to "anon";
-
-grant select on table "public"."group_connection_request" to "anon";
 
 grant trigger on table "public"."group_connection_request" to "anon";
 
 grant truncate on table "public"."group_connection_request" to "anon";
 
-grant update on table "public"."group_connection_request" to "anon";
-
-grant delete on table "public"."group_connection_request" to "authenticated";
-
-grant insert on table "public"."group_connection_request" to "authenticated";
-
 grant references on table "public"."group_connection_request" to "authenticated";
-
-grant select on table "public"."group_connection_request" to "authenticated";
 
 grant trigger on table "public"."group_connection_request" to "authenticated";
 
 grant truncate on table "public"."group_connection_request" to "authenticated";
 
-grant update on table "public"."group_connection_request" to "authenticated";
-
-grant delete on table "public"."group_connection_request" to "service_role";
-
-grant insert on table "public"."group_connection_request" to "service_role";
-
 grant references on table "public"."group_connection_request" to "service_role";
-
-grant select on table "public"."group_connection_request" to "service_role";
 
 grant trigger on table "public"."group_connection_request" to "service_role";
 
 grant truncate on table "public"."group_connection_request" to "service_role";
 
-grant update on table "public"."group_connection_request" to "service_role";
-
-grant delete on table "public"."group_delegate_allocation" to "anon";
-
-grant insert on table "public"."group_delegate_allocation" to "anon";
-
 grant references on table "public"."group_delegate_allocation" to "anon";
-
-grant select on table "public"."group_delegate_allocation" to "anon";
 
 grant trigger on table "public"."group_delegate_allocation" to "anon";
 
 grant truncate on table "public"."group_delegate_allocation" to "anon";
 
-grant update on table "public"."group_delegate_allocation" to "anon";
-
-grant delete on table "public"."group_delegate_allocation" to "authenticated";
-
-grant insert on table "public"."group_delegate_allocation" to "authenticated";
-
 grant references on table "public"."group_delegate_allocation" to "authenticated";
-
-grant select on table "public"."group_delegate_allocation" to "authenticated";
 
 grant trigger on table "public"."group_delegate_allocation" to "authenticated";
 
 grant truncate on table "public"."group_delegate_allocation" to "authenticated";
 
-grant update on table "public"."group_delegate_allocation" to "authenticated";
-
-grant delete on table "public"."group_delegate_allocation" to "service_role";
-
-grant insert on table "public"."group_delegate_allocation" to "service_role";
-
 grant references on table "public"."group_delegate_allocation" to "service_role";
-
-grant select on table "public"."group_delegate_allocation" to "service_role";
 
 grant trigger on table "public"."group_delegate_allocation" to "service_role";
 
 grant truncate on table "public"."group_delegate_allocation" to "service_role";
 
-grant update on table "public"."group_delegate_allocation" to "service_role";
-
-grant delete on table "public"."group_effective_right" to "anon";
-
-grant insert on table "public"."group_effective_right" to "anon";
-
 grant references on table "public"."group_effective_right" to "anon";
-
-grant select on table "public"."group_effective_right" to "anon";
 
 grant trigger on table "public"."group_effective_right" to "anon";
 
 grant truncate on table "public"."group_effective_right" to "anon";
 
-grant update on table "public"."group_effective_right" to "anon";
-
-grant delete on table "public"."group_effective_right" to "authenticated";
-
-grant insert on table "public"."group_effective_right" to "authenticated";
-
 grant references on table "public"."group_effective_right" to "authenticated";
-
-grant select on table "public"."group_effective_right" to "authenticated";
 
 grant trigger on table "public"."group_effective_right" to "authenticated";
 
 grant truncate on table "public"."group_effective_right" to "authenticated";
 
-grant update on table "public"."group_effective_right" to "authenticated";
-
-grant delete on table "public"."group_effective_right" to "service_role";
-
-grant insert on table "public"."group_effective_right" to "service_role";
-
 grant references on table "public"."group_effective_right" to "service_role";
-
-grant select on table "public"."group_effective_right" to "service_role";
 
 grant trigger on table "public"."group_effective_right" to "service_role";
 
 grant truncate on table "public"."group_effective_right" to "service_role";
 
-grant update on table "public"."group_effective_right" to "service_role";
-
-grant delete on table "public"."group_guest_access" to "anon";
-
-grant insert on table "public"."group_guest_access" to "anon";
-
 grant references on table "public"."group_guest_access" to "anon";
-
-grant select on table "public"."group_guest_access" to "anon";
 
 grant trigger on table "public"."group_guest_access" to "anon";
 
 grant truncate on table "public"."group_guest_access" to "anon";
 
-grant update on table "public"."group_guest_access" to "anon";
-
-grant delete on table "public"."group_guest_access" to "authenticated";
-
-grant insert on table "public"."group_guest_access" to "authenticated";
-
 grant references on table "public"."group_guest_access" to "authenticated";
-
-grant select on table "public"."group_guest_access" to "authenticated";
 
 grant trigger on table "public"."group_guest_access" to "authenticated";
 
 grant truncate on table "public"."group_guest_access" to "authenticated";
 
-grant update on table "public"."group_guest_access" to "authenticated";
-
-grant delete on table "public"."group_guest_access" to "service_role";
-
-grant insert on table "public"."group_guest_access" to "service_role";
-
 grant references on table "public"."group_guest_access" to "service_role";
-
-grant select on table "public"."group_guest_access" to "service_role";
 
 grant trigger on table "public"."group_guest_access" to "service_role";
 
 grant truncate on table "public"."group_guest_access" to "service_role";
 
-grant update on table "public"."group_guest_access" to "service_role";
-
-grant delete on table "public"."group_guest_role" to "anon";
-
-grant insert on table "public"."group_guest_role" to "anon";
-
 grant references on table "public"."group_guest_role" to "anon";
-
-grant select on table "public"."group_guest_role" to "anon";
 
 grant trigger on table "public"."group_guest_role" to "anon";
 
 grant truncate on table "public"."group_guest_role" to "anon";
 
-grant update on table "public"."group_guest_role" to "anon";
-
-grant delete on table "public"."group_guest_role" to "authenticated";
-
-grant insert on table "public"."group_guest_role" to "authenticated";
-
 grant references on table "public"."group_guest_role" to "authenticated";
-
-grant select on table "public"."group_guest_role" to "authenticated";
 
 grant trigger on table "public"."group_guest_role" to "authenticated";
 
 grant truncate on table "public"."group_guest_role" to "authenticated";
 
-grant update on table "public"."group_guest_role" to "authenticated";
-
-grant delete on table "public"."group_guest_role" to "service_role";
-
-grant insert on table "public"."group_guest_role" to "service_role";
-
 grant references on table "public"."group_guest_role" to "service_role";
-
-grant select on table "public"."group_guest_role" to "service_role";
 
 grant trigger on table "public"."group_guest_role" to "service_role";
 
 grant truncate on table "public"."group_guest_role" to "service_role";
 
-grant update on table "public"."group_guest_role" to "service_role";
-
-grant delete on table "public"."group_hashtag" to "anon";
-
-grant insert on table "public"."group_hashtag" to "anon";
-
 grant references on table "public"."group_hashtag" to "anon";
-
-grant select on table "public"."group_hashtag" to "anon";
 
 grant trigger on table "public"."group_hashtag" to "anon";
 
 grant truncate on table "public"."group_hashtag" to "anon";
 
-grant update on table "public"."group_hashtag" to "anon";
-
-grant delete on table "public"."group_hashtag" to "authenticated";
-
-grant insert on table "public"."group_hashtag" to "authenticated";
-
 grant references on table "public"."group_hashtag" to "authenticated";
-
-grant select on table "public"."group_hashtag" to "authenticated";
 
 grant trigger on table "public"."group_hashtag" to "authenticated";
 
 grant truncate on table "public"."group_hashtag" to "authenticated";
 
-grant update on table "public"."group_hashtag" to "authenticated";
-
-grant delete on table "public"."group_hashtag" to "service_role";
-
-grant insert on table "public"."group_hashtag" to "service_role";
-
 grant references on table "public"."group_hashtag" to "service_role";
-
-grant select on table "public"."group_hashtag" to "service_role";
 
 grant trigger on table "public"."group_hashtag" to "service_role";
 
 grant truncate on table "public"."group_hashtag" to "service_role";
 
-grant update on table "public"."group_hashtag" to "service_role";
-
-grant delete on table "public"."group_hierarchy_path" to "anon";
-
-grant insert on table "public"."group_hierarchy_path" to "anon";
-
 grant references on table "public"."group_hierarchy_path" to "anon";
-
-grant select on table "public"."group_hierarchy_path" to "anon";
 
 grant trigger on table "public"."group_hierarchy_path" to "anon";
 
 grant truncate on table "public"."group_hierarchy_path" to "anon";
 
-grant update on table "public"."group_hierarchy_path" to "anon";
-
-grant delete on table "public"."group_hierarchy_path" to "authenticated";
-
-grant insert on table "public"."group_hierarchy_path" to "authenticated";
-
 grant references on table "public"."group_hierarchy_path" to "authenticated";
-
-grant select on table "public"."group_hierarchy_path" to "authenticated";
 
 grant trigger on table "public"."group_hierarchy_path" to "authenticated";
 
 grant truncate on table "public"."group_hierarchy_path" to "authenticated";
 
-grant update on table "public"."group_hierarchy_path" to "authenticated";
-
-grant delete on table "public"."group_hierarchy_path" to "service_role";
-
-grant insert on table "public"."group_hierarchy_path" to "service_role";
-
 grant references on table "public"."group_hierarchy_path" to "service_role";
-
-grant select on table "public"."group_hierarchy_path" to "service_role";
 
 grant trigger on table "public"."group_hierarchy_path" to "service_role";
 
 grant truncate on table "public"."group_hierarchy_path" to "service_role";
 
-grant update on table "public"."group_hierarchy_path" to "service_role";
-
-grant delete on table "public"."group_membership" to "anon";
-
-grant insert on table "public"."group_membership" to "anon";
-
 grant references on table "public"."group_membership" to "anon";
-
-grant select on table "public"."group_membership" to "anon";
 
 grant trigger on table "public"."group_membership" to "anon";
 
 grant truncate on table "public"."group_membership" to "anon";
 
-grant update on table "public"."group_membership" to "anon";
-
-grant delete on table "public"."group_membership" to "authenticated";
-
-grant insert on table "public"."group_membership" to "authenticated";
-
 grant references on table "public"."group_membership" to "authenticated";
-
-grant select on table "public"."group_membership" to "authenticated";
 
 grant trigger on table "public"."group_membership" to "authenticated";
 
 grant truncate on table "public"."group_membership" to "authenticated";
 
-grant update on table "public"."group_membership" to "authenticated";
-
-grant delete on table "public"."group_membership" to "service_role";
-
-grant insert on table "public"."group_membership" to "service_role";
-
 grant references on table "public"."group_membership" to "service_role";
-
-grant select on table "public"."group_membership" to "service_role";
 
 grant trigger on table "public"."group_membership" to "service_role";
 
 grant truncate on table "public"."group_membership" to "service_role";
 
-grant update on table "public"."group_membership" to "service_role";
-
-grant delete on table "public"."group_membership_exclusivity_lock" to "anon";
-
-grant insert on table "public"."group_membership_exclusivity_lock" to "anon";
-
 grant references on table "public"."group_membership_exclusivity_lock" to "anon";
-
-grant select on table "public"."group_membership_exclusivity_lock" to "anon";
 
 grant trigger on table "public"."group_membership_exclusivity_lock" to "anon";
 
 grant truncate on table "public"."group_membership_exclusivity_lock" to "anon";
 
-grant update on table "public"."group_membership_exclusivity_lock" to "anon";
-
-grant delete on table "public"."group_membership_exclusivity_lock" to "authenticated";
-
-grant insert on table "public"."group_membership_exclusivity_lock" to "authenticated";
-
 grant references on table "public"."group_membership_exclusivity_lock" to "authenticated";
-
-grant select on table "public"."group_membership_exclusivity_lock" to "authenticated";
 
 grant trigger on table "public"."group_membership_exclusivity_lock" to "authenticated";
 
 grant truncate on table "public"."group_membership_exclusivity_lock" to "authenticated";
 
-grant update on table "public"."group_membership_exclusivity_lock" to "authenticated";
-
-grant delete on table "public"."group_membership_exclusivity_lock" to "service_role";
-
-grant insert on table "public"."group_membership_exclusivity_lock" to "service_role";
-
 grant references on table "public"."group_membership_exclusivity_lock" to "service_role";
-
-grant select on table "public"."group_membership_exclusivity_lock" to "service_role";
 
 grant trigger on table "public"."group_membership_exclusivity_lock" to "service_role";
 
 grant truncate on table "public"."group_membership_exclusivity_lock" to "service_role";
 
-grant update on table "public"."group_membership_exclusivity_lock" to "service_role";
-
-grant delete on table "public"."group_membership_origin" to "anon";
-
-grant insert on table "public"."group_membership_origin" to "anon";
-
 grant references on table "public"."group_membership_origin" to "anon";
-
-grant select on table "public"."group_membership_origin" to "anon";
 
 grant trigger on table "public"."group_membership_origin" to "anon";
 
 grant truncate on table "public"."group_membership_origin" to "anon";
 
-grant update on table "public"."group_membership_origin" to "anon";
-
-grant delete on table "public"."group_membership_origin" to "authenticated";
-
-grant insert on table "public"."group_membership_origin" to "authenticated";
-
 grant references on table "public"."group_membership_origin" to "authenticated";
-
-grant select on table "public"."group_membership_origin" to "authenticated";
 
 grant trigger on table "public"."group_membership_origin" to "authenticated";
 
 grant truncate on table "public"."group_membership_origin" to "authenticated";
 
-grant update on table "public"."group_membership_origin" to "authenticated";
-
-grant delete on table "public"."group_membership_origin" to "service_role";
-
-grant insert on table "public"."group_membership_origin" to "service_role";
-
 grant references on table "public"."group_membership_origin" to "service_role";
-
-grant select on table "public"."group_membership_origin" to "service_role";
 
 grant trigger on table "public"."group_membership_origin" to "service_role";
 
 grant truncate on table "public"."group_membership_origin" to "service_role";
 
-grant update on table "public"."group_membership_origin" to "service_role";
-
-grant delete on table "public"."group_membership_role" to "anon";
-
-grant insert on table "public"."group_membership_role" to "anon";
-
 grant references on table "public"."group_membership_role" to "anon";
-
-grant select on table "public"."group_membership_role" to "anon";
 
 grant trigger on table "public"."group_membership_role" to "anon";
 
 grant truncate on table "public"."group_membership_role" to "anon";
 
-grant update on table "public"."group_membership_role" to "anon";
-
-grant delete on table "public"."group_membership_role" to "authenticated";
-
-grant insert on table "public"."group_membership_role" to "authenticated";
-
 grant references on table "public"."group_membership_role" to "authenticated";
-
-grant select on table "public"."group_membership_role" to "authenticated";
 
 grant trigger on table "public"."group_membership_role" to "authenticated";
 
 grant truncate on table "public"."group_membership_role" to "authenticated";
 
-grant update on table "public"."group_membership_role" to "authenticated";
-
-grant delete on table "public"."group_membership_role" to "service_role";
-
-grant insert on table "public"."group_membership_role" to "service_role";
-
 grant references on table "public"."group_membership_role" to "service_role";
-
-grant select on table "public"."group_membership_role" to "service_role";
 
 grant trigger on table "public"."group_membership_role" to "service_role";
 
 grant truncate on table "public"."group_membership_role" to "service_role";
 
-grant update on table "public"."group_membership_role" to "service_role";
-
-grant delete on table "public"."group_membership_rule" to "anon";
-
-grant insert on table "public"."group_membership_rule" to "anon";
-
 grant references on table "public"."group_membership_rule" to "anon";
-
-grant select on table "public"."group_membership_rule" to "anon";
 
 grant trigger on table "public"."group_membership_rule" to "anon";
 
 grant truncate on table "public"."group_membership_rule" to "anon";
 
-grant update on table "public"."group_membership_rule" to "anon";
-
-grant delete on table "public"."group_membership_rule" to "authenticated";
-
-grant insert on table "public"."group_membership_rule" to "authenticated";
-
 grant references on table "public"."group_membership_rule" to "authenticated";
-
-grant select on table "public"."group_membership_rule" to "authenticated";
 
 grant trigger on table "public"."group_membership_rule" to "authenticated";
 
 grant truncate on table "public"."group_membership_rule" to "authenticated";
 
-grant update on table "public"."group_membership_rule" to "authenticated";
-
-grant delete on table "public"."group_membership_rule" to "service_role";
-
-grant insert on table "public"."group_membership_rule" to "service_role";
-
 grant references on table "public"."group_membership_rule" to "service_role";
-
-grant select on table "public"."group_membership_rule" to "service_role";
 
 grant trigger on table "public"."group_membership_rule" to "service_role";
 
 grant truncate on table "public"."group_membership_rule" to "service_role";
 
-grant update on table "public"."group_membership_rule" to "service_role";
-
-grant delete on table "public"."group_membership_rule_origin" to "anon";
-
-grant insert on table "public"."group_membership_rule_origin" to "anon";
-
 grant references on table "public"."group_membership_rule_origin" to "anon";
-
-grant select on table "public"."group_membership_rule_origin" to "anon";
 
 grant trigger on table "public"."group_membership_rule_origin" to "anon";
 
 grant truncate on table "public"."group_membership_rule_origin" to "anon";
 
-grant update on table "public"."group_membership_rule_origin" to "anon";
-
-grant delete on table "public"."group_membership_rule_origin" to "authenticated";
-
-grant insert on table "public"."group_membership_rule_origin" to "authenticated";
-
 grant references on table "public"."group_membership_rule_origin" to "authenticated";
-
-grant select on table "public"."group_membership_rule_origin" to "authenticated";
 
 grant trigger on table "public"."group_membership_rule_origin" to "authenticated";
 
 grant truncate on table "public"."group_membership_rule_origin" to "authenticated";
 
-grant update on table "public"."group_membership_rule_origin" to "authenticated";
-
-grant delete on table "public"."group_membership_rule_origin" to "service_role";
-
-grant insert on table "public"."group_membership_rule_origin" to "service_role";
-
 grant references on table "public"."group_membership_rule_origin" to "service_role";
-
-grant select on table "public"."group_membership_rule_origin" to "service_role";
 
 grant trigger on table "public"."group_membership_rule_origin" to "service_role";
 
 grant truncate on table "public"."group_membership_rule_origin" to "service_role";
 
-grant update on table "public"."group_membership_rule_origin" to "service_role";
-
-grant delete on table "public"."group_membership_rule_request" to "anon";
-
-grant insert on table "public"."group_membership_rule_request" to "anon";
-
 grant references on table "public"."group_membership_rule_request" to "anon";
-
-grant select on table "public"."group_membership_rule_request" to "anon";
 
 grant trigger on table "public"."group_membership_rule_request" to "anon";
 
 grant truncate on table "public"."group_membership_rule_request" to "anon";
 
-grant update on table "public"."group_membership_rule_request" to "anon";
-
-grant delete on table "public"."group_membership_rule_request" to "authenticated";
-
-grant insert on table "public"."group_membership_rule_request" to "authenticated";
-
 grant references on table "public"."group_membership_rule_request" to "authenticated";
-
-grant select on table "public"."group_membership_rule_request" to "authenticated";
 
 grant trigger on table "public"."group_membership_rule_request" to "authenticated";
 
 grant truncate on table "public"."group_membership_rule_request" to "authenticated";
 
-grant update on table "public"."group_membership_rule_request" to "authenticated";
-
-grant delete on table "public"."group_membership_rule_request" to "service_role";
-
-grant insert on table "public"."group_membership_rule_request" to "service_role";
-
 grant references on table "public"."group_membership_rule_request" to "service_role";
-
-grant select on table "public"."group_membership_rule_request" to "service_role";
 
 grant trigger on table "public"."group_membership_rule_request" to "service_role";
 
 grant truncate on table "public"."group_membership_rule_request" to "service_role";
 
-grant update on table "public"."group_membership_rule_request" to "service_role";
-
-grant delete on table "public"."group_membership_rule_request_origin" to "anon";
-
-grant insert on table "public"."group_membership_rule_request_origin" to "anon";
-
 grant references on table "public"."group_membership_rule_request_origin" to "anon";
-
-grant select on table "public"."group_membership_rule_request_origin" to "anon";
 
 grant trigger on table "public"."group_membership_rule_request_origin" to "anon";
 
 grant truncate on table "public"."group_membership_rule_request_origin" to "anon";
 
-grant update on table "public"."group_membership_rule_request_origin" to "anon";
-
-grant delete on table "public"."group_membership_rule_request_origin" to "authenticated";
-
-grant insert on table "public"."group_membership_rule_request_origin" to "authenticated";
-
 grant references on table "public"."group_membership_rule_request_origin" to "authenticated";
-
-grant select on table "public"."group_membership_rule_request_origin" to "authenticated";
 
 grant trigger on table "public"."group_membership_rule_request_origin" to "authenticated";
 
 grant truncate on table "public"."group_membership_rule_request_origin" to "authenticated";
 
-grant update on table "public"."group_membership_rule_request_origin" to "authenticated";
-
-grant delete on table "public"."group_membership_rule_request_origin" to "service_role";
-
-grant insert on table "public"."group_membership_rule_request_origin" to "service_role";
-
 grant references on table "public"."group_membership_rule_request_origin" to "service_role";
-
-grant select on table "public"."group_membership_rule_request_origin" to "service_role";
 
 grant trigger on table "public"."group_membership_rule_request_origin" to "service_role";
 
 grant truncate on table "public"."group_membership_rule_request_origin" to "service_role";
 
-grant update on table "public"."group_membership_rule_request_origin" to "service_role";
-
-grant delete on table "public"."group_offline_member" to "anon";
-
-grant insert on table "public"."group_offline_member" to "anon";
-
 grant references on table "public"."group_offline_member" to "anon";
-
-grant select on table "public"."group_offline_member" to "anon";
 
 grant trigger on table "public"."group_offline_member" to "anon";
 
 grant truncate on table "public"."group_offline_member" to "anon";
 
-grant update on table "public"."group_offline_member" to "anon";
-
-grant delete on table "public"."group_offline_member" to "authenticated";
-
-grant insert on table "public"."group_offline_member" to "authenticated";
-
 grant references on table "public"."group_offline_member" to "authenticated";
-
-grant select on table "public"."group_offline_member" to "authenticated";
 
 grant trigger on table "public"."group_offline_member" to "authenticated";
 
 grant truncate on table "public"."group_offline_member" to "authenticated";
 
-grant update on table "public"."group_offline_member" to "authenticated";
-
-grant delete on table "public"."group_offline_member" to "service_role";
-
-grant insert on table "public"."group_offline_member" to "service_role";
-
 grant references on table "public"."group_offline_member" to "service_role";
-
-grant select on table "public"."group_offline_member" to "service_role";
 
 grant trigger on table "public"."group_offline_member" to "service_role";
 
 grant truncate on table "public"."group_offline_member" to "service_role";
 
-grant update on table "public"."group_offline_member" to "service_role";
-
-grant delete on table "public"."group_offline_membership" to "anon";
-
-grant insert on table "public"."group_offline_membership" to "anon";
-
 grant references on table "public"."group_offline_membership" to "anon";
-
-grant select on table "public"."group_offline_membership" to "anon";
 
 grant trigger on table "public"."group_offline_membership" to "anon";
 
 grant truncate on table "public"."group_offline_membership" to "anon";
 
-grant update on table "public"."group_offline_membership" to "anon";
-
-grant delete on table "public"."group_offline_membership" to "authenticated";
-
-grant insert on table "public"."group_offline_membership" to "authenticated";
-
 grant references on table "public"."group_offline_membership" to "authenticated";
-
-grant select on table "public"."group_offline_membership" to "authenticated";
 
 grant trigger on table "public"."group_offline_membership" to "authenticated";
 
 grant truncate on table "public"."group_offline_membership" to "authenticated";
 
-grant update on table "public"."group_offline_membership" to "authenticated";
-
-grant delete on table "public"."group_offline_membership" to "service_role";
-
-grant insert on table "public"."group_offline_membership" to "service_role";
-
 grant references on table "public"."group_offline_membership" to "service_role";
-
-grant select on table "public"."group_offline_membership" to "service_role";
 
 grant trigger on table "public"."group_offline_membership" to "service_role";
 
 grant truncate on table "public"."group_offline_membership" to "service_role";
 
-grant update on table "public"."group_offline_membership" to "service_role";
-
-grant delete on table "public"."group_offline_membership_role" to "anon";
-
-grant insert on table "public"."group_offline_membership_role" to "anon";
-
 grant references on table "public"."group_offline_membership_role" to "anon";
-
-grant select on table "public"."group_offline_membership_role" to "anon";
 
 grant trigger on table "public"."group_offline_membership_role" to "anon";
 
 grant truncate on table "public"."group_offline_membership_role" to "anon";
 
-grant update on table "public"."group_offline_membership_role" to "anon";
-
-grant delete on table "public"."group_offline_membership_role" to "authenticated";
-
-grant insert on table "public"."group_offline_membership_role" to "authenticated";
-
 grant references on table "public"."group_offline_membership_role" to "authenticated";
-
-grant select on table "public"."group_offline_membership_role" to "authenticated";
 
 grant trigger on table "public"."group_offline_membership_role" to "authenticated";
 
 grant truncate on table "public"."group_offline_membership_role" to "authenticated";
 
-grant update on table "public"."group_offline_membership_role" to "authenticated";
-
-grant delete on table "public"."group_offline_membership_role" to "service_role";
-
-grant insert on table "public"."group_offline_membership_role" to "service_role";
-
 grant references on table "public"."group_offline_membership_role" to "service_role";
-
-grant select on table "public"."group_offline_membership_role" to "service_role";
 
 grant trigger on table "public"."group_offline_membership_role" to "service_role";
 
 grant truncate on table "public"."group_offline_membership_role" to "service_role";
 
-grant update on table "public"."group_offline_membership_role" to "service_role";
-
-grant delete on table "public"."group_right_grant" to "anon";
-
-grant insert on table "public"."group_right_grant" to "anon";
-
 grant references on table "public"."group_right_grant" to "anon";
-
-grant select on table "public"."group_right_grant" to "anon";
 
 grant trigger on table "public"."group_right_grant" to "anon";
 
 grant truncate on table "public"."group_right_grant" to "anon";
 
-grant update on table "public"."group_right_grant" to "anon";
-
-grant delete on table "public"."group_right_grant" to "authenticated";
-
-grant insert on table "public"."group_right_grant" to "authenticated";
-
 grant references on table "public"."group_right_grant" to "authenticated";
-
-grant select on table "public"."group_right_grant" to "authenticated";
 
 grant trigger on table "public"."group_right_grant" to "authenticated";
 
 grant truncate on table "public"."group_right_grant" to "authenticated";
 
-grant update on table "public"."group_right_grant" to "authenticated";
-
-grant delete on table "public"."group_right_grant" to "service_role";
-
-grant insert on table "public"."group_right_grant" to "service_role";
-
 grant references on table "public"."group_right_grant" to "service_role";
-
-grant select on table "public"."group_right_grant" to "service_role";
 
 grant trigger on table "public"."group_right_grant" to "service_role";
 
 grant truncate on table "public"."group_right_grant" to "service_role";
 
-grant update on table "public"."group_right_grant" to "service_role";
-
-grant delete on table "public"."group_right_grant_request" to "anon";
-
-grant insert on table "public"."group_right_grant_request" to "anon";
-
 grant references on table "public"."group_right_grant_request" to "anon";
-
-grant select on table "public"."group_right_grant_request" to "anon";
 
 grant trigger on table "public"."group_right_grant_request" to "anon";
 
 grant truncate on table "public"."group_right_grant_request" to "anon";
 
-grant update on table "public"."group_right_grant_request" to "anon";
-
-grant delete on table "public"."group_right_grant_request" to "authenticated";
-
-grant insert on table "public"."group_right_grant_request" to "authenticated";
-
 grant references on table "public"."group_right_grant_request" to "authenticated";
-
-grant select on table "public"."group_right_grant_request" to "authenticated";
 
 grant trigger on table "public"."group_right_grant_request" to "authenticated";
 
 grant truncate on table "public"."group_right_grant_request" to "authenticated";
 
-grant update on table "public"."group_right_grant_request" to "authenticated";
-
-grant delete on table "public"."group_right_grant_request" to "service_role";
-
-grant insert on table "public"."group_right_grant_request" to "service_role";
-
 grant references on table "public"."group_right_grant_request" to "service_role";
-
-grant select on table "public"."group_right_grant_request" to "service_role";
 
 grant trigger on table "public"."group_right_grant_request" to "service_role";
 
 grant truncate on table "public"."group_right_grant_request" to "service_role";
 
-grant update on table "public"."group_right_grant_request" to "service_role";
-
-grant delete on table "public"."group_sibling_source_lock" to "anon";
-
-grant insert on table "public"."group_sibling_source_lock" to "anon";
-
 grant references on table "public"."group_sibling_source_lock" to "anon";
-
-grant select on table "public"."group_sibling_source_lock" to "anon";
 
 grant trigger on table "public"."group_sibling_source_lock" to "anon";
 
 grant truncate on table "public"."group_sibling_source_lock" to "anon";
 
-grant update on table "public"."group_sibling_source_lock" to "anon";
-
-grant delete on table "public"."group_sibling_source_lock" to "authenticated";
-
-grant insert on table "public"."group_sibling_source_lock" to "authenticated";
-
 grant references on table "public"."group_sibling_source_lock" to "authenticated";
-
-grant select on table "public"."group_sibling_source_lock" to "authenticated";
 
 grant trigger on table "public"."group_sibling_source_lock" to "authenticated";
 
 grant truncate on table "public"."group_sibling_source_lock" to "authenticated";
 
-grant update on table "public"."group_sibling_source_lock" to "authenticated";
-
-grant delete on table "public"."group_sibling_source_lock" to "service_role";
-
-grant insert on table "public"."group_sibling_source_lock" to "service_role";
-
 grant references on table "public"."group_sibling_source_lock" to "service_role";
-
-grant select on table "public"."group_sibling_source_lock" to "service_role";
 
 grant trigger on table "public"."group_sibling_source_lock" to "service_role";
 
 grant truncate on table "public"."group_sibling_source_lock" to "service_role";
 
-grant update on table "public"."group_sibling_source_lock" to "service_role";
-
-grant delete on table "public"."group_workflow" to "anon";
-
-grant insert on table "public"."group_workflow" to "anon";
-
 grant references on table "public"."group_workflow" to "anon";
-
-grant select on table "public"."group_workflow" to "anon";
 
 grant trigger on table "public"."group_workflow" to "anon";
 
 grant truncate on table "public"."group_workflow" to "anon";
 
-grant update on table "public"."group_workflow" to "anon";
-
-grant delete on table "public"."group_workflow" to "authenticated";
-
-grant insert on table "public"."group_workflow" to "authenticated";
-
 grant references on table "public"."group_workflow" to "authenticated";
-
-grant select on table "public"."group_workflow" to "authenticated";
 
 grant trigger on table "public"."group_workflow" to "authenticated";
 
 grant truncate on table "public"."group_workflow" to "authenticated";
 
-grant update on table "public"."group_workflow" to "authenticated";
-
-grant delete on table "public"."group_workflow" to "service_role";
-
-grant insert on table "public"."group_workflow" to "service_role";
-
 grant references on table "public"."group_workflow" to "service_role";
-
-grant select on table "public"."group_workflow" to "service_role";
 
 grant trigger on table "public"."group_workflow" to "service_role";
 
 grant truncate on table "public"."group_workflow" to "service_role";
 
-grant update on table "public"."group_workflow" to "service_role";
-
-grant delete on table "public"."group_workflow_approval" to "anon";
-
-grant insert on table "public"."group_workflow_approval" to "anon";
-
 grant references on table "public"."group_workflow_approval" to "anon";
-
-grant select on table "public"."group_workflow_approval" to "anon";
 
 grant trigger on table "public"."group_workflow_approval" to "anon";
 
 grant truncate on table "public"."group_workflow_approval" to "anon";
 
-grant update on table "public"."group_workflow_approval" to "anon";
-
-grant delete on table "public"."group_workflow_approval" to "authenticated";
-
-grant insert on table "public"."group_workflow_approval" to "authenticated";
-
 grant references on table "public"."group_workflow_approval" to "authenticated";
-
-grant select on table "public"."group_workflow_approval" to "authenticated";
 
 grant trigger on table "public"."group_workflow_approval" to "authenticated";
 
 grant truncate on table "public"."group_workflow_approval" to "authenticated";
 
-grant update on table "public"."group_workflow_approval" to "authenticated";
-
-grant delete on table "public"."group_workflow_approval" to "service_role";
-
-grant insert on table "public"."group_workflow_approval" to "service_role";
-
 grant references on table "public"."group_workflow_approval" to "service_role";
-
-grant select on table "public"."group_workflow_approval" to "service_role";
 
 grant trigger on table "public"."group_workflow_approval" to "service_role";
 
 grant truncate on table "public"."group_workflow_approval" to "service_role";
 
-grant update on table "public"."group_workflow_approval" to "service_role";
-
-grant delete on table "public"."group_workflow_step" to "anon";
-
-grant insert on table "public"."group_workflow_step" to "anon";
-
 grant references on table "public"."group_workflow_step" to "anon";
-
-grant select on table "public"."group_workflow_step" to "anon";
 
 grant trigger on table "public"."group_workflow_step" to "anon";
 
 grant truncate on table "public"."group_workflow_step" to "anon";
 
-grant update on table "public"."group_workflow_step" to "anon";
-
-grant delete on table "public"."group_workflow_step" to "authenticated";
-
-grant insert on table "public"."group_workflow_step" to "authenticated";
-
 grant references on table "public"."group_workflow_step" to "authenticated";
-
-grant select on table "public"."group_workflow_step" to "authenticated";
 
 grant trigger on table "public"."group_workflow_step" to "authenticated";
 
 grant truncate on table "public"."group_workflow_step" to "authenticated";
 
-grant update on table "public"."group_workflow_step" to "authenticated";
-
-grant delete on table "public"."group_workflow_step" to "service_role";
-
-grant insert on table "public"."group_workflow_step" to "service_role";
-
 grant references on table "public"."group_workflow_step" to "service_role";
-
-grant select on table "public"."group_workflow_step" to "service_role";
 
 grant trigger on table "public"."group_workflow_step" to "service_role";
 
 grant truncate on table "public"."group_workflow_step" to "service_role";
 
-grant update on table "public"."group_workflow_step" to "service_role";
-
-grant delete on table "public"."hashtag" to "anon";
-
-grant insert on table "public"."hashtag" to "anon";
-
 grant references on table "public"."hashtag" to "anon";
-
-grant select on table "public"."hashtag" to "anon";
 
 grant trigger on table "public"."hashtag" to "anon";
 
 grant truncate on table "public"."hashtag" to "anon";
 
-grant update on table "public"."hashtag" to "anon";
-
-grant delete on table "public"."hashtag" to "authenticated";
-
-grant insert on table "public"."hashtag" to "authenticated";
-
 grant references on table "public"."hashtag" to "authenticated";
-
-grant select on table "public"."hashtag" to "authenticated";
 
 grant trigger on table "public"."hashtag" to "authenticated";
 
 grant truncate on table "public"."hashtag" to "authenticated";
 
-grant update on table "public"."hashtag" to "authenticated";
-
-grant delete on table "public"."hashtag" to "service_role";
-
-grant insert on table "public"."hashtag" to "service_role";
-
 grant references on table "public"."hashtag" to "service_role";
-
-grant select on table "public"."hashtag" to "service_role";
 
 grant trigger on table "public"."hashtag" to "service_role";
 
 grant truncate on table "public"."hashtag" to "service_role";
 
-grant update on table "public"."hashtag" to "service_role";
-
-grant delete on table "public"."indicative_candidate_selection" to "anon";
-
-grant insert on table "public"."indicative_candidate_selection" to "anon";
-
 grant references on table "public"."indicative_candidate_selection" to "anon";
-
-grant select on table "public"."indicative_candidate_selection" to "anon";
 
 grant trigger on table "public"."indicative_candidate_selection" to "anon";
 
 grant truncate on table "public"."indicative_candidate_selection" to "anon";
 
-grant update on table "public"."indicative_candidate_selection" to "anon";
-
-grant delete on table "public"."indicative_candidate_selection" to "authenticated";
-
-grant insert on table "public"."indicative_candidate_selection" to "authenticated";
-
 grant references on table "public"."indicative_candidate_selection" to "authenticated";
-
-grant select on table "public"."indicative_candidate_selection" to "authenticated";
 
 grant trigger on table "public"."indicative_candidate_selection" to "authenticated";
 
 grant truncate on table "public"."indicative_candidate_selection" to "authenticated";
 
-grant update on table "public"."indicative_candidate_selection" to "authenticated";
-
-grant delete on table "public"."indicative_candidate_selection" to "service_role";
-
-grant insert on table "public"."indicative_candidate_selection" to "service_role";
-
 grant references on table "public"."indicative_candidate_selection" to "service_role";
-
-grant select on table "public"."indicative_candidate_selection" to "service_role";
 
 grant trigger on table "public"."indicative_candidate_selection" to "service_role";
 
 grant truncate on table "public"."indicative_candidate_selection" to "service_role";
 
-grant update on table "public"."indicative_candidate_selection" to "service_role";
-
-grant delete on table "public"."indicative_choice_decision" to "anon";
-
-grant insert on table "public"."indicative_choice_decision" to "anon";
-
 grant references on table "public"."indicative_choice_decision" to "anon";
-
-grant select on table "public"."indicative_choice_decision" to "anon";
 
 grant trigger on table "public"."indicative_choice_decision" to "anon";
 
 grant truncate on table "public"."indicative_choice_decision" to "anon";
 
-grant update on table "public"."indicative_choice_decision" to "anon";
-
-grant delete on table "public"."indicative_choice_decision" to "authenticated";
-
-grant insert on table "public"."indicative_choice_decision" to "authenticated";
-
 grant references on table "public"."indicative_choice_decision" to "authenticated";
-
-grant select on table "public"."indicative_choice_decision" to "authenticated";
 
 grant trigger on table "public"."indicative_choice_decision" to "authenticated";
 
 grant truncate on table "public"."indicative_choice_decision" to "authenticated";
 
-grant update on table "public"."indicative_choice_decision" to "authenticated";
-
-grant delete on table "public"."indicative_choice_decision" to "service_role";
-
-grant insert on table "public"."indicative_choice_decision" to "service_role";
-
 grant references on table "public"."indicative_choice_decision" to "service_role";
-
-grant select on table "public"."indicative_choice_decision" to "service_role";
 
 grant trigger on table "public"."indicative_choice_decision" to "service_role";
 
 grant truncate on table "public"."indicative_choice_decision" to "service_role";
 
-grant update on table "public"."indicative_choice_decision" to "service_role";
-
-grant delete on table "public"."indicative_elector_participation" to "anon";
-
-grant insert on table "public"."indicative_elector_participation" to "anon";
-
 grant references on table "public"."indicative_elector_participation" to "anon";
-
-grant select on table "public"."indicative_elector_participation" to "anon";
 
 grant trigger on table "public"."indicative_elector_participation" to "anon";
 
 grant truncate on table "public"."indicative_elector_participation" to "anon";
 
-grant update on table "public"."indicative_elector_participation" to "anon";
-
-grant delete on table "public"."indicative_elector_participation" to "authenticated";
-
-grant insert on table "public"."indicative_elector_participation" to "authenticated";
-
 grant references on table "public"."indicative_elector_participation" to "authenticated";
-
-grant select on table "public"."indicative_elector_participation" to "authenticated";
 
 grant trigger on table "public"."indicative_elector_participation" to "authenticated";
 
 grant truncate on table "public"."indicative_elector_participation" to "authenticated";
 
-grant update on table "public"."indicative_elector_participation" to "authenticated";
-
-grant delete on table "public"."indicative_elector_participation" to "service_role";
-
-grant insert on table "public"."indicative_elector_participation" to "service_role";
-
 grant references on table "public"."indicative_elector_participation" to "service_role";
-
-grant select on table "public"."indicative_elector_participation" to "service_role";
 
 grant trigger on table "public"."indicative_elector_participation" to "service_role";
 
 grant truncate on table "public"."indicative_elector_participation" to "service_role";
 
-grant update on table "public"."indicative_elector_participation" to "service_role";
-
-grant delete on table "public"."indicative_voter_participation" to "anon";
-
-grant insert on table "public"."indicative_voter_participation" to "anon";
-
 grant references on table "public"."indicative_voter_participation" to "anon";
-
-grant select on table "public"."indicative_voter_participation" to "anon";
 
 grant trigger on table "public"."indicative_voter_participation" to "anon";
 
 grant truncate on table "public"."indicative_voter_participation" to "anon";
 
-grant update on table "public"."indicative_voter_participation" to "anon";
-
-grant delete on table "public"."indicative_voter_participation" to "authenticated";
-
-grant insert on table "public"."indicative_voter_participation" to "authenticated";
-
 grant references on table "public"."indicative_voter_participation" to "authenticated";
-
-grant select on table "public"."indicative_voter_participation" to "authenticated";
 
 grant trigger on table "public"."indicative_voter_participation" to "authenticated";
 
 grant truncate on table "public"."indicative_voter_participation" to "authenticated";
 
-grant update on table "public"."indicative_voter_participation" to "authenticated";
-
-grant delete on table "public"."indicative_voter_participation" to "service_role";
-
-grant insert on table "public"."indicative_voter_participation" to "service_role";
-
 grant references on table "public"."indicative_voter_participation" to "service_role";
-
-grant select on table "public"."indicative_voter_participation" to "service_role";
 
 grant trigger on table "public"."indicative_voter_participation" to "service_role";
 
 grant truncate on table "public"."indicative_voter_participation" to "service_role";
 
-grant update on table "public"."indicative_voter_participation" to "service_role";
-
-grant delete on table "public"."link" to "anon";
-
-grant insert on table "public"."link" to "anon";
-
 grant references on table "public"."link" to "anon";
-
-grant select on table "public"."link" to "anon";
 
 grant trigger on table "public"."link" to "anon";
 
 grant truncate on table "public"."link" to "anon";
 
-grant update on table "public"."link" to "anon";
-
-grant delete on table "public"."link" to "authenticated";
-
-grant insert on table "public"."link" to "authenticated";
-
 grant references on table "public"."link" to "authenticated";
-
-grant select on table "public"."link" to "authenticated";
 
 grant trigger on table "public"."link" to "authenticated";
 
 grant truncate on table "public"."link" to "authenticated";
 
-grant update on table "public"."link" to "authenticated";
-
-grant delete on table "public"."link" to "service_role";
-
-grant insert on table "public"."link" to "service_role";
-
 grant references on table "public"."link" to "service_role";
-
-grant select on table "public"."link" to "service_role";
 
 grant trigger on table "public"."link" to "service_role";
 
 grant truncate on table "public"."link" to "service_role";
 
-grant update on table "public"."link" to "service_role";
-
-grant delete on table "public"."message" to "anon";
-
-grant insert on table "public"."message" to "anon";
-
 grant references on table "public"."message" to "anon";
-
-grant select on table "public"."message" to "anon";
 
 grant trigger on table "public"."message" to "anon";
 
 grant truncate on table "public"."message" to "anon";
 
-grant update on table "public"."message" to "anon";
-
-grant delete on table "public"."message" to "authenticated";
-
-grant insert on table "public"."message" to "authenticated";
-
 grant references on table "public"."message" to "authenticated";
-
-grant select on table "public"."message" to "authenticated";
 
 grant trigger on table "public"."message" to "authenticated";
 
 grant truncate on table "public"."message" to "authenticated";
 
-grant update on table "public"."message" to "authenticated";
-
-grant delete on table "public"."message" to "service_role";
-
-grant insert on table "public"."message" to "service_role";
-
 grant references on table "public"."message" to "service_role";
-
-grant select on table "public"."message" to "service_role";
 
 grant trigger on table "public"."message" to "service_role";
 
 grant truncate on table "public"."message" to "service_role";
 
-grant update on table "public"."message" to "service_role";
-
-grant delete on table "public"."notification" to "anon";
-
-grant insert on table "public"."notification" to "anon";
-
 grant references on table "public"."notification" to "anon";
-
-grant select on table "public"."notification" to "anon";
 
 grant trigger on table "public"."notification" to "anon";
 
 grant truncate on table "public"."notification" to "anon";
 
-grant update on table "public"."notification" to "anon";
-
-grant delete on table "public"."notification" to "authenticated";
-
-grant insert on table "public"."notification" to "authenticated";
-
 grant references on table "public"."notification" to "authenticated";
-
-grant select on table "public"."notification" to "authenticated";
 
 grant trigger on table "public"."notification" to "authenticated";
 
 grant truncate on table "public"."notification" to "authenticated";
 
-grant update on table "public"."notification" to "authenticated";
-
-grant delete on table "public"."notification" to "service_role";
-
-grant insert on table "public"."notification" to "service_role";
-
 grant references on table "public"."notification" to "service_role";
-
-grant select on table "public"."notification" to "service_role";
 
 grant trigger on table "public"."notification" to "service_role";
 
 grant truncate on table "public"."notification" to "service_role";
 
-grant update on table "public"."notification" to "service_role";
-
-grant delete on table "public"."notification_read" to "anon";
-
-grant insert on table "public"."notification_read" to "anon";
-
 grant references on table "public"."notification_read" to "anon";
-
-grant select on table "public"."notification_read" to "anon";
 
 grant trigger on table "public"."notification_read" to "anon";
 
 grant truncate on table "public"."notification_read" to "anon";
 
-grant update on table "public"."notification_read" to "anon";
-
-grant delete on table "public"."notification_read" to "authenticated";
-
-grant insert on table "public"."notification_read" to "authenticated";
-
 grant references on table "public"."notification_read" to "authenticated";
-
-grant select on table "public"."notification_read" to "authenticated";
 
 grant trigger on table "public"."notification_read" to "authenticated";
 
 grant truncate on table "public"."notification_read" to "authenticated";
 
-grant update on table "public"."notification_read" to "authenticated";
-
-grant delete on table "public"."notification_read" to "service_role";
-
-grant insert on table "public"."notification_read" to "service_role";
-
 grant references on table "public"."notification_read" to "service_role";
-
-grant select on table "public"."notification_read" to "service_role";
 
 grant trigger on table "public"."notification_read" to "service_role";
 
 grant truncate on table "public"."notification_read" to "service_role";
 
-grant update on table "public"."notification_read" to "service_role";
-
-grant delete on table "public"."notification_setting" to "anon";
-
-grant insert on table "public"."notification_setting" to "anon";
-
 grant references on table "public"."notification_setting" to "anon";
-
-grant select on table "public"."notification_setting" to "anon";
 
 grant trigger on table "public"."notification_setting" to "anon";
 
 grant truncate on table "public"."notification_setting" to "anon";
 
-grant update on table "public"."notification_setting" to "anon";
-
-grant delete on table "public"."notification_setting" to "authenticated";
-
-grant insert on table "public"."notification_setting" to "authenticated";
-
 grant references on table "public"."notification_setting" to "authenticated";
-
-grant select on table "public"."notification_setting" to "authenticated";
 
 grant trigger on table "public"."notification_setting" to "authenticated";
 
 grant truncate on table "public"."notification_setting" to "authenticated";
 
-grant update on table "public"."notification_setting" to "authenticated";
-
-grant delete on table "public"."notification_setting" to "service_role";
-
-grant insert on table "public"."notification_setting" to "service_role";
-
 grant references on table "public"."notification_setting" to "service_role";
-
-grant select on table "public"."notification_setting" to "service_role";
 
 grant trigger on table "public"."notification_setting" to "service_role";
 
 grant truncate on table "public"."notification_setting" to "service_role";
 
-grant update on table "public"."notification_setting" to "service_role";
-
-grant delete on table "public"."participant" to "anon";
-
-grant insert on table "public"."participant" to "anon";
-
 grant references on table "public"."participant" to "anon";
-
-grant select on table "public"."participant" to "anon";
 
 grant trigger on table "public"."participant" to "anon";
 
 grant truncate on table "public"."participant" to "anon";
 
-grant update on table "public"."participant" to "anon";
-
-grant delete on table "public"."participant" to "authenticated";
-
-grant insert on table "public"."participant" to "authenticated";
-
 grant references on table "public"."participant" to "authenticated";
-
-grant select on table "public"."participant" to "authenticated";
 
 grant trigger on table "public"."participant" to "authenticated";
 
 grant truncate on table "public"."participant" to "authenticated";
 
-grant update on table "public"."participant" to "authenticated";
-
-grant delete on table "public"."participant" to "service_role";
-
-grant insert on table "public"."participant" to "service_role";
-
 grant references on table "public"."participant" to "service_role";
-
-grant select on table "public"."participant" to "service_role";
 
 grant trigger on table "public"."participant" to "service_role";
 
 grant truncate on table "public"."participant" to "service_role";
 
-grant update on table "public"."participant" to "service_role";
-
-grant delete on table "public"."payment" to "anon";
-
-grant insert on table "public"."payment" to "anon";
-
 grant references on table "public"."payment" to "anon";
-
-grant select on table "public"."payment" to "anon";
 
 grant trigger on table "public"."payment" to "anon";
 
 grant truncate on table "public"."payment" to "anon";
 
-grant update on table "public"."payment" to "anon";
-
-grant delete on table "public"."payment" to "authenticated";
-
-grant insert on table "public"."payment" to "authenticated";
-
 grant references on table "public"."payment" to "authenticated";
-
-grant select on table "public"."payment" to "authenticated";
 
 grant trigger on table "public"."payment" to "authenticated";
 
 grant truncate on table "public"."payment" to "authenticated";
 
-grant update on table "public"."payment" to "authenticated";
-
-grant delete on table "public"."payment" to "service_role";
-
-grant insert on table "public"."payment" to "service_role";
-
 grant references on table "public"."payment" to "service_role";
-
-grant select on table "public"."payment" to "service_role";
 
 grant trigger on table "public"."payment" to "service_role";
 
 grant truncate on table "public"."payment" to "service_role";
 
-grant update on table "public"."payment" to "service_role";
-
-grant delete on table "public"."pql_filter" to "anon";
-
-grant insert on table "public"."pql_filter" to "anon";
-
 grant references on table "public"."pql_filter" to "anon";
-
-grant select on table "public"."pql_filter" to "anon";
 
 grant trigger on table "public"."pql_filter" to "anon";
 
 grant truncate on table "public"."pql_filter" to "anon";
 
-grant update on table "public"."pql_filter" to "anon";
-
-grant delete on table "public"."pql_filter" to "authenticated";
-
-grant insert on table "public"."pql_filter" to "authenticated";
-
 grant references on table "public"."pql_filter" to "authenticated";
-
-grant select on table "public"."pql_filter" to "authenticated";
 
 grant trigger on table "public"."pql_filter" to "authenticated";
 
 grant truncate on table "public"."pql_filter" to "authenticated";
 
-grant update on table "public"."pql_filter" to "authenticated";
-
-grant delete on table "public"."pql_filter" to "service_role";
-
-grant insert on table "public"."pql_filter" to "service_role";
-
 grant references on table "public"."pql_filter" to "service_role";
-
-grant select on table "public"."pql_filter" to "service_role";
 
 grant trigger on table "public"."pql_filter" to "service_role";
 
 grant truncate on table "public"."pql_filter" to "service_role";
 
-grant update on table "public"."pql_filter" to "service_role";
-
-grant delete on table "public"."process_task" to "anon";
-
-grant insert on table "public"."process_task" to "anon";
-
 grant references on table "public"."process_task" to "anon";
-
-grant select on table "public"."process_task" to "anon";
 
 grant trigger on table "public"."process_task" to "anon";
 
 grant truncate on table "public"."process_task" to "anon";
 
-grant update on table "public"."process_task" to "anon";
-
-grant delete on table "public"."process_task" to "authenticated";
-
-grant insert on table "public"."process_task" to "authenticated";
-
 grant references on table "public"."process_task" to "authenticated";
-
-grant select on table "public"."process_task" to "authenticated";
 
 grant trigger on table "public"."process_task" to "authenticated";
 
 grant truncate on table "public"."process_task" to "authenticated";
 
-grant update on table "public"."process_task" to "authenticated";
-
-grant delete on table "public"."process_task" to "service_role";
-
-grant insert on table "public"."process_task" to "service_role";
-
 grant references on table "public"."process_task" to "service_role";
-
-grant select on table "public"."process_task" to "service_role";
 
 grant trigger on table "public"."process_task" to "service_role";
 
 grant truncate on table "public"."process_task" to "service_role";
 
-grant update on table "public"."process_task" to "service_role";
-
-grant delete on table "public"."push_subscription" to "anon";
-
-grant insert on table "public"."push_subscription" to "anon";
-
 grant references on table "public"."push_subscription" to "anon";
-
-grant select on table "public"."push_subscription" to "anon";
 
 grant trigger on table "public"."push_subscription" to "anon";
 
 grant truncate on table "public"."push_subscription" to "anon";
 
-grant update on table "public"."push_subscription" to "anon";
-
-grant delete on table "public"."push_subscription" to "authenticated";
-
-grant insert on table "public"."push_subscription" to "authenticated";
-
 grant references on table "public"."push_subscription" to "authenticated";
-
-grant select on table "public"."push_subscription" to "authenticated";
 
 grant trigger on table "public"."push_subscription" to "authenticated";
 
 grant truncate on table "public"."push_subscription" to "authenticated";
 
-grant update on table "public"."push_subscription" to "authenticated";
-
-grant delete on table "public"."push_subscription" to "service_role";
-
-grant insert on table "public"."push_subscription" to "service_role";
-
 grant references on table "public"."push_subscription" to "service_role";
-
-grant select on table "public"."push_subscription" to "service_role";
 
 grant trigger on table "public"."push_subscription" to "service_role";
 
 grant truncate on table "public"."push_subscription" to "service_role";
 
-grant update on table "public"."push_subscription" to "service_role";
-
-grant delete on table "public"."reaction" to "anon";
-
-grant insert on table "public"."reaction" to "anon";
-
 grant references on table "public"."reaction" to "anon";
-
-grant select on table "public"."reaction" to "anon";
 
 grant trigger on table "public"."reaction" to "anon";
 
 grant truncate on table "public"."reaction" to "anon";
 
-grant update on table "public"."reaction" to "anon";
-
-grant delete on table "public"."reaction" to "authenticated";
-
-grant insert on table "public"."reaction" to "authenticated";
-
 grant references on table "public"."reaction" to "authenticated";
-
-grant select on table "public"."reaction" to "authenticated";
 
 grant trigger on table "public"."reaction" to "authenticated";
 
 grant truncate on table "public"."reaction" to "authenticated";
 
-grant update on table "public"."reaction" to "authenticated";
-
-grant delete on table "public"."reaction" to "service_role";
-
-grant insert on table "public"."reaction" to "service_role";
-
 grant references on table "public"."reaction" to "service_role";
-
-grant select on table "public"."reaction" to "service_role";
 
 grant trigger on table "public"."reaction" to "service_role";
 
 grant truncate on table "public"."reaction" to "service_role";
 
-grant update on table "public"."reaction" to "service_role";
-
-grant delete on table "public"."role" to "anon";
-
-grant insert on table "public"."role" to "anon";
-
 grant references on table "public"."role" to "anon";
-
-grant select on table "public"."role" to "anon";
 
 grant trigger on table "public"."role" to "anon";
 
 grant truncate on table "public"."role" to "anon";
 
-grant update on table "public"."role" to "anon";
-
-grant delete on table "public"."role" to "authenticated";
-
-grant insert on table "public"."role" to "authenticated";
-
 grant references on table "public"."role" to "authenticated";
-
-grant select on table "public"."role" to "authenticated";
 
 grant trigger on table "public"."role" to "authenticated";
 
 grant truncate on table "public"."role" to "authenticated";
 
-grant update on table "public"."role" to "authenticated";
-
-grant delete on table "public"."role" to "service_role";
-
-grant insert on table "public"."role" to "service_role";
-
 grant references on table "public"."role" to "service_role";
-
-grant select on table "public"."role" to "service_role";
 
 grant trigger on table "public"."role" to "service_role";
 
 grant truncate on table "public"."role" to "service_role";
 
-grant update on table "public"."role" to "service_role";
-
-grant delete on table "public"."role_holder_history" to "anon";
-
-grant insert on table "public"."role_holder_history" to "anon";
-
 grant references on table "public"."role_holder_history" to "anon";
-
-grant select on table "public"."role_holder_history" to "anon";
 
 grant trigger on table "public"."role_holder_history" to "anon";
 
 grant truncate on table "public"."role_holder_history" to "anon";
 
-grant update on table "public"."role_holder_history" to "anon";
-
-grant delete on table "public"."role_holder_history" to "authenticated";
-
-grant insert on table "public"."role_holder_history" to "authenticated";
-
 grant references on table "public"."role_holder_history" to "authenticated";
-
-grant select on table "public"."role_holder_history" to "authenticated";
 
 grant trigger on table "public"."role_holder_history" to "authenticated";
 
 grant truncate on table "public"."role_holder_history" to "authenticated";
 
-grant update on table "public"."role_holder_history" to "authenticated";
-
-grant delete on table "public"."role_holder_history" to "service_role";
-
-grant insert on table "public"."role_holder_history" to "service_role";
-
 grant references on table "public"."role_holder_history" to "service_role";
-
-grant select on table "public"."role_holder_history" to "service_role";
 
 grant trigger on table "public"."role_holder_history" to "service_role";
 
 grant truncate on table "public"."role_holder_history" to "service_role";
 
-grant update on table "public"."role_holder_history" to "service_role";
-
-grant delete on table "public"."search_document" to "anon";
-
-grant insert on table "public"."search_document" to "anon";
-
 grant references on table "public"."search_document" to "anon";
-
-grant select on table "public"."search_document" to "anon";
 
 grant trigger on table "public"."search_document" to "anon";
 
 grant truncate on table "public"."search_document" to "anon";
 
-grant update on table "public"."search_document" to "anon";
-
-grant delete on table "public"."search_document" to "authenticated";
-
-grant insert on table "public"."search_document" to "authenticated";
-
 grant references on table "public"."search_document" to "authenticated";
-
-grant select on table "public"."search_document" to "authenticated";
 
 grant trigger on table "public"."search_document" to "authenticated";
 
 grant truncate on table "public"."search_document" to "authenticated";
 
-grant update on table "public"."search_document" to "authenticated";
-
-grant delete on table "public"."search_document" to "service_role";
-
-grant insert on table "public"."search_document" to "service_role";
-
 grant references on table "public"."search_document" to "service_role";
-
-grant select on table "public"."search_document" to "service_role";
 
 grant trigger on table "public"."search_document" to "service_role";
 
 grant truncate on table "public"."search_document" to "service_role";
 
-grant update on table "public"."search_document" to "service_role";
-
-grant delete on table "public"."search_document_acl" to "anon";
-
-grant insert on table "public"."search_document_acl" to "anon";
-
 grant references on table "public"."search_document_acl" to "anon";
-
-grant select on table "public"."search_document_acl" to "anon";
 
 grant trigger on table "public"."search_document_acl" to "anon";
 
 grant truncate on table "public"."search_document_acl" to "anon";
 
-grant update on table "public"."search_document_acl" to "anon";
-
-grant delete on table "public"."search_document_acl" to "authenticated";
-
-grant insert on table "public"."search_document_acl" to "authenticated";
-
 grant references on table "public"."search_document_acl" to "authenticated";
-
-grant select on table "public"."search_document_acl" to "authenticated";
 
 grant trigger on table "public"."search_document_acl" to "authenticated";
 
 grant truncate on table "public"."search_document_acl" to "authenticated";
 
-grant update on table "public"."search_document_acl" to "authenticated";
-
-grant delete on table "public"."search_document_acl" to "service_role";
-
-grant insert on table "public"."search_document_acl" to "service_role";
-
 grant references on table "public"."search_document_acl" to "service_role";
-
-grant select on table "public"."search_document_acl" to "service_role";
 
 grant trigger on table "public"."search_document_acl" to "service_role";
 
 grant truncate on table "public"."search_document_acl" to "service_role";
 
-grant update on table "public"."search_document_acl" to "service_role";
-
-grant delete on table "public"."search_document_topic" to "anon";
-
-grant insert on table "public"."search_document_topic" to "anon";
-
 grant references on table "public"."search_document_topic" to "anon";
-
-grant select on table "public"."search_document_topic" to "anon";
 
 grant trigger on table "public"."search_document_topic" to "anon";
 
 grant truncate on table "public"."search_document_topic" to "anon";
 
-grant update on table "public"."search_document_topic" to "anon";
-
-grant delete on table "public"."search_document_topic" to "authenticated";
-
-grant insert on table "public"."search_document_topic" to "authenticated";
-
 grant references on table "public"."search_document_topic" to "authenticated";
-
-grant select on table "public"."search_document_topic" to "authenticated";
 
 grant trigger on table "public"."search_document_topic" to "authenticated";
 
 grant truncate on table "public"."search_document_topic" to "authenticated";
 
-grant update on table "public"."search_document_topic" to "authenticated";
-
-grant delete on table "public"."search_document_topic" to "service_role";
-
-grant insert on table "public"."search_document_topic" to "service_role";
-
 grant references on table "public"."search_document_topic" to "service_role";
-
-grant select on table "public"."search_document_topic" to "service_role";
 
 grant trigger on table "public"."search_document_topic" to "service_role";
 
 grant truncate on table "public"."search_document_topic" to "service_role";
 
-grant update on table "public"."search_document_topic" to "service_role";
-
-grant delete on table "public"."speaker_list" to "anon";
-
-grant insert on table "public"."speaker_list" to "anon";
-
 grant references on table "public"."speaker_list" to "anon";
-
-grant select on table "public"."speaker_list" to "anon";
 
 grant trigger on table "public"."speaker_list" to "anon";
 
 grant truncate on table "public"."speaker_list" to "anon";
 
-grant update on table "public"."speaker_list" to "anon";
-
-grant delete on table "public"."speaker_list" to "authenticated";
-
-grant insert on table "public"."speaker_list" to "authenticated";
-
 grant references on table "public"."speaker_list" to "authenticated";
-
-grant select on table "public"."speaker_list" to "authenticated";
 
 grant trigger on table "public"."speaker_list" to "authenticated";
 
 grant truncate on table "public"."speaker_list" to "authenticated";
 
-grant update on table "public"."speaker_list" to "authenticated";
-
-grant delete on table "public"."speaker_list" to "service_role";
-
-grant insert on table "public"."speaker_list" to "service_role";
-
 grant references on table "public"."speaker_list" to "service_role";
-
-grant select on table "public"."speaker_list" to "service_role";
 
 grant trigger on table "public"."speaker_list" to "service_role";
 
 grant truncate on table "public"."speaker_list" to "service_role";
 
-grant update on table "public"."speaker_list" to "service_role";
-
-grant delete on table "public"."statement" to "anon";
-
-grant insert on table "public"."statement" to "anon";
-
 grant references on table "public"."statement" to "anon";
-
-grant select on table "public"."statement" to "anon";
 
 grant trigger on table "public"."statement" to "anon";
 
 grant truncate on table "public"."statement" to "anon";
 
-grant update on table "public"."statement" to "anon";
-
-grant delete on table "public"."statement" to "authenticated";
-
-grant insert on table "public"."statement" to "authenticated";
-
 grant references on table "public"."statement" to "authenticated";
-
-grant select on table "public"."statement" to "authenticated";
 
 grant trigger on table "public"."statement" to "authenticated";
 
 grant truncate on table "public"."statement" to "authenticated";
 
-grant update on table "public"."statement" to "authenticated";
-
-grant delete on table "public"."statement" to "service_role";
-
-grant insert on table "public"."statement" to "service_role";
-
 grant references on table "public"."statement" to "service_role";
-
-grant select on table "public"."statement" to "service_role";
 
 grant trigger on table "public"."statement" to "service_role";
 
 grant truncate on table "public"."statement" to "service_role";
 
-grant update on table "public"."statement" to "service_role";
-
-grant delete on table "public"."statement_hashtag" to "anon";
-
-grant insert on table "public"."statement_hashtag" to "anon";
-
 grant references on table "public"."statement_hashtag" to "anon";
-
-grant select on table "public"."statement_hashtag" to "anon";
 
 grant trigger on table "public"."statement_hashtag" to "anon";
 
 grant truncate on table "public"."statement_hashtag" to "anon";
 
-grant update on table "public"."statement_hashtag" to "anon";
-
-grant delete on table "public"."statement_hashtag" to "authenticated";
-
-grant insert on table "public"."statement_hashtag" to "authenticated";
-
 grant references on table "public"."statement_hashtag" to "authenticated";
-
-grant select on table "public"."statement_hashtag" to "authenticated";
 
 grant trigger on table "public"."statement_hashtag" to "authenticated";
 
 grant truncate on table "public"."statement_hashtag" to "authenticated";
 
-grant update on table "public"."statement_hashtag" to "authenticated";
-
-grant delete on table "public"."statement_hashtag" to "service_role";
-
-grant insert on table "public"."statement_hashtag" to "service_role";
-
 grant references on table "public"."statement_hashtag" to "service_role";
-
-grant select on table "public"."statement_hashtag" to "service_role";
 
 grant trigger on table "public"."statement_hashtag" to "service_role";
 
 grant truncate on table "public"."statement_hashtag" to "service_role";
 
-grant update on table "public"."statement_hashtag" to "service_role";
-
-grant delete on table "public"."statement_support_vote" to "anon";
-
-grant insert on table "public"."statement_support_vote" to "anon";
-
 grant references on table "public"."statement_support_vote" to "anon";
-
-grant select on table "public"."statement_support_vote" to "anon";
 
 grant trigger on table "public"."statement_support_vote" to "anon";
 
 grant truncate on table "public"."statement_support_vote" to "anon";
 
-grant update on table "public"."statement_support_vote" to "anon";
-
-grant delete on table "public"."statement_support_vote" to "authenticated";
-
-grant insert on table "public"."statement_support_vote" to "authenticated";
-
 grant references on table "public"."statement_support_vote" to "authenticated";
-
-grant select on table "public"."statement_support_vote" to "authenticated";
 
 grant trigger on table "public"."statement_support_vote" to "authenticated";
 
 grant truncate on table "public"."statement_support_vote" to "authenticated";
 
-grant update on table "public"."statement_support_vote" to "authenticated";
-
-grant delete on table "public"."statement_support_vote" to "service_role";
-
-grant insert on table "public"."statement_support_vote" to "service_role";
-
 grant references on table "public"."statement_support_vote" to "service_role";
-
-grant select on table "public"."statement_support_vote" to "service_role";
 
 grant trigger on table "public"."statement_support_vote" to "service_role";
 
 grant truncate on table "public"."statement_support_vote" to "service_role";
 
-grant update on table "public"."statement_support_vote" to "service_role";
-
-grant delete on table "public"."statement_survey" to "anon";
-
-grant insert on table "public"."statement_survey" to "anon";
-
 grant references on table "public"."statement_survey" to "anon";
-
-grant select on table "public"."statement_survey" to "anon";
 
 grant trigger on table "public"."statement_survey" to "anon";
 
 grant truncate on table "public"."statement_survey" to "anon";
 
-grant update on table "public"."statement_survey" to "anon";
-
-grant delete on table "public"."statement_survey" to "authenticated";
-
-grant insert on table "public"."statement_survey" to "authenticated";
-
 grant references on table "public"."statement_survey" to "authenticated";
-
-grant select on table "public"."statement_survey" to "authenticated";
 
 grant trigger on table "public"."statement_survey" to "authenticated";
 
 grant truncate on table "public"."statement_survey" to "authenticated";
 
-grant update on table "public"."statement_survey" to "authenticated";
-
-grant delete on table "public"."statement_survey" to "service_role";
-
-grant insert on table "public"."statement_survey" to "service_role";
-
 grant references on table "public"."statement_survey" to "service_role";
-
-grant select on table "public"."statement_survey" to "service_role";
 
 grant trigger on table "public"."statement_survey" to "service_role";
 
 grant truncate on table "public"."statement_survey" to "service_role";
 
-grant update on table "public"."statement_survey" to "service_role";
-
-grant delete on table "public"."statement_survey_option" to "anon";
-
-grant insert on table "public"."statement_survey_option" to "anon";
-
 grant references on table "public"."statement_survey_option" to "anon";
-
-grant select on table "public"."statement_survey_option" to "anon";
 
 grant trigger on table "public"."statement_survey_option" to "anon";
 
 grant truncate on table "public"."statement_survey_option" to "anon";
 
-grant update on table "public"."statement_survey_option" to "anon";
-
-grant delete on table "public"."statement_survey_option" to "authenticated";
-
-grant insert on table "public"."statement_survey_option" to "authenticated";
-
 grant references on table "public"."statement_survey_option" to "authenticated";
-
-grant select on table "public"."statement_survey_option" to "authenticated";
 
 grant trigger on table "public"."statement_survey_option" to "authenticated";
 
 grant truncate on table "public"."statement_survey_option" to "authenticated";
 
-grant update on table "public"."statement_survey_option" to "authenticated";
-
-grant delete on table "public"."statement_survey_option" to "service_role";
-
-grant insert on table "public"."statement_survey_option" to "service_role";
-
 grant references on table "public"."statement_survey_option" to "service_role";
-
-grant select on table "public"."statement_survey_option" to "service_role";
 
 grant trigger on table "public"."statement_survey_option" to "service_role";
 
 grant truncate on table "public"."statement_survey_option" to "service_role";
 
-grant update on table "public"."statement_survey_option" to "service_role";
-
-grant delete on table "public"."statement_survey_vote" to "anon";
-
-grant insert on table "public"."statement_survey_vote" to "anon";
-
 grant references on table "public"."statement_survey_vote" to "anon";
-
-grant select on table "public"."statement_survey_vote" to "anon";
 
 grant trigger on table "public"."statement_survey_vote" to "anon";
 
 grant truncate on table "public"."statement_survey_vote" to "anon";
 
-grant update on table "public"."statement_survey_vote" to "anon";
-
-grant delete on table "public"."statement_survey_vote" to "authenticated";
-
-grant insert on table "public"."statement_survey_vote" to "authenticated";
-
 grant references on table "public"."statement_survey_vote" to "authenticated";
-
-grant select on table "public"."statement_survey_vote" to "authenticated";
 
 grant trigger on table "public"."statement_survey_vote" to "authenticated";
 
 grant truncate on table "public"."statement_survey_vote" to "authenticated";
 
-grant update on table "public"."statement_survey_vote" to "authenticated";
-
-grant delete on table "public"."statement_survey_vote" to "service_role";
-
-grant insert on table "public"."statement_survey_vote" to "service_role";
-
 grant references on table "public"."statement_survey_vote" to "service_role";
-
-grant select on table "public"."statement_survey_vote" to "service_role";
 
 grant trigger on table "public"."statement_survey_vote" to "service_role";
 
 grant truncate on table "public"."statement_survey_vote" to "service_role";
 
-grant update on table "public"."statement_survey_vote" to "service_role";
-
-grant delete on table "public"."stripe_customer" to "anon";
-
-grant insert on table "public"."stripe_customer" to "anon";
-
 grant references on table "public"."stripe_customer" to "anon";
-
-grant select on table "public"."stripe_customer" to "anon";
 
 grant trigger on table "public"."stripe_customer" to "anon";
 
 grant truncate on table "public"."stripe_customer" to "anon";
 
-grant update on table "public"."stripe_customer" to "anon";
-
-grant delete on table "public"."stripe_customer" to "authenticated";
-
-grant insert on table "public"."stripe_customer" to "authenticated";
-
 grant references on table "public"."stripe_customer" to "authenticated";
-
-grant select on table "public"."stripe_customer" to "authenticated";
 
 grant trigger on table "public"."stripe_customer" to "authenticated";
 
 grant truncate on table "public"."stripe_customer" to "authenticated";
 
-grant update on table "public"."stripe_customer" to "authenticated";
-
-grant delete on table "public"."stripe_customer" to "service_role";
-
-grant insert on table "public"."stripe_customer" to "service_role";
-
 grant references on table "public"."stripe_customer" to "service_role";
-
-grant select on table "public"."stripe_customer" to "service_role";
 
 grant trigger on table "public"."stripe_customer" to "service_role";
 
 grant truncate on table "public"."stripe_customer" to "service_role";
 
-grant update on table "public"."stripe_customer" to "service_role";
-
-grant delete on table "public"."stripe_payment" to "anon";
-
-grant insert on table "public"."stripe_payment" to "anon";
-
 grant references on table "public"."stripe_payment" to "anon";
-
-grant select on table "public"."stripe_payment" to "anon";
 
 grant trigger on table "public"."stripe_payment" to "anon";
 
 grant truncate on table "public"."stripe_payment" to "anon";
 
-grant update on table "public"."stripe_payment" to "anon";
-
-grant delete on table "public"."stripe_payment" to "authenticated";
-
-grant insert on table "public"."stripe_payment" to "authenticated";
-
 grant references on table "public"."stripe_payment" to "authenticated";
-
-grant select on table "public"."stripe_payment" to "authenticated";
 
 grant trigger on table "public"."stripe_payment" to "authenticated";
 
 grant truncate on table "public"."stripe_payment" to "authenticated";
 
-grant update on table "public"."stripe_payment" to "authenticated";
-
-grant delete on table "public"."stripe_payment" to "service_role";
-
-grant insert on table "public"."stripe_payment" to "service_role";
-
 grant references on table "public"."stripe_payment" to "service_role";
-
-grant select on table "public"."stripe_payment" to "service_role";
 
 grant trigger on table "public"."stripe_payment" to "service_role";
 
 grant truncate on table "public"."stripe_payment" to "service_role";
 
-grant update on table "public"."stripe_payment" to "service_role";
-
-grant delete on table "public"."stripe_subscription" to "anon";
-
-grant insert on table "public"."stripe_subscription" to "anon";
-
 grant references on table "public"."stripe_subscription" to "anon";
-
-grant select on table "public"."stripe_subscription" to "anon";
 
 grant trigger on table "public"."stripe_subscription" to "anon";
 
 grant truncate on table "public"."stripe_subscription" to "anon";
 
-grant update on table "public"."stripe_subscription" to "anon";
-
-grant delete on table "public"."stripe_subscription" to "authenticated";
-
-grant insert on table "public"."stripe_subscription" to "authenticated";
-
 grant references on table "public"."stripe_subscription" to "authenticated";
-
-grant select on table "public"."stripe_subscription" to "authenticated";
 
 grant trigger on table "public"."stripe_subscription" to "authenticated";
 
 grant truncate on table "public"."stripe_subscription" to "authenticated";
 
-grant update on table "public"."stripe_subscription" to "authenticated";
-
-grant delete on table "public"."stripe_subscription" to "service_role";
-
-grant insert on table "public"."stripe_subscription" to "service_role";
-
 grant references on table "public"."stripe_subscription" to "service_role";
-
-grant select on table "public"."stripe_subscription" to "service_role";
 
 grant trigger on table "public"."stripe_subscription" to "service_role";
 
 grant truncate on table "public"."stripe_subscription" to "service_role";
 
-grant update on table "public"."stripe_subscription" to "service_role";
-
-grant delete on table "public"."subscriber" to "anon";
-
-grant insert on table "public"."subscriber" to "anon";
-
 grant references on table "public"."subscriber" to "anon";
-
-grant select on table "public"."subscriber" to "anon";
 
 grant trigger on table "public"."subscriber" to "anon";
 
 grant truncate on table "public"."subscriber" to "anon";
 
-grant update on table "public"."subscriber" to "anon";
-
-grant delete on table "public"."subscriber" to "authenticated";
-
-grant insert on table "public"."subscriber" to "authenticated";
-
 grant references on table "public"."subscriber" to "authenticated";
-
-grant select on table "public"."subscriber" to "authenticated";
 
 grant trigger on table "public"."subscriber" to "authenticated";
 
 grant truncate on table "public"."subscriber" to "authenticated";
 
-grant update on table "public"."subscriber" to "authenticated";
-
-grant delete on table "public"."subscriber" to "service_role";
-
-grant insert on table "public"."subscriber" to "service_role";
-
 grant references on table "public"."subscriber" to "service_role";
-
-grant select on table "public"."subscriber" to "service_role";
 
 grant trigger on table "public"."subscriber" to "service_role";
 
 grant truncate on table "public"."subscriber" to "service_role";
 
-grant update on table "public"."subscriber" to "service_role";
-
-grant delete on table "public"."support_confirmation" to "anon";
-
-grant insert on table "public"."support_confirmation" to "anon";
-
 grant references on table "public"."support_confirmation" to "anon";
-
-grant select on table "public"."support_confirmation" to "anon";
 
 grant trigger on table "public"."support_confirmation" to "anon";
 
 grant truncate on table "public"."support_confirmation" to "anon";
 
-grant update on table "public"."support_confirmation" to "anon";
-
-grant delete on table "public"."support_confirmation" to "authenticated";
-
-grant insert on table "public"."support_confirmation" to "authenticated";
-
 grant references on table "public"."support_confirmation" to "authenticated";
-
-grant select on table "public"."support_confirmation" to "authenticated";
 
 grant trigger on table "public"."support_confirmation" to "authenticated";
 
 grant truncate on table "public"."support_confirmation" to "authenticated";
 
-grant update on table "public"."support_confirmation" to "authenticated";
-
-grant delete on table "public"."support_confirmation" to "service_role";
-
-grant insert on table "public"."support_confirmation" to "service_role";
-
 grant references on table "public"."support_confirmation" to "service_role";
-
-grant select on table "public"."support_confirmation" to "service_role";
 
 grant trigger on table "public"."support_confirmation" to "service_role";
 
 grant truncate on table "public"."support_confirmation" to "service_role";
 
-grant update on table "public"."support_confirmation" to "service_role";
-
-grant delete on table "public"."thread" to "anon";
-
-grant insert on table "public"."thread" to "anon";
-
 grant references on table "public"."thread" to "anon";
-
-grant select on table "public"."thread" to "anon";
 
 grant trigger on table "public"."thread" to "anon";
 
 grant truncate on table "public"."thread" to "anon";
 
-grant update on table "public"."thread" to "anon";
-
-grant delete on table "public"."thread" to "authenticated";
-
-grant insert on table "public"."thread" to "authenticated";
-
 grant references on table "public"."thread" to "authenticated";
-
-grant select on table "public"."thread" to "authenticated";
 
 grant trigger on table "public"."thread" to "authenticated";
 
 grant truncate on table "public"."thread" to "authenticated";
 
-grant update on table "public"."thread" to "authenticated";
-
-grant delete on table "public"."thread" to "service_role";
-
-grant insert on table "public"."thread" to "service_role";
-
 grant references on table "public"."thread" to "service_role";
-
-grant select on table "public"."thread" to "service_role";
 
 grant trigger on table "public"."thread" to "service_role";
 
 grant truncate on table "public"."thread" to "service_role";
 
-grant update on table "public"."thread" to "service_role";
-
-grant delete on table "public"."thread_vote" to "anon";
-
-grant insert on table "public"."thread_vote" to "anon";
-
 grant references on table "public"."thread_vote" to "anon";
-
-grant select on table "public"."thread_vote" to "anon";
 
 grant trigger on table "public"."thread_vote" to "anon";
 
 grant truncate on table "public"."thread_vote" to "anon";
 
-grant update on table "public"."thread_vote" to "anon";
-
-grant delete on table "public"."thread_vote" to "authenticated";
-
-grant insert on table "public"."thread_vote" to "authenticated";
-
 grant references on table "public"."thread_vote" to "authenticated";
-
-grant select on table "public"."thread_vote" to "authenticated";
 
 grant trigger on table "public"."thread_vote" to "authenticated";
 
 grant truncate on table "public"."thread_vote" to "authenticated";
 
-grant update on table "public"."thread_vote" to "authenticated";
-
-grant delete on table "public"."thread_vote" to "service_role";
-
-grant insert on table "public"."thread_vote" to "service_role";
-
 grant references on table "public"."thread_vote" to "service_role";
-
-grant select on table "public"."thread_vote" to "service_role";
 
 grant trigger on table "public"."thread_vote" to "service_role";
 
 grant truncate on table "public"."thread_vote" to "service_role";
 
-grant update on table "public"."thread_vote" to "service_role";
-
-grant delete on table "public"."timeline_event" to "anon";
-
-grant insert on table "public"."timeline_event" to "anon";
-
 grant references on table "public"."timeline_event" to "anon";
-
-grant select on table "public"."timeline_event" to "anon";
 
 grant trigger on table "public"."timeline_event" to "anon";
 
 grant truncate on table "public"."timeline_event" to "anon";
 
-grant update on table "public"."timeline_event" to "anon";
-
-grant delete on table "public"."timeline_event" to "authenticated";
-
-grant insert on table "public"."timeline_event" to "authenticated";
-
 grant references on table "public"."timeline_event" to "authenticated";
-
-grant select on table "public"."timeline_event" to "authenticated";
 
 grant trigger on table "public"."timeline_event" to "authenticated";
 
 grant truncate on table "public"."timeline_event" to "authenticated";
 
-grant update on table "public"."timeline_event" to "authenticated";
-
-grant delete on table "public"."timeline_event" to "service_role";
-
-grant insert on table "public"."timeline_event" to "service_role";
-
 grant references on table "public"."timeline_event" to "service_role";
-
-grant select on table "public"."timeline_event" to "service_role";
 
 grant trigger on table "public"."timeline_event" to "service_role";
 
 grant truncate on table "public"."timeline_event" to "service_role";
 
-grant update on table "public"."timeline_event" to "service_role";
-
-grant delete on table "public"."todo" to "anon";
-
-grant insert on table "public"."todo" to "anon";
-
 grant references on table "public"."todo" to "anon";
-
-grant select on table "public"."todo" to "anon";
 
 grant trigger on table "public"."todo" to "anon";
 
 grant truncate on table "public"."todo" to "anon";
 
-grant update on table "public"."todo" to "anon";
-
-grant delete on table "public"."todo" to "authenticated";
-
-grant insert on table "public"."todo" to "authenticated";
-
 grant references on table "public"."todo" to "authenticated";
-
-grant select on table "public"."todo" to "authenticated";
 
 grant trigger on table "public"."todo" to "authenticated";
 
 grant truncate on table "public"."todo" to "authenticated";
 
-grant update on table "public"."todo" to "authenticated";
-
-grant delete on table "public"."todo" to "service_role";
-
-grant insert on table "public"."todo" to "service_role";
-
 grant references on table "public"."todo" to "service_role";
-
-grant select on table "public"."todo" to "service_role";
 
 grant trigger on table "public"."todo" to "service_role";
 
 grant truncate on table "public"."todo" to "service_role";
 
-grant update on table "public"."todo" to "service_role";
-
-grant delete on table "public"."todo_assignment" to "anon";
-
-grant insert on table "public"."todo_assignment" to "anon";
-
 grant references on table "public"."todo_assignment" to "anon";
-
-grant select on table "public"."todo_assignment" to "anon";
 
 grant trigger on table "public"."todo_assignment" to "anon";
 
 grant truncate on table "public"."todo_assignment" to "anon";
 
-grant update on table "public"."todo_assignment" to "anon";
-
-grant delete on table "public"."todo_assignment" to "authenticated";
-
-grant insert on table "public"."todo_assignment" to "authenticated";
-
 grant references on table "public"."todo_assignment" to "authenticated";
-
-grant select on table "public"."todo_assignment" to "authenticated";
 
 grant trigger on table "public"."todo_assignment" to "authenticated";
 
 grant truncate on table "public"."todo_assignment" to "authenticated";
 
-grant update on table "public"."todo_assignment" to "authenticated";
-
-grant delete on table "public"."todo_assignment" to "service_role";
-
-grant insert on table "public"."todo_assignment" to "service_role";
-
 grant references on table "public"."todo_assignment" to "service_role";
-
-grant select on table "public"."todo_assignment" to "service_role";
 
 grant trigger on table "public"."todo_assignment" to "service_role";
 
 grant truncate on table "public"."todo_assignment" to "service_role";
 
-grant update on table "public"."todo_assignment" to "service_role";
-
-grant delete on table "public"."user" to "anon";
-
-grant insert on table "public"."user" to "anon";
-
 grant references on table "public"."user" to "anon";
-
-grant select on table "public"."user" to "anon";
 
 grant trigger on table "public"."user" to "anon";
 
 grant truncate on table "public"."user" to "anon";
 
-grant update on table "public"."user" to "anon";
-
-grant delete on table "public"."user" to "authenticated";
-
-grant insert on table "public"."user" to "authenticated";
-
 grant references on table "public"."user" to "authenticated";
-
-grant select on table "public"."user" to "authenticated";
 
 grant trigger on table "public"."user" to "authenticated";
 
 grant truncate on table "public"."user" to "authenticated";
 
-grant update on table "public"."user" to "authenticated";
-
-grant delete on table "public"."user" to "service_role";
-
-grant insert on table "public"."user" to "service_role";
-
 grant references on table "public"."user" to "service_role";
-
-grant select on table "public"."user" to "service_role";
 
 grant trigger on table "public"."user" to "service_role";
 
 grant truncate on table "public"."user" to "service_role";
 
-grant update on table "public"."user" to "service_role";
-
-grant delete on table "public"."user_hashtag" to "anon";
-
-grant insert on table "public"."user_hashtag" to "anon";
-
 grant references on table "public"."user_hashtag" to "anon";
-
-grant select on table "public"."user_hashtag" to "anon";
 
 grant trigger on table "public"."user_hashtag" to "anon";
 
 grant truncate on table "public"."user_hashtag" to "anon";
 
-grant update on table "public"."user_hashtag" to "anon";
-
-grant delete on table "public"."user_hashtag" to "authenticated";
-
-grant insert on table "public"."user_hashtag" to "authenticated";
-
 grant references on table "public"."user_hashtag" to "authenticated";
-
-grant select on table "public"."user_hashtag" to "authenticated";
 
 grant trigger on table "public"."user_hashtag" to "authenticated";
 
 grant truncate on table "public"."user_hashtag" to "authenticated";
 
-grant update on table "public"."user_hashtag" to "authenticated";
-
-grant delete on table "public"."user_hashtag" to "service_role";
-
-grant insert on table "public"."user_hashtag" to "service_role";
-
 grant references on table "public"."user_hashtag" to "service_role";
-
-grant select on table "public"."user_hashtag" to "service_role";
 
 grant trigger on table "public"."user_hashtag" to "service_role";
 
 grant truncate on table "public"."user_hashtag" to "service_role";
 
-grant update on table "public"."user_hashtag" to "service_role";
-
-grant delete on table "public"."user_preference" to "anon";
-
-grant insert on table "public"."user_preference" to "anon";
-
 grant references on table "public"."user_preference" to "anon";
-
-grant select on table "public"."user_preference" to "anon";
 
 grant trigger on table "public"."user_preference" to "anon";
 
 grant truncate on table "public"."user_preference" to "anon";
 
-grant update on table "public"."user_preference" to "anon";
-
-grant delete on table "public"."user_preference" to "authenticated";
-
-grant insert on table "public"."user_preference" to "authenticated";
-
 grant references on table "public"."user_preference" to "authenticated";
-
-grant select on table "public"."user_preference" to "authenticated";
 
 grant trigger on table "public"."user_preference" to "authenticated";
 
 grant truncate on table "public"."user_preference" to "authenticated";
 
-grant update on table "public"."user_preference" to "authenticated";
-
-grant delete on table "public"."user_preference" to "service_role";
-
-grant insert on table "public"."user_preference" to "service_role";
-
 grant references on table "public"."user_preference" to "service_role";
-
-grant select on table "public"."user_preference" to "service_role";
 
 grant trigger on table "public"."user_preference" to "service_role";
 
 grant truncate on table "public"."user_preference" to "service_role";
 
-grant update on table "public"."user_preference" to "service_role";
-
-grant delete on table "public"."vote" to "anon";
-
-grant insert on table "public"."vote" to "anon";
-
 grant references on table "public"."vote" to "anon";
-
-grant select on table "public"."vote" to "anon";
 
 grant trigger on table "public"."vote" to "anon";
 
 grant truncate on table "public"."vote" to "anon";
 
-grant update on table "public"."vote" to "anon";
-
-grant delete on table "public"."vote" to "authenticated";
-
-grant insert on table "public"."vote" to "authenticated";
-
 grant references on table "public"."vote" to "authenticated";
-
-grant select on table "public"."vote" to "authenticated";
 
 grant trigger on table "public"."vote" to "authenticated";
 
 grant truncate on table "public"."vote" to "authenticated";
 
-grant update on table "public"."vote" to "authenticated";
-
-grant delete on table "public"."vote" to "service_role";
-
-grant insert on table "public"."vote" to "service_role";
-
 grant references on table "public"."vote" to "service_role";
-
-grant select on table "public"."vote" to "service_role";
 
 grant trigger on table "public"."vote" to "service_role";
 
 grant truncate on table "public"."vote" to "service_role";
 
-grant update on table "public"."vote" to "service_role";
-
-grant delete on table "public"."vote_choice" to "anon";
-
-grant insert on table "public"."vote_choice" to "anon";
-
 grant references on table "public"."vote_choice" to "anon";
-
-grant select on table "public"."vote_choice" to "anon";
 
 grant trigger on table "public"."vote_choice" to "anon";
 
 grant truncate on table "public"."vote_choice" to "anon";
 
-grant update on table "public"."vote_choice" to "anon";
-
-grant delete on table "public"."vote_choice" to "authenticated";
-
-grant insert on table "public"."vote_choice" to "authenticated";
-
 grant references on table "public"."vote_choice" to "authenticated";
-
-grant select on table "public"."vote_choice" to "authenticated";
 
 grant trigger on table "public"."vote_choice" to "authenticated";
 
 grant truncate on table "public"."vote_choice" to "authenticated";
 
-grant update on table "public"."vote_choice" to "authenticated";
-
-grant delete on table "public"."vote_choice" to "service_role";
-
-grant insert on table "public"."vote_choice" to "service_role";
-
 grant references on table "public"."vote_choice" to "service_role";
-
-grant select on table "public"."vote_choice" to "service_role";
 
 grant trigger on table "public"."vote_choice" to "service_role";
 
 grant truncate on table "public"."vote_choice" to "service_role";
 
-grant update on table "public"."vote_choice" to "service_role";
-
-grant delete on table "public"."vote_offline_tally" to "anon";
-
-grant insert on table "public"."vote_offline_tally" to "anon";
-
 grant references on table "public"."vote_offline_tally" to "anon";
-
-grant select on table "public"."vote_offline_tally" to "anon";
 
 grant trigger on table "public"."vote_offline_tally" to "anon";
 
 grant truncate on table "public"."vote_offline_tally" to "anon";
 
-grant update on table "public"."vote_offline_tally" to "anon";
-
-grant delete on table "public"."vote_offline_tally" to "authenticated";
-
-grant insert on table "public"."vote_offline_tally" to "authenticated";
-
 grant references on table "public"."vote_offline_tally" to "authenticated";
-
-grant select on table "public"."vote_offline_tally" to "authenticated";
 
 grant trigger on table "public"."vote_offline_tally" to "authenticated";
 
 grant truncate on table "public"."vote_offline_tally" to "authenticated";
 
-grant update on table "public"."vote_offline_tally" to "authenticated";
-
-grant delete on table "public"."vote_offline_tally" to "service_role";
-
-grant insert on table "public"."vote_offline_tally" to "service_role";
-
 grant references on table "public"."vote_offline_tally" to "service_role";
-
-grant select on table "public"."vote_offline_tally" to "service_role";
 
 grant trigger on table "public"."vote_offline_tally" to "service_role";
 
 grant truncate on table "public"."vote_offline_tally" to "service_role";
 
-grant update on table "public"."vote_offline_tally" to "service_role";
-
-grant delete on table "public"."voter" to "anon";
-
-grant insert on table "public"."voter" to "anon";
-
 grant references on table "public"."voter" to "anon";
-
-grant select on table "public"."voter" to "anon";
 
 grant trigger on table "public"."voter" to "anon";
 
 grant truncate on table "public"."voter" to "anon";
 
-grant update on table "public"."voter" to "anon";
-
-grant delete on table "public"."voter" to "authenticated";
-
-grant insert on table "public"."voter" to "authenticated";
-
 grant references on table "public"."voter" to "authenticated";
-
-grant select on table "public"."voter" to "authenticated";
 
 grant trigger on table "public"."voter" to "authenticated";
 
 grant truncate on table "public"."voter" to "authenticated";
 
-grant update on table "public"."voter" to "authenticated";
-
-grant delete on table "public"."voter" to "service_role";
-
-grant insert on table "public"."voter" to "service_role";
-
 grant references on table "public"."voter" to "service_role";
-
-grant select on table "public"."voter" to "service_role";
 
 grant trigger on table "public"."voter" to "service_role";
 
 grant truncate on table "public"."voter" to "service_role";
 
-grant update on table "public"."voter" to "service_role";
-
-grant delete on table "public"."voting_password" to "anon";
-
-grant insert on table "public"."voting_password" to "anon";
-
 grant references on table "public"."voting_password" to "anon";
-
-grant select on table "public"."voting_password" to "anon";
 
 grant trigger on table "public"."voting_password" to "anon";
 
 grant truncate on table "public"."voting_password" to "anon";
 
-grant update on table "public"."voting_password" to "anon";
-
-grant delete on table "public"."voting_password" to "authenticated";
-
-grant insert on table "public"."voting_password" to "authenticated";
-
 grant references on table "public"."voting_password" to "authenticated";
-
-grant select on table "public"."voting_password" to "authenticated";
 
 grant trigger on table "public"."voting_password" to "authenticated";
 
 grant truncate on table "public"."voting_password" to "authenticated";
 
-grant update on table "public"."voting_password" to "authenticated";
-
-grant delete on table "public"."voting_password" to "service_role";
-
-grant insert on table "public"."voting_password" to "service_role";
-
 grant references on table "public"."voting_password" to "service_role";
-
-grant select on table "public"."voting_password" to "service_role";
 
 grant trigger on table "public"."voting_password" to "service_role";
 
 grant truncate on table "public"."voting_password" to "service_role";
-
-grant update on table "public"."voting_password" to "service_role";
 
 
   create policy "service_role_all"
@@ -12620,24 +9780,6 @@ using (true);
 
 
   create policy "service_role_all"
-  on "public"."chart_projection"
-  as permissive
-  for all
-  to service_role
-using (true);
-
-
-
-  create policy "service_role_all"
-  on "public"."chart_projection_point"
-  as permissive
-  for all
-  to service_role
-using (true);
-
-
-
-  create policy "service_role_all"
   on "public"."comment"
   as permissive
   for all
@@ -12666,6 +9808,33 @@ using (true);
 
   create policy "service_role_all"
   on "public"."conversation_participant"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."dataset"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."dataset_import_job"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."dataset_snapshot"
   as permissive
   for all
   to service_role
@@ -12747,33 +9916,6 @@ using (true);
 
   create policy "service_role_all"
   on "public"."elector"
-  as permissive
-  for all
-  to service_role
-using (true);
-
-
-
-  create policy "service_role_all"
-  on "public"."eurostat_dataset"
-  as permissive
-  for all
-  to service_role
-using (true);
-
-
-
-  create policy "service_role_all"
-  on "public"."eurostat_import_partition"
-  as permissive
-  for all
-  to service_role
-using (true);
-
-
-
-  create policy "service_role_all"
-  on "public"."eurostat_observation"
   as permissive
   for all
   to service_role
@@ -13568,6 +10710,10 @@ CREATE TRIGGER trg_search_document_blog_hashtag AFTER INSERT OR DELETE OR UPDATE
 
 CREATE TRIGGER trg_participant_refresh_conversation_rollups AFTER INSERT OR DELETE OR UPDATE OF last_read_at, left_at, user_id ON public.conversation_participant FOR EACH ROW EXECUTE FUNCTION public.refresh_conversation_rollups_from_participant();
 
+CREATE TRIGGER trg_search_document_dataset AFTER INSERT OR DELETE OR UPDATE ON public.dataset FOR EACH ROW EXECUTE FUNCTION public.upsert_dataset_search_document();
+
+CREATE TRIGGER trg_dataset_snapshot_touch_dataset AFTER INSERT OR DELETE OR UPDATE ON public.dataset_snapshot FOR EACH ROW EXECUTE FUNCTION public.touch_dataset_from_snapshot();
+
 CREATE TRIGGER trg_search_document_election AFTER INSERT OR DELETE OR UPDATE ON public.election FOR EACH ROW EXECUTE FUNCTION public.upsert_election_search_document();
 
 CREATE TRIGGER trg_search_document_event AFTER INSERT OR DELETE OR UPDATE ON public.event FOR EACH ROW EXECUTE FUNCTION public.upsert_event_search_document();
@@ -13576,7 +10722,7 @@ CREATE TRIGGER trg_search_document_event_hashtag AFTER INSERT OR DELETE OR UPDAT
 
 CREATE TRIGGER trg_search_document_group AFTER INSERT OR DELETE OR UPDATE ON public."group" FOR EACH ROW EXECUTE FUNCTION public.upsert_group_search_document();
 
-CREATE TRIGGER trg_search_document_group_location_refresh AFTER UPDATE OF country, region, post_code, city, street, house_number, latitude, longitude ON public."group" FOR EACH ROW EXECUTE FUNCTION public.refresh_search_documents_from_group_location();
+CREATE TRIGGER trg_search_document_group_location_refresh AFTER UPDATE OF country, region, post_code, city, street, house_number, latitude, longitude, location_kind, location_place_id, location_boundary_source, location_geometry, location_bounds ON public."group" FOR EACH ROW EXECUTE FUNCTION public.refresh_search_documents_from_group_location();
 
 CREATE TRIGGER trg_search_document_group_hashtag AFTER INSERT OR DELETE OR UPDATE ON public.group_hashtag FOR EACH ROW EXECUTE FUNCTION public.refresh_group_search_document_topics_from_hashtag();
 
@@ -13596,7 +10742,7 @@ CREATE TRIGGER trg_search_document_todo AFTER INSERT OR DELETE OR UPDATE ON publ
 
 CREATE TRIGGER trg_search_document_user AFTER INSERT OR DELETE OR UPDATE ON public."user" FOR EACH ROW EXECUTE FUNCTION public.upsert_user_search_document();
 
-CREATE TRIGGER trg_search_document_user_location_refresh AFTER UPDATE OF country, region, post_code, city, street, house_number, latitude, longitude ON public."user" FOR EACH ROW EXECUTE FUNCTION public.refresh_search_documents_from_user_location();
+CREATE TRIGGER trg_search_document_user_location_refresh AFTER UPDATE OF country, region, post_code, city, street, house_number, latitude, longitude, location_kind, location_place_id, location_boundary_source, location_geometry, location_bounds ON public."user" FOR EACH ROW EXECUTE FUNCTION public.refresh_search_documents_from_user_location();
 
 CREATE TRIGGER trg_search_document_user_hashtag AFTER INSERT OR DELETE OR UPDATE ON public.user_hashtag FOR EACH ROW EXECUTE FUNCTION public.refresh_user_search_document_topics_from_hashtag();
 
@@ -13636,6 +10782,24 @@ using (((bucket_id = 'avatars'::text) AND ((storage.foldername(name))[1] = (auth
   for select
   to public
 using ((bucket_id = 'avatars'::text));
+
+
+
+  create policy "dataset_snapshots_no_direct_read"
+  on "storage"."objects"
+  as permissive
+  for select
+  to authenticated
+using (false);
+
+
+
+  create policy "dataset_snapshots_no_direct_write"
+  on "storage"."objects"
+  as permissive
+  for insert
+  to authenticated
+with check (false);
 
 
 
@@ -13681,5 +10845,6 @@ using ((bucket_id = 'uploads'::text));
   for select
   to public
 using ((bucket_id = 'uploads'::text));
+
 
 

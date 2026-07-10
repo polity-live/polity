@@ -1,7 +1,9 @@
 import type { GeoCoordinates } from '@/features/shared/logic/geoCoordinates';
+import type { GeoLocationShape } from '@/features/shared/logic/geoLocationShape';
 interface GeoAddressMapProps {
   coordinates: GeoCoordinates | null;
   onCoordinatesChange: (coordinates: GeoCoordinates) => void;
+  shape?: GeoLocationShape | null;
   isBusy?: boolean;
   loadingLabel: string;
   unavailableLabel: string;
@@ -16,6 +18,7 @@ import { GeoAddressMapView } from './GeoAddressMapView';
 export function GeoAddressMap({
   coordinates,
   onCoordinatesChange,
+  shape = null,
   isBusy = false,
   loadingLabel,
   unavailableLabel,
@@ -27,6 +30,7 @@ export function GeoAddressMap({
   const viewProps = useGeoAddressMapController({
     coordinates,
     onCoordinatesChange,
+    shape,
     isBusy,
     loadingLabel,
     unavailableLabel,

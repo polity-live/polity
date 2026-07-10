@@ -432,6 +432,23 @@ export const amendmentQueries = {
     z.object({ id: z.string() }),
     ({ args: { id }, ctx: { userID } }) =>
       applyAmendmentAccess(zql.amendment.where('id', id), userID)
+        .related('group', group =>
+          group
+            .related('memberships', membership =>
+              membership
+                .where('user_id', userID ?? '__anon__')
+                .related('membership_roles', link =>
+                  link.related('role', role => role.related('action_rights'))
+                )
+            )
+            .related('guest_accesses', access =>
+              access
+                .where('user_id', userID ?? '__anon__')
+                .related('guest_roles', link =>
+                  link.related('role', role => role.related('action_rights'))
+                )
+            )
+        )
         .related('document', q => q.related('collaborators', cq => cq.related('user')))
         .related('collaborators', q =>
           applyAmendmentCollaboratorRosterAccess(q, userID)

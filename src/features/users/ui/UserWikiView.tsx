@@ -163,6 +163,11 @@ export function UserWikiView({ page }: UserWikiViewProps) {
           house_number: user.house_number || '',
           latitude: user.latitude ?? null,
           longitude: user.longitude ?? null,
+          location_kind: user.location_kind ?? null,
+          location_place_id: user.location_place_id ?? null,
+          location_boundary_source: user.location_boundary_source ?? null,
+          location_geometry: user.location_geometry ?? null,
+          location_bounds: user.location_bounds ?? null,
           location: page.userLocation,
         }}
         className="mb-12"

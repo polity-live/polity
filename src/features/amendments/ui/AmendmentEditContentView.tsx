@@ -27,6 +27,7 @@ import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputFie
 import { EditingModeMenuItems } from '@/features/shared/ui/status';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/features/shared/ui/ui/select';
 import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
+import { geoLocationShapeFromFields } from '@/features/shared/logic/geoLocationShape';
 export interface AmendmentEditContentViewProps {
   amendmentId: any;
   amendment: any;
@@ -64,6 +65,7 @@ export interface AmendmentEditContentViewProps {
   handleRemoveImage: any;
   handleLocationFieldChange: any;
   handleLocationCoordinatesChange: any;
+  handleLocationShapeChange: any;
   locationSummary: any;
   handleSubmit: any;
   onFormSubmit: any;
@@ -96,6 +98,7 @@ export function AmendmentEditContentView({
   handleRemoveImage,
   handleLocationFieldChange,
   handleLocationCoordinatesChange,
+  handleLocationShapeChange,
   locationSummary,
   handleSubmit,
   onFormSubmit,
@@ -301,6 +304,8 @@ export function AmendmentEditContentView({
                   : null
               }
               onCoordinatesChange={handleLocationCoordinatesChange}
+              shape={geoLocationShapeFromFields(formData)}
+              onShapeChange={handleLocationShapeChange}
               onFieldChange={handleLocationFieldChange}
               labels={{
                 country: t('features.amendments.editContent.locationCountryLabel'),

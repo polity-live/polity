@@ -45,6 +45,11 @@ export function useUserMutations() {
       house_number?: string;
       latitude?: number | null;
       longitude?: number | null;
+      location_kind?: string | null;
+      location_place_id?: string | null;
+      location_boundary_source?: string | null;
+      location_geometry?: ReadonlyJSONValue | null;
+      location_bounds?: ReadonlyJSONValue | null;
     }
   ) => {
     setIsLoading(true);
@@ -139,6 +144,11 @@ export function useUserMutations() {
       house_number?: string;
       latitude?: number | null;
       longitude?: number | null;
+      location_kind?: string | null;
+      location_place_id?: string | null;
+      location_boundary_source?: string | null;
+      location_geometry?: ReadonlyJSONValue | null;
+      location_bounds?: ReadonlyJSONValue | null;
       visibility?: string;
       hashtags?: string[];
       existingJunctions?: {
@@ -178,6 +188,11 @@ export function useUserMutations() {
         house_number: profileData.house_number,
         latitude: profileData.latitude,
         longitude: profileData.longitude,
+        location_kind: profileData.location_kind,
+        location_place_id: profileData.location_place_id,
+        location_boundary_source: profileData.location_boundary_source,
+        location_geometry: profileData.location_geometry,
+        location_bounds: profileData.location_bounds,
         visibility: profileData.visibility,
       });
 

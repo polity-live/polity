@@ -5,7 +5,7 @@ import type { TFunction } from 'i18next';
 
 import {
   CalendarIcon,
-  ChartNoAxesCombinedIcon,
+  DatabaseIcon,
   ChevronRightIcon,
   Columns3Icon,
   FileCodeIcon,
@@ -31,8 +31,8 @@ import { useTranslation } from 'react-i18next';
 
 import { insertBlock, insertInlineElement } from '@/features/shared/ui/kit-platejs/transforms.ts';
 
-import { CHART_NODE_TYPE } from '@/features/charts/types';
-import { openChartDialog } from '@/features/charts/ui/ChartDialog';
+import { DATA_VIEW_NODE_TYPE } from '@/features/charts/types';
+import { openDataViewDialog } from '@/features/charts/ui/ChartDialog';
 
 interface Group {
   group: string;
@@ -150,10 +150,10 @@ const groups = (t: TFunction): Group[] => [
       })),
       {
         focusEditor: false,
-        icon: <ChartNoAxesCombinedIcon />,
-        label: t('plateJs.toolbar.chart'),
-        value: CHART_NODE_TYPE,
-        onSelect: () => openChartDialog(),
+        icon: <DatabaseIcon />,
+        label: t('plateJs.dataView.insertTitle'),
+        value: DATA_VIEW_NODE_TYPE,
+        onSelect: () => openDataViewDialog(),
       },
     ],
   },

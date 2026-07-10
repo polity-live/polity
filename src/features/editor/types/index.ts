@@ -240,6 +240,8 @@ export interface EditorEntityMetadata {
   /** Group-specific */
   groupId?: string;
   groupName?: string;
+  canViewDatasets?: boolean;
+  canManageDatasets?: boolean;
 }
 
 /**

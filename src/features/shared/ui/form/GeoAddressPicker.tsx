@@ -4,6 +4,7 @@ import type {
   GeoAddressValues,
 } from '@/features/shared/ui/form/GeoAddressInputField';
 import { type GeoCoordinates } from '@/features/shared/logic/geoCoordinates';
+import type { GeoLocationShape } from '@/features/shared/logic/geoLocationShape';
 
 interface GeoAddressPickerProps {
   idPrefix: string;
@@ -13,6 +14,8 @@ interface GeoAddressPickerProps {
   placeholders: GeoAddressTextMap;
   coordinates: GeoCoordinates | null;
   onCoordinatesChange: (coordinates: GeoCoordinates | null) => void;
+  shape?: GeoLocationShape | null;
+  onShapeChange?: (shape: GeoLocationShape | null) => void;
 }
 import { useGeoAddressPickerController } from './useGeoAddressPickerController';
 import { GeoAddressPickerView } from './GeoAddressPickerView';
@@ -25,6 +28,8 @@ export function GeoAddressPicker({
   placeholders,
   coordinates,
   onCoordinatesChange,
+  shape,
+  onShapeChange,
 }: GeoAddressPickerProps) {
   const viewProps = useGeoAddressPickerController({
     idPrefix,
@@ -34,6 +39,8 @@ export function GeoAddressPicker({
     placeholders,
     coordinates,
     onCoordinatesChange,
+    shape,
+    onShapeChange,
   });
 
   return <GeoAddressPickerView {...viewProps} />;

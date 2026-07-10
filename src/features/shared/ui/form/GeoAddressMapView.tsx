@@ -4,6 +4,7 @@ import { MapPanelSkeleton } from '@/features/shared/ui/feedback';
 export interface GeoAddressMapViewProps {
   coordinates: any;
   onCoordinatesChange: any;
+  shape?: any;
   isBusy: any;
   loadingLabel: any;
   unavailableLabel: any;
@@ -18,8 +19,13 @@ export interface GeoAddressMapViewProps {
   loadFailed: any;
   setLoadFailed: any;
   markerIcon: any;
+  hasAreaGeometry?: any;
+  viewportBounds?: any;
+  shapeKey?: any;
+  areaStyle?: any;
   position: any;
   zoom: any;
+  GeoJSON?: any;
   MapContainer: any;
   Marker: any;
   TileLayer: any;
@@ -32,6 +38,7 @@ export interface GeoAddressMapViewProps {
 export function GeoAddressMapView({
   coordinates,
   onCoordinatesChange,
+  shape = null,
   isBusy,
   loadingLabel,
   unavailableLabel,
@@ -43,8 +50,19 @@ export function GeoAddressMapView({
   leafletModule,
   loadFailed,
   markerIcon,
+  hasAreaGeometry = false,
+  viewportBounds = null,
+  shapeKey = null,
+  areaStyle = {
+    color: '#0f766e',
+    fillColor: '#14b8a6',
+    fillOpacity: 0.18,
+    opacity: 0.85,
+    weight: 2,
+  },
   position,
   zoom,
+  GeoJSON,
   MapContainer,
   Marker,
   TileLayer,
@@ -59,7 +77,7 @@ export function GeoAddressMapView({
     );
   }
 
-  if (!reactLeafletModule || !leafletModule || !markerIcon) {
+  if (!reactLeafletModule || !leafletModule || !markerIcon || !MapContainer) {
     return <MapPanelSkeleton label={loadingLabel} className="rounded-xl" />;
   }
 
@@ -76,9 +94,12 @@ export function GeoAddressMapView({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap contributors"
           />
-          <MapViewportController center={position} zoomLevel={zoom} />
+          <MapViewportController center={position} zoomLevel={zoom} bounds={viewportBounds} />
           {interactive ? <MapClickHandler onSelect={onCoordinatesChange} /> : null}
-          {coordinates ? (
+          {hasAreaGeometry && GeoJSON && shape?.geometry ? (
+            <GeoJSON key={shapeKey} data={shape.geometry} style={areaStyle} interactive={false} />
+          ) : null}
+          {coordinates && !hasAreaGeometry ? (
             <Marker
               position={position}
               draggable={interactive}
@@ -109,7 +130,7 @@ export function GeoAddressMapView({
           </div>
         ) : null}
         <div className="bg-background/92 text-muted-foreground pointer-events-none absolute inset-x-3 bottom-3 rounded-lg border px-3 py-2 text-xs shadow-sm">
-          {coordinates ? moveHint : emptyMessage}
+          {coordinates || hasAreaGeometry ? moveHint : emptyMessage}
         </div>
       </div>
     </div>

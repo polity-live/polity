@@ -95,6 +95,13 @@ export function InlineAmendmentEditorView({
           onEventSuggestionCancel={onEventSuggestionCancel}
           selectedCrIds={selectedCrIds}
           onSelectedCrIdsChange={setSelectedCrIds}
+          datasetContext={{
+            defaultGroupId: entity.metadata?.groupId ?? null,
+            defaultGroupName: entity.metadata?.groupName ?? null,
+            canViewDatasets: entity.metadata?.canViewDatasets ?? false,
+            canManageDatasets: entity.metadata?.canManageDatasets ?? false,
+            canUploadDatasets: true,
+          }}
         />
       </div>
     </div>

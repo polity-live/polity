@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-import { ChartNoAxesCombinedIcon } from 'lucide-react';
+import { DatabaseIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { ToolbarButton } from '@/features/shared/ui/layout';
-import { openChartDialog } from '@/features/charts/ui/ChartDialog';
+import { openDataViewDialog } from '@/features/charts/ui/ChartDialog';
 
 export function ChartToolbarButton(props: React.ComponentProps<typeof ToolbarButton>) {
   const { t } = useTranslation();
@@ -13,14 +13,14 @@ export function ChartToolbarButton(props: React.ComponentProps<typeof ToolbarBut
     <ToolbarButton
       {...props}
       data-plate-focus
-      tooltip={t('plateJs.toolbar.chart', 'Chart')}
+      tooltip={t('plateJs.dataView.insertTitle', 'Insert data')}
       onClick={event => {
         props.onClick?.(event);
         if (event.defaultPrevented) return;
-        openChartDialog();
+        openDataViewDialog();
       }}
     >
-      <ChartNoAxesCombinedIcon />
+      <DatabaseIcon />
     </ToolbarButton>
   );
 }

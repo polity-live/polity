@@ -1,8 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { GeoCoordinates } from '@/features/shared/logic/geoCoordinates';
+import {
+  hasGeoLocationBounds,
+  hasGeoLocationGeometry,
+  type GeoLocationBounds,
+  type GeoLocationShape,
+} from '@/features/shared/logic/geoLocationShape';
 interface GeoAddressMapProps {
   coordinates: GeoCoordinates | null;
   onCoordinatesChange: (coordinates: GeoCoordinates) => void;
+  shape?: GeoLocationShape | null;
   isBusy?: boolean;
   loadingLabel: string;
   unavailableLabel: string;
@@ -16,10 +23,16 @@ type LeafletModule = typeof import('leaflet');
 const DEFAULT_CENTER: [number, number] = [20, 0];
 const DEFAULT_ZOOM = 2;
 const FILLED_ZOOM = 15;
+const AREA_ZOOM = 10;
+
+function centerFromBounds(bounds: GeoLocationBounds): [number, number] {
+  return [(bounds.south + bounds.north) / 2, (bounds.west + bounds.east) / 2];
+}
 
 export function useGeoAddressMapController({
   coordinates,
   onCoordinatesChange,
+  shape = null,
   isBusy = false,
   loadingLabel,
   unavailableLabel,
@@ -77,30 +90,71 @@ export function useGeoAddressMapController({
     });
   }, [leafletModule]);
 
-  const position = coordinates
-    ? ([coordinates.latitude, coordinates.longitude] as [number, number])
-    : DEFAULT_CENTER;
+  const hasAreaGeometry = hasGeoLocationGeometry(shape);
+  const viewportBounds = hasGeoLocationBounds(shape) ? shape.bounds : null;
+  const shapeKey = shape
+    ? [
+        shape.kind,
+        shape.placeId ?? '',
+        viewportBounds?.south ?? '',
+        viewportBounds?.west ?? '',
+        viewportBounds?.north ?? '',
+        viewportBounds?.east ?? '',
+      ].join(':')
+    : null;
 
-  const zoom = coordinates ? FILLED_ZOOM : DEFAULT_ZOOM;
+  const position = viewportBounds
+    ? centerFromBounds(viewportBounds)
+    : coordinates
+      ? ([coordinates.latitude, coordinates.longitude] as [number, number])
+      : DEFAULT_CENTER;
 
+  const zoom = viewportBounds ? AREA_ZOOM : coordinates ? FILLED_ZOOM : DEFAULT_ZOOM;
+  const areaStyle = {
+    color: '#0f766e',
+    fillColor: '#14b8a6',
+    fillOpacity: 0.18,
+    opacity: 0.85,
+    weight: 2,
+  };
+
+  const GeoJSON =
+    reactLeafletModule && 'GeoJSON' in reactLeafletModule ? reactLeafletModule.GeoJSON : undefined;
   const { MapContainer, Marker, TileLayer, useMap, useMapEvents } =
     reactLeafletModule ?? ({} as ReactLeafletModule);
 
   function MapViewportController({
     center,
     zoomLevel,
+    bounds,
   }: {
     center: [number, number];
     zoomLevel: number;
+    bounds: GeoLocationBounds | null;
   }) {
     const map = useMap();
 
     useEffect(() => {
+      if (bounds) {
+        map.fitBounds(
+          [
+            [bounds.south, bounds.west],
+            [bounds.north, bounds.east],
+          ],
+          {
+            animate: true,
+            duration: 0.35,
+            padding: [16, 16],
+          }
+        );
+        return;
+      }
+
       map.flyTo(center, zoomLevel, {
         animate: true,
         duration: 0.35,
       });
-    }, [center, map, zoomLevel]);
+    }, [bounds, center, map, zoomLevel]);
 
     return null;
   }
@@ -121,6 +175,7 @@ export function useGeoAddressMapController({
   return {
     coordinates,
     onCoordinatesChange,
+    shape,
     isBusy,
     loadingLabel,
     unavailableLabel,
@@ -135,8 +190,13 @@ export function useGeoAddressMapController({
     loadFailed,
     setLoadFailed,
     markerIcon,
+    hasAreaGeometry,
+    viewportBounds,
+    shapeKey,
+    areaStyle,
     position,
     zoom,
+    GeoJSON,
     MapContainer,
     Marker,
     TileLayer,

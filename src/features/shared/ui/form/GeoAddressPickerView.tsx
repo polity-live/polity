@@ -8,13 +8,17 @@ export interface GeoAddressPickerViewProps {
   placeholders: any;
   coordinates: any;
   onCoordinatesChange: any;
+  shape: any;
   t: any;
   language: any;
   resetContextKey: any;
   setResetContextKey: any;
   isReverseGeocoding: any;
   setIsReverseGeocoding: any;
+  isBoundaryLoading: any;
+  setIsBoundaryLoading: any;
   reverseRequestIdRef: any;
+  boundaryRequestIdRef: any;
   isApplyingReverseSyncRef: any;
   ignoreForwardResolutionRef: any;
   handleResolvedAddress: any;
@@ -28,9 +32,11 @@ export function GeoAddressPickerView({
   labels,
   placeholders,
   coordinates,
+  shape,
   t,
   resetContextKey,
   isReverseGeocoding,
+  isBoundaryLoading,
   handleResolvedAddress,
   handleFieldChange,
   handleMapCoordinatesChange,
@@ -55,8 +61,9 @@ export function GeoAddressPickerView({
         </div>
         <GeoAddressMap
           coordinates={coordinates}
+          shape={shape}
           onCoordinatesChange={handleMapCoordinatesChange}
-          isBusy={isReverseGeocoding}
+          isBusy={isReverseGeocoding || isBoundaryLoading}
           loadingLabel={t('common.locationPicker.loading')}
           unavailableLabel={t('common.locationPicker.unavailable')}
           busyLabel={t('common.locationPicker.syncing')}

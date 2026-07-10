@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   type GeoAddressContext,
   type GeoAddressField,
@@ -14,7 +14,7 @@ interface GeoAddressFieldsProps {
   onFieldChange: (field: GeoAddressField, value: string) => void;
   labels: GeoAddressTextMap;
   placeholders: GeoAddressTextMap;
-  onResolvedAddress?: (result: GeoResolvedAddress | null) => void;
+  onResolvedAddress?: (result: GeoResolvedAddress | null, field: GeoAddressField | null) => void;
   resetContextKey?: number | string;
   disabled?: boolean;
 }
@@ -67,6 +67,14 @@ function hasSameResolvedAddress(
 
   return previousValue.place_id === nextValue.place_id;
 }
+
+function resolvedAddressEmissionKey(
+  field: GeoAddressField | null,
+  result: GeoResolvedAddress | null
+): string {
+  return `${field ?? 'none'}:${result?.place_id ?? 'none'}`;
+}
+
 export function useGeoAddressFieldsController({
   idPrefix,
   values,
@@ -79,22 +87,38 @@ export function useGeoAddressFieldsController({
 }: GeoAddressFieldsProps) {
   const [context, setContext] = useState<GeoAddressContext>(INITIAL_CONTEXT);
   const [resolvedAddresses, setResolvedAddresses] = useState(INITIAL_RESOLVED_ADDRESSES);
+  const onResolvedAddressRef = useRef(onResolvedAddress);
+  const lastResolvedAddressEmissionRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    onResolvedAddressRef.current = onResolvedAddress;
+  }, [onResolvedAddress]);
 
   useEffect(() => {
     setContext(INITIAL_CONTEXT);
     setResolvedAddresses(INITIAL_RESOLVED_ADDRESSES);
+    lastResolvedAddressEmissionRef.current = null;
   }, [resetContextKey]);
 
   useEffect(() => {
-    if (!onResolvedAddress) {
+    const notifyResolvedAddress = onResolvedAddressRef.current;
+
+    if (!notifyResolvedAddress) {
       return;
     }
 
-    const nextResolvedAddress =
-      RESOLVED_ADDRESS_PRIORITY.map(field => resolvedAddresses[field]).find(Boolean) ?? null;
+    const nextResolvedField =
+      RESOLVED_ADDRESS_PRIORITY.find(field => Boolean(resolvedAddresses[field])) ?? null;
+    const nextResolvedAddress = nextResolvedField ? resolvedAddresses[nextResolvedField] : null;
+    const emissionKey = resolvedAddressEmissionKey(nextResolvedField, nextResolvedAddress);
 
-    onResolvedAddress(nextResolvedAddress);
-  }, [onResolvedAddress, resolvedAddresses]);
+    if (lastResolvedAddressEmissionRef.current === emissionKey) {
+      return;
+    }
+
+    lastResolvedAddressEmissionRef.current = emissionKey;
+    notifyResolvedAddress(nextResolvedAddress, nextResolvedField);
+  }, [resolvedAddresses]);
 
   const handleResolved = useCallback(
     (field: GeoAddressField, result: GeoResolvedAddress | null) => {
@@ -139,14 +163,17 @@ export function useGeoAddressFieldsController({
           ...previousContext,
           ...(field === 'house_number' ? {} : { [field]: null }),
         };
+        let changed =
+          field !== 'house_number' && previousContext[field as keyof GeoAddressContext] !== null;
 
         for (const descendantField of CASCADE_RESET_FIELDS[field]) {
           if (descendantField !== 'house_number') {
+            changed = changed || previousContext[descendantField] !== null;
             nextContext[descendantField] = null;
           }
         }
 
-        return nextContext;
+        return changed ? nextContext : previousContext;
       });
 
       setResolvedAddresses(previousResolvedAddresses => {
@@ -154,12 +181,14 @@ export function useGeoAddressFieldsController({
           ...previousResolvedAddresses,
           [field]: null,
         };
+        let changed = previousResolvedAddresses[field] !== null;
 
         for (const descendantField of CASCADE_RESET_FIELDS[field]) {
+          changed = changed || previousResolvedAddresses[descendantField] !== null;
           nextResolvedAddresses[descendantField] = null;
         }
 
-        return nextResolvedAddresses;
+        return changed ? nextResolvedAddresses : previousResolvedAddresses;
       });
 
       for (const descendantField of CASCADE_RESET_FIELDS[field]) {

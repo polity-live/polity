@@ -7,6 +7,7 @@ import {
   EditorKit,
   EditorKitWithoutFixedToolbar,
 } from '@/features/shared/ui/kit-platejs/editor-kit.tsx';
+import type { ChartDatasetContextValue } from '@/features/charts/context/ChartDatasetContext';
 import { discussionPlugin } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import { suggestionPlugin } from '@/features/shared/ui/kit-platejs/suggestion-kit.tsx';
 import { Editor, EditorContainer } from '@/features/shared/ui/ui-platejs/editor.tsx';
@@ -68,6 +69,7 @@ interface PlateEditorProps {
     enabled?: boolean;
     onActiveCursorsChange?: (userIds: Set<string>) => void;
   };
+  datasetContext?: ChartDatasetContextValue | null;
 }
 import { PlateEditorView } from './PlateEditorView';
 export function PlateEditor({
@@ -104,6 +106,7 @@ export function PlateEditor({
   selectedCrIds,
   onSelectedCrIdsChange,
   remoteCursors,
+  datasetContext,
 }: PlateEditorProps) {
   const onChangeRef = React.useRef(onChange);
   const isControlled = value !== undefined;
@@ -443,6 +446,7 @@ export function PlateEditor({
       selectedCrIds={selectedCrIds}
       onSelectedCrIdsChange={onSelectedCrIdsChange}
       remoteCursors={remoteCursors}
+      datasetContext={datasetContext}
       onChangeRef={onChangeRef}
       isControlled={isControlled}
       prevValueRef={prevValueRef}

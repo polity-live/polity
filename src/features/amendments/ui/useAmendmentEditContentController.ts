@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
@@ -20,6 +21,10 @@ import { getEditingModeOption, type SelectableEditingMode } from '@/features/sha
 import { deriveControllingEventForSettings } from '@/features/amendments/logic/amendmentSettingsEventPhase';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import type { GeoCoordinates } from '@/features/shared/logic/geoCoordinates';
+import {
+  geoLocationFieldsFromShape,
+  type GeoLocationShape,
+} from '@/features/shared/logic/geoLocationShape';
 import type { GeoAddressField } from '@/features/shared/ui/form/GeoAddressInputField';
 import {
   getBranchEditingModeDisabledReasons,
@@ -110,6 +115,11 @@ export function useAmendmentEditContentController({
     house_number: '',
     latitude: null as number | null,
     longitude: null as number | null,
+    location_kind: null as string | null,
+    location_place_id: null as string | null,
+    location_boundary_source: null as string | null,
+    location_geometry: null as ReadonlyJSONValue | null,
+    location_bounds: null as ReadonlyJSONValue | null,
   });
 
   const workflowBranches = useMemo(
@@ -227,6 +237,11 @@ export function useAmendmentEditContentController({
         house_number: amendment.house_number ?? '',
         latitude: amendment.latitude ?? null,
         longitude: amendment.longitude ?? null,
+        location_kind: amendment.location_kind ?? null,
+        location_place_id: amendment.location_place_id ?? null,
+        location_boundary_source: amendment.location_boundary_source ?? null,
+        location_geometry: amendment.location_geometry ?? null,
+        location_bounds: amendment.location_bounds ?? null,
       });
     }
   }, [amendment, workflowSourceMode]);
@@ -409,6 +424,11 @@ export function useAmendmentEditContentController({
             house_number: formData.house_number || null,
             latitude: formData.latitude,
             longitude: formData.longitude,
+            location_kind: formData.location_kind,
+            location_place_id: formData.location_place_id,
+            location_boundary_source: formData.location_boundary_source,
+            location_geometry: formData.location_geometry,
+            location_bounds: formData.location_bounds,
             x: null,
             youtube: null,
             linkedin: null,
@@ -442,6 +462,11 @@ export function useAmendmentEditContentController({
             house_number: formData.house_number || null,
             latitude: formData.latitude,
             longitude: formData.longitude,
+            location_kind: formData.location_kind,
+            location_place_id: formData.location_place_id,
+            location_boundary_source: formData.location_boundary_source,
+            location_geometry: formData.location_geometry,
+            location_bounds: formData.location_bounds,
           })
         );
       }
@@ -534,6 +559,18 @@ export function useAmendmentEditContentController({
     }));
   }, []);
 
+  const handleLocationShapeChange = useCallback((shape: GeoLocationShape | null) => {
+    const fields = geoLocationFieldsFromShape(shape);
+    setFormData(previousData => ({
+      ...previousData,
+      location_kind: fields.location_kind,
+      location_place_id: fields.location_place_id,
+      location_boundary_source: fields.location_boundary_source,
+      location_geometry: fields.location_geometry,
+      location_bounds: fields.location_bounds,
+    }));
+  }, []);
+
   const locationSummary = useMemo(
     () =>
       formatLocation({
@@ -592,6 +629,7 @@ export function useAmendmentEditContentController({
     handleRemoveImage,
     handleLocationFieldChange,
     handleLocationCoordinatesChange,
+    handleLocationShapeChange,
     locationSummary,
     handleSubmit,
     onFormSubmit,

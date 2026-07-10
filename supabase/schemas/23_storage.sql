@@ -78,3 +78,17 @@ CREATE POLICY "service_role_all_storage"
   ON storage.objects FOR ALL
   TO service_role
   USING (true);
+
+-- Dataset snapshots are private. The application server authorizes dataset
+-- metadata access and reads objects with the service role only.
+DROP POLICY IF EXISTS "dataset_snapshots_no_direct_read" ON storage.objects;
+CREATE POLICY "dataset_snapshots_no_direct_read"
+  ON storage.objects FOR SELECT
+  TO authenticated
+  USING (false);
+
+DROP POLICY IF EXISTS "dataset_snapshots_no_direct_write" ON storage.objects;
+CREATE POLICY "dataset_snapshots_no_direct_write"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (false);

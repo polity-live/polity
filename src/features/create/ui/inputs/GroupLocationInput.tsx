@@ -1,4 +1,5 @@
 import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
+import type { GeoLocationShape } from '@/features/shared/logic/geoLocationShape';
 
 interface GroupLocationValues {
   country: string;
@@ -24,6 +25,8 @@ interface GroupLocationInputProps {
     value: string
   ) => void;
   onCoordinatesChange: (coordinates: { latitude: number; longitude: number } | null) => void;
+  shape?: GeoLocationShape | null;
+  onShapeChange?: (shape: GeoLocationShape | null) => void;
 }
 
 export function GroupLocationInput({
@@ -33,6 +36,8 @@ export function GroupLocationInput({
   placeholders,
   onFieldChange,
   onCoordinatesChange,
+  shape,
+  onShapeChange,
 }: GroupLocationInputProps) {
   return (
     <div className="space-y-4">
@@ -53,6 +58,8 @@ export function GroupLocationInput({
             : null
         }
         onCoordinatesChange={onCoordinatesChange}
+        shape={shape}
+        onShapeChange={onShapeChange}
         onFieldChange={(field, value) => onFieldChange(field, value)}
         labels={labels}
         placeholders={placeholders}

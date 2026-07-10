@@ -5,7 +5,7 @@
  * Column order represents role hierarchy: left = least rights, right = most rights.
  */
 
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { GROUP_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import {
   getActionRightSections,
@@ -27,6 +27,7 @@ interface RolesPermissionsTableProps<TRole extends ParticipationRoleLike> {
   title?: string;
   description?: string;
   isPermissionDisabled?: (role: TRole, resource: string, action: string) => string | null;
+  addRoleButton?: ReactNode;
 }
 export function useRolesPermissionsTableController<TRole extends ParticipationRoleLike>({
   roles,
@@ -38,6 +39,7 @@ export function useRolesPermissionsTableController<TRole extends ParticipationRo
     'generated.inline.0111_manage_roles_and_their_action_rights_by_capab_84eb9c78'
   ),
   isPermissionDisabled,
+  addRoleButton,
 }: RolesPermissionsTableProps<TRole>) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -102,6 +104,7 @@ export function useRolesPermissionsTableController<TRole extends ParticipationRo
     title,
     description,
     isPermissionDisabled,
+    addRoleButton,
     draggedIndex,
     setDraggedIndex,
     dragOverIndex,

@@ -21,6 +21,10 @@ import { AccountPasswordSection } from './AccountPasswordSection';
 import { AccountEmailSection } from './AccountEmailSection';
 import { NotificationSettingsContent } from '@/features/notifications/ui/NotificationSettingsContent';
 import { AiSettingsTab } from './AiSettingsTab';
+import {
+  geoLocationFieldsFromShape,
+  geoLocationShapeFromFields,
+} from '@/features/shared/logic/geoLocationShape';
 import type { Value } from 'platejs';
 import type { UserProfileFormData } from '../hooks/useUserProfileForm';
 
@@ -151,6 +155,7 @@ export function UserProfileEditForm({
               house_number={formData.house_number}
               latitude={formData.latitude}
               longitude={formData.longitude}
+              shape={geoLocationShapeFromFields(formData)}
               onCountryChange={value => onFieldChange('country', value)}
               onRegionChange={value => onFieldChange('region', value)}
               onPostCodeChange={value => onFieldChange('post_code', value)}
@@ -160,6 +165,14 @@ export function UserProfileEditForm({
               onCoordinatesChange={coordinates => {
                 onFieldChange('latitude', coordinates?.latitude ?? null);
                 onFieldChange('longitude', coordinates?.longitude ?? null);
+              }}
+              onShapeChange={shape => {
+                const fields = geoLocationFieldsFromShape(shape);
+                onFieldChange('location_kind', fields.location_kind);
+                onFieldChange('location_place_id', fields.location_place_id);
+                onFieldChange('location_boundary_source', fields.location_boundary_source);
+                onFieldChange('location_geometry', fields.location_geometry);
+                onFieldChange('location_bounds', fields.location_bounds);
               }}
             />
 

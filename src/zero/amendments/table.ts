@@ -1,4 +1,4 @@
-import { table, string, number, json } from '@rocicorp/zero';
+import { table, string, number, json, type ReadonlyJSONValue } from '@rocicorp/zero';
 
 export const amendment = table('amendment')
   .columns({
@@ -22,6 +22,11 @@ export const amendment = table('amendment')
     house_number: string().optional(),
     latitude: number().optional(),
     longitude: number().optional(),
+    location_kind: string().optional(),
+    location_place_id: string().optional(),
+    location_boundary_source: string().optional(),
+    location_geometry: json<ReadonlyJSONValue>().optional(),
+    location_bounds: json<ReadonlyJSONValue>().optional(),
     upvotes: number(),
     downvotes: number(),
     tags: json<string[]>().optional(),

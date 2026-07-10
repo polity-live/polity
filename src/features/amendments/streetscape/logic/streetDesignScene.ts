@@ -820,6 +820,153 @@ function addStreetMarkings(args: {
   }
 }
 
+export function createLaneArrowPolygon(args: {
+  center: StreetDesignLocalPoint;
+  direction: StreetDesignLocalPoint;
+  length: number;
+  width: number;
+}): StreetDesignLocalPoint[] {
+  const directionLength = Math.hypot(args.direction.x, args.direction.z);
+  const direction =
+    directionLength <= 0.001
+      ? { x: 0, z: 1 }
+      : {
+          x: args.direction.x / directionLength,
+          z: args.direction.z / directionLength,
+        };
+  const halfLength = Math.max(args.length, 0.4) / 2;
+  const halfWidth = Math.max(args.width, 0.12) / 2;
+  const shaftHalfWidth = halfWidth * 0.24;
+  const tailCenter = {
+    x: args.center.x - direction.x * halfLength,
+    z: args.center.z - direction.z * halfLength,
+  };
+  const headBaseCenter = {
+    x: args.center.x + direction.x * (halfLength * 0.18),
+    z: args.center.z + direction.z * (halfLength * 0.18),
+  };
+  const tip = {
+    x: args.center.x + direction.x * halfLength,
+    z: args.center.z + direction.z * halfLength,
+  };
+
+  return [
+    tip,
+    offsetPointFromDirection(headBaseCenter, direction, halfWidth),
+    offsetPointFromDirection(headBaseCenter, direction, shaftHalfWidth),
+    offsetPointFromDirection(tailCenter, direction, shaftHalfWidth),
+    offsetPointFromDirection(tailCenter, direction, -shaftHalfWidth),
+    offsetPointFromDirection(headBaseCenter, direction, -shaftHalfWidth),
+    offsetPointFromDirection(headBaseCenter, direction, -halfWidth),
+  ];
+}
+
+function addLaneArrowMarkings(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry;
+  lateralOffsets: number[];
+  arrowLength: number;
+  arrowWidth: number;
+  color?: string;
+  y?: number;
+  objectId?: string;
+  osmWayId?: string;
+}) {
+  const {
+    THREE,
+    group,
+    geometry,
+    lateralOffsets,
+    arrowLength,
+    arrowWidth,
+    color = '#f8fafc',
+    y = 0.14,
+    objectId,
+    osmWayId,
+  } = args;
+  const centerline = getCorridorCenterline(geometry);
+  const length = geometry.length;
+
+  if (length < arrowLength || centerline.length < 2) return;
+
+  const spacing = Math.max(4.2, arrowLength * 2.25);
+  const firstOffset = Math.min(spacing / 2, Math.max(arrowLength / 2, length / 2));
+
+  for (let offset = firstOffset; offset < length - 0.4; offset += spacing) {
+    const sample = getCenterlineSample(centerline, offset);
+
+    lateralOffsets.forEach(lateralOffset => {
+      const center = offsetPointFromDirection(sample.point, sample.direction, lateralOffset);
+      addFlatPolygon({
+        THREE,
+        group,
+        points: createLaneArrowPolygon({
+          center,
+          direction: sample.direction,
+          length: arrowLength,
+          width: arrowWidth,
+        }),
+        color,
+        opacity: 0.94,
+        y,
+        objectId,
+        osmWayId,
+      });
+    });
+  }
+}
+
+function addCarLaneMarkings(args: {
+  THREE: ThreeModule;
+  group: Group;
+  geometry: RenderableCorridorGeometry;
+  direction: string;
+  y?: number;
+  objectId?: string;
+}) {
+  const { THREE, group, geometry, direction, y = 0.14, objectId } = args;
+  const isTwoWay = direction === 'two_way';
+  const arrowLength = Math.max(1.8, Math.min(geometry.width * 1.05, 2.75));
+  const arrowWidth = isTwoWay
+    ? Math.max(0.34, Math.min(geometry.width * 0.18, 0.56))
+    : Math.max(0.46, Math.min(geometry.width * 0.32, 0.86));
+
+  if (isTwoWay) {
+    const laneOffset = Math.max(0.34, Math.min(geometry.width * 0.28, geometry.width / 2 - 0.28));
+    addStreetMarkings({
+      THREE,
+      group,
+      geometry,
+      objectId,
+      color: '#facc15',
+      y,
+    });
+    addLaneArrowMarkings({
+      THREE,
+      group,
+      geometry,
+      lateralOffsets: [-laneOffset, laneOffset],
+      arrowLength,
+      arrowWidth,
+      y: y + 0.012,
+      objectId,
+    });
+    return;
+  }
+
+  addLaneArrowMarkings({
+    THREE,
+    group,
+    geometry,
+    lateralOffsets: [0],
+    arrowLength,
+    arrowWidth,
+    y,
+    objectId,
+  });
+}
+
 export type StreetDesignTreeRenderKind =
   | 'deciduous'
   | 'conifer'
@@ -3527,19 +3674,6 @@ function addDesignObject(args: {
           });
         }
       }
-      if (
-        object.type === 'car_lane' &&
-        stringProperty(object.properties.direction, 'one_way') === 'two_way'
-      ) {
-        addStreetMarkings({
-          THREE,
-          group,
-          geometry: detailGeometry,
-          objectId: object.id,
-          color: '#facc15',
-          y: surfaceY + 0.088,
-        });
-      }
     }
 
     if (definition.renderKind === 'traffic' && object.type === 'traffic_calming') {
@@ -3579,7 +3713,16 @@ function addDesignObject(args: {
       });
     }
 
-    if (showStreetMarkings && (definition.renderKind === 'road' || object.type === 'car_lane')) {
+    if (showStreetMarkings && object.type === 'car_lane') {
+      addCarLaneMarkings({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        direction: stringProperty(object.properties.direction, 'one_way'),
+        objectId: object.id,
+        y: surfaceY + 0.088,
+      });
+    } else if (showStreetMarkings && definition.renderKind === 'road') {
       addStreetMarkings({
         THREE,
         group,

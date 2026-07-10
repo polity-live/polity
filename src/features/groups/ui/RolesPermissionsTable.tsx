@@ -9,6 +9,7 @@ import { GROUP_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import type { ParticipationRoleLike } from '@/features/shared/types/participation';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { ActionRightDefinition } from '@/features/groups/logic/actionRightSections';
+import type { ReactNode } from 'react';
 
 interface RolesPermissionsTableProps<TRole extends ParticipationRoleLike> {
   roles: TRole[];
@@ -23,6 +24,7 @@ interface RolesPermissionsTableProps<TRole extends ParticipationRoleLike> {
   title?: string;
   description?: string;
   isPermissionDisabled?: (role: TRole, resource: string, action: string) => string | null;
+  addRoleButton?: ReactNode;
 }
 import { useRolesPermissionsTableController } from './useRolesPermissionsTableController';
 import { RolesPermissionsTableView } from './RolesPermissionsTableView';
@@ -37,6 +39,7 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
     'generated.inline.0111_manage_roles_and_their_action_rights_by_capab_84eb9c78'
   ),
   isPermissionDisabled,
+  addRoleButton,
 }: RolesPermissionsTableProps<TRole>) {
   const viewProps = useRolesPermissionsTableController({
     roles,
@@ -46,6 +49,7 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
     title,
     description,
     isPermissionDisabled,
+    addRoleButton,
   });
 
   return <RolesPermissionsTableView {...viewProps} />;

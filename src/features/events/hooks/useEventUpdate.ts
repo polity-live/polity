@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
@@ -60,6 +61,11 @@ export interface EventFormData {
   houseNumber: string;
   latitude: number | null;
   longitude: number | null;
+  location_kind: string | null;
+  location_place_id: string | null;
+  location_boundary_source: string | null;
+  location_geometry: ReadonlyJSONValue | null;
+  location_bounds: ReadonlyJSONValue | null;
   startDate: string;
   startTime: string;
   endDate: string;
@@ -136,6 +142,11 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     houseNumber: '',
     latitude: null,
     longitude: null,
+    location_kind: null,
+    location_place_id: null,
+    location_boundary_source: null,
+    location_geometry: null,
+    location_bounds: null,
     startDate: '',
     startTime: '',
     endDate: '',
@@ -244,6 +255,11 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         houseNumber: event.house_number || '',
         latitude: event.latitude ?? null,
         longitude: event.longitude ?? null,
+        location_kind: event.location_kind ?? null,
+        location_place_id: event.location_place_id ?? null,
+        location_boundary_source: event.location_boundary_source ?? null,
+        location_geometry: event.location_geometry ?? null,
+        location_bounds: event.location_bounds ?? null,
         startDate: formatLocalDateInput(event.start_date),
         startTime: formatLocalTimeInput(event.start_date),
         endDate: formatLocalDateInput(event.end_date),
@@ -392,6 +408,14 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           house_number: formData.attendanceMode !== 'online' ? formData.houseNumber || null : null,
           latitude: formData.attendanceMode !== 'online' ? formData.latitude : null,
           longitude: formData.attendanceMode !== 'online' ? formData.longitude : null,
+          location_kind: formData.attendanceMode !== 'online' ? formData.location_kind : null,
+          location_place_id:
+            formData.attendanceMode !== 'online' ? formData.location_place_id : null,
+          location_boundary_source:
+            formData.attendanceMode !== 'online' ? formData.location_boundary_source : null,
+          location_geometry:
+            formData.attendanceMode !== 'online' ? formData.location_geometry : null,
+          location_bounds: formData.attendanceMode !== 'online' ? formData.location_bounds : null,
           start_date,
           end_date,
           visibility: formData.visibility,
@@ -449,6 +473,14 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           house_number: formData.attendanceMode !== 'online' ? formData.houseNumber || null : null,
           latitude: formData.attendanceMode !== 'online' ? formData.latitude : null,
           longitude: formData.attendanceMode !== 'online' ? formData.longitude : null,
+          location_kind: formData.attendanceMode !== 'online' ? formData.location_kind : null,
+          location_place_id:
+            formData.attendanceMode !== 'online' ? formData.location_place_id : null,
+          location_boundary_source:
+            formData.attendanceMode !== 'online' ? formData.location_boundary_source : null,
+          location_geometry:
+            formData.attendanceMode !== 'online' ? formData.location_geometry : null,
+          location_bounds: formData.attendanceMode !== 'online' ? formData.location_bounds : null,
           start_date,
           end_date,
           visibility: formData.visibility,

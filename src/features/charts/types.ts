@@ -1,16 +1,22 @@
 import type { TElement } from 'platejs';
 
-export const CHART_NODE_TYPE = 'chart';
+export const DATA_VIEW_NODE_TYPE = 'data_view';
 export const MAX_MANUAL_CHART_ROWS = 5_000;
 export const MAX_MANUAL_CHART_COLUMNS = 50;
 export const MAX_MANUAL_CSV_BYTES = 2_000_000;
 export const MAX_CHART_POINTS = 5_000;
-export const MAX_EUROSTAT_DATASET_BYTES = 100_000_000;
+export const MAX_DATASET_SNAPSHOT_BYTES = 50 * 1024 * 1024;
+export const MAX_EUROSTAT_DATASET_BYTES = MAX_DATASET_SNAPSHOT_BYTES;
 export const EUROSTAT_PARTITION_CELL_LIMIT = 20_000;
 export const EUROSTAT_DEFAULT_VALUE_FIELD = 'OBS_VALUE';
 export const EUROSTAT_VALUE_FIELDS = [EUROSTAT_DEFAULT_VALUE_FIELD] as const;
 
 export type ChartType = 'line' | 'bar' | 'area' | 'pie';
+export type DataViewKind = 'chart' | 'table' | 'stat';
+export type DataAggregation = 'sum' | 'mean' | 'median' | 'min' | 'max' | 'count';
+export type DataSortDirection = 'asc' | 'desc';
+export type DatasetColumnType = 'number' | 'date' | 'category' | 'text';
+export type DatasetColumnRole = 'measure' | 'time' | 'geo' | 'dimension' | 'label';
 export type EurostatValueField = (typeof EUROSTAT_VALUE_FIELDS)[number];
 
 export interface ChartPoint {
@@ -38,12 +44,6 @@ export interface ChartPresentation {
   showGrid?: boolean;
   showTooltip?: boolean;
   donut?: boolean;
-}
-
-export interface ManualChartSource {
-  kind: 'manual';
-  columns: string[];
-  rows: Record<string, string>[];
 }
 
 export interface GovDataResourceSummary {
@@ -82,40 +82,102 @@ export interface GovDataProvenance {
   importedAt: string;
 }
 
-export interface GovDataChartSource extends GovDataProvenance {
-  kind: 'govdata';
-  snapshotKey: string;
-  columns: string[];
-  rows: Record<string, string>[];
+export interface DatasetColumnProfile {
+  name: string;
+  label: string;
+  type: DatasetColumnType;
+  role: DatasetColumnRole;
+  nullCount: number;
+  distinctCount: number;
+  min?: number | string | null;
+  max?: number | string | null;
 }
 
+export interface DataViewQuery {
+  measureColumn?: string | null;
+  dimensionColumn?: string | null;
+  seriesColumn?: string | null;
+  filters: Record<string, string>;
+  aggregation: DataAggregation;
+  layout?: 'long' | 'wide' | 'multi';
+  valueColumns?: string[];
+  columns?: string[];
+  sort?: {
+    column: string;
+    direction: DataSortDirection;
+  } | null;
+  limit?: 5 | 10 | 25 | 50;
+}
+
+export interface DataViewProjectionRequest extends DataViewQuery {
+  snapshotId: string;
+  view: DataViewKind;
+}
+
+export interface ChartDataViewProjection {
+  view: 'chart';
+  snapshotId: string;
+  points: ChartPoint[];
+  rowCount: number;
+}
+
+export interface TableDataViewProjection {
+  view: 'table';
+  snapshotId: string;
+  columns: string[];
+  rows: Record<string, string>[];
+  rowCount: number;
+}
+
+export interface StatDataViewProjection {
+  view: 'stat';
+  snapshotId: string;
+  label: string;
+  value: number;
+  aggregation: DataAggregation;
+  rowCount: number;
+}
+
+export type DataViewProjection =
+  | ChartDataViewProjection
+  | TableDataViewProjection
+  | StatDataViewProjection;
+
 export interface GovDataImportResult {
+  datasetId: string;
+  snapshotId: string;
   snapshotKey: string;
   columns: string[];
   rows: Record<string, string>[];
   provenance: GovDataProvenance;
 }
 
-export interface EurostatChartSource {
-  kind: 'eurostat';
+export type DatasetProviderId = 'EUROSTAT' | 'GENESIS_DESTATIS' | 'GOVDATA' | 'UPLOAD';
+
+export interface DatasetChartSource {
+  kind: 'dataset';
+  provider: DatasetProviderId;
   datasetId: string;
-  datasetCode: string;
-  snapshotKey: string;
-  projectionId: string;
-  filters: Record<string, string>;
-  columns?: string[];
-  rows?: Record<string, string>[];
+  snapshotId: string;
+  snapshotKey?: string;
+  title: string;
+  providerDatasetId?: string | null;
+  providerResourceId?: string | null;
+  publisher?: string | null;
+  sourceUrl?: string | null;
+  license?: string | null;
+  snapshotTakenAt?: string | null;
+  filters?: Record<string, string>;
+  groupId?: string | null;
 }
 
-export type ChartSource = ManualChartSource | GovDataChartSource | EurostatChartSource;
-
-export interface TChartElement extends TElement {
-  type: typeof CHART_NODE_TYPE;
-  chartType: ChartType;
-  mapping: ChartMapping;
+export interface TDataViewElement extends TElement {
+  type: typeof DATA_VIEW_NODE_TYPE;
+  view: DataViewKind;
+  source: DatasetChartSource;
+  query: DataViewQuery;
+  chartType?: ChartType;
   presentation: ChartPresentation;
-  source: ChartSource;
-  points: ChartPoint[];
   children: [{ text: '' }];
 }
 
@@ -167,6 +229,7 @@ export interface EurostatImportProgress {
 
 export interface EurostatProjectionRequest {
   datasetId: string;
+  snapshotId?: string;
   filters: Record<string, string>;
   xDimension: string;
   seriesDimension?: string | null;
@@ -174,21 +237,63 @@ export interface EurostatProjectionRequest {
 }
 
 export interface EurostatProjectionResult {
-  projectionId: string;
+  projectionId?: string;
+  snapshotId?: string;
   points: ChartPoint[];
 }
 
-export type OfficialDataProviderId = 'govdata' | 'eurostat';
-
-export interface OfficialDataSearchResult {
+export interface DatasetSearchResult {
   id: string;
-  provider: OfficialDataProviderId;
+  provider: DatasetProviderId;
+  providerDatasetId?: string | null;
+  providerResourceId?: string | null;
   title: string;
-  code?: string;
   description?: string | null;
-  source?: string | null;
+  publisher?: string | null;
+  license?: string | null;
+  sourceUrl?: string | null;
   modified?: string | null;
-  formatSummary?: string | null;
+  structureSummary?: string | null;
   valueSummary?: string | null;
-  entry: GovDataCatalogueEntry | EurostatCatalogueEntry;
+  formatSummary?: string | null;
+  snapshotId?: string | null;
+  snapshotKey?: string | null;
+  snapshotTakenAt?: string | null;
+  rowCount?: number | null;
+  columnCount?: number | null;
+  columnProfiles?: DatasetColumnProfile[];
+  byteSize?: number | null;
+  groupId?: string | null;
+  timeCoverage?: { start?: string | null; end?: string | null } | null;
+  spatialCoverage?: string[] | Record<string, unknown> | null;
+  metadata?: Record<string, unknown>;
+  entry?: unknown;
+}
+
+export interface DatasetProviderError {
+  provider: DatasetProviderId;
+  message: string;
+}
+
+export interface DatasetProviderSearchResponse {
+  results: DatasetSearchResult[];
+  errors: DatasetProviderError[];
+}
+
+export interface DatasetSnapshotImportResult {
+  datasetId: string;
+  snapshotId: string;
+  snapshotKey: string;
+  provider: DatasetProviderId;
+  title: string;
+  publisher?: string | null;
+  sourceUrl?: string | null;
+  columns: string[];
+  columnProfiles?: DatasetColumnProfile[];
+  rows: Record<string, string>[];
+  rowCount: number;
+  columnCount: number;
+  byteSize: number;
+  snapshotTakenAt: string;
+  provenance?: Record<string, unknown>;
 }

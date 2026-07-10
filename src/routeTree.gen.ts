@@ -48,6 +48,10 @@ import { Route as ApiEurostatImportRouteImport } from './routes/api/eurostat/imp
 import { Route as ApiEurostatDetailsRouteImport } from './routes/api/eurostat/details'
 import { Route as ApiEurostatCatalogueRouteImport } from './routes/api/eurostat/catalogue'
 import { Route as ApiDebugGroupGeneralAssembliesRouteImport } from './routes/api/debug/group-general-assemblies'
+import { Route as ApiDatasetsUploadRouteImport } from './routes/api/datasets/upload'
+import { Route as ApiDatasetsSnapshotsRouteImport } from './routes/api/datasets/snapshots'
+import { Route as ApiDatasetsSearchRouteImport } from './routes/api/datasets/search'
+import { Route as ApiDatasetsArchiveRouteImport } from './routes/api/datasets/archive'
 import { Route as ApiAiCredentialsRouteImport } from './routes/api/ai/credentials'
 import { Route as ApiAiCopilotRouteImport } from './routes/api/ai/copilot'
 import { Route as ApiAiCommandRouteImport } from './routes/api/ai/command'
@@ -74,6 +78,9 @@ import { Route as AuthedGroupIdIndexRouteImport } from './routes/_authed/group/$
 import { Route as AuthedEventIdIndexRouteImport } from './routes/_authed/event/$id/index'
 import { Route as AuthedBlogIdIndexRouteImport } from './routes/_authed/blog/$id/index'
 import { Route as AuthedAmendmentIdIndexRouteImport } from './routes/_authed/amendment/$id/index'
+import { Route as ApiDatasetsSnapshotIdValuesRouteImport } from './routes/api/datasets/$snapshotId/values'
+import { Route as ApiDatasetsSnapshotIdProjectionRouteImport } from './routes/api/datasets/$snapshotId/projection'
+import { Route as ApiDatasetsDatasetIdDetailsRouteImport } from './routes/api/datasets/$datasetId/details'
 import { Route as AuthedUserIdSubscriptionsRouteImport } from './routes/_authed/user/$id/subscriptions'
 import { Route as AuthedUserIdSettingsRouteImport } from './routes/_authed/user/$id/settings'
 import { Route as AuthedUserIdNotificationsRouteImport } from './routes/_authed/user/$id/notifications'
@@ -323,6 +330,26 @@ const ApiDebugGroupGeneralAssembliesRoute =
     path: '/api/debug/group-general-assemblies',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiDatasetsUploadRoute = ApiDatasetsUploadRouteImport.update({
+  id: '/api/datasets/upload',
+  path: '/api/datasets/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDatasetsSnapshotsRoute = ApiDatasetsSnapshotsRouteImport.update({
+  id: '/api/datasets/snapshots',
+  path: '/api/datasets/snapshots',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDatasetsSearchRoute = ApiDatasetsSearchRouteImport.update({
+  id: '/api/datasets/search',
+  path: '/api/datasets/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDatasetsArchiveRoute = ApiDatasetsArchiveRouteImport.update({
+  id: '/api/datasets/archive',
+  path: '/api/datasets/archive',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAiCredentialsRoute = ApiAiCredentialsRouteImport.update({
   id: '/api/ai/credentials',
   path: '/api/ai/credentials',
@@ -454,6 +481,24 @@ const AuthedAmendmentIdIndexRoute = AuthedAmendmentIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedAmendmentIdRoute,
 } as any)
+const ApiDatasetsSnapshotIdValuesRoute =
+  ApiDatasetsSnapshotIdValuesRouteImport.update({
+    id: '/api/datasets/$snapshotId/values',
+    path: '/api/datasets/$snapshotId/values',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiDatasetsSnapshotIdProjectionRoute =
+  ApiDatasetsSnapshotIdProjectionRouteImport.update({
+    id: '/api/datasets/$snapshotId/projection',
+    path: '/api/datasets/$snapshotId/projection',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiDatasetsDatasetIdDetailsRoute =
+  ApiDatasetsDatasetIdDetailsRouteImport.update({
+    id: '/api/datasets/$datasetId/details',
+    path: '/api/datasets/$datasetId/details',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthedUserIdSubscriptionsRoute =
   AuthedUserIdSubscriptionsRouteImport.update({
     id: '/subscriptions',
@@ -800,6 +845,10 @@ export interface FileRoutesByFullPath {
   '/api/ai/command': typeof ApiAiCommandRoute
   '/api/ai/copilot': typeof ApiAiCopilotRoute
   '/api/ai/credentials': typeof ApiAiCredentialsRoute
+  '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
+  '/api/datasets/search': typeof ApiDatasetsSearchRoute
+  '/api/datasets/snapshots': typeof ApiDatasetsSnapshotsRoute
+  '/api/datasets/upload': typeof ApiDatasetsUploadRoute
   '/api/debug/group-general-assemblies': typeof ApiDebugGroupGeneralAssembliesRoute
   '/api/eurostat/catalogue': typeof ApiEurostatCatalogueRoute
   '/api/eurostat/details': typeof ApiEurostatDetailsRoute
@@ -847,6 +896,9 @@ export interface FileRoutesByFullPath {
   '/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
   '/user/$id/settings': typeof AuthedUserIdSettingsRoute
   '/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
+  '/api/datasets/$datasetId/details': typeof ApiDatasetsDatasetIdDetailsRoute
+  '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
+  '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
   '/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id/': typeof AuthedBlogIdIndexRoute
   '/event/$id/': typeof AuthedEventIdIndexRoute
@@ -912,6 +964,10 @@ export interface FileRoutesByTo {
   '/api/ai/command': typeof ApiAiCommandRoute
   '/api/ai/copilot': typeof ApiAiCopilotRoute
   '/api/ai/credentials': typeof ApiAiCredentialsRoute
+  '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
+  '/api/datasets/search': typeof ApiDatasetsSearchRoute
+  '/api/datasets/snapshots': typeof ApiDatasetsSnapshotsRoute
+  '/api/datasets/upload': typeof ApiDatasetsUploadRoute
   '/api/debug/group-general-assemblies': typeof ApiDebugGroupGeneralAssembliesRoute
   '/api/eurostat/catalogue': typeof ApiEurostatCatalogueRoute
   '/api/eurostat/details': typeof ApiEurostatDetailsRoute
@@ -956,6 +1012,9 @@ export interface FileRoutesByTo {
   '/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
   '/user/$id/settings': typeof AuthedUserIdSettingsRoute
   '/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
+  '/api/datasets/$datasetId/details': typeof ApiDatasetsDatasetIdDetailsRoute
+  '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
+  '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
   '/amendment/$id': typeof AuthedAmendmentIdIndexRoute
   '/blog/$id': typeof AuthedBlogIdIndexRoute
   '/event/$id': typeof AuthedEventIdIndexRoute
@@ -1028,6 +1087,10 @@ export interface FileRoutesById {
   '/api/ai/command': typeof ApiAiCommandRoute
   '/api/ai/copilot': typeof ApiAiCopilotRoute
   '/api/ai/credentials': typeof ApiAiCredentialsRoute
+  '/api/datasets/archive': typeof ApiDatasetsArchiveRoute
+  '/api/datasets/search': typeof ApiDatasetsSearchRoute
+  '/api/datasets/snapshots': typeof ApiDatasetsSnapshotsRoute
+  '/api/datasets/upload': typeof ApiDatasetsUploadRoute
   '/api/debug/group-general-assemblies': typeof ApiDebugGroupGeneralAssembliesRoute
   '/api/eurostat/catalogue': typeof ApiEurostatCatalogueRoute
   '/api/eurostat/details': typeof ApiEurostatDetailsRoute
@@ -1075,6 +1138,9 @@ export interface FileRoutesById {
   '/_authed/user/$id/notifications': typeof AuthedUserIdNotificationsRoute
   '/_authed/user/$id/settings': typeof AuthedUserIdSettingsRoute
   '/_authed/user/$id/subscriptions': typeof AuthedUserIdSubscriptionsRoute
+  '/api/datasets/$datasetId/details': typeof ApiDatasetsDatasetIdDetailsRoute
+  '/api/datasets/$snapshotId/projection': typeof ApiDatasetsSnapshotIdProjectionRoute
+  '/api/datasets/$snapshotId/values': typeof ApiDatasetsSnapshotIdValuesRoute
   '/_authed/amendment/$id/': typeof AuthedAmendmentIdIndexRoute
   '/_authed/blog/$id/': typeof AuthedBlogIdIndexRoute
   '/_authed/event/$id/': typeof AuthedEventIdIndexRoute
@@ -1149,6 +1215,10 @@ export interface FileRouteTypes {
     | '/api/ai/command'
     | '/api/ai/copilot'
     | '/api/ai/credentials'
+    | '/api/datasets/archive'
+    | '/api/datasets/search'
+    | '/api/datasets/snapshots'
+    | '/api/datasets/upload'
     | '/api/debug/group-general-assemblies'
     | '/api/eurostat/catalogue'
     | '/api/eurostat/details'
@@ -1196,6 +1266,9 @@ export interface FileRouteTypes {
     | '/user/$id/notifications'
     | '/user/$id/settings'
     | '/user/$id/subscriptions'
+    | '/api/datasets/$datasetId/details'
+    | '/api/datasets/$snapshotId/projection'
+    | '/api/datasets/$snapshotId/values'
     | '/amendment/$id/'
     | '/blog/$id/'
     | '/event/$id/'
@@ -1261,6 +1334,10 @@ export interface FileRouteTypes {
     | '/api/ai/command'
     | '/api/ai/copilot'
     | '/api/ai/credentials'
+    | '/api/datasets/archive'
+    | '/api/datasets/search'
+    | '/api/datasets/snapshots'
+    | '/api/datasets/upload'
     | '/api/debug/group-general-assemblies'
     | '/api/eurostat/catalogue'
     | '/api/eurostat/details'
@@ -1305,6 +1382,9 @@ export interface FileRouteTypes {
     | '/user/$id/notifications'
     | '/user/$id/settings'
     | '/user/$id/subscriptions'
+    | '/api/datasets/$datasetId/details'
+    | '/api/datasets/$snapshotId/projection'
+    | '/api/datasets/$snapshotId/values'
     | '/amendment/$id'
     | '/blog/$id'
     | '/event/$id'
@@ -1376,6 +1456,10 @@ export interface FileRouteTypes {
     | '/api/ai/command'
     | '/api/ai/copilot'
     | '/api/ai/credentials'
+    | '/api/datasets/archive'
+    | '/api/datasets/search'
+    | '/api/datasets/snapshots'
+    | '/api/datasets/upload'
     | '/api/debug/group-general-assemblies'
     | '/api/eurostat/catalogue'
     | '/api/eurostat/details'
@@ -1423,6 +1507,9 @@ export interface FileRouteTypes {
     | '/_authed/user/$id/notifications'
     | '/_authed/user/$id/settings'
     | '/_authed/user/$id/subscriptions'
+    | '/api/datasets/$datasetId/details'
+    | '/api/datasets/$snapshotId/projection'
+    | '/api/datasets/$snapshotId/values'
     | '/_authed/amendment/$id/'
     | '/_authed/blog/$id/'
     | '/_authed/event/$id/'
@@ -1467,6 +1554,10 @@ export interface RootRouteChildren {
   ApiAiCommandRoute: typeof ApiAiCommandRoute
   ApiAiCopilotRoute: typeof ApiAiCopilotRoute
   ApiAiCredentialsRoute: typeof ApiAiCredentialsRoute
+  ApiDatasetsArchiveRoute: typeof ApiDatasetsArchiveRoute
+  ApiDatasetsSearchRoute: typeof ApiDatasetsSearchRoute
+  ApiDatasetsSnapshotsRoute: typeof ApiDatasetsSnapshotsRoute
+  ApiDatasetsUploadRoute: typeof ApiDatasetsUploadRoute
   ApiDebugGroupGeneralAssembliesRoute: typeof ApiDebugGroupGeneralAssembliesRoute
   ApiEurostatCatalogueRoute: typeof ApiEurostatCatalogueRoute
   ApiEurostatDetailsRoute: typeof ApiEurostatDetailsRoute
@@ -1476,6 +1567,9 @@ export interface RootRouteChildren {
   ApiGovdataCatalogueRoute: typeof ApiGovdataCatalogueRoute
   ApiGovdataImportRoute: typeof ApiGovdataImportRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  ApiDatasetsDatasetIdDetailsRoute: typeof ApiDatasetsDatasetIdDetailsRoute
+  ApiDatasetsSnapshotIdProjectionRoute: typeof ApiDatasetsSnapshotIdProjectionRoute
+  ApiDatasetsSnapshotIdValuesRoute: typeof ApiDatasetsSnapshotIdValuesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1753,6 +1847,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDebugGroupGeneralAssembliesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/datasets/upload': {
+      id: '/api/datasets/upload'
+      path: '/api/datasets/upload'
+      fullPath: '/api/datasets/upload'
+      preLoaderRoute: typeof ApiDatasetsUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/datasets/snapshots': {
+      id: '/api/datasets/snapshots'
+      path: '/api/datasets/snapshots'
+      fullPath: '/api/datasets/snapshots'
+      preLoaderRoute: typeof ApiDatasetsSnapshotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/datasets/search': {
+      id: '/api/datasets/search'
+      path: '/api/datasets/search'
+      fullPath: '/api/datasets/search'
+      preLoaderRoute: typeof ApiDatasetsSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/datasets/archive': {
+      id: '/api/datasets/archive'
+      path: '/api/datasets/archive'
+      fullPath: '/api/datasets/archive'
+      preLoaderRoute: typeof ApiDatasetsArchiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ai/credentials': {
       id: '/api/ai/credentials'
       path: '/api/ai/credentials'
@@ -1934,6 +2056,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/amendment/$id/'
       preLoaderRoute: typeof AuthedAmendmentIdIndexRouteImport
       parentRoute: typeof AuthedAmendmentIdRoute
+    }
+    '/api/datasets/$snapshotId/values': {
+      id: '/api/datasets/$snapshotId/values'
+      path: '/api/datasets/$snapshotId/values'
+      fullPath: '/api/datasets/$snapshotId/values'
+      preLoaderRoute: typeof ApiDatasetsSnapshotIdValuesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/datasets/$snapshotId/projection': {
+      id: '/api/datasets/$snapshotId/projection'
+      path: '/api/datasets/$snapshotId/projection'
+      fullPath: '/api/datasets/$snapshotId/projection'
+      preLoaderRoute: typeof ApiDatasetsSnapshotIdProjectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/datasets/$datasetId/details': {
+      id: '/api/datasets/$datasetId/details'
+      path: '/api/datasets/$datasetId/details'
+      fullPath: '/api/datasets/$datasetId/details'
+      preLoaderRoute: typeof ApiDatasetsDatasetIdDetailsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authed/user/$id/subscriptions': {
       id: '/_authed/user/$id/subscriptions'
@@ -2663,6 +2806,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAiCommandRoute: ApiAiCommandRoute,
   ApiAiCopilotRoute: ApiAiCopilotRoute,
   ApiAiCredentialsRoute: ApiAiCredentialsRoute,
+  ApiDatasetsArchiveRoute: ApiDatasetsArchiveRoute,
+  ApiDatasetsSearchRoute: ApiDatasetsSearchRoute,
+  ApiDatasetsSnapshotsRoute: ApiDatasetsSnapshotsRoute,
+  ApiDatasetsUploadRoute: ApiDatasetsUploadRoute,
   ApiDebugGroupGeneralAssembliesRoute: ApiDebugGroupGeneralAssembliesRoute,
   ApiEurostatCatalogueRoute: ApiEurostatCatalogueRoute,
   ApiEurostatDetailsRoute: ApiEurostatDetailsRoute,
@@ -2672,6 +2819,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiGovdataCatalogueRoute: ApiGovdataCatalogueRoute,
   ApiGovdataImportRoute: ApiGovdataImportRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  ApiDatasetsDatasetIdDetailsRoute: ApiDatasetsDatasetIdDetailsRoute,
+  ApiDatasetsSnapshotIdProjectionRoute: ApiDatasetsSnapshotIdProjectionRoute,
+  ApiDatasetsSnapshotIdValuesRoute: ApiDatasetsSnapshotIdValuesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

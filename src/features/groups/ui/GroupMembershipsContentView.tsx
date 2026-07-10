@@ -25,6 +25,9 @@ import {
 } from '@/features/shared/ui/participation';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { Plus } from 'lucide-react';
 
 export interface GroupMembershipsContentViewProps {
   accessRoles: any;
@@ -216,6 +219,9 @@ export function GroupMembershipsContentView({
   updateOfflineMember,
 }: GroupMembershipsContentViewProps) {
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const [roleConfigurationTab, setRoleConfigurationTab] = useState<'roles' | 'actionRights'>(
+    'roles'
+  );
   const showMembershipSearch =
     canManageMembers &&
     activeTab !== 'roles' &&
@@ -651,40 +657,78 @@ export function GroupMembershipsContentView({
         showGuests={canManageMembers}
         showRoles={canManageMembers}
         rolesContent={
-          <>
-            <RoleDetailsTable
-              roles={groupRoleHook.roles}
-              onEdit={handleOpenEditRole}
-              onDelete={roleId => groupRoleHook.actions.delete(roleId)}
-              onAssignHolder={groupRoleHook.actions.openAssignHolder}
-              onViewHistory={groupRoleHook.actions.openHistory}
-              onOpenElectionAssignment={roleId =>
-                navigate({
-                  to: '/group/$id/memberships',
-                  params: { id: groupId },
-                  search: { tab: 'openAssignments', assignmentId: `role:${roleId}` },
-                })
-              }
-              addRoleButton={
-                <AddRoleDialog
-                  isOpen={addRoleOpen}
-                  onOpenChange={setAddRoleOpen}
-                  form={newRoleForm}
-                  onFormChange={patch =>
-                    setNewRoleForm((current: any) => ({ ...current, ...patch }))
-                  }
-                  onSubmit={handleAddRole}
-                  guestOnlyMembershipFlow={guestOnlyMembershipFlow}
-                />
-              }
-            />
-            <RolesPermissionsTable
-              roles={[...accessRoles]}
-              onTogglePermission={handleTogglePermission}
-              onReorderRoles={reorderRoles}
-            />
-          </>
+          <Tabs
+            value={roleConfigurationTab}
+            onValueChange={value =>
+              setRoleConfigurationTab(value === 'actionRights' ? 'actionRights' : 'roles')
+            }
+            className="space-y-4"
+          >
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="roles">
+                {translateText('features.groups.roleConfiguration.rolesTab', 'Roles')}
+              </TabsTrigger>
+              <TabsTrigger value="actionRights">
+                {translateText(
+                  'features.groups.roleConfiguration.actionRightsTab',
+                  'Action rights'
+                )}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="roles" className="mt-0">
+              <RoleDetailsTable
+                roles={groupRoleHook.roles}
+                onEdit={handleOpenEditRole}
+                onDelete={roleId => groupRoleHook.actions.delete(roleId)}
+                onAssignHolder={groupRoleHook.actions.openAssignHolder}
+                onViewHistory={groupRoleHook.actions.openHistory}
+                onOpenElectionAssignment={roleId =>
+                  navigate({
+                    to: '/group/$id/memberships',
+                    params: { id: groupId },
+                    search: { tab: 'openAssignments', assignmentId: `role:${roleId}` },
+                  })
+                }
+                addRoleButton={
+                  <Button type="button" onClick={() => setAddRoleOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    {translateText('generated.inline.0125_add_role_82d0afcc')}
+                  </Button>
+                }
+              />
+            </TabsContent>
+            <TabsContent value="actionRights" className="mt-0">
+              <RolesPermissionsTable
+                roles={[...accessRoles]}
+                onTogglePermission={handleTogglePermission}
+                onReorderRoles={reorderRoles}
+                addRoleButton={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-8"
+                    title={translateText('generated.inline.0125_add_role_82d0afcc')}
+                    aria-label={translateText('generated.inline.0125_add_role_82d0afcc')}
+                    onClick={() => setAddRoleOpen(true)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                }
+              />
+            </TabsContent>
+          </Tabs>
         }
+      />
+
+      <AddRoleDialog
+        isOpen={addRoleOpen}
+        onOpenChange={setAddRoleOpen}
+        form={newRoleForm}
+        onFormChange={patch => setNewRoleForm((current: any) => ({ ...current, ...patch }))}
+        onSubmit={handleAddRole}
+        trigger={null}
+        guestOnlyMembershipFlow={guestOnlyMembershipFlow}
       />
 
       <MemberRightsDialog

@@ -1,18 +1,13 @@
 import type { SlateElementProps } from 'platejs';
 import { SlateElement } from 'platejs/static';
-import type { TChartElement } from '@/features/charts/types';
-import { ChartRenderer } from '@/features/charts/ui/ChartRenderer';
+import type { TDataViewElement } from '@/features/charts/types';
+import { DataViewRenderer } from '@/features/charts/ui/DataViewRenderer';
 
-export function ChartElementStatic(props: SlateElementProps<TChartElement>) {
+export function ChartElementStatic(props: SlateElementProps<TDataViewElement>) {
   return (
     <SlateElement {...props} className="py-3">
       <figure className="bg-background m-0 border p-4">
-        <ChartRenderer
-          chartType={props.element.chartType}
-          points={props.element.points}
-          presentation={props.element.presentation}
-          staticMode
-        />
+        <DataViewRenderer element={props.element} />
       </figure>
       {props.children}
     </SlateElement>

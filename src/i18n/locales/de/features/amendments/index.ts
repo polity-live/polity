@@ -416,6 +416,7 @@ export const amendmentsTranslations = {
       readOnly: 'Nur Lesen',
       saved: 'Gespeichert',
       unsaved: 'Ungespeichert',
+      unsavedChanges: 'Ungespeicherte Änderungen',
     },
     metrics: {
       changeRequests: '{{count}} CRs',
@@ -480,6 +481,44 @@ export const amendmentsTranslations = {
       objects: 'Objekte',
       selectedOsmWay: 'OSM-Weg',
       showCrOverlay: 'Canvas-Overlay anzeigen',
+    },
+    help: {
+      title: 'Navigationshilfe',
+      trigger: 'Navigationshilfe für den Straßenentwurf anzeigen',
+      description: 'Die Canvas-Steuerung hängt vom aktiven Modus ab.',
+      tabs: {
+        touch: 'Touch',
+        mouse: 'Maus',
+        keyboard: 'Tastatur',
+      },
+      modes: {
+        select: 'Auswählen',
+        place: 'Platzieren',
+        camera: 'Kamera',
+      },
+      global: {
+        title: 'Globale Navigation',
+      },
+      touch: {
+        select: 'Tippe auf ein Element oder Bestandsobjekt, um es auszuwählen.',
+        place: 'Tippe auf die Canvas, um das ausgewählte Element zu platzieren.',
+        camera: 'Ziehe im Kamera-Modus mit einem Finger, um die Kamera zu bewegen.',
+        global: 'Mit zwei Fingern bewegst und zoomst du die Kamera.',
+      },
+      mouse: {
+        select: 'Klicke ein Element oder Bestandsobjekt an, um es auszuwählen.',
+        rotate: 'Ziehe am Rotationsgriff, um ein ausgewähltes Element zu drehen.',
+        place: 'Klicke zum Platzieren. Bewege den Zeiger, um das nächste Element vorab zu sehen.',
+        camera: 'Ziehe im Kamera-Modus mit linker Maustaste, um die Kamera zu bewegen.',
+        global:
+          'Mausrad zoomt. Mittelklick+Ziehen oder Leertaste+Ziehen bewegt. Rechtsklick+Ziehen oder Shift+Ziehen dreht.',
+      },
+      keyboard: {
+        select: 'Tastatur-Navigation ist beim Auswählen immer verfügbar.',
+        place: 'Tastatur-Navigation ist während der Platzierungsvorschau verfügbar.',
+        camera: 'Tastatur-Navigation ist im Kamera-Modus verfügbar.',
+        global: 'WASD oder Pfeiltasten bewegen, + und - zoomen, Q und E drehen.',
+      },
     },
     osmLayers: {
       bikeLane: 'Radwege',

@@ -10,6 +10,10 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
+import {
+  geoLocationFieldsFromShape,
+  type GeoLocationShape,
+} from '@/features/shared/logic/geoLocationShape';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { EventTypeInput } from '../ui/inputs/EventTypeInput';
 import { type DelegateConfig } from '../ui/inputs/DelegateAllocationInput';
@@ -100,6 +104,7 @@ type CreateEventRestoreState = Partial<{
   houseNumber: string;
   latitude: number | null;
   longitude: number | null;
+  locationShape: GeoLocationShape | null;
   capacity: string;
   imageURL: string;
   visibility: Visibility;
@@ -155,6 +160,7 @@ export function useCreateEventForm(): CreateFormConfig {
   const [houseNumber, setHouseNumber] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const [locationShape, setLocationShape] = useState<GeoLocationShape | null>(null);
   const [capacity, setCapacity] = useState('');
   const [imageURL, setImageURL] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('public');
@@ -208,6 +214,7 @@ export function useCreateEventForm(): CreateFormConfig {
     setHouseNumber(state.houseNumber ?? '');
     setLatitude(state.latitude ?? null);
     setLongitude(state.longitude ?? null);
+    setLocationShape(state.locationShape ?? null);
     setCapacity(state.capacity ?? '');
     setImageURL(state.imageURL ?? '');
     setVisibility(state.visibility ?? 'public');
@@ -452,6 +459,7 @@ export function useCreateEventForm(): CreateFormConfig {
           delegatesNominationDeadline,
         });
 
+      const locationFields = geoLocationFieldsFromShape(locationShape);
       const eventPayload = {
         id: eventId,
         title: title.trim(),
@@ -468,6 +476,12 @@ export function useCreateEventForm(): CreateFormConfig {
         house_number: attendanceMode !== 'online' ? houseNumber || null : null,
         latitude: attendanceMode !== 'online' ? latitude : null,
         longitude: attendanceMode !== 'online' ? longitude : null,
+        location_kind: attendanceMode !== 'online' ? locationFields.location_kind : null,
+        location_place_id: attendanceMode !== 'online' ? locationFields.location_place_id : null,
+        location_boundary_source:
+          attendanceMode !== 'online' ? locationFields.location_boundary_source : null,
+        location_geometry: attendanceMode !== 'online' ? locationFields.location_geometry : null,
+        location_bounds: attendanceMode !== 'online' ? locationFields.location_bounds : null,
         start_date,
         end_date,
         visibility: effectiveVisibility,
@@ -590,6 +604,7 @@ export function useCreateEventForm(): CreateFormConfig {
         houseNumber,
         latitude,
         longitude,
+        locationShape,
         capacity,
         imageURL,
         visibility: effectiveVisibility,
@@ -901,6 +916,8 @@ export function useCreateEventForm(): CreateFormConfig {
                   longitude,
                   capacity,
                 },
+                shape: locationShape,
+                onShapeChange: setLocationShape,
                 showCapacity: !isMeetingEvent,
                 labels: {
                   attendanceMode: translateText('generated.inline.0327_attendance_mode_507f30a9'),
@@ -1186,6 +1203,9 @@ export function useCreateEventForm(): CreateFormConfig {
       city,
       street,
       houseNumber,
+      latitude,
+      longitude,
+      locationShape,
       locationSummary,
       capacity,
       imageURL,

@@ -39,6 +39,10 @@ import {
   waitForOptimisticCreate,
 } from '../logic/createFinalization';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
+import {
+  geoLocationFieldsFromShape,
+  type GeoLocationShape,
+} from '@/features/shared/logic/geoLocationShape';
 
 interface CreateTargetGroupData {
   id: string;
@@ -83,6 +87,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   const [house_number, setHouseNumber] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const [locationShape, setLocationShape] = useState<GeoLocationShape | null>(null);
   const [targetSelection, setTargetSelection] = useState<{
     sourceGroupId: string;
     groupId: string;
@@ -124,6 +129,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         house_number: string;
         latitude: number | null;
         longitude: number | null;
+        locationShape: GeoLocationShape | null;
         targetSelection: typeof targetSelection;
         pathMode: 'hierarchy' | 'workflow';
         workflowId: string;
@@ -149,6 +155,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     setHouseNumber(state.house_number ?? '');
     setLatitude(state.latitude ?? null);
     setLongitude(state.longitude ?? null);
+    setLocationShape(state.locationShape ?? null);
     setTargetSelection(state.targetSelection ?? null);
     setPathMode(state.pathMode ?? searchParams.pathMode);
     setWorkflowId(state.workflowId ?? searchParams.workflowId ?? '');
@@ -346,6 +353,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                   : null,
             }
           : null;
+      const locationFields = geoLocationFieldsFromShape(locationShape);
       const createAmendmentPayload = {
         amendment: {
           id: amendmentId,
@@ -370,6 +378,11 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           house_number: house_number || null,
           latitude,
           longitude,
+          location_kind: locationFields.location_kind,
+          location_place_id: locationFields.location_place_id,
+          location_boundary_source: locationFields.location_boundary_source,
+          location_geometry: locationFields.location_geometry,
+          location_bounds: locationFields.location_bounds,
           x: null,
           youtube: null,
           linkedin: null,
@@ -427,6 +440,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
             house_number,
             latitude,
             longitude,
+            locationShape,
             targetSelection,
             pathMode,
             workflowId,
@@ -461,6 +475,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                 house_number,
                 latitude,
                 longitude,
+                locationShape,
                 targetSelection,
                 pathMode,
                 workflowId,
@@ -591,6 +606,8 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                   latitude,
                   longitude,
                 },
+                shape: locationShape,
+                onShapeChange: setLocationShape,
                 labels: {
                   country: t('pages.create.amendment.countryLabel'),
                   region: t('pages.create.amendment.regionLabel'),
@@ -890,6 +907,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       house_number,
       latitude,
       longitude,
+      locationShape,
       locationSummary,
       preferredHashtagSuggestions,
       targetSelection,

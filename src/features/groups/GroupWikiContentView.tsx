@@ -367,6 +367,11 @@ export function GroupWikiContentView({
           house_number: group.house_number ?? undefined,
           latitude: group.latitude ?? null,
           longitude: group.longitude ?? null,
+          location_kind: group.location_kind ?? null,
+          location_place_id: group.location_place_id ?? null,
+          location_boundary_source: group.location_boundary_source ?? null,
+          location_geometry: group.location_geometry ?? null,
+          location_bounds: group.location_bounds ?? null,
           location: groupLocation || undefined,
         }}
         className="mb-12"

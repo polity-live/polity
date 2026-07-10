@@ -5,6 +5,7 @@
  * Column order represents role hierarchy: left = least rights, right = most rights.
  */
 
+import type { ReactNode } from 'react';
 import {
   MatrixCheckbox,
   MatrixTable,
@@ -37,6 +38,7 @@ export interface RolesPermissionsTableViewProps {
   handleDragOver: any;
   handleDrop: any;
   handleDragEnd: any;
+  addRoleButton?: ReactNode;
 }
 
 export function RolesPermissionsTableView({
@@ -55,6 +57,7 @@ export function RolesPermissionsTableView({
   handleDragOver,
   handleDrop,
   handleDragEnd,
+  addRoleButton,
 }: RolesPermissionsTableViewProps) {
   return (
     <section className="space-y-3">
@@ -122,6 +125,11 @@ export function RolesPermissionsTableView({
                           </div>
                         </MatrixTableHead>
                       ))}
+                      {addRoleButton ? (
+                        <MatrixTableHead className="min-w-[88px] text-center">
+                          <div className="flex justify-center py-1">{addRoleButton}</div>
+                        </MatrixTableHead>
+                      ) : null}
                     </MatrixTableRow>
                   </MatrixTableHeader>
                   <MatrixTableBody>
@@ -158,6 +166,7 @@ export function RolesPermissionsTableView({
                               </MatrixTableCell>
                             );
                           })}
+                          {addRoleButton ? <MatrixTableCell aria-hidden="true" /> : null}
                         </MatrixTableRow>
                       );
                     })}
@@ -175,6 +184,7 @@ export function RolesPermissionsTableView({
               'generated.inline.0732_no_roles_created_yet_create_your_first_role_i_71214f95'
             )}
           </p>
+          {addRoleButton ? <div className="mt-4 flex justify-center">{addRoleButton}</div> : null}
         </div>
       )}
     </section>

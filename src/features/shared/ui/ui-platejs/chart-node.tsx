@@ -2,24 +2,25 @@ import type { PlateElementProps } from 'platejs/react';
 import { PencilIcon, Trash2Icon } from 'lucide-react';
 import { PlateElement, useEditorRef, useFocused, useReadOnly, useSelected } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
-import type { TChartElement } from '@/features/charts/types';
-import { ChartRenderer } from '@/features/charts/ui/ChartRenderer';
-import { openChartDialog } from '@/features/charts/ui/ChartDialog';
+import type { TDataViewElement } from '@/features/charts/types';
+import { DataViewRenderer } from '@/features/charts/ui/DataViewRenderer';
+import { openDataViewDialog } from '@/features/charts/ui/ChartDialog';
+import { useAuth } from '@/providers/auth-provider';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
 
-export function ChartElement(props: PlateElementProps<TChartElement>) {
+export function ChartElement(props: PlateElementProps<TDataViewElement>) {
   const editor = useEditorRef();
   const selected = useSelected();
   const focused = useFocused();
   const readOnly = useReadOnly();
   const { t } = useTranslation();
-
+  const { session } = useAuth();
   return (
     <PlateElement {...props} className="py-3">
       <figure
         className={cn(
-          'group/chart bg-background m-0 border p-4',
+          'group/data-view bg-background m-0 border p-4',
           selected && focused && 'ring-ring ring-2 ring-offset-2'
         )}
       >
@@ -35,11 +36,11 @@ export function ChartElement(props: PlateElementProps<TChartElement>) {
               type="button"
               variant="secondary"
               size="icon"
-              className="pointer-events-none size-8 opacity-0 shadow-sm transition-opacity group-focus-within/chart:pointer-events-auto group-focus-within/chart:opacity-100 group-hover/chart:pointer-events-auto group-hover/chart:opacity-100"
-              title={t('plateJs.chart.edit', 'Edit chart')}
+              className="pointer-events-none size-8 opacity-0 shadow-sm transition-opacity group-focus-within/data-view:pointer-events-auto group-focus-within/data-view:opacity-100 group-hover/data-view:pointer-events-auto group-hover/data-view:opacity-100"
+              title={t('plateJs.dataView.edit', 'Edit data view')}
               onClick={event => {
                 event.stopPropagation();
-                openChartDialog(props.element);
+                openDataViewDialog(props.element);
               }}
             >
               <PencilIcon className="size-4" />
@@ -48,8 +49,8 @@ export function ChartElement(props: PlateElementProps<TChartElement>) {
               type="button"
               variant="secondary"
               size="icon"
-              className="pointer-events-none size-8 opacity-0 shadow-sm transition-opacity group-focus-within/chart:pointer-events-auto group-focus-within/chart:opacity-100 group-hover/chart:pointer-events-auto group-hover/chart:opacity-100"
-              title={t('plateJs.chart.delete', 'Delete chart')}
+              className="pointer-events-none size-8 opacity-0 shadow-sm transition-opacity group-focus-within/data-view:pointer-events-auto group-focus-within/data-view:opacity-100 group-hover/data-view:pointer-events-auto group-hover/data-view:opacity-100"
+              title={t('plateJs.dataView.delete', 'Delete data view')}
               onClick={event => {
                 event.stopPropagation();
                 const path = editor.api.findPath(props.element);
@@ -66,11 +67,7 @@ export function ChartElement(props: PlateElementProps<TChartElement>) {
           onMouseDown={event => event.stopPropagation()}
           onPointerDown={event => event.stopPropagation()}
         >
-          <ChartRenderer
-            chartType={props.element.chartType}
-            points={props.element.points}
-            presentation={props.element.presentation}
-          />
+          <DataViewRenderer element={props.element} accessToken={session?.access_token} />
         </div>
       </figure>
       {props.children}

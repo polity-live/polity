@@ -4,7 +4,7 @@ import {
   type GovDataImportResult,
   type GovDataProvenance,
 } from '@/features/charts/types';
-import { isGovDataCsvResource, loadGovDataPackage } from './catalogue';
+import { isGovDataCsvResource, loadGovDataPackage, normalizeGovDataText } from './catalogue';
 import { parseGovDataCsvTable } from './csv';
 import { assertSafePublicHttpUrl } from './safety';
 
@@ -93,7 +93,9 @@ export async function createGovDataCsvSnapshot(
 
   const csvText = await readLimitedResponseText(response);
   const table = parseGovDataCsvTable(csvText);
-  const organizationTitle = nullableText(pkg.organization?.title ?? pkg.organization?.name);
+  const organizationTitle = nullableText(
+    normalizeGovDataText(pkg.organization?.title ?? pkg.organization?.name)
+  );
   const resourceModified = nullableText(
     resource.modified ?? resource.last_modified ?? resource.metadata_modified
   );
@@ -111,17 +113,17 @@ export async function createGovDataCsvSnapshot(
   const provenance: GovDataProvenance = {
     packageId: text(pkg.id),
     packageName: text(pkg.name),
-    packageTitle: text(pkg.title) || text(pkg.name),
+    packageTitle: normalizeGovDataText(pkg.title) || text(pkg.name),
     resourceId,
-    resourceName: text(resource.name) || 'CSV resource',
+    resourceName: normalizeGovDataText(resource.name) || 'CSV resource',
     resourceUrl: url.toString(),
     publisher: nullableText(
-      extraValue(pkg.extras ?? undefined, 'publisher_name') ?? pkg.maintainer
+      normalizeGovDataText(extraValue(pkg.extras ?? undefined, 'publisher_name') ?? pkg.maintainer)
     ),
     organizationTitle,
     modified: nullableText(pkg.modified ?? pkg.metadata_modified),
     resourceModified,
-    licenseTitle: nullableText(pkg.license_title),
+    licenseTitle: nullableText(normalizeGovDataText(pkg.license_title)),
     importedAt: new Date().toISOString(),
   };
 

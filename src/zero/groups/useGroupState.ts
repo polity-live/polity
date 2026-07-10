@@ -1172,6 +1172,29 @@ export function useCurrentUserActiveGroupIds() {
   };
 }
 
+export function useCurrentUserActiveGroups() {
+  const [membershipsData, result] = useQuery(
+    queries.groups.currentUserActiveMembershipsWithGroups({})
+  );
+
+  const groups = useMemo(() => {
+    const byId = new Map<string, { id: string; name: string }>();
+    for (const membership of normalizeMemberships(membershipsData)) {
+      const group = membership.group;
+      if (!group?.id) continue;
+      byId.set(group.id, { id: group.id, name: group.name?.trim() || group.id });
+    }
+    return [...byId.values()].sort((left, right) =>
+      left.name.localeCompare(right.name, undefined, { sensitivity: 'base' })
+    );
+  }, [membershipsData]);
+
+  return {
+    groups,
+    isLoading: result.type === 'unknown',
+  };
+}
+
 // ── Groups where current user can manage events ─────────────────────
 
 export function useUserGroupsWithManageEvents() {

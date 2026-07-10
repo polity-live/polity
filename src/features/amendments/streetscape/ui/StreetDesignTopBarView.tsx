@@ -41,6 +41,7 @@ import {
   type SelectableEditingMode,
 } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/features/shared/ui/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -386,8 +387,8 @@ export function StreetDesignTopBarView({
       </ToolbarGroup>
 
       <ToolbarGroup>
-        <Popover open={areaPickerOpen} onOpenChange={onAreaPickerOpenChange}>
-          <PopoverTrigger asChild>
+        <Dialog open={areaPickerOpen} onOpenChange={onAreaPickerOpenChange}>
+          <DialogTrigger asChild>
             <ToolbarButton
               type="button"
               aria-label={t('features.amendments.streetscape.areaPicker.title')}
@@ -396,15 +397,14 @@ export function StreetDesignTopBarView({
             >
               <MapPinned className="size-4" />
             </ToolbarButton>
-          </PopoverTrigger>
-          <PopoverContent
-            align="start"
-            className="max-h-[min(72vh,46rem)] w-[min(72rem,calc(100vw-2rem))] overflow-auto p-0"
-            sideOffset={8}
-          >
-            {areaPickerContent}
-          </PopoverContent>
-        </Popover>
+          </DialogTrigger>
+          <DialogContent className="bg-background h-dvh w-screen max-w-none overflow-hidden rounded-none border-0 p-0 sm:max-w-none">
+            <DialogTitle className="sr-only">
+              {t('features.amendments.streetscape.areaPicker.title')}
+            </DialogTitle>
+            <div className="h-full overflow-auto">{areaPickerContent}</div>
+          </DialogContent>
+        </Dialog>
 
         <LayersDropdown
           osmLayerVisibility={osmLayerVisibility}

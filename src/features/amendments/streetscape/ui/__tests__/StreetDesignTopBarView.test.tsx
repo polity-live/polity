@@ -155,6 +155,17 @@ describe('StreetDesignTopBarView', () => {
     expect(props.objects).toHaveLength(1);
   });
 
+  it('renders the map selector as a full-screen dialog when open', () => {
+    renderTopBar({ areaPickerOpen: true });
+
+    const dialog = screen.getByRole('dialog', { name: 'Map section' });
+    expect(screen.getByText('Area picker panel')).toBeTruthy();
+    expect(dialog.className).toContain('h-dvh');
+    expect(dialog.className).toContain('w-screen');
+    expect(dialog.className).toContain('max-w-none');
+    expect(dialog.className).toContain('sm:max-w-none');
+  });
+
   it('renders secondary share, invite, change request, and overlay controls', async () => {
     const onChangeRequestColorModeChange = vi.fn();
     const props = renderSecondaryActionBar({ onChangeRequestColorModeChange });

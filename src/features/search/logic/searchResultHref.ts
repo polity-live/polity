@@ -66,6 +66,8 @@ export function getEntityHref(
       if (options.groupId) return `/group/${options.groupId}/blog/${id}`;
       if (options.authorId) return `/user/${options.authorId}/blog/${id}`;
       return `/blog/${id}`;
+    case 'dataset':
+      return options.groupId ? `/group/${options.groupId}/operation#datasets` : undefined;
     case 'event':
       return `/event/${id}`;
     case 'group':

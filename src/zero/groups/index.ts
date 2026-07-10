@@ -43,4 +43,5 @@ export {
   useUserSearch,
   usePublicGroups,
   useUserGroupSubscriptions,
+  useCurrentUserActiveGroups,
 } from './useGroupState';

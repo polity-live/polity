@@ -19,7 +19,7 @@ const ACTION_RIGHT_SECTION_DEFINITIONS = [
     id: 'operations',
     title: translateText('generated.inline.0137_operations_a1fdaa6b'),
     description: translateText('generated.inline.0138_documents_links_payments_and_todos_29ac0bfa'),
-    resources: ['groupDocuments', 'groupLinks', 'groupPayments', 'groupTodos'],
+    resources: ['groupDatasets', 'groupDocuments', 'groupLinks', 'groupPayments', 'groupTodos'],
   },
   {
     id: 'group-management',

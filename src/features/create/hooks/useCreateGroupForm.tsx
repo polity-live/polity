@@ -19,6 +19,10 @@ import { isValidOptionalEmailAddress } from '@/features/shared/logic/inputValida
 import { matchInviteCsvUsers, type InviteCsvMatchResult } from '../logic/groupInviteCsv';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import {
+  geoLocationFieldsFromShape,
+  type GeoLocationShape,
+} from '@/features/shared/logic/geoLocationShape';
+import {
   EMPTY_RICH_TEXT_VALUE,
   richTextToPlainText,
   toZeroRichTextValue,
@@ -110,6 +114,7 @@ type CreateGroupRestoreState = Partial<{
   house_number: string;
   latitude: number | null;
   longitude: number | null;
+  locationShape: GeoLocationShape | null;
   imageURL: string;
   hashtags: string[];
   visibility: 'public' | 'authenticated' | 'private';
@@ -235,6 +240,7 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [house_number, setHouseNumber] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const [locationShape, setLocationShape] = useState<GeoLocationShape | null>(null);
   const [imageURL, setImageURL] = useState('');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
@@ -289,6 +295,7 @@ export function useCreateGroupForm(): CreateFormConfig {
     setHouseNumber(state.house_number ?? '');
     setLatitude(state.latitude ?? null);
     setLongitude(state.longitude ?? null);
+    setLocationShape(state.locationShape ?? null);
     setImageURL(state.imageURL ?? '');
     setHashtags(state.hashtags ?? []);
     setVisibility(state.visibility ?? 'public');
@@ -621,6 +628,7 @@ export function useCreateGroupForm(): CreateFormConfig {
             }
           : null;
 
+      const locationFields = geoLocationFieldsFromShape(locationShape);
       const createGroupPayload = {
         group: {
           id: groupId,
@@ -635,6 +643,11 @@ export function useCreateGroupForm(): CreateFormConfig {
           house_number: house_number || null,
           latitude,
           longitude,
+          location_kind: locationFields.location_kind,
+          location_place_id: locationFields.location_place_id,
+          location_boundary_source: locationFields.location_boundary_source,
+          location_geometry: locationFields.location_geometry,
+          location_bounds: locationFields.location_bounds,
           image_url: imageURL || null,
           x: null,
           youtube: null,
@@ -685,6 +698,7 @@ export function useCreateGroupForm(): CreateFormConfig {
             house_number,
             latitude,
             longitude,
+            locationShape,
             imageURL,
             hashtags,
             visibility,
@@ -722,6 +736,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                 house_number,
                 latitude,
                 longitude,
+                locationShape,
                 imageURL,
                 hashtags,
                 visibility,
@@ -1025,6 +1040,8 @@ export function useCreateGroupForm(): CreateFormConfig {
                   latitude,
                   longitude,
                 },
+                shape: locationShape,
+                onShapeChange: setLocationShape,
                 labels: {
                   country: t('pages.create.group.countryLabel'),
                   region: t('pages.create.group.regionLabel'),
@@ -1355,6 +1372,9 @@ export function useCreateGroupForm(): CreateFormConfig {
       city,
       street,
       house_number,
+      latitude,
+      longitude,
+      locationShape,
       locationSummary,
       imageURL,
       hashtags,

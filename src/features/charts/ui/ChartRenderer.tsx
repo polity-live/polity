@@ -41,7 +41,7 @@ export const CHART_PALETTE = [
 
 interface ChartRendererProps {
   chartType: ChartType;
-  points: readonly ChartPoint[];
+  points?: readonly ChartPoint[];
   presentation?: ChartPresentation;
   className?: string;
   heightClassName?: string;
@@ -493,7 +493,7 @@ function CartesianChartContent({
             cursor
             isAnimationActive={false}
             wrapperStyle={{ pointerEvents: 'none', zIndex: 50 }}
-            content={<ChartTooltipContent indicator="line" />}
+            content={<ChartTooltipContent indicator="line" payload={[]} />}
           />
         )
       ) : null}
@@ -678,21 +678,23 @@ export function ChartRenderer({
   staticMode = false,
   valueFormatter,
 }: ChartRendererProps) {
-  const series = React.useMemo(() => getSeries(points), [points]);
-  const rows = React.useMemo(() => toCartesianRows(points), [points]);
+  const localPoints = points ?? [];
+  const effectivePoints = localPoints;
+  const series = React.useMemo(() => getSeries(effectivePoints), [effectivePoints]);
+  const rows = React.useMemo(() => toCartesianRows(effectivePoints), [effectivePoints]);
   const config = React.useMemo(() => getChartConfig(series), [series]);
   const { hoverTooltip, onHoverChange } = useChartRendererController(staticMode);
   const chart = staticMode ? (
     <StaticChartSvg
       chartType={chartType}
-      points={points}
+      points={effectivePoints}
       rows={rows}
       series={series}
       presentation={presentation}
     />
   ) : chartType === 'pie' ? (
     <PieChartContent
-      points={points}
+      points={effectivePoints}
       presentation={presentation}
       staticMode={staticMode}
       onHoverChange={onHoverChange}
@@ -712,7 +714,7 @@ export function ChartRenderer({
   return (
     <ChartRendererView
       chartType={chartType}
-      points={points}
+      points={effectivePoints}
       presentation={presentation}
       className={className}
       heightClassName={heightClassName}

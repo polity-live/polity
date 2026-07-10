@@ -50,6 +50,15 @@ export function useManualChartTableEditorController({
       ),
     });
   };
+
+  const removeRow = (rowIndex: number) => {
+    if (readOnly || table.rows.length <= 1) return;
+    onChange({
+      ...table,
+      rows: table.rows.filter((_, index) => index !== rowIndex),
+    });
+  };
+
   return {
     table,
     onChange,
@@ -60,6 +69,7 @@ export function useManualChartTableEditorController({
     visibleRows,
     renameColumn,
     removeColumn,
+    removeRow,
     readOnly,
   };
 }

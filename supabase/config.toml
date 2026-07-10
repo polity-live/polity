@@ -72,6 +72,11 @@ public = true
 file_size_limit = "50MB"
 allowed_mime_types = ["image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml", "video/mp4", "video/webm", "video/quicktime", "application/pdf"]
 
+[storage.buckets.dataset-snapshots]
+public = false
+file_size_limit = "50MiB"
+allowed_mime_types = ["text/csv", "text/tab-separated-values", "text/plain", "application/vnd.ms-excel"]
+
 [analytics]
 enabled = true
 port = 54327

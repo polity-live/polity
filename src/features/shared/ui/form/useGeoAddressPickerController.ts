@@ -11,6 +11,8 @@ import {
   toGeoCoordinates,
   type GeoCoordinates,
 } from '@/features/shared/logic/geoCoordinates';
+import type { GeoLocationKind, GeoLocationShape } from '@/features/shared/logic/geoLocationShape';
+import { geoapifyBoundaryFn } from '@/server/geoapify-boundary';
 import { geoapifyReverseFn } from '@/server/geoapify-reverse';
 
 interface GeoAddressPickerProps {
@@ -21,6 +23,8 @@ interface GeoAddressPickerProps {
   placeholders: GeoAddressTextMap;
   coordinates: GeoCoordinates | null;
   onCoordinatesChange: (coordinates: GeoCoordinates | null) => void;
+  shape?: GeoLocationShape | null;
+  onShapeChange?: (shape: GeoLocationShape | null) => void;
 }
 
 const REVERSE_FIELD_ORDER: GeoAddressField[] = [
@@ -46,6 +50,49 @@ function mapResolvedAddressToValues(result: GeoResolvedAddress): GeoAddressValue
     house_number: result.housenumber ?? '',
   };
 }
+
+function mapFieldToLocationKind(field: GeoAddressField | null): GeoLocationKind {
+  if (field === 'post_code') {
+    return 'postcode';
+  }
+
+  if (field === 'city' || field === 'region' || field === 'country') {
+    return field;
+  }
+
+  return 'point';
+}
+
+function isBoundaryField(
+  field: GeoAddressField | null
+): field is 'country' | 'region' | 'city' | 'post_code' {
+  return field === 'country' || field === 'region' || field === 'city' || field === 'post_code';
+}
+
+function pointShape(placeId?: string | null): GeoLocationShape {
+  return {
+    kind: 'point',
+    placeId: placeId ?? null,
+    boundarySource: null,
+    geometry: null,
+    bounds: null,
+  };
+}
+
+function unresolvedBoundaryShape(
+  field: GeoAddressField,
+  placeId?: string | null
+): GeoLocationShape {
+  const boundaries = field === 'post_code' ? 'postal_code' : 'administrative';
+
+  return {
+    kind: mapFieldToLocationKind(field),
+    placeId: placeId ?? null,
+    boundarySource: `geoapify:${boundaries}`,
+    geometry: null,
+    bounds: null,
+  };
+}
 export function useGeoAddressPickerController({
   idPrefix,
   values,
@@ -54,17 +101,22 @@ export function useGeoAddressPickerController({
   placeholders,
   coordinates,
   onCoordinatesChange,
+  shape = null,
+  onShapeChange,
 }: GeoAddressPickerProps) {
   const { t, language } = useTranslation();
   const [resetContextKey, setResetContextKey] = useState(0);
   const [isReverseGeocoding, setIsReverseGeocoding] = useState(false);
+  const [isBoundaryLoading, setIsBoundaryLoading] = useState(false);
   const reverseRequestIdRef = useRef(0);
+  const boundaryRequestIdRef = useRef(0);
   const isApplyingReverseSyncRef = useRef(false);
   const ignoreForwardResolutionRef = useRef(false);
 
   useEffect(() => {
     if (coordinates && isGeoAddressValuesEmpty(values)) {
       onCoordinatesChange(null);
+      onShapeChange?.(null);
     }
   }, [
     coordinates,
@@ -75,34 +127,86 @@ export function useGeoAddressPickerController({
     values.post_code,
     values.region,
     values.street,
+    onShapeChange,
   ]);
 
   const handleResolvedAddress = useCallback(
-    (result: GeoResolvedAddress | null) => {
+    async (result: GeoResolvedAddress | null, field: GeoAddressField | null) => {
       if (ignoreForwardResolutionRef.current) {
         return;
       }
 
       const nextCoordinates = toGeoCoordinates(result);
 
-      if (!nextCoordinates || geoCoordinatesEqual(nextCoordinates, coordinates)) {
+      if (!result || !nextCoordinates || !field) {
+        boundaryRequestIdRef.current += 1;
+        onShapeChange?.(null);
         return;
       }
 
-      onCoordinatesChange(nextCoordinates);
+      if (!geoCoordinatesEqual(nextCoordinates, coordinates)) {
+        onCoordinatesChange(nextCoordinates);
+      }
+
+      const requestId = ++boundaryRequestIdRef.current;
+
+      if (!isBoundaryField(field)) {
+        onShapeChange?.(pointShape(result.place_id));
+        return;
+      }
+
+      setIsBoundaryLoading(true);
+
+      try {
+        const data = (await geoapifyBoundaryFn({
+          data: {
+            field,
+            placeId: result.place_id,
+            latitude: nextCoordinates.latitude,
+            longitude: nextCoordinates.longitude,
+            values,
+            resolvedAddress: result,
+            language,
+          },
+        })) as { shape?: GeoLocationShape | null };
+
+        if (boundaryRequestIdRef.current === requestId) {
+          onShapeChange?.(data.shape ?? unresolvedBoundaryShape(field, result.place_id));
+        }
+      } catch {
+        if (boundaryRequestIdRef.current === requestId) {
+          onShapeChange?.(unresolvedBoundaryShape(field, result.place_id));
+        }
+      } finally {
+        if (boundaryRequestIdRef.current === requestId) {
+          setIsBoundaryLoading(false);
+        }
+      }
     },
-    [coordinates, onCoordinatesChange]
+    [
+      coordinates,
+      language,
+      onCoordinatesChange,
+      onShapeChange,
+      values.city,
+      values.country,
+      values.house_number,
+      values.post_code,
+      values.region,
+      values.street,
+    ]
   );
 
   const handleFieldChange = useCallback(
     (field: GeoAddressField, value: string) => {
       if (!isApplyingReverseSyncRef.current) {
         ignoreForwardResolutionRef.current = false;
+        onShapeChange?.(null);
       }
 
       onFieldChange(field, value);
     },
-    [onFieldChange]
+    [onFieldChange, onShapeChange]
   );
 
   const handleMapCoordinatesChange = useCallback(
@@ -112,7 +216,10 @@ export function useGeoAddressPickerController({
       }
 
       const requestId = ++reverseRequestIdRef.current;
+      boundaryRequestIdRef.current += 1;
+      onShapeChange?.(pointShape());
       setIsReverseGeocoding(true);
+      setIsBoundaryLoading(false);
 
       try {
         const { result } = await geoapifyReverseFn({
@@ -129,6 +236,7 @@ export function useGeoAddressPickerController({
 
         const nextValues = mapResolvedAddressToValues(result);
         const normalizedCoordinates = toGeoCoordinates(result);
+        onShapeChange?.(pointShape(result.place_id));
 
         isApplyingReverseSyncRef.current = true;
         ignoreForwardResolutionRef.current = true;
@@ -159,6 +267,7 @@ export function useGeoAddressPickerController({
       language,
       onCoordinatesChange,
       onFieldChange,
+      onShapeChange,
       values.city,
       values.country,
       values.house_number,
@@ -181,9 +290,13 @@ export function useGeoAddressPickerController({
     setResetContextKey,
     isReverseGeocoding,
     setIsReverseGeocoding,
+    isBoundaryLoading,
+    setIsBoundaryLoading,
     reverseRequestIdRef,
+    boundaryRequestIdRef,
     isApplyingReverseSyncRef,
     ignoreForwardResolutionRef,
+    shape,
     handleResolvedAddress,
     handleFieldChange,
     handleMapCoordinatesChange,

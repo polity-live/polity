@@ -37,6 +37,10 @@ import {
   isValidOptionalUrlLike,
 } from '@/features/shared/logic/inputValidation';
 import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
+import {
+  geoLocationFieldsFromShape,
+  geoLocationShapeFromFields,
+} from '@/features/shared/logic/geoLocationShape';
 import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 import { getEventTypeTranslationKey } from '@/features/events/logic/getEventTypeTranslationKey';
@@ -398,6 +402,21 @@ export function EventEditView({
                       onCoordinatesChange={coordinates => {
                         updateField('latitude', coordinates?.latitude ?? null);
                         updateField('longitude', coordinates?.longitude ?? null);
+                      }}
+                      shape={geoLocationShapeFromFields({
+                        location_kind: formData.location_kind,
+                        location_place_id: formData.location_place_id,
+                        location_boundary_source: formData.location_boundary_source,
+                        location_geometry: formData.location_geometry,
+                        location_bounds: formData.location_bounds,
+                      })}
+                      onShapeChange={shape => {
+                        const fields = geoLocationFieldsFromShape(shape);
+                        updateField('location_kind', fields.location_kind);
+                        updateField('location_place_id', fields.location_place_id);
+                        updateField('location_boundary_source', fields.location_boundary_source);
+                        updateField('location_geometry', fields.location_geometry);
+                        updateField('location_bounds', fields.location_bounds);
                       }}
                       onFieldChange={(field, value) => {
                         switch (field) {

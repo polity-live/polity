@@ -4,12 +4,12 @@ import { cleanup, fireEvent, render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { openChartDialog } from '@/features/charts/ui/ChartDialog';
+import { openDataViewDialog } from '@/features/charts/ui/ChartDialog';
 import { Toolbar } from '@/features/shared/ui/layout';
 import { ChartToolbarButton } from '../chart-toolbar-button';
 
 vi.mock('@/features/charts/ui/ChartDialog', () => ({
-  openChartDialog: vi.fn(),
+  openDataViewDialog: vi.fn(),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -34,7 +34,7 @@ describe('ChartToolbarButton', () => {
   const renderButton = (button?: ReactNode) =>
     render(<Toolbar>{button ?? <ChartToolbarButton />}</Toolbar>);
 
-  it('opens the chart dialog through the shared chart entrypoint', () => {
+  it('opens the shared data dialog', () => {
     const { getByRole } = renderButton();
     const button = getByRole('button');
 
@@ -42,7 +42,7 @@ describe('ChartToolbarButton', () => {
 
     fireEvent.click(button);
 
-    expect(openChartDialog).toHaveBeenCalledTimes(1);
+    expect(openDataViewDialog).toHaveBeenCalledTimes(1);
   });
 
   it('respects a prevented click from caller props', () => {
@@ -57,6 +57,6 @@ describe('ChartToolbarButton', () => {
 
     fireEvent.click(button);
 
-    expect(openChartDialog).not.toHaveBeenCalled();
+    expect(openDataViewDialog).not.toHaveBeenCalled();
   });
 });

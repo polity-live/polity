@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { StreetDesignOsmWay } from '../../types';
 import { createCorridorGeometry } from '../streetDesignPlacement';
 import {
+  createLaneArrowPolygon,
   createStreetDesignRenderScheduler,
   getStreetDesignElevationRampLength,
   getStreetDesignElevationRampSegments,
@@ -52,6 +53,28 @@ describe('streetDesignScene coordinate mapping', () => {
 
     expect(corridor.polygon.map(point => point.z)).toEqual([1, 1, -1, -1]);
     expect(shapePoints.map(point => point.y)).toEqual([-1, -1, 1, 1]);
+  });
+
+  it('creates lane arrows with the tip facing the placement direction', () => {
+    const eastArrow = createLaneArrowPolygon({
+      center: { x: 0, z: 0 },
+      direction: { x: 1, z: 0 },
+      length: 4,
+      width: 1,
+    });
+    const northArrow = createLaneArrowPolygon({
+      center: { x: 0, z: 0 },
+      direction: { x: 0, z: -1 },
+      length: 4,
+      width: 1,
+    });
+
+    expect(eastArrow[0]).toMatchObject({ x: 2, z: 0 });
+    expect(eastArrow).toHaveLength(7);
+    expect(Math.max(...eastArrow.slice(1).map(point => point.x))).toBeLessThan(eastArrow[0].x);
+    expect(Math.abs(eastArrow[2].z)).toBeLessThan(Math.abs(eastArrow[1].z));
+    expect(northArrow[0]).toMatchObject({ x: 0, z: -2 });
+    expect(Math.min(...northArrow.slice(1).map(point => point.z))).toBeGreaterThan(northArrow[0].z);
   });
 
   it('renders green OSM areas below mobility layers and buildings', () => {

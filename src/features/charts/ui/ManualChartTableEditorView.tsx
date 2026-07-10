@@ -23,6 +23,7 @@ export interface ManualChartTableEditorViewProps {
   visibleRows: any[];
   renameColumn: any;
   removeColumn: any;
+  removeRow: (rowIndex: number) => void;
   readOnly?: boolean;
 }
 
@@ -36,6 +37,7 @@ export function ManualChartTableEditorView({
   visibleRows,
   renameColumn,
   removeColumn,
+  removeRow,
   readOnly = false,
 }: ManualChartTableEditorViewProps) {
   return (
@@ -70,6 +72,7 @@ export function ManualChartTableEditorView({
                   </div>
                 </TableHead>
               ))}
+              {!readOnly ? <TableHead className="w-10 p-1" /> : null}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -95,6 +98,22 @@ export function ManualChartTableEditorView({
                       />
                     </TableCell>
                   ))}
+                  {!readOnly ? (
+                    <TableCell className="w-10 p-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        disabled={table.rows.length <= 1}
+                        onClick={() => removeRow(rowIndex)}
+                        title={t('plateJs.chart.removeRow')}
+                      >
+                        <Trash2Icon className="size-4" />
+                        <span className="sr-only">{t('plateJs.chart.removeRow')}</span>
+                      </Button>
+                    </TableCell>
+                  ) : null}
                 </TableRow>
               );
             })}

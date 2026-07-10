@@ -1904,6 +1904,11 @@ export function LandingSearchPreview() {
         location_longitude: null,
         location_label: null,
         location_source: null,
+        location_kind: null,
+        location_place_id: null,
+        location_boundary_source: null,
+        location_geometry: null,
+        location_bounds: null,
         card_payload: {
           type: 'workflow',
           tags: ['climate', 'budget', 'committee'],

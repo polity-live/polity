@@ -100,6 +100,41 @@ function mapEditorMode(mode: string | null | undefined): EditorMode {
   return isTerminalEditingMode(normalizedMode) ? 'view' : normalizedMode;
 }
 
+function getGroupDatasetRights(group: RawEntity | null | undefined, userId?: string) {
+  if (!group || !userId) return { canViewDatasets: false, canManageDatasets: false };
+  if (group.owner_id === userId) return { canViewDatasets: true, canManageDatasets: true };
+
+  const activeMembershipStatuses = new Set(['active', 'member', 'admin']);
+  const memberships = Array.isArray(group.memberships)
+    ? group.memberships.filter(
+        (membership: RawEntity) =>
+          (membership.user_id === userId || membership.user?.id === userId) &&
+          activeMembershipStatuses.has(membership.status)
+      )
+    : [];
+  const guestAccesses = Array.isArray(group.guest_accesses)
+    ? group.guest_accesses.filter(
+        (access: RawEntity) =>
+          (access.user_id === userId || access.user?.id === userId) && access.status === 'active'
+      )
+    : [];
+  const roleLinks = [
+    ...memberships.flatMap((membership: RawEntity) => membership.membership_roles ?? []),
+    ...guestAccesses.flatMap((access: RawEntity) => access.guest_roles ?? []),
+  ];
+  const rights = roleLinks.flatMap((link: RawEntity) => link.role?.action_rights ?? []);
+  const canManageDatasets = rights.some(
+    (right: RawEntity) => right.resource === 'groupDatasets' && right.action === 'manage'
+  );
+  const canViewDatasets =
+    memberships.length > 0 ||
+    canManageDatasets ||
+    rights.some(
+      (right: RawEntity) => right.resource === 'groupDatasets' && right.action === 'view'
+    );
+  return { canViewDatasets, canManageDatasets };
+}
+
 function mapChangeRequestStatusToDiscussionStatus(status: string | null | undefined) {
   if (status === 'accepted' || status === 'approved') return 'accepted';
   if (status === 'rejected' || status === 'declined') return 'rejected';
@@ -311,6 +346,7 @@ export function adaptAmendmentToEntity(
     });
   }
 
+  const datasetRights = getGroupDatasetRights(amendment.group, userId);
   const metadata: EditorEntityMetadata = {
     entityType: 'amendment',
     amendmentId: amendment.id,
@@ -318,6 +354,9 @@ export function adaptAmendmentToEntity(
     amendmentEditingMode: normalizeEditingMode(
       processBranch?.editing_mode ?? document.editing_mode
     ),
+    groupId: amendment.group_id ?? undefined,
+    groupName: amendment.group?.name ?? undefined,
+    ...datasetRights,
     processBranchId: processBranch?.id,
     processBranchStatus: processBranch?.status,
     processBranchResolution: processBranch?.resolution,

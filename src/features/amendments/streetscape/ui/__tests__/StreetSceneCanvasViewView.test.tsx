@@ -113,8 +113,13 @@ describe('StreetSceneCanvasViewView', () => {
 
   it('renders an accordion legend with placement presets', () => {
     const { container } = renderCanvasView({ selectedObject: null });
+    const legendButton = screen.getByRole('button', { name: /legend/i });
+    const legendRoot = legendButton.parentElement;
 
-    expect(screen.queryByRole('button', { name: /legend/i })).not.toBeNull();
+    expect(legendButton).not.toBeNull();
+    expect(legendRoot?.className).toContain('right-6');
+    expect(legendRoot?.className).toContain('bottom-6');
+    expect(legendRoot?.lastElementChild).toBe(legendButton);
     expect(screen.queryByText('Placement options')).not.toBeNull();
     expect(screen.queryAllByText('Office building')).toHaveLength(1);
     expect(screen.queryAllByText('Residential building')).toHaveLength(1);
@@ -127,6 +132,9 @@ describe('StreetSceneCanvasViewView', () => {
     );
     expect(screen.queryAllByTestId('street-design-legend-preview-tree').length).toBeGreaterThan(1);
     expect(screen.queryAllByTestId('street-design-legend-preview-street').length).toBeGreaterThan(
+      1
+    );
+    expect(screen.queryAllByTestId('street-design-legend-preview-car_lane').length).toBeGreaterThan(
       1
     );
     expect(

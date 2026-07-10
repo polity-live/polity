@@ -285,4 +285,94 @@ describe('adaptAmendmentToEntity', () => {
     expect(entity?.editingMode).toBe('view');
     expect(entity?.canChangeMode).toBe(false);
   });
+
+  it('passes group dataset view and manage rights into the editor context', () => {
+    const amendment = amendmentWithRole('view') as any;
+    amendment.group_id = 'group-1';
+    amendment.group = {
+      id: 'group-1',
+      name: 'Example group',
+      memberships: [
+        {
+          user_id: 'user-1',
+          status: 'active',
+          membership_roles: [
+            {
+              role: {
+                action_rights: [{ resource: 'groupDatasets', action: 'view' }],
+              },
+            },
+          ],
+        },
+      ],
+      guest_accesses: [],
+    };
+
+    const entity = adaptAmendmentToEntity(amendment, document, 'user-1');
+
+    expect(entity?.metadata).toMatchObject({
+      canViewDatasets: true,
+      canManageDatasets: false,
+      groupId: 'group-1',
+    });
+  });
+
+  it('lets active group members view shared datasets without a dataset role right', () => {
+    const amendment = amendmentWithRole('view') as any;
+    amendment.group_id = 'group-1';
+    amendment.group = {
+      id: 'group-1',
+      name: 'Example group',
+      memberships: [
+        {
+          user_id: 'user-1',
+          status: 'active',
+          membership_roles: [],
+        },
+      ],
+      guest_accesses: [],
+    };
+
+    const entity = adaptAmendmentToEntity(amendment, document, 'user-1');
+
+    expect(entity?.metadata).toMatchObject({
+      canViewDatasets: true,
+      canManageDatasets: false,
+    });
+  });
+
+  it('does not inherit dataset rights from another group member', () => {
+    const amendment = amendmentWithRole('view') as any;
+    amendment.group_id = 'group-1';
+    amendment.group = {
+      id: 'group-1',
+      name: 'Example group',
+      memberships: [
+        {
+          user_id: 'user-1',
+          status: 'active',
+          membership_roles: [],
+        },
+        {
+          user_id: 'user-2',
+          status: 'active',
+          membership_roles: [
+            {
+              role: {
+                action_rights: [{ resource: 'groupDatasets', action: 'manage' }],
+              },
+            },
+          ],
+        },
+      ],
+      guest_accesses: [],
+    };
+
+    const entity = adaptAmendmentToEntity(amendment, document, 'user-1');
+
+    expect(entity?.metadata).toMatchObject({
+      canViewDatasets: true,
+      canManageDatasets: false,
+    });
+  });
 });

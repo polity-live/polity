@@ -1,5 +1,6 @@
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { GroupDocumentsList } from '@/features/documents/ui/GroupDocumentsList';
+import { GroupDatasetsSection } from '@/features/groups/ui/GroupDatasetsSection';
 import { PaymentsSection } from '@/features/groups/ui/PaymentsSection';
 import { TodosSection } from '@/features/groups/ui/TodosSection';
 import { AddLinkDialog } from '@/features/network/ui/AddLinkDialog';
@@ -15,6 +16,7 @@ export interface GroupOperationPageContainerViewProps {
   canView: any;
   isLoading: any;
   isMember: any;
+  canViewDatasets: any;
   canViewDocuments: any;
   canViewLinks: any;
   canViewPayments: any;
@@ -28,6 +30,7 @@ export function GroupOperationPageContainerView({
   canManage,
   isLoading,
   isMember,
+  canViewDatasets,
   canViewDocuments,
   canViewLinks,
   canViewPayments,
@@ -45,9 +48,11 @@ export function GroupOperationPageContainerView({
   return (
     <AuthorizedGroupOperationPage
       canManageDocuments={canManage('groupDocuments')}
+      canManageDatasets={canManage('groupDatasets')}
       canManageLinks={canManage('groupLinks')}
       canManagePayments={canManage('groupPayments')}
       canManageTodos={canManage('groupTodos')}
+      canViewDatasets={canViewDatasets}
       canViewDocuments={canViewDocuments}
       canViewLinks={canViewLinks}
       canViewPayments={canViewPayments}
@@ -59,10 +64,12 @@ export function GroupOperationPageContainerView({
 }
 
 export interface GroupOperationPageViewProps {
+  canManageDatasets: boolean;
   canManageDocuments: boolean;
   canManageLinks: boolean;
   canManagePayments: boolean;
   canManageTodos: boolean;
+  canViewDatasets: boolean;
   canViewDocuments: boolean;
   canViewLinks: boolean;
   canViewPayments: boolean;
@@ -85,10 +92,12 @@ export interface GroupOperationPageViewProps {
 }
 
 export function GroupOperationPageView({
+  canManageDatasets,
   canManageDocuments,
   canManageLinks,
   canManagePayments,
   canManageTodos,
+  canViewDatasets,
   canViewDocuments,
   canViewLinks,
   canViewPayments,
@@ -111,6 +120,17 @@ export function GroupOperationPageView({
 }: GroupOperationPageViewProps) {
   return (
     <div className="space-y-8">
+      {canViewDatasets ? (
+        <Panel>
+          <PanelHeader>
+            <PanelTitle>{translateText('features.groups.datasets.title', 'Datasets')}</PanelTitle>
+          </PanelHeader>
+          <PanelContent>
+            <GroupDatasetsSection groupId={groupId} canManageDatasets={canManageDatasets} />
+          </PanelContent>
+        </Panel>
+      ) : null}
+
       {canViewLinks ? (
         <LinksSection
           links={links}

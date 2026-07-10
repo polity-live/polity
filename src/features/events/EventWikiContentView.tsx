@@ -367,6 +367,11 @@ export function EventWikiContentView({
           house_number: event.house_number ?? undefined,
           latitude: event.latitude ?? null,
           longitude: event.longitude ?? null,
+          location_kind: event.location_kind ?? null,
+          location_place_id: event.location_place_id ?? null,
+          location_boundary_source: event.location_boundary_source ?? null,
+          location_geometry: event.location_geometry ?? null,
+          location_bounds: event.location_bounds ?? null,
         }}
         className="mb-12"
       />
