@@ -83,6 +83,8 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       onObjectVisibilityChange={controller.setObjectVisibility}
       onObjectCategoryVisibilityChange={controller.setObjectCategoryVisibility}
       onOsmWayHide={controller.hideOsmWay}
+      onOsmWayImport={controller.importOsmWay}
+      onOsmImportUndo={controller.undoOsmImport}
       onOsmLayerVisibilityChange={controller.setOsmLayerVisibility}
       onShowStreetMarkingsChange={controller.setShowStreetMarkings}
       onPlacementPropertyChange={controller.updatePlacementProperty}

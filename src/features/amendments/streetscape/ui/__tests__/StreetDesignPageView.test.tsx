@@ -1,7 +1,8 @@
 /* @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyStreetDesignState } from '../../state/streetDesignReducer';
 import { StreetDesignPageView } from '../StreetDesignPageView';
 
@@ -10,7 +11,11 @@ vi.mock('@/features/editor/ui/OnlineCollaboratorAvatars', () => ({
 }));
 
 vi.mock('../StreetAreaPicker', () => ({
-  StreetAreaPicker: () => <div data-testid="area-picker" />,
+  StreetAreaPicker: ({ onLoadOsm }: { onLoadOsm: () => void }) => (
+    <button type="button" onClick={onLoadOsm}>
+      Load OSM from picker
+    </button>
+  ),
 }));
 
 vi.mock('../StreetCostSummaryView', () => ({
@@ -18,7 +23,23 @@ vi.mock('../StreetCostSummaryView', () => ({
 }));
 
 vi.mock('../StreetDesignTopBarView', () => ({
-  StreetDesignTopBarView: () => <div data-testid="street-design-topbar" />,
+  StreetDesignTopBarView: ({
+    areaPickerContent,
+    areaPickerOpen,
+    onAreaPickerOpenChange,
+  }: {
+    areaPickerContent: ReactNode;
+    areaPickerOpen: boolean;
+    onAreaPickerOpenChange: (open: boolean) => void;
+  }) => (
+    <div data-testid="street-design-topbar">
+      <span>{areaPickerOpen ? 'area picker open' : 'area picker closed'}</span>
+      <button type="button" onClick={() => onAreaPickerOpenChange(true)}>
+        Open map dialog
+      </button>
+      {areaPickerOpen ? areaPickerContent : null}
+    </div>
+  ),
   StreetDesignSecondaryActionBarView: () => (
     <div data-testid="street-design-secondary-action-bar" />
   ),
@@ -27,6 +48,10 @@ vi.mock('../StreetDesignTopBarView', () => ({
 vi.mock('../StreetSceneCanvasView', () => ({
   StreetSceneCanvasView: () => <div data-testid="street-scene-canvas" />,
 }));
+
+afterEach(() => {
+  cleanup();
+});
 
 describe('StreetDesignPageView', () => {
   it('shows KPI badges and opens the navigation help popover', () => {
@@ -75,6 +100,20 @@ describe('StreetDesignPageView', () => {
 
     expect(screen.getByRole('status', { name: 'Unsaved changes' })).toBeTruthy();
     expect(screen.getByText('Unsaved changes')).toBeTruthy();
+  });
+
+  it('closes the area picker dialog when loading OSM from the picker', () => {
+    const props = createPageProps();
+    render(<StreetDesignPageView {...props} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open map dialog' }));
+    expect(screen.getByText('area picker open')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Load OSM from picker' }));
+
+    expect(props.onLoadOsm).toHaveBeenCalled();
+    expect(screen.getByText('area picker closed')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Load OSM from picker' })).toBeNull();
   });
 });
 

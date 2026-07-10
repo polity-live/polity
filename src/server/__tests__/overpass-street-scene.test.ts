@@ -11,7 +11,13 @@ describe('overpass street scene normalization', () => {
     expect(query).not.toContain('out tags geom center');
     expect(query).toContain('node["amenity"~"bench|bicycle_parking');
     expect(query).toContain('way["railway"~"rail|tram|light_rail|subway');
-    expect(query).toContain('way["barrier"~"hedge|fence|wall|gate"]');
+    expect(query).toContain(
+      'way["barrier"~"hedge|fence|wall|gate|kerb|cycle_barrier|block|lift_gate"]'
+    );
+    expect(query).toContain('node["traffic_sign"]');
+    expect(query).toContain('node["entrance"]');
+    expect(query).toContain('way["place"="square"]');
+    expect(query).toContain('relation["building"]');
     expect(query).toContain('way["landuse"~"allotments|cemetery|forest');
     expect(query).toContain('way["waterway"~"riverbank|river|canal|stream|ditch|drain"]');
     expect(query).toContain('relation["natural"~"water|wetland"]');
@@ -486,7 +492,7 @@ describe('overpass street scene normalization', () => {
     ]);
   });
 
-  it('does not turn residential landuse polygons into green surface overlays', () => {
+  it('loads residential landuse as context instead of a green surface overlay', () => {
     const snapshot = normalizeOverpassPayload(bbox, {
       elements: [
         {
@@ -503,7 +509,11 @@ describe('overpass street scene normalization', () => {
       ],
     });
 
-    expect(snapshot.features).toEqual([]);
+    expect(snapshot.features?.[0]).toMatchObject({
+      kind: 'landuse_context',
+      mappedObjectType: 'landuse_context_area',
+      subkind: 'residential',
+    });
   });
 
   it('creates conservative side bands for explicit sidewalk and cycleway tags', () => {
@@ -528,15 +538,39 @@ describe('overpass street scene normalization', () => {
     expect(snapshot.features?.find(feature => feature.id === '1:sidewalk:left')).toMatchObject({
       kind: 'sidewalk',
       side: 'left',
+      offsetMeters: -3.75,
+      mappedObjectType: 'sidewalk',
+      mappingConfidence: 'derived',
     });
     expect(snapshot.features?.find(feature => feature.id === '1:sidewalk:right')).toMatchObject({
       kind: 'sidewalk',
       side: 'right',
+      offsetMeters: 5.7,
     });
     expect(snapshot.features?.find(feature => feature.id === '1:bike_lane:right')).toMatchObject({
       kind: 'bike_lane',
       side: 'right',
+      offsetMeters: 3.45,
     });
+  });
+
+  it('does not derive side bands that are mapped separately', () => {
+    const snapshot = normalizeOverpassPayload(bbox, {
+      elements: [
+        {
+          type: 'way',
+          id: 1,
+          tags: { highway: 'residential', sidewalk: 'both', 'sidewalk:right': 'separate' },
+          geometry: [
+            { lat: 0, lon: 0 },
+            { lat: 1, lon: 0 },
+          ],
+        },
+      ],
+    });
+
+    expect(snapshot.features?.some(feature => feature.id === '1:sidewalk:left')).toBe(true);
+    expect(snapshot.features?.some(feature => feature.id === '1:sidewalk:right')).toBe(false);
   });
 
   it('creates loading-zone side bands from parking restrictions', () => {

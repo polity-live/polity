@@ -122,6 +122,14 @@ const objectIcons = {
   landuse_context_area: Layers,
   civic_area: Building2,
   station_platform: Route,
+  kerb: Layers,
+  traffic_sign: Highlighter,
+  traffic_island: Highlighter,
+  public_space: Layers,
+  building_entrance: Building2,
+  charging_station: Highlighter,
+  public_toilet: Armchair,
+  taxi_stand: ParkingSquare,
 } satisfies Record<StreetDesignObjectType, ComponentType<{ className?: string }>>;
 
 const categoryIcons = {

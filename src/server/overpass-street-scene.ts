@@ -9,6 +9,11 @@ import type {
   StreetDesignOsmSnapshot,
   StreetDesignOsmStructureKind,
 } from '@/features/amendments/streetscape/types';
+import {
+  applyStreetDesignOsmSemanticMapping,
+  getStreetDesignOsmRoadWidthMeters,
+  getStreetDesignOsmSideWidthMeters,
+} from '@/features/amendments/streetscape/logic/streetDesignOsmMapping';
 
 const streetSceneSchema = z.object({
   bbox: z.object({
@@ -66,7 +71,13 @@ const ROAD_HIGHWAY_VALUES = new Set([
 
 const RAILWAY_VALUES = new Set(['rail', 'tram', 'light_rail', 'subway']);
 
-const TRANSIT_RAILWAY_VALUES = new Set(['station', 'halt', 'tram_stop', 'subway_entrance']);
+const TRANSIT_RAILWAY_VALUES = new Set([
+  'station',
+  'halt',
+  'tram_stop',
+  'subway_entrance',
+  'platform',
+]);
 
 const CIVIC_AMENITY_VALUES = new Set(['school', 'university', 'hospital', 'kindergarten']);
 
@@ -78,11 +89,24 @@ const UTILITY_AMENITY_VALUES = new Set([
   'post_box',
   'fountain',
   'drinking_water',
+  'charging_station',
+  'toilets',
+  'taxi',
 ]);
 
 const STREET_FURNITURE_AMENITY_VALUES = new Set(['bench', 'bicycle_parking']);
 
-const BARRIER_VALUES = new Set(['hedge', 'bollard', 'gate', 'fence', 'wall']);
+const BARRIER_VALUES = new Set([
+  'hedge',
+  'bollard',
+  'gate',
+  'fence',
+  'wall',
+  'kerb',
+  'cycle_barrier',
+  'block',
+  'lift_gate',
+]);
 
 const SPORTS_LEISURE_VALUES = new Set(['pitch', 'sports_centre']);
 
@@ -109,7 +133,14 @@ const GREEN_LANDUSE_VALUES = new Set([
   'flowerbed',
 ]);
 
-const CONTEXT_LANDUSE_VALUES = new Set(['retail', 'commercial', 'industrial']);
+const CONTEXT_LANDUSE_VALUES = new Set([
+  'retail',
+  'commercial',
+  'industrial',
+  'residential',
+  'education',
+  'institutional',
+]);
 
 function assertSmallBoundingBox(bbox: StreetDesignBoundingBox) {
   const latSpan = bbox.north - bbox.south;
@@ -131,25 +162,29 @@ export function buildOverpassQuery(bbox: StreetDesignBoundingBox) {
     [out:json][timeout:20];
     (
       node["natural"="tree"](${bounds});
-      node["amenity"~"bench|bicycle_parking|waste_basket|recycling|post_box|fountain|drinking_water"](${bounds});
-      node["highway"~"street_lamp|traffic_signals|crossing|bus_stop"](${bounds});
+      node["amenity"~"bench|bicycle_parking|waste_basket|recycling|post_box|fountain|drinking_water|charging_station|toilets|taxi|bus_station"](${bounds});
+      node["highway"~"street_lamp|traffic_signals|traffic_sign|crossing|bus_stop|stop|give_way"](${bounds});
+      node["traffic_sign"](${bounds});
+      node["entrance"](${bounds});
       node["emergency"="fire_hydrant"](${bounds});
-      node["barrier"~"bollard|gate"](${bounds});
+      node["barrier"~"bollard|gate|kerb|cycle_barrier|block|lift_gate"](${bounds});
       node["traffic_calming"](${bounds});
       node["railway"~"station|halt|tram_stop|subway_entrance"](${bounds});
       node["public_transport"~"platform|stop_position|station"](${bounds});
       way["highway"](${bounds});
       way["building"](${bounds});
-      way["railway"~"rail|tram|light_rail|subway|station|halt|tram_stop"](${bounds});
+      way["place"="square"](${bounds});
+      way["amenity"="marketplace"](${bounds});
+      way["railway"~"rail|tram|light_rail|subway|station|halt|tram_stop|platform"](${bounds});
       way["public_transport"~"platform|stop_position|station"](${bounds});
       way["leisure"~"park|garden|playground|pitch|sports_centre"](${bounds});
-      way["natural"~"water|wood|grassland|tree_row|wetland|scrub|heath"](${bounds});
+      way["natural"~"water|wood|grassland|tree_row|wetland|scrub|shrubbery|heath"](${bounds});
       way["water"~"river|canal|lake|reservoir|pond|basin|stream_pool"](${bounds});
       way["waterway"~"riverbank|river|canal|stream|ditch|drain"](${bounds});
-      way["landuse"~"allotments|cemetery|forest|grass|greenfield|meadow|recreation_ground|village_green|orchard|vineyard|flowerbed|brownfield|retail|commercial|industrial"](${bounds});
+      way["landuse"~"allotments|cemetery|forest|grass|greenfield|meadow|recreation_ground|village_green|orchard|vineyard|flowerbed|brownfield|retail|commercial|industrial|residential|education|institutional"](${bounds});
       way["amenity"="parking"](${bounds});
-      way["amenity"~"bicycle_parking|recycling|fountain|drinking_water|school|university|hospital|kindergarten"](${bounds});
-      way["barrier"~"hedge|fence|wall|gate"](${bounds});
+      way["amenity"~"bicycle_parking|recycling|fountain|drinking_water|school|university|hospital|kindergarten|charging_station|toilets|taxi|bus_station"](${bounds});
+      way["barrier"~"hedge|fence|wall|gate|kerb|cycle_barrier|block|lift_gate"](${bounds});
       way["traffic_calming"](${bounds});
       way["historic"](${bounds});
       way["tourism"~"attraction|hotel"](${bounds});
@@ -169,7 +204,10 @@ export function buildOverpassQuery(bbox: StreetDesignBoundingBox) {
       way["height"](${bounds});
       way["man_made"="bridge"](${bounds});
       way["area:highway"="steps"](${bounds});
+      way["area:highway"="traffic_island"](${bounds});
       relation["natural"~"water|wetland"](${bounds});
+      relation["building"](${bounds});
+      relation["place"="square"](${bounds});
       relation["water"~"river|canal|lake|reservoir|pond|basin|stream_pool"](${bounds});
       relation["waterway"~"riverbank|river|canal"](${bounds});
       relation["bridge"](${bounds});
@@ -197,7 +235,8 @@ function classifyWay(tags: Record<string, string> | undefined): StreetDesignOsmF
   if (
     (tags.railway && TRANSIT_RAILWAY_VALUES.has(tags.railway)) ||
     tags.public_transport ||
-    tags.highway === 'bus_stop'
+    tags.highway === 'bus_stop' ||
+    tags.amenity === 'bus_station'
   ) {
     return 'transit';
   }
@@ -207,6 +246,14 @@ function classifyWay(tags: Record<string, string> | undefined): StreetDesignOsmF
   }
   if (tags.amenity === 'fountain' || tags.amenity === 'drinking_water') return 'water';
   if (tags.amenity === 'parking' || (tags.parking && !tags.highway)) return 'parking';
+  if (tags['area:highway'] === 'traffic_island') return 'traffic';
+  if (
+    tags.place === 'square' ||
+    tags.amenity === 'marketplace' ||
+    (tags.highway === 'pedestrian' && tags.area === 'yes')
+  ) {
+    return 'landuse_context';
+  }
   if (tags.leisure === 'playground') return 'playground';
   if (tags.leisure && SPORTS_LEISURE_VALUES.has(tags.leisure)) return 'sports';
   if (tags.landuse === 'brownfield') return 'construction';
@@ -231,7 +278,15 @@ function classifyWay(tags: Record<string, string> | undefined): StreetDesignOsmF
   const highway = tags?.highway;
   if (!highway) return null;
 
-  if (highway === 'crossing' || highway === 'traffic_signals') return 'traffic';
+  if (
+    highway === 'crossing' ||
+    highway === 'traffic_signals' ||
+    highway === 'traffic_sign' ||
+    highway === 'stop' ||
+    highway === 'give_way'
+  ) {
+    return 'traffic';
+  }
   if (highway === 'bus_stop') return 'transit';
 
   if (
@@ -351,12 +406,22 @@ function getElementGeometryPoints(element: OverpassElement) {
 function classifyPoint(tags: Record<string, string>): StreetDesignOsmFeatureKind | null {
   if (tags.natural === 'tree') return 'tree';
   if (tags.highway === 'street_lamp') return 'street_furniture';
-  if (tags.highway === 'traffic_signals' || tags.highway === 'crossing' || tags.traffic_calming) {
+  if (
+    tags.highway === 'traffic_signals' ||
+    tags.highway === 'traffic_sign' ||
+    tags.highway === 'stop' ||
+    tags.highway === 'give_way' ||
+    tags.highway === 'crossing' ||
+    tags.traffic_sign ||
+    tags.traffic_calming
+  ) {
     return 'traffic';
   }
-  if (tags.highway === 'bus_stop' || tags.public_transport) return 'transit';
+  if (tags.highway === 'bus_stop' || tags.public_transport || tags.amenity === 'bus_station')
+    return 'transit';
   if (tags.railway && TRANSIT_RAILWAY_VALUES.has(tags.railway)) return 'transit';
   if (tags.emergency === 'fire_hydrant') return 'utility';
+  if (tags.entrance) return 'utility';
   if (tags.barrier && BARRIER_VALUES.has(tags.barrier)) return 'barrier';
   if (tags.amenity && STREET_FURNITURE_AMENITY_VALUES.has(tags.amenity)) {
     return 'street_furniture';
@@ -414,7 +479,7 @@ function getFeatureWidthMeters(kind: StreetDesignOsmFeatureKind, tags: Record<st
     return tags.barrier === 'wall' ? 0.5 : tags.barrier === 'hedge' ? 0.8 : 0.3;
   if (kind === 'traffic') return tags.highway === 'crossing' ? 3 : 1.2;
   if (kind === 'transit') return 2.8;
-  if (kind === 'road') return 4.8;
+  if (kind === 'road') return getStreetDesignOsmRoadWidthMeters(tags);
   return undefined;
 }
 
@@ -659,7 +724,7 @@ function getFeatureSubkind(kind: StreetDesignOsmFeatureKind, tags: Record<string
     return tags.amenity ?? tags.water ?? tags.natural ?? tags.waterway;
   }
   if (kind === 'green') {
-    if (tags.natural === 'scrub') return 'scrub';
+    if (tags.natural === 'scrub' || tags.natural === 'shrubbery') return 'scrub';
     if (tags.natural === 'heath') return 'heath';
     if (tags.landuse === 'orchard' || tags.landuse === 'vineyard') return tags.landuse;
     if (tags.landuse === 'flowerbed' || tags['garden:type']) return 'flower_bed';
@@ -672,7 +737,8 @@ function getFeatureSubkind(kind: StreetDesignOsmFeatureKind, tags: Record<string
   if (kind === 'barrier') return tags.barrier;
   if (kind === 'street_furniture') return tags.amenity ?? tags.highway;
   if (kind === 'utility') return tags.emergency ?? tags.amenity;
-  if (kind === 'traffic') return tags.traffic_calming ?? tags.highway ?? tags.crossing;
+  if (kind === 'traffic')
+    return tags.traffic_calming ?? tags['area:highway'] ?? tags.highway ?? tags.crossing;
   if (kind === 'transit') return tags.highway ?? tags.railway ?? tags.public_transport;
   if (kind === 'parking' && hasLoadingZoneTags(tags)) return 'loading_zone';
   if (kind === 'building') {
@@ -698,6 +764,8 @@ function collectSideValues(
   presentBaseValues: Set<string>
 ): ('left' | 'right')[] {
   const sides: ('left' | 'right')[] = [];
+  const keepExplicitlyPresent = (candidates: ('left' | 'right')[]) =>
+    candidates.filter(side => !ABSENT_SIDE_VALUES.has(tags[`${key}:${side}`] ?? ''));
 
   (['left', 'right'] as const).forEach(side => {
     if (isPresentSideValue(tags[`${key}:${side}`])) {
@@ -705,15 +773,15 @@ function collectSideValues(
     }
   });
 
-  if (sides.length > 0) return sides;
+  if (sides.length > 0) return keepExplicitlyPresent(sides);
 
-  if (isPresentSideValue(tags[`${key}:both`])) return ['left', 'right'];
+  if (isPresentSideValue(tags[`${key}:both`])) return keepExplicitlyPresent(['left', 'right']);
 
   const baseValue = tags[key];
   if (!baseValue || ABSENT_SIDE_VALUES.has(baseValue)) return [];
-  if (baseValue === 'left' || baseValue === 'right') return [baseValue];
+  if (baseValue === 'left' || baseValue === 'right') return keepExplicitlyPresent([baseValue]);
   if (baseValue === 'both' || baseValue === 'yes' || presentBaseValues.has(baseValue)) {
-    return ['left', 'right'];
+    return keepExplicitlyPresent(['left', 'right']);
   }
 
   return [];
@@ -805,45 +873,31 @@ function createDerivedStreetSideFeatures(feature: StreetDesignOsmFeature) {
   const parkingSides = collectParkingSides(tags);
   const loadingZoneSides = collectLoadingZoneSides(tags);
 
-  return [
-    ...sidewalkSides.map(side =>
-      createDerivedStreetSideFeature({
+  return (['left', 'right'] as const).flatMap(side => {
+    const bands: { kind: 'sidewalk' | 'bike_lane' | 'parking'; subkind?: string }[] = [];
+    if (cyclewaySides.includes(side)) bands.push({ kind: 'bike_lane' });
+    if (loadingZoneSides.includes(side)) {
+      bands.push({ kind: 'parking', subkind: 'loading_zone' });
+    } else if (parkingSides.includes(side)) {
+      bands.push({ kind: 'parking' });
+    }
+    if (sidewalkSides.includes(side)) bands.push({ kind: 'sidewalk' });
+
+    let outerEdge = (feature.widthMeters ?? getStreetDesignOsmRoadWidthMeters(tags)) / 2;
+    return bands.map(band => {
+      const widthMeters = getStreetDesignOsmSideWidthMeters({ tags, kind: band.kind, side });
+      const offsetMeters = Math.round((outerEdge + 0.15 + widthMeters / 2) * 100) / 100;
+      outerEdge = offsetMeters + widthMeters / 2;
+      return createDerivedStreetSideFeature({
         feature,
-        kind: 'sidewalk',
+        kind: band.kind,
         side,
-        widthMeters: 2.4,
-        offsetMeters: 6.2,
-      })
-    ),
-    ...cyclewaySides.map(side =>
-      createDerivedStreetSideFeature({
-        feature,
-        kind: 'bike_lane',
-        side,
-        widthMeters: 2,
-        offsetMeters: 3.7,
-      })
-    ),
-    ...parkingSides.map(side =>
-      createDerivedStreetSideFeature({
-        feature,
-        kind: 'parking',
-        side,
-        widthMeters: 2.5,
-        offsetMeters: 4.9,
-      })
-    ),
-    ...loadingZoneSides.map(side =>
-      createDerivedStreetSideFeature({
-        feature,
-        kind: 'parking',
-        side,
-        widthMeters: 2.5,
-        offsetMeters: 4.9,
-        subkind: 'loading_zone',
-      })
-    ),
-  ];
+        widthMeters,
+        offsetMeters,
+        subkind: band.subkind,
+      });
+    });
+  });
 }
 
 export function normalizeOverpassPayload(
@@ -871,30 +925,32 @@ export function normalizeOverpassPayload(
         clearanceMeters,
         stepCount,
       });
-      features.push({
-        id: String(element.id),
-        kind,
-        geometryKind: 'point',
-        label: getFeatureLabel(tags, kind),
-        point: { lat: element.lat, lon: element.lon },
-        subkind: getFeatureSubkind(kind, tags),
-        semanticUse,
-        renderColor: kind === 'building' ? getBuildingRenderColor(semanticUse) : undefined,
-        renderVariant: tags.crossing ?? tags.traffic_calming ?? tags.public_transport,
-        level: getFeatureLevel(tags),
-        access: getFeatureAccess(tags),
-        layerIndex,
-        elevationMeters: parseFiniteNumber(tags.ele),
-        baseElevationMeters: getFeatureBaseElevationMeters(structureKind),
-        deckElevationMeters,
-        clearanceMeters,
-        incline: tags.incline,
-        stepCount,
-        structureKind,
-        elevationSource: getFeatureElevationSource({ tags, deckElevationMeters, structureKind }),
-        tags,
-        source: 'osm',
-      });
+      features.push(
+        applyStreetDesignOsmSemanticMapping({
+          id: String(element.id),
+          kind,
+          geometryKind: 'point',
+          label: getFeatureLabel(tags, kind),
+          point: { lat: element.lat, lon: element.lon },
+          subkind: getFeatureSubkind(kind, tags),
+          semanticUse,
+          renderColor: kind === 'building' ? getBuildingRenderColor(semanticUse) : undefined,
+          renderVariant: tags.crossing ?? tags.traffic_calming ?? tags.public_transport,
+          level: getFeatureLevel(tags),
+          access: getFeatureAccess(tags),
+          layerIndex,
+          elevationMeters: parseFiniteNumber(tags.ele),
+          baseElevationMeters: getFeatureBaseElevationMeters(structureKind),
+          deckElevationMeters,
+          clearanceMeters,
+          incline: tags.incline,
+          stepCount,
+          structureKind,
+          elevationSource: getFeatureElevationSource({ tags, deckElevationMeters, structureKind }),
+          tags,
+          source: 'osm',
+        })
+      );
       return;
     }
 
@@ -956,8 +1012,11 @@ export function normalizeOverpassPayload(
       source: 'osm',
     };
 
-    features.push(feature);
-    features.push(...createDerivedStreetSideFeatures(feature));
+    const mappedFeature = applyStreetDesignOsmSemanticMapping(feature);
+    features.push(mappedFeature);
+    features.push(
+      ...createDerivedStreetSideFeatures(mappedFeature).map(applyStreetDesignOsmSemanticMapping)
+    );
   });
 
   return {

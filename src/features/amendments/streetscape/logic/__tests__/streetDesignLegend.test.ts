@@ -89,6 +89,8 @@ describe('buildStreetDesignLegendSections', () => {
     const existing = sections.find(section => section.id === 'existing');
 
     expect(existing?.entries.map(entry => entry.id)).toEqual(['existing:road']);
-    expect(existing?.entries[0]?.labelKey).toBe('features.amendments.streetscape.osmLayers.road');
+    expect(existing?.entries[0]?.labelKey).toBe(
+      'features.amendments.streetscape.objects.street.label'
+    );
   });
 });

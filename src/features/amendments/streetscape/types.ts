@@ -73,7 +73,33 @@ export type StreetDesignObjectType =
   | 'construction_area'
   | 'landuse_context_area'
   | 'civic_area'
-  | 'station_platform';
+  | 'station_platform'
+  | 'kerb'
+  | 'traffic_sign'
+  | 'traffic_island'
+  | 'public_space'
+  | 'building_entrance'
+  | 'charging_station'
+  | 'public_toilet'
+  | 'taxi_stand';
+
+export type StreetDesignOsmMappingConfidence = 'exact' | 'derived' | 'generic';
+
+export type StreetDesignOsmRenderProfile =
+  | 'road'
+  | 'sidewalk'
+  | 'bike_lane'
+  | 'parking'
+  | 'loading_zone'
+  | 'crossing'
+  | 'tactile'
+  | 'transit'
+  | 'barrier'
+  | 'green'
+  | 'water'
+  | 'building'
+  | 'public_space'
+  | 'utility';
 
 export interface StreetDesignLocalPoint {
   x: number;
@@ -180,6 +206,11 @@ export interface StreetDesignObject {
   geometry: StreetDesignGeometry;
   properties: Record<string, StreetDesignPropertyValue>;
   cost: StreetDesignObjectCost;
+  provenance?: {
+    source: 'osm';
+    featureId: string;
+    confidence: StreetDesignOsmMappingConfidence;
+  };
 }
 
 export interface StreetDesignPlacementSettings {
@@ -313,6 +344,10 @@ export interface StreetDesignOsmFeature {
   elevationSource?: StreetDesignOsmElevationSource;
   tags?: Record<string, string>;
   source?: 'osm' | 'derived' | 'fallback' | 'sample';
+  mappedObjectType?: StreetDesignObjectType;
+  mappedProperties?: Record<string, StreetDesignPropertyValue>;
+  mappingConfidence?: StreetDesignOsmMappingConfidence;
+  renderProfile?: StreetDesignOsmRenderProfile;
 }
 
 export type StreetDesignOsmWay = StreetDesignOsmFeature;

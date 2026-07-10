@@ -101,6 +101,14 @@ const objectIcons = {
   landuse_context_area: Layers,
   civic_area: Building2,
   station_platform: Route,
+  kerb: Layers,
+  traffic_sign: Layers,
+  traffic_island: Layers,
+  public_space: Layers,
+  building_entrance: Building2,
+  charging_station: Layers,
+  public_toilet: Armchair,
+  taxi_stand: ParkingSquare,
 } satisfies Record<StreetDesignObjectType, LucideIcon>;
 
 const categoryIcons = {

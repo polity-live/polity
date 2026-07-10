@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode, type RefObject } from 'react';
-import { ChevronDown, Eye, EyeOff, Layers, Trash2, X } from 'lucide-react';
+import { ChevronDown, CopyPlus, Eye, EyeOff, Layers, Trash2, Undo2, X } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
@@ -91,6 +91,8 @@ export interface StreetSceneCanvasViewViewProps {
   onOsmWaySelect: (osmWayId: string | null) => void;
   onObjectVisibilityChange: (objectId: string, visible: boolean) => void;
   onOsmWayHide: (osmWayId: string) => void;
+  onOsmWayImport?: (osmWayId: string) => void;
+  onOsmImportUndo?: (osmWayId: string) => void;
   onPropertyChange: (objectId: string, key: string, value: StreetDesignPropertyValue) => void;
   onWidthChange: (objectId: string, width: number) => void;
   onRotationChange: (objectId: string, rotationDeg: number) => void;
@@ -138,6 +140,8 @@ export function StreetSceneCanvasViewView({
   onOsmWaySelect,
   onObjectVisibilityChange,
   onOsmWayHide,
+  onOsmWayImport = () => undefined,
+  onOsmImportUndo = () => undefined,
   onPropertyChange,
   onWidthChange,
   onRotationChange,
@@ -339,6 +343,7 @@ export function StreetSceneCanvasViewView({
               onRotationChange={onRotationChange}
               onUnitCostChange={onUnitCostChange}
               onDeleteObject={onDeleteObject}
+              onUndoOsmImport={onOsmImportUndo}
             />
           </CanvasSelectionPopover>
         ) : selectedOsmWay && selectedOsmAnchor ? (
@@ -348,6 +353,7 @@ export function StreetSceneCanvasViewView({
               readOnly={readOnly}
               onClose={() => onOsmWaySelect(null)}
               onHideOsmWay={onOsmWayHide}
+              onImportOsmWay={onOsmWayImport}
             />
           </CanvasSelectionPopover>
         ) : null}
@@ -521,6 +527,7 @@ function StreetDesignObjectPopover({
   onRotationChange,
   onUnitCostChange,
   onDeleteObject,
+  onUndoOsmImport,
 }: {
   object: StreetDesignObject;
   costLine: StreetDesignCostLine | null;
@@ -533,6 +540,7 @@ function StreetDesignObjectPopover({
   onRotationChange: (objectId: string, rotationDeg: number) => void;
   onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
   onDeleteObject: (objectId: string) => void;
+  onUndoOsmImport: (osmWayId: string) => void;
 }) {
   const { t } = useTranslation();
   const definition = getStreetDesignObjectDefinition(object.type);
@@ -743,6 +751,19 @@ function StreetDesignObjectPopover({
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
+          {object.provenance?.source === 'osm' ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 gap-2 text-xs"
+              disabled={readOnly}
+              onClick={() => onUndoOsmImport(object.provenance?.featureId ?? '')}
+            >
+              <Undo2 className="size-3.5" />
+              {t('features.amendments.streetscape.actions.undoOsmImport')}
+            </Button>
+          ) : null}
           <Button
             type="button"
             size="sm"
@@ -773,21 +794,26 @@ function StreetDesignObjectPopover({
   );
 }
 
-function StreetDesignOsmPopover({
+export function StreetDesignOsmPopover({
   osmWay,
   readOnly,
   onClose,
   onHideOsmWay,
+  onImportOsmWay,
 }: {
   osmWay: StreetDesignOsmWay;
   readOnly: boolean;
   onClose: () => void;
   onHideOsmWay: (osmWayId: string) => void;
+  onImportOsmWay: (osmWayId: string) => void;
 }) {
   const { t } = useTranslation();
   const osmFeaturePoints = getStreetDesignOsmFeaturePoints(osmWay);
   const osmLayer = getStreetDesignOsmFeatureLayer(osmWay.kind);
   const relevantTags = getRelevantOsmTags(osmWay.tags);
+  const mappedDefinition = osmWay.mappedObjectType
+    ? getStreetDesignObjectDefinition(osmWay.mappedObjectType)
+    : null;
 
   return (
     <div className="max-h-[min(30rem,70vh)] overflow-auto p-4">
@@ -818,6 +844,19 @@ function StreetDesignOsmPopover({
       </div>
 
       <div className="grid gap-2 text-sm">
+        {mappedDefinition ? (
+          <ReadonlyCard
+            label={t('features.amendments.streetscape.inspector.mappedAs')}
+            value={`${t(mappedDefinition.labelKey)} · ${t(
+              `features.amendments.streetscape.inspector.mappingConfidence.${osmWay.mappingConfidence ?? 'generic'}`
+            )}`}
+          />
+        ) : (
+          <ReadonlyCard
+            label={t('features.amendments.streetscape.inspector.mappedAs')}
+            value={t('features.amendments.streetscape.inspector.noSafeMapping')}
+          />
+        )}
         <ReadonlyCard
           label={t('features.amendments.streetscape.inspector.points')}
           value={String(osmFeaturePoints.length)}
@@ -871,7 +910,19 @@ function StreetDesignOsmPopover({
         ) : null}
       </div>
 
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex flex-wrap justify-end gap-2">
+        {osmWay.mappedObjectType && osmWay.mappingConfidence !== 'generic' ? (
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 gap-2 text-xs"
+            disabled={readOnly}
+            onClick={() => onImportOsmWay(osmWay.id)}
+          >
+            <CopyPlus className="size-3.5" />
+            {t('features.amendments.streetscape.inspector.importAsPlanned')}
+          </Button>
+        ) : null}
         <Button
           type="button"
           size="sm"

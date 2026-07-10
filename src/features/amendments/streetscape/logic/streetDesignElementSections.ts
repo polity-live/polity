@@ -44,7 +44,7 @@ export const streetDesignElementSections = [
     layer: 'building',
     labelKey: 'features.amendments.streetscape.osmLayers.building',
     icon: 'Building2',
-    objectTypes: ['building'],
+    objectTypes: ['building', 'building_entrance'],
     tools: streetDesignVariantToolsBySection.building,
     propertyCoverage: ['building.semanticUse/use', 'building.renderColor/color'],
   },
@@ -75,7 +75,7 @@ export const streetDesignElementSections = [
     layer: 'parking',
     labelKey: 'features.amendments.streetscape.osmLayers.parking',
     icon: 'ParkingSquare',
-    objectTypes: ['parking_area', 'loading_zone'],
+    objectTypes: ['parking_area', 'loading_zone', 'taxi_stand'],
     tools: streetDesignVariantToolsBySection.parking,
   },
   {
@@ -126,7 +126,7 @@ export const streetDesignElementSections = [
     layer: 'barrier',
     labelKey: 'features.amendments.streetscape.osmLayers.barrier',
     icon: 'Layers',
-    objectTypes: ['bollard', 'gate', 'fence', 'wall', 'hedge'],
+    objectTypes: ['bollard', 'gate', 'fence', 'wall', 'hedge', 'kerb'],
   },
   {
     layer: 'street_furniture',
@@ -140,13 +140,21 @@ export const streetDesignElementSections = [
       'waste_bin',
       'recycling_container',
       'post_box',
+      'charging_station',
+      'public_toilet',
     ],
   },
   {
     layer: 'traffic',
     labelKey: 'features.amendments.streetscape.osmLayers.traffic',
     icon: 'Highlighter',
-    objectTypes: ['traffic_signal', 'crossing', 'traffic_calming'],
+    objectTypes: [
+      'traffic_signal',
+      'traffic_sign',
+      'crossing',
+      'traffic_calming',
+      'traffic_island',
+    ],
     tools: streetDesignVariantToolsBySection.traffic,
   },
   {
@@ -168,7 +176,7 @@ export const streetDesignElementSections = [
     layer: 'landuse_context',
     labelKey: 'features.amendments.streetscape.osmLayers.landuseContext',
     icon: 'Layers',
-    objectTypes: ['landuse_context_area', 'civic_area'],
+    objectTypes: ['landuse_context_area', 'civic_area', 'public_space'],
     tools: streetDesignVariantToolsBySection.landuse_context,
   },
 ] satisfies StreetDesignElementSection[];

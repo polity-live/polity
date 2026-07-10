@@ -281,6 +281,22 @@ export const streetDesignVariantToolsBySection = {
     createVariantTool({
       objectType: 'car_lane',
       variantGroup: 'carLane',
+      value: 'bus_lane',
+      propertyOverrides: { direction: 'one_way', laneUse: 'bus' },
+      selectionPropertyKeys: ['laneUse'],
+      widthOverride: 3.25,
+    }),
+    createVariantTool({
+      objectType: 'car_lane',
+      variantGroup: 'carLane',
+      value: 'taxi_lane',
+      propertyOverrides: { direction: 'one_way', laneUse: 'taxi' },
+      selectionPropertyKeys: ['laneUse'],
+      widthOverride: 3.25,
+    }),
+    createVariantTool({
+      objectType: 'car_lane',
+      variantGroup: 'carLane',
       value: 'bridge',
       propertyOverrides: {
         deckElevationMeters: 3.5,
@@ -544,7 +560,7 @@ export const streetDesignVariantToolsBySection = {
 const knownVariantValues = {
   bikeLane: ['painted', 'protected', 'raised', 'bridge'],
   building: streetDesignBuildingUses,
-  carLane: ['one_way', 'two_way', 'bridge'],
+  carLane: ['one_way', 'two_way', 'bus_lane', 'taxi_lane', 'bridge'],
   civic: ['school', 'library', 'townhall', 'hospital', 'community_center'],
   construction: ['planned', 'active', 'closed'],
   crossing: ['zebra', 'signalized', 'raised', 'refuge'],

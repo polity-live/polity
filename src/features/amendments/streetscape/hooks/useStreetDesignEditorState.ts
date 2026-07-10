@@ -11,6 +11,7 @@ import type {
 } from '../types';
 import { getStreetDesignCostLine, getStreetDesignCostSummary } from '../logic/streetDesignCosting';
 import { getStreetDesignOsmFeatures } from '../logic/streetDesignOsm';
+import { convertStreetDesignOsmFeature } from '../logic/streetDesignOsmConversion';
 import {
   createInitialStreetDesignEditorState,
   streetDesignReducer,
@@ -142,6 +143,26 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
     dispatch({ type: 'hide_osm_way', osmWayId });
   }, []);
 
+  const importOsmWay = useCallback(
+    (osmWayId: string) => {
+      const feature = getStreetDesignOsmFeatures(state.design.osmSnapshot).find(
+        item => item.id === osmWayId
+      );
+      if (!feature) return;
+      const objects = convertStreetDesignOsmFeature({
+        feature,
+        origin: state.design.origin,
+        createId: createObjectId,
+      });
+      dispatch({ type: 'import_osm_feature', osmWayId, objects });
+    },
+    [state.design.origin, state.design.osmSnapshot]
+  );
+
+  const undoOsmImport = useCallback((osmWayId: string) => {
+    dispatch({ type: 'undo_osm_import', osmWayId });
+  }, []);
+
   const updateObjectProperty = useCallback(
     (objectId: string, key: string, value: StreetDesignPropertyValue) => {
       dispatch({ type: 'update_object_property', objectId, key, value });
@@ -198,6 +219,8 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
     setObjectVisibility,
     setObjectCategoryVisibility,
     hideOsmWay,
+    importOsmWay,
+    undoOsmImport,
     updateObjectProperty,
     updateObjectWidth,
     rotateObject,

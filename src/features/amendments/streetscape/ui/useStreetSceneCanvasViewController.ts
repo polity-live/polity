@@ -72,6 +72,8 @@ interface StreetSceneCanvasViewProps {
   onOsmWaySelect: (osmWayId: string | null) => void;
   onObjectVisibilityChange: (objectId: string, visible: boolean) => void;
   onOsmWayHide: (osmWayId: string) => void;
+  onOsmWayImport?: (osmWayId: string) => void;
+  onOsmImportUndo?: (osmWayId: string) => void;
   onObjectRotate: (objectId: string, rotationDeg: number) => void;
   onPropertyChange: (objectId: string, key: string, value: StreetDesignPropertyValue) => void;
   onWidthChange: (objectId: string, width: number) => void;
@@ -129,6 +131,8 @@ export function useStreetSceneCanvasViewController({
   onOsmWaySelect,
   onObjectVisibilityChange,
   onOsmWayHide,
+  onOsmWayImport = () => undefined,
+  onOsmImportUndo = () => undefined,
   onObjectRotate,
   onPropertyChange,
   onWidthChange,
@@ -412,6 +416,8 @@ export function useStreetSceneCanvasViewController({
     onOsmWaySelect,
     onObjectVisibilityChange,
     onOsmWayHide,
+    onOsmWayImport,
+    onOsmImportUndo,
     onPropertyChange,
     onWidthChange,
     onRotationChange,

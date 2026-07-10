@@ -428,6 +428,7 @@ export const amendmentsTranslations = {
       water: 'Water',
     },
     actions: {
+      undoOsmImport: 'Undo OSM import',
       collapse: 'Collapse {{label}}',
       expand: 'Expand {{label}}',
       hide: 'Hide {{label}}',
@@ -544,12 +545,20 @@ export const amendmentsTranslations = {
       fieldWithUnit: '{{label}} ({{unit}})',
       height: 'Height',
       incline: 'Incline',
+      importAsPlanned: 'Import as planned change',
       layer: 'Layer',
       length: 'Length',
       nextElementSettings: 'Settings for the next element',
       noSelection: 'No element selected',
       noSelectionDescription: 'Select a placed element or an existing object in the 3D model.',
       osmFallback: 'OSM existing object',
+      mappedAs: 'Mapped element',
+      mappingConfidence: {
+        exact: 'Exact mapping',
+        derived: 'Estimated from OSM',
+        generic: 'Generic mapping',
+      },
+      noSafeMapping: 'No safe editable mapping',
       place: 'Place',
       points: 'Points',
       price: 'Price',
@@ -716,10 +725,16 @@ export const amendmentsTranslations = {
       common: {
         properties: {
           access: 'Access',
+          capacity: 'Capacity',
+          direction: 'Direction',
           crop: 'Crop',
           deckElevationMeters: 'Deck elevation',
           height: 'Height',
           incline: 'Incline',
+          laneMarkings: 'Lane markings',
+          laneUse: 'Lane use',
+          lit: 'Lit',
+          maxspeed: 'Maximum speed',
           layerIndex: 'Layer',
           level: 'Level',
           maintenance: 'Maintenance',
@@ -727,9 +742,15 @@ export const amendmentsTranslations = {
           planting: 'Planting',
           publicAccess: 'Public access',
           spacing: 'Row spacing',
+          segregated: 'Segregated',
           status: 'Status',
           structureKind: 'Structure',
           surface: 'Surface',
+          tactilePaving: 'Tactile paving',
+          transportMode: 'Transport mode',
+          turn: 'Turn direction',
+          turnLanes: 'Turn lanes',
+          wheelchair: 'Wheelchair accessible',
         },
       },
       flowerBed: {
@@ -938,8 +959,77 @@ export const amendmentsTranslations = {
           civicType: 'Facility type',
         },
       },
+      kerb: {
+        label: 'Kerb',
+        properties: { kerbType: 'Kerb type', tactilePaving: 'Tactile paving' },
+      },
+      trafficSign: {
+        label: 'Traffic sign',
+        properties: { signType: 'Sign type', direction: 'Direction' },
+      },
+      trafficIsland: {
+        label: 'Traffic island',
+        properties: { islandType: 'Island type' },
+      },
+      publicSpace: {
+        label: 'Public space',
+        properties: { publicSpaceType: 'Space type' },
+      },
+      buildingEntrance: {
+        label: 'Building entrance',
+        properties: { entranceType: 'Entrance type', wheelchair: 'Wheelchair accessible' },
+      },
+      chargingStation: {
+        label: 'Charging station',
+        properties: { capacity: 'Charging points' },
+      },
+      publicToilet: {
+        label: 'Public toilet',
+        properties: { wheelchair: 'Wheelchair accessible' },
+      },
+      taxiStand: {
+        label: 'Taxi stand',
+        properties: { capacity: 'Taxi spaces' },
+      },
     },
     variantOptions: {
+      laneUse: {
+        bus: 'Bus',
+        emergency: 'Emergency',
+        general: 'General traffic',
+        taxi: 'Taxi',
+      },
+      travelDirection: {
+        backward: 'Backward',
+        both: 'Both directions',
+        forward: 'Forward',
+      },
+      transportMode: {
+        bus: 'Bus',
+        tram: 'Tram',
+      },
+      kerbType: {
+        flush: 'Flush',
+        lowered: 'Lowered',
+        raised: 'Raised',
+        rolled: 'Rolled',
+      },
+      signType: {
+        give_way: 'Give way',
+        maxspeed: 'Speed limit',
+        no_entry: 'No entry',
+        stop: 'Stop',
+      },
+      islandType: {
+        calming: 'Traffic calming',
+        median: 'Median',
+        refuge: 'Refuge island',
+      },
+      publicSpaceType: {
+        marketplace: 'Marketplace',
+        pedestrian: 'Pedestrian area',
+        square: 'Square',
+      },
       access: {
         destination: 'Destination access',
         emergency: 'Emergency access',
@@ -1136,7 +1226,9 @@ export const amendmentsTranslations = {
       },
       carLane: {
         bridge: 'Lane bridge',
+        bus_lane: 'Bus lane',
         one_way: 'One-way lane',
+        taxi_lane: 'Taxi lane',
         two_way: 'Two-way lane',
       },
       civic: {

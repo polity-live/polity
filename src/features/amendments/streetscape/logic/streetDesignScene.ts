@@ -1242,7 +1242,8 @@ function addPointObject(args: {
     definition.renderKind === 'utility' ||
     definition.renderKind === 'barrier' ||
     definition.renderKind === 'traffic' ||
-    definition.renderKind === 'transit'
+    definition.renderKind === 'transit' ||
+    object.type === 'taxi_stand'
   ) {
     const primaryMaterial = new THREE.MeshStandardMaterial({
       color: definition.color,
@@ -1301,6 +1302,22 @@ function addPointObject(args: {
         plate.position.set(0, 1.58, -0.15);
         root.add(plate);
       }
+    } else if (object.type === 'traffic_sign') {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.06, 2.05, 10), darkMaterial);
+      pole.position.y = 1.025;
+      const signType = stringProperty(object.properties.signType, 'give_way');
+      const plate = new THREE.Mesh(
+        signType === 'stop'
+          ? new THREE.CylinderGeometry(0.34, 0.34, 0.055, 8)
+          : new THREE.BoxGeometry(0.58, 0.58, 0.055),
+        new THREE.MeshStandardMaterial({
+          color: signType === 'give_way' ? '#f8fafc' : definition.color,
+          roughness: 0.42,
+        })
+      );
+      plate.rotation.x = Math.PI / 2;
+      plate.position.set(0, 1.82, 0);
+      root.add(pole, plate);
     } else if (object.type === 'bus_stop') {
       const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.06, 2.1, 10), darkMaterial);
       const sign = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.38, 0.05), primaryMaterial);
@@ -1322,6 +1339,39 @@ function addPointObject(args: {
         back.position.set(0, 0.85, 0.42);
         setSceneShadows(roof, true, true);
         root.add(roof, back);
+      }
+    } else if (object.type === 'building_entrance') {
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(1.05, 2.15, 0.16), darkMaterial);
+      const door = new THREE.Mesh(new THREE.BoxGeometry(0.78, 1.86, 0.12), primaryMaterial);
+      frame.position.y = 1.08;
+      door.position.set(0, 0.95, -0.1);
+      root.add(frame, door);
+    } else if (object.type === 'charging_station') {
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.25, 0.34), primaryMaterial);
+      const screen = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.2, 0.03), darkMaterial);
+      body.position.y = 0.64;
+      screen.position.set(0, 0.88, -0.19);
+      root.add(body, screen);
+    } else if (object.type === 'public_toilet') {
+      const booth = new THREE.Mesh(new THREE.BoxGeometry(1.05, 2.05, 1.05), primaryMaterial);
+      const door = new THREE.Mesh(new THREE.BoxGeometry(0.66, 1.65, 0.04), darkMaterial);
+      booth.position.y = 1.03;
+      door.position.set(0, 0.9, -0.55);
+      root.add(booth, door);
+    } else if (object.type === 'taxi_stand') {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.055, 1.8, 10), darkMaterial);
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.34, 0.06), primaryMaterial);
+      pole.position.y = 0.9;
+      plate.position.y = 1.55;
+      root.add(pole, plate);
+    } else if (object.type === 'crossing') {
+      for (let index = -2; index <= 2; index += 1) {
+        const stripe = new THREE.Mesh(
+          new THREE.BoxGeometry(0.18, 0.025, 1.2),
+          new THREE.MeshStandardMaterial({ color: '#f8fafc', roughness: 0.6 })
+        );
+        stripe.position.set(index * 0.28, 0.03, 0);
+        root.add(stripe);
       }
     } else if (object.type === 'gate') {
       [-0.5, 0.5].forEach(x => {
@@ -3244,6 +3294,35 @@ function addDesignObject(args: {
     return;
   }
 
+  if (object.geometry.kind === 'polygon') {
+    const surfaceColor = getDesignObjectSurfaceColor(object, definition);
+    addFlatPolygon({
+      THREE,
+      group,
+      points: object.geometry.points,
+      color: surfaceColor,
+      opacity,
+      y,
+      objectId: object.id,
+    });
+    addPickPolygon({
+      THREE,
+      group,
+      points: object.geometry.points,
+      objectId: object.id,
+      y: y + 0.2,
+    });
+    addPolygonOutline({
+      THREE,
+      group,
+      points: object.geometry.points,
+      color: selected ? '#facc15' : '#27323a',
+      objectId: object.id,
+      y: y + (selected ? 0.18 : 0.08),
+    });
+    return;
+  }
+
   if (object.geometry.kind === 'corridor' || object.geometry.kind === 'path_corridor') {
     const surfaceColor = getDesignObjectSurfaceColor(object, definition);
     const deckAwareObject =
@@ -3404,13 +3483,22 @@ function addDesignObject(args: {
       });
     }
 
-    if (object.type === 'parking_area' || object.type === 'loading_zone') {
+    if (
+      object.type === 'parking_area' ||
+      object.type === 'loading_zone' ||
+      object.type === 'taxi_stand'
+    ) {
       addSurfaceTexture({
         THREE,
         group,
         geometry: detailGeometry,
         objectId: object.id,
-        color: object.type === 'loading_zone' ? '#f8fafc' : '#454f59',
+        color:
+          object.type === 'loading_zone'
+            ? '#f8fafc'
+            : object.type === 'taxi_stand'
+              ? '#fde047'
+              : '#454f59',
         opacity: object.type === 'loading_zone' ? 0.28 : 0.2,
         y: surfaceY + 0.06,
       });
@@ -3454,6 +3542,17 @@ function addDesignObject(args: {
           color: '#facc15',
           opacity: 0.2,
           y: surfaceY + 0.095,
+        });
+      }
+      if (object.type === 'sidewalk' && object.properties.tactilePaving === true) {
+        addSurfaceTexture({
+          THREE,
+          group,
+          geometry: detailGeometry,
+          objectId: object.id,
+          color: '#facc15',
+          opacity: 0.42,
+          y: surfaceY + 0.1,
         });
       }
       if (object.type === 'sidewalk' && pathType === 'promenade') {
@@ -3559,7 +3658,10 @@ function addDesignObject(args: {
         group,
         points: object.geometry.polygon,
         color: definition.color,
-        height: Math.max(numberProperty(object.properties.height, 1.1), 0.3),
+        height:
+          object.type === 'kerb'
+            ? Math.max(numberProperty(object.properties.height, 0.12), 0.04)
+            : Math.max(numberProperty(object.properties.height, 1.1), 0.3),
         objectId: object.id,
       });
     }
@@ -3674,6 +3776,20 @@ function addDesignObject(args: {
           });
         }
       }
+      if (object.type === 'car_lane') {
+        const laneUse = stringProperty(object.properties.laneUse, 'general');
+        if (laneUse !== 'general') {
+          addSurfaceTexture({
+            THREE,
+            group,
+            geometry: detailGeometry,
+            objectId: object.id,
+            color: laneUse === 'bus' ? '#dc2626' : laneUse === 'taxi' ? '#eab308' : '#2563eb',
+            opacity: 0.28,
+            y: surfaceY + 0.08,
+          });
+        }
+      }
     }
 
     if (definition.renderKind === 'traffic' && object.type === 'traffic_calming') {
@@ -3698,6 +3814,39 @@ function addDesignObject(args: {
           y: surfaceY + 0.095,
         });
       }
+    }
+
+    if (object.type === 'traffic_island') {
+      addCorridorEdgeStrips({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        color: '#f8fafc',
+        opacity: 0.72,
+        y: surfaceY + 0.09,
+      });
+      addSurfaceTexture({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        color: '#65a30d',
+        opacity: 0.24,
+        y: surfaceY + 0.1,
+      });
+    }
+
+    if (object.type === 'public_space') {
+      addSurfaceTexture({
+        THREE,
+        group,
+        geometry: detailGeometry,
+        objectId: object.id,
+        color: '#f4eadc',
+        opacity: 0.34,
+        y: surfaceY + 0.07,
+      });
     }
 
     if (object.type === 'construction_area') {
@@ -3732,7 +3881,16 @@ function addDesignObject(args: {
       });
     }
 
-    if (selected) {
+    if (!selected) {
+      addCorridorOutline({
+        THREE,
+        group,
+        geometry: object.geometry,
+        color: '#27323a',
+        objectId: object.id,
+        y: pickY + 0.04,
+      });
+    } else {
       addCorridorOutline({
         THREE,
         group,
@@ -3946,6 +4104,7 @@ function createOsmTreeObject(args: {
 }
 
 function getOsmPointObjectType(way: StreetDesignOsmWay): StreetDesignObjectType {
+  if (way.mappedObjectType) return way.mappedObjectType;
   if (way.kind === 'tree') return 'tree';
   if (way.kind === 'water') return 'fountain';
   if (way.kind === 'transit') return 'bus_stop';
@@ -4372,7 +4531,14 @@ function addOsmWays(args: {
         group,
         points: geometry.polygon,
         color,
-        height: way.subkind === 'wall' ? 1.2 : way.subkind === 'hedge' ? 1.1 : 0.75,
+        height:
+          way.subkind === 'wall'
+            ? 1.2
+            : way.subkind === 'hedge'
+              ? 1.1
+              : way.subkind === 'kerb'
+                ? 0.12
+                : 0.75,
         osmWayId: way.id,
       });
       addPickPolygon({ THREE, group, points: geometry.polygon, osmWayId: way.id, y: 1.35 });
@@ -5241,6 +5407,25 @@ export async function mountStreetDesignScene(
         design: options.design,
         selectedOsmWayId: options.selectedOsmWayId,
         animatedObjects: originalAnimatedObjects,
+      });
+      const neutral = new THREE.Color('#9aa0a3');
+      forEachObjectMaterial(originalLayerGroup, material => {
+        const styled = material as ThreeMaterial & {
+          color?: import('three').Color;
+          emissive?: import('three').Color;
+          opacity?: number;
+          transparent?: boolean;
+          depthWrite?: boolean;
+        };
+        if (styled.opacity != null && styled.opacity <= 0.02) return;
+        const isSelection = styled.color?.getHexString() === 'facc15';
+        if (!isSelection && styled.color) styled.color.lerp(neutral, 0.55);
+        if (!isSelection && styled.emissive) styled.emissive.multiplyScalar(0.35);
+        if (!isSelection) {
+          styled.opacity = Math.min(styled.opacity ?? 1, 0.75);
+          styled.transparent = true;
+          styled.depthWrite = false;
+        }
       });
     }
     syncAnimatedObjects();

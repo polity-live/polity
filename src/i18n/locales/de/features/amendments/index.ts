@@ -433,6 +433,7 @@ export const amendmentsTranslations = {
       water: 'Wasser',
     },
     actions: {
+      undoOsmImport: 'OSM-Übernahme rückgängig',
       collapse: '{{label}} einklappen',
       expand: '{{label}} ausklappen',
       hide: '{{label}} ausblenden',
@@ -550,6 +551,7 @@ export const amendmentsTranslations = {
       fieldWithUnit: '{{label}} ({{unit}})',
       height: 'Höhe',
       incline: 'Steigung',
+      importAsPlanned: 'Als geplante Änderung übernehmen',
       layer: 'Layer',
       length: 'Länge',
       nextElementSettings: 'Einstellungen für das nächste Element',
@@ -557,6 +559,13 @@ export const amendmentsTranslations = {
       noSelectionDescription:
         'Wähle ein platziertes Element oder ein Bestandsobjekt im 3D-Modell aus.',
       osmFallback: 'OSM-Bestandsobjekt',
+      mappedAs: 'Zugeordnetes Element',
+      mappingConfidence: {
+        exact: 'Exakte Zuordnung',
+        derived: 'Aus OSM geschätzt',
+        generic: 'Generische Zuordnung',
+      },
+      noSafeMapping: 'Keine sichere editierbare Zuordnung',
       place: 'Platzieren',
       points: 'Punkte',
       price: 'Preis',
@@ -723,10 +732,16 @@ export const amendmentsTranslations = {
       common: {
         properties: {
           access: 'Zugang',
+          capacity: 'Kapazität',
+          direction: 'Richtung',
           crop: 'Kultur',
           deckElevationMeters: 'Deckhöhe',
           height: 'Höhe',
           incline: 'Steigung',
+          laneMarkings: 'Fahrbahnmarkierungen',
+          laneUse: 'Spurnutzung',
+          lit: 'Beleuchtet',
+          maxspeed: 'Höchstgeschwindigkeit',
           layerIndex: 'Layer',
           level: 'Ebene',
           maintenance: 'Pflege',
@@ -734,9 +749,15 @@ export const amendmentsTranslations = {
           planting: 'Bepflanzung',
           publicAccess: 'Öffentlich zugänglich',
           spacing: 'Reihenabstand',
+          segregated: 'Getrennt geführt',
           status: 'Status',
           structureKind: 'Struktur',
           surface: 'Oberfläche',
+          tactilePaving: 'Taktiles Leitsystem',
+          transportMode: 'Verkehrsmittel',
+          turn: 'Abbiegerichtung',
+          turnLanes: 'Abbiegespuren',
+          wheelchair: 'Rollstuhlgerecht',
         },
       },
       flowerBed: {
@@ -945,8 +966,77 @@ export const amendmentsTranslations = {
           civicType: 'Einrichtungstyp',
         },
       },
+      kerb: {
+        label: 'Bordstein',
+        properties: { kerbType: 'Bordsteintyp', tactilePaving: 'Taktiles Leitsystem' },
+      },
+      trafficSign: {
+        label: 'Verkehrszeichen',
+        properties: { signType: 'Zeichentyp', direction: 'Richtung' },
+      },
+      trafficIsland: {
+        label: 'Verkehrsinsel',
+        properties: { islandType: 'Inseltyp' },
+      },
+      publicSpace: {
+        label: 'Öffentlicher Platz',
+        properties: { publicSpaceType: 'Platztyp' },
+      },
+      buildingEntrance: {
+        label: 'Gebäudeeingang',
+        properties: { entranceType: 'Eingangstyp', wheelchair: 'Rollstuhlgerecht' },
+      },
+      chargingStation: {
+        label: 'Ladesäule',
+        properties: { capacity: 'Ladepunkte' },
+      },
+      publicToilet: {
+        label: 'Öffentliche Toilette',
+        properties: { wheelchair: 'Rollstuhlgerecht' },
+      },
+      taxiStand: {
+        label: 'Taxistand',
+        properties: { capacity: 'Taxiplätze' },
+      },
     },
     variantOptions: {
+      laneUse: {
+        bus: 'Bus',
+        emergency: 'Rettungsverkehr',
+        general: 'Allgemeiner Verkehr',
+        taxi: 'Taxi',
+      },
+      travelDirection: {
+        backward: 'Entgegen der Zeichenrichtung',
+        both: 'Beide Richtungen',
+        forward: 'In Zeichenrichtung',
+      },
+      transportMode: {
+        bus: 'Bus',
+        tram: 'Straßenbahn',
+      },
+      kerbType: {
+        flush: 'Bündig',
+        lowered: 'Abgesenkt',
+        raised: 'Erhöht',
+        rolled: 'Überfahrbar',
+      },
+      signType: {
+        give_way: 'Vorfahrt gewähren',
+        maxspeed: 'Geschwindigkeitsbegrenzung',
+        no_entry: 'Einfahrt verboten',
+        stop: 'Stopp',
+      },
+      islandType: {
+        calming: 'Verkehrsberuhigung',
+        median: 'Mittelinsel',
+        refuge: 'Schutzinsel',
+      },
+      publicSpaceType: {
+        marketplace: 'Marktplatz',
+        pedestrian: 'Fußgängerbereich',
+        square: 'Stadtplatz',
+      },
       access: {
         destination: 'Anlieger / Zielverkehr',
         emergency: 'Rettungszugang',
@@ -1143,7 +1233,9 @@ export const amendmentsTranslations = {
       },
       carLane: {
         bridge: 'Fahrspur-Brücke',
+        bus_lane: 'Busspur',
         one_way: 'Einbahn-Fahrspur',
+        taxi_lane: 'Taxispur',
         two_way: 'Zweirichtungs-Fahrspur',
       },
       civic: {

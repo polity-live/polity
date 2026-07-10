@@ -701,6 +701,45 @@ describe('streetDesignReducer', () => {
     expect(hidden.isDirty).toBe(true);
   });
 
+  it('imports OSM objects atomically, hides the source, and marks the design dirty', () => {
+    const initialState = createInitialStreetDesignEditorState();
+    const tree = createPointStreetDesignObject({
+      id: 'imported-tree',
+      type: 'tree',
+      point: { x: 2, z: 3 },
+    });
+    const imported = streetDesignReducer(initialState, {
+      type: 'import_osm_feature',
+      osmWayId: 'osm-tree-1',
+      objects: [tree],
+    });
+
+    expect(imported.design.objects).toEqual([tree]);
+    expect(imported.design.hiddenOsmFeatureIds).toContain('osm-tree-1');
+    expect(imported.selectedObjectId).toBe('imported-tree');
+    expect(imported.selectedOsmWayId).toBeNull();
+    expect(imported.isDirty).toBe(true);
+
+    const importedObject = {
+      ...tree,
+      provenance: {
+        source: 'osm' as const,
+        featureId: 'osm-tree-1',
+        confidence: 'exact' as const,
+      },
+    };
+    const reverted = streetDesignReducer(
+      {
+        ...imported,
+        design: { ...imported.design, objects: [importedObject] },
+      },
+      { type: 'undo_osm_import', osmWayId: 'osm-tree-1' }
+    );
+
+    expect(reverted.design.objects).toHaveLength(0);
+    expect(reverted.design.hiddenOsmFeatureIds).not.toContain('osm-tree-1');
+  });
+
   it('normalizes old OSM ways and layer visibility when parsing saved designs', () => {
     const parsed = parseStoredStreetDesignState({
       ...createInitialStreetDesignEditorState().design,

@@ -87,6 +87,8 @@ export type StreetDesignEditorAction =
       visible: boolean;
     }
   | { type: 'hide_osm_way'; osmWayId: string }
+  | { type: 'import_osm_feature'; osmWayId: string; objects: StreetDesignObject[] }
+  | { type: 'undo_osm_import'; osmWayId: string }
   | {
       type: 'update_object_property';
       objectId: string;
@@ -758,6 +760,58 @@ export function streetDesignReducer(
         },
         selectedOsmWayId:
           state.selectedOsmWayId === action.osmWayId ? null : state.selectedOsmWayId,
+        isDirty: true,
+      };
+    }
+
+    case 'import_osm_feature': {
+      if (action.objects.length === 0) return state;
+      const hiddenOsmFeatureIds = Array.from(
+        new Set([
+          ...(state.design.hiddenOsmWayIds ?? []),
+          ...(state.design.hiddenOsmFeatureIds ?? []),
+          action.osmWayId,
+        ])
+      );
+      const firstObject = action.objects[0];
+
+      return {
+        ...state,
+        design: {
+          ...state.design,
+          objects: [...state.design.objects, ...action.objects],
+          hiddenOsmWayIds: hiddenOsmFeatureIds,
+          hiddenOsmFeatureIds,
+        },
+        selectedObjectId: firstObject?.id ?? null,
+        selectedOsmWayId: null,
+        selectedObjectFocusRequestKey: firstObject
+          ? state.selectedObjectFocusRequestKey + 1
+          : state.selectedObjectFocusRequestKey,
+        interactionMode: 'select',
+        isDirty: true,
+      };
+    }
+
+    case 'undo_osm_import': {
+      const objects = state.design.objects.filter(
+        object => object.provenance?.featureId !== action.osmWayId
+      );
+      if (objects.length === state.design.objects.length) return state;
+
+      return {
+        ...state,
+        design: {
+          ...state.design,
+          objects,
+          hiddenOsmWayIds: (state.design.hiddenOsmWayIds ?? []).filter(
+            featureId => featureId !== action.osmWayId
+          ),
+          hiddenOsmFeatureIds: (state.design.hiddenOsmFeatureIds ?? []).filter(
+            featureId => featureId !== action.osmWayId
+          ),
+        },
+        selectedObjectId: null,
         isDirty: true,
       };
     }

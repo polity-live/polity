@@ -94,38 +94,56 @@ export function buildStreetDesignLegendSections({
 function buildExistingLegendEntries(design: StreetDesignStateV1): StreetDesignLegendEntry[] {
   const layerVisibility = getStreetDesignOsmLayerVisibility(design.osmLayerVisibility);
   const hiddenOsmFeatureIds = getStreetDesignHiddenOsmFeatureIds(design);
-  const entriesByLayer = new Map<StreetDesignOsmFeatureLayer, StreetDesignLegendEntry>();
+  const entriesByLayer = new Map<StreetDesignOsmFeatureLayer, StreetDesignLegendEntry[]>();
+  const seenKeys = new Set<string>();
 
   getStreetDesignOsmFeatures(design.osmSnapshot).forEach(feature => {
     const layer = getStreetDesignOsmFeatureLayer(feature.kind);
     if (hiddenOsmFeatureIds.has(feature.id) || !layerVisibility[layer]) return;
-    if (entriesByLayer.has(layer)) return;
 
     const section = sectionByLayer.get(layer);
     if (!section) return;
-    const fallbackType = section.objectTypes[0];
-    if (!fallbackType) return;
-    const definition = getStreetDesignObjectDefinition(fallbackType);
+    const objectType = feature.mappedObjectType ?? section.objectTypes[0];
+    if (!objectType) return;
+    const key = `${layer}:${objectType}:${feature.renderProfile ?? feature.subkind ?? ''}`;
+    if (seenKeys.has(key)) return;
+    seenKeys.add(key);
+    const definition = getStreetDesignObjectDefinition(objectType);
+    const layerEntries = entriesByLayer.get(layer) ?? [];
 
-    entriesByLayer.set(layer, {
-      id: `existing:${layer}`,
+    layerEntries.push({
+      id: layerEntries.length === 0 ? `existing:${layer}` : `existing:${layer}:${objectType}`,
       source: 'existing',
       kind: 'existing-layer',
-      labelKey: section.labelKey,
-      color: getExistingLegendColor(feature, layer),
+      labelKey: feature.mappedObjectType ? definition.labelKey : section.labelKey,
+      color: muteExistingColor(getExistingLegendColor(feature, layer)),
       renderKind: definition.renderKind,
       layer,
-      objectType: fallbackType,
-      properties: definition.defaultProperties,
+      objectType,
+      properties: {
+        ...definition.defaultProperties,
+        ...(feature.mappedProperties ?? {}),
+      },
       sectionId: section.layer,
-      width: definition.defaultWidth,
+      width: feature.widthMeters ?? definition.defaultWidth,
     });
+    entriesByLayer.set(layer, layerEntries);
   });
 
-  return streetDesignElementSections.flatMap(section => {
-    const entry = entriesByLayer.get(section.layer);
-    return entry ? [entry] : [];
+  return streetDesignElementSections.flatMap(section => entriesByLayer.get(section.layer) ?? []);
+}
+
+function muteExistingColor(color: string) {
+  const normalized = color.match(/^#([0-9a-f]{6})$/i)?.[1];
+  if (!normalized) return color;
+  const neutral = [0x9a, 0xa0, 0xa3];
+  const mixed = [0, 2, 4].map((offset, index) => {
+    const channel = Number.parseInt(normalized.slice(offset, offset + 2), 16);
+    return Math.round(channel * 0.45 + neutral[index] * 0.55)
+      .toString(16)
+      .padStart(2, '0');
   });
+  return `#${mixed.join('')}`;
 }
 
 function buildPlannedLegendEntryGroups(): StreetDesignLegendEntryGroup[] {

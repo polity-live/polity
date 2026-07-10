@@ -134,6 +134,8 @@ interface StreetDesignPageViewProps {
     visible: boolean
   ) => void;
   onOsmWayHide: (osmWayId: string) => void;
+  onOsmWayImport?: (osmWayId: string) => void;
+  onOsmImportUndo?: (osmWayId: string) => void;
   onOsmLayerVisibilityChange: (
     layer: keyof StreetDesignOsmLayerVisibility,
     visible: boolean
@@ -225,6 +227,8 @@ export function StreetDesignPageView({
   onObjectVisibilityChange,
   onObjectCategoryVisibilityChange,
   onOsmWayHide,
+  onOsmWayImport = () => undefined,
+  onOsmImportUndo = () => undefined,
   onOsmLayerVisibilityChange,
   onShowStreetMarkingsChange,
   onPropertyChange,
@@ -287,6 +291,10 @@ export function StreetDesignPageView({
     },
     [onObjectSelect, onOsmWaySelect]
   );
+  const handleAreaPickerLoadOsm = useCallback(() => {
+    setAreaPickerOpen(false);
+    onLoadOsm();
+  }, [onLoadOsm]);
 
   const areaPickerContent = useMemo(
     () => (
@@ -301,13 +309,13 @@ export function StreetDesignPageView({
         onOpenChange={setAreaPickerOpen}
         variant="panel"
         onMapSelectionChange={onSelectedMapSelectionChange}
-        onLoadOsm={onLoadOsm}
+        onLoadOsm={handleAreaPickerLoadOsm}
         onLoadSample={onLoadSample}
       />
     ),
     [
+      handleAreaPickerLoadOsm,
       isLoadingOsm,
-      onLoadOsm,
       onLoadSample,
       onSelectedMapSelectionChange,
       osmError,
@@ -506,6 +514,8 @@ export function StreetDesignPageView({
               onOsmWaySelect={selectOsmWay}
               onObjectVisibilityChange={onObjectVisibilityChange}
               onOsmWayHide={onOsmWayHide}
+              onOsmWayImport={onOsmWayImport}
+              onOsmImportUndo={onOsmImportUndo}
               onObjectRotate={onRotationChange}
               onPropertyChange={onPropertyChange}
               onWidthChange={onWidthChange}

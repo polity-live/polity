@@ -9,6 +9,7 @@ import type { StreetDesignStateV1 } from '../../types';
 import {
   getBoundedCanvasPopoverPlacement,
   projectLocalPointToCanvasAnchor,
+  StreetDesignOsmPopover,
   StreetSceneCanvasViewView,
 } from '../StreetSceneCanvasViewView';
 
@@ -64,6 +65,35 @@ function createTestDesign(overrides: Partial<StreetDesignStateV1> = {}): StreetD
 }
 
 describe('StreetSceneCanvasViewView', () => {
+  it('shows semantic OSM mapping and imports an exact feature as a planned change', () => {
+    const onImportOsmWay = vi.fn();
+    render(
+      <StreetDesignOsmPopover
+        osmWay={{
+          id: 'charger-1',
+          kind: 'utility',
+          geometryKind: 'point',
+          point: { lat: 52.52, lon: 13.405 },
+          tags: { amenity: 'charging_station' },
+          subkind: 'charging_station',
+          mappedObjectType: 'charging_station',
+          mappedProperties: { capacity: 2 },
+          mappingConfidence: 'exact',
+          renderProfile: 'utility',
+          source: 'osm',
+        }}
+        readOnly={false}
+        onClose={vi.fn()}
+        onHideOsmWay={vi.fn()}
+        onImportOsmWay={onImportOsmWay}
+      />
+    );
+
+    expect(screen.getByText('Charging station · Exact mapping')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Import as planned change' }));
+    expect(onImportOsmWay).toHaveBeenCalledWith('charger-1');
+  });
+
   it('does not show the OSM loading bar by default', () => {
     renderCanvasView({ selectedObject: null });
 

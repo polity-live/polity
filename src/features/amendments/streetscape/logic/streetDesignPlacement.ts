@@ -44,6 +44,10 @@ const PATH_CORRIDOR_TYPES = new Set<StreetDesignObjectType>([
   'construction_area',
   'landuse_context_area',
   'civic_area',
+  'kerb',
+  'traffic_island',
+  'public_space',
+  'taxi_stand',
 ]);
 
 function roundMetric(value: number) {
@@ -195,6 +199,21 @@ function getPolygonArea(points: StreetDesignLocalPoint[]) {
   }, 0);
 
   return roundMetric(Math.abs(sum) / 2);
+}
+
+export function createPolygonGeometry(points: StreetDesignLocalPoint[]): PolygonGeometry {
+  const cleanPoints = removeConsecutiveDuplicatePoints(points);
+  const normalizedPoints =
+    cleanPoints.length > 1 &&
+    distanceBetweenPoints(cleanPoints[0], cleanPoints[cleanPoints.length - 1]) < MIN_CORRIDOR_LENGTH
+      ? cleanPoints.slice(0, -1)
+      : cleanPoints;
+
+  return {
+    kind: 'polygon',
+    points: normalizedPoints,
+    area: getPolygonArea(normalizedPoints),
+  };
 }
 
 function rotatePointAround(

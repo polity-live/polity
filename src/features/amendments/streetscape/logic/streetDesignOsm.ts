@@ -6,6 +6,7 @@ import type {
   StreetDesignOsmSnapshot,
   StreetDesignStateV1,
 } from '../types';
+import { applyStreetDesignOsmSemanticMapping } from './streetDesignOsmMapping';
 
 export const DEFAULT_STREET_DESIGN_OSM_LAYER_VISIBILITY: StreetDesignOsmLayerVisibility = {
   road: true,
@@ -88,26 +89,26 @@ export function normalizeStreetDesignOsmFeature(
 
   if (inferredGeometryKind === 'point') {
     if (!point) return null;
-    return {
+    return applyStreetDesignOsmSemanticMapping({
       ...(feature as StreetDesignOsmFeature),
       id: feature.id,
       kind: feature.kind,
       geometryKind: 'point',
       point,
       source: feature.source ?? 'osm',
-    };
+    });
   }
 
   if (points.length < 2) return null;
 
-  return {
+  return applyStreetDesignOsmSemanticMapping({
     ...(feature as StreetDesignOsmFeature),
     id: feature.id,
     kind: feature.kind,
     geometryKind: inferredGeometryKind,
     points,
     source: feature.source ?? 'osm',
-  };
+  });
 }
 
 export function normalizeStreetDesignOsmSnapshot(
