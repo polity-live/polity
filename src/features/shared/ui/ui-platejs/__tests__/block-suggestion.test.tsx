@@ -49,9 +49,21 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('platejs/react', async importOriginal => {
   const actual = await importOriginal<typeof import('platejs/react')>();
+  const React = await import('react');
 
   return {
     ...actual,
+    PlateLeaf: ({
+      as,
+      attributes,
+      children,
+      className,
+    }: {
+      as?: keyof JSX.IntrinsicElements;
+      attributes?: Record<string, unknown>;
+      children: React.ReactNode;
+      className?: string;
+    }) => React.createElement(as ?? 'span', { ...attributes, className }, children),
     useEditorPlugin: () => plateReactMock.editorPlugin,
     usePluginOption: (_plugin: unknown, option: string, userId?: string) => {
       if (plateReactMock.pluginOptions.has(option)) return plateReactMock.pluginOptions.get(option);
@@ -96,10 +108,12 @@ vi.mock('../comment.tsx', () => ({
 }));
 
 import {
+  BlockSuggestion,
   BlockSuggestionCard,
   type ResolvedSuggestion,
   useResolveSuggestion,
 } from '../block-suggestion';
+import { SuggestionLeaf } from '../suggestion-node';
 
 function internalVoteSuggestion(): ResolvedSuggestion {
   return {
@@ -302,5 +316,105 @@ describe('useResolveSuggestion block labels', () => {
       newText: '__block__Block',
       type: 'insert',
     });
+  });
+});
+
+describe('suggestion editor styling', () => {
+  beforeEach(() => {
+    plateReactMock.pluginOptions.clear();
+    plateReactMock.editorPlugin = {
+      api: {
+        suggestion: {
+          dataList: vi.fn(() => []),
+          nodeId: vi.fn(() => 'suggestion-1'),
+          withoutSuggestions: (callback: () => void) => callback(),
+        },
+      },
+      editor: {},
+      setOption: vi.fn(),
+    };
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('uses green styling for inserted block suggestions', () => {
+    render(
+      <BlockSuggestion
+        element={
+          {
+            children: [{ text: '' }],
+            suggestion: { id: 'suggestion-1', type: 'insert' },
+            type: 'data_view',
+          } as any
+        }
+      />
+    );
+
+    const overlay = document.querySelector('[contenteditable="false"]');
+
+    expect(overlay?.className).toContain('border-[var(--badge-success-border)]');
+    expect(overlay?.className).toContain('bg-[var(--badge-success-bg)]');
+    expect(overlay?.className).toContain('text-[var(--badge-success-fg)]');
+  });
+
+  it('uses red styling for removed block suggestions', () => {
+    render(
+      <BlockSuggestion
+        element={
+          {
+            children: [{ text: '' }],
+            suggestion: { id: 'suggestion-1', type: 'remove' },
+            type: 'data_view',
+          } as any
+        }
+      />
+    );
+
+    const overlay = document.querySelector('[contenteditable="false"]');
+
+    expect(overlay?.className).toContain('border-[var(--badge-danger-border)]');
+    expect(overlay?.className).toContain('bg-[var(--badge-danger-bg)]');
+    expect(overlay?.className).toContain('text-[var(--badge-danger-fg)]');
+  });
+
+  it('uses green styling for inserted inline suggestions', () => {
+    plateReactMock.editorPlugin.api.suggestion.dataList = vi.fn(() => [
+      { id: 'suggestion-1', type: 'insert' },
+    ]);
+
+    render(
+      <SuggestionLeaf attributes={{}} leaf={{ text: 'new text' } as any} text={{} as any}>
+        new text
+      </SuggestionLeaf>
+    );
+
+    const suggestion = screen.getByText('new text');
+
+    expect(suggestion.getAttribute('data-suggestion-type')).toBe('insert');
+    expect(suggestion.className).toContain('border-[var(--badge-success-border)]');
+    expect(suggestion.className).toContain('bg-[var(--badge-success-bg)]');
+    expect(suggestion.className).toContain('text-[var(--badge-success-fg)]');
+  });
+
+  it('uses red styling for removed inline suggestions', () => {
+    plateReactMock.editorPlugin.api.suggestion.dataList = vi.fn(() => [
+      { id: 'suggestion-1', type: 'remove' },
+    ]);
+
+    render(
+      <SuggestionLeaf attributes={{}} leaf={{ text: 'old text' } as any} text={{} as any}>
+        old text
+      </SuggestionLeaf>
+    );
+
+    const suggestion = screen.getByText('old text');
+
+    expect(suggestion.getAttribute('data-suggestion-type')).toBe('remove');
+    expect(suggestion.className).toContain('border-[var(--badge-danger-border)]');
+    expect(suggestion.className).toContain('bg-[var(--badge-danger-bg)]');
+    expect(suggestion.className).toContain('text-[var(--badge-danger-fg)]');
+    expect(suggestion.className).toContain('line-through');
   });
 });

@@ -6,6 +6,8 @@ import { SlateLeaf } from 'platejs/static';
 import { getMotionPreset, getSemanticToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils.ts';
 
+const INLINE_SUGGESTION_MARK_CLASSES = 'box-decoration-clone rounded-sm border px-0.5 no-underline';
+
 export function SuggestionLeafStatic(props: SlateLeafProps<TSuggestionText>) {
   const { editor, leaf } = props;
 
@@ -22,7 +24,7 @@ export function SuggestionLeafStatic(props: SlateLeafProps<TSuggestionText>) {
       {...props}
       as={Component}
       className={cn(
-        'no-underline',
+        INLINE_SUGGESTION_MARK_CLASSES,
         getMotionPreset('colors'),
         insertTone.surface,
         hasRemove && `${removeTone.surface} line-through`

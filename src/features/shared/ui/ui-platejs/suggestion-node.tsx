@@ -15,6 +15,8 @@ import { discussionPlugin } from '@/features/shared/ui/kit-platejs/discussion-ki
 import { useModeContext } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
 import { getMotionPreset, getSemanticToneClasses } from '@/features/shared/theme';
 
+const INLINE_SUGGESTION_MARK_CLASSES = 'box-decoration-clone rounded-sm border px-0.5 no-underline';
+
 export function SuggestionLeaf(props: PlateLeafProps<TSuggestionText>) {
   const { api, setOption } = useEditorPlugin(suggestionPlugin);
   const leaf = props.leaf;
@@ -63,11 +65,11 @@ export function SuggestionLeaf(props: PlateLeafProps<TSuggestionText>) {
       {...props}
       as={Component}
       className={cn(
-        'no-underline',
+        INLINE_SUGGESTION_MARK_CLASSES,
         getMotionPreset('colors'),
         insertTone.surface,
         (hasActive || hasHover) && `ring-1 ${insertTone.ring}`,
-        hasRemove && removeTone.surface,
+        hasRemove && `${removeTone.surface} line-through`,
         (hasActive || hasHover) && hasRemove && `no-underline ring-1 ${removeTone.ring}`
       )}
       attributes={{
@@ -130,7 +132,7 @@ function SuggestionLineBreakContent({ suggestionData }: { suggestionData: TSugge
     <span
       ref={spanRef}
       className={cn(
-        'absolute border-b-2 text-justify no-underline',
+        'absolute rounded-sm border border-b-2 px-0.5 text-justify no-underline',
         getMotionPreset('colors'),
         isInsert && insertTone.surface,
         isInsert && (isActive || isHover) && `ring-1 ${insertTone.ring}`,

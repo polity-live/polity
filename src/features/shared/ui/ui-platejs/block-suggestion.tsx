@@ -40,7 +40,11 @@ import {
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
-import { getBadgeToneClasses } from '@/features/shared/theme';
+import {
+  getBadgeToneClasses,
+  getMotionPreset,
+  getSemanticToneClasses,
+} from '@/features/shared/theme';
 import {
   type TDiscussion,
   discussionPlugin,
@@ -187,12 +191,15 @@ export function BlockSuggestion({ element }: { element: TSuggestionElement }) {
   if (suggestionData?.isLineBreak) return null;
 
   const isRemove = suggestionData?.type === 'remove';
+  const insertTone = getSemanticToneClasses('success');
+  const removeTone = getSemanticToneClasses('danger');
 
   return (
     <div
       className={cn(
-        'border-ring pointer-events-none absolute inset-0 z-1 border-2 transition-opacity',
-        isRemove && 'border-[var(--badge-neutral-border)]'
+        'pointer-events-none absolute inset-0 z-1 border-2 transition-opacity',
+        getMotionPreset('colors'),
+        isRemove ? removeTone.surface : insertTone.surface
       )}
       contentEditable={false}
     />
