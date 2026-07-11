@@ -1,7 +1,16 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, renderHook, screen } from '@testing-library/react';
+import type { TElement } from 'platejs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const translationMock = vi.hoisted(() => ({
+  'plateJs.blockSuggestion.block': 'Block',
+  'plateJs.dataView.chart': 'Chart',
+  'plateJs.dataView.insertTitle': 'Insert data',
+  'plateJs.dataView.stat': 'Metric',
+  'plateJs.dataView.table': 'Table',
+}));
 
 const suggestionCallbacksMock = vi.hoisted(() => ({
   onEventSuggestionCancel: vi.fn(),
@@ -19,9 +28,22 @@ const modeContextMock = vi.hoisted(() => ({
   isOwnerOrCollaborator: true,
 }));
 
+const plateReactMock = vi.hoisted(() => ({
+  editorPlugin: {
+    api: {
+      suggestion: {
+        withoutSuggestions: (callback: () => void) => callback(),
+      },
+    },
+    editor: {},
+  } as any,
+  pluginOptions: new Map<string, unknown>(),
+}));
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: string) => fallback ?? _key,
+    t: (key: string, fallback?: string) =>
+      translationMock[key as keyof typeof translationMock] ?? fallback ?? key,
   }),
 }));
 
@@ -30,15 +52,9 @@ vi.mock('platejs/react', async importOriginal => {
 
   return {
     ...actual,
-    useEditorPlugin: () => ({
-      api: {
-        suggestion: {
-          withoutSuggestions: (callback: () => void) => callback(),
-        },
-      },
-      editor: {},
-    }),
+    useEditorPlugin: () => plateReactMock.editorPlugin,
     usePluginOption: (_plugin: unknown, option: string, userId?: string) => {
+      if (plateReactMock.pluginOptions.has(option)) return plateReactMock.pluginOptions.get(option);
       if (option === 'currentUserId') return 'manager-1';
       if (option === 'user') return { id: userId, name: 'Test User' };
       return null;
@@ -79,7 +95,11 @@ vi.mock('../comment.tsx', () => ({
   formatCommentDate: () => 'today',
 }));
 
-import { BlockSuggestionCard, type ResolvedSuggestion } from '../block-suggestion';
+import {
+  BlockSuggestionCard,
+  type ResolvedSuggestion,
+  useResolveSuggestion,
+} from '../block-suggestion';
 
 function internalVoteSuggestion(): ResolvedSuggestion {
   return {
@@ -132,6 +152,15 @@ describe('BlockSuggestionCard internal vote actions', () => {
     Object.values(suggestionCallbacksMock).forEach(mock => mock.mockReset());
     modeContextMock.currentMode = 'vote_internal';
     modeContextMock.isOwnerOrCollaborator = true;
+    plateReactMock.pluginOptions.clear();
+    plateReactMock.editorPlugin = {
+      api: {
+        suggestion: {
+          withoutSuggestions: (callback: () => void) => callback(),
+        },
+      },
+      editor: {},
+    };
   });
 
   afterEach(() => {
@@ -187,5 +216,91 @@ describe('BlockSuggestionCard internal vote actions', () => {
     expect(screen.getByText('Submitted - vote pending')).toBeTruthy();
     expect(screen.queryByText('Soll diese Änderung eingereicht werden?')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Einreichen' })).toBeNull();
+  });
+});
+
+describe('useResolveSuggestion block labels', () => {
+  beforeEach(() => {
+    plateReactMock.pluginOptions.clear();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  function resolveBlockSuggestion(node: TElement) {
+    const blockPath = [0];
+    const suggestionNode = {
+      ...node,
+      suggestion: {
+        createdAt: Date.now(),
+        id: 'suggestion-1',
+        type: 'insert',
+        userId: 'author-1',
+      },
+    } as TElement;
+
+    plateReactMock.pluginOptions.set('discussions', []);
+    plateReactMock.pluginOptions.set('uniquePathMap', new Map([['suggestion-1', blockPath]]));
+    plateReactMock.editorPlugin = {
+      api: {
+        node: vi.fn(() => undefined),
+        suggestion: {
+          dataList: vi.fn(() => []),
+          isBlockSuggestion: vi.fn(currentNode => Boolean(currentNode?.suggestion)),
+          node: vi.fn(() => [suggestionNode, blockPath]),
+          nodeId: vi.fn(currentNode => currentNode?.suggestion?.id),
+          suggestionData: vi.fn(currentNode => currentNode?.suggestion),
+          withoutSuggestions: (callback: () => void) => callback(),
+        },
+      },
+      editor: {
+        api: {
+          nodes: vi.fn(() => [[suggestionNode, blockPath]]),
+        },
+        getOption: vi.fn(() => null),
+      },
+      getOption: vi.fn(() => new Map([['suggestion-1', blockPath]])),
+      setOption: vi.fn(),
+    };
+
+    return renderHook(() => useResolveSuggestion([[suggestionNode, blockPath]], blockPath));
+  }
+
+  it('resolves data view block suggestions without throwing', () => {
+    const { result } = resolveBlockSuggestion({
+      chartType: 'bar',
+      children: [{ text: '' }],
+      presentation: {},
+      query: { aggregation: 'sum', filters: {} },
+      source: {
+        datasetId: 'dataset-id',
+        kind: 'dataset',
+        provider: 'UPLOAD',
+        snapshotId: 'snapshot-id',
+        title: 'Dataset',
+      },
+      type: 'data_view',
+      view: 'chart',
+    } as TElement);
+
+    expect(result.current).toHaveLength(1);
+    expect(result.current[0]).toMatchObject({
+      newText: '__block__Chart',
+      type: 'insert',
+    });
+  });
+
+  it('falls back for unknown custom block suggestions', () => {
+    const { result } = resolveBlockSuggestion({
+      children: [{ text: '' }],
+      type: 'custom_widget',
+    } as TElement);
+
+    expect(result.current).toHaveLength(1);
+    expect(result.current[0]).toMatchObject({
+      newText: '__block__Block',
+      type: 'insert',
+    });
   });
 });

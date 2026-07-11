@@ -527,6 +527,7 @@ export const plateJsTranslations = {
     delete: 'Diagramm löschen',
   },
   blockSuggestion: {
+    block: 'Block',
     lineBreaks: 'Zeilenumbrüche',
     delete: 'Löschen:',
     add: 'Hinzufügen:',

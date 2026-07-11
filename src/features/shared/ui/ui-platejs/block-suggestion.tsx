@@ -24,6 +24,7 @@ import {
 import { useEditorPlugin, usePluginOption } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
 
+import { DATA_VIEW_NODE_TYPE, type TDataViewElement } from '@/features/charts/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
 import {
   AlertDialog,
@@ -120,40 +121,64 @@ export interface ResolvedSuggestion extends TResolvedSuggestion {
 
 const BLOCK_SUGGESTION = '__block__';
 
+type TypeTextMap = Record<string, (node?: TElement) => string>;
+
 const useTypeTextMap = () => {
   const { t } = useTranslation();
 
-  const TYPE_TEXT_MAP: Record<string, (node?: TElement) => string> = {
-    [KEYS.audio]: () => t('plateJs.toolbar.audio'),
-    [KEYS.blockquote]: () => t('plateJs.quote'),
-    [KEYS.callout]: () => t('plateJs.layout.callout'),
-    [KEYS.codeBlock]: () => t('plateJs.code'),
-    [KEYS.column]: () => t('plateJs.layout.column'),
-    [KEYS.equation]: () => t('plateJs.equation.newEquation'),
-    [KEYS.file]: () => t('plateJs.toolbar.file'),
-    [KEYS.h1]: () => t('plateJs.headings.heading1'),
-    [KEYS.h2]: () => t('plateJs.headings.heading2'),
-    [KEYS.h3]: () => t('plateJs.headings.heading3'),
-    [KEYS.h4]: () => t('plateJs.headings.heading4'),
-    [KEYS.h5]: () => t('plateJs.headings.heading5'),
-    [KEYS.h6]: () => t('plateJs.headings.heading6'),
-    [KEYS.hr]: () => t('plateJs.toolbar.divider'),
-    [KEYS.img]: () => t('plateJs.toolbar.image'),
-    [KEYS.mediaEmbed]: () => t('plateJs.media.embed'),
-    [KEYS.p]: node => {
-      if (node?.[KEYS.listType] === KEYS.listTodo) return t('plateJs.lists.todo');
-      if (node?.[KEYS.listType] === KEYS.ol) return t('plateJs.lists.numbered');
-      if (node?.[KEYS.listType] === KEYS.ul) return t('plateJs.lists.bulleted');
+  const TYPE_TEXT_MAP = React.useMemo<TypeTextMap>(
+    () => ({
+      [KEYS.audio]: () => t('plateJs.toolbar.audio'),
+      [KEYS.blockquote]: () => t('plateJs.quote'),
+      [KEYS.callout]: () => t('plateJs.layout.callout'),
+      [KEYS.codeBlock]: () => t('plateJs.code'),
+      [KEYS.column]: () => t('plateJs.layout.column'),
+      [DATA_VIEW_NODE_TYPE]: node => {
+        const view = (node as Partial<TDataViewElement> | undefined)?.view;
 
-      return t('plateJs.text');
-    },
-    [KEYS.table]: () => t('plateJs.toolbar.tableButton'),
-    [KEYS.toc]: () => t('plateJs.toolbar.tableOfContents.title'),
-    [KEYS.toggle]: () => t('plateJs.lists.toggle'),
-    [KEYS.video]: () => t('plateJs.toolbar.video'),
-  };
+        switch (view) {
+          case 'chart':
+            return t('plateJs.dataView.chart');
+          case 'table':
+            return t('plateJs.dataView.table');
+          case 'stat':
+            return t('plateJs.dataView.stat');
+          default:
+            return t('plateJs.dataView.insertTitle');
+        }
+      },
+      [KEYS.equation]: () => t('plateJs.equation.newEquation'),
+      [KEYS.file]: () => t('plateJs.toolbar.file'),
+      [KEYS.h1]: () => t('plateJs.headings.heading1'),
+      [KEYS.h2]: () => t('plateJs.headings.heading2'),
+      [KEYS.h3]: () => t('plateJs.headings.heading3'),
+      [KEYS.h4]: () => t('plateJs.headings.heading4'),
+      [KEYS.h5]: () => t('plateJs.headings.heading5'),
+      [KEYS.h6]: () => t('plateJs.headings.heading6'),
+      [KEYS.hr]: () => t('plateJs.toolbar.divider'),
+      [KEYS.img]: () => t('plateJs.toolbar.image'),
+      [KEYS.mediaEmbed]: () => t('plateJs.media.embed'),
+      [KEYS.p]: node => {
+        if (node?.[KEYS.listType] === KEYS.listTodo) return t('plateJs.lists.todo');
+        if (node?.[KEYS.listType] === KEYS.ol) return t('plateJs.lists.numbered');
+        if (node?.[KEYS.listType] === KEYS.ul) return t('plateJs.lists.bulleted');
 
-  return TYPE_TEXT_MAP;
+        return t('plateJs.text');
+      },
+      [KEYS.table]: () => t('plateJs.toolbar.tableButton'),
+      [KEYS.toc]: () => t('plateJs.toolbar.tableOfContents.title'),
+      [KEYS.toggle]: () => t('plateJs.lists.toggle'),
+      [KEYS.video]: () => t('plateJs.toolbar.video'),
+    }),
+    [t]
+  );
+
+  const getTypeText = React.useCallback(
+    (node: TElement) => TYPE_TEXT_MAP[node.type]?.(node) ?? t('plateJs.blockSuggestion.block'),
+    [TYPE_TEXT_MAP, t]
+  );
+
+  return { getTypeText };
 };
 
 export function BlockSuggestion({ element }: { element: TSuggestionElement }) {
@@ -820,7 +845,7 @@ export const useResolveSuggestion = (
 ) => {
   const discussions = usePluginOption(discussionPlugin, 'discussions');
   const uniquePathMap = usePluginOption(suggestionPlugin, 'uniquePathMap');
-  const TYPE_TEXT_MAP = useTypeTextMap();
+  const { getTypeText } = useTypeTextMap();
   const { currentMode } = useModeContext();
 
   const { api, editor, getOption, setOption } = useEditorPlugin(suggestionPlugin);
@@ -954,11 +979,11 @@ export const useResolveSuggestion = (
           if (lineBreakData.type === 'insert') {
             newText += lineBreakData.isLineBreak
               ? BLOCK_SUGGESTION
-              : BLOCK_SUGGESTION + TYPE_TEXT_MAP[node.type](node);
+              : BLOCK_SUGGESTION + getTypeText(node);
           } else if (lineBreakData.type === 'remove') {
             text += lineBreakData.isLineBreak
               ? BLOCK_SUGGESTION
-              : BLOCK_SUGGESTION + TYPE_TEXT_MAP[node.type](node);
+              : BLOCK_SUGGESTION + getTypeText(node);
           }
         }
       });
@@ -1121,7 +1146,15 @@ export const useResolveSuggestion = (
     });
 
     return res;
-  }, [api.suggestion, blockPath, discussions, editor.api, suggestionNodes, uniquePathMap]);
+  }, [
+    api.suggestion,
+    blockPath,
+    discussions,
+    editor.api,
+    getTypeText,
+    suggestionNodes,
+    uniquePathMap,
+  ]);
 
   // Effect to ensure all suggestions have CR IDs
   React.useEffect(() => {

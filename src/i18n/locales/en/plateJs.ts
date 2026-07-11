@@ -502,6 +502,7 @@ export const plateJsTranslations = {
     delete: 'Delete chart',
   },
   blockSuggestion: {
+    block: 'Block',
     lineBreaks: 'line breaks',
     delete: 'Delete:',
     add: 'Add:',
