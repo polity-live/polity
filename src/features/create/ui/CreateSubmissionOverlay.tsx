@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, type MouseEvent, type ReactNode } from 'react';
+import { useEffect, useId, type ReactNode } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { AlertTriangle, Check, type LucideIcon } from 'lucide-react';
 
@@ -27,7 +27,6 @@ interface CreateSubmissionOverlayProps {
   error?: unknown;
   progressSteps: CreateSubmitProgressStep[];
   reviewPreview?: ReactNode;
-  onNavigate: (target: CreateSubmitTarget) => void;
   onBack: () => void;
   onRetry: () => void;
 }
@@ -69,6 +68,10 @@ function targetHref(target: CreateSubmitTarget | null | undefined) {
   return target.kind === 'route' ? routeHref(target) : target.href;
 }
 
+function renderTargetLink(href: string, content: ReactNode) {
+  return <a href={href}>{content}</a>;
+}
+
 export function CreateSubmissionOverlay({
   status,
   entityType,
@@ -77,7 +80,6 @@ export function CreateSubmissionOverlay({
   error,
   progressSteps,
   reviewPreview,
-  onNavigate,
   onBack,
   onRetry,
 }: CreateSubmissionOverlayProps) {
@@ -102,11 +104,6 @@ export function CreateSubmissionOverlay({
     ) : (
       targetLabel
     );
-  const handleTargetButtonClick = (event: MouseEvent) => {
-    if (!target) return;
-    event.preventDefault();
-    onNavigate(target);
-  };
   const displayProgressSteps = progressSteps.map(step => ({
     ...step,
     status:
@@ -119,7 +116,7 @@ export function CreateSubmissionOverlay({
 
   useEffect(() => {
     if (canNavigateToTarget) {
-      document.querySelector<HTMLButtonElement>('[data-create-submit-target="true"]')?.focus();
+      document.querySelector<HTMLElement>('[data-create-submit-target="true"]')?.focus();
     }
   }, [canNavigateToTarget]);
 
@@ -272,7 +269,6 @@ export function CreateSubmissionOverlay({
                   type="button"
                   size="lg"
                   asChild={Boolean(href)}
-                  onClick={handleTargetButtonClick}
                   data-create-submit-target="true"
                   data-create-action="navigate-created-target"
                   data-create-target-kind={target?.kind}
@@ -280,7 +276,7 @@ export function CreateSubmissionOverlay({
                   data-create-target-params={serializeRouteParams(target)}
                   className="mx-auto flex w-full max-w-xs"
                 >
-                  {href ? <a href={href}>{targetButtonContent}</a> : targetButtonContent}
+                  {href ? renderTargetLink(href, targetButtonContent) : targetButtonContent}
                 </Button>
               ) : status === 'error' ? (
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -302,7 +298,6 @@ export function CreateSubmissionOverlay({
                   size="lg"
                   disabled={!canNavigateToTarget}
                   asChild={canNavigateToTarget && Boolean(href)}
-                  onClick={handleTargetButtonClick}
                   data-create-submit-target="true"
                   data-create-action="navigate-created-target"
                   data-create-target-kind={target?.kind}
@@ -312,11 +307,9 @@ export function CreateSubmissionOverlay({
                   successState={status === 'ready'}
                   successLabel={targetLabel}
                 >
-                  {canNavigateToTarget && href ? (
-                    <a href={href}>{targetButtonContent}</a>
-                  ) : (
-                    targetButtonContent
-                  )}
+                  {canNavigateToTarget && href
+                    ? renderTargetLink(href, targetButtonContent)
+                    : targetButtonContent}
                 </Button>
               )}
             </div>

@@ -182,11 +182,7 @@ export class CreateFlowPage {
   }
 
   async submitWaitForSavedAndNavigate(options: SubmitWaitForSavedAndNavigateOptions) {
-    const finalizationTimeoutMs = options.finalizationTimeoutMs ?? createFinalizationTimeoutMs();
-
     await this.form.submit();
-
-    const savedToastPromise = this.waitForFinalizationSavedToast(finalizationTimeoutMs);
 
     await this.waitForFinalizationStartedOrSaved();
     await this.form.waitForSubmissionReady();
@@ -198,6 +194,7 @@ export class CreateFlowPage {
     const targetTo = await navigateButton.getAttribute('data-create-target-to');
     const targetParams = await navigateButton.getAttribute('data-create-target-params');
     const targetHref = await navigateButton.getAttribute('href');
+    await expect(navigateButton).toHaveAttribute('href', /.+/);
     const parsedTargetParams = parseTargetParams(targetParams);
     const target: CreateSubmitTargetMetadata = {
       kind: targetKind,
@@ -213,27 +210,18 @@ export class CreateFlowPage {
     try {
       await expect(this.page).toHaveURL(options.expectedUrl, { timeout: 5_000 });
     } catch (error) {
-      if (!targetHref) {
-        throw new Error(
-          `Create target navigation did not reach the expected URL. Rendered target: ${targetMetadataString(target, this.page.url())}.`,
-          { cause: error }
-        );
-      }
-
-      await this.page.goto(targetHref);
-      try {
-        await expect(this.page).toHaveURL(options.expectedUrl, { timeout: 60_000 });
-      } catch (fallbackError) {
-        throw new Error(
-          `Create target navigation did not reach the expected URL. Rendered target: ${targetMetadataString(target, this.page.url())}.`,
-          { cause: fallbackError }
-        );
-      }
+      throw new Error(
+        `Create target client navigation did not reach the expected URL. Rendered target: ${targetMetadataString(target, this.page.url())}.`,
+        { cause: error }
+      );
     }
 
-    await savedToastPromise;
+    await expect(this.page.locator('[data-slot="create-submission-overlay"]')).toBeHidden({
+      timeout: 5_000,
+    });
     await options.verifyCreatedRecord?.(target);
     await options.expectTargetVisible?.(target);
+    await this.expectPrimarySearchLinkStillNavigates();
   }
 
   private async installCreateRecoverySessionStateClearer() {
@@ -276,5 +264,13 @@ export class CreateFlowPage {
     ).toBeVisible();
 
     return savedToast;
+  }
+
+  private async expectPrimarySearchLinkStillNavigates() {
+    const searchLink = this.page.locator('a[href="/search"]').first();
+    await expect(searchLink).toBeVisible({ timeout: 10_000 });
+    await expect(searchLink).toHaveAttribute('href', '/search');
+    await searchLink.click();
+    await expect(this.page).toHaveURL(/\/search(?:[?#].*)?$/, { timeout: 5_000 });
   }
 }

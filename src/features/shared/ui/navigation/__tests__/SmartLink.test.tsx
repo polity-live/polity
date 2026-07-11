@@ -12,7 +12,7 @@ vi.mock('@tanstack/react-router', () => ({
   ),
 }));
 
-import { isExternalHref, SmartLink, toRouterHref } from '../SmartLink';
+import { isExternalHref, isPlainLeftClick, SmartLink, toRouterHref } from '../SmartLink';
 
 describe('SmartLink', () => {
   it('routes root-relative app paths through TanStack Router', () => {
@@ -61,6 +61,9 @@ describe('SmartLink', () => {
         <SmartLink href="/download.csv" download>
           Download
         </SmartLink>
+        <SmartLink href="/create/amendment" target="_blank">
+          New tab
+        </SmartLink>
       </>
     );
 
@@ -69,5 +72,54 @@ describe('SmartLink', () => {
     expect(
       screen.getByRole('link', { name: 'Download' }).getAttribute('data-router-link')
     ).toBeNull();
+    expect(
+      screen.getByRole('link', { name: 'New tab' }).getAttribute('data-router-link')
+    ).toBeNull();
+    expect(screen.getByRole('link', { name: 'New tab' }).getAttribute('href')).toBe(
+      '/create/amendment'
+    );
+  });
+
+  it('uses router links for explicit self-targeted internal hrefs', () => {
+    render(
+      <SmartLink href="/create/group" target="_self">
+        Same tab
+      </SmartLink>
+    );
+
+    const link = screen.getByRole('link', { name: 'Same tab' });
+    expect(link.getAttribute('data-router-link')).toBe('true');
+    expect(link.getAttribute('href')).toBe('/create/group');
+  });
+
+  it('identifies plain left clicks separately from modified clicks', () => {
+    expect(
+      isPlainLeftClick({
+        button: 0,
+        metaKey: false,
+        ctrlKey: false,
+        shiftKey: false,
+        altKey: false,
+      })
+    ).toBe(true);
+
+    expect(
+      isPlainLeftClick({
+        button: 0,
+        metaKey: false,
+        ctrlKey: true,
+        shiftKey: false,
+        altKey: false,
+      })
+    ).toBe(false);
+    expect(
+      isPlainLeftClick({
+        button: 1,
+        metaKey: false,
+        ctrlKey: false,
+        shiftKey: false,
+        altKey: false,
+      })
+    ).toBe(false);
   });
 });

@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CreateFormStyle } from '@/zero/preferences/schema';
 import type { CreateSubmitOutcome } from '../../types/create-form.types';
+import type { ReactNode } from 'react';
 
 let createFormStyle: CreateFormStyle = 'carousel';
 const updateFormStyle = vi.fn();
@@ -59,6 +60,27 @@ vi.mock('@/features/timeline/hooks/useIsMobile', () => ({
 }));
 
 vi.mock('@tanstack/react-router', () => ({
+  Link: ({
+    to,
+    params,
+    children,
+    ...props
+  }: {
+    to: string;
+    params?: Record<string, string>;
+    children: ReactNode;
+  }) => {
+    const href = Object.entries(params ?? {}).reduce(
+      (path, [key, value]) => path.replaceAll(`$${key}`, value),
+      to
+    );
+
+    return (
+      <a data-router-link="true" href={href} {...props}>
+        {children}
+      </a>
+    );
+  },
   useNavigate: () => navigate,
 }));
 
@@ -202,14 +224,13 @@ describe('CreateFormShell', () => {
       expect(screen.getByRole<HTMLAnchorElement>('link', { name: /zur gruppe/i })).toBeTruthy();
     });
 
-    fireEvent.click(screen.getByRole('link', { name: /zur gruppe/i }));
+    const targetLink = screen.getByRole('link', { name: /zur gruppe/i });
+    expect(targetLink.getAttribute('data-router-link')).toBeNull();
+    expect(targetLink.getAttribute('href')).toBe('/group/group-1');
 
-    expect(navigate).toHaveBeenCalledWith({
-      to: '/group/$id',
-      params: { id: 'group-1' },
-      search: undefined,
-      hash: undefined,
-    });
+    fireEvent.click(targetLink);
+
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it('updates fullscreen progress from the submit context', async () => {
@@ -293,13 +314,12 @@ describe('CreateFormShell', () => {
     expect(screen.queryByRole('button', { name: /zurück zum formular/i })).toBeNull();
     expect(screen.queryByRole('button', { name: /erneut versuchen/i })).toBeNull();
 
-    fireEvent.click(screen.getByRole('link', { name: /zur gruppe/i }));
+    const targetLink = screen.getByRole('link', { name: /zur gruppe/i });
+    expect(targetLink.getAttribute('data-router-link')).toBeNull();
+    expect(targetLink.getAttribute('href')).toBe('/group/group-1');
 
-    expect(navigate).toHaveBeenCalledWith({
-      to: '/group/$id',
-      params: { id: 'group-1' },
-      search: undefined,
-      hash: undefined,
-    });
+    fireEvent.click(targetLink);
+
+    expect(navigate).not.toHaveBeenCalled();
   });
 });

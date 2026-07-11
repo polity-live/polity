@@ -33,7 +33,6 @@ interface CreateFormShellViewProps {
     target: CreateSubmitTarget | null;
     error: unknown;
     progressSteps: CreateSubmitProgressStep[];
-    onNavigate: (target: CreateSubmitTarget) => void;
     onBack: () => void;
     onRetry: () => void;
   };
@@ -93,7 +92,6 @@ export function CreateFormShellView({
         error={submission.error}
         progressSteps={submission.progressSteps}
         reviewPreview={reviewPreview}
-        onNavigate={submission.onNavigate}
         onBack={submission.onBack}
         onRetry={submission.onRetry}
       />
