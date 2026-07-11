@@ -164,27 +164,26 @@ function sameBranch(
   return (row.process_branch_id ?? null) === (processBranchId ?? null);
 }
 
-async function resolveNextChangeRequestBranchSequence({
-  tx,
-  amendmentId,
+function resolveNextChangeRequestBranchSequence({
+  existingChangeRequests,
   processBranchId,
   discussions,
   discussionId,
   requestedCrId,
 }: {
-  tx: Parameters<typeof denyPublicApiMutation>[0];
-  amendmentId: string;
+  existingChangeRequests: readonly {
+    process_branch_id?: string | null;
+    branch_sequence_number?: number | null;
+    title?: string | null;
+  }[];
   processBranchId?: string | null;
   discussions: readonly Record<string, any>[];
   discussionId?: string | null;
   requestedCrId?: string | null;
 }) {
-  const existingChangeRequests = await tx.run(
-    zql.change_request.where('amendment_id', amendmentId)
+  const scopedChangeRequests = existingChangeRequests.filter(row =>
+    sameBranch(row, processBranchId)
   );
-  const scopedChangeRequests = (
-    Array.isArray(existingChangeRequests) ? existingChangeRequests : []
-  ).filter((row: { process_branch_id?: string | null }) => sameBranch(row, processBranchId));
   const persistedNumbers = new Set(
     scopedChangeRequests.map(
       (row: { branch_sequence_number?: number | null; title?: string | null }) =>
@@ -197,7 +196,7 @@ async function resolveNextChangeRequestBranchSequence({
     0
   );
   const targetDiscussion = discussionId
-    ? discussions.find(discussion => discussion.id === discussionId)
+    ? (discussions.find(discussion => discussion.id === discussionId) ?? null)
     : null;
   const maxFromOtherDiscussions = discussions.reduce(
     (max, discussion) =>
@@ -554,9 +553,59 @@ export const amendmentSharedMutators = {
           'Cannot create document change request: linked document suggestion not found.'
         );
       }
-      const branchSequenceNumber = await resolveNextChangeRequestBranchSequence({
-        tx,
-        amendmentId: args.amendment_id,
+      const existingChangeRequestsResult = await tx.run(
+        zql.change_request.where('amendment_id', args.amendment_id)
+      );
+      const existingChangeRequests = Array.isArray(existingChangeRequestsResult)
+        ? existingChangeRequestsResult
+        : [];
+      const existingSuggestionChangeRequest = discussionId
+        ? existingChangeRequests.find(
+            changeRequest =>
+              sameBranch(changeRequest, args.process_branch_id ?? null) &&
+              changeRequest.suggestion_id === discussionId
+          )
+        : null;
+
+      if (existingSuggestionChangeRequest) {
+        const existingSequenceNumber = getScopedChangeRequestNumber(
+          existingSuggestionChangeRequest
+        );
+        const existingCrId =
+          formatChangeRequestCrId(existingSequenceNumber) ?? existingSuggestionChangeRequest.title;
+        if (existingSequenceNumber > 0 && existingCrId) {
+          const nextDiscussions = updateDiscussionForCreatedChangeRequest({
+            discussions: targetDiscussions,
+            discussionId,
+            requestedCrId: args.title,
+            changeRequestId: existingSuggestionChangeRequest.id,
+            crId: existingCrId,
+            branchSequenceNumber: existingSequenceNumber,
+            status: existingSuggestionChangeRequest.status,
+            votingStatus: existingSuggestionChangeRequest.voting_status,
+            now,
+          });
+          if (nextDiscussions) {
+            if (processBranch) {
+              await tx.mutate.amendment_process_branch.update({
+                id: processBranch.id,
+                discussions: nextDiscussions,
+                updated_at: now,
+              });
+            } else {
+              await tx.mutate.amendment.update({
+                id: amendment.id,
+                discussions: nextDiscussions,
+                updated_at: now,
+              });
+            }
+          }
+          return false;
+        }
+      }
+
+      const branchSequenceNumber = resolveNextChangeRequestBranchSequence({
+        existingChangeRequests,
         processBranchId: args.process_branch_id ?? null,
         discussions: targetDiscussions,
         discussionId,
@@ -627,6 +676,7 @@ export const amendmentSharedMutators = {
           });
         }
       }
+      return true;
     }
   ),
 

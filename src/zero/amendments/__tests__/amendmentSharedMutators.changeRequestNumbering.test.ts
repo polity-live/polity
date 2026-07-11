@@ -49,6 +49,114 @@ function createTx() {
 const ctx = { userID: 'user-1' } as any;
 
 describe('amendmentSharedMutators.createChangeRequest numbering', () => {
+  it('assigns CR-1 through CR-4 when each no-path suggestion is submitted twice', async () => {
+    const amendment = { id: 'amendment-1', discussions: [] as Record<string, unknown>[] };
+    const changeRequests: Record<string, unknown>[] = [];
+    let runCall = 0;
+    const tx = createTx();
+    tx.run.mockImplementation(async () => {
+      runCall += 1;
+      return runCall % 2 === 1 ? amendment : changeRequests;
+    });
+    tx.mutate.amendment.update.mockImplementation(async (update: Record<string, unknown>) => {
+      Object.assign(amendment, update);
+    });
+    tx.mutate.change_request.insert.mockImplementation(
+      async (changeRequest: Record<string, unknown>) => {
+        changeRequests.push(changeRequest);
+      }
+    );
+
+    for (let sequenceNumber = 1; sequenceNumber <= 4; sequenceNumber += 1) {
+      amendment.discussions.push({
+        id: `suggestion-${sequenceNumber}`,
+        crId: `CR-${sequenceNumber}`,
+        changeRequestEntityId: `cr-${sequenceNumber}`,
+      });
+
+      await amendmentSharedMutators.createChangeRequest.fn({
+        tx,
+        ctx,
+        args: createArgs({
+          id: `cr-${sequenceNumber}`,
+          discussion_id: `suggestion-${sequenceNumber}`,
+          title: `CR-${sequenceNumber}`,
+        }),
+      });
+      await amendmentSharedMutators.createChangeRequest.fn({
+        tx,
+        ctx,
+        args: createArgs({
+          id: `duplicate-cr-${sequenceNumber}`,
+          discussion_id: `suggestion-${sequenceNumber}`,
+          title: `CR-${sequenceNumber}`,
+        }),
+      });
+    }
+
+    expect(changeRequests).toHaveLength(4);
+    expect(
+      changeRequests.map(changeRequest => ({
+        title: changeRequest.title,
+        sequence: changeRequest.branch_sequence_number,
+        suggestionId: changeRequest.suggestion_id,
+      }))
+    ).toEqual([
+      { title: 'CR-1', sequence: 1, suggestionId: 'suggestion-1' },
+      { title: 'CR-2', sequence: 2, suggestionId: 'suggestion-2' },
+      { title: 'CR-3', sequence: 3, suggestionId: 'suggestion-3' },
+      { title: 'CR-4', sequence: 4, suggestionId: 'suggestion-4' },
+    ]);
+  });
+
+  it('reuses the existing change request when the same suggestion is submitted twice', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'amendment-1',
+        discussions: [
+          {
+            id: 'suggestion-new',
+            crId: 'CR-2',
+            changeRequestEntityId: 'duplicate-cr',
+          },
+        ],
+      })
+      .mockResolvedValueOnce([
+        {
+          id: 'existing-cr',
+          amendment_id: 'amendment-1',
+          process_branch_id: null,
+          suggestion_id: 'suggestion-new',
+          title: 'CR-1',
+          branch_sequence_number: 1,
+          status: 'open',
+          voting_status: 'open',
+        },
+      ]);
+
+    await amendmentSharedMutators.createChangeRequest.fn({
+      tx,
+      ctx,
+      args: createArgs({ id: 'duplicate-cr', title: 'CR-2' }),
+    });
+
+    expect(tx.mutate.change_request.insert).not.toHaveBeenCalled();
+    expect(tx.mutate.amendment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'amendment-1',
+        discussions: [
+          expect.objectContaining({
+            id: 'suggestion-new',
+            crId: 'CR-1',
+            changeRequestEntityId: 'existing-cr',
+            branchSequenceNumber: 1,
+          }),
+        ],
+      })
+    );
+  });
+
   it('assigns CR-1 in an empty process branch and syncs the branch discussion', async () => {
     const tx = createTx();
     tx.run

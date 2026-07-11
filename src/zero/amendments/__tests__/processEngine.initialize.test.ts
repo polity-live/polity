@@ -66,46 +66,31 @@ function createTx(
           };
         case 7:
           return { version_number: 1 };
+        default:
+          break;
+      }
+
+      const mainChangeRequestCount = options.mainChangeRequests?.length ?? 0;
+      if (runCall >= 8 && runCall < 8 + mainChangeRequestCount) {
+        return options.timelineItems ?? [];
+      }
+
+      switch (runCall - mainChangeRequestCount) {
         case 8:
-          if ((options.mainChangeRequests?.length ?? 0) > 0) {
-            return options.timelineItems ?? [];
-          }
           return state.existingAgendaItems ?? [];
         case 9:
-          if ((options.mainChangeRequests?.length ?? 0) > 0) {
-            return state.existingAgendaItems ?? [];
-          }
           return [state.stepRun];
         case 10:
-          if ((options.mainChangeRequests?.length ?? 0) > 0) {
-            return [state.stepRun];
-          }
           return state.agendaItem;
         case 11:
-          if ((options.mainChangeRequests?.length ?? 0) > 0) {
-            return state.agendaItem;
-          }
           return state.pathSegment ? [state.pathSegment] : [];
         case 12:
-          if ((options.mainChangeRequests?.length ?? 0) > 0) {
-            return state.pathSegment ? [state.pathSegment] : [];
-          }
           return state.stepRun ? [state.stepRun] : [];
         case 13:
-          if ((options.mainChangeRequests?.length ?? 0) > 0) {
-            return state.stepRun ? [state.stepRun] : [];
-          }
           return state.branch ? [state.branch] : [];
         case 14:
-          if ((options.mainChangeRequests?.length ?? 0) > 0) {
-            return state.branch ? [state.branch] : [];
-          }
           return state.stepRun ? [state.stepRun] : [];
         case 15:
-          if ((options.mainChangeRequests?.length ?? 0) > 0) {
-            return state.stepRun ? [state.stepRun] : [];
-          }
-          return state.branch ? [state.branch] : [];
         case 16:
           return state.branch ? [state.branch] : [];
         default:
@@ -130,7 +115,7 @@ function createTx(
         }),
       },
       change_request: {
-        update: vi.fn(async () => null),
+        update: vi.fn<(args: Record<string, unknown>) => Promise<null>>().mockResolvedValue(null),
       },
       agenda_item_change_request: {
         update: vi.fn(async () => null),
@@ -462,10 +447,24 @@ describe('initializeAmendmentProcessPath', () => {
     });
 
     const insertedBranch = tx.mutate.amendment_process_branch.insert.mock.calls[0]?.[0];
-    expect(insertedBranch).toEqual(expect.objectContaining({ discussions }));
+    expect(insertedBranch).toEqual(
+      expect.objectContaining({
+        discussions: [
+          expect.objectContaining({
+            ...discussions[0],
+            displayCrId: 'CR-1',
+            branchSequenceNumber: 1,
+            branchScopedCrNumber: 1,
+          }),
+        ],
+      })
+    );
     expect(tx.mutate.change_request.update).toHaveBeenCalledWith({
       id: 'change-request-1',
       process_branch_id: insertedBranch?.id,
+      suggestion_id: 'suggestion-1',
+      branch_sequence_number: 1,
+      title: 'CR-1',
       updated_at: expect.any(Number),
     });
     expect(tx.mutate.agenda_item_change_request.update).toHaveBeenCalledWith({
@@ -478,6 +477,70 @@ describe('initializeAmendmentProcessPath', () => {
         current_process_run_id: expect.any(String),
         discussions: [],
       })
+    );
+  });
+
+  it('repairs even legacy numbering while moving four change requests into the first branch', async () => {
+    const discussions = [2, 4, 6, 8].map((crNumber, index) => ({
+      id: `suggestion-${index + 1}`,
+      crId: `CR-${crNumber}`,
+      changeRequestEntityId: `change-request-${index + 1}`,
+    }));
+    const mainChangeRequests = [2, 4, 6, 8].map((crNumber, index) => ({
+      id: `change-request-${index + 1}`,
+      amendment_id: 'amendment-1',
+      process_branch_id: null,
+      suggestion_id: null,
+      branch_sequence_number: crNumber,
+      title: `CR-${crNumber}`,
+      created_at: index + 1,
+    }));
+    const tx = createTx(null, { discussions, mainChangeRequests });
+
+    await initializeAmendmentProcessPath(tx as never, 'user-1', {
+      amendment_id: 'amendment-1',
+      amendment_title: 'Budget Reform',
+      amendment_reason: null,
+      source_group_id: 'group-start',
+      path_mode: 'hierarchy',
+      enriched_path: [
+        {
+          groupId: 'group-start',
+          groupName: 'Budget Circle',
+          eventId: 'event-1',
+          eventTitle: 'Budget Assembly',
+          eventStartDate: Date.now() + 60_000,
+          eventEndDate: Date.now() + 120_000,
+          agendaItemId: null,
+          amendmentVoteId: null,
+          forwardingStatus: 'forward_confirmed',
+        },
+      ],
+    });
+
+    const insertedBranch = tx.mutate.amendment_process_branch.insert.mock.calls[0]?.[0];
+    expect(insertedBranch?.discussions).toHaveLength(4);
+    expect(insertedBranch?.discussions).toEqual(
+      [1, 2, 3, 4].map(sequenceNumber =>
+        expect.objectContaining({
+          id: `suggestion-${sequenceNumber}`,
+          crId: `CR-${sequenceNumber}`,
+          displayCrId: `CR-${sequenceNumber}`,
+          changeRequestEntityId: `change-request-${sequenceNumber}`,
+          branchSequenceNumber: sequenceNumber,
+          branchScopedCrNumber: sequenceNumber,
+        })
+      )
+    );
+    expect(tx.mutate.change_request.update.mock.calls.map(call => call[0])).toEqual(
+      [1, 2, 3, 4].map(sequenceNumber => ({
+        id: `change-request-${sequenceNumber}`,
+        process_branch_id: insertedBranch?.id,
+        suggestion_id: `suggestion-${sequenceNumber}`,
+        branch_sequence_number: sequenceNumber,
+        title: `CR-${sequenceNumber}`,
+        updated_at: expect.any(Number),
+      }))
     );
   });
 

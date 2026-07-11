@@ -1370,7 +1370,14 @@ export const amendmentServerMutators = {
   createChangeRequest: defineMutator(createChangeRequestSchema, async ({ tx, ctx, args }) => {
     await assertCanCreateChangeRequest(tx, ctx, args.amendment_id, args.process_branch_id ?? null);
 
-    await mutators.amendments.createChangeRequest.fn({ tx, ctx, args });
+    const wasCreated = (await mutators.amendments.createChangeRequest.fn({
+      tx,
+      ctx,
+      args,
+    })) as unknown as boolean | undefined;
+    if (wasCreated === false) {
+      return;
+    }
 
     if (args.status === PENDING_SUBMISSION_STATUS) {
       const amendment = await tx.run(zql.amendment.where('id', args.amendment_id).one());

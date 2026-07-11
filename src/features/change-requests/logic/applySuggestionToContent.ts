@@ -86,6 +86,12 @@ function processNode(
   suggestionId: string,
   action: SuggestionAction
 ): Descendant[] {
+  const blockSuggestion = findBlockSuggestion(node, suggestionId);
+  if (blockSuggestion) {
+    const resolvedBlock = resolveBlockSuggestion(node, blockSuggestion, action);
+    return resolvedBlock ? processNode(resolvedBlock, suggestionId, action) : [];
+  }
+
   // Check if this is a text node with suggestion marks
   const suggestionKey = findSuggestionKey(node, suggestionId);
 
@@ -150,6 +156,39 @@ function processNode(
   return [node];
 }
 
+function findBlockSuggestion(node: Descendant, suggestionId: string): SuggestionMark | null {
+  if (!node || typeof node !== 'object' || !('suggestion' in node)) return null;
+
+  const mark = (node as Record<string, unknown>).suggestion;
+  if (!mark || typeof mark !== 'object' || Array.isArray(mark)) return null;
+
+  const blockSuggestion = mark as SuggestionMark;
+  return blockSuggestion.id === suggestionId ? blockSuggestion : null;
+}
+
+function resolveBlockSuggestion(
+  node: Descendant,
+  mark: SuggestionMark,
+  action: SuggestionAction
+): Descendant | null {
+  const cleaned = stripBlockSuggestionMark(node);
+
+  if (mark.type === 'insert' || mark.type === 'replace') {
+    return action === 'accept' ? cleaned : null;
+  }
+
+  if (mark.type === 'remove') {
+    return action === 'accept' ? null : cleaned;
+  }
+
+  if (mark.type === 'update') {
+    const properties = action === 'accept' ? mark.newProperties : mark.properties;
+    return properties ? ({ ...cleaned, ...properties } as Descendant) : cleaned;
+  }
+
+  return cleaned;
+}
+
 function findSuggestionKey(node: Descendant, suggestionId: string): string | null {
   if (!node || typeof node !== 'object') return null;
 
@@ -174,5 +213,11 @@ function stripSuggestionMark(node: Descendant, suggestionKey: string): Descendan
     delete copy.suggestion;
   }
 
+  return copy as Descendant;
+}
+
+function stripBlockSuggestionMark(node: Descendant): Descendant {
+  const copy = { ...node } as Record<string, unknown>;
+  Reflect.deleteProperty(copy, 'suggestion');
   return copy as Descendant;
 }

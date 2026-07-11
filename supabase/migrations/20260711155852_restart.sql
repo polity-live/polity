@@ -449,6 +449,7 @@ alter table "public"."calendar_subscription" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "amendment_id" uuid not null,
     "process_branch_id" uuid,
+    "suggestion_id" text,
     "user_id" uuid not null,
     "title" text,
     "description" text,
@@ -574,6 +575,7 @@ alter table "public"."conversation_participant" enable row level security;
     "structure_summary" text,
     "dimensions" jsonb not null default '[]'::jsonb,
     "columns" jsonb not null default '[]'::jsonb,
+    "column_profiles" jsonb not null default '[]'::jsonb,
     "time_coverage" jsonb not null default '{}'::jsonb,
     "spatial_coverage" jsonb not null default '{}'::jsonb,
     "topics" jsonb not null default '[]'::jsonb,
@@ -620,6 +622,7 @@ alter table "public"."dataset_import_job" enable row level security;
     "row_count" bigint not null default 0,
     "column_count" integer not null default 0,
     "columns" jsonb not null default '[]'::jsonb,
+    "column_profiles" jsonb not null default '[]'::jsonb,
     "dimensions" jsonb not null default '[]'::jsonb,
     "metadata" jsonb not null default '{}'::jsonb,
     "status" text not null default 'pending'::text,
@@ -2629,6 +2632,8 @@ CREATE UNIQUE INDEX idx_change_request_main_sequence ON public.change_request US
 
 CREATE INDEX idx_change_request_process_branch ON public.change_request USING btree (process_branch_id);
 
+CREATE INDEX idx_change_request_suggestion_id ON public.change_request USING btree (suggestion_id) WHERE (suggestion_id IS NOT NULL);
+
 CREATE INDEX idx_change_request_user ON public.change_request USING btree (user_id);
 
 CREATE INDEX idx_change_request_vote_cr ON public.change_request_vote USING btree (change_request_id);
@@ -3039,7 +3044,13 @@ CREATE INDEX idx_notification_read_entity ON public.notification_read USING btre
 
 CREATE INDEX idx_notification_recipient ON public.notification USING btree (recipient_id);
 
+CREATE INDEX idx_notification_recipient_amendment ON public.notification USING btree (recipient_amendment_id, created_at);
+
+CREATE INDEX idx_notification_recipient_blog ON public.notification USING btree (recipient_blog_id, created_at);
+
 CREATE INDEX idx_notification_recipient_entity ON public.notification USING btree (recipient_entity_id, created_at);
+
+CREATE INDEX idx_notification_recipient_event ON public.notification USING btree (recipient_event_id, created_at);
 
 CREATE INDEX idx_notification_recipient_group ON public.notification USING btree (recipient_group_id, created_at);
 
@@ -6398,6 +6409,10 @@ BEGIN
       WHEN TG_OP = 'DELETE' THEN columns
       ELSE NEW.columns
     END,
+    column_profiles = CASE
+      WHEN TG_OP = 'DELETE' THEN column_profiles
+      ELSE NEW.column_profiles
+    END,
     updated_at = now()
   WHERE id = target_dataset_id;
 
@@ -6573,6 +6588,7 @@ BEGIN
       NEW.publisher,
       NEW.license,
       public.search_document_json_text(NEW.columns),
+      public.search_document_json_text(NEW.column_profiles),
       public.search_document_json_text(NEW.dimensions),
       public.search_document_json_text(NEW.time_coverage),
       public.search_document_json_text(NEW.spatial_coverage),
@@ -6591,6 +6607,7 @@ BEGIN
       'publisher', NEW.publisher,
       'license', NEW.license,
       'structure_summary', NEW.structure_summary,
+      'column_profiles', coalesce(NEW.column_profiles, '[]'::jsonb),
       'snapshot_id', latest_snapshot.id,
       'snapshot_status', latest_snapshot.status,
       'snapshot_taken_at', public.search_document_epoch_ms(latest_snapshot.snapshot_taken_at),
