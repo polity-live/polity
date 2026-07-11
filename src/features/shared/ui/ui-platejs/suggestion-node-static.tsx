@@ -1,6 +1,7 @@
-import type { SlateLeafProps, TSuggestionText } from 'platejs';
+import type { SlateLeafProps, TSuggestionData, TSuggestionElement, TSuggestionText } from 'platejs';
 
 import { BaseSuggestionPlugin } from '@platejs/suggestion';
+import { CornerDownLeftIcon } from 'lucide-react';
 import { SlateLeaf } from 'platejs/static';
 
 import { getMotionPreset, getSemanticToneClasses } from '@/features/shared/theme';
@@ -32,5 +33,51 @@ export function SuggestionLeafStatic(props: SlateLeafProps<TSuggestionText>) {
     >
       {props.children}
     </SlateLeaf>
+  );
+}
+
+export function BlockSuggestionStatic({ element }: { element: TSuggestionElement }) {
+  const suggestionData = element.suggestion;
+
+  if (suggestionData?.isLineBreak) return null;
+
+  const isRemove = suggestionData?.type === 'remove';
+  const insertTone = getSemanticToneClasses('success');
+  const removeTone = getSemanticToneClasses('danger');
+
+  return (
+    <div
+      className={cn(
+        'pointer-events-none absolute inset-0 z-1 border-2 transition-opacity',
+        getMotionPreset('colors'),
+        isRemove ? removeTone.surface : insertTone.surface
+      )}
+      contentEditable={false}
+    />
+  );
+}
+
+export function SuggestionLineBreakStatic({ suggestionData }: { suggestionData: TSuggestionData }) {
+  const isRemove = suggestionData.type === 'remove';
+  const isInsert = suggestionData.type === 'insert';
+  const insertTone = getSemanticToneClasses('success');
+  const removeTone = getSemanticToneClasses('danger');
+
+  return (
+    <span
+      className={cn(
+        'absolute rounded-sm border border-b-2 px-0.5 text-justify no-underline',
+        getMotionPreset('colors'),
+        isInsert && insertTone.surface,
+        isRemove && `${removeTone.surface} line-through`
+      )}
+      style={{
+        bottom: 4.5,
+        height: 21,
+      }}
+      contentEditable={false}
+    >
+      <CornerDownLeftIcon className="mt-0.5 size-4" />
+    </span>
   );
 }

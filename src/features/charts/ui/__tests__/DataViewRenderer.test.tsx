@@ -94,4 +94,15 @@ describe('DataViewRenderer attribution', () => {
     );
     expect(createDataViewProjection).not.toHaveBeenCalled();
   });
+
+  it('does not render raw unauthorized errors', async () => {
+    vi.mocked(createDataViewProjection).mockRejectedValue(new Error('Unauthorized'));
+
+    render(<DataViewRenderer element={baseElement} accessToken={null} />);
+
+    await waitFor(() =>
+      expect(screen.getByText('plateJs.dataView.previewUnavailable')).toBeTruthy()
+    );
+    expect(screen.queryByText('Unauthorized')).toBeNull();
+  });
 });

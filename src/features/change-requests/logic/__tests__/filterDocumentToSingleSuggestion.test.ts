@@ -15,6 +15,23 @@ function firstParagraphChildren(content: Value) {
   return 'children' in paragraph && Array.isArray(paragraph.children) ? paragraph.children : [];
 }
 
+const chartBlock = (suggestion: { id: string; type: string }) => ({
+  chartType: 'bar',
+  children: [{ text: '' }],
+  presentation: {},
+  query: { aggregation: 'sum', filters: {} },
+  source: {
+    datasetId: 'dataset-id',
+    kind: 'dataset',
+    provider: 'UPLOAD',
+    snapshotId: 'snapshot-id',
+    title: 'Dataset',
+  },
+  suggestion,
+  type: 'data_view',
+  view: 'chart',
+});
+
 describe('filterDocumentToSuggestions', () => {
   it('applies decided suggestions and keeps only the target suggestion visible', () => {
     const content = [
@@ -78,5 +95,63 @@ describe('filterDocumentToSuggestions', () => {
     expect(firstParagraphChildren(result).some(node => 'suggestion_target_insert' in node)).toBe(
       true
     );
+  });
+
+  it('keeps target block inserts visible with their suggestion mark', () => {
+    const content = [chartBlock({ id: 'target-insert', type: 'insert' })] as Value;
+
+    const result = filterDocumentToSuggestions(content, new Set(['target-insert']));
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      suggestion: { id: 'target-insert', type: 'insert' },
+      type: 'data_view',
+    });
+  });
+
+  it('removes non-target pending block inserts', () => {
+    const content = [chartBlock({ id: 'pending-insert', type: 'insert' })] as Value;
+
+    const result = filterDocumentToSuggestions(content, new Set(['target-insert']));
+
+    expect(result).toEqual([]);
+  });
+
+  it('keeps accepted non-target block inserts without suggestion marks', () => {
+    const content = [chartBlock({ id: 'accepted-insert', type: 'insert' })] as Value;
+
+    const result = filterDocumentToSuggestions(
+      content,
+      new Set(['target-insert']),
+      new Map([['accepted-insert', 'accept']])
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ type: 'data_view' });
+    expect('suggestion' in result[0]).toBe(false);
+  });
+
+  it('keeps target block removals visible with their suggestion mark', () => {
+    const content = [chartBlock({ id: 'target-remove', type: 'remove' })] as Value;
+
+    const result = filterDocumentToSuggestions(content, new Set(['target-remove']));
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      suggestion: { id: 'target-remove', type: 'remove' },
+      type: 'data_view',
+    });
+  });
+
+  it('removes accepted non-target block removals', () => {
+    const content = [chartBlock({ id: 'accepted-remove', type: 'remove' })] as Value;
+
+    const result = filterDocumentToSuggestions(
+      content,
+      new Set(['target-insert']),
+      new Map([['accepted-remove', 'accept']])
+    );
+
+    expect(result).toEqual([]);
   });
 });

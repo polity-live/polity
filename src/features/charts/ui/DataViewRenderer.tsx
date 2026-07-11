@@ -6,6 +6,12 @@ import type { DataViewProjection, TDataViewElement } from '../types';
 import { ChartRenderer } from './ChartRenderer';
 import { DataViewAttribution } from './DataViewAttribution';
 
+function getDataViewErrorMessage(error: unknown, fallback: string) {
+  if (!(error instanceof Error)) return fallback;
+  if (error.message === 'Unauthorized' || error.message.includes('401')) return fallback;
+  return error.message;
+}
+
 export function DataViewRenderer({
   element,
   accessToken,
@@ -43,7 +49,7 @@ export function DataViewRenderer({
       })
       .catch(loadError => {
         if (!cancelled)
-          setError(loadError instanceof Error ? loadError.message : String(loadError));
+          setError(getDataViewErrorMessage(loadError, t('plateJs.dataView.previewUnavailable')));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

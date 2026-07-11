@@ -14,6 +14,7 @@ export type SuggestionPreviewResolutionMap = ReadonlyMap<string, SuggestionPrevi
 interface SuggestionMark {
   id?: string;
   type?: string;
+  isLineBreak?: boolean;
   properties?: Record<string, unknown>;
   newProperties?: Record<string, unknown>;
 }
@@ -58,23 +59,39 @@ function processNode(
   targetIds: Set<string>,
   suggestionResolutions?: SuggestionPreviewResolutionMap
 ): Descendant[] {
-  const allSuggestionKeys = findAllSuggestionKeys(node);
+  const blockSuggestion = getBlockSuggestion(node);
+  let cleaned = { ...node } as Record<string, unknown>;
+
+  if (blockSuggestion && !targetIds.has(blockSuggestion.id ?? '')) {
+    const resolved = resolveBlockSuggestion(cleaned, blockSuggestion, suggestionResolutions);
+    if (!resolved) {
+      return [];
+    }
+    cleaned = resolved;
+  }
+
+  const allSuggestionKeys = findAllSuggestionKeys(cleaned as Descendant);
 
   if (allSuggestionKeys.length === 0) {
     // Not a suggestion node — recurse into children
-    if ('children' in node && Array.isArray(node.children)) {
-      const processedChildren = processNodes(node.children, targetIds, suggestionResolutions);
-      return [{ ...node, children: processedChildren }];
+    if ('children' in cleaned && Array.isArray(cleaned.children)) {
+      const processedChildren = processNodes(
+        cleaned.children as Descendant[],
+        targetIds,
+        suggestionResolutions
+      );
+      return [
+        stripSuggestionFlagIfResolved({ ...cleaned, children: processedChildren }) as Descendant,
+      ];
     }
-    return [node];
+    return [stripSuggestionFlagIfResolved(cleaned) as Descendant];
   }
 
   const otherKeys = allSuggestionKeys.filter(key => {
-    const mark = (node as Record<string, unknown>)[key] as SuggestionMark;
+    const mark = cleaned[key] as SuggestionMark;
     return !targetIds.has(mark?.id ?? '');
   });
 
-  let cleaned = { ...node } as Record<string, unknown>;
   for (const otherKey of otherKeys) {
     const resolved = resolveSuggestion(cleaned, otherKey, suggestionResolutions);
     if (!resolved) {
@@ -92,6 +109,30 @@ function processNode(
   }
 
   return [stripSuggestionFlagIfResolved(cleaned) as Descendant];
+}
+
+function getBlockSuggestion(node: Descendant): SuggestionMark | null {
+  if (!node || typeof node !== 'object' || !('suggestion' in node)) return null;
+  const suggestion = (node as Record<string, unknown>).suggestion;
+  if (!suggestion || typeof suggestion !== 'object' || Array.isArray(suggestion)) return null;
+  return suggestion as SuggestionMark;
+}
+
+function resolveBlockSuggestion(
+  node: Record<string, unknown>,
+  mark: SuggestionMark,
+  suggestionResolutions?: SuggestionPreviewResolutionMap
+): Record<string, unknown> | null {
+  const type = mark.type;
+  const action = suggestionResolutions?.get(mark.id ?? '') ?? 'reject';
+
+  if (action === 'accept') {
+    if (type === 'remove') return null;
+    return stripBlockSuggestion(node);
+  }
+
+  if (type === 'insert' || type === 'replace') return null;
+  return stripBlockSuggestion(node);
 }
 
 function resolveSuggestion(
@@ -161,10 +202,20 @@ function stripSuggestionMark(
 
 function stripSuggestionFlagIfResolved(node: Record<string, unknown>): Record<string, unknown> {
   const hasSuggestionMarks = Object.keys(node).some(key => key.startsWith('suggestion_'));
-  if (!hasSuggestionMarks) {
+  const hasBlockSuggestion =
+    typeof node.suggestion === 'object' &&
+    node.suggestion !== null &&
+    !Array.isArray(node.suggestion);
+  if (!hasSuggestionMarks && !hasBlockSuggestion) {
     Reflect.deleteProperty(node, 'suggestion');
   }
   return node;
+}
+
+function stripBlockSuggestion(node: Record<string, unknown>): Record<string, unknown> {
+  const cleaned = { ...node };
+  Reflect.deleteProperty(cleaned, 'suggestion');
+  return stripSuggestionFlagIfResolved(cleaned);
 }
 
 function findAllSuggestionKeys(node: Descendant): string[] {

@@ -25,6 +25,7 @@ import { useEditorPlugin, usePluginOption } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
 
 import { DATA_VIEW_NODE_TYPE, type TDataViewElement } from '@/features/charts/types';
+import { BLOCK_SUGGESTION_MARKER } from '@/features/change-requests/logic/suggestionBlockLabels';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
 import {
   AlertDialog,
@@ -123,7 +124,7 @@ export interface ResolvedSuggestion extends TResolvedSuggestion {
   changeRequestStatus?: string | null;
 }
 
-const BLOCK_SUGGESTION = '__block__';
+const BLOCK_SUGGESTION = BLOCK_SUGGESTION_MARKER;
 
 type TypeTextMap = Record<string, (node?: TElement) => string>;
 
@@ -137,6 +138,8 @@ const useTypeTextMap = () => {
       [KEYS.callout]: () => t('plateJs.layout.callout'),
       [KEYS.codeBlock]: () => t('plateJs.code'),
       [KEYS.column]: () => t('plateJs.layout.column'),
+      [KEYS.columnGroup]: () => t('plateJs.layout.threeColumns'),
+      [KEYS.date]: () => t('plateJs.toolbar.date'),
       [DATA_VIEW_NODE_TYPE]: node => {
         const view = (node as Partial<TDataViewElement> | undefined)?.view;
 
@@ -161,6 +164,8 @@ const useTypeTextMap = () => {
       [KEYS.h6]: () => t('plateJs.headings.heading6'),
       [KEYS.hr]: () => t('plateJs.toolbar.divider'),
       [KEYS.img]: () => t('plateJs.toolbar.image'),
+      [KEYS.inlineEquation]: () => t('plateJs.toolbar.inlineEquation'),
+      [KEYS.link]: () => t('plateJs.toolbar.link'),
       [KEYS.mediaEmbed]: () => t('plateJs.media.embed'),
       [KEYS.p]: node => {
         if (node?.[KEYS.listType] === KEYS.listTodo) return t('plateJs.lists.todo');

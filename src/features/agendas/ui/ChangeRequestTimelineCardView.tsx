@@ -32,6 +32,7 @@ import {
 } from '@/features/shared/ui/voting/voteChoiceLabels';
 import { ChangeRequestSummaryItem } from '@/features/change-requests/ui/ChangeRequestSummaryItem';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
+import { splitSuggestionPreviewText } from '@/features/change-requests/logic/suggestionBlockLabels';
 import { StreetDesignChangeRequestPreview } from '@/features/amendments/streetscape/ui/StreetDesignChangeRequestPreview';
 import {
   isStreetDesignChangeRequest,
@@ -622,7 +623,16 @@ export function ChangeRequestTimelineCardView({
                             'agendaChangeRequestTimelineCardDangerPanel'
                           )}
                         >
-                          <p className="text-xs whitespace-pre-wrap">{diff.originalText}</p>
+                          <div className="space-y-1">
+                            {splitSuggestionPreviewText(
+                              diff.originalText,
+                              t('plateJs.blockSuggestion.lineBreaks')
+                            ).map((text, index) => (
+                              <p key={index} className="text-xs whitespace-pre-wrap">
+                                {text}
+                              </p>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -647,7 +657,16 @@ export function ChangeRequestTimelineCardView({
                             'agendaChangeRequestTimelineCardSuccessPanel'
                           )}
                         >
-                          <p className="text-xs whitespace-pre-wrap">{diff.newText}</p>
+                          <div className="space-y-1">
+                            {splitSuggestionPreviewText(
+                              diff.newText,
+                              t('plateJs.blockSuggestion.lineBreaks')
+                            ).map((text, index) => (
+                              <p key={index} className="text-xs whitespace-pre-wrap">
+                                {text}
+                              </p>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}

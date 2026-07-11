@@ -114,6 +114,7 @@ import {
   useResolveSuggestion,
 } from '../block-suggestion';
 import { SuggestionLeaf } from '../suggestion-node';
+import { BlockSuggestionStatic, SuggestionLineBreakStatic } from '../suggestion-node-static';
 
 function internalVoteSuggestion(): ResolvedSuggestion {
   return {
@@ -377,6 +378,75 @@ describe('suggestion editor styling', () => {
     expect(overlay?.className).toContain('border-[var(--badge-danger-border)]');
     expect(overlay?.className).toContain('bg-[var(--badge-danger-bg)]');
     expect(overlay?.className).toContain('text-[var(--badge-danger-fg)]');
+  });
+
+  it('uses green styling for inserted static preview block suggestions', () => {
+    render(
+      <BlockSuggestionStatic
+        element={
+          {
+            children: [{ text: '' }],
+            suggestion: { id: 'suggestion-1', type: 'insert' },
+            type: 'data_view',
+          } as any
+        }
+      />
+    );
+
+    const overlay = document.querySelector('[contenteditable="false"]');
+
+    expect(overlay?.className).toContain('border-[var(--badge-success-border)]');
+    expect(overlay?.className).toContain('bg-[var(--badge-success-bg)]');
+    expect(overlay?.className).toContain('text-[var(--badge-success-fg)]');
+  });
+
+  it('uses red styling for removed static preview block suggestions', () => {
+    render(
+      <BlockSuggestionStatic
+        element={
+          {
+            children: [{ text: '' }],
+            suggestion: { id: 'suggestion-1', type: 'remove' },
+            type: 'data_view',
+          } as any
+        }
+      />
+    );
+
+    const overlay = document.querySelector('[contenteditable="false"]');
+
+    expect(overlay?.className).toContain('border-[var(--badge-danger-border)]');
+    expect(overlay?.className).toContain('bg-[var(--badge-danger-bg)]');
+    expect(overlay?.className).toContain('text-[var(--badge-danger-fg)]');
+  });
+
+  it('uses green styling for inserted static preview line breaks', () => {
+    render(
+      <SuggestionLineBreakStatic
+        suggestionData={{ id: 'suggestion-1', isLineBreak: true, type: 'insert' } as any}
+      />
+    );
+
+    const indicator = document.querySelector('[contenteditable="false"]');
+
+    expect(indicator?.className).toContain('border-[var(--badge-success-border)]');
+    expect(indicator?.className).toContain('bg-[var(--badge-success-bg)]');
+    expect(indicator?.className).toContain('text-[var(--badge-success-fg)]');
+  });
+
+  it('uses red styling for removed static preview line breaks', () => {
+    render(
+      <SuggestionLineBreakStatic
+        suggestionData={{ id: 'suggestion-1', isLineBreak: true, type: 'remove' } as any}
+      />
+    );
+
+    const indicator = document.querySelector('[contenteditable="false"]');
+
+    expect(indicator?.className).toContain('border-[var(--badge-danger-border)]');
+    expect(indicator?.className).toContain('bg-[var(--badge-danger-bg)]');
+    expect(indicator?.className).toContain('text-[var(--badge-danger-fg)]');
+    expect(indicator?.className).toContain('line-through');
   });
 
   it('uses green styling for inserted inline suggestions', () => {

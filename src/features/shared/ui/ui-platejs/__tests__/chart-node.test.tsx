@@ -1,12 +1,14 @@
 /* @vitest-environment jsdom */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ComponentProps, ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { TDataViewElement } from '@/features/charts/types';
+import { DataViewRenderer } from '@/features/charts/ui/DataViewRenderer';
 import { openDataViewDialog } from '@/features/charts/ui/ChartDialog';
 import { ChartElement } from '../chart-node';
+import { ChartElementStatic } from '../chart-node-static';
 
 const findPath = vi.fn(() => [0]);
 const removeNodes = vi.fn();
@@ -29,17 +31,25 @@ vi.mock('@/features/charts/ui/ChartDialog', () => ({
 }));
 
 vi.mock('@/features/charts/ui/DataViewRenderer', () => ({
-  DataViewRenderer: () => <div data-testid="data-view-renderer" />,
+  DataViewRenderer: vi.fn(({ accessToken }: { accessToken?: string | null }) => (
+    <div data-testid="data-view-renderer" data-access-token={accessToken ?? ''} />
+  )),
 }));
 
 vi.mock('@/providers/auth-provider', () => ({
-  useAuth: () => ({ session: { access_token: 'token' } }),
+  useAuth: () => ({ loading: false, session: { access_token: 'token' } }),
 }));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (_key: string, fallback?: string) => fallback ?? _key,
   }),
+}));
+
+vi.mock('platejs/static', () => ({
+  SlateElement: ({ children, className }: { children: ReactNode; className?: string }) => (
+    <div className={className}>{children}</div>
+  ),
 }));
 
 const element: TDataViewElement = {
@@ -69,6 +79,8 @@ describe('ChartElement', () => {
     vi.clearAllMocks();
   });
 
+  afterEach(cleanup);
+
   it('keeps edit controls separate from the chart interaction surface', () => {
     const props = {
       attributes: {},
@@ -93,5 +105,26 @@ describe('ChartElement', () => {
     fireEvent.click(screen.getByTitle('Delete data view'));
     expect(findPath).toHaveBeenCalledWith(element);
     expect(removeNodes).toHaveBeenCalledWith({ at: [0] });
+  });
+
+  it('passes the auth token to static data view previews', () => {
+    const props = {
+      attributes: {},
+      children: null,
+      element,
+    } as unknown as ComponentProps<typeof ChartElementStatic>;
+
+    render(<ChartElementStatic {...props} />);
+
+    expect(DataViewRenderer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accessToken: 'token',
+        element,
+      }),
+      undefined
+    );
+    expect(screen.getByTestId('data-view-renderer').getAttribute('data-access-token')).toBe(
+      'token'
+    );
   });
 });

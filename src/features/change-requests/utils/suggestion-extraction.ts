@@ -5,6 +5,12 @@
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import type { Value, Descendant } from 'platejs';
 
+import {
+  appendSuggestionBlockLabel,
+  appendSuggestionLineBreak,
+  getSuggestionBlockLabel,
+} from '@/features/change-requests/logic/suggestionBlockLabels';
+
 /** Properties diff for a Plate suggestion (subset of TElement properties) */
 export type SuggestionProperties = Record<string, string | number | boolean | null | undefined>;
 export type PersistedSuggestionProperties = Record<string, string | number | boolean | null>;
@@ -23,6 +29,14 @@ export interface SuggestionContent {
   newText: string;
   properties: SuggestionProperties;
   newProperties: SuggestionProperties;
+}
+
+interface SuggestionMark {
+  id?: string;
+  type?: string;
+  isLineBreak?: boolean;
+  properties?: SuggestionProperties;
+  newProperties?: SuggestionProperties;
 }
 
 const RENDERABLE_SUGGESTION_TYPES = new Set(['insert', 'remove', 'delete', 'replace', 'update']);
@@ -63,6 +77,26 @@ export function extractSuggestionContent(
   const searchNodes = (nodes: Descendant[]): void => {
     for (const node of nodes) {
       if (node && typeof node === 'object') {
+        const blockSuggestion = 'suggestion' in node ? (node.suggestion as SuggestionMark) : null;
+
+        if (blockSuggestion && blockSuggestion.id === discussionId) {
+          if (blockSuggestion.type) {
+            seenTypes.add(blockSuggestion.type);
+            type = blockSuggestion.type;
+          }
+
+          const appendBlockContent = (value: string) =>
+            blockSuggestion.isLineBreak
+              ? appendSuggestionLineBreak(value)
+              : appendSuggestionBlockLabel(value, getSuggestionBlockLabel(node));
+
+          if (blockSuggestion.type === 'insert' || blockSuggestion.type === 'replace') {
+            newText = appendBlockContent(newText);
+          } else if (blockSuggestion.type === 'remove' || blockSuggestion.type === 'delete') {
+            text = appendBlockContent(text);
+          }
+        }
+
         // Look for suggestion_* properties
         const suggestionKeys = Object.keys(node).filter(key => key.startsWith('suggestion_'));
 
