@@ -54,16 +54,16 @@ export function SuggestionLeaf(props: PlateLeafProps<TSuggestionText>) {
     );
   }
 
-  const diffOperation = { type: hasRemove ? 'delete' : 'insert' } as const;
   const insertTone = getSemanticToneClasses('success');
   const removeTone = getSemanticToneClasses('danger');
-
-  const Component = ({ delete: 'del', insert: 'ins', update: 'span' } as const)[diffOperation.type];
 
   return (
     <PlateLeaf
       {...props}
-      as={Component}
+      // Keep the editable DOM shape stable. Switching a text leaf from the
+      // default span to ins/del after the first suggestion replaces the live
+      // browser text node and collapses its selection to the line start.
+      as="span"
       className={cn(
         INLINE_SUGGESTION_MARK_CLASSES,
         getMotionPreset('colors'),

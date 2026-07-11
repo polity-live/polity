@@ -14,11 +14,18 @@ import { Editor, EditorContainer } from '@/features/shared/ui/ui-platejs/editor.
 import {
   editorSelectionDebugLog,
   getActiveElementDebugInfo,
+  getDomSelectionDebugInfo,
   isActiveElementInSlateEditor,
+  isEditorSelectionDebugEnabled,
   summarizeDiscussions,
   summarizeRichTextValue,
   summarizeSelection,
 } from '@/features/shared/logic/editorSelectionDebug';
+import {
+  areEditorValuesEqual,
+  hasEditorContentOperations,
+  replaceEditorValuePreservingSelection,
+} from '@/features/shared/logic/editorContentSync';
 import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
 import type { EditorMode } from '@/features/editor/types';
@@ -360,36 +367,52 @@ export function PlateEditor({
     // content, version restore) because local edits no longer update the
     // content state in useEditor — so the `value` prop stays stable.
     if (isControlled && value && prevValueRef.current !== value) {
+      let resetAfterSlateFlush = false;
       try {
+        if (areEditorValuesEqual(editor.children, value)) {
+          editorSelectionDebugLog('plate-value-sync:semantic-noop', {
+            activeElement: getActiveElementDebugInfo(),
+            contentSignature: summarizeRichTextValue(value),
+            documentId,
+            selection: summarizeSelection(editor.selection),
+            syncClassification: 'semantic-noop',
+          });
+          prevValueRef.current = value;
+          return;
+        }
+
+        const preserveSelection = isActiveElementInSlateEditor();
+        const selectionBefore = editor.selection;
         editorSelectionDebugLog('plate-value-sync:start', {
           activeElement: getActiveElementDebugInfo(),
           contentSignature: summarizeRichTextValue(value),
           documentId,
           isControlled,
-          isEditorFocused: isActiveElementInSlateEditor(),
-          selectionBefore: summarizeSelection(editor.selection),
+          isEditorFocused: preserveSelection,
+          selectionBefore: summarizeSelection(selectionBefore),
+          syncClassification: 'genuine-remote',
           valueChanged: prevValueRef.current !== value,
         });
 
-        // Reset selection before swapping content to prevent toolbar
-        // crashes from stale paths (e.g. MarkToolbarButton → getMarks).
-        editor.selection = null;
         isUpdatingFromProps.current = true;
-        editor.children = value as Value;
+        resetAfterSlateFlush = true;
+        const restoredSelection = replaceEditorValuePreservingSelection(
+          editor,
+          value as Value,
+          preserveSelection
+        );
         editorSelectionDebugLog('plate-value-sync:end', {
           activeElement: getActiveElementDebugInfo(),
           contentSignature: summarizeRichTextValue(editor.children),
           documentId,
           isControlled,
-          isEditorFocused: isActiveElementInSlateEditor(),
+          isEditorFocused: preserveSelection,
+          selectionBefore: summarizeSelection(selectionBefore),
           selectionAfter: summarizeSelection(editor.selection),
+          selectionRestored: Boolean(restoredSelection),
+          syncClassification: 'genuine-remote',
           valueChanged: true,
         });
-
-        // Trigger a re-render without calling parent onChange
-        if (typeof editor.onChange === 'function') {
-          (editor as unknown as { onChange: () => void }).onChange();
-        }
       } catch (e) {
         editorSelectionDebugLog('plate-value-sync:error', {
           documentId,
@@ -397,20 +420,57 @@ export function PlateEditor({
         });
         console.warn('Failed to update editor value:', e);
       } finally {
-        isUpdatingFromProps.current = false;
+        if (resetAfterSlateFlush) {
+          // Slate batches transform onChange callbacks into a microtask. Keep the
+          // guard active until that flush so external content is not persisted
+          // back to the server as if it were a local keystroke.
+          queueMicrotask(() => {
+            isUpdatingFromProps.current = false;
+          });
+        } else {
+          isUpdatingFromProps.current = false;
+        }
       }
       prevValueRef.current = value;
     }
   }, [value, isControlled, editor, documentId]);
 
   // Handle changes from the editor using ref to avoid recreating function
-  const handleEditorChange = React.useCallback(({ value: newValue }: { value: Value }) => {
-    // Skip onChange triggered by controlled value updates to prevent feedback loops
-    if (isUpdatingFromProps.current) return;
-    if (onChangeRef.current) {
-      onChangeRef.current(newValue);
-    }
-  }, []);
+  const handleEditorChange = React.useCallback(
+    ({ value: newValue }: { value: Value }) => {
+      if (isEditorSelectionDebugEnabled()) {
+        const operations = editor.operations.slice(-25).map(operation => {
+          const record = operation as unknown as Record<string, unknown>;
+          return {
+            newPath: Array.isArray(record.newPath) ? record.newPath : undefined,
+            offset: typeof record.offset === 'number' ? record.offset : undefined,
+            path: Array.isArray(record.path) ? record.path : undefined,
+            textLength: typeof record.text === 'string' ? record.text.length : undefined,
+            type: operation.type,
+          };
+        });
+
+        editorSelectionDebugLog('plate-editor-change', {
+          contentSignature: summarizeRichTextValue(newValue),
+          documentId,
+          domSelection: getDomSelectionDebugInfo(),
+          isUpdatingFromProps: isUpdatingFromProps.current,
+          operations,
+          selection: summarizeSelection(editor.selection),
+        });
+      }
+
+      // Skip onChange triggered by controlled value updates to prevent feedback loops
+      if (isUpdatingFromProps.current) return;
+      // Cursor movement and DOM selection reconciliation do not change the
+      // document and must not trigger persistence or realtime broadcasts.
+      if (!hasEditorContentOperations(editor.operations)) return;
+      if (onChangeRef.current) {
+        onChangeRef.current(newValue);
+      }
+    },
+    [documentId, editor]
+  );
   return (
     <PlateEditorView
       initialValue={initialValue}

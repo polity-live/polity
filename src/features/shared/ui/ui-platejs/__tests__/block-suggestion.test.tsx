@@ -480,6 +480,7 @@ describe('suggestion editor styling', () => {
 
     const suggestion = screen.getByText('new text');
 
+    expect(suggestion.tagName).toBe('SPAN');
     expect(suggestion.getAttribute('data-suggestion-type')).toBe('insert');
     expect(suggestion.className).toContain('border-[var(--badge-success-border)]');
     expect(suggestion.className).toContain('bg-[var(--badge-success-bg)]');
@@ -499,6 +500,7 @@ describe('suggestion editor styling', () => {
 
     const suggestion = screen.getByText('old text');
 
+    expect(suggestion.tagName).toBe('SPAN');
     expect(suggestion.getAttribute('data-suggestion-type')).toBe('remove');
     expect(suggestion.className).toContain('border-[var(--badge-danger-border)]');
     expect(suggestion.className).toContain('bg-[var(--badge-danger-bg)]');

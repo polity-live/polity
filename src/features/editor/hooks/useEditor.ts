@@ -48,6 +48,7 @@ import {
   summarizeDiscussions,
   summarizeRichTextValue,
 } from '@/features/shared/logic/editorSelectionDebug';
+import { getEditorContentSignature } from '@/features/shared/logic/editorContentSync';
 import {
   getBranchEditingModeDisabledReasons,
   resolveSelectedBranchId,
@@ -190,6 +191,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   const [selectedCrIds, setSelectedCrIds] = useState<Set<string> | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const latestEditorContentSignature = useRef(getEditorContentSignature(DEFAULT_EDITOR_CONTENT));
   const [isSavingTitle, setIsSavingTitle] = useState(false);
 
   // Refs to prevent re-renders and update loops
@@ -334,6 +336,16 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   const handleRemoteContent = useCallback(
     (remoteContent: Value) => {
       if (!isInitialized.current) return;
+      const remoteSignature = getEditorContentSignature(remoteContent);
+      if (remoteSignature === latestEditorContentSignature.current) {
+        editorSelectionDebugLog('content-source:realtime-broadcast:semantic-noop', {
+          contentEntityId,
+          contentSignature: summarizeRichTextValue(remoteContent),
+          entityId,
+          entityType,
+        });
+        return;
+      }
       editorSelectionDebugLog('content-source:realtime-broadcast', {
         contentEntityId,
         contentSignature: summarizeRichTextValue(remoteContent),
@@ -341,6 +353,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         entityType,
       });
       lastRemoteUpdate.current = Date.now();
+      latestEditorContentSignature.current = remoteSignature;
       setContentState(remoteContent);
     },
     [contentEntityId, entityId, entityType]
@@ -372,6 +385,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       });
       setTitleState(entity.title || '');
       setContentState(initialContent);
+      latestEditorContentSignature.current = getEditorContentSignature(initialContent);
       setDiscussionsState(entity.discussions || []);
       setModeState(entity.editingMode || 'edit');
       setHasUnsavedChanges(false);
@@ -429,6 +443,21 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   // is NOT actively typing (no pending local changes, no recent save).
   useEffect(() => {
     if (!entity || !isInitialized.current) return;
+    const remoteUpdatedAt = entity.updatedAt || 0;
+    const remoteContent = entity.content?.length ? entity.content : DEFAULT_EDITOR_CONTENT;
+    const remoteContentSignature = getEditorContentSignature(remoteContent);
+    if (remoteContentSignature === latestEditorContentSignature.current) {
+      editorSelectionDebugLog('content-source:zero-remote-update:local-echo', {
+        contentEntityId,
+        contentSignature: summarizeRichTextValue(remoteContent),
+        entityId,
+        entityType,
+        remoteUpdatedAt,
+      });
+      lastRemoteUpdate.current = Math.max(lastRemoteUpdate.current, remoteUpdatedAt);
+      return;
+    }
+
     const forceCanonicalRemoteContent =
       mode === 'vote_internal' || mode === 'event_final_closing_vote';
     if (!forceCanonicalRemoteContent) {
@@ -438,12 +467,6 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       if (Date.now() - lastSaveTime.current < 2000) return;
     }
 
-    const remoteUpdatedAt = entity.updatedAt || 0;
-    const remoteContent = entity.content?.length ? entity.content : DEFAULT_EDITOR_CONTENT;
-    if (JSON.stringify(remoteContent) === JSON.stringify(content)) {
-      lastRemoteUpdate.current = Math.max(lastRemoteUpdate.current, remoteUpdatedAt);
-      return;
-    }
     if (!forceCanonicalRemoteContent && remoteUpdatedAt <= lastRemoteUpdate.current) return;
 
     editorSelectionDebugLog('content-source:zero-remote-update', {
@@ -453,7 +476,9 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       entityType,
       lastRemoteUpdate: lastRemoteUpdate.current,
       remoteUpdatedAt,
+      syncClassification: 'genuine-remote',
     });
+    latestEditorContentSignature.current = remoteContentSignature;
     setContentState(remoteContent);
     lastRemoteUpdate.current = remoteUpdatedAt;
   }, [
@@ -464,7 +489,6 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     entityId,
     entityType,
     hasUnsavedChanges,
-    content,
     mode,
   ]);
 
@@ -534,6 +558,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       }
 
       isLocalChange.current = true;
+      latestEditorContentSignature.current = getEditorContentSignature(newContent);
       // Don't call setContentState — the editor already has this content.
       // Updating React state here would trigger a re-render cascade:
       //   useEditor → EditorView → PlateEditor → controlled value effect

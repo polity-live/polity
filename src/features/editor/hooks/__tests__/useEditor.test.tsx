@@ -195,4 +195,99 @@ describe('useEditor', () => {
       expect(JSON.stringify(result.current.content)).toContain('Canonical accepted text')
     );
   });
+
+  it('does not publish a local save echo back through the controlled content value', async () => {
+    hookMocks.amendmentDocsCollabs = {
+      ...hookMocks.amendmentDocsCollabs,
+      document: {
+        ...hookMocks.amendmentDocsCollabs.document,
+        editing_mode: 'suggest_event',
+      },
+    };
+    const { result, rerender } = renderHook(() =>
+      useEditor({
+        entityType: 'amendment',
+        entityId: 'amendment-1',
+        userId: 'user-1',
+      })
+    );
+
+    await waitFor(() => expect(JSON.stringify(result.current.content)).toContain('Text'));
+    const controlledValueBeforeEdit = result.current.content;
+    const localContent = [{ type: 'p', children: [{ text: 'TextX' }] }] as any;
+
+    act(() => result.current.setContent(localContent));
+    hookMocks.amendmentDocsCollabs = {
+      ...hookMocks.amendmentDocsCollabs,
+      document: {
+        ...hookMocks.amendmentDocsCollabs.document,
+        content: localContent,
+        updated_at: 2,
+      },
+    };
+    rerender();
+
+    await waitFor(() => expect(hookMocks.updateDocumentContent).toHaveBeenCalled());
+    expect(result.current.content).toBe(controlledValueBeforeEdit);
+  });
+
+  it('keeps the controlled content value stable when only CR metadata changes', async () => {
+    hookMocks.amendmentDocsCollabs = {
+      ...hookMocks.amendmentDocsCollabs,
+      document: {
+        ...hookMocks.amendmentDocsCollabs.document,
+        editing_mode: 'suggest_event',
+      },
+    };
+    const { result, rerender } = renderHook(() =>
+      useEditor({
+        entityType: 'amendment',
+        entityId: 'amendment-1',
+        userId: 'user-1',
+      })
+    );
+
+    await waitFor(() => expect(JSON.stringify(result.current.content)).toContain('Text'));
+    const controlledValue = result.current.content;
+
+    hookMocks.amendmentDocsCollabs = {
+      ...hookMocks.amendmentDocsCollabs,
+      change_requests: [{ id: 'cr-1', status: 'open', suggestion_id: 'suggestion-1' }],
+    };
+    rerender();
+
+    expect(result.current.content).toBe(controlledValue);
+  });
+
+  it('adopts genuinely different remote content outside voting modes', async () => {
+    hookMocks.amendmentDocsCollabs = {
+      ...hookMocks.amendmentDocsCollabs,
+      document: {
+        ...hookMocks.amendmentDocsCollabs.document,
+        editing_mode: 'suggest_event',
+      },
+    };
+    const { result, rerender } = renderHook(() =>
+      useEditor({
+        entityType: 'amendment',
+        entityId: 'amendment-1',
+        userId: 'user-1',
+      })
+    );
+
+    await waitFor(() => expect(JSON.stringify(result.current.content)).toContain('Text'));
+    hookMocks.amendmentDocsCollabs = {
+      ...hookMocks.amendmentDocsCollabs,
+      document: {
+        ...hookMocks.amendmentDocsCollabs.document,
+        content: [{ type: 'p', children: [{ text: 'Remote collaborator text' }] }],
+        updated_at: Date.now() + 1000,
+      },
+    };
+    rerender();
+
+    await waitFor(() =>
+      expect(JSON.stringify(result.current.content)).toContain('Remote collaborator text')
+    );
+  });
 });
