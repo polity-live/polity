@@ -20,6 +20,7 @@ import {
 import { getIconComponent } from '@/features/navigation/nav-items/icon-map.tsx';
 import { getShortcutForItem } from '@/features/navigation/nav-keyboard/keyboard-navigation.ts';
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
+import { usePreloadCoordinator } from '@/zero/preloads';
 
 interface NavigationCommandDialogViewProps {
   open: boolean;
@@ -55,9 +56,19 @@ function NavigationCommandItem({
   onSelect: (item: NavigationItem) => void;
 }) {
   const IconComponent = getIconComponent(item.icon);
+  const preloadContext = usePreloadCoordinator();
+  const href = item.preloadTarget?.href ?? item.href;
 
   return (
-    <CommandItem key={item.id} onSelect={() => onSelect(item)}>
+    <CommandItem
+      key={item.id}
+      onSelect={() => onSelect(item)}
+      onMouseEnter={() => href && preloadContext?.beginIntent(href)}
+      onMouseLeave={() => href && preloadContext?.cancelIntent(href)}
+      onFocus={() => href && preloadContext?.beginIntent(href)}
+      onBlur={() => href && preloadContext?.cancelIntent(href)}
+      onTouchStart={() => href && preloadContext?.beginIntent(href)}
+    >
       <div className="flex items-center">
         <IconComponent className="mr-2 h-4 w-4" />
         <span>{item.label}</span>
@@ -79,11 +90,18 @@ function NavigationGroupCommandItem({
   group: UserMenuGroup;
   onSelect: (group: UserMenuGroup) => void;
 }) {
+  const preloadContext = usePreloadCoordinator();
+  const href = `/group/${group.id}`;
   return (
     <CommandItem
       key={group.id}
       value={['group', group.name, group.id].filter(Boolean).join(' ')}
       onSelect={() => onSelect(group)}
+      onMouseEnter={() => preloadContext?.beginIntent(href)}
+      onMouseLeave={() => preloadContext?.cancelIntent(href)}
+      onFocus={() => preloadContext?.beginIntent(href)}
+      onBlur={() => preloadContext?.cancelIntent(href)}
+      onTouchStart={() => preloadContext?.beginIntent(href)}
     >
       <Avatar className="h-6 w-6">
         <AvatarImage src={group.image_url ?? undefined} alt={group.name ?? undefined} />
@@ -107,6 +125,8 @@ function NavigationEventCommandItem({
 }) {
   const title = event.title || eventFallback;
   const meta = formatEventMeta(event);
+  const preloadContext = usePreloadCoordinator();
+  const href = `/event/${event.id}`;
 
   return (
     <CommandItem
@@ -115,6 +135,11 @@ function NavigationEventCommandItem({
         .filter(Boolean)
         .join(' ')}
       onSelect={() => onSelect(event)}
+      onMouseEnter={() => preloadContext?.beginIntent(href)}
+      onMouseLeave={() => preloadContext?.cancelIntent(href)}
+      onFocus={() => preloadContext?.beginIntent(href)}
+      onBlur={() => preloadContext?.cancelIntent(href)}
+      onTouchStart={() => preloadContext?.beginIntent(href)}
       className="items-start"
     >
       <Calendar className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
@@ -137,6 +162,8 @@ function NavigationAmendmentCommandItem({
 }) {
   const title = amendment.title || amendmentFallback;
   const meta = formatAmendmentMeta(amendment);
+  const preloadContext = usePreloadCoordinator();
+  const href = `/amendment/${amendment.id}`;
 
   return (
     <CommandItem
@@ -153,6 +180,11 @@ function NavigationAmendmentCommandItem({
         .filter(Boolean)
         .join(' ')}
       onSelect={() => onSelect(amendment)}
+      onMouseEnter={() => preloadContext?.beginIntent(href)}
+      onMouseLeave={() => preloadContext?.cancelIntent(href)}
+      onFocus={() => preloadContext?.beginIntent(href)}
+      onBlur={() => preloadContext?.cancelIntent(href)}
+      onTouchStart={() => preloadContext?.beginIntent(href)}
       className="items-start"
     >
       <FileText className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />

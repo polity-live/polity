@@ -1,13 +1,11 @@
 export {
   useCoreZeroPreloads,
   useGlobalZeroPreloads,
-  useLikelyFirstRoutePreloads,
   useRelationshipEntityPreloads,
 } from './global';
 export {
   useAmendmentRouteFamilyPreloads,
   useBlogRouteFamilyPreloads,
-  useCurrentUserParticipantEventAgendaPreloads,
   useEventRouteFamilyPreloads,
   useGroupRouteFamilyPreloads,
   useUserRouteFamilyPreloads,
@@ -19,6 +17,7 @@ export {
   useHomePreloads,
   useMessagesPreloads,
   useNotificationsPreloads,
+  usePrimaryRouteIdlePreloads,
   useSearchPreloads,
   useTodosPreloads,
 } from './routes';
@@ -26,7 +25,18 @@ export {
   createPreloadEntry,
   preloadKey,
   retainZeroPreload,
+  retainZeroPreloadHandle,
   stableStringify,
   useZeroPreloads,
   type ZeroPreloadEntry,
 } from './preload-registry';
+export {
+  PrioritizedPreloadProvider,
+  usePreloadCoordinator,
+  useVisiblePreloadRoutes,
+  PRELOAD_CACHE_TTL,
+  type PreloadRouteTarget,
+  type PreloadTask,
+  type PreloadTaskPriority,
+  type PreloadTaskState,
+} from './preload-coordinator';

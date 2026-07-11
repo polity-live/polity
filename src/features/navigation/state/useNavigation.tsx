@@ -74,6 +74,7 @@ export function useNavigation() {
           ...item,
           label: t(`navigation.primary.${item.id}`),
           badge,
+          ...(item.href ? { preloadTarget: { href: item.href } } : {}),
         };
       }),
     [basePrimaryNavItems, unreadNotificationsCount, unreadMessagesCount, t]
@@ -266,6 +267,7 @@ export function useNavigation() {
         ...(item.id === 'notifications' && entityUnreadCount > 0
           ? { badge: entityUnreadCount }
           : {}),
+        ...(item.href ? { preloadTarget: { href: item.href } } : {}),
       };
     });
   };

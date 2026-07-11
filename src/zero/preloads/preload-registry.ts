@@ -21,6 +21,12 @@ export interface ZeroPreloadEntry {
 interface PreloadRecord {
   count: number;
   cleanup: () => void;
+  complete: Promise<void>;
+}
+
+export interface RetainedZeroPreload {
+  release: () => void;
+  complete: Promise<void>;
 }
 
 const registries = new WeakMap<object, Map<string, PreloadRecord>>();
@@ -64,12 +70,22 @@ export function createPreloadEntry(name: string, args: unknown, query: unknown):
 }
 
 export function retainZeroPreload(zero: PreloadableZero, entry: ZeroPreloadEntry): () => void {
+  return retainZeroPreloadHandle(zero, entry).release;
+}
+
+export function retainZeroPreloadHandle(
+  zero: PreloadableZero,
+  entry: ZeroPreloadEntry
+): RetainedZeroPreload {
   const registry = getRegistry(zero);
   const existing = registry.get(entry.key);
 
   if (existing) {
     existing.count += 1;
-    return () => releaseZeroPreload(registry, entry.key);
+    return {
+      complete: existing.complete,
+      release: () => releaseZeroPreload(registry, entry.key),
+    };
   }
 
   const handle = zero.preload(entry.query, { ttl: entry.ttl ?? 'none' });
@@ -80,9 +96,13 @@ export function retainZeroPreload(zero: PreloadableZero, entry: ZeroPreloadEntry
   registry.set(entry.key, {
     count: 1,
     cleanup: handle.cleanup,
+    complete: handle.complete,
   });
 
-  return () => releaseZeroPreload(registry, entry.key);
+  return {
+    complete: handle.complete,
+    release: () => releaseZeroPreload(registry, entry.key),
+  };
 }
 
 function releaseZeroPreload(registry: Map<string, PreloadRecord>, key: string) {

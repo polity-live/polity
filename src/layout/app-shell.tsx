@@ -31,7 +31,12 @@ import { useNotificationDispatch } from '@/features/notifications/hooks/useNotif
 import { useBrowserNotifications } from '@/features/notifications/hooks/useBrowserNotifications.ts';
 import { useToastSettingsSync } from '@/features/notifications/hooks/useToastSettingsSync.ts';
 import { MotionPage } from '@/features/shared/motion';
-import { useGlobalZeroPreloads } from '@/zero/preloads';
+import {
+  PrioritizedPreloadProvider,
+  useGlobalZeroPreloads,
+  usePrimaryRouteIdlePreloads,
+  useVisiblePreloadRoutes,
+} from '@/zero/preloads';
 import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation.ts';
 import { isItemActive } from '@/features/navigation/nav-items/nav-helpers.ts';
 import {
@@ -59,7 +64,11 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const zeroReady = useZeroReady();
 
   if (user && zeroReady) {
-    return <AuthenticatedShell>{children}</AuthenticatedShell>;
+    return (
+      <PrioritizedPreloadProvider>
+        <AuthenticatedShell>{children}</AuthenticatedShell>
+      </PrioritizedPreloadProvider>
+    );
   }
 
   return <UnauthenticatedShell>{children}</UnauthenticatedShell>;
@@ -187,10 +196,14 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
   useBrowserNotifications();
   useToastSettingsSync();
   useGlobalZeroPreloads();
+  usePrimaryRouteIdlePreloads();
   const navigate = useNavigate();
   const { screenType, isMobileScreen } = useScreenStore();
   const { navigationType, navigationView } = useNavigationStore();
   const { primaryNavItems, secondaryNavItems } = useNavigation();
+  useVisiblePreloadRoutes(
+    (secondaryNavItems ?? []).flatMap(item => (item.href ? [item.href] : []))
+  );
   const pathname = useRouterState({ select: s => s.location.pathname });
 
   const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen);

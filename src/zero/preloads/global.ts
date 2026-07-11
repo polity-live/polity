@@ -2,16 +2,12 @@ import { useMemo } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { queries } from '@/zero/queries';
 import { createPreloadEntry, useZeroPreloads } from './preload-registry';
-import { HOME_DISCOVER_SEARCH_ARGS } from './search-context';
-import { useCurrentUserParticipantEventAgendaPreloads } from './entity-families';
 
+/** Shell-critical data stays eager because navigation, badges and push setup consume it. */
 export function useCoreZeroPreloads() {
   const { user } = useAuth();
-  const userId = user?.id;
-
   const entries = useMemo(() => {
-    if (!userId) return [];
-
+    if (!user?.id) return [];
     return [
       createPreloadEntry('queries.users.current', {}, queries.users.current({})),
       createPreloadEntry('queries.notifications.settings', {}, queries.notifications.settings({})),
@@ -21,48 +17,30 @@ export function useCoreZeroPreloads() {
         queries.notifications.pushSubscriptions({})
       ),
       createPreloadEntry(
-        'queries.search.searchDocumentTopics',
-        { limit: 160 },
-        queries.search.searchDocumentTopics({ limit: 160 })
-      ),
-      createPreloadEntry(
-        'queries.common.userHashtags',
-        { user_id: userId },
-        queries.common.userHashtags({ user_id: userId })
-      ),
-      createPreloadEntry(
         'queries.messages.conversationsForUnread',
         {},
         queries.messages.conversationsForUnread({})
       ),
     ];
-  }, [userId]);
-
+  }, [user?.id]);
   useZeroPreloads(entries);
 }
 
+/** Exact queries used by the profile menu's Groups, Events and Amendments sections. */
 export function useRelationshipEntityPreloads() {
   const { user } = useAuth();
-  const userId = user?.id;
-
   const entries = useMemo(() => {
-    if (!userId) return [];
-
+    if (!user?.id) return [];
     return [
       createPreloadEntry(
-        'queries.groups.currentUserActiveMembershipsWithGroups',
+        'queries.groups.currentUserMembershipsWithGroups',
         {},
-        queries.groups.currentUserActiveMembershipsWithGroups({})
+        queries.groups.currentUserMembershipsWithGroups({})
       ),
       createPreloadEntry(
-        'queries.events.currentUserActiveParticipationsWithEvents',
-        {},
-        queries.events.currentUserActiveParticipationsWithEvents({})
-      ),
-      createPreloadEntry(
-        'queries.amendments.currentUserActiveCollaborationsWithAmendments',
-        {},
-        queries.amendments.currentUserActiveCollaborationsWithAmendments({})
+        'queries.events.userParticipationsWithEvent',
+        { userId: user.id },
+        queries.events.userParticipationsWithEvent({ userId: user.id })
       ),
       createPreloadEntry(
         'queries.amendments.currentUserOpenNavigationAmendments',
@@ -70,32 +48,11 @@ export function useRelationshipEntityPreloads() {
         queries.amendments.currentUserOpenNavigationAmendments({})
       ),
     ];
-  }, [userId]);
-
-  useZeroPreloads(entries);
-}
-
-export function useLikelyFirstRoutePreloads() {
-  const { user } = useAuth();
-
-  const entries = useMemo(() => {
-    if (!user?.id) return [];
-
-    return [
-      createPreloadEntry(
-        'queries.search.searchDocumentPage',
-        HOME_DISCOVER_SEARCH_ARGS,
-        queries.search.searchDocumentPage(HOME_DISCOVER_SEARCH_ARGS)
-      ),
-    ];
   }, [user?.id]);
-
   useZeroPreloads(entries);
 }
 
 export function useGlobalZeroPreloads() {
   useCoreZeroPreloads();
   useRelationshipEntityPreloads();
-  useCurrentUserParticipantEventAgendaPreloads();
-  useLikelyFirstRoutePreloads();
 }

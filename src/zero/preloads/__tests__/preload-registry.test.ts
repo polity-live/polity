@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   preloadKey,
   retainZeroPreload,
+  retainZeroPreloadHandle,
   stableStringify,
   type ZeroPreloadEntry,
 } from '../preload-registry';
@@ -64,5 +65,15 @@ describe('Zero preload registry', () => {
 
     expect(first.cleanup).toHaveBeenCalledTimes(1);
     expect(second.cleanup).toHaveBeenCalledTimes(1);
+  });
+
+  it('shares the completion promise with every retainer', () => {
+    const { zero } = createFakeZero();
+    const first = retainZeroPreloadHandle(zero, entry());
+    const second = retainZeroPreloadHandle(zero, entry());
+
+    expect(first.complete).toBe(second.complete);
+    first.release();
+    second.release();
   });
 });

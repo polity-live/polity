@@ -32,6 +32,7 @@ import {
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
 import type { UserMenuAmendment, UserMenuEvent, UserMenuGroup } from './logic/userMenuItems';
+import { usePreloadCoordinator } from '@/zero/preloads';
 
 export type { UserMenuAmendment, UserMenuEvent, UserMenuGroup } from './logic/userMenuItems';
 
@@ -121,6 +122,14 @@ export function UserMenuView({
   onClearAmendmentSearch,
   onLogout,
 }: UserMenuViewProps) {
+  const preloadContext = usePreloadCoordinator();
+  const intentProps = (href: string) => ({
+    onMouseEnter: () => preloadContext?.beginIntent(href),
+    onMouseLeave: () => preloadContext?.cancelIntent(href),
+    onFocus: () => preloadContext?.beginIntent(href),
+    onBlur: () => preloadContext?.cancelIntent(href),
+    onTouchStart: () => preloadContext?.beginIntent(href),
+  });
   const hasGroups = groups.length > 0 || showGroupSearch;
   const hasEvents = events.length > 0 || showEventSearch;
   const hasAmendments = amendments.length > 0 || showAmendmentSearch;
@@ -159,14 +168,24 @@ export function UserMenuView({
           <DropdownMenuSeparator className="shrink-0" />
 
           <DropdownMenuItem asChild className="shrink-0">
-            <Link to={profileHref} className="flex w-full items-center">
+            <Link
+              to={profileHref}
+              preload="intent"
+              className="flex w-full items-center"
+              {...intentProps(profileHref)}
+            >
               <User className="mr-2 h-4 w-4" />
               {labels.profile}
             </Link>
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild className="shrink-0">
-            <Link to={settingsHref} className="flex w-full items-center">
+            <Link
+              to={settingsHref}
+              preload="intent"
+              className="flex w-full items-center"
+              {...intentProps(settingsHref)}
+            >
               <Settings className="mr-2 h-4 w-4" />
               {labels.settings}
             </Link>
@@ -229,6 +248,8 @@ export function UserMenuView({
                             <Link
                               to="/group/$id"
                               params={{ id: group.id }}
+                              preload="intent"
+                              {...intentProps(`/group/${group.id}`)}
                               className="flex w-full min-w-0 items-center gap-2"
                             >
                               <Avatar className="h-5 w-5 shrink-0">
@@ -304,6 +325,8 @@ export function UserMenuView({
                             <Link
                               to="/event/$id"
                               params={{ id: event.id }}
+                              preload="intent"
+                              {...intentProps(`/event/${event.id}`)}
                               className="flex w-full min-w-0 items-center gap-2"
                             >
                               <Calendar className="text-muted-foreground h-4 w-4 shrink-0" />
@@ -374,6 +397,8 @@ export function UserMenuView({
                             <Link
                               to="/amendment/$id"
                               params={{ id: amendment.id }}
+                              preload="intent"
+                              {...intentProps(`/amendment/${amendment.id}`)}
                               className="flex w-full min-w-0 items-center gap-2"
                             >
                               <FileText className="text-muted-foreground h-4 w-4 shrink-0" />

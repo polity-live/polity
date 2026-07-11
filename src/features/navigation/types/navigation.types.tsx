@@ -15,6 +15,7 @@ export interface NavigationItem {
   badge?: number;
   href?: string;
   onClick?: () => void;
+  preloadTarget?: { href: string };
 }
 
 export interface NavigationProps {

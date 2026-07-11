@@ -6,6 +6,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { UserMenuView } from '../UserMenuView';
 
+const preloadMocks = vi.hoisted(() => ({ beginIntent: vi.fn(), cancelIntent: vi.fn() }));
+
+vi.mock('@/zero/preloads', () => ({
+  usePreloadCoordinator: () => preloadMocks,
+}));
+
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, params, to, ...props }: any) => {
     const href = typeof to === 'string' ? to.replace('$id', params?.id ?? '') : '#';
@@ -114,6 +120,16 @@ describe('UserMenuView', () => {
     expect(hrefs).toEqual(
       expect.arrayContaining(['/group/group-1', '/event/event-1', '/amendment/amendment-1'])
     );
+
+    const groupLink = screen
+      .getAllByRole('menuitem')
+      .find(item => item.getAttribute('href') === '/group/group-1');
+    expect(groupLink).toBeTruthy();
+    if (!groupLink) return;
+    fireEvent.mouseEnter(groupLink);
+    expect(preloadMocks.beginIntent).toHaveBeenCalledWith('/group/group-1');
+    fireEvent.mouseLeave(groupLink);
+    expect(preloadMocks.cancelIntent).toHaveBeenCalledWith('/group/group-1');
 
     const groupsList = screen.getByTestId('user-menu-groups-list');
     const eventsList = screen.getByTestId('user-menu-events-list');
