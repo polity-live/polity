@@ -23,8 +23,6 @@ export interface NavItemListViewProps {
   loadingItem: any;
   setLoadingItem: any;
   handleItemClick: any;
-  beginPreloadIntent: any;
-  cancelPreloadIntent: any;
 }
 
 export function NavItemListView({
@@ -37,8 +35,6 @@ export function NavItemListView({
   setHoveredItem,
   loadingItem,
   handleItemClick,
-  beginPreloadIntent,
-  cancelPreloadIntent,
 }: NavItemListViewProps) {
   if (navigationView === 'asButton') {
     return (
@@ -48,17 +44,7 @@ export function NavItemListView({
           {navigationItems.length <= 4 ? (
             <div className="col-span-full flex flex-wrap justify-center gap-8">
               {navigationItems.map((item: any) => (
-                <Link
-                  key={item.id}
-                  to={item.href || '#'}
-                  preload="intent"
-                  className="inline-block"
-                  onMouseEnter={() => beginPreloadIntent(item)}
-                  onMouseLeave={() => cancelPreloadIntent(item)}
-                  onFocus={() => beginPreloadIntent(item)}
-                  onBlur={() => cancelPreloadIntent(item)}
-                  onTouchStart={() => beginPreloadIntent(item)}
-                >
+                <Link key={item.id} to={item.href || '#'} preload="intent" className="inline-block">
                   <Button
                     aria-label={item.label}
                     variant="ghost"
@@ -103,17 +89,7 @@ export function NavItemListView({
           ) : (
             // Original layout for 5+ items
             navigationItems.map((item: any) => (
-              <Link
-                key={item.id}
-                to={item.href || '#'}
-                preload="intent"
-                className="inline-block"
-                onMouseEnter={() => beginPreloadIntent(item)}
-                onMouseLeave={() => cancelPreloadIntent(item)}
-                onFocus={() => beginPreloadIntent(item)}
-                onBlur={() => cancelPreloadIntent(item)}
-                onTouchStart={() => beginPreloadIntent(item)}
-              >
+              <Link key={item.id} to={item.href || '#'} preload="intent" className="inline-block">
                 <Button
                   aria-label={item.label}
                   variant="ghost"
@@ -166,16 +142,7 @@ export function NavItemListView({
           {navigationItems.map((item: any) => (
             <Popover key={item.id} open={hoveredItem === item.id}>
               <PopoverTrigger asChild>
-                <Link
-                  to={item.href || '#'}
-                  preload="intent"
-                  className="inline-block"
-                  onMouseEnter={() => beginPreloadIntent(item)}
-                  onMouseLeave={() => cancelPreloadIntent(item)}
-                  onFocus={() => beginPreloadIntent(item)}
-                  onBlur={() => cancelPreloadIntent(item)}
-                  onTouchStart={() => beginPreloadIntent(item)}
-                >
+                <Link to={item.href || '#'} preload="intent" className="inline-block">
                   <Button
                     aria-label={item.label}
                     variant="ghost"
@@ -233,16 +200,7 @@ export function NavItemListView({
         {navigationItems.map((item: any) => (
           <Popover key={item.id} open={hoveredItem === item.id}>
             <PopoverTrigger asChild>
-              <Link
-                to={item.href || '#'}
-                preload="intent"
-                className="inline-block"
-                onMouseEnter={() => beginPreloadIntent(item)}
-                onMouseLeave={() => cancelPreloadIntent(item)}
-                onFocus={() => beginPreloadIntent(item)}
-                onBlur={() => cancelPreloadIntent(item)}
-                onTouchStart={() => beginPreloadIntent(item)}
-              >
+              <Link to={item.href || '#'} preload="intent" className="inline-block">
                 <Button
                   aria-label={item.label}
                   variant="ghost"
@@ -298,17 +256,7 @@ export function NavItemListView({
       <div className="scrollbar-hide flex-1 overflow-x-auto">
         <div className="flex min-w-max items-center justify-center gap-1 px-2">
           {navigationItems.map((item: any) => (
-            <Link
-              key={item.id}
-              to={item.href || '#'}
-              preload="intent"
-              className="inline-block"
-              onMouseEnter={() => beginPreloadIntent(item)}
-              onMouseLeave={() => cancelPreloadIntent(item)}
-              onFocus={() => beginPreloadIntent(item)}
-              onBlur={() => cancelPreloadIntent(item)}
-              onTouchStart={() => beginPreloadIntent(item)}
-            >
+            <Link key={item.id} to={item.href || '#'} preload="intent" className="inline-block">
               <Button
                 aria-label={item.label}
                 variant="ghost"
@@ -359,17 +307,7 @@ export function NavItemListView({
     return (
       <div className="flex flex-col gap-2">
         {navigationItems.map((item: any) => (
-          <Link
-            key={item.id}
-            to={item.href || '#'}
-            preload="intent"
-            className="inline-block"
-            onMouseEnter={() => beginPreloadIntent(item)}
-            onMouseLeave={() => cancelPreloadIntent(item)}
-            onFocus={() => beginPreloadIntent(item)}
-            onBlur={() => cancelPreloadIntent(item)}
-            onTouchStart={() => beginPreloadIntent(item)}
-          >
+          <Link key={item.id} to={item.href || '#'} preload="intent" className="inline-block">
             <Button
               aria-label={item.label}
               variant="ghost"

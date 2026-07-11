@@ -17,6 +17,37 @@ function dynamicTask(key: string, href: string, entries: readonly ZeroPreloadEnt
   return task(`${key}:${stableStringify(entries.map(entry => entry.key))}`, href, entries);
 }
 
+function createPermissionPreloadEntries(userId?: string): ZeroPreloadEntry[] {
+  if (!userId) return [];
+  return [
+    createPreloadEntry(
+      'queries.rbac.membershipPermissions',
+      { userId },
+      queries.rbac.membershipPermissions({ userId })
+    ),
+    createPreloadEntry(
+      'queries.rbac.guestPermissions',
+      { userId },
+      queries.rbac.guestPermissions({ userId })
+    ),
+    createPreloadEntry(
+      'queries.rbac.participantPermissions',
+      { userId },
+      queries.rbac.participantPermissions({ userId })
+    ),
+    createPreloadEntry(
+      'queries.rbac.bloggerPermissions',
+      { userId },
+      queries.rbac.bloggerPermissions({ userId })
+    ),
+    createPreloadEntry(
+      'queries.rbac.ownedGroupPermissions',
+      { userId },
+      queries.rbac.ownedGroupPermissions({ userId })
+    ),
+  ];
+}
+
 export function createHomePreloadTask(userId: string): PreloadTask {
   return task('primary:home', '/home', [
     createPreloadEntry(
@@ -170,7 +201,7 @@ export function createPrimaryIdleTasks(userId: string): PreloadTask[] {
   ];
 }
 
-export function createGroupPreloadTasks(groupId: string): PreloadTask[] {
+export function createGroupPreloadTasks(groupId: string, viewerId?: string): PreloadTask[] {
   const base = `/group/${groupId}`;
   const common = [
     createPreloadEntry(
@@ -186,22 +217,61 @@ export function createGroupPreloadTasks(groupId: string): PreloadTask[] {
   ];
   return [
     task(`group:${groupId}:overview`, base, [
-      ...common,
       createPreloadEntry(
         'queries.groups.wikiData',
         { id: groupId },
         queries.groups.wikiData({ id: groupId })
       ),
       createPreloadEntry(
-        'queries.groups.activeMembersByGroup',
-        { groupId },
-        queries.groups.activeMembersByGroup({ groupId })
+        'queries.network.allGroupConnections',
+        {},
+        queries.network.allGroupConnections({})
       ),
       createPreloadEntry(
-        'queries.messages.conversationByGroupId',
-        { group_id: groupId },
-        queries.messages.conversationByGroupId({ group_id: groupId })
+        'queries.groups.byIdBasic',
+        { id: groupId },
+        queries.groups.byIdBasic({ id: groupId })
       ),
+      createPreloadEntry(
+        'queries.groups.subscribersByGroup',
+        { groupId },
+        queries.groups.subscribersByGroup({ groupId })
+      ),
+      createPreloadEntry(
+        'queries.groups.byId',
+        { id: groupId },
+        queries.groups.byId({ id: groupId })
+      ),
+      createPreloadEntry(
+        'queries.groups.memberships',
+        { groupId },
+        queries.groups.memberships({ groupId })
+      ),
+      createPreloadEntry('queries.groups.roles', { groupId }, queries.groups.roles({ groupId })),
+      createPreloadEntry(
+        'queries.groups.scopedRoles',
+        { groupId },
+        queries.groups.scopedRoles({ groupId })
+      ),
+      createPreloadEntry(
+        'queries.groups.allMembershipsInGroupWithRole',
+        { groupId },
+        queries.groups.allMembershipsInGroupWithRole({ groupId })
+      ),
+      ...(viewerId
+        ? [
+            createPreloadEntry(
+              'queries.groups.currentUserGuestAccessesWithGroups',
+              {},
+              queries.groups.currentUserGuestAccessesWithGroups({})
+            ),
+            createPreloadEntry(
+              'queries.groups.userMembershipInGroup',
+              { userId: viewerId, groupId },
+              queries.groups.userMembershipInGroup({ userId: viewerId, groupId })
+            ),
+          ]
+        : []),
     ]),
     task(`group:${groupId}:operation`, `${base}/operation`, [
       ...common,
@@ -314,7 +384,7 @@ export function createGroupPreloadTasks(groupId: string): PreloadTask[] {
   ];
 }
 
-export function createEventPreloadTasks(eventId: string): PreloadTask[] {
+export function createEventPreloadTasks(eventId: string, viewerId?: string): PreloadTask[] {
   const base = `/event/${eventId}`;
   const common = [
     createPreloadEntry(
@@ -336,6 +406,27 @@ export function createEventPreloadTasks(eventId: string): PreloadTask[] {
         { eventId },
         queries.events.wikiAgendaItems({ eventId })
       ),
+      createPreloadEntry(
+        'queries.events.participantsWithUserAndRole',
+        { eventId },
+        queries.events.participantsWithUserAndRole({ eventId })
+      ),
+      createPreloadEntry(
+        'queries.events.byId',
+        { id: eventId },
+        queries.events.byId({ id: eventId })
+      ),
+      createPreloadEntry(
+        'queries.events.subscribersByEvent',
+        { eventId },
+        queries.events.subscribersByEvent({ eventId })
+      ),
+      ...(viewerId
+        ? [
+            createPreloadEntry('queries.users.current', {}, queries.users.current({})),
+            createPreloadEntry('queries.users.allUsers', {}, queries.users.allUsers({})),
+          ]
+        : []),
     ]),
     task(`event:${eventId}:agenda`, `${base}/agenda`, [
       ...common,
@@ -415,7 +506,7 @@ export function createEventPreloadTasks(eventId: string): PreloadTask[] {
   ];
 }
 
-export function createAmendmentPreloadTasks(amendmentId: string): PreloadTask[] {
+export function createAmendmentPreloadTasks(amendmentId: string, viewerId?: string): PreloadTask[] {
   const base = `/amendment/${amendmentId}`;
   const basic = [
     createPreloadEntry(
@@ -433,12 +524,66 @@ export function createAmendmentPreloadTasks(amendmentId: string): PreloadTask[] 
   ];
   return [
     task(`amendment:${amendmentId}:wiki`, base, [
-      ...basic,
+      createPreloadEntry(
+        'queries.amendments.byIdWithRelations',
+        { id: amendmentId },
+        queries.amendments.byIdWithRelations({ id: amendmentId })
+      ),
+      createPreloadEntry(
+        'queries.amendments.collaborators',
+        { amendment_id: amendmentId },
+        queries.amendments.collaborators({ amendment_id: amendmentId })
+      ),
+      createPreloadEntry(
+        'queries.amendments.subscribers',
+        { amendment_id: amendmentId },
+        queries.amendments.subscribers({ amendment_id: amendmentId })
+      ),
       createPreloadEntry(
         'queries.amendments.byIdFull',
         { id: amendmentId },
         queries.amendments.byIdFull({ id: amendmentId })
       ),
+      createPreloadEntry(
+        'queries.amendments.clonesBySource',
+        { source_id: amendmentId },
+        queries.amendments.clonesBySource({ source_id: amendmentId })
+      ),
+      createPreloadEntry(
+        'queries.amendments.rolesByAmendment',
+        { amendment_id: amendmentId },
+        queries.amendments.rolesByAmendment({ amendment_id: amendmentId })
+      ),
+      createPreloadEntry('queries.amendments.allGroups', {}, queries.amendments.allGroups({})),
+      createPreloadEntry(
+        'queries.amendments.allGroupRelationships',
+        {},
+        queries.amendments.allGroupRelationships({})
+      ),
+      createPreloadEntry(
+        'queries.amendments.allGroupMemberships',
+        {},
+        queries.amendments.allGroupMemberships({})
+      ),
+      createPreloadEntry('queries.amendments.allEvents', {}, queries.amendments.allEvents({})),
+      ...(viewerId
+        ? [
+            createPreloadEntry(
+              'queries.amendments.userCollaboration',
+              { amendment_id: amendmentId, user_id: viewerId },
+              queries.amendments.userCollaboration({
+                amendment_id: amendmentId,
+                user_id: viewerId,
+              })
+            ),
+            createPreloadEntry(
+              'queries.amendments.userGroupMemberships',
+              { user_id: viewerId },
+              queries.amendments.userGroupMemberships({ user_id: viewerId })
+            ),
+            createPreloadEntry('queries.amendments.allUsers', {}, queries.amendments.allUsers({})),
+          ]
+        : []),
     ]),
     task(`amendment:${amendmentId}:text`, `${base}/text`, [
       ...basic,
@@ -544,13 +689,20 @@ export function createUserPreloadTasks(userId: string, isOwnUser: boolean): Prel
       { id: userId },
       queries.users.fullProfile({ id: userId })
     ),
-    createPreloadEntry(
-      'queries.common.userHashtags',
-      { user_id: userId },
-      queries.common.userHashtags({ user_id: userId })
-    ),
+    createPreloadEntry('queries.users.current', {}, queries.users.current({})),
+    createPreloadEntry('queries.users.byId', { id: userId }, queries.users.byId({ id: userId })),
     createPreloadEntry('queries.users.followers', { userId }, queries.users.followers({ userId })),
     createPreloadEntry('queries.users.following', { userId }, queries.users.following({ userId })),
+    createPreloadEntry(
+      'queries.payments.subscriptionStatusByUser',
+      { userId },
+      queries.payments.subscriptionStatusByUser({ userId })
+    ),
+    createPreloadEntry(
+      'queries.common.userSubscribers',
+      { user_id: userId },
+      queries.common.userSubscribers({ user_id: userId })
+    ),
   ];
   const tasks = [
     task(`user:${userId}:profile`, base, profile),
@@ -638,13 +790,27 @@ export function createUserPreloadTasks(userId: string, isOwnUser: boolean): Prel
   return tasks;
 }
 
-export function createBlogPreloadTasks(blogId: string, base = `/blog/${blogId}`): PreloadTask[] {
+export function createBlogPreloadTasks(
+  blogId: string,
+  base = `/blog/${blogId}`,
+  viewerId?: string
+): PreloadTask[] {
   const common = [
+    createPreloadEntry('queries.blogs.byId', { id: blogId }, queries.blogs.byId({ id: blogId })),
     createPreloadEntry(
-      'queries.blogs.byIdWithBloggers',
-      { id: blogId },
-      queries.blogs.byIdWithBloggers({ id: blogId })
+      'queries.blogs.entries',
+      { blog_id: blogId },
+      queries.blogs.entries({ blog_id: blogId })
     ),
+    ...(base === `/blog/${blogId}`
+      ? [
+          createPreloadEntry(
+            'queries.blogs.byIdWithBloggers',
+            { id: blogId },
+            queries.blogs.byIdWithBloggers({ id: blogId })
+          ),
+        ]
+      : []),
   ];
   return [
     task(`blog:${blogId}:overview`, base, [
@@ -653,11 +819,6 @@ export function createBlogPreloadTasks(blogId: string, base = `/blog/${blogId}`)
         'queries.blogs.byIdWithDetails',
         { id: blogId },
         queries.blogs.byIdWithDetails({ id: blogId })
-      ),
-      createPreloadEntry(
-        'queries.blogs.entries',
-        { blog_id: blogId },
-        queries.blogs.entries({ blog_id: blogId })
       ),
       createPreloadEntry(
         'queries.blogs.blogThread',
@@ -669,6 +830,7 @@ export function createBlogPreloadTasks(blogId: string, base = `/blog/${blogId}`)
         { blog_id: blogId },
         queries.blogs.subscribers({ blog_id: blogId })
       ),
+      ...createPermissionPreloadEntries(viewerId),
     ]),
     task(`blog:${blogId}:editor`, `${base}/editor`, [
       ...common,
@@ -686,10 +848,16 @@ export function createBlogPreloadTasks(blogId: string, base = `/blog/${blogId}`)
     task(`blog:${blogId}:edit`, `${base}/edit`, [
       ...common,
       createPreloadEntry(
-        'queries.blogs.byIdWithManagement',
+        'queries.blogs.byIdWithHashtags',
         { id: blogId },
-        queries.blogs.byIdWithManagement({ id: blogId })
+        queries.blogs.byIdWithHashtags({ id: blogId })
       ),
+      createPreloadEntry(
+        'queries.common.blogHashtags',
+        { blog_id: blogId },
+        queries.common.blogHashtags({ blog_id: blogId })
+      ),
+      createPreloadEntry('queries.common.allHashtags', {}, queries.common.allHashtags({})),
     ]),
     task(`blog:${blogId}:notifications`, `${base}/notifications`, [
       ...common,
@@ -725,24 +893,50 @@ export function createIntentTaskForHref(href: string, userId?: string): PreloadT
 
   const nestedBlog = pathname.match(/^(\/(?:group|user)\/[^/]+\/blog\/([^/]+))(?:\/.*)?$/);
   if (nestedBlog) {
-    return taskForPath(createBlogPreloadTasks(nestedBlog[2], nestedBlog[1]), pathname);
+    return taskForPath(createBlogPreloadTasks(nestedBlog[2], nestedBlog[1], userId), pathname);
   }
   const blog = pathname.match(/^(\/blog\/([^/]+))(?:\/.*)?$/);
-  if (blog) return taskForPath(createBlogPreloadTasks(blog[2], blog[1]), pathname);
+  if (blog) return taskForPath(createBlogPreloadTasks(blog[2], blog[1], userId), pathname);
 
   const group = pathname.match(/^\/group\/([^/]+)/);
-  if (group) return taskForPath(createGroupPreloadTasks(group[1]), pathname);
+  if (group) {
+    const tasks = createGroupPreloadTasks(group[1], userId);
+    const base = `/group/${group[1]}`;
+    if (pathname.startsWith(`${base}/relationships`)) {
+      return taskForAlias(tasks, 'network', pathname);
+    }
+    return taskForPath(tasks, pathname);
+  }
   const event = pathname.match(/^\/event\/([^/]+)/);
-  if (event) return taskForPath(createEventPreloadTasks(event[1]), pathname);
+  if (event) return taskForPath(createEventPreloadTasks(event[1], userId), pathname);
   const amendment = pathname.match(/^\/amendment\/([^/]+)/);
-  if (amendment) return taskForPath(createAmendmentPreloadTasks(amendment[1]), pathname);
+  if (amendment) return taskForPath(createAmendmentPreloadTasks(amendment[1], userId), pathname);
   const user = pathname.match(/^\/user\/([^/]+)/);
-  if (user) return taskForPath(createUserPreloadTasks(user[1], user[1] === userId), pathname);
+  if (user) {
+    const tasks = createUserPreloadTasks(user[1], user[1] === userId);
+    if (pathname.startsWith(`/user/${user[1]}/notifications`)) {
+      return taskForAlias(tasks, 'settings', pathname);
+    }
+    return taskForPath(tasks, pathname);
+  }
   return undefined;
 }
 
 function taskForPath(tasks: readonly PreloadTask[], pathname: string) {
+  const rootHref = tasks.reduce(
+    (shortest, item) => (item.route.href.length < shortest.length ? item.route.href : shortest),
+    tasks[0]?.route.href ?? ''
+  );
   return [...tasks]
     .sort((left, right) => right.route.href.length - left.route.href.length)
-    .find(item => pathname === item.route.href || pathname.startsWith(`${item.route.href}/`));
+    .find(
+      item =>
+        pathname === item.route.href ||
+        (item.route.href !== rootHref && pathname.startsWith(`${item.route.href}/`))
+    );
+}
+
+function taskForAlias(tasks: readonly PreloadTask[], suffix: string, pathname: string) {
+  const matched = tasks.find(item => item.key.endsWith(`:${suffix}`));
+  return matched ? { ...matched, route: { href: pathname } } : undefined;
 }

@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS public.change_request (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
   process_branch_id UUID REFERENCES public.amendment_process_branch (id) ON DELETE SET NULL,
+  suggestion_id TEXT,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   title TEXT,
   description TEXT,
@@ -43,6 +44,9 @@ CREATE TABLE IF NOT EXISTS public.change_request (
 
 CREATE INDEX idx_change_request_amendment ON public.change_request (amendment_id);
 CREATE INDEX idx_change_request_process_branch ON public.change_request (process_branch_id);
+CREATE INDEX idx_change_request_suggestion_id
+  ON public.change_request (suggestion_id)
+  WHERE suggestion_id IS NOT NULL;
 CREATE INDEX idx_change_request_user ON public.change_request (user_id);
 CREATE INDEX idx_change_request_changed_character_count ON public.change_request (changed_character_count);
 CREATE UNIQUE INDEX idx_change_request_branch_sequence

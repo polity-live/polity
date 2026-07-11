@@ -5,6 +5,7 @@ export const changeRequest = table('change_request')
     id: string(),
     amendment_id: string(),
     process_branch_id: string().optional(),
+    suggestion_id: string().optional(),
     user_id: string(),
     title: string().optional(),
     description: string().optional(),

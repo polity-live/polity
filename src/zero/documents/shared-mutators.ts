@@ -1,4 +1,5 @@
 import { defineMutator } from '@rocicorp/zero';
+import type { Value } from 'platejs';
 import { can } from '../rbac/can';
 import { requireAuthenticated, requireOwner } from '../rbac/authorize';
 import { PermissionError, isPermissionError } from '../rbac/errors';
@@ -27,6 +28,7 @@ import {
   updateCommentVoteSchema,
   deleteCommentVoteSchema,
 } from '../votes/schema';
+import { applyResolvedSuggestionsToContent } from '@/features/change-requests/logic/applySuggestionToContent';
 
 async function loadDocumentScope(tx: Parameters<typeof can>[0], documentId: string) {
   const document = await tx.run(zql.document.where('id', documentId).one());
@@ -248,12 +250,20 @@ export const documentSharedMutators = {
 
   // Update document content
   updateContent: defineMutator(updateDocumentSchema, async ({ tx, ctx, args }) => {
+    let content = args.content;
     if (tx.location !== 'client') {
-      await authorizeDocumentGroupManage(tx, ctx, args.id);
+      const scope = await authorizeDocumentGroupManage(tx, ctx, args.id);
+      if (content && scope.document.amendment_id) {
+        const changeRequests = await tx.run(
+          zql.change_request.where('amendment_id', scope.document.amendment_id)
+        );
+        content = applyResolvedSuggestionsToContent(content as Value, changeRequests);
+      }
     }
 
     await tx.mutate.document.update({
       ...args,
+      ...(args.content !== undefined ? { content } : {}),
       updated_at: Date.now(),
     });
   }),

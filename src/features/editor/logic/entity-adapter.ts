@@ -22,6 +22,7 @@ import {
   mapRoleActionRights,
 } from '@/features/amendments/logic/amendmentPermissions';
 import { decorateBranchScopedChangeRequests } from '@/features/change-requests/logic/branchScopedDisplay';
+import { applyResolvedSuggestionsToContent } from '@/features/change-requests/logic/applySuggestionToContent';
 import { isTerminalEditingMode, normalizeEditingMode } from '@/zero/amendments/editing-mode-policy';
 
 // Raw entity type for adapter function parameters.
@@ -362,10 +363,14 @@ export function adaptAmendmentToEntity(
     processBranchResolution: processBranch?.resolution,
   };
 
-  const content =
+  const storedContent =
     Array.isArray(document.content) && document.content.length > 0
       ? sanitizeContent(document.content)
       : DEFAULT_EDITOR_CONTENT;
+  const content = applyResolvedSuggestionsToContent(
+    storedContent,
+    Array.isArray(amendmentContext.change_requests) ? amendmentContext.change_requests : []
+  );
   const permissionFlags = getAmendmentPermissionFlags(amendmentContext, userId);
   const isBranchReadonly = isReadonlyProcessBranch(processBranch);
 

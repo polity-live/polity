@@ -5,7 +5,6 @@ import type {
 import React, { useState } from 'react';
 import { useLocation, useRouterState } from '@tanstack/react-router';
 import { NavItemListView } from './NavItemListView';
-import { usePreloadCoordinator } from '@/zero/preloads';
 
 const LANDING_SECTION_FALLBACK_SCROLL_MARGIN_TOP = 96;
 const LANDING_PATHS = new Set(['/', '/features', '/solutions', '/imprint']);
@@ -182,7 +181,6 @@ export function NavItemList({
   const currentRoute = activeHashSectionRoute ?? `${pathname ?? '/'}${normalizedHash}`;
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [loadingItem, setLoadingItem] = useState<string | null>(null);
-  const preloadContext = usePreloadCoordinator();
 
   // Clear loading state when router finishes navigating
   React.useEffect(() => {
@@ -214,12 +212,6 @@ export function NavItemList({
       loadingItem={loadingItem}
       setLoadingItem={setLoadingItem}
       handleItemClick={handleItemClick}
-      beginPreloadIntent={(item: NavigationItem) => {
-        if (item.preloadTarget) preloadContext?.beginIntent(item.preloadTarget.href);
-      }}
-      cancelPreloadIntent={(item: NavigationItem) => {
-        if (item.preloadTarget) preloadContext?.cancelIntent(item.preloadTarget.href);
-      }}
     />
   );
 }

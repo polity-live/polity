@@ -139,7 +139,8 @@ describe('documentSharedMutators group RBAC', () => {
       .mockResolvedValueOnce({
         id: 'amendment-1',
         group_id: 'group-1',
-      });
+      })
+      .mockResolvedValueOnce([]);
     canMock.mockResolvedValueOnce(undefined);
 
     await documentSharedMutators.updateContent.fn({
@@ -163,6 +164,58 @@ describe('documentSharedMutators group RBAC', () => {
         updated_at: expect.any(Number),
       })
     );
+  });
+
+  it('prevents stale document saves from resurrecting completed suggestions', async () => {
+    const tx = createTx('server');
+    const ctx = createCtx();
+    const staleContent = [
+      {
+        type: 'p',
+        children: [
+          {
+            text: 'remove me',
+            suggestion: true,
+            suggestion_insert: { id: 'suggestion-rejected-insert', type: 'insert' },
+          },
+          {
+            text: 'keep me',
+            suggestion: true,
+            suggestion_remove: { id: 'suggestion-rejected-remove', type: 'remove' },
+          },
+        ],
+      },
+    ];
+
+    tx.run
+      .mockResolvedValueOnce({ id: 'doc-1', amendment_id: 'amendment-1' })
+      .mockResolvedValueOnce({ id: 'amendment-1', group_id: 'group-1' })
+      .mockResolvedValueOnce([
+        {
+          suggestion_id: 'suggestion-rejected-insert',
+          status: 'rejected',
+          voting_status: 'completed',
+          created_at: 1,
+        },
+        {
+          suggestion_id: 'suggestion-rejected-remove',
+          status: 'rejected',
+          voting_status: 'completed',
+          created_at: 2,
+        },
+      ]);
+    canMock.mockResolvedValueOnce(undefined);
+
+    await documentSharedMutators.updateContent.fn({
+      tx: tx as never,
+      ctx,
+      args: { id: 'doc-1', content: staleContent },
+    });
+
+    const update = tx.mutate.document.update.mock.calls[0][0];
+    expect(JSON.stringify(update.content)).not.toContain('remove me');
+    expect(JSON.stringify(update.content)).toContain('keep me');
+    expect(JSON.stringify(update.content)).not.toContain('suggestion-rejected-remove');
   });
 
   it('rejects standalone document content updates without an active collaborator', async () => {

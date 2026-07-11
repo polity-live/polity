@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { TDiscussion } from '@/features/shared/ui/kit-platejs/discussion-kit';
@@ -87,5 +87,31 @@ describe('useSuggestionIdAssignment', () => {
     expect(onDiscussionsUpdate.mock.invocationCallOrder[0]).toBeLessThan(
       onChangeRequestCreate.mock.invocationCallOrder[0]
     );
+  });
+
+  it('waits for the discussion link to persist before creating the change request', async () => {
+    let finishDiscussionUpdate: (() => void) | undefined;
+    const discussionUpdate = new Promise<void>(resolve => {
+      finishDiscussionUpdate = resolve;
+    });
+    const onDiscussionsUpdate = vi.fn(() => discussionUpdate);
+    const onChangeRequestCreate = vi.fn();
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue('33333333-3333-4333-8333-333333333333');
+
+    renderHook(() =>
+      useSuggestionIdAssignment({
+        documentId: 'document-1',
+        discussions: [{ ...baseDiscussion, crId: 'CR-1' }],
+        onDiscussionsUpdate,
+        onChangeRequestCreate,
+      })
+    );
+
+    await waitFor(() => expect(onDiscussionsUpdate).toHaveBeenCalledTimes(1));
+    expect(onChangeRequestCreate).not.toHaveBeenCalled();
+
+    await act(async () => finishDiscussionUpdate?.());
+
+    await waitFor(() => expect(onChangeRequestCreate).toHaveBeenCalledTimes(1));
   });
 });

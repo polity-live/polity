@@ -44,6 +44,7 @@ interface InternalChangeRequestRow {
   id: string;
   amendment_id: string;
   process_branch_id?: string | null;
+  suggestion_id?: string | null;
   title?: string | null;
   status?: string | null;
   voting_status?: string | null;

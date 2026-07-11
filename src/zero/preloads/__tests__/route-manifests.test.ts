@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   createAmendmentPreloadTasks,
   createEventPreloadTasks,
+  createBlogPreloadTasks,
   createGroupPreloadTasks,
   createIntentTaskForHref,
   createMessagesPreloadTask,
   createSearchPreloadTask,
+  createUserPreloadTasks,
 } from '../route-manifests';
 
 describe('prioritized preload route manifests', () => {
@@ -54,6 +56,53 @@ describe('prioritized preload route manifests', () => {
     );
     expect(createIntentTaskForHref('/amendment/amendment-1/collaborators', 'user-1')?.key).toBe(
       'amendment:amendment-1:collaborators'
+    );
+    expect(createIntentTaskForHref('/user/user-2/blog/blog-1', 'user-1')?.key).toBe(
+      'blog:blog-1:overview'
+    );
+    expect(createIntentTaskForHref('/statement/statement-1', 'user-1')).toBeUndefined();
+    expect(createIntentTaskForHref('/group/group-1/relationships', 'user-1')?.key).toBe(
+      'group:group-1:network'
+    );
+    expect(createIntentTaskForHref('/group/group-1/blog', 'user-1')).toBeUndefined();
+    expect(createIntentTaskForHref('/user/user-1/notifications', 'user-1')?.key).toBe(
+      'user:user-1:settings'
+    );
+  });
+
+  it('matches the exact cold-render query contracts of all wiki roots', () => {
+    const keys = (entries: readonly { key: string }[]) => entries.map(entry => entry.key).join('|');
+    const group = createGroupPreloadTasks('group-1', 'viewer-1')[0];
+    const event = createEventPreloadTasks('event-1', 'viewer-1')[0];
+    const amendment = createAmendmentPreloadTasks('amendment-1', 'viewer-1')[0];
+    const user = createUserPreloadTasks('user-1', false)[0];
+    const blog = createBlogPreloadTasks('blog-1', '/blog/blog-1', 'viewer-1')[0];
+
+    expect(keys(group.entries)).toContain('queries.groups.subscribersByGroup');
+    expect(keys(group.entries)).toContain('queries.groups.userMembershipInGroup');
+    expect(keys(event.entries)).toContain('queries.events.participantsWithUserAndRole');
+    expect(keys(event.entries)).toContain('queries.events.subscribersByEvent');
+    expect(keys(amendment.entries)).toContain('queries.amendments.byIdWithRelations');
+    expect(keys(amendment.entries)).toContain('queries.amendments.allGroupRelationships');
+    expect(keys(user.entries)).toContain('queries.payments.subscriptionStatusByUser');
+    expect(keys(user.entries)).toContain('queries.common.userSubscribers');
+    expect(keys(blog.entries)).toContain('queries.blogs.byId');
+    expect(keys(blog.entries)).toContain('queries.rbac.bloggerPermissions');
+    expect(keys(blog.entries)).toContain('queries.blogs.byIdWithBloggers');
+    expect(
+      keys(createBlogPreloadTasks('blog-1', '/group/group-1/blog/blog-1', 'viewer-1')[0].entries)
+    ).not.toContain('queries.blogs.byIdWithBloggers');
+  });
+
+  it('keeps wiki task identities separate across entity IDs and nested blog paths', () => {
+    expect(createGroupPreloadTasks('group-1')[0]?.key).not.toBe(
+      createGroupPreloadTasks('group-2')[0]?.key
+    );
+    expect(createIntentTaskForHref('/group/group-1/blog/blog-1', 'viewer-1')?.route.href).toBe(
+      '/group/group-1/blog/blog-1'
+    );
+    expect(createIntentTaskForHref('/user/user-1/blog/blog-1', 'viewer-1')?.route.href).toBe(
+      '/user/user-1/blog/blog-1'
     );
   });
 });

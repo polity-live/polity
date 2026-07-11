@@ -11,13 +11,15 @@ const {
     ...content,
     { type: 'p', children: [{ text: `${suggestionId}:${voteResult}` }] },
   ]),
-  findChangeRequestDiscussionMock: vi.fn((discussions, changeRequest) =>
-    discussions.find(
-      (discussion: any) =>
-        discussion.changeRequestEntityId === changeRequest.id ||
-        (changeRequest.title &&
-          (discussion.crId === changeRequest.title || discussion.title === changeRequest.title))
-    )
+  findChangeRequestDiscussionMock: vi.fn(
+    (discussions, changeRequest) =>
+      discussions.find(
+        (discussion: any) =>
+          discussion.id === changeRequest.suggestion_id ||
+          discussion.changeRequestEntityId === changeRequest.id ||
+          (changeRequest.title &&
+            (discussion.crId === changeRequest.title || discussion.title === changeRequest.title))
+      ) ?? (changeRequest.suggestion_id ? { id: changeRequest.suggestion_id } : undefined)
   ),
   getChangeRequestResolutionStatusMock: vi.fn(voteResult =>
     voteResult === 'passed' ? 'accepted' : 'rejected'
@@ -386,6 +388,49 @@ describe('internal change request voting close rules', () => {
     );
     expect(applyChangeRequestVoteResultToContentMock).not.toHaveBeenCalled();
     expect(tx.mutate.document.update).not.toHaveBeenCalled();
+  });
+
+  it('uses the durable suggestion id when branch discussions no longer contain the link', async () => {
+    const originalContent = [
+      {
+        type: 'p',
+        children: [{ text: 'inserted', suggestion_insert: { id: 'suggestion-1', type: 'insert' } }],
+      },
+    ];
+    const tx = createTx([
+      {
+        id: 'amendment-1',
+        document_id: 'doc-1',
+        discussions: [],
+      },
+      [
+        {
+          ...openChangeRequest,
+          created_in_mode: 'suggest_internal',
+          suggestion_id: 'suggestion-1',
+        },
+      ],
+      { id: 'doc-1', content: originalContent },
+      [votingCollaborator('user-1')],
+      [{ id: 'vote-1', user_id: 'user-1', vote: 'accept', created_at: 1_000 }],
+      { version_number: 1 },
+    ]);
+
+    await finalizeInternalChangeRequestsForEventPhaseTransition({
+      tx: tx as never,
+      ctx: { userID: 'manager-1' },
+      amendmentId: 'amendment-1',
+      now: 5_000,
+    });
+
+    expect(applyChangeRequestVoteResultToContentMock).toHaveBeenCalledWith(
+      originalContent,
+      'suggestion-1',
+      'passed'
+    );
+    expect(tx.mutate.change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'cr-1', status: 'accepted' })
+    );
   });
 
   it('applies duplicated logical CRs only once using the voted row as canonical', async () => {

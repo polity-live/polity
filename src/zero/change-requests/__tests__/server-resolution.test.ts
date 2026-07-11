@@ -190,6 +190,58 @@ describe('resolveChangeRequestByVoteResult', () => {
     );
   });
 
+  it('resolves a change request by its durable suggestion id without discussion metadata', async () => {
+    const originalContent = [
+      {
+        type: 'p',
+        children: [
+          { text: 'removed', suggestion_remove: { id: 'suggestion-durable', type: 'remove' } },
+        ],
+      },
+    ];
+    const tx = createTx([
+      {
+        id: 'cr-1',
+        amendment_id: 'amendment-1',
+        suggestion_id: 'suggestion-durable',
+        title: 'CR-1',
+      },
+      {
+        id: 'amendment-1',
+        document_id: 'doc-1',
+        discussions: [],
+      },
+      {
+        id: 'doc-1',
+        content: originalContent,
+      },
+      {
+        version_number: 1,
+      },
+    ]);
+
+    await resolveChangeRequestByVoteResult({
+      tx: tx as never,
+      ctx: { userID: 'user-1' },
+      changeRequestId: 'cr-1',
+      voteResult: 'rejected',
+      now: 1_000,
+    });
+
+    expect(applySuggestionToContentMock).toHaveBeenCalledWith(
+      originalContent,
+      'suggestion-durable',
+      'reject'
+    );
+    expect(tx.mutate.change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'cr-1',
+        status: 'rejected',
+        voting_status: 'completed',
+      })
+    );
+  });
+
   it('applies a branch-scoped change request only to the branch document and discussions', async () => {
     const originalContent = [
       {

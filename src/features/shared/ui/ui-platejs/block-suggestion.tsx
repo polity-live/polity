@@ -281,7 +281,11 @@ export function BlockSuggestionCard({
     suggestion.votingStatus !== 'completed' &&
     Boolean(suggestion.changeRequestEntityId) &&
     Boolean(onFinalizeInternalVote);
-  const canVoteOnSuggestion = Boolean(onVoteAccept && onVoteReject && onVoteAbstain);
+  const isCompletedSuggestion =
+    suggestion.votingStatus === 'completed' ||
+    ['accepted', 'approved', 'rejected', 'declined'].includes(suggestion.changeRequestStatus ?? '');
+  const canVoteOnSuggestion =
+    !isCompletedSuggestion && Boolean(onVoteAccept && onVoteReject && onVoteAbstain);
   const projectedOutcome = acceptVotes > rejectVotes ? 'Accepted' : 'Rejected';
   const isEventSuggestionMode = currentMode === 'suggest_event';
   const isConfirmedEventSuggestion =

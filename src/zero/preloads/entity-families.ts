@@ -16,6 +16,7 @@ import {
   createEventAgendaDependentPreloadEntries,
   discoverEventAgendaPreloadDependencies,
 } from './event-agenda';
+import { withWikiTaskDependencies } from './task-dependencies';
 
 interface RunnableZero {
   run: (
@@ -64,7 +65,7 @@ function selectGroupTask(tasks: readonly PreloadTask[], groupId: string, pathnam
   if (pathname.startsWith(`${base}/operation`)) return taskBySuffix(tasks, 'operation');
   if (pathname.startsWith(`${base}/events`)) return taskBySuffix(tasks, 'events');
   if (pathname.startsWith(`${base}/amendments`)) return taskBySuffix(tasks, 'amendments');
-  if (pathname === `${base}/blog` || pathname.startsWith(`${base}/blogs-and-statements`)) {
+  if (pathname.startsWith(`${base}/blogs-and-statements`)) {
     return taskBySuffix(tasks, 'blogs-and-statements');
   }
   if (pathname.startsWith(`${base}/network`) || pathname.startsWith(`${base}/relationships`)) {
@@ -83,29 +84,31 @@ export function useGroupRouteFamilyPreloads(groupId?: string) {
   const pathname = useLocation().pathname;
   const tasks = useMemo(() => {
     if (!user?.id || !groupId) return [];
-    return createGroupPreloadTasks(groupId).map<PreloadTask>(item =>
-      item.key.endsWith(':events')
-        ? {
-            ...item,
-            resolveAfterComplete: async () => {
-              const eventRows = await zero.run(queries.events.byGroupActive({ groupId }), {
-                type: 'unknown',
-                ttl: 'none',
-              });
-              const eventIds = idRows(eventRows);
-              return eventIds.length
-                ? [
-                    createPreloadEntry(
-                      'queries.groups.amendmentEventStepRunsByEventIds',
-                      { eventIds },
-                      queries.groups.amendmentEventStepRunsByEventIds({ eventIds })
-                    ),
-                  ]
-                : [];
-            },
-          }
-        : item
-    );
+    return createGroupPreloadTasks(groupId, user.id)
+      .map(item => withWikiTaskDependencies(item, zero, user.id))
+      .map<PreloadTask>(item =>
+        item.key.endsWith(':events')
+          ? {
+              ...item,
+              resolveAfterComplete: async () => {
+                const eventRows = await zero.run(queries.events.byGroupActive({ groupId }), {
+                  type: 'unknown',
+                  ttl: 'none',
+                });
+                const eventIds = idRows(eventRows);
+                return eventIds.length
+                  ? [
+                      createPreloadEntry(
+                        'queries.groups.amendmentEventStepRunsByEventIds',
+                        { eventIds },
+                        queries.groups.amendmentEventStepRunsByEventIds({ eventIds })
+                      ),
+                    ]
+                  : [];
+              },
+            }
+          : item
+      );
   }, [groupId, user?.id, zero]);
   const active = groupId ? selectGroupTask(tasks, groupId, pathname) : undefined;
   useEntityTaskFamily(groupId ? `group:${groupId}` : 'group:none', tasks, active);
@@ -130,7 +133,7 @@ export function useEventRouteFamilyPreloads(eventId?: string) {
   const pathname = useLocation().pathname;
   const tasks = useMemo(() => {
     if (!user?.id || !eventId) return [];
-    return createEventPreloadTasks(eventId).map<PreloadTask>(item => {
+    return createEventPreloadTasks(eventId, user.id).map<PreloadTask>(item => {
       if (item.key.endsWith(':agenda')) {
         return {
           ...item,
@@ -226,7 +229,7 @@ export function useAmendmentRouteFamilyPreloads(amendmentId?: string) {
   const pathname = useLocation().pathname;
   const tasks = useMemo(() => {
     if (!user?.id || !amendmentId) return [];
-    return createAmendmentPreloadTasks(amendmentId).map<PreloadTask>(item => {
+    return createAmendmentPreloadTasks(amendmentId, user.id).map<PreloadTask>(item => {
       const page = item.key.split(':').at(-1) ?? '';
       if (!['text', 'change-requests', 'discussions'].includes(page)) return item;
       return {
@@ -273,7 +276,7 @@ export function useBlogRouteFamilyPreloads(blogId?: string) {
     : undefined;
   const base = nestedBase ?? directBase;
   const tasks = useMemo(
-    () => (user?.id && blogId ? createBlogPreloadTasks(blogId, base) : []),
+    () => (user?.id && blogId ? createBlogPreloadTasks(blogId, base, user.id) : []),
     [base, blogId, user?.id]
   );
   const active = useMemo(() => {

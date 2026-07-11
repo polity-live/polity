@@ -429,15 +429,23 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   // is NOT actively typing (no pending local changes, no recent save).
   useEffect(() => {
     if (!entity || !isInitialized.current) return;
-    // Skip if we have an active local edit in progress
-    if (isLocalChange.current || hasUnsavedChanges) return;
-    // Skip if a save just happened (the poke is echoing our own write)
-    if (Date.now() - lastSaveTime.current < 2000) return;
+    const forceCanonicalRemoteContent =
+      mode === 'vote_internal' || mode === 'event_final_closing_vote';
+    if (!forceCanonicalRemoteContent) {
+      // Skip if we have an active local edit in progress
+      if (isLocalChange.current || hasUnsavedChanges) return;
+      // Skip if a save just happened (the poke is echoing our own write)
+      if (Date.now() - lastSaveTime.current < 2000) return;
+    }
 
     const remoteUpdatedAt = entity.updatedAt || 0;
-    if (remoteUpdatedAt <= lastRemoteUpdate.current) return;
-
     const remoteContent = entity.content?.length ? entity.content : DEFAULT_EDITOR_CONTENT;
+    if (JSON.stringify(remoteContent) === JSON.stringify(content)) {
+      lastRemoteUpdate.current = Math.max(lastRemoteUpdate.current, remoteUpdatedAt);
+      return;
+    }
+    if (!forceCanonicalRemoteContent && remoteUpdatedAt <= lastRemoteUpdate.current) return;
+
     editorSelectionDebugLog('content-source:zero-remote-update', {
       contentEntityId,
       contentSignature: summarizeRichTextValue(remoteContent),
@@ -456,6 +464,8 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     entityId,
     entityType,
     hasUnsavedChanges,
+    content,
+    mode,
   ]);
 
   // Reset local change flag

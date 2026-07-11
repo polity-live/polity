@@ -21,6 +21,8 @@ export interface CanonicalSavedChangeRequest {
   id: string;
   process_branch_id?: string | null;
   processBranchId?: string | null;
+  suggestion_id?: string | null;
+  suggestionId?: string | null;
   title?: string | null;
   status?: string | null;
   voting_status?: string | null;
@@ -151,14 +153,18 @@ export function findDiscussionForChangeRequest<TDiscussion extends CanonicalDisc
     | 'title'
     | 'process_branch_id'
     | 'processBranchId'
+    | 'suggestion_id'
+    | 'suggestionId'
     | 'branch_sequence_number'
     | 'branchSequenceNumber'
   >
 ) {
   const processBranchId = getChangeRequestProcessBranchId(changeRequest);
   const canonicalCrId = formatChangeRequestCrId(getChangeRequestSequenceNumber(changeRequest));
+  const suggestionId = changeRequest.suggestion_id ?? changeRequest.suggestionId ?? null;
 
   return (
+    discussions.find(discussion => suggestionId && discussion.id === suggestionId) ??
     discussions.find(discussion => discussion.changeRequestEntityId === changeRequest.id) ??
     discussions.find(
       discussion =>

@@ -32,6 +32,7 @@ import { useBrowserNotifications } from '@/features/notifications/hooks/useBrows
 import { useToastSettingsSync } from '@/features/notifications/hooks/useToastSettingsSync.ts';
 import { MotionPage } from '@/features/shared/motion';
 import {
+  InternalLinkIntentPreloader,
   PrioritizedPreloadProvider,
   useGlobalZeroPreloads,
   usePrimaryRouteIdlePreloads,
@@ -66,12 +67,18 @@ function AppShellInner({ children }: { children: ReactNode }) {
   if (user && zeroReady) {
     return (
       <PrioritizedPreloadProvider>
+        <InternalLinkIntentPreloader />
         <AuthenticatedShell>{children}</AuthenticatedShell>
       </PrioritizedPreloadProvider>
     );
   }
 
-  return <UnauthenticatedShell>{children}</UnauthenticatedShell>;
+  return (
+    <>
+      <InternalLinkIntentPreloader />
+      <UnauthenticatedShell>{children}</UnauthenticatedShell>
+    </>
+  );
 }
 
 function UnauthenticatedShell({ children }: { children: ReactNode }) {

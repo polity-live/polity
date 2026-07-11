@@ -177,4 +177,26 @@ describe('canonical change request records', () => {
 
     expect(record.displayCrId).toBe('CR-7');
   });
+
+  it('matches the persisted suggestion id before legacy title fallbacks', () => {
+    const records = buildCanonicalChangeRequestRecords({
+      discussions: [
+        { id: 'suggestion-correct', crId: 'CR-1', title: 'Correct suggestion' },
+        { id: 'suggestion-stale', crId: 'CR-2', title: 'Legacy title' },
+      ],
+      changeRequests: [
+        {
+          id: 'cr-1',
+          suggestion_id: 'suggestion-correct',
+          title: 'Legacy title',
+          status: 'open',
+        },
+      ],
+    });
+
+    expect(records).toHaveLength(2);
+    expect(records.find(record => record.changeRequest?.id === 'cr-1')?.discussion?.id).toBe(
+      'suggestion-correct'
+    );
+  });
 });

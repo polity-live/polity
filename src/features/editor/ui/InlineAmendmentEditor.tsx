@@ -141,7 +141,7 @@ export function InlineAmendmentEditor({
     }) => {
       if (!amendmentIdFromEntity) return;
       const snapshot = createChangeRequestDiffSnapshot(discussionId, content);
-      editorOps.handleSuggestionCreated({
+      return editorOps.handleSuggestionCreated({
         id: changeRequestEntityId,
         crId,
         discussionId,

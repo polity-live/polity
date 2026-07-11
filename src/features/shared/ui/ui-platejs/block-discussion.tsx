@@ -95,12 +95,19 @@ const BlockCommentContent = ({
   const { selectedCrIds } = useModeContext();
 
   const resolvedSuggestions = useResolveSuggestion(suggestionNodes, blockPath);
+  const openSuggestions = resolvedSuggestions.filter(
+    suggestion =>
+      suggestion.votingStatus !== 'completed' &&
+      !['accepted', 'approved', 'rejected', 'declined'].includes(
+        suggestion.changeRequestStatus ?? ''
+      )
+  );
   const resolvedDiscussions = useResolvedDiscussion(commentNodes, blockPath);
 
   // Filter suggestions when specific CRs are selected
   const filteredSuggestions = selectedCrIds
-    ? resolvedSuggestions.filter(s => s.crId != null && selectedCrIds.has(s.crId))
-    : resolvedSuggestions;
+    ? openSuggestions.filter(s => s.crId != null && selectedCrIds.has(s.crId))
+    : openSuggestions;
 
   const suggestionsCount = filteredSuggestions.length;
   const discussionsCount = resolvedDiscussions.length;

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { Value } from 'platejs';
 
-import { applySuggestionToContent } from '../applySuggestionToContent';
+import {
+  applyResolvedSuggestionsToContent,
+  applySuggestionToContent,
+} from '../applySuggestionToContent';
 
 function textContent(content: Value) {
   return JSON.stringify(content);
@@ -50,5 +53,44 @@ describe('applySuggestionToContent', () => {
     expect(textContent(applySuggestionToContent(content, 'suggestion-1', 'reject'))).not.toContain(
       'Wird hinzugefügt'
     );
+  });
+
+  it('reapplies completed decisions to stale document content', () => {
+    const content = [
+      {
+        type: 'p',
+        children: [
+          {
+            text: 'Nicht hinzufügen',
+            suggestion: true,
+            suggestion_insert: { id: 'suggestion-insert', type: 'insert' },
+          },
+          {
+            text: 'Nicht entfernen',
+            suggestion: true,
+            suggestion_remove: { id: 'suggestion-remove', type: 'remove' },
+          },
+        ],
+      },
+    ] as Value;
+
+    const resolved = applyResolvedSuggestionsToContent(content, [
+      {
+        suggestion_id: 'suggestion-insert',
+        status: 'rejected',
+        voting_status: 'completed',
+        created_at: 1,
+      },
+      {
+        suggestion_id: 'suggestion-remove',
+        status: 'rejected',
+        voting_status: 'completed',
+        created_at: 2,
+      },
+    ]);
+
+    expect(textContent(resolved)).not.toContain('Nicht hinzufügen');
+    expect(textContent(resolved)).toContain('Nicht entfernen');
+    expect(textContent(resolved)).not.toContain('suggestion-remove');
   });
 });

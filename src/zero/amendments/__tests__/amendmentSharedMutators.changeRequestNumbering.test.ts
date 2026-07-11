@@ -76,6 +76,7 @@ describe('amendmentSharedMutators.createChangeRequest numbering', () => {
         title: 'CR-1',
         branch_sequence_number: 1,
         process_branch_id: 'branch-1',
+        suggestion_id: 'suggestion-new',
       })
     );
     expect(tx.mutate.amendment_process_branch.update).toHaveBeenCalledWith(
@@ -90,6 +91,65 @@ describe('amendmentSharedMutators.createChangeRequest numbering', () => {
             branchScopedCrNumber: 1,
           }),
         ],
+      })
+    );
+  });
+
+  it('does not insert a document change request when its suggestion link is missing', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce({ id: 'amendment-1', discussions: [] })
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        process_run_id: 'run-1',
+        document_id: 'document-1',
+        discussions: [],
+        status: 'active',
+        editing_mode: 'suggest_internal',
+      })
+      .mockResolvedValueOnce({ id: 'run-1', amendment_id: 'amendment-1' });
+
+    await expect(
+      amendmentSharedMutators.createChangeRequest.fn({
+        tx,
+        ctx,
+        args: createArgs({ process_branch_id: 'branch-1' }),
+      })
+    ).rejects.toThrow('linked document suggestion not found');
+
+    expect(tx.mutate.change_request.insert).not.toHaveBeenCalled();
+  });
+
+  it('allows a street design change request without a document suggestion link', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce({ id: 'amendment-1', discussions: [] })
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        process_run_id: 'run-1',
+        document_id: 'document-1',
+        discussions: [],
+        status: 'active',
+        editing_mode: 'suggest_internal',
+      })
+      .mockResolvedValueOnce({ id: 'run-1', amendment_id: 'amendment-1' })
+      .mockResolvedValueOnce([]);
+
+    await amendmentSharedMutators.createChangeRequest.fn({
+      tx,
+      ctx,
+      args: createArgs({
+        process_branch_id: 'branch-1',
+        discussion_id: null,
+        source_type: 'street_design_object',
+      }),
+    });
+
+    expect(tx.mutate.change_request.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'cr-new',
+        source_type: 'street_design_object',
+        suggestion_id: null,
       })
     );
   });

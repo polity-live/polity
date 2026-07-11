@@ -123,6 +123,36 @@ describe('adaptAmendmentToEntity', () => {
     expect(discussion?.votes).toEqual([{ id: 'vote-1', vote: 'accept', voterId: 'user-1' }]);
   });
 
+  it('does not render stale markers for completed change requests', () => {
+    const amendment = amendmentWithRole('vote') as any;
+    amendment.change_requests[0] = {
+      ...amendment.change_requests[0],
+      suggestion_id: 'suggestion-1',
+      status: 'rejected',
+      voting_status: 'completed',
+    };
+    const staleDocument = {
+      ...document,
+      content: [
+        {
+          type: 'p',
+          children: [
+            {
+              text: 'Nicht hinzufügen',
+              suggestion: true,
+              suggestion_insert: { id: 'suggestion-1', type: 'insert' },
+            },
+          ],
+        },
+      ],
+    };
+
+    const entity = adaptAmendmentToEntity(amendment, staleDocument, 'user-1');
+
+    expect(JSON.stringify(entity?.content)).not.toContain('Nicht hinzufügen');
+    expect(JSON.stringify(entity?.content)).not.toContain('suggestion-1');
+  });
+
   it('includes change request authors as editor users even when they are not collaborators', () => {
     const amendment = amendmentWithRole('view') as any;
     amendment.change_requests[0] = {

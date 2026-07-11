@@ -17,6 +17,13 @@ interface SuggestionMark {
   newProperties?: Record<string, unknown>;
 }
 
+export interface ResolvedSuggestionDecision {
+  suggestion_id?: string | null;
+  status?: string | null;
+  voting_status?: string | null;
+  created_at?: number | null;
+}
+
 /**
  * Apply or reject a specific suggestion in a plate-js document.
  *
@@ -31,6 +38,32 @@ export function applySuggestionToContent(
   action: SuggestionAction
 ): Value {
   return processNodes(content, suggestionId, action) as Value;
+}
+
+export function applyResolvedSuggestionsToContent(
+  content: Value,
+  changeRequests: readonly ResolvedSuggestionDecision[]
+): Value {
+  return [...changeRequests]
+    .filter(
+      changeRequest =>
+        changeRequest.voting_status === 'completed' &&
+        Boolean(changeRequest.suggestion_id) &&
+        ['accepted', 'approved', 'rejected', 'declined'].includes(changeRequest.status ?? '')
+    )
+    .sort((left, right) => (left.created_at ?? 0) - (right.created_at ?? 0))
+    .reduce((nextContent, changeRequest) => {
+      const suggestionId = changeRequest.suggestion_id;
+      if (!suggestionId) return nextContent;
+
+      return applySuggestionToContent(
+        nextContent,
+        suggestionId,
+        changeRequest.status === 'accepted' || changeRequest.status === 'approved'
+          ? 'accept'
+          : 'reject'
+      );
+    }, content);
 }
 
 function processNodes(

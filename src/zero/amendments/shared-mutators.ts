@@ -537,9 +537,23 @@ export const amendmentSharedMutators = {
         args.process_branch_id ?? null
       );
       const discussionId = args.discussion_id ?? null;
+      const sourceType = args.source_type?.trim().toLowerCase() ?? '';
+      const isStreetDesignChangeRequest =
+        sourceType === 'street_design' ||
+        sourceType === 'streetscape' ||
+        sourceType.startsWith('street_design_') ||
+        sourceType.startsWith('streetscape_');
       const targetDiscussions = normalizeDiscussions(
         processBranch ? processBranch.discussions : amendment.discussions
       );
+      const targetDiscussion = discussionId
+        ? targetDiscussions.find(discussion => discussion.id === discussionId)
+        : null;
+      if (!isStreetDesignChangeRequest && (!discussionId || !targetDiscussion)) {
+        throw new Error(
+          'Cannot create document change request: linked document suggestion not found.'
+        );
+      }
       const branchSequenceNumber = await resolveNextChangeRequestBranchSequence({
         tx,
         amendmentId: args.amendment_id,
@@ -564,6 +578,7 @@ export const amendmentSharedMutators = {
       await tx.mutate.change_request.insert({
         ...changeRequestArgs,
         process_branch_id: args.process_branch_id ?? null,
+        suggestion_id: discussionId,
         title: crId,
         branch_sequence_number: branchSequenceNumber,
         user_id: userID,

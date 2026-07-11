@@ -9,6 +9,7 @@ const baseChangeRequestSchema = z.object({
   id: z.string(),
   amendment_id: z.string(),
   process_branch_id: z.string().nullable().optional(),
+  suggestion_id: z.string().nullable().optional(),
   user_id: z.string(),
   title: z.string().nullable(),
   description: z.string().nullable(),

@@ -26,6 +26,7 @@ interface ChangeRequestResolutionRow {
   id: string;
   amendment_id: string;
   process_branch_id?: string | null;
+  suggestion_id?: string | null;
   title?: string | null;
   source_type?: string | null;
   source_id?: string | null;
@@ -50,13 +51,16 @@ export function getChangeRequestResolutionStatus(voteResult: VoteResult) {
 
 export function findChangeRequestDiscussion(
   discussions: readonly DiscussionEntry[],
-  changeRequest: { id: string; title?: string | null }
+  changeRequest: { id: string; suggestion_id?: string | null; title?: string | null }
 ) {
-  return discussions.find(
-    discussion =>
-      discussion.changeRequestEntityId === changeRequest.id ||
-      (changeRequest.title &&
-        (discussion.crId === changeRequest.title || discussion.title === changeRequest.title))
+  return (
+    discussions.find(
+      discussion =>
+        discussion.id === changeRequest.suggestion_id ||
+        discussion.changeRequestEntityId === changeRequest.id ||
+        (changeRequest.title &&
+          (discussion.crId === changeRequest.title || discussion.title === changeRequest.title))
+    ) ?? (changeRequest.suggestion_id ? { id: changeRequest.suggestion_id } : undefined)
   );
 }
 

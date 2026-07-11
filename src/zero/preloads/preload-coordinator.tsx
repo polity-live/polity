@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import { useRouter, useRouterState } from '@tanstack/react-router';
 import { useZero } from '@rocicorp/zero/react';
+import type { TTL } from '@rocicorp/zero';
 import { useAuth } from '@/providers/auth-provider';
 import { retainZeroPreloadHandle, type ZeroPreloadEntry } from './preload-registry';
 import { createIntentTaskForHref } from './route-manifests';
+import { withWikiTaskDependencies } from './task-dependencies';
 
 export const PRELOAD_CACHE_TTL = '10m' as const;
 export const PRELOAD_CACHE_TTL_MS = 10 * 60 * 1000;
@@ -25,8 +27,12 @@ export interface PreloadTask {
 interface PreloadableZero {
   preload: (
     query: unknown,
-    options?: { ttl?: typeof PRELOAD_CACHE_TTL }
+    options?: { ttl?: TTL }
   ) => { cleanup: () => void; complete: Promise<void> };
+  run?: (
+    query: unknown,
+    options: { type: 'unknown' | 'complete'; ttl?: 'none' }
+  ) => Promise<unknown>;
 }
 
 interface IdleScope {
@@ -40,14 +46,6 @@ interface RunningTask {
   kind: 'foreground' | 'background';
   releases: (() => void)[];
   task: PreloadTask;
-}
-
-interface IdleWindow extends Window {
-  requestIdleCallback?: (
-    callback: (deadline: { didTimeout: boolean; timeRemaining: () => number }) => void,
-    options?: { timeout: number }
-  ) => number;
-  cancelIdleCallback?: (id: number) => void;
 }
 
 function normalizeHref(href: string): string {
@@ -162,8 +160,7 @@ export class PreloadCoordinator {
 
   scheduleIntent(task: PreloadTask, delay = 50) {
     this.cancelIntent(task.key);
-    const timer = setTimeout(() => {
-      this.intentTimers.delete(task.key);
+    const enqueue = () => {
       if (this.isReady(task.key)) return;
       this.intentQueue.set(task.key, task);
 
@@ -178,6 +175,14 @@ export class PreloadCoordinator {
           this.start(next, 'background', 0);
         }
       }
+    };
+    if (delay <= 0) {
+      enqueue();
+      return;
+    }
+    const timer = setTimeout(() => {
+      this.intentTimers.delete(task.key);
+      enqueue();
     }, delay);
     this.intentTimers.set(task.key, timer);
   }
@@ -339,8 +344,8 @@ export class PreloadCoordinator {
       if (next) this.start(next, 'background', 0);
     };
 
-    const idleWindow = typeof window === 'undefined' ? undefined : (window as IdleWindow);
-    if (idleWindow?.requestIdleCallback) {
+    const idleWindow = typeof window === 'undefined' ? undefined : window;
+    if (idleWindow && typeof idleWindow.requestIdleCallback === 'function') {
       this.idleUsesWindowApi = true;
       this.idleHandle = idleWindow.requestIdleCallback(run, { timeout: 1_500 });
     } else {
@@ -351,8 +356,12 @@ export class PreloadCoordinator {
 
   private cancelScheduledIdle() {
     if (this.idleHandle === null) return;
-    const idleWindow = typeof window === 'undefined' ? undefined : (window as IdleWindow);
-    if (this.idleUsesWindowApi && idleWindow?.cancelIdleCallback) {
+    const idleWindow = typeof window === 'undefined' ? undefined : window;
+    if (
+      this.idleUsesWindowApi &&
+      idleWindow &&
+      typeof idleWindow.cancelIdleCallback === 'function'
+    ) {
       idleWindow.cancelIdleCallback(this.idleHandle as number);
     } else {
       clearTimeout(this.idleHandle as ReturnType<typeof setTimeout>);
@@ -380,7 +389,7 @@ export class PreloadCoordinator {
 
 interface PreloadCoordinatorContextValue {
   coordinator: PreloadCoordinator;
-  beginIntent: (href: string) => void;
+  beginIntent: (href: string, delay?: number) => void;
   cancelIntent: (href: string) => void;
 }
 
@@ -419,19 +428,24 @@ export function PrioritizedPreloadProvider({ children }: { children: ReactNode }
   }, [coordinator]);
 
   const value = useMemo<PreloadCoordinatorContextValue>(() => {
-    const taskFor = (href: string) => createIntentTaskForHref(href, user?.id);
+    const taskFor = (href: string) => {
+      const task = createIntentTaskForHref(href, user?.id);
+      return task && zero.run
+        ? withWikiTaskDependencies(task, { run: zero.run.bind(zero) }, user?.id)
+        : task;
+    };
     return {
       coordinator,
-      beginIntent: href => {
+      beginIntent: (href, delay = 50) => {
         const task = taskFor(href);
-        if (task) coordinator.scheduleIntent(task);
+        if (task) coordinator.scheduleIntent(task, delay);
       },
       cancelIntent: href => {
         const task = taskFor(href);
         if (task) coordinator.cancelIntent(task.key);
       },
     };
-  }, [coordinator, user?.id]);
+  }, [coordinator, user?.id, zero]);
 
   return (
     <PreloadCoordinatorContext.Provider value={value}>

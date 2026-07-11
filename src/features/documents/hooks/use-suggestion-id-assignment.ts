@@ -16,7 +16,7 @@ interface UseSuggestionIdAssignmentProps {
   confirmationMode?: 'none' | 'event_suggestion';
   documentId: string;
   discussions: TDiscussion[];
-  onDiscussionsUpdate: (discussions: TDiscussion[]) => void;
+  onDiscussionsUpdate: (discussions: TDiscussion[]) => unknown | Promise<unknown>;
   onChangeRequestCreate?: (params: {
     crId: string;
     discussionId: string;
@@ -176,7 +176,7 @@ export function useSuggestionIdAssignment({
             documentId,
             updatedDiscussions: summarizeDiscussions(updatedDiscussions),
           });
-          onDiscussionsUpdate(updatedDiscussions);
+          await onDiscussionsUpdate(updatedDiscussions);
           hasChanges = false;
         }
 
@@ -191,7 +191,7 @@ export function useSuggestionIdAssignment({
         documentId,
         updatedDiscussions: summarizeDiscussions(updatedDiscussions),
       });
-      onDiscussionsUpdate(updatedDiscussions);
+      await onDiscussionsUpdate(updatedDiscussions);
     }
   }, [
     confirmationMode,

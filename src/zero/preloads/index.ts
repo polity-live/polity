@@ -40,3 +40,10 @@ export {
   type PreloadTaskPriority,
   type PreloadTaskState,
 } from './preload-coordinator';
+export {
+  InternalLinkIntentPreloader,
+  LINK_INTENT_DELAY_MS,
+  installInternalLinkIntentDelegation,
+  isPreloadableAppRoute,
+  resolveInternalPreloadHref,
+} from './link-intent';

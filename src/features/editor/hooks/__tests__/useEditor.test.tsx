@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const hookMocks = vi.hoisted(() => ({
   zeroMutate: vi.fn((mutation: unknown) => mutation),
@@ -28,6 +28,24 @@ const hookMocks = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
   broadcastContent: vi.fn(),
+  amendmentDocsCollabs: {
+    id: 'amendment-1',
+    title: 'Amendment 1',
+    created_by_id: 'user-1',
+    discussions: [],
+    change_requests: [],
+    current_process_run: null,
+    collaborators: [],
+    document: {
+      id: 'document-1',
+      title: 'Amendment 1',
+      content: [{ type: 'p', children: [{ text: 'Text' }] }],
+      editing_mode: 'vote_internal',
+      visibility: 'public',
+      collaborators: [],
+      updated_at: 1,
+    },
+  } as any,
 }));
 
 vi.mock('@rocicorp/zero/react', () => ({
@@ -60,24 +78,7 @@ vi.mock('@/zero/mutate-with-server-check', () => ({
 vi.mock('@/zero/amendments/useAmendmentState', () => ({
   useAmendmentState: () => ({
     isLoading: false,
-    amendmentDocsCollabs: {
-      id: 'amendment-1',
-      title: 'Amendment 1',
-      created_by_id: 'user-1',
-      discussions: [],
-      change_requests: [],
-      current_process_run: null,
-      collaborators: [],
-      document: {
-        id: 'document-1',
-        title: 'Amendment 1',
-        content: [{ type: 'p', children: [{ text: 'Text' }] }],
-        editing_mode: 'vote_internal',
-        visibility: 'public',
-        collaborators: [],
-        updated_at: 1,
-      },
-    },
+    amendmentDocsCollabs: hookMocks.amendmentDocsCollabs,
   }),
 }));
 
@@ -114,9 +115,25 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 
 import { useEditor } from '../useEditor';
 
+beforeEach(() => {
+  hookMocks.amendmentDocsCollabs = {
+    ...hookMocks.amendmentDocsCollabs,
+    change_requests: [],
+    document: {
+      id: 'document-1',
+      title: 'Amendment 1',
+      content: [{ type: 'p', children: [{ text: 'Text' }] }],
+      editing_mode: 'vote_internal',
+      visibility: 'public',
+      collaborators: [],
+      updated_at: 1,
+    },
+  };
+});
+
 afterEach(() => {
   Object.values(hookMocks).forEach(value => {
-    value.mockClear();
+    if (vi.isMockFunction(value)) value.mockClear();
   });
 });
 
@@ -150,5 +167,32 @@ describe('useEditor', () => {
         editing_mode: 'suggest_internal',
       },
     });
+  });
+
+  it('adopts canonical remote content in internal voting even with an older timestamp', async () => {
+    const { result, rerender } = renderHook(() =>
+      useEditor({
+        entityType: 'amendment',
+        entityId: 'amendment-1',
+        userId: 'user-1',
+      })
+    );
+
+    await waitFor(() => expect(result.current.content[0]).toMatchObject({ type: 'p' }));
+
+    hookMocks.amendmentDocsCollabs = {
+      ...hookMocks.amendmentDocsCollabs,
+      document: {
+        ...hookMocks.amendmentDocsCollabs.document,
+        content: [{ type: 'p', children: [{ text: 'Canonical accepted text' }] }],
+        // A local save can make lastRemoteUpdate newer than this authoritative row timestamp.
+        updated_at: 0,
+      },
+    };
+    rerender();
+
+    await waitFor(() =>
+      expect(JSON.stringify(result.current.content)).toContain('Canonical accepted text')
+    );
   });
 });

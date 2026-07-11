@@ -192,6 +192,24 @@ describe('BlockSuggestionCard internal vote actions', () => {
     expect(screen.getByRole('button', { name: 'Interne Abstimmung beenden' })).toBeTruthy();
   });
 
+  it('does not offer vote actions for a completed suggestion', () => {
+    render(
+      <BlockSuggestionCard
+        idx={0}
+        isLast
+        suggestion={{
+          ...internalVoteSuggestion(),
+          changeRequestStatus: 'rejected',
+          votingStatus: 'completed',
+        }}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: 'Accept' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Reject' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Abstain' })).toBeNull();
+  });
+
   it('asks the author to submit pending event suggestions even with a persisted row', () => {
     modeContextMock.currentMode = 'suggest_event';
 

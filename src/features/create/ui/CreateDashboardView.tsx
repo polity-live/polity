@@ -10,7 +10,6 @@ import {
   Section,
 } from '@/features/shared/ui/layout';
 import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
-import { usePreloadCoordinator } from '@/zero/preloads';
 
 export interface CreateDashboardItemViewModel {
   href: string;
@@ -32,7 +31,6 @@ interface CreateDashboardViewProps {
 }
 
 export function CreateDashboardView({ title, subtitle, sections }: CreateDashboardViewProps) {
-  const preloadContext = usePreloadCoordinator();
   return (
     <div className="space-y-6">
       <PageHeader title={title} description={subtitle} />
@@ -45,16 +43,7 @@ export function CreateDashboardView({ title, subtitle, sections }: CreateDashboa
                 const Icon = item.icon;
 
                 return (
-                  <SmartLink
-                    key={item.href}
-                    href={item.href}
-                    className="block"
-                    onMouseEnter={() => preloadContext?.beginIntent(item.href)}
-                    onMouseLeave={() => preloadContext?.cancelIntent(item.href)}
-                    onFocus={() => preloadContext?.beginIntent(item.href)}
-                    onBlur={() => preloadContext?.cancelIntent(item.href)}
-                    onTouchStart={() => preloadContext?.beginIntent(item.href)}
-                  >
+                  <SmartLink key={item.href} href={item.href} className="block">
                     <Panel
                       className="hover:bg-accent/60 focus-within:ring-ring h-full transition-colors focus-within:ring-2"
                       data-create-action="open-create-flow"
