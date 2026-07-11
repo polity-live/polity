@@ -169,30 +169,53 @@ async function resolveNextChangeRequestBranchSequence({
   amendmentId,
   processBranchId,
   discussions,
+  discussionId,
   requestedCrId,
 }: {
   tx: Parameters<typeof denyPublicApiMutation>[0];
   amendmentId: string;
   processBranchId?: string | null;
   discussions: readonly Record<string, any>[];
+  discussionId?: string | null;
   requestedCrId?: string | null;
 }) {
   const existingChangeRequests = await tx.run(
     zql.change_request.where('amendment_id', amendmentId)
   );
-  const maxFromRows = (Array.isArray(existingChangeRequests) ? existingChangeRequests : [])
-    .filter((row: { process_branch_id?: string | null }) => sameBranch(row, processBranchId))
-    .reduce(
-      (max: number, row: { branch_sequence_number?: number | null; title?: string | null }) =>
-        Math.max(max, getScopedChangeRequestNumber(row)),
-      0
-    );
-  const maxFromDiscussions = discussions.reduce(
-    (max, discussion) => Math.max(max, getDiscussionCrNumber(discussion)),
+  const scopedChangeRequests = (
+    Array.isArray(existingChangeRequests) ? existingChangeRequests : []
+  ).filter((row: { process_branch_id?: string | null }) => sameBranch(row, processBranchId));
+  const persistedNumbers = new Set(
+    scopedChangeRequests.map(
+      (row: { branch_sequence_number?: number | null; title?: string | null }) =>
+        getScopedChangeRequestNumber(row)
+    )
+  );
+  const maxFromRows = scopedChangeRequests.reduce(
+    (max: number, row: { branch_sequence_number?: number | null; title?: string | null }) =>
+      Math.max(max, getScopedChangeRequestNumber(row)),
+    0
+  );
+  const targetDiscussion = discussionId
+    ? discussions.find(discussion => discussion.id === discussionId)
+    : null;
+  const maxFromOtherDiscussions = discussions.reduce(
+    (max, discussion) =>
+      discussion === targetDiscussion ? max : Math.max(max, getDiscussionCrNumber(discussion)),
     0
   );
   const requestedNumber = parseChangeRequestCrId(requestedCrId);
-  const nextNumber = Math.max(maxFromRows, maxFromDiscussions) + 1;
+  const isTargetReservation =
+    requestedNumber !== null &&
+    requestedNumber > 0 &&
+    targetDiscussion !== null &&
+    getDiscussionCrNumber(targetDiscussion) === requestedNumber;
+
+  if (isTargetReservation && !persistedNumbers.has(requestedNumber)) {
+    return requestedNumber;
+  }
+
+  const nextNumber = Math.max(maxFromRows, maxFromOtherDiscussions) + 1;
 
   return requestedNumber && requestedNumber >= nextNumber ? requestedNumber : nextNumber;
 }
@@ -522,6 +545,7 @@ export const amendmentSharedMutators = {
         amendmentId: args.amendment_id,
         processBranchId: args.process_branch_id ?? null,
         discussions: targetDiscussions,
+        discussionId,
         requestedCrId: args.title,
       });
       const crId = formatChangeRequestCrId(branchSequenceNumber) ?? `CR-${branchSequenceNumber}`;

@@ -69,19 +69,21 @@ export function CreateFormShellView({
             'pointer-events-none opacity-30 blur-[1px] transition-[filter,opacity] duration-[var(--motion-duration-base)] select-none'
         )}
       >
-        <CreateFlowFrame
-          title={title}
-          action={<FormStyleSelector value={selectedFormStyle} onChange={onFormStyleChange} />}
-          isCarouselLayout={isCarouselLayout}
-        >
-          <Layout
-            steps={steps}
-            currentStep={currentStep}
-            onStepChange={onStepChange}
-            onSubmit={onSubmit}
-            isSubmitting={isSubmitting}
-          />
-        </CreateFlowFrame>
+        {submission.status !== 'ready' ? (
+          <CreateFlowFrame
+            title={title}
+            action={<FormStyleSelector value={selectedFormStyle} onChange={onFormStyleChange} />}
+            isCarouselLayout={isCarouselLayout}
+          >
+            <Layout
+              steps={steps}
+              currentStep={currentStep}
+              onStepChange={onStepChange}
+              onSubmit={onSubmit}
+              isSubmitting={isSubmitting}
+            />
+          </CreateFlowFrame>
+        ) : null}
       </div>
 
       <CreateSubmissionOverlay

@@ -57,7 +57,7 @@ describe('amendmentSharedMutators.createChangeRequest numbering', () => {
         id: 'branch-1',
         process_run_id: 'run-1',
         document_id: 'document-1',
-        discussions: [{ id: 'suggestion-new' }],
+        discussions: [{ id: 'suggestion-new', crId: 'CR-1' }],
         status: 'active',
         editing_mode: 'suggest_event',
       })
@@ -90,6 +90,106 @@ describe('amendmentSharedMutators.createChangeRequest numbering', () => {
             branchScopedCrNumber: 1,
           }),
         ],
+      })
+    );
+  });
+
+  it('keeps the next preassigned discussion number after an existing change request', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce({ id: 'amendment-1', discussions: [] })
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        process_run_id: 'run-1',
+        document_id: 'document-1',
+        discussions: [{ id: 'suggestion-new', crId: 'CR-2' }],
+        status: 'active',
+        editing_mode: 'suggest_event',
+      })
+      .mockResolvedValueOnce({ id: 'run-1', amendment_id: 'amendment-1' })
+      .mockResolvedValueOnce([
+        {
+          id: 'cr-1',
+          process_branch_id: 'branch-1',
+          title: 'CR-1',
+          branch_sequence_number: 1,
+        },
+      ]);
+
+    await amendmentSharedMutators.createChangeRequest.fn({
+      tx,
+      ctx,
+      args: createArgs({ process_branch_id: 'branch-1', title: 'CR-2' }),
+    });
+
+    expect(tx.mutate.change_request.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'CR-2', branch_sequence_number: 2 })
+    );
+  });
+
+  it('does not let another preassigned discussion displace the current reservation', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce({ id: 'amendment-1', discussions: [] })
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        process_run_id: 'run-1',
+        document_id: 'document-1',
+        discussions: [
+          { id: 'suggestion-new', crId: 'CR-1' },
+          { id: 'suggestion-next', crId: 'CR-2' },
+        ],
+        status: 'active',
+        editing_mode: 'suggest_event',
+      })
+      .mockResolvedValueOnce({ id: 'run-1', amendment_id: 'amendment-1' })
+      .mockResolvedValueOnce([]);
+
+    await amendmentSharedMutators.createChangeRequest.fn({
+      tx,
+      ctx,
+      args: createArgs({ process_branch_id: 'branch-1', title: 'CR-1' }),
+    });
+
+    expect(tx.mutate.change_request.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'CR-1', branch_sequence_number: 1 })
+    );
+  });
+
+  it('advances when the current discussion reserved an already persisted number', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce({ id: 'amendment-1', discussions: [] })
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        process_run_id: 'run-1',
+        document_id: 'document-1',
+        discussions: [{ id: 'suggestion-new', crId: 'CR-1' }],
+        status: 'active',
+        editing_mode: 'suggest_event',
+      })
+      .mockResolvedValueOnce({ id: 'run-1', amendment_id: 'amendment-1' })
+      .mockResolvedValueOnce([
+        {
+          id: 'cr-1',
+          process_branch_id: 'branch-1',
+          title: 'CR-1',
+          branch_sequence_number: 1,
+        },
+      ]);
+
+    await amendmentSharedMutators.createChangeRequest.fn({
+      tx,
+      ctx,
+      args: createArgs({ process_branch_id: 'branch-1', title: 'CR-1' }),
+    });
+
+    expect(tx.mutate.change_request.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'CR-2', branch_sequence_number: 2 })
+    );
+    expect(tx.mutate.amendment_process_branch.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        discussions: [expect.objectContaining({ id: 'suggestion-new', crId: 'CR-2' })],
       })
     );
   });

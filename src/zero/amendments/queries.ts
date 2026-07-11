@@ -841,16 +841,6 @@ export const amendmentQueries = {
         .related('action_rights')
   ),
 
-  // Document versions by document
-  documentVersionsByDocument: defineQuery(
-    z.object({ document_id: z.string() }),
-    ({ args: { document_id }, ctx: { userID } }) =>
-      zql.document_version
-        .where('document_id', document_id)
-        .whereExists('document', document => applyDocumentQueryAccess(document, userID))
-        .related('author')
-  ),
-
   // Cross-domain: All groups
   allGroups: defineQuery(z.object({}), ({ ctx: { userID } }) =>
     applyGroupQueryAccess(zql.group, userID)
@@ -1028,7 +1018,6 @@ export type ChangeRequestRow = QueryRowType<typeof amendmentQueries.changeReques
 export type ChangeRequestWithVotesRow = QueryRowType<
   typeof amendmentQueries.changeRequestsWithVotes
 >;
-export type DocumentVersionRow = QueryRowType<typeof amendmentQueries.documentVersionsByDocument>;
 export type SupportConfirmationRow = QueryRowType<typeof amendmentQueries.supportConfirmations>;
 export type AmendmentGroupDecisionRow = QueryRowType<
   typeof amendmentQueries.groupDecisionsByAmendment

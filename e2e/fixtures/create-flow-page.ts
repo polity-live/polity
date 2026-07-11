@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { FormActions } from './form-actions';
 import { selectTypeahead } from './typeahead';
 
@@ -20,7 +20,6 @@ export interface SubmitWaitForSavedAndNavigateOptions {
   expectedUrl: string | RegExp;
   expectTargetVisible?: (target: CreateSubmitTargetMetadata) => Promise<void>;
   verifyCreatedRecord?: (target: CreateSubmitTargetMetadata) => Promise<void>;
-  finalizationTimeoutMs?: number;
 }
 
 export function createFinalizationTimeoutMs() {
@@ -205,6 +204,15 @@ export class CreateFlowPage {
       id: targetIdFrom(parsedTargetParams, targetHref),
     };
 
+    const documentMarker = `create-spa-${Date.now()}-${Math.random()}`;
+    if (targetKind === 'route') {
+      await this.page.evaluate(marker => {
+        (
+          window as typeof window & { __createSpaNavigationMarker?: string }
+        ).__createSpaNavigationMarker = marker;
+      }, documentMarker);
+    }
+
     await navigateButton.click();
 
     try {
@@ -214,6 +222,15 @@ export class CreateFlowPage {
         `Create target client navigation did not reach the expected URL. Rendered target: ${targetMetadataString(target, this.page.url())}.`,
         { cause: error }
       );
+    }
+
+    if (targetKind === 'route') {
+      const markerAfterNavigation = await this.page.evaluate(
+        () =>
+          (window as typeof window & { __createSpaNavigationMarker?: string })
+            .__createSpaNavigationMarker
+      );
+      expect(markerAfterNavigation).toBe(documentMarker);
     }
 
     await expect(this.page.locator('[data-slot="create-submission-overlay"]')).toBeHidden({
@@ -249,21 +266,6 @@ export class CreateFlowPage {
       expect(this.finalizationLoadingToast()).toBeVisible({ timeout: 15_000 }),
       expect(this.finalizationSavedToast()).toBeVisible({ timeout: 15_000 }),
     ]).catch(() => undefined);
-  }
-
-  private async waitForFinalizationSavedToast(timeout: number): Promise<Locator> {
-    const savedToast = this.finalizationSavedToast();
-
-    await expect(savedToast).toBeVisible({ timeout });
-    await expect(savedToast).toHaveAttribute('data-type', 'success');
-    await expect(savedToast.locator('[data-create-finalization-toast="saved"]').first()).toHaveText(
-      'Saved'
-    );
-    await expect(
-      savedToast.locator('[data-create-finalization-icon="check"]').first()
-    ).toBeVisible();
-
-    return savedToast;
   }
 
   private async expectPrimarySearchLinkStillNavigates() {

@@ -39,6 +39,9 @@ CREATE INDEX idx_notification_sender ON public.notification (sender_id);
 CREATE INDEX idx_notification_is_read ON public.notification (is_read);
 CREATE INDEX idx_notification_recipient_entity ON public.notification (recipient_entity_id, created_at);
 CREATE INDEX idx_notification_recipient_group ON public.notification (recipient_group_id, created_at);
+CREATE INDEX idx_notification_recipient_event ON public.notification (recipient_event_id, created_at);
+CREATE INDEX idx_notification_recipient_amendment ON public.notification (recipient_amendment_id, created_at);
+CREATE INDEX idx_notification_recipient_blog ON public.notification (recipient_blog_id, created_at);
 CREATE INDEX idx_notification_recipient_read ON public.notification (recipient_id, is_read);
 CREATE INDEX idx_notification_category ON public.notification (category);
 

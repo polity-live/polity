@@ -14,6 +14,7 @@ import {
 import { getContentTypeToneClasses } from '@/features/shared/theme';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { LoadingProgressBar } from '@/features/shared/ui/feedback';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -68,7 +69,11 @@ function targetHref(target: CreateSubmitTarget | null | undefined) {
   return target.kind === 'route' ? routeHref(target) : target.href;
 }
 
-function renderTargetLink(href: string, content: ReactNode) {
+function renderTargetLink(target: CreateSubmitTarget, href: string, content: ReactNode) {
+  if (target.kind === 'route') {
+    return <SmartLink href={href}>{content}</SmartLink>;
+  }
+
   return <a href={href}>{content}</a>;
 }
 
@@ -276,7 +281,9 @@ export function CreateSubmissionOverlay({
                   data-create-target-params={serializeRouteParams(target)}
                   className="mx-auto flex w-full max-w-xs"
                 >
-                  {href ? renderTargetLink(href, targetButtonContent) : targetButtonContent}
+                  {href && target
+                    ? renderTargetLink(target, href, targetButtonContent)
+                    : targetButtonContent}
                 </Button>
               ) : status === 'error' ? (
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -307,8 +314,8 @@ export function CreateSubmissionOverlay({
                   successState={status === 'ready'}
                   successLabel={targetLabel}
                 >
-                  {canNavigateToTarget && href
-                    ? renderTargetLink(href, targetButtonContent)
+                  {canNavigateToTarget && href && target
+                    ? renderTargetLink(target, href, targetButtonContent)
                     : targetButtonContent}
                 </Button>
               )}

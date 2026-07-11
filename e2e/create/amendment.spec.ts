@@ -18,9 +18,12 @@ const scenarios = cartesianProduct(
 );
 
 test.describe('create/amendment', () => {
-  test('creates a minimal amendment @smoke', async ({ createFlowPage, e2eRun }) => {
+  test('creates a targeted amendment @smoke', async ({ createFlowPage, e2eRun, seed }) => {
     await gotoAmendment(createFlowPage);
     await fillMinimalAmendment(createFlowPage, e2eRun.prefix);
+    await createFlowPage.selectTypeahead('target', seed.groupName, {
+      entityType: 'group',
+    });
     await submitSmokeAndExpectCreated(createFlowPage, {
       kind: 'amendment',
       prefix: e2eRun.prefix,

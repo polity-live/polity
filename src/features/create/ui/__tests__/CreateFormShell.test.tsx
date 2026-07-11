@@ -117,6 +117,7 @@ vi.mock('../OnePageFormLayout', () => ({
 }));
 
 import { CreateFormShell } from '../CreateFormShell';
+import { CreateSubmissionOverlay } from '../CreateSubmissionOverlay';
 import { CreateSummaryStep } from '../CreateSummaryStep';
 import type { CreateFormConfig, CreateSubmitContext } from '../../types/create-form.types';
 
@@ -215,6 +216,7 @@ describe('CreateFormShell', () => {
     expect(screen.getByRole<HTMLButtonElement>('button', { name: /zur gruppe/i }).disabled).toBe(
       true
     );
+    expect(screen.getByTestId('carousel-layout')).toBeTruthy();
 
     await act(async () => {
       resolveSubmit(groupSuccessOutcome);
@@ -225,8 +227,10 @@ describe('CreateFormShell', () => {
     });
 
     const targetLink = screen.getByRole('link', { name: /zur gruppe/i });
-    expect(targetLink.getAttribute('data-router-link')).toBeNull();
+    expect(targetLink.getAttribute('data-router-link')).toBe('true');
     expect(targetLink.getAttribute('href')).toBe('/group/group-1');
+    expect(screen.queryByTestId('carousel-layout')).toBeNull();
+    expect(screen.getByText('Alpha Group Review')).toBeTruthy();
 
     fireEvent.click(targetLink);
 
@@ -290,6 +294,7 @@ describe('CreateFormShell', () => {
 
     expect(await screen.findByRole('dialog')).toBeTruthy();
     expect(screen.getByText('Create failed')).toBeTruthy();
+    expect(screen.getByTestId('carousel-layout')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /back to form/i }));
 
@@ -315,11 +320,41 @@ describe('CreateFormShell', () => {
     expect(screen.queryByRole('button', { name: /erneut versuchen/i })).toBeNull();
 
     const targetLink = screen.getByRole('link', { name: /zur gruppe/i });
-    expect(targetLink.getAttribute('data-router-link')).toBeNull();
+    expect(targetLink.getAttribute('data-router-link')).toBe('true');
     expect(targetLink.getAttribute('href')).toBe('/group/group-1');
 
     fireEvent.click(targetLink);
 
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['amendment', '/amendment/amendment-1'],
+    ['group', '/group/group-1'],
+    ['event', '/event/event-1'],
+  ] as const)('renders the %s success target as a router link', (entityType, href) => {
+    const id = href.slice(href.lastIndexOf('/') + 1);
+
+    render(
+      <CreateSubmissionOverlay
+        status="ready"
+        entityType={entityType}
+        title="Created entity"
+        target={{
+          kind: 'route',
+          entityType,
+          label: `Open ${entityType}`,
+          to: `/${entityType}/$id`,
+          params: { id },
+        }}
+        progressSteps={[]}
+        onBack={vi.fn()}
+        onRetry={vi.fn()}
+      />
+    );
+
+    const targetLink = screen.getByRole('link', { name: `Open ${entityType}` });
+    expect(targetLink.getAttribute('data-router-link')).toBe('true');
+    expect(targetLink.getAttribute('href')).toBe(href);
   });
 });

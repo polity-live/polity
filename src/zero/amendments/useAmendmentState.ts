@@ -39,7 +39,7 @@ interface AmendmentStateOptions {
   includeEventsByGroup?: boolean; // eventsByGroup (requires eventGroupId)
 
   // Dynamic filter params
-  documentId?: string; // for documentVersionsByDocument
+  documentId?: string; // for documents.versions
   eventGroupId?: string; // for eventsByGroup
   groupId?: string; // for supportConfirmationsByGroup
 }
@@ -184,7 +184,7 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
 
   const [documentVersions] = useQuery(
     includeDocumentVersions && documentId
-      ? queries.amendments.documentVersionsByDocument({ document_id: documentId })
+      ? queries.documents.versions({ document_id: documentId })
       : undefined
   );
 

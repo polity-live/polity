@@ -533,9 +533,9 @@ export function useAmendmentRouteFamilyPreloads(amendmentId?: string) {
         queries.documents.collaborators({ document_id: documentId })
       ),
       createPreloadEntry(
-        'queries.amendments.documentVersionsByDocument',
+        'queries.documents.versions',
         { document_id: documentId },
-        queries.amendments.documentVersionsByDocument({ document_id: documentId })
+        queries.documents.versions({ document_id: documentId })
       ),
     ]);
   }, [documentIds, user?.id]);

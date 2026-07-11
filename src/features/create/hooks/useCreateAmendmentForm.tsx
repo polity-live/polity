@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useRouter, useSearch } from '@tanstack/react-router';
 import {
   useTranslation,
   translate as translateText,
@@ -66,6 +66,7 @@ interface CreateTargetEventData {
 export function useCreateAmendmentForm(): CreateFormConfig {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const router = useRouter();
   const rawSearchParams = useSearch({ strict: false }) as CreateAmendmentSearch;
   const searchParams = normalizeCreateAmendmentSearch(rawSearchParams);
   const sourceGroupIdParam = searchParams.sourceGroupId ?? '';
@@ -113,6 +114,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const suppressSearchSyncRef = useRef(false);
+  const pendingSearchNavigationsRef = useRef(new Set<Promise<void>>());
   useEffect(() => {
     const restoreDraft = consumeCreateRestoreDraft<
       Partial<{
@@ -196,16 +198,24 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       if (suppressSearchSyncRef.current) {
         return;
       }
+      if (router.latestLocation.pathname !== '/create/amendment') {
+        return;
+      }
 
-      navigate({
+      const navigation = navigate({
         to: '/create/amendment',
         search: previousSearch =>
           mergeCreateSearchParams(previousSearch as CreateAmendmentSearch, updates),
         replace: true,
         resetScroll: false,
       });
+      pendingSearchNavigationsRef.current.add(navigation);
+      void navigation.then(
+        () => pendingSearchNavigationsRef.current.delete(navigation),
+        () => pendingSearchNavigationsRef.current.delete(navigation)
+      );
     },
-    [navigate]
+    [navigate, router]
   );
 
   const handleSourceGroupSelectionChange = useCallback(
@@ -314,6 +324,9 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     suppressSearchSyncRef.current = true;
     setIsSubmitting(true);
     try {
+      while (pendingSearchNavigationsRef.current.size > 0) {
+        await Promise.allSettled([...pendingSearchNavigationsRef.current]);
+      }
       context?.reportProgress({ key: 'create', status: 'active' });
       const normalizedGroupId = targetSelection?.groupId ? targetSelection.groupId : null;
       const normalizedEventId = targetSelection?.eventId ? targetSelection.eventId : null;
