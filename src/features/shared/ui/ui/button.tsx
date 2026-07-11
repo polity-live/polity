@@ -59,58 +59,70 @@ const buttonPresentationClasses: Record<NonNullable<ButtonProps['presentation']>
   floatingShadow: 'shadow-[var(--shadow-floating)]',
 };
 
-function Button({
-  className,
-  variant,
-  size,
-  asChild = false,
-  loading = false,
-  loadingLabel,
-  successState = false,
-  successLabel,
-  disabled,
-  children,
-  presentation = 'default',
-  ...props
-}: ButtonProps) {
-  const Comp = asChild ? Slot : 'button';
-  const showStatus = !asChild && (loading || successState);
-  const statusLabel = loading ? loadingLabel : successLabel;
-  const renderedStatusLabel = statusLabel ?? (size === 'icon' ? null : children);
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      loading = false,
+      loadingLabel,
+      successState = false,
+      successLabel,
+      disabled,
+      children,
+      presentation = 'default',
+      ...props
+    },
+    ref
+  ) => {
+    const Comp = asChild ? Slot : 'button';
+    const showStatus = !asChild && (loading || successState);
+    const statusLabel = loading ? loadingLabel : successLabel;
+    const renderedStatusLabel = statusLabel ?? (size === 'icon' ? null : children);
 
-  return (
-    <Comp
-      data-slot="button"
-      data-loading={loading ? 'true' : undefined}
-      data-success={successState ? 'true' : undefined}
-      aria-busy={loading || undefined}
-      disabled={loading || disabled}
-      className={cn(
-        showStatus && 'relative',
-        buttonVariants({ variant, size }),
-        getMotionPreset('colors'),
-        variant !== 'link' && getMotionPreset('press'),
-        getMotionPreset('iconNudge'),
-        successState && getMotionPreset('successSettle'),
-        buttonPresentationClasses[presentation],
-        className
-      )}
-      {...props}
-    >
-      {showStatus ? (
-        <>
-          <span className="invisible inline-flex items-center gap-2">{children}</span>
-          <span className="pointer-events-none absolute inset-0 inline-flex items-center justify-center gap-2 px-3">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            {renderedStatusLabel ? <span>{renderedStatusLabel}</span> : null}
-          </span>
-        </>
-      ) : (
-        children
-      )}
-    </Comp>
-  );
-}
+    return (
+      <Comp
+        ref={ref}
+        data-slot="button"
+        data-loading={loading ? 'true' : undefined}
+        data-success={successState ? 'true' : undefined}
+        aria-busy={loading || undefined}
+        disabled={loading || disabled}
+        className={cn(
+          showStatus && 'relative',
+          buttonVariants({ variant, size }),
+          getMotionPreset('colors'),
+          variant !== 'link' && getMotionPreset('press'),
+          getMotionPreset('iconNudge'),
+          successState && getMotionPreset('successSettle'),
+          buttonPresentationClasses[presentation],
+          className
+        )}
+        {...props}
+      >
+        {showStatus ? (
+          <>
+            <span className="invisible inline-flex items-center gap-2">{children}</span>
+            <span className="pointer-events-none absolute inset-0 inline-flex items-center justify-center gap-2 px-3">
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+              {renderedStatusLabel ? <span>{renderedStatusLabel}</span> : null}
+            </span>
+          </>
+        ) : (
+          children
+        )}
+      </Comp>
+    );
+  }
+);
+
+Button.displayName = 'Button';
 
 export { Button, buttonVariants };
 export type { ButtonProps };

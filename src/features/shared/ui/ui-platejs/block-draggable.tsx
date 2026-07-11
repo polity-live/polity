@@ -67,7 +67,7 @@ export const BlockDraggable: RenderNodeWrapper = props => {
 function Draggable(props: PlateElementProps) {
   const { children, editor, element, path } = props;
   const blockSelectionApi = editor.getApi(BlockSelectionPlugin).blockSelection;
-  const { isDragging, previewRef, handleRef } = useDraggable({
+  const { isDragging, nodeRef, previewRef, handleRef } = useDraggable({
     element,
     onDropHandler: (_, { dragItem }) => {
       const id = (dragItem as { id: string }).id;
@@ -80,6 +80,18 @@ function Draggable(props: PlateElementProps) {
 
   const isInColumn = path.length === 3;
   const isInTable = path.length === 4;
+  const blockId = element.id as string | undefined;
+  const blockRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      if (nodeRef) {
+        nodeRef.current = node;
+      }
+      if (previewRef) {
+        previewRef.current = node;
+      }
+    },
+    [nodeRef, previewRef]
+  );
 
   return (
     <div
@@ -110,6 +122,7 @@ function Draggable(props: PlateElementProps) {
                 ref={handleRef}
                 variant="ghost"
                 className="h-6 w-4.5 p-0"
+                data-block-id={blockId}
                 data-plate-prevent-deselect
               >
                 <DragHandle />
@@ -119,7 +132,7 @@ function Draggable(props: PlateElementProps) {
         </Gutter>
       )}
 
-      <div ref={previewRef} className="slate-blockWrapper">
+      <div ref={blockRef} className="slate-blockWrapper">
         <MemoizedChildren>{children}</MemoizedChildren>
         <DropLine />
       </div>
