@@ -96,6 +96,7 @@ export function appendSuggestionLineBreak(value: string): string {
 
 export function splitSuggestionPreviewText(value: string, lineBreakLabel?: string): string[] {
   if (!value.includes(BLOCK_SUGGESTION_MARKER)) return [value];
+  if (value === BLOCK_SUGGESTION_MARKER) return lineBreakLabel ? [lineBreakLabel] : [];
 
   const parts = value.split(BLOCK_SUGGESTION_MARKER);
   const split = parts
