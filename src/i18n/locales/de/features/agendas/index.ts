@@ -16,6 +16,10 @@ export const agendasTranslations = {
     finalPhase: 'Endgültig',
     indicativePhase: 'Indikativ',
     votersParticipated: 'abgestimmt',
+    indicationsCast: 'Stimmungsbilder',
+    submitPendingHint:
+      'Öffne den Editor unten, um diesen Änderungsantrag einzureichen oder zu verwerfen.',
+    awaitingAuthorSubmission: 'Warten auf die Einreichung durch den Autor.',
     activeInternalVoting: 'Interner Abstimmungsmodus aktiv',
     activeEventVoting: 'Event-Abstimmungsmodus aktiv',
     modeInfo: 'Modus',

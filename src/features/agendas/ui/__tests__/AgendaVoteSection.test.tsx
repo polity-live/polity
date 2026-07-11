@@ -55,6 +55,10 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'features.events.agenda.forwarding.completedPrefix':
           'The amendment was successfully forwarded to',
         'features.events.agenda.forwarding.completedSuffix': '.',
+        'features.events.agenda.forwarding.rejectedPrefix': 'The amendment was not forwarded to',
+        'features.events.agenda.forwarding.rejectedSuffix': ' because the vote was rejected.',
+        'features.events.agenda.forwarding.tiePrefix': 'The amendment was not forwarded to',
+        'features.events.agenda.forwarding.tieSuffix': ' because the vote ended in a tie.',
         'features.events.voting.eligible': 'Eligible',
         'features.events.voting.share': 'Share',
         'features.events.voting.voted': 'Voted',
@@ -171,6 +175,7 @@ describe('AgendaVoteSection', () => {
 
   it('shows a linked forwarding notice below the results before and after the vote closes', () => {
     const forwardingPreview = {
+      status: 'pending' as const,
       nextEventId: 'next-event',
       nextEventTitle: 'Next Assembly',
     };
@@ -190,7 +195,7 @@ describe('AgendaVoteSection', () => {
 
     expect(screen.getByText(/The amendment will be forwarded to/)).toBeTruthy();
     const pendingLink = screen.getByRole('link', { name: 'Next Assembly' });
-    expect(pendingLink.getAttribute('href')).toBe('/event/next-event');
+    expect(pendingLink.getAttribute('href')).toBe('/event/next-event/agenda');
     expect(screen.getByText(/after the vote/)).toBeTruthy();
     const pendingResults = container.querySelector('[data-slot="vote-results-display"]');
     const pendingNotice = screen.getByText(/The amendment will be forwarded to/).closest('div');
@@ -211,13 +216,13 @@ describe('AgendaVoteSection', () => {
         userSelectedChoiceIds={[]}
         voteStatus="closed"
         voteResult="passed"
-        forwardingPreview={forwardingPreview}
+        forwardingPreview={{ ...forwardingPreview, status: 'forwarded' }}
       />
     );
 
     expect(screen.getByText(/The amendment was successfully forwarded to/)).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Next Assembly' }).getAttribute('href')).toBe(
-      '/event/next-event'
+      '/event/next-event/agenda'
     );
     const completedResults = container.querySelector('[data-slot="vote-results-display"]');
     const completedNotice = screen
@@ -229,5 +234,33 @@ describe('AgendaVoteSection', () => {
       (completedResults as HTMLElement).compareDocumentPosition(completedNotice as HTMLElement) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
+  });
+
+  it.each([
+    ['rejected', ' because the vote was rejected.', 'var(--badge-danger-bg)'],
+    ['tie', ' because the vote ended in a tie.', 'var(--badge-warning-bg)'],
+  ] as const)('does not claim successful forwarding for a %s vote', (status, suffix, color) => {
+    const { container } = render(
+      <AgendaVoteSection
+        voteTitle="Budget motion"
+        choices={[choice({ id: 'yes', label: 'Yes', order_index: 0 })]}
+        indicativeDecisions={[]}
+        finalDecisions={[]}
+        userHasVoted={false}
+        userSelectedChoiceIds={[]}
+        voteStatus="closed"
+        forwardingPreview={{
+          status,
+          nextEventId: 'next-event',
+          nextEventTitle: 'Next Assembly',
+        }}
+      />
+    );
+
+    expect(screen.getByText(suffix, { exact: false })).toBeTruthy();
+    expect(screen.queryByText(/successfully forwarded/)).toBeNull();
+    expect(container.querySelector(`[data-forwarding-status="${status}"]`)?.className).toContain(
+      color
+    );
   });
 });

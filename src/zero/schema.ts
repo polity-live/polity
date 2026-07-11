@@ -129,7 +129,7 @@ import { calendarSubscription } from './calendar-subscriptions/table';
 // Voting Password
 import { votingPassword } from './voting-password/table';
 // Accreditation
-import { accreditation } from './accreditation/table';
+import { accreditation, accreditationAudit } from './accreditation/table';
 import { dataset, datasetSnapshot } from './datasets/table';
 
 // Relationship imports
@@ -288,6 +288,7 @@ const zeroTables = [
   votingPassword,
   // Accreditation
   accreditation,
+  accreditationAudit,
   // Dataset metadata
   dataset,
   datasetSnapshot,

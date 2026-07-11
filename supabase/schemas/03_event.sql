@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS public.event (
   default_final_vote_duration_seconds INTEGER,
   change_request_vote_order TEXT NOT NULL DEFAULT 'text_position',
   gender_quota_enabled BOOLEAN NOT NULL DEFAULT false,
+  accreditation_required BOOLEAN NOT NULL DEFAULT false,
   capacity INTEGER,
   participant_count INTEGER NOT NULL DEFAULT 0,
   subscriber_count INTEGER NOT NULL DEFAULT 0,

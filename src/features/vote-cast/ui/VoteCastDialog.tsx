@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { AmendmentForwardingPreview } from '@/features/amendments/ui/AmendmentForwardingPreview';
+import type { AmendmentForwardingPreviewModel } from '@/features/amendments/logic/amendmentForwardingPreview';
 import {
   getElectionModeLabel,
   getSeatCountLabel,
@@ -25,8 +26,9 @@ import {
   type VoteSubmissionStatus,
   type VoteSubmissionStepKey,
 } from '@/features/shared/ui/voting';
-import { toast } from '@/features/shared/ui/ui/sonner';
-import { trackServerFinalization } from '@/zero/mutate-with-server-check';
+import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { VOTE_CAST_SUCCESS_TOAST_ID } from '../logic/voteCastToast';
 import type { VotingPhase } from '../logic/votePhaseHelpers';
 
 interface VoteCastDialogProps {
@@ -39,12 +41,7 @@ interface VoteCastDialogProps {
   seatCount?: number | null;
   choices?: VoteCastChoice[];
   title?: string;
-  forwardingPreview?: {
-    nextEventId?: string | null;
-    nextGroupName?: string | null;
-    nextEventTitle: string;
-    nextEventStartDate?: number | null;
-  } | null;
+  forwardingPreview?: AmendmentForwardingPreviewModel | null;
   documentPreviewContent?: ReactNode;
   requirePassword?: boolean;
   passwordError?: string | null;
@@ -109,6 +106,7 @@ export function VoteCastDialog({
     createInitialProgressSteps
   );
   const serverRejectedRef = useRef(false);
+  const submissionInFlightRef = useRef(false);
 
   const isElection = Boolean(candidates?.length);
   const isMultiSelect = isElection && maxVotes > 1;
@@ -124,6 +122,7 @@ export function VoteCastDialog({
     setSubmissionError(null);
     setSubmissionSteps(createInitialProgressSteps());
     serverRejectedRef.current = false;
+    submissionInFlightRef.current = false;
   }, []);
 
   const resetSubmissionOnly = useCallback(() => {
@@ -132,6 +131,7 @@ export function VoteCastDialog({
     setSubmissionError(null);
     setSubmissionSteps(createInitialProgressSteps());
     serverRejectedRef.current = false;
+    submissionInFlightRef.current = false;
   }, []);
 
   const handleOpenChange = (value: boolean) => {
@@ -193,12 +193,20 @@ export function VoteCastDialog({
   );
 
   const trackServerResult = useCallback(
-    (result: Parameters<NonNullable<VoteSubmissionContext['trackServerResult']>>[0]) => {
-      trackServerFinalization(result, {
-        onError: handleServerRejection,
-      });
+    async (result: Parameters<NonNullable<VoteSubmissionContext['trackServerResult']>>[0]) => {
+      try {
+        await serverConfirmed(result);
+        toast.success(t('common.agendaToasts.voteCast'), {
+          id: VOTE_CAST_SUCCESS_TOAST_ID,
+        });
+      } catch (error) {
+        const normalizedError =
+          error instanceof Error ? error : new Error('Vote submission failed.');
+        handleServerRejection(normalizedError);
+        throw normalizedError;
+      }
     },
-    [handleServerRejection]
+    [handleServerRejection, t]
   );
 
   const submissionContext = useMemo<VoteSubmissionContext>(
@@ -228,6 +236,8 @@ export function VoteCastDialog({
 
   const performSubmission = useCallback(
     async (password?: string | null) => {
+      if (submissionInFlightRef.current) return;
+      submissionInFlightRef.current = true;
       setSubmissionError(null);
       setSubmissionSteps(createInitialProgressSteps());
       setSubmissionStatus('verifying');
@@ -253,6 +263,8 @@ export function VoteCastDialog({
             stepItem.status === 'active' ? { ...stepItem, status: 'error' } : stepItem
           )
         );
+      } finally {
+        submissionInFlightRef.current = false;
       }
     },
     [markStep, onPasswordSubmit, submissionContext, submitVote]
@@ -306,6 +318,7 @@ export function VoteCastDialog({
 
   const forwardingPreviewContent = forwardingPreview ? (
     <AmendmentForwardingPreview
+      status={forwardingPreview.status}
       nextEventId={forwardingPreview.nextEventId}
       nextGroupName={forwardingPreview.nextGroupName}
       nextEventTitle={forwardingPreview.nextEventTitle}

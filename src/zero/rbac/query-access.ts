@@ -441,7 +441,9 @@ export function applyAccreditationQueryAccess<T>(q: T, userID: string | undefine
   return query.where(({ or, cmp, exists }: any) =>
     or(
       cmp('user_id', userID),
-      exists('event', (event: any) => applyEventManagerQueryAccess(event, userID, 'manage_votes'))
+      exists('event', (event: any) =>
+        applyEventManagerQueryAccess(event, userID, 'manage_participants')
+      )
     )
   ) as T;
 }

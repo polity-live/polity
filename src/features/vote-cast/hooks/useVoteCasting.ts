@@ -122,7 +122,7 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
             });
         await waitForClientApply(result);
         if (context?.trackServerResult) {
-          context.trackServerResult(result);
+          await context.trackServerResult(result);
         } else {
           trackServerFinalization(result, {
             onError: error => toast.error(error.message),
@@ -218,7 +218,7 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
             });
         await waitForClientApply(result);
         if (context?.trackServerResult) {
-          context.trackServerResult(result);
+          await context.trackServerResult(result);
         } else {
           trackServerFinalization(result, {
             onError: error => toast.error(error.message),

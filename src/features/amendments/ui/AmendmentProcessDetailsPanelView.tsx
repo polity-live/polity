@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Building2, ChevronDown, ChevronRight, ExternalLink, ScrollText } from 'lucide-react';
 
 import { AmendmentForwardingPreview } from '@/features/amendments/ui/AmendmentForwardingPreview';
+import type { AmendmentForwardingPreviewModel } from '@/features/amendments/logic/amendmentForwardingPreview';
 import {
   AmendmentPathVisualization,
   type AmendmentPathVisualizationSegment,
@@ -34,13 +35,7 @@ interface AmendmentProcessDetailsPanelViewProps {
     } | null;
     group?: { id: string; name?: string | null } | null;
   };
-  forwardingPreview?: {
-    nextGroupId?: string | null;
-    nextGroupName?: string | null;
-    nextEventId?: string | null;
-    nextEventTitle: string;
-    nextEventStartDate?: number | null;
-  } | null;
+  forwardingPreview?: AmendmentForwardingPreviewModel | null;
   pathVisualizationData?: AmendmentPathVisualizationSegment[];
   groupTypeById?: Map<string, string | null>;
   onGroupClick?: (groupId: string) => void;
@@ -143,6 +138,7 @@ export function AmendmentProcessDetailsPanelView({
             {forwardingPreview ? (
               <div className="space-y-3">
                 <AmendmentForwardingPreview
+                  status={forwardingPreview.status}
                   nextEventId={forwardingPreview.nextEventId}
                   nextGroupName={forwardingPreview.nextGroupName}
                   nextEventTitle={forwardingPreview.nextEventTitle}

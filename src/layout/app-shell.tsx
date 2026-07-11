@@ -53,6 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <>
       <PwaInstallProvider />
       <AppShellInner>{children}</AppShellInner>
+      <Toaster richColors position="top-right" />
     </>
   );
 }
@@ -151,7 +152,6 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
           secondaryNavItems={secondaryNavItems}
         />
 
-        <Toaster richColors position="top-right" />
         <AlphaWarningDialog />
       </div>
     </I18nSyncProvider>
@@ -263,7 +263,6 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
             <MotionPage>{children}</MotionPage>
           </main>
 
-          <Toaster richColors position="top-right" />
           <AlphaWarningDialog />
         </div>
       </I18nSyncProvider>
@@ -311,7 +310,6 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
           secondaryNavItems={secondaryNavItems}
         />
 
-        <Toaster richColors position="top-right" />
         <AlphaWarningDialog />
       </div>
     </I18nSyncProvider>

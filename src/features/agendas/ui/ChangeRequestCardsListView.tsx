@@ -50,6 +50,7 @@ import {
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 import type { ChangeRequestSortMode } from './useChangeRequestCardsListController';
 import { DEFAULT_CHANGE_REQUEST_VOTE_ORDER } from '@/features/change-requests/logic/changeRequestVoteOrder';
+import type { AmendmentForwardingPreviewModel } from '@/features/amendments/logic/amendmentForwardingPreview';
 
 type TabValue = 'all' | 'open' | 'accepted' | 'rejected';
 
@@ -107,6 +108,7 @@ export interface ChangeRequestCardsListViewProps {
   documentContent: any;
   streetDesigns?: readonly StreetDesignPreviewSource[];
   agendaTitle?: any;
+  forwardingPreview?: AmendmentForwardingPreviewModel | null;
   discussions: any;
   amendmentId: any;
   agendaItemId: any;
@@ -169,6 +171,7 @@ export function ChangeRequestCardsListView({
   documentContent,
   streetDesigns = [],
   agendaTitle,
+  forwardingPreview,
   discussions,
   amendmentId,
   agendaItemId,
@@ -572,6 +575,7 @@ export function ChangeRequestCardsListView({
                       suggestionId={suggestionId}
                       suggestionResolutions={previewSuggestionResolutions}
                       agendaTitle={agendaTitle}
+                      forwardingPreview={item.is_closing_vote ? forwardingPreview : null}
                       crId={displayCrId || crTitle || previewCrId || undefined}
                       displayCrId={displayCrId || undefined}
                       discussions={discussions}

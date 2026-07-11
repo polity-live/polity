@@ -324,8 +324,16 @@ export const amendmentsTranslations = {
     fixedTargetGroup: 'Fixe Zielgruppe',
     fixedWorkflow: 'Fixer Workflow',
     forwardingPreviewDescription:
-      'Vorschau auf das nächste Event, an das dieser Antrag nach der aktuellen Entscheidung weitergeleitet wird.',
-    forwardingPreviewTitle: 'Weiterleitungs-Vorschau',
+      'Dort findet eine separate Folgeabstimmung statt, sobald dieser Schritt angenommen wurde.',
+    forwardingPreviewTitle: 'Bei Annahme wird dieser Antrag an das nächste Event weitergeleitet',
+    forwardingCompletedDescription: 'Dort ist jetzt eine separate Folgeabstimmung verfügbar.',
+    forwardingCompletedTitle: 'Dieser Antrag wurde erfolgreich an das nächste Event weitergeleitet',
+    forwardingRejectedDescription:
+      'Es wurde keine Folgeabstimmung erstellt, weil dieser Schritt abgelehnt wurde.',
+    forwardingRejectedTitle: 'Dieser Antrag wurde nicht an das nächste Event weitergeleitet',
+    forwardingTieDescription:
+      'Es wurde keine Folgeabstimmung erstellt, weil die Abstimmung unentschieden endete.',
+    forwardingTieTitle: 'Dieser Antrag wurde nicht an das nächste Event weitergeleitet',
     groupDecisions: 'Gruppenentscheidungen',
     groupDecisionsDescription:
       'Abgeschlossene und ausstehende Gruppenentscheidungen für diesen Antragspfad.',

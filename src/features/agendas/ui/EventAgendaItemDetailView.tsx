@@ -132,6 +132,7 @@ export interface EventAgendaItemDetailViewProps {
   selectedCRToolbarItem: any;
   currentCRSequenceItemId?: any;
   nextStartableSequenceItem?: any;
+  canStartSelectedCRFinalVote?: boolean;
   isCRToolbarActive: any;
   selectedCRPhase: any;
   isSelectedClosingVote: any;
@@ -269,6 +270,7 @@ export function EventAgendaItemDetailView({
   selectedCRToolbarItem,
   currentCRSequenceItemId,
   nextStartableSequenceItem,
+  canStartSelectedCRFinalVote = false,
   setSelectedCRToolbarItemId,
   isCRToolbarActive,
   hasUserVotedOnSelectedCR,
@@ -521,6 +523,7 @@ export function EventAgendaItemDetailView({
       documentContent={documentContent}
       streetDesigns={streetDesigns}
       agendaTitle={agendaItem.amendment?.title ?? agendaItem.title ?? null}
+      forwardingPreview={agendaForwardingPreview}
       defaultSortMode={event?.change_request_vote_order ?? null}
       discussions={amendmentDiscussions}
       amendmentId={agendaItem.amendment_id ?? undefined}
@@ -676,7 +679,7 @@ export function EventAgendaItemDetailView({
         }
         onStartFinalVote={
           canManageCurrentVote && isCRToolbarActive
-            ? toolbarVotingPhase === 'indication'
+            ? toolbarVotingPhase === 'indication' && canStartSelectedCRFinalVote
               ? handleToolbarStartFinalVote
               : undefined
             : canManageCurrentVote

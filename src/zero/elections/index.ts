@@ -27,6 +27,8 @@ export {
   selectIndicativeCandidateSelectionSchema,
   createIndicativeCandidateSelectionSchema,
   replaceIndicativeElectionVoteSchema,
+  startElectionSchema,
+  submitElectionVoteSchema,
   selectFinalElectorParticipationSchema,
   createFinalElectorParticipationSchema,
   selectFinalCandidateSelectionSchema,

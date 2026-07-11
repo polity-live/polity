@@ -683,6 +683,7 @@ describe('EventAgendaItemDetailView', () => {
         amendment: { editing_mode: 'event_final_closing_vote' },
       },
       canManageVoteSequence: true,
+      canStartSelectedCRFinalVote: true,
       crDisplayItems: [selectedCRToolbarItem],
       detailRuntimeStatus: 'pending',
       handleStartSequenceFinalVote,
@@ -722,6 +723,17 @@ describe('EventAgendaItemDetailView', () => {
         onStartFinal: handleStartSequenceFinalVote,
       })
     );
+
+    rerender(
+      <EventAgendaItemDetailView
+        {...activeProps}
+        detailRuntimeStatus="in-progress"
+        canStartSelectedCRFinalVote={false}
+      />
+    );
+
+    actionBarProps = agendaActionBarMock.mock.calls.at(-1)?.[0];
+    expect(actionBarProps).toEqual(expect.objectContaining({ onStartFinalVote: undefined }));
   });
 
   it('wires the top bar jump action to the next startable voting step', () => {

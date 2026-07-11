@@ -1,5 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { snapshotElectionElectorateMock, assertCurrentOnlineBallotEligibilityMock } = vi.hoisted(
+  () => ({
+    snapshotElectionElectorateMock: vi.fn(),
+    assertCurrentOnlineBallotEligibilityMock: vi.fn(),
+  })
+);
+
+vi.mock('../../ballot-eligibility', () => ({
+  snapshotElectionElectorate: snapshotElectionElectorateMock,
+  assertCurrentOnlineBallotEligibility: assertCurrentOnlineBallotEligibilityMock,
+}));
+
 const {
   updateElectionFn,
   createElectionFn,
@@ -81,6 +93,13 @@ function createTx() {
       election: {
         update: vi.fn(),
       },
+      indicative_elector_participation: {
+        insert: vi.fn(),
+      },
+      indicative_candidate_selection: {
+        insert: vi.fn(),
+        delete: vi.fn(),
+      },
     },
   };
 }
@@ -113,6 +132,45 @@ beforeEach(() => {
   eventAllowsOnlineVotingMock.mockResolvedValue(true);
   isUserForcedOfflineForEventMock.mockReset();
   isUserForcedOfflineForEventMock.mockResolvedValue(false);
+  snapshotElectionElectorateMock.mockReset();
+  assertCurrentOnlineBallotEligibilityMock.mockReset();
+});
+
+describe('electionServerMutators.submitElectionVote indicative eligibility', () => {
+  it('records an indicative vote by authenticated user without an elector snapshot', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'election-1',
+        agenda_item_id: 'agenda-1',
+        status: 'indicative',
+        max_votes: 1,
+        ballot_visibility: 'named',
+        electorate_snapshotted_at: null,
+      })
+      .mockResolvedValueOnce([{ id: 'candidate-1' }])
+      .mockResolvedValueOnce(null);
+
+    await electionServerMutators.submitElectionVote.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        election_id: 'election-1',
+        phase: 'indicative',
+        candidate_ids: ['candidate-1'],
+        idempotency_id: '00000000-0000-4000-8000-000000000001',
+      },
+    });
+
+    expect(assertCurrentOnlineBallotEligibilityMock).toHaveBeenCalledWith(tx, 'agenda-1', 'user-1');
+    expect(tx.mutate.indicative_elector_participation.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        election_id: 'election-1',
+        user_id: 'user-1',
+        elector_id: null,
+      })
+    );
+  });
 });
 
 describe('electionServerMutators candidacy PIN verification', () => {
@@ -226,6 +284,7 @@ function createOfflineTallyTx({
     .mockResolvedValueOnce({
       id: 'election-1',
       max_votes: maxVotes,
+      offline_electorate_size: 3,
     })
     .mockResolvedValueOnce({
       id: 'agenda-1',

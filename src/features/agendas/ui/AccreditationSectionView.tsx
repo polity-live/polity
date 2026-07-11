@@ -3,7 +3,7 @@ import { BadgeControl } from '@/features/shared/ui/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback } from '@/features/shared/ui/ui/avatar';
-import { ShieldCheck, CheckCircle2, Users } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, Users, XCircle, RotateCcw } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { VotePasswordInput } from '@/features/vote-cast/ui/VotePasswordInput';
@@ -18,14 +18,19 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
   const {
     accreditationsByAgendaItem,
     isAccredited,
+    accreditationStatus,
     accreditedCount,
     isLoading,
+    canManageAccreditations,
     showPasswordInput,
     isConfirming,
     passwordError,
     noVotingPasswordSettingsHref,
     handleConfirmClick,
     handlePasswordSubmit,
+    approveAccreditation,
+    rejectAccreditation,
+    revokeAccreditation,
   } = controller;
 
   if (isLoading) {
@@ -62,6 +67,10 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
               {t('features.events.agenda.accreditation.confirmed')}
             </span>
           </div>
+        ) : accreditationStatus === 'pending' ? (
+          <div className="rounded-md border p-3 text-sm">
+            {t('common.accreditation.pending', 'Awaiting organizer confirmation')}
+          </div>
         ) : (
           <div className="space-y-3">
             {!showPasswordInput ? (
@@ -94,7 +103,7 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
               {accreditationsByAgendaItem.map((acc: any) => (
                 <div
                   key={acc.id}
-                  className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm"
+                  className="flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm"
                 >
                   <Avatar className="h-5 w-5">
                     <AvatarFallback
@@ -106,6 +115,34 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
                   <CheckCircle2
                     className={featureThemeClassName('agendaAccreditationSectionSuccessIconAlpha')}
                   />
+                  <span>{acc.status}</span>
+                  {canManageAccreditations && acc.status === 'pending' ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => approveAccreditation({ accreditation_id: acc.id })}
+                      >
+                        <CheckCircle2 className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => rejectAccreditation({ accreditation_id: acc.id })}
+                      >
+                        <XCircle className="h-3 w-3" />
+                      </Button>
+                    </>
+                  ) : null}
+                  {canManageAccreditations && acc.status === 'approved' ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => revokeAccreditation({ accreditation_id: acc.id })}
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                    </Button>
+                  ) : null}
                 </div>
               ))}
             </div>

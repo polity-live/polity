@@ -313,8 +313,17 @@ export function EventStreamView({
           userSelectedChoiceIds={userSelectedChoiceIds}
           voteStatus={voteEntity.status ?? 'indicative'}
           majorityType={voteEntity.majority_type}
-          totalEligibleVoters={(voteEntity.voters?.length ?? 0) + confirmedOfflineParticipantCount}
-          offlineEligibleCount={confirmedOfflineParticipantCount}
+          totalEligibleVoters={
+            voteEntity.offline_electorate_size == null
+              ? (voteEntity.voters?.length ?? 0) + confirmedOfflineParticipantCount
+              : (voteEntity.voters ?? []).filter(
+                  (voter: { participation_channel?: string | null }) =>
+                    voter.participation_channel !== 'offline'
+                ).length + voteEntity.offline_electorate_size
+          }
+          offlineEligibleCount={
+            voteEntity.offline_electorate_size ?? confirmedOfflineParticipantCount
+          }
         />
       )}
 

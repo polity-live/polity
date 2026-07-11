@@ -15,7 +15,23 @@ export function useVotePasswordInputController({
   isLoading,
 }: UseVotePasswordInputControllerOptions) {
   const [digits, setDigits] = useState<string[]>(emptyDigits);
+  const digitsRef = useRef<string[]>(emptyDigits());
+  const scheduledPinRef = useRef<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const replaceDigits = useCallback((next: string[]) => {
+    digitsRef.current = next;
+    setDigits(next);
+  }, []);
+
+  const scheduleSubmit = useCallback(
+    (pin: string) => {
+      if (scheduledPinRef.current === pin) return;
+      scheduledPinRef.current = pin;
+      setTimeout(() => onSubmit(pin), 0);
+    },
+    [onSubmit]
+  );
 
   useEffect(() => {
     inputRefs.current[0]?.focus();
@@ -23,10 +39,11 @@ export function useVotePasswordInputController({
 
   useEffect(() => {
     if (error) {
-      setDigits(emptyDigits());
+      scheduledPinRef.current = null;
+      replaceDigits(emptyDigits());
       inputRefs.current[0]?.focus();
     }
-  }, [error]);
+  }, [error, replaceDigits]);
 
   const handleChange = useCallback(
     (index: number, value: string) => {
@@ -34,22 +51,19 @@ export function useVotePasswordInputController({
 
       const digit = value.replace(/\D/g, '').slice(-1);
 
-      setDigits(prev => {
-        const next = [...prev];
-        next[index] = digit;
+      const next = [...digitsRef.current];
+      next[index] = digit;
+      replaceDigits(next);
 
-        if (digit && index === 3 && next.every(digitValue => digitValue !== '')) {
-          setTimeout(() => onSubmit(next.join('')), 0);
-        }
-
-        return next;
-      });
+      if (digit && index === 3 && next.every(digitValue => digitValue !== '')) {
+        scheduleSubmit(next.join(''));
+      }
 
       if (digit && index < 3) {
         inputRefs.current[index + 1]?.focus();
       }
     },
-    [isLoading, onSubmit]
+    [isLoading, replaceDigits, scheduleSubmit]
   );
 
   const handleKeyDown = useCallback(
@@ -69,19 +83,19 @@ export function useVotePasswordInputController({
       const pasted = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
       if (pasted.length === 0) return;
 
-      const newDigits = [...digits];
+      const newDigits = [...digitsRef.current];
       for (let index = 0; index < pasted.length; index++) {
         newDigits[index] = pasted[index];
       }
-      setDigits(newDigits);
+      replaceDigits(newDigits);
 
       if (pasted.length === 4) {
-        setTimeout(() => onSubmit(newDigits.join('')), 0);
+        scheduleSubmit(newDigits.join(''));
       } else {
         inputRefs.current[pasted.length]?.focus();
       }
     },
-    [digits, isLoading, onSubmit]
+    [isLoading, replaceDigits, scheduleSubmit]
   );
 
   return {

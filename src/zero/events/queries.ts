@@ -284,7 +284,15 @@ export const eventQueries = {
                   .whereExists('vote', vote => applyVoteManagerQueryAccess(vote, userID))
                   .related('choice')
               )
-              .related('voters', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
+              .related('voters', voter =>
+                applyVoteVoterOrManagerQueryAccess(voter, userID).related('user')
+              )
+              .related('final_participations', participation =>
+                participation
+                  .whereExists('voter', voter => applyVoteVoterOrManagerQueryAccess(voter, userID))
+                  .related('voter')
+                  .related('decisions', decision => decision.related('choice'))
+              )
           )
           .related('amendment', aq => aq.related('group').related('event'))
       )

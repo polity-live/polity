@@ -46,6 +46,8 @@ import {
 } from '../logic/createMockCRTimelineItems';
 import { getFinalVoteActionLabels } from '../logic/finalVoteActionLabels';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
+import { AmendmentForwardingNotice } from '@/features/amendments/ui/AmendmentForwardingNotice';
+import type { AmendmentForwardingPreviewModel } from '@/features/amendments/logic/amendmentForwardingPreview';
 const CR_CHOICE_COLORS = [
   {
     color: featureThemeClassName('agendaAgendaVoteSectionSuccessBackground'),
@@ -153,6 +155,7 @@ export interface ChangeRequestTimelineCardViewProps {
   suggestionId: any;
   suggestionResolutions?: any;
   agendaTitle?: any;
+  forwardingPreview?: AmendmentForwardingPreviewModel | null;
   crId: any;
   displayCrId?: any;
   discussions: any;
@@ -235,6 +238,7 @@ export function ChangeRequestTimelineCardView({
   suggestionId,
   suggestionResolutions,
   agendaTitle,
+  forwardingPreview,
   crId,
   displayCrId,
   discussions,
@@ -335,6 +339,15 @@ export function ChangeRequestTimelineCardView({
   const internalChoiceIdSuffix = item.change_request_id ?? cr?.id ?? item.id;
   const confirmationStatus = cr?.confirmation_status ?? cr?.confirmationStatus ?? null;
   const isPendingSubmission = isPendingSubmissionCRTimelineItem(item);
+  const pendingSubmissionDiscussion = discussions?.find(
+    (discussion: { id?: string; crId?: string; changeRequestEntityId?: string; userId?: string }) =>
+      discussion.id === suggestionId ||
+      discussion.crId === crId ||
+      discussion.changeRequestEntityId === item.change_request_id
+  );
+  const canSubmitPendingSuggestion = Boolean(
+    isPendingSubmission && userId && pendingSubmissionDiscussion?.userId === userId
+  );
   const isMockTimelineItem = isMockCRTimelineItem(item);
   const isSyntheticEventVoteRow = isMockTimelineItem && !isInternalVotingMode;
   const effectiveCanVote = canVote && !isSyntheticEventVoteRow;
@@ -509,13 +522,14 @@ export function ChangeRequestTimelineCardView({
                   }
                 />
               )}
-              {getStatusBadge(
-                item.status,
-                isCurrent && !isLocked,
-                t,
-                resolvedVoteResult,
-                (item as Record<string, unknown>)._originalStatus as string | undefined
-              )}
+              {!isPendingSubmission &&
+                getStatusBadge(
+                  item.status,
+                  isCurrent && !isLocked,
+                  t,
+                  resolvedVoteResult,
+                  (item as Record<string, unknown>)._originalStatus as string | undefined
+                )}
               <ChevronDown className="text-muted-foreground h-4 w-4 transition-transform [[data-state=open]_&]:rotate-180" />
             </div>
           </CardHeader>
@@ -684,6 +698,19 @@ export function ChangeRequestTimelineCardView({
               )}
 
             {/* Preview with per-card suggestion filter. */}
+            {isPendingSubmission ? (
+              <p className="text-muted-foreground text-sm">
+                {canSubmitPendingSuggestion
+                  ? t(
+                      'features.agendas.crTimeline.submitPendingHint',
+                      'Open the editor below to submit or discard this change request.'
+                    )
+                  : t(
+                      'features.agendas.crTimeline.awaitingAuthorSubmission',
+                      'Waiting for the author to submit this change request.'
+                    )}
+              </p>
+            ) : null}
             {showEditorPreview && streetDesignChangeRequest ? (
               <div className="space-y-2">
                 <StreetDesignChangeRequestPreview
@@ -698,6 +725,7 @@ export function ChangeRequestTimelineCardView({
                   documentContent={documentContent ?? ([] as Value)}
                   suggestionIds={selectedSuggestionIds}
                   suggestionResolutions={suggestionResolutions}
+                  allowInteractiveEditor={canSubmitPendingSuggestion}
                   editingMode={editingMode}
                   amendmentId={amendmentId}
                   userId={userId}
@@ -744,6 +772,10 @@ export function ChangeRequestTimelineCardView({
                 />
               ))}
 
+            {item.is_closing_vote && forwardingPreview ? (
+              <AmendmentForwardingNotice preview={forwardingPreview} />
+            ) : null}
+
             {/* Participation count */}
             {vote &&
               !isInternalVotingMode &&
@@ -751,8 +783,14 @@ export function ChangeRequestTimelineCardView({
               !isPendingSubmission && (
                 <div className="text-muted-foreground flex items-center gap-2 text-xs">
                   <span>
-                    {currentPhaseVoteCount}/{totalVoters}{' '}
-                    {t('features.agendas.crTimeline.votersParticipated')}
+                    {isIndicative
+                      ? `${totalIndicative} ${t(
+                          'features.agendas.crTimeline.indicationsCast',
+                          'indications'
+                        )}`
+                      : `${currentPhaseVoteCount}/${totalVoters} ${t(
+                          'features.agendas.crTimeline.votersParticipated'
+                        )}`}
                   </span>
                 </div>
               )}

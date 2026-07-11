@@ -138,21 +138,11 @@ export function useEventStream(eventId: string) {
       );
       if (!election) return;
 
-      // Find or create elector record
+      // The server resolves the elector from the frozen snapshot.
       const existingElector = election.electors?.find(
         (e: { user_id: string }) => e.user_id === user.id
       );
-      let electorId = existingElector?.id;
-      if (!electorId) {
-        electorId = crypto.randomUUID();
-        await waitForClientApply(
-          electionActions.createElector({
-            id: electorId,
-            election_id: electionId,
-            user_id: user.id,
-          })
-        );
-      }
+      const electorId = existingElector?.id ?? `snapshot-resolved:${user.id}`;
 
       // Determine phase based on election status
       const isIndicative = election.status === 'indicative';
@@ -209,21 +199,11 @@ export function useEventStream(eventId: string) {
       const voteEntity = currentAgendaItem?.votes?.find((v: { id: string }) => v.id === voteId);
       if (!voteEntity) return;
 
-      // Find or create voter record
+      // The server resolves the voter from the frozen snapshot.
       const existingVoter = voteEntity.voters?.find(
         (v: { user_id: string }) => v.user_id === user.id
       );
-      let voterId = existingVoter?.id;
-      if (!voterId) {
-        voterId = crypto.randomUUID();
-        await waitForClientApply(
-          voteActionsHook.createVoter({
-            id: voterId,
-            vote_id: voteId,
-            user_id: user.id,
-          })
-        );
-      }
+      const voterId = existingVoter?.id ?? `snapshot-resolved:${user.id}`;
 
       // Determine phase based on vote status
       const isIndicative = voteEntity.status === 'indicative';

@@ -33,6 +33,8 @@ export {
   selectIndicativeChoiceDecisionSchema,
   createIndicativeChoiceDecisionSchema,
   replaceIndicativeVoteSchema,
+  startVoteSchema,
+  submitVoteSchema,
   selectFinalVoterParticipationSchema,
   createFinalVoterParticipationSchema,
   selectFinalChoiceDecisionSchema,

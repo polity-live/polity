@@ -307,6 +307,19 @@ export function EventEditView({
                   checked={Boolean(formData.genderQuotaEnabled)}
                   onCheckedChange={checked => updateField('genderQuotaEnabled', checked)}
                 />
+                <SwitchField
+                  id="accreditationRequired"
+                  label={translateText(
+                    'features.events.accreditation.requiredLabel',
+                    'Accreditation required'
+                  )}
+                  description={translateText(
+                    'features.events.accreditation.requiredDescription',
+                    'Only approved participants are included in new ballot electorates.'
+                  )}
+                  checked={Boolean(formData.accreditationRequired)}
+                  onCheckedChange={checked => updateField('accreditationRequired', checked)}
+                />
                 <ChangeRequestVoteOrderInput
                   value={formData.changeRequestVoteOrder}
                   onChange={value => updateField('changeRequestVoteOrder', value)}

@@ -30,7 +30,7 @@ export interface VoteSubmissionProgressStep {
 
 export interface VoteSubmissionContext {
   reportProgress: (stepKey: VoteSubmissionStepKey, status: VoteSubmissionProgressStatus) => void;
-  trackServerResult?: (result: MutationResultLike) => void;
+  trackServerResult?: (result: MutationResultLike) => Promise<void>;
 }
 
 export interface VoteSubmissionCandidate {

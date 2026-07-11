@@ -16,7 +16,7 @@ const baseVoteSchema = z.object({
   amendment_id: z.string().nullable(),
   title: z.string().nullable(),
   description: z.string().nullable(),
-  status: z.enum(['internal', 'indicative', 'final', 'closed']).nullable(),
+  status: z.enum(['pending', 'internal', 'indicative', 'final', 'closed']).nullable(),
   purpose: z.enum(['change_request', 'closing', 'merge_variant']),
   majority_type: z.string().nullable(),
   closing_type: z.string().nullable(),
@@ -27,15 +27,17 @@ const baseVoteSchema = z.object({
   closed_by_id: z.string().nullable(),
   visibility: z.string(),
   ballot_visibility: ballotVisibilitySchema,
+  electorate_snapshotted_at: nullableTimestampSchema,
+  offline_electorate_size: z.number(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
 
 const defaultVoteStatusSchema = z
-  .enum(['internal', 'indicative', 'final', 'closed'])
+  .enum(['pending', 'internal', 'indicative', 'final', 'closed'])
   .nullable()
   .optional()
-  .transform(value => value ?? 'indicative');
+  .transform(value => value ?? 'pending');
 const defaultVoteMajorityTypeSchema = z
   .string()
   .nullable()
@@ -68,6 +70,8 @@ export const createVoteSchema = baseVoteSchema
     closed_by_id: true,
     visibility: true,
     ballot_visibility: true,
+    electorate_snapshotted_at: true,
+    offline_electorate_size: true,
   })
   .extend({
     id: z.string(),
@@ -76,6 +80,10 @@ export const createVoteSchema = baseVoteSchema
     closing_type: defaultVoteClosingTypeSchema,
     visibility: defaultVoteVisibilitySchema,
     ballot_visibility: defaultVoteBallotVisibilitySchema,
+    offline_electorate_size: z
+      .number()
+      .optional()
+      .transform(value => value ?? 0),
   });
 export const updateVoteSchema = baseVoteSchema
   .pick({
@@ -130,13 +138,19 @@ const baseVoterSchema = z.object({
   id: z.string(),
   vote_id: z.string(),
   user_id: z.string(),
+  participation_channel: z.enum(['online', 'offline']),
+  snapshotted_at: timestampSchema,
   created_at: timestampSchema,
 });
 
 export const selectVoterSchema = baseVoterSchema;
 export const createVoterSchema = baseVoterSchema
-  .omit({ id: true, created_at: true })
-  .extend({ id: z.string() });
+  .omit({ id: true, created_at: true, participation_channel: true, snapshotted_at: true })
+  .extend({
+    id: z.string(),
+    participation_channel: z.enum(['online', 'offline']).optional(),
+    snapshotted_at: timestampSchema.optional(),
+  });
 export const deleteVoterSchema = z.object({ id: z.string() });
 
 // ============================================
@@ -146,14 +160,19 @@ export const deleteVoterSchema = z.object({ id: z.string() });
 const baseIndicativeVoterParticipationSchema = z.object({
   id: z.string(),
   vote_id: z.string(),
-  voter_id: z.string(),
+  user_id: z.string(),
+  voter_id: z.string().nullable(),
   created_at: timestampSchema,
 });
 
 export const selectIndicativeVoterParticipationSchema = baseIndicativeVoterParticipationSchema;
 export const createIndicativeVoterParticipationSchema = baseIndicativeVoterParticipationSchema
   .omit({ id: true, created_at: true })
-  .extend({ id: z.string() });
+  .extend({
+    id: z.string(),
+    user_id: z.string().optional(),
+    voter_id: z.string().nullable().optional(),
+  });
 
 // ============================================
 // Indicative Choice Decision
@@ -175,6 +194,17 @@ export const replaceIndicativeVoteSchema = z.object({
   voter: createVoterSchema.optional(),
   participation: createIndicativeVoterParticipationSchema,
   decisions: z.array(createIndicativeChoiceDecisionSchema).min(1),
+});
+export const startVoteSchema = z.object({
+  vote_id: z.string(),
+  phase: z.enum(['indicative', 'final']),
+  closing_end_time: nullableTimestampSchema.optional(),
+});
+export const submitVoteSchema = z.object({
+  vote_id: z.string(),
+  phase: z.enum(['indicative', 'final']),
+  choice_ids: z.array(z.string()).min(1),
+  idempotency_id: z.string().uuid(),
 });
 
 // ============================================

@@ -17,6 +17,8 @@ export const election = table('election')
     election_mode: string().optional(),
     seat_count: number().optional(),
     max_votes: number(),
+    electorate_snapshotted_at: number().optional(),
+    offline_electorate_size: number().optional(),
     created_at: number(),
     updated_at: number(),
   })
@@ -41,6 +43,8 @@ export const elector = table('elector')
     id: string(),
     election_id: string(),
     user_id: string(),
+    participation_channel: string().optional(),
+    snapshotted_at: number().optional(),
     created_at: number(),
   })
   .primaryKey('id');
@@ -49,7 +53,8 @@ export const indicativeElectorParticipation = table('indicative_elector_particip
   .columns({
     id: string(),
     election_id: string(),
-    elector_id: string(),
+    user_id: string(),
+    elector_id: string().optional(),
     created_at: number(),
   })
   .primaryKey('id');

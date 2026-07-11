@@ -135,16 +135,16 @@ describe('agendaServerMutators.ensureEventSuggestionChangeRequestVotes', () => {
     expect(tx.mutate.vote_choice.insert).toHaveBeenCalledWith(
       expect.objectContaining({ label: 'abstain', semantic_key: 'abstain' })
     );
-    expect(tx.mutate.voter.insert).toHaveBeenCalledTimes(2);
+    expect(tx.mutate.voter.insert).not.toHaveBeenCalled();
     expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         agenda_item_id: 'agenda-1',
         change_request_id: 'cr-1',
-        order_index: 5,
+        order_index: 4,
         step_kind: 'change_request',
         process_branch_id: 'branch-1',
         is_closing_vote: false,
-        status: 'pending',
+        status: 'voting',
       })
     );
     expect(tx.mutate.vote.insert).not.toHaveBeenCalledWith(
@@ -198,6 +198,50 @@ describe('agendaServerMutators.ensureEventSuggestionChangeRequestVotes', () => {
         },
       ],
       [],
+      [
+        {
+          id: 'link-cr-15',
+          change_request_id: 'cr-15',
+          order_index: 5,
+          step_kind: 'change_request',
+          is_closing_vote: false,
+          status: 'voting',
+          change_request: changeRequest('cr-15', { title: 'CR-15' }),
+          vote: { status: 'indicative' },
+        },
+        {
+          id: 'link-cr-13',
+          change_request_id: 'cr-13',
+          order_index: 6,
+          step_kind: 'change_request',
+          is_closing_vote: false,
+          status: 'voting',
+          change_request: changeRequest('cr-13', { title: 'CR-13' }),
+          vote: { status: 'indicative' },
+        },
+      ],
+      { id: 'amendment-1', document_id: null, discussions: [] },
+      [
+        {
+          id: 'branch-1',
+          document_id: 'document-branch-1',
+          document_version_id: null,
+          discussions: [
+            { id: 'suggestion-13', changeRequestEntityId: 'cr-13' },
+            { id: 'suggestion-15', changeRequestEntityId: 'cr-15' },
+          ],
+        },
+      ],
+      [
+        {
+          id: 'document-branch-1',
+          content: [
+            { type: 'p', children: [{ text: 'early', suggestion_15: { id: 'suggestion-15' } }] },
+            { type: 'p', children: [{ text: 'later', suggestion_13: { id: 'suggestion-13' } }] },
+          ],
+        },
+      ],
+      [],
     ]);
 
     await ensure(tx);
@@ -206,9 +250,12 @@ describe('agendaServerMutators.ensureEventSuggestionChangeRequestVotes', () => {
       ([link]) => link
     );
     expect(insertedLinks).toEqual([
-      expect.objectContaining({ change_request_id: 'cr-15', order_index: 6 }),
-      expect.objectContaining({ change_request_id: 'cr-13', order_index: 7 }),
+      expect.objectContaining({ change_request_id: 'cr-15', order_index: 5 }),
+      expect.objectContaining({ change_request_id: 'cr-13', order_index: 6 }),
     ]);
+    expect(tx.mutate.agenda_item_change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'existing-final', order_index: 7 })
+    );
   });
 
   it('reorders existing open vote rows when a newly submitted change request belongs before them', async () => {
@@ -220,7 +267,6 @@ describe('agendaServerMutators.ensureEventSuggestionChangeRequestVotes', () => {
       ],
       [{ id: 'link-cr-15', change_request_id: 'cr-15', is_closing_vote: false, order_index: 0 }],
       { id: 'event-1', change_request_vote_order: 'text_position' },
-      [],
       [
         {
           id: 'link-cr-15',
@@ -264,6 +310,7 @@ describe('agendaServerMutators.ensureEventSuggestionChangeRequestVotes', () => {
           ],
         },
       ],
+      [],
     ]);
 
     await ensure(tx);
@@ -285,6 +332,61 @@ describe('agendaServerMutators.ensureEventSuggestionChangeRequestVotes', () => {
         id: 'link-cr-15',
         order_index: 1,
       })
+    );
+  });
+
+  it('keeps a running final CR fixed and inserts new CRs before the closing vote', async () => {
+    const activeLink = {
+      id: 'link-active',
+      change_request_id: 'cr-active',
+      is_closing_vote: false,
+      order_index: 0,
+      status: 'voting',
+    };
+    const closingLink = {
+      id: 'link-closing',
+      change_request_id: null,
+      is_closing_vote: true,
+      step_kind: 'closing',
+      order_index: 1,
+      status: 'pending',
+    };
+    const tx = createTx([
+      agendaItem(),
+      [changeRequest('cr-active'), changeRequest('cr-new')],
+      [activeLink, closingLink],
+      { id: 'event-1', change_request_vote_order: 'cr_number' },
+      [
+        {
+          ...activeLink,
+          step_kind: 'change_request',
+          change_request: changeRequest('cr-active'),
+          vote: { status: 'final' },
+        },
+        {
+          id: 'link-new',
+          change_request_id: 'cr-new',
+          is_closing_vote: false,
+          step_kind: 'change_request',
+          order_index: 1,
+          status: 'voting',
+          change_request: changeRequest('cr-new'),
+          vote: { status: 'indicative' },
+        },
+        { ...closingLink, order_index: 2 },
+      ],
+    ]);
+
+    await ensure(tx);
+
+    expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ change_request_id: 'cr-new', order_index: 1 })
+    );
+    expect(tx.mutate.agenda_item_change_request.update).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'link-closing', order_index: 2 })
+    );
+    expect(tx.mutate.agenda_item_change_request.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'link-active' })
     );
   });
 

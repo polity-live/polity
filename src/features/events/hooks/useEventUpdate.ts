@@ -85,6 +85,7 @@ export interface EventFormData {
   delegateElectionMode: ElectionMode;
   defaultFinalVoteDurationMinutes: string;
   genderQuotaEnabled: boolean;
+  accreditationRequired: boolean;
   changeRequestVoteOrder: ChangeRequestVoteOrder;
   recurrencePattern: RecurrencePattern;
   recurrenceInterval: number;
@@ -166,6 +167,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     delegateElectionMode: 'list',
     defaultFinalVoteDurationMinutes: '',
     genderQuotaEnabled: false,
+    accreditationRequired: false,
     changeRequestVoteOrder: DEFAULT_CHANGE_REQUEST_VOTE_ORDER,
     recurrencePattern: 'none',
     recurrenceInterval: 1,
@@ -288,6 +290,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           ? String(Math.max(1, Math.round(event.default_final_vote_duration_seconds / 60)))
           : '',
         genderQuotaEnabled: Boolean(event.gender_quota_enabled),
+        accreditationRequired: Boolean(event.accreditation_required),
         changeRequestVoteOrder: normalizeChangeRequestVoteOrder(event.change_request_vote_order),
         recurrencePattern,
         recurrenceInterval,
@@ -443,6 +446,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
             event?.event_type === 'delegate_assembly' ? formData.delegateElectionMode : null,
           default_final_vote_duration_seconds: defaultFinalVoteDurationSeconds,
           gender_quota_enabled: formData.genderQuotaEnabled,
+          accreditation_required: formData.accreditationRequired,
           change_request_vote_order: formData.changeRequestVoteOrder,
           ...recurringFields,
         };
@@ -510,6 +514,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
             event.event_type === 'delegate_assembly' ? formData.delegateElectionMode : null,
           default_final_vote_duration_seconds: defaultFinalVoteDurationSeconds,
           gender_quota_enabled: formData.genderQuotaEnabled,
+          accreditation_required: formData.accreditationRequired,
           change_request_vote_order: formData.changeRequestVoteOrder,
           ...recurringFields,
         };

@@ -1,6 +1,7 @@
 'use client';
 
 import type { AmendmentPathVisualizationSegment } from '@/features/network/ui/AmendmentPathVisualization';
+import type { AmendmentForwardingPreviewModel } from '@/features/amendments/logic/amendmentForwardingPreview';
 
 import { useAmendmentProcessDetailsPanelController } from '@/features/amendments/hooks/useAmendmentProcessDetailsPanelController';
 
@@ -23,13 +24,7 @@ interface AmendmentProcessDetailsPanelProps {
     } | null;
     group?: { id: string; name?: string | null } | null;
   };
-  forwardingPreview?: {
-    nextGroupId?: string | null;
-    nextGroupName?: string | null;
-    nextEventId?: string | null;
-    nextEventTitle: string;
-    nextEventStartDate?: number | null;
-  } | null;
+  forwardingPreview?: AmendmentForwardingPreviewModel | null;
   pathVisualizationData?: AmendmentPathVisualizationSegment[];
   groupTypeById?: Map<string, string | null>;
   onGroupClick?: (groupId: string) => void;

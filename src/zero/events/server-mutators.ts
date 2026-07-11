@@ -952,6 +952,28 @@ export const eventServerMutators = {
 
   update: defineMutator(eventUpdateSchema, async ({ tx, ctx, args }) => {
     const previousEvent = await tx.run(zql.event.where('id', args.id).one());
+    if (
+      args.accreditation_required !== undefined &&
+      previousEvent &&
+      args.accreditation_required !== previousEvent.accreditation_required
+    ) {
+      const agendaItems = await tx.run(zql.agenda_item.where('event_id', args.id));
+      for (const agendaItem of agendaItems) {
+        const [votes, elections] = await Promise.all([
+          tx.run(zql.vote.where('agenda_item_id', agendaItem.id)),
+          tx.run(zql.election.where('agenda_item_id', agendaItem.id)),
+        ]);
+        const snapshottedVote = votes.some(vote => vote.electorate_snapshotted_at != null);
+        const snapshottedElection = elections.some(
+          election => election.electorate_snapshotted_at != null
+        );
+        if (snapshottedVote || snapshottedElection) {
+          throw new Error(
+            'Accreditation requirements cannot be changed after the first final ballot snapshot.'
+          );
+        }
+      }
+    }
     const nextEventType = args.event_type ?? previousEvent?.event_type ?? null;
     const nextGroupId =
       args.group_id !== undefined ? args.group_id : (previousEvent?.group_id ?? null);

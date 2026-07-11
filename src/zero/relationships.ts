@@ -1727,6 +1727,7 @@ export const indicativeElectorParticipationRelationships = relationships(
   ({ one, many }) => ({
     election: one({ sourceField: ['election_id'], destSchema: election, destField: ['id'] }),
     elector: one({ sourceField: ['elector_id'], destSchema: elector, destField: ['id'] }),
+    user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
     selections: many({
       sourceField: ['id'],
       destSchema: indicativeCandidateSelection,
@@ -2286,6 +2287,7 @@ export const indicativeVoterParticipationRelationships = relationships(
   ({ one, many }) => ({
     vote: one({ sourceField: ['vote_id'], destSchema: vote, destField: ['id'] }),
     voter: one({ sourceField: ['voter_id'], destSchema: voter, destField: ['id'] }),
+    user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
     decisions: many({
       sourceField: ['id'],
       destSchema: indicativeChoiceDecision,

@@ -317,7 +317,14 @@ export function EventStreamSectionView({
                 userSelectedChoiceIds={userSelectedChoiceIds}
                 voteStatus={voteStatus}
                 majorityType={voteEntity.majority_type}
-                totalEligibleVoters={voteEntity.voters?.length}
+                totalEligibleVoters={
+                  voteEntity.offline_electorate_size == null
+                    ? voteEntity.voters?.length
+                    : (voteEntity.voters ?? []).filter(
+                        (voter: { participation_channel?: string | null }) =>
+                          voter.participation_channel !== 'offline'
+                      ).length + voteEntity.offline_electorate_size
+                }
               />
             )}
 

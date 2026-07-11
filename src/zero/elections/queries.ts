@@ -154,11 +154,10 @@ export const electionQueries = {
   // Check if user has participated in indicative phase
   userIndicativeParticipation: defineQuery(
     z.object({ election_id: z.string(), elector_id: z.string() }),
-    ({ args: { election_id, elector_id }, ctx: { userID } }) =>
+    ({ args: { election_id }, ctx: { userID } }) =>
       zql.indicative_elector_participation
         .where('election_id', election_id)
-        .where('elector_id', elector_id)
-        .whereExists('elector', elector => elector.where('user_id', userID))
+        .where('user_id', userID ?? '__anon__')
         .whereExists('election', election => applyElectionQueryAccess(election, userID))
         .related('selections', q => q.related('candidate'))
         .one()

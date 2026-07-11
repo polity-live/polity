@@ -183,6 +183,7 @@ export interface EventAgendaViewProps {
   nextPendingCRItem: any;
   activeCRToolbarItem: any;
   nextStartableSequenceItem?: any;
+  canStartSelectedCRFinalVote?: boolean;
   isCRToolbarActive: any;
   selectedCRPhase: any;
   isSelectedClosingVote: any;
@@ -309,6 +310,7 @@ export function EventAgendaView({
   effectiveClosingVoteItem,
   activeCRToolbarItem,
   nextStartableSequenceItem,
+  canStartSelectedCRFinalVote = false,
   isCRToolbarActive,
   selectedCRPhase,
   hasUserVotedOnSelectedCR,
@@ -401,7 +403,7 @@ export function EventAgendaView({
       ? actionBarHook.handleStartVote
       : undefined;
   const liveFocusStartFinalVoteClick = isCRToolbarActive
-    ? isToolbarAgendaItemActive && selectedCRPhase === 'indication'
+    ? isToolbarAgendaItemActive && selectedCRPhase === 'indication' && canStartSelectedCRFinalVote
       ? handleToolbarStartFinalVote
       : undefined
     : isToolbarAgendaItemActive && effectiveToolbarVotingPhase === 'indication'
@@ -793,7 +795,7 @@ export function EventAgendaView({
         }
         onStartFinalVote={
           canManageCurrentVote && isCRToolbarActive
-            ? selectedCRPhase === 'indication'
+            ? selectedCRPhase === 'indication' && canStartSelectedCRFinalVote
               ? handleToolbarStartFinalVote
               : undefined
             : canManageCurrentVote && effectiveToolbarVotingPhase === 'indication'

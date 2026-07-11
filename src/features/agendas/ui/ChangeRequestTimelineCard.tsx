@@ -5,6 +5,7 @@ import type { TDiscussion } from '@/features/editor/types';
 import type { SuggestionPreviewResolutionMap } from '@/features/change-requests/logic/filterDocumentToSingleSuggestion';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 import type { StreetDesignPreviewSource } from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
+import type { AmendmentForwardingPreviewModel } from '@/features/amendments/logic/amendmentForwardingPreview';
 /** Optional text diff data to render inside the card. */
 export interface ChangeRequestDiffData {
   changeType?: string;
@@ -32,6 +33,7 @@ interface ChangeRequestTimelineCardProps {
   suggestionResolutions?: SuggestionPreviewResolutionMap;
   /** Agenda or amendment title used for final closing vote labels. */
   agendaTitle?: string | null;
+  forwardingPreview?: AmendmentForwardingPreviewModel | null;
   /** Short CR identifier (e.g. "CR-1") used to default-select this card's CR */
   crId?: string;
   /** User-facing branch-scoped CR label, e.g. "Branch 1 CR-1" */
@@ -91,6 +93,7 @@ export function ChangeRequestTimelineCard({
   suggestionId,
   suggestionResolutions,
   agendaTitle,
+  forwardingPreview,
   crId,
   displayCrId,
   discussions,
@@ -127,6 +130,7 @@ export function ChangeRequestTimelineCard({
     suggestionId,
     suggestionResolutions,
     agendaTitle,
+    forwardingPreview,
     crId,
     displayCrId,
     discussions,

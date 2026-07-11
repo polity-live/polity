@@ -29,6 +29,7 @@ import {
   mapChangeRequestsToTimelineItems,
 } from '../logic/changeRequestsViewModel';
 import { normalizeEditingMode, type EditingMode } from '@/zero/amendments/editing-mode-policy';
+import type { VoteSubmissionContext } from '@/features/shared/ui/voting';
 
 interface ChangeRequestsPageContainerProps {
   amendmentId: string;
@@ -358,9 +359,9 @@ export function useChangeRequestsPageContainerController({
   );
 
   const handleCastEventVoteFromDialog = useCallback(
-    async (choiceId: string) => {
+    async (choiceId: string, context?: VoteSubmissionContext) => {
       if (!selectedEventVoteItem) return;
-      await agendaCrVoting.castCRVote(selectedEventVoteItem, choiceId);
+      await agendaCrVoting.castCRVote(selectedEventVoteItem, choiceId, context);
     },
     [agendaCrVoting, selectedEventVoteItem]
   );

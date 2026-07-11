@@ -60,6 +60,14 @@ function setDefaultTimeline() {
 
 beforeEach(() => {
   Object.values(mocks).forEach(mock => mock.mockReset());
+  const mutationResult = {
+    client: Promise.resolve(),
+    server: Promise.resolve({ type: 'success' }),
+  };
+  mocks.updateVote.mockReturnValue(mutationResult);
+  mocks.updateAgendaItemChangeRequest.mockReturnValue(mutationResult);
+  mocks.castIndicativeVote.mockReturnValue(mutationResult);
+  mocks.castFinalVote.mockReturnValue(mutationResult);
   setDefaultTimeline();
 });
 
@@ -203,5 +211,39 @@ describe('useAgendaItemCRVoting', () => {
     expect(mocks.castIndicativeVote).not.toHaveBeenCalled();
     expect(mocks.castFinalVote).not.toHaveBeenCalled();
     expect(mocks.toastError).not.toHaveBeenCalled();
+  });
+
+  it('awaits the dialog server tracker and silences the action-level final vote toast', async () => {
+    const item = {
+      id: 'agenda-cr-1',
+      agenda_item_id: 'agenda-1',
+      change_request_id: 'cr-1',
+      vote_id: 'vote-1',
+      is_closing_vote: false,
+      status: 'voting',
+      vote: {
+        id: 'vote-1',
+        status: 'final',
+        ballot_visibility: 'named',
+        choices: [{ id: 'choice-yes', label: 'yes', order_index: 0 }],
+        voters: [{ id: 'voter-1', user_id: 'user-1' }],
+        indicative_participations: [],
+        final_participations: [],
+      },
+    };
+    const trackServerResult = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useAgendaItemCRVoting('agenda-1', 'user-1'));
+
+    await act(async () => {
+      await result.current.castCRVote(item as never, 'choice-yes', {
+        reportProgress: vi.fn(),
+        trackServerResult,
+      });
+    });
+
+    expect(mocks.castFinalVote).toHaveBeenCalledWith(expect.any(Object), expect.any(Array), {
+      silent: true,
+    });
+    expect(trackServerResult).toHaveBeenCalledWith(mocks.castFinalVote.mock.results[0]?.value);
   });
 });

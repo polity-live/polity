@@ -694,11 +694,6 @@ BEGIN
 
   INSERT INTO public.voter (id, vote_id, user_id, created_at)
   VALUES
-    ('d5200000-0000-4000-a000-000000000001', urgent_vote_id, demo_user_id, seed_now),
-    ('d5200000-0000-4000-a000-000000000002', urgent_vote_id, user_mina_id, seed_now),
-    ('d5200000-0000-4000-a000-000000000003', urgent_vote_id, user_omar_id, seed_now),
-    ('d5200000-0000-4000-a000-000000000004', urgent_vote_id, user_leah_id, seed_now),
-    ('d5200000-0000-4000-a000-000000000005', urgent_vote_id, user_jonas_id, seed_now),
     ('d5200000-0000-4000-a000-000000000006', final_vote_id, demo_user_id, seed_now),
     ('d5200000-0000-4000-a000-000000000007', final_vote_id, user_mina_id, seed_now),
     ('d5200000-0000-4000-a000-000000000008', final_vote_id, user_omar_id, seed_now),
@@ -710,20 +705,20 @@ BEGIN
     ('d5200000-0000-4000-a000-000000000014', closed_vote_id, user_leah_id, seed_now),
     ('d5200000-0000-4000-a000-000000000015', closed_vote_id, user_jonas_id, seed_now);
 
-  INSERT INTO public.indicative_voter_participation (id, vote_id, voter_id, created_at)
+  INSERT INTO public.indicative_voter_participation (id, vote_id, user_id, created_at)
   VALUES
-    ('d5300000-0000-4000-a000-000000000001', urgent_vote_id, 'd5200000-0000-4000-a000-000000000002', seed_now - INTERVAL '12 minutes'),
-    ('d5300000-0000-4000-a000-000000000002', urgent_vote_id, 'd5200000-0000-4000-a000-000000000003', seed_now - INTERVAL '10 minutes'),
-    ('d5300000-0000-4000-a000-000000000003', urgent_vote_id, 'd5200000-0000-4000-a000-000000000004', seed_now - INTERVAL '8 minutes'),
-    ('d5300000-0000-4000-a000-000000000004', urgent_vote_id, 'd5200000-0000-4000-a000-000000000005', seed_now - INTERVAL '6 minutes'),
-    ('d5300000-0000-4000-a000-000000000005', final_vote_id, 'd5200000-0000-4000-a000-000000000007', seed_now - INTERVAL '42 minutes'),
-    ('d5300000-0000-4000-a000-000000000006', final_vote_id, 'd5200000-0000-4000-a000-000000000008', seed_now - INTERVAL '40 minutes'),
-    ('d5300000-0000-4000-a000-000000000007', final_vote_id, 'd5200000-0000-4000-a000-000000000009', seed_now - INTERVAL '38 minutes'),
-    ('d5300000-0000-4000-a000-000000000008', final_vote_id, 'd5200000-0000-4000-a000-000000000010', seed_now - INTERVAL '36 minutes'),
-    ('d5300000-0000-4000-a000-000000000009', closed_vote_id, 'd5200000-0000-4000-a000-000000000011', seed_now - INTERVAL '70 minutes'),
-    ('d5300000-0000-4000-a000-000000000010', closed_vote_id, 'd5200000-0000-4000-a000-000000000012', seed_now - INTERVAL '68 minutes'),
-    ('d5300000-0000-4000-a000-000000000011', closed_vote_id, 'd5200000-0000-4000-a000-000000000013', seed_now - INTERVAL '66 minutes'),
-    ('d5300000-0000-4000-a000-000000000012', closed_vote_id, 'd5200000-0000-4000-a000-000000000014', seed_now - INTERVAL '64 minutes');
+    ('d5300000-0000-4000-a000-000000000001', urgent_vote_id, user_mina_id, seed_now - INTERVAL '12 minutes'),
+    ('d5300000-0000-4000-a000-000000000002', urgent_vote_id, user_omar_id, seed_now - INTERVAL '10 minutes'),
+    ('d5300000-0000-4000-a000-000000000003', urgent_vote_id, user_leah_id, seed_now - INTERVAL '8 minutes'),
+    ('d5300000-0000-4000-a000-000000000004', urgent_vote_id, user_jonas_id, seed_now - INTERVAL '6 minutes'),
+    ('d5300000-0000-4000-a000-000000000005', final_vote_id, user_mina_id, seed_now - INTERVAL '42 minutes'),
+    ('d5300000-0000-4000-a000-000000000006', final_vote_id, user_omar_id, seed_now - INTERVAL '40 minutes'),
+    ('d5300000-0000-4000-a000-000000000007', final_vote_id, user_leah_id, seed_now - INTERVAL '38 minutes'),
+    ('d5300000-0000-4000-a000-000000000008', final_vote_id, user_jonas_id, seed_now - INTERVAL '36 minutes'),
+    ('d5300000-0000-4000-a000-000000000009', closed_vote_id, demo_user_id, seed_now - INTERVAL '70 minutes'),
+    ('d5300000-0000-4000-a000-000000000010', closed_vote_id, user_mina_id, seed_now - INTERVAL '68 minutes'),
+    ('d5300000-0000-4000-a000-000000000011', closed_vote_id, user_omar_id, seed_now - INTERVAL '66 minutes'),
+    ('d5300000-0000-4000-a000-000000000012', closed_vote_id, user_leah_id, seed_now - INTERVAL '64 minutes');
 
   INSERT INTO public.indicative_choice_decision (id, vote_id, choice_id, voter_participation_id, created_at)
   VALUES
@@ -837,26 +832,21 @@ BEGIN
 
   INSERT INTO public.elector (id, election_id, user_id, created_at)
   VALUES
-    ('d6200000-0000-4000-a000-000000000001', live_election_id, demo_user_id, seed_now),
-    ('d6200000-0000-4000-a000-000000000002', live_election_id, user_mina_id, seed_now),
-    ('d6200000-0000-4000-a000-000000000003', live_election_id, user_omar_id, seed_now),
-    ('d6200000-0000-4000-a000-000000000004', live_election_id, user_leah_id, seed_now),
-    ('d6200000-0000-4000-a000-000000000005', live_election_id, user_jonas_id, seed_now),
     ('d6200000-0000-4000-a000-000000000006', closed_election_id, demo_user_id, seed_now),
     ('d6200000-0000-4000-a000-000000000007', closed_election_id, user_mina_id, seed_now),
     ('d6200000-0000-4000-a000-000000000008', closed_election_id, user_omar_id, seed_now),
     ('d6200000-0000-4000-a000-000000000009', closed_election_id, user_leah_id, seed_now),
     ('d6200000-0000-4000-a000-000000000010', closed_election_id, user_jonas_id, seed_now);
 
-  INSERT INTO public.indicative_elector_participation (id, election_id, elector_id, created_at)
+  INSERT INTO public.indicative_elector_participation (id, election_id, user_id, created_at)
   VALUES
-    ('d6300000-0000-4000-a000-000000000001', live_election_id, 'd6200000-0000-4000-a000-000000000002', seed_now - INTERVAL '17 minutes'),
-    ('d6300000-0000-4000-a000-000000000002', live_election_id, 'd6200000-0000-4000-a000-000000000003', seed_now - INTERVAL '16 minutes'),
-    ('d6300000-0000-4000-a000-000000000003', live_election_id, 'd6200000-0000-4000-a000-000000000004', seed_now - INTERVAL '15 minutes'),
-    ('d6300000-0000-4000-a000-000000000004', live_election_id, 'd6200000-0000-4000-a000-000000000005', seed_now - INTERVAL '14 minutes'),
-    ('d6300000-0000-4000-a000-000000000005', closed_election_id, 'd6200000-0000-4000-a000-000000000006', seed_now - INTERVAL '90 minutes'),
-    ('d6300000-0000-4000-a000-000000000006', closed_election_id, 'd6200000-0000-4000-a000-000000000007', seed_now - INTERVAL '88 minutes'),
-    ('d6300000-0000-4000-a000-000000000007', closed_election_id, 'd6200000-0000-4000-a000-000000000008', seed_now - INTERVAL '86 minutes');
+    ('d6300000-0000-4000-a000-000000000001', live_election_id, user_mina_id, seed_now - INTERVAL '17 minutes'),
+    ('d6300000-0000-4000-a000-000000000002', live_election_id, user_omar_id, seed_now - INTERVAL '16 minutes'),
+    ('d6300000-0000-4000-a000-000000000003', live_election_id, user_leah_id, seed_now - INTERVAL '15 minutes'),
+    ('d6300000-0000-4000-a000-000000000004', live_election_id, user_jonas_id, seed_now - INTERVAL '14 minutes'),
+    ('d6300000-0000-4000-a000-000000000005', closed_election_id, demo_user_id, seed_now - INTERVAL '90 minutes'),
+    ('d6300000-0000-4000-a000-000000000006', closed_election_id, user_mina_id, seed_now - INTERVAL '88 minutes'),
+    ('d6300000-0000-4000-a000-000000000007', closed_election_id, user_omar_id, seed_now - INTERVAL '86 minutes');
 
   INSERT INTO public.indicative_candidate_selection (id, election_id, candidate_id, elector_participation_id, created_at)
   VALUES

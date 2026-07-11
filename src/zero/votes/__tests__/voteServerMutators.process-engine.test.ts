@@ -7,6 +7,8 @@ const {
   castFinalVoteFn,
   createFinalChoiceDecisionFn,
   upsertOfflineTallyFn,
+  replaceIndicativeVoteFn,
+  castFinalVoteFullFn,
   recomputeEventCountersMock,
   eventTitleMock,
   fireNotificationMock,
@@ -16,6 +18,8 @@ const {
   discardPendingEventSuggestionsMock,
   finalizeInternalChangeRequestsForEventPhaseTransitionMock,
   resolveChangeRequestByVoteResultMock,
+  assertCurrentOnlineBallotEligibilityMock,
+  snapshotVoteElectorateMock,
 } = vi.hoisted(() => ({
   updateVoteFn: vi.fn(),
   createVoteFn: vi.fn(),
@@ -23,6 +27,8 @@ const {
   castFinalVoteFn: vi.fn(),
   createFinalChoiceDecisionFn: vi.fn(),
   upsertOfflineTallyFn: vi.fn(),
+  replaceIndicativeVoteFn: vi.fn(),
+  castFinalVoteFullFn: vi.fn(),
   recomputeEventCountersMock: vi.fn(),
   eventTitleMock: vi.fn(),
   fireNotificationMock: vi.fn(),
@@ -32,6 +38,13 @@ const {
   discardPendingEventSuggestionsMock: vi.fn(),
   finalizeInternalChangeRequestsForEventPhaseTransitionMock: vi.fn(),
   resolveChangeRequestByVoteResultMock: vi.fn(),
+  assertCurrentOnlineBallotEligibilityMock: vi.fn(),
+  snapshotVoteElectorateMock: vi.fn(),
+}));
+
+vi.mock('../../ballot-eligibility', () => ({
+  assertCurrentOnlineBallotEligibility: assertCurrentOnlineBallotEligibilityMock,
+  snapshotVoteElectorate: snapshotVoteElectorateMock,
 }));
 
 vi.mock('../../mutators', () => ({
@@ -43,6 +56,8 @@ vi.mock('../../mutators', () => ({
       castFinalVote: { fn: castFinalVoteFn },
       createFinalChoiceDecision: { fn: createFinalChoiceDecisionFn },
       upsertOfflineTally: { fn: upsertOfflineTallyFn },
+      replaceIndicativeVote: { fn: replaceIndicativeVoteFn },
+      castFinalVoteFull: { fn: castFinalVoteFullFn },
     },
   },
 }));
@@ -99,6 +114,13 @@ function createTx() {
       vote: {
         update: vi.fn(),
       },
+      indicative_voter_participation: {
+        insert: vi.fn(),
+      },
+      indicative_choice_decision: {
+        insert: vi.fn(),
+        delete: vi.fn(),
+      },
     },
   };
 }
@@ -117,6 +139,8 @@ beforeEach(() => {
   castFinalVoteFn.mockReset();
   createFinalChoiceDecisionFn.mockReset();
   upsertOfflineTallyFn.mockReset();
+  replaceIndicativeVoteFn.mockReset();
+  castFinalVoteFullFn.mockReset();
   recomputeEventCountersMock.mockReset();
   eventTitleMock.mockReset();
   fireNotificationMock.mockReset();
@@ -126,6 +150,8 @@ beforeEach(() => {
   discardPendingEventSuggestionsMock.mockReset();
   finalizeInternalChangeRequestsForEventPhaseTransitionMock.mockReset();
   resolveChangeRequestByVoteResultMock.mockReset();
+  assertCurrentOnlineBallotEligibilityMock.mockReset();
+  snapshotVoteElectorateMock.mockReset();
 });
 
 function activeVotingParticipant(userId: string) {
@@ -165,6 +191,67 @@ function voter(id: string, userId: string) {
   };
 }
 
+describe('voteServerMutators.submitVote electorate enforcement', () => {
+  it('uses current event eligibility for an indicative vote without a snapshot', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'vote-1',
+        status: 'indicative',
+        ballot_visibility: 'named',
+        agenda_item_id: 'agenda-1',
+        electorate_snapshotted_at: null,
+      })
+      .mockResolvedValueOnce([{ id: 'choice-1' }])
+      .mockResolvedValueOnce(null);
+
+    await voteServerMutators.submitVote.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: {
+        vote_id: 'vote-1',
+        phase: 'indicative',
+        choice_ids: ['choice-1'],
+        idempotency_id: '00000000-0000-4000-8000-000000000001',
+      },
+    });
+
+    expect(tx.mutate.indicative_voter_participation.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        vote_id: 'vote-1',
+        user_id: 'user-1',
+        voter_id: null,
+      })
+    );
+    expect(replaceIndicativeVoteFn).not.toHaveBeenCalled();
+  });
+
+  it('rejects users outside the frozen snapshot even if they manage votes', async () => {
+    const tx = createTx();
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'vote-1',
+        status: 'final',
+        electorate_snapshotted_at: 123,
+      })
+      .mockResolvedValueOnce(null);
+
+    await expect(
+      voteServerMutators.submitVote.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: {
+          vote_id: 'vote-1',
+          phase: 'final',
+          choice_ids: ['choice-1'],
+          idempotency_id: '00000000-0000-4000-8000-000000000002',
+        },
+      })
+    ).rejects.toThrow(/not part of the electorate snapshot/i);
+    expect(castFinalVoteFullFn).not.toHaveBeenCalled();
+  });
+});
+
 describe('voteServerMutators final vote auto-close', () => {
   it('does not close after the first final vote when more active voters are eligible', async () => {
     const tx = createTx();
@@ -183,7 +270,11 @@ describe('voteServerMutators final vote auto-close', () => {
       ])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([voter('voter-1', 'user-1')])
+      .mockResolvedValueOnce([
+        voter('voter-1', 'user-1'),
+        voter('voter-2', 'user-2'),
+        voter('voter-3', 'user-3'),
+      ])
       .mockResolvedValueOnce([finalParticipation('voter-1')])
       .mockResolvedValueOnce([]);
 
@@ -1123,6 +1214,61 @@ describe('voteServerMutators.updateVote', () => {
 
     expect(updateVoteFn).not.toHaveBeenCalled();
     expect(resolveAmendmentProcessVoteMock).not.toHaveBeenCalled();
+  });
+
+  it('blocks a linked closing vote while a change request vote is unfinished', async () => {
+    const tx = createTx();
+
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'vote-closing',
+        status: 'indicative',
+        agenda_item_id: 'agenda-1',
+        amendment_id: 'amendment-1',
+        purpose: 'closing',
+      })
+      .mockResolvedValueOnce({ id: 'agenda-1', event_id: null })
+      .mockResolvedValueOnce({
+        id: 'agenda-closing',
+        agenda_item_id: 'agenda-1',
+        status: 'pending',
+        is_closing_vote: true,
+      })
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({
+        id: 'agenda-closing',
+        agenda_item_id: 'agenda-1',
+        status: 'pending',
+        is_closing_vote: true,
+      })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'agenda-cr-1',
+          agenda_item_id: 'agenda-1',
+          status: 'voting',
+          is_closing_vote: false,
+          order_index: 0,
+        },
+        {
+          id: 'agenda-closing',
+          agenda_item_id: 'agenda-1',
+          status: 'pending',
+          is_closing_vote: true,
+          order_index: 1,
+        },
+      ]);
+
+    await expect(
+      voteServerMutators.updateVote.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: { id: 'vote-closing', status: 'final' },
+      })
+    ).rejects.toThrow('All change request votes must be completed before the final vote.');
+
+    expect(updateVoteFn).not.toHaveBeenCalled();
   });
 
   it('does not resolve amendment process votes when closing change request timeline votes', async () => {

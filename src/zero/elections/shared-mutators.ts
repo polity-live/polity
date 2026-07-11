@@ -26,6 +26,8 @@ import {
   castFinalElectionVoteFullSchema,
   upsertElectionOfflineTallySchema,
   deleteElectionOfflineTallySchema,
+  startElectionSchema,
+  submitElectionVoteSchema,
 } from './schema';
 
 type ElectionTx = Parameters<typeof can>[0];
@@ -124,9 +126,9 @@ async function assertElectorOwner(
     throw new Error('Elector not found for this election.');
   }
   requireOwner(tx, ctx, elector.user_id, { action: 'active_voting', resource: 'events' });
-  const { eventId } = await loadElectionEventId(tx, electionId);
-  if (eventId) {
-    await can(tx, ctx, { action: 'active_voting', resource: 'events', eventId });
+  const { eventId, election } = await loadElectionEventId(tx, electionId);
+  if (eventId && election.electorate_snapshotted_at == null) {
+    throw new Error('The electorate has not been snapshotted.');
   }
 }
 
@@ -157,6 +159,11 @@ async function ensureElectorRow(
       zql.elector.where('election_id', elector.election_id).where('user_id', elector.user_id).one()
     );
     if (existingForUser) return existingForUser.id;
+
+    const { eventId } = await loadElectionEventId(tx, elector.election_id);
+    if (eventId) {
+      throw new Error('User is not part of the frozen electorate snapshot for this election.');
+    }
   }
 
   const now = Date.now();
@@ -179,6 +186,11 @@ async function assertElectorParticipationOwner(
       ? await tx.run(zql.indicative_elector_participation.where('id', participationId).one())
       : await tx.run(zql.final_elector_participation.where('id', participationId).one());
   if (!participation) throw new Error('Election participation not found');
+  if (phase === 'indicative') {
+    if (participation.user_id !== ctx.userID) throw new Error('Elector does not own participation');
+    return;
+  }
+  if (!participation.elector_id) throw new Error('Elector is missing from final participation');
   await assertElectorOwner(tx, ctx, participation.elector_id, participation.election_id);
 }
 
@@ -206,29 +218,29 @@ async function assertSecretElectionSelectionOwner(
     throw new PermissionError('active_voting', 'events', 'event required');
   }
 
-  const elector = await tx.run(
-    zql.elector.where('election_id', electionId).where('user_id', ctx.userID).one()
-  );
-  if (!elector) {
-    throw new PermissionError('active_voting', 'events', `election:${electionId}`);
-  }
-
-  await assertElectorOwner(tx, ctx, elector.id, electionId);
-
   const participation =
     phase === 'indicative'
       ? await tx.run(
           zql.indicative_elector_participation
             .where('election_id', electionId)
-            .where('elector_id', elector.id)
+            .where('user_id', ctx.userID)
             .one()
         )
-      : await tx.run(
-          zql.final_elector_participation
-            .where('election_id', electionId)
-            .where('elector_id', elector.id)
-            .one()
-        );
+      : await (async () => {
+          const elector = await tx.run(
+            zql.elector.where('election_id', electionId).where('user_id', ctx.userID).one()
+          );
+          if (!elector) {
+            throw new PermissionError('active_voting', 'events', `election:${electionId}`);
+          }
+          await assertElectorOwner(tx, ctx, elector.id, electionId);
+          return tx.run(
+            zql.final_elector_participation
+              .where('election_id', electionId)
+              .where('elector_id', elector.id)
+              .one()
+          );
+        })();
 
   if (!participation) throw new Error('Election participation not found');
 }
@@ -250,6 +262,12 @@ async function assertSecretElectionSelectionOwnerOrManager(
 
 /** Shared mutators — run on both client and server. */
 export const electionSharedMutators = {
+  startElection: defineMutator(startElectionSchema, async () => {
+    // Server-only electorate snapshot.
+  }),
+  submitElectionVote: defineMutator(submitElectionVoteSchema, async () => {
+    // Server-only authenticated ballot submission.
+  }),
   // Create an election
   createElection: defineMutator(createElectionSchema, async ({ tx, ctx, args }) => {
     await assertElectionManagerForAgendaItem(tx, ctx, args.agenda_item_id);
@@ -359,28 +377,30 @@ export const electionSharedMutators = {
   }),
 
   // Add an elector
-  createElector: defineMutator(createElectorSchema, async ({ tx, ctx, args }) => {
-    await ensureElectorRow(tx, ctx, args);
+  createElector: defineMutator(createElectorSchema, async ({ tx }) => {
+    if (tx.location !== 'client') {
+      throw new Error('Elector rows are managed by the server-side electorate snapshot.');
+    }
   }),
 
   // Remove an elector
-  deleteElector: defineMutator(deleteElectorSchema, async ({ tx, ctx, args }) => {
+  deleteElector: defineMutator(deleteElectorSchema, async ({ tx }) => {
     if (tx.location !== 'client') {
-      const elector = await tx.run(zql.elector.where('id', args.id).one());
-      if (!elector) throw new Error('Elector not found');
-      await assertElectionManager(tx, ctx, elector.election_id);
+      throw new Error('Elector rows are managed by the server-side electorate snapshot.');
     }
-    await tx.mutate.elector.delete({ id: args.id });
   }),
 
   // Cast indicative election vote (creates participation + selection(s))
   castIndicativeElectionVote: defineMutator(
     createIndicativeElectorParticipationSchema,
     async ({ tx, ctx, args }) => {
+      if (!args.elector_id)
+        throw new Error('Elector is required for the legacy indicative mutator.');
       await assertElectorOwner(tx, ctx, args.elector_id, args.election_id);
       const now = Date.now();
       await tx.mutate.indicative_elector_participation.insert({
         ...args,
+        user_id: ctx.userID,
         created_at: now,
       });
     }
@@ -408,6 +428,9 @@ export const electionSharedMutators = {
     replaceIndicativeElectionVoteSchema,
     async ({ tx, ctx, args }) => {
       const { elector, participation, selections } = args;
+      if (!participation.elector_id && !elector) {
+        throw new Error('Elector is required for the legacy indicative mutator.');
+      }
       let resolvedParticipation = participation;
       if (elector) {
         if (
@@ -420,6 +443,9 @@ export const electionSharedMutators = {
           ...participation,
           elector_id: await ensureElectorRow(tx, ctx, elector),
         };
+      }
+      if (!resolvedParticipation.elector_id) {
+        throw new Error('Elector is required for the legacy indicative mutator.');
       }
       await assertElectorOwner(
         tx,
@@ -465,6 +491,7 @@ export const electionSharedMutators = {
       if (!existingParticipation) {
         await tx.mutate.indicative_elector_participation.insert({
           ...resolvedParticipation,
+          user_id: ctx.userID,
           created_at: now,
         });
       } else {

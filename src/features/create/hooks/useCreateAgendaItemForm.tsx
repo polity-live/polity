@@ -492,7 +492,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       id: electionId,
       title: title.trim(),
       description: description.trim() || null,
-      status: 'indicative',
+      status: 'pending',
       majority_type: majorityType,
       closing_type: null,
       closing_duration_seconds: null,
@@ -504,6 +504,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       election_mode: resolvedElectionMode,
       seat_count: resolvedSeatCount,
       max_votes: deriveElectionMaxVotes(resolvedElectionMode, resolvedSeatCount),
+      offline_electorate_size: 0,
       debug_correlation_id: correlationId,
     };
   };
@@ -635,7 +636,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
               allSeatRoleIds,
               mode: 'list',
             }),
-            status: 'indicative',
+            status: 'pending',
             majority_type: majorityType,
             closing_type: null,
             closing_duration_seconds: null,
@@ -645,6 +646,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
             election_mode: 'list',
             seat_count: delegateSeatCount,
             max_votes: deriveElectionMaxVotes('list', delegateSeatCount),
+            offline_electorate_size: 0,
             debug_correlation_id: correlationId,
           },
         ],
@@ -698,7 +700,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
             allSeatRoleIds,
             mode: 'single',
           }),
-          status: 'indicative',
+          status: 'pending',
           majority_type: majorityType,
           closing_type: null,
           closing_duration_seconds: null,
@@ -708,6 +710,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           election_mode: 'single',
           seat_count: 1,
           max_votes: 1,
+          offline_electorate_size: 0,
           debug_correlation_id: correlationId,
         });
       }
@@ -806,7 +809,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
               id: voteId,
               title: title.trim(),
               description: description.trim() || null,
-              status: VOTE_PHASE.indicative,
+              status: VOTE_PHASE.pending,
               purpose: VOTE_PURPOSE.closing,
               majority_type: majorityType,
               closing_type: 'moderator',
@@ -816,6 +819,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
               ballot_visibility: ballotVisibility,
               agenda_item_id: agendaItemId,
               amendment_id: amendmentId || null,
+              offline_electorate_size: 0,
             },
             choices: ['Yes', 'No', 'Abstain'].map((label, index) => ({
               id: crypto.randomUUID(),

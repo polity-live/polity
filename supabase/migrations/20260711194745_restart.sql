@@ -6,12 +6,33 @@ create extension if not exists "pg_trgm" with schema "public";
     "event_id" uuid not null,
     "agenda_item_id" uuid not null,
     "user_id" uuid not null,
+    "status" text not null default 'pending'::text,
+    "requested_at" timestamp with time zone not null default now(),
+    "decided_at" timestamp with time zone,
+    "decided_by" uuid,
+    "decision_reason" text,
     "confirmed_at" timestamp with time zone,
     "created_at" timestamp with time zone not null default now()
       );
 
 
 alter table "public"."accreditation" enable row level security;
+
+
+  create table "public"."accreditation_audit" (
+    "id" uuid not null default gen_random_uuid(),
+    "accreditation_id" uuid not null,
+    "event_id" uuid not null,
+    "user_id" uuid not null,
+    "from_status" text,
+    "to_status" text not null,
+    "actor_id" uuid,
+    "reason" text,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."accreditation_audit" enable row level security;
 
 
   create table "public"."action_right" (
@@ -727,6 +748,8 @@ alter table "public"."document_version" enable row level security;
     "election_mode" text not null default 'single'::text,
     "seat_count" integer not null default 1,
     "max_votes" integer not null default 1,
+    "electorate_snapshotted_at" timestamp with time zone,
+    "offline_electorate_size" integer not null default 0,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
       );
@@ -770,6 +793,8 @@ alter table "public"."election_offline_tally" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "election_id" uuid not null,
     "user_id" uuid not null,
+    "participation_channel" text not null default 'online'::text,
+    "snapshotted_at" timestamp with time zone not null default now(),
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -808,6 +833,7 @@ alter table "public"."elector" enable row level security;
     "default_final_vote_duration_seconds" integer,
     "change_request_vote_order" text not null default 'text_position'::text,
     "gender_quota_enabled" boolean not null default false,
+    "accreditation_required" boolean not null default false,
     "capacity" integer,
     "participant_count" integer not null default 0,
     "subscriber_count" integer not null default 0,
@@ -1525,7 +1551,8 @@ alter table "public"."indicative_choice_decision" enable row level security;
   create table "public"."indicative_elector_participation" (
     "id" uuid not null default gen_random_uuid(),
     "election_id" uuid not null,
-    "elector_id" uuid not null,
+    "user_id" uuid not null,
+    "elector_id" uuid,
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -1536,7 +1563,8 @@ alter table "public"."indicative_elector_participation" enable row level securit
   create table "public"."indicative_voter_participation" (
     "id" uuid not null default gen_random_uuid(),
     "vote_id" uuid not null,
-    "voter_id" uuid not null,
+    "user_id" uuid not null,
+    "voter_id" uuid,
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -2205,7 +2233,7 @@ alter table "public"."user_preference" enable row level security;
     "amendment_id" uuid,
     "title" text,
     "description" text,
-    "status" text not null default 'indicative'::text,
+    "status" text not null default 'pending'::text,
     "purpose" text not null,
     "majority_type" text not null default 'relative'::text,
     "closing_type" text not null default 'moderator'::text,
@@ -2216,6 +2244,8 @@ alter table "public"."user_preference" enable row level security;
     "closed_by_id" uuid,
     "visibility" character varying not null default 'public'::character varying,
     "ballot_visibility" text not null default 'named'::text,
+    "electorate_snapshotted_at" timestamp with time zone,
+    "offline_electorate_size" integer not null default 0,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
       );
@@ -2257,6 +2287,8 @@ alter table "public"."vote_offline_tally" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "vote_id" uuid not null,
     "user_id" uuid not null,
+    "participation_channel" text not null default 'online'::text,
+    "snapshotted_at" timestamp with time zone not null default now(),
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -2275,6 +2307,8 @@ alter table "public"."voter" enable row level security;
 
 
 alter table "public"."voting_password" enable row level security;
+
+CREATE UNIQUE INDEX accreditation_audit_pkey ON public.accreditation_audit USING btree (id);
 
 CREATE UNIQUE INDEX accreditation_event_id_user_id_key ON public.accreditation USING btree (event_id, user_id);
 
@@ -2503,6 +2537,10 @@ CREATE UNIQUE INDEX group_workflow_step_pkey ON public.group_workflow_step USING
 CREATE UNIQUE INDEX hashtag_pkey ON public.hashtag USING btree (id);
 
 CREATE INDEX idx_accreditation_agenda_item ON public.accreditation USING btree (agenda_item_id);
+
+CREATE INDEX idx_accreditation_audit_accreditation ON public.accreditation_audit USING btree (accreditation_id);
+
+CREATE INDEX idx_accreditation_audit_event ON public.accreditation_audit USING btree (event_id);
 
 CREATE INDEX idx_accreditation_event ON public.accreditation USING btree (event_id);
 
@@ -3018,6 +3056,10 @@ CREATE INDEX idx_indicative_elector_participation_election ON public.indicative_
 
 CREATE INDEX idx_indicative_elector_participation_elector ON public.indicative_elector_participation USING btree (elector_id);
 
+CREATE INDEX idx_indicative_elector_participation_user ON public.indicative_elector_participation USING btree (user_id);
+
+CREATE INDEX idx_indicative_voter_participation_user ON public.indicative_voter_participation USING btree (user_id);
+
 CREATE INDEX idx_indicative_voter_participation_vote ON public.indicative_voter_participation USING btree (vote_id);
 
 CREATE INDEX idx_indicative_voter_participation_voter ON public.indicative_voter_participation USING btree (voter_id);
@@ -3228,13 +3270,13 @@ CREATE UNIQUE INDEX indicative_candidate_selection_pkey ON public.indicative_can
 
 CREATE UNIQUE INDEX indicative_choice_decision_pkey ON public.indicative_choice_decision USING btree (id);
 
-CREATE UNIQUE INDEX indicative_elector_participation_election_id_elector_id_key ON public.indicative_elector_participation USING btree (election_id, elector_id);
+CREATE UNIQUE INDEX indicative_elector_participation_election_id_user_id_key ON public.indicative_elector_participation USING btree (election_id, user_id);
 
 CREATE UNIQUE INDEX indicative_elector_participation_pkey ON public.indicative_elector_participation USING btree (id);
 
 CREATE UNIQUE INDEX indicative_voter_participation_pkey ON public.indicative_voter_participation USING btree (id);
 
-CREATE UNIQUE INDEX indicative_voter_participation_vote_id_voter_id_key ON public.indicative_voter_participation USING btree (vote_id, voter_id);
+CREATE UNIQUE INDEX indicative_voter_participation_vote_id_user_id_key ON public.indicative_voter_participation USING btree (vote_id, user_id);
 
 CREATE UNIQUE INDEX link_pkey ON public.link USING btree (id);
 
@@ -3355,6 +3397,8 @@ CREATE UNIQUE INDEX voting_password_pkey ON public.voting_password USING btree (
 CREATE UNIQUE INDEX voting_password_user_id_key ON public.voting_password USING btree (user_id);
 
 alter table "public"."accreditation" add constraint "accreditation_pkey" PRIMARY KEY using index "accreditation_pkey";
+
+alter table "public"."accreditation_audit" add constraint "accreditation_audit_pkey" PRIMARY KEY using index "accreditation_audit_pkey";
 
 alter table "public"."action_right" add constraint "action_right_pkey" PRIMARY KEY using index "action_right_pkey";
 
@@ -3614,15 +3658,43 @@ alter table "public"."accreditation" add constraint "accreditation_agenda_item_i
 
 alter table "public"."accreditation" validate constraint "accreditation_agenda_item_id_fkey";
 
+alter table "public"."accreditation" add constraint "accreditation_decided_by_fkey" FOREIGN KEY (decided_by) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."accreditation" validate constraint "accreditation_decided_by_fkey";
+
 alter table "public"."accreditation" add constraint "accreditation_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
 
 alter table "public"."accreditation" validate constraint "accreditation_event_id_fkey";
 
 alter table "public"."accreditation" add constraint "accreditation_event_id_user_id_key" UNIQUE using index "accreditation_event_id_user_id_key";
 
+alter table "public"."accreditation" add constraint "accreditation_status_check" CHECK ((status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'revoked'::text]))) not valid;
+
+alter table "public"."accreditation" validate constraint "accreditation_status_check";
+
 alter table "public"."accreditation" add constraint "accreditation_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."accreditation" validate constraint "accreditation_user_id_fkey";
+
+alter table "public"."accreditation_audit" add constraint "accreditation_audit_accreditation_id_fkey" FOREIGN KEY (accreditation_id) REFERENCES public.accreditation(id) ON DELETE CASCADE not valid;
+
+alter table "public"."accreditation_audit" validate constraint "accreditation_audit_accreditation_id_fkey";
+
+alter table "public"."accreditation_audit" add constraint "accreditation_audit_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."accreditation_audit" validate constraint "accreditation_audit_actor_id_fkey";
+
+alter table "public"."accreditation_audit" add constraint "accreditation_audit_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
+
+alter table "public"."accreditation_audit" validate constraint "accreditation_audit_event_id_fkey";
+
+alter table "public"."accreditation_audit" add constraint "accreditation_audit_to_status_check" CHECK ((to_status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'revoked'::text]))) not valid;
+
+alter table "public"."accreditation_audit" validate constraint "accreditation_audit_to_status_check";
+
+alter table "public"."accreditation_audit" add constraint "accreditation_audit_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."accreditation_audit" validate constraint "accreditation_audit_user_id_fkey";
 
 alter table "public"."action_right" add constraint "action_right_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE CASCADE not valid;
 
@@ -4088,6 +4160,10 @@ alter table "public"."election" add constraint "election_ballot_visibility_check
 
 alter table "public"."election" validate constraint "election_ballot_visibility_check";
 
+alter table "public"."election" add constraint "election_offline_electorate_size_check" CHECK ((offline_electorate_size >= 0)) not valid;
+
+alter table "public"."election" validate constraint "election_offline_electorate_size_check";
+
 alter table "public"."election" add constraint "election_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE SET NULL not valid;
 
 alter table "public"."election" validate constraint "election_role_id_fkey";
@@ -4127,6 +4203,10 @@ alter table "public"."elector" add constraint "elector_election_id_fkey" FOREIGN
 alter table "public"."elector" validate constraint "elector_election_id_fkey";
 
 alter table "public"."elector" add constraint "elector_election_id_user_id_key" UNIQUE using index "elector_election_id_user_id_key";
+
+alter table "public"."elector" add constraint "elector_participation_channel_check" CHECK ((participation_channel = ANY (ARRAY['online'::text, 'offline'::text]))) not valid;
+
+alter table "public"."elector" validate constraint "elector_participation_channel_check";
 
 alter table "public"."elector" add constraint "elector_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
@@ -4856,23 +4936,31 @@ alter table "public"."indicative_choice_decision" add constraint "indicative_cho
 
 alter table "public"."indicative_choice_decision" validate constraint "indicative_choice_decision_voter_participation_id_fkey";
 
-alter table "public"."indicative_elector_participation" add constraint "indicative_elector_participation_election_id_elector_id_key" UNIQUE using index "indicative_elector_participation_election_id_elector_id_key";
-
 alter table "public"."indicative_elector_participation" add constraint "indicative_elector_participation_election_id_fkey" FOREIGN KEY (election_id) REFERENCES public.election(id) ON DELETE CASCADE not valid;
 
 alter table "public"."indicative_elector_participation" validate constraint "indicative_elector_participation_election_id_fkey";
 
-alter table "public"."indicative_elector_participation" add constraint "indicative_elector_participation_elector_id_fkey" FOREIGN KEY (elector_id) REFERENCES public.elector(id) ON DELETE CASCADE not valid;
+alter table "public"."indicative_elector_participation" add constraint "indicative_elector_participation_election_id_user_id_key" UNIQUE using index "indicative_elector_participation_election_id_user_id_key";
+
+alter table "public"."indicative_elector_participation" add constraint "indicative_elector_participation_elector_id_fkey" FOREIGN KEY (elector_id) REFERENCES public.elector(id) ON DELETE SET NULL not valid;
 
 alter table "public"."indicative_elector_participation" validate constraint "indicative_elector_participation_elector_id_fkey";
+
+alter table "public"."indicative_elector_participation" add constraint "indicative_elector_participation_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."indicative_elector_participation" validate constraint "indicative_elector_participation_user_id_fkey";
+
+alter table "public"."indicative_voter_participation" add constraint "indicative_voter_participation_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."indicative_voter_participation" validate constraint "indicative_voter_participation_user_id_fkey";
 
 alter table "public"."indicative_voter_participation" add constraint "indicative_voter_participation_vote_id_fkey" FOREIGN KEY (vote_id) REFERENCES public.vote(id) ON DELETE CASCADE not valid;
 
 alter table "public"."indicative_voter_participation" validate constraint "indicative_voter_participation_vote_id_fkey";
 
-alter table "public"."indicative_voter_participation" add constraint "indicative_voter_participation_vote_id_voter_id_key" UNIQUE using index "indicative_voter_participation_vote_id_voter_id_key";
+alter table "public"."indicative_voter_participation" add constraint "indicative_voter_participation_vote_id_user_id_key" UNIQUE using index "indicative_voter_participation_vote_id_user_id_key";
 
-alter table "public"."indicative_voter_participation" add constraint "indicative_voter_participation_voter_id_fkey" FOREIGN KEY (voter_id) REFERENCES public.voter(id) ON DELETE CASCADE not valid;
+alter table "public"."indicative_voter_participation" add constraint "indicative_voter_participation_voter_id_fkey" FOREIGN KEY (voter_id) REFERENCES public.voter(id) ON DELETE SET NULL not valid;
 
 alter table "public"."indicative_voter_participation" validate constraint "indicative_voter_participation_voter_id_fkey";
 
@@ -5200,11 +5288,15 @@ alter table "public"."vote" add constraint "vote_closed_by_id_fkey" FOREIGN KEY 
 
 alter table "public"."vote" validate constraint "vote_closed_by_id_fkey";
 
+alter table "public"."vote" add constraint "vote_offline_electorate_size_check" CHECK ((offline_electorate_size >= 0)) not valid;
+
+alter table "public"."vote" validate constraint "vote_offline_electorate_size_check";
+
 alter table "public"."vote" add constraint "vote_purpose_check" CHECK ((purpose = ANY (ARRAY['change_request'::text, 'closing'::text, 'merge_variant'::text]))) not valid;
 
 alter table "public"."vote" validate constraint "vote_purpose_check";
 
-alter table "public"."vote" add constraint "vote_status_check" CHECK ((status = ANY (ARRAY['internal'::text, 'indicative'::text, 'final'::text, 'closed'::text]))) not valid;
+alter table "public"."vote" add constraint "vote_status_check" CHECK ((status = ANY (ARRAY['pending'::text, 'internal'::text, 'indicative'::text, 'final'::text, 'closed'::text]))) not valid;
 
 alter table "public"."vote" validate constraint "vote_status_check";
 
@@ -5237,6 +5329,10 @@ alter table "public"."vote_offline_tally" add constraint "vote_offline_tally_vot
 alter table "public"."vote_offline_tally" validate constraint "vote_offline_tally_vote_id_fkey";
 
 alter table "public"."vote_offline_tally" add constraint "vote_offline_tally_vote_id_phase_choice_id_key" UNIQUE using index "vote_offline_tally_vote_id_phase_choice_id_key";
+
+alter table "public"."voter" add constraint "voter_participation_channel_check" CHECK ((participation_channel = ANY (ARRAY['online'::text, 'offline'::text]))) not valid;
+
+alter table "public"."voter" validate constraint "voter_participation_channel_check";
 
 alter table "public"."voter" add constraint "voter_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
@@ -7274,6 +7370,24 @@ grant references on table "public"."accreditation" to "service_role";
 grant trigger on table "public"."accreditation" to "service_role";
 
 grant truncate on table "public"."accreditation" to "service_role";
+
+grant references on table "public"."accreditation_audit" to "anon";
+
+grant trigger on table "public"."accreditation_audit" to "anon";
+
+grant truncate on table "public"."accreditation_audit" to "anon";
+
+grant references on table "public"."accreditation_audit" to "authenticated";
+
+grant trigger on table "public"."accreditation_audit" to "authenticated";
+
+grant truncate on table "public"."accreditation_audit" to "authenticated";
+
+grant references on table "public"."accreditation_audit" to "service_role";
+
+grant trigger on table "public"."accreditation_audit" to "service_role";
+
+grant truncate on table "public"."accreditation_audit" to "service_role";
 
 grant references on table "public"."action_right" to "anon";
 
@@ -9564,6 +9678,15 @@ grant truncate on table "public"."voting_password" to "service_role";
 
   create policy "service_role_all"
   on "public"."accreditation"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."accreditation_audit"
   as permissive
   for all
   to service_role

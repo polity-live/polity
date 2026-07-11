@@ -4,10 +4,13 @@ import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { serverConfirmed } from '../mutate-with-server-check';
+import { useAuth } from '@/providers/auth-provider';
+import { showVotingPasswordErrorToast } from '@/features/notifications/utils/voting-password-error-toast';
 
 export function useVotingPasswordActions() {
   const zero = useZero();
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   const setVotingPassword = useCallback(
     async (password: string) => {
@@ -33,11 +36,11 @@ export function useVotingPasswordActions() {
       } catch (error) {
         const message =
           error instanceof Error ? error.message : t('common.votingPassword.verifyFailed');
-        toast.error(message || t('common.votingPassword.verifyFailed'));
+        showVotingPasswordErrorToast(message || t('common.votingPassword.verifyFailed'), user?.id);
         throw error;
       }
     },
-    [zero, t]
+    [zero, t, user?.id]
   );
 
   return { setVotingPassword, verifyVotingPassword };

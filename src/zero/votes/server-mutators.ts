@@ -13,6 +13,10 @@ import {
 } from '../offline-roster-helpers';
 import { zql } from '../schema';
 import {
+  assertCurrentOnlineBallotEligibility,
+  snapshotVoteElectorate,
+} from '../ballot-eligibility';
+import {
   eventTitle,
   recomputeEventCounters,
   requireRecentVotingPasswordVerification,
@@ -21,7 +25,6 @@ import { fireNotification } from '../server-notify';
 import { resolveAmendmentProcessVote } from '../amendments/process-engine';
 import { notifyProcessVoteResolution } from '../amendments/process-notifications';
 import { finalizeInternalChangeRequestsForEventPhaseTransition } from '../change-requests/internal-voting';
-import { discardPendingEventSuggestions } from '../change-requests/event-suggestions';
 import { resolveChangeRequestByVoteResult } from '../change-requests/server-resolution';
 import {
   createVoteSchema,
@@ -33,6 +36,8 @@ import {
   createFinalChoiceDecisionSchema,
   castFinalVoteFullSchema,
   upsertVoteOfflineTallySchema,
+  startVoteSchema,
+  submitVoteSchema,
 } from './schema';
 import { VOTE_PHASE, isFinalVotePhase, VOTE_PURPOSE, normalizeVotePhase } from './vote-workflow';
 
@@ -84,7 +89,10 @@ async function assertOfflineVoteTallyWithinCap(
     throw new Error('Vote is not linked to an event.');
   }
 
-  const confirmedOfflineAttendeeCount = await getConfirmedOfflineAttendeeCount(tx, eventId);
+  const vote = await tx.run(zql.vote.where('id', args.voteId).one());
+  const confirmedOfflineAttendeeCount = Array.isArray(vote)
+    ? vote.length
+    : (vote?.offline_electorate_size ?? 0);
   const existingTallies = await tx.run(zql.vote_offline_tally.where('vote_id', args.voteId));
   const hasMatchingChoice = existingTallies.some(
     tally => tally.phase === args.phase && tally.choice_id === args.nextChoiceId
@@ -117,32 +125,6 @@ interface VoteContext {
 
 const ACTIVE_EVENT_PARTICIPANT_STATUSES = ['active', 'confirmed', 'member', 'admin'];
 
-function participantHasActiveVotingRight(
-  participant: {
-    participant_roles?: readonly {
-      role?: {
-        action_rights?: readonly {
-          action?: string | null;
-          resource?: string | null;
-          event_id?: string | null;
-        }[];
-      } | null;
-    }[];
-  },
-  eventId: string
-) {
-  return (
-    participant.participant_roles?.some(participantRole =>
-      participantRole.role?.action_rights?.some(
-        right =>
-          right.action === 'active_voting' &&
-          right.resource === 'events' &&
-          right.event_id === eventId
-      )
-    ) ?? false
-  );
-}
-
 function normalizeMajorityType(value?: string | null): MajorityType {
   if (value === 'absolute' || value === 'two_thirds') {
     return value;
@@ -173,22 +155,28 @@ async function assertCurrentCRVoteOrder(
     is_closing_vote: boolean;
   }
 ) {
-  if (agendaItemChangeRequest.is_closing_vote) {
-    return;
-  }
-
   const timelineResult = await tx.run(
     zql.agenda_item_change_request
       .where('agenda_item_id', agendaItemChangeRequest.agenda_item_id)
       .orderBy('order_index', 'asc')
+      .related('change_request')
   );
   const timeline = Array.isArray(timelineResult) ? timelineResult : [];
   const firstIncomplete = timeline.find(
     item => !item.is_closing_vote && item.status !== 'completed'
   );
 
+  if (agendaItemChangeRequest.is_closing_vote && firstIncomplete) {
+    throw new Error('All change request votes must be completed before the final vote.');
+  }
+
   if (firstIncomplete?.id && firstIncomplete.id !== agendaItemChangeRequest.id) {
-    throw new Error('Change requests must be voted in their configured order.');
+    const expectedTitle = firstIncomplete.change_request?.title?.trim();
+    throw new Error(
+      expectedTitle
+        ? `Change requests must be voted in their configured order. Start the final vote for "${expectedTitle}" first.`
+        : 'Change requests must be voted in their configured order. Start the first unfinished change request vote first.'
+    );
   }
 }
 
@@ -205,6 +193,7 @@ async function findProcessBranchIdsForVote(
   vote: {
     id: string;
     agenda_item_id?: string | null;
+    offline_electorate_size?: number | null;
   }
 ) {
   const branchIds = new Set<string>();
@@ -274,6 +263,29 @@ async function assertNoOpenChangeRequestsBeforeFinalVote(
   const timelineLink = await tx.run(zql.agenda_item_change_request.where('vote_id', vote.id).one());
 
   if (timelineLink) {
+    if (
+      (timelineLink.is_closing_vote || vote.purpose === VOTE_PURPOSE.closing) &&
+      vote.amendment_id
+    ) {
+      const branchId = await findProcessBranchIdForAgendaItem(tx, vote.agenda_item_id);
+      const changeRequestsResult = await tx.run(
+        zql.change_request.where('amendment_id', vote.amendment_id)
+      );
+      const changeRequests = Array.isArray(changeRequestsResult) ? changeRequestsResult : [];
+      const hasPendingSubmission = changeRequests.some(
+        changeRequest =>
+          (changeRequest.status === 'pending_submission' ||
+            changeRequest.voting_status === 'pending_submission') &&
+          (branchId
+            ? changeRequest.process_branch_id === branchId
+            : !changeRequest.process_branch_id)
+      );
+      if (hasPendingSubmission) {
+        throw new Error(
+          'All pending change request submissions must be submitted or discarded before the final vote.'
+        );
+      }
+    }
     await assertCurrentCRVoteOrder(tx, timelineLink);
     return {
       isChangeRequestVote: true,
@@ -307,6 +319,21 @@ async function assertNoOpenChangeRequestsBeforeFinalVote(
 
   if (vote.amendment_id) {
     const branchId = await findProcessBranchIdForAgendaItem(tx, vote.agenda_item_id);
+    const allChangeRequestsResult = await tx.run(
+      zql.change_request.where('amendment_id', vote.amendment_id)
+    );
+    const allChangeRequests = Array.isArray(allChangeRequestsResult) ? allChangeRequestsResult : [];
+    const pendingSubmissions = allChangeRequests.filter(
+      changeRequest =>
+        (changeRequest.status === 'pending_submission' ||
+          changeRequest.voting_status === 'pending_submission') &&
+        (branchId ? changeRequest.process_branch_id === branchId : !changeRequest.process_branch_id)
+    );
+    if (pendingSubmissions.length > 0) {
+      throw new Error(
+        'All pending change request submissions must be submitted or discarded before the final vote.'
+      );
+    }
     const allOpenChangeRequestsResult = await tx.run(
       zql.change_request.where('amendment_id', vote.amendment_id).where('status', 'open')
     );
@@ -329,6 +356,7 @@ async function loadVoteContext(
   vote: {
     id: string;
     agenda_item_id?: string | null;
+    offline_electorate_size?: number | null;
   }
 ) {
   if (!vote.agenda_item_id) {
@@ -347,6 +375,7 @@ async function loadEligibleFinalVoteCounts(
   vote: {
     id: string;
     agenda_item_id?: string | null;
+    offline_electorate_size?: number | null;
   }
 ) {
   if (!vote.agenda_item_id) {
@@ -358,38 +387,45 @@ async function loadEligibleFinalVoteCounts(
     return { eligibleFinalVoterCount: 0, recordedFinalVoteCount: 0 };
   }
 
-  const eventId = agendaItem.event_id;
-  const [
-    participants,
-    forcedOfflineUserIds,
-    confirmedOfflineAttendeeCount,
-    voters,
-    finalParticipations,
-    offlineTallies,
-  ] = await Promise.all([
-    tx.run(
-      zql.event_participant
-        .where('event_id', eventId)
-        .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
-        .related('participant_roles', q => q.related('role', rq => rq.related('action_rights')))
-    ),
-    getHybridOfflineOverrideUserIdsForEvent(tx, eventId),
-    getConfirmedOfflineAttendeeCount(tx, eventId),
-    tx.run(zql.voter.where('vote_id', vote.id)),
-    tx.run(zql.final_voter_participation.where('vote_id', vote.id)),
-    tx.run(zql.vote_offline_tally.where('vote_id', vote.id)),
-  ]);
+  const [voters, finalParticipations, offlineTallies, legacyOfflineCount] =
+    vote.offline_electorate_size == null
+      ? await Promise.all([
+          tx
+            .run(
+              zql.event_participant
+                .where('event_id', agendaItem.event_id)
+                .where('status', 'IN', ACTIVE_EVENT_PARTICIPANT_STATUSES)
+                .related('participant_roles', q =>
+                  q.related('role', rq => rq.related('action_rights'))
+                )
+            )
+            .then(() => tx.run(zql.voter.where('vote_id', vote.id))),
+          getHybridOfflineOverrideUserIdsForEvent(tx, agendaItem.event_id).then(() =>
+            tx.run(zql.final_voter_participation.where('vote_id', vote.id))
+          ),
+          getConfirmedOfflineAttendeeCount(tx, agendaItem.event_id).then(count =>
+            tx.run(zql.vote_offline_tally.where('vote_id', vote.id)).then(tallies => ({
+              count,
+              tallies,
+            }))
+          ),
+        ]).then(
+          ([legacyVoters, legacyParticipations, legacy]) =>
+            [legacyVoters, legacyParticipations, legacy.tallies, legacy.count] as const
+        )
+      : await Promise.all([
+          tx.run(zql.voter.where('vote_id', vote.id)),
+          tx.run(zql.final_voter_participation.where('vote_id', vote.id)),
+          tx.run(zql.vote_offline_tally.where('vote_id', vote.id)),
+        ]).then(
+          ([snapshotVoters, snapshotParticipations, snapshotTallies]) =>
+            [snapshotVoters, snapshotParticipations, snapshotTallies, 0] as const
+        );
 
-  const eligibleOnlineUserIds = new Set<string>();
-  for (const participant of participants) {
-    if (
-      participant.user_id &&
-      !forcedOfflineUserIds.has(participant.user_id) &&
-      participantHasActiveVotingRight(participant, eventId)
-    ) {
-      eligibleOnlineUserIds.add(participant.user_id);
-    }
-  }
+  const eligibleOnlineUserIds = new Set(
+    voters.filter(voter => voter.participation_channel !== 'offline').map(voter => voter.user_id)
+  );
+  const confirmedOfflineAttendeeCount = vote.offline_electorate_size ?? legacyOfflineCount;
 
   const voterUserIdById = new Map(
     voters
@@ -477,16 +513,6 @@ async function syncVoteEventEditingMode(
       continue;
     }
 
-    if (editingMode === 'event_final_closing_vote') {
-      await discardPendingEventSuggestions({
-        tx,
-        ctx,
-        amendmentId,
-        processBranchId: branch.id,
-        now: Date.now(),
-      });
-    }
-
     if (branch.editing_mode === editingMode) {
       continue;
     }
@@ -535,6 +561,7 @@ async function summarizeFinalVoteResult(
   vote: {
     id: string;
     majority_type?: string | null;
+    offline_electorate_size?: number | null;
   }
 ): Promise<{ result: VoteResult; acceptVotes: number; rejectVotes: number }> {
   const [choices, finalDecisions, voters, offlineTallies] = await Promise.all([
@@ -562,7 +589,10 @@ async function summarizeFinalVoteResult(
     finalDecisions
       .map(decision => ({ choice_id: decision.choice_id ?? '' }))
       .filter(decision => Boolean(decision.choice_id)),
-    Math.max(voters.length, finalDecisions.length + offlineFinalCount),
+    vote.offline_electorate_size == null
+      ? Math.max(voters.length, finalDecisions.length + offlineFinalCount)
+      : voters.filter(voter => voter.participation_channel !== 'offline').length +
+          vote.offline_electorate_size,
     normalizeMajorityType(vote.majority_type),
     offlineTallies
   );
@@ -744,6 +774,111 @@ async function closeExpiredFinalVote(
 
 /** Server-only mutators — override shared mutators with additional server-side logic. */
 export const voteServerMutators = {
+  startVote: defineMutator(startVoteSchema, async ({ tx, ctx, args }) => {
+    const vote = await tx.run(zql.vote.where('id', args.vote_id).one());
+    if (!vote) throw new Error('Vote not found.');
+    await voteServerMutators.updateVote.fn({
+      tx,
+      ctx,
+      args: {
+        id: args.vote_id,
+        status: args.phase,
+        ...(args.closing_end_time !== undefined ? { closing_end_time: args.closing_end_time } : {}),
+      },
+    });
+  }),
+
+  submitVote: defineMutator(submitVoteSchema, async ({ tx, ctx, args }) => {
+    await requireRecentVotingPasswordVerification(tx, ctx.userID);
+    const vote = await tx.run(zql.vote.where('id', args.vote_id).one());
+    if (!vote || normalizeVotePhase(vote.status) !== args.phase) {
+      throw new Error(`The ${args.phase} vote is not open.`);
+    }
+    if (args.phase === 'indicative') {
+      await assertCurrentOnlineBallotEligibility(tx, vote.agenda_item_id, ctx.userID);
+      const choices = await tx.run(zql.vote_choice.where('vote_id', args.vote_id));
+      const validChoiceIds = new Set(choices.map(choice => choice.id));
+      if (args.choice_ids.some(choiceId => !validChoiceIds.has(choiceId))) {
+        throw new Error('Vote choice not found for this vote.');
+      }
+      const existing = await tx.run(
+        zql.indicative_voter_participation
+          .where('vote_id', args.vote_id)
+          .where('user_id', ctx.userID)
+          .one()
+      );
+      if (existing?.id === args.idempotency_id) return;
+      if (existing && (vote.ballot_visibility ?? 'named') !== 'named') {
+        throw new Error('You have already cast a secret indicative vote.');
+      }
+      const participationId = existing?.id ?? args.idempotency_id;
+      if (existing) {
+        const previousDecisions = await tx.run(
+          zql.indicative_choice_decision.where('voter_participation_id', existing.id)
+        );
+        for (const decision of previousDecisions) {
+          await tx.mutate.indicative_choice_decision.delete({ id: decision.id });
+        }
+      } else {
+        await tx.mutate.indicative_voter_participation.insert({
+          id: participationId,
+          vote_id: args.vote_id,
+          user_id: ctx.userID,
+          voter_id: null,
+          created_at: Date.now(),
+        });
+      }
+      for (const choiceId of args.choice_ids) {
+        await tx.mutate.indicative_choice_decision.insert({
+          id: crypto.randomUUID(),
+          vote_id: args.vote_id,
+          choice_id: choiceId,
+          voter_participation_id:
+            (vote.ballot_visibility ?? 'named') === 'named' ? participationId : null,
+          created_at: Date.now(),
+        });
+      }
+      return;
+    }
+
+    if (vote.electorate_snapshotted_at == null) {
+      throw new Error('The electorate has not been snapshotted.');
+    }
+    const voter = await tx.run(
+      zql.voter.where('vote_id', args.vote_id).where('user_id', ctx.userID).one()
+    );
+    if (!voter) throw new Error('You are not part of the electorate snapshot for this vote.');
+    if (voter.participation_channel !== 'online') {
+      throw new Error('This vote must be entered via the offline tally flow for this participant.');
+    }
+    const choices = await tx.run(zql.vote_choice.where('vote_id', args.vote_id));
+    const validChoiceIds = new Set(choices.map(choice => choice.id));
+    if (args.choice_ids.some(choiceId => !validChoiceIds.has(choiceId))) {
+      throw new Error('Vote choice not found for this vote.');
+    }
+
+    const existing = await tx.run(
+      zql.final_voter_participation.where('vote_id', args.vote_id).where('voter_id', voter.id).one()
+    );
+    if (existing?.id === args.idempotency_id) return;
+    if (existing) throw new Error('You have already cast a final vote.');
+    await mutators.votes.castFinalVoteFull.fn({
+      tx,
+      ctx,
+      args: {
+        participation: { id: args.idempotency_id, vote_id: args.vote_id, voter_id: voter.id },
+        decisions: args.choice_ids.map(choiceId => ({
+          id: crypto.randomUUID(),
+          vote_id: args.vote_id,
+          choice_id: choiceId,
+          voter_participation_id:
+            (vote.ballot_visibility ?? 'named') === 'named' ? args.idempotency_id : null,
+        })),
+      },
+    });
+    await maybeCloseVoteWhenAllFinalVotersVoted(tx, ctx, args.vote_id);
+  }),
+
   createVote: defineMutator(createVoteSchema, async ({ tx, ctx, args }) => {
     await mutators.votes.createVote.fn({ tx, ctx, args });
 
@@ -783,23 +918,12 @@ export const voteServerMutators = {
       (oldVote.purpose === VOTE_PURPOSE.closing || startingTimelineLink?.is_closing_vote)
     );
     let oldVoteProcessBranchIds: string[] | null = null;
+
     const getOldVoteProcessBranchIds = async () => {
       if (!oldVote) return [];
       oldVoteProcessBranchIds ??= await findProcessBranchIdsForVote(tx, oldVote);
       return oldVoteProcessBranchIds;
     };
-
-    if (isStartingFinalClosingVote && oldVote?.amendment_id) {
-      for (const processBranchId of await getOldVoteProcessBranchIds()) {
-        await discardPendingEventSuggestions({
-          tx,
-          ctx,
-          amendmentId: oldVote.amendment_id,
-          processBranchId,
-          now: Date.now(),
-        });
-      }
-    }
 
     const voteContext =
       oldVote &&
@@ -809,6 +933,10 @@ export const voteServerMutators = {
         : oldVote && isClosingFinalVote
           ? await loadVoteContext(tx, oldVote)
           : { isChangeRequestVote: false, isFinalChangeRequestVote: false };
+
+    if (isStartingFinalVote && oldVote) {
+      await snapshotVoteElectorate(tx, oldVote.id);
+    }
 
     await mutators.votes.updateVote.fn({ tx, ctx, args: normalizedArgs });
 

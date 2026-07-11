@@ -6,7 +6,12 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
-import { isZeroClosedMutationCancellation, onServerError } from '../mutate-with-server-check';
+import {
+  isZeroClosedMutationCancellation,
+  onServerError,
+  trackServerFinalization,
+} from '../mutate-with-server-check';
+import { VOTE_CAST_SUCCESS_TOAST_ID } from '@/features/vote-cast/logic/voteCastToast';
 
 /**
  * Action hook for vote mutations.
@@ -36,7 +41,16 @@ export function useVoteActions() {
 
   const updateVote = useCallback(
     (args: Parameters<typeof mutators.votes.updateVote>[0]) => {
-      const result = zero.mutate(mutators.votes.updateVote(args));
+      const result =
+        args.status === 'indicative' || args.status === 'final'
+          ? zero.mutate(
+              mutators.votes.startVote({
+                vote_id: args.id,
+                phase: args.status,
+                closing_end_time: args.closing_end_time,
+              })
+            )
+          : zero.mutate(mutators.votes.updateVote(args));
       onServerError(result, () => toast.error(t('common.agendaToasts.voteUpdateFailed')));
       return result;
     },
@@ -124,15 +138,21 @@ export function useVoteActions() {
       options?: CastVoteOptions
     ) => {
       const result = zero.mutate(
-        mutators.votes.replaceIndicativeVote({
-          voter: options?.voter,
-          participation: participationArgs,
-          decisions,
+        mutators.votes.submitVote({
+          vote_id: participationArgs.vote_id,
+          phase: 'indicative',
+          choice_ids: decisions.map(decision => decision.choice_id),
+          idempotency_id: participationArgs.id,
         })
       );
       if (!options?.silent) {
-        onServerError(result, () => toast.error(t('common.agendaToasts.voteCastFailed')));
-        toast.success(t('common.agendaToasts.voteCast'));
+        trackServerFinalization(result, {
+          onSuccess: () =>
+            toast.success(t('common.agendaToasts.voteCast'), {
+              id: VOTE_CAST_SUCCESS_TOAST_ID,
+            }),
+          onError: () => toast.error(t('common.agendaToasts.voteCastFailed')),
+        });
       }
       return result;
     },
@@ -148,15 +168,21 @@ export function useVoteActions() {
       options?: CastVoteOptions
     ) => {
       const result = zero.mutate(
-        mutators.votes.castFinalVoteFull({
-          voter: options?.voter,
-          participation: participationArgs,
-          decisions,
+        mutators.votes.submitVote({
+          vote_id: participationArgs.vote_id,
+          phase: 'final',
+          choice_ids: decisions.map(decision => decision.choice_id),
+          idempotency_id: participationArgs.id,
         })
       );
       if (!options?.silent) {
-        onServerError(result, () => toast.error(t('common.agendaToasts.voteCastFailed')));
-        toast.success(t('common.agendaToasts.voteCast'));
+        trackServerFinalization(result, {
+          onSuccess: () =>
+            toast.success(t('common.agendaToasts.voteCast'), {
+              id: VOTE_CAST_SUCCESS_TOAST_ID,
+            }),
+          onError: () => toast.error(t('common.agendaToasts.voteCastFailed')),
+        });
       }
       return result;
     },

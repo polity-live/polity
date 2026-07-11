@@ -11,6 +11,7 @@ import { useEventParticipation } from './useEventParticipation';
 import { computeAgendaStats } from '@/features/agendas/logic/computeAgendaStats';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { isVotingPasswordError } from '@/features/notifications/utils/voting-password-error-toast';
 
 export function useEventWikiPage(eventId: string) {
   const navigate = useNavigate();
@@ -106,18 +107,20 @@ export function useEventWikiPage(eventId: string) {
         setSelectedElection(null);
       } catch (error) {
         console.error('Failed to add candidate:', error);
-        setCandidacyPasswordError(
+        const message =
           error instanceof Error
             ? error.message
             : translateText(
                 'generated.inline.0481_fehler_beim_hinzuf_gen_des_kandidaten_bitte_v_14c00c58'
-              )
-        );
-        toast.error(
-          translateText(
-            'generated.inline.0481_fehler_beim_hinzuf_gen_des_kandidaten_bitte_v_14c00c58'
-          )
-        );
+              );
+        setCandidacyPasswordError(message);
+        if (!isVotingPasswordError(message)) {
+          toast.error(
+            translateText(
+              'generated.inline.0481_fehler_beim_hinzuf_gen_des_kandidaten_bitte_v_14c00c58'
+            )
+          );
+        }
       } finally {
         setIsSubmitting(false);
       }

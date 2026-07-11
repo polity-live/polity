@@ -115,6 +115,9 @@ describe('mutate-with-server-check', () => {
     const allowedFiles = new Set([
       'features/decision-terminal/hooks/useDecisionVoteDialogController.ts',
       'features/vote-cast/hooks/useVotePasswordConfirmation.ts',
+      'features/vote-cast/ui/VoteCastDialog.tsx',
+      'features/votes/hooks/useEventVoting.ts',
+      'zero/accreditation/useAccreditationActions.ts',
       'zero/voting-password/useVotingPasswordActions.ts',
     ]);
     const actualFiles = new Set<string>();

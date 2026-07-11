@@ -25,6 +25,8 @@ const baseElectionSchema = z.object({
   election_mode: z.string().nullable(),
   seat_count: z.number().nullable(),
   max_votes: z.number(),
+  electorate_snapshotted_at: nullableTimestampSchema,
+  offline_electorate_size: z.number(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
@@ -35,10 +37,21 @@ const defaultElectionBallotVisibilitySchema = ballotVisibilitySchema
 
 export const selectElectionSchema = baseElectionSchema;
 export const createElectionSchema = baseElectionSchema
-  .omit({ id: true, created_at: true, updated_at: true, ballot_visibility: true })
+  .omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+    ballot_visibility: true,
+    electorate_snapshotted_at: true,
+    offline_electorate_size: true,
+  })
   .extend({
     id: z.string(),
     ballot_visibility: defaultElectionBallotVisibilitySchema,
+    offline_electorate_size: z
+      .number()
+      .optional()
+      .transform(value => value ?? 0),
     position_id: z.string().nullable().optional(),
     election_mode: z.string().nullable().optional(),
     seat_count: z.number().nullable().optional(),
@@ -100,13 +113,19 @@ const baseElectorSchema = z.object({
   id: z.string(),
   election_id: z.string(),
   user_id: z.string(),
+  participation_channel: z.enum(['online', 'offline']),
+  snapshotted_at: timestampSchema,
   created_at: timestampSchema,
 });
 
 export const selectElectorSchema = baseElectorSchema;
 export const createElectorSchema = baseElectorSchema
-  .omit({ id: true, created_at: true })
-  .extend({ id: z.string() });
+  .omit({ id: true, created_at: true, participation_channel: true, snapshotted_at: true })
+  .extend({
+    id: z.string(),
+    participation_channel: z.enum(['online', 'offline']).optional(),
+    snapshotted_at: timestampSchema.optional(),
+  });
 export const deleteElectorSchema = z.object({ id: z.string() });
 
 // ============================================
@@ -115,14 +134,19 @@ export const deleteElectorSchema = z.object({ id: z.string() });
 const baseIndicativeElectorParticipationSchema = z.object({
   id: z.string(),
   election_id: z.string(),
-  elector_id: z.string(),
+  user_id: z.string(),
+  elector_id: z.string().nullable(),
   created_at: timestampSchema,
 });
 
 export const selectIndicativeElectorParticipationSchema = baseIndicativeElectorParticipationSchema;
 export const createIndicativeElectorParticipationSchema = baseIndicativeElectorParticipationSchema
   .omit({ id: true, created_at: true })
-  .extend({ id: z.string() });
+  .extend({
+    id: z.string(),
+    user_id: z.string().optional(),
+    elector_id: z.string().nullable().optional(),
+  });
 
 // ============================================
 // Indicative Candidate Selection
@@ -179,6 +203,17 @@ export const castFinalElectionVoteFullSchema = z.object({
   elector: createElectorSchema.optional(),
   participation: createFinalElectorParticipationSchema,
   selections: z.array(createFinalCandidateSelectionSchema).min(1),
+});
+export const startElectionSchema = z.object({
+  election_id: z.string(),
+  phase: z.enum(['indicative', 'final']),
+  closing_end_time: nullableTimestampSchema.optional(),
+});
+export const submitElectionVoteSchema = z.object({
+  election_id: z.string(),
+  phase: z.enum(['indicative', 'final']),
+  candidate_ids: z.array(z.string()).min(1),
+  idempotency_id: z.string().uuid(),
 });
 
 // ============================================

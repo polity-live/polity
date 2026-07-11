@@ -22,6 +22,8 @@ import {
   castFinalVoteFullSchema,
   upsertVoteOfflineTallySchema,
   deleteVoteOfflineTallySchema,
+  startVoteSchema,
+  submitVoteSchema,
 } from './schema';
 import { VOTE_PHASE, normalizeVotePhase } from './vote-workflow';
 
@@ -157,9 +159,9 @@ async function assertVoterOwner(tx: VoteTx, ctx: VoteCtx, voterId: string, voteI
     throw new Error('Voter not found for this vote.');
   }
   requireOwner(tx, ctx, voter.user_id, { action: 'active_voting', resource: 'events' });
-  const { eventId } = await loadVoteScope(tx, voteId);
-  if (eventId) {
-    await can(tx, ctx, { action: 'active_voting', resource: 'events', eventId });
+  const { eventId, vote } = await loadVoteScope(tx, voteId);
+  if (eventId && vote.electorate_snapshotted_at == null) {
+    throw new Error('The electorate has not been snapshotted.');
   }
 }
 
@@ -186,6 +188,11 @@ async function ensureVoterRow(
       zql.voter.where('vote_id', voter.vote_id).where('user_id', voter.user_id).one()
     );
     if (existingForUser) return existingForUser.id;
+
+    const { eventId } = await loadVoteScope(tx, voter.vote_id);
+    if (eventId) {
+      throw new Error('User is not part of the frozen electorate snapshot for this vote.');
+    }
   }
 
   const now = Date.now();
@@ -208,6 +215,11 @@ async function assertVoterParticipationOwner(
       ? await tx.run(zql.indicative_voter_participation.where('id', participationId).one())
       : await tx.run(zql.final_voter_participation.where('id', participationId).one());
   if (!participation) throw new Error('Vote participation not found');
+  if (phase === 'indicative') {
+    if (participation.user_id !== ctx.userID) throw new Error('Voter does not own participation');
+    return;
+  }
+  if (!participation.voter_id) throw new Error('Voter is missing from final participation');
   await assertVoterOwner(tx, ctx, participation.voter_id, participation.vote_id);
 }
 
@@ -231,24 +243,26 @@ async function assertSecretChoiceDecisionOwner(
     throw new PermissionError('active_voting', 'events', 'event required');
   }
 
-  const voter = await tx.run(zql.voter.where('vote_id', voteId).where('user_id', ctx.userID).one());
-  if (!voter) {
-    throw new PermissionError('active_voting', 'events', `vote:${voteId}`);
-  }
-
-  await assertVoterOwner(tx, ctx, voter.id, voteId);
-
   const participation =
     phase === 'indicative'
       ? await tx.run(
           zql.indicative_voter_participation
             .where('vote_id', voteId)
-            .where('voter_id', voter.id)
+            .where('user_id', ctx.userID)
             .one()
         )
-      : await tx.run(
-          zql.final_voter_participation.where('vote_id', voteId).where('voter_id', voter.id).one()
-        );
+      : await (async () => {
+          const voter = await tx.run(
+            zql.voter.where('vote_id', voteId).where('user_id', ctx.userID).one()
+          );
+          if (!voter) {
+            throw new PermissionError('active_voting', 'events', `vote:${voteId}`);
+          }
+          await assertVoterOwner(tx, ctx, voter.id, voteId);
+          return tx.run(
+            zql.final_voter_participation.where('vote_id', voteId).where('voter_id', voter.id).one()
+          );
+        })();
 
   if (!participation) throw new Error('Vote participation not found');
 }
@@ -270,6 +284,12 @@ async function assertSecretChoiceDecisionOwnerOrManager(
 
 /** Shared mutators — run on both client and server. */
 export const voteSharedMutators = {
+  startVote: defineMutator(startVoteSchema, async () => {
+    // Server-only: snapshots the electorate and opens the requested phase atomically.
+  }),
+  submitVote: defineMutator(submitVoteSchema, async () => {
+    // Server-only: resolves the authenticated user against the frozen electorate.
+  }),
   // Create a vote
   createVote: defineMutator(createVoteSchema, async ({ tx, ctx, args }) => {
     await assertVoteManagerForAgendaItem(tx, ctx, args.agenda_item_id, args.amendment_id);
@@ -344,29 +364,30 @@ export const voteSharedMutators = {
   }),
 
   // Add a voter
-  createVoter: defineMutator(createVoterSchema, async ({ tx, ctx, args }) => {
-    await ensureVoterRow(tx, ctx, args);
+  createVoter: defineMutator(createVoterSchema, async ({ tx }) => {
+    if (tx.location !== 'client') {
+      throw new Error('Voter rows are managed by the server-side electorate snapshot.');
+    }
   }),
 
   // Remove a voter
-  deleteVoter: defineMutator(deleteVoterSchema, async ({ tx, ctx, args }) => {
+  deleteVoter: defineMutator(deleteVoterSchema, async ({ tx }) => {
     if (tx.location !== 'client') {
-      const voter = await tx.run(zql.voter.where('id', args.id).one());
-      if (!voter) throw new Error('Voter not found');
-      await assertVoteManager(tx, ctx, voter.vote_id);
+      throw new Error('Voter rows are managed by the server-side electorate snapshot.');
     }
-    await tx.mutate.voter.delete({ id: args.id });
   }),
 
   // Cast indicative vote (creates participation)
   castIndicativeVote: defineMutator(
     createIndicativeVoterParticipationSchema,
     async ({ tx, ctx, args }) => {
+      if (!args.voter_id) throw new Error('Voter is required for the legacy indicative mutator.');
       await assertVoterOwner(tx, ctx, args.voter_id, args.vote_id);
       await assertVoteOpenForPhase(tx, args.vote_id, 'indicative');
       const now = Date.now();
       await tx.mutate.indicative_voter_participation.insert({
         ...args,
+        user_id: ctx.userID,
         created_at: now,
       });
     }
@@ -393,6 +414,9 @@ export const voteSharedMutators = {
 
   replaceIndicativeVote: defineMutator(replaceIndicativeVoteSchema, async ({ tx, ctx, args }) => {
     const { voter, participation, decisions } = args;
+    if (!participation.voter_id && !voter) {
+      throw new Error('Voter is required for the legacy indicative mutator.');
+    }
     let resolvedParticipation = participation;
     if (voter) {
       if (voter.id !== participation.voter_id || voter.vote_id !== participation.vote_id) {
@@ -402,6 +426,9 @@ export const voteSharedMutators = {
         ...participation,
         voter_id: await ensureVoterRow(tx, ctx, voter),
       };
+    }
+    if (!resolvedParticipation.voter_id) {
+      throw new Error('Voter is required for the legacy indicative mutator.');
     }
     await assertVoterOwner(tx, ctx, resolvedParticipation.voter_id, resolvedParticipation.vote_id);
 
@@ -439,6 +466,7 @@ export const voteSharedMutators = {
     if (!existingParticipation) {
       await tx.mutate.indicative_voter_participation.insert({
         ...resolvedParticipation,
+        user_id: ctx.userID,
         created_at: now,
       });
     } else {

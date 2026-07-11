@@ -108,10 +108,15 @@ describe('VoteCastDialog', () => {
   it('shows the fullscreen submission overlay after password submit and auto-closes on success', async () => {
     const onOpenChange = vi.fn();
     const onPasswordSubmit = vi.fn().mockResolvedValue(undefined);
+    let confirmServer: () => void = () => undefined;
+    const server = new Promise<{ type: 'success' }>(resolve => {
+      confirmServer = () => resolve({ type: 'success' });
+    });
     const onCastVote = vi.fn(async (_choiceId, context) => {
       context?.reportProgress('cast', 'active');
       context?.reportProgress('cast', 'complete');
       context?.reportProgress('sync', 'active');
+      await context?.trackServerResult?.({ client: Promise.resolve(), server });
       context?.reportProgress('sync', 'complete');
     });
 
@@ -172,6 +177,9 @@ describe('VoteCastDialog', () => {
       )
     );
 
+    expect(screen.queryByText('Stimme abgegeben')).toBeNull();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+    confirmServer();
     expect(await screen.findByText('Stimme abgegeben')).toBeTruthy();
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false), { timeout: 1500 });
   });
@@ -220,7 +228,7 @@ describe('VoteCastDialog', () => {
       rejectServer = resolve;
     });
     const onCastVote = vi.fn(async (_choiceId, context) => {
-      context?.trackServerResult?.({
+      await context?.trackServerResult?.({
         client: Promise.resolve(),
         server,
       });
@@ -243,7 +251,7 @@ describe('VoteCastDialog', () => {
     clickConfirmButton();
     await enterPin();
 
-    expect(await screen.findByText('Stimme abgegeben')).toBeTruthy();
+    expect(screen.queryByText('Stimme abgegeben')).toBeNull();
     rejectServer({
       type: 'error',
       error: { type: 'server', message: 'Server rejected vote' },
@@ -257,6 +265,74 @@ describe('VoteCastDialog', () => {
     await waitFor(() => expect(document.querySelectorAll('input')).toHaveLength(4));
     expect(onPasswordSubmit).toHaveBeenCalledTimes(1);
     expect(onCastVote).toHaveBeenCalledTimes(1);
+  });
+
+  it('submits a completed PIN only once while the first submission is still running', async () => {
+    let finishPasswordVerification: () => void = () => undefined;
+    const passwordVerification = new Promise<void>(resolve => {
+      finishPasswordVerification = resolve;
+    });
+    const onPasswordSubmit = vi.fn(() => passwordVerification);
+    const onCastVote = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <VoteCastDialog
+        open
+        onOpenChange={vi.fn()}
+        phase="final"
+        title="Final vote"
+        choices={[{ id: 'support', label: 'Support' }]}
+        requirePassword
+        onPasswordSubmit={onPasswordSubmit}
+        onCastVote={onCastVote}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /support/i }));
+    clickConfirmButton();
+    await waitFor(() => expect(document.querySelectorAll('input')).toHaveLength(4));
+    const inputs = Array.from(document.querySelectorAll('input'));
+    inputs.forEach((input, index) => {
+      fireEvent.change(input, { target: { value: String(index + 1) } });
+    });
+    fireEvent.change(inputs[3], { target: { value: '4' } });
+
+    await waitFor(() => expect(onPasswordSubmit).toHaveBeenCalledTimes(1));
+    expect(onCastVote).not.toHaveBeenCalled();
+
+    finishPasswordVerification();
+    await waitFor(() => expect(onCastVote).toHaveBeenCalledTimes(1));
+  });
+
+  it('submits a pasted four-digit PIN only once', async () => {
+    const onPasswordSubmit = vi.fn().mockResolvedValue(undefined);
+    const onCastVote = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <VoteCastDialog
+        open
+        onOpenChange={vi.fn()}
+        phase="final"
+        title="Final vote"
+        choices={[{ id: 'support', label: 'Support' }]}
+        requirePassword
+        onPasswordSubmit={onPasswordSubmit}
+        onCastVote={onCastVote}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /support/i }));
+    clickConfirmButton();
+    await waitFor(() => expect(document.querySelectorAll('input')).toHaveLength(4));
+    const firstInput = document.querySelector('input');
+    if (!firstInput) throw new Error('Expected PIN input');
+    const clipboardData = { getData: () => '1234' };
+
+    fireEvent.paste(firstInput, { clipboardData });
+    fireEvent.paste(firstInput, { clipboardData });
+
+    await waitFor(() => expect(onPasswordSubmit).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onCastVote).toHaveBeenCalledTimes(1));
   });
 
   it('explains duplicate submissions without exposing the raw constraint as the main error', async () => {

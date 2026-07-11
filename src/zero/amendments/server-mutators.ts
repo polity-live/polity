@@ -82,6 +82,8 @@ import {
   normalizeVotePhase,
 } from '../votes/vote-workflow';
 import { AGENDA_VOTE_STEP_KIND } from '../agendas/vote-step-kind';
+import { normalizeChangeRequestVoteOrder } from '@/features/change-requests/logic/changeRequestVoteOrder';
+import { reorderOpenChangeRequestVoteStepsForAgendaItem } from '../agendas/change-request-vote-ordering';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 const PENDING_SUBMISSION_STATUS = 'pending_submission';
@@ -683,9 +685,6 @@ async function appendEventChangeRequestVoteStepIfNeeded({
     return null;
   }
 
-  const accreditations = target.agendaItem.event_id
-    ? await tx.run(zql.accreditation.where('event_id', target.agendaItem.event_id))
-    : [];
   const voteId = crypto.randomUUID();
   await tx.mutate.vote.insert({
     id: voteId,
@@ -719,15 +718,6 @@ async function appendEventChangeRequestVoteStepIfNeeded({
     });
   }
 
-  for (const accreditation of accreditations) {
-    await tx.mutate.voter.insert({
-      id: crypto.randomUUID(),
-      vote_id: voteId,
-      user_id: accreditation.user_id,
-      created_at: now,
-    });
-  }
-
   const nextOrderIndex =
     target.linksForAgendaItem.reduce(
       (max, link, index) => Math.max(max, link.order_index ?? index),
@@ -753,7 +743,7 @@ async function appendEventChangeRequestVoteStepIfNeeded({
     step_kind: AGENDA_VOTE_STEP_KIND.changeRequest,
     process_branch_id: changeRequest.process_branch_id ?? null,
     is_closing_vote: false,
-    status: 'pending',
+    status: 'voting',
     blocked_reason: null,
     result_status: null,
     obsolete_reason: null,
@@ -779,6 +769,15 @@ async function appendEventChangeRequestVoteStepIfNeeded({
       updated_at: now,
     });
   }
+
+  const event = target.agendaItem.event_id
+    ? await tx.run(zql.event.where('id', target.agendaItem.event_id).one())
+    : null;
+  await reorderOpenChangeRequestVoteStepsForAgendaItem(
+    tx,
+    target.agendaItem,
+    normalizeChangeRequestVoteOrder(event?.change_request_vote_order)
+  );
 
   return target.agendaItem.event_id ?? null;
 }

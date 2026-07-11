@@ -2,10 +2,9 @@
 
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
-import { Link } from '@tanstack/react-router';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { ArrowRight, CheckCircle2, Expand, Vote } from 'lucide-react';
+import { CheckCircle2, Expand, Vote } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/VoteResultsDisplay';
@@ -18,6 +17,8 @@ import {
 } from '@/features/vote-cast/logic/computeVoteResults';
 import { calculateVoteStats, getVotingPhase } from '@/features/agendas/hooks/useAgendaItemVoting';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
+import { AmendmentForwardingNotice } from '@/features/amendments/ui/AmendmentForwardingNotice';
+import type { AmendmentForwardingPreviewModel } from '@/features/amendments/logic/amendmentForwardingPreview';
 
 interface ChoiceDecision {
   choice_id: string;
@@ -78,10 +79,7 @@ interface AgendaVoteSectionProps {
   offlineTallies?: readonly VoteOfflineTallyLike[];
   canManageOfflineResults?: boolean;
   offlineEligibleCount?: number;
-  forwardingPreview?: {
-    nextEventId?: string | null;
-    nextEventTitle?: string | null;
-  } | null;
+  forwardingPreview?: AmendmentForwardingPreviewModel | null;
   onOpenNamedResults?: () => void;
   className?: string;
 }
@@ -186,9 +184,6 @@ export function AgendaVoteSection({
     : t('features.events.agenda.votes');
   const openNamedResultsLabel = t('features.events.agenda.openNamedResults');
   const namedResultsLabel = t('features.events.agenda.namedResults.label');
-  const forwardingEventId = forwardingPreview?.nextEventId ?? null;
-  const forwardingEventTitle = forwardingPreview?.nextEventTitle ?? null;
-  const shouldShowForwardingNotice = Boolean(forwardingEventId && forwardingEventTitle);
   const voteOptions = useMemo<VoteBarOption[]>(() => {
     return choiceStats.map((cs, idx) => {
       const colors = CHOICE_COLORS[idx % CHOICE_COLORS.length];
@@ -282,37 +277,7 @@ export function AgendaVoteSection({
             />
           )}
 
-          {shouldShowForwardingNotice ? (
-            <div
-              className={cn(
-                'flex items-start gap-2 rounded-md border px-3 py-2 text-sm',
-                isClosed
-                  ? 'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]'
-                  : 'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] text-[var(--badge-info-fg)]'
-              )}
-            >
-              {isClosed ? (
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-              ) : (
-                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0" />
-              )}
-              <span>
-                {isClosed
-                  ? t('features.events.agenda.forwarding.completedPrefix')
-                  : t('features.events.agenda.forwarding.pendingPrefix')}{' '}
-                <Link
-                  to="/event/$id"
-                  params={{ id: forwardingEventId ?? '' }}
-                  className="font-medium underline underline-offset-2 hover:opacity-80"
-                >
-                  {forwardingEventTitle}
-                </Link>
-                {isClosed
-                  ? t('features.events.agenda.forwarding.completedSuffix')
-                  : t('features.events.agenda.forwarding.pendingSuffix')}
-              </span>
-            </div>
-          ) : null}
+          {forwardingPreview ? <AmendmentForwardingNotice preview={forwardingPreview} /> : null}
 
           {userHasVoted ? (
             <div className="flex items-center justify-center gap-2 text-sm">

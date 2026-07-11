@@ -96,6 +96,22 @@ export function resolvePreferredReorderedVoteSequenceItem<T extends VoteSequence
   );
 }
 
+/**
+ * Resolve the single sequence step that may enter its final phase. Indicative
+ * votes can be open on multiple rows at once, but final votes remain strictly
+ * ordered by the persisted sequence.
+ */
+export function resolveFinalStartableVoteSequenceItem<T extends VoteSequenceStartableItem>({
+  sequenceItems,
+}: {
+  sequenceItems: readonly T[];
+}): T | null {
+  const finalOpenItem = sequenceItems.find(item => item.vote?.status === 'final');
+  if (finalOpenItem) return finalOpenItem;
+
+  return sequenceItems.find(isStartableVoteSequenceItem) ?? null;
+}
+
 export function resolveNextStartableVoteSequenceItem({
   selectedItemId,
   sequenceItems,
@@ -103,20 +119,8 @@ export function resolveNextStartableVoteSequenceItem({
   selectedItemId: string | null;
   sequenceItems: readonly VoteSequenceStartableItem[];
 }): VoteSequenceStartableItem | null {
-  const selectedIndex = selectedItemId
-    ? sequenceItems.findIndex(item => item.id === selectedItemId)
-    : -1;
-  const selectedItem = selectedIndex >= 0 ? sequenceItems[selectedIndex] : null;
-
-  if (selectedItem && isStartableVoteSequenceItem(selectedItem)) {
-    return null;
-  }
-
-  if (selectedIndex >= 0) {
-    return sequenceItems.slice(selectedIndex + 1).find(isStartableVoteSequenceItem) ?? null;
-  }
-
-  return sequenceItems.find(isStartableVoteSequenceItem) ?? null;
+  const finalStartableItem = resolveFinalStartableVoteSequenceItem({ sequenceItems });
+  return finalStartableItem?.id === selectedItemId ? null : finalStartableItem;
 }
 
 export function resolveVoteSequenceSelectionUpdate({

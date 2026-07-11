@@ -36,6 +36,7 @@ import {
 } from '../logic/voteSequenceJump';
 import {
   resolveCurrentVoteSequenceItem,
+  resolveFinalStartableVoteSequenceItem,
   resolveNextStartableVoteSequenceItem,
   resolvePreferredReorderedVoteSequenceItem,
   resolveVoteSequenceSelectionUpdate,
@@ -77,6 +78,8 @@ import {
   resolveAttendanceMode,
 } from '../logic/agendaUiHelpers';
 import { VOTE_PHASE, VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
+import type { VoteSubmissionContext } from '@/features/shared/ui/voting';
+import { buildAmendmentForwardingPreview } from '@/features/amendments/logic/amendmentForwardingPreview';
 import {
   buildBranchDiffCandidates,
   getBranchEditingMode,
@@ -942,6 +945,11 @@ export function EventAgendaItemDetail({
       }),
     [selectedCRToolbarItem?.id, selectedCRToolbarItemId, sequenceDisplayItems]
   );
+  const finalStartableSequenceItem = useMemo(
+    () => resolveFinalStartableVoteSequenceItem({ sequenceItems: sequenceDisplayItems }),
+    [sequenceDisplayItems]
+  );
+  const canStartSelectedCRFinalVote = finalStartableSequenceItem?.id === selectedCRToolbarItem?.id;
 
   const isCRToolbarActive =
     !!agendaItem?.amendment_id && sequenceDisplayItems.length > 0 && !!selectedCRToolbarItem;
@@ -1045,16 +1053,36 @@ export function EventAgendaItemDetail({
 
       if (!item?.vote) return;
 
-      if (getVoteStepKind(item)) {
-        await waitForClientApply(updateAgendaVote({ id: item.vote.id, status: VOTE_PHASE.final }));
+      if (finalStartableSequenceItem?.id !== itemId) {
+        if (finalStartableSequenceItem?.id) {
+          setSelectedCRToolbarItemId(finalStartableSequenceItem.id);
+        }
         return;
       }
 
-      await startFinalPhase(itemId);
+      setSequenceVotingLoading(itemId);
+      try {
+        if (getVoteStepKind(item)) {
+          await waitForClientApply(
+            updateAgendaVote({ id: item.vote.id, status: VOTE_PHASE.final })
+          );
+          return;
+        }
+
+        await startFinalPhase(itemId);
+      } catch (error) {
+        if (finalStartableSequenceItem?.id) {
+          setSelectedCRToolbarItemId(finalStartableSequenceItem.id);
+        }
+        toast.error(error instanceof Error ? error.message : 'Could not start the final vote.');
+      } finally {
+        setSequenceVotingLoading(null);
+      }
     },
     [
       agendaItem?.amendment_id,
       agendaItem?.id,
+      finalStartableSequenceItem?.id,
       initializeChangeRequestVoting,
       nonFinalCRItems.length,
       sequenceDisplayItems,
@@ -1130,9 +1158,9 @@ export function EventAgendaItemDetail({
   }, [actionBarHook, handleCloseSequenceVoting, isCRToolbarActive, selectedCRToolbarItem]);
 
   const handleCastCRVoteFromDialog = useCallback(
-    async (choiceId: string) => {
+    async (choiceId: string, context?: VoteSubmissionContext) => {
       if (!selectedCRToolbarItem) return;
-      await castCRVote(selectedCRToolbarItem, choiceId);
+      await castCRVote(selectedCRToolbarItem, choiceId, context);
     },
     [selectedCRToolbarItem, castCRVote]
   );
@@ -1242,23 +1270,12 @@ export function EventAgendaItemDetail({
     voteDialogDocumentPreviewModel,
   ]);
   const agendaForwardingPreview = useMemo(() => {
-    const nextStepRun = forwardingContext.nextStepRun;
-    if (!nextStepRun?.event) {
-      return null;
-    }
-
-    if (!agendaItem?.amendment_id) {
-      return null;
-    }
-
-    return {
-      nextGroupId: nextStepRun.target_group?.id ?? null,
-      nextGroupName: nextStepRun.target_group?.name ?? null,
-      nextEventId: nextStepRun.event.id ?? null,
-      nextEventTitle: nextStepRun.event.title ?? 'Next event',
-      nextEventStartDate: nextStepRun.event.start_date ?? null,
-    };
-  }, [agendaItem?.amendment_id, forwardingContext.nextStepRun]);
+    return buildAmendmentForwardingPreview({
+      amendmentId: agendaItem?.amendment_id,
+      currentStepRun: forwardingContext.currentStepRun,
+      nextStepRun: forwardingContext.nextStepRun,
+    });
+  }, [agendaItem?.amendment_id, forwardingContext.currentStepRun, forwardingContext.nextStepRun]);
   const voteDialogForwardingPreview = useMemo(() => {
     if (!agendaForwardingPreview) {
       return null;
@@ -1504,17 +1521,23 @@ export function EventAgendaItemDetail({
       ),
     [rosterEvent?.offline_participants]
   );
-  const eligibleFinalVoterCount = useMemo(
-    () =>
-      computeEligibleFinalVoterCount({
-        participants:
-          activeEventParticipants.length > 0
-            ? activeEventParticipants
-            : (rosterEvent?.participants ?? []),
-        offlineParticipants: rosterEvent?.offline_participants ?? [],
-      }),
-    [activeEventParticipants, rosterEvent?.offline_participants, rosterEvent?.participants]
-  );
+  const eligibleFinalVoterCount = useMemo(() => {
+    if (vote?.electorate_snapshotted_at != null) {
+      return (
+        (vote.voters ?? []).filter(
+          (voter: { participation_channel?: string | null }) =>
+            voter.participation_channel !== 'offline'
+        ).length + (vote.offline_electorate_size ?? 0)
+      );
+    }
+    return computeEligibleFinalVoterCount({
+      participants:
+        activeEventParticipants.length > 0
+          ? activeEventParticipants
+          : (rosterEvent?.participants ?? []),
+      offlineParticipants: rosterEvent?.offline_participants ?? [],
+    });
+  }, [activeEventParticipants, rosterEvent?.offline_participants, rosterEvent?.participants, vote]);
 
   // Derive election/vote data for section components
   const indicativeSelections = useMemo(
@@ -1526,27 +1549,28 @@ export function EventAgendaItemDetail({
     [election?.final_selections]
   );
   const userHasElectionVoted = useMemo(() => {
-    if (!userElector) return false;
     const phase = election?.status;
     if (phase === VOTE_PHASE.final) {
+      if (!userElector) return false;
       return (election?.final_participations ?? []).some(
         (p: { elector_id?: string | null }) => p.elector_id === userElector.id
       );
     }
     return (election?.indicative_participations ?? []).some(
-      (p: { elector_id?: string | null }) => p.elector_id === userElector.id
+      (p: { user_id?: string | null }) => p.user_id === user?.id
     );
-  }, [userElector, election]);
+  }, [userElector, election, user?.id]);
 
   const userSelectedCandidateIds = useMemo(() => {
-    if (!userElector) return [];
     const phase = election?.status;
+    if (phase === VOTE_PHASE.final && !userElector) return [];
     const participations =
       phase === VOTE_PHASE.final
         ? (election?.final_participations ?? [])
         : (election?.indicative_participations ?? []);
     const userPart = participations.find(
-      (p: { elector_id?: string | null }) => p.elector_id === userElector.id
+      (p: { elector_id?: string | null; user_id?: string | null }) =>
+        phase === VOTE_PHASE.final ? p.elector_id === userElector?.id : p.user_id === user?.id
     );
     if (!userPart) return [];
     return (userPart.selections ?? [])
@@ -1555,7 +1579,7 @@ export function EventAgendaItemDetail({
           s.candidate?.id ?? s.candidate_id ?? ''
       )
       .filter(Boolean);
-  }, [userElector, election]);
+  }, [userElector, election, user?.id]);
 
   const offlineTallyPhaseSource = toolbarVotingPhase;
   const offlineTallyPhase = useMemo(
@@ -1574,27 +1598,28 @@ export function EventAgendaItemDetail({
   );
   const finalDecisions = useMemo(() => vote?.final_decisions ?? [], [vote?.final_decisions]);
   const userHasVoteVoted = useMemo(() => {
-    if (!userVoter) return false;
     const phase = vote?.status;
     if (phase === VOTE_PHASE.final) {
+      if (!userVoter) return false;
       return (vote?.final_participations ?? []).some(
         (p: { voter_id?: string | null }) => p.voter_id === userVoter.id
       );
     }
     return (vote?.indicative_participations ?? []).some(
-      (p: { voter_id?: string | null }) => p.voter_id === userVoter.id
+      (p: { user_id?: string | null }) => p.user_id === user?.id
     );
-  }, [userVoter, vote]);
+  }, [userVoter, vote, user?.id]);
 
   const userSelectedChoiceIds = useMemo(() => {
-    if (!userVoter) return [];
     const phase = vote?.status;
+    if (phase === VOTE_PHASE.final && !userVoter) return [];
     const participations =
       phase === VOTE_PHASE.final
         ? (vote?.final_participations ?? [])
         : (vote?.indicative_participations ?? []);
     const userPart = participations.find(
-      (p: { voter_id?: string | null }) => p.voter_id === userVoter.id
+      (p: { voter_id?: string | null; user_id?: string | null }) =>
+        phase === VOTE_PHASE.final ? p.voter_id === userVoter?.id : p.user_id === user?.id
     );
     if (!userPart) return [];
     return (userPart.decisions ?? [])
@@ -1603,7 +1628,7 @@ export function EventAgendaItemDetail({
           d.choice?.id ?? d.choice_id ?? ''
       )
       .filter(Boolean);
-  }, [userVoter, vote]);
+  }, [userVoter, vote, user?.id]);
   const namedElectionResults = useMemo(
     () =>
       election
@@ -1788,25 +1813,27 @@ export function EventAgendaItemDetail({
           setOfflineTallySubmitError(message);
         }
 
-        toast.error(
-          translateText('generated.inline.0049_failed_to_save_offline_tally_82b59509'),
-          buildOfflineTallyErrorToast({
-            message,
-            userId: user?.id,
-            action:
-              message.includes('Offline election totals exceed the current cap') ||
-              message.includes('Offline vote totals cannot exceed')
-                ? {
-                    label: translateText('generated.inline.0004_open_participants_22616da9'),
-                    onClick: () =>
-                      navigate({
-                        to: '/event/$id/participants',
-                        params: { id: eventId },
-                      }),
-                  }
-                : undefined,
-          })
-        );
+        if (!isPasswordError) {
+          toast.error(
+            translateText('generated.inline.0049_failed_to_save_offline_tally_82b59509'),
+            buildOfflineTallyErrorToast({
+              message,
+              userId: user?.id,
+              action:
+                message.includes('Offline election totals exceed the current cap') ||
+                message.includes('Offline vote totals cannot exceed')
+                  ? {
+                      label: translateText('generated.inline.0004_open_participants_22616da9'),
+                      onClick: () =>
+                        navigate({
+                          to: '/event/$id/participants',
+                          params: { id: eventId },
+                        }),
+                    }
+                  : undefined,
+            })
+          );
+        }
       } finally {
         setIsOfflineTallySubmitting(false);
       }
@@ -1931,6 +1958,7 @@ export function EventAgendaItemDetail({
       selectedCRToolbarItem={selectedCRToolbarItem}
       currentCRSequenceItemId={currentSequenceItem?.id ?? null}
       nextStartableSequenceItem={nextStartableSequenceItem}
+      canStartSelectedCRFinalVote={canStartSelectedCRFinalVote}
       isCRToolbarActive={isCRToolbarActive}
       selectedCRPhase={selectedCRPhase}
       isSelectedClosingVote={isSelectedClosingVote}

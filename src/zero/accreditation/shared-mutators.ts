@@ -1,48 +1,31 @@
 import { defineMutator } from '@rocicorp/zero';
-import { can } from '../rbac/can';
-import { requireAuthenticated, requireOwner } from '../rbac/authorize';
-import { isPermissionError } from '../rbac/errors';
-import { zql } from '../schema';
-import { createAccreditationSchema, deleteAccreditationSchema } from './schema';
+import { requireAuthenticated } from '../rbac/authorize';
+import {
+  decideAccreditationSchema,
+  deleteAccreditationSchema,
+  requestAccreditationSchema,
+} from './schema';
+
+const serverOnlyRequest = defineMutator(requestAccreditationSchema, async ({ tx, ctx }) => {
+  requireAuthenticated(tx, ctx, { action: 'create', resource: 'accreditations' });
+  // The server verifies the PIN, participant relation and current state.
+});
+
+const serverOnlyDecision = defineMutator(decideAccreditationSchema, async () => {
+  // Accreditation decisions are intentionally not optimistic.
+});
 
 export const accreditationSharedMutators = {
-  // Confirm accreditation (server verifies voting password)
-  confirmAccreditation: defineMutator(createAccreditationSchema, async ({ tx, ctx, args }) => {
-    const { userID } = ctx;
-    requireAuthenticated(tx, ctx, { action: 'create', resource: 'accreditations' });
-    const now = Date.now();
-    await tx.mutate.accreditation.insert({
-      id: crypto.randomUUID(),
-      event_id: args.event_id,
-      agenda_item_id: args.agenda_item_id,
-      user_id: userID,
-      confirmed_at: now,
-      created_at: now,
-    });
-  }),
+  requestAccreditation: serverOnlyRequest,
+  // Backwards-compatible name for existing clients during rollout.
+  confirmAccreditation: serverOnlyRequest,
+  approveAccreditation: serverOnlyDecision,
+  rejectAccreditation: serverOnlyDecision,
+  revokeAccreditation: serverOnlyDecision,
 
-  deleteAccreditation: defineMutator(deleteAccreditationSchema, async ({ tx, ctx, args }) => {
+  deleteAccreditation: defineMutator(deleteAccreditationSchema, async ({ tx }) => {
     if (tx.location !== 'client') {
-      const accreditation = await tx.run(zql.accreditation.where('id', args.id).one());
-      if (!accreditation) {
-        throw new Error('Accreditation not found');
-      }
-
-      try {
-        requireOwner(tx, ctx, accreditation.user_id, {
-          action: 'delete',
-          resource: 'accreditations',
-        });
-      } catch (error) {
-        if (!isPermissionError(error)) throw error;
-        await can(tx, ctx, {
-          action: 'manage_votes',
-          resource: 'events',
-          eventId: accreditation.event_id,
-        });
-      }
+      throw new Error('Accreditations are retained for their append-only audit history.');
     }
-
-    await tx.mutate.accreditation.delete({ id: args.id });
   }),
 };

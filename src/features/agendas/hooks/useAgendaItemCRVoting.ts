@@ -13,6 +13,7 @@ import {
 import { isNamedBallot } from '@/zero/shared';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { VOTE_PHASE } from '@/zero/votes/vote-workflow';
+import type { VoteSubmissionContext } from '@/features/shared/ui/voting';
 import { isMockCRTimelineItem } from '../logic/createMockCRTimelineItems';
 import {
   deriveChangeRequestVotePhase,
@@ -55,24 +56,23 @@ export function useAgendaItemCRVoting(agendaItemId: string | undefined, userId?:
   } = useAgendaItemCRTimeline(agendaItemId);
 
   const { updateAgendaItemChangeRequest } = useAgendaActions();
-  const { updateVote, castIndicativeVote, castFinalVote, createVoter } = useVoteActions();
+  const { updateVote, castIndicativeVote, castFinalVote } = useVoteActions();
 
   // Determine if the current user has voted on a given CR vote (for the current phase)
   const hasUserVoted = useCallback(
     (item: ChangeRequestTimelineRow) => {
       if (!userId || !item.vote) return false;
-      const voters = item.vote.voters ?? [];
-      const voter = voters.find((v: { user_id: string }) => v.user_id === userId);
-      if (!voter) return false;
-
       const phase = getVotePhase(item);
-      if (phase === 'final') {
+      if (phase === 'final' || phase === 'closed') {
+        const voters = item.vote.voters ?? [];
+        const voter = voters.find((v: { user_id: string }) => v.user_id === userId);
+        if (!voter) return false;
         return (item.vote.final_participations ?? []).some(
           (p: { voter_id: string }) => p.voter_id === voter.id
         );
       }
       return (item.vote.indicative_participations ?? []).some(
-        (p: { voter_id: string }) => p.voter_id === voter.id
+        (p: { user_id?: string | null }) => p.user_id === userId
       );
     },
     [userId]
@@ -93,17 +93,17 @@ export function useAgendaItemCRVoting(agendaItemId: string | undefined, userId?:
       if (!userId || !item.vote) return [];
 
       const voter = getUserVoter(item);
-      if (!voter) return [];
 
       const phase = getVotePhase(item);
-      const participations =
+      if ((phase === 'final' || phase === 'closed') && !voter) return [];
+      const userParticipation =
         phase === 'final' || phase === 'closed'
-          ? (item.vote.final_participations ?? [])
-          : (item.vote.indicative_participations ?? []);
-
-      const userParticipation = participations.find(
-        (p: { voter_id?: string | null }) => p.voter_id === voter.id
-      );
+          ? (item.vote.final_participations ?? []).find(
+              (p: { voter_id?: string | null }) => p.voter_id === voter?.id
+            )
+          : (item.vote.indicative_participations ?? []).find(
+              (p: { user_id?: string | null }) => p.user_id === userId
+            );
 
       if (!userParticipation) return [];
 
@@ -158,7 +158,7 @@ export function useAgendaItemCRVoting(agendaItemId: string | undefined, userId?:
 
   // Cast a vote on a CR item (handles indicative vs final based on current phase)
   const castCRVote = useCallback(
-    async (item: ChangeRequestTimelineRow, choiceId: string) => {
+    async (item: ChangeRequestTimelineRow, choiceId: string, context?: VoteSubmissionContext) => {
       if (isMockCRTimelineItem(item)) {
         toast.error(
           translateText('generated.inline.0001_cannot_cast_vote_missing_user_or_vote_data_32ecb2cb')
@@ -178,17 +178,7 @@ export function useAgendaItemCRVoting(agendaItemId: string | undefined, userId?:
         return;
       }
 
-      let voterId = getUserVoter(item)?.id;
-      if (!voterId) {
-        voterId = crypto.randomUUID();
-        await waitForClientApply(
-          createVoter({
-            id: voterId,
-            vote_id: item.vote.id,
-            user_id: userId,
-          })
-        );
-      }
+      const voterId = getUserVoter(item)?.id ?? `snapshot-resolved:${userId}`;
 
       const participationId = crypto.randomUUID();
       const participationArgs = {
@@ -208,12 +198,20 @@ export function useAgendaItemCRVoting(agendaItemId: string | undefined, userId?:
       ];
 
       if (phase === 'final') {
-        await waitForClientApply(castFinalVote(participationArgs, decisions));
+        const result = castFinalVote(participationArgs, decisions, {
+          silent: Boolean(context?.trackServerResult),
+        });
+        await waitForClientApply(result);
+        await context?.trackServerResult?.(result);
       } else {
-        await waitForClientApply(castIndicativeVote(participationArgs, decisions));
+        const result = castIndicativeVote(participationArgs, decisions, {
+          silent: Boolean(context?.trackServerResult),
+        });
+        await waitForClientApply(result);
+        await context?.trackServerResult?.(result);
       }
     },
-    [userId, getUserVoter, castIndicativeVote, castFinalVote, createVoter]
+    [userId, getUserVoter, castIndicativeVote, castFinalVote]
   );
 
   // Check if all CR votes (non-final) are completed
@@ -266,10 +264,14 @@ export function getVoteResult(item: ChangeRequestTimelineRow): VoteResult {
     (sum, tally) => (tally.phase === 'final' ? sum + (tally.count ?? 0) : sum),
     0
   );
-  const totalEligible = Math.max(
-    item.vote.voters?.length ?? 0,
-    finalDecisions.length + offlineFinalCount
-  );
+  const snapshotOfflineSize = item.vote.offline_electorate_size;
+  const totalEligible =
+    snapshotOfflineSize == null
+      ? Math.max(item.vote.voters?.length ?? 0, finalDecisions.length + offlineFinalCount)
+      : (item.vote.voters ?? []).filter(
+          (voter: { participation_channel?: string | null }) =>
+            voter.participation_channel !== 'offline'
+        ).length + snapshotOfflineSize;
 
   return computeVoteResultSummary(
     choices.map((choice, idx) => ({

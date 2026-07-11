@@ -689,11 +689,7 @@ describe('amendmentServerMutators authorization', () => {
         is_closing_vote: false,
       })
     );
-    expect(tx.mutate.voter.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        user_id: 'voter-1',
-      })
-    );
+    expect(tx.mutate.voter.insert).not.toHaveBeenCalled();
     expect(fireNotificationMock).toHaveBeenCalledWith(
       'notifyEventChangeRequestCreated',
       expect.objectContaining({
@@ -756,11 +752,7 @@ describe('amendmentServerMutators authorization', () => {
       })
     );
     expect(tx.mutate.vote_choice.insert).toHaveBeenCalledTimes(3);
-    expect(tx.mutate.voter.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        user_id: 'voter-1',
-      })
-    );
+    expect(tx.mutate.voter.insert).not.toHaveBeenCalled();
     expect(tx.mutate.agenda_item_change_request.update).not.toHaveBeenCalled();
     expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenNthCalledWith(
       1,
@@ -978,11 +970,7 @@ describe('amendmentServerMutators authorization', () => {
       })
     );
     expect(tx.mutate.vote_choice.insert).toHaveBeenCalledTimes(3);
-    expect(tx.mutate.voter.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        user_id: 'voter-1',
-      })
-    );
+    expect(tx.mutate.voter.insert).not.toHaveBeenCalled();
     expect(tx.mutate.agenda_item_change_request.insert).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({

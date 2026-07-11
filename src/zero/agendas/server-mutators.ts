@@ -7,6 +7,7 @@ import { fireNotification } from '../server-notify';
 import { electionServerMutators } from '../elections/server-mutators';
 import { groupServerMutators } from '../groups/server-mutators';
 import { voteServerMutators } from '../votes/server-mutators';
+import { snapshotVoteElectorate } from '../ballot-eligibility';
 import { eventTitle, recomputeEventCounters, recomputeEventEndDate } from '../server-helpers';
 import { resolveChangeRequestByVoteResult } from '../change-requests/server-resolution';
 import { finalizeInternalChangeRequestsForEventPhaseTransition } from '../change-requests/internal-voting';
@@ -586,12 +587,6 @@ export const agendaServerMutators = {
         await syncBranchEditingMode(tx, ctx, amendment_id, branchId, 'suggest_event');
       }
 
-      // 2. Fetch accredited voters for this agenda item
-      const accreditationsResult = agendaItem?.event_id
-        ? await tx.run(zql.accreditation.where('event_id', agendaItem.event_id))
-        : [];
-      const accreditations = Array.isArray(accreditationsResult) ? accreditationsResult : [];
-
       const CHOICE_LABELS = ['yes', 'no', 'abstain'] as const;
       const DEFAULT_CHOICE_SPECS = CHOICE_LABELS.map(label => ({
         label,
@@ -638,16 +633,6 @@ export const agendaServerMutators = {
             semantic_key: choice.semanticKey ?? null,
             process_branch_id: choice.processBranchId ?? null,
             order_index: i,
-            created_at: now,
-          });
-        }
-
-        // Create voter records from accreditation
-        for (const acc of accreditations) {
-          await tx.mutate.voter.insert({
-            id: crypto.randomUUID(),
-            vote_id: voteId,
-            user_id: acc.user_id,
             created_at: now,
           });
         }
@@ -772,8 +757,27 @@ export const agendaServerMutators = {
       const existingChangeRequestIds = new Set(
         existingLinks.map(link => link.change_request_id).filter((id): id is string => Boolean(id))
       );
+      const missingChangeRequestCount = orderedChangeRequests.filter(
+        changeRequest => !existingChangeRequestIds.has(changeRequest.id)
+      ).length;
+      const closingBoundary = existingLinks.find(
+        link => link.is_closing_vote || link.step_kind === AGENDA_VOTE_STEP_KIND.closing
+      );
       let nextOrderIndex =
+        closingBoundary?.order_index ??
         existingLinks.reduce((max, link) => Math.max(max, link.order_index ?? 0), -1) + 1;
+
+      if (closingBoundary && missingChangeRequestCount > 0) {
+        for (const link of existingLinks.filter(
+          link => (link.order_index ?? 0) >= nextOrderIndex
+        )) {
+          await tx.mutate.agenda_item_change_request.update({
+            id: link.id,
+            order_index: (link.order_index ?? nextOrderIndex) + missingChangeRequestCount,
+            updated_at: now,
+          });
+        }
+      }
       if (insertedMergeSequenceStep && nextOrderIndex === 0) {
         nextOrderIndex = 1;
       }
@@ -802,7 +806,7 @@ export const agendaServerMutators = {
           step_kind: AGENDA_VOTE_STEP_KIND.changeRequest,
           process_branch_id: cr.process_branch_id ?? processBranchId ?? null,
           is_closing_vote: false,
-          status: 'pending',
+          status: 'voting',
           blocked_reason: null,
           result_status: null,
           obsolete_reason: null,
@@ -860,6 +864,7 @@ export const agendaServerMutators = {
           closingDurationSeconds = event?.default_final_vote_duration_seconds ?? null;
         }
 
+        await snapshotVoteElectorate(tx, finalVoteId);
         await tx.mutate.vote.update({
           id: finalVoteId,
           status: VOTE_PHASE.final,
@@ -954,12 +959,24 @@ export const agendaServerMutators = {
           ? await orderChangeRequestsForVoting(tx, amendment_id, changeRequests, voteOrder)
           : changeRequests;
 
-      const accreditationsResult = agendaItem.event_id
-        ? await tx.run(zql.accreditation.where('event_id', agendaItem.event_id))
-        : [];
-      const accreditations = Array.isArray(accreditationsResult) ? accreditationsResult : [];
+      const closingBoundary = existingLinks.find(
+        link => link.is_closing_vote || link.step_kind === AGENDA_VOTE_STEP_KIND.closing
+      );
       let nextOrderIndex =
+        closingBoundary?.order_index ??
         existingLinks.reduce((max, link) => Math.max(max, link.order_index ?? 0), -1) + 1;
+
+      if (closingBoundary) {
+        for (const link of existingLinks.filter(
+          link => (link.order_index ?? 0) >= nextOrderIndex
+        )) {
+          await tx.mutate.agenda_item_change_request.update({
+            id: link.id,
+            order_index: (link.order_index ?? nextOrderIndex) + changeRequests.length,
+            updated_at: now,
+          });
+        }
+      }
 
       for (const cr of orderedChangeRequests) {
         const voteId = crypto.randomUUID();
@@ -994,15 +1011,6 @@ export const agendaServerMutators = {
           });
         }
 
-        for (const accreditation of accreditations) {
-          await tx.mutate.voter.insert({
-            id: crypto.randomUUID(),
-            vote_id: voteId,
-            user_id: accreditation.user_id,
-            created_at: now,
-          });
-        }
-
         await tx.mutate.agenda_item_change_request.insert({
           id: crypto.randomUUID(),
           agenda_item_id,
@@ -1012,7 +1020,7 @@ export const agendaServerMutators = {
           step_kind: AGENDA_VOTE_STEP_KIND.changeRequest,
           process_branch_id: cr.process_branch_id ?? processBranchId ?? null,
           is_closing_vote: false,
-          status: 'pending',
+          status: 'voting',
           blocked_reason: null,
           result_status: null,
           obsolete_reason: null,
@@ -1022,9 +1030,7 @@ export const agendaServerMutators = {
         nextOrderIndex += 1;
       }
 
-      if (hasExistingOpenChangeRequestVoteSteps) {
-        await reorderOpenChangeRequestVoteStepsForAgendaItem(tx, agendaItem, voteOrder);
-      }
+      await reorderOpenChangeRequestVoteStepsForAgendaItem(tx, agendaItem, voteOrder);
     }
   ),
 

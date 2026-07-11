@@ -1,4 +1,5 @@
 export const VOTE_PHASE = {
+  pending: 'pending',
   internal: 'internal',
   indicative: 'indicative',
   final: 'final',
@@ -21,6 +22,7 @@ export function normalizeVotePhase(phase: string | null | undefined): CanonicalV
 
   if (
     phase === VOTE_PHASE.internal ||
+    phase === VOTE_PHASE.pending ||
     phase === VOTE_PHASE.indicative ||
     phase === VOTE_PHASE.final ||
     phase === VOTE_PHASE.closed

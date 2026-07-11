@@ -247,6 +247,10 @@ export const eventsTranslations = {
       pendingSuffix: ' after the vote.',
       completedPrefix: 'The amendment was successfully forwarded to',
       completedSuffix: '.',
+      rejectedPrefix: 'The amendment was not forwarded to',
+      rejectedSuffix: ' because the vote was rejected.',
+      tiePrefix: 'The amendment was not forwarded to',
+      tieSuffix: ' because the vote ended in a tie.',
     },
     // Indication system
     indication: 'Indication',

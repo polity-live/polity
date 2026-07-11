@@ -54,7 +54,7 @@ function createTx(rows: unknown[]) {
   };
 }
 
-const election = { id: 'election-1', agenda_item_id: 'agenda-1' };
+const election = { id: 'election-1', agenda_item_id: 'agenda-1', electorate_snapshotted_at: 1 };
 const namedElection = { ...election, ballot_visibility: 'named' };
 const secretElection = { ...election, ballot_visibility: 'secret' };
 const agendaItem = { id: 'agenda-1', event_id: 'event-1' };
@@ -178,27 +178,23 @@ describe('electionSharedMutators event voting rights', () => {
     );
   });
 
-  it('allows a participant with active voting rights to create their own elector record', async () => {
-    allowActions(['active_voting']);
-    const tx = createTx([election, agendaItem, null, null]);
+  it('prevents direct elector creation because snapshots are server-managed', async () => {
+    allowActions(['manage_votes']);
+    const tx = createTx([]);
 
-    await electionSharedMutators.createElector.fn({
-      tx: tx as never,
-      ctx: { userID: 'user-1' } as never,
-      args: {
-        id: 'elector-1',
-        election_id: 'election-1',
-        user_id: 'user-1',
-      },
-    });
-
-    expect(tx.mutate.elector.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'elector-1',
-        election_id: 'election-1',
-        user_id: 'user-1',
+    await expect(
+      electionSharedMutators.createElector.fn({
+        tx: tx as never,
+        ctx: { userID: 'user-1' } as never,
+        args: {
+          id: 'elector-1',
+          election_id: 'election-1',
+          user_id: 'user-1',
+        },
       })
-    );
+    ).rejects.toThrow(/server-side electorate snapshot/i);
+
+    expect(tx.mutate.elector.insert).not.toHaveBeenCalled();
   });
 
   it('allows secret-ballot selections after the active voter participation exists', async () => {
@@ -235,7 +231,7 @@ describe('electionSharedMutators event voting rights', () => {
     );
   });
 
-  it('rejects secret-ballot selections without active voting rights or manager rights', async () => {
+  it('keeps a snapshotted secret-ballot elector eligible after rights change', async () => {
     allowActions([]);
     const tx = createTx([
       candidate,
@@ -249,18 +245,18 @@ describe('electionSharedMutators event voting rights', () => {
       agendaItem,
     ]);
 
-    await expect(
-      electionSharedMutators.createIndicativeCandidateSelection.fn({
-        tx: tx as never,
-        ctx: { userID: 'user-1' } as never,
-        args: {
-          id: 'selection-1',
-          election_id: 'election-1',
-          candidate_id: 'candidate-1',
-          elector_participation_id: null,
-        },
-      })
-    ).rejects.toThrow(PermissionError);
+    await electionSharedMutators.createIndicativeCandidateSelection.fn({
+      tx: tx as never,
+      ctx: { userID: 'user-1' } as never,
+      args: {
+        id: 'selection-1',
+        election_id: 'election-1',
+        candidate_id: 'candidate-1',
+        elector_participation_id: null,
+      },
+    });
+
+    expect(tx.mutate.indicative_candidate_selection.insert).toHaveBeenCalled();
   });
 
   it('creates named indicative election participation and selections on first submission', async () => {
@@ -304,61 +300,33 @@ describe('electionSharedMutators event voting rights', () => {
     );
   });
 
-  it('creates a missing elector inside the indicative election vote transaction', async () => {
+  it('rejects missing electors instead of extending the frozen indicative electorate', async () => {
     allowActions(['active_voting']);
-    const tx = createTx([
-      election,
-      agendaItem,
-      null,
-      null,
-      elector,
-      election,
-      agendaItem,
-      namedElection,
-      candidate,
-      null,
-    ]);
+    const tx = createTx([election, agendaItem, null, null, election, agendaItem]);
 
-    await electionSharedMutators.replaceIndicativeElectionVote.fn({
-      tx: tx as never,
-      ctx: { userID: 'user-1' } as never,
-      args: {
-        elector,
-        participation: {
-          id: 'participation-1',
-          election_id: 'election-1',
-          elector_id: 'elector-1',
-        },
-        selections: [
-          {
-            id: 'selection-1',
+    await expect(
+      electionSharedMutators.replaceIndicativeElectionVote.fn({
+        tx: tx as never,
+        ctx: { userID: 'user-1' } as never,
+        args: {
+          elector,
+          participation: {
+            id: 'participation-1',
             election_id: 'election-1',
-            candidate_id: 'candidate-1',
-            elector_participation_id: 'participation-1',
+            elector_id: 'elector-1',
           },
-        ],
-      },
-    });
-
-    expect(tx.mutate.elector.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'elector-1',
-        election_id: 'election-1',
-        user_id: 'user-1',
+          selections: [
+            {
+              id: 'selection-1',
+              election_id: 'election-1',
+              candidate_id: 'candidate-1',
+              elector_participation_id: 'participation-1',
+            },
+          ],
+        },
       })
-    );
-    expect(tx.mutate.indicative_elector_participation.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'participation-1',
-        elector_id: 'elector-1',
-      })
-    );
-    expect(tx.mutate.indicative_candidate_selection.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'selection-1',
-        elector_participation_id: 'participation-1',
-      })
-    );
+    ).rejects.toThrow(/frozen electorate snapshot/i);
+    expect(tx.mutate.elector.insert).not.toHaveBeenCalled();
   });
 
   it('replaces linked named indicative election selections on repeat submission', async () => {
@@ -468,59 +436,32 @@ describe('electionSharedMutators event voting rights', () => {
     ).rejects.toThrow(/duplicate key/i);
   });
 
-  it('creates a missing elector inside the final full election vote transaction', async () => {
+  it('rejects missing electors instead of extending the frozen final electorate', async () => {
     allowActions(['active_voting']);
-    const tx = createTx([
-      election,
-      agendaItem,
-      null,
-      null,
-      elector,
-      election,
-      agendaItem,
-      namedElection,
-      candidate,
-    ]);
+    const tx = createTx([election, agendaItem, null, null, election, agendaItem]);
 
-    await electionSharedMutators.castFinalElectionVoteFull.fn({
-      tx: tx as never,
-      ctx: { userID: 'user-1' } as never,
-      args: {
-        elector,
-        participation: {
-          id: 'final-participation-1',
-          election_id: 'election-1',
-          elector_id: 'elector-1',
-        },
-        selections: [
-          {
-            id: 'final-selection-1',
+    await expect(
+      electionSharedMutators.castFinalElectionVoteFull.fn({
+        tx: tx as never,
+        ctx: { userID: 'user-1' } as never,
+        args: {
+          elector,
+          participation: {
+            id: 'final-participation-1',
             election_id: 'election-1',
-            candidate_id: 'candidate-1',
-            elector_participation_id: 'final-participation-1',
+            elector_id: 'elector-1',
           },
-        ],
-      },
-    });
-
-    expect(tx.mutate.elector.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'elector-1',
-        election_id: 'election-1',
-        user_id: 'user-1',
+          selections: [
+            {
+              id: 'final-selection-1',
+              election_id: 'election-1',
+              candidate_id: 'candidate-1',
+              elector_participation_id: 'final-participation-1',
+            },
+          ],
+        },
       })
-    );
-    expect(tx.mutate.final_elector_participation.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'final-participation-1',
-        elector_id: 'elector-1',
-      })
-    );
-    expect(tx.mutate.final_candidate_selection.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'final-selection-1',
-        elector_participation_id: 'final-participation-1',
-      })
-    );
+    ).rejects.toThrow(/frozen electorate snapshot/i);
+    expect(tx.mutate.elector.insert).not.toHaveBeenCalled();
   });
 });

@@ -2951,6 +2951,7 @@ export const generatedTranslations = {
       accreditation: {
         confirmFailed: 'Confirm Failed',
         confirmed: 'Confirmed',
+        pending: 'Awaiting organizer confirmation',
         deleteFailed: 'Delete Failed',
         wrongPassword: 'Invalid password',
       },
@@ -3169,6 +3170,10 @@ export const generatedTranslations = {
         },
       },
       events: {
+        accreditation: {
+          requiredLabel: 'Accreditation required',
+          requiredDescription: 'Only approved participants are included in new ballot electorates.',
+        },
         agenda: {
           accreditation: {
             accredited: 'Accredited',

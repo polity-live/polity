@@ -5,11 +5,17 @@ const {
   discardPendingEventSuggestionsMock,
   finalizeInternalChangeRequestsForEventPhaseTransitionMock,
   resolveChangeRequestByVoteResultMock,
+  snapshotVoteElectorateMock,
 } = vi.hoisted(() => ({
   canMock: vi.fn(),
   discardPendingEventSuggestionsMock: vi.fn(),
   finalizeInternalChangeRequestsForEventPhaseTransitionMock: vi.fn(),
   resolveChangeRequestByVoteResultMock: vi.fn(),
+  snapshotVoteElectorateMock: vi.fn(),
+}));
+
+vi.mock('../../ballot-eligibility', () => ({
+  snapshotVoteElectorate: snapshotVoteElectorateMock,
 }));
 
 vi.mock('../../rbac/can', () => ({
@@ -106,6 +112,7 @@ beforeEach(() => {
   discardPendingEventSuggestionsMock.mockReset();
   finalizeInternalChangeRequestsForEventPhaseTransitionMock.mockReset();
   resolveChangeRequestByVoteResultMock.mockReset();
+  snapshotVoteElectorateMock.mockReset();
 });
 
 describe('agendaServerMutators.initializeChangeRequestVoting', () => {
@@ -117,7 +124,6 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce(amendment())
-      .mockResolvedValueOnce([{ user_id: 'user-1' }, { user_id: 'user-2' }])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([]);
 
@@ -141,7 +147,7 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
       })
     );
     expect(tx.mutate.vote_choice.insert).toHaveBeenCalledTimes(3);
-    expect(tx.mutate.voter.insert).toHaveBeenCalledTimes(2);
+    expect(tx.mutate.voter.insert).not.toHaveBeenCalled();
     expect(tx.mutate.vote.update).not.toHaveBeenCalled();
   });
 
@@ -171,6 +177,7 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
         status: 'final',
       })
     );
+    expect(snapshotVoteElectorateMock).toHaveBeenCalledWith(tx, finalVoteInsert.id);
   });
 
   it('does not skip real change request votes when start-final is requested', async () => {
@@ -193,7 +200,7 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
         agenda_item_id: 'agenda-1',
         change_request_id: 'cr-1',
         is_closing_vote: false,
-        status: 'pending',
+        status: 'voting',
       })
     );
     expect(tx.mutate.vote.update).not.toHaveBeenCalled();
@@ -361,7 +368,6 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce(amendment())
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
           id: 'vote-final-1',
@@ -382,6 +388,7 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
         status: 'final',
       })
     );
+    expect(snapshotVoteElectorateMock).toHaveBeenCalledWith(tx, 'vote-final-1');
   });
 
   it('creates a merge-variant step with branch-titled agenda and vote titles', async () => {
@@ -412,7 +419,6 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
         id: 'branch-2',
         editing_mode: 'event_final_closing_vote',
       })
-      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
@@ -520,7 +526,6 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
       })
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         { id: 'branch-2', title: 'BR-2', created_at: 2 },
         { id: 'branch-3', title: 'BR-3', created_at: 3 },
@@ -574,7 +579,6 @@ describe('agendaServerMutators.initializeChangeRequestVoting', () => {
         id: 'branch-2',
         editing_mode: 'event_final_closing_vote',
       })
-      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {

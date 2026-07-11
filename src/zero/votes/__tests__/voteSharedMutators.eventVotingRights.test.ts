@@ -50,7 +50,12 @@ function createTx(rows: unknown[]) {
   };
 }
 
-const vote = { id: 'vote-1', agenda_item_id: 'agenda-1', amendment_id: null };
+const vote = {
+  id: 'vote-1',
+  agenda_item_id: 'agenda-1',
+  amendment_id: null,
+  electorate_snapshotted_at: 1,
+};
 const indicativeVote = { ...vote, status: 'indicative' };
 const finalOpenVote = { ...vote, status: 'final' };
 const closedVote = { ...vote, status: 'closed' };
@@ -70,32 +75,23 @@ describe('voteSharedMutators event voting rights', () => {
     vi.clearAllMocks();
   });
 
-  it('allows a participant with active voting rights to create their own voter record', async () => {
-    allowActions(['active_voting']);
-    const tx = createTx([vote, agendaItem, null, null]);
+  it('prevents direct voter creation because snapshots are server-managed', async () => {
+    allowActions(['manage_votes']);
+    const tx = createTx([]);
 
-    await voteSharedMutators.createVoter.fn({
-      tx: tx as never,
-      ctx: { userID: 'user-1' } as never,
-      args: {
-        id: 'voter-1',
-        vote_id: 'vote-1',
-        user_id: 'user-1',
-      },
-    });
-
-    expect(tx.mutate.voter.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'voter-1',
-        vote_id: 'vote-1',
-        user_id: 'user-1',
+    await expect(
+      voteSharedMutators.createVoter.fn({
+        tx: tx as never,
+        ctx: { userID: 'user-1' } as never,
+        args: {
+          id: 'voter-1',
+          vote_id: 'vote-1',
+          user_id: 'user-1',
+        },
       })
-    );
-    expect(canMock).toHaveBeenCalledWith(
-      tx,
-      { userID: 'user-1' },
-      expect.objectContaining({ action: 'active_voting', resource: 'events', eventId: 'event-1' })
-    );
+    ).rejects.toThrow(/server-side electorate snapshot/i);
+
+    expect(tx.mutate.voter.insert).not.toHaveBeenCalled();
   });
 
   it('allows secret-ballot choice decisions after the active voter participation exists', async () => {
@@ -133,7 +129,7 @@ describe('voteSharedMutators event voting rights', () => {
     );
   });
 
-  it('rejects secret-ballot choice decisions without active voting rights or manager rights', async () => {
+  it('keeps a snapshotted secret-ballot voter eligible after rights change', async () => {
     allowActions([]);
     const tx = createTx([
       choice,
@@ -148,18 +144,17 @@ describe('voteSharedMutators event voting rights', () => {
       agendaItem,
     ]);
 
-    await expect(
-      voteSharedMutators.createIndicativeChoiceDecision.fn({
-        tx: tx as never,
-        ctx: { userID: 'user-1' } as never,
-        args: {
-          id: 'decision-1',
-          vote_id: 'vote-1',
-          choice_id: 'choice-1',
-          voter_participation_id: null,
-        },
-      })
-    ).rejects.toThrow(PermissionError);
+    await voteSharedMutators.createIndicativeChoiceDecision.fn({
+      tx: tx as never,
+      ctx: { userID: 'user-1' } as never,
+      args: {
+        id: 'decision-1',
+        vote_id: 'vote-1',
+        choice_id: 'choice-1',
+        voter_participation_id: null,
+      },
+    });
+    expect(tx.mutate.indicative_choice_decision.insert).toHaveBeenCalled();
   });
 
   it('creates named indicative participation and decision on first submission', async () => {
@@ -203,61 +198,29 @@ describe('voteSharedMutators event voting rights', () => {
     );
   });
 
-  it('creates a missing voter inside the indicative replacement transaction', async () => {
+  it('rejects missing voters instead of extending the frozen indicative electorate', async () => {
     allowActions(['active_voting']);
-    const tx = createTx([
-      vote,
-      agendaItem,
-      null,
-      null,
-      voter,
-      vote,
-      agendaItem,
-      namedVote,
-      choice,
-      null,
-    ]);
+    const tx = createTx([vote, agendaItem, null, null, vote, agendaItem]);
 
-    await voteSharedMutators.replaceIndicativeVote.fn({
-      tx: tx as never,
-      ctx: { userID: 'user-1' } as never,
-      args: {
-        voter,
-        participation: {
-          id: 'participation-1',
-          vote_id: 'vote-1',
-          voter_id: 'voter-1',
+    await expect(
+      voteSharedMutators.replaceIndicativeVote.fn({
+        tx: tx as never,
+        ctx: { userID: 'user-1' } as never,
+        args: {
+          voter,
+          participation: { id: 'participation-1', vote_id: 'vote-1', voter_id: 'voter-1' },
+          decisions: [
+            {
+              id: 'decision-1',
+              vote_id: 'vote-1',
+              choice_id: 'choice-1',
+              voter_participation_id: 'participation-1',
+            },
+          ],
         },
-        decisions: [
-          {
-            id: 'decision-1',
-            vote_id: 'vote-1',
-            choice_id: 'choice-1',
-            voter_participation_id: 'participation-1',
-          },
-        ],
-      },
-    });
-
-    expect(tx.mutate.voter.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'voter-1',
-        vote_id: 'vote-1',
-        user_id: 'user-1',
       })
-    );
-    expect(tx.mutate.indicative_voter_participation.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'participation-1',
-        voter_id: 'voter-1',
-      })
-    );
-    expect(tx.mutate.indicative_choice_decision.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'decision-1',
-        voter_participation_id: 'participation-1',
-      })
-    );
+    ).rejects.toThrow(/frozen electorate snapshot/i);
+    expect(tx.mutate.voter.insert).not.toHaveBeenCalled();
   });
 
   it('replaces linked named indicative decisions on repeat submission', async () => {
@@ -458,59 +421,32 @@ describe('voteSharedMutators event voting rights', () => {
     ).rejects.toThrow(/duplicate key/i);
   });
 
-  it('creates a missing voter inside the final full vote transaction', async () => {
+  it('rejects missing voters instead of extending the frozen final electorate', async () => {
     allowActions(['active_voting']);
-    const tx = createTx([
-      vote,
-      agendaItem,
-      null,
-      null,
-      voter,
-      vote,
-      agendaItem,
-      { ...finalOpenVote, ballot_visibility: 'named' },
-      choice,
-    ]);
+    const tx = createTx([vote, agendaItem, null, null, vote, agendaItem]);
 
-    await voteSharedMutators.castFinalVoteFull.fn({
-      tx: tx as never,
-      ctx: { userID: 'user-1' } as never,
-      args: {
-        voter,
-        participation: {
-          id: 'final-participation-1',
-          vote_id: 'vote-1',
-          voter_id: 'voter-1',
-        },
-        decisions: [
-          {
-            id: 'final-decision-1',
+    await expect(
+      voteSharedMutators.castFinalVoteFull.fn({
+        tx: tx as never,
+        ctx: { userID: 'user-1' } as never,
+        args: {
+          voter,
+          participation: {
+            id: 'final-participation-1',
             vote_id: 'vote-1',
-            choice_id: 'choice-1',
-            voter_participation_id: 'final-participation-1',
+            voter_id: 'voter-1',
           },
-        ],
-      },
-    });
-
-    expect(tx.mutate.voter.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'voter-1',
-        vote_id: 'vote-1',
-        user_id: 'user-1',
+          decisions: [
+            {
+              id: 'final-decision-1',
+              vote_id: 'vote-1',
+              choice_id: 'choice-1',
+              voter_participation_id: 'final-participation-1',
+            },
+          ],
+        },
       })
-    );
-    expect(tx.mutate.final_voter_participation.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'final-participation-1',
-        voter_id: 'voter-1',
-      })
-    );
-    expect(tx.mutate.final_choice_decision.insert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'final-decision-1',
-        voter_participation_id: 'final-participation-1',
-      })
-    );
+    ).rejects.toThrow(/frozen electorate snapshot/i);
+    expect(tx.mutate.voter.insert).not.toHaveBeenCalled();
   });
 });

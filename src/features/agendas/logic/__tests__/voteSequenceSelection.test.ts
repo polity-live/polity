@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   resolveCurrentVoteSequenceItem,
+  resolveFinalStartableVoteSequenceItem,
   resolveNextStartableVoteSequenceItem,
   resolvePreferredReorderedVoteSequenceItem,
   resolveVoteSequenceSelectionUpdate,
@@ -205,7 +206,7 @@ describe('resolveNextStartableVoteSequenceItem', () => {
     expect(result?.id).toBe('next');
   });
 
-  it('returns null when no startable step exists', () => {
+  it('returns an already running final vote as the authoritative target', () => {
     expect(
       resolveNextStartableVoteSequenceItem({
         selectedItemId: 'selected',
@@ -214,7 +215,7 @@ describe('resolveNextStartableVoteSequenceItem', () => {
           { id: 'final-open', status: 'pending', vote: { id: 'vote-final', status: 'final' } },
         ],
       })
-    ).toBeNull();
+    )?.toMatchObject({ id: 'final-open' });
   });
 
   it('does not suggest a jump when the selected row is already startable', () => {
@@ -231,5 +232,30 @@ describe('resolveNextStartableVoteSequenceItem', () => {
         ],
       })
     ).toBeNull();
+  });
+
+  it('returns the first indicative row when a later indicative row is selected', () => {
+    expect(
+      resolveNextStartableVoteSequenceItem({
+        selectedItemId: 'later',
+        sequenceItems: [
+          { id: 'first', status: 'voting', vote: { id: 'vote-first', status: 'indicative' } },
+          { id: 'later', status: 'voting', vote: { id: 'vote-later', status: 'indicative' } },
+        ],
+      })?.id
+    ).toBe('first');
+  });
+});
+
+describe('resolveFinalStartableVoteSequenceItem', () => {
+  it('allows only the first indicative row to enter the final phase', () => {
+    expect(
+      resolveFinalStartableVoteSequenceItem({
+        sequenceItems: [
+          { id: 'first', status: 'voting', vote: { id: 'vote-first', status: 'indicative' } },
+          { id: 'later', status: 'voting', vote: { id: 'vote-later', status: 'indicative' } },
+        ],
+      })?.id
+    ).toBe('first');
   });
 });

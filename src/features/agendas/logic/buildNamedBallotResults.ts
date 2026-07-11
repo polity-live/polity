@@ -83,6 +83,7 @@ interface OfflineParticipantLike {
 }
 
 interface VoteParticipationLike {
+  user_id?: string | null;
   voter_id?: string | null;
   voter?: {
     user_id?: string | null;
@@ -102,6 +103,7 @@ interface VoteOfflineTallyLike {
 }
 
 interface ElectionParticipationLike {
+  user_id?: string | null;
   elector_id?: string | null;
   elector?: {
     user_id?: string | null;
@@ -458,6 +460,7 @@ export function buildNamedVoteResultsModel(args: {
 
   for (const participation of participations) {
     const userId =
+      participation.user_id ??
       participation.voter?.user_id ??
       (participation.voter_id ? voterIdByRecordId.get(participation.voter_id) : null);
     if (!userId) {
@@ -518,6 +521,7 @@ export function buildNamedElectionResultsModel(args: {
 
   for (const participation of participations) {
     const userId =
+      participation.user_id ??
       participation.elector?.user_id ??
       (participation.elector_id ? electorIdByRecordId.get(participation.elector_id) : null);
     if (!userId) {

@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS public.election (
   election_mode TEXT NOT NULL DEFAULT 'single',
   seat_count INTEGER NOT NULL DEFAULT 1,
   max_votes INTEGER NOT NULL DEFAULT 1,
+  electorate_snapshotted_at TIMESTAMPTZ,
+  offline_electorate_size INTEGER NOT NULL DEFAULT 0 CHECK (offline_electorate_size >= 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -56,6 +58,8 @@ CREATE TABLE IF NOT EXISTS public.elector (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  participation_channel TEXT NOT NULL DEFAULT 'online' CHECK (participation_channel IN ('online', 'offline')),
+  snapshotted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (election_id, user_id)
 );
@@ -70,13 +74,15 @@ CREATE POLICY "service_role_all" ON public.elector FOR ALL TO service_role USING
 CREATE TABLE IF NOT EXISTS public.indicative_elector_participation (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
-  elector_id UUID NOT NULL REFERENCES public.elector (id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  elector_id UUID REFERENCES public.elector (id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (election_id, elector_id)
+  UNIQUE (election_id, user_id)
 );
 
 CREATE INDEX idx_indicative_elector_participation_election ON public.indicative_elector_participation (election_id);
 CREATE INDEX idx_indicative_elector_participation_elector ON public.indicative_elector_participation (elector_id);
+CREATE INDEX idx_indicative_elector_participation_user ON public.indicative_elector_participation (user_id);
 
 ALTER TABLE public.indicative_elector_participation ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.indicative_elector_participation FOR ALL TO service_role USING (true);

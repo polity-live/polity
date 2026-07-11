@@ -20,6 +20,8 @@ export const vote = table('vote')
     closed_by_id: string().optional(),
     visibility: string(),
     ballot_visibility: string(),
+    electorate_snapshotted_at: number().optional(),
+    offline_electorate_size: number().optional(),
     created_at: number(),
     updated_at: number(),
   })
@@ -42,6 +44,8 @@ export const voter = table('voter')
     id: string(),
     vote_id: string(),
     user_id: string(),
+    participation_channel: string().optional(),
+    snapshotted_at: number().optional(),
     created_at: number(),
   })
   .primaryKey('id');
@@ -50,7 +54,8 @@ export const indicativeVoterParticipation = table('indicative_voter_participatio
   .columns({
     id: string(),
     vote_id: string(),
-    voter_id: string(),
+    user_id: string(),
+    voter_id: string().optional(),
     created_at: number(),
   })
   .primaryKey('id');

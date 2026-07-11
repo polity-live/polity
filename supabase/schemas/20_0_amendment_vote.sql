@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.vote (
   amendment_id UUID,
   title TEXT,
   description TEXT,
-  status TEXT NOT NULL DEFAULT 'indicative' CHECK (status IN ('internal', 'indicative', 'final', 'closed')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'internal', 'indicative', 'final', 'closed')),
   purpose TEXT NOT NULL CHECK (purpose IN ('change_request', 'closing', 'merge_variant')),
   majority_type TEXT NOT NULL DEFAULT 'relative',
   closing_type TEXT NOT NULL DEFAULT 'moderator',
@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS public.vote (
   closed_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
   visibility VARCHAR NOT NULL DEFAULT 'public',
   ballot_visibility TEXT NOT NULL DEFAULT 'named' CHECK (ballot_visibility IN ('named', 'secret')),
+  electorate_snapshotted_at TIMESTAMPTZ,
+  offline_electorate_size INTEGER NOT NULL DEFAULT 0 CHECK (offline_electorate_size >= 0),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -59,6 +61,8 @@ CREATE TABLE IF NOT EXISTS public.voter (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vote_id UUID NOT NULL REFERENCES public.vote (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  participation_channel TEXT NOT NULL DEFAULT 'online' CHECK (participation_channel IN ('online', 'offline')),
+  snapshotted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (vote_id, user_id)
 );
@@ -73,13 +77,15 @@ CREATE POLICY "service_role_all" ON public.voter FOR ALL TO service_role USING (
 CREATE TABLE IF NOT EXISTS public.indicative_voter_participation (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vote_id UUID NOT NULL REFERENCES public.vote (id) ON DELETE CASCADE,
-  voter_id UUID NOT NULL REFERENCES public.voter (id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  voter_id UUID REFERENCES public.voter (id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (vote_id, voter_id)
+  UNIQUE (vote_id, user_id)
 );
 
 CREATE INDEX idx_indicative_voter_participation_vote ON public.indicative_voter_participation (vote_id);
 CREATE INDEX idx_indicative_voter_participation_voter ON public.indicative_voter_participation (voter_id);
+CREATE INDEX idx_indicative_voter_participation_user ON public.indicative_voter_participation (user_id);
 
 ALTER TABLE public.indicative_voter_participation ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.indicative_voter_participation FOR ALL TO service_role USING (true);

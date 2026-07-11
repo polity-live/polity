@@ -2955,6 +2955,7 @@ export const generatedTranslations = {
       accreditation: {
         confirmFailed: 'Confirm Failed',
         confirmed: 'Confirmed',
+        pending: 'Bestätigung durch die Organisation ausstehend',
         deleteFailed: 'Delete Failed',
         wrongPassword: 'Invalid password',
       },
@@ -3175,6 +3176,11 @@ export const generatedTranslations = {
         },
       },
       events: {
+        accreditation: {
+          requiredLabel: 'Akkreditierung erforderlich',
+          requiredDescription:
+            'Nur bestätigte Teilnehmende werden in neue Wählerkreise aufgenommen.',
+        },
         agenda: {
           accreditation: {
             accredited: 'Accredited',

@@ -376,6 +376,7 @@ export const eventSharedMutators = {
       change_request_vote_order:
         eventArgs.change_request_vote_order ?? DEFAULT_CHANGE_REQUEST_VOTE_ORDER,
       gender_quota_enabled: eventArgs.gender_quota_enabled ?? false,
+      accreditation_required: eventArgs.accreditation_required ?? false,
       creator_id: userID,
       participant_count: 1,
       subscriber_count: 0,

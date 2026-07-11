@@ -11,6 +11,10 @@ import {
 import { computeRoleScheduledRevoteDate } from '@/features/votes/utils/revote-scheduling';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
+import {
+  assertCurrentOnlineBallotEligibility,
+  snapshotElectionElectorate,
+} from '../ballot-eligibility';
 import { fireNotification } from '../server-notify';
 import {
   eventTitle,
@@ -20,11 +24,7 @@ import {
   syncUserWithEventConversation,
   userName,
 } from '../server-helpers';
-import {
-  eventAllowsOnlineVoting,
-  getConfirmedOfflineAttendeeCount,
-  isUserForcedOfflineForEvent,
-} from '../offline-roster-helpers';
+import { eventAllowsOnlineVoting, isUserForcedOfflineForEvent } from '../offline-roster-helpers';
 import {
   createElectionSchema,
   updateElectionSchema,
@@ -35,6 +35,8 @@ import {
   createFinalElectorParticipationSchema,
   castFinalElectionVoteFullSchema,
   upsertElectionOfflineTallySchema,
+  startElectionSchema,
+  submitElectionVoteSchema,
 } from './schema';
 
 type ElectionServerTx = Parameters<typeof mutators.elections.createElection.fn>[0]['tx'];
@@ -125,7 +127,7 @@ async function assertOfflineElectionTallyWithinCap(
     throw new Error('Election is not linked to an event.');
   }
 
-  const confirmedOfflineAttendeeCount = await getConfirmedOfflineAttendeeCount(tx, eventId);
+  const confirmedOfflineAttendeeCount = election.offline_electorate_size ?? 0;
   if (args.nextCount > confirmedOfflineAttendeeCount) {
     throw new Error(
       `Each candidate can receive at most ${confirmedOfflineAttendeeCount} offline selections.`
@@ -889,6 +891,119 @@ async function applyElectionAssignments(
 
 /** Server-only mutators — override shared mutators with additional server-side logic. */
 export const electionServerMutators = {
+  startElection: defineMutator(startElectionSchema, async ({ tx, ctx, args }) => {
+    const election = await tx.run(zql.election.where('id', args.election_id).one());
+    if (!election) throw new Error('Election not found.');
+    await electionServerMutators.updateElection.fn({
+      tx,
+      ctx,
+      args: {
+        id: args.election_id,
+        status: args.phase,
+        ...(args.closing_end_time !== undefined ? { closing_end_time: args.closing_end_time } : {}),
+      },
+    });
+  }),
+
+  submitElectionVote: defineMutator(submitElectionVoteSchema, async ({ tx, ctx, args }) => {
+    await requireRecentVotingPasswordVerification(tx, ctx.userID);
+    const election = await tx.run(zql.election.where('id', args.election_id).one());
+    const currentPhase = election?.status === 'indication' ? 'indicative' : election?.status;
+    if (!election || currentPhase !== args.phase) {
+      throw new Error(`The ${args.phase} election is not open.`);
+    }
+    if (args.candidate_ids.length > election.max_votes) {
+      throw new Error(`This election allows at most ${election.max_votes} selections.`);
+    }
+    const candidates = await tx.run(zql.election_candidate.where('election_id', args.election_id));
+    const validCandidateIds = new Set(candidates.map(candidate => candidate.id));
+    if (args.candidate_ids.some(candidateId => !validCandidateIds.has(candidateId))) {
+      throw new Error('Candidate not found for this election.');
+    }
+
+    if (args.phase === 'indicative') {
+      await assertCurrentOnlineBallotEligibility(tx, election.agenda_item_id, ctx.userID);
+      const existing = await tx.run(
+        zql.indicative_elector_participation
+          .where('election_id', args.election_id)
+          .where('user_id', ctx.userID)
+          .one()
+      );
+      if (existing?.id === args.idempotency_id) return;
+      if (existing && (election.ballot_visibility ?? 'secret') !== 'named') {
+        throw new Error('You have already cast a secret indicative election vote.');
+      }
+      const participationId = existing?.id ?? args.idempotency_id;
+      if (existing) {
+        const previousSelections = await tx.run(
+          zql.indicative_candidate_selection.where('elector_participation_id', existing.id)
+        );
+        for (const selection of previousSelections) {
+          await tx.mutate.indicative_candidate_selection.delete({ id: selection.id });
+        }
+      } else {
+        await tx.mutate.indicative_elector_participation.insert({
+          id: participationId,
+          election_id: args.election_id,
+          user_id: ctx.userID,
+          elector_id: null,
+          created_at: Date.now(),
+        });
+      }
+      for (const candidateId of args.candidate_ids) {
+        await tx.mutate.indicative_candidate_selection.insert({
+          id: crypto.randomUUID(),
+          election_id: args.election_id,
+          candidate_id: candidateId,
+          elector_participation_id:
+            (election.ballot_visibility ?? 'secret') === 'named' ? participationId : null,
+          created_at: Date.now(),
+        });
+      }
+      return;
+    }
+
+    if (election.electorate_snapshotted_at == null) {
+      throw new Error('The electorate has not been snapshotted.');
+    }
+    const elector = await tx.run(
+      zql.elector.where('election_id', args.election_id).where('user_id', ctx.userID).one()
+    );
+    if (!elector) {
+      throw new Error('You are not part of the electorate snapshot for this election.');
+    }
+    if (elector.participation_channel !== 'online') {
+      throw new Error('This vote must be entered via the offline tally flow for this participant.');
+    }
+
+    const existing = await tx.run(
+      zql.final_elector_participation
+        .where('election_id', args.election_id)
+        .where('elector_id', elector.id)
+        .one()
+    );
+    if (existing?.id === args.idempotency_id) return;
+    if (existing) throw new Error('You have already cast a final election vote.');
+    await mutators.elections.castFinalElectionVoteFull.fn({
+      tx,
+      ctx,
+      args: {
+        participation: {
+          id: args.idempotency_id,
+          election_id: args.election_id,
+          elector_id: elector.id,
+        },
+        selections: args.candidate_ids.map(candidateId => ({
+          id: crypto.randomUUID(),
+          election_id: args.election_id,
+          candidate_id: candidateId,
+          elector_participation_id:
+            (election.ballot_visibility ?? 'secret') === 'named' ? args.idempotency_id : null,
+        })),
+      },
+    });
+  }),
+
   createElection: defineMutator(createElectionSchema, async ({ tx, ctx, args }) => {
     await mutators.elections.createElection.fn({ tx, ctx, args });
 
@@ -963,6 +1078,10 @@ export const electionServerMutators = {
       isFinalElectionVoteStatus(args.status);
     const isClosingFinalVote =
       oldElection && oldElection.status !== 'closed' && args.status === 'closed';
+
+    if (isStartingFinalVote && oldElection) {
+      await snapshotElectionElectorate(tx, oldElection.id);
+    }
 
     await mutators.elections.updateElection.fn({ tx, ctx, args });
 

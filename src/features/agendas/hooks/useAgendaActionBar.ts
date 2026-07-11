@@ -61,7 +61,12 @@ interface ElectionLike {
   closing_duration_seconds?: number | null;
   role?: { title?: string | null; name?: string | null; description?: string | null } | null;
   candidates?: readonly ElectionCandidateLike[] | null;
-  indicative_participations?: readonly { elector_id?: string | null }[] | null;
+  indicative_participations?:
+    | readonly {
+        elector_id?: string | null;
+        user_id?: string | null;
+      }[]
+    | null;
 }
 
 interface VoteLike {
@@ -70,7 +75,12 @@ interface VoteLike {
   visibility?: string | null;
   ballot_visibility?: string | null;
   closing_duration_seconds?: number | null;
-  indicative_participations?: readonly { voter_id?: string | null }[] | null;
+  indicative_participations?:
+    | readonly {
+        voter_id?: string | null;
+        user_id?: string | null;
+      }[]
+    | null;
 }
 
 interface UseAgendaActionBarOptions {
@@ -157,18 +167,23 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
   // Candidate status
   const isUserCandidate = useMemo(() => Boolean(userCandidate), [userCandidate]);
   const hasUserIndicativeParticipation = useMemo(() => {
-    if (election?.id && electorId) {
+    if (election?.id && user?.id) {
       return (
         election.indicative_participations?.some(
-          participation => participation.elector_id === electorId
+          participation =>
+            participation.user_id === user.id ||
+            (!participation.user_id && participation.elector_id === electorId)
         ) ?? false
       );
     }
 
-    if (vote?.id && voterId) {
+    if (vote?.id && user?.id) {
       return (
-        vote.indicative_participations?.some(participation => participation.voter_id === voterId) ??
-        false
+        vote.indicative_participations?.some(
+          participation =>
+            participation.user_id === user.id ||
+            (!participation.user_id && participation.voter_id === voterId)
+        ) ?? false
       );
     }
 
@@ -177,6 +192,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     election?.id,
     election?.indicative_participations,
     electorId,
+    user?.id,
     vote?.id,
     vote?.indicative_participations,
     voterId,

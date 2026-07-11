@@ -17,6 +17,7 @@ import type { TDiscussion } from '@/features/editor/types';
 import type { SuggestionPreviewResolutionMap } from '@/features/change-requests/logic/filterDocumentToSingleSuggestion';
 import type { EditingMode } from '@/zero/amendments/editing-mode-policy';
 import type { StreetDesignPreviewSource } from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
+import type { AmendmentForwardingPreviewModel } from '@/features/amendments/logic/amendmentForwardingPreview';
 function normalizeMajorityType(value?: string | null): MajorityType {
   if (value === 'absolute' || value === 'two_thirds') {
     return value;
@@ -51,6 +52,7 @@ interface ChangeRequestTimelineCardProps {
   suggestionResolutions?: SuggestionPreviewResolutionMap;
   /** Agenda or amendment title used for final closing vote labels. */
   agendaTitle?: string | null;
+  forwardingPreview?: AmendmentForwardingPreviewModel | null;
   /** Short CR identifier (e.g. "CR-1") used to default-select this card's CR */
   crId?: string;
   /** User-facing branch-scoped CR label, e.g. "Branch 1 CR-1" */
@@ -107,6 +109,7 @@ export function useChangeRequestTimelineCardController({
   suggestionId,
   suggestionResolutions,
   agendaTitle,
+  forwardingPreview,
   crId,
   displayCrId,
   discussions,
@@ -220,11 +223,19 @@ export function useChangeRequestTimelineCardController({
     [choices, finalDecisions, indicativeDecisions, offlineTallies]
   );
 
-  const lazyVoterCount = vote?.voters?.length ?? 0;
+  const lazyVoterCount =
+    vote?.offline_electorate_size == null
+      ? (vote?.voters?.length ?? 0)
+      : (vote.voters ?? []).filter(
+          (voter: { participation_channel?: string | null }) =>
+            voter.participation_channel !== 'offline'
+        ).length + vote.offline_electorate_size;
   const totalVoters =
-    (isFinal || isClosed) && eligibleFinalVoterCount !== undefined
-      ? eligibleFinalVoterCount
-      : lazyVoterCount;
+    vote?.electorate_snapshotted_at != null
+      ? lazyVoterCount
+      : (isFinal || isClosed) && eligibleFinalVoterCount !== undefined
+        ? eligibleFinalVoterCount
+        : lazyVoterCount;
 
   const computedVoteSummary = useMemo(() => {
     if (!isClosed || choiceStats.length === 0) {
@@ -334,6 +345,7 @@ export function useChangeRequestTimelineCardController({
     suggestionId,
     suggestionResolutions,
     agendaTitle,
+    forwardingPreview,
     crId,
     displayCrId,
     discussions,

@@ -13,11 +13,12 @@ import { VOTE_PHASE, VOTE_PURPOSE } from '@/zero/votes/vote-workflow';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
 import { toast } from '@/features/shared/ui/ui/sonner';
+import { VOTE_CAST_SUCCESS_TOAST_ID } from '@/features/vote-cast/logic/voteCastToast';
 import { computeVoteResult, type MajorityType, type VoteResult } from '../logic/computeVoteResult';
 import { computeEligibleVoters, type EligibleVoter } from '../logic/computeEligibleVoters';
 import { isNamedBallot } from '@/zero/shared';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { serverConfirmed, waitForClientApply } from '@/zero/mutate-with-server-check';
 
 export type VotingPhase = 'introduction' | 'voting' | 'completed';
 export type VotingType = 'amendment' | 'election' | 'change_request';
@@ -79,7 +80,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 
   const canManageVoting = can('manage', 'agendaItems');
-  const canVote = can('active_voting', 'events');
+  const hasActiveVotingRight = can('active_voting', 'events');
 
   // Query event with voting sessions and participants with their roles
   const { event, isLoading: queryLoading } = useEventWithVoting(eventId);
@@ -119,20 +120,54 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
     };
   }, [agendaItemId, event?.agenda_items]);
 
-  // Get eligible voters (participants with active_voting right)
+  const currentVoteRecord = useMemo(() => {
+    const agendaItem = event?.agenda_items?.find(item => item.id === agendaItemId);
+    return agendaItem?.votes?.[0] ?? null;
+  }, [agendaItemId, event?.agenda_items]);
+
+  // Once the vote starts, eligibility and turnout come only from its frozen snapshot.
   const eligibleVoters = useMemo((): EligibleVoter[] => {
+    if (currentVoteRecord?.electorate_snapshotted_at != null) {
+      const votedVoterIds = new Set(
+        (currentVoteRecord.final_participations ?? []).map(participation => participation.voter_id)
+      );
+      return (currentVoteRecord.voters ?? []).map(voter => ({
+        id: voter.user_id,
+        name: `${voter.user?.first_name ?? ''} ${voter.user?.last_name ?? ''}`.trim() || undefined,
+        hasVoted: votedVoterIds.has(voter.id),
+      }));
+    }
     if (!event?.participants) return [];
     const votedUserIds = new Set(currentSession?.votes?.map(v => v.voter?.id) || []);
     return computeEligibleVoters(event.participants, votedUserIds);
-  }, [event?.participants, currentSession?.votes]);
+  }, [currentVoteRecord, event?.participants, currentSession?.votes]);
 
   const votedCount = eligibleVoters.filter(v => v.hasVoted).length;
-  const totalVoters = eligibleVoters.length;
+  const totalVoters =
+    currentVoteRecord?.electorate_snapshotted_at != null
+      ? (currentVoteRecord.voters ?? []).filter(voter => voter.participation_channel !== 'offline')
+          .length + (currentVoteRecord.offline_electorate_size ?? 0)
+      : eligibleVoters.length;
+
+  const snapshotVoter = currentVoteRecord?.voters?.find(voter => voter.user_id === user?.id);
+  const canVote =
+    currentVoteRecord?.electorate_snapshotted_at != null
+      ? snapshotVoter?.participation_channel === 'online'
+      : hasActiveVotingRight;
 
   const hasUserVoted = useMemo(() => {
-    if (!user || !currentSession?.votes) return false;
-    return currentSession.votes.some(v => v.voter?.id === user.id);
-  }, [user, currentSession?.votes]);
+    if (!user) return false;
+    if (currentVoteRecord?.electorate_snapshotted_at != null) {
+      const voter = currentVoteRecord.voters?.find(row => row.user_id === user.id);
+      return Boolean(
+        voter &&
+        currentVoteRecord.final_participations?.some(
+          participation => participation.voter_id === voter.id
+        )
+      );
+    }
+    return currentSession?.votes?.some(v => v.voter?.id === user.id) ?? false;
+  }, [user, currentVoteRecord, currentSession?.votes]);
 
   const userVote = useMemo((): VoteValue | null => {
     if (!user || !currentSession?.votes) return null;
@@ -224,7 +259,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
             amendment_id: null,
             title: null,
             description: null,
-            status: VOTE_PHASE.indicative,
+            status: VOTE_PHASE.pending,
             purpose: VOTE_PURPOSE.closing,
             majority_type: params.majorityType || 'simple',
             closing_type: null,
@@ -234,6 +269,8 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
             ballot_visibility: 'named',
           })
         );
+
+        await waitForClientApply(updateVote({ id: voteId, status: VOTE_PHASE.indicative }));
 
         await waitForClientApply(
           updateAgendaItem({
@@ -389,7 +426,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
         const decisionId = crypto.randomUUID();
         const voterId = crypto.randomUUID();
 
-        await waitForClientApply(
+        await serverConfirmed(
           doCastFinalVote(
             {
               id: participationId,
@@ -412,11 +449,14 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
                 vote_id: voteRecord.id,
                 user_id: user.id,
               },
+              silent: true,
             }
           )
         );
 
-        toast.success(translateText('generated.inline.1244_vote_cast_successfully_2d80d997'));
+        toast.success(translateText('generated.inline.1244_vote_cast_successfully_2d80d997'), {
+          id: VOTE_CAST_SUCCESS_TOAST_ID,
+        });
       } catch (error) {
         console.error('Error casting vote:', error);
         toast.error(translateText('generated.inline.1245_failed_to_cast_vote_0b719004'));
@@ -425,7 +465,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
         setIsLoading(false);
       }
     },
-    [user, canVote, hasUserVoted, currentSession?.phase, event?.agenda_items]
+    [user, canVote, hasUserVoted, currentSession?.phase, event?.agenda_items, doCastFinalVote]
   );
 
   return {

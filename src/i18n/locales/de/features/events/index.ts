@@ -250,6 +250,10 @@ export const eventsTranslations = {
       pendingSuffix: ' weitergeleitet.',
       completedPrefix: 'Der Antrag wurde erfolgreich an',
       completedSuffix: ' weitergeleitet.',
+      rejectedPrefix: 'Der Antrag wurde nicht an',
+      rejectedSuffix: ' weitergeleitet, weil die Abstimmung abgelehnt wurde.',
+      tiePrefix: 'Der Antrag wurde nicht an',
+      tieSuffix: ' weitergeleitet, weil die Abstimmung unentschieden endete.',
     },
     // Indication system
     indication: 'Stimmungsbild',
