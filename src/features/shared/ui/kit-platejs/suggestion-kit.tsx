@@ -15,6 +15,7 @@ import {
 } from '@/features/shared/ui/ui-platejs/suggestion-node.tsx';
 
 import { discussionPlugin } from './discussion-kit.tsx';
+import { SuggestionBreakCleanupPlugin } from '@/features/shared/logic/suggestionBreakCleanupPlugin';
 
 export type SuggestionConfig = ExtendConfig<
   BaseSuggestionConfig,
@@ -91,4 +92,4 @@ export const suggestionPlugin = toTPlatePlugin<SuggestionConfig>(
   },
 });
 
-export const SuggestionKit = [suggestionPlugin];
+export const SuggestionKit = [suggestionPlugin, SuggestionBreakCleanupPlugin];
