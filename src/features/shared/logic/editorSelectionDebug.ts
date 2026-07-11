@@ -1,6 +1,3 @@
-const EDITOR_SELECTION_DEBUG_STORAGE_KEY = 'polity:editor-selection-debug';
-const DEBUG_PREFIX = '[polity:editor-selection-debug]';
-
 type DebugData = Record<string, unknown>;
 
 interface SlatePointLike {
@@ -72,31 +69,9 @@ function collectValueStats(value: unknown) {
   return stats;
 }
 
-export function isEditorSelectionDebugEnabled() {
-  if (typeof window === 'undefined') return false;
-
-  try {
-    return window.localStorage.getItem(EDITOR_SELECTION_DEBUG_STORAGE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-export function editorSelectionDebugLog(event: string, data: DebugData = {}) {
-  if (!isEditorSelectionDebugEnabled()) return;
-
-  const debugWindow = window as typeof window & {
-    __polityEditorSelectionDebug?: {
-      data: DebugData;
-      event: string;
-      timestamp: number;
-    }[];
-  };
-  const entries = debugWindow.__polityEditorSelectionDebug ?? [];
-  entries.push({ data, event, timestamp: Date.now() });
-  debugWindow.__polityEditorSelectionDebug = entries.slice(-250);
-
-  console.debug(DEBUG_PREFIX, event, data);
+export function editorSelectionDebugLog(_event: string, _data: DebugData = {}) {
+  void _event;
+  void _data;
 }
 
 function summarizeDiscussionValue(value: unknown) {
@@ -208,39 +183,6 @@ export function getActiveElementDebugInfo() {
     isInSlateEditor: Boolean(element.closest('[data-slate-editor="true"]')),
     role: element.getAttribute('role'),
     tagName: element.tagName.toLowerCase(),
-  };
-}
-
-function getSlateDomNodeDebugInfo(node: Node | null) {
-  if (!node || typeof HTMLElement === 'undefined') return null;
-
-  const element = node instanceof HTMLElement ? node : node.parentElement;
-  if (!element) return null;
-  const slateNode = element.closest('[data-slate-node]');
-  const suggestionNode = element.closest('[data-suggestion-id]');
-
-  return {
-    dataSlateLeaf: Boolean(element.closest('[data-slate-leaf="true"]')),
-    dataSlateNode: slateNode?.getAttribute('data-slate-node') ?? null,
-    suggestionId: suggestionNode?.getAttribute('data-suggestion-id') ?? null,
-    suggestionType: suggestionNode?.getAttribute('data-suggestion-type') ?? null,
-    textLength: node.textContent?.length ?? null,
-  };
-}
-
-export function getDomSelectionDebugInfo() {
-  if (typeof window === 'undefined') return null;
-
-  const selection = window.getSelection();
-  if (!selection) return null;
-
-  return {
-    anchorNode: getSlateDomNodeDebugInfo(selection.anchorNode),
-    anchorOffset: selection.anchorOffset,
-    focusNode: getSlateDomNodeDebugInfo(selection.focusNode),
-    focusOffset: selection.focusOffset,
-    isCollapsed: selection.isCollapsed,
-    rangeCount: selection.rangeCount,
   };
 }
 

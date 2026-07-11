@@ -14,9 +14,7 @@ import { Editor, EditorContainer } from '@/features/shared/ui/ui-platejs/editor.
 import {
   editorSelectionDebugLog,
   getActiveElementDebugInfo,
-  getDomSelectionDebugInfo,
   isActiveElementInSlateEditor,
-  isEditorSelectionDebugEnabled,
   summarizeDiscussions,
   summarizeRichTextValue,
   summarizeSelection,
@@ -438,28 +436,6 @@ export function PlateEditor({
   // Handle changes from the editor using ref to avoid recreating function
   const handleEditorChange = React.useCallback(
     ({ value: newValue }: { value: Value }) => {
-      if (isEditorSelectionDebugEnabled()) {
-        const operations = editor.operations.slice(-25).map(operation => {
-          const record = operation as unknown as Record<string, unknown>;
-          return {
-            newPath: Array.isArray(record.newPath) ? record.newPath : undefined,
-            offset: typeof record.offset === 'number' ? record.offset : undefined,
-            path: Array.isArray(record.path) ? record.path : undefined,
-            textLength: typeof record.text === 'string' ? record.text.length : undefined,
-            type: operation.type,
-          };
-        });
-
-        editorSelectionDebugLog('plate-editor-change', {
-          contentSignature: summarizeRichTextValue(newValue),
-          documentId,
-          domSelection: getDomSelectionDebugInfo(),
-          isUpdatingFromProps: isUpdatingFromProps.current,
-          operations,
-          selection: summarizeSelection(editor.selection),
-        });
-      }
-
       // Skip onChange triggered by controlled value updates to prevent feedback loops
       if (isUpdatingFromProps.current) return;
       // Cursor movement and DOM selection reconciliation do not change the
