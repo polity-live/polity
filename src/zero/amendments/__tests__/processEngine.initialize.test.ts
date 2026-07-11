@@ -8,7 +8,14 @@ vi.mock('../../server-notify', () => ({
 
 import { initializeAmendmentProcessPath } from '../process-engine';
 
-function createTx(documentEditingMode: string | null = null) {
+function createTx(
+  documentEditingMode: string | null = null,
+  options: {
+    discussions?: Record<string, unknown>[];
+    mainChangeRequests?: Record<string, unknown>[];
+    timelineItems?: Record<string, unknown>[];
+  } = {}
+) {
   const state: {
     branch?: Record<string, unknown>;
     existingAgendaItems?: Record<string, unknown>[];
@@ -42,30 +49,64 @@ function createTx(documentEditingMode: string | null = null) {
         case 2:
           return [];
         case 3:
-          return { id: 'amendment-1', document_id: 'document-main' };
+          return {
+            id: 'amendment-1',
+            document_id: 'document-main',
+            discussions: options.discussions ?? [],
+          };
         case 4:
+          return options.mainChangeRequests ?? [];
+        case 5:
+          return { id: 'amendment-1', document_id: 'document-main' };
+        case 6:
           return {
             id: 'document-main',
             content: [{ type: 'p', children: [{ text: 'Base' }] }],
             editing_mode: documentEditingMode,
           };
-        case 5:
-          return { version_number: 1 };
-        case 6:
-          return state.existingAgendaItems ?? [];
         case 7:
-          return [state.stepRun];
+          return { version_number: 1 };
         case 8:
-          return state.agendaItem;
+          if ((options.mainChangeRequests?.length ?? 0) > 0) {
+            return options.timelineItems ?? [];
+          }
+          return state.existingAgendaItems ?? [];
         case 9:
-          return state.pathSegment ? [state.pathSegment] : [];
+          if ((options.mainChangeRequests?.length ?? 0) > 0) {
+            return state.existingAgendaItems ?? [];
+          }
+          return [state.stepRun];
         case 10:
-          return state.stepRun ? [state.stepRun] : [];
+          if ((options.mainChangeRequests?.length ?? 0) > 0) {
+            return [state.stepRun];
+          }
+          return state.agendaItem;
         case 11:
-          return state.branch ? [state.branch] : [];
+          if ((options.mainChangeRequests?.length ?? 0) > 0) {
+            return state.agendaItem;
+          }
+          return state.pathSegment ? [state.pathSegment] : [];
         case 12:
+          if ((options.mainChangeRequests?.length ?? 0) > 0) {
+            return state.pathSegment ? [state.pathSegment] : [];
+          }
           return state.stepRun ? [state.stepRun] : [];
         case 13:
+          if ((options.mainChangeRequests?.length ?? 0) > 0) {
+            return state.stepRun ? [state.stepRun] : [];
+          }
+          return state.branch ? [state.branch] : [];
+        case 14:
+          if ((options.mainChangeRequests?.length ?? 0) > 0) {
+            return state.branch ? [state.branch] : [];
+          }
+          return state.stepRun ? [state.stepRun] : [];
+        case 15:
+          if ((options.mainChangeRequests?.length ?? 0) > 0) {
+            return state.stepRun ? [state.stepRun] : [];
+          }
+          return state.branch ? [state.branch] : [];
+        case 16:
           return state.branch ? [state.branch] : [];
         default:
           return [];
@@ -87,6 +128,12 @@ function createTx(documentEditingMode: string | null = null) {
         update: vi.fn(async (args: Record<string, unknown>) => {
           state.branch = { ...state.branch, ...args };
         }),
+      },
+      change_request: {
+        update: vi.fn(async () => null),
+      },
+      agenda_item_change_request: {
+        update: vi.fn(async () => null),
       },
       amendment_path: {
         insert: vi.fn(async () => null),
@@ -164,24 +211,28 @@ function createTxForMissingEvent() {
         case 2:
           return [];
         case 3:
-          return { id: 'amendment-2', document_id: 'document-main' };
+          return { id: 'amendment-2', document_id: 'document-main', discussions: [] };
         case 4:
-          return { id: 'document-main', content: [{ type: 'p', children: [{ text: 'Base' }] }] };
+          return [];
         case 5:
-          return { version_number: 1 };
+          return { id: 'amendment-2', document_id: 'document-main' };
         case 6:
-          return null;
+          return { id: 'document-main', content: [{ type: 'p', children: [{ text: 'Base' }] }] };
         case 7:
-          return state.stepRun ? [state.stepRun] : [];
+          return { version_number: 1 };
         case 8:
-          return state.pathSegment ? [state.pathSegment] : [];
+          return null;
         case 9:
           return state.stepRun ? [state.stepRun] : [];
         case 10:
-          return state.branch ? [state.branch] : [];
+          return state.pathSegment ? [state.pathSegment] : [];
         case 11:
           return state.stepRun ? [state.stepRun] : [];
         case 12:
+          return state.branch ? [state.branch] : [];
+        case 13:
+          return state.stepRun ? [state.stepRun] : [];
+        case 14:
           return state.branch ? [state.branch] : [];
         default:
           return [];
@@ -199,6 +250,12 @@ function createTxForMissingEvent() {
         update: vi.fn(async (args: Record<string, unknown>) => {
           state.branch = { ...state.branch, ...args };
         }),
+      },
+      change_request: {
+        update: vi.fn(async () => null),
+      },
+      agenda_item_change_request: {
+        update: vi.fn(async () => null),
       },
       amendment_path: {
         insert: vi.fn(async () => null),
@@ -357,6 +414,69 @@ describe('initializeAmendmentProcessPath', () => {
     expect(tx.mutate.amendment_process_branch.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         editing_mode: 'suggest_internal',
+      })
+    );
+  });
+
+  it('moves main-scope change requests and discussions into the first process branch', async () => {
+    const discussions = [
+      {
+        id: 'suggestion-1',
+        crId: 'CR-1',
+        changeRequestEntityId: 'change-request-1',
+      },
+    ];
+    const tx = createTx(null, {
+      discussions,
+      mainChangeRequests: [
+        {
+          id: 'change-request-1',
+          amendment_id: 'amendment-1',
+          process_branch_id: null,
+          branch_sequence_number: 1,
+          title: 'CR-1',
+        },
+      ],
+      timelineItems: [{ id: 'timeline-1', change_request_id: 'change-request-1' }],
+    });
+
+    await initializeAmendmentProcessPath(tx as never, 'user-1', {
+      amendment_id: 'amendment-1',
+      amendment_title: 'Budget Reform',
+      amendment_reason: null,
+      source_group_id: 'group-start',
+      path_mode: 'hierarchy',
+      enriched_path: [
+        {
+          groupId: 'group-start',
+          groupName: 'Budget Circle',
+          eventId: 'event-1',
+          eventTitle: 'Budget Assembly',
+          eventStartDate: Date.now() + 60_000,
+          eventEndDate: Date.now() + 120_000,
+          agendaItemId: null,
+          amendmentVoteId: null,
+          forwardingStatus: 'forward_confirmed',
+        },
+      ],
+    });
+
+    const insertedBranch = tx.mutate.amendment_process_branch.insert.mock.calls[0]?.[0];
+    expect(insertedBranch).toEqual(expect.objectContaining({ discussions }));
+    expect(tx.mutate.change_request.update).toHaveBeenCalledWith({
+      id: 'change-request-1',
+      process_branch_id: insertedBranch?.id,
+      updated_at: expect.any(Number),
+    });
+    expect(tx.mutate.agenda_item_change_request.update).toHaveBeenCalledWith({
+      id: 'timeline-1',
+      process_branch_id: insertedBranch?.id,
+      updated_at: expect.any(Number),
+    });
+    expect(tx.mutate.amendment.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        current_process_run_id: expect.any(String),
+        discussions: [],
       })
     );
   });

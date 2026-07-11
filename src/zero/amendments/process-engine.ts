@@ -2373,6 +2373,17 @@ export async function initializeAmendmentProcessPath(
   const branchId = crypto.randomUUID();
   const pathId = crypto.randomUUID();
   const now = Date.now();
+  const mainScopeAmendment = !existingRun
+    ? await tx.run(zql.amendment.where('id', args.amendment_id).one())
+    : null;
+  const mainScopeDiscussions = Array.isArray(mainScopeAmendment?.discussions)
+    ? mainScopeAmendment.discussions
+    : [];
+  const mainScopeChangeRequests = !existingRun
+    ? (await tx.run(zql.change_request.where('amendment_id', args.amendment_id))).filter(
+        changeRequest => !changeRequest.process_branch_id
+      )
+    : [];
   const branchDocumentArtifacts = await createBranchDocumentArtifacts(tx, {
     amendmentId: args.amendment_id,
     processRunId: existingRun?.id ?? null,
@@ -2412,7 +2423,7 @@ export async function initializeAmendmentProcessPath(
     source_step_run_id: null,
     document_version_id: branchDocumentArtifacts.documentVersionId,
     document_id: branchDocumentArtifacts.documentId,
-    discussions: [],
+    discussions: mainScopeDiscussions,
     title: args.amendment_title,
     status: 'pending_event',
     editing_mode: initialBranchEditingMode,
@@ -2420,6 +2431,27 @@ export async function initializeAmendmentProcessPath(
     created_at: now,
     updated_at: now,
   });
+
+  if (!existingRun) {
+    for (const changeRequest of mainScopeChangeRequests) {
+      await tx.mutate.change_request.update({
+        id: changeRequest.id,
+        process_branch_id: branchId,
+        updated_at: now,
+      });
+
+      const timelineItems = await tx.run(
+        zql.agenda_item_change_request.where('change_request_id', changeRequest.id)
+      );
+      for (const timelineItem of timelineItems) {
+        await tx.mutate.agenda_item_change_request.update({
+          id: timelineItem.id,
+          process_branch_id: branchId,
+          updated_at: now,
+        });
+      }
+    }
+  }
 
   if (!existingRun) {
     await tx.mutate.amendment_process_run.update({
@@ -2485,6 +2517,7 @@ export async function initializeAmendmentProcessPath(
   await tx.mutate.amendment.update({
     id: args.amendment_id,
     current_process_run_id: processRunId,
+    ...(!existingRun ? { discussions: [] } : {}),
     updated_at: Date.now(),
   });
 

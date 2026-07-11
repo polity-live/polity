@@ -179,7 +179,6 @@ export function NavItemList({
     pathname,
   });
   const currentRoute = activeHashSectionRoute ?? `${pathname ?? '/'}${normalizedHash}`;
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [loadingItem, setLoadingItem] = useState<string | null>(null);
 
   // Clear loading state when router finishes navigating
@@ -194,7 +193,6 @@ export function NavItemList({
     if (item.onClick) {
       item.onClick();
     }
-    setHoveredItem(null);
   };
   return (
     <NavItemListView
@@ -207,8 +205,6 @@ export function NavItemList({
       isRouterPending={isRouterPending}
       normalizedHash={normalizedHash}
       currentRoute={currentRoute}
-      hoveredItem={hoveredItem}
-      setHoveredItem={setHoveredItem}
       loadingItem={loadingItem}
       setLoadingItem={setLoadingItem}
       handleItemClick={handleItemClick}

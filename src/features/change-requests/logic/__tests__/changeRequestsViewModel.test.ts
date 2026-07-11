@@ -157,7 +157,7 @@ describe('change request view model helpers', () => {
     );
   });
 
-  it('groups change requests into process branch sections and ignores unbranched rows', () => {
+  it('groups change requests into process branch sections and assigns legacy rows to the first branch', () => {
     const branchOneRequest = changeRequest({
       id: 'request-branch-1',
       changeRequestEntityId: 'request-branch-1',
@@ -238,12 +238,15 @@ describe('change request view model helpers', () => {
       status: 'in_vote',
       editingMode: 'suggest_event',
       eventTitle: 'First event',
-      totalCount: 1,
-      openCount: 1,
+      totalCount: 2,
+      openCount: 2,
     });
     expect(sections[0].documentContent).toBe(branchOneContent);
     expect(sections[0].discussions[0]?.processBranchId).toBe('branch-1');
-    expect(sections[0].timelineItems[0]?.change_request_id).toBe('request-branch-1');
+    expect(sections[0].timelineItems.map(item => item.change_request_id)).toEqual([
+      'request-branch-1',
+      'request-main',
+    ]);
     expect(sections[1]).toMatchObject({
       title: 'Second branch group',
       editingMode: 'vote_internal',

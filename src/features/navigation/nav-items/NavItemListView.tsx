@@ -1,8 +1,7 @@
-import { featureThemeClassName } from '@/features/shared/theme';
+import { featureThemeClassName, getMotionPreset } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
-import { Button } from '@/features/shared/ui/ui/button.tsx';
+import { Button, buttonVariants } from '@/features/shared/ui/ui/button.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
-import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover.tsx';
 import { iconMap } from '@/features/navigation/nav-items/icon-map.tsx';
 import React from 'react';
 import { Link } from '@tanstack/react-router';
@@ -18,8 +17,6 @@ export interface NavItemListViewProps {
   isRouterPending: any;
   normalizedHash: any;
   currentRoute: any;
-  hoveredItem: any;
-  setHoveredItem: any;
   loadingItem: any;
   setLoadingItem: any;
   handleItemClick: any;
@@ -31,8 +28,6 @@ export function NavItemListView({
   isPrimary,
   navigationView,
   currentRoute,
-  hoveredItem,
-  setHoveredItem,
   loadingItem,
   handleItemClick,
 }: NavItemListViewProps) {
@@ -134,117 +129,97 @@ export function NavItemListView({
     );
   }
 
-  // asButtonList variant - Mobile: Horizontal scrolling buttons with popovers
+  // asButtonList variant - Mobile: Horizontal scrolling links with native labels
   if (navigationView === 'asButtonList' && isMobile) {
     return (
       <div className="scrollbar-hide flex-1 overflow-x-auto">
         <div className="flex min-w-max items-center justify-center gap-1 px-2">
           {navigationItems.map((item: any) => (
-            <Popover key={item.id} open={hoveredItem === item.id}>
-              <PopoverTrigger asChild>
-                <Link to={item.href || '#'} preload="intent" className="inline-block">
-                  <Button
-                    aria-label={item.label}
-                    variant="ghost"
-                    size="icon"
-                    className={cn(
-                      'hover:bg-accent relative h-12 w-12 flex-shrink-0',
-                      isItemActive(item, currentRoute, isPrimary) &&
-                        'bg-accent text-accent-foreground'
-                    )}
-                    onClick={e => {
-                      if (item.onClick) {
-                        e.preventDefault();
-                        item.onClick();
-                      }
-                      setHoveredItem(null); // Reset hover state after click
-                    }}
-                    onMouseEnter={() => setHoveredItem(item.id)}
-                    onMouseLeave={() => setHoveredItem(null)}
-                    onTouchStart={() => setHoveredItem(item.id)}
-                    onTouchEnd={() => setHoveredItem(null)}
-                  >
-                    {React.createElement(iconMap[item.icon as keyof typeof iconMap], {
-                      className: cn(
-                        'h-5 w-5',
-                        isItemActive(item, currentRoute, isPrimary) && 'text-primary'
-                      ),
-                    })}
-                    {item.badge && (
-                      <BadgeControl
-                        className="absolute top-2 right-4 flex h-5 w-5 items-center justify-center p-0"
-                        variant="default"
-                      >
-                        {(() => {
-                          return item.badge;
-                        })()}
-                      </BadgeControl>
-                    )}
-                  </Button>
-                </Link>
-              </PopoverTrigger>
-              <PopoverContent side="top" className="w-auto p-2" sideOffset={8}>
-                <span className="text-sm font-medium">{item.label}</span>
-              </PopoverContent>
-            </Popover>
+            <Link
+              key={item.id}
+              to={item.href || '#'}
+              preload="intent"
+              aria-label={item.label}
+              title={item.label}
+              data-slot="button"
+              className={cn(
+                buttonVariants({ variant: 'ghost', size: 'icon' }),
+                getMotionPreset('colors'),
+                getMotionPreset('press'),
+                getMotionPreset('iconNudge'),
+                'relative h-12 w-12 flex-shrink-0',
+                isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
+              )}
+              onClick={e => {
+                if (item.onClick) {
+                  e.preventDefault();
+                  item.onClick();
+                }
+              }}
+            >
+              {React.createElement(iconMap[item.icon as keyof typeof iconMap], {
+                className: cn(
+                  'h-5 w-5',
+                  isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+                ),
+              })}
+              {item.badge && (
+                <BadgeControl
+                  className="absolute top-2 right-4 flex h-5 w-5 items-center justify-center p-0"
+                  variant="default"
+                >
+                  {item.badge}
+                </BadgeControl>
+              )}
+            </Link>
           ))}
         </div>
       </div>
     );
   }
 
-  // asButtonList variant - Desktop: Vertical sidebar with icon buttons and popovers
+  // asButtonList variant - Desktop: Vertical sidebar with icon links and native labels
   if (navigationView === 'asButtonList' && !isMobile) {
     return (
       <div className={cn('flex flex-col items-center gap-2')}>
         {navigationItems.map((item: any) => (
-          <Popover key={item.id} open={hoveredItem === item.id}>
-            <PopoverTrigger asChild>
-              <Link to={item.href || '#'} preload="intent" className="inline-block">
-                <Button
-                  aria-label={item.label}
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    'hover:bg-accent relative h-12 w-12 flex-shrink-0',
-                    isItemActive(item, currentRoute, isPrimary) &&
-                      'bg-accent text-accent-foreground'
-                  )}
-                  onClick={e => {
-                    if (item.onClick) {
-                      e.preventDefault();
-                      item.onClick();
-                    }
-                    setHoveredItem(null); // Reset hover state after click
-                  }}
-                  onMouseEnter={() => setHoveredItem(item.id)}
-                  onMouseLeave={() => setHoveredItem(null)}
-                >
-                  {React.createElement(iconMap[item.icon as keyof typeof iconMap], {
-                    className: cn(
-                      'h-5 w-5',
-                      isItemActive(item, currentRoute, isPrimary) && 'text-primary'
-                    ),
-                  })}
-                  {item.badge && (
-                    <BadgeControl
-                      className="absolute -top-0 -right-1 flex h-5 w-5 items-center justify-center p-0"
-                      variant="default"
-                    >
-                      {item.badge}
-                    </BadgeControl>
-                  )}
-                </Button>
-              </Link>
-            </PopoverTrigger>
-            <PopoverContent
-              side={isPrimary ? 'right' : 'left'}
-              className="w-auto p-2"
-              sideOffset={8}
-            >
-              <span className="text-sm font-medium">{item.label}</span>
-            </PopoverContent>
-          </Popover>
+          <Link
+            key={item.id}
+            to={item.href || '#'}
+            preload="intent"
+            aria-label={item.label}
+            title={item.label}
+            data-slot="button"
+            className={cn(
+              buttonVariants({ variant: 'ghost', size: 'icon' }),
+              getMotionPreset('colors'),
+              getMotionPreset('press'),
+              getMotionPreset('iconNudge'),
+              'relative h-12 w-12 flex-shrink-0',
+              isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
+            )}
+            onClick={e => {
+              if (item.onClick) {
+                e.preventDefault();
+                item.onClick();
+              }
+            }}
+          >
+            {React.createElement(iconMap[item.icon as keyof typeof iconMap], {
+              className: cn(
+                'h-5 w-5',
+                isItemActive(item, currentRoute, isPrimary) && 'text-primary'
+              ),
+            })}
+            {item.badge && (
+              <BadgeControl
+                className="absolute -top-0 -right-1 flex h-5 w-5 items-center justify-center p-0"
+                variant="default"
+              >
+                {item.badge}
+              </BadgeControl>
+            )}
+          </Link>
         ))}
       </div>
     );
@@ -269,10 +244,7 @@ export function NavItemListView({
                     e.preventDefault();
                     item.onClick();
                   }
-                  setHoveredItem(null); // Reset hover state after click
                 }}
-                onMouseEnter={() => setHoveredItem(item.id)}
-                onMouseLeave={() => setHoveredItem(null)}
               >
                 <div className="relative">
                   {' '}
@@ -320,10 +292,7 @@ export function NavItemListView({
                   e.preventDefault();
                   item.onClick();
                 }
-                setHoveredItem(null); // Reset hover state after click
               }}
-              onMouseEnter={() => setHoveredItem(item.id)}
-              onMouseLeave={() => setHoveredItem(null)}
             >
               {React.createElement(iconMap[item.icon as keyof typeof iconMap], {
                 className: cn(

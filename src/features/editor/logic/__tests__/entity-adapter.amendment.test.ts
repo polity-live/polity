@@ -256,6 +256,56 @@ describe('adaptAmendmentToEntity', () => {
     );
   });
 
+  it('shows legacy main-scope change requests in the first process branch', () => {
+    const amendment = amendmentWithRole('vote') as any;
+    amendment.discussions = [
+      {
+        id: 'suggestion-main',
+        crId: 'CR-1',
+        changeRequestEntityId: 'change-request-main',
+        comments: [],
+        createdAt: 1,
+        isResolved: false,
+        userId: 'user-1',
+      },
+    ];
+    amendment.change_requests = [
+      {
+        id: 'change-request-main',
+        title: 'CR-1',
+        status: 'open',
+        process_branch_id: null,
+        branch_sequence_number: 1,
+        votes_for: 1,
+        votes_against: 0,
+        votes_abstain: 0,
+        votes: [],
+      },
+    ];
+    const firstBranch = {
+      id: 'branch-first',
+      created_at: 1,
+      status: 'scheduled',
+      resolution: null,
+      discussions: [],
+    };
+
+    const entity = adaptAmendmentToEntity(amendment, document, 'user-1', {
+      processBranch: firstBranch,
+      processBranches: [{ id: 'branch-later', created_at: 2 }, firstBranch],
+    });
+
+    expect(entity?.discussions).toHaveLength(1);
+    expect(entity?.discussions[0]).toEqual(
+      expect.objectContaining({
+        id: 'suggestion-main',
+        changeRequestEntityId: 'change-request-main',
+        displayCrId: 'Branch 1 CR-1',
+        votesFor: 1,
+      })
+    );
+  });
+
   it('uses suggest_event from the selected process branch as the editor mode', () => {
     const branch = {
       id: 'branch-suggest-event',

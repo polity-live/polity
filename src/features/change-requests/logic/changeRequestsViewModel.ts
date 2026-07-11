@@ -626,9 +626,10 @@ export function buildChangeRequestBranchSections({
   const sortedChangeRequests = sortChangeRequestsByDisplayOrder(changeRequests);
   const requestsByBranchId = new Map<string, ChangeRequest[]>();
   const historicalRequestsByBranchId = new Map<string, ChangeRequest[]>();
+  const firstBranchId = sortedBranches[0]?.id ?? null;
 
   for (const changeRequest of sortedChangeRequests) {
-    const branchId = changeRequest.processBranchId;
+    const branchId = changeRequest.processBranchId ?? firstBranchId;
     if (!branchId) {
       continue;
     }
@@ -637,7 +638,11 @@ export function buildChangeRequestBranchSections({
       ? requestsByBranchId
       : historicalRequestsByBranchId;
     const branchRequests = targetMap.get(branchId) ?? [];
-    branchRequests.push(changeRequest);
+    branchRequests.push(
+      changeRequest.processBranchId
+        ? changeRequest
+        : { ...changeRequest, processBranchId: branchId }
+    );
     targetMap.set(branchId, branchRequests);
   }
 

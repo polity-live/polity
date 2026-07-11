@@ -243,17 +243,61 @@ function isReadonlyProcessBranch(branch?: RawEntity | null) {
   );
 }
 
-function withBranchChangeRequestContext(amendment: RawEntity, processBranch?: RawEntity | null) {
+function getProcessBranchCreatedAt(branch: RawEntity) {
+  const createdAt = branch.created_at;
+  if (typeof createdAt === 'number') return createdAt;
+  if (typeof createdAt === 'string') {
+    const parsed = Date.parse(createdAt);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function withBranchChangeRequestContext(
+  amendment: RawEntity,
+  processBranch?: RawEntity | null,
+  processBranches: readonly RawEntity[] = []
+) {
   const branchId = processBranch?.id ?? null;
-  const sourceDiscussions = branchId ? processBranch?.discussions : amendment.discussions;
+  const firstBranch = [...processBranches].sort((left, right) => {
+    const byCreatedAt = getProcessBranchCreatedAt(left) - getProcessBranchCreatedAt(right);
+    return byCreatedAt !== 0 ? byCreatedAt : String(left.id).localeCompare(String(right.id));
+  })[0];
+  const isFirstBranch = Boolean(branchId && firstBranch?.id === branchId);
+  const branchDiscussions = Array.isArray(processBranch?.discussions)
+    ? processBranch.discussions
+    : [];
+  const amendmentDiscussions = Array.isArray(amendment.discussions) ? amendment.discussions : [];
+  const sourceDiscussions = branchId
+    ? isFirstBranch
+      ? [
+          ...new Map(
+            [...amendmentDiscussions, ...branchDiscussions].map(discussion => [
+              discussion.id,
+              discussion,
+            ])
+          ).values(),
+        ]
+      : branchDiscussions
+    : amendmentDiscussions;
   const changeRequests = Array.isArray(amendment.change_requests) ? amendment.change_requests : [];
+  const scopedChangeRequests = changeRequests
+    .filter((changeRequest: RawEntity) =>
+      branchId
+        ? changeRequest.process_branch_id === branchId ||
+          (isFirstBranch && !changeRequest.process_branch_id)
+        : !changeRequest.process_branch_id
+    )
+    .map((changeRequest: RawEntity) =>
+      branchId && isFirstBranch && !changeRequest.process_branch_id
+        ? { ...changeRequest, process_branch_id: branchId }
+        : changeRequest
+    );
 
   return {
     ...amendment,
     discussions: Array.isArray(sourceDiscussions) ? sourceDiscussions : [],
-    change_requests: changeRequests.filter((changeRequest: RawEntity) =>
-      branchId ? changeRequest.process_branch_id === branchId : !changeRequest.process_branch_id
-    ),
+    change_requests: scopedChangeRequests,
   };
 }
 
@@ -278,7 +322,11 @@ export function adaptAmendmentToEntity(
     (Array.isArray(amendment.current_process_run?.branches)
       ? amendment.current_process_run.branches
       : []);
-  const amendmentContext = withBranchChangeRequestContext(amendment, processBranch);
+  const amendmentContext = withBranchChangeRequestContext(
+    amendment,
+    processBranch,
+    processBranches
+  );
 
   const owner: EditorUser | undefined = document.owner
     ? buildEditorUser(document.owner, 'Owner')
