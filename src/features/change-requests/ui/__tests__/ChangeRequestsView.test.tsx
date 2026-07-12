@@ -292,4 +292,18 @@ describe('ChangeRequestsView branch sections', () => {
       })
     );
   });
+
+  it('renders the complete change request list shell when the amendment has no change requests', () => {
+    render(<ChangeRequestsView {...baseProps()} branchSections={[]} timelineItems={[]} />);
+
+    expect(screen.queryByTestId('change-request-branch-sections')).toBeNull();
+    expect(screen.getByTestId('change-request-cards-list').getAttribute('data-item-count')).toBe(
+      '0'
+    );
+    expect(changeRequestCardsListMock.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        items: [],
+      })
+    );
+  });
 });

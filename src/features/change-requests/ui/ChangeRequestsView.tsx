@@ -240,7 +240,7 @@ export function ChangeRequestsView({
                 </section>
               ))}
             </div>
-          ) : timelineItems.length > 0 ? (
+          ) : (
             renderChangeRequestList({
               items: timelineItems,
               sectionDiffMap: diffMap,
@@ -248,7 +248,7 @@ export function ChangeRequestsView({
               sectionDiscussions: discussions,
               sectionEditingMode: editingMode,
             })
-          ) : null}
+          )}
         </div>
       </div>
     </PageWrapper>
