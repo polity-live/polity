@@ -1,5 +1,5 @@
 // Table
-export { todo, todoAssignment } from './table'
+export { todo, todoAssignment } from './table';
 
 // Zod Schemas
 export {
@@ -13,12 +13,12 @@ export {
   deleteTodoAssignmentSchema,
   type Todo,
   type TodoAssignment,
-} from './schema'
+} from './schema';
 
 // Queries & Mutators
-export { todoQueries } from './queries'
-export { todoSharedMutators } from './shared-mutators'
+export { todoQueries } from './queries';
+export { todoSharedMutators } from './shared-mutators';
 
 // Hooks
-export { useTodoState } from './useTodoState'
-export { useTodoActions } from './useTodoActions'
+export { useTodoState } from './useTodoState';
+export { useTodoActions } from './useTodoActions';

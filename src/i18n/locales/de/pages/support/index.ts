@@ -55,8 +55,7 @@ export const supportPageTranslations = {
       'Polity ist ein Community-Projekt. Jede Form der Unterstützung – ob finanziell, durch Design oder Entwicklung – macht einen Unterschied. Gemeinsam bauen wir Werkzeuge für eine demokratischere Zukunft.',
     openSource: {
       title: 'Open Source & Transparent:',
-      text:
-        'Alle unsere Entwicklungen sind öffentlich einsehbar. Deine Beiträge helfen nicht nur uns, sondern der gesamten Community und demokratischen Bewegungen weltweit.',
+      text: 'Alle unsere Entwicklungen sind öffentlich einsehbar. Deine Beiträge helfen nicht nur uns, sondern der gesamten Community und demokratischen Bewegungen weltweit.',
     },
   },
 } as const;

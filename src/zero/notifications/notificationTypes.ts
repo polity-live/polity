@@ -11,6 +11,7 @@ export const NOTIFICATION_CATEGORIES = {
   AMENDMENT: 'amendment',
   EVENT: 'event',
   GROUP: 'group',
-} as const
+} as const;
 
-export type NotificationCategory = typeof NOTIFICATION_CATEGORIES[keyof typeof NOTIFICATION_CATEGORIES]
+export type NotificationCategory =
+  (typeof NOTIFICATION_CATEGORIES)[keyof typeof NOTIFICATION_CATEGORIES];

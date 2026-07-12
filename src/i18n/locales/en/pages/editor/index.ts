@@ -1,6 +1,7 @@
 export const editorPageTranslations = {
   title: 'My Documents',
-  description: 'Create and manage your collaborative documents. Select a document to start editing.',
+  description:
+    'Create and manage your collaborative documents. Select a document to start editing.',
   newDocument: 'New Document',
   createDocument: {
     title: 'Create New Document',
@@ -15,12 +16,13 @@ export const editorPageTranslations = {
     by: 'By',
     collaborators: 'collaborator',
     collaboratorsPlural: 'collaborators',
-    notFound: 'Document not found or you don\'t have access to it.',
+    notFound: "Document not found or you don't have access to it.",
     backToDocuments: 'Back to Documents',
     untitled: 'Untitled Document',
     savingTitle: 'Saving title...',
     autoSaveEnabled: 'Auto-save enabled',
-    changesAutoSaved: 'Changes are saved automatically as you type. Other users\' changes appear in real-time.',
+    changesAutoSaved:
+      "Changes are saved automatically as you type. Other users' changes appear in real-time.",
   },
   presence: {
     userOnline: 'user online',

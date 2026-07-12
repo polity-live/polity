@@ -39,20 +39,13 @@ describe('hashtagHelpers', () => {
     });
 
     it('should filter out junction rows with undefined hashtag', () => {
-      const junctions = [
-        { hashtag: undefined },
-        { hashtag: { id: 'h2', tag: 'health' } },
-      ];
-      expect(extractHashtags(junctions)).toEqual([
-        { id: 'h2', tag: 'health' },
-      ]);
+      const junctions = [{ hashtag: undefined }, { hashtag: { id: 'h2', tag: 'health' } }];
+      expect(extractHashtags(junctions)).toEqual([{ id: 'h2', tag: 'health' }]);
     });
 
     it('should handle single junction row', () => {
       const junctions = [{ hashtag: { id: 'h1', tag: 'economy' } }];
-      expect(extractHashtags(junctions)).toEqual([
-        { id: 'h1', tag: 'economy' },
-      ]);
+      expect(extractHashtags(junctions)).toEqual([{ id: 'h1', tag: 'economy' }]);
     });
 
     it('should handle all null hashtags returning empty array', () => {
@@ -75,10 +68,7 @@ describe('hashtagHelpers', () => {
     });
 
     it('should extract tag strings from junction rows', () => {
-      const junctions = [
-        { hashtag: { tag: 'politics' } },
-        { hashtag: { tag: 'climate' } },
-      ];
+      const junctions = [{ hashtag: { tag: 'politics' } }, { hashtag: { tag: 'climate' } }];
       expect(extractHashtagTags(junctions)).toEqual(['politics', 'climate']);
     });
 
@@ -92,26 +82,17 @@ describe('hashtagHelpers', () => {
     });
 
     it('should filter out null hashtags', () => {
-      const junctions = [
-        { hashtag: null },
-        { hashtag: { tag: 'health' } },
-      ];
+      const junctions = [{ hashtag: null }, { hashtag: { tag: 'health' } }];
       expect(extractHashtagTags(junctions)).toEqual(['health']);
     });
 
     it('should filter out undefined hashtags', () => {
-      const junctions = [
-        { hashtag: undefined },
-        { hashtag: { tag: 'transport' } },
-      ];
+      const junctions = [{ hashtag: undefined }, { hashtag: { tag: 'transport' } }];
       expect(extractHashtagTags(junctions)).toEqual(['transport']);
     });
 
     it('should return empty array when all tags are null', () => {
-      const junctions = [
-        { hashtag: { tag: null } },
-        { hashtag: { tag: null } },
-      ];
+      const junctions = [{ hashtag: { tag: null } }, { hashtag: { tag: null } }];
       expect(extractHashtagTags(junctions)).toEqual([]);
     });
   });

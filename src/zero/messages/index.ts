@@ -1,5 +1,5 @@
 // Table
-export { conversation, conversationParticipant, message } from './table'
+export { conversation, conversationParticipant, message } from './table';
 
 // Zod Schemas
 export {
@@ -16,12 +16,12 @@ export {
   type Conversation,
   type ConversationParticipant,
   type Message,
-} from './schema'
+} from './schema';
 
 // Queries & Mutators
-export { messageQueries } from './queries'
-export { messageSharedMutators } from './shared-mutators'
+export { messageQueries } from './queries';
+export { messageSharedMutators } from './shared-mutators';
 
 // Hooks
-export { useMessageState } from './useMessageState'
-export { useMessageActions } from './useMessageActions'
+export { useMessageState } from './useMessageState';
+export { useMessageActions } from './useMessageActions';

@@ -1,5 +1,5 @@
 // Table
-export { thread, comment } from './table'
+export { thread, comment } from './table';
 
 // Zod Schemas
 export {
@@ -11,4 +11,4 @@ export {
   updateCommentSchema,
   type Thread,
   type Comment,
-} from './schema'
+} from './schema';

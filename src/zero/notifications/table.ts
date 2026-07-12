@@ -1,4 +1,4 @@
-import { table, string, number, boolean, json } from '@rocicorp/zero'
+import { table, string, number, boolean, json } from '@rocicorp/zero';
 
 export const notification = table('notification')
   .columns({
@@ -31,7 +31,7 @@ export const notification = table('notification')
     category: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const pushSubscription = table('push_subscription')
   .columns({
@@ -44,7 +44,7 @@ export const pushSubscription = table('push_subscription')
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const notificationSetting = table('notification_setting')
   .columns({
@@ -61,7 +61,7 @@ export const notificationSetting = table('notification_setting')
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const notificationRead = table('notification_read')
   .columns({
@@ -72,4 +72,4 @@ export const notificationRead = table('notification_read')
     read_by_user_id: string().optional(),
     read_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');

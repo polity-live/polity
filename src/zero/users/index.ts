@@ -1,6 +1,6 @@
-export { userQueries } from './queries'
-export { userSharedMutators } from './shared-mutators'
-export { useUserState } from './useUserState'
-export { useUserActions } from './useUserActions'
-export type { User, File } from './schema'
-export type { Follow } from '../network/schema'
+export { userQueries } from './queries';
+export { userSharedMutators } from './shared-mutators';
+export { useUserState } from './useUserState';
+export { useUserActions } from './useUserActions';
+export type { User, File } from './schema';
+export type { Follow } from '../network/schema';

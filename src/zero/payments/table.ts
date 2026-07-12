@@ -1,4 +1,4 @@
-import { table, string, number, boolean } from '@rocicorp/zero'
+import { table, string, number, boolean } from '@rocicorp/zero';
 
 export const payment = table('payment')
   .columns({
@@ -12,7 +12,7 @@ export const payment = table('payment')
     receiver_group_id: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const stripeCustomer = table('stripe_customer')
   .columns({
@@ -23,7 +23,7 @@ export const stripeCustomer = table('stripe_customer')
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const stripeSubscription = table('stripe_subscription')
   .columns({
@@ -42,7 +42,7 @@ export const stripeSubscription = table('stripe_subscription')
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const stripePayment = table('stripe_payment')
   .columns({
@@ -57,4 +57,4 @@ export const stripePayment = table('stripe_payment')
     paid_at: number().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
