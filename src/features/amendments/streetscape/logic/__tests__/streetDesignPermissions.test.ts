@@ -89,4 +89,18 @@ describe('getStreetDesignAccess', () => {
     expect(access.readOnly).toBe(true);
     expect(access.canChangeMode).toBe(false);
   });
+
+  it('allows event suggestions with active voting rights but no amendment update right', () => {
+    const access = getStreetDesignAccess({
+      amendment: amendmentWithCollaborator('view', 'active'),
+      selectedProcessBranch: { ...editableBranch, editing_mode: 'suggest_event' },
+      userId: 'user-1',
+      hasActiveEventVotingRight: true,
+    });
+
+    expect(access.canEditDirectly).toBe(false);
+    expect(access.canSuggestInternally).toBe(false);
+    expect(access.canSuggestInEvent).toBe(true);
+    expect(access.readOnly).toBe(false);
+  });
 });

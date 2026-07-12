@@ -129,6 +129,17 @@ export interface StreetDesignMapSelection {
   rotationDeg: number;
 }
 
+export interface StreetDesignSelectionAddress {
+  placeId?: string;
+  formatted?: string;
+  country?: string;
+  region?: string;
+  city?: string;
+  postCode?: string;
+  street?: string;
+  houseNumber?: string;
+}
+
 export interface StreetDesignVector3 {
   x: number;
   y: number;
@@ -382,6 +393,7 @@ export interface StreetDesignStateV1 {
   schemaVersion: 1;
   origin: StreetDesignOrigin;
   mapSelection?: StreetDesignMapSelection;
+  selectionAddress?: StreetDesignSelectionAddress;
   osmSnapshot: StreetDesignOsmSnapshot | null;
   osmLayerVisibility?: StreetDesignOsmLayerVisibility;
   hiddenOsmWayIds?: string[];

@@ -13,11 +13,15 @@ interface StreetDesignAccessOptions {
   hasProcessBranch?: boolean;
   selectedProcessBranch: AmendmentProcessBranchSource | null | undefined;
   userId?: string;
+  hasActiveEventVotingRight?: boolean;
 }
 
 export interface StreetDesignAccess {
   canChangeMode: boolean;
   canEdit: boolean;
+  canEditDirectly: boolean;
+  canSuggestInternally: boolean;
+  canSuggestInEvent: boolean;
   readOnly: boolean;
 }
 
@@ -27,6 +31,7 @@ export function getStreetDesignAccess({
   hasProcessBranch,
   selectedProcessBranch,
   userId,
+  hasActiveEventVotingRight = false,
 }: StreetDesignAccessOptions): StreetDesignAccess {
   const permissionFlags = getAmendmentPermissionFlags(amendment, userId);
   const canEdit = permissionFlags.canChangeMode;
@@ -39,7 +44,10 @@ export function getStreetDesignAccess({
 
   return {
     canEdit,
+    canEditDirectly: canEdit,
+    canSuggestInternally: canEdit,
+    canSuggestInEvent: hasActiveEventVotingRight,
     canChangeMode,
-    readOnly: !canEdit,
+    readOnly: !(canEdit || hasActiveEventVotingRight),
   };
 }

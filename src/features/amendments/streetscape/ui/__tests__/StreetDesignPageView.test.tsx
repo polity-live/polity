@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyStreetDesignState } from '../../state/streetDesignReducer';
+import { createPointStreetDesignObject } from '../../logic/streetDesignPlacement';
 import { StreetDesignPageView } from '../StreetDesignPageView';
 
 vi.mock('@/features/editor/ui/OnlineCollaboratorAvatars', () => ({
@@ -27,15 +28,20 @@ vi.mock('../StreetDesignTopBarView', () => ({
     areaPickerContent,
     areaPickerOpen,
     onAreaPickerOpenChange,
+    onObjectCategoryDelete,
   }: {
     areaPickerContent: ReactNode;
     areaPickerOpen: boolean;
     onAreaPickerOpenChange: (open: boolean) => void;
+    onObjectCategoryDelete: (category: 'greenery') => void;
   }) => (
     <div data-testid="street-design-topbar">
       <span>{areaPickerOpen ? 'area picker open' : 'area picker closed'}</span>
       <button type="button" onClick={() => onAreaPickerOpenChange(true)}>
         Open map dialog
+      </button>
+      <button type="button" onClick={() => onObjectCategoryDelete('greenery')}>
+        Delete greenery
       </button>
       {areaPickerOpen ? areaPickerContent : null}
     </div>
@@ -61,6 +67,7 @@ describe('StreetDesignPageView', () => {
     expect(screen.getByText('0 elements')).toBeTruthy();
     expect(screen.getByText(content => /0\s*€/.test(content))).toBeTruthy();
     expect(screen.getByText('0 CRs')).toBeTruthy();
+    expect(screen.getByText('Alexanderplatz, Berlin')).toBeTruthy();
 
     const helpButton = screen.getByRole('button', {
       name: 'Show street design navigation help',
@@ -115,6 +122,37 @@ describe('StreetDesignPageView', () => {
     expect(screen.getByText('area picker closed')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Load OSM from picker' })).toBeNull();
   });
+
+  it('confirms the number of per-element CRs before deleting a category in suggestion mode', () => {
+    const onDeleteObjectCategory = vi.fn();
+    const design = {
+      ...createEmptyStreetDesignState(),
+      objects: [
+        createPointStreetDesignObject({
+          id: 'tree-1',
+          type: 'tree',
+          point: { x: 0, z: 0 },
+        }),
+        createPointStreetDesignObject({
+          id: 'bush-1',
+          type: 'bush',
+          point: { x: 1, z: 1 },
+        }),
+      ],
+    };
+    render(
+      <StreetDesignPageView
+        {...createPageProps({ mode: 'suggest_event', design, onDeleteObjectCategory })}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete greenery' }));
+
+    expect(onDeleteObjectCategory).not.toHaveBeenCalled();
+    expect(screen.getByText(/2 separate change requests/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Create 2 change requests/ }));
+    expect(onDeleteObjectCategory).toHaveBeenCalledWith('greenery');
+  });
 });
 
 function createPageProps(overrides: Partial<Parameters<typeof StreetDesignPageView>[0]> = {}) {
@@ -146,6 +184,7 @@ function createPageProps(overrides: Partial<Parameters<typeof StreetDesignPageVi
     amendment: { title: 'Safer street' },
     isLoading: false,
     readOnly: false,
+    canEditMapContext: true,
     mode: 'edit',
     modeDisabledReasons: {},
     canChangeMode: true,
@@ -186,6 +225,7 @@ function createPageProps(overrides: Partial<Parameters<typeof StreetDesignPageVi
       heightMeters: 100,
       rotationDeg: 0,
     },
+    selectionAddressLabel: 'Alexanderplatz, Berlin',
     costSummary: {
       currency: 'EUR',
       totalCostMinor: 0,
@@ -206,8 +246,8 @@ function createPageProps(overrides: Partial<Parameters<typeof StreetDesignPageVi
     isSaving: false,
     saveError: null,
     onSelectedMapSelectionChange: vi.fn(),
+    onSelectionAddressChange: vi.fn(),
     onLoadOsm: vi.fn(),
-    onLoadSample: vi.fn(),
     onSave: vi.fn(),
     onModeChange: vi.fn(),
     onChangeRequestVote: vi.fn(),

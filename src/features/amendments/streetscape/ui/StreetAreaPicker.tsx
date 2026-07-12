@@ -2,6 +2,7 @@ import type {
   StreetDesignBoundingBox,
   StreetDesignGeoPoint,
   StreetDesignMapSelection,
+  StreetDesignSelectionAddress,
 } from '../types';
 interface StreetAreaPickerProps {
   center: StreetDesignGeoPoint;
@@ -10,12 +11,14 @@ interface StreetAreaPickerProps {
   isLoadingOsm: boolean;
   osmError: string | null;
   readOnly: boolean;
+  selectionAddress?: StreetDesignSelectionAddress;
+  addressLabel: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   variant?: 'card' | 'panel';
   onMapSelectionChange: (selection: StreetDesignMapSelection) => void;
+  onSelectionAddressChange: (address?: StreetDesignSelectionAddress) => void;
   onLoadOsm: () => void;
-  onLoadSample: () => void;
 }
 import { useStreetAreaPickerController } from './useStreetAreaPickerController';
 import { StreetAreaPickerView } from './StreetAreaPickerView';
@@ -27,12 +30,14 @@ export function StreetAreaPicker({
   isLoadingOsm,
   osmError,
   readOnly,
+  selectionAddress,
+  addressLabel,
   open,
   onOpenChange,
   variant,
   onMapSelectionChange,
+  onSelectionAddressChange,
   onLoadOsm,
-  onLoadSample,
 }: StreetAreaPickerProps) {
   const viewProps = useStreetAreaPickerController({
     center,
@@ -41,14 +46,16 @@ export function StreetAreaPicker({
     isLoadingOsm,
     osmError,
     readOnly,
+    selectionAddress,
     onMapSelectionChange,
+    onSelectionAddressChange,
     onLoadOsm,
-    onLoadSample,
   });
 
   return (
     <StreetAreaPickerView
       {...viewProps}
+      addressLabel={addressLabel}
       open={open}
       onOpenChange={onOpenChange}
       variant={variant}

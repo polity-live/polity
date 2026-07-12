@@ -37,6 +37,7 @@ import {
 } from './schema';
 import {
   createChangeRequestSchema,
+  createStreetDesignChangeRequestsSchema,
   deleteChangeRequestSchema,
   finalizeExpiredInternalChangeRequestVotesSchema,
   finalizeInternalChangeRequestVoteSchema,
@@ -84,6 +85,7 @@ import {
 import { AGENDA_VOTE_STEP_KIND } from '../agendas/vote-step-kind';
 import { normalizeChangeRequestVoteOrder } from '@/features/change-requests/logic/changeRequestVoteOrder';
 import { reorderOpenChangeRequestVoteStepsForAgendaItem } from '../agendas/change-request-vote-ordering';
+import { isBranchEditable } from '@/features/amendments/logic/amendmentBranchDisplay';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 const PENDING_SUBMISSION_STATUS = 'pending_submission';
@@ -179,6 +181,36 @@ async function resolveChangeRequestMutationEditingMode({
     branch: null,
     mode: normalizeEditingMode(document?.editing_mode),
   };
+}
+
+async function assertStreetDesignDirectEditMode(
+  tx: AmendmentServerTx,
+  amendmentId: string,
+  processBranchId?: string | null
+) {
+  const amendment = await loadAmendmentForMutation(tx, amendmentId);
+  const { branch, mode } = await resolveChangeRequestMutationEditingMode({
+    tx,
+    amendmentId,
+    processBranchId,
+    amendment,
+  });
+
+  if (branch) {
+    const processRun = await loadProcessRunForBranch(tx, branch);
+    const amendmentOriginId =
+      amendment.origin_amendment_id ?? amendment.clone_source_id ?? amendment.id;
+    if (processRun.amendment_id !== amendmentOriginId) {
+      throw new Error('Process branch does not belong to this amendment.');
+    }
+    if (!isBranchEditable(branch)) {
+      throw new PermissionError('update', 'amendments', 'street_design:branch_readonly');
+    }
+  }
+
+  if (mode !== 'edit') {
+    throw new PermissionError('update', 'amendments', `street_design:editing_mode:${mode}`);
+  }
 }
 
 async function assertCanCreateAmendment(tx: AmendmentServerTx, ctx: AmendmentServerCtx) {
@@ -1199,7 +1231,7 @@ export const amendmentServerMutators = {
         amendmentTitle: aTitle,
       });
     } else if (args.status === 'invited' && args.user_id) {
-      fireNotification('notifyCollaborationInvite', {
+      await fireNotification('notifyCollaborationInvite', {
         senderId: ctx.userID,
         recipientUserId: args.user_id,
         amendmentId: args.amendment_id,
@@ -1344,6 +1376,7 @@ export const amendmentServerMutators = {
     createAmendmentStreetDesignSchema,
     async ({ tx, ctx, args }) => {
       await assertCanMutateAmendment(tx, ctx, args.amendment_id, 'update');
+      await assertStreetDesignDirectEditMode(tx, args.amendment_id, args.process_branch_id ?? null);
       await mutators.amendments.createStreetDesign.fn({ tx, ctx, args });
     }
   ),
@@ -1353,6 +1386,11 @@ export const amendmentServerMutators = {
     async ({ tx, ctx, args }) => {
       const streetDesign = await loadStreetDesignForMutation(tx, args.id);
       await assertCanMutateAmendment(tx, ctx, streetDesign.amendment_id, 'update');
+      await assertStreetDesignDirectEditMode(
+        tx,
+        streetDesign.amendment_id,
+        args.process_branch_id ?? null
+      );
       await mutators.amendments.updateStreetDesign.fn({ tx, ctx, args });
     }
   ),
@@ -1367,6 +1405,9 @@ export const amendmentServerMutators = {
   ),
 
   createChangeRequest: defineMutator(createChangeRequestSchema, async ({ tx, ctx, args }) => {
+    if (args.source_type?.trim().toLowerCase() === 'street_design_scene') {
+      throw new Error('Street design scene change requests are no longer supported.');
+    }
     await assertCanCreateChangeRequest(tx, ctx, args.amendment_id, args.process_branch_id ?? null);
 
     const wasCreated = (await mutators.amendments.createChangeRequest.fn({
@@ -1431,6 +1472,28 @@ export const amendmentServerMutators = {
       await recomputeEventCounters(tx, notificationEventId);
     }
   }),
+
+  createStreetDesignChangeRequests: defineMutator(
+    createStreetDesignChangeRequestsSchema,
+    async ({ tx, ctx, args }) => {
+      for (const request of args.requests) {
+        const sourceType = request.source_type?.trim().toLowerCase() ?? '';
+        if (sourceType !== 'street_design_object') {
+          throw new Error('Street design batches only support object change requests.');
+        }
+        if (
+          request.amendment_id !== args.amendment_id ||
+          (request.process_branch_id ?? null) !== args.process_branch_id
+        ) {
+          throw new Error('Street design batch request scope does not match the batch scope.');
+        }
+      }
+
+      for (const request of args.requests) {
+        await amendmentServerMutators.createChangeRequest.fn({ tx, ctx, args: request });
+      }
+    }
+  ),
 
   voteOnChangeRequest: defineMutator(createChangeRequestVoteSchema, async ({ tx, ctx, args }) => {
     const changeRequest = await assertCanVoteOnChangeRequest(tx, ctx, args.change_request_id);

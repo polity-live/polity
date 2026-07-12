@@ -47,6 +47,8 @@ interface ChangeRequestCardsListProps {
   amendmentId?: string;
   /** Agenda item ID — passed to interactive editor */
   agendaItemId?: string;
+  /** Show the map-gated Street Design accordion on the agenda item detail page. */
+  showStreetDesignPreviewAccordion?: boolean;
   /** Current user record — passed to interactive editor for author/avatar display */
   userRecord?: {
     id: string;
@@ -93,6 +95,7 @@ export function ChangeRequestCardsList({
   discussions,
   amendmentId,
   agendaItemId,
+  showStreetDesignPreviewAccordion = false,
   userRecord,
   hasUserVoted,
   getUserSelectedChoiceIds,
@@ -130,6 +133,7 @@ export function ChangeRequestCardsList({
     discussions,
     amendmentId,
     agendaItemId,
+    showStreetDesignPreviewAccordion,
     userRecord,
     hasUserVoted,
     getUserSelectedChoiceIds,

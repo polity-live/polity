@@ -1,6 +1,6 @@
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import type { StreetDesignObject, StreetDesignStateV1 } from '../types';
-import { getStreetDesignCostSummary } from './streetDesignCosting';
+import { getStreetDesignCostLine, getStreetDesignCostSummary } from './streetDesignCosting';
 import {
   STREET_DESIGN_COST_CATALOG_VERSION,
   STREET_DESIGN_CURRENCY,
@@ -81,6 +81,13 @@ export interface StreetDesignPersistenceSnapshot {
   cost_summary: ReadonlyJSONValue;
 }
 
+export interface StreetDesignCostChange {
+  beforeUnitCostMinor: number | null;
+  afterUnitCostMinor: number | null;
+  beforeTotalCostMinor: number | null;
+  afterTotalCostMinor: number | null;
+}
+
 const OBJECT_SOURCE_TYPE = 'street_design_object' as const;
 const SCENE_SOURCE_TYPE = 'street_design_scene' as const;
 
@@ -156,46 +163,6 @@ export function createStreetDesignChangeRequestPayloads({
     );
   }
 
-  const baseScene = createSceneSnapshot(base);
-  const draftScene = createSceneSnapshot(draft);
-  if (stableJson(baseScene) !== stableJson(draftScene)) {
-    const originalProperties = createSnapshot({
-      streetDesignId: streetDesignId ?? null,
-      objectId: null,
-      scene: baseScene,
-      designContext: baseScene,
-    });
-    const newProperties = createSnapshot({
-      streetDesignId: streetDesignId ?? null,
-      objectId: null,
-      scene: draftScene,
-      designContext: draftScene,
-    });
-
-    payloads.push({
-      id: createId(),
-      amendment_id: amendmentId,
-      process_branch_id: processBranchId ?? null,
-      title: null,
-      description: 'Streetscape scene settings changed',
-      status: 'open',
-      reason: null,
-      source_type: SCENE_SOURCE_TYPE,
-      source_id: streetDesignId ?? null,
-      source_title: 'Streetscape scene',
-      change_type: 'update',
-      original_text: summarizeSceneSnapshot(baseScene),
-      new_text: summarizeSceneSnapshot(draftScene),
-      original_properties: originalProperties,
-      new_properties: newProperties,
-      changed_character_count: countSnapshotCharacters(originalProperties, newProperties),
-      voting_status: 'open',
-      voting_deadline: null,
-      voting_majority_type: null,
-      quorum_required: null,
-    });
-  }
-
   return payloads;
 }
 
@@ -236,10 +203,38 @@ export function applyStreetDesignChangeRequestToDesign(
     });
   }
 
+  const originalObject = getStreetDesignObjectSnapshot(changeRequest.original_properties);
+  const currentObject = currentDesign.objects[existingIndex];
+  const mergedObject = originalObject
+    ? (applySemanticChangePatch(currentObject, originalObject, nextObject) as StreetDesignObject)
+    : nextObject;
+
   return normalizeStreetDesignStateV1({
     ...currentDesign,
-    objects: currentDesign.objects.map(object => (object.id === objectId ? nextObject : object)),
+    objects: currentDesign.objects.map(object => (object.id === objectId ? mergedObject : object)),
   });
+}
+
+export function getStreetDesignSemanticChangedCharacterCount(before: unknown, after: unknown) {
+  const beforeComparable = getSemanticSnapshotValue(before);
+  const afterComparable = getSemanticSnapshotValue(after);
+  return countChangedValueCharacters(beforeComparable, afterComparable);
+}
+
+export function getStreetDesignCostChange(
+  originalProperties: unknown,
+  newProperties: unknown
+): StreetDesignCostChange | null {
+  const before = getStreetDesignObjectSnapshot(originalProperties);
+  const after = getStreetDesignObjectSnapshot(newProperties);
+  if (!before && !after) return null;
+
+  return {
+    beforeUnitCostMinor: before ? getEffectiveUnitCostMinor(before) : null,
+    afterUnitCostMinor: after ? getEffectiveUnitCostMinor(after) : null,
+    beforeTotalCostMinor: before ? getStreetDesignCostLine(before).totalCostMinor : null,
+    afterTotalCostMinor: after ? getStreetDesignCostLine(after).totalCostMinor : null,
+  };
 }
 
 export function createStreetDesignPersistenceSnapshot(
@@ -350,23 +345,38 @@ function createObjectPayload({
     ? createSnapshot({ streetDesignId, objectId, object: next, designContext })
     : null;
 
+  const isPriceOnlyUpdate = Boolean(previous && next && isOnlyObjectCostChanged(previous, next));
+
   return {
     id,
     amendment_id: amendmentId,
     process_branch_id: processBranchId ?? null,
     title: null,
-    description: `Streetscape object ${changeType}: ${objectLabel}`,
+    description: isPriceOnlyUpdate
+      ? `Streetscape unit price changed: ${objectLabel}`
+      : `Streetscape object ${changeType}: ${objectLabel}`,
     status: 'open',
     reason: null,
     source_type: OBJECT_SOURCE_TYPE,
     source_id: objectId,
     source_title: objectLabel,
     change_type: changeType,
-    original_text: previous ? summarizeObject(previous) : null,
-    new_text: next ? summarizeObject(next) : null,
+    original_text: previous
+      ? isPriceOnlyUpdate
+        ? summarizeObjectUnitPrice(previous)
+        : summarizeObject(previous)
+      : null,
+    new_text: next
+      ? isPriceOnlyUpdate
+        ? summarizeObjectUnitPrice(next)
+        : summarizeObject(next)
+      : null,
     original_properties: originalProperties,
     new_properties: newProperties,
-    changed_character_count: countSnapshotCharacters(originalProperties, newProperties),
+    changed_character_count: getStreetDesignSemanticChangedCharacterCount(
+      originalProperties,
+      newProperties
+    ),
     voting_status: 'open',
     voting_deadline: null,
     voting_majority_type: null,
@@ -408,17 +418,73 @@ function summarizeObject(object: StreetDesignObject) {
   return `${object.type} ${object.id}`;
 }
 
-function summarizeSceneSnapshot(snapshot: StreetDesignSceneSnapshot) {
-  const featureCount =
-    snapshot.osmSnapshot?.features?.length ?? snapshot.osmSnapshot?.ways?.length ?? 0;
-  return `origin ${snapshot.origin.lat.toFixed(6)}, ${snapshot.origin.lon.toFixed(6)}; ${featureCount} OSM features`;
+function summarizeObjectUnitPrice(object: StreetDesignObject) {
+  return `Unit price: ${(getEffectiveUnitCostMinor(object) / 100).toFixed(2)} ${object.cost.currency}`;
 }
 
-function countSnapshotCharacters(
-  before: ReadonlyJSONValue | null,
-  after: ReadonlyJSONValue | null
-) {
+function getEffectiveUnitCostMinor(object: StreetDesignObject) {
+  return object.cost.customUnitCostMinor ?? object.cost.suggestedUnitCostMinor;
+}
+
+function isOnlyObjectCostChanged(before: StreetDesignObject, after: StreetDesignObject) {
+  const withoutCost = (object: StreetDesignObject) => {
+    const { cost, ...rest } = object;
+    void cost;
+    return rest;
+  };
+  return (
+    stableJson(withoutCost(before)) === stableJson(withoutCost(after)) &&
+    stableJson(before.cost) !== stableJson(after.cost)
+  );
+}
+
+function getSemanticSnapshotValue(value: unknown) {
+  const object = getStreetDesignObjectSnapshot(value);
+  if (object) return object;
+  const scene = getStreetDesignSceneSnapshot(value);
+  return scene;
+}
+
+function countChangedValueCharacters(before: unknown, after: unknown): number {
+  if (stableJson(before) === stableJson(after)) return 0;
+
+  if (isPlainRecord(before) && isPlainRecord(after)) {
+    const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+    let count = 0;
+    for (const key of keys) {
+      const childCount = countChangedValueCharacters(before[key], after[key]);
+      if (childCount > 0) count += key.length + childCount;
+    }
+    return count;
+  }
+
   return stableJson(before).length + stableJson(after).length;
+}
+
+function applySemanticChangePatch(current: unknown, before: unknown, after: unknown): unknown {
+  if (stableJson(before) === stableJson(after)) return current;
+
+  if (isPlainRecord(before) && isPlainRecord(after)) {
+    const result: Record<string, unknown> = isPlainRecord(current) ? { ...current } : {};
+    const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+    for (const key of keys) {
+      const beforeHasKey = Object.prototype.hasOwnProperty.call(before, key);
+      const afterHasKey = Object.prototype.hasOwnProperty.call(after, key);
+      if (beforeHasKey && !afterHasKey) {
+        Reflect.deleteProperty(result, key);
+        continue;
+      }
+      if (!afterHasKey) continue;
+      result[key] = applySemanticChangePatch(result[key], before[key], after[key]);
+    }
+    return result;
+  }
+
+  return after;
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
 function asStreetDesignObject(value: unknown): StreetDesignObject | null {
@@ -445,7 +511,7 @@ function asReadonlyJsonValue(value: unknown): ReadonlyJSONValue {
 }
 
 function stableJson(value: unknown) {
-  return JSON.stringify(value, Object.keys(flattenKeys(value)).sort());
+  return JSON.stringify(value, Object.keys(flattenKeys(value)).sort()) ?? 'undefined';
 }
 
 function flattenKeys(value: unknown, keys: Record<string, true> = {}) {

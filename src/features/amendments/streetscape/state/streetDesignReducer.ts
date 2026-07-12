@@ -2,6 +2,7 @@ import type {
   StreetDesignComparisonMode,
   StreetDesignInteractionMode,
   StreetDesignLocalPoint,
+  StreetDesignMapSelection,
   StreetDesignObject,
   StreetDesignObjectCategory,
   StreetDesignObjectType,
@@ -11,6 +12,7 @@ import type {
   StreetDesignPlacementDraft,
   StreetDesignPlacementSettings,
   StreetDesignPropertyValue,
+  StreetDesignSelectionAddress,
   StreetDesignStateV1,
 } from '../types';
 import { updateObjectUnitCost } from '../logic/streetDesignCosting';
@@ -54,6 +56,13 @@ export interface StreetDesignEditorState {
 
 export type StreetDesignEditorAction =
   | { type: 'replace_design'; design: StreetDesignStateV1; dirty?: boolean }
+  | {
+      type: 'set_map_context';
+      mapSelection: StreetDesignMapSelection;
+      selectionAddress?: StreetDesignSelectionAddress;
+      invalidateOsm?: boolean;
+    }
+  | { type: 'set_selection_address'; selectionAddress?: StreetDesignSelectionAddress }
   | { type: 'set_osm_snapshot'; osmSnapshot: StreetDesignOsmSnapshot; origin: StreetDesignOrigin }
   | { type: 'set_comparison_mode'; comparisonMode: StreetDesignComparisonMode }
   | { type: 'set_interaction_mode'; interactionMode: StreetDesignInteractionMode }
@@ -368,6 +377,47 @@ export function streetDesignReducer(
         isDirty: action.dirty ?? false,
       };
 
+    case 'set_map_context':
+      return {
+        ...state,
+        design: {
+          ...state.design,
+          origin: {
+            ...action.mapSelection.center,
+            ...(action.selectionAddress?.formatted
+              ? { label: action.selectionAddress.formatted }
+              : {}),
+          },
+          mapSelection: action.mapSelection,
+          selectionAddress: action.selectionAddress,
+          ...(action.invalidateOsm
+            ? {
+                osmSnapshot: null,
+                hiddenOsmWayIds: [],
+                hiddenOsmFeatureIds: [],
+              }
+            : {}),
+        },
+        selectedOsmWayId: null,
+        isDirty: true,
+      };
+
+    case 'set_selection_address':
+      return {
+        ...state,
+        design: {
+          ...state.design,
+          origin: {
+            ...state.design.origin,
+            ...(action.selectionAddress?.formatted
+              ? { label: action.selectionAddress.formatted }
+              : { label: undefined }),
+          },
+          selectionAddress: action.selectionAddress,
+        },
+        isDirty: true,
+      };
+
     case 'set_osm_snapshot':
       return {
         ...state,
@@ -391,7 +441,7 @@ export function streetDesignReducer(
           ...state.design,
           comparisonMode: action.comparisonMode,
         },
-        isDirty: true,
+        isDirty: state.isDirty,
       };
 
     case 'set_interaction_mode':
@@ -415,7 +465,7 @@ export function streetDesignReducer(
             [action.layer]: action.visible,
           },
         },
-        isDirty: true,
+        isDirty: state.isDirty,
       };
 
     case 'set_show_street_markings':
@@ -425,7 +475,7 @@ export function streetDesignReducer(
           ...state.design,
           showStreetMarkings: action.visible,
         },
-        isDirty: true,
+        isDirty: state.isDirty,
       };
 
     case 'set_tool':
@@ -766,13 +816,6 @@ export function streetDesignReducer(
 
     case 'import_osm_feature': {
       if (action.objects.length === 0) return state;
-      const hiddenOsmFeatureIds = Array.from(
-        new Set([
-          ...(state.design.hiddenOsmWayIds ?? []),
-          ...(state.design.hiddenOsmFeatureIds ?? []),
-          action.osmWayId,
-        ])
-      );
       const firstObject = action.objects[0];
 
       return {
@@ -780,8 +823,6 @@ export function streetDesignReducer(
         design: {
           ...state.design,
           objects: [...state.design.objects, ...action.objects],
-          hiddenOsmWayIds: hiddenOsmFeatureIds,
-          hiddenOsmFeatureIds,
         },
         selectedObjectId: firstObject?.id ?? null,
         selectedOsmWayId: null,
@@ -804,12 +845,6 @@ export function streetDesignReducer(
         design: {
           ...state.design,
           objects,
-          hiddenOsmWayIds: (state.design.hiddenOsmWayIds ?? []).filter(
-            featureId => featureId !== action.osmWayId
-          ),
-          hiddenOsmFeatureIds: (state.design.hiddenOsmFeatureIds ?? []).filter(
-            featureId => featureId !== action.osmWayId
-          ),
         },
         selectedObjectId: null,
         isDirty: true,

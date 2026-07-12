@@ -39,6 +39,26 @@ describe('changeRequestVoteOrder', () => {
     expect(ordered.map(item => item.id)).toEqual(['CR-15', 'CR-13']);
   });
 
+  it('places street-design CRs after positioned document CRs and orders them by CR number', () => {
+    const documentCr = createChangeRequest('CR-8');
+    const streetCr10 = createChangeRequest('CR-10', {
+      source_type: 'street_design_object',
+    });
+    const streetCr2 = createChangeRequest('CR-2', {
+      source_type: 'street_design_object',
+    });
+
+    const ordered = sortChangeRequestsByVoteOrder(
+      [streetCr10, documentCr, streetCr2],
+      'text_position',
+      {
+        getTextPosition: item => (item.id === 'CR-8' ? 4 : null),
+      }
+    );
+
+    expect(ordered.map(item => item.id)).toEqual(['CR-8', 'CR-2', 'CR-10']);
+  });
+
   it('sorts by changed character count with larger changes first', () => {
     const ordered = sortChangeRequestsByVoteOrder(
       [
@@ -80,6 +100,49 @@ describe('changeRequestVoteOrder', () => {
     );
 
     expect(ordered.map(item => item.id)).toEqual(['CR-6', 'CR-8', 'CR-2', 'CR-4']);
+  });
+
+  it('uses semantic street-design changes instead of persisted full-snapshot sizes', () => {
+    const streetObject = (
+      customUnitCostMinor: number,
+      overrides: Record<string, unknown> = {}
+    ) => ({
+      id: 'object-1',
+      type: 'tree',
+      geometry: { kind: 'point', point: { x: 1, z: 1 }, rotation: 0 },
+      properties: { species: 'oak' },
+      cost: {
+        rule: 'per_item',
+        currency: 'EUR',
+        suggestedUnitCostMinor: 10_000,
+        customUnitCostMinor,
+      },
+      ...overrides,
+    });
+    const priceCr = createChangeRequest('CR-1', {
+      source_type: 'street_design_object',
+      changed_character_count: 999_999,
+      original_properties: { object: streetObject(10_000) },
+      new_properties: { object: streetObject(10_100) },
+    });
+    const geometryCr = createChangeRequest('CR-2', {
+      source_type: 'street_design_object',
+      changed_character_count: 1,
+      original_properties: { object: streetObject(10_000) },
+      new_properties: {
+        object: streetObject(10_000, {
+          geometry: { kind: 'point', point: { x: 123_456, z: 654_321 }, rotation: 270 },
+          properties: {
+            species: 'a-very-long-replacement-species-name',
+            note: 'a substantial semantic change',
+          },
+        }),
+      },
+    });
+
+    const ordered = sortChangeRequestsByVoteOrder([priceCr, geometryCr], 'changed_character_count');
+
+    expect(ordered.map(item => item.id)).toEqual(['CR-2', 'CR-1']);
   });
 
   it('sorts by CR number and falls back to created_at', () => {

@@ -8,8 +8,19 @@ import { BadgeControl, type SelectableEditingMode } from '@/features/shared/ui/s
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Popover, PopoverAnchor, PopoverContent } from '@/features/shared/ui/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/features/shared/ui/ui/alert-dialog';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
+import { getStreetDesignObjectDefinition } from '../logic/streetDesignObjectRegistry';
 import { getStreetDesignOsmFeatures } from '../logic/streetDesignOsm';
 import type {
   StreetDesignChangeRequest,
@@ -25,6 +36,7 @@ import type {
   StreetDesignInteractionMode,
   StreetDesignLocalPoint,
   StreetDesignMapSelection,
+  StreetDesignSelectionAddress,
   StreetDesignObject,
   StreetDesignObjectCategory,
   StreetDesignObjectType,
@@ -55,6 +67,7 @@ interface StreetDesignPageViewProps {
   amendment: StreetDesignAmendmentSummary;
   isLoading: boolean;
   readOnly: boolean;
+  canEditMapContext: boolean;
   mode: SelectableEditingMode;
   modeDisabledReasons: Partial<Record<SelectableEditingMode, string>>;
   canChangeMode: boolean;
@@ -87,6 +100,8 @@ interface StreetDesignPageViewProps {
   selectedCenter: StreetDesignGeoPoint;
   selectedBbox: StreetDesignBoundingBox;
   selectedMapSelection: StreetDesignMapSelection;
+  selectionAddress?: StreetDesignSelectionAddress;
+  selectionAddressLabel: string;
   costSummary: StreetDesignCostSummary;
   isDirty: boolean;
   placementPreview: CorridorGeometry | PathCorridorGeometry | null;
@@ -102,8 +117,8 @@ interface StreetDesignPageViewProps {
   isSaving: boolean;
   saveError: string | null;
   onSelectedMapSelectionChange: (selection: StreetDesignMapSelection) => void;
+  onSelectionAddressChange: (address?: StreetDesignSelectionAddress) => void;
   onLoadOsm: () => void;
-  onLoadSample: () => void;
   onSave: () => void;
   onModeChange: (mode: SelectableEditingMode) => void | Promise<void>;
   onChangeRequestVote: (
@@ -158,6 +173,7 @@ export function StreetDesignPageView({
   amendment,
   isLoading,
   readOnly,
+  canEditMapContext,
   mode,
   modeDisabledReasons,
   canChangeMode,
@@ -190,6 +206,8 @@ export function StreetDesignPageView({
   selectedCenter,
   selectedBbox,
   selectedMapSelection,
+  selectionAddress,
+  selectionAddressLabel,
   costSummary,
   isDirty,
   placementPreview,
@@ -205,8 +223,8 @@ export function StreetDesignPageView({
   isSaving,
   saveError,
   onSelectedMapSelectionChange,
+  onSelectionAddressChange,
   onLoadOsm,
-  onLoadSample,
   onSave,
   onModeChange,
   onChangeRequestVote,
@@ -243,11 +261,33 @@ export function StreetDesignPageView({
   const [costSummaryOpen, setCostSummaryOpen] = useState(false);
   const [showChangeRequests, setShowChangeRequests] = useState(true);
   const [selectedChangeRequestId, setSelectedChangeRequestId] = useState<string | null>(null);
+  const [pendingCategoryDeletion, setPendingCategoryDeletion] =
+    useState<StreetDesignObjectCategory | null>(null);
   const osmWayCount = useMemo(
     () => getStreetDesignOsmFeatures(design.osmSnapshot).length,
     [design.osmSnapshot]
   );
   const title = amendment?.title ?? t('features.amendments.streetscape.defaultTitle');
+  const pendingCategoryDeletionCount = pendingCategoryDeletion
+    ? design.objects.filter(
+        object => getStreetDesignObjectDefinition(object.type).category === pendingCategoryDeletion
+      ).length
+    : 0;
+  const handleObjectCategoryDelete = useCallback(
+    (category: StreetDesignObjectCategory) => {
+      if (mode === 'suggest_internal' || mode === 'suggest_event') {
+        setPendingCategoryDeletion(category);
+        return;
+      }
+      onDeleteObjectCategory(category);
+    },
+    [mode, onDeleteObjectCategory]
+  );
+  const confirmObjectCategoryDelete = useCallback(() => {
+    if (!pendingCategoryDeletion) return;
+    onDeleteObjectCategory(pendingCategoryDeletion);
+    setPendingCategoryDeletion(null);
+  }, [onDeleteObjectCategory, pendingCategoryDeletion]);
   const kpis = useMemo(
     () => [
       t('features.amendments.streetscape.metrics.elements', { count: design.objects.length }),
@@ -304,22 +344,26 @@ export function StreetDesignPageView({
         mapSelection={selectedMapSelection}
         isLoadingOsm={isLoadingOsm}
         osmError={osmError}
-        readOnly={readOnly}
+        readOnly={!canEditMapContext}
+        selectionAddress={selectionAddress}
+        addressLabel={selectionAddressLabel}
         open
         onOpenChange={setAreaPickerOpen}
         variant="panel"
         onMapSelectionChange={onSelectedMapSelectionChange}
+        onSelectionAddressChange={onSelectionAddressChange}
         onLoadOsm={handleAreaPickerLoadOsm}
-        onLoadSample={onLoadSample}
       />
     ),
     [
       handleAreaPickerLoadOsm,
       isLoadingOsm,
-      onLoadSample,
       onSelectedMapSelectionChange,
+      onSelectionAddressChange,
       osmError,
-      readOnly,
+      canEditMapContext,
+      selectionAddress,
+      selectionAddressLabel,
       selectedBbox,
       selectedCenter,
       selectedMapSelection,
@@ -337,7 +381,7 @@ export function StreetDesignPageView({
         onComparisonModeChange={onComparisonModeChange}
         onObjectSelect={selectObject}
         onDeleteObject={onDeleteObject}
-        onDeleteObjectCategory={onDeleteObjectCategory}
+        onDeleteObjectCategory={handleObjectCategoryDelete}
       />
     ),
     [
@@ -345,7 +389,7 @@ export function StreetDesignPageView({
       design.comparisonMode,
       onComparisonModeChange,
       onDeleteObject,
-      onDeleteObjectCategory,
+      handleObjectCategoryDelete,
       readOnly,
       selectObject,
       selectedObjectId,
@@ -364,6 +408,7 @@ export function StreetDesignPageView({
     <div className="space-y-2 pt-5">
       <StreetDesignTopBarView
         readOnly={readOnly}
+        mapContextReadOnly={!canEditMapContext}
         mode={mode}
         modeDisabledReasons={modeDisabledReasons}
         canChangeMode={canChangeMode}
@@ -396,16 +441,45 @@ export function StreetDesignPageView({
         onObjectVisibilityChange={onObjectVisibilityChange}
         onObjectCategoryVisibilityChange={onObjectCategoryVisibilityChange}
         onObjectDelete={onDeleteObject}
-        onObjectCategoryDelete={onDeleteObjectCategory}
+        onObjectCategoryDelete={handleObjectCategoryDelete}
         onOsmLayerVisibilityChange={onOsmLayerVisibilityChange}
         onShowStreetMarkingsChange={onShowStreetMarkingsChange}
         onComparisonModeChange={onComparisonModeChange}
         onAreaPickerOpenChange={setAreaPickerOpen}
         onCostSummaryOpenChange={setCostSummaryOpen}
         onLoadOsm={onLoadOsm}
-        onLoadSample={onLoadSample}
         onOsmWayHide={onOsmWayHide}
       />
+
+      <AlertDialog
+        open={pendingCategoryDeletion != null}
+        onOpenChange={open => {
+          if (!open) setPendingCategoryDeletion(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('features.amendments.streetscape.categoryDelete.title')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('features.amendments.streetscape.categoryDelete.description', {
+                count: pendingCategoryDeletionCount,
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {t('features.amendments.streetscape.categoryDelete.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={confirmObjectCategoryDelete}>
+              {t('features.amendments.streetscape.categoryDelete.confirm', {
+                count: pendingCategoryDeletionCount,
+              })}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="container mx-auto px-8 pt-8 pb-8">
         <StreetDesignSecondaryActionBarView
@@ -430,18 +504,23 @@ export function StreetDesignPageView({
               <span className="bg-muted/40 flex size-10 shrink-0 items-center justify-center rounded-md border">
                 <MapPinned className="text-muted-foreground size-5" />
               </span>
-              <div className="flex min-w-0 items-center gap-3">
-                <CardTitle size="lg" className="truncate leading-tight">
-                  {title}
-                </CardTitle>
-                <OnlineCollaboratorAvatars
-                  collaborators={editorCollaborators}
-                  onlinePeerMap={onlinePeerMap}
-                  activeCursorUserIds={activeCursorUserIds}
-                  currentUserId={currentUserId}
-                  presenceColorByUserId={presenceColorByUserId}
-                  enabled
-                />
+              <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-3">
+                  <CardTitle size="lg" className="truncate leading-tight">
+                    {title}
+                  </CardTitle>
+                  <OnlineCollaboratorAvatars
+                    collaborators={editorCollaborators}
+                    onlinePeerMap={onlinePeerMap}
+                    activeCursorUserIds={activeCursorUserIds}
+                    currentUserId={currentUserId}
+                    presenceColorByUserId={presenceColorByUserId}
+                    enabled
+                  />
+                </div>
+                <p className="text-muted-foreground mt-1 truncate text-xs">
+                  {selectionAddressLabel}
+                </p>
               </div>
             </div>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 text-xs">
@@ -494,6 +573,7 @@ export function StreetDesignPageView({
               selectedOsmFocusRequestKey={selectedOsmFocusRequestKey}
               interactionMode={interactionMode}
               readOnly={readOnly}
+              mapContextReadOnly={!canEditMapContext}
               changeRequests={streetChangeRequests}
               streetDesignDiscussions={streetDesignDiscussions}
               selectedChangeRequestId={selectedChangeRequestId}

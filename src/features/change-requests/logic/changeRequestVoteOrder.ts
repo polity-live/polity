@@ -1,3 +1,5 @@
+import { getStreetDesignSemanticChangedCharacterCount } from '@/features/amendments/streetscape/logic/streetDesignChangeRequestDiff';
+
 export const CHANGE_REQUEST_VOTE_ORDER_VALUES = [
   'text_position',
   'changed_character_count',
@@ -125,12 +127,29 @@ function getBranchSortNumber<T>(item: T, getChangeRequest?: (item: T) => unknown
 
 function getChangedCharacterCount<T>(item: T, getChangeRequest?: (item: T) => unknown) {
   const cr = readChangeRequest(item, getChangeRequest);
+  if (isStreetDesignChangeRequestRecord(cr)) {
+    return getStreetDesignSemanticChangedCharacterCount(
+      cr.original_properties ?? cr.originalProperties,
+      cr.new_properties ?? cr.newProperties
+    );
+  }
   const persistedCount =
     getNumberValue(cr.changed_character_count) ?? getNumberValue(cr.changedCharacterCount);
   const computedCount = getSnapshotChangedCharacterCount(cr);
   if (persistedCount !== null && persistedCount > 0) return persistedCount;
   if (computedCount > 0) return computedCount;
   return persistedCount ?? computedCount;
+}
+
+function isStreetDesignChangeRequestRecord(cr: Record<string, unknown>) {
+  const sourceType = getStringValue(cr.source_type) ?? getStringValue(cr.sourceType);
+  return Boolean(
+    sourceType &&
+    (sourceType === 'street_design' ||
+      sourceType === 'streetscape' ||
+      sourceType.startsWith('street_design_') ||
+      sourceType.startsWith('streetscape_'))
+  );
 }
 
 function countPropertyCharacters(value: unknown) {
@@ -261,11 +280,22 @@ export function sortChangeRequestsByVoteOrder<T>(
     .map((item, index) => ({ item, index }))
     .sort((left, right) => {
       if (normalizedVoteOrder === 'text_position') {
-        const documentOrderDiff = compareNullableNumbers(
-          getDocumentPosition(left.item),
-          getDocumentPosition(right.item)
-        );
+        const leftCr = readChangeRequest(left.item, options.getChangeRequest);
+        const rightCr = readChangeRequest(right.item, options.getChangeRequest);
+        const leftPosition = getDocumentPosition(left.item);
+        const rightPosition = getDocumentPosition(right.item);
+        const documentOrderDiff = compareNullableNumbers(leftPosition, rightPosition);
         if (documentOrderDiff !== 0) return documentOrderDiff;
+
+        if (leftPosition === null && rightPosition === null) {
+          const leftIsStreetDesign = isStreetDesignChangeRequestRecord(leftCr);
+          const rightIsStreetDesign = isStreetDesignChangeRequestRecord(rightCr);
+          if (leftIsStreetDesign !== rightIsStreetDesign) return leftIsStreetDesign ? 1 : -1;
+          if (leftIsStreetDesign && rightIsStreetDesign) {
+            const numberDiff = compareCrNumber(left.item, right.item, options.getChangeRequest);
+            if (numberDiff !== 0) return numberDiff;
+          }
+        }
       }
 
       if (normalizedVoteOrder === 'changed_character_count') {

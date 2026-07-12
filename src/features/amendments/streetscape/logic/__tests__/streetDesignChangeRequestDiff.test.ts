@@ -33,6 +33,31 @@ function state(objects: StreetDesignObject[]): StreetDesignStateV1 {
 }
 
 describe('street design change request diffs', () => {
+  it('does not create broad scene CRs for map context or presentation changes', () => {
+    const base = createEmptyStreetDesignState();
+    const draft: StreetDesignStateV1 = {
+      ...base,
+      mapSelection: {
+        center: { lat: 52.517, lon: 13.3889 },
+        widthMeters: 180,
+        heightMeters: 120,
+        rotationDeg: 15,
+      },
+      selectionAddress: { formatted: 'Unter den Linden 1, Berlin' },
+      comparisonMode: 'split',
+      showStreetMarkings: false,
+    };
+
+    expect(
+      createStreetDesignChangeRequestPayloads({
+        amendmentId: 'amendment-1',
+        streetDesignId: 'street-design-1',
+        baseDesign: base,
+        draftDesign: draft,
+      })
+    ).toEqual([]);
+  });
+
   it('creates an insert payload with only new properties', () => {
     const inserted = object();
     const [payload] = createStreetDesignChangeRequestPayloads({
@@ -114,6 +139,76 @@ describe('street design change request diffs', () => {
     expect(payloads.map(payload => payload.change_type).sort()).toEqual(['insert', 'update']);
   });
 
+  it('creates one readable CR for a unit-price-only change', () => {
+    const before = object();
+    const after = object({
+      cost: { ...before.cost, customUnitCostMinor: 12_345 },
+    });
+    const [payload] = createStreetDesignChangeRequestPayloads({
+      amendmentId: 'amendment-1',
+      processBranchId: 'branch-1',
+      streetDesignId: 'street-design-1',
+      baseDesign: state([before]),
+      draftDesign: state([after]),
+      createId: () => 'cr-price',
+    });
+
+    expect(payload).toMatchObject({
+      id: 'cr-price',
+      change_type: 'update',
+      description: expect.stringContaining('unit price changed'),
+      original_text: 'Unit price: 100.00 EUR',
+      new_text: 'Unit price: 123.45 EUR',
+    });
+    expect(payload?.new_properties).toMatchObject({
+      object: { cost: { customUnitCostMinor: 12_345 } },
+    });
+    expect(payload?.changed_character_count).toBeGreaterThan(0);
+    expect(payload?.changed_character_count).toBeLessThan(200);
+  });
+
+  it('keeps price and geometry changes for one element in one CR', () => {
+    const before = object();
+    const after = object({
+      geometry: { kind: 'point', point: { x: 8, z: 3 }, rotation: 0 },
+      cost: { ...before.cost, customUnitCostMinor: 12_345 },
+    });
+
+    const payloads = createStreetDesignChangeRequestPayloads({
+      amendmentId: 'amendment-1',
+      baseDesign: state([before]),
+      draftDesign: state([after]),
+      createId: () => 'cr-combined',
+    });
+
+    expect(payloads).toHaveLength(1);
+    expect(payloads[0]?.new_properties).toMatchObject({ object: after });
+  });
+
+  it('records resetting a custom price to the suggested catalog price', () => {
+    const before = object({
+      cost: {
+        rule: 'per_item',
+        currency: 'EUR',
+        suggestedUnitCostMinor: 100_00,
+        customUnitCostMinor: 12_345,
+      },
+    });
+    const after = object();
+    const [payload] = createStreetDesignChangeRequestPayloads({
+      amendmentId: 'amendment-1',
+      baseDesign: state([before]),
+      draftDesign: state([after]),
+      createId: () => 'cr-reset-price',
+    });
+
+    expect(payload?.original_text).toBe('Unit price: 123.45 EUR');
+    expect(payload?.new_text).toBe('Unit price: 100.00 EUR');
+    expect(payload?.new_properties).not.toMatchObject({
+      object: { cost: { customUnitCostMinor: expect.anything() } },
+    });
+  });
+
   it('applies accepted insert, update and delete payloads to a design state', () => {
     const before = object();
     const after = object({ properties: { species: 'lime' } });
@@ -159,5 +254,52 @@ describe('street design change request diffs', () => {
       deletePayload as NonNullable<typeof deletePayload>
     );
     expect(withDelete.objects.map(item => item.id)).toEqual(['object-2']);
+  });
+
+  it('merges accepted updates fieldwise and lets the later CR win only overlapping fields', () => {
+    const baseObject = object();
+    const priceObject = object({
+      cost: { ...baseObject.cost, customUnitCostMinor: 12_345 },
+    });
+    const geometryObject = object({
+      geometry: { kind: 'point', point: { x: 9, z: 3 }, rotation: 0 },
+    });
+    const laterPriceObject = object({
+      cost: { ...baseObject.cost, customUnitCostMinor: 15_000 },
+    });
+    const [priceCr] = createStreetDesignChangeRequestPayloads({
+      amendmentId: 'amendment-1',
+      baseDesign: state([baseObject]),
+      draftDesign: state([priceObject]),
+      createId: () => 'cr-price',
+    });
+    const [geometryCr] = createStreetDesignChangeRequestPayloads({
+      amendmentId: 'amendment-1',
+      baseDesign: state([baseObject]),
+      draftDesign: state([geometryObject]),
+      createId: () => 'cr-geometry',
+    });
+    const [laterPriceCr] = createStreetDesignChangeRequestPayloads({
+      amendmentId: 'amendment-1',
+      baseDesign: state([baseObject]),
+      draftDesign: state([laterPriceObject]),
+      createId: () => 'cr-later-price',
+    });
+    if (!priceCr || !geometryCr || !laterPriceCr) {
+      throw new Error('Expected price and geometry change requests');
+    }
+
+    const afterPrice = applyStreetDesignChangeRequestToDesign(state([baseObject]), priceCr);
+    const afterGeometry = applyStreetDesignChangeRequestToDesign(afterPrice, geometryCr);
+    expect(afterGeometry.objects[0]).toMatchObject({
+      geometry: geometryObject.geometry,
+      cost: { customUnitCostMinor: 12_345 },
+    });
+
+    const afterLaterPrice = applyStreetDesignChangeRequestToDesign(afterGeometry, laterPriceCr);
+    expect(afterLaterPrice.objects[0]).toMatchObject({
+      geometry: geometryObject.geometry,
+      cost: { customUnitCostMinor: 15_000 },
+    });
   });
 });

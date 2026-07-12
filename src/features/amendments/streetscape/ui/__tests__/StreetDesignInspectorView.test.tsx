@@ -7,6 +7,7 @@ import { StreetDesignInspectorView } from '../StreetDesignInspectorView';
 describe('StreetDesignInspectorView', () => {
   it('renders combobox suggestions while allowing custom placement values', () => {
     const onPlacementPropertyChange = vi.fn();
+    const onPlacementUnitCostChange = vi.fn();
 
     render(
       <StreetDesignInspectorView
@@ -28,7 +29,7 @@ describe('StreetDesignInspectorView', () => {
             structureKind: 'surface',
             surface: 'pflaster',
           },
-          customUnitCostMinor: null,
+          customUnitCostMinor: 12_000,
         }}
         placementPreview={null}
         placementMode={null}
@@ -36,7 +37,7 @@ describe('StreetDesignInspectorView', () => {
         onPlacementPropertyChange={onPlacementPropertyChange}
         onPlacementWidthChange={vi.fn()}
         onPlacementRotationChange={vi.fn()}
-        onPlacementUnitCostChange={vi.fn()}
+        onPlacementUnitCostChange={onPlacementUnitCostChange}
         onPropertyChange={vi.fn()}
         onWidthChange={vi.fn()}
         onRotationChange={vi.fn()}
@@ -53,5 +54,14 @@ describe('StreetDesignInspectorView', () => {
     fireEvent.change(pathTypeInput, { target: { value: 'shared_space' } });
 
     expect(onPlacementPropertyChange).toHaveBeenCalledWith('pathType', 'shared_space');
+
+    const priceInput = screen.getByRole('spinbutton', { name: /price/i });
+    expect(priceInput.getAttribute('step')).toBe('0.01');
+    fireEvent.change(priceInput, { target: { value: '123.45' } });
+    expect(onPlacementUnitCostChange).toHaveBeenCalledWith(12_345);
+    fireEvent.change(priceInput, { target: { value: '' } });
+    expect(onPlacementUnitCostChange).toHaveBeenLastCalledWith(null);
+    fireEvent.click(screen.getByRole('button', { name: /suggested price/i }));
+    expect(onPlacementUnitCostChange).toHaveBeenLastCalledWith(null);
   });
 });

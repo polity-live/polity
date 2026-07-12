@@ -34,6 +34,7 @@ export function formatMinorCurrency(amountMinor: number, currency = STREET_DESIG
   return new Intl.NumberFormat('de-DE', {
     style: 'currency',
     currency,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(amountMinor / 100);
 }

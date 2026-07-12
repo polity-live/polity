@@ -89,6 +89,7 @@ import {
 
 interface StreetDesignTopBarViewProps {
   readOnly: boolean;
+  mapContextReadOnly: boolean;
   mode: SelectableEditingMode;
   modeDisabledReasons: Partial<Record<SelectableEditingMode, string>>;
   canChangeMode: boolean;
@@ -138,7 +139,6 @@ interface StreetDesignTopBarViewProps {
   onAreaPickerOpenChange: (open: boolean) => void;
   onCostSummaryOpenChange: (open: boolean) => void;
   onLoadOsm: () => void;
-  onLoadSample: () => void;
   onOsmWayHide: (osmWayId: string) => void;
 }
 
@@ -269,6 +269,7 @@ function isSectionToolSelected(args: {
 
 export function StreetDesignTopBarView({
   readOnly,
+  mapContextReadOnly,
   mode,
   modeDisabledReasons,
   canChangeMode,
@@ -308,7 +309,6 @@ export function StreetDesignTopBarView({
   onAreaPickerOpenChange,
   onCostSummaryOpenChange,
   onLoadOsm,
-  onLoadSample,
   onOsmWayHide,
 }: StreetDesignTopBarViewProps) {
   const { t } = useTranslation();
@@ -395,12 +395,18 @@ export function StreetDesignTopBarView({
       </ToolbarGroup>
 
       <ToolbarGroup>
-        <Dialog open={areaPickerOpen} onOpenChange={onAreaPickerOpenChange}>
+        <Dialog
+          open={!mapContextReadOnly && areaPickerOpen}
+          onOpenChange={open => {
+            if (!mapContextReadOnly || !open) onAreaPickerOpenChange(open);
+          }}
+        >
           <DialogTrigger asChild>
             <ToolbarButton
               type="button"
               aria-label={t('features.amendments.streetscape.areaPicker.title')}
               pressed={areaPickerOpen}
+              disabled={mapContextReadOnly}
               tooltip={t('features.amendments.streetscape.areaPicker.title')}
             >
               <MapPinned className="size-4" />
@@ -523,25 +529,20 @@ export function StreetDesignTopBarView({
 
         {!readOnly ? (
           <>
-            <ToolbarButton
-              type="button"
-              aria-label={t('features.amendments.streetscape.areaPicker.loadDemo')}
-              tooltip={t('features.amendments.streetscape.areaPicker.loadDemo')}
-              onClick={onLoadSample}
-            >
-              <MapPinned className="size-4" />
-            </ToolbarButton>
-
-            <ToolbarButton
-              type="button"
-              aria-label={t('features.amendments.streetscape.areaPicker.loadOsm')}
-              tooltip={osmError ?? t('features.amendments.streetscape.areaPicker.loadOsm')}
-              loading={isLoadingOsm}
-              disabled={isLoadingOsm}
-              onClick={onLoadOsm}
-            >
-              <Layers className={cn('size-4', osmError && 'text-destructive')} />
-            </ToolbarButton>
+            {!mapContextReadOnly ? (
+              <>
+                <ToolbarButton
+                  type="button"
+                  aria-label={t('features.amendments.streetscape.areaPicker.loadOsm')}
+                  tooltip={osmError ?? t('features.amendments.streetscape.areaPicker.loadOsm')}
+                  loading={isLoadingOsm}
+                  disabled={isLoadingOsm}
+                  onClick={onLoadOsm}
+                >
+                  <Layers className={cn('size-4', osmError && 'text-destructive')} />
+                </ToolbarButton>
+              </>
+            ) : null}
 
             <ToolbarButton
               type="button"
@@ -595,12 +596,12 @@ export function StreetDesignTopBarView({
                 <Trash2 className="text-destructive size-4" />
               </ToolbarButton>
             </>
-          ) : selectedOsmWay ? (
+          ) : selectedOsmWay && !mapContextReadOnly ? (
             <ToolbarButton
               type="button"
               aria-label={t('features.amendments.streetscape.inspector.removeFromMap')}
               tooltip={t('features.amendments.streetscape.inspector.removeFromMap')}
-              disabled={readOnly}
+              disabled={mapContextReadOnly}
               onClick={() => onOsmWayHide(selectedOsmWay.id)}
             >
               <EyeOff className="size-4" />

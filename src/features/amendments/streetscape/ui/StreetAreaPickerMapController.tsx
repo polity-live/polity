@@ -93,6 +93,7 @@ export function StreetAreaPickerSelectionOverlay({
   rotateHandlePosition,
   resizeHandles,
   onBboxMove,
+  onBboxMoveEnd,
   onBboxResize,
   onSelectionRotate,
 }: {
@@ -105,6 +106,7 @@ export function StreetAreaPickerSelectionOverlay({
   rotateHandlePosition: LeafletPosition;
   resizeHandles: { handle: StreetDesignBboxResizeHandle; position: LeafletPosition }[];
   onBboxMove: (center: StreetDesignGeoPoint) => void;
+  onBboxMoveEnd: (center: StreetDesignGeoPoint) => void;
   onBboxResize: (handle: StreetDesignBboxResizeHandle, point: StreetDesignGeoPoint) => void;
   onSelectionRotate: (point: StreetDesignGeoPoint) => void;
 }) {
@@ -137,7 +139,8 @@ export function StreetAreaPickerSelectionOverlay({
   );
 
   const createMarkerEventHandlers = (
-    onDrag: (event: LeafletMarkerDragEvent) => void
+    onDrag: (event: LeafletMarkerDragEvent) => void,
+    onDragEnd?: (event: LeafletMarkerDragEvent) => void
   ): LeafletEventHandlerFnMap =>
     ({
       mousedown: guardSelectionGesture,
@@ -145,7 +148,10 @@ export function StreetAreaPickerSelectionOverlay({
       touchstart: guardSelectionGesture,
       dragstart: beginSelectionDrag,
       drag: onDrag,
-      dragend: endSelectionDrag,
+      dragend: (event: LeafletMarkerDragEvent) => {
+        endSelectionDrag(event);
+        onDragEnd?.(event);
+      },
     }) as unknown as LeafletEventHandlerFnMap;
 
   return (
@@ -154,10 +160,16 @@ export function StreetAreaPickerSelectionOverlay({
         position={position}
         icon={markerIcon}
         draggable={!readOnly}
-        eventHandlers={createMarkerEventHandlers(event => {
-          const latLng = event.target.getLatLng();
-          onBboxMove({ lat: latLng.lat, lon: latLng.lng });
-        })}
+        eventHandlers={createMarkerEventHandlers(
+          event => {
+            const latLng = event.target.getLatLng();
+            onBboxMove({ lat: latLng.lat, lon: latLng.lng });
+          },
+          event => {
+            const latLng = event.target.getLatLng();
+            onBboxMoveEnd({ lat: latLng.lat, lon: latLng.lng });
+          }
+        )}
       />
       {resizeHandles.map(item => (
         <reactLeafletModule.Marker

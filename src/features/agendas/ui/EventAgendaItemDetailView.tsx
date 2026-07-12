@@ -528,6 +528,7 @@ export function EventAgendaItemDetailView({
       discussions={amendmentDiscussions}
       amendmentId={agendaItem.amendment_id ?? undefined}
       agendaItemId={agendaItemId}
+      showStreetDesignPreviewAccordion
       userRecord={userRecord}
       hasUserVoted={isCRVotingActive ? hasUserVotedOnCR : undefined}
       getUserSelectedChoiceIds={isCRVotingActive ? getUserSelectedChoiceIds : undefined}

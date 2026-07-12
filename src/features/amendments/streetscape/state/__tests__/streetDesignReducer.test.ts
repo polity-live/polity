@@ -9,6 +9,7 @@ import {
   parseStoredStreetDesignState,
   streetDesignReducer,
 } from '../streetDesignReducer';
+import { getStreetDesignHiddenOsmFeatureIds } from '../../logic/streetDesignOsm';
 
 describe('streetDesignReducer', () => {
   it('starts in select mode by default', () => {
@@ -548,6 +549,36 @@ describe('streetDesignReducer', () => {
 
     expect(nextState.design.osmLayerVisibility?.building).toBe(false);
     expect(nextState.design.osmLayerVisibility?.road).toBe(true);
+    expect(nextState.isDirty).toBe(false);
+  });
+
+  it('updates the collaborative map context and invalidates the previous OSM snapshot', () => {
+    const initialState = createInitialStreetDesignEditorState({
+      ...createInitialStreetDesignEditorState().design,
+      selectionAddress: { formatted: 'Old address' },
+      osmSnapshot: {
+        fetchedAt: 1,
+        bbox: { south: 0, west: 0, north: 1, east: 1 },
+        features: [],
+      },
+    });
+    const mapSelection = {
+      center: { lat: 52.517, lon: 13.3889 },
+      widthMeters: 180,
+      heightMeters: 120,
+      rotationDeg: 15,
+    };
+
+    const nextState = streetDesignReducer(initialState, {
+      type: 'set_map_context',
+      mapSelection,
+      invalidateOsm: true,
+    });
+
+    expect(nextState.design.mapSelection).toEqual(mapSelection);
+    expect(nextState.design.origin).toEqual(mapSelection.center);
+    expect(nextState.design.selectionAddress).toBeUndefined();
+    expect(nextState.design.osmSnapshot).toBeNull();
     expect(nextState.isDirty).toBe(true);
   });
 
@@ -703,11 +734,18 @@ describe('streetDesignReducer', () => {
 
   it('imports OSM objects atomically, hides the source, and marks the design dirty', () => {
     const initialState = createInitialStreetDesignEditorState();
-    const tree = createPointStreetDesignObject({
-      id: 'imported-tree',
-      type: 'tree',
-      point: { x: 2, z: 3 },
-    });
+    const tree = {
+      ...createPointStreetDesignObject({
+        id: 'imported-tree',
+        type: 'tree',
+        point: { x: 2, z: 3 },
+      }),
+      provenance: {
+        source: 'osm' as const,
+        featureId: 'osm-tree-1',
+        confidence: 'exact' as const,
+      },
+    };
     const imported = streetDesignReducer(initialState, {
       type: 'import_osm_feature',
       osmWayId: 'osm-tree-1',
@@ -715,19 +753,13 @@ describe('streetDesignReducer', () => {
     });
 
     expect(imported.design.objects).toEqual([tree]);
-    expect(imported.design.hiddenOsmFeatureIds).toContain('osm-tree-1');
+    expect(imported.design.hiddenOsmFeatureIds).not.toContain('osm-tree-1');
+    expect(getStreetDesignHiddenOsmFeatureIds(imported.design)).toContain('osm-tree-1');
     expect(imported.selectedObjectId).toBe('imported-tree');
     expect(imported.selectedOsmWayId).toBeNull();
     expect(imported.isDirty).toBe(true);
 
-    const importedObject = {
-      ...tree,
-      provenance: {
-        source: 'osm' as const,
-        featureId: 'osm-tree-1',
-        confidence: 'exact' as const,
-      },
-    };
+    const importedObject = tree;
     const reverted = streetDesignReducer(
       {
         ...imported,
@@ -738,6 +770,7 @@ describe('streetDesignReducer', () => {
 
     expect(reverted.design.objects).toHaveLength(0);
     expect(reverted.design.hiddenOsmFeatureIds).not.toContain('osm-tree-1');
+    expect(getStreetDesignHiddenOsmFeatureIds(reverted.design)).not.toContain('osm-tree-1');
   });
 
   it('normalizes old OSM ways and layer visibility when parsing saved designs', () => {

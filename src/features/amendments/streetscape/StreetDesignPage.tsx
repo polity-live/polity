@@ -14,6 +14,7 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       amendment={controller.amendment}
       isLoading={controller.isLoading}
       readOnly={controller.readOnly}
+      canEditMapContext={controller.canEditMapContext}
       mode={controller.mode}
       modeDisabledReasons={controller.modeDisabledReasons}
       canChangeMode={controller.canChangeMode}
@@ -46,6 +47,8 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       selectedCenter={controller.selectedCenter}
       selectedBbox={controller.selectedBbox}
       selectedMapSelection={controller.selectedMapSelection}
+      selectionAddress={controller.selectionAddress}
+      selectionAddressLabel={controller.selectionAddressLabel}
       costSummary={controller.costSummary}
       isDirty={controller.state.isDirty}
       placementPreview={controller.placementPreview}
@@ -61,8 +64,8 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       isSaving={controller.isSaving}
       saveError={controller.saveError}
       onSelectedMapSelectionChange={controller.onSelectedMapSelectionChange}
+      onSelectionAddressChange={controller.onSelectionAddressChange}
       onLoadOsm={controller.onLoadOsm}
-      onLoadSample={controller.onLoadSample}
       onSave={controller.onSave}
       onModeChange={controller.onModeChange}
       onChangeRequestVote={controller.onChangeRequestVote}

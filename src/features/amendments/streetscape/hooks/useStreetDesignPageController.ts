@@ -33,11 +33,10 @@ import {
 } from '../logic/streetDesignChangeRequests';
 import { getStreetDesignAccess } from '../logic/streetDesignPermissions';
 import type {
-  StreetDesignBoundingBox,
   StreetDesignGeoPoint,
   StreetDesignMapSelection,
-  StreetDesignOsmSnapshot,
   StreetDesignOrigin,
+  StreetDesignSelectionAddress,
 } from '../types';
 import { STREET_DESIGN_CURRENCY } from '../logic/streetDesignObjectRegistry';
 import {
@@ -56,95 +55,20 @@ import {
 import { getStreetDesignOriginFromAmendmentLocation } from '../logic/streetDesignAmendmentLocation';
 import { getStreetDesignOsmLayerVisibility } from '../logic/streetDesignOsm';
 import { useStreetDesignEditorState } from './useStreetDesignEditorState';
+import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
+import { usePermissions } from '@/zero/rbac/usePermissions';
+import { formatStreetDesignSelectionAddress } from '../logic/streetDesignSelectionAddress';
 
-function originFromCenter(center: StreetDesignGeoPoint): StreetDesignOrigin {
+function originFromCenter(center: StreetDesignGeoPoint, label?: string): StreetDesignOrigin {
   return {
     ...center,
-    label: translateText('features.amendments.streetscape.sample.selectedStreetSpace'),
+    ...(label ? { label } : {}),
   };
 }
 
-function createSampleOsmSnapshot(
-  center: StreetDesignGeoPoint,
-  bbox: StreetDesignBoundingBox
-): StreetDesignOsmSnapshot {
-  const latStep = 0.00045;
-  const lonStep = 0.00065;
-
-  return {
-    fetchedAt: Date.now(),
-    bbox,
-    features: [
-      {
-        id: 'sample-road-main',
-        kind: 'road',
-        geometryKind: 'line',
-        label: translateText('features.amendments.streetscape.sample.mainRoad'),
-        widthMeters: 4.8,
-        points: [
-          { lat: center.lat - latStep, lon: center.lon - lonStep },
-          { lat: center.lat + latStep, lon: center.lon + lonStep },
-        ],
-        source: 'sample',
-      },
-      {
-        id: 'sample-road-side',
-        kind: 'road',
-        geometryKind: 'line',
-        label: translateText('features.amendments.streetscape.sample.sideRoad'),
-        widthMeters: 4.8,
-        points: [
-          { lat: center.lat + latStep * 0.2, lon: center.lon - lonStep },
-          { lat: center.lat - latStep * 0.15, lon: center.lon + lonStep },
-        ],
-        source: 'sample',
-      },
-      {
-        id: 'sample-building-left',
-        kind: 'building',
-        geometryKind: 'polygon',
-        label: translateText('features.amendments.streetscape.sample.existingBuilding'),
-        height: 15,
-        points: [
-          { lat: center.lat - 0.00035, lon: center.lon - 0.0005 },
-          { lat: center.lat - 0.00015, lon: center.lon - 0.00032 },
-          { lat: center.lat - 0.00003, lon: center.lon - 0.00047 },
-          { lat: center.lat - 0.00023, lon: center.lon - 0.00065 },
-          { lat: center.lat - 0.00035, lon: center.lon - 0.0005 },
-        ],
-        source: 'sample',
-      },
-      {
-        id: 'sample-building-right',
-        kind: 'building',
-        geometryKind: 'polygon',
-        label: translateText('features.amendments.streetscape.sample.residentialBuilding'),
-        height: 12,
-        points: [
-          { lat: center.lat + 0.00012, lon: center.lon + 0.00028 },
-          { lat: center.lat + 0.00032, lon: center.lon + 0.00047 },
-          { lat: center.lat + 0.0002, lon: center.lon + 0.00062 },
-          { lat: center.lat, lon: center.lon + 0.00042 },
-          { lat: center.lat + 0.00012, lon: center.lon + 0.00028 },
-        ],
-        source: 'sample',
-      },
-      {
-        id: 'sample-green',
-        kind: 'green',
-        geometryKind: 'polygon',
-        label: translateText('features.amendments.streetscape.sample.greenSpace'),
-        points: [
-          { lat: center.lat + 0.00018, lon: center.lon - 0.00055 },
-          { lat: center.lat + 0.00036, lon: center.lon - 0.00036 },
-          { lat: center.lat + 0.00026, lon: center.lon - 0.00018 },
-          { lat: center.lat + 0.00008, lon: center.lon - 0.00035 },
-          { lat: center.lat + 0.00018, lon: center.lon - 0.00055 },
-        ],
-        source: 'sample',
-      },
-    ],
-  };
+function isSameCenter(left: StreetDesignGeoPoint, right: StreetDesignGeoPoint) {
+  return left.lat === right.lat && left.lon === right.lon;
 }
 
 export function useStreetDesignPageController(amendmentId: string) {
@@ -169,7 +93,7 @@ export function useStreetDesignPageController(amendmentId: string) {
     includeStreetDesign: true,
   });
   const {
-    createChangeRequest,
+    createStreetDesignChangeRequests,
     createStreetDesign,
     finalizeInternalChangeRequestVote,
     updateAmendment,
@@ -200,15 +124,6 @@ export function useStreetDesignPageController(amendmentId: string) {
     [amendmentLocationOrigin, primaryStreetDesign?.design_state]
   );
   const editor = useStreetDesignEditorState(persistedDesign);
-  const [selectedMapSelection, setSelectedMapSelection] = useState<StreetDesignMapSelection>(
-    persistedDesign.mapSelection ??
-      createStreetDesignMapSelectionFromBbox(
-        persistedDesign.osmSnapshot?.bbox ??
-          getStreetDesignMapSelectionBoundingBox(
-            createStreetDesignMapSelectionFromCenterRadius(persistedDesign.origin)
-          )
-      )
-  );
   const [isLoadingOsm, setIsLoadingOsm] = useState(false);
   const [osmError, setOsmError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -218,15 +133,6 @@ export function useStreetDesignPageController(amendmentId: string) {
 
   useEffect(() => {
     editor.replaceDesign(persistedDesign, false);
-    setSelectedMapSelection(
-      persistedDesign.mapSelection ??
-        createStreetDesignMapSelectionFromBbox(
-          persistedDesign.osmSnapshot?.bbox ??
-            getStreetDesignMapSelectionBoundingBox(
-              createStreetDesignMapSelectionFromCenterRadius(persistedDesign.origin)
-            )
-        )
-    );
   }, [editor.replaceDesign, persistedDesign]);
 
   const amendmentModeContext = amendmentDocsCollabs ?? amendment;
@@ -251,6 +157,29 @@ export function useStreetDesignPageController(amendmentId: string) {
   });
   const selectedProcessBranch =
     processBranches.find(branch => branch.id === selectedProcessBranchId) ?? activeProcessBranch;
+  const selectedBranchStepRuns =
+    (
+      selectedProcessBranch as
+        | {
+            step_runs?: readonly {
+              event_id?: string | null;
+              status?: string | null;
+            }[];
+          }
+        | null
+        | undefined
+    )?.step_runs ?? [];
+  const currentProcessEventId =
+    selectedBranchStepRuns.find(
+      step =>
+        Boolean(step.event_id) &&
+        !['approved', 'rejected', 'merged', 'withdrawn', 'completed'].includes(step.status ?? '')
+    )?.event_id ??
+    selectedBranchStepRuns.find(step => Boolean(step.event_id))?.event_id ??
+    amendmentProcess?.event_id ??
+    amendment?.event_id ??
+    undefined;
+  const eventPermissions = usePermissions({ eventId: currentProcessEventId ?? undefined });
   const primaryDocument =
     amendmentDocsCollabs?.document ??
     documents.find(document => document.id === amendment?.document_id) ??
@@ -272,16 +201,27 @@ export function useStreetDesignPageController(amendmentId: string) {
         hasProcessBranch,
         selectedProcessBranch,
         userId: user?.id,
+        hasActiveEventVotingRight: eventPermissions.canVote(),
       }),
-    [amendmentModeContext, hasProcessBranch, primaryDocument?.id, selectedProcessBranch, user?.id]
+    [
+      amendmentModeContext,
+      eventPermissions,
+      hasProcessBranch,
+      primaryDocument?.id,
+      selectedProcessBranch,
+      user?.id,
+    ]
   );
   const branchAllowsDesignMutation =
     !hasProcessBranch ||
     (Boolean(selectedProcessBranch?.id) && isBranchEditable(selectedProcessBranch));
   const canMutateDesign =
-    streetDesignAccess.canEdit &&
     branchAllowsDesignMutation &&
-    (mode === 'edit' || isSuggestingMode(mode));
+    ((mode === 'edit' && streetDesignAccess.canEditDirectly) ||
+      (mode === 'suggest_internal' && streetDesignAccess.canSuggestInternally) ||
+      (mode === 'suggest_event' && streetDesignAccess.canSuggestInEvent));
+  const canEditMapContext =
+    branchAllowsDesignMutation && mode === 'edit' && streetDesignAccess.canEditDirectly;
   const readOnly = !canMutateDesign;
   const canVoteOnStreetChangeRequests = streetDesignAccess.canEdit && isVotingMode(mode);
   const canFinalizeStreetChangeRequests = streetDesignAccess.canEdit && mode === 'vote_internal';
@@ -343,7 +283,23 @@ export function useStreetDesignPageController(amendmentId: string) {
     [amendment, selectedProcessBranch]
   );
 
+  const selectedMapSelection = useMemo<StreetDesignMapSelection>(
+    () =>
+      editor.design.mapSelection ??
+      createStreetDesignMapSelectionFromBbox(
+        editor.design.osmSnapshot?.bbox ??
+          getStreetDesignMapSelectionBoundingBox(
+            createStreetDesignMapSelectionFromCenterRadius(editor.design.origin)
+          )
+      ),
+    [editor.design.mapSelection, editor.design.origin, editor.design.osmSnapshot?.bbox]
+  );
   const selectedCenter = selectedMapSelection.center;
+  const selectionAddressLabel = formatStreetDesignSelectionAddress(
+    editor.design.selectionAddress,
+    editor.design.origin.label ?? amendmentLocationOrigin?.label,
+    selectedCenter
+  );
   const selectedBbox = useMemo(
     () => getStreetDesignMapSelectionBoundingBox(selectedMapSelection),
     [selectedMapSelection]
@@ -355,8 +311,37 @@ export function useStreetDesignPageController(amendmentId: string) {
   const osmLayerVisibility = getStreetDesignOsmLayerVisibility(editor.design.osmLayerVisibility);
   const showStreetMarkings = editor.design.showStreetMarkings ?? true;
 
+  const handleSelectedMapSelectionChange = useCallback(
+    (selection: StreetDesignMapSelection) => {
+      if (!canEditMapContext) return;
+      const keepAddress = isSameCenter(selectedMapSelection.center, selection.center);
+      editor.updateMapContext(
+        selection,
+        keepAddress ? editor.design.selectionAddress : undefined,
+        true
+      );
+    },
+    [canEditMapContext, editor, selectedMapSelection.center]
+  );
+
+  const handleSelectionAddressChange = useCallback(
+    (address?: StreetDesignSelectionAddress) => {
+      if (!canEditMapContext) return;
+      editor.updateSelectionAddress(address);
+    },
+    [canEditMapContext, editor]
+  );
+
+  const handleHideOsmWay = useCallback(
+    (osmWayId: string) => {
+      if (!canEditMapContext) return;
+      editor.hideOsmWay(osmWayId);
+    },
+    [canEditMapContext, editor]
+  );
+
   const handleLoadOsm = useCallback(async () => {
-    if (readOnly) return;
+    if (!canEditMapContext) return;
 
     setIsLoadingOsm(true);
     setOsmError(null);
@@ -367,7 +352,7 @@ export function useStreetDesignPageController(amendmentId: string) {
       editor.replaceDesign(
         {
           ...editor.design,
-          origin: originFromCenter(selectedCenter),
+          origin: originFromCenter(selectedCenter, selectionAddressLabel),
           mapSelection: selectedMapSelection,
           osmLayerVisibility: getStreetDesignOsmLayerVisibility(editor.design.osmLayerVisibility),
           hiddenOsmWayIds: [],
@@ -386,27 +371,24 @@ export function useStreetDesignPageController(amendmentId: string) {
     } finally {
       setIsLoadingOsm(false);
     }
-  }, [editor, readOnly, selectedBbox, selectedCenter, selectedMapSelection]);
+  }, [
+    canEditMapContext,
+    editor,
+    selectedBbox,
+    selectedCenter,
+    selectedMapSelection,
+    selectionAddressLabel,
+  ]);
 
-  const handleLoadSample = useCallback(() => {
-    if (readOnly) return;
-
-    const snapshot = createSampleOsmSnapshot(selectedCenter, selectedBbox);
-    editor.replaceDesign(
-      {
-        ...editor.design,
-        origin: originFromCenter(selectedCenter),
-        mapSelection: selectedMapSelection,
-        osmLayerVisibility: getStreetDesignOsmLayerVisibility(editor.design.osmLayerVisibility),
-        hiddenOsmWayIds: [],
-        hiddenOsmFeatureIds: [],
-        osmSnapshot: snapshot,
-        comparisonMode: 'overlay',
-      },
-      true
-    );
-    setOsmError(null);
-  }, [editor, readOnly, selectedBbox, selectedCenter, selectedMapSelection]);
+  const designForPersistence = useMemo(
+    () => ({
+      ...editor.design,
+      comparisonMode: persistedDesign.comparisonMode,
+      osmLayerVisibility: persistedDesign.osmLayerVisibility,
+      showStreetMarkings: persistedDesign.showStreetMarkings,
+    }),
+    [editor.design, persistedDesign]
+  );
 
   const handleSave = useCallback(async () => {
     if (readOnly) return;
@@ -427,20 +409,26 @@ export function useStreetDesignPageController(amendmentId: string) {
           processBranchId: selectedProcessBranch?.id ?? null,
           streetDesignId: primaryStreetDesign?.id ?? null,
           baseDesign: persistedDesign,
-          draftDesign: editor.design,
+          draftDesign: designForPersistence,
         });
 
-        for (const payload of changeRequestPayloads) {
-          await createChangeRequest(
-            payload as unknown as Parameters<typeof createChangeRequest>[0]
-          );
+        if (changeRequestPayloads.length === 0) {
+          return;
         }
 
+        const result = createStreetDesignChangeRequests({
+          amendment_id: amendmentId,
+          process_branch_id: selectedProcessBranch?.id ?? null,
+          requests: changeRequestPayloads,
+        } as unknown as Parameters<typeof createStreetDesignChangeRequests>[0]);
+        await waitForClientApply(result);
+
         editor.replaceDesign(persistedDesign, false);
+        toast.success(translateText('features.amendments.toasts.changeRequestCreated'));
         return;
       }
 
-      const persistence = createStreetDesignPersistenceSnapshot(editor.design);
+      const persistence = createStreetDesignPersistenceSnapshot(designForPersistence);
       const payload = {
         amendment_id: amendmentId,
         title,
@@ -458,6 +446,7 @@ export function useStreetDesignPageController(amendmentId: string) {
       if (primaryStreetDesign?.id) {
         await updateStreetDesign({
           id: primaryStreetDesign.id,
+          process_branch_id: selectedProcessBranch?.id ?? null,
           title: payload.title,
           bbox: payload.bbox,
           center_lat: payload.center_lat,
@@ -472,11 +461,12 @@ export function useStreetDesignPageController(amendmentId: string) {
       } else {
         await createStreetDesign({
           id: crypto.randomUUID(),
+          process_branch_id: selectedProcessBranch?.id ?? null,
           ...payload,
         });
       }
 
-      editor.replaceDesign(editor.design, false);
+      editor.replaceDesign(designForPersistence, false);
     } catch (error) {
       setSaveError(
         error instanceof Error
@@ -489,8 +479,9 @@ export function useStreetDesignPageController(amendmentId: string) {
   }, [
     amendment?.title,
     amendmentId,
-    createChangeRequest,
+    createStreetDesignChangeRequests,
     createStreetDesign,
+    designForPersistence,
     editor,
     mode,
     persistedDesign,
@@ -673,9 +664,12 @@ export function useStreetDesignPageController(amendmentId: string) {
     onlinePeerMap,
     presenceColorByUserId,
     readOnly,
+    canEditMapContext,
     selectedCenter,
     selectedBbox,
     selectedMapSelection,
+    selectionAddress: editor.design.selectionAddress,
+    selectionAddressLabel,
     placementPreview,
     placementPreviewType: placementDraft?.type ?? null,
     placementStart: placementDraft?.start ?? null,
@@ -684,11 +678,11 @@ export function useStreetDesignPageController(amendmentId: string) {
     canFinishPathPlacement,
     osmLayerVisibility,
     showStreetMarkings,
-    onSelectedMapSelectionChange: setSelectedMapSelection,
+    onSelectedMapSelectionChange: handleSelectedMapSelectionChange,
+    onSelectionAddressChange: handleSelectionAddressChange,
     isLoadingOsm,
     osmError,
     onLoadOsm: handleLoadOsm,
-    onLoadSample: handleLoadSample,
     isSaving,
     saveError,
     changeRequestColorMode,
@@ -700,6 +694,7 @@ export function useStreetDesignPageController(amendmentId: string) {
     streetDesignDiscussions,
     userColor,
     ...editor,
+    hideOsmWay: handleHideOsmWay,
   };
 }
 

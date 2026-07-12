@@ -74,6 +74,7 @@ export interface StreetSceneCanvasViewViewProps {
   hiddenObjectCategories?: readonly StreetDesignObjectCategory[];
   interactionMode: StreetDesignInteractionMode;
   readOnly: boolean;
+  mapContextReadOnly: boolean;
   changeRequests?: readonly StreetDesignChangeRequest[];
   streetDesignDiscussions?: readonly StreetDesignDiscussionLike[];
   selectedChangeRequestId?: string | null;
@@ -123,6 +124,7 @@ export function StreetSceneCanvasViewView({
   hiddenObjectCategories = [],
   interactionMode,
   readOnly,
+  mapContextReadOnly,
   changeRequests = [],
   streetDesignDiscussions = [],
   selectedChangeRequestId = null,
@@ -351,6 +353,7 @@ export function StreetSceneCanvasViewView({
             <StreetDesignOsmPopover
               osmWay={selectedOsmWay}
               readOnly={readOnly}
+              hideReadOnly={mapContextReadOnly}
               onClose={() => onOsmWaySelect(null)}
               onHideOsmWay={onOsmWayHide}
               onImportOsmWay={onOsmWayImport}
@@ -729,13 +732,18 @@ function StreetDesignObjectPopover({
               </Label>
               <Input
                 type="number"
+                aria-label={t('features.amendments.streetscape.inspector.price')}
                 min={0}
-                step={1}
+                step={0.01}
                 value={unitCostEuro}
                 disabled={readOnly}
-                onChange={event =>
-                  onUnitCostChange(object.id, Math.round(Number(event.target.value) * 100))
-                }
+                onChange={event => {
+                  const value = event.target.value;
+                  onUnitCostChange(
+                    object.id,
+                    value === '' ? null : Math.max(0, Math.round(Number(value) * 100))
+                  );
+                }}
               />
             </div>
             <ReadonlyMetric
@@ -748,6 +756,18 @@ function StreetDesignObjectPopover({
               cost: formatMinorCurrency(object.cost.suggestedUnitCostMinor),
             })}
           </p>
+          {object.cost.customUnitCostMinor != null ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="mt-1 h-auto px-0 text-xs"
+              disabled={readOnly}
+              onClick={() => onUnitCostChange(object.id, null)}
+            >
+              {t('features.amendments.streetscape.inspector.resetToSuggestedPrice')}
+            </Button>
+          ) : null}
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -797,12 +817,14 @@ function StreetDesignObjectPopover({
 export function StreetDesignOsmPopover({
   osmWay,
   readOnly,
+  hideReadOnly,
   onClose,
   onHideOsmWay,
   onImportOsmWay,
 }: {
   osmWay: StreetDesignOsmWay;
   readOnly: boolean;
+  hideReadOnly: boolean;
   onClose: () => void;
   onHideOsmWay: (osmWayId: string) => void;
   onImportOsmWay: (osmWayId: string) => void;
@@ -928,7 +950,7 @@ export function StreetDesignOsmPopover({
           size="sm"
           variant="outline"
           className="h-8 gap-2 text-xs"
-          disabled={readOnly}
+          disabled={hideReadOnly}
           onClick={() => onHideOsmWay(osmWay.id)}
         >
           <EyeOff className="size-3.5" />

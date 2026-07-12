@@ -34,6 +34,7 @@ import {
 } from './schema';
 import {
   createChangeRequestSchema,
+  createStreetDesignChangeRequestsSchema,
   deleteChangeRequestSchema,
   finalizeExpiredInternalChangeRequestVotesSchema,
   finalizeInternalChangeRequestVoteSchema,
@@ -493,8 +494,10 @@ export const amendmentSharedMutators = {
     createAmendmentStreetDesignSchema,
     async ({ tx, ctx: { userID }, args }) => {
       const now = Date.now();
+      const { process_branch_id: _processBranchId, ...streetDesign } = args;
+      void _processBranchId;
       await tx.mutate.amendment_street_design.insert({
-        ...args,
+        ...streetDesign,
         title: args.title ?? null,
         bbox: args.bbox ?? null,
         center_lat: args.center_lat ?? null,
@@ -511,8 +514,10 @@ export const amendmentSharedMutators = {
   ),
 
   updateStreetDesign: defineMutator(updateAmendmentStreetDesignSchema, async ({ tx, args }) => {
+    const { process_branch_id: _processBranchId, ...streetDesign } = args;
+    void _processBranchId;
     await tx.mutate.amendment_street_design.update({
-      ...args,
+      ...streetDesign,
       updated_at: Date.now(),
     });
   }),
@@ -677,6 +682,15 @@ export const amendmentSharedMutators = {
         }
       }
       return true;
+    }
+  ),
+
+  createStreetDesignChangeRequests: defineMutator(
+    createStreetDesignChangeRequestsSchema,
+    async ({ tx, ctx, args }) => {
+      for (const request of args.requests) {
+        await amendmentSharedMutators.createChangeRequest.fn({ tx, ctx, args: request });
+      }
     }
   ),
 

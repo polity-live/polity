@@ -30,6 +30,7 @@ export const agendasTranslations = {
     sortByChangedCharacters: 'Sort by changed characters',
     sortByTextPosition: 'Sort by text position',
     sortLexicographically: 'Sort lexicographically',
+    streetDesignPreview: 'Street Design Preview',
     deadline: 'Deadline',
     accepted: 'Accepted',
     changeRequestVotesPlaceholder: 'Change request votes will appear here.',

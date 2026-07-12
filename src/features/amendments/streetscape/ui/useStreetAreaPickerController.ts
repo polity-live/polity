@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toGeoCoordinates } from '@/features/shared/logic/geoCoordinates';
+import { geoapifyReverseFn } from '@/server/geoapify-reverse';
 import type {
   GeoAddressField,
   GeoAddressValues,
+  GeoResolvedAddress,
 } from '@/features/shared/ui/form/GeoAddressInputField';
 import type { GeoAddressTextMap } from '@/features/shared/ui/form/GeoAddressFields';
 import type { DivIcon } from 'leaflet';
@@ -11,7 +13,13 @@ import type {
   StreetDesignBoundingBox,
   StreetDesignGeoPoint,
   StreetDesignMapSelection,
+  StreetDesignSelectionAddress,
 } from '../types';
+import {
+  createStreetDesignSelectionAddress,
+  EMPTY_STREET_DESIGN_ADDRESS_VALUES,
+  mapStreetDesignSelectionAddressToValues,
+} from '../logic/streetDesignSelectionAddress';
 import {
   getStreetDesignMapSelectionCorners,
   getStreetDesignMapSelectionDimensions,
@@ -31,22 +39,14 @@ interface StreetAreaPickerProps {
   isLoadingOsm: boolean;
   osmError: string | null;
   readOnly: boolean;
+  selectionAddress?: StreetDesignSelectionAddress;
   onMapSelectionChange: (selection: StreetDesignMapSelection) => void;
+  onSelectionAddressChange: (address?: StreetDesignSelectionAddress) => void;
   onLoadOsm: () => void;
-  onLoadSample: () => void;
 }
 
 type ReactLeafletModule = typeof import('react-leaflet');
 type LeafletModule = typeof import('leaflet');
-
-const EMPTY_LOCATION_SEARCH_VALUES: GeoAddressValues = {
-  country: '',
-  region: '',
-  city: '',
-  post_code: '',
-  street: '',
-  house_number: '',
-};
 
 function isSameGeoPoint(left: StreetDesignGeoPoint, right: StreetDesignGeoPoint) {
   const precision = 1_000_000;
@@ -63,26 +63,43 @@ export function useStreetAreaPickerController({
   isLoadingOsm,
   osmError,
   readOnly,
+  selectionAddress,
   onMapSelectionChange,
+  onSelectionAddressChange,
   onLoadOsm,
-  onLoadSample,
 }: StreetAreaPickerProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [reactLeafletModule, setReactLeafletModule] = useState<ReactLeafletModule | null>(null);
 
   const [leafletModule, setLeafletModule] = useState<LeafletModule | null>(null);
 
   const [loadFailed, setLoadFailed] = useState(false);
-  const [locationSearchValues, setLocationSearchValues] = useState<GeoAddressValues>(
-    EMPTY_LOCATION_SEARCH_VALUES
+  const persistedAddressValues = useMemo(
+    () => mapStreetDesignSelectionAddressToValues(selectionAddress),
+    [
+      selectionAddress?.city,
+      selectionAddress?.country,
+      selectionAddress?.houseNumber,
+      selectionAddress?.postCode,
+      selectionAddress?.region,
+      selectionAddress?.street,
+    ]
   );
+  const [locationSearchValues, setLocationSearchValues] =
+    useState<GeoAddressValues>(persistedAddressValues);
   const [locationSearchResetKey, setLocationSearchResetKey] = useState(0);
   const [mapViewportFocusKey, setMapViewportFocusKey] = useState(0);
   const mapSelectionRef = useRef(mapSelection);
+  const reverseRequestIdRef = useRef(0);
 
   useEffect(() => {
     mapSelectionRef.current = mapSelection;
   }, [mapSelection]);
+
+  useEffect(() => {
+    setLocationSearchValues(persistedAddressValues);
+    setLocationSearchResetKey(key => key + 1);
+  }, [persistedAddressValues]);
 
   useEffect(() => {
     let isActive = true;
@@ -283,7 +300,7 @@ export function useStreetAreaPickerController({
   }, []);
 
   const handleLocationResolvedAddress = useCallback(
-    (result: { lat?: number | null; lon?: number | null } | null) => {
+    (result: GeoResolvedAddress | null) => {
       if (readOnly) return;
 
       const coordinates = toGeoCoordinates(result);
@@ -295,14 +312,42 @@ export function useStreetAreaPickerController({
       };
       const currentSelection = mapSelectionRef.current;
 
-      if (isSameGeoPoint(currentSelection.center, nextCenter)) {
-        return;
+      if (!isSameGeoPoint(currentSelection.center, nextCenter)) {
+        onMapSelectionChange(moveStreetDesignMapSelectionToCenter(currentSelection, nextCenter));
+        setMapViewportFocusKey(key => key + 1);
       }
 
-      onMapSelectionChange(moveStreetDesignMapSelectionToCenter(currentSelection, nextCenter));
-      setMapViewportFocusKey(key => key + 1);
+      onSelectionAddressChange(createStreetDesignSelectionAddress(result, locationSearchValues));
     },
-    [onMapSelectionChange, readOnly]
+    [locationSearchValues, onMapSelectionChange, onSelectionAddressChange, readOnly]
+  );
+
+  const handleBboxMoveEnd = useCallback(
+    async (nextCenter: StreetDesignGeoPoint) => {
+      if (readOnly) return;
+
+      const requestId = ++reverseRequestIdRef.current;
+      try {
+        const { result } = await geoapifyReverseFn({
+          data: {
+            latitude: nextCenter.lat,
+            longitude: nextCenter.lon,
+            language,
+          },
+        });
+        if (reverseRequestIdRef.current !== requestId || !result) return;
+
+        const nextAddress = createStreetDesignSelectionAddress(result);
+        setLocationSearchValues(mapStreetDesignSelectionAddressToValues(nextAddress));
+        setLocationSearchResetKey(key => key + 1);
+        onSelectionAddressChange(nextAddress);
+      } catch {
+        if (reverseRequestIdRef.current === requestId) {
+          onSelectionAddressChange(undefined);
+        }
+      }
+    },
+    [language, onSelectionAddressChange, readOnly]
   );
 
   const mapLoading =
@@ -320,7 +365,6 @@ export function useStreetAreaPickerController({
     osmError,
     readOnly,
     onLoadOsm,
-    onLoadSample,
     locationSearchValues,
     locationSearchLabels,
     locationSearchPlaceholders,
@@ -329,8 +373,9 @@ export function useStreetAreaPickerController({
     onLocationSearchFieldChange: handleLocationSearchFieldChange,
     onLocationSearchResolved: handleLocationResolvedAddress,
     onLocationSearchReset: () => {
-      setLocationSearchValues(EMPTY_LOCATION_SEARCH_VALUES);
+      setLocationSearchValues(EMPTY_STREET_DESIGN_ADDRESS_VALUES);
       setLocationSearchResetKey(key => key + 1);
+      onSelectionAddressChange(undefined);
     },
     reactLeafletModule,
     markerIcon,
@@ -345,6 +390,7 @@ export function useStreetAreaPickerController({
     heightMeters: dimensions.heightMeters,
     rotationDeg: dimensions.rotationDeg,
     onBboxMove: handleBboxMove,
+    onBboxMoveEnd: handleBboxMoveEnd,
     onBboxResize: handleBboxResize,
     onSelectionRotate: handleRotationDrag,
     onWidthMetersChange: handleWidthMetersChange,

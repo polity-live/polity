@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { cn } from '@/features/shared/utils/utils';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 import {
   mountStreetDesignScene,
@@ -12,7 +13,11 @@ import {
   type StreetDesignChangeRequestColorMode,
   type StreetDesignPreviewSource,
 } from '../logic/streetDesignChangeRequests';
-import { resolveStreetDesignBaseState } from '../logic/streetDesignChangeRequestDiff';
+import {
+  getStreetDesignCostChange,
+  resolveStreetDesignBaseState,
+} from '../logic/streetDesignChangeRequestDiff';
+import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
 import { parseStoredStreetDesignState } from '../state/streetDesignReducer';
 import type { StreetDesignStateV1 } from '../types';
 
@@ -29,11 +34,22 @@ export function StreetDesignChangeRequestPreview({
   colorMode = 'natural',
   className,
 }: StreetDesignChangeRequestPreviewProps) {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const design = useMemo(
     () => resolveStreetDesignPreviewState(changeRequest, streetDesigns),
     [changeRequest, streetDesigns]
+  );
+  const costChange = useMemo(
+    () =>
+      getStreetDesignCostChange(changeRequest.original_properties, changeRequest.new_properties),
+    [changeRequest.new_properties, changeRequest.original_properties]
+  );
+  const hasVisibleCostChange = Boolean(
+    costChange &&
+    (costChange.beforeUnitCostMinor !== costChange.afterUnitCostMinor ||
+      costChange.beforeTotalCostMinor !== costChange.afterTotalCostMinor)
   );
 
   useEffect(() => {
@@ -87,15 +103,60 @@ export function StreetDesignChangeRequestPreview({
 
   return (
     <div
-      className={cn('bg-muted/20 relative h-72 overflow-hidden rounded-md border', className)}
+      className={cn('bg-muted/20 overflow-hidden rounded-md border', className)}
       data-testid="street-design-change-request-preview"
     >
-      <canvas ref={canvasRef} className="block h-full w-full" />
-      {loadFailed ? (
-        <div className="bg-background/85 text-muted-foreground absolute inset-0 flex items-center justify-center px-4 text-center text-sm">
-          Street design preview unavailable.
+      <div className="relative h-72">
+        <canvas ref={canvasRef} className="block h-full w-full" />
+        {loadFailed ? (
+          <div className="bg-background/85 text-muted-foreground absolute inset-0 flex items-center justify-center px-4 text-center text-sm">
+            Street design preview unavailable.
+          </div>
+        ) : null}
+      </div>
+      {hasVisibleCostChange && costChange ? (
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-3 border-t px-3 py-3 text-sm">
+          <CostColumn
+            label={t('features.amendments.streetscape.changeRequests.before')}
+            unitCostMinor={costChange.beforeUnitCostMinor}
+            totalCostMinor={costChange.beforeTotalCostMinor}
+            t={t}
+          />
+          <span className="text-muted-foreground self-center">→</span>
+          <CostColumn
+            label={t('features.amendments.streetscape.changeRequests.after')}
+            unitCostMinor={costChange.afterUnitCostMinor}
+            totalCostMinor={costChange.afterTotalCostMinor}
+            t={t}
+          />
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function CostColumn({
+  label,
+  unitCostMinor,
+  totalCostMinor,
+  t,
+}: {
+  label: string;
+  unitCostMinor: number | null;
+  totalCostMinor: number | null;
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="min-w-0 space-y-1">
+      <p className="text-muted-foreground text-xs font-medium">{label}</p>
+      <p className="truncate font-medium">
+        {t('features.amendments.streetscape.inspector.price')}:{' '}
+        {unitCostMinor == null ? '—' : formatMinorCurrency(unitCostMinor)}
+      </p>
+      <p className="text-muted-foreground truncate text-xs">
+        {t('features.amendments.streetscape.inspector.total')}:{' '}
+        {totalCostMinor == null ? '—' : formatMinorCurrency(totalCostMinor)}
+      </p>
     </div>
   );
 }

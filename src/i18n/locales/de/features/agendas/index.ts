@@ -31,6 +31,7 @@ export const agendasTranslations = {
     sortByChangedCharacters: 'Nach Änderungsumfang sortieren',
     sortByTextPosition: 'Nach Textposition sortieren',
     sortLexicographically: 'Lexikografisch sortieren',
+    streetDesignPreview: 'Straßendesign-Vorschau',
     deadline: 'Frist',
     accepted: 'Angenommen',
     changeRequestVotesPlaceholder: 'Änderungsantrags-Abstimmungen erscheinen hier.',

@@ -62,6 +62,12 @@ export const createChangeRequestSchema = baseChangeRequestSchema
     discussion_id: z.string().nullable().optional(),
   });
 
+export const createStreetDesignChangeRequestsSchema = z.object({
+  amendment_id: z.string(),
+  process_branch_id: z.string().nullable(),
+  requests: z.array(createChangeRequestSchema).min(1),
+});
+
 export const updateChangeRequestSchema = baseChangeRequestSchema
   .pick({
     title: true,

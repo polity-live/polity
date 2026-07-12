@@ -197,6 +197,17 @@ export function useAmendmentActions() {
     [zero]
   );
 
+  const createStreetDesignChangeRequests = useCallback(
+    (args: Parameters<typeof mutators.amendments.createStreetDesignChangeRequests>[0]) => {
+      const result = zero.mutate(mutators.amendments.createStreetDesignChangeRequests(args));
+      onServerError(result, () =>
+        toast.error(t('features.amendments.toasts.changeRequestCreateFailed'))
+      );
+      return result;
+    },
+    [zero]
+  );
+
   const updateChangeRequest = useCallback(
     (args: Parameters<typeof mutators.amendments.updateChangeRequest>[0]) => {
       const result = zero.mutate(mutators.amendments.updateChangeRequest(args));
@@ -622,6 +633,7 @@ export function useAmendmentActions() {
 
     // Change requests
     createChangeRequest,
+    createStreetDesignChangeRequests,
     deleteChangeRequest,
     updateChangeRequest,
     voteOnChangeRequest,

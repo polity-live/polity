@@ -3,10 +3,12 @@ import type {
   StreetDesignComparisonMode,
   StreetDesignInteractionMode,
   StreetDesignLocalPoint,
+  StreetDesignMapSelection,
   StreetDesignObjectCategory,
   StreetDesignObjectType,
   StreetDesignOsmLayerVisibility,
   StreetDesignPropertyValue,
+  StreetDesignSelectionAddress,
   StreetDesignStateV1,
 } from '../types';
 import { getStreetDesignCostLine, getStreetDesignCostSummary } from '../logic/streetDesignCosting';
@@ -52,6 +54,26 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
 
   const replaceDesign = useCallback((design: StreetDesignStateV1, dirty = false) => {
     dispatch({ type: 'replace_design', design, dirty });
+  }, []);
+
+  const updateMapContext = useCallback(
+    (
+      mapSelection: StreetDesignMapSelection,
+      selectionAddress?: StreetDesignSelectionAddress,
+      invalidateOsm = true
+    ) => {
+      dispatch({
+        type: 'set_map_context',
+        mapSelection,
+        selectionAddress,
+        invalidateOsm,
+      });
+    },
+    []
+  );
+
+  const updateSelectionAddress = useCallback((selectionAddress?: StreetDesignSelectionAddress) => {
+    dispatch({ type: 'set_selection_address', selectionAddress });
   }, []);
 
   const setComparisonMode = useCallback((comparisonMode: StreetDesignComparisonMode) => {
@@ -200,6 +222,8 @@ export function useStreetDesignEditorState(initialDesign: StreetDesignStateV1) {
     selectedObjectCostLine,
     costSummary,
     replaceDesign,
+    updateMapContext,
+    updateSelectionAddress,
     setComparisonMode,
     setInteractionMode,
     setSelectedTool,

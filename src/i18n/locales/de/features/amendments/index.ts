@@ -420,6 +420,12 @@ export const amendmentsTranslations = {
     saving: 'Speichern...',
     workspaceTitle: 'Straßenraum-Entwurf',
     workspaceDescription: 'Werkzeuge, 3D-Modell, Inspector und Kosten in einem Arbeitsbereich.',
+    categoryDelete: {
+      title: 'Elementkategorie löschen?',
+      description: 'Dadurch entstehen {{count}} einzelne Änderungsanträge, einer pro Element.',
+      cancel: 'Abbrechen',
+      confirm: '{{count}} Änderungsanträge erstellen',
+    },
     status: {
       readOnly: 'Nur Lesen',
       saved: 'Gespeichert',
@@ -582,6 +588,7 @@ export const amendmentsTranslations = {
       stepCount: 'Stufen',
       structure: 'Struktur',
       suggestedCost: 'Vorschlag: {{cost}}',
+      resetToSuggestedPrice: 'Vorgeschlagenen Preis verwenden',
       tags: 'Tags',
       title: 'Inspector',
       total: 'Summe',
@@ -621,7 +628,6 @@ export const amendmentsTranslations = {
     },
     areaPicker: {
       heightMeters: 'Höhe m',
-      loadDemo: 'Demo laden',
       loadOsm: 'OSM laden',
       loadingOsm: 'Lädt...',
       loadingMap: 'Karte wird geladen...',

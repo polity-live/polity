@@ -413,6 +413,12 @@ export const amendmentsTranslations = {
     saving: 'Saving...',
     workspaceTitle: 'Street-space design',
     workspaceDescription: 'Tools, 3D model, inspector, and costs in one workspace.',
+    categoryDelete: {
+      title: 'Delete element category?',
+      description: 'This creates {{count}} separate change requests, one for each element.',
+      cancel: 'Cancel',
+      confirm: 'Create {{count}} change requests',
+    },
     status: {
       readOnly: 'Read only',
       saved: 'Saved',
@@ -573,6 +579,7 @@ export const amendmentsTranslations = {
       stepCount: 'Steps',
       structure: 'Structure',
       suggestedCost: 'Suggestion: {{cost}}',
+      resetToSuggestedPrice: 'Use suggested price',
       tags: 'Tags',
       title: 'Inspector',
       total: 'Total',
@@ -612,7 +619,6 @@ export const amendmentsTranslations = {
     },
     areaPicker: {
       heightMeters: 'Height m',
-      loadDemo: 'Load demo',
       loadOsm: 'Load OSM',
       loadingOsm: 'Loading...',
       loadingMap: 'Loading map...',

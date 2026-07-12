@@ -62,6 +62,7 @@ describe('StreetAreaPickerView', () => {
   it('temporarily disables map gestures while dragging selection handles', () => {
     const { map, markerEventHandlers, reactLeafletModule } = createReactLeafletFixture();
     const onBboxMove = vi.fn();
+    const onBboxMoveEnd = vi.fn();
     const onBboxResize = vi.fn();
     const onSelectionRotate = vi.fn();
 
@@ -70,6 +71,7 @@ describe('StreetAreaPickerView', () => {
         {...createPickerProps({
           reactLeafletModule,
           onBboxMove,
+          onBboxMoveEnd,
           onBboxResize,
           onSelectionRotate,
         })}
@@ -84,6 +86,8 @@ describe('StreetAreaPickerView', () => {
     expect(onBboxMove).toHaveBeenCalledWith({ lat: 52.5201, lon: 13.4051 });
 
     markerEventHandlers.center.dragend(createLeafletEvent({ lat: 52.5201, lng: 13.4051 }));
+    expect(onBboxMoveEnd).toHaveBeenCalledTimes(1);
+    expect(onBboxMoveEnd).toHaveBeenCalledWith({ lat: 52.5201, lon: 13.4051 });
     expect(map.dragging.enable).toHaveBeenCalledTimes(1);
     expect(map.touchZoom.enable).toHaveBeenCalledTimes(1);
 
@@ -169,11 +173,11 @@ describe('StreetAreaPickerView', () => {
 function createPickerProps(overrides: Record<string, unknown> = {}) {
   return {
     center: { lat: 52.52, lon: 13.405 },
+    addressLabel: 'Alexanderplatz, Berlin',
     isLoadingOsm: false,
     osmError: null,
     readOnly: false,
     onLoadOsm: vi.fn(),
-    onLoadSample: vi.fn(),
     locationSearchValues: {
       country: '',
       region: '',
@@ -221,6 +225,7 @@ function createPickerProps(overrides: Record<string, unknown> = {}) {
     heightMeters: 100,
     rotationDeg: 0,
     onBboxMove: vi.fn(),
+    onBboxMoveEnd: vi.fn(),
     onBboxResize: vi.fn(),
     onSelectionRotate: vi.fn(),
     onWidthMetersChange: vi.fn(),

@@ -38,6 +38,7 @@ interface StreetSceneCanvasViewProps {
   selectedOsmFocusRequestKey: number;
   interactionMode: StreetDesignInteractionMode;
   readOnly: boolean;
+  mapContextReadOnly?: boolean;
   changeRequests?: readonly StreetDesignChangeRequest[];
   streetDesignDiscussions?: readonly StreetDesignDiscussionLike[];
   selectedChangeRequestId?: string | null;
@@ -100,6 +101,7 @@ export function StreetSceneCanvasView({
   selectedOsmFocusRequestKey,
   interactionMode,
   readOnly,
+  mapContextReadOnly = readOnly,
   changeRequests = [],
   streetDesignDiscussions = [],
   selectedChangeRequestId = null,
@@ -155,6 +157,7 @@ export function StreetSceneCanvasView({
     selectedOsmFocusRequestKey,
     interactionMode,
     readOnly,
+    mapContextReadOnly,
     changeRequests,
     streetDesignDiscussions,
     selectedChangeRequestId,

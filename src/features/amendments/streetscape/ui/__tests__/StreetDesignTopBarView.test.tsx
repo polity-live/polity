@@ -50,6 +50,7 @@ function renderTopBar(overrides: Partial<Parameters<typeof StreetDesignTopBarVie
   });
   const props: Parameters<typeof StreetDesignTopBarView>[0] = {
     readOnly: false,
+    mapContextReadOnly: false,
     mode: 'edit',
     modeDisabledReasons: {},
     canChangeMode: true,
@@ -89,7 +90,6 @@ function renderTopBar(overrides: Partial<Parameters<typeof StreetDesignTopBarVie
     onAreaPickerOpenChange: vi.fn(),
     onCostSummaryOpenChange: vi.fn(),
     onLoadOsm: vi.fn(),
-    onLoadSample: vi.fn(),
     onOsmWayHide: vi.fn(),
     ...overrides,
   };
@@ -137,9 +137,7 @@ describe('StreetDesignTopBarView', () => {
     expect(props.onAreaPickerOpenChange).toHaveBeenCalledWith(true);
     expect(props.onCostSummaryOpenChange).toHaveBeenCalledWith(true);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Load demo' }));
     fireEvent.click(screen.getByRole('button', { name: 'Load OSM' }));
-    expect(props.onLoadSample).toHaveBeenCalled();
     expect(props.onLoadOsm).toHaveBeenCalled();
   });
 
@@ -164,6 +162,14 @@ describe('StreetDesignTopBarView', () => {
     expect(dialog.className).toContain('w-screen');
     expect(dialog.className).toContain('max-w-none');
     expect(dialog.className).toContain('sm:max-w-none');
+  });
+
+  it('keeps object suggestions available while hiding map-context mutations', () => {
+    renderTopBar({ mode: 'suggest_event', mapContextReadOnly: true });
+
+    expect(screen.getByRole('radio', { name: 'Place' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Map section' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Load OSM' })).toBeNull();
   });
 
   it('renders secondary share, invite, change request, and overlay controls', async () => {

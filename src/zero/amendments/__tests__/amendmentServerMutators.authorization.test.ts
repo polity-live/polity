@@ -99,6 +99,7 @@ type CreateChangeRequestArgs = Parameters<
 type UpdateSupportConfirmationArgs = Parameters<
   typeof amendmentServerMutators.updateSupportConfirmation.fn
 >[0]['args'];
+type AddCollaboratorArgs = Parameters<typeof amendmentServerMutators.addCollaborator.fn>[0]['args'];
 
 function createTx(location: AmendmentMutatorTx['location'] = 'server') {
   return {
@@ -289,6 +290,18 @@ function updateSupportConfirmationArgs(
   };
 }
 
+function addCollaboratorArgs(overrides: Partial<AddCollaboratorArgs> = {}): AddCollaboratorArgs {
+  return {
+    id: 'collaborator-1',
+    user_id: 'invited-user',
+    amendment_id: 'amendment-1',
+    role_id: 'role-1',
+    status: 'invited',
+    visibility: null,
+    ...overrides,
+  };
+}
+
 describe('amendmentServerMutators authorization', () => {
   beforeEach(() => {
     canMock.mockReset();
@@ -335,6 +348,74 @@ describe('amendmentServerMutators authorization', () => {
         user_id: 'user-1',
         status: 'admin',
       })
+    );
+  });
+
+  it('waits for an invited collaborator notification before completing', async () => {
+    const tx = createTx('server');
+    let resolveNotification: (() => void) | undefined;
+    const notificationPending = new Promise<void>(resolve => {
+      resolveNotification = resolve;
+    });
+    fireNotificationMock.mockReturnValueOnce(notificationPending);
+    amendmentTitleMock.mockResolvedValueOnce('Amendment One');
+    userNameMock.mockResolvedValueOnce('Inviting User');
+
+    let mutationCompleted = false;
+    const mutation = amendmentServerMutators.addCollaborator
+      .fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: addCollaboratorArgs(),
+      })
+      .then(() => {
+        mutationCompleted = true;
+      });
+
+    await vi.waitFor(() => {
+      expect(fireNotificationMock).toHaveBeenCalledWith('notifyCollaborationInvite', {
+        senderId: 'user-1',
+        recipientUserId: 'invited-user',
+        amendmentId: 'amendment-1',
+        amendmentTitle: 'Amendment One',
+      });
+    });
+    expect(mutationCompleted).toBe(false);
+
+    resolveNotification?.();
+    await mutation;
+
+    expect(mutationCompleted).toBe(true);
+  });
+
+  it('keeps self-request collaboration notifications on the request path', async () => {
+    const tx = createTx('server');
+    tx.run.mockResolvedValueOnce({
+      id: 'amendment-1',
+      created_by_id: 'author-user',
+      visibility: 'public',
+    });
+    amendmentTitleMock.mockResolvedValueOnce('Amendment One');
+    userNameMock.mockResolvedValueOnce('Requesting User');
+
+    await amendmentServerMutators.addCollaborator.fn({
+      tx: tx as never,
+      ctx: createCtx(),
+      args: addCollaboratorArgs({
+        user_id: 'user-1',
+        status: 'requested',
+      }),
+    });
+
+    expect(fireNotificationMock).toHaveBeenCalledWith('notifyCollaborationRequest', {
+      senderId: 'user-1',
+      senderName: 'Requesting User',
+      amendmentId: 'amendment-1',
+      amendmentTitle: 'Amendment One',
+    });
+    expect(fireNotificationMock).not.toHaveBeenCalledWith(
+      'notifyCollaborationInvite',
+      expect.anything()
     );
   });
 
@@ -1579,6 +1660,44 @@ describe('amendmentServerMutators authorization', () => {
 
     expect(tx.mutate.amendment_process_branch.update).not.toHaveBeenCalled();
     expect(sharedUpdateProcessBranchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects direct street-design updates outside collaborative edit mode', async () => {
+    const tx = createTx('server');
+    tx.run
+      .mockResolvedValueOnce({ id: 'street-design-1', amendment_id: 'amendment-1' })
+      .mockResolvedValueOnce({
+        id: 'amendment-1',
+        origin_amendment_id: null,
+        clone_source_id: null,
+      })
+      .mockResolvedValueOnce({
+        id: 'branch-1',
+        process_run_id: 'run-1',
+        editing_mode: 'suggest_event',
+        status: 'scheduled',
+        resolution: null,
+      })
+      .mockResolvedValueOnce({ id: 'run-1', amendment_id: 'amendment-1' });
+    canMock.mockResolvedValueOnce(undefined);
+
+    await expect(
+      amendmentServerMutators.updateStreetDesign.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: {
+          id: 'street-design-1',
+          process_branch_id: 'branch-1',
+          title: 'Not allowed',
+        },
+      })
+    ).rejects.toThrow(PermissionError);
+
+    expect(canMock).toHaveBeenCalledWith(tx, createCtx(), {
+      action: 'update',
+      resource: 'amendments',
+      amendmentId: 'amendment-1',
+    });
   });
 
   it('keeps terminal process branches readonly on the server', async () => {

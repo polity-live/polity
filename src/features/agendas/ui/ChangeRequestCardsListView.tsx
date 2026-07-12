@@ -8,6 +8,12 @@ import type { Value } from 'platejs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Progress } from '@/features/shared/ui/ui/progress';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/features/shared/ui/ui/accordion';
 import { Tabs, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { ToggleGroup } from '@/features/shared/ui/ui/toggle-group';
 import { FilterToggleGroupItem } from '@/features/shared/ui/filter-controls';
@@ -38,10 +44,12 @@ import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
 import { StreetDesignChangeRequestPreview } from '@/features/amendments/streetscape/ui/StreetDesignChangeRequestPreview';
 import {
+  getStreetDesignChangeRequestStreetDesignId,
   isStreetDesignChangeRequest,
   type StreetDesignChangeRequest,
   type StreetDesignPreviewSource,
 } from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
+import { parseStoredStreetDesignState } from '@/features/amendments/streetscape/state/streetDesignReducer';
 import { SuggestionViewToggle } from '@/features/editor/ui/SuggestionViewToggle';
 import {
   isMockCRTimelineItem,
@@ -87,6 +95,13 @@ function getStreetDesignChangeRequestFromTimelineItem(
   };
 }
 
+function hasStreetDesignMapSelection(streetDesign: StreetDesignPreviewSource) {
+  return Boolean(
+    parseStoredStreetDesignState(streetDesign.design_state ?? streetDesign.designState)
+      ?.mapSelection
+  );
+}
+
 export interface ChangeRequestCardsListViewProps {
   items: any[];
   editingMode: EditingMode;
@@ -112,6 +127,7 @@ export interface ChangeRequestCardsListViewProps {
   discussions: any;
   amendmentId: any;
   agendaItemId: any;
+  showStreetDesignPreviewAccordion?: boolean;
   userRecord?: any;
   hasUserVoted: any;
   getUserSelectedChoiceIds: any;
@@ -175,6 +191,7 @@ export function ChangeRequestCardsListView({
   discussions,
   amendmentId,
   agendaItemId,
+  showStreetDesignPreviewAccordion = false,
   userRecord,
   hasUserVoted,
   getUserSelectedChoiceIds,
@@ -259,10 +276,30 @@ export function ChangeRequestCardsListView({
   const showSharedTextPreview =
     sharedPreviewEnabled && !sharedPreviewHasStreetDesign && Boolean(documentContent);
   const showSharedStreetPreview =
+    !showStreetDesignPreviewAccordion &&
     sharedPreviewEnabled &&
     sharedPreviewHasStreetDesign &&
     !sharedPreviewHasText &&
     Boolean(selectedSharedStreetChangeRequests[0]);
+  const streetDesignWithMapSelection = showStreetDesignPreviewAccordion
+    ? (streetDesigns.find(hasStreetDesignMapSelection) ?? null)
+    : null;
+  const selectedStreetDesignChangeRequest = streetDesignWithMapSelection
+    ? (selectedSharedStreetChangeRequests.find(changeRequest => {
+        const targetStreetDesignId = getStreetDesignChangeRequestStreetDesignId(changeRequest);
+        return !targetStreetDesignId || targetStreetDesignId === streetDesignWithMapSelection.id;
+      }) ?? null)
+    : null;
+  const streetDesignPreviewChangeRequest: StreetDesignChangeRequest | null =
+    selectedStreetDesignChangeRequest ??
+    (streetDesignWithMapSelection
+      ? {
+          id: `street-design-preview-${streetDesignWithMapSelection.id ?? 'selected-map'}`,
+          source_type: 'street_design_scene',
+          source_id: streetDesignWithMapSelection.id ?? null,
+          change_type: null,
+        }
+      : null);
 
   return (
     <Card>
@@ -356,6 +393,26 @@ export function ChangeRequestCardsListView({
               streetDesigns={streetDesigns}
             />
           </div>
+        ) : null}
+        {showStreetDesignPreviewAccordion &&
+        streetDesignWithMapSelection &&
+        streetDesignPreviewChangeRequest ? (
+          <Accordion type="single" collapsible>
+            <AccordionItem value="street-design-preview" className="border-b-0">
+              <AccordionTrigger
+                className="hover:bg-muted/50 rounded-md px-2 py-2 text-sm font-medium hover:no-underline"
+                data-testid="street-design-preview-accordion-trigger"
+              >
+                {t('features.agendas.crTimeline.streetDesignPreview', 'Street Design Preview')}
+              </AccordionTrigger>
+              <AccordionContent className="pt-2 pb-0">
+                <StreetDesignChangeRequestPreview
+                  changeRequest={streetDesignPreviewChangeRequest}
+                  streetDesigns={[streetDesignWithMapSelection]}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         ) : null}
 
         {/* Tabs */}

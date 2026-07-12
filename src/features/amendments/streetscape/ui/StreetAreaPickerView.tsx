@@ -32,11 +32,11 @@ import {
 
 export interface StreetAreaPickerViewProps {
   center: StreetDesignGeoPoint;
+  addressLabel: string;
   isLoadingOsm: boolean;
   osmError: string | null;
   readOnly: boolean;
   onLoadOsm: () => void;
-  onLoadSample: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   variant?: 'card' | 'panel';
@@ -61,6 +61,7 @@ export interface StreetAreaPickerViewProps {
   heightMeters: number;
   rotationDeg: number;
   onBboxMove: (center: StreetDesignGeoPoint) => void;
+  onBboxMoveEnd: (center: StreetDesignGeoPoint) => void;
   onBboxResize: (handle: StreetDesignBboxResizeHandle, point: StreetDesignGeoPoint) => void;
   onSelectionRotate: (point: StreetDesignGeoPoint) => void;
   onWidthMetersChange: (widthMeters: number) => void;
@@ -72,11 +73,11 @@ export interface StreetAreaPickerViewProps {
 
 export function StreetAreaPickerView({
   center,
+  addressLabel,
   isLoadingOsm,
   osmError,
   readOnly,
   onLoadOsm,
-  onLoadSample,
   open,
   onOpenChange,
   variant = 'card',
@@ -101,6 +102,7 @@ export function StreetAreaPickerView({
   heightMeters,
   rotationDeg,
   onBboxMove,
+  onBboxMoveEnd,
   onBboxResize,
   onSelectionRotate,
   onWidthMetersChange,
@@ -158,7 +160,8 @@ export function StreetAreaPickerView({
               </span>
               <span className="min-w-0 text-left">
                 <span className="block truncate text-sm font-semibold">{mapSectionTitle}</span>
-                <span className="text-muted-foreground block text-xs">
+                <span className="text-muted-foreground block truncate text-xs">{addressLabel}</span>
+                <span className="text-muted-foreground/80 block text-[10px]">
                   {center.lat.toFixed(5)}, {center.lon.toFixed(5)}
                 </span>
               </span>
@@ -212,9 +215,6 @@ export function StreetAreaPickerView({
                   onChange={event => updateRotation(Number(event.target.value))}
                 />
               </div>
-              <Button size="sm" variant="outline" onClick={onLoadSample} disabled={readOnly}>
-                {t('features.amendments.streetscape.areaPicker.loadDemo')}
-              </Button>
               <Button size="sm" onClick={onLoadOsm} disabled={readOnly || isLoadingOsm}>
                 {isLoadingOsm
                   ? t('features.amendments.streetscape.areaPicker.loadingOsm')
@@ -291,6 +291,7 @@ export function StreetAreaPickerView({
                     disabled={readOnly}
                     reactLeafletModule={reactLeafletModule}
                     onBboxMove={onBboxMove}
+                    onBboxMoveEnd={onBboxMoveEnd}
                   />
                   {selectionCorners.length >= 3 ? (
                     <reactLeafletModule.Polygon
@@ -308,6 +309,7 @@ export function StreetAreaPickerView({
                     rotateHandlePosition={rotateHandlePosition}
                     resizeHandles={resizeHandles}
                     onBboxMove={onBboxMove}
+                    onBboxMoveEnd={onBboxMoveEnd}
                     onBboxResize={onBboxResize}
                     onSelectionRotate={onSelectionRotate}
                   />
@@ -327,15 +329,19 @@ function MapClickHandler({
   disabled,
   reactLeafletModule,
   onBboxMove,
+  onBboxMoveEnd,
 }: {
   disabled: boolean;
   reactLeafletModule: ReactLeafletModule;
   onBboxMove: (center: StreetDesignGeoPoint) => void;
+  onBboxMoveEnd: (center: StreetDesignGeoPoint) => void;
 }) {
   reactLeafletModule.useMapEvents({
     click(event) {
       if (disabled) return;
-      onBboxMove({ lat: event.latlng.lat, lon: event.latlng.lng });
+      const center = { lat: event.latlng.lat, lon: event.latlng.lng };
+      onBboxMove(center);
+      onBboxMoveEnd(center);
     },
   });
 

@@ -133,5 +133,13 @@ export function getStreetDesignOsmFeatures(snapshot: StreetDesignOsmSnapshot | n
 }
 
 export function getStreetDesignHiddenOsmFeatureIds(design: StreetDesignStateV1) {
-  return new Set([...(design.hiddenOsmWayIds ?? []), ...(design.hiddenOsmFeatureIds ?? [])]);
+  return new Set([
+    ...(design.hiddenOsmWayIds ?? []),
+    ...(design.hiddenOsmFeatureIds ?? []),
+    ...design.objects.flatMap(object =>
+      object.provenance?.source === 'osm' && object.provenance.featureId
+        ? [object.provenance.featureId]
+        : []
+    ),
+  ]);
 }

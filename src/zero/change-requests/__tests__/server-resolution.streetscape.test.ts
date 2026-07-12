@@ -145,4 +145,52 @@ describe('resolveChangeRequestByVoteResult for Streetscape', () => {
       })
     );
   });
+
+  it('applies a passed price CR fieldwise and recomputes persisted costs', async () => {
+    const original = object();
+    const proposedPrice = object({
+      cost: { ...original.cost, customUnitCostMinor: 12_345 },
+    });
+    const concurrentlyChanged = object({
+      geometry: { kind: 'point', point: { x: 9, z: 8 }, rotation: 45 },
+    });
+    const [payload] = createStreetDesignChangeRequestPayloads({
+      amendmentId: 'amendment-1',
+      streetDesignId: 'street-design-1',
+      baseDesign: state([original]),
+      draftDesign: state([proposedPrice]),
+      createId: () => 'cr-price',
+    });
+    const tx = createTx([
+      payload,
+      {
+        id: 'street-design-1',
+        amendment_id: 'amendment-1',
+        design_state: state([concurrentlyChanged]),
+      },
+    ]);
+
+    await resolveChangeRequestByVoteResult({
+      tx: tx as never,
+      ctx: { userID: 'user-1' },
+      changeRequestId: 'cr-price',
+      voteResult: 'passed',
+      now: 1_000,
+    });
+
+    expect(tx.mutate.amendment_street_design.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'street-design-1',
+        estimated_total_cost_minor: 12_345,
+        design_state: expect.objectContaining({
+          objects: [
+            expect.objectContaining({
+              geometry: concurrentlyChanged.geometry,
+              cost: expect.objectContaining({ customUnitCostMinor: 12_345 }),
+            }),
+          ],
+        }),
+      })
+    );
+  });
 });

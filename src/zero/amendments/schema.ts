@@ -188,7 +188,7 @@ export const selectAmendmentStreetDesignSchema = baseAmendmentStreetDesignSchema
 
 export const createAmendmentStreetDesignSchema = baseAmendmentStreetDesignSchema
   .omit({ id: true, created_at: true, updated_at: true, created_by_id: true })
-  .extend({ id: z.string() });
+  .extend({ id: z.string(), process_branch_id: z.string().nullable().optional() });
 
 export const updateAmendmentStreetDesignSchema = baseAmendmentStreetDesignSchema
   .pick({
@@ -204,7 +204,7 @@ export const updateAmendmentStreetDesignSchema = baseAmendmentStreetDesignSchema
     cost_summary: true,
   })
   .partial()
-  .extend({ id: z.string() });
+  .extend({ id: z.string(), process_branch_id: z.string().nullable().optional() });
 
 export const deleteAmendmentStreetDesignSchema = z.object({ id: z.string() });
 

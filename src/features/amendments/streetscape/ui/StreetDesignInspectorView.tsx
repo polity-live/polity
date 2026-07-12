@@ -366,13 +366,17 @@ export function StreetDesignInspectorView({
                 </Label>
                 <Input
                   type="number"
+                  aria-label={t('features.amendments.streetscape.inspector.price')}
                   min={0}
-                  step={1}
+                  step={0.01}
                   value={unitCostEuro}
                   disabled={readOnly}
-                  onChange={event =>
-                    onPlacementUnitCostChange(Math.round(Number(event.target.value) * 100))
-                  }
+                  onChange={event => {
+                    const value = event.target.value;
+                    onPlacementUnitCostChange(
+                      value === '' ? null : Math.max(0, Math.round(Number(value) * 100))
+                    );
+                  }}
                 />
               </div>
               <div>
@@ -387,6 +391,18 @@ export function StreetDesignInspectorView({
                 cost: formatMinorCurrency(definition.suggestedUnitCostMinor),
               })}
             </p>
+            {placementSettings.customUnitCostMinor != null ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mt-1 h-auto px-0 text-xs"
+                disabled={readOnly}
+                onClick={() => onPlacementUnitCostChange(null)}
+              >
+                {t('features.amendments.streetscape.inspector.resetToSuggestedPrice')}
+              </Button>
+            ) : null}
           </div>
         </div>
       </aside>
@@ -766,13 +782,18 @@ export function StreetDesignInspectorView({
               </Label>
               <Input
                 type="number"
+                aria-label={t('features.amendments.streetscape.inspector.price')}
                 min={0}
-                step={1}
+                step={0.01}
                 value={unitCostEuro}
                 disabled={readOnly}
-                onChange={event =>
-                  onUnitCostChange(selectedObject.id, Math.round(Number(event.target.value) * 100))
-                }
+                onChange={event => {
+                  const value = event.target.value;
+                  onUnitCostChange(
+                    selectedObject.id,
+                    value === '' ? null : Math.max(0, Math.round(Number(value) * 100))
+                  );
+                }}
               />
             </div>
             <div>
@@ -790,6 +811,18 @@ export function StreetDesignInspectorView({
               cost: formatMinorCurrency(selectedObject.cost.suggestedUnitCostMinor),
             })}
           </p>
+          {selectedObject.cost.customUnitCostMinor != null ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="mt-1 h-auto px-0 text-xs"
+              disabled={readOnly}
+              onClick={() => onUnitCostChange(selectedObject.id, null)}
+            >
+              {t('features.amendments.streetscape.inspector.resetToSuggestedPrice')}
+            </Button>
+          ) : null}
         </div>
       </div>
     </aside>
