@@ -74,8 +74,6 @@ export function NotificationsPageView({
         className="w-full"
       >
         <FeedToolbar>
-          <NotificationHeader unreadCount={unreadCount} onMarkAllAsRead={onMarkAllAsRead} />
-
           <div className="mb-4">
             <EntitySearchBar
               searchQuery={searchQuery}
@@ -84,12 +82,20 @@ export function NotificationsPageView({
             />
           </div>
 
-          <NotificationTabs
-            allCount={searchFilteredNotifications.all.length}
-            unreadCount={searchFilteredNotifications.unread.length}
-            personalCount={searchFilteredNotifications.personal.length}
-            entityCount={searchFilteredNotifications.entity.length}
-          />
+          <div
+            data-slot="notification-controls"
+            className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center"
+          >
+            <div className="min-w-0 flex-1">
+              <NotificationTabs
+                allCount={searchFilteredNotifications.all.length}
+                unreadCount={searchFilteredNotifications.unread.length}
+                personalCount={searchFilteredNotifications.personal.length}
+                entityCount={searchFilteredNotifications.entity.length}
+              />
+            </div>
+            <NotificationHeader unreadCount={unreadCount} onMarkAllAsRead={onMarkAllAsRead} />
+          </div>
         </FeedToolbar>
 
         <TabsContent value="all" className="mt-0">

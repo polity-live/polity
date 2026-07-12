@@ -38,7 +38,7 @@ function getRowKey(document: SearchDocument) {
 interface UseVirtualSearchGridControllerOptions {
   context: SearchListContext;
   permalinkID?: string | null;
-  onTotalChange?: (total: number) => void;
+  onTotalChange?: (total: number | null) => void;
 }
 
 export function useVirtualSearchGridController({
@@ -121,7 +121,7 @@ export function useVirtualSearchGridController({
     };
   }, []);
 
-  const { virtualizer, rowAt, complete, rowsEmpty, estimatedTotal, total } = useZeroVirtualizer<
+  const { virtualizer, rowAt, complete, rowsEmpty, total } = useZeroVirtualizer<
     HTMLDivElement,
     HTMLDivElement,
     SearchListContext,
@@ -147,8 +147,8 @@ export function useVirtualSearchGridController({
   const headKey = rowAt(0)?.id ?? null;
 
   useEffect(() => {
-    onTotalChange?.(total ?? estimatedTotal);
-  }, [estimatedTotal, onTotalChange, total]);
+    onTotalChange?.(total ?? null);
+  }, [listContextParams, onTotalChange, total]);
 
   useEffect(() => {
     if (!headKey) return;

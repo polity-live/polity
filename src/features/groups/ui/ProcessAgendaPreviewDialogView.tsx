@@ -107,7 +107,7 @@ export function ProcessAgendaPreviewDialogView({
 }: ProcessAgendaPreviewDialogViewProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <ScrollableDialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-5xl">
+      <ScrollableDialogContent management className="sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>
             {translateText('generated.inline.0710_neue_agenda_items_anzeigen_bf362c2d')}

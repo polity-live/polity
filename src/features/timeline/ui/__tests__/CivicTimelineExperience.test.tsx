@@ -302,6 +302,18 @@ describe('CivicTimelineMap', () => {
 });
 
 describe('ModernTimelineView', () => {
+  it('hides the page title and subtitle while keeping the mode tabs', () => {
+    render(<ModernTimelineView {...createTimelineViewProps()} />);
+
+    expect(screen.getByRole('heading', { name: 'Timeline' }).className).toContain('sr-only');
+    expect(
+      screen.queryByText('What is happening around you, ranked by relevance and proximity.')
+    ).toBeNull();
+    expect(screen.getByRole('radio', { name: 'features.timeline.modes.timeline' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'features.timeline.modes.decisions' })).toBeTruthy();
+    expect(screen.getByTestId('timeline-rail-surface')).toBeTruthy();
+  });
+
   it('places the live timeline rail on the same subtle card surface as the landing preview', () => {
     render(<ModernTimelineView {...createTimelineViewProps()} />);
 

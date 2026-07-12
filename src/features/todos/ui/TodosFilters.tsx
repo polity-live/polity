@@ -7,6 +7,7 @@ import type { PqlFieldDefinition, PqlFilter } from '@/features/pql/logic/applyPq
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { Todo } from '../types/todo.types';
 import type { TodoFieldKey } from '../hooks/useTodoFilters';
+import type { ReactNode } from 'react';
 
 interface TodosFiltersProps {
   fields: readonly PqlFieldDefinition<Todo, TodoFieldKey>[];
@@ -22,6 +23,7 @@ interface TodosFiltersProps {
   onCustomFilterToggle: (filterId: string) => void;
   onCustomFilterDelete: (filterId: string) => void;
   onCustomFilterSave: (filter: PqlFilter<TodoFieldKey>) => void;
+  actions?: ReactNode;
 }
 
 export function TodosFilters({
@@ -38,6 +40,7 @@ export function TodosFilters({
   onCustomFilterToggle,
   onCustomFilterDelete,
   onCustomFilterSave,
+  actions,
 }: TodosFiltersProps) {
   const { t } = useTranslation();
 
@@ -57,6 +60,7 @@ export function TodosFilters({
       onCustomFilterToggle={onCustomFilterToggle}
       onCustomFilterDelete={onCustomFilterDelete}
       onCustomFilterSave={onCustomFilterSave}
+      actions={actions}
     />
   );
 }

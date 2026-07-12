@@ -81,29 +81,7 @@ export function BlogsAndStatementsView({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{t('navigation.secondary.group.blogsAndStatements')}</h1>
-        {canCreateBlog || canCreateStatement ? (
-          <div className="flex gap-2">
-            {canCreateBlog ? (
-              <Link to="/create/blog-entry" search={{ groupId }}>
-                <Button size="sm">
-                  <Plus className="mr-1 h-4 w-4" />
-                  {translateText('generated.inline.0297_blog_0b9d2b23')}
-                </Button>
-              </Link>
-            ) : null}
-            {canCreateStatement ? (
-              <Link to="/create/statement" search={{ groupId }}>
-                <Button size="sm" variant="outline">
-                  <Plus className="mr-1 h-4 w-4" />
-                  {translateText('generated.inline.0298_statement_a72ca256')}
-                </Button>
-              </Link>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
+      <h1 className="sr-only">{t('navigation.secondary.group.blogsAndStatements')}</h1>
 
       {/* Search + filter bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -128,6 +106,26 @@ export function BlogsAndStatementsView({
             </FilterButton>
           ))}
         </div>
+        {canCreateBlog || canCreateStatement ? (
+          <div className="flex shrink-0 gap-2">
+            {canCreateBlog ? (
+              <Link to="/create/blog-entry" search={{ groupId }}>
+                <Button size="sm">
+                  <Plus className="mr-1 h-4 w-4" />
+                  {translateText('generated.inline.0297_blog_0b9d2b23')}
+                </Button>
+              </Link>
+            ) : null}
+            {canCreateStatement ? (
+              <Link to="/create/statement" search={{ groupId }}>
+                <Button size="sm" variant="outline">
+                  <Plus className="mr-1 h-4 w-4" />
+                  {translateText('generated.inline.0298_statement_a72ca256')}
+                </Button>
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {/* Blog section */}

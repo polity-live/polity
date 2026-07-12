@@ -196,7 +196,7 @@ export function OpenAssignmentsPanelView({
       </section>
 
       <Dialog open={!!activeEventAssignment} onOpenChange={closeEventDialog}>
-        <ScrollableDialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
+        <ScrollableDialogContent management className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {activeEventAssignment?.kind === 'role_renewal'

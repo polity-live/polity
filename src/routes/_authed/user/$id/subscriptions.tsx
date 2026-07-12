@@ -25,19 +25,22 @@ function UserSubscriptionsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">
-        {translateText('generated.inline.1271_subscriptions_5697fd85')}
-      </h1>
-      <EntitySearchBar
-        searchQuery={searchQuery}
-        onSearchQueryChange={setSearchQuery}
-        placeholder={translateText('generated.inline.1272_search_subscriptions_54112067')}
-      />
-      <SubscriptionTypeFilters
-        filterType={filterType}
-        counts={subscriptionCounts}
-        onFilterChange={setFilterType}
-      />
+      <h1 className="sr-only">{translateText('generated.inline.1271_subscriptions_5697fd85')}</h1>
+      <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center">
+        <EntitySearchBar
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          placeholder={translateText('generated.inline.1272_search_subscriptions_54112067')}
+          className="min-w-0 flex-1"
+        />
+        <div className="min-w-0 flex-1">
+          <SubscriptionTypeFilters
+            filterType={filterType}
+            counts={subscriptionCounts}
+            onFilterChange={setFilterType}
+          />
+        </div>
+      </div>
       <SubscriptionsTable
         subscriptions={filteredSubscriptions}
         onUnsubscribe={unsubscribe}

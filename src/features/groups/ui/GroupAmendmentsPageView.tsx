@@ -32,17 +32,7 @@ export function GroupAmendmentsPageView({
 }: GroupAmendmentsPageViewProps) {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{t('features.groups.amendments.title')}</h1>
-        {canCreate('amendments') ? (
-          <Link to="/create/amendment" search={{ groupId }}>
-            <Button size="sm">
-              <Plus className="mr-1 h-4 w-4" />
-              {t('features.groups.amendments.createAmendment')}
-            </Button>
-          </Link>
-        ) : null}
-      </div>
+      <h1 className="sr-only">{t('features.groups.amendments.title')}</h1>
 
       <AmendmentSearchAndFilters
         filters={filters}
@@ -54,6 +44,16 @@ export function GroupAmendmentsPageView({
         onToggleFilters={() => setShowFilters(!showFilters)}
         onClearStatusFilter={() => clearFilter('statusFilter')}
         onClearHashtagFilter={() => clearFilter('hashtagFilter')}
+        actions={
+          canCreate('amendments') ? (
+            <Link to="/create/amendment" search={{ groupId }}>
+              <Button size="sm">
+                <Plus className="mr-1 h-4 w-4" />
+                {t('features.groups.amendments.createAmendment')}
+              </Button>
+            </Link>
+          ) : null
+        }
       />
 
       <AmendmentGroups

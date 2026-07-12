@@ -94,21 +94,14 @@ export function DiscussionsView({
 
   return (
     <PageWrapper>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <div className="mb-2 flex items-center gap-3">
-            <MessageSquare className="h-8 w-8" />
-            <h1 className="text-4xl font-bold">
-              {translateText('generated.inline.0387_discussions_0474a6c6')}
-            </h1>
-          </div>
-          <p className="text-muted-foreground">
-            {threads.length}
-            {translateText('generated.inline.0388_discussion_thread_28eed8a6')}
-            {threads.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+      <h1 className="sr-only">{translateText('generated.inline.0387_discussions_0474a6c6')}</h1>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-muted-foreground text-sm">
+          {threads.length}
+          {translateText('generated.inline.0388_discussion_thread_28eed8a6')}
+          {threads.length !== 1 ? 's' : ''}
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground text-sm">
               {translateText('generated.inline.0389_sort_by_9bb640e5')}

@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { SettingsTabs, type SettingsTab } from '@/features/shared/ui/form';
+import { TabsContent } from '@/features/shared/ui/ui/tabs';
 
 export type ParticipationTabValue =
   | 'membershipsByUser'
@@ -65,35 +66,32 @@ export function ParticipationTabs<TTab extends string = ParticipationTabValue>({
   guestsLabel = 'Guests',
   rolesLabel = 'Roles',
 }: ParticipationTabsProps<TTab>) {
+  const tabs: SettingsTab<TTab>[] = [
+    ...(showMembershipsByUser
+      ? [{ value: 'membershipsByUser' as TTab, label: membershipsByUserLabel }]
+      : []),
+    ...(showMembershipsByRole
+      ? [{ value: 'membershipsByRole' as TTab, label: membershipsByRoleLabel }]
+      : []),
+    ...(showComposition ? [{ value: 'composition' as TTab, label: compositionLabel }] : []),
+    ...(showRightsAlignment
+      ? [{ value: 'rightsAlignment' as TTab, label: rightsAlignmentLabel }]
+      : []),
+    ...(showOpenAssignments
+      ? [{ value: 'openAssignments' as TTab, label: openAssignmentsLabel }]
+      : []),
+    ...(showGuests ? [{ value: 'guests' as TTab, label: guestsLabel }] : []),
+    ...(showRoles ? [{ value: 'roles' as TTab, label: rolesLabel }] : []),
+  ];
+
   return (
-    <Tabs
+    <SettingsTabs
+      tabs={tabs}
       value={activeTab}
-      onValueChange={value => onTabChange(value as TTab)}
+      onValueChange={onTabChange}
+      action={tabBarAction}
       className="space-y-4"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <TabsList>
-          {showMembershipsByUser ? (
-            <TabsTrigger value="membershipsByUser">{membershipsByUserLabel}</TabsTrigger>
-          ) : null}
-          {showMembershipsByRole ? (
-            <TabsTrigger value="membershipsByRole">{membershipsByRoleLabel}</TabsTrigger>
-          ) : null}
-          {showComposition ? (
-            <TabsTrigger value="composition">{compositionLabel}</TabsTrigger>
-          ) : null}
-          {showRightsAlignment ? (
-            <TabsTrigger value="rightsAlignment">{rightsAlignmentLabel}</TabsTrigger>
-          ) : null}
-          {showOpenAssignments ? (
-            <TabsTrigger value="openAssignments">{openAssignmentsLabel}</TabsTrigger>
-          ) : null}
-          {showGuests ? <TabsTrigger value="guests">{guestsLabel}</TabsTrigger> : null}
-          {showRoles ? <TabsTrigger value="roles">{rolesLabel}</TabsTrigger> : null}
-        </TabsList>
-        {tabBarAction}
-      </div>
-
       {showMembershipsByUser ? (
         <TabsContent value="membershipsByUser" className="space-y-6">
           {membershipsByUserContent}
@@ -135,6 +133,6 @@ export function ParticipationTabs<TTab extends string = ParticipationTabValue>({
           {rolesContent}
         </TabsContent>
       ) : null}
-    </Tabs>
+    </SettingsTabs>
   );
 }

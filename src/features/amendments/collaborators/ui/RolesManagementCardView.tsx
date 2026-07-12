@@ -125,7 +125,7 @@ export function RolesManagementCardView({
                 {translateText('generated.inline.0125_add_role_82d0afcc')}
               </Button>
             </DialogTrigger>
-            <ScrollableDialogContent>
+            <ScrollableDialogContent management>
               <DialogHeader>
                 <DialogTitle>
                   {translateText('generated.inline.0126_add_new_role_241eb33f')}

@@ -1,4 +1,5 @@
 import { Trash2, type LucideIcon } from 'lucide-react';
+import { useState } from 'react';
 
 import { getMembershipRoleNames } from '@/features/shared/logic/membershipRoleHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
@@ -14,6 +15,7 @@ import type { BloggersByUserRow } from '@/zero/blogs/queries';
 import type { EventParticipantsByUserRow } from '@/zero/events/queries';
 import type { GroupMembershipsByUserRow } from '@/zero/groups/queries';
 import type { FilterableRecord } from '../hooks/useUserMembershipsFilters';
+import { DangerConfirmDialog } from '@/features/shared/ui/dialog';
 
 type EntityKey = 'group' | 'event' | 'amendment' | 'blog';
 
@@ -68,6 +70,11 @@ export function MembershipStatusTable({
   getEntityHref,
   getAcceptPreflightInput,
 }: MembershipStatusTableProps) {
+  const [pendingAction, setPendingAction] = useState<{
+    kind: 'leave' | 'withdraw';
+    id: string;
+    entityName: string;
+  } | null>(null);
   const getEntityTypeLabel = (entityKey: MembershipStatusTableProps['entityKey']): string => {
     const translationKeys = {
       group: 'components.linkPreview.group',
@@ -212,13 +219,33 @@ export function MembershipStatusTable({
             />
           ) : null}
           {statusType === 'active' ? (
-            <Button variant="ghost" size="sm" onClick={() => onLeave?.(row.original.id)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setPendingAction({
+                  kind: 'leave',
+                  id: row.original.id,
+                  entityName: getEntityName(getEntityData(row.original)),
+                })
+              }
+            >
               <Trash2 className="h-4 w-4" />
               <span className="ml-2">{translateText('generated.inline.1197_leave_7e3520a9')}</span>
             </Button>
           ) : null}
           {statusType === 'requested' ? (
-            <Button variant="ghost" size="sm" onClick={() => onWithdraw?.(row.original.id)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setPendingAction({
+                  kind: 'withdraw',
+                  id: row.original.id,
+                  entityName: getEntityName(getEntityData(row.original)),
+                })
+              }
+            >
               <Trash2 className="h-4 w-4" />
               <span className="ml-2">
                 {translateText('generated.inline.1198_withdraw_request_898cc3e4')}
@@ -230,25 +257,59 @@ export function MembershipStatusTable({
     },
   ];
   return (
-    <MembershipStatusTableView
-      title={title}
-      description={description}
-      Icon={Icon}
-      items={items}
-      statusType={statusType}
-      entityKey={entityKey}
-      FallbackIcon={FallbackIcon}
-      onAccept={onAccept}
-      onDecline={onDecline}
-      onLeave={onLeave}
-      onWithdraw={onWithdraw}
-      getEntityHref={getEntityHref}
-      getAcceptPreflightInput={getAcceptPreflightInput}
-      getEntityData={getEntityData}
-      getEntityName={getEntityName}
-      getEntityImage={getEntityImage}
-      buildDefaultEntityHref={buildDefaultEntityHref}
-      columns={columns}
-    />
+    <>
+      <MembershipStatusTableView
+        title={title}
+        description={description}
+        Icon={Icon}
+        items={items}
+        statusType={statusType}
+        entityKey={entityKey}
+        FallbackIcon={FallbackIcon}
+        onAccept={onAccept}
+        onDecline={onDecline}
+        onLeave={onLeave}
+        onWithdraw={onWithdraw}
+        getEntityHref={getEntityHref}
+        getAcceptPreflightInput={getAcceptPreflightInput}
+        getEntityData={getEntityData}
+        getEntityName={getEntityName}
+        getEntityImage={getEntityImage}
+        buildDefaultEntityHref={buildDefaultEntityHref}
+        columns={columns}
+      />
+      <DangerConfirmDialog
+        open={pendingAction !== null}
+        onOpenChange={open => {
+          if (!open) setPendingAction(null);
+        }}
+        title={translateText(
+          pendingAction?.kind === 'withdraw'
+            ? 'pages.user.memberships.confirmations.withdrawTitle'
+            : 'pages.user.memberships.confirmations.leaveTitle'
+        )}
+        description={translateText(
+          pendingAction?.kind === 'withdraw'
+            ? 'pages.user.memberships.confirmations.withdrawDescription'
+            : 'pages.user.memberships.confirmations.leaveDescription',
+          { name: pendingAction?.entityName ?? '' }
+        )}
+        cancelLabel={translateText('common.actions.cancel')}
+        confirmLabel={translateText(
+          pendingAction?.kind === 'withdraw'
+            ? 'pages.user.memberships.confirmations.withdrawConfirm'
+            : 'pages.user.memberships.confirmations.leaveConfirm'
+        )}
+        onConfirm={() => {
+          if (!pendingAction) return;
+          if (pendingAction.kind === 'withdraw') {
+            onWithdraw?.(pendingAction.id);
+          } else {
+            onLeave?.(pendingAction.id);
+          }
+          setPendingAction(null);
+        }}
+      />
+    </>
   );
 }

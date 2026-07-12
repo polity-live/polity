@@ -73,7 +73,7 @@ export function AssignHolderDialogView({
 }: AssignHolderDialogViewProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <ScrollableDialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[500px]">
+      <ScrollableDialogContent management className="sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>

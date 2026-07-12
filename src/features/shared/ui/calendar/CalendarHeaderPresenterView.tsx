@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 export type CalendarHeaderView = 'list' | 'day' | 'week' | 'month';
+export type CalendarHeadingMode = 'visible' | 'sr-only' | 'none';
 
 export interface CalendarHeaderViewOption<TView extends string = CalendarHeaderView> {
   value: TView;
@@ -35,6 +36,7 @@ export interface CalendarHeaderPresenterViewProps<TView extends string = Calenda
   onToday: () => void;
   actions?: ReactNode;
   title?: ReactNode;
+  headingMode?: CalendarHeadingMode;
   resolvedViews: CalendarHeaderViewOption<TView>[];
   resolvedTodayLabel: string;
   resolvedPreviousLabel: string;
@@ -50,6 +52,7 @@ export function CalendarHeaderPresenterView<TView extends string = CalendarHeade
   onToday,
   actions,
   title,
+  headingMode = 'visible',
   resolvedViews,
   resolvedTodayLabel,
   resolvedPreviousLabel,
@@ -57,14 +60,16 @@ export function CalendarHeaderPresenterView<TView extends string = CalendarHeade
 }: CalendarHeaderPresenterViewProps<TView>) {
   return (
     <>
-      {(title || actions) && (
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {title ? <h1 className="text-3xl font-bold">{title}</h1> : null}
-          {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
-        </div>
-      )}
+      {title && headingMode !== 'none' ? (
+        <h1 className={headingMode === 'sr-only' ? 'sr-only' : 'mb-4 text-3xl font-bold'}>
+          {title}
+        </h1>
+      ) : null}
 
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div
+        data-slot="calendar-controls"
+        className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      >
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
@@ -83,21 +88,33 @@ export function CalendarHeaderPresenterView<TView extends string = CalendarHeade
           <h2 className="ml-0 text-lg font-semibold sm:ml-2">{currentViewTitle}</h2>
         </div>
 
-        <Tabs value={viewMode} onValueChange={value => setViewMode(value as TView)}>
-          <TabsList>
-            {resolvedViews.map((view: any) => {
-              const Icon =
-                view.Icon ?? DEFAULT_ICON_BY_VIEW[view.value as CalendarHeaderView] ?? CalendarIcon;
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+          <Tabs value={viewMode} onValueChange={value => setViewMode(value as TView)}>
+            <TabsList className="scrollbar-hide max-w-full justify-start overflow-x-auto">
+              {resolvedViews.map((view: any) => {
+                const Icon =
+                  view.Icon ??
+                  DEFAULT_ICON_BY_VIEW[view.value as CalendarHeaderView] ??
+                  CalendarIcon;
 
-              return (
-                <TabsTrigger key={view.value} value={view.value}>
-                  <Icon className="mr-2 h-4 w-4" />
-                  {view.label}
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
-        </Tabs>
+                return (
+                  <TabsTrigger key={view.value} value={view.value} className="shrink-0">
+                    <Icon className="mr-2 h-4 w-4" />
+                    {view.label}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </Tabs>
+          {actions ? (
+            <div
+              data-slot="calendar-actions"
+              className="flex shrink-0 flex-wrap items-center gap-2"
+            >
+              {actions}
+            </div>
+          ) : null}
+        </div>
       </div>
     </>
   );

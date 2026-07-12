@@ -41,6 +41,7 @@ import { MembershipCompositionPanel } from '@/features/groups/ui/MembershipCompo
 import { useEventActions } from '@/zero/events/useEventActions';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { ManagementToolbar, SettingsPage } from '@/features/shared/ui/form';
 import { buildEventParticipantCompositionBuckets } from '../logic/eventParticipantComposition';
 import { buildOfflineRosterRowsForEvent } from '../logic/offlineParticipantRows';
 
@@ -70,9 +71,11 @@ function isAssemblyEventType(eventType: string | null | undefined) {
 export function EventParticipants({
   eventId,
   defaultTab = 'membershipsByUser',
+  onTabChange,
 }: {
   eventId: string;
   defaultTab?: MembershipTab;
+  onTabChange?: (tab: MembershipTab) => void;
 }) {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
@@ -95,6 +98,11 @@ export function EventParticipants({
   } = useEventActions();
 
   const [activeTab, setActiveTab] = useState<MembershipTab>(defaultTab);
+  useEffect(() => setActiveTab(defaultTab), [defaultTab]);
+  const handleTabChange = (tab: MembershipTab) => {
+    setActiveTab(tab);
+    onTabChange?.(tab);
+  };
   const [membershipSort, setMembershipSort] = useState<MembershipSort>({
     field: 'user',
     direction: 'asc',
@@ -536,7 +544,7 @@ export function EventParticipants({
     >
       <MembershipTabs
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         membershipsByUserLabel={translateText(
           'generated.inline.0100_participants_by_user_99abf1d2'
         )}
@@ -943,23 +951,21 @@ export function EventParticipantsView({
   children,
 }: EventParticipantsViewProps) {
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="mb-2 text-3xl font-bold">{title}</h1>
-        <p className="text-muted-foreground">{subtitle}</p>
-      </div>
-
-      {showSearch ? (
-        <EntitySearchBar
-          searchQuery={searchQuery}
-          onSearchQueryChange={onSearchQueryChange}
-          placeholder={searchPlaceholder}
-          className="mb-4"
-        />
+    <SettingsPage title={title} description={subtitle} size="wide" headingMode="sr-only">
+      {showSearch || secondaryFilterContent ? (
+        <ManagementToolbar className="mb-6">
+          {showSearch ? (
+            <EntitySearchBar
+              searchQuery={searchQuery}
+              onSearchQueryChange={onSearchQueryChange}
+              placeholder={searchPlaceholder}
+              className="flex-1"
+            />
+          ) : null}
+          {secondaryFilterContent}
+        </ManagementToolbar>
       ) : null}
-      {secondaryFilterContent}
-
       {children}
-    </div>
+    </SettingsPage>
   );
 }

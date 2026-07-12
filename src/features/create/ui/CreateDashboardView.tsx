@@ -1,7 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 
 import {
-  PageHeader,
   Panel,
   PanelContent,
   PanelGrid,
@@ -25,16 +24,14 @@ export interface CreateDashboardSectionViewModel {
 }
 
 interface CreateDashboardViewProps {
-  title: string;
-  subtitle: string;
   sections: CreateDashboardSectionViewModel[];
+  accessibleTitle: string;
 }
 
-export function CreateDashboardView({ title, subtitle, sections }: CreateDashboardViewProps) {
+export function CreateDashboardView({ sections, accessibleTitle }: CreateDashboardViewProps) {
   return (
-    <div className="space-y-6">
-      <PageHeader title={title} description={subtitle} />
-
+    <div>
+      <h1 className="sr-only">{accessibleTitle}</h1>
       <div className="space-y-8">
         {sections.map((section: any) => (
           <Section key={section.key} title={section.title}>

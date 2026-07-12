@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 
 import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
@@ -14,15 +14,24 @@ import { useCollaborators, type Collaborator } from './useCollaborators';
 interface UseCollaboratorsPageControllerOptions {
   amendmentId: string;
   currentUserId: string | undefined;
+  initialTab?: MembershipTab;
+  onTabChange?: (tab: MembershipTab) => void;
 }
 
 export function useCollaboratorsPageController({
   amendmentId,
   currentUserId,
+  initialTab = 'membershipsByUser',
+  onTabChange,
 }: UseCollaboratorsPageControllerOptions) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<MembershipTab>('membershipsByUser');
+  const [activeTab, setActiveTab] = useState<MembershipTab>(initialTab);
+  useEffect(() => setActiveTab(initialTab), [initialTab]);
+  const handleActiveTabChange = (tab: MembershipTab) => {
+    setActiveTab(tab);
+    onTabChange?.(tab);
+  };
   const [membershipSort, setMembershipSort] = useState<MembershipSort>({
     field: 'user',
     direction: 'asc',
@@ -107,7 +116,7 @@ export function useCollaboratorsPageController({
     pendingRequests,
     roles,
     searchQuery,
-    onActiveTabChange: setActiveTab,
+    onActiveTabChange: handleActiveTabChange,
     onApproveRequest: mutations.approveRequest,
     onChangeRoleOpenChange: setChangeRoleOpen,
     onConfirmRoleChange: handleConfirmRoleChange,

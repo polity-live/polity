@@ -4,6 +4,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Calendar as CalendarIcon, Grid3x3, List, type LucideIcon } from 'lucide-react';
 
 export type CalendarHeaderView = 'list' | 'day' | 'week' | 'month';
+export type CalendarHeadingMode = 'visible' | 'sr-only' | 'none';
 
 export interface CalendarHeaderViewOption<TView extends string = CalendarHeaderView> {
   value: TView;
@@ -20,6 +21,7 @@ export interface CalendarHeaderProps<TView extends string = CalendarHeaderView> 
   onToday: () => void;
   actions?: ReactNode;
   title?: ReactNode;
+  headingMode?: CalendarHeadingMode;
   todayLabel?: string;
   previousLabel?: string;
   nextLabel?: string;
@@ -45,6 +47,7 @@ export function CalendarHeader<TView extends string = CalendarHeaderView>({
   onToday,
   actions,
   title,
+  headingMode = 'visible',
   todayLabel,
   previousLabel,
   nextLabel,
@@ -67,6 +70,7 @@ export function CalendarHeader<TView extends string = CalendarHeaderView>({
       onToday={onToday}
       actions={actions}
       title={title}
+      headingMode={headingMode}
       resolvedViews={resolvedViews}
       resolvedTodayLabel={resolvedTodayLabel}
       resolvedPreviousLabel={resolvedPreviousLabel}

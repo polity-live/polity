@@ -27,6 +27,7 @@ function GroupEventsPage() {
         onNext={gp.goToNext}
         onToday={gp.goToToday}
         title={gp.t('features.calendar.title')}
+        headingMode="sr-only"
         actions={
           canCreate('events') ? (
             <Link to="/create/event" search={{ groupId: id }}>

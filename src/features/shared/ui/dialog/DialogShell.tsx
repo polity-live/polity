@@ -50,10 +50,20 @@ export interface DialogShellProps {
 export function ScrollableDialogContent({
   className,
   children,
+  management = false,
   ...props
-}: ComponentProps<typeof DialogContent>) {
+}: ComponentProps<typeof DialogContent> & { management?: boolean }) {
   return (
-    <DialogContent className={cn('max-h-[calc(100vh-2rem)] overflow-y-auto', className)} {...props}>
+    <DialogContent
+      data-management-dialog={management || undefined}
+      className={cn(
+        'max-h-[calc(100vh-2rem)] overflow-y-auto',
+        management &&
+          '[&>[data-slot=dialog-header]]:border-border/60 [&>[data-slot=dialog-header]]:bg-background/95 [&>[data-slot=dialog-footer]]:border-border/60 [&>[data-slot=dialog-footer]]:bg-background/95 gap-0 p-0 [&>[data-slot=dialog-footer]]:sticky [&>[data-slot=dialog-footer]]:bottom-0 [&>[data-slot=dialog-footer]]:z-10 [&>[data-slot=dialog-footer]]:border-t [&>[data-slot=dialog-footer]]:px-5 [&>[data-slot=dialog-footer]]:py-4 [&>[data-slot=dialog-footer]]:backdrop-blur sm:[&>[data-slot=dialog-footer]]:px-6 [&>[data-slot=dialog-header]]:sticky [&>[data-slot=dialog-header]]:top-0 [&>[data-slot=dialog-header]]:z-10 [&>[data-slot=dialog-header]]:border-b [&>[data-slot=dialog-header]]:px-5 [&>[data-slot=dialog-header]]:py-4 [&>[data-slot=dialog-header]]:pr-12 [&>[data-slot=dialog-header]]:backdrop-blur sm:[&>[data-slot=dialog-header]]:px-6 [&>div:not([data-slot])]:mx-5 [&>div:not([data-slot])]:my-5 sm:[&>div:not([data-slot])]:mx-6',
+        className
+      )}
+      {...props}
+    >
       {children}
     </DialogContent>
   );

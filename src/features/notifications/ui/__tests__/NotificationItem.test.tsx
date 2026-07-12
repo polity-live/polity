@@ -140,8 +140,10 @@ describe('NotificationItem', () => {
     );
 
     const card = container.querySelector('[data-slot="notification-card"]');
+    const heading = screen.getByRole('heading', { name: labels.title });
 
     expect(card).toBeTruthy();
+    expect(heading.closest('header')?.className).toContain('sr-only');
     expect(card?.getAttribute('data-mode')).toBe('entity');
     expect(container.querySelector('[data-slot="feed-list"]')).toBeTruthy();
     expect(container.querySelector('[data-slot="notification-list-item"]')?.className).toContain(

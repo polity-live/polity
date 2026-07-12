@@ -1,5 +1,6 @@
 export {
   CalendarHeader,
+  type CalendarHeadingMode,
   type CalendarHeaderProps,
   type CalendarHeaderView,
   type CalendarHeaderViewOption,

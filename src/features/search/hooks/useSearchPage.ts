@@ -28,7 +28,10 @@ function createdAfterForRange(range: DateRangeFilter) {
 export function useSearchPage() {
   const { user } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
-  const [totalResults, setTotalResults] = useState(0);
+  const [totalResultsState, setTotalResultsState] = useState<{
+    contextKey: string;
+    total: number | null;
+  }>({ contextKey: '', total: null });
   const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const {
     searchQuery,
@@ -110,6 +113,18 @@ export function useSearchPage() {
       bounds: null,
     }),
     [contentTypes, dateRange, engagement, searchQuery, sortBy, topics]
+  );
+  const resultsContextKey = useMemo(
+    () => JSON.stringify({ searchContext, view }),
+    [searchContext, view]
+  );
+  const totalResults =
+    totalResultsState.contextKey === resultsContextKey ? totalResultsState.total : null;
+  const setTotalResults = useCallback(
+    (total: number | null) => {
+      setTotalResultsState({ contextKey: resultsContextKey, total });
+    },
+    [resultsContextKey]
   );
 
   return {

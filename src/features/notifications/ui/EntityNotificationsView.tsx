@@ -55,18 +55,10 @@ export function EntityNotificationsView({
   return (
     <div className="space-y-6">
       <Tabs defaultValue="all" className="w-full">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold">{labels.title}</h2>
-            <p className="text-muted-foreground">{labels.statusDescription}</p>
-          </div>
-          {unreadNotifications.length > 0 ? (
-            <Button onClick={onMarkAllAsRead} variant="outline">
-              <CheckCheck className="mr-2 h-4 w-4" />
-              {labels.markAllRead}
-            </Button>
-          ) : null}
-        </div>
+        <header className="sr-only">
+          <h2>{labels.title}</h2>
+          <p>{labels.statusDescription}</p>
+        </header>
 
         <div className="mb-4">
           <EntitySearchBar
@@ -76,23 +68,33 @@ export function EntityNotificationsView({
           />
         </div>
 
-        <ScrollableTabsList>
-          <TabsTrigger value="all">
-            {labels.all}
-            <BadgeControl variant="secondary" className="ml-2">
-              {notifications.length}
-            </BadgeControl>
-          </TabsTrigger>
-          <TabsTrigger value="unread">
-            {labels.unread}
-            {unreadNotifications.length > 0 ? (
-              <BadgeControl variant="default" className="ml-2">
-                {unreadNotifications.length}
-              </BadgeControl>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="read">{labels.read}</TabsTrigger>
-        </ScrollableTabsList>
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <ScrollableTabsList>
+              <TabsTrigger value="all">
+                {labels.all}
+                <BadgeControl variant="secondary" className="ml-2">
+                  {notifications.length}
+                </BadgeControl>
+              </TabsTrigger>
+              <TabsTrigger value="unread">
+                {labels.unread}
+                {unreadNotifications.length > 0 ? (
+                  <BadgeControl variant="default" className="ml-2">
+                    {unreadNotifications.length}
+                  </BadgeControl>
+                ) : null}
+              </TabsTrigger>
+              <TabsTrigger value="read">{labels.read}</TabsTrigger>
+            </ScrollableTabsList>
+          </div>
+          {unreadNotifications.length > 0 ? (
+            <Button className="shrink-0" onClick={onMarkAllAsRead} variant="outline">
+              <CheckCheck className="mr-2 h-4 w-4" />
+              {labels.markAllRead}
+            </Button>
+          ) : null}
+        </div>
 
         <TabsContent value="all" className="mt-6">
           <NotificationsList

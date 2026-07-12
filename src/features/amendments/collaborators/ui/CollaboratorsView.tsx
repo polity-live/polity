@@ -24,6 +24,7 @@ import { InviteDialog } from './InviteDialog.tsx';
 import { RolesManagementCard } from './RolesManagementCard.tsx';
 import type { Collaborator, Role } from '../hooks/useCollaborators';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { ManagementToolbar, SettingsPage } from '@/features/shared/ui/form';
 
 interface CollaboratorsViewProps {
   activeCollaborators: Collaborator[];
@@ -125,28 +126,23 @@ export function CollaboratorsView({
   );
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">
-          {translateText('generated.inline.0097_manage_amendment_collaborators_1a87c60d')}
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          {amendmentTitle}
-          {translateText(
-            'generated.inline.0098_manage_collaborators_requests_and_invitations_b304a0db'
-          )}
-        </p>
-      </div>
-
+    <SettingsPage
+      title={translateText('generated.inline.0097_manage_amendment_collaborators_1a87c60d')}
+      description={`${amendmentTitle}${translateText(
+        'generated.inline.0098_manage_collaborators_requests_and_invitations_b304a0db'
+      )}`}
+      size="wide"
+      headingMode="sr-only"
+    >
       {activeTab !== 'roles' ? (
-        <>
+        <ManagementToolbar className="mb-6">
           <EntitySearchBar
             searchQuery={searchQuery}
             onSearchQueryChange={onSearchQueryChange}
             placeholder={translateText(
               'generated.inline.0099_search_collaborators_by_name_role_or_status_c0a4b06d'
             )}
-            className="mb-4"
+            className="flex-1"
           />
           {showCollaboratorFilters ? (
             <ParticipationRoleFilterBar
@@ -155,7 +151,7 @@ export function CollaboratorsView({
               onSelectedRoleIdsChange={setSelectedRoleIds}
             />
           ) : null}
-        </>
+        </ManagementToolbar>
       ) : null}
 
       <MembershipTabs
@@ -274,6 +270,6 @@ export function CollaboratorsView({
         onConfirm={onConfirmRoleChange}
         title={translateText('generated.inline.0107_manage_collaborator_roles_f0c3f76e')}
       />
-    </div>
+    </SettingsPage>
   );
 }

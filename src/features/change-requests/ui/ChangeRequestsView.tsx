@@ -192,14 +192,9 @@ export function ChangeRequestsView({
   return (
     <PageWrapper>
       <div className="space-y-6 pt-5">
-        <div className="container mx-auto px-8">
-          <div className="flex items-center gap-3">
-            <FileEdit className="h-8 w-8" />
-            <h1 className="text-4xl font-bold">
-              {translateText('generated.inline.0285_change_requests_af9a9fa4')}
-            </h1>
-          </div>
-        </div>
+        <h1 className="sr-only">
+          {translateText('generated.inline.0285_change_requests_af9a9fa4')}
+        </h1>
 
         {branchSelectorBranches.length > 0 && onBranchChange ? (
           <AmendmentBranchSelectorSection

@@ -69,7 +69,7 @@ function averageCenter(items: SearchSpatialItem[]): [number, number] {
 interface UseSpatialSearchControllerOptions {
   context: SearchListContext;
   permalinkID?: string | null;
-  onTotalChange?: (total: number) => void;
+  onTotalChange?: (total: number | null) => void;
 }
 
 export function useSpatialSearchController({
@@ -140,7 +140,7 @@ export function useSpatialSearchController({
     };
   }, []);
 
-  const { virtualizer, rowAt, complete, rowsEmpty, estimatedTotal, total } = useZeroVirtualizer<
+  const { virtualizer, rowAt, complete, rowsEmpty, total } = useZeroVirtualizer<
     HTMLDivElement,
     HTMLDivElement,
     SearchListContext,
@@ -180,8 +180,8 @@ export function useSpatialSearchController({
   const mapCenter = useMemo(() => averageCenter(mapItems), [mapItems]);
 
   useEffect(() => {
-    onTotalChange?.(total ?? estimatedTotal);
-  }, [estimatedTotal, onTotalChange, total]);
+    onTotalChange?.(total ?? null);
+  }, [listContextParams, onTotalChange, total]);
 
   const handleBoundsChange = useCallback((nextBounds: SearchBounds) => {
     setBounds(currentBounds =>

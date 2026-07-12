@@ -3,6 +3,7 @@ import type { PqlQuickFilterDefinition, PqlQuickFilterValues } from '../hooks/us
 import { usePqlToolbarController } from '../hooks/usePqlToolbarController';
 import { PqlToolbarView } from './PqlToolbarView';
 import type { SurfaceMode } from '@/features/shared/ui/layout/SurfaceDepthContext';
+import type { ReactNode } from 'react';
 
 interface PqlToolbarProps<TItem, TFieldKey extends string> {
   fields: readonly PqlFieldDefinition<TItem, TFieldKey>[];
@@ -20,6 +21,7 @@ interface PqlToolbarProps<TItem, TFieldKey extends string> {
   onCustomFilterDelete: (filterId: string) => void;
   onCustomFilterSave: (filter: PqlFilter<TFieldKey>) => void;
   surface?: SurfaceMode;
+  actions?: ReactNode;
 }
 
 export function PqlToolbar<TItem, TFieldKey extends string>({
@@ -38,6 +40,7 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
   onCustomFilterDelete,
   onCustomFilterSave,
   surface = 'auto',
+  actions,
 }: PqlToolbarProps<TItem, TFieldKey>) {
   return (
     <PqlToolbarView
@@ -56,6 +59,7 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
       searchPlaceholder={searchPlaceholder}
       searchQuery={searchQuery}
       surface={surface}
+      actions={actions}
       {...usePqlToolbarController({
         fields,
         quickFilters,

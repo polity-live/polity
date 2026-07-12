@@ -166,12 +166,14 @@ export function GroupMembershipsContentContainer({
   canManageAssignments,
   defaultTab,
   focusAssignmentId,
+  onTabChange,
 }: {
   groupId: string;
   canManageMembers: boolean;
   canManageAssignments: boolean;
   defaultTab?: MembershipTab;
   focusAssignmentId?: string;
+  onTabChange?: (tab: MembershipTab) => void;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -219,7 +221,15 @@ export function GroupMembershipsContentContainer({
 
   useEffect(() => {
     setActiveTab(resolvedDefaultTab);
-  }, [resolvedDefaultTab]);
+    if (resolvedDefaultTab !== defaultTab) {
+      onTabChange?.(resolvedDefaultTab);
+    }
+  }, [defaultTab, onTabChange, resolvedDefaultTab]);
+
+  const handleTabChange = (tab: MembershipTab) => {
+    setActiveTab(tab);
+    onTabChange?.(tab);
+  };
 
   const { activeMemberships, invitedMemberships, requestedMemberships } =
     useGroupMemberships(groupId);
@@ -932,7 +942,7 @@ export function GroupMembershipsContentContainer({
       selectedGuestUserIds={selectedGuestUserIds}
       selectedInviteRoleIds={selectedInviteRoleIds}
       selectedUserIds={selectedUserIds}
-      setActiveTab={setActiveTab}
+      setActiveTab={handleTabChange}
       setAddRoleOpen={setAddRoleOpen}
       setChangeRoleOpen={setChangeRoleOpen}
       setEditingRole={setEditingRole}

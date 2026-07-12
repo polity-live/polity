@@ -14,6 +14,8 @@ import {
 import { EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { RoleTag } from './RoleTag';
+import { ManagementSection } from '@/features/shared/ui/form';
+import { CountBadge } from '@/features/shared/ui/status';
 
 interface GuestAccessRoleLike {
   id?: string | null;
@@ -224,17 +226,18 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
   ];
 
   return (
-    <section
+    <ManagementSection
       className="civic-load-card-reveal space-y-3"
       style={{ '--civic-load-index': 3 } as CSSProperties}
-    >
-      <div className="space-y-1.5 px-3 sm:px-4">
-        <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
+      title={
+        <span className="flex items-center gap-2">
           <UserRoundCheck className="h-5 w-5" />
-          {title} ({guests.length})
-        </h2>
-        <p className="text-muted-foreground text-sm">{description}</p>
-      </div>
+          {title}
+          <CountBadge count={guests.length} />
+        </span>
+      }
+      description={description}
+    >
       <DataTable
         columns={columns}
         data={[...guests]}
@@ -242,6 +245,6 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
         enablePagination={false}
         emptyTitle={translateText('generated.inline.0687_no_guests_yet_a19e5185')}
       />
-    </section>
+    </ManagementSection>
   );
 }

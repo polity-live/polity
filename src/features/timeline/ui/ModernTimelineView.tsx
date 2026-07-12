@@ -100,9 +100,7 @@ export function ModernTimelineView({
         activeFilterCount={activeFilterCount}
         decisionsBadge={decisionTerminal.urgentCount}
         showSort={false}
-        subtitle={t('features.timeline.header.subtitle', {
-          defaultValue: 'What is happening around you, ranked by relevance and proximity.',
-        })}
+        showTitle={false}
       />
 
       {showFilterPanel ? (

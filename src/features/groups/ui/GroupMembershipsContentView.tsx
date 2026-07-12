@@ -25,6 +25,7 @@ import {
 } from '@/features/shared/ui/participation';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { ManagementToolbar, SettingsPage } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { Plus } from 'lucide-react';
@@ -827,20 +828,21 @@ export function GroupMembershipsPageView({
   children,
 }: GroupMembershipsPageViewProps) {
   return (
-    <div>
-      <h1 className="mb-6 text-3xl font-bold">{title}</h1>
-
-      {showSearch ? (
-        <EntitySearchBar
-          searchQuery={searchQuery}
-          onSearchQueryChange={onSearchQueryChange}
-          placeholder={searchPlaceholder}
-          className="mb-4"
-        />
+    <SettingsPage title={title} size="wide" headingMode="sr-only">
+      {showSearch || secondaryFilterContent ? (
+        <ManagementToolbar className="mb-6">
+          {showSearch ? (
+            <EntitySearchBar
+              searchQuery={searchQuery}
+              onSearchQueryChange={onSearchQueryChange}
+              placeholder={searchPlaceholder}
+              className="flex-1"
+            />
+          ) : null}
+          {secondaryFilterContent}
+        </ManagementToolbar>
       ) : null}
-      {secondaryFilterContent}
-
       {children}
-    </div>
+    </SettingsPage>
   );
 }

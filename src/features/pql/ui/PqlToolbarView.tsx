@@ -27,6 +27,7 @@ import {
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { PqlFilterBuilderDialog } from './PqlFilterBuilderDialog';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import type { ReactNode } from 'react';
 
 export interface ActivePqlFilterBadge {
   id: string;
@@ -73,6 +74,7 @@ interface PqlToolbarViewProps<TItem, TFieldKey extends string> {
   searchPlaceholder: string;
   searchQuery: string;
   surface?: SurfaceMode;
+  actions?: ReactNode;
 }
 
 function describeFilter<TFieldKey extends string>(filter: PqlFilter<TFieldKey>): string {
@@ -105,17 +107,29 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
   searchPlaceholder,
   searchQuery,
   surface = 'auto',
+  actions,
 }: PqlToolbarViewProps<TItem, TFieldKey>) {
   const getField = (fieldKey: TFieldKey) => fields.find((field: any) => field.key === fieldKey);
   const resolvedSurface = useResolvedSurfaceMode(surface);
   const toolbarContent = (
     <>
-      <SearchField
-        placeholder={searchPlaceholder}
-        value={searchQuery}
-        onValueChange={onSearchQueryChange}
-        clearLabel={translateText('generated.inline.1132_clear_search_67300d0f')}
-      />
+      <div
+        data-slot="pql-search-row"
+        className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center"
+      >
+        <SearchField
+          fieldClassName="min-w-0 flex-1"
+          placeholder={searchPlaceholder}
+          value={searchQuery}
+          onValueChange={onSearchQueryChange}
+          clearLabel={translateText('generated.inline.1132_clear_search_67300d0f')}
+        />
+        {actions ? (
+          <div data-slot="pql-actions" className="flex shrink-0 flex-wrap items-center gap-2">
+            {actions}
+          </div>
+        ) : null}
+      </div>
 
       {activeBadges.length > 0 ? (
         <div className="flex flex-wrap gap-2">

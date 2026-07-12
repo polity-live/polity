@@ -13,7 +13,7 @@ interface SearchHeaderProps {
   activeTopics: string[];
   personalTopics?: string[];
   onTopicToggle: (topic: string) => void;
-  totalResults: number;
+  totalResults: number | null;
   queryParam: string;
   view: SearchViewMode;
   onViewChange: (view: SearchViewMode) => void;
@@ -36,11 +36,7 @@ export function SearchHeader({
 
   return (
     <>
-      <div className="mb-6">
-        <h1 className="mb-2 text-3xl font-bold">{t('features.search.title')}</h1>
-        <p className="text-muted-foreground">{t('features.search.description')}</p>
-      </div>
-
+      <h1 className="sr-only">{t('features.search.title')}</h1>
       {/* Search Bar - Fixed/Sticky */}
       <div className="bg-background sticky top-0 z-10 mb-2 space-y-3 pt-2 pb-2">
         <div className="flex gap-2">
@@ -116,7 +112,9 @@ export function SearchHeader({
       {queryParam && (
         <div className="mb-4">
           <p className="text-muted-foreground text-sm">
-            {t('features.search.results.showingFor', { count: totalResults, query: queryParam })}
+            {totalResults === null
+              ? t('features.search.results.searchingFor', { query: queryParam })
+              : t('features.search.results.showingFor', { count: totalResults, query: queryParam })}
           </p>
         </div>
       )}

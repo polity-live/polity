@@ -18,6 +18,7 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { Filter, Hash } from 'lucide-react';
 import type { AmendmentFilters } from '../hooks/useAmendmentFilters';
+import type { ReactNode } from 'react';
 
 interface AmendmentSearchAndFiltersProps {
   filters: AmendmentFilters;
@@ -29,6 +30,7 @@ interface AmendmentSearchAndFiltersProps {
   onToggleFilters: () => void;
   onClearStatusFilter: () => void;
   onClearHashtagFilter: () => void;
+  actions?: ReactNode;
 }
 
 export function AmendmentSearchAndFilters({
@@ -41,6 +43,7 @@ export function AmendmentSearchAndFilters({
   onToggleFilters,
   onClearStatusFilter,
   onClearHashtagFilter,
+  actions,
 }: AmendmentSearchAndFiltersProps) {
   const { t } = useTranslation();
   const statusLabels: Record<string, string> = {
@@ -63,6 +66,7 @@ export function AmendmentSearchAndFilters({
         <Button variant="outline" size="icon" onClick={onToggleFilters}>
           <Filter className="h-4 w-4" />
         </Button>
+        {actions ? <div className="flex shrink-0 items-center">{actions}</div> : null}
       </div>
 
       {/* Active Filters Display */}

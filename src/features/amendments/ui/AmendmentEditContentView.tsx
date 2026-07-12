@@ -210,6 +210,7 @@ export function AmendmentEditContentView({
           ? t('pages.create.amendment.description')
           : t('features.amendments.editContent.pageDescription')
       }
+      headingMode={isCreating ? 'visible' : 'sr-only'}
     >
       <form ref={formRef} onSubmit={onFormSubmit} className="space-y-6">
         <SettingsTabs

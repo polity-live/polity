@@ -9,3 +9,10 @@ export {
   ScrollableSheetContent,
   SelectionDialog,
 } from './DialogShell';
+export {
+  ManagementDialogBody,
+  ManagementDialogContent,
+  ManagementDialogFooter,
+  ManagementDialogHeader,
+  ManagementDialogSection,
+} from './ManagementDialog';

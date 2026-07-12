@@ -6,7 +6,7 @@ import { SpatialSearchResultsList } from './SpatialSearchResultsList';
 interface SpatialSearchViewProps {
   context: SearchListContext;
   permalinkID?: string | null;
-  onTotalChange?: (total: number) => void;
+  onTotalChange?: (total: number | null) => void;
 }
 
 export function SpatialSearchView({ context, permalinkID, onTotalChange }: SpatialSearchViewProps) {

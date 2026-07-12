@@ -15,6 +15,8 @@ import { getMembershipProvenanceDisplayLabel } from '../logic/membershipComposit
 import type { ParticipationLike } from '@/features/shared/types/participation';
 import { RoleTag } from './RoleTag';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { ManagementSection } from '@/features/shared/ui/form';
+import { CountBadge } from '@/features/shared/ui/status';
 
 interface PendingInvitationsTableProps<TParticipation extends ParticipationLike> {
   invitations: TParticipation[];
@@ -194,17 +196,18 @@ export function PendingInvitationsTable<TParticipation extends ParticipationLike
   }
 
   return (
-    <section
+    <ManagementSection
       className="civic-load-card-reveal space-y-3"
       style={{ '--civic-load-index': 1 } as CSSProperties}
-    >
-      <div className="space-y-1.5 px-3 sm:px-4">
-        <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
+      title={
+        <span className="flex items-center gap-2">
           <UserPlus className="h-5 w-5" />
-          {title} ({invitations.length})
-        </h2>
-        <p className="text-muted-foreground text-sm">{description}</p>
-      </div>
+          {title}
+          <CountBadge count={invitations.length} />
+        </span>
+      }
+      description={description}
+    >
       <DataTable
         columns={columns}
         data={invitations}
@@ -212,6 +215,6 @@ export function PendingInvitationsTable<TParticipation extends ParticipationLike
         enablePagination={false}
         tableClassName="[&_td:last-child]:text-right"
       />
-    </section>
+    </ManagementSection>
   );
 }

@@ -18,6 +18,8 @@ import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary
 import { getMembershipProvenanceDisplayLabel } from '../logic/membershipComposition';
 import type { MembershipSort, MembershipSortField } from '../types/group.types';
 import { RoleTag } from './RoleTag';
+import { ManagementSection } from '@/features/shared/ui/form';
+import { CountBadge } from '@/features/shared/ui/status';
 
 interface ActiveMembersTableProps<TMembership extends ParticipationLike> {
   members: TMembership[];
@@ -237,17 +239,18 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
   ];
 
   return (
-    <section
+    <ManagementSection
       className="civic-load-card-reveal space-y-3"
       style={{ '--civic-load-index': 2 } as CSSProperties}
-    >
-      <div className="space-y-1.5 px-3 sm:px-4">
-        <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
+      title={
+        <span className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          {resolvedTitle} ({members.length})
-        </h2>
-        <p className="text-muted-foreground text-sm">{resolvedDescription}</p>
-      </div>
+          {resolvedTitle}
+          <CountBadge count={members.length} />
+        </span>
+      }
+      description={resolvedDescription}
+    >
       <DataTable
         columns={columns}
         data={members}
@@ -255,7 +258,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
         enablePagination={false}
         emptyTitle={t('components.membershipTables.noActiveMembers')}
       />
-    </section>
+    </ManagementSection>
   );
 }
 

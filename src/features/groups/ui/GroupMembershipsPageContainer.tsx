@@ -8,12 +8,14 @@ interface GroupMembershipsPageContainerProps {
   groupId: string;
   defaultTab?: MembershipTab;
   focusAssignmentId?: string;
+  onTabChange?: (tab: MembershipTab) => void;
 }
 
 export function GroupMembershipsPageContainer({
   groupId,
   defaultTab,
   focusAssignmentId,
+  onTabChange,
 }: GroupMembershipsPageContainerProps) {
   const controller = useGroupMembershipsPageController({ groupId, defaultTab, focusAssignmentId });
 
@@ -32,6 +34,7 @@ export function GroupMembershipsPageContainer({
       canManageAssignments={controller.canManageAssignments}
       defaultTab={controller.defaultTab}
       focusAssignmentId={controller.focusAssignmentId}
+      onTabChange={onTabChange}
     />
   );
 }

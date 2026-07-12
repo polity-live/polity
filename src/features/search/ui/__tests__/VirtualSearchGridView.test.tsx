@@ -76,7 +76,9 @@ describe('VirtualSearchGridView', () => {
 
     const positionWrapper = container.querySelector('[data-index="4"]') as HTMLElement | null;
     const revealWrapper = container.querySelector('.civic-load-card-reveal') as HTMLElement | null;
+    const scrollContainer = container.querySelector('.overflow-auto') as HTMLElement | null;
 
+    expect(scrollContainer?.className).toContain('scrollbar-hide');
     expect(positionWrapper).toBeTruthy();
     expect(positionWrapper?.style.transform).toBe('translate(40px, 20px)');
     expect(positionWrapper?.className).not.toContain('civic-load-card-reveal');

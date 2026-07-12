@@ -56,6 +56,7 @@ export const searchTranslations = {
   results: {
     showing: 'Showing {{count}} results',
     showingFor: 'Showing {{count}} results for "{{query}}"',
+    searchingFor: 'Searching for "{{query}}"…',
     loadMore: 'Load more',
     page: 'Page {{current}} of {{total}}',
   },

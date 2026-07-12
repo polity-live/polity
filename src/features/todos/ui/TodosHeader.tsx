@@ -14,10 +14,8 @@ export function TodosHeader({ viewMode, setViewMode }: TodosHeaderProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="mb-6 flex items-center justify-between">
-      <div>
-        <h1 className="text-3xl font-bold">{t('features.todos.title')}</h1>
-      </div>
+    <>
+      <h1 className="sr-only">{t('features.todos.title')}</h1>
       <div className="flex gap-2">
         <div className="flex gap-1 rounded-lg border p-1">
           <Button
@@ -42,6 +40,6 @@ export function TodosHeader({ viewMode, setViewMode }: TodosHeaderProps) {
           </Button>
         </Link>
       </div>
-    </div>
+    </>
   );
 }

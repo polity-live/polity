@@ -19,9 +19,14 @@ import { cn } from '@/features/shared/utils/utils';
 import { UserTableCell } from '@/features/shared/ui/data-table';
 import { RoleTag } from '@/features/groups/ui/RoleTag';
 import { DataTable, TableActionIconButton, type ColumnDef } from '@/features/shared/ui/data-table';
-import { FileInputField, FormFieldShell, TextField } from '@/features/shared/ui/form';
+import {
+  FileInputField,
+  FormFieldShell,
+  ManagementSection,
+  TextField,
+} from '@/features/shared/ui/form';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
-import { EntityBadge, StatusBadge } from '@/features/shared/ui/status';
+import { CountBadge, EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import {
   ArrowUpDown,
   Check,
@@ -546,22 +551,24 @@ export function OfflineRosterCardView({
 
   return (
     <>
-      <section className="space-y-3">
-        <div className="flex flex-col gap-4 px-3 sm:flex-row sm:items-start sm:justify-between sm:px-4">
-          <div className="space-y-1.5">
-            <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
-              <Users className="h-5 w-5" />
-              {title} ({rows.length})
-            </h2>
-            <p className="text-muted-foreground text-sm">{description}</p>
-          </div>
-          {showManageButton ? (
+      <ManagementSection
+        title={
+          <span className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            {title}
+            <CountBadge count={rows.length} />
+          </span>
+        }
+        description={description}
+        action={
+          showManageButton ? (
             <Button type="button" onClick={() => setManageOpen(true)}>
               <UserRoundPlus className="mr-2 h-4 w-4" />
               {manageButtonLabel}
             </Button>
-          ) : null}
-        </div>
+          ) : null
+        }
+      >
         <DataTable
           columns={tableVariant === 'membership' ? membershipColumns : defaultColumns}
           data={sortedRows}
@@ -570,10 +577,11 @@ export function OfflineRosterCardView({
           emptyTitle={title}
           emptyDescription={emptyStateLabel}
         />
-      </section>
+      </ManagementSection>
 
       <Dialog open={manageOpen} onOpenChange={handleManageOpenChange}>
         <ScrollableDialogContent
+          management
           className="bg-background h-dvh !max-h-none max-h-none w-screen max-w-none overflow-y-auto rounded-none border-0 p-0 shadow-none sm:max-w-none"
           showCloseButton={!isManageSubmitActive}
         >
@@ -897,7 +905,7 @@ export function OfflineRosterCardView({
           }
         }}
       >
-        <ScrollableDialogContent className="max-w-2xl">
+        <ScrollableDialogContent management className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {translateText('generated.inline.0967_connect_active_user_3b32e5de')}
@@ -948,7 +956,7 @@ export function OfflineRosterCardView({
           }
         }}
       >
-        <ScrollableDialogContent className="max-w-2xl">
+        <ScrollableDialogContent management className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {translateText('generated.inline.0971_edit_offline_user_be53ee65')}

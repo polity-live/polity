@@ -79,6 +79,7 @@ export function CalendarPageView({
         onNext={onNext}
         onToday={onToday}
         title={title}
+        headingMode="sr-only"
         actions={
           <>
             <CalendarExportButton events={events} />

@@ -134,7 +134,7 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <ScrollableDialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[920px]">
+      <ScrollableDialogContent management className="sm:max-w-[920px]">
         <DialogHeader>
           <DialogTitle>{memberName}</DialogTitle>
           <DialogDescription>

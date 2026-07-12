@@ -1,6 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { cleanup, render, screen } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@tanstack/react-router', () => ({
@@ -56,7 +57,9 @@ vi.mock('@/features/pql/hooks/usePqlCollection', () => ({
 }));
 
 vi.mock('@/features/pql/ui/PqlToolbar', () => ({
-  PqlToolbar: () => <div data-testid="pql-toolbar" />,
+  PqlToolbar: ({ actions }: { actions?: ReactNode }) => (
+    <div data-testid="pql-toolbar">{actions}</div>
+  ),
 }));
 
 vi.mock('../GroupDocumentCard', () => ({

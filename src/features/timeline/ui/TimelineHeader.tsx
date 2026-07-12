@@ -38,6 +38,8 @@ export interface TimelineHeaderProps {
   showSort?: boolean;
   /** Optional short context line below the title */
   subtitle?: string;
+  /** Whether to render the title row */
+  showTitle?: boolean;
   /** Additional CSS classes */
   className?: string;
 }
@@ -73,32 +75,37 @@ export function TimelineHeader({
   onSettingsClick,
   showSort = true,
   subtitle,
+  showTitle = true,
   className,
 }: TimelineHeaderProps) {
   const { t } = useTranslation();
   const isDecisionsMode = mode === 'decisions';
 
   return (
-    <div className={cn('space-y-4', className)}>
-      {/* Title row */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {t('features.timeline.header.title', { defaultValue: 'Timeline' })}
-          </h1>
-          {subtitle && <p className="text-muted-foreground mt-1 text-sm">{subtitle}</p>}
-        </div>
+    <div className={cn(showTitle && 'space-y-4', className)}>
+      {showTitle ? (
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {t('features.timeline.header.title', { defaultValue: 'Timeline' })}
+            </h1>
+            {subtitle && <p className="text-muted-foreground mt-1 text-sm">{subtitle}</p>}
+          </div>
 
-        {/* Settings button */}
-        {onSettingsClick && (
-          <Button variant="ghost" size="icon" onClick={onSettingsClick}>
-            <Settings className="h-5 w-5" />
-            <span className="sr-only">
-              {t('features.timeline.header.settings', { defaultValue: 'Settings' })}
-            </span>
-          </Button>
-        )}
-      </div>
+          {onSettingsClick && (
+            <Button variant="ghost" size="icon" onClick={onSettingsClick}>
+              <Settings className="h-5 w-5" />
+              <span className="sr-only">
+                {t('features.timeline.header.settings', { defaultValue: 'Settings' })}
+              </span>
+            </Button>
+          )}
+        </div>
+      ) : (
+        <h1 className="sr-only">
+          {t('features.timeline.header.title', { defaultValue: 'Timeline' })}
+        </h1>
+      )}
 
       {/* Controls row */}
       <div className="flex flex-wrap items-center justify-between gap-4">

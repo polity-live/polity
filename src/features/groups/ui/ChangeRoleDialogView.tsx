@@ -78,7 +78,7 @@ export function ChangeRoleDialogView({
 }: ChangeRoleDialogViewProps) {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <ScrollableDialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[920px]">
+      <ScrollableDialogContent management className="sm:max-w-[920px]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>

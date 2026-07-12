@@ -58,6 +58,8 @@ function mockRouteState({
   isLoading?: boolean;
 } = {}) {
   vi.spyOn(Route, 'useParams').mockReturnValue({ id: 'amendment-1' } as never);
+  vi.spyOn(Route, 'useSearch').mockReturnValue({ tab: 'membershipsByUser' } as never);
+  vi.spyOn(Route, 'useNavigate').mockReturnValue(vi.fn() as never);
   useAuthMock.mockReturnValue({ user: { id: userId } });
   useAmendmentStateMock.mockReturnValue({
     amendment: {

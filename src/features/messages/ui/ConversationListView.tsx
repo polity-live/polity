@@ -60,40 +60,38 @@ export function ConversationListView({
       )}
     >
       <CardHeader className="flex-shrink-0 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">{t('features.messages.title')}</h2>
-          <div className="flex items-center gap-2">
-            <Button
-              size="icon"
-              variant="outline"
-              className="rounded-full"
-              onClick={onNewConversationClick}
-              aria-label={t('features.messages.compose.startNewChat')}
-              title={t('features.messages.compose.startNewChat')}
-            >
-              <MessageCircle className="h-5 w-5" />
-            </Button>
-            <Button
-              size="icon"
-              variant="default"
-              className="rounded-full"
-              onClick={onNewAiConversationClick}
-              aria-label={t('features.messages.compose.startNewAi')}
-              title={t('features.messages.compose.startNewAi')}
-            >
-              <Bot className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
+        <h1 className="sr-only">{t('features.messages.title')}</h1>
         <div className="space-y-2">
-          <div className="relative">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <FormControlInput
-              placeholder={t('features.messages.searchConversations')}
-              value={searchQuery}
-              onChange={e => onSearchChange(e.target.value)}
-              className="pl-9"
-            />
+          <div data-slot="conversation-search-row" className="flex min-w-0 items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+              <FormControlInput
+                placeholder={t('features.messages.searchConversations')}
+                value={searchQuery}
+                onChange={e => onSearchChange(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={onNewConversationClick}
+                aria-label={t('features.messages.compose.startNewChat')}
+                title={t('features.messages.compose.startNewChat')}
+              >
+                <MessageCircle className="h-5 w-5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="default"
+                onClick={onNewAiConversationClick}
+                aria-label={t('features.messages.compose.startNewAi')}
+                title={t('features.messages.compose.startNewAi')}
+              >
+                <Bot className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             {filterButtons.map((filter: any) => (

@@ -289,7 +289,7 @@ export function GroupConflictDialog({
           {resolvedTriggerLabel}
         </Button>
       </DialogTrigger>
-      <ScrollableDialogContent className="max-h-[min(90dvh,42rem)] overflow-y-auto sm:max-w-2xl">
+      <ScrollableDialogContent management className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{resolvedTitle}</DialogTitle>
           <DialogDescription>{resolvedDescription}</DialogDescription>

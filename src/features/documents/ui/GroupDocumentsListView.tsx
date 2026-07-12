@@ -114,18 +114,6 @@ export function GroupDocumentsListView({
 
   return (
     <>
-      {canManageDocuments ? (
-        <div className="mb-6 flex justify-between">
-          <CreateAction
-            canManageDocuments={canManageDocuments}
-            groupId={groupId}
-            groupName={groupName}
-            isCreating={isCreating}
-            onCreateDocument={onCreateDocument}
-          />
-        </div>
-      ) : null}
-
       <PqlToolbar
         fields={fields}
         searchQuery={pql.searchQuery}
@@ -143,6 +131,17 @@ export function GroupDocumentsListView({
         onCustomFilterToggle={pql.toggleCustomFilter}
         onCustomFilterDelete={pql.deleteCustomFilter}
         onCustomFilterSave={pql.saveCustomFilter}
+        actions={
+          canManageDocuments ? (
+            <CreateAction
+              canManageDocuments={canManageDocuments}
+              groupId={groupId}
+              groupName={groupName}
+              isCreating={isCreating}
+              onCreateDocument={onCreateDocument}
+            />
+          ) : undefined
+        }
       />
 
       {pql.filteredItems.length === 0 ? (

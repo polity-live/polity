@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -24,7 +24,7 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
-  translate: (key: string, fallback?: string) => fallback ?? key,
+  translate: (key: string, fallback?: unknown) => (typeof fallback === 'string' ? fallback : key),
 }));
 
 afterEach(() => {
@@ -123,5 +123,67 @@ describe('MembershipStatusTable', () => {
     ]);
 
     expect(screen.getByText('Participant')).toBeTruthy();
+  });
+
+  it('requires confirmation before leaving an active membership', () => {
+    const onLeave = vi.fn();
+    render(
+      <MembershipStatusTable
+        title="Groups"
+        description="Group rows"
+        icon={Users}
+        items={
+          [
+            {
+              id: 'membership-1',
+              status: 'member',
+              group: { id: 'group-1', name: 'Finance Group' },
+              created_at: Date.now(),
+            },
+          ] as never
+        }
+        statusType="active"
+        entityKey="group"
+        fallbackIcon={Users}
+        onLeave={onLeave}
+      />
+    );
+
+    fireEvent.click(screen.getByText('generated.inline.1197_leave_7e3520a9'));
+    expect(onLeave).not.toHaveBeenCalled();
+    expect(screen.getByText('pages.user.memberships.confirmations.leaveTitle')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('pages.user.memberships.confirmations.leaveConfirm'));
+    expect(onLeave).toHaveBeenCalledWith('membership-1');
+  });
+
+  it('requires confirmation before withdrawing a request', () => {
+    const onWithdraw = vi.fn();
+    render(
+      <MembershipStatusTable
+        title="Requested"
+        description="Requested rows"
+        icon={Users}
+        items={
+          [
+            {
+              id: 'request-1',
+              status: 'requested',
+              event: { id: 'event-1', title: 'Assembly' },
+              created_at: Date.now(),
+            },
+          ] as never
+        }
+        statusType="requested"
+        entityKey="event"
+        fallbackIcon={Users}
+        onWithdraw={onWithdraw}
+      />
+    );
+
+    fireEvent.click(screen.getByText('generated.inline.1198_withdraw_request_898cc3e4'));
+    expect(onWithdraw).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText('pages.user.memberships.confirmations.withdrawConfirm'));
+    expect(onWithdraw).toHaveBeenCalledWith('request-1');
   });
 });

@@ -109,6 +109,7 @@ export function InviteMembersDialogView({
         )}
       </DialogTrigger>
       <ScrollableDialogContent
+        management={!submissionActive}
         showCloseButton={!submissionActive}
         className={
           submissionActive

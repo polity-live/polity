@@ -1,5 +1,6 @@
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { DataTable } from '@/features/shared/ui/data-table';
+import { ManagementSection } from '@/features/shared/ui/form';
 export interface MembershipStatusTableViewProps {
   title: any;
   description: any;
@@ -39,14 +40,15 @@ export function MembershipStatusTableView({
   );
 
   return (
-    <section className="space-y-3">
-      <div className="space-y-1.5 px-3 sm:px-4">
-        <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
+    <ManagementSection
+      title={
+        <span className="flex items-center gap-2">
           <Icon className="h-5 w-5" />
           {title}
-        </h2>
-        <p className="text-muted-foreground text-sm">{description}</p>
-      </div>
+        </span>
+      }
+      description={description}
+    >
       <DataTable
         columns={columns}
         data={items}
@@ -56,6 +58,6 @@ export function MembershipStatusTableView({
           statusType: statusLabel,
         })}
       />
-    </section>
+    </ManagementSection>
   );
 }

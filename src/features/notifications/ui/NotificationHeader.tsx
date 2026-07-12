@@ -12,11 +12,9 @@ export function NotificationHeader({ unreadCount, onMarkAllAsRead }: Notificatio
   const { t } = useTranslation();
 
   return (
-    <div className="mb-6 flex items-center justify-between">
-      <div>
-        <h1 className="text-3xl font-bold">{t('features.notifications.titleVersion')}</h1>
-      </div>
-      <div className="flex items-center gap-2">
+    <>
+      <h1 className="sr-only">{t('features.notifications.titleVersion')}</h1>
+      <div className="flex shrink-0 items-center gap-2">
         <PushNotificationToggle variant="minimal" />
         {unreadCount > 0 && (
           <Button onClick={onMarkAllAsRead} variant="outline">
@@ -25,6 +23,6 @@ export function NotificationHeader({ unreadCount, onMarkAllAsRead }: Notificatio
           </Button>
         )}
       </div>
-    </div>
+    </>
   );
 }

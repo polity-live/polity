@@ -5,7 +5,7 @@ import { VirtualSearchGridView } from './VirtualSearchGridView';
 interface VirtualSearchGridProps {
   context: SearchListContext;
   permalinkID?: string | null;
-  onTotalChange?: (total: number) => void;
+  onTotalChange?: (total: number | null) => void;
 }
 
 export function VirtualSearchGrid({ context, permalinkID, onTotalChange }: VirtualSearchGridProps) {

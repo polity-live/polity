@@ -73,8 +73,11 @@ describe('SpatialSearchResultsList', () => {
     );
 
     const card = screen.getByTestId('search-result-card');
+    const scrollContainer = screen.getByTestId('spatial-search-results-list');
     const wrapper = card.closest('[data-search-document-id="group:1"]');
 
+    expect(scrollContainer.className).toContain('scrollbar-hide');
+    expect(scrollContainer.className).toContain('overflow-auto');
     expect(card.textContent).toContain('Active Group');
     expect(wrapper?.className).toContain('border-primary');
     expect(wrapper?.className).toContain('bg-primary/5');

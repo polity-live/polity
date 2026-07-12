@@ -92,10 +92,6 @@ export function CreateDashboard() {
   ];
 
   return (
-    <CreateDashboardView
-      title={t('pages.create.dashboard.title')}
-      subtitle={t('pages.create.dashboard.subtitle')}
-      sections={sections}
-    />
+    <CreateDashboardView sections={sections} accessibleTitle={t('pages.create.dashboard.title')} />
   );
 }

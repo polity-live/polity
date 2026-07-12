@@ -28,7 +28,7 @@ export interface SearchPageViewProps {
   onEngagementChange: (engagement: EngagementFilter) => void;
   onResetFilters: () => void;
   hasActiveFilters: boolean;
-  totalResults: number;
+  totalResults: number | null;
   view: SearchViewMode;
   onViewChange: (view: SearchViewMode) => void;
   swipeHandlers: SwipeNavigationHandlers;

@@ -197,6 +197,22 @@ export const userPageTranslations = {
   },
   memberships: {
     title: 'Memberships',
+    description: 'Manage your memberships, participations, collaborations, and blog access.',
+    tabs: {
+      all: 'All',
+      groups: 'Groups',
+      events: 'Events',
+      amendments: 'Amendments',
+      blogs: 'Blogs',
+    },
+    confirmations: {
+      leaveTitle: 'Leave this connection?',
+      leaveDescription: 'You will leave “{{name}}” and lose the associated access.',
+      leaveConfirm: 'Leave',
+      withdrawTitle: 'Withdraw request?',
+      withdrawDescription: 'Your request for “{{name}}” will be withdrawn.',
+      withdrawConfirm: 'Withdraw request',
+    },
     sections: {
       pendingTitle: 'Pending ({{count}})',
       activeTitle: 'Active ({{count}})',

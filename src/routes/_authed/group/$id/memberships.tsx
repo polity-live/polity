@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { GroupMembershipsPageContainer } from '@/features/groups/ui/GroupMembershipsPageContainer';
 
-const groupMembershipsSearchSchema = z.object({
+export const groupMembershipsSearchSchema = z.object({
   tab: z
     .enum([
       'membershipsByUser',
@@ -14,6 +14,7 @@ const groupMembershipsSearchSchema = z.object({
       'guests',
       'roles',
     ])
+    .catch('membershipsByUser')
     .optional(),
   assignmentId: z.string().optional(),
 });
@@ -26,8 +27,16 @@ export const Route = createFileRoute('/_authed/group/$id/memberships')({
 function GroupMembershipsRoute() {
   const { id } = Route.useParams();
   const { tab, assignmentId } = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   return (
-    <GroupMembershipsPageContainer groupId={id} defaultTab={tab} focusAssignmentId={assignmentId} />
+    <GroupMembershipsPageContainer
+      groupId={id}
+      defaultTab={tab}
+      focusAssignmentId={assignmentId}
+      onTabChange={nextTab =>
+        navigate({ search: previous => ({ ...previous, tab: nextTab }), replace: true })
+      }
+    />
   );
 }

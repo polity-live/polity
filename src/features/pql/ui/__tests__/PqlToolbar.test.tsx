@@ -24,7 +24,13 @@ const assigneeItems: TypeaheadItem[] = [
   },
 ];
 
-function ToolbarHarness({ embedded = false }: { embedded?: boolean }) {
+function ToolbarHarness({
+  embedded = false,
+  withActions = false,
+}: {
+  embedded?: boolean;
+  withActions?: boolean;
+}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [values, setValues] = useState<Partial<Record<FieldKey, string[]>>>({});
 
@@ -94,6 +100,7 @@ function ToolbarHarness({ embedded = false }: { embedded?: boolean }) {
       onCustomFilterToggle={() => undefined}
       onCustomFilterDelete={() => undefined}
       onCustomFilterSave={() => undefined}
+      actions={withActions ? <button type="button">New item</button> : undefined}
     />
   );
 
@@ -105,6 +112,17 @@ afterEach(() => {
 });
 
 describe('PqlToolbar', () => {
+  it('renders optional actions in the same responsive row as search', () => {
+    const { container } = render(<ToolbarHarness withActions />);
+
+    const searchRow = container.querySelector('[data-slot="pql-search-row"]');
+    const actions = container.querySelector('[data-slot="pql-actions"]');
+
+    expect(searchRow?.className).toContain('sm:flex-row');
+    expect(actions?.parentElement).toBe(searchRow);
+    expect(screen.getByRole('button', { name: 'New item' })).toBeTruthy();
+  });
+
   it('renders active button quick filters as pressed colored controls', () => {
     render(<ToolbarHarness />);
 

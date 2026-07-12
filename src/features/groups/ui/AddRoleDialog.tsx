@@ -97,7 +97,7 @@ export function AddRoleDialog({
       ) : trigger ? (
         <DialogTrigger asChild>{trigger}</DialogTrigger>
       ) : null}
-      <ScrollableDialogContent className="!flex !max-h-[calc(100vh-2rem)] !max-w-3xl !flex-col !overflow-hidden sm:!max-w-3xl">
+      <ScrollableDialogContent management className="!max-w-3xl sm:!max-w-3xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
