@@ -16,6 +16,12 @@ updates:
         patterns:
           - "@rocicorp/zero"
           - "@rocicorp/zero-virtual"
+    ignore:
+      # 0.6 removes the multi-lane virtualizer API used by the search grid.
+      - dependency-name: "@rocicorp/zero-virtual"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-major"
 
   - package-ecosystem: "github-actions"
     directory: "/"

@@ -100,7 +100,7 @@
     "@radix-ui/react-toolbar": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.10",
     "@rocicorp/zero": "1.7.0",
-    "@rocicorp/zero-virtual": "0.6.0",
+    "@rocicorp/zero-virtual": "0.5.1",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
     "@tailwindcss/cli": "^4.3.1",
