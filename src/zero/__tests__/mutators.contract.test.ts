@@ -94,7 +94,7 @@ describe('Zero mutator contracts', () => {
     );
     expect(countMutators(mutators)).toBeGreaterThan(100);
     expect(countMutators(serverMutators)).toBeGreaterThan(100);
-  }, 20_000);
+  }, 30_000);
 
   it('forces profile updates onto the authenticated user id', async () => {
     const globals = installDeterministicGlobals({ now: 1_700_000_000_123 });

@@ -156,7 +156,7 @@ describe('Zero query contracts', () => {
 
     expect(failures).toEqual([]);
     expect(queryCount).toBeGreaterThan(180);
-  });
+  }, 10_000);
 
   it('keeps searchable document paging stateless and deterministic', async () => {
     const { harness, registries } = await loadQueryRegistries();

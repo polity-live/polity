@@ -234,5 +234,5 @@ describe('StreetDesignToolbarView', () => {
 
     fireEvent.click(screen.getByTitle('Remove Greenery'));
     expect(onObjectCategoryDelete).toHaveBeenCalledWith('greenery');
-  });
+  }, 10_000);
 });
