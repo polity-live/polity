@@ -91,7 +91,7 @@ export const TableElement = withHOC(
     const readOnly = useReadOnly();
     const isSelectionAreaVisible = usePluginOption(BlockSelectionPlugin, 'isSelectionAreaVisible');
     const hasControls = !readOnly && !isSelectionAreaVisible;
-    const { isSelectingCell, marginLeft, props: tableProps } = useTableElement();
+    const { marginLeft, props: tableProps } = useTableElement();
 
     const content = (
       <PlateElement
@@ -106,7 +106,7 @@ export const TableElement = withHOC(
           <table
             className={cn(
               'mr-0 ml-px table h-px table-fixed border-collapse',
-              isSelectingCell && 'selection:bg-transparent'
+              'selection:bg-transparent'
             )}
             {...tableProps}
           >

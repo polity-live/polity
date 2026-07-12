@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import { toMutableJSONValue } from '@/zero/shared/helpers';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
@@ -164,7 +165,7 @@ export function useCloneAmendment(
       const createDocumentResult = createDocument({
         id: cloneDocumentId,
         amendment_id: cloneId,
-        content: originalDocument?.content ?? { type: 'doc', content: [] },
+        content: toMutableJSONValue(originalDocument?.content ?? { type: 'doc', content: [] }),
         editing_mode: 'edit',
       });
       await waitForClientApply(createDocumentResult);

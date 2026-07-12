@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import type { MutableJSONValue } from '@/zero/shared/helpers';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
@@ -118,8 +118,8 @@ export function useAmendmentEditContentController({
     location_kind: null as string | null,
     location_place_id: null as string | null,
     location_boundary_source: null as string | null,
-    location_geometry: null as ReadonlyJSONValue | null,
-    location_bounds: null as ReadonlyJSONValue | null,
+    location_geometry: null as MutableJSONValue | null,
+    location_bounds: null as MutableJSONValue | null,
   });
 
   const workflowBranches = useMemo(

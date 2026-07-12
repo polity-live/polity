@@ -1,4 +1,5 @@
-import type { SlateElementProps, TDateElement } from 'platejs';
+import type { TDateElement } from 'platejs';
+import type { SlateElementProps } from 'platejs/static';
 
 import { SlateElement } from 'platejs/static';
 import { useTranslation } from 'react-i18next';

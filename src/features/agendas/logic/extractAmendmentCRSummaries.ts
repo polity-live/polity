@@ -13,6 +13,7 @@ import {
   hasRenderableSuggestionContent,
   suggestionContentFromChangeRequestSnapshot,
 } from '@/features/change-requests/utils/suggestion-extraction';
+import type { MutableJSONValue } from '@/zero/shared/helpers';
 
 interface DiscussionEntry {
   id: string;
@@ -47,8 +48,8 @@ interface SavedChangeRequest {
   change_type?: string | null;
   original_text?: string | null;
   new_text?: string | null;
-  original_properties?: unknown;
-  new_properties?: unknown;
+  original_properties?: MutableJSONValue;
+  new_properties?: MutableJSONValue;
 }
 
 interface ExtractAmendmentCRSummariesOptions {

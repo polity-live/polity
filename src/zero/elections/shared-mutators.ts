@@ -181,15 +181,18 @@ async function assertElectorParticipationOwner(
   phase: 'indicative' | 'final'
 ) {
   if (tx.location === 'client') return;
-  const participation =
-    phase === 'indicative'
-      ? await tx.run(zql.indicative_elector_participation.where('id', participationId).one())
-      : await tx.run(zql.final_elector_participation.where('id', participationId).one());
-  if (!participation) throw new Error('Election participation not found');
   if (phase === 'indicative') {
+    const participation = await tx.run(
+      zql.indicative_elector_participation.where('id', participationId).one()
+    );
+    if (!participation) throw new Error('Election participation not found');
     if (participation.user_id !== ctx.userID) throw new Error('Elector does not own participation');
     return;
   }
+  const participation = await tx.run(
+    zql.final_elector_participation.where('id', participationId).one()
+  );
+  if (!participation) throw new Error('Election participation not found');
   if (!participation.elector_id) throw new Error('Elector is missing from final participation');
   await assertElectorOwner(tx, ctx, participation.elector_id, participation.election_id);
 }

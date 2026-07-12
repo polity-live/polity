@@ -1,4 +1,4 @@
-import { streamText } from 'ai';
+import { stepCountIs, streamText } from 'ai';
 import { createFileRoute } from '@tanstack/react-router';
 import { DEFAULT_AI_SKILLS_BY_SLUG } from '@/features/assistant/logic/defaultAiSkills';
 import {
@@ -156,9 +156,9 @@ export const Route = createFileRoute('/api/ai/chat')({
           system: systemPrompt,
           messages: compressedHistory.messages,
           tools,
-          maxSteps: tools ? 4 : 1,
+          stopWhen: stepCountIs(tools ? 4 : 1),
           providerOptions,
-          experimental_activeTools: tools ? activeToolNames : undefined,
+          activeTools: tools ? activeToolNames : undefined,
           onStepFinish: async stepResult => {
             try {
               toolAttachments.push(
@@ -211,15 +211,7 @@ export const Route = createFileRoute('/api/ai/chat')({
                 switch (part.type) {
                   case 'text-delta': {
                     controller.enqueue(
-                      encoder.encode(
-                        `${JSON.stringify({ type: 'text-delta', text: part.textDelta })}\n`
-                      )
-                    );
-                    break;
-                  }
-                  case 'tool-call-delta': {
-                    controller.enqueue(
-                      encoder.encode(`${JSON.stringify({ type: 'tool-call-delta' })}\n`)
+                      encoder.encode(`${JSON.stringify({ type: 'text-delta', text: part.text })}\n`)
                     );
                     break;
                   }
@@ -229,7 +221,7 @@ export const Route = createFileRoute('/api/ai/chat')({
                         `${JSON.stringify({
                           type: 'tool-call',
                           toolName: String(part.toolName),
-                          args: 'args' in part ? part.args : null,
+                          args: part.input,
                         })}\n`
                       )
                     );

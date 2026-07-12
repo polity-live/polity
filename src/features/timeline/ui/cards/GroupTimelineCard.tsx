@@ -6,7 +6,6 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
 import { useSubscribeGroup } from '@/features/groups/hooks/useSubscribeGroup';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
-import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';
 
 export interface GroupTimelineCardProps {
   group: {
@@ -58,7 +57,6 @@ export function GroupTimelineCard({
   const [membershipOpen, setMembershipOpen] = useState(false);
   const membership = useGroupMembership(group.id);
   const subscription = useSubscribeGroup(group.id);
-  const groupStyle = CONTENT_TYPE_CONFIG.group;
   const groupHashtags = group.hashtags ?? group.topics?.map(topic => ({ id: topic, tag: topic }));
   const groupDescription = normalizeTimelineText(group.description);
 
@@ -142,17 +140,14 @@ export function GroupTimelineCard({
       setMembershipOpen={setMembershipOpen}
       membership={membership}
       subscription={subscription}
-      groupStyle={groupStyle}
       groupHashtags={groupHashtags}
       groupDescription={groupDescription}
-      resolvedMembershipStatus={resolvedMembershipStatus}
       isMember={isMember}
       isInvited={isInvited}
       hasRequested={hasRequested}
       requestMembershipDisabled={requestMembershipDisabled}
       getMembershipLabel={getMembershipLabel}
       getMembershipVariant={getMembershipVariant}
-      getMembershipIcon={getMembershipIcon}
       MembershipIcon={MembershipIcon}
       stats={stats}
     />

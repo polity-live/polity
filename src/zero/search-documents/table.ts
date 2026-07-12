@@ -1,4 +1,5 @@
-import { table, string, number, json, type ReadonlyJSONValue } from '@rocicorp/zero';
+import { table, string, number, json } from '@rocicorp/zero';
+import type { MutableJSONValue } from '../shared/helpers';
 
 export const searchDocument = table('search_document')
   .columns({
@@ -20,9 +21,9 @@ export const searchDocument = table('search_document')
     location_kind: string().optional(),
     location_place_id: string().optional(),
     location_boundary_source: string().optional(),
-    location_geometry: json<ReadonlyJSONValue>().optional(),
-    location_bounds: json<ReadonlyJSONValue>().optional(),
-    card_payload: json<ReadonlyJSONValue>(),
+    location_geometry: json<MutableJSONValue>().optional(),
+    location_bounds: json<MutableJSONValue>().optional(),
+    card_payload: json<MutableJSONValue>(),
     created_at: number(),
     updated_at: number(),
     engagement_score: number(),

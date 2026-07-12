@@ -1,4 +1,4 @@
-import type { SlateElementProps } from 'platejs';
+import type { SlateElementProps } from 'platejs/static';
 import { SlateElement } from 'platejs/static';
 import type { TDataViewElement } from '@/features/charts/types';
 import { DataViewRenderer } from '@/features/charts/ui/DataViewRenderer';

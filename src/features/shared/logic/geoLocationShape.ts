@@ -1,4 +1,4 @@
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import { toMutableJSONValue, type MutableJSONValue } from '@/zero/shared/helpers';
 
 export type GeoLocationKind = 'point' | 'postcode' | 'city' | 'region' | 'country';
 
@@ -42,8 +42,8 @@ export interface GeoLocationStoredFields {
   location_kind: string | null;
   location_place_id: string | null;
   location_boundary_source: string | null;
-  location_geometry: ReadonlyJSONValue | null;
-  location_bounds: ReadonlyJSONValue | null;
+  location_geometry: MutableJSONValue | null;
+  location_bounds: MutableJSONValue | null;
 }
 
 export function isAreaLocationKind(
@@ -118,8 +118,8 @@ export function geoLocationFieldsFromShape(
     location_kind: shape?.kind ?? null,
     location_place_id: shape?.placeId ?? null,
     location_boundary_source: shape?.boundarySource ?? null,
-    location_geometry: (shape?.geometry ?? null) as ReadonlyJSONValue | null,
-    location_bounds: (shape?.bounds ?? null) as ReadonlyJSONValue | null,
+    location_geometry: shape?.geometry ? toMutableJSONValue(shape.geometry) : null,
+    location_bounds: shape?.bounds ? toMutableJSONValue(shape.bounds) : null,
   };
 }
 

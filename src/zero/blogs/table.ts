@@ -1,11 +1,12 @@
 import { table, string, number, json } from '@rocicorp/zero';
+import type { MutableJSONValue } from '../shared/helpers';
 
 export const blog = table('blog')
   .columns({
     id: string(),
     title: string().optional(),
     description: string().optional(),
-    content: json().optional(),
+    content: json<MutableJSONValue>().optional(),
     date: string().optional(),
     image_url: string().optional(),
     visibility: string(),
@@ -16,7 +17,7 @@ export const blog = table('blog')
     upvotes: number(),
     downvotes: number(),
     editing_mode: string().optional(),
-    discussions: json().optional(),
+    discussions: json<MutableJSONValue>().optional(),
     group_id: string().optional(),
     updated_at: number(),
     created_at: number(),

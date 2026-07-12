@@ -3,7 +3,7 @@
 import { Users, MessageSquare } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
-import { CONTENT_TYPE_CONFIG, getContentTypeGradient } from '../../constants/content-type-config';
+import { getContentTypeGradient } from '../../constants/content-type-config';
 
 export interface BlogTimelineCardProps {
   blog: {
@@ -30,7 +30,6 @@ export function BlogTimelineCard({ blog, href, className }: BlogTimelineCardProp
   const { t } = useTranslation();
   const gradient = getContentTypeGradient('blog');
   const subscription = useSubscribeBlog(blog.id);
-  const blogStyle = CONTENT_TYPE_CONFIG.blog;
 
   const blogUrl =
     href ??
@@ -63,7 +62,6 @@ export function BlogTimelineCard({ blog, href, className }: BlogTimelineCardProp
       t={t}
       gradient={gradient}
       subscription={subscription}
-      blogStyle={blogStyle}
       blogUrl={blogUrl}
       stats={stats}
     />

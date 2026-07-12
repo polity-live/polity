@@ -161,6 +161,8 @@ export const amendmentsTranslations = {
     votingProgress: 'Abstimmungsfortschritt',
     voted: 'abgestimmt',
     collaboratorsVoted: '{{voted}}/{{total}} Mitarbeiter mit Abstimmungsrecht haben abgestimmt',
+    collaboratorsWithVoteRightVoted:
+      '{{voted}}/{{total}} Mitarbeiter mit Abstimmungsrecht haben abgestimmt',
     closesInMinutes: 'Schließt in {{minutes}} min',
     deadlineExpired: 'Frist abgelaufen',
     votedList: 'Abgestimmt',
@@ -175,6 +177,19 @@ export const amendmentsTranslations = {
     create: 'Änderungsantrag erstellen',
     noRequests: 'Keine Änderungsanträge gefunden',
     searchPlaceholder: 'Änderungsanträge suchen...',
+    actions: {
+      abstain: 'Enthalten',
+      accept: 'Annehmen',
+      finalizeInternalVote: 'Abstimmung abschließen',
+      finalizeInternalVoteQuestion: 'Diese interne Abstimmung abschließen?',
+      reject: 'Ablehnen',
+    },
+    finalizeResult: 'Das aktuelle Abstimmungsergebnis wird angewendet.',
+    voteRequiredDescription:
+      'Gib deine Stimme ab, bevor dieser Änderungsantrag abgeschlossen werden kann.',
+    votes: {
+      youVoted: 'Du hast abgestimmt für',
+    },
     voteControls: {
       accept: 'Annehmen',
       reject: 'Ablehnen',
@@ -488,6 +503,7 @@ export const amendmentsTranslations = {
       allChangeRequests: 'Alle Change Requests',
       changeRequests: 'Change Requests',
       changeRequestsCount: '{{count}} CRs',
+      colorCrChanges: 'Änderungen einfärben',
       insert: 'Einfügen',
       layers: 'Layer',
       noChangeRequests: 'Keine Straßenentwurf-Change-Requests.',
@@ -565,6 +581,7 @@ export const amendmentsTranslations = {
       fieldWithUnit: '{{label}} ({{unit}})',
       height: 'Höhe',
       incline: 'Steigung',
+      suggestedCostShort: 'Preisvorschlag',
       importAsPlanned: 'Als geplante Änderung übernehmen',
       layer: 'Layer',
       length: 'Länge',
@@ -614,6 +631,8 @@ export const amendmentsTranslations = {
       emptyDiff: 'Kein Eigenschafts-Diff gespeichert.',
       noComments: 'Noch keine Kommentare.',
       noDescription: 'Noch keine Details.',
+      reply: 'Antworten...',
+      submitComment: 'Kommentar senden',
       tones: {
         add: 'Hinzufügen',
         neutral: 'Änderung',

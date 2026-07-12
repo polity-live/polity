@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import type { MutableJSONValue } from '@/zero/shared/helpers';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
@@ -64,8 +64,8 @@ export interface EventFormData {
   location_kind: string | null;
   location_place_id: string | null;
   location_boundary_source: string | null;
-  location_geometry: ReadonlyJSONValue | null;
-  location_bounds: ReadonlyJSONValue | null;
+  location_geometry: MutableJSONValue | null;
+  location_bounds: MutableJSONValue | null;
   startDate: string;
   startTime: string;
   endDate: string;

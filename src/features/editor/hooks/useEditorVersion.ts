@@ -8,7 +8,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import { toMutableJSONValue } from '@/zero/shared/helpers';
 import type { Value } from 'platejs';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
@@ -124,7 +124,7 @@ export function useEditorVersion(options: UseEditorVersionOptions): UseEditorVer
         await doCreateVersion({
           id: versionId,
           change_summary: title.trim(),
-          content: content as ReadonlyJSONValue,
+          content: toMutableJSONValue(content),
           version_number: newVersionNumber,
           document_id: entityType === 'blog' ? '' : entityId,
           amendment_id: null,

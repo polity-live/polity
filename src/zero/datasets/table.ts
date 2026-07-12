@@ -1,4 +1,5 @@
-import { json, number, string, table, type ReadonlyJSONValue } from '@rocicorp/zero';
+import { json, number, string, table } from '@rocicorp/zero';
+import type { MutableJSONValue } from '../shared/helpers';
 
 export const dataset = table('dataset')
   .columns({
@@ -13,13 +14,13 @@ export const dataset = table('dataset')
     language: string(),
     source_url: string().optional(),
     structure_summary: string().optional(),
-    dimensions: json<ReadonlyJSONValue>(),
-    columns: json<ReadonlyJSONValue>(),
-    column_profiles: json<ReadonlyJSONValue>(),
-    time_coverage: json<ReadonlyJSONValue>(),
-    spatial_coverage: json<ReadonlyJSONValue>(),
-    topics: json<ReadonlyJSONValue>(),
-    metadata: json<ReadonlyJSONValue>(),
+    dimensions: json<MutableJSONValue>(),
+    columns: json<MutableJSONValue>(),
+    column_profiles: json<MutableJSONValue>(),
+    time_coverage: json<MutableJSONValue>(),
+    spatial_coverage: json<MutableJSONValue>(),
+    topics: json<MutableJSONValue>(),
+    metadata: json<MutableJSONValue>(),
     visibility: string(),
     owner_user_id: string().optional(),
     group_id: string().optional(),
@@ -42,10 +43,10 @@ export const datasetSnapshot = table('dataset_snapshot')
     byte_size: number(),
     row_count: number(),
     column_count: number(),
-    columns: json<ReadonlyJSONValue>(),
-    column_profiles: json<ReadonlyJSONValue>(),
-    dimensions: json<ReadonlyJSONValue>(),
-    metadata: json<ReadonlyJSONValue>(),
+    columns: json<MutableJSONValue>(),
+    column_profiles: json<MutableJSONValue>(),
+    dimensions: json<MutableJSONValue>(),
+    metadata: json<MutableJSONValue>(),
     status: string(),
     snapshot_taken_at: number(),
     created_by_id: string().optional(),

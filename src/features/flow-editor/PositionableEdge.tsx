@@ -2,6 +2,7 @@ import { getBezierPath, getSmoothStepPath, getStraightPath, useReactFlow } from 
 
 import type { EdgeProps } from '@xyflow/react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
+import type { FlowEditorEdge, FlowEditorNode } from './types';
 
 interface PositionHandler {
   x: number;
@@ -9,10 +10,6 @@ interface PositionHandler {
   active: boolean;
 }
 
-interface PositionableEdgeData {
-  type?: 'straight' | 'smoothstep' | 'default';
-  positionHandlers?: PositionHandler[];
-}
 import { PositionableEdgeView } from './PositionableEdgeView';
 export default function PositionableEdge({
   id,
@@ -26,8 +23,8 @@ export default function PositionableEdge({
   markerEnd,
   data,
   label,
-}: EdgeProps<PositionableEdgeData>) {
-  const reactFlowInstance = useReactFlow();
+}: EdgeProps<FlowEditorEdge>) {
+  const reactFlowInstance = useReactFlow<FlowEditorNode, FlowEditorEdge>();
   const positionHandlers = data?.positionHandlers ?? [];
   const type = data?.type ?? 'default';
   const edgeSegmentsCount = positionHandlers.length + 1;

@@ -1,4 +1,5 @@
-import { table, string, number, json, type ReadonlyJSONValue } from '@rocicorp/zero';
+import { table, string, number, json } from '@rocicorp/zero';
+import type { MutableJSONValue } from '../shared/helpers';
 
 export const amendment = table('amendment')
   .columns({
@@ -25,8 +26,8 @@ export const amendment = table('amendment')
     location_kind: string().optional(),
     location_place_id: string().optional(),
     location_boundary_source: string().optional(),
-    location_geometry: json<ReadonlyJSONValue>().optional(),
-    location_bounds: json<ReadonlyJSONValue>().optional(),
+    location_geometry: json<MutableJSONValue>().optional(),
+    location_bounds: json<MutableJSONValue>().optional(),
     upvotes: number(),
     downvotes: number(),
     tags: json<string[]>().optional(),
@@ -37,7 +38,7 @@ export const amendment = table('amendment')
     internal_cr_voting_close_trigger: string().optional(),
     internal_cr_voting_duration_minutes: number().optional(),
     internal_cr_resolution_visibility: string().optional(),
-    discussions: json().optional(),
+    discussions: json<MutableJSONValue>().optional(),
     comment_count: number(),
     collaborator_count: number(),
     image_url: string().optional(),
@@ -69,15 +70,15 @@ export const amendmentStreetDesign = table('amendment_street_design')
     amendment_id: string(),
     created_by_id: string(),
     title: string().optional(),
-    bbox: json().optional(),
+    bbox: json<MutableJSONValue>().optional(),
     center_lat: number().optional(),
     center_lon: number().optional(),
-    osm_snapshot: json().optional(),
-    design_state: json().optional(),
+    osm_snapshot: json<MutableJSONValue>().optional(),
+    design_state: json<MutableJSONValue>().optional(),
     currency: string(),
     estimated_total_cost_minor: number(),
     cost_catalog_version: string().optional(),
-    cost_summary: json().optional(),
+    cost_summary: json<MutableJSONValue>().optional(),
     created_at: number(),
     updated_at: number(),
   })
@@ -170,7 +171,7 @@ export const amendmentProcessBranch = table('amendment_process_branch')
     source_step_run_id: string().optional(),
     document_version_id: string().optional(),
     document_id: string().optional(),
-    discussions: json().optional(),
+    discussions: json<MutableJSONValue>().optional(),
     title: string().optional(),
     status: string(),
     editing_mode: string(),
@@ -223,7 +224,7 @@ export const processTask = table('process_task')
     support_confirmation_id: string().optional(),
     due_at: number().optional(),
     resolved_at: number().optional(),
-    metadata: json().optional(),
+    metadata: json<MutableJSONValue>().optional(),
     created_at: number(),
     updated_at: number(),
   })

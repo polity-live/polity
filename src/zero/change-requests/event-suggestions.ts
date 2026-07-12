@@ -1,4 +1,4 @@
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import { toMutableJSONValue } from '../shared/helpers';
 import type { Value } from 'platejs';
 
 import { applySuggestionToContent } from '@/features/change-requests/logic/applySuggestionToContent';
@@ -119,7 +119,7 @@ export async function discardPendingEventSuggestions({
       document_id: document.id,
       amendment_id: amendment.id,
       blog_id: null,
-      content: document.content as ReadonlyJSONValue,
+      content: toMutableJSONValue(document.content),
       version_number: nextVersionNumber,
       change_summary: 'Discarded unsubmitted event suggestions before final vote',
       author_id: ctx.userID,
@@ -128,7 +128,7 @@ export async function discardPendingEventSuggestions({
 
     await tx.mutate.document.update({
       id: document.id,
-      content: cleanup.content as unknown as ReadonlyJSONValue,
+      content: toMutableJSONValue(cleanup.content),
       updated_at: now,
     });
   }
@@ -136,13 +136,13 @@ export async function discardPendingEventSuggestions({
   if (branch?.id) {
     await tx.mutate.amendment_process_branch.update({
       id: branch.id,
-      discussions: cleanup.discussions as unknown as ReadonlyJSONValue,
+      discussions: toMutableJSONValue(cleanup.discussions),
       updated_at: now,
     });
   } else {
     await tx.mutate.amendment.update({
       id: amendment.id,
-      discussions: cleanup.discussions as unknown as ReadonlyJSONValue,
+      discussions: toMutableJSONValue(cleanup.discussions),
       updated_at: now,
     });
   }

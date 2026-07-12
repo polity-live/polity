@@ -4,6 +4,7 @@ export const commonTranslations = {
   attached: 'Attached',
   unknown: 'Unknown',
   unknownUser: 'Unknown User',
+  value: 'Value',
   days: {
     monday: 'Monday',
     tuesday: 'Tuesday',

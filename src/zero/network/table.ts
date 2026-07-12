@@ -1,4 +1,5 @@
-import { table, string, number, boolean, json, type ReadonlyJSONValue } from '@rocicorp/zero';
+import { table, string, number, boolean, json } from '@rocicorp/zero';
+import type { MutableJSONValue } from '../shared/helpers';
 
 export const follow = table('follow')
   .columns({
@@ -71,7 +72,7 @@ export const groupHierarchyPath = table('group_hierarchy_path')
     direct_child_group_id: string().optional(),
     base_group_id: string(),
     depth: number(),
-    path_group_ids: json<ReadonlyJSONValue>(),
+    path_group_ids: json<MutableJSONValue>(),
     status: string(),
     connection_id: string().optional(),
     created_at: number(),

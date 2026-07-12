@@ -162,7 +162,7 @@ describe('AI copilot route', () => {
         prompt: 'The policy should',
         system: 'Complete inline.',
         temperature: 0.2,
-        maxTokens: 48,
+        maxOutputTokens: 48,
       })
     );
     expect(mockedTouchAiCredential).not.toHaveBeenCalled();

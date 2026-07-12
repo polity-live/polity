@@ -35,7 +35,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useZero } from '@rocicorp/zero/react';
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import { toMutableJSONValue, type MutableJSONValue } from '@/zero/shared/helpers';
 import type { Value } from 'platejs';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useBlogState } from '@/zero/blogs/useBlogState';
@@ -517,13 +517,13 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
             ? zero.mutate(
                 mutators.blogs.update({
                   id: contentEntityId,
-                  content: newContent as ReadonlyJSONValue[],
+                  content: toMutableJSONValue(newContent),
                 })
               )
             : zero.mutate(
                 mutators.documents.updateContent({
                   id: contentEntityId,
-                  content: newContent as ReadonlyJSONValue[],
+                  content: toMutableJSONValue(newContent),
                 })
               );
         trackServerFinalization(result, {
@@ -706,7 +706,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       }
 
       try {
-        const serializedDiscussions: ReadonlyJSONValue = JSON.parse(newStr);
+        const serializedDiscussions: MutableJSONValue = toMutableJSONValue(JSON.parse(newStr));
         let result: ReturnType<typeof zero.mutate> | undefined;
         editorSelectionDebugLog('editor-set-discussions:persist-start', {
           contentEntityId,
@@ -883,13 +883,13 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
             ? zero.mutate(
                 mutators.blogs.update({
                   id: contentEntityId,
-                  content: versionContent as ReadonlyJSONValue[],
+                  content: toMutableJSONValue(versionContent),
                 })
               )
             : zero.mutate(
                 mutators.documents.updateContent({
                   id: contentEntityId,
-                  content: versionContent as ReadonlyJSONValue[],
+                  content: toMutableJSONValue(versionContent),
                 })
               );
         trackServerFinalization(result, {

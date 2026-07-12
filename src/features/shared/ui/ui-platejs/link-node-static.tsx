@@ -1,4 +1,5 @@
-import type { SlateElementProps, TLinkElement } from 'platejs';
+import type { TLinkElement } from 'platejs';
+import type { SlateElementProps } from 'platejs/static';
 
 import { SlateElement } from 'platejs/static';
 

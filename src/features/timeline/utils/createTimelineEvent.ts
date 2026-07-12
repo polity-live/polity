@@ -121,7 +121,9 @@ const createTimelineEventSchema = z.object({
   actorId: z.string(),
   title: z.string(),
   description: z.string().optional(),
-  metadata: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
+  metadata: z
+    .record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]))
+    .optional(),
   tags: z.array(z.string()).optional(),
   contentType: z.string().optional(),
   media: z

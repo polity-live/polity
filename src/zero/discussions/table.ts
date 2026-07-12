@@ -1,4 +1,5 @@
-import { table, string, number, json } from '@rocicorp/zero'
+import { table, string, number, json } from '@rocicorp/zero';
+import type { MutableJSONValue } from '../shared/helpers';
 
 export const thread = table('thread')
   .columns({
@@ -13,11 +14,11 @@ export const thread = table('thread')
     resolved_at: number().optional(),
     upvotes: number(),
     downvotes: number(),
-    position: json().optional(),
+    position: json<MutableJSONValue>().optional(),
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const comment = table('comment')
   .columns({
@@ -31,4 +32,4 @@ export const comment = table('comment')
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');

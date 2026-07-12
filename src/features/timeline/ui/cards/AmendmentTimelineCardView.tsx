@@ -89,20 +89,16 @@ export interface AmendmentTimelineCardViewProps {
   setCollaborationOpen: any;
   collaboration: any;
   subscription: any;
-  amendmentStyle: any;
   amendmentDescription: any;
   statusConfig: any;
-  statusLabelConfig: any;
   statusLabel: any;
   isVoting: any;
   isCompleted: any;
-  resolvedCollaborationStatus: any;
   isCollaborator: any;
   isInvited: any;
   hasRequested: any;
   getCollaborationLabel: any;
   getCollaborationVariant: any;
-  getCollaborationIcon: any;
   CollaborationIcon: any;
   stats: any;
 }

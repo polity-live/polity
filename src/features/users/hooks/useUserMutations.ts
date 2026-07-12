@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import type { MutableJSONValue } from '@/zero/shared/helpers';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
@@ -25,7 +25,7 @@ export function useUserMutations() {
       last_name?: string;
       gender?: 'male' | 'female' | 'diverse' | null;
       bio?: string;
-      about?: ReadonlyJSONValue | null;
+      about?: MutableJSONValue | null;
       avatar?: string;
       x?: string;
       whatsapp?: string;
@@ -48,8 +48,8 @@ export function useUserMutations() {
       location_kind?: string | null;
       location_place_id?: string | null;
       location_boundary_source?: string | null;
-      location_geometry?: ReadonlyJSONValue | null;
-      location_bounds?: ReadonlyJSONValue | null;
+      location_geometry?: MutableJSONValue | null;
+      location_bounds?: MutableJSONValue | null;
     }
   ) => {
     setIsLoading(true);
@@ -124,7 +124,7 @@ export function useUserMutations() {
       last_name?: string;
       gender?: 'male' | 'female' | 'diverse' | null;
       bio?: string;
-      about?: ReadonlyJSONValue | null;
+      about?: MutableJSONValue | null;
       aboutPlainText?: string;
       avatar?: string;
       whatsapp?: string;
@@ -147,8 +147,8 @@ export function useUserMutations() {
       location_kind?: string | null;
       location_place_id?: string | null;
       location_boundary_source?: string | null;
-      location_geometry?: ReadonlyJSONValue | null;
-      location_bounds?: ReadonlyJSONValue | null;
+      location_geometry?: MutableJSONValue | null;
+      location_bounds?: MutableJSONValue | null;
       visibility?: string;
       hashtags?: string[];
       existingJunctions?: {

@@ -1,4 +1,4 @@
-import type { SlateLeafProps } from 'platejs';
+import type { SlateLeafProps } from 'platejs/static';
 
 import { SlateLeaf } from 'platejs/static';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import { toMutableJSONValue } from '@/zero/shared/helpers';
 import type { Value } from 'platejs';
 import { toast } from '@/features/shared/ui/ui/sonner';
 
@@ -105,7 +105,7 @@ export function useVersionControlModel({
         id: versionId,
         version_number: nextVersionNumber,
         change_summary: versionTitle,
-        content: currentContent as ReadonlyJSONValue,
+        content: toMutableJSONValue(currentContent),
         document_id: entityType === 'blog' ? '' : entityId,
         amendment_id: null,
         blog_id: entityType === 'blog' ? entityId : null,

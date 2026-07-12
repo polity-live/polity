@@ -1,10 +1,11 @@
-import { table, string, number, boolean, json, type ReadonlyJSONValue } from '@rocicorp/zero';
+import { table, string, number, boolean, json } from '@rocicorp/zero';
+import type { MutableJSONValue } from '../shared/helpers';
 
 export const group = table('group')
   .columns({
     id: string(),
     name: string().optional(),
-    description: json<ReadonlyJSONValue>().optional(),
+    description: json<MutableJSONValue>().optional(),
     email: string().optional(),
     country: string().optional(),
     region: string().optional(),
@@ -17,8 +18,8 @@ export const group = table('group')
     location_kind: string().optional(),
     location_place_id: string().optional(),
     location_boundary_source: string().optional(),
-    location_geometry: json<ReadonlyJSONValue>().optional(),
-    location_bounds: json<ReadonlyJSONValue>().optional(),
+    location_geometry: json<MutableJSONValue>().optional(),
+    location_bounds: json<MutableJSONValue>().optional(),
     image_url: string().optional(),
     member_count: number(),
     subscriber_count: number(),
@@ -81,7 +82,7 @@ export const groupMembershipOrigin = table('group_membership_origin')
     part_group_id: string().optional(),
     base_group_id: string().optional(),
     depth: number(),
-    path_group_ids: json<ReadonlyJSONValue>(),
+    path_group_ids: json<MutableJSONValue>(),
     created_at: number(),
   })
   .primaryKey('id');
@@ -175,7 +176,7 @@ export const role = table('role')
     recurrence_pattern: string().optional(),
     recurrence_rule: string().optional(),
     recurrence_interval: number().optional(),
-    recurrence_days: json<ReadonlyJSONValue>().optional(),
+    recurrence_days: json<MutableJSONValue>().optional(),
     recurrence_end_date: number().optional(),
     scheduled_revote_date: number().optional(),
     default_request_role: boolean(),

@@ -1,4 +1,4 @@
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import { toMutableJSONValue, type MutableJSONValue } from '@/zero/shared/helpers';
 import type { Descendant, Value } from 'platejs';
 
 export const EMPTY_RICH_TEXT_VALUE: Value = [
@@ -141,6 +141,6 @@ export function hasRichTextContent(value: unknown): boolean {
   return richTextToPlainText(value).length > 0;
 }
 
-export function toZeroRichTextValue(value: Value): ReadonlyJSONValue {
-  return value as ReadonlyJSONValue;
+export function toZeroRichTextValue(value: Value): MutableJSONValue {
+  return toMutableJSONValue(value);
 }

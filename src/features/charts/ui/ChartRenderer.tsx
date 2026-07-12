@@ -493,7 +493,7 @@ function CartesianChartContent({
             cursor
             isAnimationActive={false}
             wrapperStyle={{ pointerEvents: 'none', zIndex: 50 }}
-            content={<ChartTooltipContent indicator="line" payload={[]} />}
+            content={props => <ChartTooltipContent {...props} indicator="line" />}
           />
         )
       ) : null}
@@ -501,7 +501,12 @@ function CartesianChartContent({
         staticMode ? (
           <Legend />
         ) : (
-          <ChartLegend content={<ChartLegendContent />} />
+          <ChartLegend
+            content={({ ref: legendRef, ...props }) => {
+              void legendRef;
+              return <ChartLegendContent {...props} />;
+            }}
+          />
         )
       ) : null}
     </>
@@ -643,8 +648,9 @@ function PieChartContent({
             cursor={false}
             isAnimationActive={false}
             wrapperStyle={{ pointerEvents: 'none', zIndex: 50 }}
-            content={
+            content={props => (
               <ChartTooltipContent
+                {...props}
                 nameKey="name"
                 formatter={(value, name, item) => {
                   const point = item.payload as ChartPoint;
@@ -661,7 +667,7 @@ function PieChartContent({
                   );
                 }}
               />
-            }
+            )}
           />
         )
       ) : null}

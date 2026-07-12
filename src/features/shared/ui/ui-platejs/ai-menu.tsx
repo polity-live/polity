@@ -54,7 +54,10 @@ export function AIMenu() {
   const { input, messages, setInput, status } = chat;
   const [anchorElement, setAnchorElement] = React.useState<HTMLElement | null>(null);
 
-  const content = useLastAssistantMessage()?.content;
+  const content = useLastAssistantMessage()
+    ?.parts.filter(part => part.type === 'text')
+    .map(part => part.text)
+    .join('');
 
   React.useEffect(() => {
     if (streaming) {
@@ -174,7 +177,7 @@ export function AIMenu() {
                 }
                 if (isHotkey('enter')(e) && !e.shiftKey && !value) {
                   e.preventDefault();
-                  void api.aiChat.submit();
+                  void api.aiChat.submit(input);
                 }
               }}
               onValueChange={setInput}
@@ -229,7 +232,7 @@ export const AIMenuItems = ({ setValue }: { setValue: (value: string) => void })
 
         const isEmpty = NodeApi.string(ancestorNode[0]).trim().length === 0;
 
-        void editor.getApi(AIChatPlugin).aiChat.submit({
+        void editor.getApi(AIChatPlugin).aiChat.submit('', {
           mode: 'insert',
           prompt: isEmpty
             ? `<Document>
@@ -255,7 +258,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.emojify'),
       value: 'emojify',
       onSelect: ({ editor }) => {
-        void editor.getApi(AIChatPlugin).aiChat.submit({
+        void editor.getApi(AIChatPlugin).aiChat.submit('', {
           prompt: 'Emojify',
         });
       },
@@ -265,7 +268,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.explain'),
       value: 'explain',
       onSelect: ({ editor }) => {
-        void editor.getApi(AIChatPlugin).aiChat.submit({
+        void editor.getApi(AIChatPlugin).aiChat.submit('', {
           prompt: {
             default: 'Explain {editor}',
             selecting: 'Explain',
@@ -278,7 +281,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.fixSpelling'),
       value: 'fixSpelling',
       onSelect: ({ editor }) => {
-        void editor.getApi(AIChatPlugin).aiChat.submit({
+        void editor.getApi(AIChatPlugin).aiChat.submit('', {
           prompt: 'Fix spelling and grammar',
         });
       },
@@ -288,7 +291,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.generateMarkdownSample'),
       value: 'generateMarkdownSample',
       onSelect: ({ editor }) => {
-        void editor.getApi(AIChatPlugin).aiChat.submit({
+        void editor.getApi(AIChatPlugin).aiChat.submit('', {
           prompt: 'Generate a markdown sample',
         });
       },
@@ -298,7 +301,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.generateMdxSample'),
       value: 'generateMdxSample',
       onSelect: ({ editor }) => {
-        void editor.getApi(AIChatPlugin).aiChat.submit({
+        void editor.getApi(AIChatPlugin).aiChat.submit('', {
           prompt: 'Generate a mdx sample',
         });
       },
@@ -308,7 +311,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.improveWriting'),
       value: 'improveWriting',
       onSelect: ({ editor }) => {
-        void editor.getApi(AIChatPlugin).aiChat.submit({
+        void editor.getApi(AIChatPlugin).aiChat.submit('', {
           prompt: 'Improve the writing',
         });
       },
@@ -326,7 +329,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.makeLonger'),
       value: 'makeLonger',
       onSelect: ({ editor }) => {
-        void editor.getApi(AIChatPlugin).aiChat.submit({
+        void editor.getApi(AIChatPlugin).aiChat.submit('', {
           prompt: 'Make longer',
         });
       },
@@ -336,7 +339,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.makeShorter'),
       value: 'makeShorter',
       onSelect: ({ editor }) => {
-        void editor.getApi(AIChatPlugin).aiChat.submit({
+        void editor.getApi(AIChatPlugin).aiChat.submit('', {
           prompt: 'Make shorter',
         });
       },
@@ -354,7 +357,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.simplifyLanguage'),
       value: 'simplifyLanguage',
       onSelect: ({ editor }) => {
-        void editor.getApi(AIChatPlugin).aiChat.submit({
+        void editor.getApi(AIChatPlugin).aiChat.submit('', {
           prompt: 'Simplify the language',
         });
       },
@@ -364,7 +367,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       label: t('plateJs.ai.menu.addSummary'),
       value: 'summarize',
       onSelect: ({ editor }) => {
-        void editor.getApi(AIChatPlugin).aiChat.submit({
+        void editor.getApi(AIChatPlugin).aiChat.submit('', {
           mode: 'insert',
           prompt: {
             default: 'Summarize {editor}',

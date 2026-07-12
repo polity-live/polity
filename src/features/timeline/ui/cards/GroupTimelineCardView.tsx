@@ -65,17 +65,14 @@ export interface GroupTimelineCardViewProps {
   setMembershipOpen: any;
   membership: any;
   subscription: any;
-  groupStyle: any;
   groupHashtags: any;
   groupDescription: any;
-  resolvedMembershipStatus: any;
   isMember: any;
   isInvited: any;
   hasRequested: any;
   requestMembershipDisabled: any;
   getMembershipLabel: any;
   getMembershipVariant: any;
-  getMembershipIcon: any;
   MembershipIcon: any;
   stats: any;
 }

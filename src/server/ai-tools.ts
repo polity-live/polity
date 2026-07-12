@@ -1638,7 +1638,7 @@ export function buildAiTools(userId: string) {
       description: translateText(
         'generated.inline.0643_find_the_current_user_s_own_todos_from_the_to_b7da1691'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         status: z
           .enum(['pending', 'in_progress', 'completed', 'cancelled'])
           .optional()
@@ -1659,7 +1659,7 @@ export function buildAiTools(userId: string) {
       description: translateText(
         'generated.inline.0644_find_the_current_user_s_calendar_events_simil_bca8cd75'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         timeframe: z.enum(['upcoming', 'past', 'all']).default('upcoming'),
         limit: z.number().int().min(1).max(12).optional(),
       }),
@@ -1677,7 +1677,7 @@ export function buildAiTools(userId: string) {
       description: translateText(
         'generated.inline.0645_find_the_current_user_s_groups_where_they_hav_30902b45'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         query: z.string().trim().min(1).optional(),
         limit: z.number().int().min(1).max(12).optional(),
       }),
@@ -1695,7 +1695,7 @@ export function buildAiTools(userId: string) {
       description: translateText(
         'generated.inline.0646_find_the_current_user_s_amendments_where_they_452b78e7'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         query: z.string().trim().min(1).optional(),
         limit: z.number().int().min(1).max(12).optional(),
       }),
@@ -1713,7 +1713,7 @@ export function buildAiTools(userId: string) {
       description: translateText(
         'generated.inline.0647_find_the_current_user_s_events_where_they_hav_c150d211'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         query: z.string().trim().min(1).optional(),
         limit: z.number().int().min(1).max(12).optional(),
       }),
@@ -1731,7 +1731,7 @@ export function buildAiTools(userId: string) {
       description: translateText(
         'generated.inline.0648_find_the_current_user_s_blogs_where_they_have_20345b7a'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         query: z.string().trim().min(1).optional(),
         limit: z.number().int().min(1).max(12).optional(),
       }),
@@ -1749,7 +1749,7 @@ export function buildAiTools(userId: string) {
       description: translateText(
         'generated.inline.0649_search_across_main_polity_entities_such_as_us_20899de1'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         query: z.string().trim().min(1),
         entityTypes: z.array(searchEntityTypeSchema).default([...SEARCH_ENTITY_TYPES]),
         limit: z.number().int().min(1).max(12).default(6),
@@ -1801,7 +1801,7 @@ export function buildAiTools(userId: string) {
         'generated.inline.ai_read_polity_docs_tool_description',
         'Read and search the user-facing Polity /docs documentation. Use this for questions about how Polity features work, where to find guidance, or how users should navigate Polity workflows.'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         query: z
           .string()
           .trim()
@@ -1857,7 +1857,7 @@ export function buildAiTools(userId: string) {
       description: translateText(
         'generated.inline.0650_find_payments_todos_links_amendments_events_b_6f648ebb'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         groupId: z.string().trim().min(1),
         resourceTypes: z.array(groupResourceTypeSchema).default([...GROUP_RESOURCE_TYPES]),
         query: z.string().trim().min(1).optional(),
@@ -1877,7 +1877,7 @@ export function buildAiTools(userId: string) {
       description: translateText(
         'generated.inline.0651_find_agenda_items_amendments_elections_and_vo_61e5ad2b'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         eventId: z.string().trim().min(1),
         resourceTypes: z.array(eventResourceTypeSchema).default([...EVENT_RESOURCE_TYPES]),
         query: z.string().trim().min(1).optional(),
@@ -1897,7 +1897,7 @@ export function buildAiTools(userId: string) {
       description: translateText(
         'generated.inline.0652_open_one_of_the_existing_polity_create_flows__cecbfcc1'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         flow: createFlowTypeSchema,
         eventId: z.string().trim().min(1).optional(),
         agendaItemType: agendaItemTypeSchema.optional(),

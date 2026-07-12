@@ -1,4 +1,5 @@
-import { table, string, number, boolean, json, type ReadonlyJSONValue } from '@rocicorp/zero';
+import { table, string, number, boolean, json } from '@rocicorp/zero';
+import type { MutableJSONValue } from '../shared/helpers';
 
 export const user = table('user')
   .columns({
@@ -9,7 +10,7 @@ export const user = table('user')
     last_name: string().optional(),
     bio: string().optional(),
     gender: string().optional(),
-    about: json<ReadonlyJSONValue>().optional(),
+    about: json<MutableJSONValue>().optional(),
     avatar: string().optional(),
     x: string().optional(),
     youtube: string().optional(),
@@ -32,8 +33,8 @@ export const user = table('user')
     location_kind: string().optional(),
     location_place_id: string().optional(),
     location_boundary_source: string().optional(),
-    location_geometry: json<ReadonlyJSONValue>().optional(),
-    location_bounds: json<ReadonlyJSONValue>().optional(),
+    location_geometry: json<MutableJSONValue>().optional(),
+    location_bounds: json<MutableJSONValue>().optional(),
     visibility: string(),
     subscriber_count: number(),
     amendment_count: number(),

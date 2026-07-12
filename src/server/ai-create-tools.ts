@@ -681,7 +681,7 @@ export function buildAiCreateTools(userId: string) {
       description: translateText(
         'generated.inline.0615_create_a_real_polity_group_only_use_this_when_566bf6f0'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         name: z.string().trim().min(1),
         description: z.string().trim().optional(),
         groupType: groupTypeSchema.default('base'),
@@ -946,7 +946,7 @@ export function buildAiCreateTools(userId: string) {
       description: translateText(
         'generated.inline.0616_create_a_real_polity_event_if_the_user_wants__5aef4dda'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         title: z.string().trim().min(1),
         description: z.string().trim().optional(),
         eventType: eventTypeSchema.default('open'),
@@ -1077,7 +1077,7 @@ export function buildAiCreateTools(userId: string) {
       description: translateText(
         'generated.inline.0617_create_a_real_polity_amendment_if_the_amendme_639231cd'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         title: z.string().trim().min(1),
         code: z.string().trim().optional(),
         reason: z.string().trim().optional(),
@@ -1320,7 +1320,7 @@ export function buildAiCreateTools(userId: string) {
       description: translateText(
         'generated.inline.0619_create_a_real_polity_blog_entry_only_use_this_5c1ab8c3'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         title: z.string().trim().min(1),
         date: z.string().trim().optional(),
         visibility: visibilitySchema.default('public'),
@@ -1397,7 +1397,7 @@ export function buildAiCreateTools(userId: string) {
       description: translateText(
         'generated.inline.0620_create_a_real_polity_todo_only_use_this_when__94618ff3'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         title: z.string().trim().min(1),
         description: z.string().trim().optional(),
         priority: todoPrioritySchema.default('medium'),
@@ -1511,7 +1511,7 @@ export function buildAiCreateTools(userId: string) {
       description: translateText(
         'generated.inline.0621_create_a_real_polity_statement_only_use_this__93f2d1c4'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         text: z.string().trim().min(1).max(280),
         groupId: z.string().trim().min(1).optional().describe(groupReferenceDescription),
         imageUrl: z.string().trim().url().optional(),
@@ -1621,7 +1621,7 @@ export function buildAiCreateTools(userId: string) {
       description: translateText(
         'generated.inline.0622_create_a_real_polity_payment_only_use_this_wh_b0a4119b'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         groupId: z.string().trim().min(1).describe(groupReferenceDescription),
         direction: paymentDirectionSchema.default('income'),
         label: z.string().trim().min(1),
@@ -1730,7 +1730,7 @@ export function buildAiCreateTools(userId: string) {
       description: translateText(
         'generated.inline.0623_create_a_real_polity_agenda_item_only_use_thi_46f29630'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         eventId: z.string().trim().min(1).describe(eventReferenceDescription),
         title: z.string().trim().min(1),
         description: z.string().trim().optional(),
@@ -1890,7 +1890,7 @@ export function buildAiCreateTools(userId: string) {
       description: translateText(
         'generated.inline.0624_create_a_real_polity_election_candidate_entry_ee7cb9cb'
       ),
-      parameters: z.object({
+      inputSchema: z.object({
         electionId: z.string().trim().min(1),
         statement: z.string().trim().optional(),
         imageUrl: z.string().trim().url().optional(),

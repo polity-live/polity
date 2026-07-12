@@ -1,6 +1,6 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
-import type { LanguageModelV1ProviderMetadata } from '@ai-sdk/provider';
+import type { SharedV3ProviderOptions } from '@ai-sdk/provider';
 import type { LanguageModel } from 'ai';
 import { z } from 'zod';
 import { OPENROUTER_FREE_MODEL_ID } from '@/lib/ai/models';
@@ -39,7 +39,7 @@ export interface AiModelOption {
 
 interface ResolveModelResult {
   model: LanguageModel;
-  providerOptions?: LanguageModelV1ProviderMetadata;
+  providerOptions?: SharedV3ProviderOptions;
   credentialProvider: AiProvider | null;
 }
 
@@ -373,7 +373,10 @@ export async function resolveLanguageModelForUser(
     const provider = createOpenAI({ apiKey });
 
     return {
-      model: provider(modelDescriptor.id, { reasoningEffort }),
+      model: provider(modelDescriptor.id),
+      providerOptions: {
+        openai: { reasoningEffort },
+      },
       credentialProvider: 'openai',
     };
   }

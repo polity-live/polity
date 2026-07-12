@@ -30,6 +30,8 @@ describe('OnboardingGroupMap loading states', () => {
             name: 'Berlin Group',
             latitude: 52.52,
             longitude: 13.405,
+            member_count: 0,
+            visibility: 'public',
           },
         ]}
         selectedGroupIds={new Set()}

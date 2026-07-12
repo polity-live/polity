@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PermissionError } from '../../rbac/errors';
+import { toMutableJSONValue } from '../../shared/helpers';
 
 const canMock = vi.fn();
 
@@ -209,7 +210,7 @@ describe('documentSharedMutators group RBAC', () => {
     await documentSharedMutators.updateContent.fn({
       tx: tx as never,
       ctx,
-      args: { id: 'doc-1', content: staleContent },
+      args: { id: 'doc-1', content: toMutableJSONValue(staleContent) },
     });
 
     const update = tx.mutate.document.update.mock.calls[0][0];

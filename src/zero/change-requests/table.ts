@@ -1,4 +1,5 @@
-import { table, string, number, json, type ReadonlyJSONValue } from '@rocicorp/zero';
+import { table, string, number, json } from '@rocicorp/zero';
+import type { MutableJSONValue } from '../shared/helpers';
 
 export const changeRequest = table('change_request')
   .columns({
@@ -17,8 +18,8 @@ export const changeRequest = table('change_request')
     change_type: string().optional(),
     original_text: string().optional(),
     new_text: string().optional(),
-    original_properties: json<ReadonlyJSONValue>().optional(),
-    new_properties: json<ReadonlyJSONValue>().optional(),
+    original_properties: json<MutableJSONValue>().optional(),
+    new_properties: json<MutableJSONValue>().optional(),
     changed_character_count: number(),
     votes_for: number(),
     votes_against: number(),

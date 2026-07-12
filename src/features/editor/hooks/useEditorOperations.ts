@@ -8,7 +8,7 @@
 
 import { useCallback } from 'react';
 import { toast } from '@/features/shared/ui/ui/sonner';
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import { toMutableJSONValue } from '@/zero/shared/helpers';
 import type { Value } from 'platejs';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
@@ -71,7 +71,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
 
       await createVersion({
         id: versionId,
-        content: content as unknown as ReadonlyJSONValue,
+        content: toMutableJSONValue(content),
         version_number: newVersionNumber,
         change_summary: versionTitle,
         document_id: isBlog ? '' : entityId,

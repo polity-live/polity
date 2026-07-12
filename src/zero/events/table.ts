@@ -1,10 +1,11 @@
-import { table, string, number, boolean, json, type ReadonlyJSONValue } from '@rocicorp/zero';
+import { table, string, number, boolean, json } from '@rocicorp/zero';
+import type { MutableJSONValue } from '../shared/helpers';
 
 export const event = table('event')
   .columns({
     id: string(),
     title: string().optional(),
-    description: json<ReadonlyJSONValue>().optional(),
+    description: json<MutableJSONValue>().optional(),
     status: string().optional(),
     event_type: string().optional(),
     attendance_mode: string().optional(),
@@ -21,8 +22,8 @@ export const event = table('event')
     location_kind: string().optional(),
     location_place_id: string().optional(),
     location_boundary_source: string().optional(),
-    location_geometry: json<ReadonlyJSONValue>().optional(),
-    location_bounds: json<ReadonlyJSONValue>().optional(),
+    location_geometry: json<MutableJSONValue>().optional(),
+    location_bounds: json<MutableJSONValue>().optional(),
     location_url: string().optional(),
     location_coordinates: string().optional(),
     visibility: string(),

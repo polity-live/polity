@@ -605,7 +605,7 @@ export const amendmentSharedMutators = {
               });
             }
           }
-          return false;
+          return;
         }
       }
 
@@ -681,7 +681,6 @@ export const amendmentSharedMutators = {
           });
         }
       }
-      return true;
     }
   ),
 

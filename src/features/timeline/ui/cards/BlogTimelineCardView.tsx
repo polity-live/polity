@@ -55,7 +55,6 @@ export interface BlogTimelineCardViewProps {
   t: any;
   gradient: any;
   subscription: any;
-  blogStyle: any;
   blogUrl: any;
   stats: any;
 }

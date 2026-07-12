@@ -206,7 +206,7 @@ function eurostatSearchResult(entry: EurostatCatalogueEntry): DatasetSearchResul
       .join(' · '),
     formatSummary: entry.type,
     valueSummary: entry.valueCount.toLocaleString(),
-    metadata: entry,
+    metadata: { ...entry },
     entry,
   };
 }

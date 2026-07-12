@@ -86,6 +86,10 @@ vi.mock('@/zero/users/useUserState', () => ({
   useUserState: (...args: unknown[]) => mocks.useUserState(...args),
 }));
 
+vi.mock('@/zero/amendments/useAmendmentState', () => ({
+  useAmendmentState: () => ({ streetDesigns: [] }),
+}));
+
 vi.mock('@/zero/events', () => ({
   useEventById: (...args: unknown[]) => mocks.useEventById(...args),
   useEventParticipantsByParticipatedEventIds: (...args: unknown[]) =>

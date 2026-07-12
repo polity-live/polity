@@ -11,12 +11,12 @@ export const BaseSuggestionKit = [
     render: {
       belowNodes: ({ api, element }) => {
         if (!api.suggestion?.isBlockSuggestion(element)) {
-          return null;
+          return undefined;
         }
 
         const suggestionData = element.suggestion;
         if (!suggestionData?.isLineBreak) {
-          return null;
+          return undefined;
         }
 
         return function Component({ children }) {
@@ -30,7 +30,7 @@ export const BaseSuggestionKit = [
       },
       belowRootNodes: ({ api, element }) => {
         if (!api.suggestion?.isBlockSuggestion(element)) {
-          return null;
+          return undefined;
         }
 
         return <BlockSuggestionStatic element={element} />;

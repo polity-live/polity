@@ -12,6 +12,7 @@ export interface CanonicalDiscussionEntry {
   processBranchId?: string | null;
   process_branch_id?: string | null;
   title?: string | null;
+  description?: string | null;
   status?: string | null;
   confirmationStatus?: 'pending' | 'confirmed' | null;
   changeRequestStatus?: string | null;
@@ -32,6 +33,10 @@ export interface CanonicalSavedChangeRequest {
   votes?: readonly unknown[] | null;
   branch_sequence_number?: number | null;
   branchSequenceNumber?: number | null;
+  voting_deadline?: number | null;
+  resolution_method?: string | null;
+  visibility_scope?: string | null;
+  resolved_in_mode?: string | null;
   changed_character_count?: number | null;
   changedCharacterCount?: number | null;
   source_type?: string | null;

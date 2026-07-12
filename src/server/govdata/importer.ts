@@ -1,9 +1,5 @@
 import { createHash } from 'node:crypto';
-import {
-  MAX_MANUAL_CSV_BYTES,
-  type GovDataImportResult,
-  type GovDataProvenance,
-} from '@/features/charts/types';
+import { MAX_MANUAL_CSV_BYTES, type GovDataProvenance } from '@/features/charts/types';
 import { isGovDataCsvResource, loadGovDataPackage, normalizeGovDataText } from './catalogue';
 import { parseGovDataCsvTable } from './csv';
 import { assertSafePublicHttpUrl } from './safety';
@@ -71,7 +67,12 @@ async function readLimitedResponseText(response: Response) {
 export async function createGovDataCsvSnapshot(
   packageId: string,
   resourceId: string
-): Promise<GovDataImportResult> {
+): Promise<{
+  snapshotKey: string;
+  columns: string[];
+  rows: Record<string, string>[];
+  provenance: GovDataProvenance;
+}> {
   const pkg = await loadGovDataPackage(packageId);
   const resource = (pkg.resources ?? []).find(candidate => candidate.id === resourceId);
   if (!resource) {

@@ -3,11 +3,11 @@ import type { Connection, Edge, Node } from '@xyflow/react';
 
 export type FlowEditorConnection = Connection;
 
-export interface FlowEditorNodeData {
+export interface FlowEditorNodeData extends Record<string, unknown> {
   label: string;
 }
 
-export interface FlowEditorEdgeData {
+export interface FlowEditorEdgeData extends Record<string, unknown> {
   label?: string;
   type?: string;
   positionHandlers?: { x: number; y: number; active: boolean }[];

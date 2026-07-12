@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import type { MutableJSONValue } from '@/zero/shared/helpers';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from '@/features/shared/ui/ui/sonner';
@@ -63,8 +63,8 @@ export interface GroupFormData {
   location_kind: string | null;
   location_place_id: string | null;
   location_boundary_source: string | null;
-  location_geometry: ReadonlyJSONValue | null;
-  location_bounds: ReadonlyJSONValue | null;
+  location_geometry: MutableJSONValue | null;
+  location_bounds: MutableJSONValue | null;
   imageURL: string;
   visibility: Visibility;
   website: string;

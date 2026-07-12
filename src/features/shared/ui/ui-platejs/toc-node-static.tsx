@@ -1,4 +1,4 @@
-import type { SlateElementProps } from 'platejs';
+import type { SlateElementProps } from 'platejs/static';
 
 import { useTocElementStaticController } from '@/features/shared/hooks/useTocElementStaticController';
 import { TocElementStaticView } from './TocElementStaticView';

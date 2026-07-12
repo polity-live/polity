@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import type postgres from 'postgres';
 import type {
   DataViewProjection,
   DataViewProjectionRequest,
@@ -124,6 +125,10 @@ function stableHash(value: unknown) {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
 }
 
+function toPostgresJson(value: unknown): postgres.JSONValue {
+  return JSON.parse(JSON.stringify(value)) as postgres.JSONValue;
+}
+
 function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
@@ -176,13 +181,13 @@ async function upsertDataset(input: PersistDatasetSnapshotInput) {
         language = ${input.language ?? 'en'},
         source_url = ${input.sourceUrl ?? null},
         structure_summary = ${structureSummary},
-        dimensions = ${sql.json(input.dimensions ?? [])},
-        columns = ${sql.json(columns)},
-        column_profiles = ${sql.json(columnProfiles)},
-        time_coverage = ${sql.json(input.timeCoverage ?? {})},
-        spatial_coverage = ${sql.json(input.spatialCoverage ?? {})},
-        topics = ${sql.json(input.topics ?? [])},
-        metadata = ${sql.json(input.metadata ?? {})},
+        dimensions = ${sql.json(toPostgresJson(input.dimensions ?? []))},
+        columns = ${sql.json(toPostgresJson(columns))},
+        column_profiles = ${sql.json(toPostgresJson(columnProfiles))},
+        time_coverage = ${sql.json(toPostgresJson(input.timeCoverage ?? {}))},
+        spatial_coverage = ${sql.json(toPostgresJson(input.spatialCoverage ?? {}))},
+        topics = ${sql.json(toPostgresJson(input.topics ?? []))},
+        metadata = ${sql.json(toPostgresJson(input.metadata ?? {}))},
         visibility = ${input.visibility ?? (input.groupId ? 'private' : 'public')},
         owner_user_id = ${input.ownerUserId ?? input.createdById},
         group_id = ${input.groupId ?? null},
@@ -206,10 +211,10 @@ async function upsertDataset(input: PersistDatasetSnapshotInput) {
       ${datasetId}, ${input.provider}, ${input.providerDatasetId ?? null},
       ${input.providerResourceId ?? null}, ${input.title}, ${input.description ?? null},
       ${input.license ?? null}, ${input.publisher ?? null}, ${input.language ?? 'en'},
-      ${input.sourceUrl ?? null}, ${structureSummary}, ${sql.json(input.dimensions ?? [])},
-      ${sql.json(columns)}, ${sql.json(columnProfiles)}, ${sql.json(input.timeCoverage ?? {})},
-      ${sql.json(input.spatialCoverage ?? {})}, ${sql.json(input.topics ?? [])},
-      ${sql.json(input.metadata ?? {})},
+      ${input.sourceUrl ?? null}, ${structureSummary}, ${sql.json(toPostgresJson(input.dimensions ?? []))},
+      ${sql.json(toPostgresJson(columns))}, ${sql.json(toPostgresJson(columnProfiles))}, ${sql.json(toPostgresJson(input.timeCoverage ?? {}))},
+      ${sql.json(toPostgresJson(input.spatialCoverage ?? {}))}, ${sql.json(toPostgresJson(input.topics ?? []))},
+      ${sql.json(toPostgresJson(input.metadata ?? {}))},
       ${input.visibility ?? (input.groupId ? 'private' : 'public')},
       ${input.ownerUserId ?? input.createdById}, ${input.groupId ?? null}, 'active',
       ${input.createdById}
@@ -286,8 +291,8 @@ export async function persistDatasetSnapshot(input: PersistDatasetSnapshotInput)
     VALUES (
       ${snapshotId}, ${dataset.id}, ${snapshotKey}, ${DATASET_SNAPSHOT_BUCKET},
       ${storagePath}, 'csv', ${contentHash}, ${bytes.byteLength}, ${input.table.rows.length},
-      ${input.table.columns.length}, ${sql.json(input.table.columns)}, ${sql.json(columnProfiles)},
-      ${sql.json(input.dimensions ?? [])}, ${sql.json(input.metadata ?? {})}, 'ready',
+      ${input.table.columns.length}, ${sql.json(toPostgresJson(input.table.columns))}, ${sql.json(toPostgresJson(columnProfiles))},
+      ${sql.json(toPostgresJson(input.dimensions ?? []))}, ${sql.json(toPostgresJson(input.metadata ?? {}))}, 'ready',
       ${input.snapshotTakenAt ? new Date(input.snapshotTakenAt) : new Date()}, ${input.createdById}
     )
     ON CONFLICT (snapshot_key) DO UPDATE

@@ -161,7 +161,7 @@ export async function handleCopilotRequest(request: Request): Promise<Response> 
       system: parsedBody.data.system?.trim() || DEFAULT_COPILOT_SYSTEM_PROMPT,
       prompt,
       temperature: 0.2,
-      maxTokens: COPILOT_MAX_TOKENS,
+      maxOutputTokens: COPILOT_MAX_TOKENS,
     });
 
     const text = normalizeCopilotCompletion(result.text);

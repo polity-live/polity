@@ -589,7 +589,11 @@ export const streetDesignObjectRegistry = {
       {
         key: 'turnLanes',
         labelKey: 'features.amendments.streetscape.objects.common.properties.turnLanes',
-        fieldType: 'text',
+        fieldType: 'combobox',
+        options: ['left', 'through', 'right', 'left|through', 'through|right'].map(value => ({
+          labelKey: `features.amendments.streetscape.variantOptions.turnLanes.${value}`,
+          value,
+        })),
       },
       {
         key: 'laneMarkings',
@@ -677,7 +681,11 @@ export const streetDesignObjectRegistry = {
       {
         key: 'turn',
         labelKey: 'features.amendments.streetscape.objects.common.properties.turn',
-        fieldType: 'text',
+        fieldType: 'combobox',
+        options: ['left', 'through', 'right', 'merge'].map(value => ({
+          labelKey: `features.amendments.streetscape.variantOptions.turn.${value}`,
+          value,
+        })),
       },
       {
         key: 'access',
@@ -1679,7 +1687,11 @@ export const streetDesignObjectRegistry = {
       {
         key: 'direction',
         labelKey: 'features.amendments.streetscape.objects.trafficSign.properties.direction',
-        fieldType: 'text',
+        fieldType: 'combobox',
+        options: ['forward', 'backward', 'both'].map(value => ({
+          labelKey: `features.amendments.streetscape.variantOptions.direction.${value}`,
+          value,
+        })),
       },
     ],
     costRule: 'per_item',
@@ -1773,7 +1785,11 @@ export const streetDesignObjectRegistry = {
         key: 'entranceType',
         labelKey:
           'features.amendments.streetscape.objects.buildingEntrance.properties.entranceType',
-        fieldType: 'text',
+        fieldType: 'combobox',
+        options: ['main', 'secondary', 'service', 'emergency'].map(value => ({
+          labelKey: `features.amendments.streetscape.variantOptions.entranceType.${value}`,
+          value,
+        })),
       },
       {
         key: 'wheelchair',

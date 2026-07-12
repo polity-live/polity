@@ -1,5 +1,6 @@
 import { defineMutator } from '@rocicorp/zero';
 import type { Value } from 'platejs';
+import { toMutableJSONValue } from '../shared/helpers';
 import { can } from '../rbac/can';
 import { requireAuthenticated, requireOwner } from '../rbac/authorize';
 import { PermissionError, isPermissionError } from '../rbac/errors';
@@ -257,7 +258,9 @@ export const documentSharedMutators = {
         const changeRequests = await tx.run(
           zql.change_request.where('amendment_id', scope.document.amendment_id)
         );
-        content = applyResolvedSuggestionsToContent(content as Value, changeRequests);
+        content = toMutableJSONValue(
+          applyResolvedSuggestionsToContent(content as Value, changeRequests)
+        );
       }
     }
 

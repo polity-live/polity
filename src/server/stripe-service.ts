@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 
 import { getSession } from '@/lib/supabase/server';
 
-const STRIPE_API_VERSION = '2025-10-29.clover';
+const STRIPE_API_VERSION = '2026-05-27.dahlia';
 const CUSTOM_AMOUNT_MIN_CENTS = 100;
 const CUSTOM_AMOUNT_MAX_CENTS = 99_900;
 

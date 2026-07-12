@@ -1,9 +1,6 @@
 import * as React from 'react';
 import { Chat, useChat as useBaseChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type ChatRequestOptions, type UIMessage } from 'ai';
-import { usePluginOption } from 'platejs/react';
-
-import { aiChatPlugin } from '@/features/shared/ui/kit-platejs/ai-kit.tsx';
 import { useAuth } from '@/providers/auth-provider';
 
 export interface PlateEditorChatOptions {
@@ -101,7 +98,7 @@ function buildEditorCommandBody(
   body?: unknown
 ): { messages: EditorCommandMessage[] } {
   const systemMessage = getSystemMessageFromBody(body);
-  const editorMessages = messages.flatMap(message => {
+  const editorMessages: EditorCommandMessage[] = messages.flatMap(message => {
     if (message.role !== 'assistant' && message.role !== 'system' && message.role !== 'user') {
       return [];
     }
@@ -138,7 +135,7 @@ function getAppendText(message?: LegacyChatMessage | { text?: string }): string 
 }
 
 export const useChat = () => {
-  const options = usePluginOption(aiChatPlugin, 'chatOptions') as PlateEditorChatOptions;
+  const options: PlateEditorChatOptions = { api: '/api/ai/command', body: {} };
   const { session } = useAuth();
 
   const transport = React.useMemo(

@@ -1,4 +1,4 @@
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import { toMutableJSONValue, type MutableJSONValue } from '@/zero/shared/helpers';
 import type { StreetDesignObject, StreetDesignStateV1 } from '../types';
 import { getStreetDesignCostLine, getStreetDesignCostSummary } from './streetDesignCosting';
 import {
@@ -48,8 +48,8 @@ export interface StreetDesignChangeRequestCreatePayload {
   change_type: StreetDesignChangeType;
   original_text: string | null;
   new_text: string | null;
-  original_properties: ReadonlyJSONValue | null;
-  new_properties: ReadonlyJSONValue | null;
+  original_properties: MutableJSONValue | null;
+  new_properties: MutableJSONValue | null;
   changed_character_count: number;
   voting_status: string;
   voting_deadline: number | null;
@@ -70,15 +70,15 @@ export interface StreetDesignChangeRequestLike {
 
 export interface StreetDesignPersistenceSnapshot {
   design: StreetDesignStateV1;
-  bbox: ReadonlyJSONValue | null;
+  bbox: MutableJSONValue | null;
   center_lat: number;
   center_lon: number;
-  osm_snapshot: ReadonlyJSONValue | null;
-  design_state: ReadonlyJSONValue;
+  osm_snapshot: MutableJSONValue | null;
+  design_state: MutableJSONValue;
   currency: string;
   estimated_total_cost_minor: number;
   cost_catalog_version: string;
-  cost_summary: ReadonlyJSONValue;
+  cost_summary: MutableJSONValue;
 }
 
 export interface StreetDesignCostChange {
@@ -384,7 +384,7 @@ function createObjectPayload({
   };
 }
 
-function createSnapshot(snapshot: StreetDesignChangeRequestSnapshot): ReadonlyJSONValue {
+function createSnapshot(snapshot: StreetDesignChangeRequestSnapshot): MutableJSONValue {
   return asReadonlyJsonValue(snapshot);
 }
 
@@ -506,8 +506,8 @@ function asStringArray(value: unknown) {
     : undefined;
 }
 
-function asReadonlyJsonValue(value: unknown): ReadonlyJSONValue {
-  return value as ReadonlyJSONValue;
+function asReadonlyJsonValue(value: unknown): MutableJSONValue {
+  return toMutableJSONValue(value);
 }
 
 function stableJson(value: unknown) {

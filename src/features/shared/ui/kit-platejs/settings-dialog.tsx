@@ -8,7 +8,6 @@ import { useEditorRef } from 'platejs/react';
 
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
-import { aiChatPlugin } from '@/features/shared/ui/kit-platejs/ai-kit.tsx';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface Model {
@@ -38,17 +37,6 @@ export function SettingsDialog() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Update AI chat options
-    const chatOptions = editor.getOptions(aiChatPlugin).chatOptions ?? {};
-    editor.setOption(aiChatPlugin, 'chatOptions', {
-      ...chatOptions,
-      body: {
-        ...chatOptions.body,
-        apiKey: tempKeys.openai,
-        model: tempModel.value,
-      },
-    });
 
     setOpen(false);
 

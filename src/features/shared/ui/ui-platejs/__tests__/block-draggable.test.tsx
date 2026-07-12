@@ -103,7 +103,20 @@ describe('BlockDraggable', () => {
       if (!Wrapper) return null;
 
       return (
-        <Wrapper editor={editor as any} element={element as any} path={[0] as any}>
+        <Wrapper
+          api={{} as any}
+          attributes={{ 'data-slate-node': 'element', ref: null }}
+          editor={editor as any}
+          element={element as any}
+          getOption={vi.fn() as any}
+          getOptions={vi.fn(() => ({})) as any}
+          path={[0]}
+          plugin={{} as any}
+          setOption={vi.fn() as any}
+          setOptions={vi.fn() as any}
+          tf={{} as any}
+          type="p"
+        >
           <p>Move me</p>
         </Wrapper>
       );

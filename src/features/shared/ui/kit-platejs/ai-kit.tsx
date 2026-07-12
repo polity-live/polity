@@ -1,5 +1,4 @@
 import type { AIChatPluginConfig } from '@platejs/ai/react';
-import type { PlateEditorChatOptions } from './use-chat.ts';
 
 import { withAIBatch } from '@platejs/ai';
 import { AIChatPlugin, AIPlugin, streamInsertChunk, useChatChunk } from '@platejs/ai/react';
@@ -13,26 +12,6 @@ import { CursorOverlayKit } from './cursor-overlay-kit.tsx';
 import { MarkdownKit } from './markdown-kit.tsx';
 
 export const aiChatPlugin = AIChatPlugin.extend({
-  options: {
-    chatOptions: {
-      api: '/api/ai/command',
-      body: {},
-    } as PlateEditorChatOptions,
-    promptTemplate: ({ isBlockSelecting, isSelecting }) => {
-      return isBlockSelecting
-        ? PROMPT_TEMPLATES.userBlockSelecting
-        : isSelecting
-          ? PROMPT_TEMPLATES.userSelecting
-          : PROMPT_TEMPLATES.userDefault;
-    },
-    systemTemplate: ({ isBlockSelecting, isSelecting }) => {
-      return isBlockSelecting
-        ? PROMPT_TEMPLATES.systemBlockSelecting
-        : isSelecting
-          ? PROMPT_TEMPLATES.systemSelecting
-          : PROMPT_TEMPLATES.systemDefault;
-    },
-  },
   render: {
     afterContainer: AILoadingBar,
     afterEditable: AIMenu,

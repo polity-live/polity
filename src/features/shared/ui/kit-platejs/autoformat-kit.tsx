@@ -1,11 +1,16 @@
-import { KEYS, createSlatePlugin, createTextSubstitutionInputRule } from 'platejs';
+import {
+  KEYS,
+  createSlatePlugin,
+  createTextSubstitutionInputRule,
+  type TextSubstitutionPattern,
+} from 'platejs';
 
 export const isAutoformatRuleEnabled = ({ editor }: { editor: any }) =>
   !editor.api.some({
     match: { type: editor.getType(KEYS.codeBlock) },
   });
 
-const textSubstitutionPatterns = [
+const textSubstitutionPatterns: TextSubstitutionPattern[] = [
   { format: '→', match: '->' },
   { format: '⇒', match: '=>' },
   { format: '←', match: '<-' },

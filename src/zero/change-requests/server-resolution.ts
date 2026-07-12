@@ -1,4 +1,4 @@
-import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import { toMutableJSONValue } from '../shared/helpers';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { applySuggestionToContent } from '@/features/change-requests/logic/applySuggestionToContent';
@@ -354,7 +354,7 @@ export async function resolveChangeRequestByVoteResult({
     document_id: doc.id,
     amendment_id: cr.amendment_id,
     blog_id: null,
-    content: doc.content as ReadonlyJSONValue,
+    content: toMutableJSONValue(doc.content),
     version_number: nextVersionNumber,
     change_summary: versionSummary,
     author_id: ctx.userID,
@@ -369,7 +369,7 @@ export async function resolveChangeRequestByVoteResult({
 
   await tx.mutate.document.update({
     id: doc.id,
-    content: updatedContent as unknown as ReadonlyJSONValue,
+    content: toMutableJSONValue(updatedContent),
     updated_at: now,
   });
 
@@ -382,13 +382,13 @@ export async function resolveChangeRequestByVoteResult({
     if (target.branch) {
       await tx.mutate.amendment_process_branch.update({
         id: target.branch.id,
-        discussions: updatedDiscussions as unknown as ReadonlyJSONValue,
+        discussions: toMutableJSONValue(updatedDiscussions),
         updated_at: now,
       });
     } else {
       await tx.mutate.amendment.update({
         id: cr.amendment_id,
-        discussions: updatedDiscussions as unknown as ReadonlyJSONValue,
+        discussions: toMutableJSONValue(updatedDiscussions),
         updated_at: now,
       });
     }

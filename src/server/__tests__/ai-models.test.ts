@@ -165,11 +165,12 @@ describe('resolveLanguageModelForUser', () => {
     );
 
     expect(mocks.createOpenAI).toHaveBeenCalledWith({ apiKey: 'openai-key' });
-    expect(provider).toHaveBeenCalledWith('gpt-4.1-mini', { reasoningEffort: 'low' });
+    expect(provider).toHaveBeenCalledWith('gpt-4.1-mini');
     expect(provider.chat).not.toHaveBeenCalled();
     expect(result).toEqual({
       model: responseModel,
       credentialProvider: 'openai',
+      providerOptions: { openai: { reasoningEffort: 'low' } },
     });
   });
 

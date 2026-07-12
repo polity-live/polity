@@ -208,7 +208,7 @@ export function PaymentsSectionView({
                     ))}
                   </Pie>
                   <RechartsTooltip
-                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']}
+                    formatter={value => [`$${Number(value).toFixed(2)}`, 'Amount']}
                   />
                   <Legend />
                 </PieChart>
@@ -233,7 +233,7 @@ export function PaymentsSectionView({
                     ))}
                   </Pie>
                   <RechartsTooltip
-                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']}
+                    formatter={value => [`$${Number(value).toFixed(2)}`, 'Amount']}
                   />
                   <Legend />
                 </PieChart>

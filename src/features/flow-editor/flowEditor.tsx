@@ -1,7 +1,7 @@
 import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
 import { Background, Controls, MiniMap, Panel, ReactFlow } from '@xyflow/react';
-import type { NodeTypes } from '@xyflow/react';
+import type { EdgeTypes, NodeProps, NodeTypes } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -12,8 +12,9 @@ import {
   type FlowEditorController,
 } from './hooks/useFlowEditorController';
 import PositionableEdge from './PositionableEdge.tsx';
+import type { FlowEditorEdge, FlowEditorNode } from './types';
 
-const GroupNode = ({ data }: { data: { label: string }; selected: boolean }) => {
+const GroupNode = ({ data }: NodeProps<FlowEditorNode>) => {
   return (
     <>
       <div
@@ -41,7 +42,7 @@ const nodeTypes: NodeTypes = {
   group: GroupNode,
 };
 
-const edgeTypes = {
+const edgeTypes: EdgeTypes = {
   positionableedge: PositionableEdge,
 };
 
@@ -88,14 +89,14 @@ export function FlowEditorView({ controller }: { controller: FlowEditorControlle
 
   return (
     <div className="h-screen w-full">
-      <ReactFlow
+      <ReactFlow<FlowEditorNode, FlowEditorEdge>
         nodes={nodes}
         edges={edges}
         nodesDraggable={isInteractive}
         nodesFocusable={isInteractive}
         nodesConnectable={isInteractive}
         edgesFocusable={isInteractive}
-        edgesUpdatable={isInteractive}
+        edgesReconnectable={isInteractive}
         edgeTypes={edgeTypes}
         nodeTypes={nodeTypes}
         onNodesChange={isInteractive ? onNodesChange : undefined}

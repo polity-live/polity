@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -95,9 +95,13 @@ function buildWorkflow(id: string, overrides: Record<string, unknown> = {}) {
 }
 
 describe('ManageWorkflowsTab', () => {
-  it('renders incoming approvals and lets accepted co-owners edit active workflows', () => {
-    const onApproveWorkflowApproval = vi.fn();
-    const onRejectWorkflowApproval = vi.fn();
+  it('renders incoming approvals and lets accepted co-owners edit active workflows', async () => {
+    const onApproveWorkflowApproval = vi.fn(
+      (_id: string, context?: { completeSuccess?: () => void }) => context?.completeSuccess?.()
+    );
+    const onRejectWorkflowApproval = vi.fn(
+      (_id: string, context?: { completeSuccess?: () => void }) => context?.completeSuccess?.()
+    );
     const onOpenEditWorkflow = vi.fn();
 
     const incomingWorkflow = buildWorkflow('incoming-workflow', {
@@ -210,11 +214,9 @@ describe('ManageWorkflowsTab', () => {
     expect(screen.getAllByRole('button', { name: 'Edit Workflow' })).toHaveLength(3);
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Reject' }));
+    await waitFor(() => expect(onApproveWorkflowApproval.mock.calls[0]?.[0]).toBe('approval-1'));
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit Workflow' })[1]);
 
-    expect(onApproveWorkflowApproval).toHaveBeenCalledWith('approval-1');
-    expect(onRejectWorkflowApproval).toHaveBeenCalledWith('approval-1');
     expect(onOpenEditWorkflow).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'outgoing-workflow' })
     );

@@ -69,9 +69,7 @@ export const Route = createFileRoute('/api/ai/command')({
           },
         });
 
-        return result.toUIMessageStreamResponse({
-          getErrorMessage: getStreamErrorMessage,
-        });
+        return result.toUIMessageStreamResponse({ onError: getStreamErrorMessage });
       },
     },
   },

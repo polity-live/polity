@@ -1,4 +1,5 @@
-import type { SlateElementProps, TFileElement } from 'platejs';
+import type { TFileElement } from 'platejs';
+import type { SlateElementProps } from 'platejs/static';
 
 import { FileUp } from 'lucide-react';
 import { SlateElement } from 'platejs/static';

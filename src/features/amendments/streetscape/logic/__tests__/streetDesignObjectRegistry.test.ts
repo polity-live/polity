@@ -51,6 +51,14 @@ describe('streetDesignObjectRegistry', () => {
       'construction_area',
       'landuse_context_area',
       'civic_area',
+      'kerb',
+      'traffic_sign',
+      'traffic_island',
+      'public_space',
+      'building_entrance',
+      'charging_station',
+      'public_toilet',
+      'taxi_stand',
     ]);
 
     for (const type of streetDesignObjectTypes) {

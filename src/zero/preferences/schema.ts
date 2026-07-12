@@ -82,7 +82,7 @@ export const decisionTerminalGridLayoutItemSchema = z.object({
 export const decisionTerminalDashboardConfigSchema = z.object({
   version: z.number(),
   widgets: z.array(decisionTerminalWidgetSchema),
-  layouts: z.record(z.array(decisionTerminalGridLayoutItemSchema)),
+  layouts: z.record(z.string(), z.array(decisionTerminalGridLayoutItemSchema)),
 });
 
 export const networkLayoutPositionSchema = z.object({
@@ -91,11 +91,11 @@ export const networkLayoutPositionSchema = z.object({
 });
 
 export const groupNetworkLayoutSchema = z.object({
-  node_positions: z.record(networkLayoutPositionSchema),
-  edge_bend_points: z.record(z.array(networkLayoutPositionSchema)),
+  node_positions: z.record(z.string(), networkLayoutPositionSchema),
+  edge_bend_points: z.record(z.string(), z.array(networkLayoutPositionSchema)),
 });
 
-export const groupNetworkLayoutsSchema = z.record(groupNetworkLayoutSchema);
+export const groupNetworkLayoutsSchema = z.record(z.string(), groupNetworkLayoutSchema);
 
 const baseUserPreferenceSchema = z.object({
   id: z.string(),

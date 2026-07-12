@@ -1,4 +1,5 @@
-import type { SlateLeafProps, TSuggestionData, TSuggestionElement, TSuggestionText } from 'platejs';
+import type { TElement, TSuggestionData, TSuggestionText } from 'platejs';
+import type { SlateLeafProps } from 'platejs/static';
 
 import { BaseSuggestionPlugin } from '@platejs/suggestion';
 import { CornerDownLeftIcon } from 'lucide-react';
@@ -8,6 +9,12 @@ import { getMotionPreset, getSemanticToneClasses } from '@/features/shared/theme
 import { cn } from '@/features/shared/utils/utils.ts';
 
 const INLINE_SUGGESTION_MARK_CLASSES = 'box-decoration-clone rounded-sm border px-0.5 no-underline';
+
+function hasSuggestionData(
+  element: TElement
+): element is TElement & { suggestion?: TSuggestionData } {
+  return 'suggestion' in element;
+}
 
 export function SuggestionLeafStatic(props: SlateLeafProps<TSuggestionText>) {
   const { editor, leaf } = props;
@@ -36,8 +43,8 @@ export function SuggestionLeafStatic(props: SlateLeafProps<TSuggestionText>) {
   );
 }
 
-export function BlockSuggestionStatic({ element }: { element: TSuggestionElement }) {
-  const suggestionData = element.suggestion;
+export function BlockSuggestionStatic({ element }: { element: TElement }) {
+  const suggestionData = hasSuggestionData(element) ? element.suggestion : undefined;
 
   if (suggestionData?.isLineBreak) return null;
 

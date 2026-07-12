@@ -165,9 +165,17 @@ export type NotificationType =
   | 'hashtag_mentioned' // 8.5: Hashtag mentioned
   | 'recurring_event_updated'; // 8.6: Recurring event updated
 
+import type { useNotificationState } from '@/zero/notifications/useNotificationState';
 import type { NotificationWithRelationsRow } from '@/zero/notifications/queries';
 
-export type Notification = NotificationWithRelationsRow;
+type UserNotification = ReturnType<typeof useNotificationState>['userNotifications'][number];
+
+export type Notification = UserNotification & {
+  recipient_group?: NotificationWithRelationsRow['recipient_group'];
+  recipient_event?: NotificationWithRelationsRow['recipient_event'];
+  recipient_amendment?: NotificationWithRelationsRow['recipient_amendment'];
+  recipient_blog?: NotificationWithRelationsRow['recipient_blog'];
+};
 
 export interface NotificationFilters {
   all: Notification[];

@@ -1,5 +1,5 @@
 interface GroupOperationAccessOptions {
-  canViewDatasets: boolean;
+  canViewDatasets?: boolean;
   canViewDocuments: boolean;
   canViewLinks: boolean;
   canViewPayments: boolean;
@@ -7,7 +7,7 @@ interface GroupOperationAccessOptions {
 }
 
 export function hasGroupOperationAccess({
-  canViewDatasets,
+  canViewDatasets = false,
   canViewDocuments,
   canViewLinks,
   canViewPayments,

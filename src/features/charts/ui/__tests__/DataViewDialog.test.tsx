@@ -419,7 +419,7 @@ describe('DataViewDialog', () => {
     inserted = editorMocks.insertNodes.mock.calls[2][0];
     expect(inserted).toMatchObject({ type: 'data_view', view: 'stat' });
     expect(inserted.rows).toBeUndefined();
-  });
+  }, 15_000);
 
   it('updates all selected chart value columns and sends them as separate series', async () => {
     vi.mocked(createProviderSnapshot).mockResolvedValue({

@@ -1,8 +1,16 @@
 /* @vitest-environment jsdom */
 
 import { cleanup, fireEvent, render, renderHook, screen } from '@testing-library/react';
+import type { ComponentType, JSX, ReactNode } from 'react';
 import type { TElement } from 'platejs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const TestSuggestionLeaf = SuggestionLeaf as ComponentType<{
+  attributes: Record<string, unknown>;
+  children: ReactNode;
+  leaf: { text: string };
+  text: { text: string };
+}>;
 
 const translationMock = vi.hoisted(() => ({
   'plateJs.blockSuggestion.block': 'Block',
@@ -473,9 +481,9 @@ describe('suggestion editor styling', () => {
     ]);
 
     render(
-      <SuggestionLeaf attributes={{}} leaf={{ text: 'new text' } as any} text={{} as any}>
+      <TestSuggestionLeaf attributes={{}} leaf={{ text: 'new text' }} text={{ text: 'new text' }}>
         new text
-      </SuggestionLeaf>
+      </TestSuggestionLeaf>
     );
 
     const suggestion = screen.getByText('new text');
@@ -493,9 +501,9 @@ describe('suggestion editor styling', () => {
     ]);
 
     render(
-      <SuggestionLeaf attributes={{}} leaf={{ text: 'old text' } as any} text={{} as any}>
+      <TestSuggestionLeaf attributes={{}} leaf={{ text: 'old text' }} text={{ text: 'old text' }}>
         old text
-      </SuggestionLeaf>
+      </TestSuggestionLeaf>
     );
 
     const suggestion = screen.getByText('old text');
