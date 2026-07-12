@@ -30,11 +30,12 @@ export function ZeroAppProvider({ children }: { children: React.ReactNode }) {
         : { userID: 'anon', email: '' },
     [session?.user?.id, session?.user?.email]
   );
+  const zeroIdentity = session ? { userID: session.user.id } : {};
 
   return (
     <ZeroReadyContext.Provider value={true}>
       <ZeroProvider
-        userID={zeroContext.userID}
+        {...zeroIdentity}
         context={zeroContext}
         cacheURL={cacheURL}
         queryURL={`${appURL}/api/query`}

@@ -21,6 +21,24 @@ primary_region = "fra"
   ZERO_PORT = "4848"
   NODE_ENV = "production"
 
+  # Zero 1.7 defaults to 30 CVR connections, 5 change connections, and
+  # max(1, available CPU parallelism - 1) sync workers. ZERO_UPSTREAM_DB has a
+  # separate default limit of 20 and does not consume this session-pool budget
+  # while it continues to use Supabase's direct database connection.
+  #
+  # ZERO_CVR_DB and ZERO_CHANGE_DB use the same Supabase user + database, so
+  # they share Nano's pool_size=15. The 8 + 3 allocation below uses 11 slots
+  # and leaves 4 for startup and operational headroom.
+  #
+  # After increasing the Supabase compute/pool limit, keep roughly:
+  #   Fly machines * (CVR_MAX_CONNS + CHANGE_MAX_CONNS) <= 80% of pool_size
+  # Example for pool_size=30 and one machine: CVR=20, CHANGE=4. Redeploy Fly
+  # after changing these values. Restore Zero's 30 + 5 defaults only with at
+  # least 40 available pool connections (and recalculate for multiple machines).
+  ZERO_NUM_SYNC_WORKERS = "1"
+  ZERO_CVR_MAX_CONNS = "8"
+  ZERO_CHANGE_MAX_CONNS = "3"
+
 [http_service]
   internal_port = 4848
   force_https = true
