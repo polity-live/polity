@@ -59,7 +59,7 @@ describe('messageServerMutators notifications', () => {
             user_id: 'sender-1',
             joined_at: 1,
             last_read_at: 0,
-            left_at: null,
+            left_at: 0,
           },
           {
             id: 'participant-2',
@@ -67,7 +67,7 @@ describe('messageServerMutators notifications', () => {
             user_id: 'recipient-1',
             joined_at: 1,
             last_read_at: 0,
-            left_at: null,
+            left_at: 0,
           },
         ],
       },
@@ -105,7 +105,7 @@ describe('messageServerMutators notifications', () => {
         conversation_id: 'conversation-1',
         content: 'Hello',
         context_json: '[]',
-        deleted_at: null,
+        deleted_at: 0,
       },
     });
 

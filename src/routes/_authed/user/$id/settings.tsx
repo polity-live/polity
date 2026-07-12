@@ -13,6 +13,8 @@ const settingsSearchSchema = z.object({
   canceled: z.string().optional(),
 });
 
+type SettingsTab = NonNullable<z.infer<typeof settingsSearchSchema>['tab']>;
+
 export const Route = createFileRoute('/_authed/user/$id/settings')({
   validateSearch: settingsSearchSchema,
   component: UserSettingsPage,
@@ -34,7 +36,13 @@ function UserSettingsPage() {
       userId={id}
       activeTab={tab ?? 'basic-info'}
       onTabChange={nextTab =>
-        navigate({ search: previous => ({ ...previous, tab: nextTab }), replace: true })
+        navigate({
+          search: previous => ({
+            ...previous,
+            tab: settingsSearchSchema.shape.tab.parse(nextTab) as SettingsTab,
+          }),
+          replace: true,
+        })
       }
     />
   );

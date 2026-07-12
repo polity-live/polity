@@ -82,6 +82,7 @@ vi.mock('@/features/shared/ui/wiki/InfoTabs.tsx', () => ({
 }));
 
 vi.mock('@/features/shared/ui/wiki', () => ({
+  EntityWikiMedia: () => <div data-testid="entity-wiki-media" />,
   WikiParticipationDirectory: wikiParticipationDirectoryMock,
   WikiRosterSummaryCard: () => <div data-testid="roster-summary" />,
   getWikiParticipationName: () => 'Participant',

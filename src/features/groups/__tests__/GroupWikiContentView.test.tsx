@@ -56,6 +56,7 @@ vi.mock('@/features/shared/ui/hashtags', () => ({
 }));
 
 vi.mock('@/features/shared/ui/wiki', () => ({
+  EntityWikiMedia: () => <div data-testid="entity-wiki-media" />,
   InfoTabs: () => <div data-testid="info-tabs" />,
   WikiParticipationDirectory: wikiParticipationDirectoryMock,
   WikiRosterSummaryCard: () => <div data-testid="roster-summary" />,

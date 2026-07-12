@@ -7,6 +7,7 @@ import type {
   StreetDesignLocalPoint,
   StreetDesignStateV1,
 } from '@/features/amendments/streetscape/types';
+import type { StreetDesignChangeRequest } from '@/features/amendments/streetscape/logic/streetDesignChangeRequests';
 import { LandingStreetDesignPreview } from '../LandingStreetDesignPreview';
 
 const captured = vi.hoisted(() => ({
@@ -87,7 +88,7 @@ vi.mock('@/features/amendments/streetscape/ui/StreetSceneCanvasView', () => ({
     readOnly: boolean;
     canVoteOnChangeRequests: boolean;
     initialLegendOpen: boolean;
-    changeRequests: { id: string }[];
+    changeRequests: StreetDesignChangeRequest[];
     onPointerDown: (point: StreetDesignLocalPoint) => void;
     onChangeRequestVote: (id: string, vote: 'accept') => void;
   }) => {
