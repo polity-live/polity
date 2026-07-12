@@ -3,7 +3,12 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const streetDesignPreviewMock = vi.hoisted(() => vi.fn(() => <div data-testid="street-preview" />));
+const streetDesignPreviewMock = vi.hoisted(() =>
+  vi.fn((props: unknown) => {
+    void props;
+    return <div data-testid="street-preview" />;
+  })
+);
 
 vi.mock('@/features/change-requests/ui/CREditorPreview', () => ({
   CREditorPreview: () => <button type="button">Document Preview</button>,
@@ -64,6 +69,11 @@ function renderList(streetDesigns: readonly Record<string, unknown>[]) {
       isVotingActive
       items={[textChangeRequest]}
       normalizedPreviewCrIds={['cr-1']}
+      onCastVote={undefined}
+      onCloseVoting={undefined}
+      onFinalizeInternalVote={undefined}
+      onStartFinal={undefined}
+      onStartIndicative={undefined}
       progress={0}
       progressPercent={0}
       previewSuggestionResolutions={new Map()}
