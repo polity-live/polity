@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState, type ReactNode, type RefObject } from 'react';
-import { ChevronDown, CopyPlus, Eye, EyeOff, Layers, Trash2, Undo2, X } from 'lucide-react';
+import {
+  ChevronDown,
+  CopyPlus,
+  Eye,
+  EyeOff,
+  Layers,
+  MousePointer2,
+  Trash2,
+  Undo2,
+  X,
+} from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
@@ -54,6 +64,7 @@ import {
 } from '../logic/streetDesignOsm';
 import { projectGeoPointToLocal } from '../logic/streetDesignProjection';
 import type { EditorCollaborator } from '@/features/editor/types';
+import type { StreetDesignRemoteCursor } from '../hooks/useStreetDesignRemoteCursors';
 import {
   StreetDesignChangeRequestCanvasList,
   StreetDesignChangeRequestPanel,
@@ -74,7 +85,7 @@ export interface StreetSceneCanvasViewViewProps {
   hiddenObjectCategories?: readonly StreetDesignObjectCategory[];
   interactionMode: StreetDesignInteractionMode;
   readOnly: boolean;
-  mapContextReadOnly: boolean;
+  mapContextReadOnly?: boolean;
   changeRequests?: readonly StreetDesignChangeRequest[];
   streetDesignDiscussions?: readonly StreetDesignDiscussionLike[];
   selectedChangeRequestId?: string | null;
@@ -86,6 +97,7 @@ export interface StreetSceneCanvasViewViewProps {
   currentUserDisplayName?: string | null;
   currentUserAvatarUrl?: string | null;
   collaborators?: readonly EditorCollaborator[];
+  remoteCursors?: readonly StreetDesignRemoteCursor[];
   onFinishPathPlacement: () => void;
   onCancelPlacement: () => void;
   onObjectSelect: (objectId: string | null) => void;
@@ -124,7 +136,7 @@ export function StreetSceneCanvasViewView({
   hiddenObjectCategories = [],
   interactionMode,
   readOnly,
-  mapContextReadOnly,
+  mapContextReadOnly = readOnly,
   changeRequests = [],
   streetDesignDiscussions = [],
   selectedChangeRequestId = null,
@@ -136,6 +148,7 @@ export function StreetSceneCanvasViewView({
   currentUserDisplayName = null,
   currentUserAvatarUrl = null,
   collaborators = [],
+  remoteCursors = [],
   onFinishPathPlacement,
   onCancelPlacement,
   onObjectSelect,
@@ -166,6 +179,36 @@ export function StreetSceneCanvasViewView({
   );
   const designLayerOffsetX = comparisonLayers.split ? 52 : 0;
   const originalLayerOffsetX = comparisonLayers.split ? -52 : 0;
+  const positionedRemoteCursors = useMemo(
+    () =>
+      remoteCursors.flatMap(cursor => {
+        const requestedLayerVisible =
+          cursor.layer === 'design' ? comparisonLayers.showDesign : comparisonLayers.showOriginal;
+        const renderedLayer = requestedLayerVisible
+          ? cursor.layer
+          : comparisonLayers.showDesign
+            ? 'design'
+            : 'original';
+        const layerOffsetX = renderedLayer === 'design' ? designLayerOffsetX : originalLayerOffsetX;
+        const anchor = getTrackedCanvasAnchorFromLocalPoint({
+          point: cursor.position,
+          cameraPose,
+          canvasSize,
+          layerOffsetX,
+          hideWhenOutside: true,
+        });
+        return anchor ? [{ ...cursor, ...anchor }] : [];
+      }),
+    [
+      cameraPose,
+      canvasSize,
+      comparisonLayers.showDesign,
+      comparisonLayers.showOriginal,
+      designLayerOffsetX,
+      originalLayerOffsetX,
+      remoteCursors,
+    ]
+  );
   const legendSections = useMemo(
     () =>
       buildStreetDesignLegendSections({
@@ -248,6 +291,30 @@ export function StreetSceneCanvasViewView({
                 : 'h-[42rem] w-full cursor-crosshair lg:h-[calc(100vh-10rem)]'
           }
         />
+        {positionedRemoteCursors.length > 0 ? (
+          <div className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+            {positionedRemoteCursors.map(cursor => (
+              <div
+                key={cursor.userId}
+                className="absolute flex items-start drop-shadow-md"
+                style={{
+                  left: `${cursor.leftPercent}%`,
+                  top: `${cursor.topPercent}%`,
+                  color: cursor.color,
+                }}
+                data-testid={`street-design-remote-cursor-${cursor.userId}`}
+              >
+                <MousePointer2 className="size-5 fill-current stroke-white stroke-[1.5]" />
+                <span
+                  className="mt-4 -ml-1 max-w-44 truncate rounded-full px-2 py-0.5 text-xs font-semibold text-white shadow-sm"
+                  style={{ backgroundColor: cursor.color }}
+                >
+                  {cursor.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : null}
         {isLoadingOsm ? (
           <div className="pointer-events-none absolute right-4 bottom-4 left-4 z-10">
             <LoadingProgressBar

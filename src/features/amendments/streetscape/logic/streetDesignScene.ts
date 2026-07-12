@@ -2,6 +2,8 @@ import type {
   CorridorGeometry,
   PathCorridorGeometry,
   StreetDesignCameraPose,
+  StreetDesignComparisonLayer,
+  StreetDesignComparisonMode,
   StreetDesignInteractionMode,
   StreetDesignLocalPoint,
   StreetDesignObject,
@@ -63,6 +65,10 @@ export interface StreetDesignSceneMountOptions {
   initialCameraPose: StreetDesignCameraPose | null;
   onPointerDown: (point: StreetDesignLocalPoint) => void;
   onPointerMove: (point: StreetDesignLocalPoint) => void;
+  onPointerHover: (
+    point: StreetDesignLocalPoint | null,
+    layer: StreetDesignComparisonLayer
+  ) => void;
   onObjectSelect: (objectId: string | null) => void;
   onOsmWaySelect: (osmWayId: string | null) => void;
   onObjectRotate: (objectId: string, rotationDeg: number) => void;
@@ -108,6 +114,7 @@ export interface StreetDesignSceneController {
       StreetDesignSceneMountOptions,
       | 'onPointerDown'
       | 'onPointerMove'
+      | 'onPointerHover'
       | 'onObjectSelect'
       | 'onOsmWaySelect'
       | 'onObjectRotate'
@@ -124,6 +131,38 @@ type Object3D = import('three').Object3D;
 type Group = import('three').Group;
 type ThreeMaterial = import('three').Material;
 type RenderableCorridorGeometry = CorridorGeometry | PathCorridorGeometry;
+
+const STREET_DESIGN_SPLIT_LAYER_OFFSET_X = 52;
+
+export function getStreetDesignComparisonLayerOffsetX(
+  comparisonMode: StreetDesignComparisonMode,
+  layer: StreetDesignComparisonLayer
+) {
+  if (comparisonMode !== 'split') return 0;
+  return layer === 'original'
+    ? -STREET_DESIGN_SPLIT_LAYER_OFFSET_X
+    : STREET_DESIGN_SPLIT_LAYER_OFFSET_X;
+}
+
+export function getStreetDesignPointerLayer(
+  comparisonMode: StreetDesignComparisonMode,
+  worldX: number
+): StreetDesignComparisonLayer {
+  const layers = getStreetDesignComparisonLayers(comparisonMode);
+  if (layers.split) return worldX < 0 ? 'original' : 'design';
+  return layers.showDesign ? 'design' : 'original';
+}
+
+export function normalizeStreetDesignPointerPoint(
+  point: StreetDesignLocalPoint,
+  comparisonMode: StreetDesignComparisonMode,
+  layer: StreetDesignComparisonLayer
+): StreetDesignLocalPoint {
+  return {
+    x: point.x - getStreetDesignComparisonLayerOffsetX(comparisonMode, layer),
+    z: point.z,
+  };
+}
 
 export interface StreetDesignRenderFrameApi {
   requestAnimationFrame: (callback: FrameRequestCallback) => number;
@@ -5380,8 +5419,14 @@ export async function mountStreetDesignScene(
     layers = getStreetDesignComparisonLayers(options.design.comparisonMode);
     originalGroup.visible = layers.showOriginal;
     designGroup.visible = layers.showDesign;
-    originalGroup.position.x = layers.split ? -52 : 0;
-    designGroup.position.x = layers.split ? 52 : 0;
+    originalGroup.position.x = getStreetDesignComparisonLayerOffsetX(
+      options.design.comparisonMode,
+      'original'
+    );
+    designGroup.position.x = getStreetDesignComparisonLayerOffsetX(
+      options.design.comparisonMode,
+      'design'
+    );
   }
 
   function getVisibleDesignObjects() {
@@ -5736,6 +5781,17 @@ export async function mountStreetDesignScene(
     return designPoint;
   }
 
+  function getPointerLayer(point: StreetDesignLocalPoint): StreetDesignComparisonLayer {
+    return getStreetDesignPointerLayer(options.design.comparisonMode, point.x);
+  }
+
+  function toLayerPoint(
+    point: StreetDesignLocalPoint,
+    layer: StreetDesignComparisonLayer
+  ): StreetDesignLocalPoint {
+    return normalizeStreetDesignPointerPoint(point, options.design.comparisonMode, layer);
+  }
+
   function handlePlacePointerDown(event: PointerEvent) {
     const point = updatePointer(event);
 
@@ -5887,6 +5943,12 @@ export async function mountStreetDesignScene(
   function handlePointerMove(event: PointerEvent) {
     updatePendingTouchMove(event);
 
+    if (event.pointerType !== 'touch') {
+      const hoverPoint = updatePointer(event);
+      const hoverLayer = getPointerLayer(hoverPoint);
+      options.onPointerHover(toLayerPoint(hoverPoint, hoverLayer), hoverLayer);
+    }
+
     if (
       !options.readOnly &&
       options.interactionMode === 'place' &&
@@ -5894,6 +5956,12 @@ export async function mountStreetDesignScene(
     ) {
       const point = updatePointer(event);
       options.onPointerMove(toDesignPoint(point));
+    }
+  }
+
+  function handlePointerLeave(event: PointerEvent) {
+    if (event.pointerType !== 'touch') {
+      options.onPointerHover(null, 'design');
     }
   }
 
@@ -5957,6 +6025,9 @@ export async function mountStreetDesignScene(
         pendingTouchAction = null;
       }
     }
+    if (event.pointerType !== 'touch') {
+      options.onPointerHover(null, 'design');
+    }
     activeRotateDrag = null;
   }
 
@@ -6019,6 +6090,7 @@ export async function mountStreetDesignScene(
   function handleWindowBlur() {
     isSpacePressed = false;
     setPrimaryPointerNavigationControls(options.interactionMode === 'camera' ? 'move' : 'none');
+    options.onPointerHover(null, 'design');
   }
 
   function updateAmbientAnimations(elapsedSeconds: number) {
@@ -6154,6 +6226,7 @@ export async function mountStreetDesignScene(
   canvas.addEventListener('pointerdown', handlePointerDownCapture, true);
   canvas.addEventListener('pointerdown', handlePointerDown);
   canvas.addEventListener('pointermove', handlePointerMove);
+  canvas.addEventListener('pointerleave', handlePointerLeave);
   canvas.addEventListener('pointerup', handlePointerUp);
   canvas.addEventListener('pointercancel', handlePointerCancel);
   canvas.addEventListener('contextmenu', handleContextMenu);
@@ -6166,6 +6239,7 @@ export async function mountStreetDesignScene(
   requestRender();
 
   function dispose() {
+    options.onPointerHover(null, 'design');
     renderScheduler.dispose();
     controls.removeEventListener('change', handleControlsChange);
     resizeObserver?.disconnect();
@@ -6174,6 +6248,7 @@ export async function mountStreetDesignScene(
     canvas.removeEventListener('pointerdown', handlePointerDownCapture, true);
     canvas.removeEventListener('pointerdown', handlePointerDown);
     canvas.removeEventListener('pointermove', handlePointerMove);
+    canvas.removeEventListener('pointerleave', handlePointerLeave);
     canvas.removeEventListener('pointerup', handlePointerUp);
     canvas.removeEventListener('pointercancel', handlePointerCancel);
     canvas.removeEventListener('contextmenu', handleContextMenu);

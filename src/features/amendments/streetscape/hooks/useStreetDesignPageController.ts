@@ -59,6 +59,7 @@ import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import { formatStreetDesignSelectionAddress } from '../logic/streetDesignSelectionAddress';
+import { useStreetDesignRemoteCursors } from './useStreetDesignRemoteCursors';
 
 function originFromCenter(center: StreetDesignGeoPoint, label?: string): StreetDesignOrigin {
   return {
@@ -248,8 +249,9 @@ export function useStreetDesignPageController(amendmentId: string) {
     editorCollaborators.forEach(collaborator => userIds.add(collaborator.user.id));
     return generateDistinctUserColorMap(userIds);
   }, [editorCollaborators, user?.id]);
+  const presenceEntityId = `street-design:${primaryStreetDesign?.id ?? amendmentId}`;
   const { onlinePeers, userColor } = useEditorPresence({
-    entityId: `street-design:${primaryStreetDesign?.id ?? amendmentId}`,
+    entityId: presenceEntityId,
     userId: user?.id,
     userName: currentUserName,
     userAvatar: userRecord?.avatar ?? undefined,
@@ -259,7 +261,13 @@ export function useStreetDesignPageController(amendmentId: string) {
   const onlinePeerMap = useMemo(() => {
     return new Map(onlinePeers.map(peer => [peer.userId, peer]));
   }, [onlinePeers]);
-  const activeCursorUserIds = useMemo(() => new Set<string>(), []);
+  const { remoteCursors, activeCursorUserIds, broadcastCursor } = useStreetDesignRemoteCursors({
+    entityId: presenceEntityId,
+    userId: user?.id,
+    userName: currentUserName,
+    userColor,
+    enabled: Boolean(user?.id),
+  });
   const streetChangeRequests = useMemo(
     () =>
       getStreetDesignChangeRequests(
@@ -663,6 +671,8 @@ export function useStreetDesignPageController(amendmentId: string) {
     onChangeRequestCommentSubmit: handleChangeRequestCommentSubmit,
     onlinePeerMap,
     presenceColorByUserId,
+    remoteCursors,
+    broadcastCursor,
     readOnly,
     canEditMapContext,
     selectedCenter,

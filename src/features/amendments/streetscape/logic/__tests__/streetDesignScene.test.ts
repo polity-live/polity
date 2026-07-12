@@ -6,6 +6,8 @@ import {
   createStreetDesignRenderScheduler,
   getStreetDesignElevationRampLength,
   getStreetDesignElevationRampSegments,
+  getStreetDesignPointerLayer,
+  normalizeStreetDesignPointerPoint,
   getStreetDesignOsmFeatureRenderY,
   getStreetDesignOsmRenderPriority,
   getStreetDesignOsmWaterRenderY,
@@ -42,6 +44,21 @@ function rampFeature(args: {
 }
 
 describe('streetDesignScene coordinate mapping', () => {
+  it('resolves and normalizes pointer positions across comparison layers', () => {
+    expect(getStreetDesignPointerLayer('split', -20)).toBe('original');
+    expect(getStreetDesignPointerLayer('split', 20)).toBe('design');
+    expect(getStreetDesignPointerLayer('original', 20)).toBe('original');
+    expect(getStreetDesignPointerLayer('overlay', -20)).toBe('design');
+    expect(normalizeStreetDesignPointerPoint({ x: -47, z: 8 }, 'split', 'original')).toEqual({
+      x: 5,
+      z: 8,
+    });
+    expect(normalizeStreetDesignPointerPoint({ x: 57, z: 8 }, 'split', 'design')).toEqual({
+      x: 5,
+      z: 8,
+    });
+  });
+
   it('maps local z to negative shape y so rotated ShapeGeometry lands on the same ground z', () => {
     expect(toShapePoint({ x: 4, z: 7 })).toEqual({ x: 4, y: -7 });
     expect(toShapePoint({ x: -3, z: -5 })).toEqual({ x: -3, y: 5 });

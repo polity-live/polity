@@ -29,6 +29,7 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       onlinePeerMap={controller.onlinePeerMap}
       activeCursorUserIds={controller.activeCursorUserIds}
       presenceColorByUserId={controller.presenceColorByUserId}
+      remoteCursors={controller.remoteCursors}
       streetChangeRequests={controller.streetChangeRequests}
       streetDesignDiscussions={controller.streetDesignDiscussions}
       changeRequestColorMode={controller.changeRequestColorMode}
@@ -78,6 +79,7 @@ export function StreetDesignPage({ amendmentId }: StreetDesignPageProps) {
       onComparisonModeChange={controller.setComparisonMode}
       onScenePointerDown={controller.handleScenePointerDown}
       onScenePointerMove={controller.handleScenePointerMove}
+      onScenePointerHover={controller.broadcastCursor}
       onFinishPlacement={controller.finishPlacement}
       onFinishPathPlacement={controller.finishPathPlacement}
       onCancelPlacement={controller.cancelPlacement}

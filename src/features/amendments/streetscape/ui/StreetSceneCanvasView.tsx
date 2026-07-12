@@ -2,6 +2,7 @@ import type {
   CorridorGeometry,
   PathCorridorGeometry,
   StreetDesignInteractionMode,
+  StreetDesignComparisonLayer,
   StreetDesignCostLine,
   StreetDesignLocalPoint,
   StreetDesignObject,
@@ -17,6 +18,7 @@ import type {
 } from '../logic/streetDesignChangeRequests';
 import type { StreetDesignDiscussionLike } from './StreetDesignChangeRequestPanel';
 import type { EditorCollaborator } from '@/features/editor/types';
+import type { StreetDesignRemoteCursor } from '../hooks/useStreetDesignRemoteCursors';
 interface StreetSceneCanvasViewProps {
   design: StreetDesignStateV1;
   metricLabels?: string[];
@@ -50,8 +52,13 @@ interface StreetSceneCanvasViewProps {
   currentUserDisplayName?: string | null;
   currentUserAvatarUrl?: string | null;
   collaborators?: readonly EditorCollaborator[];
+  remoteCursors?: readonly StreetDesignRemoteCursor[];
   onPointerDown: (point: StreetDesignLocalPoint) => void;
   onPointerMove: (point: StreetDesignLocalPoint) => void;
+  onPointerHover?: (
+    point: StreetDesignLocalPoint | null,
+    layer: StreetDesignComparisonLayer
+  ) => void;
   onFinishPlacement: () => void;
   onFinishPathPlacement: () => void;
   onCancelPlacement: () => void;
@@ -113,8 +120,10 @@ export function StreetSceneCanvasView({
   currentUserDisplayName = null,
   currentUserAvatarUrl = null,
   collaborators = [],
+  remoteCursors = [],
   onPointerDown,
   onPointerMove,
+  onPointerHover = () => undefined,
   onFinishPlacement,
   onFinishPathPlacement,
   onCancelPlacement,
@@ -169,8 +178,10 @@ export function StreetSceneCanvasView({
     currentUserDisplayName,
     currentUserAvatarUrl,
     collaborators,
+    remoteCursors,
     onPointerDown,
     onPointerMove,
+    onPointerHover,
     onFinishPlacement,
     onFinishPathPlacement,
     onCancelPlacement,

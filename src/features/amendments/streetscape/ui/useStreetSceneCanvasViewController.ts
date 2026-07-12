@@ -4,6 +4,7 @@ import type {
   PathCorridorGeometry,
   StreetDesignCostLine,
   StreetDesignCameraPose,
+  StreetDesignComparisonLayer,
   StreetDesignInteractionMode,
   StreetDesignLocalPoint,
   StreetDesignObject,
@@ -24,6 +25,7 @@ import type {
 } from '../logic/streetDesignChangeRequests';
 import type { EditorCollaborator } from '@/features/editor/types';
 import type { StreetDesignDiscussionLike } from './StreetDesignChangeRequestPanel';
+import type { StreetDesignRemoteCursor } from '../hooks/useStreetDesignRemoteCursors';
 
 const EMPTY_CHANGE_REQUESTS: readonly StreetDesignChangeRequest[] = [];
 const DEFAULT_STREET_DESIGN_CAMERA_POSE: StreetDesignCameraPose = {
@@ -52,6 +54,7 @@ interface StreetSceneCanvasViewProps {
   selectedOsmFocusRequestKey: number;
   interactionMode: StreetDesignInteractionMode;
   readOnly: boolean;
+  mapContextReadOnly?: boolean;
   changeRequests?: readonly StreetDesignChangeRequest[];
   streetDesignDiscussions?: readonly StreetDesignDiscussionLike[];
   selectedChangeRequestId?: string | null;
@@ -63,8 +66,13 @@ interface StreetSceneCanvasViewProps {
   currentUserDisplayName?: string | null;
   currentUserAvatarUrl?: string | null;
   collaborators?: readonly EditorCollaborator[];
+  remoteCursors?: readonly StreetDesignRemoteCursor[];
   onPointerDown: (point: StreetDesignLocalPoint) => void;
   onPointerMove: (point: StreetDesignLocalPoint) => void;
+  onPointerHover?: (
+    point: StreetDesignLocalPoint | null,
+    layer: StreetDesignComparisonLayer
+  ) => void;
   onFinishPlacement: () => void;
   onFinishPathPlacement: () => void;
   onCancelPlacement: () => void;
@@ -111,6 +119,7 @@ export function useStreetSceneCanvasViewController({
   selectedOsmFocusRequestKey,
   interactionMode,
   readOnly,
+  mapContextReadOnly = readOnly,
   changeRequests = [],
   streetDesignDiscussions = [],
   selectedChangeRequestId = null,
@@ -122,8 +131,10 @@ export function useStreetSceneCanvasViewController({
   currentUserDisplayName = null,
   currentUserAvatarUrl = null,
   collaborators = [],
+  remoteCursors = [],
   onPointerDown,
   onPointerMove,
+  onPointerHover = () => undefined,
   onFinishPlacement,
   onFinishPathPlacement,
   onCancelPlacement,
@@ -203,6 +214,7 @@ export function useStreetSceneCanvasViewController({
     initialCameraPose: cameraPoseRef.current,
     onPointerDown,
     onPointerMove,
+    onPointerHover,
     onObjectSelect,
     onOsmWaySelect,
     onObjectRotate,
@@ -227,6 +239,7 @@ export function useStreetSceneCanvasViewController({
     initialCameraPose: cameraPoseRef.current,
     onPointerDown,
     onPointerMove,
+    onPointerHover,
     onObjectSelect,
     onOsmWaySelect,
     onObjectRotate,
@@ -319,12 +332,20 @@ export function useStreetSceneCanvasViewController({
     sceneControllerRef.current?.updateHandlers({
       onPointerDown,
       onPointerMove,
+      onPointerHover,
       onObjectSelect,
       onOsmWaySelect,
       onObjectRotate,
       onCameraPoseChange: latestSceneOptionsRef.current.onCameraPoseChange,
     });
-  }, [onObjectRotate, onObjectSelect, onOsmWaySelect, onPointerDown, onPointerMove]);
+  }, [
+    onObjectRotate,
+    onObjectSelect,
+    onOsmWaySelect,
+    onPointerDown,
+    onPointerHover,
+    onPointerMove,
+  ]);
 
   useEffect(() => {
     sceneControllerRef.current?.updateDesign({
@@ -399,6 +420,7 @@ export function useStreetSceneCanvasViewController({
     hiddenObjectCategories,
     interactionMode,
     readOnly,
+    mapContextReadOnly,
     changeRequests,
     streetDesignDiscussions,
     selectedChangeRequestId,
@@ -410,6 +432,7 @@ export function useStreetSceneCanvasViewController({
     currentUserDisplayName,
     currentUserAvatarUrl,
     collaborators,
+    remoteCursors,
     onFinishPathPlacement,
     onCancelPlacement,
     onObjectSelect,
@@ -440,6 +463,7 @@ function syncSceneController(
   controller.updateHandlers({
     onPointerDown: options.onPointerDown,
     onPointerMove: options.onPointerMove,
+    onPointerHover: options.onPointerHover,
     onObjectSelect: options.onObjectSelect,
     onOsmWaySelect: options.onOsmWaySelect,
     onObjectRotate: options.onObjectRotate,

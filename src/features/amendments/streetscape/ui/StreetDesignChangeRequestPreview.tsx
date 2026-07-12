@@ -79,6 +79,7 @@ export function StreetDesignChangeRequestPreview({
       initialCameraPose: null,
       onPointerDown: () => undefined,
       onPointerMove: () => undefined,
+      onPointerHover: () => undefined,
       onObjectSelect: () => undefined,
       onOsmWaySelect: () => undefined,
       onObjectRotate: () => undefined,

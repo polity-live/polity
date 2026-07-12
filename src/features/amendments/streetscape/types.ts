@@ -1,5 +1,7 @@
 export type StreetDesignComparisonMode = 'original' | 'new_design' | 'overlay' | 'split';
 
+export type StreetDesignComparisonLayer = 'original' | 'design';
+
 export type StreetDesignInteractionMode = 'place' | 'select' | 'camera';
 
 export type StreetDesignGeometryKind = 'point' | 'line' | 'polygon' | 'corridor';

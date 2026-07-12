@@ -83,6 +83,7 @@ describe('StreetSceneCanvasViewView', () => {
           source: 'osm',
         }}
         readOnly={false}
+        hideReadOnly={false}
         onClose={vi.fn()}
         onHideOsmWay={vi.fn()}
         onImportOsmWay={onImportOsmWay}
@@ -111,6 +112,26 @@ describe('StreetSceneCanvasViewView', () => {
     const { container } = renderCanvasView({ selectedObject: null });
 
     expect(container.querySelector('canvas')?.className).toContain('h-[42rem]');
+  });
+
+  it('renders non-interactive remote cursors with their presence identity', () => {
+    renderCanvasView({
+      selectedObject: null,
+      remoteCursors: [
+        {
+          userId: 'user-remote',
+          name: 'Grace Hopper',
+          color: '#2563eb',
+          position: { x: 0, z: 0 },
+          layer: 'design',
+        },
+      ],
+    });
+
+    const cursor = screen.getByTestId('street-design-remote-cursor-user-remote');
+    expect(cursor.textContent).toContain('Grace Hopper');
+    expect(cursor.getAttribute('style')).toContain('color: rgb(37, 99, 235)');
+    expect(cursor.parentElement?.className).toContain('pointer-events-none');
   });
 
   it('shows a delete action for a selected placed object', () => {

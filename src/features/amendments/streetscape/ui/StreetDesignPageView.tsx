@@ -30,6 +30,7 @@ import type {
   CorridorGeometry,
   PathCorridorGeometry,
   StreetDesignBoundingBox,
+  StreetDesignComparisonLayer,
   StreetDesignCostLine,
   StreetDesignCostSummary,
   StreetDesignGeoPoint,
@@ -54,6 +55,7 @@ import {
 } from './StreetDesignTopBarView';
 import { StreetSceneCanvasView } from './StreetSceneCanvasView';
 import type { StreetDesignDiscussionLike } from './StreetDesignChangeRequestPanel';
+import type { StreetDesignRemoteCursor } from '../hooks/useStreetDesignRemoteCursors';
 
 type StreetDesignAmendmentSummary =
   | {
@@ -82,6 +84,7 @@ interface StreetDesignPageViewProps {
   onlinePeerMap: Map<string, EditorPresencePeer>;
   activeCursorUserIds: Set<string>;
   presenceColorByUserId: Map<string, string>;
+  remoteCursors: readonly StreetDesignRemoteCursor[];
   streetChangeRequests: readonly StreetDesignChangeRequest[];
   streetDesignDiscussions?: readonly StreetDesignDiscussionLike[];
   changeRequestColorMode?: StreetDesignChangeRequestColorMode;
@@ -138,6 +141,10 @@ interface StreetDesignPageViewProps {
   onComparisonModeChange: (mode: StreetDesignStateV1['comparisonMode']) => void;
   onScenePointerDown: (point: StreetDesignLocalPoint) => void;
   onScenePointerMove: (point: StreetDesignLocalPoint) => void;
+  onScenePointerHover: (
+    point: StreetDesignLocalPoint | null,
+    layer: StreetDesignComparisonLayer
+  ) => void;
   onFinishPlacement: () => void;
   onFinishPathPlacement: () => void;
   onCancelPlacement: () => void;
@@ -188,6 +195,7 @@ export function StreetDesignPageView({
   onlinePeerMap,
   activeCursorUserIds,
   presenceColorByUserId,
+  remoteCursors,
   streetChangeRequests,
   streetDesignDiscussions = [],
   changeRequestColorMode = 'natural',
@@ -237,6 +245,7 @@ export function StreetDesignPageView({
   onComparisonModeChange,
   onScenePointerDown,
   onScenePointerMove,
+  onScenePointerHover,
   onFinishPlacement,
   onFinishPathPlacement,
   onCancelPlacement,
@@ -585,8 +594,10 @@ export function StreetDesignPageView({
               currentUserDisplayName={currentUserDisplayName}
               currentUserAvatarUrl={currentUserAvatarUrl}
               collaborators={editorCollaborators}
+              remoteCursors={remoteCursors}
               onPointerDown={onScenePointerDown}
               onPointerMove={onScenePointerMove}
+              onPointerHover={onScenePointerHover}
               onFinishPlacement={onFinishPlacement}
               onFinishPathPlacement={onFinishPathPlacement}
               onCancelPlacement={onCancelPlacement}
