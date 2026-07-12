@@ -16,7 +16,7 @@ import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { VisibilitySelector } from '@/features/shared/ui/form';
 import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
 import { PageWrapper } from '@/layout/page-wrapper';
-import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
+import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 export interface CreateBlogFormViewProps {
   navigate: any;
@@ -82,16 +82,21 @@ export function CreateBlogFormView({
                       required
                     />
                   </div>
-                  <ImageUpload
+                  <MediaUpload
                     currentImage={formData.imageURL}
                     onImageChange={(url: string) => setFormData({ ...formData, imageURL: url })}
+                    currentVideo={formData.videoURL}
+                    onVideoChange={(url: string) => setFormData({ ...formData, videoURL: url })}
                     cleanupOnRemove
+                    exclusiveMedia
                     entityType="blogs"
                     entityId={blogId}
-                    label={translateText('generated.inline.0278_cover_image_dbc62fcb')}
-                    description={translateText(
+                    imageLabel={translateText('generated.inline.0278_cover_image_dbc62fcb')}
+                    imageDescription={translateText(
                       'generated.inline.0279_upload_a_cover_image_for_your_blog_post_91a4eeda'
                     )}
+                    videoLabel={translateText('common.actions.uploadVideo')}
+                    videoDescription={translateText('common.media.videoDescription')}
                   />
                 </div>
               </CarouselItem>

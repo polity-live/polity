@@ -1,5 +1,4 @@
 import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
-import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import {
   Dialog,
   DialogDescription,
@@ -12,6 +11,7 @@ import { VotePasswordInput } from '@/features/vote-cast/ui/VotePasswordInput';
 import { StatusBadge } from '@/features/shared/ui/status';
 import { cn } from '@/features/shared/utils/utils';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { AgendaDialogContent } from './AgendaUiSystem';
 
 interface OfflineElectionTallyCandidate {
   id: string;
@@ -91,10 +91,10 @@ export function OfflineElectionTallyDialogView({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <ScrollableDialogContent className="bg-background h-dvh !max-h-none max-h-none w-screen max-w-none overflow-y-auto rounded-none border-0 p-0 shadow-none sm:max-w-none">
+      <AgendaDialogContent size="fullscreen">
         <div className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col items-center justify-center px-4 py-6 sm:py-8">
           <div
-            className="bg-card text-card-foreground w-full rounded-lg border p-5 shadow-[var(--shadow-floating)] sm:p-6"
+            className="bg-card text-card-foreground border-border/70 w-full rounded-xl border p-5 shadow-sm sm:p-6"
             data-slot="offline-election-tally-centered-card"
           >
             <DialogHeader className="text-center sm:text-center">
@@ -221,7 +221,7 @@ export function OfflineElectionTallyDialogView({
             </DialogFooter>
           </div>
         </div>
-      </ScrollableDialogContent>
+      </AgendaDialogContent>
     </Dialog>
   );
 }

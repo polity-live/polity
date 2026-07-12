@@ -276,6 +276,7 @@ export const blogServerMutators = {
       (args.description !== undefined && args.description !== previousBlog.description) ||
       (args.date !== undefined && args.date !== previousBlog.date) ||
       (args.image_url !== undefined && args.image_url !== previousBlog.image_url) ||
+      (args.video_url !== undefined && args.video_url !== previousBlog.video_url) ||
       (args.visibility !== undefined && args.visibility !== previousBlog.visibility);
 
     if (!hasProfileChanges) {

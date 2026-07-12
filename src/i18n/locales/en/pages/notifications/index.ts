@@ -191,6 +191,8 @@ export const notificationsPageTranslations = {
       directMessagesDesc: 'New direct messages',
       conversationRequests: 'Conversation Requests',
       conversationRequestsDesc: 'When someone wants to start a conversation',
+      documentInvitations: 'Document invitations',
+      documentInvitationsDesc: 'When someone invites you to collaborate on a document',
     },
     timeline: {
       title: 'Timeline Settings',

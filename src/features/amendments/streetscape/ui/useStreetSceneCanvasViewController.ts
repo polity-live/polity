@@ -36,6 +36,10 @@ const DEFAULT_STREET_DESIGN_CAMERA_POSE: StreetDesignCameraPose = {
 interface StreetSceneCanvasViewProps {
   design: StreetDesignStateV1;
   metricLabels?: string[];
+  initialLegendOpen?: boolean;
+  embeddedPreview?: boolean;
+  embeddedWorkspace?: boolean;
+  initialCameraPose?: StreetDesignCameraPose;
   isLoadingOsm: boolean;
   placementPreview: CorridorGeometry | PathCorridorGeometry | null;
   placementPreviewType: StreetDesignObjectType | null;
@@ -101,6 +105,10 @@ interface StreetSceneCanvasViewProps {
 export function useStreetSceneCanvasViewController({
   design,
   metricLabels,
+  initialLegendOpen = false,
+  embeddedPreview = false,
+  embeddedWorkspace = false,
+  initialCameraPose,
   isLoadingOsm,
   placementPreview,
   placementPreviewType,
@@ -158,7 +166,8 @@ export function useStreetSceneCanvasViewController({
 }: StreetSceneCanvasViewProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneControllerRef = useRef<StreetDesignSceneController | null>(null);
-  const cameraPoseRef = useRef<StreetDesignCameraPose | null>(null);
+  const initialCameraPoseRef = useRef(initialCameraPose ?? DEFAULT_STREET_DESIGN_CAMERA_POSE);
+  const cameraPoseRef = useRef<StreetDesignCameraPose | null>(initialCameraPoseRef.current);
   const pendingCameraPoseRef = useRef<StreetDesignCameraPose | null>(null);
   const cameraPoseFrameRef = useRef<number | null>(null);
   const lastObjectFocusRequestKeyRef = useRef(0);
@@ -178,7 +187,7 @@ export function useStreetSceneCanvasViewController({
 
   const [loadFailed, setLoadFailed] = useState(false);
   const [cameraPose, setCameraPose] = useState<StreetDesignCameraPose>(
-    DEFAULT_STREET_DESIGN_CAMERA_POSE
+    initialCameraPoseRef.current
   );
   const handleCameraPoseChange = useCallback((pose: StreetDesignCameraPose) => {
     cameraPoseRef.current = pose;
@@ -409,6 +418,9 @@ export function useStreetSceneCanvasViewController({
   return {
     design,
     metricLabels,
+    initialLegendOpen,
+    embeddedPreview,
+    embeddedWorkspace,
     isLoadingOsm,
     placementMode,
     placementPointCount,

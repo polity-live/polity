@@ -23,6 +23,7 @@ import { votingPasswordServerMutators } from './voting-password/server-mutators'
 import { accreditationServerMutators } from './accreditation/server-mutators';
 import { messageServerMutators } from './messages/server-mutators';
 import { networkServerMutators } from './network/server-mutators';
+import { userServerMutators } from './users/server-mutators';
 
 export const serverMutators = defineMutators(mutators, {
   groups: groupServerMutators,
@@ -41,4 +42,5 @@ export const serverMutators = defineMutators(mutators, {
   votingPassword: votingPasswordServerMutators,
   accreditation: accreditationServerMutators,
   network: networkServerMutators,
+  users: userServerMutators,
 });

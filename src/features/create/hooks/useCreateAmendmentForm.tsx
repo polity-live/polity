@@ -5,7 +5,7 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
-import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
+import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { AmendmentLocationInput } from '../ui/inputs/AmendmentLocationInput';
@@ -78,6 +78,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [imageURL, setImageURL] = useState('');
+  const [videoURL, setVideoURL] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [country, setCountry] = useState('');
@@ -121,6 +122,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         title: string;
         subtitle: string;
         imageURL: string;
+        videoURL: string;
         visibility: 'public' | 'authenticated' | 'private';
         hashtags: string[];
         country: string;
@@ -147,6 +149,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     setTitle(state.title ?? '');
     setSubtitle(state.subtitle ?? '');
     setImageURL(state.imageURL ?? '');
+    setVideoURL(state.videoURL ?? '');
     setVisibility(state.visibility ?? 'public');
     setHashtags(state.hashtags ?? []);
     setCountry(state.country ?? '');
@@ -383,6 +386,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           visibility,
           discussions: null,
           image_url: imageURL || null,
+          video_url: videoURL || null,
           country: country || null,
           region: region || null,
           post_code: post_code || null,
@@ -443,6 +447,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
             title,
             subtitle,
             imageURL,
+            videoURL,
             visibility,
             hashtags,
             country,
@@ -478,6 +483,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                 title,
                 subtitle,
                 imageURL,
+                videoURL,
                 visibility,
                 hashtags,
                 country,
@@ -550,17 +556,22 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               placeholder: t('pages.create.amendment.subtitlePlaceholder'),
             },
             {
-              key: 'image',
+              key: 'media',
               kind: 'customComponent',
-              component: ImageUpload,
+              component: MediaUpload,
               props: {
                 currentImage: imageURL,
                 onImageChange: (url: string) => setImageURL(url),
+                currentVideo: videoURL,
+                onVideoChange: (url: string) => setVideoURL(url),
                 cleanupOnRemove: true,
+                exclusiveMedia: true,
                 entityType: 'amendments',
                 entityId: amendmentId,
-                label: t('pages.create.amendment.imageLabel'),
-                description: t('pages.create.amendment.imageDescription'),
+                imageLabel: t('pages.create.amendment.imageLabel'),
+                imageDescription: t('pages.create.amendment.imageDescription'),
+                videoLabel: t('common.actions.uploadVideo'),
+                videoDescription: t('common.media.videoDescription'),
               },
             },
           ],
@@ -806,9 +817,11 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                 badge: t('pages.create.amendment.reviewBadge'),
                 title: title || t('pages.create.amendment.titlePlaceholder'),
                 subtitle: subtitle || undefined,
-                media: imageURL
-                  ? { imageUrl: imageURL, imageAlt: title || t('pages.create.amendment.imageAlt') }
-                  : undefined,
+                media: {
+                  imageUrl: imageURL || undefined,
+                  imageAlt: title || t('pages.create.amendment.imageAlt'),
+                  videoUrl: videoURL || undefined,
+                },
                 hashtags: hashtags.length > 0 ? hashtags : undefined,
                 sections: [
                   {
@@ -896,6 +909,14 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                             },
                           ]
                         : []),
+                      ...(videoURL
+                        ? [
+                            {
+                              label: t('common.actions.uploadVideo'),
+                              value: t('common.attached'),
+                            },
+                          ]
+                        : []),
                     ],
                   },
                 ],
@@ -909,6 +930,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       title,
       subtitle,
       imageURL,
+      videoURL,
       visibility,
       visibilityLabel,
       hashtags,

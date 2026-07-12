@@ -1,4 +1,5 @@
-import { aiChatAttachmentSchema, type AiChatAttachment } from './schemas';
+import type { AiChatAttachment } from './schemas';
+import { parseAiMessageContext } from './messageContext';
 
 export interface SelectedAiPromptSkill {
   slug: string;
@@ -18,20 +19,13 @@ export const BASE_ARIA_KAI_SYSTEM_PROMPT = [
   'Use open_create_flow only when the user explicitly wants to open a create flow or when important creation details are still missing.',
   'If a required reference is still missing or ambiguous after searching, ask one short follow-up question before attempting the create tool call.',
   'Do not claim that you can access external tools or systems unless the current message clearly provides that context.',
+  'Polity entities returned by tools are rendered as cards. Summarize those results in at most two sentences and do not repeat them as a bullet list.',
+  'For two or more synthesized findings, comparisons, or research conclusions that are not Polity entities, call present_findings so they render as structured cards.',
+  'Do not use present_findings for ordinary prose, a single observation, or entities already returned by Polity tools.',
 ].join('\n\n');
 
 function parseAttachments(contextJson?: string | null): AiChatAttachment[] {
-  if (!contextJson) {
-    return [];
-  }
-
-  try {
-    const parsed: unknown = JSON.parse(contextJson);
-    const result = aiChatAttachmentSchema.array().safeParse(parsed);
-    return result.success ? result.data : [];
-  } catch {
-    return [];
-  }
+  return parseAiMessageContext(contextJson).attachments;
 }
 
 function formatAttachmentLine(attachment: AiChatAttachment): string {

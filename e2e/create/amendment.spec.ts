@@ -1,6 +1,12 @@
 import { test, expect } from '../fixtures/test';
 import { cartesianProduct, matrixLimit, scenarioLabel } from '../fixtures/matrix';
-import { fillMinimalAmendment, gotoAmendment, layouts, visibilityValues } from './helpers';
+import {
+  applyOptionalVideoUrl,
+  fillMinimalAmendment,
+  gotoAmendment,
+  layouts,
+  visibilityValues,
+} from './helpers';
 import { submitSmokeAndExpectCreated } from './smoke-expectations';
 
 const scenarios = cartesianProduct(
@@ -8,7 +14,7 @@ const scenarios = cartesianProduct(
     layout: layouts,
     title: ['empty', 'valid'],
     subtitle: ['absent', 'present'],
-    media: ['absent', 'url'],
+    media: ['absent', 'video'],
     target: ['absent', 'group', 'group-event'],
     evaluation: ['none', 'fixed_date', 'relative_to_vote'],
     visibility: visibilityValues,
@@ -18,6 +24,13 @@ const scenarios = cartesianProduct(
 );
 
 test.describe('create/amendment', () => {
+  test('accepts a title video URL', async ({ createFlowPage, e2eRun }) => {
+    await gotoAmendment(createFlowPage);
+    await expect(applyOptionalVideoUrl(createFlowPage.page, 'media', e2eRun.prefix)).resolves.toBe(
+      true
+    );
+  });
+
   test('creates a targeted amendment @smoke', async ({ createFlowPage, e2eRun, seed }) => {
     await gotoAmendment(createFlowPage);
     await fillMinimalAmendment(createFlowPage, e2eRun.prefix);
@@ -44,6 +57,10 @@ test.describe('create/amendment', () => {
         await createFlowPage.form.fillText('subtitle', `${e2eRun.prefix} subtitle`, {
           optional: true,
         });
+      }
+
+      if (scenario.data.media === 'video') {
+        await applyOptionalVideoUrl(createFlowPage.page, 'media', e2eRun.prefix);
       }
 
       if (scenario.data.target !== 'absent') {

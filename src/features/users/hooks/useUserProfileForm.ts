@@ -49,6 +49,7 @@ export interface UserProfileFormData {
   location_geometry: MutableJSONValue | null;
   location_bounds: MutableJSONValue | null;
   avatar: string;
+  videoURL: string;
   visibility: Visibility;
   hashtags: string[];
 }
@@ -120,6 +121,7 @@ export function useUserProfileForm({
     location_geometry: null,
     location_bounds: null,
     avatar: '',
+    videoURL: '',
     visibility: 'public' as Visibility,
     hashtags: [],
   });
@@ -167,6 +169,7 @@ export function useUserProfileForm({
         location_geometry: user.location_geometry ?? null,
         location_bounds: user.location_bounds ?? null,
         avatar: user.avatar || '',
+        videoURL: user.video_url || '',
         visibility: (user.visibility as Visibility) ?? 'public',
         hashtags: [],
       });
@@ -214,7 +217,8 @@ export function useUserProfileForm({
         bio: formData.subtitle,
         about: formData.about ? toZeroRichTextValue(formData.aboutContent) : null,
         aboutPlainText: formData.about,
-        avatar: formData.avatar,
+        avatar: formData.avatar || null,
+        video_url: formData.videoURL || null,
         youtube: formData.youtube,
         linkedin: formData.linkedin,
         whatsapp: formData.whatsapp,

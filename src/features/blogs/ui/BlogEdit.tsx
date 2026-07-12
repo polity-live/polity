@@ -14,9 +14,17 @@ interface BlogEditProps {
   blogId: string;
   groupId?: string;
   userId?: string;
+  activeTab?: 'general' | 'tags';
+  onTabChange?: (tab: 'general' | 'tags') => void;
 }
 import { BlogEditView } from './BlogEditView';
-export function BlogEdit({ blogId, groupId, userId }: BlogEditProps) {
+export function BlogEdit({
+  blogId,
+  groupId,
+  userId,
+  activeTab = 'general',
+  onTabChange,
+}: BlogEditProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -45,6 +53,8 @@ export function BlogEdit({ blogId, groupId, userId }: BlogEditProps) {
       blog={blog}
       isLoading={isLoading}
       navigateToBlog={navigateToBlog}
+      activeTab={activeTab}
+      onTabChange={onTabChange}
     />
   );
 }

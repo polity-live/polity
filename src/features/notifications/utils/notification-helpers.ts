@@ -4,8 +4,8 @@
  * Utilities for creating notifications on behalf of entities
  * and sending notifications to entity recipients.
  *
- * On the client, uses a Zero mutator dispatch set via setNotificationDispatch().
- * On the server (server-notify.ts), falls back to Supabase with service_role.
+ * Production delivery is server-only via server-notify.ts and Supabase service_role.
+ * The injectable dispatch remains solely for isolated helper unit tests.
  */
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
@@ -15,8 +15,8 @@ import type { NotificationType } from '@/features/notifications/types/notificati
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 // ── Dispatch pattern ─────────────────────────────────────────────────────────
-// On the client, a Zero-backed dispatch is injected at app startup.
-// On the server, we fall back to Supabase with the service_role key.
+// Unit tests can inject a capture dispatch. Production calls run on the server
+// and fall back to Supabase with the service_role key.
 
 export interface CreateNotificationInput {
   id: string;
@@ -54,7 +54,8 @@ let _clientDispatch: NotificationDispatchFn | null = null;
 
 /**
  * Set the dispatch function used to create notifications.
- * Called once from useNotificationDispatch() at app startup.
+ * Intended for isolated helper tests only. Production code must create
+ * notifications from authorized server mutators.
  */
 export function setNotificationDispatch(fn: NotificationDispatchFn | null): void {
   _clientDispatch = fn;
@@ -223,7 +224,36 @@ async function getRecipientNotificationSettings(
     return null;
   }
 
-  return (data as NotificationSettings | null) ?? null;
+  if (!data) return null;
+
+  const row = data as Record<string, unknown>;
+  return {
+    id: row.id as string | undefined,
+    groupNotifications: (row.group_notifications ??
+      row.groupNotifications ??
+      {}) as NotificationSettings['groupNotifications'],
+    eventNotifications: (row.event_notifications ??
+      row.eventNotifications ??
+      {}) as NotificationSettings['eventNotifications'],
+    amendmentNotifications: (row.amendment_notifications ??
+      row.amendmentNotifications ??
+      {}) as NotificationSettings['amendmentNotifications'],
+    blogNotifications: (row.blog_notifications ??
+      row.blogNotifications ??
+      {}) as NotificationSettings['blogNotifications'],
+    todoNotifications: (row.todo_notifications ??
+      row.todoNotifications ??
+      {}) as NotificationSettings['todoNotifications'],
+    socialNotifications: (row.social_notifications ??
+      row.socialNotifications ??
+      {}) as NotificationSettings['socialNotifications'],
+    deliverySettings: (row.delivery_settings ??
+      row.deliverySettings ??
+      {}) as NotificationSettings['deliverySettings'],
+    timelineSettings: (row.timeline_settings ??
+      row.timelineSettings ??
+      {}) as NotificationSettings['timelineSettings'],
+  };
 }
 
 async function personalizeNotificationConfig(
@@ -257,13 +287,6 @@ async function personalizeNotificationConfig(
 }
 
 async function insertServerNotification(config: NotificationConfig, notificationId: string) {
-  if (config.recipientUserId) {
-    const settings = await getRecipientNotificationSettings(config.recipientUserId);
-    if (!shouldDispatchNotification(config.type, settings)) {
-      return false;
-    }
-  }
-
   const personalizedConfig = await personalizeNotificationConfig(config);
   const input = mapConfigToInput(personalizedConfig, notificationId);
   const { error } = await getServerSupabase().from('notification').insert(input);
@@ -274,6 +297,36 @@ async function insertServerNotification(config: NotificationConfig, notification
   }
 
   return true;
+}
+
+async function deliverServerNotification(config: NotificationConfig, notificationId: string) {
+  const settings = config.recipientUserId
+    ? await getRecipientNotificationSettings(config.recipientUserId)
+    : null;
+  const typeEnabled = shouldDispatchNotification(config.type, settings, {
+    isEntityNotification: Boolean(config.recipientEntityType && config.recipientEntityId),
+  });
+
+  if (!typeEnabled) return false;
+
+  let inserted = false;
+  if (!config.recipientUserId || settings?.deliverySettings?.inAppNotifications !== false) {
+    inserted = await insertServerNotification(config, notificationId);
+  }
+
+  if (config.recipientUserId && config.recipientUserId !== config.senderId) {
+    await sendPushNotification(config.recipientUserId, {
+      title: config.title,
+      message: config.message,
+      actionUrl: config.actionUrl,
+      notificationId,
+      type: config.type,
+    }).catch(error => {
+      console.error('[Notification] Failed to send push notification:', error);
+    });
+  }
+
+  return inserted;
 }
 
 const ACTIVE_GROUP_MANAGER_STATUSES = new Set(['active', 'member', 'admin']);
@@ -1638,14 +1691,14 @@ export async function createNotification(config: NotificationConfig): Promise<st
     }
   } else {
     // ── Server-side: insert via Supabase service_role ─────────────────
-    await insertServerNotification(config, notificationId);
+    await deliverServerNotification(config, notificationId);
 
     if (
       config.recipientEntityType &&
       config.recipientEntityId &&
       SELF_PERSONAL_COPY_TYPES.has(config.type)
     ) {
-      await insertServerNotification(
+      await deliverServerNotification(
         {
           ...config,
           recipientUserId: config.senderId,
@@ -1676,13 +1729,8 @@ async function sendPushNotification(
   }
 ): Promise<void> {
   try {
-    const { pushSendFn } = await import('@/server/push-send');
-    await pushSendFn({
-      data: {
-        userId,
-        notification,
-      },
-    });
+    const { sendPushNotificationToUser } = await import('@/server/push-send');
+    await sendPushNotificationToUser(userId, notification);
   } catch (error) {
     console.error('[Notification] Error sending push notification:', error);
     throw error;
@@ -4742,7 +4790,10 @@ export async function notifyAmendmentCloned(params: {
     ),
     actionUrl: `/amendment/${params.newAmendmentId}`,
     relatedEntityType: 'amendment',
-    relatedAmendmentId: params.newAmendmentId,
+    // Keep the FK on the already-committed source amendment. The destination
+    // clone is created in the same Zero transaction and may not yet be visible
+    // to the service-role notification insert.
+    relatedAmendmentId: params.originalAmendmentId,
   });
 }
 
@@ -5514,6 +5565,26 @@ export async function notifyStandaloneTodoAssigned(params: {
       todoTitle: params.todoTitle,
     }),
     actionUrl: `/todos`,
+  });
+}
+
+export async function notifyTodoClaimed(params: {
+  senderId: string;
+  senderName: string;
+  recipientUserId: string;
+  todoId: string;
+  todoTitle: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientUserId: params.recipientUserId,
+    type: 'todo_updated',
+    title: translateText('features.notifications.generated.titles.todoClaimed'),
+    message: translateText('features.notifications.generated.messages.todoClaimed', {
+      senderName: params.senderName,
+      todoTitle: params.todoTitle,
+    }),
+    actionUrl: '/todos',
   });
 }
 

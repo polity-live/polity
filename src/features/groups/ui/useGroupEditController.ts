@@ -115,6 +115,7 @@ export function useGroupEditController({ groupId }: GroupEditProps) {
         location_geometry: group.location_geometry ?? null,
         location_bounds: group.location_bounds ?? null,
         imageURL: group.image_url ?? '',
+        videoURL: group.video_url ?? '',
         connected_group_id: group.connected_group_id ?? null,
         siblingMembershipDirection: getRelativeSiblingMembershipDirection(),
         sibling_membership_mode:

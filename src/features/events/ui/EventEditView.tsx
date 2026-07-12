@@ -1,6 +1,13 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
-import { FormControlLabel, SwitchField } from '@/features/shared/ui/form';
+import {
+  FormControlLabel,
+  SettingsActionBar,
+  SettingsPage,
+  SettingsPanel,
+  SettingsTabs,
+  SwitchField,
+} from '@/features/shared/ui/form';
 /**
  * Event Edit Component
  *
@@ -21,9 +28,9 @@ import { DelegateAllocationInput } from '@/features/create/ui/inputs/DelegateAll
 import { ChangeRequestVoteOrderInput } from '@/features/create/ui/inputs/ChangeRequestVoteOrderInput';
 import { ElectionModeInput } from '@/features/elections/ui/ElectionModeInput';
 import { Loader2, XCircle } from 'lucide-react';
-import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
+import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { TabsContent } from '@/features/shared/ui/ui/tabs';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { CancelEventDialog } from './CancelEventDialog';
@@ -36,6 +43,7 @@ import {
   isPositiveInteger,
   isValidOptionalUrlLike,
 } from '@/features/shared/logic/inputValidation';
+import { isValidOptionalEventStreamUrl } from '@/features/events/logic/eventStreamUrl';
 import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import {
   geoLocationFieldsFromShape,
@@ -48,7 +56,8 @@ import { EventTimeSeriesSection } from './EventTimeSeriesSection';
 export interface EventEditViewProps {
   eventId: any;
   mode: any;
-  defaultTab: any;
+  activeTab: any;
+  onTabChange: any;
   navigate: any;
   t: any;
   cancelDialogOpen: any;
@@ -83,7 +92,8 @@ export interface EventEditViewProps {
 
 export function EventEditView({
   eventId,
-  defaultTab,
+  activeTab,
+  onTabChange,
   navigate,
   t,
   cancelDialogOpen,
@@ -148,11 +158,11 @@ export function EventEditView({
             title={formData.title || t('features.events.editPage.untitled')}
             subtitle={formData.description || undefined}
             hashtags={formData.tags}
-            media={
-              formData.imageURL
-                ? { imageUrl: formData.imageURL, imageAlt: formData.title || 'Event image' }
-                : undefined
-            }
+            media={{
+              imageUrl: formData.imageURL || undefined,
+              imageAlt: formData.title || 'Event image',
+              videoUrl: formData.videoURL || undefined,
+            }}
           >
             {formData.startDate && (
               <SummaryField
@@ -178,6 +188,9 @@ export function EventEditView({
                 label={t('pages.create.event.meetingLink')}
                 value={formData.onlineLink}
               />
+            )}
+            {formData.streamUrl && (
+              <SummaryField label={t('pages.create.event.streamUrl')} value={formData.streamUrl} />
             )}
             {formData.capacity && (
               <SummaryField
@@ -209,42 +222,40 @@ export function EventEditView({
   }
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">
-          {isCreating ? t('pages.create.event.title') : t('features.events.editPage.title')}
-        </h1>
-        <p className="text-muted-foreground">
-          {isCreating
-            ? t('pages.create.event.description')
-            : t('features.events.editPage.subtitle')}
-        </p>
-      </div>
-
+    <SettingsPage
+      title={isCreating ? t('pages.create.event.title') : t('features.events.editPage.title')}
+      description={
+        isCreating ? t('pages.create.event.description') : t('features.events.editPage.subtitle')
+      }
+    >
       <form ref={formRef} onSubmit={onFormSubmit} className="space-y-6">
-        <Tabs defaultValue={defaultTab || 'basic-info'} className="space-y-6">
-          <TabsList className="bg-muted/60 h-auto w-full flex-wrap justify-start gap-2 rounded-xl p-1">
-            <TabsTrigger value="basic-info" className="flex-1 rounded-lg sm:flex-none">
-              {t('pages.event.settingsTabs.basicInfo')}
-            </TabsTrigger>
-            <TabsTrigger value="time-series" className="flex-1 rounded-lg sm:flex-none">
-              {t('pages.event.settingsTabs.timeSeries')}
-            </TabsTrigger>
-            <TabsTrigger value="event-type" className="flex-1 rounded-lg sm:flex-none">
-              {translateText('generated.inline.0486_eventtyp_662805d4')}
-            </TabsTrigger>
-          </TabsList>
-
+        <SettingsTabs
+          value={activeTab}
+          onValueChange={onTabChange}
+          tabs={[
+            { value: 'basic-info', label: t('pages.event.settingsTabs.basicInfo') },
+            { value: 'time-series', label: t('pages.event.settingsTabs.timeSeries') },
+            {
+              value: 'event-type',
+              label: translateText('generated.inline.0486_eventtyp_662805d4'),
+            },
+          ]}
+        >
           <TabsContent value="basic-info" className="space-y-6">
-            <ImageUpload
+            <MediaUpload
               currentImage={formData.imageURL}
               onImageChange={(url: string) => updateField('imageURL', url)}
+              currentVideo={formData.videoURL}
+              onVideoChange={(url: string) => updateField('videoURL', url)}
               onImageRemove={isCreating ? undefined : removeImage}
               cleanupOnRemove
+              exclusiveMedia
               entityType="events"
               entityId={eventId}
-              label={t('features.events.editPage.image.label')}
-              description={t('features.events.editPage.image.description')}
+              imageLabel={t('features.events.editPage.image.label')}
+              imageDescription={t('features.events.editPage.image.description')}
+              videoLabel={t('common.actions.uploadVideo')}
+              videoDescription={t('common.media.videoDescription')}
             />
 
             <Card>
@@ -487,6 +498,19 @@ export function EventEditView({
                     />
                   </div>
                 ) : null}
+                <div className="space-y-4 rounded-xl border p-4">
+                  <ValidatedInputField
+                    id="streamUrl"
+                    inputMode="url"
+                    label={t('pages.create.event.streamUrl')}
+                    value={formData.streamUrl}
+                    onChange={value => updateField('streamUrl', value)}
+                    placeholder={t('pages.create.event.streamUrlPlaceholder')}
+                    validator={isValidOptionalEventStreamUrl}
+                    hint={t('pages.create.event.streamUrlHint')}
+                    autoComplete="url"
+                  />
+                </div>
                 <ValidatedInputField
                   id="capacity"
                   type="number"
@@ -516,6 +540,24 @@ export function EventEditView({
                 />
               </CardContent>
             </Card>
+
+            {!isCreating && canDeleteEvent ? (
+              <SettingsPanel
+                variant="danger"
+                title={t('features.events.cancel.cancelEvent')}
+                description={t('features.events.cancel.description')}
+              >
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => setCancelDialogOpen(true)}
+                  disabled={isSubmitting}
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  {t('features.events.cancel.cancelEvent')}
+                </Button>
+              </SettingsPanel>
+            ) : null}
           </TabsContent>
 
           <TabsContent value="time-series" className="space-y-6">
@@ -647,10 +689,10 @@ export function EventEditView({
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+        </SettingsTabs>
 
         {/* Action Buttons */}
-        <div className="flex gap-4">
+        <SettingsActionBar className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
             type="button"
             variant="outline"
@@ -660,20 +702,7 @@ export function EventEditView({
             {t('features.events.cancelLabel')}
           </Button>
 
-          {/* Cancel Event Button - only for users with delete permission in edit mode */}
-          {!isCreating && canDeleteEvent && (
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => setCancelDialogOpen(true)}
-              disabled={isSubmitting}
-            >
-              <XCircle className="mr-2 h-4 w-4" />
-              {t('features.events.cancel.cancelEvent')}
-            </Button>
-          )}
-
-          <Button type="submit" disabled={isSubmitting} className="flex-1">
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -687,7 +716,7 @@ export function EventEditView({
               t('features.events.editPage.saveChanges')
             )}
           </Button>
-        </div>
+        </SettingsActionBar>
       </form>
 
       {/* Cancel Event Dialog */}
@@ -698,6 +727,6 @@ export function EventEditView({
           onOpenChange={setCancelDialogOpen}
         />
       )}
-    </div>
+    </SettingsPage>
   );
 }

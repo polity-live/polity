@@ -95,16 +95,6 @@ export function useNotificationActions() {
     [zero, t]
   );
 
-  // ── Create Notification ────────────────────────────────────────────
-  const createNotification = useCallback(
-    (args: Parameters<typeof mutators.notifications.createNotification>[0]) => {
-      const result = zero.mutate(mutators.notifications.createNotification(args));
-      onServerError(result, () => toast.error(t('features.notifications.toasts.createFailed')));
-      return result;
-    },
-    [zero, t]
-  );
-
   // ── Entity Notification Reads ──────────────────────────────────────
   const markEntityNotificationRead = useCallback(
     (args: Parameters<typeof mutators.notifications.markEntityNotificationRead>[0]) => {
@@ -143,9 +133,6 @@ export function useNotificationActions() {
     // Push Subscriptions
     registerPushSubscription,
     unregisterPushSubscription,
-
-    // Create
-    createNotification,
 
     // Entity Notification Reads
     markEntityNotificationRead,

@@ -1,7 +1,6 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import type { ReactNode } from 'react';
 
-import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { SectionSkeleton } from '@/features/shared/ui/feedback';
 import { FormControlLabel } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -23,6 +22,7 @@ import type {
   EventWithAgendaPermission,
   TransferAgendaItemDialogController,
 } from '../hooks/useTransferAgendaItemDialogController';
+import { AgendaDialogBody, AgendaDialogContent } from './AgendaUiSystem';
 
 interface TransferAgendaItemDialogViewProps {
   agendaItemTitle: string;
@@ -60,15 +60,15 @@ export function TransferAgendaItemDialogView({
           </Button>
         )}
       </DialogTrigger>
-      <ScrollableDialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <AgendaDialogContent size="standard">
+        <DialogHeader separator>
           <DialogTitle>{t('features.events.agenda.transferItem')}</DialogTitle>
           <DialogDescription>
             {t('features.events.agenda.selectDestinationEvent')}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <AgendaDialogBody>
           <div className="space-y-2">
             <FormControlLabel>{t('features.events.agenda.currentEvent')}</FormControlLabel>
             <Card surface="muted">
@@ -121,9 +121,9 @@ export function TransferAgendaItemDialogView({
               </p>
             </div>
           )}
-        </div>
+        </AgendaDialogBody>
 
-        <DialogFooter>
+        <DialogFooter separator surface="background">
           <Button variant="outline" onClick={() => setOpen(false)} disabled={transferLoading}>
             {t('common.cancel')}
           </Button>
@@ -141,7 +141,7 @@ export function TransferAgendaItemDialogView({
             )}
           </Button>
         </DialogFooter>
-      </ScrollableDialogContent>
+      </AgendaDialogContent>
     </Dialog>
   );
 }

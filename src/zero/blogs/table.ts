@@ -9,6 +9,7 @@ export const blog = table('blog')
     content: json<MutableJSONValue>().optional(),
     date: string().optional(),
     image_url: string().optional(),
+    video_url: string().optional(),
     visibility: string(),
     subscriber_count: number(),
     supporter_count: number(),

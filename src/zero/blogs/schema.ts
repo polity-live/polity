@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { timestampSchema, jsonSchema } from '../shared/helpers';
 import { createTimelineEventSchema } from '../common/schema';
+import { hasExclusivePrimaryMedia, primaryMediaValidationMessage } from '../shared/primaryMedia';
 
 // ============================================
 // Blog Zod Schemas
@@ -14,6 +15,7 @@ const baseBlogSchema = z.object({
   content: jsonSchema.nullable(),
   date: z.string().nullable(),
   image_url: z.string().nullable(),
+  video_url: z.string().nullable(),
   visibility: z.string(),
   subscriber_count: z.number(),
   supporter_count: z.number(),
@@ -38,7 +40,11 @@ export const createBlogSchema = baseBlogSchema
     subscriber_count: true,
     supporter_count: true,
   })
-  .extend({ id: z.string() });
+  .extend({ id: z.string() })
+  .refine(hasExclusivePrimaryMedia, {
+    message: primaryMediaValidationMessage,
+    path: ['video_url'],
+  });
 
 export const createBlogFullSchema = z.object({
   blog: createBlogSchema,
@@ -53,6 +59,7 @@ export const updateBlogSchema = baseBlogSchema
     content: true,
     date: true,
     image_url: true,
+    video_url: true,
     visibility: true,
     editing_mode: true,
     discussions: true,
@@ -60,7 +67,11 @@ export const updateBlogSchema = baseBlogSchema
     downvotes: true,
   })
   .partial()
-  .extend({ id: z.string() });
+  .extend({ id: z.string() })
+  .refine(hasExclusivePrimaryMedia, {
+    message: primaryMediaValidationMessage,
+    path: ['video_url'],
+  });
 
 export const deleteBlogSchema = z.object({ id: z.string() });
 

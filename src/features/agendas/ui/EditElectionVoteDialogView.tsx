@@ -12,7 +12,6 @@ import {
   FormControlSelectValue,
   FormControlRadioGroupItem,
 } from '@/features/shared/ui/form';
-import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import {
   Dialog,
   DialogDescription,
@@ -25,6 +24,7 @@ import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { Loader2, Plus, X } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { BallotVisibilityInput } from './BallotVisibilityInput';
+import { AgendaDialogBody, AgendaDialogContent } from './AgendaUiSystem';
 export interface EditElectionVoteDialogViewProps {
   open: any;
   onOpenChange: any;
@@ -103,8 +103,8 @@ export function EditElectionVoteDialogView({
 }: EditElectionVoteDialogViewProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <ScrollableDialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
+      <AgendaDialogContent size="standard">
+        <DialogHeader separator>
           <DialogTitle>
             {isElection
               ? t('features.events.agenda.editElectionSettings')
@@ -115,7 +115,7 @@ export function EditElectionVoteDialogView({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 py-4">
+        <AgendaDialogBody className="space-y-5">
           <div className="space-y-2">
             <FormControlLabel htmlFor="agenda-title">
               {t('features.events.agenda.item.title')}
@@ -277,9 +277,9 @@ export function EditElectionVoteDialogView({
               </div>
             </div>
           )}
-        </div>
+        </AgendaDialogBody>
 
-        <DialogFooter>
+        <DialogFooter separator surface="background">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t('common.actions.cancel')}
           </Button>
@@ -288,7 +288,7 @@ export function EditElectionVoteDialogView({
             {t('common.actions.save')}
           </Button>
         </DialogFooter>
-      </ScrollableDialogContent>
+      </AgendaDialogContent>
     </Dialog>
   );
 }

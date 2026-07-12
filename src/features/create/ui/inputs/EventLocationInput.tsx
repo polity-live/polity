@@ -2,12 +2,14 @@ import { FormControlLabel, CreateInputField } from '@/features/shared/ui/form';
 import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import type { GeoLocationShape } from '@/features/shared/logic/geoLocationShape';
 import { Button } from '@/features/shared/ui/ui/button';
+import { normalizeEventStreamUrl } from '@/features/events/logic/eventStreamUrl';
 
 type AttendanceMode = 'online' | 'hybrid' | 'offline';
 
 interface EventLocationValues {
   locationName: string;
   onlineLink: string;
+  streamUrl: string;
   country: string;
   region: string;
   postCode: string;
@@ -34,6 +36,10 @@ interface EventLocationInputProps {
     meetingLink: string;
     meetingLinkHint: string;
     meetingLinkPlaceholder: string;
+    streamUrl: string;
+    streamUrlHint: string;
+    streamUrlPlaceholder: string;
+    streamUrlInvalid: string;
     capacity: string;
     capacityHint: string;
     capacityPlaceholder: string;
@@ -153,6 +159,21 @@ export function EventLocationInput({
           />
         </div>
       ) : null}
+      <div className="space-y-4 rounded-xl border p-4">
+        <CreateInputField
+          label={labels.streamUrl}
+          hint={labels.streamUrlHint}
+          value={values.streamUrl}
+          onValueChange={value => onValueChange('streamUrl', value)}
+          placeholder={labels.streamUrlPlaceholder}
+          inputMode="url"
+          validator={value =>
+            value.trim().length === 0 || normalizeEventStreamUrl(value)
+              ? null
+              : labels.streamUrlInvalid
+          }
+        />
+      </div>
       {showCapacity ? (
         <CreateInputField
           label={labels.capacity}

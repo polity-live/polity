@@ -224,27 +224,38 @@ export const messageSharedMutators = {
   }),
 
   deleteConversationFull: defineMutator(deleteConversationFullSchema, async ({ tx, ctx, args }) => {
+    // Authorize while the caller's participant row still exists. Re-checking after
+    // removing participants would incorrectly lock an incoming recipient out of
+    // the final conversation delete.
+    await assertCanManageConversation(tx, ctx, args.id);
+
+    if (tx.location !== 'client') {
+      for (const messageId of args.messageIds ?? []) {
+        const message = await tx.run(zql.message.where('id', messageId).one());
+        if (!message || message.conversation_id !== args.id) {
+          throw new Error('Message does not belong to this conversation.');
+        }
+      }
+
+      for (const participantId of args.participantIds ?? []) {
+        const participant = await tx.run(
+          zql.conversation_participant.where('id', participantId).one()
+        );
+        if (!participant || participant.conversation_id !== args.id) {
+          throw new Error('Conversation participant does not belong to this conversation.');
+        }
+      }
+    }
+
     for (const messageId of args.messageIds ?? []) {
-      await messageSharedMutators.deleteMessage.fn({
-        tx,
-        ctx,
-        args: { id: messageId },
-      });
+      await tx.mutate.message.delete({ id: messageId });
     }
 
     for (const participantId of args.participantIds ?? []) {
-      await messageSharedMutators.removeParticipant.fn({
-        tx,
-        ctx,
-        args: { id: participantId },
-      });
+      await tx.mutate.conversation_participant.delete({ id: participantId });
     }
 
-    await messageSharedMutators.deleteConversation.fn({
-      tx,
-      ctx,
-      args: { id: args.id },
-    });
+    await tx.mutate.conversation.delete({ id: args.id });
   }),
 
   // Update a message

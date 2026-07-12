@@ -79,6 +79,8 @@ export const messagesTranslations = {
     pin: 'Pin conversation',
     unpin: 'Unpin conversation',
     cancelRequest: 'Cancel request',
+    cancelRequestConfirm:
+      'Are you sure you want to cancel this conversation request? This action cannot be undone.',
     noMessagesYet: 'No messages yet. Start the conversation!',
     waitingForAccept: 'Waiting for {{name}} to accept your conversation request',
     rejected: 'This conversation request was rejected',
@@ -110,6 +112,14 @@ export const messagesTranslations = {
     loadFailed: 'Failed to load messages',
   },
   ai: {
+    retry: 'Try again',
+    settings: 'AI settings',
+    information: 'About AI responses',
+    searchSettings: 'Search tools and skills…',
+    noSettingsFound: 'No matching tools or skills found.',
+    openResult: 'Open',
+    showMoreResults: 'Show {{count}} more',
+    showFewerResults: 'Show fewer',
     compressingHistory: 'Aria & Kai is compressing the chat history...',
     defaultConversationName: 'Aria & Kai',
     renameConversation: 'Rename AI conversation',

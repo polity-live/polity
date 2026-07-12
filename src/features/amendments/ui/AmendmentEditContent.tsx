@@ -8,6 +8,8 @@ interface AmendmentEditContentProps {
   isLoading: boolean;
   mode?: 'create' | 'edit';
   agendaItemId?: string;
+  activeTab?: 'general' | 'workflow' | 'location';
+  onTabChange?: (tab: 'general' | 'workflow' | 'location') => void;
 }
 
 import { useAmendmentEditContentController } from './useAmendmentEditContentController';
@@ -21,6 +23,8 @@ export function AmendmentEditContent({
   isLoading,
   mode,
   agendaItemId,
+  activeTab,
+  onTabChange,
 }: AmendmentEditContentProps) {
   const viewProps = useAmendmentEditContentController({
     amendmentId,
@@ -30,6 +34,8 @@ export function AmendmentEditContent({
     isLoading,
     mode,
     agendaItemId,
+    activeTab,
+    onTabChange,
   });
 
   return <AmendmentEditContentView {...viewProps} />;

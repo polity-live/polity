@@ -7,7 +7,6 @@ import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import type { PathWithEventSegment } from '@/features/amendments/logic/amendmentPathHelpers';
-import { notifyAmendmentCloned } from '@/features/notifications/utils/notification-helpers.ts';
 import { useCreateAmendmentPath } from './useCreateAmendmentPath';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -25,6 +24,7 @@ interface CloneAmendmentData {
   readonly visibility: string;
   readonly discussions: ReadonlyJSONValue | null;
   readonly image_url: string | null;
+  readonly video_url: string | null;
   readonly country?: string | null;
   readonly region?: string | null;
   readonly post_code?: string | null;
@@ -56,6 +56,7 @@ export function useCloneAmendment(
   userId: string | undefined,
   userEmail: string | undefined
 ) {
+  void userEmail;
   const navigate = useNavigate();
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [isCloning, setIsCloning] = useState(false);
@@ -159,6 +160,7 @@ export function useCloneAmendment(
         linkedin: '',
         website: '',
         image_url: amendment.image_url ?? null,
+        video_url: amendment.video_url ?? null,
       });
       await waitForClientApply(createAmendmentResult);
 
@@ -188,15 +190,6 @@ export function useCloneAmendment(
           pathMode: selection.pathMode,
         });
       }
-
-      // Notify about the clone
-      await notifyAmendmentCloned({
-        senderId: userId,
-        senderName: userEmail || 'Someone',
-        originalAmendmentId: amendmentId,
-        originalAmendmentTitle: amendment.title ?? '',
-        newAmendmentId: cloneId,
-      });
 
       toast.success(translateText('generated.inline.0153_amendment_cloned_successfully_e51bc162'));
       setCloneDialogOpen(false);

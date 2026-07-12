@@ -1,5 +1,10 @@
 export const amendmentPageTranslations = {
   settings: 'Edit Amendment',
+  settingsTabs: {
+    general: 'General',
+    workflow: 'Workflow',
+    location: 'Location',
+  },
   overview: {
     title: 'Overview',
   },

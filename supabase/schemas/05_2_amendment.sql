@@ -45,13 +45,15 @@ CREATE TABLE IF NOT EXISTS public.amendment (
   comment_count INTEGER NOT NULL DEFAULT 0,
   collaborator_count INTEGER NOT NULL DEFAULT 0,
   image_url TEXT,
+  video_url TEXT,
   x TEXT,
   youtube TEXT,
   linkedin TEXT,
   website TEXT,
   current_process_run_id UUID,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT amendment_single_primary_media_check CHECK (image_url IS NULL OR video_url IS NULL)
 );
 
 CREATE INDEX idx_amendment_created_by ON public.amendment (created_by_id);

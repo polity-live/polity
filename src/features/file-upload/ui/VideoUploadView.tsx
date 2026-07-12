@@ -1,10 +1,10 @@
-import type React from 'react';
-
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
-import { FileUploadTrigger, FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
-import { X, Video, Loader2 } from 'lucide-react';
+import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
+import { X } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils.ts';
+import { FileDropzone, type FileDropzoneRejection } from './FileDropzone';
 
 interface VideoUploadViewProps {
   className?: string;
@@ -13,16 +13,21 @@ interface VideoUploadViewProps {
   description: string;
   previewUrl: string;
   videoUrl: string;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  urlInputId: string;
   isUploading: boolean;
   progress: number;
+  maxSize: number;
   copy: {
+    dropVideoHere: string;
+    dragVideoHere: string;
+    orClickToBrowse: string;
     uploading: string;
     uploadVideo: string;
     orProvideUrl: string;
     unsupportedVideo: string;
   };
-  onFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void | Promise<void>;
+  onFilesSelected: (files: File[]) => void | Promise<void>;
+  onFilesRejected: (rejections: FileDropzoneRejection[]) => void;
   onUrlChange: (url: string) => void;
   onRemoveVideo: () => void;
 }
@@ -34,16 +39,18 @@ export function VideoUploadView({
   description,
   previewUrl,
   videoUrl,
-  fileInputRef,
+  urlInputId,
   isUploading,
   progress,
+  maxSize,
   copy,
-  onFileSelect,
+  onFilesSelected,
+  onFilesRejected,
   onUrlChange,
   onRemoveVideo,
 }: VideoUploadViewProps) {
   return (
-    <Card className={cn('', className)}>
+    <Card className={cn('', className)} data-testid="video-upload">
       <CardContent className="pt-6">
         <div className="space-y-4">
           <div className="text-sm">
@@ -57,9 +64,8 @@ export function VideoUploadView({
                 controls
                 preload="metadata"
                 poster={currentThumbnail || undefined}
-                className="w-full rounded-lg"
+                className="bg-background aspect-video max-h-[400px] w-full rounded-lg object-contain"
                 src={previewUrl}
-                style={{ maxHeight: '400px' }}
                 onLoadedMetadata={event => {
                   const video = event.currentTarget;
                   if (!currentThumbnail) {
@@ -82,41 +88,43 @@ export function VideoUploadView({
             </div>
           )}
 
-          <div className="flex gap-2">
-            <FileUploadTrigger
-              inputRef={fileInputRef}
-              inputProps={{
-                accept: 'video/*',
-                onChange: onFileSelect,
-              }}
-              variant="outline"
-              className="flex-1"
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {copy.uploading} {progress}%
-                </>
-              ) : (
-                <>
-                  <Video className="mr-2 h-4 w-4" />
-                  {copy.uploadVideo}
-                </>
-              )}
-            </FileUploadTrigger>
-          </div>
-
-          <div className="space-y-2">
-            <FormControlLabel>{copy.orProvideUrl}</FormControlLabel>
-            <FormControlInput
-              type="url"
-              value={videoUrl}
-              onChange={event => onUrlChange(event.target.value)}
-              placeholder="https://example.com/video.mp4"
-              disabled={isUploading}
-            />
-          </div>
+          <FileDropzone
+            accept="video/*"
+            maxSize={maxSize}
+            disabled={isUploading}
+            busy={isUploading}
+            idleLabel={copy.dragVideoHere}
+            activeLabel={copy.dropVideoHere}
+            browseLabel={copy.uploadVideo}
+            busyLabel={`${copy.uploading} ${progress}%`}
+            hint={copy.orClickToBrowse}
+            testId="video-upload-dropzone"
+            inputProps={{ 'data-testid': 'video-upload-input' }}
+            onFilesSelected={onFilesSelected}
+            onFilesRejected={onFilesRejected}
+          >
+            <div className={featureThemeClassName('fileuploadImageUploadThemedText')}>
+              <span className="bg-border h-px flex-1" />
+              <span>{copy.orProvideUrl}</span>
+              <span className="bg-border h-px flex-1" />
+            </div>
+            <div className="w-full space-y-2 text-left">
+              <FormControlLabel className="sr-only" htmlFor={urlInputId}>
+                {copy.orProvideUrl}
+              </FormControlLabel>
+              <FormControlInput
+                id={urlInputId}
+                type="url"
+                value={videoUrl}
+                onChange={event => onUrlChange(event.target.value)}
+                placeholder="https://example.com/video.mp4"
+                data-testid="video-upload-url-input"
+                aria-label={copy.orProvideUrl}
+                disabled={isUploading}
+                className="bg-background/90 text-center shadow-sm sm:text-left"
+              />
+            </div>
+          </FileDropzone>
         </div>
       </CardContent>
     </Card>

@@ -493,6 +493,9 @@ export const eventsTranslations = {
     liveFocusDescription:
       'Fokussierte Ansicht für aktuellen Tagesordnungspunkt, Redeliste und Abstimmung.',
     liveStream: 'Live-Stream der Veranstaltung',
+    externalStreamDescription:
+      'Dieser Anbieter kann hier nicht eingebettet werden. Öffne den Stream direkt.',
+    openStream: 'Stream öffnen',
     noActiveItem: 'Kein aktiver Tagesordnungspunkt gefunden',
     openLiveFocus: 'Live-Fokus öffnen',
     speakersList: 'Redeliste',

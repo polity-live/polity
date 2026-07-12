@@ -346,6 +346,11 @@ export const createPageTranslations = {
     },
     meetingLink: 'Meeting Link',
     meetingLinkPlaceholder: 'https://zoom.us/j/...',
+    streamUrl: 'Livestream-Link',
+    streamUrlHint:
+      'YouTube und Twitch werden direkt abgespielt; andere Plattformen öffnen in einem neuen Tab.',
+    streamUrlPlaceholder: 'youtube.com/live/... oder twitch.tv/kanal',
+    streamUrlInvalid: 'Gib einen gültigen HTTP- oder HTTPS-Livestream-Link ein.',
     accessCode: 'Zugangscode',
     accessCodeOptional: 'Zugangscode (optional)',
     venueName: 'Name des Veranstaltungsortes',

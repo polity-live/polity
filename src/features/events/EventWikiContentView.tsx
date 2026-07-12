@@ -34,6 +34,7 @@ import { CandidacyPasswordDialog } from '@/features/elections/ui/CandidacyPasswo
 import { getEventTypeTranslationKey } from './logic/getEventTypeTranslationKey';
 import {
   getWikiParticipationName,
+  EntityWikiMedia,
   isVisibleWikiParticipationStatus,
   normalizeWikiParticipationRole,
   WikiParticipationDirectory,
@@ -257,16 +258,11 @@ export function EventWikiContentView({
         </div>
       </div>
 
-      {/* Event Image */}
-      {event.image_url && (
-        <div className="mb-8">
-          <img
-            src={event.image_url}
-            alt={event.title ?? ''}
-            className="mx-auto h-64 w-full max-w-4xl rounded-lg object-cover shadow-lg"
-          />
-        </div>
-      )}
+      <EntityWikiMedia
+        imageUrl={event.image_url}
+        videoUrl={event.video_url}
+        alt={event.title ?? ''}
+      />
 
       {/* Stats Bar */}
       <StatsBar

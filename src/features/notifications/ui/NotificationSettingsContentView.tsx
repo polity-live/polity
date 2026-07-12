@@ -670,6 +670,13 @@ export function NotificationSettingsContentView({
             }
             disabled={isUpdating}
           />
+          <SettingItem
+            label={t('pages.notifications.settingsPage.social.documentInvitations')}
+            description={t('pages.notifications.settingsPage.social.documentInvitationsDesc')}
+            checked={settings.socialNotifications.documentInvitations}
+            onCheckedChange={checked => updateSocialNotifications({ documentInvitations: checked })}
+            disabled={isUpdating}
+          />
         </CardContent>
       </Card>
 

@@ -8,6 +8,7 @@ import {
   jsonStringStringRecordSchema,
 } from '../shared/helpers';
 import { completeProcessTaskWithEventSchema } from '../amendments/schema';
+import { hasExclusivePrimaryMedia, primaryMediaValidationMessage } from '../shared/primaryMedia';
 
 const nullableEventScheduleTimestampSchema = z.number().nullable();
 const attendanceModeSchema = z.enum(['online', 'hybrid', 'offline']);
@@ -16,6 +17,17 @@ const changeRequestVoteOrderSchema = z.enum([
   'changed_character_count',
   'cr_number',
 ]);
+const eventStreamUrlInputSchema = z
+  .string()
+  .refine(value => {
+    try {
+      const protocol = new URL(value).protocol;
+      return protocol === 'http:' || protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }, 'Livestream URL must use HTTP or HTTPS')
+  .nullable();
 
 // ── event ─────────────────────────────────────────────────────────────
 const eventBaseSchema = z.object({
@@ -76,6 +88,7 @@ const eventBaseSchema = z.object({
   website: z.string().nullable(),
   stream_url: z.string().nullable(),
   image_url: z.string().nullable(),
+  video_url: z.string().nullable(),
   has_delegates: z.boolean(),
   delegate_count: z.number(),
   delegate_distribution_method: z.string().nullable(),
@@ -123,8 +136,13 @@ export const eventCreateSchema = eventBaseSchema
     id: z.string(),
     title: z.string(),
     group_id: z.string().nullable(),
+    stream_url: eventStreamUrlInputSchema.optional(),
     invited_user_ids: z.array(z.string()).optional(),
     debug_correlation_id: z.string().optional(),
+  })
+  .refine(hasExclusivePrimaryMedia, {
+    message: primaryMediaValidationMessage,
+    path: ['video_url'],
   });
 export const eventFullCreateSchema = z.object({
   event: eventCreateSchema,
@@ -170,6 +188,7 @@ export const eventUpdateSchema = eventBaseSchema
     max_bookings: true,
     stream_url: true,
     image_url: true,
+    video_url: true,
     is_recurring: true,
     recurrence_pattern: true,
     recurrence_rule: true,
@@ -189,7 +208,15 @@ export const eventUpdateSchema = eventBaseSchema
     delegate_election_mode: true,
   })
   .partial()
-  .extend({ id: z.string(), debug_correlation_id: z.string().optional() });
+  .extend({
+    id: z.string(),
+    stream_url: eventStreamUrlInputSchema.optional(),
+    debug_correlation_id: z.string().optional(),
+  })
+  .refine(hasExclusivePrimaryMedia, {
+    message: primaryMediaValidationMessage,
+    path: ['video_url'],
+  });
 export const eventDeleteSchema = z.object({ id: z.string() });
 export const eventCancelSchema = z.object({
   id: z.string(),

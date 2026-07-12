@@ -32,8 +32,8 @@ export function AmendmentPathVisualizationView({
   hasTarget,
   pathSegments,
 }: AmendmentPathVisualizationViewProps) {
-  const [panelCollapsed, setPanelCollapsed] = useState(false);
-  const [legendCollapsed, setLegendCollapsed] = useState(false);
+  const [panelCollapsed, setPanelCollapsed] = useState(true);
+  const [legendCollapsed, setLegendCollapsed] = useState(true);
 
   if (!amendment) {
     return <NetworkFlowSkeleton label={t('common.network.loadingNetwork')} />;

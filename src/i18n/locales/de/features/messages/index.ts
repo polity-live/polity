@@ -79,6 +79,8 @@ export const messagesTranslations = {
     pin: 'Unterhaltung anheften',
     unpin: 'Unterhaltung lösen',
     cancelRequest: 'Anfrage abbrechen',
+    cancelRequestConfirm:
+      'Möchtest du diese Unterhaltungsanfrage wirklich zurückziehen? Diese Aktion kann nicht rückgängig gemacht werden.',
     noMessagesYet: 'Noch keine Nachrichten. Starte die Unterhaltung!',
     waitingForAccept: 'Warte auf {{name}}, um deine Unterhaltungsanfrage zu akzeptieren',
     rejected: 'Diese Unterhaltungsanfrage wurde abgelehnt',
@@ -110,6 +112,14 @@ export const messagesTranslations = {
     loadFailed: 'Nachrichten konnten nicht geladen werden',
   },
   ai: {
+    retry: 'Erneut versuchen',
+    settings: 'KI-Einstellungen',
+    information: 'Hinweise zur KI-Nutzung',
+    searchSettings: 'Tools und Skills durchsuchen…',
+    noSettingsFound: 'Keine passenden Tools oder Skills gefunden.',
+    openResult: 'Öffnen',
+    showMoreResults: '{{count}} weitere anzeigen',
+    showFewerResults: 'Weniger anzeigen',
     compressingHistory: 'Aria & Kai komprimiert gerade den Chatverlauf...',
     defaultConversationName: 'Aria & Kai',
     renameConversation: 'KI-Unterhaltung umbenennen',

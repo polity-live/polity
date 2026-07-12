@@ -63,6 +63,7 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   group_todo_assigned: { category: 'groupNotifications', key: 'tasksAssigned' },
   group_todo_updated: { category: 'groupNotifications', key: 'tasksAssigned' },
   group_process_task_created: { category: 'groupNotifications', key: 'tasksAssigned' },
+  group_todo_deleted: { category: 'groupNotifications', key: 'tasksAssigned' },
 
   // Payments
   group_payment_created: { category: 'groupNotifications', key: 'paymentNotifications' },
@@ -209,6 +210,7 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   todo_completed: { category: 'todoNotifications', key: 'taskCompleted' },
   todo_due_soon: { category: 'todoNotifications', key: 'dueDateReminders' },
   todo_overdue: { category: 'todoNotifications', key: 'overdueAlerts' },
+  todo_deleted: { category: 'todoNotifications', key: 'taskUpdated' },
 
   // ── Social Notifications ───────────────────────────────────────────
   new_follower: { category: 'socialNotifications', key: 'newFollowers' },
@@ -216,6 +218,10 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   direct_message: { category: 'socialNotifications', key: 'directMessages' },
   conversation_request: { category: 'socialNotifications', key: 'conversationRequests' },
   conversation_accepted: { category: 'socialNotifications', key: 'conversationRequests' },
+  document_collaborator_invited: {
+    category: 'socialNotifications',
+    key: 'documentInvitations',
+  },
 
   // Statement types
   statement_response: { category: 'socialNotifications', key: 'mentions' },
@@ -237,9 +243,6 @@ export function shouldDispatchNotification(
 ): boolean {
   // Entity notifications always dispatch
   if (options?.isEntityNotification) return true;
-
-  // Check delivery kill switch
-  if (recipientSettings?.deliverySettings?.inAppNotifications === false) return false;
 
   const mapping = NOTIFICATION_TYPE_TO_SETTING[type];
   if (!mapping) return true; // unmapped types always dispatch

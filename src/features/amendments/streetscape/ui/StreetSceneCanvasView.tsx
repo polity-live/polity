@@ -4,6 +4,7 @@ import type {
   StreetDesignInteractionMode,
   StreetDesignComparisonLayer,
   StreetDesignCostLine,
+  StreetDesignCameraPose,
   StreetDesignLocalPoint,
   StreetDesignObject,
   StreetDesignObjectCategory,
@@ -22,6 +23,10 @@ import type { StreetDesignRemoteCursor } from '../hooks/useStreetDesignRemoteCur
 interface StreetSceneCanvasViewProps {
   design: StreetDesignStateV1;
   metricLabels?: string[];
+  initialLegendOpen?: boolean;
+  embeddedPreview?: boolean;
+  embeddedWorkspace?: boolean;
+  initialCameraPose?: StreetDesignCameraPose;
   isLoadingOsm: boolean;
   placementPreview: CorridorGeometry | PathCorridorGeometry | null;
   placementPreviewType: StreetDesignObjectType | null;
@@ -90,6 +95,10 @@ import { StreetSceneCanvasViewView } from './StreetSceneCanvasViewView';
 export function StreetSceneCanvasView({
   design,
   metricLabels,
+  initialLegendOpen = false,
+  embeddedPreview = false,
+  embeddedWorkspace = false,
+  initialCameraPose,
   isLoadingOsm,
   placementPreview,
   placementPreviewType,
@@ -148,6 +157,10 @@ export function StreetSceneCanvasView({
   const viewProps = useStreetSceneCanvasViewController({
     design,
     metricLabels,
+    initialLegendOpen,
+    embeddedPreview,
+    embeddedWorkspace,
+    initialCameraPose,
     isLoadingOsm,
     placementPreview,
     placementPreviewType,

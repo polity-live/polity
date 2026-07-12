@@ -1,9 +1,18 @@
 import { featureThemeClassName } from '@/features/shared/theme';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { AlertCircle, Archive, Check, LoaderCircle, Wrench, X } from 'lucide-react';
+import {
+  AlertCircle,
+  Archive,
+  Check,
+  ChevronDown,
+  LoaderCircle,
+  RotateCcw,
+  Wrench,
+  X,
+} from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
-import { getOtherParticipant } from '../logic/messageUtils';
+import { getOtherParticipant, isConversationRequester } from '../logic/messageUtils';
 import { AriaKaiMessageActions } from '@/features/assistant/ui/AriaKaiMessageActions.tsx';
 import {
   useTranslation,
@@ -11,6 +20,12 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { MessageContent } from '@/features/messages/ui/MessageContent.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/features/shared/ui/ui/collapsible';
+import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 interface StreamingAssistantMessage {
   text: string;
   isCompressing: boolean;
@@ -19,6 +34,8 @@ interface StreamingAssistantMessage {
   toolName?: string | null;
   toolPreview?: string | null;
   errorMessage?: string | null;
+  canRetry?: boolean;
+  onRetry?: () => Promise<boolean>;
 }
 function StreamingBubble({
   streamingAssistantMessage,
@@ -31,95 +48,69 @@ function StreamingBubble({
   if (!otherUser) return null;
 
   return (
-    <div className="flex items-end gap-2">
+    <div className="flex items-start gap-3">
       <Avatar className="h-8 w-8 flex-shrink-0">
         <AvatarImage src={otherUser.avatar ?? undefined} />
         <AvatarFallback>{otherUser.first_name?.[0]?.toUpperCase() || 'A'}</AvatarFallback>
       </Avatar>
-      <div className="max-w-[70%] space-y-2">
-        <div className="bg-muted rounded-lg px-4 py-2">
-          {streamingAssistantMessage.text ? (
-            <div className="space-y-3">
-              <MessageContent content={streamingAssistantMessage.text} />
-              {streamingAssistantMessage.errorMessage && (
-                <div className={featureThemeClassName('messageMessageListDangerBadge')}>
-                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                  <span>{streamingAssistantMessage.errorMessage}</span>
-                </div>
+      <div className="max-w-3xl min-w-0 flex-1 space-y-3 py-1">
+        {streamingAssistantMessage.text && (
+          <MessageContent content={streamingAssistantMessage.text} renderMarkdown />
+        )}
+
+        {(streamingAssistantMessage.isThinking ||
+          streamingAssistantMessage.isCompressing ||
+          streamingAssistantMessage.isToolCalling) && (
+          <Collapsible className="group/activity text-muted-foreground text-sm">
+            <CollapsibleTrigger className="hover:text-foreground flex items-center gap-2 transition-colors">
+              {streamingAssistantMessage.isToolCalling ? (
+                <Wrench className="h-4 w-4 animate-[wiggle_1.2s_ease-in-out_infinite]" />
+              ) : streamingAssistantMessage.isCompressing ? (
+                <Archive className="h-4 w-4" />
+              ) : (
+                <LoaderCircle className="h-4 w-4 animate-spin" />
               )}
-            </div>
-          ) : streamingAssistantMessage.isToolCalling ? (
-            <div className="space-y-2">
-              <div className="text-muted-foreground flex items-center gap-2 text-sm">
-                <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-full">
-                  <Wrench className="h-3.5 w-3.5 animate-[wiggle_1.2s_ease-in-out_infinite]" />
-                </div>
-                <span>
-                  {streamingAssistantMessage.toolName
+              <span>
+                {streamingAssistantMessage.isToolCalling
+                  ? streamingAssistantMessage.toolName
                     ? t('features.messages.ai.toolCallingNamed', {
                         tool: streamingAssistantMessage.toolName,
                       })
-                    : t('features.messages.ai.toolCalling')}
-                </span>
-              </div>
-              <div className="border-border/60 bg-background/70 overflow-hidden rounded-md border px-3 py-2">
-                <div className={featureThemeClassName('messageMessageListThemedText')}>
-                  {t('features.messages.ai.toolCallLabel')}
-                </div>
-                <div className="text-foreground font-mono text-xs leading-5 break-all">
-                  {streamingAssistantMessage.toolPreview ??
-                    streamingAssistantMessage.toolName ??
-                    translateText('generated.inline.0116_tool_78c84770')}
-                </div>
-                <div className="mt-2 flex gap-1">
-                  <span className="bg-primary/50 h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:-0.3s]" />
-                  <span className="bg-primary/50 h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:-0.15s]" />
-                  <span className="bg-primary/50 h-1.5 w-1.5 animate-bounce rounded-full" />
-                </div>
-              </div>
-            </div>
-          ) : streamingAssistantMessage.isCompressing ? (
-            <div className="space-y-3">
-              <div className="text-muted-foreground flex items-center gap-3 text-sm">
-                <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-full">
-                  <Archive className="h-3.5 w-3.5" />
-                </div>
-                <span>{t('features.messages.ai.compressingHistory')}</span>
-              </div>
-              <div className="border-border/60 bg-background/70 rounded-md border px-3 py-3">
-                <div className="mb-2 flex items-end gap-1.5">
-                  <span className="bg-primary/35 h-3 w-2 animate-pulse rounded-full [animation-delay:-0.2s]" />
-                  <span className="bg-primary/45 h-5 w-2 animate-pulse rounded-full [animation-delay:-0.05s]" />
-                  <span className="bg-primary/60 h-7 w-2 animate-pulse rounded-full [animation-delay:0.1s]" />
-                  <span className="bg-primary/45 h-5 w-2 animate-pulse rounded-full [animation-delay:0.25s]" />
-                  <span className="bg-primary/35 h-3 w-2 animate-pulse rounded-full [animation-delay:0.4s]" />
-                </div>
-                <div className="flex items-center gap-1.5 opacity-80">
-                  <span className="bg-muted-foreground/30 h-1.5 w-16 animate-pulse rounded-full" />
-                  <span className="bg-muted-foreground/20 h-1.5 w-10 animate-pulse rounded-full [animation-delay:120ms]" />
-                  <span className="bg-muted-foreground/30 h-1.5 w-6 animate-pulse rounded-full [animation-delay:240ms]" />
-                </div>
-              </div>
-            </div>
-          ) : streamingAssistantMessage.errorMessage ? (
-            <div className={featureThemeClassName('messageMessageListDangerText')}>
-              <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-              <span>{streamingAssistantMessage.errorMessage}</span>
-            </div>
-          ) : (
-            <div className="text-muted-foreground flex items-center gap-3 text-sm">
-              <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-full">
-                <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-              </div>
-              <div className="flex items-center gap-2">
-                <span>{t('features.messages.ai.thinking')}</span>
-                <span className="bg-primary/40 h-1.5 w-1.5 animate-pulse rounded-full" />
-                <span className="bg-primary/40 h-1.5 w-1.5 animate-pulse rounded-full [animation-delay:120ms]" />
-                <span className="bg-primary/40 h-1.5 w-1.5 animate-pulse rounded-full [animation-delay:240ms]" />
-              </div>
-            </div>
-          )}
-        </div>
+                    : t('features.messages.ai.toolCalling')
+                  : streamingAssistantMessage.isCompressing
+                    ? t('features.messages.ai.compressingHistory')
+                    : t('features.messages.ai.thinking')}
+              </span>
+              {streamingAssistantMessage.toolPreview && (
+                <ChevronDown className="h-3.5 w-3.5 transition-transform group-data-[state=open]/activity:rotate-180" />
+              )}
+            </CollapsibleTrigger>
+            {streamingAssistantMessage.toolPreview && (
+              <CollapsibleContent className="border-border/60 bg-muted/40 mt-2 rounded-lg border px-3 py-2 font-mono text-xs break-all">
+                {streamingAssistantMessage.toolPreview}
+              </CollapsibleContent>
+            )}
+          </Collapsible>
+        )}
+
+        {streamingAssistantMessage.errorMessage && (
+          <div className={featureThemeClassName('messageMessageListDangerBadge')}>
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <span className="min-w-0 flex-1">{streamingAssistantMessage.errorMessage}</span>
+            {streamingAssistantMessage.canRetry && streamingAssistantMessage.onRetry && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 flex-shrink-0"
+                onClick={() => void streamingAssistantMessage.onRetry?.()}
+              >
+                <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                {t('features.messages.ai.retry')}
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -165,11 +156,9 @@ export function MessageListView({
   onAcceptConversation,
   onRejectConversation,
   resolveAttachmentCardData,
-  streamingAssistantMessage,
   t,
   scrollRef,
   hasNewMessages,
-  displayMessages,
   otherUser,
   otherParticipantName,
   virtualRows,
@@ -194,7 +183,7 @@ export function MessageListView({
       )}
 
       <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto">
-        {displayMessages.length === 0 && !streamingAssistantMessage ? (
+        {virtualRows.length === 0 ? (
           <div className="flex h-full items-center justify-center py-12">
             <p className="text-muted-foreground text-sm">
               {t('features.messages.conversation.noMessagesYet')}
@@ -225,6 +214,7 @@ export function MessageListView({
                     <MessageBubble
                       message={row.message}
                       isOwnMessage={row.message.sender?.id === currentUserId}
+                      isAssistantConversation={isAssistantConversation(conversation)}
                       resolveAttachmentCardData={resolveAttachmentCardData}
                     />
                   )}
@@ -247,7 +237,7 @@ export function MessageListView({
                     <div className="border-t pt-4">
                       <Card surface="muted">
                         <CardContent className="flex flex-col items-center gap-3 p-4">
-                          {conversation.requested_by?.id === currentUserId ? (
+                          {isConversationRequester(conversation, currentUserId) ? (
                             <p className="text-center text-sm font-medium">
                               {t('features.messages.conversation.waitingForAccept', {
                                 name: otherParticipantName,

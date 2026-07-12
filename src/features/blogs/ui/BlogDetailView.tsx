@@ -28,6 +28,7 @@ import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import {
   getWikiParticipationName,
+  EntityWikiMedia,
   isVisibleWikiParticipationStatus,
   normalizeWikiParticipationRole,
   WikiParticipationDirectory,
@@ -85,6 +86,7 @@ interface BlogDetailViewProps {
   downvotes: number;
   editorUrl: string;
   hashtags: { id: string; tag: string }[];
+  imageUrl?: string | null;
   isLoaded: boolean;
   isSubscribed: boolean;
   onAddComment: (text: string, parentId?: string) => Promise<void>;
@@ -99,6 +101,7 @@ interface BlogDetailViewProps {
   supporterCount: number;
   title?: string | null;
   upvotes: number;
+  videoUrl?: string | null;
   viewUrl: string;
 }
 
@@ -119,6 +122,7 @@ export function BlogDetailView({
   downvotes,
   editorUrl,
   hashtags,
+  imageUrl,
   isLoaded,
   isSubscribed,
   onAddComment,
@@ -133,6 +137,7 @@ export function BlogDetailView({
   supporterCount,
   title,
   upvotes,
+  videoUrl,
   viewUrl,
 }: BlogDetailViewProps) {
   const { t } = useTranslation();
@@ -230,6 +235,8 @@ export function BlogDetailView({
             </div>
           ) : null}
         </div>
+
+        <EntityWikiMedia imageUrl={imageUrl} videoUrl={videoUrl} alt={title} />
 
         <StatsBar
           items={[

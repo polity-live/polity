@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS public."group" (
   location_geometry JSONB,
   location_bounds JSONB,
   image_url TEXT,
+  video_url TEXT,
   visibility TEXT NOT NULL DEFAULT 'public',
   member_count INTEGER NOT NULL DEFAULT 0,
   subscriber_count INTEGER NOT NULL DEFAULT 0,
@@ -58,7 +59,8 @@ CREATE TABLE IF NOT EXISTS public."group" (
   tiktok TEXT,
   owner_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT group_single_primary_media_check CHECK (image_url IS NULL OR video_url IS NULL)
 );
 
 CREATE INDEX idx_group_owner ON public."group" (owner_id);

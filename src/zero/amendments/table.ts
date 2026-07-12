@@ -42,6 +42,7 @@ export const amendment = table('amendment')
     comment_count: number(),
     collaborator_count: number(),
     image_url: string().optional(),
+    video_url: string().optional(),
     x: string().optional(),
     youtube: string().optional(),
     linkedin: string().optional(),

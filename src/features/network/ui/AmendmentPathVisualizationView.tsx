@@ -223,7 +223,7 @@ export function AmendmentPathVisualizationView({
   onLegendOpenChange,
 }: AmendmentPathVisualizationViewProps) {
   const { t } = useTranslation();
-  const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const [panelCollapsed, setPanelCollapsed] = useState(true);
 
   const segments = buildSegmentsWithVisualStates(enrichedPathData);
   const nodes: Node[] = [];

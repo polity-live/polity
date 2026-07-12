@@ -54,6 +54,8 @@ export function CreateFormShellView({
   const Layout = isCarouselLayout ? CarouselFormLayout : OnePageFormLayout;
   const overlayOpen = submission.status !== 'idle';
   const reviewPreview = getCreateReviewPreview(steps);
+  const settingsAligned =
+    entityType === 'group' || entityType === 'amendment' || entityType === 'event';
 
   return (
     <LayoutGroup id={`create-${entityType}`}>
@@ -66,7 +68,9 @@ export function CreateFormShellView({
             ? 'flex h-[calc(100dvh-3rem)] min-h-0 w-full flex-col overflow-hidden'
             : 'w-full',
           overlayOpen &&
-            'pointer-events-none opacity-30 blur-[1px] transition-[filter,opacity] duration-[var(--motion-duration-base)] select-none'
+            'pointer-events-none opacity-30 blur-[1px] transition-[filter,opacity] duration-[var(--motion-duration-base)] select-none',
+          settingsAligned &&
+            '[&_[data-create-section]]:border-border/60 [&_[data-create-section]]:bg-card [&_[data-create-action-bar]]:border-border/70 [&_[data-create-action-bar]]:bg-background/95 [&_[data-create-action-bar]]:sticky [&_[data-create-action-bar]]:bottom-3 [&_[data-create-action-bar]]:z-20 [&_[data-create-action-bar]]:rounded-xl [&_[data-create-action-bar]]:border [&_[data-create-action-bar]]:p-3 [&_[data-create-action-bar]]:shadow-lg [&_[data-create-action-bar]]:backdrop-blur [&_[data-create-section]]:rounded-xl [&_[data-create-section]]:border [&_[data-create-section]]:p-4 [&_[data-create-section]]:shadow-none sm:[&_[data-create-section]]:p-5'
         )}
       >
         {submission.status !== 'ready' ? (
@@ -74,6 +78,7 @@ export function CreateFormShellView({
             title={title}
             action={<FormStyleSelector value={selectedFormStyle} onChange={onFormStyleChange} />}
             isCarouselLayout={isCarouselLayout}
+            settingsAligned={settingsAligned}
           >
             <Layout
               steps={steps}

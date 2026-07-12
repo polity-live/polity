@@ -13,7 +13,6 @@ import { useAuth } from '@/providers/auth-provider';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import { useTodoState } from '@/zero/todos/useTodoState';
-import { notifyStandaloneTodoAssigned } from '@/features/notifications/utils/notification-helpers.ts';
 import type { TodoTimelineCardTodo, TodoTimelineUrgency } from '../types/todoTimelineCard.types';
 
 function getUrgencyConfig(dueDate: Date): TodoTimelineUrgency {
@@ -133,15 +132,6 @@ export function useTodoTimelineCardController({
           role: 'assignee',
         })
       );
-
-      if (todo.creatorId && todo.creatorId !== user.id) {
-        await notifyStandaloneTodoAssigned({
-          senderId: user.id,
-          recipientUserId: todo.creatorId,
-          todoId: todo.id,
-          todoTitle: todo.title || t('features.search.entityLabels.todo'),
-        });
-      }
 
       toast.success(t('features.todos.assignee.assignedToMe'));
     } catch (error) {

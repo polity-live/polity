@@ -42,6 +42,7 @@ export function MessagesPageShellView({ mp }: MessagesPageShellViewProps) {
           onMemberListDialogOpenChange={mp.setMemberListDialogOpen}
           deleteDialogOpen={mp.deleteDialogOpen}
           onDeleteDialogOpenChange={mp.setDeleteDialogOpen}
+          isCancelRequest={mp.isCancelRequest}
           onTogglePin={mp.togglePin}
           onCreateConversationRequest={mp.handleCreateConversationRequest}
           onDeleteConversation={mp.handleDeleteConversation}

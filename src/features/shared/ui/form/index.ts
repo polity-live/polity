@@ -52,6 +52,7 @@ export {
   type SegmentedChoiceTone,
 } from './SegmentedChoiceField';
 export { SettingsPanel } from './SettingsPanel';
+export { SettingsActionBar, SettingsPage, SettingsTabs, type SettingsTab } from './SettingsLayout';
 export { SwitchField } from './SwitchField';
 export { TextField, type TextFieldProps } from './TextField';
 export { TypeSelector } from './TypeSelector';

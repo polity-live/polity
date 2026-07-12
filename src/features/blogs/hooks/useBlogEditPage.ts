@@ -13,6 +13,7 @@ export interface BlogFormData {
   title: string;
   date: string;
   imageURL: string;
+  videoURL: string;
   visibility: Visibility;
   hashtags: string[];
 }
@@ -33,6 +34,7 @@ export function useBlogEditPage(
     title: '',
     date: new Date().toISOString().split('T')[0] ?? '',
     imageURL: '',
+    videoURL: '',
     visibility: 'public' as Visibility,
     hashtags: [],
   });
@@ -70,6 +72,7 @@ export function useBlogEditPage(
         title: blog.title || '',
         date: blog.date || new Date().toISOString().split('T')[0] || '',
         imageURL: blog.image_url || '',
+        videoURL: blog.video_url || '',
         visibility: (blog.visibility as Visibility) ?? 'public',
         hashtags: existingTags.length > 0 ? existingTags : [],
       });
@@ -130,7 +133,8 @@ export function useBlogEditPage(
           id: blogId,
           title: formData.title,
           date: formData.date,
-          image_url: formData.imageURL,
+          image_url: formData.imageURL || null,
+          video_url: formData.videoURL || null,
           visibility: formData.visibility,
         })
       );
@@ -152,6 +156,21 @@ export function useBlogEditPage(
                   'generated.inline.0035_a_new_image_was_uploaded_to_this_blog_post_c0b0e0ce'
                 ),
                 contentType: 'image',
+              },
+            });
+          }
+          if (formData.videoURL && formData.videoURL !== blog.video_url) {
+            void createTimelineEvent({
+              data: {
+                eventType: 'video_uploaded',
+                entityType: 'blog',
+                entityId: blogId,
+                actorId,
+                title: translateText('features.timeline.videoUploadedTitle'),
+                description: translateText('features.timeline.videoUploadedDescription', {
+                  title: formData.title,
+                }),
+                contentType: 'video',
               },
             });
           }

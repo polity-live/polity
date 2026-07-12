@@ -1,11 +1,10 @@
-import { AlertTriangle, CircleHelp, MapPinned } from 'lucide-react';
+import { CircleHelp } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { OnlineCollaboratorAvatars } from '@/features/editor/ui/OnlineCollaboratorAvatars';
 import type { EditorCollaborator, EditorPresencePeer } from '@/features/editor/types';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
-import { BadgeControl, type SelectableEditingMode } from '@/features/shared/ui/status';
-import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { type SelectableEditingMode } from '@/features/shared/ui/status';
 import { Popover, PopoverAnchor, PopoverContent } from '@/features/shared/ui/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import {
@@ -54,6 +53,7 @@ import {
   StreetDesignTopBarView,
 } from './StreetDesignTopBarView';
 import { StreetSceneCanvasView } from './StreetSceneCanvasView';
+import { StreetDesignWorkspaceView } from './StreetDesignWorkspaceView';
 import type { StreetDesignDiscussionLike } from './StreetDesignChangeRequestPanel';
 import type { StreetDesignRemoteCursor } from '../hooks/useStreetDesignRemoteCursors';
 
@@ -507,120 +507,87 @@ export function StreetDesignPageView({
           onChangeRequestSelect={selectChangeRequest}
         />
 
-        <Card className="mt-4 overflow-hidden rounded-lg p-0">
-          <CardHeader className="flex-row items-center justify-between gap-4 space-y-0 p-4 sm:p-5">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="bg-muted/40 flex size-10 shrink-0 items-center justify-center rounded-md border">
-                <MapPinned className="text-muted-foreground size-5" />
-              </span>
-              <div className="min-w-0">
-                <div className="flex min-w-0 items-center gap-3">
-                  <CardTitle size="lg" className="truncate leading-tight">
-                    {title}
-                  </CardTitle>
-                  <OnlineCollaboratorAvatars
-                    collaborators={editorCollaborators}
-                    onlinePeerMap={onlinePeerMap}
-                    activeCursorUserIds={activeCursorUserIds}
-                    currentUserId={currentUserId}
-                    presenceColorByUserId={presenceColorByUserId}
-                    enabled
-                  />
-                </div>
-                <p className="text-muted-foreground mt-1 truncate text-xs">
-                  {selectionAddressLabel}
-                </p>
-              </div>
-            </div>
-            <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 text-xs">
-              <span className="bg-muted/20 rounded-md border px-3 py-2 font-medium whitespace-nowrap">
-                {t('features.amendments.streetscape.metrics.existing', { count: osmWayCount })}
-              </span>
-              {kpis.map(label => (
-                <span
-                  key={label}
-                  className="bg-muted/20 rounded-md border px-3 py-2 font-medium whitespace-nowrap"
-                >
-                  {label}
-                </span>
-              ))}
-              {isDirty ? (
-                <BadgeControl
-                  tone="warning"
-                  variant="secondary"
-                  shape="rounded"
-                  role="status"
-                  aria-label={t('features.amendments.streetscape.status.unsavedChanges')}
-                  className="h-9 gap-1.5 px-3 py-2 font-medium whitespace-nowrap"
-                >
-                  <AlertTriangle className="size-3.5" aria-hidden="true" />
-                  {t('features.amendments.streetscape.status.unsavedChanges')}
-                </BadgeControl>
-              ) : null}
-              <StreetDesignNavigationHelp />
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-0">
-            <StreetSceneCanvasView
-              design={design}
-              isLoadingOsm={isLoadingOsm}
-              placementPreview={placementPreview}
-              placementPreviewType={placementPreviewType}
-              placementStart={placementStart}
-              placementMode={placementMode}
-              placementPointCount={placementPointCount}
-              canFinishPathPlacement={canFinishPathPlacement}
-              selectedObjectId={selectedObjectId}
-              selectedObject={selectedObject}
-              selectedObjectCostLine={selectedObjectCostLine}
-              selectedObjectFocusRequestKey={selectedObjectFocusRequestKey}
-              hiddenObjectIds={hiddenObjectIds}
-              hiddenObjectCategories={hiddenObjectCategories}
-              selectedOsmWayId={selectedOsmWay?.id ?? null}
-              selectedOsmWay={selectedOsmWay}
-              selectedOsmFocusRequestKey={selectedOsmFocusRequestKey}
-              interactionMode={interactionMode}
-              readOnly={readOnly}
-              mapContextReadOnly={!canEditMapContext}
-              changeRequests={streetChangeRequests}
-              streetDesignDiscussions={streetDesignDiscussions}
-              selectedChangeRequestId={selectedChangeRequestId}
-              showChangeRequests={showChangeRequests}
-              changeRequestColorMode={changeRequestColorMode}
-              canVoteOnChangeRequests={canVoteOnStreetChangeRequests}
-              canFinalizeChangeRequests={canFinalizeStreetChangeRequests}
-              currentUserId={currentUserId}
-              currentUserDisplayName={currentUserDisplayName}
-              currentUserAvatarUrl={currentUserAvatarUrl}
+        <StreetDesignWorkspaceView
+          contentOnly
+          beforeCard
+          title={title}
+          selectionAddressLabel={selectionAddressLabel}
+          metricLabels={[
+            t('features.amendments.streetscape.metrics.existing', { count: osmWayCount }),
+            ...kpis,
+          ]}
+          isDirty={isDirty}
+          collaborators={
+            <OnlineCollaboratorAvatars
               collaborators={editorCollaborators}
-              remoteCursors={remoteCursors}
-              onPointerDown={onScenePointerDown}
-              onPointerMove={onScenePointerMove}
-              onPointerHover={onScenePointerHover}
-              onFinishPlacement={onFinishPlacement}
-              onFinishPathPlacement={onFinishPathPlacement}
-              onCancelPlacement={onCancelPlacement}
-              onObjectSelect={selectObject}
-              onOsmWaySelect={selectOsmWay}
-              onObjectVisibilityChange={onObjectVisibilityChange}
-              onOsmWayHide={onOsmWayHide}
-              onOsmWayImport={onOsmWayImport}
-              onOsmImportUndo={onOsmImportUndo}
-              onObjectRotate={onRotationChange}
-              onPropertyChange={onPropertyChange}
-              onWidthChange={onWidthChange}
-              onRotationChange={onRotationChange}
-              onUnitCostChange={onUnitCostChange}
-              onDeleteObject={onDeleteObject}
-              onChangeRequestSelect={selectChangeRequest}
-              onChangeRequestVote={onChangeRequestVote}
-              onChangeRequestFinalize={onChangeRequestFinalize}
-              onChangeRequestTitleChange={onChangeRequestTitleChange}
-              onChangeRequestCommentSubmit={onChangeRequestCommentSubmit}
+              onlinePeerMap={onlinePeerMap}
+              activeCursorUserIds={activeCursorUserIds}
+              currentUserId={currentUserId}
+              presenceColorByUserId={presenceColorByUserId}
+              enabled
             />
-          </CardContent>
-        </Card>
+          }
+          headerActions={<StreetDesignNavigationHelp />}
+        >
+          <StreetSceneCanvasView
+            design={design}
+            initialLegendOpen={false}
+            isLoadingOsm={isLoadingOsm}
+            placementPreview={placementPreview}
+            placementPreviewType={placementPreviewType}
+            placementStart={placementStart}
+            placementMode={placementMode}
+            placementPointCount={placementPointCount}
+            canFinishPathPlacement={canFinishPathPlacement}
+            selectedObjectId={selectedObjectId}
+            selectedObject={selectedObject}
+            selectedObjectCostLine={selectedObjectCostLine}
+            selectedObjectFocusRequestKey={selectedObjectFocusRequestKey}
+            hiddenObjectIds={hiddenObjectIds}
+            hiddenObjectCategories={hiddenObjectCategories}
+            selectedOsmWayId={selectedOsmWay?.id ?? null}
+            selectedOsmWay={selectedOsmWay}
+            selectedOsmFocusRequestKey={selectedOsmFocusRequestKey}
+            interactionMode={interactionMode}
+            readOnly={readOnly}
+            mapContextReadOnly={!canEditMapContext}
+            changeRequests={streetChangeRequests}
+            streetDesignDiscussions={streetDesignDiscussions}
+            selectedChangeRequestId={selectedChangeRequestId}
+            showChangeRequests={showChangeRequests}
+            changeRequestColorMode={changeRequestColorMode}
+            canVoteOnChangeRequests={canVoteOnStreetChangeRequests}
+            canFinalizeChangeRequests={canFinalizeStreetChangeRequests}
+            currentUserId={currentUserId}
+            currentUserDisplayName={currentUserDisplayName}
+            currentUserAvatarUrl={currentUserAvatarUrl}
+            collaborators={editorCollaborators}
+            remoteCursors={remoteCursors}
+            onPointerDown={onScenePointerDown}
+            onPointerMove={onScenePointerMove}
+            onPointerHover={onScenePointerHover}
+            onFinishPlacement={onFinishPlacement}
+            onFinishPathPlacement={onFinishPathPlacement}
+            onCancelPlacement={onCancelPlacement}
+            onObjectSelect={selectObject}
+            onOsmWaySelect={selectOsmWay}
+            onObjectVisibilityChange={onObjectVisibilityChange}
+            onOsmWayHide={onOsmWayHide}
+            onOsmWayImport={onOsmWayImport}
+            onOsmImportUndo={onOsmImportUndo}
+            onObjectRotate={onRotationChange}
+            onPropertyChange={onPropertyChange}
+            onWidthChange={onWidthChange}
+            onRotationChange={onRotationChange}
+            onUnitCostChange={onUnitCostChange}
+            onDeleteObject={onDeleteObject}
+            onChangeRequestSelect={selectChangeRequest}
+            onChangeRequestVote={onChangeRequestVote}
+            onChangeRequestFinalize={onChangeRequestFinalize}
+            onChangeRequestTitleChange={onChangeRequestTitleChange}
+            onChangeRequestCommentSubmit={onChangeRequestCommentSubmit}
+          />
+        </StreetDesignWorkspaceView>
       </div>
     </div>
   );

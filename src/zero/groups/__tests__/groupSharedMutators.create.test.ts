@@ -43,6 +43,7 @@ function createGroupArgs(overrides: Partial<CreateGroupMutatorInput['args']> = {
     latitude: null,
     longitude: null,
     image_url: null,
+    video_url: null,
     x: null,
     youtube: null,
     linkedin: null,

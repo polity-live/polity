@@ -12,6 +12,7 @@ export const user = table('user')
     gender: string().optional(),
     about: json<MutableJSONValue>().optional(),
     avatar: string().optional(),
+    video_url: string().optional(),
     x: string().optional(),
     youtube: string().optional(),
     linkedin: string().optional(),

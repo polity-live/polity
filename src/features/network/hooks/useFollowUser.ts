@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useUserState } from '@/zero/users/useUserState';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyNewFollower } from '@/features/notifications/utils/notification-helpers.ts';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
 /**
@@ -46,14 +45,6 @@ export function useFollowUser(targetUserId?: string) {
           followee_id: targetUserId,
         })
       );
-
-      // Send notification to the user being followed
-      notifyNewFollower({
-        senderId: authUser.id,
-        recipientUserId: targetUserId,
-        senderName: authUser.email?.split('@')[0] || 'Someone',
-      });
-      // Notifications are sent separately — best-effort
     } catch (error) {
       console.error('Failed to follow user:', error);
     } finally {

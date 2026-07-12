@@ -70,11 +70,13 @@ import { CandidacyPasswordDialog } from '@/features/elections/ui/CandidacyPasswo
 import { EventLiveFocusDialog } from './EventLiveFocusDialog';
 import { getAgendaDisplayTimes } from '../logic/getAgendaDisplayTimes';
 import { getAgendaRuntimeStatus } from '../logic/getAgendaRuntimeStatus';
-import { getAgendaDisplayType, getYouTubeVideoId } from '../logic/agendaUiHelpers';
+import { getAgendaDisplayType } from '../logic/agendaUiHelpers';
+import { EventLivestreamPlayer } from '@/features/events/ui/EventLivestreamPlayer';
 import { computeAgendaStats } from '../logic/computeAgendaStats';
 import { getOfflineTallyDialogTitle, getOfflineTallyTooltip } from '../logic/offlineTallyToolbar';
 import type { CandidatesByElectionRow } from '@/zero/elections/queries';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
+import { AgendaPageShell, AgendaSectionHeading, AgendaSurface } from './AgendaUiSystem';
 type EventAgendaItemRow = ReturnType<typeof useAgendaItems>['agendaItems'][number];
 export interface EventAgendaViewProps {
   eventId: any;
@@ -493,7 +495,7 @@ export function EventAgendaView({
   };
 
   const renderAgendaItemsList = (items: EventAgendaItemRow[], revealStartIndex = 0) => (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {items.map((item, index) => {
         const revealIndex = Math.min(revealStartIndex + index, 11);
         const runtimeStatus = getAgendaRuntimeStatus({
@@ -717,7 +719,7 @@ export function EventAgendaView({
   }
 
   return (
-    <div className="space-y-6">
+    <AgendaPageShell>
       {/* Fixed Action Bar (positioned outside page layout) */}
       <AgendaActionBar
         eventId={eventId}
@@ -875,7 +877,6 @@ export function EventAgendaView({
         currentAgendaItemTopNumber={streamAgendaItemTopNumber}
         streamRuntimeStatus={streamRuntimeStatus}
         streamIsLive={streamIsLive}
-        isEventStarted={isEventStarted}
         eventStartTimestamp={eventStartTimestamp}
         speakerList={streamSpeakerListData}
         showSpeakerGender={Boolean(event?.gender_quota_enabled)}
@@ -907,6 +908,18 @@ export function EventAgendaView({
         disableVoteButton={voteButtonDisabled}
         disabledVoteTooltip={disabledVoteTooltip}
         onVoteClick={liveFocusVoteClick}
+        showOfflineTallyButton={showOfflineTallyButton}
+        onOfflineTallyClick={showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined}
+        offlineTallyMode={toolbarOfflineTallyMode}
+        offlineTallyLabel={getOfflineTallyTooltip({
+          phase: toolbarOfflineTallyPhase,
+          mode: toolbarOfflineTallyMode,
+        })}
+        canBeCandidate={actionBarHook.hasCandidateRight}
+        isUserCandidate={actionBarHook.isUserCandidate}
+        candidateLoading={actionBarHook.candidateLoading}
+        onBecomeCandidate={actionBarHook.handleBecomeCandidate}
+        onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
         attendanceMode={attendanceMode}
         confirmedOfflineParticipantCount={confirmedOfflineParticipantCount}
         eligibleFinalVoterCount={eligibleFinalVoterCount}
@@ -926,8 +939,8 @@ export function EventAgendaView({
 
       {/* Stream Section */}
       <Collapsible open={streamOpen} onOpenChange={setStreamOpen}>
-        <Card>
-          <CardHeader className="pb-3">
+        <Card className="border-border/70 bg-card/70 overflow-hidden rounded-xl shadow-none">
+          <CardHeader className="px-4 py-3 sm:px-5">
             <div className="flex items-center gap-2">
               <Button
                 type="button"
@@ -947,10 +960,7 @@ export function EventAgendaView({
               <CollapsibleTrigger asChild>
                 <Button
                   variant="ghost"
-                  className={cn(
-                    featureThemeClassName('agendaEventAgendaThemedPanel'),
-                    'min-w-0 flex-1'
-                  )}
+                  className={cn('hover:bg-muted/50 min-w-0 flex-1 justify-between rounded-lg px-3')}
                 >
                   <div className="flex min-w-0 items-center gap-2">
                     <Radio className={featureThemeClassName('agendaEventAgendaDangerIcon')} />
@@ -973,7 +983,7 @@ export function EventAgendaView({
             </div>
           </CardHeader>
           <CollapsibleContent>
-            <CardContent>
+            <CardContent className="border-border/60 border-t p-4 sm:p-5">
               {!streamAgendaItem ? (
                 <div className="text-muted-foreground flex items-center gap-3 rounded-lg border border-dashed p-4">
                   <Info className="h-5 w-5 flex-shrink-0" />
@@ -986,7 +996,7 @@ export function EventAgendaView({
                       <Button
                         type="button"
                         variant="ghost"
-                        className="bg-primary/5 hover:bg-primary/10 h-auto w-full justify-start rounded-lg p-3 text-left whitespace-normal transition-colors"
+                        className="hover:bg-muted/50 h-auto w-full justify-start rounded-lg border-0 bg-transparent p-3 text-left whitespace-normal transition-colors"
                       >
                         <div className="bg-primary text-primary-foreground relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
                           <Play className={featureThemeClassName('agendaEventAgendaThemedStyle')} />
@@ -1048,28 +1058,15 @@ export function EventAgendaView({
 
                     <CollapsibleContent className="space-y-6 pt-3">
                       {/* Stream Video */}
-                      {isEventStarted &&
-                        event.stream_url &&
-                        (() => {
-                          const videoId = getYouTubeVideoId(event.stream_url);
-                          return videoId ? (
-                            <div
-                              className={featureThemeClassName(
-                                'agendaEventAgendaContrastBackground'
-                              )}
-                            >
-                              <div className="aspect-video">
-                                <iframe
-                                  className="h-full w-full"
-                                  src={`https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=0&rel=0&modestbranding=1`}
-                                  title={t('features.events.stream.liveStream')}
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                  allowFullScreen
-                                />
-                              </div>
-                            </div>
-                          ) : null;
-                        })()}
+                      {streamIsLive && (
+                        <EventLivestreamPlayer
+                          streamUrl={event.stream_url}
+                          title={t('features.events.stream.liveStream')}
+                          containerClassName={featureThemeClassName(
+                            'agendaEventAgendaContrastBackground'
+                          )}
+                        />
+                      )}
 
                       <AgendaItemContextCard
                         agendaItem={{
@@ -1193,12 +1190,12 @@ export function EventAgendaView({
 
       {/* Agenda Statistics */}
       <Collapsible open={statsOpen} onOpenChange={setStatsOpen}>
-        <Card>
-          <CardHeader className="pb-3">
+        <Card className="border-border/70 bg-card/70 overflow-hidden rounded-xl shadow-none">
+          <CardHeader className="px-4 py-3 sm:px-5">
             <CollapsibleTrigger asChild>
               <Button
                 variant="ghost"
-                className={featureThemeClassName('agendaEventAgendaThemedPanel')}
+                className="hover:bg-muted/50 w-full justify-between rounded-lg px-3"
               >
                 <CardTitle className="text-lg">{t('features.events.agenda.statistics')}</CardTitle>
                 {statsOpen ? (
@@ -1210,9 +1207,9 @@ export function EventAgendaView({
             </CollapsibleTrigger>
           </CardHeader>
           <CollapsibleContent>
-            <CardContent>
+            <CardContent className="border-border/60 border-t p-4 sm:p-5">
               <div className="grid grid-cols-3 gap-2 md:gap-4">
-                <div className="flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
+                <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
                   <div className={featureThemeClassName('agendaEventAgendaAccentRoundIcon')}>
                     <Vote className={featureThemeClassName('agendaEventAgendaAccentIcon')} />
                   </div>
@@ -1226,7 +1223,7 @@ export function EventAgendaView({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
+                <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
                   <div className={featureThemeClassName('agendaEventAgendaWarningRoundIconAlpha')}>
                     <Gavel className={featureThemeClassName('agendaEventAgendaWarningIcon')} />
                   </div>
@@ -1240,7 +1237,7 @@ export function EventAgendaView({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
+                <div className="bg-background/50 flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
                   <div className={featureThemeClassName('agendaEventAgendaInfoRoundIcon')}>
                     <FileText className={featureThemeClassName('agendaEventAgendaInfoIcon')} />
                   </div>
@@ -1260,12 +1257,11 @@ export function EventAgendaView({
       </Collapsible>
 
       {/* Search and Filters */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">
-            {t('features.events.agenda.itemsCount', { count: filteredAgendaItems.length })}
-          </h2>
-        </div>
+      <AgendaSurface className="space-y-4 p-4 sm:p-5">
+        <AgendaSectionHeading
+          eyebrow={t('features.events.agenda.title', 'Agenda')}
+          title={t('features.events.agenda.itemsCount', { count: filteredAgendaItems.length })}
+        />
 
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -1277,14 +1273,20 @@ export function EventAgendaView({
               className="pl-10"
             />
           </div>
-          <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
+          <Button
+            variant={showFilters ? 'secondary' : 'outline'}
+            size="icon"
+            onClick={() => setShowFilters(!showFilters)}
+            aria-expanded={showFilters}
+            aria-label={t('features.events.agenda.filters')}
+          >
             <Filter className="h-4 w-4" />
           </Button>
         </div>
 
         {showFilters && (
-          <Card>
-            <CardHeader>
+          <Card className="bg-background/45 shadow-none">
+            <CardHeader className="px-4 pt-4 pb-3">
               <CardTitle>{t('features.events.agenda.filters')}</CardTitle>
               <CardDescription>{t('features.events.agenda.filtersDescription')}</CardDescription>
             </CardHeader>
@@ -1349,7 +1351,7 @@ export function EventAgendaView({
             </CardContent>
           </Card>
         )}
-      </div>
+      </AgendaSurface>
 
       {/* Agenda Items List */}
       {filteredAgendaItems.length === 0 ? (
@@ -1369,7 +1371,7 @@ export function EventAgendaView({
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {confirmedAgendaItems.length > 0 ? renderAgendaItemsList(confirmedAgendaItems) : null}
 
           {scheduledButUnconfirmedAgendaItems.length > 0 ? (
@@ -1460,6 +1462,6 @@ export function EventAgendaView({
         }
         isLoading={isCRToolbarActive ? false : actionBarHook.voteCasting.isLoading}
       />
-    </div>
+    </AgendaPageShell>
   );
 }

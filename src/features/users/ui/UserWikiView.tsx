@@ -13,6 +13,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/features/shared/ui/ui/hover-card';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
+import { EntityWikiMedia } from '@/features/shared/ui/wiki';
 import type { UserWikiPageState } from '../hooks/useUserWikiPage';
 import { SocialBar } from './SocialBar';
 import { UserWikiContentTabs } from './UserWikiContentTabs';
@@ -77,15 +78,7 @@ export function UserWikiView({ page }: UserWikiViewProps) {
         {page.bioText ? <p className="text-muted-foreground">{page.bioText}</p> : null}
       </div>
 
-      {user.avatar ? (
-        <div className="mb-8">
-          <img
-            src={user.avatar}
-            alt={page.fullName}
-            className="mx-auto h-64 w-full max-w-4xl rounded-lg object-cover shadow-lg"
-          />
-        </div>
-      ) : null}
+      <EntityWikiMedia imageUrl={user.avatar} videoUrl={user.video_url} alt={page.fullName} />
 
       <StatsBar
         items={[

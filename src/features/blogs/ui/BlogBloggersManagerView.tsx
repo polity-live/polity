@@ -3,7 +3,7 @@
 import type { CSSProperties } from 'react';
 
 import { Button } from '@/features/shared/ui/ui/button';
-import { ArrowLeft, UserPlus, Plus, Trash2, Shield } from 'lucide-react';
+import { UserPlus, Plus, Trash2, Shield } from 'lucide-react';
 import {
   DataTable,
   MatrixCheckbox,
@@ -185,10 +185,6 @@ export function BlogBloggersManagerView({
   return (
     <div className="container mx-auto max-w-6xl p-8">
       <div className="mb-6">
-        <Button variant="ghost" onClick={() => window.history.back()} className="mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {translateText('generated.inline.0241_back_to_blog_68c5e1c7')}
-        </Button>
         <h1 className="text-3xl font-bold">
           {translateText('generated.inline.0242_manage_bloggers_58827569')}
         </h1>

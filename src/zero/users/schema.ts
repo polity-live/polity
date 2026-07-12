@@ -1,5 +1,9 @@
 import { z } from 'zod';
 import { jsonSchema, timestampSchema } from '../shared/helpers';
+import {
+  hasExclusiveUserPrimaryMedia,
+  primaryMediaValidationMessage,
+} from '../shared/primaryMedia';
 
 export const userGenderSchema = z.enum(['male', 'female', 'diverse']);
 
@@ -14,6 +18,7 @@ const userBaseSchema = z.object({
   gender: userGenderSchema.nullable(),
   about: jsonSchema.nullable(),
   avatar: z.string().nullable(),
+  video_url: z.string().nullable(),
   x: z.string().nullable(),
   youtube: z.string().nullable(),
   linkedin: z.string().nullable(),
@@ -57,7 +62,11 @@ export const userCreateSchema = userBaseSchema
     amendment_count: true,
     group_count: true,
   })
-  .extend({ id: z.string(), gender: userGenderSchema.nullable().optional() });
+  .extend({ id: z.string(), gender: userGenderSchema.nullable().optional() })
+  .refine(hasExclusiveUserPrimaryMedia, {
+    message: primaryMediaValidationMessage,
+    path: ['video_url'],
+  });
 export const userUpdateSchema = userBaseSchema
   .pick({
     first_name: true,
@@ -72,6 +81,7 @@ export const userUpdateSchema = userBaseSchema
     tiktok: true,
     about: true,
     avatar: true,
+    video_url: true,
     handle: true,
     x: true,
     youtube: true,
@@ -95,7 +105,11 @@ export const userUpdateSchema = userBaseSchema
     assistant_introduction: true,
   })
   .partial()
-  .extend({ id: z.string().optional() });
+  .extend({ id: z.string().optional() })
+  .refine(hasExclusiveUserPrimaryMedia, {
+    message: primaryMediaValidationMessage,
+    path: ['video_url'],
+  });
 export const userDeleteSchema = z.object({ id: z.string() });
 export type User = z.infer<typeof userSelectSchema>;
 

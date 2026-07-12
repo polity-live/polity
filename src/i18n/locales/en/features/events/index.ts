@@ -482,6 +482,8 @@ export const eventsTranslations = {
     liveFocus: 'Live focus',
     liveFocusDescription: 'Focused view for the current agenda item, speakers, and vote.',
     liveStream: 'Event Live Stream',
+    externalStreamDescription: 'This provider cannot be embedded here. Open the stream directly.',
+    openStream: 'Open stream',
     noActiveItem: 'No active agenda item found',
     openLiveFocus: 'Open live focus',
     speakersList: 'Speaker list',

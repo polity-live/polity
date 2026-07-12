@@ -1,5 +1,9 @@
 export const blogPageTranslations = {
   settings: 'Blog bearbeiten',
+  settingsTabs: {
+    general: 'Allgemein',
+    tags: 'Schlagwörter',
+  },
   overview: {
     title: 'Übersicht',
   },

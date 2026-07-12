@@ -7,10 +7,6 @@ import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useUserState } from '@/zero/users/useUserState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import {
-  notifyBloggerInvited,
-  notifyDocumentCollaboratorInvited,
-} from '@/features/notifications/utils/notification-helpers.ts';
 
 import type { EditorEntityType } from '../types';
 
@@ -29,6 +25,7 @@ export function useInviteCollaboratorModel({
   entityTitle,
   existingCollaboratorIds = [],
 }: InviteCollaboratorDialogProps) {
+  void entityTitle;
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -75,7 +72,7 @@ export function useInviteCollaboratorModel({
             blog_id: entityId,
             user_id: userId,
             role_id: null,
-            status: 'collaborator',
+            status: 'invited',
             visibility: '',
           });
         } else {
@@ -87,25 +84,6 @@ export function useInviteCollaboratorModel({
             role_id: null,
             status: 'collaborator',
             visibility: '',
-          });
-        }
-      }
-
-      // Send notifications to invited users
-      for (const userId of selectedUsers) {
-        if (entityType === 'blog') {
-          await notifyBloggerInvited({
-            senderId: currentUserId,
-            recipientUserId: userId,
-            blogId: entityId,
-            blogTitle: entityTitle || 'Blog',
-          });
-        } else {
-          await notifyDocumentCollaboratorInvited({
-            senderId: currentUserId,
-            recipientUserId: userId,
-            documentId: entityId,
-            documentTitle: entityTitle || 'Document',
           });
         }
       }

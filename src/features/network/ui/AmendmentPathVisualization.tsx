@@ -22,7 +22,7 @@ function AmendmentPathVisualizationEmptyView({ message }: { message: string }) {
 
 export function AmendmentPathVisualization(props: AmendmentPathVisualizationProps) {
   const { t } = useTranslation();
-  const [legendOpen, setLegendOpen] = useState(true);
+  const [legendOpen, setLegendOpen] = useState(false);
 
   if (!props.enrichedPathData || props.enrichedPathData.length === 0) {
     return (

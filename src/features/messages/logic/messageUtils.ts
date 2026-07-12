@@ -53,6 +53,15 @@ interface ConversationDisplayLike {
   assistant_for_user_id?: string | null;
 }
 
+interface ConversationRequesterLike {
+  requested_by_id?: string | null;
+}
+
+export const isConversationRequester = (
+  conversation: ConversationRequesterLike,
+  currentUserId?: string
+) => Boolean(currentUserId && conversation.requested_by_id === currentUserId);
+
 function isAssistantConversationLike(conversation: ConversationDisplayLike) {
   if (conversation.assistant_for_user_id) {
     return true;
@@ -196,7 +205,7 @@ export const hasUnreadConversationRequest = (
     return false;
   }
 
-  if (conversation.requested_by_id === currentUserId) {
+  if (isConversationRequester(conversation, currentUserId)) {
     return false;
   }
 

@@ -91,6 +91,7 @@ export function useDocumentMutations(_groupId: string): UseDocumentMutationsResu
           tags: null,
           discussions: null,
           image_url: null,
+          video_url: null,
           x: null,
           youtube: null,
           linkedin: null,

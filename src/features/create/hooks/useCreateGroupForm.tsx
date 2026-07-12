@@ -116,6 +116,7 @@ type CreateGroupRestoreState = Partial<{
   longitude: number | null;
   locationShape: GeoLocationShape | null;
   imageURL: string;
+  videoURL: string;
   hashtags: string[];
   visibility: 'public' | 'authenticated' | 'private';
   invitedUserIds: string[];
@@ -242,6 +243,7 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [longitude, setLongitude] = useState<number | null>(null);
   const [locationShape, setLocationShape] = useState<GeoLocationShape | null>(null);
   const [imageURL, setImageURL] = useState('');
+  const [videoURL, setVideoURL] = useState('');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -297,6 +299,7 @@ export function useCreateGroupForm(): CreateFormConfig {
     setLongitude(state.longitude ?? null);
     setLocationShape(state.locationShape ?? null);
     setImageURL(state.imageURL ?? '');
+    setVideoURL(state.videoURL ?? '');
     setHashtags(state.hashtags ?? []);
     setVisibility(state.visibility ?? 'public');
     setInvitedUserIds(state.invitedUserIds ?? []);
@@ -649,6 +652,7 @@ export function useCreateGroupForm(): CreateFormConfig {
           location_geometry: locationFields.location_geometry,
           location_bounds: locationFields.location_bounds,
           image_url: imageURL || null,
+          video_url: videoURL || null,
           x: null,
           youtube: null,
           linkedin: null,
@@ -700,6 +704,7 @@ export function useCreateGroupForm(): CreateFormConfig {
             longitude,
             locationShape,
             imageURL,
+            videoURL,
             hashtags,
             visibility,
             invitedUserIds,
@@ -738,6 +743,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                 longitude,
                 locationShape,
                 imageURL,
+                videoURL,
                 hashtags,
                 visibility,
                 invitedUserIds,
@@ -1101,6 +1107,9 @@ export function useCreateGroupForm(): CreateFormConfig {
               component: GroupMediaSettingsInput,
               props: {
                 imageURL,
+                videoURL,
+                onImageChange: setImageURL,
+                onVideoChange: setVideoURL,
                 groupId,
                 imageLabel: t('pages.create.group.imageLabel'),
                 imageDescription: t('pages.create.group.imageDescription'),
@@ -1108,7 +1117,6 @@ export function useCreateGroupForm(): CreateFormConfig {
                 hashtags,
                 hashtagPlaceholder: t('pages.create.group.hashtagPlaceholder'),
                 preferredHashtagSuggestions,
-                onImageChange: (url: string) => setImageURL(url),
                 onVisibilityChange: setVisibility,
                 onHashtagsChange: setHashtags,
               },
@@ -1262,9 +1270,11 @@ export function useCreateGroupForm(): CreateFormConfig {
                 secondaryBadge: groupTypeLabel,
                 title: name || t('pages.create.group.namePlaceholder'),
                 subtitle: description || undefined,
-                media: imageURL
-                  ? { imageUrl: imageURL, imageAlt: name || t('pages.create.group.imageAlt') }
-                  : undefined,
+                media: {
+                  imageUrl: imageURL || undefined,
+                  imageAlt: name || t('pages.create.group.imageAlt'),
+                  videoUrl: videoURL || undefined,
+                },
                 hashtags: hashtags.length > 0 ? hashtags : undefined,
                 groupLinksTitle: t('pages.create.group.groupLinksLabel'),
                 linkedGroupReviewData,
@@ -1302,6 +1312,14 @@ export function useCreateGroupForm(): CreateFormConfig {
                         ? [
                             {
                               label: t('pages.create.group.imageLabel'),
+                              value: t('common.attached'),
+                            },
+                          ]
+                        : []),
+                      ...(videoURL
+                        ? [
+                            {
+                              label: t('common.actions.uploadVideo'),
                               value: t('common.attached'),
                             },
                           ]
@@ -1377,6 +1395,7 @@ export function useCreateGroupForm(): CreateFormConfig {
       locationShape,
       locationSummary,
       imageURL,
+      videoURL,
       hashtags,
       preferredHashtagSuggestions,
       visibility,

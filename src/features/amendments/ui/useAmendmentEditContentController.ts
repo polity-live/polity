@@ -62,6 +62,8 @@ interface AmendmentEditContentProps {
   isLoading: boolean;
   mode?: 'create' | 'edit';
   agendaItemId?: string;
+  activeTab?: 'general' | 'workflow' | 'location';
+  onTabChange?: (tab: 'general' | 'workflow' | 'location') => void;
 }
 
 export function useAmendmentEditContentController({
@@ -72,7 +74,17 @@ export function useAmendmentEditContentController({
   isLoading,
   mode,
   agendaItemId,
+  activeTab: requestedTab,
+  onTabChange,
 }: AmendmentEditContentProps) {
+  const [activeTab, setActiveTab] = useState(requestedTab ?? 'general');
+
+  useEffect(() => setActiveTab(requestedTab ?? 'general'), [requestedTab]);
+
+  const handleTabChange = (tab: 'general' | 'workflow' | 'location') => {
+    setActiveTab(tab);
+    onTabChange?.(tab);
+  };
   const isCreating = mode === 'create' || !amendment;
 
   const navigate = useNavigate();
@@ -99,7 +111,6 @@ export function useAmendmentEditContentController({
     code: '',
     imageURL: '',
     videoURL: '',
-    videoThumbnailURL: '',
     workflowStatus: 'edit' as EditingMode,
     internalCRVotingCloseTrigger:
       DEFAULT_INTERNAL_CR_VOTING_CLOSE_TRIGGER as InternalCRVotingCloseTrigger,
@@ -211,8 +222,7 @@ export function useAmendmentEditContentController({
         subtitle: '',
         code: amendment.code || '',
         imageURL: amendment.image_url || '',
-        videoURL: '',
-        videoThumbnailURL: '',
+        videoURL: amendment.video_url || '',
         workflowStatus: workflowSourceMode,
         internalCRVotingCloseTrigger: normalizeInternalCRVotingCloseTrigger(
           amendment.internal_cr_voting_close_trigger
@@ -416,6 +426,7 @@ export function useAmendmentEditContentController({
             internal_cr_resolution_visibility: formData.internalCRResolutionVisibility,
             discussions: null,
             image_url: formData.imageURL || null,
+            video_url: formData.videoURL || null,
             country: formData.country || null,
             region: formData.region || null,
             post_code: formData.post_code || null,
@@ -454,6 +465,7 @@ export function useAmendmentEditContentController({
             visibility: formData.visibility,
             tags: formData.hashtags,
             image_url: formData.imageURL || null,
+            video_url: formData.videoURL || null,
             country: formData.country || null,
             region: formData.region || null,
             post_code: formData.post_code || null,
@@ -498,7 +510,7 @@ export function useAmendmentEditContentController({
             },
           });
         }
-        if (formData.videoURL) {
+        if (formData.videoURL && formData.videoURL !== amendment.video_url) {
           await createTimelineEvent({
             data: {
               eventType: 'video_uploaded',
@@ -600,6 +612,8 @@ export function useAmendmentEditContentController({
     mode,
     agendaItemId,
     isCreating,
+    activeTab,
+    onTabChange: handleTabChange,
     navigate,
     t,
     updateAmendment,

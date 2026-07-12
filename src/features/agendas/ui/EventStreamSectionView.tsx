@@ -31,7 +31,7 @@ import { AgendaElectionSection, isAutoAssignedRoleElection } from './AgendaElect
 import { AgendaVoteSection } from './AgendaVoteSection';
 import { AccreditationSection } from './AccreditationSection';
 import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
-import { getYouTubeVideoId } from '../logic/agendaUiHelpers';
+import { EventLivestreamPlayer } from '@/features/events/ui/EventLivestreamPlayer';
 import { getSpeakerGenderLabel } from '../logic/speakerListGenderQuota';
 import {
   INTERACTIVE_HORIZONTAL_ARROW_NAVIGATION_LOCK_SELECTOR,
@@ -234,25 +234,13 @@ export function EventStreamSectionView({
         <CollapsibleContent>
           <CardContent className="space-y-6 pt-4">
             {/* Live Stream Video */}
-            {streamUrl &&
-              (() => {
-                const videoId = getYouTubeVideoId(streamUrl);
-                return videoId ? (
-                  <div
-                    className={featureThemeClassName('agendaEventStreamSectionContrastBackground')}
-                  >
-                    <div className="aspect-video">
-                      <iframe
-                        className="h-full w-full"
-                        src={`https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1`}
-                        title={t('features.events.stream.liveStream')}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                      />
-                    </div>
-                  </div>
-                ) : null;
-              })()}
+            <EventLivestreamPlayer
+              streamUrl={streamUrl}
+              title={t('features.events.stream.liveStream')}
+              containerClassName={featureThemeClassName(
+                'agendaEventStreamSectionContrastBackground'
+              )}
+            />
 
             {/* Description */}
             {currentAgendaItem.description && (

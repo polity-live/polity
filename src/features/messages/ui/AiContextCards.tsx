@@ -1,9 +1,9 @@
 'use client';
 
-import { featureThemeClassName } from '@/features/shared/theme';
-import { BadgeControl } from '@/features/shared/ui/status';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
+  ChevronDown,
+  ChevronUp,
   Download,
   ExternalLink,
   FileText,
@@ -11,13 +11,17 @@ import {
   Search,
   Sparkles,
 } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import {
-  DynamicTimelineCard,
-  LAZY_CARD_COMPONENTS,
-  type CardType,
-} from '@/features/timeline/ui/LazyCardComponents';
+  getEntityToneClasses,
+  getSemanticToneClasses,
+  type EntityTone,
+} from '@/features/shared/theme';
+import { getEntityIcon } from '@/features/shared/logic/entityCardHelpers';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink';
+import { BadgeControl } from '@/features/shared/ui/status';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { cn } from '@/features/shared/utils/utils';
 import type { AiChatAttachment } from '@/lib/ai/schemas';
 import {
@@ -26,8 +30,22 @@ import {
   isUploadAttachmentCardPayload,
   type UploadAttachmentCardPayload,
 } from '../logic/uploadAttachmentCard';
-import { parseContextAttachments } from '../logic/contextAttachments';
-import { sanitizeAttachmentCardProps } from '../logic/sanitizeAttachmentCardProps';
+import { parseContextAttachments, parseContextPresentations } from '../logic/contextAttachments';
+import { AiFindingsCardGroup } from './AiFindingsCardGroup';
+
+const INITIAL_VISIBLE_RESULTS = 4;
+const ENTITY_TONES = new Set<EntityTone>([
+  'user',
+  'group',
+  'event',
+  'amendment',
+  'blog',
+  'agenda_item',
+  'vote',
+  'election',
+  'todo',
+  'role',
+]);
 
 interface AiContextCardsProps {
   attachments?: readonly AiChatAttachment[];
@@ -40,19 +58,7 @@ interface AiContextCardsProps {
   className?: string;
 }
 
-interface CardPayload {
-  cardType: CardType;
-  cardProps: Record<string, unknown>;
-}
-
-type AttachmentCardPayload = CardPayload | UploadAttachmentCardPayload;
-
 type RenderableContextCard =
-  | {
-      kind: 'timeline';
-      key: string;
-      cardPayload: CardPayload;
-    }
   | {
       kind: 'upload';
       key: string;
@@ -60,75 +66,94 @@ type RenderableContextCard =
       cardPayload: UploadAttachmentCardPayload;
     }
   | {
-      kind: 'skill';
-      key: string;
-      attachment: AiChatAttachment;
-    }
-  | {
-      kind: 'attachment';
+      kind: 'skill' | 'entity';
       key: string;
       attachment: AiChatAttachment;
     };
 
-type SkillContextCard = Extract<RenderableContextCard, { kind: 'skill' }>;
-type NonSkillContextCard = Exclude<RenderableContextCard, SkillContextCard>;
-
-function isCardPayload(value: unknown): value is CardPayload {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const record = value as Record<string, unknown>;
-  return (
-    typeof record.cardType === 'string' &&
-    record.cardType in LAZY_CARD_COMPONENTS &&
-    typeof record.cardProps === 'object' &&
-    record.cardProps !== null
-  );
-}
-
-function parseAttachmentCardPayload(cardDataJson?: string | null): AttachmentCardPayload | null {
-  if (!cardDataJson) {
-    return null;
-  }
+function parseUploadPayload(cardDataJson?: string | null): UploadAttachmentCardPayload | null {
+  if (!cardDataJson) return null;
 
   try {
     const parsed: unknown = JSON.parse(cardDataJson);
-
-    if (isCardPayload(parsed)) {
-      return {
-        ...parsed,
-        cardProps: sanitizeAttachmentCardProps(parsed.cardProps),
-      };
-    }
-
-    if (isUploadAttachmentCardPayload(parsed)) {
-      return parsed;
-    }
-
-    return null;
+    return isUploadAttachmentCardPayload(parsed) ? parsed : null;
   } catch {
     return null;
   }
 }
 
-function isUploadContextPayload(
-  cardPayload: AttachmentCardPayload
-): cardPayload is UploadAttachmentCardPayload {
-  return 'kind' in cardPayload && cardPayload.kind === 'upload';
-}
-
-function isTimelineContextPayload(cardPayload: AttachmentCardPayload): cardPayload is CardPayload {
-  return 'cardType' in cardPayload;
-}
-
-function getSkillPreview(promptContext?: string | null): string | null {
+function getPreview(promptContext?: string | null): string | null {
   const normalized = promptContext?.replace(/\s+/g, ' ').trim();
   return normalized ? normalized : null;
 }
 
 function formatEntityTypeLabel(entityType: string): string {
   return entityType.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function getAttachmentTone(entityType: AiChatAttachment['entityType']) {
+  return ENTITY_TONES.has(entityType as EntityTone)
+    ? getEntityToneClasses(entityType as EntityTone)
+    : getSemanticToneClasses('neutral');
+}
+
+function EntityResultCard({ attachment }: { attachment: AiChatAttachment }) {
+  const { t } = useTranslation();
+  const Icon = getEntityIcon(attachment.entityType);
+  const tone = getAttachmentTone(attachment.entityType);
+  const preview = getPreview(attachment.prompt_context);
+  const body = (
+    <Card
+      className={cn(
+        'h-full shadow-none transition-colors',
+        tone.border,
+        attachment.href && 'hover:bg-muted/45'
+      )}
+    >
+      <CardContent className="flex h-full items-start gap-3 p-3">
+        <span
+          className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', tone.badge)}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">{attachment.title}</p>
+              {attachment.subtitle ? (
+                <p className="text-muted-foreground truncate text-xs">{attachment.subtitle}</p>
+              ) : null}
+            </div>
+            <BadgeControl variant="outline" size="tiny" className={cn('shrink-0', tone.badge)}>
+              {formatEntityTypeLabel(attachment.entityType)}
+            </BadgeControl>
+          </div>
+          {preview ? (
+            <p className="text-muted-foreground mt-2 line-clamp-2 text-xs leading-relaxed">
+              {preview}
+            </p>
+          ) : null}
+          {attachment.href ? (
+            <span className="text-primary mt-2 inline-flex items-center gap-1 text-xs font-medium">
+              {t('features.messages.ai.openResult')}
+              <ExternalLink className="h-3 w-3" />
+            </span>
+          ) : null}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  return attachment.href ? (
+    <SmartLink
+      href={attachment.href}
+      className="focus-visible:ring-ring block h-full rounded-xl focus-visible:ring-2 focus-visible:outline-none"
+    >
+      {body}
+    </SmartLink>
+  ) : (
+    body
+  );
 }
 
 function UploadContextCard({
@@ -144,70 +169,36 @@ function UploadContextCard({
   const downloadUrl = buildUploadAttachmentDownloadUrl(cardPayload.fileUrl, cardPayload.fileName);
 
   return (
-    <Card surface="skyPanel" className="overflow-hidden">
-      {showImagePreview && (
-        <a href={cardPayload.fileUrl} target="_blank" rel="noopener noreferrer" className="block">
-          <img
-            src={cardPayload.fileUrl}
-            alt={cardPayload.fileName}
-            className="max-h-80 w-full object-cover"
-            loading="lazy"
-          />
-        </a>
-      )}
-
-      <CardContent className="space-y-3 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3">
-            <div className="bg-muted flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
-              {showImagePreview ? (
-                <ImageIcon className={featureThemeClassName('messageAiContextCardsInfoIcon')} />
-              ) : (
-                <FileText className={featureThemeClassName('messageAiContextCardsInfoIcon')} />
-              )}
-            </div>
-
-            <div className="min-w-0">
-              <p className="text-foreground truncate text-sm font-semibold">{attachment.title}</p>
-              <p className="text-muted-foreground truncate text-xs">
-                {attachment.subtitle ??
-                  [cardPayload.fileType, fileSizeLabel].filter(Boolean).join(' · ')}
-              </p>
-            </div>
-          </div>
-
-          <BadgeControl tone="skyTint" size="tiny">
-            {showImagePreview
-              ? t('common.actions.uploadImage')
-              : formatEntityTypeLabel(attachment.entityType)}
-          </BadgeControl>
-        </div>
-
-        {!showImagePreview && (
-          <p className="text-muted-foreground line-clamp-2 text-sm leading-6">
-            {cardPayload.fileType || t('features.messages.compose.fileFallbackLabel')} ·{' '}
-            {fileSizeLabel}
+    <Card className="h-full overflow-hidden shadow-none">
+      <CardContent className="flex h-full items-start gap-3 p-3">
+        <span className="bg-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+          {showImagePreview ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">{attachment.title}</p>
+          <p className="text-muted-foreground truncate text-xs">
+            {attachment.subtitle ??
+              [cardPayload.fileType, fileSizeLabel].filter(Boolean).join(' · ')}
           </p>
-        )}
-
-        <div className="flex flex-wrap items-center gap-2">
-          <a
-            href={cardPayload.fileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={featureThemeClassName('messageAiContextCardsInfoBadge')}
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            {t('features.messages.compose.openAttachment')}
-          </a>
-          <a
-            href={downloadUrl}
-            download={cardPayload.fileName}
-            className="border-border hover:bg-muted inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
-          >
-            <Download className="h-3.5 w-3.5" />
-            {t('features.messages.compose.downloadAttachment')}
-          </a>
+          <div className="mt-2 flex items-center gap-3 text-xs font-medium">
+            <a
+              href={cardPayload.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary inline-flex items-center gap-1"
+            >
+              <ExternalLink className="h-3 w-3" />
+              {t('features.messages.compose.openAttachment')}
+            </a>
+            <a
+              href={downloadUrl}
+              download={cardPayload.fileName}
+              className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+            >
+              <Download className="h-3 w-3" />
+              {t('features.messages.compose.downloadAttachment')}
+            </a>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -222,172 +213,118 @@ export function AiContextCards({
   className,
 }: AiContextCardsProps) {
   const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
   const resolvedAttachments = useMemo(
     () => attachments ?? parseContextAttachments(contextJson),
     [attachments, contextJson]
   );
-
+  const presentations = useMemo(() => parseContextPresentations(contextJson), [contextJson]);
   const cards = useMemo(
     () =>
-      resolvedAttachments.flatMap<RenderableContextCard>(attachment => {
+      resolvedAttachments.map<RenderableContextCard>(attachment => {
         const key = `${attachment.entityType}:${attachment.entityId}`;
-        const cardPayload = parseAttachmentCardPayload(
+        const uploadPayload = parseUploadPayload(
           attachment.card_data_json ??
             resolveAttachmentCardData?.(attachment.entityType, attachment.entityId) ??
             null
         );
-
-        if (cardPayload && isUploadContextPayload(cardPayload)) {
-          return [{ kind: 'upload', key, attachment, cardPayload }];
-        }
-
-        if (cardPayload && isTimelineContextPayload(cardPayload)) {
-          return [{ kind: 'timeline', key, cardPayload }];
-        }
-
-        if (attachment.entityType === 'skill') {
-          return [{ kind: 'skill', key, attachment }];
-        }
-
-        return [{ kind: 'attachment', key, attachment }];
+        if (uploadPayload) return { kind: 'upload', key, attachment, cardPayload: uploadPayload };
+        if (attachment.entityType === 'skill') return { kind: 'skill', key, attachment };
+        return { kind: 'entity', key, attachment };
       }),
     [resolveAttachmentCardData, resolvedAttachments]
   );
+  const resultCards = cards.filter(card => card.kind !== 'skill');
+  const skillCards = cards.filter(card => card.kind === 'skill');
+  const visibleCards = expanded ? resultCards : resultCards.slice(0, INITIAL_VISIBLE_RESULTS);
+  const hiddenCount = resultCards.length - INITIAL_VISIBLE_RESULTS;
 
-  const contextCards = useMemo(
-    () => cards.filter((card): card is NonSkillContextCard => card.kind !== 'skill'),
-    [cards]
-  );
-
-  const skillCards = useMemo(
-    () => cards.filter((card): card is SkillContextCard => card.kind === 'skill'),
-    [cards]
-  );
-  const isOutputContext = contextLabel === 'output';
-
-  if (cards.length === 0) {
-    return null;
-  }
+  if (cards.length === 0 && presentations.length === 0) return null;
 
   return (
-    <div className={cn('space-y-2 md:max-w-xl', className)}>
-      {contextCards.length > 0 && (
-        <div
-          className={cn(
-            featureThemeClassName('messageAiContextCardsThemedGradientSurface'),
-            isOutputContext
-              ? featureThemeClassName('messageAiContextCardsSuccessTealGradientSurface')
-              : featureThemeClassName('messageAiContextCardsInfoGradientSurface')
-          )}
-        >
-          <div
-            className={cn(
-              featureThemeClassName('messageAiContextCardsThemedBorder'),
-              isOutputContext
-                ? featureThemeClassName('messageAiContextCardsSuccessBadge')
-                : featureThemeClassName('messageAiContextCardsInfoBadgeAlpha')
+    <div className={cn('space-y-3 md:max-w-3xl', className)}>
+      {resultCards.length > 0 ? (
+        <section className="border-border/70 bg-card/60 overflow-hidden rounded-2xl border">
+          <header className="border-border/60 flex items-center gap-2 border-b px-4 py-3">
+            <Search className="text-muted-foreground h-4 w-4" />
+            <p className="min-w-0 flex-1 truncate text-sm font-semibold">
+              {contextLabel === 'output'
+                ? t('features.messages.ai.outputContextCardLabel')
+                : t('features.messages.ai.inputContextCardLabel')}
+            </p>
+            <BadgeControl variant="outline" size="tiny">
+              {resultCards.length}
+            </BadgeControl>
+          </header>
+          <div className="grid gap-2 p-3 sm:grid-cols-2">
+            {visibleCards.map(card =>
+              card.kind === 'upload' ? (
+                <UploadContextCard
+                  key={card.key}
+                  attachment={card.attachment}
+                  cardPayload={card.cardPayload}
+                />
+              ) : (
+                <EntityResultCard key={card.key} attachment={card.attachment} />
+              )
             )}
-          >
-            <Search className="h-3.5 w-3.5" />
-            {contextLabel === 'output'
-              ? t('features.messages.ai.outputContextCardLabel')
-              : t('features.messages.ai.inputContextCardLabel')}
           </div>
+          {hiddenCount > 0 ? (
+            <div className="border-border/60 border-t px-3 py-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={() => setExpanded(value => !value)}
+              >
+                {expanded ? (
+                  <ChevronUp className="mr-2 h-4 w-4" />
+                ) : (
+                  <ChevronDown className="mr-2 h-4 w-4" />
+                )}
+                {expanded
+                  ? t('features.messages.ai.showFewerResults')
+                  : t('features.messages.ai.showMoreResults', { count: hiddenCount })}
+              </Button>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
-          <div className="grid gap-2 p-3">
-            {contextCards.map(card => {
-              if (card.kind === 'timeline') {
-                return (
-                  <DynamicTimelineCard
-                    key={card.key}
-                    cardType={card.cardPayload.cardType}
-                    cardProps={card.cardPayload.cardProps}
-                  />
-                );
-              }
+      {presentations.map(presentation => (
+        <AiFindingsCardGroup key={presentation.id} presentation={presentation} />
+      ))}
 
-              if (card.kind === 'upload') {
-                return (
-                  <UploadContextCard
-                    key={card.key}
-                    attachment={card.attachment}
-                    cardPayload={card.cardPayload}
-                  />
-                );
-              }
-
-              const preview = getSkillPreview(card.attachment.prompt_context);
-
-              return (
-                <Card key={card.key} surface="skyPanel" className="overflow-hidden">
-                  <CardContent className="space-y-3 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-foreground truncate text-sm font-semibold">
-                          {card.attachment.title}
-                        </p>
-                        {card.attachment.subtitle && (
-                          <p className="text-muted-foreground truncate text-xs">
-                            {card.attachment.subtitle}
-                          </p>
-                        )}
-                      </div>
-                      <BadgeControl tone="skyTint" size="tiny">
-                        {formatEntityTypeLabel(card.attachment.entityType)}
-                      </BadgeControl>
-                    </div>
-
-                    {preview && (
-                      <p className="text-muted-foreground line-clamp-4 text-sm leading-6">
-                        {preview}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {skillCards.map(card => {
-        const promptPreview = getSkillPreview(card.attachment.prompt_context);
-
-        return (
-          <Card
-            key={card.key}
-            className={featureThemeClassName('messageAiContextCardsSuccessGradientSurface')}
-          >
-            <CardContent className="space-y-3 p-4">
-              <div className="flex items-start justify-between gap-3">
+      {skillCards.map(card => (
+        <Card key={card.key} className="border-border/70 shadow-none">
+          <CardContent className="flex items-start gap-3 p-3">
+            <span className="bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <div className={featureThemeClassName('messageAiContextCardsSuccessText')}>
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {t('features.messages.ai.skillCardLabel')}
-                  </div>
-                  <p className="text-foreground truncate text-sm font-semibold">
-                    {card.attachment.title}
-                  </p>
-                  {card.attachment.subtitle && (
+                  <p className="truncate text-sm font-semibold">{card.attachment.title}</p>
+                  {card.attachment.subtitle ? (
                     <p className="text-muted-foreground truncate text-xs">
                       /{card.attachment.subtitle}
                     </p>
-                  )}
+                  ) : null}
                 </div>
-                <BadgeControl tone="emeraldTint" size="tiny">
+                <BadgeControl variant="outline" size="tiny">
                   {t('features.messages.ai.skillCardBadge')}
                 </BadgeControl>
               </div>
-
-              {promptPreview && (
-                <p className="text-muted-foreground line-clamp-4 text-sm leading-6">
-                  {promptPreview}
+              {getPreview(card.attachment.prompt_context) ? (
+                <p className="text-muted-foreground mt-2 line-clamp-2 text-xs leading-relaxed">
+                  {getPreview(card.attachment.prompt_context)}
                 </p>
-              )}
-            </CardContent>
-          </Card>
-        );
-      })}
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

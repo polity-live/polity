@@ -3,7 +3,8 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 export interface UserEditViewProps {
   userId: any;
-  defaultTab: any;
+  activeTab: any;
+  onTabChange: any;
   user: any;
   isLoading: any;
   formData: any;
@@ -25,7 +26,8 @@ export interface UserEditViewProps {
 
 export function UserEditView({
   userId,
-  defaultTab,
+  activeTab,
+  onTabChange,
   isLoading,
   formData,
   isSubmitting,
@@ -56,7 +58,8 @@ export function UserEditView({
       formData={formData}
       isSubmitting={isSubmitting}
       userId={userId}
-      defaultTab={defaultTab}
+      activeTab={activeTab}
+      onTabChange={onTabChange}
       activeSubscriptionAmount={getActivePlanAmount()}
       isCheckoutLoading={isCheckoutLoading}
       isPlanActive={isPlanActive}

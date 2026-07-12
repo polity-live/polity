@@ -172,3 +172,18 @@ export async function applyOptionalMediaUrl(page: Page, fieldKey: string, prefix
   await input.fill(mediaUrl(prefix));
   return true;
 }
+
+export async function applyOptionalVideoUrl(page: Page, fieldKey: string, prefix: string) {
+  const field = page.locator(`[data-create-field="${fieldKey}"]`);
+  if (!(await field.count())) return false;
+
+  const videoTab = field.getByRole('tab', { name: /video/i }).first();
+  if (!(await videoTab.count())) return false;
+  await videoTab.click();
+
+  const input = field.locator('input[type="url"]').first();
+  if (!(await input.count())) return false;
+
+  await input.fill(`https://example.test/${encodeURIComponent(prefix)}.mp4`);
+  return true;
+}

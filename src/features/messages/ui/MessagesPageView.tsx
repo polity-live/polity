@@ -34,6 +34,7 @@ export interface MessagesPageViewProps {
   onMemberListDialogOpenChange: (open: boolean) => void;
   deleteDialogOpen: boolean;
   onDeleteDialogOpenChange: (open: boolean) => void;
+  isCancelRequest: boolean;
   onTogglePin: (id: string, currentPinned: boolean) => void;
   onCreateConversationRequest: (otherUserId: string) => Promise<void>;
   onDeleteConversation: () => Promise<void>;
@@ -73,6 +74,7 @@ export function MessagesPageView({
   onMemberListDialogOpenChange,
   deleteDialogOpen,
   onDeleteDialogOpenChange,
+  isCancelRequest,
   onTogglePin,
   onCreateConversationRequest,
   onDeleteConversation,
@@ -150,6 +152,7 @@ export function MessagesPageView({
         open={deleteDialogOpen}
         onOpenChange={onDeleteDialogOpenChange}
         onConfirm={onDeleteConversation}
+        isCancelRequest={isCancelRequest}
       />
     </>
   );

@@ -13,7 +13,12 @@ import { useAiActions } from '@/zero/ai/useAiActions';
 import { useAiState } from '@/zero/ai/useAiState';
 import type { Conversation } from '../types/message.types';
 import { slugifySkillName } from '../logic/assistantComposer';
-import { buildAssistantErrorContextJson } from '../logic/contextAttachments';
+import {
+  AssistantChatStreamDecoder,
+  buildToolCallPreview,
+  readAiChatErrorResponse,
+  type AssistantChatStreamEvent,
+} from '../logic/assistantStream';
 import { useMessageMutations } from './useMessageMutations';
 import { useMessageAttachments } from './useMessageAttachments';
 
@@ -57,20 +62,18 @@ export interface CreateAssistantSkillInput {
 
 interface SendAssistantMessageOptions {
   onUserMessageSent?: () => void;
+  skipUserMessagePersistence?: boolean;
+  requestOverride?: AssistantChatRequestPayload;
 }
 
-interface AssistantChatStreamEvent {
-  type:
-    | 'compression-start'
-    | 'text-delta'
-    | 'tool-call-delta'
-    | 'tool-call'
-    | 'tool-result'
-    | 'error';
-  text?: string;
-  toolName?: string | null;
-  args?: Record<string, unknown> | null;
-  message?: string;
+interface AssistantChatRequestPayload {
+  conversationId: string;
+  content: string;
+  model: { provider: AiProvider; id: string };
+  reasoningEffort: AiReasoningEffort;
+  skillSlugs: string[];
+  toolNames: AiToolName[];
+  attachments: AiChatAttachment[];
 }
 
 interface ActiveToolCallState {
@@ -93,86 +96,6 @@ function sameToolNames(left: readonly AiToolName[], right: readonly AiToolName[]
   return left.length === right.length && left.every((toolName, index) => toolName === right[index]);
 }
 
-function parseAssistantChatStreamEvent(rawLine: string): AssistantChatStreamEvent | null {
-  try {
-    const parsed = JSON.parse(rawLine) as Record<string, unknown>;
-    const type = parsed.type;
-
-    if (
-      type !== 'compression-start' &&
-      type !== 'text-delta' &&
-      type !== 'tool-call-delta' &&
-      type !== 'tool-call' &&
-      type !== 'tool-result' &&
-      type !== 'error'
-    ) {
-      return null;
-    }
-
-    return {
-      type,
-      text: typeof parsed.text === 'string' ? parsed.text : undefined,
-      toolName: typeof parsed.toolName === 'string' ? parsed.toolName : null,
-      args:
-        parsed.args && typeof parsed.args === 'object' && !Array.isArray(parsed.args)
-          ? (parsed.args as Record<string, unknown>)
-          : null,
-      message: typeof parsed.message === 'string' ? parsed.message : undefined,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function formatToolCallValue(value: unknown): string {
-  if (typeof value === 'string') {
-    return JSON.stringify(value);
-  }
-
-  if (typeof value === 'number' || typeof value === 'boolean') {
-    return String(value);
-  }
-
-  if (value === null) {
-    return 'null';
-  }
-
-  if (Array.isArray(value)) {
-    const preview = value
-      .slice(0, 3)
-      .map(item => formatToolCallValue(item))
-      .join(', ');
-    return `[${preview}${value.length > 3 ? ', ...' : ''}]`;
-  }
-
-  if (typeof value === 'object') {
-    return '{...}';
-  }
-
-  return 'unknown';
-}
-
-function buildToolCallPreview(
-  toolName: string | null,
-  args?: Record<string, unknown> | null
-): string | null {
-  if (!toolName) {
-    return null;
-  }
-
-  if (!args || Object.keys(args).length === 0) {
-    return `${toolName}()`;
-  }
-
-  const serializedArgs = Object.entries(args)
-    .slice(0, 4)
-    .map(([key, value]) => `${key}: ${formatToolCallValue(value)}`)
-    .join(', ');
-
-  const hasMoreArgs = Object.keys(args).length > 4;
-  return `${toolName}(${serializedArgs}${hasMoreArgs ? ', ...' : ''})`;
-}
-
 export function useAssistantChat(conversation: Conversation, currentUserId?: string) {
   const { session } = useAuth();
   const { t } = useTranslation();
@@ -189,6 +112,9 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   const [streamingText, setStreamingText] = useState('');
   const [awaitingPersistenceText, setAwaitingPersistenceText] = useState<string | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
+  const [lastFailedRequest, setLastFailedRequest] = useState<AssistantChatRequestPayload | null>(
+    null
+  );
   const [isCatalogLoading, setIsCatalogLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
@@ -339,6 +265,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
     setStreamingText('');
     setAwaitingPersistenceText(null);
     setStreamError(null);
+    setLastFailedRequest(null);
     setIsCompressing(false);
     setIsThinking(false);
     setIsToolCalling(false);
@@ -462,7 +389,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         return false;
       }
 
-      if (!selectedModel) {
+      if (!selectedModel && !options?.requestOverride) {
         toast.error(t('features.messages.ai.modelRequired'));
         return false;
       }
@@ -477,34 +404,60 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
       setAwaitingPersistenceText(null);
       setStreamError(null);
 
-      const attachmentsForRequest: AiChatAttachment[] = [...attachmentComposer.selectedAttachments];
+      const attachmentsForRequest: AiChatAttachment[] = options?.requestOverride
+        ? [...options.requestOverride.attachments]
+        : [...attachmentComposer.selectedAttachments];
 
-      for (const selectedSkill of selectedSkills) {
-        attachmentsForRequest.push({
-          entityType: 'skill',
-          entityId: selectedSkill.slug,
-          title: selectedSkill.name,
-          subtitle: selectedSkill.slug,
-          prompt_context: selectedSkill.systemPrompt,
-        });
+      if (!options?.requestOverride) {
+        for (const selectedSkill of selectedSkills) {
+          attachmentsForRequest.push({
+            entityType: 'skill',
+            entityId: selectedSkill.slug,
+            title: selectedSkill.name,
+            subtitle: selectedSkill.slug,
+            prompt_context: selectedSkill.systemPrompt,
+          });
+        }
       }
 
       const contextJson = JSON.stringify(attachmentsForRequest);
+      const requestPayload: AssistantChatRequestPayload | null =
+        options?.requestOverride ??
+        (selectedModel
+          ? {
+              conversationId: conversation.id,
+              content,
+              model: {
+                provider: selectedModel.provider,
+                id: selectedModel.id,
+              },
+              reasoningEffort,
+              skillSlugs: selectedSkills.map(skill => skill.slug),
+              toolNames: selectedToolNames,
+              attachments: attachmentsForRequest,
+            }
+          : null);
+
+      if (!requestPayload) {
+        return false;
+      }
 
       try {
-        const userMessageResult = await mutations.sendMessage(
-          conversation.id,
-          currentUserId,
-          content,
-          undefined,
-          { contextJson }
-        );
+        if (!options?.skipUserMessagePersistence) {
+          const userMessageResult = await mutations.sendMessage(
+            conversation.id,
+            currentUserId,
+            content,
+            undefined,
+            { contextJson }
+          );
 
-        if (!userMessageResult.success) {
-          return false;
+          if (!userMessageResult.success) {
+            return false;
+          }
+
+          options?.onUserMessageSent?.();
         }
-
-        options?.onUserMessageSent?.();
 
         const response = await fetch('/api/ai/chat', {
           method: 'POST',
@@ -512,30 +465,30 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({
-            conversationId: conversation.id,
-            content,
-            model: {
-              provider: selectedModel.provider,
-              id: selectedModel.id,
-            },
-            reasoningEffort,
-            skillSlugs: selectedSkills.map(skill => skill.slug),
-            toolNames: selectedToolNames,
-            attachments: attachmentsForRequest,
-          }),
+          body: JSON.stringify(requestPayload),
         });
 
-        if (!response.ok || !response.body) {
-          throw new Error((await response.text()) || 'AI chat request failed');
+        if (!response.ok) {
+          const errorPayload = await readAiChatErrorResponse(response);
+          const errorMessage =
+            errorPayload.code === 'MODEL_UNAVAILABLE'
+              ? t('features.messages.ai.modelRequired')
+              : errorPayload.code === 'UNAUTHORIZED'
+                ? t('features.messages.ai.sessionMissing')
+                : t('features.messages.ai.sendFailed');
+          throw new Error(errorMessage);
+        }
+
+        if (!response.body) {
+          throw new Error(t('features.messages.ai.sendFailed'));
         }
 
         attachmentComposer.clearAttachments();
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        const streamDecoder = new AssistantChatStreamDecoder();
         let finalText = '';
-        let streamBuffer = '';
         let streamErrorMessage: string | null = null;
 
         const resolveToolLabel = (toolName?: string | null): string | null => {
@@ -546,16 +499,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
           return availableTools.find(tool => tool.name === toolName)?.label ?? toolName;
         };
 
-        const handleStreamLine = (rawLine: string) => {
-          if (!rawLine) {
-            return;
-          }
-
-          const streamEvent = parseAssistantChatStreamEvent(rawLine);
-          if (!streamEvent) {
-            return;
-          }
-
+        const handleStreamEvent = (streamEvent: AssistantChatStreamEvent) => {
           switch (streamEvent.type) {
             case 'compression-start': {
               setIsCompressing(true);
@@ -628,23 +572,20 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
             continue;
           }
 
-          streamBuffer += chunk;
-          let newlineIndex = streamBuffer.indexOf('\n');
-          while (newlineIndex !== -1) {
-            const line = streamBuffer.slice(0, newlineIndex).trim();
-            streamBuffer = streamBuffer.slice(newlineIndex + 1);
-            handleStreamLine(line);
-            newlineIndex = streamBuffer.indexOf('\n');
+          for (const event of streamDecoder.push(chunk)) {
+            handleStreamEvent(event);
           }
         }
 
         const trailingChunk = decoder.decode();
         if (trailingChunk) {
-          streamBuffer += trailingChunk;
+          for (const event of streamDecoder.push(trailingChunk)) {
+            handleStreamEvent(event);
+          }
         }
 
-        if (streamBuffer.trim()) {
-          handleStreamLine(streamBuffer.trim());
+        for (const event of streamDecoder.finish()) {
+          handleStreamEvent(event);
         }
 
         if (finalText.trim()) {
@@ -654,6 +595,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         }
 
         setStreamError(null);
+        setLastFailedRequest(null);
 
         return true;
       } catch (error) {
@@ -662,18 +604,14 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
           error instanceof Error && error.message.trim()
             ? error.message
             : t('features.messages.ai.sendFailed');
-        setStreamingText('');
         setAwaitingPersistenceText(null);
         setIsCompressing(false);
         setIsToolCalling(false);
         setActiveToolName(null);
         setActiveToolCall(null);
 
-        const persistedError = await mutations.sendAssistantMessage(conversation.id, errorMessage, {
-          contextJson: buildAssistantErrorContextJson(),
-        });
-
-        setStreamError(persistedError.success ? null : errorMessage);
+        setLastFailedRequest(requestPayload);
+        setStreamError(errorMessage);
         toast.error(errorMessage);
         return false;
       } finally {
@@ -699,6 +637,17 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
       t,
     ]
   );
+
+  const retryLastAssistantMessage = useCallback(async (): Promise<boolean> => {
+    if (!lastFailedRequest || isSending) {
+      return false;
+    }
+
+    return sendAssistantMessage(lastFailedRequest.content, {
+      skipUserMessagePersistence: true,
+      requestOverride: lastFailedRequest,
+    });
+  }, [isSending, lastFailedRequest, sendAssistantMessage]);
 
   return {
     models,
@@ -731,6 +680,8 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
     uploadingAttachmentName: attachmentComposer.uploadingAttachmentName,
     createSkill,
     sendAssistantMessage,
+    retryLastAssistantMessage,
+    canRetry: Boolean(lastFailedRequest) && !isSending,
     streamingText,
     streamError,
     isSending,

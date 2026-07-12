@@ -84,6 +84,7 @@ const amendment = {
   editing_mode: 'edit',
   discussions: [{ id: 'discussion-1' }],
   image_url: null,
+  video_url: null,
   origin_amendment_id: null,
   document: { content: originalContent },
   documents: [],

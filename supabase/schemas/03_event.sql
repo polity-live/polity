@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS public.event (
   website TEXT,
   stream_url TEXT,
   image_url TEXT,
+  video_url TEXT,
   has_delegates BOOLEAN NOT NULL DEFAULT false,
   delegate_count INTEGER NOT NULL DEFAULT 0,
   delegate_distribution_method TEXT,
@@ -89,7 +90,8 @@ CREATE TABLE IF NOT EXISTS public.event (
   group_id UUID,
   creator_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT event_single_primary_media_check CHECK (image_url IS NULL OR video_url IS NULL)
 );
 
 CREATE INDEX idx_event_creator ON public.event (creator_id);

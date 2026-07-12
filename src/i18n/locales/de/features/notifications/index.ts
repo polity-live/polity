@@ -93,6 +93,7 @@ export const notificationsTranslations = {
   },
   generated: {
     titles: {
+      todoClaimed: 'Aufgabe übernommen',
       eventAssignedToGroup: 'Event einer Gruppe zugeordnet',
       amendmentSupportConfirmed: 'Antragsunterstützung bestätigt',
       amendmentUpvoted: 'Antrag positiv bewertet',
@@ -101,6 +102,7 @@ export const notificationsTranslations = {
       blogDownvoted: 'Blog negativ bewertet',
     },
     messages: {
+      todoClaimed: '{{senderName}} hat die Aufgabe „{{todoTitle}}“ übernommen.',
       guestAccessApproved: 'Eine Gastzugangsanfrage in {{groupName}} wurde genehmigt.',
       guestAccessRequested: '{{senderName}} hat Gastzugang zu {{groupName}} angefragt.',
       guestInvited: 'Ein Gast wurde zu {{groupName}} eingeladen.',

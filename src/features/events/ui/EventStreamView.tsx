@@ -37,23 +37,8 @@ import {
   INTERACTIVE_HORIZONTAL_ARROW_NAVIGATION_LOCK_SELECTOR,
   useHorizontalArrowNavigation,
 } from '@/features/shared/hooks/useHorizontalArrowNavigation';
+import { EventLivestreamPlayer } from './EventLivestreamPlayer';
 
-// Helper function to extract YouTube video ID from URL
-function getYouTubeVideoId(url: string): string | null {
-  if (!url) return null;
-
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-    /^([a-zA-Z0-9_-]{11})$/, // Direct video ID
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
-  }
-
-  return null;
-}
 function formatGenderBadgeLabel(t: any, gender?: string | null) {
   const labelKey =
     gender === 'male'
@@ -189,23 +174,11 @@ export function EventStreamView({
   return (
     <div className="space-y-6">
       {/* Live Stream Video */}
-      {event.stream_url &&
-        (() => {
-          const videoId = getYouTubeVideoId(event.stream_url);
-          return videoId ? (
-            <div className={featureThemeClassName('agendaEventStreamSectionContrastBackground')}>
-              <div className="aspect-video">
-                <iframe
-                  className="h-full w-full"
-                  src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&rel=0&modestbranding=1`}
-                  title={t('features.events.stream.liveStream')}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
-              </div>
-            </div>
-          ) : null;
-        })()}
+      <EventLivestreamPlayer
+        streamUrl={event.stream_url}
+        title={t('features.events.stream.liveStream')}
+        containerClassName={featureThemeClassName('agendaEventStreamSectionContrastBackground')}
+      />
 
       {/* Current Agenda Item - Prominent Display */}
       <div ref={activeContentRef}>

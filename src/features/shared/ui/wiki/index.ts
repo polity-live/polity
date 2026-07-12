@@ -1,4 +1,5 @@
 export { InfoTabs } from './InfoTabs';
+export { EntityWikiMedia, type EntityWikiMediaProps } from './EntityWikiMedia';
 export {
   getWikiParticipationName,
   isVisibleWikiParticipationStatus,

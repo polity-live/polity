@@ -12,6 +12,7 @@ import {
   recomputeEventCounters,
   recomputeGroupCounters,
   recomputeUserCounters,
+  userName,
 } from '../server-helpers';
 import { createSubscriberSchema, deleteSubscriberSchema } from '../network/schema';
 import { createLinkSchema, deleteLinkSchema } from './schema';
@@ -60,6 +61,12 @@ export const commonServerMutators = {
         blogTitle: bTitle,
         groupId: blogRow?.group_id ?? undefined,
         ownerId: ownerRelation?.user_id ?? undefined,
+      });
+    } else if (args.user_id && args.user_id !== ctx.userID) {
+      await fireNotification('notifyNewFollower', {
+        senderId: ctx.userID,
+        senderName: await userName(tx, ctx.userID),
+        recipientUserId: args.user_id,
       });
     }
   }),

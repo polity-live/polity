@@ -21,6 +21,7 @@ export const group = table('group')
     location_geometry: json<MutableJSONValue>().optional(),
     location_bounds: json<MutableJSONValue>().optional(),
     image_url: string().optional(),
+    video_url: string().optional(),
     member_count: number(),
     subscriber_count: number(),
     event_count: number(),

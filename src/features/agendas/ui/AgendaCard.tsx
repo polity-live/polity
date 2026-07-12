@@ -1,6 +1,5 @@
 'use client';
 
-import { featureThemeClassName } from '@/features/shared/theme';
 import { ReactNode } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import {
@@ -81,16 +80,18 @@ export function AgendaCard({
   const { t } = useTranslation();
   const visualStatus = isActive ? 'active' : status;
   const cardClassName = cn(
-    'cursor-pointer transition-all hover:shadow-md',
-    isActive && featureThemeClassName('agendaAgendaCardSuccessGradientSurface'),
+    'border-border/70 bg-card/75 cursor-pointer overflow-hidden shadow-none transition-[border-color,background-color,box-shadow] hover:border-foreground/15 hover:bg-card hover:shadow-sm',
+    isActive && 'border-primary/35 bg-primary/[0.035] ring-primary/10 ring-1',
     className
   );
   const cardContent = (
-    <div className={cn(isActive && 'bg-background relative z-10 rounded-lg')}>
-      <CardHeader className="pb-3">
+    <div className="relative z-10">
+      <CardHeader className="px-4 pt-4 pb-3 sm:px-5">
         <div className="flex items-start justify-between">
           <div className="flex-1 space-y-1">
-            <CardTitle className="text-lg">{title}</CardTitle>
+            <CardTitle className="text-base leading-snug font-semibold sm:text-lg">
+              {title}
+            </CardTitle>
             {subtitle && <p className="text-muted-foreground text-sm">{subtitle}</p>}
             <div className="flex flex-wrap items-center gap-2">
               <AgendaTypeBadge type={type} />
@@ -142,13 +143,15 @@ export function AgendaCard({
       </CardHeader>
 
       {description && (
-        <CardContent className="pt-0">
-          <p className="text-muted-foreground">{description}</p>
+        <CardContent className="px-4 pt-0 sm:px-5">
+          <p className="text-muted-foreground line-clamp-3 text-sm leading-relaxed">
+            {description}
+          </p>
         </CardContent>
       )}
 
       {(creatorName || footer || footerRight) && (
-        <CardFooter className="pt-3">
+        <CardFooter className="border-border/60 bg-muted/15 px-4 py-3 sm:px-5">
           {footer || (
             <div
               className={cn(

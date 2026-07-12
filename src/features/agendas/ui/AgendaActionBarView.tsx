@@ -179,7 +179,7 @@ export function AgendaActionBarView({
     closeVoteTooltip || t('features.events.agenda.actions.closeFinalVote');
 
   return (
-    <FixedAgendaToolbar className="gap-3">
+    <FixedAgendaToolbar className="gap-2">
       <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
         {onBackToAgenda ? (
           <ToolbarButton asChild tooltip={t('features.events.agenda.backToAgenda')}>
@@ -245,7 +245,7 @@ export function AgendaActionBarView({
         ) : null}
       </div>
 
-      <div className="flex items-center justify-center gap-1">
+      <div className="border-border/60 bg-muted/25 flex items-center justify-center gap-1 rounded-lg border px-1 py-0.5">
         {isVotable && onJumpToNextVoteStep ? (
           <ToolbarButton
             tooltip={
@@ -370,7 +370,7 @@ export function AgendaActionBarView({
         ) : null}
       </div>
 
-      <div className="flex min-w-0 flex-1 items-center justify-end gap-1 overflow-x-auto">
+      <div className="border-border/60 flex min-w-0 flex-1 items-center justify-end gap-1 overflow-x-auto border-l pl-2">
         {showLifecycleControls && onPreviousItem ? (
           <ToolbarButton
             tooltip={t('features.events.navigation.previous')}

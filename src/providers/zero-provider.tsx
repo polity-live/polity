@@ -1,15 +1,8 @@
-import { lazy, Suspense, createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useMemo } from 'react';
+import { ZeroProvider } from '@rocicorp/zero/react';
 import { schema } from '@/zero/schema';
 import { mutators } from '@/zero/mutators';
 import { useAuth } from './auth-provider';
-import { AppBootLoadingState } from '@/features/shared/ui/feedback';
-
-// Use React lazy to defer loading the ZeroProvider (client-side only)
-const ZeroProvider = lazy(() =>
-  import('@rocicorp/zero/react').then(mod => ({
-    default: mod.ZeroProvider,
-  }))
-);
 
 const ZeroReadyContext = createContext(false);
 
@@ -39,28 +32,19 @@ export function ZeroAppProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <Suspense
-      fallback={
-        <AppBootLoadingState
-          onRetry={() => window.location.reload()}
-          details="Zero provider module"
-        />
-      }
-    >
-      <ZeroReadyContext.Provider value={true}>
-        <ZeroProvider
-          userID={zeroContext.userID}
-          context={zeroContext}
-          cacheURL={cacheURL}
-          queryURL={`${appURL}/api/query`}
-          mutateURL={`${appURL}/api/mutate`}
-          auth={session?.access_token ?? undefined}
-          schema={schema}
-          mutators={mutators}
-        >
-          {children}
-        </ZeroProvider>
-      </ZeroReadyContext.Provider>
-    </Suspense>
+    <ZeroReadyContext.Provider value={true}>
+      <ZeroProvider
+        userID={zeroContext.userID}
+        context={zeroContext}
+        cacheURL={cacheURL}
+        queryURL={`${appURL}/api/query`}
+        mutateURL={`${appURL}/api/mutate`}
+        auth={session?.access_token ?? undefined}
+        schema={schema}
+        mutators={mutators}
+      >
+        {children}
+      </ZeroProvider>
+    </ZeroReadyContext.Provider>
   );
 }

@@ -17,6 +17,7 @@ export const Route = createFileRoute('/_authed/event/$id/settings')({
 function EventSettingsPage() {
   const { id } = Route.useParams();
   const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   const { can, isLoading } = usePermissions({ eventId: id });
 
@@ -28,5 +29,13 @@ function EventSettingsPage() {
     return <AccessDenied />;
   }
 
-  return <EventEdit eventId={id} defaultTab={tab} />;
+  return (
+    <EventEdit
+      eventId={id}
+      defaultTab={tab}
+      onTabChange={nextTab =>
+        navigate({ search: previous => ({ ...previous, tab: nextTab }), replace: true })
+      }
+    />
+  );
 }

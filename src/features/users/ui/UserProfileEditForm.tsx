@@ -1,8 +1,15 @@
 import { Loader2 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
-import { FormActions, SettingsPanel } from '@/features/shared/ui/form';
+import { TabsContent } from '@/features/shared/ui/ui/tabs';
+import {
+  FormActions,
+  SettingsActionBar,
+  SettingsPage,
+  SettingsPanel,
+  SettingsTabs,
+  type SettingsTab,
+} from '@/features/shared/ui/form';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
-import { ImageUpload } from '@/features/file-upload/ui/ImageUpload';
+import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { BasicInformationSection } from './BasicInformationSection';
 import { AboutSection } from './AboutSection';
 import { ContactInformationSection } from './ContactInformationSection';
@@ -32,7 +39,8 @@ interface UserProfileEditFormProps {
   formData: UserProfileFormData;
   isSubmitting: boolean;
   userId: string;
-  defaultTab?: string;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
   activeSubscriptionAmount: number;
   isCheckoutLoading: boolean;
   isPlanActive: (amount: number) => boolean;
@@ -54,7 +62,8 @@ export function UserProfileEditForm({
   formData,
   isSubmitting,
   userId,
-  defaultTab,
+  activeTab,
+  onTabChange,
   activeSubscriptionAmount,
   isCheckoutLoading,
   isPlanActive,
@@ -69,37 +78,39 @@ export function UserProfileEditForm({
   onCancelSubscription,
 }: UserProfileEditFormProps) {
   const { t } = useTranslation();
+  const tabs: SettingsTab[] = [
+    { value: 'basic-info', label: t('pages.user.settingsTabs.basicInfo') },
+    { value: 'preferences', label: t('pages.user.settingsTabs.appearance') },
+    { value: 'subscriptions', label: t('pages.user.settingsTabs.subscriptions') },
+    { value: 'passwords', label: t('pages.user.settingsTabs.passwords') },
+    { value: 'notifications', label: t('pages.user.settingsTabs.notifications') },
+    { value: 'ai', label: t('pages.user.settingsTabs.ai', 'AI') },
+  ];
+  const resolvedTab =
+    activeTab && tabs.some(tab => tab.value === activeTab) ? activeTab : 'basic-info';
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">{t('pages.user.settings')}</h1>
-        <p className="text-muted-foreground">{t('pages.user.settingsDescription')}</p>
-      </div>
-
-      <Tabs defaultValue={defaultTab || 'basic-info'}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="basic-info">{t('pages.user.settingsTabs.basicInfo')}</TabsTrigger>
-          <TabsTrigger value="preferences">{t('pages.user.settingsTabs.appearance')}</TabsTrigger>
-          <TabsTrigger value="subscriptions">
-            {t('pages.user.settingsTabs.subscriptions')}
-          </TabsTrigger>
-          <TabsTrigger value="passwords">{t('pages.user.settingsTabs.passwords')}</TabsTrigger>
-          <TabsTrigger value="notifications">
-            {t('pages.user.settingsTabs.notifications')}
-          </TabsTrigger>
-          <TabsTrigger value="ai">{t('pages.user.settingsTabs.ai', 'AI')}</TabsTrigger>
-        </TabsList>
-
+    <SettingsPage
+      title={t('pages.user.settings')}
+      description={t('pages.user.settingsDescription')}
+    >
+      <SettingsTabs tabs={tabs} value={resolvedTab} onValueChange={onTabChange}>
         {/* Basic Information Tab */}
         <TabsContent value="basic-info">
           <form onSubmit={onSubmit} className="space-y-6">
-            <ImageUpload
+            <MediaUpload
               currentImage={formData.avatar}
               onImageChange={url => onFieldChange('avatar', url)}
-              onFileUpload={onAvatarUpload}
-              label={t('pages.user.settingsForm.avatar.title')}
-              description={t('pages.user.settingsForm.avatar.description')}
+              onImageFileUpload={onAvatarUpload}
+              currentVideo={formData.videoURL}
+              onVideoChange={url => onFieldChange('videoURL', url)}
+              entityType="users"
+              entityId={userId}
+              exclusiveMedia
+              imageLabel={t('pages.user.settingsForm.avatar.title')}
+              imageDescription={t('pages.user.settingsForm.avatar.description')}
+              videoLabel={t('common.actions.uploadVideo')}
+              videoDescription={t('common.media.videoDescription')}
             />
 
             <BasicInformationSection
@@ -181,23 +192,24 @@ export function UserProfileEditForm({
               onHashtagsChange={value => onFieldChange('hashtags', value)}
             />
 
-            <FormActions
-              cancelLabel={t('common.actions.cancel')}
-              onCancel={onCancel}
-              isSubmitting={isSubmitting}
-              submitLabel={
-                isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('pages.user.settingsTabs.saving')}
-                  </>
-                ) : (
-                  t('pages.user.settingsTabs.saveProfile')
-                )
-              }
-              submitDisabled={isSubmitting}
-              className="sm:justify-start"
-            />
+            <SettingsActionBar>
+              <FormActions
+                cancelLabel={t('common.actions.cancel')}
+                onCancel={onCancel}
+                isSubmitting={isSubmitting}
+                submitLabel={
+                  isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t('pages.user.settingsTabs.saving')}
+                    </>
+                  ) : (
+                    t('pages.user.settingsTabs.saveProfile')
+                  )
+                }
+                submitDisabled={isSubmitting}
+              />
+            </SettingsActionBar>
           </form>
         </TabsContent>
 
@@ -272,7 +284,7 @@ export function UserProfileEditForm({
         <TabsContent value="ai">
           <AiSettingsTab />
         </TabsContent>
-      </Tabs>
-    </div>
+      </SettingsTabs>
+    </SettingsPage>
   );
 }

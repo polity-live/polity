@@ -88,6 +88,7 @@ const amendment = {
   title: 'A1',
   code: 'A-1',
   image_url: null,
+  video_url: null,
   internal_cr_voting_close_trigger: 'all_collaborators_voted',
   internal_cr_voting_duration_minutes: null,
   internal_cr_resolution_visibility: 'public',

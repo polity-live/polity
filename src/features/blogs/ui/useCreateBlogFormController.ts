@@ -20,6 +20,7 @@ export function useCreateBlogFormController() {
     visibility: 'public' as 'public' | 'authenticated' | 'private',
     hashtags: [] as string[],
     imageURL: '',
+    videoURL: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
@@ -56,7 +57,8 @@ export function useCreateBlogFormController() {
           description: '',
           content: null,
           date: formData.date,
-          image_url: formData.imageURL,
+          image_url: formData.imageURL || null,
+          video_url: formData.videoURL || null,
           visibility: formData.visibility,
           like_count: 0,
           comment_count: 0,
@@ -83,7 +85,7 @@ export function useCreateBlogFormController() {
                 ),
                 metadata: null,
                 image_url: formData.imageURL || '',
-                video_url: '',
+                video_url: formData.videoURL || '',
                 video_thumbnail_url: '',
                 content_type: 'blog',
                 tags: null,

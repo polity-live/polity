@@ -94,13 +94,13 @@ describe('notifyProcessTaskCreated', () => {
       notification_setting: [
         {
           user_id: 'muted-user',
-          deliverySettings: { inAppNotifications: true },
-          groupNotifications: { tasksAssigned: false },
+          delivery_settings: { inAppNotifications: true },
+          group_notifications: { tasksAssigned: false },
         },
         {
           user_id: 'guest-user',
-          deliverySettings: { inAppNotifications: false },
-          groupNotifications: { tasksAssigned: true },
+          delivery_settings: { inAppNotifications: false },
+          group_notifications: { tasksAssigned: true },
         },
       ],
       notification: [],
@@ -168,8 +168,8 @@ describe('group member notification fanout', () => {
       notification_setting: [
         {
           user_id: 'member-user',
-          deliverySettings: { inAppNotifications: true },
-          groupNotifications: { newEvents: false, newAmendments: false },
+          delivery_settings: { inAppNotifications: true },
+          group_notifications: { newEvents: false, newAmendments: false },
         },
       ],
       notification: [],

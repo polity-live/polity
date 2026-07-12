@@ -4,7 +4,6 @@ import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useCommonState } from '@/zero/common/useCommonState';
 import { useAuth } from '@/providers/auth-provider';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
-import { notifyNewFollower } from '@/features/notifications/utils/notification-helpers.ts';
 
 /**
  * Hook to handle user subscription functionality
@@ -12,18 +11,13 @@ import { notifyNewFollower } from '@/features/notifications/utils/notification-h
  */
 export function useSubscribeUser(targetUserId?: string) {
   const { user: authUser } = useAuth();
-  const { currentUser, user: targetUser } = useUserState({ userId: targetUserId });
+  const { user: targetUser } = useUserState({ userId: targetUserId });
   const commonActions = useCommonActions();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const optimisticTargetRef = useRef<boolean | null>(null);
   const createdSubscriptionIdRef = useRef<string | null>(null);
-
-  // Current user's name for notifications
-  const currentUserName = currentUser
-    ? [currentUser.first_name, currentUser.last_name].filter(Boolean).join(' ') || 'Someone'
-    : 'Someone';
 
   // Query to get all subscribers for the target user (we'll filter client-side)
   const { userSubscribers: subscriptionRows } = useCommonState({
@@ -84,17 +78,6 @@ export function useSubscribeUser(targetUserId?: string) {
           blog_id: null,
         })
       );
-
-      // Notification is server-only — send separately
-      try {
-        notifyNewFollower({
-          senderId: authUser.id,
-          senderName: currentUserName,
-          recipientUserId: targetUserId,
-        });
-      } catch {
-        /* notification delivery is best-effort */
-      }
     } catch (error) {
       // Revert optimistic update
       optimisticTargetRef.current = null;

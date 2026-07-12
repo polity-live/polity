@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public."user" (
   gender TEXT CHECK (gender IN ('male', 'female', 'diverse')),
   about JSONB,
   avatar TEXT,
+  video_url TEXT,
   x TEXT,
   youtube TEXT,
   linkedin TEXT,
@@ -44,7 +45,8 @@ CREATE TABLE IF NOT EXISTS public."user" (
   tutorial_step INTEGER,
   assistant_introduction BOOLEAN,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT user_single_primary_media_check CHECK (avatar IS NULL OR video_url IS NULL)
 );
 
 CREATE UNIQUE INDEX idx_user_handle ON public."user" (handle);

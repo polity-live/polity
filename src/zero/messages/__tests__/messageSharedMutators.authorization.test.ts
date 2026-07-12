@@ -161,4 +161,115 @@ describe('messageSharedMutators authorization', () => {
     });
     expect(tx.mutate.conversation.delete).toHaveBeenCalledWith({ id: 'conversation-1' });
   });
+
+  it('allows an incoming recipient to delete the full conversation after one upfront check', async () => {
+    const tx = createTx('server');
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'conversation-1',
+        requested_by_id: 'user-2',
+        assistant_for_user_id: null,
+        group_id: null,
+        event_id: null,
+      })
+      .mockResolvedValueOnce({
+        id: 'conversation-1',
+        requested_by_id: 'user-2',
+        assistant_for_user_id: null,
+        group_id: null,
+        event_id: null,
+      })
+      .mockResolvedValueOnce({
+        id: 'participant-1',
+        conversation_id: 'conversation-1',
+        user_id: 'user-1',
+        left_at: null,
+      })
+      .mockResolvedValueOnce({
+        id: 'participant-1',
+        conversation_id: 'conversation-1',
+        user_id: 'user-1',
+      })
+      .mockResolvedValueOnce({
+        id: 'participant-2',
+        conversation_id: 'conversation-1',
+        user_id: 'user-2',
+      });
+
+    await expect(
+      messageSharedMutators.deleteConversationFull.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: {
+          id: 'conversation-1',
+          participantIds: ['participant-1', 'participant-2'],
+        },
+      })
+    ).resolves.toBeUndefined();
+
+    expect(tx.mutate.conversation_participant.delete).toHaveBeenCalledTimes(2);
+    expect(tx.mutate.conversation.delete).toHaveBeenCalledWith({ id: 'conversation-1' });
+  });
+
+  it('allows the requester to cancel a full conversation request', async () => {
+    const tx = createTx('server');
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'conversation-1',
+        requested_by_id: 'user-1',
+        assistant_for_user_id: null,
+        group_id: null,
+        event_id: null,
+      })
+      .mockResolvedValueOnce({
+        id: 'participant-1',
+        conversation_id: 'conversation-1',
+        user_id: 'user-1',
+      });
+
+    await expect(
+      messageSharedMutators.deleteConversationFull.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: {
+          id: 'conversation-1',
+          participantIds: ['participant-1'],
+        },
+      })
+    ).resolves.toBeUndefined();
+
+    expect(tx.mutate.conversation.delete).toHaveBeenCalledWith({ id: 'conversation-1' });
+  });
+
+  it('rejects child ids from another conversation before deleting anything', async () => {
+    const tx = createTx('server');
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'conversation-1',
+        requested_by_id: 'user-1',
+        assistant_for_user_id: null,
+        group_id: null,
+        event_id: null,
+      })
+      .mockResolvedValueOnce({
+        id: 'message-foreign',
+        conversation_id: 'conversation-2',
+      });
+
+    await expect(
+      messageSharedMutators.deleteConversationFull.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: {
+          id: 'conversation-1',
+          messageIds: ['message-foreign'],
+          participantIds: ['participant-1'],
+        },
+      })
+    ).rejects.toThrow('Message does not belong to this conversation.');
+
+    expect(tx.mutate.message.delete).not.toHaveBeenCalled();
+    expect(tx.mutate.conversation_participant.delete).not.toHaveBeenCalled();
+    expect(tx.mutate.conversation.delete).not.toHaveBeenCalled();
+  });
 });

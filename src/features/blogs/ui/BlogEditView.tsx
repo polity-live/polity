@@ -18,10 +18,12 @@ import { hasMinLength } from '@/features/shared/logic/inputValidation';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { Loader2 } from 'lucide-react';
-import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
+import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
+import { SettingsActionBar, SettingsPage, SettingsTabs } from '@/features/shared/ui/form';
+import { TabsContent } from '@/features/shared/ui/ui/tabs';
 export interface BlogEditViewProps {
   blogId: any;
   navigate: any;
@@ -35,6 +37,8 @@ export interface BlogEditViewProps {
   blog: any;
   isLoading: any;
   navigateToBlog: any;
+  activeTab: 'general' | 'tags';
+  onTabChange?: (tab: 'general' | 'tags') => void;
 }
 
 export function BlogEditView({
@@ -50,6 +54,8 @@ export function BlogEditView({
   blog,
   isLoading,
   navigateToBlog,
+  activeTab,
+  onTabChange,
 }: BlogEditViewProps) {
   // Loading state
   if (isLoading) {
@@ -77,82 +83,100 @@ export function BlogEditView({
 
   // Main edit form
   return (
-    <div className="container mx-auto max-w-4xl p-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">{t('features.blogs.editPage.title')}</h1>
-        <p className="text-muted-foreground">{t('features.blogs.editPage.description')}</p>
-      </div>
-
+    <SettingsPage
+      title={t('features.blogs.editPage.title')}
+      description={t('features.blogs.editPage.description')}
+    >
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Blog Image Section */}
-        <ImageUpload
-          currentImage={formData.imageURL}
-          onImageChange={(url: string) => updateField('imageURL', url)}
-          onImageRemove={removeImage}
-          cleanupOnRemove
-          entityType="blogs"
-          entityId={blogId}
-          label={t('features.blogs.editPage.blogImage')}
-          description={t('features.blogs.editPage.blogImageDescription')}
-        />
+        <SettingsTabs
+          value={activeTab}
+          onValueChange={onTabChange}
+          tabs={[
+            { value: 'general', label: t('pages.blog.settingsTabs.general') },
+            { value: 'tags', label: t('pages.blog.settingsTabs.tags') },
+          ]}
+        >
+          <TabsContent value="general" className="space-y-6">
+            {/* Blog Image Section */}
+            <MediaUpload
+              currentImage={formData.imageURL}
+              onImageChange={(url: string) => updateField('imageURL', url)}
+              currentVideo={formData.videoURL}
+              onVideoChange={(url: string) => updateField('videoURL', url)}
+              onImageRemove={removeImage}
+              cleanupOnRemove
+              exclusiveMedia
+              entityType="blogs"
+              entityId={blogId}
+              imageLabel={t('features.blogs.editPage.blogImage')}
+              imageDescription={t('features.blogs.editPage.blogImageDescription')}
+              videoLabel={t('common.actions.uploadVideo')}
+              videoDescription={t('common.media.videoDescription')}
+            />
 
-        {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('features.blogs.editPage.basicInfo')}</CardTitle>
-            <CardDescription>{t('features.blogs.editPage.basicInfoDescription')}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ValidatedInputField
-              id="title"
-              label={t('features.blogs.editPage.blogTitleRequired')}
-              value={formData.title}
-              onChange={value => updateField('title', value)}
-              placeholder={t('features.blogs.editPage.blogTitlePlaceholder')}
-              validator={value => hasMinLength(value, 3)}
-              hint={t('common.validation.titleHint')}
-              required
-            />
-            <div className="space-y-2">
-              <FormControlLabel htmlFor="date">
-                {translateText('generated.inline.0277_date_eb9a4bc1')}
-              </FormControlLabel>
-              <FormControlInput
-                id="date"
-                type="date"
-                value={formData.date}
-                onChange={e => updateField('date', e.target.value)}
-                required
-              />
-            </div>
-            <VisibilityInput
-              value={formData.visibility}
-              onChange={v => updateField('visibility', v)}
-            />
-          </CardContent>
-        </Card>
+            {/* Basic Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('features.blogs.editPage.basicInfo')}</CardTitle>
+                <CardDescription>
+                  {t('features.blogs.editPage.basicInfoDescription')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <ValidatedInputField
+                  id="title"
+                  label={t('features.blogs.editPage.blogTitleRequired')}
+                  value={formData.title}
+                  onChange={value => updateField('title', value)}
+                  placeholder={t('features.blogs.editPage.blogTitlePlaceholder')}
+                  validator={value => hasMinLength(value, 3)}
+                  hint={t('common.validation.titleHint')}
+                  required
+                />
+                <div className="space-y-2">
+                  <FormControlLabel htmlFor="date">
+                    {translateText('generated.inline.0277_date_eb9a4bc1')}
+                  </FormControlLabel>
+                  <FormControlInput
+                    id="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={e => updateField('date', e.target.value)}
+                    required
+                  />
+                </div>
+                <VisibilityInput
+                  value={formData.visibility}
+                  onChange={v => updateField('visibility', v)}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        {/* Tags */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('features.blogs.editPage.tags')}</CardTitle>
-            <CardDescription>{t('features.blogs.editPage.tagsDescription')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <HashtagEditor
-              value={formData.hashtags}
-              onChange={hashtags => setFormData({ ...formData, hashtags })}
-              placeholder={t('features.blogs.editPage.addTagPlaceholder')}
-            />
-          </CardContent>
-        </Card>
+          {/* Tags */}
+          <TabsContent value="tags" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('features.blogs.editPage.tags')}</CardTitle>
+                <CardDescription>{t('features.blogs.editPage.tagsDescription')}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <HashtagEditor
+                  value={formData.hashtags}
+                  onChange={hashtags => setFormData({ ...formData, hashtags })}
+                  placeholder={t('features.blogs.editPage.addTagPlaceholder')}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </SettingsTabs>
 
         {/* Action Buttons */}
-        <div className="flex gap-4">
+        <SettingsActionBar className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" onClick={navigateToBlog} disabled={isSubmitting}>
             {t('features.blogs.editPage.cancel')}
           </Button>
-          <Button type="submit" disabled={isSubmitting} className="flex-1">
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -162,8 +186,8 @@ export function BlogEditView({
               t('features.blogs.editPage.saveChanges')
             )}
           </Button>
-        </div>
+        </SettingsActionBar>
       </form>
-    </div>
+    </SettingsPage>
   );
 }

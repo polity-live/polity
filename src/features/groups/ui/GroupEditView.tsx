@@ -9,6 +9,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { GroupEditForm } from './GroupEditForm';
 import type { GroupType } from '../hooks/useGroupUpdate';
+import { SettingsPage } from '@/features/shared/ui/form';
 export interface GroupEditViewProps {
   groupId: any;
   navigate: any;
@@ -23,6 +24,8 @@ export interface GroupEditViewProps {
   fallbackCanonicalMembershipMode: any;
   getRelativeSiblingMembershipDirection: any;
   initialFormData: any;
+  activeTab?: 'general' | 'relationships' | 'contact';
+  onTabChange?: (tab: 'general' | 'relationships' | 'contact') => void;
 }
 
 export function GroupEditView({
@@ -33,6 +36,8 @@ export function GroupEditView({
   isLoading,
   user,
   initialFormData,
+  activeTab,
+  onTabChange,
 }: GroupEditViewProps) {
   // Loading state
   if (isLoading) {
@@ -60,12 +65,10 @@ export function GroupEditView({
 
   // Main edit view
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">{t('features.groups.editPage.title')}</h1>
-        <p className="text-muted-foreground">{t('features.groups.editPage.subtitle')}</p>
-      </div>
-
+    <SettingsPage
+      title={t('features.groups.editPage.title')}
+      description={t('features.groups.editPage.subtitle')}
+    >
       <GroupEditForm
         groupId={groupId}
         initialData={initialFormData}
@@ -75,7 +78,9 @@ export function GroupEditView({
         groupType={group.group_type as GroupType}
         hasHierarchyChildren={group.has_hierarchy_children}
         hasSiblingConnections={group.has_sibling_connections}
+        activeTab={activeTab}
+        onTabChange={onTabChange}
       />
-    </div>
+    </SettingsPage>
   );
 }

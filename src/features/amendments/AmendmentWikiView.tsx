@@ -21,6 +21,7 @@ import { ActionBar, EntityPageFrame, StatsBar } from '@/features/shared/ui/layou
 import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
 import {
   getWikiParticipationName,
+  EntityWikiMedia,
   InfoTabs,
   isVisibleWikiParticipationStatus,
   normalizeWikiParticipationRole,
@@ -325,16 +326,11 @@ export function AmendmentWikiView({
         </div>
       </div>
 
-      {/* Amendment Image */}
-      {amendment.image_url && (
-        <div className="mb-8">
-          <img
-            src={amendment.image_url}
-            alt={amendment.title ?? ''}
-            className="mx-auto h-64 w-full max-w-4xl rounded-lg object-cover shadow-lg"
-          />
-        </div>
-      )}
+      <EntityWikiMedia
+        imageUrl={amendment.image_url}
+        videoUrl={amendment.video_url}
+        alt={amendment.title ?? ''}
+      />
 
       {/* Amendment Video */}
       {amendment.youtube && (

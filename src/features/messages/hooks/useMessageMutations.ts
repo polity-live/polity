@@ -4,11 +4,6 @@ import { toast } from '@/features/shared/ui/ui/sonner';
 import { Conversation } from '../types/message.types';
 import { hasUnreadConversationRequest } from '../logic/messageUtils';
 import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from '@/features/assistant/constants';
-import {
-  notifyDirectMessage,
-  notifyConversationRequest,
-  notifyConversationAccepted,
-} from '@/features/notifications/utils/notification-helpers.ts';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 
@@ -34,6 +29,8 @@ export function useMessageMutations() {
     recipientUserIds?: string[],
     options?: SendMessageOptions
   ) => {
+    void senderId;
+    void recipientUserIds;
     setIsLoading(true);
     try {
       const messageId = crypto.randomUUID();
@@ -48,23 +45,6 @@ export function useMessageMutations() {
         })
       );
 
-      // Notify all other participants — best-effort
-      try {
-        if (recipientUserIds) {
-          for (const recipientId of recipientUserIds) {
-            if (recipientId !== senderId) {
-              await notifyDirectMessage({
-                senderId,
-                senderName: '',
-                recipientUserId: recipientId,
-                conversationId,
-              });
-            }
-          }
-        }
-      } catch {
-        /* notification delivery is best-effort */
-      }
       return { success: true, messageId };
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -141,23 +121,7 @@ export function useMessageMutations() {
         })
       );
 
-      // Send conversation request notifications — best-effort
-      try {
-        if (creatorId) {
-          for (const participantId of participantIds) {
-            if (participantId !== creatorId) {
-              await notifyConversationRequest({
-                conversationId,
-                senderId: creatorId,
-                senderName: '',
-                recipientUserId: participantId,
-              });
-            }
-          }
-        }
-      } catch {
-        /* notification delivery is best-effort */
-      }
+      void creatorId;
       toast.success(translateText('generated.inline.0737_conversation_created_dab567d8'));
       return { success: true, conversationId };
     } catch (error) {
@@ -296,19 +260,7 @@ export function useMessageMutations() {
         })
       );
 
-      // Send notification to the requester
-      try {
-        if (params?.senderId && params?.senderName && params?.requesterUserId) {
-          await notifyConversationAccepted({
-            senderId: params.senderId,
-            senderName: params.senderName,
-            recipientUserId: params.requesterUserId,
-            conversationId,
-          });
-        }
-      } catch {
-        /* notification delivery is best-effort */
-      }
+      void params;
       toast.success(translateText('generated.inline.0743_conversation_accepted_575bee56'));
       return { success: true };
     } catch (error) {

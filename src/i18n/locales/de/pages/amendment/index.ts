@@ -1,5 +1,10 @@
 export const amendmentPageTranslations = {
   settings: 'Antrag bearbeiten',
+  settingsTabs: {
+    general: 'Allgemein',
+    workflow: 'Workflow',
+    location: 'Standort',
+  },
   overview: {
     title: 'Übersicht',
   },
@@ -23,7 +28,8 @@ export const amendmentPageTranslations = {
   },
   process: {
     title: 'Antragsprozess',
-    description: 'Navigiere durch das Netzwerk, um eine Zielgruppe und Veranstaltung für deinen Antrag auszuwählen',
+    description:
+      'Navigiere durch das Netzwerk, um eine Zielgruppe und Veranstaltung für deinen Antrag auszuwählen',
   },
   notifications: {
     title: 'Benachrichtigungen',

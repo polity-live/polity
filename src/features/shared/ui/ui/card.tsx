@@ -106,6 +106,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <SurfaceLayerProvider>
         <Comp
           ref={ref}
+          data-slot="card"
           className={cn(
             'bg-card text-card-foreground rounded-lg border shadow-[var(--shadow-panel)]',
             getMotionPreset('colors'),
@@ -135,6 +136,7 @@ const CardHeader = React.forwardRef<HTMLDivElement, CardSectionProps>(
   ({ className, align = 'default', separator = false, surface = 'default', ...props }, ref) => (
     <div
       ref={ref}
+      data-slot="card-header"
       className={cn(
         'flex flex-col space-y-1.5 p-6',
         align === 'center' && 'text-center',
@@ -184,6 +186,7 @@ const CardDescription = React.forwardRef<HTMLDivElement, CardDescriptionProps>(
   ({ className, leading = 'default', tone = 'default', ...props }, ref) => (
     <div
       ref={ref}
+      data-slot="card-description"
       className={cn(
         'text-muted-foreground text-sm',
         leading === 'relaxed' && 'leading-6',
@@ -210,6 +213,7 @@ const CardContent = React.forwardRef<HTMLDivElement, CardContentProps>(
   ) => (
     <div
       ref={ref}
+      data-slot="card-content"
       className={cn(
         'p-6 pt-0',
         align === 'center' && 'text-center',

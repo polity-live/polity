@@ -68,6 +68,7 @@ const baseProps = {
   onMemberListDialogOpenChange: vi.fn(),
   deleteDialogOpen: false,
   onDeleteDialogOpenChange: vi.fn(),
+  isCancelRequest: false,
   onTogglePin: vi.fn(),
   onCreateConversationRequest: vi.fn(),
   onDeleteConversation: vi.fn(),

@@ -12,12 +12,14 @@ interface DeleteConversationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
+  isCancelRequest?: boolean;
 }
 
 export function DeleteConversationDialog({
   open,
   onOpenChange,
   onConfirm,
+  isCancelRequest = false,
 }: DeleteConversationDialogProps) {
   const { t } = useTranslation();
 
@@ -25,8 +27,20 @@ export function DeleteConversationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <ScrollableDialogContent>
         <DialogHeader>
-          <DialogTitle>{t('features.messages.conversation.delete')}</DialogTitle>
-          <DialogDescription>{t('features.messages.conversation.deleteConfirm')}</DialogDescription>
+          <DialogTitle>
+            {t(
+              isCancelRequest
+                ? 'features.messages.conversation.cancelRequest'
+                : 'features.messages.conversation.delete'
+            )}
+          </DialogTitle>
+          <DialogDescription>
+            {t(
+              isCancelRequest
+                ? 'features.messages.conversation.cancelRequestConfirm'
+                : 'features.messages.conversation.deleteConfirm'
+            )}
+          </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-2 pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>

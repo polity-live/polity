@@ -4,8 +4,8 @@ import { cleanup, render } from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/features/file-upload/ui/ImageUpload.tsx', () => ({
-  ImageUpload: () => <div data-testid="image-upload" />,
+vi.mock('@/features/file-upload/ui/MediaUpload', () => ({
+  MediaUpload: () => <div data-testid="media-upload" />,
 }));
 
 vi.mock('@/features/create/ui/inputs/VisibilityInput', () => ({
@@ -65,6 +65,8 @@ describe('GroupEditFormView sibling preflight feedback', () => {
         hasHierarchyChildren={false}
         hasSiblingConnections={false}
         showSiblingRelationshipEditor
+        activeTab="relationships"
+        onTabChange={vi.fn()}
         t={(key: string) =>
           key === 'common.checks.siblingConfiguration' ? 'Checking sibling configuration...' : key
         }

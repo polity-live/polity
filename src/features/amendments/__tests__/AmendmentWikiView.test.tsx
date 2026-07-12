@@ -48,6 +48,7 @@ vi.mock('@/features/shared/ui/voting', () => ({
 }));
 
 vi.mock('@/features/shared/ui/wiki', () => ({
+  EntityWikiMedia: () => <div data-testid="entity-wiki-media" />,
   InfoTabs: () => <div data-testid="info-tabs" />,
   WikiParticipationDirectory: () => <div data-testid="wiki-participation-directory" />,
   getWikiParticipationName: () => 'Collaborator',
@@ -96,6 +97,7 @@ function baseProps(amendmentOverrides: Record<string, unknown> = {}): AmendmentW
     },
     amendment_hashtags: [],
     image_url: null,
+    video_url: null,
     youtube: null,
     ...amendmentOverrides,
   };

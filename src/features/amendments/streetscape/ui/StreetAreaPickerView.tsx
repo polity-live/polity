@@ -46,7 +46,10 @@ export interface StreetAreaPickerViewProps {
   locationSearchResetKey: number;
   mapViewportFocusKey: number;
   onLocationSearchFieldChange: (field: GeoAddressField, value: string) => void;
-  onLocationSearchResolved: (result: GeoResolvedAddress | null) => void;
+  onLocationSearchResolved: (
+    result: GeoResolvedAddress | null,
+    field: GeoAddressField | null
+  ) => void;
   onLocationSearchReset: () => void;
   reactLeafletModule: ReactLeafletModule | null;
   markerIcon: DivIcon | null;

@@ -1,6 +1,7 @@
 import { Button } from '@/features/shared/ui/ui/button';
 import { CardHeader } from '@/features/shared/ui/ui/card';
 import { ArrowLeft, Pin, PinOff, Trash2 } from 'lucide-react';
+import { isConversationRequester } from '../logic/messageUtils';
 export interface ConversationHeaderViewProps {
   conversation: any;
   currentUserId: any;
@@ -31,6 +32,7 @@ export interface ConversationHeaderViewProps {
 
 export function ConversationHeaderView({
   conversation,
+  currentUserId,
   onBack,
   onTogglePin,
   onDeleteClick,
@@ -67,20 +69,23 @@ export function ConversationHeaderView({
             )}
           </Button>
         )}
-        {conversation.type !== 'group' && conversation.type !== 'event' && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onDeleteClick(conversation.id)}
-            title={
-              conversation.status === 'pending'
-                ? t('features.messages.conversation.cancelRequest')
-                : t('features.messages.conversation.delete')
-            }
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
+        {conversation.type !== 'group' &&
+          conversation.type !== 'event' &&
+          (conversation.status !== 'pending' ||
+            isConversationRequester(conversation, currentUserId)) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDeleteClick(conversation.id)}
+              title={
+                conversation.status === 'pending'
+                  ? t('features.messages.conversation.cancelRequest')
+                  : t('features.messages.conversation.delete')
+              }
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
       </div>
     </CardHeader>
   );

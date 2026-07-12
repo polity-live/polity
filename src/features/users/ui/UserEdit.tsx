@@ -6,10 +6,11 @@ import { useStripeCheckout } from '@/features/payments/hooks/useStripeCheckout';
 
 interface UserEditProps {
   userId: string;
-  defaultTab?: string;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 import { UserEditView } from './UserEditView';
-export function UserEdit({ userId, defaultTab }: UserEditProps) {
+export function UserEdit({ userId, activeTab, onTabChange }: UserEditProps) {
   const { user, isLoading } = useUserData(userId);
 
   const { formData, isSubmitting, handleSubmit, updateAboutContent, updateField } =
@@ -36,7 +37,8 @@ export function UserEdit({ userId, defaultTab }: UserEditProps) {
   return (
     <UserEditView
       userId={userId}
-      defaultTab={defaultTab}
+      activeTab={activeTab}
+      onTabChange={onTabChange}
       user={user}
       isLoading={isLoading}
       formData={formData}

@@ -8,7 +8,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
+import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 import {
   geoLocationFieldsFromShape,
@@ -73,6 +73,10 @@ import {
   createSuccessSubmitOutcome,
 } from '../logic/createSubmitTargets';
 import { consumeCreateRestoreDraft, trackCreateFinalization } from '../logic/createFinalization';
+import {
+  isValidOptionalEventStreamUrl,
+  normalizeEventStreamUrl,
+} from '@/features/events/logic/eventStreamUrl';
 
 type EventType = CreateEventType;
 type MeetingType = 'one-on-one' | 'public-meeting';
@@ -96,6 +100,7 @@ type CreateEventRestoreState = Partial<{
   attendanceMode: AttendanceMode;
   locationName: string;
   onlineLink: string;
+  streamUrl: string;
   country: string;
   region: string;
   postCode: string;
@@ -107,6 +112,7 @@ type CreateEventRestoreState = Partial<{
   locationShape: GeoLocationShape | null;
   capacity: string;
   imageURL: string;
+  videoURL: string;
   visibility: Visibility;
   genderQuotaEnabled: boolean;
   changeRequestVoteOrder: ChangeRequestVoteOrder;
@@ -152,6 +158,7 @@ export function useCreateEventForm(): CreateFormConfig {
   const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>('offline');
   const [locationName, setLocationName] = useState('');
   const [onlineLink, setOnlineLink] = useState('');
+  const [streamUrl, setStreamUrl] = useState('');
   const [country, setCountry] = useState('');
   const [region, setRegion] = useState('');
   const [postCode, setPostCode] = useState('');
@@ -163,6 +170,7 @@ export function useCreateEventForm(): CreateFormConfig {
   const [locationShape, setLocationShape] = useState<GeoLocationShape | null>(null);
   const [capacity, setCapacity] = useState('');
   const [imageURL, setImageURL] = useState('');
+  const [videoURL, setVideoURL] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('public');
   const [genderQuotaEnabled, setGenderQuotaEnabled] = useState(false);
   const [changeRequestVoteOrder, setChangeRequestVoteOrder] = useState<ChangeRequestVoteOrder>(
@@ -206,6 +214,7 @@ export function useCreateEventForm(): CreateFormConfig {
     setAttendanceMode(state.attendanceMode ?? 'offline');
     setLocationName(state.locationName ?? '');
     setOnlineLink(state.onlineLink ?? '');
+    setStreamUrl(state.streamUrl ?? '');
     setCountry(state.country ?? '');
     setRegion(state.region ?? '');
     setPostCode(state.postCode ?? '');
@@ -217,6 +226,7 @@ export function useCreateEventForm(): CreateFormConfig {
     setLocationShape(state.locationShape ?? null);
     setCapacity(state.capacity ?? '');
     setImageURL(state.imageURL ?? '');
+    setVideoURL(state.videoURL ?? '');
     setVisibility(state.visibility ?? 'public');
     setGenderQuotaEnabled(state.genderQuotaEnabled ?? false);
     setChangeRequestVoteOrder(state.changeRequestVoteOrder ?? DEFAULT_CHANGE_REQUEST_VOTE_ORDER);
@@ -408,6 +418,10 @@ export function useCreateEventForm(): CreateFormConfig {
 
   const handleSubmit = async (context?: CreateSubmitContext) => {
     if (!title.trim()) return createBlockedSubmitOutcome();
+    if (!isValidOptionalEventStreamUrl(streamUrl)) {
+      toast.error(t('pages.create.event.streamUrlInvalid'));
+      return createBlockedSubmitOutcome();
+    }
     if (!selectedGroupIsValid) {
       toast.error(groupInvalidReason ?? t('pages.create.error.createFailed'));
       return createBlockedSubmitOutcome();
@@ -468,6 +482,7 @@ export function useCreateEventForm(): CreateFormConfig {
         location_type: attendanceMode === 'online' ? 'online' : 'physical',
         location_name: attendanceMode !== 'online' ? locationName || null : null,
         location_url: attendanceMode !== 'offline' ? onlineLink || null : null,
+        stream_url: normalizeEventStreamUrl(streamUrl),
         country: attendanceMode !== 'online' ? country || null : null,
         region: attendanceMode !== 'online' ? region || null : null,
         post_code: attendanceMode !== 'online' ? postCode || null : null,
@@ -488,6 +503,7 @@ export function useCreateEventForm(): CreateFormConfig {
         gender_quota_enabled: genderQuotaEnabled,
         change_request_vote_order: changeRequestVoteOrder,
         image_url: imageURL || null,
+        video_url: videoURL || null,
         capacity: isMeetingEvent ? null : capacity ? parseInt(capacity, 10) : null,
         event_type: eventType,
         group_id: groupId || null,
@@ -596,6 +612,7 @@ export function useCreateEventForm(): CreateFormConfig {
         attendanceMode,
         locationName,
         onlineLink,
+        streamUrl,
         country,
         region,
         postCode,
@@ -607,6 +624,7 @@ export function useCreateEventForm(): CreateFormConfig {
         locationShape,
         capacity,
         imageURL,
+        videoURL,
         visibility: effectiveVisibility,
         genderQuotaEnabled,
         changeRequestVoteOrder,
@@ -705,17 +723,22 @@ export function useCreateEventForm(): CreateFormConfig {
               },
             },
             {
-              key: 'image',
+              key: 'media',
               kind: 'customComponent',
-              component: ImageUpload,
+              component: MediaUpload,
               props: {
                 currentImage: imageURL,
                 onImageChange: (url: string) => setImageURL(url),
+                currentVideo: videoURL,
+                onVideoChange: (url: string) => setVideoURL(url),
                 cleanupOnRemove: true,
+                exclusiveMedia: true,
                 entityType: 'events',
                 entityId: eventId,
-                label: t('pages.create.event.imageLabel'),
-                description: t('pages.create.event.imageDescription'),
+                imageLabel: t('pages.create.event.imageLabel'),
+                imageDescription: t('pages.create.event.imageDescription'),
+                videoLabel: t('common.actions.uploadVideo'),
+                videoDescription: t('common.media.videoDescription'),
               },
             },
           ],
@@ -894,7 +917,11 @@ export function useCreateEventForm(): CreateFormConfig {
         // 6. Location (tabbed: Physical / Online)
         {
           label: t('pages.create.event.location'),
-          isValid: () => true,
+          isValid: () => isValidOptionalEventStreamUrl(streamUrl),
+          getInvalidReason: () =>
+            isValidOptionalEventStreamUrl(streamUrl)
+              ? null
+              : t('pages.create.event.streamUrlInvalid'),
           optional: true,
           fields: [
             {
@@ -906,6 +933,7 @@ export function useCreateEventForm(): CreateFormConfig {
                 values: {
                   locationName,
                   onlineLink,
+                  streamUrl,
                   country,
                   region,
                   postCode,
@@ -930,6 +958,10 @@ export function useCreateEventForm(): CreateFormConfig {
                   meetingLink: t('pages.create.event.meetingLink'),
                   meetingLinkHint: t('pages.create.event.tips.meetingLink'),
                   meetingLinkPlaceholder: t('pages.create.event.meetingLinkPlaceholder'),
+                  streamUrl: t('pages.create.event.streamUrl'),
+                  streamUrlHint: t('pages.create.event.streamUrlHint'),
+                  streamUrlPlaceholder: t('pages.create.event.streamUrlPlaceholder'),
+                  streamUrlInvalid: t('pages.create.event.streamUrlInvalid'),
                   capacity: t('pages.create.event.capacityLabel'),
                   capacityHint: t('pages.create.event.tips.capacity'),
                   capacityPlaceholder: t('pages.create.event.capacityPlaceholder'),
@@ -948,6 +980,9 @@ export function useCreateEventForm(): CreateFormConfig {
                       break;
                     case 'onlineLink':
                       setOnlineLink(String(value ?? ''));
+                      break;
+                    case 'streamUrl':
+                      setStreamUrl(String(value ?? ''));
                       break;
                     case 'country':
                       setCountry(String(value ?? ''));
@@ -1035,9 +1070,11 @@ export function useCreateEventForm(): CreateFormConfig {
                 secondaryBadge: eventTypeLabel,
                 title: title || t('pages.create.event.titlePlaceholder'),
                 subtitle: description || undefined,
-                media: imageURL
-                  ? { imageUrl: imageURL, imageAlt: title || t('pages.create.event.coverImageAlt') }
-                  : undefined,
+                media: {
+                  imageUrl: imageURL || undefined,
+                  imageAlt: title || t('pages.create.event.coverImageAlt'),
+                  videoUrl: videoURL || undefined,
+                },
                 hashtags: hashtags.length > 0 ? hashtags : undefined,
                 sections: [
                   {
@@ -1177,6 +1214,9 @@ export function useCreateEventForm(): CreateFormConfig {
                       ...(attendanceMode !== 'offline' && onlineLink
                         ? [{ label: t('pages.create.event.meetingLink'), value: onlineLink }]
                         : []),
+                      ...(streamUrl
+                        ? [{ label: t('pages.create.event.streamUrl'), value: streamUrl }]
+                        : []),
                     ],
                   },
                 ],
@@ -1197,6 +1237,7 @@ export function useCreateEventForm(): CreateFormConfig {
       attendanceMode,
       locationName,
       onlineLink,
+      streamUrl,
       country,
       region,
       postCode,
@@ -1209,6 +1250,7 @@ export function useCreateEventForm(): CreateFormConfig {
       locationSummary,
       capacity,
       imageURL,
+      videoURL,
       visibility,
       genderQuotaEnabled,
       changeRequestVoteOrder,

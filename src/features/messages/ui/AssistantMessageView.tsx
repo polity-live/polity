@@ -54,6 +54,8 @@ export function AssistantMessageView({
           toolName: assistantChat.activeToolName,
           toolPreview: assistantChat.activeToolCall?.preview ?? null,
           errorMessage: assistantChat.streamError,
+          canRetry: assistantChat.canRetry,
+          onRetry: assistantChat.retryLastAssistantMessage,
         }
       : undefined;
 

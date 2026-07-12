@@ -12,7 +12,7 @@ import {
 import { toast } from '@/features/shared/ui/ui/sonner';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
-import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
+import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
@@ -51,6 +51,7 @@ export function useCreateBlogForm(): CreateFormConfig {
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [imageURL, setImageURL] = useState('');
+  const [videoURL, setVideoURL] = useState('');
   const [groupId, setGroupId] = useState<string | null>(() => groupIdParam || null);
   const [groupName, setGroupName] = useState<string>('');
   const { group } = useGroupById(groupId ?? undefined);
@@ -82,6 +83,7 @@ export function useCreateBlogForm(): CreateFormConfig {
       title?: string;
       date?: string;
       imageURL?: string;
+      videoURL?: string;
       visibility?: 'public' | 'authenticated' | 'private';
       groupId?: string | null;
       hashtags?: string[];
@@ -91,6 +93,7 @@ export function useCreateBlogForm(): CreateFormConfig {
     setTitle(restoreDraft.formState.title ?? '');
     setDate(restoreDraft.formState.date ?? new Date().toISOString().split('T')[0]);
     setImageURL(restoreDraft.formState.imageURL ?? '');
+    setVideoURL(restoreDraft.formState.videoURL ?? '');
     setVisibility(restoreDraft.formState.visibility ?? 'public');
     setGroupId(restoreDraft.formState.groupId ?? null);
     setHashtags(restoreDraft.formState.hashtags ?? []);
@@ -138,7 +141,8 @@ export function useCreateBlogForm(): CreateFormConfig {
           description: '',
           content: null,
           date,
-          image_url: imageURL,
+          image_url: imageURL || null,
+          video_url: videoURL || null,
           visibility,
           like_count: 0,
           comment_count: 0,
@@ -165,7 +169,7 @@ export function useCreateBlogForm(): CreateFormConfig {
                 ),
                 metadata: null,
                 image_url: imageURL || '',
-                video_url: '',
+                video_url: videoURL || '',
                 video_thumbnail_url: '',
                 content_type: 'blog',
                 tags: null,
@@ -207,7 +211,7 @@ export function useCreateBlogForm(): CreateFormConfig {
             entityType: 'blog',
             entityId: blogId,
             createPath: '/create/blog-entry',
-            formState: { title, date, imageURL, visibility, groupId, hashtags },
+            formState: { title, date, imageURL, videoURL, visibility, groupId, hashtags },
             mutationPayload: createBlogPayload,
             target,
           },
@@ -226,7 +230,7 @@ export function useCreateBlogForm(): CreateFormConfig {
           entityType: 'blog',
           entityId: blogId,
           createPath: '/create/blog-entry',
-          formState: { title, date, imageURL, visibility, groupId, hashtags },
+          formState: { title, date, imageURL, videoURL, visibility, groupId, hashtags },
           mutationPayload: createBlogPayload,
           target,
         },
@@ -279,17 +283,22 @@ export function useCreateBlogForm(): CreateFormConfig {
               type: 'date',
             },
             {
-              key: 'image',
+              key: 'media',
               kind: 'customComponent',
-              component: ImageUpload,
+              component: MediaUpload,
               props: {
                 currentImage: imageURL,
                 onImageChange: (url: string) => setImageURL(url),
+                currentVideo: videoURL,
+                onVideoChange: (url: string) => setVideoURL(url),
                 cleanupOnRemove: true,
+                exclusiveMedia: true,
                 entityType: 'blogs',
                 entityId: blogId,
-                label: t('pages.create.blog.coverImage'),
-                description: t('pages.create.blog.coverImageDescription'),
+                imageLabel: t('pages.create.blog.coverImage'),
+                imageDescription: t('pages.create.blog.coverImageDescription'),
+                videoLabel: t('common.actions.uploadVideo'),
+                videoDescription: t('common.media.videoDescription'),
               },
             },
             {
@@ -354,9 +363,11 @@ export function useCreateBlogForm(): CreateFormConfig {
                 badge: t('pages.create.blog.reviewBadge'),
                 secondaryBadge: visibilityLabel,
                 title: title || t('pages.create.blog.titlePlaceholder'),
-                media: imageURL
-                  ? { imageUrl: imageURL, imageAlt: title || t('pages.create.blog.coverImageAlt') }
-                  : undefined,
+                media: {
+                  imageUrl: imageURL || undefined,
+                  imageAlt: title || t('pages.create.blog.coverImageAlt'),
+                  videoUrl: videoURL || undefined,
+                },
                 hashtags: hashtags.length > 0 ? hashtags : undefined,
                 sections: [
                   {
@@ -388,6 +399,14 @@ export function useCreateBlogForm(): CreateFormConfig {
                             },
                           ]
                         : []),
+                      ...(videoURL
+                        ? [
+                            {
+                              label: t('common.actions.uploadVideo'),
+                              value: t('common.attached'),
+                            },
+                          ]
+                        : []),
                     ],
                   },
                 ],
@@ -405,6 +424,7 @@ export function useCreateBlogForm(): CreateFormConfig {
       hashtags,
       preferredHashtagSuggestions,
       imageURL,
+      videoURL,
       isSubmitting,
       blogId,
       groupId,

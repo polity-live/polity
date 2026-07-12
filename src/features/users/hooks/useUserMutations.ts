@@ -26,7 +26,8 @@ export function useUserMutations() {
       gender?: 'male' | 'female' | 'diverse' | null;
       bio?: string;
       about?: MutableJSONValue | null;
-      avatar?: string;
+      avatar?: string | null;
+      video_url?: string | null;
       x?: string;
       whatsapp?: string;
       instagram?: string;
@@ -84,6 +85,7 @@ export function useUserMutations() {
     try {
       await userActions.updateProfileClientApplied({
         avatar: fileId,
+        video_url: null,
       });
 
       await createTimelineEvent({
@@ -126,7 +128,8 @@ export function useUserMutations() {
       bio?: string;
       about?: MutableJSONValue | null;
       aboutPlainText?: string;
-      avatar?: string;
+      avatar?: string | null;
+      video_url?: string | null;
       whatsapp?: string;
       instagram?: string;
       twitter?: string;
@@ -170,6 +173,7 @@ export function useUserMutations() {
         bio: profileData.bio,
         about: profileData.about,
         avatar: profileData.avatar,
+        video_url: profileData.video_url,
         x: profileData.twitter,
         whatsapp: profileData.whatsapp,
         instagram: profileData.instagram,

@@ -69,9 +69,9 @@ export function useWorkflowFlowVisualizationController({
 }: WorkflowFlowVisualizationProps) {
   const { t } = useTranslation();
 
-  const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const [panelCollapsed, setPanelCollapsed] = useState(true);
 
-  const [legendCollapsed, setLegendCollapsed] = useState(false);
+  const [legendCollapsed, setLegendCollapsed] = useState(true);
 
   const [isInteractive, setIsInteractive] = useState(true);
 

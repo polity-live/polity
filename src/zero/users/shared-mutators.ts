@@ -3,13 +3,18 @@ import { zql } from '../schema';
 import { requireAuthenticated, requireOwner } from '../rbac/authorize';
 import { userUpdateSchema } from './schema';
 import { followCreateSchema, followDeleteSchema } from '../network/schema';
+import { normalizeUserPrimaryMediaUpdate } from '../shared/primaryMedia';
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const userSharedMutators = {
   updateProfile: defineMutator(userUpdateSchema, async ({ tx, ctx, args }) => {
     const { userID } = ctx;
     requireAuthenticated(tx, ctx, { action: 'update', resource: '$users' });
-    await tx.mutate.user.update({ ...args, id: userID, updated_at: Date.now() });
+    await tx.mutate.user.update({
+      ...normalizeUserPrimaryMediaUpdate(args),
+      id: userID,
+      updated_at: Date.now(),
+    });
   }),
 
   follow: defineMutator(followCreateSchema, async ({ tx, ctx, args }) => {

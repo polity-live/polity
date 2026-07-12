@@ -169,6 +169,8 @@ export interface SocialNotificationSettings {
   directMessages: boolean;
   /** Conversation requests */
   conversationRequests: boolean;
+  /** Invitations to collaborate on standalone documents */
+  documentInvitations: boolean;
 }
 
 // ============================================================================
@@ -296,6 +298,7 @@ export const DEFAULT_SOCIAL_NOTIFICATIONS: SocialNotificationSettings = {
   mentions: true,
   directMessages: true,
   conversationRequests: true,
+  documentInvitations: true,
 };
 
 export const DEFAULT_DELIVERY_SETTINGS: DeliverySettings = {

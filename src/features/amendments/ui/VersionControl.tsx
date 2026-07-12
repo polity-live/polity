@@ -1,8 +1,6 @@
 'use client';
 
 import { VersionControl as EditorVersionControl } from '@/features/editor/ui/VersionControl';
-import { notifyVersionCreated } from '@/features/notifications/utils/notification-helpers.ts';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import type { Value } from 'platejs';
 
 interface VersionControlProps {
@@ -22,19 +20,6 @@ export function VersionControl({
   amendmentId,
   amendmentTitle,
 }: VersionControlProps) {
-  const handleVersionCreated = async ({ versionNumber }: { versionNumber: number }) => {
-    if (!amendmentId) {
-      return;
-    }
-
-    await notifyVersionCreated({
-      senderId: currentUserId,
-      amendmentId,
-      amendmentTitle: amendmentTitle || translateText('features.amendments.editContent.untitled'),
-      version: `v.${versionNumber}`,
-    });
-  };
-
   return (
     <EditorVersionControl
       entityType="amendment"
@@ -44,7 +29,6 @@ export function VersionControl({
       onRestoreVersion={onRestoreVersion}
       amendmentId={amendmentId}
       amendmentTitle={amendmentTitle}
-      onVersionCreated={handleVersionCreated}
     />
   );
 }

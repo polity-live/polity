@@ -197,6 +197,7 @@ function createAmendmentArgs(overrides: Partial<CreateAmendmentArgs> = {}): Crea
     visibility: 'public',
     discussions: null,
     image_url: null,
+    video_url: null,
     x: null,
     youtube: null,
     linkedin: null,

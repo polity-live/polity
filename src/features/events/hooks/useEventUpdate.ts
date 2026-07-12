@@ -43,6 +43,10 @@ import {
   type ChangeRequestVoteOrder,
 } from '@/features/change-requests/logic/changeRequestVoteOrder';
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
+import {
+  isValidOptionalEventStreamUrl,
+  normalizeEventStreamUrl,
+} from '@/features/events/logic/eventStreamUrl';
 
 type AttendanceMode = 'online' | 'hybrid' | 'offline';
 
@@ -53,6 +57,7 @@ export interface EventFormData {
   attendanceMode: AttendanceMode;
   locationName: string;
   onlineLink: string;
+  streamUrl: string;
   country: string;
   region: string;
   postCode: string;
@@ -73,6 +78,7 @@ export interface EventFormData {
   capacity: string;
   groupId: string;
   imageURL: string;
+  videoURL: string;
   visibility: Visibility;
   tags: string[];
   registrationDeadline: string;
@@ -135,6 +141,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     attendanceMode: 'offline',
     locationName: '',
     onlineLink: '',
+    streamUrl: '',
     country: '',
     region: '',
     postCode: '',
@@ -155,6 +162,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     capacity: '',
     groupId: '',
     imageURL: '',
+    videoURL: '',
     visibility: 'public' as Visibility,
     tags: [],
     registrationDeadline: '',
@@ -249,6 +257,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         attendanceMode: resolveAttendanceMode(event),
         locationName: event.location_name || '',
         onlineLink: event.location_url || '',
+        streamUrl: event.stream_url || '',
         country: event.country || '',
         region: event.region || '',
         postCode: event.post_code || '',
@@ -269,6 +278,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         capacity: event.capacity?.toString() || '',
         groupId: event.group_id || '',
         imageURL: event.image_url || '',
+        videoURL: event.video_url || '',
         visibility: (event.visibility as Visibility) ?? 'public',
         tags: [],
         registrationDeadline: formatLocalDateTimeInput(event.registration_deadline),
@@ -333,6 +343,10 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
   // Submit handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidOptionalEventStreamUrl(formData.streamUrl)) {
+      toast.error(t('pages.create.event.streamUrlInvalid'));
+      return;
+    }
     setIsSubmitting(true);
 
     try {
@@ -403,6 +417,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           location_name:
             formData.attendanceMode !== 'online' ? formData.locationName || null : null,
           location_url: formData.attendanceMode !== 'offline' ? formData.onlineLink || null : null,
+          stream_url: normalizeEventStreamUrl(formData.streamUrl),
           country: formData.attendanceMode !== 'online' ? formData.country || null : null,
           region: formData.attendanceMode !== 'online' ? formData.region || null : null,
           post_code: formData.attendanceMode !== 'online' ? formData.postCode || null : null,
@@ -423,6 +438,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           end_date,
           visibility: formData.visibility,
           image_url: formData.imageURL || null,
+          video_url: formData.videoURL || null,
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
           group_id: formData.groupId || null,
           creator_id: user.id,
@@ -469,6 +485,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           location_name:
             formData.attendanceMode !== 'online' ? formData.locationName || null : null,
           location_url: formData.attendanceMode !== 'offline' ? formData.onlineLink || null : null,
+          stream_url: normalizeEventStreamUrl(formData.streamUrl),
           country: formData.attendanceMode !== 'online' ? formData.country || null : null,
           region: formData.attendanceMode !== 'online' ? formData.region || null : null,
           post_code: formData.attendanceMode !== 'online' ? formData.postCode || null : null,
@@ -489,6 +506,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           end_date,
           visibility: formData.visibility,
           image_url: formData.imageURL || null,
+          video_url: formData.videoURL || null,
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
           group_id: formData.groupId || null,
           registration_deadline,

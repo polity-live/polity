@@ -3,6 +3,7 @@ import {
   getConversationDisplay,
   getUnreadCount,
   hasUnreadConversationRequest,
+  isConversationRequester,
 } from '../logic/messageUtils';
 
 type TestConversationOverrides = Partial<Parameters<typeof getUnreadCount>[0]> & {
@@ -30,6 +31,16 @@ const createConversation = (overrides: TestConversationOverrides = {}) => ({
   ],
   messages: [],
   ...overrides,
+});
+
+describe('conversation requester detection', () => {
+  it('uses the scalar foreign key without requiring the loaded requester relation', () => {
+    const conversation = { requested_by_id: 'user-a' };
+
+    expect(isConversationRequester(conversation, 'user-a')).toBe(true);
+    expect(isConversationRequester(conversation, 'user-b')).toBe(false);
+    expect(isConversationRequester(conversation)).toBe(false);
+  });
 });
 
 describe('getUnreadCount', () => {

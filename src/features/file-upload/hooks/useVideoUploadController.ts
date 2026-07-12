@@ -1,5 +1,4 @@
-import type React from 'react';
-import { useRef, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 import {
   useTranslation,
@@ -7,6 +6,9 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { useUploadFile } from '@/features/file-upload/hooks/use-upload-file.ts';
 import { toast } from '@/features/shared/ui/ui/sonner';
+import type { FileDropzoneRejection } from '@/features/file-upload/ui/FileDropzone';
+
+export const MAX_VIDEO_UPLOAD_SIZE = 100 * 1024 * 1024;
 
 interface UseVideoUploadControllerProps {
   currentVideo?: string;
@@ -26,27 +28,27 @@ export function useVideoUploadController({
   className,
 }: UseVideoUploadControllerProps) {
   const { t } = useTranslation();
+  const urlInputId = useId();
   const [previewUrl, setPreviewUrl] = useState<string>(currentVideo || '');
   const [videoUrl, setVideoUrl] = useState<string>(currentVideo || '');
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadFile, isUploading, progress } = useUploadFile();
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
+  useEffect(() => {
+    setPreviewUrl(currentVideo || '');
+    setVideoUrl(currentVideo || '');
+  }, [currentVideo]);
+
+  const handleFilesSelected = async (files: File[]) => {
+    const file = files[0];
+    if (!file) return;
 
     if (!file.type.startsWith('video/')) {
-      toast.error(translateText('generated.inline.0523_please_select_a_valid_video_file_1459ebac'));
+      toast.error(t('common.actions.uploadVideoTypesOnly'));
       return;
     }
 
-    const maxSize = 100 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast.error(
-        translateText('generated.inline.0524_video_file_size_must_be_less_than_100mb_7ca8a681')
-      );
+    if (file.size > MAX_VIDEO_UPLOAD_SIZE) {
+      toast.error(t('common.actions.videoTooLarge'));
       return;
     }
 
@@ -56,11 +58,20 @@ export function useVideoUploadController({
         setPreviewUrl(uploadResult.url);
         setVideoUrl(uploadResult.url);
         onVideoChange(uploadResult.url);
-        toast.success(translateText('generated.inline.0525_video_uploaded_successfully_d74ca369'));
+        toast.success(t('common.actions.videoUploadSuccess'));
       }
     } catch (error) {
       console.error('Error uploading video:', error);
-      toast.error(translateText('generated.inline.0526_failed_to_upload_video_c3009772'));
+      toast.error(t('common.actions.videoUploadFailed'));
+    }
+  };
+
+  const handleFilesRejected = (rejections: FileDropzoneRejection[]) => {
+    if (rejections.some(rejection => rejection.code === 'file-type')) {
+      toast.error(t('common.actions.uploadVideoTypesOnly'));
+    }
+    if (rejections.some(rejection => rejection.code === 'file-size')) {
+      toast.error(t('common.actions.videoTooLarge'));
     }
   };
 
@@ -74,9 +85,6 @@ export function useVideoUploadController({
     setPreviewUrl('');
     setVideoUrl('');
     onVideoChange('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
   };
 
   return {
@@ -86,18 +94,21 @@ export function useVideoUploadController({
     description,
     previewUrl,
     videoUrl,
-    fileInputRef,
+    urlInputId,
     isUploading,
     progress,
+    maxSize: MAX_VIDEO_UPLOAD_SIZE,
     copy: {
+      dropVideoHere: t('common.actions.dropVideoHere'),
+      dragVideoHere: t('common.actions.dragVideoHere'),
+      orClickToBrowse: t('common.media.orClickToBrowse'),
       uploading: t('common.actions.uploading'),
       uploadVideo: t('common.actions.uploadVideo'),
       orProvideUrl: t('common.labels.orProvideUrl'),
-      unsupportedVideo: translateText(
-        'generated.inline.0527_your_browser_does_not_support_the_video_tag_05b27e33'
-      ),
+      unsupportedVideo: t('common.media.unsupportedVideo'),
     },
-    onFileSelect: handleFileSelect,
+    onFilesSelected: handleFilesSelected,
+    onFilesRejected: handleFilesRejected,
     onUrlChange: handleUrlChange,
     onRemoveVideo: handleRemoveVideo,
   };

@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { EventLiveFocusDialog } from '../EventLiveFocusDialog';
@@ -29,7 +29,6 @@ const baseProps = {
   currentAgendaItemTopNumber: 1,
   streamRuntimeStatus: 'active',
   streamIsLive: true,
-  isEventStarted: true,
   speakerList: [],
   isUserInSpeakerList: false,
   canManageAgenda: false,
@@ -47,6 +46,30 @@ const baseProps = {
 };
 
 describe('EventLiveFocusDialog', () => {
+  it('shows the livestream for a live agenda item even when the event status is not started', () => {
+    render(
+      <EventLiveFocusDialog
+        {...baseProps}
+        streamUrl="https://www.youtube.com/watch?v=xIbdyxtLPx4"
+        streamIsLive
+      />
+    );
+
+    expect(screen.getByTitle('features.events.stream.liveStream')).toBeTruthy();
+  });
+
+  it('hides the livestream when the agenda item is no longer live', () => {
+    render(
+      <EventLiveFocusDialog
+        {...baseProps}
+        streamUrl="https://www.youtube.com/watch?v=xIbdyxtLPx4"
+        streamIsLive={false}
+      />
+    );
+
+    expect(screen.queryByTitle('features.events.stream.liveStream')).toBeNull();
+  });
+
   it('renders the Vote button for amendment items when the toolbar can vote', () => {
     render(
       <EventLiveFocusDialog
@@ -81,5 +104,43 @@ describe('EventLiveFocusDialog', () => {
     expect(
       screen.getByText('Active Voting Rights are required to vote in this event.')
     ).toBeTruthy();
+  });
+
+  it('keeps voting management, offline tally, and candidacy actions available in fullscreen', () => {
+    const onStartVote = vi.fn();
+    const onOfflineTallyClick = vi.fn();
+    const onBecomeCandidate = vi.fn();
+
+    render(
+      <EventLiveFocusDialog
+        {...baseProps}
+        currentAgendaItem={{ ...baseProps.currentAgendaItem, type: 'election' }}
+        canManageAgenda
+        canBeCandidate
+        isUserCandidate={false}
+        isVotingActionAvailable
+        onVoteClick={() => undefined}
+        onStartVote={onStartVote}
+        showOfflineTallyButton
+        onOfflineTallyClick={onOfflineTallyClick}
+        offlineTallyMode="create"
+        offlineTallyLabel="Offline tally"
+        onBecomeCandidate={onBecomeCandidate}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Offline tally' }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'features.events.agenda.actions.becomeCandidate',
+      })
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'features.events.agenda.actions.startVote' })
+    );
+
+    expect(onOfflineTallyClick).toHaveBeenCalledTimes(1);
+    expect(onBecomeCandidate).toHaveBeenCalledTimes(1);
+    expect(onStartVote).toHaveBeenCalledTimes(1);
   });
 });

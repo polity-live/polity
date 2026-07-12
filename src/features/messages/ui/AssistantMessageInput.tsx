@@ -1,11 +1,9 @@
 'use client';
 
-import { featureThemeClassName } from '@/features/shared/theme';
-import { BadgeControl } from '@/features/shared/ui/status';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { toast } from '@/features/shared/ui/ui/sonner';
-import { DropdownMenuCheckboxItem } from '@/features/shared/ui/ui/dropdown-menu';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { featureThemeClassName } from '@/features/shared/theme';
 import {
   ASSISTANT_ATTACHMENT_TYPE_OPTIONS,
   getSuggestionAnchorPosition,
@@ -21,7 +19,6 @@ import type { useAssistantChat } from '../hooks/useAssistantChat';
 interface AssistantMessageInputProps {
   assistantChat: ReturnType<typeof useAssistantChat>;
 }
-const MAX_VISIBLE_TOOL_BADGES = 4;
 function buildModelKey(model: { provider: string; id: string }): string {
   return `${model.provider}:${model.id}`;
 }
@@ -35,6 +32,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
     useState<SuggestionAnchorPosition | null>(null);
   const [textareaScrollVersion, setTextareaScrollVersion] = useState(0);
   const [createSkillOpen, setCreateSkillOpen] = useState(false);
+  const [assistantSettingsOpen, setAssistantSettingsOpen] = useState(false);
   const [skillName, setSkillName] = useState('');
   const [skillSlug, setSkillSlug] = useState('');
   const [skillAliases, setSkillAliases] = useState('');
@@ -175,90 +173,6 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
 
   const suggestionAnchorIndex =
     mentionQuery?.start ?? skillCommand?.start ?? toolCommand?.start ?? null;
-
-  const visibleSelectedTools = assistantChat.selectedTools.slice(0, MAX_VISIBLE_TOOL_BADGES);
-  const hiddenSelectedToolCount = Math.max(
-    assistantChat.selectedTools.length - visibleSelectedTools.length,
-    0
-  );
-
-  const getToolGroupCheckedState = (
-    tools: readonly (typeof assistantChat.availableTools)[number][]
-  ) => {
-    if (tools.length === 0) {
-      return false;
-    }
-
-    const selectedCount = tools.filter(tool => selectedToolKeySet.has(tool.name)).length;
-    if (selectedCount === 0) {
-      return false;
-    }
-
-    if (selectedCount === tools.length) {
-      return true;
-    }
-
-    return 'indeterminate' as const;
-  };
-
-  const renderToolGroup = (
-    label: string,
-    kind: 'search' | 'create',
-    tools: readonly (typeof assistantChat.availableTools)[number][]
-  ) => {
-    if (tools.length === 0) {
-      return null;
-    }
-
-    const checkedState = getToolGroupCheckedState(tools);
-
-    return (
-      <div className="space-y-1" key={kind}>
-        <div className={featureThemeClassName('messageAssistantMessageInputThemedText')}>
-          {label}
-        </div>
-        <DropdownMenuCheckboxItem
-          checked={checkedState}
-          onSelect={event => event.preventDefault()}
-          onCheckedChange={checked => assistantChat.setToolGroupSelection(kind, checked === true)}
-        >
-          <div className="flex w-full min-w-0 items-center justify-between gap-2">
-            <div className="min-w-0">
-              <div className="truncate text-sm font-medium">
-                {kind === 'search'
-                  ? t('features.messages.ai.allSearchTools')
-                  : t('features.messages.ai.allCreateTools')}
-              </div>
-              <div className="text-muted-foreground truncate text-xs">
-                {kind === 'search'
-                  ? t('features.messages.ai.searchToolsDescription')
-                  : t('features.messages.ai.createToolsDescription')}
-              </div>
-            </div>
-            <BadgeControl variant="outline" size="tiny" textTransform="uppercase">
-              {tools.length}
-            </BadgeControl>
-          </div>
-        </DropdownMenuCheckboxItem>
-        {tools.map(tool => (
-          <DropdownMenuCheckboxItem
-            key={tool.name}
-            checked={selectedToolKeySet.has(tool.name)}
-            onSelect={event => event.preventDefault()}
-            onCheckedChange={checked => assistantChat.setToolSelection(tool.name, checked === true)}
-            className="pl-8"
-          >
-            <div className="min-w-0">
-              <div className="truncate text-sm font-medium">{tool.label}</div>
-              <div className="text-muted-foreground truncate text-xs">
-                {tool.name} · {tool.description}
-              </div>
-            </div>
-          </DropdownMenuCheckboxItem>
-        ))}
-      </div>
-    );
-  };
 
   const freeRouterLabel = t('features.messages.ai.freeRouterModel');
   const freeRouterMessage = t('features.messages.ai.modelReliability.freeRouter');
@@ -472,6 +386,8 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
       setTextareaScrollVersion={setTextareaScrollVersion}
       createSkillOpen={createSkillOpen}
       setCreateSkillOpen={setCreateSkillOpen}
+      assistantSettingsOpen={assistantSettingsOpen}
+      setAssistantSettingsOpen={setAssistantSettingsOpen}
       skillName={skillName}
       setSkillName={setSkillName}
       skillSlug={skillSlug}
@@ -494,10 +410,6 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
       toolSuggestions={toolSuggestions}
       hasSuggestionPanel={hasSuggestionPanel}
       suggestionAnchorIndex={suggestionAnchorIndex}
-      visibleSelectedTools={visibleSelectedTools}
-      hiddenSelectedToolCount={hiddenSelectedToolCount}
-      getToolGroupCheckedState={getToolGroupCheckedState}
-      renderToolGroup={renderToolGroup}
       freeRouterLabel={freeRouterLabel}
       freeRouterMessage={freeRouterMessage}
       reliabilityMessage={reliabilityMessage}

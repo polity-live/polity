@@ -12,6 +12,8 @@ import {
   type TimelineCardItem,
 } from '@/features/search/logic/buildTimelineCardProps';
 import { type AiAttachmentEntity, type AiChatAttachment } from '@/lib/ai/schemas';
+import { aiFindingToneSchema } from '@/lib/ai/messageContext';
+import { buildAiEntityHref } from '@/lib/ai/entityHref';
 import { executeZeroRead, type ZeroTransaction } from '@/server/zero-mutate';
 import { zql } from '@/zero/schema';
 import { buildAiCreateTools } from './ai-create-tools';
@@ -62,6 +64,22 @@ const groupResourceTypeSchema = z.enum(GROUP_RESOURCE_TYPES);
 const eventResourceTypeSchema = z.enum(EVENT_RESOURCE_TYPES);
 const createFlowTypeSchema = z.enum(CREATE_FLOW_TYPES);
 const agendaItemTypeSchema = z.enum(AGENDA_ITEM_TYPES);
+
+const presentFindingsInputSchema = z.object({
+  title: z.string().trim().min(1).max(160),
+  summary: z.string().trim().min(1).max(800).optional(),
+  items: z
+    .array(
+      z.object({
+        title: z.string().trim().min(1).max(160),
+        description: z.string().trim().min(1).max(800),
+        badge: z.string().trim().min(1).max(48).optional(),
+        tone: aiFindingToneSchema.default('neutral'),
+      })
+    )
+    .min(2)
+    .max(12),
+});
 
 const createFlowMetadata: Record<
   CreateFlowType,
@@ -496,6 +514,7 @@ function buildAttachment(
     subtitle: subtitle ?? null,
     prompt_context: promptContext ?? null,
     card_data_json: cardDataJson,
+    href: buildAiEntityHref(entityType, entityId),
   };
 }
 
@@ -1633,6 +1652,32 @@ function buildCreateFlowRoute(
 export function buildAiTools(userId: string) {
   return {
     ...buildAiCreateTools(userId),
+
+    present_findings: tool({
+      description:
+        'Present two or more synthesized findings, comparisons, or research conclusions as structured UI cards. Do not use this for Polity entities returned by other tools; those already render as entity cards. This tool is presentation-only and does not change data.',
+      inputSchema: presentFindingsInputSchema,
+      execute: async ({ title, summary, items }) => {
+        const presentationId = crypto.randomUUID();
+        return {
+          summary: `${title}: ${items.length} strukturierte Ergebnisse.`,
+          attachments: [] as AiChatAttachment[],
+          presentations: [
+            {
+              type: 'findings' as const,
+              id: presentationId,
+              title,
+              summary: summary ?? null,
+              items: items.map((item, index) => ({
+                ...item,
+                id: `${presentationId}:${index + 1}`,
+                badge: item.badge ?? null,
+              })),
+            },
+          ],
+        };
+      },
+    }),
 
     find_my_todos: tool({
       description: translateText(

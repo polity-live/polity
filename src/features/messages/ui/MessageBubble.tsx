@@ -13,12 +13,14 @@ import type { AiAttachmentEntity } from '@/lib/ai/schemas';
 interface MessageBubbleProps {
   message: Message;
   isOwnMessage: boolean;
+  isAssistantConversation?: boolean;
   resolveAttachmentCardData?: (entityType: AiAttachmentEntity, entityId: string) => string | null;
 }
 
 export function MessageBubble({
   message,
   isOwnMessage,
+  isAssistantConversation = false,
   resolveAttachmentCardData,
 }: MessageBubbleProps) {
   const contextLabel = isAssistantUser(message.sender?.id ?? '') ? 'output' : 'input';
@@ -26,23 +28,37 @@ export function MessageBubble({
   const isAssistantError = isAssistantErrorContext(message.context_json);
   const hidePolityLinkPreviews =
     contextLabel === 'output' && hasRenderableContextCards(message.context_json);
+  const useFlatAssistantLayout = isAssistantConversation && !isOwnMessage && !isAssistantError;
 
   return (
-    <div className={cn('flex items-end gap-2', isOwnMessage && 'flex-row-reverse')}>
+    <div
+      className={cn(
+        'flex gap-3',
+        useFlatAssistantLayout ? 'items-start' : 'items-end',
+        isOwnMessage && 'flex-row-reverse'
+      )}
+    >
       <Avatar className="h-8 w-8 flex-shrink-0">
         <AvatarImage src={message.sender?.avatar ?? undefined} />
         <AvatarFallback>{message.sender?.first_name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
       </Avatar>
-      <div className="max-w-[70%] space-y-2">
+      <div
+        className={cn(
+          'space-y-2',
+          useFlatAssistantLayout ? 'max-w-3xl min-w-0 flex-1 py-1' : 'max-w-[78%]'
+        )}
+      >
         {hasContent && (
           <div
             className={cn(
-              'rounded-lg px-4 py-2 break-words',
-              isOwnMessage
-                ? 'bg-primary text-primary-foreground'
-                : isAssistantError
-                  ? featureThemeClassName('messageMessageBubbleDangerBadge')
-                  : 'bg-muted'
+              'break-words',
+              useFlatAssistantLayout ? 'px-1' : 'rounded-2xl px-4 py-2',
+              !useFlatAssistantLayout &&
+                (isOwnMessage
+                  ? 'bg-primary text-primary-foreground'
+                  : isAssistantError
+                    ? featureThemeClassName('messageMessageBubbleDangerBadge')
+                    : 'bg-muted')
             )}
           >
             {isAssistantError ? (
@@ -58,6 +74,7 @@ export function MessageBubble({
               <MessageContent
                 content={message.content ?? ''}
                 hidePolityLinkPreviews={hidePolityLinkPreviews}
+                renderMarkdown={contextLabel === 'output'}
               />
             )}
             <p
@@ -67,7 +84,8 @@ export function MessageBubble({
                   ? 'text-primary-foreground/70'
                   : isAssistantError
                     ? featureThemeClassName('messageMessageBubbleDangerText')
-                    : 'text-muted-foreground'
+                    : 'text-muted-foreground',
+                useFlatAssistantLayout && 'mt-2'
               )}
             >
               {formatTime(message.created_at)}

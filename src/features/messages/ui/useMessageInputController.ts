@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Conversation } from '../types/message.types';
-import { getOtherParticipant } from '../logic/messageUtils';
+import { getOtherParticipant, isConversationRequester } from '../logic/messageUtils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
   ASSISTANT_ATTACHMENT_TYPE_OPTIONS,
@@ -202,9 +202,9 @@ export function useMessageInputController({
     t('common.labels.unspecifiedUser');
   const isPendingDirectConversation =
     conversation.type === 'direct' && conversation.status === 'pending';
-  const isConversationRequester = conversation.requested_by?.id === currentUserId;
+  const isCurrentUserRequester = isConversationRequester(conversation, currentUserId);
 
-  if (isPendingDirectConversation && !isConversationRequester) {
+  if (isPendingDirectConversation && !isCurrentUserRequester) {
     return null;
   }
   return {
@@ -236,6 +236,6 @@ export function useMessageInputController({
     otherUser,
     otherParticipantName,
     isPendingDirectConversation,
-    isConversationRequester,
+    isConversationRequester: isCurrentUserRequester,
   };
 }

@@ -1,6 +1,12 @@
 import { test, expect } from '../fixtures/test';
 import { cartesianProduct, matrixLimit, scenarioLabel } from '../fixtures/matrix';
-import { fillMinimalGroup, gotoGroup, layouts, visibilityValues } from './helpers';
+import {
+  applyOptionalVideoUrl,
+  fillMinimalGroup,
+  gotoGroup,
+  layouts,
+  visibilityValues,
+} from './helpers';
 import { submitSmokeAndExpectCreated } from './smoke-expectations';
 
 const scenarios = cartesianProduct(
@@ -11,6 +17,7 @@ const scenarios = cartesianProduct(
     groupType: ['base', 'hierarchical'],
     linkedGroup: ['absent', 'present'],
     location: ['absent', 'present'],
+    media: ['absent', 'video'],
     visibility: visibilityValues,
     hashtags: ['absent', 'present'],
     invite: ['absent', 'user', 'csv'],
@@ -20,6 +27,13 @@ const scenarios = cartesianProduct(
 );
 
 test.describe('create/group', () => {
+  test('accepts a title video URL', async ({ createFlowPage, e2eRun }) => {
+    await gotoGroup(createFlowPage);
+    await expect(
+      applyOptionalVideoUrl(createFlowPage.page, 'image-tags', e2eRun.prefix)
+    ).resolves.toBe(true);
+  });
+
   test('creates a minimal group @smoke', async ({ createFlowPage, e2eRun }) => {
     await gotoGroup(createFlowPage);
     await fillMinimalGroup(createFlowPage, e2eRun.prefix);
@@ -61,6 +75,9 @@ test.describe('create/group', () => {
       await createFlowPage.form.chooseOption('image-tags', scenario.data.visibility as string, {
         optional: true,
       });
+      if (scenario.data.media === 'video') {
+        await applyOptionalVideoUrl(createFlowPage.page, 'image-tags', e2eRun.prefix);
+      }
 
       if (
         scenario.data.layout === 'one_page' &&

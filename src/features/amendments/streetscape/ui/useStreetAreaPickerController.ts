@@ -91,12 +91,14 @@ export function useStreetAreaPickerController({
   const [mapViewportFocusKey, setMapViewportFocusKey] = useState(0);
   const mapSelectionRef = useRef(mapSelection);
   const reverseRequestIdRef = useRef(0);
+  const userDrivenLocationSearchFieldRef = useRef<GeoAddressField | null>(null);
 
   useEffect(() => {
     mapSelectionRef.current = mapSelection;
   }, [mapSelection]);
 
   useEffect(() => {
+    userDrivenLocationSearchFieldRef.current = null;
     setLocationSearchValues(persistedAddressValues);
     setLocationSearchResetKey(key => key + 1);
   }, [persistedAddressValues]);
@@ -250,6 +252,8 @@ export function useStreetAreaPickerController({
   );
 
   const handleBboxMove = (nextCenter: StreetDesignGeoPoint) => {
+    reverseRequestIdRef.current += 1;
+    userDrivenLocationSearchFieldRef.current = null;
     onMapSelectionChange(moveStreetDesignMapSelectionToCenter(mapSelection, nextCenter));
   };
 
@@ -293,6 +297,12 @@ export function useStreetAreaPickerController({
   };
 
   const handleLocationSearchFieldChange = useCallback((field: GeoAddressField, value: string) => {
+    reverseRequestIdRef.current += 1;
+    if (value.trim()) {
+      userDrivenLocationSearchFieldRef.current = field;
+    } else if (userDrivenLocationSearchFieldRef.current === field) {
+      userDrivenLocationSearchFieldRef.current = null;
+    }
     setLocationSearchValues(previousValues => ({
       ...previousValues,
       [field]: value,
@@ -300,11 +310,14 @@ export function useStreetAreaPickerController({
   }, []);
 
   const handleLocationResolvedAddress = useCallback(
-    (result: GeoResolvedAddress | null) => {
+    (result: GeoResolvedAddress | null, field: GeoAddressField | null) => {
       if (readOnly) return;
+      if (!field || userDrivenLocationSearchFieldRef.current !== field) return;
 
       const coordinates = toGeoCoordinates(result);
       if (!coordinates) return;
+
+      userDrivenLocationSearchFieldRef.current = null;
 
       const nextCenter = {
         lat: coordinates.latitude,
@@ -340,6 +353,7 @@ export function useStreetAreaPickerController({
         if (reverseRequestIdRef.current !== requestId || !result) return;
 
         const nextAddress = createStreetDesignSelectionAddress(result);
+        userDrivenLocationSearchFieldRef.current = null;
         setLocationSearchValues(mapStreetDesignSelectionAddressToValues(nextAddress));
         setLocationSearchResetKey(key => key + 1);
         onSelectionAddressChange(nextAddress);
@@ -375,6 +389,8 @@ export function useStreetAreaPickerController({
     onLocationSearchFieldChange: handleLocationSearchFieldChange,
     onLocationSearchResolved: handleLocationResolvedAddress,
     onLocationSearchReset: () => {
+      reverseRequestIdRef.current += 1;
+      userDrivenLocationSearchFieldRef.current = null;
       setLocationSearchValues(EMPTY_STREET_DESIGN_ADDRESS_VALUES);
       setLocationSearchResetKey(key => key + 1);
       onSelectionAddressChange(undefined);

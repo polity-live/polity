@@ -8,6 +8,7 @@ import {
 } from '../shared/helpers';
 import { eventCreateSchema } from '../events/schema';
 import { proposeGroupConnectionChangeSchema } from '../network/schema';
+import { hasExclusivePrimaryMedia, primaryMediaValidationMessage } from '../shared/primaryMedia';
 const roleAssigneeKindSchema = z.enum(['member', 'guest']);
 const groupGuestStatusSchema = z.enum(['requested', 'invited', 'active', 'revoked']);
 export const groupTypeSchema = z.enum([
@@ -39,6 +40,7 @@ const groupBaseSchema = z.object({
   location_geometry: jsonSchema.nullable().optional(),
   location_bounds: jsonSchema.nullable().optional(),
   image_url: z.string().nullable(),
+  video_url: z.string().nullable(),
   member_count: z.number(),
   subscriber_count: z.number(),
   event_count: z.number(),
@@ -88,6 +90,10 @@ export const groupCreateSchema = groupBaseSchema
   .extend({
     id: z.string(),
     group_type: groupTypeSchema.default('base'),
+  })
+  .refine(hasExclusivePrimaryMedia, {
+    message: primaryMediaValidationMessage,
+    path: ['video_url'],
   });
 export const groupFullCreateSchema = z.object({
   group: groupCreateSchema,
@@ -127,6 +133,7 @@ export const groupUpdateSchema = groupBaseSchema
     location_geometry: true,
     location_bounds: true,
     image_url: true,
+    video_url: true,
     group_type: true,
     has_hierarchy_children: true,
     has_sibling_connections: true,
@@ -141,7 +148,11 @@ export const groupUpdateSchema = groupBaseSchema
     visibility: true,
   })
   .partial()
-  .extend({ id: z.string() });
+  .extend({ id: z.string() })
+  .refine(hasExclusivePrimaryMedia, {
+    message: primaryMediaValidationMessage,
+    path: ['video_url'],
+  });
 export const groupDeleteSchema = z.object({ id: z.string() });
 export type Group = z.infer<typeof groupSelectSchema>;
 

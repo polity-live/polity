@@ -6,6 +6,7 @@ import { XIcon } from 'lucide-react';
 
 import { cn } from '@/features/shared/utils/utils.ts';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { useOverlayPortalBoundary } from './overlay-portal-boundary';
 
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -27,11 +28,13 @@ function DialogOverlay({
   className,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+  const { contained } = useOverlayPortalBoundary();
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px] duration-[var(--motion-duration-base)]',
+        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 inset-0 z-50 bg-black/45 backdrop-blur-[2px] duration-[var(--motion-duration-base)]',
+        contained ? 'absolute' : 'fixed',
         className
       )}
       {...props}
@@ -47,13 +50,15 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
 }) {
+  const { container, contained } = useOverlayPortalBoundary();
   return (
-    <DialogPortal data-slot="dialog-portal">
+    <DialogPortal data-slot="dialog-portal" container={container ?? undefined}>
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
           'bg-card text-card-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-[var(--shadow-floating)] duration-[var(--motion-duration-slow)] sm:max-w-lg',
+          contained && 'absolute',
           className
         )}
         {...props}

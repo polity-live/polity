@@ -1,13 +1,13 @@
 import { ARIA_KAI_USER_ID } from '@/features/assistant/constants';
 import { isAssistantErrorContext } from '@/features/messages/logic/contextAttachments';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
-import {
-  aiChatAttachmentSchema,
-  type AiChatAttachment,
-  type AiProvider,
-  type AiToolName,
-} from '@/lib/ai/schemas';
+import { type AiChatAttachment, type AiProvider, type AiToolName } from '@/lib/ai/schemas';
 import { createClient } from '@/lib/supabase/server';
+import {
+  parseAiMessageContext,
+  serializeAiMessageContext,
+  type AiMessageContextV1,
+} from '@/lib/ai/messageContext';
 import { decryptSecret, encryptSecret, maskSecret } from './ai-crypto';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -141,20 +141,6 @@ function combinePromptSections(...sections: (string | null | undefined)[]): stri
     .join('\n\n');
 
   return result || null;
-}
-
-function parseAiAttachments(contextJson?: string | null): AiChatAttachment[] {
-  if (!contextJson) {
-    return [];
-  }
-
-  try {
-    const parsed: unknown = JSON.parse(contextJson);
-    const result = aiChatAttachmentSchema.array().safeParse(parsed);
-    return result.success ? result.data : [];
-  } catch {
-    return [];
-  }
 }
 
 async function buildEventPromptContext(
@@ -532,7 +518,7 @@ export async function getConversationMessagesForAi(
 export async function persistAssistantMessage(
   conversationId: string,
   content: string,
-  attachments: readonly AiChatAttachment[] = []
+  context: AiMessageContextV1
 ): Promise<void> {
   const supabase = createClient();
   const now = new Date().toISOString();
@@ -541,7 +527,7 @@ export async function persistAssistantMessage(
     conversation_id: conversationId,
     sender_id: ARIA_KAI_USER_ID,
     content,
-    context_json: JSON.stringify(attachments),
+    context_json: serializeAiMessageContext(context),
     is_read: false,
     deleted_at: null,
     created_at: now,
@@ -668,5 +654,5 @@ export async function enrichAiAttachmentsForPrompt(
 export async function enrichAiAttachmentsFromContextJson(
   contextJson?: string | null
 ): Promise<AiChatAttachment[]> {
-  return enrichAiAttachmentsForPrompt(parseAiAttachments(contextJson));
+  return enrichAiAttachmentsForPrompt(parseAiMessageContext(contextJson).attachments);
 }

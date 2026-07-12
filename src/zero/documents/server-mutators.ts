@@ -10,7 +10,12 @@ import {
   recomputeBlogCounters,
   userName,
 } from '../server-helpers';
-import { deleteDocumentSchema, createDocumentSchema } from './schema';
+import {
+  deleteDocumentSchema,
+  createDocumentSchema,
+  createDocumentCollaboratorSchema,
+  createDocumentVersionSchema,
+} from './schema';
 import { createCommentSchema } from '../discussions/schema';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
@@ -69,6 +74,36 @@ export const documentServerMutators = {
         });
       }
     }
+  }),
+
+  createVersion: defineMutator(createDocumentVersionSchema, async ({ tx, ctx, args }) => {
+    await mutators.documents.createVersion.fn({ tx, ctx, args });
+    const document = await tx.run(zql.document.where('id', args.document_id).one());
+    const amendmentId = args.amendment_id ?? document?.amendment_id;
+    if (!amendmentId) return;
+
+    await fireNotification('notifyVersionCreated', {
+      senderId: ctx.userID,
+      amendmentId,
+      amendmentTitle: await amendmentTitle(tx, amendmentId),
+      version: `v.${args.version_number ?? 1}`,
+    });
+  }),
+
+  addCollaborator: defineMutator(createDocumentCollaboratorSchema, async ({ tx, ctx, args }) => {
+    await mutators.documents.addCollaborator.fn({ tx, ctx, args });
+    if (args.user_id === ctx.userID) return;
+
+    const document = await tx.run(zql.document.where('id', args.document_id).one());
+    const documentTitle = document?.amendment_id
+      ? await amendmentTitle(tx, document.amendment_id)
+      : 'Document';
+    await fireNotification('notifyDocumentCollaboratorInvited', {
+      senderId: ctx.userID,
+      recipientUserId: args.user_id,
+      documentId: args.document_id,
+      documentTitle,
+    });
   }),
 
   addComment: defineMutator(createCommentSchema, async ({ tx, ctx, args }) => {

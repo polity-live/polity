@@ -6,7 +6,7 @@ import { useCreateEventForm } from '../useCreateEventForm';
 import type { CreateFormFieldDescriptor } from '../../types/create-form.types';
 
 const navigate = vi.fn();
-const createEvent = vi.fn();
+const createFullEvent = vi.fn();
 let searchParams: Record<string, string | undefined> = {};
 let creatableGroupIds = new Set<string>();
 let groupPermissionLoading = false;
@@ -47,12 +47,12 @@ vi.mock('../../ui/inputs/CreateRichTextField', () => ({
   CreateRichTextField: () => null,
 }));
 
-vi.mock('@/features/file-upload/ui/ImageUpload.tsx', () => ({
-  ImageUpload: () => null,
+vi.mock('@/features/file-upload/ui/MediaUpload', () => ({
+  MediaUpload: () => null,
 }));
 
 vi.mock('@/zero/events/useEventActions', () => ({
-  useEventActions: () => ({ createEvent }),
+  useEventActions: () => ({ createFullEvent }),
 }));
 
 vi.mock('@/zero/common', () => ({
@@ -152,7 +152,11 @@ describe('useCreateEventForm', () => {
     creatableGroupIds = new Set();
     groupPermissionLoading = false;
     navigate.mockClear();
-    createEvent.mockReset();
+    createFullEvent.mockReset();
+    createFullEvent.mockReturnValue({
+      client: Promise.resolve(),
+      server: Promise.resolve(),
+    });
     vi.stubGlobal('crypto', { randomUUID: () => 'event-1' });
   });
 
@@ -207,6 +211,32 @@ describe('useCreateEventForm', () => {
     expect(groupStep?.isValid()).toBe(false);
     expect(groupStep?.getInvalidReason?.()).toBe(
       'pages.create.event.validation.groupPermissionDenied'
+    );
+  });
+
+  it('normalizes and persists a protocol-less livestream link', async () => {
+    const { result } = renderHook(() => useCreateEventForm());
+    fillTitle(result);
+    fillDateTime(result);
+
+    const locationStep = result.current.steps.find(
+      step => step.label === 'pages.create.event.location'
+    );
+    const locationField = findField(locationStep?.fields ?? [], 'location', 'customComponent');
+    act(() => {
+      (
+        locationField.props as { onValueChange: (field: string, value: string) => void }
+      ).onValueChange('streamUrl', ' twitch.tv/polity_live ');
+    });
+
+    await act(async () => {
+      await result.current.onSubmit();
+    });
+
+    expect(createFullEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: expect.objectContaining({ stream_url: 'https://twitch.tv/polity_live' }),
+      })
     );
   });
 });

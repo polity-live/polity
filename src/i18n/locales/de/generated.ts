@@ -3333,6 +3333,7 @@ export const generatedTranslations = {
           noSkillsAvailable: 'No enabled skills are currently available.',
           noToolsAvailable: 'No enabled tools are currently available.',
           outputContextCardLabel: 'Output context',
+          openResult: 'Öffnen',
           placeholder:
             'Ask Aria & Kai anything. Use # for tools, / for skills, and @ for Polity context.',
           searchToolGroup: 'Search tools',
@@ -3341,6 +3342,8 @@ export const generatedTranslations = {
           sessionMissing: 'Your session has expired. Please sign in again.',
           skillCardBadge: 'AI mode',
           skillCardLabel: 'Skill',
+          showFewerResults: 'Weniger anzeigen',
+          showMoreResults: '{{count}} weitere anzeigen',
           skillSelector: 'Skills',
           skillSelectorDescription: 'Active skills for this message context',
           skills: 'Skills',

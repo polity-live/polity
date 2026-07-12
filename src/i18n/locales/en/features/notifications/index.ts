@@ -93,6 +93,7 @@ export const notificationsTranslations = {
   },
   generated: {
     titles: {
+      todoClaimed: 'Task claimed',
       eventAssignedToGroup: 'Event assigned to group',
       amendmentSupportConfirmed: 'Amendment support confirmed',
       amendmentUpvoted: 'Amendment upvoted',
@@ -101,6 +102,7 @@ export const notificationsTranslations = {
       blogDownvoted: 'Blog downvoted',
     },
     messages: {
+      todoClaimed: '{{senderName}} claimed the task “{{todoTitle}}”.',
       guestAccessApproved: 'A guest access request in {{groupName}} has been approved.',
       guestAccessRequested: '{{senderName}} has requested guest access to {{groupName}}.',
       guestInvited: 'A guest has been invited to {{groupName}}.',

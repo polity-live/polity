@@ -1,7 +1,7 @@
 'use client';
 
 import { featureThemeClassName } from '@/features/shared/theme';
-import type { ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Panel } from '@/features/network/ui/NetworkFlowBase';
@@ -95,9 +95,7 @@ export interface NetworkControlPanelProps {
 export function NetworkControlPanel({
   title,
   description,
-  panelCollapsed,
   onPanelCollapsedChange,
-  legendCollapsed,
   onLegendCollapsedChange,
   legendItems,
   legendSections,
@@ -137,6 +135,10 @@ export function NetworkControlPanel({
   legendExtraContent,
 }: NetworkControlPanelProps) {
   const { t } = useTranslation();
+  const panelContentId = useId();
+  const legendContentId = useId();
+  const [renderedPanelCollapsed, setRenderedPanelCollapsed] = useState(true);
+  const [renderedLegendCollapsed, setRenderedLegendCollapsed] = useState(true);
   const canRenderRightFilter = showRightsFilter && !filterRight && selectedRights && onToggleRight;
   const resolvedDepthFilters =
     depthFilters ??
@@ -210,15 +212,26 @@ export function NetworkControlPanel({
         <Button
           size="sm"
           variant="ghost"
-          onClick={() => onPanelCollapsedChange(!panelCollapsed)}
+          aria-label={title}
+          aria-expanded={!renderedPanelCollapsed}
+          aria-controls={panelContentId}
+          onClick={() => {
+            const nextCollapsed = !renderedPanelCollapsed;
+            setRenderedPanelCollapsed(nextCollapsed);
+            onPanelCollapsedChange(nextCollapsed);
+          }}
           className="h-6 w-6 p-0"
         >
-          {panelCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          {renderedPanelCollapsed ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronUp className="h-4 w-4" />
+          )}
         </Button>
       </div>
 
-      {!panelCollapsed && (
-        <div className="flex min-h-0 flex-1 flex-col">
+      {!renderedPanelCollapsed && (
+        <div id={panelContentId} className="flex min-h-0 flex-1 flex-col">
           {description ? (
             <p className={featureThemeClassName('networkNetworkControlPanelNeutralText')}>
               {description}
@@ -265,18 +278,27 @@ export function NetworkControlPanel({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => onLegendCollapsedChange(!legendCollapsed)}
+              aria-expanded={!renderedLegendCollapsed}
+              aria-controls={legendContentId}
+              onClick={() => {
+                const nextCollapsed = !renderedLegendCollapsed;
+                setRenderedLegendCollapsed(nextCollapsed);
+                onLegendCollapsedChange(nextCollapsed);
+              }}
               className="hover:text-primary flex h-auto w-full shrink-0 items-center justify-between px-0 py-0 text-sm font-medium"
             >
               <span>{legendTitle}</span>
-              {legendCollapsed ? (
+              {renderedLegendCollapsed ? (
                 <ChevronDown className="h-4 w-4" />
               ) : (
                 <ChevronUp className="h-4 w-4" />
               )}
             </Button>
-            {!legendCollapsed && (
-              <div className="mt-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 text-sm">
+            {!renderedLegendCollapsed && (
+              <div
+                id={legendContentId}
+                className="mt-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 text-sm"
+              >
                 {resolvedLegendSections.map((section, sectionIndex) => (
                   <div key={section.id} className="space-y-2">
                     {sectionIndex > 0 ? (

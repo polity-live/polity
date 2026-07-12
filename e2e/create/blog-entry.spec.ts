@@ -1,6 +1,12 @@
 import { test, expect } from '../fixtures/test';
 import { cartesianProduct, matrixLimit, scenarioLabel } from '../fixtures/matrix';
-import { fillMinimalBlogEntry, gotoBlogEntry, layouts, visibilityValues } from './helpers';
+import {
+  applyOptionalVideoUrl,
+  fillMinimalBlogEntry,
+  gotoBlogEntry,
+  layouts,
+  visibilityValues,
+} from './helpers';
 import { submitSmokeAndExpectCreated } from './smoke-expectations';
 
 const scenarios = cartesianProduct(
@@ -8,7 +14,7 @@ const scenarios = cartesianProduct(
     layout: layouts,
     title: ['empty', 'valid'],
     date: ['default', 'custom'],
-    image: ['absent', 'present'],
+    media: ['absent', 'video'],
     group: ['absent', 'present'],
     visibility: visibilityValues,
     hashtags: ['absent', 'present'],
@@ -17,6 +23,13 @@ const scenarios = cartesianProduct(
 );
 
 test.describe('create/blog-entry', () => {
+  test('accepts a title video URL', async ({ createFlowPage, e2eRun, seed }) => {
+    await gotoBlogEntry(createFlowPage, seed);
+    await expect(applyOptionalVideoUrl(createFlowPage.page, 'media', e2eRun.prefix)).resolves.toBe(
+      true
+    );
+  });
+
   test('creates a minimal blog entry @smoke', async ({ createFlowPage, e2eRun, seed }) => {
     await gotoBlogEntry(createFlowPage, seed);
     await fillMinimalBlogEntry(createFlowPage, e2eRun.prefix);
@@ -42,6 +55,9 @@ test.describe('create/blog-entry', () => {
       }
       if (scenario.data.date === 'custom') {
         await createFlowPage.form.fillText('date', '2030-02-01', { optional: true });
+      }
+      if (scenario.data.media === 'video') {
+        await applyOptionalVideoUrl(createFlowPage.page, 'media', e2eRun.prefix);
       }
       await createFlowPage.form.chooseOption('visibility', scenario.data.visibility as string, {
         optional: true,

@@ -19,8 +19,8 @@ export function useNetworkFlowControls() {
     useState<NetworkRelationshipKind>('active');
   const [connectionDirectionFilter, setConnectionDirectionFilter] =
     useState<NetworkConnectionDirectionFilter>('all');
-  const [panelCollapsed, setPanelCollapsed] = useState(false);
-  const [legendCollapsed, setLegendCollapsed] = useState(false);
+  const [panelCollapsed, setPanelCollapsed] = useState(true);
+  const [legendCollapsed, setLegendCollapsed] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<NetworkDialogEntity | null>(null);
 

@@ -171,6 +171,10 @@ describe('StreetSceneCanvasViewView', () => {
     expect(legendRoot?.className).toContain('right-6');
     expect(legendRoot?.className).toContain('bottom-6');
     expect(legendRoot?.lastElementChild).toBe(legendButton);
+    expect(screen.queryByText('Placement options')).toBeNull();
+
+    fireEvent.click(legendButton);
+
     expect(screen.queryByText('Placement options')).not.toBeNull();
     expect(screen.queryAllByText('Office building')).toHaveLength(1);
     expect(screen.queryAllByText('Residential building')).toHaveLength(1);
@@ -214,6 +218,8 @@ describe('StreetSceneCanvasViewView', () => {
       }),
       selectedObject: null,
     });
+
+    fireEvent.click(screen.getByRole('button', { name: /legend/i }));
 
     expect(screen.queryByText('Existing')).not.toBeNull();
     expect(container.querySelector('[data-legend-entry-id="existing:road"]')).not.toBeNull();
@@ -278,6 +284,8 @@ describe('StreetSceneCanvasViewView', () => {
       selectedObject: null,
     });
 
+    fireEvent.click(screen.getByRole('button', { name: /legend/i }));
+
     expect(screen.queryByText('Existing')).toBeNull();
     expect(screen.queryByText('Placement options')).not.toBeNull();
     expect(screen.queryByText('Office building')).not.toBeNull();
@@ -285,6 +293,10 @@ describe('StreetSceneCanvasViewView', () => {
 
   it('toggles legend entries through the accordion button', () => {
     renderCanvasView({ selectedObject: null });
+
+    expect(screen.queryByText('Office building')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /legend/i }));
 
     expect(screen.queryByText('Office building')).not.toBeNull();
 

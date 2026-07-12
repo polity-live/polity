@@ -1,5 +1,10 @@
 export const groupPageTranslations = {
   settings: 'Group Settings',
+  settingsTabs: {
+    general: 'General',
+    relationships: 'Connections',
+    contact: 'Location & contact',
+  },
   loading: 'Loading amendments...',
   notFound: {
     title: 'Group Not Found',

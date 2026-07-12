@@ -88,6 +88,8 @@ import {
 } from '../logic/streetDesignChangeRequests';
 
 interface StreetDesignTopBarViewProps {
+  positionMode?: 'viewport' | 'container';
+  availableModes?: readonly SelectableEditingMode[];
   readOnly: boolean;
   mapContextReadOnly: boolean;
   mode: SelectableEditingMode;
@@ -268,6 +270,8 @@ function isSectionToolSelected(args: {
 }
 
 export function StreetDesignTopBarView({
+  positionMode = 'viewport',
+  availableModes,
   readOnly,
   mapContextReadOnly,
   mode,
@@ -352,7 +356,10 @@ export function StreetDesignTopBarView({
     t(`features.amendments.streetscape.actions.${action}`, { label });
 
   return (
-    <FixedToolbar className="gap-0 rounded-none border-x-0 border-t-0 px-1 py-1 shadow-none">
+    <FixedToolbar
+      positionMode={positionMode}
+      className="gap-0 rounded-none border-x-0 border-t-0 px-1 py-1 shadow-none"
+    >
       <ToolbarGroup>
         {!readOnly ? (
           <ToolbarButton
@@ -387,6 +394,7 @@ export function StreetDesignTopBarView({
 
       <ToolbarGroup>
         <StreetDesignModeToolbarButton
+          availableModes={availableModes}
           canChangeMode={canChangeMode}
           disabledModeReasons={modeDisabledReasons}
           mode={mode}
@@ -412,7 +420,14 @@ export function StreetDesignTopBarView({
               <MapPinned className="size-4" />
             </ToolbarButton>
           </DialogTrigger>
-          <DialogContent className="bg-background h-dvh w-screen max-w-none overflow-hidden rounded-none border-0 p-0 sm:max-w-none">
+          <DialogContent
+            className={cn(
+              'bg-background max-w-none overflow-hidden rounded-none border-0 p-0 sm:max-w-none',
+              positionMode === 'container'
+                ? 'inset-0 h-full w-full translate-x-0 translate-y-0'
+                : 'h-dvh w-screen'
+            )}
+          >
             <DialogTitle className="sr-only">
               {t('features.amendments.streetscape.areaPicker.title')}
             </DialogTitle>
@@ -690,11 +705,13 @@ export function StreetDesignSecondaryActionBarView({
 }
 
 function StreetDesignModeToolbarButton({
+  availableModes,
   canChangeMode,
   disabledModeReasons,
   mode,
   onModeChange,
 }: {
+  availableModes?: readonly SelectableEditingMode[];
   canChangeMode: boolean;
   disabledModeReasons: Partial<Record<SelectableEditingMode, string>>;
   mode: SelectableEditingMode;
@@ -724,6 +741,8 @@ function StreetDesignModeToolbarButton({
           </div>
         ) : null}
         <EditingModeMenuItems
+          modes={availableModes}
+          showAutomaticEventModes={!availableModes}
           value={mode}
           disabled={!canChangeMode}
           disabledModeReasons={disabledModeReasons}

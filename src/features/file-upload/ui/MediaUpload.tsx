@@ -9,6 +9,8 @@ import { translate as translateText } from '@/features/shared/hooks/use-translat
 interface MediaUploadProps {
   currentImage?: string;
   onImageChange: (url: string) => void;
+  onImageFileUpload?: (file: File) => Promise<string>;
+  onImageRemove?: (imageUrl: string) => Promise<void> | void;
   currentVideo?: string;
   onVideoChange: (url: string) => void;
   entityType: string;
@@ -18,12 +20,15 @@ interface MediaUploadProps {
   videoLabel?: string;
   videoDescription?: string;
   exclusiveMedia?: boolean;
+  cleanupOnRemove?: boolean;
   className?: string;
 }
 
 export const MediaUpload: React.FC<MediaUploadProps> = ({
   currentImage,
   onImageChange,
+  onImageFileUpload,
+  onImageRemove,
   currentVideo,
   onVideoChange,
   entityType,
@@ -33,8 +38,16 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   videoLabel,
   videoDescription,
   exclusiveMedia = false,
+  cleanupOnRemove = false,
   className,
 }) => {
+  const [activeTab, setActiveTab] = React.useState(currentVideo ? 'video' : 'image');
+
+  React.useEffect(() => {
+    if (currentVideo && !currentImage) setActiveTab('video');
+    if (currentImage && !currentVideo) setActiveTab('image');
+  }, [currentImage, currentVideo]);
+
   const handleImageChange = (url: string) => {
     onImageChange(url);
     if (exclusiveMedia && url) {
@@ -50,7 +63,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   };
 
   return (
-    <Tabs defaultValue="image" className={className}>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className={className}>
       <TabsList className="w-full">
         <TabsTrigger value="image" className="flex-1">
           {translateText('generated.inline.0521_image_50e19fda')}
@@ -63,6 +76,9 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         <ImageUpload
           currentImage={currentImage}
           onImageChange={handleImageChange}
+          onFileUpload={onImageFileUpload}
+          onImageRemove={onImageRemove}
+          cleanupOnRemove={cleanupOnRemove}
           entityType={entityType}
           entityId={entityId}
           label={imageLabel}

@@ -125,7 +125,6 @@ export function AgendaItemContextCardView({
   t,
   locale,
   TypeIcon,
-  gradientClass,
   durationMinutes,
   actualStartedAt,
   actualCompletedAt,
@@ -284,10 +283,12 @@ export function AgendaItemContextCardView({
   }));
 
   return (
-    <Card className={cn('overflow-hidden', className)}>
-      {/* Gradient Header */}
+    <Card className={cn('border-border/70 overflow-hidden rounded-xl shadow-none', className)}>
       <div
-        className={cn('p-4', gradientClass, hasAgendaDetailLink ? 'cursor-pointer' : undefined)}
+        className={cn(
+          'border-border/60 bg-muted/20 border-b p-4 sm:p-5',
+          hasAgendaDetailLink ? 'hover:bg-muted/35 cursor-pointer transition-colors' : undefined
+        )}
         onClick={hasAgendaDetailLink ? navigateToAgendaDetail : undefined}
         onKeyDown={
           hasAgendaDetailLink
@@ -304,17 +305,11 @@ export function AgendaItemContextCardView({
       >
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div
-              className={featureThemeClassName(
-                'agendaAgendaItemContextCardNeutralContrastBackground'
-              )}
-            >
+            <div className="bg-background text-foreground flex size-10 shrink-0 items-center justify-center rounded-lg border">
               <TypeIcon className="h-6 w-6" />
             </div>
             <div>
-              <h2
-                className={featureThemeClassName('agendaAgendaItemContextCardNeutralContrastText')}
-              >
+              <h2 className="text-base leading-snug font-semibold sm:text-lg">
                 {hasAgendaDetailLink && agendaDetailLink ? (
                   <Link
                     to="/event/$id/agenda/$agendaItemId"
@@ -338,7 +333,7 @@ export function AgendaItemContextCardView({
                   agendaItem.title
                 )}
               </h2>
-              <div className={featureThemeClassName('agendaAgendaItemContextCardNeutralText')}>
+              <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-sm">
                 <AgendaTypeBadge
                   type={
                     agendaItem.type as
@@ -362,11 +357,7 @@ export function AgendaItemContextCardView({
                   />
                 ) : null}
                 {durationMinutes && (
-                  <div
-                    className={featureThemeClassName(
-                      'agendaAgendaItemContextCardNeutralContrastBadge'
-                    )}
-                  >
+                  <div className="bg-background inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs">
                     <Timer className="h-3 w-3" />
                     {durationMinutes} {t('common.minutes')}
                   </div>
@@ -375,9 +366,7 @@ export function AgendaItemContextCardView({
                   <AgendaElectionModeBadge
                     electionMode={election.election_mode}
                     seatCount={election.seat_count}
-                    className={featureThemeClassName(
-                      'agendaAgendaItemContextCardNeutralContrastBadgeAlpha'
-                    )}
+                    className="bg-background"
                   />
                 ) : null}
               </div>

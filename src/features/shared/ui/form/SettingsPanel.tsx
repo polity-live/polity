@@ -33,8 +33,8 @@ export function SettingsPanel({
   return (
     <Panel
       className={cn(
-        variant === 'danger' &&
-          'border-destructive ring-destructive/20 dark:ring-destructive/40 ring-[3px]',
+        'border-border/60 shadow-none',
+        variant === 'danger' && 'border-destructive/50 bg-destructive/[0.025]',
         className
       )}
     >

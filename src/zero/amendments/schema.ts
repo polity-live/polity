@@ -7,6 +7,7 @@ import {
   jsonStringArraySchema,
 } from '../shared/helpers';
 import { createDocumentCollaboratorSchema, createDocumentSchema } from '../documents/schema';
+import { hasExclusivePrimaryMedia, primaryMediaValidationMessage } from '../shared/primaryMedia';
 
 // ============================================
 // Amendment Zod Schemas
@@ -58,6 +59,7 @@ const baseAmendmentSchema = z.object({
   comment_count: z.number(),
   collaborator_count: z.number(),
   image_url: z.string().nullable(),
+  video_url: z.string().nullable(),
   x: z.string().nullable(),
   youtube: z.string().nullable(),
   linkedin: z.string().nullable(),
@@ -88,6 +90,10 @@ export const createAmendmentSchema = baseAmendmentSchema
     id: z.string(),
     current_process_run_id: z.string().nullable().optional(),
     origin_amendment_id: z.string().nullable().optional(),
+  })
+  .refine(hasExclusivePrimaryMedia, {
+    message: primaryMediaValidationMessage,
+    path: ['video_url'],
   });
 
 export const updateAmendmentSchema = baseAmendmentSchema
@@ -128,10 +134,15 @@ export const updateAmendmentSchema = baseAmendmentSchema
     location_geometry: true,
     location_bounds: true,
     image_url: true,
+    video_url: true,
     current_process_run_id: true,
   })
   .partial()
-  .extend({ id: z.string() });
+  .extend({ id: z.string() })
+  .refine(hasExclusivePrimaryMedia, {
+    message: primaryMediaValidationMessage,
+    path: ['video_url'],
+  });
 
 export const deleteAmendmentSchema = z.object({ id: z.string() });
 

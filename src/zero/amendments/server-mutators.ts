@@ -1050,6 +1050,16 @@ export const amendmentServerMutators = {
     if (args.event_id) {
       await recomputeEventCounters(tx, args.event_id);
     }
+
+    if (sourceAmendment) {
+      await fireNotification('notifyAmendmentCloned', {
+        senderId: ctx.userID,
+        senderName: await userName(tx, ctx.userID),
+        originalAmendmentId: sourceAmendment.id,
+        originalAmendmentTitle: sourceAmendment.title ?? 'Amendment',
+        newAmendmentId: args.id,
+      });
+    }
   }),
 
   createFull: defineMutator(createAmendmentFullMutatorSchema, async ({ tx, ctx, args }) => {
@@ -1144,6 +1154,7 @@ export const amendmentServerMutators = {
       (args.tags !== undefined && args.tags !== previousAmendment.tags) ||
       (args.code !== undefined && args.code !== previousAmendment.code) ||
       (args.image_url !== undefined && args.image_url !== previousAmendment.image_url) ||
+      (args.video_url !== undefined && args.video_url !== previousAmendment.video_url) ||
       (args.x !== undefined && args.x !== previousAmendment.x) ||
       (args.youtube !== undefined && args.youtube !== previousAmendment.youtube) ||
       (args.linkedin !== undefined && args.linkedin !== previousAmendment.linkedin) ||

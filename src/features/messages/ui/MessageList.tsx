@@ -8,6 +8,8 @@ interface StreamingAssistantMessage {
   toolName?: string | null;
   toolPreview?: string | null;
   errorMessage?: string | null;
+  canRetry?: boolean;
+  onRetry?: () => Promise<boolean>;
 }
 interface MessageListProps {
   conversation: Conversation;

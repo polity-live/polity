@@ -18,6 +18,7 @@ import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-b
 import { SocialBar } from '@/features/users/ui/SocialBar';
 import {
   getWikiParticipationName,
+  EntityWikiMedia,
   InfoTabs,
   isVisibleWikiParticipationStatus,
   normalizeWikiParticipationRole,
@@ -245,15 +246,11 @@ export function GroupWikiContentView({
         {groupLocation && <p className="text-muted-foreground">{groupLocation}</p>}
       </div>
 
-      {group.image_url && (
-        <div className="mb-8">
-          <img
-            src={group.image_url}
-            alt={group.name ?? 'Group'}
-            className="mx-auto h-64 w-full max-w-4xl rounded-lg object-cover shadow-lg"
-          />
-        </div>
-      )}
+      <EntityWikiMedia
+        imageUrl={group.image_url}
+        videoUrl={group.video_url}
+        alt={group.name ?? 'Group'}
+      />
 
       {/* Stats Bar with Events and Amendments */}
       <StatsBar

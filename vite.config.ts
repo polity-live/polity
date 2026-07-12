@@ -22,6 +22,7 @@ export default defineConfig({
     viteReact(),
   ],
   resolve: {
+    dedupe: ['@rocicorp/zero', 'react', 'react-dom'],
     alias: [
       { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
       {
@@ -46,6 +47,8 @@ export default defineConfig({
       'react/jsx-runtime',
       'react/jsx-dev-runtime',
       'react-dom/client',
+      '@rocicorp/zero/react',
+      '@rocicorp/zero-virtual/react',
     ],
   },
 });

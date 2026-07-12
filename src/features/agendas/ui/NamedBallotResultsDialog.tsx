@@ -1,7 +1,6 @@
 'use client';
 
 import { BadgeControl, StatusBadge, type BadgeTone } from '@/features/shared/ui/status';
-import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Link } from '@tanstack/react-router';
 import {
   Dialog,
@@ -15,6 +14,7 @@ import type { NamedBallotResultsModel } from '@/features/agendas/logic/buildName
 import { cn } from '@/features/shared/utils/utils';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { getLocalizedVoteChoiceLabel } from '@/features/shared/ui/voting/voteChoiceLabels';
+import { AgendaDialogContent } from './AgendaUiSystem';
 
 interface NamedBallotResultsDialogProps {
   open: boolean;
@@ -138,7 +138,7 @@ export function NamedBallotResultsDialog({
 }: NamedBallotResultsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <ScrollableDialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none border-0 p-0 sm:h-screen sm:max-w-none">
+      <AgendaDialogContent size="fullscreen">
         <DialogHeader separator className="px-6 py-5 pr-14 sm:pr-16">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-2">
@@ -299,7 +299,7 @@ export function NamedBallotResultsDialog({
             </div>
           )}
         </div>
-      </ScrollableDialogContent>
+      </AgendaDialogContent>
     </Dialog>
   );
 }

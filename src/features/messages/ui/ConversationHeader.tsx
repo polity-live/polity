@@ -9,6 +9,8 @@ import { getConversationDisplay, getOtherParticipant } from '../logic/messageUti
 import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Link } from '@tanstack/react-router';
+import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 
 interface ConversationHeaderProps {
   conversation: Conversation;
@@ -132,19 +134,44 @@ export function ConversationHeader({
           <h3 className="truncate font-semibold">{display.name}</h3>
         )}
         {isAiConversation && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 flex-shrink-0"
-            onClick={event => {
-              event.preventDefault();
-              setIsEditingName(true);
-            }}
-            title={t('features.messages.ai.renameConversation')}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
+          <>
+            <Popover>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="border-border/70 text-muted-foreground hover:text-foreground h-6 w-6 flex-shrink-0 rounded-full border text-xs font-semibold"
+                      aria-label={t('features.messages.ai.information')}
+                    >
+                      ?
+                    </Button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs space-y-2 text-left">
+                  <AiResponseInformation t={t} />
+                </TooltipContent>
+              </Tooltip>
+              <PopoverContent align="start" className="w-80 space-y-3">
+                <AiResponseInformation t={t} />
+              </PopoverContent>
+            </Popover>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 flex-shrink-0"
+              onClick={event => {
+                event.preventDefault();
+                setIsEditingName(true);
+              }}
+              title={t('features.messages.ai.renameConversation')}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+          </>
         )}
       </div>
     );
@@ -203,5 +230,15 @@ export function ConversationHeader({
       titleContent={titleContent}
       identityContent={identityContent}
     />
+  );
+}
+
+function AiResponseInformation({ t }: { t: (key: string) => string }) {
+  return (
+    <div className="space-y-2">
+      <p className="font-medium">{t('features.messages.ai.information')}</p>
+      <p className="text-xs leading-relaxed">{t('features.messages.ai.helperText')}</p>
+      <p className="text-xs leading-relaxed">{t('features.messages.ai.disclaimer')}</p>
+    </div>
   );
 }

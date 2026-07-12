@@ -5,7 +5,10 @@ import { UserEdit } from '@/features/users/ui/UserEdit';
 import { useAuth } from '@/providers/auth-provider';
 
 const settingsSearchSchema = z.object({
-  tab: z.string().optional(),
+  tab: z
+    .enum(['basic-info', 'preferences', 'subscriptions', 'passwords', 'notifications', 'ai'])
+    .catch('basic-info')
+    .optional(),
   success: z.string().optional(),
   canceled: z.string().optional(),
 });
@@ -18,6 +21,7 @@ export const Route = createFileRoute('/_authed/user/$id/settings')({
 function UserSettingsPage() {
   const { id } = Route.useParams();
   const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   const { user } = useAuth();
 
@@ -25,5 +29,13 @@ function UserSettingsPage() {
     return <AccessDenied />;
   }
 
-  return <UserEdit userId={id} defaultTab={tab} />;
+  return (
+    <UserEdit
+      userId={id}
+      activeTab={tab ?? 'basic-info'}
+      onTabChange={nextTab =>
+        navigate({ search: previous => ({ ...previous, tab: nextTab }), replace: true })
+      }
+    />
+  );
 }

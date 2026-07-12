@@ -125,16 +125,25 @@ export const todoServerMutators = {
   assign: defineMutator(createTodoAssignmentSchema, async ({ tx, ctx, args }) => {
     await mutators.todos.assign.fn({ tx, ctx, args });
 
-    if (args.user_id === ctx.userID) {
-      return;
-    }
-
     const todo = await tx.run(zql.todo.where('id', args.todo_id).one());
     if (!todo) {
       return;
     }
 
     const todoTitle = todo.title ?? 'Task';
+
+    if (args.user_id === ctx.userID) {
+      if (todo.creator_id && todo.creator_id !== ctx.userID) {
+        await fireNotification('notifyTodoClaimed', {
+          senderId: ctx.userID,
+          senderName: await userName(tx, ctx.userID),
+          recipientUserId: todo.creator_id,
+          todoId: todo.id,
+          todoTitle,
+        });
+      }
+      return;
+    }
 
     if (todo.group_id) {
       const gName = await groupName(tx, todo.group_id);

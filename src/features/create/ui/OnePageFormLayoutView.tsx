@@ -56,6 +56,7 @@ export function OnePageFormLayoutView({
             }}
             className="scroll-mt-32"
             data-testid="one-page-create-section"
+            data-create-section
           >
             <div className="mb-5 flex items-center gap-3 border-b pb-4">
               <BadgeControl variant="outline" size="xs">
@@ -73,7 +74,7 @@ export function OnePageFormLayoutView({
         ))}
       </div>
 
-      <div className="border-t pt-5">
+      <div data-create-action-bar className="border-t pt-5">
         {invalidReason ? (
           <CreateSubmitInvalidNotice reason={invalidReason} className="mb-3" />
         ) : null}

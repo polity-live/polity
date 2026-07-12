@@ -12,7 +12,7 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { usePermissions } from '@/zero/rbac';
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useAllGroups, useUserGroupsWithManageEvents } from '@/zero/groups/useGroupState';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
@@ -20,9 +20,15 @@ interface EventEditProps {
   eventId: string;
   mode?: 'create' | 'edit';
   defaultTab?: 'basic-info' | 'time-series' | 'event-type';
+  onTabChange?: (tab: 'basic-info' | 'time-series' | 'event-type') => void;
 }
 
-export function useEventEditController({ eventId, mode = 'edit', defaultTab }: EventEditProps) {
+export function useEventEditController({
+  eventId,
+  mode = 'edit',
+  defaultTab,
+  onTabChange,
+}: EventEditProps) {
   const navigate = useNavigate();
 
   const { t } = useTranslation();
@@ -30,6 +36,14 @@ export function useEventEditController({ eventId, mode = 'edit', defaultTab }: E
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const [showReview, setShowReview] = useState(false);
+  const [activeTab, setActiveTab] = useState(defaultTab ?? 'basic-info');
+
+  useEffect(() => setActiveTab(defaultTab ?? 'basic-info'), [defaultTab]);
+
+  const handleTabChange = (tab: 'basic-info' | 'time-series' | 'event-type') => {
+    setActiveTab(tab);
+    onTabChange?.(tab);
+  };
 
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -134,7 +148,8 @@ export function useEventEditController({ eventId, mode = 'edit', defaultTab }: E
   return {
     eventId,
     mode,
-    defaultTab,
+    activeTab,
+    onTabChange: handleTabChange,
     navigate,
     t,
     cancelDialogOpen,

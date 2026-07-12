@@ -12,6 +12,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { Conversation } from '../types/message.types';
 import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 import { useSwipeNavigation } from '@/features/shared/hooks/useSwipeNavigation';
+import { isConversationRequester } from '../logic/messageUtils';
 
 export function useMessagesPage() {
   const { t } = useTranslation();
@@ -298,8 +299,8 @@ export function useMessagesPage() {
     if (conversationToDelete) {
       const conversation = conversations.find(c => c.id === conversationToDelete);
       if (conversation) {
-        await mutations.deleteConversation(conversation);
-        if (selectedConversationId === conversationToDelete) {
+        const result = await mutations.deleteConversation(conversation);
+        if (result.success && selectedConversationId === conversationToDelete) {
           setSelectedConversationId(null);
         }
       }
@@ -312,13 +313,13 @@ export function useMessagesPage() {
     await mutations.acceptConversation(conversation.id, {
       senderId: user.id,
       senderName: currentUserName,
-      requesterUserId: conversation.requested_by?.id,
+      requesterUserId: conversation.requested_by_id ?? undefined,
     });
   };
 
-  const handleRejectConversation = (conversation: Conversation) => {
-    mutations.rejectConversation(conversation);
-    if (selectedConversationId === conversation.id) {
+  const handleRejectConversation = async (conversation: Conversation) => {
+    const result = await mutations.rejectConversation(conversation);
+    if (result.success && selectedConversationId === conversation.id) {
       setSelectedConversationId(null);
     }
   };
@@ -392,6 +393,13 @@ export function useMessagesPage() {
     setMemberListDialogOpen,
     deleteDialogOpen,
     setDeleteDialogOpen,
+    isCancelRequest: conversations.some(
+      conversation =>
+        conversation.id === conversationToDelete &&
+        conversation.type === 'direct' &&
+        conversation.status === 'pending' &&
+        isConversationRequester(conversation, user?.id)
+    ),
 
     // Mutations
     togglePin: mutations.togglePin,

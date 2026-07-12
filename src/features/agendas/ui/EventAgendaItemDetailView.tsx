@@ -32,6 +32,7 @@ import { NamedBallotResultsDialog } from './NamedBallotResultsDialog';
 import { isNamedBallot } from '@/zero/shared';
 import { AmendmentBranchSelectorSection } from '@/features/amendments/ui/AmendmentBranchSelectorSection';
 import { isMockCRTimelineItem } from '../logic/createMockCRTimelineItems';
+import { AgendaPageShell, AgendaSectionHeading, AgendaSurface } from './AgendaUiSystem';
 export interface EventAgendaItemDetailViewProps {
   eventId: any;
   agendaItemId: any;
@@ -601,7 +602,7 @@ export function EventAgendaItemDetailView({
     ) : null;
 
   return (
-    <div className="space-y-6">
+    <AgendaPageShell>
       {/* Fixed Action Bar */}
       <AgendaActionBar
         eventId={eventId}
@@ -849,9 +850,18 @@ export function EventAgendaItemDetailView({
         }))}
       />
 
+      <AgendaSurface className="p-4 sm:p-5">
+        <AgendaSectionHeading
+          eyebrow={toolbarAgendaItemTopNumber ? `TOP-${toolbarAgendaItemTopNumber}` : undefined}
+          title={agendaItem.title ?? t('features.events.agenda.details', 'Details')}
+          description={agendaItem.description ?? undefined}
+          action={renderContextToggleButton()}
+        />
+      </AgendaSurface>
+
       <section
         data-testid="agenda-detail-context-switcher"
-        className="relative overflow-hidden"
+        className="relative overflow-hidden rounded-xl"
         aria-label={t('features.events.agenda.details')}
       >
         <div
@@ -865,9 +875,6 @@ export function EventAgendaItemDetailView({
               : 'relative translate-x-0 opacity-100'
           )}
         >
-          {!isSpeakersPaneActive ? (
-            <div className="mb-2 flex justify-end">{renderContextToggleButton()}</div>
-          ) : null}
           {agendaDetailsPanel}
         </div>
 
@@ -882,15 +889,13 @@ export function EventAgendaItemDetailView({
               : 'pointer-events-none absolute inset-x-0 top-0 translate-x-full opacity-0'
           )}
         >
-          {isSpeakersPaneActive ? (
-            <div className="mb-2 flex justify-end">{renderContextToggleButton()}</div>
-          ) : null}
           {speakerListPanel}
         </div>
       </section>
 
       {hasResultsPanel ? (
-        <section data-testid="agenda-detail-results" className="scroll-mt-20">
+        <section data-testid="agenda-detail-results" className="scroll-mt-20 space-y-3">
+          <AgendaSectionHeading title={t('features.events.agenda.voteResults', 'Results')} />
           <div className="space-y-4">
             {changeRequestResultsPanel}
             {electionResultsPanel}
@@ -907,6 +912,6 @@ export function EventAgendaItemDetailView({
       {agendaItem.type === 'accreditation' && (
         <AccreditationSection eventId={eventId} agendaItemId={agendaItemId} />
       )}
-    </div>
+    </AgendaPageShell>
   );
 }

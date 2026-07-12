@@ -4,6 +4,7 @@ import {
   hasRenderableContextCards,
   isAssistantErrorContext,
   parseContextAttachments,
+  parseContextPresentations,
 } from '../logic/contextAttachments';
 
 describe('contextAttachments', () => {
@@ -52,6 +53,27 @@ describe('contextAttachments', () => {
         ])
       )
     ).toBe(false);
+  });
+
+  it('parses V1 findings and treats presentation-only context as renderable', () => {
+    const context = JSON.stringify({
+      version: 1,
+      attachments: [],
+      presentations: [
+        {
+          type: 'findings',
+          id: 'comparison',
+          title: 'Comparison',
+          items: [
+            { id: 'a', title: 'A', description: 'First', tone: 'neutral' },
+            { id: 'b', title: 'B', description: 'Second', tone: 'success' },
+          ],
+        },
+      ],
+    });
+
+    expect(parseContextPresentations(context)).toHaveLength(1);
+    expect(hasRenderableContextCards(context)).toBe(true);
   });
 
   it('builds and detects persisted assistant error context markers', () => {

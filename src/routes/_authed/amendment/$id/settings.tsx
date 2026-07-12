@@ -6,13 +6,21 @@ import { useAuth } from '@/providers/auth-provider';
 import { AmendmentEditContent } from '@/features/amendments/ui/AmendmentEditContent';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
+import { z } from 'zod';
+
+const settingsSearchSchema = z.object({
+  tab: z.enum(['general', 'workflow', 'location']).catch('general').optional(),
+});
 
 export const Route = createFileRoute('/_authed/amendment/$id/settings')({
+  validateSearch: settingsSearchSchema,
   component: AmendmentSettingsPage,
 });
 
 function AmendmentSettingsPage() {
   const { id } = Route.useParams();
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const { user } = useAuth();
   const collaboration = useAmendmentCollaboration(id);
   const { amendment, amendmentProcess, isLoading } = useAmendmentState({
@@ -43,6 +51,10 @@ function AmendmentSettingsPage() {
       isLoading={isLoading}
       mode="edit"
       agendaItemId={agendaItemId}
+      activeTab={tab ?? 'general'}
+      onTabChange={nextTab =>
+        navigate({ search: previous => ({ ...previous, tab: nextTab }), replace: true })
+      }
     />
   );
 }

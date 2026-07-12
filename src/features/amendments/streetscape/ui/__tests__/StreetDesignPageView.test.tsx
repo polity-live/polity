@@ -52,7 +52,9 @@ vi.mock('../StreetDesignTopBarView', () => ({
 }));
 
 vi.mock('../StreetSceneCanvasView', () => ({
-  StreetSceneCanvasView: () => <div data-testid="street-scene-canvas" />,
+  StreetSceneCanvasView: ({ initialLegendOpen }: { initialLegendOpen: boolean }) => (
+    <div data-testid="street-scene-canvas" data-initial-legend-open={String(initialLegendOpen)} />
+  ),
 }));
 
 afterEach(() => {
@@ -68,6 +70,9 @@ describe('StreetDesignPageView', () => {
     expect(screen.getByText(content => /0\s*€/.test(content))).toBeTruthy();
     expect(screen.getByText('0 CRs')).toBeTruthy();
     expect(screen.getByText('Alexanderplatz, Berlin')).toBeTruthy();
+    expect(screen.getByTestId('street-scene-canvas').getAttribute('data-initial-legend-open')).toBe(
+      'false'
+    );
 
     const helpButton = screen.getByRole('button', {
       name: 'Show street design navigation help',

@@ -74,6 +74,9 @@ import {
 export interface StreetSceneCanvasViewViewProps {
   design: StreetDesignStateV1;
   metricLabels?: string[];
+  initialLegendOpen?: boolean;
+  embeddedPreview?: boolean;
+  embeddedWorkspace?: boolean;
   isLoadingOsm: boolean;
   placementMode: 'drag_band' | 'path' | null;
   placementPointCount: number;
@@ -125,6 +128,9 @@ export interface StreetSceneCanvasViewViewProps {
 
 export function StreetSceneCanvasViewView({
   design,
+  initialLegendOpen = false,
+  embeddedPreview = false,
+  embeddedWorkspace = false,
   isLoadingOsm,
   placementMode,
   placementPointCount,
@@ -171,7 +177,7 @@ export function StreetSceneCanvasViewView({
   loadFailed,
 }: StreetSceneCanvasViewViewProps) {
   const { t } = useTranslation();
-  const [legendOpen, setLegendOpen] = useState(true);
+  const [legendOpen, setLegendOpen] = useState(initialLegendOpen);
   const canvasSize = useCanvasElementSize(canvasRef);
   const comparisonLayers = useMemo(
     () => getStreetDesignComparisonLayers(design.comparisonMode),
@@ -277,19 +283,41 @@ export function StreetSceneCanvasViewView({
 
   return (
     <div
-      className="bg-background relative min-h-[42rem] overflow-hidden lg:min-h-[calc(100vh-10rem)]"
+      className={cn(
+        'bg-background relative overflow-hidden',
+        embeddedWorkspace
+          ? 'min-h-[34rem]'
+          : embeddedPreview
+            ? 'min-h-[30rem]'
+            : 'min-h-[42rem] lg:min-h-[calc(100vh-10rem)]'
+      )}
       data-swipe-lock
     >
-      <div className="bg-muted/10 relative min-h-[42rem] overflow-hidden lg:min-h-[calc(100vh-10rem)]">
+      <div
+        className={cn(
+          'bg-muted/10 relative overflow-hidden',
+          embeddedWorkspace
+            ? 'min-h-[34rem]'
+            : embeddedPreview
+              ? 'min-h-[30rem]'
+              : 'min-h-[42rem] lg:min-h-[calc(100vh-10rem)]'
+        )}
+      >
         <canvas
           ref={canvasRef}
-          className={
+          className={cn(
+            'w-full',
+            embeddedWorkspace
+              ? 'h-[34rem]'
+              : embeddedPreview
+                ? 'h-[30rem]'
+                : 'h-[42rem] lg:h-[calc(100vh-10rem)]',
             interactionMode === 'camera'
-              ? 'h-[42rem] w-full cursor-grab lg:h-[calc(100vh-10rem)]'
+              ? 'cursor-grab'
               : interactionMode === 'select'
-                ? 'h-[42rem] w-full cursor-pointer lg:h-[calc(100vh-10rem)]'
-                : 'h-[42rem] w-full cursor-crosshair lg:h-[calc(100vh-10rem)]'
-          }
+                ? 'cursor-pointer'
+                : 'cursor-crosshair'
+          )}
         />
         {positionedRemoteCursors.length > 0 ? (
           <div className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
@@ -324,7 +352,7 @@ export function StreetSceneCanvasViewView({
             />
           </div>
         ) : null}
-        {showChangeRequests && positionedChangeRequestMarkers.length > 0 ? (
+        {!embeddedPreview && showChangeRequests && positionedChangeRequestMarkers.length > 0 ? (
           <div className="pointer-events-none absolute inset-0 z-20">
             {positionedChangeRequestMarkers.map(marker => (
               <button
@@ -358,14 +386,14 @@ export function StreetSceneCanvasViewView({
             ))}
           </div>
         ) : null}
-        {showChangeRequests && changeRequests.length > 0 ? (
+        {!embeddedPreview && showChangeRequests && changeRequests.length > 0 ? (
           <StreetDesignChangeRequestCanvasList
             changeRequests={changeRequests}
             selectedChangeRequestId={selectedChangeRequestId}
             onChangeRequestSelect={changeRequestId => onChangeRequestSelect?.(changeRequestId)}
           />
         ) : null}
-        {selectedChangeRequest ? (
+        {!embeddedPreview && selectedChangeRequest ? (
           <CanvasSelectionPopover
             anchor={
               selectedChangeRequestMarker
@@ -398,7 +426,7 @@ export function StreetSceneCanvasViewView({
               onCommentSubmit={onChangeRequestCommentSubmit}
             />
           </CanvasSelectionPopover>
-        ) : selectedObject && selectedObjectAnchor ? (
+        ) : !embeddedPreview && selectedObject && selectedObjectAnchor ? (
           <CanvasSelectionPopover anchor={selectedObjectAnchor}>
             <StreetDesignObjectPopover
               object={selectedObject}
@@ -415,7 +443,7 @@ export function StreetSceneCanvasViewView({
               onUndoOsmImport={onOsmImportUndo}
             />
           </CanvasSelectionPopover>
-        ) : selectedOsmWay && selectedOsmAnchor ? (
+        ) : !embeddedPreview && selectedOsmWay && selectedOsmAnchor ? (
           <CanvasSelectionPopover anchor={selectedOsmAnchor}>
             <StreetDesignOsmPopover
               osmWay={selectedOsmWay}
@@ -428,7 +456,7 @@ export function StreetSceneCanvasViewView({
           </CanvasSelectionPopover>
         ) : null}
       </div>
-      {legendSections.length > 0 ? (
+      {!embeddedPreview && legendSections.length > 0 ? (
         <Collapsible
           open={legendOpen}
           onOpenChange={setLegendOpen}

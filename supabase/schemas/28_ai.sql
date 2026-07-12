@@ -21,6 +21,7 @@ CREATE INDEX IF NOT EXISTS idx_ai_skill_user
 
 ALTER TABLE public.ai_skill ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.ai_skill FOR ALL TO service_role USING (true);
+GRANT ALL ON TABLE public.ai_skill TO service_role;
 
 CREATE TABLE IF NOT EXISTS public.ai_tool (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -38,6 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_ai_tool_user
 
 ALTER TABLE public.ai_tool ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.ai_tool FOR ALL TO service_role USING (true);
+GRANT ALL ON TABLE public.ai_tool TO service_role;
 
 CREATE TABLE IF NOT EXISTS public.ai_provider_credential (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -57,3 +59,4 @@ CREATE INDEX IF NOT EXISTS idx_ai_provider_credential_user
 
 ALTER TABLE public.ai_provider_credential ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.ai_provider_credential FOR ALL TO service_role USING (true);
+GRANT ALL ON TABLE public.ai_provider_credential TO service_role;

@@ -27,8 +27,6 @@ import {
   createNavItemsUnauthenticated,
 } from '@/features/navigation/nav-items/nav-items-unauthenticated.tsx';
 import { usePreferenceSync } from '@/zero/preferences/usePreferenceSync.ts';
-import { useNotificationDispatch } from '@/features/notifications/hooks/useNotificationDispatch.ts';
-import { useBrowserNotifications } from '@/features/notifications/hooks/useBrowserNotifications.ts';
 import { useToastSettingsSync } from '@/features/notifications/hooks/useToastSettingsSync.ts';
 import { MotionPage } from '@/features/shared/motion';
 import {
@@ -199,8 +197,6 @@ function findActiveNavigationItemIndex(
 
 function AuthenticatedShell({ children }: { children: ReactNode }) {
   usePreferenceSync();
-  useNotificationDispatch();
-  useBrowserNotifications();
   useToastSettingsSync();
   useGlobalZeroPreloads();
   usePrimaryRouteIdlePreloads();

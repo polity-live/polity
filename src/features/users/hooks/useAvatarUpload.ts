@@ -40,6 +40,7 @@ export function useAvatarUpload({
       // Update user's avatar URL
       await userActions.updateProfileClientApplied({
         avatar: avatarUrl,
+        video_url: null,
       });
 
       onSuccess?.(avatarUrl);

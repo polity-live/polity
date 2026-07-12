@@ -7,13 +7,15 @@
 
 interface GroupEditProps {
   groupId: string;
+  activeTab?: 'general' | 'relationships' | 'contact';
+  onTabChange?: (tab: 'general' | 'relationships' | 'contact') => void;
 }
 
 import { useGroupEditController } from './useGroupEditController';
 import { GroupEditView } from './GroupEditView';
 
-export function GroupEdit({ groupId }: GroupEditProps) {
+export function GroupEdit({ groupId, activeTab, onTabChange }: GroupEditProps) {
   const viewProps = useGroupEditController({ groupId });
 
-  return <GroupEditView {...viewProps} />;
+  return <GroupEditView {...viewProps} activeTab={activeTab} onTabChange={onTabChange} />;
 }

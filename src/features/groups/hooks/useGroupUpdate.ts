@@ -66,6 +66,7 @@ export interface GroupFormData {
   location_geometry: MutableJSONValue | null;
   location_bounds: MutableJSONValue | null;
   imageURL: string;
+  videoURL: string;
   visibility: Visibility;
   website: string;
   youtube: string;
@@ -115,6 +116,7 @@ const initialFormState: GroupFormData = {
   location_geometry: null,
   location_bounds: null,
   imageURL: '',
+  videoURL: '',
   visibility: 'public' as Visibility,
   website: '',
   youtube: '',
@@ -216,6 +218,7 @@ export function useGroupUpdate(
         location_geometry: initialData.location_geometry ?? null,
         location_bounds: initialData.location_bounds ?? null,
         imageURL: initialData.imageURL || '',
+        videoURL: initialData.videoURL || '',
         visibility: initialData.visibility ?? 'public',
         website: initialData.website || '',
         youtube: initialData.youtube || '',
@@ -303,6 +306,7 @@ export function useGroupUpdate(
         location_geometry: initialData.location_geometry ?? null,
         location_bounds: initialData.location_bounds ?? null,
         imageURL: initialData.imageURL || '',
+        videoURL: initialData.videoURL || '',
         visibility: initialData.visibility ?? 'public',
         website: initialData.website || '',
         youtube: initialData.youtube || '',
@@ -521,6 +525,7 @@ export function useGroupUpdate(
           location_geometry: formData.location_geometry,
           location_bounds: formData.location_bounds,
           image_url: formData.imageURL || null,
+          video_url: formData.videoURL || null,
           x: formData.twitter || null,
           website: formData.website || null,
           youtube: formData.youtube || null,
@@ -562,6 +567,7 @@ export function useGroupUpdate(
             location_geometry: formData.location_geometry,
             location_bounds: formData.location_bounds,
             image_url: formData.imageURL || null,
+            video_url: formData.videoURL || null,
             x: formData.twitter,
             website: formData.website || null,
             youtube: formData.youtube || null,

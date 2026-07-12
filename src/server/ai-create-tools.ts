@@ -6,6 +6,7 @@ import {
   type TimelineCardItem,
 } from '@/features/search/logic/buildTimelineCardProps';
 import type { AiAttachmentEntity, AiChatAttachment } from '@/lib/ai/schemas';
+import { buildAiEntityHref } from '@/lib/ai/entityHref';
 import {
   notifyAgendaItemCreated,
   notifyPaymentCreated,
@@ -231,6 +232,7 @@ function buildAttachment(
     subtitle: subtitle ?? null,
     prompt_context: promptContext ?? null,
     card_data_json: cardDataJson,
+    href: buildAiEntityHref(entityType, entityId),
   };
 }
 
@@ -798,6 +800,7 @@ export function buildAiCreateTools(userId: string) {
               latitude: latitude ?? null,
               longitude: longitude ?? null,
               image_url: imageUrl ?? null,
+              video_url: null,
               x: null,
               youtube: null,
               linkedin: null,
@@ -1156,6 +1159,7 @@ export function buildAiCreateTools(userId: string) {
               visibility,
               discussions: null,
               image_url: imageUrl ?? null,
+              video_url: null,
               x: null,
               youtube: null,
               linkedin: null,
@@ -1350,7 +1354,8 @@ export function buildAiCreateTools(userId: string) {
               description: '',
               content: null,
               date: date?.trim() || new Date().toISOString().split('T')[0],
-              image_url: imageUrl ?? '',
+              image_url: imageUrl ?? null,
+              video_url: null,
               visibility,
               like_count: 0,
               comment_count: 0,

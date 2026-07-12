@@ -7,7 +7,7 @@
 
 import { useGroupUpdate } from '../hooks/useGroupUpdate';
 import type { GroupFormData, GroupType } from '../hooks/useGroupUpdate';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   useTranslation,
   translate as translateText,
@@ -30,6 +30,8 @@ interface GroupEditFormProps {
   groupType?: GroupType;
   hasHierarchyChildren?: boolean | null;
   hasSiblingConnections?: boolean | null;
+  activeTab?: 'general' | 'relationships' | 'contact';
+  onTabChange?: (tab: 'general' | 'relationships' | 'contact') => void;
 }
 
 export function useGroupEditFormController({
@@ -41,12 +43,15 @@ export function useGroupEditFormController({
   groupType,
   hasHierarchyChildren,
   hasSiblingConnections,
+  activeTab: requestedTab,
+  onTabChange,
 }: GroupEditFormProps) {
   const { t } = useTranslation();
 
   const isCreating = !initialData;
 
   const [showReview, setShowReview] = useState(false);
+  const [activeTab, setActiveTab] = useState(requestedTab ?? 'general');
 
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -181,6 +186,22 @@ export function useGroupEditFormController({
 
   const showSiblingRelationshipEditor = groupType === 'sibling' || Boolean(hasSiblingConnections);
 
+  useEffect(() => {
+    const nextTab =
+      requestedTab === 'relationships' && !showSiblingRelationshipEditor
+        ? 'general'
+        : (requestedTab ?? 'general');
+    setActiveTab(nextTab);
+    if (nextTab !== requestedTab) {
+      onTabChange?.(nextTab);
+    }
+  }, [onTabChange, requestedTab, showSiblingRelationshipEditor]);
+
+  const handleTabChange = (tab: 'general' | 'relationships' | 'contact') => {
+    setActiveTab(tab);
+    onTabChange?.(tab);
+  };
+
   const siblingConfigurationPreflight = useGroupConflictPreflight(
     showSiblingRelationshipEditor &&
       formData.connected_group_id &&
@@ -253,6 +274,8 @@ export function useGroupEditFormController({
     hasHierarchyChildren,
     hasSiblingConnections,
     showSiblingRelationshipEditor,
+    activeTab,
+    onTabChange: handleTabChange,
     t,
     isCreating,
     showReview,

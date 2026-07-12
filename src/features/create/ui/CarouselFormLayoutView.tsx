@@ -66,7 +66,7 @@ export function CarouselFormLayoutView({
       <div ref={emblaRef} className="min-h-0 flex-1 overflow-hidden py-4">
         <div className="flex h-full">
           {steps.map((step: any, index: number) => (
-            <div key={index} className="min-h-0 min-w-0 flex-[0_0_100%] px-1">
+            <div key={index} data-create-section className="min-h-0 min-w-0 flex-[0_0_100%] px-1">
               <div className="h-full overflow-y-auto pr-1">
                 <CreateStepRenderer step={step} />
               </div>
@@ -75,7 +75,10 @@ export function CarouselFormLayoutView({
         </div>
       </div>
 
-      <div className="bg-background/95 flex shrink-0 items-center justify-between border-t pt-4">
+      <div
+        data-create-action-bar
+        className="bg-background/95 flex shrink-0 items-center justify-between border-t pt-4"
+      >
         <Button
           type="button"
           variant="outline"

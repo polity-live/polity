@@ -282,6 +282,7 @@ export function useBlogDetailController({ blogId }: UseBlogDetailControllerOptio
     downvotes: blog?.downvotes ?? 0,
     editorUrl,
     hashtags: blog?.blog_hashtags ? extractHashtags([...blog.blog_hashtags]) : [],
+    imageUrl: blog?.image_url,
     isLoaded: Boolean(blogWithDetails),
     isSubscribed,
     onAddComment: handleAddComment,
@@ -306,6 +307,7 @@ export function useBlogDetailController({ blogId }: UseBlogDetailControllerOptio
     supporterCount: blog?.supporter_count ?? score,
     title: blog?.title,
     upvotes: blog?.upvotes ?? 0,
+    videoUrl: blog?.video_url,
     viewUrl: blogViewUrl,
   };
 }

@@ -49,6 +49,7 @@ const OVERPASS_ENDPOINTS = [
   'https://overpass.kumi.systems/api/interpreter',
   'https://overpass.openstreetmap.ru/api/interpreter',
 ] as const;
+const OVERPASS_REQUEST_TIMEOUT_MS = 12_000;
 
 const ROAD_HIGHWAY_VALUES = new Set([
   'motorway',
@@ -1095,6 +1096,7 @@ async function fetchOverpassSnapshot(bbox: StreetDesignBoundingBox) {
       const response = await fetch(endpoint, {
         method: 'POST',
         cache: 'no-store',
+        signal: AbortSignal.timeout(OVERPASS_REQUEST_TIMEOUT_MS),
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',

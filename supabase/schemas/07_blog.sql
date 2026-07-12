@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.blog (
   content JSONB,
   date TEXT,
   image_url TEXT,
+  video_url TEXT,
   visibility TEXT NOT NULL DEFAULT 'public',
   subscriber_count INTEGER NOT NULL DEFAULT 0,
   supporter_count INTEGER NOT NULL DEFAULT 0,
@@ -22,7 +23,8 @@ CREATE TABLE IF NOT EXISTS public.blog (
   discussions JSONB,
   group_id UUID,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT blog_single_primary_media_check CHECK (image_url IS NULL OR video_url IS NULL)
 );
 
 CREATE INDEX idx_blog_group ON public.blog (group_id);

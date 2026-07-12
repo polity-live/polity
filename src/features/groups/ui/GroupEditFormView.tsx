@@ -6,7 +6,10 @@ import {
   FormControlSelectItem,
   FormControlSelectTrigger,
   FormControlSelectValue,
+  SettingsActionBar,
+  SettingsTabs,
 } from '@/features/shared/ui/form';
+import { TabsContent } from '@/features/shared/ui/ui/tabs';
 /**
  * Group Edit Form Component
  *
@@ -15,7 +18,7 @@ import {
  */
 
 import { Button } from '@/features/shared/ui/ui/button';
-import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
+import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { BasicInfoSection } from './BasicInfoSection';
@@ -41,6 +44,8 @@ export interface GroupEditFormViewProps {
   hasHierarchyChildren?: boolean | null;
   hasSiblingConnections?: boolean | null;
   showSiblingRelationshipEditor: boolean;
+  activeTab: 'general' | 'relationships' | 'contact';
+  onTabChange: (tab: 'general' | 'relationships' | 'contact') => void;
   t: any;
   isCreating: any;
   showReview: any;
@@ -77,6 +82,8 @@ export function GroupEditFormView({
   hasHierarchyChildren,
   hasSiblingConnections,
   showSiblingRelationshipEditor,
+  activeTab,
+  onTabChange,
   t,
   isCreating,
   showReview,
@@ -119,14 +126,11 @@ export function GroupEditFormView({
             title={formData.name || t('pages.create.group.untitledGroup')}
             subtitle={formData.description || undefined}
             hashtags={formData.hashtags}
-            media={
-              formData.imageURL
-                ? {
-                    imageUrl: formData.imageURL,
-                    imageAlt: formData.name || t('features.groups.editPage.groupImageAlt'),
-                  }
-                : undefined
-            }
+            media={{
+              imageUrl: formData.imageURL || undefined,
+              imageAlt: formData.name || t('features.groups.editPage.groupImageAlt'),
+              videoUrl: formData.videoURL || undefined,
+            }}
           >
             {formatLocation(formData) && (
               <SummaryField
@@ -158,248 +162,275 @@ export function GroupEditFormView({
 
   return (
     <form ref={formRef} onSubmit={onFormSubmit} className="space-y-6">
-      {/* Group Image Section */}
-      <ImageUpload
-        currentImage={formData.imageURL}
-        onImageChange={(url: string) => updateField('imageURL', url)}
-        onImageRemove={isCreating ? undefined : removeImage}
-        cleanupOnRemove
-        entityType="groups"
-        entityId={groupId}
-        label={translateText('generated.inline.0671_group_image_70e21c64')}
-        description={translateText(
-          'generated.inline.0672_upload_a_group_image_or_provide_a_url_7f743f85'
-        )}
-      />
+      <SettingsTabs
+        value={activeTab}
+        onValueChange={onTabChange}
+        tabs={[
+          { value: 'general', label: t('pages.group.settingsTabs.general') },
+          ...(showSiblingRelationshipEditor
+            ? [
+                {
+                  value: 'relationships' as const,
+                  label: t('pages.group.settingsTabs.relationships'),
+                },
+              ]
+            : []),
+          { value: 'contact', label: t('pages.group.settingsTabs.contact') },
+        ]}
+      >
+        <TabsContent value="general" className="space-y-6">
+          {/* Group Image Section */}
+          <MediaUpload
+            currentImage={formData.imageURL}
+            onImageChange={(url: string) => updateField('imageURL', url)}
+            currentVideo={formData.videoURL}
+            onVideoChange={(url: string) => updateField('videoURL', url)}
+            onImageRemove={isCreating ? undefined : removeImage}
+            cleanupOnRemove
+            exclusiveMedia
+            entityType="groups"
+            entityId={groupId}
+            imageLabel={translateText('generated.inline.0671_group_image_70e21c64')}
+            imageDescription={translateText(
+              'generated.inline.0672_upload_a_group_image_or_provide_a_url_7f743f85'
+            )}
+            videoLabel={t('common.actions.uploadVideo')}
+            videoDescription={t('common.media.videoDescription')}
+          />
 
-      {/* Basic Information */}
-      <BasicInfoSection
-        formData={formData}
-        onNameChange={value => updateField('name', value)}
-        onDescriptionContentChange={updateDescriptionContent}
-      />
+          {/* Basic Information */}
+          <BasicInfoSection
+            formData={formData}
+            onNameChange={value => updateField('name', value)}
+            onDescriptionContentChange={updateDescriptionContent}
+          />
 
-      {/* Visibility */}
-      <VisibilityInput value={formData.visibility} onChange={v => updateField('visibility', v)} />
+          {/* Visibility */}
+          <VisibilityInput
+            value={formData.visibility}
+            onChange={v => updateField('visibility', v)}
+          />
 
-      {/* Group Type */}
-      {groupType && (
-        <GroupTypeSection
-          groupType={groupType}
-          hasHierarchyChildren={hasHierarchyChildren}
-          hasSiblingConnections={hasSiblingConnections}
-        />
-      )}
-
-      {showSiblingRelationshipEditor ? (
-        <div className="space-y-4 rounded-lg border p-4">
-          <div className="space-y-2">
-            <FormControlLabel>
-              {translateText('generated.inline.0547_verbundene_gruppe_2d1da077')}
-            </FormControlLabel>
-            <FormControlSelect
-              value={formData.connected_group_id ?? ''}
-              onValueChange={value => updateField('connected_group_id', value)}
-            >
-              <FormControlSelectTrigger>
-                <FormControlSelectValue
-                  placeholder={translateText('generated.inline.0673_gruppe_waehlen_ef267c5c')}
-                />
-              </FormControlSelectTrigger>
-              <FormControlSelectContent>
-                {selectableConnectedGroups.map((group: any) => (
-                  <FormControlSelectItem key={group.id} value={group.id}>
-                    {group.name || translateText('generated.inline.0094_group_171a0606')}
-                  </FormControlSelectItem>
-                ))}
-              </FormControlSelectContent>
-            </FormControlSelect>
-          </div>
-
-          <div className="space-y-2">
-            <FormControlLabel>
-              {translateText('generated.inline.0674_membership_richtung_3a1dbdaf')}
-            </FormControlLabel>
-            <FormControlSelect
-              value={formData.siblingMembershipDirection ?? ''}
-              onValueChange={value =>
-                updateField(
-                  'siblingMembershipDirection',
-                  value as GroupFormData['siblingMembershipDirection']
-                )
-              }
-            >
-              <FormControlSelectTrigger>
-                <FormControlSelectValue
-                  placeholder={translateText('generated.inline.0675_richtung_waehlen_2c1eefdb')}
-                />
-              </FormControlSelectTrigger>
-              <FormControlSelectContent>
-                {membershipDirectionOptions.map((option: any) => (
-                  <FormControlSelectItem key={option.value} value={option.value}>
-                    <div className="space-y-1">
-                      <div>{option.label}</div>
-                      <div className="text-muted-foreground text-xs">{option.description}</div>
-                    </div>
-                  </FormControlSelectItem>
-                ))}
-              </FormControlSelectContent>
-            </FormControlSelect>
-          </div>
+          {/* Group Type */}
+          {groupType && (
+            <GroupTypeSection
+              groupType={groupType}
+              hasHierarchyChildren={hasHierarchyChildren}
+              hasSiblingConnections={hasSiblingConnections}
+            />
+          )}
 
           <div className="space-y-2">
             <FormControlLabel>
-              {translateText('generated.inline.0676_mitgliedschaftsmodus_cb90aa67')}
+              {translateText('generated.inline.0685_hashtags_338da6e1')}
             </FormControlLabel>
-            <FormControlSelect
-              value={formData.sibling_membership_mode ?? 'none'}
-              onValueChange={value =>
-                updateField(
-                  'sibling_membership_mode',
-                  value as GroupFormData['sibling_membership_mode']
-                )
-              }
-            >
-              <FormControlSelectTrigger>
-                <FormControlSelectValue />
-              </FormControlSelectTrigger>
-              <FormControlSelectContent>
-                {GROUP_EDIT_MEMBERSHIP_MODE_OPTIONS.map((mode: any) => (
-                  <FormControlSelectItem key={mode} value={mode}>
-                    {getCanonicalMembershipModeLabel(mode)}
-                  </FormControlSelectItem>
-                ))}
-              </FormControlSelectContent>
-            </FormControlSelect>
+            <HashtagEditor
+              value={formData.hashtags}
+              onChange={tags => setFormData({ ...formData, hashtags: tags })}
+              label={translateText('generated.inline.0685_hashtags_338da6e1')}
+              showLabel={false}
+              placeholder={translateText('generated.inline.0686_add_hashtags_258ebb1b')}
+            />
           </div>
+        </TabsContent>
 
-          {formData.sibling_membership_mode === 'role_members' ? (
-            <div className="space-y-2">
-              <FormControlLabel>
-                {translateText('generated.inline.0677_verbundene_rolle_6c578cbb')}
-              </FormControlLabel>
-              <FormControlSelect
-                value={formData.sibling_role_id ?? ''}
-                onValueChange={value => updateField('sibling_role_id', value)}
-              >
-                <FormControlSelectTrigger>
-                  <FormControlSelectValue
-                    placeholder={translateText('generated.inline.0678_rolle_waehlen_51cf1595')}
-                  />
-                </FormControlSelectTrigger>
-                <FormControlSelectContent>
-                  {selectableConnectedRoles.map((role: any) => (
-                    <FormControlSelectItem key={role.id} value={role.id}>
-                      {role.name || translateText('generated.inline.0092_role_c3f104d1')}
-                    </FormControlSelectItem>
-                  ))}
-                </FormControlSelectContent>
-              </FormControlSelect>
-            </div>
-          ) : null}
-
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <FormControlLabel>
-                {translateText('generated.inline.0680_rechterichtung_75533cc6')}
-              </FormControlLabel>
-              <p className="text-muted-foreground text-xs">
-                {translateText(
-                  'generated.inline.0681_lege_pro_recht_fest_in_welche_richtung_die_ve_27eaae4c'
-                )}
-              </p>
-            </div>
-            <div className="grid gap-3">
-              {RIGHT_TYPES.map((right: any) => (
-                <div
-                  key={right}
-                  className="grid gap-2 rounded-lg border p-3 md:grid-cols-[220px_minmax(0,1fr)] md:items-center"
+        {showSiblingRelationshipEditor ? (
+          <TabsContent value="relationships" className="space-y-6">
+            <div className="space-y-4 rounded-lg border p-4">
+              <div className="space-y-2">
+                <FormControlLabel>
+                  {translateText('generated.inline.0547_verbundene_gruppe_2d1da077')}
+                </FormControlLabel>
+                <FormControlSelect
+                  value={formData.connected_group_id ?? ''}
+                  onValueChange={value => updateField('connected_group_id', value)}
                 >
-                  <div className="text-sm font-medium">
-                    {getGroupRelationshipRightLabel(right, t)}
-                  </div>
+                  <FormControlSelectTrigger>
+                    <FormControlSelectValue
+                      placeholder={translateText('generated.inline.0673_gruppe_waehlen_ef267c5c')}
+                    />
+                  </FormControlSelectTrigger>
+                  <FormControlSelectContent>
+                    {selectableConnectedGroups.map((group: any) => (
+                      <FormControlSelectItem key={group.id} value={group.id}>
+                        {group.name || translateText('generated.inline.0094_group_171a0606')}
+                      </FormControlSelectItem>
+                    ))}
+                  </FormControlSelectContent>
+                </FormControlSelect>
+              </div>
+
+              <div className="space-y-2">
+                <FormControlLabel>
+                  {translateText('generated.inline.0674_membership_richtung_3a1dbdaf')}
+                </FormControlLabel>
+                <FormControlSelect
+                  value={formData.siblingMembershipDirection ?? ''}
+                  onValueChange={value =>
+                    updateField(
+                      'siblingMembershipDirection',
+                      value as GroupFormData['siblingMembershipDirection']
+                    )
+                  }
+                >
+                  <FormControlSelectTrigger>
+                    <FormControlSelectValue
+                      placeholder={translateText('generated.inline.0675_richtung_waehlen_2c1eefdb')}
+                    />
+                  </FormControlSelectTrigger>
+                  <FormControlSelectContent>
+                    {membershipDirectionOptions.map((option: any) => (
+                      <FormControlSelectItem key={option.value} value={option.value}>
+                        <div className="space-y-1">
+                          <div>{option.label}</div>
+                          <div className="text-muted-foreground text-xs">{option.description}</div>
+                        </div>
+                      </FormControlSelectItem>
+                    ))}
+                  </FormControlSelectContent>
+                </FormControlSelect>
+              </div>
+
+              <div className="space-y-2">
+                <FormControlLabel>
+                  {translateText('generated.inline.0676_mitgliedschaftsmodus_cb90aa67')}
+                </FormControlLabel>
+                <FormControlSelect
+                  value={formData.sibling_membership_mode ?? 'none'}
+                  onValueChange={value =>
+                    updateField(
+                      'sibling_membership_mode',
+                      value as GroupFormData['sibling_membership_mode']
+                    )
+                  }
+                >
+                  <FormControlSelectTrigger>
+                    <FormControlSelectValue />
+                  </FormControlSelectTrigger>
+                  <FormControlSelectContent>
+                    {GROUP_EDIT_MEMBERSHIP_MODE_OPTIONS.map((mode: any) => (
+                      <FormControlSelectItem key={mode} value={mode}>
+                        {getCanonicalMembershipModeLabel(mode)}
+                      </FormControlSelectItem>
+                    ))}
+                  </FormControlSelectContent>
+                </FormControlSelect>
+              </div>
+
+              {formData.sibling_membership_mode === 'role_members' ? (
+                <div className="space-y-2">
+                  <FormControlLabel>
+                    {translateText('generated.inline.0677_verbundene_rolle_6c578cbb')}
+                  </FormControlLabel>
                   <FormControlSelect
-                    value={formData.connectedRelationshipDirections[right]}
-                    onValueChange={value =>
-                      updateField('connectedRelationshipDirections', {
-                        ...formData.connectedRelationshipDirections,
-                        [right]:
-                          value as GroupFormData['connectedRelationshipDirections'][RightType],
-                      })
-                    }
+                    value={formData.sibling_role_id ?? ''}
+                    onValueChange={value => updateField('sibling_role_id', value)}
                   >
                     <FormControlSelectTrigger>
-                      <FormControlSelectValue />
+                      <FormControlSelectValue
+                        placeholder={translateText('generated.inline.0678_rolle_waehlen_51cf1595')}
+                      />
                     </FormControlSelectTrigger>
                     <FormControlSelectContent>
-                      {relationshipDirectionOptions.map((option: any) => (
-                        <FormControlSelectItem key={option.value} value={option.value}>
-                          {option.label}
+                      {selectableConnectedRoles.map((role: any) => (
+                        <FormControlSelectItem key={role.id} value={role.id}>
+                          {role.name || translateText('generated.inline.0092_role_c3f104d1')}
                         </FormControlSelectItem>
                       ))}
                     </FormControlSelectContent>
                   </FormControlSelect>
                 </div>
-              ))}
-            </div>
-          </div>
+              ) : null}
 
-          {siblingConfigurationPreflight.blocking ? (
-            <div className={featureThemeClassName('groupGroupConflictPanelWarningSurface')}>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-sm font-semibold">
-                    {siblingConfigurationPreflight.response.summary ??
-                      translateText(
-                        'generated.inline.0095_diese_konfiguration_ist_aktuell_blockiert_42554ab1'
-                      )}
-                  </div>
-                  <div className="text-muted-foreground text-sm">
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <FormControlLabel>
+                    {translateText('generated.inline.0680_rechterichtung_75533cc6')}
+                  </FormControlLabel>
+                  <p className="text-muted-foreground text-xs">
                     {translateText(
-                      'generated.inline.0682_bitte_bereinige_die_konflikte_bevor_du_speich_ec2bc1a4'
+                      'generated.inline.0681_lege_pro_recht_fest_in_welche_richtung_die_ve_27eaae4c'
                     )}
-                  </div>
+                  </p>
                 </div>
-                <GroupConflictDialog
-                  response={siblingConfigurationPreflight.response}
-                  triggerLabel={translateText('generated.inline.0683_details_dc3decbb')}
-                  title={translateText(
-                    'generated.inline.0684_warum_ist_diese_konfiguration_blockiert_bef0cbe3'
-                  )}
-                />
+                <div className="grid gap-3">
+                  {RIGHT_TYPES.map((right: any) => (
+                    <div
+                      key={right}
+                      className="grid gap-2 rounded-lg border p-3 md:grid-cols-[220px_minmax(0,1fr)] md:items-center"
+                    >
+                      <div className="text-sm font-medium">
+                        {getGroupRelationshipRightLabel(right, t)}
+                      </div>
+                      <FormControlSelect
+                        value={formData.connectedRelationshipDirections[right]}
+                        onValueChange={value =>
+                          updateField('connectedRelationshipDirections', {
+                            ...formData.connectedRelationshipDirections,
+                            [right]:
+                              value as GroupFormData['connectedRelationshipDirections'][RightType],
+                          })
+                        }
+                      >
+                        <FormControlSelectTrigger>
+                          <FormControlSelectValue />
+                        </FormControlSelectTrigger>
+                        <FormControlSelectContent>
+                          {relationshipDirectionOptions.map((option: any) => (
+                            <FormControlSelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </FormControlSelectItem>
+                          ))}
+                        </FormControlSelectContent>
+                      </FormControlSelect>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <GroupConflictPanel response={siblingConfigurationPreflight.response} />
+
+              {siblingConfigurationPreflight.blocking ? (
+                <div className={featureThemeClassName('groupGroupConflictPanelWarningSurface')}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold">
+                        {siblingConfigurationPreflight.response.summary ??
+                          translateText(
+                            'generated.inline.0095_diese_konfiguration_ist_aktuell_blockiert_42554ab1'
+                          )}
+                      </div>
+                      <div className="text-muted-foreground text-sm">
+                        {translateText(
+                          'generated.inline.0682_bitte_bereinige_die_konflikte_bevor_du_speich_ec2bc1a4'
+                        )}
+                      </div>
+                    </div>
+                    <GroupConflictDialog
+                      response={siblingConfigurationPreflight.response}
+                      triggerLabel={translateText('generated.inline.0683_details_dc3decbb')}
+                      title={translateText(
+                        'generated.inline.0684_warum_ist_diese_konfiguration_blockiert_bef0cbe3'
+                      )}
+                    />
+                  </div>
+                  <GroupConflictPanel response={siblingConfigurationPreflight.response} />
+                </div>
+              ) : siblingConfigurationChecking ? (
+                <div className="text-muted-foreground text-sm" aria-live="polite">
+                  {siblingConfigurationCheckingLabel}
+                </div>
+              ) : null}
             </div>
-          ) : siblingConfigurationChecking ? (
-            <div className="text-muted-foreground text-sm" aria-live="polite">
-              {siblingConfigurationCheckingLabel}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+          </TabsContent>
+        ) : null}
 
-      {/* Location Information */}
-      <LocationInfoSection formData={formData} onChange={updateField} />
-
-      {/* Social Media Links */}
-      <SocialMediaSection formData={formData} onChange={updateField} />
-
-      {/* Hashtags */}
-      <div className="space-y-2">
-        <FormControlLabel>
-          {translateText('generated.inline.0685_hashtags_338da6e1')}
-        </FormControlLabel>
-        <HashtagEditor
-          value={formData.hashtags}
-          onChange={tags => setFormData({ ...formData, hashtags: tags })}
-          label={translateText('generated.inline.0685_hashtags_338da6e1')}
-          showLabel={false}
-          placeholder={translateText('generated.inline.0686_add_hashtags_258ebb1b')}
-        />
-      </div>
+        <TabsContent value="contact" className="space-y-6">
+          <LocationInfoSection formData={formData} onChange={updateField} />
+          <SocialMediaSection formData={formData} onChange={updateField} />
+        </TabsContent>
+      </SettingsTabs>
 
       {/* Action Buttons */}
-      <div className="flex gap-4">
+      <SettingsActionBar className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         {onCancel && (
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             {translateText('generated.inline.0065_cancel_77dfd213')}
@@ -410,13 +441,12 @@ export function GroupEditFormView({
           disabled={siblingConfigurationPreflight.blocking}
           loading={isSubmitting || siblingConfigurationChecking}
           loadingLabel={submitLoadingLabel}
-          className="flex-1"
         >
           {isCreating
             ? t('pages.create.next')
             : translateText('generated.inline.0097_save_changes_fa2984b3')}
         </Button>
-      </div>
+      </SettingsActionBar>
     </form>
   );
 }

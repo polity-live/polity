@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/providers/auth-provider';
 import {
   useEventData,
@@ -8,7 +7,6 @@ import {
 } from '../hooks/useEventData';
 import { useEventMutations } from '../hooks/useEventMutations';
 import { useEventAccessRoles, useEventOfflineParticipants } from '@/zero/events/useEventState';
-import { Button } from '@/features/shared/ui/ui/button';
 import { PageSkeleton } from '@/features/shared/ui/feedback';
 import { EntitySearchBar } from '@/features/shared/ui/typeahead';
 import { MembershipTabs } from '@/features/groups/ui/MembershipTabs';
@@ -522,8 +520,6 @@ export function EventParticipants({
     <EventParticipantsView
       title={translateText('generated.inline.0441_event_participants_df407348')}
       subtitle={eventTitle}
-      backLabel={translateText('generated.inline.0493_back_b52b36b7')}
-      onBack={() => navigate({ to: '..' })}
       showSearch={showParticipantSearch}
       searchQuery={participantSearchQuery}
       onSearchQueryChange={setParticipantSearchQuery}
@@ -928,8 +924,6 @@ export function EventParticipants({
 interface EventParticipantsViewProps {
   title: string;
   subtitle: string;
-  backLabel: string;
-  onBack: () => void;
   showSearch: boolean;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
@@ -941,8 +935,6 @@ interface EventParticipantsViewProps {
 export function EventParticipantsView({
   title,
   subtitle,
-  backLabel,
-  onBack,
   showSearch,
   searchQuery,
   onSearchQueryChange,
@@ -952,13 +944,6 @@ export function EventParticipantsView({
 }: EventParticipantsViewProps) {
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <Button variant="ghost" onClick={onBack}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {backLabel}
-        </Button>
-      </div>
-
       <div className="mb-6">
         <h1 className="mb-2 text-3xl font-bold">{title}</h1>
         <p className="text-muted-foreground">{subtitle}</p>

@@ -15,6 +15,8 @@ interface GroupEditFormProps {
   groupType?: GroupType;
   hasHierarchyChildren?: boolean | null;
   hasSiblingConnections?: boolean | null;
+  activeTab?: 'general' | 'relationships' | 'contact';
+  onTabChange?: (tab: 'general' | 'relationships' | 'contact') => void;
 }
 
 import { useGroupEditFormController } from './useGroupEditFormController';
@@ -29,6 +31,8 @@ export function GroupEditForm({
   groupType,
   hasHierarchyChildren,
   hasSiblingConnections,
+  activeTab,
+  onTabChange,
 }: GroupEditFormProps) {
   const viewProps = useGroupEditFormController({
     groupId,
@@ -39,6 +43,8 @@ export function GroupEditForm({
     groupType,
     hasHierarchyChildren,
     hasSiblingConnections,
+    activeTab,
+    onTabChange,
   });
 
   return <GroupEditFormView {...viewProps} />;

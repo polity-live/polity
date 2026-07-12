@@ -30,6 +30,11 @@ export const aiChatAttachmentSchema = z.object({
   subtitle: z.string().nullable().optional(),
   prompt_context: z.string().nullable().optional(),
   card_data_json: z.string().nullable().optional(),
+  href: z
+    .string()
+    .regex(/^\/(?!\/)/)
+    .nullable()
+    .optional(),
 });
 
 export const aiModelDescriptorSchema = z.object({

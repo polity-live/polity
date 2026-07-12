@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Dialog, DialogDescription, DialogTitle } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
@@ -13,7 +12,8 @@ import { AgendaCountdownPill, AgendaStatusBadge, AgendaTypeBadge } from './Agend
 import type { AgendaItemStatus } from './AgendaCard';
 import { AgendaElectionSection, isAutoAssignedRoleElection } from './AgendaElectionSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
-import { getAgendaDisplayType, getYouTubeVideoId } from '../logic/agendaUiHelpers';
+import { getAgendaDisplayType } from '../logic/agendaUiHelpers';
+import { EventLivestreamPlayer } from '@/features/events/ui/EventLivestreamPlayer';
 import { getSpeakerGenderLabel } from '../logic/speakerListGenderQuota';
 import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 import {
@@ -26,11 +26,17 @@ import {
   MicOff,
   PanelRightClose,
   PanelRightOpen,
+  FileEdit,
+  PencilLine,
   Play,
+  Radio,
+  UserMinus,
+  UserPlus,
   Users,
   Vote,
   X,
 } from 'lucide-react';
+import { AgendaDialogContent } from './AgendaUiSystem';
 
 interface EventLiveFocusDialogProps {
   open: boolean;
@@ -41,7 +47,6 @@ interface EventLiveFocusDialogProps {
   currentAgendaItemTopNumber?: number;
   streamRuntimeStatus?: string | null;
   streamIsLive: boolean;
-  isEventStarted: boolean;
   eventStartTimestamp?: number | null;
   speakerList: any[];
   showSpeakerGender?: boolean;
@@ -71,6 +76,15 @@ interface EventLiveFocusDialogProps {
   disableVoteButton?: boolean;
   disabledVoteTooltip?: string | null;
   onVoteClick?: () => void;
+  showOfflineTallyButton?: boolean;
+  onOfflineTallyClick?: () => void;
+  offlineTallyMode?: 'create' | 'edit' | null;
+  offlineTallyLabel?: string | null;
+  canBeCandidate?: boolean;
+  isUserCandidate?: boolean;
+  candidateLoading?: boolean;
+  onBecomeCandidate?: () => void;
+  onWithdrawCandidacy?: () => void;
   attendanceMode?: 'online' | 'hybrid' | 'offline' | null;
   confirmedOfflineParticipantCount?: number;
   eligibleFinalVoterCount?: number;
@@ -353,7 +367,6 @@ export function EventLiveFocusDialog({
   currentAgendaItemTopNumber,
   streamRuntimeStatus,
   streamIsLive,
-  isEventStarted,
   eventStartTimestamp,
   speakerList,
   showSpeakerGender,
@@ -383,6 +396,15 @@ export function EventLiveFocusDialog({
   disableVoteButton,
   disabledVoteTooltip,
   onVoteClick,
+  showOfflineTallyButton = false,
+  onOfflineTallyClick,
+  offlineTallyMode,
+  offlineTallyLabel,
+  canBeCandidate = false,
+  isUserCandidate = false,
+  candidateLoading = false,
+  onBecomeCandidate,
+  onWithdrawCandidacy,
   attendanceMode,
   confirmedOfflineParticipantCount = 0,
   eligibleFinalVoterCount,
@@ -423,37 +445,53 @@ export function EventLiveFocusDialog({
         'generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792',
         'Offline votes are entered via tallies.'
       ));
-  const videoId = isEventStarted && streamUrl ? getYouTubeVideoId(streamUrl) : null;
   const visualStatus = getAgendaVisualStatus(streamRuntimeStatus, streamIsLive);
   const activeSpeakersCount = speakerList.filter(speaker => !speaker.completed).length;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <ScrollableDialogContent
-        showCloseButton={false}
-        className="bg-background !fixed !top-0 !left-0 !z-[100] flex !h-[100dvh] !max-h-[100dvh] !w-[100dvw] !max-w-[100dvw] !translate-x-0 !translate-y-0 flex-col !overflow-hidden !rounded-none !border-0 !p-0"
-      >
+      <AgendaDialogContent size="fullscreen" showCloseButton={false}>
         <DialogTitle className="sr-only">{t('features.events.stream.liveFocus')}</DialogTitle>
         <DialogDescription className="sr-only">
           {t('features.events.stream.liveFocusDescription')}
         </DialogDescription>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="bg-background/90 absolute top-3 right-3 z-20 h-9 w-9 shadow-sm backdrop-blur"
-          onClick={() => onOpenChange(false)}
-          aria-label={t('common.actions.close', 'Close')}
-          title={t('common.actions.close', 'Close')}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <header className="bg-background/95 border-border/70 flex h-14 shrink-0 items-center justify-between gap-4 border-b px-4 backdrop-blur sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="bg-destructive/10 text-destructive flex size-8 shrink-0 items-center justify-center rounded-lg">
+              <Radio className="size-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-semibold">
+                  {t('features.events.stream.liveFocus')}
+                </p>
+                {streamIsLive ? (
+                  <BadgeControl variant="default" pulse>
+                    {t('features.events.stream.live', 'LIVE')}
+                  </BadgeControl>
+                ) : null}
+              </div>
+              <p className="text-muted-foreground truncate text-xs">{agendaTitle}</p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            onClick={() => onOpenChange(false)}
+            aria-label={t('common.actions.close', 'Close')}
+            title={t('common.actions.close', 'Close')}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </header>
 
-        <div className="flex-1 overflow-y-auto lg:overflow-hidden">
+        <div className="bg-muted/10 flex-1 overflow-y-auto lg:overflow-hidden">
           <div
             className={cn(
-              'grid min-h-full gap-4 p-4 lg:h-full lg:p-6',
+              'mx-auto grid min-h-full w-full max-w-[1600px] gap-4 p-4 lg:h-full lg:p-5',
               desktopSpeakersOpen
                 ? 'lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]'
                 : 'lg:grid-cols-[minmax(0,1fr)_72px]'
@@ -471,7 +509,7 @@ export function EventLiveFocusDialog({
                 </div>
               ) : (
                 <>
-                  <div className="bg-card rounded-lg border p-4 shadow-sm md:p-6">
+                  <div className="bg-card/80 border-border/70 rounded-xl border p-4 shadow-none md:p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -519,18 +557,14 @@ export function EventLiveFocusDialog({
                     onMarkSpeakerCompleted={onMarkSpeakerCompleted}
                   />
 
-                  {videoId ? (
-                    <div className={featureThemeClassName('agendaEventAgendaContrastBackground')}>
-                      <div className="aspect-video">
-                        <iframe
-                          className="h-full w-full"
-                          src={`https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=0&rel=0&modestbranding=1`}
-                          title={t('features.events.stream.liveStream')}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                        />
-                      </div>
-                    </div>
+                  {streamIsLive ? (
+                    <EventLivestreamPlayer
+                      streamUrl={streamUrl}
+                      title={t('features.events.stream.liveStream')}
+                      containerClassName={featureThemeClassName(
+                        'agendaEventAgendaContrastBackground'
+                      )}
+                    />
                   ) : null}
 
                   {streamElection ? (
@@ -619,8 +653,8 @@ export function EventLiveFocusDialog({
           </div>
         </div>
 
-        <footer className="bg-background/95 shrink-0 border-t p-3 backdrop-blur md:px-6">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <footer className="bg-background/95 border-border/70 shrink-0 border-t p-3 backdrop-blur md:px-6">
+          <div className="mx-auto flex max-w-[1600px] flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               {showVoteButton ? (
                 <Button
@@ -678,6 +712,35 @@ export function EventLiveFocusDialog({
                 </Button>
               ) : null}
 
+              {isElectionItem && !isUserCandidate && onBecomeCandidate ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  onClick={canBeCandidate ? onBecomeCandidate : undefined}
+                  disabled={candidateLoading}
+                  loading={candidateLoading}
+                  aria-disabled={!canBeCandidate || undefined}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  {t('features.events.agenda.actions.becomeCandidate')}
+                </Button>
+              ) : null}
+
+              {isElectionItem && isUserCandidate && onWithdrawCandidacy ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  onClick={onWithdrawCandidacy}
+                  disabled={candidateLoading}
+                  loading={candidateLoading}
+                >
+                  <UserMinus className="h-4 w-4" />
+                  {t('features.events.agenda.actions.withdrawCandidacy')}
+                </Button>
+              ) : null}
+
               {isVoteActionBlocked && isVotable ? (
                 <p className="text-muted-foreground text-sm">{voteBlockedReason}</p>
               ) : null}
@@ -685,6 +748,22 @@ export function EventLiveFocusDialog({
 
             {canManageAgenda ? (
               <div className="flex flex-wrap items-center gap-2">
+                {showOfflineTallyButton || onOfflineTallyClick ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onOfflineTallyClick}
+                    disabled={!onOfflineTallyClick}
+                    title={offlineTallyLabel ?? undefined}
+                  >
+                    {offlineTallyMode === 'edit' ? (
+                      <PencilLine className="h-4 w-4" />
+                    ) : (
+                      <FileEdit className="h-4 w-4" />
+                    )}
+                    {offlineTallyLabel ?? t('features.events.agenda.manageOfflineTally')}
+                  </Button>
+                ) : null}
                 {onStartVote ? (
                   <Button type="button" variant="outline" onClick={onStartVote}>
                     <Play className="h-4 w-4" />
@@ -731,7 +810,7 @@ export function EventLiveFocusDialog({
             ) : null}
           </div>
         </footer>
-      </ScrollableDialogContent>
+      </AgendaDialogContent>
     </Dialog>
   );
 }
