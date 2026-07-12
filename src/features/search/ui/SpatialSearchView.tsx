@@ -32,13 +32,13 @@ export function SpatialSearchView({ context, permalinkID, onTotalChange }: Spati
       <SpatialSearchResultsList
         parentRef={controller.parentRef}
         cells={controller.cells}
-        totalHeight={controller.totalHeight}
+        spaceBefore={controller.spaceBefore}
+        spaceAfter={controller.spaceAfter}
         rowsEmpty={controller.rowsEmpty}
         isComplete={controller.isComplete}
         emptyLabel={controller.emptyLabel}
         activeDocumentId={controller.activeDocumentId}
         onDocumentSelect={controller.onDocumentSelect}
-        onMeasureElement={controller.onMeasureElement}
       />
     </div>
   );

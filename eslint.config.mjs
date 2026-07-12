@@ -36,6 +36,23 @@ export default tseslint.config(
     },
   },
   {
+    // These files are a feature-local, vendored JavaScript compatibility layer.
+    // They retain upstream TypeScript exhaustiveness expressions and are consumed
+    // through the typed facade in use-search-grid-virtualizer.ts.
+    files: ['src/features/search/virtual-grid/*.js'],
+    languageOptions: {
+      globals: {
+        clearTimeout: 'readonly',
+        setTimeout: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
+  {
     // Allow CommonJS in config files
     files: [
       '*.config.js',

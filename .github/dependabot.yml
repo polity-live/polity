@@ -17,7 +17,7 @@ updates:
           - "@rocicorp/zero"
           - "@rocicorp/zero-virtual"
     ignore:
-      # 0.6 removes the multi-lane virtualizer API used by the search grid.
+      # zero-virtual is pre-1.0; minor releases may contain breaking API changes.
       - dependency-name: "@rocicorp/zero-virtual"
         update-types:
           - "version-update:semver-minor"

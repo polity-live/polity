@@ -1,6 +1,6 @@
 import { useHistoryScrollState, useZeroVirtualizer } from '@rocicorp/zero-virtual/react';
 import { useQuery } from '@rocicorp/zero/react';
-import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { queries } from '@/zero/queries';
@@ -17,11 +17,11 @@ import type {
   SearchStart,
 } from '../types/search-document.types';
 import { SEARCH_CARD_HEIGHT, SEARCH_GRID_GAP } from '../ui/VirtualSearchGridView';
+import { useStableSearchListContext } from './useStableSearchListContext';
 
 export interface SpatialSearchListCell {
-  key: Key;
+  key: string | number;
   index: number;
-  top: number;
   document?: SearchDocument | null;
 }
 
@@ -82,27 +82,9 @@ export function useSpatialSearchController({
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(permalinkID ?? null);
   const [scrollState, setScrollState] = useHistoryScrollState<SearchStart>('search-spatial-list');
 
-  const spatialContext = useMemo<SearchListContext>(
-    () => ({
-      ...context,
-      bounds,
-    }),
-    [bounds, context]
-  );
+  const spatialContext = useStableSearchListContext({ ...context, bounds });
 
-  const listContextParams = useMemo(
-    () => ({
-      query: spatialContext.query,
-      types: [...spatialContext.types].sort(),
-      topics: [...spatialContext.topics].sort(),
-      createdAfter: spatialContext.createdAfter,
-      engagement: spatialContext.engagement,
-      sort: spatialContext.sort,
-      snapshotAt: spatialContext.snapshotAt,
-      bounds,
-    }),
-    [bounds, spatialContext]
-  );
+  const listContextParams = spatialContext;
 
   const getPageQuery = useCallback(
     ({
@@ -140,9 +122,7 @@ export function useSpatialSearchController({
     };
   }, []);
 
-  const { virtualizer, rowAt, complete, rowsEmpty, total } = useZeroVirtualizer<
-    HTMLDivElement,
-    HTMLDivElement,
+  const { items, spaceBefore, spaceAfter, complete, rowsEmpty, total } = useZeroVirtualizer<
     SearchListContext,
     SearchDocument,
     SearchStart
@@ -151,7 +131,6 @@ export function useSpatialSearchController({
     getScrollElement: useCallback(() => parentRef.current, []),
     estimateSize: useCallback(() => SEARCH_CARD_HEIGHT + SEARCH_GRID_GAP, []),
     overscan: 8,
-    lanes: 1,
     getPageQuery,
     getSingleQuery,
     getRowKey,
@@ -189,15 +168,12 @@ export function useSpatialSearchController({
     );
   }, []);
 
-  const scrollToDocument = useCallback(
-    (documentId: string) => {
-      const index = mapRows.findIndex(row => row.id === documentId);
-      if (index >= 0) {
-        virtualizer.scrollToIndex(index, { align: 'start' });
-      }
-    },
-    [mapRows, virtualizer]
-  );
+  const scrollToDocument = useCallback((documentId: string) => {
+    const row = Array.from(
+      parentRef.current?.querySelectorAll<HTMLElement>('[data-search-document-id]') ?? []
+    ).find(element => element.dataset.searchDocumentId === documentId);
+    row?.scrollIntoView({ block: 'nearest' });
+  }, []);
 
   const handleMapItemSelect = useCallback(
     (documentId: string) => {
@@ -211,22 +187,21 @@ export function useSpatialSearchController({
     setActiveDocumentId(document.id);
   }, []);
 
-  const virtualItems = virtualizer.getVirtualItems();
   const cells = useMemo<SpatialSearchListCell[]>(
     () =>
-      virtualItems.map(virtualItem => ({
-        key: virtualItem.key,
-        index: virtualItem.index,
-        top: virtualItem.start,
-        document: rowAt(virtualItem.index),
+      items.map(item => ({
+        key: item.key,
+        index: item.index,
+        document: item.row,
       })),
-    [rowAt, virtualItems]
+    [items]
   );
 
   return {
     parentRef,
     cells,
-    totalHeight: virtualizer.getTotalSize(),
+    spaceBefore,
+    spaceAfter,
     rowsEmpty,
     isComplete: complete,
     emptyLabel: translateText('generated.inline.1110_keine_ergebnisse_2c33e7bb'),
@@ -238,7 +213,6 @@ export function useSpatialSearchController({
     onMapItemSelect: handleMapItemSelect,
     onActiveDocumentChange: setActiveDocumentId,
     onDocumentSelect: handleDocumentSelect,
-    onMeasureElement: virtualizer.measureElement,
   };
 }
 
