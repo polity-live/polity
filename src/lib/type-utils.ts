@@ -4,5 +4,5 @@
  * and React components (which conventionally use `undefined` for optional props).
  */
 export function toUndefined<T>(value: T | null): T | undefined {
-  return value ?? undefined
+  return value ?? undefined;
 }

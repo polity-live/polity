@@ -16,6 +16,12 @@ updates:
         patterns:
           - "@rocicorp/zero"
           - "@rocicorp/zero-virtual"
+    ignore:
+      # zero-virtual is pre-1.0; minor releases may contain breaking API changes.
+      - dependency-name: "@rocicorp/zero-virtual"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-major"
 
   - package-ecosystem: "github-actions"
     directory: "/"

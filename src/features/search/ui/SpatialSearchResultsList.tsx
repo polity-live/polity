@@ -1,4 +1,5 @@
-import type { CSSProperties, RefCallback, RefObject } from 'react';
+import { rowAttributes } from '@rocicorp/zero-virtual/react';
+import type { CSSProperties, RefObject } from 'react';
 
 import { cn } from '@/features/shared/utils/utils';
 import { Card } from '@/features/shared/ui/ui/card';
@@ -10,13 +11,13 @@ import { SearchResultCard } from './SearchResultCard';
 interface SpatialSearchResultsListProps {
   parentRef: RefObject<HTMLDivElement | null>;
   cells: SpatialSearchListCell[];
-  totalHeight: number;
+  spaceBefore: number;
+  spaceAfter: number;
   rowsEmpty: boolean;
   isComplete: boolean;
   emptyLabel: string;
   activeDocumentId?: string | null;
   onDocumentSelect: (document: SearchDocument) => void;
-  onMeasureElement: RefCallback<HTMLDivElement>;
 }
 
 function SpatialSearchCardSkeleton() {
@@ -41,18 +42,18 @@ function SpatialSearchCardSkeleton() {
 export function SpatialSearchResultsList({
   parentRef,
   cells,
-  totalHeight,
+  spaceBefore,
+  spaceAfter,
   rowsEmpty,
   isComplete,
   emptyLabel,
   activeDocumentId,
   onDocumentSelect,
-  onMeasureElement,
 }: SpatialSearchResultsListProps) {
   return (
     <div
       ref={parentRef}
-      className="scrollbar-hide h-[70dvh] min-h-[420px] overflow-auto pr-1 lg:h-[calc(100dvh-15rem)] lg:min-h-[520px]"
+      className="scrollbar-hide h-[70dvh] min-h-[420px] overflow-auto pr-1 lg:h-full lg:min-h-0"
       data-testid="spatial-search-results-list"
     >
       {rowsEmpty && isComplete ? (
@@ -60,20 +61,15 @@ export function SpatialSearchResultsList({
           {emptyLabel}
         </div>
       ) : (
-        <div className="relative" style={{ height: totalHeight }}>
+        <div className="space-y-4" style={{ paddingTop: spaceBefore, paddingBottom: spaceAfter }}>
           {cells.map(cell => {
             const isActive = cell.document?.id === activeDocumentId;
 
             return (
               <div
                 key={cell.key}
-                data-index={cell.index}
-                ref={onMeasureElement}
-                className="absolute inset-x-0"
-                style={{
-                  height: SEARCH_CARD_HEIGHT,
-                  transform: `translateY(${cell.top}px)`,
-                }}
+                {...rowAttributes(cell.index, cell.key)}
+                style={{ height: SEARCH_CARD_HEIGHT }}
               >
                 <div
                   data-search-document-id={cell.document?.id}

@@ -58,17 +58,16 @@ describe('SpatialSearchResultsList', () => {
           {
             key: 'cell-0',
             index: 0,
-            top: 0,
             document: makeDocument('group:1', 'Active Group'),
           },
         ]}
-        totalHeight={400}
+        spaceBefore={24}
+        spaceAfter={48}
         rowsEmpty={false}
         isComplete={false}
         emptyLabel="No results"
         activeDocumentId="group:1"
         onDocumentSelect={vi.fn()}
-        onMeasureElement={vi.fn()}
       />
     );
 
@@ -78,6 +77,12 @@ describe('SpatialSearchResultsList', () => {
 
     expect(scrollContainer.className).toContain('scrollbar-hide');
     expect(scrollContainer.className).toContain('overflow-auto');
+    expect(scrollContainer.className).toContain('lg:h-full');
+    expect(scrollContainer.className).not.toContain('100dvh');
+    expect(wrapper?.parentElement?.getAttribute('data-vrow-index')).toBe('0');
+    expect(wrapper?.parentElement?.getAttribute('data-vrow-key')).toBe('cell-0');
+    expect(wrapper?.parentElement?.parentElement?.style.paddingTop).toBe('24px');
+    expect(wrapper?.parentElement?.parentElement?.style.paddingBottom).toBe('48px');
     expect(card.textContent).toContain('Active Group');
     expect(wrapper?.className).toContain('border-primary');
     expect(wrapper?.className).toContain('bg-primary/5');
@@ -94,17 +99,16 @@ describe('SpatialSearchResultsList', () => {
           {
             key: 'cell-1',
             index: 1,
-            top: 24,
             document,
           },
         ]}
-        totalHeight={400}
+        spaceBefore={0}
+        spaceAfter={120}
         rowsEmpty={false}
         isComplete={false}
         emptyLabel="No results"
         activeDocumentId={null}
         onDocumentSelect={onDocumentSelect}
-        onMeasureElement={vi.fn()}
       />
     );
 

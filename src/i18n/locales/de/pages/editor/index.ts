@@ -1,6 +1,7 @@
 export const editorPageTranslations = {
   title: 'Meine Dokumente',
-  description: 'Erstelle und verwalte deine kollaborativen Dokumente. Wähle ein Dokument aus, um mit der Bearbeitung zu beginnen.',
+  description:
+    'Erstelle und verwalte deine kollaborativen Dokumente. Wähle ein Dokument aus, um mit der Bearbeitung zu beginnen.',
   newDocument: 'Neues Dokument',
   createDocument: {
     title: 'Neues Dokument erstellen',
@@ -20,7 +21,8 @@ export const editorPageTranslations = {
     untitled: 'Unbenanntes Dokument',
     savingTitle: 'Titel wird gespeichert...',
     autoSaveEnabled: 'Automatisches Speichern aktiviert',
-    changesAutoSaved: 'Änderungen werden automatisch gespeichert. Änderungen anderer Benutzer erscheinen in Echtzeit.',
+    changesAutoSaved:
+      'Änderungen werden automatisch gespeichert. Änderungen anderer Benutzer erscheinen in Echtzeit.',
   },
   presence: {
     userOnline: 'Benutzer online',

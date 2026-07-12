@@ -1,5 +1,7 @@
-import { createFileRoute, notFound } from '@tanstack/react-router'
+import { createFileRoute, notFound } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/$')({
-  loader: () => { throw notFound() },
-})
+  loader: () => {
+    throw notFound();
+  },
+});

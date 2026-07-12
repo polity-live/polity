@@ -23,7 +23,7 @@ export const supportPageTranslations = {
       title: 'Design',
       description: 'Help design flows and improve UI & UX',
       intro:
-        'Your design expertise can significantly improve the platform\'s usability and make democratic processes more accessible.',
+        "Your design expertise can significantly improve the platform's usability and make democratic processes more accessible.",
       details: [
         'Design intuitive user flows for complex democratic processes',
         'Improve user experience through thoughtful interface design',
@@ -55,8 +55,7 @@ export const supportPageTranslations = {
       'Polity is a community project. Every form of support – whether financial, through design, or development – makes a difference. Together, we build tools for a more democratic future.',
     openSource: {
       title: 'Open Source & Transparent:',
-      text:
-        'All our developments are publicly visible. Your contributions help not only us but the entire community and democratic movements worldwide.',
+      text: 'All our developments are publicly visible. Your contributions help not only us but the entire community and democratic movements worldwide.',
     },
   },
 } as const;

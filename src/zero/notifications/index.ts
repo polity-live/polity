@@ -1,5 +1,5 @@
 // Table
-export { notification, pushSubscription, notificationSetting, notificationRead } from './table'
+export { notification, pushSubscription, notificationSetting, notificationRead } from './table';
 
 // Zod Schemas
 export {
@@ -18,13 +18,13 @@ export {
   type PushSubscription,
   type NotificationSetting,
   type NotificationRead,
-} from './schema'
+} from './schema';
 
 // Queries & Mutators
-export { notificationQueries } from './queries'
-export { notificationSharedMutators } from './shared-mutators'
+export { notificationQueries } from './queries';
+export { notificationSharedMutators } from './shared-mutators';
 
 // Hooks
-export { useNotificationState } from './useNotificationState'
-export { useNotificationActions } from './useNotificationActions'
-export { useEntityUnreadCount } from './useEntityUnreadCount'
+export { useNotificationState } from './useNotificationState';
+export { useNotificationActions } from './useNotificationActions';
+export { useEntityUnreadCount } from './useEntityUnreadCount';

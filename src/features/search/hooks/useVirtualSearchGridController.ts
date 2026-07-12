@@ -1,8 +1,9 @@
-import { useHistoryScrollState, useZeroVirtualizer } from '@rocicorp/zero-virtual/react';
+import { useHistoryScrollState } from '@rocicorp/zero-virtual/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { queries } from '@/zero/queries';
+import { useSearchGridVirtualizer } from '../virtual-grid/use-search-grid-virtualizer';
 
 import type {
   SearchDocument,
@@ -14,8 +15,9 @@ import {
   SEARCH_GRID_GAP,
   type VirtualSearchGridCell,
 } from '../ui/VirtualSearchGridView';
+import { useStableSearchListContext } from './useStableSearchListContext';
 
-function getLanes(width: number) {
+export function getSearchGridLanes(width: number) {
   if (width >= 1440) return 4;
   if (width >= 1040) return 3;
   if (width >= 700) return 2;
@@ -68,22 +70,10 @@ export function useVirtualSearchGridController({
     return () => resizeObserver.disconnect();
   }, []);
 
-  const lanes = getLanes(width);
+  const lanes = getSearchGridLanes(width);
   const columnWidth = Math.max(0, (width - SEARCH_GRID_GAP * (lanes - 1)) / lanes);
 
-  const listContextParams = useMemo(
-    () => ({
-      query: context.query,
-      types: [...context.types].sort(),
-      topics: [...context.topics].sort(),
-      createdAfter: context.createdAfter,
-      engagement: context.engagement,
-      sort: context.sort,
-      snapshotAt: context.snapshotAt,
-      bounds: context.bounds ?? null,
-    }),
-    [context]
-  );
+  const listContextParams = useStableSearchListContext(context);
 
   const getPageQuery = useCallback(
     ({
@@ -101,7 +91,7 @@ export function useVirtualSearchGridController({
 
       return {
         query: queries.search.searchDocumentPage({
-          ...context,
+          ...listContextParams,
           limit,
           start,
           dir,
@@ -109,7 +99,7 @@ export function useVirtualSearchGridController({
         options: { ttl },
       };
     },
-    [context]
+    [listContextParams]
   );
 
   const getSingleQuery = useCallback(({ id, settled }: { id: string; settled: boolean }) => {
@@ -121,13 +111,7 @@ export function useVirtualSearchGridController({
     };
   }, []);
 
-  const { virtualizer, rowAt, complete, rowsEmpty, total } = useZeroVirtualizer<
-    HTMLDivElement,
-    HTMLDivElement,
-    SearchListContext,
-    SearchDocument,
-    SearchStart
-  >({
+  const { virtualizer, rowAt, complete, rowsEmpty, total } = useSearchGridVirtualizer({
     listContextParams,
     getScrollElement: useCallback(() => parentRef.current, []),
     estimateSize: useCallback(() => SEARCH_CARD_HEIGHT + SEARCH_GRID_GAP, []),

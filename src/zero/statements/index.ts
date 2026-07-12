@@ -1,10 +1,5 @@
 // Table
-export {
-  statement,
-  statementSurvey,
-  statementSurveyOption,
-  statementSurveyVote,
-} from './table'
+export { statement, statementSurvey, statementSurveyOption, statementSurveyVote } from './table';
 
 // Zod Schemas
 export {
@@ -25,12 +20,12 @@ export {
   type StatementSurvey,
   type StatementSurveyOption,
   type StatementSurveyVote,
-} from './schema'
+} from './schema';
 
 // Queries & Mutators
-export { statementQueries } from './queries'
-export { statementSharedMutators } from './shared-mutators'
+export { statementQueries } from './queries';
+export { statementSharedMutators } from './shared-mutators';
 
 // Facade hooks
-export { useStatementState } from './useStatementState'
-export { useStatementActions } from './useStatementActions'
+export { useStatementState } from './useStatementState';
+export { useStatementActions } from './useStatementActions';

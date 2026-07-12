@@ -14,10 +14,10 @@ export function SpatialSearchView({ context, permalinkID, onTotalChange }: Spati
 
   return (
     <div
-      className="grid gap-4 lg:grid-cols-[minmax(360px,52vw)_minmax(320px,1fr)]"
+      className="grid h-full min-h-0 gap-4 overflow-auto lg:grid-cols-[minmax(360px,52vw)_minmax(320px,1fr)] lg:overflow-hidden"
       data-testid="spatial-search-view"
     >
-      <div className="lg:sticky lg:top-28 lg:self-start">
+      <div className="lg:h-full lg:min-h-0">
         <SpatialSearchMap
           items={controller.mapItems}
           activeItem={controller.activeMapItem}
@@ -32,13 +32,13 @@ export function SpatialSearchView({ context, permalinkID, onTotalChange }: Spati
       <SpatialSearchResultsList
         parentRef={controller.parentRef}
         cells={controller.cells}
-        totalHeight={controller.totalHeight}
+        spaceBefore={controller.spaceBefore}
+        spaceAfter={controller.spaceAfter}
         rowsEmpty={controller.rowsEmpty}
         isComplete={controller.isComplete}
         emptyLabel={controller.emptyLabel}
         activeDocumentId={controller.activeDocumentId}
         onDocumentSelect={controller.onDocumentSelect}
-        onMeasureElement={controller.onMeasureElement}
       />
     </div>
   );

@@ -1,10 +1,12 @@
 /* @vitest-environment jsdom */
 
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import type { LatLngBounds } from 'leaflet';
 import type { ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StreetAreaPickerView } from '../StreetAreaPickerView';
+
+afterEach(cleanup);
 
 describe('StreetAreaPickerView', () => {
   it('renders the compact map fallback', () => {

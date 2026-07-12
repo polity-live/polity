@@ -68,7 +68,7 @@ export function VirtualSearchGridView({
   onMeasureElement,
 }: VirtualSearchGridViewProps) {
   return (
-    <div className="relative">
+    <div className="relative h-full min-h-0">
       {showNewResults ? (
         <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center">
           <Button
@@ -85,7 +85,7 @@ export function VirtualSearchGridView({
       <div
         ref={parentRef}
         onScroll={onScroll}
-        className="scrollbar-hide h-[calc(100dvh-15rem)] min-h-[520px] overflow-auto pr-1"
+        className="scrollbar-hide h-full min-h-0 overflow-auto pr-1"
       >
         {rowsEmpty && isComplete ? (
           <div className="text-muted-foreground flex h-64 items-center justify-center rounded-lg border border-dashed text-sm">

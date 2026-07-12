@@ -142,6 +142,7 @@ test-output.txt
 /playwright/.cache/
 /e2e-results/
 /.playwright-cli/
+/output/
 
 # Playwright
 /blob-report/

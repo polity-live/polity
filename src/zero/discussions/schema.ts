@@ -1,5 +1,5 @@
-import { z } from 'zod'
-import { timestampSchema, nullableTimestampSchema, jsonSchema } from '../shared/helpers'
+import { z } from 'zod';
+import { timestampSchema, nullableTimestampSchema, jsonSchema } from '../shared/helpers';
 
 // ============================================
 // Thread Schemas
@@ -20,18 +20,18 @@ const baseThreadSchema = z.object({
   position: jsonSchema.nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
-})
+});
 
-export const selectThreadSchema = baseThreadSchema
+export const selectThreadSchema = baseThreadSchema;
 
 export const createThreadSchema = baseThreadSchema
   .omit({ id: true, created_at: true, updated_at: true })
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 
 export const updateThreadSchema = baseThreadSchema
   .pick({ content: true, status: true, upvotes: true, downvotes: true })
   .partial()
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 
 // ============================================
 // Comment Schemas
@@ -47,22 +47,22 @@ const baseCommentSchema = z.object({
   downvotes: z.number(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
-})
+});
 
-export const selectCommentSchema = baseCommentSchema
+export const selectCommentSchema = baseCommentSchema;
 
 export const createCommentSchema = baseCommentSchema
   .omit({ id: true, created_at: true, updated_at: true })
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 
 export const updateCommentSchema = baseCommentSchema
   .pick({ content: true, upvotes: true, downvotes: true })
   .partial()
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 
 // ============================================
 // Inferred Types
 // ============================================
 
-export type Thread = z.infer<typeof selectThreadSchema>
-export type Comment = z.infer<typeof selectCommentSchema>
+export type Thread = z.infer<typeof selectThreadSchema>;
+export type Comment = z.infer<typeof selectCommentSchema>;

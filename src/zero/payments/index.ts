@@ -1,5 +1,5 @@
 // Table
-export { payment, stripeCustomer, stripeSubscription, stripePayment } from './table'
+export { payment, stripeCustomer, stripeSubscription, stripePayment } from './table';
 
 // Zod Schemas
 export {
@@ -17,12 +17,12 @@ export {
   type StripeCustomer,
   type StripeSubscription,
   type StripePayment,
-} from './schema'
+} from './schema';
 
 // Queries & Mutators
-export { paymentQueries } from './queries'
-export { paymentSharedMutators } from './shared-mutators'
+export { paymentQueries } from './queries';
+export { paymentSharedMutators } from './shared-mutators';
 
 // Facade Hooks
-export { usePaymentState } from './usePaymentState'
-export { usePaymentActions } from './usePaymentActions'
+export { usePaymentState } from './usePaymentState';
+export { usePaymentActions } from './usePaymentActions';

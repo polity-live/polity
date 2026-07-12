@@ -24,7 +24,8 @@ export const documentsTranslations = {
   inviteDialog: {
     invite: 'Einladen',
     title: 'Mitarbeiter einladen',
-    description: 'Suchen und wählen Sie Benutzer aus, die als Mitarbeiter an diesem Dokument eingeladen werden sollen.',
+    description:
+      'Suchen und wählen Sie Benutzer aus, die als Mitarbeiter an diesem Dokument eingeladen werden sollen.',
     searchPlaceholder: 'Nach Name, Handle oder E-Mail suchen...',
     noUsersFound: 'Keine Benutzer gefunden.',
     selected: 'Ausgewählt',

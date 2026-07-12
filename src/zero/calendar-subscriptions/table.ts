@@ -1,4 +1,4 @@
-import { table, string, number, boolean } from '@rocicorp/zero'
+import { table, string, number, boolean } from '@rocicorp/zero';
 
 export const calendarSubscription = table('calendar_subscription')
   .columns({
@@ -11,4 +11,4 @@ export const calendarSubscription = table('calendar_subscription')
     color: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
