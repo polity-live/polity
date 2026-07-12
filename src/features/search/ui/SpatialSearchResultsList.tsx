@@ -53,7 +53,7 @@ export function SpatialSearchResultsList({
   return (
     <div
       ref={parentRef}
-      className="scrollbar-hide h-[70dvh] min-h-[420px] overflow-auto pr-1 lg:h-[calc(100dvh-15rem)] lg:min-h-[520px]"
+      className="scrollbar-hide h-[70dvh] min-h-[420px] overflow-auto pr-1 lg:h-full lg:min-h-0"
       data-testid="spatial-search-results-list"
     >
       {rowsEmpty && isComplete ? (

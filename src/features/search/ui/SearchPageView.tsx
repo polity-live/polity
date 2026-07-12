@@ -1,4 +1,4 @@
-import type { Dispatch, ReactNode, SetStateAction } from 'react';
+import type { CSSProperties, Dispatch, ReactNode, SetStateAction } from 'react';
 
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
 import {
@@ -59,8 +59,19 @@ export function SearchPageView({
   swipeHandlers,
   results,
 }: SearchPageViewProps) {
+  const searchLayoutStyle: CSSProperties = {
+    touchAction: 'pan-y',
+    height:
+      'calc(100dvh - var(--app-shell-mobile-top-offset, 0rem) - var(--app-shell-mobile-bottom-offset, 0rem) - 1.5rem)',
+  };
+
   return (
-    <div style={{ touchAction: 'pan-y' }} {...swipeHandlers}>
+    <div
+      className="-mb-6 flex min-h-0 flex-col overflow-hidden"
+      data-testid="search-page-layout"
+      style={searchLayoutStyle}
+      {...swipeHandlers}
+    >
       <SearchHeader
         searchQuery={searchQuery}
         setSearchQuery={onSearchQueryChange}
@@ -94,7 +105,7 @@ export function SearchPageView({
         />
       ) : null}
 
-      {results}
+      <div className="min-h-0 flex-1">{results}</div>
     </div>
   );
 }

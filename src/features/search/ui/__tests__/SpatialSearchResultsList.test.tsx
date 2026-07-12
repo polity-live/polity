@@ -77,6 +77,8 @@ describe('SpatialSearchResultsList', () => {
 
     expect(scrollContainer.className).toContain('scrollbar-hide');
     expect(scrollContainer.className).toContain('overflow-auto');
+    expect(scrollContainer.className).toContain('lg:h-full');
+    expect(scrollContainer.className).not.toContain('100dvh');
     expect(wrapper?.parentElement?.getAttribute('data-vrow-index')).toBe('0');
     expect(wrapper?.parentElement?.getAttribute('data-vrow-key')).toBe('cell-0');
     expect(wrapper?.parentElement?.parentElement?.style.paddingTop).toBe('24px');

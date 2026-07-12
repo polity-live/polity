@@ -91,7 +91,7 @@ function createClusterIcon(leafletModule: LeafletModule, cluster: { getChildCoun
 
 function SpatialSearchMapMessageView({ message }: { message: string }) {
   return (
-    <div className="bg-muted/20 text-muted-foreground flex h-72 items-center justify-center rounded-lg border border-dashed px-4 text-center text-sm lg:h-[calc(100dvh-15rem)] lg:min-h-[520px]">
+    <div className="bg-muted/20 text-muted-foreground flex h-72 items-center justify-center rounded-lg border border-dashed px-4 text-center text-sm lg:h-full lg:min-h-0">
       {message}
     </div>
   );
@@ -351,7 +351,7 @@ export function SpatialSearchMap({
       <MapPanelSkeleton
         label={translateText('common.locationPicker.loading', 'Loading map...')}
         className="rounded-lg"
-        heightClassName="h-72 lg:h-[calc(100dvh-15rem)] lg:min-h-[520px]"
+        heightClassName="h-72 lg:h-full lg:min-h-0"
       />
     );
   }
@@ -360,14 +360,14 @@ export function SpatialSearchMap({
 
   return (
     <div
-      className="bg-background overflow-hidden rounded-lg border shadow-sm"
+      className="bg-background overflow-hidden rounded-lg border shadow-sm lg:h-full lg:min-h-0"
       data-testid="spatial-search-map"
       data-swipe-lock
     >
       <MapContainer
         center={center}
         zoom={items.length === 1 ? 10 : 6}
-        className="h-72 w-full lg:h-[calc(100dvh-15rem)] lg:min-h-[520px]"
+        className="h-72 w-full lg:h-full lg:min-h-0"
         attributionControl={false}
       >
         <TileLayer
