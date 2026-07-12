@@ -4,11 +4,14 @@ import { featureThemeClassName } from '@/features/shared/theme';
 import {
   Dialog,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
-import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import {
+  ManagementDialogBody,
+  ManagementDialogContent,
+  ManagementDialogHeader,
+} from '@/features/shared/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type {
@@ -289,13 +292,15 @@ export function GroupConflictDialog({
           {resolvedTriggerLabel}
         </Button>
       </DialogTrigger>
-      <ScrollableDialogContent management className="sm:max-w-2xl">
-        <DialogHeader>
+      <ManagementDialogContent className="h-[min(90dvh,42rem)] sm:max-w-2xl">
+        <ManagementDialogHeader>
           <DialogTitle>{resolvedTitle}</DialogTitle>
           <DialogDescription>{resolvedDescription}</DialogDescription>
-        </DialogHeader>
-        <GroupConflictPanel response={response} />
-      </ScrollableDialogContent>
+        </ManagementDialogHeader>
+        <ManagementDialogBody>
+          <GroupConflictPanel response={response} />
+        </ManagementDialogBody>
+      </ManagementDialogContent>
     </Dialog>
   );
 }

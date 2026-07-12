@@ -17,6 +17,7 @@ import {
   getBranchEditingMode,
   getOrderedBranches,
 } from '@/features/amendments/logic/amendmentBranchDisplay';
+import { normalizeEditingMode } from '@/zero/amendments/editing-mode-policy';
 
 interface AmendmentProcessDetailsPanelViewProps {
   amendment: {
@@ -24,6 +25,7 @@ interface AmendmentProcessDetailsPanelViewProps {
     title?: string | null;
     reason?: string | null;
     preamble?: string | null;
+    editing_mode?: string | null;
     current_process_run?: {
       branches?:
         | readonly {
@@ -40,6 +42,7 @@ interface AmendmentProcessDetailsPanelViewProps {
   groupTypeById?: Map<string, string | null>;
   onGroupClick?: (groupId: string) => void;
   onEventClick?: (eventId: string) => void;
+  variant?: 'default' | 'agenda';
   open: boolean;
   onOpenChange: (open: boolean) => void;
   labels: {
@@ -59,11 +62,17 @@ export function AmendmentProcessDetailsPanelView({
   groupTypeById,
   onGroupClick,
   onEventClick,
+  variant = 'default',
   open,
   onOpenChange,
   labels,
 }: AmendmentProcessDetailsPanelViewProps) {
   const firstBranch = getOrderedBranches(amendment.current_process_run?.branches ?? [])[0] ?? null;
+  const editingMode = firstBranch
+    ? getBranchEditingMode(firstBranch)
+    : amendment.editing_mode
+      ? normalizeEditingMode(amendment.editing_mode)
+      : null;
 
   return (
     <Collapsible open={open} onOpenChange={onOpenChange}>
@@ -72,23 +81,23 @@ export function AmendmentProcessDetailsPanelView({
           {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <ScrollText className="text-muted-foreground h-4 w-4" />
           <span>{labels.amendmentDetails}</span>
-          {firstBranch ? (
-            <EditingModeBadge mode={getBranchEditingMode(firstBranch)} variant="secondary" />
+          {editingMode ? <EditingModeBadge mode={editingMode} variant="secondary" /> : null}
+          {variant === 'default' ? (
+            <Link
+              to="/amendment/$id"
+              params={{ id: amendment.id }}
+              className="text-primary ml-auto flex items-center gap-1 text-xs hover:underline"
+              onClick={event => event.stopPropagation()}
+            >
+              {labels.viewAmendment}
+              <ExternalLink className="h-3 w-3" />
+            </Link>
           ) : null}
-          <Link
-            to="/amendment/$id"
-            params={{ id: amendment.id }}
-            className="text-primary ml-auto flex items-center gap-1 text-xs hover:underline"
-            onClick={event => event.stopPropagation()}
-          >
-            {labels.viewAmendment}
-            <ExternalLink className="h-3 w-3" />
-          </Link>
         </CollapsibleTrigger>
 
         <CollapsibleContent>
           <div className="space-y-3 border-t px-4 py-3">
-            {amendment.title ? (
+            {variant === 'default' && amendment.title ? (
               <div>
                 <p className="text-muted-foreground text-xs font-medium">{labels.title}</p>
                 <Link
@@ -101,7 +110,7 @@ export function AmendmentProcessDetailsPanelView({
               </div>
             ) : null}
 
-            {amendment.reason ? (
+            {variant === 'default' && amendment.reason ? (
               <div>
                 <p className="text-muted-foreground text-xs font-medium">{labels.reason}</p>
                 <p className="text-sm whitespace-pre-wrap">{amendment.reason}</p>
@@ -115,25 +124,27 @@ export function AmendmentProcessDetailsPanelView({
               </div>
             ) : null}
 
-            <div className="flex flex-wrap gap-2">
-              {amendment.group?.id && amendment.group?.name ? (
-                <BadgeControl variant="outline" size="xs">
-                  <Link
-                    to="/group/$id"
-                    params={{ id: amendment.group.id }}
-                    className="inline-flex items-center gap-1 hover:underline"
-                  >
-                    <Building2 className="h-3 w-3" />
+            {variant === 'default' ? (
+              <div className="flex flex-wrap gap-2">
+                {amendment.group?.id && amendment.group?.name ? (
+                  <BadgeControl variant="outline" size="xs">
+                    <Link
+                      to="/group/$id"
+                      params={{ id: amendment.group.id }}
+                      className="inline-flex items-center gap-1 hover:underline"
+                    >
+                      <Building2 className="h-3 w-3" />
+                      {amendment.group.name}
+                    </Link>
+                  </BadgeControl>
+                ) : amendment.group?.name ? (
+                  <BadgeControl variant="outline" size="xs">
+                    <Building2 className="mr-1 h-3 w-3" />
                     {amendment.group.name}
-                  </Link>
-                </BadgeControl>
-              ) : amendment.group?.name ? (
-                <BadgeControl variant="outline" size="xs">
-                  <Building2 className="mr-1 h-3 w-3" />
-                  {amendment.group.name}
-                </BadgeControl>
-              ) : null}
-            </div>
+                  </BadgeControl>
+                ) : null}
+              </div>
+            ) : null}
 
             {forwardingPreview ? (
               <div className="space-y-3">

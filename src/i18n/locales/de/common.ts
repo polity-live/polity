@@ -291,6 +291,8 @@ export const commonTranslations = {
     layoutSaved: 'Netzwerk-Layout gespeichert.',
     layoutReset: 'Netzwerk-Layout zurückgesetzt.',
     activeRelationships: 'Aktive Beziehungen',
+    activeRelationshipsDescription:
+      'Bestehende Gruppenverbindungen und die aktuell darüber vergebenen Rechte.',
     active: 'Aktiv',
     searchByGroupName: 'Nach Gruppenname suchen...',
     directionFilterLabel: 'Beziehungsrichtung',

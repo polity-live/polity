@@ -163,7 +163,7 @@ describe('ManageWorkflowsTab', () => {
       ],
     });
 
-    render(
+    const { container } = render(
       <ManageWorkflowsTab
         canManageWorkflows
         groupId="current-group"
@@ -212,6 +212,9 @@ describe('ManageWorkflowsTab', () => {
     );
     expect(screen.getAllByText('Final group').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: 'Edit Workflow' })).toHaveLength(3);
+    expect(container.querySelector('[data-slot="management-toolbar"]')).toBeTruthy();
+    expect(container.querySelectorAll('[data-slot="management-section"]')).toHaveLength(4);
+    expect(container.querySelectorAll('[data-slot="data-table-surface"]')).toHaveLength(4);
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
     await waitFor(() => expect(onApproveWorkflowApproval.mock.calls[0]?.[0]).toBe('approval-1'));

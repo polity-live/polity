@@ -206,6 +206,18 @@ describe('ManageNetworkTab', () => {
     expect(infoRightBadge?.className).toContain('hover:bg-accent');
     expect(infoRightBadge?.className).toContain('hover:text-accent-foreground');
     expect(infoRightBadge?.className).not.toContain('hover:bg-primary');
+
+    const toolbar = container.querySelector('[data-slot="management-toolbar"]');
+    const sections = container.querySelectorAll('[data-slot="management-section"]');
+    const tableSurfaces = container.querySelectorAll('[data-slot="data-table-surface"]');
+    expect(toolbar).toBeTruthy();
+    expect(sections.length).toBe(3);
+    expect(tableSurfaces.length).toBe(3);
+    sections.forEach(section => {
+      const header = section.querySelector('[data-slot="management-section-header"]');
+      expect(header).toBeTruthy();
+      expect(header?.closest('[data-slot="data-table-surface"]')).toBeNull();
+    });
   });
 
   it('shows create, row actions, and workflows for users with manage rights', () => {
@@ -319,7 +331,7 @@ describe('ManageNetworkTab', () => {
       />
     );
 
-    expect(screen.getByText('common.network.outgoingRequests (1)')).toBeTruthy();
+    expect(screen.getByText('common.network.outgoingRequests')).toBeTruthy();
     expect(screen.queryByText('Structure / membership change')).toBeNull();
     expect(screen.getAllByText('Membership').length).toBeGreaterThan(0);
     expect(screen.getByText('Alle Mitglieder von')).toBeTruthy();
@@ -474,7 +486,7 @@ describe('ManageNetworkTab', () => {
       />
     );
 
-    expect(screen.getByText('common.network.outgoingRequests (1)')).toBeTruthy();
+    expect(screen.getByText('common.network.outgoingRequests')).toBeTruthy();
     expect(screen.getAllByText('Structure / membership change').length).toBeGreaterThan(0);
     expect(screen.getByText('Structure / membership')).toBeTruthy();
     expect(screen.queryByText('-')).toBeNull();

@@ -138,7 +138,7 @@ export function NamedBallotResultsDialog({
 }: NamedBallotResultsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <AgendaDialogContent size="fullscreen">
+      <AgendaDialogContent size="fullscreen" className="!z-[140]">
         <DialogHeader separator className="px-6 py-5 pr-14 sm:pr-16">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-2">

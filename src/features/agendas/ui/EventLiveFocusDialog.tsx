@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Dialog, DialogDescription, DialogTitle } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
@@ -61,6 +61,8 @@ interface EventLiveFocusDialogProps {
   onStartVote?: () => void;
   onStartFinalVote?: () => void;
   onCloseFinalVote?: () => void;
+  onJumpToNextVoteStep?: () => void;
+  onEditItem?: () => void;
   startVoteLabel?: string | null;
   startFinalVoteLabel?: string | null;
   closeFinalVoteLabel?: string | null;
@@ -100,6 +102,7 @@ interface EventLiveFocusDialogProps {
   finalDecisions: readonly any[];
   userHasVoteVoted: boolean;
   userSelectedChoiceIds: string[];
+  votingWorkspace?: ReactNode;
 }
 
 type AgendaVisualStatus = AgendaItemStatus | 'active';
@@ -381,6 +384,8 @@ export function EventLiveFocusDialog({
   onStartVote,
   onStartFinalVote,
   onCloseFinalVote,
+  onJumpToNextVoteStep,
+  onEditItem,
   startVoteLabel,
   startFinalVoteLabel,
   closeFinalVoteLabel,
@@ -420,6 +425,7 @@ export function EventLiveFocusDialog({
   finalDecisions,
   userHasVoteVoted,
   userSelectedChoiceIds,
+  votingWorkspace,
 }: EventLiveFocusDialogProps) {
   const [desktopSpeakersOpen, setDesktopSpeakersOpen] = useState(true);
   const agendaTitle = currentAgendaItem?.title || t('features.events.stream.noActiveItem');
@@ -567,42 +573,43 @@ export function EventLiveFocusDialog({
                     />
                   ) : null}
 
-                  {streamElection ? (
-                    <AgendaElectionSection
-                      className="shadow-sm"
-                      roleName={streamElection.title ?? t('features.events.agenda.role')}
-                      electionMode={
-                        streamElection.election_mode
-                          ? normalizeElectionMode(streamElection.election_mode)
-                          : null
-                      }
-                      seatCount={streamElection.seat_count ?? null}
-                      candidates={streamElection.candidates ?? []}
-                      indicativeSelections={indicativeSelections}
-                      finalSelections={finalSelections}
-                      offlineTallies={streamElection.offline_tallies ?? []}
-                      attendanceMode={attendanceMode}
-                      delegateTargetEventId={
-                        streamDelegateTargetEvent?.id ??
-                        (
-                          streamElection as {
-                            delegate_assignment_meta?: { targetEventId?: string } | null;
-                          }
-                        ).delegate_assignment_meta?.targetEventId
-                      }
-                      delegateTargetEventTitle={streamDelegateTargetEvent?.title ?? null}
-                      showRoleAssignedMessage={isAutoAssignedRoleElection(streamElection)}
-                      userHasVoted={userHasElectionVoted}
-                      userSelectedCandidateIds={userSelectedCandidateIds}
-                      electionStatus={streamElection.status}
-                      canVote={false}
-                      canBeCandidate={false}
-                      isUserCandidate={false}
-                      onBecomeCandidate={() => undefined}
-                    />
-                  ) : null}
+                  {votingWorkspace ??
+                    (streamElection ? (
+                      <AgendaElectionSection
+                        className="shadow-sm"
+                        roleName={streamElection.title ?? t('features.events.agenda.role')}
+                        electionMode={
+                          streamElection.election_mode
+                            ? normalizeElectionMode(streamElection.election_mode)
+                            : null
+                        }
+                        seatCount={streamElection.seat_count ?? null}
+                        candidates={streamElection.candidates ?? []}
+                        indicativeSelections={indicativeSelections}
+                        finalSelections={finalSelections}
+                        offlineTallies={streamElection.offline_tallies ?? []}
+                        attendanceMode={attendanceMode}
+                        delegateTargetEventId={
+                          streamDelegateTargetEvent?.id ??
+                          (
+                            streamElection as {
+                              delegate_assignment_meta?: { targetEventId?: string } | null;
+                            }
+                          ).delegate_assignment_meta?.targetEventId
+                        }
+                        delegateTargetEventTitle={streamDelegateTargetEvent?.title ?? null}
+                        showRoleAssignedMessage={isAutoAssignedRoleElection(streamElection)}
+                        userHasVoted={userHasElectionVoted}
+                        userSelectedCandidateIds={userSelectedCandidateIds}
+                        electionStatus={streamElection.status}
+                        canVote={false}
+                        canBeCandidate={false}
+                        isUserCandidate={false}
+                        onBecomeCandidate={() => undefined}
+                      />
+                    ) : null)}
 
-                  {streamVote ? (
+                  {!votingWorkspace && streamVote ? (
                     <AgendaVoteSection
                       className="shadow-sm"
                       voteId={streamVote.id}
@@ -764,6 +771,18 @@ export function EventLiveFocusDialog({
                     {offlineTallyLabel ?? t('features.events.agenda.manageOfflineTally')}
                   </Button>
                 ) : null}
+                {onJumpToNextVoteStep ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onJumpToNextVoteStep}
+                    disabled={voteLoading}
+                    loading={voteLoading}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                    {t('features.agendas.crTimeline.nextVotingStep', 'Next voting step')}
+                  </Button>
+                ) : null}
                 {onStartVote ? (
                   <Button type="button" variant="outline" onClick={onStartVote}>
                     <Play className="h-4 w-4" />
@@ -780,6 +799,12 @@ export function EventLiveFocusDialog({
                   <Button type="button" variant="outline" onClick={onCloseFinalVote}>
                     <CheckCircle2 className="h-4 w-4" />
                     {closeFinalVoteLabel ?? t('features.events.agenda.actions.closeFinalVote')}
+                  </Button>
+                ) : null}
+                {onEditItem ? (
+                  <Button type="button" variant="outline" onClick={onEditItem}>
+                    <PencilLine className="h-4 w-4" />
+                    {t('common.actions.edit', 'Edit')}
                   </Button>
                 ) : null}
                 {onCompleteItem ? (

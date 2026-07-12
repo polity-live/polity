@@ -79,6 +79,11 @@ import { buildOfflineTallyErrorToast, isOfflineTallyPasswordError } from './offl
 import { waitForClientApply } from '@/zero/mutate-with-server-check';
 import type { VoteSubmissionContext } from '@/features/shared/ui/voting';
 import { buildAmendmentForwardingPreview } from '@/features/amendments/logic/amendmentForwardingPreview';
+import {
+  buildNamedElectionResultsModel,
+  buildNamedVoteResultsModel,
+} from '../logic/buildNamedBallotResults';
+import { useDelegateAssemblyParticipantsComposition } from '@/features/events/hooks/useDelegateAssemblyParticipantsComposition';
 
 interface EventAgendaProps {
   eventId: string;
@@ -115,8 +120,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [streamOpen, setStreamOpen] = useState(true);
-  const [streamDetailsOpen, setStreamDetailsOpen] = useState(false);
+  const [streamContextPane, setStreamContextPane] = useState<'details' | 'speakers'>('details');
   const [liveFocusOpen, setLiveFocusOpen] = useState(false);
+  const [namedResultsTarget, setNamedResultsTarget] = useState<'election' | 'vote' | null>(null);
   const [selectedCRToolbarItemId, setSelectedCRToolbarItemId] = useState<string | null>(null);
   const [addingSpeaker, setAddingSpeaker] = useState(false);
   const [removingSpeaker, setRemovingSpeaker] = useState(false);
@@ -161,6 +167,31 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         offlineParticipants: event?.offline_participants ?? [],
       }),
     [activeEventParticipants, event?.offline_participants, event?.participants]
+  );
+  const activeRosterParticipants = useMemo(
+    () =>
+      (activeEventParticipants.length > 0
+        ? activeEventParticipants
+        : (event?.participants ?? [])
+      ).filter(participant =>
+        ['active', 'member', 'admin', 'confirmed'].includes(participant.status ?? '')
+      ),
+    [activeEventParticipants, event?.participants]
+  );
+  const { isDelegateAssembly, participantsWithProvenance } =
+    useDelegateAssemblyParticipantsComposition(event, activeRosterParticipants);
+  const eligibleParticipantsForNamedResults = useMemo(
+    () => (isDelegateAssembly ? participantsWithProvenance : activeRosterParticipants),
+    [activeRosterParticipants, isDelegateAssembly, participantsWithProvenance]
+  );
+  const confirmedOfflineParticipants = useMemo(
+    () =>
+      (event?.offline_participants ?? []).filter(
+        participant =>
+          participant.attendance_status === 'confirmed' &&
+          participant.participation_channel === 'offline'
+      ),
+    [event?.offline_participants]
   );
   const [isPasswordVerifying, setIsPasswordVerifying] = useState(false);
   const [offlineTallyDialogOpen, setOfflineTallyDialogOpen] = useState(false);
@@ -496,6 +527,71 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           : (actionBarElection.candidates ?? streamElection?.candidates ?? []),
     };
   }, [actionBarCandidates, actionBarElection, streamElection]);
+  const namedElectionResults = useMemo(
+    () =>
+      toolbarElection
+        ? buildNamedElectionResultsModel({
+            election: toolbarElection,
+            eligibleParticipants: eligibleParticipantsForNamedResults,
+            confirmedOfflineParticipants,
+            groupedBySourceGroup: isDelegateAssembly,
+          })
+        : null,
+    [
+      confirmedOfflineParticipants,
+      eligibleParticipantsForNamedResults,
+      isDelegateAssembly,
+      toolbarElection,
+    ]
+  );
+  const namedVoteResults = useMemo(
+    () =>
+      streamVote
+        ? buildNamedVoteResultsModel({
+            vote: streamVote,
+            eligibleParticipants: eligibleParticipantsForNamedResults,
+            confirmedOfflineParticipants,
+            groupedBySourceGroup: isDelegateAssembly,
+          })
+        : null,
+    [
+      confirmedOfflineParticipants,
+      eligibleParticipantsForNamedResults,
+      isDelegateAssembly,
+      streamVote,
+    ]
+  );
+  const namedResultsDialogConfig = useMemo(() => {
+    if (namedResultsTarget === 'election' && toolbarElection && namedElectionResults) {
+      return {
+        title: toolbarElection.title ?? streamAgendaItem?.title ?? 'Named election',
+        description: t(
+          'features.events.agenda.namedResults.electionDescription',
+          'Named results for the current election.'
+        ),
+        model: namedElectionResults,
+      };
+    }
+    if (namedResultsTarget === 'vote' && streamVote && namedVoteResults) {
+      return {
+        title: streamVote.title ?? streamAgendaItem?.title ?? 'Named vote',
+        description: t(
+          'features.events.agenda.namedResults.voteDescription',
+          'Named results for the current vote.'
+        ),
+        model: namedVoteResults,
+      };
+    }
+    return null;
+  }, [
+    namedElectionResults,
+    namedResultsTarget,
+    namedVoteResults,
+    streamAgendaItem?.title,
+    streamVote,
+    t,
+    toolbarElection,
+  ]);
   const streamVotingPhase = getEffectiveVotingPhase(
     streamElection?.status ?? streamVote?.status,
     streamAgendaItem?.voting_phase ?? null
@@ -1528,8 +1624,8 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       setStatsOpen={setStatsOpen}
       streamOpen={streamOpen}
       setStreamOpen={setStreamOpen}
-      streamDetailsOpen={streamDetailsOpen}
-      setStreamDetailsOpen={setStreamDetailsOpen}
+      streamContextPane={streamContextPane}
+      setStreamContextPane={setStreamContextPane}
       liveFocusOpen={liveFocusOpen}
       setLiveFocusOpen={setLiveFocusOpen}
       addingSpeaker={addingSpeaker}
@@ -1595,6 +1691,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       streamDelegateTargetEvent={streamDelegateTargetEvent}
       streamForwardingContext={streamForwardingContext}
       crVoting={crVoting}
+      streamVoteSequenceItems={streamVoteSequenceItems}
+      streamAgendaItemAmendmentEditingMode={streamAgendaItemAmendmentEditingMode}
+      streamDocumentContent={streamDocumentContent}
+      streamAmendmentDiscussions={streamAmendmentDiscussions}
       actionBarElection={actionBarElection}
       actionBarCandidates={actionBarCandidates}
       toolbarElection={toolbarElection}
@@ -1642,7 +1742,12 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       streamAgendaItemTopNumber={streamAgendaItemTopNumber}
       userHasVoteVoted={userHasVoteVoted}
       userSelectedChoiceIds={userSelectedChoiceIds}
+      namedResultsTarget={namedResultsTarget}
+      setNamedResultsTarget={setNamedResultsTarget}
+      namedResultsDialogConfig={namedResultsDialogConfig}
       handleToolbarStartVote={handleToolbarStartVote}
+      handleStartSequenceFinalVote={handleStartSequenceFinalVote}
+      setSelectedCRToolbarItemId={setSelectedCRToolbarItemId}
       handleJumpToNextStartableSequenceItem={handleJumpToNextStartableSequenceItem}
       handleToolbarStartFinalVote={handleToolbarStartFinalVote}
       handleToolbarCloseVote={handleToolbarCloseVote}

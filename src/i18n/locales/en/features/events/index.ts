@@ -92,7 +92,9 @@ export const eventsTranslations = {
   agenda: {
     title: 'Agenda',
     backToAgenda: 'Back to agenda',
-    speakerList: 'Speakers list',
+    speakerList: 'Speaker list',
+    amendmentDetails: 'Amendment context',
+    viewAmendment: 'View amendment',
     speakerListDescription: 'Select a speaker to view their profile.',
     speakerListEmpty: 'No speakers yet',
     speakerCount: '{{count}} speakers',
@@ -217,6 +219,8 @@ export const eventsTranslations = {
     yourVote: 'Your vote',
     yourIndication: 'Your indication',
     voteResults: 'Vote Results',
+    votingWorkspaceDescription:
+      'Voting progress, decisions, and results for the active agenda item.',
     noChoices: 'No choices defined',
     selected: 'Selected',
     winner: 'Winner',
@@ -241,6 +245,8 @@ export const eventsTranslations = {
       offlineAggregated: 'offline aggregated',
       unavailable: 'No named results available',
       unnamedSourceGroup: 'Unnamed source group',
+      electionDescription: 'Named results for the current election.',
+      voteDescription: 'Named results for the current vote.',
     },
     forwarding: {
       pendingPrefix: 'The amendment will be forwarded to',
@@ -327,6 +333,7 @@ export const eventsTranslations = {
     viewGroup: 'View group',
     term: 'Term',
     actions: {
+      toolbar: 'Agenda controls',
       becomeCandidate: 'Become candidate',
       candidateRequiresPassiveVotingRight: 'Passive voting rights are required to stand.',
       castFinalVote: 'Cast final vote',

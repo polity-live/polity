@@ -85,6 +85,7 @@ export interface AgendaItemContextCardViewProps {
   showHeaderStatusBadge: any;
   agendaDetailLink: any;
   className: any;
+  presentation: 'standalone' | 'embedded';
   t: any;
   i18n: any;
   navigate: any;
@@ -122,6 +123,7 @@ export function AgendaItemContextCardView({
   showHeaderStatusBadge,
   agendaDetailLink,
   className,
+  presentation,
   t,
   locale,
   TypeIcon,
@@ -281,6 +283,28 @@ export function AgendaItemContextCardView({
     isActive: index === agendaTimelineActiveIndex,
     isComplete: item.timestamp <= now,
   }));
+
+  if (presentation === 'embedded') {
+    return (
+      <div className={cn('space-y-4', className)} data-agenda-context-presentation="embedded">
+        {amendment ? (
+          <AmendmentProcessDetailsPanel
+            amendment={amendment}
+            forwardingPreview={amendmentForwardingPreview}
+            pathVisualizationData={amendmentPathVisualizationData}
+            groupTypeById={amendmentGroupTypeById}
+            onGroupClick={onAmendmentGroupClick}
+            onEventClick={onAmendmentEventClick}
+            defaultOpen={false}
+            variant="agenda"
+          />
+        ) : null}
+        {election?.role ? (
+          <ElectionDetailsSectionView election={election} {...electionDetailsController} />
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <Card className={cn('border-border/70 overflow-hidden rounded-xl shadow-none', className)}>

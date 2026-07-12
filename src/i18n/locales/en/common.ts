@@ -281,6 +281,8 @@ export const commonTranslations = {
     layoutSaved: 'Network layout saved.',
     layoutReset: 'Network layout reset.',
     activeRelationships: 'Active Relationships',
+    activeRelationshipsDescription:
+      'Established group connections and the rights they currently provide.',
     active: 'Active',
     searchByGroupName: 'Search by group name...',
     directionFilterLabel: 'Relationship direction',

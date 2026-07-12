@@ -71,6 +71,7 @@ interface AgendaItemContextCardProps {
     agendaItemId: string;
   } | null;
   className?: string;
+  presentation?: 'standalone' | 'embedded';
 }
 function getEstimatedEndTime(startAt?: Date, durationMinutes?: number | null) {
   if (!startAt || !durationMinutes) {
@@ -131,6 +132,7 @@ export function AgendaItemContextCard({
   showHeaderStatusBadge = true,
   agendaDetailLink,
   className,
+  presentation = 'standalone',
 }: AgendaItemContextCardProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -184,6 +186,7 @@ export function AgendaItemContextCard({
       showHeaderStatusBadge={showHeaderStatusBadge}
       agendaDetailLink={agendaDetailLink}
       className={className}
+      presentation={presentation}
       t={t}
       i18n={i18n}
       navigate={navigate}

@@ -1,5 +1,10 @@
 'use client';
-import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import {
+  ManagementDialogBody,
+  ManagementDialogContent,
+  ManagementDialogFooter,
+  ManagementDialogHeader,
+} from '@/features/shared/ui/dialog';
 import { Link } from 'lucide-react';
 import {
   ActionSubmissionOverlay,
@@ -8,8 +13,6 @@ import {
 import {
   Dialog,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
@@ -241,23 +244,23 @@ export function LinkGroupDialogView({
         {trigger ? (
           trigger
         ) : (
-          <Button variant="outline">
+          <Button>
             <Link className="mr-2 h-4 w-4" />
             {t('components.actionBar.linkGroup')}
           </Button>
         )}
       </DialogTrigger>
-      <ScrollableDialogContent
+      <ManagementDialogContent
         showCloseButton={!submissionActive}
         className={
           submissionActive
             ? 'h-dvh max-h-none w-screen max-w-none overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none sm:max-w-none'
-            : 'h-[min(90dvh,46rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-[760px]'
+            : 'h-[min(90dvh,46rem)] sm:max-w-[760px]'
         }
       >
         {!submissionActive ? (
           <>
-            <DialogHeader className="px-6 pt-6 pr-12 pb-4">
+            <ManagementDialogHeader>
               <DialogTitle>{relationshipLabel}</DialogTitle>
               <DialogDescription>
                 {isEditMode
@@ -266,9 +269,9 @@ export function LinkGroupDialogView({
                     })
                   : t('common.network.linkGroupDescription', { groupName: currentGroupName })}
               </DialogDescription>
-            </DialogHeader>
+            </ManagementDialogHeader>
 
-            <div className="grid min-h-0 content-start gap-4 overflow-y-auto px-6 py-4">
+            <ManagementDialogBody className="grid content-start gap-4">
               <GroupConnectionComposer
                 activeTab={activeTab}
                 onActiveTabChange={setActiveTab}
@@ -283,9 +286,9 @@ export function LinkGroupDialogView({
                 disableGroupSelection={isEditMode}
                 groupSelectorLabel={t('common.network.selectGroup')}
               />
-            </div>
+            </ManagementDialogBody>
 
-            <DialogFooter separator className="px-6 py-4">
+            <ManagementDialogFooter>
               {submitState.reason ? (
                 <div className="text-muted-foreground mr-auto min-w-0 text-sm" aria-live="polite">
                   {submitState.reason}
@@ -302,7 +305,7 @@ export function LinkGroupDialogView({
               >
                 {submitState.label}
               </Button>
-            </DialogFooter>
+            </ManagementDialogFooter>
           </>
         ) : null}
         <ActionSubmissionOverlay
@@ -331,7 +334,7 @@ export function LinkGroupDialogView({
           onBack={actionSubmission.reset}
           onRetry={() => void actionSubmission.retry()}
         />
-      </ScrollableDialogContent>
+      </ManagementDialogContent>
     </Dialog>
   );
 }

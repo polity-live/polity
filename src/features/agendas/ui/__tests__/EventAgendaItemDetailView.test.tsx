@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -71,10 +71,16 @@ vi.mock('@tanstack/react-router', () => ({
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   translate: (_key: string, fallback?: string) => fallback ?? _key,
+  useTranslation: () => ({
+    t: (_key: string, fallback?: string) => fallback ?? _key,
+    i18n: { language: 'en' },
+  }),
 }));
 
 vi.mock('../AgendaItemContextCard', () => ({
-  AgendaItemContextCard: () => <div data-testid="agenda-item-context-card" />,
+  AgendaItemContextCard: ({ presentation }: { presentation?: string }) => (
+    <div data-testid="agenda-item-context-card" data-presentation={presentation} />
+  ),
 }));
 
 vi.mock('../AgendaSpeakerListSection', () => ({
@@ -374,13 +380,17 @@ function buildProps() {
 }
 
 describe('EventAgendaItemDetailView', () => {
-  it('renders agenda details in an accordion that is open by default', () => {
+  it('renders deduplicated details and speaker-list tabs below the shared header', () => {
     render(<EventAgendaItemDetailView {...buildProps()} />);
 
-    const trigger = screen.getByTestId('agenda-detail-details-accordion-trigger');
+    const detailsTab = screen.getByRole('tab', { name: 'Details' });
+    const speakersTab = screen.getByRole('tab', { name: 'Speaker list' });
+    expect(detailsTab.getAttribute('data-state')).toBe('active');
+    expect(screen.getByTestId('agenda-item-context-card').dataset.presentation).toBe('embedded');
 
-    expect(trigger.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.getByTestId('agenda-item-context-card')).not.toBeNull();
+    fireEvent.mouseDown(speakersTab, { button: 0 });
+    expect(speakersTab.getAttribute('data-state')).toBe('active');
+    expect(screen.getByTestId('agenda-speaker-list-section')).toBeTruthy();
   });
 
   it('uses delegate assignment metadata as election target fallback', () => {

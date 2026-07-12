@@ -43,8 +43,17 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
 }));
 
 vi.mock('../FixedAgendaToolbar', () => ({
-  FixedAgendaToolbar: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="fixed-agenda-toolbar">{children}</div>
+  FixedAgendaToolbar: ({
+    children,
+    className,
+    ...props
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <div data-testid="fixed-agenda-toolbar" className={className} {...props}>
+      {children}
+    </div>
   ),
 }));
 
@@ -75,6 +84,9 @@ vi.mock('@/features/shared/ui/layout', () => ({
     >
       {children}
     </Button>
+  ),
+  ToolbarSeparator: ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+    <div role="separator" className={className} {...props} />
   ),
 }));
 
@@ -116,6 +128,42 @@ const lifecycleProps = {
 };
 
 describe('AgendaActionBar', () => {
+  it('renders one borderless toolbar instead of card-like action groups', () => {
+    const { container } = render(
+      <AgendaActionBar
+        {...baseProps}
+        {...lifecycleProps}
+        canManageAgenda
+        currentItemLabel="TOP-1"
+        onBackToAgenda={noop}
+        onVoteClick={noop}
+        currentAgendaItem={{ ...baseProps.currentAgendaItem, voting_phase: 'final' }}
+      />
+    );
+
+    const toolbar = screen.getByTestId('fixed-agenda-toolbar');
+    const groups = container.querySelectorAll('[data-agenda-toolbar-group]');
+
+    expect(toolbar.className).toContain('overflow-x-auto');
+    expect(toolbar.className).toContain('gap-0');
+    expect(groups.length).toBe(3);
+    groups.forEach(group => {
+      expect(group.className).not.toMatch(/\bborder(?:-|\b)/);
+      expect(group.className).not.toMatch(/\brounded(?:-|\b)/);
+      expect(group.className).not.toMatch(/\bbg-(?!transparent)/);
+    });
+    expect(container.querySelectorAll('[data-agenda-toolbar-separator]').length).toBe(2);
+  });
+
+  it('does not render orphan separators when only navigation is visible', () => {
+    const { container } = render(<AgendaActionBar {...baseProps} currentItemLabel="TOP-1" />);
+
+    expect(container.querySelector('[data-agenda-toolbar-group="context"]')).toBeNull();
+    expect(container.querySelector('[data-agenda-toolbar-group="voting"]')).toBeNull();
+    expect(container.querySelector('[data-agenda-toolbar-group="navigation"]')).toBeTruthy();
+    expect(container.querySelector('[data-agenda-toolbar-separator]')).toBeNull();
+  });
+
   it('hides agenda lifecycle controls when agenda management rights are missing', () => {
     const { rerender } = render(
       <AgendaActionBar {...baseProps} {...lifecycleProps} currentItemLabel="TOP-1" />

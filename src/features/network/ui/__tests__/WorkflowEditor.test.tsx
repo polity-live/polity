@@ -105,6 +105,9 @@ describe('WorkflowEditor', () => {
     expect(screen.getByTestId('workflow-flow-visualization').textContent).toBe(
       'Draft process:Start Group:1'
     );
+    expect(document.querySelector('[data-slot="management-dialog-header"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="management-dialog-body"]')).toBeTruthy();
+    expect(document.querySelector('[data-slot="management-dialog-footer"]')).toBeTruthy();
   });
 
   it(featureThemeClassName('networkWorkflowEditorThemedGradientSurface'), async () => {

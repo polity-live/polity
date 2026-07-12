@@ -13,6 +13,7 @@ interface AmendmentProcessDetailsPanelProps {
     title?: string | null;
     reason?: string | null;
     preamble?: string | null;
+    editing_mode?: string | null;
     current_process_run?: {
       branches?:
         | readonly {
@@ -30,6 +31,7 @@ interface AmendmentProcessDetailsPanelProps {
   onGroupClick?: (groupId: string) => void;
   onEventClick?: (eventId: string) => void;
   defaultOpen?: boolean;
+  variant?: 'default' | 'agenda';
 }
 
 export function AmendmentProcessDetailsPanel({

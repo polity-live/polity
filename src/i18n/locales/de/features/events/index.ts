@@ -92,7 +92,9 @@ export const eventsTranslations = {
   agenda: {
     title: 'Tagesordnung',
     backToAgenda: 'Zurück zur Tagesordnung',
-    speakerList: 'Rednerliste',
+    speakerList: 'Redeliste',
+    amendmentDetails: 'Antragskontext',
+    viewAmendment: 'Antrag öffnen',
     speakerListDescription: 'Wähle eine Person, um ihr Profil zu öffnen.',
     speakerListEmpty: 'Noch keine Redner',
     speakerCount: '{{count}} Redner',
@@ -220,6 +222,8 @@ export const eventsTranslations = {
     yourVote: 'Ihre Stimme',
     yourIndication: 'Ihre Stimmungsabgabe',
     voteResults: 'Abstimmungsergebnisse',
+    votingWorkspaceDescription:
+      'Abstimmungsverlauf, Entscheidungen und Ergebnisse für den aktiven Tagesordnungspunkt.',
     noChoices: 'Noch keine Optionen definiert',
     selected: 'Ausgewählt',
     winner: 'Gewinner',
@@ -244,6 +248,8 @@ export const eventsTranslations = {
       offlineAggregated: 'offline aggregiert',
       unavailable: 'Keine namentlichen Ergebnisse verfügbar',
       unnamedSourceGroup: 'Unbenannte Herkunftsgruppe',
+      electionDescription: 'Namentliche Ergebnisse der aktuellen Wahl.',
+      voteDescription: 'Namentliche Ergebnisse der aktuellen Abstimmung.',
     },
     forwarding: {
       pendingPrefix: 'Der Antrag wird nach der Abstimmung an',
@@ -333,6 +339,7 @@ export const eventsTranslations = {
     viewGroup: 'Gruppe anzeigen',
     term: 'Amtszeit',
     actions: {
+      toolbar: 'Agenda-Steuerung',
       becomeCandidate: 'Kandidieren',
       candidateRequiresPassiveVotingRight: 'Passives Stimmrecht ist für eine Kandidatur nötig.',
       castFinalVote: 'Endgültig abstimmen',

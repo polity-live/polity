@@ -72,7 +72,7 @@ export function CandidacyPasswordDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <ScrollableDialogContent
         showCloseButton={!isSubmitting}
-        className="bg-background h-dvh !max-h-none max-h-none w-screen max-w-none overflow-y-auto rounded-none border-0 p-0 shadow-none sm:max-w-none"
+        className="bg-background !z-[140] h-dvh !max-h-none max-h-none w-screen max-w-none overflow-y-auto rounded-none border-0 p-0 shadow-none sm:max-w-none"
       >
         <div className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col items-center justify-center px-4 py-6 sm:py-8">
           <div

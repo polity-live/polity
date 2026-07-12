@@ -1,13 +1,5 @@
-import { featureThemeClassName } from '@/features/shared/theme';
 import { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   ActionSubmissionOverlay,
@@ -16,7 +8,7 @@ import {
 } from '@/features/shared/ui/action-submission';
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
 import { DangerConfirmDialog } from '@/features/shared/ui/dialog';
-import { SearchField } from '@/features/shared/ui/form';
+import { ManagementSection, ManagementToolbar, SearchField } from '@/features/shared/ui/form';
 import { StatusBadge } from '@/features/shared/ui/status';
 import { FilterToggleGroupItem } from '@/features/shared/ui/filter-controls';
 import { ToggleGroup } from '@/features/shared/ui/ui/toggle-group';
@@ -107,19 +99,6 @@ const WORKFLOW_STATUS_FILTERS: WorkflowStatusFilter[] = [
   'rejected',
   'archived',
 ];
-
-function getSectionCardClasses(section: 'incoming' | 'accepted' | 'outgoing' | 'active') {
-  switch (section) {
-    case 'incoming':
-      return 'border-primary/20 bg-primary/5';
-    case 'accepted':
-      return 'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)]';
-    case 'outgoing':
-      return featureThemeClassName('networkUseManageWorkflowsTabWarningSurface');
-    default:
-      return featureThemeClassName('networkUseManageWorkflowsTabSuccessSurface');
-  }
-}
 
 function getSortedWorkflowSteps(workflow: WorkflowWithStepsRow) {
   return [...(workflow.steps ?? [])].sort(
@@ -718,10 +697,12 @@ export function ManageWorkflowsTabContentView({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">{t('features.network.workflows.title')}</h3>
-          <p className="text-muted-foreground text-sm">
+      <header className="flex flex-col gap-4 px-3 sm:flex-row sm:items-start sm:justify-between sm:px-4">
+        <div className="max-w-2xl space-y-1.5">
+          <h1 className="text-xl font-semibold tracking-tight">
+            {t('features.network.workflows.title')}
+          </h1>
+          <p className="text-muted-foreground text-sm leading-relaxed">
             {t('features.network.workflows.managementDescription')}
           </p>
         </div>
@@ -731,10 +712,10 @@ export function ManageWorkflowsTabContentView({
             {t('features.network.workflows.create')}
           </Button>
         ) : null}
-      </div>
+      </header>
 
       {hasAnyTables ? (
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <ManagementToolbar className="md:items-end">
           <SearchField
             fieldClassName="min-w-0 flex-1 md:max-w-md"
             placeholder={t(
@@ -766,139 +747,129 @@ export function ManageWorkflowsTabContentView({
               </FilterToggleGroupItem>
             ))}
           </ToggleGroup>
-        </div>
+        </ManagementToolbar>
       ) : null}
 
       {!hasAnyTables ? (
-        <Card borderStyle="dashed">
-          <CardContent
-            align="center"
-            className="flex flex-col items-center justify-center gap-3 py-12"
-          >
-            <Workflow className="text-muted-foreground h-8 w-8" />
-            <div className="space-y-1">
-              <p className="font-medium">{t('features.network.workflows.emptyTitle')}</p>
-              <p className="text-muted-foreground text-sm">
-                {t('features.network.workflows.emptyDescription')}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="border-border/60 flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-6 py-12 text-center">
+          <Workflow className="text-muted-foreground h-8 w-8" />
+          <div className="space-y-1">
+            <p className="font-medium">{t('features.network.workflows.emptyTitle')}</p>
+            <p className="text-muted-foreground text-sm">
+              {t('features.network.workflows.emptyDescription')}
+            </p>
+          </div>
+        </div>
       ) : null}
 
       {hasAnyTables && !hasVisibleTables ? (
-        <Card borderStyle="dashed">
-          <CardContent
-            align="center"
-            className="flex flex-col items-center justify-center gap-3 py-12"
-          >
-            <Workflow className="text-muted-foreground h-8 w-8" />
-            <div className="space-y-1">
-              <p className="font-medium">
-                {t('features.network.workflows.filters.emptyTitle', 'No matching workflows')}
-              </p>
-              <p className="text-muted-foreground text-sm">
-                {t(
-                  'features.network.workflows.filters.emptyDescription',
-                  'No workflows match the selected status or group search.'
-                )}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="border-border/60 flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-6 py-12 text-center">
+          <Workflow className="text-muted-foreground h-8 w-8" />
+          <div className="space-y-1">
+            <p className="font-medium">
+              {t('features.network.workflows.filters.emptyTitle', 'No matching workflows')}
+            </p>
+            <p className="text-muted-foreground text-sm">
+              {t(
+                'features.network.workflows.filters.emptyDescription',
+                'No workflows match the selected status or group search.'
+              )}
+            </p>
+          </div>
+        </div>
       ) : null}
 
       {incomingRows.length > 0 ? (
-        <Card className={getSectionCardClasses('incoming')}>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+        <ManagementSection
+          title={
+            <span className="flex flex-wrap items-center gap-2">
               <Clock className="h-4 w-4" />
-              {t('features.network.workflows.incomingRequests')} ({incomingRows.length})
-            </CardTitle>
-            <CardDescription>
-              {t('features.network.workflows.incomingRequestsDescription')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DataTable
-              columns={incomingColumns}
-              data={incomingRows}
-              getRowId={row => row.workflow.id}
-              enablePagination={false}
-            />
-          </CardContent>
-        </Card>
+              <span>{t('features.network.workflows.incomingRequests')}</span>
+              <StatusBadge status="pending" tone="outline">
+                {incomingRows.length}
+              </StatusBadge>
+            </span>
+          }
+          description={t('features.network.workflows.incomingRequestsDescription')}
+        >
+          <DataTable
+            columns={incomingColumns}
+            data={incomingRows}
+            getRowId={row => row.workflow.id}
+            enablePagination={false}
+          />
+        </ManagementSection>
       ) : null}
 
       {filteredAcceptedPendingRequests.length > 0 ? (
-        <Card className={getSectionCardClasses('accepted')}>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+        <ManagementSection
+          title={
+            <span className="flex flex-wrap items-center gap-2">
               <CheckCircle2 className="h-4 w-4" />
-              {t('features.network.workflows.acceptedPending', 'Accepted, waiting for others')} (
-              {filteredAcceptedPendingRequests.length})
-            </CardTitle>
-            <CardDescription>
-              {t(
-                'features.network.workflows.acceptedPendingDescription',
-                'Workflow requests this group accepted that still need confirmations from other groups.'
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DataTable
-              columns={acceptedPendingColumns}
-              data={filteredAcceptedPendingRequests}
-              getRowId={workflow => workflow.id}
-              enablePagination={false}
-            />
-          </CardContent>
-        </Card>
+              <span>
+                {t('features.network.workflows.acceptedPending', 'Accepted, waiting for others')}
+              </span>
+              <StatusBadge status="accepted" tone="outline">
+                {filteredAcceptedPendingRequests.length}
+              </StatusBadge>
+            </span>
+          }
+          description={t(
+            'features.network.workflows.acceptedPendingDescription',
+            'Workflow requests this group accepted that still need confirmations from other groups.'
+          )}
+        >
+          <DataTable
+            columns={acceptedPendingColumns}
+            data={filteredAcceptedPendingRequests}
+            getRowId={workflow => workflow.id}
+            enablePagination={false}
+          />
+        </ManagementSection>
       ) : null}
 
       {filteredOutgoingRequests.length > 0 ? (
-        <Card className={getSectionCardClasses('outgoing')}>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+        <ManagementSection
+          title={
+            <span className="flex flex-wrap items-center gap-2">
               <Send className="h-4 w-4" />
-              {t('features.network.workflows.outgoingRequests')} ({filteredOutgoingRequests.length})
-            </CardTitle>
-            <CardDescription>
-              {t('features.network.workflows.outgoingRequestsDescription')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DataTable
-              columns={outgoingColumns}
-              data={filteredOutgoingRequests}
-              getRowId={workflow => workflow.id}
-              enablePagination={false}
-            />
-          </CardContent>
-        </Card>
+              <span>{t('features.network.workflows.outgoingRequests')}</span>
+              <StatusBadge status="outgoing" tone="outline">
+                {filteredOutgoingRequests.length}
+              </StatusBadge>
+            </span>
+          }
+          description={t('features.network.workflows.outgoingRequestsDescription')}
+        >
+          <DataTable
+            columns={outgoingColumns}
+            data={filteredOutgoingRequests}
+            getRowId={workflow => workflow.id}
+            enablePagination={false}
+          />
+        </ManagementSection>
       ) : null}
 
       {filteredActiveRelevantWorkflows.length > 0 ? (
-        <Card className={getSectionCardClasses('active')}>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+        <ManagementSection
+          title={
+            <span className="flex flex-wrap items-center gap-2">
               <Workflow className="h-4 w-4" />
-              {t('features.network.workflows.activeRelevant')} (
-              {filteredActiveRelevantWorkflows.length})
-            </CardTitle>
-            <CardDescription>
-              {t('features.network.workflows.activeRelevantDescription')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DataTable
-              columns={activeColumns}
-              data={filteredActiveRelevantWorkflows}
-              getRowId={workflow => workflow.id}
-              enablePagination={false}
-            />
-          </CardContent>
-        </Card>
+              <span>{t('features.network.workflows.activeRelevant')}</span>
+              <StatusBadge status="active" tone="outline">
+                {filteredActiveRelevantWorkflows.length}
+              </StatusBadge>
+            </span>
+          }
+          description={t('features.network.workflows.activeRelevantDescription')}
+        >
+          <DataTable
+            columns={activeColumns}
+            data={filteredActiveRelevantWorkflows}
+            getRowId={workflow => workflow.id}
+            enablePagination={false}
+          />
+        </ManagementSection>
       ) : null}
 
       <WorkflowEditor

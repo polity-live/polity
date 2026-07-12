@@ -1,13 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/features/shared/ui/ui/accordion';
-import { cn } from '@/features/shared/utils/utils';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 import type { CandidatesByElectionRow } from '@/zero/elections/queries';
@@ -32,7 +25,8 @@ import { NamedBallotResultsDialog } from './NamedBallotResultsDialog';
 import { isNamedBallot } from '@/zero/shared';
 import { AmendmentBranchSelectorSection } from '@/features/amendments/ui/AmendmentBranchSelectorSection';
 import { isMockCRTimelineItem } from '../logic/createMockCRTimelineItems';
-import { AgendaPageShell, AgendaSectionHeading, AgendaSurface } from './AgendaUiSystem';
+import { AgendaActiveItemHeader } from './AgendaActiveItemHeader';
+import { AgendaContextTabs, AgendaPageShell, AgendaVotingWorkspace } from './AgendaUiSystem';
 export interface EventAgendaItemDetailViewProps {
   eventId: any;
   agendaItemId: any;
@@ -400,22 +394,6 @@ export function EventAgendaItemDetailView({
     );
   }
 
-  const isSpeakersPaneActive = activeContextPane === 'speakers';
-  const contextToggleLabel = isSpeakersPaneActive ? 'Details' : 'Redeliste';
-  const renderContextToggleButton = () => (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      data-testid="agenda-detail-context-toggle"
-      aria-label={contextToggleLabel}
-      onClick={() =>
-        setActiveContextPane(current => (current === 'details' ? 'speakers' : 'details'))
-      }
-    >
-      {contextToggleLabel}
-    </Button>
-  );
   const hasChangeRequestResults = Boolean(agendaItem.amendment_id && crDisplayItems.length > 0);
   const hasStandaloneVoteResults = Boolean(vote && !isVoteInCRList);
   const hasResultsPanel = Boolean(election || hasStandaloneVoteResults || hasChangeRequestResults);
@@ -432,56 +410,27 @@ export function EventAgendaItemDetailView({
     ) : null;
 
   const agendaDetailsPanel = (
-    <Accordion type="single" collapsible defaultValue="agenda-details">
-      <AccordionItem value="agenda-details" className="border-b-0">
-        <AccordionTrigger
-          className="bg-card hover:bg-muted/50 rounded-lg border px-4 py-3 text-sm font-semibold hover:no-underline"
-          data-testid="agenda-detail-details-accordion-trigger"
-        >
-          {t('features.events.agenda.details', 'Details')}
-        </AccordionTrigger>
-        <AccordionContent className="pt-3 pb-0">
-          <AgendaItemContextCard
-            className="h-full"
-            agendaItem={{
-              id: agendaItem.id,
-              title: agendaItem.title || '',
-              description: agendaItem.description ?? undefined,
-              type: agendaItem.type === 'amendment' ? 'vote' : agendaItem.type || '',
-              status: detailRuntimeStatus,
-              duration: agendaItem.duration ?? undefined,
-              scheduledTime:
-                estimatedStartTime?.toISOString() ?? agendaItem.scheduled_time ?? undefined,
-              startTime: agendaItem.start_time ? new Date(agendaItem.start_time) : undefined,
-              endTime: agendaItem.end_time ? new Date(agendaItem.end_time) : undefined,
-              activatedAt: agendaItem.activated_at ? new Date(agendaItem.activated_at) : undefined,
-              completedAt: agendaItem.completed_at ? new Date(agendaItem.completed_at) : undefined,
-            }}
-            amendment={agendaItem.amendment ?? undefined}
-            amendmentForwardingPreview={agendaForwardingPreview}
-            amendmentPathVisualizationData={detailPathVisualizationData}
-            amendmentGroupTypeById={detailGroupTypeById}
-            onAmendmentGroupClick={groupId =>
-              navigate({ to: '/group/$id', params: { id: groupId } })
-            }
-            onAmendmentEventClick={targetEventId =>
-              navigate({ to: '/event/$id/agenda', params: { id: targetEventId } })
-            }
-            election={election ?? undefined}
-            votingStartTime={
-              (agendaItem.activated_at ?? agendaItem.start_time)
-                ? new Date(agendaItem.activated_at ?? agendaItem.start_time)
-                : undefined
-            }
-            votingEndTime={
-              (election?.closing_end_time ?? vote?.closing_end_time)
-                ? new Date(election?.closing_end_time ?? vote?.closing_end_time ?? 0)
-                : undefined
-            }
-          />
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+    <AgendaItemContextCard
+      className="h-full"
+      presentation="embedded"
+      agendaItem={{
+        id: agendaItem.id,
+        title: agendaItem.title || '',
+        description: agendaItem.description ?? undefined,
+        type: agendaItem.type === 'amendment' ? 'vote' : agendaItem.type || '',
+        status: detailRuntimeStatus,
+        duration: agendaItem.duration ?? undefined,
+      }}
+      amendment={agendaItem.amendment ?? undefined}
+      amendmentForwardingPreview={agendaForwardingPreview}
+      amendmentPathVisualizationData={detailPathVisualizationData}
+      amendmentGroupTypeById={detailGroupTypeById}
+      onAmendmentGroupClick={groupId => navigate({ to: '/group/$id', params: { id: groupId } })}
+      onAmendmentEventClick={targetEventId =>
+        navigate({ to: '/event/$id/agenda', params: { id: targetEventId } })
+      }
+      election={election ?? undefined}
+    />
   );
 
   const speakerListPanel = (
@@ -600,6 +549,17 @@ export function EventAgendaItemDetailView({
         }
       />
     ) : null;
+  const headerStartAt =
+    agendaItem.activated_at ??
+    agendaItem.start_time ??
+    estimatedStartTime ??
+    agendaItem.scheduled_time;
+  const headerEndAt =
+    agendaItem.completed_at ??
+    agendaItem.end_time ??
+    (headerStartAt && agendaItem.duration
+      ? new Date(headerStartAt).getTime() + agendaItem.duration * 60_000
+      : null);
 
   return (
     <AgendaPageShell>
@@ -850,58 +810,53 @@ export function EventAgendaItemDetailView({
         }))}
       />
 
-      <AgendaSurface className="p-4 sm:p-5">
-        <AgendaSectionHeading
-          eyebrow={toolbarAgendaItemTopNumber ? `TOP-${toolbarAgendaItemTopNumber}` : undefined}
-          title={agendaItem.title ?? t('features.events.agenda.details', 'Details')}
-          description={agendaItem.description ?? undefined}
-          action={renderContextToggleButton()}
-        />
-      </AgendaSurface>
+      <AgendaActiveItemHeader
+        topLabel={toolbarAgendaItemTopNumber ? `TOP-${toolbarAgendaItemTopNumber}` : undefined}
+        title={agendaItem.title ?? t('features.events.agenda.details', 'Details')}
+        description={agendaItem.description ?? agendaItem.amendment?.reason ?? undefined}
+        status={detailRuntimeStatus}
+        type={agendaItem.type ?? 'discussion'}
+        amendmentId={agendaItem.amendment_id ?? agendaItem.amendment?.id ?? null}
+        group={agendaItem.amendment?.group ?? null}
+        timing={{
+          startAt: headerStartAt,
+          endAt: headerEndAt,
+          votingStartAt: agendaItem.activated_at ?? agendaItem.start_time,
+          votingEndAt: election?.closing_end_time ?? vote?.closing_end_time,
+          durationMinutes: agendaItem.duration ?? null,
+          startIsEstimated: !agendaItem.activated_at && !agendaItem.start_time,
+          endIsEstimated: !agendaItem.completed_at && !agendaItem.end_time,
+        }}
+      />
 
       <section
         data-testid="agenda-detail-context-switcher"
-        className="relative overflow-hidden rounded-xl"
         aria-label={t('features.events.agenda.details')}
       >
-        <div
-          data-testid="agenda-detail-context-details"
-          aria-hidden={isSpeakersPaneActive}
-          inert={isSpeakersPaneActive ? true : undefined}
-          className={cn(
-            'transition-[opacity,transform] duration-300 ease-out',
-            isSpeakersPaneActive
-              ? 'pointer-events-none absolute inset-x-0 top-0 -translate-x-full opacity-0'
-              : 'relative translate-x-0 opacity-100'
-          )}
-        >
-          {agendaDetailsPanel}
-        </div>
-
-        <div
-          data-testid="agenda-detail-context-speakers"
-          aria-hidden={!isSpeakersPaneActive}
-          inert={!isSpeakersPaneActive ? true : undefined}
-          className={cn(
-            'transition-[opacity,transform] duration-300 ease-out',
-            isSpeakersPaneActive
-              ? 'relative translate-x-0 opacity-100'
-              : 'pointer-events-none absolute inset-x-0 top-0 translate-x-full opacity-0'
-          )}
-        >
-          {speakerListPanel}
-        </div>
+        <AgendaContextTabs
+          value={activeContextPane}
+          onValueChange={setActiveContextPane}
+          detailsLabel={t('features.events.agenda.details', 'Details')}
+          speakersLabel={t('features.events.agenda.speakerList', 'Speaker list')}
+          details={<div data-testid="agenda-detail-context-details">{agendaDetailsPanel}</div>}
+          speakers={<div data-testid="agenda-detail-context-speakers">{speakerListPanel}</div>}
+        />
       </section>
 
       {hasResultsPanel ? (
-        <section data-testid="agenda-detail-results" className="scroll-mt-20 space-y-3">
-          <AgendaSectionHeading title={t('features.events.agenda.voteResults', 'Results')} />
-          <div className="space-y-4">
-            {changeRequestResultsPanel}
-            {electionResultsPanel}
-            {voteResultsPanel}
-          </div>
-        </section>
+        <AgendaVotingWorkspace
+          data-testid="agenda-detail-results"
+          className="scroll-mt-20"
+          mode="detail"
+          title={t('features.events.agenda.voteResults', 'Results')}
+          description={t(
+            'features.events.agenda.votingWorkspaceDescription',
+            'Voting progress, decisions, and results for this agenda item.'
+          )}
+          changeRequests={changeRequestResultsPanel}
+          election={electionResultsPanel}
+          vote={voteResultsPanel}
+        />
       ) : null}
 
       {delegateTargetEvent ? <EventSearchCard event={delegateTargetEvent} /> : null}

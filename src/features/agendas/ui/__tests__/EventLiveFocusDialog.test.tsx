@@ -143,4 +143,26 @@ describe('EventLiveFocusDialog', () => {
     expect(onBecomeCandidate).toHaveBeenCalledTimes(1);
     expect(onStartVote).toHaveBeenCalledTimes(1);
   });
+
+  it('renders the shared voting workspace and sequence management actions in fullscreen', () => {
+    const onJumpToNextVoteStep = vi.fn();
+    const onEditItem = vi.fn();
+
+    render(
+      <EventLiveFocusDialog
+        {...baseProps}
+        canManageAgenda
+        votingWorkspace={<div data-testid="shared-voting-workspace">CR voting sequence</div>}
+        onJumpToNextVoteStep={onJumpToNextVoteStep}
+        onEditItem={onEditItem}
+      />
+    );
+
+    expect(screen.getByTestId('shared-voting-workspace')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Next voting step' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+
+    expect(onJumpToNextVoteStep).toHaveBeenCalledTimes(1);
+    expect(onEditItem).toHaveBeenCalledTimes(1);
+  });
 });

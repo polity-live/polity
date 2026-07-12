@@ -7,16 +7,23 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LinkGroupDialogView } from '../LinkGroupDialogView';
 
 vi.mock('@/features/shared/ui/dialog', () => ({
-  ScrollableDialogContent: ({ children }: { children: ReactNode }) => (
-    <div data-slot="dialog-content">{children}</div>
+  ManagementDialogContent: ({ children }: { children: ReactNode }) => (
+    <div data-slot="management-dialog-content">{children}</div>
+  ),
+  ManagementDialogHeader: ({ children }: { children: ReactNode }) => (
+    <header data-slot="management-dialog-header">{children}</header>
+  ),
+  ManagementDialogBody: ({ children }: { children: ReactNode }) => (
+    <div data-slot="management-dialog-body">{children}</div>
+  ),
+  ManagementDialogFooter: ({ children }: { children: ReactNode }) => (
+    <footer data-slot="management-dialog-footer">{children}</footer>
   ),
 }));
 
 vi.mock('@/features/shared/ui/ui/dialog', () => ({
   Dialog: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   DialogDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
-  DialogFooter: ({ children }: { children: ReactNode }) => <footer>{children}</footer>,
-  DialogHeader: ({ children }: { children: ReactNode }) => <header>{children}</header>,
   DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
   DialogTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
@@ -64,7 +71,7 @@ function renderDialog({
     preset: 'elected',
   };
 
-  render(
+  return render(
     <LinkGroupDialogView
       {...({
         currentGroupId: 'current',
@@ -121,6 +128,14 @@ function renderDialog({
 }
 
 describe('LinkGroupDialogView', () => {
+  it('uses the shared management dialog structure', () => {
+    const { container } = renderDialog({ roleId: 'role-1' });
+
+    expect(container.querySelector('[data-slot="management-dialog-header"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="management-dialog-body"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="management-dialog-footer"]')).toBeTruthy();
+  });
+
   it('disables submit for role-members links without a selected role', () => {
     renderDialog();
 

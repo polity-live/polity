@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import { RoleTag } from '@/features/groups/ui/RoleTag';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
+import { ManagementSection, ManagementToolbar } from '@/features/shared/ui/form';
 import { FilterButton } from '@/features/shared/ui/filter-controls';
 import {
   ActionSubmissionOverlay,
@@ -34,7 +28,7 @@ import {
   GroupRelationshipTypePreview,
 } from '../ui/GroupRelationshipFields';
 import { LinkGroupDialog } from '../ui/LinkGroupDialog';
-import { Pencil, Trash2, Clock } from 'lucide-react';
+import { Network, Pencil, Trash2, Clock } from 'lucide-react';
 import {
   useTranslation,
   translate as translateText,
@@ -774,11 +768,12 @@ export function ManageNetworkTabContentView({
 
   return (
     <div className="space-y-6">
-      {/* Link Group Action */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">{t('common.network.groupRelationships')}</h3>
-          <p className="text-muted-foreground text-sm">
+      <header className="flex flex-col gap-4 px-3 sm:flex-row sm:items-start sm:justify-between sm:px-4">
+        <div className="max-w-2xl space-y-1.5">
+          <h1 className="text-xl font-semibold tracking-tight">
+            {t('common.network.groupRelationships')}
+          </h1>
+          <p className="text-muted-foreground text-sm leading-relaxed">
             {t('common.network.groupRelationshipsDescription')}
           </p>
         </div>
@@ -789,14 +784,10 @@ export function ManageNetworkTabContentView({
             allRelationships={allRelationships}
           />
         ) : null}
-      </div>
+      </header>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">{t('common.network.activeRelationships')}</CardTitle>
-          <CardDescription>{t('common.network.groupRelationshipsDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <ManagementToolbar className="items-stretch md:items-end">
+        <div className="min-w-0 flex-1">
           <EntitySearchBar
             searchQuery={searchQuery}
             onSearchQueryChange={onSearchQueryChange}
@@ -805,115 +796,128 @@ export function ManageNetworkTabContentView({
             filterLabel={t('common.labels.filterByRights')}
             onFilterToggle={onToggleRightFilter}
           />
+        </div>
+        <div className="space-y-2">
+          <p className="text-sm font-medium">{t('common.network.directionFilterLabel')}</p>
+          <div className="flex flex-wrap gap-2">
+            {directionOptions.map(option => {
+              const isActive = directionFilter === option.value;
 
-          <div className="space-y-2">
-            <p className="text-sm font-medium">{t('common.network.directionFilterLabel')}</p>
-            <div className="flex flex-wrap gap-2">
-              {directionOptions.map(option => {
-                const isActive = directionFilter === option.value;
-
-                return (
-                  <FilterButton
-                    key={option.value}
-                    active={isActive}
-                    onClick={() => onDirectionFilterChange(option.value)}
-                  >
-                    {option.label}
-                  </FilterButton>
-                );
-              })}
-            </div>
+              return (
+                <FilterButton
+                  key={option.value}
+                  active={isActive}
+                  onClick={() => onDirectionFilterChange(option.value)}
+                >
+                  {option.label}
+                </FilterButton>
+              );
+            })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </ManagementToolbar>
 
-      {/* Incoming Requests */}
       {incomingRequests.length > 0 && (
-        <div className="mb-8">
-          <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-            <Clock className="h-5 w-5" />
-            {t('common.network.incomingRequests')} ({incomingRequestCount})
-          </h2>
-          <div className="space-y-4">
+        <ManagementSection
+          title={
+            <span className="flex flex-wrap items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span>{t('common.network.incomingRequests')}</span>
+              <StatusBadge status="incoming" tone="outline">
+                {incomingRequestCount}
+              </StatusBadge>
+            </span>
+          }
+          description={t('common.network.incomingRequestsDescription')}
+        >
+          <div className="space-y-5">
             {incomingRequests.map(req => (
-              <Card key={req.group.id} surface="primarySoft">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">{req.group.name}</CardTitle>
-                  <CardDescription>
+              <div key={req.group.id} className="space-y-3">
+                <div className="space-y-1 px-3 sm:px-4">
+                  <h3 className="text-sm font-semibold">{req.group.name}</h3>
+                  <div className="text-muted-foreground text-sm">
                     {renderRequestDescription(
                       req.group,
                       req.type,
                       req.membershipMode,
                       req.rels.length > 0
                     )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <DataTable
-                    columns={incomingRequestColumns}
-                    data={getRequestRows(req)}
-                    getRowId={row => row.id}
-                    enablePagination={false}
-                  />
-                </CardContent>
-              </Card>
+                  </div>
+                </div>
+                <DataTable
+                  columns={incomingRequestColumns}
+                  data={getRequestRows(req)}
+                  getRowId={row => row.id}
+                  enablePagination={false}
+                />
+              </div>
             ))}
           </div>
-        </div>
+        </ManagementSection>
       )}
 
-      {/* Outgoing Requests */}
       {outgoingRequests.length > 0 && (
-        <div className="mb-8">
-          <h2 className="mb-4 text-xl font-semibold">
-            {t('common.network.outgoingRequests')} ({outgoingRequestCount})
-          </h2>
-          <div className="space-y-4">
+        <ManagementSection
+          title={
+            <span className="flex flex-wrap items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span>{t('common.network.outgoingRequests')}</span>
+              <StatusBadge status="outgoing" tone="outline">
+                {outgoingRequestCount}
+              </StatusBadge>
+            </span>
+          }
+          description={t('common.network.outgoingRequestsDescription')}
+        >
+          <div className="space-y-5">
             {outgoingRequests.map(req => (
-              <Card key={req.group.id}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">{req.group.name}</CardTitle>
-                  <CardDescription>
+              <div key={req.group.id} className="space-y-3">
+                <div className="space-y-1 px-3 sm:px-4">
+                  <h3 className="text-sm font-semibold">{req.group.name}</h3>
+                  <div className="text-muted-foreground text-sm">
                     {renderRequestDescription(
                       req.group,
                       req.type,
                       req.membershipMode,
                       req.rels.length > 0
                     )}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <DataTable
-                    columns={outgoingRequestColumns}
-                    data={getRequestRows(req)}
-                    getRowId={row => row.id}
-                    enablePagination={false}
-                  />
-                </CardContent>
-              </Card>
+                  </div>
+                </div>
+                <DataTable
+                  columns={outgoingRequestColumns}
+                  data={getRequestRows(req)}
+                  getRowId={row => row.id}
+                  enablePagination={false}
+                />
+              </div>
             ))}
           </div>
-        </div>
+        </ManagementSection>
       )}
 
-      {/* Active Relationships — Search, Filters & Table */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">{t('common.network.activeRelationships')}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <DataTable
-            columns={activeRelationshipColumns}
-            data={filteredRelationships}
-            getRowId={(relationship, index) =>
-              `${relationship.group.id}-${relationship.type}-${index}`
-            }
-            enablePagination={false}
-            emptyTitle={t('common.network.activeRelationships')}
-            emptyDescription={t('common.network.noRelationshipsFound')}
-          />
-        </CardContent>
-      </Card>
+      <ManagementSection
+        title={
+          <span className="flex flex-wrap items-center gap-2">
+            <Network className="h-4 w-4" />
+            <span>{t('common.network.activeRelationships')}</span>
+            <StatusBadge status="active" tone="outline">
+              {filteredRelationships.length}
+            </StatusBadge>
+          </span>
+        }
+        description={t('common.network.activeRelationshipsDescription')}
+      >
+        <DataTable
+          columns={activeRelationshipColumns}
+          data={filteredRelationships}
+          getRowId={(relationship, index) =>
+            `${relationship.group.id}-${relationship.type}-${index}`
+          }
+          enablePagination={false}
+          emptyTitle={t('common.network.activeRelationships')}
+          emptyDescription={t('common.network.noRelationshipsFound')}
+        />
+      </ManagementSection>
 
       {canManageRelationships && manageDialog ? (
         <HierarchyConflictDialog

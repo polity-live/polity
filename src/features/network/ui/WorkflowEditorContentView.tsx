@@ -12,16 +12,15 @@ import {
   FormControlSelectTrigger,
   FormControlSelectValue,
 } from '@/features/shared/ui/form';
-import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import {
-  Dialog,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/features/shared/ui/ui/dialog';
+  ManagementDialogBody,
+  ManagementDialogContent,
+  ManagementDialogFooter,
+  ManagementDialogHeader,
+  ManagementDialogSection,
+} from '@/features/shared/ui/dialog';
+import { Dialog, DialogDescription, DialogTitle } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import {
   Accordion,
@@ -219,13 +218,17 @@ export function WorkflowEditorContentView({
         }
       }}
     >
-      <ScrollableDialogContent
+      <ManagementDialogContent
         showCloseButton={!submissionActive}
-        className="flex h-screen max-h-none w-screen max-w-none flex-col overflow-hidden rounded-none border-0 p-0 sm:h-screen sm:max-w-none"
+        className={
+          submissionActive
+            ? 'h-dvh max-h-none w-screen max-w-none overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none sm:max-w-none'
+            : 'h-[calc(100dvh-2rem)] sm:h-[min(90dvh,56rem)] sm:max-w-6xl'
+        }
       >
         {!submissionActive ? (
           <>
-            <DialogHeader separator className="px-6 pt-6 pb-4">
+            <ManagementDialogHeader>
               <DialogTitle>
                 {editingWorkflow
                   ? t('features.network.workflows.edit')
@@ -234,9 +237,9 @@ export function WorkflowEditorContentView({
               <DialogDescription>
                 {t('features.network.workflows.editorDescription')}
               </DialogDescription>
-            </DialogHeader>
+            </ManagementDialogHeader>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+            <ManagementDialogBody>
               <div className="space-y-5">
                 <div className="space-y-2">
                   <FormControlLabel>{t('common.name')}</FormControlLabel>
@@ -492,42 +495,40 @@ export function WorkflowEditorContentView({
                         </p>
                       </div>
 
-                      <Card>
-                        <CardContent className="space-y-3 p-4">
-                          <div className="flex items-center gap-2 font-medium">
-                            <Workflow className="h-4 w-4" />
-                            {t('features.network.workflows.summary')}
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2 text-sm">
-                            <BadgeControl variant="secondary">
-                              {draftStartGroupId
-                                ? getGroupName(draftStartGroupId, availableGroups)
-                                : t('features.network.workflows.noStartSelected')}
-                            </BadgeControl>
-                            {draftSteps.map((step: any, index: number) => (
-                              <span
-                                key={`${step.id ?? step.group_id}-${index}`}
-                                className="flex items-center gap-2"
+                      <ManagementDialogSection className="space-y-3">
+                        <div className="flex items-center gap-2 font-medium">
+                          <Workflow className="h-4 w-4" />
+                          {t('features.network.workflows.summary')}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                          <BadgeControl variant="secondary">
+                            {draftStartGroupId
+                              ? getGroupName(draftStartGroupId, availableGroups)
+                              : t('features.network.workflows.noStartSelected')}
+                          </BadgeControl>
+                          {draftSteps.map((step: any, index: number) => (
+                            <span
+                              key={`${step.id ?? step.group_id}-${index}`}
+                              className="flex items-center gap-2"
+                            >
+                              <ArrowRight className="text-muted-foreground h-3.5 w-3.5" />
+                              <BadgeControl
+                                variant={index === draftSteps.length - 1 ? 'default' : 'outline'}
                               >
-                                <ArrowRight className="text-muted-foreground h-3.5 w-3.5" />
-                                <BadgeControl
-                                  variant={index === draftSteps.length - 1 ? 'default' : 'outline'}
-                                >
-                                  {step.label
-                                    ? `${getGroupName(step.group_id, availableGroups)} (${step.label})`
-                                    : getGroupName(step.group_id, availableGroups)}
-                                </BadgeControl>
-                              </span>
-                            ))}
-                          </div>
-                          <p className="text-muted-foreground text-xs">
-                            {t(
-                              'features.network.workflows.summaryHint',
-                              `The current page group is ${currentGroupName || currentGroupId} and must stay part of this chain.`
-                            )}
-                          </p>
-                        </CardContent>
-                      </Card>
+                                {step.label
+                                  ? `${getGroupName(step.group_id, availableGroups)} (${step.label})`
+                                  : getGroupName(step.group_id, availableGroups)}
+                              </BadgeControl>
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-muted-foreground text-xs">
+                          {t(
+                            'features.network.workflows.summaryHint',
+                            `The current page group is ${currentGroupName || currentGroupId} and must stay part of this chain.`
+                          )}
+                        </p>
+                      </ManagementDialogSection>
                     </div>
 
                     <TabsList className="self-start">
@@ -574,121 +575,117 @@ export function WorkflowEditorContentView({
                         const isInvalidTransition = invalidTransitionIndexes.includes(index);
 
                         return (
-                          <Card
+                          <ManagementDialogSection
                             key={step.id ?? `${step.group_id}-${index}`}
                             draggable
+                            className="space-y-4"
                             onDragStart={() => setDraggedStepIndex(index)}
                             onDragOver={event => event.preventDefault()}
                             onDrop={() => handleRowDrop(index)}
                           >
-                            <CardContent className="space-y-4 p-4">
-                              <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div className="flex items-center gap-2">
-                                  <GripVertical className="text-muted-foreground h-4 w-4 cursor-grab active:cursor-grabbing" />
-                                  <BadgeControl variant="outline">
-                                    {t(
-                                      'features.network.workflows.stepNumber',
-                                      `Step ${index + 1}`
-                                    )}
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <div className="flex items-center gap-2">
+                                <GripVertical className="text-muted-foreground h-4 w-4 cursor-grab active:cursor-grabbing" />
+                                <BadgeControl variant="outline">
+                                  {t('features.network.workflows.stepNumber', `Step ${index + 1}`)}
+                                </BadgeControl>
+                                {isInvalidTransition ? (
+                                  <BadgeControl variant="destructive">
+                                    {t('features.network.workflows.invalidStep')}
                                   </BadgeControl>
-                                  {isInvalidTransition ? (
-                                    <BadgeControl variant="destructive">
-                                      {t('features.network.workflows.invalidStep')}
-                                    </BadgeControl>
-                                  ) : null}
-                                </div>
-
-                                <div className="flex items-center gap-1">
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    disabled={index === 0}
-                                    onClick={() => onMoveStep(index, index - 1)}
-                                  >
-                                    <ChevronUp className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    disabled={index === draftSteps.length - 1}
-                                    onClick={() => onMoveStep(index, index + 1)}
-                                  >
-                                    <ChevronDown className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => onRemoveStep(index)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
+                                ) : null}
                               </div>
 
-                              <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                  <FormControlLabel>
-                                    {t('features.network.workflows.sourceGroup')}
-                                  </FormControlLabel>
-                                  {index === 0 ? (
-                                    <TypeaheadSearch
-                                      items={allGroupItems}
-                                      value={draftStartGroupId}
-                                      onChange={(item: TypeaheadItem | null) =>
-                                        setDraftStartGroupId(item?.id ?? '')
-                                      }
-                                      placeholder={t('features.network.workflows.selectStartGroup')}
-                                      showAllOnFocus
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  disabled={index === 0}
+                                  onClick={() => onMoveStep(index, index - 1)}
+                                >
+                                  <ChevronUp className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  disabled={index === draftSteps.length - 1}
+                                  onClick={() => onMoveStep(index, index + 1)}
+                                >
+                                  <ChevronDown className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  onClick={() => onRemoveStep(index)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            <div className="grid gap-4 md:grid-cols-2">
+                              <div className="space-y-2">
+                                <FormControlLabel>
+                                  {t('features.network.workflows.sourceGroup')}
+                                </FormControlLabel>
+                                {index === 0 ? (
+                                  <TypeaheadSearch
+                                    items={allGroupItems}
+                                    value={draftStartGroupId}
+                                    onChange={(item: TypeaheadItem | null) =>
+                                      setDraftStartGroupId(item?.id ?? '')
+                                    }
+                                    placeholder={t('features.network.workflows.selectStartGroup')}
+                                    showAllOnFocus
+                                  />
+                                ) : (
+                                  <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
+                                    {sourceGroupId
+                                      ? getGroupName(sourceGroupId, availableGroups)
+                                      : t('features.network.workflows.notSelected')}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="space-y-2">
+                                <FormControlLabel>
+                                  {t('features.network.workflows.targetGroup')}
+                                </FormControlLabel>
+                                <FormControlSelect
+                                  value={step.group_id}
+                                  onValueChange={value => handleRowTargetChange(index, value)}
+                                >
+                                  <FormControlSelectTrigger>
+                                    <FormControlSelectValue
+                                      placeholder={t(
+                                        'features.network.workflows.listTargetPlaceholder'
+                                      )}
                                     />
-                                  ) : (
-                                    <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
-                                      {sourceGroupId
-                                        ? getGroupName(sourceGroupId, availableGroups)
-                                        : t('features.network.workflows.notSelected')}
-                                    </div>
-                                  )}
-                                </div>
-
-                                <div className="space-y-2">
-                                  <FormControlLabel>
-                                    {t('features.network.workflows.targetGroup')}
-                                  </FormControlLabel>
-                                  <FormControlSelect
-                                    value={step.group_id}
-                                    onValueChange={value => handleRowTargetChange(index, value)}
-                                  >
-                                    <FormControlSelectTrigger>
-                                      <FormControlSelectValue
-                                        placeholder={t(
-                                          'features.network.workflows.listTargetPlaceholder'
-                                        )}
-                                      />
-                                    </FormControlSelectTrigger>
-                                    <FormControlSelectContent>
-                                      {targetOptions.map((group: any) => (
-                                        <FormControlSelectItem key={group.id} value={group.id}>
-                                          {group.name ?? group.id}
-                                        </FormControlSelectItem>
-                                      ))}
-                                    </FormControlSelectContent>
-                                  </FormControlSelect>
-                                </div>
+                                  </FormControlSelectTrigger>
+                                  <FormControlSelectContent>
+                                    {targetOptions.map((group: any) => (
+                                      <FormControlSelectItem key={group.id} value={group.id}>
+                                        {group.name ?? group.id}
+                                      </FormControlSelectItem>
+                                    ))}
+                                  </FormControlSelectContent>
+                                </FormControlSelect>
                               </div>
-                              <div className="rounded-lg border border-dashed px-4 py-3 text-sm">
-                                <p className="font-medium">
-                                  {sourceGroupId
-                                    ? `${getGroupName(sourceGroupId, availableGroups)} -> ${getGroupName(step.group_id, availableGroups)}`
-                                    : getGroupName(step.group_id, availableGroups)}
-                                </p>
-                                <p className="text-muted-foreground mt-1 text-xs">
-                                  {t('features.network.workflows.listStepHint')}
-                                </p>
-                              </div>
-                            </CardContent>
-                          </Card>
+                            </div>
+                            <div className="rounded-lg border border-dashed px-4 py-3 text-sm">
+                              <p className="font-medium">
+                                {sourceGroupId
+                                  ? `${getGroupName(sourceGroupId, availableGroups)} -> ${getGroupName(step.group_id, availableGroups)}`
+                                  : getGroupName(step.group_id, availableGroups)}
+                              </p>
+                              <p className="text-muted-foreground mt-1 text-xs">
+                                {t('features.network.workflows.listStepHint')}
+                              </p>
+                            </div>
+                          </ManagementDialogSection>
                         );
                       })
                     )}
@@ -708,16 +705,16 @@ export function WorkflowEditorContentView({
                   </div>
                 ) : null}
               </div>
-            </div>
+            </ManagementDialogBody>
 
-            <DialogFooter separator className="px-6 py-4">
+            <ManagementDialogFooter>
               <Button variant="outline" onClick={onClose}>
                 {t('common.cancel')}
               </Button>
               <Button onClick={handleSaveWithSubmission} disabled={!canSave}>
                 {editingWorkflow ? t('common.save') : t('features.network.workflows.create')}
               </Button>
-            </DialogFooter>
+            </ManagementDialogFooter>
           </>
         ) : null}
 
@@ -739,7 +736,7 @@ export function WorkflowEditorContentView({
           onBack={actionSubmission.reset}
           onRetry={() => void actionSubmission.retry()}
         />
-      </ScrollableDialogContent>
+      </ManagementDialogContent>
     </Dialog>
   );
 }

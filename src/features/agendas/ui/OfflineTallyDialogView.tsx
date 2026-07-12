@@ -97,7 +97,7 @@ export function OfflineTallyDialogView({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <AgendaDialogContent size="fullscreen">
+      <AgendaDialogContent size="fullscreen" className="!z-[140]">
         <div className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col items-center justify-center px-4 py-6 sm:py-8">
           <div
             className="bg-card text-card-foreground border-border/70 w-full rounded-xl border p-5 shadow-sm sm:p-6"

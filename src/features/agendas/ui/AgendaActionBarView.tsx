@@ -1,7 +1,6 @@
 'use client';
 
 import { Link } from '@tanstack/react-router';
-import { featureThemeClassName } from '@/features/shared/theme';
 import {
   Plus,
   Vote,
@@ -23,7 +22,7 @@ import {
   PencilLine,
 } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { ToolbarButton } from '@/features/shared/ui/layout';
+import { ToolbarButton, ToolbarSeparator } from '@/features/shared/ui/layout';
 import { FixedAgendaToolbar } from './FixedAgendaToolbar';
 import { cn } from '@/features/shared/utils/utils';
 export interface AgendaActionBarViewProps {
@@ -177,261 +176,325 @@ export function AgendaActionBarView({
     startFinalVoteTooltip || t('features.events.agenda.actions.startFinalVote');
   const closeFinalVoteActionLabel =
     closeVoteTooltip || t('features.events.agenda.actions.closeFinalVote');
+  const showJoinSpeakerAction = Boolean(
+    currentAgendaItem && !isUserInSpeakerList && onJoinSpeakerList
+  );
+  const showLeaveSpeakerAction = Boolean(
+    currentAgendaItem && isUserInSpeakerList && onLeaveSpeakerList
+  );
+  const showBecomeCandidateAction = Boolean(
+    isElection && !isClosed && !isUserCandidate && onBecomeCandidate
+  );
+  const showWithdrawCandidateAction = Boolean(
+    isElection && canBeCandidate && isUserCandidate && onWithdrawCandidacy
+  );
+  const showOfflineTallyAction = Boolean(
+    !isClosed && !isPendingVote && (showOfflineTallyButton || onOfflineTallyClick)
+  );
+  const showContextGroup = Boolean(onBackToAgenda || canManageAgenda);
+  const showVotingGroup = Boolean(
+    (isVotable && onJumpToNextVoteStep) ||
+    (isVotable && !isClosed && isPendingVote && onStartVote) ||
+    showStartFinalVoteButton ||
+    (isVotable && !isClosed && isFinalVotePhase && onCloseFinalVote) ||
+    showJoinSpeakerAction ||
+    showLeaveSpeakerAction ||
+    showBecomeCandidateAction ||
+    showWithdrawCandidateAction ||
+    showVoteButton ||
+    showOfflineTallyAction
+  );
+  const showNavigationGroup = Boolean(
+    (showLifecycleControls && onPreviousItem) ||
+    currentAgendaItem ||
+    showStartButton ||
+    (showLifecycleControls && currentAgendaItem && isCurrentItemActive && onCompleteItem) ||
+    (showLifecycleControls && onNextItem)
+  );
 
   return (
-    <FixedAgendaToolbar className="gap-2">
-      <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
-        {onBackToAgenda ? (
-          <ToolbarButton asChild tooltip={t('features.events.agenda.backToAgenda')}>
-            <Link to="/event/$id/agenda" params={{ id: eventId }}>
-              <ListOrdered />
-            </Link>
-          </ToolbarButton>
-        ) : null}
-        {canManageAgenda && onMoveToEvent ? (
-          <ToolbarButton tooltip={t('features.events.agenda.moveToEvent')} onClick={onMoveToEvent}>
-            <ArrowRightLeft />
-          </ToolbarButton>
-        ) : null}
-        {canManageAgenda && currentAgendaItem && onEditItem ? (
-          <ToolbarButton tooltip={t('common.actions.edit')} onClick={onEditItem}>
-            <Edit />
-          </ToolbarButton>
-        ) : null}
-        {canManageAgenda && currentAgendaItem && onDeleteItem ? (
-          <ToolbarButton tooltip={t('common.actions.delete')} onClick={onDeleteItem}>
-            <Trash2 />
-          </ToolbarButton>
-        ) : null}
-        {canManageAgenda ? (
-          <>
-            <ToolbarButton asChild tooltip={t('features.events.agenda.quickActions.addItem')}>
-              <Link to="/create/agenda-item" search={{ eventId }}>
-                <Plus />
+    <FixedAgendaToolbar
+      className="scrollbar-hide grid auto-cols-max grid-flow-col items-stretch justify-start gap-0 overflow-x-auto md:flex md:justify-between"
+      aria-label={t('features.events.agenda.actions.toolbar', 'Agenda controls')}
+    >
+      {showContextGroup ? (
+        <div
+          className="flex min-w-max items-center gap-1 px-1 md:min-w-0 md:flex-1 md:overflow-x-auto"
+          data-agenda-toolbar-group="context"
+        >
+          {onBackToAgenda ? (
+            <ToolbarButton asChild tooltip={t('features.events.agenda.backToAgenda')}>
+              <Link to="/event/$id/agenda" params={{ id: eventId }}>
+                <ListOrdered />
               </Link>
             </ToolbarButton>
+          ) : null}
+          {canManageAgenda && onMoveToEvent ? (
             <ToolbarButton
-              asChild
-              tooltip={t('features.events.agenda.quickActions.createElection')}
+              tooltip={t('features.events.agenda.moveToEvent')}
+              onClick={onMoveToEvent}
             >
-              <Link to="/create/agenda-item" search={{ eventId, type: 'election' }}>
-                <Vote />
-              </Link>
+              <ArrowRightLeft />
             </ToolbarButton>
-            <ToolbarButton asChild tooltip={t('features.events.agenda.quickActions.createVote')}>
-              <Link to="/create/agenda-item" search={{ eventId, type: 'vote' }}>
-                <Gavel />
-              </Link>
+          ) : null}
+          {canManageAgenda && currentAgendaItem && onEditItem ? (
+            <ToolbarButton tooltip={t('common.actions.edit')} onClick={onEditItem}>
+              <Edit />
             </ToolbarButton>
-          </>
-        ) : null}
-        {canManageAgenda && onPreviousChangeRequest ? (
-          <ToolbarButton
-            tooltip={t('features.agendas.crTimeline.previous')}
-            onClick={onPreviousChangeRequest}
-            disabled={!hasPreviousChangeRequest}
-          >
-            <ChevronLeft />
-          </ToolbarButton>
-        ) : null}
-        {canManageAgenda && onNextChangeRequest ? (
-          <ToolbarButton
-            tooltip={t('features.agendas.crTimeline.next')}
-            onClick={onNextChangeRequest}
-            disabled={!hasNextChangeRequest}
-          >
-            <ChevronRight />
-          </ToolbarButton>
-        ) : null}
-      </div>
+          ) : null}
+          {canManageAgenda && currentAgendaItem && onDeleteItem ? (
+            <ToolbarButton tooltip={t('common.actions.delete')} onClick={onDeleteItem}>
+              <Trash2 />
+            </ToolbarButton>
+          ) : null}
+          {canManageAgenda ? (
+            <>
+              <ToolbarButton asChild tooltip={t('features.events.agenda.quickActions.addItem')}>
+                <Link to="/create/agenda-item" search={{ eventId }}>
+                  <Plus />
+                </Link>
+              </ToolbarButton>
+              <ToolbarButton
+                asChild
+                tooltip={t('features.events.agenda.quickActions.createElection')}
+              >
+                <Link to="/create/agenda-item" search={{ eventId, type: 'election' }}>
+                  <Vote />
+                </Link>
+              </ToolbarButton>
+              <ToolbarButton asChild tooltip={t('features.events.agenda.quickActions.createVote')}>
+                <Link to="/create/agenda-item" search={{ eventId, type: 'vote' }}>
+                  <Gavel />
+                </Link>
+              </ToolbarButton>
+            </>
+          ) : null}
+          {canManageAgenda && onPreviousChangeRequest ? (
+            <ToolbarButton
+              tooltip={t('features.agendas.crTimeline.previous')}
+              onClick={onPreviousChangeRequest}
+              disabled={!hasPreviousChangeRequest}
+            >
+              <ChevronLeft />
+            </ToolbarButton>
+          ) : null}
+          {canManageAgenda && onNextChangeRequest ? (
+            <ToolbarButton
+              tooltip={t('features.agendas.crTimeline.next')}
+              onClick={onNextChangeRequest}
+              disabled={!hasNextChangeRequest}
+            >
+              <ChevronRight />
+            </ToolbarButton>
+          ) : null}
+        </div>
+      ) : null}
 
-      <div className="border-border/60 bg-muted/25 flex items-center justify-center gap-1 rounded-lg border px-1 py-0.5">
-        {isVotable && onJumpToNextVoteStep ? (
-          <ToolbarButton
-            tooltip={
-              jumpToNextVoteStepTooltip ||
-              t('features.agendas.crTimeline.nextVotingStep', 'Next voting step')
-            }
-            onClick={onJumpToNextVoteStep}
-            disabled={voteLoading}
-            loading={voteLoading}
-          >
-            <ChevronRight />
-          </ToolbarButton>
-        ) : null}
-        {isVotable && !isClosed && isPendingVote && onStartVote ? (
-          <ToolbarButton
-            tooltip={startVoteActionLabel}
-            aria-label={startVoteActionLabel}
-            onClick={onStartVote}
-            disabled={voteLoading}
-            loading={voteLoading}
-          >
-            <Play />
-          </ToolbarButton>
-        ) : null}
-        {showStartFinalVoteButton ? (
-          <ToolbarButton
-            tooltip={startFinalVoteActionLabel}
-            aria-label={startFinalVoteActionLabel}
-            onClick={onStartFinalVote}
-            disabled={voteLoading}
-            loading={voteLoading}
-          >
-            <Gavel />
-          </ToolbarButton>
-        ) : null}
-        {isVotable && !isClosed && isFinalVotePhase && onCloseFinalVote ? (
-          <ToolbarButton
-            tooltip={closeFinalVoteActionLabel}
-            aria-label={closeFinalVoteActionLabel}
-            onClick={onCloseFinalVote}
-          >
-            <CheckCircle2 />
-          </ToolbarButton>
-        ) : null}
-        {currentAgendaItem && !isUserInSpeakerList && onJoinSpeakerList ? (
-          <ToolbarButton
-            tooltip={t('features.events.agenda.actions.joinSpeakerList')}
-            onClick={onJoinSpeakerList}
-            disabled={speakerLoading}
-            loading={speakerLoading}
-          >
-            <Mic />
-          </ToolbarButton>
-        ) : null}
-        {currentAgendaItem && isUserInSpeakerList && onLeaveSpeakerList ? (
-          <ToolbarButton
-            tooltip={t('features.events.agenda.actions.leaveSpeakerList')}
-            onClick={onLeaveSpeakerList}
-            disabled={speakerLoading}
-            loading={speakerLoading}
-          >
-            <MicOff />
-          </ToolbarButton>
-        ) : null}
-        {isElection && !isClosed && !isUserCandidate && onBecomeCandidate ? (
-          <ToolbarButton
-            tooltip={candidateTooltip}
-            onClick={isCandidateActionBlocked ? undefined : onBecomeCandidate}
-            disabled={candidateLoading}
-            loading={candidateLoading}
-            aria-disabled={isCandidateActionBlocked || undefined}
-            aria-label={candidateTooltip}
-            className={cn(
-              isCandidateActionBlocked &&
-                'border-muted-foreground/30 text-muted-foreground border opacity-70'
-            )}
-          >
-            <UserPlus />
-            {isCandidateActionBlocked ? <CircleHelp className="h-4 w-4" /> : null}
-          </ToolbarButton>
-        ) : null}
-        {isElection && canBeCandidate && isUserCandidate && onWithdrawCandidacy ? (
-          <ToolbarButton
-            tooltip={t('features.events.agenda.actions.withdrawCandidacy')}
-            onClick={onWithdrawCandidacy}
-            disabled={candidateLoading}
-            loading={candidateLoading}
-          >
-            <UserMinus />
-          </ToolbarButton>
-        ) : null}
-        {showVoteButton ? (
-          <ToolbarButton
-            tooltip={voteTooltip}
-            onClick={isVoteActionBlocked ? undefined : onVoteClick}
-            disabled={voteLoading}
-            loading={voteLoading}
-            aria-disabled={isVoteActionBlocked || undefined}
-            className={cn(
-              'civic-ballot-submit',
-              'bg-background border px-3 font-semibold shadow-sm transition-all',
-              isVoteActionBlocked
-                ? 'border-muted-foreground/30 text-muted-foreground opacity-70'
-                : featureThemeClassName('agendaAgendaActionBarAccentBadge')
-            )}
-          >
-            <Vote />
-            <span>{translateText('generated.inline.0011_vote_64f87291')}</span>
-            {isVoteActionBlocked ? <CircleHelp className="h-4 w-4" /> : null}
-          </ToolbarButton>
-        ) : null}
-        {!isClosed && !isPendingVote && (showOfflineTallyButton || onOfflineTallyClick) ? (
-          <ToolbarButton
-            tooltip={offlineTallyTooltip || t('features.events.agenda.manageOfflineTally')}
-            onClick={onOfflineTallyClick}
-            disabled={!onOfflineTallyClick}
-            className={featureThemeClassName('agendaAgendaActionBarInfoBorder')}
-          >
-            {offlineTallyMode === 'edit' ? <PencilLine /> : <FileEdit />}
-            <span>{translateText('generated.inline.0012_enter_tally_70132614')}</span>
-          </ToolbarButton>
-        ) : null}
-      </div>
+      {showContextGroup && showVotingGroup ? (
+        <ToolbarSeparator data-agenda-toolbar-separator="context-voting" className="mx-1 my-2" />
+      ) : null}
 
-      <div className="border-border/60 flex min-w-0 flex-1 items-center justify-end gap-1 overflow-x-auto border-l pl-2">
-        {showLifecycleControls && onPreviousItem ? (
-          <ToolbarButton
-            tooltip={t('features.events.navigation.previous')}
-            onClick={onPreviousItem}
-            disabled={!hasPreviousItem || navigationLoading}
-            loading={navigationLoading}
-          >
-            <ChevronLeft />
-          </ToolbarButton>
-        ) : null}
-        {currentAgendaItem ? (
-          <ToolbarButton
-            tooltip={currentItemTitle || currentItemLabel || ''}
-            onClick={onOpenCurrentItem}
-            disabled={!onOpenCurrentItem}
-            className="max-w-[220px] justify-start truncate px-3"
-            title={currentItemTitle || currentItemLabel || undefined}
-          >
-            <span className="truncate">
-              {currentItemLabel || translateText('generated.inline.0004_top_b48813fa')}
-            </span>
-          </ToolbarButton>
-        ) : null}
-        {showStartButton ? (
-          <ToolbarButton
-            tooltip={t('features.events.navigation.start')}
-            onClick={onStartItem}
-            disabled={startDisabled}
-            loading={navigationLoading}
-            className={featureThemeClassName('agendaAgendaActionBarSuccessBorder')}
-          >
-            <Play />
-          </ToolbarButton>
-        ) : null}
-        {showLifecycleControls && currentAgendaItem && isCurrentItemActive && onCompleteItem ? (
-          <ToolbarButton
-            tooltip={t('features.events.navigation.complete')}
-            onClick={onCompleteItem}
-            disabled={completeDisabled}
-            loading={navigationLoading}
-            successState={isCurrentItemCompleted}
-            className={cn(
-              isCurrentItemCompleted
-                ? featureThemeClassName('agendaAgendaActionBarSuccessBadge')
-                : featureThemeClassName('agendaAgendaActionBarSuccessBorder')
-            )}
-          >
-            <CheckCircle2 />
-          </ToolbarButton>
-        ) : null}
-        {showLifecycleControls && onNextItem ? (
-          <ToolbarButton
-            tooltip={t('features.events.navigation.next')}
-            onClick={onNextItem}
-            disabled={nextDisabled}
-            loading={navigationLoading}
-          >
-            <ChevronRight />
-          </ToolbarButton>
-        ) : null}
-      </div>
+      {showVotingGroup ? (
+        <div
+          className="flex min-w-max items-center justify-center gap-1 px-1"
+          data-agenda-toolbar-group="voting"
+        >
+          {isVotable && onJumpToNextVoteStep ? (
+            <ToolbarButton
+              tooltip={
+                jumpToNextVoteStepTooltip ||
+                t('features.agendas.crTimeline.nextVotingStep', 'Next voting step')
+              }
+              onClick={onJumpToNextVoteStep}
+              disabled={voteLoading}
+              loading={voteLoading}
+            >
+              <ChevronRight />
+            </ToolbarButton>
+          ) : null}
+          {isVotable && !isClosed && isPendingVote && onStartVote ? (
+            <ToolbarButton
+              tooltip={startVoteActionLabel}
+              aria-label={startVoteActionLabel}
+              onClick={onStartVote}
+              disabled={voteLoading}
+              loading={voteLoading}
+            >
+              <Play />
+            </ToolbarButton>
+          ) : null}
+          {showStartFinalVoteButton ? (
+            <ToolbarButton
+              tooltip={startFinalVoteActionLabel}
+              aria-label={startFinalVoteActionLabel}
+              onClick={onStartFinalVote}
+              disabled={voteLoading}
+              loading={voteLoading}
+            >
+              <Gavel />
+            </ToolbarButton>
+          ) : null}
+          {isVotable && !isClosed && isFinalVotePhase && onCloseFinalVote ? (
+            <ToolbarButton
+              tooltip={closeFinalVoteActionLabel}
+              aria-label={closeFinalVoteActionLabel}
+              onClick={onCloseFinalVote}
+            >
+              <CheckCircle2 />
+            </ToolbarButton>
+          ) : null}
+          {showJoinSpeakerAction ? (
+            <ToolbarButton
+              tooltip={t('features.events.agenda.actions.joinSpeakerList')}
+              onClick={onJoinSpeakerList}
+              disabled={speakerLoading}
+              loading={speakerLoading}
+            >
+              <Mic />
+            </ToolbarButton>
+          ) : null}
+          {showLeaveSpeakerAction ? (
+            <ToolbarButton
+              tooltip={t('features.events.agenda.actions.leaveSpeakerList')}
+              onClick={onLeaveSpeakerList}
+              disabled={speakerLoading}
+              loading={speakerLoading}
+            >
+              <MicOff />
+            </ToolbarButton>
+          ) : null}
+          {showBecomeCandidateAction ? (
+            <ToolbarButton
+              tooltip={candidateTooltip}
+              onClick={isCandidateActionBlocked ? undefined : onBecomeCandidate}
+              disabled={candidateLoading}
+              loading={candidateLoading}
+              aria-disabled={isCandidateActionBlocked || undefined}
+              aria-label={candidateTooltip}
+              className={cn(isCandidateActionBlocked && 'text-muted-foreground opacity-70')}
+            >
+              <UserPlus />
+              {isCandidateActionBlocked ? <CircleHelp className="h-4 w-4" /> : null}
+            </ToolbarButton>
+          ) : null}
+          {showWithdrawCandidateAction ? (
+            <ToolbarButton
+              tooltip={t('features.events.agenda.actions.withdrawCandidacy')}
+              onClick={onWithdrawCandidacy}
+              disabled={candidateLoading}
+              loading={candidateLoading}
+            >
+              <UserMinus />
+            </ToolbarButton>
+          ) : null}
+          {showVoteButton ? (
+            <ToolbarButton
+              tooltip={voteTooltip}
+              onClick={isVoteActionBlocked ? undefined : onVoteClick}
+              disabled={voteLoading}
+              loading={voteLoading}
+              aria-disabled={isVoteActionBlocked || undefined}
+              className={cn(
+                'civic-ballot-submit',
+                'border-0 bg-transparent px-3 font-semibold shadow-none transition-all',
+                isVoteActionBlocked
+                  ? 'text-muted-foreground opacity-70'
+                  : 'animate-pulse text-fuchsia-700 hover:bg-fuchsia-50 hover:text-fuchsia-800'
+              )}
+            >
+              <Vote />
+              <span>{translateText('generated.inline.0011_vote_64f87291')}</span>
+              {isVoteActionBlocked ? <CircleHelp className="h-4 w-4" /> : null}
+            </ToolbarButton>
+          ) : null}
+          {showOfflineTallyAction ? (
+            <ToolbarButton
+              tooltip={offlineTallyTooltip || t('features.events.agenda.manageOfflineTally')}
+              onClick={onOfflineTallyClick}
+              disabled={!onOfflineTallyClick}
+              className="border-0 px-3 text-[var(--badge-info-fg)] shadow-none"
+            >
+              {offlineTallyMode === 'edit' ? <PencilLine /> : <FileEdit />}
+              <span>{translateText('generated.inline.0012_enter_tally_70132614')}</span>
+            </ToolbarButton>
+          ) : null}
+        </div>
+      ) : null}
+
+      {(showContextGroup || showVotingGroup) && showNavigationGroup ? (
+        <ToolbarSeparator
+          data-agenda-toolbar-separator="actions-navigation"
+          className="mx-1 my-2"
+        />
+      ) : null}
+
+      {showNavigationGroup ? (
+        <div
+          className="flex min-w-max items-center justify-end gap-1 px-1 md:min-w-0 md:flex-1 md:overflow-x-auto"
+          data-agenda-toolbar-group="navigation"
+        >
+          {showLifecycleControls && onPreviousItem ? (
+            <ToolbarButton
+              tooltip={t('features.events.navigation.previous')}
+              onClick={onPreviousItem}
+              disabled={!hasPreviousItem || navigationLoading}
+              loading={navigationLoading}
+            >
+              <ChevronLeft />
+            </ToolbarButton>
+          ) : null}
+          {currentAgendaItem ? (
+            <ToolbarButton
+              tooltip={currentItemTitle || currentItemLabel || ''}
+              onClick={onOpenCurrentItem}
+              disabled={!onOpenCurrentItem}
+              className="max-w-[220px] justify-start truncate px-3"
+              title={currentItemTitle || currentItemLabel || undefined}
+            >
+              <span className="truncate">
+                {currentItemLabel || translateText('generated.inline.0004_top_b48813fa')}
+              </span>
+            </ToolbarButton>
+          ) : null}
+          {showStartButton ? (
+            <ToolbarButton
+              tooltip={t('features.events.navigation.start')}
+              onClick={onStartItem}
+              disabled={startDisabled}
+              loading={navigationLoading}
+              className="border-0 text-[var(--badge-success-fg)] shadow-none hover:bg-[var(--badge-success-bg)]"
+            >
+              <Play />
+            </ToolbarButton>
+          ) : null}
+          {showLifecycleControls && currentAgendaItem && isCurrentItemActive && onCompleteItem ? (
+            <ToolbarButton
+              tooltip={t('features.events.navigation.complete')}
+              onClick={onCompleteItem}
+              disabled={completeDisabled}
+              loading={navigationLoading}
+              successState={isCurrentItemCompleted}
+              className={cn(
+                isCurrentItemCompleted
+                  ? 'border-0 bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)] shadow-none'
+                  : 'border-0 text-[var(--badge-success-fg)] shadow-none hover:bg-[var(--badge-success-bg)]'
+              )}
+            >
+              <CheckCircle2 />
+            </ToolbarButton>
+          ) : null}
+          {showLifecycleControls && onNextItem ? (
+            <ToolbarButton
+              tooltip={t('features.events.navigation.next')}
+              onClick={onNextItem}
+              disabled={nextDisabled}
+              loading={navigationLoading}
+            >
+              <ChevronRight />
+            </ToolbarButton>
+          ) : null}
+        </div>
+      ) : null}
     </FixedAgendaToolbar>
   );
 }
