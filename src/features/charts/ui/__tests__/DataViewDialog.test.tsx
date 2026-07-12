@@ -51,6 +51,16 @@ vi.mock('@/features/shared/ui/ui/dialog', () => ({
   DialogTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
 }));
 
+vi.mock('@/features/shared/ui/ui/sheet', () => ({
+  Sheet: ({ children, open }: { children: ReactNode; open: boolean }) =>
+    open ? <div>{children}</div> : null,
+  SheetContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SheetDescription: ({ children }: { children: ReactNode }) => <p>{children}</p>,
+  SheetFooter: ({ children }: { children: ReactNode }) => <footer>{children}</footer>,
+  SheetHeader: ({ children }: { children: ReactNode }) => <header>{children}</header>,
+  SheetTitle: ({ children }: { children: ReactNode }) => <h2>{children}</h2>,
+}));
+
 vi.mock('../../api/datasetClient', () => ({
   createDataViewProjection: vi.fn(),
   createDatasetProjection: vi.fn(),
